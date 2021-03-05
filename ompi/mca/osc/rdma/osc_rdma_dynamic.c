@@ -128,7 +128,7 @@ static bool ompi_osc_rdma_find_conflicting_attachment (ompi_osc_rdma_handle_t *h
 static int ompi_osc_rdma_add_attachment (ompi_osc_rdma_handle_t *handle, intptr_t base, size_t len)
 {
     ompi_osc_rdma_attachment_t *attachment = OBJ_NEW(ompi_osc_rdma_attachment_t);
-    assert (NULL != attachment);
+    OPAL_ASSERT(NULL != attachment);
 
     if (ompi_osc_rdma_find_conflicting_attachment(handle, base, base + len)) {
         return OMPI_ERR_RMA_ATTACH;
@@ -238,7 +238,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
 
     /* add RDMA region handle to track this region */
     rdma_region_handle = OBJ_NEW(ompi_osc_rdma_handle_t);
-    assert (NULL != rdma_region_handle);
+    OPAL_ASSERT(NULL != rdma_region_handle);
 
     if (module->selected_btl->btl_register_mem) {
         mca_btl_base_registration_handle_t *handle;
@@ -259,7 +259,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     }
 
     ret = ompi_osc_rdma_add_attachment (rdma_region_handle, (intptr_t) base, len);
-    assert(OMPI_SUCCESS == ret);
+    OPAL_ASSERT(OMPI_SUCCESS == ret);
     module->dynamic_handles[region_index] = rdma_region_handle;
 
 #if OPAL_ENABLE_DEBUG

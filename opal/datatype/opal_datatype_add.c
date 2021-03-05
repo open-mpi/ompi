@@ -374,7 +374,7 @@ build_loop:
             pdtBase->desc.used += pdtAdd->desc.used;
             if( pLoop != NULL ) {
                 int index = GET_FIRST_NON_LOOP( pLoop );
-                assert( pLoop[index].elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
+                OPAL_ASSERT( pLoop[index].elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
                 CREATE_LOOP_END( pLast, pdtAdd->desc.used + 1, pLoop[index].elem.disp,
                                  pdtAdd->size, pLoop->loop.common.flags );
             }
@@ -401,7 +401,7 @@ build_loop:
 
     /* If the NO_GAP flag is set the contiguous have to be set too */
     if( pdtBase->flags & OPAL_DATATYPE_FLAG_NO_GAPS ) {
-        assert( pdtBase->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS );
+        OPAL_ASSERT( pdtBase->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS );
     }
     pdtBase->nbElems += (count * pdtAdd->nbElems);
 

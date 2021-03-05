@@ -428,7 +428,7 @@ static int mca_rcache_grdma_find (mca_rcache_base_module_t *rcache, void *addr,
             (mca_rcache_grdma_component.leave_pinned ||
              ((*reg)->flags & MCA_RCACHE_FLAGS_PERSIST) ||
              ((*reg)->base == base && (*reg)->bound == bound))) {
-        assert(((void*)(*reg)->bound) >= addr);
+        OPAL_ASSERT(((void*)(*reg)->bound) >= addr);
         if(0 == (*reg)->ref_count &&
                 mca_rcache_grdma_component.leave_pinned) {
             opal_list_remove_item(&rcache_grdma->cache->lru_list,

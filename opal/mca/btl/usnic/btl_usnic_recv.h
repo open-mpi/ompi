@@ -244,10 +244,10 @@ opal_btl_usnic_check_rx_seq(
 #endif
         /* highest_seq_rcvd is for debug stats only; it's not used
            in any window calculations */
-        assert(SEQ_LE(seq, endpoint->endpoint_highest_seq_rcvd));
+        OPAL_ASSERT(SEQ_LE(seq, endpoint->endpoint_highest_seq_rcvd));
         /* next_contig_seq_to_recv-1 is the ack number we'll
            send */
-        assert (SEQ_GT(seq, endpoint->endpoint_next_contig_seq_to_recv - 1));
+        OPAL_ASSERT(SEQ_GT(seq, endpoint->endpoint_next_contig_seq_to_recv - 1));
 
         /* Stats */
         ++endpoint->endpoint_module->stats.num_dup_recvs;

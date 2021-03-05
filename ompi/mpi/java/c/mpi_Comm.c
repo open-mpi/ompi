@@ -49,8 +49,9 @@
  *            at Syracuse University 1998
  */
 #include "ompi_config.h"
+#include "opal/util/opal_assert.h"
+
 #include <stdlib.h>
-#include <assert.h>
 #ifdef HAVE_TARGETCONDITIONALS_H
 #include <TargetConditionals.h>
 #endif
@@ -71,7 +72,7 @@ static void* getBufCritical(void** bufBase, JNIEnv *env,
     else if(db)
     {
         *bufBase = (*env)->GetDirectBufferAddress(env, buf);
-        assert(offset == 0);
+        OPAL_ASSERT(offset == 0);
         return *bufBase;
     }
     else
@@ -848,7 +849,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gather(
 
     if(sjType == 0)
     {
-        assert(sBuf == NULL);
+        OPAL_ASSERT(sBuf == NULL);
         sType = MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
@@ -883,7 +884,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gather(
              * As we are using MPI_IN_PLACE version, we use the receive
              * buffer as the send buffer.
              */
-            assert(sBuf == NULL);
+            OPAL_ASSERT(sBuf == NULL);
             sPtr   = rPtr;
             sCount = rCount;
             sType  = rType;
@@ -921,7 +922,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
 
     if(sType == 0)
     {
-        assert(sendBuf == NULL);
+        OPAL_ASSERT(sendBuf == NULL);
         sType = (jlong)MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
@@ -950,7 +951,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
              * As we are using MPI_IN_PLACE version, we use the receive
              * buffer as the send buffer.
              */
-            assert(sendBuf == NULL);
+            OPAL_ASSERT(sendBuf == NULL);
             sPtr   = rPtr;
             sCount = rCount;
             sType  = rType;
@@ -984,7 +985,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_gatherv(
 
     if(sjType == 0)
     {
-        assert(sBuf == NULL);
+        OPAL_ASSERT(sBuf == NULL);
         sType = MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
@@ -1052,7 +1053,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGatherv(
 
     if(sType == 0)
     {
-        assert(sendBuf == NULL);
+        OPAL_ASSERT(sendBuf == NULL);
         sType = (jlong)MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
@@ -1110,7 +1111,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
 
     if(rjType == 0)
     {
-        assert(rBuf == NULL);
+        OPAL_ASSERT(rBuf == NULL);
         rType = MPI_DATATYPE_NULL;
         rPtr  = MPI_IN_PLACE;
     }
@@ -1133,7 +1134,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatter(
              * As we are using MPI_IN_PLACE version, we use the send
              * buffer as the receive buffer.
              */
-            assert(rBuf == NULL);
+            OPAL_ASSERT(rBuf == NULL);
             rPtr   = sPtr;
             rCount = sCount;
             rType  = sType;
@@ -1174,7 +1175,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatter(
 
     if(rType == 0)
     {
-        assert(recvBuf == NULL);
+        OPAL_ASSERT(recvBuf == NULL);
         rType = (jlong)MPI_DATATYPE_NULL;
         rPtr  = MPI_IN_PLACE;
     }
@@ -1193,7 +1194,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatter(
              * As we are using MPI_IN_PLACE version, we use the send
              * buffer as the receive buffer.
              */
-            assert(recvBuf == NULL);
+            OPAL_ASSERT(recvBuf == NULL);
             rPtr   = sPtr;
             rCount = sCount;
             rType  = sType;
@@ -1227,7 +1228,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_scatterv(
 
     if(rjType == 0)
     {
-        assert(rBuf == NULL);
+        OPAL_ASSERT(rBuf == NULL);
         rType = MPI_DATATYPE_NULL;
         rPtr  = MPI_IN_PLACE;
     }
@@ -1284,7 +1285,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iScatterv(
 
     if(rType == 0)
     {
-        assert(recvBuf == NULL);
+        OPAL_ASSERT(recvBuf == NULL);
         rType = (jlong)MPI_DATATYPE_NULL;
         rPtr  = MPI_IN_PLACE;
     }
@@ -1344,7 +1345,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allGather(
 
     if(sjType == 0)
     {
-        assert(sBuf == NULL);
+        OPAL_ASSERT(sBuf == NULL);
         sType = MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
         int rank = getRank(env, comm);
@@ -1381,7 +1382,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGather(
 
     if(sType == 0)
     {
-        assert(sendBuf == NULL);
+        OPAL_ASSERT(sendBuf == NULL);
         sType = (jlong)MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
@@ -1423,7 +1424,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allGatherv(
 
     if(sjType == 0)
     {
-        assert(sBuf == NULL);
+        OPAL_ASSERT(sBuf == NULL);
         sType = MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
         int rank = getRank(env, comm);
@@ -1466,7 +1467,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllGatherv(
 
     if(sType == 0)
     {
-        assert(sendBuf == NULL);
+        OPAL_ASSERT(sendBuf == NULL);
         sType = (jlong)MPI_DATATYPE_NULL;
         sPtr  = MPI_IN_PLACE;
     }
@@ -2029,7 +2030,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iReduce(
              * As we are using MPI_IN_PLACE version, we use the receive
              * buffer as the send buffer.
              */
-            assert(sendBuf == NULL);
+            OPAL_ASSERT(sendBuf == NULL);
             sPtr = rPtr;
         }
     }

@@ -139,8 +139,8 @@ static hwloc_obj_t find_device_numa(opal_btl_usnic_module_t *module)
     hwloc_obj_t obj;
 
     /* Bozo checks */
-    assert(NULL != matrix);
-    assert(NULL != my_numa_node);
+    OPAL_ASSERT(NULL != matrix);
+    OPAL_ASSERT(NULL != my_numa_node);
 
     uip = &module->usnic_info;
 
@@ -149,7 +149,7 @@ static hwloc_obj_t find_device_numa(opal_btl_usnic_module_t *module)
        if we find the IP device name, we've found the usNIC device) */
     obj = NULL;
     while (NULL != (obj = hwloc_get_next_osdev(opal_hwloc_topology, obj))) {
-        assert(HWLOC_OBJ_OS_DEVICE == obj->type);
+        OPAL_ASSERT(HWLOC_OBJ_OS_DEVICE == obj->type);
         if (0 == strcmp(obj->name, uip->ui.v1.ui_ifname)) {
             break;
         }
@@ -188,7 +188,7 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
     hwloc_obj_t dev_numa;
 
     /* Bozo check */
-    assert(NULL != module);
+    OPAL_ASSERT(NULL != module);
 
     /* Is this process bound? */
     if (!proc_bound()) {

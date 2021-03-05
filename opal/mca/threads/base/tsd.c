@@ -45,7 +45,7 @@ void opal_tsd_tracked_key_destructor(opal_tsd_tracked_key_t *key)
 
 int opal_tsd_tracked_key_set(opal_tsd_tracked_key_t *key, void *p)
 {
-    assert( NULL != key);
+    OPAL_ASSERT( NULL != key);
    
     opal_tsd_list_item_t *tsd = NULL;
     opal_tsd_get(key->key, (void **)&tsd); 
@@ -69,7 +69,7 @@ int opal_tsd_tracked_key_set(opal_tsd_tracked_key_t *key, void *p)
 
 void opal_tsd_tracked_key_set_destructor(opal_tsd_tracked_key_t *key, opal_tsd_destructor_t destructor)
 {
-    assert (NULL != key);
+    OPAL_ASSERT(NULL != key);
     key->user_destructor = destructor;
 }
 

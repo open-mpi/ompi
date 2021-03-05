@@ -120,8 +120,8 @@ opal_pack_homogeneous_contig_with_gaps_function( opal_convertor_t* pConv,
      * is the initial displacement, the size the length of the contiguous area and the extent represent
      * how much we should jump between elements.
      */
-    assert( (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && ((ptrdiff_t)pData->size != extent) );
-    assert( pData->opt_desc.used <= 1 );
+    OPAL_ASSERT( (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && ((ptrdiff_t)pData->size != extent) );
+    OPAL_ASSERT( pData->opt_desc.used <= 1 );
     DO_DEBUG( opal_output( 0, "pack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
                            (void*)pConv->pBaseBuf, *out_size ); );
     if( stack[1].type != opal_datatype_uint1.id ) {
@@ -319,7 +319,7 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
                     if( pStack->index == -1 ) {  /* If it's the datatype count loop */
                         pStack->disp += (pData->ub - pData->lb);  /* jump by the datatype extent */
                     } else {
-                        assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
+                        OPAL_ASSERT( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
                         pStack->disp += description[pStack->index].loop.extent;  /* jump by the loop extent */
                     }
                 }
@@ -507,7 +507,7 @@ opal_pack_general_function( opal_convertor_t* pConvertor,
                     if( pStack->index == -1 ) {
                         pStack->disp += (pData->ub - pData->lb);
                     } else {
-                        assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
+                        OPAL_ASSERT( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
                         pStack->disp += description[pStack->index].loop.extent;
                     }
                 }

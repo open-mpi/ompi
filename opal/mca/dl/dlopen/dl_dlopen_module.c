@@ -35,7 +35,7 @@
 static void do_dlopen(const char *fname, int flags,
                       void **handle, char **err_msg)
 {
-    assert(handle);
+    OPAL_ASSERT(handle);
 
     *handle = dlopen(fname, flags);
 
@@ -52,7 +52,7 @@ static void do_dlopen(const char *fname, int flags,
 static int dlopen_open(const char *fname, bool use_ext, bool private_namespace,
                        opal_dl_handle_t **handle, char **err_msg)
 {
-    assert(handle);
+    OPAL_ASSERT(handle);
 
     *handle = NULL;
 
@@ -125,10 +125,10 @@ static int dlopen_open(const char *fname, bool use_ext, bool private_namespace,
 static int dlopen_lookup(opal_dl_handle_t *handle, const char *symbol,
                          void **ptr, char **err_msg)
 {
-    assert(handle);
-    assert(handle->dlopen_handle);
-    assert(symbol);
-    assert(ptr);
+    OPAL_ASSERT(handle);
+    OPAL_ASSERT(handle->dlopen_handle);
+    OPAL_ASSERT(symbol);
+    OPAL_ASSERT(ptr);
 
     *ptr = dlsym(handle->dlopen_handle, symbol);
     if (NULL != *ptr) {
@@ -144,7 +144,7 @@ static int dlopen_lookup(opal_dl_handle_t *handle, const char *symbol,
 
 static int dlopen_close(opal_dl_handle_t *handle)
 {
-    assert(handle);
+    OPAL_ASSERT(handle);
 
     int ret;
     ret = dlclose(handle->dlopen_handle);

@@ -21,10 +21,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 
 #include "opal/constants.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/opal_assert.h"
 #include "opal/util/output.h"
 
 static void opal_pointer_array_construct(opal_pointer_array_t *);
@@ -101,7 +101,7 @@ static void opal_pointer_array_destruct(opal_pointer_array_t *array)
         }                                                               \
         GET_BIT_POS((START_IDX), __b_idx, __b_pos);                     \
         for (; table->free_bits[__b_idx] == 0xFFFFFFFFFFFFFFFFu; __b_idx++); \
-        assert(__b_idx < (uint32_t)table->size);                        \
+        OPAL_ASSERT(__b_idx < (uint32_t)table->size);                        \
         uint64_t __check_value = table->free_bits[__b_idx];             \
         __b_pos = 0;                                                    \
                                                                         \
@@ -133,7 +133,7 @@ static void opal_pointer_array_destruct(opal_pointer_array_t *array)
     do {                                                                \
         uint32_t __b_idx, __b_pos;                                      \
         GET_BIT_POS((IDX), __b_idx, __b_pos);                           \
-        assert( 0 == (table->free_bits[__b_idx] & (((uint64_t)1) << __b_pos))); \
+        OPAL_ASSERT( 0 == (table->free_bits[__b_idx] & (((uint64_t)1) << __b_pos))); \
         table->free_bits[__b_idx] |= (((uint64_t)1) << __b_pos);        \
     } while(0)
 
@@ -144,7 +144,7 @@ static void opal_pointer_array_destruct(opal_pointer_array_t *array)
     do {                                                                \
         uint32_t __b_idx, __b_pos;                                      \
         GET_BIT_POS((IDX), __b_idx, __b_pos);                           \
-        assert( (table->free_bits[__b_idx] & (((uint64_t)1) << __b_pos))); \
+        OPAL_ASSERT( (table->free_bits[__b_idx] & (((uint64_t)1) << __b_pos))); \
         table->free_bits[__b_idx] ^= (((uint64_t)1) << __b_pos);        \
     } while(0)
 
@@ -163,12 +163,12 @@ static void opal_pointer_array_validate(opal_pointer_array_t *array)
         GET_BIT_POS(i, b_idx, p_idx);
         if( NULL == array->addr[i] ) {
             cnt++;
-            assert( 0 == (array->free_bits[b_idx] & (((uint64_t)1) << p_idx)) );
+            OPAL_ASSERT( 0 == (array->free_bits[b_idx] & (((uint64_t)1) << p_idx)) );
         } else {
-            assert( 0 != (array->free_bits[b_idx] & (((uint64_t)1) << p_idx)) );
+            OPAL_ASSERT( 0 != (array->free_bits[b_idx] & (((uint64_t)1) << p_idx)) );
         }
     }
-    assert(cnt == array->number_free);
+    OPAL_ASSERT(cnt == array->number_free);
 }
 #endif
 
@@ -231,16 +231,16 @@ int opal_pointer_array_add(opal_pointer_array_t *table, void *ptr)
         }
     }
 
-    assert( (table->addr != NULL) && (table->size > 0) );
-    assert( (table->lowest_free >= 0) && (table->lowest_free < table->size) );
-    assert( (table->number_free > 0) && (table->number_free <= table->size) );
+    OPAL_ASSERT( (table->addr != NULL) && (table->size > 0) );
+    OPAL_ASSERT( (table->lowest_free >= 0) && (table->lowest_free < table->size) );
+    OPAL_ASSERT( (table->number_free > 0) && (table->number_free <= table->size) );
 
     /*
      * add pointer to table, and return the index
      */
 
     index = table->lowest_free;
-    assert(NULL == table->addr[index]);
+    OPAL_ASSERT(NULL == table->addr[index]);
     table->addr[index] = ptr;
     table->number_free--;
     SET_BIT(index);
@@ -271,7 +271,7 @@ int opal_pointer_array_add(opal_pointer_array_t *table, void *ptr)
 int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
                                 void * value)
 {
-    assert(table != NULL);
+    OPAL_ASSERT(table != NULL);
 
     if (OPAL_UNLIKELY(0 > index)) {
         return OPAL_ERROR;
@@ -286,7 +286,7 @@ int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
             return OPAL_ERROR;
         }
     }
-    assert(table->size > index);
+    OPAL_ASSERT(table->size > index);
     /* mark element as free, if NULL element */
     if( NULL == value ) {
         if( NULL != table->addr[index] ) {
@@ -305,7 +305,7 @@ int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
                 FIND_FIRST_ZERO(index, table->lowest_free);
             }
         } else {
-            assert( index != table->lowest_free );
+            OPAL_ASSERT( index != table->lowest_free );
         }
     }
     table->addr[index] = value;
@@ -340,8 +340,8 @@ int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
 bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *table,
                                            int index, void *value)
 {
-    assert(table != NULL);
-    assert(index >= 0);
+    OPAL_ASSERT(table != NULL);
+    OPAL_ASSERT(index >= 0);
 
 #if 0
     opal_output(0,"opal_pointer_array_test_and_set_item: IN:  "
@@ -371,7 +371,7 @@ bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *table,
     /*
      * allow a specific index to be changed.
      */
-    assert(NULL == table->addr[index]);
+    OPAL_ASSERT(NULL == table->addr[index]);
     table->addr[index] = value;
     table->number_free--;
     SET_BIT(index);

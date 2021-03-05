@@ -16,6 +16,8 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/opal_assert.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif

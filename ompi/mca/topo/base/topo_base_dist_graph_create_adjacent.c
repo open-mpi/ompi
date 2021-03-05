@@ -49,7 +49,7 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
 
     err = OMPI_ERR_OUT_OF_RESOURCE;  /* suppose by default something bad will happens */
 
-    assert( NULL == (*newcomm)->c_topo );
+    OPAL_ASSERT( NULL == (*newcomm)->c_topo );
 
     topo = OBJ_NEW(mca_topo_base_comm_dist_graph_2_2_0_t);
     if( NULL == topo ) {

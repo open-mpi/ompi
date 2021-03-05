@@ -81,7 +81,7 @@ position_predefined_data( opal_convertor_t* CONVERTOR,
     size_t do_now, do_now_bytes = opal_datatype_basicDatatypes[_elem->common.type]->size;
     unsigned char* _memory = (*POINTER) + _elem->disp;
 
-    assert( *(COUNT) <= ((size_t)_elem->count * _elem->blocklen) );
+    OPAL_ASSERT( *(COUNT) <= ((size_t)_elem->count * _elem->blocklen) );
 
     if( cando_count > *(COUNT) )
         cando_count = *(COUNT);
@@ -164,7 +164,7 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
     ptrdiff_t extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
 
     DUMP( "opal_convertor_generic_simple_position( %p, &%ld )\n", (void*)pConvertor, (long)*position );
-    assert(*position > pConvertor->bConverted);
+    OPAL_ASSERT(*position > pConvertor->bConverted);
 
     /* We dont want to have to parse the datatype multiple times. What we are interested in
      * here is to compute the number of completed datatypes that we can move forward, update
@@ -208,7 +208,7 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
         if( missing_length >= iov_len_local ) {
             pConvertor->partial_length = (pConvertor->partial_length + iov_len_local) % element_length;
             pConvertor->bConverted    += iov_len_local;
-            assert(pConvertor->partial_length < element_length);
+            OPAL_ASSERT(pConvertor->partial_length < element_length);
             return 0;
         }
         pConvertor->partial_length = 0;
@@ -234,7 +234,7 @@ int opal_convertor_generic_simple_position( opal_convertor_t* pConvertor,
                     pStack->disp += extent;
                     pos_desc = 0;  /* back to the first element */
                 } else {
-                    assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
+                    OPAL_ASSERT( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
                     pStack->disp += description[pStack->index].loop.extent;
                     pos_desc = pStack->index;  /* go back to the loop start itself to give a chance 
                                                 * to move forward by entire loops */

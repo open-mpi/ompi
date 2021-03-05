@@ -90,7 +90,7 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
         up_comm  = han_module->sub_comm[INTER_NODE];
         low_comm = han_module->sub_comm[INTRA_NODE];
     }
-    assert(up_comm != NULL && low_comm != NULL);
+    OPAL_ASSERT(up_comm != NULL && low_comm != NULL);
 
     int low_rank = ompi_comm_rank(low_comm);
     int low_size = ompi_comm_size(low_comm);
@@ -145,7 +145,7 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
 
     /* error out if the rank distribution is not balanced */
     if (is_imbalanced) {
-        assert(MPI_REQUEST_NULL == request);
+        OPAL_ASSERT(MPI_REQUEST_NULL == request);
         han_module->are_ppn_imbalanced = true;
         free(topo);
         if( NULL != my_low_rank_map ) free(my_low_rank_map);

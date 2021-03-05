@@ -86,7 +86,7 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             return OPAL_ERROR;
         }
 
-        assert (0 != data_ptr);
+        OPAL_ASSERT(0 != data_ptr);
 
         count++;
 
@@ -217,7 +217,7 @@ int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl)
         BTL_ERROR(("unhandled error in GNI_CqGetEvent"));
 
         /* unhandled error: crash */
-        assert (0);
+        OPAL_ASSERT(0);
         return mca_btl_rc_ugni_to_opal (grc);
     }
 

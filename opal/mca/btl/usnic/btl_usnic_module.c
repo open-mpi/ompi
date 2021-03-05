@@ -726,7 +726,7 @@ usnic_alloc(struct mca_btl_base_module_t* btl,
         }
         frag = &lfrag->lsf_base;
 
-        assert(size > 0);
+        OPAL_ASSERT(size > 0);
         lfrag->lsf_buffer = malloc(size);
         if (OPAL_UNLIKELY(NULL == lfrag->lsf_buffer)) {
             opal_btl_usnic_frag_return(module, &lfrag->lsf_base.sf_base);
@@ -803,9 +803,9 @@ pack_chunk_seg_from_frag(
     size_t seg_space;
     size_t max_data;
 
-    assert(NULL != lfrag);
+    OPAL_ASSERT(NULL != lfrag);
     /* never should be attempting to pack if we've already packed everything */
-    assert(lfrag->lsf_pack_bytes_left > 0);
+    OPAL_ASSERT(lfrag->lsf_pack_bytes_left > 0);
 
     seg = opal_btl_usnic_chunk_segment_alloc(module);
     if (OPAL_UNLIKELY(NULL == seg)) {
@@ -849,8 +849,8 @@ pack_chunk_seg_from_frag(
 
     if (seg_space > 0 && lfrag->lsf_pack_bytes_left > 0) {
         /* the remaining bytes come from a convertor; pack using it */
-        assert(NULL == lfrag->lsf_cur_ptr);
-        assert(1 == lfrag->lsf_cur_sge);
+        OPAL_ASSERT(NULL == lfrag->lsf_cur_ptr);
+        OPAL_ASSERT(1 == lfrag->lsf_cur_sge);
 
         copylen = lfrag->lsf_pack_bytes_left;
         if (copylen > seg_space) {
@@ -867,8 +867,8 @@ pack_chunk_seg_from_frag(
                   __func__, (void *)seg, (void *)lfrag,
                   (module->max_chunk_payload - seg_space));
 
-    assert(lfrag->lsf_cur_sge <= 2);
-    assert(seg_space < module->max_chunk_payload); /* must make progress */
+    OPAL_ASSERT(lfrag->lsf_cur_sge <= 2);
+    OPAL_ASSERT(seg_space < module->max_chunk_payload); /* must make progress */
 
     seg->ss_parent_frag = &lfrag->lsf_base;
     seg->ss_len = module->max_chunk_payload - seg_space;
@@ -904,7 +904,7 @@ static int usnic_finalize(struct mca_btl_base_module_t* btl)
     opal_mutex_unlock(&module->all_endpoints_lock);
 
     /* _flush_endpoint should have emptied this list */
-    assert(opal_list_is_empty(&(module->pending_resend_segs)));
+    OPAL_ASSERT(opal_list_is_empty(&(module->pending_resend_segs)));
     OBJ_DESTRUCT(&module->pending_resend_segs);
 
     /* Similarly, empty the endpoints_that_need_acks list so that
@@ -1036,7 +1036,7 @@ usnic_handle_large_send(
     opal_btl_usnic_send_segment_t *sseg;
     size_t payload_len;
 
-    assert(frag->sf_base.uf_type == OPAL_BTL_USNIC_FRAG_LARGE_SEND);
+    OPAL_ASSERT(frag->sf_base.uf_type == OPAL_BTL_USNIC_FRAG_LARGE_SEND);
     lfrag = (opal_btl_usnic_large_send_frag_t *)frag;
     if (lfrag->lsf_cur_offset == 0) {
         /* assign a fragment ID */
@@ -1046,7 +1046,7 @@ usnic_handle_large_send(
     }
 
     if (lfrag->lsf_pack_on_the_fly) {
-        assert(opal_list_is_empty(&lfrag->lsf_seg_chain));
+        OPAL_ASSERT(opal_list_is_empty(&lfrag->lsf_seg_chain));
 
         /* just pack a single chunk segment and put it on the list */
         sseg = pack_chunk_seg_from_frag(module, lfrag);
@@ -1056,12 +1056,12 @@ usnic_handle_large_send(
             opal_list_remove_first(&lfrag->lsf_seg_chain);
     }
 
-    assert(NULL != sseg);
+    OPAL_ASSERT(NULL != sseg);
     payload_len = sseg->ss_len;
 
-    assert(payload_len > 0); /* must have made progress */
-    assert(payload_len <= module->max_chunk_payload);
-    assert(lfrag->lsf_bytes_left >= payload_len);
+    OPAL_ASSERT(payload_len > 0); /* must have made progress */
+    OPAL_ASSERT(payload_len <= module->max_chunk_payload);
+    OPAL_ASSERT(lfrag->lsf_bytes_left >= payload_len);
 
     /* set actual packet length */
     sseg->ss_len = sizeof(opal_btl_usnic_btl_chunk_header_t) + payload_len;
@@ -1292,7 +1292,7 @@ usnic_send(
     module = (opal_btl_usnic_module_t *)base_module;
     frag = (opal_btl_usnic_send_frag_t*) descriptor;
 
-    assert(frag->sf_endpoint == endpoint);
+    OPAL_ASSERT(frag->sf_endpoint == endpoint);
     frag->sf_base.uf_remote_seg[0].seg_addr.pval = NULL;      /* not a PUT */
 
     opal_btl_usnic_compute_sf_size(frag);
@@ -1588,20 +1588,20 @@ static int create_ep(opal_btl_usnic_module_t* module,
     /* all of the OMPI code assumes IPv4, but some versions of libfabric will
      * return FI_SOCKADDR instead of FI_SOCKADDR_IN, so we need to do a little
      * bit of sanity checking */
-    assert(FI_SOCKADDR_IN == channel->info->addr_format ||
+    OPAL_ASSERT(FI_SOCKADDR_IN == channel->info->addr_format ||
            FI_SOCKADDR == channel->info->addr_format);
     if (FI_SOCKADDR == channel->info->addr_format) {
         struct sockaddr *sa;
         sa = (struct sockaddr *)channel->info->src_addr;
-        assert(AF_INET == sa->sa_family);
+        OPAL_ASSERT(AF_INET == sa->sa_family);
     }
 #endif
 
     sin = (struct sockaddr_in *)channel->info->src_addr;
-    assert(sizeof(struct sockaddr_in) == channel->info->src_addrlen);
+    OPAL_ASSERT(sizeof(struct sockaddr_in) == channel->info->src_addrlen);
 
     /* no matter the version of libfabric, this should hold */
-    assert(0 == sin->sin_port);
+    OPAL_ASSERT(0 == sin->sin_port);
 
     rc = fi_endpoint(module->domain, channel->info, &channel->ep, NULL);
     if (0 != rc || NULL == channel->ep) {
@@ -1709,7 +1709,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
                            rc, fi_strerror(-rc));
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        assert(0 != sin->sin_port);
+        OPAL_ASSERT(0 != sin->sin_port);
     }
 
     char *str;
@@ -1757,7 +1757,7 @@ static void finalize_one_channel(opal_btl_usnic_module_t *module,
      * have been constructed.  Make sure to wait until queues
      * destroyed to destroy the recv_segs */
     if (channel->recv_segs.ctx == module) {
-        assert(NULL == channel->ep && NULL == channel->cq);
+        OPAL_ASSERT(NULL == channel->ep && NULL == channel->cq);
         OBJ_DESTRUCT(&channel->recv_segs);
     }
 }
@@ -1833,7 +1833,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
         goto error;
     }
 
-    assert(channel->info->ep_attr->msg_prefix_size ==
+    OPAL_ASSERT(channel->info->ep_attr->msg_prefix_size ==
            (uint32_t) mca_btl_usnic_component.transport_header_len);
 
     opal_output_verbose(15, USNIC_OUT,
@@ -1879,7 +1879,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
     /* Post receive descriptors */
     for (i = 0; i < rd_num; i++) {
         USNIC_COMPAT_FREE_LIST_GET(&channel->recv_segs, item);
-        assert(NULL != item);
+        OPAL_ASSERT(NULL != item);
         rseg = (opal_btl_usnic_recv_segment_t*)item;
 
         if (NULL == rseg) {
@@ -2378,7 +2378,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                              module->rcache,
                              NULL /* item_init */,
                              NULL /* item_init_context */);
-    assert(OPAL_SUCCESS == rc);
+    OPAL_ASSERT(OPAL_SUCCESS == rc);
 
     OBJ_CONSTRUCT(&module->large_send_frags, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->large_send_frags,
@@ -2395,7 +2395,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                              NULL /* unused0 */,
                              NULL /* item_init */,
                              NULL /* item_init_context */);
-    assert(OPAL_SUCCESS == rc);
+    OPAL_ASSERT(OPAL_SUCCESS == rc);
 
     OBJ_CONSTRUCT(&module->put_dest_frags, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->put_dest_frags,
@@ -2412,7 +2412,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                              NULL /* unused0 */,
                              NULL /* item_init */,
                              NULL /* item_init_context */);
-    assert(OPAL_SUCCESS == rc);
+    OPAL_ASSERT(OPAL_SUCCESS == rc);
 
     /* list of segments to use for sending */
     OBJ_CONSTRUCT(&module->chunk_segs, opal_free_list_t);
@@ -2430,7 +2430,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                              module->rcache,
                              NULL /* item_init */,
                              NULL /* item_init_context */);
-    assert(OPAL_SUCCESS == rc);
+    OPAL_ASSERT(OPAL_SUCCESS == rc);
 
     /* ACK segments freelist */
     uint32_t ack_segment_len;
@@ -2452,7 +2452,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                              module->rcache,
                              NULL /* item_init */,
                              NULL /* item_init_context */);
-    assert(OPAL_SUCCESS == rc);
+    OPAL_ASSERT(OPAL_SUCCESS == rc);
 
     /*
      * Initialize pools of large recv buffers
@@ -2464,7 +2464,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     module->last_pool = usnic_fls(module->super.btl_eager_limit-1);
     module->module_recv_buffers = calloc(module->last_pool+1,
             sizeof(opal_free_list_t));
-    assert(module->module_recv_buffers != NULL);
+    OPAL_ASSERT(module->module_recv_buffers != NULL);
     for (int i = module->first_pool; i <= module->last_pool; ++i) {
         size_t elt_size = sizeof(opal_btl_usnic_rx_buf_t) - 1 + (1 << i);
         OBJ_CONSTRUCT(&module->module_recv_buffers[i], opal_free_list_t);
@@ -2482,7 +2482,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
                                  NULL /* unused0 */,
                                  NULL /* item_init */,
                                  NULL /* item_init_context */);
-        assert(OPAL_SUCCESS == rc);
+        OPAL_ASSERT(OPAL_SUCCESS == rc);
     }
 }
 

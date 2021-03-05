@@ -808,7 +808,7 @@ int ompi_coll_base_reduce_intra_redscat_gather(
 
     /* Find nearest power-of-two less than or equal to comm_size */
     int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
-    assert(nsteps >= 0);
+    OPAL_ASSERT(nsteps >= 0);
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
 
     if (nprocs_pof2 < 2 || count < nprocs_pof2 || !ompi_op_is_commute(op)) {

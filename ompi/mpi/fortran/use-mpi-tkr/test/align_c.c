@@ -1,5 +1,5 @@
 #include "ompi_config.h"
-#include <assert.h>
+#include "opal/util/opal_assert.h"
 
 BEGIN_C_DECLS
 
@@ -36,7 +36,7 @@ void align_c(char *a, char *w, char *x, char *y, char *z)
     diff = a - w;
     diff = (diff >= 0) ? diff : -diff;
     *a = diff;
-    assert(diff4 == diff);
+    OPAL_ASSERT(diff4 == diff);
 }
 
 

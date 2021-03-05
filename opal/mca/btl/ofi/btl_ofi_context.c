@@ -352,7 +352,7 @@ mca_btl_ofi_context_t *get_ofi_context(mca_btl_ofi_module_t *btl)
         OPAL_THREAD_UNLOCK(&btl->module_lock);
     }
 
-    assert (my_context);
+    OPAL_ASSERT(my_context);
     return my_context;
 #else
     return get_ofi_context_rr(btl);

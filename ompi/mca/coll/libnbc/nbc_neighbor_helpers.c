@@ -82,7 +82,7 @@ int NBC_Comm_neighbors (ompi_communicator_t *comm, int **sources, int *source_co
     int rpeer, speer;
 
     /* silence clang static analyzer warning */
-    assert (indeg == outdeg);
+    OPAL_ASSERT(indeg == outdeg);
 
     for (int dim = 0, i = 0 ; dim < comm->c_topo->mtc.cart->ndims ; ++dim) {
       mca_topo_base_cart_shift (comm, dim, 1, &rpeer, &speer);

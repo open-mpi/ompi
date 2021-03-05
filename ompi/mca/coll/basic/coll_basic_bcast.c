@@ -69,7 +69,7 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
     /* Receive data from parent in the tree. */
 
     if (vrank > 0) {
-        assert(hibit >= 0);
+        OPAL_ASSERT(hibit >= 0);
         peer = ((vrank & ~(1 << hibit)) + root) % size;
 
         err = MCA_PML_CALL(recv(buff, count, datatype, peer,

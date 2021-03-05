@@ -36,7 +36,7 @@ extern int mca_base_opened;
 
 void mca_base_close (void)
 {
-    assert (mca_base_opened);
+    OPAL_ASSERT(mca_base_opened);
     if (--mca_base_opened) {
         return;
     }

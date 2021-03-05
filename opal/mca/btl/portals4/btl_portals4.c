@@ -719,7 +719,7 @@ void mca_btl_portals4_free_module(mca_btl_portals4_module_t *portals4_btl)
          "mca_btl_portals4_free_module portals_outstanding_ops=%d\n", portals4_btl->portals_outstanding_ops));
 
     /* sanity check */
-    assert(portals4_btl->portals_outstanding_ops  >= 0);
+    OPAL_ASSERT(portals4_btl->portals_outstanding_ops  >= 0);
 
     /* finalize all communication */
     while (portals4_btl->portals_outstanding_ops > 0) {

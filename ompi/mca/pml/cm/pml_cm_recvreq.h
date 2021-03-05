@@ -315,7 +315,7 @@ do {                                                                    \
  */
 #define MCA_PML_CM_THIN_RECV_REQUEST_PML_COMPLETE(recvreq)              \
 do {                                                                    \
-    assert( false == recvreq->req_base.req_pml_complete );              \
+    OPAL_ASSERT( false == recvreq->req_base.req_pml_complete );              \
                                                                         \
     if( true == recvreq->req_base.req_free_called ) {                   \
         MCA_PML_CM_THIN_RECV_REQUEST_RETURN( recvreq );                 \
@@ -335,7 +335,7 @@ do {                                                                    \
  */
 #define MCA_PML_CM_HVY_RECV_REQUEST_PML_COMPLETE(recvreq)               \
 do {                                                                    \
-    assert( false == recvreq->req_base.req_pml_complete );              \
+    OPAL_ASSERT( false == recvreq->req_base.req_pml_complete );              \
                                                                         \
     if( true == recvreq->req_base.req_free_called ) {                   \
         MCA_PML_CM_HVY_RECV_REQUEST_RETURN( recvreq );                  \

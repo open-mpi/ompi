@@ -332,8 +332,8 @@ static inline opal_list_item_t* opal_list_get_first(opal_list_t* list)
 #if OPAL_ENABLE_DEBUG
     /* Spot check: ensure that the first item is only on one list */
 
-    assert(1 == item->opal_list_item_refcount);
-    assert( list == item->opal_list_item_belong_to );
+    OPAL_ASSERT(1 == item->opal_list_item_refcount);
+    OPAL_ASSERT( list == item->opal_list_item_belong_to );
 #endif
 
     return item;
@@ -359,8 +359,8 @@ static inline opal_list_item_t* opal_list_get_last(opal_list_t* list)
 #if OPAL_ENABLE_DEBUG
     /* Spot check: ensure that the last item is only on one list */
 
-    assert( 1 == item->opal_list_item_refcount );
-    assert( list == item->opal_list_item_belong_to );
+    OPAL_ASSERT( 1 == item->opal_list_item_refcount );
+    OPAL_ASSERT( list == item->opal_list_item_belong_to );
 #endif
 
     return item;
@@ -500,7 +500,7 @@ static inline opal_list_item_t *opal_list_remove_item
         return (opal_list_item_t *)NULL;
     }
 
-    assert( list == item->opal_list_item_belong_to );
+    OPAL_ASSERT( list == item->opal_list_item_belong_to );
 #endif
 
     /* reset next pointer of previous element */
@@ -515,7 +515,7 @@ static inline opal_list_item_t *opal_list_remove_item
     /* Spot check: ensure that this item is still only on one list */
 
     OPAL_THREAD_ADD_FETCH32( &(item->opal_list_item_refcount), -1 );
-    assert(0 == item->opal_list_item_refcount);
+    OPAL_ASSERT(0 == item->opal_list_item_refcount);
     item->opal_list_item_belong_to = NULL;
 #endif
 
@@ -555,8 +555,8 @@ static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
 #if OPAL_ENABLE_DEBUG
   /* Spot check: ensure that this item is previously on no lists */
 
-  assert(0 == item->opal_list_item_refcount);
-  assert( NULL == item->opal_list_item_belong_to );
+  OPAL_ASSERT(0 == item->opal_list_item_refcount);
+  OPAL_ASSERT( NULL == item->opal_list_item_belong_to );
   item->super.cls_init_file_name = FILE_NAME;
   item->super.cls_init_lineno    = LINENO;
 #endif
@@ -581,7 +581,7 @@ static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
      appended it to */
 
   OPAL_THREAD_ADD_FETCH32( &(item->opal_list_item_refcount), 1 );
-  assert(1 == item->opal_list_item_refcount);
+  OPAL_ASSERT(1 == item->opal_list_item_refcount);
   item->opal_list_item_belong_to = list;
 #endif
 }
@@ -607,8 +607,8 @@ static inline void opal_list_prepend(opal_list_t *list,
 #if OPAL_ENABLE_DEBUG
   /* Spot check: ensure that this item is previously on no lists */
 
-  assert(0 == item->opal_list_item_refcount);
-  assert( NULL == item->opal_list_item_belong_to );
+  OPAL_ASSERT(0 == item->opal_list_item_refcount);
+  OPAL_ASSERT( NULL == item->opal_list_item_belong_to );
 #endif
 
   /* reset item's next pointer */
@@ -631,7 +631,7 @@ static inline void opal_list_prepend(opal_list_t *list,
      prepended it to */
 
   OPAL_THREAD_ADD_FETCH32( &(item->opal_list_item_refcount), 1 );
-  assert(1 == item->opal_list_item_refcount);
+  OPAL_ASSERT(1 == item->opal_list_item_refcount);
   item->opal_list_item_belong_to = list;
 #endif
 }
@@ -667,7 +667,7 @@ static inline opal_list_item_t *opal_list_remove_first(opal_list_t *list)
 #if OPAL_ENABLE_DEBUG
   /* Spot check: ensure that the first item is only on this list */
 
-  assert(1 == list->opal_list_sentinel.opal_list_next->opal_list_item_refcount);
+  OPAL_ASSERT(1 == list->opal_list_sentinel.opal_list_next->opal_list_item_refcount);
 #endif
 
   /* reset list length counter */
@@ -683,7 +683,7 @@ static inline opal_list_item_t *opal_list_remove_first(opal_list_t *list)
   list->opal_list_sentinel.opal_list_next = item->opal_list_next;
 
 #if OPAL_ENABLE_DEBUG
-  assert( list == item->opal_list_item_belong_to );
+  OPAL_ASSERT( list == item->opal_list_item_belong_to );
   item->opal_list_item_belong_to = NULL;
   item->opal_list_prev=(opal_list_item_t *)NULL;
   item->opal_list_next=(opal_list_item_t *)NULL;
@@ -692,7 +692,7 @@ static inline opal_list_item_t *opal_list_remove_first(opal_list_t *list)
      lists */
 
   OPAL_THREAD_ADD_FETCH32( &item->opal_list_item_refcount, -1 );
-  assert(0 == item->opal_list_item_refcount);
+  OPAL_ASSERT(0 == item->opal_list_item_refcount);
 #endif
 
   return item;
@@ -729,7 +729,7 @@ static inline opal_list_item_t *opal_list_remove_last(opal_list_t *list)
 #if OPAL_ENABLE_DEBUG
   /* Spot check: ensure that the first item is only on this list */
 
-  assert(1 == list->opal_list_sentinel.opal_list_prev->opal_list_item_refcount);
+  OPAL_ASSERT(1 == list->opal_list_sentinel.opal_list_prev->opal_list_item_refcount);
 #endif
 
   /* reset list length counter */
@@ -745,14 +745,14 @@ static inline opal_list_item_t *opal_list_remove_last(opal_list_t *list)
   list->opal_list_sentinel.opal_list_prev = item->opal_list_prev;
 
 #if OPAL_ENABLE_DEBUG
-  assert( list == item->opal_list_item_belong_to );
+  OPAL_ASSERT( list == item->opal_list_item_belong_to );
   item->opal_list_next = item->opal_list_prev = (opal_list_item_t *)NULL;
 
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
   OPAL_THREAD_ADD_FETCH32(&item->opal_list_item_refcount, -1 );
-  assert(0 == item->opal_list_item_refcount);
+  OPAL_ASSERT(0 == item->opal_list_item_refcount);
   item->opal_list_item_belong_to = NULL;
 #endif
 
@@ -775,8 +775,8 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
     /* Spot check: ensure that the item we're insertting is currently
        not on any list */
 
-    assert(0 == item->opal_list_item_refcount);
-    assert( NULL == item->opal_list_item_belong_to );
+    OPAL_ASSERT(0 == item->opal_list_item_refcount);
+    OPAL_ASSERT( NULL == item->opal_list_item_belong_to );
 #endif
 
     /* point item at the existing elements */
@@ -795,7 +795,7 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
        that we just added it to */
 
     OPAL_THREAD_ADD_FETCH32( &(item->opal_list_item_refcount), 1 );
-    assert(1 == item->opal_list_item_refcount);
+    OPAL_ASSERT(1 == item->opal_list_item_refcount);
     item->opal_list_item_belong_to = list;
 #endif
 }

@@ -297,7 +297,7 @@ ompi_osc_portals4_complete_all(ompi_osc_portals4_module_t *module)
         PtlCTSet(module->ct_h, event);
         module->opcount = 0;
     }
-    assert(event.success == (size_t) module->opcount);
+    OPAL_ASSERT(event.success == (size_t) module->opcount);
 
     PtlAtomicSync();
 

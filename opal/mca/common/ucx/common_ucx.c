@@ -158,7 +158,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void)
 {
     /* unregister only on last deregister */
     opal_common_ucx.registered--;
-    assert(opal_common_ucx.registered >= 0);
+    OPAL_ASSERT(opal_common_ucx.registered >= 0);
     if (opal_common_ucx.registered) {
         return;
     }
@@ -290,7 +290,7 @@ opal_common_ucx_support_level(ucp_context_h context)
         }
 
         /* Check if the transport has a match (either positive or negative) */
-        assert(!(is_any_tl && negate));
+        OPAL_ASSERT(!(is_any_tl && negate));
         if (found_tl != negate) {
             if (is_any_device ||
                 opal_common_ucx_check_device(rsc_device_name, device_list)) {

@@ -117,7 +117,7 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
         for (i = 0; i < events_read; i++) {
             if (NULL != wc[i].op_context) {
                 ofi_req = TO_OFI_REQ(wc[i].op_context);
-                assert(ofi_req);
+                OPAL_ASSERT(ofi_req);
                 ret = ofi_req->event_callback(&wc[i], ofi_req);
                 if (OMPI_SUCCESS != ret) {
                     opal_output(0, "%s:%d: Error returned by request event callback: %zd.\n"
@@ -155,9 +155,9 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
             exit(1);
         }
 
-        assert(error.op_context);
+        OPAL_ASSERT(error.op_context);
         ofi_req = TO_OFI_REQ(error.op_context);
-        assert(ofi_req);
+        OPAL_ASSERT(ofi_req);
         ret = ofi_req->error_callback(&error, ofi_req);
         if (OMPI_SUCCESS != ret) {
                 opal_output(0, "%s:%d: Error returned by request error callback: %zd.\n"
@@ -270,7 +270,7 @@ __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_send_callback(struct fi_cq_tagged_entry *wc,
                            ompi_mtl_ofi_request_t *ofi_req)
 {
-    assert(ofi_req->completion_count > 0);
+    OPAL_ASSERT(ofi_req->completion_count > 0);
     ofi_req->completion_count--;
     return OMPI_SUCCESS;
 }
@@ -319,7 +319,7 @@ __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_isend_callback(struct fi_cq_tagged_entry *wc,
                             ompi_mtl_ofi_request_t *ofi_req)
 {
-    assert(ofi_req->completion_count > 0);
+    OPAL_ASSERT(ofi_req->completion_count > 0);
     ofi_req->completion_count--;
 
     if (0 == ofi_req->completion_count) {
@@ -367,7 +367,7 @@ ompi_mtl_ofi_ssend_recv(ompi_mtl_ofi_request_t *ack_req,
     set_thread_context(ctxt_id);
 
     ack_req = malloc(sizeof(ompi_mtl_ofi_request_t));
-    assert(ack_req);
+    OPAL_ASSERT(ack_req);
 
     ack_req->parent = ofi_req;
     ack_req->event_callback = ompi_mtl_ofi_send_ack_callback;
@@ -656,7 +656,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
 
     ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(ofi_req->comm->c_contextid);
 
-    assert(ofi_req->super.ompi_req);
+    OPAL_ASSERT(ofi_req->super.ompi_req);
     status = &ofi_req->super.ompi_req->req_status;
 
     /**
@@ -696,7 +696,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
     * MTL_OFI_SYNC_SEND_ACK should only be received in the send_ack
     * callback.
     */
-    assert(!MTL_OFI_IS_SYNC_SEND_ACK(wc->tag));
+    OPAL_ASSERT(!MTL_OFI_IS_SYNC_SEND_ACK(wc->tag));
 
     /**
      * If this recv is part of an MPI_Ssend operation, then we send an
@@ -755,7 +755,7 @@ ompi_mtl_ofi_recv_error_callback(struct fi_cq_err_entry *error,
                                  ompi_mtl_ofi_request_t *ofi_req)
 {
     ompi_status_public_t *status;
-    assert(ofi_req->super.ompi_req);
+    OPAL_ASSERT(ofi_req->super.ompi_req);
     status = &ofi_req->super.ompi_req->req_status;
     status->MPI_TAG = MTL_OFI_GET_TAG(ofi_req->match_bits);
     status->MPI_SOURCE = mtl_ofi_get_source((struct fi_cq_tagged_entry *) error);

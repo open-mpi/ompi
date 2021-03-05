@@ -558,7 +558,7 @@ do { \
 #define OPAL_DATATYPE_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
     {                                                                   \
         unsigned char *__lower_bound = (INITPTR), *__upper_bound;       \
-        assert( ((LENGTH) != 0) && ((COUNT) != 0) );                    \
+        OPAL_ASSERT( ((LENGTH) != 0) && ((COUNT) != 0) );                    \
         __lower_bound += (PDATA)->true_lb;                              \
         __upper_bound = (INITPTR) + (PDATA)->true_ub +                  \
             ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1);                \

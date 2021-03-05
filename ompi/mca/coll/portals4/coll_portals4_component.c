@@ -718,9 +718,9 @@ portals4_progress(void)
                     OPAL_OUTPUT_VERBOSE((50, ompi_coll_base_framework.framework_output,
                             "hdr_data %p, matchbits 0x%lx",
                             (void*) ev.hdr_data, ev.match_bits));
-                    assert(0 != ev.hdr_data);
+                    OPAL_ASSERT(0 != ev.hdr_data);
                     ptl_request = (ompi_coll_portals4_request_t*) ev.hdr_data;
-                    assert(NULL != ptl_request);
+                    OPAL_ASSERT(NULL != ptl_request);
 
                     switch (ptl_request->type) {
                     case OMPI_COLL_PORTALS4_TYPE_BARRIER:

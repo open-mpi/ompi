@@ -164,9 +164,9 @@ static void ompi_comm_rbcast_bml_recv_cb(
     ompi_communicator_t* comm;
 
     /* Parse the rbcast fragment */
-    assert( MCA_BTL_TAG_FT_RBCAST == tag );
-    assert( 1 == descriptor->des_segment_count );
-    assert( sizeof(ompi_comm_rbcast_message_t) <= descriptor->des_segments->seg_len );
+    OPAL_ASSERT( MCA_BTL_TAG_FT_RBCAST == tag );
+    OPAL_ASSERT( 1 == descriptor->des_segment_count );
+    OPAL_ASSERT( sizeof(ompi_comm_rbcast_message_t) <= descriptor->des_segments->seg_len );
     msg = (ompi_comm_rbcast_message_t*) descriptor->des_segments->seg_addr.pval;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
@@ -196,7 +196,7 @@ static void ompi_comm_rbcast_bml_recv_cb(
     }
 
     /* invoke the local registered callback for the type */
-    assert( 0 <= msg->type && RBCAST_CB_TYPE_MAX >= msg->type );
+    OPAL_ASSERT( 0 <= msg->type && RBCAST_CB_TYPE_MAX >= msg->type );
     if( NULL != ompi_comm_rbcast_cb[msg->type] ) {
         if( ompi_comm_rbcast_cb[msg->type](comm, msg) ) {
             /* forward the rbcast */
@@ -208,15 +208,15 @@ static void ompi_comm_rbcast_bml_recv_cb(
          * that we keep receiving messages after we deregistered the type.
          * Any other time, this is indicative of a problem.
          */
-        assert(ompi_mpi_state >= OMPI_MPI_STATE_FINALIZE_STARTED);
+        OPAL_ASSERT(ompi_mpi_state >= OMPI_MPI_STATE_FINALIZE_STARTED);
     }
 }
 
 int ompi_comm_rbcast_send_msg(ompi_proc_t* proc, ompi_comm_rbcast_message_t* msg, size_t size) {
     mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc);
-    assert( NULL != endpoint );
+    OPAL_ASSERT( NULL != endpoint );
     mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_eager, 0);
-    assert( NULL != bml_btl );
+    OPAL_ASSERT( NULL != bml_btl );
     mca_btl_base_descriptor_t *des;
     int ret;
 
@@ -238,7 +238,7 @@ int ompi_comm_rbcast_send_msg(ompi_proc_t* proc, ompi_comm_rbcast_message_t* msg
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    assert( des->des_segments->seg_len == size ) ;
+    OPAL_ASSERT( des->des_segments->seg_len == size ) ;
     des->des_cbfunc = ompi_rbcast_bml_send_complete_cb;
     memcpy(des->des_segments->seg_addr.pval, msg, size);
     ret = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_FT_RBCAST);

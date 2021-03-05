@@ -40,7 +40,7 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
     ompi_osc_rdma_sync_t *lock;
     ompi_osc_rdma_peer_t *peer;
 
-    assert (0 <= target);
+    OPAL_ASSERT(0 <= target);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush: %d, %s", target, win->w_name);
 
@@ -191,7 +191,7 @@ int ompi_osc_rdma_demand_lock_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdm
     int ret = OMPI_SUCCESS;
 
     /* check for bad usage */
-    assert (OMPI_OSC_RDMA_SYNC_TYPE_LOCK == lock->type);
+    OPAL_ASSERT(OMPI_OSC_RDMA_SYNC_TYPE_LOCK == lock->type);
 
     OPAL_THREAD_SCOPED_LOCK(&peer->lock,
     do {

@@ -115,7 +115,7 @@ static void* progress_engine(opal_object_t *obj)
 
 static void stop_progress_engine(opal_progress_tracker_t *trk)
 {
-    assert(trk->ev_active);
+    OPAL_ASSERT(trk->ev_active);
     trk->ev_active = false;
 
     /* break the event loop - this will cause the loop to exit upon
@@ -127,7 +127,7 @@ static void stop_progress_engine(opal_progress_tracker_t *trk)
 
 static int start_progress_engine(opal_progress_tracker_t *trk)
 {
-    assert(!trk->ev_active);
+    OPAL_ASSERT(!trk->ev_active);
     trk->ev_active = true;
 
     /* fork off a thread to progress it */

@@ -37,7 +37,7 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                 mca_btl_base_module_t *module)
 {
     /* If this is ever triggered change the uint32_ts in mca_btl_base_module_t to unsigned ints */
-    assert(sizeof(unsigned int) == sizeof(uint32_t));
+    OPAL_ASSERT(sizeof(unsigned int) == sizeof(uint32_t));
 
     (void) mca_base_component_var_register(version, "exclusivity",
                                            "BTL exclusivity (must be >= 0)",

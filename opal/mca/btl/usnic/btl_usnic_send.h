@@ -79,8 +79,8 @@ opal_btl_usnic_post_segment(
                 sseg->ss_len);
 #endif
 
-    assert(channel_id == USNIC_DATA_CHANNEL);
-    assert(channel->credits > 1);
+    OPAL_ASSERT(channel_id == USNIC_DATA_CHANNEL);
+    OPAL_ASSERT(channel->credits > 1);
 
     /* Send the segment */
     ret = fi_send(channel->ep,
@@ -135,8 +135,8 @@ opal_btl_usnic_post_ack(
                 sseg->ss_len);
 #endif
 
-    assert(channel_id == USNIC_PRIORITY_CHANNEL);
-    assert(channel->credits > 1);
+    OPAL_ASSERT(channel_id == USNIC_PRIORITY_CHANNEL);
+    OPAL_ASSERT(channel->credits > 1);
 
     ret = fi_send(channel->ep,
             sseg->ss_ptr,
@@ -192,9 +192,9 @@ opal_btl_usnic_endpoint_send_segment(
 
             next_seq_to_send > ack_seq_rcvd + WINDOW_SIZE
     */
-    assert(SEQ_GT(endpoint->endpoint_next_seq_to_send,
+    OPAL_ASSERT(SEQ_GT(endpoint->endpoint_next_seq_to_send,
                   endpoint->endpoint_ack_seq_rcvd));
-    assert(WINDOW_OPEN(endpoint));
+    OPAL_ASSERT(WINDOW_OPEN(endpoint));
 
     /* Assign sequence number and increment */
     sseg->ss_base.us_btl_header->pkt_seq =
@@ -243,7 +243,7 @@ opal_btl_usnic_endpoint_send_segment(
        receives its ACK.  To find a unique slot in this array, use
        (seq % WINDOW_SIZE). */
     sfi = WINDOW_SIZE_MOD(sseg->ss_base.us_btl_header->pkt_seq);
-    assert(NULL == endpoint->endpoint_sent_segs[sfi]);
+    OPAL_ASSERT(NULL == endpoint->endpoint_sent_segs[sfi]);
     endpoint->endpoint_sent_segs[sfi] = sseg;
     sseg->ss_ack_pending = true;
 

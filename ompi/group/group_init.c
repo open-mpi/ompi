@@ -90,7 +90,7 @@ ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_
     /* local variables */
     ompi_group_t * new_group = NULL;
 
-    assert (group_size >= 0);
+    OPAL_ASSERT(group_size >= 0);
 
     /* create new group group element */
     new_group = OBJ_NEW(ompi_group_t);
@@ -127,7 +127,7 @@ ompi_group_t *ompi_group_allocate_sporadic(int group_size)
     /* local variables */
     ompi_group_t *new_group = NULL;
 
-    assert (group_size >= 0);
+    OPAL_ASSERT(group_size >= 0);
 
     /* create new group group element */
     new_group = OBJ_NEW(ompi_group_t);
@@ -196,7 +196,7 @@ ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
 {
     ompi_group_t *new_group = NULL;
 
-    assert (group_size >= 0);
+    OPAL_ASSERT(group_size >= 0);
 
     /* create new group group element */
     new_group = OBJ_NEW(ompi_group_t);

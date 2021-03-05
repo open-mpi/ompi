@@ -405,7 +405,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
         /* shouldn't happen. attempting to open a component belonging to
          * another framework. if this happens it is likely a MCA base
          * bug so assert */
-        assert (0);
+        OPAL_ASSERT(0);
         return OPAL_ERR_NOT_SUPPORTED;
     }
 

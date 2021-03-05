@@ -38,7 +38,7 @@ static int mca_btl_ugni_endpoint_get_modex (mca_btl_base_endpoint_t *ep)
     size_t msg_size;
     int rc;
 
-    assert (NULL != ep && NULL != ep->peer_proc);
+    OPAL_ASSERT(NULL != ep && NULL != ep->peer_proc);
 
     /* Receive the modex */
     OPAL_MODEX_RECV(rc, &mca_btl_ugni_component.super.btl_version,
@@ -66,7 +66,7 @@ int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_endpo
     int rc;
 
     endpoint = OBJ_NEW(mca_btl_ugni_endpoint_t);
-    assert (endpoint != NULL);
+    OPAL_ASSERT(endpoint != NULL);
 
     endpoint->smsg_progressing = 0;
     endpoint->state = MCA_BTL_UGNI_EP_STATE_INIT;
@@ -76,7 +76,7 @@ int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_endpo
      * to re-entry through opal_progress(). */
     rc = mca_btl_ugni_endpoint_get_modex (endpoint);
     if (OPAL_SUCCESS != rc) {
-        assert (0);
+        OPAL_ASSERT(0);
         return rc;
     }
 
@@ -112,7 +112,7 @@ static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
     mca_btl_ugni_module_t *ugni_module = mca_btl_ugni_ep_btl (ep);
     opal_free_list_item_t *mbox;
 
-    assert (NULL == ep->mailbox);
+    OPAL_ASSERT(NULL == ep->mailbox);
 
     mbox = opal_free_list_get (&ugni_module->smsg_mboxes);
     if (OPAL_UNLIKELY(NULL == mbox)) {

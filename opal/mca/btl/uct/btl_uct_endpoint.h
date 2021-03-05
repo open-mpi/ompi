@@ -82,14 +82,14 @@ static inline int mca_btl_uct_endpoint_check (mca_btl_uct_module_t *module, mca_
 static inline int mca_btl_uct_endpoint_check_rdma (mca_btl_uct_module_t *module, mca_btl_uct_endpoint_t *endpoint,
                                                    mca_btl_uct_device_context_t *context, uct_ep_h *ep_handle)
 {
-    assert (NULL != module->rdma_tl);
+    OPAL_ASSERT(NULL != module->rdma_tl);
     return mca_btl_uct_endpoint_check (module, endpoint, context, ep_handle, module->rdma_tl->tl_index);
 }
 
 static inline int mca_btl_uct_endpoint_check_am (mca_btl_uct_module_t *module, mca_btl_uct_endpoint_t *endpoint,
                                                  mca_btl_uct_device_context_t *context, uct_ep_h *ep_handle)
 {
-    assert (NULL != module->am_tl);
+    OPAL_ASSERT(NULL != module->am_tl);
     return mca_btl_uct_endpoint_check (module, endpoint, context, ep_handle, module->am_tl->tl_index);
 }
 

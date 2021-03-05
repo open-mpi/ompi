@@ -120,10 +120,10 @@
 #define OPAL_OBJECT_H
 
 #include "opal_config.h"
-#include <assert.h>
 #include <stdlib.h>
 
 #include "opal/mca/threads/thread_usage.h"
+#include "opal/util/opal_assert.h"
 
 BEGIN_C_DECLS
 
@@ -281,10 +281,10 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
 #if OPAL_ENABLE_DEBUG
 #define OBJ_RETAIN(object)                                              \
     do {                                                                \
-        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
-        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+        OPAL_ASSERT(NULL != ((opal_object_t *) (object))->obj_class);        \
+        OPAL_ASSERT(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
         opal_obj_update((opal_object_t *) (object), 1);                 \
-        assert(((opal_object_t *) (object))->obj_reference_count >= 0); \
+        OPAL_ASSERT(((opal_object_t *) (object))->obj_reference_count >= 0); \
     } while (0)
 #else
 #define OBJ_RETAIN(object)  opal_obj_update((opal_object_t *) (object), 1);
@@ -324,8 +324,8 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
 #if OPAL_ENABLE_DEBUG
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
-        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
-        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        OPAL_ASSERT(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+        OPAL_ASSERT(NULL != ((opal_object_t *) (object))->obj_class);        \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
             OBJ_SET_MAGIC_ID((object), 0);                              \
             opal_obj_run_destructors((opal_object_t *) (object));       \
@@ -348,8 +348,8 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
 #if OPAL_ENABLE_DEBUG
 #define OBJ_RELEASE_NO_NULLIFY(object)                                  \
     do {                                                                \
-        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
-        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        OPAL_ASSERT(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+        OPAL_ASSERT(NULL != ((opal_object_t *) (object))->obj_class);        \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
             OBJ_SET_MAGIC_ID((object), 0);                              \
             opal_obj_run_destructors((opal_object_t *) (object));       \
@@ -400,7 +400,7 @@ do {                                                                \
 #if OPAL_ENABLE_DEBUG
 #define OBJ_DESTRUCT(object)                                    \
 do {                                                            \
-    assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+    OPAL_ASSERT(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
     OBJ_SET_MAGIC_ID((object), 0);                              \
     opal_obj_run_destructors((opal_object_t *) (object));       \
     OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
@@ -454,7 +454,7 @@ static inline void opal_obj_run_constructors(opal_object_t * object)
 {
     opal_construct_t* cls_construct;
 
-    assert(NULL != object->obj_class);
+    OPAL_ASSERT(NULL != object->obj_class);
 
     cls_construct = object->obj_class->cls_construct_array;
     while( NULL != *cls_construct ) {
@@ -476,7 +476,7 @@ static inline void opal_obj_run_destructors(opal_object_t * object)
 {
     opal_destruct_t* cls_destruct;
 
-    assert(NULL != object->obj_class);
+    OPAL_ASSERT(NULL != object->obj_class);
 
     cls_destruct = object->obj_class->cls_destruct_array;
     while( NULL != *cls_destruct ) {
@@ -499,7 +499,7 @@ static inline void opal_obj_run_destructors(opal_object_t * object)
 static inline opal_object_t *opal_obj_new(opal_class_t * cls)
 {
     opal_object_t *object;
-    assert(cls->cls_sizeof >= sizeof(opal_object_t));
+    OPAL_ASSERT(cls->cls_sizeof >= sizeof(opal_object_t));
 
 #if OPAL_WANT_MEMCHECKER
     object = (opal_object_t *) calloc(1, cls->cls_sizeof);

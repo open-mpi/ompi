@@ -211,7 +211,7 @@ mca_coll_ftagree_eta_intra(void *contrib,
             for(i = 0; i < np; i++) {
                 if( !(proc_status[i] & STATUS_RECV_COMPLETE) ) {
                     if( (rc == MPI_SUCCESS) || (MPI_SUCCESS == statuses[ri].MPI_ERROR) ) {
-                        assert(MPI_REQUEST_NULL == reqs[ri]);
+                        OPAL_ASSERT(MPI_REQUEST_NULL == reqs[ri]);
 
                         /* Implements the binary and of answers */
                         ompi_op_reduce(op, in[i].est_value, out->est_value, dt_count, dt);
@@ -238,9 +238,9 @@ mca_coll_ftagree_eta_intra(void *contrib,
                                 ompi_request_free(&reqs[ri]);
                         } else if( (MPI_ERR_PENDING == statuses[ri].MPI_ERROR) ) {
                             /* The pending request(s) will be waited on at the next iteration. */
-                            assert( ri >= nr );
-                            assert( MPI_REQUEST_NULL != reqs[ri] );
-                            assert( ri == nr || reqs[nr] == MPI_REQUEST_NULL );
+                            OPAL_ASSERT( ri >= nr );
+                            OPAL_ASSERT( MPI_REQUEST_NULL != reqs[ri] );
+                            OPAL_ASSERT( ri == nr || reqs[nr] == MPI_REQUEST_NULL );
                             OPAL_OUTPUT_VERBOSE((100, ompi_ftmpi_output_handle,
                                                  "%s ftagree:agreement (ETA) Request %d(%p) for recv of rank %d remains pending. Renaming it as Request %d\n",
                                                  OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), ri, (void*)reqs[ri], i, nr));
@@ -258,7 +258,7 @@ mca_coll_ftagree_eta_intra(void *contrib,
 
                 if( !(proc_status[i] & STATUS_SEND_COMPLETE) ) {
                     if( (rc == MPI_SUCCESS) || (MPI_SUCCESS == statuses[ri].MPI_ERROR) ) {
-                        assert(MPI_REQUEST_NULL == reqs[ri]);
+                        OPAL_ASSERT(MPI_REQUEST_NULL == reqs[ri]);
                         proc_status[i] |= ((out->knows * STATUS_KNOWS_I_KNOW) | STATUS_SEND_COMPLETE);
 
                         OPAL_OUTPUT_VERBOSE((100, ompi_ftmpi_output_handle,
@@ -279,9 +279,9 @@ mca_coll_ftagree_eta_intra(void *contrib,
                                 ompi_request_free(&reqs[ri]);
                         } else if( (MPI_ERR_PENDING == statuses[ri].MPI_ERROR) ) {
                             /* The pending request(s) will be waited on at the next iteration. */
-                            assert( ri >= nr );
-                            assert( MPI_REQUEST_NULL != reqs[ri] );
-                            assert( ri == nr || reqs[nr] == MPI_REQUEST_NULL );
+                            OPAL_ASSERT( ri >= nr );
+                            OPAL_ASSERT( MPI_REQUEST_NULL != reqs[ri] );
+                            OPAL_ASSERT( ri == nr || reqs[nr] == MPI_REQUEST_NULL );
                             OPAL_OUTPUT_VERBOSE((100, ompi_ftmpi_output_handle,
                                                  "%s ftagree:agreement (ETA) Request %d(%p) for send of rank %d remains pending. Renaming it as Request %d\n",
                                                  OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), ri, (void*)reqs[ri], i, nr));

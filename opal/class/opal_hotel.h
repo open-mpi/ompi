@@ -222,7 +222,7 @@ static inline void opal_hotel_checkin_with_res(opal_hotel_t *hotel,
     /* Put this occupant into the first empty room that we have */
     *room_num = hotel->unoccupied_rooms[hotel->last_unoccupied_room--];
     room = &(hotel->rooms[*room_num]);
-    assert(room->occupant == NULL);
+    OPAL_ASSERT(room->occupant == NULL);
     room->occupant = occupant;
 
     /* Assign the event and make it pending */
@@ -248,7 +248,7 @@ static inline void opal_hotel_checkout(opal_hotel_t *hotel, int room_num)
     opal_hotel_room_t *room;
 
     /* Bozo check */
-    assert(room_num < hotel->num_rooms);
+    OPAL_ASSERT(room_num < hotel->num_rooms);
 
     /* If there's an occupant in the room, check them out */
     room = &(hotel->rooms[room_num]);
@@ -261,7 +261,7 @@ static inline void opal_hotel_checkout(opal_hotel_t *hotel, int room_num)
             opal_event_del(&(room->eviction_timer_event));
         }
         hotel->last_unoccupied_room++;
-        assert(hotel->last_unoccupied_room < hotel->num_rooms);
+        OPAL_ASSERT(hotel->last_unoccupied_room < hotel->num_rooms);
         hotel->unoccupied_rooms[hotel->last_unoccupied_room] = room_num;
     }
 
@@ -286,7 +286,7 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
     opal_hotel_room_t *room;
 
     /* Bozo check */
-    assert(room_num < hotel->num_rooms);
+    OPAL_ASSERT(room_num < hotel->num_rooms);
 
     /* If there's an occupant in the room, check them out */
     room = &(hotel->rooms[room_num]);
@@ -301,7 +301,7 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
             opal_event_del(&(room->eviction_timer_event));
         }
         hotel->last_unoccupied_room++;
-        assert(hotel->last_unoccupied_room < hotel->num_rooms);
+        OPAL_ASSERT(hotel->last_unoccupied_room < hotel->num_rooms);
         hotel->unoccupied_rooms[hotel->last_unoccupied_room] = room_num;
     }
     else {
@@ -338,7 +338,7 @@ static inline void opal_hotel_knock(opal_hotel_t *hotel, int room_num, void **oc
     opal_hotel_room_t *room;
 
     /* Bozo check */
-    assert(room_num < hotel->num_rooms);
+    OPAL_ASSERT(room_num < hotel->num_rooms);
 
     *occupant = NULL;
 

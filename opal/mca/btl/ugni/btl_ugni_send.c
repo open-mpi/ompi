@@ -141,7 +141,7 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
                                                                                         header_size, &packed_size, flags);
         }
 
-        assert (packed_size == payload_size);
+        OPAL_ASSERT(packed_size == payload_size);
         if (OPAL_UNLIKELY(NULL == frag || OPAL_SUCCESS != mca_btl_ugni_check_endpoint_state (endpoint))) {
             break;
         }

@@ -175,7 +175,7 @@ static int recv_nb(struct dte_data_representation_t data,
                 "ec_h.handle = %p, ec_h.rank = %d\n",ec_h.handle,ec_h.rank);
         return HCOLL_ERROR;
     }
-    assert(HCOL_DTE_IS_INLINE(data));
+    OPAL_ASSERT(HCOL_DTE_IS_INLINE(data));
     /*do inline nb recv*/
     size_t size;
     ompi_request_t *ompi_req;
@@ -216,7 +216,7 @@ static int send_nb( dte_data_representation_t data,
                 "ec_h.handle = %p, ec_h.rank = %d\n",ec_h.handle,ec_h.rank);
         return HCOLL_ERROR;
     }
-    assert(HCOL_DTE_IS_INLINE(data));
+    OPAL_ASSERT(HCOL_DTE_IS_INLINE(data));
     /*do inline nb recv*/
     size_t size;
     ompi_request_t *ompi_req;

@@ -208,7 +208,7 @@ int ompi_comm_failure_detector_finalize(void) {
     while( MPI_PROC_NULL != (observing = detector->hb_observing) ) {
 #if !FD_LOCAL_PROCS
         ompi_proc_t* proc = ompi_comm_peer_lookup(detector->comm, observing);
-        assert( NULL != proc );
+        OPAL_ASSERT( NULL != proc );
         if( OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags) ) {
             break;
         }
@@ -313,7 +313,7 @@ int ompi_comm_start_detector(ompi_communicator_t* comm) {
 }
 
 static int fd_heartbeat_request(comm_detector_t* detector) {
-    assert( -1 != comm_heartbeat_request_cb_type /* initialized */);
+    OPAL_ASSERT( -1 != comm_heartbeat_request_cb_type /* initialized */);
     ompi_communicator_t* comm = detector->comm;
 
     if( -2 < detector->hb_rdma_flag /* initialization for values -2, -3 */
@@ -331,7 +331,7 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
          true;
          rank = (np+rank-1) % np ) {
         ompi_proc_t* proc = ompi_comm_peer_lookup(comm, rank);
-        assert( NULL != proc );
+        OPAL_ASSERT( NULL != proc );
         if( !ompi_proc_is_active(proc) ) continue;
 
         /* if everybody else is dead, I don't need to monitor myself. */
@@ -359,9 +359,9 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
 
         if( comm_detector_use_rdma_hb ) {
             mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc);
-            assert( NULL != endpoint );
+            OPAL_ASSERT( NULL != endpoint );
             mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_rdma, 0);
-            assert( NULL != bml_btl );
+            OPAL_ASSERT( NULL != bml_btl );
 
             /* register mem for the flag and cache the reg key */
             /* remove previous registration if any */
@@ -369,10 +369,10 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
                 mca_bml_base_deregister_mem(detector->hb_rdma_bml_btl_observing, detector->hb_rdma_flag_lreg);
             }
             if( NULL != bml_btl->btl->btl_register_mem ) {
-                assert( !((size_t)&detector->hb_rdma_flag & ALIGNMENT_MASK(bml_btl->btl->btl_put_alignment)) );
+                OPAL_ASSERT( !((size_t)&detector->hb_rdma_flag & ALIGNMENT_MASK(bml_btl->btl->btl_put_alignment)) );
                 mca_bml_base_register_mem(bml_btl, (void*)&detector->hb_rdma_flag, sizeof(int),
                         MCA_BTL_REG_FLAG_LOCAL_WRITE | MCA_BTL_REG_FLAG_REMOTE_WRITE, &detector->hb_rdma_flag_lreg);
-                assert( NULL != detector->hb_rdma_flag_lreg );
+                OPAL_ASSERT( NULL != detector->hb_rdma_flag_lreg );
                 regsize = bml_btl->btl->btl_registration_handle_size;
             }
             detector->hb_rdma_bml_btl_observing = bml_btl;
@@ -398,7 +398,7 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
 }
 
 static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbeat_req_t* msg) {
-    assert( &ompi_mpi_comm_world.comm == comm );
+    OPAL_ASSERT( &ompi_mpi_comm_world.comm == comm );
     comm_detector_t* detector = &comm_world_detector;
 
     int np, rr, ro;
@@ -420,11 +420,11 @@ static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbea
     if( comm_detector_use_rdma_hb ) {
         ompi_communicator_t* comm = detector->comm;
         ompi_proc_t* proc = ompi_comm_peer_lookup(comm, msg->from);
-        assert( NULL != proc );
+        OPAL_ASSERT( NULL != proc );
         mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc);
-        assert( NULL != endpoint );
+        OPAL_ASSERT( NULL != endpoint );
         mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_rdma, 0);
-        assert( NULL != bml_btl );
+        OPAL_ASSERT( NULL != bml_btl );
 
         OPAL_THREAD_LOCK(&detector->fd_mutex);
         /* registration for the local rank */
@@ -433,14 +433,14 @@ static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbea
             mca_bml_base_deregister_mem(detector->hb_rdma_bml_btl_observer, detector->hb_rdma_rank_lreg);
         }
         if( NULL != bml_btl->btl->btl_register_mem ) {
-            assert( !((size_t)&detector->hb_rdma_rank & ALIGNMENT_MASK(bml_btl->btl->btl_put_alignment)) );
+            OPAL_ASSERT( !((size_t)&detector->hb_rdma_rank & ALIGNMENT_MASK(bml_btl->btl->btl_put_alignment)) );
             mca_bml_base_register_mem(bml_btl, &detector->hb_rdma_rank, sizeof(int), 0, &detector->hb_rdma_rank_lreg);
-            assert( NULL != detector->hb_rdma_rank_lreg );
+            OPAL_ASSERT( NULL != detector->hb_rdma_rank_lreg );
             /* registration for the remote flag */
             if( NULL != detector->hb_rdma_rreg ) free(detector->hb_rdma_rreg);
             size_t regsize = bml_btl->btl->btl_registration_handle_size;
             detector->hb_rdma_rreg = malloc(regsize);
-            assert( NULL != detector->hb_rdma_rreg );
+            OPAL_ASSERT( NULL != detector->hb_rdma_rreg );
             memcpy(detector->hb_rdma_rreg, &msg->rdma_rreg[0], regsize);
         }
         /* cache the bml_btl used for put */
@@ -598,8 +598,8 @@ void* fd_progress(opal_object_t* obj) {
             /* force rbcast recv to progress */
             int completed = 0;
             ret = ompi_request_test(&req, &completed, MPI_STATUS_IGNORE);
-            assert( OMPI_SUCCESS == ret );
-            assert( 0 == completed );
+            OPAL_ASSERT( OMPI_SUCCESS == ret );
+            OPAL_ASSERT( 0 == completed );
         }
     }
     ret = ompi_request_cancel(req);
@@ -650,7 +650,7 @@ static int fd_heartbeat_rdma_put(comm_detector_t* detector) {
  */
 
 static int fd_heartbeat_send(comm_detector_t* detector) {
-    assert( -1 != comm_heartbeat_recv_cb_type /* initialized */);
+    OPAL_ASSERT( -1 != comm_heartbeat_recv_cb_type /* initialized */);
     ompi_communicator_t* comm = detector->comm;
     if( comm != &ompi_mpi_comm_world.comm ) return OMPI_ERR_NOT_IMPLEMENTED;
 
@@ -685,7 +685,7 @@ static int fd_heartbeat_send(comm_detector_t* detector) {
 }
 
 static int fd_heartbeat_recv_cb(ompi_communicator_t* comm, ompi_comm_heartbeat_message_t* msg) {
-    assert( &ompi_mpi_comm_world.comm == comm );
+    OPAL_ASSERT( &ompi_mpi_comm_world.comm == comm );
     comm_detector_t* detector = &comm_world_detector;
 
 

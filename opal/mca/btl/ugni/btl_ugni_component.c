@@ -344,7 +344,7 @@ static int btl_ugni_component_register(void)
         char name[128], desc[128];
         size_t str_len = strlen (gni_statistic_str[i]);
 
-        assert (str_len < sizeof (name));
+        OPAL_ASSERT(str_len < sizeof (name));
 
         /* we can get an all-caps string for the variable from gni_statistic_str. need to make it lowercase
          * to match ompi standards */
@@ -591,7 +591,7 @@ int mca_btl_ugni_progress_datagram (mca_btl_ugni_device_t *device)
     }
 
     /* should not have gotten a NULL endpoint */
-    assert (NULL != ep);
+    OPAL_ASSERT(NULL != ep);
 
     BTL_VERBOSE(("got a datagram completion: ep = %p. wc = %d", (void *) ep, handle == ugni_module->wildcard_ep));
 

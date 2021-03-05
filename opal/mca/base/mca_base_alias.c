@@ -142,7 +142,7 @@ int mca_base_alias_register (const char *project, const char *framework, const c
     }
 
     char *name = mca_base_alias_generate_name (project, framework, component_name);
-    assert (NULL != name);
+    OPAL_ASSERT(NULL != name);
 
     mca_base_alias_t *alias = mca_base_alias_lookup_internal (name);
     if (NULL == alias) {
@@ -177,7 +177,7 @@ const mca_base_alias_t *mca_base_alias_lookup(const char *project, const char *f
     }
 
     char *name = mca_base_alias_generate_name (project, framework, component_name);
-    assert (NULL != name);
+    OPAL_ASSERT(NULL != name);
     const mca_base_alias_t *alias = mca_base_alias_lookup_internal (name);
     free (name);
 

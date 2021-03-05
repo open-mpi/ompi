@@ -343,7 +343,7 @@ static void backend_abort_no_aggregate(int fatal, char *type,
     char *arg;
 
     int32_t state = ompi_mpi_state;
-    assert(state < OMPI_MPI_STATE_INIT_COMPLETED ||
+    OPAL_ASSERT(state < OMPI_MPI_STATE_INIT_COMPLETED ||
            state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT);
 
     fflush(stdout);

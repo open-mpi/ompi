@@ -384,7 +384,7 @@ static void edge_pairs_to_match_table(
 
     num_modules = (int)mca_btl_usnic_component.num_modules;
 
-    assert(nme >= 0);
+    OPAL_ASSERT(nme >= 0);
     for (i = 0; i < nme; ++i) {
         left  = me[2*i+0];
         right = me[2*i+1];
@@ -396,8 +396,8 @@ static void edge_pairs_to_match_table(
             module_idx = MODULE_INDEX(left);
             proc_idx = PROC_INDEX(right);
         }
-        assert(module_idx >= 0 && module_idx < num_modules);
-        assert(proc_idx >= 0 && proc_idx < (int)proc->proc_modex_count);
+        OPAL_ASSERT(module_idx >= 0 && module_idx < num_modules);
+        OPAL_ASSERT(proc_idx >= 0 && proc_idx < (int)proc->proc_modex_count);
         proc->proc_ep_match_table[module_idx] = proc_idx;
         proc->proc_match_exists = true;
     }
@@ -461,7 +461,7 @@ static int create_proc_module_graph(
             OPAL_ERROR_LOG(err);
             goto out_free_graph;
         }
-        assert(idx == MODULE_VERTEX(i));
+        OPAL_ASSERT(idx == MODULE_VERTEX(i));
     }
     for (i = 0; i < (int)proc->proc_modex_count; ++i) {
         int idx = -1;
@@ -470,7 +470,7 @@ static int create_proc_module_graph(
             OPAL_ERROR_LOG(err);
             goto out_free_graph;
         }
-        assert(idx == (int)PROC_VERTEX(i));
+        OPAL_ASSERT(idx == (int)PROC_VERTEX(i));
     }
 
     /* now add edges between interfaces that can communicate */
@@ -497,8 +497,8 @@ static int create_proc_module_graph(
                  * been computing weights (negative costs) */
                 cost = -weight;
             }
-            assert(INT64_MAX != cost);
-            assert(INT64_MIN != cost);
+            OPAL_ASSERT(INT64_MAX != cost);
+            OPAL_ASSERT(INT64_MIN != cost);
 
             if (proc_is_left) {
                 u = PROC_VERTEX(j);
@@ -741,7 +741,7 @@ opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module,
 
     /* Initalize the endpoint */
     endpoint->endpoint_module = module;
-    assert(modex_index >= 0 && modex_index < (int)proc->proc_modex_count);
+    OPAL_ASSERT(modex_index >= 0 && modex_index < (int)proc->proc_modex_count);
     endpoint->endpoint_remote_modex = proc->proc_modex[modex_index];
     endpoint->endpoint_send_credits = module->sd_num;
 

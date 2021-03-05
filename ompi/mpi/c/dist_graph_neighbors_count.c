@@ -14,11 +14,11 @@
  * Additional copyrights may follow
  *
  */
-#include <assert.h>
 #include <stdlib.h>
 
 #include "ompi_config.h"
 
+#include "opal/util/opal_assert.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"

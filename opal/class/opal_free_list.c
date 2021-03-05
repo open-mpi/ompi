@@ -186,7 +186,7 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
                                flist->fl_payload_buffer_alignment, size_t);
 
         /* elem_size should not be 0 here */
-        assert (elem_size > 0);
+        OPAL_ASSERT(elem_size > 0);
 
         buffer_size = num_elements * elem_size;
         align = flist->fl_payload_buffer_alignment;

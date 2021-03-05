@@ -134,7 +134,7 @@ OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void)
 {
     /* unregister only on last deregister */
     opal_common_ofi.registered--;
-    assert(opal_common_ofi.registered >= 0);
+    OPAL_ASSERT(opal_common_ofi.registered >= 0);
     if (opal_common_ofi.registered) {
         return;
     }

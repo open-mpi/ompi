@@ -324,7 +324,7 @@ ompi_mtl_portals4_rndv_get_frag_progress(ptl_event_t *ev,
     ompi_mtl_portals4_recv_request_t* ptl_request =
         (ompi_mtl_portals4_recv_request_t*) rndv_get_frag->request;
 
-    assert(PTL_EVENT_REPLY == ev->type);
+    OPAL_ASSERT(PTL_EVENT_REPLY == ev->type);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
         "Recv %lu (0x%lx) got reply event",
@@ -389,7 +389,7 @@ ompi_mtl_portals4_rndv_get_frag_progress(ptl_event_t *ev,
     if (ret > 0) {
         return OMPI_SUCCESS;
     }
-    assert(ptl_request->pending_reply == 0);
+    OPAL_ASSERT(ptl_request->pending_reply == 0);
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     OPAL_THREAD_ADD_FETCH32(&ompi_mtl_portals4.flowctl.send_slots, 1);

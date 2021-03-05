@@ -127,7 +127,7 @@ check_config_value_bool(char *key, opal_info_t *info)
         free(value_string);
         goto info_not_found;
     }
-    assert(flag != 0);
+    OPAL_ASSERT(flag != 0);
     ret = opal_info_value_to_bool(value_string, &result);
     free(value_string);
     if (OMPI_SUCCESS != ret) goto info_not_found;
@@ -165,7 +165,7 @@ check_config_value_equal(char *key, opal_info_t *info, char *value)
         free(value_string);
         goto info_not_found;
     }
-    assert(flag != 0);
+    OPAL_ASSERT(flag != 0);
     if (0 == strcmp(value_string, value)) result = true;
     free(value_string);
     return result;

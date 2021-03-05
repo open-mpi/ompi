@@ -131,7 +131,7 @@ void append_frag_to_ordered_list (mca_pml_ob1_recv_frag_t **queue,
     }
 
     prior = *queue;
-    assert(hdr->hdr_seq != prior->hdr.hdr_match.hdr_seq);
+    OPAL_ASSERT(hdr->hdr_seq != prior->hdr.hdr_match.hdr_seq);
 
     /* The hdr_seq being 16 bits long it can rollover rather quickly. We need to
      * account for this rollover or the matching will fail.
@@ -257,7 +257,7 @@ remove_head_from_ordered_list(mca_pml_ob1_recv_frag_t** queue)
         *queue = (mca_pml_ob1_recv_frag_t*)range;
         if( range->super.super.opal_list_next == (opal_list_item_t*)range ) {
             /* the range has no next element */
-            assert( range->super.super.opal_list_prev == (opal_list_item_t*)range );
+            OPAL_ASSERT( range->super.super.opal_list_prev == (opal_list_item_t*)range );
             range->range = NULL;
         } else {
             range->range = (mca_pml_ob1_recv_frag_t*)range->super.super.opal_list_next;
@@ -417,7 +417,7 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
         mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
 
         if( MCA_PML_OB1_HDR_TYPE_MATCH != hdr->hdr_common.hdr_type ) {
-            assert( MCA_PML_OB1_HDR_TYPE_RGET == hdr->hdr_common.hdr_type ||
+            OPAL_ASSERT( MCA_PML_OB1_HDR_TYPE_RGET == hdr->hdr_common.hdr_type ||
                     MCA_PML_OB1_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type );
             OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
                                  "ob1_revoke_comm: sending NACK to %d", hdr->hdr_rndv.hdr_match.hdr_src));
@@ -460,7 +460,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
     size_t num_segments = descriptor->des_segment_count;
     size_t bytes_received = 0;
 
-    assert(num_segments <= MCA_BTL_DES_MAX_SEGMENTS);
+    OPAL_ASSERT(num_segments <= MCA_BTL_DES_MAX_SEGMENTS);
 
     if (OPAL_UNLIKELY(segments->seg_len < OMPI_PML_OB1_MATCH_HDR_LEN)) {
         return;
@@ -757,7 +757,7 @@ void mca_pml_ob1_recv_frag_callback_frag (mca_btl_base_module_t *btl,
      * copies, then start the copy and return.  The copy completion will trigger
      * the next phase. */
     if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA_ASYNC) {
-        assert(btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV);
+        OPAL_ASSERT(btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV);
 
         /* This will trigger the opal_convertor_pack to start asynchronous copy. */
         mca_pml_ob1_recv_request_frag_copy_start(recvreq, btl, segments, descriptor->des_segment_count, NULL);
@@ -1070,7 +1070,7 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
                       (ompi_comm_coll_revoked(comm_ptr) && ompi_request_tag_is_collective(hdr->hdr_tag)) ) {
         OPAL_THREAD_UNLOCK(&comm->matching_lock);
         if( MCA_PML_OB1_HDR_TYPE_MATCH != hdr->hdr_common.hdr_type ) {
-            assert( MCA_PML_OB1_HDR_TYPE_RGET == hdr->hdr_common.hdr_type ||
+            OPAL_ASSERT( MCA_PML_OB1_HDR_TYPE_RGET == hdr->hdr_common.hdr_type ||
                     MCA_PML_OB1_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type );
             /* Send a ACK with a NULL request to signify revocation */
             mca_pml_ob1_rendezvous_hdr_t* hdr_rndv = (mca_pml_ob1_rendezvous_hdr_t*) hdr;

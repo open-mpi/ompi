@@ -12,7 +12,6 @@
 
 #include "opal_config.h"
 
-#include <assert.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -31,6 +30,7 @@
 #include "opal/util/fd.h"
 #include "opal/util/string_copy.h"
 #include "opal/util/printf.h"
+#include "opal/util/opal_assert.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_module.h"
@@ -53,7 +53,7 @@ int opal_btl_usnic_connectivity_client_init(void)
     if (!mca_btl_usnic_component.connectivity_enabled) {
         return OPAL_SUCCESS;
     }
-    assert(!initialized);
+    OPAL_ASSERT(!initialized);
 
     /* Open local IPC socket to the agent */
     agent_fd = socket(PF_UNIX, SOCK_STREAM, 0);
@@ -73,7 +73,7 @@ int opal_btl_usnic_connectivity_client_init(void)
     }
 #if !defined(NDEBUG)
     struct sockaddr_un sun;
-    assert(strlen(ipc_filename) <= sizeof(sun.sun_path));
+    OPAL_ASSERT(strlen(ipc_filename) <= sizeof(sun.sun_path));
 #endif
 
     /* Wait for the agent to create its socket.  Timeout after 10
@@ -219,7 +219,7 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     }
 
     /* Get the UDP port number that was received */
-    assert(CONNECTIVITY_AGENT_CMD_LISTEN == reply.cmd);
+    OPAL_ASSERT(CONNECTIVITY_AGENT_CMD_LISTEN == reply.cmd);
     module->local_modex.connectivity_udp_port = reply.udp_port;
 
     return OPAL_SUCCESS;

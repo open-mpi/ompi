@@ -126,7 +126,7 @@ void sm_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl
     if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_RCACHE_FLAGS_PERSIST))) {
 #if OPAL_ENABLE_DEBUG
         int ret = mca_rcache_base_vma_delete (vma_module, reg);
-        assert (OPAL_SUCCESS == ret);
+        OPAL_ASSERT(OPAL_SUCCESS == ret);
 #else
         (void) mca_rcache_base_vma_delete (vma_module, reg);
 #endif

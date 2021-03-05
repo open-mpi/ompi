@@ -169,7 +169,7 @@ ompi_osc_sm_unlock(int target,
 
     default:
         // This is an OMPI programming error -- cause some pain.
-        assert(module->outstanding_locks[target] == lock_none ||
+        OPAL_ASSERT(module->outstanding_locks[target] == lock_none ||
                module->outstanding_locks[target] == lock_nocheck ||
                module->outstanding_locks[target] == lock_exclusive ||
                module->outstanding_locks[target] == lock_shared);

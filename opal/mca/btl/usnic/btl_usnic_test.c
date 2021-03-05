@@ -58,7 +58,7 @@ void opal_btl_usnic_register_test(const char *name,
                                   void *ctx)
 {
     struct test_info *info = malloc(sizeof(*info));
-    assert(info != NULL);
+    OPAL_ASSERT(info != NULL);
 
     OBJ_CONSTRUCT(&info->li, opal_list_item_t);
 

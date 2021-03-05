@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
+#include "opal/util/opal_assert.h"
 
 #include "opal/constants.h"
 #include "opal/class/opal_ring_buffer.h"

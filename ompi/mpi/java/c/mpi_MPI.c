@@ -1287,7 +1287,7 @@ jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
         rc = ompi_errcode_get_mpi_code (rc);
         /* ompi_mpi_errcode_get_class CAN NOT handle negative error codes.
          * all Open MPI MPI error codes should be > 0. */
-        assert (rc >= 0);
+        OPAL_ASSERT(rc >= 0);
     }
     jni_exception = (*env)->ExceptionCheck(env);
 

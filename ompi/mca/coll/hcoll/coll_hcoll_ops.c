@@ -414,7 +414,7 @@ int mca_coll_hcoll_scatterv(const void* sbuf, const int *scounts, const int *dis
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
     if (rbuf == MPI_IN_PLACE) {
-        assert(root == comm->c_my_rank);
+        OPAL_ASSERT(root == comm->c_my_rank);
         rtype = stype;
     }
     if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {

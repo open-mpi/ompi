@@ -231,7 +231,7 @@ static int group_register (const char *project_name, const char *framework_name,
         ret = mca_base_var_group_get_internal (group_id, &group, true);
         if (OPAL_SUCCESS != ret) {
             /* something went horribly wrong */
-            assert (NULL != group);
+            OPAL_ASSERT(NULL != group);
             return ret;
         }
         group->group_isvalid = true;

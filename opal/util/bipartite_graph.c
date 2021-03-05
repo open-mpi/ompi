@@ -51,7 +51,7 @@
 /* ensure that (a+b<=max) */
 static inline void check_add64_overflow(int64_t a, int64_t b)
 {
-    assert(!((b > 0) && (a > (INT64_MAX - b))) &&
+    OPAL_ASSERT(!((b > 0) && (a > (INT64_MAX - b))) &&
            !((b < 0) && (a < (INT64_MIN - b))));
 }
 
@@ -125,7 +125,7 @@ static int get_capacity(opal_bp_graph_t *g, int source, int target)
     CHECK_VERTEX_RANGE(g, target);
 
     FOREACH_OUT_EDGE(g, source, e) {
-        assert(e->source == source);
+        OPAL_ASSERT(e->source == source);
         if (e->target == target) {
             return e->capacity;
         }
@@ -143,7 +143,7 @@ set_capacity(opal_bp_graph_t *g, int source, int target, int cap)
     CHECK_VERTEX_RANGE(g, target);
 
     FOREACH_OUT_EDGE(g, source, e) {
-        assert(e->source == source);
+        OPAL_ASSERT(e->source == source);
         if (e->target == target) {
             e->capacity = cap;
             return OPAL_SUCCESS;
@@ -270,7 +270,7 @@ int opal_bp_graph_clone(const opal_bp_graph_t *g,
     if (OPAL_SUCCESS != err) {
         return err;
     }
-    assert(NULL != gx);
+    OPAL_ASSERT(NULL != gx);
 
     /* reconstruct all vertices */
     for (i = 0; i < NUM_VERTICES(g); ++i) {
@@ -278,14 +278,14 @@ int opal_bp_graph_clone(const opal_bp_graph_t *g,
         if (OPAL_SUCCESS != err) {
             goto out_free_gx;
         }
-        assert(index == i);
+        OPAL_ASSERT(index == i);
     }
 
     /* now reconstruct all the edges (iterate by source vertex only to avoid
      * double-adding) */
     for (i = 0; i < NUM_VERTICES(g); ++i) {
         FOREACH_OUT_EDGE(g, i, e) {
-            assert(i == e->source);
+            OPAL_ASSERT(i == e->source);
             err = opal_bp_graph_add_edge(gx, e->source, e->target,
 					    e->cost, e->capacity, NULL);
             if (OPAL_SUCCESS != err) {
@@ -347,7 +347,7 @@ int opal_bp_graph_add_edge(opal_bp_graph_t *g,
         return OPAL_ERR_BAD_PARAM;
     }
     FOREACH_OUT_EDGE(g, from, e) {
-        assert(e->source == from);
+        OPAL_ASSERT(e->source == from);
         if (e->target == to) {
             return OPAL_EXISTS;
         }
@@ -396,7 +396,7 @@ int opal_bp_graph_add_vertex(opal_bp_graph_t *g,
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    assert(v->v_index == g->num_vertices);
+    OPAL_ASSERT(v->v_index == g->num_vertices);
 
     ++g->num_vertices;
 
@@ -455,7 +455,7 @@ static void shrink_flow_matrix(int *flow, int old_n, int new_n)
 {
     int u, v;
 
-    assert(old_n > new_n);
+    OPAL_ASSERT(old_n > new_n);
 
     for (u = 0; u < new_n; ++u) {
         for (v = 0; v < new_n; ++v) {
@@ -598,7 +598,7 @@ bool opal_bp_graph_bellman_ford(opal_bp_graph_t *gx,
 #if GRAPH_DEBUG
     dump_vec("pred", pred, NUM_VERTICES(gx));
 #endif
-    assert(pred[source] == -1);
+    OPAL_ASSERT(pred[source] == -1);
     free(dist);
     GRAPH_DEBUG_OUT(("bellman_ford: found_target=%s", found_target ? "true" : "false"));
     return found_target;
@@ -809,17 +809,17 @@ static int min_cost_flow_ssp(opal_bp_graph_t *gx,
 
         /* augment current flow along P */
         FOREACH_UV_ON_PATH(pred, gx->source_idx, gx->sink_idx, u, v) {
-            assert(u == pred[v]);
+            OPAL_ASSERT(u == pred[v]);
 
             f(u,v) = f(u,v) + cap_f_path; /* "forward" edge */
             f(v,u) = f(v,u) - cap_f_path; /* residual network edge */
 
-            assert(f(u,v) == -f(v,u)); /* skew symmetry invariant */
+            OPAL_ASSERT(f(u,v) == -f(v,u)); /* skew symmetry invariant */
 
             /* update Gx as we go along: decrease capacity by this new
              * augmenting flow */
             c = get_capacity(gx, u, v) - cap_f_path;
-            assert(c >= 0);
+            OPAL_ASSERT(c >= 0);
             err = set_capacity(gx, u, v, c);
             if (OPAL_SUCCESS != err) {
                 opal_output(0, "[%s:%d:%s] unable to set capacity, missing edge?",
@@ -828,7 +828,7 @@ static int min_cost_flow_ssp(opal_bp_graph_t *gx,
             }
 
             c = get_capacity(gx, v, u) + cap_f_path;
-            assert(c >= 0);
+            OPAL_ASSERT(c >= 0);
             err = set_capacity(gx, v, u, c);
             if (OPAL_SUCCESS != err) {
                 opal_output(0, "[%s:%d:%s] unable to set capacity, missing edge?",
@@ -903,7 +903,7 @@ int opal_bp_graph_solve_bipartite_assignment(const opal_bp_graph_t *g,
         GRAPH_DEBUG_OUT(("min_cost_flow_ssp failed"));
         return err;
     }
-    assert(NULL != flow);
+    OPAL_ASSERT(NULL != flow);
 
     /* don't care about new edges in gx, only old edges in g */
     n = opal_bp_graph_order(g);

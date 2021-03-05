@@ -262,9 +262,9 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
         ++module->stats.num_chunk_recvs;
 
         /* validate offset and len to be within fragment */
-        assert(chunk_hdr->ch_frag_offset + chunk_hdr->ch_hdr.payload_len <=
+        OPAL_ASSERT(chunk_hdr->ch_frag_offset + chunk_hdr->ch_hdr.payload_len <=
                 fip->rfi_frag_size);
-        assert(fip->rfi_frag_size == chunk_hdr->ch_frag_size);
+        OPAL_ASSERT(fip->rfi_frag_size == chunk_hdr->ch_frag_size);
 
         /* copy the data into place */
         memcpy(fip->rfi_data + chunk_hdr->ch_frag_offset, (char *)(chunk_hdr+1),

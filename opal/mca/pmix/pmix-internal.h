@@ -198,7 +198,7 @@ typedef struct {
 #else
 #define OPAL_PMIX_RELEASE_THREAD(lck)                   \
     do {                                                \
-        assert(0 != opal_mutex_trylock(&(lck)->mutex)); \
+        OPAL_ASSERT(0 != opal_mutex_trylock(&(lck)->mutex)); \
         (lck)->active = false;                          \
         opal_pmix_condition_broadcast(&(lck)->cond);    \
         opal_mutex_unlock(&(lck)->mutex);               \

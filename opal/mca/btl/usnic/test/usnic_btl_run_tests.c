@@ -14,7 +14,8 @@
 /* for dladdr() */
 #define _GNU_SOURCE
 
-#include <assert.h>
+#include "opal/util/opal_assert.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,7 +68,7 @@ int main(int argc, char **argv)
         abort();
     }
     libmpi_path = strdup(info.dli_fname);
-    assert(libmpi_path != NULL);
+    OPAL_ASSERT(libmpi_path != NULL);
     path_len = strlen(libmpi_path) + strlen("/openmpi/") + strlen(MCA_BTL_USNIC_SO);
     path = calloc(path_len+1, 1);
     to = path;

@@ -86,7 +86,7 @@ int mca_pml_ob1_progress(void)
 
         switch(pending_type) {
         case MCA_PML_OB1_SEND_PENDING_NONE:
-            assert(0);
+            OPAL_ASSERT(0);
             return 0;
         case MCA_PML_OB1_SEND_PENDING_SCHEDULE:
             if( mca_pml_ob1_send_request_schedule_exclusive(sendreq) ==

@@ -141,7 +141,7 @@ static void release_objs_callback(struct ompi_coll_base_nbc_request_t *request) 
 static int complete_objs_callback(struct ompi_request_t *req) {
     struct ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
     int rc = OMPI_SUCCESS;
-    assert (NULL != request);
+    OPAL_ASSERT(NULL != request);
     if (NULL != request->cb.req_complete_cb) {
         rc = request->cb.req_complete_cb(request->req_complete_cb_data);
     }
@@ -258,7 +258,7 @@ static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
 static int complete_vecs_callback(struct ompi_request_t *req) {
     ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
     int rc = OMPI_SUCCESS;
-    assert (NULL != request);
+    OPAL_ASSERT(NULL != request);
     if (NULL != request->cb.req_complete_cb) {
         rc = request->cb.req_complete_cb(request->req_complete_cb_data);
     }

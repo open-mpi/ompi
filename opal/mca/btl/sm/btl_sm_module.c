@@ -530,7 +530,7 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src (struct mca_btl_base_mod
     int rc;
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
-    assert (NULL != data_ptr);
+    OPAL_ASSERT(NULL != data_ptr);
 
     /* in place send fragment */
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {

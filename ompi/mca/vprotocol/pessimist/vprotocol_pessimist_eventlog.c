@@ -104,7 +104,7 @@ void vprotocol_pessimist_matching_replay(int *src) {
     }
     /* not forcing a ANY SOURCE event whose recieve clock is lower than max
      * is a bug indicating we have missed an event during logging ! */
-    assert(((*src) != MPI_ANY_SOURCE) || (mca_vprotocol_pessimist.clock > max));
+    OPAL_ASSERT(((*src) != MPI_ANY_SOURCE) || (mca_vprotocol_pessimist.clock > max));
 #else
     }
 #endif
@@ -152,7 +152,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
                 }
             }
             V_OUTPUT_VERBOSE(70, "pessimist:\treplay\tdeliver\t%"PRIpclock"\tnone", mca_vprotocol_pessimist.clock);
-            assert(devent->reqid == 0); /* make sure we don't missed a request */
+            OPAL_ASSERT(devent->reqid == 0); /* make sure we don't missed a request */
             *index = MPI_UNDEFINED;
             *outcount = 0;
             mca_vprotocol_pessimist.clock++;

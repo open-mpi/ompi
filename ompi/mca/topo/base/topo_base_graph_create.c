@@ -55,7 +55,7 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
 
     num_procs = old_comm->c_local_group->grp_proc_count;
     new_rank = old_comm->c_local_group->grp_my_rank;
-    assert(topo->type == OMPI_COMM_GRAPH);
+    OPAL_ASSERT(topo->type == OMPI_COMM_GRAPH);
 
     if( num_procs < nnodes ) {
         return MPI_ERR_DIMS;

@@ -73,7 +73,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
     size_t sum_iov_len = 0;      /* sum of raw data lengths in the iov_len fields */
     uint32_t index = 0;          /* the iov index and a simple counter */
 
-    assert( (*iov_count) > 0 );
+    OPAL_ASSERT( (*iov_count) > 0 );
     if( OPAL_LIKELY(pConvertor->flags & CONVERTOR_COMPLETED) ) {
         iov[0].iov_base = NULL;
         iov[0].iov_len  = 0;
@@ -154,7 +154,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
             do_now = current->count;
             if( count_desc != ((size_t)current->count * current->blocklen) ) {
                 do_now = count_desc / current->blocklen;
-                assert( 0 == (count_desc % current->blocklen) );
+                OPAL_ASSERT( 0 == (count_desc % current->blocklen) );
             }
 
             blength = current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size;
@@ -200,7 +200,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                 if( pStack->index == -1 ) {
                     pStack->disp += (pData->ub - pData->lb);
                 } else {
-                    assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
+                    OPAL_ASSERT( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
                     pStack->disp += description[pStack->index].loop.extent;  /* jump by the loop extent */
                 }
             }

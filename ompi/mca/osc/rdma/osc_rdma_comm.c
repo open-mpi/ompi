@@ -50,7 +50,7 @@ static void ompi_osc_get_data_complete (struct mca_btl_base_module_t *btl, struc
                                         void *local_address, mca_btl_base_registration_handle_t *local_handle,
                                         void *context, void *data, int status)
 {
-    assert (OPAL_SUCCESS == status);
+    OPAL_ASSERT(OPAL_SUCCESS == status);
     ((bool *) context)[0]  = true;
 }
 
@@ -92,7 +92,7 @@ int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, struct mca_btl_b
                          (void *) frag);
     }
 
-    assert (!(source_address & ALIGNMENT_MASK(module->selected_btl->btl_get_alignment)));
+    OPAL_ASSERT(!(source_address & ALIGNMENT_MASK(module->selected_btl->btl_get_alignment)));
 
     do {
         ret = module->selected_btl->btl_get (module->selected_btl, endpoint, ptr, aligned_addr,
@@ -238,7 +238,7 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != local_iov_count);
+            OPAL_ASSERT(0 != local_iov_count);
 
             /* determine how much to transfer in this operation */
             rdma_len = min(min(local_iovec[local_iov_index].iov_len, remote_iovec[remote_iov_index].iov_len), max_rdma_len);
@@ -384,7 +384,7 @@ static void ompi_osc_rdma_put_complete (struct mca_btl_base_module_t *btl, struc
 {
     ompi_osc_rdma_sync_t *sync = (ompi_osc_rdma_sync_t *) context;
 
-    assert (OPAL_SUCCESS == status);
+    OPAL_ASSERT(OPAL_SUCCESS == status);
 
     /* the lowest bit is used as a flag indicating this put operation has a request */
     if ((intptr_t) context & 0x1) {
@@ -415,7 +415,7 @@ static void ompi_osc_rdma_put_complete_flush (struct mca_btl_base_module_t *btl,
 {
     ompi_osc_rdma_module_t *module = (ompi_osc_rdma_module_t *) context;
 
-    assert (OPAL_SUCCESS == status);
+    OPAL_ASSERT(OPAL_SUCCESS == status);
 
     /* the lowest bit is used as a flag indicating this put operation has a request */
     if ((intptr_t) context & 0x1) {
@@ -545,7 +545,7 @@ static void ompi_osc_rdma_get_complete (struct mca_btl_base_module_t *btl, struc
     OSC_RDMA_VERBOSE(status ? MCA_BASE_VERBOSE_ERROR : MCA_BASE_VERBOSE_TRACE, "btl get complete on sync %p. local "
                      "address %p. origin %p. opal status %d", (void *) sync, local_address, origin_addr, status);
 
-    assert (OPAL_SUCCESS == status);
+    OPAL_ASSERT(OPAL_SUCCESS == status);
 
     if (request->buffer || frag) {
         if (OPAL_LIKELY(OMPI_SUCCESS == status)) {

@@ -176,7 +176,7 @@ static uint32_t mca_rcache_udreg_dereg_func (void *device_data, void *dreg_conte
     mca_rcache_base_registration_t *udreg_reg = (mca_rcache_base_registration_t *) device_data;
     int rc;
 
-    assert (udreg_reg->ref_count == 0);
+    OPAL_ASSERT(udreg_reg->ref_count == 0);
 
     rc = rcache_udreg->resources.base.deregister_mem (rcache_udreg->resources.base.reg_data, udreg_reg);
     if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
@@ -321,7 +321,7 @@ static int mca_rcache_udreg_deregister(mca_rcache_base_module_t *rcache,
     mca_rcache_udreg_module_t *rcache_udreg = (mca_rcache_udreg_module_t *) rcache;
     int32_t ref_count = OPAL_THREAD_ADD_FETCH32 (&reg->ref_count, -1);
 
-    assert(ref_count >= 0);
+    OPAL_ASSERT(ref_count >= 0);
 
     if (!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS)) {
         OPAL_THREAD_LOCK(&rcache_udreg->lock);

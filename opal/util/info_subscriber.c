@@ -36,12 +36,12 @@
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
 #endif
-#include <assert.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
 #include "opal/util/info_subscriber.h"
+#include "opal/util/opal_assert.h"
 
 static char* opal_infosubscribe_inform_subscribers(opal_infosubscriber_t * object, char *key, char *new_value, int *found_callback);
 static void infosubscriber_construct(opal_infosubscriber_t *obj);
@@ -359,7 +359,7 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
                     key, max_len);
 #if OPAL_ENABLE_DEBUG
         opal_output(0, "Aborting because this is a developer / debugging build.  Go fix this error.");
-        // Do not assert() / dump core.  Just exit un-gracefully.
+        // Do not OPAL_ASSERT() / dump core.  Just exit un-gracefully.
         exit(1);
 #else
         opal_output(0, "The \"%s\" MPI info key almost certainly will not work properly.  You should inform an Open MPI developer about this.", key);

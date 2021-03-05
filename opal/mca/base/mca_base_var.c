@@ -927,7 +927,7 @@ int mca_base_var_env_name(const char *param_name,
 {
     int ret;
 
-    assert (NULL != env_name);
+    OPAL_ASSERT(NULL != env_name);
 
     ret = opal_asprintf(env_name, "%s%s", mca_prefix, param_name);
     if (0 > ret) {
@@ -1313,7 +1313,7 @@ static int register_variable (const char *project_name, const char *framework_na
     mca_base_var_t *var, *original = NULL;
 
     /* Developer error. Storage can not be NULL and type must exist */
-    assert (((flags & MCA_BASE_VAR_FLAG_SYNONYM) || NULL != storage) && type >= 0 && type < MCA_BASE_VAR_TYPE_MAX);
+    OPAL_ASSERT(((flags & MCA_BASE_VAR_FLAG_SYNONYM) || NULL != storage) && type >= 0 && type < MCA_BASE_VAR_TYPE_MAX);
 
     /* Developer error: check max length of strings */
     if (NULL != project_name &&
@@ -1373,13 +1373,13 @@ static int register_variable (const char *project_name, const char *framework_na
     }
 
     if (0 != align) {
-        assert(((uintptr_t) storage) % align == 0);
+        OPAL_ASSERT(((uintptr_t) storage) % align == 0);
     }
 
     /* Also check to ensure that synonym_for>=0 when
        MCA_BCASE_VAR_FLAG_SYNONYM is specified */
     if (flags & MCA_BASE_VAR_FLAG_SYNONYM && synonym_for < 0) {
-        assert((flags & MCA_BASE_VAR_FLAG_SYNONYM) && synonym_for >= 0);
+        OPAL_ASSERT((flags & MCA_BASE_VAR_FLAG_SYNONYM) && synonym_for >= 0);
     }
 #endif
 
@@ -1388,7 +1388,7 @@ static int register_variable (const char *project_name, const char *framework_na
         if (NULL == original) {
             /* Attempting to create a synonym for a non-existent variable. probably a
              * developer error. */
-            assert (NULL != original);
+            OPAL_ASSERT(NULL != original);
             return OPAL_ERR_NOT_FOUND;
         }
     }
@@ -1476,7 +1476,7 @@ static int register_variable (const char *project_name, const char *framework_na
         mca_base_var_count++;
         if (0 <= var_find_by_name (var->mbv_full_name, &tmp, 0)) {
             /* XXX --- FIXME: variable overshadows an existing variable. this is difficult to support */
-            assert (0);
+            OPAL_ASSERT(0);
         }
 
         opal_hash_table_set_value_ptr (&mca_base_var_index_hash, var->mbv_full_name, strlen (var->mbv_full_name),
@@ -1508,7 +1508,7 @@ static int register_variable (const char *project_name, const char *framework_na
                            group->group_framework, group->group_component,
                            var->mbv_variable_name);
             /* This is developer error. abort! */
-            assert (0);
+            OPAL_ASSERT(0);
             return OPAL_ERROR;
         }
 
@@ -1567,7 +1567,7 @@ int mca_base_var_register (const char *project_name, const char *framework_name,
 {
     int ret;
     /* Only integer variables can have enumerator */
-    assert (NULL == enumerator || (MCA_BASE_VAR_TYPE_INT == type || MCA_BASE_VAR_TYPE_UNSIGNED_INT == type));
+    OPAL_ASSERT(NULL == enumerator || (MCA_BASE_VAR_TYPE_INT == type || MCA_BASE_VAR_TYPE_UNSIGNED_INT == type));
 
     ret = register_variable (project_name, framework_name, component_name,
                              variable_name, description, type, enumerator,
@@ -1985,7 +1985,7 @@ static int var_value_string (mca_base_var_t *var, char **value_string)
     const mca_base_var_storage_t *value=NULL;
     int ret;
 
-    assert (MCA_BASE_VAR_TYPE_MAX > var->mbv_type);
+    OPAL_ASSERT(MCA_BASE_VAR_TYPE_MAX > var->mbv_type);
 
     /** Parameters with MCA_BASE_VAR_FLAG_DEF_UNSET flag should be shown
      * as "unset" by default. */

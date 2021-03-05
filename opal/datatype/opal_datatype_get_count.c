@@ -39,7 +39,7 @@ ssize_t opal_datatype_get_element_count( const opal_datatype_t* datatype, size_t
     /* Normally the size should be less or equal to the size of the datatype.
      * This function does not support a iSize bigger than the size of the datatype.
      */
-    assert( iSize <= datatype->size );
+    OPAL_ASSERT( iSize <= datatype->size );
     DUMP( "dt_count_elements( %p, %ul )\n", (void*)datatype, (unsigned long)iSize );
     pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->loops + 2) );
     pStack->count    = 1;

@@ -47,6 +47,8 @@
  */
 
 #include "ompi_config.h"
+#include "opal/util/opal_assert.h"
+
 #include <stdlib.h>
 #include <assert.h>
 #ifdef HAVE_TARGETCONDITIONALS_H

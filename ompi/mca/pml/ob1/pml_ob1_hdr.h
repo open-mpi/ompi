@@ -458,7 +458,7 @@ ob1_hdr_ntoh(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type)
             MCA_PML_OB1_FIN_HDR_NTOH(hdr->hdr_fin);
             break;
         default:
-            assert(0);
+            OPAL_ASSERT(0);
             break;
     }
 }
@@ -504,7 +504,7 @@ ob1_hdr_hton_intr(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type,
             MCA_PML_OB1_FIN_HDR_HTON(hdr->hdr_fin);
             break;
         default:
-            assert(0);
+            OPAL_ASSERT(0);
             break;
     }
 #endif

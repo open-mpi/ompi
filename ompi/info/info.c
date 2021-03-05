@@ -41,7 +41,6 @@
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
 #endif
-#include <assert.h>
 
 #include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
@@ -49,6 +48,7 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/util/info.h"
+#include "opal/util/opal_assert.h"
 
 #include "ompi/info/info.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -100,11 +100,11 @@ int ompi_mpiinfo_init(void)
 
     /* Create MPI_INFO_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_info_null.info, ompi_info_t);
-    assert(ompi_mpi_info_null.info.i_f_to_c_index == 0);
+    OPAL_ASSERT(ompi_mpi_info_null.info.i_f_to_c_index == 0);
 
     /* Create MPI_INFO_ENV */
     OBJ_CONSTRUCT(&ompi_mpi_info_env.info, ompi_info_t);
-    assert(ompi_mpi_info_env.info.i_f_to_c_index == 1);
+    OPAL_ASSERT(ompi_mpi_info_env.info.i_f_to_c_index == 1);
 
     /* fill the env info object */
 

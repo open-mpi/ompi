@@ -26,7 +26,7 @@ mca_pml_cm_recv_request_free(struct ompi_request_t** request)
 {
     mca_pml_cm_request_t* recvreq = *(mca_pml_cm_request_t**)request;
 
-    assert( false == recvreq->req_free_called );
+    OPAL_ASSERT( false == recvreq->req_free_called );
 
     recvreq->req_free_called = true;
     if( true == recvreq->req_pml_complete ) {

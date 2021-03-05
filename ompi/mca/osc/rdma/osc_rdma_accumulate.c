@@ -563,7 +563,7 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != target_iov_count);
+            OPAL_ASSERT(0 != target_iov_count);
 
             /* determine how much to put in this operation */
             if (source_count) {

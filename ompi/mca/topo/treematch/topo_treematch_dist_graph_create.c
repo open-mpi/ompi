@@ -503,7 +503,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             }
             free(obj_to_rank_in_comm);
 
-            assert(numlevels < TM_MAX_LEVELS);
+            OPAL_ASSERT(numlevels < TM_MAX_LEVELS);
             if( 0 == rank ) {
                 hierarchies = (int *)malloc(num_nodes*(TM_MAX_LEVELS+1)*sizeof(int));
             } else {
@@ -599,7 +599,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     tm_topology->nb_nodes[i] = tm_topology->nb_nodes[i-1] * tm_topology->arity[i-1];
 
 #ifdef __DEBUG__
-                assert(num_objs_total == (int)tm_topology->nb_nodes[tm_topology->nb_levels-1]);
+                OPAL_ASSERT(num_objs_total == (int)tm_topology->nb_nodes[tm_topology->nb_levels-1]);
 #endif
                 /* Build process id tab */
                 tm_topology->node_id  = (int *)malloc(num_objs_total*sizeof(int));
@@ -627,7 +627,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     if (obj_mapping[i] != -1)
                         tm_topology->constraints[idx++] = obj_mapping[i]; /* use process ranks instead of core numbers */
 #ifdef __DEBUG__
-                assert(idx == tm_topology->nb_constraints);
+                OPAL_ASSERT(idx == tm_topology->nb_constraints);
 #endif
                 tm_topology->oversub_fact = 1;
 
@@ -672,7 +672,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                     "====> nb levels : %i\n",tm_topology->nb_levels);
                 dump_int_array(10, ompi_topo_base_framework.framework_output,
                                "Rank permutation sigma/k : ", "", k, num_objs_total);
-                assert(size == (int)sol->sigma_length);
+                OPAL_ASSERT(size == (int)sol->sigma_length);
                 dump_int_array(10, ompi_topo_base_framework.framework_output,
                                "Matching : ", "",sol->sigma, sol->sigma_length);
 #endif
@@ -809,7 +809,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
             
 #ifdef __DEBUG__
-            assert(num_objs_in_node == (int)tm_topology->nb_nodes[tm_topology->nb_levels-1]);
+            OPAL_ASSERT(num_objs_in_node == (int)tm_topology->nb_nodes[tm_topology->nb_levels-1]);
 #endif
             /* create a table that derives the rank in local (node) comm from the object number */
             obj_to_rank_in_lcomm = (int *)malloc(num_objs_in_node*sizeof(int));
@@ -855,7 +855,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             tm_topology->oversub_fact = 1;
 
 #ifdef __DEBUG__
-            assert(num_objs_in_node == (int)tm_topology->nb_nodes[tm_topology->nb_levels-1]);
+            OPAL_ASSERT(num_objs_in_node == (int)tm_topology->nb_nodes[tm_topology->nb_levels-1]);
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                  "Levels in topo : %i | num procs in node : %i\n",
                                  tm_topology->nb_levels,num_procs_in_node));
@@ -873,7 +873,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             comm_tree = tm_build_tree_from_topology(tm_topology,aff_mat, NULL, NULL);
             sol = tm_compute_mapping(tm_topology, comm_tree);
 
-            assert((int)sol->k_length == num_objs_in_node);
+            OPAL_ASSERT((int)sol->k_length == num_objs_in_node);
 
             k = (int *)calloc(sol->k_length, sizeof(int));
             for(idx = 0 ; idx < (int)sol->k_length ; idx++)
@@ -884,7 +884,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                  "====> nb levels : %i\n",tm_topology->nb_levels));
             dump_int_array(10, ompi_topo_base_framework.framework_output,
                            "Rank permutation sigma/k : ", "", k, num_procs_in_node);
-            assert(num_procs_in_node == (int)sol->sigma_length);
+            OPAL_ASSERT(num_procs_in_node == (int)sol->sigma_length);
             dump_int_array(10, ompi_topo_base_framework.framework_output,
                            "Matching : ", "", sol->sigma, sol->sigma_length);
 #endif

@@ -53,12 +53,12 @@ static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_
         return mca_btl_ugni_event_fatal_error (grc, event_data);
     }
 
-    assert (GNI_CQ_GET_TYPE(event_data) == GNI_CQ_EVENT_TYPE_SMSG);
+    OPAL_ASSERT(GNI_CQ_GET_TYPE(event_data) == GNI_CQ_EVENT_TYPE_SMSG);
 
     frag = (mca_btl_ugni_base_frag_t *) opal_pointer_array_get_item (&ugni_module->pending_smsg_frags_bb,
                                                                      GNI_CQ_GET_MSG_ID(event_data));
     if (OPAL_UNLIKELY(NULL == frag)) {
-        assert (0);
+        OPAL_ASSERT(0);
         return OPAL_ERROR;
     }
 

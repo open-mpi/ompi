@@ -101,12 +101,12 @@ opal_finalize_domain_t opal_init_domain = {{{0}}};
 void opal_finalize_append_cleanup (opal_cleanup_fn_t cleanup_fn, const char *fn_name, void *user_data)
 {
     opal_cleanup_fn_item_t *cleanup_item = OBJ_NEW(opal_cleanup_fn_item_t);
-    assert (NULL != cleanup_item);
+    OPAL_ASSERT(NULL != cleanup_item);
     cleanup_item->cleanup_fn = cleanup_fn;
     cleanup_item->user_data = user_data;
 #if OPAL_ENABLE_DEBUG
     cleanup_item->cleanup_fn_name = strdup (fn_name);
-    assert (NULL != cleanup_item->cleanup_fn_name);
+    OPAL_ASSERT(NULL != cleanup_item->cleanup_fn_name);
 #else
     (void) fn_name;
 #endif

@@ -11,12 +11,11 @@
 #ifndef TEST_REACHABLE_SHARED
 #define TEST_REACHABLE_SHARED 1
 
-#include <assert.h>
-
 #include "opal/runtime/opal.h"
 #include "opal/mca/reachable/reachable.h"
 #include "opal/util/if.h"
 #include "opal/util/string_copy.h"
+#include "opal/util/opal_assert.h"
 
 BEGIN_C_DECLS
 
@@ -29,9 +28,9 @@ opal_if_t* create_if(int af_family, char *address, int mask, int bandwidth)
     ((struct sockaddr *)&(interface->if_addr))->sa_family = af_family; 
 
     if (AF_INET == af_family){
-	assert(1 == inet_pton(af_family, address, &((struct sockaddr_in *)&(interface->if_addr))->sin_addr));
+	OPAL_ASSERT(1 == inet_pton(af_family, address, &((struct sockaddr_in *)&(interface->if_addr))->sin_addr));
     } else if (AF_INET6 == af_family){
-	assert(1 == inet_pton(af_family, address, &((struct sockaddr_in6 *)&(interface->if_addr))->sin6_addr));
+	OPAL_ASSERT(1 == inet_pton(af_family, address, &((struct sockaddr_in6 *)&(interface->if_addr))->sin6_addr));
     }
 
     interface->if_mask = mask;

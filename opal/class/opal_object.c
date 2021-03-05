@@ -81,7 +81,7 @@ void opal_class_initialize(opal_class_t *cls)
     int cls_destruct_array_count;
     int i;
 
-    assert(cls);
+    OPAL_ASSERT(cls);
 
     /* Check to see if any other thread got in here and initialized
        this class before we got a chance to */

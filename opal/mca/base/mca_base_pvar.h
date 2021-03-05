@@ -308,7 +308,7 @@ OBJ_CLASS_DECLARATION(mca_base_pvar_handle_t);
  * @returns index         On success returns the index of this variable.
  * @returns OPAL_ERROR    On error.
  *
- * Note: if used incorrectly this function may fail an assert(); see
+ * Note: if used incorrectly this function may fail an OPAL_ASSERT(); see
  * MPI 3.0 14.3 to see acceptable values for datatype given the class.
  */
 OPAL_DECLSPEC int mca_base_pvar_register (const char *project, const char *framework, const char *component, const char *name,

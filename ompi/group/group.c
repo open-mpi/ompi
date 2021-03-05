@@ -78,7 +78,7 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
         }
 
         /* unknown sparse group type */
-        assert (0);
+        OPAL_ASSERT(0);
     }
 
     if( group2->grp_parent_group_ptr == group1 ) { /* from parent to child*/
@@ -96,7 +96,7 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
         }
 
         /* unknown sparse group type */
-        assert (0);
+        OPAL_ASSERT(0);
     }
 #endif
 

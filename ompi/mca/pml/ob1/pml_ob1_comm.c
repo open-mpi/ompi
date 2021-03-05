@@ -42,7 +42,7 @@ static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
 
 static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t* proc)
 {
-    assert(NULL == proc->frags_cant_match);
+    OPAL_ASSERT(NULL == proc->frags_cant_match);
 #if !MCA_PML_OB1_CUSTOM_MATCH
     OBJ_DESTRUCT(&proc->specific_receives);
     OBJ_DESTRUCT(&proc->unexpected_frags);

@@ -135,7 +135,7 @@ static inline void vprotocol_pessimist_event_flush(void)
             {
                 /* check if request have been matched and update the event */
                 /* this assert make sure the negative source trick is fine  */
-                assert(event->type == VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING);
+                OPAL_ASSERT(event->type == VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING);
                 if(event->req->req_ompi.req_status.MPI_SOURCE == -1)
                 {
                     V_OUTPUT_VERBOSE(41, "pessimist:\tlog\tel\t%"PRIpclock"\tnot matched yet (%d)", event->u_event.e_matching.reqid, event->u_event.e_matching.src);
@@ -151,7 +151,7 @@ static inline void vprotocol_pessimist_event_flush(void)
             if(mca_vprotocol_pessimist.event_buffer_length ==
                mca_vprotocol_pessimist.event_buffer_max_length)
                 __VPROTOCOL_PESSIMIST_SEND_BUFFER();
-            assert(mca_vprotocol_pessimist.event_buffer_length < mca_vprotocol_pessimist.event_buffer_max_length);
+            OPAL_ASSERT(mca_vprotocol_pessimist.event_buffer_length < mca_vprotocol_pessimist.event_buffer_max_length);
             prv_event = (mca_vprotocol_pessimist_event_t *)
                 opal_list_remove_item(&mca_vprotocol_pessimist.pending_events,
                                       (opal_list_item_t *) event);
