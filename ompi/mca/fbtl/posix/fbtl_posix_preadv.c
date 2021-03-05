@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2020 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -29,19 +29,38 @@
 #include "ompi/mca/fbtl/fbtl.h"
 
 
-static ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh);
-static ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh);
+static ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock, int *lock_counter);
+static ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int *lock_counter);
+
+#define MAX_RETRIES 10
 
 ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
 {
     ssize_t bytes_read=0, ret_code=0;
     struct flock lock;
+    int lock_counter=0;    
     int ret;
+    int32_t orig_flags;
 
     if (NULL == fh->f_io_array) {
         return OMPI_ERROR;
     }
     
+    if ( fh->f_atomicity ) {
+        // save flags and disable file system specific requirements
+        orig_flags = fh->f_flags;
+        fh->f_flags &= ~OMPIO_LOCK_NEVER;
+        fh->f_flags &= ~OMPIO_LOCK_NOT_THIS_OP;
+
+        // Set a lock on the entire region that is being modified
+        off_t end_offset = (off_t)fh->f_io_array[fh->f_num_of_io_entries-1].offset +
+            (off_t)fh->f_io_array[fh->f_num_of_io_entries-1].length;
+        off_t len = end_offset - (off_t)fh->f_io_array[0].offset;
+        ret = mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, (off_t)fh->f_io_array[0].offset,
+                                    len, OMPIO_LOCK_ENTIRE_REGION, &lock_counter); 
+        fh->f_flags = orig_flags;
+    }
+
     if ( fh->f_num_of_io_entries > 1 ) {
         bool do_data_sieving = true;
 
@@ -65,45 +84,53 @@ ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
         }
 
         if ( do_data_sieving) {
-            return mca_fbtl_posix_preadv_datasieving (fh);
+            bytes_read = mca_fbtl_posix_preadv_datasieving (fh, &lock, &lock_counter);
         }
         else {
-            return mca_fbtl_posix_preadv_generic (fh);
+            bytes_read =  mca_fbtl_posix_preadv_generic (fh, &lock, &lock_counter);
         }
     }
     else {
         // i.e. fh->f_num_of_io_entries == 1
         ret = mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, (off_t)fh->f_io_array[0].offset,
-                                    (off_t)fh->f_io_array[0].length, OMPIO_LOCK_ENTIRE_REGION ); 
+                                    (off_t)fh->f_io_array[0].length, OMPIO_LOCK_ENTIRE_REGION,
+                                    &lock_counter ); 
         if ( 0 < ret ) {
             opal_output(1, "mca_fbtl_posix_preadv: error in mca_fbtl_posix_lock() ret=%d: %s",
                         ret, strerror(errno));
             /* Just in case some part of the lock worked */
-            mca_fbtl_posix_unlock ( &lock, fh);
-            return OMPI_ERROR;
+            mca_fbtl_posix_unlock ( &lock, fh, &lock_counter);
+            bytes_read  = OMPI_ERROR;
+            goto exit;
         }
         
         ret_code = pread(fh->fd, fh->f_io_array[0].memory_address, fh->f_io_array[0].length,
                          (off_t)fh->f_io_array[0].offset );
-        mca_fbtl_posix_unlock ( &lock, fh );
+        mca_fbtl_posix_unlock ( &lock, fh, &lock_counter );
         if ( ret_code == -1 ) {
             opal_output(1, "mca_fbtl_posix_preadv: error in (p)read(v):%s", strerror(errno));
-	    return OMPI_ERROR;
+	    bytes_read = OMPI_ERROR;
+            goto exit;
 	}
         
         bytes_read += ret_code;
     }
+
+exit:
+    if ( fh->f_atomicity ) {
+        mca_fbtl_posix_unlock ( &lock, fh, &lock_counter );
+    }
+    
         
     return bytes_read;
 }
 
-ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh)
+ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock, int *lock_counter)
 {
     size_t start, end, len;
     size_t bufsize = 0;
     int ret, i, j;
     ssize_t bytes_read=0, ret_code=0;
-    struct flock lock;
     char *temp_buf = NULL;
     
     int startindex = 0;
@@ -152,23 +179,38 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh)
         }
         
         // Read the entire block.
-        ret = mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, start, len, OMPIO_LOCK_ENTIRE_REGION ); 
+        ret = mca_fbtl_posix_lock ( lock, fh, F_RDLCK, start, len, OMPIO_LOCK_ENTIRE_REGION, lock_counter ); 
         if ( 0 < ret ) {
             opal_output(1, "mca_fbtl_posix_preadv_datasieving: error in mca_fbtl_posix_lock() ret=%d: %s",
                         ret, strerror(errno));
             /* Just in case some part of the lock worked */
-            mca_fbtl_posix_unlock ( &lock, fh);
+            mca_fbtl_posix_unlock ( lock, fh, lock_counter);
             free ( temp_buf);
             return OMPI_ERROR;
         }
+        long unsigned int total_bytes = 0;
+        int retries = 0;
         
-        ret_code = pread (fh->fd, temp_buf, len, start);
-        mca_fbtl_posix_unlock ( &lock, fh);
-        if ( ret_code == -1 ) {
-            opal_output(1, "mca_fbtl_posix_preadv_datasieving: error in (p)read(v):%s", strerror(errno));
-            free ( temp_buf);
-            return OMPI_ERROR;
+        while ( total_bytes < len ) {
+            ret_code = pread (fh->fd, temp_buf+total_bytes, len-total_bytes, start+total_bytes);
+            if ( ret_code == -1 ) {
+                opal_output(1, "mca_fbtl_posix_preadv_datasieving: error in (p)read(v):%s", strerror(errno));
+                free ( temp_buf);
+                return OMPI_ERROR;
+            }
+            if ( ret_code == 0 ) {
+                // end of file
+                retries++;
+                if ( retries == MAX_RETRIES ) {
+                    break;
+                }
+                else {
+                    continue;
+                }
+            }
+            total_bytes += ret_code;
         }
+        mca_fbtl_posix_unlock ( lock, fh, lock_counter);
         
         // Copy out the elements that were requested.
         size_t pos = 0;
@@ -193,11 +235,10 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh)
     return bytes_read;
 }
 
-ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh )
+ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int *lock_counter )
 {
     ssize_t bytes_read=0, ret_code=0;
     struct iovec *iov = NULL;
-    struct flock lock;
     int ret, i;
 
     int block=1;
@@ -247,12 +288,12 @@ ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh )
         
         total_length = (end_offset - (off_t)iov_offset );
         
-        ret = mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, iov_offset, total_length, OMPIO_LOCK_SELECTIVE ); 
+        ret = mca_fbtl_posix_lock ( lock, fh, F_RDLCK, iov_offset, total_length, OMPIO_LOCK_SELECTIVE, lock_counter ); 
         if ( 0 < ret ) {
             opal_output(1, "mca_fbtl_posix_preadv_generic: error in mca_fbtl_posix_lock() ret=%d: %s", ret, strerror(errno));
             free (iov);
             /* Just in case some part of the lock worked */
-            mca_fbtl_posix_unlock ( &lock, fh);
+            mca_fbtl_posix_unlock ( lock, fh, lock_counter);
             return OMPI_ERROR;
         }
 #if defined(HAVE_PREADV)
@@ -261,12 +302,12 @@ ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh )
         if (-1 == lseek (fh->fd, iov_offset, SEEK_SET)) {
             opal_output(1, "mca_fbtl_posix_preadv_generic: error in lseek:%s", strerror(errno));
             free(iov);
-            mca_fbtl_posix_unlock ( &lock, fh );
+            mca_fbtl_posix_unlock ( lock, fh, lock_counter );
             return OMPI_ERROR;
         }
         ret_code = readv (fh->fd, iov, iov_count);
 #endif
-        mca_fbtl_posix_unlock ( &lock, fh );
+        mca_fbtl_posix_unlock ( lock, fh, lock_counter );
         if ( 0 < ret_code ) {
             bytes_read+=ret_code;
         }

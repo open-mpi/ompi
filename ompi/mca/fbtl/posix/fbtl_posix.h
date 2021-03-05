@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2020 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -66,8 +66,9 @@ bool mca_fbtl_posix_progress     ( mca_ompio_request_t *req);
 void mca_fbtl_posix_request_free ( mca_ompio_request_t *req);
 
 int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op, 
-                          OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags);
-void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh );
+                          OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags,
+                          int *lock_counter);
+void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh, int *lock_counter );
 
 
 struct mca_fbtl_posix_request_data_t {
@@ -78,9 +79,10 @@ struct mca_fbtl_posix_request_data_t {
     int            aio_first_active_req; /* first active posted req */
     int            aio_last_active_req;  /* last currently active poted req */
     struct aiocb       *aio_reqs;       /* pointer array of req structures */
-    int          *aio_req_status;       /* array of statuses */
+    int           *aio_req_status;       /* array of statuses */
     ssize_t        aio_total_len;       /* total amount of data written */
     struct flock   aio_lock;            /* lock used for certain file systems */
+    int            aio_lock_counter;    /* to keep track of no. of lock calls */
     ompio_file_t  *aio_fh;       /* pointer back to the mca_io_ompio_fh structure */
 };
 typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
