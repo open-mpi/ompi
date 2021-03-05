@@ -28,14 +28,14 @@ mca_btl_ofi_rdma_completion_t *mca_btl_ofi_rdma_completion_alloc (
                                          void *cbcontext, void *cbdata,
                                          int type)
 {
-    assert(btl);
-    assert(endpoint);
-    assert(ofi_context);
+    OPAL_ASSERT(btl);
+    OPAL_ASSERT(endpoint);
+    OPAL_ASSERT(ofi_context);
 
     mca_btl_ofi_rdma_completion_t *comp;
 
     comp = (mca_btl_ofi_rdma_completion_t*) opal_free_list_get(&ofi_context->rdma_comp_list);
-    assert(comp);
+    OPAL_ASSERT(comp);
 
     comp->base.btl = btl;
     comp->base.endpoint = endpoint;

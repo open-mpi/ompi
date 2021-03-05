@@ -193,7 +193,7 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
     }
 
     /* ensure the caller did not set an invalid flag */
-    assert (!(flags & 0x3f));
+    OPAL_ASSERT(!(flags & 0x3f));
 
     flags &= ~MCA_BASE_PVAR_FLAG_INVALID;
 
@@ -239,7 +239,7 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
     }
 
     /* update this assert if more MPIT verbosity levels are added */
-    assert (verbosity >= OPAL_INFO_LVL_1 && verbosity <= OPAL_INFO_LVL_9);
+    OPAL_ASSERT(verbosity >= OPAL_INFO_LVL_1 && verbosity <= OPAL_INFO_LVL_9);
 
     /* check if this variable is already registered */
     ret = mca_base_pvar_find (project, framework, component, name);
@@ -356,7 +356,7 @@ static int mca_base_pvar_get_internal (int index, mca_base_pvar_t **pvar, bool i
     *pvar = opal_pointer_array_get_item (&registered_pvars, index);
 
     /* variables should never be removed per MPI 3.0 § 14.3.7 */
-    assert (*pvar);
+    OPAL_ASSERT(*pvar);
 
     if (((*pvar)->flags & MCA_BASE_PVAR_FLAG_INVALID) && !invalidok) {
         *pvar = NULL;

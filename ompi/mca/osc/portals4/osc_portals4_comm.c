@@ -470,7 +470,7 @@ create_iov_list(const void       *address,
             iov_index++;
         }
 
-        assert(*ptl_iovec_count == ptl_iovec_index);
+        OPAL_ASSERT(*ptl_iovec_count == ptl_iovec_index);
     } while (!done);
 
     return OMPI_SUCCESS;
@@ -1239,7 +1239,7 @@ put_to_noncontig(opal_atomic_int64_t *opcount,
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != origin_iov_count);
+            OPAL_ASSERT(0 != origin_iov_count);
 
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
@@ -1348,7 +1348,7 @@ atomic_put_to_noncontig(ompi_osc_portals4_module_t *module,
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != origin_iov_count);
+            OPAL_ASSERT(0 != origin_iov_count);
 
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
@@ -1466,7 +1466,7 @@ atomic_to_noncontig(ompi_osc_portals4_module_t *module,
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != origin_iov_count);
+            OPAL_ASSERT(0 != origin_iov_count);
 
             /* determine how much to transfer in this operation */
             atomic_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), module->atomic_max);
@@ -1573,7 +1573,7 @@ get_from_noncontig(opal_atomic_int64_t *opcount,
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != origin_iov_count);
+            OPAL_ASSERT(0 != origin_iov_count);
 
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
@@ -1674,7 +1674,7 @@ atomic_get_from_noncontig(ompi_osc_portals4_module_t *module,
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != origin_iov_count);
+            OPAL_ASSERT(0 != origin_iov_count);
 
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
@@ -1803,8 +1803,8 @@ swap_from_noncontig(ompi_osc_portals4_module_t *module,
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != result_iov_count);
-            assert (0 != origin_iov_count);
+            OPAL_ASSERT(0 != result_iov_count);
+            OPAL_ASSERT(0 != origin_iov_count);
 
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
@@ -1955,8 +1955,8 @@ fetch_atomic_from_noncontig(ompi_osc_portals4_module_t *module,
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != result_iov_count);
-            assert (0 != origin_iov_count);
+            OPAL_ASSERT(0 != result_iov_count);
+            OPAL_ASSERT(0 != origin_iov_count);
 
             /* determine how much to transfer in this operation */
             rdma_len = MIN(MIN(origin_iovec[origin_iov_index].iov_len, target_iovec[target_iov_index].iov_len), max_rdma_len);
@@ -3528,7 +3528,7 @@ ompi_osc_portals4_compare_and_swap(const void *origin_addr,
     ret = ompi_datatype_type_size(dt, &length);
     if (OMPI_SUCCESS != ret) return ret;
 
-    assert(length <= module->fetch_atomic_max);
+    OPAL_ASSERT(length <= module->fetch_atomic_max);
 
     result_md_offset = (ptl_size_t) result_addr;
     origin_md_offset = (ptl_size_t) origin_addr;
@@ -3597,7 +3597,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
     ret = ompi_datatype_type_size(dt, &length);
     if (OMPI_SUCCESS != ret) return ret;
 
-    assert(length <= module->fetch_atomic_max);
+    OPAL_ASSERT(length <= module->fetch_atomic_max);
 
     if (MPI_REPLACE == op) {
         ptl_size_t result_md_offset, origin_md_offset;

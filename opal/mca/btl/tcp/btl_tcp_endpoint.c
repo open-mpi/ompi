@@ -302,7 +302,7 @@ out:
 static inline void mca_btl_tcp_endpoint_event_init(mca_btl_base_endpoint_t* btl_endpoint)
 {
 #if MCA_BTL_TCP_ENDPOINT_CACHE
-    assert(NULL == btl_endpoint->endpoint_cache);
+    OPAL_ASSERT(NULL == btl_endpoint->endpoint_cache);
     btl_endpoint->endpoint_cache     = (char*)malloc(mca_btl_tcp_component.tcp_endpoint_cache);
     btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
@@ -503,7 +503,7 @@ void mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
 {
     struct timeval now = {0, 0};
 
-    assert(btl_endpoint->endpoint_sd_next == -1);
+    OPAL_ASSERT(btl_endpoint->endpoint_sd_next == -1);
     btl_endpoint->endpoint_sd_next = sd;
 
     opal_event_evtimer_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_accept_event,
@@ -591,7 +591,7 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
 static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoint)
 {
     /* setup socket options */
-    assert( MCA_BTL_TCP_CONNECTED != btl_endpoint->endpoint_state );
+    OPAL_ASSERT( MCA_BTL_TCP_CONNECTED != btl_endpoint->endpoint_state );
     btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTED;
     btl_endpoint->endpoint_retries = 0;
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, "READY [endpoint_connected]");
@@ -724,7 +724,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
         addrlen = sizeof (struct sockaddr_in6);
     }
 #endif
-    assert( btl_endpoint->endpoint_sd < 0 );
+    OPAL_ASSERT( btl_endpoint->endpoint_sd < 0 );
     btl_endpoint->endpoint_sd = socket(af_family, SOCK_STREAM, 0);
     if (btl_endpoint->endpoint_sd < 0) {
         btl_endpoint->endpoint_retries++;
@@ -767,7 +767,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
      * can properly pair btl modules, even in cases where Linux
      * might do something unexpected with routing */
     if (endpoint_addr.ss_family == AF_INET) {
-        assert(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr);
+        OPAL_ASSERT(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr);
         if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr,
                  sizeof(struct sockaddr_in)) < 0) {
             BTL_ERROR(("bind on local address (%s:%d) failed: %s (%d)",
@@ -781,7 +781,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     }
 #if OPAL_ENABLE_IPV6
     if (endpoint_addr.ss_family == AF_INET6) {
-        assert(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr);
+        OPAL_ASSERT(NULL != &btl_endpoint->endpoint_btl->tcp_ifaddr);
         if (bind(btl_endpoint->endpoint_sd, (struct sockaddr*) &btl_endpoint->endpoint_btl->tcp_ifaddr,
                  sizeof(struct sockaddr_in6)) < 0) {
             BTL_ERROR(("bind on local address (%s:%d) failed: %s (%d)",
@@ -1012,7 +1012,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
             }
 
 #if MCA_BTL_TCP_ENDPOINT_CACHE
-            assert( 0 == btl_endpoint->endpoint_cache_length );
+            OPAL_ASSERT( 0 == btl_endpoint->endpoint_cache_length );
         data_still_pending_on_endpoint:
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
             /* check for completion of non-blocking recv on the current fragment */
@@ -1043,7 +1043,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                 MCA_BTL_TCP_FRAG_RETURN(frag);
             }
 #if MCA_BTL_TCP_ENDPOINT_CACHE
-            assert( 0 == btl_endpoint->endpoint_cache_length );
+            OPAL_ASSERT( 0 == btl_endpoint->endpoint_cache_length );
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
             break;
@@ -1090,7 +1090,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
             mca_btl_tcp_frag_t* frag = btl_endpoint->endpoint_send_frag;
             int btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
-            assert(btl_endpoint->endpoint_state == MCA_BTL_TCP_CONNECTED);
+            OPAL_ASSERT(btl_endpoint->endpoint_state == MCA_BTL_TCP_CONNECTED);
             if(mca_btl_tcp_frag_send(frag, btl_endpoint->endpoint_sd) == false) {
                 break;
             }
@@ -1100,7 +1100,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void* user)
 
             /* if required - update request status and release fragment */
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
-            assert( frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK );
+            OPAL_ASSERT( frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK );
             frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
             if( btl_ownership ) {
                 MCA_BTL_TCP_FRAG_RETURN(frag);

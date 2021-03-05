@@ -37,6 +37,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/threads/condition.h"
 #include "opal/mca/threads/wait_sync.h"
+#include "opal/util/opal_assert.h"
 #include "ompi/constants.h"
 #include "ompi/runtime/params.h"
 
@@ -457,7 +458,7 @@ redo:
             }
         }
 #endif /* OPAL_ENABLE_FT_MPI */
-        assert(REQUEST_COMPLETE(req));
+        OPAL_ASSERT(REQUEST_COMPLETE(req));
         WAIT_SYNC_RELEASE(&sync);
     } else {
         while(!REQUEST_COMPLETE(req)) {

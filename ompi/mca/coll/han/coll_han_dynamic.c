@@ -117,7 +117,7 @@ mca_coll_han_get_all_coll_modules(struct ompi_communicator_t *comm,
                         topo_lvl, mca_coll_han_topo_lvl_to_str(topo_lvl),
                         nb_modules, comm->c_contextid, comm->c_name);
 
-    assert(0 != nb_modules);
+    OPAL_ASSERT(0 != nb_modules);
 
     /* The modules are get */
     han_module->storage_initialized = true;

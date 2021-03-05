@@ -62,7 +62,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
 
     num_procs = old_comm->c_local_group->grp_proc_count;
     new_rank = old_comm->c_local_group->grp_my_rank;
-    assert(topo->type == OMPI_COMM_CART);
+    OPAL_ASSERT(topo->type == OMPI_COMM_CART);
 
     /* Calculate the number of processes in this grid */
     for (i = 0; i < ndims; ++i) {

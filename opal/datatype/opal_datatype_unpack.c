@@ -138,7 +138,7 @@ opal_unpack_homogeneous_contig_function( opal_convertor_t* pConv,
                 MEMCPY_CSUM( user_memory, packed_buffer, remaining, pConv );
                 stack[1].count -= remaining;
                 stack[1].disp  += remaining;  /* keep the += in case we are copying less that the datatype size */
-                assert( stack[1].count );
+                OPAL_ASSERT( stack[1].count );
             }
         }
     }
@@ -287,7 +287,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             size_t element_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
             size_t missing_length = element_length - pConvertor->partial_length;
 
-            assert( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
+            OPAL_ASSERT( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
             COMPUTE_CSUM( iov_ptr, missing_length, pConvertor );
             opal_unpack_partial_datatype( pConvertor, pElem,
                                           iov_ptr,
@@ -347,7 +347,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
                     if( pStack->index == -1 ) {
                         pStack->disp += (pData->ub - pData->lb);
                     } else {
-                        assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
+                        OPAL_ASSERT( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
                         pStack->disp += description[pStack->index].loop.extent;
                     }
                 }
@@ -379,13 +379,13 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             }
         }
     complete_loop:
-        assert( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
+        OPAL_ASSERT( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
         if( (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) && (0 != iov_len_local) ) {
             unsigned char* temp = conv_ptr;
             /* We have some partial data here. Let's copy it into the convertor
              * and keep it hot until the next round.
              */
-            assert( iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size );
+            OPAL_ASSERT( iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size );
             COMPUTE_CSUM( iov_ptr, iov_len_local, pConvertor );
 
             opal_unpack_partial_datatype( pConvertor, pElem,
@@ -472,7 +472,7 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
-        assert( 0 == pConvertor->partial_length );
+        OPAL_ASSERT( 0 == pConvertor->partial_length );
         while( 1 ) {
             while( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA ) {
                 /* now here we have a basic datatype */
@@ -500,14 +500,14 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                     continue;
                 }
                 conv_ptr += rc * description[pos_desc].elem.extent;
-                assert( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
-                assert( 0 == iov_len_local );
+                OPAL_ASSERT( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
+                OPAL_ASSERT( 0 == iov_len_local );
                 if( 0 != iov_len_local ) {
                     unsigned char* temp = conv_ptr;
                     /* We have some partial data here. Let's copy it into the convertor
                      * and keep it hot until the next round.
                      */
-                    assert( iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size );
+                    OPAL_ASSERT( iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size );
                     COMPUTE_CSUM( iov_ptr, iov_len_local, pConvertor );
 
                     opal_unpack_partial_datatype( pConvertor, pElem,
@@ -537,7 +537,7 @@ opal_unpack_general_function( opal_convertor_t* pConvertor,
                     if( pStack->index == -1 ) {
                         pStack->disp += (pData->ub - pData->lb);
                     } else {
-                        assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
+                        OPAL_ASSERT( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
                         pStack->disp += description[pStack->index].loop.extent;
                     }
                 }

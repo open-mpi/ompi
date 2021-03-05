@@ -106,7 +106,7 @@ int ompi_comm_init(void)
 
     /* Setup MPI_COMM_WORLD */
     OBJ_CONSTRUCT(&ompi_mpi_comm_world, ompi_communicator_t);
-    assert(ompi_mpi_comm_world.comm.c_f_to_c_index == 0);
+    OPAL_ASSERT(ompi_mpi_comm_world.comm.c_f_to_c_index == 0);
     group = OBJ_NEW(ompi_group_t);
 
     size = ompi_process_info.num_procs;
@@ -175,7 +175,7 @@ int ompi_comm_init(void)
     }
     /* Setup MPI_COMM_SELF */
     OBJ_CONSTRUCT(&ompi_mpi_comm_self, ompi_communicator_t);
-    assert(ompi_mpi_comm_self.comm.c_f_to_c_index == 1);
+    OPAL_ASSERT(ompi_mpi_comm_self.comm.c_f_to_c_index == 1);
     group = OBJ_NEW(ompi_group_t);
     group->grp_proc_pointers = ompi_proc_self(&size);
     group->grp_my_rank       = 0;
@@ -207,7 +207,7 @@ int ompi_comm_init(void)
 
     /* Setup MPI_COMM_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_comm_null, ompi_communicator_t);
-    assert(ompi_mpi_comm_null.comm.c_f_to_c_index == 2);
+    OPAL_ASSERT(ompi_mpi_comm_null.comm.c_f_to_c_index == 2);
     ompi_mpi_comm_null.comm.c_local_group  = &ompi_mpi_group_null.group;
     ompi_mpi_comm_null.comm.c_remote_group = &ompi_mpi_group_null.group;
     OBJ_RETAIN(&ompi_mpi_group_null.group);

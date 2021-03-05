@@ -63,6 +63,7 @@ headers = \
         numtostr.h \
         opal_environ.h \
         opal_getcwd.h \
+        opal_assert.h \
         opal_pty.h \
         os_dirpath.h \
         os_path.h \

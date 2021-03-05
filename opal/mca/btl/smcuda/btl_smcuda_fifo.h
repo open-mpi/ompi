@@ -35,7 +35,7 @@ add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
     i = opal_free_list_get (&mca_btl_smcuda_component.pending_send_fl);
 
     /* don't handle error for now */
-    assert(i != NULL);
+    OPAL_ASSERT(i != NULL);
 
     si = (btl_smcuda_pending_send_item_t*)i;
     si->data = data;

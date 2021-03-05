@@ -266,7 +266,7 @@ ompi_mtl_psm2_add_procs(struct mca_mtl_base_module_t *mtl,
     int proc_errors[PSM2_ERROR_LAST] = { 0 };
     int timeout_in_secs;
 
-    assert(mtl == &ompi_mtl_psm2.super);
+    OPAL_ASSERT(mtl == &ompi_mtl_psm2.super);
     rc = OMPI_ERR_OUT_OF_RESOURCE;
 
     errs_out = (psm2_error_t *) malloc(nprocs * sizeof(psm2_error_t));

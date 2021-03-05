@@ -38,6 +38,7 @@
 #include "opal/align.h"
 
 #include "opal/util/proc.h"
+#include "opal/util/opal_assert.h"
 #if OPAL_CUDA_GDR_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_GDR_SUPPORT */
@@ -428,7 +429,7 @@ static int mca_rcache_grdma_find (mca_rcache_base_module_t *rcache, void *addr,
             (mca_rcache_grdma_component.leave_pinned ||
              ((*reg)->flags & MCA_RCACHE_FLAGS_PERSIST) ||
              ((*reg)->base == base && (*reg)->bound == bound))) {
-        assert(((void*)(*reg)->bound) >= addr);
+        OPAL_ASSERT(((void*)(*reg)->bound) >= addr);
         if(0 == (*reg)->ref_count &&
                 mca_rcache_grdma_component.leave_pinned) {
             opal_list_remove_item(&rcache_grdma->cache->lru_list,
@@ -456,7 +457,7 @@ static int mca_rcache_grdma_deregister (mca_rcache_base_module_t *rcache,
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
                          "returning registration %p, remaining references %d", (void *) reg, ref_count));
 
-    assert (ref_count >= 0);
+    OPAL_ASSERT(ref_count >= 0);
     if (ref_count > 0) {
         return OPAL_SUCCESS;
     }

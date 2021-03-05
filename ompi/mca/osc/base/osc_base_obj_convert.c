@@ -61,7 +61,7 @@ ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
     ompi_datatype_type_size( primitive_datatype, &primitive_size );
     primitive_count = datatype_size / primitive_size;
 #if OPAL_ENABLE_DEBUG
-    assert( 0 == (datatype_size % primitive_size) );
+    OPAL_ASSERT( 0 == (datatype_size % primitive_size) );
 #endif  /* OPAL_ENABLE_DEBUG */
 
     /* We now have the count as a size_t, convert it to an uint32_t */
@@ -123,7 +123,7 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
              * datatype. */
             (void)ompi_datatype_type_size(datatype, &size);
             count *= (size / primitive_size);
-            assert( 0 == (size % primitive_size) );
+            OPAL_ASSERT( 0 == (size % primitive_size) );
 
             /* in case it is possible for the datatype to have a non-zero lb in this case.
              * remove me if this is not possible */
@@ -223,7 +223,7 @@ int ompi_osc_base_sndrcv_op (const void *origin, int32_t origin_count,
             }
 
             /* we already checked that the target was large enough. this should be impossible */
-            assert (0 != target_iov_count);
+            OPAL_ASSERT(0 != target_iov_count);
 
             /* determine how much to accumulate */
             if (target_iovec[target_iov_index].iov_len < origin_iovec[origin_iov_index].iov_len) {

@@ -47,6 +47,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/util/error.h"
+#include "opal/util/opal_assert.h"
 #include "opal/runtime/opal_params.h"
 
 #include "ompi/communicator/communicator.h"
@@ -98,7 +99,7 @@ static void try_kill_peers(ompi_communicator_t *comm,
             /* Don't include this process in the array */
             --nprocs;
         } else {
-            assert(count <= nprocs);
+            OPAL_ASSERT(count <= nprocs);
             procs[count++] =
                 *OMPI_CAST_RTE_NAME(&ompi_group_get_proc_ptr(comm->c_remote_group, i, true)->super.proc_name);
         }
@@ -106,7 +107,7 @@ static void try_kill_peers(ompi_communicator_t *comm,
 
     /* if requested, kill off remote group procs too */
     for (i = 0; i < ompi_comm_remote_size(comm); ++i) {
-        assert(count <= nprocs);
+        OPAL_ASSERT(count <= nprocs);
         procs[count++] =
             *OMPI_CAST_RTE_NAME(&ompi_group_get_proc_ptr(comm->c_remote_group, i, true)->super.proc_name);
     }

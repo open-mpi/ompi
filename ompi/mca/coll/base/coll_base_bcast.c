@@ -56,7 +56,7 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
 #if OPAL_ENABLE_DEBUG
     int size;
     size = ompi_comm_size(comm);
-    assert( size > 1 );
+    OPAL_ASSERT( size > 1 );
 #endif
     rank = ompi_comm_rank(comm);
 

@@ -116,7 +116,7 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
     int pos;
     ompi_datatype_args_t* pArgs;
 
-    assert( NULL == pData->args );
+    OPAL_ASSERT( NULL == pData->args );
     ALLOC_ARGS( pData, ci, ca, cd );
 
     pArgs = (ompi_datatype_args_t*)pData->args;
@@ -397,7 +397,7 @@ int32_t ompi_datatype_release_args( ompi_datatype_t* pData )
     int i;
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)pData->args;
 
-    assert( 0 < pArgs->ref_count );
+    OPAL_ASSERT( 0 < pArgs->ref_count );
     OPAL_THREAD_ADD_FETCH32(&pArgs->ref_count, -1);
     if( 0 == pArgs->ref_count ) {
         /* There are some duplicated datatypes around that have a pointer to this
@@ -507,7 +507,7 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
                  * If not reassess the size of the packed buffer necessary for holding the
                  * datatype description.
                  */
-                assert(args->total_pack_size >= (uintptr_t)((char*)recursive_buffer - (char *) packed_description));
+                OPAL_ASSERT(args->total_pack_size >= (uintptr_t)((char*)recursive_buffer - (char *) packed_description));
                 args->total_pack_size = (uintptr_t)((char*)recursive_buffer - (char *) packed_description);
             }
 
@@ -550,8 +550,8 @@ size_t ompi_datatype_pack_description_length( ompi_datatype_t* datatype )
             return 0;
         }
     }
-    assert( NULL != (ompi_datatype_args_t*)datatype->args );
-    assert( NULL != (ompi_datatype_args_t*)datatype->packed_description );
+    OPAL_ASSERT( NULL != (ompi_datatype_args_t*)datatype->args );
+    OPAL_ASSERT( NULL != (ompi_datatype_args_t*)datatype->packed_description );
     return ((ompi_datatype_args_t*)datatype->args)->total_pack_size;
 }
 
@@ -593,7 +593,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
             data_id = opal_swap_bytes4(data_id);
         }
 #endif
-        assert( data_id < OMPI_DATATYPE_MAX_PREDEFINED );
+        OPAL_ASSERT( data_id < OMPI_DATATYPE_MAX_PREDEFINED );
         *packed_buffer = position + 2;
         return (ompi_datatype_t*)ompi_datatype_basicDatatypes[data_id];
     }
@@ -691,7 +691,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     case MPI_COMBINER_DUP:
         /* should we duplicate d[0]? */
         /* ompi_datatype_set_args( datatype, 0, NULL, 0, NULL, 1, d[0], MPI_COMBINER_DUP ); */
-        assert(0);  /* shouldn't happen */
+        OPAL_ASSERT(0);  /* shouldn't happen */
         break;
         /******************************************************************/
     case MPI_COMBINER_CONTIGUOUS:

@@ -418,7 +418,7 @@ do {                                                                            
  */
 #define MCA_PML_CM_HVY_SEND_REQUEST_PML_COMPLETE(sendreq)                          \
 do {                                                                               \
-    assert( false == sendreq->req_send.req_base.req_pml_complete );                \
+    OPAL_ASSERT( false == sendreq->req_send.req_base.req_pml_complete );                \
                                                                                    \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&           \
         sendreq->req_count > 0 ) {                                                 \
@@ -467,7 +467,7 @@ do {                                                                            
  */
 #define MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(sendreq)                   \
 do {                                                                         \
-    assert( false == sendreq->req_send.req_base.req_pml_complete );          \
+    OPAL_ASSERT( false == sendreq->req_send.req_base.req_pml_complete );          \
                                                                              \
     if( !REQUEST_COMPLETE(&sendreq->req_send.req_base.req_ompi)) {           \
         /* Should only be called for long messages (maybe synchronous) */    \

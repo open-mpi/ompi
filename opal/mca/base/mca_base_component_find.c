@@ -178,7 +178,7 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
     bool include_mode, can_use;
     int ret;
 
-    assert (NULL != components);
+    OPAL_ASSERT(NULL != components);
 
     if (0 == filter_flags && NULL == framework->framework_selection) {
         return OPAL_SUCCESS;

@@ -31,7 +31,7 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
             return ret;
         }
 
-        assert((int64_t)result_value >= 0);
+        OPAL_ASSERT((int64_t)result_value >= 0);
         if (result_value >= TARGET_LOCK_EXCLUSIVE) {
             ret = opal_common_ucx_wpmem_post(module->state_mem,
                                            UCP_ATOMIC_POST_OP_ADD, (-1), target,
@@ -99,7 +99,7 @@ int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *
         }
     } else {
         ompi_osc_ucx_lock_t *item = NULL;
-        assert(module->epoch_type.access == PASSIVE_EPOCH);
+        OPAL_ASSERT(module->epoch_type.access == PASSIVE_EPOCH);
         opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target, (void **) &item);
         if (item != NULL) {
             return OMPI_ERR_RMA_SYNC;
@@ -108,7 +108,7 @@ int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *
 
     module->epoch_type.access = PASSIVE_EPOCH;
     module->lock_count++;
-    assert(module->lock_count <= ompi_comm_size(module->comm));
+    OPAL_ASSERT(module->lock_count <= ompi_comm_size(module->comm));
 
     lock = OBJ_NEW(ompi_osc_ucx_lock_t);
     lock->target_rank = target;
@@ -169,7 +169,7 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
     OBJ_RELEASE(lock);
 
     module->lock_count--;
-    assert(module->lock_count >= 0);
+    OPAL_ASSERT(module->lock_count >= 0);
     if (module->lock_count == 0) {
         module->epoch_type.access = NONE_EPOCH;
     }
@@ -210,7 +210,7 @@ int ompi_osc_ucx_lock_all(int assert, struct ompi_win_t *win) {
     } else {
         module->lock_all_is_nocheck = true;
     }
-    assert(OMPI_SUCCESS == ret);
+    OPAL_ASSERT(OMPI_SUCCESS == ret);
     return OMPI_SUCCESS;
 }
 
@@ -223,7 +223,7 @@ int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    assert(module->lock_count == 0);
+    OPAL_ASSERT(module->lock_count == 0);
 
     ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
     if (ret != OMPI_SUCCESS) {

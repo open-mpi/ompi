@@ -489,7 +489,7 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
 
         if (!ompi_osc_rdma_peer_local_state (peer)) {
             ret = ompi_osc_rdma_lock_btl_op (module, peer, target, MCA_BTL_ATOMIC_ADD, 1, true);
-            assert (OMPI_SUCCESS == ret);
+            OPAL_ASSERT(OMPI_SUCCESS == ret);
         } else {
             (void) ompi_osc_rdma_counter_add ((osc_rdma_atomic_counter_t *) target, 1);
         }

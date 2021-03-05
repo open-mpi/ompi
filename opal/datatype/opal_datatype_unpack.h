@@ -49,7 +49,7 @@ unpack_partial_blocklen( opal_convertor_t* CONVERTOR,
     unsigned char* _memory = (*memory) + _elem->disp;
     unsigned char* _packed = *packed;
 
-    assert( *(COUNT) <= ((size_t)(_elem->count * _elem->blocklen)) );
+    OPAL_ASSERT( *(COUNT) <= ((size_t)(_elem->count * _elem->blocklen)) );
 
     /**
      * First check if we already did something on this element ? The COUNT is the number
@@ -96,8 +96,8 @@ unpack_predefined_data( opal_convertor_t* CONVERTOR,
     unsigned char* _memory = (*memory) + _elem->disp;
     unsigned char* _packed = *packed;
 
-    assert( 0 == (cando_count % _elem->blocklen) );  /* no partials here */
-    assert( *(COUNT) <= ((size_t)_elem->count * _elem->blocklen) );
+    OPAL_ASSERT( 0 == (cando_count % _elem->blocklen) );  /* no partials here */
+    OPAL_ASSERT( *(COUNT) <= ((size_t)_elem->count * _elem->blocklen) );
 
     if( (blocklen_bytes * cando_count) > *(SPACE) )
         cando_count = (*SPACE) / blocklen_bytes;
@@ -144,7 +144,7 @@ unpack_predefined_data( opal_convertor_t* CONVERTOR,
      * As an epilog do anything left from the last blocklen.
      */
     if( 0 != cando_count ) {
-        assert( (cando_count < _elem->blocklen) ||
+        OPAL_ASSERT( (cando_count < _elem->blocklen) ||
                 ((1 == _elem->count) && (cando_count <= _elem->blocklen)) );
         do_now_bytes = cando_count * opal_datatype_basicDatatypes[_elem->common.type]->size;
         OPAL_DATATYPE_SAFEGUARD_POINTER( _memory, do_now_bytes, (CONVERTOR)->pBaseBuf,

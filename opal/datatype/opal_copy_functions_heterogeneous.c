@@ -125,7 +125,7 @@ opal_dt_swap_long_double(void *to_p, const void *from_p, const size_t size, size
 #endif
     }
 #else
-    assert(0);
+    OPAL_ASSERT(0);
 #endif
 }
 #else

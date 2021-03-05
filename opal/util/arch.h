@@ -23,8 +23,8 @@
 #include "opal_config.h"
 
 #include <float.h>
-#include <assert.h>
 
+#include "opal/util/opal_assert.h"
 
 /***************************************************
 ** This file tries to classify the most relevant

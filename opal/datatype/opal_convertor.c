@@ -206,7 +206,7 @@ opal_convertor_t* opal_convertor_create( int32_t remote_arch, int32_t mode )
         (CONVERTOR)->checksum = OPAL_CSUM_ZERO;                         \
         (CONVERTOR)->csum_ui1 = 0;                                      \
         (CONVERTOR)->csum_ui2 = 0;                                      \
-        assert( (CONVERTOR)->bConverted < (CONVERTOR)->local_size );    \
+        OPAL_ASSERT( (CONVERTOR)->bConverted < (CONVERTOR)->local_size );    \
     } while(0)
 
 /**
@@ -367,7 +367,7 @@ opal_convertor_create_stack_with_pos_contig( opal_convertor_t* pConvertor,
 
     pConvertor->bConverted = starting_point;
     pConvertor->stack_pos = 1;
-    assert( 0 == pConvertor->partial_length );
+    OPAL_ASSERT( 0 == pConvertor->partial_length );
     return OPAL_SUCCESS;
 }
 
@@ -536,9 +536,9 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
             }                                                           \
         }                                                               \
                                                                         \
-        assert( (convertor)->pDesc == (datatype) );                     \
+        OPAL_ASSERT( (convertor)->pDesc == (datatype) );                     \
         opal_convertor_compute_remote_size( convertor );                \
-        assert( NULL != convertor->use_desc->desc );                    \
+        OPAL_ASSERT( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled then always continue */               \
         if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | OPAL_DATATYPE_FLAG_NO_GAPS)) \
@@ -552,7 +552,7 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
             uint32_t required_stack_length = datatype->loops + 1;       \
                                                                         \
             if( required_stack_length > convertor->stack_size ) {       \
-                assert(convertor->pStack == convertor->static_stack);   \
+                OPAL_ASSERT(convertor->pStack == convertor->static_stack);   \
                 convertor->stack_size = required_stack_length;          \
                 convertor->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * \
                                                             convertor->stack_size ); \
@@ -576,7 +576,7 @@ int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
     }
 #endif
 
-    assert(! (convertor->flags & CONVERTOR_SEND));
+    OPAL_ASSERT(! (convertor->flags & CONVERTOR_SEND));
     OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
 #if defined(CHECKSUM)

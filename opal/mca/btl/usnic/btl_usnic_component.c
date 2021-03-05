@@ -512,7 +512,7 @@ static usnic_if_filter_t *parse_ifex_str(const char *orig_str,
 
         free(tmp);
     }
-    assert(i == n_argv); /* sanity */
+    OPAL_ASSERT(i == n_argv); /* sanity */
 
     opal_argv_free(argv);
 
@@ -1150,10 +1150,10 @@ static int usnic_component_progress(void)
             module = mca_btl_usnic_component.usnic_active_modules[i];
             channel = &module->mod_channels[USNIC_PRIORITY_CHANNEL];
 
-            assert(channel->chan_deferred_recv == NULL);
+            OPAL_ASSERT(channel->chan_deferred_recv == NULL);
 
             int ret = fi_cq_read(channel->cq, &completion, 1);
-            assert(0 != ret);
+            OPAL_ASSERT(0 != ret);
             if (OPAL_LIKELY(1 == ret)) {
                 opal_memchecker_base_mem_defined(&completion,
                                                  sizeof(completion));
@@ -1332,7 +1332,7 @@ static int usnic_component_progress_2(bool check_priority)
             num_events = ret =
                 fi_cq_read(channel->cq, completions,
                            OPAL_BTL_USNIC_NUM_COMPLETIONS);
-            assert(0 != ret);
+            OPAL_ASSERT(0 != ret);
             opal_memchecker_base_mem_defined(&ret, sizeof(ret));
             if (OPAL_UNLIKELY(ret < 0 && -FI_EAGAIN != ret)) {
                 usnic_handle_cq_error(module, channel, num_events);

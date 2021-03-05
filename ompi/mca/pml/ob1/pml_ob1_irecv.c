@@ -261,7 +261,7 @@ mca_pml_ob1_imrecv( void *buf,
                                                frag->num_segments);
         break;
     default:
-        assert(0);
+        OPAL_ASSERT(0);
     }
     MCA_PML_OB1_RECV_FRAG_RETURN(frag);
 
@@ -353,7 +353,7 @@ mca_pml_ob1_mrecv( void *buf,
                                                frag->num_segments);
         break;
     default:
-        assert(0);
+        OPAL_ASSERT(0);
     }
 
     ompi_message_return(*message);

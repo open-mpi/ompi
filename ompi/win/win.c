@@ -79,7 +79,7 @@ ompi_win_init(void)
 {
     int ret;
 
-    assert (sizeof (ompi_predefined_win_t) >= sizeof (ompi_win_t));
+    OPAL_ASSERT(sizeof (ompi_predefined_win_t) >= sizeof (ompi_win_t));
 
     /* setup window Fortran array */
     OBJ_CONSTRUCT(&ompi_mpi_windows, opal_pointer_array_t);

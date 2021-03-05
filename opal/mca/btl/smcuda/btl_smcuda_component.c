@@ -789,7 +789,7 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
 
         smcuda_btl->error_cb(&smcuda_btl->super, MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC,
                              ep_proc, (char *)&mca_btl_smcuda_component.cuda_ipc_output);
-        assert(endpoint->ipcstate == IPC_SENT);
+        OPAL_ASSERT(endpoint->ipcstate == IPC_SENT);
         endpoint->ipcstate = IPC_ACKED;
         break;
 

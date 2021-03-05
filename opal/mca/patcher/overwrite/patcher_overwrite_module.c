@@ -19,6 +19,7 @@
 #include "opal/constants.h"
 #include "opal/util/sys_limits.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_assert.h"
 #include "opal/prefetch.h"
 
 #include <stdio.h>
@@ -28,7 +29,6 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <dlfcn.h>
-#include <assert.h>
 
 #if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
 

@@ -74,7 +74,7 @@ void mca_pml_ob1_recv_request_process_pending(void)
 static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 {
     mca_pml_ob1_recv_request_t* recvreq = *(mca_pml_ob1_recv_request_t**)request;
-    assert (false == recvreq->req_recv.req_base.req_free_called);
+    OPAL_ASSERT (false == recvreq->req_recv.req_base.req_free_called);
 
     recvreq->req_recv.req_base.req_free_called = true;
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
@@ -110,7 +110,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
         return OMPI_SUCCESS;
     }
     if( !request->req_match_received ) { /* the match has not been already done */
-        assert( OMPI_ANY_TAG == ompi_request->req_status.MPI_TAG ); /* not matched isn't it */
+        OPAL_ASSERT( OMPI_ANY_TAG == ompi_request->req_status.MPI_TAG ); /* not matched isn't it */
 #if MCA_PML_OB1_CUSTOM_MATCH
         custom_match_prq_cancel(ob1_comm->prq, request);
 #else
@@ -223,7 +223,7 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
 
     OPAL_THREAD_ADD_FETCH32(&recvreq->req_pipeline_depth, -1);
 
-    assert ((uint64_t) rdma_size == frag->rdma_length);
+    OPAL_ASSERT ((uint64_t) rdma_size == frag->rdma_length);
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
 
     if (OPAL_LIKELY(0 < rdma_size)) {
@@ -1403,7 +1403,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                                                        frag->num_segments);
                 break;
             default:
-                assert(0);
+                OPAL_ASSERT(0);
             }
 
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);

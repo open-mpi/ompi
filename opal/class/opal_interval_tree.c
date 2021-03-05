@@ -477,7 +477,7 @@ static opal_interval_tree_node_t *opal_interval_tree_node_copy (opal_interval_tr
 {
     opal_interval_tree_node_t *copy = (opal_interval_tree_node_t *) opal_free_list_wait_st (&tree->free_list);
     size_t color_offset = offsetof(opal_interval_tree_node_t, color);
-    assert (NULL != copy);
+    OPAL_ASSERT(NULL != copy);
     memcpy ((unsigned char *) copy + color_offset, (unsigned char *) node + color_offset,
             sizeof (*node) - color_offset);
     return copy;
@@ -490,7 +490,7 @@ static void opal_interval_tree_delete_leaf (opal_interval_tree_t *tree, opal_int
     opal_interval_tree_node_t **parent_ptr, *next, *parent = node->parent;
     opal_interval_tree_nodecolor_t color = node->color;
 
-    assert (node->left == nill || node->right == nill);
+    OPAL_ASSERT(node->left == nill || node->right == nill);
 
     parent_ptr = (parent->right == node) ? &parent->right : &parent->left;
 
@@ -646,7 +646,7 @@ static void opal_interval_tree_insert_node (opal_interval_tree_t *tree, opal_int
     while (n != nill) {
         check = opal_interval_tree_compare_node(n, node->low, node->high, node->data);
         /* node already exists */
-        assert (0 != check);
+        OPAL_ASSERT(0 != check);
 
         if (n->max < node->high) {
             n->max = node->high;
@@ -654,7 +654,7 @@ static void opal_interval_tree_insert_node (opal_interval_tree_t *tree, opal_int
 
         parent = n;
         n = (-1 == check) ? n->left : n->right;
-        assert (nill == n || n->parent == parent);
+        OPAL_ASSERT(nill == n || n->parent == parent);
     }
 
     /* place it on either the left or the right */

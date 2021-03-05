@@ -304,7 +304,7 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
         ompi_comm_free(&intermediate_comm);
     }
 
-    assert(NULL == (*newcomm)->c_topo);
+    OPAL_ASSERT(NULL == (*newcomm)->c_topo);
     (*newcomm)->c_topo             = module;
     (*newcomm)->c_topo->reorder    = reorder;
     (*newcomm)->c_flags           |= OMPI_COMM_DIST_GRAPH;

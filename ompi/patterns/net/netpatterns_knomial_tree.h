@@ -17,6 +17,7 @@
 #define COMM_PATTERNS_KNOMIAL_TREE_H
 
 #include "ompi_config.h"
+#include "opal/util/opal_assert.h"
 
 BEGIN_C_DECLS
 
@@ -245,7 +246,7 @@ do {                                                                            
     if (rank_radix_base != peer/step_info.k_level) {                                            \
         /* Wraparound the number */                                                             \
         peer -= step_info.k_level;                                                              \
-        assert(peer >=0);                                                                       \
+        OPAL_ASSERT(peer >=0);                                                                  \
     }                                                                                           \
     ++step_info.k_step;                                                                         \
     if (radix == step_info.k_step) {                                                            \

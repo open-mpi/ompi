@@ -973,7 +973,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
         default:
             /* This should not happen */
-            assert(0);
+            OPAL_ASSERT(0);
             break;
         }
         /* Did the callback return non-MPI_SUCCESS? */
@@ -1073,7 +1073,7 @@ static int ompi_attr_delete_impl(ompi_attribute_type_t type, void *object,
 
         default:
             /* This should not happen */
-            assert(0);
+            OPAL_ASSERT(0);
             break;
         }
         if (MPI_SUCCESS != ret) {
@@ -1232,7 +1232,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
 
         default:
             /* This should not happen */
-            assert(0);
+            OPAL_ASSERT(0);
             break;
         }
         if (MPI_SUCCESS != ret) {
@@ -1247,7 +1247,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
     if ((OMPI_SUCCESS != ret ) || (NULL == keyval)) {
         /* Keyval has disappeared underneath us -- this shouldn't
            happen! */
-        assert(0);
+        OPAL_ASSERT(0);
         return OMPI_ERR_BAD_PARAM;
     }
 

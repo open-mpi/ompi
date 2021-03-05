@@ -81,7 +81,7 @@ coll_base_comm_destruct(mca_coll_base_comm_t *data)
         data->mcct_reqs = NULL;
         data->mcct_num_reqs = 0;
     }
-    assert(0 == data->mcct_num_reqs);
+    OPAL_ASSERT(0 == data->mcct_num_reqs);
 
     /* free any cached information that has been allocated */
     if (data->cached_ntree) { /* destroy general tree if defined */

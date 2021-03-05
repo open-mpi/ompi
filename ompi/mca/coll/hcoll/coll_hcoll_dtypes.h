@@ -249,7 +249,7 @@ static int hcoll_type_attr_del_fn(MPI_Datatype type, int keyval, void *attr_val,
     mca_coll_hcoll_dtype_t *dtype =
         (mca_coll_hcoll_dtype_t*) attr_val;
 
-    assert(dtype);
+    OPAL_ASSERT(dtype);
     if (&zero_dte_mapping == dtype) {
         return OMPI_SUCCESS;
     }

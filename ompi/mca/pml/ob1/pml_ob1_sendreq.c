@@ -183,7 +183,7 @@ static void mca_pml_ob1_send_request_destruct(mca_pml_ob1_send_request_t* req)
 {
     OBJ_DESTRUCT(&req->req_send_ranges);
     OBJ_DESTRUCT(&req->req_send_range_lock);
-    assert( NULL == req->rdma_frag );
+    OPAL_ASSERT( NULL == req->rdma_frag );
 }
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_send_request_t,
@@ -1058,7 +1058,7 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
         size_t size, offset, data_remaining = 0;
         mca_bml_base_btl_t* bml_btl;
 
-        assert(range->range_send_length != 0);
+        OPAL_ASSERT(range->range_send_length != 0);
 
         if(prev_bytes_remaining == range->range_send_length)
             num_fail++;
@@ -1068,7 +1068,7 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
         prev_bytes_remaining = range->range_send_length;
 
         if( OPAL_UNLIKELY(num_fail == range->range_btl_cnt) ) {
-            /*TODO : assert(sendreq->req_pending == MCA_PML_OB1_SEND_PENDING_NONE); */
+            /*TODO : OPAL_ASSERT(sendreq->req_pending == MCA_PML_OB1_SEND_PENDING_NONE); */
             add_request_to_send_pending(sendreq,
                     MCA_PML_OB1_SEND_PENDING_SCHEDULE, true);
             /* Note that request remains locked. send_request_process_pending()

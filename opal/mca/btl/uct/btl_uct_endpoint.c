@@ -245,7 +245,7 @@ static int mca_btl_uct_endpoint_connect_endpoint (mca_btl_uct_module_t *uct_btl,
     ucs_status_t ucs_status;
     int rc;
 
-    assert (NULL != conn_tl);
+    OPAL_ASSERT(NULL != conn_tl);
 
     BTL_VERBOSE(("connecting endpoint to remote endpoint"));
 
@@ -343,7 +343,7 @@ int mca_btl_uct_endpoint_connect (mca_btl_uct_module_t *uct_btl, mca_btl_uct_end
     int rc;
 
     /* only two types of endpoints at this time */
-    assert (tl_index < 2);
+    OPAL_ASSERT(tl_index < 2);
 
     if (OPAL_UNLIKELY(NULL == tl)) {
         return OPAL_ERR_UNREACH;

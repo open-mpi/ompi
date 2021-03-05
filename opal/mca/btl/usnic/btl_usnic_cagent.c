@@ -12,7 +12,6 @@
 
 #include "opal_config.h"
 
-#include <assert.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -30,6 +29,7 @@
 #include "opal/util/fd.h"
 #include "opal/util/string_copy.h"
 #include "opal/util/printf.h"
+#include "opal/util/opal_assert.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_connectivity.h"
@@ -474,7 +474,7 @@ static void agent_thread_receive_ping(int fd, short flags, void *context)
 {
     agent_udp_port_listener_t *listener =
         (agent_udp_port_listener_t *) context;
-    assert(NULL != listener);
+    OPAL_ASSERT(NULL != listener);
 
     /* Receive the message */
     ssize_t numbytes;
@@ -962,7 +962,7 @@ static void agent_thread_ipc_receive(int fd, short flags, void *context)
         /* Will not return */
     }
 
-    assert(CONNECTIVITY_AGENT_CMD_LISTEN == command ||
+    OPAL_ASSERT(CONNECTIVITY_AGENT_CMD_LISTEN == command ||
            CONNECTIVITY_AGENT_CMD_PING == command ||
            CONNECTIVITY_AGENT_CMD_UNLISTEN == command);
 
@@ -1188,7 +1188,7 @@ int opal_btl_usnic_connectivity_agent_init(void)
     unlink(ipc_filename);
 
     struct sockaddr_un address;
-    assert(strlen(ipc_filename) < sizeof(address.sun_path));
+    OPAL_ASSERT(strlen(ipc_filename) < sizeof(address.sun_path));
 
     memset(&address, 0, sizeof(struct sockaddr_un));
     address.sun_family = AF_UNIX;

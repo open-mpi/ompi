@@ -145,7 +145,7 @@ static void mca_btl_uct_tl_constructor (mca_btl_uct_tl_t *tl)
 
 static void mca_btl_uct_tl_destructor (mca_btl_uct_tl_t *tl)
 {
-    assert (((opal_object_t *) tl)->obj_reference_count == 0);
+    OPAL_ASSERT(((opal_object_t *) tl)->obj_reference_count == 0);
 
     for (int context_id = 0 ; context_id < MCA_BTL_UCT_MAX_WORKERS ; ++context_id) {
         if (NULL != tl->uct_dev_contexts[context_id]) {
@@ -202,7 +202,7 @@ int mca_btl_uct_process_connection_request (mca_btl_uct_module_t *module, mca_bt
         return UCS_ERR_UNREACHABLE;
     }
 
-    assert (req->type < 2);
+    OPAL_ASSERT(req->type < 2);
 
     ep_flags = opal_atomic_fetch_or_32 (&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC);
 

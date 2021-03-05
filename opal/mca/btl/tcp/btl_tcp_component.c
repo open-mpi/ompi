@@ -430,7 +430,7 @@ static int mca_btl_tcp_component_close(void)
             }
             /* wait until the TCP progress thread completes */
             opal_thread_join(&mca_btl_tcp_progress_thread, &ret);
-            assert( -1 == mca_btl_tcp_progress_thread_trigger );
+            OPAL_ASSERT( -1 == mca_btl_tcp_progress_thread_trigger );
         }
         opal_event_del(&mca_btl_tcp_component.tcp_recv_thread_async_event);
         opal_event_base_free(mca_btl_tcp_event_base);
@@ -897,7 +897,7 @@ static void mca_btl_tcp_component_event_async_handler(int fd, short unused, void
     int rc;
 
     rc = read(fd, (void*)&event, sizeof(opal_event_t*));
-    assert( fd == mca_btl_tcp_pipe_to_progress[0] );
+    OPAL_ASSERT( fd == mca_btl_tcp_pipe_to_progress[0] );
     if( 0 == rc ) {
         /* The main thread closed the pipe to trigger the shutdown procedure */
         opal_thread_t* current_thread = (opal_thread_t*)context;
@@ -1398,7 +1398,7 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
         }
         mca_btl_tcp_set_socket_options(sd);
 
-        assert( NULL != mca_btl_tcp_event_base );
+        OPAL_ASSERT( NULL != mca_btl_tcp_event_base );
         /* wait for receipt of peers process identifier to complete this connection */
         event = OBJ_NEW(mca_btl_tcp_event_t);
         opal_event_set(mca_btl_tcp_event_base, &(event->event), sd,

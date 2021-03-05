@@ -65,7 +65,7 @@ int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype
     }
 
     *datatype = mca_to_mpi_datatypes[type];
-    assert (*datatype);
+    OPAL_ASSERT(*datatype);
 
     return OMPI_SUCCESS;
 }

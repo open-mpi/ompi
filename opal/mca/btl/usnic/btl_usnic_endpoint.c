@@ -100,7 +100,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     /* fragment reassembly info */
     endpoint->endpoint_rx_frag_info =
         calloc(sizeof(struct opal_btl_usnic_rx_frag_info_t), MAX_ACTIVE_FRAGS);
-    assert(NULL != endpoint->endpoint_rx_frag_info);
+    OPAL_ASSERT(NULL != endpoint->endpoint_rx_frag_info);
     if (OPAL_UNLIKELY(endpoint->endpoint_rx_frag_info == NULL)) {
         BTL_ERROR(("calloc returned NULL -- this should not happen!"));
         opal_btl_usnic_exit(endpoint->endpoint_module);

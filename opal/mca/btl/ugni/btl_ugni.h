@@ -37,11 +37,11 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/util/opal_assert.h"
 
 #include <errno.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include <assert.h>
 #include <sys/time.h>
 #include <gni_pub.h>
 

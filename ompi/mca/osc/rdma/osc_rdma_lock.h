@@ -45,7 +45,7 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, struct 
     int ret = OPAL_ERROR;
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
-    assert (NULL != pending_op);
+    OPAL_ASSERT(NULL != pending_op);
 
     if (!wait_for_completion) {
         /* NTH: need to keep track of pending ops to avoid a potential teardown problem */
@@ -126,7 +126,7 @@ static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, struct m
     }
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
-    assert (NULL != pending_op);
+    OPAL_ASSERT(NULL != pending_op);
     OBJ_RETAIN(pending_op);
     if (cbfunc) {
         pending_op->cbfunc = cbfunc;
@@ -189,7 +189,7 @@ static inline int ompi_osc_rdma_btl_cswap (ompi_osc_rdma_module_t *module, struc
     int ret;
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
-    assert (NULL != pending_op);
+    OPAL_ASSERT(NULL != pending_op);
 
     OBJ_RETAIN(pending_op);
 

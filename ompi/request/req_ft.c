@@ -32,6 +32,7 @@
 #include "ompi/mca/pml/pml.h"
 
 #include "opal/mca/backtrace/backtrace.h"
+#include "opal/util/opal_assert.h"
 
 /**************************
  * Support Routines
@@ -70,7 +71,7 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
     /*
      * Sanity check
      */
-    assert( NULL != req->req_mpi_object.comm );
+    OPAL_ASSERT( NULL != req->req_mpi_object.comm );
 
     /*
      * If the request is complete, then just skip it
@@ -142,7 +143,7 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
                                   OMPI_COMM_IS_INTER(req->req_mpi_object.comm))) ) {
         req->req_status.MPI_SOURCE = pml_req->req_peer;
         req->req_status.MPI_ERROR  = MPI_ERR_PROC_FAILED;
-        assert(MPI_ANY_SOURCE != pml_req->req_peer); /* this case is handled above, so... */
+        OPAL_ASSERT(MPI_ANY_SOURCE != pml_req->req_peer); /* this case is handled above, so... */
         opal_output_verbose(10, ompi_ftmpi_output_handle,
                             "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm %s(%d) mpi_source %3d failed - Ret %s",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag,

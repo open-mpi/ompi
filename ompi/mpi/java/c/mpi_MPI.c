@@ -76,6 +76,7 @@
 
 #include "opal/util/output.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/util/opal_assert.h"
 #include "opal/mca/base/mca_base_var.h"
 
 #include "mpi.h"
@@ -448,7 +449,7 @@ static int getTypeExtent(JNIEnv *env, MPI_Datatype type)
     int rc = MPI_Type_get_extent(type, &lb, &extent);
     ompi_java_exceptionCheck(env, rc);
     int value = extent;
-    assert(((MPI_Aint)value) == extent);
+    OPAL_ASSERT(((MPI_Aint)value) == extent);
     return value;
 }
 
@@ -487,7 +488,7 @@ static void getArrayRegion(JNIEnv *env, jobject buf, int baseType,
             (*env)->GetByteArrayRegion(env, buf, offset, length, ptr);
             break;
         default:
-            assert(0);
+            OPAL_ASSERT(0);
     }
 }
 
@@ -526,7 +527,7 @@ static void setArrayRegion(JNIEnv *env, jobject buf, int baseType,
             (*env)->SetByteArrayRegion(env, buf, offset, length, ptr);
             break;
         default:
-            assert(0);
+            OPAL_ASSERT(0);
     }
 }
 
@@ -561,7 +562,7 @@ static void releaseBuffer(void *ptr, ompi_java_buffer_t *item)
     }
     else
     {
-        assert(item->buffer == ptr);
+        OPAL_ASSERT(item->buffer == ptr);
         opal_free_list_return (&ompi_java_buffers, (opal_free_list_item_t*)item);
     }
 }
@@ -832,7 +833,7 @@ void ompi_java_getReadPtr(
     }
     else if(db)
     {
-        assert(offset == 0);
+        OPAL_ASSERT(offset == 0);
         *ptr  = (*env)->GetDirectBufferAddress(env, buf);
         *item = NULL;
     }
@@ -855,7 +856,7 @@ void ompi_java_getReadPtrRank(
     }
     else if(db)
     {
-        assert(offset == 0);
+        OPAL_ASSERT(offset == 0);
         *ptr  = (*env)->GetDirectBufferAddress(env, buf);
         *item = NULL;
     }
@@ -879,7 +880,7 @@ void ompi_java_getReadPtrv(
     }
     else if(db)
     {
-        assert(offset == 0);
+        OPAL_ASSERT(offset == 0);
         *ptr  = (*env)->GetDirectBufferAddress(env, buf);
         *item = NULL;
     }
@@ -911,7 +912,7 @@ void ompi_java_getReadPtrw(
     else if(db)
     {
         for(i = 0; i < size; i++){
-            assert(offsets[i] == 0);
+            OPAL_ASSERT(offsets[i] == 0);
         }
         *ptr  = (*env)->GetDirectBufferAddress(env, buf);
         *item = NULL;
@@ -1287,7 +1288,7 @@ jboolean ompi_java_exceptionCheck(JNIEnv *env, int rc)
         rc = ompi_errcode_get_mpi_code (rc);
         /* ompi_mpi_errcode_get_class CAN NOT handle negative error codes.
          * all Open MPI MPI error codes should be > 0. */
-        assert (rc >= 0);
+        OPAL_ASSERT(rc >= 0);
     }
     jni_exception = (*env)->ExceptionCheck(env);
 

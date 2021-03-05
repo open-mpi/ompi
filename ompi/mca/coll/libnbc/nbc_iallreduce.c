@@ -23,8 +23,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
 #include "opal/util/bit_ops.h"
-
-#include <assert.h>
+#include "opal/util/opal_assert.h"
 
 static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, char inplace, NBC_Schedule *schedule, void *tmpbuf);
@@ -462,7 +461,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
     }
   }
 
-  if (0 == vrank) assert(lbuf == recvbuf);
+  if (0 == vrank) OPAL_ASSERT(lbuf == recvbuf);
   /* now send to the right hosts */
   for (int r = 0; r < maxr; ++r) {
     if (((vrank + (1 << r) < p) && (vrank < (1 << r))) || (vrank == 0)) {

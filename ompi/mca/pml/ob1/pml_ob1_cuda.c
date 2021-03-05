@@ -165,7 +165,7 @@ int mca_pml_ob1_cuda_need_buffers(void * rreq,
         bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
     }
     /* We should always be able to find back the bml_btl based on the btl */
-    assert(NULL != bml_btl);
+    OPAL_ASSERT(NULL != bml_btl);
 
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
         (bml_btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET)) {
@@ -193,8 +193,8 @@ void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t
     int btl_verbose_stream = 0;
     int i;
 
-    assert(NULL != errproc);
-    assert(NULL != errproc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
+    OPAL_ASSERT(NULL != errproc);
+    OPAL_ASSERT(NULL != errproc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]);
     if (NULL != btlinfo) {
         btl_verbose_stream = *(int *)btlinfo;
     }

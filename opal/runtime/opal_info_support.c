@@ -332,7 +332,7 @@ void opal_info_close_components(void)
 {
     int i;
 
-    assert(opal_info_registered);
+    OPAL_ASSERT(opal_info_registered);
     if (--opal_info_registered) {
         return;
     }

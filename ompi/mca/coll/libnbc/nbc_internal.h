@@ -37,11 +37,11 @@
 #include "ompi/request/request.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
+#include "opal/util/opal_assert.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <assert.h>
 #include <math.h>
 #include <string.h>
 #include "libdict/dict.h"

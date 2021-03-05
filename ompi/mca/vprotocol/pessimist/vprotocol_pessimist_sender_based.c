@@ -164,12 +164,12 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(opal_convertor_t* pCo
     V_OUTPUT_VERBOSE(39, "pessimist:\tsb\tpack\t%"PRIsize_t, *max_data);
 
     for(i = 0, pending_length = *max_data; pending_length > 0; i++) {
-        assert(i < *out_size);
+        OPAL_ASSERT(i < *out_size);
         MEMCPY((void *) ftreq->sb.cursor, iov[i].iov_base, iov[i].iov_len);
         pending_length -= iov[i].iov_len;
         ftreq->sb.cursor += iov[i].iov_len;
     }
-    assert(pending_length == 0);
+    OPAL_ASSERT(pending_length == 0);
 
     pConvertor->flags &= ~CONVERTOR_NO_OP;
     pConvertor->fAdvance = &vprotocol_pessimist_sender_based_convertor_advance;

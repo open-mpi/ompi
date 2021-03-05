@@ -449,7 +449,7 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
             if( NULL == proc ) {
                 continue; /* we are not 'MPI connected' with this proc. */
             }
-            assert( !ompi_proc_is_sentinel(proc) );
+            OPAL_ASSERT( !ompi_proc_is_sentinel(proc) );
             ompi_errhandler_proc_failed_internal(proc, status, false);
         }
         opal_event_del(&event->super);

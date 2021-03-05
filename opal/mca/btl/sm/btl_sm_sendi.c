@@ -100,7 +100,7 @@ int mca_btl_sm_sendi (struct mca_btl_base_module_t *btl,
 
         (void) opal_convertor_pack (convertor, &iov, &iov_count, &length);
 
-        assert (length == payload_size);
+        OPAL_ASSERT(length == payload_size);
     }
 
     /* write the fragment pointer to peer's the FIFO. the progress function will return the fragment */

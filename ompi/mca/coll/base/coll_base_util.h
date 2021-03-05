@@ -70,7 +70,7 @@ static inline int32_t
 ompi_coll_base_nbc_reserve_tags(ompi_communicator_t* comm, int32_t reserve)
 {
     int32_t tag, old_tag;
-    assert( reserve > 0 );
+    OPAL_ASSERT( reserve > 0 );
   reread_tag:  /* In case we fail to atomically update the tag */
     tag = old_tag = comm->c_nbc_tag;
     if ((tag - reserve) < MCA_COLL_BASE_TAG_NONBLOCKING_END) {

@@ -34,6 +34,7 @@
 #include "opal/runtime/opal_info_support.h"
 #include "ompi/runtime/ompi_info_support.h"
 
+#include "opal/util/opal_assert.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 
@@ -82,7 +83,7 @@ void ompi_info_close_components(void)
 {
     int i;
 
-    assert(ompi_info_registered);
+    OPAL_ASSERT(ompi_info_registered);
     if (--ompi_info_registered) {
         return;
     }

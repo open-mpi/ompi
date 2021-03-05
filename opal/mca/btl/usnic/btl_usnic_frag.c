@@ -179,8 +179,8 @@ send_frag_destructor(opal_btl_usnic_send_frag_t *frag)
     /* make sure nobody twiddled these values after the constructor */
     mca_btl_base_descriptor_t *desc;
     desc = &frag->sf_base.uf_base;
-    assert(desc->USNIC_SEND_LOCAL == frag->sf_base.uf_local_seg);
-    assert(0 == frag->sf_base.uf_local_seg[0].seg_len);
+    OPAL_ASSERT(desc->USNIC_SEND_LOCAL == frag->sf_base.uf_local_seg);
+    OPAL_ASSERT(0 == frag->sf_base.uf_local_seg[0].seg_len);
 #endif
 
     /* PML may change desc->des_remote to point elsewhere, cannot assert that it
@@ -216,9 +216,9 @@ small_send_frag_destructor(opal_btl_usnic_small_send_frag_t *frag)
     opal_btl_usnic_frag_segment_t *fseg;
 
     fseg = &frag->ssf_segment;
-    assert(fseg->ss_parent_frag == (struct opal_btl_usnic_send_frag_t *)frag);
-    assert(frag->ssf_base.sf_base.uf_type == OPAL_BTL_USNIC_FRAG_SMALL_SEND);
-    assert(frag->ssf_base.sf_base.uf_local_seg[0].seg_addr.pval ==
+    OPAL_ASSERT(fseg->ss_parent_frag == (struct opal_btl_usnic_send_frag_t *)frag);
+    OPAL_ASSERT(frag->ssf_base.sf_base.uf_type == OPAL_BTL_USNIC_FRAG_SMALL_SEND);
+    OPAL_ASSERT(frag->ssf_base.sf_base.uf_local_seg[0].seg_addr.pval ==
            fseg->ss_base.us_payload.raw);
     OBJ_DESTRUCT(fseg);
 }
@@ -250,8 +250,8 @@ put_dest_frag_constructor(opal_btl_usnic_put_dest_frag_t *pfrag)
 static void
 put_dest_frag_destructor(opal_btl_usnic_put_dest_frag_t *pfrag)
 {
-    assert(pfrag->uf_base.USNIC_PUT_LOCAL == pfrag->uf_remote_seg);
-    assert(1 == pfrag->uf_base.USNIC_PUT_LOCAL_COUNT);
+    OPAL_ASSERT(pfrag->uf_base.USNIC_PUT_LOCAL == pfrag->uf_remote_seg);
+    OPAL_ASSERT(1 == pfrag->uf_base.USNIC_PUT_LOCAL_COUNT);
 }
 
 OBJ_CLASS_INSTANCE(opal_btl_usnic_segment_t,

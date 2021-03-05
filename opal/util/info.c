@@ -36,13 +36,13 @@
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
 #endif
-#include <assert.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
 #include "opal/util/info.h"
+#include "opal/util/opal_assert.h"
 
 /*
  * Local functions

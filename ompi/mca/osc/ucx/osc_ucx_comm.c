@@ -113,7 +113,7 @@ static inline int create_iov_list(const void *addr, int count, ompi_datatype_t *
             iov_idx++;
         }
 
-        assert((*ucx_iov_count) == ucx_iov_idx);
+        OPAL_ASSERT((*ucx_iov_count) == ucx_iov_idx);
 
     } while (!done);
 
@@ -185,7 +185,7 @@ static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
             }
         }
 
-        assert(origin_ucx_iov_idx == origin_ucx_iov_count &&
+        OPAL_ASSERT(origin_ucx_iov_idx == origin_ucx_iov_count &&
                target_ucx_iov_idx == target_ucx_iov_count);
 
     } else if (!is_origin_contig) {
@@ -311,7 +311,7 @@ static inline int end_atomicity(
                                         UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
                                         target, &result_value, sizeof(result_value),
                                         remote_addr);
-        assert(result_value == TARGET_LOCK_EXCLUSIVE);
+        OPAL_ASSERT(result_value == TARGET_LOCK_EXCLUSIVE);
     } else if (NULL != free_ptr){
         /* flush before freeing the buffer */
         ret = opal_common_ucx_wpmem_flush(module->state_mem, OPAL_COMMON_UCX_SCOPE_EP, target);
@@ -354,12 +354,12 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
     }
 
     memcpy(&win_count, temp_buf, sizeof(uint64_t));
-    assert(win_count > 0 && win_count <= OMPI_OSC_UCX_ATTACH_MAX);
+    OPAL_ASSERT(win_count > 0 && win_count <= OMPI_OSC_UCX_ATTACH_MAX);
 
     temp_dynamic_wins = (ompi_osc_dynamic_win_info_t *)(temp_buf + sizeof(uint64_t));
     contain = ompi_osc_find_attached_region_position(temp_dynamic_wins, 0, win_count,
                                                      remote_addr, 1, &insert);
-    assert(contain >= 0 && (uint64_t)contain < win_count);
+    OPAL_ASSERT(contain >= 0 && (uint64_t)contain < win_count);
 
     if (module->local_dynamic_win_info[contain].mem->mem_addrs == NULL) {
         module->local_dynamic_win_info[contain].mem->mem_addrs = calloc(ompi_comm_size(module->comm),
@@ -1071,7 +1071,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     }
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    assert(NULL != ucx_req);
+    OPAL_ASSERT(NULL != ucx_req);
 
     ret = ompi_osc_ucx_put(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
@@ -1124,7 +1124,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     }
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    assert(NULL != ucx_req);
+    OPAL_ASSERT(NULL != ucx_req);
 
     ret = ompi_osc_ucx_get(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
@@ -1169,7 +1169,7 @@ int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
     }
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    assert(NULL != ucx_req);
+    OPAL_ASSERT(NULL != ucx_req);
 
     ret = accumulate_req(origin_addr, origin_count, origin_dt, target, target_disp,
                          target_count, target_dt, op, win, ucx_req);
@@ -1201,7 +1201,7 @@ int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
     }
 
     OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    assert(NULL != ucx_req);
+    OPAL_ASSERT(NULL != ucx_req);
 
     ret = get_accumulate_req(origin_addr, origin_count, origin_datatype,
                              result_addr, result_count, result_datatype,

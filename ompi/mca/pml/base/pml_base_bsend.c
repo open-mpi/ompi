@@ -275,7 +275,7 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
 
-    assert( sendreq->req_bytes_packed > 0 );
+    OPAL_ASSERT( sendreq->req_bytes_packed > 0 );
 
     /* has a buffer been provided */
     OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);

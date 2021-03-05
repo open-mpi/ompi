@@ -935,7 +935,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         /* fill in fragment fields */
         frag->segment.seg_len = length;
         frag->hdr->len        = length;
-        assert( 0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) );
+        OPAL_ASSERT( 0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) );
         frag->base.des_flags = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;   /* why do any flags matter here other than OWNERSHIP? */
         frag->hdr->tag = tag;
         frag->endpoint = endpoint;
@@ -958,7 +958,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
 
             (void)opal_convertor_pack( convertor, &iov, &iov_count, &max_data);
 
-            assert(max_data == payload_size);
+            OPAL_ASSERT(max_data == payload_size);
         }
 
         MCA_BTL_SMCUDA_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(frag);

@@ -435,8 +435,8 @@ static inline struct ompi_proc_t *ompi_group_peer_lookup_existing (ompi_group_t 
 static inline int ompi_group_proc_lookup_rank (ompi_group_t* group, ompi_proc_t* proc)
 {
     int i, np, v;
-    assert( NULL != proc );
-    assert( !ompi_proc_is_sentinel(proc) );
+    OPAL_ASSERT( NULL != proc );
+    OPAL_ASSERT( !ompi_proc_is_sentinel(proc) );
     np = ompi_group_size(group);
     if( 0 == np ) return MPI_PROC_NULL;
     /* heuristic: On comm_world, start the lookup from v=vpid, so that

@@ -114,7 +114,7 @@ static inline bool mca_rcache_rgpusm_deregister_lru (mca_rcache_base_module_t *r
 
     /* Drop the rcache lock while we deregister the memory */
     OPAL_THREAD_UNLOCK(&rcache->lock);
-    assert(old_reg->ref_count == 0);
+    OPAL_ASSERT(old_reg->ref_count == 0);
     rc = cuda_closememhandle (NULL, old_reg);
     OPAL_THREAD_LOCK(&rcache->lock);
 
@@ -186,7 +186,7 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
     mypeer = flags;
     flags = 0;
     /* No need to support MCA_RCACHE_FLAGS_CACHE_BYPASS in here. It is not used. */
-    assert(0 == (flags & MCA_RCACHE_FLAGS_CACHE_BYPASS));
+    OPAL_ASSERT(0 == (flags & MCA_RCACHE_FLAGS_CACHE_BYPASS));
 
     /* This chunk of code handles the case where leave pinned is not
      * set and we do not use the cache.  This is not typically how we
@@ -215,7 +215,7 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
                                  (mca_rcache_base_registration_t *)rget_reg);
 
         /* This error should not happen with no cache in use. */
-        assert(OPAL_ERR_WOULD_BLOCK != rc);
+        OPAL_ASSERT(OPAL_ERR_WOULD_BLOCK != rc);
 
         if(rc != OPAL_SUCCESS) {
             opal_free_list_return (&rcache_rgpusm->reg_list, item);
@@ -257,7 +257,7 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
 
             /* The ref_count has to be zero as this memory cannot possibly
              * be in use.  Assert on that just to make sure. */
-            assert(0 == (*reg)->ref_count);
+            OPAL_ASSERT(0 == (*reg)->ref_count);
             if (mca_rcache_rgpusm_component.leave_pinned) {
                 opal_list_remove_item(&rcache_rgpusm->lru_list,
                                       (opal_list_item_t*)(*reg));
@@ -300,7 +300,7 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
 
     /* If we are here, then we did not find a registration, or it was invalid,
      * so this is a new one, and we are going to use the cache. */
-    assert(NULL == *reg);
+    OPAL_ASSERT(NULL == *reg);
     opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                         "RGPUSM: New registration ep=%d, addr=%p, size=%d. Need to register and insert in cache",
                          mypeer, addr, (int)size);
@@ -351,7 +351,7 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
         if (NULL != oldreg) {
             /* The ref_count has to be zero as this memory cannot
              * possibly be in use.  Assert on that just to make sure. */
-            assert(0 == oldreg->ref_count);
+            OPAL_ASSERT(0 == oldreg->ref_count);
             if (mca_rcache_rgpusm_component.leave_pinned) {
                 opal_list_remove_item(&rcache_rgpusm->lru_list,
                                       (opal_list_item_t*)oldreg);
@@ -483,7 +483,7 @@ int mca_rcache_rgpusm_deregister(struct mca_rcache_base_module_t *rcache,
 {
     mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t*)rcache;
     int rc = OPAL_SUCCESS;
-    assert(reg->ref_count > 0);
+    OPAL_ASSERT(reg->ref_count > 0);
 
     OPAL_THREAD_LOCK(&rcache->lock);
     reg->ref_count--;
@@ -509,7 +509,7 @@ int mca_rcache_rgpusm_deregister(struct mca_rcache_base_module_t *rcache,
         OPAL_THREAD_UNLOCK(&rcache->lock);
 
         {
-             assert(reg->ref_count == 0);
+             OPAL_ASSERT(reg->ref_count == 0);
              rc = cuda_closememhandle (NULL, reg);
          }
 
@@ -530,7 +530,7 @@ int mca_rcache_rgpusm_deregister_no_lock(struct mca_rcache_base_module_t *rcache
 {
     mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t*)rcache;
     int rc = OPAL_SUCCESS;
-    assert(reg->ref_count > 0);
+    OPAL_ASSERT(reg->ref_count > 0);
 
     reg->ref_count--;
     opal_output(-1, "Deregister: reg->ref_count=%d", (int)reg->ref_count);
@@ -547,7 +547,7 @@ int mca_rcache_rgpusm_deregister_no_lock(struct mca_rcache_base_module_t *rcache
         if(!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS))
             mca_rcache_base_vma_delete (rcache_rgpusm->vma_module, reg);
 
-        assert(reg->ref_count == 0);
+        OPAL_ASSERT(reg->ref_count == 0);
         rc = cuda_closememhandle (NULL, reg);
 
         if(OPAL_SUCCESS == rc) {
@@ -600,7 +600,7 @@ void mca_rcache_rgpusm_finalize(struct mca_rcache_base_module_t *rcache)
 
             /* Drop lock before deregistering memory */
             OPAL_THREAD_UNLOCK(&rcache->lock);
-            assert(reg->ref_count == 0);
+            OPAL_ASSERT(reg->ref_count == 0);
             rc = cuda_closememhandle (NULL, reg);
             OPAL_THREAD_LOCK(&rcache->lock);
 

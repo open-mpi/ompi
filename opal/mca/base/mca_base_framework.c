@@ -62,7 +62,7 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
     char *desc;
     int ret;
 
-    assert (NULL != framework);
+    OPAL_ASSERT(NULL != framework);
 
     framework->framework_refcnt++;
 
@@ -162,7 +162,7 @@ int mca_base_framework_open (struct mca_base_framework_t *framework,
                              mca_base_open_flag_t flags) {
     int ret;
 
-    assert (NULL != framework);
+    OPAL_ASSERT(NULL != framework);
 
     /* register this framework before opening it */
     ret = mca_base_framework_register (framework, MCA_BASE_REGISTER_DEFAULT);
@@ -228,13 +228,13 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
     bool is_registered = mca_base_framework_is_registered (framework);
     int ret, group_id;
 
-    assert (NULL != framework);
+    OPAL_ASSERT(NULL != framework);
 
     if (!(is_open || is_registered)) {
         return OPAL_SUCCESS;
     }
 
-    assert (framework->framework_refcnt);
+    OPAL_ASSERT(framework->framework_refcnt);
     if (--framework->framework_refcnt) {
         return OPAL_SUCCESS;
     }

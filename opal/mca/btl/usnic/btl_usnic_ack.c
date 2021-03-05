@@ -107,8 +107,8 @@ opal_btl_usnic_handle_ack(
             WINDOW_SIZE_MOD(is), is, (void*)sseg, (sseg?sseg->ss_hotel_room:-2));
 #endif
 
-        assert(sseg != NULL);
-        assert(sseg->ss_base.us_btl_header->pkt_seq == is);
+        OPAL_ASSERT(sseg != NULL);
+        OPAL_ASSERT(sseg->ss_base.us_btl_header->pkt_seq == is);
 #if MSGDEBUG1
         if (sseg->ss_hotel_room == -1) {
             opal_output(0, "=== ACKed frag in sent_frags array is not in hotel/enqueued, module %p, endpoint %p, seg %p, seq %" UDSEQ ", slot %lu",

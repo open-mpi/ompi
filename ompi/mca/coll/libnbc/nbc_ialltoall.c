@@ -120,7 +120,7 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
     }
   } else if (alg == NBC_A2A_DISS) {
     /* persistent operation is not supported currently for this algorithm */
-    assert(! persistent);
+    OPAL_ASSERT(! persistent);
 
     if(NBC_Type_intrinsic(sendtype)) {
       datasize = sndext * sendcount;

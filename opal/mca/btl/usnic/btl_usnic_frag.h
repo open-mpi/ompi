@@ -378,8 +378,8 @@ opal_btl_usnic_small_send_frag_alloc(opal_btl_usnic_module_t *module)
     frag->ssf_base.sf_base.uf_freelist = &(module->small_send_frags);
     frag->ssf_segment.ss_send_posted = 0;
 
-    assert(frag);
-    assert(OPAL_BTL_USNIC_FRAG_SMALL_SEND == frag->ssf_base.sf_base.uf_type);
+    OPAL_ASSERT(frag);
+    OPAL_ASSERT(OPAL_BTL_USNIC_FRAG_SMALL_SEND == frag->ssf_base.sf_base.uf_type);
 
     return frag;
 }
@@ -400,8 +400,8 @@ opal_btl_usnic_large_send_frag_alloc(opal_btl_usnic_module_t *module)
     /* this belongs in constructor... */
     frag->lsf_base.sf_base.uf_freelist = &(module->large_send_frags);
 
-    assert(frag);
-    assert(OPAL_BTL_USNIC_FRAG_LARGE_SEND == frag->lsf_base.sf_base.uf_type);
+    OPAL_ASSERT(frag);
+    OPAL_ASSERT(OPAL_BTL_USNIC_FRAG_LARGE_SEND == frag->lsf_base.sf_base.uf_type);
 
     return frag;
 }
@@ -423,8 +423,8 @@ opal_btl_usnic_put_dest_frag_alloc(
     /* this belongs in constructor... */
     frag->uf_freelist = &(module->put_dest_frags);
 
-    assert(frag);
-    assert(OPAL_BTL_USNIC_FRAG_PUT_DEST == frag->uf_type);
+    OPAL_ASSERT(frag);
+    OPAL_ASSERT(OPAL_BTL_USNIC_FRAG_PUT_DEST == frag->uf_type);
 
     return frag;
 }
@@ -444,7 +444,7 @@ opal_btl_usnic_send_frag_ok_to_return(
     opal_btl_usnic_module_t *module,
     opal_btl_usnic_send_frag_t *frag)
 {
-    assert(frag);
+    OPAL_ASSERT(frag);
 
     if (OPAL_LIKELY(frag->sf_base.uf_base.des_flags &
                 MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) &&
@@ -548,8 +548,8 @@ opal_btl_usnic_chunk_segment_alloc(
     seg = (opal_btl_usnic_send_segment_t*) item;
     seg->ss_channel = USNIC_DATA_CHANNEL;
 
-    assert(seg);
-    assert(OPAL_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
+    OPAL_ASSERT(seg);
+    OPAL_ASSERT(OPAL_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
 
     return seg;
 }
@@ -559,8 +559,8 @@ opal_btl_usnic_chunk_segment_return(
     opal_btl_usnic_module_t *module,
     opal_btl_usnic_chunk_segment_t *seg)
 {
-    assert(seg);
-    assert(OPAL_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
+    OPAL_ASSERT(seg);
+    OPAL_ASSERT(OPAL_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
 
     USNIC_COMPAT_FREE_LIST_RETURN(&(module->chunk_segs), &(seg->ss_base.us_list));
 }
@@ -582,8 +582,8 @@ opal_btl_usnic_ack_segment_alloc(opal_btl_usnic_module_t *module)
     ack = (opal_btl_usnic_ack_segment_t*) item;
     ack->ss_channel = USNIC_PRIORITY_CHANNEL;
 
-    assert(ack);
-    assert(OPAL_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
+    OPAL_ASSERT(ack);
+    OPAL_ASSERT(OPAL_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
 
     return ack;
 }
@@ -596,8 +596,8 @@ opal_btl_usnic_ack_segment_return(
     opal_btl_usnic_module_t *module,
     opal_btl_usnic_ack_segment_t *ack)
 {
-    assert(ack);
-    assert(OPAL_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
+    OPAL_ASSERT(ack);
+    OPAL_ASSERT(OPAL_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
 
     USNIC_COMPAT_FREE_LIST_RETURN(&(module->ack_segs), &(ack->ss_base.us_list));
 }
@@ -614,11 +614,11 @@ opal_btl_usnic_compute_sf_size(opal_btl_usnic_send_frag_t *sfrag)
 
     /* JMS This can be a put or a send, and the buffers are different... */
 #if 0
-    assert(frag->uf_base.USNIC_SEND_LOCAL_COUNT > 0);
-    assert(frag->uf_base.USNIC_SEND_LOCAL_COUNT <= 2);
+    OPAL_ASSERT(frag->uf_base.USNIC_SEND_LOCAL_COUNT > 0);
+    OPAL_ASSERT(frag->uf_base.USNIC_SEND_LOCAL_COUNT <= 2);
 
     /* belt and suspenders: second len should be zero if only one SGE */
-    assert(2 == frag->uf_base.USNIC_SEND_LOCAL_COUNT ||
+    OPAL_ASSERT(2 == frag->uf_base.USNIC_SEND_LOCAL_COUNT ||
         0 == frag->uf_local_seg[1].seg_len);
 #endif
 

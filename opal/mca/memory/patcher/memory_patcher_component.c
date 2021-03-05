@@ -28,6 +28,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/opal_assert.h"
 #include "opal/mca/memory/base/empty.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/memoryhooks/memory.h"
@@ -40,7 +41,6 @@
 #include <stdarg.h>
 #include <sys/mman.h>
 #include <dlfcn.h>
-#include <assert.h>
 #include <sys/time.h>
 #if defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>

@@ -51,7 +51,7 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
     pTypeDesc->desc = pElemDesc = (dt_elem_desc_t*)malloc( sizeof(dt_elem_desc_t) * pTypeDesc->length );
     pTypeDesc->used = 0;
 
-    assert( OPAL_DATATYPE_END_LOOP == pData->desc.desc[pData->desc.used].elem.common.type );
+    OPAL_ASSERT( OPAL_DATATYPE_END_LOOP == pData->desc.desc[pData->desc.used].elem.common.type );
 
     while( stack_pos >= 0 ) {
         if( OPAL_DATATYPE_END_LOOP == pData->desc.desc[pos_desc].elem.common.type ) { /* end of the current loop */
@@ -81,13 +81,13 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             if( loop->common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                 ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)&(pData->desc.desc[pos_desc + loop->items]);
 
-                assert(pData->desc.desc[pos_desc + index].elem.disp == end_loop->first_elem_disp);
+                OPAL_ASSERT(pData->desc.desc[pos_desc + index].elem.disp == end_loop->first_elem_disp);
                 compress.common.flags = loop->common.flags;
                 compress.common.type =  pData->desc.desc[pos_desc + index].elem.common.type;
                 compress.blocklen = pData->desc.desc[pos_desc + index].elem.blocklen;
                 for( uint32_t i = index+1; i < loop->items; i++ ) {
                     current = &pData->desc.desc[pos_desc + i].elem;
-                    assert(1 ==  current->count);
+                    OPAL_ASSERT(1 ==  current->count);
                     if( (current->common.type == OPAL_DATATYPE_LOOP) ||
                         compress.common.type != current->common.type ) {
                         compress.common.type = OPAL_DATATYPE_UINT1;
@@ -274,7 +274,7 @@ int32_t opal_datatype_commit( opal_datatype_t * pData )
         dt_elem_desc_t* pElem = pData->desc.desc;
 
         index = GET_FIRST_NON_LOOP( pElem );
-        assert( pElem[index].elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
+        OPAL_ASSERT( pElem[index].elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
         first_elem_disp = pElem[index].elem.disp;
     }
 

@@ -46,7 +46,7 @@ ompi_mtl_psm2_send(struct mca_mtl_base_module_t* mtl,
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
     mca_mtl_psm2_endpoint_t* psm2_endpoint = ompi_mtl_psm2_get_endpoint (mtl, ompi_proc);
 
-    assert(mtl == &ompi_mtl_psm2.super);
+    OPAL_ASSERT(mtl == &ompi_mtl_psm2.super);
 
     PSM2_MAKE_MQTAG(comm->c_contextid, comm->c_my_rank, tag, mqtag);
 
@@ -104,7 +104,7 @@ ompi_mtl_psm2_isend(struct mca_mtl_base_module_t* mtl,
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
     mca_mtl_psm2_endpoint_t* psm2_endpoint = ompi_mtl_psm2_get_endpoint (mtl, ompi_proc);
 
-    assert(mtl == &ompi_mtl_psm2.super);
+    OPAL_ASSERT(mtl == &ompi_mtl_psm2.super);
 
     PSM2_MAKE_MQTAG(comm->c_contextid, comm->c_my_rank, tag, mqtag);
 

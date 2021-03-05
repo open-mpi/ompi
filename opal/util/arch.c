@@ -32,7 +32,7 @@ static inline int32_t opal_arch_isbigendian ( void )
     /* if( sizeof(int) == 8 ) x = 4; */
     if( ptr[x] == 0x12)  return 1; /* big endian, true */
     if( ptr[x] == 0x78 ) return 0; /* little endian, false */
-    assert( 0 );  /* unknown architecture not little nor big endian */
+    OPAL_ASSERT( 0 );  /* unknown architecture not little nor big endian */
     return -1;
 }
 

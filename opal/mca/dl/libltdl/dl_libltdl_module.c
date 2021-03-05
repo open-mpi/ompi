@@ -19,7 +19,7 @@
 static int libltdl_open(const char *fname, bool use_ext, bool private_namespace,
                        opal_dl_handle_t **handle, char **err_msg)
 {
-    assert(handle);
+    OPAL_ASSERT(handle);
 
     *handle = NULL;
     if (NULL != err_msg) {
@@ -74,10 +74,10 @@ static int libltdl_open(const char *fname, bool use_ext, bool private_namespace,
 static int libltdl_lookup(opal_dl_handle_t *handle, const char *symbol,
                          void **ptr, char **err_msg)
 {
-    assert(handle);
-    assert(handle->ltdl_handle);
-    assert(symbol);
-    assert(ptr);
+    OPAL_ASSERT(handle);
+    OPAL_ASSERT(handle->ltdl_handle);
+    OPAL_ASSERT(symbol);
+    OPAL_ASSERT(ptr);
 
     if (NULL != err_msg) {
         *err_msg = NULL;
@@ -97,7 +97,7 @@ static int libltdl_lookup(opal_dl_handle_t *handle, const char *symbol,
 
 static int libltdl_close(opal_dl_handle_t *handle)
 {
-    assert(handle);
+    OPAL_ASSERT(handle);
 
     int ret;
     ret = lt_dlclose(handle->ltdl_handle);
@@ -114,8 +114,8 @@ static int libltdl_foreachfile(const char *search_path,
                                int (*func)(const char *filename, void *data),
                                void *data)
 {
-    assert(search_path);
-    assert(func);
+    OPAL_ASSERT(search_path);
+    OPAL_ASSERT(func);
 
     int ret = lt_dlforeachfile(search_path, func, data);
     return (0 == ret) ? OPAL_SUCCESS : OPAL_ERROR;

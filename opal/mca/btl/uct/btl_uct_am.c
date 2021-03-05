@@ -57,7 +57,7 @@ static inline void _mca_btl_uct_send_pack (void *data, void *header, size_t head
     size_t length;
 
     if (header_size > 0) {
-        assert (NULL != header);
+        OPAL_ASSERT(NULL != header);
         memcpy (data, header, header_size);
     }
 
@@ -67,7 +67,7 @@ static inline void _mca_btl_uct_send_pack (void *data, void *header, size_t head
 
     (void) opal_convertor_pack (convertor, &iov, &iov_count, &length);
 
-    assert (length == payload_size);
+    OPAL_ASSERT(length == payload_size);
 }
 
 struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src (mca_btl_base_module_t *btl,
@@ -92,7 +92,7 @@ struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src (mca_btl_base_module_t
                                 convertor, *size);
     } else {
         opal_convertor_get_current_pointer (convertor, &data_ptr);
-        assert (NULL != data_ptr);
+        OPAL_ASSERT(NULL != data_ptr);
 
         frag = mca_btl_uct_frag_alloc_short (uct_btl, endpoint);
         if (OPAL_UNLIKELY(NULL == frag)) {
@@ -168,7 +168,7 @@ int mca_btl_uct_send_frag (mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_
 
     /* if we get here then we must have an endpoint handle for this context/endpoint pair */
     (void) mca_btl_uct_endpoint_test_am (uct_btl, frag->endpoint, frag->context, &ep_handle);
-    assert (NULL != ep_handle);
+    OPAL_ASSERT(NULL != ep_handle);
 
     /* if another thread set this we really don't care too much as this flag is only meant
      * to protect against deep recursion */

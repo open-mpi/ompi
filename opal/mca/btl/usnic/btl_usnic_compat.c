@@ -75,7 +75,7 @@ prepare_src_small(
     size_t payload_len;
 
     payload_len = *size + reserve;
-    assert(payload_len <= module->max_frag_payload); /* precondition */
+    OPAL_ASSERT(payload_len <= module->max_frag_payload); /* precondition */
 
     sfrag = opal_btl_usnic_small_send_frag_alloc(module);
     if (OPAL_UNLIKELY(NULL == sfrag)) {
@@ -105,7 +105,7 @@ prepare_src_small(
      */
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
         /* put user data just after end of 1st seg (upper layer header) */
-        assert(payload_len <= module->max_frag_payload);
+        OPAL_ASSERT(payload_len <= module->max_frag_payload);
         usnic_convertor_pack_simple(
                 convertor,
                 (IOVBASE_TYPE*)(intptr_t)(frag->sf_base.uf_local_seg[0].seg_addr.lval + reserve),
@@ -147,8 +147,8 @@ pack_chunk_seg_chain_with_reserve(
     size_t max_data;
     bool first_pass;
 
-    assert(NULL != lfrag);
-    assert(NULL != convertor_bytes_packed);
+    OPAL_ASSERT(NULL != lfrag);
+    OPAL_ASSERT(NULL != convertor_bytes_packed);
 
     n_segs = 0;
     *convertor_bytes_packed = 0;
@@ -168,7 +168,7 @@ pack_chunk_seg_chain_with_reserve(
 
         if (first_pass) {
             /* logic could accommodate >max, but currently doesn't */
-            assert(reserve_len <= module->max_chunk_payload);
+            OPAL_ASSERT(reserve_len <= module->max_chunk_payload);
             ret_ptr = copyptr;
             seg_space -= reserve_len;
             copyptr += reserve_len;
@@ -188,15 +188,15 @@ pack_chunk_seg_chain_with_reserve(
             * most recently allocated segment and finish processing.
             */
             if (seg_space == module->max_chunk_payload) {
-                assert(max_data == 0); /* only way this can happen */
+                OPAL_ASSERT(max_data == 0); /* only way this can happen */
                 opal_btl_usnic_chunk_segment_return(module, seg);
                 break;
             }
         }
 
         /* bozo checks */
-        assert(seg_space >= 0);
-        assert(seg_space < module->max_chunk_payload);
+        OPAL_ASSERT(seg_space >= 0);
+        OPAL_ASSERT(seg_space < module->max_chunk_payload);
 
         /* append segment of data to chain to send */
         seg->ss_parent_frag = &lfrag->lsf_base;
@@ -248,7 +248,7 @@ prepare_src_large(
     frag->sf_base.uf_local_seg[0].seg_addr.pval = &lfrag->lsf_ompi_header;
     frag->sf_base.uf_local_seg[0].seg_len = reserve;
     /* make sure upper header small enough */
-    assert(reserve <= sizeof(lfrag->lsf_ompi_header));
+    OPAL_ASSERT(reserve <= sizeof(lfrag->lsf_ompi_header));
 
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
         /* threshold == -1 means always pack eagerly */

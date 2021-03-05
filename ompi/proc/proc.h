@@ -40,6 +40,7 @@
 #include "ompi/types.h"
 
 #include "opal/util/proc.h"
+#include "opal/util/opal_assert.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_rte.h"
 
@@ -408,7 +409,7 @@ static inline uintptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
 {
     uintptr_t tmp, sentinel = 0;
     /* local jobid must fit in 15 bits */
-    assert(! (OMPI_LOCAL_JOBID(name.jobid) & 0x8000));
+    OPAL_ASSERT(! (OMPI_LOCAL_JOBID(name.jobid) & 0x8000));
     sentinel |= 0x1;
     tmp = (uintptr_t)OMPI_LOCAL_JOBID(name.jobid);
     sentinel |= ((tmp << 1) & 0xfffe);
@@ -424,7 +425,7 @@ static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel
   opal_process_name_t name;
   uint32_t local, family;
   uint32_t vpid;
-  assert(sentinel & 0x1);
+  OPAL_ASSERT(sentinel & 0x1);
   local = (sentinel >> 1) & 0x7fff;
   family = (sentinel >> 16) & 0xffff;
   vpid = (sentinel >> 32) & 0xffffffff;
@@ -439,7 +440,7 @@ static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel
  */
 static inline uintptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
 {
-    assert(OMPI_PROC_MY_NAME->jobid == name.jobid);
+    OPAL_ASSERT(OMPI_PROC_MY_NAME->jobid == name.jobid);
     return (uintptr_t)((name.vpid <<1) | 0x1);
 }
 
@@ -456,15 +457,15 @@ static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel
 
 #if OPAL_ENABLE_FT_MPI
 static inline bool ompi_proc_is_active(ompi_proc_t *proc) {
-    assert( NULL != proc );
-    assert( !ompi_proc_is_sentinel(proc) );
+    OPAL_ASSERT( NULL != proc );
+    OPAL_ASSERT( !ompi_proc_is_sentinel(proc) );
     return (proc->proc_active);
 }
 
 /* Made a function, so we can do something smarter in the future */
 static inline void ompi_proc_mark_as_failed(ompi_proc_t *proc) {
-    assert( NULL != proc );
-    assert( !ompi_proc_is_sentinel(proc) );
+    OPAL_ASSERT( NULL != proc );
+    OPAL_ASSERT( !ompi_proc_is_sentinel(proc) );
     if( proc == ompi_proc_local() ) {
         opal_output(0, "%s %s: I have been reported dead by someone else. This is abnormal: since the current rank is executing this code, the failure detector made a mistake. The root cause may be that this rank missed its heartbeat send deadlines, or that the observer process got very slow. One way to resolve such issues is to increase the detector timeout, or enable the threaded detector. This is abnormal; Aborting.",
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__);

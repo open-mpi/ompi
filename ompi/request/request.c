@@ -29,6 +29,7 @@
 
 #include "ompi/communicator/communicator.h"
 #include "opal/class/opal_object.h"
+#include "opal/util/opal_assert.h"
 #include "ompi/request/request.h"
 #include "ompi/request/request_default.h"
 #include "ompi/constants.h"
@@ -67,8 +68,8 @@ static void ompi_request_construct(ompi_request_t* req)
 
 static void ompi_request_destruct(ompi_request_t* req)
 {
-    assert( MPI_UNDEFINED == req->req_f_to_c_index );
-    assert( OMPI_REQUEST_INVALID == req->req_state );
+    OPAL_ASSERT( MPI_UNDEFINED == req->req_f_to_c_index );
+    OPAL_ASSERT( OMPI_REQUEST_INVALID == req->req_state );
 }
 
 static int ompi_request_null_free(ompi_request_t** request)

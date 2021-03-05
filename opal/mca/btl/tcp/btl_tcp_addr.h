@@ -33,7 +33,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include <assert.h>
+#include "opal/util/opal_assert.h"
 
 /**
  * Modex address structure.

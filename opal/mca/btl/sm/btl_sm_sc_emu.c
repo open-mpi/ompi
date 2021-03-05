@@ -44,7 +44,7 @@ static void mca_btl_sm_sc_emu_atomic_64 (int64_t *operand, opal_atomic_int64_t *
         break;
 #endif
     default:
-        assert (0);
+        OPAL_ASSERT(0);
     }
 
     *operand = result;
@@ -83,7 +83,7 @@ static void mca_btl_sm_sc_emu_atomic_32 (int32_t *operand, opal_atomic_int32_t *
         break;
 #endif
     default:
-        assert (0);
+        OPAL_ASSERT(0);
     }
 
     *operand = result;
@@ -115,7 +115,7 @@ static void mca_btl_sm_sc_emu_rdma (mca_btl_base_module_t *btl, const mca_btl_ba
 #else
         } else {
             /* developer error. should not happen */
-            assert (0);
+            OPAL_ASSERT(0);
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 */
         }
         break;
@@ -131,7 +131,7 @@ static void mca_btl_sm_sc_emu_rdma (mca_btl_base_module_t *btl, const mca_btl_ba
 #else
         } else {
             /* developer error. should not happen */
-            assert (0);
+            OPAL_ASSERT(0);
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 */
         }
         break;

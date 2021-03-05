@@ -49,7 +49,7 @@ void req_completion(void *request) {
     ompi_osc_ucx_request_t *req = (ompi_osc_ucx_request_t *)request;
     ompi_request_complete(&(req->super), true);
     mca_osc_ucx_component.num_incomplete_req_ops--;
-    assert(mca_osc_ucx_component.num_incomplete_req_ops >= 0);
+    OPAL_ASSERT(mca_osc_ucx_component.num_incomplete_req_ops >= 0);
 }
 
 OBJ_CLASS_INSTANCE(ompi_osc_ucx_request_t, ompi_request_t,

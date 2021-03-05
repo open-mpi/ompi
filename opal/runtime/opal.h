@@ -31,8 +31,8 @@
 #include "opal/types.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
+#include "opal/util/opal_assert.h"
 
-#include <assert.h>
 
 BEGIN_C_DECLS
 

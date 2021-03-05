@@ -152,11 +152,11 @@ static inline void __SENDER_BASED_METHOD_FLUSH(ompi_request_t *req)
        pmlreq->req_bytes_packed)
     {
         mca_vprotocol_pessimist_request_t *ftreq = VPESSIMIST_SEND_FTREQ(req);
-        assert(!opal_list_is_empty(&mca_vprotocol_pessimist.sender_based.sb_sendreq));
+        OPAL_ASSERT(!opal_list_is_empty(&mca_vprotocol_pessimist.sender_based.sb_sendreq));
         opal_list_remove_item(&mca_vprotocol_pessimist.sender_based.sb_sendreq,
                               (opal_list_item_t *) ftreq);
         vprotocol_pessimist_sb_progress_req(pmlreq);
-        assert(pmlreq->req_bytes_packed == ftreq->sb.bytes_progressed);
+        OPAL_ASSERT(pmlreq->req_bytes_packed == ftreq->sb.bytes_progressed);
     }
 }
 

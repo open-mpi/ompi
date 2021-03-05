@@ -66,8 +66,8 @@ static void opal_list_item_construct(opal_list_item_t *item)
 static void opal_list_item_destruct(opal_list_item_t *item)
 {
 #if OPAL_ENABLE_DEBUG
-    assert( 0 == item->opal_list_item_refcount );
-    assert( NULL == item->opal_list_item_belong_to );
+    OPAL_ASSERT( 0 == item->opal_list_item_refcount );
+    OPAL_ASSERT( NULL == item->opal_list_item_belong_to );
 #endif  /* OPAL_ENABLE_DEBUG */
 }
 
@@ -127,7 +127,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
         /* Spot check: ensure that this item is previously on no
            lists */
 
-        assert(0 == item->opal_list_item_refcount);
+        OPAL_ASSERT(0 == item->opal_list_item_refcount);
 #endif
         /* pointer to element 0 */
         ptr = list->opal_list_sentinel.opal_list_next;
@@ -145,7 +145,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
            just inserted it into */
 
         opal_atomic_add ( &(item->opal_list_item_refcount), 1 );
-        assert(1 == item->opal_list_item_refcount);
+        OPAL_ASSERT(1 == item->opal_list_item_refcount);
         item->opal_list_item_belong_to = list;
 #endif
     }
@@ -179,7 +179,7 @@ opal_list_transfer(opal_list_item_t *pos, opal_list_item_t *begin,
             while( pos != item ) {
                 item->opal_list_item_belong_to = pos->opal_list_item_belong_to;
                 item = item->opal_list_next;
-                assert(NULL != item);
+                OPAL_ASSERT(NULL != item);
             }
         }
 #endif  /* OPAL_ENABLE_DEBUG */

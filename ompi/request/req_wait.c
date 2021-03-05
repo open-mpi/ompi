@@ -31,6 +31,8 @@
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
+#include "opal/util/opal_assert.h"
+
 int ompi_request_default_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status)
@@ -199,7 +201,7 @@ recheck:
         return MPI_ERR_PROC_FAILED_PENDING;
     }
 #endif  /* OPAL_ENABLE_FT_MPI */
-    assert( REQUEST_COMPLETE(request) );
+    OPAL_ASSERT( REQUEST_COMPLETE(request) );
     /* Per note above, we have to call gen request query_fn even
        if STATUS_IGNORE was provided */
     if (OMPI_REQUEST_GEN == request->req_type) {
@@ -350,7 +352,7 @@ recheck:
                     continue;
                 }
             }
-            assert( REQUEST_COMPLETE(request) );
+            OPAL_ASSERT( REQUEST_COMPLETE(request) );
 
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
@@ -413,7 +415,7 @@ recheck:
                     goto absorb_error_and_continue;
                  }
             }
-            assert( REQUEST_COMPLETE(request) );
+            OPAL_ASSERT( REQUEST_COMPLETE(request) );
 
             /* Per note above, we have to call gen request query_fn
                even if STATUSES_IGNORE was provided */
@@ -580,7 +582,7 @@ int ompi_request_default_wait_some(size_t count,
      * We have nothing more to do here besides rearming the sync and trying
      * again */
     if(OPAL_UNLIKELY( 0 == num_requests_done )) {
-        assert(OMPI_SUCCESS != sync.status);
+        OPAL_ASSERT(OMPI_SUCCESS != sync.status);
         goto recheck;
     }
 
@@ -604,7 +606,7 @@ int ompi_request_default_wait_some(size_t count,
             continue;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
-        assert( REQUEST_COMPLETE(request) );
+        OPAL_ASSERT( REQUEST_COMPLETE(request) );
 
         /* Per note above, we have to call gen request query_fn even
            if STATUS_IGNORE was provided */

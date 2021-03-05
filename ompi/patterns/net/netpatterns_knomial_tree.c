@@ -16,6 +16,7 @@
  */
 
 #include "ompi_config.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -25,13 +26,14 @@
 #endif
 #include <fcntl.h>
 #include <stdlib.h>
-#include <assert.h>
 
 #include "ompi/constants.h"
 
 #include "ompi/runtime/ompi_rte.h"
+#include "opal/util/opal_assert.h"
 
 #include "netpatterns.h"
+
 
 /* setup recursive doubleing tree node */
 
@@ -57,8 +59,8 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
             ("Enter ompi_netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
                 num_nodes, node_rank, tree_order));
 
-    assert(num_nodes > 1);
-    assert(tree_order > 1);
+    OPAL_ASSERT(num_nodes > 1);
+    OPAL_ASSERT(tree_order > 1);
     if (tree_order > num_nodes) {
         tree_order = num_nodes;
     }
@@ -546,8 +548,8 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_tree_node(
             ("Enter ompi_netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
                 num_nodes, node_rank, tree_order));
 
-    assert(num_nodes > 1);
-    assert(tree_order > 1);
+    OPAL_ASSERT(num_nodes > 1);
+    OPAL_ASSERT(tree_order > 1);
     if (tree_order > num_nodes) {
         tree_order = num_nodes;
     }
@@ -595,7 +597,7 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_tree_node(
             ++exchange_node->n_extra_sources;
         }
 
-        assert(exchange_node->n_extra_sources < tree_order);
+        OPAL_ASSERT(exchange_node->n_extra_sources < tree_order);
 
         if (exchange_node->n_extra_sources > 0) {
             exchange_node->rank_extra_sources_array = (int *) malloc
@@ -709,14 +711,14 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_n_tree_node(int num_
 
     NETPATTERNS_VERBOSE(("Enter ompi_netpatterns_setup_recursive_doubling_n_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)", num_nodes, node_rank, tree_order));
 
-    assert(num_nodes > 1);
+    OPAL_ASSERT(num_nodes > 1);
     while (tree_order > num_nodes) {
         tree_order /= 2;
     }
 
     exchange_node->tree_order = tree_order;
     /* We support only tree_order that are power of two */
-    assert(0 == (tree_order & (tree_order - 1)));
+    OPAL_ASSERT(0 == (tree_order & (tree_order - 1)));
 
     /* figure out number of levels in the tree */
     n_levels = 0;
@@ -743,7 +745,7 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_n_tree_node(int num_
         tmp *= tree_order;
     }
     /* Ishai: I see no reason for calculating tmp. Add an assert before deleting it */
-    assert(tmp == cnt);
+    OPAL_ASSERT(tmp == cnt);
 
     exchange_node->n_largest_pow_tree_order = tmp;
     if (2 == tree_order) {

@@ -133,7 +133,7 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read (sm_fifo_t *fifo, struct mca_btl_ba
 
     fifo->fifo_head = SM_FIFO_FREE;
 
-    assert (hdr->next != value);
+    OPAL_ASSERT(hdr->next != value);
 
     if (OPAL_UNLIKELY(SM_FIFO_FREE == hdr->next)) {
         opal_atomic_rmb();
@@ -172,7 +172,7 @@ static inline void sm_fifo_write (sm_fifo_t *fifo, fifo_value_t value)
     prev = sm_item_swap (&fifo->fifo_tail, value);
     opal_atomic_rmb ();
 
-    assert (prev != value);
+    OPAL_ASSERT(prev != value);
 
     if (OPAL_LIKELY(SM_FIFO_FREE != prev)) {
         mca_btl_sm_hdr_t *hdr = (mca_btl_sm_hdr_t *) relative2virtual (prev);

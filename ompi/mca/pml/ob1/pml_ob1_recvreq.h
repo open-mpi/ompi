@@ -441,7 +441,7 @@ mca_pml_ob1_recv_request_ack_send(mca_btl_base_module_t* btl,
     mca_bml_base_btl_t* bml_btl;
     mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc);
 
-    assert (NULL != endpoint);
+    OPAL_ASSERT(NULL != endpoint);
 
     /**
      * If a btl has been requested then send the ack using that specific device, otherwise

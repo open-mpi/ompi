@@ -275,7 +275,7 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *endpoint, *next;
 
-    assert(btl);
+    OPAL_ASSERT(btl);
 
     /* clear the rcache */
     if (ofi_btl->rcache) {

@@ -1021,8 +1021,8 @@ int cuda_getmemhandle(void *base, size_t size, mca_rcache_base_registration_t *n
     /* We should only be there if this is a CUDA device pointer */
     result = cuFunc.cuPointerGetAttribute(&memType,
                                           CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr)base);
-    assert(CUDA_SUCCESS == result);
-    assert(CU_MEMORYTYPE_DEVICE == memType);
+    OPAL_ASSERT(CUDA_SUCCESS == result);
+    OPAL_ASSERT(CU_MEMORYTYPE_DEVICE == memType);
 
     /* Get the memory handle so we can send it to the remote process. */
     result = cuFunc.cuIpcGetMemHandle(memHandle, (CUdeviceptr)base);
@@ -1775,7 +1775,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
         return 0;
     }
     /* Must be a device pointer */
-    assert(memType == CU_MEMORYTYPE_DEVICE);
+    OPAL_ASSERT(memType == CU_MEMORYTYPE_DEVICE);
 #else /* OPAL_CUDA_GET_ATTRIBUTES */
     res = cuFunc.cuPointerGetAttribute(&memType,
                                        CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
@@ -1788,7 +1788,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
         return 0;
     }
     /* Must be a device pointer */
-    assert(memType == CU_MEMORYTYPE_DEVICE);
+    OPAL_ASSERT(memType == CU_MEMORYTYPE_DEVICE);
 #endif /* OPAL_CUDA_GET_ATTRIBUTES */
 
     /* This piece of code was added in to handle in a case involving

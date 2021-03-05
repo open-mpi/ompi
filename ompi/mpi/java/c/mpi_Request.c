@@ -47,6 +47,7 @@
  */
 
 #include "ompi_config.h"
+
 #include <stdlib.h>
 #include <assert.h>
 #ifdef HAVE_TARGETCONDITIONALS_H

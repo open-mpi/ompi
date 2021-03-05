@@ -233,7 +233,7 @@ static inline bool mca_btl_ugni_frag_del_ref (mca_btl_ugni_base_frag_t *frag, in
 
     ref_cnt = OPAL_THREAD_ADD_FETCH32(&frag->ref_cnt, -1);
     if (ref_cnt) {
-        assert (ref_cnt > 0);
+        OPAL_ASSERT(ref_cnt > 0);
         return false;
     }
 

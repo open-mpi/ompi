@@ -49,9 +49,9 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     dt_elem_desc_t* pElems;
     size_t count;
 
-    assert( 0 != starting_point );
-    assert( pConvertor->bConverted != starting_point );
-    assert( starting_point <=(pConvertor->count * pData->size) );
+    OPAL_ASSERT( 0 != starting_point );
+    OPAL_ASSERT( pConvertor->bConverted != starting_point );
+    OPAL_ASSERT( starting_point <=(pConvertor->count * pData->size) );
 
     /*opal_output( 0, "Data extent %d size %d count %d total_size %d starting_point %d\n",
                  pData->ub - pData->lb, pData->size, pConvertor->count,
@@ -91,7 +91,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
     }
 
     /* remove from the main loop all the complete datatypes */
-    assert (! (pConvertor->flags & CONVERTOR_SEND));
+    OPAL_ASSERT(! (pConvertor->flags & CONVERTOR_SEND));
     remote_size    = opal_convertor_compute_remote_size( pConvertor );
     count          = starting_point / remote_size;
     resting_place -= (remote_size * count);
@@ -124,7 +124,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
                 if( pStack->index == -1 ) {
                     extent = pData->ub - pData->lb;
                 } else {
-                    assert( OPAL_DATATYPE_LOOP == (pElems - end_loop->items)->loop.common.type );
+                    OPAL_ASSERT( OPAL_DATATYPE_LOOP == (pElems - end_loop->items)->loop.common.type );
                     extent = ((ddt_loop_desc_t*)(pElems - end_loop->items))->extent;
                 }
                 pStack->count -= (cnt + 1);

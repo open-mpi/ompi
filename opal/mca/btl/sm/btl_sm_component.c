@@ -649,7 +649,7 @@ void mca_btl_sm_poll_handle_frag (mca_btl_sm_hdr_t *hdr, struct mca_btl_base_end
         xpmem_reg = sm_get_registation (endpoint, hdr->sc_iov.iov_base,
                                         hdr->sc_iov.iov_len, 0,
                                         &segments[1].seg_addr.pval);
-        assert (NULL != xpmem_reg);
+        OPAL_ASSERT(NULL != xpmem_reg);
 
         segments[1].seg_len = hdr->sc_iov.iov_len;
         frag.des_segment_count = 2;

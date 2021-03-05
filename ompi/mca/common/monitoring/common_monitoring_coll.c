@@ -20,7 +20,7 @@
 #include "ompi/communicator/communicator.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/class/opal_hash_table.h"
-#include <assert.h>
+#include "opal/util/opal_assert.h"
 
 /*** Monitoring specific variables ***/
 struct mca_monitoring_coll_data_t {
@@ -67,7 +67,7 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
         char*tmp_procs;
         size = ompi_comm_size(data->p_comm);
         world_size = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world) - 1;
-        assert( 0 < size );
+        OPAL_ASSERT( 0 < size );
         /* Allocate enough space for list (add 1 to keep the final '\0' if already exact size) */
         max_length = snprintf(NULL, 0, "%d,", world_size - 1) + 1;
         tmp_procs = malloc((1 + max_length * size) * sizeof(char));

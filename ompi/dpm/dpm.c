@@ -141,7 +141,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         /* we will set the rportlen to a negative value corresponding to the
          * error code produced by pmix spawn */
         char *value = strrchr(port_string, '=');
-        assert(NULL != value);
+        OPAL_ASSERT(NULL != value);
         rportlen = atoi(++value);
         if (rportlen > 0) rportlen *= -1;
         goto bcast_rportlen;

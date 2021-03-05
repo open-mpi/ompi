@@ -94,7 +94,7 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
     /* Fill the communicator with topology information. */
     if (temp_comm != MPI_COMM_NULL) {
 
-        assert( NULL == temp_comm->c_topo );
+        OPAL_ASSERT( NULL == temp_comm->c_topo );
         if (OMPI_SUCCESS != (errcode = mca_topo_base_comm_select(temp_comm,
                                                                  comm->c_topo,
                                                                  &topo,

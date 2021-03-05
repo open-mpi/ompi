@@ -61,7 +61,7 @@ static void mca_btl_ugni_callback_eager_get_progress_pending (struct mca_btl_bas
         /* copy the relevant data out of the pending fragment */
         frag->endpoint = pending_frag->endpoint;
 
-        assert (frag != pending_frag);
+        OPAL_ASSERT(frag != pending_frag);
 
         /* start the next eager get using this fragment */
         (void) mca_btl_ugni_start_eager_get (frag->endpoint, pending_frag->hdr.eager_ex, frag);
@@ -143,7 +143,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *endpoint,
                 frag = mca_btl_ugni_frag_alloc_rdma_int (endpoint);
 
                 /* not much can be done if a small fragment can not be allocated. abort! */
-                assert (NULL != frag);
+                OPAL_ASSERT(NULL != frag);
                 frag->hdr.eager_ex = hdr;
                 break;
             }

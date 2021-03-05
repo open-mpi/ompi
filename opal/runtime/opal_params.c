@@ -46,6 +46,7 @@
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/opal_assert.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
 #include "opal/util/printf.h"
@@ -64,6 +65,7 @@ bool opal_timing_overhead = true;
 bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
 bool opal_cuda_support = false;
 bool opal_warn_on_missing_libcuda = true;
+bool opal_assert_core_enabled = true;
 
 /**
  * Globals imported from the OMPI layer.
@@ -358,6 +360,16 @@ int opal_register_params(void)
             "Number of thread allowed in opal_progress. Default: 1",
             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_8,
             MCA_BASE_VAR_SCOPE_READONLY, &opal_max_thread_in_progress);
+
+    /* Generate a core file on assert or just print and _exit(1) */
+    (void)mca_base_var_register("opal", "opal", NULL, "enable_assert_core",
+                                "Enable core files on OPAL_ASSERT(). Default: 0",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                0,
+                                OPAL_INFO_LVL_5,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &opal_assert_core_enabled);
+
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();

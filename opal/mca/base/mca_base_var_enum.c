@@ -395,10 +395,10 @@ int mca_base_var_enum_create_flag (const char *name, const mca_base_var_enum_val
         new_enum->enum_flags[i].conflicting_flag = flags[i].conflicting_flag;
         /* ensure flags are only set a single bit, doesn't conflict with itself, and
          * hasn't already been specified. */
-        assert (!(flags[i].flag & (flags[i].flag - 1)));
-        assert (!(flags[i].flag & flags[i].conflicting_flag));
-        assert (!(all_flags & flags[i].flag));
-        assert (flags[i].flag);
+        OPAL_ASSERT(!(flags[i].flag & (flags[i].flag - 1)));
+        OPAL_ASSERT(!(flags[i].flag & flags[i].conflicting_flag));
+        OPAL_ASSERT(!(all_flags & flags[i].flag));
+        OPAL_ASSERT(flags[i].flag);
         all_flags |= flags[i].flag;
     }
 
@@ -741,7 +741,7 @@ int mca_base_var_enum_register(const char *project_name, const char *framework_n
     int group_index;
 
     /* Developer error. Storage can not be NULL */
-    assert (NULL != storage);
+    OPAL_ASSERT(NULL != storage);
 
     /* Create a new parameter entry */
     group_index = mca_base_var_group_register (project_name, framework_name, component_name,

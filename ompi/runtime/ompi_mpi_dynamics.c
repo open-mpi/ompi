@@ -25,6 +25,7 @@
 #include "ompi_config.h"
 
 #include "opal/util/show_help.h"
+#include "opal/util/opal_assert.h"
 
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -34,7 +35,7 @@ static char *ompi_mpi_dynamics_disabled_msg = "Enabled";
 
 void ompi_mpi_dynamics_disable(const char *msg)
 {
-    assert(msg);
+    OPAL_ASSERT(msg);
 
     ompi_mpi_dynamics_enabled = false;
     ompi_mpi_dynamics_disabled_msg = strdup(msg);

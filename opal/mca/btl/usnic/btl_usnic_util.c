@@ -165,7 +165,7 @@ void opal_btl_usnic_snprintf_bool_array(char *s, size_t slen, bool a[],
     size_t j = 0;
 
     /* could accommodate other cases, but not needed right now */
-    assert(slen % 4 == 0);
+    OPAL_ASSERT(slen % 4 == 0);
 
     /* compute one nybble at a time */
     while (i < alen && (j < slen - 1)) {
@@ -184,8 +184,8 @@ void opal_btl_usnic_snprintf_bool_array(char *s, size_t slen, bool a[],
     }
 
     s[j++] = '\0';
-    assert(i <= alen);
-    assert(j <= slen);
+    OPAL_ASSERT(i <= alen);
+    OPAL_ASSERT(j <= slen);
 }
 
 /* Return the largest size data size that can be packed into max_len using the
@@ -210,7 +210,7 @@ size_t opal_btl_usnic_convertor_pack_peek(
         BTL_ERROR(("unexpected convertor error"));
         abort(); /* XXX */
     }
-    assert(position >= conv->bConverted);
+    OPAL_ASSERT(position >= conv->bConverted);
     packable_len = position - conv->bConverted;
     OBJ_DESTRUCT(&temp);
     return packable_len;

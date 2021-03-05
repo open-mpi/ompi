@@ -142,7 +142,7 @@ opal_btl_usnic_finish_put_or_send(
          */
         if (frag->sf_base.uf_base.USNIC_SEND_LOCAL_COUNT > 1) {
             /* no convertor */
-            assert(NULL != frag->sf_base.uf_local_seg[1].seg_addr.pval);
+            OPAL_ASSERT(NULL != frag->sf_base.uf_local_seg[1].seg_addr.pval);
 
             memcpy(((char *)(intptr_t)frag->sf_base.uf_local_seg[0].seg_addr.lval +
                         frag->sf_base.uf_local_seg[0].seg_len),

@@ -33,7 +33,7 @@ static int
 mca_pml_cm_send_request_free(struct ompi_request_t** request)
 {
     mca_pml_cm_send_request_t* sendreq = *(mca_pml_cm_send_request_t**)request;
-    assert( false == sendreq->req_base.req_free_called );
+    OPAL_ASSERT( false == sendreq->req_base.req_free_called );
 
     sendreq->req_base.req_free_called = true;
     if( true == sendreq->req_base.req_pml_complete ) {

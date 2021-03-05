@@ -53,7 +53,7 @@ static inline void _predefined_data( const dt_elem_desc_t* ELEM,
     unsigned char* _destination = (DESTINATION) + _elem->disp;
     size_t do_now = _elem->count, do_now_bytes;
 
-    assert( (COUNT) == (do_now * _elem->blocklen));
+    OPAL_ASSERT( (COUNT) == (do_now * _elem->blocklen));
 
     /* We don't a prologue and epilogue here as we are __always__ working
      * with full copies of the data description.
@@ -63,7 +63,7 @@ static inline void _predefined_data( const dt_elem_desc_t* ELEM,
      * Compute how many full blocklen we need to do and do them.
      */
     do_now_bytes = _elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size;
-    assert( (do_now * do_now_bytes) <= (*SPACE) );
+    OPAL_ASSERT( (do_now * do_now_bytes) <= (*SPACE) );
 
     for(size_t _i = 0; _i < do_now; _i++ ) {
         OPAL_DATATYPE_SAFEGUARD_POINTER( _source, do_now_bytes, (SOURCE_BASE),
@@ -198,7 +198,7 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
                                    pStack->count, stack_pos, pos_desc, pStack->disp, (unsigned long)iov_len_local ); );
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( stack_pos == 0 ) {
-                    assert( iov_len_local == 0 );
+                    OPAL_ASSERT( iov_len_local == 0 );
                     return 0;  /* completed */
                 }
                 stack_pos--;
@@ -209,7 +209,7 @@ static inline int32_t _copy_content_same_ddt( const opal_datatype_t* datatype, i
                 if( pStack->index == -1 ) {
                     pStack->disp += (datatype->ub - datatype->lb);
                 } else {
-                    assert( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
+                    OPAL_ASSERT( OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type );
                     pStack->disp += description[pStack->index].loop.extent;
                 }
             }

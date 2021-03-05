@@ -51,7 +51,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
             OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "PTL_EVENT_GET received now pending_get=%d",ret));
             return retval;
         }
-        assert(ptl_request->pending_get == 0);
+        OPAL_ASSERT(ptl_request->pending_get == 0);
 
         /* last get received */
         OPAL_OUTPUT_VERBOSE((90, ompi_mtl_base_framework.framework_output, "PTL_EVENT_GET: PtlMEUnlink is called ptl_request->me_h=%d (pending get=%d)", ptl_request->me_h, ret));
@@ -162,7 +162,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         add++;
     }
     val = OPAL_THREAD_ADD_FETCH32((int32_t*)&ptl_request->event_count, add);
-    assert(val <= 3);
+    OPAL_ASSERT(val <= 3);
 
     if (val == 3) {
         if (NULL != ptl_request->buffer_ptr) {
