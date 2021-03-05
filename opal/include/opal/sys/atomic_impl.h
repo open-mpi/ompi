@@ -22,6 +22,8 @@
 
 /* Inline C implementation of the functions defined in atomic.h */
 
+#include "opal/util/opal_assert.h"
+
 #include <stdlib.h>
 
 /**********************************************************************
@@ -246,7 +248,7 @@ OPAL_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, -, sub)
             return opal_atomic_compare_exchange_strong_64 ((opal_atomic_int64_t *) addr, \
                                                            (int64_t *) oldval, (int64_t) newval); \
         }                                                               \
-        abort();                                                        \
+        OPAL_ABORT();                                                        \
     }
 #elif OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32
 #define OPAL_ATOMIC_DEFINE_CMPXCG_XX(semantics)                         \
@@ -259,7 +261,7 @@ OPAL_ATOMIC_DEFINE_CMPXCG_OP(int64_t, 64, -, sub)
             return opal_atomic_compare_exchange_strong_32 ((opal_atomic_int32_t *) addr, \
                                                            (int32_t *) oldval, (int32_t) newval); \
         }                                                               \
-        abort();                                                        \
+        OPAL_ABORT();                                                        \
     }
 #else
 #error "Platform does not have required atomic compare-and-swap functionality"
@@ -324,7 +326,7 @@ static inline void
    default:
        /* This should never happen, so deliberately abort (hopefully
           leaving a corefile for analysis) */
-       abort();
+       OPAL_ABORT();
    }
 }
 
@@ -347,7 +349,7 @@ opal_atomic_sub_xx(opal_atomic_intptr_t* addr, int32_t value, size_t length)
    default:
        /* This should never happen, so deliberately abort (hopefully
           leaving a corefile for analysis) */
-       abort();
+       OPAL_ABORT();
    }
 }
 
@@ -404,7 +406,7 @@ static inline intptr_t opal_atomic_fetch_add_ptr( opal_atomic_intptr_t* addr,
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_ADD_64
     return opal_atomic_fetch_add_64((opal_atomic_int64_t*) addr, (unsigned long) delta);
 #else
-    abort ();
+    OPAL_ABORT();
     return 0;
 #endif
 }
@@ -417,7 +419,7 @@ static inline intptr_t opal_atomic_add_fetch_ptr( opal_atomic_intptr_t* addr,
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_ADD_64
     return opal_atomic_add_fetch_64((opal_atomic_int64_t*) addr, (unsigned long) delta);
 #else
-    abort ();
+    OPAL_ABORT();
     return 0;
 #endif
 }
@@ -430,7 +432,7 @@ static inline intptr_t opal_atomic_fetch_sub_ptr( opal_atomic_intptr_t* addr,
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SUB_32
     return opal_atomic_fetch_sub_64((opal_atomic_int64_t*) addr, (unsigned long) delta);
 #else
-    abort();
+    OPAL_ABORT();
     return 0;
 #endif
 }
@@ -443,7 +445,7 @@ static inline intptr_t opal_atomic_sub_fetch_ptr( opal_atomic_intptr_t* addr,
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SUB_32
     return opal_atomic_sub_fetch_64((opal_atomic_int64_t*) addr, (unsigned long) delta);
 #else
-    abort();
+    OPAL_ABORT();
     return 0;
 #endif
 }

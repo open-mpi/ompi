@@ -428,7 +428,7 @@ static inline int ompi_osc_rdma_lock_release_exclusive (ompi_osc_rdma_module_t *
         ret = ompi_osc_rdma_lock_btl_op (module, peer, lock, MCA_BTL_ATOMIC_ADD, -OMPI_OSC_RDMA_LOCK_EXCLUSIVE,
                                          false);
         if (OMPI_SUCCESS != ret) {
-            abort ();
+            OPAL_ABORT();
         }
     } else {
         ompi_osc_rdma_unlock_local ((ompi_osc_rdma_atomic_lock_t *)(intptr_t) lock);

@@ -469,7 +469,7 @@ static inline void ompi_proc_mark_as_failed(ompi_proc_t *proc) {
     if( proc == ompi_proc_local() ) {
         opal_output(0, "%s %s: I have been reported dead by someone else. This is abnormal: since the current rank is executing this code, the failure detector made a mistake. The root cause may be that this rank missed its heartbeat send deadlines, or that the observer process got very slow. One way to resolve such issues is to increase the detector timeout, or enable the threaded detector. This is abnormal; Aborting.",
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__);
-        abort();
+        OPAL_ABORT();
     }
     proc->proc_active = false;
 }

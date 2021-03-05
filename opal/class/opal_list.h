@@ -449,7 +449,7 @@ static inline size_t opal_list_get_size(opal_list_t* list)
     if (check_len != list->opal_list_length) {
         fprintf(stderr," Error :: opal_list_get_size - opal_list_length does not match actual list length\n");
         fflush(stderr);
-        abort();
+        OPAL_ABORT();
     }
 #endif
 

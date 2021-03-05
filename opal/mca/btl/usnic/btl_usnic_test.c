@@ -115,7 +115,7 @@ void opal_btl_usnic_register_test(const char *name,
                                   opal_btl_usnic_test_fn_t test_fn,
                                   void *ctx)
 {
-    abort(); /* never should be called */
+    OPAL_ABORT(); /* never should be called */
 }
 
 void opal_btl_usnic_run_tests(void)

@@ -406,7 +406,7 @@ static void resolve_relative_paths(char **file_prefix, char *file_path, bool rel
     if( OPAL_SUCCESS != fixup_files(file_prefix, file_path, rel_path_search, sep) ) {
 #if 0
         /* JJH We need to die! */
-        abort();
+        OPAL_ABORT();
 #else
         ;
 #endif

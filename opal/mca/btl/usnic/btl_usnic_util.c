@@ -208,7 +208,7 @@ size_t opal_btl_usnic_convertor_pack_peek(
     rc = opal_convertor_clone_with_position(conv, &temp, 1, &position);
     if (OPAL_UNLIKELY(rc < 0)) {
         BTL_ERROR(("unexpected convertor error"));
-        abort(); /* XXX */
+        OPAL_ABORT(); /* XXX */
     }
     OPAL_ASSERT(position >= conv->bConverted);
     packable_len = position - conv->bConverted;

@@ -80,7 +80,7 @@ static __inline size_t sysconf(int option) {
     }
     printf( "This functionality is not supported: line: %d\tfile: %s\n",
             __LINE__, __FILE__ );
-    abort();
+    OPAL_ABORT();
     return 0;
 }
 
@@ -102,7 +102,7 @@ static __inline int fcntl (int fildes, int cmd, ...) {
         case F_GETFL: ret = 0;
                       break;
         default: printf("Option not supported: %d %s\n", __LINE__, __FILE__);
-                      abort();
+                      OPAL_ABORT();
     };
 
     return ret;

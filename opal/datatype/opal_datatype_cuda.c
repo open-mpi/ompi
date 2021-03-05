@@ -135,7 +135,7 @@ void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_
     if (res != 0) {
         opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
                     res, dest, src, (int)size);
-        abort();
+        OPAL_ABORT();
     } else {
         return dest;
     }
@@ -153,7 +153,7 @@ void *opal_cuda_memcpy_sync(void *dest, const void *src, size_t size)
     if (res != 0) {
         opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d",
                     res, dest, src, (int)size);
-        abort();
+        OPAL_ABORT();
     } else {
         return dest;
     }
@@ -171,7 +171,7 @@ void *opal_cuda_memmove(void *dest, void *src, size_t size)
     if(res != 0){
         opal_output(0, "CUDA: Error in gpu memmove: res=%d, dest=%p, src=%p, size=%d",
                     res, dest, src, (int)size);
-        abort();
+        OPAL_ABORT();
     }
     return dest;
 }

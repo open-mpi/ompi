@@ -261,7 +261,7 @@ int opal_bp_graph_clone(const opal_bp_graph_t *g,
     if (copy_user_data) {
 	opal_output(0, "[%s:%d:%s] user data copy requested but not yet supported", 
 		    __FILE__, __LINE__, __func__);
-        abort();
+        OPAL_ABORT();
         return OPAL_ERR_FATAL;
     }
 
@@ -584,7 +584,7 @@ bool opal_bp_graph_bellman_ford(opal_bp_graph_t *gx,
                 (dist[u] + e_ptr->cost) < dist[v]) {
                 opal_output(0, "[%s:%d:%s] negative-weight cycle detected",
 			    __FILE__, __LINE__, __func__);
-                abort();
+                OPAL_ABORT();
                 goto out;
             }
         }
@@ -657,7 +657,7 @@ int opal_bp_graph_bipartite_to_flow(opal_bp_graph_t *g)
         if (inbound > 0 && outbound > 0) {
             opal_output(0, "[%s:%d:%s] graph is not (unidirectionally) bipartite",
 			__FILE__, __LINE__, __func__);
-            abort();
+            OPAL_ABORT();
         }
         else if (inbound > 0) {
             /* "right" side of the graph, create edges to the sink */
@@ -824,7 +824,7 @@ static int min_cost_flow_ssp(opal_bp_graph_t *gx,
             if (OPAL_SUCCESS != err) {
                 opal_output(0, "[%s:%d:%s] unable to set capacity, missing edge?",
 			    __FILE__, __LINE__, __func__);
-                abort();
+                OPAL_ABORT();
             }
 
             c = get_capacity(gx, v, u) + cap_f_path;
@@ -833,7 +833,7 @@ static int min_cost_flow_ssp(opal_bp_graph_t *gx,
             if (OPAL_SUCCESS != err) {
                 opal_output(0, "[%s:%d:%s] unable to set capacity, missing edge?",
 			    __FILE__, __LINE__, __func__);
-                abort();
+                OPAL_ABORT();
             }
         }
     }

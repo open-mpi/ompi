@@ -585,7 +585,7 @@ int mca_btl_ugni_progress_datagram (mca_btl_ugni_device_t *device)
             /* there is no way to recover from this error so just abort() */
             BTL_ERROR(("could not find/allocate a btl endpoint for peer %s",
                        OPAL_NAME_PRINT(ugni_module->wc_remote_attr.proc_name)));
-            abort ();
+            OPAL_ABORT();
             return OPAL_ERR_NOT_FOUND;
         }
     }

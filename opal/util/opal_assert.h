@@ -30,4 +30,18 @@ OPAL_DECLSPEC extern bool opal_assert_core_enabled;
     OPAL_ASSERT_INTERNAL(cond, #cond)     \
 }
 
+#define OPAL_ABORT() {                                       \
+  if(OPAL_LIKELY(true == opal_assert_core_enabled)) {        \
+      abort();                                               \
+  }                                                          \
+  else {                                                     \
+      fprintf(stderr, "ERROR: %s:%d: %s(): Program aborted.\n", __FILE__, __LINE__, __func__);                                     \
+      fprintf(stderr, "WARNING: No core file will be generated.\n");                                                               \
+      fprintf(stderr, "If you would like to generate a core file, please rerun with: \'--mca opal_enable_assert_core 1\'\n");      \
+      fprintf(stderr, "Exiting.\n");  \
+      fflush(stderr);                 \
+      _exit(1);                       \
+  }                                   \
+}
+
 #endif
