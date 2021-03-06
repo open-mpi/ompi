@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
@@ -135,6 +135,10 @@ typedef bool (*mca_fbtl_base_module_progress_fn_t)
 
 typedef void (*mca_fbtl_base_module_request_free_fn_t)
     ( struct mca_ompio_request_t *request);
+
+typedef bool (*mca_fbtl_base_module_check_atomicity_fn_t)
+    (struct ompio_file_t *file);
+
 /*
  * ***********************************************************************
  * ***************************  module structure *************************
@@ -150,12 +154,13 @@ struct mca_fbtl_base_module_1_0_0_t {
     mca_fbtl_base_module_finalize_1_0_0_fn_t fbtl_module_finalize;
 
     /* FBTL function pointers */
-    mca_fbtl_base_module_preadv_fn_t        fbtl_preadv;
-    mca_fbtl_base_module_ipreadv_fn_t       fbtl_ipreadv;
-    mca_fbtl_base_module_pwritev_fn_t       fbtl_pwritev;
-    mca_fbtl_base_module_ipwritev_fn_t      fbtl_ipwritev;
-    mca_fbtl_base_module_progress_fn_t      fbtl_progress;
-    mca_fbtl_base_module_request_free_fn_t  fbtl_request_free;
+    mca_fbtl_base_module_preadv_fn_t          fbtl_preadv;
+    mca_fbtl_base_module_ipreadv_fn_t         fbtl_ipreadv;
+    mca_fbtl_base_module_pwritev_fn_t         fbtl_pwritev;
+    mca_fbtl_base_module_ipwritev_fn_t        fbtl_ipwritev;
+    mca_fbtl_base_module_progress_fn_t        fbtl_progress;
+    mca_fbtl_base_module_request_free_fn_t    fbtl_request_free;
+    mca_fbtl_base_module_check_atomicity_fn_t fbtl_check_atomicity;
 };
 typedef struct mca_fbtl_base_module_1_0_0_t mca_fbtl_base_module_1_0_0_t;
 typedef mca_fbtl_base_module_1_0_0_t mca_fbtl_base_module_t;

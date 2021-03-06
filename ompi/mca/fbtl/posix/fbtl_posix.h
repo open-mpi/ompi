@@ -64,6 +64,7 @@ ssize_t mca_fbtl_posix_ipwritev (ompio_file_t *file,
 
 bool mca_fbtl_posix_progress     ( mca_ompio_request_t *req);
 void mca_fbtl_posix_request_free ( mca_ompio_request_t *req);
+bool mca_fbtl_posix_check_atomicity ( ompio_file_t *file);
 
 int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op, 
                           OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags,

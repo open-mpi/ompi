@@ -58,12 +58,13 @@ static mca_fbtl_base_module_1_0_0_t posix =  {
 #if defined (FBTL_POSIX_HAVE_AIO)
     mca_fbtl_posix_ipwritev,        /* non-blocking write */
     mca_fbtl_posix_progress,        /* module specific progress */
-    mca_fbtl_posix_request_free     /* free module specific data items on the request */
+    mca_fbtl_posix_request_free,    /* free module specific data items on the request */
 #else
     NULL,                           /* non-blocking write */
     NULL,                           /* module specific progress */
-    NULL                            /* free module specific data items on the request */
+    NULL,                           /* free module specific data items on the request */
 #endif
+    mca_fbtl_posix_check_atomicity  /* check whether atomicity is supported on this fs */
 };
 /*
  * *******************************************************************
@@ -290,4 +291,28 @@ void mca_fbtl_posix_request_free ( mca_ompio_request_t *req)
     }
 #endif
   return;
+}
+
+bool mca_fbtl_posix_check_atomicity ( ompio_file_t *file)
+{    
+    struct flock lock;
+    
+    lock.l_type   = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start  = 0;
+    lock.l_len    = 0;
+    lock.l_pid    = 0;
+    
+    if (fcntl(file->fd, F_GETLK, &lock) < 0)
+    {
+#ifdef VERBOSE
+        printf("Failed to get lock info for '%s': %s\n", filename, strerror(errno));
+#endif
+        return false;
+    }
+
+#ifdef VERBOSE
+    printf("Lock would have worked, l_type=%d\n", (int)lock.l_type);
+#endif
+    return true;
 }
