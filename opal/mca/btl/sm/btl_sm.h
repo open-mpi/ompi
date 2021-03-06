@@ -103,7 +103,6 @@ enum {
       MCA_BTL_SM_CMA   = 1,
       MCA_BTL_SM_KNEM  = 2,
       MCA_BTL_SM_NONE  = 3,
-      MCA_BTL_SM_EMUL  = 4,
 };
 
 /**
@@ -246,11 +245,6 @@ int mca_btl_sm_put_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *en
                          int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 #endif
 
-int mca_btl_sm_put_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                           uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                           mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                           int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
-
 /**
  * Initiate an synchronous get.
  *
@@ -280,29 +274,6 @@ int mca_btl_sm_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *en
 #endif
 
 ino_t mca_btl_sm_get_user_ns_id(void);
-
-int mca_btl_sm_get_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                           uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                           mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                           int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
-
-int mca_btl_sm_emu_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                        uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
-                        mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
-                        mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
-
-int mca_btl_sm_emu_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                         void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                         mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
-                         uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
-                         void *cbcontext, void *cbdata);
-
-int mca_btl_sm_emu_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                           void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                           mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value, int flags,
-                           int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
-
-void mca_btl_sm_sc_emu_init (void);
 
 /**
  * Allocate a segment.

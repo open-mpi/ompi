@@ -42,7 +42,6 @@ libmca_btl_sm_la_sources = \
     btl_sm_xpmem.h \
     btl_sm_knem.c \
     btl_sm_knem.h \
-    btl_sm_sc_emu.c \
     btl_sm_atomic.c
 
 # Make the output library in this directory, and name it either

@@ -143,19 +143,3 @@ int mca_btl_sm_put_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *en
     return OPAL_SUCCESS;
 }
 #endif
-
-/**
- * @brief Provides an emulated put path which uses copy-in copy-out with shared memory buffers
- */
-int mca_btl_sm_put_sc_emu (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                              uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                              mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                              int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
-{
-    if (size > mca_btl_sm.super.btl_put_limit) {
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
-
-    return mca_btl_sm_rdma_frag_start (btl, endpoint, MCA_BTL_SM_OP_PUT, 0, 0, 0, order, flags, size,
-                                       local_address, remote_address, cbfunc, cbcontext, cbdata);
-}

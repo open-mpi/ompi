@@ -40,12 +40,12 @@ mca_base_var_enum_flag_t *mca_btl_base_atomic_enum = NULL;
 
 mca_base_var_enum_value_flag_t mca_btl_base_flag_enum_flags[] = {
     {MCA_BTL_FLAGS_SEND, "send", 0},
-    {MCA_BTL_FLAGS_PUT, "put", 0},
-    {MCA_BTL_FLAGS_GET, "get", 0},
+    {MCA_BTL_FLAGS_PUT, "put", MCA_BTL_FLAGS_PUT_AM},
+    {MCA_BTL_FLAGS_GET, "get", MCA_BTL_FLAGS_GET_AM},
     {MCA_BTL_FLAGS_SEND_INPLACE, "inplace", 0},
     {MCA_BTL_FLAGS_SIGNALED, "signaled", 0},
-    {MCA_BTL_FLAGS_ATOMIC_OPS, "atomics", 0},
-    {MCA_BTL_FLAGS_ATOMIC_FOPS, "fetching-atomics", 0},
+    {MCA_BTL_FLAGS_ATOMIC_OPS, "atomics", MCA_BTL_FLAGS_ATOMIC_AM_FOP},
+    {MCA_BTL_FLAGS_ATOMIC_FOPS, "fetching-atomics", MCA_BTL_FLAGS_ATOMIC_AM_FOP},
     {MCA_BTL_FLAGS_SINGLE_ADD_PROCS, "static", 0},
     {MCA_BTL_FLAGS_CUDA_PUT, "cuda-put", 0},
     {MCA_BTL_FLAGS_CUDA_GET, "cuda-get", 0},
@@ -56,6 +56,9 @@ mca_base_var_enum_value_flag_t mca_btl_base_flag_enum_flags[] = {
     {MCA_BTL_FLAGS_NEED_CSUM, "need-csum", 0},
     {MCA_BTL_FLAGS_HETEROGENEOUS_RDMA, "hetero-rdma", 0},
     {MCA_BTL_FLAGS_RDMA_FLUSH, "rdma-flush", 0},
+    {MCA_BTL_FLAGS_PUT_AM, "put-am", MCA_BTL_FLAGS_PUT},
+    {MCA_BTL_FLAGS_GET_AM, "get_am", MCA_BTL_FLAGS_GET},
+    {MCA_BTL_FLAGS_ATOMIC_AM_FOP, "atomic-am", MCA_BTL_FLAGS_ATOMIC_FOPS},
     {0, NULL, 0}
 };
 

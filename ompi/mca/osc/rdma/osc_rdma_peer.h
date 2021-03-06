@@ -36,7 +36,7 @@ struct ompi_osc_rdma_peer_t {
     /** registration handle associated with the state */
     mca_btl_base_registration_handle_t *state_handle;
 
-    /** lock to protrct peer structure */
+    /** lock to protect peer structure */
     opal_mutex_t lock;
 
     /** rank of this peer in the window */
@@ -44,6 +44,12 @@ struct ompi_osc_rdma_peer_t {
 
     /** peer flags */
     opal_atomic_int32_t flags;
+
+    /** index into BTL array */
+    uint8_t data_btl_index;
+
+    /** index into BTL array */
+    uint8_t state_btl_index;
 };
 typedef struct ompi_osc_rdma_peer_t ompi_osc_rdma_peer_t;
 
@@ -160,17 +166,6 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
  * intended to be called from anywhere else.
  */
 struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup (struct ompi_osc_rdma_module_t *module, int peer_id);
-
-/**
- * @brief lookup the btl endpoint for a peer
- *
- * @param[in]  module         osc rdma module
- * @param[in]  peer_id        peer's rank in the communicator
- *
- * @returns btl endpoint for the peer on success
- * @returns NULL on failure
- */
-struct mca_btl_base_endpoint_t *ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *module, int peer_id);
 
 /**
  * @brief check if this process holds an exclusive lock on a peer

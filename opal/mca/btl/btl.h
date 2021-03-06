@@ -18,7 +18,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -176,6 +176,7 @@ typedef uint8_t mca_btl_base_tag_t;
  * header file associated with the framework.
  */
 #define MCA_BTL_AM_FRAMEWORK_MASK   0xD0
+#define MCA_BTL_TAG_BTL_BASE        0x10
 #define MCA_BTL_TAG_BTL             0x20
 #if OPAL_ENABLE_FT_MPI
 #define MCA_BTL_TAG_FT_RBCAST       0x30
@@ -251,6 +252,15 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* The BTL supports RMDA flush */
 #define MCA_BTL_FLAGS_RDMA_FLUSH      0x80000
+
+/* The BTL has an active-message based put */
+#define MCA_BTL_FLAGS_PUT_AM          0x100000
+
+/* The BTL has an active-message based get */
+#define MCA_BTL_FLAGS_GET_AM          0x200000
+
+/* The BTL has active-message based atomics */
+#define MCA_BTL_FLAGS_ATOMIC_AM_FOP   0x400000
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */

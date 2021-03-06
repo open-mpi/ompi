@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
+# Copyright (c) 2021      Google, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,10 +22,12 @@ dist_opaldata_DATA = base/help-mpi-btl-base.txt
 
 headers += \
         base/base.h \
-        base/btl_base_error.h
+        base/btl_base_error.h \
+        base/btl_base_am_rdma.h
 
 libmca_btl_la_SOURCES += \
         base/btl_base_frame.c \
         base/btl_base_error.c \
         base/btl_base_select.c \
-        base/btl_base_mca.c
+        base/btl_base_mca.c \
+        base/btl_base_am_rdma.c

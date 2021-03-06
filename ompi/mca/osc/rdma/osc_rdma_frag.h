@@ -4,6 +4,7 @@
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,7 +67,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
         curr->module = module;
         curr->curr_index = 0;
 
-        if (module->selected_btl->btl_register_mem) {
+        if (module->use_memory_registration) {
             ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, curr->super.ptr, mca_osc_rdma_component.buffer_size,
                                           MCA_BTL_REG_FLAG_ACCESS_ANY, &curr->handle);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
