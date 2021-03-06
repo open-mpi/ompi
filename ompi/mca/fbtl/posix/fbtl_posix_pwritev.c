@@ -40,32 +40,14 @@ ssize_t  mca_fbtl_posix_pwritev(ompio_file_t *fh )
 {
     ssize_t bytes_written=0;
     struct flock lock;
-    int lock_counter=0, ret;
-    int32_t orig_flags;
+    int lock_counter=0;
     
     if (NULL == fh->f_io_array) {
         return OMPI_ERROR;
     }
 
     if ( fh->f_atomicity ) {
-        // save flags and disable file system specific requirements
-        orig_flags = fh->f_flags;
-        fh->f_flags &= ~OMPIO_LOCK_NEVER;
-        fh->f_flags &= ~OMPIO_LOCK_NOT_THIS_OP;
-        
-        // Set a lock on the entire region that is being modified
-        off_t end_offset = (off_t)fh->f_io_array[fh->f_num_of_io_entries-1].offset +
-            (off_t)fh->f_io_array[fh->f_num_of_io_entries-1].length;
-        off_t len = end_offset - (off_t)fh->f_io_array[0].offset;
-        ret = mca_fbtl_posix_lock ( &lock, fh, F_WRLCK, (off_t)fh->f_io_array[0].offset,
-                                    len, OMPIO_LOCK_ENTIRE_REGION, &lock_counter); 
-        if ( 0 < ret ) {
-            opal_output(1, "mca_fbtl_posix_pwritev: error in mca_fbtl_posix_lock() ret=%d: %s",
-                        ret, strerror(errno));
-            mca_fbtl_posix_unlock ( &lock, fh, &lock_counter);
-            return OMPI_ERROR;
-        }
-        fh->f_flags = orig_flags;
+        OMPIO_SET_ATOMICITY_LOCK(fh, lock, lock_counter, F_WRLCK);
     }
     
     if ( fh->f_num_of_io_entries > 1 ) {

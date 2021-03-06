@@ -95,6 +95,22 @@ typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
 #define FBTL_POSIX_READ 1
 #define FBTL_POSIX_WRITE 2
 
+#define OMPIO_SET_ATOMICITY_LOCK(_fh, _lock, _lock_counter, _op) {     \
+     int32_t _orig_flags = _fh->f_flags;                               \
+     _fh->f_flags &= ~OMPIO_LOCK_NEVER;                                \
+     _fh->f_flags &= ~OMPIO_LOCK_NOT_THIS_OP;                          \
+     off_t _end_offset = (off_t)_fh->f_io_array[_fh->f_num_of_io_entries-1].offset +         \
+            (off_t)_fh->f_io_array[_fh->f_num_of_io_entries-1].length;                       \
+     off_t _len = _end_offset - (off_t)_fh->f_io_array[0].offset;                            \
+     int _ret = mca_fbtl_posix_lock ( &_lock, _fh, _op, (off_t)_fh->f_io_array[0].offset,    \
+                                    _len, OMPIO_LOCK_ENTIRE_REGION, &_lock_counter);         \
+     if ( _ret == -1 ) {                                                                     \
+          opal_output(1, "mca_fbtl_posix: error in mca_fbtl_posix_lock():%s",                \
+                      strerror(errno));                                                      \
+          return OMPI_ERROR;                                                                 \
+     }                                                                                       \
+     _fh->f_flags = _orig_flags; }
+
 
 /*
  * ******************************************************************
