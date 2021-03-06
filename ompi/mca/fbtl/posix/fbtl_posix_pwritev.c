@@ -32,10 +32,13 @@
 
 static ssize_t mca_fbtl_posix_pwritev_datasieving (ompio_file_t *fh, struct flock *lock, int *lock_counter );
 static ssize_t mca_fbtl_posix_pwritev_generic (ompio_file_t *fh, struct flock *lock, int *lock_counter );
+static ssize_t mca_fbtl_posix_pwritev_single (ompio_file_t *fh, struct flock *lock, int *lock_counter );
+
+#define MAX_RETRIES 10
 
 ssize_t  mca_fbtl_posix_pwritev(ompio_file_t *fh )
 {
-    ssize_t bytes_written=0, ret_code=0;
+    ssize_t bytes_written=0;
     struct flock lock;
     int lock_counter=0, ret;
     int32_t orig_flags;
@@ -56,6 +59,12 @@ ssize_t  mca_fbtl_posix_pwritev(ompio_file_t *fh )
         off_t len = end_offset - (off_t)fh->f_io_array[0].offset;
         ret = mca_fbtl_posix_lock ( &lock, fh, F_WRLCK, (off_t)fh->f_io_array[0].offset,
                                     len, OMPIO_LOCK_ENTIRE_REGION, &lock_counter); 
+        if ( 0 < ret ) {
+            opal_output(1, "mca_fbtl_posix_pwritev: error in mca_fbtl_posix_lock() ret=%d: %s",
+                        ret, strerror(errno));
+            mca_fbtl_posix_unlock ( &lock, fh, &lock_counter);
+            return OMPI_ERROR;
+        }
         fh->f_flags = orig_flags;
     }
     
@@ -92,35 +101,47 @@ ssize_t  mca_fbtl_posix_pwritev(ompio_file_t *fh )
     }
     else {
         // i.e. fh->f_num_of_io_entries == 1
-        ret = mca_fbtl_posix_lock ( &lock, fh, F_WRLCK, (off_t)fh->f_io_array[0].offset,
-                                    (off_t)fh->f_io_array[0].length, OMPIO_LOCK_ENTIRE_REGION,
-                                    &lock_counter); 
-        if ( 0 < ret ) {
-            opal_output(1, "mca_fbtl_posix_pwritev: error in mca_fbtl_posix_lock() ret=%d: %s",
-                        ret, strerror(errno));
-            /* Just in case some part of the lock worked */
-            mca_fbtl_posix_unlock ( &lock, fh, &lock_counter);
-            bytes_written = OMPI_ERROR;
-            goto exit;
-        }
-        
-        ret_code = pwrite(fh->fd, fh->f_io_array[0].memory_address, fh->f_io_array[0].length,
-                         (off_t)fh->f_io_array[0].offset );
-        mca_fbtl_posix_unlock ( &lock, fh, &lock_counter );
-        if ( ret_code == -1 ) {
-            opal_output(1, "mca_fbtl_posix_pwritev: error in (p)write(v):%s", strerror(errno));
-	    bytes_written =  OMPI_ERROR;
-            goto exit;
-	}
-        
-        bytes_written += ret_code;
+        bytes_written = mca_fbtl_posix_pwritev_single (fh, &lock, &lock_counter);
     }
 
-exit:
     if ( fh->f_atomicity ) {
         mca_fbtl_posix_unlock ( &lock, fh, &lock_counter );
     }
     
+    return bytes_written;
+}
+
+ssize_t mca_fbtl_posix_pwritev_single (ompio_file_t *fh, struct flock *lock, int *lock_counter)
+{
+    int ret;
+    ssize_t bytes_written=0, ret_code;
+    size_t total_bytes = 0;
+    size_t len = fh->f_io_array[0].length;
+    
+    ret = mca_fbtl_posix_lock ( lock, fh, F_WRLCK, (off_t)fh->f_io_array[0].offset,
+                                (off_t)fh->f_io_array[0].length, OMPIO_LOCK_ENTIRE_REGION,
+                                lock_counter); 
+    if ( 0 < ret ) {
+        opal_output(1, "mca_fbtl_posix_pwritev_single: error in mca_fbtl_posix_lock() ret=%d: %s",
+                    ret, strerror(errno));
+        /* Just in case some part of the lock worked */
+        mca_fbtl_posix_unlock ( lock, fh, lock_counter);
+        return OMPI_ERROR;
+    }
+    while ( total_bytes < len ) {
+        ret_code = pwrite(fh->fd, (char*)fh->f_io_array[0].memory_address+total_bytes,
+                          fh->f_io_array[0].length-total_bytes,
+                          (off_t)fh->f_io_array[0].offset+total_bytes );
+        if ( ret_code == -1 ) {
+            opal_output(1, "mca_fbtl_posix_pwritev: error in (p)write(v):%s", strerror(errno));
+            mca_fbtl_posix_unlock ( lock, fh, lock_counter );                    
+            return OMPI_ERROR;
+        }
+        total_bytes += ret_code;
+    }
+    mca_fbtl_posix_unlock ( lock, fh, lock_counter );
+
+    bytes_written = total_bytes;
     return bytes_written;
 }
 
@@ -135,6 +156,7 @@ ssize_t mca_fbtl_posix_pwritev_datasieving (ompio_file_t *fh, struct flock *lock
     int startindex = 0;
     int endindex   = 0;
     bool done = false;
+    size_t total_bytes = 0;
     
     while (!done) {
         // Break the io_array into chunks such that the size of the temporary
@@ -188,17 +210,29 @@ ssize_t mca_fbtl_posix_pwritev_datasieving (ompio_file_t *fh, struct flock *lock
             return OMPI_ERROR;
         }
         
-        ret_code = pread (fh->fd, temp_buf, len, start);
-        if ( ret_code == -1 ) {
-            //opal_output(1, "mca_fbtl_posix_pwritev_datasieving: error in pwrite:%s", strerror(errno));
-            opal_output(1, "mca_fbtl_posix_pwritev_datasieving: error in pwrite:%s", strerror(errno));
-            /* Just in case some part of the lock worked */
-            mca_fbtl_posix_unlock ( lock, fh, lock_counter);
-            free ( temp_buf);
-            return OMPI_ERROR;
+        int retries=0;
+        while ( total_bytes < len ) {
+            ret_code = pread (fh->fd, temp_buf, len, start);
+            if ( ret_code == -1 ) {
+                opal_output(1, "mca_fbtl_posix_pwritev_datasieving: error in pread:%s", strerror(errno));
+                mca_fbtl_posix_unlock ( lock, fh, lock_counter);
+                free ( temp_buf);
+                return OMPI_ERROR;
+            }
+            if ( ret_code == 0 ) {
+                // end of file
+                retries++;
+                if ( retries == MAX_RETRIES ) {
+                    break;
+                }
+                else {
+                    continue;
+                }
+            }
+            total_bytes += ret_code;
         }
         
-        // Copy out the elements to write into temporary buffer.
+        // Copy the elements to write into temporary buffer.
         size_t pos = 0;
         size_t num_bytes;
         size_t start_offset = (size_t) fh->f_io_array[startindex].offset;
@@ -208,13 +242,17 @@ ssize_t mca_fbtl_posix_pwritev_datasieving (ompio_file_t *fh, struct flock *lock
             memcpy (temp_buf + pos, fh->f_io_array[i].memory_address, num_bytes);
             bytes_written += num_bytes;            
         }
-        ret_code = pwrite (fh->fd, temp_buf, len, start);
-        if ( ret_code == -1 ) {
-            opal_output(1, "mca_fbtl_posix_pwritev_datasieving: error in pwrite:%s", strerror(errno));
-            /* Just in case some part of the lock worked */
-            mca_fbtl_posix_unlock ( lock, fh, lock_counter);
-            free ( temp_buf);
-            return OMPI_ERROR;
+
+        total_bytes = 0;
+        while ( total_bytes < len ) {
+            ret_code = pwrite (fh->fd, temp_buf+total_bytes, len-total_bytes, start+total_bytes);
+            if ( ret_code == -1 ) {
+                opal_output(1, "mca_fbtl_posix_pwritev_datasieving: error in pwrite:%s", strerror(errno));
+                mca_fbtl_posix_unlock ( lock, fh, lock_counter);
+                free ( temp_buf);
+                return OMPI_ERROR;
+            }
+            total_bytes += ret_code;
         }
                         
         mca_fbtl_posix_unlock ( lock, fh, lock_counter);

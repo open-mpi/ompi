@@ -31,15 +31,15 @@
 
 static ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock, int *lock_counter);
 static ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int *lock_counter);
+static ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int *lock_counter);
 
 #define MAX_RETRIES 10
 
 ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
 {
-    ssize_t bytes_read=0, ret_code=0;
+    ssize_t bytes_read=0;
     struct flock lock;
-    int lock_counter=0;    
-    int ret;
+    int ret, lock_counter=0;    
     int32_t orig_flags;
 
     if (NULL == fh->f_io_array) {
@@ -58,6 +58,10 @@ ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
         off_t len = end_offset - (off_t)fh->f_io_array[0].offset;
         ret = mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, (off_t)fh->f_io_array[0].offset,
                                     len, OMPIO_LOCK_ENTIRE_REGION, &lock_counter); 
+        if ( ret == -1 ) {
+            opal_output(1, "mca_fbtl_posix_preadv: error in mca_fbtl_posix_lock():%s", strerror(errno));
+            return OMPI_ERROR;
+        }
         fh->f_flags = orig_flags;
     }
 
@@ -92,36 +96,60 @@ ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
     }
     else {
         // i.e. fh->f_num_of_io_entries == 1
-        ret = mca_fbtl_posix_lock ( &lock, fh, F_RDLCK, (off_t)fh->f_io_array[0].offset,
-                                    (off_t)fh->f_io_array[0].length, OMPIO_LOCK_ENTIRE_REGION,
-                                    &lock_counter ); 
-        if ( 0 < ret ) {
-            opal_output(1, "mca_fbtl_posix_preadv: error in mca_fbtl_posix_lock() ret=%d: %s",
-                        ret, strerror(errno));
-            /* Just in case some part of the lock worked */
-            mca_fbtl_posix_unlock ( &lock, fh, &lock_counter);
-            bytes_read  = OMPI_ERROR;
-            goto exit;
-        }
-        
-        ret_code = pread(fh->fd, fh->f_io_array[0].memory_address, fh->f_io_array[0].length,
-                         (off_t)fh->f_io_array[0].offset );
-        mca_fbtl_posix_unlock ( &lock, fh, &lock_counter );
-        if ( ret_code == -1 ) {
-            opal_output(1, "mca_fbtl_posix_preadv: error in (p)read(v):%s", strerror(errno));
-	    bytes_read = OMPI_ERROR;
-            goto exit;
-	}
-        
-        bytes_read += ret_code;
+        bytes_read = mca_fbtl_posix_preadv_single (fh, &lock, &lock_counter );
     }
 
-exit:
     if ( fh->f_atomicity ) {
         mca_fbtl_posix_unlock ( &lock, fh, &lock_counter );
     }
     
         
+    return bytes_read;
+}
+
+ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int *lock_counter)
+{
+    ssize_t bytes_read=0, ret_code;
+    size_t total_bytes = 0;
+    int ret;
+    
+    ret = mca_fbtl_posix_lock ( lock, fh, F_RDLCK, (off_t)fh->f_io_array[0].offset,
+                                (off_t)fh->f_io_array[0].length, OMPIO_LOCK_ENTIRE_REGION,
+                                lock_counter ); 
+    if ( 0 < ret ) {
+        opal_output(1, "mca_fbtl_posix_preadv_single: error in mca_fbtl_posix_lock() ret=%d: %s",
+                    ret, strerror(errno));
+        /* Just in case some part of the lock worked */
+        mca_fbtl_posix_unlock ( lock, fh, lock_counter);
+        return OMPI_ERROR;
+    }
+    
+    int retries = 0;
+    size_t len = fh->f_io_array[0].length;
+    while ( total_bytes < len ) {
+        ret_code = pread(fh->fd, (char*)fh->f_io_array[0].memory_address+total_bytes,
+                         fh->f_io_array[0].length-total_bytes,
+                         (off_t)fh->f_io_array[0].offset+total_bytes );
+        if ( ret_code == -1 ) {
+            opal_output(1, "mca_fbtl_posix_preadv_single: error in (p)read(v):%s", strerror(errno));
+            mca_fbtl_posix_unlock ( lock, fh, lock_counter );
+            return OMPI_ERROR;
+        }
+        if ( ret_code == 0 ) {
+            // end of file
+            retries++;
+            if ( retries == MAX_RETRIES ) {
+                break;
+            }
+            else {
+                continue;
+            }
+        }
+        total_bytes += ret_code;
+    }   
+    bytes_read = total_bytes;
+    mca_fbtl_posix_unlock ( lock, fh, lock_counter );
+
     return bytes_read;
 }
 
@@ -188,13 +216,14 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             free ( temp_buf);
             return OMPI_ERROR;
         }
-        long unsigned int total_bytes = 0;
+        size_t total_bytes = 0;
         int retries = 0;
         
         while ( total_bytes < len ) {
             ret_code = pread (fh->fd, temp_buf+total_bytes, len-total_bytes, start+total_bytes);
             if ( ret_code == -1 ) {
                 opal_output(1, "mca_fbtl_posix_preadv_datasieving: error in (p)read(v):%s", strerror(errno));
+                mca_fbtl_posix_unlock ( lock, fh, lock_counter );
                 free ( temp_buf);
                 return OMPI_ERROR;
             }

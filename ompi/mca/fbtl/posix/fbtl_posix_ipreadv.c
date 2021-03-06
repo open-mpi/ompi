@@ -85,6 +85,11 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
         off_t len = end_offset - (off_t)fh->f_io_array[0].offset;
         ret = mca_fbtl_posix_lock ( &data->aio_lock, fh, F_RDLCK, (off_t)fh->f_io_array[0].offset,
                                     len, OMPIO_LOCK_ENTIRE_REGION, &data->aio_lock_counter); 
+        if ( ret == -1 ) {
+            opal_output(1, "mca_fbtl_posix_ipreadv: error in mca_fbtl_posix_lock():%s", strerror(errno));
+            return OMPI_ERROR;
+        }
+
         fh->f_flags = orig_flags;
     }
     
