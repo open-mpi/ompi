@@ -15,7 +15,7 @@ dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2017-2020 IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -77,37 +77,28 @@ AC_DEFUN([ORTE_CHECK_LSF],[
           # on AIX it should be in libbsd
           # on HP-UX it should be in libBSD
           # on IRIX < 6 it should be in libsun (IRIX 6 and later it is in libc)
-          OPAL_SEARCH_LIBS_COMPONENT([yp_all_nsl], [yp_all], [nsl bsd BSD sun],
-                         [yp_all_nsl_happy="yes"],
-                         [yp_all_nsl_happy="no"])
-
-          AS_IF([test "$yp_all_nsl_happy" = "no"],
-                    [orte_check_lsf_happy="no"],
-                    [orte_check_lsf_happy="yes"])
+          AS_IF([test "$orte_check_lsf_happy" = "yes"],
+                [OPAL_SEARCH_LIBS_COMPONENT([yp_all_nsl], [yp_all], [nsl bsd BSD sun],
+                              [orte_check_lsf_happy="yes"],
+                              [orte_check_lsf_happy="no"])])
 
           # liblsf requires shm_open, shm_unlink, which are in librt
-          OPAL_SEARCH_LIBS_COMPONENT([shm_open_rt], [shm_open], [rt],
-                        [shm_open_rt_happy="yes"],
-                        [shm_open_rt_happy="no"])
-
-          AS_IF([test "$shm_open_rt_happy" = "no"],
-                    [orte_check_lsf_happy="no"],
-                    [orte_check_lsf_happy="yes"])
+          AS_IF([test "$orte_check_lsf_happy" = "yes"],
+                [OPAL_SEARCH_LIBS_COMPONENT([shm_open_rt], [shm_open], [rt],
+                              [orte_check_lsf_happy="yes"],
+                              [orte_check_lsf_happy="no"])])
 
           # liblsb requires liblsf - using ls_info as a test for liblsf presence
-          OPAL_CHECK_PACKAGE([ls_info_lsf],
-                     [lsf/lsf.h],
-                     [lsf],
-                     [ls_info],
-                     [$yp_all_nsl_LIBS $shm_open_rt_LIBS],
-                     [$orte_check_lsf_dir],
-                     [$orte_check_lsf_libdir],
-                     [ls_info_lsf_happy="yes"],
-                     [ls_info_lsf_happy="no"])
-
-          AS_IF([test "$ls_info_lsf_happy" = "no"],
-                    [orte_check_lsf_happy="no"],
-                    [orte_check_lsf_happy="yes"])
+          AS_IF([test "$orte_check_lsf_happy" = "yes"],
+                [OPAL_CHECK_PACKAGE([ls_info_lsf],
+                           [lsf/lsf.h],
+                           [lsf],
+                           [ls_info],
+                           [$yp_all_nsl_LIBS $shm_open_rt_LIBS],
+                           [$orte_check_lsf_dir],
+                           [$orte_check_lsf_libdir],
+                           [orte_check_lsf_happy="yes"],
+                           [orte_check_lsf_happy="no"])])
 
           # test function of liblsb LSF package
           AS_IF([test "$orte_check_lsf_happy" = "yes"],
@@ -115,10 +106,6 @@ AC_DEFUN([ORTE_CHECK_LSF],[
                      AC_MSG_RESULT([$orte_check_lsf_dir_msg])
                      AC_MSG_CHECKING([for LSF library dir])
                      AC_MSG_RESULT([$orte_check_lsf_libdir_msg])
-                     AC_MSG_CHECKING([for liblsf function])
-                     AC_MSG_RESULT([$ls_info_lsf_happy])
-                     AC_MSG_CHECKING([for liblsf yp requirements])
-                     AC_MSG_RESULT([$yp_all_nsl_happy])
                      OPAL_CHECK_PACKAGE([orte_check_lsf],
                         [lsf/lsbatch.h],
                         [bat],
