@@ -102,7 +102,7 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
 
     /* loop over all ranks */
     for (int proc = 0; proc < n_ranks; ++proc) {
-        struct ompi_proc_t *proc1_pointer, *proc2_pointer;
+        ompi_process_name_t proc1_name, proc2_name;
         int rank = ranks1[proc];
 
         if ( MPI_PROC_NULL == rank) {
@@ -110,12 +110,12 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
             continue;
         }
 
-        proc1_pointer = ompi_group_get_proc_ptr_raw (group1, rank);
+        proc1_name = ompi_group_get_proc_name(group1, rank);
         /* initialize to no "match" */
         ranks2[proc] = MPI_UNDEFINED;
         for (int proc2 = 0; proc2 < group2->grp_proc_count; ++proc2) {
-            proc2_pointer = ompi_group_get_proc_ptr_raw (group2, proc2);
-            if ( proc1_pointer == proc2_pointer) {
+            proc2_name = ompi_group_get_proc_name(group2, proc2);
+            if(0 == opal_compare_proc(proc1_name, proc2_name)) {
                 ranks2[proc] = proc2;
                 break;
             }
@@ -446,7 +446,7 @@ int ompi_group_intersection(ompi_group_t* group1,ompi_group_t* group2,
     int proc1,proc2,k, result;
     int *ranks_included=NULL;
     ompi_group_t *group1_pointer, *group2_pointer;
-    ompi_proc_t *proc1_pointer, *proc2_pointer;
+    ompi_process_name_t proc1_name, proc2_name;
 
     group1_pointer=(ompi_group_t *)group1;
     group2_pointer=(ompi_group_t *)group2;
@@ -462,14 +462,14 @@ int ompi_group_intersection(ompi_group_t* group1,ompi_group_t* group2,
     /* determine the list of included processes for the incl-method */
     k = 0;
     for (proc1 = 0; proc1 < group1_pointer->grp_proc_count; proc1++) {
-        proc1_pointer = ompi_group_peer_lookup (group1_pointer , proc1);
+        proc1_name = ompi_group_get_proc_name(group1_pointer , proc1);
 
         /* check to see if this proc is in group2 */
 
         for (proc2 = 0; proc2 < group2_pointer->grp_proc_count; proc2++) {
-            proc2_pointer = ompi_group_peer_lookup (group2_pointer ,proc2);
+            proc2_name = ompi_group_get_proc_name(group2_pointer ,proc2);
 
-            if( proc1_pointer == proc2_pointer ) {
+            if(0 == opal_compare_proc(proc1_name, proc2_name)) {
                 ranks_included[k] = proc1;
                 k++;
                 break;
@@ -494,7 +494,7 @@ int ompi_group_compare(ompi_group_t *group1,
     int proc1, proc2, match;
     bool similar, identical;
     ompi_group_t *group1_pointer, *group2_pointer;
-    ompi_proc_t *proc1_pointer, *proc2_pointer;
+    opal_process_name_t proc1_name, proc2_name;
 
     /* check for same groups */
     if( group1 == group2 ) {
@@ -524,12 +524,12 @@ int ompi_group_compare(ompi_group_t *group1,
     similar=true;
     identical=true;
     for(proc1=0 ; proc1 < group1_pointer->grp_proc_count ; proc1++ ) {
-        proc1_pointer= ompi_group_peer_lookup(group1_pointer,proc1);
+        proc1_name=ompi_group_get_proc_name(group1_pointer,proc1);
         /* loop over group2 processes to find "match" */
         match=-1;
         for(proc2=0 ; proc2 < group2_pointer->grp_proc_count ; proc2++ ) {
-            proc2_pointer=ompi_group_peer_lookup(group2_pointer,proc2);
-            if( proc1_pointer == proc2_pointer ) {
+            proc2_name=ompi_group_get_proc_name(group2_pointer,proc2);
+            if(0 == opal_compare_proc(proc1_name, proc2_name)) {
                 if(proc1 != proc2 ) {
                     identical=false;
                 }
