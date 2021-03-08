@@ -28,6 +28,7 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/fbtl/fbtl.h"
+#include "ompi/mca/fbtl/base/base.h"
 #include "ompi/mca/fbtl/pvfs2/fbtl_pvfs2.h"
 
 /*
@@ -43,7 +44,8 @@ static mca_fbtl_base_module_1_0_0_t pvfs2 =  {
     mca_fbtl_pvfs2_pwritev,         /* blocking write */
     NULL,                           /* non-blocking write */
     NULL,                           /* module specific progress */
-    NULL                            /* free module specific data items on the request */
+    NULL,                           /* free module specific data items on the request */
+    mca_fbtl_base_check_atomicity   /* check whether atomicity is supported on this fs */
 };
 /*
  * *******************************************************************

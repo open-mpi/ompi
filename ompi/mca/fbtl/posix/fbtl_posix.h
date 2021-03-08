@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2020 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -64,10 +64,12 @@ ssize_t mca_fbtl_posix_ipwritev (ompio_file_t *file,
 
 bool mca_fbtl_posix_progress     ( mca_ompio_request_t *req);
 void mca_fbtl_posix_request_free ( mca_ompio_request_t *req);
+bool mca_fbtl_posix_check_atomicity ( ompio_file_t *file);
 
 int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op, 
-                          OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags);
-void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh );
+                          OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags,
+                          int *lock_counter);
+void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh, int *lock_counter );
 
 
 struct mca_fbtl_posix_request_data_t {
@@ -78,9 +80,10 @@ struct mca_fbtl_posix_request_data_t {
     int            aio_first_active_req; /* first active posted req */
     int            aio_last_active_req;  /* last currently active poted req */
     struct aiocb       *aio_reqs;       /* pointer array of req structures */
-    int          *aio_req_status;       /* array of statuses */
+    int           *aio_req_status;       /* array of statuses */
     ssize_t        aio_total_len;       /* total amount of data written */
     struct flock   aio_lock;            /* lock used for certain file systems */
+    int            aio_lock_counter;    /* to keep track of no. of lock calls */
     ompio_file_t  *aio_fh;       /* pointer back to the mca_io_ompio_fh structure */
 };
 typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
@@ -91,6 +94,22 @@ typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
 /* define constants for AIO requests */
 #define FBTL_POSIX_READ 1
 #define FBTL_POSIX_WRITE 2
+
+#define OMPIO_SET_ATOMICITY_LOCK(_fh, _lock, _lock_counter, _op) {     \
+     int32_t _orig_flags = _fh->f_flags;                               \
+     _fh->f_flags &= ~OMPIO_LOCK_NEVER;                                \
+     _fh->f_flags &= ~OMPIO_LOCK_NOT_THIS_OP;                          \
+     off_t _end_offset = (off_t)_fh->f_io_array[_fh->f_num_of_io_entries-1].offset +         \
+            (off_t)_fh->f_io_array[_fh->f_num_of_io_entries-1].length;                       \
+     off_t _len = _end_offset - (off_t)_fh->f_io_array[0].offset;                            \
+     int _ret = mca_fbtl_posix_lock ( &_lock, _fh, _op, (off_t)_fh->f_io_array[0].offset,    \
+                                    _len, OMPIO_LOCK_ENTIRE_REGION, &_lock_counter);         \
+     if ( _ret == -1 ) {                                                                     \
+          opal_output(1, "mca_fbtl_posix: error in mca_fbtl_posix_lock():%s",                \
+                      strerror(errno));                                                      \
+          return OMPI_ERROR;                                                                 \
+     }                                                                                       \
+     _fh->f_flags = _orig_flags; }
 
 
 /*

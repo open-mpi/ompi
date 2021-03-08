@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2017      University of Houston. All rights reserved.
+ * Copyright (c) 2017-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -23,12 +23,16 @@
 #include "fbtl_posix.h"
 
 #include "mpi.h"
+
+#include <fcntl.h>
+
 #include <unistd.h>
 #include <sys/uio.h>
 #include <errno.h>
 #include <limits.h>
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
+
 
 #define MAX_ERRCOUNT 100
 
@@ -44,15 +48,27 @@
 */
 
 int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op, 
-                          OMPI_MPI_OFFSET_TYPE offset, off_t len, int flags)
+                          OMPI_MPI_OFFSET_TYPE offset, off_t len, int flags,
+                          int *lock_counter)
 {
     off_t lmod, bmod;
     int ret, err_count;
+
+    *lock_counter = *lock_counter + 1;
+    if ( (*lock_counter) > 1 ) {
+        /* 
+        ** This lock was already initialized, most likely through an atomicity operation.
+        ** No need to do anything except increment the lock_counter;
+        */
+        return 0;
+    }
 
     lock->l_type   = op;
     lock->l_whence = SEEK_SET;
     lock->l_start  =-1;
     lock->l_len    =-1;
+    lock->l_pid    = 0;
+    
     if ( 0 == len ) {
         return 0;
     } 
@@ -117,9 +133,9 @@ int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op,
     printf("%d: acquiring lock for offset %ld length %ld requested offset %ld request len %ld \n", 
            fh->f_rank, lock->l_start, lock->l_len, offset, len);
 #endif
-    errno=0;
     err_count=0;
     do {
+        errno=0;
         ret = fcntl ( fh->fd, F_SETLKW, lock);
         if ( ret ) {
 #ifdef OMPIO_DEBUG
@@ -133,8 +149,13 @@ int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op,
     return ret;
 }
 
-void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh )
+void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh, int *lock_counter)
 {
+    *lock_counter  = *lock_counter - 1;
+    if ( (*lock_counter) > 0 ) {
+        return;
+    }
+
     if ( -1 == lock->l_start && -1 == lock->l_len ) {
         return;
     }

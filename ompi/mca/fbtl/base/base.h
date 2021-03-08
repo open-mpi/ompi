@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -50,6 +50,8 @@ OMPI_DECLSPEC int mca_fbtl_base_find_available(bool enable_progress_threads,
 OMPI_DECLSPEC int mca_fbtl_base_init_file (struct ompio_file_t *file);
 
 OMPI_DECLSPEC int mca_fbtl_base_get_param (struct ompio_file_t *file, int keyval);
+
+OMPI_DECLSPEC bool mca_fbtl_base_check_atomicity (struct ompio_file_t *file);
 /*
  * Globals
  */

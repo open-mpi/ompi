@@ -11,6 +11,7 @@
 #include "mpi.h"
 
 #include "ompi/mca/fbtl/fbtl.h"
+#include "ompi/mca/fbtl/base/base.h"
 #include "ompi/mca/fbtl/ime/fbtl_ime.h"
 
 /*
@@ -26,8 +27,8 @@ static mca_fbtl_base_module_1_0_0_t ime =  {
     mca_fbtl_ime_pwritev,         /* blocking write */
     mca_fbtl_ime_ipwritev,        /* non-blocking write */
     mca_fbtl_ime_progress,        /* module specific progress */
-    mca_fbtl_ime_request_free     /* free module specific data items on the request */
-};
+    mca_fbtl_ime_request_free,     /* free module specific data items on the request */
+    mca_fbtl_base_check_atomicity  /* check whether atomicity is supported on this fs */};
 /*
  * *******************************************************************
  * ************************* structure ends **************************

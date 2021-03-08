@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -258,4 +258,14 @@ int mca_fbtl_base_file_select (struct ompio_file_t *file,
     OBJ_DESTRUCT(&queried);
 
     return err;
+}
+
+
+bool mca_fbtl_base_check_atomicity (struct ompio_file_t *file)
+{
+    /* by default, return false. An fbtl can overwrite this setting
+    ** if they have support for atomic operations through locks or other
+    ** measures.
+    */
+    return false;
 }
