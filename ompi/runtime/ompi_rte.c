@@ -235,6 +235,46 @@ char* ompi_pmix_print_name(const ompi_process_name_t *name)
     return ptr->buffers[ptr->cntr-1];
 }
 
+char* ompi_pmix_print_id(const pmix_proc_t *procid)
+{
+    opal_print_args_buffers_t *ptr;
+
+    /* protect against NULL IDs */
+    if (NULL == procid) {
+        /* get the next buffer */
+        ptr = get_print_name_buffer();
+        if (NULL == ptr) {
+            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+            return opal_print_args_null;
+        }
+        /* cycle around the ring */
+        if (OPAL_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
+            ptr->cntr = 0;
+        }
+        snprintf(ptr->buffers[ptr->cntr++], OPAL_PRINT_NAME_ARGS_MAX_SIZE, "[NO-ID]");
+        return ptr->buffers[ptr->cntr-1];
+    }
+
+    /* get the next buffer */
+    ptr = get_print_name_buffer();
+
+    if (NULL == ptr) {
+        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+        return opal_print_args_null;
+    }
+
+    /* cycle around the ring */
+    if (OPAL_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
+        ptr->cntr = 0;
+    }
+
+    snprintf(ptr->buffers[ptr->cntr++],
+             OPAL_PRINT_NAME_ARGS_MAX_SIZE,
+             "%s.%u", procid->nspace, procid->rank);
+
+    return ptr->buffers[ptr->cntr-1];
+}
+
 int ompi_rte_compare_name_fields(ompi_rte_cmp_bitmask_t fields,
                                  const opal_process_name_t* name1,
                                  const opal_process_name_t* name2)
@@ -525,7 +565,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     opal_pmix_setup_nspace_tracker();
 
     /* initialize the selected module */
-    if (!PMIx_Initialized() && (PMIX_SUCCESS != (ret = PMIx_Init(&opal_process_info.myprocid, NULL, 0)))) {
+    if (PMIX_SUCCESS != (ret = PMIx_Init(&opal_process_info.myprocid, NULL, 0))) {
         /* if we get PMIX_ERR_UNREACH indicating that we cannot reach the
          * server, then we assume we are operating as a singleton */
         if (PMIX_ERR_UNREACH == ret) {
