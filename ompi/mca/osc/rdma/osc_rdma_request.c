@@ -6,6 +6,8 @@
  * Copyright (c) 2016      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2019      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,15 +58,7 @@ static void request_construct(ompi_osc_rdma_request_t *request)
     request->internal = false;
     request->cleanup = NULL;
     request->outstanding_requests = 0;
-    OBJ_CONSTRUCT(&request->convertor, opal_convertor_t);
 }
 
-static void request_destruct(ompi_osc_rdma_request_t *request)
-{
-    OBJ_DESTRUCT(&request->convertor);
-}
-
-OBJ_CLASS_INSTANCE(ompi_osc_rdma_request_t,
-                   ompi_request_t,
-                   request_construct,
-                   request_destruct);
+OBJ_CLASS_INSTANCE(ompi_osc_rdma_request_t, ompi_request_t,
+                   request_construct, NULL);
