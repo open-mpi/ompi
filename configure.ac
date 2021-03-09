@@ -384,6 +384,15 @@ opal_show_title "Compiler and preprocessor tests"
 
 OPAL_SETUP_CC
 
+# Open MPI no longer supports 32 bit builds
+AC_CHECK_SIZEOF(void *)
+AC_MSG_CHECKING([if build environment is 32 bit])
+AS_IF([test "$ac_cv_sizeof_void_p" = "4"],
+      [AC_MSG_RESULT([yes])
+       AC_MSG_WARN([Sorry, this version of Open MPI does not support building on 32-bit platforms.])
+       AC_MSG_ERROR([Cannot continue])])
+AC_MSG_RESULT([no (good)])
+
 # Do all Interix detections if necessary
 OMPI_INTERIX
 
@@ -476,7 +485,6 @@ AC_CHECK_SIZEOF(float _Complex)
 AC_CHECK_SIZEOF(double _Complex)
 AC_CHECK_SIZEOF(long double _Complex)
 
-AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(size_t)
 if test "$ac_cv_type_ssize_t" = yes ; then
     AC_CHECK_SIZEOF(ssize_t)
