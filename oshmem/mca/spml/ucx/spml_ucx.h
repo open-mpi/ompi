@@ -76,6 +76,7 @@ struct mca_spml_ucx_ctx {
     unsigned int             ucp_workers;
     int                     *put_proc_indexes;
     unsigned                 put_proc_count;
+    bool                     synchronized_quiet;
 };
 typedef struct mca_spml_ucx_ctx mca_spml_ucx_ctx_t;
 
@@ -256,7 +257,7 @@ static inline int ucx_status_to_oshmem_nb(ucs_status_t status)
 
 static inline void mca_spml_ucx_remote_op_posted(mca_spml_ucx_ctx_t *ctx, int dst)
 {
-    if (OPAL_UNLIKELY(mca_spml_ucx.synchronized_quiet)) {
+    if (OPAL_UNLIKELY(ctx->synchronized_quiet)) {
         if (!opal_bitmap_is_set_bit(&ctx->put_op_bitmap, dst)) {
             ctx->put_proc_indexes[ctx->put_proc_count++] = dst;
             opal_bitmap_set_bit(&ctx->put_op_bitmap, dst);
