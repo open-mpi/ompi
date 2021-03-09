@@ -428,6 +428,12 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                          id.phys.nid, id.phys.pid));
 
     ompi_mtl_portals4.base.mtl_max_tag = MTL_PORTALS4_MAX_TAG;
+
+    /* Disable opal from checking if buffer being sent is cuda */
+#if OPAL_CUDA_SUPPORT
+    ompi_mtl_portals4.base.mtl_flags |= MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE;
+#endif /* OPAL_CUDA_SUPPORT */
+
     return &ompi_mtl_portals4.base;
 
  error:

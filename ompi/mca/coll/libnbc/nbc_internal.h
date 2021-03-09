@@ -31,7 +31,7 @@
 #include "coll_libnbc.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_convertor.h"
-#include "opal/datatype/opal_datatype_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 #include "ompi/include/ompi/constants.h"
 #include "ompi/request/request.h"

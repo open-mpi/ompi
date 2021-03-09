@@ -117,8 +117,8 @@ AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
     AC_MSG_RESULT([yes (-I$opal_cuda_incdir)])
     CUDA_SUPPORT=1
-    opal_datatype_cuda_CPPFLAGS="-I$opal_cuda_incdir"
-    AC_SUBST([opal_datatype_cuda_CPPFLAGS])
+    common_cuda_CPPFLAGS="-I$opal_cuda_incdir"
+    AC_SUBST([common_cuda_CPPFLAGS])
 else
     AC_MSG_RESULT([no])
     CUDA_SUPPORT=0

@@ -54,7 +54,7 @@
 #define OPAL_DATATYPE_PACK_UNPACK_PREDEFINED_H_HAS_BEEN_INCLUDED
 
 #include "opal_config.h"
-#include "opal/datatype/opal_datatype_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 #include <stdint.h>
 
 /*  Improve predefined pack/unpack performance using mpich methods.

@@ -20,7 +20,6 @@
 #include "ompi_config.h"
 
 #include "opal/datatype/opal_convertor.h"
-#include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/mca/common/cuda/common_cuda.h"
 #include "opal/util/sys_limits.h"
 

@@ -17,7 +17,7 @@
 
 #include "ompi/op/op.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/datatype/opal_datatype_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 
 int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count,
                          struct ompi_datatype_t *dtype,

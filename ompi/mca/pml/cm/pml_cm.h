@@ -379,7 +379,16 @@ mca_pml_cm_send(const void *buf,
 		convertor.pBaseBuf   = (unsigned char*)buf + datatype->super.true_lb;
 		convertor.count      = count;
 		convertor.pDesc      = &datatype->super;
-	} else
+
+#if OPAL_CUDA_SUPPORT
+        /* Switches off CUDA detection if
+           MTL set MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE during init */
+        MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
+        convertor.flags      |= flags;
+        /* Sets CONVERTOR_CUDA flag if CUDA buffer */
+        opal_convertor_prepare_for_send( &convertor, &datatype->super, count, buf );
+#endif
+    } else
 #endif
 	{
 		ompi_proc = ompi_comm_peer_lookup(comm, dst);

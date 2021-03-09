@@ -77,3 +77,12 @@ recoverable and your application is likely to abort.
   Error: %s (%d)
 [message too big]
 Message size %llu bigger than supported by selected transport. Max = %llu
+
+[Buffer Memory Registration Failed]
+Open MPI failed to register your buffer.
+This error is fatal, your job will abort
+
+  Buffer Type: %s
+  Buffer Address: %p
+  Buffer Length: %d
+  Error: %s (%zd)

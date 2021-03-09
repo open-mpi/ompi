@@ -17,7 +17,7 @@
 
 #include "ompi/op/op.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/datatype/opal_datatype_cuda.h"
+#include "opal/mca/common/cuda/common_cuda.h"
 
 /*
  *	scan

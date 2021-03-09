@@ -27,8 +27,4 @@ AC_DEFUN([MCA_opal_common_cuda_CONFIG],[
           [$1],
           [$2])
 
-    # Copy over the includes needed to build CUDA
-    common_cuda_CPPFLAGS=$opal_datatype_cuda_CPPFLAGS
-    AC_SUBST([common_cuda_CPPFLAGS])
-
 ])dnl

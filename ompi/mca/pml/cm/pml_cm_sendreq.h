@@ -242,6 +242,14 @@ do {                                                                    \
             (unsigned char*)buf + datatype->super.true_lb;              \
         (req_send)->req_base.req_convertor.count      = count;          \
         (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
+        /* Switches off CUDA detection if                               \
+         MTL set MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE during init */     \
+        MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);   \
+        (req_send)->req_base.req_convertor.flags |= flags;              \
+        /* Sets CONVERTOR_CUDA flag if CUDA buffer */                   \
+        opal_convertor_prepare_for_send(                                \
+            &req_send->req_base.req_convertor,                          \
+            &datatype->super, count, buf );                             \
     } else {                                                            \
         MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);   \
         opal_convertor_copy_and_prepare_for_send(                       \
