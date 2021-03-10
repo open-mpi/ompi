@@ -38,11 +38,13 @@
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#include <fcntl.h>
 
 #include "opal/util/alfg.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/path.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
@@ -68,6 +70,7 @@ typedef struct {
 } ompi_dpm_disconnect_obj;
 static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs);
 static ompi_dpm_disconnect_obj *disconnect_init(ompi_communicator_t *comm);
+static int start_dvm(char **hostfiles, char **dash_host);
 
 typedef struct {
     opal_list_item_t super;
@@ -824,6 +827,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     pmix_status_t pret;
     pmix_nspace_t nspace;
     size_t scount = count;
+    char **hostfiles = NULL, **dash_host = NULL;
 #if PMIX_NUMERIC_VERSION >= 0x00040000
     const char *checkkey;
 #endif
@@ -944,6 +948,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOST, host, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                opal_argv_append_nosize(&dash_host, host);
                 continue;
             }
             ompi_info_get (array_of_info[i], "PMIX_HOST", sizeof(host) - 1, host, &flag);
@@ -951,6 +956,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOST, host, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                opal_argv_append_nosize(&dash_host, host);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
@@ -960,6 +966,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOST, host, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                opal_argv_append_nosize(&dash_host, host);
                 continue;
             }
 #endif
@@ -1016,6 +1023,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, host, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                opal_argv_append_nosize(&hostfiles, host);
                 continue;
             }
             ompi_info_get (array_of_info[i], "PMIX_HOSTFILE", sizeof(host) - 1, host, &flag);
@@ -1023,6 +1031,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, host, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                opal_argv_append_nosize(&hostfiles, host);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
@@ -1032,6 +1041,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, host, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                opal_argv_append_nosize(&hostfiles, host);
                 continue;
             }
 #endif
@@ -1200,6 +1210,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
                     opal_progress_event_users_decrement();
+                    if (NULL != hostfiles) {
+                        opal_argv_free(hostfiles);
+                    }
+                    if (NULL != dash_host) {
+                        opal_argv_free(dash_host);
+                    }
                     return MPI_ERR_SPAWN;
                 }
                 continue;
@@ -1216,6 +1232,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
                     opal_progress_event_users_decrement();
+                    if (NULL != hostfiles) {
+                        opal_argv_free(hostfiles);
+                    }
+                    if (NULL != dash_host) {
+                        opal_argv_free(dash_host);
+                    }
                     return MPI_ERR_SPAWN;
                 }
                 continue;
@@ -1229,6 +1251,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
                     opal_progress_event_users_decrement();
+                    if (NULL != hostfiles) {
+                        opal_argv_free(hostfiles);
+                    }
+                    if (NULL != dash_host) {
+                        opal_argv_free(dash_host);
+                    }
                     return MPI_ERR_SPAWN;
                 }
                 continue;
@@ -1242,6 +1270,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
                     opal_progress_event_users_decrement();
+                    if (NULL != hostfiles) {
+                        opal_argv_free(hostfiles);
+                    }
+                    if (NULL != dash_host) {
+                        opal_argv_free(dash_host);
+                    }
                     return MPI_ERR_SPAWN;
                 }
                 ++tmp; // step over first colon
@@ -1251,6 +1285,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
                     opal_progress_event_users_decrement();
+                    if (NULL != hostfiles) {
+                        opal_argv_free(hostfiles);
+                    }
+                    if (NULL != dash_host) {
+                        opal_argv_free(dash_host);
+                    }
                     return MPI_ERR_SPAWN;
                 }
                 rc = dpm_convert(&job_info, "ppr", PMIX_MAPBY, slot_list, NULL, true);
@@ -1260,6 +1300,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
                     opal_progress_event_users_decrement();
+                    if (NULL != hostfiles) {
+                        opal_argv_free(hostfiles);
+                    }
+                    if (NULL != dash_host) {
+                        opal_argv_free(dash_host);
+                    }
                     return MPI_ERR_SPAWN;
                 }
                 continue;
@@ -1275,6 +1321,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
                     opal_progress_event_users_decrement();
+                    if (NULL != hostfiles) {
+                        opal_argv_free(hostfiles);
+                    }
+                    if (NULL != dash_host) {
+                        opal_argv_free(dash_host);
+                    }
                     return MPI_ERR_SPAWN;
                 }
                 continue;
@@ -1498,6 +1550,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 OMPI_ERROR_LOG(rc);
                 PMIX_APP_FREE(apps, (size_t)count);
                 opal_progress_event_users_decrement();
+                if (NULL != hostfiles) {
+                    opal_argv_free(hostfiles);
+                }
+                if (NULL != dash_host) {
+                    opal_argv_free(dash_host);
+                }
                 return rc;
             }
             info = OBJ_NEW(opal_info_item_t);
@@ -1540,6 +1598,30 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         }
     }
     OPAL_LIST_DESTRUCT(&job_info);
+
+    if (ompi_singleton) {
+        rc = start_dvm(hostfiles, dash_host);
+        if (OPAL_SUCCESS != rc) {
+            if (NULL != pinfo) {
+                PMIX_INFO_FREE(pinfo, ninfo);
+            }
+            PMIX_APP_FREE(apps, scount);
+            opal_progress_event_users_decrement();
+            if (NULL != hostfiles) {
+                opal_argv_free(hostfiles);
+            }
+            if (NULL != dash_host) {
+                opal_argv_free(dash_host);
+            }
+            return MPI_ERR_SPAWN;
+        }
+    }
+    if (NULL != hostfiles) {
+        opal_argv_free(hostfiles);
+    }
+    if (NULL != dash_host) {
+        opal_argv_free(dash_host);
+    }
 
     pret = PMIx_Spawn(pinfo, ninfo, apps, count, nspace);
     rc = opal_pmix_convert_status(pret);
@@ -1856,3 +1938,212 @@ void ompi_dpm_mark_dyncomm(ompi_communicator_t *comm)
         OMPI_COMM_SET_DYNAMIC(comm);
     }
 }
+
+#if OMPI_HAVE_PRRTE
+
+#define DVM_URI_MSG_LGTH   256
+
+static void set_handler_default(int sig)
+{
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+
+    sigaction(sig, &act, (struct sigaction *)0);
+}
+
+static int start_dvm(char **hostfiles, char **dash_host)
+{
+    pmix_status_t pret;
+    int rc;
+    char **args = NULL;
+    char *cmd, *tmp;
+    int p[2];
+    int death_pipe[2];
+    pid_t pid;
+    sigset_t sigs;
+    pmix_info_t info;
+    int buffer_length, num_chars_read, chunk;
+    char *uri;
+
+    /* find the prte binary using the install_dirs support - this also
+     * checks to ensure that we can see this executable and it *is* executable by us
+     */
+    cmd = opal_find_absolute_path("prte");
+    if (NULL == cmd) {
+        /* guess we couldn't do it - best to abort */
+        OMPI_ERROR_LOG(OMPI_ERROR);
+        return OMPI_ERROR;
+    }
+
+    /* A pipe is used to communicate between the parent and child to
+     indicate whether the exec ultimately succeeded or failed, and to
+     pass back the URL of the DVM so we can connect to it
+     */
+    if (pipe(p) < 0) {
+        OMPI_ERROR_LOG(OMPI_ERROR);
+        return OMPI_ERROR;
+    }
+
+    /* we also have to give the DVM a pipe it can watch to know when
+     * we terminated. Since the DVM is going to be a child of us, it
+     * can't just use waitpid to see when we leave - so it will watch
+     * the pipe instead
+     */
+    if (pipe(death_pipe) < 0) {
+        OMPI_ERROR_LOG(OMPI_ERROR);
+        close(p[0]);
+        close(p[1]);
+        return OMPI_ERROR;
+    }
+
+   /* we need to start the PRRTE DVM first so we can
+     * spawn processes - see if they gave us any hostfile
+     * or dash-host options we should pass along */
+    opal_argv_append_nosize(&args, "prte");
+    if (NULL != hostfiles) {
+        tmp = opal_argv_join(hostfiles, ',');
+        opal_argv_append_nosize(&args, "--hostfile");
+        opal_argv_append_nosize(&args, tmp);
+        free(tmp);
+    }
+    if (NULL != dash_host) {
+        tmp = opal_argv_join(dash_host, ',');
+        opal_argv_append_nosize(&args, "--host");
+        opal_argv_append_nosize(&args, tmp);
+        free(tmp);
+    }
+    opal_argv_append_nosize(&args, "--no-ready-msg");
+    opal_argv_append_nosize(&args, "--report-uri");
+    opal_asprintf(&tmp, "%d", p[1]);
+    opal_argv_append_nosize(&args, tmp);
+    free(tmp);
+    opal_argv_append_nosize(&args, "--singleton");
+    opal_argv_append_nosize(&args, OMPI_PRINT_ID(OMPI_PROC_MYID));
+    opal_argv_append_nosize(&args, "--keepalive");
+    opal_asprintf(&tmp, "%d", death_pipe[0]);
+    opal_argv_append_nosize(&args, tmp);
+    free(tmp);
+    opal_argv_append_nosize(&args, "&");
+
+    tmp = opal_argv_join(args, ' ');
+    free(tmp);
+
+    /* Fork off the child */
+    pid = fork();
+    if (pid < 0) {
+        OMPI_ERROR_LOG(OMPI_ERROR);
+        close(p[0]);
+        close(p[1]);
+        close(death_pipe[0]);
+        close(death_pipe[1]);
+        free(cmd);
+        opal_argv_free(args);
+        return OMPI_ERROR;
+    }
+
+    if (pid == 0) {
+        close(p[0]);
+        close(death_pipe[1]);
+        /* I am the child - exec me */
+
+        /* Set signal handlers back to the default.  Do this close
+         to the execve() because the event library may (and likely
+         will) reset them.  If we don't do this, the event
+         library may have left some set that, at least on some
+         OS's, don't get reset via fork() or exec().  Hence, the
+         orted could be unkillable (for example). */
+        set_handler_default(SIGTERM);
+        set_handler_default(SIGINT);
+        set_handler_default(SIGHUP);
+        set_handler_default(SIGPIPE);
+        set_handler_default(SIGCHLD);
+
+        /* Unblock all signals, for many of the same reasons that
+         we set the default handlers, above.  This is noticable
+         on Linux where the event library blocks SIGTERM, but we
+         don't want that blocked by the orted (or, more
+         specifically, we don't want it to be blocked by the
+         orted and then inherited by the ORTE processes that it
+         forks, making them unkillable by SIGTERM). */
+        sigprocmask(0, 0, &sigs);
+        sigprocmask(SIG_UNBLOCK, &sigs, 0);
+
+        execv(cmd, args);
+
+        /* if I get here, the execv failed! */
+        opal_show_help("help-ess-base.txt", "ess-base:execv-error",
+                       true, cmd, strerror(errno));
+        exit(1);
+
+    }
+
+    free(cmd);
+    /* I am the parent - wait to hear something back and
+     * report results
+     */
+    close(p[1]);  /* parent closes the write - prte will write its contact info to it*/
+    close(death_pipe[0]);  /* parent closes the death_pipe's read */
+    opal_argv_free(args);
+
+    /* setup the buffer to read the DVM's uri */
+    buffer_length = DVM_URI_MSG_LGTH;
+    chunk = DVM_URI_MSG_LGTH-1;
+    num_chars_read = 0;
+    uri = (char*)malloc(buffer_length);
+    memset(uri, 0, buffer_length);
+
+    while (0 != (rc = read(p[0], &uri[num_chars_read], chunk))) {
+        if (rc < 0 && (EAGAIN == errno || EINTR == errno)) {
+            continue;
+        } else if (rc < 0) {
+            num_chars_read = -1;
+            break;
+        }
+        /* we read something - better get more */
+        num_chars_read += rc;
+        chunk -= rc;
+        if (0 == chunk) {
+            chunk = DVM_URI_MSG_LGTH;
+            uri = realloc((void*)uri, buffer_length+chunk);
+            memset(&uri[buffer_length], 0, chunk);
+            buffer_length += chunk;
+        }
+    }
+    close(p[0]);
+
+    if (num_chars_read <= 0) {
+        /* we didn't get anything back - this is bad */
+        OMPI_ERROR_LOG(OMPI_ERROR);
+        free(uri);
+        return OMPI_ERROR;
+    }
+
+    /* connect to the spawned PRRTE daemon */
+    PMIX_INFO_LOAD(&info, PMIX_SERVER_URI, uri, PMIX_STRING);
+    free(uri);
+    pret = PMIx_Init(NULL, &info, 1);
+    rc = opal_pmix_convert_status(pret);
+    if (OPAL_SUCCESS != rc) {
+        opal_progress_event_users_decrement();
+        return MPI_ERR_SPAWN;
+    }
+    /* decrement the PMIx init refcount */
+    PMIx_Finalize(NULL, 0);
+
+    /* push our information up to the server */
+    PMIx_Commit();
+
+    /* we are no longer a singleton */
+    ompi_singleton = false;
+
+    return OMPI_SUCCESS;
+}
+#else
+static int start_dvm(char *hostfile, char *dash_host)
+{
+    return OMPI_ERROR;
+}
+#endif

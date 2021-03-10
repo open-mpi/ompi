@@ -102,12 +102,18 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
 
     AS_IF([test "$opal_prrte_mode" != "disabled"],
           [AS_IF([test "$prrte_setup_external_happy" = "0" -a "$prrte_setup_internal_happy" = "0"],
-                 [AC_MSG_ERROR([Could not find viable prrte build.])])])
+                 [AC_MSG_ERROR([Could not find viable prrte build.])])
+           OMPI_HAVE_PRRTE=1],
+          [OMPI_HAVE_PRRTE=0])
 
     AC_SUBST([PRTE_PATH])
 
     AM_CONDITIONAL([OMPI_WANT_PRRTE],
            [test "$prrte_setup_internal_happy" = "1" -o "$prrte_setup_external_happy" = "1"])
+
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_PRRTE],
+                       [$OMPI_HAVE_PRRTE],
+                       [Whether or not PRRTE is available])
 
     OPAL_SUMMARY_ADD([[Miscellaneous]], [[prrte]], [prrte], [$opal_prrte_mode])
 

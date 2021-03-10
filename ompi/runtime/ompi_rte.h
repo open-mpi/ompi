@@ -194,6 +194,9 @@ OMPI_DECLSPEC extern hwloc_cpuset_t ompi_proc_applied_binding;
 
 #define OMPI_PROC_MY_NAME (&opal_process_info.my_name)
 #define OMPI_NAME_WILDCARD  (&opal_name_wildcard)
+#define OMPI_PROC_MYID (&opal_process_info.myprocid)
+#define OMPI_PRINT_ID(a) ompi_pmix_print_id(a)
+OMPI_DECLSPEC char* ompi_pmix_print_id(const pmix_proc_t *procid);
 
 typedef uint8_t ompi_rte_cmp_bitmask_t;
 #define OMPI_RTE_CMP_NONE   0x00
