@@ -539,7 +539,7 @@ ${sym}mytestlabel$opal_cv_asm_label_suffix],
 # OPAL_CHECK_ASM_LSYM()
 # ---------------------
 AC_DEFUN([OPAL_CHECK_ASM_LSYM],[
-    AC_REQUIRE([AC_PROG_NM])
+    AC_REQUIRE([LT_PATH_NM])
 
     AC_CACHE_CHECK([prefix for lsym labels],
                    [opal_cv_asm_lsym],
@@ -700,7 +700,7 @@ dnl logarithmically, 0 otherwise
 dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CHECK_ASM_ALIGN_LOG],[
-    AC_REQUIRE([AC_PROG_NM])
+    AC_REQUIRE([LT_PATH_NM])
     AC_REQUIRE([AC_PROG_GREP])
 
     AC_CACHE_CHECK([if .align directive takes logarithmic value],
