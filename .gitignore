@@ -105,6 +105,7 @@ ltoptions.m4
 !3rd-party/libevent-*.tar.*
 3rd-party/hwloc-*
 !3rd-party/hwloc-*.tar.*
+3rd-party/treematch/config.h
 
 config/project_list.m4
 config/autogen_found_items.m4
