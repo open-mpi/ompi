@@ -32,10 +32,10 @@ AC_DEFUN([MCA_ompi_io_romio321_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([io_romio321_flags io_romio321_flags_define io_romio321_happy io_romio321_save_LIBS])
     AC_ARG_ENABLE([io-romio],
-                  [AC_HELP_STRING([--disable-io-romio],
+                  [AS_HELP_STRING([--disable-io-romio],
                                   [Disable the ROMIO MPI-IO component])])
     AC_ARG_WITH([io-romio-flags],
-                [AC_HELP_STRING([--with-io-romio-flags=FLAGS],
+                [AS_HELP_STRING([--with-io-romio-flags=FLAGS],
                                 [Pass FLAGS to the ROMIO distribution configuration script])])
     AC_DEFINE_UNQUOTED([MCA_io_romio321_USER_CONFIGURE_FLAGS], ["$with_io_romio_flags"], [Set of user-defined configure flags given to ROMIOs configure script via --with-io-romio-flags])
     AC_MSG_CHECKING([if want ROMIO component])

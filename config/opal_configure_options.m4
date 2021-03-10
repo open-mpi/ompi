@@ -48,9 +48,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want to run code coverage])
-AC_ARG_ENABLE(coverage,
-              AC_HELP_STRING([--enable-coverage],
-                             [enable code coverage files to be generated]))
+AC_ARG_ENABLE([coverage],
+              [AS_HELP_STRING([--enable-coverage],
+                             [enable code coverage files to be generated])])
 if test "$enable_coverage" = "yes"; then
     if test "$enable_shared" = "yes"; then
         AC_MSG_WARN([Code coverage can run only with static libraries. Please
@@ -73,9 +73,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want to compile with branch probabilities])
-AC_ARG_ENABLE(branch-probabilities,
-              AC_HELP_STRING([--enable-branch-probabilities],
-                             [enable profile arcs and branch probability optimization]))
+AC_ARG_ENABLE([branch-probabilities],
+              [AS_HELP_STRING([--enable-branch-probabilities],
+                             [enable profile arcs and branch probability optimization])])
 if test "$enable_branch_probabilities" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_BRANCH_PROBABILITIES=1
@@ -90,9 +90,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want to debug memory usage])
-AC_ARG_ENABLE(mem-debug,
-    AC_HELP_STRING([--enable-mem-debug],
-                   [enable memory debugging (not for general MPI users!) (default: disabled)]))
+AC_ARG_ENABLE([mem-debug],
+    [AS_HELP_STRING([--enable-mem-debug],
+                   [enable memory debugging (not for general MPI users!) (default: disabled)])])
 if test "$enable_mem_debug" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_DEBUG=1
@@ -108,9 +108,9 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
 #
 
 AC_MSG_CHECKING([if want to profile memory usage])
-AC_ARG_ENABLE(mem-profile,
-    AC_HELP_STRING([--enable-mem-profile],
-                   [enable memory profiling (not for general MPI users!) (default: disabled)]))
+AC_ARG_ENABLE([mem-profile],
+    [AS_HELP_STRING([--enable-mem-profile],
+                   [enable memory profiling (not for general MPI users!) (default: disabled)])])
 if test "$enable_mem_profile" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_PROFILE=1
@@ -126,9 +126,9 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
 #
 
 AC_MSG_CHECKING([if want developer-level compiler pickyness])
-AC_ARG_ENABLE(picky,
-    AC_HELP_STRING([--enable-picky],
-                   [enable developer-level compiler pickyness when building Open MPI (default: disabled, unless a .git directory is found in the build tree)]))
+AC_ARG_ENABLE([picky],
+    [AS_HELP_STRING([--enable-picky],
+                   [enable developer-level compiler pickyness when building Open MPI (default: disabled, unless a .git directory is found in the build tree)])])
 if test "$enable_picky" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_PICKY_COMPILER=1
@@ -148,9 +148,9 @@ fi
 #
 
 AC_MSG_CHECKING([if want developer-level debugging code])
-AC_ARG_ENABLE(debug,
-    AC_HELP_STRING([--enable-debug],
-                   [enable developer-level debugging code (not for general MPI users!) (default: disabled)]))
+AC_ARG_ENABLE([debug],
+    [AS_HELP_STRING([--enable-debug],
+                   [enable developer-level debugging code (not for general MPI users!) (default: disabled)])])
 if test "$enable_debug" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_DEBUG=1
@@ -161,9 +161,9 @@ fi
 
 
 AC_MSG_CHECKING([if want to developer-level timing framework])
-AC_ARG_ENABLE(timing,
-    AC_HELP_STRING([--enable-timing],
-                   [enable developer-level timing code (not for general MPI users!) (default: disabled)]))
+AC_ARG_ENABLE([timing],
+    [AS_HELP_STRING([--enable-timing],
+                   [enable developer-level timing code (not for general MPI users!) (default: disabled)])])
 if test "$enable_timing" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_TIMING=1
@@ -185,18 +185,18 @@ fi
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
-AC_ARG_ENABLE(debug-symbols,
-    AC_HELP_STRING([--disable-debug-symbols],
-        [Disable adding compiler flags to enable debugging symbols if --enable-debug is specified.  For non-debugging builds, this flag has no effect.]))
+AC_ARG_ENABLE([debug-symbols],
+    [AS_HELP_STRING([--disable-debug-symbols],
+        [Disable adding compiler flags to enable debugging symbols if --enable-debug is specified.  For non-debugging builds, this flag has no effect.])])
 
 #
 # Do we want to install all of OPAL/ORTE and OMPI's header files?
 #
 
 AC_MSG_CHECKING([if want to install project-internal header files])
-AC_ARG_WITH(devel-headers,
-    AC_HELP_STRING([--with-devel-headers],
-                   [normal MPI users/applications do not need this (mpi.h and mpif.h are ALWAYS installed).  Developer headers are only necessary for MCA module authors (default: disabled).]))
+AC_ARG_WITH([devel-headers],
+    [AS_HELP_STRING([--with-devel-headers],
+                   [normal MPI users/applications do not need this (mpi.h and mpif.h are ALWAYS installed).  Developer headers are only necessary for MCA module authors (default: disabled).])])
 if test "$with_devel_headers" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_INSTALL_HEADERS=1
@@ -213,7 +213,7 @@ AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 
 AC_MSG_CHECKING([if want pretty-print stacktrace])
 AC_ARG_ENABLE([pretty-print-stacktrace],
-    [AC_HELP_STRING([--enable-pretty-print-stacktrace],
+    [AS_HELP_STRING([--enable-pretty-print-stacktrace],
                     [Pretty print stacktrace on process signal (default: enabled)])])
 if test "$enable_pretty_print_stacktrace" = "no" ; then
     AC_MSG_RESULT([no])
@@ -232,9 +232,9 @@ AC_DEFINE_UNQUOTED([OPAL_WANT_PRETTY_PRINT_STACKTRACE],
 #
 
 AC_MSG_CHECKING([if want pty support])
-AC_ARG_ENABLE(pty-support,
-    AC_HELP_STRING([--enable-pty-support],
-                   [Enable/disable PTY support for STDIO forwarding.  (default: enabled)]))
+AC_ARG_ENABLE([pty-support],
+    [AS_HELP_STRING([--enable-pty-support],
+                   [Enable/disable PTY support for STDIO forwarding.  (default: enabled)])])
 if test "$enable_pty_support" = "no" ; then
     AC_MSG_RESULT([no])
     OPAL_ENABLE_PTY_SUPPORT=0
@@ -251,9 +251,9 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_PTY_SUPPORT], [$OPAL_ENABLE_PTY_SUPPORT],
 #
 
 AC_MSG_CHECKING([if want weak symbol support])
-AC_ARG_ENABLE(weak-symbols,
-    AC_HELP_STRING([--enable-weak-symbols],
-                   [use weak symbols, if available (default: enabled)]))
+AC_ARG_ENABLE([weak-symbols],
+    [AS_HELP_STRING([--enable-weak-symbols],
+                   [use weak symbols, if available (default: enabled)])])
 if test "$enable_weak_symbols" != "no"; then
     AC_MSG_RESULT([yes])
     WANT_WEAK_SYMBOLS=1
@@ -269,7 +269,7 @@ fi
 
 AC_MSG_CHECKING([if want dlopen support])
 AC_ARG_ENABLE([dlopen],
-    [AC_HELP_STRING([--enable-dlopen],
+    [AS_HELP_STRING([--enable-dlopen],
                     [Whether build should attempt to use dlopen (or
                      similar) to dynamically load components.
                      Disabling dlopen implies --disable-mca-dso.
@@ -293,7 +293,7 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_DLOPEN_SUPPORT, $OPAL_ENABLE_DLOPEN_SUPPORT,
 
 AC_MSG_CHECKING([for default value of mca_base_component_show_load_errors])
 AC_ARG_ENABLE([show-load-errors-by-default],
-    [AC_HELP_STRING([--enable-show-load-errors-by-default],
+    [AS_HELP_STRING([--enable-show-load-errors-by-default],
                     [Set the default value for the MCA parameter
                      mca_base_component_show_load_errors (but can be
                      overridden at run time by the usual
@@ -320,7 +320,7 @@ AC_DEFINE_UNQUOTED(OPAL_SHOW_LOAD_ERRORS_DEFAULT, $OPAL_SHOW_LOAD_ERRORS_DEFAULT
 
 AC_MSG_CHECKING([if want heterogeneous support])
 AC_ARG_ENABLE([heterogeneous],
-    [AC_HELP_STRING([--enable-heterogeneous],
+    [AS_HELP_STRING([--enable-heterogeneous],
                     [Enable features required for heterogeneous
                      platform support (default: disabled)])])
 if test "$enable_heterogeneous" = "yes" ; then
@@ -362,7 +362,7 @@ AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
 # Cross-compile data
 #
 AC_ARG_WITH([cross],
-    [AC_HELP_STRING([--with-cross=FILE],
+    [AS_HELP_STRING([--with-cross=FILE],
         [Specify configure values that can not be determined in a cross-compilation environment.  See the Open MPI FAQ.])])
 if test "$with_cross" = "yes" ; then
     AC_MSG_ERROR([--with-cross argument must include FILE option])
@@ -383,12 +383,12 @@ fi
 # Do we want to install binaries?
 #
 AC_ARG_ENABLE([binaries],
-    [AC_HELP_STRING([--enable-binaries],
+    [AS_HELP_STRING([--enable-binaries],
         [Build and install binaries required for Open MPI, such as the wrapper compilers.   Useful for multi-lib installations.  (default: enabled)])])
 AM_CONDITIONAL([OPAL_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
 
 AC_ARG_ENABLE([script-wrapper-compilers],
-  [AC_HELP_STRING([--enable-script-wrapper-compilers],
+  [AS_HELP_STRING([--enable-script-wrapper-compilers],
      [Use less featured script-based wrapper compilers instead of the standard C-based wrapper compilers.  This option ignores the --disable-binaries option and is mainly useful in cross-compile environments])])
   if test "$enable_script_wrapper_compilers" = "yes"; then
       WANT_SCRIPT_WRAPPER_COMPILERS=1
@@ -401,7 +401,7 @@ AM_CONDITIONAL([OPAL_WANT_SCRIPT_WRAPPER_COMPILERS], [test "$enable_script_wrapp
 # Support per-user config files?
 #
 AC_ARG_ENABLE([per-user-config-files],
-   [AC_HELP_STRING([--enable-per-user-config-files],
+   [AS_HELP_STRING([--enable-per-user-config-files],
       [Disable per-user configuration files, to save disk accesses during job start-up.  This is likely desirable for large jobs.  Note that this can also be achieved by environment variables at run-time.  (default: enabled)])])
 if test "$enable_per_user_config_files" = "no" ; then
   result=0
@@ -416,7 +416,7 @@ AC_DEFINE_UNQUOTED([OPAL_WANT_HOME_CONFIG_FILES], [$result],
 #
 AC_MSG_CHECKING([if want IPv6 support])
 AC_ARG_ENABLE([ipv6],
-    [AC_HELP_STRING([--enable-ipv6],
+    [AS_HELP_STRING([--enable-ipv6],
         [Enable IPv6 support, but only if the underlying system supports it (default: disabled)])])
 if test "$enable_ipv6" = "yes"; then
     AC_MSG_RESULT([yes])
@@ -434,7 +434,7 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_IPV6], [$opal_want_ipv6],
 #
 AC_MSG_CHECKING([if want package/brand string])
 AC_ARG_WITH([package-string],
-     [AC_HELP_STRING([--with-package-string=STRING],
+     [AS_HELP_STRING([--with-package-string=STRING],
                      [Use a branding string throughout Open MPI])])
 if test "$with_package_string" = "" || test "$with_package_string" = "no"; then
     with_package_string="Open MPI $OPAL_CONFIGURE_USER@$OPAL_CONFIGURE_HOST Distribution"
@@ -448,7 +448,7 @@ AC_MSG_RESULT([$with_package_string])
 #
 AC_MSG_CHECKING([if want ident string])
 AC_ARG_WITH([ident-string],
-     [AC_HELP_STRING([--with-ident-string=STRING],
+     [AS_HELP_STRING([--with-ident-string=STRING],
                      [Embed an ident string into Open MPI object files])])
 if test "$with_ident_string" = "" || test "$with_ident_string" = "no"; then
     with_ident_string="%VERSION%"
@@ -473,7 +473,7 @@ AC_MSG_RESULT([$with_ident_string])
 #
 AC_MSG_CHECKING([if want to use an alternative checksum algo for messages])
 AC_ARG_WITH([dst-checksum],
-     [AC_HELP_STRING([--with-dst-checksum],
+     [AS_HELP_STRING([--with-dst-checksum],
                      [Use an alternative checksum algorithm for messages])])
 if test "$with_dst_checksum" = "yes"; then
     AC_MSG_RESULT([yes])
@@ -515,7 +515,7 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
 # some systems don't want/like getpwuid
 AC_MSG_CHECKING([if want getpwuid support])
 AC_ARG_ENABLE([getpwuid],
-    [AC_HELP_STRING([--disable-getpwuid],
+    [AS_HELP_STRING([--disable-getpwuid],
         [Disable getpwuid support (default: enabled)])])
 if test "$enable_getpwuid" = "no"; then
     AC_MSG_RESULT([no])

@@ -24,11 +24,11 @@ AC_DEFUN([OMPI_CHECK_UCX],[
 
     AS_IF([test -z "$ompi_check_ucx_happy"],
           [AC_ARG_WITH([ucx],
-		       [AC_HELP_STRING([--with-ucx(=DIR)],
+		       [AS_HELP_STRING([--with-ucx(=DIR)],
 				       [Build with Unified Communication X library support])])
 	   OPAL_CHECK_WITHDIR([ucx], [$with_ucx], [include/ucp/api/ucp.h])
 	   AC_ARG_WITH([ucx-libdir],
-		       [AC_HELP_STRING([--with-ucx-libdir=DIR],
+		       [AS_HELP_STRING([--with-ucx-libdir=DIR],
 				       [Search for Unified Communication X libraries in DIR])])
 	   OPAL_CHECK_WITHDIR([ucx-libdir], [$with_ucx_libdir], [libucp.*])
 

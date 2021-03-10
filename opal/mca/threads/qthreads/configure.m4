@@ -26,11 +26,11 @@
 AC_DEFUN([OPAL_CONFIG_QTHREADS],[
 
     AC_ARG_WITH([qthreads],
-                [AC_HELP_STRING([--with-qthreads=DIR],
+                [AS_HELP_STRING([--with-qthreads=DIR],
                                 [Specify location of qthreads installation.  Error if qthreads support cannot be found.])])
 
     AC_ARG_WITH([qthreads-libdir],
-                [AC_HELP_STRING([--with-qthreads-libdir=DIR],
+                [AS_HELP_STRING([--with-qthreads-libdir=DIR],
                                 [Search for qthreads libraries in DIR])])
 
     opal_check_qthreads_save_CPPFLAGS=$CPPFLAGS

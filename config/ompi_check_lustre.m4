@@ -42,7 +42,7 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
 
     # Get some configuration information
     AC_ARG_WITH([lustre],
-        [AC_HELP_STRING([--with-lustre(=DIR)],
+        [AS_HELP_STRING([--with-lustre(=DIR)],
              [Build Lustre support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([lustre], [$with_lustre], [include/lustre/lustreapi.h])
 

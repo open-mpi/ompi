@@ -46,7 +46,7 @@ AC_DEFUN([MCA_ompi_mtl_portals4_CONFIG],[
            CPPFLAGS="$CPPFLAGS $mtl_portals4_CPPFLAGS"])
 
     AC_ARG_ENABLE([mtl-portals4-flow-control],
-       [AC_HELP_STRING([--enable-mtl-portals4-flow-control],
+       [AS_HELP_STRING([--enable-mtl-portals4-flow-control],
            [enable flow control for Portals 4 MTL (default: disabled)])])
     AC_MSG_CHECKING([whether to enable flow control])
     if test "$enable_mtl_portals4_flow_control" != "no"; then

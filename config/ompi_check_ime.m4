@@ -25,7 +25,7 @@ AC_DEFUN([OMPI_CHECK_IME],[
 
     # Get some configuration information
     AC_ARG_WITH([ime],
-        [AC_HELP_STRING([--with-ime(=DIR)],
+        [AS_HELP_STRING([--with-ime(=DIR)],
              [Build IME support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([ime], [$with_ime], [include/ime_native.h])
 

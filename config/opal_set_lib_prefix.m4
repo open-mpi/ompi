@@ -33,7 +33,7 @@ AC_DEFUN([OPAL_SET_LIB_PREFIX],[
 AC_DEFUN([OMPI_SET_LIB_NAME],[
     AC_MSG_CHECKING([if want custom libmpi(_FOO) name])
     AC_ARG_WITH([libmpi-name],
-        [AC_HELP_STRING([--with-libmpi-name=STRING],
+        [AS_HELP_STRING([--with-libmpi-name=STRING],
                 ["Replace \"libmpi(_FOO)\" with \"libSTRING(_FOO)\" (default=mpi)"])])
 
     AS_IF([test "$with_libmpi_name" = "no"],

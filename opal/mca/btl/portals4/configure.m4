@@ -41,7 +41,7 @@ AC_DEFUN([MCA_opal_btl_portals4_CONFIG],[
           [CPPFLAGS="$CPPFLAGS $btl_portals4_CPPFLAGS"])
 
     AC_ARG_ENABLE([btl-portals4-flow-control],
-       [AC_HELP_STRING([--enable-btl-portals4-flow-control],
+       [AS_HELP_STRING([--enable-btl-portals4-flow-control],
            [enable flow control for Portals 4 BTL (default: disabled)])])
     AC_MSG_CHECKING([whether to enable flow control])
     if test "$enable_btl_portals4_flow_control" != "no"; then

@@ -26,11 +26,11 @@
 AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
 
     AC_ARG_WITH([argobots],
-                [AC_HELP_STRING([--with-argobots=DIR],
+                [AS_HELP_STRING([--with-argobots=DIR],
                                 [Specify location of argobots installation.  Error if argobots support cannot be found.])])
 
     AC_ARG_WITH([argobots-libdir],
-                [AC_HELP_STRING([--with-argobots-libdir=DIR],
+                [AS_HELP_STRING([--with-argobots-libdir=DIR],
                                 [Search for argobots libraries in DIR])])
 
     opal_check_argo_save_CPPFLAGS=$CPPFLAGS

@@ -217,7 +217,7 @@ AC_CONFIG_HEADERS([opal/include/opal_config.h])
 m4_ifdef([project_ompi],
          [AC_CONFIG_HEADERS([ompi/include/mpi.h])])
 m4_ifdef([project_oshmem],
-         [AC_CONFIG_HEADER([oshmem/include/shmem.h])])
+         [AC_CONFIG_HEADERS([oshmem/include/shmem.h])])
 
 opal_show_subtitle "Initialization, setup"
 
@@ -304,9 +304,9 @@ AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshme
 m4_ifndef([project_oshmem], [project_oshmem_amc="no (not available)"])
 
 # Enable/Disable Software-Based Performance Counters Capability
-AC_ARG_ENABLE(spc,
-    AC_HELP_STRING([--enable-spc],
-                   [Enable software-based performance counters capability (default: disabled)]))
+AC_ARG_ENABLE([spc],
+    [AS_HELP_STRING([--enable-spc],
+                   [Enable software-based performance counters capability (default: disabled)])])
 if test "$enable_spc" = "yes"; then
     AC_MSG_RESULT([yes])
     SPC_ENABLE=1
@@ -341,8 +341,8 @@ m4_ifdef([project_ompi],
 # Part one of libtool magic.  Default to: enable shared, disable static.
 #
 
-AM_ENABLE_SHARED
-AM_DISABLE_STATIC
+AC_ENABLE_SHARED
+AC_DISABLE_STATIC
 
 # Must be called before OPAL_SETUP_CC to get the value of CC
 # before it is modified by the C99/C11 checks.

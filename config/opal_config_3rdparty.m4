@@ -33,18 +33,18 @@ dnl $2: long pacakage name
 AC_DEFUN([OPAL_3RDPARTY_WITH], [
     m4_ifdef([$3],
         [AC_ARG_WITH([$1],
-            [AC_HELP_STRING([--with-$1(=DIR)],
+            [AS_HELP_STRING([--with-$1(=DIR)],
                            [Build $2 support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" forces Open MPI to use its internal copy of $2.  "external" forces Open MPI to use an external installation of $2.  Supplying a valid directory name also forces Open MPI to use an external installation of $2, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI no longer supports --without-$1.  If no argument is specified, Open MPI will search default locations for $2 and fall back to an internal version if one is not found.])])
 
          AC_ARG_WITH([$1-libdir],
-            [AC_HELP_STRING([--with-$1-libdir=DIR],
+            [AS_HELP_STRING([--with-$1-libdir=DIR],
              [Search for $2 libraries in DIR.  Should only be used if an external copy of $2 is being used.])])],
         [AC_ARG_WITH([$1],
-            [AC_HELP_STRING([--with-$1(=DIR)],
+            [AS_HELP_STRING([--with-$1(=DIR)],
                            [Build $2 support.  DIR can take one of two values:  "external" or a valid directory name.  "external" forces Open MPI to use an external installation of $2.  Supplying a valid directory name also forces Open MPI to use an external installation of $2, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI no longer supports --without-$1.  If no argument is specified, Open MPI will search default locations for $2 and error if one is not found.])])
 
          AC_ARG_WITH([$1-libdir],
-            [AC_HELP_STRING([--with-$1-libdir=DIR],
+            [AS_HELP_STRING([--with-$1-libdir=DIR],
              [Search for $2 libraries in DIR.  Should only be used if an external copy of $2 is being used.])])])
 
     # Bozo check

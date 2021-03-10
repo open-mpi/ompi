@@ -26,9 +26,9 @@ AC_DEFUN([OPAL_CHECK_VISIBILITY],[
 
     # Check if the compiler has support for visibility, like some
     # versions of gcc, icc Sun Studio cc.
-    AC_ARG_ENABLE(visibility,
-        AC_HELP_STRING([--enable-visibility],
-            [enable visibility feature of certain compilers/linkers (default: enabled)]))
+    AC_ARG_ENABLE([visibility],
+        [AS_HELP_STRING([--enable-visibility],
+            [enable visibility feature of certain compilers/linkers (default: enabled)])])
 
     opal_visibility_define=0
     opal_msg="whether to enable symbol visibility"

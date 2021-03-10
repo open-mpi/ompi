@@ -26,7 +26,7 @@ AC_DEFUN([MCA_opal_timer_CONFIG],[
 
         # All components look at this value
         AC_ARG_WITH([timer],
-            [AC_HELP_STRING([--with-timer=TYPE],
+            [AS_HELP_STRING([--with-timer=TYPE],
                         [Build high resolution timer component TYPE])])
 
         # first, compile all the components

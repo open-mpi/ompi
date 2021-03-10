@@ -19,7 +19,7 @@
 # check if cma support is wanted.
 AC_DEFUN([OPAL_CHECK_CMA],[
     AC_ARG_WITH([cma],
-                [AC_HELP_STRING([--with-cma],
+                [AS_HELP_STRING([--with-cma],
                                 [Build Cross Memory Attach support (default: autodetect)])])
 
     if test "x$with_cma" = "xno" ; then

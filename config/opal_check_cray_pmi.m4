@@ -71,7 +71,7 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI_EXPLICIT],[
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_CRAY_PMI],[
     AC_ARG_WITH([cray_pmi],
-                [AC_HELP_STRING([--with-cray-pmi(=DIR)],
+                [AS_HELP_STRING([--with-cray-pmi(=DIR)],
                 [Build Cray PMI support, optionally adding DIR to the search path (default: auto)])],
                                                                                 [], with_cray_pmi=auto)
    AC_MSG_CHECKING([for Cray PMI support])

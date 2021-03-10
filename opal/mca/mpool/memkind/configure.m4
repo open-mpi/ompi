@@ -13,7 +13,7 @@ AC_DEFUN([MCA_opal_mpool_memkind_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([opal_mpool_memkind_happy])
     AC_CONFIG_FILES([opal/mca/mpool/memkind/Makefile])
 
-    AC_ARG_WITH([memkind], [AC_HELP_STRING([--with-memkind(=DIR)]),
+    AC_ARG_WITH([memkind], [AS_HELP_STRING([--with-memkind(=DIR)]),
 		[Build with MEMKIND, searching for headers in DIR])])
     OPAL_CHECK_WITHDIR([memkind], [$with_memkind], [include/memkind.h])
 

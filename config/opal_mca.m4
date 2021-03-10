@@ -56,36 +56,36 @@ AC_DEFUN([OPAL_MCA],[
     # --disable-mca-dso
     #
     AC_ARG_ENABLE([mca-no-build],
-        [AC_HELP_STRING([--enable-mca-no-build=LIST],
+        [AS_HELP_STRING([--enable-mca-no-build=LIST],
                         [Comma-separated list of <type>-<component> pairs
                          that will not be built.  Example:
                          "--enable-mca-no-build=btl-portals,oob-ud" will
                          disable building the "portals" btl and the "ud"
                          oob components.])])
-    AC_ARG_ENABLE(mca-dso,
-        AC_HELP_STRING([--enable-mca-dso=LIST],
+    AC_ARG_ENABLE([mca-dso],
+        [AS_HELP_STRING([--enable-mca-dso=LIST],
                        [Comma-separated list of types and/or
                         type-component pairs that will be built as
                         run-time loadable components (as opposed to
                         statically linked in), if supported on this
                         platform.  The default is to build all components
-                        as DSOs.]))
-    AC_ARG_ENABLE(mca-static,
-        AC_HELP_STRING([--enable-mca-static=LIST],
+                        as DSOs.])])
+    AC_ARG_ENABLE([mca-static],
+        [AS_HELP_STRING([--enable-mca-static=LIST],
                        [Comma-separated list of types and/or
                         type-component pairs that will be built statically
                         linked into the library.  The default (if DSOs are
                         supported) is to build all components as DSOs.
                         Enabling a component as static disables it
-                        building as a DSO.]))
-    AC_ARG_ENABLE(mca-direct,
-        AC_HELP_STRING([--enable-mca-direct=LIST],
+                        building as a DSO.])])
+    AC_ARG_ENABLE([mca-direct],
+        [AS_HELP_STRING([--enable-mca-direct=LIST],
                        [Comma-separated list of type-component pairs that
                         will be hard coded as the one component to use for
                         a given component type, saving the (small)
                         overhead of the component architecture.  LIST must
                         not be empty and implies given component pairs are
-                        build as static components.]))
+                        build as static components.])])
 
     AC_MSG_CHECKING([which components should be disabled])
     if test "$enable_mca_no_build" = "yes"; then

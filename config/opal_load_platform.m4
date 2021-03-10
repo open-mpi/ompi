@@ -24,11 +24,11 @@ dnl
 # --------------------
 AC_DEFUN([OPAL_LOAD_PLATFORM], [
     AC_ARG_WITH([platform-patches-dir],
-        [AC_HELP_STRING([--with-platform-patches-dir=DIR],
+        [AS_HELP_STRING([--with-platform-patches-dir=DIR],
                         [Location of the platform patches directory. If you use this option, you must also use --with-platform.])])
 
     AC_ARG_WITH([platform],
-        [AC_HELP_STRING([--with-platform=FILE],
+        [AS_HELP_STRING([--with-platform=FILE],
                         [Load options for build from FILE.  Options on the
                          command line not in FILE are used.  Options on the
                          command line and in FILE are replaced by what is

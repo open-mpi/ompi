@@ -31,7 +31,7 @@
 AC_DEFUN([OPAL_CHECK_CRAY_XPMEM],[
     if test -z "$opal_check_cray_xpmem_happy" ; then
         AC_ARG_WITH([cray_xpmem],
-                    [AC_HELP_STRING([--with-cray-xpmem(=yes/no)],
+                    [AS_HELP_STRING([--with-cray-xpmem(=yes/no)],
                     [Build Cray XPMEM support(default: auto)])],
                     [], with_cray_xpmem=auto)
 
@@ -74,12 +74,12 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
 
 	if test "$opal_check_xpmem_happy" = no ; then
 	    AC_ARG_WITH([xpmem],
-			[AC_HELP_STRING([--with-xpmem(=DIR)],
+			[AS_HELP_STRING([--with-xpmem(=DIR)],
 					[Build with XPMEM kernel module support, searching for headers in DIR])])
 	    OPAL_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
 
 	    AC_ARG_WITH([xpmem-libdir],
-			[AC_HELP_STRING([--with-xpmem-libdir=DIR],
+			[AS_HELP_STRING([--with-xpmem-libdir=DIR],
 					[Search for XPMEM library in DIR])])
 	    OPAL_CHECK_WITHDIR([xpmem-libdir], [$with_xpmem_libdir], [libxpmem.*])
 

@@ -37,7 +37,7 @@ dnl the opal_qsort instead.
 # --------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_BROKEN_QSORT],[
   AC_ARG_WITH([broken-qsort],
-              [AC_HELP_STRING([--with-broken-qsort],
+              [AS_HELP_STRING([--with-broken-qsort],
                               [Build with FreeBSD qsort instead of native qsort (default: no)])])
   AC_MSG_CHECKING([for broken qsort])
 

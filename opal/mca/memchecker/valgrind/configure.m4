@@ -29,7 +29,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
     OPAL_VAR_SCOPE_PUSH([opal_memchecker_valgrind_save_CPPFLAGS opal_memchecker_valgrind_happy opal_memchecker_valgrind_CPPFLAGS])
 
     AC_ARG_WITH([valgrind],
-        [AC_HELP_STRING([--with-valgrind(=DIR)],
+        [AS_HELP_STRING([--with-valgrind(=DIR)],
             [Directory where the valgrind software is installed])])
     OPAL_CHECK_WITHDIR([valgrind], [$with_valgrind], [include/valgrind/valgrind.h])
 

@@ -34,7 +34,7 @@ AC_DEFUN([OMPI_REQUIRE_ENDPOINT_TAG], [
 
 AC_DEFUN([OMPI_REQUIRE_ENDPOINT_TAG_FINI], [
 dnl    AC_ARG_ENABLE([dynamic-endpoint-information],
-dnl      [AC_HELP_STRING([--disable-dynamic-endpoint-information],
+dnl      [AS_HELP_STRING([--disable-dynamic-endpoint-information],
 dnl         [Disable support for dynamic endpoint information storage.  This saves a considerable amount of memory for large processes, but makes loading outside components which require endpoint storage impossible.])])
 dnl    AS_IF([test "$enable_endpoint_information" != "no"],
 dnl          [OMPI_REQUIRE_ENDPOINT_TAG(DYNAMIC)])
