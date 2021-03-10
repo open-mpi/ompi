@@ -20,16 +20,8 @@
 # $HEADER$
 #
 
-EXTRA_DIST = autogen.subdirs
-
 sources =
 include src/Makefile.extra
-
-if MCA_io_romio321_SHOULD_BUILD
-# Need to set both SUBDIRS and DIST_SUBDIRS due to oddities with AM
-SUBDIRS = romio
-DIST_SUBDIRS = romio
-endif
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -47,7 +39,7 @@ component =
 component_sources =
 endif
 
-libs = romio/libromio_dist.la
+libs = $(top_builddir)/3rd-party/romio321/libromio_dist.la
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)

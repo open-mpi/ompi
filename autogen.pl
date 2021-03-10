@@ -1638,6 +1638,8 @@ if ("prrte" ~~ @disabled_3rdparty_packages) {
 
 $m4 .= "\n";
 
+process_autogen_subdirs("3rd-party");
+
 #---------------------------------------------------------------------------
 
 # Find MPI extensions and contribs
