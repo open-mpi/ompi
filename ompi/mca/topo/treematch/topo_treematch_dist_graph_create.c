@@ -25,8 +25,8 @@
 #include "opal/mca/hwloc/base/base.h"
 
 #include "ompi/mca/topo/treematch/topo_treematch.h"
-#include "ompi/mca/topo/treematch/treematch/treematch.h"
-#include "ompi/mca/topo/treematch/treematch/tm_mapping.h"
+#include <treematch.h>
+#include <tm_mapping.h>
 #include "ompi/mca/topo/base/base.h"
 
 #include "ompi/communicator/communicator.h"
