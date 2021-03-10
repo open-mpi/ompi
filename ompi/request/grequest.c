@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -121,15 +122,23 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  */
 static void ompi_grequest_destruct(ompi_grequest_t* greq)
 {
+    int rc;
     MPI_Fint ierr;
 
     if (greq->greq_free.c_free != NULL) {
         if (greq->greq_funcs_are_c) {
-            greq->greq_free.c_free(greq->greq_state);
+            rc = greq->greq_free.c_free(greq->greq_state);
         } else {
             greq->greq_free.f_free((MPI_Aint*)greq->greq_state, &ierr);
+            rc = OMPI_FINT_2_INT(ierr);
         }
     }
+
+    /* We were already putting query_fn()'s return value into
+     * status.MPI_ERROR but for MPI_{Wait,Test}* the standard
+     * says use the free_fn() callback too.
+     */
+    greq->greq_base.req_status.MPI_ERROR = rc;
 
     OMPI_REQUEST_FINI(&greq->greq_base);
 }
@@ -214,8 +223,21 @@ int ompi_grequest_invoke_query(ompi_request_t *request,
         if (g->greq_funcs_are_c) {
             rc = g->greq_query.c_query(g->greq_state, status);
         } else {
+            /* request->req_status.MPI_ERROR was initialized to success
+             * and it's meant to be unmodified in the case of callback
+             * success, and set when callbacks return a failure.  But
+             * if we leave fstatus uninitialized this sets
+             * req_status.MPI_ERROR to whatever happened to be on the
+             * stack at fstatus (f_query isn't supposed to directly set
+             * its status.MPI_ERROR, according to the standard)
+             *
+             * So the Status_c2f below only really cares about transferring
+             * the MPI_ERROR setting into fstatus so that when it's transferred
+             * back in the f2c call, it has the starting value.
+             */
             MPI_Fint ierr;
             MPI_Fint fstatus[sizeof(MPI_Status) / sizeof(int)];
+            MPI_Status_c2f(status, fstatus);
             g->greq_query.f_query((MPI_Aint*)g->greq_state, fstatus, &ierr);
             MPI_Status_f2c(fstatus, status);
             rc = OMPI_FINT_2_INT(ierr);
