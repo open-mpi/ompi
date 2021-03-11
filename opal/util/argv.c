@@ -343,7 +343,7 @@ char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter)
 
     /* Bozo case */
 
-    if (NULL == argv || NULL == argv[0] || (int)start > opal_argv_count(argv)) {
+    if (NULL == argv || NULL == argv[0] || (int)start >= opal_argv_count(argv)) {
         return strdup("");
     }
 
@@ -354,10 +354,15 @@ char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter)
         str_len += strlen(*p) + 1;
     }
 
+    if (0 == str_len) {
+        return strdup("");
+    }
+
     /* Allocate the string. */
 
-    if (NULL == (str = (char*) malloc(str_len)))
+    if (NULL == (str = (char*) malloc(str_len))) {
         return NULL;
+    }
 
     /* Loop filling in the string. */
 
