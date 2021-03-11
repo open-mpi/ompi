@@ -21,6 +21,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1918,7 +1919,7 @@ OMPI_DECLSPEC  int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_at
 OMPI_DECLSPEC  int MPI_Win_delete_attr(MPI_Win win, int win_keyval);
 OMPI_DECLSPEC  int MPI_Win_detach(MPI_Win win, const void *base);
 OMPI_DECLSPEC  MPI_Win MPI_Win_f2c(MPI_Fint win);
-OMPI_DECLSPEC  int MPI_Win_fence(int assert, MPI_Win win);
+OMPI_DECLSPEC  int MPI_Win_fence(int mpi_assert, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_flush(int rank, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_flush_all(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_flush_local(int rank, MPI_Win win);
@@ -1931,15 +1932,15 @@ OMPI_DECLSPEC  int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandle
 OMPI_DECLSPEC  int MPI_Win_get_group(MPI_Win win, MPI_Group *group);
 OMPI_DECLSPEC  int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used);
 OMPI_DECLSPEC  int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen);
-OMPI_DECLSPEC  int MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win);
-OMPI_DECLSPEC  int MPI_Win_lock_all(int assert, MPI_Win win);
-OMPI_DECLSPEC  int MPI_Win_post(MPI_Group group, int assert, MPI_Win win);
+OMPI_DECLSPEC  int MPI_Win_lock(int lock_type, int rank, int mpi_assert, MPI_Win win);
+OMPI_DECLSPEC  int MPI_Win_lock_all(int mpi_assert, MPI_Win win);
+OMPI_DECLSPEC  int MPI_Win_post(MPI_Group group, int mpi_assert, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val);
 OMPI_DECLSPEC  int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int MPI_Win_set_info(MPI_Win win, MPI_Info info);
 OMPI_DECLSPEC  int MPI_Win_set_name(MPI_Win win, const char *win_name);
 OMPI_DECLSPEC  int MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, void *baseptr);
-OMPI_DECLSPEC  int MPI_Win_start(MPI_Group group, int assert, MPI_Win win);
+OMPI_DECLSPEC  int MPI_Win_start(MPI_Group group, int mpi_assert, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_sync(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_test(MPI_Win win, int *flag);
 OMPI_DECLSPEC  int MPI_Win_unlock(int rank, MPI_Win win);
@@ -2583,7 +2584,7 @@ OMPI_DECLSPEC  int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_a
 OMPI_DECLSPEC  int PMPI_Win_delete_attr(MPI_Win win, int win_keyval);
 OMPI_DECLSPEC  int PMPI_Win_detach(MPI_Win win, const void *base);
 OMPI_DECLSPEC  MPI_Win PMPI_Win_f2c(MPI_Fint win);
-OMPI_DECLSPEC  int PMPI_Win_fence(int assert, MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Win_fence(int mpi_assert, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_flush(int rank, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_flush_all(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_flush_local(int rank, MPI_Win win);
@@ -2596,15 +2597,15 @@ OMPI_DECLSPEC  int PMPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandl
 OMPI_DECLSPEC  int PMPI_Win_get_group(MPI_Win win, MPI_Group *group);
 OMPI_DECLSPEC  int PMPI_Win_get_info(MPI_Win win, MPI_Info *info_used);
 OMPI_DECLSPEC  int PMPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen);
-OMPI_DECLSPEC  int PMPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win);
-OMPI_DECLSPEC  int PMPI_Win_lock_all(int assert, MPI_Win win);
-OMPI_DECLSPEC  int PMPI_Win_post(MPI_Group group, int assert, MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Win_lock(int lock_type, int rank, int mpi_assert, MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Win_lock_all(int mpi_assert, MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Win_post(MPI_Group group, int mpi_assert, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val);
 OMPI_DECLSPEC  int PMPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int PMPI_Win_set_info(MPI_Win win, MPI_Info info);
 OMPI_DECLSPEC  int PMPI_Win_set_name(MPI_Win win, const char *win_name);
 OMPI_DECLSPEC  int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, void *baseptr);
-OMPI_DECLSPEC  int PMPI_Win_start(MPI_Group group, int assert, MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Win_start(MPI_Group group, int mpi_assert, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_sync(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_test(MPI_Win win, int *flag);
 OMPI_DECLSPEC  int PMPI_Win_unlock(int rank, MPI_Win win);

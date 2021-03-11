@@ -13,6 +13,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2018      Intel, Inc. All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -206,14 +207,14 @@ int ompi_osc_rdma_demand_lock_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdm
     return ret;
 }
 
-int ompi_osc_rdma_lock_atomic (int lock_type, int target, int assert, ompi_win_t *win)
+int ompi_osc_rdma_lock_atomic (int lock_type, int target, int mpi_assert, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_peer_t *peer = ompi_osc_rdma_module_peer (module, target);
     ompi_osc_rdma_sync_t *lock;
     int ret = OMPI_SUCCESS;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock: %d, %d, %d, %s", lock_type, target, assert, win->w_name);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock: %d, %d, %d, %s", lock_type, target, mpi_assert, win->w_name);
 
     if (module->no_locks) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "attempted to lock with no_locks set");
@@ -238,13 +239,13 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int assert, ompi_win_t
     lock->type = OMPI_OSC_RDMA_SYNC_TYPE_LOCK;
     lock->sync.lock.target = target;
     lock->sync.lock.type = lock_type;
-    lock->sync.lock.assert = assert;
+    lock->sync.lock.mpi_assert = mpi_assert;
 
     lock->peer_list.peer = peer;
     lock->num_peers = 1;
     OBJ_RETAIN(peer);
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         ret = ompi_osc_rdma_lock_atomic_internal (module, peer, lock);
     }
 
@@ -288,7 +289,7 @@ int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win)
     /* finish all outstanding fragments */
     ompi_osc_rdma_sync_rdma_complete (lock);
 
-    if (!(lock->sync.lock.assert & MPI_MODE_NOCHECK)) {
+    if (!(lock->sync.lock.mpi_assert & MPI_MODE_NOCHECK)) {
         ret = ompi_osc_rdma_unlock_atomic_internal (module, peer, lock);
     }
 
@@ -309,13 +310,13 @@ int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win)
     return ret;
 }
 
-int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win)
+int ompi_osc_rdma_lock_all_atomic (int mpi_assert, struct ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_sync_t *lock;
     int ret = OMPI_SUCCESS;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock_all: %d, %s", assert, win->w_name);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock_all: %d, %s", mpi_assert, win->w_name);
 
     if (module->no_locks) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "attempted to lock with no_locks set");
@@ -339,7 +340,7 @@ int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win)
     lock->type = OMPI_OSC_RDMA_SYNC_TYPE_LOCK;
     lock->sync.lock.target = -1;
     lock->sync.lock.type   = MPI_LOCK_SHARED;
-    lock->sync.lock.assert = assert;
+    lock->sync.lock.mpi_assert = mpi_assert;
     lock->num_peers = ompi_comm_size (module->comm);
 
     lock->epoch_active = true;
@@ -348,7 +349,7 @@ int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win)
      * at the expense of memory usage. Ex. if a window has 1M peers then 8MB per process would
      * be needed for this array. */
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         /* increment the global shared lock */
         if (OMPI_OSC_RDMA_LOCKING_TWO_LEVEL == module->locking_mode) {
             ret = ompi_osc_rdma_lock_acquire_shared (module, module->leader, 0x0000000100000000UL,
@@ -396,7 +397,7 @@ int ompi_osc_rdma_unlock_all_atomic (struct ompi_win_t *win)
     /* finish all outstanding fragments */
     ompi_osc_rdma_sync_rdma_complete (lock);
 
-    if (0 == (lock->sync.lock.assert & MPI_MODE_NOCHECK)) {
+    if (0 == (lock->sync.lock.mpi_assert & MPI_MODE_NOCHECK)) {
         if (OMPI_OSC_RDMA_LOCKING_ON_DEMAND == module->locking_mode) {
             ompi_osc_rdma_peer_t *peer, *next;
 

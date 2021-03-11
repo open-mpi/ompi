@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,13 +22,13 @@
  *
  * @param[in] lock_type        mpi lock type (MPI_LOCK_SHARED, MPI_LOCK_EXCLUSIVE)
  * @param[in] target           target process
- * @param[in] assert           asserts
+ * @param[in] mpi_assert       asserts
  * @param[in] win              mpi window
  *
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERR_RMA_SYNC if there is a conflicting RMA epoch
  */
-int ompi_osc_rdma_lock_atomic (int lock_type, int target, int assert, ompi_win_t *win);
+int ompi_osc_rdma_lock_atomic (int lock_type, int target, int mpi_assert, ompi_win_t *win);
 
 /**
  * @brief unlock the target in the window using network/cpu atomics
@@ -43,18 +44,18 @@ int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win);
 /**
  * @brief lock all targets in window using network/cpu atomics
  *
- * @param[in] assert           asserts
+ * @param[in] mpi_assert       asserts
  * @param[in] win              mpi window
  *
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERR_RMA_SYNC if there is a conflicting RMA epoch
  */
-int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win);
+int ompi_osc_rdma_lock_all_atomic (int mpi_assert, struct ompi_win_t *win);
 
 /**
  * @brief unlock all targets in window using network/cpu atomics
  *
- * @param[in] assert           asserts
+ * @param[in] mpi_assert       asserts
  * @param[in] win              mpi window
  *
  * @returns OMPI_SUCCESS on success

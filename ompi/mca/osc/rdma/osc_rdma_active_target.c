@@ -17,6 +17,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -297,14 +298,14 @@ static int ompi_osc_rdma_post_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdm
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
+int ompi_osc_rdma_post_atomic (ompi_group_t *group, int mpi_assert, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_peer_t **peers;
     ompi_osc_rdma_state_t *state = module->state;
     int ret = OMPI_SUCCESS;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "post: %p, %d, %s", (void*) group, assert, win->w_name);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "post: %p, %d, %s", (void*) group, mpi_assert, win->w_name);
 
     /* check if we are already in a post epoch */
     if (module->pw_group) {
@@ -329,7 +330,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
     state->num_complete_msgs = 0;
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    if ((assert & MPI_MODE_NOCHECK) || 0 == ompi_group_size (group)) {
+    if ((mpi_assert & MPI_MODE_NOCHECK) || 0 == ompi_group_size (group)) {
         return OMPI_SUCCESS;
     }
 
@@ -356,7 +357,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
     return ret;
 }
 
-int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
+int ompi_osc_rdma_start_atomic (ompi_group_t *group, int mpi_assert, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_pending_post_t *pending_post, *next;
@@ -364,7 +365,7 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
     ompi_osc_rdma_sync_t *sync = &module->all_sync;
     int group_size = ompi_group_size (group);
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start: %p, %d, %s", (void*) group, assert,
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start: %p, %d, %s", (void*) group, mpi_assert,
                      win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -408,7 +409,7 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
     /* save the group */
     OBJ_RETAIN(group);
 
-    if (!(assert & MPI_MODE_NOCHECK)) {
+    if (!(mpi_assert & MPI_MODE_NOCHECK)) {
         /* look through list of pending posts */
         OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_rdma_pending_post_t) {
             for (int i = 0 ; i < group_size ; ++i) {
@@ -586,12 +587,12 @@ int ompi_osc_rdma_test_atomic (ompi_win_t *win, int *flag)
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_rdma_fence_atomic (int assert, ompi_win_t *win)
+int ompi_osc_rdma_fence_atomic (int mpi_assert, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     int ret = OMPI_SUCCESS;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "fence: %d, %s", assert, win->w_name);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "fence: %d, %s", mpi_assert, win->w_name);
 
     /* can't enter an active target epoch while a lock is active */
     if (ompi_osc_rdma_in_passive_epoch (module) || module->pw_group) {
@@ -604,7 +605,7 @@ int ompi_osc_rdma_fence_atomic (int assert, ompi_win_t *win)
     OPAL_THREAD_LOCK(&module->lock);
 
     /* active sends are now active (we will close the epoch if NOSUCCEED is specified) */
-    if (0 == (assert & MPI_MODE_NOSUCCEED)) {
+    if (0 == (mpi_assert & MPI_MODE_NOSUCCEED)) {
         module->all_sync.type = OMPI_OSC_RDMA_SYNC_TYPE_FENCE;
         module->all_sync.num_peers = ompi_comm_size (module->comm);
         /* NTH: should add a fast access array for peers here later. for now just use the
@@ -625,7 +626,7 @@ int ompi_osc_rdma_fence_atomic (int assert, ompi_win_t *win)
     /* ensure all writes to my memory are complete (both local stores, and RMA operations) */
     ret = module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
 
-    if (assert & MPI_MODE_NOSUCCEED) {
+    if (mpi_assert & MPI_MODE_NOSUCCEED) {
         /* as specified in MPI-3 p 438 3-5 the fence can end an epoch. it isn't explicitly
          * stated that MPI_MODE_NOSUCCEED ends the epoch but it is a safe assumption. */
         module->all_sync.type = OMPI_OSC_RDMA_SYNC_TYPE_NONE;

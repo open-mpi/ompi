@@ -37,7 +37,7 @@
 static const char FUNC_NAME[] = "MPI_Win_lock_all";
 
 
-int MPI_Win_lock_all(int assert, MPI_Win win)
+int MPI_Win_lock_all(int mpi_assert, MPI_Win win)
 {
     int rc;
 
@@ -46,13 +46,13 @@ int MPI_Win_lock_all(int assert, MPI_Win win)
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
-        } else if (0 != (assert & ~(MPI_MODE_NOCHECK))) {
+        } else if (0 != (mpi_assert & ~(MPI_MODE_NOCHECK))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
         } else if (! ompi_win_allow_locks(win)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);
         }
     }
 
-    rc = win->w_osc_module->osc_lock_all(assert, win);
+    rc = win->w_osc_module->osc_lock_all(mpi_assert, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

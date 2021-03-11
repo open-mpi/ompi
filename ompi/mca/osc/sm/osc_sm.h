@@ -215,16 +215,16 @@ int ompi_osc_sm_rget_accumulate(const void *origin_addr,
                                       struct ompi_win_t *win,
                                       struct ompi_request_t **request);
 
-int ompi_osc_sm_fence(int assert, struct ompi_win_t *win);
+int ompi_osc_sm_fence(int mpi_assert, struct ompi_win_t *win);
 
 int ompi_osc_sm_start(struct ompi_group_t *group,
-                            int assert,
+                            int mpi_assert,
                             struct ompi_win_t *win);
 
 int ompi_osc_sm_complete(struct ompi_win_t *win);
 
 int ompi_osc_sm_post(struct ompi_group_t *group,
-                           int assert,
+                           int mpi_assert,
                            struct ompi_win_t *win);
 
 int ompi_osc_sm_wait(struct ompi_win_t *win);
@@ -234,14 +234,14 @@ int ompi_osc_sm_test(struct ompi_win_t *win,
 
 int ompi_osc_sm_lock(int lock_type,
                            int target,
-                           int assert,
+                           int mpi_assert,
                            struct ompi_win_t *win);
 
 int ompi_osc_sm_unlock(int target,
                              struct ompi_win_t *win);
 
 
-int ompi_osc_sm_lock_all(int assert,
+int ompi_osc_sm_lock_all(int mpi_assert,
                                struct ompi_win_t *win);
 
 int ompi_osc_sm_unlock_all(struct ompi_win_t *win);

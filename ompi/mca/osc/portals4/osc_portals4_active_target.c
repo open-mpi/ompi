@@ -20,7 +20,7 @@
 
 
 int
-ompi_osc_portals4_fence(int assert, struct ompi_win_t *win)
+ompi_osc_portals4_fence(int mpi_assert, struct ompi_win_t *win)
 {
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
@@ -42,7 +42,7 @@ ompi_osc_portals4_fence(int assert, struct ompi_win_t *win)
 
 int
 ompi_osc_portals4_start(struct ompi_group_t *group,
-                        int assert,
+                        int mpi_assert,
                         struct ompi_win_t *win)
 {
     ompi_osc_portals4_module_t *module =
@@ -53,7 +53,7 @@ ompi_osc_portals4_start(struct ompi_group_t *group,
         return OMPI_ERR_RMA_SYNC;
     }
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         int size;
 
         OBJ_RETAIN(group);
@@ -115,14 +115,14 @@ ompi_osc_portals4_complete(struct ompi_win_t *win)
 
 int
 ompi_osc_portals4_post(struct ompi_group_t *group,
-                       int assert,
+                       int mpi_assert,
                        struct ompi_win_t *win)
 {
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
     int ret, i, size;
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         OBJ_RETAIN(group);
         module->post_group = group;
 
