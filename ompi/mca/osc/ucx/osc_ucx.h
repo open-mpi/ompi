@@ -193,16 +193,16 @@ int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
                                  struct ompi_op_t *op, struct ompi_win_t *win,
                                  struct ompi_request_t **request);
 
-int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win);
-int ompi_osc_ucx_start(struct ompi_group_t *group, int assert, struct ompi_win_t *win);
+int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win);
+int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win);
 int ompi_osc_ucx_complete(struct ompi_win_t *win);
-int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t *win);
+int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win);
 int ompi_osc_ucx_wait(struct ompi_win_t *win);
 int ompi_osc_ucx_test(struct ompi_win_t *win, int *flag);
 
-int ompi_osc_ucx_lock(int lock_type, int target, int assert, struct ompi_win_t *win);
+int ompi_osc_ucx_lock(int lock_type, int target, int mpi_assert, struct ompi_win_t *win);
 int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win);
-int ompi_osc_ucx_lock_all(int assert, struct ompi_win_t *win);
+int ompi_osc_ucx_lock_all(int mpi_assert, struct ompi_win_t *win);
 int ompi_osc_ucx_unlock_all(struct ompi_win_t *win);
 int ompi_osc_ucx_sync(struct ompi_win_t *win);
 int ompi_osc_ucx_flush(int target, struct ompi_win_t *win);

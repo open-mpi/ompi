@@ -58,7 +58,7 @@ static inline void ompi_osc_ucx_handle_incoming_post(ompi_osc_ucx_module_t *modu
     opal_list_append(&module->pending_posts, &pending_post->super);
 }
 
-int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
+int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
@@ -67,13 +67,13 @@ int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    if (assert & MPI_MODE_NOSUCCEED) {
+    if (mpi_assert & MPI_MODE_NOSUCCEED) {
         module->epoch_type.access = NONE_EPOCH;
     } else {
         module->epoch_type.access = FENCE_EPOCH;
     }
 
-    if (!(assert & MPI_MODE_NOPRECEDE)) {
+    if (!(mpi_assert & MPI_MODE_NOPRECEDE)) {
         ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
         if (ret != OMPI_SUCCESS) {
             return ret;
@@ -84,7 +84,7 @@ int ompi_osc_ucx_fence(int assert, struct ompi_win_t *win) {
                                               module->comm->c_coll->coll_barrier_module);
 }
 
-int ompi_osc_ucx_start(struct ompi_group_t *group, int assert, struct ompi_win_t *win) {
+int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int i, size, *ranks_in_grp = NULL, *ranks_in_win_grp = NULL;
     ompi_group_t *win_group = NULL;
@@ -123,7 +123,7 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int assert, struct ompi_win_t
         return OMPI_ERROR;
     }
 
-    if ((assert & MPI_MODE_NOCHECK) == 0) {
+    if ((mpi_assert & MPI_MODE_NOCHECK) == 0) {
         ompi_osc_ucx_pending_post_t *pending_post, *next;
 
         /* first look through the pending list */
@@ -202,7 +202,7 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
     return ret;
 }
 
-int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t *win) {
+int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
@@ -213,7 +213,7 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int assert, struct ompi_win_t 
     OBJ_RETAIN(group);
     module->post_group = group;
 
-    if ((assert & MPI_MODE_NOCHECK) == 0) {
+    if ((mpi_assert & MPI_MODE_NOCHECK) == 0) {
         int i, j, size;
         ompi_group_t *win_group = NULL;
         int *ranks_in_grp = NULL, *ranks_in_win_grp = NULL;

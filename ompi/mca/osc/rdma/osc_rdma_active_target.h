@@ -12,6 +12,7 @@
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,14 +27,14 @@
 #include "osc_rdma_sync.h"
 #include "osc_rdma_lock.h"
 
-int ompi_osc_rdma_fence_atomic (int assert, struct ompi_win_t *win);
+int ompi_osc_rdma_fence_atomic (int mpi_assert, struct ompi_win_t *win);
 
 int ompi_osc_rdma_start_atomic (struct ompi_group_t *group,
-                                int assert, struct ompi_win_t *win);
+                                int mpi_assert, struct ompi_win_t *win);
 int ompi_osc_rdma_complete_atomic (struct ompi_win_t *win);
 
 int ompi_osc_rdma_post_atomic (struct ompi_group_t *group,
-                               int assert, struct ompi_win_t *win);
+                               int mpi_assert, struct ompi_win_t *win);
 
 int ompi_osc_rdma_wait_atomic (struct ompi_win_t *win);
 
