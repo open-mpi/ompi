@@ -159,7 +159,7 @@ static int mca_spml_ucx_component_register(void)
 
     mca_spml_ucx_param_register_bool("synchronized_quiet", 0,
                                      "Use synchronized quiet on shmem_quiet or shmem_barrier_all operations",
-                                     &mca_spml_ucx.synchronized_quiet);
+                                     &mca_spml_ucx_ctx_default.synchronized_quiet);
 
     mca_spml_ucx_param_register_ulong("nb_progress_thresh_global", 0,
                                     "Number of nb_put or nb_get operations before ucx progress is triggered. Disabled by default (0). Setting this value will override nb_put/get_progress_thresh.",
