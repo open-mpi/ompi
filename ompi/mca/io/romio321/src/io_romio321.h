@@ -28,8 +28,8 @@
 #include "ompi/request/request.h"
 #include "ompi/file/file.h"
 #include "ompi/mca/io/io.h"
-#include "romio/adio/include/romioconf.h"
-#include "romio/include/mpio.h"
+#include "3rd-party/romio321/adio/include/romioconf.h"
+#include "3rd-party/romio321/include/mpio.h"
 
 
 BEGIN_C_DECLS

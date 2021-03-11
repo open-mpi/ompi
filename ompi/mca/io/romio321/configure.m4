@@ -30,6 +30,9 @@ AC_DEFUN([MCA_ompi_io_romio321_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_io_romio321_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/io/romio321/Makefile])
 
+    OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS romio321"
+    OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS romio321"
+    
     OPAL_VAR_SCOPE_PUSH([io_romio321_flags io_romio321_flags_define io_romio321_happy io_romio321_save_LIBS])
     AC_ARG_ENABLE([io-romio],
                   [AS_HELP_STRING([--disable-io-romio],
@@ -85,7 +88,7 @@ AC_DEFUN([MCA_ompi_io_romio321_CONFIG],[
                    io_romio321_flags="$io_romio321_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS -D__EXTENSIONS__"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio321_shared-shared --$io_romio321_static-static $io_romio321_flags $io_romio321_prefix_arg --disable-aio --disable-weak-symbols --enable-strict --disable-f77 --disable-f90"
 
                    opal_show_subtitle "Configuring ROMIO distribution"
-                   OPAL_CONFIG_SUBDIR([ompi/mca/io/romio321/romio],
+                   OPAL_CONFIG_SUBDIR([3rd-party/romio321],
                                       [$io_romio321_flags],
                                       [io_romio321_happy=1], [io_romio321_happy=0])
 
@@ -96,7 +99,7 @@ AC_DEFUN([MCA_ompi_io_romio321_CONFIG],[
                            # the wrapper settings
                           io_romio321_save_LIBS="$LIBS"
                           LIBS=
-                          . ompi/mca/io/romio321/romio/localdefs
+                          . 3rd-party/romio321/localdefs
                           io_romio321_LIBS="$LIBS"
                           LIBS="$io_romio321_save_LIBS"
 
