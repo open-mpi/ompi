@@ -296,6 +296,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wmissing-prototypes, Wmissing_prototypes)
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wstrict-prototypes, Wstrict_prototypes)
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wcomment, Wcomment)
+        _OPAL_CHECK_SPECIFIC_CFLAGS(-Wshadow, Wshadow)
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Werror-implicit-function-declaration, Werror_implicit_function_declaration)
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wno-long-double, Wno_long_double, int main() { long double x; })
         _OPAL_CHECK_SPECIFIC_CFLAGS(-fno-strict-aliasing, fno_strict_aliasing, int main() { long double x; })
