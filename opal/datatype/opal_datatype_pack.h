@@ -110,7 +110,8 @@ pack_predefined_data( opal_convertor_t* CONVERTOR,
     *(COUNT) -= cando_count;
 
     if(_elem->blocklen < 9) {
-        if(OPAL_LIKELY(OPAL_SUCCESS == opal_datatype_pack_predefined_element(&_memory, &_packed, cando_count, _elem)))   {
+        if((!(CONVERTOR->flags & CONVERTOR_CUDA)) && OPAL_LIKELY(OPAL_SUCCESS ==
+                    opal_datatype_pack_predefined_element(&_memory, &_packed, cando_count, _elem)))   {
             goto update_and_return;
         }
         /* else unrecognized _elem->common.type, use the memcpy path */
