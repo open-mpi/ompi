@@ -112,7 +112,7 @@ end_shared(ompi_osc_sm_module_t *module,
 int
 ompi_osc_sm_lock(int lock_type,
                  int target,
-                 int assert,
+                 int mpi_assert,
                  struct ompi_win_t *win)
 {
     ompi_osc_sm_module_t *module =
@@ -123,7 +123,7 @@ ompi_osc_sm_lock(int lock_type,
         return OMPI_ERR_RMA_SYNC;
     }
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         if (MPI_LOCK_EXCLUSIVE == lock_type) {
             module->outstanding_locks[target] = lock_exclusive;
             ret = start_exclusive(module, target);
@@ -188,7 +188,7 @@ ompi_osc_sm_unlock(int target,
 
 
 int
-ompi_osc_sm_lock_all(int assert,
+ompi_osc_sm_lock_all(int mpi_assert,
                            struct ompi_win_t *win)
 {
     ompi_osc_sm_module_t *module =
@@ -197,7 +197,7 @@ ompi_osc_sm_lock_all(int assert,
 
     comm_size = ompi_comm_size(module->comm);
     for (i = 0 ; i < comm_size ; ++i) {
-        ret = ompi_osc_sm_lock(MPI_LOCK_SHARED, i, assert, win);
+        ret = ompi_osc_sm_lock(MPI_LOCK_SHARED, i, mpi_assert, win);
         if (OMPI_SUCCESS != ret) return ret;
     }
 

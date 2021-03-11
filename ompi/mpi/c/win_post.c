@@ -37,7 +37,7 @@
 static const char FUNC_NAME[] = "MPI_Win_post";
 
 
-int MPI_Win_post(MPI_Group group, int assert, MPI_Win win)
+int MPI_Win_post(MPI_Group group, int mpi_assert, MPI_Win win)
 {
     int rc;
 
@@ -46,12 +46,12 @@ int MPI_Win_post(MPI_Group group, int assert, MPI_Win win)
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
-        } else if (0 != (assert & ~(MPI_MODE_NOCHECK | MPI_MODE_NOSTORE |
+        } else if (0 != (mpi_assert & ~(MPI_MODE_NOCHECK | MPI_MODE_NOSTORE |
                                     MPI_MODE_NOPUT))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
         }
     }
 
-    rc = win->w_osc_module->osc_post(group, assert, win);
+    rc = win->w_osc_module->osc_post(group, mpi_assert, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }
