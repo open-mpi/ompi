@@ -79,7 +79,6 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
     struct mca_btl_base_endpoint_t *endpoint;
     ompi_osc_rdma_peer_t *peer;
     uint8_t module_btl_index = UINT8_MAX;
-    mca_btl_base_module_t *btl = NULL;
 
     *peer_out = NULL;
 
@@ -88,10 +87,6 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret && !((module->selected_btls[0]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) &&
                                                peer_id == ompi_comm_rank (module->comm)))) {
         return ret;
-    }
-
-    if (endpoint) {
-        btl = ompi_osc_rdma_selected_btl (module, module_btl_index);
     }
 
     if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor) {
@@ -127,7 +122,6 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
     uint64_t peer_data_size;
     uint64_t peer_data_offset, array_pointer;
-    mca_btl_base_module_t *array_btl;
     struct mca_btl_base_endpoint_t *array_endpoint;
     ompi_osc_rdma_region_t *array_peer_data, *node_peer_data;
     ompi_osc_rdma_rank_data_t rank_data;
