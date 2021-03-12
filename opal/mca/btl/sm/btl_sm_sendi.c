@@ -25,11 +25,11 @@
 
 #include "opal_config.h"
 
-#include "btl_sm.h"
-#include "btl_sm_frag.h"
-#include "btl_sm_fifo.h"
+#include "opal/mca/btl/sm/btl_sm.h"
+#include "opal/mca/btl/sm/btl_sm_fifo.h"
+#include "opal/mca/btl/sm/btl_sm_frag.h"
 
-#include "btl_sm_fbox.h"
+#include "opal/mca/btl/sm/btl_sm_fbox.h"
 
 /**
  * Initiate an inline send to the peer.
@@ -37,20 +37,17 @@
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-int mca_btl_sm_sendi (struct mca_btl_base_module_t *btl,
-                         struct mca_btl_base_endpoint_t *endpoint,
-                         struct opal_convertor_t *convertor,
-                         void *header, size_t header_size,
-                         size_t payload_size, uint8_t order,
-                         uint32_t flags, mca_btl_base_tag_t tag,
-                         mca_btl_base_descriptor_t **descriptor)
+int mca_btl_sm_sendi(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                     struct opal_convertor_t *convertor, void *header, size_t header_size,
+                     size_t payload_size, uint8_t order, uint32_t flags, mca_btl_base_tag_t tag,
+                     mca_btl_base_descriptor_t **descriptor)
 {
     mca_btl_sm_frag_t *frag;
     void *data_ptr = NULL;
     size_t length;
 
     /* don't attempt sendi if there are pending fragments on the endpoint */
-    if (OPAL_UNLIKELY(opal_list_get_size (&endpoint->pending_frags))) {
+    if (OPAL_UNLIKELY(opal_list_get_size(&endpoint->pending_frags))) {
         if (descriptor) {
             *descriptor = NULL;
         }
@@ -59,19 +56,19 @@ int mca_btl_sm_sendi (struct mca_btl_base_module_t *btl,
     }
 
     if (payload_size) {
-        opal_convertor_get_current_pointer (convertor, &data_ptr);
+        opal_convertor_get_current_pointer(convertor, &data_ptr);
     }
 
-    if (!(payload_size && opal_convertor_need_buffers (convertor)) &&
-        mca_btl_sm_fbox_sendi (endpoint, tag, header, header_size, data_ptr, payload_size)) {
+    if (!(payload_size && opal_convertor_need_buffers(convertor)) &&
+        mca_btl_sm_fbox_sendi(endpoint, tag, header, header_size, data_ptr, payload_size)) {
         return OPAL_SUCCESS;
     }
 
     length = header_size + payload_size;
 
     /* allocate a fragment, giving up if we can't get one */
-    frag = (mca_btl_sm_frag_t *) mca_btl_sm_alloc (btl, endpoint, order, length,
-                                                         flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+    frag = (mca_btl_sm_frag_t *) mca_btl_sm_alloc(btl, endpoint, order, length,
+                                                  flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if (OPAL_UNLIKELY(NULL == frag)) {
         if (descriptor) {
             *descriptor = NULL;
@@ -85,7 +82,7 @@ int mca_btl_sm_sendi (struct mca_btl_base_module_t *btl,
     frag->hdr->tag = tag;
 
     /* write the match header (with MPI comm/tag/etc. info) */
-    memcpy (frag->segments[0].seg_addr.pval, header, header_size);
+    memcpy(frag->segments[0].seg_addr.pval, header, header_size);
 
     /* write the message data if there is any */
     /* we can't use single-copy semantics here since as caller will consider the send
@@ -95,20 +92,21 @@ int mca_btl_sm_sendi (struct mca_btl_base_module_t *btl,
         struct iovec iov;
 
         /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE *)((uintptr_t)frag->segments[0].seg_addr.pval + header_size);
-        iov.iov_len  = length = payload_size;
+        iov.iov_base = (IOVBASE_TYPE *) ((uintptr_t) frag->segments[0].seg_addr.pval + header_size);
+        iov.iov_len = length = payload_size;
 
-        (void) opal_convertor_pack (convertor, &iov, &iov_count, &length);
+        (void) opal_convertor_pack(convertor, &iov, &iov_count, &length);
 
-        assert (length == payload_size);
+        assert(length == payload_size);
     }
 
-    /* write the fragment pointer to peer's the FIFO. the progress function will return the fragment */
-    if (!sm_fifo_write_ep (frag->hdr, endpoint)) {
+    /* write the fragment pointer to peer's the FIFO. the progress function will return the fragment
+     */
+    if (!sm_fifo_write_ep(frag->hdr, endpoint)) {
         if (descriptor) {
             *descriptor = &frag->base;
         } else {
-            mca_btl_sm_free (btl, &frag->base);
+            mca_btl_sm_free(btl, &frag->base);
         }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
