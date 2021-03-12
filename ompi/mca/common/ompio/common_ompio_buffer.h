@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +61,7 @@
 
 #if OPAL_CUDA_SUPPORT
 void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, 
+                                      struct ompi_datatype_t *datatype,
 				      int *is_gpu, int *is_managed);
 #endif
 int mca_common_ompio_buffer_alloc_init ( void );

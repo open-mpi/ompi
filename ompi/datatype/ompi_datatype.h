@@ -508,5 +508,11 @@ ompi_datatype_consolidate_free(ompi_datatype_consolidate_t *dtmod)
  */
 #define OMPI_DATATYPE_CONSOLIDATE_THRESHOLD 250
 
+static void*
+BUF_START(void *userbuf, MPI_Datatype dt)
+{
+    return userbuf + dt->super.true_lb;
+}
+
 END_C_DECLS
 #endif  /* OMPI_DATATYPE_H_HAS_BEEN_INCLUDED */

@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -580,6 +581,11 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
     convertor->flags |= CONVERTOR_RECV;
 #if OPAL_CUDA_SUPPORT
     if (!(convertor->flags & CONVERTOR_SKIP_CUDA_INIT)) {
+        /* setting a couple fields from CONVERTOR_PREPARE early
+         * so that the cuda code can figure out what offsets
+         * from pUserBuf to look at
+         */
+        convertor->pDesc      = (opal_datatype_t*)datatype;             \
         mca_cuda_convertor_init(convertor, pUserBuf);
     }
 #endif
@@ -622,6 +628,7 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
     convertor->flags |= CONVERTOR_SEND;
 #if OPAL_CUDA_SUPPORT
     if (!(convertor->flags & CONVERTOR_SKIP_CUDA_INIT)) {
+        convertor->pDesc      = (opal_datatype_t*)datatype;             \
         mca_cuda_convertor_init(convertor, pUserBuf);
     }
 #endif

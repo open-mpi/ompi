@@ -12,6 +12,7 @@
  *  Copyright (c) 2008-2019 University of Houston. All rights reserved.
  *  Copyright (c) 2018      Research Organization for Information Science
  *                          and Technology (RIST). All rights reserved.
+ *  Copyright (c) 2021      IBM Corporation. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -92,7 +93,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
     opal_convertor_t convertor;
 #if OPAL_CUDA_SUPPORT
     int is_gpu, is_managed;
-    mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
+    mca_common_ompio_check_gpu_buf ( fh, buf, datatype, &is_gpu, &is_managed);
     if ( is_gpu && !is_managed ) {
         need_to_copy = true;
     }
@@ -271,7 +272,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
     
 #if OPAL_CUDA_SUPPORT
         int is_gpu, is_managed;
-        mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
+        mca_common_ompio_check_gpu_buf ( fh, buf, datatype, &is_gpu, &is_managed);
         if ( is_gpu && !is_managed ) {
             need_to_copy = true;
         }
