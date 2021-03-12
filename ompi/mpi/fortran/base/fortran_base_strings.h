@@ -55,7 +55,7 @@ BEGIN_C_DECLS
      * convert C strings to fortran strings.  It is assumed that the
      * fortran string is already allocated and has a length of len.
      */
-    OMPI_DECLSPEC int ompi_fortran_string_c2f(char *cstr, char *fstr, int len);
+    OMPI_DECLSPEC int ompi_fortran_string_c2f(const char* cstr, char* fstr, int len);
 
     /**
      * Convert an array of Fortran strings that are terminated with a

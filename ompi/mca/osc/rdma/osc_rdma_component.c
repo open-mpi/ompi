@@ -81,7 +81,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
 static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module);
 static int ompi_osc_rdma_query_mtls (void);
 
-static char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, char *key, char *value);
+static const char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, const char *value);
 
 static char *ompi_osc_rdma_btl_names;
 static char *ompi_osc_rdma_mtl_names;
@@ -1509,7 +1509,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 }
 
 
-static char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, char *key, char *value)
+static const char*
+ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, const char *value)
 {
 
     struct ompi_win_t *win = (struct ompi_win_t*) obj;

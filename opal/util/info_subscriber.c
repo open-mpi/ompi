@@ -37,13 +37,14 @@
 #include <sys/utsname.h>
 #endif
 #include <assert.h>
+#include <string.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
 #include "opal/util/info_subscriber.h"
 
-static char* opal_infosubscribe_inform_subscribers(opal_infosubscriber_t * object, char *key, char *new_value, int *found_callback);
+static const char* opal_infosubscribe_inform_subscribers(opal_infosubscriber_t * object, const char *key, const char *new_value, int *found_callback);
 static void infosubscriber_construct(opal_infosubscriber_t *obj);
 static void infosubscriber_destruct(opal_infosubscriber_t *obj);
 
@@ -55,7 +56,7 @@ typedef struct opal_callback_list_t opal_callback_list_t;
 
 struct opal_callback_list_item_t {
     opal_list_item_t super;
-    char *default_value;
+    opal_cstring_t *default_value;
     opal_key_interest_callback_t *callback;
 };
 typedef struct opal_callback_list_item_t opal_callback_list_item_t;
@@ -104,16 +105,16 @@ static void infosubscriber_destruct(opal_infosubscriber_t *obj) {
 
 static void opal_callback_list_item_destruct(opal_callback_list_item_t *obj) {
     if (obj->default_value) {
-        free(obj->default_value); // came from a strdup()
+        OBJ_RELEASE(obj->default_value);
     }
 }
 
-static char* opal_infosubscribe_inform_subscribers(opal_infosubscriber_t *object, char *key, char *new_value, int *found_callback)
+static const char* opal_infosubscribe_inform_subscribers(opal_infosubscriber_t *object, const char *key, const char *new_value, int *found_callback)
 {
     opal_hash_table_t *table = &object->s_subscriber_table;
     opal_list_t *list = NULL;
     opal_callback_list_item_t *item;
-    char *updated_value = NULL;
+    const char *updated_value = NULL;
 
     if (found_callback) { *found_callback = 0; }
 /*
@@ -191,7 +192,7 @@ opal_infosubscribe_testregister(opal_infosubscriber_t *object)
             if (list) {
                 OPAL_LIST_FOREACH(item, list, opal_callback_list_item_t) {
                     if (0 ==
-                        strcmp(item->default_value, testing_initialvals[i])
+                        strcmp(item->default_value->string, testing_initialvals[i])
                         &&
                         item->callback == testing_callbacks[i])
                     {
@@ -225,7 +226,7 @@ opal_infosubscribe_testregister(opal_infosubscriber_t *object)
             OPAL_LIST_FOREACH(item1, list, opal_callback_list_item_t) {
                 OPAL_LIST_FOREACH(item2, list, opal_callback_list_item_t) {
                     if (0 ==
-                        strcmp(item1->default_value, item2->default_value)
+                        strcmp(item1->default_value->string, item2->default_value->string)
                         &&
                         item1->callback == item2->callback)
                     {
@@ -255,7 +256,7 @@ opal_infosubscribe_testregister(opal_infosubscriber_t *object)
 // The last argument indicates whether to overwrite a previous
 // __IN_<key> or not.
 static int
-save_original_key_val(opal_info_t *info, char *key, char *val, int overwrite)
+save_original_key_val(opal_info_t *info, const char *key, opal_cstring_t *val, int overwrite)
 {
     char modkey[OPAL_MAX_INFO_KEY];
     int flag, err;
@@ -267,9 +268,9 @@ save_original_key_val(opal_info_t *info, char *key, char *val, int overwrite)
             OPAL_INFO_SAVE_PREFIX "%s", key);
 // (the prefix macro is a string, so the unreadable part above is a string concatenation)
         flag = 0;
-        opal_info_get(info, modkey, 0, NULL, &flag);
+        opal_info_get(info, modkey, 0, &flag);
         if (!flag || overwrite) {
-            err = opal_info_set(info, modkey, val);
+            err = opal_info_set_cstring(info, modkey, val);
             if (OPAL_SUCCESS != err) {
                 return err;
             }
@@ -291,7 +292,7 @@ opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *new_i
 {
     int err;
     opal_info_entry_t *iterator;
-    char *updated_value;
+    const char *updated_value;
 
     /* for each key/value in new info, let subscribers know of new value */
     int found_callback;
@@ -302,27 +303,36 @@ opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *new_i
 
     if (NULL != new_info) {
     OPAL_LIST_FOREACH(iterator, &new_info->super, opal_info_entry_t) {
+        opal_cstring_t *value_str, *key_str;
+        value_str = iterator->ie_value;
+        OBJ_RETAIN(value_str);
+        key_str = iterator->ie_key;
+        OBJ_RETAIN(key_str);
 
-        updated_value = opal_infosubscribe_inform_subscribers(object, iterator->ie_key, iterator->ie_value, &found_callback);
+        updated_value = opal_infosubscribe_inform_subscribers(object, iterator->ie_key->string,
+                                                              iterator->ie_value->string, &found_callback);
         if (updated_value) {
-            err = opal_info_set(object->s_info, iterator->ie_key, updated_value);
+            err = opal_info_set(object->s_info, iterator->ie_key->string, updated_value);
         } else {
 // This path would happen if there was no callback for this key,
 // or if there was a callback and it returned null. One way the
 // setting was unrecognized the other way it was recognized and ignored,
 // either way it shouldn't be set, which we'll ensure with an unset
 // in case a previous value exists.
-            err = opal_info_delete(object->s_info, iterator->ie_key);
+            err = opal_info_delete(object->s_info, iterator->ie_key->string);
             err = OPAL_SUCCESS; // we don't care if the key was found or not
         }
         if (OPAL_SUCCESS != err) {
+            OBJ_RELEASE(value_str);
+            OBJ_RELEASE(key_str);
             return err;
         }
 // Save the original at "__IN_<key>":"original"
 // And if multiple set-info calls happen, the last would be the most relevant
 // to save, so overwrite a previously saved value if there is one.
-        save_original_key_val(object->s_info,
-            iterator->ie_key, iterator->ie_value, 1);
+        save_original_key_val(object->s_info, key_str->string, value_str, 1);
+        OBJ_RELEASE(value_str);
+        OBJ_RELEASE(key_str);
     }}
 
     return OPAL_SUCCESS;
@@ -346,7 +356,7 @@ opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *new_i
 // to me this might be required if the strings become more dynamic than the
 // simple true/false values seen in the current code. It'll be an easy change,
 // callback() is only used two places.
-int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char *value, opal_key_interest_callback_t *callback)
+int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, const char *key, const char *value, opal_key_interest_callback_t *callback)
 {
     opal_list_t *list = NULL;
     opal_hash_table_t *table = &object->s_subscriber_table;
@@ -363,7 +373,6 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
         exit(1);
 #else
         opal_output(0, "The \"%s\" MPI info key almost certainly will not work properly.  You should inform an Open MPI developer about this.", key);
-        key[max_len] = '\0';
 #endif
     }
 
@@ -374,14 +383,10 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
             list = OBJ_NEW(opal_list_t);
             opal_hash_table_set_value_ptr(table, key, strlen(key), list);
         }
-
+        opal_cstring_t *value_str = opal_cstring_create(value);
         callback_list_item = OBJ_NEW(opal_callback_list_item_t);
         callback_list_item->callback = callback;
-        if (value) {
-            callback_list_item->default_value = strdup(value);
-        } else {
-            callback_list_item->default_value = NULL;
-        }
+        callback_list_item->default_value = value_str;
 
         opal_list_append(list, (opal_list_item_t*) callback_list_item);
 
@@ -398,17 +403,17 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
         }
 // - is there a value already associated with key in this obj's info:
 //   to use in the callback()
-        char *buffer = malloc(OPAL_MAX_INFO_VAL+1); // (+1 shouldn't be needed)
-        char *val = value; // start as default value
+        opal_cstring_t *val;
         int flag = 0;
-        char *updated_value;
+        const char *updated_value;
         int err;
-        opal_info_get(object->s_info, key, OPAL_MAX_INFO_VAL, buffer, &flag);
-        if (flag) {
-            val = buffer; // become info value if this key was in info
+        opal_info_get(object->s_info, key, &val, &flag);
+        if (!flag) {
+            val = value_str; // fall back to default string
+            OBJ_RETAIN(val);
         }
 // - callback() and modify the val in info
-        updated_value = callback(object, key, val);
+        updated_value = callback(object, key, val->string);
         if (updated_value) {
             err = opal_info_set(object->s_info, key, updated_value);
         } else {
@@ -416,7 +421,7 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
             err = OPAL_SUCCESS; // we don't care if the key was found or not
         }
         if (OPAL_SUCCESS != err) {
-            free(buffer);
+            OBJ_RELEASE(val);
             return err;
         }
 // - save the previous val under key __IN_*
@@ -428,7 +433,7 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, char *key, char 
 //   up if the user queries later with get_info.
         save_original_key_val(object->s_info, key, val, 0);
 
-        free(buffer);
+        OBJ_RELEASE(val);
     } else {
 /*
  * TODO: This should not happen

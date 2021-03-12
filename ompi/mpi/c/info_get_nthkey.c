@@ -25,6 +25,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "opal/util/string_copy.h"
 #include <string.h>
 
 #if OMPI_BUILD_MPI_PROFILING
@@ -89,6 +90,11 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
 
     /* Everything seems alright. Call the back end key copy */
 
-    err = ompi_info_get_nthkey (info, n, key);
+    opal_cstring_t *key_str = NULL;
+    err = ompi_info_get_nthkey (info, n, &key_str);
+    if (NULL != key_str) {
+        opal_string_copy(key, key_str->string, MPI_MAX_INFO_KEY);
+        OBJ_RELEASE(key);
+    }
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

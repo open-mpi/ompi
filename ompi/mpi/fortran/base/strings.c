@@ -90,7 +90,7 @@ int ompi_fortran_string_f2c(char *fstr, int len, char **cstr)
  * shorter string, or reading a shorter record, automatically pads the
  * rest of the string with blanks."
  */
-int ompi_fortran_string_c2f(char *cstr, char *fstr, int len)
+int ompi_fortran_string_c2f(const char *cstr, char *fstr, int len)
 {
     int i;
 

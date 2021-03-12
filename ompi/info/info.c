@@ -224,10 +224,10 @@ int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
 {
     return opal_info_set_value_enum (&(info->super), key, value, var_enum);
 }
-int ompi_info_get (ompi_info_t *info, const char *key, int valuelen,
-                   char *value, int *flag)
+int ompi_info_get (ompi_info_t *info, const char *key,
+                   opal_cstring_t **value, int *flag)
 {
-    return opal_info_get (&(info->super), key, valuelen, value, flag);
+    return opal_info_get (&(info->super), key, value, flag);
 }
 int ompi_info_get_value_enum (ompi_info_t *info, const char *key, int *value,
                               int default_value, mca_base_var_enum_t *var_enum,
@@ -247,7 +247,7 @@ int ompi_info_get_valuelen (ompi_info_t *info, const char *key, int *valuelen,
 {
     return opal_info_get_valuelen (&(info->super), key, valuelen, flag);
 }
-int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key) {
+int ompi_info_get_nthkey (ompi_info_t *info, int n, opal_cstring_t **key) {
     return opal_info_get_nthkey (&(info->super), n, key);
 }
 int ompi_info_get_nkeys(ompi_info_t *info, int *nkeys)
@@ -304,8 +304,8 @@ int ompi_mpiinfo_finalize(void)
                          item = opal_list_get_next(item)) {
                         entry = (opal_info_entry_t *) item;
                         opal_output(0, "WARNING:   key=\"%s\", value=\"%s\"",
-                                    entry->ie_key,
-                                    NULL != entry->ie_value ? entry->ie_value : "(null)");
+                                    entry->ie_key->string,
+                                    NULL != entry->ie_value ? entry->ie_value->string : "(null)");
                         found = true;
                     }
                 }

@@ -654,7 +654,7 @@ static dpm_conflicts_t bindto_modifiers[] = {
     {.name = ""}
 };
 
-static int check_modifiers(char *modifier, char **checks, dpm_conflicts_t *conflicts)
+static int check_modifiers(const char *modifier, char **checks, dpm_conflicts_t *conflicts)
 {
     int n, m, k;
 
@@ -674,10 +674,10 @@ static int check_modifiers(char *modifier, char **checks, dpm_conflicts_t *confl
 }
 
 static int dpm_convert(opal_list_t *infos,
-                       char *infokey,
-                       char *option,
-                       char *directive,
-                       char *modifier,
+                       const char *infokey,
+                       const char *option,
+                       const char *directive,
+                       const char *modifier,
                        bool deprecated)
 {
     opal_info_item_t *iptr;
@@ -714,7 +714,10 @@ static int dpm_convert(opal_list_t *infos,
                if (0 != strncasecmp(ck, directive, strlen(directive))) {
                     opal_asprintf(&help_str, "Conflicting directives \"%s %s\"", ck, directive);
 #if PMIX_NUMERIC_VERSION >= 0x00040000
-                    attr = PMIx_Get_attribute_string(option);
+                    /* TODO: remove strdup if PMIx_Get_attribute_string takes const char* */
+                    char *option_dup = strdup(option);
+                    attr = PMIx_Get_attribute_string(option_dup);
+                    free(option_dup);
 #else
                     attr = option;
 #endif
@@ -745,7 +748,10 @@ static int dpm_convert(opal_list_t *infos,
                         /* we have a conflict */
                         opal_asprintf(&ptr, "  Option %s\n  Conflicting modifiers \"%s %s\"", option, infokey, modifier);
 #if PMIX_NUMERIC_VERSION >= 0x00040000
-                        attr = PMIx_Get_attribute_string(option);
+                        /* TODO: remove strdup if PMIx_Get_attribute_string takes const char* */
+                        char *option_dup = strdup(option);
+                        attr = PMIx_Get_attribute_string(option_dup);
+                        free(option_dup);
 #else
                         attr = option;
 #endif
@@ -805,14 +811,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     int rc, i, j;
     int have_wdir=0;
     int flag=0;
-    char cwd[OPAL_PATH_MAX];
-    char host[OPAL_MAX_INFO_VAL];  /*** should define OMPI_HOST_MAX ***/
-    char init_errh[OPAL_MAX_INFO_VAL];
-    char prefix[OPAL_MAX_INFO_VAL];
-    char stdin_target[OPAL_MAX_INFO_VAL];
-    char params[OPAL_MAX_INFO_VAL];
-    char mapper[OPAL_MAX_INFO_VAL];
-    char slot_list[OPAL_MAX_INFO_VAL];
+    opal_cstring_t *info_str;
     uint32_t ui32;
     bool personality = false;
     char *tmp;
@@ -908,33 +907,36 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
 
             /* check for personality - this is a job-level key */
-            ompi_info_get (array_of_info[i], "personality", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "personality", &info_str, &flag);
             if ( flag ) {
                 /* deprecate --> PMIX_PERSONALITY */
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "personality", "PMIX_PERSONALITY");
                 personality = true;
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_PERSONALITY", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_PERSONALITY", &info_str, &flag);
             if ( flag ) {
                 personality = true;
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_PERSONALITY");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 personality = true;
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
@@ -943,68 +945,75 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
              * MPI standard ch. 10.3.4 */
 
             /* check for 'host' */
-            ompi_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "host", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_HOST, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
-                opal_argv_append_nosize(&dash_host, host);
+                opal_argv_append_nosize(&dash_host, info_str->string);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_HOST", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_HOST", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_HOST, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
-                opal_argv_append_nosize(&dash_host, host);
+                opal_argv_append_nosize(&dash_host, info_str->string);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_HOST");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_HOST, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
-                opal_argv_append_nosize(&dash_host, host);
+                opal_argv_append_nosize(&dash_host, info_str->string);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
 
             /* check for 'wdir' */
-            ompi_info_get (array_of_info[i], "wdir", sizeof(cwd) - 1, cwd, &flag);
+            ompi_info_get (array_of_info[i], "wdir", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 have_wdir = 1;
             }
-            ompi_info_get (array_of_info[i], "PMIX_WDIR", sizeof(cwd) - 1, cwd, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_WDIR", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 have_wdir = 1;
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_WDIR");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(cwd) - 1, cwd, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, cwd, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_WDIR, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 have_wdir = 1;
                 continue;
             }
 #endif
 
             /* check for 'mpi_initial_errhandler' */
-            ompi_info_get (array_of_info[i], "mpi_initial_errhandler", sizeof(init_errh) - 1, init_errh, &flag);
+            ompi_info_get (array_of_info[i], "mpi_initial_errhandler", &info_str, &flag);
             if ( flag ) {
                 /* this is set as an environment because it must be available
                  * before pmix_init */
-                opal_setenv("OMPI_MCA_mpi_initial_errhandler", init_errh, true, &app->env);
+                opal_setenv("OMPI_MCA_mpi_initial_errhandler", info_str->string, true, &app->env);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 
@@ -1018,108 +1027,119 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
              * deprecated in the non-prefixed form */
 
             /* check for 'hostfile' */
-            ompi_info_get (array_of_info[i], "hostfile", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "hostfile", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
-                opal_argv_append_nosize(&hostfiles, host);
+                opal_argv_append_nosize(&hostfiles, info_str->string);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_HOSTFILE", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_HOSTFILE", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
-                opal_argv_append_nosize(&hostfiles, host);
+                opal_argv_append_nosize(&hostfiles, info_str->string);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_HOSTFILE");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
-                opal_argv_append_nosize(&hostfiles, host);
+                opal_argv_append_nosize(&hostfiles, info_str->string);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
 
             /* check for 'add-hostfile' */
-            ompi_info_get (array_of_info[i], "add-hostfile", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "add-hostfile", &info_str, &flag);
             if ( flag ) {
                 /* deprecate --> PMIX_ADD_HOSTFILE */
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "add-hostfile", "PMIX_ADD_HOSTFILE");
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_ADD_HOSTFILE", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_ADD_HOSTFILE", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_ADD_HOSTFILE");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
 
             /* check for 'add-host' */
-            ompi_info_get (array_of_info[i], "add-host", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "add-host", &info_str, &flag);
             if ( flag ) {
                 /* deprecate --> PMIX_ADD_HOST */
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "add-host", "PMIX_ADD_HOST");
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_ADD_HOST", sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_ADD_HOST", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_ADD_HOST");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(host) - 1, host, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, host, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
 
             /* check for env */
-            ompi_info_get (array_of_info[i], "env", sizeof(host)-1, host, &flag);
+            ompi_info_get (array_of_info[i], "env", &info_str, &flag);
             if ( flag ) {
                 /* deprecate --> PMIX_ENVAR */
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "env", "PMIX_ENVAR");
-                envars = opal_argv_split(host, '\n');
+                envars = opal_argv_split(info_str->string, '\n');
+                OBJ_RELEASE(info_str);
                 for (j=0; NULL != envars[j]; j++) {
                     opal_argv_append_nosize(&app->env, envars[j]);
                 }
                 opal_argv_free(envars);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_ENVAR", sizeof(host)-1, host, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_ENVAR", &info_str, &flag);
             if ( flag ) {
-                envars = opal_argv_split(host, '\n');
+                envars = opal_argv_split(info_str->string, '\n');
+                OBJ_RELEASE(info_str);
                 for (j=0; NULL != envars[j]; j++) {
                     opal_argv_append_nosize(&app->env, envars[j]);
                 }
@@ -1128,9 +1148,10 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_ENVAR");
-            ompi_info_get (array_of_info[i], "PMIX_ENVAR", sizeof(host)-1, host, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_ENVAR", &info_str, &flag);
             if ( flag ) {
-                envars = opal_argv_split(host, '\n');
+                envars = opal_argv_split(info_str->string, '\n');
+                OBJ_RELEASE(info_str);
                 for (j=0; NULL != envars[j]; j++) {
                     opal_argv_append_nosize(&app->env, envars[j]);
                 }
@@ -1144,59 +1165,65 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
              *
              * This is a job-level key
              */
-            ompi_info_get (array_of_info[i], "ompi_prefix", sizeof(prefix) - 1, prefix, &flag);
+            ompi_info_get (array_of_info[i], "ompi_prefix", &info_str, &flag);
             if ( flag ) {
                 /* deprecate --> PMIX_PREFIX */
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "ompi_prefix", "PMIX_PREFIX");
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, prefix, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_PREFIX", sizeof(prefix) - 1, prefix, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_PREFIX", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, prefix, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_PREFIX");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(prefix) - 1, prefix, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, prefix, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
 
             /* check for 'mapper' - a job-level key */
-            ompi_info_get(array_of_info[i], "mapper", sizeof(mapper) - 1, mapper, &flag);
+            ompi_info_get(array_of_info[i], "mapper", &info_str, &flag);
             if ( flag ) {
                 /* deprecate --> PMIX_MAPPER */
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "mapper", "PMIX_MAPPER");
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, mapper, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get(array_of_info[i], "PMIX_MAPPER", sizeof(mapper) - 1, mapper, &flag);
+            ompi_info_get(array_of_info[i], "PMIX_MAPPER", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, mapper, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_MAPPER");
-            ompi_info_get(array_of_info[i], checkkey, sizeof(mapper) - 1, mapper, &flag);
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, mapper, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
@@ -1222,11 +1249,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'npernode' and 'ppr' - job-level key */
-            ompi_info_get (array_of_info[i], "npernode", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get (array_of_info[i], "npernode", &info_str, &flag);
             if ( flag ) {
-                opal_asprintf(&tmp, "PPR:%s:NODE", slot_list);
+                opal_asprintf(&tmp, "PPR:%s:NODE", info_str->string);
                 rc = dpm_convert(&job_info, "npernode", PMIX_MAPBY, tmp, NULL, true);
                 free(tmp);
+                OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
@@ -1242,10 +1270,11 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 }
                 continue;
             }
-            ompi_info_get (array_of_info[i], "pernode", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get (array_of_info[i], "pernode", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "pernode", PMIX_MAPBY, "PPR:1:NODE", NULL, true);
                 free(tmp);
+                OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
@@ -1261,11 +1290,11 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 }
                 continue;
             }
-            ompi_info_get (array_of_info[i], "ppr", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get (array_of_info[i], "ppr", &info_str, &flag);
             if ( flag ) {
                 /* must have correct syntax with two colons */
-                if (NULL == (tmp = strchr(slot_list, ':'))) {
-                    opal_show_help("help-dpm.txt", "bad-ppr", true, slot_list);
+                if (NULL == (tmp = strchr(info_str->string, ':'))) {
+                    opal_show_help("help-dpm.txt", "bad-ppr", true, info_str->string);
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
@@ -1276,11 +1305,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     if (NULL != dash_host) {
                         opal_argv_free(dash_host);
                     }
+                    OBJ_RELEASE(info_str);
                     return MPI_ERR_SPAWN;
                 }
                 ++tmp; // step over first colon
                 if (NULL == strchr(tmp, ':')) {
-                    opal_show_help("help-dpm.txt", "bad-ppr", true, slot_list);
+                    opal_show_help("help-dpm.txt", "bad-ppr", true, info_str->string);
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
@@ -1291,10 +1321,12 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     if (NULL != dash_host) {
                         opal_argv_free(dash_host);
                     }
+                    OBJ_RELEASE(info_str);
                     return MPI_ERR_SPAWN;
                 }
-                rc = dpm_convert(&job_info, "ppr", PMIX_MAPBY, slot_list, NULL, true);
+                rc = dpm_convert(&job_info, "ppr", PMIX_MAPBY, info_str->string, NULL, true);
                 free(tmp);
+                OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
@@ -1312,10 +1344,11 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'map_by' - job-level key */
-            ompi_info_get(array_of_info[i], "map_by", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], "map_by", &info_str, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "map_by", PMIX_MAPBY, slot_list, NULL, false);
+                rc = dpm_convert(&job_info, "map_by", PMIX_MAPBY, info_str->string, NULL, false);
                 free(tmp);
+                OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
@@ -1331,29 +1364,32 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 }
                 continue;
             }
-            ompi_info_get(array_of_info[i], "PMIX_MAPBY", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], "PMIX_MAPBY", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_MAPBY, slot_list, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_MAPBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_MAPBY");
-            ompi_info_get(array_of_info[i], checkkey, sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_MAPBY, slot_list, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_MAPBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
 
             /* check for 'rank_by' - job-level key */
-            ompi_info_get(array_of_info[i], "rank_by", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], "rank_by", &info_str, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "rank_by", PMIX_RANKBY, slot_list, NULL, false);
+                rc = dpm_convert(&job_info, "rank_by", PMIX_RANKBY, info_str->string, NULL, false);
                 free(tmp);
+                OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
@@ -1363,29 +1399,32 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 }
                 continue;
             }
-            ompi_info_get(array_of_info[i], "PMIX_RANKBY", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], "PMIX_RANKBY", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, slot_list, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_RANKBY");
-            ompi_info_get(array_of_info[i], checkkey, sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, slot_list, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
 
             /* check for 'bind_to' - job-level key */
-            ompi_info_get(array_of_info[i], "bind_to", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], "bind_to", &info_str, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "bind_to", PMIX_BINDTO, slot_list, NULL, false);
+                rc = dpm_convert(&job_info, "bind_to", PMIX_BINDTO, info_str->string, NULL, false);
                 free(tmp);
+                OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
@@ -1395,20 +1434,22 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 }
                 continue;
             }
-            ompi_info_get(array_of_info[i], "PMIX_BINDTO", sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], "PMIX_BINDTO", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_BINDTO, slot_list, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_BINDTO, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_BINDTO");
-            ompi_info_get(array_of_info[i], checkkey, sizeof(slot_list) - 1, slot_list, &flag);
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_BINDTO, slot_list, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_BINDTO, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
@@ -1443,30 +1484,33 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for 'preload_files' - job-level key */
-            ompi_info_get (array_of_info[i], "ompi_preload_files", sizeof(cwd) - 1, cwd, &flag);
+            ompi_info_get (array_of_info[i], "ompi_preload_files", &info_str, &flag);
             if ( flag ) {
                 /* deprecate --> PMIX_PRELOAD_FILES */
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "ompi_preload_files", "PMIX_PRELOAD_FILES");
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, cwd, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_PRELOAD_FILES", sizeof(cwd) - 1, cwd, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_PRELOAD_FILES", &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, cwd, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_PRELOAD_FILES");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(cwd) - 1, cwd, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_info_item_t);
-                PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, cwd, PMIX_STRING);
+                PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
@@ -1482,61 +1526,65 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* see if this is an MCA param that the user wants applied to the child job */
-            ompi_info_get (array_of_info[i], "ompi_param", sizeof(params) - 1, params, &flag);
+            ompi_info_get (array_of_info[i], "ompi_param", &info_str, &flag);
             if ( flag ) {
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "ompi_param", "PMIX_ENVAR");
-                opal_argv_append_unique_nosize(&app->env, params, true);
+                opal_argv_append_unique_nosize(&app->env, info_str->string, true);
+                OBJ_RELEASE(info_str);
             }
 
             /* see if user specified what to do with stdin - defaults to
              * not forwarding stdin to child processes - job-level key
              */
-            ompi_info_get (array_of_info[i], "ompi_stdin_target", sizeof(stdin_target) - 1, stdin_target, &flag);
+            ompi_info_get (array_of_info[i], "ompi_stdin_target", &info_str, &flag);
             if ( flag ) {
                 /* deprecate --> PMIX_STDIN_TGT */
                 opal_show_help("help-dpm.txt", "deprecated-converted", true,
                                 "ompi_stdin_target", "PMIX_STDIN_TGT");
-                if (0 == strcmp(stdin_target, "all")) {
+                if (0 == strcmp(info_str->string, "all")) {
                     ui32 = OPAL_VPID_WILDCARD;
-                } else if (0 == strcmp(stdin_target, "none")) {
+                } else if (0 == strcmp(info_str->string, "none")) {
                     ui32 = OPAL_VPID_INVALID;
                 } else {
-                    ui32 = strtoul(stdin_target, NULL, 10);
+                    ui32 = strtoul(info_str->string, NULL, 10);
                 }
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_STDIN_TGT, &ui32, PMIX_UINT32);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
-            ompi_info_get (array_of_info[i], "PMIX_STDIN_TGT", sizeof(stdin_target) - 1, stdin_target, &flag);
+            ompi_info_get (array_of_info[i], "PMIX_STDIN_TGT", &info_str, &flag);
             if ( flag ) {
-                if (0 == strcmp(stdin_target, "all")) {
+                if (0 == strcmp(info_str->string, "all")) {
                     ui32 = OPAL_VPID_WILDCARD;
-                } else if (0 == strcmp(stdin_target, "none")) {
+                } else if (0 == strcmp(info_str->string, "none")) {
                     ui32 = OPAL_VPID_INVALID;
                 } else {
-                    ui32 = strtoul(stdin_target, NULL, 10);
+                    ui32 = strtoul(info_str->string, NULL, 10);
                 }
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_STDIN_TGT, &ui32, PMIX_UINT32);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_STDIN_TGT");
-            ompi_info_get (array_of_info[i], checkkey, sizeof(stdin_target) - 1, stdin_target, &flag);
+            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
-                if (0 == strcmp(stdin_target, "all")) {
+                if (0 == strcmp(info_str->string, "all")) {
                     ui32 = OPAL_VPID_WILDCARD;
-                } else if (0 == strcmp(stdin_target, "none")) {
+                } else if (0 == strcmp(info_str->string, "none")) {
                     ui32 = OPAL_VPID_INVALID;
                 } else {
-                    ui32 = strtoul(stdin_target, NULL, 10);
+                    ui32 = strtoul(info_str->string, NULL, 10);
                 }
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_STDIN_TGT, &ui32, PMIX_UINT32);
                 opal_list_append(&job_info, &info->super);
+                OBJ_RELEASE(info_str);
                 continue;
             }
 #endif
@@ -1546,6 +1594,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
          * executable, we assume the current working directory
          */
         if ( !have_wdir ) {
+            char cwd[OPAL_PATH_MAX];
             if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OPAL_PATH_MAX))) {
                 OMPI_ERROR_LOG(rc);
                 PMIX_APP_FREE(apps, (size_t)count);
