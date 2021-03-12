@@ -820,15 +820,15 @@ static int mca_btl_tcp_component_create_instances(void)
                                        "include", true);
     while(argv && *argv) {
         char* if_name = *argv;
-        int if_index = opal_ifnametokindex(if_name);
-        if(if_index < 0) {
+        int idx = opal_ifnametokindex(if_name);
+        if(idx < 0) {
             opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
                            true, "include", opal_process_info.nodename,
                            if_name, "Unknown interface name");
             ret = OPAL_ERR_NOT_FOUND;
             goto cleanup;
         }
-        mca_btl_tcp_create(if_index, if_name);
+        mca_btl_tcp_create(idx, if_name);
         argv++;
     }
 

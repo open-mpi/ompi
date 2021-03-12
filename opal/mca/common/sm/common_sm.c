@@ -285,7 +285,7 @@ void *mca_common_sm_seg_alloc (void *ctx, size_t *size)
 
 /* ////////////////////////////////////////////////////////////////////////// */
 int
-mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module)
+mca_common_sm_fini(mca_common_sm_module_t *module)
 {
     int rc = OPAL_SUCCESS;
 

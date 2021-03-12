@@ -172,7 +172,7 @@ int mca_sharedfp_lockedfile_file_close (ompio_file_t *fh)
     }
     sh = fh->f_sharedfp_data;
 
-    module_data = (lockedfile_data*)(sh->selected_module_data);
+    module_data = (lockedfile_data_global*)(sh->selected_module_data);
     if ( module_data)   {
         /*Close lockedfile handle*/
         if ( module_data->handle)  {

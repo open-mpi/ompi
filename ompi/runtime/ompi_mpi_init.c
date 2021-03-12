@@ -852,7 +852,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* initialize the fault tolerant infrastructure (revoke, detector,
      * propagator) */
     if( ompi_ftmpi_enabled ) {
-        int rc;
         const char *evmethod;
         rc = ompi_comm_rbcast_init();
         if( OMPI_SUCCESS != rc ) return rc;
@@ -1001,7 +1000,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 #if OPAL_ENABLE_FT_MPI
     /* start the failure detector */
     if( ompi_ftmpi_enabled ) {
-        int rc;
         rc = ompi_comm_failure_detector_start();
         if( OMPI_SUCCESS != rc ) return rc;
     }

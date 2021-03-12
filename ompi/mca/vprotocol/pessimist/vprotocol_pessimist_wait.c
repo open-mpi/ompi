@@ -19,8 +19,7 @@ static int vprotocol_pessimist_request_no_free(ompi_request_t **req) {
 }
 
 #define PREPARE_REQUESTS_WITH_NO_FREE(count, requests) do { \
-    size_t i; \
-    for(i = 0; i < count; i++) \
+    for(int i = 0; i < count; i++) \
     { \
         if(requests[i] == MPI_REQUEST_NULL) continue; \
         requests[i]->req_free = vprotocol_pessimist_request_no_free; \
@@ -74,7 +73,6 @@ int mca_vprotocol_pessimist_test_any(size_t count, ompi_request_t ** requests,
                                      ompi_status_public_t * status)
 {
     int ret;
-    size_t i;
 
     VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(count, requests, completed, index, status);
 
@@ -86,7 +84,7 @@ int mca_vprotocol_pessimist_test_any(size_t count, ompi_request_t ** requests,
 
     if(completed)
     {   /* Parse the result */
-        for(i = 0; i < count; i++)
+        for(size_t i = 0; i < count; i++)
         {
             ompi_request_t *req = requests[i];
             if(req == MPI_REQUEST_NULL) continue;
@@ -116,7 +114,6 @@ int mca_vprotocol_pessimist_wait_any(size_t count, ompi_request_t ** requests,
                                      int *index, ompi_status_public_t * status)
 {
     int ret;
-    size_t i;
     int dummy;
 
     VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(count, requests, &dummy, index, status);
@@ -127,7 +124,7 @@ int mca_vprotocol_pessimist_wait_any(size_t count, ompi_request_t ** requests,
     ret = mca_pml_v.host_request_fns.req_wait_any(count, requests, index, status);
 
     /* Parse the result */
-    for(i = 0; i < count; i++)
+    for(size_t i = 0; i < count; i++)
     {
         ompi_request_t *req = requests[i];
         if(req == MPI_REQUEST_NULL) continue;
