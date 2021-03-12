@@ -964,17 +964,17 @@ int main(int argc, char *argv[])
                                                    ? WTERMSIG(status)
                                                    : (WIFSTOPPED(status) ? WSTOPSIG(status) : 255));
             if ((OPAL_SUCCESS != ret) || ((0 != exit_status) && (flags & COMP_SHOW_ERROR))) {
-                char *exec_command = opal_argv_join(exec_argv, ' ');
+                char* exec_cmd = opal_argv_join(exec_argv, ' ');
                 if (OPAL_SUCCESS != ret) {
                     opal_show_help("help-opal-wrapper.txt", "spawn-failed", true, exec_argv[0],
                                    strerror(status), exec_command, NULL);
                 } else {
 #if 0
                     opal_show_help("help-opal-wrapper.txt", "compiler-failed", true,
-                                   exec_argv[0], exit_status, exec_command, NULL);
+                                   exec_argv[0], exit_status, exec_cmd, NULL);
 #endif
                 }
-                free(exec_command);
+                free(exec_cmd);
             }
         }
     }

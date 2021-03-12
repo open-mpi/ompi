@@ -124,7 +124,7 @@ struct mca_sharedfp_sm_data
     char *sem_name;    /* Name of the semaphore */
 };
 
-typedef struct mca_sharedfp_sm_data sm_data;
+typedef struct mca_sharedfp_sm_data sm_data_global;
 
 
 int mca_sharedfp_sm_request_position (ompio_file_t *fh,

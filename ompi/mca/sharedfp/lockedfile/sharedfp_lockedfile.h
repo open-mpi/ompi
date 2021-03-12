@@ -115,7 +115,7 @@ struct mca_sharedfp_lockedfile_data
     char* filename;
 };
 
-typedef struct mca_sharedfp_lockedfile_data lockedfile_data;
+typedef struct mca_sharedfp_lockedfile_data lockedfile_data_global;
 
 
 int mca_sharedfp_lockedfile_request_position (struct mca_sharedfp_base_data_t * sh,

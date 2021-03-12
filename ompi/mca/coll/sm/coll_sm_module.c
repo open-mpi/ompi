@@ -492,7 +492,6 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 static int bootstrap_comm(ompi_communicator_t *comm,
                           mca_coll_sm_module_t *module)
 {
-    int i;
     char *shortpath, *fullpath;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
     mca_coll_sm_comm_t *data = module->sm_comm_data;
@@ -511,7 +510,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
        with the lowest ORTE name to form a unique filename. */
     proc = ompi_group_peer_lookup(comm->c_local_group, 0);
     lowest_name = OMPI_CAST_RTE_NAME(&proc->super.proc_name);
-    for (i = 1; i < comm_size; ++i) {
+    for (int i = 1; i < comm_size; ++i) {
         proc = ompi_group_peer_lookup(comm->c_local_group, i);
         if (ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                           OMPI_CAST_RTE_NAME(&proc->super.proc_name),
