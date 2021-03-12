@@ -89,10 +89,10 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
 
         if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
-            size_t sendtype_size, recvtype_size;
+            size_t sendtype_size, recvtype_size_tmp;
             ompi_datatype_type_size(sendtype, &sendtype_size);
-            ompi_datatype_type_size(recvtype, &recvtype_size);
-            if ((sendtype_size*sendcount) != (recvtype_size*recvcount)) {
+            ompi_datatype_type_size(recvtype, &recvtype_size_tmp);
+            if ((sendtype_size*sendcount) != (recvtype_size_tmp*recvcount)) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
             }
         }

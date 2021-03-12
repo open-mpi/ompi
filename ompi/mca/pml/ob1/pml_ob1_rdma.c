@@ -124,8 +124,8 @@ size_t mca_pml_ob1_rdma_pipeline_btls_count (mca_bml_base_endpoint_t* bml_endpoi
         /* NTH: go ahead and use an rdma btl if is the only one */
         bool ignore = !mca_pml_ob1.use_all_rdma;
 
-        for (int i = 0 ; i < num_eager_btls && ignore ; ++i) {
-            mca_bml_base_btl_t *eager_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_eager, i);
+        for (int j = 0 ; j < num_eager_btls && ignore ; ++j) {
+            mca_bml_base_btl_t *eager_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_eager, j);
             if (eager_btl->btl_endpoint == bml_btl->btl_endpoint) {
                 ignore = false;
                 break;
@@ -154,8 +154,8 @@ size_t mca_pml_ob1_rdma_pipeline_btls( mca_bml_base_endpoint_t* bml_endpoint,
         /* NTH: go ahead and use an rdma btl if is the only one */
         bool ignore = !mca_pml_ob1.use_all_rdma;
 
-        for (int i = 0 ; i < num_eager_btls && ignore ; ++i) {
-            mca_bml_base_btl_t *eager_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_eager, i);
+        for (int j = 0 ; j < num_eager_btls && ignore ; ++j) {
+            mca_bml_base_btl_t *eager_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_eager, j);
             if (eager_btl->btl_endpoint == bml_btl->btl_endpoint) {
                 ignore = false;
                 break;

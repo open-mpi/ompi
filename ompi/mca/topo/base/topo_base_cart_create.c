@@ -118,12 +118,12 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         {  /* setup the cartesian topology */
-            int nprocs = num_procs, rank = new_rank;
+            int n_procs = num_procs, rank = new_rank;
 
             for (i = 0; i < ndims; ++i) {
-                nprocs /= cart->dims[i];
-                cart->coords[i] = rank / nprocs;
-                rank %= nprocs;
+                n_procs /= cart->dims[i];
+                cart->coords[i] = rank / n_procs;
+                rank %= n_procs;
             }
         }
     }
