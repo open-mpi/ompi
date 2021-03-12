@@ -1366,10 +1366,13 @@ OPAL_SETUP_WRAPPER_FINAL
 # autoconf macro defines in mpi.h.  Since AC sometimes changes whether
 # things are defined as null tokens or an integer result, two projects
 # with different versions of AC can cause problems.
-if test $ac_cv_header_stdc = yes; then
-    AC_DEFINE(OPAL_STDC_HEADERS, 1,
-              [Do not use outside of mpi.h.  Define to 1 if you have the ANSI C header files.])
-fi
+
+# According to the autoconf 2.67 documentation the AC_HEADER_STDC macro,
+# and therefore the ac_cv_header_stdc cache variable, is obsolescent, as
+# current systems have conforming header files. Instead of removing the
+# protection completely, let's just make sure it is always on.
+AC_DEFINE(OPAL_STDC_HEADERS, 1,
+          [Do not use outside of mpi.h.  Define to 1 if you have the ANSI C header files.])
 if test $ac_cv_header_sys_time_h = yes ; then
     AC_DEFINE(OPAL_HAVE_SYS_TIME_H, 1,
               [Do not use outside of mpi.h.  Define to 1 if you have the <sys/time.h> header file.])
