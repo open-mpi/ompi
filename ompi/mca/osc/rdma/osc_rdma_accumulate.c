@@ -331,6 +331,13 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
     return OMPI_SUCCESS;
 }
 
+static inline __opal_attribute_always_inline__ bool ompi_osc_rdma_is_atomic_size_supported(uint64_t remote_addr,
+                                                                                           size_t size)
+{
+    return ((sizeof(uint32_t) == size && !(remote_addr & 0x3)) ||
+            (sizeof(uint64_t) == size && !(remote_addr & 0x7)));
+}
+
 static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const void *source, int source_count,
                                              ompi_datatype_t *source_datatype, void *result, int result_count,
                                              ompi_datatype_t *result_datatype, opal_convertor_t *result_convertor,
@@ -339,11 +346,12 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
                                              ompi_datatype_t *target_datatype, ompi_op_t *op, ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    unsigned long len = target_count * target_datatype->super.size;
+    size_t target_dtype_size = target_datatype->super.size;
+    unsigned long len = target_count * target_dtype_size;
     char *ptr = NULL;
     int ret;
 
-    request->len = target_datatype->super.size * module->network_amo_max_count;
+    request->len = target_dtype_size * module->network_amo_max_count;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating accumulate on contiguous region of %lu bytes to remote address %" PRIx64
                      ", sync %p", len, target_address, (void *) sync);
@@ -351,7 +359,8 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
     /* if the datatype is small enough (and the count is 1) then try to directly use the hardware to execute
      * the atomic operation. this should be safe in all cases as either 1) the user has assured us they will
      * never use atomics with count > 1, 2) we have the accumulate lock, or 3) we have an exclusive lock */
-    if ((target_datatype->super.size <= 8) && (((unsigned long) target_count) <= module->network_amo_max_count)) {
+    if ((target_dtype_size <= 8) && (((unsigned long) target_count) <= module->network_amo_max_count) &&
+         ompi_osc_rdma_is_atomic_size_supported(target_address, target_dtype_size)) {
         ret = ompi_osc_rdma_gacc_amo (module, sync, source, result, result_count, result_datatype, result_convertor,
                                       peer, target_address, target_handle, target_count, target_datatype, op, request);
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
