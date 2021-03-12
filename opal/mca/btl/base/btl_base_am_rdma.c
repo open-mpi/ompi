@@ -412,8 +412,6 @@ static void mca_btl_base_am_descriptor_complete (mca_btl_base_module_t *btl,
                                                  struct mca_btl_base_endpoint_t *endpoint,
                                                  mca_btl_base_descriptor_t *descriptor, int status)
 {
-    mca_btl_base_rdma_context_t *context = (mca_btl_base_rdma_context_t *)descriptor->des_context;
-
     (void)mca_btl_base_am_rdma_advance (btl, endpoint,
                                         (mca_btl_base_rdma_context_t *)descriptor->des_context,
                                         /*send_descriptor=*/false);
@@ -445,42 +443,40 @@ mca_btl_base_rdma_start (mca_btl_base_module_t *btl, struct mca_btl_base_endpoin
     context->local_handle   = local_handle;
     context->total_size     = size;
 
-    size_t send_size = 0;
-    size_t recv_size = 0;
-    bool use_rdma    = false;
+    bool use_rdma = false;
 
     if (MCA_BTL_BASE_AM_PUT == type) {
         if (sizeof (*hdr) + size <= btl->btl_eager_limit) {
             /* just go ahead and send the data */
-            send_size = size;
-        } else if (!mca_btl_base_rdma_use_rdma_get (btl)) {
-            send_size = size_t_min (size, btl->btl_max_send_size - sizeof (*hdr));
+            packet_size += size;
+        } else if (!mca_btl_base_rdma_use_rdma_get(btl)) {
+            packet_size += size;
+        } else if (!mca_btl_base_rdma_use_rdma_get(btl)) {
+            packet_size += size_t_min (size, btl->btl_max_send_size - sizeof (*hdr));
         } else {
             use_rdma = true;
         }
     } else if (MCA_BTL_BASE_AM_GET == type) {
-        if (sizeof (mca_btl_base_rdma_response_hdr_t) + size <= btl->btl_eager_limit) {
-            recv_size = size;
-        } else if (!mca_btl_base_rdma_use_rdma_put (btl)) {
-            recv_size = size_t_min (size, btl->btl_max_send_size -
-                                              sizeof (mca_btl_base_rdma_response_hdr_t));
+        if (sizeof(mca_btl_base_rdma_response_hdr_t) + size <= btl->btl_eager_limit) {
+            packet_size += size;
+        } else if (!mca_btl_base_rdma_use_rdma_put(btl)) {
+            packet_size += size_t_min(size, btl->btl_max_send_size
+                                             - sizeof(mca_btl_base_rdma_response_hdr_t));
         } else {
             use_rdma = true;
         }
     } else {
         /* fetching atomic. always recv result via active message */
-        recv_size = size;
+        packet_size += size;
     }
 
     if (use_rdma && btl->btl_register_mem) {
         packet_size += 2 * btl->btl_registration_handle_size;
     }
 
-    packet_size += send_size;
-
-    BTL_VERBOSE (("Initiating RDMA operation. context=%p, size=%" PRIsize_t
-                  ", packet_size=%" PRIsize_t,
-                  context, size, packet_size));
+    BTL_VERBOSE(("Initiating RDMA operation. context=%p, size=%" PRIsize_t
+                 ", packet_size=%" PRIsize_t,
+                 context, size, packet_size));
 
     descriptor = btl->btl_alloc (btl, endpoint, order, packet_size,
                                  MCA_BTL_DES_SEND_ALWAYS_CALLBACK | MCA_BTL_DES_FLAGS_SIGNAL);
@@ -721,9 +717,8 @@ static int mca_btl_base_am_rdma_target_put (mca_btl_base_module_t *btl,
 
 static void mca_btl_base_rdma_retry_operation (mca_btl_base_rdma_operation_t *operation)
 {
-    mca_btl_base_module_t *btl = operation->btl;
-    void *target_address       = (void *)(intptr_t)operation->hdr.target_address;
-    int ret;
+    void *target_address = (void *)(intptr_t)operation->hdr.target_address;
+    int ret              = OPAL_SUCCESS;
 
     if (!operation->descriptor && !operation->is_completed) {
         switch (operation->hdr.type) {
@@ -792,6 +787,8 @@ static int mca_btl_base_am_rdma_progress (void)
             }
         }
     }));
+
+    return 0;
 }
 
 static int mca_btl_base_am_atomic_64 (int64_t *operand, opal_atomic_int64_t *addr,
@@ -950,9 +947,8 @@ static void mca_btl_base_am_process_atomic (mca_btl_base_module_t *btl,
         abort ();
     }
 
-    const mca_btl_base_rdma_hdr_t *hdr =
-        (mca_btl_base_rdma_hdr_t *)desc->des_segments[0].seg_addr.pval;
-    void *target_address     = (void *)(intptr_t)hdr->target_address;
+    const mca_btl_base_rdma_hdr_t *hdr = (mca_btl_base_rdma_hdr_t *) desc->des_segments[0]
+                                             .seg_addr.pval;
     uint64_t atomic_response = hdr->data.atomic.operand[0];
 
     if (4 != hdr->data.atomic.size && 8 != hdr->data.atomic.size) {
@@ -963,7 +959,8 @@ static void mca_btl_base_am_process_atomic (mca_btl_base_module_t *btl,
     BTL_VERBOSE (("got active-message atomic request. hdr->context=0x%" PRIx64
                   ", target_address=%p, "
                   "segment 0 size=%" PRIu64,
-                  hdr->context, target_address, desc->des_segments[0].seg_len));
+                  hdr->context, (void *)(intptr_t)hdr->target_address,
+                  adesc->des_segments[0].seg_len));
 
     switch (hdr->type) {
     case MCA_BTL_BASE_AM_ATOMIC:
