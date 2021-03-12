@@ -279,8 +279,8 @@ static inline bool mca_btl_sm_check_fboxes(void)
             } else if (OPAL_LIKELY(0xfe == hdr.data.tag)) {
                 /* process fragment header */
                 fifo_value_t *value = (fifo_value_t *) (ep->fbox_in.buffer + start + sizeof(hdr));
-                mca_btl_sm_hdr_t *hdr = relative2virtual(*value);
-                mca_btl_sm_poll_handle_frag(hdr, ep);
+                mca_btl_sm_hdr_t *sm_hdr = relative2virtual(*value);
+                mca_btl_sm_poll_handle_frag(sm_hdr, ep);
             }
 
             start = (start + hdr.data.size + sizeof(hdr) + MCA_BTL_SM_FBOX_ALIGNMENT_MASK)

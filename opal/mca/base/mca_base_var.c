@@ -1542,10 +1542,10 @@ int mca_base_var_register(const char *project_name, const char *framework_name,
         return ret;
     }
 
-    OPAL_LIST_FOREACH_DECL (alias_item, &alias->component_aliases, mca_base_alias_item_t) {
-        mca_base_var_syn_flag_t flags = 0;
+    OPAL_LIST_FOREACH_DECL(alias_item, &alias->component_aliases, mca_base_alias_item_t) {
+        mca_base_var_syn_flag_t flags_tmp = 0;
         if (alias_item->alias_flags & MCA_BASE_ALIAS_FLAG_DEPRECATED) {
-            flags = MCA_BASE_VAR_SYN_FLAG_DEPRECATED;
+            flags_tmp = MCA_BASE_VAR_SYN_FLAG_DEPRECATED;
         }
         (void) mca_base_var_register_synonym(ret, project_name, framework_name,
                                              alias_item->component_alias, variable_name, flags);

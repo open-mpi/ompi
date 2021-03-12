@@ -63,8 +63,8 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
         if (i == rank) {
             continue;
         }
-        size_t size = opal_datatype_span(&rdtype->super, rcounts[i], &gap);
-        max_size = size > max_size ? size : max_size;
+        size_t cur_size = opal_datatype_span(&rdtype->super, rcounts[i], &gap);
+        max_size = cur_size > max_size ? cur_size : max_size;
     }
     /* The gap will always be the same as we are working on the same datatype */
 

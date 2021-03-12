@@ -253,7 +253,7 @@ int mca_sharedfp_sm_file_close (ompio_file_t *fh)
      */
     fh->f_comm->c_coll->coll_barrier (fh->f_comm, fh->f_comm->c_coll->coll_barrier_module );
 
-    file_data = (sm_data*)(sh->selected_module_data);
+    file_data = (sm_data_global*)(sh->selected_module_data);
     if (file_data)  {
         /*Close sm handle*/
         if (file_data->sm_offset_ptr) {
