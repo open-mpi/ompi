@@ -7,7 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2021 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +49,17 @@ int ompi_osc_base_select(ompi_win_t *win,
 int ompi_osc_base_finalize(void);
 
 OMPI_DECLSPEC extern mca_base_framework_t ompi_osc_base_framework;
+
+
+/* Helper to check whether osc can support atomic operation on the size the operands
+ * Currently used with rdma and ucx.
+ */
+static inline __opal_attribute_always_inline__ bool ompi_osc_base_is_atomic_size_supported(uint64_t remote_addr,
+                                                                                           size_t size)
+{
+    return ((sizeof(uint32_t) == size && !(remote_addr & 0x3)) ||
+            (sizeof(uint64_t) == size && !(remote_addr & 0x7)));
+}
 
 END_C_DECLS
 

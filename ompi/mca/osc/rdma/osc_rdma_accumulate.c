@@ -20,6 +20,7 @@
 #include "osc_rdma_request.h"
 #include "osc_rdma_comm.h"
 
+#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 
 static inline void ompi_osc_rdma_peer_accumulate_cleanup (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer, bool lock_acquired)
@@ -331,13 +332,6 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
     return OMPI_SUCCESS;
 }
 
-static inline __opal_attribute_always_inline__ bool ompi_osc_rdma_is_atomic_size_supported(uint64_t remote_addr,
-                                                                                           size_t size)
-{
-    return ((sizeof(uint32_t) == size && !(remote_addr & 0x3)) ||
-            (sizeof(uint64_t) == size && !(remote_addr & 0x7)));
-}
-
 static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const void *source, int source_count,
                                              ompi_datatype_t *source_datatype, void *result, int result_count,
                                              ompi_datatype_t *result_datatype, opal_convertor_t *result_convertor,
@@ -360,7 +354,7 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
      * the atomic operation. this should be safe in all cases as either 1) the user has assured us they will
      * never use atomics with count > 1, 2) we have the accumulate lock, or 3) we have an exclusive lock */
     if ((target_dtype_size <= 8) && (((unsigned long) target_count) <= module->network_amo_max_count) &&
-         ompi_osc_rdma_is_atomic_size_supported(target_address, target_dtype_size)) {
+         ompi_osc_base_is_atomic_size_supported(target_address, target_dtype_size)) {
         ret = ompi_osc_rdma_gacc_amo (module, sync, source, result, result_count, result_datatype, result_convertor,
                                       peer, target_address, target_handle, target_count, target_datatype, op, request);
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
