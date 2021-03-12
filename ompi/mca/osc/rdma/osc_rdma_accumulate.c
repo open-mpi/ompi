@@ -845,10 +845,12 @@ int ompi_osc_rdma_compare_and_swap (const void *origin_addr, const void *compare
          * user has indicated that they will only use the same op (or same op and no op) for
          * operations on overlapping memory ranges. that indicates it is safe to go ahead and
          * use network atomic operations. */
-        ret = ompi_osc_rdma_cas_atomic (sync, origin_addr, compare_addr, result_addr, dt,
-                                        peer, target_address, target_handle, lock_acquired);
-        if (OMPI_SUCCESS == ret) {
-            return OMPI_SUCCESS;
+        if(ompi_osc_base_is_atomic_size_supported(target_address, dt->super.size)) {
+            ret = ompi_osc_rdma_cas_atomic (sync, origin_addr, compare_addr, result_addr, dt,
+                                            peer, target_address, target_handle, lock_acquired);
+            if (OMPI_SUCCESS == ret) {
+                return OMPI_SUCCESS;
+            }
         }
     }
 
