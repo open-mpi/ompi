@@ -106,6 +106,18 @@ ltoptions.m4
 3rd-party/hwloc-*
 !3rd-party/hwloc-*.tar.*
 3rd-party/treematch/config.h
+3rd-party/romio321/adio/include/romioconf.h
+3rd-party/romio321/adio/include/romioconf.h.in
+3rd-party/romio321/include/mpio.h
+3rd-party/romio321/localdefs
+3rd-party/romio321/test/fcoll_test.f
+3rd-party/romio321/test/fmisc.f
+3rd-party/romio321/test/fperf.f
+3rd-party/romio321/test/large_file.c
+3rd-party/romio321/test/misc.c
+3rd-party/romio321/test/pfcoll_test.f
+3rd-party/romio321/test/runtests
+3rd-party/romio321/util/romioinstall
 
 config/project_list.m4
 config/autogen_found_items.m4
