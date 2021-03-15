@@ -92,7 +92,7 @@ static int *ompi_osc_sm_group_ranks (ompi_group_t *group, ompi_group_t *sub_grou
 
 
 int
-ompi_osc_sm_fence(int assert, struct ompi_win_t *win)
+ompi_osc_sm_fence(int mpi_assert, struct ompi_win_t *win)
 {
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
@@ -124,7 +124,7 @@ ompi_osc_sm_fence(int assert, struct ompi_win_t *win)
 
 int
 ompi_osc_sm_start(struct ompi_group_t *group,
-                  int assert,
+                  int mpi_assert,
                   struct ompi_win_t *win)
 {
     ompi_osc_sm_module_t *module =
@@ -139,7 +139,7 @@ ompi_osc_sm_start(struct ompi_group_t *group,
         return OMPI_ERR_RMA_SYNC;
     }
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         int size;
 
         int *ranks = ompi_osc_sm_group_ranks (module->comm->c_local_group, group);
@@ -215,7 +215,7 @@ ompi_osc_sm_complete(struct ompi_win_t *win)
 
 int
 ompi_osc_sm_post(struct ompi_group_t *group,
-                       int assert,
+                       int mpi_assert,
                        struct ompi_win_t *win)
 {
     ompi_osc_sm_module_t *module =
@@ -236,7 +236,7 @@ ompi_osc_sm_post(struct ompi_group_t *group,
 
     OBJ_RETAIN(group);
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         int *ranks = ompi_osc_sm_group_ranks (module->comm->c_local_group, group);
         if (NULL == ranks) {
             return OMPI_ERR_OUT_OF_RESOURCE;

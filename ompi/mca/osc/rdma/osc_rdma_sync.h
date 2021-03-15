@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +68,7 @@ struct ompi_osc_rdma_sync_t {
             /** assert specified at lock acquire time. at this time Open MPI
              * only uses 5-bits for asserts. if this number goes over 16 this
              * will need to be changed to accomodate. */
-            int16_t assert;
+            int16_t mpi_assert;
         } lock;
 
         /** post/start/complete/wait specific synchronization data */

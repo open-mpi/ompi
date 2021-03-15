@@ -198,7 +198,7 @@ end_shared(ompi_osc_portals4_module_t *module,
 int
 ompi_osc_portals4_lock(int lock_type,
                        int target,
-                       int assert,
+                       int mpi_assert,
                        struct ompi_win_t *win)
 {
     ompi_osc_portals4_module_t *module =
@@ -211,7 +211,7 @@ ompi_osc_portals4_lock(int lock_type,
     lock = OBJ_NEW(ompi_osc_portals4_outstanding_lock_t);
     lock->target = target;
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         if (MPI_LOCK_EXCLUSIVE == lock_type) {
             lock->lock_type = lock_exclusive;
             ret = start_exclusive(module, target);
@@ -276,7 +276,7 @@ ompi_osc_portals4_unlock(int target,
 
 
 int
-ompi_osc_portals4_lock_all(int assert,
+ompi_osc_portals4_lock_all(int mpi_assert,
                            struct ompi_win_t *win)
 {
     ompi_osc_portals4_module_t *module =
@@ -289,7 +289,7 @@ ompi_osc_portals4_lock_all(int assert,
     lock = OBJ_NEW(ompi_osc_portals4_outstanding_lock_t);
     lock->target = -1;
 
-    if (0 == (assert & MPI_MODE_NOCHECK)) {
+    if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         int i, comm_size;
 
         lock->lock_type = lock_shared;

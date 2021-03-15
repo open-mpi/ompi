@@ -309,11 +309,11 @@ typedef int (*ompi_osc_base_module_rget_accumulate_fn_t)(const void *origin_addr
                                                          struct ompi_win_t *win,
                                                          struct ompi_request_t **request);
 
-typedef int (*ompi_osc_base_module_fence_fn_t)(int assert, struct ompi_win_t *win);
+typedef int (*ompi_osc_base_module_fence_fn_t)(int mpi_assert, struct ompi_win_t *win);
 
 
 typedef int (*ompi_osc_base_module_start_fn_t)(struct ompi_group_t *group,
-                                              int assert,
+                                              int mpi_assert,
                                               struct ompi_win_t *win);
 
 
@@ -321,7 +321,7 @@ typedef int (*ompi_osc_base_module_complete_fn_t)(struct ompi_win_t *win);
 
 
 typedef int (*ompi_osc_base_module_post_fn_t)(struct ompi_group_t *group,
-                                             int assert,
+                                             int mpi_assert,
                                              struct ompi_win_t *win);
 
 
@@ -334,13 +334,13 @@ typedef int (*ompi_osc_base_module_test_fn_t)(struct ompi_win_t *win,
 
 typedef int (*ompi_osc_base_module_lock_fn_t)(int lock_type,
                                              int target,
-                                             int assert,
+                                             int mpi_assert,
                                              struct ompi_win_t *win);
 
 typedef int (*ompi_osc_base_module_unlock_fn_t)(int target,
                                              struct ompi_win_t *win);
 
-typedef int (*ompi_osc_base_module_lock_all_fn_t)(int assert,
+typedef int (*ompi_osc_base_module_lock_all_fn_t)(int mpi_assert,
                                                   struct ompi_win_t *win);
 
 typedef int (*ompi_osc_base_module_unlock_all_fn_t)(struct ompi_win_t *win);

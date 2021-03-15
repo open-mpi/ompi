@@ -41,9 +41,9 @@
         return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_flush_local_all(win); \
     }                                                                   \
                                                                         \
-    static int ompi_osc_monitoring_## template ##_lock (int lock_type, int target, int assert, ompi_win_t *win) \
+    static int ompi_osc_monitoring_## template ##_lock (int lock_type, int target, int mpi_assert, ompi_win_t *win) \
     {                                                                   \
-        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_lock(lock_type, target, assert, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_lock(lock_type, target, mpi_assert, win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_unlock (int target, ompi_win_t *win) \
@@ -51,9 +51,9 @@
         return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_unlock(target, win); \
     }                                                                   \
                                                                         \
-    static int ompi_osc_monitoring_## template ##_lock_all (int assert, struct ompi_win_t *win) \
+    static int ompi_osc_monitoring_## template ##_lock_all (int mpi_assert, struct ompi_win_t *win) \
     {                                                                   \
-        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_lock_all(assert, win); \
+        return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_lock_all(mpi_assert, win); \
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_unlock_all (struct ompi_win_t *win) \
