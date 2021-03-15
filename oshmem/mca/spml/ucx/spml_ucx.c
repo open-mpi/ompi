@@ -80,14 +80,14 @@ mca_spml_ucx_t mca_spml_ucx = {
     .num_disconnect         = 1,
     .heap_reg_nb            = 0,
     .enabled                = 0,
-    .get_mkey_slow          = NULL,
-    .synchronized_quiet     = false
+    .get_mkey_slow          = NULL
 };
 
 mca_spml_ucx_ctx_t mca_spml_ucx_ctx_default = {
-    .ucp_worker = NULL,
-    .ucp_peers  = NULL,
-    .options    = 0
+    .ucp_worker         = NULL,
+    .ucp_peers          = NULL,
+    .options            = 0,
+    .synchronized_quiet = false
 };
 
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
@@ -675,6 +675,7 @@ static int mca_spml_ucx_ctx_create_common(long options, mca_spml_ucx_ctx_t **ucx
     ucx_ctx->options = options;
     ucx_ctx->ucp_worker = calloc(1, sizeof(ucp_worker_h));
     ucx_ctx->ucp_workers = 1;
+    ucx_ctx->synchronized_quiet = mca_spml_ucx_ctx_default.synchronized_quiet;
 
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (oshmem_mpi_thread_provided == SHMEM_THREAD_SINGLE || options & SHMEM_CTX_PRIVATE || options & SHMEM_CTX_SERIALIZED) {
