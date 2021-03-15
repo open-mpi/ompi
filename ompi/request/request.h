@@ -499,15 +499,12 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
 
     if (0 == rc) {
         if( OPAL_LIKELY(with_signal) ) {
-            void *_tmp_ptr = REQUEST_PENDING;
-
-            if(!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_COMPLETED)) {
-                ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
-                                                                                       REQUEST_COMPLETED);
-                /* In the case where another thread concurrently changed the request to REQUEST_PENDING */
-                if( REQUEST_PENDING != tmp_sync )
-                    wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
-            }
+            ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
+                                                                                   REQUEST_COMPLETED);
+            /* Protect update call in the case where another thread concurrently changed
+             * the request to REQUEST_PENDING or REQUEST_COMPLETED */
+            if( REQUEST_COMPLETED < (void*)tmp_sync )
+                wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
         } else
             request->req_complete = REQUEST_COMPLETED;
     }
