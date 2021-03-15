@@ -2220,13 +2220,6 @@ static void complete_recv(int status, orte_process_name_t* sender,
 #define DUMP_INT(X) fprintf(stderr, "  %s = %d\n", # X, X);
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
-struct MPIR_PROCDESC {
-    char *host_name;        /* something that can be passed to inet_addr */
-    char *executable_name;  /* name of binary */
-    int pid;                /* process pid */
-};
-
-
 /**
  * Initialization of data structures for running under a debugger
  * using the MPICH/TotalView parallel debugger interface.  Before the
