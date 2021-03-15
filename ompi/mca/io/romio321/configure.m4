@@ -11,8 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015-2017 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2021 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,9 +30,6 @@ AC_DEFUN([MCA_ompi_io_romio321_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_io_romio321_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/io/romio321/Makefile])
 
-    OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS romio321"
-    OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS romio321"
-    
     OPAL_VAR_SCOPE_PUSH([io_romio321_flags io_romio321_flags_define io_romio321_happy io_romio321_save_LIBS])
     AC_ARG_ENABLE([io-romio],
                   [AS_HELP_STRING([--disable-io-romio],
@@ -102,6 +99,8 @@ AC_DEFUN([MCA_ompi_io_romio321_CONFIG],[
                           . 3rd-party/romio321/localdefs
                           io_romio321_LIBS="$LIBS"
                           LIBS="$io_romio321_save_LIBS"
+                          OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS romio321"
+                          OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS romio321"
 
                           echo "ROMIO distribution configured successfully"
                           $1],
