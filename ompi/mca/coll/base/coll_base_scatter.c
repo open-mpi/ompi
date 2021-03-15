@@ -66,12 +66,14 @@ ompi_coll_base_scatter_intra_binomial(
     int root, struct ompi_communicator_t *comm,
     mca_coll_base_module_t *module)
 {
-    int line = -1, rank, vrank, size, err;
-    char *ptmp, *tempbuf = NULL;
-    MPI_Status status;
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*)module;
     mca_coll_base_comm_t *data = base_module->base_data;
-    ptrdiff_t sextent, rextent, ssize, rsize, sgap = 0, rgap = 0;
+    int line = -1, rank, vrank, size, err, packed_size, curr_count;
+    char *ptmp, *tempbuf = NULL;
+    size_t max_data, packed_sizet;
+    opal_convertor_t convertor;
+    ptrdiff_t sextent;
+    MPI_Status status;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -89,98 +91,94 @@ ompi_coll_base_scatter_intra_binomial(
     vrank = (rank - root + size) % size;
     ptmp = (char *)rbuf;  /* by default suppose leaf nodes, just use rbuf */
 
-    if (rank == root) {
+    if ( vrank % 2 ) {  /* leaves */
+        /* recv from parent on leaf nodes */
+        err = MCA_PML_CALL(recv(rbuf, rcount, rdtype, bmtree->tree_prev,
+                                MCA_COLL_BASE_TAG_SCATTER, comm, &status));
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+        return MPI_SUCCESS;
+
+    }
+    OBJ_CONSTRUCT( &convertor, opal_convertor_t );
+    if (rank == root) {  /* root and non-leafs */
         ompi_datatype_type_extent(sdtype, &sextent);
-        ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
-        if (0 == root) {
-            /* root on 0, just use the send buffer */
-            ptmp = (char *)sbuf;
-            if (rbuf != MPI_IN_PLACE) {
-                /* local copy to rbuf */
-                err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
-                                           rbuf, rcount, rdtype);
-                if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-            }
-        } else {
-            /* root is not on 0, allocate temp buffer for send */
-            tempbuf = (char *)malloc(ssize);
+        ptmp = (char *)sbuf;  /* if root == 0, just use the send buffer */
+        if (0 != root) {
+            opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, &(sdtype->super),
+                                                      scount * size, sbuf, 0, &convertor );
+            opal_convertor_get_packed_size( &convertor, &packed_sizet );
+            packed_size = (int)packed_sizet;
+            packed_sizet = packed_sizet / size;
+            ptmp = tempbuf = (char *)malloc(packed_size);
             if (NULL == tempbuf) {
                 err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
             }
-            ptmp = tempbuf - sgap;
+            /* rotate data so they will eventually be in the right place */
+            struct iovec iov[1];
+            uint32_t iov_size = 1;
 
-            /* and rotate data so they will eventually in the right place */
-            err = ompi_datatype_copy_content_same_ddt(sdtype, (ptrdiff_t)scount * (ptrdiff_t)(size - root),
-                                                      ptmp, (char *) sbuf + sextent * (ptrdiff_t)root * (ptrdiff_t)scount);
-            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+            iov[0].iov_base = ptmp + (ptrdiff_t)(size - root) * packed_sizet;
+            iov[0].iov_len = max_data = packed_sizet * (ptrdiff_t)root;
+            opal_convertor_pack(&convertor, iov, &iov_size, &max_data);
+            
+            iov[0].iov_base = ptmp;
+            iov[0].iov_len = max_data = packed_sizet * (ptrdiff_t)(size - root);
+            opal_convertor_pack(&convertor, iov, &iov_size, &max_data);
+            OBJ_DESTRUCT(&convertor);
 
-            err = ompi_datatype_copy_content_same_ddt(sdtype, (ptrdiff_t)scount * (ptrdiff_t)root,
-                                                      ptmp + sextent * (ptrdiff_t)scount * (ptrdiff_t)(size - root), (char *)sbuf);
-            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
-            if (rbuf != MPI_IN_PLACE) {
-                /* local copy to rbuf */
-                err = ompi_datatype_sndrcv(ptmp, scount, sdtype,
-                                           rbuf, rcount, rdtype);
-                if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-            }
+            sdtype = MPI_PACKED;
+            sextent = 1;  /* bytes */
+            scount = packed_size / size;
         }
-    } else if (!(vrank % 2)) {
-        /* non-root, non-leaf nodes, allocate temp buffer for recv
-         * the most we need is rcount*size/2 */
-        ompi_datatype_type_extent(rdtype, &rextent);
-        rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
-        tempbuf = (char *)malloc(rsize / 2);
+        curr_count = scount * size;
+    } else {  /* (!(vrank % 2)) */
+        opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, &(rdtype->super),
+                                                  rcount, NULL, 0, &convertor );
+        opal_convertor_get_packed_size( &convertor, &packed_sizet );
+        scount = (int)packed_sizet;
+
+        sdtype = MPI_PACKED;  /* default to MPI_PACKED as the send type */
+        packed_size = scount * (size+1)/2;  /* non-root, non-leaf nodes, allocate temp buffer for recv
+                                             * the most we need is rcount*size/2 */
+        ptmp = tempbuf = (char *)malloc(packed_size);
         if (NULL == tempbuf) {
             err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
         }
-        ptmp = tempbuf - rgap;
-        sdtype = rdtype;
-        scount = rcount;
-        sextent = rextent;
-    }
 
-    int curr_count = (rank == root) ? scount * size : 0;
-    if (!(vrank % 2)) {
-        if (rank != root) {
-            /* recv from parent on non-root */
-            err = MCA_PML_CALL(recv(ptmp, (ptrdiff_t)rcount * (ptrdiff_t)size, rdtype, bmtree->tree_prev,
-                                    MCA_COLL_BASE_TAG_SCATTER, comm, &status));
-            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
-            /* Get received count */
-            size_t rdtype_size;
-            ompi_datatype_type_size(rdtype, &rdtype_size);
-            curr_count = (int)(status._ucount / rdtype_size);
-
-            /* local copy to rbuf */
-            err = ompi_datatype_sndrcv(ptmp, scount, sdtype,
-                                       rbuf, rcount, rdtype);
-            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-        }
-        /* send to children on all non-leaf */
-        for (int i = bmtree->tree_nextsize - 1; i >= 0; i--) {
-            /* figure out how much data I have to send to this child */
-            int vchild = (bmtree->tree_next[i] - root + size) % size;
-            int send_count = vchild - vrank;
-            if (send_count > size - vchild)
-                send_count = size - vchild;
-            send_count *= scount;
-            err = MCA_PML_CALL(send(ptmp + (ptrdiff_t)(curr_count - send_count) * sextent,
-                                    send_count, sdtype, bmtree->tree_next[i],
-                                    MCA_COLL_BASE_TAG_SCATTER,
-                                    MCA_PML_BASE_SEND_STANDARD, comm));
-            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-            curr_count -= send_count;
-        }
-        if (NULL != tempbuf)
-            free(tempbuf);
-    } else {
-        /* recv from parent on leaf nodes */
-        err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, bmtree->tree_prev,
+        /* recv from parent on non-root */
+        err = MCA_PML_CALL(recv(ptmp, (ptrdiff_t)packed_size, MPI_PACKED, bmtree->tree_prev,
                                 MCA_COLL_BASE_TAG_SCATTER, comm, &status));
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+        /* Get received count */
+        curr_count = (int)status._ucount;  /* no need for conversion, work in bytes */
+        sextent = 1;  /* bytes */
     }
+
+    if (rbuf != MPI_IN_PLACE) {  /* local copy to rbuf */
+        err = ompi_datatype_sndrcv(ptmp, scount, sdtype,
+                                   rbuf, rcount, rdtype);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+
+    /* send to children on all non-leaf */
+    for (int i = bmtree->tree_nextsize - 1; i >= 0; i--) {
+        /* figure out how much data I have to send to this child */
+        int vchild = (bmtree->tree_next[i] - root + size) % size;
+        int send_count = vchild - vrank;
+        if (send_count > size - vchild)
+            send_count = size - vchild;
+        send_count *= scount;
+
+        err = MCA_PML_CALL(send(ptmp + (ptrdiff_t)(curr_count - send_count) * sextent,
+                                send_count, sdtype, bmtree->tree_next[i],
+                                MCA_COLL_BASE_TAG_SCATTER,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+        curr_count -= send_count;
+    }
+    if (NULL != tempbuf)
+        free(tempbuf);
 
     return MPI_SUCCESS;
 
