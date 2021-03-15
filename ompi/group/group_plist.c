@@ -35,18 +35,18 @@
 
 static int ompi_group_dense_overlap (ompi_group_t *group1, ompi_group_t *group2, opal_bitmap_t *bitmap)
 {
-    ompi_proc_t *proc1_pointer, *proc2_pointer;
+    ompi_process_name_t proc1_name, proc2_name;
     int rc, overlap_count;
 
     overlap_count = 0;
 
     for (int proc1 = 0 ; proc1 < group1->grp_proc_count ; ++proc1) {
-        proc1_pointer = ompi_group_get_proc_ptr_raw (group1, proc1);
+        proc1_name = ompi_group_get_proc_name(group1, proc1);
 
         /* check to see if this proc is in group2 */
         for (int proc2 = 0 ; proc2 < group2->grp_proc_count ; ++proc2) {
-            proc2_pointer = ompi_group_get_proc_ptr_raw (group2, proc2);
-            if( proc1_pointer == proc2_pointer ) {
+            proc2_name = ompi_group_get_proc_name(group2, proc2);
+            if(0 == opal_compare_proc(proc1_name, proc2_name)) {
                 rc = opal_bitmap_set_bit (bitmap, proc2);
                 if (OPAL_SUCCESS != rc) {
                     return rc;
