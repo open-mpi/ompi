@@ -1787,24 +1787,12 @@ exit status of the primary job. Any non-zero exit status in secondary jobs will 
 reported solely in a summary print statement.
 .
 .PP
-By default, OMPI records and notes that MPI processes exited with non-zero termination status.
-This is generally not considered an "abnormal termination" - i.e., OMPI will not abort an MPI
-job if one or more processes return a non-zero status. Instead, the default behavior simply
-reports the number of processes terminating with non-zero status upon completion of the job.
-.PP
-However, in some cases it can be desirable to have the job abort when any process terminates
-with non-zero status. For example, a non-MPI job might detect a bad result from a calculation
-and want to abort, but doesn't want to generate a core file. Or an MPI job might continue past
-a call to MPI_Finalize, but indicate that all processes should abort due to some post-MPI result.
-.PP
-It is not anticipated that this situation will occur frequently. However, in the interest of
-serving the broader community, OMPI now has a means for allowing users to direct that jobs be
-aborted upon any process exiting with non-zero status. Setting the MCA parameter
-"orte_abort_on_non_zero_status" to 1 will cause OMPI to abort all processes once any process
- exits with non-zero status.
-.PP
-Terminations caused in this manner will be reported on the console as an "abnormal termination",
-with the first process to so exit identified along with its exit status.
+By default, the job will abort when any process terminates with non-zero
+status. The MCA parameter "orte_abort_on_non_zero_status" can be set to
+"false" (or "0") to cause OMPI to not abort a job if one or more
+processes return a non-zero status. In that situation the OMPI records
+and notes that processes exited with non-zero termination status to
+report the approprate exit status of \fImpirun\fP (per bullet points above).
 .PP
 .
 .\" **************************
