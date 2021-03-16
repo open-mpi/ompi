@@ -3,8 +3,8 @@
  *      See COPYRIGHT in top-level directory.
  */
 
-#include <dlfcn.h>
 #include "mpl.h"
+#include <dlfcn.h>
 #include <assert.h>
 
 #define CUDA_ERR_CHECK(ret) if (unlikely((ret) != cudaSuccess)) goto fn_fail
