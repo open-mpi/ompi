@@ -320,6 +320,7 @@ static inline int end_atomicity(
         OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fetch failed: %d", ret);
         return OMPI_ERROR;
     }
+    opal_atomic_wmb();
 
     return ret;
 }
@@ -1026,7 +1027,6 @@ int get_accumulate_req(const void *origin_addr, int origin_count,
         ompi_request_complete(&ucx_req->super, true);
     }
 
-
     return end_atomicity(module, target, lock_acquired, free_addr);
 }
 
@@ -1091,6 +1091,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
         return ret;
     }
 
+    opal_atomic_wmb();
     *request = &ucx_req->super;
 
     return ret;
@@ -1144,6 +1145,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
         return ret;
     }
 
+    opal_atomic_wmb();
     *request = &ucx_req->super;
 
     return ret;
@@ -1173,6 +1175,7 @@ int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
         return ret;
     }
 
+    opal_atomic_wmb();
     *request = &ucx_req->super;
 
     return ret;
@@ -1207,6 +1210,7 @@ int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
         return ret;
     }
 
+    opal_atomic_wmb();
     *request = &ucx_req->super;
 
     return ret;

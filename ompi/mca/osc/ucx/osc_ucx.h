@@ -28,6 +28,7 @@
 typedef struct ompi_osc_ucx_component {
     ompi_osc_base_component_t super;
     opal_common_ucx_wpool_t *wpool;
+    opal_common_ucx_ctx_t *wpctx;
     bool enable_mpi_threads;
     opal_free_list_t requests; /* request free list for the r* communication variants */
     bool env_initialized; /* UCX environment is initialized or not */
