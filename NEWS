@@ -110,7 +110,8 @@ included in the vX.Y.Z section and be denoted as:
   non-contiguous datatypes are used. Thanks to @sadcat11 for reporting the issue.
 - Fixed bugs related to the accumulate and atomics functionality in the
   osc/rdma component.
-- Fixed race condition observed with MPI group operations.
+- Fixed race condition in MPI group operations observed with
+  MPI_THREAD_MULTIPLE threading level.
 - Fixed a deadlock in the TCP BTL's connection matching logic.
 - Fixed pml/ob1 compilation error when CUDA support is enabled.
 - Fixed a build issue with Lustre caused by unnecessary header includes.
