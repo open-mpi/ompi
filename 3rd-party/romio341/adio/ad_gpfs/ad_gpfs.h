@@ -11,11 +11,11 @@
 #ifndef AD_GPFS_H_INCLUDED
 #define AD_GPFS_H_INCLUDED
 
+#include "adio.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include "adio.h"
 
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
