@@ -31,53 +31,38 @@
 #include "opal_config.h"
 #include "opal/util/show_help.h"
 
-#include "btl_sm.h"
-#include "btl_sm_endpoint.h"
-#include "btl_sm_fifo.h"
-#include "btl_sm_fbox.h"
-#include "btl_sm_xpmem.h"
+#include "opal/mca/btl/sm/btl_sm.h"
+#include "opal/mca/btl/sm/btl_sm_endpoint.h"
+#include "opal/mca/btl/sm/btl_sm_fbox.h"
+#include "opal/mca/btl/sm/btl_sm_fifo.h"
+#include "opal/mca/btl/sm/btl_sm_frag.h"
+#include "opal/mca/btl/sm/btl_sm_xpmem.h"
 
 #include <string.h>
 
-static int sm_del_procs (struct mca_btl_base_module_t *btl,
-                            size_t nprocs, struct opal_proc_t **procs,
-                            struct mca_btl_base_endpoint_t **peers);
+static int sm_del_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+                        struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers);
 
-static int sm_register_error_cb (struct mca_btl_base_module_t* btl,
-                                    mca_btl_base_module_error_cb_fn_t cbfunc);
+static int sm_register_error_cb(struct mca_btl_base_module_t *btl,
+                                mca_btl_base_module_error_cb_fn_t cbfunc);
 
-static int sm_finalize (struct mca_btl_base_module_t* btl);
+static int sm_finalize(struct mca_btl_base_module_t *btl);
 
-static struct mca_btl_base_descriptor_t *sm_prepare_src (
-                                                            struct mca_btl_base_module_t *btl,
-                                                            struct mca_btl_base_endpoint_t *endpoint,
-                                                            struct opal_convertor_t *convertor,
-                                                            uint8_t order,
-                                                            size_t reserve,
-                                                            size_t *size,
-                                                            uint32_t flags
-                                                            );
+static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_module_t *btl,
+                                                        struct mca_btl_base_endpoint_t *endpoint,
+                                                        struct opal_convertor_t *convertor,
+                                                        uint8_t order, size_t reserve, size_t *size,
+                                                        uint32_t flags);
 
-static int sm_add_procs(struct mca_btl_base_module_t* btl,
-                           size_t nprocs, struct opal_proc_t **procs,
-                           struct mca_btl_base_endpoint_t** peers,
-                           struct opal_bitmap_t* reachability);
+static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+                        struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
+                        struct opal_bitmap_t *reachability);
 
 mca_btl_sm_t mca_btl_sm = {
-    {
-        &mca_btl_sm_component.super,
-        .btl_add_procs = sm_add_procs,
-        .btl_del_procs = sm_del_procs,
-        .btl_finalize = sm_finalize,
-        .btl_alloc = mca_btl_sm_alloc,
-        .btl_free = mca_btl_sm_free,
-        .btl_prepare_src = sm_prepare_src,
-        .btl_send = mca_btl_sm_send,
-        .btl_sendi = mca_btl_sm_sendi,
-        .btl_dump = mca_btl_base_dump,
-        .btl_register_error = sm_register_error_cb
-    }
-};
+    {&mca_btl_sm_component.super, .btl_add_procs = sm_add_procs, .btl_del_procs = sm_del_procs,
+     .btl_finalize = sm_finalize, .btl_alloc = mca_btl_sm_alloc, .btl_free = mca_btl_sm_free,
+     .btl_prepare_src = sm_prepare_src, .btl_send = mca_btl_sm_send, .btl_sendi = mca_btl_sm_sendi,
+     .btl_dump = mca_btl_base_dump, .btl_register_error = sm_register_error_cb}};
 
 /*
  * Exit function copied from btl_usnic_util.c
@@ -90,8 +75,7 @@ mca_btl_sm_t mca_btl_sm = {
 static void sm_btl_exit(mca_btl_sm_t *btl)
 {
     if (NULL != btl && NULL != btl->error_cb) {
-        btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
-                      (opal_proc_t*) opal_proc_local_get(),
+        btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL, (opal_proc_t *) opal_proc_local_get(),
                       "The sm BTL is aborting the MPI job (via PML error callback).");
     }
 
@@ -107,73 +91,71 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     int rc;
 
     /* generate the endpoints */
-    component->endpoints = (struct mca_btl_base_endpoint_t *) calloc (n + 1, sizeof (struct mca_btl_base_endpoint_t));
+    component->endpoints = (struct mca_btl_base_endpoint_t *)
+        calloc(n + 1, sizeof(struct mca_btl_base_endpoint_t));
     if (NULL == component->endpoints) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     component->endpoints[n].peer_smp_rank = -1;
 
-    component->fbox_in_endpoints = calloc (n + 1, sizeof (void *));
+    component->fbox_in_endpoints = calloc(n + 1, sizeof(void *));
     if (NULL == component->fbox_in_endpoints) {
         free(component->endpoints);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    component->mpool = mca_mpool_basic_create ((void *) (component->my_segment + MCA_BTL_SM_FIFO_SIZE),
-                                               (unsigned long) (mca_btl_sm_component.segment_size - MCA_BTL_SM_FIFO_SIZE), 64);
+    component->mpool = mca_mpool_basic_create((void *) (component->my_segment +
+                                                        MCA_BTL_SM_FIFO_SIZE),
+                                              (unsigned long) (mca_btl_sm_component.segment_size -
+                                                               MCA_BTL_SM_FIFO_SIZE),
+                                              64);
     if (NULL == component->mpool) {
-        free (component->endpoints);
+        free(component->endpoints);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    rc = opal_free_list_init (&component->sm_fboxes, sizeof (opal_free_list_item_t), 8,
-                              OBJ_CLASS(opal_free_list_item_t), mca_btl_sm_component.fbox_size,
-                              opal_cache_line_size, 0, mca_btl_sm_component.fbox_max, 4,
-                              component->mpool, 0, NULL, NULL, NULL);
+    rc = opal_free_list_init(&component->sm_fboxes, sizeof(opal_free_list_item_t), 8,
+                             OBJ_CLASS(opal_free_list_item_t), mca_btl_sm_component.fbox_size,
+                             opal_cache_line_size, 0, mca_btl_sm_component.fbox_max, 4,
+                             component->mpool, 0, NULL, NULL, NULL);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
     /* initialize fragment descriptor free lists */
     /* initialize free list for small send and inline fragments */
-    rc = opal_free_list_init (&component->sm_frags_user,
-                              sizeof(mca_btl_sm_frag_t),
-                              opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
-                              mca_btl_sm_component.max_inline_send + sizeof (mca_btl_sm_frag_t),
-                              opal_cache_line_size, component->sm_free_list_num,
-                              component->sm_free_list_max,
-                              component->sm_free_list_inc,
-                              component->mpool, 0, NULL, mca_btl_sm_frag_init,
-                              &component->sm_frags_user);
+    rc = opal_free_list_init(&component->sm_frags_user, sizeof(mca_btl_sm_frag_t),
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
+                             mca_btl_sm_component.max_inline_send + sizeof(mca_btl_sm_frag_t),
+                             opal_cache_line_size, component->sm_free_list_num,
+                             component->sm_free_list_max, component->sm_free_list_inc,
+                             component->mpool, 0, NULL, mca_btl_sm_frag_init,
+                             &component->sm_frags_user);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
     /* initialize free list for buffered send fragments */
-    rc = opal_free_list_init (&component->sm_frags_eager,
-                              sizeof (mca_btl_sm_frag_t),
-                              opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
-                              mca_btl_sm.super.btl_eager_limit + sizeof (mca_btl_sm_frag_t),
-                              opal_cache_line_size, component->sm_free_list_num,
-                              component->sm_free_list_max,
-                              component->sm_free_list_inc,
-                              component->mpool, 0, NULL, mca_btl_sm_frag_init,
-                              &component->sm_frags_eager);
+    rc = opal_free_list_init(&component->sm_frags_eager, sizeof(mca_btl_sm_frag_t),
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
+                             mca_btl_sm.super.btl_eager_limit + sizeof(mca_btl_sm_frag_t),
+                             opal_cache_line_size, component->sm_free_list_num,
+                             component->sm_free_list_max, component->sm_free_list_inc,
+                             component->mpool, 0, NULL, mca_btl_sm_frag_init,
+                             &component->sm_frags_eager);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
     if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism) {
         /* initialize free list for buffered send fragments */
-        rc = opal_free_list_init (&component->sm_frags_max_send,
-                                  sizeof (mca_btl_sm_frag_t),
-                                  opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
-                                  mca_btl_sm.super.btl_max_send_size + sizeof (mca_btl_sm_frag_t),
-                                  opal_cache_line_size, component->sm_free_list_num,
-                                  component->sm_free_list_max,
-                                  component->sm_free_list_inc,
-                                  component->mpool, 0, NULL, mca_btl_sm_frag_init,
-                                  &component->sm_frags_max_send);
+        rc = opal_free_list_init(&component->sm_frags_max_send, sizeof(mca_btl_sm_frag_t),
+                                 opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
+                                 mca_btl_sm.super.btl_max_send_size + sizeof(mca_btl_sm_frag_t),
+                                 opal_cache_line_size, component->sm_free_list_num,
+                                 component->sm_free_list_max, component->sm_free_list_inc,
+                                 component->mpool, 0, NULL, mca_btl_sm_frag_init,
+                                 &component->sm_frags_max_send);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
@@ -184,15 +166,15 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
 #if OPAL_BTL_SM_HAVE_XPMEM
     if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism) {
-        mca_btl_sm_component.vma_module = mca_rcache_base_vma_module_alloc ();
+        mca_btl_sm_component.vma_module = mca_rcache_base_vma_module_alloc();
     }
 #endif
 
     return OPAL_SUCCESS;
 }
 
-
-static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc) {
+static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc)
+{
     mca_btl_sm_component_t *component = &mca_btl_sm_component;
     union sm_modex_t *modex;
     ino_t my_user_ns_id;
@@ -201,8 +183,7 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opa
 
     uint16_t peer_local_rank;
     uint16_t *ptr = &peer_local_rank;
-    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &proc->proc_name,
-                          &ptr, PMIX_UINT16);
+    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &proc->proc_name, &ptr, PMIX_UINT16);
     if (OPAL_SUCCESS != rc) {
         BTL_VERBOSE(("could not read the local rank for peer. rc=%d", rc));
         return rc;
@@ -216,8 +197,8 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opa
     ep->peer_smp_rank = peer_local_rank;
 
     if (peer_local_rank != MCA_BTL_SM_LOCAL_RANK) {
-        OPAL_MODEX_RECV_IMMEDIATE(rc, &component->super.btl_version,
-                                  &proc->proc_name, (void **) &modex, &msg_size);
+        OPAL_MODEX_RECV_IMMEDIATE(rc, &component->super.btl_version, &proc->proc_name,
+                                  (void **) &modex, &msg_size);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
@@ -226,21 +207,23 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opa
 #if OPAL_BTL_SM_HAVE_XPMEM
         if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism) {
             /* always use xpmem if it is available */
-            ep->segment_data.xpmem.apid = xpmem_get (modex->xpmem.seg_id, XPMEM_RDWR, XPMEM_PERMIT_MODE, (void *) 0666);
+            ep->segment_data.xpmem.apid = xpmem_get(modex->xpmem.seg_id, XPMEM_RDWR,
+                                                    XPMEM_PERMIT_MODE, (void *) 0666);
             ep->segment_data.xpmem.address_max = modex->xpmem.address_max;
-            (void) sm_get_registation (ep, modex->xpmem.segment_base, mca_btl_sm_component.segment_size,
-                                          MCA_RCACHE_FLAGS_PERSIST, (void **) &ep->segment_base);
+            (void) sm_get_registation(ep, modex->xpmem.segment_base,
+                                      mca_btl_sm_component.segment_size, MCA_RCACHE_FLAGS_PERSIST,
+                                      (void **) &ep->segment_base);
         } else {
 #endif
             /* store a copy of the segment information for detach */
-            ep->segment_data.other.seg_ds = malloc (modex->other.seg_ds_size);
+            ep->segment_data.other.seg_ds = malloc(modex->other.seg_ds_size);
             if (NULL == ep->segment_data.other.seg_ds) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
 
-            memcpy (ep->segment_data.other.seg_ds, &modex->other.seg_ds, modex->other.seg_ds_size);
+            memcpy(ep->segment_data.other.seg_ds, &modex->other.seg_ds, modex->other.seg_ds_size);
 
-            ep->segment_base = opal_shmem_segment_attach (ep->segment_data.other.seg_ds);
+            ep->segment_base = opal_shmem_segment_attach(ep->segment_data.other.seg_ds);
             if (NULL == ep->segment_base) {
                 return OPAL_ERROR;
             }
@@ -274,8 +257,8 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opa
                      * If CMA has been selected because it is the default or
                      * some fallback, this falls back even further.
                      */
-                    opal_show_help("help-btl-sm.txt", "cma-different-user-namespace-warning",
-                                   true, opal_process_info.nodename);
+                    opal_show_help("help-btl-sm.txt", "cma-different-user-namespace-warning", true,
+                                   opal_process_info.nodename);
                     mca_btl_sm_component.single_copy_mechanism = MCA_BTL_SM_NONE;
                     mca_btl_sm.super.btl_get = NULL;
                     mca_btl_sm.super.btl_put = NULL;
@@ -286,7 +269,7 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opa
 #endif
         OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
 
-        free (modex);
+        free(modex);
     } else {
         /* set up the segment base so we can calculate a virtual to real for local pointers */
         ep->segment_base = component->my_segment;
@@ -297,7 +280,7 @@ static int init_sm_endpoint (struct mca_btl_base_endpoint_t **ep_out, struct opa
     return OPAL_SUCCESS;
 }
 
-static int fini_sm_endpoint (struct mca_btl_base_endpoint_t *ep)
+static int fini_sm_endpoint(struct mca_btl_base_endpoint_t *ep)
 {
     /* check if the endpoint is initialized. avoids a double-destruct */
     if (ep->fifo) {
@@ -321,10 +304,9 @@ static int fini_sm_endpoint (struct mca_btl_base_endpoint_t *ep)
  *
  */
 
-static int sm_add_procs (struct mca_btl_base_module_t* btl,
-                            size_t nprocs, struct opal_proc_t **procs,
-                            struct mca_btl_base_endpoint_t **peers,
-                            opal_bitmap_t *reachability)
+static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+                        struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
+                        opal_bitmap_t *reachability)
 {
     mca_btl_sm_t *sm_btl = (mca_btl_sm_t *) btl;
     const opal_proc_t *my_proc;
@@ -342,9 +324,8 @@ static int sm_add_procs (struct mca_btl_base_module_t* btl,
         return OPAL_SUCCESS;
     }
 
-
     if (!sm_btl->btl_inited) {
-        rc = sm_btl_first_time_init (sm_btl, 1 + MCA_BTL_SM_NUM_LOCAL_PEERS);
+        rc = sm_btl_first_time_init(sm_btl, 1 + MCA_BTL_SM_NUM_LOCAL_PEERS);
         if (rc != OPAL_SUCCESS) {
             return rc;
         }
@@ -361,14 +342,14 @@ static int sm_add_procs (struct mca_btl_base_module_t* btl,
 
         if (my_proc != procs[proc] && NULL != reachability) {
             /* add this proc to shared memory accessibility list */
-            rc = opal_bitmap_set_bit (reachability, proc);
-            if(OPAL_SUCCESS != rc) {
+            rc = opal_bitmap_set_bit(reachability, proc);
+            if (OPAL_SUCCESS != rc) {
                 return rc;
             }
         }
 
         /* setup endpoint */
-        rc = init_sm_endpoint (peers + proc, procs[proc]);
+        rc = init_sm_endpoint(peers + proc, procs[proc]);
         if (OPAL_SUCCESS != rc) {
             break;
         }
@@ -387,20 +368,18 @@ static int sm_add_procs (struct mca_btl_base_module_t* btl,
  *
  */
 
-static int sm_del_procs(struct mca_btl_base_module_t *btl,
-                           size_t nprocs, struct opal_proc_t **procs,
-                           struct mca_btl_base_endpoint_t **peers)
+static int sm_del_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+                        struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers)
 {
-    for (size_t i = 0 ; i < nprocs ; ++i) {
+    for (size_t i = 0; i < nprocs; ++i) {
         if (peers[i]) {
-            fini_sm_endpoint (peers[i]);
+            fini_sm_endpoint(peers[i]);
             peers[i] = NULL;
         }
     }
 
     return OPAL_SUCCESS;
 }
-
 
 /**
  * MCA->BTL Clean up any resources held by BTL module
@@ -424,21 +403,21 @@ static int sm_finalize(struct mca_btl_base_module_t *btl)
         return OPAL_SUCCESS;
     }
 
-    for (int i = 0 ; i < (int)(1 + MCA_BTL_SM_NUM_LOCAL_PEERS) ; ++i) {
-        fini_sm_endpoint (component->endpoints + i);
+    for (int i = 0; i < (int) (1 + MCA_BTL_SM_NUM_LOCAL_PEERS); ++i) {
+        fini_sm_endpoint(component->endpoints + i);
     }
 
-    free (component->endpoints);
+    free(component->endpoints);
     component->endpoints = NULL;
 
     sm_btl->btl_inited = false;
 
-    free (component->fbox_in_endpoints);
+    free(component->fbox_in_endpoints);
     component->fbox_in_endpoints = NULL;
 
     if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism) {
-        opal_shmem_unlink (&mca_btl_sm_component.seg_ds);
-        opal_shmem_segment_detach (&mca_btl_sm_component.seg_ds);
+        opal_shmem_unlink(&mca_btl_sm_component.seg_ds);
+        opal_shmem_segment_detach(&mca_btl_sm_component.seg_ds);
     }
 
 #if OPAL_BTL_SM_HAVE_XPMEM
@@ -450,7 +429,6 @@ static int sm_finalize(struct mca_btl_base_module_t *btl)
     return OPAL_SUCCESS;
 }
 
-
 /**
  * Register a callback function that is called on error..
  *
@@ -458,10 +436,10 @@ static int sm_finalize(struct mca_btl_base_module_t *btl)
  * @param cbfunc (IN)  function to call on error
  * @return             Status indicating if cleanup was successful
  */
-static int sm_register_error_cb(struct mca_btl_base_module_t* btl,
-                                   mca_btl_base_module_error_cb_fn_t cbfunc)
+static int sm_register_error_cb(struct mca_btl_base_module_t *btl,
+                                mca_btl_base_module_error_cb_fn_t cbfunc)
 {
-    ((mca_btl_sm_t *)btl)->error_cb = cbfunc;
+    ((mca_btl_sm_t *) btl)->error_cb = cbfunc;
     return OPAL_SUCCESS;
 }
 
@@ -472,25 +450,25 @@ static int sm_register_error_cb(struct mca_btl_base_module_t* btl,
  * @param size (IN)     Request segment size.
  */
 mca_btl_base_descriptor_t *mca_btl_sm_alloc(struct mca_btl_base_module_t *btl,
-                                               struct mca_btl_base_endpoint_t *endpoint,
-                                               uint8_t order, size_t size, uint32_t flags)
+                                            struct mca_btl_base_endpoint_t *endpoint, uint8_t order,
+                                            size_t size, uint32_t flags)
 {
     mca_btl_sm_frag_t *frag = NULL;
 
     if (size <= (size_t) mca_btl_sm_component.max_inline_send) {
-        (void) MCA_BTL_SM_FRAG_ALLOC_USER(frag, endpoint);
+        MCA_BTL_SM_FRAG_ALLOC_USER(frag, endpoint);
     } else if (size <= mca_btl_sm.super.btl_eager_limit) {
-        (void) MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, endpoint);
+        MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, endpoint);
     } else if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism &&
                size <= mca_btl_sm.super.btl_max_send_size) {
-        (void) MCA_BTL_SM_FRAG_ALLOC_MAX(frag, endpoint);
+        MCA_BTL_SM_FRAG_ALLOC_MAX(frag, endpoint);
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
-        frag->segments[0].seg_len  = size;
+        frag->segments[0].seg_len = size;
 
-        frag->base.des_flags   = flags;
-        frag->base.order       = order;
+        frag->base.des_flags = flags;
+        frag->base.order = order;
     }
 
     return (mca_btl_base_descriptor_t *) frag;
@@ -502,7 +480,7 @@ mca_btl_base_descriptor_t *mca_btl_sm_alloc(struct mca_btl_base_module_t *btl,
  * @param btl (IN)      BTL module
  * @param segment (IN)  Allocated segment.
  */
-int mca_btl_sm_free (struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des)
+int mca_btl_sm_free(struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des)
 {
     MCA_BTL_SM_FRAG_RETURN((mca_btl_sm_frag_t *) des);
 
@@ -514,19 +492,19 @@ int mca_btl_sm_free (struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_
  *
  * @param btl (IN)      BTL module
  */
-static struct mca_btl_base_descriptor_t *sm_prepare_src (struct mca_btl_base_module_t *btl,
-                                                            struct mca_btl_base_endpoint_t *endpoint,
-                                                            struct opal_convertor_t *convertor,
-                                                            uint8_t order, size_t reserve, size_t *size,
-                                                            uint32_t flags)
+static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_module_t *btl,
+                                                        struct mca_btl_base_endpoint_t *endpoint,
+                                                        struct opal_convertor_t *convertor,
+                                                        uint8_t order, size_t reserve, size_t *size,
+                                                        uint32_t flags)
 {
     const size_t total_size = reserve + *size;
     mca_btl_sm_frag_t *frag;
     void *data_ptr;
     int rc;
 
-    opal_convertor_get_current_pointer (convertor, &data_ptr);
-    assert (NULL != data_ptr);
+    opal_convertor_get_current_pointer(convertor, &data_ptr);
+    assert(NULL != data_ptr);
 
     /* in place send fragment */
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
@@ -536,20 +514,19 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src (struct mca_btl_base_mod
         /* non-contiguous data requires the convertor */
         if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism &&
             total_size > mca_btl_sm.super.btl_eager_limit) {
-            (void) MCA_BTL_SM_FRAG_ALLOC_MAX(frag, endpoint);
-        } else
-            (void) MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, endpoint);
+            MCA_BTL_SM_FRAG_ALLOC_MAX(frag, endpoint);
+        } else {
+            MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, endpoint);
+        }
 
         if (OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
 
         iov.iov_len = *size;
-        iov.iov_base =
-            (IOVBASE_TYPE *)(((uintptr_t)(frag->segments[0].seg_addr.pval)) +
-                             reserve);
+        iov.iov_base = (IOVBASE_TYPE *) (((uintptr_t)(frag->segments[0].seg_addr.pval)) + reserve);
 
-        rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
+        rc = opal_convertor_pack(convertor, &iov, &iov_count, size);
         if (OPAL_UNLIKELY(rc < 0)) {
             MCA_BTL_SM_FRAG_RETURN(frag);
             return NULL;
@@ -559,12 +536,13 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src (struct mca_btl_base_mod
     } else {
         if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism) {
             if (OPAL_LIKELY(total_size <= mca_btl_sm.super.btl_eager_limit)) {
-                (void) MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, endpoint);
+                MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, endpoint);
             } else {
-                (void) MCA_BTL_SM_FRAG_ALLOC_MAX(frag, endpoint);
+                MCA_BTL_SM_FRAG_ALLOC_MAX(frag, endpoint);
             }
-        } else
-            (void) MCA_BTL_SM_FRAG_ALLOC_USER(frag, endpoint);
+        } else {
+            MCA_BTL_SM_FRAG_ALLOC_USER(frag, endpoint);
+        }
 
         if (OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
@@ -579,7 +557,7 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src (struct mca_btl_base_mod
 
             /* set up single copy io vector */
             frag->hdr->sc_iov.iov_base = data_ptr;
-            frag->hdr->sc_iov.iov_len  = *size;
+            frag->hdr->sc_iov.iov_len = *size;
 
             frag->segments[0].seg_len = reserve;
             frag->segments[1].seg_len = *size;
@@ -588,20 +566,21 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src (struct mca_btl_base_mod
         } else {
 #endif
             /* NTH: the covertor adds some latency so we bypass it here */
-            memcpy ((void *)((uintptr_t)frag->segments[0].seg_addr.pval + reserve), data_ptr, *size);
+            memcpy((void *) ((uintptr_t) frag->segments[0].seg_addr.pval + reserve), data_ptr,
+                   *size);
             frag->segments[0].seg_len = total_size;
 #if OPAL_BTL_SM_HAVE_XPMEM
         }
 #endif
     }
 
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
+    frag->base.order = order;
+    frag->base.des_flags = flags;
 
     return &frag->base;
 }
 
-static void mca_btl_sm_endpoint_constructor (mca_btl_sm_endpoint_t *ep)
+static void mca_btl_sm_endpoint_constructor(mca_btl_sm_endpoint_t *ep)
 {
     OBJ_CONSTRUCT(&ep->pending_frags, opal_list_t);
     OBJ_CONSTRUCT(&ep->pending_frags_lock, opal_mutex_t);
@@ -612,31 +591,32 @@ static void mca_btl_sm_endpoint_constructor (mca_btl_sm_endpoint_t *ep)
 #if OPAL_BTL_SM_HAVE_XPMEM
 #endif
 
-static void mca_btl_sm_endpoint_destructor (mca_btl_sm_endpoint_t *ep)
+static void mca_btl_sm_endpoint_destructor(mca_btl_sm_endpoint_t *ep)
 {
     OBJ_DESTRUCT(&ep->pending_frags);
     OBJ_DESTRUCT(&ep->pending_frags_lock);
 
 #if OPAL_BTL_SM_HAVE_XPMEM
     if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism) {
-        mca_btl_sm_xpmem_cleanup_endpoint (ep);
+        mca_btl_sm_xpmem_cleanup_endpoint(ep);
     } else
 #endif
-    if (ep->segment_data.other.seg_ds) {
+        if (ep->segment_data.other.seg_ds) {
         opal_shmem_ds_t seg_ds;
 
         /* opal_shmem_segment_detach expects a opal_shmem_ds_t and will
          * stomp past the end of the seg_ds if it is too small (which
          * ep->seg_ds probably is) */
-        memcpy (&seg_ds, ep->segment_data.other.seg_ds, opal_shmem_sizeof_shmem_ds (ep->segment_data.other.seg_ds));
-        free (ep->segment_data.other.seg_ds);
+        memcpy(&seg_ds, ep->segment_data.other.seg_ds,
+               opal_shmem_sizeof_shmem_ds(ep->segment_data.other.seg_ds));
+        free(ep->segment_data.other.seg_ds);
         ep->segment_data.other.seg_ds = NULL;
 
         /* disconnect from the peer's segment */
-        opal_shmem_segment_detach (&seg_ds);
+        opal_shmem_segment_detach(&seg_ds);
     }
     if (ep->fbox_out.fbox) {
-        opal_free_list_return (&mca_btl_sm_component.sm_fboxes, ep->fbox_out.fbox);
+        opal_free_list_return(&mca_btl_sm_component.sm_fboxes, ep->fbox_out.fbox);
     }
 
     ep->fbox_in.buffer = ep->fbox_out.buffer = NULL;
@@ -645,4 +625,5 @@ static void mca_btl_sm_endpoint_destructor (mca_btl_sm_endpoint_t *ep)
     ep->fifo = NULL;
 }
 
-OBJ_CLASS_INSTANCE(mca_btl_sm_endpoint_t, opal_list_item_t, mca_btl_sm_endpoint_constructor, mca_btl_sm_endpoint_destructor);
+OBJ_CLASS_INSTANCE(mca_btl_sm_endpoint_t, opal_list_item_t, mca_btl_sm_endpoint_constructor,
+                   mca_btl_sm_endpoint_destructor);

@@ -28,20 +28,20 @@
 #include "btl_sm.h"
 #include "btl_sm_frag.h"
 
-static inline void mca_btl_sm_frag_constructor (mca_btl_sm_frag_t *frag)
+static inline void mca_btl_sm_frag_constructor(mca_btl_sm_frag_t *frag)
 {
-    frag->hdr = (mca_btl_sm_hdr_t*)frag->base.super.ptr;
-    if(frag->hdr != NULL) {
+    frag->hdr = (mca_btl_sm_hdr_t *) frag->base.super.ptr;
+    if (frag->hdr != NULL) {
         frag->hdr->frag = frag;
         frag->hdr->flags = 0;
-        frag->segments[0].seg_addr.pval = (char *)(frag->hdr + 1);
+        frag->segments[0].seg_addr.pval = (char *) (frag->hdr + 1);
     }
 
-    frag->base.des_segments      = frag->segments;
+    frag->base.des_segments = frag->segments;
     frag->base.des_segment_count = 1;
 }
 
-int mca_btl_sm_frag_init (opal_free_list_item_t *item, void *ctx)
+int mca_btl_sm_frag_init(opal_free_list_item_t *item, void *ctx)
 {
     mca_btl_sm_frag_t *frag = (mca_btl_sm_frag_t *) item;
 
@@ -51,5 +51,4 @@ int mca_btl_sm_frag_init (opal_free_list_item_t *item, void *ctx)
     return OPAL_SUCCESS;
 }
 
-OBJ_CLASS_INSTANCE(mca_btl_sm_frag_t, mca_btl_base_descriptor_t,
-                   mca_btl_sm_frag_constructor, NULL);
+OBJ_CLASS_INSTANCE(mca_btl_sm_frag_t, mca_btl_base_descriptor_t, mca_btl_sm_frag_constructor, NULL);

@@ -38,37 +38,35 @@
 #include <stdlib.h>
 #include <string.h>
 
-# include <stdint.h>
+#include <stdint.h>
 #ifdef HAVE_SCHED_H
-# include <sched.h>
-#endif  /* HAVE_SCHED_H */
+#    include <sched.h>
+#endif /* HAVE_SCHED_H */
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#    include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
 #include "opal/mca/shmem/base/base.h"
 
-#include "opal/class/opal_free_list.h"
-#include "opal/sys/atomic.h"
-#include "opal/mca/btl/btl.h"
-#include "opal/mca/rcache/rcache.h"
-#include "opal/mca/rcache/base/rcache_base_vma.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/rcache/rcache.h"
-#include "opal/mca/rcache/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/sm/btl_sm_types.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/rcache/base/rcache_base_vma.h"
+#include "opal/mca/rcache/rcache.h"
+#include "opal/sys/atomic.h"
 #include "opal/util/proc.h"
-#include "btl_sm_endpoint.h"
 
 #include "opal/mca/pmix/pmix-internal.h"
 
-#include "btl_sm_xpmem.h"
 #include "btl_sm_knem.h"
+#include "btl_sm_xpmem.h"
 
 BEGIN_C_DECLS
 
-#define min(a,b) ((a) < (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 /*
  * Shared Memory resource managment
@@ -76,103 +74,7 @@ BEGIN_C_DECLS
 
 struct sm_fifo_t;
 
-/*
- * Modex data
- */
-union sm_modex_t {
-#if OPAL_BTL_SM_HAVE_XPMEM
-    struct sm_modex_xpmem_t {
-        xpmem_segid_t seg_id;
-        void *segment_base;
-        uintptr_t address_max;
-    } xpmem;
-#endif
-    struct sm_modex_other_t {
-        ino_t user_ns_id;
-        int seg_ds_size;
-        /* seg_ds needs to be the last element */
-        opal_shmem_ds_t seg_ds;
-    } other;
-};
-
-/**
- * Single copy mechanisms
- */
-enum {
-      MCA_BTL_SM_XPMEM = 0,
-      MCA_BTL_SM_CMA   = 1,
-      MCA_BTL_SM_KNEM  = 2,
-      MCA_BTL_SM_NONE  = 3,
-};
-
-/**
- * Shared Memory (SM) BTL module.
- */
-struct mca_btl_sm_component_t {
-    mca_btl_base_component_3_0_0_t super;   /**< base BTL component */
-    int sm_free_list_num;                /**< initial size of free lists */
-    int sm_free_list_max;                /**< maximum size of free lists */
-    int sm_free_list_inc;                /**< number of elements to alloc when growing free lists */
-#if OPAL_BTL_SM_HAVE_XPMEM
-    xpmem_segid_t my_seg_id;                /**< this rank's xpmem segment id */
-    uintptr_t my_address_max;               /**< largest address */
-    mca_rcache_base_vma_module_t *vma_module; /**< registration cache for xpmem segments */
-#endif
-    opal_shmem_ds_t seg_ds;                 /**< this rank's shared memory segment (when not using xpmem) */
-
-    opal_mutex_t lock;                      /**< lock to protect concurrent updates to this structure's members */
-    char *my_segment;                       /**< this rank's base pointer */
-    size_t segment_size;                    /**< size of my_segment */
-    int32_t num_smp_procs;                  /**< current number of smp procs on this host */
-    opal_free_list_t sm_frags_eager;     /**< free list of sm send frags */
-    opal_free_list_t sm_frags_max_send;  /**< free list of sm max send frags (large fragments) */
-    opal_free_list_t sm_frags_user;      /**< free list of small inline frags */
-    opal_free_list_t sm_fboxes;          /**< free list of available fast-boxes */
-
-    unsigned int fbox_threshold;            /**< number of sends required before we setup a send fast box for a peer */
-    unsigned int fbox_max;                  /**< maximum number of send fast boxes to allocate */
-    unsigned int fbox_size;                 /**< size of each peer fast box allocation */
-
-    int single_copy_mechanism;              /**< single copy mechanism to use */
-
-    int memcpy_limit;                       /**< Limit where we switch from memmove to memcpy */
-    int log_attach_align;                   /**< Log of the alignment for xpmem segments */
-    unsigned int max_inline_send;           /**< Limit for copy-in-copy-out fragments */
-
-    mca_btl_base_endpoint_t *endpoints;     /**< array of local endpoints (one for each local peer including myself) */
-    mca_btl_base_endpoint_t **fbox_in_endpoints; /**< array of fast box in endpoints */
-    unsigned int num_fbox_in_endpoints;     /**< number of fast boxes to poll */
-    struct sm_fifo_t *my_fifo;           /**< pointer to the local fifo */
-
-    opal_list_t pending_endpoints;          /**< list of endpoints with pending fragments */
-    opal_list_t pending_fragments;          /**< fragments pending remote completion */
-
-    char *backing_directory;                /**< directory to place shared memory backing files */
-
-    /* knem stuff */
-#if OPAL_BTL_SM_HAVE_KNEM
-    unsigned int knem_dma_min;              /**< minimum size to enable DMA for knem transfers (0 disables) */
-#endif
-    mca_mpool_base_module_t *mpool;
-};
-typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
-
-/**
- * SM BTL Interface
- */
-struct mca_btl_sm_t {
-    mca_btl_base_module_t  super;       /**< base BTL interface */
-    bool btl_inited;  /**< flag indicating if btl has been inited */
-    mca_btl_base_module_error_cb_fn_t error_cb;
-#if OPAL_BTL_SM_HAVE_KNEM
-    int knem_fd;
-
-    /* registration cache */
-    mca_rcache_base_module_t *knem_rcache;
-#endif
-};
-typedef struct mca_btl_sm_t mca_btl_sm_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
 
 /* number of peers on the node (not including self) */
@@ -183,12 +85,12 @@ OPAL_MODULE_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
 
 /* memcpy is faster at larger sizes but is undefined if the
    pointers are aliased (TODO -- readd alias check) */
-static inline void sm_memmove (void *dst, void *src, size_t size)
+static inline void sm_memmove(void *dst, void *src, size_t size)
 {
     if (size >= (size_t) mca_btl_sm_component.memcpy_limit) {
-        memcpy (dst, src, size);
+        memcpy(dst, src, size);
     } else {
-        memmove (dst, src, size);
+        memmove(dst, src, size);
     }
 }
 
@@ -198,10 +100,8 @@ static inline void sm_memmove (void *dst, void *src, size_t size)
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-int mca_btl_sm_send(struct mca_btl_base_module_t *btl,
-                    struct mca_btl_base_endpoint_t *endpoint,
-                    struct mca_btl_base_descriptor_t *descriptor,
-                    mca_btl_base_tag_t tag);
+int mca_btl_sm_send(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                    struct mca_btl_base_descriptor_t *descriptor, mca_btl_base_tag_t tag);
 
 /**
  * Initiate an inline send to the peer.
@@ -209,13 +109,10 @@ int mca_btl_sm_send(struct mca_btl_base_module_t *btl,
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-int mca_btl_sm_sendi (struct mca_btl_base_module_t *btl,
-                      struct mca_btl_base_endpoint_t *endpoint,
-                      struct opal_convertor_t *convertor,
-                      void *header, size_t header_size,
-                      size_t payload_size, uint8_t order,
-                      uint32_t flags, mca_btl_base_tag_t tag,
-                      mca_btl_base_descriptor_t **descriptor);
+int mca_btl_sm_sendi(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                     struct opal_convertor_t *convertor, void *header, size_t header_size,
+                     size_t payload_size, uint8_t order, uint32_t flags, mca_btl_base_tag_t tag,
+                     mca_btl_base_descriptor_t **descriptor);
 
 /**
  * Initiate an synchronous put.
@@ -225,24 +122,30 @@ int mca_btl_sm_sendi (struct mca_btl_base_module_t *btl,
  * @param descriptor (IN)  Description of the data to be transferred
  */
 #if OPAL_BTL_SM_HAVE_XPMEM
-int mca_btl_sm_put_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                          uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                          mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                          int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_sm_put_xpmem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                         void *local_address, uint64_t remote_address,
+                         mca_btl_base_registration_handle_t *local_handle,
+                         mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                         void *cbdata);
 #endif
 
 #if OPAL_BTL_SM_HAVE_CMA
-int mca_btl_sm_put_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                        uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_sm_put_cma(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                       void *local_address, uint64_t remote_address,
+                       mca_btl_base_registration_handle_t *local_handle,
+                       mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                       int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                       void *cbdata);
 #endif
 
 #if OPAL_BTL_SM_HAVE_KNEM
-int mca_btl_sm_put_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                         uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                         mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_sm_put_knem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                        void *local_address, uint64_t remote_address,
+                        mca_btl_base_registration_handle_t *local_handle,
+                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                        void *cbdata);
 #endif
 
 /**
@@ -253,24 +156,30 @@ int mca_btl_sm_put_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *en
  * @param descriptor (IN)  Description of the data to be transferred
  */
 #if OPAL_BTL_SM_HAVE_XPMEM
-int mca_btl_sm_get_xpmem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                          uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                          mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                          int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_sm_get_xpmem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                         void *local_address, uint64_t remote_address,
+                         mca_btl_base_registration_handle_t *local_handle,
+                         mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                         void *cbdata);
 #endif
 
 #if OPAL_BTL_SM_HAVE_CMA
-int mca_btl_sm_get_cma (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                        uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_sm_get_cma(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                       void *local_address, uint64_t remote_address,
+                       mca_btl_base_registration_handle_t *local_handle,
+                       mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                       int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                       void *cbdata);
 #endif
 
 #if OPAL_BTL_SM_HAVE_KNEM
-int mca_btl_sm_get_knem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint, void *local_address,
-                         uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                         mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_sm_get_knem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                        void *local_address, uint64_t remote_address,
+                        mca_btl_base_registration_handle_t *local_handle,
+                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                        void *cbdata);
 #endif
 
 ino_t mca_btl_sm_get_user_ns_id(void);
@@ -281,9 +190,9 @@ ino_t mca_btl_sm_get_user_ns_id(void);
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
  */
-mca_btl_base_descriptor_t* mca_btl_sm_alloc (struct mca_btl_base_module_t* btl,
-                                             struct mca_btl_base_endpoint_t* endpoint,
-                                             uint8_t order, size_t size, uint32_t flags);
+mca_btl_base_descriptor_t *mca_btl_sm_alloc(struct mca_btl_base_module_t *btl,
+                                            struct mca_btl_base_endpoint_t *endpoint, uint8_t order,
+                                            size_t size, uint32_t flags);
 
 /**
  * Return a segment allocated by this BTL.
@@ -291,8 +200,7 @@ mca_btl_base_descriptor_t* mca_btl_sm_alloc (struct mca_btl_base_module_t* btl,
  * @param btl (IN)      BTL module
  * @param segment (IN)  Allocated segment.
  */
-int mca_btl_sm_free (struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des);
-
+int mca_btl_sm_free(struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des);
 
 END_C_DECLS
 

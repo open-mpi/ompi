@@ -11,57 +11,31 @@
  * $HEADER$
  */
 
-#if !defined(MCA_BTL_SM_XPMEM_H)
+#ifndef MCA_BTL_SM_XPMEM_H
 #define MCA_BTL_SM_XPMEM_H
 
-#if OPAL_BTL_SM_HAVE_XPMEM
-
-#if defined(HAVE_XPMEM_H)
-  #include <xpmem.h>
-
-  typedef struct xpmem_addr xpmem_addr_t;
-#elif defined(HAVE_SN_XPMEM_H)
-  #include <sn/xpmem.h>
-
-  typedef int64_t xpmem_segid_t;
-  typedef int64_t xpmem_apid_t;
-#endif
-
+#include "opal_config.h"
+#include "opal/mca/btl/sm/btl_sm_types.h"
 #include "opal/mca/rcache/base/rcache_base_vma.h"
 #include "opal/mca/rcache/rcache.h"
+
+#if OPAL_BTL_SM_HAVE_XPMEM
 
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
 
 struct mca_btl_base_endpoint_t;
 
-int mca_btl_sm_xpmem_init (void);
+int mca_btl_sm_xpmem_init(void);
 
-mca_rcache_base_registration_t *sm_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
-                                                       size_t size, int flags, void **local_ptr);
+mca_rcache_base_registration_t *sm_get_registation(struct mca_btl_base_endpoint_t *endpoint,
+                                                   void *rem_ptr, size_t size, int flags,
+                                                   void **local_ptr);
 
-void sm_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
-void mca_btl_sm_xpmem_cleanup_endpoint (struct mca_btl_base_endpoint_t *ep);
-
-#else
-
-static inline mca_rcache_base_registration_t *sm_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
-                                                                     size_t size, int flags, void **local_ptr)
-{
-    (void) endpoint;
-    (void) rem_ptr;
-    (void) size;
-    (void) flags;
-    (void) local_ptr;
-    return NULL;
-}
-
-static inline void sm_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint)
-{
-    (void) reg;
-    (void) endpoint;
-}
+void sm_return_registration(mca_rcache_base_registration_t *reg,
+                            struct mca_btl_base_endpoint_t *endpoint);
+void mca_btl_sm_xpmem_cleanup_endpoint(struct mca_btl_base_endpoint_t *ep);
 
 #endif /* OPAL_BTL_SM_HAVE_XPMEM */
 
-#endif
+#endif /* MCA_BTL_SM_XPMEM_H */
