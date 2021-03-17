@@ -800,6 +800,11 @@ All OpenSHMEM-1.3 functionality is supported.
   mechanisms for Open MPI to utilize single-copy semantics for shared
   memory.
 
+* The OFI MTL does not support sending messages larger than the active
+  Libfabric provider's `max_msg_size`.  If you receive an error
+  message about sending too large of a message when using the OFI MTL,
+  please reach out to your networking vendor to ask them to support a
+  larger `max_msg_size` for tagged messages.
 
 ### Open MPI Extensions
 
