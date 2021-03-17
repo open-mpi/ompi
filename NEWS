@@ -58,15 +58,22 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.1 -- February, 2021
+4.1.1 -- March, 2021
 -----------------------
 
 - Reverted temporary solution that worked around launch issues in
   SLURM v20.11.{0,1,2}. SchedMD encourages users to avoid these
   versions and to upgrade to v20.11.3 or newer.
+- Updated PMIx to v3.2.2.
 - Fixed configuration issue on Apple Silicon observed with
   Homebrew. Thanks to François-Xavier Coudert for reporting the issue.
 - Disabled gcc built-in atomics by default on aarch64 platforms.
+- Disabled UCX PML when UCX v1.8.0 is detected. UCX version 1.8.0 has a bug that
+  may cause data corruption when its TCP transport is used in conjunction with
+  the shared memory transport. UCX versions prior to v1.8.0 are not affected by
+  this issue. Thanks to @ksiazekm for reporting the issue.
+- Fixed detection of available UCX transports/devices to better inform PML
+  prioritization.
 - Fixed SLURM support to mark ORTE daemons as non-MPI tasks.
 - Improved AVX detection to more accurately detect supported
   platforms.  Also improved the generated AVX code, and switched to
@@ -74,8 +81,11 @@ included in the vX.Y.Z section and be denoted as:
   big flags).
 - Improved OFI compatibility support and fixed memory leaks in error
   handling paths.
+- Improved HAN collectives with support for Barrier and Scatter. Thanks
+  to @EmmanuelBRELLE for these changes and the relevant bug fixes.
 - Fixed MPI debugger support (i.e., the MPIR_Breakpoint() symbol).
   Thanks to @louisespellacy-arm for reporting the issue.
+- Fixed ORTE bug that prevented debuggers from reading MPIR_Proctable.
 - Removed PML uniformity check from the UCX PML to address performance
   regression.
 - Fixed MPI_Init_thread(3) statement about C++ binding and update
@@ -94,6 +104,19 @@ included in the vX.Y.Z section and be denoted as:
 - Fixed bug to marked a generalized request as pending once initiated.
 - Fixed external PMIx v4.x check.
 - Fixed OSHMEM build with `--enable-mem-debug`.
+- Fixed a performance regression observed with older versions of GCC when
+  __ATOMIC_SEQ_CST is used. Thanks to @BiplabRaut for reporting the issue.
+- Fixed buffer allocation bug in the binomial tree scatter algorithm when
+  non-contiguous datatypes are used. Thanks to @sadcat11 for reporting the issue.
+- Fixed bugs related to the accumulate and atomics functionality in the
+  osc/rdma component.
+- Fixed race condition in MPI group operations observed with
+  MPI_THREAD_MULTIPLE threading level.
+- Fixed a deadlock in the TCP BTL's connection matching logic.
+- Fixed pml/ob1 compilation error when CUDA support is enabled.
+- Fixed a build issue with Lustre caused by unnecessary header includes.
+- Fixed a build issue with IMB LSF workload manager.
+- Fixed linker error with UCX SPML.
 
 
 4.1.0 -- December, 2020
