@@ -15,7 +15,7 @@ dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2020 Research Organization for Information Science
+dnl Copyright (c) 2014-2021 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -327,6 +327,13 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV=1],
                [OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV=0])])
     AC_SUBST(OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV)
+
+    # The non standard iso_fortran_env:real16 can be used for MPI_SIZEOF
+    OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV_REAL16=0
+    AS_IF([test $ompi_fortran_happy -eq 1],
+          [OMPI_FORTRAN_CHECK_ISO_FORTRAN_ENV_REAL16(
+               [OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV_REAL16=1])])
+    AC_SUBST(OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV_REAL16)
 
     # Ensure that the fortran compiler supports STORAGE_SIZE for
     # enough relevant types.
