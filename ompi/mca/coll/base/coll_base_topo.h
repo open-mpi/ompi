@@ -20,6 +20,7 @@
 #define MCA_COLL_BASE_TOPO_H_HAS_BEEN_INCLUDED
 
 #include "ompi_config.h"
+#include "ompi/communicator/communicator.h"
 #include <stddef.h>
 
 #define MAXTREEFANOUT 32
