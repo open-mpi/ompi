@@ -1,0 +1,109 @@
+stages:
+  - build
+  - test
+
+build:intel:
+  stage: build
+  tags: [jlselogin3_shell]
+  script:
+    - module load intel
+    - git submodule update --init
+    - ./autogen.pl
+    - ./configure CC=icc FC=ifort CXX=icpc --prefix=$PWD/install_test --with-libevent=internal
+    - make -j 8 install
+    - make check
+    - export PATH=$PWD/install_test/bin:$PATH
+    - cd examples 
+    - make
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME_intel"
+    untracked: true
+    paths:
+      - examples
+      - install_test
+    expire_in: 1 week
+  only: [merge_requests]
+
+build:gnu:
+  stage: build
+  tags: [jlselogin3_shell]
+  script:
+    - module load gcc
+    - git submodule update --init
+    - ./autogen.pl
+    - ./configure --prefix=$PWD/install_test --with-libevent=internal
+    - make -j 8 install
+    - make check
+    - export PATH=$PWD/install_test/bin:$PATH
+    - cd examples 
+    - make
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    untracked: true
+    paths:
+      - examples
+      - install_test
+    expire_in: 1 week
+  only: [merge_requests]
+
+test:intel:
+  stage: test
+  tags: 
+    - jlselogin3_batch-03
+  dependencies:
+    - build:intel
+  needs: ["build:intel"]
+  script:
+    - pwd
+    - ls
+    - module load intel
+    - export PATH=$PWD/install_test/bin:$PATH
+    - which mpirun
+    - cd examples
+    - mpirun -np 4 hostname
+    - mpirun -np 4 ./hello_c
+    - mpirun -np 4 ./ring_c
+    - mpirun -np 4 ./hello_mpifh
+    - mpirun -np 4 ./ring_mpifh
+    - mpirun -np 4 ./hello_usempi
+    - mpirun -np 4 ./ring_usempi
+    - mpirun -np 4 ./hello_usempif08
+    - mpirun -np 4 ./ring_usempif08
+    - mpirun -np 4 ./connectivity_c
+  variables:
+    JLSE_SCHEDULER_PARAMETERS: "-qiris -t 1:00:00 -n 1"
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    expire_in: 1 week
+  only: [merge_requests]
+
+test:gnu:
+  stage: test
+  tags:
+    - jlselogin3_batch-03
+  dependencies:
+    - build:gnu
+  needs: ["build:gnu"]
+  script:
+    - pwd
+    - ls
+    - module load gcc
+    - export PATH=$PWD/install_test/bin:$PATH
+    - which mpirun
+    - cd examples
+    - mpirun -np 4 hostname
+    - mpirun -np 4 ./hello_c
+    - mpirun -np 4 ./ring_c
+    - mpirun -np 4 ./hello_mpifh
+    - mpirun -np 4 ./ring_mpifh
+    - mpirun -np 4 ./hello_usempi
+    - mpirun -np 4 ./ring_usempi
+    - mpirun -np 4 ./hello_usempif08
+    - mpirun -np 4 ./ring_usempif08
+    - mpirun -np 4 ./connectivity_c
+  variables:
+    JLSE_SCHEDULER_PARAMETERS: "-qiris -t 1:00:00 -n 1"
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    expire_in: 1 week
+  only: [merge_requests]
