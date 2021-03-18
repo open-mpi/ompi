@@ -44,9 +44,9 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 {
     int rc = 0;
     int flag;
-    int valueLen = MPI_MAX_INFO_VAL;
-    char value[MPI_MAX_INFO_VAL + 1];
+    opal_cstring_t *info_str;
     char gpfsHintsKey[50];
+    bool info_bool;
     const char* split = ",";
     char* token;
     int ret = OMPI_SUCCESS;
@@ -163,9 +163,9 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
     */
 
     strcpy(gpfsHintsKey, "useSIOXLib");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
+    ompi_info_get_bool(info_selected, gpfsHintsKey, &info_bool, &flag);
     if (flag) {
-        if(strcmp(value, "true") == 0) {
+        if(info_bool) {
             //using the SIOX lib and the I/O pattern selection
             ret = mca_fs_gpfs_io_selection(fh, info, info_selected);
             if (ret != OMPI_SUCCESS)
@@ -179,10 +179,10 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 
     //Setting GPFS Hint - gpfsAccessRange
     strcpy(gpfsHintsKey, "gpfsAccessRange");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
+    ompi_info_get(info_selected, gpfsHintsKey, &info_str, &flag);
     if (flag) {
         opal_output(ompi_fs_base_framework.framework_output,
-                    "GPFS Access Range is set: %s: %s\n", gpfsHintsKey, value);
+                    "GPFS Access Range is set: %s: %s\n", gpfsHintsKey, info_str->string);
         gpfs_hint_AccessRange.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_AccessRange);
         gpfs_hint_AccessRange.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_AccessRange.gpfsFcntlHeader.fcntlReserved = 0;
@@ -190,12 +190,15 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         gpfs_hint_AccessRange.gpfsAccessRange.structLen =
                 sizeof(gpfs_hint_AccessRange.gpfsAccessRange);
         gpfs_hint_AccessRange.gpfsAccessRange.structType = GPFS_ACCESS_RANGE;
-        token = strtok(value, split);
+        char *info_str_dup = strdup(info_str->string);
+        OBJ_RELEASE(info_str);
+        token = strtok(info_str_dup, split);
         gpfs_hint_AccessRange.gpfsAccessRange.start = atol(token);
         token = strtok(NULL, split);
         gpfs_hint_AccessRange.gpfsAccessRange.length = atol(token);
         token = strtok(NULL, split);
         gpfs_hint_AccessRange.gpfsAccessRange.isWrite = atoi(token);
+        free(info_str_dup);
 
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_AccessRange);
         if (rc != 0) {
@@ -209,10 +212,10 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 
     //Setting GPFS Hint - gpfsFreeRange
     strcpy(gpfsHintsKey, "gpfsFreeRange");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
+    ompi_info_get(info_selected, gpfsHintsKey, &info_str, &flag);
     if (flag) {
         opal_output(ompi_fs_base_framework.framework_output,
-                    "GPFS Free Range is set: %s: %s\n", gpfsHintsKey, value);
+                    "GPFS Free Range is set: %s: %s\n", gpfsHintsKey, info_str->string);
         gpfs_hint_FreeRange.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_FreeRange);
         gpfs_hint_FreeRange.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_FreeRange.gpfsFcntlHeader.fcntlReserved = 0;
@@ -220,10 +223,13 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         gpfs_hint_FreeRange.gpfsFreeRange.structLen =
                 sizeof(gpfs_hint_FreeRange.gpfsFreeRange);
         gpfs_hint_FreeRange.gpfsFreeRange.structType = GPFS_FREE_RANGE;
-        token = strtok(value, split);
+        char *info_str_dup = strdup(info_str->string);
+        OBJ_RELEASE(info_str);
+        token = strtok(info_str_dup, split);
         gpfs_hint_FreeRange.gpfsFreeRange.start = atol(token);
         token = strtok(NULL, split);
         gpfs_hint_FreeRange.gpfsFreeRange.length = atol(token);
+        free(info_str_dup);
 
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_FreeRange);
         if (rc != 0) {
@@ -241,10 +247,10 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 
     //Setting GPFS Hint - gpfsClearFileCache
     strcpy(gpfsHintsKey, "gpfsClearFileCache");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
-    if (flag & (strcmp(value, "true") == 0)) {
+    ompi_info_get_bool(info_selected, gpfsHintsKey, &info_bool, &flag);
+    if (flag && info_bool) {
         opal_output(ompi_fs_base_framework.framework_output,
-                    "GPFS Clear File Cache is set: %s: %s\n", gpfsHintsKey, value);
+                    "GPFS Clear File Cache is set: %s\n", gpfsHintsKey);
         gpfs_hint_ClearFileCache.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_ClearFileCache);
         gpfs_hint_ClearFileCache.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_ClearFileCache.gpfsFcntlHeader.fcntlReserved = 0;
@@ -265,10 +271,10 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 
     //Setting GPFS Hint - gpfsCancelHints
     strcpy(gpfsHintsKey, "gpfsCancelHints");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
-    if (flag & (strcmp(value, "true") == 0)) {
+    ompi_info_get_bool(info_selected, gpfsHintsKey, &info_bool, &flag);
+    if (flag && info_bool) {
         opal_output(ompi_fs_base_framework.framework_output,
-                    "GPFS Cancel Hints is set: %s: %s\n", gpfsHintsKey, value);
+                    "GPFS Cancel Hints is set: %s\n", gpfsHintsKey);
         gpfs_hint_CancelHints.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_CancelHints);
         gpfs_hint_CancelHints.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_CancelHints.gpfsFcntlHeader.fcntlReserved = 0;
@@ -289,10 +295,10 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 
     //Setting GPFS Hint - gpfsSetReplication
     strcpy(gpfsHintsKey, "gpfsSetReplication");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
+    ompi_info_get(info_selected, gpfsHintsKey, &info_str, &flag);
     if (flag) {
         opal_output(ompi_fs_base_framework.framework_output,
-                    "GPFS Set Replication is set: %s: %s\n", gpfsHintsKey, value);
+                    "GPFS Set Replication is set: %s: %s\n", gpfsHintsKey, info_str->string);
         gpfs_hint_SetReplication.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_SetReplication);
         gpfs_hint_SetReplication.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_SetReplication.gpfsFcntlHeader.fcntlReserved = 0;
@@ -300,12 +306,15 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         gpfs_hint_SetReplication.gpfsSetReplication.structLen =
                 sizeof(gpfs_hint_SetReplication.gpfsSetReplication);
         gpfs_hint_SetReplication.gpfsSetReplication.structType = GPFS_FCNTL_SET_REPLICATION;
-        token = strtok(value, split);
+        char *info_str_dup = strdup(info_str->string);
+        OBJ_RELEASE(info_str);
+        token = strtok(info_str_dup, split);
         gpfs_hint_SetReplication.gpfsSetReplication.metadataReplicas = atoi(token);
         gpfs_hint_SetReplication.gpfsSetReplication.maxMetadataReplicas = atoi(token);
         gpfs_hint_SetReplication.gpfsSetReplication.dataReplicas = atoi(token);
         gpfs_hint_SetReplication.gpfsSetReplication.maxDataReplicas = atoi(token);
         gpfs_hint_SetReplication.gpfsSetReplication.reserved = 0;
+        free(info_str_dup);
 
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_SetReplication);
         if (rc != 0) {
@@ -322,18 +331,21 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 
     //Setting GPFS Hint - gpfsByteRange
     strcpy(gpfsHintsKey, "gpfsByteRange");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
+    ompi_info_get(info_selected, gpfsHintsKey, &info_str, &flag);
     if (flag) {
         opal_output(ompi_fs_base_framework.framework_output,
-                    "GPFS Byte Range is set: %s: %s\n", gpfsHintsKey, value);
+                    "GPFS Byte Range is set: %s: %s\n", gpfsHintsKey, info_str->string);
         gpfs_hint_ByteRange.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_ByteRange);
         gpfs_hint_ByteRange.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_ByteRange.gpfsFcntlHeader.fcntlReserved = 0;
 
-        token = strtok(value, split);
+        char *info_str_dup = strdup(info_str->string);
+        OBJ_RELEASE(info_str);
+        token = strtok(info_str_dup, split);
         gpfs_hint_ByteRange.gpfsByteRange.startOffset = atol(token);
-        token = strtok(value, split);
+        token = strtok(NULL, split);
         gpfs_hint_ByteRange.gpfsByteRange.numOfBlks = atol(token);
+        free(info_str_dup);
 
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_ByteRange);
         if (rc != 0) {
@@ -347,10 +359,10 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
 
     //Setting GPFS Hint - gpfsRestripeData
     strcpy(gpfsHintsKey, "gpfsRestripeData");
-    ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
+    ompi_info_get(info_selected, gpfsHintsKey, &info_str, &flag);
     if (flag) {
         opal_output(ompi_fs_base_framework.framework_output,
-                    "GPFS Restripe Data is set: %s: %s\n", gpfsHintsKey, value);
+                    "GPFS Restripe Data is set: %s: %s\n", gpfsHintsKey, info_str->string);
         gpfs_hint_RestripeData.gpfsFcntlHeader.totalLength = sizeof(gpfs_hint_RestripeData);
         gpfs_hint_RestripeData.gpfsFcntlHeader.fcntlVersion = GPFS_FCNTL_CURRENT_VERSION;
         gpfs_hint_RestripeData.gpfsFcntlHeader.fcntlReserved = 0;
@@ -358,10 +370,13 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         gpfs_hint_RestripeData.gpfsRestripeData.structLen =
                 sizeof(gpfs_hint_RestripeData.gpfsRestripeData);
         gpfs_hint_RestripeData.gpfsRestripeData.structType = GPFS_FCNTL_RESTRIPE_DATA;
-        token = strtok(value, split);
+        char *info_str_dup = strdup(info_str->string);
+        OBJ_RELEASE(info_str);
+        token = strtok(info_str_dup, split);
         gpfs_hint_RestripeData.gpfsRestripeData.options = atoi(token);
         gpfs_hint_RestripeData.gpfsRestripeData.reserved1 = 0;
         gpfs_hint_RestripeData.gpfsRestripeData.reserved2 = 0;
+        free(info_str_dup);
 
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_RestripeData);
         if (rc != 0) {

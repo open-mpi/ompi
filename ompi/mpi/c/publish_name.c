@@ -49,7 +49,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
                      const char *port_name)
 {
     int ret;
-    char range[OPAL_MAX_INFO_VAL];
+    opal_cstring_t *info_str;
     int flag=0;
     pmix_status_t rc;
     pmix_info_t pinfo[3];
@@ -76,33 +76,35 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     /* OMPI supports info keys to pass the range and persistence to
      * be used for the given key */
     if (MPI_INFO_NULL != info) {
-        ompi_info_get (info, "range", sizeof(range) - 1, range, &flag);
+        ompi_info_get (info, "range", &info_str, &flag);
         if (flag) {
-            if (0 == strcmp(range, "nspace")) {
+            if (0 == strcmp(info_str->string, "nspace")) {
                 rng = PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
-            } else if (0 == strcmp(range, "session")) {
+            } else if (0 == strcmp(info_str->string, "session")) {
                 rng = PMIX_RANGE_SESSION; // share only with procs in same session
             } else {
                 /* unrecognized scope */
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                             FUNC_NAME);
             }
+            OBJ_RELEASE(info_str);
         }
-        ompi_info_get (info, "persistence", sizeof(range) - 1, range, &flag);
+        ompi_info_get (info, "persistence", &info_str, &flag);
         if (flag) {
-            if (0 == strcmp(range, "indef")) {
+            if (0 == strcmp(info_str->string, "indef")) {
                 pers = PMIX_PERSIST_INDEF;   // retain until specifically deleted
-            } else if (0 == strcmp(range, "proc")) {
+            } else if (0 == strcmp(info_str->string, "proc")) {
                 pers = PMIX_PERSIST_PROC;    // retain until publishing process terminates
-            } else if (0 == strcmp(range, "app")) {
+            } else if (0 == strcmp(info_str->string, "app")) {
                 pers = PMIX_PERSIST_APP;     // retain until application terminates
-            } else if (0 == strcmp(range, "session")) {
+            } else if (0 == strcmp(info_str->string, "session")) {
                 pers = PMIX_PERSIST_SESSION; // retain until session/allocation terminates
             } else {
                 /* unrecognized persistence */
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                             FUNC_NAME);
             }
+            OBJ_RELEASE(info_str);
         }
     }
 

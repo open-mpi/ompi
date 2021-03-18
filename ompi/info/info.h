@@ -130,8 +130,8 @@ OMPI_DECLSPEC int ompi_info_get_value_enum (ompi_info_t *info, const char *key,
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_get (ompi_info_t *info, const char *key, int valuelen,
-                                 char *value, int *flag);
+OMPI_DECLSPEC int ompi_info_get (ompi_info_t *info, const char *key,
+                                 opal_cstring_t **value, int *flag);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
@@ -144,7 +144,7 @@ OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, const char *key, in
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key);
+OMPI_DECLSPEC int ompi_info_get_nthkey (ompi_info_t *info, int n, opal_cstring_t **key);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */

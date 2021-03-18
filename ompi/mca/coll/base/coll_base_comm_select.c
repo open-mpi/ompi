@@ -348,7 +348,6 @@ static opal_list_t *check_components(opal_list_t * components,
     mca_coll_base_module_t *module;
     opal_list_t *selectable;
     mca_coll_base_avail_coll_t *avail;
-    char info_val[OPAL_MAX_INFO_VAL+1];
     char **coll_argv = NULL, **coll_exclude = NULL, **coll_include = NULL;
 
     /* Check if this communicator comes with restrictions on the collective modules
@@ -360,12 +359,14 @@ static opal_list_t *check_components(opal_list_t * components,
      * force a change in the component priority.
      */
     if( NULL != comm->super.s_info) {
+        opal_cstring_t *info_str;
         opal_info_get(comm->super.s_info, "ompi_comm_coll_preference",
-                      sizeof(info_val), info_val, &flag);
+                      &info_str, &flag);
         if( !flag ) {
             goto proceed_to_select;
         }
-        coll_argv = opal_argv_split(info_val, ',');
+        coll_argv = opal_argv_split(info_str->string, ',');
+        OBJ_RELEASE(info_str);
         if(NULL == coll_argv) {
             goto proceed_to_select;
         }

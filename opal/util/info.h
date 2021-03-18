@@ -28,6 +28,7 @@
 
 #include <string.h>
 
+#include "opal/class/opal_cstring.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/threads/mutex.h"
@@ -63,12 +64,11 @@ extern opal_pointer_array_t ompi_info_f_to_c_table;
  * type. It contains (key,value) pairs
  */
 struct opal_info_entry_t {
-    opal_list_item_t super; /**< required for opal_list_t type */
-    char *ie_value; /**< value part of the (key, value) pair.
-                  * Maximum length is MPI_MAX_INFO_VAL */
-    char ie_key[OPAL_MAX_INFO_KEY + 1]; /**< "key" part of the (key, value)
-                                     * pair */
+    opal_list_item_t super;  /**< required for opal_list_t type */
+    opal_cstring_t *ie_value; /**< value part of the (key, value) pair. */
+    opal_cstring_t *ie_key;   /**< "key" part of the (key, value) pair */
 };
+
 /**
  * \internal
  * Convenience typedef
@@ -104,7 +104,7 @@ int opal_mpiinfo_init(void*);
  *   Not only will the (key, value) pairs be duplicated, the order
  *   of keys will be the same in 'newinfo' as it is in 'info'.  When
  *   an info object is no longer being used, it should be freed with
- *   'MPI_Info_free'.
+ *   \c opal_info_free.
  */
 int opal_info_dup (opal_info_t *info, opal_info_t **newinfo);
 
@@ -151,6 +151,21 @@ int opal_info_dup_mpistandard (opal_info_t *info, opal_info_t **newinfo);
  * @retval OPAL_ERR_OUT_OF_RESOURCE if out of memory
  */
 OPAL_DECLSPEC int opal_info_set (opal_info_t *info, const char *key, const char *value);
+
+/**
+ * Set a new key,value pair on info.
+ *
+ * @param info pointer to opal_info_t object
+ * @param key pointer to the new key string
+ * @param value pointer to the new value string object
+ *
+ * @retval OPAL_SUCCESS upon success
+ * @retval OPAL_ERR_OUT_OF_RESOURCE if out of memory
+ *
+ * The \c value string object will be retained and can be safely released if necessary
+ * by the caller.
+ */
+OPAL_DECLSPEC int opal_info_set_cstring (opal_info_t *info, const char *key, opal_cstring_t *value);
 
 /**
  * Set a new key,value pair from a variable enumerator.
@@ -232,18 +247,19 @@ OPAL_DECLSPEC int opal_info_get_value_enum (opal_info_t *info, const char *key,
  *
  *   @param info Pointer to opal_info_t object
  *   @param key null-terminated character string of the index key
- *   @param valuelen maximum length of 'value' (integer)
- *   @param value null-terminated character string of the value
+ *   @param string null-terminated character string of the value
  *   @param flag true (1) if 'key' defined on 'info', false (0) if not
  *               (logical)
  *
  *   @retval OPAL_SUCCESS
  *
- *   In C and C++, 'valuelen' should be one less than the allocated
- *   space to allow for for the null terminator.
+ *   The \c string pointer will only be set if the key is found, i.e., if \c flag
+ *   is set to \c true. It is the caller's responsibility to decremenet the
+ *   reference count of the \c string object by calling \c OBJ_RELEASE on it
+ *   once the object is not needed any more.
  */
-OPAL_DECLSPEC int opal_info_get (opal_info_t *info, const char *key, int valuelen,
-                                 char *value, int *flag);
+OPAL_DECLSPEC int opal_info_get (opal_info_t *info, const char *key,
+                                 opal_cstring_t **string, int *flag);
 
 /**
  * Delete a (key,value) pair from "info"
@@ -276,49 +292,20 @@ OPAL_DECLSPEC int opal_info_get_valuelen (opal_info_t *info, const char *key, in
                                           int *flag);
 
 /**
- *   opal_info_get_nthkey - Get a key indexed by integer from an 'MPI_Info' o
+ *   opal_info_get_nthkey - Get a key indexed by integer from an info object
  *
  *   @param info Pointer to opal_info_t object
  *   @param n index of key to retrieve (integer)
- *   @param key character string of at least 'MPI_MAX_INFO_KEY' characters
+ *   @param key output opal_cstring_t object, set if the n'th key exists
  *
  *   @retval OPAL_SUCCESS
  *   @retval OPAL_ERR_BAD_PARAM
+ *
+ *   It is the caller's responsibility to decremenet the reference count of the
+ *   \c key string by calling \c OBJ_RELEASE on it once the object is not needed
+ *   any more.
  */
-int opal_info_get_nthkey (opal_info_t *info, int n, char *key);
-
-/**
- * Convert value string to boolean
- *
- * Convert value string \c value into a boolean, using the
- * interpretation rules specified in MPI-2 Section 4.10.  The
- * strings "true", "false", and integer numbers can be converted
- * into booleans.  All others will return \c OMPI_ERR_BAD_PARAM
- *
- * @param value Value string for info key to interpret
- * @param interp returned interpretation of the value key
- *
- * @retval OPAL_SUCCESS string was successfully interpreted
- * @retval OPAL_ERR_BAD_PARAM string was not able to be interpreted
- */
-OPAL_DECLSPEC int opal_info_value_to_bool(char *value, bool *interp);
-
-/**
- * Convert value string to integer
- *
- * Convert value string \c value into a integer, using the
- * interpretation rules specified in MPI-2 Section 4.10.
- * All others will return \c OPAL_ERR_BAD_PARAM
- *
- * @param value Value string for info key to interpret
- * @param interp returned interpretation of the value key
- *
- * @retval OPAL_SUCCESS string was successfully interpreted
- * @retval OPAL_ERR_BAD_PARAM string was not able to be interpreted
- */
-int opal_info_value_to_int(char *value, int *interp);
-
-END_C_DECLS
+int opal_info_get_nthkey (opal_info_t *info, int n, opal_cstring_t **key);
 
 /**
  * Get the number of keys defined on on an MPI_Info object
@@ -334,6 +321,8 @@ opal_info_get_nkeys(opal_info_t *info, int *nkeys)
     return OPAL_SUCCESS;
 }
 
-bool opal_str_to_bool(char*);
+
+END_C_DECLS
+
 
 #endif /* OPAL_INFO_H */
