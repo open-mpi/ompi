@@ -2,6 +2,7 @@
  * Copyright (C) 2001-2017 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
  * Copyright (c) 2019-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,11 +26,6 @@
         OSC_UCX_VERBOSE(1, "window with non-zero length does not have an rkey"); \
         return OMPI_ERROR;                                                       \
     }
-
-/* macro to check whether UCX supports atomic operation on the size the operands */
-#define ATOMIC_SIZE_SUPPORTED(_remote_addr, _size) \
-    ((sizeof(uint32_t) == (_size) && !((_remote_addr) & 0x3)) || \
-     (sizeof(uint64_t) == (_size) && !((_remote_addr) & 0x7)))
 
 typedef struct ucx_iovec {
     void *addr;
@@ -400,9 +396,8 @@ bool use_atomic_op(
         ompi_datatype_type_size(origin_dt, &origin_dt_bytes);
         ompi_datatype_type_size(target_dt, &target_dt_bytes);
         /* UCX only supports 32 and 64-bit operands atm */
-        if (ATOMIC_SIZE_SUPPORTED(remote_addr, origin_dt_bytes) &&
-            origin_dt_bytes  == target_dt_bytes    &&
-            origin_count     == target_count) {
+        if (ompi_osc_base_is_atomic_size_supported(remote_addr, origin_dt_bytes) &&
+            origin_dt_bytes == target_dt_bytes && origin_count == target_count) {
             return true;
         }
     }
@@ -794,7 +789,7 @@ int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_a
     }
 
     ompi_datatype_type_size(dt, &dt_bytes);
-    if (ATOMIC_SIZE_SUPPORTED(remote_addr, dt_bytes)) {
+    if (ompi_osc_base_is_atomic_size_supported(remote_addr, dt_bytes)) {
         // fast path using UCX atomic operations
         return do_atomic_compare_and_swap(origin_addr, compare_addr,
                                           result_addr, dt, target,
@@ -850,7 +845,7 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
     ompi_datatype_type_size(dt, &dt_bytes);
 
     /* UCX atomics are only supported on 32 and 64 bit values */
-    if (ATOMIC_SIZE_SUPPORTED(remote_addr, dt_bytes) &&
+    if (ompi_osc_base_is_atomic_size_supported(remote_addr, dt_bytes) &&
         (op == &ompi_mpi_op_no_op.op || op == &ompi_mpi_op_replace.op ||
          op == &ompi_mpi_op_sum.op)) {
         uint64_t value;

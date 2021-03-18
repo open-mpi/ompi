@@ -8,6 +8,7 @@
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 #include "osc_rdma_request.h"
 #include "osc_rdma_comm.h"
 
+#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 
 static inline void ompi_osc_rdma_peer_accumulate_cleanup (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer, bool lock_acquired)
@@ -133,6 +135,22 @@ static int ompi_osc_rdma_op_mapping[OMPI_OP_NUM_OF_TYPES + 1] = {
     [OMPI_OP_REPLACE] = MCA_BTL_ATOMIC_SWAP,
 };
 
+/* set the appropriate flags for this atomic */
+static inline int ompi_osc_rdma_set_btl_flags(ompi_osc_rdma_module_t *module, ompi_datatype_t *dt, ptrdiff_t extent) {
+
+    int flags = 0;
+
+    if(4 == extent) {
+        flags = MCA_BTL_ATOMIC_FLAG_32BIT;
+    }
+
+    if (OMPI_DATATYPE_FLAG_DATA_FLOAT & dt->super.flags) {
+        flags |= MCA_BTL_ATOMIC_FLAG_FLOAT;
+    }
+
+    return flags;
+}
+
 static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const void *origin_addr, void *result_addr, ompi_datatype_t *dt,
                                               ptrdiff_t extent, ompi_osc_rdma_peer_t *peer, uint64_t target_address,
                                               mca_btl_base_registration_handle_t *target_handle, ompi_op_t *op, ompi_osc_rdma_request_t *req)
@@ -151,10 +169,7 @@ static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const 
 
     btl_op = ompi_osc_rdma_op_mapping[op->op_type];
 
-    flags = (4 == extent) ? MCA_BTL_ATOMIC_FLAG_32BIT : 0;
-    if (OMPI_DATATYPE_FLAG_DATA_FLOAT & dt->super.flags) {
-        flags |= MCA_BTL_ATOMIC_FLAG_FLOAT;
-    }
+    flags = ompi_osc_rdma_set_btl_flags(module, dt, extent);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating fetch-and-op using %d-bit btl atomics. origin: 0x%" PRIx64,
                      (4 == extent) ? 32 : 64, *((int64_t *) origin_addr));
@@ -239,10 +254,7 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
     origin = (8 == extent) ? ((uint64_t *) origin_addr)[0] : ((uint32_t *) origin_addr)[0];
 
     /* set the appropriate flags for this atomic */
-    flags = (4 == extent) ? MCA_BTL_ATOMIC_FLAG_32BIT : 0;
-    if (OMPI_DATATYPE_FLAG_DATA_FLOAT & dt->super.flags) {
-        flags |= MCA_BTL_ATOMIC_FLAG_FLOAT;
-    }
+    flags = ompi_osc_rdma_set_btl_flags(module, dt, extent);
 
     btl_op = ompi_osc_rdma_op_mapping[op->op_type];
 
@@ -328,11 +340,12 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
                                              ompi_datatype_t *target_datatype, ompi_op_t *op, ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    unsigned long len = target_count * target_datatype->super.size;
+    size_t target_dtype_size = target_datatype->super.size;
+    unsigned long len = target_count * target_dtype_size;
     char *ptr = NULL;
     int ret;
 
-    request->len = target_datatype->super.size * module->network_amo_max_count;
+    request->len = target_dtype_size * module->network_amo_max_count;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating accumulate on contiguous region of %lu bytes to remote address %" PRIx64
                      ", sync %p", len, target_address, (void *) sync);
@@ -340,7 +353,8 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
     /* if the datatype is small enough (and the count is 1) then try to directly use the hardware to execute
      * the atomic operation. this should be safe in all cases as either 1) the user has assured us they will
      * never use atomics with count > 1, 2) we have the accumulate lock, or 3) we have an exclusive lock */
-    if ((target_datatype->super.size <= 8) && (((unsigned long) target_count) <= module->network_amo_max_count)) {
+    if ((target_dtype_size <= 8) && (((unsigned long) target_count) <= module->network_amo_max_count) &&
+         ompi_osc_base_is_atomic_size_supported(target_address, target_dtype_size)) {
         ret = ompi_osc_rdma_gacc_amo (module, sync, source, result, result_count, result_datatype, result_convertor,
                                       peer, target_address, target_handle, target_count, target_datatype, op, request);
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
@@ -659,7 +673,8 @@ static inline int ompi_osc_rdma_cas_atomic (ompi_osc_rdma_sync_t *sync, const vo
 
     compare = (8 == size) ? ((int64_t *) compare_addr)[0] : ((int32_t *) compare_addr)[0];
     source = (8 == size) ? ((int64_t *) source_addr)[0] : ((int32_t *) source_addr)[0];
-    flags = (4 == size) ? MCA_BTL_ATOMIC_FLAG_32BIT : 0;
+
+    flags = ompi_osc_rdma_set_btl_flags(module, datatype, size);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating compare-and-swap using %d-bit btl atomics. compare: 0x%"
                      PRIx64 ", origin: 0x%" PRIx64, (int) size * 8, *((int64_t *) compare_addr), *((int64_t *) source_addr));
@@ -830,10 +845,12 @@ int ompi_osc_rdma_compare_and_swap (const void *origin_addr, const void *compare
          * user has indicated that they will only use the same op (or same op and no op) for
          * operations on overlapping memory ranges. that indicates it is safe to go ahead and
          * use network atomic operations. */
-        ret = ompi_osc_rdma_cas_atomic (sync, origin_addr, compare_addr, result_addr, dt,
-                                        peer, target_address, target_handle, lock_acquired);
-        if (OMPI_SUCCESS == ret) {
-            return OMPI_SUCCESS;
+        if(ompi_osc_base_is_atomic_size_supported(target_address, dt->super.size)) {
+            ret = ompi_osc_rdma_cas_atomic (sync, origin_addr, compare_addr, result_addr, dt,
+                                            peer, target_address, target_handle, lock_acquired);
+            if (OMPI_SUCCESS == ret) {
+                return OMPI_SUCCESS;
+            }
         }
     }
 
