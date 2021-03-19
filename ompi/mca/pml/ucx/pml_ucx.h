@@ -58,6 +58,7 @@ struct mca_pml_ucx_module {
 
     int                       priority;
     bool                      cuda_initialized;
+    bool                      request_leak_check;
 };
 
 extern mca_pml_base_component_2_0_0_t mca_pml_ucx_component;
