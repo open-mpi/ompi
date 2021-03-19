@@ -141,6 +141,7 @@ int ompi_osc_rdma_free(ompi_win_t *win)
     free (module->peer_array);
     free (module->outstanding_lock_array);
     free (module->free_after);
+    free (module->selected_btls);
     free (module);
 
     return OMPI_SUCCESS;
