@@ -23,12 +23,12 @@
  */
 
 #if !defined(MCA_BASE_VAR_ENUM_H)
-#define MCA_BASE_VAR_ENUM_H
+#    define MCA_BASE_VAR_ENUM_H
 
-#include "opal_config.h"
+#    include "opal_config.h"
 
-#include "opal/class/opal_object.h"
-#include "opal/constants.h"
+#    include "opal/class/opal_object.h"
+#    include "opal/constants.h"
 
 typedef struct mca_base_var_enum_t mca_base_var_enum_t;
 
@@ -48,8 +48,8 @@ typedef int (*mca_base_var_enum_get_count_fn_t)(mca_base_var_enum_t *self, int *
  * @param[out] value integer value
  * @param[out] string_value string value
  */
-typedef int (*mca_base_var_enum_get_value_fn_t)(mca_base_var_enum_t *self, int index,
-                                                int *value, const char **string_value);
+typedef int (*mca_base_var_enum_get_value_fn_t)(mca_base_var_enum_t *self, int index, int *value,
+                                                const char **string_value);
 
 /**
  * Look up the integer value of a string
@@ -140,7 +140,6 @@ struct mca_base_var_enum_t {
     mca_base_var_enum_value_t *enum_values;
 };
 
-
 /**
  * The default flag enumerator class takes in a list of integer-string pairs. If a
  * string is read from an environment variable or a file value the matching
@@ -199,8 +198,9 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_enum_t);
  * strings passed in values[] after mca_base_var_enum_create()
  * returns.
  */
-OPAL_DECLSPEC int mca_base_var_enum_create (const char *name, const mca_base_var_enum_value_t values[],
-                                            mca_base_var_enum_t **enumerator);
+OPAL_DECLSPEC int mca_base_var_enum_create(const char *name,
+                                           const mca_base_var_enum_value_t values[],
+                                           mca_base_var_enum_t **enumerator);
 
 /**
  * Create a new default flag enumerator
@@ -226,8 +226,9 @@ OPAL_DECLSPEC int mca_base_var_enum_create (const char *name, const mca_base_var
  * strings passed in values[] after mca_base_var_enum_create()
  * returns.
  */
-OPAL_DECLSPEC int mca_base_var_enum_create_flag (const char *name, const mca_base_var_enum_value_flag_t flags[],
-                                                 mca_base_var_enum_flag_t **enumerator);
+OPAL_DECLSPEC int mca_base_var_enum_create_flag(const char *name,
+                                                const mca_base_var_enum_value_flag_t flags[],
+                                                mca_base_var_enum_flag_t **enumerator);
 
 OPAL_DECLSPEC int mca_base_var_enum_register(const char *project_name, const char *framework_name,
                                              const char *component_name, const char *enum_name,

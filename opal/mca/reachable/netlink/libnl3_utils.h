@@ -45,38 +45,38 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <netlink/netlink.h>
-#include <netlink/route/rtnl.h>
 #include <netlink/route/route.h>
+#include <netlink/route/rtnl.h>
 
 typedef struct nl_sock NL_HANDLE;
 
-#define NLMSG_SIZE(size) nlmsg_size(size)
-#define NL_GETERROR(err) nl_geterror(err)
-#define NL_HANDLE_ALLOC nl_socket_alloc
-#define NL_HANDLE_FREE nl_socket_free
+#define NLMSG_SIZE(size)     nlmsg_size(size)
+#define NL_GETERROR(err)     nl_geterror(err)
+#define NL_HANDLE_ALLOC      nl_socket_alloc
+#define NL_HANDLE_FREE       nl_socket_free
 #define NL_DISABLE_SEQ_CHECK nl_socket_disable_seq_check
 #define INC_CB_MSGCNT(arg)
 
 /* err will be returned as -NLE_AGAIN */
 /* if the socket times out */
-#define NL_RECVMSGS(nlh, cb_arg, rc, err, out) \
-	do { \
-		err = nl_recvmsgs_default(nlh); \
-		if (err < 0) { \
-                    opal_output(0, "Failed to receive netlink reply message, error %s\n", \
-				NL_GETERROR(err)); \
-			if (err == -NLE_AGAIN) \
-				err = rc; \
-			goto out; \
-		} \
-	} while (0)
+#define NL_RECVMSGS(nlh, cb_arg, rc, err, out)                                    \
+    do {                                                                          \
+        err = nl_recvmsgs_default(nlh);                                           \
+        if (err < 0) {                                                            \
+            opal_output(0, "Failed to receive netlink reply message, error %s\n", \
+                        NL_GETERROR(err));                                        \
+            if (err == -NLE_AGAIN)                                                \
+                err = rc;                                                         \
+            goto out;                                                             \
+        }                                                                         \
+    } while (0)
 
 struct opal_reachable_netlink_rt_cb_arg {
-	int			oif;
-	int			found;
-	int			has_gateway;
-	int			replied;
-	struct opal_reachable_netlink_sk	*unlsk;
+    int oif;
+    int found;
+    int has_gateway;
+    int replied;
+    struct opal_reachable_netlink_sk *unlsk;
 };
 
 #endif /* LIBNL3_UTILS_H */

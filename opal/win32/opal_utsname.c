@@ -30,7 +30,7 @@
     5. machine: GetSystemInfo
 */
 
-int uname( struct utsname *un )
+int uname(struct utsname *un)
 {
     TCHAR env_variable[] = "OS=%OS%";
     DWORD info_buf_count;
@@ -38,15 +38,15 @@ int uname( struct utsname *un )
     SYSTEM_INFO sys_info;
     TCHAR info_buf[OPAL_UTSNAME_LEN];
 
-    info_buf_count = ExpandEnvironmentStrings( env_variable, info_buf, OPAL_UTSNAME_LEN);
+    info_buf_count = ExpandEnvironmentStrings(env_variable, info_buf, OPAL_UTSNAME_LEN);
     if (0 == info_buf_count) {
-        snprintf( un->sysname, OPAL_UTSNAME_LEN, "Unknown" );
+        snprintf(un->sysname, OPAL_UTSNAME_LEN, "Unknown");
     } else {
         /* remove the "OS=" from the beginning of the string */
-        opal_string_copy( un->sysname, info_buf + 3, OPAL_UTSNAME_LEN );
+        opal_string_copy(un->sysname, info_buf + 3, OPAL_UTSNAME_LEN);
     }
     info_buf_count = OPAL_UTSNAME_LEN;
-    if (!GetComputerName( un->nodename, &info_buf_count)) {
+    if (!GetComputerName(un->nodename, &info_buf_count)) {
         snprintf(un->nodename, OPAL_UTSNAME_LEN, "undefined");
     }
 
@@ -56,31 +56,29 @@ int uname( struct utsname *un )
         snprintf(un->version, OPAL_UTSNAME_LEN, "undefined");
     } else {
         /* fill in both release and version information */
-        snprintf( un->release, OPAL_UTSNAME_LEN, "%d.%d.%d",
-                  version_info.dwMajorVersion,
-                  version_info.dwMinorVersion,
-                  version_info.dwBuildNumber);
-        snprintf( un->version, OPAL_UTSNAME_LEN, "%s", version_info.szCSDVersion );
+        snprintf(un->release, OPAL_UTSNAME_LEN, "%d.%d.%d", version_info.dwMajorVersion,
+                 version_info.dwMinorVersion, version_info.dwBuildNumber);
+        snprintf(un->version, OPAL_UTSNAME_LEN, "%s", version_info.szCSDVersion);
     }
 
     /* get machine information */
     GetSystemInfo(&sys_info);
-    switch( sys_info.wProcessorArchitecture ) {
-        case PROCESSOR_ARCHITECTURE_UNKNOWN:
-            snprintf( un->machine, OPAL_UTSNAME_LEN, "Unknown %d", sys_info.wProcessorLevel );
-            break;
-        case PROCESSOR_ARCHITECTURE_INTEL:
-            snprintf( un->machine, OPAL_UTSNAME_LEN, "Intel %d", sys_info.wProcessorLevel );
-            break;
-        case PROCESSOR_ARCHITECTURE_IA64:
-            snprintf( un->machine, OPAL_UTSNAME_LEN, "IA64 %d", sys_info.wProcessorLevel );
-            break;
-        case PROCESSOR_ARCHITECTURE_AMD64:
-            snprintf( un->machine, OPAL_UTSNAME_LEN, "AMD %d", sys_info.wProcessorLevel );
-            break;
-        default:
-            snprintf( un->machine, OPAL_UTSNAME_LEN, "UFO hardware %d", sys_info.wProcessorLevel );
-            break;
+    switch (sys_info.wProcessorArchitecture) {
+    case PROCESSOR_ARCHITECTURE_UNKNOWN:
+        snprintf(un->machine, OPAL_UTSNAME_LEN, "Unknown %d", sys_info.wProcessorLevel);
+        break;
+    case PROCESSOR_ARCHITECTURE_INTEL:
+        snprintf(un->machine, OPAL_UTSNAME_LEN, "Intel %d", sys_info.wProcessorLevel);
+        break;
+    case PROCESSOR_ARCHITECTURE_IA64:
+        snprintf(un->machine, OPAL_UTSNAME_LEN, "IA64 %d", sys_info.wProcessorLevel);
+        break;
+    case PROCESSOR_ARCHITECTURE_AMD64:
+        snprintf(un->machine, OPAL_UTSNAME_LEN, "AMD %d", sys_info.wProcessorLevel);
+        break;
+    default:
+        snprintf(un->machine, OPAL_UTSNAME_LEN, "UFO hardware %d", sys_info.wProcessorLevel);
+        break;
     }
 
     return 0;

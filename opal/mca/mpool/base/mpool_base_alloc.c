@@ -24,15 +24,14 @@
  */
 
 #include "opal_config.h"
-#include <stdint.h>
-#include <string.h>
-#include "opal/mca/mpool/mpool.h"
 #include "base.h"
 #include "mpool_base_tree.h"
+#include "opal/align.h"
+#include "opal/mca/mpool/mpool.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/info.h"
-#include "opal/align.h"
-
+#include <stdint.h>
+#include <string.h>
 
 static void unregister_tree_item(mca_mpool_base_tree_item_t *mpool_tree_item)
 {
@@ -65,9 +64,9 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info, const char *hints)
     void *mem = NULL;
 #if defined(TODO_BTL_GB)
     int flag = 0;
-#endif  /* defined(TODO_BTL_GB) */
+#endif /* defined(TODO_BTL_GB) */
 
-    mpool_tree_item = mca_mpool_base_tree_item_get ();
+    mpool_tree_item = mca_mpool_base_tree_item_get();
     if (!mpool_tree_item) {
         return NULL;
     }
@@ -75,20 +74,20 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info, const char *hints)
     mpool_tree_item->num_bytes = size;
     mpool_tree_item->count = 0;
 
-    mpool = mca_mpool_base_module_lookup (hints);
+    mpool = mca_mpool_base_module_lookup(hints);
     if (NULL != mpool) {
-        mem = mpool->mpool_alloc (mpool, size, OPAL_ALIGN_MIN, 0);
+        mem = mpool->mpool_alloc(mpool, size, OPAL_ALIGN_MIN, 0);
     }
 
     if (NULL == mem) {
         /* fall back on malloc */
         mem = malloc(size);
 
-        mca_mpool_base_tree_item_put (mpool_tree_item);
+        mca_mpool_base_tree_item_put(mpool_tree_item);
     } else {
         mpool_tree_item->mpool = mpool;
         mpool_tree_item->key = mem;
-        mca_mpool_base_tree_insert (mpool_tree_item);
+        mca_mpool_base_tree_insert(mpool_tree_item);
     }
 
     return mem;
@@ -107,20 +106,20 @@ int mca_mpool_base_free(void *base)
     mca_mpool_base_tree_item_t *mpool_tree_item = NULL;
     int rc;
 
-    if(!base) {
+    if (!base) {
         return OPAL_ERROR;
     }
 
     mpool_tree_item = mca_mpool_base_tree_find(base);
 
-    if(!mpool_tree_item) {
+    if (!mpool_tree_item) {
         /* nothing in the tree this was just plain old malloc'd memory */
         free(base);
         return OPAL_SUCCESS;
     }
 
     rc = mca_mpool_base_tree_delete(mpool_tree_item);
-    if(OPAL_SUCCESS == rc) {
+    if (OPAL_SUCCESS == rc) {
         unregister_tree_item(mpool_tree_item);
         mca_mpool_base_tree_item_put(mpool_tree_item);
     }

@@ -15,14 +15,14 @@
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
+#    include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
+#    include <sys/un.h>
 #endif
 
-#include "opal/mca/reachable/reachable.h"
 #include "opal/mca/mca.h"
+#include "opal/mca/reachable/reachable.h"
 #include "opal/util/event.h"
 #include "opal/util/proc.h"
 
@@ -37,7 +37,6 @@ typedef struct {
 OPAL_DECLSPEC extern opal_reachable_weighted_component_t mca_reachable_weighted_component;
 
 OPAL_DECLSPEC extern const opal_reachable_base_module_t opal_reachable_weighted_module;
-
 
 END_C_DECLS
 

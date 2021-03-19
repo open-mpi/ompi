@@ -23,7 +23,6 @@ enum connection_quality {
     CQ_PUBLIC_SAME_NETWORK = 100
 };
 
-
 /* SUITE 1:
  * Tests IPv4 connections by
  * modifying ip addresses and
@@ -52,8 +51,8 @@ int ipv4_test()
     int2 = create_if(AF_INET, "127.0.0.2", 0, 0);
     result = run_single_test(int1, int2);
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -69,8 +68,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -86,8 +85,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -103,8 +102,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -120,8 +119,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -137,8 +136,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -154,8 +153,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -171,8 +170,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -188,8 +187,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -205,8 +204,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed this test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed this test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -222,8 +221,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed this test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed this test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -239,8 +238,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -256,8 +255,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -273,8 +272,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -290,8 +289,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -302,13 +301,13 @@ int ipv4_test()
      */
     test_no++;
     expected_result = CQ_NO_CONNECTION;
-    int1 = create_if(AF_INET, "27.27.27.27", 24 , 0);
+    int1 = create_if(AF_INET, "27.27.27.27", 24, 0);
     int2 = create_if(AF_INET, "192.168.0.1", 16, 0);
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -324,8 +323,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
 
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -339,8 +338,8 @@ int ipv4_test()
     result = run_single_test(int1, int2);
     test_no++;
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -354,21 +353,21 @@ int ipv4_test()
     result = run_single_test(int1, int2);
     test_no++;
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
 
-    opal_output(0, "Finished Reachable IPv4 Tests.  %d/%d successful", test_no-failed_no, test_no);
+    opal_output(0, "Finished Reachable IPv4 Tests.  %d/%d successful", test_no - failed_no,
+                test_no);
 
     if (0 == failed_no) {
-	return 0;
+        return 0;
     } else {
-	return 1;
+        return 1;
     }
 }
-
 
 /* SUITE 2:
  * Compares connections with different
@@ -411,8 +410,8 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 > result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
     /* TEST2
@@ -434,8 +433,8 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 < result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
     /* TEST3
@@ -458,8 +457,8 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 < result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
     /* TEST4
@@ -482,8 +481,8 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 < result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
     /* TEST5
@@ -506,8 +505,8 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 < result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
     /* TEST6
@@ -529,8 +528,8 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 < result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
     /* TEST7
@@ -553,8 +552,8 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 < result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
     /* TEST8
@@ -577,8 +576,8 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 == result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
     /* TEST9
@@ -600,18 +599,18 @@ int ranking_test()
     OBJ_RELEASE(int2);
 
     if (!(result1 < result2)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
 
-    opal_output(0, "Finished Reachable Weighted Ranking Tests.  %d/%d successful", test_no-failed_no, test_no);
+    opal_output(0, "Finished Reachable Weighted Ranking Tests.  %d/%d successful",
+                test_no - failed_no, test_no);
     if (0 == failed_no) {
-	return 0;
+        return 0;
     } else {
-	return 1;
+        return 1;
     }
 }
-
 
 /* SUITE 3:
  * Tests interfaces lists of various sizes
@@ -644,8 +643,8 @@ int loop_test()
     OBJ_RELEASE(if_list2);
 
     if (!(0 == results->num_local && 0 == results->num_remote)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
@@ -666,8 +665,8 @@ int loop_test()
     OBJ_RELEASE(if_list2);
 
     if (!(0 == results->num_local && 1 == results->num_remote)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
@@ -687,8 +686,8 @@ int loop_test()
     OBJ_RELEASE(if_list2);
 
     if (!(1 == results->num_local && 0 == results->num_remote)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
@@ -702,12 +701,12 @@ int loop_test()
     if_list1 = OBJ_NEW(opal_list_t);
     if_list2 = OBJ_NEW(opal_list_t);
     for (i = 0; i < 3; i++) {
-	intf = create_if(AF_INET, "31.14.19.92", 24, 0);
-	opal_list_append(if_list1, &(intf->super));
+        intf = create_if(AF_INET, "31.14.19.92", 24, 0);
+        opal_list_append(if_list1, &(intf->super));
     }
     for (i = 0; i < 14; i++) {
-	intf = create_if(AF_INET, "31.14.19.92", 24, 0);
-	opal_list_append(if_list2, &(intf->super));
+        intf = create_if(AF_INET, "31.14.19.92", 24, 0);
+        opal_list_append(if_list2, &(intf->super));
     }
     results = opal_reachable.reachable(if_list1, if_list2);
 
@@ -715,8 +714,8 @@ int loop_test()
     OBJ_RELEASE(if_list2);
 
     if (!(3 == results->num_local && 14 == results->num_remote)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
@@ -730,12 +729,12 @@ int loop_test()
     if_list1 = OBJ_NEW(opal_list_t);
     if_list2 = OBJ_NEW(opal_list_t);
     for (i = 0; i < 14; i++) {
-	intf = create_if(AF_INET, "31.14.19.92", 24, 0);
-	opal_list_append(if_list1, &(intf->super));
+        intf = create_if(AF_INET, "31.14.19.92", 24, 0);
+        opal_list_append(if_list1, &(intf->super));
     }
     for (i = 0; i < 3; i++) {
-	intf = create_if(AF_INET, "31.14.19.92", 24, 0);
-	opal_list_append(if_list2, &(intf->super));
+        intf = create_if(AF_INET, "31.14.19.92", 24, 0);
+        opal_list_append(if_list2, &(intf->super));
     }
     results = opal_reachable.reachable(if_list1, if_list2);
 
@@ -743,8 +742,8 @@ int loop_test()
     OBJ_RELEASE(if_list2);
 
     if (!(14 == results->num_local && 3 == results->num_remote)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
@@ -758,12 +757,12 @@ int loop_test()
     if_list1 = OBJ_NEW(opal_list_t);
     if_list2 = OBJ_NEW(opal_list_t);
     for (i = 0; i < 27; i++) {
-	intf = create_if(AF_INET, "31.14.19.92", 24, 0);
-	opal_list_append(if_list1, &(intf->super));
+        intf = create_if(AF_INET, "31.14.19.92", 24, 0);
+        opal_list_append(if_list1, &(intf->super));
     }
     for (i = 0; i < 27; i++) {
-	intf = create_if(AF_INET, "31.14.19.92", 24, 0);
-	opal_list_append(if_list2, &(intf->super));
+        intf = create_if(AF_INET, "31.14.19.92", 24, 0);
+        opal_list_append(if_list2, &(intf->super));
     }
     results = opal_reachable.reachable(if_list1, if_list2);
 
@@ -771,8 +770,8 @@ int loop_test()
     OBJ_RELEASE(if_list2);
 
     if (!(27 == results->num_local && 27 == results->num_remote)) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
@@ -800,12 +799,12 @@ int loop_test()
     OBJ_RELEASE(if_list1);
     OBJ_RELEASE(if_list2);
 
-    if (!(CQ_PUBLIC_SAME_NETWORK == results->weights[0][0] &&
-	  CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[0][1] &&
-	  CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[1][0] &&
-	  CQ_PUBLIC_SAME_NETWORK == results->weights[1][1])) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+    if (!(CQ_PUBLIC_SAME_NETWORK == results->weights[0][0]
+          && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[0][1]
+          && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[1][0]
+          && CQ_PUBLIC_SAME_NETWORK == results->weights[1][1])) {
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
@@ -835,14 +834,14 @@ int loop_test()
     OBJ_RELEASE(if_list1);
     OBJ_RELEASE(if_list2);
 
-    if (!(CQ_PUBLIC_SAME_NETWORK == results->weights[0][0] &&
-	  CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[0][1] &&
-	  CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[0][2] &&
-	  CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[1][0] &&
-	  CQ_PUBLIC_SAME_NETWORK == results->weights[1][1]) &&
-	CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[1][2]) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+    if (!(CQ_PUBLIC_SAME_NETWORK == results->weights[0][0]
+          && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[0][1]
+          && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[0][2]
+          && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[1][0]
+          && CQ_PUBLIC_SAME_NETWORK == results->weights[1][1])
+        && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[1][2]) {
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
@@ -872,27 +871,26 @@ int loop_test()
     OBJ_RELEASE(if_list1);
     OBJ_RELEASE(if_list2);
 
-    if (!(CQ_PUBLIC_SAME_NETWORK == results->weights[0][0] &&
-	  CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[0][1] &&
-	  CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[1][0] &&
-	  CQ_PUBLIC_SAME_NETWORK == results->weights[1][1] &&
-	  CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[2][0]) &&
-	CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[2][1]) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+    if (!(CQ_PUBLIC_SAME_NETWORK == results->weights[0][0]
+          && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[0][1]
+          && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[1][0]
+          && CQ_PUBLIC_SAME_NETWORK == results->weights[1][1]
+          && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[2][0])
+        && CQ_PUBLIC_DIFFERENT_NETWORK == results->weights[2][1]) {
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(results);
 
-    opal_output(0, "Finished Reachable Weighted Loop Tests.  %d/%d successful", test_no-failed_no, test_no);
+    opal_output(0, "Finished Reachable Weighted Loop Tests.  %d/%d successful", test_no - failed_no,
+                test_no);
 
     if (0 == failed_no) {
-	return 0;
+        return 0;
     } else {
-	return 1;
+        return 1;
     }
-
 }
-
 
 /* SUITE 4:
  * Test IPv6
@@ -918,8 +916,8 @@ int test_ipv6()
     result = run_single_test(int1, int2);
     test_no++;
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -934,8 +932,8 @@ int test_ipv6()
     result = run_single_test(int1, int2);
     test_no++;
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -946,8 +944,8 @@ int test_ipv6()
     result = run_single_test(int1, int2);
     test_no++;
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
@@ -958,18 +956,19 @@ int test_ipv6()
     result = run_single_test(int1, int2);
     test_no++;
     if (result != expected_result) {
-	++failed_no;
-	opal_output(0, "Failed test #%d", test_no);
+        ++failed_no;
+        opal_output(0, "Failed test #%d", test_no);
     }
     OBJ_RELEASE(int1);
     OBJ_RELEASE(int2);
 
-    opal_output(0, "Finished Reachable Weighted IPv6 Tests.  %d/%d successful", test_no-failed_no, test_no);
+    opal_output(0, "Finished Reachable Weighted IPv6 Tests.  %d/%d successful", test_no - failed_no,
+                test_no);
 
     if (0 == failed_no) {
-	return 0;
+        return 0;
     } else {
-	return 1;
+        return 1;
     }
 #else
     opal_output(0, "No IPv6 support; skipped tests");
@@ -987,28 +986,28 @@ int main(int argc, char **argv)
 
     total++;
     if (ipv4_test()) {
-	failed++;
+        failed++;
     }
 
     total++;
     if (ranking_test()) {
-	failed++;
+        failed++;
     }
 
     total++;
     if (loop_test()) {
-	failed++;
+        failed++;
     }
 
     total++;
     if (test_ipv6()) {
-	failed++;
+        failed++;
     }
 
     if (0 != failed) {
-	opal_output(0, "\n\nFailed %d/%d Reachable Weighted Test Suites :(\n\n", failed, total);	
+        opal_output(0, "\n\nFailed %d/%d Reachable Weighted Test Suites :(\n\n", failed, total);
     } else {
-	opal_output(0, "\n\nPassed %d/%d Reachable Weighted Test Suites :)\n\n", total, total);	
+        opal_output(0, "\n\nPassed %d/%d Reachable Weighted Test Suites :)\n\n", total, total);
     }
 
     return failed;

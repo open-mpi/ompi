@@ -22,7 +22,7 @@
 
 #include "opal_config.h"
 #ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
+#    include <sys/types.h>
 #endif
 
 /* see memory.h for meaning */
@@ -37,6 +37,5 @@ OPAL_DECLSPEC void opal_mem_hooks_set_support(int support);
 OPAL_DECLSPEC void opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc);
 
 END_C_DECLS
-
 
 #endif /* OPAL_MEMORY_MEMORY_INTERNAL_H */

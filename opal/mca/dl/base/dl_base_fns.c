@@ -21,24 +21,19 @@
 
 #include "opal/mca/dl/base/base.h"
 
-
-int opal_dl_open(const char *fname,
-                 bool use_ext, bool private_namespace,
-                 opal_dl_handle_t **handle, char **err_msg)
+int opal_dl_open(const char *fname, bool use_ext, bool private_namespace, opal_dl_handle_t **handle,
+                 char **err_msg)
 {
     *handle = NULL;
 
     if (NULL != opal_dl && NULL != opal_dl->open) {
-        return opal_dl->open(fname, use_ext, private_namespace,
-                             handle, err_msg);
+        return opal_dl->open(fname, use_ext, private_namespace, handle, err_msg);
     }
 
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-int opal_dl_lookup(opal_dl_handle_t *handle,
-                   const char *symbol,
-                   void **ptr, char **err_msg)
+int opal_dl_lookup(opal_dl_handle_t *handle, const char *symbol, void **ptr, char **err_msg)
 {
     if (NULL != opal_dl && NULL != opal_dl->lookup) {
         return opal_dl->lookup(handle, symbol, ptr, err_msg);
@@ -57,8 +52,7 @@ int opal_dl_close(opal_dl_handle_t *handle)
 }
 
 int opal_dl_foreachfile(const char *search_path,
-                        int (*cb_func)(const char *filename, void *context),
-                        void *context)
+                        int (*cb_func)(const char *filename, void *context), void *context)
 {
     if (NULL != opal_dl && NULL != opal_dl->foreachfile) {
         return opal_dl->foreachfile(search_path, cb_func, context);

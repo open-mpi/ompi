@@ -23,22 +23,16 @@
 #include "opal/constants.h"
 #include "opal/mca/memory/base/empty.h"
 
-
-int opal_memory_base_component_register_empty(void *base, size_t len,
-                                              uint64_t cookie)
+int opal_memory_base_component_register_empty(void *base, size_t len, uint64_t cookie)
 {
     return OPAL_SUCCESS;
 }
 
-
-int opal_memory_base_component_deregister_empty(void *base, size_t len,
-                                                uint64_t cookie)
+int opal_memory_base_component_deregister_empty(void *base, size_t len, uint64_t cookie)
 {
     return OPAL_SUCCESS;
 }
 
-void opal_memory_base_component_set_alignment_empty(int use_memalign,
-                                                    size_t memalign_threshold)
+void opal_memory_base_component_set_alignment_empty(int use_memalign, size_t memalign_threshold)
 {
 }
-

@@ -22,12 +22,12 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/util/output.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
-#include "opal/mca/shmem/shmem.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/shmem/base/base.h"
+#include "opal/mca/shmem/shmem.h"
+#include "opal/util/output.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -45,8 +45,7 @@ char *opal_shmem_base_RUNTIME_QUERY_hint = NULL;
 /**
  * Register some shmem-wide MCA params
  */
-static int
-opal_shmem_base_register (mca_base_register_flag_t flags)
+static int opal_shmem_base_register(mca_base_register_flag_t flags)
 {
     int ret;
 
@@ -54,17 +53,17 @@ opal_shmem_base_register (mca_base_register_flag_t flags)
      * hint to the shmem framework.
      */
     opal_shmem_base_RUNTIME_QUERY_hint = NULL;
-    ret = mca_base_framework_var_register (&opal_shmem_base_framework, "RUNTIME_QUERY_hint",
-                                           "Internal OMPI parameter used to provide a "
-                                           "component selection hint to the shmem "
-                                           "framework.  The value of this parameter "
-                                           "is the name of the component that is "
-                                           "available, selectable, and meets our "
-                                           "run-time behavior requirements.",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_INTERNAL,
-                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
-                                           &opal_shmem_base_RUNTIME_QUERY_hint);
+    ret = mca_base_framework_var_register(&opal_shmem_base_framework, "RUNTIME_QUERY_hint",
+                                          "Internal OMPI parameter used to provide a "
+                                          "component selection hint to the shmem "
+                                          "framework.  The value of this parameter "
+                                          "is the name of the component that is "
+                                          "available, selectable, and meets our "
+                                          "run-time behavior requirements.",
+                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9,
+                                          MCA_BASE_VAR_SCOPE_ALL,
+                                          &opal_shmem_base_RUNTIME_QUERY_hint);
 
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }

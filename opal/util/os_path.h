@@ -44,8 +44,8 @@
 
 #include "opal_config.h"
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 BEGIN_C_DECLS
 
@@ -69,13 +69,14 @@ BEGIN_C_DECLS
  * va_start() has undefined behavior (according to clang warnings on
  * MacOS High Sierra).
  */
-OPAL_DECLSPEC char *opal_os_path(int relative, ...) __opal_attribute_malloc__ __opal_attribute_sentinel__ __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC char *opal_os_path(int relative, ...)
+    __opal_attribute_malloc__ __opal_attribute_sentinel__ __opal_attribute_warn_unused_result__;
 
 /**
  * Convert the path to be OS friendly. On UNIX this function will
  * be empty.
  */
-#define opal_make_filename_os_friendly(PATH)   (PATH)
+#define opal_make_filename_os_friendly(PATH) (PATH)
 
 END_C_DECLS
 

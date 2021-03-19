@@ -22,15 +22,15 @@
 #include "opal_config.h"
 
 #ifndef OPAL_WIN_COMPAT_H
-#error This file is supposed to be included only from win_compat.h
-#endif  /* OPAL_WIN_COMPAT_H */
+#    error This file is supposed to be included only from win_compat.h
+#endif /* OPAL_WIN_COMPAT_H */
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC pid_t waitpid (pid_t pid, int *status, int options) ;
+OPAL_DECLSPEC pid_t waitpid(pid_t pid, int *status, int options);
 
-OPAL_DECLSPEC int kill(pid_t pid, int sig) ;
+OPAL_DECLSPEC int kill(pid_t pid, int sig);
 
 END_C_DECLS
 
-#endif  /* OPAL_PROCESS_H */
+#endif /* OPAL_PROCESS_H */

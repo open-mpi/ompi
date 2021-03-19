@@ -18,8 +18,8 @@
 #ifndef OPAL_GET_SOCKET_ERROR_H
 #define OPAL_GET_SOCKET_ERROR_H
 
-#include <errno.h>
 #include "opal/constants.h"
+#include <errno.h>
 
 #define opal_socket_errno errno
 

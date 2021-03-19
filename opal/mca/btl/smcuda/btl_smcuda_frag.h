@@ -31,16 +31,16 @@
 #include "btl_smcuda.h"
 
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#    include "opal/mca/common/cuda/common_cuda.h"
 #endif
 
-#define MCA_BTL_SMCUDA_FRAG_TYPE_MASK ((uintptr_t)0x3)
-#define MCA_BTL_SMCUDA_FRAG_SEND ((uintptr_t)0x0)
-#define MCA_BTL_SMCUDA_FRAG_ACK ((uintptr_t)0x1)
-#define MCA_BTL_SMCUDA_FRAG_PUT ((uintptr_t)0x2)
-#define MCA_BTL_SMCUDA_FRAG_GET ((uintptr_t)0x3)
+#define MCA_BTL_SMCUDA_FRAG_TYPE_MASK ((uintptr_t) 0x3)
+#define MCA_BTL_SMCUDA_FRAG_SEND      ((uintptr_t) 0x0)
+#define MCA_BTL_SMCUDA_FRAG_ACK       ((uintptr_t) 0x1)
+#define MCA_BTL_SMCUDA_FRAG_PUT       ((uintptr_t) 0x2)
+#define MCA_BTL_SMCUDA_FRAG_GET       ((uintptr_t) 0x3)
 
-#define MCA_BTL_SMCUDA_FRAG_STATUS_MASK ((uintptr_t)0x4)
+#define MCA_BTL_SMCUDA_FRAG_STATUS_MASK ((uintptr_t) 0x4)
 
 struct mca_btl_smcuda_frag_t;
 
@@ -64,7 +64,7 @@ struct mca_btl_smcuda_segment_t {
     uint8_t key[128]; /* 64 bytes for CUDA mem handle, 64 bytes for CUDA event handle */
     /** Address of the entire memory handle */
     opal_ptr_t memh_seg_addr;
-     /** Length in bytes of entire memory handle */
+    /** Length in bytes of entire memory handle */
     uint32_t memh_seg_len;
 #endif /* OPAL_CUDA_SUPPORT */
 };
@@ -84,39 +84,38 @@ struct mca_btl_smcuda_frag_t {
     size_t size;
     /* pointer written to the FIFO, this is the base of the shared memory region */
     mca_btl_smcuda_hdr_t *hdr;
-    opal_free_list_t* my_list;
+    opal_free_list_t *my_list;
 };
 typedef struct mca_btl_smcuda_frag_t mca_btl_smcuda_frag_t;
 typedef struct mca_btl_smcuda_frag_t mca_btl_smcuda_frag1_t;
 typedef struct mca_btl_smcuda_frag_t mca_btl_smcuda_frag2_t;
 typedef struct mca_btl_smcuda_frag_t mca_btl_smcuda_user_t;
 
-
 OBJ_CLASS_DECLARATION(mca_btl_smcuda_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_smcuda_frag1_t);
 OBJ_CLASS_DECLARATION(mca_btl_smcuda_frag2_t);
 OBJ_CLASS_DECLARATION(mca_btl_smcuda_user_t);
 
-#define MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag)                           \
-{                                                                       \
-    frag = (mca_btl_smcuda_frag_t *)                                    \
-        opal_free_list_get (&mca_btl_smcuda_component.sm_frags_eager);  \
-}
+#define MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag)                \
+    {                                                        \
+        frag = (mca_btl_smcuda_frag_t *) opal_free_list_get( \
+            &mca_btl_smcuda_component.sm_frags_eager);       \
+    }
 
-#define MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag)                             \
-{                                                                       \
-    frag = (mca_btl_smcuda_frag_t *)                                    \
-        opal_free_list_get (&mca_btl_smcuda_component.sm_frags_max);    \
-}
+#define MCA_BTL_SMCUDA_FRAG_ALLOC_MAX(frag)                  \
+    {                                                        \
+        frag = (mca_btl_smcuda_frag_t *) opal_free_list_get( \
+            &mca_btl_smcuda_component.sm_frags_max);         \
+    }
 
-#define MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag)                            \
-{                                                                       \
-    frag = (mca_btl_smcuda_frag_t *)                                    \
-        opal_free_list_get (&mca_btl_smcuda_component.sm_frags_user);   \
-}
+#define MCA_BTL_SMCUDA_FRAG_ALLOC_USER(frag)                 \
+    {                                                        \
+        frag = (mca_btl_smcuda_frag_t *) opal_free_list_get( \
+            &mca_btl_smcuda_component.sm_frags_user);        \
+    }
 
-#define MCA_BTL_SMCUDA_FRAG_RETURN(frag)                                \
-{                                                                       \
-    opal_free_list_return (frag->my_list, (opal_free_list_item_t*)(frag)); \
-}
+#define MCA_BTL_SMCUDA_FRAG_RETURN(frag)                                        \
+    {                                                                           \
+        opal_free_list_return(frag->my_list, (opal_free_list_item_t *) (frag)); \
+    }
 #endif

@@ -45,8 +45,7 @@ typedef void (*opal_bp_graph_cleanup_fn_t)(void *user_data);
  * @returns OPAL_SUCCESS or an OMPI error code
  */
 int opal_bp_graph_create(opal_bp_graph_cleanup_fn_t v_data_cleanup_fn,
-			 opal_bp_graph_cleanup_fn_t e_data_cleanup_fn,
-			 opal_bp_graph_t **g_out);
+                         opal_bp_graph_cleanup_fn_t e_data_cleanup_fn, opal_bp_graph_t **g_out);
 
 /**
  * free the given graph
@@ -70,9 +69,8 @@ int opal_bp_graph_free(opal_bp_graph_t *g);
  * @param[in] g_clone_out     the resulting cloned graph
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_bp_graph_clone(const opal_bp_graph_t *g,
-			bool copy_user_data,
-			opal_bp_graph_t **g_clone_out);
+int opal_bp_graph_clone(const opal_bp_graph_t *g, bool copy_user_data,
+                        opal_bp_graph_t **g_clone_out);
 
 /**
  * return the number of edges for which this vertex is a destination
@@ -81,8 +79,7 @@ int opal_bp_graph_clone(const opal_bp_graph_t *g,
  * @param[in] vertex  the vertex id to query
  * @returns the number of edges for which this vertex is a destination
  */
-int opal_bp_graph_indegree(const opal_bp_graph_t *g,
-			   int vertex);
+int opal_bp_graph_indegree(const opal_bp_graph_t *g, int vertex);
 
 /**
  * return the number of edges for which this vertex is a source
@@ -91,8 +88,7 @@ int opal_bp_graph_indegree(const opal_bp_graph_t *g,
  * @param[in] vertex  the vertex id to query
  * @returns the number of edges for which this vertex is a source
  */
-int opal_bp_graph_outdegree(const opal_bp_graph_t *g,
-			    int vertex);
+int opal_bp_graph_outdegree(const opal_bp_graph_t *g, int vertex);
 
 /**
  * add an edge to the given graph
@@ -106,12 +102,8 @@ int opal_bp_graph_outdegree(const opal_bp_graph_t *g,
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_bp_graph_add_edge(opal_bp_graph_t *g,
-			   int from,
-			   int to,
-			   int64_t cost,
-			   int capacity,
-			   void *e_data);
+int opal_bp_graph_add_edge(opal_bp_graph_t *g, int from, int to, int64_t cost, int capacity,
+                           void *e_data);
 
 /**
  * add a vertex to the given graph
@@ -122,9 +114,7 @@ int opal_bp_graph_add_edge(opal_bp_graph_t *g,
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_bp_graph_add_vertex(opal_bp_graph_t *g,
-			     void *v_data,
-			     int *index_out);
+int opal_bp_graph_add_vertex(opal_bp_graph_t *g, void *v_data, int *index_out);
 
 /**
  * Get a pointer to the vertex data given the graph and vertex index
@@ -136,9 +126,7 @@ int opal_bp_graph_add_vertex(opal_bp_graph_t *g,
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_bp_graph_get_vertex_data(opal_bp_graph_t *g,
-                                  int v_index,
-                                  void** v_data_out);
+int opal_bp_graph_get_vertex_data(opal_bp_graph_t *g, int v_index, void **v_data_out);
 
 /**
  * compute the order of a graph (number of vertices)
@@ -171,8 +159,7 @@ int opal_bp_graph_order(const opal_bp_graph_t *g);
  *
  * @returns OPAL_SUCCESS or an OMPI error code
  */
-int opal_bp_graph_solve_bipartite_assignment(const opal_bp_graph_t *g,
-					     int *num_match_edges_out,
-					     int **match_edges_out);
+int opal_bp_graph_solve_bipartite_assignment(const opal_bp_graph_t *g, int *num_match_edges_out,
+                                             int **match_edges_out);
 
 #endif /* OPAL_BP_GRAPH_H */

@@ -23,8 +23,7 @@
 #include "btl_portals4.h"
 #include "btl_portals4_frag.h"
 
-static void
-mca_btl_portals4_frag_common_send_constructor(mca_btl_portals4_frag_t* frag)
+static void mca_btl_portals4_frag_common_send_constructor(mca_btl_portals4_frag_t *frag)
 {
     frag->base.des_flags = 0;
     frag->base.des_segments = &frag->segments[0].base;
@@ -37,16 +36,14 @@ mca_btl_portals4_frag_common_send_constructor(mca_btl_portals4_frag_t* frag)
     frag->me_h = PTL_INVALID_HANDLE;
 }
 
-static void
-mca_btl_portals4_frag_eager_constructor(mca_btl_portals4_frag_t* frag)
+static void mca_btl_portals4_frag_eager_constructor(mca_btl_portals4_frag_t *frag)
 {
     frag->size = mca_btl_portals4_module.super.btl_eager_limit;
     mca_btl_portals4_frag_common_send_constructor(frag);
     frag->type = BTL_PORTALS4_FRAG_TYPE_EAGER;
 }
 
-static void
-mca_btl_portals4_frag_eager_destructor(mca_btl_portals4_frag_t* frag)
+static void mca_btl_portals4_frag_eager_destructor(mca_btl_portals4_frag_t *frag)
 {
     if (PTL_INVALID_HANDLE != frag->me_h) {
         PtlMEUnlink(frag->me_h);
@@ -54,42 +51,27 @@ mca_btl_portals4_frag_eager_destructor(mca_btl_portals4_frag_t* frag)
     }
 }
 
-static void
-mca_btl_portals4_frag_max_constructor(mca_btl_portals4_frag_t* frag)
+static void mca_btl_portals4_frag_max_constructor(mca_btl_portals4_frag_t *frag)
 {
     frag->size = mca_btl_portals4_module.super.btl_max_send_size;
     mca_btl_portals4_frag_common_send_constructor(frag);
     frag->type = BTL_PORTALS4_FRAG_TYPE_MAX;
 }
 
-static void
-mca_btl_portals4_frag_user_constructor(mca_btl_portals4_frag_t* frag)
+static void mca_btl_portals4_frag_user_constructor(mca_btl_portals4_frag_t *frag)
 {
     frag->base.des_flags = 0;
     frag->size = 0;
     frag->type = BTL_PORTALS4_FRAG_TYPE_USER;
 }
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_portals4_frag_t,
-    mca_btl_base_descriptor_t,
-    NULL,
-    NULL);
+OBJ_CLASS_INSTANCE(mca_btl_portals4_frag_t, mca_btl_base_descriptor_t, NULL, NULL);
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_portals4_frag_eager_t,
-    mca_btl_base_descriptor_t,
-    mca_btl_portals4_frag_eager_constructor,
-    mca_btl_portals4_frag_eager_destructor);
+OBJ_CLASS_INSTANCE(mca_btl_portals4_frag_eager_t, mca_btl_base_descriptor_t,
+                   mca_btl_portals4_frag_eager_constructor, mca_btl_portals4_frag_eager_destructor);
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_portals4_frag_max_t,
-    mca_btl_base_descriptor_t,
-    mca_btl_portals4_frag_max_constructor,
-    NULL);
+OBJ_CLASS_INSTANCE(mca_btl_portals4_frag_max_t, mca_btl_base_descriptor_t,
+                   mca_btl_portals4_frag_max_constructor, NULL);
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_portals4_frag_user_t,
-    mca_btl_base_descriptor_t,
-    mca_btl_portals4_frag_user_constructor,
-    NULL);
+OBJ_CLASS_INSTANCE(mca_btl_portals4_frag_user_t, mca_btl_base_descriptor_t,
+                   mca_btl_portals4_frag_user_constructor, NULL);

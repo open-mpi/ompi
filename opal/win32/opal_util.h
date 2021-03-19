@@ -24,7 +24,7 @@ static __inline int getpagesize(void)
     SYSTEM_INFO sys_info;
 
     GetSystemInfo(&sys_info);
-    return (int)sys_info.dwPageSize;
+    return (int) sys_info.dwPageSize;
 }
 
 #endif

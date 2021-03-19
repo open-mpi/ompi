@@ -46,7 +46,6 @@
 
 BEGIN_C_DECLS
 
-
 /**
  * Initialize the memory hooks subsystem
  *
@@ -61,7 +60,6 @@ BEGIN_C_DECLS
  * @retval OPAL_SUCCESS Initialization completed successfully
  */
 OPAL_DECLSPEC int opal_mem_hooks_init(void);
-
 
 /**
  * Query level of support provided by memory hooks
@@ -89,7 +87,6 @@ OPAL_DECLSPEC int opal_mem_hooks_init(void);
  */
 OPAL_DECLSPEC int opal_mem_hooks_support_level(void);
 
-
 /**
  * Memory status change callback
  *
@@ -106,9 +103,7 @@ OPAL_DECLSPEC int opal_mem_hooks_support_level(void);
  *                general allocation routines (malloc, calloc, free,
  *                etc.) or directly from the user (mmap, munmap, etc.)
  */
-typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length,
-                                            void *cbdata, bool from_alloc);
-
+typedef void(opal_mem_hooks_callback_fn_t)(void *buf, size_t length, void *cbdata, bool from_alloc);
 
 /**
  * Register callback for when memory is to be released
@@ -126,8 +121,7 @@ typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length,
  * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for
  *                      receiving callbacks when memory is to be released
  */
-OPAL_DECLSPEC int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func,
-                                                  void *cbdata);
+OPAL_DECLSPEC int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata);
 
 /**
  * Unregister previously registered release callback
@@ -140,7 +134,6 @@ OPAL_DECLSPEC int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *
  * @retval OPAL_ERR_NOT_FOUND The function was not previously registered
  */
 OPAL_DECLSPEC int opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t *func);
-
 
 END_C_DECLS
 

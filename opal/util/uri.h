@@ -53,7 +53,7 @@
 #include "opal_config.h"
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 
 BEGIN_C_DECLS
@@ -63,15 +63,16 @@ BEGIN_C_DECLS
  *
  * The caller is responsible for freeing the returned string.
  */
-OPAL_DECLSPEC char *opal_uri_get_scheme(const char *uri) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC char *opal_uri_get_scheme(const char *uri)
+    __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
 /**
  *  Create a uri from a hostname and filename
  *
  * The caller is responsible for freeing the returned string.
  */
-OPAL_DECLSPEC char *opal_filename_to_uri(const char *filename,
-                                         const char *hostname) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC char *opal_filename_to_uri(const char *filename, const char *hostname)
+    __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 /**
  * Extract the filename (and hostname) from a uri
  *
@@ -83,8 +84,8 @@ OPAL_DECLSPEC char *opal_filename_to_uri(const char *filename,
  *
  * The caller is responsible for freeing the returned string.
  */
-OPAL_DECLSPEC char *opal_filename_from_uri(const char *uri,
-                                           char **hostname) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC char *opal_filename_from_uri(const char *uri, char **hostname)
+    __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
 END_C_DECLS
 #endif /* OPAL_URI_H */

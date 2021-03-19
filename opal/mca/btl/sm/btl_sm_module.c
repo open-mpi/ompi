@@ -104,10 +104,10 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    component->mpool = mca_mpool_basic_create((void *) (component->my_segment +
-                                                        MCA_BTL_SM_FIFO_SIZE),
-                                              (unsigned long) (mca_btl_sm_component.segment_size -
-                                                               MCA_BTL_SM_FIFO_SIZE),
+    component->mpool = mca_mpool_basic_create((void *) (component->my_segment
+                                                        + MCA_BTL_SM_FIFO_SIZE),
+                                              (unsigned long) (mca_btl_sm_component.segment_size
+                                                               - MCA_BTL_SM_FIFO_SIZE),
                                               64);
     if (NULL == component->mpool) {
         free(component->endpoints);
@@ -334,8 +334,8 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
     for (int32_t proc = 0; proc < (int32_t) nprocs; ++proc) {
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
-        if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
-            !OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
+        if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid
+            || !OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             peers[proc] = NULL;
             continue;
         }
@@ -459,8 +459,8 @@ mca_btl_base_descriptor_t *mca_btl_sm_alloc(struct mca_btl_base_module_t *btl,
         MCA_BTL_SM_FRAG_ALLOC_USER(frag, endpoint);
     } else if (size <= mca_btl_sm.super.btl_eager_limit) {
         MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, endpoint);
-    } else if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism &&
-               size <= mca_btl_sm.super.btl_max_send_size) {
+    } else if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism
+               && size <= mca_btl_sm.super.btl_max_send_size) {
         MCA_BTL_SM_FRAG_ALLOC_MAX(frag, endpoint);
     }
 
@@ -512,8 +512,8 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_modu
         struct iovec iov;
 
         /* non-contiguous data requires the convertor */
-        if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism &&
-            total_size > mca_btl_sm.super.btl_eager_limit) {
+        if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism
+            && total_size > mca_btl_sm.super.btl_eager_limit) {
             MCA_BTL_SM_FRAG_ALLOC_MAX(frag, endpoint);
         } else {
             MCA_BTL_SM_FRAG_ALLOC_EAGER(frag, endpoint);
@@ -550,8 +550,8 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_modu
 
 #if OPAL_BTL_SM_HAVE_XPMEM
         /* use xpmem to send this segment if it is above the max inline send size */
-        if (OPAL_UNLIKELY(MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism &&
-                          total_size > (size_t) mca_btl_sm_component.max_inline_send)) {
+        if (OPAL_UNLIKELY(MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism
+                          && total_size > (size_t) mca_btl_sm_component.max_inline_send)) {
             /* single copy send */
             frag->hdr->flags = MCA_BTL_SM_FLAG_SINGLE_COPY;
 

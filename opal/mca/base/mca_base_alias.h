@@ -17,9 +17,9 @@
 BEGIN_C_DECLS
 
 enum mca_base_alias_flags_t {
-      MCA_BASE_ALIAS_FLAG_NONE       = 0,
-      /** The aliased name has been deprecated. */
-      MCA_BASE_ALIAS_FLAG_DEPRECATED = 1,
+    MCA_BASE_ALIAS_FLAG_NONE = 0,
+    /** The aliased name has been deprecated. */
+    MCA_BASE_ALIAS_FLAG_DEPRECATED = 1,
 };
 
 typedef enum mca_base_alias_flags_t mca_base_alias_flags_t;
@@ -67,10 +67,9 @@ OBJ_CLASS_DECLARATION(mca_base_alias_t);
  * component if the synonym is registered in the btl framework
  * registration function.
  */
-OPAL_DECLSPEC int mca_base_alias_register (const char *project, const char *framework,
-                                           const char *component_name,
-                                           const char *component_alias,
-                                           uint32_t alias_flags);
+OPAL_DECLSPEC int mca_base_alias_register(const char *project, const char *framework,
+                                          const char *component_name, const char *component_alias,
+                                          uint32_t alias_flags);
 
 /**
  * @brief Check for aliases for a component.
@@ -79,8 +78,7 @@ OPAL_DECLSPEC int mca_base_alias_register (const char *project, const char *fram
  * @param[in] frameworek     Framework name (may be NULL)
  * @param[in] component_name Component name (may not be NULL)
  */
-OPAL_DECLSPEC const mca_base_alias_t *mca_base_alias_lookup(const char *project,
-                                                            const char *framework,
-                                                            const char *component_name);
+OPAL_DECLSPEC const mca_base_alias_t *
+mca_base_alias_lookup(const char *project, const char *framework, const char *component_name);
 
 #endif /* OPAL_MCA_BASE_ALIAS_H */

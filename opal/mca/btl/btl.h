@@ -118,13 +118,13 @@
 #define OPAL_MCA_BTL_H
 
 #include "opal_config.h"
-#include "opal/types.h"
-#include "opal/prefetch.h" /* For OPAL_LIKELY */
 #include "opal/class/opal_bitmap.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/rcache/rcache.h"
+#include "opal/prefetch.h" /* For OPAL_LIKELY */
+#include "opal/types.h"
 
 BEGIN_C_DECLS
 
@@ -152,14 +152,13 @@ struct opal_proc_t;
 struct mca_btl_base_registration_handle_t;
 typedef struct mca_btl_base_registration_handle_t mca_btl_base_registration_handle_t;
 
-
 /* Wildcard endpoint for use in the register_mem function */
 #define MCA_BTL_ENDPOINT_ANY (struct mca_btl_base_endpoint_t *) -1
 
 /* send/recv operations require tag matching */
 typedef uint8_t mca_btl_base_tag_t;
 
-#define MCA_BTL_NO_ORDER       255
+#define MCA_BTL_NO_ORDER 255
 
 /*
  * Communication specific defines. There are a number of active message ID
@@ -175,58 +174,58 @@ typedef uint8_t mca_btl_base_tag_t;
  * information about how these framework ID are defined, take a look in the
  * header file associated with the framework.
  */
-#define MCA_BTL_AM_FRAMEWORK_MASK   0xD0
-#define MCA_BTL_TAG_BTL_BASE        0x10
-#define MCA_BTL_TAG_BTL             0x20
+#define MCA_BTL_AM_FRAMEWORK_MASK 0xD0
+#define MCA_BTL_TAG_BTL_BASE      0x10
+#define MCA_BTL_TAG_BTL           0x20
 #if OPAL_ENABLE_FT_MPI
-#define MCA_BTL_TAG_FT_RBCAST       0x30
-#define MCA_BTL_TAG_FT_AGREE        0x31
+#    define MCA_BTL_TAG_FT_RBCAST 0x30
+#    define MCA_BTL_TAG_FT_AGREE  0x31
 #endif
-#define MCA_BTL_TAG_PML             0x40
-#define MCA_BTL_TAG_OSC_RDMA        0x60
-#define MCA_BTL_TAG_USR             0x80
-#define MCA_BTL_TAG_MAX             255 /* 1 + highest allowed tag num */
+#define MCA_BTL_TAG_PML      0x40
+#define MCA_BTL_TAG_OSC_RDMA 0x60
+#define MCA_BTL_TAG_USR      0x80
+#define MCA_BTL_TAG_MAX      255 /* 1 + highest allowed tag num */
 
 /*
  * Reserved tags for specific BTLs. As multiple BTLs can be active
  * simultaneously, their tags should not collide.
  */
-#define MCA_BTL_TAG_IB                (MCA_BTL_TAG_BTL + 0)
-#define MCA_BTL_TAG_UDAPL             (MCA_BTL_TAG_BTL + 1)
-#define MCA_BTL_TAG_SMCUDA            (MCA_BTL_TAG_BTL + 2)
-#define MCA_BTL_TAG_SM                (MCA_BTL_TAG_BTL + 3)
+#define MCA_BTL_TAG_IB     (MCA_BTL_TAG_BTL + 0)
+#define MCA_BTL_TAG_UDAPL  (MCA_BTL_TAG_BTL + 1)
+#define MCA_BTL_TAG_SMCUDA (MCA_BTL_TAG_BTL + 2)
+#define MCA_BTL_TAG_SM     (MCA_BTL_TAG_BTL + 3)
 
 /* prefered protocol */
-#define MCA_BTL_FLAGS_SEND            0x0001
-#define MCA_BTL_FLAGS_PUT             0x0002
-#define MCA_BTL_FLAGS_GET             0x0004
+#define MCA_BTL_FLAGS_SEND 0x0001
+#define MCA_BTL_FLAGS_PUT  0x0002
+#define MCA_BTL_FLAGS_GET  0x0004
 /* btls that set the MCA_BTL_FLAGS_RDMA will always get added to the BML
  * rdma_btls list. This allows the updated one-sided component to
  * use btls that are not otherwise used for send/recv. */
-#define MCA_BTL_FLAGS_RDMA (MCA_BTL_FLAGS_GET|MCA_BTL_FLAGS_PUT)
+#define MCA_BTL_FLAGS_RDMA (MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_PUT)
 
 /* btl can send directly from user buffer w/out registration */
-#define MCA_BTL_FLAGS_SEND_INPLACE    0x0008
+#define MCA_BTL_FLAGS_SEND_INPLACE 0x0008
 
 /* btl transport reliability flags - currently used only by the DR PML */
-#define MCA_BTL_FLAGS_NEED_ACK        0x0010
-#define MCA_BTL_FLAGS_NEED_CSUM       0x0020
+#define MCA_BTL_FLAGS_NEED_ACK  0x0010
+#define MCA_BTL_FLAGS_NEED_CSUM 0x0020
 
 /** deprecated (BTL 3.0) */
-#define MCA_BTL_FLAGS_RDMA_MATCHED    0x0040
+#define MCA_BTL_FLAGS_RDMA_MATCHED 0x0040
 
 /* btl needs local rdma completion */
 #define MCA_BTL_FLAGS_RDMA_COMPLETION 0x0080
 
- /* btl can do heterogeneous rdma operations on byte buffers */
+/* btl can do heterogeneous rdma operations on byte buffers */
 #define MCA_BTL_FLAGS_HETEROGENEOUS_RDMA 0x0100
 
 /* btl can support failover if enabled */
 #define MCA_BTL_FLAGS_FAILOVER_SUPPORT 0x0200
 
-#define MCA_BTL_FLAGS_CUDA_PUT        0x0400
-#define MCA_BTL_FLAGS_CUDA_GET        0x0800
-#define MCA_BTL_FLAGS_CUDA_RDMA (MCA_BTL_FLAGS_CUDA_GET|MCA_BTL_FLAGS_CUDA_PUT)
+#define MCA_BTL_FLAGS_CUDA_PUT             0x0400
+#define MCA_BTL_FLAGS_CUDA_GET             0x0800
+#define MCA_BTL_FLAGS_CUDA_RDMA            (MCA_BTL_FLAGS_CUDA_GET | MCA_BTL_FLAGS_CUDA_PUT)
 #define MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND 0x1000
 #define MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV 0x2000
 
@@ -236,12 +235,12 @@ typedef uint8_t mca_btl_base_tag_t;
  * (and probably will) turn this flag on and off using the MCA variable
  * system.
  */
-#define MCA_BTL_FLAGS_SIGNALED        0x4000
+#define MCA_BTL_FLAGS_SIGNALED 0x4000
 
 /** The BTL supports network atomic operations */
-#define MCA_BTL_FLAGS_ATOMIC_OPS      0x08000
+#define MCA_BTL_FLAGS_ATOMIC_OPS 0x08000
 /** The BTL supports fetching network atomic operations */
-#define MCA_BTL_FLAGS_ATOMIC_FOPS     0x10000
+#define MCA_BTL_FLAGS_ATOMIC_FOPS 0x10000
 
 /** The BTL requires add_procs to be with all procs including non-local. Shared-memory
  * BTLs should not set this flag. */
@@ -251,25 +250,25 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_FLAGS_BTL_PROGRESS_THREAD_ENABLED 0x40000
 
 /* The BTL supports RMDA flush */
-#define MCA_BTL_FLAGS_RDMA_FLUSH      0x80000
+#define MCA_BTL_FLAGS_RDMA_FLUSH 0x80000
 
 /* The BTL has an active-message based put */
-#define MCA_BTL_FLAGS_PUT_AM          0x100000
+#define MCA_BTL_FLAGS_PUT_AM 0x100000
 
 /* The BTL has an active-message based get */
-#define MCA_BTL_FLAGS_GET_AM          0x200000
+#define MCA_BTL_FLAGS_GET_AM 0x200000
 
 /* The BTL has active-message based atomics */
-#define MCA_BTL_FLAGS_ATOMIC_AM_FOP   0x400000
+#define MCA_BTL_FLAGS_ATOMIC_AM_FOP 0x400000
 
 /* Default exclusivity levels */
-#define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
-#define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
-#define MCA_BTL_EXCLUSIVITY_LOW      0         /* TCP used as a last resort */
+#define MCA_BTL_EXCLUSIVITY_HIGH    (64 * 1024) /* internal loopback */
+#define MCA_BTL_EXCLUSIVITY_DEFAULT 1024 /* GM/IB/etc. */
+#define MCA_BTL_EXCLUSIVITY_LOW     0 /* TCP used as a last resort */
 
 /* error callback flags */
-#define MCA_BTL_ERROR_FLAGS_FATAL 0x1
-#define MCA_BTL_ERROR_FLAGS_NONFATAL 0x2
+#define MCA_BTL_ERROR_FLAGS_FATAL        0x1
+#define MCA_BTL_ERROR_FLAGS_NONFATAL     0x2
 #define MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC 0x4
 
 /** registration flags. the access flags are a 1-1 mapping with the mpool
@@ -278,15 +277,15 @@ enum {
     /** Allow local write on the registered region. If a region is registered
      * with this flag the registration can be used as the local handle for a
      * btl_get operation. */
-    MCA_BTL_REG_FLAG_LOCAL_WRITE   = MCA_RCACHE_ACCESS_LOCAL_WRITE,
+    MCA_BTL_REG_FLAG_LOCAL_WRITE = MCA_RCACHE_ACCESS_LOCAL_WRITE,
     /** Allow remote read on the registered region. If a region is registered
      * with this flag the registration can be used as the remote handle for a
      * btl_get operation. */
-    MCA_BTL_REG_FLAG_REMOTE_READ   = MCA_RCACHE_ACCESS_REMOTE_READ,
+    MCA_BTL_REG_FLAG_REMOTE_READ = MCA_RCACHE_ACCESS_REMOTE_READ,
     /** Allow remote write on the registered region. If a region is registered
      * with this flag the registration can be used as the remote handle for a
      * btl_put operation. */
-    MCA_BTL_REG_FLAG_REMOTE_WRITE  = MCA_RCACHE_ACCESS_REMOTE_WRITE,
+    MCA_BTL_REG_FLAG_REMOTE_WRITE = MCA_RCACHE_ACCESS_REMOTE_WRITE,
     /** Allow remote atomic operations on the registered region. If a region is
      * registered with this flag the registration can be used as the remote
      * handle for a btl_atomic_op or btl_atomic_fop operation. */
@@ -294,53 +293,53 @@ enum {
     /** Allow any btl operation on the registered region. If a region is registered
      * with this flag the registration can be used as the local or remote handle for
      * any btl operation. */
-    MCA_BTL_REG_FLAG_ACCESS_ANY    = MCA_RCACHE_ACCESS_ANY,
+    MCA_BTL_REG_FLAG_ACCESS_ANY = MCA_RCACHE_ACCESS_ANY,
 #if OPAL_CUDA_GDR_SUPPORT
     /** Region is in GPU memory */
-    MCA_BTL_REG_FLAG_CUDA_GPU_MEM  = 0x00010000,
+    MCA_BTL_REG_FLAG_CUDA_GPU_MEM = 0x00010000,
 #endif
 };
 
 /** supported atomic operations */
 enum {
     /** The btl supports atomic add */
-    MCA_BTL_ATOMIC_SUPPORTS_ADD    = 0x00000001,
+    MCA_BTL_ATOMIC_SUPPORTS_ADD = 0x00000001,
     /** The btl supports atomic bitwise and */
-    MCA_BTL_ATOMIC_SUPPORTS_AND    = 0x00000200,
+    MCA_BTL_ATOMIC_SUPPORTS_AND = 0x00000200,
     /** The btl supports atomic bitwise or */
-    MCA_BTL_ATOMIC_SUPPORTS_OR     = 0x00000400,
+    MCA_BTL_ATOMIC_SUPPORTS_OR = 0x00000400,
     /** The btl supports atomic bitwise exclusive or */
-    MCA_BTL_ATOMIC_SUPPORTS_XOR    = 0x00000800,
+    MCA_BTL_ATOMIC_SUPPORTS_XOR = 0x00000800,
 
     /** The btl supports logical and */
-    MCA_BTL_ATOMIC_SUPPORTS_LAND   = 0x00001000,
+    MCA_BTL_ATOMIC_SUPPORTS_LAND = 0x00001000,
     /** The btl supports logical or */
-    MCA_BTL_ATOMIC_SUPPORTS_LOR    = 0x00002000,
+    MCA_BTL_ATOMIC_SUPPORTS_LOR = 0x00002000,
     /** The btl supports logical exclusive or */
-    MCA_BTL_ATOMIC_SUPPORTS_LXOR   = 0x00004000,
+    MCA_BTL_ATOMIC_SUPPORTS_LXOR = 0x00004000,
 
     /** The btl supports atomic swap */
-    MCA_BTL_ATOMIC_SUPPORTS_SWAP   = 0x00010000,
+    MCA_BTL_ATOMIC_SUPPORTS_SWAP = 0x00010000,
 
     /** The btl supports atomic min */
-    MCA_BTL_ATOMIC_SUPPORTS_MIN    = 0x00100000,
+    MCA_BTL_ATOMIC_SUPPORTS_MIN = 0x00100000,
     /** The btl supports atomic min */
-    MCA_BTL_ATOMIC_SUPPORTS_MAX    = 0x00200000,
+    MCA_BTL_ATOMIC_SUPPORTS_MAX = 0x00200000,
 
     /** The btl supports 32-bit integer operations. Keep in mind the btl may
      * support only a subset of the available atomics. */
-    MCA_BTL_ATOMIC_SUPPORTS_32BIT  = 0x01000000,
+    MCA_BTL_ATOMIC_SUPPORTS_32BIT = 0x01000000,
 
     /** The btl supports floating-point operations. Keep in mind the btl may
      * support only a subset of the available atomics and may not support
      * both 64 or 32-bit floating point. */
-    MCA_BTL_ATOMIC_SUPPORTS_FLOAT  = 0x02000000,
+    MCA_BTL_ATOMIC_SUPPORTS_FLOAT = 0x02000000,
 
     /** The btl supports atomic compare-and-swap */
-    MCA_BTL_ATOMIC_SUPPORTS_CSWAP  = 0x10000000,
+    MCA_BTL_ATOMIC_SUPPORTS_CSWAP = 0x10000000,
 
     /** The btl guarantees global atomicity (can mix btl atomics with cpu atomics) */
-    MCA_BTL_ATOMIC_SUPPORTS_GLOB   = 0x20000000,
+    MCA_BTL_ATOMIC_SUPPORTS_GLOB = 0x20000000,
 };
 
 enum {
@@ -356,7 +355,7 @@ enum mca_btl_base_atomic_op_t {
     /** Atomic and: (*remote_address) = (*remote_address) & operand */
     MCA_BTL_ATOMIC_AND = 0x0011,
     /** Atomic or: (*remote_address) = (*remote_address) | operand */
-    MCA_BTL_ATOMIC_OR  = 0x0012,
+    MCA_BTL_ATOMIC_OR = 0x0012,
     /** Atomic xor: (*remote_address) = (*remote_address) ^ operand */
     MCA_BTL_ATOMIC_XOR = 0x0014,
     /** Atomic logical and: (*remote_address) = (*remote_address) && operand */
@@ -388,12 +387,10 @@ typedef enum mca_btl_base_atomic_op_t mca_btl_base_atomic_op_t;
  * @param[IN] descriptor  the BTL descriptor
  *
  */
-typedef void (*mca_btl_base_completion_fn_t)(
-    struct mca_btl_base_module_t* module,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* descriptor,
-    int status);
-
+typedef void (*mca_btl_base_completion_fn_t)(struct mca_btl_base_module_t *module,
+                                             struct mca_btl_base_endpoint_t *endpoint,
+                                             struct mca_btl_base_descriptor_t *descriptor,
+                                             int status);
 
 /**
  * Asynchronous callback function on completion of an rdma or atomic operation.
@@ -411,14 +408,9 @@ typedef void (*mca_btl_base_completion_fn_t)(
  *
  */
 typedef void (*mca_btl_base_rdma_completion_fn_t)(
-    struct mca_btl_base_module_t* module,
-    struct mca_btl_base_endpoint_t* endpoint,
-    void *local_address,
-    struct mca_btl_base_registration_handle_t *local_handle,
-    void *context,
-    void *cbdata,
-    int status);
-
+    struct mca_btl_base_module_t *module, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, struct mca_btl_base_registration_handle_t *local_handle, void *context,
+    void *cbdata, int status);
 
 /**
  * Describes a region/segment of memory that is addressable
@@ -440,26 +432,25 @@ typedef void (*mca_btl_base_rdma_completion_fn_t)(
 struct mca_btl_base_segment_t {
     /** Address of the memory */
     opal_ptr_t seg_addr;
-     /** Length in bytes */
-    uint64_t   seg_len;
+    /** Length in bytes */
+    uint64_t seg_len;
 };
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
 
-
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && !defined(WORDS_BIGENDIAN)
-#define MCA_BTL_BASE_SEGMENT_HTON(s)                   \
-    do {                                               \
-        (s).seg_addr.lval = hton64((s).seg_addr.lval); \
-        (s).seg_len = hton64((s).seg_len);             \
-    } while(0)
-#define MCA_BTL_BASE_SEGMENT_NTOH(s)                   \
-    do {                                               \
-        (s).seg_addr.lval = ntoh64((s).seg_addr.lval); \
-        (s).seg_len = ntoh64((s).seg_len);             \
-    } while(0)
+#    define MCA_BTL_BASE_SEGMENT_HTON(s)                   \
+        do {                                               \
+            (s).seg_addr.lval = hton64((s).seg_addr.lval); \
+            (s).seg_len = hton64((s).seg_len);             \
+        } while (0)
+#    define MCA_BTL_BASE_SEGMENT_NTOH(s)                   \
+        do {                                               \
+            (s).seg_addr.lval = ntoh64((s).seg_addr.lval); \
+            (s).seg_len = ntoh64((s).seg_len);             \
+        } while (0)
 #else
-#define MCA_BTL_BASE_SEGMENT_HTON(s)
-#define MCA_BTL_BASE_SEGMENT_NTOH(s)
+#    define MCA_BTL_BASE_SEGMENT_HTON(s)
+#    define MCA_BTL_BASE_SEGMENT_NTOH(s)
 #endif
 /**
  * @brief Descriptor to hold outgoing send messages
@@ -470,12 +461,12 @@ typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
  */
 struct mca_btl_base_descriptor_t {
     opal_free_list_item_t super;
-    mca_btl_base_segment_t *des_segments;     /**< local segments */
-    size_t des_segment_count;                 /**< number of local segments */
-    mca_btl_base_completion_fn_t des_cbfunc;  /**< local callback function */
-    void* des_cbdata;                         /**< opaque callback data */
-    void* des_context;                        /**< more opaque callback data */
-    uint32_t des_flags;                       /**< hints to BTL */
+    mca_btl_base_segment_t *des_segments;    /**< local segments */
+    size_t des_segment_count;                /**< number of local segments */
+    mca_btl_base_completion_fn_t des_cbfunc; /**< local callback function */
+    void *des_cbdata;                        /**< opaque callback data */
+    void *des_context;                       /**< more opaque callback data */
+    uint32_t des_flags;                      /**< hints to BTL */
     /** order value, this is only
         valid in the local completion callback
         and may be used in subsequent calls to
@@ -489,25 +480,25 @@ typedef struct mca_btl_base_descriptor_t mca_btl_base_descriptor_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
 
-#define MCA_BTL_DES_FLAGS_PRIORITY          0x0001
+#define MCA_BTL_DES_FLAGS_PRIORITY 0x0001
 /* Allow the BTL to dispose the descriptor once the callback
  * associated was triggered.
  */
-#define MCA_BTL_DES_FLAGS_BTL_OWNERSHIP     0x0002
+#define MCA_BTL_DES_FLAGS_BTL_OWNERSHIP 0x0002
 /* Allow the BTL to avoid calling the descriptor callback
  * if the send succeded in the btl_send (i.e in the fast path).
  */
-#define MCA_BTL_DES_SEND_ALWAYS_CALLBACK    0x0004
+#define MCA_BTL_DES_SEND_ALWAYS_CALLBACK 0x0004
 
 /* Tell the PML that the copy is being done asynchronously
  */
-#define MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC   0x0008
+#define MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC 0x0008
 
 /* Ask the BTL to wake the remote process (send/sendi) or local process
  * (put/get) to handle this message. The BTL may ignore this flag if
  * signaled operations are not supported.
  */
-#define MCA_BTL_DES_FLAGS_SIGNAL            0x0040
+#define MCA_BTL_DES_FLAGS_SIGNAL 0x0040
 
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.
@@ -546,11 +537,10 @@ struct mca_btl_base_receive_descriptor_t {
 };
 typedef struct mca_btl_base_receive_descriptor_t mca_btl_base_receive_descriptor_t;
 
-
 /*
  *  BTL base header, stores the tag at a minimum
  */
-struct mca_btl_base_header_t{
+struct mca_btl_base_header_t {
     mca_btl_base_tag_t tag;
 };
 typedef struct mca_btl_base_header_t mca_btl_base_header_t;
@@ -588,11 +578,8 @@ typedef struct mca_btl_base_header_t mca_btl_base_header_t;
  *
  */
 
-typedef struct mca_btl_base_module_t** (*mca_btl_base_component_init_fn_t)(
-    int *num_btls,
-    bool enable_progress_threads,
-    bool enable_mpi_threads
-);
+typedef struct mca_btl_base_module_t **(*mca_btl_base_component_init_fn_t)(
+    int *num_btls, bool enable_progress_threads, bool enable_mpi_threads);
 
 /**
  * MCA->BTL Called to progress outstanding requests for
@@ -604,7 +591,6 @@ typedef struct mca_btl_base_module_t** (*mca_btl_base_component_init_fn_t)(
  */
 
 typedef int (*mca_btl_base_component_progress_fn_t)(void);
-
 
 /**
  * Callback function that is called asynchronously on receipt
@@ -621,16 +607,15 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
  */
 
 typedef void (*mca_btl_base_module_recv_cb_fn_t)(
-    struct mca_btl_base_module_t *btl,
-    const mca_btl_base_receive_descriptor_t *descriptor);
+    struct mca_btl_base_module_t *btl, const mca_btl_base_receive_descriptor_t *descriptor);
 
 typedef struct mca_btl_active_message_callback_t {
     mca_btl_base_module_recv_cb_fn_t cbfunc;
-    void* cbdata;
+    void *cbdata;
 } mca_btl_active_message_callback_t;
 
-OPAL_DECLSPEC extern
-mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TAG_MAX];
+OPAL_DECLSPEC extern mca_btl_active_message_callback_t
+    mca_btl_base_active_message_trigger[MCA_BTL_TAG_MAX];
 
 /**
  *  BTL component descriptor. Contains component version information
@@ -638,10 +623,10 @@ mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TA
  */
 
 struct mca_btl_base_component_3_0_0_t {
-  mca_base_component_t btl_version;
-  mca_base_component_data_t btl_data;
-  mca_btl_base_component_init_fn_t btl_init;
-  mca_btl_base_component_progress_fn_t btl_progress;
+    mca_base_component_t btl_version;
+    mca_base_component_data_t btl_data;
+    mca_btl_base_component_init_fn_t btl_init;
+    mca_btl_base_component_progress_fn_t btl_progress;
 };
 typedef struct mca_btl_base_component_3_0_0_t mca_btl_base_component_3_0_0_t;
 typedef struct mca_btl_base_component_3_0_0_t mca_btl_base_component_t;
@@ -653,7 +638,6 @@ typedef struct mca_btl_base_component_3_0_0_t mca_btl_base_component_t;
  *  can not be used with the new interface.
  */
 typedef struct mca_btl_base_component_3_0_0_t mca_btl_base_component_2_0_0_t;
-
 
 /*
  * BTL module interface functions and datatype.
@@ -672,9 +656,7 @@ typedef struct mca_btl_base_component_3_0_0_t mca_btl_base_component_2_0_0_t;
  * to the BTL module freed.
  *
  */
-typedef int (*mca_btl_base_module_finalize_fn_t)(
-    struct mca_btl_base_module_t* btl
-);
+typedef int (*mca_btl_base_module_finalize_fn_t)(struct mca_btl_base_module_t *btl);
 
 /**
  * BML->BTL notification of change in the process list.
@@ -683,7 +665,8 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(
  * @param nprocs (IN)         Number of processes
  * @param procs (IN)          Array of processes
  * @param endpoint (OUT)      Array of mca_btl_base_endpoint_t structures by BTL.
- * @param reachable (OUT)     Bitmask indicating set of peer processes that are reachable by this BTL.
+ * @param reachable (OUT)     Bitmask indicating set of peer processes that are reachable by this
+ * BTL.
  * @return                    OPAL_SUCCESS or error status on failure.
  *
  * The mca_btl_base_module_add_procs_fn_t() is called by the BML to
@@ -703,13 +686,10 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(
  * addressing or connection information (e.g. TCP socket, IB queue
  * pair).
  */
-typedef int (*mca_btl_base_module_add_procs_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    size_t nprocs,
-    struct opal_proc_t** procs,
-    struct mca_btl_base_endpoint_t** endpoints,
-    struct opal_bitmap_t* reachable
-);
+typedef int (*mca_btl_base_module_add_procs_fn_t)(struct mca_btl_base_module_t *btl, size_t nprocs,
+                                                  struct opal_proc_t **procs,
+                                                  struct mca_btl_base_endpoint_t **endpoints,
+                                                  struct opal_bitmap_t *reachable);
 
 /**
  * Notification of change to the process list.
@@ -724,12 +704,9 @@ typedef int (*mca_btl_base_module_add_procs_fn_t)(
  * change, to provide the opportunity to cleanup or release any
  * resources associated with the peer.
  */
-typedef int (*mca_btl_base_module_del_procs_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    size_t nprocs,
-    struct opal_proc_t** procs,
-    struct mca_btl_base_endpoint_t** peer
-);
+typedef int (*mca_btl_base_module_del_procs_fn_t)(struct mca_btl_base_module_t *btl, size_t nprocs,
+                                                  struct opal_proc_t **procs,
+                                                  struct mca_btl_base_endpoint_t **peer);
 
 /**
  * Register a callback function that is called on receipt
@@ -745,13 +722,10 @@ typedef int (*mca_btl_base_module_del_procs_fn_t)(
  * @return OPAL_ERROR   The callback was NOT registered successfully
  *
  */
-typedef int (*mca_btl_base_module_register_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_module_recv_cb_fn_t cbfunc,
-    void* cbdata
-);
-
+typedef int (*mca_btl_base_module_register_fn_t)(struct mca_btl_base_module_t *btl,
+                                                 mca_btl_base_tag_t tag,
+                                                 mca_btl_base_module_recv_cb_fn_t cbfunc,
+                                                 void *cbdata);
 
 /**
  * Callback function that is called asynchronously on receipt
@@ -763,13 +737,8 @@ typedef int (*mca_btl_base_module_register_fn_t)(
  * @param[IN] btlinfo descriptive string from the BTL
  */
 
-typedef void (*mca_btl_base_module_error_cb_fn_t)(
-        struct mca_btl_base_module_t* btl,
-        int32_t flags,
-        struct opal_proc_t* errproc,
-        char* btlinfo
-);
-
+typedef void (*mca_btl_base_module_error_cb_fn_t)(struct mca_btl_base_module_t *btl, int32_t flags,
+                                                  struct opal_proc_t *errproc, char *btlinfo);
 
 /**
  * Register a callback function that is called on receipt
@@ -782,11 +751,8 @@ typedef void (*mca_btl_base_module_error_cb_fn_t)(
  * @return OPAL_ERROR   The callback was NOT registered successfully
  *
  */
-typedef int (*mca_btl_base_module_register_error_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_module_error_cb_fn_t cbfunc
-);
-
+typedef int (*mca_btl_base_module_register_error_fn_t)(struct mca_btl_base_module_t *btl,
+                                                       mca_btl_base_module_error_cb_fn_t cbfunc);
 
 /**
  * Allocate a descriptor with a segment of the requested size.
@@ -804,13 +770,9 @@ typedef int (*mca_btl_base_module_register_error_fn_t)(
  * @param order (IN)    The ordering tag (may be MCA_BTL_NO_ORDER)
  */
 
-typedef mca_btl_base_descriptor_t* (*mca_btl_base_module_alloc_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    uint8_t order,
-    size_t size,
-    uint32_t flags
-);
+typedef mca_btl_base_descriptor_t *(*mca_btl_base_module_alloc_fn_t)(
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, uint8_t order,
+    size_t size, uint32_t flags);
 
 /**
  * Return a descriptor allocated from this BTL via alloc/prepare.
@@ -820,11 +782,8 @@ typedef mca_btl_base_descriptor_t* (*mca_btl_base_module_alloc_fn_t)(
  * @param btl (IN)      BTL module
  * @param segment (IN)  Descriptor allocated from the BTL
  */
-typedef int (*mca_btl_base_module_free_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_descriptor_t* descriptor
-);
-
+typedef int (*mca_btl_base_module_free_fn_t)(struct mca_btl_base_module_t *btl,
+                                             mca_btl_base_descriptor_t *descriptor);
 
 /**
  * Prepare a descriptor for send using the supplied convertor. If the convertor
@@ -849,15 +808,10 @@ typedef int (*mca_btl_base_module_free_fn_t)(
  *                          number of bytes actually prepared (OUT)
  *
  */
-typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags
-);
+typedef struct mca_btl_base_descriptor_t *(*mca_btl_base_module_prepare_fn_t)(
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+    struct opal_convertor_t *convertor, uint8_t order, size_t reserve, size_t *size,
+    uint32_t flags);
 
 /**
  * @brief Register a memory region for put/get/atomic operations.
@@ -882,7 +836,7 @@ typedef struct mca_btl_base_descriptor_t* (*mca_btl_base_module_prepare_fn_t)(
  * the mca_btl_base_module_deregister_mem_fn_t function.
  */
 typedef struct mca_btl_base_registration_handle_t *(*mca_btl_base_module_register_mem_fn_t)(
-    struct mca_btl_base_module_t* btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
     size_t size, uint32_t flags);
 
 /**
@@ -902,7 +856,7 @@ typedef struct mca_btl_base_registration_handle_t *(*mca_btl_base_module_registe
  * is now is allowed to free the memory, return it to a freelist, etc.
  */
 typedef int (*mca_btl_base_module_deregister_mem_fn_t)(
-    struct mca_btl_base_module_t* btl, struct mca_btl_base_registration_handle_t *handle);
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_registration_handle_t *handle);
 
 /**
  * Initiate an asynchronous send.
@@ -921,12 +875,10 @@ typedef int (*mca_btl_base_module_deregister_mem_fn_t)(
  * @retval OPAL_ERROR      The descriptor was NOT successfully queued for a send
  * @retval OPAL_ERR_UNREACH The endpoint is not reachable
  */
-typedef int (*mca_btl_base_module_send_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* descriptor,
-    mca_btl_base_tag_t tag
-);
+typedef int (*mca_btl_base_module_send_fn_t)(struct mca_btl_base_module_t *btl,
+                                             struct mca_btl_base_endpoint_t *endpoint,
+                                             struct mca_btl_base_descriptor_t *descriptor,
+                                             mca_btl_base_tag_t tag);
 
 /**
  * Initiate an immediate blocking send.
@@ -956,18 +908,12 @@ typedef int (*mca_btl_base_module_send_fn_t)(
  *                                (via the OUT param) if descriptors are available
  */
 
-typedef int (*mca_btl_base_module_sendi_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct opal_convertor_t* convertor,
-    void* header,
-    size_t header_size,
-    size_t payload_size,
-    uint8_t order,
-    uint32_t flags,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_descriptor_t** descriptor
- );
+typedef int (*mca_btl_base_module_sendi_fn_t)(struct mca_btl_base_module_t *btl,
+                                              struct mca_btl_base_endpoint_t *endpoint,
+                                              struct opal_convertor_t *convertor, void *header,
+                                              size_t header_size, size_t payload_size,
+                                              uint8_t order, uint32_t flags, mca_btl_base_tag_t tag,
+                                              mca_btl_base_descriptor_t **descriptor);
 
 /**
  * Initiate an asynchronous put.
@@ -1000,11 +946,12 @@ typedef int (*mca_btl_base_module_sendi_fn_t)(
  * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
  *                         alignment restrictions.
  */
-typedef int (*mca_btl_base_module_put_fn_t) (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+typedef int (*mca_btl_base_module_put_fn_t)(
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags, int order,
+    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Initiate an asynchronous get.
@@ -1037,11 +984,12 @@ typedef int (*mca_btl_base_module_put_fn_t) (struct mca_btl_base_module_t *btl,
  * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
  *                         alignment restrictions.
  */
-typedef int (*mca_btl_base_module_get_fn_t) (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+typedef int (*mca_btl_base_module_get_fn_t)(
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags, int order,
+    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Initiate an asynchronous atomic operation.
@@ -1078,11 +1026,11 @@ typedef int (*mca_btl_base_module_get_fn_t) (struct mca_btl_base_module_t *btl,
  * however, that not all btls will provide consistency between btl atomic operations and
  * cpu or other btl atomics.
  */
-typedef int (*mca_btl_base_module_atomic_op64_fn_t) (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, uint64_t remote_address,
-    struct mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
-    uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
-    void *cbcontext, void *cbdata);
+typedef int (*mca_btl_base_module_atomic_op64_fn_t)(
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+    uint64_t remote_address, struct mca_btl_base_registration_handle_t *remote_handle,
+    mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Initiate an asynchronous fetching atomic operation.
@@ -1123,8 +1071,9 @@ typedef int (*mca_btl_base_module_atomic_op64_fn_t) (struct mca_btl_base_module_
  * however, that not all btls will provide consistency between btl atomic operations and
  * cpu or other btl atomics.
  */
-typedef int (*mca_btl_base_module_atomic_fop64_fn_t) (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address, uint64_t remote_address,
+typedef int (*mca_btl_base_module_atomic_fop64_fn_t)(
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, uint64_t remote_address,
     struct mca_btl_base_registration_handle_t *local_handle,
     struct mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
     uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
@@ -1169,12 +1118,12 @@ typedef int (*mca_btl_base_module_atomic_fop64_fn_t) (struct mca_btl_base_module
  * however, that not all btls will provide consistency between btl atomic operations and
  * cpu atomics.
  */
-typedef int (*mca_btl_base_module_atomic_cswap64_fn_t) (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address, uint64_t remote_address,
+typedef int (*mca_btl_base_module_atomic_cswap64_fn_t)(
+    struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, uint64_t remote_address,
     struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, uint64_t compare,
-    uint64_t value, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
-    void *cbcontext, void *cbdata);
+    struct mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value,
+    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
 /**
  * Diagnostic dump of btl state.
@@ -1184,11 +1133,9 @@ typedef int (*mca_btl_base_module_atomic_cswap64_fn_t) (struct mca_btl_base_modu
  * @param verbose (IN)     Verbosity level
  */
 
-typedef void (*mca_btl_base_module_dump_fn_t)(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    int verbose
-);
+typedef void (*mca_btl_base_module_dump_fn_t)(struct mca_btl_base_module_t *btl,
+                                              struct mca_btl_base_endpoint_t *endpoint,
+                                              int verbose);
 
 /**
  * Flush all outstanding RDMA operations on an endpoint or all endpoints.
@@ -1202,7 +1149,8 @@ typedef void (*mca_btl_base_module_dump_fn_t)(
  *
  * The BTL is allowed to ignore the endpoint parameter and flush *all* endpoints.
  */
-typedef int (*mca_btl_base_module_flush_fn_t) (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint);
+typedef int (*mca_btl_base_module_flush_fn_t)(struct mca_btl_base_module_t *btl,
+                                              struct mca_btl_base_endpoint_t *endpoint);
 
 /**
  * BTL module interface functions and attributes.
@@ -1210,64 +1158,69 @@ typedef int (*mca_btl_base_module_flush_fn_t) (struct mca_btl_base_module_t *btl
 struct mca_btl_base_module_t {
 
     /* BTL common attributes */
-    mca_btl_base_component_t* btl_component; /**< pointer back to the BTL component structure */
-    size_t      btl_eager_limit;      /**< maximum size of first fragment -- eager send */
-    size_t      btl_rndv_eager_limit;    /**< the size of a data sent in a first fragment of rendezvous protocol */
-    size_t      btl_max_send_size;    /**< maximum send fragment size supported by the BTL */
-    size_t      btl_rdma_pipeline_send_length; /**< amount of bytes that should be send by pipeline protocol */
-    size_t      btl_rdma_pipeline_frag_size; /**< maximum rdma fragment size supported by the BTL */
-    size_t      btl_min_rdma_pipeline_size; /**< minimum packet size for pipeline protocol  */
-    uint32_t    btl_exclusivity;      /**< indicates this BTL should be used exclusively */
-    uint32_t    btl_latency;          /**< relative ranking of latency used to prioritize btls */
-    uint32_t    btl_bandwidth;        /**< bandwidth (Mbytes/sec) supported by each endpoint */
-    uint32_t    btl_flags;            /**< flags (put/get...) */
-    uint32_t    btl_atomic_flags;     /**< atomic operations supported (add, and, xor, etc) */
-    size_t      btl_registration_handle_size; /**< size of the BTLs registration handles */
+    mca_btl_base_component_t *btl_component; /**< pointer back to the BTL component structure */
+    size_t btl_eager_limit;                  /**< maximum size of first fragment -- eager send */
+    size_t btl_rndv_eager_limit; /**< the size of a data sent in a first fragment of rendezvous
+                                    protocol */
+    size_t btl_max_send_size;    /**< maximum send fragment size supported by the BTL */
+    size_t btl_rdma_pipeline_send_length; /**< amount of bytes that should be send by pipeline
+                                             protocol */
+    size_t btl_rdma_pipeline_frag_size;   /**< maximum rdma fragment size supported by the BTL */
+    size_t btl_min_rdma_pipeline_size;    /**< minimum packet size for pipeline protocol  */
+    uint32_t btl_exclusivity;             /**< indicates this BTL should be used exclusively */
+    uint32_t btl_latency;                /**< relative ranking of latency used to prioritize btls */
+    uint32_t btl_bandwidth;              /**< bandwidth (Mbytes/sec) supported by each endpoint */
+    uint32_t btl_flags;                  /**< flags (put/get...) */
+    uint32_t btl_atomic_flags;           /**< atomic operations supported (add, and, xor, etc) */
+    size_t btl_registration_handle_size; /**< size of the BTLs registration handles */
 
     /* One-sided limitations (0 for no alignment, SIZE_MAX for no limit ) */
-    size_t      btl_get_limit;        /**< maximum size supported by the btl_get function */
-    size_t      btl_get_alignment;    /**< minimum alignment/size needed by btl_get (power of 2) */
-    size_t      btl_put_limit;        /**< maximum size supported by the btl_put function */
-    size_t      btl_put_alignment;    /**< minimum alignment/size needed by btl_put (power of 2) */
+    size_t btl_get_limit;     /**< maximum size supported by the btl_get function */
+    size_t btl_get_alignment; /**< minimum alignment/size needed by btl_get (power of 2) */
+    size_t btl_put_limit;     /**< maximum size supported by the btl_put function */
+    size_t btl_put_alignment; /**< minimum alignment/size needed by btl_put (power of 2) */
 
     /* minimum transaction sizes for which registration is required for local memory */
-    size_t      btl_get_local_registration_threshold;
-    size_t      btl_put_local_registration_threshold;
+    size_t btl_get_local_registration_threshold;
+    size_t btl_put_local_registration_threshold;
 
     /* BTL function table */
-    mca_btl_base_module_add_procs_fn_t      btl_add_procs;
-    mca_btl_base_module_del_procs_fn_t      btl_del_procs;
-    mca_btl_base_module_register_fn_t       btl_register;
-    mca_btl_base_module_finalize_fn_t       btl_finalize;
+    mca_btl_base_module_add_procs_fn_t btl_add_procs;
+    mca_btl_base_module_del_procs_fn_t btl_del_procs;
+    mca_btl_base_module_register_fn_t btl_register;
+    mca_btl_base_module_finalize_fn_t btl_finalize;
 
-    mca_btl_base_module_alloc_fn_t          btl_alloc;
-    mca_btl_base_module_free_fn_t           btl_free;
-    mca_btl_base_module_prepare_fn_t        btl_prepare_src;
-    mca_btl_base_module_send_fn_t           btl_send;
-    mca_btl_base_module_sendi_fn_t          btl_sendi;
-    mca_btl_base_module_put_fn_t            btl_put;
-    mca_btl_base_module_get_fn_t            btl_get;
-    mca_btl_base_module_dump_fn_t           btl_dump;
+    mca_btl_base_module_alloc_fn_t btl_alloc;
+    mca_btl_base_module_free_fn_t btl_free;
+    mca_btl_base_module_prepare_fn_t btl_prepare_src;
+    mca_btl_base_module_send_fn_t btl_send;
+    mca_btl_base_module_sendi_fn_t btl_sendi;
+    mca_btl_base_module_put_fn_t btl_put;
+    mca_btl_base_module_get_fn_t btl_get;
+    mca_btl_base_module_dump_fn_t btl_dump;
 
     /* atomic operations */
-    mca_btl_base_module_atomic_op64_fn_t    btl_atomic_op;
-    mca_btl_base_module_atomic_fop64_fn_t   btl_atomic_fop;
+    mca_btl_base_module_atomic_op64_fn_t btl_atomic_op;
+    mca_btl_base_module_atomic_fop64_fn_t btl_atomic_fop;
     mca_btl_base_module_atomic_cswap64_fn_t btl_atomic_cswap;
 
     /* new memory registration functions */
-    mca_btl_base_module_register_mem_fn_t   btl_register_mem;   /**< memory registration function (NULL if not needed) */
-    mca_btl_base_module_deregister_mem_fn_t btl_deregister_mem; /**< memory deregistration function (NULL if not needed) */
+    mca_btl_base_module_register_mem_fn_t
+        btl_register_mem; /**< memory registration function (NULL if not needed) */
+    mca_btl_base_module_deregister_mem_fn_t
+        btl_deregister_mem; /**< memory deregistration function (NULL if not needed) */
 
     /** the mpool associated with this btl (optional) */
-    mca_mpool_base_module_t*             btl_mpool;
+    mca_mpool_base_module_t *btl_mpool;
     /** register a default error handler */
     mca_btl_base_module_register_error_fn_t btl_register_error;
 #if OPAL_CUDA_GDR_SUPPORT
-    size_t      btl_cuda_eager_limit;  /**< switch from eager to RDMA */
-    size_t      btl_cuda_rdma_limit;   /**< switch from RDMA to rndv pipeline */
+    size_t btl_cuda_eager_limit; /**< switch from eager to RDMA */
+    size_t btl_cuda_rdma_limit;  /**< switch from RDMA to rndv pipeline */
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 #if OPAL_CUDA_SUPPORT
-    size_t      btl_cuda_max_send_size;   /**< set if CUDA max send_size is different from host max send size */
+    size_t btl_cuda_max_send_size; /**< set if CUDA max send_size is different from host max send
+                                      size */
 #endif /* OPAL_CUDA_SUPPORT */
 
     mca_btl_base_module_flush_fn_t btl_flush; /**< flush all previous operations on an endpoint */
@@ -1283,17 +1236,14 @@ typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 /*
  * Macro for use in modules that are of type btl v3.2.0
  */
-#define MCA_BTL_BASE_VERSION_3_3_0                          \
-    OPAL_MCA_BASE_VERSION_2_1_0("btl",                      \
-                                MCA_BTL_BASE_MAJOR_VERSION, \
-                                MCA_BTL_BASE_MINOR_VERSION, \
+#define MCA_BTL_BASE_VERSION_3_3_0                                                             \
+    OPAL_MCA_BASE_VERSION_2_1_0("btl", MCA_BTL_BASE_MAJOR_VERSION, MCA_BTL_BASE_MINOR_VERSION, \
                                 MCA_BTL_BASE_PATCH_VERSION)
 
-#define MCA_BTL_DEFAULT_VERSION(name)                       \
-    MCA_BTL_BASE_VERSION_3_3_0,                             \
-    .mca_component_name = name,                             \
-    MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, \
-                          OPAL_RELEASE_VERSION)
+#define MCA_BTL_DEFAULT_VERSION(name)                                                \
+    MCA_BTL_BASE_VERSION_3_3_0, .mca_component_name = name,                          \
+                                MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, \
+                                                      OPAL_MINOR_VERSION, OPAL_RELEASE_VERSION)
 
 /**
  * Convenience macro for detecting the BTL interface version.

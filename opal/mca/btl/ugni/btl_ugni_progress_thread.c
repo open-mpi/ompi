@@ -18,20 +18,19 @@
 
 #include "opal/include/opal/align.h"
 
-
 static pthread_t mca_btl_ugni_progress_thread_id;
 
 static volatile int stop_progress_thread = 0;
 
 unsigned int mca_btl_ugni_progress_thread_wakeups = 0;
 
-static void *mca_btl_ugni_prog_thread_fn(void * data)
+static void *mca_btl_ugni_prog_thread_fn(void *data)
 {
     uint32_t which;
     gni_return_t status;
     gni_cq_handle_t cq_vec[1 + MCA_BTL_UGNI_MAX_DEV_HANDLES];
 
-    struct mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *)data;
+    struct mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *) data;
     int cq_count = 1 + mca_btl_ugni_component.virtual_device_count;
 
     /*
@@ -39,7 +38,7 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
      */
 
     cq_vec[0] = btl->smsg_remote_irq_cq;
-    for (int i = 0 ; i < mca_btl_ugni_component.virtual_device_count ; ++i) {
+    for (int i = 0; i < mca_btl_ugni_component.virtual_device_count; ++i) {
         cq_vec[i + 1] = btl->devices[i].dev_rdma_local_irq_cq.gni_handle;
     }
 
@@ -49,12 +48,10 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
          * this ugni call doesn't need a lock
          */
 
-        status = GNI_CqVectorMonitor(cq_vec,
-                                     cq_count,
-                                     -1,
-                                     &which);
+        status = GNI_CqVectorMonitor(cq_vec, cq_count, -1, &which);
 
-        if (status == GNI_RC_NOT_DONE) continue;
+        if (status == GNI_RC_NOT_DONE)
+            continue;
 
         if ((status == GNI_RC_SUCCESS) && (stop_progress_thread == 0)) {
             mca_btl_ugni_progress_thread_wakeups++;
@@ -67,38 +64,38 @@ static void *mca_btl_ugni_prog_thread_fn(void * data)
 
 int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
 {
-    int rc, ret=OPAL_SUCCESS;
+    int rc, ret = OPAL_SUCCESS;
     pthread_attr_t attr;
 
     pthread_attr_init(&attr);
     rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_attr_setdetachstate returned %s ",strerror(rc)));
+        BTL_ERROR(("btl/ugni pthread_attr_setdetachstate returned %s ", strerror(rc)));
         ret = OPAL_ERROR;
         goto fn_exit;
     }
 
-    rc = pthread_create(&mca_btl_ugni_progress_thread_id,
-                        &attr, mca_btl_ugni_prog_thread_fn, (void *)btl);
+    rc = pthread_create(&mca_btl_ugni_progress_thread_id, &attr, mca_btl_ugni_prog_thread_fn,
+                        (void *) btl);
     if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_create returned %s ",strerror(rc)));
+        BTL_ERROR(("btl/ugni pthread_create returned %s ", strerror(rc)));
         ret = OPAL_ERROR;
         goto fn_exit;
     }
 
     rc = pthread_attr_destroy(&attr);
     if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_attr_destory returned %s ",strerror(rc)));
+        BTL_ERROR(("btl/ugni pthread_attr_destory returned %s ", strerror(rc)));
         ret = OPAL_ERROR;
     }
 
-   fn_exit:
+fn_exit:
     return ret;
 }
 
 int mca_btl_ugni_kill_progress_thread(void)
 {
-    int ret=OPAL_SUCCESS;
+    int ret = OPAL_SUCCESS;
     void *thread_rc;
 
     stop_progress_thread = 1;
@@ -107,26 +104,25 @@ int mca_btl_ugni_kill_progress_thread(void)
      * post a CQ to myself to wake my thread up
      */
 
-    ret = mca_btl_ugni_post_cqwrite (mca_btl_ugni_component.modules[0].local_ep,
-                                     &mca_btl_ugni_component.modules[0].devices[0].dev_rdma_local_cq,
-                                     mca_btl_ugni_component.modules[0].devices[0].smsg_irq_mhndl,
-                                     0xdead, NULL, NULL, NULL);
+    ret = mca_btl_ugni_post_cqwrite(mca_btl_ugni_component.modules[0].local_ep,
+                                    &mca_btl_ugni_component.modules[0].devices[0].dev_rdma_local_cq,
+                                    mca_btl_ugni_component.modules[0].devices[0].smsg_irq_mhndl,
+                                    0xdead, NULL, NULL, NULL);
     /*
      * TODO: if error returned, need to kill off thread manually
      */
     if (OPAL_SUCCESS != ret) {
         /* force the thread to exit */
-        pthread_cancel (mca_btl_ugni_progress_thread_id);
+        pthread_cancel(mca_btl_ugni_progress_thread_id);
         goto fn_exit;
     }
 
-    pthread_join (mca_btl_ugni_progress_thread_id, &thread_rc);
+    pthread_join(mca_btl_ugni_progress_thread_id, &thread_rc);
     if (0 != (intptr_t) thread_rc) {
         BTL_ERROR(("btl/ugni error returned from progress thread: %d", (int) (intptr_t) thread_rc));
-        ret = (int)(intptr_t) thread_rc;
+        ret = (int) (intptr_t) thread_rc;
     }
 
-   fn_exit:
+fn_exit:
     return ret;
 }
-

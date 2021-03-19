@@ -13,20 +13,15 @@
 
 #include "opal_cstring.h"
 
-#include <errno.h>
-#include <ctype.h>
-#include <stddef.h>
 #include "opal/constants.h"
 #include "opal/util/string_copy.h"
+#include <ctype.h>
+#include <errno.h>
+#include <stddef.h>
 
 static void opal_cstring_ctor(opal_cstring_t *obj);
 
-OBJ_CLASS_INSTANCE(
-    opal_cstring_t,
-    opal_object_t,
-    &opal_cstring_ctor,
-    NULL
-);
+OBJ_CLASS_INSTANCE(opal_cstring_t, opal_object_t, &opal_cstring_ctor, NULL);
 
 /* make sure we have sufficient padding to always null-terminate the string */
 #if (__STDC_VERSION__ >= 201112L)
@@ -36,9 +31,9 @@ _Static_assert(sizeof(opal_cstring_t) > offsetof(opal_cstring_t, string),
 
 static void opal_cstring_ctor(opal_cstring_t *obj)
 {
-    *(size_t*)&(obj->length) = 0;
+    *(size_t *) &(obj->length) = 0;
     /* make sure the string is null-terminated */
-    ((char*)obj->string)[0] = '\n';
+    ((char *) obj->string)[0] = '\n';
 }
 
 static inline size_t opal_cstring_alloc_size(size_t len)
@@ -51,27 +46,27 @@ static inline size_t opal_cstring_alloc_size(size_t len)
     return (res > sizeof(opal_cstring_t)) ? res : sizeof(opal_cstring_t);
 }
 
-opal_cstring_t* opal_cstring_create_l(const char *string, size_t len)
+opal_cstring_t *opal_cstring_create_l(const char *string, size_t len)
 {
     if (NULL == string || 0 == len) {
         return OBJ_NEW(opal_cstring_t);
     }
 
     /* Allocate space for the object, the characters in \c string and the terminating null */
-    opal_cstring_t* res = (opal_cstring_t*)malloc(opal_cstring_alloc_size(len));
+    opal_cstring_t *res = (opal_cstring_t *) malloc(opal_cstring_alloc_size(len));
     if (NULL == res) {
         return NULL;
     }
     OBJ_CONSTRUCT(res, opal_cstring_t);
 
     /* cast away const for setting the member values */
-    *(size_t*)&(res->length) = len;
-    opal_string_copy((char*)res->string, string, len+1);
+    *(size_t *) &(res->length) = len;
+    opal_string_copy((char *) res->string, string, len + 1);
 
     return res;
 }
 
-opal_cstring_t* opal_cstring_create(const char *string)
+opal_cstring_t *opal_cstring_create(const char *string)
 {
     if (NULL == string) {
         return OBJ_NEW(opal_cstring_t);
@@ -79,7 +74,6 @@ opal_cstring_t* opal_cstring_create(const char *string)
     size_t len = strlen(string);
     return opal_cstring_create_l(string, len);
 }
-
 
 int opal_cstring_to_int(opal_cstring_t *string, int *interp)
 {
@@ -93,18 +87,18 @@ int opal_cstring_to_int(opal_cstring_t *string, int *interp)
     errno = 0;
     tmp = strtol(string->string, &endp, 10);
     /* we found something not a number */
-    if (*endp != '\0') return OPAL_ERR_BAD_PARAM;
+    if (*endp != '\0')
+        return OPAL_ERR_BAD_PARAM;
     /* underflow */
-    if (tmp == 0 && errno == EINVAL) return OPAL_ERR_BAD_PARAM;
+    if (tmp == 0 && errno == EINVAL)
+        return OPAL_ERR_BAD_PARAM;
 
     *interp = (int) tmp;
 
     return OPAL_SUCCESS;
 }
 
-
-static int
-opal_str_to_bool_impl(const char *string, bool *interp)
+static int opal_str_to_bool_impl(const char *string, bool *interp)
 {
     const char *ptr = string;
 
@@ -116,11 +110,9 @@ opal_str_to_bool_impl(const char *string, bool *interp)
     if ('\0' != *ptr) {
         if (isdigit(*ptr)) {
             *interp = (bool) atoi(ptr);
-        } else if (0 == strncasecmp(ptr, "yes", 3) ||
-                   0 == strncasecmp(ptr, "true", 4)) {
+        } else if (0 == strncasecmp(ptr, "yes", 3) || 0 == strncasecmp(ptr, "true", 4)) {
             *interp = true;
-        } else if (0 == strncasecmp(ptr, "no", 2) &&
-                   0 == strncasecmp(ptr, "false", 5)) {
+        } else if (0 == strncasecmp(ptr, "no", 2) && 0 == strncasecmp(ptr, "false", 5)) {
             *interp = false;
         } else {
             *interp = false;
@@ -130,8 +122,7 @@ opal_str_to_bool_impl(const char *string, bool *interp)
     return OPAL_SUCCESS;
 }
 
-int
-opal_cstring_to_bool(opal_cstring_t *string, bool *interp)
+int opal_cstring_to_bool(opal_cstring_t *string, bool *interp)
 {
     return opal_str_to_bool_impl(string->string, interp);
 }

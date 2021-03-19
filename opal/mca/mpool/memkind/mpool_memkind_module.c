@@ -22,10 +22,10 @@
  */
 
 #include "opal_config.h"
-#include <string.h>
 #include "mpool_memkind.h"
+#include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #include "opal/mca/mpool/base/base.h"
 
@@ -42,11 +42,8 @@ void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t *mpool)
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM;
 }
 
-void* mca_mpool_memkind_alloc(
-    mca_mpool_base_module_t* mpool,
-    size_t size,
-    size_t align,
-    uint32_t flags)
+void *mca_mpool_memkind_alloc(mca_mpool_base_module_t *mpool, size_t size, size_t align,
+                              uint32_t flags)
 {
     mca_mpool_memkind_module_t *memkind_module = (mca_mpool_memkind_module_t *) mpool;
     void *addr;
@@ -55,18 +52,17 @@ void* mca_mpool_memkind_alloc(
         align = memkind_module->page_size;
     }
 
-    if ((errno = memkind_posix_memalign(memkind_module->kind, &addr, align, size))!= 0){
+    if ((errno = memkind_posix_memalign(memkind_module->kind, &addr, align, size)) != 0) {
         return NULL;
     }
 
     return addr;
 }
 
-void* mca_mpool_memkind_realloc(mca_mpool_base_module_t *mpool, void *addr,
-                                size_t size)
+void *mca_mpool_memkind_realloc(mca_mpool_base_module_t *mpool, void *addr, size_t size)
 {
     mca_mpool_memkind_module_t *memkind_module = (mca_mpool_memkind_module_t *) mpool;
-    return memkind_realloc (memkind_module->kind, addr, size);
+    return memkind_realloc(memkind_module->kind, addr, size);
 }
 
 void mca_mpool_memkind_free(mca_mpool_base_module_t *mpool, void *addr)

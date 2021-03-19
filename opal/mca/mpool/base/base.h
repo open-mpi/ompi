@@ -50,10 +50,11 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
  * Global functions for MCA: overall mpool open and close
  */
 
-OPAL_DECLSPEC mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name);
-OPAL_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name);
+OPAL_DECLSPEC mca_mpool_base_component_t *mca_mpool_base_component_lookup(const char *name);
+OPAL_DECLSPEC mca_mpool_base_module_t *mca_mpool_base_module_lookup(const char *name);
 
-OPAL_DECLSPEC mca_mpool_base_module_t *mca_mpool_basic_create (void *base, size_t size, unsigned min_align);
+OPAL_DECLSPEC mca_mpool_base_module_t *mca_mpool_basic_create(void *base, size_t size,
+                                                              unsigned min_align);
 
 /*
  * Globals
@@ -61,7 +62,6 @@ OPAL_DECLSPEC mca_mpool_base_module_t *mca_mpool_basic_create (void *base, size_
 extern opal_list_t mca_mpool_base_modules;
 extern mca_mpool_base_module_t *mca_mpool_base_default_module;
 extern int mca_mpool_base_default_priority;
-
 
 OPAL_DECLSPEC extern mca_base_framework_t opal_mpool_base_framework;
 

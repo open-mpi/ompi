@@ -16,14 +16,14 @@
 #ifndef OPAL_MINMAX_H
 #define OPAL_MINMAX_H
 
-#define OPAL_DEFINE_MINMAX(type, suffix)                                                           \
-    static inline const type opal_min_##suffix(const type a, const type b)                         \
-    {                                                                                              \
-        return (a < b) ? a : b;                                                                    \
-    }                                                                                              \
-    static inline const type opal_max_##suffix(const type a, const type b)                         \
-    {                                                                                              \
-        return (a > b) ? a : b;                                                                    \
+#define OPAL_DEFINE_MINMAX(type, suffix)                                   \
+    static inline const type opal_min_##suffix(const type a, const type b) \
+    {                                                                      \
+        return (a < b) ? a : b;                                            \
+    }                                                                      \
+    static inline const type opal_max_##suffix(const type a, const type b) \
+    {                                                                      \
+        return (a > b) ? a : b;                                            \
     }
 
 OPAL_DEFINE_MINMAX(int8_t, 8)
@@ -41,8 +41,8 @@ OPAL_DEFINE_MINMAX(double, double)
 OPAL_DEFINE_MINMAX(void *, ptr)
 
 #if OPAL_C_HAVE__GENERIC
-#define opal_min(a, b)                                                  \
-    (_Generic((a) + (b),                                                \
+#    define opal_min(a, b) \
+        (_Generic((a) + (b),                                                \
                                  int8_t: opal_min_8,                    \
                                  uint8_t: opal_min_u8,                  \
                                  int16_t: opal_min_16,                  \
@@ -56,8 +56,8 @@ OPAL_DEFINE_MINMAX(void *, ptr)
                                  void *: opal_min_ptr,                  \
                                  default: opal_min_64)((a), (b)))
 
-#define opal_max(a, b)                                                  \
-    (_Generic((a) + (b),                                                \
+#    define opal_max(a, b) \
+        (_Generic((a) + (b),                                                \
                                  int8_t: opal_max_8,                    \
                                  uint8_t: opal_max_u8,                  \
                                  int16_t: opal_max_16,                  \
@@ -74,8 +74,8 @@ OPAL_DEFINE_MINMAX(void *, ptr)
 
 /* these versions suffer from double-evaluation. please upgrade to a modern compiler */
 
-#define opal_min(a, b) (((a) < (b)) ? (a) : (b))
-#define opal_max(a, b) (((a) > (b)) ? (a) : (b))
+#    define opal_min(a, b) (((a) < (b)) ? (a) : (b))
+#    define opal_max(a, b) (((a) > (b)) ? (a) : (b))
 
 #endif
 

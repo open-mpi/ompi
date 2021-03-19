@@ -15,10 +15,10 @@
 #define _GNU_SOURCE
 
 #include <assert.h>
+#include <libgen.h> /* for dirname() */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libgen.h> /* for dirname() */
 
 #include <dlfcn.h>
 
@@ -39,22 +39,22 @@ int main(int argc, char **argv)
     char *to;
     int path_len;
 
-    mpi_handle = dlopen("lib" OMPI_LIBMPI_NAME ".so", RTLD_NOW|RTLD_GLOBAL);
+    mpi_handle = dlopen("lib" OMPI_LIBMPI_NAME ".so", RTLD_NOW | RTLD_GLOBAL);
     if (mpi_handle == NULL) {
         fprintf(stderr, "mpi_handle=NULL dlerror()=%s\n", dlerror());
         abort();
     }
 
     /* casting awfulness needed for GCC's "-pedantic" option :( */
-    *(void **)(&init) = dlsym(mpi_handle, "MPI_Init");
+    *(void **) (&init) = dlsym(mpi_handle, "MPI_Init");
     if (init == NULL) {
         fprintf(stderr, "init=NULL dlerror()=%s\n", dlerror());
         abort();
     }
     /* casting awfulness needed for GCC's "-pedantic" option :( */
-    *(void **)(&finalize) = dlsym(mpi_handle, "MPI_Finalize");
+    *(void **) (&finalize) = dlsym(mpi_handle, "MPI_Finalize");
     if (finalize == NULL) {
-        fprintf(stderr, "finalize=%p dlerror()=%s\n", *(void **)(&finalize), dlerror());
+        fprintf(stderr, "finalize=%p dlerror()=%s\n", *(void **) (&finalize), dlerror());
         abort();
     }
 
@@ -62,22 +62,22 @@ int main(int argc, char **argv)
     init(&argc, &argv);
 
     /* figure out where the usnic BTL shared object is relative to libmpi.so */
-    if (!dladdr(*(void **)(&init), &info)) {
+    if (!dladdr(*(void **) (&init), &info)) {
         fprintf(stderr, "ERROR: unable to dladdr(init,...)\n");
         abort();
     }
     libmpi_path = strdup(info.dli_fname);
     assert(libmpi_path != NULL);
     path_len = strlen(libmpi_path) + strlen("/openmpi/") + strlen(MCA_BTL_USNIC_SO);
-    path = calloc(path_len+1, 1);
+    path = calloc(path_len + 1, 1);
     to = path;
     to = stpcpy(to, dirname(libmpi_path));
     to = stpcpy(to, "/openmpi/");
     to = stpcpy(to, MCA_BTL_USNIC_SO);
 
-    usnic_handle = dlopen(path, RTLD_NOW|RTLD_LOCAL);
+    usnic_handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (usnic_handle == NULL) {
-        fprintf(stderr, "usnic_handle=%p dlerror()=%s\n", (void *)usnic_handle, dlerror());
+        fprintf(stderr, "usnic_handle=%p dlerror()=%s\n", (void *) usnic_handle, dlerror());
         abort();
     }
 
@@ -85,10 +85,9 @@ int main(int argc, char **argv)
     free(path);
 
     /* casting awfulness needed for GCC's "-pedantic" option :( */
-    *(void **)(&run_tests) = dlsym(usnic_handle, BTL_USNIC_RUN_TESTS_SYMBOL);
+    *(void **) (&run_tests) = dlsym(usnic_handle, BTL_USNIC_RUN_TESTS_SYMBOL);
     if (run_tests == NULL) {
-        fprintf(stderr, "run_tests=%p dlerror()=%s\n",
-                *(void **)(&run_tests), dlerror());
+        fprintf(stderr, "run_tests=%p dlerror()=%s\n", *(void **) (&run_tests), dlerror());
         abort();
     }
     run_tests();

@@ -15,7 +15,7 @@
 #include "btl_usnic.h"
 
 #ifndef MIN
-#  define MIN(a,b)                ((a) < (b) ? (a) : (b))
+#    define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
 /*
@@ -39,20 +39,17 @@ void opal_btl_usnic_util_abort(const char *msg, const char *file, int line);
  * If netmask==0, it is not included in the output string.  addr is
  * expected to be in network byte order.
  */
-void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
-                                       uint32_t addr_be, uint32_t netmask_be);
+void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen, uint32_t addr_be,
+                                       uint32_t netmask_be);
 
 void opal_btl_usnic_snprintf_bool_array(char *s, size_t slen, bool a[], size_t alen);
 
-void opal_btl_usnic_dump_hex(int verbose_level, int output_id,
-                             void *vaddr, int len);
+void opal_btl_usnic_dump_hex(int verbose_level, int output_id, void *vaddr, int len);
 
-size_t opal_btl_usnic_convertor_pack_peek(const opal_convertor_t *conv,
-                                          size_t max_len);
+size_t opal_btl_usnic_convertor_pack_peek(const opal_convertor_t *conv, size_t max_len);
 
 /* avoid "defined but not used" warnings */
-static inline int __opal_attribute_always_inline__ usnic_fls(int x)
-    __opal_attribute_unused__;
+static inline int __opal_attribute_always_inline__ usnic_fls(int x) __opal_attribute_unused__;
 
 static inline int __opal_attribute_always_inline__ usnic_fls(int x)
 {
@@ -84,18 +81,14 @@ static inline int __opal_attribute_always_inline__ usnic_fls(int x)
 }
 
 /* a helper function that just declutters convertor packing */
-static inline void
-usnic_convertor_pack_simple(
-    opal_convertor_t *convertor,
-    void *dest,
-    size_t max_bytes_to_pack,
-    size_t *bytes_packed)
+static inline void usnic_convertor_pack_simple(opal_convertor_t *convertor, void *dest,
+                                               size_t max_bytes_to_pack, size_t *bytes_packed)
 {
     int rc;
     struct iovec iov;
     uint32_t iov_count;
 
-    iov.iov_base = (IOVBASE_TYPE*)dest;
+    iov.iov_base = (IOVBASE_TYPE *) dest;
     iov.iov_len = max_bytes_to_pack;
     iov_count = 1;
     *bytes_packed = max_bytes_to_pack;
@@ -105,16 +98,12 @@ usnic_convertor_pack_simple(
     }
 }
 
-static inline int
-usnic_netmask_to_cidrlen(
-    uint32_t netmask_be)
+static inline int usnic_netmask_to_cidrlen(uint32_t netmask_be)
 {
     return 33 - ffs(ntohl(netmask_be));
 }
 
-static inline uint32_t
-usnic_cidrlen_to_netmask(
-    int cidrlen)
+static inline uint32_t usnic_cidrlen_to_netmask(int cidrlen)
 {
     uint32_t mask;
 

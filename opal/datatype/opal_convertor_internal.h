@@ -22,18 +22,17 @@
 
 BEGIN_C_DECLS
 
-typedef int32_t (*conversion_fct_t)( opal_convertor_t* pConvertor, uint32_t count,
-                                     const void* from, size_t from_len, ptrdiff_t from_extent,
-                                     void* to, size_t to_length, ptrdiff_t to_extent,
-                                     ptrdiff_t *advance );
+typedef int32_t (*conversion_fct_t)(opal_convertor_t *pConvertor, uint32_t count, const void *from,
+                                    size_t from_len, ptrdiff_t from_extent, void *to,
+                                    size_t to_length, ptrdiff_t to_extent, ptrdiff_t *advance);
 
 typedef struct opal_convertor_master_t {
-    struct opal_convertor_master_t* next;
-    uint32_t                        remote_arch;
-    uint32_t                        flags;
-    uint32_t                        hetero_mask;
-    const size_t                    remote_sizes[OPAL_DATATYPE_MAX_PREDEFINED];
-    conversion_fct_t*               pFunctions;   /**< the convertor functions pointer */
+    struct opal_convertor_master_t *next;
+    uint32_t remote_arch;
+    uint32_t flags;
+    uint32_t hetero_mask;
+    const size_t remote_sizes[OPAL_DATATYPE_MAX_PREDEFINED];
+    conversion_fct_t *pFunctions; /**< the convertor functions pointer */
 } opal_convertor_master_t;
 
 /*
@@ -41,15 +40,14 @@ typedef struct opal_convertor_master_t {
  * convertor hold all informations related to a defined architecture, such as the sizes
  * of the predefined data-types, the conversion functions, ...
  */
-opal_convertor_master_t* opal_convertor_find_or_create_master( uint32_t remote_arch );
+opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_arch);
 
 /*
  * Destroy all pending master convertors. This function is usually called when we
  * shutdown the data-type engine, once all convertors have been destroyed.
  */
-void opal_convertor_destroy_masters( void );
-
+void opal_convertor_destroy_masters(void);
 
 END_C_DECLS
 
-#endif  /* OPAL_CONVERTOR_INTERNAL_HAS_BEEN_INCLUDED */
+#endif /* OPAL_CONVERTOR_INTERNAL_HAS_BEEN_INCLUDED */

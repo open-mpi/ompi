@@ -18,7 +18,6 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include "opal/mca/backtrace/base/base.h"
@@ -30,11 +29,10 @@
  */
 #include "opal/mca/backtrace/base/static-components.h"
 
-
 /*
  * Globals
  */
 
 /* Uses default register/open/close functions */
 MCA_BASE_FRAMEWORK_DECLARE(opal, backtrace, NULL, NULL, NULL, NULL,
-			   mca_backtrace_base_static_components, 0);
+                           mca_backtrace_base_static_components, 0);

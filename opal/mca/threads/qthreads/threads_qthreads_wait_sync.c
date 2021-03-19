@@ -23,11 +23,11 @@ static ompi_wait_sync_t *wait_sync_list = NULL;
 
 static opal_atomic_int32_t num_thread_in_progress = 0;
 
-#define WAIT_SYNC_PASS_OWNERSHIP(who)                  \
-    do {                                               \
-        opal_mutex_lock(&(who)->lock);                 \
-        opal_cond_signal(&(who)->condition);           \
-        opal_mutex_unlock(&(who)->lock);               \
+#define WAIT_SYNC_PASS_OWNERSHIP(who)        \
+    do {                                     \
+        opal_mutex_lock(&(who)->lock);       \
+        opal_cond_signal(&(who)->condition); \
+        opal_mutex_unlock(&(who)->lock);     \
     } while (0)
 
 int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
@@ -70,9 +70,8 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
      *  - this thread has been promoted to take care of the progress
      *  - our sync has been triggered.
      */
-  check_status:
-    if (sync != wait_sync_list &&
-        num_thread_in_progress >= opal_max_thread_in_progress) {
+check_status:
+    if (sync != wait_sync_list && num_thread_in_progress >= opal_max_thread_in_progress) {
         opal_cond_wait(&sync->condition, &sync->lock);
 
         /**
@@ -98,7 +97,7 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
     }
     OPAL_THREAD_ADD_FETCH32(&num_thread_in_progress, -1);
 
-  i_am_done:
+i_am_done:
     /* My sync is now complete. Trim the list: remove self, wake next */
     OPAL_THREAD_LOCK(&wait_sync_lock);
     sync->prev->next = sync->next;

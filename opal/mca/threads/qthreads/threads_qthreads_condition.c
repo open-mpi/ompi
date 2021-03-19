@@ -27,16 +27,10 @@
 
 #include "opal/mca/threads/condition.h"
 
-
 static void opal_condition_construct(opal_condition_t *c)
 {
     c->c_waiting = 0;
     c->c_signaled = 0;
 }
 
-
-
-OBJ_CLASS_INSTANCE(opal_condition_t,
-                   opal_object_t,
-                   opal_condition_construct,
-                   NULL);
+OBJ_CLASS_INSTANCE(opal_condition_t, opal_object_t, opal_condition_construct, NULL);

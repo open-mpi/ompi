@@ -28,10 +28,10 @@
 #include "opal/mca/base/base.h"
 #include "rcache_gpusm.h"
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_MALLOC_H
-#include <malloc.h>
+#    include <malloc.h>
 #endif
 
 /*
@@ -40,14 +40,14 @@
 static int gpusm_open(void);
 static int gpusm_close(void);
 static int gpusm_register(void);
-static mca_rcache_base_module_t* gpusm_init(struct mca_rcache_base_resources_t* resources);
+static mca_rcache_base_module_t *gpusm_init(struct mca_rcache_base_resources_t *resources);
 
-mca_rcache_gpusm_component_t mca_rcache_gpusm_component = {
-    {
-      /* First, the mca_base_component_t struct containing meta
-         information about the component itself */
+mca_rcache_gpusm_component_t mca_rcache_gpusm_component = {{
+    /* First, the mca_base_component_t struct containing meta
+       information about the component itself */
 
-        .rcache_version = {
+    .rcache_version =
+        {
             MCA_RCACHE_BASE_VERSION_3_0_0,
 
             .mca_component_name = "gpusm",
@@ -57,44 +57,39 @@ mca_rcache_gpusm_component_t mca_rcache_gpusm_component = {
             .mca_close_component = gpusm_close,
             .mca_register_component_params = gpusm_register,
         },
-        .rcache_data = {
-            /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
-        },
+    .rcache_data =
+        {/* The component is checkpoint ready */
+         MCA_BASE_METADATA_PARAM_CHECKPOINT},
 
-        .rcache_init = gpusm_init,
-    }
-};
+    .rcache_init = gpusm_init,
+}};
 
 /**
-  * Component open/close/init/register functions.  Most do not do anything,
-  * but keep around for placeholders.
-  */
+ * Component open/close/init/register functions.  Most do not do anything,
+ * but keep around for placeholders.
+ */
 static int gpusm_open(void)
 {
     return OPAL_SUCCESS;
 }
 
-
 static int gpusm_register(void)
 {
-	return OPAL_SUCCESS;
+    return OPAL_SUCCESS;
 }
-
 
 static int gpusm_close(void)
 {
     return OPAL_SUCCESS;
 }
 
-
-static mca_rcache_base_module_t* gpusm_init(struct mca_rcache_base_resources_t *resources)
+static mca_rcache_base_module_t *gpusm_init(struct mca_rcache_base_resources_t *resources)
 {
-    mca_rcache_gpusm_module_t* rcache_module;
+    mca_rcache_gpusm_module_t *rcache_module;
 
     (void) resources;
 
-    rcache_module = (mca_rcache_gpusm_module_t *) calloc (1, sizeof (*rcache_module));
+    rcache_module = (mca_rcache_gpusm_module_t *) calloc(1, sizeof(*rcache_module));
     if (NULL == rcache_module) {
         return NULL;
     }

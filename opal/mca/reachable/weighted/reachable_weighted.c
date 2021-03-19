@@ -20,27 +20,25 @@
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_MATH_H
-#include <math.h>
+#    include <math.h>
 #endif
 
 #include "opal/mca/if/if.h"
 
 #include "opal/mca/reachable/base/base.h"
-#include "reachable_weighted.h"
 #include "opal/util/net.h"
 #include "opal/util/string_copy.h"
+#include "reachable_weighted.h"
 
 static int weighted_init(void);
 static int weighted_fini(void);
-static opal_reachable_t* weighted_reachable(opal_list_t *local_ifs,
-                                            opal_list_t *remote_ifs);
+static opal_reachable_t *weighted_reachable(opal_list_t *local_ifs, opal_list_t *remote_ifs);
 
 static int get_weights(opal_if_t *local_if, opal_if_t *remote_if);
-static int calculate_weight(int bandwidth_local, int bandwidth_remote,
-                            int connection_quality);
+static int calculate_weight(int bandwidth_local, int bandwidth_remote, int connection_quality);
 
 /*
  * Describes the quality of a possible connection between a local and
@@ -58,15 +56,11 @@ enum connection_quality {
     CQ_PUBLIC_SAME_NETWORK = 100
 };
 
-const opal_reachable_base_module_t opal_reachable_weighted_module = {
-    weighted_init,
-    weighted_fini,
-    weighted_reachable
-};
+const opal_reachable_base_module_t opal_reachable_weighted_module = {weighted_init, weighted_fini,
+                                                                     weighted_reachable};
 
 // local variables
 static int init_cntr = 0;
-
 
 static int weighted_init(void)
 {
@@ -82,9 +76,7 @@ static int weighted_fini(void)
     return OPAL_SUCCESS;
 }
 
-
-static opal_reachable_t* weighted_reachable(opal_list_t *local_ifs,
-                                            opal_list_t *remote_ifs)
+static opal_reachable_t *weighted_reachable(opal_list_t *local_ifs, opal_list_t *remote_ifs)
 {
     opal_reachable_t *reachable_results = NULL;
     int i, j;
@@ -97,9 +89,9 @@ static opal_reachable_t* weighted_reachable(opal_list_t *local_ifs,
     }
 
     i = 0;
-    OPAL_LIST_FOREACH(local_iter, local_ifs, opal_if_t) {
+    OPAL_LIST_FOREACH (local_iter, local_ifs, opal_if_t) {
         j = 0;
-        OPAL_LIST_FOREACH(remote_iter, remote_ifs, opal_if_t) {
+        OPAL_LIST_FOREACH (remote_iter, remote_ifs, opal_if_t) {
             reachable_results->weights[i][j] = get_weights(local_iter, remote_iter);
             j++;
         }
@@ -109,15 +101,14 @@ static opal_reachable_t* weighted_reachable(opal_list_t *local_ifs,
     return reachable_results;
 }
 
-
 static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
 {
     char str_local[128], str_remote[128], *conn_type;
     struct sockaddr *local_sockaddr, *remote_sockaddr;
     int weight;
 
-    local_sockaddr = (struct sockaddr *)&local_if->if_addr;
-    remote_sockaddr = (struct sockaddr *)&remote_if->if_addr;
+    local_sockaddr = (struct sockaddr *) &local_if->if_addr;
+    remote_sockaddr = (struct sockaddr *) &remote_if->if_addr;
 
     /* opal_net_get_hostname returns a static buffer.  Great for
        single address printfs, need to copy in this case */
@@ -129,52 +120,41 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
     /*  initially, assume no connection is possible */
     weight = calculate_weight(0, 0, CQ_NO_CONNECTION);
 
-    if (AF_INET == local_sockaddr->sa_family &&
-        AF_INET == remote_sockaddr->sa_family) {
+    if (AF_INET == local_sockaddr->sa_family && AF_INET == remote_sockaddr->sa_family) {
 
-        if (opal_net_addr_isipv4public(local_sockaddr) &&
-            opal_net_addr_isipv4public(remote_sockaddr)) {
-            if (opal_net_samenetwork(local_sockaddr,
-                                     remote_sockaddr,
-                                     local_if->if_mask)) {
+        if (opal_net_addr_isipv4public(local_sockaddr)
+            && opal_net_addr_isipv4public(remote_sockaddr)) {
+            if (opal_net_samenetwork(local_sockaddr, remote_sockaddr, local_if->if_mask)) {
                 conn_type = "IPv4 PUBLIC SAME NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_PUBLIC_SAME_NETWORK);
             } else {
                 conn_type = "IPv4 PUBLIC DIFFERENT NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_PUBLIC_DIFFERENT_NETWORK);
             }
-        } else if (!opal_net_addr_isipv4public(local_sockaddr) &&
-                   !opal_net_addr_isipv4public(remote_sockaddr)) {
-            if (opal_net_samenetwork(local_sockaddr,
-                                     remote_sockaddr,
-                                     local_if->if_mask)) {
+        } else if (!opal_net_addr_isipv4public(local_sockaddr)
+                   && !opal_net_addr_isipv4public(remote_sockaddr)) {
+            if (opal_net_samenetwork(local_sockaddr, remote_sockaddr, local_if->if_mask)) {
                 conn_type = "IPv4 PRIVATE SAME NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_PRIVATE_SAME_NETWORK);
             } else {
                 conn_type = "IPv4 PRIVATE DIFFERENT NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_PRIVATE_DIFFERENT_NETWORK);
             }
         } else {
             /* one private, one public address.  likely not a match. */
             conn_type = "IPv4 NO CONNECTION";
-            weight = calculate_weight(local_if->if_bandwidth,
-                                      remote_if->if_bandwidth,
+            weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                       CQ_NO_CONNECTION);
         }
 
 #if OPAL_ENABLE_IPV6
-    } else if (AF_INET6 == local_sockaddr->sa_family &&
-               AF_INET6 == remote_sockaddr->sa_family) {
-        if (opal_net_addr_isipv6linklocal(local_sockaddr) &&
-            opal_net_addr_isipv6linklocal(remote_sockaddr)) {
+    } else if (AF_INET6 == local_sockaddr->sa_family && AF_INET6 == remote_sockaddr->sa_family) {
+        if (opal_net_addr_isipv6linklocal(local_sockaddr)
+            && opal_net_addr_isipv6linklocal(remote_sockaddr)) {
             /* we can't actually tell if link local addresses are on
              * the same network or not with the weighted component.
              * Assume they are on the same network, so that they'll be
@@ -189,29 +169,23 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
              * either case, do so.
              */
             conn_type = "IPv6 LINK-LOCAL SAME NETWORK";
-            weight = calculate_weight(local_if->if_bandwidth,
-                                      remote_if->if_bandwidth,
+            weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                       CQ_PRIVATE_SAME_NETWORK);
-        } else if (!opal_net_addr_isipv6linklocal(local_sockaddr) &&
-                   !opal_net_addr_isipv6linklocal(remote_sockaddr)) {
-            if (opal_net_samenetwork(local_sockaddr,
-                                     remote_sockaddr,
-                                     local_if->if_mask)) {
+        } else if (!opal_net_addr_isipv6linklocal(local_sockaddr)
+                   && !opal_net_addr_isipv6linklocal(remote_sockaddr)) {
+            if (opal_net_samenetwork(local_sockaddr, remote_sockaddr, local_if->if_mask)) {
                 conn_type = "IPv6 PUBLIC SAME NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_PUBLIC_SAME_NETWORK);
             } else {
                 conn_type = "IPv6 PUBLIC DIFFERENT NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_PUBLIC_DIFFERENT_NETWORK);
             }
         } else {
             /* one link-local, one public address.  likely not a match. */
             conn_type = "IPv6 NO CONNECTION";
-            weight = calculate_weight(local_if->if_bandwidth,
-                                      remote_if->if_bandwidth,
+            weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                       CQ_NO_CONNECTION);
         }
 #endif /* #if OPAL_ENABLE_IPV6 */
@@ -224,12 +198,11 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
     }
 
     opal_output_verbose(20, opal_reachable_base_framework.framework_output,
-                        "reachable:weighted: path from %s to %s: %s",
-                        str_local, str_remote, conn_type);
+                        "reachable:weighted: path from %s to %s: %s", str_local, str_remote,
+                        conn_type);
 
     return weight;
 }
-
 
 /*
  * Weights determined by bandwidth between
@@ -257,10 +230,10 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
  * connection_quality to be large enough
  * to capture decimals
  */
-static int calculate_weight(int bandwidth_local, int bandwidth_remote,
-                            int connection_quality)
+static int calculate_weight(int bandwidth_local, int bandwidth_remote, int connection_quality)
 {
-    int weight = connection_quality * (MIN(bandwidth_local, bandwidth_remote) +
-                                       1.0 / (1.0 + (double)abs(bandwidth_local - bandwidth_remote)));
+    int weight = connection_quality
+                 * (MIN(bandwidth_local, bandwidth_remote)
+                    + 1.0 / (1.0 + (double) abs(bandwidth_local - bandwidth_remote)));
     return weight;
 }

@@ -24,22 +24,21 @@
  */
 
 #include "opal_config.h"
-#include <string.h>
 #include "opal/class/opal_bitmap.h"
-#include "opal/util/printf.h"
-#include "opal/mca/btl/btl.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/util/printf.h"
+#include <string.h>
 
 #include "btl_ofi.h"
 #include "btl_ofi_endpoint.h"
 #include "btl_ofi_frag.h"
 
-static int mca_btl_ofi_add_procs (mca_btl_base_module_t *btl,
-                                  size_t nprocs, opal_proc_t **opal_procs,
-                                  mca_btl_base_endpoint_t **peers,
-                                  opal_bitmap_t *reachable)
+static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
+                                 opal_proc_t **opal_procs, mca_btl_base_endpoint_t **peers,
+                                 opal_bitmap_t *reachable)
 {
     int rc;
     int count;
@@ -51,48 +50,51 @@ static int mca_btl_ofi_add_procs (mca_btl_base_module_t *btl,
 
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
 
-    for (size_t i = 0 ; i < nprocs ; ++i) {
+    for (size_t i = 0; i < nprocs; ++i) {
 
         proc = opal_procs[i];
 
         /* See if we already have an endpoint for this proc. */
-        rc = opal_hash_table_get_value_uint64 (&ofi_btl->id_to_endpoint, (intptr_t) proc, (void **) &ep);
+        rc = opal_hash_table_get_value_uint64(&ofi_btl->id_to_endpoint, (intptr_t) proc,
+                                              (void **) &ep);
 
         if (OPAL_SUCCESS == rc) {
-            BTL_VERBOSE(("returning existing endpoint for proc %s", OPAL_NAME_PRINT(proc->proc_name)));
+            BTL_VERBOSE(
+                ("returning existing endpoint for proc %s", OPAL_NAME_PRINT(proc->proc_name)));
             peers[i] = ep;
 
         } else {
             /* We don't have this endpoint yet, create one */
-            peers[i] = mca_btl_ofi_endpoint_create (proc, ofi_btl->ofi_endpoint);
-            BTL_VERBOSE(("creating peer %p", (void*) peers[i]));
+            peers[i] = mca_btl_ofi_endpoint_create(proc, ofi_btl->ofi_endpoint);
+            BTL_VERBOSE(("creating peer %p", (void *) peers[i]));
 
             if (OPAL_UNLIKELY(NULL == peers[i])) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
 
             /* Add this endpoint to the lookup table */
-            (void) opal_hash_table_set_value_uint64 (&ofi_btl->id_to_endpoint, (intptr_t) proc, (void**) &ep);
+            (void) opal_hash_table_set_value_uint64(&ofi_btl->id_to_endpoint, (intptr_t) proc,
+                                                    (void **) &ep);
         }
 
-        OPAL_MODEX_RECV(rc, &mca_btl_ofi_component.super.btl_version,
-                        &peers[i]->ep_proc->proc_name, (void **)&ep_name, &namelen);
+        OPAL_MODEX_RECV(rc, &mca_btl_ofi_component.super.btl_version, &peers[i]->ep_proc->proc_name,
+                        (void **) &ep_name, &namelen);
         if (OPAL_SUCCESS != rc) {
             BTL_ERROR(("error receiving modex"));
             MCA_BTL_OFI_ABORT();
         }
 
         /* get peer fi_addr */
-        count = fi_av_insert(ofi_btl->av,      /* Address vector to insert */
-                             ep_name,          /* peer name */
-                             1,                /* amount to insert */
+        count = fi_av_insert(ofi_btl->av,          /* Address vector to insert */
+                             ep_name,              /* peer name */
+                             1,                    /* amount to insert */
                              &peers[i]->peer_addr, /* return peer address here */
-                             0,                /* flags */
-                             NULL);            /* context */
+                             0,                    /* flags */
+                             NULL);                /* context */
 
         /* if succeed, add this proc and mark reachable */
         if (count == 1) { /* we inserted 1 address. */
-            opal_list_append (&ofi_btl->endpoints, &peers[i]->super);
+            opal_list_append(&ofi_btl->endpoints, &peers[i]->super);
             opal_bitmap_set_bit(reachable, i);
         } else {
             BTL_VERBOSE(("fi_av_insert failed with rc = %d", count));
@@ -103,16 +105,17 @@ static int mca_btl_ofi_add_procs (mca_btl_base_module_t *btl,
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_ofi_del_procs (mca_btl_base_module_t *btl, size_t nprocs,
-                                  opal_proc_t **procs, mca_btl_base_endpoint_t **peers)
+static int mca_btl_ofi_del_procs(mca_btl_base_module_t *btl, size_t nprocs, opal_proc_t **procs,
+                                 mca_btl_base_endpoint_t **peers)
 {
     int rc;
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_base_endpoint_t *ep;
 
-    for (size_t i = 0 ; i < nprocs ; ++i) {
+    for (size_t i = 0; i < nprocs; ++i) {
         if (peers[i]) {
-            rc = opal_hash_table_get_value_uint64 (&ofi_btl->id_to_endpoint, (intptr_t) procs[i], (void **) &ep);
+            rc = opal_hash_table_get_value_uint64(&ofi_btl->id_to_endpoint, (intptr_t) procs[i],
+                                                  (void **) &ep);
 
             if (OPAL_SUCCESS == rc) {
                 /* remove the address from AV. */
@@ -120,37 +123,37 @@ static int mca_btl_ofi_del_procs (mca_btl_base_module_t *btl, size_t nprocs,
                 if (rc < 0) {
                     /* remove failed. this should not happen. */
                     /* Lets not crash because we failed to remove an address. */
-                    BTL_ERROR(("fi_av_remove failed with error %d:%s",
-                                    rc, fi_strerror(-rc)));
+                    BTL_ERROR(("fi_av_remove failed with error %d:%s", rc, fi_strerror(-rc)));
                 }
 
                 /* remove and free MPI endpoint from the list. */
-                opal_list_remove_item (&ofi_btl->endpoints, &peers[i]->super);
-                (void) opal_hash_table_remove_value_uint64 (&ofi_btl->id_to_endpoint, (intptr_t) procs[i]);
+                opal_list_remove_item(&ofi_btl->endpoints, &peers[i]->super);
+                (void) opal_hash_table_remove_value_uint64(&ofi_btl->id_to_endpoint,
+                                                           (intptr_t) procs[i]);
                 OBJ_RELEASE(peers[i]);
-           }
+            }
         }
     }
 
     return OPAL_SUCCESS;
 }
 
-void mca_btl_ofi_rcache_init (mca_btl_ofi_module_t *module)
+void mca_btl_ofi_rcache_init(mca_btl_ofi_module_t *module)
 {
     if (!module->initialized) {
         mca_rcache_base_resources_t rcache_resources;
         char *tmp;
 
-        (void) opal_asprintf (&tmp, "ofi.%s", module->linux_device_name);
+        (void) opal_asprintf(&tmp, "ofi.%s", module->linux_device_name);
 
-        rcache_resources.cache_name     = tmp;
-        rcache_resources.reg_data       = (void *) module;
-        rcache_resources.sizeof_reg     = sizeof (mca_btl_ofi_reg_t);
-        rcache_resources.register_mem   = mca_btl_ofi_reg_mem;
+        rcache_resources.cache_name = tmp;
+        rcache_resources.reg_data = (void *) module;
+        rcache_resources.sizeof_reg = sizeof(mca_btl_ofi_reg_t);
+        rcache_resources.register_mem = mca_btl_ofi_reg_mem;
         rcache_resources.deregister_mem = mca_btl_ofi_dereg_mem;
 
-        module->rcache = mca_rcache_base_module_create ("grdma", module, &rcache_resources);
-        free (tmp);
+        module->rcache = mca_rcache_base_module_create("grdma", module, &rcache_resources);
+        free(tmp);
 
         if (NULL == module->rcache) {
             /* something when horribly wrong */
@@ -161,7 +164,6 @@ void mca_btl_ofi_rcache_init (mca_btl_ofi_module_t *module)
         module->initialized = true;
     }
 }
-
 
 /**
  * @brief Register a memory region for put/get/atomic operations.
@@ -182,16 +184,17 @@ void mca_btl_ofi_rcache_init (mca_btl_ofi_module_t *module)
  * as they may use limited system/NIC resources.
  */
 static struct mca_btl_base_registration_handle_t *
-mca_btl_ofi_register_mem (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
-                          size_t size, uint32_t flags)
+mca_btl_ofi_register_mem(struct mca_btl_base_module_t *btl,
+                         struct mca_btl_base_endpoint_t *endpoint, void *base, size_t size,
+                         uint32_t flags)
 {
     mca_btl_ofi_module_t *ofi_module = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_reg_t *reg;
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
 
-    rc = ofi_module->rcache->rcache_register (ofi_module->rcache, base, size, 0, access_flags,
-                                              (mca_rcache_base_registration_t **) &reg);
+    rc = ofi_module->rcache->rcache_register(ofi_module->rcache, base, size, 0, access_flags,
+                                             (mca_rcache_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;
     }
@@ -210,27 +213,28 @@ mca_btl_ofi_register_mem (struct mca_btl_base_module_t *btl, struct mca_btl_base
  * after it is deregistered. It is erroneous to specify a memory handle associated with
  * a remote node.
  */
-static int mca_btl_ofi_deregister_mem (mca_btl_base_module_t *btl, mca_btl_base_registration_handle_t *handle)
+static int mca_btl_ofi_deregister_mem(mca_btl_base_module_t *btl,
+                                      mca_btl_base_registration_handle_t *handle)
 {
     mca_btl_ofi_module_t *ofi_module = (mca_btl_ofi_module_t *) btl;
-    mca_btl_ofi_reg_t *reg =
-        (mca_btl_ofi_reg_t *)((intptr_t) handle - offsetof (mca_btl_ofi_reg_t, handle));
+    mca_btl_ofi_reg_t *reg = (mca_btl_ofi_reg_t *) ((intptr_t) handle
+                                                    - offsetof(mca_btl_ofi_reg_t, handle));
 
-    (void) ofi_module->rcache->rcache_deregister (ofi_module->rcache, &reg->base);
+    (void) ofi_module->rcache->rcache_deregister(ofi_module->rcache, &reg->base);
 
     return OPAL_SUCCESS;
 }
 
-int mca_btl_ofi_reg_mem (void *reg_data, void *base, size_t size, mca_rcache_base_registration_t *reg)
+int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
+                        mca_rcache_base_registration_t *reg)
 {
     int rc;
     static uint64_t access_flags = FI_REMOTE_WRITE | FI_REMOTE_READ | FI_READ | FI_WRITE;
 
-    mca_btl_ofi_module_t *btl = (mca_btl_ofi_module_t*) reg_data;
-    mca_btl_ofi_reg_t *ur = (mca_btl_ofi_reg_t*) reg;
+    mca_btl_ofi_module_t *btl = (mca_btl_ofi_module_t *) reg_data;
+    mca_btl_ofi_reg_t *ur = (mca_btl_ofi_reg_t *) reg;
 
-    rc = fi_mr_reg(btl->domain, base, size, access_flags, 0,
-                   (uint64_t) reg, 0, &ur->ur_mr, NULL);
+    rc = fi_mr_reg(btl->domain, base, size, access_flags, 0, (uint64_t) reg, 0, &ur->ur_mr, NULL);
     if (0 != rc) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -250,14 +254,14 @@ int mca_btl_ofi_reg_mem (void *reg_data, void *base, size_t size, mca_rcache_bas
     return OPAL_SUCCESS;
 }
 
-int mca_btl_ofi_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg)
+int mca_btl_ofi_dereg_mem(void *reg_data, mca_rcache_base_registration_t *reg)
 {
-    mca_btl_ofi_reg_t *ur = (mca_btl_ofi_reg_t*)reg;
+    mca_btl_ofi_reg_t *ur = (mca_btl_ofi_reg_t *) reg;
 
     if (ur->ur_mr != NULL) {
         if (0 != fi_close(&ur->ur_mr->fid)) {
-            BTL_ERROR(("%s: error unpinning memory mr=%p: %s",
-                       __func__, (void*) ur->ur_mr, strerror(errno)));
+            BTL_ERROR(("%s: error unpinning memory mr=%p: %s", __func__, (void *) ur->ur_mr,
+                       strerror(errno)));
             return OPAL_ERROR;
         }
     }
@@ -269,7 +273,7 @@ int mca_btl_ofi_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg)
  * Cleanup/release module resources.
  */
 
-int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
+int mca_btl_ofi_finalize(mca_btl_base_module_t *btl)
 {
     int i;
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
@@ -279,7 +283,7 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
 
     /* clear the rcache */
     if (ofi_btl->rcache) {
-        mca_rcache_base_module_destroy (ofi_btl->rcache);
+        mca_rcache_base_module_destroy(ofi_btl->rcache);
         ofi_btl->rcache = NULL;
     }
 
@@ -290,7 +294,7 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
     }
 
     /* loop over all the contexts */
-    for (i=0; i < ofi_btl->num_contexts; i++) {
+    for (i = 0; i < ofi_btl->num_contexts; i++) {
         mca_btl_ofi_context_finalize(&ofi_btl->contexts[i], ofi_btl->is_scalable_ep);
     }
     free(ofi_btl->contexts);
@@ -317,8 +321,8 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
     }
 
     /* clean up any leftover endpoints */
-    OPAL_LIST_FOREACH_SAFE(endpoint, next, &ofi_btl->endpoints, mca_btl_ofi_endpoint_t) {
-        opal_list_remove_item (&ofi_btl->endpoints, &endpoint->super);
+    OPAL_LIST_FOREACH_SAFE (endpoint, next, &ofi_btl->endpoints, mca_btl_ofi_endpoint_t) {
+        opal_list_remove_item(&ofi_btl->endpoints, &endpoint->super);
         OBJ_RELEASE(endpoint);
     }
 
@@ -326,39 +330,31 @@ int mca_btl_ofi_finalize (mca_btl_base_module_t* btl)
     OBJ_DESTRUCT(&ofi_btl->id_to_endpoint);
     OBJ_DESTRUCT(&ofi_btl->module_lock);
 
-    free (btl);
+    free(btl);
 
     return OPAL_SUCCESS;
 }
 
 /* Post wildcard recvs on the rx context. */
-int mca_btl_ofi_post_recvs (mca_btl_base_module_t *module,
-                            mca_btl_ofi_context_t *context,
-                            int count)
+int mca_btl_ofi_post_recvs(mca_btl_base_module_t *module, mca_btl_ofi_context_t *context, int count)
 {
     int i;
     int rc;
     mca_btl_ofi_base_frag_t *frag;
     mca_btl_ofi_frag_completion_t *comp;
 
-    for (i=0; i < count; i++) {
-        frag = (mca_btl_ofi_base_frag_t*) mca_btl_ofi_alloc(module,
-                                                     NULL,
-                                                     0,
-                                                     MCA_BTL_OFI_FRAG_SIZE,
-                                                     MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+    for (i = 0; i < count; i++) {
+        frag = (mca_btl_ofi_base_frag_t *) mca_btl_ofi_alloc(module, NULL, 0, MCA_BTL_OFI_FRAG_SIZE,
+                                                             MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if (NULL == frag) {
             BTL_ERROR(("cannot allocate recv frag."));
             return OPAL_ERROR;
         }
 
-        comp = mca_btl_ofi_frag_completion_alloc (module,
-                                                  context,
-                                                  frag,
-                                                  MCA_BTL_OFI_TYPE_RECV);
+        comp = mca_btl_ofi_frag_completion_alloc(module, context, frag, MCA_BTL_OFI_TYPE_RECV);
 
-        rc = fi_recv (context->rx_ctx, &frag->hdr, MCA_BTL_OFI_RECV_SIZE,
-                      NULL, FI_ADDR_UNSPEC, &comp->comp_ctx);
+        rc = fi_recv(context->rx_ctx, &frag->hdr, MCA_BTL_OFI_RECV_SIZE, NULL, FI_ADDR_UNSPEC,
+                     &comp->comp_ctx);
 
         if (FI_SUCCESS != rc) {
             BTL_ERROR(("cannot post recvs"));
@@ -369,12 +365,12 @@ int mca_btl_ofi_post_recvs (mca_btl_base_module_t *module,
 }
 
 /* Allocate and fill out the module capabilities according to operation mode. */
-mca_btl_ofi_module_t * mca_btl_ofi_module_alloc (int mode)
+mca_btl_ofi_module_t *mca_btl_ofi_module_alloc(int mode)
 {
     mca_btl_ofi_module_t *module;
 
     /* allocate module */
-    module = (mca_btl_ofi_module_t*) calloc(1, sizeof(mca_btl_ofi_module_t));
+    module = (mca_btl_ofi_module_t *) calloc(1, sizeof(mca_btl_ofi_module_t));
     if (NULL == module) {
         return NULL;
     }
@@ -384,24 +380,22 @@ mca_btl_ofi_module_t * mca_btl_ofi_module_alloc (int mode)
 
     if (mode == MCA_BTL_OFI_MODE_ONE_SIDED || mode == MCA_BTL_OFI_MODE_FULL_SUPPORT) {
 
-        module->super.btl_put            = mca_btl_ofi_put;
-        module->super.btl_get            = mca_btl_ofi_get;
-        module->super.btl_atomic_op      = mca_btl_ofi_aop;
-        module->super.btl_atomic_fop     = mca_btl_ofi_afop;
-        module->super.btl_atomic_cswap   = mca_btl_ofi_acswap;
-        module->super.btl_flush          = mca_btl_ofi_flush;
+        module->super.btl_put = mca_btl_ofi_put;
+        module->super.btl_get = mca_btl_ofi_get;
+        module->super.btl_atomic_op = mca_btl_ofi_aop;
+        module->super.btl_atomic_fop = mca_btl_ofi_afop;
+        module->super.btl_atomic_cswap = mca_btl_ofi_acswap;
+        module->super.btl_flush = mca_btl_ofi_flush;
 
-        module->super.btl_register_mem   = mca_btl_ofi_register_mem;
+        module->super.btl_register_mem = mca_btl_ofi_register_mem;
         module->super.btl_deregister_mem = mca_btl_ofi_deregister_mem;
 
-        module->super.btl_flags         |= MCA_BTL_FLAGS_ATOMIC_FOPS |
-                                           MCA_BTL_FLAGS_ATOMIC_OPS |
-                                           MCA_BTL_FLAGS_RDMA;
+        module->super.btl_flags |= MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS
+                                   | MCA_BTL_FLAGS_RDMA;
 
-        module->super.btl_atomic_flags   = MCA_BTL_ATOMIC_SUPPORTS_ADD |
-                                           MCA_BTL_ATOMIC_SUPPORTS_SWAP |
-                                           MCA_BTL_ATOMIC_SUPPORTS_CSWAP |
-                                           MCA_BTL_ATOMIC_SUPPORTS_32BIT ;
+        module->super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_SWAP
+                                         | MCA_BTL_ATOMIC_SUPPORTS_CSWAP
+                                         | MCA_BTL_ATOMIC_SUPPORTS_32BIT;
 
         module->super.btl_put_limit = 1 << 23;
         module->super.btl_put_alignment = 0;
@@ -409,26 +403,25 @@ mca_btl_ofi_module_t * mca_btl_ofi_module_alloc (int mode)
         module->super.btl_get_limit = 1 << 23;
         module->super.btl_get_alignment = 0;
 
-        module->super.btl_registration_handle_size =
-                                sizeof(mca_btl_base_registration_handle_t);
+        module->super.btl_registration_handle_size = sizeof(mca_btl_base_registration_handle_t);
     }
 
     if (mode == MCA_BTL_OFI_MODE_TWO_SIDED || mode == MCA_BTL_OFI_MODE_FULL_SUPPORT) {
 
-        module->super.btl_alloc          = mca_btl_ofi_alloc;
-        module->super.btl_free           = mca_btl_ofi_free;
-        module->super.btl_prepare_src    = mca_btl_ofi_prepare_src;
+        module->super.btl_alloc = mca_btl_ofi_alloc;
+        module->super.btl_free = mca_btl_ofi_free;
+        module->super.btl_prepare_src = mca_btl_ofi_prepare_src;
 
-        module->super.btl_send           = mca_btl_ofi_send;
+        module->super.btl_send = mca_btl_ofi_send;
 
-        module->super.btl_flags         |= MCA_BTL_FLAGS_SEND;
-        module->super.btl_eager_limit    = MCA_BTL_OFI_FRAG_SIZE;
-        module->super.btl_max_send_size  = MCA_BTL_OFI_FRAG_SIZE;
+        module->super.btl_flags |= MCA_BTL_FLAGS_SEND;
+        module->super.btl_eager_limit = MCA_BTL_OFI_FRAG_SIZE;
+        module->super.btl_max_send_size = MCA_BTL_OFI_FRAG_SIZE;
         module->super.btl_rndv_eager_limit = MCA_BTL_OFI_FRAG_SIZE;
 
         /* If two sided is enabled, we expected that the user knows exactly what
          * they want. We bump the priority to maximum, making this BTL the default. */
-        module->super.btl_exclusivity    = MCA_BTL_EXCLUSIVITY_HIGH;
+        module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
     }
 
     if (mode == MCA_BTL_OFI_MODE_FULL_SUPPORT) {
@@ -441,9 +434,8 @@ mca_btl_ofi_module_t * mca_btl_ofi_module_alloc (int mode)
 
 mca_btl_ofi_module_t mca_btl_ofi_module_template = {
     .super = {
-        .btl_component      = &mca_btl_ofi_component.super,
-        .btl_add_procs      = mca_btl_ofi_add_procs,
-        .btl_del_procs      = mca_btl_ofi_del_procs,
-        .btl_finalize       = mca_btl_ofi_finalize,
-   }
-};
+        .btl_component = &mca_btl_ofi_component.super,
+        .btl_add_procs = mca_btl_ofi_add_procs,
+        .btl_del_procs = mca_btl_ofi_del_procs,
+        .btl_finalize = mca_btl_ofi_finalize,
+    }};

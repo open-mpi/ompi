@@ -15,25 +15,24 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "opal/util/show_help.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
-#include "btl_usnic_compat.h"
 #include "btl_usnic.h"
+#include "btl_usnic_compat.h"
 #include "btl_usnic_module.h"
-#include "btl_usnic_util.h"
 #include "btl_usnic_proc.h"
+#include "btl_usnic_util.h"
 
 /*
  * qsort helper: compare modules by fabric name
  */
 static int map_compare_modules(const void *aa, const void *bb)
 {
-    opal_btl_usnic_module_t *a = *((opal_btl_usnic_module_t**) aa);
-    opal_btl_usnic_module_t *b = *((opal_btl_usnic_module_t**) bb);
+    opal_btl_usnic_module_t *a = *((opal_btl_usnic_module_t **) aa);
+    opal_btl_usnic_module_t *b = *((opal_btl_usnic_module_t **) bb);
 
-    return strcmp(a->linux_device_name,
-                  b->linux_device_name);
+    return strcmp(a->linux_device_name, b->linux_device_name);
 }
 
 /*
@@ -53,17 +52,15 @@ static int map_output_modules(FILE *fp)
 
     /* First, we must sort the modules (by device name) so that
        they're always output in a repeatable order. */
-    size = mca_btl_usnic_component.num_modules *
-        sizeof(opal_btl_usnic_module_t*);
+    size = mca_btl_usnic_component.num_modules * sizeof(opal_btl_usnic_module_t *);
     modules = calloc(1, size);
     if (NULL == modules) {
         return OPAL_ERR_IN_ERRNO;
     }
 
     memcpy(modules, mca_btl_usnic_component.usnic_active_modules, size);
-    qsort(modules, mca_btl_usnic_component.num_modules,
-          sizeof(opal_btl_usnic_module_t*), map_compare_modules);
-
+    qsort(modules, mca_btl_usnic_component.num_modules, sizeof(opal_btl_usnic_module_t *),
+          map_compare_modules);
 
     /* Loop over and print the sorted module device information */
     for (i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
@@ -71,13 +68,10 @@ static int map_output_modules(FILE *fp)
         sin = modules[i]->fabric_info->src_addr;
         prefix_len = usnic_netmask_to_cidrlen(uip->ui.v1.ui_netmask_be);
 
-        opal_btl_usnic_snprintf_ipv4_addr(ipv4, IPV4STRADDRLEN,
-                                        sin->sin_addr.s_addr,
-                                        prefix_len);
+        opal_btl_usnic_snprintf_ipv4_addr(ipv4, IPV4STRADDRLEN, sin->sin_addr.s_addr, prefix_len);
 
-        fprintf(fp, "device=%s,ip=%s,mss=%" PRIsize_t "\n",
-                modules[i]->linux_device_name,
-                ipv4, modules[i]->fabric_info->ep_attr->max_msg_size);
+        fprintf(fp, "device=%s,ip=%s,mss=%" PRIsize_t "\n", modules[i]->linux_device_name, ipv4,
+                modules[i]->fabric_info->ep_attr->max_msg_size);
     }
 
     /* Free the temp array */
@@ -93,8 +87,8 @@ static int map_output_modules(FILE *fp)
  */
 static int map_compare_endpoints(const void *aa, const void *bb)
 {
-    opal_btl_usnic_endpoint_t *a = *((opal_btl_usnic_endpoint_t**) aa);
-    opal_btl_usnic_endpoint_t *b = *((opal_btl_usnic_endpoint_t**) bb);
+    opal_btl_usnic_endpoint_t *a = *((opal_btl_usnic_endpoint_t **) aa);
+    opal_btl_usnic_endpoint_t *b = *((opal_btl_usnic_endpoint_t **) bb);
 
     if (NULL == a && NULL == b) {
         return 0;
@@ -104,8 +98,7 @@ static int map_compare_endpoints(const void *aa, const void *bb)
         return -1;
     }
 
-    return strcmp(a->endpoint_module->linux_device_name,
-                  b->endpoint_module->linux_device_name);
+    return strcmp(a->endpoint_module->linux_device_name, b->endpoint_module->linux_device_name);
 }
 
 /*
@@ -131,8 +124,7 @@ static int map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
     }
 
     memcpy(eps, proc->proc_endpoints, size);
-    qsort(eps, proc->proc_endpoint_count,
-          sizeof(opal_btl_usnic_endpoint_t*),
+    qsort(eps, proc->proc_endpoint_count, sizeof(opal_btl_usnic_endpoint_t *),
           map_compare_endpoints);
 
     /* Loop over and print the sorted endpoint information, ignoring
@@ -149,9 +141,7 @@ static int map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
                                           eps[i]->endpoint_remote_modex.ipv4_addr,
                                           eps[i]->endpoint_remote_modex.netmask);
 
-        fprintf(fp, "device=%s@peer_ip=%s",
-                eps[i]->endpoint_module->linux_device_name,
-                ipv4);
+        fprintf(fp, "device=%s@peer_ip=%s", eps[i]->endpoint_module->linux_device_name, ipv4);
         ++num_output;
     }
     fprintf(fp, "\n");
@@ -169,8 +159,8 @@ static int map_output_endpoints(FILE *fp, opal_btl_usnic_proc_t *proc)
  */
 static int map_compare_procs(const void *aa, const void *bb)
 {
-    opal_btl_usnic_proc_t *a = *((opal_btl_usnic_proc_t**) aa);
-    opal_btl_usnic_proc_t *b = *((opal_btl_usnic_proc_t**) bb);
+    opal_btl_usnic_proc_t *a = *((opal_btl_usnic_proc_t **) aa);
+    opal_btl_usnic_proc_t *b = *((opal_btl_usnic_proc_t **) bb);
     opal_process_name_t *an = &(a->proc_opal->proc_name);
     opal_process_name_t *bn = &(b->proc_opal->proc_name);
 
@@ -198,19 +188,17 @@ static int map_output_procs(FILE *fp)
     /* First, we must sort the procs by MCW rank so that they're
        always output in a repeatable order. */
     num_procs = opal_list_get_size(&mca_btl_usnic_component.usnic_procs);
-    procs = calloc(num_procs, sizeof(opal_btl_usnic_proc_t*));
+    procs = calloc(num_procs, sizeof(opal_btl_usnic_proc_t *));
     if (NULL == procs) {
         return OPAL_ERR_IN_ERRNO;
     }
 
     i = 0;
-    OPAL_LIST_FOREACH(pitem, &mca_btl_usnic_component.usnic_procs,
-                      opal_btl_usnic_proc_t) {
+    OPAL_LIST_FOREACH (pitem, &mca_btl_usnic_component.usnic_procs, opal_btl_usnic_proc_t) {
         procs[i] = pitem;
         ++i;
     }
-    qsort(procs, num_procs, sizeof(opal_btl_usnic_proc_t*),
-          map_compare_procs);
+    qsort(procs, num_procs, sizeof(opal_btl_usnic_proc_t *), map_compare_procs);
 
     /* Loop over and print the sorted module device information */
     int ret = OPAL_SUCCESS;
@@ -247,11 +235,9 @@ void opal_btl_usnic_connectivity_map(void)
     /* Filename is of the form: <prefix>-<hostname>.<pid>.<job>.<MCW
        rank>.txt */
     opal_asprintf(&filename, "%s-%s.pid%d.job%d.mcwrank%d.txt",
-             mca_btl_usnic_component.connectivity_map_prefix,
-             opal_process_info.nodename,
-             getpid(),
-             opal_proc_local_get()->proc_name.jobid,
-             opal_proc_local_get()->proc_name.vpid);
+                  mca_btl_usnic_component.connectivity_map_prefix, opal_process_info.nodename,
+                  getpid(), opal_proc_local_get()->proc_name.jobid,
+                  opal_proc_local_get()->proc_name.vpid);
     if (NULL == filename) {
         /* JMS abort? */
         return;
@@ -262,12 +248,8 @@ void opal_btl_usnic_connectivity_map(void)
         char dirname[PATH_MAX];
         getcwd(dirname, sizeof(dirname));
         dirname[sizeof(dirname) - 1] = '\0';
-        opal_show_help("help-mpi-btl-usnic.txt", "cannot write to map file",
-                       true,
-                       opal_process_info.nodename,
-                       filename,
-                       dirname,
-                       strerror(errno), errno);
+        opal_show_help("help-mpi-btl-usnic.txt", "cannot write to map file", true,
+                       opal_process_info.nodename, filename, dirname, strerror(errno), errno);
         return;
     }
 

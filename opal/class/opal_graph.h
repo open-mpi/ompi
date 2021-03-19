@@ -28,39 +28,39 @@
 #define OPAL_GRAPH_H
 
 #include "opal_config.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_value_array.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 BEGIN_C_DECLS
 
-    /* When two vertices are not connected, the distance between them is infinite. */
+/* When two vertices are not connected, the distance between them is infinite. */
 #define DISTANCE_INFINITY 0x7fffffff
 
-    /* A class for vertex */
+/* A class for vertex */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_graph_vertex_t);
 
-    /* A class for an edge (a connection between two verices) */
+/* A class for an edge (a connection between two verices) */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_graph_edge_t);
 
-    /* A class for an adjacency list  */
+/* A class for an adjacency list  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_adjacency_list_t);
 
-    /* A class for graph */
+/* A class for graph */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_graph_t);
 
-  /**
-   * Function pointer for coping a vertex data from one vertex to
-   * another
-   *
-   * @param dst The destination pointer of vertex_data
-   * @param src The source pointer of the vertex_data
-   *
-   *
-   */
+/**
+ * Function pointer for coping a vertex data from one vertex to
+ * another
+ *
+ * @param dst The destination pointer of vertex_data
+ * @param src The source pointer of the vertex_data
+ *
+ *
+ */
 typedef void (*opal_graph_copy_vertex_data)(void **dst, void *src);
 
 /**
@@ -88,7 +88,7 @@ typedef void *(*opal_graph_alloc_vertex_data)(void);
  *        vertex_data2 and -1- vertex_data1 is smaller the
  *        vertex_data2.
  */
-typedef int  (*opal_graph_compare_vertex_data)(void *vertex_data1, void *vertex_data2);
+typedef int (*opal_graph_compare_vertex_data)(void *vertex_data1, void *vertex_data2);
 
 /**
  * print a vertex data.
@@ -97,24 +97,24 @@ typedef int  (*opal_graph_compare_vertex_data)(void *vertex_data1, void *vertex_
  */
 typedef char *(*opal_graph_print_vertex)(void *vertex_data);
 
-
 /**
  * A vertex class.
  */
 struct opal_graph_vertex_t {
-    opal_list_item_t             super; /* A pointer to a vertex parent */
-    void                         *in_graph; /* A pointer to the graph that this vertex belongs to */
-    void                         *in_adj_list; /* A pointer to the adjacency that this vertex belongs to */
-    void                         *vertex_data;/* A pointer to some data. this pointer can point to the struct the this*/
-                                              /* vertex belongs to*/
-    struct opal_graph_vertex_t   *sibling;/* A pointer to a sibling vertex. */
-                                          /* if this vertex was copied this pointer will point to the source vertex */
-                                          /* This pointer is for internal uses. */
-    opal_graph_copy_vertex_data  copy_vertex_data; /* A function to copy vertex data */
-    opal_graph_free_vertex_data  free_vertex_data; /* A function to print vertex data */
-    opal_graph_alloc_vertex_data alloc_vertex_data;/* A function to allocate vertex data */
-    opal_graph_compare_vertex_data compare_vertex; /* A function to compare between two vertices data */
-    opal_graph_print_vertex        print_vertex;   /* A function to print vertex data */
+    opal_list_item_t super; /* A pointer to a vertex parent */
+    void *in_graph;         /* A pointer to the graph that this vertex belongs to */
+    void *in_adj_list;      /* A pointer to the adjacency that this vertex belongs to */
+    void *vertex_data; /* A pointer to some data. this pointer can point to the struct the this*/
+                       /* vertex belongs to*/
+    struct opal_graph_vertex_t *sibling; /* A pointer to a sibling vertex. */
+    /* if this vertex was copied this pointer will point to the source vertex */
+    /* This pointer is for internal uses. */
+    opal_graph_copy_vertex_data copy_vertex_data;   /* A function to copy vertex data */
+    opal_graph_free_vertex_data free_vertex_data;   /* A function to print vertex data */
+    opal_graph_alloc_vertex_data alloc_vertex_data; /* A function to allocate vertex data */
+    opal_graph_compare_vertex_data
+        compare_vertex;                   /* A function to compare between two vertices data */
+    opal_graph_print_vertex print_vertex; /* A function to print vertex data */
 };
 
 /**
@@ -126,9 +126,9 @@ typedef struct opal_graph_vertex_t opal_graph_vertex_t;
  * An opal_adjacency_list_t class
  */
 struct opal_adjacency_list_t {
-    opal_list_item_t     super;   /* A pointer to vertex parent */
-    opal_graph_vertex_t *vertex;  /* The adjacency_list is for adjacent of this vertex */
-    opal_list_t         *edges;   /* An edge list for all the adjacent and their weights */
+    opal_list_item_t super;      /* A pointer to vertex parent */
+    opal_graph_vertex_t *vertex; /* The adjacency_list is for adjacent of this vertex */
+    opal_list_t *edges;          /* An edge list for all the adjacent and their weights */
 };
 
 /**
@@ -144,13 +144,13 @@ typedef struct opal_adjacency_list_t opal_adjacency_list_t;
  * contains a weight field.
  */
 struct opal_graph_edge_t {
-    opal_list_item_t         super;  /* A pointer to the edge parent */
-    opal_graph_vertex_t      *start; /* The start vertex. */
-    opal_graph_vertex_t      *end;   /* The end vertex */
-    uint32_t                 weight; /* The weight of this edge */
-    opal_adjacency_list_t    *in_adj_list; /* The adjacency list in witch this edge in.*/
-                                           /* This adjacency list contains the start vertex of this edge*/
-                                           /* and its for internal uses */
+    opal_list_item_t super;             /* A pointer to the edge parent */
+    opal_graph_vertex_t *start;         /* The start vertex. */
+    opal_graph_vertex_t *end;           /* The end vertex */
+    uint32_t weight;                    /* The weight of this edge */
+    opal_adjacency_list_t *in_adj_list; /* The adjacency list in witch this edge in.*/
+    /* This adjacency list contains the start vertex of this edge*/
+    /* and its for internal uses */
 };
 
 /**
@@ -158,15 +158,14 @@ struct opal_graph_edge_t {
  */
 typedef struct opal_graph_edge_t opal_graph_edge_t;
 
-
 /**
  * A graph class.
  */
 struct opal_graph_t {
-    opal_object_t       super;
-    opal_list_t         *adjacency_list;
-    int                 number_of_edges;
-    int                 number_of_vertices;
+    opal_object_t super;
+    opal_list_t *adjacency_list;
+    int number_of_edges;
+    int number_of_vertices;
 };
 
 /**
@@ -180,7 +179,7 @@ typedef struct opal_graph_t opal_graph_t;
  */
 struct vertex_distance_from_t {
     opal_graph_vertex_t *vertex;
-    uint32_t            weight;
+    uint32_t weight;
 };
 
 /**
@@ -231,7 +230,7 @@ OPAL_DECLSPEC int opal_graph_add_edge(opal_graph_t *graph, opal_graph_edge_t *ed
  * @param graph The graph that this edge will be remove from.
  * @param edge the edge that we want to remove.
  */
-OPAL_DECLSPEC void opal_graph_remove_edge (opal_graph_t *graph, opal_graph_edge_t *edge);
+OPAL_DECLSPEC void opal_graph_remove_edge(opal_graph_t *graph, opal_graph_edge_t *edge);
 
 /**
  * This graph API tell us if two vertices are adjacent
@@ -244,7 +243,8 @@ OPAL_DECLSPEC void opal_graph_remove_edge (opal_graph_t *graph, opal_graph_edge_
  *         vertices or infinity if the vertices are not
  *         connected.
  */
-OPAL_DECLSPEC uint32_t opal_graph_adjacent(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_graph_vertex_t *vertex2);
+OPAL_DECLSPEC uint32_t opal_graph_adjacent(opal_graph_t *graph, opal_graph_vertex_t *vertex1,
+                                           opal_graph_vertex_t *vertex2);
 
 /**
  * This Graph API returns the order of the graph (number of
@@ -277,7 +277,6 @@ OPAL_DECLSPEC int opal_graph_get_size(opal_graph_t *graph);
  */
 OPAL_DECLSPEC opal_graph_vertex_t *opal_graph_find_vertex(opal_graph_t *graph, void *vertex_data);
 
-
 /**
  * This graph API returns an array of pointers of all the
  * vertices in the graph.
@@ -290,7 +289,8 @@ OPAL_DECLSPEC opal_graph_vertex_t *opal_graph_find_vertex(opal_graph_t *graph, v
  * @return int returning the graph order (the
  *                    number of vertices in the returned array)
  */
-OPAL_DECLSPEC int opal_graph_get_graph_vertices(opal_graph_t *graph, opal_pointer_array_t *vertices_list);
+OPAL_DECLSPEC int opal_graph_get_graph_vertices(opal_graph_t *graph,
+                                                opal_pointer_array_t *vertices_list);
 
 /**
  * This graph API returns all the adjacent of a vertex and the
@@ -305,7 +305,8 @@ OPAL_DECLSPEC int opal_graph_get_graph_vertices(opal_graph_t *graph, opal_pointe
  *
  * @return int the number of adjacent in the list.
  */
-OPAL_DECLSPEC int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *adjacent);
+OPAL_DECLSPEC int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_graph_vertex_t *vertex,
+                                                   opal_value_array_t *adjacent);
 
 /**
  * This graph API duplicates a graph. Note that this API does
@@ -326,7 +327,8 @@ OPAL_DECLSPEC void opal_graph_duplicate(opal_graph_t **dest, opal_graph_t *src);
  *
  * @return uint32_t the distance between the two vertices.
  */
-OPAL_DECLSPEC uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *vertex1, opal_graph_vertex_t *vertex2);
+OPAL_DECLSPEC uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *vertex1,
+                                      opal_graph_vertex_t *vertex2);
 
 /**
  * This graph API returns the distance (weight) from a reference
@@ -340,7 +342,8 @@ OPAL_DECLSPEC uint32_t opal_graph_spf(opal_graph_t *graph, opal_graph_vertex_t *
  *
  * @return uint32_t the size of the distance array
  */
-OPAL_DECLSPEC uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex, opal_value_array_t *distance_array);
+OPAL_DECLSPEC uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex,
+                                           opal_value_array_t *distance_array);
 
 /**
  * This graph API prints a graph - mostly for debug uses.
@@ -350,6 +353,4 @@ OPAL_DECLSPEC void opal_graph_print(opal_graph_t *graph);
 
 END_C_DECLS
 
-
 #endif /* OPAL_GRAPH_H */
-

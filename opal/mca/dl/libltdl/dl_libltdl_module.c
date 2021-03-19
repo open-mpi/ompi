@@ -15,9 +15,8 @@
 
 #include "dl_libltdl.h"
 
-
 static int libltdl_open(const char *fname, bool use_ext, bool private_namespace,
-                       opal_dl_handle_t **handle, char **err_msg)
+                        opal_dl_handle_t **handle, char **err_msg)
 {
     assert(handle);
 
@@ -53,10 +52,9 @@ static int libltdl_open(const char *fname, bool use_ext, bool private_namespace,
         (*handle)->ltdl_handle = local_handle;
 
 #if OPAL_ENABLE_DEBUG
-        if( NULL != fname ) {
+        if (NULL != fname) {
             (*handle)->filename = strdup(fname);
-        }
-        else {
+        } else {
             (*handle)->filename = strdup("(null)");
         }
 #endif
@@ -65,14 +63,12 @@ static int libltdl_open(const char *fname, bool use_ext, bool private_namespace,
     }
 
     if (NULL != err_msg) {
-        *err_msg = (char*) lt_dlerror();
+        *err_msg = (char *) lt_dlerror();
     }
     return OPAL_ERROR;
 }
 
-
-static int libltdl_lookup(opal_dl_handle_t *handle, const char *symbol,
-                         void **ptr, char **err_msg)
+static int libltdl_lookup(opal_dl_handle_t *handle, const char *symbol, void **ptr, char **err_msg)
 {
     assert(handle);
     assert(handle->ltdl_handle);
@@ -89,11 +85,10 @@ static int libltdl_lookup(opal_dl_handle_t *handle, const char *symbol,
     }
 
     if (NULL != err_msg) {
-        *err_msg = (char*) lt_dlerror();
+        *err_msg = (char *) lt_dlerror();
     }
     return OPAL_ERROR;
 }
-
 
 static int libltdl_close(opal_dl_handle_t *handle)
 {
@@ -111,8 +106,7 @@ static int libltdl_close(opal_dl_handle_t *handle)
 }
 
 static int libltdl_foreachfile(const char *search_path,
-                               int (*func)(const char *filename, void *data),
-                               void *data)
+                               int (*func)(const char *filename, void *data), void *data)
 {
     assert(search_path);
     assert(func);
@@ -121,13 +115,10 @@ static int libltdl_foreachfile(const char *search_path,
     return (0 == ret) ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
-
 /*
  * Module definition
  */
-opal_dl_base_module_t opal_dl_libltdl_module = {
-    .open = libltdl_open,
-    .lookup = libltdl_lookup,
-    .close = libltdl_close,
-    .foreachfile = libltdl_foreachfile
-};
+opal_dl_base_module_t opal_dl_libltdl_module = {.open = libltdl_open,
+                                                .lookup = libltdl_lookup,
+                                                .close = libltdl_close,
+                                                .foreachfile = libltdl_foreachfile};

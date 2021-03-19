@@ -28,14 +28,14 @@
 #define MCA_BTL_TEMPLATE_H
 
 #include "opal_config.h"
-#include <sys/types.h>
 #include <string.h>
+#include <sys/types.h>
 
 /* Open MPI includes */
-#include "opal/util/event.h"
-#include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/util/event.h"
 
 BEGIN_C_DECLS
 
@@ -46,12 +46,12 @@ BEGIN_C_DECLS
  */
 
 struct mca_btl_template_component_t {
-    mca_btl_base_component_3_0_0_t          super;  /**< base BTL component */
+    mca_btl_base_component_3_0_0_t super; /**< base BTL component */
 
-    uint32_t                                template_num_btls;
+    uint32_t template_num_btls;
     /**< number of hcas available to the TEMPLATE component */
 
-    struct mca_btl_template_module_t       *template_btls;
+    struct mca_btl_template_module_t *template_btls;
     /**< array of available BTL modules */
 
     int template_free_list_num;
@@ -69,7 +69,7 @@ struct mca_btl_template_component_t {
     opal_mutex_t template_lock;
     /**< lock for accessing module state */
 
-    char* template_mpool_name;
+    char *template_mpool_name;
     /**< name of memory pool */
 
     bool leave_pinned;
@@ -83,7 +83,7 @@ OPAL_MODULE_DECLSPEC extern mca_btl_template_component_t mca_btl_template_compon
  * BTL Module Interface
  */
 struct mca_btl_template_module_t {
-    mca_btl_base_module_t  super;  /**< base BTL interface */
+    mca_btl_base_module_t super; /**< base BTL interface */
 
     /* free list of fragment descriptors */
     opal_free_list_t template_frag_eager;
@@ -94,12 +94,11 @@ struct mca_btl_template_module_t {
     opal_mutex_t template_lock;
 
 #if MCA_BTL_HAS_MPOOL
-    struct mca_mpool_base_module_t* template_mpool;
+    struct mca_mpool_base_module_t *template_mpool;
 #endif
 };
 typedef struct mca_btl_template_module_t mca_btl_template_module_t;
 extern mca_btl_template_module_t mca_btl_template_module;
-
 
 /**
  * TEMPLATE component initialization.
@@ -108,19 +107,14 @@ extern mca_btl_template_module_t mca_btl_template_module;
  * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
  */
-extern mca_btl_base_module_t** mca_btl_template_component_init(
-    int *num_btl_modules,
-    bool allow_multi_user_threads,
-    bool have_hidden_threads
-);
-
+extern mca_btl_base_module_t **mca_btl_template_component_init(int *num_btl_modules,
+                                                               bool allow_multi_user_threads,
+                                                               bool have_hidden_threads);
 
 /**
  * TEMPLATE component progress.
  */
 extern int mca_btl_template_component_progress(void);
-
-
 
 /**
  * Cleanup any resources held by the BTL.
@@ -129,10 +123,7 @@ extern int mca_btl_template_component_progress(void);
  * @return     OPAL_SUCCESS or error status on failure.
  */
 
-extern int mca_btl_template_finalize(
-    struct mca_btl_base_module_t* btl
-);
-
+extern int mca_btl_template_finalize(struct mca_btl_base_module_t *btl);
 
 /**
  * PML->BTL notification of change in the process list.
@@ -146,13 +137,10 @@ extern int mca_btl_template_finalize(
  *
  */
 
-extern int mca_btl_template_add_procs(
-    struct mca_btl_base_module_t* btl,
-    size_t nprocs,
-    struct opal_proc_t **procs,
-    struct mca_btl_base_endpoint_t** peers,
-    opal_bitmap_t* reachable
-);
+extern int mca_btl_template_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+                                      struct opal_proc_t **procs,
+                                      struct mca_btl_base_endpoint_t **peers,
+                                      opal_bitmap_t *reachable);
 
 /**
  * PML->BTL notification of change in the process list.
@@ -165,13 +153,9 @@ extern int mca_btl_template_add_procs(
  *
  */
 
-extern int mca_btl_template_del_procs(
-    struct mca_btl_base_module_t* btl,
-    size_t nprocs,
-    struct opal_proc_t **procs,
-    struct mca_btl_base_endpoint_t** peers
-);
-
+extern int mca_btl_template_del_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+                                      struct opal_proc_t **procs,
+                                      struct mca_btl_base_endpoint_t **peers);
 
 /**
  * Initiate an asynchronous send.
@@ -182,13 +166,10 @@ extern int mca_btl_template_del_procs(
  * @param tag (IN)         The tag value used to notify the peer.
  */
 
-extern int mca_btl_template_send(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* descriptor,
-    mca_btl_base_tag_t tag
-);
-
+extern int mca_btl_template_send(struct mca_btl_base_module_t *btl,
+                                 struct mca_btl_base_endpoint_t *btl_peer,
+                                 struct mca_btl_base_descriptor_t *descriptor,
+                                 mca_btl_base_tag_t tag);
 
 /**
  * Initiate an asynchronous put.
@@ -221,11 +202,13 @@ extern int mca_btl_template_send(
  * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
  *                         alignment restrictions.
  */
-int mca_btl_template_put (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_template_put(struct mca_btl_base_module_t *btl,
+                         struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                         uint64_t remote_address,
+                         struct mca_btl_base_registration_handle_t *local_handle,
+                         struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
+                         int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                         void *cbcontext, void *cbdata);
 
 /**
  * Initiate an asynchronous get.
@@ -258,11 +241,13 @@ int mca_btl_template_put (struct mca_btl_base_module_t *btl,
  * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
  *                         alignment restrictions.
  */
-int mca_btl_template_get (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_template_get(struct mca_btl_base_module_t *btl,
+                         struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                         uint64_t remote_address,
+                         struct mca_btl_base_registration_handle_t *local_handle,
+                         struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
+                         int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                         void *cbcontext, void *cbdata);
 
 /**
  * @brief Register a memory region for put/get/atomic operations.
@@ -282,9 +267,10 @@ int mca_btl_template_get (struct mca_btl_base_module_t *btl,
  * functions. Care should be taken to not hold an excessive number of registrations
  * as they may use limited system/NIC resources.
  */
-struct mca_btl_base_registration_handle_t *mca_btl_template_register_mem (
-    struct mca_btl_base_module_t* btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
-    size_t size, uint32_t flags);
+struct mca_btl_base_registration_handle_t *
+mca_btl_template_register_mem(struct mca_btl_base_module_t *btl,
+                              struct mca_btl_base_endpoint_t *endpoint, void *base, size_t size,
+                              uint32_t flags);
 
 /**
  * @brief Deregister a memory region
@@ -297,8 +283,8 @@ struct mca_btl_base_registration_handle_t *mca_btl_template_register_mem (
  * after it is deregistered. It is erroneous to specify a memory handle associated with
  * a remote node.
  */
-int mca_btl_template_deregister_mem (struct mca_btl_base_module_t* btl,
-                                     struct mca_btl_base_registration_handle_t *handle);
+int mca_btl_template_deregister_mem(struct mca_btl_base_module_t *btl,
+                                    struct mca_btl_base_registration_handle_t *handle);
 
 /**
  * Register a callback function that is called on receipt
@@ -309,11 +295,8 @@ int mca_btl_template_deregister_mem (struct mca_btl_base_module_t* btl,
  *
  */
 
-extern int mca_btl_template_register(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_module_recv_cb_fn_t cbfunc,
-    void* cbdata);
+extern int mca_btl_template_register(struct mca_btl_base_module_t *btl, mca_btl_base_tag_t tag,
+                                     mca_btl_base_module_recv_cb_fn_t cbfunc, void *cbdata);
 
 /**
  * Allocate a descriptor with a segment of the requested size.
@@ -324,13 +307,10 @@ extern int mca_btl_template_register(
  * @param size (IN)     Request segment size.
  */
 
-extern mca_btl_base_descriptor_t* mca_btl_template_alloc(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    uint8_t order,
-    size_t size,
-    uint32_t flags);
-
+extern mca_btl_base_descriptor_t *mca_btl_template_alloc(struct mca_btl_base_module_t *btl,
+                                                         struct mca_btl_base_endpoint_t *endpoint,
+                                                         uint8_t order, size_t size,
+                                                         uint32_t flags);
 
 /**
  * Return a segment allocated by this BTL.
@@ -339,10 +319,7 @@ extern mca_btl_base_descriptor_t* mca_btl_template_alloc(
  * @param descriptor (IN)  Allocated descriptor.
  */
 
-extern int mca_btl_template_free(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_descriptor_t* des);
-
+extern int mca_btl_template_free(struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des);
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
@@ -356,17 +333,13 @@ extern int mca_btl_template_free(
  * @param convertor (IN)    Data type convertor
  * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
  * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
-*/
+ */
 
-mca_btl_base_descriptor_t* mca_btl_template_prepare_src(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* peer,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags
-);
+mca_btl_base_descriptor_t *mca_btl_template_prepare_src(struct mca_btl_base_module_t *btl,
+                                                        struct mca_btl_base_endpoint_t *peer,
+                                                        struct opal_convertor_t *convertor,
+                                                        uint8_t order, size_t reserve, size_t *size,
+                                                        uint32_t flags);
 
 END_C_DECLS
 #endif

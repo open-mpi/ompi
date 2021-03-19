@@ -14,8 +14,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
 
@@ -24,20 +24,20 @@ BEGIN_C_DECLS
  * once opal_init has been called is the opal_install_dirs structure
  * and the opal_install_dirs_expand() call */
 struct opal_install_dirs_t {
-    char* prefix;
-    char* exec_prefix;
-    char* bindir;
-    char* sbindir;
-    char* libexecdir;
-    char* datarootdir;
-    char* datadir;
-    char* sysconfdir;
-    char* sharedstatedir;
-    char* localstatedir;
-    char* libdir;
-    char* includedir;
-    char* infodir;
-    char* mandir;
+    char *prefix;
+    char *exec_prefix;
+    char *bindir;
+    char *sbindir;
+    char *libexecdir;
+    char *datarootdir;
+    char *datadir;
+    char *sysconfdir;
+    char *sharedstatedir;
+    char *localstatedir;
+    char *libdir;
+    char *includedir;
+    char *infodir;
+    char *mandir;
 
     /* Note that the following fields intentionally have an "ompi"
        prefix, even though they're down in the OPAL layer.  This is
@@ -55,9 +55,9 @@ struct opal_install_dirs_t {
        Note that these field names match macros set by configure that
        are used in Makefile.am files.  E.g., project help files are
        installed into $(opaldatadir). */
-    char* opaldatadir;
-    char* opallibdir;
-    char* opalincludedir;
+    char *opaldatadir;
+    char *opallibdir;
+    char *opalincludedir;
 };
 typedef struct opal_install_dirs_t opal_install_dirs_t;
 
@@ -67,8 +67,7 @@ OPAL_DECLSPEC extern opal_install_dirs_t opal_install_dirs;
 /**
  * Expand out path variables (such as ${prefix}) in the input string
  * using the current opal_install_dirs structure */
-OPAL_DECLSPEC char * opal_install_dirs_expand(const char* input);
-
+OPAL_DECLSPEC char *opal_install_dirs_expand(const char *input);
 
 /**
  * Structure for installdirs components.
@@ -89,8 +88,7 @@ typedef struct opal_installdirs_base_component_2_0_0_t opal_installdirs_base_com
 /*
  * Macro for use in components that are of type installdirs
  */
-#define OPAL_INSTALLDIRS_BASE_VERSION_2_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("installdirs", 2, 0, 0)
+#define OPAL_INSTALLDIRS_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("installdirs", 2, 0, 0)
 
 END_C_DECLS
 

@@ -48,50 +48,50 @@
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_CDEFS_H
-# include <sys/cdefs.h>
+#    include <sys/cdefs.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #include <sys/stat.h>
 #ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
+#    include <sys/ioctl.h>
 #endif
 #ifdef HAVE_FCNTL_H
-#include <fcntl.h>
+#    include <fcntl.h>
 #endif
 #ifdef HAVE_TERMIOS_H
-# include <termios.h>
+#    include <termios.h>
 #else
-# ifdef HAVE_TERMIO_H
-#  include <termio.h>
-# endif
+#    ifdef HAVE_TERMIO_H
+#        include <termio.h>
+#    endif
 #endif
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#    include <unistd.h>
 #endif
 #include <stdio.h>
-# include <string.h>
+#include <string.h>
 #ifdef HAVE_GRP_H
-#include <grp.h>
+#    include <grp.h>
 #endif
 #ifdef HAVE_PTY_H
-#include <pty.h>
+#    include <pty.h>
 #endif
 #ifdef HAVE_UTMP_H
-#include <utmp.h>
+#    include <utmp.h>
 #endif
 
 #ifdef HAVE_PTSNAME
-# include <stdlib.h>
-# ifdef HAVE_STROPTS_H
-#  include <stropts.h>
-# endif
+#    include <stdlib.h>
+#    ifdef HAVE_STROPTS_H
+#        include <stropts.h>
+#    endif
 #endif
 
 #ifdef HAVE_UTIL_H
-#include <util.h>
+#    include <util.h>
 #endif
 
 #include "opal/util/opal_pty.h"
@@ -101,16 +101,14 @@
 
 #if OPAL_ENABLE_PTY_SUPPORT == 0
 
-int opal_openpty(int *amaster, int *aslave, char *name,
-                 void *termp, void *winpp)
+int opal_openpty(int *amaster, int *aslave, char *name, void *termp, void *winpp)
 {
     return -1;
 }
 
 #elif defined(HAVE_OPENPTY)
 
-int opal_openpty(int *amaster, int *aslave, char *name,
-                 struct termios *termp, struct winsize *winp)
+int opal_openpty(int *amaster, int *aslave, char *name, struct termios *termp, struct winsize *winp)
 {
     return openpty(amaster, aslave, name, termp, winp);
 }
@@ -122,8 +120,7 @@ int opal_openpty(int *amaster, int *aslave, char *name,
 static int ptym_open(char *pts_name);
 static int ptys_open(int fdm, char *pts_name);
 
-int opal_openpty(int *amaster, int *aslave, char *name,
-                 struct termios *termp, struct winsize *winp)
+int opal_openpty(int *amaster, int *aslave, char *name, struct termios *termp, struct winsize *winp)
 {
     char line[20];
     *amaster = ptym_open(line);
@@ -140,52 +137,51 @@ int opal_openpty(int *amaster, int *aslave, char *name,
         // max length of the source, so at least use that.
         opal_string_copy(name, line, sizeof(line));
     }
-#ifndef TCSAFLUSH
-#define TCSAFLUSH TCSETAF
-#endif
+#    ifndef TCSAFLUSH
+#        define TCSAFLUSH TCSETAF
+#    endif
     if (termp) {
         (void) tcsetattr(*aslave, TCSAFLUSH, termp);
     }
-#ifdef TIOCSWINSZ
+#    ifdef TIOCSWINSZ
     if (winp) {
         (void) ioctl(*aslave, TIOCSWINSZ, (char *) winp);
     }
-#endif
+#    endif
     return 0;
 }
-
 
 static int ptym_open(char *pts_name)
 {
     int fdm;
-#ifdef HAVE_PTSNAME
+#    ifdef HAVE_PTSNAME
     char *ptr;
 
-#ifdef _AIX
+#        ifdef _AIX
     strcpy(pts_name, "/dev/ptc");
-#else
+#        else
     strcpy(pts_name, "/dev/ptmx");
-#endif
+#        endif
     fdm = open(pts_name, O_RDWR);
     if (fdm < 0) {
         return -1;
     }
-    if (grantpt(fdm) < 0) {     /* grant access to slave */
+    if (grantpt(fdm) < 0) { /* grant access to slave */
         close(fdm);
         return -2;
     }
-    if (unlockpt(fdm) < 0) {    /* clear slave's lock flag */
+    if (unlockpt(fdm) < 0) { /* clear slave's lock flag */
         close(fdm);
         return -3;
     }
     ptr = ptsname(fdm);
-    if (ptr == NULL) {          /* get slave's name */
+    if (ptr == NULL) { /* get slave's name */
         close(fdm);
         return -4;
     }
-    strcpy(pts_name, ptr);      /* return name of slave */
-    return fdm;                 /* return fd of master */
-#else
+    strcpy(pts_name, ptr); /* return name of slave */
+    return fdm;            /* return fd of master */
+#    else
     char *ptr1, *ptr2;
 
     strcpy(pts_name, "/dev/ptyXY");
@@ -197,32 +193,31 @@ static int ptym_open(char *pts_name)
             /* try to open master */
             fdm = open(pts_name, O_RDWR);
             if (fdm < 0) {
-                if (errno == ENOENT) {  /* different from EIO */
-                    return -1;  /* out of pty devices */
+                if (errno == ENOENT) { /* different from EIO */
+                    return -1;         /* out of pty devices */
                 } else {
-                    continue;   /* try next pty device */
+                    continue; /* try next pty device */
                 }
             }
-            pts_name[5] = 't';  /* chage "pty" to "tty" */
-            return fdm;         /* got it, return fd of master */
+            pts_name[5] = 't'; /* chage "pty" to "tty" */
+            return fdm;        /* got it, return fd of master */
         }
     }
-    return -1;                  /* out of pty devices */
-#endif
+    return -1; /* out of pty devices */
+#    endif
 }
-
 
 static int ptys_open(int fdm, char *pts_name)
 {
     int fds;
-#ifdef HAVE_PTSNAME
+#    ifdef HAVE_PTSNAME
     /* following should allocate controlling terminal */
     fds = open(pts_name, O_RDWR);
     if (fds < 0) {
         close(fdm);
         return -5;
     }
-#if defined(__SVR4) && defined(__sun)
+#        if defined(__SVR4) && defined(__sun)
     if (ioctl(fds, I_PUSH, "ptem") < 0) {
         close(fdm);
         close(fds);
@@ -233,10 +228,10 @@ static int ptys_open(int fdm, char *pts_name)
         close(fds);
         return -7;
     }
-#endif
+#        endif
 
     return fds;
-#else
+#    else
     int gid;
     struct group *grptr;
 
@@ -244,7 +239,7 @@ static int ptys_open(int fdm, char *pts_name)
     if (grptr != NULL) {
         gid = grptr->gr_gid;
     } else {
-        gid = -1;               /* group tty is not in the group file */
+        gid = -1; /* group tty is not in the group file */
     }
     /* following two functions don't work unless we're root */
     chown(pts_name, getuid(), gid);
@@ -255,7 +250,7 @@ static int ptys_open(int fdm, char *pts_name)
         return -1;
     }
     return fds;
-#endif
+#    endif
 }
 
 #endif /* #ifdef HAVE_OPENPTY */

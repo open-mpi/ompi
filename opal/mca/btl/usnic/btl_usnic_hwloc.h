@@ -14,7 +14,6 @@
 
 #include "btl_usnic_module.h"
 
-
 int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module);
 
 #endif /* BTL_USNIC_HWLOC_H */

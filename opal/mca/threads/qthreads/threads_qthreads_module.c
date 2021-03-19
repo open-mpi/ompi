@@ -19,8 +19,8 @@
  * $HEADER$
  */
 
-#include "opal/mca/threads/qthreads/threads_qthreads.h"
 #include "opal/constants.h"
+#include "opal/mca/threads/qthreads/threads_qthreads.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/mca/threads/tsd.h"
 
@@ -60,26 +60,24 @@ static void opal_thread_construct(opal_thread_t *t)
     t->t_thread_ret = 0;
 }
 
-OBJ_CLASS_INSTANCE(opal_thread_t,
-                   opal_object_t,
-                   opal_thread_construct, NULL);
+OBJ_CLASS_INSTANCE(opal_thread_t, opal_object_t, opal_thread_construct, NULL);
 
 static inline aligned_t *opal_thread_get_qthreads_self(void)
 {
     self_key_ensure_init();
     void *ptr = qthread_getspecific(opal_thread_self_key);
-    return (aligned_t *)ptr;
+    return (aligned_t *) ptr;
 }
 
 static aligned_t opal_thread_qthreads_wrapper(void *arg)
 {
-    opal_thread_t *t = (opal_thread_t *)arg;
+    opal_thread_t *t = (opal_thread_t *) arg;
 
     /* Register itself. */
     self_key_ensure_init();
     qthread_setspecific(opal_thread_self_key, t->t_thread_ret_ptr);
 
-    t->t_ret = ((void *(*)(void *))t->t_run)(t);
+    t->t_ret = ((void *(*) (void *) ) t->t_run)(t);
     return 0;
 }
 

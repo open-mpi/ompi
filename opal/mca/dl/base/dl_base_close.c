@@ -11,12 +11,11 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 
-#include "opal/mca/dl/dl.h"
 #include "opal/mca/dl/base/base.h"
-
+#include "opal/mca/dl/dl.h"
 
 int opal_dl_base_close(void)
 {

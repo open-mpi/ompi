@@ -20,28 +20,28 @@
 
 #include "opal_config.h"
 
+#include "memchecker_valgrind.h"
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_var.h"
-#include "opal/mca/memchecker/memchecker.h"
 #include "opal/mca/memchecker/base/base.h"
-#include "memchecker_valgrind.h"
-#include "valgrind/valgrind.h"
+#include "opal/mca/memchecker/memchecker.h"
 #include "valgrind/memcheck.h"
-
+#include "valgrind/valgrind.h"
 
 /*
  * Local functions
  */
 static int valgrind_module_init(void);
 static int valgrind_module_runindebugger(void);
-static int valgrind_module_isaddressable(void * p, size_t len);
-static int valgrind_module_isdefined(void * p, size_t len);
-static int valgrind_module_mem_noaccess(void * p, size_t len);
-static int valgrind_module_mem_undefined(void * p, size_t len);
-static int valgrind_module_mem_defined(void * p, size_t len);
-static int valgrind_module_mem_defined_if_addressable(void * p, size_t len);
-static int valgrind_module_create_block(void * p, size_t len, char * description);
-static int valgrind_module_discard_block(void * p); /* Here, we need to do some mapping for valgrind */
+static int valgrind_module_isaddressable(void *p, size_t len);
+static int valgrind_module_isdefined(void *p, size_t len);
+static int valgrind_module_mem_noaccess(void *p, size_t len);
+static int valgrind_module_mem_undefined(void *p, size_t len);
+static int valgrind_module_mem_defined(void *p, size_t len);
+static int valgrind_module_mem_defined_if_addressable(void *p, size_t len);
+static int valgrind_module_create_block(void *p, size_t len, char *description);
+static int
+valgrind_module_discard_block(void *p); /* Here, we need to do some mapping for valgrind */
 static int valgrind_module_leakcheck(void);
 #if 0
 static int valgrind_module_get_vbits(void * p, char * vbits, size_t len);
@@ -58,28 +58,19 @@ static const opal_memchecker_base_module_1_0_0_t loc_module = {
     valgrind_module_init,
 
     /* Module function pointers */
-    valgrind_module_runindebugger,
-    valgrind_module_isaddressable,
-    valgrind_module_isdefined,
-    valgrind_module_mem_noaccess,
-    valgrind_module_mem_undefined,
-    valgrind_module_mem_defined,
-    valgrind_module_mem_defined_if_addressable,
-    valgrind_module_create_block,
-    valgrind_module_discard_block,
-    valgrind_module_leakcheck
-};
-
+    valgrind_module_runindebugger, valgrind_module_isaddressable, valgrind_module_isdefined,
+    valgrind_module_mem_noaccess, valgrind_module_mem_undefined, valgrind_module_mem_defined,
+    valgrind_module_mem_defined_if_addressable, valgrind_module_create_block,
+    valgrind_module_discard_block, valgrind_module_leakcheck};
 
 int opal_memchecker_valgrind_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = opal_memchecker_component_priority;
 
-    *module = (mca_base_module_t *)&loc_module;
+    *module = (mca_base_module_t *) &loc_module;
 
     return OPAL_SUCCESS;
 }
-
 
 static int valgrind_module_init(void)
 {
@@ -88,14 +79,12 @@ static int valgrind_module_init(void)
     return OPAL_SUCCESS;
 }
 
-
 static int valgrind_module_runindebugger(void)
 {
     return RUNNING_ON_VALGRIND;
 }
 
-
-static int valgrind_module_isaddressable(void * p, size_t len)
+static int valgrind_module_isaddressable(void *p, size_t len)
 {
     if (len > 0) {
         VALGRIND_CHECK_MEM_IS_ADDRESSABLE(p, len);
@@ -104,8 +93,7 @@ static int valgrind_module_isaddressable(void * p, size_t len)
     return OPAL_SUCCESS;
 }
 
-
-static int valgrind_module_isdefined(void * p, size_t len)
+static int valgrind_module_isdefined(void *p, size_t len)
 {
     if (len > 0) {
         VALGRIND_CHECK_MEM_IS_DEFINED(p, len);
@@ -114,8 +102,7 @@ static int valgrind_module_isdefined(void * p, size_t len)
     return OPAL_SUCCESS;
 }
 
-
-static int valgrind_module_mem_noaccess(void * p, size_t len)
+static int valgrind_module_mem_noaccess(void *p, size_t len)
 {
     if (len > 0) {
         VALGRIND_MAKE_MEM_NOACCESS(p, len);
@@ -124,8 +111,7 @@ static int valgrind_module_mem_noaccess(void * p, size_t len)
     return OPAL_SUCCESS;
 }
 
-
-static int valgrind_module_mem_undefined(void * p, size_t len)
+static int valgrind_module_mem_undefined(void *p, size_t len)
 {
     if (len > 0) {
         VALGRIND_MAKE_MEM_UNDEFINED(p, len);
@@ -134,8 +120,7 @@ static int valgrind_module_mem_undefined(void * p, size_t len)
     return OPAL_SUCCESS;
 }
 
-
-static int valgrind_module_mem_defined(void * p, size_t len)
+static int valgrind_module_mem_defined(void *p, size_t len)
 {
     if (len > 0) {
         VALGRIND_MAKE_MEM_DEFINED(p, len);
@@ -144,8 +129,7 @@ static int valgrind_module_mem_defined(void * p, size_t len)
     return OPAL_SUCCESS;
 }
 
-
-static int valgrind_module_mem_defined_if_addressable(void * p, size_t len)
+static int valgrind_module_mem_defined_if_addressable(void *p, size_t len)
 {
     if (len > 0) {
         VALGRIND_MAKE_MEM_DEFINED_IF_ADDRESSABLE(p, len);
@@ -154,11 +138,10 @@ static int valgrind_module_mem_defined_if_addressable(void * p, size_t len)
     return OPAL_SUCCESS;
 }
 
-
-static int valgrind_module_create_block(void * p, size_t len, char * description)
+static int valgrind_module_create_block(void *p, size_t len, char *description)
 {
     if (len > 0) {
-        VALGRIND_CREATE_BLOCK (p, len, description);
+        VALGRIND_CREATE_BLOCK(p, len, description);
         /*
          * Add p to some list atomically
          */
@@ -166,8 +149,7 @@ static int valgrind_module_create_block(void * p, size_t len, char * description
     return OPAL_SUCCESS;
 }
 
-
-static int valgrind_module_discard_block(void * p)
+static int valgrind_module_discard_block(void *p)
 {
     /* Here, we need to do some mapping for valgrind */
     /*
@@ -176,13 +158,11 @@ static int valgrind_module_discard_block(void * p)
     return OPAL_SUCCESS;
 }
 
-
 static int valgrind_module_leakcheck(void)
 {
     VALGRIND_DO_LEAK_CHECK;
     return OPAL_SUCCESS;
 }
-
 
 #if 0
 static int valgrind_module_get_vbits(void * p, char * vbits, size_t len)
@@ -204,4 +184,3 @@ static int valgrind_module_set_vbits(void * p, char * vbits, size_t len)
     return OPAL_SUCCESS;
 }
 #endif
-

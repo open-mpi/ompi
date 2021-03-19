@@ -21,15 +21,13 @@
  * $HEADER$
  */
 
-
 #ifndef OPAL_MCA_THREADS_THREAD_H
 #define OPAL_MCA_THREADS_THREAD_H
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-
+#include "opal/mca/mca.h"
 
 /**
  * Structure for threads components.
@@ -43,13 +41,11 @@ struct opal_threads_base_component_1_0_0_t {
 /**
  * Convenience typedef
  */
-typedef struct opal_threads_base_component_1_0_0_t
-               opal_threads_base_component_1_0_0_t;
+typedef struct opal_threads_base_component_1_0_0_t opal_threads_base_component_1_0_0_t;
 
 /*
  * Macro for use in components that are of type threads
  */
-#define OPAL_THREADS_BASE_VERSION_1_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("threads", 1, 0, 0)
+#define OPAL_THREADS_BASE_VERSION_1_0_0 OPAL_MCA_BASE_VERSION_2_1_0("threads", 1, 0, 0)
 
 #endif /* OPAL_MCA_THREADS_THREAD_H */

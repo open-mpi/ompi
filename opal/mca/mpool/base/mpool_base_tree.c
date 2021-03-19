@@ -29,13 +29,12 @@
 #include "opal_config.h"
 
 #include "opal/mca/mca.h"
-#include "opal/util/show_help.h"
-#include "opal/util/proc.h"
 #include "opal/util/printf.h"
+#include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 
-#include "opal/class/opal_rb_tree.h"
 #include "mpool_base_tree.h"
-
+#include "opal/class/opal_rb_tree.h"
 
 static int num_leaks = 0;
 static int max_mem_leaks = -1;
@@ -44,11 +43,13 @@ static char *leak_msg = NULL;
 static int condition(void *value);
 static void action(void *key, void *value);
 
-static void opal_mca_mpool_base_tree_constructor(mca_mpool_base_tree_item_t *item) {
+static void opal_mca_mpool_base_tree_constructor(mca_mpool_base_tree_item_t *item)
+{
     item->key = NULL;
 }
 
-OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, opal_free_list_item_t, opal_mca_mpool_base_tree_constructor, NULL);
+OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, opal_free_list_item_t,
+                   opal_mca_mpool_base_tree_constructor, NULL);
 
 /*
  * use globals for the tree and the tree_item free list..
@@ -60,18 +61,13 @@ static opal_mutex_t tree_lock;
 /*
  *  simple minded compare function...
  */
-int mca_mpool_base_tree_node_compare(void * key1, void * key2)
+int mca_mpool_base_tree_node_compare(void *key1, void *key2)
 {
-    if(key1 < key2)
-    {
+    if (key1 < key2) {
         return -1;
-    }
-    else if(key1 > key2)
-    {
+    } else if (key1 > key2) {
         return 1;
-    }
-    else
-    {
+    } else {
         return 0;
     }
 }
@@ -79,18 +75,17 @@ int mca_mpool_base_tree_node_compare(void * key1, void * key2)
 /*
  * initialize the rb tree
  */
-int mca_mpool_base_tree_init(void) {
+int mca_mpool_base_tree_init(void)
+{
     int rc;
     OBJ_CONSTRUCT(&mca_mpool_base_tree, opal_rb_tree_t);
     OBJ_CONSTRUCT(&mca_mpool_base_tree_item_free_list, opal_free_list_t);
     OBJ_CONSTRUCT(&tree_lock, opal_mutex_t);
-    rc = opal_free_list_init (&mca_mpool_base_tree_item_free_list,
-            sizeof(mca_mpool_base_tree_item_t),
-            opal_cache_line_size,
-            OBJ_CLASS(mca_mpool_base_tree_item_t),
-            0,opal_cache_line_size,
-            0, -1 , 4, NULL, 0, NULL, NULL, NULL);
-    if(OPAL_SUCCESS == rc) {
+    rc = opal_free_list_init(&mca_mpool_base_tree_item_free_list,
+                             sizeof(mca_mpool_base_tree_item_t), opal_cache_line_size,
+                             OBJ_CLASS(mca_mpool_base_tree_item_t), 0, opal_cache_line_size, 0, -1,
+                             4, NULL, 0, NULL, NULL, NULL);
+    if (OPAL_SUCCESS == rc) {
         rc = opal_rb_tree_init(&mca_mpool_base_tree, mca_mpool_base_tree_node_compare);
     }
     return rc;
@@ -110,7 +105,8 @@ int mca_mpool_base_tree_fini(void)
 /*
  * insert an item in the rb tree
  */
-int mca_mpool_base_tree_insert(mca_mpool_base_tree_item_t* item) {
+int mca_mpool_base_tree_insert(mca_mpool_base_tree_item_t *item)
+{
     int rc;
 
     OPAL_THREAD_LOCK(&tree_lock);
@@ -130,7 +126,8 @@ int mca_mpool_base_tree_insert(mca_mpool_base_tree_item_t* item) {
  * race conditions can occur
  *
  */
-int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item) {
+int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t *item)
+{
     int rc;
 
     OPAL_THREAD_LOCK(&tree_lock);
@@ -143,12 +140,12 @@ int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item) {
 /**
  *  find the item in the rb tree
  */
-mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base) {
-    mca_mpool_base_tree_item_t* item;
+mca_mpool_base_tree_item_t *mca_mpool_base_tree_find(void *base)
+{
+    mca_mpool_base_tree_item_t *item;
 
     OPAL_THREAD_LOCK(&tree_lock);
-    item = (mca_mpool_base_tree_item_t*)opal_rb_tree_find(&mca_mpool_base_tree,
-            base);
+    item = (mca_mpool_base_tree_item_t *) opal_rb_tree_find(&mca_mpool_base_tree, base);
     OPAL_THREAD_UNLOCK(&tree_lock);
 
     return item;
@@ -157,19 +154,18 @@ mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base) {
 /*
  * get a tree item from the free list
  */
-mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void) {
-    return (mca_mpool_base_tree_item_t *)
-        opal_free_list_get (&mca_mpool_base_tree_item_free_list);
+mca_mpool_base_tree_item_t *mca_mpool_base_tree_item_get(void)
+{
+    return (mca_mpool_base_tree_item_t *) opal_free_list_get(&mca_mpool_base_tree_item_free_list);
 }
 
 /*
  * put an item back into the free list
  */
-void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item) {
-    opal_free_list_return (&mca_mpool_base_tree_item_free_list,
-                           &item->super);
+void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t *item)
+{
+    opal_free_list_return(&mca_mpool_base_tree_item_free_list, &item->super);
 }
-
 
 /*
  * Print a show_help kind of message for an items still left in the
@@ -189,25 +185,19 @@ void mca_mpool_base_tree_print(int show_up_to_mem_leaks)
         return;
     }
 
-    if (num_leaks <= show_up_to_mem_leaks ||
-        show_up_to_mem_leaks < 0) {
-        opal_show_help("help-mpool-base.txt", "all mem leaks",
-                       true, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                       opal_process_info.nodename,
-                       getpid(), leak_msg);
+    if (num_leaks <= show_up_to_mem_leaks || show_up_to_mem_leaks < 0) {
+        opal_show_help("help-mpool-base.txt", "all mem leaks", true,
+                       OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), opal_process_info.nodename, getpid(),
+                       leak_msg);
     } else {
         int i = num_leaks - show_up_to_mem_leaks;
-        opal_show_help("help-mpool-base.txt", "some mem leaks",
-                       true, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                       opal_process_info.nodename,
-                       getpid(), leak_msg, i,
-                       (i > 1) ? "s were" : " was",
-                       (i > 1) ? "are" : "is");
+        opal_show_help("help-mpool-base.txt", "some mem leaks", true,
+                       OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), opal_process_info.nodename, getpid(),
+                       leak_msg, i, (i > 1) ? "s were" : " was", (i > 1) ? "are" : "is");
     }
     free(leak_msg);
     leak_msg = NULL;
 }
-
 
 /* Condition function for rb traversal */
 static int condition(void *value)
@@ -215,26 +205,23 @@ static int condition(void *value)
     return 1;
 }
 
-
 /* Action function for rb traversal */
 static void action(void *key, void *value)
 {
     char *tmp;
     mca_mpool_base_tree_item_t *item = (mca_mpool_base_tree_item_t *) value;
 
-    if( (++num_leaks <= max_mem_leaks) || (max_mem_leaks < 0) ) {
+    if ((++num_leaks <= max_mem_leaks) || (max_mem_leaks < 0)) {
 
         /* We know that we're supposed to make the first one; check on
            successive items if we're supposed to catenate more
            notices. */
         if (NULL == leak_msg) {
             opal_asprintf(&leak_msg, "    %lu bytes at address 0x%lx",
-                     (unsigned long) item->num_bytes,
-                     (unsigned long) key);
+                          (unsigned long) item->num_bytes, (unsigned long) key);
         } else {
-            opal_asprintf(&tmp, "%s\n    %lu bytes at address 0x%lx",
-                     leak_msg, (unsigned long) item->num_bytes,
-                     (unsigned long) key);
+            opal_asprintf(&tmp, "%s\n    %lu bytes at address 0x%lx", leak_msg,
+                          (unsigned long) item->num_bytes, (unsigned long) key);
             free(leak_msg);
             leak_msg = tmp;
         }

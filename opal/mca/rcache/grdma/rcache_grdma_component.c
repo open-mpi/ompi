@@ -28,10 +28,10 @@
 #include "opal/runtime/opal_params.h"
 #include "rcache_grdma.h"
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
-#include <stdlib.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 /*
  * Local functions
@@ -39,15 +39,14 @@
 static int grdma_open(void);
 static int grdma_close(void);
 static int grdma_register(void);
-static mca_rcache_base_module_t* grdma_init(
-        struct mca_rcache_base_resources_t* resources);
+static mca_rcache_base_module_t *grdma_init(struct mca_rcache_base_resources_t *resources);
 
-mca_rcache_grdma_component_t mca_rcache_grdma_component = {
-    {
-      /* First, the mca_base_component_t struct containing meta
-         information about the component itself */
+mca_rcache_grdma_component_t mca_rcache_grdma_component = {{
+    /* First, the mca_base_component_t struct containing meta
+       information about the component itself */
 
-        .rcache_version = {
+    .rcache_version =
+        {
             MCA_RCACHE_BASE_VERSION_3_0_0,
 
             .mca_component_name = "grdma",
@@ -57,18 +56,16 @@ mca_rcache_grdma_component_t mca_rcache_grdma_component = {
             .mca_close_component = grdma_close,
             .mca_register_component_params = grdma_register,
         },
-        .rcache_data = {
-            /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
-        },
+    .rcache_data =
+        {/* The component is checkpoint ready */
+         MCA_BASE_METADATA_PARAM_CHECKPOINT},
 
-        .rcache_init = grdma_init,
-    }
-};
+    .rcache_init = grdma_init,
+}};
 
 /**
-  * component open/close/init function
-  */
+ * component open/close/init function
+ */
 static int grdma_open(void)
 {
     OBJ_CONSTRUCT(&mca_rcache_grdma_component.caches, opal_list_t);
@@ -76,20 +73,17 @@ static int grdma_open(void)
     return OPAL_SUCCESS;
 }
 
-
 static int grdma_register(void)
 {
     mca_rcache_grdma_component.print_stats = false;
-    (void) mca_base_component_var_register(&mca_rcache_grdma_component.super.rcache_version,
-                                           "print_stats", "print registration cache usage statistics at the end of the run",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_rcache_grdma_component.print_stats);
+    (void) mca_base_component_var_register(
+        &mca_rcache_grdma_component.super.rcache_version, "print_stats",
+        "print registration cache usage statistics at the end of the run", MCA_BASE_VAR_TYPE_BOOL,
+        NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_rcache_grdma_component.print_stats);
 
     return OPAL_SUCCESS;
 }
-
 
 static int grdma_close(void)
 {
@@ -97,9 +91,7 @@ static int grdma_close(void)
     return OPAL_SUCCESS;
 }
 
-
-static mca_rcache_base_module_t *
-grdma_init(struct mca_rcache_base_resources_t *resources)
+static mca_rcache_base_module_t *grdma_init(struct mca_rcache_base_resources_t *resources)
 {
     mca_rcache_grdma_module_t *rcache_module;
     mca_rcache_grdma_cache_t *cache = NULL, *item;
@@ -107,12 +99,12 @@ grdma_init(struct mca_rcache_base_resources_t *resources)
     /* Set this here (vs in component.c) because
        opal_leave_pinned* may have been set after MCA params were
        read (e.g., by the openib btl) */
-    mca_rcache_grdma_component.leave_pinned = (int)
-        (1 == opal_leave_pinned || opal_leave_pinned_pipeline);
+    mca_rcache_grdma_component.leave_pinned = (int) (1 == opal_leave_pinned
+                                                     || opal_leave_pinned_pipeline);
 
     /* find the specified pool */
-    OPAL_LIST_FOREACH(item, &mca_rcache_grdma_component.caches, mca_rcache_grdma_cache_t) {
-        if (0 == strcmp (item->cache_name, resources->cache_name)) {
+    OPAL_LIST_FOREACH (item, &mca_rcache_grdma_component.caches, mca_rcache_grdma_cache_t) {
+        if (0 == strcmp(item->cache_name, resources->cache_name)) {
             cache = item;
             break;
         }
@@ -125,16 +117,16 @@ grdma_init(struct mca_rcache_base_resources_t *resources)
             return NULL;
         }
 
-        cache->cache_name = strdup (resources->cache_name);
+        cache->cache_name = strdup(resources->cache_name);
 
-        opal_list_append (&mca_rcache_grdma_component.caches, &cache->super);
+        opal_list_append(&mca_rcache_grdma_component.caches, &cache->super);
     }
 
-    rcache_module = (mca_rcache_grdma_module_t *) malloc (sizeof (*rcache_module));
+    rcache_module = (mca_rcache_grdma_module_t *) malloc(sizeof(*rcache_module));
 
     rcache_module->resources = *resources;
 
-    mca_rcache_grdma_module_init (rcache_module, cache);
+    mca_rcache_grdma_module_init(rcache_module, cache);
 
     return &rcache_module->super;
 }

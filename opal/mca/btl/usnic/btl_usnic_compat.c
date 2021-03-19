@@ -15,30 +15,23 @@
 #include "opal_stdint.h"
 
 #include "btl_usnic_compat.h"
-#include "btl_usnic_frag.h"
-#include "btl_usnic_endpoint.h"
 #include "btl_usnic_connectivity.h"
+#include "btl_usnic_endpoint.h"
+#include "btl_usnic_frag.h"
 #include "btl_usnic_send.h"
 
 #include "opal/util/proc.h"
 
-void usnic_compat_modex_send(int *rc,
-                             mca_base_component_t *component,
-                             opal_btl_usnic_modex_t *modexes,
-                             size_t size)
+void usnic_compat_modex_send(int *rc, mca_base_component_t *component,
+                             opal_btl_usnic_modex_t *modexes, size_t size)
 {
-    OPAL_MODEX_SEND(*rc, PMIX_REMOTE, component,
-                    modexes, size);
+    OPAL_MODEX_SEND(*rc, PMIX_REMOTE, component, modexes, size);
 }
 
-void usnic_compat_modex_recv(int *rc,
-                             mca_base_component_t *component,
-                             opal_proc_t *proc,
-                             opal_btl_usnic_modex_t **modexes,
-                             size_t *size)
+void usnic_compat_modex_recv(int *rc, mca_base_component_t *component, opal_proc_t *proc,
+                             opal_btl_usnic_modex_t **modexes, size_t *size)
 {
-    OPAL_MODEX_RECV(*rc, component, &proc->proc_name,
-                    (uint8_t**) modexes, size);
+    OPAL_MODEX_RECV(*rc, component, &proc->proc_name, (uint8_t **) modexes, size);
 }
 
 uint64_t usnic_compat_rte_hash_name(opal_process_name_t *pname)
@@ -61,14 +54,9 @@ const char *usnic_compat_proc_name_print(opal_process_name_t *pname)
  * requested if the given convertor cannot process the entire (*size).
  */
 static inline opal_btl_usnic_send_frag_t *
-prepare_src_small(
-    struct opal_btl_usnic_module_t* module,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags)
+prepare_src_small(struct opal_btl_usnic_module_t *module, struct mca_btl_base_endpoint_t *endpoint,
+                  struct opal_convertor_t *convertor, uint8_t order, size_t reserve, size_t *size,
+                  uint32_t flags)
 {
     opal_btl_usnic_send_frag_t *frag;
     opal_btl_usnic_small_send_frag_t *sfrag;
@@ -106,11 +94,10 @@ prepare_src_small(
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
         /* put user data just after end of 1st seg (upper layer header) */
         assert(payload_len <= module->max_frag_payload);
-        usnic_convertor_pack_simple(
-                convertor,
-                (IOVBASE_TYPE*)(intptr_t)(frag->sf_base.uf_local_seg[0].seg_addr.lval + reserve),
-                *size,
-                size);
+        usnic_convertor_pack_simple(convertor,
+                                    (IOVBASE_TYPE *) (intptr_t)(
+                                        frag->sf_base.uf_local_seg[0].seg_addr.lval + reserve),
+                                    *size, size);
         payload_len = reserve + *size;
         frag->sf_base.uf_base.USNIC_SEND_LOCAL_COUNT = 1;
         /* PML will copy header into beginning of segment */
@@ -129,14 +116,11 @@ prepare_src_small(
     return frag;
 }
 
-static void *
-pack_chunk_seg_chain_with_reserve(
-    struct opal_btl_usnic_module_t* module,
-    opal_btl_usnic_large_send_frag_t *lfrag,
-    size_t reserve_len,
-    opal_convertor_t *convertor,
-    size_t max_convertor_bytes,
-    size_t *convertor_bytes_packed)
+static void *pack_chunk_seg_chain_with_reserve(struct opal_btl_usnic_module_t *module,
+                                               opal_btl_usnic_large_send_frag_t *lfrag,
+                                               size_t reserve_len, opal_convertor_t *convertor,
+                                               size_t max_convertor_bytes,
+                                               size_t *convertor_bytes_packed)
 {
     opal_btl_usnic_chunk_segment_t *seg;
     void *ret_ptr = NULL;
@@ -154,12 +138,10 @@ pack_chunk_seg_chain_with_reserve(
     *convertor_bytes_packed = 0;
 
     first_pass = true;
-    while (*convertor_bytes_packed < max_convertor_bytes ||
-           first_pass) {
+    while (*convertor_bytes_packed < max_convertor_bytes || first_pass) {
         seg = opal_btl_usnic_chunk_segment_alloc(module);
         if (OPAL_UNLIKELY(NULL == seg)) {
-            opal_btl_usnic_util_abort("chunk segment allocation error",
-                                      __FILE__, __LINE__);
+            opal_btl_usnic_util_abort("chunk segment allocation error", __FILE__, __LINE__);
         }
         ++n_segs;
 
@@ -185,8 +167,8 @@ pack_chunk_seg_chain_with_reserve(
             *convertor_bytes_packed += max_data;
 
             /* If unable to pack any of the remaining bytes, release the
-            * most recently allocated segment and finish processing.
-            */
+             * most recently allocated segment and finish processing.
+             */
             if (seg_space == module->max_chunk_payload) {
                 assert(max_data == 0); /* only way this can happen */
                 opal_btl_usnic_chunk_segment_return(module, seg);
@@ -204,9 +186,8 @@ pack_chunk_seg_chain_with_reserve(
         opal_list_append(&lfrag->lsf_seg_chain, &seg->ss_base.us_list.super);
 
 #if MSGDEBUG1
-        opal_output(0, "%s: appending seg=%p, frag=%p, payload=%zd\n",
-                    __func__, (void *)seg, (void *)lfrag,
-                    (module->max_chunk_payload - seg_space));
+        opal_output(0, "%s: appending seg=%p, frag=%p, payload=%zd\n", __func__, (void *) seg,
+                    (void *) lfrag, (module->max_chunk_payload - seg_space));
 #endif
 
         first_pass = false;
@@ -219,15 +200,11 @@ pack_chunk_seg_chain_with_reserve(
  * in the same manner as btl_prepare_src.  Must return a smaller amount than
  * requested if the given convertor cannot process the entire (*size).
  */
-static opal_btl_usnic_send_frag_t *
-prepare_src_large(
-    struct opal_btl_usnic_module_t* module,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags)
+static opal_btl_usnic_send_frag_t *prepare_src_large(struct opal_btl_usnic_module_t *module,
+                                                     struct mca_btl_base_endpoint_t *endpoint,
+                                                     struct opal_convertor_t *convertor,
+                                                     uint8_t order, size_t reserve, size_t *size,
+                                                     uint32_t flags)
 {
     opal_btl_usnic_send_frag_t *frag;
     opal_btl_usnic_large_send_frag_t *lfrag;
@@ -252,9 +229,9 @@ prepare_src_large(
 
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
         /* threshold == -1 means always pack eagerly */
-        if (mca_btl_usnic_component.pack_lazy_threshold >= 0 &&
-            *size >= (size_t)mca_btl_usnic_component.pack_lazy_threshold) {
-            MSGDEBUG1_OUT("packing frag %p on the fly", (void *)frag);
+        if (mca_btl_usnic_component.pack_lazy_threshold >= 0
+            && *size >= (size_t) mca_btl_usnic_component.pack_lazy_threshold) {
+            MSGDEBUG1_OUT("packing frag %p on the fly", (void *) frag);
             lfrag->lsf_pack_on_the_fly = true;
 
             /* tell the PML we will absorb as much as possible while still
@@ -266,16 +243,13 @@ prepare_src_large(
             rc = opal_convertor_clone(convertor, &frag->sf_convertor,
                                       /*copy_stack=*/true);
             if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-                opal_btl_usnic_util_abort("unexpected convertor clone error",
-                                          __FILE__, __LINE__);
+                opal_btl_usnic_util_abort("unexpected convertor clone error", __FILE__, __LINE__);
             }
-        }
-        else {
+        } else {
             /* pack everything in the convertor into a chain of segments now,
              * leaving space for the PML header in the first segment */
-            lfrag->lsf_base.sf_base.uf_local_seg[0].seg_addr.pval =
-                pack_chunk_seg_chain_with_reserve(module, lfrag, reserve,
-                                                  convertor, *size, size);
+            lfrag->lsf_base.sf_base.uf_local_seg[0].seg_addr.pval
+                = pack_chunk_seg_chain_with_reserve(module, lfrag, reserve, convertor, *size, size);
         }
 
         /* We set SG[1] to {NULL,bytes_packed} so that various calculations
@@ -287,8 +261,7 @@ prepare_src_large(
     } else {
         /* convertor not needed, just save the payload pointer in SG[1] */
         lfrag->lsf_pack_on_the_fly = true;
-        opal_convertor_get_current_pointer(convertor,
-                                           &frag->sf_base.uf_local_seg[1].seg_addr.pval);
+        opal_convertor_get_current_pointer(convertor, &frag->sf_base.uf_local_seg[1].seg_addr.pval);
         frag->sf_base.uf_local_seg[1].seg_len = *size;
     }
 
@@ -327,16 +300,11 @@ prepare_src_large(
  * NOTE that the *only* reason this routine is allowed to return a size smaller
  * than was requested is if the convertor cannot process the entire amount.
  */
-struct mca_btl_base_descriptor_t *
-opal_btl_usnic_prepare_src(struct mca_btl_base_module_t *base_module,
-                           struct mca_btl_base_endpoint_t *endpoint,
-                           struct opal_convertor_t *convertor,
-                           uint8_t order,
-                           size_t reserve,
-                           size_t *size,
-                           uint32_t flags)
+struct mca_btl_base_descriptor_t *opal_btl_usnic_prepare_src(
+    struct mca_btl_base_module_t *base_module, struct mca_btl_base_endpoint_t *endpoint,
+    struct opal_convertor_t *convertor, uint8_t order, size_t reserve, size_t *size, uint32_t flags)
 {
-    opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t*) base_module;
+    opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t *) base_module;
     opal_btl_usnic_send_frag_t *frag;
     uint32_t payload_len;
 #if MSGDEBUG2
@@ -353,30 +321,27 @@ opal_btl_usnic_prepare_src(struct mca_btl_base_module_t *base_module,
      */
     payload_len = *size + reserve;
     if (payload_len <= module->max_frag_payload) {
-        frag = prepare_src_small(module, endpoint, convertor,
-                                 order, reserve, size, flags);
+        frag = prepare_src_small(module, endpoint, convertor, order, reserve, size, flags);
     } else {
-        frag = prepare_src_large(module, endpoint, convertor,
-                                 order, reserve, size, flags);
+        frag = prepare_src_large(module, endpoint, convertor, order, reserve, size, flags);
     }
 
 #if MSGDEBUG2
     opal_output(0, "prep_src: %s %s frag %p, size=%d+%u (was %u), conv=%p\n",
                 module->linux_device_name,
-                (reserve + *size) <= module->max_frag_payload?"small":"large",
-                (void *)frag, (int)reserve, (unsigned)*size, (unsigned)osize,
-                (void *)convertor);
-#if MSGDEBUG1
+                (reserve + *size) <= module->max_frag_payload ? "small" : "large", (void *) frag,
+                (int) reserve, (unsigned) *size, (unsigned) osize, (void *) convertor);
+#    if MSGDEBUG1
     {
         unsigned i;
         mca_btl_base_descriptor_t *desc = &frag->sf_base.uf_base;
-        for (i=0; i<desc->USNIC_SEND_LOCAL_COUNT; ++i) {
+        for (i = 0; i < desc->USNIC_SEND_LOCAL_COUNT; ++i) {
             opal_output(0, "  %d: ptr:%p len:%d\n", i,
-                        (void *)desc->USNIC_SEND_LOCAL[i].seg_addr.pval,
+                        (void *) desc->USNIC_SEND_LOCAL[i].seg_addr.pval,
                         desc->USNIC_SEND_LOCAL[i].seg_len);
         }
     }
-#endif
+#    endif
 #endif
 
     return &frag->sf_base.uf_base;
@@ -391,18 +356,16 @@ opal_btl_usnic_prepare_src(struct mca_btl_base_module_t *base_module,
  * Note that this function is only ever called with contiguous
  * buffers, so a convertor is not necessary.
  */
-int
-opal_btl_usnic_put(struct mca_btl_base_module_t *base_module,
-                   struct mca_btl_base_endpoint_t *endpoint,
-                   void *local_address, uint64_t remote_address,
-                   struct mca_btl_base_registration_handle_t *local_handle,
-                   struct mca_btl_base_registration_handle_t *remote_handle,
-                   size_t size, int flags, int order,
-                   mca_btl_base_rdma_completion_fn_t cbfunc,
-                   void *cbcontext, void *cbdata)
+int opal_btl_usnic_put(struct mca_btl_base_module_t *base_module,
+                       struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                       uint64_t remote_address,
+                       struct mca_btl_base_registration_handle_t *local_handle,
+                       struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
+                       int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                       void *cbcontext, void *cbdata)
 {
     opal_btl_usnic_send_frag_t *sfrag;
-    opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t*) base_module;
+    opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t *) base_module;
 
     /* At least for the moment, continue to make a descriptor, like we
        used to in BTL 2.0 */
@@ -439,8 +402,7 @@ opal_btl_usnic_put(struct mca_btl_base_module_t *base_module,
     frag->uf_local_seg[0].seg_len = size;
     frag->uf_local_seg[0].seg_addr.pval = local_address;
     frag->uf_remote_seg[0].seg_len = size;
-    frag->uf_remote_seg[0].seg_addr.pval =
-        (void *)(uintptr_t) remote_address;
+    frag->uf_remote_seg[0].seg_addr.pval = (void *) (uintptr_t) remote_address;
 
     mca_btl_base_descriptor_t *desc;
     desc = &frag->uf_base;
@@ -455,9 +417,7 @@ opal_btl_usnic_put(struct mca_btl_base_module_t *base_module,
     desc->order = order;
 
     int rc;
-    rc = opal_btl_usnic_finish_put_or_send(module,
-                                           (opal_btl_usnic_endpoint_t *)endpoint,
-                                           sfrag,
+    rc = opal_btl_usnic_finish_put_or_send(module, (opal_btl_usnic_endpoint_t *) endpoint, sfrag,
                                            /*tag=*/MCA_BTL_NO_ORDER);
     return rc;
 }

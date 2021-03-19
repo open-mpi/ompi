@@ -22,11 +22,11 @@
 #ifndef MCA_BTL_TCP_PROC_H
 #define MCA_BTL_TCP_PROC_H
 
-#include "opal/class/opal_object.h"
-#include "opal/util/proc.h"
 #include "btl_tcp.h"
 #include "btl_tcp_addr.h"
 #include "btl_tcp_endpoint.h"
+#include "opal/class/opal_object.h"
+#include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
@@ -43,7 +43,7 @@ struct mca_btl_tcp_proc_t {
     opal_proc_t *proc_opal;
     /**< pointer to corresponding opal_proc_t */
 
-    struct mca_btl_tcp_addr_t* proc_addrs;
+    struct mca_btl_tcp_addr_t *proc_addrs;
     /**< array of addresses exported by peer */
 
     size_t proc_addr_count;
@@ -64,12 +64,12 @@ struct mca_btl_tcp_proc_t {
 typedef struct mca_btl_tcp_proc_t mca_btl_tcp_proc_t;
 OBJ_CLASS_DECLARATION(mca_btl_tcp_proc_t);
 
-mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc);
-mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t* name);
-int  mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t*, mca_btl_base_endpoint_t*);
-int  mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t*, mca_btl_base_endpoint_t*);
-void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t*, struct sockaddr*, int);
-bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t*, struct sockaddr_storage*);
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc);
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name);
+int mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t *, mca_btl_base_endpoint_t *);
+int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t *, mca_btl_base_endpoint_t *);
+void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *, struct sockaddr *, int);
+bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t *, struct sockaddr_storage *);
 
 END_C_DECLS
 #endif

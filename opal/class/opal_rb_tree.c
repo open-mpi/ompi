@@ -27,19 +27,15 @@
 #include "opal/class/opal_rb_tree.h"
 
 /* Private functions */
-static void btree_insert(opal_rb_tree_t *tree, opal_rb_tree_node_t * node);
-static void btree_delete_fixup(opal_rb_tree_t *tree, opal_rb_tree_node_t * x);
-static opal_rb_tree_node_t * btree_successor(opal_rb_tree_t * tree,
-                                             opal_rb_tree_node_t * node);
-static opal_rb_tree_node_t * opal_rb_tree_find_node(opal_rb_tree_t *tree, void *key);
-static void left_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t * x);
-static void right_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t * x);
-static void inorder_destroy(opal_rb_tree_t *tree, opal_rb_tree_node_t * node);
-static void inorder_traversal(opal_rb_tree_t *tree,
-                              opal_rb_tree_condition_fn_t cond,
-                              opal_rb_tree_action_fn_t action,
-                              opal_rb_tree_node_t * node);
-
+static void btree_insert(opal_rb_tree_t *tree, opal_rb_tree_node_t *node);
+static void btree_delete_fixup(opal_rb_tree_t *tree, opal_rb_tree_node_t *x);
+static opal_rb_tree_node_t *btree_successor(opal_rb_tree_t *tree, opal_rb_tree_node_t *node);
+static opal_rb_tree_node_t *opal_rb_tree_find_node(opal_rb_tree_t *tree, void *key);
+static void left_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t *x);
+static void right_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t *x);
+static void inorder_destroy(opal_rb_tree_t *tree, opal_rb_tree_node_t *node);
+static void inorder_traversal(opal_rb_tree_t *tree, opal_rb_tree_condition_fn_t cond,
+                              opal_rb_tree_action_fn_t action, opal_rb_tree_node_t *node);
 
 /**
  * the constructor function. creates the free list to get the nodes from
@@ -48,14 +44,14 @@ static void inorder_traversal(opal_rb_tree_t *tree,
  *
  * @retval NONE
  */
-static void opal_rb_tree_construct(opal_object_t * object)
+static void opal_rb_tree_construct(opal_object_t *object)
 {
-    opal_rb_tree_t * tree = (opal_rb_tree_t *) object;
+    opal_rb_tree_t *tree = (opal_rb_tree_t *) object;
     tree->root_ptr = NULL;
     OBJ_CONSTRUCT(&(tree->free_list), opal_free_list_t);
-    opal_free_list_init (&(tree->free_list), sizeof(opal_rb_tree_node_t),
-            opal_cache_line_size, OBJ_CLASS(opal_rb_tree_node_t),
-            0,opal_cache_line_size, 0, -1 , 128, NULL, 0, NULL, NULL, NULL);
+    opal_free_list_init(&(tree->free_list), sizeof(opal_rb_tree_node_t), opal_cache_line_size,
+                        OBJ_CLASS(opal_rb_tree_node_t), 0, opal_cache_line_size, 0, -1, 128, NULL,
+                        0, NULL, NULL, NULL);
 }
 
 /**
@@ -63,35 +59,33 @@ static void opal_rb_tree_construct(opal_object_t * object)
  *
  * @param object the tree object
  */
-static void opal_rb_tree_destruct(opal_object_t * object)
+static void opal_rb_tree_destruct(opal_object_t *object)
 {
-    if(NULL != ((opal_rb_tree_t *)object)->root_ptr) {
+    if (NULL != ((opal_rb_tree_t *) object)->root_ptr) {
         opal_rb_tree_destroy((opal_rb_tree_t *) object);
     }
-    OBJ_DESTRUCT(&(((opal_rb_tree_t *)object)->free_list));
+    OBJ_DESTRUCT(&(((opal_rb_tree_t *) object)->free_list));
     return;
 }
 
 /* declare the instance of the classes  */
 OBJ_CLASS_INSTANCE(opal_rb_tree_node_t, opal_free_list_item_t, NULL, NULL);
-OBJ_CLASS_INSTANCE(opal_rb_tree_t, opal_object_t, opal_rb_tree_construct,
-                   opal_rb_tree_destruct);
+OBJ_CLASS_INSTANCE(opal_rb_tree_t, opal_object_t, opal_rb_tree_construct, opal_rb_tree_destruct);
 
 /* Create the tree */
-int opal_rb_tree_init(opal_rb_tree_t * tree,
-                      opal_rb_tree_comp_fn_t comp)
+int opal_rb_tree_init(opal_rb_tree_t *tree, opal_rb_tree_comp_fn_t comp)
 {
-    opal_free_list_item_t * node;
+    opal_free_list_item_t *node;
     /* we need to get memory for the root pointer from the free list */
-    node = opal_free_list_get (&(tree->free_list));
+    node = opal_free_list_get(&(tree->free_list));
     tree->root_ptr = (opal_rb_tree_node_t *) node;
     if (NULL == node) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    node = opal_free_list_get (&(tree->free_list));
+    node = opal_free_list_get(&(tree->free_list));
     if (NULL == node) {
-        opal_free_list_return (&tree->free_list, (opal_free_list_item_t*)tree->root_ptr);
+        opal_free_list_return(&tree->free_list, (opal_free_list_item_t *) tree->root_ptr);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     tree->nill = (opal_rb_tree_node_t *) node;
@@ -115,16 +109,15 @@ int opal_rb_tree_init(opal_rb_tree_t * tree,
     return OPAL_SUCCESS;
 }
 
-
 /* This inserts a node into the tree based on the passed values. */
-int opal_rb_tree_insert(opal_rb_tree_t *tree, void * key, void * value)
+int opal_rb_tree_insert(opal_rb_tree_t *tree, void *key, void *value)
 {
-    opal_rb_tree_node_t * y;
-    opal_rb_tree_node_t * node;
-    opal_free_list_item_t * item;
+    opal_rb_tree_node_t *y;
+    opal_rb_tree_node_t *node;
+    opal_free_list_item_t *item;
 
     /* get the memory for a node */
-    item = opal_free_list_get (&tree->free_list);
+    item = opal_free_list_get(&tree->free_list);
     if (NULL == item) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -180,10 +173,9 @@ int opal_rb_tree_insert(opal_rb_tree_t *tree, void * key, void * value)
 }
 
 /* Finds the node in the tree based on the key */
-void * opal_rb_tree_find_with(opal_rb_tree_t *tree, void *key,
-        opal_rb_tree_comp_fn_t compfn)
+void *opal_rb_tree_find_with(opal_rb_tree_t *tree, void *key, opal_rb_tree_comp_fn_t compfn)
 {
-    opal_rb_tree_node_t * node;
+    opal_rb_tree_node_t *node;
     int compvalue;
 
     node = tree->root_ptr->left;
@@ -203,9 +195,9 @@ void * opal_rb_tree_find_with(opal_rb_tree_t *tree, void *key,
 /* Finds the node in the tree based on the key and returns a pointer
  * to the node. This is a bit a code duplication, but this has to be fast
  * so we go ahead with the duplication */
-static opal_rb_tree_node_t * opal_rb_tree_find_node(opal_rb_tree_t *tree, void *key)
+static opal_rb_tree_node_t *opal_rb_tree_find_node(opal_rb_tree_t *tree, void *key)
 {
-    opal_rb_tree_node_t * node;
+    opal_rb_tree_node_t *node;
     int compvalue;
 
     node = tree->root_ptr->left;
@@ -225,10 +217,10 @@ static opal_rb_tree_node_t * opal_rb_tree_find_node(opal_rb_tree_t *tree, void *
 /* Delete a node from the tree based on the key */
 int opal_rb_tree_delete(opal_rb_tree_t *tree, void *key)
 {
-    opal_rb_tree_node_t * p;
-    opal_rb_tree_node_t * todelete;
-    opal_rb_tree_node_t * y;
-    opal_free_list_item_t * item;
+    opal_rb_tree_node_t *p;
+    opal_rb_tree_node_t *todelete;
+    opal_rb_tree_node_t *y;
+    opal_free_list_item_t *item;
 
     p = opal_rb_tree_find_node(tree, key);
     if (NULL == p) {
@@ -252,7 +244,7 @@ int opal_rb_tree_delete(opal_rb_tree_t *tree, void *key)
         tree->root_ptr->left = y;
     } else {
         if (todelete == todelete->parent->left) {
-         todelete->parent->left = y;
+            todelete->parent->left = y;
         } else {
             todelete->parent->right = y;
         }
@@ -267,16 +259,15 @@ int opal_rb_tree_delete(opal_rb_tree_t *tree, void *key)
         btree_delete_fixup(tree, y);
     }
     item = (opal_free_list_item_t *) todelete;
-    opal_free_list_return (&(tree->free_list), item);
+    opal_free_list_return(&(tree->free_list), item);
     --tree->tree_size;
     return OPAL_SUCCESS;
 }
 
-
 /* Destroy the hashmap    */
 int opal_rb_tree_destroy(opal_rb_tree_t *tree)
 {
-    opal_free_list_item_t * item;
+    opal_free_list_item_t *item;
     /* Recursive inorder traversal for delete    */
 
     inorder_destroy(tree, tree->root_ptr);
@@ -287,16 +278,15 @@ int opal_rb_tree_destroy(opal_rb_tree_t *tree)
 
     /* free the tree->nill node */
     item = (opal_free_list_item_t *) tree->nill;
-    opal_free_list_return (&(tree->free_list), item);
+    opal_free_list_return(&(tree->free_list), item);
     return OPAL_SUCCESS;
 }
 
-
 /* Find the next inorder successor of a node    */
 
-static opal_rb_tree_node_t * btree_successor(opal_rb_tree_t * tree, opal_rb_tree_node_t * node)
+static opal_rb_tree_node_t *btree_successor(opal_rb_tree_t *tree, opal_rb_tree_node_t *node)
 {
-    opal_rb_tree_node_t * p;
+    opal_rb_tree_node_t *p;
 
     if (node->right == tree->nill) {
         p = node->parent;
@@ -304,27 +294,26 @@ static opal_rb_tree_node_t * btree_successor(opal_rb_tree_t * tree, opal_rb_tree
             node = p;
             p = p->parent;
         }
-        if(p == tree->root_ptr) {
+        if (p == tree->root_ptr) {
             return tree->nill;
         }
         return p;
     }
 
     p = node->right;
-    while(p->left != tree->nill) {
+    while (p->left != tree->nill) {
         p = p->left;
     }
     return p;
 }
 
-
 /* Insert an element in the normal binary search tree fashion    */
 /* this function goes through the tree and finds the leaf where
  * the node will be inserted   */
-static void btree_insert(opal_rb_tree_t *tree, opal_rb_tree_node_t * node)
+static void btree_insert(opal_rb_tree_t *tree, opal_rb_tree_node_t *node)
 {
-    opal_rb_tree_node_t * parent = tree->root_ptr;
-    opal_rb_tree_node_t * n = parent->left; /* the real root of the tree */
+    opal_rb_tree_node_t *parent = tree->root_ptr;
+    opal_rb_tree_node_t *n = parent->left; /* the real root of the tree */
 
     /* set up initial values for the node */
     node->color = RED;
@@ -339,7 +328,7 @@ static void btree_insert(opal_rb_tree_t *tree, opal_rb_tree_node_t * node)
     }
 
     /* place it on either the left or the right */
-    if((parent == tree->root_ptr) || (tree->comp(node->key, parent->key) <= 0)) {
+    if ((parent == tree->root_ptr) || (tree->comp(node->key, parent->key) <= 0)) {
         parent->left = node;
     } else {
         parent->right = node;
@@ -354,10 +343,10 @@ static void btree_insert(opal_rb_tree_t *tree, opal_rb_tree_node_t * node)
 }
 
 /* Fixup the balance of the btree after deletion    */
-static void btree_delete_fixup(opal_rb_tree_t *tree, opal_rb_tree_node_t * x)
+static void btree_delete_fixup(opal_rb_tree_t *tree, opal_rb_tree_node_t *x)
 {
-    opal_rb_tree_node_t * w;
-    opal_rb_tree_node_t * root = tree->root_ptr->left;
+    opal_rb_tree_node_t *w;
+    opal_rb_tree_node_t *root = tree->root_ptr->left;
     while ((x != root) && (x->color == BLACK)) {
         if (x == x->parent->left) {
             w = x->parent->right;
@@ -415,13 +404,11 @@ static void btree_delete_fixup(opal_rb_tree_t *tree, opal_rb_tree_node_t * x)
     return;
 }
 
-
 /* Free the nodes in inorder fashion    */
 
-static void
-inorder_destroy(opal_rb_tree_t *tree, opal_rb_tree_node_t * node)
+static void inorder_destroy(opal_rb_tree_t *tree, opal_rb_tree_node_t *node)
 {
-    opal_free_list_item_t * item;
+    opal_free_list_item_t *item;
 
     if (node == tree->nill) {
         return;
@@ -432,21 +419,20 @@ inorder_destroy(opal_rb_tree_t *tree, opal_rb_tree_node_t * node)
     if (node->left != tree->nill) {
         item = (opal_free_list_item_t *) node->left;
         --tree->tree_size;
-        opal_free_list_return (&tree->free_list, item);
+        opal_free_list_return(&tree->free_list, item);
     }
 
     inorder_destroy(tree, node->right);
     if (node->right != tree->nill) {
         item = (opal_free_list_item_t *) node->right;
         --tree->tree_size;
-        opal_free_list_return (&tree->free_list, item);
+        opal_free_list_return(&tree->free_list, item);
     }
 }
 
 /* Try to access all the elements of the hashmap conditionally */
 
-int opal_rb_tree_traverse(opal_rb_tree_t *tree,
-                          opal_rb_tree_condition_fn_t cond,
+int opal_rb_tree_traverse(opal_rb_tree_t *tree, opal_rb_tree_condition_fn_t cond,
                           opal_rb_tree_action_fn_t action)
 {
     if ((cond == NULL) || (action == NULL)) {
@@ -458,11 +444,8 @@ int opal_rb_tree_traverse(opal_rb_tree_t *tree,
     return OPAL_SUCCESS;
 }
 
-
-static void inorder_traversal(opal_rb_tree_t *tree,
-                              opal_rb_tree_condition_fn_t cond,
-                              opal_rb_tree_action_fn_t action,
-                              opal_rb_tree_node_t * node)
+static void inorder_traversal(opal_rb_tree_t *tree, opal_rb_tree_condition_fn_t cond,
+                              opal_rb_tree_action_fn_t action, opal_rb_tree_node_t *node)
 {
     if (node == tree->nill) {
         return;
@@ -480,14 +463,14 @@ static void inorder_traversal(opal_rb_tree_t *tree,
 /* Left rotate the tree    */
 /* basically what we want to do is to make x be the left child
  * of its right child    */
-static void left_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t * x)
+static void left_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t *x)
 {
-    opal_rb_tree_node_t * y;
+    opal_rb_tree_node_t *y;
 
     y = x->right;
     /* make the left child of y's parent be x if it is not the sentinal node*/
     if (y->left != tree->nill) {
-        y->left->parent=x;
+        y->left->parent = x;
     }
 
     /* normlly we would have to check to see if we are at the root.
@@ -507,17 +490,16 @@ static void left_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t * x)
     return;
 }
 
-
 /* Right rotate the tree    */
 /* basically what we want to do is to make x be the right child
  * of its left child */
-static void right_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t * x)
+static void right_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t *x)
 {
-    opal_rb_tree_node_t * y;
+    opal_rb_tree_node_t *y;
 
     y = x->left;
 
-    if(y->right != tree->nill) {
+    if (y->right != tree->nill) {
         y->right->parent = x;
     }
 
@@ -535,16 +517,15 @@ static void right_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t * x)
     return;
 }
 
-
 /* returns the size of the tree */
 int opal_rb_tree_size(opal_rb_tree_t *tree)
 {
-        return tree->tree_size;
+    return tree->tree_size;
 }
 
 /* below are a couple of debugging functions */
 #if 0
-#include <stdio.h>
+#    include <stdio.h>
 static void inorder(opal_rb_tree_t * tree, opal_rb_tree_node_t * node);
 static void print_inorder(opal_rb_tree_t * tree);
 

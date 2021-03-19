@@ -10,14 +10,13 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/reachable/reachable.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/reachable/base/base.h"
+#include "opal/mca/reachable/reachable.h"
 
 /*
  * Globals
@@ -32,10 +31,11 @@ int opal_reachable_base_select(void)
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("reachable", opal_reachable_base_framework.framework_output,
-                                        &opal_reachable_base_framework.framework_components,
-                                        (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component, NULL) ) {
+    if (OPAL_SUCCESS
+        != mca_base_select("reachable", opal_reachable_base_framework.framework_output,
+                           &opal_reachable_base_framework.framework_components,
+                           (mca_base_module_t **) &best_module,
+                           (mca_base_component_t **) &best_component, NULL)) {
         /* notify caller that no available component found */
         return OPAL_ERR_NOT_FOUND;
     }

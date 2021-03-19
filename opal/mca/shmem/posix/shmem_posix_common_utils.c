@@ -29,40 +29,39 @@
 
 #include <errno.h>
 #ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif  /* HAVE_FCNTL_H */
+#    include <fcntl.h>
+#endif /* HAVE_FCNTL_H */
 #include <string.h>
 #if OPAL_HAVE_SOLARIS && !defined(_POSIX_C_SOURCE)
-  #define _POSIX_C_SOURCE 200112L /* Required for shm_{open,unlink} decls */
-  #include <sys/mman.h>
-  #undef _POSIX_C_SOURCE
+#    define _POSIX_C_SOURCE 200112L /* Required for shm_{open,unlink} decls */
+#    include <sys/mman.h>
+#    undef _POSIX_C_SOURCE
 #else
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif /* HAVE_SYS_MMAN_H */
+#    ifdef HAVE_SYS_MMAN_H
+#        include <sys/mman.h>
+#    endif /* HAVE_SYS_MMAN_H */
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif /* HAVE_SYS_TYPES_H */
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif /* HAVE_NETDB_H */
 
+#include "opal/mca/shmem/base/base.h"
+#include "opal/mca/shmem/shmem.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/shmem/base/base.h"
-#include "opal/mca/shmem/shmem.h"
 
 #include "shmem_posix.h"
 #include "shmem_posix_common_utils.h"
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int
-shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
+int shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
 {
     int attempt = 0, fd = -1;
 
@@ -75,13 +74,12 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
          * see comment in shmem_posix.h that explains why we chose to do things
          * this way.
          */
-        snprintf(posix_file_name_buff, size, "%s%04d",
-                 OPAL_SHMEM_POSIX_FILE_NAME_PREFIX, attempt++);
+        snprintf(posix_file_name_buff, size, "%s%04d", OPAL_SHMEM_POSIX_FILE_NAME_PREFIX,
+                 attempt++);
         /* the check for the existence of the object and its creation if it
          * does not exist are performed atomically.
          */
-        if (-1 == (fd = shm_open(posix_file_name_buff,
-                                 O_CREAT | O_EXCL | O_RDWR, 0600))) {
+        if (-1 == (fd = shm_open(posix_file_name_buff, O_CREAT | O_EXCL | O_RDWR, 0600))) {
             int err = errno;
             /* the object already exists, so try again with a new name */
             if (EEXIST == err) {
@@ -92,9 +90,9 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
              */
             else {
                 opal_output_verbose(10, opal_shmem_base_framework.framework_output,
-                     "shmem_posix_shm_open: disqualifying posix because "
-                     "shm_open(2) failed with error: %s (errno %d)\n",
-                     strerror(err), err);
+                                    "shmem_posix_shm_open: disqualifying posix because "
+                                    "shm_open(2) failed with error: %s (errno %d)\n",
+                                    strerror(err), err);
                 break;
             }
         }
@@ -107,8 +105,7 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
     /* if we didn't find a name, let the user know that we tried and failed */
     if (attempt >= OPAL_SHMEM_POSIX_MAX_ATTEMPTS) {
         opal_output(0, "shmem: posix: file name search - max attempts exceeded."
-                    "cannot continue with posix.\n");
+                       "cannot continue with posix.\n");
     }
     return fd;
 }
-

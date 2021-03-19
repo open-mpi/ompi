@@ -23,15 +23,14 @@
  * $HEADER$
  */
 
-
 #ifndef OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_THREADS_H
 #define OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_THREADS_H
 
 #include <pthread.h>
 #include <signal.h>
 
-#include "opal/mca/threads/threads.h"
 #include "opal/mca/threads/pthreads/threads_pthreads.h"
+#include "opal/mca/threads/threads.h"
 
 struct opal_thread_t {
     opal_object_t super;
@@ -43,8 +42,7 @@ struct opal_thread_t {
 /* Pthreads do not need to yield when idle */
 #define OPAL_THREAD_YIELD_WHEN_IDLE_DEFAULT false
 
-static inline
-void opal_thread_yield(void)
+static inline void opal_thread_yield(void)
 {
     opal_threads_pthreads_yield_fn();
 }

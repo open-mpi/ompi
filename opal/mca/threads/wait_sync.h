@@ -21,8 +21,8 @@
 #ifndef OPAL_MCA_THREADS_WAIT_SYNC_H
 #define OPAL_MCA_THREADS_WAIT_SYNC_H
 
-#include "opal/sys/atomic.h"
 #include "opal/mca/threads/condition.h"
+#include "opal/sys/atomic.h"
 
 BEGIN_C_DECLS
 
@@ -36,8 +36,7 @@ extern int opal_max_thread_in_progress;
  * triggered. The status of the synchronization will be reported to
  * the waiting threads.
  */
-static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates,
-                                    int status)
+static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int status)
 {
     if (OPAL_LIKELY(OPAL_SUCCESS == status)) {
         if (0 != (OPAL_THREAD_ADD_FETCH32(&sync->count, -updates))) {

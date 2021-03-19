@@ -13,25 +13,29 @@
 
 #include <assert.h>
 
-#include "opal/runtime/opal.h"
 #include "opal/mca/reachable/reachable.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/if.h"
 #include "opal/util/string_copy.h"
 
 BEGIN_C_DECLS
 
 /* Create and populate opal_if_t with information required by opal_reachable */
-opal_if_t* create_if(int af_family, char *address, int mask, int bandwidth)
+opal_if_t *create_if(int af_family, char *address, int mask, int bandwidth)
 {
     opal_if_t *interface = OBJ_NEW(opal_if_t);
     opal_string_copy(interface->if_name, "interface0", OPAL_IF_NAMESIZE);
     interface->af_family = af_family;
-    ((struct sockaddr *)&(interface->if_addr))->sa_family = af_family; 
+    ((struct sockaddr *) &(interface->if_addr))->sa_family = af_family;
 
-    if (AF_INET == af_family){
-	assert(1 == inet_pton(af_family, address, &((struct sockaddr_in *)&(interface->if_addr))->sin_addr));
-    } else if (AF_INET6 == af_family){
-	assert(1 == inet_pton(af_family, address, &((struct sockaddr_in6 *)&(interface->if_addr))->sin6_addr));
+    if (AF_INET == af_family) {
+        assert(1
+               == inet_pton(af_family, address,
+                            &((struct sockaddr_in *) &(interface->if_addr))->sin_addr));
+    } else if (AF_INET6 == af_family) {
+        assert(1
+               == inet_pton(af_family, address,
+                            &((struct sockaddr_in6 *) &(interface->if_addr))->sin6_addr));
     }
 
     interface->if_mask = mask;
@@ -39,7 +43,6 @@ opal_if_t* create_if(int af_family, char *address, int mask, int bandwidth)
 
     return interface;
 }
-
 
 /* Run a test between a pair of interfaces
  * and clean up the memory afterwards.

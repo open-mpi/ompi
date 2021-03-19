@@ -26,20 +26,20 @@
 #include "opal/mca/base/mca_base_framework.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/allocator/allocator.h"
+#include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
 /**
  * Structure which describes a selected module.
  */
 struct mca_allocator_base_selected_module_t {
-  opal_list_item_t super;
-  /**< Makes this an object of type opal_list_item */
-  mca_allocator_base_component_t *allocator_component;
-  /**< Info about the module */
-  mca_allocator_base_module_t *allocator_module;
-  /**< The function pointers for all the module's functions. */
+    opal_list_item_t super;
+    /**< Makes this an object of type opal_list_item */
+    mca_allocator_base_component_t *allocator_component;
+    /**< Info about the module */
+    mca_allocator_base_module_t *allocator_module;
+    /**< The function pointers for all the module's functions. */
 };
 /**
  * Convenience typedef.
@@ -51,9 +51,7 @@ typedef struct mca_allocator_base_selected_module_t mca_allocator_base_selected_
  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_allocator_base_selected_module_t);
 
-
-OPAL_DECLSPEC mca_allocator_base_component_t* mca_allocator_component_lookup(const char* name);
-
+OPAL_DECLSPEC mca_allocator_base_component_t *mca_allocator_component_lookup(const char *name);
 
 /*
  * Globals

@@ -22,22 +22,21 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 #include <stdio.h>
 
-#include "opal/mca/mca.h"
+#include "opal/constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_pvar.h"
-#include "opal/mca/rcache/rcache.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/rcache/base/base.h"
+#include "opal/mca/rcache/rcache.h"
 #include "opal/memoryhooks/memory.h"
-#include "opal/constants.h"
 #include "rcache_base_mem_cb.h"
 
 /* two-level macro for stringifying a number */
 #define STRINGIFYX(x) #x
-#define STRINGIFY(x) STRINGIFYX(x)
+#define STRINGIFY(x)  STRINGIFYX(x)
 
 /*
  * The following file was created by configure.  It contains extern
@@ -53,7 +52,7 @@ int mca_rcache_base_used_mem_hooks = 0;
  * Memory Pool Registration
  */
 
-static void mca_rcache_base_registration_constructor( mca_rcache_base_registration_t * reg )
+static void mca_rcache_base_registration_constructor(mca_rcache_base_registration_t *reg)
 {
     reg->rcache = NULL;
     reg->base = NULL;
@@ -106,7 +105,7 @@ static int mca_rcache_base_close(void)
            opal_mem_free_finalize(), and callbacks from the memory manager
            hooks to the bowels of the mem_free code can still occur any
            time between now and end of application (even post main()!) */
-        (void) mca_base_framework_close (&opal_memory_base_framework);
+        (void) mca_base_framework_close(&opal_memory_base_framework);
     }
 
     /* All done */
@@ -125,17 +124,15 @@ static int mca_rcache_base_open(mca_base_open_flag_t flags)
 
     OBJ_CONSTRUCT(&mca_rcache_base_modules, opal_list_t);
 
-     /* Open up all available components */
+    /* Open up all available components */
     return mca_base_framework_components_open(&opal_rcache_base_framework, flags);
 }
 
-static int mca_rcache_base_register_mca_variables (mca_base_register_flag_t flags)
+static int mca_rcache_base_register_mca_variables(mca_base_register_flag_t flags)
 {
     return OPAL_SUCCESS;
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, rcache, "OPAL Registration Cache",
-                           mca_rcache_base_register_mca_variables,
-                           mca_rcache_base_open, mca_rcache_base_close,
-                           mca_rcache_base_static_components, 0);
-
+                           mca_rcache_base_register_mca_variables, mca_rcache_base_open,
+                           mca_rcache_base_close, mca_rcache_base_static_components, 0);

@@ -12,9 +12,9 @@
  */
 
 #if !defined(OPAL_MPIT_PVAR_H)
-#define OPAL_MPIT_PVAR_H
+#    define OPAL_MPIT_PVAR_H
 
-#include "opal/mca/base/mca_base_var.h"
+#    include "opal/mca/base/mca_base_var.h"
 
 /*
  * These flags are used when registering a new pvar.
@@ -27,20 +27,20 @@ typedef enum {
         manually when you register a variable with
         mca_base_pvar_register().  Analogous to the
         MCA_BASE_VAR_FLAG_DWG flag. */
-    MCA_BASE_PVAR_FLAG_IWG        = 0x040,
+    MCA_BASE_PVAR_FLAG_IWG = 0x040,
     /** This variable can not be written. Will be ignored for counter,
         timer, and aggregate variables. These variable handles will be
         updated relative to the value reported by the get_value()
         function provided at registration time. */
-    MCA_BASE_PVAR_FLAG_READONLY   = 0x080,
+    MCA_BASE_PVAR_FLAG_READONLY = 0x080,
     /** This variable runs continuously after being bound to a handle. */
     MCA_BASE_PVAR_FLAG_CONTINUOUS = 0x100,
     /** This variable can be updated atomically. This flag is ignored
         by mca_base_pvar_register() at this time. */
-    MCA_BASE_PVAR_FLAG_ATOMIC     = 0x200,
+    MCA_BASE_PVAR_FLAG_ATOMIC = 0x200,
     /** This variable has been marked as invalid. This flag is ignored
         by mca_base_pvar_register(). */
-    MCA_BASE_PVAR_FLAG_INVALID    = 0x400,
+    MCA_BASE_PVAR_FLAG_INVALID = 0x400,
 } mca_base_pvar_flag_t;
 
 /*
@@ -94,7 +94,7 @@ enum {
     MCA_BASE_PVAR_CLASS_GENERIC
 };
 
-#define MCA_BASE_PVAR_CLASS_ANY -1
+#    define MCA_BASE_PVAR_CLASS_ANY -1
 
 /*
  * Reserved bindings; passed when registering a new pvar. OPAL will
@@ -128,7 +128,7 @@ struct mca_base_pvar_t;
  * pointer will be large enough to hold the datatype and count specified when this
  * variable was created and bound.
  */
-typedef int (*mca_base_get_value_fn_t) (const struct mca_base_pvar_t *pvar, void *value, void *obj);
+typedef int (*mca_base_get_value_fn_t)(const struct mca_base_pvar_t *pvar, void *value, void *obj);
 
 /**
  * Function to set the current value of a variable.
@@ -142,7 +142,7 @@ typedef int (*mca_base_get_value_fn_t) (const struct mca_base_pvar_t *pvar, void
  * variable was created and bound. Read-only variables are not expected to provide
  * this function.
  */
-typedef int (*mca_base_set_value_fn_t) (struct mca_base_pvar_t *pvar, const void *value, void *obj);
+typedef int (*mca_base_set_value_fn_t)(struct mca_base_pvar_t *pvar, const void *value, void *obj);
 
 /**
  * Function to notify of a pvar handle event.
@@ -158,7 +158,8 @@ typedef int (*mca_base_set_value_fn_t) (struct mca_base_pvar_t *pvar, const void
  * On MCA_BASE_PVAR_HANDLE_START: enable the performance variable.
  * On MCA_BASE_PVAR_HANDLE_STOP: XXX -- TODO -- finish me
  */
-typedef int (*mca_base_notify_fn_t) (struct mca_base_pvar_t *pvar, mca_base_pvar_event_t event, void *obj, int *count);
+typedef int (*mca_base_notify_fn_t)(struct mca_base_pvar_t *pvar, mca_base_pvar_event_t event,
+                                    void *obj, int *count);
 
 /**
  * Structure representing an OPAL performance variable.
@@ -311,11 +312,12 @@ OBJ_CLASS_DECLARATION(mca_base_pvar_handle_t);
  * Note: if used incorrectly this function may fail an assert(); see
  * MPI 3.0 14.3 to see acceptable values for datatype given the class.
  */
-OPAL_DECLSPEC int mca_base_pvar_register (const char *project, const char *framework, const char *component, const char *name,
-                            const char *description, mca_base_var_info_lvl_t verbosity,
-                            int var_class, mca_base_var_type_t type, mca_base_var_enum_t *enumerator,
-                            int bind, mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
-                            mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify, void *ctx);
+OPAL_DECLSPEC int
+mca_base_pvar_register(const char *project, const char *framework, const char *component,
+                       const char *name, const char *description, mca_base_var_info_lvl_t verbosity,
+                       int var_class, mca_base_var_type_t type, mca_base_var_enum_t *enumerator,
+                       int bind, mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
+                       mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify, void *ctx);
 
 /**
  * Convinience function for registering a performance variable
@@ -326,12 +328,12 @@ OPAL_DECLSPEC int mca_base_pvar_register (const char *project, const char *frame
  * be unregistered / made unavailable when that component is closed by
  * its framework.
  */
-OPAL_DECLSPEC int mca_base_component_pvar_register (const mca_base_component_t *component, const char *name,
-                            const char *description, mca_base_var_info_lvl_t verbosity, int var_class,
-                            mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
-                            mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
-                            mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify, void *ctx);
-
+OPAL_DECLSPEC int mca_base_component_pvar_register(
+    const mca_base_component_t *component, const char *name, const char *description,
+    mca_base_var_info_lvl_t verbosity, int var_class, mca_base_var_type_t type,
+    mca_base_var_enum_t *enumerator, int bind, mca_base_pvar_flag_t flags,
+    mca_base_get_value_fn_t get_value, mca_base_set_value_fn_t set_value,
+    mca_base_notify_fn_t notify, void *ctx);
 
 /**
  * Find the index for an MCA performance variable based on its names.
@@ -351,7 +353,8 @@ OPAL_DECLSPEC int mca_base_component_pvar_register (const mca_base_component_t *
  * mca_base_pvar_get(), mca_base_pvar_handle_alloc(), and
  * mca_base_pvar_dump().
  */
-OPAL_DECLSPEC int mca_base_pvar_find (const char *project, const char *framework, const char *component, const char *name);
+OPAL_DECLSPEC int mca_base_pvar_find(const char *project, const char *framework,
+                                     const char *component, const char *name);
 
 /**
  * Find the index for a performance variable based on its full name
@@ -361,7 +364,7 @@ OPAL_DECLSPEC int mca_base_pvar_find (const char *project, const char *framework
  *
  * See mca_base_pvar_find().
  */
-OPAL_DECLSPEC int mca_base_pvar_find_by_name (const char *full_name, int var_class, int *index);
+OPAL_DECLSPEC int mca_base_pvar_find_by_name(const char *full_name, int var_class, int *index);
 
 /****************************************************************************
  * The following functions are the back-end to the MPI_T API functions
@@ -376,7 +379,7 @@ OPAL_DECLSPEC int mca_base_pvar_find_by_name (const char *full_name, int var_cla
  * This function can be called before mca_base_pvar_init() and after
  * mca_base_pvar_finalize().
  */
-OPAL_DECLSPEC int mca_base_pvar_get_count (int *count);
+OPAL_DECLSPEC int mca_base_pvar_get_count(int *count);
 
 /**
  * Update the handles associated with the specified performance variable and MPI object
@@ -389,7 +392,7 @@ OPAL_DECLSPEC int mca_base_pvar_get_count (int *count);
  * is recommended this function not be called from within any critical code path. Calling
  * this function should only be necessary to update watermarks.
  */
-OPAL_DECLSPEC int mca_base_pvar_update_all_handles (int index, const void *obj);
+OPAL_DECLSPEC int mca_base_pvar_update_all_handles(int index, const void *obj);
 
 /**
  * Get the variable at an index
@@ -400,7 +403,7 @@ OPAL_DECLSPEC int mca_base_pvar_update_all_handles (int index, const void *obj);
  * @returns OPAL_SUCCESS on success
  * @returns OPAL_ERR_VALUE_OUT_OF_BOUNDS on if index is out of range
  */
-OPAL_DECLSPEC int mca_base_pvar_get (int index, const mca_base_pvar_t **pvar);
+OPAL_DECLSPEC int mca_base_pvar_get(int index, const mca_base_pvar_t **pvar);
 
 /**
  * Dump strings describing the performance variable at an index
@@ -423,40 +426,40 @@ OPAL_DECLSPEC int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_t
  * A performance variable that has been marked as invalid will not be available. To
  * restore a performance variable it has to be re-registered using mca_base_pvar_register().
  */
-int mca_base_pvar_mark_invalid (int index);
+int mca_base_pvar_mark_invalid(int index);
 
 /**
  * Convienience functions for performance variables
  */
-static inline bool mca_base_pvar_is_sum (const mca_base_pvar_t *pvar)
+static inline bool mca_base_pvar_is_sum(const mca_base_pvar_t *pvar)
 {
-    return (MCA_BASE_PVAR_CLASS_COUNTER == pvar->var_class ||
-            MCA_BASE_PVAR_CLASS_TIMER == pvar->var_class ||
-            MCA_BASE_PVAR_CLASS_AGGREGATE == pvar->var_class);
+    return (MCA_BASE_PVAR_CLASS_COUNTER == pvar->var_class
+            || MCA_BASE_PVAR_CLASS_TIMER == pvar->var_class
+            || MCA_BASE_PVAR_CLASS_AGGREGATE == pvar->var_class);
 }
 
-static inline bool mca_base_pvar_is_watermark (const mca_base_pvar_t *pvar)
+static inline bool mca_base_pvar_is_watermark(const mca_base_pvar_t *pvar)
 {
-    return (MCA_BASE_PVAR_CLASS_HIGHWATERMARK == pvar->var_class ||
-            MCA_BASE_PVAR_CLASS_LOWWATERMARK == pvar->var_class);
+    return (MCA_BASE_PVAR_CLASS_HIGHWATERMARK == pvar->var_class
+            || MCA_BASE_PVAR_CLASS_LOWWATERMARK == pvar->var_class);
 }
 
-static inline bool mca_base_pvar_is_readonly (const mca_base_pvar_t *pvar)
+static inline bool mca_base_pvar_is_readonly(const mca_base_pvar_t *pvar)
 {
     return !!(pvar->flags & MCA_BASE_PVAR_FLAG_READONLY);
 }
 
-static inline bool mca_base_pvar_is_continuous (const mca_base_pvar_t *pvar)
+static inline bool mca_base_pvar_is_continuous(const mca_base_pvar_t *pvar)
 {
     return !!(pvar->flags & MCA_BASE_PVAR_FLAG_CONTINUOUS);
 }
 
-static inline bool mca_base_pvar_is_atomic (const mca_base_pvar_t *pvar)
+static inline bool mca_base_pvar_is_atomic(const mca_base_pvar_t *pvar)
 {
     return !!(pvar->flags & MCA_BASE_PVAR_FLAG_ATOMIC);
 }
 
-static inline bool mca_base_pvar_is_invalid (const mca_base_pvar_t *pvar)
+static inline bool mca_base_pvar_is_invalid(const mca_base_pvar_t *pvar)
 {
     return !!(pvar->flags & MCA_BASE_PVAR_FLAG_INVALID);
 }
@@ -479,8 +482,9 @@ static inline bool mca_base_pvar_is_invalid (const mca_base_pvar_t *pvar)
  * hold \count values of the type of the performance variable specified by
  * \index.
  */
-OPAL_DECLSPEC int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, void *obj_handle,
-                                mca_base_pvar_handle_t **handle, int *count);
+OPAL_DECLSPEC int mca_base_pvar_handle_alloc(mca_base_pvar_session_t *session, int index,
+                                             void *obj_handle, mca_base_pvar_handle_t **handle,
+                                             int *count);
 
 /**
  * Free an allocated performance variable handle
@@ -489,7 +493,7 @@ OPAL_DECLSPEC int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, 
  *
  * After calling this function the performance variable will no longer be valid.
  */
-OPAL_DECLSPEC int mca_base_pvar_handle_free (mca_base_pvar_handle_t *handle);
+OPAL_DECLSPEC int mca_base_pvar_handle_free(mca_base_pvar_handle_t *handle);
 
 /**
  * Update a performance variable handle.
@@ -502,7 +506,7 @@ OPAL_DECLSPEC int mca_base_pvar_handle_free (mca_base_pvar_handle_t *handle);
  * the new value will be the greater/lesser of the current handle value and the
  * current variable value. This call does not update other types of handles.
  */
-OPAL_DECLSPEC int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle);
+OPAL_DECLSPEC int mca_base_pvar_handle_update(mca_base_pvar_handle_t *handle);
 
 /**
  * Read the current value of a handle
@@ -514,7 +518,7 @@ OPAL_DECLSPEC int mca_base_pvar_handle_update (mca_base_pvar_handle_t *handle);
  * and return it in the buffer specified by value. The buffer must be large enough to
  * hold the correct number and type of this handle's value (see mca_base_pvar_handle_update()).
  */
-OPAL_DECLSPEC int mca_base_pvar_handle_read_value (mca_base_pvar_handle_t *handle, void *value);
+OPAL_DECLSPEC int mca_base_pvar_handle_read_value(mca_base_pvar_handle_t *handle, void *value);
 
 /**
  * Write a value to a read-write handle
@@ -524,7 +528,8 @@ OPAL_DECLSPEC int mca_base_pvar_handle_read_value (mca_base_pvar_handle_t *handl
  *
  * If the underlying variable is read-only this function will fail with OPAL_ERR_PERM.
  */
-OPAL_DECLSPEC int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void *value);
+OPAL_DECLSPEC int mca_base_pvar_handle_write_value(mca_base_pvar_handle_t *handle,
+                                                   const void *value);
 
 /**
  * Convienience function for sending notification of a handle change
@@ -533,7 +538,8 @@ OPAL_DECLSPEC int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *hand
  * @param[in]  event  Event that occurred
  * @param[out] count  Value count returned when binding a handle
  */
-OPAL_DECLSPEC int mca_base_pvar_notify (mca_base_pvar_handle_t *handle, mca_base_pvar_event_t event, int *count);
+OPAL_DECLSPEC int mca_base_pvar_notify(mca_base_pvar_handle_t *handle, mca_base_pvar_event_t event,
+                                       int *count);
 
 /**
  * Start a performance variable handle
@@ -543,7 +549,7 @@ OPAL_DECLSPEC int mca_base_pvar_notify (mca_base_pvar_handle_t *handle, mca_base
  * @returns OPAL_SUCCESS on success
  * @returns OPAL_ERR_NOT_SUPPORTED if the handle could not be started
  */
-OPAL_DECLSPEC int mca_base_pvar_handle_start (mca_base_pvar_handle_t *handle);
+OPAL_DECLSPEC int mca_base_pvar_handle_start(mca_base_pvar_handle_t *handle);
 
 /**
  * Stop a performance variable handle
@@ -553,7 +559,7 @@ OPAL_DECLSPEC int mca_base_pvar_handle_start (mca_base_pvar_handle_t *handle);
  * @return OPAL_SUCCESS on success
  * @returns OPAL_ERR_NOT_SUPPORTED if the handle could not be started
  */
-OPAL_DECLSPEC int mca_base_pvar_handle_stop (mca_base_pvar_handle_t *handle);
+OPAL_DECLSPEC int mca_base_pvar_handle_stop(mca_base_pvar_handle_t *handle);
 
 /**
  * Reset a performance variable handle
@@ -562,9 +568,9 @@ OPAL_DECLSPEC int mca_base_pvar_handle_stop (mca_base_pvar_handle_t *handle);
  *
  * Reset the handle to a value equivalent to when the handle was first allocated.
  */
-OPAL_DECLSPEC int mca_base_pvar_handle_reset (mca_base_pvar_handle_t *handle);
+OPAL_DECLSPEC int mca_base_pvar_handle_reset(mca_base_pvar_handle_t *handle);
 
-static inline bool mca_base_pvar_handle_is_running (mca_base_pvar_handle_t *handle)
+static inline bool mca_base_pvar_handle_is_running(mca_base_pvar_handle_t *handle)
 {
     return handle->started || !!(handle->pvar->flags & MCA_BASE_PVAR_FLAG_CONTINUOUS);
 }

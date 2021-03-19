@@ -27,10 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "opal/util/printf.h"
+#include "opal/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
-#include "opal/constants.h"
+#include "opal/util/printf.h"
 
 #define OPAL_DEFAULT_TMPDIR "/tmp"
 
@@ -92,8 +92,7 @@ char **opal_environ_merge(char **minor, char **major)
  * Portable version of setenv(), allowing editing of any environ-like
  * array
  */
-int opal_setenv(const char *name, const char *value, bool overwrite,
-                char ***env)
+int opal_setenv(const char *name, const char *value, bool overwrite, char ***env)
 {
     int i;
     char *newvalue, *compare;
@@ -113,7 +112,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
 
     /* Check the bozo case */
 
-    if( NULL == env ) {
+    if (NULL == env) {
         return OPAL_ERR_BAD_PARAM;
     } else if (NULL == *env) {
         i = 0;
@@ -123,13 +122,13 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
     }
 
     /* If this is the "environ" array, use putenv */
-    if( *env == environ ) {
+    if (*env == environ) {
         /* THIS IS POTENTIALLY A MEMORY LEAK!  But I am doing it
            so that we don't violate the law of least
            astonishment for OPAL developers (i.e., those that don't
            check the return code of opal_setenv() and notice that we
            returned an error if you passed in the real environ) */
-#if defined (HAVE_SETENV)
+#if defined(HAVE_SETENV)
         setenv(name, value, overwrite);
         /* setenv copies the value, so we can free it here */
         free(newvalue);
@@ -199,7 +198,6 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
     return OPAL_SUCCESS;
 }
 
-
 /*
  * Portable version of unsetenv(), allowing editing of any
  * environ-like array
@@ -248,21 +246,20 @@ int opal_unsetenv(const char *name, char ***env)
     return (found) ? OPAL_SUCCESS : OPAL_ERR_NOT_FOUND;
 }
 
-const char* opal_tmp_directory( void )
+const char *opal_tmp_directory(void)
 {
-    const char* str;
+    const char *str;
 
-    if( NULL == (str = getenv("TMPDIR")) )
-        if( NULL == (str = getenv("TEMP")) )
-            if( NULL == (str = getenv("TMP")) )
+    if (NULL == (str = getenv("TMPDIR")))
+        if (NULL == (str = getenv("TEMP")))
+            if (NULL == (str = getenv("TMP")))
                 str = OPAL_DEFAULT_TMPDIR;
     return str;
 }
 
-const char* opal_home_directory( void )
+const char *opal_home_directory(void)
 {
-    char* home = getenv("HOME");
+    char *home = getenv("HOME");
 
     return home;
 }
-

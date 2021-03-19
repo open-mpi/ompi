@@ -25,14 +25,14 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/runtime/opal.h"
-#include "opal/util/keyval_parse.h"
 #include "opal/util/keyval/keyval_lex.h"
+#include "opal/util/keyval_parse.h"
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
-#include "opal/mca/threads/mutex.h"
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 
 int opal_util_keyval_parse_lineno = 0;
 
@@ -49,7 +49,7 @@ static void parse_error(int num);
 static char *env_str = NULL;
 static int envsize = 1024;
 
-static void opal_util_keyval_parse_finalize (void)
+static void opal_util_keyval_parse_finalize(void)
 {
     free(key_buffer);
     key_buffer = NULL;
@@ -62,17 +62,16 @@ int opal_util_keyval_parse_init(void)
 {
     OBJ_CONSTRUCT(&keyval_mutex, opal_mutex_t);
 
-    opal_finalize_register_cleanup (opal_util_keyval_parse_finalize);
+    opal_finalize_register_cleanup(opal_util_keyval_parse_finalize);
 
     return OPAL_SUCCESS;
 }
 
-int
-opal_util_keyval_parse(const char *filename,
-                       opal_keyval_parse_fn_t callback)
+int opal_util_keyval_parse(const char *filename, opal_keyval_parse_fn_t callback)
 {
     int val;
-    int ret = OPAL_SUCCESS;;
+    int ret = OPAL_SUCCESS;
+    ;
 
     OPAL_THREAD_LOCK(&keyval_mutex);
 
@@ -118,14 +117,12 @@ opal_util_keyval_parse(const char *filename,
         }
     }
     fclose(opal_util_keyval_yyin);
-    opal_util_keyval_yylex_destroy ();
+    opal_util_keyval_yylex_destroy();
 
 cleanup:
     OPAL_THREAD_UNLOCK(&keyval_mutex);
     return ret;
 }
-
-
 
 static int parse_line(void)
 {
@@ -137,7 +134,7 @@ static int parse_line(void)
     if (key_buffer_len < strlen(opal_util_keyval_yytext) + 1) {
         char *tmp;
         key_buffer_len = strlen(opal_util_keyval_yytext) + 1;
-        tmp = (char*)realloc(key_buffer, key_buffer_len);
+        tmp = (char *) realloc(key_buffer, key_buffer_len);
         if (NULL == tmp) {
             free(key_buffer);
             key_buffer_len = 0;
@@ -160,23 +157,20 @@ static int parse_line(void)
     /* Next we get the value */
 
     val = opal_util_keyval_yylex();
-    if (OPAL_UTIL_KEYVAL_PARSE_SINGLE_WORD == val ||
-        OPAL_UTIL_KEYVAL_PARSE_VALUE == val) {
+    if (OPAL_UTIL_KEYVAL_PARSE_SINGLE_WORD == val || OPAL_UTIL_KEYVAL_PARSE_VALUE == val) {
         keyval_callback(key_buffer, opal_util_keyval_yytext);
 
         /* Now we need to see the newline */
 
         val = opal_util_keyval_yylex();
-        if (OPAL_UTIL_KEYVAL_PARSE_NEWLINE == val ||
-            OPAL_UTIL_KEYVAL_PARSE_DONE == val) {
+        if (OPAL_UTIL_KEYVAL_PARSE_NEWLINE == val || OPAL_UTIL_KEYVAL_PARSE_DONE == val) {
             return OPAL_SUCCESS;
         }
     }
 
     /* Did we get an EOL or EOF? */
 
-    else if (OPAL_UTIL_KEYVAL_PARSE_DONE == val ||
-             OPAL_UTIL_KEYVAL_PARSE_NEWLINE == val) {
+    else if (OPAL_UTIL_KEYVAL_PARSE_DONE == val || OPAL_UTIL_KEYVAL_PARSE_NEWLINE == val) {
         keyval_callback(key_buffer, NULL);
         return OPAL_SUCCESS;
     }
@@ -186,12 +180,11 @@ static int parse_line(void)
     return OPAL_ERROR;
 }
 
-
 static void parse_error(int num)
 {
     /* JMS need better error/warning message here */
-    opal_output(0, "keyval parser: error %d reading file %s at line %d:\n  %s\n",
-                num, keyval_filename, opal_util_keyval_yynewlines, opal_util_keyval_yytext);
+    opal_output(0, "keyval parser: error %d reading file %s at line %d:\n  %s\n", num,
+                keyval_filename, opal_util_keyval_yynewlines, opal_util_keyval_yytext);
 }
 
 int opal_util_keyval_save_internal_envars(opal_keyval_parse_fn_t callback)
@@ -204,7 +197,7 @@ int opal_util_keyval_save_internal_envars(opal_keyval_parse_fn_t callback)
     return OPAL_SUCCESS;
 }
 
-static void trim_name(char *buffer, const char* prefix, const char* suffix)
+static void trim_name(char *buffer, const char *prefix, const char *suffix)
 {
     char *pchr, *echr;
     size_t buffer_len;
@@ -213,54 +206,54 @@ static void trim_name(char *buffer, const char* prefix, const char* suffix)
         return;
     }
 
-    buffer_len = strlen (buffer);
+    buffer_len = strlen(buffer);
 
     pchr = buffer;
     if (NULL != prefix) {
-        size_t prefix_len = strlen (prefix);
+        size_t prefix_len = strlen(prefix);
 
-        if (0 == strncmp (buffer, prefix, prefix_len)) {
+        if (0 == strncmp(buffer, prefix, prefix_len)) {
             pchr += prefix_len;
         }
     }
 
     /* trim spaces at the beginning */
-    while (isspace (*pchr)) {
+    while (isspace(*pchr)) {
         pchr++;
     }
 
     /* trim spaces at the end */
     echr = buffer + buffer_len;
-    while (echr > buffer && isspace (*(echr - 1))) {
+    while (echr > buffer && isspace(*(echr - 1))) {
         echr--;
     }
     echr[0] = '\0';
 
-    if (NULL != suffix && (uintptr_t) (echr - buffer) > strlen (suffix)) {
-        size_t suffix_len = strlen (suffix);
+    if (NULL != suffix && (uintptr_t)(echr - buffer) > strlen(suffix)) {
+        size_t suffix_len = strlen(suffix);
 
         echr -= suffix_len;
 
-        if (0 == strncmp (echr, suffix, strlen(suffix))) {
+        if (0 == strncmp(echr, suffix, strlen(suffix))) {
             do {
                 echr--;
-            } while (isspace (*echr));
+            } while (isspace(*echr));
             echr[1] = '\0';
         }
     }
 
     if (buffer != pchr) {
         /* move the trimmed string to the beginning of the buffer */
-        memmove (buffer, pchr, strlen (pchr) + 1);
+        memmove(buffer, pchr, strlen(pchr) + 1);
     }
 }
 
-static int save_param_name (void)
+static int save_param_name(void)
 {
     if (key_buffer_len < strlen(opal_util_keyval_yytext) + 1) {
         char *tmp;
         key_buffer_len = strlen(opal_util_keyval_yytext) + 1;
-        tmp = (char*)realloc(key_buffer, key_buffer_len);
+        tmp = (char *) realloc(key_buffer, key_buffer_len);
         if (NULL == tmp) {
             free(key_buffer);
             key_buffer_len = 0;
@@ -270,7 +263,7 @@ static int save_param_name (void)
         key_buffer = tmp;
     }
 
-    opal_string_copy (key_buffer, opal_util_keyval_yytext, key_buffer_len);
+    opal_string_copy(key_buffer, opal_util_keyval_yytext, key_buffer_len);
 
     return OPAL_SUCCESS;
 }
@@ -342,22 +335,22 @@ static int parse_line_new(opal_keyval_parse_state_t first_val)
 
     val = first_val;
     while (OPAL_UTIL_KEYVAL_PARSE_NEWLINE != val && OPAL_UTIL_KEYVAL_PARSE_DONE != val) {
-        rc = save_param_name ();
+        rc = save_param_name();
         if (OPAL_SUCCESS != rc) {
             return rc;
         }
 
         if (OPAL_UTIL_KEYVAL_PARSE_MCAVAR == val) {
-            trim_name (key_buffer, "-mca", NULL);
-            trim_name (key_buffer, "--mca", NULL);
+            trim_name(key_buffer, "-mca", NULL);
+            trim_name(key_buffer, "--mca", NULL);
 
             val = opal_util_keyval_yylex();
             if (OPAL_UTIL_KEYVAL_PARSE_VALUE == val) {
                 if (NULL != opal_util_keyval_yytext) {
                     tmp = strdup(opal_util_keyval_yytext);
                     if ('\'' == tmp[0] || '\"' == tmp[0]) {
-                        trim_name (tmp, "\'", "\'");
-                        trim_name (tmp, "\"", "\"");
+                        trim_name(tmp, "\'", "\'");
+                        trim_name(tmp, "\"", "\"");
                     }
                     keyval_callback(key_buffer, tmp);
                     free(tmp);
@@ -367,8 +360,8 @@ static int parse_line_new(opal_keyval_parse_state_t first_val)
                 return OPAL_ERROR;
             }
         } else if (OPAL_UTIL_KEYVAL_PARSE_ENVEQL == val) {
-            trim_name (key_buffer, "-x", "=");
-            trim_name (key_buffer, "--x", NULL);
+            trim_name(key_buffer, "-x", "=");
+            trim_name(key_buffer, "--x", NULL);
 
             val = opal_util_keyval_yylex();
             if (OPAL_UTIL_KEYVAL_PARSE_VALUE == val) {
@@ -378,8 +371,8 @@ static int parse_line_new(opal_keyval_parse_state_t first_val)
                 return OPAL_ERROR;
             }
         } else if (OPAL_UTIL_KEYVAL_PARSE_ENVVAR == val) {
-            trim_name (key_buffer, "-x", "=");
-            trim_name (key_buffer, "--x", NULL);
+            trim_name(key_buffer, "-x", "=");
+            trim_name(key_buffer, "--x", NULL);
             add_to_env_str(key_buffer, NULL);
         } else {
             /* we got something unexpected.  Bonk! */

@@ -14,7 +14,6 @@
  * $HEADER$
  */
 
-
 #ifndef OPAL_MCA_THREADS_TSD_H
 #define OPAL_MCA_THREADS_TSD_H
 
@@ -22,9 +21,9 @@
 
 #include <pthread.h>
 
-#include "opal/constants.h"
-#include "opal/class/opal_list.h"
 #include "mutex.h"
+#include "opal/class/opal_list.h"
+#include "opal/constants.h"
 
 BEGIN_C_DECLS
 
@@ -35,7 +34,6 @@ BEGIN_C_DECLS
  *
  * Functions for providing thread-specific datastore capabilities.
  */
-
 
 /**
  * Prototype for callback when tsd data is being destroyed
@@ -69,7 +67,6 @@ typedef void *opal_tsd_key_t;
  */
 OPAL_DECLSPEC int opal_tsd_key_delete(opal_tsd_key_t key);
 
-
 /**
  * Set a thread-specific data value
  *
@@ -88,7 +85,6 @@ OPAL_DECLSPEC int opal_tsd_key_delete(opal_tsd_key_t key);
  * @retval OPAL_ERR_IN_ERRNO Error
  */
 OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
-
 
 /**
  * Get a thread-specific data value
@@ -109,7 +105,7 @@ OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
 
 #else
 
-#include MCA_threads_tsd_base_include_HEADER
+#    include MCA_threads_tsd_base_include_HEADER
 
 #endif
 
@@ -136,11 +132,11 @@ void opal_tsd_tracked_key_destructor(opal_tsd_tracked_key_t *key);
 
 static inline int opal_tsd_tracked_key_get(opal_tsd_tracked_key_t *key, void **p)
 {
-    assert( NULL != key);
+    assert(NULL != key);
     *p = NULL;
 
     opal_tsd_list_item_t *tsd = NULL;
-    opal_tsd_get(key->key, (void **)&tsd); 
+    opal_tsd_get(key->key, (void **) &tsd);
     if (NULL != tsd) {
         *p = tsd->data;
     }
@@ -149,8 +145,8 @@ static inline int opal_tsd_tracked_key_get(opal_tsd_tracked_key_t *key, void **p
 }
 
 OPAL_DECLSPEC int opal_tsd_tracked_key_set(opal_tsd_tracked_key_t *key, void *p);
-OPAL_DECLSPEC void opal_tsd_tracked_key_set_destructor(
-        opal_tsd_tracked_key_t *key, opal_tsd_destructor_t destructor);
+OPAL_DECLSPEC void opal_tsd_tracked_key_set_destructor(opal_tsd_tracked_key_t *key,
+                                                       opal_tsd_destructor_t destructor);
 
 /**
  * Create thread-specific data key
@@ -177,8 +173,7 @@ OPAL_DECLSPEC void opal_tsd_tracked_key_set_destructor(
  * @retval OPAL_ERR          Error
  * @retval OPAL_ERR_IN_ERRNO Error
  */
-OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key,
-                                      opal_tsd_destructor_t destructor);
+OPAL_DECLSPEC int opal_tsd_key_create(opal_tsd_key_t *key, opal_tsd_destructor_t destructor);
 
 END_C_DECLS
 

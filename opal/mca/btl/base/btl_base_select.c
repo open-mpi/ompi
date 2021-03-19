@@ -25,21 +25,18 @@
 
 #include "opal_config.h"
 
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_component_repository.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/mca.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "opal/mca/base/mca_base_component_repository.h"
-#include "opal/runtime/opal.h"
-#include "opal/mca/btl/btl.h"
-#include "opal/mca/btl/base/btl_base_error.h"
-#include "opal/mca/btl/base/base.h"
 
-OBJ_CLASS_INSTANCE( mca_btl_base_selected_module_t,
-                    opal_list_item_t,
-                    NULL,
-                    NULL );
+OBJ_CLASS_INSTANCE(mca_btl_base_selected_module_t, opal_list_item_t, NULL, NULL);
 
 /**
  * Function for weeding out btl components that don't want to run.
@@ -49,8 +46,7 @@ OBJ_CLASS_INSTANCE( mca_btl_base_selected_module_t,
  * components will be closed and unloaded.  The selected modules will
  * be returned to the caller in a opal_list_t.
  */
-int mca_btl_base_select(bool enable_progress_threads,
-                        bool enable_mpi_threads)
+int mca_btl_base_select(bool enable_progress_threads, bool enable_mpi_threads)
 {
     int i, num_btls;
     mca_base_component_list_item_t *cli, *next;
@@ -58,42 +54,44 @@ int mca_btl_base_select(bool enable_progress_threads,
     mca_btl_base_module_t **modules;
     mca_btl_base_selected_module_t *sm;
 
-    char** include = opal_argv_split(mca_btl_base_include, ',');
-    char** exclude = opal_argv_split(mca_btl_base_exclude, ',');
+    char **include = opal_argv_split(mca_btl_base_include, ',');
+    char **exclude = opal_argv_split(mca_btl_base_exclude, ',');
 
     /* Traverse the list of opened modules; call their init
        functions. */
 
-    OPAL_LIST_FOREACH_SAFE(cli, next, &opal_btl_base_framework.framework_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH_SAFE (cli, next, &opal_btl_base_framework.framework_components,
+                            mca_base_component_list_item_t) {
         component = (mca_btl_base_component_t *) cli->cli_component;
 
         /* if there is an include list - item must be in the list to be included */
-        if ( NULL != include ) {
-            char** argv = include;
+        if (NULL != include) {
+            char **argv = include;
             bool found = false;
-            while(argv && *argv) {
-                if(strcmp(component->btl_version.mca_component_name,*argv) == 0) {
+            while (argv && *argv) {
+                if (strcmp(component->btl_version.mca_component_name, *argv) == 0) {
                     found = true;
                     break;
                 }
                 argv++;
             }
-            if(found == false) {
+            if (found == false) {
                 continue;
             }
 
-            /* otherwise - check the exclude list to see if this item has been specifically excluded */
-        } else if ( NULL != exclude ) {
-            char** argv = exclude;
+            /* otherwise - check the exclude list to see if this item has been specifically excluded
+             */
+        } else if (NULL != exclude) {
+            char **argv = exclude;
             bool found = false;
-            while(argv && *argv) {
-                if(strcmp(component->btl_version.mca_component_name,*argv) == 0) {
+            while (argv && *argv) {
+                if (strcmp(component->btl_version.mca_component_name, *argv) == 0) {
                     found = true;
                     break;
                 }
                 argv++;
             }
-            if(found == true) {
+            if (found == true) {
                 continue;
             }
         }
@@ -107,8 +105,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                                 "select: no init function; ignoring component %s",
                                 component->btl_version.mca_component_name);
         } else {
-            modules = component->btl_init(&num_btls, enable_progress_threads,
-                                          enable_mpi_threads);
+            modules = component->btl_init(&num_btls, enable_progress_threads, enable_mpi_threads);
 
             /* If the component didn't initialize, remove it from the opened
                list and remove it from the component repository */
@@ -134,8 +131,10 @@ int mca_btl_base_select(bool enable_progress_threads,
                 for (i = 0; i < num_btls; ++i) {
                     /* If modules[i] is NULL, it's a developer error */
                     if (NULL == modules[i]) {
-                        BTL_ERROR(("BTL module init of %s returned a NULL -- this should never happen, and is a developer error.  Contact the Open MPI developers.",
-                                   component->btl_version.mca_component_name));
+                        BTL_ERROR(
+                            ("BTL module init of %s returned a NULL -- this should never happen, "
+                             "and is a developer error.  Contact the Open MPI developers.",
+                             component->btl_version.mca_component_name));
                         exit(1);
                     }
                     sm = OBJ_NEW(mca_btl_base_selected_module_t);
@@ -150,8 +149,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                     }
                     sm->btl_component = component;
                     sm->btl_module = modules[i];
-                    opal_list_append(&mca_btl_base_modules_initialized,
-                                     (opal_list_item_t*) sm);
+                    opal_list_append(&mca_btl_base_modules_initialized, (opal_list_item_t *) sm);
                 }
                 free(modules);
             }
@@ -168,11 +166,8 @@ int mca_btl_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if (0 == opal_list_get_size(&mca_btl_base_modules_initialized)) {
-        opal_show_help("help-mca-base.txt", "find-available:none found",
-                       true,
-                       "btl",
-                       opal_process_info.nodename,
-                       "btl");
+        opal_show_help("help-mca-base.txt", "find-available:none found", true, "btl",
+                       opal_process_info.nodename, "btl");
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;

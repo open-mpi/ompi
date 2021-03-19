@@ -27,24 +27,22 @@
 
 #include "opal/constants.h"
 
-#include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/btl.h"
 
 #include "btl_usnic.h"
-#include "btl_usnic_frag.h"
-#include "btl_usnic_util.h"
-#include "btl_usnic_send.h"
 #include "btl_usnic_ack.h"
-
+#include "btl_usnic_frag.h"
+#include "btl_usnic_send.h"
+#include "btl_usnic_util.h"
 
 /*
  * This function is called when a send of a segment completes that is
  * the one-and-only segment of an MPI message.  Return the WQE and
  * also return the segment if no ACK pending.
  */
-void
-opal_btl_usnic_frag_send_complete(opal_btl_usnic_module_t *module,
-                                    opal_btl_usnic_send_segment_t *sseg)
+void opal_btl_usnic_frag_send_complete(opal_btl_usnic_module_t *module,
+                                       opal_btl_usnic_send_segment_t *sseg)
 {
     opal_btl_usnic_send_frag_t *frag;
 
@@ -77,9 +75,8 @@ opal_btl_usnic_frag_send_complete(opal_btl_usnic_module_t *module,
  * segments that have not yet completed sending).  Return the WQE and
  * also return the segment if no ACK pending.
  */
-void
-opal_btl_usnic_chunk_send_complete(opal_btl_usnic_module_t *module,
-                                    opal_btl_usnic_send_segment_t *sseg)
+void opal_btl_usnic_chunk_send_complete(opal_btl_usnic_module_t *module,
+                                        opal_btl_usnic_send_segment_t *sseg)
 {
     opal_btl_usnic_send_frag_t *frag;
 
@@ -115,12 +112,9 @@ opal_btl_usnic_chunk_send_complete(opal_btl_usnic_module_t *module,
  *
  * The "tag" only applies to sends.
  */
-int
-opal_btl_usnic_finish_put_or_send(
-    opal_btl_usnic_module_t *module,
-    opal_btl_usnic_endpoint_t *endpoint,
-    opal_btl_usnic_send_frag_t *frag,
-    mca_btl_base_tag_t tag)
+int opal_btl_usnic_finish_put_or_send(opal_btl_usnic_module_t *module,
+                                      opal_btl_usnic_endpoint_t *endpoint,
+                                      opal_btl_usnic_send_frag_t *frag, mca_btl_base_tag_t tag)
 {
     int rc;
     opal_btl_usnic_small_send_frag_t *sfrag;
@@ -133,7 +127,7 @@ opal_btl_usnic_finish_put_or_send(
      */
     if (frag->sf_base.uf_type == OPAL_BTL_USNIC_FRAG_SMALL_SEND) {
 
-        sfrag = (opal_btl_usnic_small_send_frag_t *)frag;
+        sfrag = (opal_btl_usnic_small_send_frag_t *) frag;
         sseg = &sfrag->ssf_segment;
 
         /* Copy in user data if there is any, collapsing 2 segments into 1.
@@ -144,15 +138,14 @@ opal_btl_usnic_finish_put_or_send(
             /* no convertor */
             assert(NULL != frag->sf_base.uf_local_seg[1].seg_addr.pval);
 
-            memcpy(((char *)(intptr_t)frag->sf_base.uf_local_seg[0].seg_addr.lval +
-                        frag->sf_base.uf_local_seg[0].seg_len),
-                    frag->sf_base.uf_local_seg[1].seg_addr.pval,
-                    frag->sf_base.uf_local_seg[1].seg_len);
+            memcpy(((char *) (intptr_t) frag->sf_base.uf_local_seg[0].seg_addr.lval
+                    + frag->sf_base.uf_local_seg[0].seg_len),
+                   frag->sf_base.uf_local_seg[1].seg_addr.pval,
+                   frag->sf_base.uf_local_seg[1].seg_len);
 
             /* update 1st segment length */
             frag->sf_base.uf_base.USNIC_SEND_LOCAL_COUNT = 1;
-            frag->sf_base.uf_local_seg[0].seg_len +=
-                frag->sf_base.uf_local_seg[1].seg_len;
+            frag->sf_base.uf_local_seg[0].seg_len += frag->sf_base.uf_local_seg[1].seg_len;
         }
 
         sseg->ss_len = sizeof(opal_btl_usnic_btl_header_t) + frag->sf_size;
@@ -165,7 +158,7 @@ opal_btl_usnic_finish_put_or_send(
 
         /* Save info about the frag so that future invocations of
          * usnic_handle_large_send can generate segments to put on the wire. */
-        lfrag = (opal_btl_usnic_large_send_frag_t *)frag;
+        lfrag = (opal_btl_usnic_large_send_frag_t *) frag;
         lfrag->lsf_tag = tag;
         lfrag->lsf_cur_offset = 0;
         lfrag->lsf_cur_ptr = lfrag->lsf_des_src[0].seg_addr.pval;

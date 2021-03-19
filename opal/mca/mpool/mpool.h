@@ -21,20 +21,20 @@
  * $HEADER$
  */
 /**
-  * @file
-  * Description of the Memory Pool framework
-  */
+ * @file
+ * Description of the Memory Pool framework
+ */
 #ifndef MCA_MPOOL_H
 #define MCA_MPOOL_H
 #include "opal_config.h"
-#include "opal/mca/mca.h"
 #include "opal/class/opal_free_list.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/rcache/base/rcache_base_vma.h"
 
-#define MCA_MPOOL_ALLOC_FLAG_DEFAULT      0x00
-#define MCA_MPOOL_ALLOC_FLAG_USER         0x01
+#define MCA_MPOOL_ALLOC_FLAG_DEFAULT 0x00
+#define MCA_MPOOL_ALLOC_FLAG_USER    0x01
 
-#define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM     0x80
+#define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM 0x80
 
 struct opal_info_t;
 struct mca_mpool_base_module_t;
@@ -59,36 +59,34 @@ typedef struct mca_mpool_base_module_t mca_mpool_base_module_t;
  * Memory pools should try to support at a minimum name=value but can define
  * any additional keys.
  */
-typedef int (*mca_mpool_base_component_query_fn_t) (const char *hints, int *priority,
-                                                    mca_mpool_base_module_t **module);
+typedef int (*mca_mpool_base_component_query_fn_t)(const char *hints, int *priority,
+                                                   mca_mpool_base_module_t **module);
 
 /**
-  * allocate function typedef
-  */
-typedef void *(*mca_mpool_base_module_alloc_fn_t) (mca_mpool_base_module_t *mpool,
-                                                   size_t size, size_t align,
-                                                   uint32_t flags);
+ * allocate function typedef
+ */
+typedef void *(*mca_mpool_base_module_alloc_fn_t)(mca_mpool_base_module_t *mpool, size_t size,
+                                                  size_t align, uint32_t flags);
 
 /**
-  * allocate function typedef
-  */
-typedef void *(*mca_mpool_base_module_realloc_fn_t) (mca_mpool_base_module_t *mpool,
-                                                     void *addr, size_t size);
+ * allocate function typedef
+ */
+typedef void *(*mca_mpool_base_module_realloc_fn_t)(mca_mpool_base_module_t *mpool, void *addr,
+                                                    size_t size);
 
 /**
-  * free function typedef
-  */
-typedef void (*mca_mpool_base_module_free_fn_t) (mca_mpool_base_module_t *mpool,
-                                                 void *addr);
+ * free function typedef
+ */
+typedef void (*mca_mpool_base_module_free_fn_t)(mca_mpool_base_module_t *mpool, void *addr);
 
 /**
-  * if appropriate - returns base address of memory pool
-  */
-typedef void* (*mca_mpool_base_module_address_fn_t) (mca_mpool_base_module_t *mpool);
+ * if appropriate - returns base address of memory pool
+ */
+typedef void *(*mca_mpool_base_module_address_fn_t)(mca_mpool_base_module_t *mpool);
 
 /**
-  * finalize
-  */
+ * finalize
+ */
 typedef void (*mca_mpool_base_module_finalize_fn_t)(mca_mpool_base_module_t *mpool);
 
 /**
@@ -96,18 +94,18 @@ typedef void (*mca_mpool_base_module_finalize_fn_t)(mca_mpool_base_module_t *mpo
  * and open/close/init functions.
  */
 struct mca_mpool_base_component_3_1_0_t {
-    mca_base_component_t mpool_version;        /**< version */
-    mca_base_component_data_t mpool_data;/**< metadata */
+    mca_base_component_t mpool_version;   /**< version */
+    mca_base_component_data_t mpool_data; /**< metadata */
 
-    mca_mpool_base_component_query_fn_t mpool_query;  /**< query for matching pools */
+    mca_mpool_base_component_query_fn_t mpool_query; /**< query for matching pools */
 };
 /**
  * Convenience typedef.
  */
 typedef struct mca_mpool_base_component_3_1_0_t mca_mpool_base_component_3_1_0_t;
 /**
-  * Convenience typedef
-  */
+ * Convenience typedef
+ */
 typedef struct mca_mpool_base_component_3_1_0_t mca_mpool_base_component_t;
 
 /**
@@ -116,19 +114,18 @@ typedef struct mca_mpool_base_component_3_1_0_t mca_mpool_base_component_t;
  *  details.
  */
 struct mca_mpool_base_module_t {
-    mca_mpool_base_component_t *mpool_component;         /**< component stuct */
-    mca_mpool_base_module_address_fn_t mpool_base;       /**< returns the base address */
-    mca_mpool_base_module_alloc_fn_t mpool_alloc;        /**< allocate function */
-    mca_mpool_base_module_realloc_fn_t mpool_realloc;    /**< reallocate function */
-    mca_mpool_base_module_free_fn_t mpool_free;          /**< free function */
+    mca_mpool_base_component_t *mpool_component;      /**< component stuct */
+    mca_mpool_base_module_address_fn_t mpool_base;    /**< returns the base address */
+    mca_mpool_base_module_alloc_fn_t mpool_alloc;     /**< allocate function */
+    mca_mpool_base_module_realloc_fn_t mpool_realloc; /**< reallocate function */
+    mca_mpool_base_module_free_fn_t mpool_free;       /**< free function */
 
-    mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
-    uint32_t flags; /**< mpool flags */
+    mca_mpool_base_module_finalize_fn_t mpool_finalize; /**< finalize */
+    uint32_t flags;                                     /**< mpool flags */
 
-    size_t mpool_allocation_unit;                        /**< allocation unit used by this mpool */
-    char *mpool_name; /**< name of this pool module */
+    size_t mpool_allocation_unit; /**< allocation unit used by this mpool */
+    char *mpool_name;             /**< name of this pool module */
 };
-
 
 /**
  * Function to allocate special memory according to what the user requests in
@@ -150,7 +147,7 @@ struct mca_mpool_base_module_t {
  * @retval pointer to the allocated memory
  * @retval NULL on failure
  */
-OPAL_DECLSPEC void * mca_mpool_base_alloc(size_t size, struct opal_info_t * info, const char *hints);
+OPAL_DECLSPEC void *mca_mpool_base_alloc(size_t size, struct opal_info_t *info, const char *hints);
 
 /**
  * Function to free memory previously allocated by mca_mpool_base_alloc
@@ -160,7 +157,7 @@ OPAL_DECLSPEC void * mca_mpool_base_alloc(size_t size, struct opal_info_t * info
  * @retval OPAL_SUCCESS
  * @retval OPAL_ERR_BAD_PARAM if the passed base pointer was invalid
  */
-OPAL_DECLSPEC int mca_mpool_base_free(void * base);
+OPAL_DECLSPEC int mca_mpool_base_free(void *base);
 
 /**
  * Function for the red black tree to compare 2 keys
@@ -172,13 +169,11 @@ OPAL_DECLSPEC int mca_mpool_base_free(void * base);
  * @retval 1 if key 1 is above key2
  * @retval 0 if the keys are the same
  */
-OPAL_DECLSPEC int mca_mpool_base_tree_node_compare(void * key1, void * key2);
+OPAL_DECLSPEC int mca_mpool_base_tree_node_compare(void *key1, void *key2);
 
 /**
  * Macro for use in components that are of type mpool
  */
-#define MCA_MPOOL_BASE_VERSION_3_1_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("mpool", 3, 1, 0)
+#define MCA_MPOOL_BASE_VERSION_3_1_0 OPAL_MCA_BASE_VERSION_2_1_0("mpool", 3, 1, 0)
 
 #endif /* MCA_MPOOL_H */
-

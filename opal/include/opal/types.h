@@ -24,23 +24,23 @@
 
 #include <stdint.h>
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
+#    include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
+#    include <sys/select.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
+#    include <arpa/inet.h>
 #endif
 
 #if OPAL_ENABLE_DEBUG
-#include "opal/util/output.h"
+#    include "opal/util/output.h"
 #endif
 
 /*
@@ -48,13 +48,13 @@
  */
 
 typedef union {
-   uint64_t lval;
-   uint32_t ival;
-   void*    pval;
-   struct {
-       uint32_t uval;
-       uint32_t lval;
-   } sval;
+    uint64_t lval;
+    uint32_t ival;
+    void *pval;
+    struct {
+        uint32_t uval;
+        uint32_t lval;
+    } sval;
 } opal_ptr_t;
 
 /*
@@ -62,11 +62,11 @@ typedef union {
  */
 
 #if defined(__APPLE__) || defined(__WINDOWS__)
-typedef char* opal_iov_base_ptr_t;
-#define OPAL_IOVBASE char
+typedef char *opal_iov_base_ptr_t;
+#    define OPAL_IOVBASE char
 #else
-#define OPAL_IOVBASE void
-typedef void* opal_iov_base_ptr_t;
+#    define OPAL_IOVBASE void
+typedef void *opal_iov_base_ptr_t;
 #endif
 
 /*
@@ -79,7 +79,6 @@ typedef socklen_t opal_socklen_t;
 typedef int opal_socklen_t;
 #endif
 
-
 /*
  * Convert a 64 bit value to network byte order.
  */
@@ -87,12 +86,13 @@ static inline uint64_t hton64(uint64_t val) __opal_attribute_const__;
 static inline uint64_t hton64(uint64_t val)
 {
 #ifdef HAVE_UNIX_BYTESWAP
-    union { uint64_t ll;
-            uint32_t l[2];
+    union {
+        uint64_t ll;
+        uint32_t l[2];
     } w, r;
 
     /* platform already in network byte order? */
-    if(htonl(1) == 1L)
+    if (htonl(1) == 1L)
         return val;
     w.ll = val;
     r.l[0] = htonl(w.l[1]);
@@ -111,12 +111,13 @@ static inline uint64_t ntoh64(uint64_t val) __opal_attribute_const__;
 static inline uint64_t ntoh64(uint64_t val)
 {
 #ifdef HAVE_UNIX_BYTESWAP
-    union { uint64_t ll;
-            uint32_t l[2];
+    union {
+        uint64_t ll;
+        uint32_t l[2];
     } w, r;
 
     /* platform already in network byte order? */
-    if(htonl(1) == 1L)
+    if (htonl(1) == 1L)
         return val;
     w.ll = val;
     r.l[0] = ntohl(w.l[1]);
@@ -127,33 +128,33 @@ static inline uint64_t ntoh64(uint64_t val)
 #endif
 }
 
-
 /**
  * Convert between a local representation of pointer and a 64 bits value.
  */
-static inline uint64_t opal_ptr_ptol( void* ptr ) __opal_attribute_const__;
-static inline uint64_t opal_ptr_ptol( void* ptr )
+static inline uint64_t opal_ptr_ptol(void *ptr) __opal_attribute_const__;
+static inline uint64_t opal_ptr_ptol(void *ptr)
 {
     return (uint64_t)(uintptr_t) ptr;
 }
 
-static inline void* opal_ptr_ltop( uint64_t value ) __opal_attribute_const__;
-static inline void* opal_ptr_ltop( uint64_t value )
+static inline void *opal_ptr_ltop(uint64_t value) __opal_attribute_const__;
+static inline void *opal_ptr_ltop(uint64_t value)
 {
 #if SIZEOF_VOID_P == 4 && OPAL_ENABLE_DEBUG
     if (value > ((1ULL << 32) - 1ULL)) {
         opal_output(0, "Warning: truncating value in opal_ptr_ltop");
     }
 #endif
-    return (void*)(uintptr_t) value;
+    return (void *) (uintptr_t) value;
 }
 
 #if defined(WORDS_BIGENDIAN) || !defined(HAVE_UNIX_BYTESWAP)
 static inline uint16_t opal_swap_bytes2(uint16_t val) __opal_attribute_const__;
 static inline uint16_t opal_swap_bytes2(uint16_t val)
 {
-    union { uint16_t bigval;
-            uint8_t  arrayval[2];
+    union {
+        uint16_t bigval;
+        uint8_t arrayval[2];
     } w, r;
 
     w.bigval = val;
@@ -166,8 +167,9 @@ static inline uint16_t opal_swap_bytes2(uint16_t val)
 static inline uint32_t opal_swap_bytes4(uint32_t val) __opal_attribute_const__;
 static inline uint32_t opal_swap_bytes4(uint32_t val)
 {
-    union { uint32_t bigval;
-            uint8_t  arrayval[4];
+    union {
+        uint32_t bigval;
+        uint8_t arrayval[4];
     } w, r;
 
     w.bigval = val;
@@ -182,8 +184,9 @@ static inline uint32_t opal_swap_bytes4(uint32_t val)
 static inline uint64_t opal_swap_bytes8(uint64_t val) __opal_attribute_const__;
 static inline uint64_t opal_swap_bytes8(uint64_t val)
 {
-    union { uint64_t bigval;
-            uint8_t  arrayval[8];
+    union {
+        uint64_t bigval;
+        uint8_t arrayval[8];
     } w, r;
 
     w.bigval = val;
@@ -200,9 +203,9 @@ static inline uint64_t opal_swap_bytes8(uint64_t val)
 }
 
 #else
-#define opal_swap_bytes2 htons
-#define opal_swap_bytes4 htonl
-#define opal_swap_bytes8 hton64
+#    define opal_swap_bytes2 htons
+#    define opal_swap_bytes4 htonl
+#    define opal_swap_bytes8 hton64
 #endif /* WORDS_BIGENDIAN || !HAVE_UNIX_BYTESWAP */
 
 #endif /* OPAL_TYPES_H */

@@ -10,7 +10,6 @@
  * $HEADER$
  */
 
-
 #ifndef OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_H
 #define OPAL_MCA_THREADS_PTHREADS_THREADS_PTHREADS_H
 
@@ -18,7 +17,7 @@
 #include <stdint.h>
 #include <time.h>
 
-typedef void (opal_threads_pthreads_yield_fn_t)(void);
+typedef void(opal_threads_pthreads_yield_fn_t)(void);
 
 OPAL_DECLSPEC int opal_threads_pthreads_yield_init(const mca_base_component_t *component);
 

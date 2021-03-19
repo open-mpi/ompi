@@ -22,55 +22,53 @@
 #include "opal_config.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/util/output.h"
-#include "opal/mca/mca.h"
+#include "opal/constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "opal/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/util/output.h"
 
-void mca_base_component_unload (const mca_base_component_t *component, int output_id)
+void mca_base_component_unload(const mca_base_component_t *component, int output_id)
 {
     int ret;
 
     /* Unload */
-    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
-                         "mca: base: close: unloading component %s",
-                         component->mca_component_name);
+    opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
+                        "mca: base: close: unloading component %s", component->mca_component_name);
 
-    ret = mca_base_var_group_find (component->mca_project_name, component->mca_type_name,
-                                   component->mca_component_name);
+    ret = mca_base_var_group_find(component->mca_project_name, component->mca_type_name,
+                                  component->mca_component_name);
     if (0 <= ret) {
-        mca_base_var_group_deregister (ret);
+        mca_base_var_group_deregister(ret);
     }
 
-    mca_base_component_repository_release (component);
+    mca_base_component_repository_release(component);
 }
 
-void mca_base_component_close (const mca_base_component_t *component, int output_id)
+void mca_base_component_close(const mca_base_component_t *component, int output_id)
 {
     /* Close */
     if (NULL != component->mca_close_component) {
-        if( OPAL_SUCCESS == component->mca_close_component() ) {
-            opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
-                                 "mca: base: close: component %s closed",
-                                 component->mca_component_name);
+        if (OPAL_SUCCESS == component->mca_close_component()) {
+            opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                "mca: base: close: component %s closed",
+                                component->mca_component_name);
         } else {
-            opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
-                                 "mca: base: close: component %s refused to close [drop it]",
-                                 component->mca_component_name);
+            opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                "mca: base: close: component %s refused to close [drop it]",
+                                component->mca_component_name);
             return;
         }
     }
 
-    mca_base_component_unload (component, output_id);
+    mca_base_component_unload(component, output_id);
 }
 
-int mca_base_framework_components_close (mca_base_framework_t *framework,
-                                         const mca_base_component_t *skip)
+int mca_base_framework_components_close(mca_base_framework_t *framework,
+                                        const mca_base_component_t *skip)
 {
-    return mca_base_components_close (framework->framework_output,
-                                      &framework->framework_components,
-                                      skip);
+    return mca_base_components_close(framework->framework_output, &framework->framework_components,
+                                     skip);
 }
 
 int mca_base_components_close(int output_id, opal_list_t *components,
@@ -83,13 +81,13 @@ int mca_base_components_close(int output_id, opal_list_t *components,
        components.  It's easier to simply remove the entire list and
        then simply re-add the skip entry when done. */
 
-    OPAL_LIST_FOREACH_SAFE(cli, next, components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH_SAFE (cli, next, components, mca_base_component_list_item_t) {
         if (skip == cli->cli_component) {
             continue;
         }
 
-        mca_base_component_close (cli->cli_component, output_id);
-        opal_list_remove_item (components, &cli->super);
+        mca_base_component_close(cli->cli_component, output_id);
+        opal_list_remove_item(components, &cli->super);
 
         OBJ_RELEASE(cli);
     }

@@ -17,14 +17,12 @@
 
 #include "opal_stdint.h"
 
-
 struct opal_rng_buff_t {
     uint32_t alfg[127];
     int tap1;
     int tap2;
 };
 typedef struct opal_rng_buff_t opal_rng_buff_t;
-
 
 /* NOTE: UNLIKE OTHER OPAL FUNCTIONS, THIS FUNCTION RETURNS A 1 IF
  * SUCCESSFUL INSTEAD OF OPAL_SUCCESS */

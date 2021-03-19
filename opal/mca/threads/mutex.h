@@ -51,7 +51,6 @@ typedef struct opal_mutex_t opal_recursive_mutex_t;
 OBJ_CLASS_DECLARATION(opal_mutex_t);
 OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
 
-
 /**
  * Try to acquire a mutex.
  *
@@ -60,7 +59,6 @@ OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
  */
 static inline int opal_mutex_trylock(opal_mutex_t *mutex);
 
-
 /**
  * Acquire a mutex.
  *
@@ -68,14 +66,12 @@ static inline int opal_mutex_trylock(opal_mutex_t *mutex);
  */
 static inline void opal_mutex_lock(opal_mutex_t *mutex);
 
-
 /**
  * Release a mutex.
  *
  * @param mutex         Address of the mutex.
  */
 static inline void opal_mutex_unlock(opal_mutex_t *mutex);
-
 
 /**
  * Try to acquire a mutex using atomic operations.
@@ -85,7 +81,6 @@ static inline void opal_mutex_unlock(opal_mutex_t *mutex);
  */
 static inline int opal_mutex_atomic_trylock(opal_mutex_t *mutex);
 
-
 /**
  * Acquire a mutex using atomic operations.
  *
@@ -93,14 +88,12 @@ static inline int opal_mutex_atomic_trylock(opal_mutex_t *mutex);
  */
 static inline void opal_mutex_atomic_lock(opal_mutex_t *mutex);
 
-
 /**
  * Release a mutex using atomic operations.
  *
  * @param mutex         Address of the mutex.
  */
 static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
-
 
 /**
  * Lock a mutex if opal_using_threads() says that multiple threads may
@@ -115,13 +108,12 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
  * If there is no possibility that multiple threads are running in the
  * process, return immediately.
  */
-#define OPAL_THREAD_LOCK(mutex)                     \
-    do {                                            \
-        if (OPAL_UNLIKELY(opal_using_threads())) {  \
-            opal_mutex_lock(mutex);                 \
-        }                                           \
+#define OPAL_THREAD_LOCK(mutex)                    \
+    do {                                           \
+        if (OPAL_UNLIKELY(opal_using_threads())) { \
+            opal_mutex_lock(mutex);                \
+        }                                          \
     } while (0)
-
 
 /**
  * Try to lock a mutex if opal_using_threads() says that multiple
@@ -160,7 +152,6 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
             opal_mutex_unlock(mutex);              \
         }                                          \
     } while (0)
-
 
 /**
  * Lock a mutex if opal_using_threads() says that multiple threads may

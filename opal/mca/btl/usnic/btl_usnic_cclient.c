@@ -13,28 +13,28 @@
 #include "opal_config.h"
 
 #include <assert.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/types.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #include <unistd.h>
 #ifdef HAVE_ALLOCA_H
-#include <alloca.h>
+#    include <alloca.h>
 #endif
 #include <time.h>
 
-#include "opal_stdint.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/event.h"
-#include "opal/util/output.h"
 #include "opal/util/fd.h"
-#include "opal/util/string_copy.h"
+#include "opal/util/output.h"
 #include "opal/util/printf.h"
+#include "opal/util/string_copy.h"
+#include "opal_stdint.h"
 
 #include "btl_usnic.h"
-#include "btl_usnic_module.h"
 #include "btl_usnic_connectivity.h"
+#include "btl_usnic_module.h"
 
 /**************************************************************************
  * Client-side data and methods
@@ -42,7 +42,6 @@
 
 static bool initialized = false;
 static int agent_fd = -1;
-
 
 /*
  * Startup the agent and share our MCA param values with the it.
@@ -64,8 +63,8 @@ int opal_btl_usnic_connectivity_client_init(void)
     }
 
     char *ipc_filename = NULL;
-    opal_asprintf(&ipc_filename, "%s/%s",
-             opal_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
+    opal_asprintf(&ipc_filename, "%s/%s", opal_process_info.job_session_dir,
+                  CONNECTIVITY_SOCK_NAME);
     if (NULL == ipc_filename) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("Out of memory");
@@ -110,8 +109,7 @@ int opal_btl_usnic_connectivity_client_init(void)
 
     int count = 0;
     while (1) {
-        int ret = connect(agent_fd, (struct sockaddr*) &address,
-                          sizeof(address));
+        int ret = connect(agent_fd, (struct sockaddr *) &address, sizeof(address));
         if (0 == ret) {
             break;
         }
@@ -132,8 +130,7 @@ int opal_btl_usnic_connectivity_client_init(void)
 
     /* Send the magic token */
     int tlen = strlen(CONNECTIVITY_MAGIC_TOKEN);
-    if (OPAL_SUCCESS != opal_fd_write(agent_fd, tlen,
-                                      CONNECTIVITY_MAGIC_TOKEN)) {
+    if (OPAL_SUCCESS != opal_fd_write(agent_fd, tlen, CONNECTIVITY_MAGIC_TOKEN)) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("usnic connectivity client IPC connect write failed");
         /* Will not return */
@@ -159,11 +156,9 @@ int opal_btl_usnic_connectivity_client_init(void)
 
     /* All done */
     initialized = true;
-    opal_output_verbose(20, USNIC_OUT,
-                        "usNIC connectivity client initialized");
+    opal_output_verbose(20, USNIC_OUT, "usNIC connectivity client initialized");
     return OPAL_SUCCESS;
 }
-
 
 /*
  * Send a listen command to the agent
@@ -185,12 +180,11 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     }
 
     /* Send the LISTEN command parameters */
-    opal_btl_usnic_connectivity_cmd_listen_t cmd = {
-        .module = NULL,
-        .ipv4_addr = module->local_modex.ipv4_addr,
-        .netmask = module->local_modex.netmask,
-        .max_msg_size = module->local_modex.max_msg_size
-    };
+    opal_btl_usnic_connectivity_cmd_listen_t cmd = {.module = NULL,
+                                                    .ipv4_addr = module->local_modex.ipv4_addr,
+                                                    .netmask = module->local_modex.netmask,
+                                                    .max_msg_size = module->local_modex
+                                                                        .max_msg_size};
     /* Only the MPI process who is also the agent will send the
        pointer value (it doesn't make sense otherwise) */
     if (0 == opal_process_info.my_local_rank) {
@@ -198,10 +192,8 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     }
 
     /* Ensure to NULL-terminate the passed strings */
-    opal_string_copy(cmd.nodename, opal_process_info.nodename,
-            CONNECTIVITY_NODENAME_LEN);
-    opal_string_copy(cmd.usnic_name, module->linux_device_name,
-            CONNECTIVITY_IFNAME_LEN);
+    opal_string_copy(cmd.nodename, opal_process_info.nodename, CONNECTIVITY_NODENAME_LEN);
+    opal_string_copy(cmd.usnic_name, module->linux_device_name, CONNECTIVITY_IFNAME_LEN);
 
     if (OPAL_SUCCESS != opal_fd_write(agent_fd, sizeof(cmd), &cmd)) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
@@ -225,11 +217,8 @@ int opal_btl_usnic_connectivity_listen(opal_btl_usnic_module_t *module)
     return OPAL_SUCCESS;
 }
 
-
-int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
-                                     uint32_t dest_ipv4_addr,
-                                     uint32_t dest_netmask, int dest_port,
-                                     char *dest_nodename,
+int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port, uint32_t dest_ipv4_addr,
+                                     uint32_t dest_netmask, int dest_port, char *dest_nodename,
                                      size_t max_msg_size)
 {
     /* If connectivity checking is not enabled, do nothing */
@@ -249,14 +238,12 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
     }
 
     /* Send the PING command parameters */
-    opal_btl_usnic_connectivity_cmd_ping_t cmd = {
-        .src_ipv4_addr = src_ipv4_addr,
-        .src_udp_port = src_port,
-        .dest_ipv4_addr = dest_ipv4_addr,
-        .dest_netmask = dest_netmask,
-        .dest_udp_port = dest_port,
-        .max_msg_size = max_msg_size
-    };
+    opal_btl_usnic_connectivity_cmd_ping_t cmd = {.src_ipv4_addr = src_ipv4_addr,
+                                                  .src_udp_port = src_port,
+                                                  .dest_ipv4_addr = dest_ipv4_addr,
+                                                  .dest_netmask = dest_netmask,
+                                                  .dest_udp_port = dest_port,
+                                                  .max_msg_size = max_msg_size};
     /* Ensure to NULL-terminate the passed string */
     opal_string_copy(cmd.dest_nodename, dest_nodename, CONNECTIVITY_NODENAME_LEN);
 
@@ -271,7 +258,6 @@ int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
 
     return OPAL_SUCCESS;
 }
-
 
 /*
  * Send an unlisten command to the agent
@@ -309,7 +295,6 @@ int opal_btl_usnic_connectivity_unlisten(opal_btl_usnic_module_t *module)
 
     return OPAL_SUCCESS;
 }
-
 
 /*
  * Shut down the connectivity client

@@ -22,8 +22,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 
 /**
  * Structure for memcpy components.
@@ -43,7 +43,6 @@ typedef struct opal_memcpy_base_component_2_0_0_t opal_memcpy_base_component_2_0
 /*
  * Macro for use in components that are of type memcpy
  */
-#define OPAL_MEMCPY_BASE_VERSION_2_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("memcpy", 2, 0, 0)
+#define OPAL_MEMCPY_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("memcpy", 2, 0, 0)
 
 #endif /* OPAL_MCA_MEMCPY_MEMCPY_H */
