@@ -948,7 +948,7 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
             ++btls_found;
             if (module) {
                 mca_btl_base_am_rdma_init(item->btl_module);
-                module->selected_btls[module->btls_in_use++] = item->btl_module;
+                ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++);
             }
             
         }
@@ -975,7 +975,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
     btls_to_use = opal_argv_split (ompi_osc_rdma_btl_names, ',');
 
     if (module) {
-        module->selected_btls[0] = NULL;
+        ompi_osc_rdma_selected_btl_insert(module, NULL, 0);
         module->btls_in_use = 0;
         module->use_memory_registration = false;
     }
@@ -1002,7 +1002,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
 
     if (NULL != selected_btl) {
         if (module) {
-            module->selected_btls[0] = selected_btl;
+            ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0);
             module->btls_in_use = 1;
             module->use_memory_registration = selected_btl->btl_register_mem != NULL;
         }
@@ -1119,7 +1119,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
     }
 
     if (module) {
-        module->selected_btls[0] = selected_btl;
+        ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0);
         module->btls_in_use = 1;
         module->use_memory_registration = selected_btl->btl_register_mem != NULL;
     }
@@ -1334,6 +1334,9 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->acc_use_amo = mca_osc_rdma_component.acc_use_amo;
     module->network_amo_max_count = mca_osc_rdma_component.network_amo_max_count;
+
+    module->selected_btls_size = MCA_OSC_RDMA_BTLS_SIZE_INIT;
+    module->selected_btls = calloc(module->selected_btls_size, sizeof(struct mca_btl_base_module_t *));
 
     module->all_sync.module = module;
 
