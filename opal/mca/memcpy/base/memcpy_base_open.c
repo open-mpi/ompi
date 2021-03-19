@@ -9,15 +9,13 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/memcpy/memcpy.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/memcpy/base/base.h"
-
+#include "opal/mca/memcpy/memcpy.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -30,5 +28,5 @@
  * Globals
  */
 /* Use default register/open/close functions */
-MCA_BASE_FRAMEWORK_DECLARE(opal, memcpy, NULL, NULL, NULL, NULL,
-                           mca_memcpy_base_static_components, 0);
+MCA_BASE_FRAMEWORK_DECLARE(opal, memcpy, NULL, NULL, NULL, NULL, mca_memcpy_base_static_components,
+                           0);

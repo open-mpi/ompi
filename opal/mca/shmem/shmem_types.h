@@ -67,33 +67,32 @@ BEGIN_C_DECLS
 /**
  * macro that sets all bits in flags to 0
  */
-#define OPAL_SHMEM_DS_RESET_FLAGS(ds_buf)                                      \
-do {                                                                           \
-    (ds_buf)->flags = 0x00;                                                    \
-} while (0)
+#define OPAL_SHMEM_DS_RESET_FLAGS(ds_buf) \
+    do {                                  \
+        (ds_buf)->flags = 0x00;           \
+    } while (0)
 
 /**
  * sets valid bit in flags to 1
  */
-#define OPAL_SHMEM_DS_SET_VALID(ds_buf)                                        \
-do {                                                                           \
-    (ds_buf)->flags |= OPAL_SHMEM_DS_FLAGS_VALID;                              \
-} while (0)
+#define OPAL_SHMEM_DS_SET_VALID(ds_buf)               \
+    do {                                              \
+        (ds_buf)->flags |= OPAL_SHMEM_DS_FLAGS_VALID; \
+    } while (0)
 
 /**
  * sets valid bit in flags to 0
  */
-#define OPAL_SHMEM_DS_INVALIDATE(ds_buf)                                       \
-do {                                                                           \
-    (ds_buf)->flags &= ~OPAL_SHMEM_DS_FLAGS_VALID;                             \
-} while (0)
+#define OPAL_SHMEM_DS_INVALIDATE(ds_buf)               \
+    do {                                               \
+        (ds_buf)->flags &= ~OPAL_SHMEM_DS_FLAGS_VALID; \
+    } while (0)
 
 /**
  * evaluates to 1 if the valid bit in flags is set to 1.  evaluates to 0
  * otherwise.
  */
-#define OPAL_SHMEM_DS_IS_VALID(ds_buf)                                         \
-    ( (ds_buf)->flags & OPAL_SHMEM_DS_FLAGS_VALID )
+#define OPAL_SHMEM_DS_IS_VALID(ds_buf) ((ds_buf)->flags & OPAL_SHMEM_DS_FLAGS_VALID)
 
 typedef uint8_t opal_shmem_ds_flag_t;
 
@@ -124,13 +123,12 @@ typedef struct opal_shmem_ds_t opal_shmem_ds_t;
  * opal_shmem_ds_t payload isn't viable -- due to the potential disparity
  * between the reserved buffer space and what is actually in use.
  */
-static inline size_t
-opal_shmem_sizeof_shmem_ds(const opal_shmem_ds_t *ds_bufp)
+static inline size_t opal_shmem_sizeof_shmem_ds(const opal_shmem_ds_t *ds_bufp)
 {
     char *name_base = NULL;
     size_t name_buf_offset = offsetof(opal_shmem_ds_t, seg_name);
 
-    name_base = (char *)ds_bufp + name_buf_offset;
+    name_base = (char *) ds_bufp + name_buf_offset;
 
     return name_buf_offset + strlen(name_base) + 1;
 }

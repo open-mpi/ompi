@@ -17,8 +17,8 @@
 #define OPAL_MCA_COMMON_OFI_H
 
 #include "opal_config.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/proc.h"
 #include <rdma/fabric.h>
 
@@ -56,6 +56,7 @@ OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
 
 END_C_DECLS
 
-struct fi_info* opal_mca_common_ofi_select_provider(struct fi_info *provider_list, opal_process_info_t *process_info);
+struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
+                                                    opal_process_info_t *process_info);
 
 #endif /* OPAL_MCA_COMMON_OFI_H */

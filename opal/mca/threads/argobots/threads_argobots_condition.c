@@ -33,7 +33,5 @@ static void opal_condition_destruct(opal_condition_t *c)
 {
 }
 
-OBJ_CLASS_INSTANCE(opal_condition_t,
-                   opal_object_t,
-                   opal_condition_construct,
+OBJ_CLASS_INSTANCE(opal_condition_t, opal_object_t, opal_condition_construct,
                    opal_condition_destruct);

@@ -45,7 +45,7 @@ typedef struct opal_btl_usnic_proc_t {
     opal_proc_t *proc_opal;
 
     /** Addresses received via modex for this remote proc */
-    opal_btl_usnic_modex_t* proc_modex;
+    opal_btl_usnic_modex_t *proc_modex;
     /** Number of entries in the proc_modex array */
     size_t proc_modex_count;
     /** Whether the modex entry is "claimed" by a module or not */
@@ -78,8 +78,7 @@ typedef struct opal_btl_usnic_proc_t {
 
 OBJ_CLASS_DECLARATION(opal_btl_usnic_proc_t);
 
-
-opal_btl_usnic_proc_t *opal_btl_usnic_proc_lookup_ompi(opal_proc_t* opal_proc);
+opal_btl_usnic_proc_t *opal_btl_usnic_proc_lookup_ompi(opal_proc_t *opal_proc);
 
 struct opal_btl_usnic_module_t;
 
@@ -87,13 +86,11 @@ opal_btl_usnic_endpoint_t *
 opal_btl_usnic_proc_lookup_endpoint(struct opal_btl_usnic_module_t *receiver,
                                     uint64_t sender_hashed_rte_name);
 
-int opal_btl_usnic_proc_match(opal_proc_t* opal_proc,
-                              struct opal_btl_usnic_module_t *module,
+int opal_btl_usnic_proc_match(opal_proc_t *opal_proc, struct opal_btl_usnic_module_t *module,
                               opal_btl_usnic_proc_t **proc);
-int
-opal_btl_usnic_create_endpoint(struct opal_btl_usnic_module_t *module,
-                opal_btl_usnic_proc_t *proc,
-                opal_btl_usnic_endpoint_t **endpoint_o);
+int opal_btl_usnic_create_endpoint(struct opal_btl_usnic_module_t *module,
+                                   opal_btl_usnic_proc_t *proc,
+                                   opal_btl_usnic_endpoint_t **endpoint_o);
 
 END_C_DECLS
 

@@ -24,15 +24,15 @@
 #include "opal_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "opal/class/opal_list.h"
+#include "opal/constants.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "opal/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "opal/constants.h"
 
 /*
  * Local functions
@@ -48,8 +48,7 @@ struct mca_base_dummy_framework_list_item_t {
  * Function for finding and opening either all MCA components, or the
  * one that was specifically requested via a MCA parameter.
  */
-int mca_base_framework_components_open (mca_base_framework_t *framework,
-                                        mca_base_open_flag_t flags)
+int mca_base_framework_components_open(mca_base_framework_t *framework, mca_base_open_flag_t flags)
 {
     /* Open flags are not used at this time. Suppress compiler warning. */
     if (flags & MCA_BASE_OPEN_FIND_COMPONENTS) {
@@ -62,7 +61,7 @@ int mca_base_framework_components_open (mca_base_framework_t *framework,
     }
 
     /* Open all registered components */
-    return open_components (framework);
+    return open_components(framework);
 }
 
 /*
@@ -95,64 +94,65 @@ static int open_components(mca_base_framework_t *framework)
 
     /* If mca_base_framework_register_components was called with the MCA_BASE_COMPONENTS_ALL flag
        we need to trim down and close any extra components we do not want open */
-    ret = mca_base_components_filter (framework, open_only_flags);
+    ret = mca_base_components_filter(framework, open_only_flags);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
 
     /* Announce */
-    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id, "mca: base: components_open: opening %s components",
-                         framework->framework_name);
+    opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
+                        "mca: base: components_open: opening %s components",
+                        framework->framework_name);
 
     /* Traverse the list of components */
-    OPAL_LIST_FOREACH_SAFE(cli, next, components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH_SAFE (cli, next, components, mca_base_component_list_item_t) {
         const mca_base_component_t *component = cli->cli_component;
 
-        opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
-                             "mca: base: components_open: found loaded component %s",
-                             component->mca_component_name);
+        opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
+                            "mca: base: components_open: found loaded component %s",
+                            component->mca_component_name);
 
-	if (NULL != component->mca_open_component) {
-	    /* Call open if register didn't call it already */
+        if (NULL != component->mca_open_component) {
+            /* Call open if register didn't call it already */
             ret = component->mca_open_component();
 
             if (OPAL_SUCCESS == ret) {
-                opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
-                                     "mca: base: components_open: "
-                                     "component %s open function successful",
-                                     component->mca_component_name);
+                opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                    "mca: base: components_open: "
+                                    "component %s open function successful",
+                                    component->mca_component_name);
             } else {
-		if (OPAL_ERR_NOT_AVAILABLE != ret) {
-		    /* If the component returns OPAL_ERR_NOT_AVAILABLE,
-		       it's a cue to "silently ignore me" -- it's not a
-		       failure, it's just a way for the component to say
-		       "nope!".
+                if (OPAL_ERR_NOT_AVAILABLE != ret) {
+                    /* If the component returns OPAL_ERR_NOT_AVAILABLE,
+                       it's a cue to "silently ignore me" -- it's not a
+                       failure, it's just a way for the component to say
+                       "nope!".
 
-		       Otherwise, however, display an error.  We may end
-		       up displaying this twice, but it may go to separate
-		       streams.  So better to be redundant than to not
-		       display the error in the stream where it was
-		       expected. */
+                       Otherwise, however, display an error.  We may end
+                       up displaying this twice, but it may go to separate
+                       streams.  So better to be redundant than to not
+                       display the error in the stream where it was
+                       expected. */
 
-		    if (mca_base_component_show_load_errors) {
-			opal_output_verbose (MCA_BASE_VERBOSE_ERROR, output_id,
-                                             "mca: base: components_open: component %s "
-                                             "/ %s open function failed",
-                                             component->mca_type_name,
-                                             component->mca_component_name);
-		    }
-		    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
-                                         "mca: base: components_open: "
-                                         "component %s open function failed",
-                                         component->mca_component_name);
-		}
+                    if (mca_base_component_show_load_errors) {
+                        opal_output_verbose(MCA_BASE_VERBOSE_ERROR, output_id,
+                                            "mca: base: components_open: component %s "
+                                            "/ %s open function failed",
+                                            component->mca_type_name,
+                                            component->mca_component_name);
+                    }
+                    opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                        "mca: base: components_open: "
+                                        "component %s open function failed",
+                                        component->mca_component_name);
+                }
 
-                mca_base_component_close (component, output_id);
+                mca_base_component_close(component, output_id);
 
-		opal_list_remove_item (components, &cli->super);
-		OBJ_RELEASE(cli);
-	    }
-	}
+                opal_list_remove_item(components, &cli->super);
+                OBJ_RELEASE(cli);
+            }
+        }
     }
 
     /* All done */

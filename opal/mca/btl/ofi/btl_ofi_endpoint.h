@@ -33,7 +33,7 @@
 BEGIN_C_DECLS
 
 #if OPAL_HAVE_THREAD_LOCAL
-extern opal_thread_local  mca_btl_ofi_context_t *my_context;
+extern opal_thread_local mca_btl_ofi_context_t *my_context;
 #endif /* OPAL_HAVE_THREAD_LOCAL */
 
 struct mca_btl_base_endpoint_t {
@@ -55,19 +55,17 @@ OBJ_CLASS_DECLARATION(mca_btl_ofi_endpoint_t);
 
 int init_context_freelists(mca_btl_ofi_context_t *context);
 
-mca_btl_base_endpoint_t *mca_btl_ofi_endpoint_create (opal_proc_t *proc, struct fid_ep *ep);
+mca_btl_base_endpoint_t *mca_btl_ofi_endpoint_create(opal_proc_t *proc, struct fid_ep *ep);
 
 /* contexts */
 mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
                                                           struct fid_domain *domain,
-                                                          struct fid_ep *sep,
-                                                          struct fid_av *av,
+                                                          struct fid_ep *sep, struct fid_av *av,
                                                           size_t num_contexts);
 
 mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
                                                         struct fid_domain *domain,
-                                                        struct fid_ep *ep,
-                                                        struct fid_av *av);
+                                                        struct fid_ep *ep, struct fid_av *av);
 void mca_btl_ofi_context_finalize(mca_btl_ofi_context_t *context, bool scalable_ep);
 
 mca_btl_ofi_context_t *get_ofi_context(mca_btl_ofi_module_t *btl);

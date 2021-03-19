@@ -27,202 +27,148 @@
 
 #include "opal_config.h"
 
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/event.h"
 #include "opal/util/output.h"
-#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/btl/btl.h"
-#include "opal/mca/btl/base/base.h"
-#include "opal/mca/mpool/base/base.h"
 
-#include "portals4.h"
 #include "btl_portals4.h"
 #include "btl_portals4_frag.h"
 #include "btl_portals4_recv.h"
+#include "portals4.h"
 
 static int mca_btl_portals4_component_register(void);
 static int mca_btl_portals4_component_open(void);
 static int mca_btl_portals4_component_close(void);
-static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
-                                                       bool enable_progress_threads,
-                                                       bool enable_mpi_threads);
+static mca_btl_base_module_t **mca_btl_portals4_component_init(int *num_btls,
+                                                               bool enable_progress_threads,
+                                                               bool enable_mpi_threads);
 int mca_btl_portals4_component_progress(void);
 
 OPAL_MODULE_DECLSPEC extern mca_btl_portals4_component_t mca_btl_portals4_component;
 
-mca_btl_portals4_component_t mca_btl_portals4_component = {
-    {
-      /* First, the mca_base_module_t struct containing meta
-         information about the module itself */
-      .btl_version = {
-	MCA_BTL_DEFAULT_VERSION("portals4"),
-        .mca_open_component = mca_btl_portals4_component_open,
-        .mca_close_component = mca_btl_portals4_component_close,
-        .mca_register_component_params = mca_btl_portals4_component_register,
-      },
-      .btl_data = {
-          /* The component is not checkpoint ready */
-          .param_field = MCA_BASE_METADATA_PARAM_NONE
-      },
+mca_btl_portals4_component_t mca_btl_portals4_component = {{
+    /* First, the mca_base_module_t struct containing meta
+       information about the module itself */
+    .btl_version =
+        {
+            MCA_BTL_DEFAULT_VERSION("portals4"),
+            .mca_open_component = mca_btl_portals4_component_open,
+            .mca_close_component = mca_btl_portals4_component_close,
+            .mca_register_component_params = mca_btl_portals4_component_register,
+        },
+    .btl_data =
+        {/* The component is not checkpoint ready */
+         .param_field = MCA_BASE_METADATA_PARAM_NONE},
 
-      .btl_init = mca_btl_portals4_component_init,
-      .btl_progress = mca_btl_portals4_component_progress,
-    }
-};
+    .btl_init = mca_btl_portals4_component_init,
+    .btl_progress = mca_btl_portals4_component_progress,
+}};
 
-static int
-mca_btl_portals4_component_register(void)
+static int mca_btl_portals4_component_register(void)
 {
     mca_btl_portals4_component.use_logical = 0;
-    (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "use_logical",
-                           "Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false)",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &mca_btl_portals4_component.use_logical);
+    (void) mca_base_component_var_register(
+        &mca_btl_portals4_component.super.btl_version, "use_logical",
+        "Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false)",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_btl_portals4_component.use_logical);
 
     mca_btl_portals4_component.max_btls = 1;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "max_btls",
-                           "Maximum number of accepted Portals4 cards",
-                           MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &mca_btl_portals4_component.max_btls);
+                                           "max_btls", "Maximum number of accepted Portals4 cards",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_portals4_component.max_btls);
 
     mca_btl_portals4_component.portals_free_list_init_num = 16;
-    (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "free_list_init_num",
-                           "Initial number of elements to initialize in free lists",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_free_list_init_num));
+    (void)
+        mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
+                                        "free_list_init_num",
+                                        "Initial number of elements to initialize in free lists",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &(mca_btl_portals4_component.portals_free_list_init_num));
 
     mca_btl_portals4_component.portals_free_list_max_num = 1024;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "free_list_max_num",
-                           "Max number of elements to initialize in free lists",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_free_list_max_num));
+                                           "free_list_max_num",
+                                           "Max number of elements to initialize in free lists",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(mca_btl_portals4_component.portals_free_list_max_num));
 
     mca_btl_portals4_component.portals_free_list_inc_num = 16;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "free_list_inc_num",
-                           "Increment count for free lists",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_free_list_inc_num));
+                                           "free_list_inc_num", "Increment count for free lists",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(mca_btl_portals4_component.portals_free_list_inc_num));
 
     mca_btl_portals4_component.portals_free_list_eager_max_num = 32;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "eager_frag_limit",
-                           "Maximum number of pre-pinned eager fragments",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_free_list_eager_max_num));
+                                           "eager_frag_limit",
+                                           "Maximum number of pre-pinned eager fragments",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(mca_btl_portals4_component
+                                                 .portals_free_list_eager_max_num));
 
-    mca_btl_portals4_component.portals_need_ack =  1; /* default to true.. */
+    mca_btl_portals4_component.portals_need_ack = 1; /* default to true.. */
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "needs_ack",
-                           "Require a portals level ACK",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_need_ack));
+                                           "needs_ack", "Require a portals level ACK",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(mca_btl_portals4_component.portals_need_ack));
 
     mca_btl_portals4_component.recv_queue_size = 4 * 1024;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "eq_recv_size",
-                           "Size of the receive event queue",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.recv_queue_size));
+                                           "eq_recv_size", "Size of the receive event queue",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(mca_btl_portals4_component.recv_queue_size));
 
     mca_btl_portals4_component.portals_max_outstanding_ops = 8 * 1024;
-    (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "max_pending_ops",
-                           "Maximum number of pending send/rdma frags",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_max_outstanding_ops));
+    (void)
+        mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
+                                        "max_pending_ops",
+                                        "Maximum number of pending send/rdma frags",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &(mca_btl_portals4_component.portals_max_outstanding_ops));
 
     mca_btl_portals4_component.portals_recv_mds_num = 8;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "recv_md_num",
-                           "Number of send frag receive descriptors",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_recv_mds_num));
+                                           "recv_md_num", "Number of send frag receive descriptors",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(mca_btl_portals4_component.portals_recv_mds_num));
 
     mca_btl_portals4_component.portals_recv_mds_size = 256 * 1024;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "recv_md_size",
-                           "Size of send frag receive descriptors",
-                           MCA_BASE_VAR_TYPE_INT,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_recv_mds_size));
+                                           "recv_md_size", "Size of send frag receive descriptors",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(mca_btl_portals4_component.portals_recv_mds_size));
 
     mca_btl_portals4_component.portals_max_msg_size = PTL_SIZE_MAX;
     (void) mca_base_component_var_register(&mca_btl_portals4_component.super.btl_version,
-                           "max_msg_size",
-                           "Max size supported by portals4 (above that, a message is cut into messages less than that size)",
-                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
-                           NULL,
-                           0,
-                           0,
-                           OPAL_INFO_LVL_5,
-                           MCA_BASE_VAR_SCOPE_READONLY,
-                           &(mca_btl_portals4_component.portals_max_msg_size));
+                                           "max_msg_size",
+                                           "Max size supported by portals4 (above that, a message "
+                                           "is cut into messages less than that size)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &(mca_btl_portals4_component.portals_max_msg_size));
     return OPAL_SUCCESS;
 }
 
-static int
-mca_btl_portals4_component_open(void)
+static int mca_btl_portals4_component_open(void)
 {
-    OPAL_OUTPUT_VERBOSE((1, opal_btl_base_framework.framework_output, "mca_btl_portals4_component_open\n"));
+    OPAL_OUTPUT_VERBOSE(
+        (1, opal_btl_base_framework.framework_output, "mca_btl_portals4_component_open\n"));
 
     /*
      * fill default module state
@@ -231,22 +177,25 @@ mca_btl_portals4_component_open(void)
     mca_btl_portals4_module.super.btl_eager_limit = 32 * 1024;
     mca_btl_portals4_module.super.btl_rndv_eager_limit = 32 * 1024;
     mca_btl_portals4_module.super.btl_max_send_size = 64 * 1024;
-    if (mca_btl_portals4_module.super.btl_max_send_size > mca_btl_portals4_component.portals_max_msg_size)
-        mca_btl_portals4_module.super.btl_max_send_size = mca_btl_portals4_component.portals_max_msg_size;
+    if (mca_btl_portals4_module.super.btl_max_send_size
+        > mca_btl_portals4_component.portals_max_msg_size)
+        mca_btl_portals4_module.super.btl_max_send_size = mca_btl_portals4_component
+                                                              .portals_max_msg_size;
     mca_btl_portals4_module.super.btl_rdma_pipeline_send_length = 64 * 1024;
     mca_btl_portals4_module.super.btl_rdma_pipeline_frag_size = INT_MAX;
     mca_btl_portals4_module.super.btl_min_rdma_pipeline_size = 0;
-    mca_btl_portals4_module.super.btl_flags =
-        MCA_BTL_FLAGS_RDMA |
-        MCA_BTL_FLAGS_RDMA_MATCHED |
-        MCA_BTL_FLAGS_SEND;
+    mca_btl_portals4_module.super.btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_RDMA_MATCHED
+                                              | MCA_BTL_FLAGS_SEND;
 
-    mca_btl_portals4_module.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
+    mca_btl_portals4_module.super.btl_registration_handle_size = sizeof(
+        mca_btl_base_registration_handle_t);
 
     mca_btl_portals4_module.super.btl_get_limit = SIZE_MAX;
-    if (mca_btl_portals4_module.super.btl_get_limit > mca_btl_portals4_component.portals_max_msg_size)
-         mca_btl_portals4_module.super.btl_get_limit = mca_btl_portals4_component.portals_max_msg_size;
-    mca_btl_portals4_module.super.btl_put_limit = 0;        /* not implemented */
+    if (mca_btl_portals4_module.super.btl_get_limit
+        > mca_btl_portals4_component.portals_max_msg_size)
+        mca_btl_portals4_module.super.btl_get_limit = mca_btl_portals4_component
+                                                          .portals_max_msg_size;
+    mca_btl_portals4_module.super.btl_put_limit = 0; /* not implemented */
     mca_btl_portals4_module.super.btl_get_alignment = 0;
     mca_btl_portals4_module.super.btl_put_alignment = 0;
 
@@ -256,7 +205,8 @@ mca_btl_portals4_component_open(void)
     mca_btl_portals4_module.super.btl_bandwidth = 1000;
     mca_btl_portals4_module.super.btl_latency = 0;
 
-    mca_btl_base_param_register(&mca_btl_portals4_component.super.btl_version, &mca_btl_portals4_module.super);
+    mca_btl_base_param_register(&mca_btl_portals4_component.super.btl_version,
+                                &mca_btl_portals4_module.super);
 
     mca_btl_portals4_module.portals_num_procs = 0;
 
@@ -283,19 +233,20 @@ mca_btl_portals4_component_open(void)
     return OPAL_SUCCESS;
 }
 
-
-static int
-mca_btl_portals4_component_close(void)
+static int mca_btl_portals4_component_close(void)
 {
-    opal_output_verbose(50, opal_btl_base_framework.framework_output, "mca_btl_portals4_component_close\n");
+    opal_output_verbose(50, opal_btl_base_framework.framework_output,
+                        "mca_btl_portals4_component_close\n");
 
     /* release resources */
     /* close debugging stream */
     opal_output_close(opal_btl_base_framework.framework_output);
     opal_btl_base_framework.framework_output = -1;
 
-    if (NULL != mca_btl_portals4_component.btls)  free(mca_btl_portals4_component.btls);
-    if (NULL != mca_btl_portals4_component.eqs_h) free(mca_btl_portals4_component.eqs_h);
+    if (NULL != mca_btl_portals4_component.btls)
+        free(mca_btl_portals4_component.btls);
+    if (NULL != mca_btl_portals4_component.eqs_h)
+        free(mca_btl_portals4_component.eqs_h);
     mca_btl_portals4_component.btls = NULL;
     mca_btl_portals4_component.eqs_h = NULL;
 
@@ -304,18 +255,19 @@ mca_btl_portals4_component_close(void)
     return OPAL_SUCCESS;
 }
 
-static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
-                                                       bool enable_progress_threads,
-                                                       bool enable_mpi_threads)
+static mca_btl_base_module_t **mca_btl_portals4_component_init(int *num_btls,
+                                                               bool enable_progress_threads,
+                                                               bool enable_mpi_threads)
 {
     mca_btl_portals4_module_t *portals4_btl = NULL;
     mca_btl_base_module_t **btls = NULL;
     unsigned int ret, interface;
     ptl_handle_ni_t *portals4_nis_h = NULL;
-    ptl_ni_limits_t portals4_ni_limits ;
+    ptl_ni_limits_t portals4_ni_limits;
     ptl_process_t *ptl_process_ids = NULL;
 
-    opal_output_verbose(50, opal_btl_base_framework.framework_output, "mca_btl_portals4_component_init\n");
+    opal_output_verbose(50, opal_btl_base_framework.framework_output,
+                        "mca_btl_portals4_component_init\n");
 
     if (enable_mpi_threads && !mca_btl_base_thread_multiple_override) {
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
@@ -327,8 +279,7 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     ret = PtlInit();
     if (PTL_OK != ret) {
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                            "%s:%d: PtlInit failed: %d\n",
-                            __FILE__, __LINE__, ret);
+                            "%s:%d: PtlInit failed: %d\n", __FILE__, __LINE__, ret);
         goto error;
     }
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlInit OK\n"));
@@ -338,55 +289,62 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
      */
     *num_btls = 0;
     portals4_nis_h = malloc(mca_btl_portals4_component.max_btls * sizeof(ptl_handle_ni_t));
-    for (interface=0; interface<mca_btl_portals4_component.max_btls; interface++) {
+    for (interface = 0; interface < mca_btl_portals4_component.max_btls; interface++) {
 
         if (mca_btl_portals4_component.use_logical)
-            ret = PtlNIInit((1 == mca_btl_portals4_component.max_btls) ? PTL_IFACE_DEFAULT : interface,
-                    PTL_NI_LOGICAL | PTL_NI_MATCHING,
-                    PTL_PID_ANY,       /* let library assign our pid */
-                    NULL,              /* no desired limits */
-                    &portals4_ni_limits, /* actual limits */
-                    &portals4_nis_h[*num_btls] /* our interface handle */
-                    );
-        else ret = PtlNIInit((1 == mca_btl_portals4_component.max_btls) ? PTL_IFACE_DEFAULT : interface,
-                    PTL_NI_PHYSICAL | PTL_NI_MATCHING,
-                    PTL_PID_ANY,       /* let library assign our pid */
-                    NULL,              /* no desired limits */
-                    &portals4_ni_limits, /* actual limits */
-                    &portals4_nis_h[*num_btls] /* our interface handle */
-                    );
+            ret = PtlNIInit((1 == mca_btl_portals4_component.max_btls) ? PTL_IFACE_DEFAULT
+                                                                       : interface,
+                            PTL_NI_LOGICAL | PTL_NI_MATCHING,
+                            PTL_PID_ANY,               /* let library assign our pid */
+                            NULL,                      /* no desired limits */
+                            &portals4_ni_limits,       /* actual limits */
+                            &portals4_nis_h[*num_btls] /* our interface handle */
+            );
+        else
+            ret = PtlNIInit((1 == mca_btl_portals4_component.max_btls) ? PTL_IFACE_DEFAULT
+                                                                       : interface,
+                            PTL_NI_PHYSICAL | PTL_NI_MATCHING,
+                            PTL_PID_ANY,               /* let library assign our pid */
+                            NULL,                      /* no desired limits */
+                            &portals4_ni_limits,       /* actual limits */
+                            &portals4_nis_h[*num_btls] /* our interface handle */
+            );
         if (PTL_OK != ret) {
             opal_output_verbose(90, opal_btl_base_framework.framework_output,
-                            "%s:%d: PtlNIInit failed for NI %d: %d\n", __FILE__, __LINE__, interface, ret);
-        }
-        else {
+                                "%s:%d: PtlNIInit failed for NI %d: %d\n", __FILE__, __LINE__,
+                                interface, ret);
+        } else {
             if (mca_btl_portals4_component.portals_max_msg_size > portals4_ni_limits.max_msg_size)
                 mca_btl_portals4_component.portals_max_msg_size = portals4_ni_limits.max_msg_size;
             if (mca_btl_portals4_module.super.btl_max_send_size > portals4_ni_limits.max_msg_size)
                 mca_btl_portals4_module.super.btl_max_send_size = portals4_ni_limits.max_msg_size;
             if (mca_btl_portals4_module.super.btl_get_limit > portals4_ni_limits.max_msg_size)
                 mca_btl_portals4_module.super.btl_get_limit = portals4_ni_limits.max_msg_size;
-            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlNIInit OK for NI %d max_msg_size=%ld",
-                                 *num_btls, mca_btl_portals4_component.portals_max_msg_size));
+            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+                                 "PtlNIInit OK for NI %d max_msg_size=%ld", *num_btls,
+                                 mca_btl_portals4_component.portals_max_msg_size));
 
             (*num_btls)++;
         }
     }
-    if (0 == *num_btls) goto error;
+    if (0 == *num_btls)
+        goto error;
 
     /*
      * Configure the different network interfaces and the associated btl modules
      */
     mca_btl_portals4_component.num_btls = *num_btls;
-    mca_btl_portals4_component.btls = malloc(mca_btl_portals4_component.num_btls * sizeof(mca_btl_portals4_module_t*) );
-    mca_btl_portals4_component.eqs_h = malloc(mca_btl_portals4_component.num_btls * sizeof(ptl_handle_eq_t));
-    ptl_process_ids = malloc(mca_btl_portals4_component.num_btls * sizeof(ptl_process_t) );
+    mca_btl_portals4_component.btls = malloc(mca_btl_portals4_component.num_btls
+                                             * sizeof(mca_btl_portals4_module_t *));
+    mca_btl_portals4_component.eqs_h = malloc(mca_btl_portals4_component.num_btls
+                                              * sizeof(ptl_handle_eq_t));
+    ptl_process_ids = malloc(mca_btl_portals4_component.num_btls * sizeof(ptl_process_t));
 
-    for (interface=0; interface<mca_btl_portals4_component.num_btls; interface++) {
+    for (interface = 0; interface < mca_btl_portals4_component.num_btls; interface++) {
         mca_btl_portals4_component.btls[interface] = NULL;
         mca_btl_portals4_component.eqs_h[interface] = PTL_EQ_NONE;
     }
-    for (interface=0; interface<mca_btl_portals4_component.num_btls; interface++) {
+    for (interface = 0; interface < mca_btl_portals4_component.num_btls; interface++) {
         portals4_btl = malloc(sizeof(mca_btl_portals4_module_t));
         mca_btl_portals4_component.btls[interface] = portals4_btl;
 
@@ -395,46 +353,43 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
 
         portals4_btl->interface_num = interface;
         portals4_btl->portals_ni_h = portals4_nis_h[interface];
-        portals4_btl->portals_max_outstanding_ops = mca_btl_portals4_component.portals_max_outstanding_ops;
+        portals4_btl->portals_max_outstanding_ops = mca_btl_portals4_component
+                                                        .portals_max_outstanding_ops;
 
         OBJ_CONSTRUCT(&(portals4_btl->portals_frag_eager), opal_free_list_t);
         OBJ_CONSTRUCT(&(portals4_btl->portals_frag_max), opal_free_list_t);
         OBJ_CONSTRUCT(&(portals4_btl->portals_frag_user), opal_free_list_t);
 
         /* eager frags */
-        opal_free_list_init (&(portals4_btl->portals_frag_eager),
-                        sizeof(mca_btl_portals4_frag_eager_t) +
-                        portals4_btl->super.btl_eager_limit,
-                        opal_cache_line_size,
-                        OBJ_CLASS(mca_btl_portals4_frag_eager_t),
-                        0,opal_cache_line_size,
-                        mca_btl_portals4_component.portals_free_list_init_num,
-                        mca_btl_portals4_component.portals_free_list_eager_max_num,
-                        mca_btl_portals4_component.portals_free_list_inc_num,
-                        NULL, 0, NULL, NULL, NULL);
+        opal_free_list_init(&(portals4_btl->portals_frag_eager),
+                            sizeof(mca_btl_portals4_frag_eager_t)
+                                + portals4_btl->super.btl_eager_limit,
+                            opal_cache_line_size, OBJ_CLASS(mca_btl_portals4_frag_eager_t), 0,
+                            opal_cache_line_size,
+                            mca_btl_portals4_component.portals_free_list_init_num,
+                            mca_btl_portals4_component.portals_free_list_eager_max_num,
+                            mca_btl_portals4_component.portals_free_list_inc_num, NULL, 0, NULL,
+                            NULL, NULL);
 
         /* send frags */
-        opal_free_list_init (&(portals4_btl->portals_frag_max),
-                        sizeof(mca_btl_portals4_frag_max_t) +
-                        portals4_btl->super.btl_max_send_size,
-                        opal_cache_line_size,
-                        OBJ_CLASS(mca_btl_portals4_frag_max_t),
-                        0,opal_cache_line_size,
-                        mca_btl_portals4_component.portals_free_list_init_num,
-                        mca_btl_portals4_component.portals_free_list_max_num,
-                        mca_btl_portals4_component.portals_free_list_inc_num,
-                        NULL, 0, NULL, NULL, NULL);
+        opal_free_list_init(&(portals4_btl->portals_frag_max),
+                            sizeof(mca_btl_portals4_frag_max_t)
+                                + portals4_btl->super.btl_max_send_size,
+                            opal_cache_line_size, OBJ_CLASS(mca_btl_portals4_frag_max_t), 0,
+                            opal_cache_line_size,
+                            mca_btl_portals4_component.portals_free_list_init_num,
+                            mca_btl_portals4_component.portals_free_list_max_num,
+                            mca_btl_portals4_component.portals_free_list_inc_num, NULL, 0, NULL,
+                            NULL, NULL);
 
         /* user frags */
-        opal_free_list_init (&(portals4_btl->portals_frag_user),
-                        sizeof(mca_btl_portals4_frag_user_t),
-                        opal_cache_line_size,
-                        OBJ_CLASS(mca_btl_portals4_frag_user_t),
-                        0,opal_cache_line_size,
-                        mca_btl_portals4_component.portals_free_list_init_num,
-                        mca_btl_portals4_component.portals_free_list_max_num,
-                        mca_btl_portals4_component.portals_free_list_inc_num,
-                        NULL, 0, NULL, NULL, NULL);
+        opal_free_list_init(&(portals4_btl->portals_frag_user),
+                            sizeof(mca_btl_portals4_frag_user_t), opal_cache_line_size,
+                            OBJ_CLASS(mca_btl_portals4_frag_user_t), 0, opal_cache_line_size,
+                            mca_btl_portals4_component.portals_free_list_init_num,
+                            mca_btl_portals4_component.portals_free_list_max_num,
+                            mca_btl_portals4_component.portals_free_list_inc_num, NULL, 0, NULL,
+                            NULL, NULL);
 
         /* receive block list */
         OBJ_CONSTRUCT(&(portals4_btl->portals_recv_blocks), opal_list_t);
@@ -443,70 +398,73 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     portals4_nis_h = NULL;
 
     /* Publish our NID(s)/PID(s) in the modex */
-    for (interface=0; interface<mca_btl_portals4_component.num_btls; interface++) {
+    for (interface = 0; interface < mca_btl_portals4_component.num_btls; interface++) {
         portals4_btl = mca_btl_portals4_component.btls[interface];
 
-        ret = PtlGetPhysId(portals4_btl->portals_ni_h ,&ptl_process_ids[interface]);
+        ret = PtlGetPhysId(portals4_btl->portals_ni_h, &ptl_process_ids[interface]);
         if (PTL_OK != ret) {
             opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                            "%s:%d: PtlGetPhysId for NI %d failed: %d\n",
-                            __FILE__, __LINE__, interface, ret);
+                                "%s:%d: PtlGetPhysId for NI %d failed: %d\n", __FILE__, __LINE__,
+                                interface, ret);
             goto error;
         }
 
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                  "PtlGetPhysId NI number %d: ni_h=%d rank=%x nid=%x pid=%x\n",
-                  interface, portals4_btl->portals_ni_h,
-                  ptl_process_ids[interface].rank,
-                  ptl_process_ids[interface].phys.nid, ptl_process_ids[interface].phys.pid));
+                             "PtlGetPhysId NI number %d: ni_h=%d rank=%x nid=%x pid=%x\n",
+                             interface, portals4_btl->portals_ni_h, ptl_process_ids[interface].rank,
+                             ptl_process_ids[interface].phys.nid,
+                             ptl_process_ids[interface].phys.pid));
     }
-    OPAL_MODEX_SEND(ret, PMIX_GLOBAL,
-                    &mca_btl_portals4_component.super.btl_version,
+    OPAL_MODEX_SEND(ret, PMIX_GLOBAL, &mca_btl_portals4_component.super.btl_version,
                     ptl_process_ids, mca_btl_portals4_component.num_btls * sizeof(ptl_process_t));
     if (OPAL_SUCCESS != ret) {
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                        "%s:%d: opal_modex_send failed: %d\n",
-                        __FILE__, __LINE__, ret);
+                            "%s:%d: opal_modex_send failed: %d\n", __FILE__, __LINE__, ret);
         goto error;
     }
     free(ptl_process_ids);
     ptl_process_ids = NULL;
 
-    btls = malloc(mca_btl_portals4_component.num_btls * sizeof(mca_btl_portals4_module_t*) );
-    memcpy(btls , mca_btl_portals4_component.btls,
-            mca_btl_portals4_component.num_btls*sizeof(mca_btl_portals4_module_t*) );
+    btls = malloc(mca_btl_portals4_component.num_btls * sizeof(mca_btl_portals4_module_t *));
+    memcpy(btls, mca_btl_portals4_component.btls,
+           mca_btl_portals4_component.num_btls * sizeof(mca_btl_portals4_module_t *));
 
-    opal_output_verbose(1, opal_btl_base_framework.framework_output, "The btl portals4 component has been initialized and uses %d NI(s)",
-        mca_btl_portals4_component.num_btls);
+    opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                        "The btl portals4 component has been initialized and uses %d NI(s)",
+                        mca_btl_portals4_component.num_btls);
 
     mca_btl_portals4_component.need_init = 1;
 
     return btls;
 
- error:
-    opal_output_verbose(1, opal_btl_base_framework.framework_output, "Error in mca_btl_portals4_component_init\n");
+error:
+    opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                        "Error in mca_btl_portals4_component_init\n");
 
     if (*num_btls) {
-        if (NULL != portals4_nis_h) free(portals4_nis_h);
-        if (NULL != ptl_process_ids) free(ptl_process_ids);
+        if (NULL != portals4_nis_h)
+            free(portals4_nis_h);
+        if (NULL != ptl_process_ids)
+            free(ptl_process_ids);
 
-        for (interface=0; interface<mca_btl_portals4_component.num_btls; interface++) {
+        for (interface = 0; interface < mca_btl_portals4_component.num_btls; interface++) {
             portals4_btl = mca_btl_portals4_component.btls[interface];
-            if (NULL != portals4_btl) mca_btl_portals4_free_module(portals4_btl);
+            if (NULL != portals4_btl)
+                mca_btl_portals4_free_module(portals4_btl);
         }
         mca_btl_portals4_component.num_btls = 0;
         *num_btls = 0;
-        if (NULL != mca_btl_portals4_component.btls)  free(mca_btl_portals4_component.btls);
-        if (NULL != mca_btl_portals4_component.eqs_h) free(mca_btl_portals4_component.eqs_h);
+        if (NULL != mca_btl_portals4_component.btls)
+            free(mca_btl_portals4_component.btls);
+        if (NULL != mca_btl_portals4_component.eqs_h)
+            free(mca_btl_portals4_component.eqs_h);
         mca_btl_portals4_component.btls = NULL;
         mca_btl_portals4_component.eqs_h = NULL;
-
     }
- return NULL;
+    return NULL;
 }
 
-int
-mca_btl_portals4_get_error(int ptl_error)
+int mca_btl_portals4_get_error(int ptl_error)
 {
     int ret;
 
@@ -564,8 +522,7 @@ mca_btl_portals4_get_error(int ptl_error)
     return ret;
 }
 
-int
-mca_btl_portals4_component_progress(void)
+int mca_btl_portals4_component_progress(void)
 {
     mca_btl_portals4_module_t *portals4_btl;
     int num_progressed = 0;
@@ -574,38 +531,41 @@ mca_btl_portals4_component_progress(void)
     mca_btl_base_tag_t tag;
     static ptl_event_t ev;
     unsigned int which;
-    mca_btl_active_message_callback_t* reg;
+    mca_btl_active_message_callback_t *reg;
     mca_btl_base_segment_t seg[1];
-    mca_btl_base_receive_descriptor_t recv_descriptor = {.des_segments = seg, .des_segment_count = 1};
+    mca_btl_base_receive_descriptor_t recv_descriptor = {.des_segments = seg,
+                                                         .des_segment_count = 1};
 
     while (true) {
-        ret = PtlEQPoll(mca_btl_portals4_component.eqs_h, mca_btl_portals4_component.num_btls, 0, &ev, &which);
+        ret = PtlEQPoll(mca_btl_portals4_component.eqs_h, mca_btl_portals4_component.num_btls, 0,
+                        &ev, &which);
 
         if (PTL_OK == ret) {
-            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlEQPoll Event received: %d (fail=%d) on NI %d\n",
-                ev.type, ev.ni_fail_type, which));
+            OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+                                 "PtlEQPoll Event received: %d (fail=%d) on NI %d\n", ev.type,
+                                 ev.ni_fail_type, which));
             num_progressed++;
             portals4_btl = mca_btl_portals4_component.btls[which];
 
             switch (ev.type) {
 
-            case PTL_EVENT_SEND:   /* generated on source (origin) when put stops sending */
+            case PTL_EVENT_SEND: /* generated on source (origin) when put stops sending */
 
                 frag = ev.user_ptr;
                 if (NULL == frag) {
-                    opal_output(opal_btl_base_framework.framework_output, "btl/portals4: PTL_EVENT_SEND event with NULL user_ptr");
+                    opal_output(opal_btl_base_framework.framework_output,
+                                "btl/portals4: PTL_EVENT_SEND event with NULL user_ptr");
                     break;
                 }
                 btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
                 if (!mca_btl_portals4_component.portals_need_ack) {
                     /* my part's done, in portals we trust! */
-                    if( MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ){
+                    if (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags) {
                         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                            "PTL_EVENT_SEND: Direct call to des_cbfunc: %lx\n", (uint64_t)frag->base.des_cbfunc));
-                        frag->base.des_cbfunc(&portals4_btl->super,
-                                              frag->endpoint,
-                                              &frag->base,
+                                             "PTL_EVENT_SEND: Direct call to des_cbfunc: %lx\n",
+                                             (uint64_t) frag->base.des_cbfunc));
+                        frag->base.des_cbfunc(&portals4_btl->super, frag->endpoint, &frag->base,
                                               OPAL_SUCCESS);
                     }
                     if (btl_ownership) {
@@ -613,35 +573,39 @@ mca_btl_portals4_component_progress(void)
                     }
                     if (0 != frag->size) {
                         OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
-                        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                            "PTL_EVENT_SEND: Decrementing portals_outstanding_ops=%d (1)\n",
-                            portals4_btl->portals_outstanding_ops));
+                        OPAL_OUTPUT_VERBOSE(
+                            (90, opal_btl_base_framework.framework_output,
+                             "PTL_EVENT_SEND: Decrementing portals_outstanding_ops=%d (1)\n",
+                             portals4_btl->portals_outstanding_ops));
                     }
                 }
 
                 goto done;
                 break;
 
-            case PTL_EVENT_ACK:   /* Ack that a put as completed on other side. We just call the callback function */
+            case PTL_EVENT_ACK: /* Ack that a put as completed on other side. We just call the
+                                   callback function */
 
                 frag = ev.user_ptr;
                 if (NULL == frag) {
-                    opal_output(opal_btl_base_framework.framework_output, "btl/portals4: PTL_EVENT_ACK event with NULL user_ptr");
+                    opal_output(opal_btl_base_framework.framework_output,
+                                "btl/portals4: PTL_EVENT_ACK event with NULL user_ptr");
                     break;
                 }
-                OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                    "PTL_EVENT_ACK received rlength=%ld mlength=%ld des_flags=%d\n", ev.rlength, ev.mlength, frag->base.des_flags));
+                OPAL_OUTPUT_VERBOSE(
+                    (90, opal_btl_base_framework.framework_output,
+                     "PTL_EVENT_ACK received rlength=%ld mlength=%ld des_flags=%d\n", ev.rlength,
+                     ev.mlength, frag->base.des_flags));
                 btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 
                 /* other side received the message.  should have
                    received entire thing */
                 /* let the PML know we're done */
-                if (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags ) {
+                if (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags) {
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                        "PTL_EVENT_ACK: Call to des_cbfunc %lx\n", (uint64_t)frag->base.des_cbfunc));
-                    frag->base.des_cbfunc(&portals4_btl->super,
-                                          frag->endpoint,
-                                          &frag->base,
+                                         "PTL_EVENT_ACK: Call to des_cbfunc %lx\n",
+                                         (uint64_t) frag->base.des_cbfunc));
+                    frag->base.des_cbfunc(&portals4_btl->super, frag->endpoint, &frag->base,
                                           OPAL_SUCCESS);
                 }
                 if (btl_ownership) {
@@ -650,14 +614,16 @@ mca_btl_portals4_component_progress(void)
 
                 if (0 != frag->size) {
                     OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
-                    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                        "PTL_EVENT_ACK: Decrementing portals_outstanding_ops=%d (2)\n", portals4_btl->portals_outstanding_ops));
+                    OPAL_OUTPUT_VERBOSE(
+                        (90, opal_btl_base_framework.framework_output,
+                         "PTL_EVENT_ACK: Decrementing portals_outstanding_ops=%d (2)\n",
+                         portals4_btl->portals_outstanding_ops));
                 }
 
                 goto done;
                 break;
 
-            case PTL_EVENT_PUT:   /* Generated on destination (target) when a put into memory ends */
+            case PTL_EVENT_PUT: /* Generated on destination (target) when a put into memory ends */
 
                 tag = (unsigned char) (ev.hdr_data);
 
@@ -671,7 +637,8 @@ mca_btl_portals4_component_progress(void)
                 recv_descriptor.cbdata = reg->cbdata;
 
                 OPAL_OUTPUT_VERBOSE((50, opal_btl_base_framework.framework_output,
-                    "PTL_EVENT_PUT: tag=%x base_descriptor=%p cbfunc: %lx\n", tag, (void*)&btl_base_descriptor, (uint64_t)reg->cbfunc));
+                                     "PTL_EVENT_PUT: tag=%x base_descriptor=%p cbfunc: %lx\n", tag,
+                                     (void *) &btl_base_descriptor, (uint64_t) reg->cbfunc));
                 reg->cbfunc(&portals4_btl->super, &recv_descriptor);
 
                 goto done;
@@ -680,7 +647,7 @@ mca_btl_portals4_component_progress(void)
             case PTL_EVENT_PUT_OVERFLOW:
                 /* */
                 OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                    "PTL_EVENT_OVERFLOW received\n"));
+                                     "PTL_EVENT_OVERFLOW received\n"));
                 goto done;
                 break;
 
@@ -688,7 +655,8 @@ mca_btl_portals4_component_progress(void)
                 /* */
                 frag = ev.user_ptr;
                 if (NULL == frag) {
-                    opal_output(opal_btl_base_framework.framework_output, "btl/portals4: PTL_EVENT_LINK event with NULL user_ptr");
+                    opal_output(opal_btl_base_framework.framework_output,
+                                "btl/portals4: PTL_EVENT_LINK event with NULL user_ptr");
                     break;
                 }
                 goto done;
@@ -696,7 +664,8 @@ mca_btl_portals4_component_progress(void)
 
             case PTL_EVENT_AUTO_UNLINK:
                 /* */
-                /* The Priority List is used, so PTL_EVENT_AUTO_FREE will never be received. So, we have to reactivate the block here */
+                /* The Priority List is used, so PTL_EVENT_AUTO_FREE will never be received. So, we
+                 * have to reactivate the block here */
                 mca_btl_portals4_activate_block(ev.user_ptr);
                 goto done;
                 break;
@@ -706,10 +675,11 @@ mca_btl_portals4_component_progress(void)
                 goto done;
                 break;
 
-            case PTL_EVENT_GET:   /* Generated on source (target) when a get from memory ends */
+            case PTL_EVENT_GET: /* Generated on source (target) when a get from memory ends */
                 /* */
                 OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                    "PTL_EVENT_GET received at target rlength=%ld mlength=%ld\n", ev.rlength, ev.mlength));
+                                     "PTL_EVENT_GET received at target rlength=%ld mlength=%ld\n",
+                                     ev.rlength, ev.mlength));
                 goto done;
                 break;
 
@@ -718,46 +688,45 @@ mca_btl_portals4_component_progress(void)
                 frag = ev.user_ptr;
 
                 if (PTL_NI_PERM_VIOLATION == ev.ni_fail_type) {
-                        opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                            "Warning : PTL_EVENT_REPLY with PTL_NI_PERM_VIOLATION received, try to re-issue a PtlGet");
+                    opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                        "Warning : PTL_EVENT_REPLY with PTL_NI_PERM_VIOLATION "
+                                        "received, try to re-issue a PtlGet");
 
-                    /* The distant PtlMEAppend is not finished (distant PTL_EVENT_LINK not received) */
+                    /* The distant PtlMEAppend is not finished (distant PTL_EVENT_LINK not received)
+                     */
                     /* Re-issue the PtlGet (see btl_portals4_rdma.c) */
-                    ret = PtlGet(portals4_btl->send_md_h,
-                                 (ptl_size_t) frag->addr,
-                                 frag->length,
-                                 frag->peer_proc,
-                                 portals4_btl->recv_idx,
+                    ret = PtlGet(portals4_btl->send_md_h, (ptl_size_t) frag->addr, frag->length,
+                                 frag->peer_proc, portals4_btl->recv_idx,
                                  frag->match_bits, /* match bits */
                                  0, // Warning : should be  ev.remote_offset but it is not defined,
                                  frag);
                     if (OPAL_UNLIKELY(PTL_OK != ret)) {
                         opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                                            "%s:%d: Re-issued PtlGet failed: %d",
-                                            __FILE__, __LINE__, ret);
+                                            "%s:%d: Re-issued PtlGet failed: %d", __FILE__,
+                                            __LINE__, ret);
                         return OPAL_ERROR;
                     }
 
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                        "Re-issued PtlGet length=%ld recv_idx=%d rank=%x pid=%x nid=%x match_bits=%lx\n",
-                        frag->length, portals4_btl->recv_idx,
-                        frag->peer_proc.rank, frag->peer_proc.phys.pid, frag->peer_proc.phys.nid, frag->match_bits));
-                }
-                else {
+                                         "Re-issued PtlGet length=%ld recv_idx=%d rank=%x pid=%x "
+                                         "nid=%x match_bits=%lx\n",
+                                         frag->length, portals4_btl->recv_idx, frag->peer_proc.rank,
+                                         frag->peer_proc.phys.pid, frag->peer_proc.phys.nid,
+                                         frag->match_bits));
+                } else {
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                        "PTL_EVENT_REPLY: Call to rdma_cbfunc=%lx\n", (uint64_t)frag->rdma_cb.func));
-                    frag->rdma_cb.func(&portals4_btl->super,
-                                 frag->endpoint,
-                                 ev.start,
-                                 frag->rdma_cb.local_handle,
-                                 frag->rdma_cb.context,
-                                 frag->rdma_cb.data,
-                                 OPAL_SUCCESS);
+                                         "PTL_EVENT_REPLY: Call to rdma_cbfunc=%lx\n",
+                                         (uint64_t) frag->rdma_cb.func));
+                    frag->rdma_cb.func(&portals4_btl->super, frag->endpoint, ev.start,
+                                       frag->rdma_cb.local_handle, frag->rdma_cb.context,
+                                       frag->rdma_cb.data, OPAL_SUCCESS);
 
                     OPAL_BTL_PORTALS4_FRAG_RETURN_USER(&portals4_btl->super, frag);
                     OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
-                    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                        "PTL_EVENT_REPLY: Decrementing portals_outstanding_ops=%d\n", portals4_btl->portals_outstanding_ops));
+                    OPAL_OUTPUT_VERBOSE(
+                        (90, opal_btl_base_framework.framework_output,
+                         "PTL_EVENT_REPLY: Decrementing portals_outstanding_ops=%d\n",
+                         portals4_btl->portals_outstanding_ops));
                     goto done;
                 }
                 break;
@@ -785,6 +754,6 @@ mca_btl_portals4_component_progress(void)
             break;
         }
     }
- done:
+done:
     return num_progressed;
 }

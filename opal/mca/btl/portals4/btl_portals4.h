@@ -24,15 +24,15 @@
 #ifndef BTL_PORTALS_H_HAS_BEEN_INCLUDED
 #define BTL_PORTALS_H_HAS_BEEN_INCLUDED
 
-#include <portals4.h>
 #include <btl_portals4_frag.h>
+#include <portals4.h>
 
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/btl/btl.h"
 
 BEGIN_C_DECLS
 
@@ -46,9 +46,10 @@ struct mca_btl_portals4_component_t {
     unsigned int num_btls;
     unsigned int max_btls; /* Maximum number of accepted Portals4 cards */
 
-    struct mca_btl_portals4_module_t** btls; /* array of available BTL modules */
+    struct mca_btl_portals4_module_t **btls; /* array of available BTL modules */
 
-    /* add_procs() can get called multiple times.  this prevents multiple calls to portals4_init_interface(). */
+    /* add_procs() can get called multiple times.  this prevents multiple calls to
+     * portals4_init_interface(). */
     int need_init;
 
     /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
@@ -145,111 +146,86 @@ typedef struct mca_btl_portals4_module_t mca_btl_portals4_module_t;
  * +---- protocol
  */
 
-#define BTL_PORTALS4_PROTOCOL_MASK  0xF000000000000000ULL
-#define BTL_PORTALS4_CONTEXT_MASK   0x0FFF000000000000ULL
-#define BTL_PORTALS4_SOURCE_MASK    0x0000FFFF00000000ULL
-#define BTL_PORTALS4_TAG_MASK       0x00000000FFFFFFFFULL
+#define BTL_PORTALS4_PROTOCOL_MASK 0xF000000000000000ULL
+#define BTL_PORTALS4_CONTEXT_MASK  0x0FFF000000000000ULL
+#define BTL_PORTALS4_SOURCE_MASK   0x0000FFFF00000000ULL
+#define BTL_PORTALS4_TAG_MASK      0x00000000FFFFFFFFULL
 
-#define BTL_PORTALS4_PROTOCOL_IGNR  BTL_PORTALS4_PROTOCOL_MASK
-#define BTL_PORTALS4_CONTEXT_IGNR   BTL_PORTALS4_CONTEXT_MASK
-#define BTL_PORTALS4_SOURCE_IGNR    BTL_PORTALS4_SOURCE_MASK
-#define BTL_PORTALS4_TAG_IGNR       0x000000007FFFFFFFULL
+#define BTL_PORTALS4_PROTOCOL_IGNR BTL_PORTALS4_PROTOCOL_MASK
+#define BTL_PORTALS4_CONTEXT_IGNR  BTL_PORTALS4_CONTEXT_MASK
+#define BTL_PORTALS4_SOURCE_IGNR   BTL_PORTALS4_SOURCE_MASK
+#define BTL_PORTALS4_TAG_IGNR      0x000000007FFFFFFFULL
 
-#define BTL_PORTALS4_SHORT_MSG      0x1000000000000000ULL
-#define BTL_PORTALS4_LONG_MSG       0x2000000000000000ULL
+#define BTL_PORTALS4_SHORT_MSG 0x1000000000000000ULL
+#define BTL_PORTALS4_LONG_MSG  0x2000000000000000ULL
 
 /* send posting */
 #define BTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, source, tag, type) \
-    {                                                                   \
-        match_bits = contextid;                                         \
-        match_bits = (match_bits << 16);                                \
-        match_bits |= source;                                           \
-        match_bits = (match_bits << 32);                                \
-        match_bits |= (BTL_PORTALS4_TAG_MASK & tag) | type;             \
+    {                                                                        \
+        match_bits = contextid;                                              \
+        match_bits = (match_bits << 16);                                     \
+        match_bits |= source;                                                \
+        match_bits = (match_bits << 32);                                     \
+        match_bits |= (BTL_PORTALS4_TAG_MASK & tag) | type;                  \
     }
 
-#define BTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length, sync)   \
-    {                                                                \
-        hdr_data = (sync) ? 1 : 0;                                   \
-        hdr_data = (hdr_data << 15);                                 \
-        hdr_data |= opcount & 0x7FFFULL;                             \
-        hdr_data = (hdr_data << 48);                                 \
-        hdr_data |= (length & 0xFFFFFFFFFFFFULL);                    \
+#define BTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length, sync) \
+    {                                                              \
+        hdr_data = (sync) ? 1 : 0;                                 \
+        hdr_data = (hdr_data << 15);                               \
+        hdr_data |= opcount & 0x7FFFULL;                           \
+        hdr_data = (hdr_data << 48);                               \
+        hdr_data |= (length & 0xFFFFFFFFFFFFULL);                  \
     }
 
-#define REQ_BTL_TABLE_ID	2
+#define REQ_BTL_TABLE_ID 2
 
 int mca_btl_portals4_component_progress(void);
 void mca_btl_portals4_free_module(mca_btl_portals4_module_t *portals4_btl);
 
 /* BTL interface functions */
-int mca_btl_portals4_finalize(struct mca_btl_base_module_t* btl_base);
+int mca_btl_portals4_finalize(struct mca_btl_base_module_t *btl_base);
 
+int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t nprocs,
+                               struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
+                               opal_bitmap_t *reachable);
 
-int mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
-                              size_t nprocs,
-                              struct opal_proc_t **procs,
-                              struct mca_btl_base_endpoint_t** peers,
-                              opal_bitmap_t* reachable);
+int mca_btl_portals4_del_procs(struct mca_btl_base_module_t *btl_base, size_t nprocs,
+                               struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers);
 
-int mca_btl_portals4_del_procs(struct mca_btl_base_module_t* btl_base,
-                              size_t nprocs,
-                              struct opal_proc_t **procs,
-                              struct mca_btl_base_endpoint_t** peers);
+mca_btl_base_descriptor_t *mca_btl_portals4_alloc(struct mca_btl_base_module_t *btl_base,
+                                                  struct mca_btl_base_endpoint_t *endpoint,
+                                                  uint8_t order, size_t size, uint32_t flags);
 
-mca_btl_base_descriptor_t*
-mca_btl_portals4_alloc(struct mca_btl_base_module_t* btl_base,
-                      struct mca_btl_base_endpoint_t* endpoint,
-                      uint8_t order,
-                      size_t size,
-                      uint32_t flags);
+int mca_btl_portals4_free(struct mca_btl_base_module_t *btl_base, mca_btl_base_descriptor_t *des);
 
-int mca_btl_portals4_free(struct mca_btl_base_module_t* btl_base,
-                         mca_btl_base_descriptor_t* des);
+mca_btl_base_descriptor_t *mca_btl_portals4_prepare_src(struct mca_btl_base_module_t *btl_base,
+                                                        struct mca_btl_base_endpoint_t *peer,
+                                                        struct opal_convertor_t *convertor,
+                                                        uint8_t order, size_t reserve, size_t *size,
+                                                        uint32_t flags);
 
-mca_btl_base_descriptor_t*
-mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
-                            struct mca_btl_base_endpoint_t* peer,
-                            struct opal_convertor_t* convertor,
-                            uint8_t order,
-                            size_t reserve,
-                            size_t* size,
-                            uint32_t flags);
+int mca_btl_portals4_send(struct mca_btl_base_module_t *btl_base,
+                          struct mca_btl_base_endpoint_t *btl_peer,
+                          struct mca_btl_base_descriptor_t *descriptor, mca_btl_base_tag_t tag);
 
-int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
-                         struct mca_btl_base_endpoint_t* btl_peer,
-                         struct mca_btl_base_descriptor_t* descriptor,
-                         mca_btl_base_tag_t tag);
+int mca_btl_portals4_sendi(struct mca_btl_base_module_t *btl_base,
+                           struct mca_btl_base_endpoint_t *endpoint,
+                           struct opal_convertor_t *convertor, void *header, size_t header_size,
+                           size_t payload_size, uint8_t order, uint32_t flags,
+                           mca_btl_base_tag_t tag, mca_btl_base_descriptor_t **des);
 
+int mca_btl_portals4_put(struct mca_btl_base_module_t *btl_base,
+                         struct mca_btl_base_endpoint_t *btl_peer,
+                         struct mca_btl_base_descriptor_t *decriptor);
 
-int mca_btl_portals4_sendi(struct mca_btl_base_module_t* btl_base,
-                          struct mca_btl_base_endpoint_t* endpoint,
-                          struct opal_convertor_t* convertor,
-                          void* header,
-                          size_t header_size,
-                          size_t payload_size,
-                          uint8_t order,
-                          uint32_t flags,
-                          mca_btl_base_tag_t tag,
-                          mca_btl_base_descriptor_t** des);
-
-int mca_btl_portals4_put(struct mca_btl_base_module_t* btl_base,
-                        struct mca_btl_base_endpoint_t* btl_peer,
-                        struct mca_btl_base_descriptor_t* decriptor);
-
-
-int mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
-                        struct mca_btl_base_endpoint_t* btl_peer,
-                        void *local_address,
-                        uint64_t remote_address,
-                        struct mca_btl_base_registration_handle_t *local_handle,
-                        struct mca_btl_base_registration_handle_t *remote_handle,
-                        size_t size,
-                        int flags,
-                        int order,
-                        mca_btl_base_rdma_completion_fn_t cbfunc,
-                        void *cbcontext,
-                        void *cbdata);
+int mca_btl_portals4_get(struct mca_btl_base_module_t *btl_base,
+                         struct mca_btl_base_endpoint_t *btl_peer, void *local_address,
+                         uint64_t remote_address,
+                         struct mca_btl_base_registration_handle_t *local_handle,
+                         struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
+                         int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+                         void *cbcontext, void *cbdata);
 
 int mca_btl_portals4_get_error(int ptl_error);
 
@@ -281,4 +257,4 @@ typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 
 END_C_DECLS
 
-#endif  /* BTL_PORTALS_H_HAS_BEEN_INCLUDED */
+#endif /* BTL_PORTALS_H_HAS_BEEN_INCLUDED */

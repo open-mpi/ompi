@@ -22,8 +22,8 @@
 
 #ifndef OPAL_MCA_COMMON_CUDA_H
 #define OPAL_MCA_COMMON_CUDA_H
-#include "opal/mca/btl/btl.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/btl/btl.h"
 
 #define MEMHANDLE_SIZE 8
 #define EVTHANDLE_SIZE 8
@@ -59,7 +59,7 @@ OPAL_DECLSPEC int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, ch
                                          struct mca_btl_base_descriptor_t *, int *done);
 
 OPAL_DECLSPEC int mca_common_cuda_record_ipc_event(char *msg,
-                                               struct mca_btl_base_descriptor_t *frag);
+                                                   struct mca_btl_base_descriptor_t *frag);
 OPAL_DECLSPEC int mca_common_cuda_record_dtoh_event(char *msg,
                                                     struct mca_btl_base_descriptor_t *frag);
 OPAL_DECLSPEC int mca_common_cuda_record_htod_event(char *msg,
@@ -81,7 +81,8 @@ OPAL_DECLSPEC void mca_common_cuda_destruct_event(uintptr_t event);
 OPAL_DECLSPEC int cuda_getmemhandle(void *base, size_t, mca_rcache_base_registration_t *newreg,
                                     mca_rcache_base_registration_t *hdrreg);
 OPAL_DECLSPEC int cuda_ungetmemhandle(void *reg_data, mca_rcache_base_registration_t *reg);
-OPAL_DECLSPEC int cuda_openmemhandle(void *base, size_t size, mca_rcache_base_registration_t *newreg,
+OPAL_DECLSPEC int cuda_openmemhandle(void *base, size_t size,
+                                     mca_rcache_base_registration_t *newreg,
                                      mca_rcache_base_registration_t *hdrreg);
 OPAL_DECLSPEC int cuda_closememhandle(void *reg_data, mca_rcache_base_registration_t *reg);
 OPAL_DECLSPEC int mca_common_cuda_get_device(int *devicenum);
@@ -101,11 +102,11 @@ OPAL_DECLSPEC void mca_common_cuda_get_buffer_id(mca_rcache_base_registration_t 
  *             (source arch != dest arch) or non contiguous memory
  *             layout.
  */
-static inline int32_t opal_convertor_cuda_need_buffers( opal_convertor_t* pConvertor )
+static inline int32_t opal_convertor_cuda_need_buffers(opal_convertor_t *pConvertor)
 {
     int32_t retval;
     uint32_t cudaflag = pConvertor->flags & CONVERTOR_CUDA; /* Save CUDA flag */
-    pConvertor->flags &= ~CONVERTOR_CUDA;              /* Clear CUDA flag if it exists */
+    pConvertor->flags &= ~CONVERTOR_CUDA;                   /* Clear CUDA flag if it exists */
     retval = opal_convertor_need_buffers(pConvertor);
     pConvertor->flags |= cudaflag; /* Restore CUDA flag */
     return retval;
@@ -115,24 +116,24 @@ static inline int32_t opal_convertor_cuda_need_buffers( opal_convertor_t* pConve
  * common cuda code is initialized.  This removes any dependency on <cuda.h>
  * in the opal cuda datatype code. */
 struct opal_common_cuda_function_table {
-    int (*gpu_is_gpu_buffer)(const void*, opal_convertor_t*);
-    int (*gpu_cu_memcpy_async)(void*, const void*, size_t, opal_convertor_t*);
-    int (*gpu_cu_memcpy)(void*, const void*, size_t);
-    int (*gpu_memmove)(void*, void*, size_t);
-    int (*gpu_malloc)(void*, size_t);
-    int (*gpu_free)(void*);
+    int (*gpu_is_gpu_buffer)(const void *, opal_convertor_t *);
+    int (*gpu_cu_memcpy_async)(void *, const void *, size_t, opal_convertor_t *);
+    int (*gpu_cu_memcpy)(void *, const void *, size_t);
+    int (*gpu_memmove)(void *, void *, size_t);
+    int (*gpu_malloc)(void *, size_t);
+    int (*gpu_free)(void *);
 };
 typedef struct opal_common_cuda_function_table opal_common_cuda_function_table_t;
 
-void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf);
+void mca_cuda_convertor_init(opal_convertor_t *convertor, const void *pUserBuf);
 bool opal_cuda_check_bufs(char *dest, char *src);
-bool opal_cuda_check_one_buf(char *buf, opal_convertor_t *convertor );
-void* opal_cuda_malloc(size_t size, opal_convertor_t* convertor);
-void opal_cuda_free(void * buffer, opal_convertor_t* convertor);
-void* opal_cuda_memcpy(void * dest, const void * src, size_t size, opal_convertor_t* convertor);
-void* opal_cuda_memcpy_sync(void * dest, const void * src, size_t size);
-void* opal_cuda_memmove(void * dest, void * src, size_t size);
+bool opal_cuda_check_one_buf(char *buf, opal_convertor_t *convertor);
+void *opal_cuda_malloc(size_t size, opal_convertor_t *convertor);
+void opal_cuda_free(void *buffer, opal_convertor_t *convertor);
+void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_t *convertor);
+void *opal_cuda_memcpy_sync(void *dest, const void *src, size_t size);
+void *opal_cuda_memmove(void *dest, void *src, size_t size);
 void opal_cuda_add_initialization_function(int (*fptr)(opal_common_cuda_function_table_t *));
-void opal_cuda_set_copy_function_async(opal_convertor_t* convertor, void *stream);
+void opal_cuda_set_copy_function_async(opal_convertor_t *convertor, void *stream);
 
 #endif /* OPAL_MCA_COMMON_CUDA_H */

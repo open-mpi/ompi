@@ -322,8 +322,8 @@ static int mca_btl_sm_component_close(void)
     OBJ_DESTRUCT(&mca_btl_sm_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_sm_component.pending_fragments);
 
-    if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism &&
-        NULL != mca_btl_sm_component.my_segment) {
+    if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism
+        && NULL != mca_btl_sm_component.my_segment) {
         munmap(mca_btl_sm_component.my_segment, mca_btl_sm_component.segment_size);
     }
 
@@ -531,8 +531,8 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
         component->segment_size = (2 << 20);
     }
 
-    component->fbox_size = (component->fbox_size + MCA_BTL_SM_FBOX_ALIGNMENT_MASK) &
-                           ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
+    component->fbox_size = (component->fbox_size + MCA_BTL_SM_FBOX_ALIGNMENT_MASK)
+                           & ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
 
     if (component->segment_size > (1ul << MCA_BTL_SM_OFFSET_BITS)) {
         component->segment_size = 2ul << MCA_BTL_SM_OFFSET_BITS;
@@ -652,8 +652,8 @@ void mca_btl_sm_poll_handle_frag(mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endp
 
     if (OPAL_UNLIKELY(MCA_BTL_SM_FLAG_SETUP_FBOX & hdr->flags)) {
         mca_btl_sm_endpoint_setup_fbox_recv(endpoint, relative2virtual(hdr->fbox_base));
-        mca_btl_sm_component
-            .fbox_in_endpoints[mca_btl_sm_component.num_fbox_in_endpoints++] = endpoint;
+        mca_btl_sm_component.fbox_in_endpoints[mca_btl_sm_component.num_fbox_in_endpoints++]
+            = endpoint;
     }
 
     hdr->flags = MCA_BTL_SM_FLAG_COMPLETE;

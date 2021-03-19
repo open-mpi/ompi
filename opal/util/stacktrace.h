@@ -53,6 +53,6 @@ OPAL_DECLSPEC char *opal_stackframe_output_string(void);
  *    is not a valid signal-number
  *
  */
-OPAL_DECLSPEC int opal_util_register_stackhandlers (void);
+OPAL_DECLSPEC int opal_util_register_stackhandlers(void);
 
 #endif /* OPAL_STACKTRACE_H */

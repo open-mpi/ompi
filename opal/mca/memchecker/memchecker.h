@@ -39,8 +39,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 
 /**
  * Module initialization function.  Should return OPAL_SUCCESS.
@@ -56,42 +56,44 @@ typedef int (*opal_memchecker_base_module_runindebugger_fn_t)(void);
 /**
  * Module function to check, whether memory region is addressable
  */
-typedef int (*opal_memchecker_base_module_isaddressable_fn_t)(void * p, size_t len);
+typedef int (*opal_memchecker_base_module_isaddressable_fn_t)(void *p, size_t len);
 
 /**
  * Module function to check, whether memory region is defined
  */
-typedef int (*opal_memchecker_base_module_isdefined_fn_t)(void * p, size_t len);
+typedef int (*opal_memchecker_base_module_isdefined_fn_t)(void *p, size_t len);
 
 /**
  * Module function to set memory region to not accessible
  */
-typedef int (*opal_memchecker_base_module_mem_noaccess_fn_t)(void * p, size_t len);
+typedef int (*opal_memchecker_base_module_mem_noaccess_fn_t)(void *p, size_t len);
 
 /**
  * Module function to set memory region to undefined
  */
-typedef int (*opal_memchecker_base_module_mem_undefined_fn_t)(void * p, size_t len);
+typedef int (*opal_memchecker_base_module_mem_undefined_fn_t)(void *p, size_t len);
 
 /**
  * Module function to set memory region to defined
  */
-typedef int (*opal_memchecker_base_module_mem_defined_fn_t)(void * p, size_t len);
+typedef int (*opal_memchecker_base_module_mem_defined_fn_t)(void *p, size_t len);
 
 /**
  * Module function to set memory region to defined, but only if addressable
  */
-typedef int (*opal_memchecker_base_module_mem_defined_if_addressable_fn_t)(void * p, size_t len);
+typedef int (*opal_memchecker_base_module_mem_defined_if_addressable_fn_t)(void *p, size_t len);
 
 /**
  * Module function name a specific memory region
  */
-typedef int (*opal_memchecker_base_module_create_block_fn_t)(void * p, size_t len, char * description);
+typedef int (*opal_memchecker_base_module_create_block_fn_t)(void *p, size_t len,
+                                                             char *description);
 
 /**
  * Module function to discard a named memory region
  */
-typedef int (*opal_memchecker_base_module_discard_block_fn_t)(void * p); /* Here, we need to do some mapping for valgrind */
+typedef int (*opal_memchecker_base_module_discard_block_fn_t)(
+    void *p); /* Here, we need to do some mapping for valgrind */
 
 /**
  * Module function to check for any leaks
@@ -101,14 +103,12 @@ typedef int (*opal_memchecker_base_module_leakcheck_fn_t)(void);
 /**
  * Module function to get vbits
  */
-typedef int (*opal_memchecker_base_module_get_vbits_fn_t)(void * p, char * vbits, size_t len);
+typedef int (*opal_memchecker_base_module_get_vbits_fn_t)(void *p, char *vbits, size_t len);
 
 /**
  * Module function to set vbits
  */
-typedef int (*opal_memchecker_base_module_set_vbits_fn_t)(void * p, char * vbits, size_t len);
-
-
+typedef int (*opal_memchecker_base_module_set_vbits_fn_t)(void *p, char *vbits, size_t len);
 
 /**
  * Structure for memchecker components.
@@ -176,11 +176,9 @@ struct opal_memchecker_base_module_1_0_0_t {
 typedef struct opal_memchecker_base_module_1_0_0_t opal_memchecker_base_module_1_0_0_t;
 typedef struct opal_memchecker_base_module_1_0_0_t opal_memchecker_base_module_t;
 
-
 /**
  * Macro for use in components that are of type memchecker
  */
-#define OPAL_MEMCHECKER_BASE_VERSION_2_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("memchecker", 2, 0, 0)
+#define OPAL_MEMCHECKER_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("memchecker", 2, 0, 0)
 
 #endif /* OPAL_MCA_MEMCHECKER_MEMCHECKER_H */

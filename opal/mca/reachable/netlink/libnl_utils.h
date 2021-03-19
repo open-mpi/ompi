@@ -49,8 +49,8 @@
 #include "libnl3_utils.h"
 
 struct opal_reachable_netlink_sk {
-    NL_HANDLE	*nlh;
-    uint32_t	seq;
+    NL_HANDLE *nlh;
+    uint32_t seq;
 };
 
 /* returns 0 if host is reachable, EHOSTUNREACH if the host
@@ -59,9 +59,8 @@ struct opal_reachable_netlink_sk {
  * If the route to the destination is through a gateway, *has_gateway
  * is set to 1.  Otherwise, it is set to 0.
  */
-int opal_reachable_netlink_rt_lookup(uint32_t src_addr,
-				     uint32_t dst_addr, int oif,
-				     int *has_gateway);
+int opal_reachable_netlink_rt_lookup(uint32_t src_addr, uint32_t dst_addr, int oif,
+                                     int *has_gateway);
 
 #if OPAL_ENABLE_IPV6
 /* returns 0 if host is reachable, EHOSTUNREACH if the host
@@ -70,9 +69,8 @@ int opal_reachable_netlink_rt_lookup(uint32_t src_addr,
  * If the route to the destination is through a gateway, *has_gateway
  * is set to 1.  Otherwise, it is set to 0.
  */
-int opal_reachable_netlink_rt_lookup6(struct in6_addr *src_addr,
-				      struct in6_addr *dst_addr, int oif,
-				      int *has_gateway);
+int opal_reachable_netlink_rt_lookup6(struct in6_addr *src_addr, struct in6_addr *dst_addr, int oif,
+                                      int *has_gateway);
 #endif
 
 #endif /* LIBNL_UTILS_H */

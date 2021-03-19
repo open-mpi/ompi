@@ -19,11 +19,11 @@
  * mca_btl_base_am_rdma_init.
  */
 
-#include "opal/mca/btl/btl.h"
 #include "opal_config.h"
+#include "opal/mca/btl/btl.h"
 
 #if !defined(OPAL_MCA_BTL_BASE_AM_RDMA_H)
-#define OPAL_MCA_BTL_BASE_AM_RDMA_H
+#    define OPAL_MCA_BTL_BASE_AM_RDMA_H
 
 /**
  * @brief initialize active-message RDMA/atomic support
@@ -36,6 +36,6 @@
  * support will use either send/recv or get (for put)/put (for get) (if
  * available).
  */
-int mca_btl_base_am_rdma_init (mca_btl_base_module_t *btl);
+int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl);
 
 #endif /* OPAL_MCA_BTL_BASE_AM_RDMA_H */

@@ -51,8 +51,8 @@ BEGIN_C_DECLS
  *
  * THIS IS A PORTABILITY FEATURE: USE snprintf() in CODE.
  */
-OPAL_DECLSPEC int  opal_snprintf(char *str, size_t size, const char *fmt, ...) __opal_attribute_format__(__printf__, 3, 4);
-
+OPAL_DECLSPEC int opal_snprintf(char *str, size_t size, const char *fmt, ...)
+    __opal_attribute_format__(__printf__, 3, 4);
 
 /**
  * Writes to a string under the control of a format string that
@@ -76,7 +76,8 @@ OPAL_DECLSPEC int  opal_snprintf(char *str, size_t size, const char *fmt, ...) _
  *
  * THIS IS A PORTABILITY FEATURE: USE vsnprintf() in CODE.
  */
-OPAL_DECLSPEC int  opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap) __opal_attribute_format__(__printf__, 3, 0);
+OPAL_DECLSPEC int opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
+    __opal_attribute_format__(__printf__, 3, 0);
 
 /**
  * Allocates and writes to a string under the control of a format
@@ -102,8 +103,8 @@ OPAL_DECLSPEC int  opal_vsnprintf(char *str, size_t size, const char *fmt, va_li
  * such behavior.
  *
  */
-OPAL_DECLSPEC int  opal_asprintf(char **ptr, const char *fmt, ...) __opal_attribute_format__(__printf__, 2, 3);
-
+OPAL_DECLSPEC int opal_asprintf(char **ptr, const char *fmt, ...)
+    __opal_attribute_format__(__printf__, 2, 3);
 
 /**
  * Allocates and writes to a string under the control of a format
@@ -131,10 +132,9 @@ OPAL_DECLSPEC int  opal_asprintf(char **ptr, const char *fmt, ...) __opal_attrib
  * such behavior.
  *
  */
-OPAL_DECLSPEC int  opal_vasprintf(char **ptr, const char *fmt, va_list ap) __opal_attribute_format__(__printf__, 2, 0);
-
+OPAL_DECLSPEC int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
+    __opal_attribute_format__(__printf__, 2, 0);
 
 END_C_DECLS
 
 #endif /* OPAL_PRINTF_H */
-

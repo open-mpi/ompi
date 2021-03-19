@@ -26,8 +26,8 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/btl/btl.h"
+#include "opal/mca/mca.h"
 
 #define MCA_BTL_BASE_TAG_RDMA      MCA_BTL_TAG_BTL_BASE
 #define MCA_BTL_BASE_TAG_ATOMIC    (MCA_BTL_TAG_BTL_BASE + 1)
@@ -36,22 +36,20 @@
 BEGIN_C_DECLS
 
 struct mca_btl_base_selected_module_t {
-  opal_list_item_t super;
-  mca_btl_base_component_t *btl_component;
-  mca_btl_base_module_t *btl_module;
+    opal_list_item_t super;
+    mca_btl_base_component_t *btl_component;
+    mca_btl_base_module_t *btl_module;
 };
 typedef struct mca_btl_base_selected_module_t mca_btl_base_selected_module_t;
-
 
 /* holds the recv call back function to be called by the btl on
  * a receive.
  */
 struct mca_btl_base_recv_reg_t {
     mca_btl_base_module_recv_cb_fn_t cbfunc;
-    void* cbdata;
+    void *cbdata;
 };
 typedef struct mca_btl_base_recv_reg_t mca_btl_base_recv_reg_t;
-
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_selected_module_t);
 
@@ -59,20 +57,18 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_selected_module_t);
  * Global functions for MCA: overall BTL open and close
  */
 
-OPAL_DECLSPEC  int mca_btl_base_select(bool enable_progress_threads, bool enable_mpi_threads);
-OPAL_DECLSPEC  void mca_btl_base_dump(
-    struct mca_btl_base_module_t*,
-    struct mca_btl_base_endpoint_t*,
-    int verbose);
-OPAL_DECLSPEC  int mca_btl_base_param_register(mca_base_component_t *version,
-        mca_btl_base_module_t *module);
-OPAL_DECLSPEC  int mca_btl_base_param_verify(mca_btl_base_module_t *module);
+OPAL_DECLSPEC int mca_btl_base_select(bool enable_progress_threads, bool enable_mpi_threads);
+OPAL_DECLSPEC void mca_btl_base_dump(struct mca_btl_base_module_t *,
+                                     struct mca_btl_base_endpoint_t *, int verbose);
+OPAL_DECLSPEC int mca_btl_base_param_register(mca_base_component_t *version,
+                                              mca_btl_base_module_t *module);
+OPAL_DECLSPEC int mca_btl_base_param_verify(mca_btl_base_module_t *module);
 
 /*
  * Globals
  */
-extern char* mca_btl_base_include;
-extern char* mca_btl_base_exclude;
+extern char *mca_btl_base_include;
+extern char *mca_btl_base_exclude;
 extern int mca_btl_base_warn_component_unused;
 extern int mca_btl_base_already_opened;
 OPAL_DECLSPEC extern opal_list_t mca_btl_base_modules_initialized;

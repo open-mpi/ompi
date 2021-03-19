@@ -10,9 +10,9 @@
  */
 
 #if !defined(BTL_UCT_TYPES_H)
-#define BTL_UCT_TYPES_H
+#    define BTL_UCT_TYPES_H
 
-#include "opal/mca/btl/btl.h"
+#    include "opal/mca/btl/btl.h"
 
 /* forward declarations */
 struct mca_btl_uct_module_t;
@@ -21,22 +21,22 @@ struct mca_btl_uct_base_frag_t;
 
 /* TL endpoint flags */
 /** connection data was received */
-#define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC       0x1
+#    define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC 0x1
 /** remote endpoint read */
-#define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY 0x2
+#    define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY 0x2
 /** connection was established */
-#define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY     0x4
+#    define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY 0x4
 
 /* AM tags */
 /** BTL fragment */
-#define MCA_BTL_UCT_FRAG         0x0d
+#    define MCA_BTL_UCT_FRAG 0x0d
 /** connection request */
-#define MCA_BTL_UCT_CONNECT_RDMA 0x0e
+#    define MCA_BTL_UCT_CONNECT_RDMA 0x0e
 
 /** maximum number of modules supported by the btl component */
-#define MCA_BTL_UCT_MAX_MODULES 16
+#    define MCA_BTL_UCT_MAX_MODULES 16
 /** maximum number of UCT workers */
-#define MCA_BTL_UCT_MAX_WORKERS 64
+#    define MCA_BTL_UCT_MAX_WORKERS 64
 
 /**
  * @brief MODEx data
@@ -68,7 +68,6 @@ struct mca_btl_uct_md_t {
 typedef struct mca_btl_uct_md_t mca_btl_uct_md_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_uct_md_t);
-
 
 /**
  * @brief Connection request structure
@@ -169,11 +168,11 @@ typedef struct mca_btl_uct_device_context_t mca_btl_uct_device_context_t;
 union mca_btl_uct_am_header_t {
     /** active message header data */
     struct mca_btl_uct_am_header_data_t {
-	/** callback tag */
+        /** callback tag */
         mca_btl_base_tag_t tag;
 
-	/** padding */
-        uint8_t            padding[7];
+        /** padding */
+        uint8_t padding[7];
     } data;
 
     /** header value. this is 64-bits to support using this with uct_ep_am_short */
@@ -330,7 +329,7 @@ struct mca_btl_uct_tl_t {
 typedef struct mca_btl_uct_tl_t mca_btl_uct_tl_t;
 OBJ_CLASS_DECLARATION(mca_btl_uct_tl_t);
 
-#define MCA_BTL_UCT_TL_ATTR(tl, context_id) (tl)->uct_dev_contexts[(context_id)]->uct_iface_attr
+#    define MCA_BTL_UCT_TL_ATTR(tl, context_id) (tl)->uct_dev_contexts[(context_id)]->uct_iface_attr
 
 struct mca_btl_uct_pending_connection_request_t {
     opal_list_item_t super;

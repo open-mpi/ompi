@@ -23,14 +23,14 @@
  * $HEADER$
  */
 
-#include "opal/mca/threads/argobots/threads_argobots.h"
 #include "opal_config.h"
+#include "opal/mca/threads/argobots/threads_argobots.h"
 
 #include <errno.h>
 
-#include "opal/mca/threads/mutex.h"
-#include "opal/mca/threads/argobots/threads_argobots_mutex.h"
 #include "opal/constants.h"
+#include "opal/mca/threads/argobots/threads_argobots_mutex.h"
+#include "opal/mca/threads/mutex.h"
 
 /*
  * Wait and see if some upper layer wants to use threads, if support
@@ -58,8 +58,7 @@ static void mca_threads_argobots_mutex_destructor(opal_mutex_t *p_mutex)
     }
 }
 
-static void mca_threads_argobots_recursive_mutex_constructor
-        (opal_recursive_mutex_t *p_mutex)
+static void mca_threads_argobots_recursive_mutex_constructor(opal_recursive_mutex_t *p_mutex)
 {
     opal_threads_argobots_ensure_init();
     p_mutex->m_lock_argobots = OPAL_ABT_MUTEX_NULL;
@@ -72,20 +71,16 @@ static void mca_threads_argobots_recursive_mutex_constructor
     opal_atomic_lock_init(&p_mutex->m_lock_atomic, 0);
 }
 
-static void mca_threads_argobots_recursive_mutex_destructor
-        (opal_recursive_mutex_t *p_mutex)
+static void mca_threads_argobots_recursive_mutex_destructor(opal_recursive_mutex_t *p_mutex)
 {
     if (OPAL_ABT_MUTEX_NULL != p_mutex->m_lock_argobots) {
         ABT_mutex_free(&p_mutex->m_lock_argobots);
     }
 }
 
-OBJ_CLASS_INSTANCE(opal_mutex_t,
-                   opal_object_t,
-                   mca_threads_argobots_mutex_constructor,
+OBJ_CLASS_INSTANCE(opal_mutex_t, opal_object_t, mca_threads_argobots_mutex_constructor,
                    mca_threads_argobots_mutex_destructor);
-OBJ_CLASS_INSTANCE(opal_recursive_mutex_t,
-                   opal_object_t,
+OBJ_CLASS_INSTANCE(opal_recursive_mutex_t, opal_object_t,
                    mca_threads_argobots_recursive_mutex_constructor,
                    mca_threads_argobots_recursive_mutex_destructor);
 
@@ -104,9 +99,8 @@ void opal_mutex_create(struct opal_mutex_t *m)
             ABT_mutex_create(&abt_mutex);
         }
         void *null_ptr = OPAL_ABT_MUTEX_NULL;
-        if (opal_atomic_compare_exchange_strong_ptr(
-             (opal_atomic_intptr_t *)&m->m_lock_argobots, (intptr_t *)&null_ptr,
-             (intptr_t)abt_mutex)) {
+        if (opal_atomic_compare_exchange_strong_ptr((opal_atomic_intptr_t *) &m->m_lock_argobots,
+                                                    (intptr_t *) &null_ptr, (intptr_t) abt_mutex)) {
             /* mutex is successfully created and substituted. */
             return;
         }
@@ -121,9 +115,8 @@ static void opal_cond_create(opal_cond_t *cond)
         ABT_cond new_cond;
         ABT_cond_create(&new_cond);
         void *null_ptr = OPAL_ABT_COND_NULL;
-        if (opal_atomic_compare_exchange_strong_ptr((opal_atomic_intptr_t *)cond,
-                                                    (intptr_t *)&null_ptr,
-                                                    (intptr_t)new_cond)) {
+        if (opal_atomic_compare_exchange_strong_ptr((opal_atomic_intptr_t *) cond,
+                                                    (intptr_t *) &null_ptr, (intptr_t) new_cond)) {
             /* cond is successfully created and substituted. */
             return;
         }

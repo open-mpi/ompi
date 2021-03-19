@@ -19,10 +19,9 @@
 #ifndef MCA_BTL_TCP_HDR_H
 #define MCA_BTL_TCP_HDR_H
 
-
 #include "opal_config.h"
-#include "opal/mca/btl/base/base.h"
 #include "btl_tcp.h"
+#include "opal/mca/btl/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -48,7 +47,7 @@ BEGIN_C_DECLS
 
 struct mca_btl_tcp_hdr_t {
     mca_btl_base_header_t base;
-    uint8_t  type;
+    uint8_t type;
     uint16_t count;
     uint32_t size;
 };

@@ -23,15 +23,12 @@
 #include "opal_config.h"
 #include "btl_smcuda_frag.h"
 
-
-static inline void mca_btl_smcuda_frag_common_constructor(mca_btl_smcuda_frag_t* frag)
+static inline void mca_btl_smcuda_frag_common_constructor(mca_btl_smcuda_frag_t *frag)
 {
-    frag->hdr = (mca_btl_smcuda_hdr_t*)frag->base.super.ptr;
-    if(frag->hdr != NULL) {
-        frag->hdr->frag = (mca_btl_smcuda_frag_t*)((uintptr_t)frag |
-            MCA_BTL_SMCUDA_FRAG_ACK);
-        frag->segment.seg_addr.pval = ((char*)frag->hdr) +
-            sizeof(mca_btl_smcuda_hdr_t);
+    frag->hdr = (mca_btl_smcuda_hdr_t *) frag->base.super.ptr;
+    if (frag->hdr != NULL) {
+        frag->hdr->frag = (mca_btl_smcuda_frag_t *) ((uintptr_t) frag | MCA_BTL_SMCUDA_FRAG_ACK);
+        frag->segment.seg_addr.pval = ((char *) frag->hdr) + sizeof(mca_btl_smcuda_hdr_t);
         frag->hdr->my_smp_rank = mca_btl_smcuda_component.my_smp_rank;
     }
     frag->segment.seg_len = frag->size;
@@ -43,41 +40,32 @@ static inline void mca_btl_smcuda_frag_common_constructor(mca_btl_smcuda_frag_t*
 #endif /* OPAL_CUDA_SUPPORT */
 }
 
-static void mca_btl_smcuda_frag1_constructor(mca_btl_smcuda_frag_t* frag)
+static void mca_btl_smcuda_frag1_constructor(mca_btl_smcuda_frag_t *frag)
 {
     frag->size = mca_btl_smcuda_component.eager_limit;
     frag->my_list = &mca_btl_smcuda_component.sm_frags_eager;
     mca_btl_smcuda_frag_common_constructor(frag);
 }
 
-static void mca_btl_smcuda_frag2_constructor(mca_btl_smcuda_frag_t* frag)
+static void mca_btl_smcuda_frag2_constructor(mca_btl_smcuda_frag_t *frag)
 {
     frag->size = mca_btl_smcuda_component.max_frag_size;
     frag->my_list = &mca_btl_smcuda_component.sm_frags_max;
     mca_btl_smcuda_frag_common_constructor(frag);
 }
 
-static void mca_btl_smcuda_user_constructor(mca_btl_smcuda_frag_t* frag)
+static void mca_btl_smcuda_user_constructor(mca_btl_smcuda_frag_t *frag)
 {
-	frag->size = 0;
-	frag->my_list = &mca_btl_smcuda_component.sm_frags_user;
-	mca_btl_smcuda_frag_common_constructor(frag);
+    frag->size = 0;
+    frag->my_list = &mca_btl_smcuda_component.sm_frags_user;
+    mca_btl_smcuda_frag_common_constructor(frag);
 }
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_smcuda_frag1_t,
-    mca_btl_base_descriptor_t,
-    mca_btl_smcuda_frag1_constructor,
-    NULL);
+OBJ_CLASS_INSTANCE(mca_btl_smcuda_frag1_t, mca_btl_base_descriptor_t,
+                   mca_btl_smcuda_frag1_constructor, NULL);
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_smcuda_frag2_t,
-    mca_btl_base_descriptor_t,
-    mca_btl_smcuda_frag2_constructor,
-    NULL);
+OBJ_CLASS_INSTANCE(mca_btl_smcuda_frag2_t, mca_btl_base_descriptor_t,
+                   mca_btl_smcuda_frag2_constructor, NULL);
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_smcuda_user_t,
-    mca_btl_base_descriptor_t,
-    mca_btl_smcuda_user_constructor,
-    NULL);
+OBJ_CLASS_INSTANCE(mca_btl_smcuda_user_t, mca_btl_base_descriptor_t,
+                   mca_btl_smcuda_user_constructor, NULL);

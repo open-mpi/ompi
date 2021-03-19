@@ -29,13 +29,13 @@
 #define MCA_RCACHE_UDREG_H
 
 #include "opal_config.h"
-#include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
-#include "opal/util/event.h"
+#include "opal/class/opal_list.h"
 #include "opal/mca/rcache/rcache.h"
+#include "opal/util/event.h"
 #include "opal/util/proc.h"
 #if HAVE_SYS_MMAN_H
-#include <sys/mman.h>
+#    include <sys/mman.h>
 #endif
 
 BEGIN_C_DECLS
@@ -53,9 +53,9 @@ struct mca_rcache_udreg_resources_t {
     mca_rcache_base_resources_t base;
 
     /* udreg specific resources */
-    bool   use_kernel_cache;
-    bool   use_evict_w_unreg;
-    int    max_entries;
+    bool use_kernel_cache;
+    bool use_evict_w_unreg;
+    int max_entries;
     size_t page_size;
 };
 typedef struct mca_rcache_udreg_resources_t mca_rcache_udreg_resources_t;
@@ -74,7 +74,6 @@ struct mca_rcache_udreg_module_t {
     int requested_flags;
 };
 typedef struct mca_rcache_udreg_module_t mca_rcache_udreg_module_t;
-
 
 /*
  *  Initializes the rcache module.

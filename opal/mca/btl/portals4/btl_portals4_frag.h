@@ -28,8 +28,8 @@
 BEGIN_C_DECLS
 
 struct mca_btl_portals4_segment_t {
-  mca_btl_base_segment_t base;
-  ptl_match_bits_t key;
+    mca_btl_base_segment_t base;
+    ptl_match_bits_t key;
 };
 typedef struct mca_btl_portals4_segment_t mca_btl_portals4_segment_t;
 
@@ -40,7 +40,7 @@ struct mca_btl_portals4_frag_t {
     mca_btl_base_descriptor_t base;
     mca_btl_portals4_segment_t segments[1];
     /* needed for retransmit case */
-   struct mca_btl_base_endpoint_t *endpoint;
+    struct mca_btl_base_endpoint_t *endpoint;
     /* needed for retransmit case */
     mca_btl_base_header_t hdr;
     /* handle to use for communication */
@@ -64,10 +64,12 @@ struct mca_btl_portals4_frag_t {
         mca_btl_base_registration_handle_t *local_handle;
     } rdma_cb;
 
-    enum { BTL_PORTALS4_FRAG_TYPE_EAGER,
-           BTL_PORTALS4_FRAG_TYPE_MAX,
-           BTL_PORTALS4_FRAG_TYPE_USER } type;
-    unsigned char  data[16];
+    enum {
+        BTL_PORTALS4_FRAG_TYPE_EAGER,
+        BTL_PORTALS4_FRAG_TYPE_MAX,
+        BTL_PORTALS4_FRAG_TYPE_USER
+    } type;
+    unsigned char data[16];
 };
 typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_t);
@@ -85,54 +87,48 @@ OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_user_t);
  * Macros to allocate/return descriptors from module specific
  * free list(s).
  */
-#define OPAL_BTL_PORTALS4_FRAG_ALLOC_EAGER(btl_macro, frag)                                \
-{                                                                                          \
-    frag = (mca_btl_portals4_frag_t *)                                                     \
-        opal_free_list_get (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager); \
-    if (NULL == frag) {                                                                    \
-        OPAL_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag);                                 \
-    }                                                                                      \
-}
+#define OPAL_BTL_PORTALS4_FRAG_ALLOC_EAGER(btl_macro, frag)                  \
+    {                                                                        \
+        frag = (mca_btl_portals4_frag_t *) opal_free_list_get(               \
+            &((mca_btl_portals4_module_t *) btl_macro)->portals_frag_eager); \
+        if (NULL == frag) {                                                  \
+            OPAL_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag);               \
+        }                                                                    \
+    }
 
+#define OPAL_BTL_PORTALS4_FRAG_RETURN_EAGER(btl_macro, frag)                                  \
+    {                                                                                         \
+        assert(BTL_PORTALS4_FRAG_TYPE_EAGER == frag->type);                                   \
+        opal_free_list_return(&((mca_btl_portals4_module_t *) btl_macro)->portals_frag_eager, \
+                              (opal_free_list_item_t *) (frag));                              \
+    }
 
-#define OPAL_BTL_PORTALS4_FRAG_RETURN_EAGER(btl_macro, frag)                            \
-{                                                                                       \
-    assert(BTL_PORTALS4_FRAG_TYPE_EAGER == frag->type);                                 \
-    opal_free_list_return (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_eager, \
-        (opal_free_list_item_t*)(frag));                                                \
-}
+#define OPAL_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag)                  \
+    {                                                                      \
+        frag = (mca_btl_portals4_frag_t *) opal_free_list_get(             \
+            &((mca_btl_portals4_module_t *) btl_macro)->portals_frag_max); \
+    }
 
+#define OPAL_BTL_PORTALS4_FRAG_RETURN_MAX(btl_macro, frag)                                  \
+    {                                                                                       \
+        assert(BTL_PORTALS4_FRAG_TYPE_MAX == frag->type);                                   \
+        opal_free_list_return(&((mca_btl_portals4_module_t *) btl_macro)->portals_frag_max, \
+                              (opal_free_list_item_t *) (frag));                            \
+    }
 
-#define OPAL_BTL_PORTALS4_FRAG_ALLOC_MAX(btl_macro, frag)                                           \
-{                                                                                                   \
-    frag = (mca_btl_portals4_frag_t*)                                                               \
-        opal_free_list_get (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max);            \
-}
+#define OPAL_BTL_PORTALS4_FRAG_ALLOC_USER(btl_macro, frag)                  \
+    {                                                                       \
+        frag = (mca_btl_portals4_frag_t *) opal_free_list_get(              \
+            &((mca_btl_portals4_module_t *) btl_macro)->portals_frag_user); \
+        frag->base.des_cbfunc = NULL;                                       \
+    }
 
-
-#define OPAL_BTL_PORTALS4_FRAG_RETURN_MAX(btl_macro, frag)                            \
-{                                                                                     \
-    assert(BTL_PORTALS4_FRAG_TYPE_MAX == frag->type);                                 \
-    opal_free_list_return (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_max, \
-        (opal_free_list_item_t*)(frag));                                              \
-}
-
-
-#define OPAL_BTL_PORTALS4_FRAG_ALLOC_USER(btl_macro, frag)                                      \
-{                                                                                               \
-    frag = (mca_btl_portals4_frag_t*)                                                           \
-        opal_free_list_get (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user);       \
-    frag->base.des_cbfunc = NULL;                                                               \
-}
-
-
-#define OPAL_BTL_PORTALS4_FRAG_RETURN_USER(btl_macro, frag)                            \
-{                                                                                      \
-    assert(BTL_PORTALS4_FRAG_TYPE_USER == frag->type);                                 \
-    opal_free_list_return (&((mca_btl_portals4_module_t*)btl_macro)->portals_frag_user, \
-        (opal_free_list_item_t*)(frag));                                               \
-}
-
+#define OPAL_BTL_PORTALS4_FRAG_RETURN_USER(btl_macro, frag)                                  \
+    {                                                                                        \
+        assert(BTL_PORTALS4_FRAG_TYPE_USER == frag->type);                                   \
+        opal_free_list_return(&((mca_btl_portals4_module_t *) btl_macro)->portals_frag_user, \
+                              (opal_free_list_item_t *) (frag));                             \
+    }
 
 END_C_DECLS
 #endif

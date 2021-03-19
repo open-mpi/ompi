@@ -17,7 +17,6 @@
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/memcpy/memcpy.h"
 
-
 /*
  * Global functions for MCA overall memcpy open and close
  */

@@ -75,28 +75,29 @@ typedef struct mca_btl_base_endpoint_t {
     int index;
 } mca_btl_base_endpoint_t;
 
-typedef mca_btl_base_endpoint_t  mca_btl_ugni_endpoint_t;
+typedef mca_btl_base_endpoint_t mca_btl_ugni_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_ugni_endpoint_t);
 
-int mca_btl_ugni_ep_connect_progress (mca_btl_ugni_endpoint_t *ep);
-int mca_btl_ugni_ep_disconnect (mca_btl_ugni_endpoint_t *ep, bool send_disconnect);
-int mca_btl_ugni_wildcard_ep_post (mca_btl_ugni_module_t *ugni_module);
-void mca_btl_ugni_release_ep (mca_btl_ugni_endpoint_t *ep);
-int mca_btl_ugni_init_ep (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_endpoint_t **ep,
-                          mca_btl_ugni_module_t *btl, opal_proc_t *peer_proc);
+int mca_btl_ugni_ep_connect_progress(mca_btl_ugni_endpoint_t *ep);
+int mca_btl_ugni_ep_disconnect(mca_btl_ugni_endpoint_t *ep, bool send_disconnect);
+int mca_btl_ugni_wildcard_ep_post(mca_btl_ugni_module_t *ugni_module);
+void mca_btl_ugni_release_ep(mca_btl_ugni_endpoint_t *ep);
+int mca_btl_ugni_init_ep(mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_endpoint_t **ep,
+                         mca_btl_ugni_module_t *btl, opal_proc_t *peer_proc);
 
-static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep) {
+static inline int mca_btl_ugni_check_endpoint_state(mca_btl_ugni_endpoint_t *ep)
+{
     int rc;
 
     if (OPAL_LIKELY(MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state)) {
         return OPAL_SUCCESS;
     }
 
-    opal_mutex_lock (&ep->lock);
+    opal_mutex_lock(&ep->lock);
 
     switch (ep->state) {
     case MCA_BTL_UGNI_EP_STATE_INIT:
-        rc = mca_btl_ugni_ep_connect_progress (ep);
+        rc = mca_btl_ugni_ep_connect_progress(ep);
         if (OPAL_SUCCESS != rc) {
             break;
         }
@@ -107,7 +108,7 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep
         rc = OPAL_SUCCESS;
     }
 
-    opal_mutex_unlock (&ep->lock);
+    opal_mutex_unlock(&ep->lock);
 
     return rc;
 }
@@ -122,7 +123,7 @@ static inline int mca_btl_ugni_check_endpoint_state (mca_btl_ugni_endpoint_t *ep
  * pointer in the component structure. This saves 4-8 bytes in the endpoint
  * structure.
  */
-static inline mca_btl_ugni_module_t *mca_btl_ugni_ep_btl (mca_btl_ugni_endpoint_t *ep)
+static inline mca_btl_ugni_module_t *mca_btl_ugni_ep_btl(mca_btl_ugni_endpoint_t *ep)
 {
     /* there is only one ugni module at this time. if that changes add a btl pointer back
      * to the endpoint structure. */
@@ -137,9 +138,10 @@ static inline mca_btl_ugni_module_t *mca_btl_ugni_ep_btl (mca_btl_ugni_endpoint_
  * @param[in]  device             device to bind with
  * @param[in]  ep_handle          endpoint handle to initialize and bind
  */
-int mca_btl_ugni_ep_handle_init (mca_btl_ugni_endpoint_t *ep, gni_cq_handle_t cq,
-                                 mca_btl_ugni_device_t *device, mca_btl_ugni_endpoint_handle_t *ep_handle);
+int mca_btl_ugni_ep_handle_init(mca_btl_ugni_endpoint_t *ep, gni_cq_handle_t cq,
+                                mca_btl_ugni_device_t *device,
+                                mca_btl_ugni_endpoint_handle_t *ep_handle);
 
-int mca_btl_ugni_ep_handle_cleanup (mca_btl_ugni_endpoint_handle_t *ep_handle);
+int mca_btl_ugni_ep_handle_cleanup(mca_btl_ugni_endpoint_handle_t *ep_handle);
 
 #endif /* MCA_BTL_UGNI_ENDPOINT_H */

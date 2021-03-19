@@ -26,26 +26,16 @@
  *  List classes
  */
 
-static void opal_list_item_construct(opal_list_item_t*);
-static void opal_list_item_destruct(opal_list_item_t*);
+static void opal_list_item_construct(opal_list_item_t *);
+static void opal_list_item_destruct(opal_list_item_t *);
 
-OBJ_CLASS_INSTANCE(
-    opal_list_item_t,
-    opal_object_t,
-    opal_list_item_construct,
-    opal_list_item_destruct
-);
+OBJ_CLASS_INSTANCE(opal_list_item_t, opal_object_t, opal_list_item_construct,
+                   opal_list_item_destruct);
 
-static void opal_list_construct(opal_list_t*);
-static void opal_list_destruct(opal_list_t*);
+static void opal_list_construct(opal_list_t *);
+static void opal_list_destruct(opal_list_t *);
 
-OBJ_CLASS_INSTANCE(
-    opal_list_t,
-    opal_object_t,
-    opal_list_construct,
-    opal_list_destruct
-);
-
+OBJ_CLASS_INSTANCE(opal_list_t, opal_object_t, opal_list_construct, opal_list_destruct);
 
 /*
  *
@@ -66,11 +56,10 @@ static void opal_list_item_construct(opal_list_item_t *item)
 static void opal_list_item_destruct(opal_list_item_t *item)
 {
 #if OPAL_ENABLE_DEBUG
-    assert( 0 == item->opal_list_item_refcount );
-    assert( NULL == item->opal_list_item_belong_to );
-#endif  /* OPAL_ENABLE_DEBUG */
+    assert(0 == item->opal_list_item_refcount);
+    assert(NULL == item->opal_list_item_belong_to);
+#endif /* OPAL_ENABLE_DEBUG */
 }
-
 
 /*
  *
@@ -85,8 +74,8 @@ static void opal_list_construct(opal_list_t *list)
        should never be removed from this list, added to another list,
        etc.  So set them to sentinel values. */
 
-    OBJ_CONSTRUCT( &(list->opal_list_sentinel), opal_list_item_t );
-    list->opal_list_sentinel.opal_list_item_refcount  = 1;
+    OBJ_CONSTRUCT(&(list->opal_list_sentinel), opal_list_item_t);
+    list->opal_list_sentinel.opal_list_item_refcount = 1;
     list->opal_list_sentinel.opal_list_item_belong_to = list;
 #endif
 
@@ -94,7 +83,6 @@ static void opal_list_construct(opal_list_t *list)
     list->opal_list_sentinel.opal_list_prev = &list->opal_list_sentinel;
     list->opal_list_length = 0;
 }
-
 
 /*
  * Reset all the pointers to be NULL -- do not actually destroy
@@ -105,22 +93,20 @@ static void opal_list_destruct(opal_list_t *list)
     opal_list_construct(list);
 }
 
-
 /*
  * Insert an item at a specific place in a list
  */
 bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
 {
     /* Adds item to list at index and retains item. */
-    int     i;
+    int i;
     volatile opal_list_item_t *ptr, *next;
 
-    if ( idx >= (long long)list->opal_list_length ) {
+    if (idx >= (long long) list->opal_list_length) {
         return false;
     }
 
-    if ( 0 == idx )
-    {
+    if (0 == idx) {
         opal_list_prepend(list, item);
     } else {
 #if OPAL_ENABLE_DEBUG
@@ -131,7 +117,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
 #endif
         /* pointer to element 0 */
         ptr = list->opal_list_sentinel.opal_list_next;
-        for ( i = 0; i < idx-1; i++ )
+        for (i = 0; i < idx - 1; i++)
             ptr = ptr->opal_list_next;
 
         next = ptr->opal_list_next;
@@ -144,7 +130,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
         /* Spot check: ensure this item is only on the list that we
            just inserted it into */
 
-        opal_atomic_add ( &(item->opal_list_item_refcount), 1 );
+        opal_atomic_add(&(item->opal_list_item_refcount), 1);
         assert(1 == item->opal_list_item_refcount);
         item->opal_list_item_belong_to = list;
 #endif
@@ -154,11 +140,8 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
     return true;
 }
 
-
-static
-void
-opal_list_transfer(opal_list_item_t *pos, opal_list_item_t *begin,
-                   opal_list_item_t *end)
+static void opal_list_transfer(opal_list_item_t *pos, opal_list_item_t *begin,
+                               opal_list_item_t *end)
 {
     volatile opal_list_item_t *tmp;
 
@@ -175,25 +158,21 @@ opal_list_transfer(opal_list_item_t *pos, opal_list_item_t *begin,
         begin->opal_list_prev = tmp;
 #if OPAL_ENABLE_DEBUG
         {
-            volatile opal_list_item_t* item = begin;
-            while( pos != item ) {
+            volatile opal_list_item_t *item = begin;
+            while (pos != item) {
                 item->opal_list_item_belong_to = pos->opal_list_item_belong_to;
                 item = item->opal_list_next;
                 assert(NULL != item);
             }
         }
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
     }
 }
 
-
-void
-opal_list_join(opal_list_t *thislist, opal_list_item_t *pos,
-               opal_list_t *xlist)
+void opal_list_join(opal_list_t *thislist, opal_list_item_t *pos, opal_list_t *xlist)
 {
     if (0 != opal_list_get_size(xlist)) {
-        opal_list_transfer(pos, opal_list_get_first(xlist),
-                           opal_list_get_end(xlist));
+        opal_list_transfer(pos, opal_list_get_first(xlist), opal_list_get_end(xlist));
 
         /* fix the sizes */
         thislist->opal_list_length += xlist->opal_list_length;
@@ -201,11 +180,8 @@ opal_list_join(opal_list_t *thislist, opal_list_item_t *pos,
     }
 }
 
-
-void
-opal_list_splice(opal_list_t *thislist, opal_list_item_t *pos,
-                 opal_list_t *xlist, opal_list_item_t *first,
-                 opal_list_item_t *last)
+void opal_list_splice(opal_list_t *thislist, opal_list_item_t *pos, opal_list_t *xlist,
+                      opal_list_item_t *first, opal_list_item_t *last)
 {
     size_t change = 0;
     opal_list_item_t *tmp;
@@ -215,7 +191,7 @@ opal_list_splice(opal_list_t *thislist, opal_list_item_t *pos,
          * first, since last might be end and then we wouldn't be able
          * to run the loop)
          */
-        for (tmp = first ; tmp != last ; tmp = opal_list_get_next(tmp)) {
+        for (tmp = first; tmp != last; tmp = opal_list_get_next(tmp)) {
             change++;
         }
 
@@ -227,31 +203,28 @@ opal_list_splice(opal_list_t *thislist, opal_list_item_t *pos,
     }
 }
 
-
-int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare)
+int opal_list_sort(opal_list_t *list, opal_list_item_compare_fn_t compare)
 {
-    opal_list_item_t* item;
-    opal_list_item_t** items;
-    size_t i, index=0;
+    opal_list_item_t *item;
+    opal_list_item_t **items;
+    size_t i, index = 0;
 
     if (0 == list->opal_list_length) {
         return OPAL_SUCCESS;
     }
-    items = (opal_list_item_t**)malloc(sizeof(opal_list_item_t*) *
-                                       list->opal_list_length);
+    items = (opal_list_item_t **) malloc(sizeof(opal_list_item_t *) * list->opal_list_length);
 
     if (NULL == items) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    while(NULL != (item = opal_list_remove_first(list))) {
+    while (NULL != (item = opal_list_remove_first(list))) {
         items[index++] = item;
     }
 
-    qsort(items, index, sizeof(opal_list_item_t*),
-          (int(*)(const void*,const void*))compare);
-    for (i=0; i<index; i++) {
-        opal_list_append(list,items[i]);
+    qsort(items, index, sizeof(opal_list_item_t *), (int (*)(const void *, const void *)) compare);
+    for (i = 0; i < index; i++) {
+        opal_list_append(list, items[i]);
     }
     free(items);
     return OPAL_SUCCESS;

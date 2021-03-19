@@ -29,17 +29,17 @@
 #define OPAL_LIFO_H_HAS_BEEN_INCLUDED
 
 #include "opal_config.h"
-#include <time.h>
 #include "opal/class/opal_list.h"
+#include <time.h>
 
-#include "opal/sys/atomic.h"
 #include "opal/mca/threads/mutex.h"
+#include "opal/sys/atomic.h"
 
 BEGIN_C_DECLS
 
 /* NTH: temporarily suppress warnings about this not being defined */
 #if !defined(OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128)
-#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 0
+#    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 0
 #endif
 
 /**
@@ -61,28 +61,29 @@ union opal_counted_pointer_t {
 };
 typedef union opal_counted_pointer_t opal_counted_pointer_t;
 
-
 #if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && !OPAL_HAVE_ATOMIC_LLSC_PTR
 
 /* Add one element to the FIFO. We will return the last head of the list
  * to allow the upper level to detect if this element is the first one in the
  * list (if the list was empty before this operation).
  */
-static inline bool opal_update_counted_pointer (volatile opal_counted_pointer_t * volatile addr, opal_counted_pointer_t *old,
-                                                opal_list_item_t *item)
+static inline bool opal_update_counted_pointer(volatile opal_counted_pointer_t *volatile addr,
+                                               opal_counted_pointer_t *old, opal_list_item_t *item)
 {
     opal_counted_pointer_t new_p;
     new_p.data.item = (intptr_t) item;
     new_p.data.counter = old->data.counter + 1;
-    return opal_atomic_compare_exchange_strong_128 (&addr->atomic_value, &old->value, new_p.value);
+    return opal_atomic_compare_exchange_strong_128(&addr->atomic_value, &old->value, new_p.value);
 }
 
-__opal_attribute_always_inline__
-static inline void opal_read_counted_pointer (volatile opal_counted_pointer_t * volatile addr, opal_counted_pointer_t *value)
+__opal_attribute_always_inline__ static inline void
+opal_read_counted_pointer(volatile opal_counted_pointer_t *volatile addr,
+                          opal_counted_pointer_t *value)
 {
-    /* most platforms do not read the value atomically so make sure we read the counted pointer in a specific order */
+    /* most platforms do not read the value atomically so make sure we read the counted pointer in a
+     * specific order */
     value->data.counter = addr->data.counter;
-    opal_atomic_rmb ();
+    opal_atomic_rmb();
     value->data.item = addr->data.item;
 }
 
@@ -91,7 +92,7 @@ static inline void opal_read_counted_pointer (volatile opal_counted_pointer_t * 
 /**
  * @brief Helper function for lifo/fifo to sleep this thread if excessive contention is detected
  */
-static inline void _opal_lifo_release_cpu (void)
+static inline void _opal_lifo_release_cpu(void)
 {
     /* NTH: there are many ways to cause the current thread to be suspended. This one
      * should work well in most cases. Another approach would be to use poll (NULL, 0, ) but
@@ -99,10 +100,9 @@ static inline void _opal_lifo_release_cpu (void)
      * is a performance improvement for the lifo test when this call is made on detection
      * of contention but it may not translate into actually MPI or application performance
      * improvements. */
-    static struct timespec interval = { .tv_sec = 0, .tv_nsec = 100 };
-    nanosleep (&interval, NULL);
+    static struct timespec interval = {.tv_sec = 0, .tv_nsec = 100};
+    nanosleep(&interval, NULL);
 }
-
 
 /* Atomic Last In First Out lists. If we are in a multi-threaded environment then the
  * atomicity is insured via the compare-and-swap operation, if not we simply do a read
@@ -127,16 +127,14 @@ typedef struct opal_lifo_t opal_lifo_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_lifo_t);
 
-
 /* The ghost pointer will never change. The head will change via an atomic
  * compare-and-swap. On most architectures the reading of a pointer is an
  * atomic operation so we don't have to protect it.
  */
-static inline bool opal_lifo_is_empty( opal_lifo_t* lifo )
+static inline bool opal_lifo_is_empty(opal_lifo_t *lifo)
 {
     return (opal_list_item_t *) lifo->opal_lifo_head.data.item == &lifo->opal_lifo_ghost;
 }
-
 
 #if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 && !OPAL_HAVE_ATOMIC_LLSC_PTR
 
@@ -144,17 +142,17 @@ static inline bool opal_lifo_is_empty( opal_lifo_t* lifo )
  * to allow the upper level to detect if this element is the first one in the
  * list (if the list was empty before this operation).
  */
-static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
-                                                       opal_list_item_t *item)
+static inline opal_list_item_t *opal_lifo_push_atomic(opal_lifo_t *lifo, opal_list_item_t *item)
 {
     opal_list_item_t *next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
 
     do {
         item->opal_list_next = next;
-        opal_atomic_wmb ();
+        opal_atomic_wmb();
 
         /* to protect against ABA issues it is sufficient to only update the counter in pop */
-        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, (intptr_t *) &next, (intptr_t) item)) {
+        if (opal_atomic_compare_exchange_strong_ptr(&lifo->opal_lifo_head.data.item,
+                                                    (intptr_t *) &next, (intptr_t) item)) {
             return next;
         }
         /* DO some kind of pause to release the bus */
@@ -164,12 +162,12 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
 /* Retrieve one element from the LIFO. If we reach the ghost element then the LIFO
  * is empty so we return NULL.
  */
-static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
+static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
 {
     opal_counted_pointer_t old_head;
     opal_list_item_t *item;
 
-    opal_read_counted_pointer (&lifo->opal_lifo_head, &old_head);
+    opal_read_counted_pointer(&lifo->opal_lifo_head, &old_head);
 
     do {
         item = (opal_list_item_t *) old_head.data.item;
@@ -177,9 +175,9 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
             return NULL;
         }
 
-        if (opal_update_counted_pointer (&lifo->opal_lifo_head, &old_head,
-                                         (opal_list_item_t *) item->opal_list_next)) {
-            opal_atomic_wmb ();
+        if (opal_update_counted_pointer(&lifo->opal_lifo_head, &old_head,
+                                        (opal_list_item_t *) item->opal_list_next)) {
+            opal_atomic_wmb();
             item->opal_list_next = NULL;
             return item;
         }
@@ -192,8 +190,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
  * to allow the upper level to detect if this element is the first one in the
  * list (if the list was empty before this operation).
  */
-static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
-                                                       opal_list_item_t *item)
+static inline opal_list_item_t *opal_lifo_push_atomic(opal_lifo_t *lifo, opal_list_item_t *item)
 {
     opal_list_item_t *next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
 
@@ -203,8 +200,9 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
     do {
         item->opal_list_next = next;
         opal_atomic_wmb();
-        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, (intptr_t *) &next, (intptr_t) item)) {
-            opal_atomic_wmb ();
+        if (opal_atomic_compare_exchange_strong_ptr(&lifo->opal_lifo_head.data.item,
+                                                    (intptr_t *) &next, (intptr_t) item)) {
+            opal_atomic_wmb();
             /* now safe to pop this item */
             item->item_free = 0;
             return next;
@@ -213,12 +211,12 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
     } while (1);
 }
 
-#if OPAL_HAVE_ATOMIC_LLSC_PTR
+#    if OPAL_HAVE_ATOMIC_LLSC_PTR
 
 /* Retrieve one element from the LIFO. If we reach the ghost element then the LIFO
  * is empty so we return NULL.
  */
-static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
+static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
 {
     register opal_list_item_t *item, *next;
     int attempt = 0, ret;
@@ -227,7 +225,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
         if (++attempt == 5) {
             /* deliberatly suspend this thread to allow other threads to run. this should
              * only occur during periods of contention on the lifo. */
-            _opal_lifo_release_cpu ();
+            _opal_lifo_release_cpu();
             attempt = 0;
         }
 
@@ -240,33 +238,34 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
         opal_atomic_sc_ptr(&lifo->opal_lifo_head.data.item, next, ret);
     } while (!ret);
 
-    opal_atomic_wmb ();
+    opal_atomic_wmb();
 
     item->opal_list_next = NULL;
     return item;
 }
 
-#else
+#    else
 
 /* Retrieve one element from the LIFO. If we reach the ghost element then the LIFO
  * is empty so we return NULL.
  */
-static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
+static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
 {
     opal_list_item_t *item, *head, *ghost = &lifo->opal_lifo_ghost;
 
-    while ((item=(opal_list_item_t *)lifo->opal_lifo_head.data.item) != ghost) {
+    while ((item = (opal_list_item_t *) lifo->opal_lifo_head.data.item) != ghost) {
         /* ensure it is safe to pop the head */
         if (opal_atomic_swap_32((opal_atomic_int32_t *) &item->item_free, 1)) {
             continue;
         }
 
-        opal_atomic_wmb ();
+        opal_atomic_wmb();
 
         head = item;
         /* try to swap out the head pointer */
-        if (opal_atomic_compare_exchange_strong_ptr (&lifo->opal_lifo_head.data.item, (intptr_t *) &head,
-                                                     (intptr_t) item->opal_list_next)) {
+        if (opal_atomic_compare_exchange_strong_ptr(&lifo->opal_lifo_head.data.item,
+                                                    (intptr_t *) &head,
+                                                    (intptr_t) item->opal_list_next)) {
             break;
         }
 
@@ -281,19 +280,18 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
         return NULL;
     }
 
-    opal_atomic_wmb ();
+    opal_atomic_wmb();
 
     item->opal_list_next = NULL;
     return item;
 }
 
-#endif /* OPAL_HAVE_ATOMIC_LLSC_PTR */
+#    endif /* OPAL_HAVE_ATOMIC_LLSC_PTR */
 
 #endif
 
 /* single-threaded versions of the lifo functions */
-static inline opal_list_item_t *opal_lifo_push_st (opal_lifo_t *lifo,
-                                                   opal_list_item_t *item)
+static inline opal_list_item_t *opal_lifo_push_st(opal_lifo_t *lifo, opal_list_item_t *item)
 {
     item->opal_list_next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
     item->item_free = 0;
@@ -301,7 +299,7 @@ static inline opal_list_item_t *opal_lifo_push_st (opal_lifo_t *lifo,
     return (opal_list_item_t *) item->opal_list_next;
 }
 
-static inline opal_list_item_t *opal_lifo_pop_st (opal_lifo_t *lifo)
+static inline opal_list_item_t *opal_lifo_pop_st(opal_lifo_t *lifo)
 {
     opal_list_item_t *item;
     item = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
@@ -316,25 +314,24 @@ static inline opal_list_item_t *opal_lifo_pop_st (opal_lifo_t *lifo)
 }
 
 /* conditional versions of lifo functions. use atomics if opal_using_threads is set */
-static inline opal_list_item_t *opal_lifo_push (opal_lifo_t *lifo,
-                                                opal_list_item_t *item)
+static inline opal_list_item_t *opal_lifo_push(opal_lifo_t *lifo, opal_list_item_t *item)
 {
-    if (opal_using_threads ()) {
-        return opal_lifo_push_atomic (lifo, item);
+    if (opal_using_threads()) {
+        return opal_lifo_push_atomic(lifo, item);
     }
 
-    return opal_lifo_push_st (lifo, item);
+    return opal_lifo_push_st(lifo, item);
 }
 
-static inline opal_list_item_t *opal_lifo_pop (opal_lifo_t *lifo)
+static inline opal_list_item_t *opal_lifo_pop(opal_lifo_t *lifo)
 {
-    if (opal_using_threads ()) {
-        return opal_lifo_pop_atomic (lifo);
+    if (opal_using_threads()) {
+        return opal_lifo_pop_atomic(lifo);
     }
 
-    return opal_lifo_pop_st (lifo);
+    return opal_lifo_pop_st(lifo);
 }
 
 END_C_DECLS
 
-#endif  /* OPAL_LIFO_H_HAS_BEEN_INCLUDED */
+#endif /* OPAL_LIFO_H_HAS_BEEN_INCLUDED */

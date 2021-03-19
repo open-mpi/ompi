@@ -22,7 +22,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_fifo.h"
 
-static void opal_fifo_construct (opal_fifo_t *fifo)
+static void opal_fifo_construct(opal_fifo_t *fifo)
 {
     OBJ_CONSTRUCT(&fifo->opal_fifo_ghost, opal_list_item_t);
 

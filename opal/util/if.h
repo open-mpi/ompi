@@ -28,13 +28,13 @@
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
+#    include <sys/socket.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 
 /*
@@ -49,15 +49,13 @@
 
 BEGIN_C_DECLS
 
-#define OPAL_IF_FORMAT_ADDR(n)                              \
-    (((n) >> 24) & 0x000000FF), (((n) >> 16) & 0x000000FF), \
-    (((n) >> 8) & 0x000000FF), ((n) & 0x000000FF)
+#define OPAL_IF_FORMAT_ADDR(n)                                                         \
+    (((n) >> 24) & 0x000000FF), (((n) >> 16) & 0x000000FF), (((n) >> 8) & 0x000000FF), \
+        ((n) &0x000000FF)
 
-#define OPAL_IF_ASSEMBLE_NETWORK(n1, n2, n3, n4)    \
-    (((n1) << 24) & 0xFF000000) |                   \
-    (((n2) << 16) & 0x00FF0000) |                   \
-    (((n3) <<  8) & 0x0000FF00) |                   \
-    ( (n4)        & 0x000000FF)
+#define OPAL_IF_ASSEMBLE_NETWORK(n1, n2, n3, n4)                                           \
+    (((n1) << 24) & 0xFF000000) | (((n2) << 16) & 0x00FF0000) | (((n3) << 8) & 0x0000FF00) \
+        | ((n4) &0x000000FF)
 
 /**
  *  Lookup an interface by name and return its primary address.
@@ -66,9 +64,7 @@ BEGIN_C_DECLS
  *  @param if_addr (OUT)  Interface address buffer
  *  @param size    (IN)   Interface address buffer size
  */
-OPAL_DECLSPEC int opal_ifnametoaddr(const char* if_name,
-                                    struct sockaddr* if_addr,
-                                    int size);
+OPAL_DECLSPEC int opal_ifnametoaddr(const char *if_name, struct sockaddr *if_addr, int size);
 
 /**
  *  Lookup an interface by address and return its name.
@@ -77,8 +73,7 @@ OPAL_DECLSPEC int opal_ifnametoaddr(const char* if_name,
  *  @param if_name (OUT)  Interface name buffer
  *  @param size    (IN)   Interface name buffer size
  */
-OPAL_DECLSPEC int opal_ifaddrtoname(const char* if_addr,
-                                    char* if_name, int size);
+OPAL_DECLSPEC int opal_ifaddrtoname(const char *if_addr, char *if_name, int size);
 
 /**
  *  Lookup an interface by name and return its opal_list index.
@@ -86,7 +81,7 @@ OPAL_DECLSPEC int opal_ifaddrtoname(const char* if_addr,
  *  @param if_name (IN)  Interface name
  *  @return              Interface opal_list index
  */
-OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
+OPAL_DECLSPEC int opal_ifnametoindex(const char *if_name);
 
 /**
  *  Lookup an interface by name and return its kernel index.
@@ -94,14 +89,14 @@ OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
  *  @param if_name (IN)  Interface name
  *  @return              Interface kernel index
  */
-OPAL_DECLSPEC int opal_ifnametokindex(const char* if_name);
+OPAL_DECLSPEC int opal_ifnametokindex(const char *if_name);
 
 /*
  *  Attempt to resolve an address (given as either IPv4/IPv6 string
  *  or hostname) and return the kernel index of the interface
  *  that is on the same network as the specified address
  */
-OPAL_DECLSPEC int opal_ifaddrtokindex(const char* if_addr);
+OPAL_DECLSPEC int opal_ifaddrtokindex(const char *if_addr);
 
 /**
  *  Lookup an interface by opal_list index and return its kernel index.
@@ -137,7 +132,7 @@ OPAL_DECLSPEC int opal_ifnext(int if_index);
  *  @param if_name (OUT)  Interface name buffer
  *  @param size (IN)      Interface name buffer size
  */
-OPAL_DECLSPEC int opal_ifindextoname(int if_index, char* if_name, int);
+OPAL_DECLSPEC int opal_ifindextoname(int if_index, char *if_name, int);
 
 /**
  *  Lookup an interface by kernel index and return its name.
@@ -146,7 +141,7 @@ OPAL_DECLSPEC int opal_ifindextoname(int if_index, char* if_name, int);
  *  @param if_name (OUT)  Interface name buffer
  *  @param size (IN)      Interface name buffer size
  */
-OPAL_DECLSPEC int opal_ifkindextoname(int if_kindex, char* if_name, int);
+OPAL_DECLSPEC int opal_ifkindextoname(int if_kindex, char *if_name, int);
 
 /**
  *  Lookup an interface by index and return its primary address.
@@ -155,11 +150,8 @@ OPAL_DECLSPEC int opal_ifkindextoname(int if_kindex, char* if_name, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*,
-                                     unsigned int);
-OPAL_DECLSPEC int opal_ifkindextoaddr(int if_kindex,
-                                      struct sockaddr* if_addr,
-                                      unsigned int length);
+OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr *, unsigned int);
+OPAL_DECLSPEC int opal_ifkindextoaddr(int if_kindex, struct sockaddr *if_addr, unsigned int length);
 
 /**
  *  Lookup an interface by index and return its network mask (in CIDR
@@ -169,7 +161,7 @@ OPAL_DECLSPEC int opal_ifkindextoaddr(int if_kindex,
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OPAL_DECLSPEC int opal_ifindextomask(int if_index, uint32_t*, int);
+OPAL_DECLSPEC int opal_ifindextomask(int if_index, uint32_t *, int);
 
 /**
  *  Lookup an interface by index and return its MAC address.
@@ -193,7 +185,7 @@ OPAL_DECLSPEC int opal_ifindextomtu(int if_index, int *mtu);
  *  @param if_index (IN)  Interface index
  *  @param if_flags (OUT) Interface flags
  */
-OPAL_DECLSPEC int opal_ifindextoflags(int if_index, uint32_t*);
+OPAL_DECLSPEC int opal_ifindextoflags(int if_index, uint32_t *);
 
 /**
  * Determine if given hostname / IP address is a local address
@@ -234,4 +226,3 @@ OPAL_DECLSPEC void opal_ifgetaliases(char ***aliases);
 END_C_DECLS
 
 #endif
-

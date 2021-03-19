@@ -45,14 +45,12 @@ OPAL_DECLSPEC extern bool opal_memchecker_base_selected;
 /**
  * Global component struct for the selected component
  */
-OPAL_DECLSPEC extern const opal_memchecker_base_component_2_0_0_t
-    *opal_memchecker_base_component;
+OPAL_DECLSPEC extern const opal_memchecker_base_component_2_0_0_t *opal_memchecker_base_component;
 
 /**
  * Global module struct for the selected module
  */
-OPAL_DECLSPEC extern const opal_memchecker_base_module_1_0_0_t
-    *opal_memchecker_base_module;
+OPAL_DECLSPEC extern const opal_memchecker_base_module_1_0_0_t *opal_memchecker_base_module;
 
 /**
  * Check if we are running under the memory debugger.
@@ -63,9 +61,8 @@ OPAL_DECLSPEC extern const opal_memchecker_base_module_1_0_0_t
  */
 OPAL_DECLSPEC int opal_memchecker_base_runindebugger(void);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_runindebugger() 0
+#    define opal_memchecker_base_runindebugger() 0
 #endif
-
 
 /**
  * Check if a memory region is valid to address
@@ -78,11 +75,10 @@ OPAL_DECLSPEC int opal_memchecker_base_runindebugger(void);
  * This function calls the selected memchecker, whether
  *  every Byte of this memory region is addressable
  */
-OPAL_DECLSPEC int opal_memchecker_base_isaddressable(void * p, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_isaddressable(void *p, size_t len);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_isaddressable(p, len) 0
+#    define opal_memchecker_base_isaddressable(p, len) 0
 #endif
-
 
 /**
  * Check if a memory region is defined
@@ -95,9 +91,9 @@ OPAL_DECLSPEC int opal_memchecker_base_isaddressable(void * p, size_t len);
  * This function calls the selected memchecker, whether
  * every Byte of this memory region is correctly initialized.
  */
-OPAL_DECLSPEC int opal_memchecker_base_isdefined(void * p, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_isdefined(void *p, size_t len);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_isdefined(p, len) 0
+#    define opal_memchecker_base_isdefined(p, len) 0
 #endif
 
 /**
@@ -111,9 +107,9 @@ OPAL_DECLSPEC int opal_memchecker_base_isdefined(void * p, size_t len);
  * This function calls the selected memchecker, to set
  * every Byte of this memory region to not accessible.
  */
-OPAL_DECLSPEC int opal_memchecker_base_mem_noaccess(void * p, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_mem_noaccess(void *p, size_t len);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_mem_noaccess(p, len)
+#    define opal_memchecker_base_mem_noaccess(p, len)
 #endif
 
 /**
@@ -127,9 +123,9 @@ OPAL_DECLSPEC int opal_memchecker_base_mem_noaccess(void * p, size_t len);
  * This function calls the selected memchecker, to set
  * every Byte of this memory region to not contain initialized data.
  */
-OPAL_DECLSPEC int opal_memchecker_base_mem_undefined(void * p, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_mem_undefined(void *p, size_t len);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_mem_undefined(p, len)
+#    define opal_memchecker_base_mem_undefined(p, len)
 #endif
 
 /**
@@ -143,9 +139,9 @@ OPAL_DECLSPEC int opal_memchecker_base_mem_undefined(void * p, size_t len);
  * This function calls the selected memchecker, to set
  * every Byte of this memory region to contain valid, initialized data.
  */
-OPAL_DECLSPEC int opal_memchecker_base_mem_defined(void * p, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_mem_defined(void *p, size_t len);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_mem_defined(p, len)
+#    define opal_memchecker_base_mem_defined(p, len)
 #endif
 
 /**
@@ -160,9 +156,9 @@ OPAL_DECLSPEC int opal_memchecker_base_mem_defined(void * p, size_t len);
  * every Byte of this memory region to contain valid, initialized data,
  *  but only, if the memory region is addressable.
  */
-OPAL_DECLSPEC int opal_memchecker_base_mem_defined_if_addressable(void * p, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_mem_defined_if_addressable(void *p, size_t len);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_mem_defined_if_addressable(p, len)
+#    define opal_memchecker_base_mem_defined_if_addressable(p, len)
 #endif
 
 /**
@@ -177,9 +173,9 @@ OPAL_DECLSPEC int opal_memchecker_base_mem_defined_if_addressable(void * p, size
  * This function calls the selected memchecker, to name
  * this memory region.
  */
-OPAL_DECLSPEC int opal_memchecker_base_create_block(void * p, size_t len, char * description);
+OPAL_DECLSPEC int opal_memchecker_base_create_block(void *p, size_t len, char *description);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_create_block(p, len, description)
+#    define opal_memchecker_base_create_block(p, len, description)
 #endif
 
 /**
@@ -192,9 +188,9 @@ OPAL_DECLSPEC int opal_memchecker_base_create_block(void * p, size_t len, char *
  * This function calls the selected memchecker, to discard
  * the name information of the memory region.
  */
-OPAL_DECLSPEC int opal_memchecker_base_discard_block(void * p);
+OPAL_DECLSPEC int opal_memchecker_base_discard_block(void *p);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_discard_block(p)
+#    define opal_memchecker_base_discard_block(p)
 #endif
 
 /**
@@ -209,7 +205,7 @@ OPAL_DECLSPEC int opal_memchecker_base_discard_block(void * p);
  */
 OPAL_DECLSPEC int opal_memchecker_base_leakcheck(void);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_leakcheck
+#    define opal_memchecker_base_leakcheck
 #endif
 
 /**
@@ -224,9 +220,9 @@ OPAL_DECLSPEC int opal_memchecker_base_leakcheck(void);
  * This function calls the selected memchecker, to get
  * every vbit of this memory region.
  */
-OPAL_DECLSPEC int opal_memchecker_base_get_vbits(void * p, char * vbits, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_get_vbits(void *p, char *vbits, size_t len);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_get_vbits(p, vbits, len)
+#    define opal_memchecker_base_get_vbits(p, vbits, len)
 #endif
 
 /**
@@ -241,9 +237,9 @@ OPAL_DECLSPEC int opal_memchecker_base_get_vbits(void * p, char * vbits, size_t 
  * This function calls the selected memchecker, to get
  * every vbit of this memory region.
  */
-OPAL_DECLSPEC int opal_memchecker_base_set_vbits(void * p, char * vbits, size_t len);
+OPAL_DECLSPEC int opal_memchecker_base_set_vbits(void *p, char *vbits, size_t len);
 #if OPAL_WANT_MEMCHECKER == 0
-#define opal_memchecker_base_set_vbits(p, vbits, len)
+#    define opal_memchecker_base_set_vbits(p, vbits, len)
 #endif
 
 END_C_DECLS

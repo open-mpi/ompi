@@ -14,15 +14,14 @@
  * $HEADER$
  */
 
-
 #include "btl_ugni.h"
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_frag.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/bit_ops.h"
-#include "opal/mca/hwloc/base/base.h"
 
 static inline int get_ptag(uint8_t *out_ptag)
 {
@@ -35,7 +34,7 @@ static inline int get_ptag(uint8_t *out_ptag)
         return OPAL_ERR_NOT_FOUND;
     }
     errno = 0;
-    tmp_ptag = (uint8_t)strtoul (ptr, (char **)NULL, 10);
+    tmp_ptag = (uint8_t) strtoul(ptr, (char **) NULL, 10);
     if (0 != errno) {
         /* TODO add err msg - better rc? */
         return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
@@ -44,7 +43,7 @@ static inline int get_ptag(uint8_t *out_ptag)
     return OPAL_SUCCESS;
 }
 
-static inline int get_cookie (uint32_t *out_cookie)
+static inline int get_cookie(uint32_t *out_cookie)
 {
     /* TODO no need for tmp */
     char *ptr;
@@ -55,7 +54,7 @@ static inline int get_cookie (uint32_t *out_cookie)
         return OPAL_ERR_NOT_FOUND;
     }
     errno = 0;
-    tmp_cookie = (uint32_t) strtoul (ptr, NULL, 10);
+    tmp_cookie = (uint32_t) strtoul(ptr, NULL, 10);
     if (0 != errno) {
         /* TODO add err msg - better rc? */
         return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
@@ -70,14 +69,14 @@ static unsigned int mca_btl_ugni_get_nic_address(int device_id)
     unsigned int address, cpu_id;
     gni_return_t status;
     int i, alps_dev_id = -1;
-    char *token,*p_ptr;
+    char *token, *p_ptr;
 
     p_ptr = getenv("PMI_GNI_DEV_ID");
     if (!p_ptr) {
         status = GNI_CdmGetNicAddress(device_id, &address, &cpu_id);
-        if(status != GNI_RC_SUCCESS) {
-            opal_output (0, "FAILED:GNI_CdmGetNicAddress returned error %d", status);
-            return (unsigned int)-1;
+        if (status != GNI_RC_SUCCESS) {
+            opal_output(0, "FAILED:GNI_CdmGetNicAddress returned error %d", status);
+            return (unsigned int) -1;
         }
         return address;
     }
@@ -91,27 +90,27 @@ static unsigned int mca_btl_ugni_get_nic_address(int device_id)
     }
 
     if (OPAL_UNLIKELY(-1 == alps_dev_id)) {
-        return (unsigned int)-1;
+        return (unsigned int) -1;
     }
 
     p_ptr = getenv("PMI_GNI_LOC_ADDR");
     if (OPAL_UNLIKELY(NULL == p_ptr)) {
-        return (unsigned int)-1;
+        return (unsigned int) -1;
     }
 
     i = 0;
     while (NULL != (token = strtok(p_ptr, ":"))) {
         if (i == alps_dev_id) {
-            return strtoul (token, NULL, 10);
+            return strtoul(token, NULL, 10);
         }
         p_ptr = NULL;
         ++i;
     }
 
-    return (unsigned int)-1;
+    return (unsigned int) -1;
 }
 
-int mca_btl_ugni_device_init (mca_btl_ugni_device_t *device, int virtual_device_id)
+int mca_btl_ugni_device_init(mca_btl_ugni_device_t *device, int virtual_device_id)
 {
     uint32_t dev_pe_addr;
     int rc;
@@ -119,12 +118,14 @@ int mca_btl_ugni_device_init (mca_btl_ugni_device_t *device, int virtual_device_
     OBJ_CONSTRUCT(&device->rdma_descs, opal_free_list_t);
 
     /* create a communication domain */
-    rc = GNI_CdmCreate (mca_btl_ugni_component.cdm_id_base | virtual_device_id, mca_btl_ugni_component.ptag,
-                        mca_btl_ugni_component.cookie, mca_btl_ugni_component.cdm_flags, &device->dev_cd_handle);
+    rc = GNI_CdmCreate(mca_btl_ugni_component.cdm_id_base | virtual_device_id,
+                       mca_btl_ugni_component.ptag, mca_btl_ugni_component.cookie,
+                       mca_btl_ugni_component.cdm_flags, &device->dev_cd_handle);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         /* this REALLY is an error but under alps + mapn we may not get any credentials */
-        BTL_VERBOSE(("Error: Creating communication domain %d for virtual device %d", rc, virtual_device_id));
-        return mca_btl_rc_ugni_to_opal (rc);
+        BTL_VERBOSE(("Error: Creating communication domain %d for virtual device %d", rc,
+                     virtual_device_id));
+        return mca_btl_rc_ugni_to_opal(rc);
     }
 
     device->dev_index = virtual_device_id;
@@ -133,16 +134,17 @@ int mca_btl_ugni_device_init (mca_btl_ugni_device_t *device, int virtual_device_
     OPAL_OUTPUT((-1, "Got NIC Addr: 0x%08x, CPU ID: %d", mca_btl_ugni_component.dev_addr, 0));
 
     /* Attach device to the communication domain */
-    rc = GNI_CdmAttach (device->dev_cd_handle, 0, &dev_pe_addr, &device->dev_handle);
+    rc = GNI_CdmAttach(device->dev_cd_handle, 0, &dev_pe_addr, &device->dev_handle);
     if (GNI_RC_SUCCESS != rc) {
-        BTL_VERBOSE(("Error: Attaching to communication domain. rc = %d, virtual device = %d", rc, virtual_device_id));
-        return mca_btl_rc_ugni_to_opal (rc);
+        BTL_VERBOSE(("Error: Attaching to communication domain. rc = %d, virtual device = %d", rc,
+                     virtual_device_id));
+        return mca_btl_rc_ugni_to_opal(rc);
     }
 
-    rc = opal_free_list_init (&device->rdma_descs, sizeof (mca_btl_ugni_rdma_desc_t),
-                              64, OBJ_CLASS(mca_btl_ugni_rdma_desc_t), 0, 8, 0,
-                              mca_btl_ugni_component.local_rdma_cq_size, 32,
-                              NULL, 0, NULL, mca_btl_ugni_rdma_desc_init, (void *) device);
+    rc = opal_free_list_init(&device->rdma_descs, sizeof(mca_btl_ugni_rdma_desc_t), 64,
+                             OBJ_CLASS(mca_btl_ugni_rdma_desc_t), 0, 8, 0,
+                             mca_btl_ugni_component.local_rdma_cq_size, 32, NULL, 0, NULL,
+                             mca_btl_ugni_rdma_desc_init, (void *) device);
     if (OPAL_SUCCESS != rc) {
         OBJ_DESTRUCT(&device->rdma_descs);
         return rc;
@@ -160,28 +162,28 @@ int mca_btl_ugni_device_init (mca_btl_ugni_device_t *device, int virtual_device_
     return OPAL_SUCCESS;
 }
 
-int mca_btl_ugni_device_fini (mca_btl_ugni_device_t *dev)
+int mca_btl_ugni_device_fini(mca_btl_ugni_device_t *dev)
 {
     int rc;
 
     OBJ_DESTRUCT(&dev->rdma_descs);
 
     if (0 != dev->dev_rdma_local_cq.gni_handle) {
-        GNI_CqDestroy (dev->dev_rdma_local_cq.gni_handle);
+        GNI_CqDestroy(dev->dev_rdma_local_cq.gni_handle);
         dev->dev_rdma_local_cq.gni_handle = 0;
     }
 
     if (0 != dev->dev_rdma_local_irq_cq.gni_handle) {
-        GNI_CqDestroy (dev->dev_rdma_local_irq_cq.gni_handle);
+        GNI_CqDestroy(dev->dev_rdma_local_irq_cq.gni_handle);
         dev->dev_rdma_local_irq_cq.gni_handle = 0;
     }
 
     if (0 != dev->dev_smsg_local_cq.gni_handle) {
-        GNI_CqDestroy (dev->dev_smsg_local_cq.gni_handle);
+        GNI_CqDestroy(dev->dev_smsg_local_cq.gni_handle);
         dev->dev_smsg_local_cq.gni_handle = 0;
     }
 
-    rc = GNI_CdmDestroy (dev->dev_cd_handle);
+    rc = GNI_CdmDestroy(dev->dev_cd_handle);
     if (GNI_RC_SUCCESS != rc) {
         BTL_VERBOSE(("error destroying cdm handle"));
     }
@@ -193,49 +195,47 @@ int mca_btl_ugni_device_fini (mca_btl_ugni_device_t *dev)
  * Send local device information and other information
  * required for setup
  */
-static int mca_btl_ugni_send_modex (void)
+static int mca_btl_ugni_send_modex(void)
 {
     struct mca_btl_ugni_modex_t modex;
     uint32_t modex_size;
     char *modex_msg;
     int rc;
 
-    modex_size = sizeof (struct mca_btl_ugni_modex_t);
+    modex_size = sizeof(struct mca_btl_ugni_modex_t);
 
-    modex_msg = (char *) malloc (modex_size);
+    modex_msg = (char *) malloc(modex_size);
     if (NULL == modex_msg) {
-        OPAL_OUTPUT((-1, "Error allocating memory for modex @ %s:%d",
-                     __FILE__, __LINE__));
+        OPAL_OUTPUT((-1, "Error allocating memory for modex @ %s:%d", __FILE__, __LINE__));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     modex.addr = mca_btl_ugni_component.dev_addr;
-    modex.id   = mca_btl_ugni_component.cdm_id_base;
+    modex.id = mca_btl_ugni_component.cdm_id_base;
 
     BTL_VERBOSE(("sending modex. addr: %d, id: %d", modex.addr, modex.id));
 
-    memcpy ((void *) modex_msg, (void *) &modex, modex_size);
+    memcpy((void *) modex_msg, (void *) &modex, modex_size);
 
     /*
      * need global for edge cases like MPI_Comm_spawn support with
      * new ranks started on the same nodes as the spawnee ranks, etc.
      */
 
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
-                    &mca_btl_ugni_component.super.btl_version,
-                    modex_msg, modex_size);
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ugni_component.super.btl_version, modex_msg,
+                    modex_size);
 
-    free (modex_msg);
+    free(modex_msg);
 
     return rc;
 }
 
-int mca_btl_ugni_fini (void)
+int mca_btl_ugni_fini(void)
 {
     return OPAL_SUCCESS;
 }
 
-int mca_btl_ugni_init (void)
+int mca_btl_ugni_init(void)
 {
     int32_t pid_max = 32768;
     int rc, bit;
@@ -244,15 +244,16 @@ int mca_btl_ugni_init (void)
     if (0 == mca_btl_ugni_component.virtual_device_count) {
         int core_count;
 
-        (void) opal_hwloc_base_get_topology ();
-        core_count = hwloc_get_nbobjs_by_type (opal_hwloc_topology, HWLOC_OBJ_CORE);
+        (void) opal_hwloc_base_get_topology();
+        core_count = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE);
 
         if (core_count <= opal_process_info.num_local_peers || !opal_using_threads()) {
             /* there is probably no benefit to using multiple device contexts when not
              * using threads. */
             mca_btl_ugni_component.virtual_device_count = 1;
         } else {
-            mca_btl_ugni_component.virtual_device_count = core_count / (opal_process_info.num_local_peers + 1);
+            mca_btl_ugni_component.virtual_device_count = core_count
+                                                          / (opal_process_info.num_local_peers + 1);
         }
     }
 
@@ -268,12 +269,13 @@ int mca_btl_ugni_init (void)
         }
     }
 
-    if ((mca_btl_ugni_component.virtual_device_count * (1 + opal_process_info.num_local_peers)) < 122) {
-        /* if there are fewer total devices than FMA descriptors it makes sense to turn off FMA sharing.
-         * *DO NOT* override a user requested flag. */
+    if ((mca_btl_ugni_component.virtual_device_count * (1 + opal_process_info.num_local_peers))
+        < 122) {
+        /* if there are fewer total devices than FMA descriptors it makes sense to turn off FMA
+         * sharing. *DO NOT* override a user requested flag. */
         mca_base_var_source_t source = MCA_BASE_VAR_SOURCE_DEFAULT;
 
-        mca_base_var_get_value (mca_btl_ugni_component.cdm_flags_id, NULL, &source, NULL);
+        mca_base_var_get_value(mca_btl_ugni_component.cdm_flags_id, NULL, &source, NULL);
         if (MCA_BASE_VAR_SOURCE_DEFAULT == source) {
             BTL_VERBOSE(("disabling shared FMA sharing"));
 
@@ -282,16 +284,16 @@ int mca_btl_ugni_init (void)
         }
     }
 
-    fh = fopen ("/proc/sys/kernel/pid_max", "r");
+    fh = fopen("/proc/sys/kernel/pid_max", "r");
     if (NULL != fh) {
-        fscanf (fh, "%d", &pid_max);
-        fclose (fh);
+        fscanf(fh, "%d", &pid_max);
+        fclose(fh);
     }
 
     /* Use pid to generate the cdm_id.  Although its not stated in the uGNI
      * documentation, the cdm_id only needs to be unique within a node for a
      * given ptag/cookie tuple */
-    bit = opal_hibit (pid_max, 31);
+    bit = opal_hibit(pid_max, 31);
     if (bit >= 31) {
         mca_btl_ugni_component.virtual_device_count = 1;
         mca_btl_ugni_component.cdm_id_base = getpid();
@@ -315,10 +317,10 @@ int mca_btl_ugni_init (void)
     }
 
     /* get the device address of the NIC */
-    mca_btl_ugni_component.dev_addr = mca_btl_ugni_get_nic_address (0);
+    mca_btl_ugni_component.dev_addr = mca_btl_ugni_get_nic_address(0);
 
     /* send ugni modex */
-    mca_btl_ugni_send_modex ();
+    mca_btl_ugni_send_modex();
 
     return OPAL_SUCCESS;
 }

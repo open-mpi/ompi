@@ -18,28 +18,30 @@
 
 #include "opal_config.h"
 
-#include <event2/event_struct.h>
 #include <event2/event.h>
+#include <event2/event_struct.h>
 #include <event2/thread.h>
 
 BEGIN_C_DECLS
 
 /* set the number of event priority levels */
-#define OPAL_EVENT_NUM_PRI   8
+#define OPAL_EVENT_NUM_PRI 8
 
-#define OPAL_EV_ERROR_PRI         0
-#define OPAL_EV_MSG_HI_PRI        1
-#define OPAL_EV_SYS_HI_PRI        2
-#define OPAL_EV_MSG_LO_PRI        3
-#define OPAL_EV_SYS_LO_PRI        4
-#define OPAL_EV_INFO_HI_PRI       5
-#define OPAL_EV_INFO_LO_PRI       6
-#define OPAL_EV_LOWEST_PRI        7
+#define OPAL_EV_ERROR_PRI   0
+#define OPAL_EV_MSG_HI_PRI  1
+#define OPAL_EV_SYS_HI_PRI  2
+#define OPAL_EV_MSG_LO_PRI  3
+#define OPAL_EV_SYS_LO_PRI  4
+#define OPAL_EV_INFO_HI_PRI 5
+#define OPAL_EV_INFO_LO_PRI 6
+#define OPAL_EV_LOWEST_PRI  7
 
-#define OPAL_EVENT_SIGNAL(ev)	opal_event_get_signal(ev)
+#define OPAL_EVENT_SIGNAL(ev) opal_event_get_signal(ev)
 
-#define OPAL_TIMEOUT_DEFAULT	{1, 0}
-
+#define OPAL_TIMEOUT_DEFAULT \
+    {                        \
+        1, 0                 \
+    }
 
 typedef event_callback_fn opal_event_cbfunc_t;
 
@@ -57,11 +59,11 @@ OPAL_DECLSPEC extern opal_event_base_t *opal_sync_event_base;
 /* Persistent event: won't get removed automatically when activated. */
 #define OPAL_EV_PERSIST EV_PERSIST
 
-#define OPAL_EVLOOP_ONCE     EVLOOP_ONCE        /**< Block at most once. */
-#define OPAL_EVLOOP_NONBLOCK EVLOOP_NONBLOCK    /**< Do not block. */
+#define OPAL_EVLOOP_ONCE     EVLOOP_ONCE /**< Block at most once. */
+#define OPAL_EVLOOP_NONBLOCK EVLOOP_NONBLOCK /**< Do not block. */
 
 /* Global function to create and release an event base */
-OPAL_DECLSPEC opal_event_base_t* opal_event_base_create(void);
+OPAL_DECLSPEC opal_event_base_t *opal_event_base_create(void);
 
 #define opal_event_base_free(x) event_base_free(x)
 
@@ -90,9 +92,11 @@ OPAL_DECLSPEC int opal_event_finalize(void);
 /* Basic event APIs */
 #define opal_event_enable_debug_mode() event_enable_debug_mode()
 
-#define opal_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+#define opal_event_set(b, x, fd, fg, cb, arg) \
+    event_assign((x), (b), (fd), (fg), (event_callback_fn)(cb), (arg))
 
-#define opal_event_assign(x, b, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
+#define opal_event_assign(x, b, fd, fg, cb, arg) \
+    event_assign((x), (b), (fd), (fg), (event_callback_fn)(cb), (arg))
 
 #define opal_event_add(ev, tv) event_add((ev), (tv))
 
@@ -100,9 +104,10 @@ OPAL_DECLSPEC int opal_event_finalize(void);
 
 #define opal_event_active(x, y, z) event_active((x), (y), (z))
 
-#define opal_event_new(b, fd, fg, cb, arg) event_new((b), (fd), (fg), (event_callback_fn) (cb), (arg))
+#define opal_event_new(b, fd, fg, cb, arg) \
+    event_new((b), (fd), (fg), (event_callback_fn)(cb), (arg))
 
-OPAL_DECLSPEC opal_event_t* opal_event_alloc(void);
+OPAL_DECLSPEC opal_event_t *opal_event_alloc(void);
 
 #define opal_event_free(x) event_free((x))
 
@@ -111,7 +116,8 @@ OPAL_DECLSPEC opal_event_t* opal_event_alloc(void);
 
 #define opal_event_evtimer_add(x, tv) opal_event_add((x), (tv))
 
-#define opal_event_evtimer_set(b, x, cb, arg) event_assign((x), (b), -1, 0, (event_callback_fn) (cb), (arg))
+#define opal_event_evtimer_set(b, x, cb, arg) \
+    event_assign((x), (b), -1, 0, (event_callback_fn)(cb), (arg))
 
 #define opal_event_evtimer_del(x) opal_event_del((x))
 
@@ -122,7 +128,8 @@ OPAL_DECLSPEC opal_event_t* opal_event_alloc(void);
 /* Signal APIs */
 #define opal_event_signal_add(x, tv) event_add((x), (tv))
 
-#define opal_event_signal_set(b, x, fd, cb, arg) event_assign((x), (b), (fd), EV_SIGNAL|EV_PERSIST, (event_callback_fn) (cb), (arg))
+#define opal_event_signal_set(b, x, fd, cb, arg) \
+    event_assign((x), (b), (fd), EV_SIGNAL | EV_PERSIST, (event_callback_fn)(cb), (arg))
 
 #define opal_event_signal_del(x) event_del((x))
 

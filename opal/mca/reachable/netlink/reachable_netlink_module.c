@@ -16,27 +16,22 @@
 #include "opal/types.h"
 
 #ifdef HAVE_MATH_H
-#include <math.h>
+#    include <math.h>
 #endif
 
+#include "libnl_utils.h"
+#include "opal/mca/reachable/base/base.h"
 #include "opal/util/net.h"
 #include "opal/util/string_copy.h"
-#include "opal/mca/reachable/base/base.h"
 #include "reachable_netlink.h"
-#include "libnl_utils.h"
 
-enum connection_quality {
-    CQ_NO_CONNECTION = 0,
-    CQ_DIFFERENT_NETWORK = 50,
-    CQ_SAME_NETWORK = 100
-};
+enum connection_quality { CQ_NO_CONNECTION = 0, CQ_DIFFERENT_NETWORK = 50, CQ_SAME_NETWORK = 100 };
 
 /* Local variables */
 static int init_counter = 0;
 
 static int get_weights(opal_if_t *local_if, opal_if_t *remote_if);
-static int calculate_weight(int bandwidth_local, int bandwidth_remote,
-                            int connection_quality);
+static int calculate_weight(int bandwidth_local, int bandwidth_remote, int connection_quality);
 
 static int netlink_init(void)
 {
@@ -59,8 +54,7 @@ static int netlink_fini(void)
  * Higher weightings are given to connections on the same
  * network.
  */
-static opal_reachable_t* netlink_reachable(opal_list_t *local_ifs,
-                                           opal_list_t *remote_ifs)
+static opal_reachable_t *netlink_reachable(opal_list_t *local_ifs, opal_list_t *remote_ifs)
 {
     opal_reachable_t *reachable_results = NULL;
     int i, j;
@@ -73,9 +67,9 @@ static opal_reachable_t* netlink_reachable(opal_list_t *local_ifs,
     }
 
     i = 0;
-    OPAL_LIST_FOREACH(local_iter, local_ifs, opal_if_t) {
+    OPAL_LIST_FOREACH (local_iter, local_ifs, opal_if_t) {
         j = 0;
-        OPAL_LIST_FOREACH(remote_iter, remote_ifs, opal_if_t) {
+        OPAL_LIST_FOREACH (remote_iter, remote_ifs, opal_if_t) {
             reachable_results->weights[i][j] = get_weights(local_iter, remote_iter);
             j++;
         }
@@ -85,7 +79,6 @@ static opal_reachable_t* netlink_reachable(opal_list_t *local_ifs,
     return reachable_results;
 }
 
-
 static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
 {
     char str_local[128], str_remote[128], *conn_type;
@@ -93,13 +86,11 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
 
     /* opal_net_get_hostname returns a static buffer.  Great for
        single address printfs, need to copy in this case */
-    opal_string_copy(str_local,
-            opal_net_get_hostname((struct sockaddr *)&local_if->if_addr),
-            sizeof(str_local));
+    opal_string_copy(str_local, opal_net_get_hostname((struct sockaddr *) &local_if->if_addr),
+                     sizeof(str_local));
     str_local[sizeof(str_local) - 1] = '\0';
-    opal_string_copy(str_remote,
-            opal_net_get_hostname((struct sockaddr *)&remote_if->if_addr),
-            sizeof(str_remote));
+    opal_string_copy(str_remote, opal_net_get_hostname((struct sockaddr *) &remote_if->if_addr),
+                     sizeof(str_remote));
     str_remote[sizeof(str_remote) - 1] = '\0';
 
     /*  initially, assume no connection is possible */
@@ -108,8 +99,8 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
     if (AF_INET == local_if->af_family && AF_INET == remote_if->af_family) {
         uint32_t local_ip, remote_ip;
 
-        local_ip = (uint32_t)((struct sockaddr_in *)&(local_if->if_addr))->sin_addr.s_addr;
-        remote_ip = (uint32_t)((struct sockaddr_in *)&(remote_if->if_addr))->sin_addr.s_addr;
+        local_ip = (uint32_t)((struct sockaddr_in *) &(local_if->if_addr))->sin_addr.s_addr;
+        remote_ip = (uint32_t)((struct sockaddr_in *) &(remote_if->if_addr))->sin_addr.s_addr;
         outgoing_interface = local_if->if_kernel_index;
 
         /* If the ips are identical, assume reachable through loopback. This
@@ -117,26 +108,21 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
            maintain similar behavior to previous implementations. */
         if (local_ip == remote_ip) {
             conn_type = "IPv4 SAME NETWORK";
-            weight = calculate_weight(local_if->if_bandwidth,
-                                      remote_if->if_bandwidth,
+            weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                       CQ_SAME_NETWORK);
             goto out;
         }
 
-        ret = opal_reachable_netlink_rt_lookup(local_ip,
-                                               remote_ip,
-                                               outgoing_interface,
+        ret = opal_reachable_netlink_rt_lookup(local_ip, remote_ip, outgoing_interface,
                                                &has_gateway);
         if (0 == ret) {
             if (0 == has_gateway) {
                 conn_type = "IPv4 SAME NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_SAME_NETWORK);
             } else {
                 conn_type = "IPv4 DIFFERENT NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_DIFFERENT_NETWORK);
             }
         } else {
@@ -148,8 +134,8 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
     } else if (AF_INET6 == local_if->af_family && AF_INET6 == remote_if->af_family) {
         struct in6_addr *local_ip, *remote_ip;
 
-        local_ip = &((struct sockaddr_in6 *)&(local_if->if_addr))->sin6_addr;
-        remote_ip = &((struct sockaddr_in6 *)&(remote_if->if_addr))->sin6_addr;
+        local_ip = &((struct sockaddr_in6 *) &(local_if->if_addr))->sin6_addr;
+        remote_ip = &((struct sockaddr_in6 *) &(remote_if->if_addr))->sin6_addr;
         outgoing_interface = local_if->if_kernel_index;
 
         /* If the ips are identical, assume reachable through loopback. This
@@ -157,28 +143,23 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
            maintain similar behavior to previous implementations. */
         if (local_ip == remote_ip) {
             conn_type = "IPv6 SAME NETWORK";
-            weight = calculate_weight(local_if->if_bandwidth,
-                                      remote_if->if_bandwidth,
+            weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                       CQ_SAME_NETWORK);
 
             goto out;
         }
 
-        ret = opal_reachable_netlink_rt_lookup6(local_ip,
-                                                remote_ip,
-                                                outgoing_interface,
+        ret = opal_reachable_netlink_rt_lookup6(local_ip, remote_ip, outgoing_interface,
                                                 &has_gateway);
 
         if (0 == ret) {
             if (0 == has_gateway) {
                 conn_type = "IPv6 SAME NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_SAME_NETWORK);
             } else {
                 conn_type = "IPv6 DIFFERENT NETWORK";
-                weight = calculate_weight(local_if->if_bandwidth,
-                                          remote_if->if_bandwidth,
+                weight = calculate_weight(local_if->if_bandwidth, remote_if->if_bandwidth,
                                           CQ_DIFFERENT_NETWORK);
             }
         } else {
@@ -196,19 +177,14 @@ static int get_weights(opal_if_t *local_if, opal_if_t *remote_if)
 
 out:
     opal_output_verbose(20, opal_reachable_base_framework.framework_output,
-                        "reachable:netlink: path from %s to %s: %s",
-                        str_local, str_remote, conn_type);
+                        "reachable:netlink: path from %s to %s: %s", str_local, str_remote,
+                        conn_type);
 
     return weight;
 }
 
-
-const opal_reachable_base_module_t opal_reachable_netlink_module = {
-    netlink_init,
-    netlink_fini,
-    netlink_reachable
-};
-
+const opal_reachable_base_module_t opal_reachable_netlink_module = {netlink_init, netlink_fini,
+                                                                    netlink_reachable};
 
 /*
  * Weights determined by bandwidth between
@@ -236,10 +212,10 @@ const opal_reachable_base_module_t opal_reachable_netlink_module = {
  * connection_quality to be large enough
  * to capture decimals
  */
-static int calculate_weight(int bandwidth_local, int bandwidth_remote,
-                            int connection_quality)
+static int calculate_weight(int bandwidth_local, int bandwidth_remote, int connection_quality)
 {
-    int weight = connection_quality * (MIN(bandwidth_local, bandwidth_remote) +
-                                       1.0/(1.0 + (double)abs(bandwidth_local - bandwidth_remote)));
+    int weight = connection_quality
+                 * (MIN(bandwidth_local, bandwidth_remote)
+                    + 1.0 / (1.0 + (double) abs(bandwidth_local - bandwidth_remote)));
     return weight;
 }

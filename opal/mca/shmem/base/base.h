@@ -31,23 +31,16 @@ BEGIN_C_DECLS
 /* ////////////////////////////////////////////////////////////////////////// */
 /* Public API for the shmem framework */
 /* ////////////////////////////////////////////////////////////////////////// */
-OPAL_DECLSPEC int
-opal_shmem_segment_create(opal_shmem_ds_t *ds_buf,
-                          const char *file_name,
-                          size_t size);
+OPAL_DECLSPEC int opal_shmem_segment_create(opal_shmem_ds_t *ds_buf, const char *file_name,
+                                            size_t size);
 
-OPAL_DECLSPEC int
-opal_shmem_ds_copy(const opal_shmem_ds_t *from,
-                   opal_shmem_ds_t *to);
+OPAL_DECLSPEC int opal_shmem_ds_copy(const opal_shmem_ds_t *from, opal_shmem_ds_t *to);
 
-OPAL_DECLSPEC void *
-opal_shmem_segment_attach(opal_shmem_ds_t *ds_buf);
+OPAL_DECLSPEC void *opal_shmem_segment_attach(opal_shmem_ds_t *ds_buf);
 
-OPAL_DECLSPEC int
-opal_shmem_segment_detach(opal_shmem_ds_t *ds_buf);
+OPAL_DECLSPEC int opal_shmem_segment_detach(opal_shmem_ds_t *ds_buf);
 
-OPAL_DECLSPEC int
-opal_shmem_unlink(opal_shmem_ds_t *ds_buf);
+OPAL_DECLSPEC int opal_shmem_unlink(opal_shmem_ds_t *ds_buf);
 /* ////////////////////////////////////////////////////////////////////////// */
 /* End Public API for the shmem framework */
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -64,8 +57,7 @@ opal_shmem_unlink(opal_shmem_ds_t *ds_buf);
  *
  * see: orte/mca/odls/base/odls_base_default_fns.c
  */
-OPAL_DECLSPEC char *
-opal_shmem_base_best_runnable_component_name(void);
+OPAL_DECLSPEC char *opal_shmem_base_best_runnable_component_name(void);
 
 /**
  * Select an available component.
@@ -98,8 +90,7 @@ opal_shmem_base_best_runnable_component_name(void);
  * selected.  If no component was selected, subsequent invocation
  * of the shmem wrapper functions will return an error.
  */
-OPAL_DECLSPEC int
-opal_shmem_base_select(void);
+OPAL_DECLSPEC int opal_shmem_base_select(void);
 
 /**
  * Shut down the shmem MCA framework.
@@ -112,8 +103,7 @@ opal_shmem_base_select(void);
  * It must be the last function invoked on the shmem MCA
  * framework.
  */
-OPAL_DECLSPEC int
-opal_shmem_base_close(void);
+OPAL_DECLSPEC int opal_shmem_base_close(void);
 
 /**
  * Indication of whether a component was successfully selected or

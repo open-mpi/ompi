@@ -22,14 +22,11 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
+#include "opal/mca/shmem/shmem.h"
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int
-opal_shmem_segment_create(opal_shmem_ds_t *ds_buf,
-                          const char *file_name,
-                          size_t size)
+int opal_shmem_segment_create(opal_shmem_ds_t *ds_buf, const char *file_name, size_t size)
 {
     if (!opal_shmem_base_selected) {
         return OPAL_ERROR;
@@ -39,9 +36,7 @@ opal_shmem_segment_create(opal_shmem_ds_t *ds_buf,
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int
-opal_shmem_ds_copy(const opal_shmem_ds_t *from,
-                   opal_shmem_ds_t *to)
+int opal_shmem_ds_copy(const opal_shmem_ds_t *from, opal_shmem_ds_t *to)
 {
     if (!opal_shmem_base_selected) {
         return OPAL_ERROR;
@@ -51,8 +46,7 @@ opal_shmem_ds_copy(const opal_shmem_ds_t *from,
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-void *
-opal_shmem_segment_attach(opal_shmem_ds_t *ds_buf)
+void *opal_shmem_segment_attach(opal_shmem_ds_t *ds_buf)
 {
     if (!opal_shmem_base_selected) {
         return NULL;
@@ -62,8 +56,7 @@ opal_shmem_segment_attach(opal_shmem_ds_t *ds_buf)
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int
-opal_shmem_segment_detach(opal_shmem_ds_t *ds_buf)
+int opal_shmem_segment_detach(opal_shmem_ds_t *ds_buf)
 {
     if (!opal_shmem_base_selected) {
         return OPAL_ERROR;
@@ -73,8 +66,7 @@ opal_shmem_segment_detach(opal_shmem_ds_t *ds_buf)
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int
-opal_shmem_unlink(opal_shmem_ds_t *ds_buf)
+int opal_shmem_unlink(opal_shmem_ds_t *ds_buf)
 {
     if (!opal_shmem_base_selected) {
         return OPAL_ERROR;
@@ -82,4 +74,3 @@ opal_shmem_unlink(opal_shmem_ds_t *ds_buf)
 
     return opal_shmem_base_module->unlink(ds_buf);
 }
-

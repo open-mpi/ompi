@@ -16,45 +16,45 @@
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #include <errno.h>
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
+#    include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_SOCKIO_H
-#include <sys/sockio.h>
+#    include <sys/sockio.h>
 #endif
 #ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
+#    include <sys/ioctl.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
+#    include <arpa/inet.h>
 #endif
 #ifdef HAVE_NET_IF_H
-#include <net/if.h>
+#    include <net/if.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 #ifdef HAVE_IFADDRS_H
-#include <ifaddrs.h>
+#    include <ifaddrs.h>
 #endif
 
-#include "opal/runtime/opal.h"
 #include "opal/constants.h"
+#include "opal/mca/if/base/base.h"
+#include "opal/mca/if/if.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/string_copy.h"
-#include "opal/mca/if/if.h"
-#include "opal/mca/if/base/base.h"
 
 #define LOG_PREFIX "mca: if: linux_ipv6: "
 
@@ -64,23 +64,15 @@ static int if_linux_ipv6_open(void);
 opal_if_base_component_t mca_if_linux_ipv6_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    {
-        OPAL_IF_BASE_VERSION_2_0_0,
+    {OPAL_IF_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
-        "linux_ipv6",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+     /* Component name and version */
+     "linux_ipv6", OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, OPAL_RELEASE_VERSION,
 
-        /* Component open and close functions */
-        if_linux_ipv6_open,
-        NULL
-    },
-    {
-        /* This component is checkpointable */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+     /* Component open and close functions */
+     if_linux_ipv6_open, NULL},
+    {/* This component is checkpointable */
+     MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
 
 #if OPAL_ENABLE_IPV6
@@ -96,7 +88,6 @@ static bool hex2int(char hex, int *dst)
         return false;
     }
     return true;
-
 }
 
 static bool hexdecode(const char *src, uint8_t *dst, size_t dstsize)
@@ -125,36 +116,35 @@ static int if_linux_ipv6_open(void)
         char addrhex[sizeof a6.s6_addr * 2 + 1];
         char addrstr[INET6_ADDRSTRLEN];
 
-        while (fscanf(f, "%s %x %x %x %x %s\n", addrhex,
-                      &idx, &pfxlen, &scope, &dadstat, ifname) != EOF) {
+        while (fscanf(f, "%s %x %x %x %x %s\n", addrhex, &idx, &pfxlen, &scope, &dadstat, ifname)
+               != EOF) {
             opal_if_t *intf;
 
             if (!hexdecode(addrhex, a6.s6_addr, sizeof a6.s6_addr)) {
                 const char *hostname;
                 hostname = opal_gethostname();
-                opal_show_help("help-opal-if-linux-ipv6.txt",
-                               "fail to parse if_inet6", true,
+                opal_show_help("help-opal-if-linux-ipv6.txt", "fail to parse if_inet6", true,
                                hostname, ifname, addrhex);
                 continue;
             };
             inet_ntop(AF_INET6, a6.s6_addr, addrstr, sizeof addrstr);
 
             opal_output_verbose(1, opal_if_base_framework.framework_output,
-                                LOG_PREFIX "found interface %s inet6 %s scope %x\n",
-                                ifname, addrstr, scope);
+                                LOG_PREFIX "found interface %s inet6 %s scope %x\n", ifname,
+                                addrstr, scope);
 
             /* Only interested in global (0x00) scope */
-            if (scope != 0x00)  {
+            if (scope != 0x00) {
                 opal_output_verbose(1, opal_if_base_framework.framework_output,
-                                    LOG_PREFIX "skipped interface %s inet6 %s scope %x\n",
-                                    ifname, addrstr, scope);
+                                    LOG_PREFIX "skipped interface %s inet6 %s scope %x\n", ifname,
+                                    addrstr, scope);
                 continue;
             }
 
             intf = OBJ_NEW(opal_if_t);
             if (NULL == intf) {
                 opal_output(0, LOG_PREFIX "unable to allocate %lu bytes\n",
-                            (unsigned long)sizeof(opal_if_t));
+                            (unsigned long) sizeof(opal_if_t));
                 fclose(f);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
@@ -162,13 +152,13 @@ static int if_linux_ipv6_open(void)
 
             /* now construct the opal_if_t */
             opal_string_copy(intf->if_name, ifname, OPAL_IF_NAMESIZE);
-            intf->if_index = opal_list_get_size(&opal_if_list)+1;
+            intf->if_index = opal_list_get_size(&opal_if_list) + 1;
             intf->if_kernel_index = (uint16_t) idx;
-            ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;
-            ((struct sockaddr_in6*) &intf->if_addr)->sin6_family = AF_INET6;
-            ((struct sockaddr_in6*) &intf->if_addr)->sin6_scope_id = scope;
+            ((struct sockaddr_in6 *) &intf->if_addr)->sin6_addr = a6;
+            ((struct sockaddr_in6 *) &intf->if_addr)->sin6_family = AF_INET6;
+            ((struct sockaddr_in6 *) &intf->if_addr)->sin6_scope_id = scope;
             intf->if_mask = pfxlen;
-            if (OPAL_SUCCESS == opal_ifindextoflags(opal_ifnametoindex (ifname), &flag)) {
+            if (OPAL_SUCCESS == opal_ifindextoflags(opal_ifnametoindex(ifname), &flag)) {
                 intf->if_flags = flag;
             } else {
                 intf->if_flags = IFF_UP;
@@ -178,12 +168,12 @@ static int if_linux_ipv6_open(void)
                to list */
             opal_list_append(&opal_if_list, &(intf->super));
             opal_output_verbose(1, opal_if_base_framework.framework_output,
-                                LOG_PREFIX "added interface %s inet6 %s scope %x\n",
-                                ifname, addrstr, scope);
+                                LOG_PREFIX "added interface %s inet6 %s scope %x\n", ifname,
+                                addrstr, scope);
         } /* of while */
         fclose(f);
     }
-#endif  /* OPAL_ENABLE_IPV6 */
+#endif /* OPAL_ENABLE_IPV6 */
 
     return OPAL_SUCCESS;
 }

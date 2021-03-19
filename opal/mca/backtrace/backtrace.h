@@ -25,8 +25,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 #include "opal/util/stacktrace.h"
 
 BEGIN_C_DECLS
@@ -36,7 +36,6 @@ BEGIN_C_DECLS
  * functions, both of which are called directly.  The joy of link-time
  * components.
  */
-
 
 /*
  * Print back trace to FILE file with a prefix for each line.
@@ -55,8 +54,7 @@ OPAL_DECLSPEC int opal_backtrace_print(FILE *file, char *prefix, int strip);
  * \note Probably bad to call this from a signal handler.
  *
  */
-OPAL_DECLSPEC int opal_backtrace_buffer(char*** messages, int *len);
-
+OPAL_DECLSPEC int opal_backtrace_buffer(char ***messages, int *len);
 
 /**
  * Structure for backtrace components.
@@ -75,8 +73,7 @@ typedef struct opal_backtrace_base_component_2_0_0_t opal_backtrace_base_compone
 /*
  * Macro for use in components that are of type backtrace
  */
-#define OPAL_BACKTRACE_BASE_VERSION_2_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("backtrace", 2, 0, 0)
+#define OPAL_BACKTRACE_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("backtrace", 2, 0, 0)
 
 END_C_DECLS
 

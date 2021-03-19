@@ -11,22 +11,25 @@
 
 #include "btl_uct_frag.h"
 
-static void mca_btl_uct_frag_completion (uct_completion_t *uct_comp, ucs_status_t status)
+static void mca_btl_uct_frag_completion(uct_completion_t *uct_comp, ucs_status_t status)
 {
-    mca_btl_uct_uct_completion_t *comp = (mca_btl_uct_uct_completion_t *) ((uintptr_t) uct_comp - offsetof (mca_btl_uct_uct_completion_t, uct_comp));
+    mca_btl_uct_uct_completion_t *comp = (mca_btl_uct_uct_completion_t
+                                              *) ((uintptr_t) uct_comp
+                                                  - offsetof(mca_btl_uct_uct_completion_t,
+                                                             uct_comp));
 
     BTL_VERBOSE(("frag operation complete. frag = %p. status = %d", (void *) comp->frag, status));
 
     comp->status = status;
-    opal_fifo_push (&comp->dev_context->completion_fifo, &comp->super.super);
+    opal_fifo_push(&comp->dev_context->completion_fifo, &comp->super.super);
 }
 
-static void mca_btl_uct_base_frag_constructor (mca_btl_uct_base_frag_t *frag)
+static void mca_btl_uct_base_frag_constructor(mca_btl_uct_base_frag_t *frag)
 {
     mca_btl_uct_reg_t *reg = (mca_btl_uct_reg_t *) frag->base.super.registration;
 
     /* zero everything out */
-    memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
+    memset((char *) frag + sizeof(frag->base), 0, sizeof(*frag) - sizeof(frag->base));
 
     OBJ_CONSTRUCT(&frag->comp, mca_btl_uct_uct_completion_t);
 
@@ -46,7 +49,7 @@ static void mca_btl_uct_base_frag_constructor (mca_btl_uct_base_frag_t *frag)
     }
 }
 
-static void mca_btl_uct_base_frag_destructor (mca_btl_uct_base_frag_t *frag)
+static void mca_btl_uct_base_frag_destructor(mca_btl_uct_base_frag_t *frag)
 {
     OBJ_DESTRUCT(&frag->comp);
 }

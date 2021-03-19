@@ -14,20 +14,19 @@
 #include "opal/constants.h"
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#    include <string.h>
 #endif
 
 #include "opal/class/opal_list.h"
-#include "opal/util/event.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/util/error.h"
+#include "opal/util/event.h"
 #include "opal/util/fd.h"
 
 #include "opal/runtime/opal_progress_threads.h"
-
 
 /* create a tracking object for progress threads */
 typedef struct {
@@ -52,7 +51,7 @@ typedef struct {
 
 static void tracker_constructor(opal_progress_tracker_t *p)
 {
-    p->refcount = 1;  // start at one since someone created it
+    p->refcount = 1; // start at one since someone created it
     p->name = NULL;
     p->ev_base = NULL;
     p->ev_active = false;
@@ -74,17 +73,12 @@ static void tracker_destructor(opal_progress_tracker_t *p)
     }
 }
 
-static OBJ_CLASS_INSTANCE(opal_progress_tracker_t,
-                          opal_list_item_t,
-                          tracker_constructor,
+static OBJ_CLASS_INSTANCE(opal_progress_tracker_t, opal_list_item_t, tracker_constructor,
                           tracker_destructor);
 
 static bool inited = false;
 static opal_list_t tracking;
-static struct timeval long_timeout = {
-    .tv_sec = 3600,
-    .tv_usec = 0
-};
+static struct timeval long_timeout = {.tv_sec = 3600, .tv_usec = 0};
 static const char *shared_thread_name = "OPAL-wide async progress thread";
 
 /*
@@ -93,7 +87,7 @@ static const char *shared_thread_name = "OPAL-wide async progress thread";
  */
 static void dummy_timeout_cb(int fd, short args, void *cbdata)
 {
-    opal_progress_tracker_t *trk = (opal_progress_tracker_t*)cbdata;
+    opal_progress_tracker_t *trk = (opal_progress_tracker_t *) cbdata;
 
     opal_event_add(&trk->block, &long_timeout);
 }
@@ -101,10 +95,10 @@ static void dummy_timeout_cb(int fd, short args, void *cbdata)
 /*
  * Main for the progress thread
  */
-static void* progress_engine(opal_object_t *obj)
+static void *progress_engine(opal_object_t *obj)
 {
-    opal_thread_t *t = (opal_thread_t*)obj;
-    opal_progress_tracker_t *trk = (opal_progress_tracker_t*)t->t_arg;
+    opal_thread_t *t = (opal_thread_t *) obj;
+    opal_progress_tracker_t *trk = (opal_progress_tracker_t *) t->t_arg;
 
     while (trk->ev_active) {
         opal_event_loop(trk->ev_base, OPAL_EVLOOP_ONCE);
@@ -157,7 +151,7 @@ opal_event_base_t *opal_progress_thread_init(const char *name)
     }
 
     /* check if we already have this thread */
-    OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
+    OPAL_LIST_FOREACH (trk, &tracking, opal_progress_tracker_t) {
         if (0 == strcmp(name, trk->name)) {
             /* we do, so up the refcount on it */
             ++trk->refcount;
@@ -187,8 +181,7 @@ opal_event_base_t *opal_progress_thread_init(const char *name)
 
     /* add an event to the new event base (if there are no events,
        opal_event_loop() will return immediately) */
-    opal_event_set(trk->ev_base, &trk->block, -1, OPAL_EV_PERSIST,
-                   dummy_timeout_cb, trk);
+    opal_event_set(trk->ev_base, &trk->block, -1, OPAL_EV_PERSIST, dummy_timeout_cb, trk);
     opal_event_add(&trk->block, &long_timeout);
 
     /* construct the thread object */
@@ -218,7 +211,7 @@ int opal_progress_thread_finalize(const char *name)
     }
 
     /* find the specified engine */
-    OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
+    OPAL_LIST_FOREACH (trk, &tracking, opal_progress_tracker_t) {
         if (0 == strcmp(name, trk->name)) {
             /* decrement the refcount */
             --trk->refcount;
@@ -259,7 +252,7 @@ int opal_progress_thread_pause(const char *name)
     }
 
     /* find the specified engine */
-    OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
+    OPAL_LIST_FOREACH (trk, &tracking, opal_progress_tracker_t) {
         if (0 == strcmp(name, trk->name)) {
             if (trk->ev_active) {
                 stop_progress_engine(trk);
@@ -286,7 +279,7 @@ int opal_progress_thread_resume(const char *name)
     }
 
     /* find the specified engine */
-    OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
+    OPAL_LIST_FOREACH (trk, &tracking, opal_progress_tracker_t) {
         if (0 == strcmp(name, trk->name)) {
             if (trk->ev_active) {
                 return OPAL_ERR_RESOURCE_BUSY;

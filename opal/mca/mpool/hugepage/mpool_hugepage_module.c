@@ -29,44 +29,43 @@
 
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "opal_config.h"
-#include "opal/align.h"
 #include "mpool_hugepage.h"
+#include "opal/align.h"
 #include <errno.h>
 #include <string.h>
 #ifdef HAVE_MALLOC_H
-#include <malloc.h>
+#    include <malloc.h>
 #endif
-#include "opal/mca/mpool/base/base.h"
-#include "opal/runtime/opal_params.h"
 #include "opal/include/opal_stdint.h"
 #include "opal/mca/allocator/base/base.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/runtime/opal_params.h"
 #include "opal/util/printf.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
 
+static void *mca_mpool_hugepage_alloc(mca_mpool_base_module_t *mpool, size_t size, size_t align,
+                                      uint32_t flags);
+static void *mca_mpool_hugepage_realloc(mca_mpool_base_module_t *mpool, void *addr, size_t size);
+static void mca_mpool_hugepage_free(mca_mpool_base_module_t *mpool, void *addr);
+static void mca_mpool_hugepage_finalize(mca_mpool_base_module_t *mpool);
 
-static void *mca_mpool_hugepage_alloc (mca_mpool_base_module_t *mpool, size_t size, size_t align,
-                                   uint32_t flags);
-static void *mca_mpool_hugepage_realloc (mca_mpool_base_module_t *mpool, void *addr, size_t size);
-static void mca_mpool_hugepage_free (mca_mpool_base_module_t *mpool, void *addr);
-static void mca_mpool_hugepage_finalize (mca_mpool_base_module_t *mpool);
-
-static void mca_mpool_hugepage_hugepage_constructor (mca_mpool_hugepage_hugepage_t *huge_page)
+static void mca_mpool_hugepage_hugepage_constructor(mca_mpool_hugepage_hugepage_t *huge_page)
 {
-    memset ((char *)huge_page + sizeof(huge_page->super), 0, sizeof (*huge_page) - sizeof (huge_page->super));
+    memset((char *) huge_page + sizeof(huge_page->super), 0,
+           sizeof(*huge_page) - sizeof(huge_page->super));
 }
 
-static void mca_mpool_hugepage_hugepage_destructor (mca_mpool_hugepage_hugepage_t *huge_page)
+static void mca_mpool_hugepage_hugepage_destructor(mca_mpool_hugepage_hugepage_t *huge_page)
 {
-    free (huge_page->path);
+    free(huge_page->path);
 }
 
 OBJ_CLASS_INSTANCE(mca_mpool_hugepage_hugepage_t, opal_list_item_t,
-                   mca_mpool_hugepage_hugepage_constructor,
-                   mca_mpool_hugepage_hugepage_destructor);
+                   mca_mpool_hugepage_hugepage_constructor, mca_mpool_hugepage_hugepage_destructor);
 
-static int mca_mpool_rb_hugepage_compare (void *key1, void *key2)
+static int mca_mpool_rb_hugepage_compare(void *key1, void *key2)
 {
     if (key1 == key2) {
         return 0;
@@ -79,7 +78,7 @@ static int mca_mpool_rb_hugepage_compare (void *key1, void *key2)
  *  Initializes the mpool module.
  */
 int mca_mpool_hugepage_module_init(mca_mpool_hugepage_module_t *mpool,
-                                  mca_mpool_hugepage_hugepage_t *huge_page)
+                                   mca_mpool_hugepage_hugepage_t *huge_page)
 {
     mca_allocator_base_component_t *allocator_component;
     int rc;
@@ -97,16 +96,16 @@ int mca_mpool_hugepage_module_init(mca_mpool_hugepage_module_t *mpool,
     mpool->huge_page = huge_page;
 
     /* use an allocator component to reduce waste when making small allocations */
-    allocator_component = mca_allocator_component_lookup ("bucket");
+    allocator_component = mca_allocator_component_lookup("bucket");
     if (NULL == allocator_component) {
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    mpool->allocator = allocator_component->allocator_init (true, mca_mpool_hugepage_seg_alloc,
-                                                            mca_mpool_hugepage_seg_free, mpool);
+    mpool->allocator = allocator_component->allocator_init(true, mca_mpool_hugepage_seg_alloc,
+                                                           mca_mpool_hugepage_seg_free, mpool);
 
     OBJ_CONSTRUCT(&mpool->allocation_tree, opal_rb_tree_t);
-    rc = opal_rb_tree_init (&mpool->allocation_tree, mca_mpool_rb_hugepage_compare);
+    rc = opal_rb_tree_init(&mpool->allocation_tree, mca_mpool_rb_hugepage_compare);
     if (OPAL_SUCCESS != rc) {
         OBJ_DESTRUCT(&mpool->allocation_tree);
         return OPAL_ERR_NOT_AVAILABLE;
@@ -115,7 +114,7 @@ int mca_mpool_hugepage_module_init(mca_mpool_hugepage_module_t *mpool,
     return OPAL_SUCCESS;
 }
 
-void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
+void *mca_mpool_hugepage_seg_alloc(void *ctx, size_t *sizep)
 {
     mca_mpool_hugepage_module_t *hugepage_module = (mca_mpool_hugepage_module_t *) ctx;
     mca_mpool_hugepage_hugepage_t *huge_page = hugepage_module->huge_page;
@@ -131,24 +130,23 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
     if (huge_page->path) {
         int32_t count;
 
-        count = opal_atomic_add_fetch_32 (&huge_page->count, 1);
+        count = opal_atomic_add_fetch_32(&huge_page->count, 1);
 
-        rc = opal_asprintf (&path, "%s/hugepage.openmpi.%d.%d", huge_page->path,
-                       getpid (), count);
+        rc = opal_asprintf(&path, "%s/hugepage.openmpi.%d.%d", huge_page->path, getpid(), count);
         if (0 > rc) {
             return NULL;
         }
 
-        fd = open (path, O_RDWR | O_CREAT, 0600);
+        fd = open(path, O_RDWR | O_CREAT, 0600);
         if (-1 == fd) {
-            free (path);
+            free(path);
             return NULL;
         }
 
-        if (0 != ftruncate (fd, size)) {
-            close (fd);
-            unlink (path);
-            free (path);
+        if (0 != ftruncate(fd, size)) {
+            close(fd);
+            unlink(path);
+            free(path);
             return NULL;
         }
     } else {
@@ -160,31 +158,31 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
 #endif
     }
 
-    base = mmap (NULL, size, PROT_READ | PROT_WRITE, flags | huge_page->mmap_flags, fd, 0);
+    base = mmap(NULL, size, PROT_READ | PROT_WRITE, flags | huge_page->mmap_flags, fd, 0);
     if (path) {
-        unlink (path);
-        free (path);
+        unlink(path);
+        free(path);
     }
 
     if (fd >= 0) {
-        close (fd);
+        close(fd);
     }
 
     if (MAP_FAILED == base) {
-        opal_output_verbose (MCA_BASE_VERBOSE_WARN, opal_mpool_base_framework.framework_verbose,
-                             "could not allocate huge page(s). falling back on standard pages");
+        opal_output_verbose(MCA_BASE_VERBOSE_WARN, opal_mpool_base_framework.framework_verbose,
+                            "could not allocate huge page(s). falling back on standard pages");
         /* fall back on regular pages */
-        base = mmap (NULL, size, PROT_READ | PROT_WRITE, flags, -1, 0);
+        base = mmap(NULL, size, PROT_READ | PROT_WRITE, flags, -1, 0);
     }
 
     if (MAP_FAILED == base) {
         return NULL;
     }
 
-    opal_mutex_lock (&hugepage_module->lock);
-    opal_rb_tree_insert (&hugepage_module->allocation_tree, base, (void *) (intptr_t) size);
-    (void) opal_atomic_fetch_add_size_t (&mca_mpool_hugepage_component.bytes_allocated, size);
-    opal_mutex_unlock (&hugepage_module->lock);
+    opal_mutex_lock(&hugepage_module->lock);
+    opal_rb_tree_insert(&hugepage_module->allocation_tree, base, (void *) (intptr_t) size);
+    (void) opal_atomic_fetch_add_size_t(&mca_mpool_hugepage_component.bytes_allocated, size);
+    opal_mutex_unlock(&hugepage_module->lock);
 
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_mpool_base_framework.framework_verbose,
                          "allocated segment %p of size %lu bytes", base, size));
@@ -194,56 +192,56 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
     return base;
 }
 
-void mca_mpool_hugepage_seg_free (void *ctx, void *addr)
+void mca_mpool_hugepage_seg_free(void *ctx, void *addr)
 {
     mca_mpool_hugepage_module_t *hugepage_module = (mca_mpool_hugepage_module_t *) ctx;
     size_t size;
 
-    opal_mutex_lock (&hugepage_module->lock);
+    opal_mutex_lock(&hugepage_module->lock);
 
-    size = (size_t) (intptr_t) opal_rb_tree_find (&hugepage_module->allocation_tree, addr);
+    size = (size_t)(intptr_t) opal_rb_tree_find(&hugepage_module->allocation_tree, addr);
     if (size > 0) {
-        opal_rb_tree_delete (&hugepage_module->allocation_tree, addr);
+        opal_rb_tree_delete(&hugepage_module->allocation_tree, addr);
         OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_mpool_base_framework.framework_verbose,
                              "freeing segment %p of size %lu bytes", addr, size));
-        munmap (addr, size);
-        (void) opal_atomic_fetch_add_size_t (&mca_mpool_hugepage_component.bytes_allocated, -size);
+        munmap(addr, size);
+        (void) opal_atomic_fetch_add_size_t(&mca_mpool_hugepage_component.bytes_allocated, -size);
     }
 
-    opal_mutex_unlock (&hugepage_module->lock);
+    opal_mutex_unlock(&hugepage_module->lock);
 }
 
 /**
-  * allocate function
-  */
-static void *mca_mpool_hugepage_alloc (mca_mpool_base_module_t *mpool, size_t size,
-                                       size_t align, uint32_t flags)
+ * allocate function
+ */
+static void *mca_mpool_hugepage_alloc(mca_mpool_base_module_t *mpool, size_t size, size_t align,
+                                      uint32_t flags)
 {
     mca_mpool_hugepage_module_t *hugepage_module = (mca_mpool_hugepage_module_t *) mpool;
-    return hugepage_module->allocator->alc_alloc (hugepage_module->allocator, size, align);
+    return hugepage_module->allocator->alc_alloc(hugepage_module->allocator, size, align);
 }
 
 /**
-  * allocate function
-  */
-static void *mca_mpool_hugepage_realloc (mca_mpool_base_module_t *mpool, void *addr, size_t size)
+ * allocate function
+ */
+static void *mca_mpool_hugepage_realloc(mca_mpool_base_module_t *mpool, void *addr, size_t size)
 {
     mca_mpool_hugepage_module_t *hugepage_module = (mca_mpool_hugepage_module_t *) mpool;
 
-    return hugepage_module->allocator->alc_realloc (hugepage_module->allocator, addr, size);
+    return hugepage_module->allocator->alc_realloc(hugepage_module->allocator, addr, size);
 }
 
 /**
-  * free function
-  */
-static void mca_mpool_hugepage_free (mca_mpool_base_module_t *mpool, void *addr)
+ * free function
+ */
+static void mca_mpool_hugepage_free(mca_mpool_base_module_t *mpool, void *addr)
 {
     mca_mpool_hugepage_module_t *hugepage_module = (mca_mpool_hugepage_module_t *) mpool;
 
-    hugepage_module->allocator->alc_free (hugepage_module->allocator, addr);
+    hugepage_module->allocator->alc_free(hugepage_module->allocator, addr);
 }
 
-static void mca_mpool_hugepage_finalize (struct mca_mpool_base_module_t *mpool)
+static void mca_mpool_hugepage_finalize(struct mca_mpool_base_module_t *mpool)
 {
     mca_mpool_hugepage_module_t *hugepage_module = (mca_mpool_hugepage_module_t *) mpool;
 
@@ -251,7 +249,7 @@ static void mca_mpool_hugepage_finalize (struct mca_mpool_base_module_t *mpool)
     OBJ_DESTRUCT(&hugepage_module->allocation_tree);
 
     if (hugepage_module->allocator) {
-        (void) hugepage_module->allocator->alc_finalize (hugepage_module->allocator);
+        (void) hugepage_module->allocator->alc_finalize(hugepage_module->allocator);
         hugepage_module->allocator = NULL;
     }
 }

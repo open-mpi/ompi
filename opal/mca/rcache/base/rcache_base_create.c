@@ -25,23 +25,24 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/rcache/rcache.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/base/rcache_base_mem_cb.h"
-#include "rcache_base_vma_tree.h"
-#include "opal/util/show_help.h"
+#include "opal/mca/rcache/rcache.h"
 #include "opal/util/proc.h"
+#include "opal/util/show_help.h"
+#include "rcache_base_vma_tree.h"
 
-#include "opal/runtime/opal_params.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/runtime/opal_params.h"
 
-mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void *user_data,
-                                                         struct mca_rcache_base_resources_t* resources)
+mca_rcache_base_module_t *
+mca_rcache_base_module_create(const char *name, void *user_data,
+                              struct mca_rcache_base_resources_t *resources)
 {
-    mca_rcache_base_component_t* component = NULL;
-    mca_rcache_base_module_t* module = NULL;
+    mca_rcache_base_component_t *component = NULL;
+    mca_rcache_base_module_t *module = NULL;
     mca_base_component_list_item_t *cli;
     mca_rcache_base_selected_module_t *sm;
 
@@ -60,19 +61,18 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
                triggered before this (any time after mem_free_init(),
                actually).  This is a hook available for memory manager hooks
                without good initialization routine support */
-            (void) mca_base_framework_open (&opal_memory_base_framework, 0);
+            (void) mca_base_framework_open(&opal_memory_base_framework, 0);
 
-            if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-                ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
-                 opal_mem_hooks_support_level())) {
+            if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
+                == ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
+                    & opal_mem_hooks_support_level())) {
                 if (-1 == opal_leave_pinned) {
                     opal_leave_pinned = !opal_leave_pinned_pipeline;
                 }
                 opal_mem_hooks_register_release(mca_rcache_base_mem_cb, NULL);
             } else if (1 == opal_leave_pinned || opal_leave_pinned_pipeline) {
-                opal_show_help("help-rcache-base.txt", "leave pinned failed",
-                               true, name, OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                               opal_process_info.nodename);
+                opal_show_help("help-rcache-base.txt", "leave pinned failed", true, name,
+                               OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), opal_process_info.nodename);
                 return NULL;
             }
 
@@ -82,15 +82,16 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
         }
     }
 
-    OPAL_LIST_FOREACH(cli, &opal_rcache_base_framework.framework_components, mca_base_component_list_item_t) {
-         component = (mca_rcache_base_component_t *) cli->cli_component;
-         if(0 == strcmp(component->rcache_version.mca_component_name, name)) {
-             module = component->rcache_init (resources);
-             break;
-         }
+    OPAL_LIST_FOREACH (cli, &opal_rcache_base_framework.framework_components,
+                       mca_base_component_list_item_t) {
+        component = (mca_rcache_base_component_t *) cli->cli_component;
+        if (0 == strcmp(component->rcache_version.mca_component_name, name)) {
+            module = component->rcache_init(resources);
+            break;
+        }
     }
 
-    if ( NULL == module ) {
+    if (NULL == module) {
         return NULL;
     }
 
@@ -98,7 +99,7 @@ mca_rcache_base_module_t* mca_rcache_base_module_create (const char* name, void 
     sm->rcache_component = component;
     sm->rcache_module = module;
     sm->user_data = user_data;
-    opal_list_append(&mca_rcache_base_modules, (opal_list_item_t*) sm);
+    opal_list_append(&mca_rcache_base_modules, (opal_list_item_t *) sm);
 
     return module;
 }
@@ -107,9 +108,9 @@ int mca_rcache_base_module_destroy(mca_rcache_base_module_t *module)
 {
     mca_rcache_base_selected_module_t *sm, *next;
 
-    OPAL_LIST_FOREACH_SAFE(sm, next, &mca_rcache_base_modules, mca_rcache_base_selected_module_t) {
+    OPAL_LIST_FOREACH_SAFE (sm, next, &mca_rcache_base_modules, mca_rcache_base_selected_module_t) {
         if (module == sm->rcache_module) {
-            opal_list_remove_item(&mca_rcache_base_modules, (opal_list_item_t*)sm);
+            opal_list_remove_item(&mca_rcache_base_modules, (opal_list_item_t *) sm);
             if (NULL != sm->rcache_module->rcache_finalize) {
                 sm->rcache_module->rcache_finalize(sm->rcache_module);
             }

@@ -26,11 +26,11 @@
 #include <unistd.h>
 
 #include "opal/constants.h"
-#include "opal/util/sys_limits.h"
-#include "opal/util/output.h"
-#include "opal/prefetch.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/mca/threads/tsd.h"
+#include "opal/prefetch.h"
+#include "opal/util/output.h"
+#include "opal/util/sys_limits.h"
 
 /*
  * Constructor
@@ -38,24 +38,22 @@
 static void opal_thread_construct(opal_thread_t *t)
 {
     t->t_run = 0;
-    t->t_handle = (pthread_t)-1;
+    t->t_handle = (pthread_t) -1;
 }
 
-OBJ_CLASS_INSTANCE(opal_thread_t,
-                   opal_object_t,
-                   opal_thread_construct, NULL);
+OBJ_CLASS_INSTANCE(opal_thread_t, opal_object_t, opal_thread_construct, NULL);
 
 int opal_thread_start(opal_thread_t *t)
 {
     int rc;
 
     if (OPAL_ENABLE_DEBUG) {
-        if (NULL == t->t_run || (pthread_t)-1 != t->t_handle) {
+        if (NULL == t->t_run || (pthread_t) -1 != t->t_handle) {
             return OPAL_ERR_BAD_PARAM;
         }
     }
 
-    rc = pthread_create(&t->t_handle, NULL, (void *(*)(void *))t->t_run, t);
+    rc = pthread_create(&t->t_handle, NULL, (void *(*) (void *) ) t->t_run, t);
 
     return 0 == rc ? OPAL_SUCCESS : OPAL_ERR_IN_ERRNO;
 }
@@ -63,7 +61,7 @@ int opal_thread_start(opal_thread_t *t)
 int opal_thread_join(opal_thread_t *t, void **thr_return)
 {
     int rc = pthread_join(t->t_handle, thr_return);
-    t->t_handle = (pthread_t)-1;
+    t->t_handle = (pthread_t) -1;
     return 0 == rc ? OPAL_SUCCESS : OPAL_ERR_IN_ERRNO;
 }
 

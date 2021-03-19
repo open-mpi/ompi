@@ -10,11 +10,10 @@
 
 #include "opal_config.h"
 
-#include "opal/win32/opal_socket.h"
 #include "opal/util/output.h"
+#include "opal/win32/opal_socket.h"
 
-int
-create_socketpair(int family, int type, int protocol, int fd[2])
+int create_socketpair(int family, int type, int protocol, int fd[2])
 {
     /* This code is originally from Tor.  Used with permission. */
 
@@ -24,9 +23,9 @@ create_socketpair(int family, int type, int protocol, int fd[2])
      * have other problems too.
      */
 #ifdef WIN32
-#define ERR(e) WSA##e
+#    define ERR(e) WSA##e
 #else
-#define ERR(e) e
+#    define ERR(e) e
 #endif
     int listener = -1;
     int connector = -1;
@@ -41,7 +40,7 @@ create_socketpair(int family, int type, int protocol, int fd[2])
 #ifdef AF_UNIX
             && family != AF_UNIX
 #endif
-        )) {
+            )) {
         opal_output(0, "Protocol not support: %d", (ERR(EAFNOSUPPORT)));
         return -1;
     }
@@ -56,9 +55,8 @@ create_socketpair(int family, int type, int protocol, int fd[2])
     memset(&listen_addr, 0, sizeof(listen_addr));
     listen_addr.sin_family = AF_INET;
     listen_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    listen_addr.sin_port = 0;    /* kernel chooses port.     */
-    if (bind(listener, (struct sockaddr *) &listen_addr, sizeof (listen_addr))
-        == -1)
+    listen_addr.sin_port = 0; /* kernel chooses port.     */
+    if (bind(listener, (struct sockaddr *) &listen_addr, sizeof(listen_addr)) == -1)
         goto tidy_up_and_fail;
     if (listen(listener, 1) == -1)
         goto tidy_up_and_fail;
@@ -70,10 +68,9 @@ create_socketpair(int family, int type, int protocol, int fd[2])
     size = sizeof(connect_addr);
     if (getsockname(listener, (struct sockaddr *) &connect_addr, &size) == -1)
         goto tidy_up_and_fail;
-    if (size != sizeof (connect_addr))
+    if (size != sizeof(connect_addr))
         goto abort_tidy_up_and_fail;
-    if (connect(connector, (struct sockaddr *) &connect_addr,
-                sizeof(connect_addr)) == -1)
+    if (connect(connector, (struct sockaddr *) &connect_addr, sizeof(connect_addr)) == -1)
         goto tidy_up_and_fail;
 
     size = sizeof(listen_addr);
@@ -87,8 +84,7 @@ create_socketpair(int family, int type, int protocol, int fd[2])
        two sockets.     */
     if (getsockname(connector, (struct sockaddr *) &connect_addr, &size) == -1)
         goto tidy_up_and_fail;
-    if (size != sizeof (connect_addr)
-        || listen_addr.sin_family != connect_addr.sin_family
+    if (size != sizeof(connect_addr) || listen_addr.sin_family != connect_addr.sin_family
         || listen_addr.sin_addr.s_addr != connect_addr.sin_addr.s_addr
         || listen_addr.sin_port != connect_addr.sin_port)
         goto abort_tidy_up_and_fail;
@@ -97,9 +93,9 @@ create_socketpair(int family, int type, int protocol, int fd[2])
 
     return 0;
 
- abort_tidy_up_and_fail:
+abort_tidy_up_and_fail:
     saved_errno = ERR(ECONNABORTED);
- tidy_up_and_fail:
+tidy_up_and_fail:
     if (saved_errno < 0)
         saved_errno = WSAGetLastError();
     if (listener != -1)

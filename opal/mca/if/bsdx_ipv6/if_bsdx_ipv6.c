@@ -17,39 +17,39 @@
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #include <errno.h>
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
+#    include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_SOCKIO_H
-#include <sys/sockio.h>
+#    include <sys/sockio.h>
 #endif
 #ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
+#    include <sys/ioctl.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
+#    include <arpa/inet.h>
 #endif
 #ifdef HAVE_NET_IF_H
-#include <net/if.h>
+#    include <net/if.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 #ifdef HAVE_IFADDRS_H
-#include <ifaddrs.h>
+#    include <ifaddrs.h>
 #endif
 
-#include "opal/mca/if/if.h"
 #include "opal/mca/if/base/base.h"
+#include "opal/mca/if/if.h"
 
 static int if_bsdx_ipv6_open(void);
 
@@ -65,23 +65,15 @@ static int if_bsdx_ipv6_open(void);
 opal_if_base_component_t mca_if_bsdx_ipv6_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    {
-        OPAL_IF_BASE_VERSION_2_0_0,
+    {OPAL_IF_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
-        "bsdx_ipv6",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+     /* Component name and version */
+     "bsdx_ipv6", OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, OPAL_RELEASE_VERSION,
 
-        /* Component open and close functions */
-        if_bsdx_ipv6_open,
-        NULL
-    },
-    {
-        /* This component is checkpointable */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+     /* Component open and close functions */
+     if_bsdx_ipv6_open, NULL},
+    {/* This component is checkpointable */
+     MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
 
 /* configure using getifaddrs(3) */
@@ -90,7 +82,7 @@ static int if_bsdx_ipv6_open(void)
 #if OPAL_ENABLE_IPV6
     struct ifaddrs **ifadd_list;
     struct ifaddrs *cur_ifaddrs;
-    struct sockaddr_in6* sin_addr;
+    struct sockaddr_in6 *sin_addr;
 
     opal_output_verbose(1, opal_if_base_framework.framework_output,
                         "searching for IPv6 interfaces");
@@ -100,26 +92,24 @@ static int if_bsdx_ipv6_open(void)
      * and freeifaddrs() is later used to release the allocated memory.
      * however, without this malloc the call to getifaddrs() segfaults
      */
-    ifadd_list = (struct ifaddrs **) malloc(sizeof(struct ifaddrs*));
+    ifadd_list = (struct ifaddrs **) malloc(sizeof(struct ifaddrs *));
 
     /* create the linked list of ifaddrs structs */
     if (getifaddrs(ifadd_list) < 0) {
-        opal_output(0, "opal_ifinit: getifaddrs() failed with error=%d\n",
-                    errno);
+        opal_output(0, "opal_ifinit: getifaddrs() failed with error=%d\n", errno);
         free(ifadd_list);
         return OPAL_ERROR;
     }
 
-    for (cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs;
-         cur_ifaddrs = cur_ifaddrs->ifa_next) {
+    for (cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs; cur_ifaddrs = cur_ifaddrs->ifa_next) {
         opal_if_t *intf;
         struct in6_addr a6;
 
         /* skip non-ipv6 interface addresses */
         if (AF_INET6 != cur_ifaddrs->ifa_addr->sa_family) {
             opal_output_verbose(1, opal_if_base_framework.framework_output,
-                                "skipping non-ipv6 interface %s[%d].\n",
-                                cur_ifaddrs->ifa_name, (int)cur_ifaddrs->ifa_addr->sa_family);
+                                "skipping non-ipv6 interface %s[%d].\n", cur_ifaddrs->ifa_name,
+                                (int) cur_ifaddrs->ifa_addr->sa_family);
             continue;
         }
 
@@ -139,7 +129,7 @@ static int if_bsdx_ipv6_open(void)
 
         /* or if it is a point-to-point interface */
         /* TODO: do we really skip p2p? */
-        if (0!= (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
+        if (0 != (cur_ifaddrs->ifa_flags & IFF_POINTOPOINT)) {
             opal_output_verbose(1, opal_if_base_framework.framework_output,
                                 "skipping p2p interface %s.\n", cur_ifaddrs->ifa_name);
             continue;
@@ -158,7 +148,7 @@ static int if_bsdx_ipv6_open(void)
          * so the scope returned by getifaddrs() isn't working properly
          */
 
-        if ((IN6_IS_ADDR_LINKLOCAL (&sin_addr->sin6_addr))) {
+        if ((IN6_IS_ADDR_LINKLOCAL(&sin_addr->sin6_addr))) {
             opal_output_verbose(1, opal_if_base_framework.framework_output,
                                 "skipping link-local ipv6 address on interface "
                                 "%s with scope %d.\n",
@@ -167,8 +157,8 @@ static int if_bsdx_ipv6_open(void)
         }
 
         if (0 < opal_output_get_verbosity(opal_if_base_framework.framework_output)) {
-            char *addr_name = (char *) malloc(48*sizeof(char));
-            inet_ntop(AF_INET6, &sin_addr->sin6_addr, addr_name, 48*sizeof(char));
+            char *addr_name = (char *) malloc(48 * sizeof(char));
+            inet_ntop(AF_INET6, &sin_addr->sin6_addr, addr_name, 48 * sizeof(char));
             opal_output(0, "ipv6 capable interface %s discovered, address %s.\n",
                         cur_ifaddrs->ifa_name, addr_name);
             free(addr_name);
@@ -179,19 +169,18 @@ static int if_bsdx_ipv6_open(void)
 
         intf = OBJ_NEW(opal_if_t);
         if (NULL == intf) {
-            opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
-                        sizeof(opal_if_t));
+            opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n", sizeof(opal_if_t));
             free(ifadd_list);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
         intf->af_family = AF_INET6;
         opal_string_copy(intf->if_name, cur_ifaddrs->ifa_name, OPAL_IF_NAMESIZE);
         intf->if_index = opal_list_get_size(&opal_if_list) + 1;
-        ((struct sockaddr_in6*) &intf->if_addr)->sin6_addr = a6;
-        ((struct sockaddr_in6*) &intf->if_addr)->sin6_family = AF_INET6;
+        ((struct sockaddr_in6 *) &intf->if_addr)->sin6_addr = a6;
+        ((struct sockaddr_in6 *) &intf->if_addr)->sin6_family = AF_INET6;
 
         /* since every scope != 0 is ignored, we just set the scope to 0 */
-        ((struct sockaddr_in6*) &intf->if_addr)->sin6_scope_id = 0;
+        ((struct sockaddr_in6 *) &intf->if_addr)->sin6_scope_id = 0;
 
         /*
          * hardcoded netmask, adrian says that's ok
@@ -204,15 +193,12 @@ static int if_bsdx_ipv6_open(void)
          * (or create our own), getifaddrs() does not contain such
          * data
          */
-        intf->if_kernel_index =
-            (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
+        intf->if_kernel_index = (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
         opal_list_append(&opal_if_list, &(intf->super));
-    }   /*  of for loop over ifaddrs list */
+    } /*  of for loop over ifaddrs list */
 
     free(ifadd_list);
-#endif  /* OPAL_ENABLE_IPV6 */
+#endif /* OPAL_ENABLE_IPV6 */
 
     return OPAL_SUCCESS;
 }
-
-

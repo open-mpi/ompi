@@ -23,30 +23,25 @@
 
 typedef hrtime_t opal_timer_t;
 
-
-static inline opal_timer_t
-opal_timer_base_get_cycles(void)
+static inline opal_timer_t opal_timer_base_get_cycles(void)
 {
     return 0;
 }
 
-static inline opal_timer_t
-opal_timer_base_get_usec(void)
+static inline opal_timer_t opal_timer_base_get_usec(void)
 {
     /* gethrtime returns nanoseconds */
     return gethrtime() / 1000;
 }
 
-static inline opal_timer_t
-opal_timer_base_get_freq(void)
+static inline opal_timer_t opal_timer_base_get_freq(void)
 {
     return 0;
 }
 
-
-#define OPAL_TIMER_CYCLE_NATIVE 0
+#define OPAL_TIMER_CYCLE_NATIVE    0
 #define OPAL_TIMER_CYCLE_SUPPORTED 0
-#define OPAL_TIMER_USEC_NATIVE 1
-#define OPAL_TIMER_USEC_SUPPORTED 1
+#define OPAL_TIMER_USEC_NATIVE     1
+#define OPAL_TIMER_USEC_SUPPORTED  1
 
 #endif

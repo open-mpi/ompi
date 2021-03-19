@@ -16,16 +16,15 @@
 #include "opal_config.h"
 
 #ifdef HAVE_UNISTD_H
-#include "unistd.h"
+#    include "unistd.h"
 #endif
 
 #include "opal/include/opal/constants.h"
-#include "opal/util/output.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/dl/dl.h"
 #include "opal/mca/dl/base/base.h"
-
+#include "opal/mca/dl/dl.h"
+#include "opal/mca/mca.h"
+#include "opal/util/output.h"
 
 int opal_dl_base_select(void)
 {
@@ -36,11 +35,11 @@ int opal_dl_base_select(void)
     /*
      * Select the best component
      */
-    if (OPAL_SUCCESS != mca_base_select("dl",
-                                        opal_dl_base_framework.framework_output,
-                                        &opal_dl_base_framework.framework_components,
-                                        (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component, NULL) ) {
+    if (OPAL_SUCCESS
+        != mca_base_select("dl", opal_dl_base_framework.framework_output,
+                           &opal_dl_base_framework.framework_components,
+                           (mca_base_module_t **) &best_module,
+                           (mca_base_component_t **) &best_component, NULL)) {
         /* This will only happen if no component was selected */
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -50,6 +49,6 @@ int opal_dl_base_select(void)
     opal_dl_base_selected_component = best_component;
     opal_dl = best_module;
 
- cleanup:
+cleanup:
     return exit_status;
 }

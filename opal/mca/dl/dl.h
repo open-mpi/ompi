@@ -49,8 +49,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
 
@@ -85,9 +85,9 @@ typedef struct opal_dl_handle_t opal_dl_handle_t;
  * or freed by the caller.  The contents of the err_msg string may
  * change after successive calls to opal_dl API calls.
  */
-typedef int (*opal_dl_base_module_open_fn_t)
-    (const char *fname, bool use_ext, bool private_namespace,
-     opal_dl_handle_t **handle, char **err_msg);
+typedef int (*opal_dl_base_module_open_fn_t)(const char *fname, bool use_ext,
+                                             bool private_namespace, opal_dl_handle_t **handle,
+                                             char **err_msg);
 
 /**
  * Lookup a symbol in an opened file.
@@ -106,8 +106,8 @@ typedef int (*opal_dl_base_module_open_fn_t)
  * or freed by the caller.  The contents of the err_msg string may
  * change after successive calls to opal_dl API calls.
  */
-typedef int (*opal_dl_base_module_lookup_fn_t)
-    (opal_dl_handle_t *handle, const char *symbol, void **ptr, char **err_msg);
+typedef int (*opal_dl_base_module_lookup_fn_t)(opal_dl_handle_t *handle, const char *symbol,
+                                               void **ptr, char **err_msg);
 
 /**
  * Dynamically close a previously dynamically-opened file.
@@ -120,8 +120,7 @@ typedef int (*opal_dl_base_module_lookup_fn_t)
  * This function should close the file and free and resources
  * associated with it (e.g., whatever is cached on the handle).
  */
-typedef int (*opal_dl_base_module_close_fn_t)
-    (opal_dl_handle_t *handle);
+typedef int (*opal_dl_base_module_close_fn_t)(opal_dl_handle_t *handle);
 
 /**
  * Search through a path of directories, invoking a callback on each
@@ -136,10 +135,8 @@ typedef int (*opal_dl_base_module_close_fn_t)
  * Returns:
  *   OPAL_SUCESS on success, OPAL_ERR* otherwise
  */
-typedef int (*opal_dl_base_module_foreachfile_fn_t)
-    (const char *search_path,
-     int (*cb_func)(const char *filename, void *context),
-     void *context);
+typedef int (*opal_dl_base_module_foreachfile_fn_t)(
+    const char *search_path, int (*cb_func)(const char *filename, void *context), void *context);
 
 /**
  * Structure for DL components.
@@ -160,17 +157,17 @@ typedef struct opal_dl_base_component_1_0_0_t opal_dl_base_component_t;
  * Structure for DL modules
  */
 struct opal_dl_base_module_1_0_0_t {
-    mca_base_module_2_0_0_t                 super;
+    mca_base_module_2_0_0_t super;
 
     /** Open / close */
-    opal_dl_base_module_open_fn_t           open;
-    opal_dl_base_module_close_fn_t          close;
+    opal_dl_base_module_open_fn_t open;
+    opal_dl_base_module_close_fn_t close;
 
     /** Lookup a symbol */
-    opal_dl_base_module_lookup_fn_t         lookup;
+    opal_dl_base_module_lookup_fn_t lookup;
 
     /** Iterate looking for files */
-    opal_dl_base_module_foreachfile_fn_t    foreachfile;
+    opal_dl_base_module_foreachfile_fn_t foreachfile;
 };
 typedef struct opal_dl_base_module_1_0_0_t opal_dl_base_module_1_0_0_t;
 typedef struct opal_dl_base_module_1_0_0_t opal_dl_base_module_t;
@@ -178,8 +175,7 @@ typedef struct opal_dl_base_module_1_0_0_t opal_dl_base_module_t;
 /**
  * Macro for use in components that are of type DL
  */
-#define OPAL_DL_BASE_VERSION_1_0_0              \
-    OPAL_MCA_BASE_VERSION_2_1_0("dl", 1, 0, 0)
+#define OPAL_DL_BASE_VERSION_1_0_0 OPAL_MCA_BASE_VERSION_2_1_0("dl", 1, 0, 0)
 
 END_C_DECLS
 

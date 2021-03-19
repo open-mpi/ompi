@@ -54,7 +54,8 @@ OPAL_DECLSPEC extern mca_rcache_gpusm_component_t mca_rcache_gpusm_component;
 struct mca_rcache_gpusm_module_t {
     mca_rcache_base_module_t super;
     opal_free_list_t reg_list;
-}; typedef struct mca_rcache_gpusm_module_t mca_rcache_gpusm_module_t;
+};
+typedef struct mca_rcache_gpusm_module_t mca_rcache_gpusm_module_t;
 
 /*
  *  Initializes the rcache module.
@@ -62,22 +63,23 @@ struct mca_rcache_gpusm_module_t {
 void mca_rcache_gpusm_module_init(mca_rcache_gpusm_module_t *rcache);
 
 /**
-  * register block of memory
-  */
-int mca_rcache_gpusm_register(mca_rcache_base_module_t* rcache, void *addr,
-        size_t size, uint32_t flags, int32_t access_flags, mca_rcache_base_registration_t **reg);
+ * register block of memory
+ */
+int mca_rcache_gpusm_register(mca_rcache_base_module_t *rcache, void *addr, size_t size,
+                              uint32_t flags, int32_t access_flags,
+                              mca_rcache_base_registration_t **reg);
 
 /**
  * deregister memory
  */
 int mca_rcache_gpusm_deregister(mca_rcache_base_module_t *rcache,
-        mca_rcache_base_registration_t *reg);
+                                mca_rcache_base_registration_t *reg);
 
 /**
  * find registration for a given block of memory
  */
-int mca_rcache_gpusm_find(struct mca_rcache_base_module_t* rcache, void* addr,
-        size_t size, mca_rcache_base_registration_t **reg);
+int mca_rcache_gpusm_find(struct mca_rcache_base_module_t *rcache, void *addr, size_t size,
+                          mca_rcache_base_registration_t **reg);
 
 /**
  * finalize rcache

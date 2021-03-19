@@ -17,7 +17,6 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include "opal/constants.h"
@@ -36,10 +35,8 @@ static int mca_timer_base_register(mca_base_register_flag_t flags)
 {
     (void) mca_base_var_register("opal", "timer", "require", "monotonic",
                                  "Node-level monotonic timer required (default yes)",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_5,
-                                 MCA_BASE_VAR_SCOPE_LOCAL,
-                                 &mca_timer_base_monotonic);
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_LOCAL, &mca_timer_base_monotonic);
 
     return OPAL_SUCCESS;
 }

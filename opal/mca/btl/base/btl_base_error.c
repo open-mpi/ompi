@@ -21,21 +21,20 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
-#include "opal/util/show_help.h"
-#include "opal/util/proc.h"
 #include "opal/util/printf.h"
+#include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 
 #include "base.h"
 #include "btl_base_error.h"
 
 int mca_btl_base_verbose = -1;
 
-int mca_btl_base_err(const char* fmt, ...)
+int mca_btl_base_err(const char *fmt, ...)
 {
     va_list list;
     int ret;
@@ -46,8 +45,7 @@ int mca_btl_base_err(const char* fmt, ...)
     return ret;
 }
 
-
-int mca_btl_base_out(const char* fmt, ...)
+int mca_btl_base_out(const char *fmt, ...)
 {
     va_list list;
     int ret;
@@ -58,26 +56,20 @@ int mca_btl_base_out(const char* fmt, ...)
     return ret;
 }
 
-
-void mca_btl_base_error_no_nics(const char* transport,
-                                const char* nic_name)
+void mca_btl_base_error_no_nics(const char *transport, const char *nic_name)
 {
     char *procid;
     if (mca_btl_base_warn_component_unused) {
         /* print out no-nic warning if user told us to */
         opal_asprintf(&procid, "%s", OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
-        opal_show_help("help-mpi-btl-base.txt", "btl:no-nics",
-                       true, procid, transport, opal_process_info.nodename,
-                       nic_name);
+        opal_show_help("help-mpi-btl-base.txt", "btl:no-nics", true, procid, transport,
+                       opal_process_info.nodename, nic_name);
         free(procid);
     }
 }
 
-
-void mca_btl_base_dump(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    int verbose)
+void mca_btl_base_dump(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                       int verbose)
 {
 }

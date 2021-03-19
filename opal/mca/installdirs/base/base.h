@@ -32,7 +32,7 @@ OPAL_DECLSPEC extern mca_base_framework_t opal_installdirs_base_framework;
    also insert the value of the environment variable $OPAL_DESTDIR, if
    it exists/is set.  This function should *only* be used during the
    setup routines of installdirs. */
-char * opal_install_dirs_expand_setup(const char* input);
+char *opal_install_dirs_expand_setup(const char *input);
 
 END_C_DECLS
 

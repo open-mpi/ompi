@@ -28,11 +28,11 @@
 
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif  /* HAVE_SYS_TYPES_H */
+#    include <sys/types.h>
+#endif /* HAVE_SYS_TYPES_H */
 
-#include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/btl.h"
 
 BEGIN_C_DECLS
 
@@ -42,13 +42,13 @@ BEGIN_C_DECLS
  * Shared Memory (SELF) BTL module.
  */
 struct mca_btl_self_component_t {
-    mca_btl_base_component_3_0_0_t super;  /**< base BTL component */
-    int free_list_num;                     /**< initial size of free lists */
-    int free_list_max;                     /**< maximum size of free lists */
-    int free_list_inc;                     /**< number of elements to alloc when growing free lists */
-    opal_free_list_t self_frags_eager;     /**< free list of self first */
-    opal_free_list_t self_frags_send;      /**< free list of self second */
-    opal_free_list_t self_frags_rdma;      /**< free list of self second */
+    mca_btl_base_component_3_0_0_t super; /**< base BTL component */
+    int free_list_num;                    /**< initial size of free lists */
+    int free_list_max;                    /**< maximum size of free lists */
+    int free_list_inc;                 /**< number of elements to alloc when growing free lists */
+    opal_free_list_t self_frags_eager; /**< free list of self first */
+    opal_free_list_t self_frags_send;  /**< free list of self second */
+    opal_free_list_t self_frags_rdma;  /**< free list of self second */
 };
 typedef struct mca_btl_self_component_t mca_btl_self_component_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;
@@ -58,4 +58,3 @@ extern mca_btl_base_module_t mca_btl_self;
 END_C_DECLS
 
 #endif
-

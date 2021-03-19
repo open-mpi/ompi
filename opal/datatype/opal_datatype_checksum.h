@@ -19,37 +19,42 @@
 #ifndef DATATYPE_CHECKSUM_H_HAS_BEEN_INCLUDED
 #define DATATYPE_CHECKSUM_H_HAS_BEEN_INCLUDED
 
-
 #include "opal/datatype/opal_datatype_memcpy.h"
 #include "opal/util/crc.h"
 
 #if defined(CHECKSUM)
 
-#if defined (OPAL_CSUM_DST)
-#define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
-do { \
-    (CONVERTOR)->checksum += OPAL_CSUM_BCOPY_PARTIAL( (SRC), (DST), (BLENGTH), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
-} while (0)
+#    if defined(OPAL_CSUM_DST)
+#        define MEMCPY_CSUM(DST, SRC, BLENGTH, CONVERTOR)                                 \
+            do {                                                                          \
+                (CONVERTOR)->checksum += OPAL_CSUM_BCOPY_PARTIAL((SRC), (DST), (BLENGTH), \
+                                                                 (BLENGTH),               \
+                                                                 &(CONVERTOR)->csum_ui1,  \
+                                                                 &(CONVERTOR)->csum_ui2); \
+            } while (0)
 
-#else  /* if OPAL_CSUM_DST */
+#    else /* if OPAL_CSUM_DST */
 
-#define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
-do { \
-    (CONVERTOR)->checksum += OPAL_CSUM_BCOPY_PARTIAL( (SRC), (DST), (BLENGTH), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
-} while (0)
-#endif  /* if OPAL_CSUM_DST */
+#        define MEMCPY_CSUM(DST, SRC, BLENGTH, CONVERTOR)                                 \
+            do {                                                                          \
+                (CONVERTOR)->checksum += OPAL_CSUM_BCOPY_PARTIAL((SRC), (DST), (BLENGTH), \
+                                                                 (BLENGTH),               \
+                                                                 &(CONVERTOR)->csum_ui1,  \
+                                                                 &(CONVERTOR)->csum_ui2); \
+            } while (0)
+#    endif /* if OPAL_CSUM_DST */
 
-#define COMPUTE_CSUM( SRC, BLENGTH, CONVERTOR ) \
-do { \
-    (CONVERTOR)->checksum += OPAL_CSUM_PARTIAL( (SRC), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
-} while (0)
+#    define COMPUTE_CSUM(SRC, BLENGTH, CONVERTOR)                                                \
+        do {                                                                                     \
+            (CONVERTOR)->checksum += OPAL_CSUM_PARTIAL((SRC), (BLENGTH), &(CONVERTOR)->csum_ui1, \
+                                                       &(CONVERTOR)->csum_ui2);                  \
+        } while (0)
 
-#else  /* if CHECKSUM */
+#else /* if CHECKSUM */
 
-#define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
-    MEMCPY( (DST), (SRC), (BLENGTH) )
+#    define MEMCPY_CSUM(DST, SRC, BLENGTH, CONVERTOR) MEMCPY((DST), (SRC), (BLENGTH))
 
-#define COMPUTE_CSUM( SRC, BLENGTH, CONVERTOR )
+#    define COMPUTE_CSUM(SRC, BLENGTH, CONVERTOR)
 
-#endif  /* if CHECKSUM */
-#endif  /* DATATYPE_CHECKSUM_H_HAS_BEEN_INCLUDED */
+#endif /* if CHECKSUM */
+#endif /* DATATYPE_CHECKSUM_H_HAS_BEEN_INCLUDED */

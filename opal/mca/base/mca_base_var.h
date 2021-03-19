@@ -67,9 +67,9 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_value_array.h"
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var_enum.h"
 #include "opal/mca/base/mca_base_var_group.h"
-#include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/mca.h"
 
 /**
@@ -180,21 +180,21 @@ typedef enum {
 
 typedef enum {
     MCA_BASE_VAR_SYN_FLAG_DEPRECATED = 0x0001,
-    MCA_BASE_VAR_SYN_FLAG_INTERNAL   = 0x0002
+    MCA_BASE_VAR_SYN_FLAG_INTERNAL = 0x0002
 } mca_base_var_syn_flag_t;
 
 typedef enum {
     /** Variable is internal (hidden from *_info/MPIT) */
-    MCA_BASE_VAR_FLAG_INTERNAL     = 0x0001,
+    MCA_BASE_VAR_FLAG_INTERNAL = 0x0001,
     /** Variable will always be the default value. Implies
         !MCA_BASE_VAR_FLAG_SETTABLE */
     MCA_BASE_VAR_FLAG_DEFAULT_ONLY = 0x0002,
     /** Variable can be set with mca_base_var_set() */
-    MCA_BASE_VAR_FLAG_SETTABLE     = 0x0004,
+    MCA_BASE_VAR_FLAG_SETTABLE = 0x0004,
     /** Variable is deprecated */
-    MCA_BASE_VAR_FLAG_DEPRECATED   = 0x0008,
+    MCA_BASE_VAR_FLAG_DEPRECATED = 0x0008,
     /** Variable has been overridden */
-    MCA_BASE_VAR_FLAG_OVERRIDE     = 0x0010,
+    MCA_BASE_VAR_FLAG_OVERRIDE = 0x0010,
     /** Variable may not be set from a file */
     MCA_BASE_VAR_FLAG_ENVIRONMENT_ONLY = 0x0020,
     /** Variable should be deregistered when the group is deregistered
@@ -204,12 +204,11 @@ typedef enum {
         manually when you register a variable with
         mca_base_var_register().  Analogous to the
         MCA_BASE_PVAR_FLAG_IWG. */
-    MCA_BASE_VAR_FLAG_DWG          = 0x0040,
+    MCA_BASE_VAR_FLAG_DWG = 0x0040,
     /** Variable has a default value of "unset". Meaning to only
      * be set when the user explicitly asks for it */
-    MCA_BASE_VAR_FLAG_DEF_UNSET    = 0x0080,
+    MCA_BASE_VAR_FLAG_DEF_UNSET = 0x0080,
 } mca_base_var_flag_t;
-
 
 /**
  * Types for MCA parameters.
@@ -243,7 +242,6 @@ typedef union {
     double lfval;
 } mca_base_var_storage_t;
 
-
 /**
  * Entry for holding information about an MCA variable.
  */
@@ -263,7 +261,7 @@ struct mca_base_var_t {
     mca_base_var_info_lvl_t mbv_info_lvl;
 
     /** Enum indicating the type of the variable (integer, string, boolean) */
-     mca_base_var_type_t mbv_type;
+    mca_base_var_type_t mbv_type;
 
     /** String of the variable name */
     char *mbv_variable_name;
@@ -282,10 +280,10 @@ struct mca_base_var_t {
     opal_value_array_t mbv_synonyms;
 
     /** Variable flags */
-    mca_base_var_flag_t  mbv_flags;
+    mca_base_var_flag_t mbv_flags;
 
     /** Variable scope */
-    mca_base_var_scope_t  mbv_scope;
+    mca_base_var_scope_t mbv_scope;
 
     /** Source of the current value */
     mca_base_var_source_t mbv_source;
@@ -427,12 +425,12 @@ OPAL_DECLSPEC int mca_base_var_init(void);
  * the caller may free the original string after this function returns
  * successfully.
  */
-OPAL_DECLSPEC int mca_base_var_register (const char *project_name, const char *framework_name,
-                                         const char *component_name, const char *variable_name,
-                                         const char *description, mca_base_var_type_t type,
-                                         mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
-                                         mca_base_var_info_lvl_t info_lvl,
-                                         mca_base_var_scope_t scope, void *storage);
+OPAL_DECLSPEC int mca_base_var_register(const char *project_name, const char *framework_name,
+                                        const char *component_name, const char *variable_name,
+                                        const char *description, mca_base_var_type_t type,
+                                        mca_base_var_enum_t *enumerator, int bind,
+                                        mca_base_var_flag_t flags, mca_base_var_info_lvl_t info_lvl,
+                                        mca_base_var_scope_t scope, void *storage);
 
 /**
  * Convenience function for registering a variable associated with a
@@ -443,25 +441,20 @@ OPAL_DECLSPEC int mca_base_var_register (const char *project_name, const char *f
  * be unregistered / made unavailable when that component is closed by
  * its framework.
  */
-OPAL_DECLSPEC int mca_base_component_var_register (const mca_base_component_t *component,
-                                                   const char *variable_name, const char *description,
-                                                   mca_base_var_type_t type, mca_base_var_enum_t *enumerator,
-                                                   int bind, mca_base_var_flag_t flags,
-                                                   mca_base_var_info_lvl_t info_lvl,
-                                                   mca_base_var_scope_t scope, void *storage);
+OPAL_DECLSPEC int mca_base_component_var_register(
+    const mca_base_component_t *component, const char *variable_name, const char *description,
+    mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
+    mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope, void *storage);
 
 /**
  * Convenience function for registering a variable associated with a framework. This
  * function is equivalent to mca_base_var_register with component_name = "base" and
  * with the MCA_BASE_VAR_FLAG_DWG set. See mca_base_var_register().
  */
-OPAL_DECLSPEC int mca_base_framework_var_register (const mca_base_framework_t *framework,
-                                     const char *variable_name,
-                                     const char *help_msg, mca_base_var_type_t type,
-                                     mca_base_var_enum_t *enumerator, int bind,
-                                     mca_base_var_flag_t flags,
-                                     mca_base_var_info_lvl_t info_level,
-                                     mca_base_var_scope_t scope, void *storage);
+OPAL_DECLSPEC int mca_base_framework_var_register(
+    const mca_base_framework_t *framework, const char *variable_name, const char *help_msg,
+    mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
+    mca_base_var_info_lvl_t info_level, mca_base_var_scope_t scope, void *storage);
 
 /**
  * Register a synonym name for an MCA variable.
@@ -498,11 +491,11 @@ OPAL_DECLSPEC int mca_base_framework_var_register (const mca_base_framework_t *f
  * variable names "B" and "C" (and does *not* set a value for
  * "A"), it is undefined as to which value will be used.
  */
-OPAL_DECLSPEC int mca_base_var_register_synonym (int synonym_for, const char *project_name,
-                                                 const char *framework_name,
-                                                 const char *component_name,
-                                                 const char *synonym_name,
-                                                 mca_base_var_syn_flag_t flags);
+OPAL_DECLSPEC int mca_base_var_register_synonym(int synonym_for, const char *project_name,
+                                                const char *framework_name,
+                                                const char *component_name,
+                                                const char *synonym_name,
+                                                mca_base_var_syn_flag_t flags);
 
 /**
  * Deregister a MCA variable or synonym
@@ -517,7 +510,6 @@ OPAL_DECLSPEC int mca_base_var_register_synonym (int synonym_for, const char *pr
  * If an enumerator is associated with this variable it will be dereferenced.
  */
 OPAL_DECLSPEC int mca_base_var_deregister(int vari);
-
 
 /**
  * Get the current value of an MCA variable.
@@ -537,9 +529,8 @@ OPAL_DECLSPEC int mca_base_var_deregister(int vari);
  * Note: The value can be changed by the registering code without using
  * the mca_base_var_* interface so the source may be incorrect.
  */
-OPAL_DECLSPEC int mca_base_var_get_value (int vari, const void *value,
-                                          mca_base_var_source_t *source,
-                                          const char **source_file);
+OPAL_DECLSPEC int mca_base_var_get_value(int vari, const void *value, mca_base_var_source_t *source,
+                                         const char **source_file);
 
 /**
  * Sets an "override" value for an integer MCA variable.
@@ -562,9 +553,8 @@ OPAL_DECLSPEC int mca_base_var_get_value (int vari, const void *value,
  * a synonym the variable the synonym represents) if the value is
  * settable.
  */
-OPAL_DECLSPEC int mca_base_var_set_value (int vari, const void *value, size_t size,
-                                          mca_base_var_source_t source,
-                                          const char *source_file);
+OPAL_DECLSPEC int mca_base_var_set_value(int vari, const void *value, size_t size,
+                                         mca_base_var_source_t source, const char *source_file);
 
 /**
  * Get the string name corresponding to the MCA variable
@@ -579,8 +569,7 @@ OPAL_DECLSPEC int mca_base_var_set_value (int vari, const void *value, size_t si
  * The string that is returned is owned by the caller; if
  * appropriate, it must be eventually freed by the caller.
  */
-OPAL_DECLSPEC int mca_base_var_env_name(const char *param_name,
-                                        char **env_name);
+OPAL_DECLSPEC int mca_base_var_env_name(const char *param_name, char **env_name);
 
 /**
  * Find the index for an MCA variable based on its names.
@@ -599,10 +588,8 @@ OPAL_DECLSPEC int mca_base_var_env_name(const char *param_name,
  * of any registered variable.  The returned index can be used with
  * mca_base_var_get() and mca_base_var_get_value().
  */
-OPAL_DECLSPEC int mca_base_var_find (const char *project_name,
-                                     const char *type_name,
-                                     const char *component_name,
-                                     const char *param_name);
+OPAL_DECLSPEC int mca_base_var_find(const char *project_name, const char *type_name,
+                                    const char *component_name, const char *param_name);
 
 /**
  * Find the index for a variable based on its full name
@@ -612,7 +599,7 @@ OPAL_DECLSPEC int mca_base_var_find (const char *project_name,
  *
  * See mca_base_var_find().
  */
-OPAL_DECLSPEC int mca_base_var_find_by_name (const char *full_name, int *vari);
+OPAL_DECLSPEC int mca_base_var_find_by_name(const char *full_name, int *vari);
 
 /**
  * Check that two MCA variables were not both set to non-default
@@ -642,13 +629,10 @@ OPAL_DECLSPEC int mca_base_var_find_by_name (const char *full_name, int *vari);
  * are not MCA_BASE_VAR_SOURCE_DEFAULT.
  * @returns OPAL_SUCCESS otherwise.
  */
-OPAL_DECLSPEC int mca_base_var_check_exclusive (const char *project,
-                                                const char *type_a,
-                                                const char *component_a,
-                                                const char *param_a,
-                                                const char *type_b,
-                                                const char *component_b,
-                                                const char *param_b);
+OPAL_DECLSPEC int mca_base_var_check_exclusive(const char *project, const char *type_a,
+                                               const char *component_a, const char *param_a,
+                                               const char *type_b, const char *component_b,
+                                               const char *param_b);
 
 /**
  * Set or unset a flag on a variable.
@@ -661,8 +645,7 @@ OPAL_DECLSPEC int mca_base_var_check_exclusive (const char *project,
  * @returns OPAL_ERR_BAD_PARAM If the variable is not registered.
  * @returns OPAL_ERROR Otherwise
  */
-OPAL_DECLSPEC int mca_base_var_set_flag(int vari, mca_base_var_flag_t flag,
-                                        bool set);
+OPAL_DECLSPEC int mca_base_var_set_flag(int vari, mca_base_var_flag_t flag, bool set);
 
 /**
  * Obtain basic info on a single variable (name, help message, etc)
@@ -676,7 +659,7 @@ OPAL_DECLSPEC int mca_base_var_set_flag(int vari, mca_base_var_flag_t flag,
  * The returned pointer belongs to the MCA variable system. Do not
  * modify/free/retain the pointer.
  */
-OPAL_DECLSPEC int mca_base_var_get (int vari, const mca_base_var_t **var);
+OPAL_DECLSPEC int mca_base_var_get(int vari, const mca_base_var_t **var);
 
 /**
  * Obtain the number of variables that have been registered.
@@ -689,7 +672,7 @@ OPAL_DECLSPEC int mca_base_var_get (int vari, const mca_base_var_t **var);
  * returned is equal to the number of calls to mca_base_var_register with
  * unique names. ie. two calls with the same name will not affect the count.
  */
-OPAL_DECLSPEC int mca_base_var_get_count (void);
+OPAL_DECLSPEC int mca_base_var_get_count(void);
 
 /**
  * Obtain a list of enironment variables describing the all
@@ -708,8 +691,7 @@ OPAL_DECLSPEC int mca_base_var_get_count (void);
  * its output is in terms of an argv-style array of key=value
  * strings, suitable for using in an environment.
  */
-OPAL_DECLSPEC int mca_base_var_build_env(char ***env, int *num_env,
-                                         bool internal);
+OPAL_DECLSPEC int mca_base_var_build_env(char ***env, int *num_env, bool internal);
 
 typedef enum {
     /* Dump human-readable strings */
@@ -717,7 +699,7 @@ typedef enum {
     /* Dump easily parsable strings */
     MCA_BASE_VAR_DUMP_PARSABLE = 1,
     /* Dump simple name=value string */
-    MCA_BASE_VAR_DUMP_SIMPLE   = 2
+    MCA_BASE_VAR_DUMP_SIMPLE = 2
 } mca_base_var_dump_type_t;
 
 /**
@@ -733,7 +715,7 @@ typedef enum {
 OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_type);
 
 #define MCA_COMPILETIME_VER "print_compiletime_version"
-#define MCA_RUNTIME_VER "print_runtime_version"
+#define MCA_RUNTIME_VER     "print_runtime_version"
 
 /*
  * Parse a provided list of envars and add their local value, or
@@ -746,8 +728,7 @@ OPAL_DECLSPEC int mca_base_var_process_env_list_from_file(char ***argv);
  * Initialize any file-based params
  */
 OPAL_DECLSPEC int mca_base_var_cache_files(bool rel_path_search);
-OPAL_DECLSPEC int mca_base_var_load_extra_files(char* files, bool rel_path_search);
-
+OPAL_DECLSPEC int mca_base_var_load_extra_files(char *files, bool rel_path_search);
 
 extern char *mca_base_env_list;
 #define MCA_BASE_ENV_LIST_SEP_DEFAULT ";"

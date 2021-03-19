@@ -22,15 +22,15 @@
 #include "opal_config.h"
 
 #ifndef OPAL_WIN_COMPAT_H
-#error This file is supposed to be included only from win_compat.h
-#endif  /* OPAL_WIN_COMPAT_H */
+#    error This file is supposed to be included only from win_compat.h
+#endif /* OPAL_WIN_COMPAT_H */
 
 /* define the iovec structure */
 struct iovec {
-  WSABUF data;
+    WSABUF data;
 };
 #define iov_base data.buf
-#define iov_len data.len
+#define iov_len  data.len
 
 BEGIN_C_DECLS
 /*
@@ -40,7 +40,7 @@ BEGIN_C_DECLS
    buffers  are  used  in  the  order specified.  Operates just like write
    except that data is taken from iov instead of a contiguous buffer.
  */
-OPAL_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
+OPAL_DECLSPEC int writev(int fd, struct iovec *iov, int cnt);
 
 /*
    readv  reads  data  from file descriptor fd, and puts the result in the
@@ -49,7 +49,7 @@ OPAL_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
    like read except that data is put in iov  instead  of  a  contiguous
    buffer.
  */
-OPAL_DECLSPEC int readv (int fd, struct iovec *iov, int cnt);
+OPAL_DECLSPEC int readv(int fd, struct iovec *iov, int cnt);
 
 END_C_DECLS
 

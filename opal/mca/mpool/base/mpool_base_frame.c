@@ -28,13 +28,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNISTD_H */
+#    include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 
-#include "opal/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "opal/mca/mpool/base/base.h"
 #include "opal/constants.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/mpool/base/base.h"
 #include "opal/util/sys_limits.h"
 
 /*
@@ -56,23 +56,20 @@ int mca_mpool_base_default_priority = 50;
 
 OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, opal_list_item_t, NULL, NULL);
 
-static int mca_mpool_base_register (mca_base_register_flag_t flags)
+static int mca_mpool_base_register(mca_base_register_flag_t flags)
 {
     mca_mpool_base_default_hints = NULL;
-    (void) mca_base_var_register ("opal", "mpool", "base", "default_hints",
-                                  "Hints to use when selecting the default memory pool",
-                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0,
-                                  MCA_BASE_VAR_FLAG_INTERNAL,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
-                                  &mca_mpool_base_default_hints);
+    (void) mca_base_var_register("opal", "mpool", "base", "default_hints",
+                                 "Hints to use when selecting the default memory pool",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL,
+                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
+                                 &mca_mpool_base_default_hints);
 
     mca_mpool_base_default_priority = 50;
-    (void) mca_base_var_register ("opal", "mpool", "base", "default_priority",
-                                  "Priority of the default mpool module",
-                                  MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                  MCA_BASE_VAR_FLAG_INTERNAL,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
-                                  &mca_mpool_base_default_priority);
+    (void) mca_base_var_register("opal", "mpool", "base", "default_priority",
+                                 "Priority of the default mpool module", MCA_BASE_VAR_TYPE_INT,
+                                 NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_LOCAL, &mca_mpool_base_default_priority);
 
     return OPAL_SUCCESS;
 }
@@ -85,17 +82,16 @@ static int mca_mpool_base_open(mca_base_open_flag_t flags)
 {
     /* Open up all available components - and populate the
        opal_mpool_base_framework.framework_components list */
-    if (OPAL_SUCCESS !=
-        mca_base_framework_components_open(&opal_mpool_base_framework, flags)) {
+    if (OPAL_SUCCESS != mca_base_framework_components_open(&opal_mpool_base_framework, flags)) {
         return OPAL_ERROR;
     }
 
     if (mca_mpool_base_default_hints) {
-        mca_mpool_base_default_module = mca_mpool_base_module_lookup (mca_mpool_base_default_hints);
+        mca_mpool_base_default_module = mca_mpool_base_module_lookup(mca_mpool_base_default_hints);
     }
 
-     /* Initialize the list so that in mca_mpool_base_close(), we can
-        iterate over it (even if it's empty, as in the case of opal_info) */
+    /* Initialize the list so that in mca_mpool_base_close(), we can
+       iterate over it (even if it's empty, as in the case of opal_info) */
     OBJ_CONSTRUCT(&mca_mpool_base_modules, opal_list_t);
 
     /* setup tree for tracking MPI_Alloc_mem */
@@ -106,33 +102,34 @@ static int mca_mpool_base_open(mca_base_open_flag_t flags)
 
 static int mca_mpool_base_close(void)
 {
-  opal_list_item_t *item;
-  mca_mpool_base_selected_module_t *sm;
+    opal_list_item_t *item;
+    mca_mpool_base_selected_module_t *sm;
 
-  /* Finalize all the mpool components and free their list items */
+    /* Finalize all the mpool components and free their list items */
 
-  while(NULL != (item = opal_list_remove_first(&mca_mpool_base_modules))) {
-    sm = (mca_mpool_base_selected_module_t *) item;
+    while (NULL != (item = opal_list_remove_first(&mca_mpool_base_modules))) {
+        sm = (mca_mpool_base_selected_module_t *) item;
 
-    /* Blatently ignore the return code (what would we do to recover,
-       anyway?  This component is going away, so errors don't matter
-       anymore).  Note that it's legal for the module to have NULL for
-       the finalize function. */
+        /* Blatently ignore the return code (what would we do to recover,
+           anyway?  This component is going away, so errors don't matter
+           anymore).  Note that it's legal for the module to have NULL for
+           the finalize function. */
 
-    if (NULL != sm->mpool_module->mpool_finalize) {
-        sm->mpool_module->mpool_finalize(sm->mpool_module);
+        if (NULL != sm->mpool_module->mpool_finalize) {
+            sm->mpool_module->mpool_finalize(sm->mpool_module);
+        }
+        OBJ_RELEASE(sm);
     }
-    OBJ_RELEASE(sm);
-  }
 
-  /* Close all remaining available components (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is opal_info) */
-  (void) mca_base_framework_components_close(&opal_mpool_base_framework, NULL);
+    /* Close all remaining available components (may be one if this is a
+       OMPI RTE program, or [possibly] multiple if this is opal_info) */
+    (void) mca_base_framework_components_close(&opal_mpool_base_framework, NULL);
 
-  mca_mpool_base_tree_fini();
+    mca_mpool_base_tree_fini();
 
-  return OPAL_SUCCESS;
+    return OPAL_SUCCESS;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(opal, mpool, "Memory pools", mca_mpool_base_register, mca_mpool_base_open,
-                           mca_mpool_base_close, mca_mpool_base_static_components, 0);
+MCA_BASE_FRAMEWORK_DECLARE(opal, mpool, "Memory pools", mca_mpool_base_register,
+                           mca_mpool_base_open, mca_mpool_base_close,
+                           mca_mpool_base_static_components, 0);

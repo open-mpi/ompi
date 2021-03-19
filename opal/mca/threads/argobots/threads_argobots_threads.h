@@ -26,8 +26,8 @@
 #ifndef OPAL_MCA_THREADS_ARGOBOTS_THREADS_ARGOBOTS_THREADS_H
 #define OPAL_MCA_THREADS_ARGOBOTS_THREADS_ARGOBOTS_THREADS_H
 
-#include <signal.h>
 #include "opal/mca/threads/argobots/threads_argobots.h"
+#include <signal.h>
 
 struct opal_thread_t {
     opal_object_t super;
@@ -37,12 +37,10 @@ struct opal_thread_t {
     void *t_ret;
 };
 
-
 /* Argobots are cooperatively scheduled so yield when idle */
 #define OPAL_THREAD_YIELD_WHEN_IDLE_DEFAULT true
 
-static inline
-void opal_thread_yield(void)
+static inline void opal_thread_yield(void)
 {
     ABT_thread_yield();
 }

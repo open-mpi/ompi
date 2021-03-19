@@ -16,7 +16,7 @@
  */
 
 #ifndef OPAL_CONFIG_H
-#error "opal_config_top.h should only be included from opal_config.h"
+#    error "opal_config_top.h should only be included from opal_config.h"
 #endif
 
 /* The only purpose of this file is to undef the PACKAGE_<foo> macros

@@ -23,15 +23,15 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/util/proc.h"
 #include "opal/mca/reachable/reachable.h"
+#include "opal/util/proc.h"
 #include "reachable_weighted.h"
 
 /*
  * Public string showing the reachable weighted component version number
  */
-const char *opal_reachable_weighted_component_version_string =
-    "OPAL weighted reachable MCA component version " OPAL_VERSION;
+const char *opal_reachable_weighted_component_version_string
+    = "OPAL weighted reachable MCA component version " OPAL_VERSION;
 
 /*
  * Local function
@@ -41,19 +41,18 @@ static int reachable_weighted_close(void);
 static int reachable_weighted_component_query(mca_base_module_t **module, int *priority);
 static int component_register(void);
 
-
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-opal_reachable_weighted_component_t mca_reachable_weighted_component = {
-    {
+opal_reachable_weighted_component_t mca_reachable_weighted_component = {{
 
-        /* First, the mca_component_t struct containing meta information
-           about the component itself */
+    /* First, the mca_component_t struct containing meta information
+       about the component itself */
 
-        .base_version = {
+    .base_version =
+        {
             /* Indicate that we are a reachable v1.1.0 component (which also
                implies a specific MCA version) */
 
@@ -72,13 +71,11 @@ opal_reachable_weighted_component_t mca_reachable_weighted_component = {
             .mca_query_component = reachable_weighted_component_query,
             .mca_register_component_params = component_register,
         },
-        /* Next the MCA v1.0.0 component meta data */
-        .base_data = {
-            /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
-        },
-    }
-};
+    /* Next the MCA v1.0.0 component meta data */
+    .base_data =
+        {/* The component is checkpoint ready */
+         MCA_BASE_METADATA_PARAM_CHECKPOINT},
+}};
 
 static int reachable_weighted_open(void)
 {
@@ -100,6 +97,6 @@ static int component_register(void)
 static int reachable_weighted_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = 1;
-    *module = (mca_base_module_t *)&opal_reachable_weighted_module;
+    *module = (mca_base_module_t *) &opal_reachable_weighted_module;
     return OPAL_SUCCESS;
 }

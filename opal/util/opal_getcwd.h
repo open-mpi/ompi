@@ -44,7 +44,6 @@ BEGIN_C_DECLS
  */
 OPAL_DECLSPEC int opal_getcwd(char *buf, size_t size);
 
-
 END_C_DECLS
 
 #endif /* OPAL_GETCWD_H */
