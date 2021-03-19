@@ -216,8 +216,7 @@ int ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
     return MPI_SUCCESS;
 
 err_hndl:
-    if (NULL != tempbuf)
-        free(tempbuf);
+    free(tempbuf);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));

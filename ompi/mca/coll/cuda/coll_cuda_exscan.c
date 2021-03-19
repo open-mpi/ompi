@@ -43,8 +43,7 @@ int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count, struct ompi_da
     if (opal_cuda_check_bufs(rbuf, NULL)) {
         rbuf1 = (char *) malloc(bufsize);
         if (NULL == rbuf1) {
-            if (NULL != sbuf1)
-                free(sbuf1);
+            free(sbuf1);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, bufsize);
@@ -53,9 +52,7 @@ int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count, struct ompi_da
     }
 
     rc = s->c_coll.coll_exscan(sbuf, rbuf, count, dtype, op, comm, s->c_coll.coll_exscan_module);
-    if (NULL != sbuf1) {
-        free(sbuf1);
-    }
+    free(sbuf1);
     if (NULL != rbuf1) {
         rbuf = rbuf2;
         opal_cuda_memcpy_sync(rbuf, rbuf1, bufsize);

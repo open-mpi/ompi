@@ -249,15 +249,9 @@ int mca_coll_basic_reduce_log_intra(const void *sbuf, void *rbuf, int count,
     }
 
 cleanup_and_return:
-    if (NULL != inplace_temp) {
-        free(inplace_temp);
-    }
-    if (NULL != free_buffer) {
-        free(free_buffer);
-    }
-    if (NULL != free_rbuf) {
-        free(free_rbuf);
-    }
+    free(inplace_temp);
+    free(free_buffer);
+    free(free_rbuf);
 
     /* All done */
 
@@ -305,9 +299,7 @@ int mca_coll_basic_reduce_lin_inter(const void *sbuf, void *rbuf, int count,
         err = MCA_PML_CALL(
             recv(rbuf, count, dtype, 0, MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE));
         if (MPI_SUCCESS != err) {
-            if (NULL != free_buffer) {
-                free(free_buffer);
-            }
+            free(free_buffer);
             return err;
         }
 
@@ -316,9 +308,7 @@ int mca_coll_basic_reduce_lin_inter(const void *sbuf, void *rbuf, int count,
             err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
-                if (NULL != free_buffer) {
-                    free(free_buffer);
-                }
+                free(free_buffer);
                 return err;
             }
 
@@ -326,9 +316,7 @@ int mca_coll_basic_reduce_lin_inter(const void *sbuf, void *rbuf, int count,
             ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
         }
 
-        if (NULL != free_buffer) {
-            free(free_buffer);
-        }
+        free(free_buffer);
     }
 
     /* All done */

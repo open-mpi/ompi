@@ -285,16 +285,14 @@ int ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbu
         }
     }
 
-    if (NULL != inplacebuf_free)
-        free(inplacebuf_free);
+    free(inplacebuf_free);
     return MPI_SUCCESS;
 
 error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
     (void) line; // silence compiler warning
-    if (NULL != inplacebuf_free)
-        free(inplacebuf_free);
+    free(inplacebuf_free);
     return ret;
 }
 
@@ -581,10 +579,8 @@ int ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
         }
     }
 
-    if (NULL != inbuf[0])
-        free(inbuf[0]);
-    if (NULL != inbuf[1])
-        free(inbuf[1]);
+    free(inbuf[0]);
+    free(inbuf[1]);
 
     return MPI_SUCCESS;
 
@@ -593,10 +589,9 @@ error_hndl:
                  __FILE__, line, rank, ret));
     ompi_coll_base_free_reqs(reqs, 2);
     (void) line; // silence compiler warning
-    if (NULL != inbuf[0])
-        free(inbuf[0]);
-    if (NULL != inbuf[1])
-        free(inbuf[1]);
+    free(inbuf[0]);
+    free(inbuf[1]);
+
     return ret;
 }
 
@@ -939,10 +934,8 @@ int ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, 
         }
     }
 
-    if (NULL != inbuf[0])
-        free(inbuf[0]);
-    if (NULL != inbuf[1])
-        free(inbuf[1]);
+    free(inbuf[0]);
+    free(inbuf[1]);
 
     return MPI_SUCCESS;
 
@@ -951,10 +944,9 @@ error_hndl:
                  __FILE__, line, rank, ret));
     ompi_coll_base_free_reqs(reqs, 2);
     (void) line; // silence compiler warning
-    if (NULL != inbuf[0])
-        free(inbuf[0]);
-    if (NULL != inbuf[1])
-        free(inbuf[1]);
+    free(inbuf[0]);
+    free(inbuf[1]);
+
     return ret;
 }
 
@@ -1336,16 +1328,12 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(const void *sbuf, void *rbu
     }
 
 cleanup_and_return:
-    if (NULL != tmp_buf_raw)
-        free(tmp_buf_raw);
-    if (NULL != rindex)
-        free(rindex);
-    if (NULL != sindex)
-        free(sindex);
-    if (NULL != rcount)
-        free(rcount);
-    if (NULL != scount)
-        free(scount);
+    free(tmp_buf_raw);
+    free(rindex);
+    free(sindex);
+    free(rcount);
+    free(scount);
+
     return err;
 }
 

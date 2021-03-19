@@ -335,12 +335,9 @@ int mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int 
     }
 
 cleanup:
-    if (NULL != disps)
-        free(disps);
-    if (NULL != recv_buf_free)
-        free(recv_buf_free);
-    if (NULL != result_buf_free)
-        free(result_buf_free);
+    free(disps);
+    free(recv_buf_free);
+    free(result_buf_free);
 
     return err;
 }
@@ -463,17 +460,9 @@ int mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int 
                               comm->c_local_comm, comm->c_local_comm->c_coll->coll_scatterv_module);
 
 exit:
-    if (NULL != tmpbuf) {
-        free(tmpbuf);
-    }
-
-    if (NULL != tmpbuf2) {
-        free(tmpbuf2);
-    }
-
-    if (NULL != disps) {
-        free(disps);
-    }
+    free(tmpbuf);
+    free(tmpbuf2);
+    free(disps);
 
     return err;
 }

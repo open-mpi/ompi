@@ -159,9 +159,7 @@ static int free_objs_callback(struct ompi_request_t **rptr)
 {
     struct ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **) rptr;
     int rc = OMPI_SUCCESS;
-    if (NULL != request->cb.req_free) {
-        rc = request->cb.req_free(rptr);
-    }
+    rc = request->cb.req_free(rptr);
     release_objs_callback(request);
     return rc;
 }
@@ -281,9 +279,7 @@ static int free_vecs_callback(struct ompi_request_t **rptr)
 {
     struct ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **) rptr;
     int rc = OMPI_SUCCESS;
-    if (NULL != request->cb.req_free) {
-        rc = request->cb.req_free(rptr);
-    }
+    rc = request->cb.req_free(rptr);
     release_vecs_callback(request);
     return rc;
 }

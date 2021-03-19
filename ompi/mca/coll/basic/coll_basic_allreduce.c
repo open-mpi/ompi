@@ -200,9 +200,7 @@ exit:
         (void) line; // silence compiler warning
         ompi_coll_base_free_reqs(reqs, rsize - 1);
     }
-    if (NULL != tmpbuf) {
-        free(tmpbuf);
-    }
+    free(tmpbuf);
 
     return err;
 }

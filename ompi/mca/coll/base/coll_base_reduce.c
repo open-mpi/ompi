@@ -255,12 +255,9 @@ int ompi_coll_base_reduce_generic(const void *sendbuf, void *recvbuf, int origin
         }     /* end of for each segment */
 
         /* clean up */
-        if (inbuf_free[0] != NULL)
-            free(inbuf_free[0]);
-        if (inbuf_free[1] != NULL)
-            free(inbuf_free[1]);
-        if (accumbuf_free != NULL)
-            free(accumbuf_free);
+        free(inbuf_free[0]);
+        free(inbuf_free[1]);
+        free(accumbuf_free);
     }
 
     /* leaf nodes
@@ -389,12 +386,9 @@ error_hndl: /* error handler */
         }
         ompi_coll_base_free_reqs(sreq, max_outstanding_reqs);
     }
-    if (inbuf_free[0] != NULL)
-        free(inbuf_free[0]);
-    if (inbuf_free[1] != NULL)
-        free(inbuf_free[1]);
-    if (accumbuf_free != NULL)
-        free(accumbuf);
+    free(inbuf_free[0]);
+    free(inbuf_free[1]);
+    free(accumbuf);
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ERROR_HNDL: node %d file %s line %d error %d\n", rank, __FILE__, line, ret));
     (void) line; // silence compiler warning
@@ -609,9 +603,7 @@ int ompi_coll_base_reduce_intra_in_order_binary(const void *sendbuf, void *recvb
             }
         }
     }
-    if (NULL != tmpbuf_free) {
-        free(tmpbuf_free);
-    }
+    free(tmpbuf_free);
 
     return MPI_SUCCESS;
 }
@@ -675,9 +667,7 @@ int ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int c
     if (size > 1) {
         free_buffer = (char *) malloc(dsize);
         if (NULL == free_buffer) {
-            if (NULL != inplace_temp_free) {
-                free(inplace_temp_free);
-            }
+            free(inplace_temp_free);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         pml_buffer = free_buffer - gap;
@@ -692,12 +682,8 @@ int ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int c
             recv(rbuf, count, dtype, size - 1, MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE));
     }
     if (MPI_SUCCESS != err) {
-        if (NULL != free_buffer) {
-            free(free_buffer);
-        }
-        if (NULL != inplace_temp_free) {
-            free(inplace_temp_free);
-        }
+        free(free_buffer);
+        free(inplace_temp_free);
         return err;
     }
 
@@ -710,12 +696,8 @@ int ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int c
             err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
-                if (NULL != free_buffer) {
-                    free(free_buffer);
-                }
-                if (NULL != inplace_temp_free) {
-                    free(inplace_temp_free);
-                }
+                free(free_buffer);
+                free(inplace_temp_free);
                 return err;
             }
 
@@ -731,9 +713,7 @@ int ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int c
         err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) sbuf, rbuf);
         free(inplace_temp_free);
     }
-    if (NULL != free_buffer) {
-        free(free_buffer);
-    }
+    free(free_buffer);
 
     /* All done */
 
@@ -1127,17 +1107,12 @@ int ompi_coll_base_reduce_intra_redscat_gather(const void *sbuf, void *rbuf, int
     }
 
 cleanup_and_return:
-    if (NULL != tmp_buf_raw)
-        free(tmp_buf_raw);
-    if (NULL != rbuf_raw)
-        free(rbuf_raw);
-    if (NULL != rindex)
-        free(rindex);
-    if (NULL != sindex)
-        free(sindex);
-    if (NULL != rcount)
-        free(rcount);
-    if (NULL != scount)
-        free(scount);
+    free(tmp_buf_raw);
+    free(rbuf_raw);
+    free(rindex);
+    free(sindex);
+    free(rcount);
+    free(scount);
+
     return err;
 }

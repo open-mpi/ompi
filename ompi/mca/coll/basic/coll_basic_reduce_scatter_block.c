@@ -161,13 +161,8 @@ int mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int 
                                                    comm->c_local_comm->c_coll->coll_scatter_module);
 
 exit:
-    if (NULL != tmpbuf) {
-        free(tmpbuf);
-    }
-
-    if (NULL != tmpbuf2) {
-        free(tmpbuf2);
-    }
+    free(tmpbuf);
+    free(tmpbuf2);
 
     return err;
 }

@@ -211,8 +211,7 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
     return OMPI_SUCCESS;
 
 err_hndl:
-    if (NULL != new_rcounts)
-        free(new_rcounts);
+    free(new_rcounts);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));

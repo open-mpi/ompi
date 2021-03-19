@@ -87,8 +87,7 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(
                                         comm->c_coll->coll_reduce_module);
     }
     if (MPI_SUCCESS != err) {
-        if (NULL != tmprbuf_free)
-            free(tmprbuf_free);
+        free(tmprbuf_free);
         return err;
     }
 
@@ -106,8 +105,7 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(
                                           dtype, root, comm, comm->c_coll->coll_scatterv_module);
     }
     free(displs);
-    if (NULL != tmprbuf_free)
-        free(tmprbuf_free);
+    free(tmprbuf_free);
 
     return err;
 }
@@ -375,12 +373,9 @@ int ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(
     }
 
 cleanup:
-    if (NULL != disps)
-        free(disps);
-    if (NULL != recv_buf_free)
-        free(recv_buf_free);
-    if (NULL != result_buf_free)
-        free(result_buf_free);
+    free(disps);
+    free(recv_buf_free);
+    free(result_buf_free);
 
     return err;
 }
@@ -638,14 +633,10 @@ int ompi_coll_base_reduce_scatter_intra_ring(const void *sbuf, void *rbuf, const
         goto error_hndl;
     }
 
-    if (NULL != displs)
-        free(displs);
-    if (NULL != accumbuf_free)
-        free(accumbuf_free);
-    if (NULL != inbuf_free[0])
-        free(inbuf_free[0]);
-    if (NULL != inbuf_free[1])
-        free(inbuf_free[1]);
+    free(displs);
+    free(accumbuf_free);
+    free(inbuf_free[0]);
+    free(inbuf_free[1]);
 
     return MPI_SUCCESS;
 
@@ -653,14 +644,11 @@ error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
     (void) line; // silence compiler warning
-    if (NULL != displs)
-        free(displs);
-    if (NULL != accumbuf_free)
-        free(accumbuf_free);
-    if (NULL != inbuf_free[0])
-        free(inbuf_free[0]);
-    if (NULL != inbuf_free[1])
-        free(inbuf_free[1]);
+    free(displs);
+    free(accumbuf_free);
+    free(inbuf_free[0]);
+    free(inbuf_free[1]);
+
     return ret;
 }
 
@@ -942,11 +930,9 @@ int ompi_coll_base_reduce_scatter_intra_butterfly(const void *sbuf, void *rbuf, 
     }
 
 cleanup_and_return:
-    if (displs)
-        free(displs);
-    if (tmpbuf[0])
-        free(tmpbuf[0]);
-    if (tmpbuf[1])
-        free(tmpbuf[1]);
+    free(displs);
+    free(tmpbuf[0]);
+    free(tmpbuf[1]);
+
     return err;
 }

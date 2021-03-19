@@ -139,8 +139,7 @@ int mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
 
 error_hndl:
     /* Free the temporary buffer */
-    if (NULL != allocated_buffer)
-        free(allocated_buffer);
+    free(allocated_buffer);
 
     if (MPI_SUCCESS != err) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -367,24 +366,20 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     }
 
     /* Step 4 - clean up */
-    if (tmpbuf != NULL)
-        free(tmpbuf_free);
-    if (displs != NULL)
-        free(displs);
-    if (blen != NULL)
-        free(blen);
+    free(tmpbuf_free);
+    free(displs);
+    free(blen);
+
     return OMPI_SUCCESS;
 
 err_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     (void) line; // silence compiler warning
-    if (tmpbuf != NULL)
-        free(tmpbuf_free);
-    if (displs != NULL)
-        free(displs);
-    if (blen != NULL)
-        free(blen);
+    free(tmpbuf_free);
+    free(displs);
+    free(blen);
+
     return err;
 }
 

@@ -57,8 +57,7 @@ int mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
     if (opal_cuda_check_bufs(rbuf, NULL)) {
         rbuf1 = (char *) malloc(rbufsize);
         if (NULL == rbuf1) {
-            if (NULL != sbuf1)
-                free(sbuf1);
+            free(sbuf1);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, rbufsize);
@@ -67,9 +66,7 @@ int mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
     }
     rc = s->c_coll.coll_reduce_scatter_block(sbuf, rbuf, rcount, dtype, op, comm,
                                              s->c_coll.coll_reduce_scatter_block_module);
-    if (NULL != sbuf1) {
-        free(sbuf1);
-    }
+    free(sbuf1);
     if (NULL != rbuf1) {
         rbuf = rbuf2;
         opal_cuda_memcpy_sync(rbuf, rbuf1, rbufsize);

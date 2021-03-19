@@ -415,12 +415,9 @@ proceed_to_select:
     /* If we didn't find any available components, return an error */
     if (0 == opal_list_get_size(selectable)) {
         OBJ_RELEASE(selectable);
-        if (NULL != coll_exclude) {
-            free(coll_exclude);
-        }
-        if (NULL != coll_include) {
-            free(coll_include);
-        }
+        free(coll_exclude);
+        free(coll_include);
+
         return NULL;
     }
 
@@ -444,12 +441,8 @@ proceed_to_select:
     }
 
     opal_argv_free(coll_argv);
-    if (NULL != coll_exclude) {
-        free(coll_exclude);
-    }
-    if (NULL != coll_include) {
-        free(coll_include);
-    }
+    free(coll_exclude);
+    free(coll_include);
 
     /* All done */
     return selectable;

@@ -214,9 +214,8 @@ int ompi_coll_base_exscan_intra_recursivedoubling(const void *sendbuf, void *rec
     }
 
 cleanup_and_return:
-    if (NULL != tmpsend_raw)
-        free(tmpsend_raw);
-    if (NULL != tmprecv_raw)
-        free(tmprecv_raw);
+    free(tmpsend_raw);
+    free(tmprecv_raw);
+
     return err;
 }

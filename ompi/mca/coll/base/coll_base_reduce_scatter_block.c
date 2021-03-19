@@ -101,8 +101,7 @@ int ompi_coll_base_reduce_scatter_block_basic_linear(const void *sbuf, void *rbu
     }
 
 cleanup:
-    if (NULL != recv_buf_free)
-        free(recv_buf_free);
+    free(recv_buf_free);
 
     return err;
 }
@@ -309,10 +308,8 @@ cleanup_and_return:
         ompi_datatype_destroy(&dtypesend);
     if (dtyperecv)
         ompi_datatype_destroy(&dtyperecv);
-    if (tmpbuf_raw)
-        free(tmpbuf_raw);
-    if (tmprecv_raw)
-        free(tmprecv_raw);
+    free(tmpbuf_raw);
+    free(tmprecv_raw);
     return err;
 }
 
@@ -534,10 +531,9 @@ int ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
     }
 
 cleanup_and_return:
-    if (tmpbuf_raw)
-        free(tmpbuf_raw);
-    if (tmprecv_raw)
-        free(tmprecv_raw);
+    free(tmpbuf_raw);
+    free(tmprecv_raw);
+
     return err;
 }
 
@@ -814,10 +810,9 @@ int ompi_coll_base_reduce_scatter_block_intra_butterfly(const void *sbuf, void *
     }
 
 cleanup_and_return:
-    if (tmpbuf[0])
-        free(tmpbuf[0]);
-    if (tmpbuf[1])
-        free(tmpbuf[1]);
+    free(tmpbuf[0]);
+    free(tmpbuf[1]);
+
     return err;
 }
 
@@ -942,9 +937,8 @@ static int ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
     }
 
 cleanup_and_return:
-    if (tmpbuf[0])
-        free(tmpbuf[0]);
-    if (tmpbuf[1])
-        free(tmpbuf[1]);
+    free(tmpbuf[0]);
+    free(tmpbuf[1]);
+
     return err;
 }

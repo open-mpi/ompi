@@ -189,9 +189,7 @@ exit:
         if (NULL != reqs)
             ompi_coll_base_free_reqs(reqs, rsize + 1);
     }
-    if (NULL != tmpbuf_free) {
-        free(tmpbuf_free);
-    }
+    free(tmpbuf_free);
 
     return err;
 }

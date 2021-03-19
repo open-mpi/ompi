@@ -61,9 +61,7 @@ int mca_coll_basic_allgatherv_inter(const void *sbuf, int scount, struct ompi_da
     err = comm->c_coll->coll_alltoallv(sbuf, scounts, sdisps, sdtype, rbuf, rcounts, disps, rdtype,
                                        comm, comm->c_coll->coll_alltoallv_module);
 
-    if (NULL != scounts) {
-        free(scounts);
-    }
+    free(scounts);
 
     return err;
 }

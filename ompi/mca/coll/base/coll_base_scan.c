@@ -76,9 +76,7 @@ int ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
         if (MPI_IN_PLACE != sbuf) {
             err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
             if (MPI_SUCCESS != err) {
-                if (NULL != free_buffer) {
-                    free(free_buffer);
-                }
+                free(free_buffer);
                 return err;
             }
         }
@@ -88,9 +86,7 @@ int ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
         err = MCA_PML_CALL(recv(pml_buffer, count, dtype, rank - 1, MCA_COLL_BASE_TAG_SCAN, comm,
                                 MPI_STATUS_IGNORE));
         if (MPI_SUCCESS != err) {
-            if (NULL != free_buffer) {
-                free(free_buffer);
-            }
+            free(free_buffer);
             return err;
         }
 
@@ -100,9 +96,7 @@ int ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
 
         /* All done */
 
-        if (NULL != free_buffer) {
-            free(free_buffer);
-        }
+        free(free_buffer);
     }
 
     /* Send result to next process. */
@@ -221,9 +215,8 @@ int ompi_coll_base_scan_intra_recursivedoubling(const void *sendbuf, void *recvb
     }
 
 cleanup_and_return:
-    if (NULL != tmpsend_raw)
-        free(tmpsend_raw);
-    if (NULL != tmprecv_raw)
-        free(tmprecv_raw);
+    free(tmpsend_raw);
+    free(tmprecv_raw);
+
     return err;
 }
