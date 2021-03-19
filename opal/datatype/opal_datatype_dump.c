@@ -42,10 +42,12 @@ int opal_datatype_contain_basic_datatypes(const opal_datatype_t *pData, char *pt
     int32_t index = 0;
     uint64_t mask = 1;
 
-    if (pData->flags & OPAL_DATATYPE_FLAG_USER_LB)
+    if (pData->flags & OPAL_DATATYPE_FLAG_USER_LB) {
         index += snprintf(ptr, length - index, "lb ");
-    if (pData->flags & OPAL_DATATYPE_FLAG_USER_UB)
+    }
+    if (pData->flags & OPAL_DATATYPE_FLAG_USER_UB) {
         index += snprintf(ptr + index, length - index, "ub ");
+    }
     for (i = 0; i < OPAL_DATATYPE_MAX_PREDEFINED; i++) {
         if (pData->bdt_used & mask) {
             if (NULL == pData->ptypes) {
@@ -57,8 +59,9 @@ int opal_datatype_contain_basic_datatypes(const opal_datatype_t *pData, char *pt
             }
         }
         mask <<= 1;
-        if (length <= (size_t) index)
+        if (length <= (size_t) index) {
             break;
+        }
     }
     return index;
 }
@@ -66,27 +69,37 @@ int opal_datatype_contain_basic_datatypes(const opal_datatype_t *pData, char *pt
 int opal_datatype_dump_data_flags(unsigned short usflags, char *ptr, size_t length)
 {
     int index = 0;
-    if (length < 22)
+    if (length < 22) {
         return 0;
+    }
     index = snprintf(ptr, 22, "-----------[---][---]"); /* set everything to - */
-    if (usflags & OPAL_DATATYPE_FLAG_COMMITTED)
+    if (usflags & OPAL_DATATYPE_FLAG_COMMITTED) {
         ptr[1] = 'c';
-    if (usflags & OPAL_DATATYPE_FLAG_CONTIGUOUS)
+    }
+    if (usflags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
         ptr[2] = 'C';
-    if (usflags & OPAL_DATATYPE_FLAG_OVERLAP)
+    }
+    if (usflags & OPAL_DATATYPE_FLAG_OVERLAP) {
         ptr[3] = 'o';
-    if (usflags & OPAL_DATATYPE_FLAG_USER_LB)
+    }
+    if (usflags & OPAL_DATATYPE_FLAG_USER_LB) {
         ptr[4] = 'l';
-    if (usflags & OPAL_DATATYPE_FLAG_USER_UB)
+    }
+    if (usflags & OPAL_DATATYPE_FLAG_USER_UB) {
         ptr[5] = 'u';
-    if (usflags & OPAL_DATATYPE_FLAG_PREDEFINED)
+    }
+    if (usflags & OPAL_DATATYPE_FLAG_PREDEFINED) {
         ptr[6] = 'P';
-    if (!(usflags & OPAL_DATATYPE_FLAG_NO_GAPS))
+    }
+    if (!(usflags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
         ptr[7] = 'G';
-    if (usflags & OPAL_DATATYPE_FLAG_DATA)
+    }
+    if (usflags & OPAL_DATATYPE_FLAG_DATA) {
         ptr[8] = 'D';
-    if ((usflags & OPAL_DATATYPE_FLAG_BASIC) == OPAL_DATATYPE_FLAG_BASIC)
+    }
+    if ((usflags & OPAL_DATATYPE_FLAG_BASIC) == OPAL_DATATYPE_FLAG_BASIC) {
         ptr[9] = 'B';
+    }
     /* We know nothing about the upper level language or flags! */
     /* ... */
     return index;
@@ -99,22 +112,24 @@ int opal_datatype_dump_data_desc(dt_elem_desc_t *pDesc, int nbElems, char *ptr, 
 
     for (i = 0; i < nbElems; i++) {
         index += opal_datatype_dump_data_flags(pDesc->elem.common.flags, ptr + index, length);
-        if (length <= (size_t) index)
+        if (length <= (size_t) index) {
             break;
+        }
         index += snprintf(ptr + index, length - index, "%15s ",
                           opal_datatype_basicDatatypes[pDesc->elem.common.type]->name);
-        if (length <= (size_t) index)
+        if (length <= (size_t) index) {
             break;
-        if (OPAL_DATATYPE_LOOP == pDesc->elem.common.type)
+        }
+        if (OPAL_DATATYPE_LOOP == pDesc->elem.common.type) {
             index += snprintf(ptr + index, length - index,
                               "%u times the next %u elements extent %td\n", pDesc->loop.loops,
                               pDesc->loop.items, pDesc->loop.extent);
-        else if (OPAL_DATATYPE_END_LOOP == pDesc->elem.common.type)
+        } else if (OPAL_DATATYPE_END_LOOP == pDesc->elem.common.type) {
             index += snprintf(
                 ptr + index, length - index,
                 "prev %u elements first elem displacement %td size of data %" PRIsize_t "\n",
                 pDesc->end_loop.items, pDesc->end_loop.first_elem_disp, pDesc->end_loop.size);
-        else
+        } else {
             index += snprintf(ptr + index, length - index,
                               "count %u disp 0x%tx (%td) blen %" PRIsize_t
                               " extent %td (size %zd)\n",
@@ -122,10 +137,12 @@ int opal_datatype_dump_data_desc(dt_elem_desc_t *pDesc, int nbElems, char *ptr, 
                               pDesc->elem.blocklen, pDesc->elem.extent,
                               (pDesc->elem.count * pDesc->elem.blocklen
                                * opal_datatype_basicDatatypes[pDesc->elem.common.type]->size));
+        }
         pDesc++;
 
-        if (length <= (size_t) index)
+        if (length <= (size_t) index) {
             break;
+        }
     }
     return index;
 }
@@ -149,13 +166,15 @@ void opal_datatype_dump(const opal_datatype_t *pData)
                       pData->true_ub - pData->true_lb, pData->lb, pData->ub, pData->ub - pData->lb,
                       pData->nbElems, pData->loops, (int) pData->flags);
     /* dump the flags */
-    if (pData->flags == OPAL_DATATYPE_FLAG_PREDEFINED)
+    if (pData->flags == OPAL_DATATYPE_FLAG_PREDEFINED) {
         index += snprintf(buffer + index, length - index, "predefined ");
-    else {
-        if (pData->flags & OPAL_DATATYPE_FLAG_COMMITTED)
+    } else {
+        if (pData->flags & OPAL_DATATYPE_FLAG_COMMITTED) {
             index += snprintf(buffer + index, length - index, "committed ");
-        if (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)
+        }
+        if (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
             index += snprintf(buffer + index, length - index, "contiguous ");
+        }
     }
     index += snprintf(buffer + index, length - index, ")");
     index += opal_datatype_dump_data_flags(pData->flags, buffer + index, length - index);

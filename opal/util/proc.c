@@ -111,8 +111,9 @@ int opal_proc_local_set(opal_proc_t *proc)
     if (proc != opal_proc_my_name) {
         if (NULL != proc)
             OBJ_RETAIN(proc);
-        if (&opal_local_proc != opal_proc_my_name)
+        if (&opal_local_proc != opal_proc_my_name) {
             OBJ_RELEASE(opal_proc_my_name);
+        }
         if (NULL != proc) {
             opal_proc_my_name = proc;
         } else {

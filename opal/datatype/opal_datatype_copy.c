@@ -114,8 +114,9 @@ int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int
     /* empty data ? then do nothing. This should normally be trapped
      * at a higher level.
      */
-    if (0 == count)
+    if (0 == count) {
         return 1;
+    }
 
     /**
      * see discussion in coll_basic_reduce.c for the computation of extent when

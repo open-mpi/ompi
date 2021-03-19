@@ -426,8 +426,9 @@ int opal_hash_table_remove_value_uint32(opal_hash_table_t *ht, uint32_t key)
     ht->ht_type_methods = &opal_hash_type_methods_uint32;
     for (ii = key % capacity;; ii += 1) {
         opal_hash_element_t *elt;
-        if (ii == capacity)
+        if (ii == capacity) {
             ii = 0;
+        }
         elt = &ht->ht_table[ii];
         if (!elt->valid) {
             return OPAL_ERR_NOT_FOUND;

@@ -159,8 +159,9 @@ int mca_base_alias_register(const char *project, const char *framework, const ch
 
     mca_base_alias_item_t *alias_item = OBJ_NEW(mca_base_alias_item_t);
     if (NULL == alias_item) {
-        if (NULL != name)
+        if (NULL != name) {
             free(name);
+        }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 

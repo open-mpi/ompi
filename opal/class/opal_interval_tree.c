@@ -138,8 +138,8 @@ static opal_interval_tree_token_t opal_interval_tree_reader_get_token(opal_inter
 
     while (
         !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32((opal_atomic_int32_t *) &tree->reader_epochs[token],
-                                                &(int32_t){UINT_MAX}, tree->epoch))
-        ;
+                                                &(int32_t){UINT_MAX}, tree->epoch)) {
+    }
 
     return token;
 }
@@ -166,8 +166,8 @@ static bool opal_interval_tree_write_trylock(opal_interval_tree_t *tree)
 
 static void opal_interval_tree_write_lock(opal_interval_tree_t *tree)
 {
-    while (!opal_interval_tree_write_trylock(tree))
-        ;
+    while (!opal_interval_tree_write_trylock(tree)) {
+    }
 }
 
 static void opal_interval_tree_write_unlock(opal_interval_tree_t *tree)
@@ -478,8 +478,8 @@ static inline void rp_wait_for_readers(opal_interval_tree_t *tree)
 
     /* wait for all readers to see the new tree version */
     for (int i = 0; i < tree->reader_count; ++i) {
-        while (tree->reader_epochs[i] < epoch_id)
-            ;
+        while (tree->reader_epochs[i] < epoch_id) {
+        }
     }
 }
 

@@ -541,8 +541,9 @@ static int mca_btl_tcp_create(const int if_kindex, const char *if_name)
 
     for (i = 0; i < (int) mca_btl_tcp_component.tcp_num_links; i++) {
         btl = (struct mca_btl_tcp_module_t *) malloc(sizeof(mca_btl_tcp_module_t));
-        if (NULL == btl)
+        if (NULL == btl) {
             return OPAL_ERR_OUT_OF_RESOURCE;
+        }
         copied_interface = OBJ_NEW(opal_if_t);
         if (NULL == copied_interface) {
             free(btl);
@@ -841,8 +842,9 @@ static int mca_btl_tcp_component_create_instances(void)
             /* check to see if this interface exists in the exclude list */
             argv = exclude;
             while (argv && *argv) {
-                if (strncmp(*argv, if_name, strlen(*argv)) == 0)
+                if (strncmp(*argv, if_name, strlen(*argv)) == 0) {
                     break;
+                }
                 argv++;
             }
             /* if this interface was not found in the excluded list, create a BTL */
@@ -1337,8 +1339,9 @@ static void mca_btl_tcp_component_accept_handler(int incoming_sd, short ignored,
         mca_btl_tcp_event_t *event;
         int sd = accept(incoming_sd, (struct sockaddr *) &addr, &addrlen);
         if (sd < 0) {
-            if (opal_socket_errno == EINTR)
+            if (opal_socket_errno == EINTR) {
                 continue;
+            }
             if (opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
                 opal_show_help("help-mpi-btl-tcp.txt", "accept failed", true,
                                opal_process_info.nodename, getpid(), opal_socket_errno,

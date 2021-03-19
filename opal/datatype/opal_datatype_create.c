@@ -64,8 +64,9 @@ static void opal_datatype_destruct(opal_datatype_t *datatype)
      * same data description we should start by cleaning the optimized description.
      */
     if (NULL != datatype->opt_desc.desc) {
-        if (datatype->opt_desc.desc != datatype->desc.desc)
+        if (datatype->opt_desc.desc != datatype->desc.desc) {
             free(datatype->opt_desc.desc);
+        }
         datatype->opt_desc.length = 0;
         datatype->opt_desc.used = 0;
         datatype->opt_desc.desc = NULL;
@@ -94,8 +95,9 @@ opal_datatype_t *opal_datatype_create(int32_t expectedSize)
 {
     opal_datatype_t *datatype = (opal_datatype_t *) OBJ_NEW(opal_datatype_t);
 
-    if (expectedSize == -1)
+    if (expectedSize == -1) {
         expectedSize = DT_INCREASE_STACK;
+    }
     datatype->desc.length = expectedSize + 1; /* one for the fake elem at the end */
     datatype->desc.used = 0;
     datatype->desc.desc = (dt_elem_desc_t *) calloc(datatype->desc.length, sizeof(dt_elem_desc_t));
@@ -107,12 +109,14 @@ opal_datatype_t *opal_datatype_create(int32_t expectedSize)
 
 int32_t opal_datatype_create_desc(opal_datatype_t *datatype, int32_t expectedSize)
 {
-    if (expectedSize == -1)
+    if (expectedSize == -1) {
         expectedSize = DT_INCREASE_STACK;
+    }
     datatype->desc.length = expectedSize + 1; /* one for the fake elem at the end */
     datatype->desc.used = 0;
     datatype->desc.desc = (dt_elem_desc_t *) calloc(datatype->desc.length, sizeof(dt_elem_desc_t));
-    if (NULL == datatype->desc.desc)
+    if (NULL == datatype->desc.desc) {
         return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     return OPAL_SUCCESS;
 }

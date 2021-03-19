@@ -998,10 +998,11 @@ void opal_initialize_crc_table(void)
     for (i = 0; i < 256; i++) {
         crc_accum = (i << 24);
         for (j = 0; j < 8; j++) {
-            if (crc_accum & 0x80000000)
+            if (crc_accum & 0x80000000) {
                 crc_accum = (crc_accum << 1) ^ CRC_POLYNOMIAL;
-            else
+            } else {
                 crc_accum = (crc_accum << 1);
+            }
         }
         _opal_crc_table[i] = crc_accum;
     }
