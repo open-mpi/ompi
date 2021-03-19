@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015-2018 Research Organization for Information Science
+# Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
@@ -33,6 +33,7 @@ my $maxrank_arg;
 my $generate_arg;
 my $mpi_arg;
 my $mpi_real2;
+my $mpi_iso_real16;
 my $mpi_real16;
 my $mpi_complex4;
 my $mpi_complex32;
@@ -51,6 +52,7 @@ my $ok = Getopt::Long::GetOptions("complex32=i" => \$mpi_complex32,
                                   "pmpi" => \$pmpi_arg,
                                   "real16=i" => \$mpi_real16,
                                   "real2=i" => \$mpi_real2,
+                                  "iso_real16=i" => \$mpi_iso_real16,
                                   "help|h" => \$help_arg);
 
 die "Must specify header and/or impl filenames to output"
@@ -64,8 +66,8 @@ die "max array rank must be >= 4 and <=15"
 die "Must specify --pmpi and/or --mpi if --impl is specified"
     if (defined($generate_arg) && $generate_arg &&
         (defined($impl_arg) && !defined($mpi_arg) && !defined($pmpi_arg)));
-die "Must specify real2, real16, complex4, and complex32"
-    if (!defined($mpi_real2) || !defined($mpi_real16) ||
+die "Must specify real2, iso_real16, real16, complex4, and complex32"
+    if (!defined($mpi_real2) || !defined($mpi_iso_real16) || !defined($mpi_real16) ||
         !defined($mpi_complex4) || !defined($mpi_complex32));
 
 #############################################################################
@@ -154,14 +156,18 @@ for my $size (qw/8 16 32 64/) {
     queue_sub("integer(int${size})", "int${size}", "int${size}");
 }
 for my $size (qw/16 32 64 128/) {
-    if (!($size == 16 && $mpi_real2 == 0) &&
-        !($size == 128 &&$mpi_real16 == 0)) {
+    if (!($size == 16 && $mpi_real2 == 0 && $mpi_iso_real16 == 0) &&
+        !($size == 128 && $mpi_real16 == 0)) {
         queue_sub("real(real${size})", "real${size}", "real${size}");
     }
-    if (!($size == 16 && $mpi_complex4 == 0) &&
+    if (!($size == 16 && $mpi_complex4 == 0 && $mpi_iso_real16 == 0) &&
         !($size == 128 && $mpi_complex32 == 0)) {
         queue_sub("complex(real${size})", "complex${size}", "real${size}");
     }
+}
+if ($mpi_real2 == 1 && $mpi_iso_real16 == 0) {
+    queue_sub("real*2", "real16");
+    queue_sub("complex*4", "complex16");
 }
 queue_sub("character", "character");
 queue_sub("logical", "logical");

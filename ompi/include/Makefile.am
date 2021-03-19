@@ -11,8 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2014-2015 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2014-2021 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -88,6 +88,7 @@ mpif-sizeof.h:
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
 	    --real2=$(OMPI_HAVE_FORTRAN_REAL2) \
+	    --iso_real16=$(OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV_REAL16) \
 	    --real16=$(OMPI_HAVE_FORTRAN_REAL16) \
 	    --complex4=$(OMPI_HAVE_FORTRAN_COMPLEX4) \
 	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
