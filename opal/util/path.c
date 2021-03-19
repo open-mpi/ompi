@@ -202,8 +202,9 @@ char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
         opal_argv_append(&dirc, &dirv, wrkdir);
     }
 
-    if (NULL == dirv)
+    if (NULL == dirv) {
         return NULL;
+    }
     fullpath = opal_path_find(fname, dirv, mode, envv);
     opal_argv_free(dirv);
     return fullpath;
@@ -393,8 +394,9 @@ char *opal_find_absolute_path(char *app_name)
     if (NULL != abs_app_name) {
         char *resolved_path = (char *) malloc(OPAL_PATH_MAX);
         realpath(abs_app_name, resolved_path);
-        if (abs_app_name != app_name)
+        if (abs_app_name != app_name) {
             free(abs_app_name);
+        }
         return resolved_path;
     }
     return NULL;

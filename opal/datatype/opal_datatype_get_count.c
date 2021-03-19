@@ -54,9 +54,10 @@ ssize_t opal_datatype_get_element_count(const opal_datatype_t *datatype, size_t 
             if (--(pStack->count) == 0) {           /* end of loop */
                 stack_pos--;
                 pStack--;
-                if (stack_pos == -1)
+                if (stack_pos == -1) {
                     return nbElems; /* completed */
-                pos_desc++;         /* advance to the next element after the end loop */
+                }
+                pos_desc++; /* advance to the next element after the end loop */
             } else {
                 pos_desc = pStack->index + 1; /* go back to the begining of the loop */
             }
@@ -123,8 +124,9 @@ int32_t opal_datatype_set_element_count(const opal_datatype_t *datatype, size_t 
             if (--(pStack->count) == 0) {           /* end of loop */
                 stack_pos--;
                 pStack--;
-                if (stack_pos == -1)
+                if (stack_pos == -1) {
                     return 0;
+                }
                 pos_desc++; /* advance to the next element after the end loop */
             } else {
                 pos_desc = pStack->index + 1; /* go back to the begining of the loop */
@@ -169,8 +171,9 @@ int opal_datatype_compute_ptypes(opal_datatype_t *datatype)
     ssize_t nbElems = 0, stack_pos = 0;
     dt_elem_desc_t *pElems;
 
-    if (NULL != datatype->ptypes)
+    if (NULL != datatype->ptypes) {
         return 0;
+    }
     datatype->ptypes = (size_t *) calloc(OPAL_DATATYPE_MAX_SUPPORTED, sizeof(size_t));
 
     DUMP("opal_datatype_compute_ptypes( %p )\n", (void *) datatype);
@@ -187,9 +190,10 @@ int opal_datatype_compute_ptypes(opal_datatype_t *datatype)
             if (--(pStack->count) == 0) {           /* end of loop */
                 stack_pos--;
                 pStack--;
-                if (stack_pos == -1)
+                if (stack_pos == -1) {
                     return 0; /* completed */
-                pos_desc++;   /* advance to the next element after the end loop */
+                }
+                pos_desc++; /* advance to the next element after the end loop */
             } else {
                 pos_desc = pStack->index + 1; /* go back to the begining of the loop */
             }

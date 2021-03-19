@@ -84,8 +84,9 @@ int opal_bitmap_init(opal_bitmap_t *bm, int size)
     bm->array_size = (int) (((size_t) size + SIZE_OF_BASE_TYPE - 1) / SIZE_OF_BASE_TYPE);
     if (NULL != bm->bitmap) {
         free(bm->bitmap);
-        if (bm->max_size < bm->array_size)
+        if (bm->max_size < bm->array_size) {
             bm->max_size = bm->array_size;
+        }
     }
     bm->bitmap = (uint64_t *) malloc(bm->array_size * sizeof(uint64_t));
     if (NULL == bm->bitmap) {
@@ -114,8 +115,9 @@ int opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
          valid and we simply expand the bitmap */
 
         new_size = index + 1;
-        if (new_size > bm->max_size)
+        if (new_size > bm->max_size) {
             new_size = bm->max_size;
+        }
 
         /* New size is just a multiple of the original size to fit in
          the index. */
@@ -368,8 +370,9 @@ int opal_bitmap_num_set_bits(opal_bitmap_t *bm, int len)
 #endif
 
     for (i = 0; i < len; ++i) {
-        if (0 == (val = bm->bitmap[i]))
+        if (0 == (val = bm->bitmap[i])) {
             continue;
+        }
         /*  Peter Wegner in CACM 3 (1960), 322. This method goes through as many
          *  iterations as there are set bits. */
         for (; val; cnt++) {

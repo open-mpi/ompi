@@ -229,13 +229,15 @@ int opal_unsetenv(const char *name, char ***env)
 
     found = false;
     for (i = 0; (*env)[i] != NULL; ++i) {
-        if (0 != strncmp((*env)[i], compare, len))
+        if (0 != strncmp((*env)[i], compare, len)) {
             continue;
+        }
         if (environ != *env) {
             free((*env)[i]);
         }
-        for (; (*env)[i] != NULL; ++i)
+        for (; (*env)[i] != NULL; ++i) {
             (*env)[i] = (*env)[i + 1];
+        }
         found = true;
         break;
     }
@@ -250,10 +252,13 @@ const char *opal_tmp_directory(void)
 {
     const char *str;
 
-    if (NULL == (str = getenv("TMPDIR")))
-        if (NULL == (str = getenv("TEMP")))
-            if (NULL == (str = getenv("TMP")))
+    if (NULL == (str = getenv("TMPDIR"))) {
+        if (NULL == (str = getenv("TEMP"))) {
+            if (NULL == (str = getenv("TMP"))) {
                 str = OPAL_DEFAULT_TMPDIR;
+            }
+        }
+    }
     return str;
 }
 

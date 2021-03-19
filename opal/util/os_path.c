@@ -49,8 +49,9 @@ char *opal_os_path(int relative, ...)
     while (NULL != (element = va_arg(ap, char *))) {
         num_elements++;
         total_length = total_length + strlen(element);
-        if (path_sep[0] != element[0])
+        if (path_sep[0] != element[0]) {
             total_length++;
+        }
     }
     va_end(ap);
 

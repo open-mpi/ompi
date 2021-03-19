@@ -318,8 +318,9 @@ bool opal_net_addr_isipv4public(const struct sockaddr *addr)
         for (i = 0; private_ipv4[i].addr != 0; i++) {
             if (private_ipv4[i].addr
                 == (inaddr->sin_addr.s_addr
-                    & opal_net_prefix2netmask(private_ipv4[i].netmask_bits)))
+                    & opal_net_prefix2netmask(private_ipv4[i].netmask_bits))) {
                 return false;
+            }
         }
     }
         return true;

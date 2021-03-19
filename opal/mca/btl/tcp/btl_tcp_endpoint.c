@@ -354,8 +354,9 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t *btl_endpoint, mca_btl_tcp
     case MCA_BTL_TCP_CLOSED:
         opal_list_append(&btl_endpoint->endpoint_frags, (opal_list_item_t *) frag);
         frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-        if (btl_endpoint->endpoint_state == MCA_BTL_TCP_CLOSED)
+        if (btl_endpoint->endpoint_state == MCA_BTL_TCP_CLOSED) {
             rc = mca_btl_tcp_endpoint_start_connect(btl_endpoint);
+        }
         break;
     case MCA_BTL_TCP_FAILED:
         rc = OPAL_ERR_UNREACH;
@@ -529,8 +530,9 @@ void mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t *btl_endpoint, struct s
 void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t *btl_endpoint)
 {
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, "[close]");
-    if (btl_endpoint->endpoint_sd < 0)
+    if (btl_endpoint->endpoint_sd < 0) {
         return;
+    }
     btl_endpoint->endpoint_retries++;
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, "event_del(recv) [close]");
     opal_event_del(&btl_endpoint->endpoint_recv_event);
@@ -570,8 +572,9 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t *btl_endpoint)
      */
     if (MCA_BTL_TCP_FAILED == btl_endpoint->endpoint_state) {
         mca_btl_tcp_frag_t *frag = btl_endpoint->endpoint_send_frag;
-        if (NULL == frag)
+        if (NULL == frag) {
             frag = (mca_btl_tcp_frag_t *) opal_list_remove_first(&btl_endpoint->endpoint_frags);
+        }
         while (NULL != frag) {
             frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, OPAL_ERR_UNREACH);
             if (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
@@ -606,9 +609,10 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t *btl_endpoint
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, "READY [endpoint_connected]");
 
     if (opal_list_get_size(&btl_endpoint->endpoint_frags) > 0) {
-        if (NULL == btl_endpoint->endpoint_send_frag)
+        if (NULL == btl_endpoint->endpoint_send_frag) {
             btl_endpoint->endpoint_send_frag = (mca_btl_tcp_frag_t *) opal_list_remove_first(
                 &btl_endpoint->endpoint_frags);
+        }
         MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(send) [endpoint_connected]");
         opal_event_add(&btl_endpoint->endpoint_send_event, 0);
     }
@@ -943,8 +947,9 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void *user)
     /* Make sure we don't have a race between a thread that remove the
      * recv event, and one event already scheduled.
      */
-    if (sd != btl_endpoint->endpoint_sd)
+    if (sd != btl_endpoint->endpoint_sd) {
         return;
+    }
 
     /**
      * There is an extremely rare race condition here, that can only be
@@ -962,8 +967,9 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void *user)
      * If we can't lock this mutex, it is OK to cancel the receive operation, it
      * will be eventually triggered again shorthly.
      */
-    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_recv_lock))
+    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_recv_lock)) {
         return;
+    }
 
     switch (btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECT_ACK: {
@@ -1083,8 +1089,9 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void *user)
     mca_btl_tcp_endpoint_t *btl_endpoint = (mca_btl_tcp_endpoint_t *) user;
 
     /* if another thread is already here, give up */
-    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock))
+    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock)) {
         return;
+    }
 
     switch (btl_endpoint->endpoint_state) {
     case MCA_BTL_TCP_CONNECTING:
@@ -1117,8 +1124,9 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void *user)
              * send_handler will be triggered once more, and as there will be
              * nothing to send the handler will be deleted.
              */
-            if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock))
+            if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock)) {
                 return;
+            }
         }
 
         /* if nothing else to do unregister for send event notifications */

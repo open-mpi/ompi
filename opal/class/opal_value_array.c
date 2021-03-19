@@ -30,8 +30,9 @@ static void opal_value_array_construct(opal_value_array_t *array)
 
 static void opal_value_array_destruct(opal_value_array_t *array)
 {
-    if (NULL != array->array_items)
+    if (NULL != array->array_items) {
         free(array->array_items);
+    }
 }
 
 OBJ_CLASS_INSTANCE(opal_value_array_t, opal_object_t, opal_value_array_construct,
@@ -47,13 +48,15 @@ int opal_value_array_set_size(opal_value_array_t *array, size_t size)
 #endif
 
     if (size > array->array_alloc_size) {
-        while (array->array_alloc_size < size)
+        while (array->array_alloc_size < size) {
             array->array_alloc_size <<= 1;
+        }
         array->array_items = (unsigned char *) realloc(array->array_items,
                                                        array->array_alloc_size
                                                            * array->array_item_sizeof);
-        if (NULL == array->array_items)
+        if (NULL == array->array_items) {
             return OPAL_ERR_OUT_OF_RESOURCE;
+        }
     }
     array->array_size = size;
     return OPAL_SUCCESS;

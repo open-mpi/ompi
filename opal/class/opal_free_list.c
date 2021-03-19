@@ -123,8 +123,9 @@ int opal_free_list_init(opal_free_list_t *flist, size_t frag_size, size_t frag_a
 
     if (0 < payload_buffer_size) {
         if (payload_buffer_alignment <= 1
-            || (payload_buffer_alignment & (payload_buffer_alignment - 1)))
+            || (payload_buffer_alignment & (payload_buffer_alignment - 1))) {
             return OPAL_ERROR;
+        }
     }
 
     if (frag_class && frag_size < frag_class->cls_sizeof) {

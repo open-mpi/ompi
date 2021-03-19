@@ -138,40 +138,54 @@ static void options_data_free(struct options_data_t *data)
     if (NULL != data->compiler_args) {
         opal_argv_free(data->compiler_args);
     }
-    if (NULL != data->language)
+    if (NULL != data->language) {
         free(data->language);
-    if (NULL != data->compiler)
+    }
+    if (NULL != data->compiler) {
         free(data->compiler);
-    if (NULL != data->project)
+    }
+    if (NULL != data->project) {
         free(data->project);
-    if (NULL != data->project_short)
+    }
+    if (NULL != data->project_short) {
         free(data->project_short);
-    if (NULL != data->version)
+    }
+    if (NULL != data->version) {
         free(data->version);
-    if (NULL != data->compiler_env)
+    }
+    if (NULL != data->compiler_env) {
         free(data->compiler_env);
-    if (NULL != data->compiler_flags_env)
+    }
+    if (NULL != data->compiler_flags_env) {
         free(data->compiler_flags_env);
+    }
     opal_argv_free(data->preproc_flags);
     opal_argv_free(data->comp_flags);
     opal_argv_free(data->comp_flags_prefix);
     opal_argv_free(data->link_flags);
     opal_argv_free(data->libs);
     opal_argv_free(data->libs_static);
-    if (NULL != data->dyn_lib_file)
+    if (NULL != data->dyn_lib_file) {
         free(data->dyn_lib_file);
-    if (NULL != data->static_lib_file)
+    }
+    if (NULL != data->static_lib_file) {
         free(data->static_lib_file);
-    if (NULL != data->req_file)
+    }
+    if (NULL != data->req_file) {
         free(data->req_file);
-    if (NULL != data->path_includedir)
+    }
+    if (NULL != data->path_includedir) {
         free(data->path_includedir);
-    if (NULL != data->path_libdir)
+    }
+    if (NULL != data->path_libdir) {
         free(data->path_libdir);
-    if (NULL != data->path_opalincludedir)
+    }
+    if (NULL != data->path_opalincludedir) {
         free(data->path_opalincludedir);
-    if (NULL != data->path_opallibdir)
+    }
+    if (NULL != data->path_opallibdir) {
         free(data->path_opallibdir);
+    }
 }
 
 static void options_data_expand(const char *value)
@@ -261,17 +275,21 @@ static void data_callback(const char *key, const char *value)
     if (0 == strcmp(key, "compiler_args")) {
         options_data_expand(value);
     } else if (0 == strcmp(key, "language")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].language = strdup(value);
+        }
     } else if (0 == strcmp(key, "compiler")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].compiler = strdup(value);
+        }
     } else if (0 == strcmp(key, "project")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].project = strdup(value);
+        }
     } else if (0 == strcmp(key, "version")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].version = strdup(value);
+        }
     } else if (0 == strcmp(key, "preprocessor_flags")) {
         char **values = opal_argv_split(value, ' ');
         opal_argv_insert(&options_data[parse_options_idx].preproc_flags,
@@ -308,23 +326,29 @@ static void data_callback(const char *key, const char *value)
                          opal_argv_count(options_data[parse_options_idx].libs_static), values);
         opal_argv_free(values);
     } else if (0 == strcmp(key, "dyn_lib_file")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].dyn_lib_file = strdup(value);
+        }
     } else if (0 == strcmp(key, "static_lib_file")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].static_lib_file = strdup(value);
+        }
     } else if (0 == strcmp(key, "required_file")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].req_file = strdup(value);
+        }
     } else if (0 == strcmp(key, "project_short")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].project_short = strdup(value);
+        }
     } else if (0 == strcmp(key, "compiler_env")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].compiler_env = strdup(value);
+        }
     } else if (0 == strcmp(key, "compiler_flags_env")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].compiler_flags_env = strdup(value);
+        }
     } else if (0 == strcmp(key, "includedir")) {
         if (NULL != value) {
             options_data[parse_options_idx].path_includedir = opal_install_dirs_expand(value);
@@ -340,8 +364,9 @@ static void data_callback(const char *key, const char *value)
             }
         }
     } else if (0 == strcmp(key, "libdir")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].path_libdir = opal_install_dirs_expand(value);
+        }
         if (0 != strcmp(options_data[parse_options_idx].path_libdir, "/usr/lib")) {
             char *line;
             opal_asprintf(&line, OPAL_LIBDIR_FLAG "%s",
@@ -365,8 +390,9 @@ static void data_callback(const char *key, const char *value)
             }
         }
     } else if (0 == strcmp(key, "opallibdir")) {
-        if (NULL != value)
+        if (NULL != value) {
             options_data[parse_options_idx].path_opallibdir = opal_install_dirs_expand(value);
+        }
         if (0 != strcmp(options_data[parse_options_idx].path_opallibdir, "/usr/lib")) {
             char *line;
             opal_asprintf(&line, OPAL_LIBDIR_FLAG "%s",
@@ -385,8 +411,9 @@ static int data_init(const char *appname)
     /* now load the data */
     opal_asprintf(&datafile, "%s%s%s-wrapper-data.txt", opal_install_dirs.opaldatadir,
                   OPAL_PATH_SEP, appname);
-    if (NULL == datafile)
+    if (NULL == datafile) {
         return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
+    }
 
     ret = opal_util_keyval_parse(datafile, data_callback);
     if (OPAL_SUCCESS != ret) {
@@ -416,15 +443,17 @@ static void print_flags(char **args, char *pattern)
 
     for (i = 0; args[i] != NULL; ++i) {
         if (0 == strncmp(args[i], pattern, strlen(pattern))) {
-            if (found)
+            if (found) {
                 printf(" ");
+            }
             printf("%s", args[i] + strlen(pattern));
             found = true;
         }
     }
 
-    if (found)
+    if (found) {
         printf("\n");
+    }
 }
 
 static void load_env_data(const char *project, const char *flag, char **data)
@@ -432,8 +461,9 @@ static void load_env_data(const char *project, const char *flag, char **data)
     char *envname;
     char *envvalue;
 
-    if (NULL == project || NULL == flag)
+    if (NULL == project || NULL == flag) {
         return;
+    }
 
     opal_asprintf(&envname, "%s_MPI%s", project, flag);
     if (NULL == (envvalue = getenv(envname))) {
@@ -446,8 +476,9 @@ static void load_env_data(const char *project, const char *flag, char **data)
     }
     free(envname);
 
-    if (NULL != *data)
+    if (NULL != *data) {
         free(*data);
+    }
     *data = strdup(envvalue);
 }
 
@@ -456,8 +487,9 @@ static void load_env_data_argv(const char *project, const char *flag, char ***da
     char *envname;
     char *envvalue;
 
-    if (NULL == project || NULL == flag)
+    if (NULL == project || NULL == flag) {
         return;
+    }
 
     opal_asprintf(&envname, "%s_MPI%s", project, flag);
     if (NULL == (envvalue = getenv(envname))) {
@@ -470,8 +502,9 @@ static void load_env_data_argv(const char *project, const char *flag, char ***da
     }
     free(envname);
 
-    if (NULL != *data)
+    if (NULL != *data) {
         opal_argv_free(*data);
+    }
 
     *data = opal_argv_split(envvalue, ' ');
 }
@@ -955,8 +988,9 @@ cleanup:
 
     opal_argv_free(exec_argv);
     opal_argv_free(user_argv);
-    if (NULL != base_argv0)
+    if (NULL != base_argv0) {
         free(base_argv0);
+    }
 
     if (OPAL_SUCCESS != (ret = data_finalize())) {
         return ret;

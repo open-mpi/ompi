@@ -608,12 +608,14 @@ static hwloc_obj_t df_search(hwloc_topology_t topo, hwloc_obj_t start, hwloc_obj
         search_depth = hwloc_get_cache_type_depth(topo, cache_level, (hwloc_obj_cache_type_t) -1);
 #endif
     }
-    if (HWLOC_TYPE_DEPTH_UNKNOWN == search_depth)
+    if (HWLOC_TYPE_DEPTH_UNKNOWN == search_depth) {
         return NULL;
+    }
 
     if (OPAL_HWLOC_LOGICAL == rtype) {
-        if (num_objs)
+        if (num_objs) {
             *num_objs = hwloc_get_nbobjs_by_depth(topo, search_depth);
+        }
         return hwloc_get_obj_by_depth(topo, search_depth, nobj);
     }
     if (OPAL_HWLOC_PHYSICAL == rtype) {
@@ -630,13 +632,16 @@ static hwloc_obj_t df_search(hwloc_topology_t topo, hwloc_obj_t start, hwloc_obj
          */
         hwloc_obj_t found = NULL;
         obj = NULL;
-        if (num_objs)
+        if (num_objs) {
             *num_objs = 0;
+        }
         while ((obj = hwloc_get_next_obj_by_depth(topo, search_depth, obj)) != NULL) {
-            if (num_objs && obj->os_index > *num_objs)
+            if (num_objs && obj->os_index > *num_objs) {
                 *num_objs = obj->os_index;
-            if (obj->os_index == nobj)
+            }
+            if (obj->os_index == nobj) {
                 found = obj;
+            }
         }
         return found;
     }
@@ -660,9 +665,10 @@ static hwloc_obj_t df_search(hwloc_topology_t topo, hwloc_obj_t start, hwloc_obj
         }
 
         unsigned idx = 0;
-        if (num_objs)
+        if (num_objs) {
             *num_objs = hwloc_get_nbobjs_inside_cpuset_by_depth(topo, constrained_cpuset,
                                                                 search_depth);
+        }
         obj = NULL;
         while ((obj = hwloc_get_next_obj_inside_cpuset_by_depth(topo, constrained_cpuset,
                                                                 search_depth, obj))
@@ -1373,8 +1379,9 @@ int opal_hwloc_base_topology_set_flags(hwloc_topology_t topology, unsigned long 
         flags |= HWLOC_TOPOLOGY_FLAG_IO_DEVICES;
 #else
         int ret = hwloc_topology_set_io_types_filter(topology, HWLOC_TYPE_FILTER_KEEP_IMPORTANT);
-        if (0 != ret)
+        if (0 != ret) {
             return ret;
+        }
 #endif
     }
     return hwloc_topology_set_flags(topology, flags);

@@ -80,8 +80,9 @@ static inline void position_predefined_data(opal_convertor_t *CONVERTOR, dt_elem
 
     assert(*(COUNT) <= ((size_t) _elem->count * _elem->blocklen));
 
-    if (cando_count > *(COUNT))
+    if (cando_count > *(COUNT)) {
         cando_count = *(COUNT);
+    }
 
     if (1 == _elem->blocklen) {
         DO_DEBUG(opal_output(0,
@@ -111,10 +112,11 @@ static inline void position_predefined_data(opal_convertor_t *CONVERTOR, dt_elem
                                   do_now);
 
             /* compensate if we just completed a blocklen */
-            if (do_now == left_in_block)
+            if (do_now == left_in_block) {
                 _memory += _elem->extent
                            - (_elem->blocklen
                               * opal_datatype_basicDatatypes[_elem->common.type]->size);
+            }
             cando_count -= do_now;
         }
     }
@@ -184,8 +186,9 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
                              (unsigned long) pConvertor->pDesc->size, (unsigned long) iov_len_local,
                              count_desc););
         /* Update all the stack including the last one */
-        for (pos_desc = 0; pos_desc <= pConvertor->stack_pos; pos_desc++)
+        for (pos_desc = 0; pos_desc <= pConvertor->stack_pos; pos_desc++) {
             pStack[pos_desc].disp += count_desc * extent;
+        }
         pConvertor->bConverted += count_desc * pConvertor->pDesc->size;
         iov_len_local = *position - pConvertor->bConverted;
         pStack[0].count -= count_desc;

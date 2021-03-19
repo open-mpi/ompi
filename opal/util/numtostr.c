@@ -30,8 +30,9 @@ char *opal_ltostr(long num)
     int ret = 0;
 
     buf = (char *) malloc(sizeof(char) * buflen);
-    if (NULL == buf)
+    if (NULL == buf) {
         return NULL;
+    }
 
     ret = snprintf(buf, buflen, "%ld", num);
     if (ret < 0) {
@@ -50,8 +51,9 @@ char *opal_dtostr(double num)
     int ret = 0;
 
     buf = (char *) malloc(sizeof(char) * buflen);
-    if (NULL == buf)
+    if (NULL == buf) {
         return NULL;
+    }
 
     ret = snprintf(buf, buflen, "%f", num);
     if (ret < 0) {

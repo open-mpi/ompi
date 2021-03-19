@@ -337,8 +337,8 @@ int mca_base_var_enum_create(const char *name, const mca_base_var_enum_value_t *
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    for (i = 0; values[i].string; ++i)
-        ;
+    for (i = 0; values[i].string; ++i) {
+    }
     new_enum->enum_value_count = i;
 
     /* make a copy of the values */
@@ -376,8 +376,8 @@ int mca_base_var_enum_create_flag(const char *name, const mca_base_var_enum_valu
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    for (i = 0; flags[i].string; ++i)
-        ;
+    for (i = 0; flags[i].string; ++i) {
+    }
     new_enum->super.enum_value_count = i;
 
     /* make a copy of the values */
@@ -423,8 +423,9 @@ static int enum_dump(mca_base_var_enum_t *self, char **out)
     for (i = 0; i < self->enum_value_count && self->enum_values[i].string; ++i) {
         ret = opal_asprintf(out, "%s%s%d:\"%s\"", tmp ? tmp : "", tmp ? ", " : "",
                             self->enum_values[i].value, self->enum_values[i].string);
-        if (tmp)
+        if (tmp) {
             free(tmp);
+        }
         if (0 > ret) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }

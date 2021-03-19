@@ -117,8 +117,9 @@ static char *opal_install_dirs_expand_internal(const char *input, bool is_setup)
     }
 
     retval = strdup(input);
-    if (NULL == retval)
+    if (NULL == retval) {
         return NULL;
+    }
 
     if (needs_expand) {
         bool changed = false;

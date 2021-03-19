@@ -81,8 +81,9 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
     int i, rc;
 
     /* get pointer to my proc structure */
-    if (NULL == (my_proc = opal_proc_local_get()))
+    if (NULL == (my_proc = opal_proc_local_get())) {
         return OPAL_ERR_OUT_OF_RESOURCE;
+    }
 
     for (i = 0; i < (int) nprocs; i++) {
 
@@ -323,8 +324,9 @@ int mca_btl_tcp_send(struct mca_btl_base_module_t *btl, struct mca_btl_base_endp
     frag->hdr.base.tag = tag;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_SEND;
     frag->hdr.count = 0;
-    if (endpoint->endpoint_nbo)
+    if (endpoint->endpoint_nbo) {
         MCA_BTL_TCP_HDR_HTON(frag->hdr);
+    }
     return mca_btl_tcp_endpoint_send(endpoint, frag);
 }
 
@@ -371,8 +373,9 @@ int mca_btl_tcp_put(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *
 
     frag->segments[1].seg_addr.lval = remote_address;
     frag->segments[1].seg_len = size;
-    if (endpoint->endpoint_nbo)
+    if (endpoint->endpoint_nbo) {
         MCA_BTL_BASE_SEGMENT_HTON(frag->segments[1]);
+    }
 
     frag->base.des_flags = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
     frag->base.des_cbfunc = fake_rdma_complete;
@@ -401,8 +404,9 @@ int mca_btl_tcp_put(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_PUT;
     frag->hdr.count = 1;
-    if (endpoint->endpoint_nbo)
+    if (endpoint->endpoint_nbo) {
         MCA_BTL_TCP_HDR_HTON(frag->hdr);
+    }
     return ((i = mca_btl_tcp_endpoint_send(endpoint, frag)) >= 0 ? OPAL_SUCCESS : i);
 }
 
@@ -465,8 +469,9 @@ int mca_btl_tcp_get(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_GET;
     frag->hdr.count = 1;
-    if (endpoint->endpoint_nbo)
+    if (endpoint->endpoint_nbo) {
         MCA_BTL_TCP_HDR_HTON(frag->hdr);
+    }
     return ((rc = mca_btl_tcp_endpoint_send(endpoint, frag)) >= 0 ? OPAL_SUCCESS : rc);
 }
 

@@ -44,13 +44,15 @@ static inline char *opal_find_last_path_separator(const char *filename, size_t n
 
     /* First skip the latest separators */
     for (; p >= filename; p--) {
-        if (*p != OPAL_PATH_SEP[0])
+        if (*p != OPAL_PATH_SEP[0]) {
             break;
+        }
     }
 
     for (; p >= filename; p--) {
-        if (*p == OPAL_PATH_SEP[0])
+        if (*p == OPAL_PATH_SEP[0]) {
             return p;
+        }
     }
 
     return NULL; /* nothing found inside the filename */

@@ -39,8 +39,9 @@ void wait_sync_global_wakeup_mt(int status)
          * but as of today we are the only place doing this so it is safe.
          */
         wait_sync_update(sync, 0, status);
-        if (sync->next == wait_sync_list)
+        if (sync->next == wait_sync_list) {
             break; /* special case for rings */
+        }
     }
     opal_mutex_unlock(&wait_sync_lock);
 }
