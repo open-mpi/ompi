@@ -25,12 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/string_copy.h"
-#include "opal/constants.h"
 
 #define ARGSIZE 128
-
 
 /*
  * Append a string to the end of a new or existing argv array.
@@ -53,24 +52,24 @@ int opal_argv_append_nosize(char ***argv, const char *arg)
 {
     int argc;
 
-  /* Create new argv. */
+    /* Create new argv. */
 
-  if (NULL == *argv) {
-    *argv = (char**) malloc(2 * sizeof(char *));
     if (NULL == *argv) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        *argv = (char **) malloc(2 * sizeof(char *));
+        if (NULL == *argv) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        argc = 0;
+        (*argv)[0] = NULL;
+        (*argv)[1] = NULL;
     }
-    argc = 0;
-    (*argv)[0] = NULL;
-    (*argv)[1] = NULL;
-  }
 
-  /* Extend existing argv. */
-  else {
+    /* Extend existing argv. */
+    else {
         /* count how many entries currently exist */
         argc = opal_argv_count(*argv);
 
-        *argv = (char**) realloc(*argv, (argc + 2) * sizeof(char *));
+        *argv = (char **) realloc(*argv, (argc + 2) * sizeof(char *));
         if (NULL == *argv) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
@@ -97,7 +96,7 @@ int opal_argv_prepend_nosize(char ***argv, const char *arg)
     /* Create new argv. */
 
     if (NULL == *argv) {
-        *argv = (char**) malloc(2 * sizeof(char *));
+        *argv = (char **) malloc(2 * sizeof(char *));
         if (NULL == *argv) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
@@ -107,15 +106,15 @@ int opal_argv_prepend_nosize(char ***argv, const char *arg)
         /* count how many entries currently exist */
         argc = opal_argv_count(*argv);
 
-        *argv = (char**) realloc(*argv, (argc + 2) * sizeof(char *));
+        *argv = (char **) realloc(*argv, (argc + 2) * sizeof(char *));
         if (NULL == *argv) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        (*argv)[argc+1] = NULL;
+        (*argv)[argc + 1] = NULL;
 
         /* shift all existing elements down 1 */
-        for (i=argc; 0 < i; i--) {
-            (*argv)[i] = (*argv)[i-1];
+        for (i = argc; 0 < i; i--) {
+            (*argv)[i] = (*argv)[i - 1];
         }
         (*argv)[0] = strdup(arg);
     }
@@ -135,7 +134,7 @@ int opal_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite
     }
 
     /* see if this arg is already present in the array */
-    for (i=0; NULL != (*argv)[i]; i++) {
+    for (i = 0; NULL != (*argv)[i]; i++) {
         if (0 == strcmp(arg, (*argv)[i])) {
             /* already exists - are we authorized to overwrite? */
             if (overwrite) {
@@ -155,94 +154,97 @@ int opal_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite
  */
 void opal_argv_free(char **argv)
 {
-  char **p;
+    char **p;
 
-  if (NULL == argv)
-    return;
+    if (NULL == argv) {
+        return;
+    }
 
-  for (p = argv; NULL != *p; ++p) {
-    free(*p);
-  }
+    for (p = argv; NULL != *p; ++p) {
+        free(*p);
+    }
 
-  free(argv);
+    free(argv);
 }
-
 
 /*
  * Split a string into a NULL-terminated argv array.
  */
-static char **opal_argv_split_inter(const char *src_string, int delimiter,
-        int include_empty)
+static char **opal_argv_split_inter(const char *src_string, int delimiter, int include_empty)
 {
-  char arg[ARGSIZE];
-  char **argv = NULL;
-  const char *p;
-  char *argtemp;
-  int argc = 0;
-  size_t arglen;
+    char arg[ARGSIZE];
+    char **argv = NULL;
+    const char *p;
+    char *argtemp;
+    int argc = 0;
+    size_t arglen;
 
-  while (src_string && *src_string) {
-    p = src_string;
-    arglen = 0;
+    while (src_string && *src_string) {
+        p = src_string;
+        arglen = 0;
 
-    while (('\0' != *p) && (*p != delimiter)) {
-      ++p;
-      ++arglen;
+        while (('\0' != *p) && (*p != delimiter)) {
+            ++p;
+            ++arglen;
+        }
+
+        /* zero length argument, skip */
+
+        if (src_string == p) {
+            if (include_empty) {
+                arg[0] = '\0';
+                if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, arg)) {
+                    return NULL;
+                }
+            }
+        }
+
+        /* tail argument, add straight from the original string */
+
+        else if ('\0' == *p) {
+            if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, src_string)) {
+                return NULL;
+            }
+            src_string = p;
+            continue;
+        }
+
+        /* long argument, malloc buffer, copy and add */
+
+        else if (arglen > (ARGSIZE - 1)) {
+            argtemp = (char *) malloc(arglen + 1);
+            if (NULL == argtemp) {
+                return NULL;
+            }
+
+            opal_string_copy(argtemp, src_string, arglen + 1);
+            argtemp[arglen] = '\0';
+
+            if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, argtemp)) {
+                free(argtemp);
+                return NULL;
+            }
+
+            free(argtemp);
+        }
+
+        /* short argument, copy to buffer and add */
+
+        else {
+            opal_string_copy(arg, src_string, arglen + 1);
+            arg[arglen] = '\0';
+
+            if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, arg)) {
+                return NULL;
+            }
+        }
+
+        src_string = p + 1;
     }
 
-    /* zero length argument, skip */
+    /* All done */
 
-    if (src_string == p) {
-      if (include_empty) {
-        arg[0] = '\0';
-        if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, arg))
-          return NULL;
-      }
-    }
-
-    /* tail argument, add straight from the original string */
-
-    else if ('\0' == *p) {
-      if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, src_string))
-	return NULL;
-      src_string = p;
-      continue;
-    }
-
-    /* long argument, malloc buffer, copy and add */
-
-    else if (arglen > (ARGSIZE - 1)) {
-        argtemp = (char*) malloc(arglen + 1);
-      if (NULL == argtemp)
-	return NULL;
-
-      opal_string_copy(argtemp, src_string, arglen + 1);
-      argtemp[arglen] = '\0';
-
-      if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, argtemp)) {
-	free(argtemp);
-	return NULL;
-      }
-
-      free(argtemp);
-    }
-
-    /* short argument, copy to buffer and add */
-
-    else {
-      opal_string_copy(arg, src_string, arglen + 1);
-      arg[arglen] = '\0';
-
-      if (OPAL_SUCCESS != opal_argv_append(&argc, &argv, arg))
-	return NULL;
-    }
-
-    src_string = p + 1;
-  }
-
-  /* All done */
-
-  return argv;
+    return argv;
 }
 
 char **opal_argv_split(const char *src_string, int delimiter)
@@ -260,18 +262,19 @@ char **opal_argv_split_with_empty(const char *src_string, int delimiter)
  */
 int opal_argv_count(char **argv)
 {
-  char **p;
-  int i;
+    char **p;
+    int i;
 
-  if (NULL == argv)
-    return 0;
+    if (NULL == argv) {
+        return 0;
+    }
 
-  for (i = 0, p = argv; *p; i++, p++)
-    continue;
+    for (i = 0, p = argv; *p; i++, p++) {
+        continue;
+    }
 
-  return i;
+    return i;
 }
-
 
 /*
  * Join all the elements of an argv array into a single
@@ -279,55 +282,55 @@ int opal_argv_count(char **argv)
  */
 char *opal_argv_join(char **argv, int delimiter)
 {
-  char **p;
-  char *pp;
-  char *str;
-  size_t str_len = 0;
-  size_t i;
+    char **p;
+    char *pp;
+    char *str;
+    size_t str_len = 0;
+    size_t i;
 
-  /* Bozo case */
+    /* Bozo case */
 
-  if (NULL == argv || NULL == argv[0]) {
-      return strdup("");
-  }
-
-  /* Find the total string length in argv including delimiters.  The
-     last delimiter is replaced by the NULL character. */
-
-  for (p = argv; *p; ++p) {
-    str_len += strlen(*p) + 1;
-  }
-
-  /* Allocate the string. */
-
-  if (NULL == (str = (char*) malloc(str_len)))
-    return NULL;
-
-  /* Loop filling in the string. */
-
-  str[--str_len] = '\0';
-  p = argv;
-  pp = *p;
-
-  for (i = 0; i < str_len; ++i) {
-    if ('\0' == *pp) {
-
-      /* End of a string, fill in a delimiter and go to the next
-         string. */
-
-      str[i] = (char) delimiter;
-      ++p;
-      pp = *p;
-    } else {
-      str[i] = *pp++;
+    if (NULL == argv || NULL == argv[0]) {
+        return strdup("");
     }
-  }
 
-  /* All done */
+    /* Find the total string length in argv including delimiters.  The
+       last delimiter is replaced by the NULL character. */
 
-  return str;
+    for (p = argv; *p; ++p) {
+        str_len += strlen(*p) + 1;
+    }
+
+    /* Allocate the string. */
+
+    if (NULL == (str = (char *) malloc(str_len))) {
+        return NULL;
+    }
+
+    /* Loop filling in the string. */
+
+    str[--str_len] = '\0';
+    p = argv;
+    pp = *p;
+
+    for (i = 0; i < str_len; ++i) {
+        if ('\0' == *pp) {
+
+            /* End of a string, fill in a delimiter and go to the next
+               string. */
+
+            str[i] = (char) delimiter;
+            ++p;
+            pp = *p;
+        } else {
+            str[i] = *pp++;
+        }
+    }
+
+    /* All done */
+
+    return str;
 }
-
 
 /*
  * Join all the elements of an argv array from within a
@@ -343,14 +346,14 @@ char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter)
 
     /* Bozo case */
 
-    if (NULL == argv || NULL == argv[0] || (int)start >= opal_argv_count(argv)) {
+    if (NULL == argv || NULL == argv[0] || (int) start >= opal_argv_count(argv)) {
         return strdup("");
     }
 
     /* Find the total string length in argv including delimiters.  The
      last delimiter is replaced by the NULL character. */
 
-    for (p = &argv[start], i=start; *p && i < end; ++p, ++i) {
+    for (p = &argv[start], i = start; *p && i < end; ++p, ++i) {
         str_len += strlen(*p) + 1;
     }
 
@@ -360,7 +363,7 @@ char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter)
 
     /* Allocate the string. */
 
-    if (NULL == (str = (char*) malloc(str_len))) {
+    if (NULL == (str = (char *) malloc(str_len))) {
         return NULL;
     }
 
@@ -389,58 +392,57 @@ char *opal_argv_join_range(char **argv, size_t start, size_t end, int delimiter)
     return str;
 }
 
-
 /*
  * Return the number of bytes consumed by an argv array.
  */
 size_t opal_argv_len(char **argv)
 {
-  char **p;
-  size_t length;
+    char **p;
+    size_t length;
 
-  if (NULL == argv)
-    return (size_t) 0;
+    if (NULL == argv) {
+        return (size_t) 0;
+    }
 
-  length = sizeof(char *);
+    length = sizeof(char *);
 
-  for (p = argv; *p; ++p) {
-    length += strlen(*p) + 1 + sizeof(char *);
-  }
+    for (p = argv; *p; ++p) {
+        length += strlen(*p) + 1 + sizeof(char *);
+    }
 
-  return length;
+    return length;
 }
-
 
 /*
  * Copy a NULL-terminated argv array.
  */
 char **opal_argv_copy(char **argv)
 {
-  char **dupv = NULL;
-  int dupc = 0;
+    char **dupv = NULL;
+    int dupc = 0;
 
-  if (NULL == argv)
-    return NULL;
-
-  /* create an "empty" list, so that we return something valid if we
-     were passed a valid list with no contained elements */
-  dupv = (char**) malloc(sizeof(char*));
-  dupv[0] = NULL;
-
-  while (NULL != *argv) {
-    if (OPAL_SUCCESS != opal_argv_append(&dupc, &dupv, *argv)) {
-      opal_argv_free(dupv);
-      return NULL;
+    if (NULL == argv) {
+        return NULL;
     }
 
-    ++argv;
-  }
+    /* create an "empty" list, so that we return something valid if we
+       were passed a valid list with no contained elements */
+    dupv = (char **) malloc(sizeof(char *));
+    dupv[0] = NULL;
 
-  /* All done */
+    while (NULL != *argv) {
+        if (OPAL_SUCCESS != opal_argv_append(&dupc, &dupv, *argv)) {
+            opal_argv_free(dupv);
+            return NULL;
+        }
 
-  return dupv;
+        ++argv;
+    }
+
+    /* All done */
+
+    return dupv;
 }
-
 
 int opal_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
 {
@@ -485,15 +487,16 @@ int opal_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
     (*argv)[i] = NULL;
 
     /* adjust the argv array */
-    tmp = (char**)realloc(*argv, sizeof(char*) * (i + 1));
-    if (NULL != tmp) *argv = tmp;
+    tmp = (char **) realloc(*argv, sizeof(char *) * (i + 1));
+    if (NULL != tmp) {
+        *argv = tmp;
+    }
 
     /* adjust the argc */
     (*argc) -= num_to_delete;
 
     return OPAL_SUCCESS;
 }
-
 
 int opal_argv_insert(char ***target, int start, char **source)
 {
@@ -524,15 +527,13 @@ int opal_argv_insert(char ***target, int start, char **source)
 
         /* Alloc out new space */
 
-        *target = (char**) realloc(*target,
-                                   sizeof(char *) * (target_count + source_count + 1));
+        *target = (char **) realloc(*target, sizeof(char *) * (target_count + source_count + 1));
 
         /* Move suffix items down to the end */
 
         suffix_count = target_count - start;
         for (i = suffix_count - 1; i >= 0; --i) {
-            (*target)[start + source_count + i] =
-                (*target)[start + i];
+            (*target)[start + source_count + i] = (*target)[start + i];
         }
         (*target)[start + suffix_count + source_count] = NULL;
 
@@ -569,14 +570,12 @@ int opal_argv_insert_element(char ***target, int location, char *source)
     }
 
     /* Alloc out new space */
-    *target = (char**) realloc(*target,
-                               sizeof(char*) * (target_count + 2));
+    *target = (char **) realloc(*target, sizeof(char *) * (target_count + 2));
 
     /* Move suffix items down to the end */
     suffix_count = target_count - location;
     for (i = suffix_count - 1; i >= 0; --i) {
-        (*target)[location + 1 + i] =
-        (*target)[location + i];
+        (*target)[location + 1 + i] = (*target)[location + i];
     }
     (*target)[location + suffix_count + 1] = NULL;
 

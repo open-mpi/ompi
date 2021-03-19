@@ -23,15 +23,12 @@
 #include "opal/constants.h"
 #include "opal/mca/backtrace/backtrace.h"
 
-int
-opal_backtrace_print(FILE *file, char *prefix, int strip)
+int opal_backtrace_print(FILE *file, char *prefix, int strip)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-
-int
-opal_backtrace_buffer(char ***message_out, int *len_out)
+int opal_backtrace_buffer(char ***message_out, int *len_out)
 {
     *message_out = NULL;
     *len_out = 0;

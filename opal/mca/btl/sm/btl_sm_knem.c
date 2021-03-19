@@ -93,10 +93,10 @@ static int mca_btl_sm_deregister_mem_knem(struct mca_btl_base_module_t *btl,
                                           struct mca_btl_base_registration_handle_t *handle)
 {
     mca_btl_sm_t *sm_module = (mca_btl_sm_t *) btl;
-    mca_btl_sm_registration_handle_t
-        *reg = (mca_btl_sm_registration_handle_t *) ((intptr_t) handle -
-                                                     offsetof(mca_btl_sm_registration_handle_t,
-                                                              btl_handle));
+    mca_btl_sm_registration_handle_t *reg = (mca_btl_sm_registration_handle_t
+                                                 *) ((intptr_t) handle
+                                                     - offsetof(mca_btl_sm_registration_handle_t,
+                                                                btl_handle));
 
     sm_module->knem_rcache->rcache_deregister(sm_module->knem_rcache, &reg->base);
 

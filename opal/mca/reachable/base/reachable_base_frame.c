@@ -9,16 +9,14 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 #include "opal/constants.h"
 
+#include "opal/mca/base/base.h"
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/base.h"
 
 #include "opal/mca/reachable/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern
@@ -47,7 +45,6 @@ static int opal_reachable_base_frame_open(mca_base_open_flag_t flags)
 }
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, reachable, "OPAL Reachability Framework",
-                           opal_reachable_base_frame_register,
-                           opal_reachable_base_frame_open,
-                           opal_reachable_base_frame_close,
-                           mca_reachable_base_static_components, 0);
+                           opal_reachable_base_frame_register, opal_reachable_base_frame_open,
+                           opal_reachable_base_frame_close, mca_reachable_base_static_components,
+                           0);

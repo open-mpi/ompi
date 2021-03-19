@@ -22,19 +22,19 @@
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif  /* HAVE_SYS_TYPES_H */
+#    include <sys/types.h>
+#endif /* HAVE_SYS_TYPES_H */
 #ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif  /* HAVE_SYS_MMAN_H */
+#    include <sys/mman.h>
+#endif /* HAVE_SYS_MMAN_H */
 
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
 #include "opal/constants.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/memoryhooks/memory_internal.h"
-#include "opal/class/opal_list.h"
-#include "opal/class/opal_object.h"
-#include "opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
+#include "opal/sys/atomic.h"
 
 /*
  * local types
@@ -88,7 +88,7 @@ static void opal_mem_hooks_finalize(void)
     opal_atomic_unlock(&release_lock);
 }
 
-int opal_mem_hooks_init (void)
+int opal_mem_hooks_init(void)
 {
     OBJ_CONSTRUCT(&release_cb_list, opal_list_t);
 
@@ -99,28 +99,25 @@ int opal_mem_hooks_init (void)
     release_run_callbacks = false;
     opal_atomic_mb();
 
-    opal_finalize_register_cleanup (opal_mem_hooks_finalize);
+    opal_finalize_register_cleanup(opal_mem_hooks_finalize);
 
     return OPAL_SUCCESS;
 }
 
-
-
 /* called from memory manager / memory-manager specific hooks */
-void
-opal_mem_hooks_set_support(int support)
+void opal_mem_hooks_set_support(int support)
 {
     hooks_support = support;
 }
 
-
 /* called from the memory manager / memory-manager specific hooks */
-void
-opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc)
+void opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc)
 {
     callback_list_item_t *cbitem, *next;
 
-    if (!release_run_callbacks) return;
+    if (!release_run_callbacks) {
+        return;
+    }
 
     /*
      * This is not really thread safe - but we can't hold the lock
@@ -133,7 +130,7 @@ opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc)
      */
 
     opal_atomic_lock(&release_lock);
-    OPAL_LIST_FOREACH_SAFE(cbitem, next, &release_cb_list, callback_list_item_t) {
+    OPAL_LIST_FOREACH_SAFE (cbitem, next, &release_cb_list, callback_list_item_t) {
         opal_atomic_unlock(&release_lock);
         cbitem->cbfunc(buf, length, cbitem->cbdata, (bool) from_alloc);
         opal_atomic_lock(&release_lock);
@@ -141,21 +138,17 @@ opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc)
     opal_atomic_unlock(&release_lock);
 }
 
-
-int
-opal_mem_hooks_support_level(void)
+int opal_mem_hooks_support_level(void)
 {
     return hooks_support;
 }
 
-
-int
-opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata)
+int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata)
 {
     callback_list_item_t *cbitem, *new_cbitem;
     int ret = OPAL_SUCCESS;
 
-    if (0 == ((OPAL_MEMORY_FREE_SUPPORT|OPAL_MEMORY_MUNMAP_SUPPORT) & hooks_support)) {
+    if (0 == ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & hooks_support)) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
 
@@ -176,7 +169,7 @@ opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata
     opal_atomic_mb();
 
     /* make sure the callback isn't already in the list */
-    OPAL_LIST_FOREACH(cbitem, &release_cb_list, callback_list_item_t) {
+    OPAL_LIST_FOREACH (cbitem, &release_cb_list, callback_list_item_t) {
         if (cbitem->cbfunc == func) {
             ret = OPAL_EXISTS;
             goto done;
@@ -186,9 +179,9 @@ opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata
     new_cbitem->cbfunc = func;
     new_cbitem->cbdata = cbdata;
 
-    opal_list_append(&release_cb_list, (opal_list_item_t*) new_cbitem);
+    opal_list_append(&release_cb_list, (opal_list_item_t *) new_cbitem);
 
- done:
+done:
     opal_atomic_unlock(&release_lock);
 
     if (OPAL_EXISTS == ret && NULL != new_cbitem) {
@@ -198,9 +191,7 @@ opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata
     return ret;
 }
 
-
-int
-opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t* func)
+int opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t *func)
 {
     callback_list_item_t *cbitem, *found_item = NULL;
     int ret = OPAL_ERR_NOT_FOUND;
@@ -208,7 +199,7 @@ opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t* func)
     opal_atomic_lock(&release_lock);
 
     /* make sure the callback isn't already in the list */
-    OPAL_LIST_FOREACH(cbitem, &release_cb_list, callback_list_item_t) {
+    OPAL_LIST_FOREACH (cbitem, &release_cb_list, callback_list_item_t) {
         if (cbitem->cbfunc == func) {
             opal_list_remove_item(&release_cb_list, (opal_list_item_t *) cbitem);
             found_item = cbitem;

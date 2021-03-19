@@ -8,19 +8,17 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 #include "opal/constants.h"
 
+#include "opal/mca/base/base.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/threads/thread_usage.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/base.h"
 
-#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/mca/pmix/base/base.h"
-
+#include "opal/mca/pmix/pmix-internal.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -33,27 +31,25 @@
 bool opal_pmix_collect_all_data = true;
 int opal_pmix_verbose_output = -1;
 bool opal_pmix_base_async_modex = false;
-opal_pmix_base_t opal_pmix_base = {
-    .evbase = NULL,
-    .timeout = 0,
-    .initialized = 0,
-    .lock = {
-        .mutex = OPAL_MUTEX_STATIC_INIT,
-        .cond = OPAL_PMIX_CONDITION_STATIC_INIT,
-        .active = false
-    }
-};
+opal_pmix_base_t opal_pmix_base = {.evbase = NULL,
+                                   .timeout = 0,
+                                   .initialized = 0,
+                                   .lock = {.mutex = OPAL_MUTEX_STATIC_INIT,
+                                            .cond = OPAL_PMIX_CONDITION_STATIC_INIT,
+                                            .active = false}};
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
     opal_pmix_base_async_modex = false;
-    (void) mca_base_var_register("opal", "pmix", "base", "async_modex", "Use asynchronous modex mode",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base_async_modex);
+    (void) mca_base_var_register("opal", "pmix", "base", "async_modex",
+                                 "Use asynchronous modex mode", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_pmix_base_async_modex);
     opal_pmix_collect_all_data = true;
-    (void) mca_base_var_register("opal", "pmix", "base", "collect_data", "Collect all data during modex",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_collect_all_data);
+    (void) mca_base_var_register("opal", "pmix", "base", "collect_data",
+                                 "Collect all data during modex", MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_pmix_collect_all_data);
 
     opal_pmix_base.timeout = -1;
     (void) mca_base_var_register("opal", "pmix", "base", "exchange_timeout",
@@ -84,8 +80,6 @@ static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
     return rc;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework",
-                           opal_pmix_base_frame_register,
-                           opal_pmix_base_frame_open,
-                           opal_pmix_base_frame_close,
+MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework", opal_pmix_base_frame_register,
+                           opal_pmix_base_frame_open, opal_pmix_base_frame_close,
                            mca_pmix_base_static_components, 0);

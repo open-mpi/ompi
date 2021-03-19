@@ -68,12 +68,11 @@
 struct opal_cstring_t {
     opal_object_t super;
     const size_t length; //< the number of characters not including the null-terminator
-    char _ignored;       //< single char forcing additional padding to always ensure null-termination
+    char _ignored; //< single char forcing additional padding to always ensure null-termination
     const char string[]; //< FMA containing the string, making use of padding bytes
 };
 
 typedef struct opal_cstring_t opal_cstring_t;
-
 
 BEGIN_C_DECLS
 
@@ -95,7 +94,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_cstring_t);
  *
  */
 OPAL_DECLSPEC
-opal_cstring_t* opal_cstring_create(const char *string) __opal_attribute_malloc__;
+opal_cstring_t *opal_cstring_create(const char *string) __opal_attribute_malloc__;
 
 /**
  * Create a new instance of a reference-counted immutable string object
@@ -108,7 +107,7 @@ opal_cstring_t* opal_cstring_create(const char *string) __opal_attribute_malloc_
  * If \c string is \c NULL or \c length is zero the resulting string will be empty.
  */
 OPAL_DECLSPEC
-opal_cstring_t* opal_cstring_create_l(const char *string, size_t length) __opal_attribute_malloc__;
+opal_cstring_t *opal_cstring_create_l(const char *string, size_t length) __opal_attribute_malloc__;
 
 /**
  * Convert string to integer
@@ -126,7 +125,6 @@ opal_cstring_t* opal_cstring_create_l(const char *string, size_t length) __opal_
  */
 OPAL_DECLSPEC
 int opal_cstring_to_int(opal_cstring_t *string, int *interp);
-
 
 /**
  * Convert string to boolean
@@ -154,7 +152,6 @@ int opal_cstring_to_int(opal_cstring_t *string, int *interp);
  */
 OPAL_DECLSPEC
 int opal_cstring_to_bool(opal_cstring_t *string, bool *interp);
-
 
 OPAL_DECLSPEC
 bool opal_str_to_bool(const char *string);

@@ -63,8 +63,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
 
@@ -94,10 +94,7 @@ typedef int (*opal_memory_base_component_query_fn_t)(int *priority);
  * can use the value opal_memory_base_register_empty (an empty
  * implementation of this function).
  */
-typedef int (*opal_memory_base_component_register_fn_t)(void *base,
-                                                        size_t len,
-                                                        uint64_t cookie);
-
+typedef int (*opal_memory_base_component_register_fn_t)(void *base, size_t len, uint64_t cookie);
 
 /**
  * Prototype for a function that is the opposite of
@@ -114,10 +111,7 @@ typedef int (*opal_memory_base_component_register_fn_t)(void *base,
  * can use the value opal_memory_base_deregister_empty (an empty
  * implementation of this function).
  */
-typedef int (*opal_memory_base_component_deregister_fn_t)(void *base,
-                                                          size_t len,
-                                                          uint64_t cookie);
-
+typedef int (*opal_memory_base_component_deregister_fn_t)(void *base, size_t len, uint64_t cookie);
 
 /**
  * Prototype for a function that set the memory alignment
@@ -168,7 +162,6 @@ END_C_DECLS
 /*
  * Macro for use in components that are of type memory
  */
-#define OPAL_MEMORY_BASE_VERSION_2_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("memory", 2, 0, 0)
+#define OPAL_MEMORY_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("memory", 2, 0, 0)
 
 #endif /* OPAL_MCA_MEMORY_MEMORY_H */

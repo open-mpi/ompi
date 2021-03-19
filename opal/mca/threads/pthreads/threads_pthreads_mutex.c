@@ -28,9 +28,9 @@
 #include <errno.h>
 #include <pthread.h>
 
+#include "opal/constants.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/mca/threads/pthreads/threads_pthreads_mutex.h"
-#include "opal/constants.h"
 
 /*
  * Wait and see if some upper layer wants to use threads, if support
@@ -70,8 +70,7 @@ static void mca_threads_pthreads_mutex_destructor(opal_mutex_t *p_mutex)
     pthread_mutex_destroy(&p_mutex->m_lock_pthread);
 }
 
-static void mca_threads_pthreads_recursive_mutex_constructor
-        (opal_recursive_mutex_t *p_mutex)
+static void mca_threads_pthreads_recursive_mutex_constructor(opal_recursive_mutex_t *p_mutex)
 {
     pthread_mutexattr_t mutex_attr;
     pthread_mutexattr_init(&mutex_attr);
@@ -86,19 +85,15 @@ static void mca_threads_pthreads_recursive_mutex_constructor
     opal_atomic_lock_init(&p_mutex->m_lock_atomic, 0);
 }
 
-static void mca_threads_pthreads_recursive_mutex_destructor
-        (opal_recursive_mutex_t *p_mutex)
+static void mca_threads_pthreads_recursive_mutex_destructor(opal_recursive_mutex_t *p_mutex)
 {
     pthread_mutex_destroy(&p_mutex->m_lock_pthread);
 }
 
-OBJ_CLASS_INSTANCE(opal_mutex_t,
-                   opal_object_t,
-                   mca_threads_pthreads_mutex_constructor,
+OBJ_CLASS_INSTANCE(opal_mutex_t, opal_object_t, mca_threads_pthreads_mutex_constructor,
                    mca_threads_pthreads_mutex_destructor);
 
-OBJ_CLASS_INSTANCE(opal_recursive_mutex_t,
-                   opal_object_t,
+OBJ_CLASS_INSTANCE(opal_recursive_mutex_t, opal_object_t,
                    mca_threads_pthreads_recursive_mutex_constructor,
                    mca_threads_pthreads_recursive_mutex_destructor);
 

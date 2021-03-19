@@ -24,12 +24,12 @@
 #include "opal/util/event.h"
 
 #include "opal/constants.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "opal/mca/base/mca_base_var.h"
 
-opal_event_base_t *opal_sync_event_base=NULL;
+opal_event_base_t *opal_sync_event_base = NULL;
 
 static char *opal_event_module_include = NULL;
 static struct event_config *opal_event_config = NULL;
@@ -46,25 +46,22 @@ int opal_event_register_params(void)
     opal_event_all_available_eventops = event_get_supported_methods();
 
 #ifdef __APPLE__
-    opal_event_module_include ="select";
+    opal_event_module_include = "select";
 #else
     opal_event_module_include = "poll";
 #endif
 
-    avail = opal_argv_join((char**)opal_event_all_available_eventops, ',');
-    opal_asprintf( &help_msg,
-              "Comma-delimited list of libevent subsystems "
-              "to use (%s -- available on your platform)",
-              avail );
+    avail = opal_argv_join((char **) opal_event_all_available_eventops, ',');
+    opal_asprintf(&help_msg,
+                  "Comma-delimited list of libevent subsystems "
+                  "to use (%s -- available on your platform)",
+                  avail);
 
-    ret = mca_base_var_register("opal", "opal", "event", "include",
-				help_msg,
-				MCA_BASE_VAR_TYPE_STRING, NULL, 0,
-				MCA_BASE_VAR_FLAG_SETTABLE,
-				OPAL_INFO_LVL_3,
-				MCA_BASE_VAR_SCOPE_LOCAL,
-				&opal_event_module_include);
-    free(help_msg);  /* release the help message */
+    ret = mca_base_var_register("opal", "opal", "event", "include", help_msg,
+                                MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
+                                &opal_event_module_include);
+    free(help_msg); /* release the help message */
     free(avail);
     avail = NULL;
 
@@ -72,19 +69,16 @@ int opal_event_register_params(void)
         return ret;
     }
 
-    ret = mca_base_var_register_synonym (ret, "opal", "event", "external", "include", 0);
+    ret = mca_base_var_register_synonym(ret, "opal", "event", "external", "include", 0);
     if (0 > ret) {
         return ret;
     }
 
     ret = mca_base_var_register("opal", "opal", "event", "verbose",
                                 "Verbosity level for the event framework (default: 0)",
-                                MCA_BASE_VAR_TYPE_INT,
-                                &mca_base_var_enum_verbose, 0,
-                                MCA_BASE_VAR_FLAG_SETTABLE,
-                                OPAL_INFO_LVL_3,
-                                MCA_BASE_VAR_SCOPE_LOCAL,
-                                &opal_event_verbose);
+                                MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_verbose, 0,
+                                MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                MCA_BASE_VAR_SCOPE_LOCAL, &opal_event_verbose);
     if (0 > ret) {
         return ret;
     }
@@ -92,7 +86,7 @@ int opal_event_register_params(void)
     /* The event wrapper used to be a framework.  Help the user out by
      * providing a backwards compatible verbose flag
      */
-    ret = mca_base_var_register_synonym (ret, "opal", "event", "base", "verbose", 0);
+    ret = mca_base_var_register_synonym(ret, "opal", "event", "base", "verbose", 0);
     if (0 > ret) {
         return ret;
     }
@@ -102,8 +96,8 @@ int opal_event_register_params(void)
 
 int opal_event_init(void)
 {
-    char **includes=NULL;
-    bool dumpit=false;
+    char **includes = NULL;
+    bool dumpit = false;
     int i, j;
 
     if (opal_event_verbose > 4) {
@@ -114,19 +108,19 @@ int opal_event_init(void)
         /* Shouldn't happen, but... */
         opal_event_module_include = strdup("select");
     }
-    includes = opal_argv_split(opal_event_module_include,',');
+    includes = opal_argv_split(opal_event_module_include, ',');
 
     /* get a configuration object */
     opal_event_config = event_config_new();
     /* cycle thru the available subsystems */
-    for (i = 0 ; NULL != opal_event_all_available_eventops[i] ; ++i) {
+    for (i = 0; NULL != opal_event_all_available_eventops[i]; ++i) {
         /* if this module isn't included in the given ones,
          * then exclude it
          */
         dumpit = true;
-        for (j=0; NULL != includes[j]; j++) {
-            if (0 == strcmp("all", includes[j]) ||
-                0 == strcmp(opal_event_all_available_eventops[i], includes[j])) {
+        for (j = 0; NULL != includes[j]; j++) {
+            if (0 == strcmp("all", includes[j])
+                || 0 == strcmp(opal_event_all_available_eventops[i], includes[j])) {
                 dumpit = false;
                 break;
             }
@@ -158,7 +152,7 @@ int opal_event_finalize(void)
     return OPAL_SUCCESS;
 }
 
-opal_event_base_t* opal_event_base_create(void)
+opal_event_base_t *opal_event_base_create(void)
 {
     opal_event_base_t *base;
 
@@ -170,10 +164,10 @@ opal_event_base_t* opal_event_base_create(void)
     return base;
 }
 
-opal_event_t* opal_event_alloc(void)
+opal_event_t *opal_event_alloc(void)
 {
     opal_event_t *ev;
 
-    ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+    ev = (opal_event_t *) malloc(sizeof(opal_event_t));
     return ev;
 }

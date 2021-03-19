@@ -31,17 +31,17 @@
 
 #include "opal/class/opal_object.h"
 #if OPAL_ENABLE_DEBUG
-#include "opal/util/output.h"
+#    include "opal/util/output.h"
 #endif
 
-#include "mutex.h"
 #include "condition.h"
+#include "mutex.h"
 
 BEGIN_C_DECLS
 
 typedef void *(*opal_thread_fn_t)(opal_object_t *);
 
-#define OPAL_THREAD_CANCELLED ((void *)1);
+#define OPAL_THREAD_CANCELLED ((void *) 1);
 
 #include MCA_threads_base_include_HEADER
 
@@ -53,63 +53,57 @@ OBJ_CLASS_DECLARATION(opal_thread_t);
 OPAL_DECLSPEC extern bool opal_debug_threads;
 #endif
 
-
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
 
 #if OPAL_ENABLE_DEBUG
-#define OPAL_ACQUIRE_THREAD(lck, cnd, act)               \
-    do {                                                 \
-        OPAL_THREAD_LOCK((lck));                         \
-        if (opal_debug_threads) {                        \
-            opal_output(0, "Waiting for thread %s:%d",   \
-                        __FILE__, __LINE__);             \
-        }                                                \
-        while (*(act)) {                                 \
-            opal_condition_wait((cnd), (lck));           \
-        }                                                \
-        if (opal_debug_threads) {                        \
-            opal_output(0, "Thread obtained %s:%d",      \
-                        __FILE__, __LINE__);             \
-        }                                                \
-        *(act) = true;                                   \
-    } while (0);
+#    define OPAL_ACQUIRE_THREAD(lck, cnd, act)                                  \
+        do {                                                                    \
+            OPAL_THREAD_LOCK((lck));                                            \
+            if (opal_debug_threads) {                                           \
+                opal_output(0, "Waiting for thread %s:%d", __FILE__, __LINE__); \
+            }                                                                   \
+            while (*(act)) {                                                    \
+                opal_condition_wait((cnd), (lck));                              \
+            }                                                                   \
+            if (opal_debug_threads) {                                           \
+                opal_output(0, "Thread obtained %s:%d", __FILE__, __LINE__);    \
+            }                                                                   \
+            *(act) = true;                                                      \
+        } while (0);
 #else
-#define OPAL_ACQUIRE_THREAD(lck, cnd, act)               \
-    do {                                                 \
-        OPAL_THREAD_LOCK((lck));                         \
-        while (*(act)) {                                 \
-            opal_condition_wait((cnd), (lck));           \
-        }                                                \
-        *(act) = true;                                   \
-    } while (0);
+#    define OPAL_ACQUIRE_THREAD(lck, cnd, act)     \
+        do {                                       \
+            OPAL_THREAD_LOCK((lck));               \
+            while (*(act)) {                       \
+                opal_condition_wait((cnd), (lck)); \
+            }                                      \
+            *(act) = true;                         \
+        } while (0);
 #endif
-
 
 #if OPAL_ENABLE_DEBUG
-#define OPAL_RELEASE_THREAD(lck, cnd, act)              \
-    do {                                                \
-        if (opal_debug_threads) {                       \
-            opal_output(0, "Releasing thread %s:%d",    \
-                        __FILE__, __LINE__);            \
-        }                                               \
-        *(act) = false;                                 \
-        opal_condition_broadcast((cnd));                \
-        OPAL_THREAD_UNLOCK((lck));                      \
-    } while (0);
+#    define OPAL_RELEASE_THREAD(lck, cnd, act)                                \
+        do {                                                                  \
+            if (opal_debug_threads) {                                         \
+                opal_output(0, "Releasing thread %s:%d", __FILE__, __LINE__); \
+            }                                                                 \
+            *(act) = false;                                                   \
+            opal_condition_broadcast((cnd));                                  \
+            OPAL_THREAD_UNLOCK((lck));                                        \
+        } while (0);
 #else
-#define OPAL_RELEASE_THREAD(lck, cnd, act)              \
-    do {                                                \
-        *(act) = false;                                 \
-        opal_condition_broadcast((cnd));                \
-        OPAL_THREAD_UNLOCK((lck));                      \
-    } while (0);
+#    define OPAL_RELEASE_THREAD(lck, cnd, act) \
+        do {                                   \
+            *(act) = false;                    \
+            opal_condition_broadcast((cnd));   \
+            OPAL_THREAD_UNLOCK((lck));         \
+        } while (0);
 #endif
 
-
-#define OPAL_WAKEUP_THREAD(cnd, act)        \
-    do {                                    \
-        *(act) = false;                     \
-        opal_condition_broadcast((cnd));    \
+#define OPAL_WAKEUP_THREAD(cnd, act)     \
+    do {                                 \
+        *(act) = false;                  \
+        opal_condition_broadcast((cnd)); \
     } while (0);
 
 /* provide a macro for forward-proofing the shifting
@@ -118,16 +112,14 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
 
 /* post an object to another thread - for now, we
  * only have a memory barrier */
-#define OPAL_POST_OBJECT(o)     opal_atomic_wmb()
+#define OPAL_POST_OBJECT(o) opal_atomic_wmb()
 
 /* acquire an object from another thread - for now,
  * we only have a memory barrier */
-#define OPAL_ACQUIRE_OBJECT(o)  opal_atomic_rmb()
+#define OPAL_ACQUIRE_OBJECT(o) opal_atomic_rmb()
 
-
-
-OPAL_DECLSPEC int  opal_thread_start(opal_thread_t *);
-OPAL_DECLSPEC int  opal_thread_join(opal_thread_t *, void **thread_return);
+OPAL_DECLSPEC int opal_thread_start(opal_thread_t *);
+OPAL_DECLSPEC int opal_thread_join(opal_thread_t *, void **thread_return);
 OPAL_DECLSPEC bool opal_thread_self_compare(opal_thread_t *);
 OPAL_DECLSPEC opal_thread_t *opal_thread_get_self(void);
 OPAL_DECLSPEC void opal_thread_kill(opal_thread_t *, int sig);

@@ -7,14 +7,12 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include "opal/constants.h"
 
-#include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
-
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 /*
  * Don't use show_help() here (or print any error message at all).
@@ -56,16 +54,14 @@ int opal_hwloc_base_set_process_membind_policy(void)
     } else {
         int e;
         hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
-        rc = hwloc_set_membind(opal_hwloc_topology,
-                               cpuset, policy, flags);
+        rc = hwloc_set_membind(opal_hwloc_topology, cpuset, policy, flags);
         e = errno;
         hwloc_bitmap_free(cpuset);
 
         /* See if hwloc was able to do it.  If hwloc failed due to
            ENOSYS, but the base_map == NONE, then it's not really an
            error. */
-        if (0 != rc && ENOSYS == e &&
-            OPAL_HWLOC_BASE_MAP_NONE == opal_hwloc_base_map) {
+        if (0 != rc && ENOSYS == e && OPAL_HWLOC_BASE_MAP_NONE == opal_hwloc_base_map) {
             rc = 0;
         }
     }

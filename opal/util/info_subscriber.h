@@ -27,27 +27,27 @@
 
 #include <string.h>
 
+#include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/info.h"
 
 #include "opal/mca/base/mca_base_var_enum.h"
 
-
 #define INFO_SUBSCRIBER_SIZE 5
 
 struct opal_infosubscriber_t {
-    opal_object_t	s_base;
-    opal_hash_table_t 	s_subscriber_table;
-    opal_info_t 	*s_info;
+    opal_object_t s_base;
+    opal_hash_table_t s_subscriber_table;
+    opal_info_t *s_info;
 };
 typedef struct opal_infosubscriber_t opal_infosubscriber_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_infosubscriber_t);
 
-typedef const char*(opal_key_interest_callback_t)(opal_infosubscriber_t*, const char*, const char*);
+typedef const char *(opal_key_interest_callback_t)(opal_infosubscriber_t *, const char *,
+                                                   const char *);
 
 /**
  *   opal_infosubscribe_change_info - Make changes to a Comm/Win/File Info
@@ -61,8 +61,7 @@ typedef const char*(opal_key_interest_callback_t)(opal_infosubscriber_t*, const 
  *
  *   Notifies subscribers of info's that have gone away and new info settings
  */
-int opal_infosubscribe_change_info(opal_infosubscriber_t*, opal_info_t *);
-
+int opal_infosubscribe_change_info(opal_infosubscriber_t *, opal_info_t *);
 
 /**
  *   opal_infosubscribe_subscribe - Request to be updated about info changes to a Comm/Win/File Info
@@ -79,6 +78,7 @@ int opal_infosubscribe_change_info(opal_infosubscriber_t*, opal_info_t *);
  *   Does not try to optimize settings that are the same between old and new
  *   info's.
  */
-int opal_infosubscribe_subscribe(opal_infosubscriber_t*, const char *, const char *, opal_key_interest_callback_t);
+int opal_infosubscribe_subscribe(opal_infosubscriber_t *, const char *, const char *,
+                                 opal_key_interest_callback_t);
 
 #endif /* OMPI_INFO_H */

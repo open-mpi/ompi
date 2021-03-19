@@ -30,10 +30,10 @@
 
 #include "opal_config.h"
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
+#    include <sys/time.h>
 #endif
-#include <time.h>
 #include <pthread.h>
+#include <time.h>
 
 #include "opal/constants.h"
 #include "opal/mca/threads/mutex.h"
@@ -54,7 +54,6 @@ struct opal_condition_t {
 typedef struct opal_condition_t opal_condition_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
-
 
 static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 {
@@ -103,9 +102,9 @@ static inline int opal_condition_timedwait(opal_condition_t *c, opal_mutex_t *m,
                 opal_progress();
                 gettimeofday(&tv, NULL);
                 opal_mutex_lock(m);
-            } while (0 == c->c_signaled && (tv.tv_sec <= absolute.tv_sec ||
-                                            (tv.tv_sec == absolute.tv_sec &&
-                                             tv.tv_usec < absolute.tv_usec)));
+            } while (0 == c->c_signaled
+                     && (tv.tv_sec <= absolute.tv_sec
+                         || (tv.tv_sec == absolute.tv_sec && tv.tv_usec < absolute.tv_usec)));
         }
     } else {
         absolute.tv_sec = abstime->tv_sec;
@@ -115,9 +114,9 @@ static inline int opal_condition_timedwait(opal_condition_t *c, opal_mutex_t *m,
             do {
                 opal_progress();
                 gettimeofday(&tv, NULL);
-            } while (0 == c->c_signaled && (tv.tv_sec <= absolute.tv_sec ||
-                                            (tv.tv_sec == absolute.tv_sec &&
-                                             tv.tv_usec < absolute.tv_usec)));
+            } while (0 == c->c_signaled
+                     && (tv.tv_sec <= absolute.tv_sec
+                         || (tv.tv_sec == absolute.tv_sec && tv.tv_usec < absolute.tv_usec)));
         }
     }
 

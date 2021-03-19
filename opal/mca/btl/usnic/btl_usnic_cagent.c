@@ -13,23 +13,23 @@
 #include "opal_config.h"
 
 #include <assert.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
 #ifdef HAVE_ALLOCA_H
-#include <alloca.h>
+#    include <alloca.h>
 #endif
 
-#include "opal_stdint.h"
 #include "opal/mca/threads/mutex.h"
-#include "opal/util/event.h"
-#include "opal/util/show_help.h"
 #include "opal/types.h"
-#include "opal/util/output.h"
+#include "opal/util/event.h"
 #include "opal/util/fd.h"
-#include "opal/util/string_copy.h"
+#include "opal/util/output.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
+#include "opal_stdint.h"
 
 #include "btl_usnic.h"
 #include "btl_usnic_connectivity.h"
@@ -53,7 +53,6 @@ static volatile int ipc_accepts = 0;
 static opal_list_t pings_pending;
 static opal_list_t ping_results;
 static volatile bool agent_initialized = false;
-
 
 /*
  * Holds all the information about a UDP port that the agent thread is
@@ -95,14 +94,11 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(agent_ipc_listener_t);
 
-typedef enum {
-    AGENT_MSG_TYPE_PING = 17,
-    AGENT_MSG_TYPE_ACK
-} agent_udp_message_type_t;
+typedef enum { AGENT_MSG_TYPE_PING = 17, AGENT_MSG_TYPE_ACK } agent_udp_message_type_t;
 
 // Arbitrary 64 bit numbers
 #define MAGIC_ORIGINATOR 0x9a9e2fbce63a11e5
-#define MAGIC_TARGET 0x60735c68f368aace
+#define MAGIC_TARGET     0x60735c68f368aace
 
 /*
  * Ping and ACK messages
@@ -159,18 +155,14 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(agent_ping_t);
 
-
 /**************************************************************************
  * Utility functions, constructors, destructors
  **************************************************************************/
 
 static void udp_port_listener_zero(agent_udp_port_listener_t *obj)
 {
-    obj->ipv4_addr =
-        obj->netmask =
-        obj->max_msg_size = 0;
-    obj->nodename =
-        obj->usnic_name = NULL;
+    obj->ipv4_addr = obj->netmask = obj->max_msg_size = 0;
+    obj->nodename = obj->usnic_name = NULL;
     memset(obj->ipv4_addr_str, 0, sizeof(obj->ipv4_addr_str));
 
     obj->fd = -1;
@@ -190,7 +182,7 @@ static void udp_port_listener_destructor(agent_udp_port_listener_t *obj)
     /* Find any pings that are pending on this listener and delete
        them */
     agent_ping_t *ap, *apnext;
-    OPAL_LIST_FOREACH_SAFE(ap, apnext, &pings_pending, agent_ping_t) {
+    OPAL_LIST_FOREACH_SAFE (ap, apnext, &pings_pending, agent_ping_t) {
         if (ap->src_ipv4_addr == obj->ipv4_addr) {
             opal_list_remove_item(&pings_pending, &ap->super);
             OBJ_RELEASE(ap);
@@ -220,9 +212,7 @@ static void udp_port_listener_destructor(agent_udp_port_listener_t *obj)
     udp_port_listener_zero(obj);
 }
 
-OBJ_CLASS_INSTANCE(agent_udp_port_listener_t,
-                   opal_list_item_t,
-                   udp_port_listener_constructor,
+OBJ_CLASS_INSTANCE(agent_udp_port_listener_t, opal_list_item_t, udp_port_listener_constructor,
                    udp_port_listener_destructor);
 
 static void ipc_listener_zero(agent_ipc_listener_t *obj)
@@ -252,9 +242,7 @@ static void ipc_listener_destructor(agent_ipc_listener_t *obj)
     ipc_listener_zero(obj);
 }
 
-OBJ_CLASS_INSTANCE(agent_ipc_listener_t,
-                   opal_list_item_t,
-                   ipc_listener_constructor,
+OBJ_CLASS_INSTANCE(agent_ipc_listener_t, opal_list_item_t, ipc_listener_constructor,
                    ipc_listener_destructor);
 
 static void agent_ping_result_zero(agent_ping_t *obj)
@@ -293,16 +281,13 @@ static void agent_ping_result_destructor(agent_ping_t *obj)
     agent_ping_result_zero(obj);
 }
 
-OBJ_CLASS_INSTANCE(agent_ping_t,
-                   opal_list_item_t,
-                   agent_ping_result_constructor,
+OBJ_CLASS_INSTANCE(agent_ping_t, opal_list_item_t, agent_ping_result_constructor,
                    agent_ping_result_destructor);
 
 /*
  * Wrapper around sendto() loop
  */
-static void agent_sendto(int fd, char *buffer, ssize_t numbytes,
-                         struct sockaddr *addr)
+static void agent_sendto(int fd, char *buffer, ssize_t numbytes, struct sockaddr *addr)
 {
     ssize_t rc;
     while (1) {
@@ -321,8 +306,7 @@ static void agent_sendto(int fd, char *buffer, ssize_t numbytes,
             }
 
             char *msg;
-            opal_asprintf(&msg, "Unexpected sendto() error: errno=%d (%s)",
-                     errno, strerror(errno));
+            opal_asprintf(&msg, "Unexpected sendto() error: errno=%d (%s)", errno, strerror(errno));
             ABORT(msg);
             /* Will not return */
         }
@@ -342,20 +326,21 @@ static void agent_sendto(int fd, char *buffer, ssize_t numbytes,
 /*
  * Handle an incoming PING message (send an ACK)
  */
-static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
-                                     ssize_t numbytes, struct sockaddr *from)
+static void agent_thread_handle_ping(agent_udp_port_listener_t *listener, ssize_t numbytes,
+                                     struct sockaddr *from)
 {
     /* If the size we received isn't equal to what the sender says it
        sent, do the simple thing: just don't send an ACK */
-    agent_udp_message_t *msg = (agent_udp_message_t*) listener->buffer;
-    struct sockaddr_in *src_addr_in = (struct sockaddr_in*) from;
+    agent_udp_message_t *msg = (agent_udp_message_t *) listener->buffer;
+    struct sockaddr_in *src_addr_in = (struct sockaddr_in *) from;
     if (msg->size != numbytes) {
         char str[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &src_addr_in->sin_addr, str, sizeof(str));
 
-        opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity got bad ping: %d bytes from %s, expected %d (discarded)",
-                            (int) numbytes, str, (int) msg->size);
+        opal_output_verbose(
+            20, USNIC_OUT,
+            "usNIC connectivity got bad ping: %d bytes from %s, expected %d (discarded)",
+            (int) numbytes, str, (int) msg->size);
         return;
     }
 
@@ -367,32 +352,32 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
     char msg_ipv4_addr_str[IPV4STRADDRLEN];
     char real_ipv4_addr_str[IPV4STRADDRLEN];
 
-    opal_btl_usnic_snprintf_ipv4_addr(msg_ipv4_addr_str,
-                                      sizeof(msg_ipv4_addr_str),
+    opal_btl_usnic_snprintf_ipv4_addr(msg_ipv4_addr_str, sizeof(msg_ipv4_addr_str),
                                       msg->src_ipv4_addr, 0);
-    opal_btl_usnic_snprintf_ipv4_addr(real_ipv4_addr_str,
-                                      sizeof(real_ipv4_addr_str),
+    opal_btl_usnic_snprintf_ipv4_addr(real_ipv4_addr_str, sizeof(real_ipv4_addr_str),
                                       src_addr_in->sin_addr.s_addr, 0);
 
     if (msg->src_ipv4_addr != src_addr_in->sin_addr.s_addr) {
-        opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity got bad ping (from unexpected address: %s != %s, discarded)",
-                            msg_ipv4_addr_str, real_ipv4_addr_str);
+        opal_output_verbose(
+            20, USNIC_OUT,
+            "usNIC connectivity got bad ping (from unexpected address: %s != %s, discarded)",
+            msg_ipv4_addr_str, real_ipv4_addr_str);
         return;
     }
 
     if (msg->magic_number != MAGIC_ORIGINATOR) {
         opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity got bad ping (magic number: %" PRIu64 ", discarded)",
+                            "usNIC connectivity got bad ping (magic number: %" PRIu64
+                            ", discarded)",
                             msg->magic_number);
         return;
     }
-    if (msg->major_version != OPAL_MAJOR_VERSION ||
-        msg->minor_version != OPAL_MINOR_VERSION) {
+    if (msg->major_version != OPAL_MAJOR_VERSION || msg->minor_version != OPAL_MINOR_VERSION) {
         opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity got bad ping (originator version: %d.%d, expected %d.%d, discarded)",
-                            msg->major_version, msg->minor_version,
-                            OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION);
+                            "usNIC connectivity got bad ping (originator version: %d.%d, expected "
+                            "%d.%d, discarded)",
+                            msg->major_version, msg->minor_version, OPAL_MAJOR_VERSION,
+                            OPAL_MINOR_VERSION);
         return;
     }
 
@@ -401,8 +386,8 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
        expected. */
 
     opal_output_verbose(20, USNIC_OUT,
-                        "usNIC connectivity got PING (size=%ld) from %s; sending ACK",
-                        numbytes, msg_ipv4_addr_str);
+                        "usNIC connectivity got PING (size=%ld) from %s; sending ACK", numbytes,
+                        msg_ipv4_addr_str);
 
     /* Send back an ACK.  No need to allocate a new buffer; just
        re-use the same buffer we just got.  Note that msg->size is
@@ -412,26 +397,27 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
     msg->message_type = AGENT_MSG_TYPE_ACK;
     msg->magic_number = MAGIC_TARGET;
 
-    agent_sendto(listener->fd, (char*) listener->buffer, sizeof(*msg), from);
+    agent_sendto(listener->fd, (char *) listener->buffer, sizeof(*msg), from);
 }
 
 /*
  * Handle an incoming ACK message
  */
-static void agent_thread_handle_ack(agent_udp_port_listener_t *listener,
-                                    ssize_t numbytes, struct sockaddr *from)
+static void agent_thread_handle_ack(agent_udp_port_listener_t *listener, ssize_t numbytes,
+                                    struct sockaddr *from)
 {
     char str[INET_ADDRSTRLEN];
-    struct sockaddr_in *src_addr_in = (struct sockaddr_in*) from;
+    struct sockaddr_in *src_addr_in = (struct sockaddr_in *) from;
     inet_ntop(AF_INET, &src_addr_in->sin_addr, str, sizeof(str));
 
     /* If we got a wonky ACK message that is the wrong length, just
        return */
-    agent_udp_message_t *msg = (agent_udp_message_t*) listener->buffer;
+    agent_udp_message_t *msg = (agent_udp_message_t *) listener->buffer;
     if (numbytes != sizeof(*msg)) {
-        opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity got bad ACK: %d bytes from %s, expected %d (discarded)",
-                            (int) numbytes, str, (int) sizeof(*msg));
+        opal_output_verbose(
+            20, USNIC_OUT,
+            "usNIC connectivity got bad ACK: %d bytes from %s, expected %d (discarded)",
+            (int) numbytes, str, (int) sizeof(*msg));
         return;
     }
     if (msg->magic_number != MAGIC_TARGET) {
@@ -445,11 +431,9 @@ static void agent_thread_handle_ack(agent_udp_port_listener_t *listener,
        If we don't find a match, we'll drop it. */
     agent_ping_t *ap;
     uint32_t src_in_port = ntohs(src_addr_in->sin_port);
-    OPAL_LIST_FOREACH(ap, &pings_pending, agent_ping_t) {
-        if (ap->dest_ipv4_addr == src_addr_in->sin_addr.s_addr &&
-            ap->dest_udp_port == src_in_port &&
-            ap->src_ipv4_addr == msg->src_ipv4_addr &&
-            ap->src_udp_port == msg->src_udp_port) {
+    OPAL_LIST_FOREACH (ap, &pings_pending, agent_ping_t) {
+        if (ap->dest_ipv4_addr == src_addr_in->sin_addr.s_addr && ap->dest_udp_port == src_in_port
+            && ap->src_ipv4_addr == msg->src_ipv4_addr && ap->src_udp_port == msg->src_udp_port) {
             /* Found it -- indicate that it has been acked */
             for (int i = 0; i < NUM_PING_SIZES; ++i) {
                 if (ap->sizes[i] == msg->size) {
@@ -472,19 +456,18 @@ static void agent_thread_handle_ack(agent_udp_port_listener_t *listener,
  */
 static void agent_thread_receive_ping(int fd, short flags, void *context)
 {
-    agent_udp_port_listener_t *listener =
-        (agent_udp_port_listener_t *) context;
+    agent_udp_port_listener_t *listener = (agent_udp_port_listener_t *) context;
     assert(NULL != listener);
 
     /* Receive the message */
     ssize_t numbytes;
     struct sockaddr src_addr;
-    struct sockaddr_in *src_addr_in = (struct sockaddr_in*) &src_addr;
+    struct sockaddr_in *src_addr_in = (struct sockaddr_in *) &src_addr;
     socklen_t addrlen = sizeof(src_addr);
 
     while (1) {
-        numbytes = recvfrom(listener->fd, listener->buffer, listener->max_msg_size, 0,
-                            &src_addr, &addrlen);
+        numbytes = recvfrom(listener->fd, listener->buffer, listener->max_msg_size, 0, &src_addr,
+                            &addrlen);
         if (numbytes > 0) {
             break;
         } else if (numbytes < 0) {
@@ -517,11 +500,10 @@ static void agent_thread_receive_ping(int fd, short flags, void *context)
     }
 }
 
-static agent_udp_port_listener_t *
-agent_thread_find_listener(uint32_t ipv4_addr, uint32_t *udp_port)
+static agent_udp_port_listener_t *agent_thread_find_listener(uint32_t ipv4_addr, uint32_t *udp_port)
 {
     agent_udp_port_listener_t *listener;
-    OPAL_LIST_FOREACH(listener, &udp_port_listeners, agent_udp_port_listener_t) {
+    OPAL_LIST_FOREACH (listener, &udp_port_listeners, agent_udp_port_listener_t) {
         if (listener->ipv4_addr == ipv4_addr) {
             *udp_port = listener->udp_port;
             return listener;
@@ -535,16 +517,13 @@ agent_thread_find_listener(uint32_t ipv4_addr, uint32_t *udp_port)
  * Send reply back from the LISTEN command: send back the IP address
  * and UDP port that we're listening on.
  */
-static int agent_thread_cmd_listen_reply(int fd,
-                                         uint32_t addr, int32_t udp_port)
+static int agent_thread_cmd_listen_reply(int fd, uint32_t addr, int32_t udp_port)
 {
     int ret;
 
-    opal_btl_usnic_connectivity_cmd_listen_reply_t cmd = {
-        .cmd = CONNECTIVITY_AGENT_CMD_LISTEN,
-        .ipv4_addr = addr,
-        .udp_port = udp_port
-    };
+    opal_btl_usnic_connectivity_cmd_listen_reply_t cmd = {.cmd = CONNECTIVITY_AGENT_CMD_LISTEN,
+                                                          .ipv4_addr = addr,
+                                                          .udp_port = udp_port};
 
     ret = opal_fd_write(fd, sizeof(cmd), &cmd);
     if (OPAL_SUCCESS != ret) {
@@ -587,8 +566,7 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
         if (NULL == udp_listener->module) {
             udp_listener->module = cmd.module;
         }
-        agent_thread_cmd_listen_reply(ipc_listener->client_fd,
-                                      cmd.ipv4_addr, udp_port);
+        agent_thread_cmd_listen_reply(ipc_listener->client_fd, cmd.ipv4_addr, udp_port);
         return;
     }
 
@@ -611,8 +589,8 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
        address in sockaddr_in form, it's not worth using
        inet_ntop() */
     opal_btl_usnic_snprintf_ipv4_addr(udp_listener->ipv4_addr_str,
-                                      sizeof(udp_listener->ipv4_addr_str),
-                                      cmd.ipv4_addr, cmd.netmask);
+                                      sizeof(udp_listener->ipv4_addr_str), cmd.ipv4_addr,
+                                      cmd.netmask);
 
     udp_listener->buffer = malloc(udp_listener->max_msg_size);
     if (NULL == udp_listener->buffer) {
@@ -636,7 +614,7 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
     inaddr.sin_addr.s_addr = cmd.ipv4_addr;
     inaddr.sin_port = htons(0);
 
-    ret = bind(udp_listener->fd, (struct sockaddr*) &inaddr, sizeof(inaddr));
+    ret = bind(udp_listener->fd, (struct sockaddr *) &inaddr, sizeof(inaddr));
     if (ret < 0) {
         OPAL_ERROR_LOG(ret);
         ABORT("Could not bind listening socket");
@@ -645,7 +623,7 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
 
     /* Find out the port we got */
     opal_socklen_t addrlen = sizeof(struct sockaddr_in);
-    ret = getsockname(udp_listener->fd, (struct sockaddr*) &inaddr, &addrlen);
+    ret = getsockname(udp_listener->fd, (struct sockaddr *) &inaddr, &addrlen);
     if (ret < 0) {
         OPAL_ERROR_LOG(ret);
         ABORT("Could not get UDP port number from listening socket");
@@ -653,10 +631,8 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
     }
     udp_listener->udp_port = ntohs(inaddr.sin_port);
 
-    opal_output_verbose(20, USNIC_OUT,
-                        "usNIC connectivity agent listening on %s:%d, (%s)",
-                        udp_listener->ipv4_addr_str,
-                        udp_listener->udp_port,
+    opal_output_verbose(20, USNIC_OUT, "usNIC connectivity agent listening on %s:%d, (%s)",
+                        udp_listener->ipv4_addr_str, udp_listener->udp_port,
                         udp_listener->usnic_name);
 
     /* Set the "don't fragment" bit on outgoing frames because we
@@ -664,8 +640,7 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
        peer, or fail if they have to fragment because of an MTU
        mismatch somewhere enroute */
     int val = IP_PMTUDISC_DO;
-    ret = setsockopt(udp_listener->fd, IPPROTO_IP, IP_MTU_DISCOVER,
-                     &val, sizeof(val));
+    ret = setsockopt(udp_listener->fd, IPPROTO_IP, IP_MTU_DISCOVER, &val, sizeof(val));
     if (0 != ret) {
         OPAL_ERROR_LOG(ret);
         ABORT("Unable to set \"do not fragment\" on UDP socket");
@@ -675,20 +650,16 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
     /* Set the send and receive buffer sizes to our MTU size */
     int temp;
     temp = (int) udp_listener->max_msg_size;
-    if ((ret = setsockopt(udp_listener->fd, SOL_SOCKET, SO_RCVBUF,
-                          &temp, sizeof(temp))) < 0 ||
-        (ret = setsockopt(udp_listener->fd, SOL_SOCKET, SO_SNDBUF,
-                          &temp, sizeof(temp))) < 0) {
+    if ((ret = setsockopt(udp_listener->fd, SOL_SOCKET, SO_RCVBUF, &temp, sizeof(temp))) < 0
+        || (ret = setsockopt(udp_listener->fd, SOL_SOCKET, SO_SNDBUF, &temp, sizeof(temp))) < 0) {
         OPAL_ERROR_LOG(ret);
         ABORT("Could not set socket buffer sizes");
         /* Will not return */
     }
 
     /* Create a listening event */
-    opal_event_set(mca_btl_usnic_component.opal_evbase,
-                   &udp_listener->event, udp_listener->fd,
-                   OPAL_EV_READ | OPAL_EV_PERSIST,
-                   agent_thread_receive_ping, udp_listener);
+    opal_event_set(mca_btl_usnic_component.opal_evbase, &udp_listener->event, udp_listener->fd,
+                   OPAL_EV_READ | OPAL_EV_PERSIST, agent_thread_receive_ping, udp_listener);
     opal_event_add(&udp_listener->event, 0);
 
     /* Save this listener on the list of udp_port_listeners */
@@ -697,8 +668,8 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
     udp_listener->active = true;
 
     /* Return the port number to the sender */
-    ret = agent_thread_cmd_listen_reply(ipc_listener->client_fd,
-                                        cmd.ipv4_addr, udp_listener->udp_port);
+    ret = agent_thread_cmd_listen_reply(ipc_listener->client_fd, cmd.ipv4_addr,
+                                        udp_listener->udp_port);
 
     /* All done! */
     return;
@@ -709,12 +680,11 @@ static void agent_thread_cmd_listen(agent_ipc_listener_t *ipc_listener)
  */
 static void agent_thread_send_ping(int fd, short flags, void *context)
 {
-    agent_ping_t *ap = (agent_ping_t*) context;
+    agent_ping_t *ap = (agent_ping_t *) context;
     ap->timer_active = false;
 
     char dest_ipv4_addr_str[IPV4STRADDRLEN];
-    opal_btl_usnic_snprintf_ipv4_addr(dest_ipv4_addr_str,
-                                      sizeof(dest_ipv4_addr_str),
+    opal_btl_usnic_snprintf_ipv4_addr(dest_ipv4_addr_str, sizeof(dest_ipv4_addr_str),
                                       ap->dest_ipv4_addr, ap->dest_netmask);
 
     /* If we got all the ACKs for this ping, then move this ping from
@@ -725,10 +695,8 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
         opal_list_remove_item(&pings_pending, &ap->super);
         opal_list_append(&ping_results, &ap->super);
 
-        opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity GOOD between %s <--> %s",
-                            ap->listener->ipv4_addr_str,
-                            dest_ipv4_addr_str);
+        opal_output_verbose(20, USNIC_OUT, "usNIC connectivity GOOD between %s <--> %s",
+                            ap->listener->ipv4_addr_str, dest_ipv4_addr_str);
 
         for (int i = 0; i < 2; ++i) {
             if (NULL != ap->buffers[i]) {
@@ -758,40 +726,29 @@ static void agent_thread_send_ping(int fd, short flags, void *context)
         }
 
         char ipv4_addr_str[IPV4STRADDRLEN];
-        opal_btl_usnic_snprintf_ipv4_addr(ipv4_addr_str, sizeof(ipv4_addr_str),
-                                          ap->dest_ipv4_addr,
+        opal_btl_usnic_snprintf_ipv4_addr(ipv4_addr_str, sizeof(ipv4_addr_str), ap->dest_ipv4_addr,
                                           ap->dest_netmask);
-        opal_show_help("help-mpi-btl-usnic.txt", topic, true,
-                       opal_process_info.nodename,
-                       ap->listener->ipv4_addr_str,
-                       ap->listener->usnic_name,
-                       ap->dest_nodename,
-                       ipv4_addr_str,
-                       ap->sizes[0],
-                       ap->sizes[1]);
+        opal_show_help("help-mpi-btl-usnic.txt", topic, true, opal_process_info.nodename,
+                       ap->listener->ipv4_addr_str, ap->listener->usnic_name, ap->dest_nodename,
+                       ipv4_addr_str, ap->sizes[0], ap->sizes[1]);
         opal_btl_usnic_exit(NULL);
         /* Will not return */
     }
 
     time_t t = time(NULL);
-    opal_output_verbose(20, USNIC_OUT,
-                        "usNIC connectivity pinging %s:%d (%s) from %s (%s) at %s",
-                        dest_ipv4_addr_str,
-                        ntohs(ap->dest_sockaddr.sin_port),
-                        ap->dest_nodename,
-                        ap->listener->ipv4_addr_str,
-                        ap->listener->usnic_name,
-                        ctime(&t));
+    opal_output_verbose(20, USNIC_OUT, "usNIC connectivity pinging %s:%d (%s) from %s (%s) at %s",
+                        dest_ipv4_addr_str, ntohs(ap->dest_sockaddr.sin_port), ap->dest_nodename,
+                        ap->listener->ipv4_addr_str, ap->listener->usnic_name, ctime(&t));
 
     /* Send the ping messages to the peer */
     for (int i = 0; i < NUM_PING_SIZES; ++i) {
-        agent_sendto(ap->listener->fd, (char*) ap->buffers[i], ap->sizes[i],
-                     (struct sockaddr*) &ap->dest_sockaddr);
+        agent_sendto(ap->listener->fd, (char *) ap->buffers[i], ap->sizes[i],
+                     (struct sockaddr *) &ap->dest_sockaddr);
     }
 
     /* Set a timer to check if these pings are ACKed */
-    opal_event_set(mca_btl_usnic_component.opal_evbase, &ap->timer,
-                   -1, 0, agent_thread_send_ping, ap);
+    opal_event_set(mca_btl_usnic_component.opal_evbase, &ap->timer, -1, 0, agent_thread_send_ping,
+                   ap);
     opal_event_add(&ap->timer, &ack_timeout);
     ap->timer_active = true;
 
@@ -817,9 +774,8 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
 
     /* Have we already pinged this IP address / port? */
     agent_ping_t *ap;
-    OPAL_LIST_FOREACH(ap, &ping_results, agent_ping_t) {
-        if (ap->dest_ipv4_addr == cmd.dest_ipv4_addr &&
-            ap->dest_udp_port == cmd.dest_udp_port) {
+    OPAL_LIST_FOREACH (ap, &ping_results, agent_ping_t) {
+        if (ap->dest_ipv4_addr == cmd.dest_ipv4_addr && ap->dest_udp_port == cmd.dest_udp_port) {
             /* We already have results from pinging this IP address /
                port, so there's no need for further action */
             return;
@@ -827,9 +783,8 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
     }
 
     /* Are we in the middle of pinging this IP address / port? */
-    OPAL_LIST_FOREACH(ap, &pings_pending, agent_ping_t) {
-        if (ap->dest_ipv4_addr == cmd.dest_ipv4_addr &&
-            ap->dest_udp_port == cmd.dest_udp_port) {
+    OPAL_LIST_FOREACH (ap, &pings_pending, agent_ping_t) {
+        if (ap->dest_ipv4_addr == cmd.dest_ipv4_addr && ap->dest_udp_port == cmd.dest_udp_port) {
             /* We're already in the middle of pinging this IP address
                / port, so there's no need for further action */
             return;
@@ -840,8 +795,7 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
        ipv4 address */
     bool found = false;
     agent_udp_port_listener_t *udp_listener;
-    OPAL_LIST_FOREACH(udp_listener, &udp_port_listeners,
-                      agent_udp_port_listener_t) {
+    OPAL_LIST_FOREACH (udp_listener, &udp_port_listeners, agent_udp_port_listener_t) {
         if (udp_listener->ipv4_addr == cmd.src_ipv4_addr) {
             found = true;
             break;
@@ -895,7 +849,7 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
         }
 
         /* Fill in the message with return addressing information */
-        msg = (agent_udp_message_t*) ap->buffers[i];
+        msg = (agent_udp_message_t *) ap->buffers[i];
         msg->message_type = AGENT_MSG_TYPE_PING;
         msg->src_ipv4_addr = ap->src_ipv4_addr;
         msg->src_udp_port = ap->src_udp_port;
@@ -947,7 +901,7 @@ static void agent_thread_cmd_unlisten(agent_ipc_listener_t *ipc_listener)
 static void agent_thread_ipc_receive(int fd, short flags, void *context)
 {
     int32_t command;
-    agent_ipc_listener_t *ipc_listener = (agent_ipc_listener_t*) context;
+    agent_ipc_listener_t *ipc_listener = (agent_ipc_listener_t *) context;
 
     /* Read the command */
     command = -1;
@@ -962,9 +916,8 @@ static void agent_thread_ipc_receive(int fd, short flags, void *context)
         /* Will not return */
     }
 
-    assert(CONNECTIVITY_AGENT_CMD_LISTEN == command ||
-           CONNECTIVITY_AGENT_CMD_PING == command ||
-           CONNECTIVITY_AGENT_CMD_UNLISTEN == command);
+    assert(CONNECTIVITY_AGENT_CMD_LISTEN == command || CONNECTIVITY_AGENT_CMD_PING == command
+           || CONNECTIVITY_AGENT_CMD_UNLISTEN == command);
 
     switch (command) {
     case CONNECTIVITY_AGENT_CMD_LISTEN:
@@ -1014,8 +967,9 @@ static void agent_thread_accept(int fd, short flags, void *context)
         /* Will not return */
     }
     if (0 != memcmp(msg, CONNECTIVITY_MAGIC_TOKEN, tlen)) {
-        opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity got bad IPC client (wrong magic token); disconnected");
+        opal_output_verbose(
+            20, USNIC_OUT,
+            "usNIC connectivity got bad IPC client (wrong magic token); disconnected");
         close(client_fd);
         return;
     }
@@ -1029,18 +983,15 @@ static void agent_thread_accept(int fd, short flags, void *context)
 
     /* Write back the magic token to ACK that we got the peer's
        magic token and all is kosher */
-    if (OPAL_SUCCESS != opal_fd_write(client_fd, tlen,
-                                      CONNECTIVITY_MAGIC_TOKEN)) {
+    if (OPAL_SUCCESS != opal_fd_write(client_fd, tlen, CONNECTIVITY_MAGIC_TOKEN)) {
         OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
         ABORT("usnic connectivity agent IPC read failed");
         /* Will not return */
     }
 
     /* Add this IPC listener to the event base */
-    opal_event_set(mca_btl_usnic_component.opal_evbase,
-                   &listener->event, client_fd,
-                   OPAL_EV_READ | OPAL_EV_PERSIST,
-                   agent_thread_ipc_receive, listener);
+    opal_event_set(mca_btl_usnic_component.opal_evbase, &listener->event, client_fd,
+                   OPAL_EV_READ | OPAL_EV_PERSIST, agent_thread_ipc_receive, listener);
     opal_event_add(&listener->event, 0);
 
     /* Save this listener on the list of ipc_listeners */
@@ -1078,25 +1029,23 @@ static void agent_thread_finalize(int fd, short flags, void *context)
         first = false;
     }
 
-    if (ipc_accepts < opal_process_info.num_local_peers &&
-        time(NULL) < timestamp + 10) {
-        opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity agent delaying shutdown until all clients connect...");
+    if (ipc_accepts < opal_process_info.num_local_peers && time(NULL) < timestamp + 10) {
+        opal_output_verbose(
+            20, USNIC_OUT,
+            "usNIC connectivity agent delaying shutdown until all clients connect...");
 
         opal_event_t *ev = calloc(sizeof(*ev), 1);
-        struct timeval finalize_retry = {
-            .tv_sec = 0,
-            .tv_usec = 10000
-        };
+        struct timeval finalize_retry = {.tv_sec = 0, .tv_usec = 10000};
 
-        opal_event_set(mca_btl_usnic_component.opal_evbase,
-                       ev, -1, 0, agent_thread_finalize, ev);
+        opal_event_set(mca_btl_usnic_component.opal_evbase, ev, -1, 0, agent_thread_finalize, ev);
         opal_event_add(ev, &finalize_retry);
         return;
     }
     if (ipc_accepts < opal_process_info.num_local_peers) {
         opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity agent: only %d of %d clients connected, but timeout has expired -- exiting anyway", ipc_accepts, opal_process_info.num_local_peers);
+                            "usNIC connectivity agent: only %d of %d clients connected, but "
+                            "timeout has expired -- exiting anyway",
+                            ipc_accepts, opal_process_info.num_local_peers);
     }
 
     /* Remove the agent listening event from the opal async event
@@ -1105,27 +1054,25 @@ static void agent_thread_finalize(int fd, short flags, void *context)
 
     /* Shut down all active udp_port_listeners */
     agent_udp_port_listener_t *udp_listener, *ulnext;
-    OPAL_LIST_FOREACH_SAFE(udp_listener, ulnext, &udp_port_listeners,
-                           agent_udp_port_listener_t) {
+    OPAL_LIST_FOREACH_SAFE (udp_listener, ulnext, &udp_port_listeners, agent_udp_port_listener_t) {
         OBJ_RELEASE(udp_listener);
     }
 
     /* Destroy the pending pings and ping results */
     agent_ping_t *request, *pnext;
-    OPAL_LIST_FOREACH_SAFE(request, pnext, &pings_pending, agent_ping_t) {
+    OPAL_LIST_FOREACH_SAFE (request, pnext, &pings_pending, agent_ping_t) {
         opal_list_remove_item(&pings_pending, &request->super);
         OBJ_RELEASE(request);
     }
 
-    OPAL_LIST_FOREACH_SAFE(request, pnext, &ping_results, agent_ping_t) {
+    OPAL_LIST_FOREACH_SAFE (request, pnext, &ping_results, agent_ping_t) {
         opal_list_remove_item(&ping_results, &request->super);
         OBJ_RELEASE(request);
     }
 
     /* Shut down all active ipc_listeners */
     agent_ipc_listener_t *ipc_listener, *inext;
-    OPAL_LIST_FOREACH_SAFE(ipc_listener, inext, &ipc_listeners,
-                           agent_ipc_listener_t) {
+    OPAL_LIST_FOREACH_SAFE (ipc_listener, inext, &ipc_listeners, agent_ipc_listener_t) {
         OBJ_RELEASE(ipc_listener);
     }
 
@@ -1154,10 +1101,8 @@ int opal_btl_usnic_connectivity_agent_init(void)
     /* Make a struct timeval for use with timer events.  Note that the
        MCA param is expressed in terms of *milli*seconds, but the
        timeval timeout is expressed in terms of *micro*seconds. */
-    ack_timeout.tv_sec =
-        mca_btl_usnic_component.connectivity_ack_timeout / 1000;
-    ack_timeout.tv_usec =
-        1000 * (mca_btl_usnic_component.connectivity_ack_timeout % 1000);
+    ack_timeout.tv_sec = mca_btl_usnic_component.connectivity_ack_timeout / 1000;
+    ack_timeout.tv_usec = 1000 * (mca_btl_usnic_component.connectivity_ack_timeout % 1000);
 
     /* Create lists */
     OBJ_CONSTRUCT(&udp_port_listeners, opal_list_t);
@@ -1178,8 +1123,8 @@ int opal_btl_usnic_connectivity_agent_init(void)
         /* Will not return */
     }
 
-    opal_asprintf(&ipc_filename, "%s/%s",
-             opal_process_info.job_session_dir, CONNECTIVITY_SOCK_NAME);
+    opal_asprintf(&ipc_filename, "%s/%s", opal_process_info.job_session_dir,
+                  CONNECTIVITY_SOCK_NAME);
     if (NULL == ipc_filename) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("Out of memory");
@@ -1194,8 +1139,7 @@ int opal_btl_usnic_connectivity_agent_init(void)
     address.sun_family = AF_UNIX;
     opal_string_copy(address.sun_path, ipc_filename, sizeof(address.sun_path));
 
-    if (bind(ipc_accept_fd, (struct sockaddr *) &address,
-             sizeof(struct sockaddr_un)) != 0) {
+    if (bind(ipc_accept_fd, (struct sockaddr *) &address, sizeof(struct sockaddr_un)) != 0) {
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("bind() failed");
         /* Will not return */
@@ -1212,14 +1156,11 @@ int opal_btl_usnic_connectivity_agent_init(void)
     }
 
     /* Add the socket to the event base */
-    opal_event_set(mca_btl_usnic_component.opal_evbase,
-                   &ipc_event, ipc_accept_fd,
-                   OPAL_EV_READ | OPAL_EV_PERSIST,
-                   agent_thread_accept, NULL);
+    opal_event_set(mca_btl_usnic_component.opal_evbase, &ipc_event, ipc_accept_fd,
+                   OPAL_EV_READ | OPAL_EV_PERSIST, agent_thread_accept, NULL);
     opal_event_add(&ipc_event, 0);
 
-    opal_output_verbose(20, USNIC_OUT,
-                        "usNIC connectivity agent initialized");
+    opal_output_verbose(20, USNIC_OUT, "usNIC connectivity agent initialized");
     agent_initialized = true;
     return OPAL_SUCCESS;
 }
@@ -1238,16 +1179,13 @@ int opal_btl_usnic_connectivity_agent_finalize(void)
        the usNIC events.  See the rationale for doing this in the
        comment in the agent_thread_finalize() function. */
     opal_event_t *ev = calloc(sizeof(*ev), 1);
-    opal_event_set(mca_btl_usnic_component.opal_evbase,
-                   ev, -1, OPAL_EV_WRITE, agent_thread_finalize, ev);
+    opal_event_set(mca_btl_usnic_component.opal_evbase, ev, -1, OPAL_EV_WRITE,
+                   agent_thread_finalize, ev);
     opal_event_active(ev, OPAL_EV_WRITE, 1);
 
     /* Wait for the event to fire and complete */
     while (agent_initialized) {
-        struct timespec tp = {
-            .tv_sec  = 0,
-            .tv_nsec = 1000
-        };
+        struct timespec tp = {.tv_sec = 0, .tv_nsec = 1000};
         nanosleep(&tp, NULL);
     }
 
@@ -1262,7 +1200,6 @@ int opal_btl_usnic_connectivity_agent_finalize(void)
         ipc_filename = NULL;
     }
 
-    opal_output_verbose(20, USNIC_OUT,
-                        "usNIC connectivity client finalized");
+    opal_output_verbose(20, USNIC_OUT, "usNIC connectivity client finalized");
     return OPAL_SUCCESS;
 }

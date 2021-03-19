@@ -19,31 +19,30 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include <errno.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNISTD_H */
+#    include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #include <stdlib.h>
 #if HAVE_SYS_STAT_H
-#include <sys/stat.h>
+#    include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif  /* HAVE_SYS_TYPES_H */
+#    include <sys/types.h>
+#endif /* HAVE_SYS_TYPES_H */
 #ifdef HAVE_DIRENT_H
-#include <dirent.h>
-#endif  /* HAVE_DIRENT_H */
+#    include <dirent.h>
+#endif /* HAVE_DIRENT_H */
 
-#include "opal/util/output.h"
-#include "opal/util/os_dirpath.h"
-#include "opal/util/show_help.h"
-#include "opal/util/argv.h"
-#include "opal/util/os_path.h"
 #include "opal/constants.h"
+#include "opal/util/argv.h"
+#include "opal/util/os_dirpath.h"
+#include "opal/util/os_path.h"
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 static const char path_sep[] = OPAL_PATH_SEP;
 
@@ -55,24 +54,23 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
     int ret;
 
     if (NULL == path) { /* protect ourselves from errors */
-        return(OPAL_ERR_BAD_PARAM);
+        return (OPAL_ERR_BAD_PARAM);
     }
 
-    if (0 == (ret = stat(path, &buf))) { /* already exists */
+    if (0 == (ret = stat(path, &buf))) {    /* already exists */
         if (mode == (mode & buf.st_mode)) { /* has correct mode */
-            return(OPAL_SUCCESS);
+            return (OPAL_SUCCESS);
         }
         if (0 == (ret = chmod(path, (buf.st_mode | mode)))) { /* successfully change mode */
-            return(OPAL_SUCCESS);
+            return (OPAL_SUCCESS);
         }
-        opal_show_help("help-opal-util.txt", "dir-mode", true,
-                    path, mode, strerror(errno));
-        return(OPAL_ERR_PERM); /* can't set correct mode */
+        opal_show_help("help-opal-util.txt", "dir-mode", true, path, mode, strerror(errno));
+        return (OPAL_ERR_PERM); /* can't set correct mode */
     }
 
     /* quick -- try to make directory */
     if (0 == mkdir(path, mode)) {
-        return(OPAL_SUCCESS);
+        return (OPAL_SUCCESS);
     }
 
     /* didnt work, so now have to build our way down the tree */
@@ -83,7 +81,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
     /* Ensure to allocate enough space for tmp: the strlen of the
        incoming path + 1 (for \0) */
 
-    tmp = (char*)malloc(strlen(path) + 1);
+    tmp = (char *) malloc(strlen(path) + 1);
     tmp[0] = '\0';
 
     /* Iterate through all the subdirectory names in the path,
@@ -114,19 +112,18 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
 
         /* Now that we have the name, try to create it */
         mkdir(tmp, mode);
-        ret = errno;  // save the errno for an error msg, if needed
+        ret = errno; // save the errno for an error msg, if needed
         if (0 != stat(tmp, &buf)) {
-            opal_show_help("help-opal-util.txt", "mkdir-failed", true,
-                        tmp, strerror(ret));
+            opal_show_help("help-opal-util.txt", "mkdir-failed", true, tmp, strerror(ret));
             opal_argv_free(parts);
             free(tmp);
             return OPAL_ERROR;
-        } else if (i == (len-1) && (mode != (mode & buf.st_mode)) && (0 > chmod(tmp, (buf.st_mode | mode)))) {
-            opal_show_help("help-opal-util.txt", "dir-mode", true,
-                           tmp, mode, strerror(errno));
+        } else if (i == (len - 1) && (mode != (mode & buf.st_mode))
+                   && (0 > chmod(tmp, (buf.st_mode | mode)))) {
+            opal_show_help("help-opal-util.txt", "dir-mode", true, tmp, mode, strerror(errno));
             opal_argv_free(parts);
             free(tmp);
-            return(OPAL_ERR_PERM); /* can't set correct mode */
+            return (OPAL_ERR_PERM); /* can't set correct mode */
         }
     }
 
@@ -145,8 +142,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
  * removed.  If the callback returns non-zero, then no removal is
  * done.
  */
-int opal_os_dirpath_destroy(const char *path,
-                            bool recursive,
+int opal_os_dirpath_destroy(const char *path, bool recursive,
                             opal_os_dirpath_destroy_callback_fn_t cbfunc)
 {
     int rc, exit_status = OPAL_SUCCESS;
@@ -156,7 +152,7 @@ int opal_os_dirpath_destroy(const char *path,
     char *filenm;
     struct stat buf;
 
-    if (NULL == path) {  /* protect against error */
+    if (NULL == path) { /* protect against error */
         return OPAL_ERROR;
     }
 
@@ -178,8 +174,7 @@ int opal_os_dirpath_destroy(const char *path,
         /* skip:
          *  - . and ..
          */
-        if ((0 == strcmp(ep->d_name, ".")) ||
-            (0 == strcmp(ep->d_name, ".."))) {
+        if ((0 == strcmp(ep->d_name, ".")) || (0 == strcmp(ep->d_name, ".."))) {
             continue;
         }
 
@@ -251,31 +246,31 @@ int opal_os_dirpath_destroy(const char *path,
     /* Done with this directory */
     closedir(dp);
 
- cleanup:
+cleanup:
 
     /*
      * If the directory is empty, them remove it
      */
-    if(opal_os_dirpath_is_empty(path)) {
+    if (opal_os_dirpath_is_empty(path)) {
         rmdir(path);
     }
 
     return exit_status;
 }
 
-bool opal_os_dirpath_is_empty(const char *path ) {
+bool opal_os_dirpath_is_empty(const char *path)
+{
     DIR *dp;
     struct dirent *ep;
 
-    if (NULL != path) {  /* protect against error */
+    if (NULL != path) { /* protect against error */
         dp = opendir(path);
         if (NULL != dp) {
             while ((ep = readdir(dp))) {
-                        if ((0 != strcmp(ep->d_name, ".")) &&
-                            (0 != strcmp(ep->d_name, ".."))) {
-                            closedir(dp);
-                            return false;
-                        }
+                if ((0 != strcmp(ep->d_name, ".")) && (0 != strcmp(ep->d_name, ".."))) {
+                    closedir(dp);
+                    return false;
+                }
             }
             closedir(dp);
             return true;
@@ -286,9 +281,10 @@ bool opal_os_dirpath_is_empty(const char *path ) {
     return true;
 }
 
-int opal_os_dirpath_access(const char *path, const mode_t in_mode ) {
+int opal_os_dirpath_access(const char *path, const mode_t in_mode)
+{
     struct stat buf;
-    mode_t loc_mode = S_IRWXU;  /* looking for full rights */
+    mode_t loc_mode = S_IRWXU; /* looking for full rights */
 
     /*
      * If there was no mode specified, use the default mode
@@ -297,15 +293,15 @@ int opal_os_dirpath_access(const char *path, const mode_t in_mode ) {
         loc_mode = in_mode;
     }
 
-    if (0 == stat(path, &buf)) { /* exists - check access */
+    if (0 == stat(path, &buf)) {                    /* exists - check access */
         if ((buf.st_mode & loc_mode) == loc_mode) { /* okay, I can work here */
-            return(OPAL_SUCCESS);
+            return (OPAL_SUCCESS);
         } else {
             /* Don't have access rights to the existing path */
-            return(OPAL_ERROR);
+            return (OPAL_ERROR);
         }
     } else {
         /* We could not find the path */
-        return( OPAL_ERR_NOT_FOUND );
+        return (OPAL_ERR_NOT_FOUND);
     }
 }

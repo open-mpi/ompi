@@ -27,18 +27,18 @@
  */
 
 #if !defined(OPAL_PARAMS_H)
-#define OPAL_PARAMS_H
+#    define OPAL_PARAMS_H
 
 extern char *opal_signal_string;
 extern char *opal_stacktrace_output_filename;
 extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
 
-#if OPAL_ENABLE_TIMING
+#    if OPAL_ENABLE_TIMING
 extern char *opal_timing_sync_file;
 extern char *opal_timing_output;
 extern bool opal_timing_overhead;
-#endif
+#    endif
 
 OPAL_DECLSPEC extern int opal_initialized;
 OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
@@ -80,8 +80,8 @@ OPAL_DECLSPEC extern bool opal_abort_print_stack;
  */
 OPAL_DECLSPEC extern int opal_abort_delay;
 
-#if OPAL_ENABLE_DEBUG
+#    if OPAL_ENABLE_DEBUG
 extern bool opal_progress_debug;
-#endif
+#    endif
 
 #endif

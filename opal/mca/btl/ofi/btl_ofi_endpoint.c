@@ -11,17 +11,17 @@
  * $HEADER$
  */
 
-#include "btl_ofi.h"
 #include "btl_ofi_endpoint.h"
+#include "btl_ofi.h"
 #include "opal/util/proc.h"
 
-static void mca_btl_ofi_endpoint_construct (mca_btl_ofi_endpoint_t *endpoint)
+static void mca_btl_ofi_endpoint_construct(mca_btl_ofi_endpoint_t *endpoint)
 {
     endpoint->peer_addr = 0;
     OBJ_CONSTRUCT(&endpoint->ep_lock, opal_mutex_t);
 }
 
-static void mca_btl_ofi_endpoint_destruct (mca_btl_ofi_endpoint_t *endpoint)
+static void mca_btl_ofi_endpoint_destruct(mca_btl_ofi_endpoint_t *endpoint)
 {
     endpoint->peer_addr = 0;
 
@@ -31,11 +31,10 @@ static void mca_btl_ofi_endpoint_destruct (mca_btl_ofi_endpoint_t *endpoint)
     OBJ_DESTRUCT(&endpoint->ep_lock);
 }
 
-OBJ_CLASS_INSTANCE(mca_btl_ofi_endpoint_t, opal_list_item_t,
-                   mca_btl_ofi_endpoint_construct,
+OBJ_CLASS_INSTANCE(mca_btl_ofi_endpoint_t, opal_list_item_t, mca_btl_ofi_endpoint_construct,
                    mca_btl_ofi_endpoint_destruct);
 
-mca_btl_base_endpoint_t *mca_btl_ofi_endpoint_create (opal_proc_t *proc, struct fid_ep *ep)
+mca_btl_base_endpoint_t *mca_btl_ofi_endpoint_create(opal_proc_t *proc, struct fid_ep *ep)
 {
     mca_btl_ofi_endpoint_t *endpoint = OBJ_NEW(mca_btl_ofi_endpoint_t);
 

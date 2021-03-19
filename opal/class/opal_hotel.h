@@ -55,19 +55,18 @@
 
 #include "opal_config.h"
 
-#include "opal/constants.h"
-#include "opal/util/output.h"
-#include "opal/prefetch.h"
 #include "opal/class/opal_object.h"
+#include "opal/constants.h"
+#include "opal/prefetch.h"
 #include "opal/util/event.h"
+#include "opal/util/output.h"
 
 BEGIN_C_DECLS
 
 struct opal_hotel_t;
 
 /* User-supplied function to be invoked when an occupant is evicted. */
-typedef void (*opal_hotel_eviction_callback_fn_t)(struct opal_hotel_t *hotel,
-                                                  int room_num,
+typedef void (*opal_hotel_eviction_callback_fn_t)(struct opal_hotel_t *hotel, int room_num,
                                                   void *occupant);
 
 /* Note that this is an internal data structure; it is not part of the
@@ -158,10 +157,8 @@ OBJ_CLASS_DECLARATION(opal_hotel_t);
  * @return OPAL_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-OPAL_DECLSPEC int opal_hotel_init(opal_hotel_t *hotel, int num_rooms,
-                                  opal_event_base_t *evbase,
-                                  uint32_t eviction_timeout,
-                                  int eviction_event_priority,
+OPAL_DECLSPEC int opal_hotel_init(opal_hotel_t *hotel, int num_rooms, opal_event_base_t *evbase,
+                                  uint32_t eviction_timeout, int eviction_event_priority,
                                   opal_hotel_eviction_callback_fn_t evict_callback_fn);
 
 /**
@@ -184,9 +181,7 @@ OPAL_DECLSPEC int opal_hotel_init(opal_hotel_t *hotel, int num_rooms,
  * @return OPAL_ERR_TEMP_OUT_OF_RESOURCE is the hotel is full.  Try
  * again later.
  */
-static inline int opal_hotel_checkin(opal_hotel_t *hotel,
-                                     void *occupant,
-                                     int *room_num)
+static inline int opal_hotel_checkin(opal_hotel_t *hotel, void *occupant, int *room_num)
 {
     opal_hotel_room_t *room;
 
@@ -202,8 +197,7 @@ static inline int opal_hotel_checkin(opal_hotel_t *hotel,
 
     /* Assign the event and make it pending */
     if (NULL != hotel->evbase) {
-        opal_event_add(&(room->eviction_timer_event),
-                       &(hotel->eviction_timeout));
+        opal_event_add(&(room->eviction_timer_event), &(hotel->eviction_timeout));
     }
 
     return OPAL_SUCCESS;
@@ -213,9 +207,7 @@ static inline int opal_hotel_checkin(opal_hotel_t *hotel,
  * Same as opal_hotel_checkin(), but slightly optimized for when the
  * caller *knows* that there is a room available.
  */
-static inline void opal_hotel_checkin_with_res(opal_hotel_t *hotel,
-                                     void *occupant,
-                                     int *room_num)
+static inline void opal_hotel_checkin_with_res(opal_hotel_t *hotel, void *occupant, int *room_num)
 {
     opal_hotel_room_t *room;
 
@@ -227,8 +219,7 @@ static inline void opal_hotel_checkin_with_res(opal_hotel_t *hotel,
 
     /* Assign the event and make it pending */
     if (NULL != hotel->evbase) {
-        opal_event_add(&(room->eviction_timer_event),
-                       &(hotel->eviction_timeout));
+        opal_event_add(&(room->eviction_timer_event), &(hotel->eviction_timeout));
     }
 }
 
@@ -281,7 +272,8 @@ static inline void opal_hotel_checkout(opal_hotel_t *hotel, int room_num)
  *
  * Use this checkout and when caller needs the occupant
  */
-static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, int room_num, void **occupant)
+static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, int room_num,
+                                                           void **occupant)
 {
     opal_hotel_room_t *room;
 
@@ -291,7 +283,7 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
     /* If there's an occupant in the room, check them out */
     room = &(hotel->rooms[room_num]);
     if (OPAL_LIKELY(NULL != room->occupant)) {
-        opal_output (10, "checking out occupant %p from room num %d", room->occupant, room_num);
+        opal_output(10, "checking out occupant %p from room num %d", room->occupant, room_num);
         /* Do not change this logic without also changing the same
            logic in opal_hotel_checkout() and
            opal_hotel.c:local_eviction_callback(). */
@@ -303,8 +295,7 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
         hotel->last_unoccupied_room++;
         assert(hotel->last_unoccupied_room < hotel->num_rooms);
         hotel->unoccupied_rooms[hotel->last_unoccupied_room] = room_num;
-    }
-    else {
+    } else {
         *occupant = NULL;
     }
 }
@@ -315,7 +306,7 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
  * @return bool true if empty false if there is a occupant(s)
  *
  */
-static inline bool opal_hotel_is_empty (opal_hotel_t *hotel)
+static inline bool opal_hotel_is_empty(opal_hotel_t *hotel)
 {
     if (hotel->last_unoccupied_room == hotel->num_rooms - 1)
         return true;
@@ -345,7 +336,7 @@ static inline void opal_hotel_knock(opal_hotel_t *hotel, int room_num, void **oc
     /* If there's an occupant in the room, have them come to the door */
     room = &(hotel->rooms[room_num]);
     if (OPAL_LIKELY(NULL != room->occupant)) {
-        opal_output (10, "occupant %p in room num %d responded to knock", room->occupant, room_num);
+        opal_output(10, "occupant %p in room num %d responded to knock", room->occupant, room_num);
         *occupant = room->occupant;
     }
 }

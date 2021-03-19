@@ -24,14 +24,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/util/cmd_line.h"
-#include "opal/util/argv.h"
-#include "opal/util/opal_environ.h"
-#include "opal/util/show_help.h"
-#include "opal/util/printf.h"
-#include "opal/mca/base/base.h"
 #include "opal/constants.h"
-
+#include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
+#include "opal/util/cmd_line.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
 /*
  * Private variables
@@ -40,10 +39,8 @@
 /*
  * Private functions
  */
-static int process_arg(const char *param, const char *value,
-                       char ***params, char ***values);
+static int process_arg(const char *param, const char *value, char ***params, char ***values);
 static void add_to_env(char **params, char **values, char ***env);
-
 
 /*
  * Add -mca to the possible command line options list
@@ -53,25 +50,32 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
     int ret = OPAL_SUCCESS;
 
     ret = opal_cmd_line_make_opt3(cmd, '\0', OPAL_MCA_CMD_LINE_ID, OPAL_MCA_CMD_LINE_ID, 2,
-                                  "Pass context-specific MCA parameters; they are considered global if --g"OPAL_MCA_CMD_LINE_ID" is not used and only one context is specified (arg0 is the parameter name; arg1 is the parameter value)");
+                                  "Pass context-specific MCA parameters; they are considered "
+                                  "global if --g" OPAL_MCA_CMD_LINE_ID
+                                  " is not used and only one context is specified (arg0 is the "
+                                  "parameter name; arg1 is the parameter value)");
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
 
-    ret = opal_cmd_line_make_opt3(cmd, '\0', "g"OPAL_MCA_CMD_LINE_ID, "g"OPAL_MCA_CMD_LINE_ID, 2,
-                                  "Pass global MCA parameters that are applicable to all contexts (arg0 is the parameter name; arg1 is the parameter value)");
+    ret = opal_cmd_line_make_opt3(cmd, '\0', "g" OPAL_MCA_CMD_LINE_ID, "g" OPAL_MCA_CMD_LINE_ID, 2,
+                                  "Pass global MCA parameters that are applicable to all contexts "
+                                  "(arg0 is the parameter name; arg1 is the parameter value)");
 
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
 
     {
-        opal_cmd_line_init_t entry =
-            {"mca_base_param_file_prefix", '\0', "am", NULL, 1,
-             NULL, OPAL_CMD_LINE_TYPE_STRING,
-             "Aggregate MCA parameter set file list",
-             OPAL_CMD_LINE_OTYPE_LAUNCH
-            };
+        opal_cmd_line_init_t entry = {"mca_base_param_file_prefix",
+                                      '\0',
+                                      "am",
+                                      NULL,
+                                      1,
+                                      NULL,
+                                      OPAL_CMD_LINE_TYPE_STRING,
+                                      "Aggregate MCA parameter set file list",
+                                      OPAL_CMD_LINE_OTYPE_LAUNCH};
         ret = opal_cmd_line_make_opt_mca(cmd, entry);
         if (OPAL_SUCCESS != ret) {
             return ret;
@@ -79,12 +83,15 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
     }
 
     {
-        opal_cmd_line_init_t entry =
-            {"mca_base_envar_file_prefix", '\0', "tune", NULL, 1,
-             NULL, OPAL_CMD_LINE_TYPE_STRING,
-             "Application profile options file list",
-             OPAL_CMD_LINE_OTYPE_DEBUG
-            };
+        opal_cmd_line_init_t entry = {"mca_base_envar_file_prefix",
+                                      '\0',
+                                      "tune",
+                                      NULL,
+                                      1,
+                                      NULL,
+                                      OPAL_CMD_LINE_TYPE_STRING,
+                                      "Application profile options file list",
+                                      OPAL_CMD_LINE_OTYPE_DEBUG};
         ret = opal_cmd_line_make_opt_mca(cmd, entry);
         if (OPAL_SUCCESS != ret) {
             return ret;
@@ -94,12 +101,10 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
     return ret;
 }
 
-
 /*
  * Look for and handle any -mca options on the command line
  */
-int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
-                                   char ***context_env, char ***global_env)
+int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd, char ***context_env, char ***global_env)
 {
     int i, num_insts, rc;
     char **params;
@@ -107,8 +112,8 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 
     /* If no relevant parameters were given, just return */
 
-    if (!opal_cmd_line_is_taken(cmd, OPAL_MCA_CMD_LINE_ID) &&
-        !opal_cmd_line_is_taken(cmd, "g"OPAL_MCA_CMD_LINE_ID)) {
+    if (!opal_cmd_line_is_taken(cmd, OPAL_MCA_CMD_LINE_ID)
+        && !opal_cmd_line_is_taken(cmd, "g" OPAL_MCA_CMD_LINE_ID)) {
         return OPAL_SUCCESS;
     }
 
@@ -117,9 +122,10 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
     num_insts = opal_cmd_line_get_ninsts(cmd, OPAL_MCA_CMD_LINE_ID);
     params = values = NULL;
     for (i = 0; i < num_insts; ++i) {
-        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 0),
-                                              opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 1),
-                                              &params, &values))) {
+        if (OPAL_SUCCESS
+            != (rc = process_arg(opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 0),
+                                 opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 1), &params,
+                                 &values))) {
             return rc;
         }
     }
@@ -131,12 +137,13 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
 
     /* Handle global parameters */
 
-    num_insts = opal_cmd_line_get_ninsts(cmd, "g"OPAL_MCA_CMD_LINE_ID);
+    num_insts = opal_cmd_line_get_ninsts(cmd, "g" OPAL_MCA_CMD_LINE_ID);
     params = values = NULL;
     for (i = 0; i < num_insts; ++i) {
-        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 0),
-                                              opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 1),
-                                              &params, &values))) {
+        if (OPAL_SUCCESS
+            != (rc = process_arg(opal_cmd_line_get_param(cmd, "g" OPAL_MCA_CMD_LINE_ID, i, 0),
+                                 opal_cmd_line_get_param(cmd, "g" OPAL_MCA_CMD_LINE_ID, i, 1),
+                                 &params, &values))) {
             return rc;
         }
     }
@@ -151,21 +158,18 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
     return OPAL_SUCCESS;
 }
 
-
-
 /*
  * Process a single MCA argument.
  */
-static int process_arg(const char *param, const char *value,
-                       char ***params, char ***values)
+static int process_arg(const char *param, const char *value, char ***params, char ***values)
 {
     int i;
     char *p1;
 
     /* check for quoted value */
-    if ('\"' == value[0] && '\"' == value[strlen(value)-1]) {
+    if ('\"' == value[0] && '\"' == value[strlen(value) - 1]) {
         p1 = strdup(&value[1]);
-        p1[strlen(p1)-1] = '\0';
+        p1[strlen(p1) - 1] = '\0';
     } else {
         p1 = strdup(value);
     }
@@ -202,7 +206,6 @@ static int process_arg(const char *param, const char *value,
     return OPAL_SUCCESS;
 }
 
-
 static void add_to_env(char **params, char **values, char ***env)
 {
     int i;
@@ -212,7 +215,7 @@ static void add_to_env(char **params, char **values, char ***env)
        vars of the form OPAL_MCA_PREFIX*=value. */
 
     for (i = 0; NULL != params && NULL != params[i]; ++i) {
-        (void) mca_base_var_env_name (params[i], &name);
+        (void) mca_base_var_env_name(params[i], &name);
         opal_setenv(name, values[i], true, env);
         free(name);
     }
@@ -223,10 +226,10 @@ void mca_base_cmd_line_wrap_args(char **args)
     int i;
     char *tstr;
 
-    for (i=0; NULL != args && NULL != args[i]; i++) {
-        if (0 == strcmp(args[i], "-"OPAL_MCA_CMD_LINE_ID) ||
-            0 == strcmp(args[i], "--"OPAL_MCA_CMD_LINE_ID)) {
-            if (NULL == args[i+1] || NULL == args[i+2]) {
+    for (i = 0; NULL != args && NULL != args[i]; i++) {
+        if (0 == strcmp(args[i], "-" OPAL_MCA_CMD_LINE_ID)
+            || 0 == strcmp(args[i], "--" OPAL_MCA_CMD_LINE_ID)) {
+            if (NULL == args[i + 1] || NULL == args[i + 2]) {
                 /* this should be impossible as the error would
                  * have been detected well before here, but just
                  * be safe */

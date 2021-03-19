@@ -18,21 +18,19 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #include <stdlib.h>
 
-#include "opal/util/daemon_init.h"
 #include "opal/constants.h"
-
+#include "opal/util/daemon_init.h"
 
 int opal_daemon_init(char *working_dir)
 {
@@ -43,16 +41,16 @@ int opal_daemon_init(char *working_dir)
     if ((pid = fork()) < 0) {
         return OPAL_ERROR;
     } else if (pid != 0) {
-        exit(0);   /* parent goes bye-bye */
+        exit(0); /* parent goes bye-bye */
     }
 
     /* child continues */
-#if defined(HAVE_SETSID)
-    setsid();  /* become session leader */
-#endif
+#    if defined(HAVE_SETSID)
+    setsid(); /* become session leader */
+#    endif
 
     if (NULL != working_dir) {
-        chdir(working_dir);  /* change working directory */
+        chdir(working_dir); /* change working directory */
     }
 
     /* connect input to /dev/null */
@@ -61,12 +59,12 @@ int opal_daemon_init(char *working_dir)
         return OPAL_ERR_FATAL;
     }
     dup2(fd, STDIN_FILENO);
-    if(fd != STDIN_FILENO) {
+    if (fd != STDIN_FILENO) {
         close(fd);
     }
 
     /* connect outputs to /dev/null */
-    fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
+    fd = open("/dev/null", O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd >= 0) {
         dup2(fd, STDOUT_FILENO);
         dup2(fd, STDERR_FILENO);
@@ -76,8 +74,8 @@ int opal_daemon_init(char *working_dir)
          * since one of the two would still be open and
          * someone could attempt to use it.
          */
-        if(fd != STDOUT_FILENO && fd != STDERR_FILENO) {
-           close(fd);
+        if (fd != STDOUT_FILENO && fd != STDERR_FILENO) {
+            close(fd);
         }
     } else {
         return OPAL_ERR_FATAL;

@@ -13,37 +13,34 @@
 #include "opal_config.h"
 
 #include "common_ucx.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/argv.h"
 
-#include <ucm/api/ucm.h>
 #include <fnmatch.h>
 #include <stdio.h>
+#include <ucm/api/ucm.h>
 
 /***********************************************************************/
 
 extern mca_base_framework_t opal_memory_base_framework;
 
-opal_common_ucx_module_t opal_common_ucx = {
-    .verbose             = 0,
-    .progress_iterations = 100,
-    .registered          = 0,
-    .opal_mem_hooks      = 0,
-    .tls                 = NULL
-};
+opal_common_ucx_module_t opal_common_ucx = {.verbose = 0,
+                                            .progress_iterations = 100,
+                                            .registered = 0,
+                                            .opal_mem_hooks = 0,
+                                            .tls = NULL};
 
-static void opal_common_ucx_mem_release_cb(void *buf, size_t length,
-                                           void *cbdata, bool from_alloc)
+static void opal_common_ucx_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
 {
     ucm_vm_munmap(buf, length);
 }
 
 OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component)
 {
-    static const char *default_tls     = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,cuda_ipc,rocm_ipc";
+    static const char *default_tls = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,cuda_ipc,rocm_ipc";
     static const char *default_devices = "mlx*";
     static int registered = 0;
     static int hook_index;
@@ -57,8 +54,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                               "Verbose level of the UCX components",
                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                               MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                                              MCA_BASE_VAR_SCOPE_LOCAL,
-                                              &opal_common_ucx.verbose);
+                                              MCA_BASE_VAR_SCOPE_LOCAL, &opal_common_ucx.verbose);
         progress_index = mca_base_var_register("opal", "opal_common", "ucx", "progress_iterations",
                                                "Set number of calls of internal UCX progress "
                                                "calls per opal_progress call",
@@ -68,55 +64,48 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                                &opal_common_ucx.progress_iterations);
         hook_index = mca_base_var_register("opal", "opal_common", "ucx", "opal_mem_hooks",
                                            "Use OPAL memory hooks, instead of UCX internal "
-                                           "memory hooks", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_3,
+                                           "memory hooks",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &opal_common_ucx.opal_mem_hooks);
 
-        opal_common_ucx.tls  = malloc(sizeof(*opal_common_ucx.tls));
+        opal_common_ucx.tls = malloc(sizeof(*opal_common_ucx.tls));
         *opal_common_ucx.tls = strdup(default_tls);
-        tls_index = mca_base_var_register("opal", "opal_common", "ucx", "tls",
-                                          "List of UCX transports which should be supported on the system, to enable "
-                                          "selecting the UCX component. Special values: any (any available). "
-                                          "A '^' prefix negates the list. "
-                                          "For example, in order to exclude on shared memory and TCP transports, "
-                                          "please set to '^posix,sysv,self,tcp,cma,knem,xpmem'.",
-                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                          OPAL_INFO_LVL_3,
-                                          MCA_BASE_VAR_SCOPE_LOCAL,
-                                          opal_common_ucx.tls);
+        tls_index = mca_base_var_register(
+            "opal", "opal_common", "ucx", "tls",
+            "List of UCX transports which should be supported on the system, to enable "
+            "selecting the UCX component. Special values: any (any available). "
+            "A '^' prefix negates the list. "
+            "For example, in order to exclude on shared memory and TCP transports, "
+            "please set to '^posix,sysv,self,tcp,cma,knem,xpmem'.",
+            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
+            opal_common_ucx.tls);
 
-        opal_common_ucx.devices  = malloc(sizeof(*opal_common_ucx.devices));
+        opal_common_ucx.devices = malloc(sizeof(*opal_common_ucx.devices));
         *opal_common_ucx.devices = strdup(default_devices);
-        devices_index = mca_base_var_register("opal", "opal_common", "ucx", "devices",
-                                              "List of device driver pattern names, which, if supported by UCX, will "
-                                              "bump its priority above ob1. Special values: any (any available)",
-                                              MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                              OPAL_INFO_LVL_3,
-                                              MCA_BASE_VAR_SCOPE_LOCAL,
-                                              opal_common_ucx.devices);
+        devices_index = mca_base_var_register(
+            "opal", "opal_common", "ucx", "devices",
+            "List of device driver pattern names, which, if supported by UCX, will "
+            "bump its priority above ob1. Special values: any (any available)",
+            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
+            opal_common_ucx.devices);
         registered = 1;
     }
     if (component) {
         mca_base_var_register_synonym(verbose_index, component->mca_project_name,
-                                      component->mca_type_name,
-                                      component->mca_component_name,
+                                      component->mca_type_name, component->mca_component_name,
                                       "verbose", 0);
         mca_base_var_register_synonym(progress_index, component->mca_project_name,
-                                      component->mca_type_name,
-                                      component->mca_component_name,
+                                      component->mca_type_name, component->mca_component_name,
                                       "progress_iterations", 0);
         mca_base_var_register_synonym(hook_index, component->mca_project_name,
-                                      component->mca_type_name,
-                                      component->mca_component_name,
+                                      component->mca_type_name, component->mca_component_name,
                                       "opal_mem_hooks", 0);
         mca_base_var_register_synonym(tls_index, component->mca_project_name,
-                                      component->mca_type_name,
-                                      component->mca_component_name,
+                                      component->mca_type_name, component->mca_component_name,
                                       "tls", 0);
         mca_base_var_register_synonym(devices_index, component->mca_project_name,
-                                      component->mca_type_name,
-                                      component->mca_component_name,
+                                      component->mca_type_name, component->mca_component_name,
                                       "devices", 0);
     }
 }
@@ -139,14 +128,16 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
         ret = mca_base_framework_open(&opal_memory_base_framework, 0);
         if (OPAL_SUCCESS != ret) {
             /* failed to initialize memory framework - just exit */
-            MCA_COMMON_UCX_VERBOSE(1, "failed to initialize memory base framework: %d, "
-                                      "memory hooks will not be used", ret);
+            MCA_COMMON_UCX_VERBOSE(1,
+                                   "failed to initialize memory base framework: %d, "
+                                   "memory hooks will not be used",
+                                   ret);
             return;
         }
 
-        if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-            ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
-             opal_mem_hooks_support_level())) {
+        if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
+            == ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
+                & opal_mem_hooks_support_level())) {
             MCA_COMMON_UCX_VERBOSE(1, "%s", "using OPAL memory hooks as external events");
             ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
             opal_mem_hooks_register_release(opal_common_ucx_mem_release_cb, NULL);
@@ -190,16 +181,14 @@ static bool opal_common_ucx_check_device(const char *device_name, char **device_
     driver_path[sizeof(driver_path) - 1] = '\0';
     ret = readlink(sysfs_driver_link, driver_path, sizeof(driver_path) - 1);
     if (ret < 0) {
-        MCA_COMMON_UCX_VERBOSE(2, "readlink(%s) failed: %s", sysfs_driver_link,
-                               strerror(errno));
+        MCA_COMMON_UCX_VERBOSE(2, "readlink(%s) failed: %s", sysfs_driver_link, strerror(errno));
         return false;
     }
 
     driver_name = basename(driver_path);
     for (list_item = device_list; *list_item != NULL; ++list_item) {
         if (!fnmatch(*list_item, driver_name, 0)) {
-            MCA_COMMON_UCX_VERBOSE(2, "driver '%s' matched by '%s'",
-                                   driver_path, *list_item);
+            MCA_COMMON_UCX_VERBOSE(2, "driver '%s' matched by '%s'", driver_path, *list_item);
             return true;
         }
     }
@@ -208,15 +197,13 @@ static bool opal_common_ucx_check_device(const char *device_name, char **device_
 }
 #endif
 
-OPAL_DECLSPEC opal_common_ucx_support_level_t
-opal_common_ucx_support_level(ucp_context_h context)
+OPAL_DECLSPEC opal_common_ucx_support_level_t opal_common_ucx_support_level(ucp_context_h context)
 {
     opal_common_ucx_support_level_t support_level = OPAL_COMMON_UCX_SUPPORT_NONE;
-    static const char *support_level_names[] = {
-        [OPAL_COMMON_UCX_SUPPORT_NONE]      = "none",
-        [OPAL_COMMON_UCX_SUPPORT_TRANSPORT] = "transports only",
-        [OPAL_COMMON_UCX_SUPPORT_DEVICE]    = "transports and devices"
-    };
+    static const char *support_level_names[]
+        = {[OPAL_COMMON_UCX_SUPPORT_NONE] = "none",
+           [OPAL_COMMON_UCX_SUPPORT_TRANSPORT] = "transports only",
+           [OPAL_COMMON_UCX_SUPPORT_DEVICE] = "transports and devices"};
 #if HAVE_DECL_OPEN_MEMSTREAM
     char *rsc_tl_name, *rsc_device_name;
     char **tl_list, **device_list, **list_item;
@@ -229,7 +216,7 @@ opal_common_ucx_support_level(ucp_context_h context)
     int ret;
 #endif
 
-    is_any_tl     = !strcmp(*opal_common_ucx.tls, "any");
+    is_any_tl = !strcmp(*opal_common_ucx.tls, "any");
     is_any_device = !strcmp(*opal_common_ucx.devices, "any");
 
     /* Check for special value "any" */
@@ -242,7 +229,7 @@ opal_common_ucx_support_level(ucp_context_h context)
 
 #if HAVE_DECL_OPEN_MEMSTREAM
     /* Split transports list */
-    negate  = ('^' == (*opal_common_ucx.tls)[0]);
+    negate = ('^' == (*opal_common_ucx.tls)[0]);
     tl_list = opal_argv_split(*opal_common_ucx.tls + (negate ? 1 : 0), ',');
     if (tl_list == NULL) {
         MCA_COMMON_UCX_VERBOSE(1, "failed to split tl list '%s', ucx is disabled",
@@ -261,8 +248,10 @@ opal_common_ucx_support_level(ucp_context_h context)
     /* Open memory stream to dump UCX information to */
     stream = open_memstream(&buffer, &size);
     if (stream == NULL) {
-        MCA_COMMON_UCX_VERBOSE(1, "failed to open memory stream for ucx info (%s), "
-                               "ucx is disabled", strerror(errno));
+        MCA_COMMON_UCX_VERBOSE(1,
+                               "failed to open memory stream for ucx info (%s), "
+                               "ucx is disabled",
+                               strerror(errno));
         goto out_free_device_list;
     }
 
@@ -271,8 +260,8 @@ opal_common_ucx_support_level(ucp_context_h context)
 
     /* Rewind and read transports/devices list from the stream */
     fseek(stream, 0, SEEK_SET);
-    while ((support_level != OPAL_COMMON_UCX_SUPPORT_DEVICE) &&
-           (fgets(line, sizeof(line), stream) != NULL)) {
+    while ((support_level != OPAL_COMMON_UCX_SUPPORT_DEVICE)
+           && (fgets(line, sizeof(line), stream) != NULL)) {
         rsc_tl_name = NULL;
         ret = sscanf(line,
                      /* "# resource 6  :  md 5  dev 4  flags -- rc_verbs/mlx5_0:1" */
@@ -292,19 +281,18 @@ opal_common_ucx_support_level(ucp_context_h context)
         /* Check if the transport has a match (either positive or negative) */
         assert(!(is_any_tl && negate));
         if (found_tl != negate) {
-            if (is_any_device ||
-                opal_common_ucx_check_device(rsc_device_name, device_list)) {
+            if (is_any_device || opal_common_ucx_check_device(rsc_device_name, device_list)) {
                 MCA_COMMON_UCX_VERBOSE(2, "%s/%s: matched both transport and device list",
-                                    rsc_tl_name, rsc_device_name);
+                                       rsc_tl_name, rsc_device_name);
                 support_level = OPAL_COMMON_UCX_SUPPORT_DEVICE;
             } else {
                 MCA_COMMON_UCX_VERBOSE(2, "%s/%s: matched transport list but not device list",
-                                    rsc_tl_name, rsc_device_name);
+                                       rsc_tl_name, rsc_device_name);
                 support_level = OPAL_COMMON_UCX_SUPPORT_TRANSPORT;
             }
         } else {
-            MCA_COMMON_UCX_VERBOSE(2, "%s/%s: did not match transport list",
-                                   rsc_tl_name, rsc_device_name);
+            MCA_COMMON_UCX_VERBOSE(2, "%s/%s: did not match transport list", rsc_tl_name,
+                                   rsc_device_name);
         }
 
         free(rsc_device_name);
@@ -332,17 +320,17 @@ void opal_common_ucx_empty_complete_cb(void *request, ucs_status_t status)
 
 static void opal_common_ucx_mca_fence_complete_cb(int status, void *fenced)
 {
-    *(int*)fenced = 1;
+    *(int *) fenced = 1;
 }
 
 #if HAVE_DECL_UCM_TEST_EVENTS
 static ucs_status_t opal_common_ucx_mca_test_external_events(int events)
 {
-#if HAVE_DECL_UCM_TEST_EXTERNAL_EVENTS
+#    if HAVE_DECL_UCM_TEST_EXTERNAL_EVENTS
     return ucm_test_external_events(UCM_EVENT_VM_UNMAPPED);
-#else
+#    else
     return ucm_test_events(UCM_EVENT_VM_UNMAPPED);
-#endif
+#    endif
 }
 
 static void opal_common_ucx_mca_test_events(void)
@@ -354,17 +342,18 @@ static void opal_common_ucx_mca_test_events(void)
     if (!warned) {
         if (opal_common_ucx.opal_mem_hooks) {
             suggestion = "Please check OPAL memory events infrastructure.";
-            status     = opal_common_ucx_mca_test_external_events(UCM_EVENT_VM_UNMAPPED);
+            status = opal_common_ucx_mca_test_external_events(UCM_EVENT_VM_UNMAPPED);
         } else {
             suggestion = "Pls try adding --mca opal_common_ucx_opal_mem_hooks 1 "
                          "to mpirun/oshrun command line to resolve this issue.";
-            status     = ucm_test_events(UCM_EVENT_VM_UNMAPPED);
+            status = ucm_test_events(UCM_EVENT_VM_UNMAPPED);
         }
 
         if (status != UCS_OK) {
             MCA_COMMON_UCX_WARN("UCX is unable to handle VM_UNMAP event. "
                                 "This may cause performance degradation or data "
-                                "corruption. %s", suggestion);
+                                "corruption. %s",
+                                suggestion);
             warned = 1;
         }
     }
@@ -380,7 +369,7 @@ void opal_common_ucx_mca_proc_added(void)
 
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence_nb(int *fenced)
 {
-    return PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void *)fenced);
+    return PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void *) fenced);
 }
 
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
@@ -388,8 +377,9 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
     volatile int fenced = 0;
     int ret = OPAL_SUCCESS;
 
-    if (OPAL_SUCCESS != (ret = PMIx_Fence_nb(NULL, 0, NULL, 0,
-                    opal_common_ucx_mca_fence_complete_cb, (void*)&fenced))){
+    if (OPAL_SUCCESS
+        != (ret = PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb,
+                                (void *) &fenced))) {
         return ret;
     }
 
@@ -399,7 +389,6 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
 
     return ret;
 }
-
 
 static void opal_common_ucx_wait_all_requests(void **reqs, int count, ucp_worker_h worker)
 {
@@ -412,9 +401,8 @@ static void opal_common_ucx_wait_all_requests(void **reqs, int count, ucp_worker
     }
 }
 
-OPAL_DECLSPEC int opal_common_ucx_del_procs_nofence(opal_common_ucx_del_proc_t *procs,
-                                                    size_t count, size_t my_rank,
-                                                    size_t max_disconnect,
+OPAL_DECLSPEC int opal_common_ucx_del_procs_nofence(opal_common_ucx_del_proc_t *procs, size_t count,
+                                                    size_t my_rank, size_t max_disconnect,
                                                     ucp_worker_h worker)
 {
     size_t num_reqs;
@@ -467,10 +455,10 @@ OPAL_DECLSPEC int opal_common_ucx_del_procs_nofence(opal_common_ucx_del_proc_t *
 }
 
 OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, size_t count,
-                                            size_t my_rank, size_t max_disconnect, ucp_worker_h worker)
+                                            size_t my_rank, size_t max_disconnect,
+                                            ucp_worker_h worker)
 {
     opal_common_ucx_del_procs_nofence(procs, count, my_rank, max_disconnect, worker);
 
     return opal_common_ucx_mca_pmix_fence(worker);
 }
-

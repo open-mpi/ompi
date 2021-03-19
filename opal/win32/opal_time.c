@@ -19,7 +19,7 @@
 #include "opal_config.h"
 #include "opal/win32/opal_time.h"
 
-#include<time.h>
+#include <time.h>
 
 #define EPOCHFILETIME (116444736000000000LL)
 
@@ -29,10 +29,9 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     LARGE_INTEGER place_holder;
     __int64 time;
 
-
     /* returns 64 bit value which is the number of 100 nanosecond
        intervals since 1601(UTC) */
-    GetSystemTimeAsFileTime (&file_time);
+    GetSystemTimeAsFileTime(&file_time);
 
     /* Windows recommends that we should copy the FILETIME returned
        into a ULARGE_INTEGER and then perform the arithmetic on that */
@@ -47,8 +46,8 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     /* convert 100 nanoseconds intervals into microseconds .. divide by 10 */
     time /= 10;
 
-    tv->tv_sec = (long)(time / 1000000);
-    tv->tv_usec = (long)(time % 1000000);
+    tv->tv_sec = (long) (time / 1000000);
+    tv->tv_usec = (long) (time % 1000000);
 
     return 0;
 }

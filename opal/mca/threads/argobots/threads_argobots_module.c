@@ -24,13 +24,13 @@
 
 #include <unistd.h>
 
-#include "opal/mca/threads/argobots/threads_argobots.h"
 #include "opal/constants.h"
-#include "opal/util/sys_limits.h"
-#include "opal/util/output.h"
-#include "opal/prefetch.h"
+#include "opal/mca/threads/argobots/threads_argobots.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/mca/threads/tsd.h"
+#include "opal/prefetch.h"
+#include "opal/util/output.h"
+#include "opal/util/sys_limits.h"
 
 struct opal_tsd_key_value {
     opal_tsd_key_t key;
@@ -51,9 +51,7 @@ static void opal_thread_construct(opal_thread_t *t)
     t->t_handle = ABT_THREAD_NULL;
 }
 
-OBJ_CLASS_INSTANCE(opal_thread_t,
-                   opal_object_t,
-                   opal_thread_construct, NULL);
+OBJ_CLASS_INSTANCE(opal_thread_t, opal_object_t, opal_thread_construct, NULL);
 
 static inline ABT_thread opal_thread_get_argobots_self(void)
 {
@@ -64,8 +62,8 @@ static inline ABT_thread opal_thread_get_argobots_self(void)
 
 static void opal_thread_argobots_wrapper(void *arg)
 {
-    opal_thread_t *t = (opal_thread_t *)arg;
-    t->t_ret = ((void *(*)(void *))t->t_run)(t);
+    opal_thread_t *t = (opal_thread_t *) arg;
+    t->t_ret = ((void *(*) (void *) ) t->t_run)(t);
 }
 
 opal_thread_t *opal_thread_get_self(void)
@@ -108,8 +106,7 @@ int opal_thread_start(opal_thread_t *t)
 
     ABT_xstream self_xstream;
     ABT_xstream_self(&self_xstream);
-    rc = ABT_thread_create_on_xstream(self_xstream,
-                                      opal_thread_argobots_wrapper, t,
+    rc = ABT_thread_create_on_xstream(self_xstream, opal_thread_argobots_wrapper, t,
                                       ABT_THREAD_ATTR_NULL, &t->t_handle);
 
     return (ABT_SUCCESS == rc) ? OPAL_SUCCESS : OPAL_ERROR;

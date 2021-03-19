@@ -41,13 +41,13 @@
 
 #include "opal_config.h"
 
-#include "opal/class/opal_object.h"
-#include "opal/class/opal_list.h"
-#include "opal/class/opal_value_array.h"
-#include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
-#include "opal/mca/base/mca_base_var.h"
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
+#include "opal/class/opal_pointer_array.h"
+#include "opal/class/opal_value_array.h"
 #include "opal/mca/base/mca_base_pvar.h"
+#include "opal/mca/base/mca_base_var.h"
 
 BEGIN_C_DECLS
 
@@ -56,7 +56,7 @@ BEGIN_C_DECLS
 
 typedef enum {
     /** Variable is valid */
-    MCA_BASE_VAR_FLAG_VALID   = 0x00010000,
+    MCA_BASE_VAR_FLAG_VALID = 0x00010000,
     /** Variable is a synonym */
     MCA_BASE_VAR_FLAG_SYNONYM = 0x00020000,
     /** mbv_source_file needs to be freed */
@@ -65,12 +65,12 @@ typedef enum {
 
 #define VAR_FLAG_ISSET(var, flag) (!!((var).mbp_flags & (flag)))
 
-#define VAR_IS_VALID(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_VALID))
-#define VAR_IS_SYNONYM(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_SYNONYM))
-#define VAR_IS_INTERNAL(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_INTERNAL))
+#define VAR_IS_VALID(var)        (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_VALID))
+#define VAR_IS_SYNONYM(var)      (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_SYNONYM))
+#define VAR_IS_INTERNAL(var)     (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_INTERNAL))
 #define VAR_IS_DEFAULT_ONLY(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_DEFAULT_ONLY))
-#define VAR_IS_SETTABLE(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_SETTABLE))
-#define VAR_IS_DEPRECATED(var) (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_DEPRECATED))
+#define VAR_IS_SETTABLE(var)     (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_SETTABLE))
+#define VAR_IS_DEPRECATED(var)   (!!((var).mbv_flags & MCA_BASE_VAR_FLAG_DEPRECATED))
 
 extern const char *ompi_var_type_names[];
 extern const size_t ompi_var_type_sizes[];
@@ -116,7 +116,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_file_value_t);
  * @param[out] group       Returned group if it exists
  * @param[in]  invalidok   Return group even if it has been deregistered
  */
-OPAL_DECLSPEC int mca_base_var_group_get_internal (const int group_index, mca_base_var_group_t **group, bool invalidok);
+OPAL_DECLSPEC int mca_base_var_group_get_internal(const int group_index,
+                                                  mca_base_var_group_t **group, bool invalidok);
 
 /**
  * \internal
@@ -130,30 +131,30 @@ OPAL_DECLSPEC int mca_base_parse_paramfile(const char *paramfile, opal_list_t *l
  *
  * Add a variable to a group
  */
-OPAL_DECLSPEC int mca_base_var_group_add_var (const int group_index, const int param_index);
+OPAL_DECLSPEC int mca_base_var_group_add_var(const int group_index, const int param_index);
 
 /**
  * \internal
  *
  * Add a performance variable to a group
  */
-OPAL_DECLSPEC int mca_base_var_group_add_pvar (const int group_index, const int param_index);
+OPAL_DECLSPEC int mca_base_var_group_add_pvar(const int group_index, const int param_index);
 
 /**
  * \internal
  *
  * Add an enum to a group
  */
-OPAL_DECLSPEC int mca_base_var_group_add_enum (const int group_index, const void *storage);
+OPAL_DECLSPEC int mca_base_var_group_add_enum(const int group_index, const void *storage);
 
 /**
  * \internal
  *
  * Generate a full name with _ between all of the non-NULL arguments
  */
-OPAL_DECLSPEC int mca_base_var_generate_full_name4 (const char *project, const char *framework,
-                                                    const char *component, const char *variable,
-                                                    char **full_name);
+OPAL_DECLSPEC int mca_base_var_generate_full_name4(const char *project, const char *framework,
+                                                   const char *component, const char *variable,
+                                                   char **full_name);
 
 /**
  * \internal
@@ -167,16 +168,16 @@ OPAL_DECLSPEC int mca_base_internal_env_store(void);
  *
  * Initialize/finalize MCA variable groups
  */
-OPAL_DECLSPEC int mca_base_var_group_init (void);
-OPAL_DECLSPEC int mca_base_var_group_finalize (void);
+OPAL_DECLSPEC int mca_base_var_group_init(void);
+OPAL_DECLSPEC int mca_base_var_group_finalize(void);
 
 /**
  * \internal
  *
  * Initialize MCA performance variables
  */
-OPAL_DECLSPEC int mca_base_pvar_init (void);
-OPAL_DECLSPEC int mca_base_pvar_finalize (void);
+OPAL_DECLSPEC int mca_base_pvar_init(void);
+OPAL_DECLSPEC int mca_base_pvar_finalize(void);
 
 END_C_DECLS
 

@@ -21,10 +21,10 @@
 #ifndef MCA_BTL_TEMPLATE_ENDPOINT_H
 #define MCA_BTL_TEMPLATE_ENDPOINT_H
 
+#include "btl_template.h"
+#include "btl_template_frag.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/event.h"
-#include "btl_template_frag.h"
-#include "btl_template.h"
 BEGIN_C_DECLS
 
 /**
@@ -35,17 +35,17 @@ BEGIN_C_DECLS
  */
 
 struct mca_btl_base_endpoint_t {
-    opal_list_item_t            super;
+    opal_list_item_t super;
 
-    struct mca_btl_template_module_t* endpoint_btl;
+    struct mca_btl_template_module_t *endpoint_btl;
     /**< BTL instance that created this connection */
 
-    struct mca_btl_template_proc_t*   endpoint_proc;
+    struct mca_btl_template_proc_t *endpoint_proc;
     /**< proc structure corresponding to endpoint */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
-typedef mca_btl_base_endpoint_t  mca_btl_template_endpoint_t;
+typedef mca_btl_base_endpoint_t mca_btl_template_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_template_endpoint_t);
 
 END_C_DECLS

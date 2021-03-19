@@ -22,7 +22,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_lifo.h"
 
-static void opal_lifo_construct (opal_lifo_t *lifo)
+static void opal_lifo_construct(opal_lifo_t *lifo)
 {
     OBJ_CONSTRUCT(&lifo->opal_lifo_ghost, opal_list_item_t);
     lifo->opal_lifo_ghost.opal_list_next = &lifo->opal_lifo_ghost;

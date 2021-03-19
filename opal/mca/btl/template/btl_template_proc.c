@@ -18,18 +18,16 @@
 
 #include "opal_config.h"
 
-
 #include "btl_template.h"
 #include "btl_template_proc.h"
 
-static void mca_btl_template_proc_construct(mca_btl_template_proc_t* proc);
-static void mca_btl_template_proc_destruct(mca_btl_template_proc_t* proc);
+static void mca_btl_template_proc_construct(mca_btl_template_proc_t *proc);
+static void mca_btl_template_proc_destruct(mca_btl_template_proc_t *proc);
 
-OBJ_CLASS_INSTANCE(mca_btl_template_proc_t,
-        opal_list_item_t, mca_btl_template_proc_construct,
-        mca_btl_template_proc_destruct);
+OBJ_CLASS_INSTANCE(mca_btl_template_proc_t, opal_list_item_t, mca_btl_template_proc_construct,
+                   mca_btl_template_proc_destruct);
 
-void mca_btl_template_proc_construct(mca_btl_template_proc_t* template_proc)
+void mca_btl_template_proc_construct(mca_btl_template_proc_t *template_proc)
 {
     template_proc->proc_opal = 0;
     template_proc->proc_addr_count = 0;
@@ -46,43 +44,41 @@ void mca_btl_template_proc_construct(mca_btl_template_proc_t* template_proc)
  * Cleanup ib proc instance
  */
 
-void mca_btl_template_proc_destruct(mca_btl_template_proc_t* template_proc)
+void mca_btl_template_proc_destruct(mca_btl_template_proc_t *template_proc)
 {
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_template_component.template_lock);
-    opal_list_remove_item(&mca_btl_template_component.template_procs,
-                          &template_proc->super);
+    opal_list_remove_item(&mca_btl_template_component.template_procs, &template_proc->super);
     OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
 
     /* release resources */
-    if(NULL != template_proc->proc_endpoints) {
+    if (NULL != template_proc->proc_endpoints) {
         free(template_proc->proc_endpoints);
     }
     OBJ_DESTRUCT(&template_proc->proc_lock);
 }
 
-
 /*
  * Look for an existing TEMPLATE process instances based on the associated
  * opal_proc_t instance.
  */
-static mca_btl_template_proc_t* mca_btl_template_proc_lookup_opal(opal_proc_t* opal_proc)
+static mca_btl_template_proc_t *mca_btl_template_proc_lookup_opal(opal_proc_t *opal_proc)
 {
-    mca_btl_template_proc_t* template_proc;
+    mca_btl_template_proc_t *template_proc;
 
     OPAL_THREAD_LOCK(&mca_btl_template_component.template_lock);
 
-    for(template_proc = (mca_btl_template_proc_t*)
-            opal_list_get_first(&mca_btl_template_component.template_procs);
-            template_proc != (mca_btl_template_proc_t*)
-            opal_list_get_end(&mca_btl_template_component.template_procs);
-            template_proc  = (mca_btl_template_proc_t*)opal_list_get_next(template_proc)) {
+    for (template_proc = (mca_btl_template_proc_t *) opal_list_get_first(
+             &mca_btl_template_component.template_procs);
+         template_proc
+         != (mca_btl_template_proc_t *) opal_list_get_end(
+             &mca_btl_template_component.template_procs);
+         template_proc = (mca_btl_template_proc_t *) opal_list_get_next(template_proc)) {
 
-        if(template_proc->proc_opal == opal_proc) {
+        if (template_proc->proc_opal == opal_proc) {
             OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
             return template_proc;
         }
-
     }
 
     OPAL_THREAD_UNLOCK(&mca_btl_template_component.template_lock);
@@ -98,15 +94,15 @@ static mca_btl_template_proc_t* mca_btl_template_proc_lookup_opal(opal_proc_t* o
  * datastructure.
  */
 
-mca_btl_template_proc_t* mca_btl_template_proc_create(opal_proc_t* opal_proc)
+mca_btl_template_proc_t *mca_btl_template_proc_create(opal_proc_t *opal_proc)
 {
-    mca_btl_template_proc_t* module_proc = NULL;
+    mca_btl_template_proc_t *module_proc = NULL;
 
     /* Check if we have already created a TEMPLATE proc
      * structure for this process */
     module_proc = mca_btl_template_proc_lookup_opal(opal_proc);
 
-    if(module_proc != NULL) {
+    if (module_proc != NULL) {
 
         /* Gotcha! */
         return module_proc;
@@ -131,24 +127,23 @@ mca_btl_template_proc_t* mca_btl_template_proc_create(opal_proc_t* opal_proc)
      * mca_btl_template_proc_t to allow on demand increasing of
      * number of endpoints for this proc */
 
-    module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-        malloc(module_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t*));
+    module_proc->proc_endpoints = (mca_btl_base_endpoint_t **) malloc(
+        module_proc->proc_addr_count * sizeof(mca_btl_base_endpoint_t *));
 
-    if(NULL == module_proc->proc_endpoints) {
+    if (NULL == module_proc->proc_endpoints) {
         OBJ_RELEASE(module_proc);
         return NULL;
     }
     return module_proc;
 }
 
-
 /*
  * Note that this routine must be called with the lock on the process
  * already held.  Insert a btl instance into the proc array and assign
  * it an address.
  */
-int mca_btl_template_proc_insert(mca_btl_template_proc_t* module_proc,
-        mca_btl_base_endpoint_t* module_endpoint)
+int mca_btl_template_proc_insert(mca_btl_template_proc_t *module_proc,
+                                 mca_btl_base_endpoint_t *module_endpoint)
 {
     /* insert into endpoint array */
     module_endpoint->endpoint_proc = module_proc;

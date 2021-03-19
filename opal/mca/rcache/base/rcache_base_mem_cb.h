@@ -31,7 +31,7 @@ BEGIN_C_DECLS
 /*
  *  memory hook callback, called when memory is free'd out from under us
  */
-void mca_rcache_base_mem_cb (void* base, size_t size, void* cbdata, bool from_alloc);
+void mca_rcache_base_mem_cb(void *base, size_t size, void *cbdata, bool from_alloc);
 
 END_C_DECLS
 

@@ -16,12 +16,11 @@
 #define OPAL_REACHABLE_H
 
 #include "opal_config.h"
-#include "opal/types.h"
 #include "opal/class/opal_object.h"
+#include "opal/types.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/if/if.h"
-
+#include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
 
@@ -79,36 +78,32 @@ typedef int (*opal_reachable_base_module_fini_fn_t)(void);
  * reachable.
  *
  */
-typedef opal_reachable_t*
-(*opal_reachable_base_module_reachable_fn_t)(opal_list_t *local_ifs,
-                                             opal_list_t *remote_ifs);
-
+typedef opal_reachable_t *(*opal_reachable_base_module_reachable_fn_t)(opal_list_t *local_ifs,
+                                                                       opal_list_t *remote_ifs);
 
 /*
  * the standard public API data structure
  */
 typedef struct {
     /* currently used APIs */
-    opal_reachable_base_module_init_fn_t                   init;
-    opal_reachable_base_module_fini_fn_t                   finalize;
-    opal_reachable_base_module_reachable_fn_t              reachable;
+    opal_reachable_base_module_init_fn_t init;
+    opal_reachable_base_module_fini_fn_t finalize;
+    opal_reachable_base_module_reachable_fn_t reachable;
 } opal_reachable_base_module_t;
 
 typedef struct {
-    mca_base_component_t                      base_version;
-    mca_base_component_data_t                 base_data;
+    mca_base_component_t base_version;
+    mca_base_component_data_t base_data;
     int priority;
 } opal_reachable_base_component_t;
 
 /*
  * Macro for use in components that are of type reachable
  */
-#define OPAL_REACHABLE_BASE_VERSION_2_0_0             \
-    OPAL_MCA_BASE_VERSION_2_1_0("reachable", 2, 0, 0)
+#define OPAL_REACHABLE_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("reachable", 2, 0, 0)
 
 /* Global structure for accessing reachability functions */
 OPAL_DECLSPEC extern opal_reachable_base_module_t opal_reachable;
-
 
 END_C_DECLS
 

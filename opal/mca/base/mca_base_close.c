@@ -22,11 +22,11 @@
 
 #include "opal_config.h"
 
-#include "opal/util/output.h"
-#include "opal/mca/mca.h"
+#include "opal/constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "opal/constants.h"
+#include "opal/mca/mca.h"
+#include "opal/util/output.h"
 
 extern int mca_base_opened;
 
@@ -34,25 +34,25 @@ extern int mca_base_opened;
  * Main MCA shutdown.
  */
 
-void mca_base_close (void)
+void mca_base_close(void)
 {
-    assert (mca_base_opened);
+    assert(mca_base_opened);
     if (--mca_base_opened) {
         return;
     }
 
     /* deregister all MCA base parameters */
-    int group_id = mca_base_var_group_find ("opal", "mca", "base");
+    int group_id = mca_base_var_group_find("opal", "mca", "base");
 
     if (-1 < group_id) {
-        mca_base_var_group_deregister (group_id);
+        mca_base_var_group_deregister(group_id);
     }
 
     /* release the default paths */
-    free (mca_base_system_default_path);
+    free(mca_base_system_default_path);
     mca_base_system_default_path = NULL;
 
-    free (mca_base_user_default_path);
+    free(mca_base_user_default_path);
     mca_base_user_default_path = NULL;
 
     /* Close down the component repository */

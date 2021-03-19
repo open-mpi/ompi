@@ -36,23 +36,23 @@
 #include "opal/sys/architecture.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 
 /* do some quick #define cleanup in cases where we are doing
    testing... */
 #ifdef OPAL_DISABLE_INLINE_ASM
-#undef OPAL_C_GCC_INLINE_ASSEMBLY
-#define OPAL_C_GCC_INLINE_ASSEMBLY 0
+#    undef OPAL_C_GCC_INLINE_ASSEMBLY
+#    define OPAL_C_GCC_INLINE_ASSEMBLY 0
 #endif
 
 /* define OPAL_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
    OPAL_{C,CXX}_{GCC,DEC,XLC}_INLINE_ASSEMBLY defines and whether we
    are in C or C++ */
 #if defined(c_plusplus) || defined(__cplusplus)
-#define OPAL_GCC_INLINE_ASSEMBLY OPAL_CXX_GCC_INLINE_ASSEMBLY
+#    define OPAL_GCC_INLINE_ASSEMBLY OPAL_CXX_GCC_INLINE_ASSEMBLY
 #else
-#define OPAL_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
+#    define OPAL_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
 #endif
 
 /**********************************************************************
@@ -73,36 +73,36 @@ BEGIN_C_DECLS
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */
 #elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
-#include "opal/sys/x86_64/timer.h"
+#    include "opal/sys/x86_64/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
-#include "opal/sys/arm/timer.h"
+#    include "opal/sys/arm/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
-#include "opal/sys/arm64/timer.h"
+#    include "opal/sys/arm64/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
-#include "opal/sys/ia32/timer.h"
+#    include "opal/sys/ia32/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
-#include "opal/sys/powerpc/timer.h"
+#    include "opal/sys/powerpc/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
-#include "opal/sys/powerpc/timer.h"
+#    include "opal/sys/powerpc/timer.h"
 #endif
 
 #ifndef DOXYGEN
-#ifndef OPAL_HAVE_SYS_TIMER_GET_CYCLES
-#define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
+#    ifndef OPAL_HAVE_SYS_TIMER_GET_CYCLES
+#        define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
 
 typedef long opal_timer_t;
-#endif
+#    endif
 
-#ifndef OPAL_HAVE_SYS_TIMER_GET_FREQ
-#define OPAL_HAVE_SYS_TIMER_GET_FREQ 0
-#endif
+#    ifndef OPAL_HAVE_SYS_TIMER_GET_FREQ
+#        define OPAL_HAVE_SYS_TIMER_GET_FREQ 0
+#    endif
 #endif
 
 #ifndef OPAL_HAVE_SYS_TIMER_IS_MONOTONIC
 
-#define OPAL_HAVE_SYS_TIMER_IS_MONOTONIC 1
+#    define OPAL_HAVE_SYS_TIMER_IS_MONOTONIC 1
 
-static inline bool opal_sys_timer_is_monotonic (void)
+static inline bool opal_sys_timer_is_monotonic(void)
 {
     return OPAL_TIMER_MONOTONIC;
 }

@@ -24,17 +24,17 @@
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_datatype_internal.h"
 
-int32_t opal_datatype_create_contiguous( int count, const opal_datatype_t* oldType,
-                                         opal_datatype_t** newType )
+int32_t opal_datatype_create_contiguous(int count, const opal_datatype_t *oldType,
+                                        opal_datatype_t **newType)
 {
-    opal_datatype_t* pdt;
+    opal_datatype_t *pdt;
 
-    if( 0 == count ) {
-        pdt = opal_datatype_create( 0 );
-        opal_datatype_add( pdt, &opal_datatype_empty, 0, 0, 0 );
+    if (0 == count) {
+        pdt = opal_datatype_create(0);
+        opal_datatype_add(pdt, &opal_datatype_empty, 0, 0, 0);
     } else {
-        pdt = opal_datatype_create( oldType->desc.used + 2 );
-        opal_datatype_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );
+        pdt = opal_datatype_create(oldType->desc.used + 2);
+        opal_datatype_add(pdt, oldType, count, 0, (oldType->ub - oldType->lb));
     }
     *newType = pdt;
     return OPAL_SUCCESS;

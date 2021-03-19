@@ -33,22 +33,21 @@
 
 #include "opal_config.h"
 
-#include <time.h>
 #include <signal.h>
+#include <time.h>
 
 #include "opal/constants.h"
-#include "opal/runtime/opal.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/shmem/base/base.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/mca/threads/threads.h"
-#include "opal/mca/shmem/base/base.h"
-#include "opal/mca/base/mca_base_var.h"
+#include "opal/runtime/opal.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
-#include "opal/util/printf.h"
 
 char *opal_signal_string = NULL;
 char *opal_stacktrace_output_filename = NULL;
@@ -77,7 +76,7 @@ int opal_max_thread_in_progress = 1;
 
 static bool opal_register_done = false;
 
-static void opal_deregister_params (void)
+static void opal_deregister_params(void)
 {
     /* The MCA variable system will be torn down shortly so reset the registered
      * flag. */
@@ -113,9 +112,8 @@ int opal_register_params(void)
 #ifdef SIGSEGV
             SIGSEGV,
 #endif
-            -1
-        };
-        for (j = 0 ; signals[j] != -1 ; ++j) {
+            -1};
+        for (j = 0; signals[j] != -1; ++j) {
             if (j == 0) {
                 opal_asprintf(&string, "%d", signals[j]);
             } else {
@@ -127,12 +125,17 @@ int opal_register_params(void)
         }
 
         opal_signal_string = string;
-        ret = mca_base_var_register ("opal", "opal", NULL, "signal",
-				     "Comma-delimited list of integer signal numbers to Open MPI to attempt to intercept.  Upon receipt of the intercepted signal, Open MPI will display a stack trace and abort.  Open MPI will *not* replace signals if handlers are already installed by the time MPI_INIT is invoked.  Optionally append \":complain\" to any signal number in the comma-delimited list to make Open MPI complain if it detects another signal handler (and therefore does not insert its own).",
-				     MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-				     OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
-				     &opal_signal_string);
-        free (string);
+        ret = mca_base_var_register(
+            "opal", "opal", NULL, "signal",
+            "Comma-delimited list of integer signal numbers to Open MPI to attempt to intercept.  "
+            "Upon receipt of the intercepted signal, Open MPI will display a stack trace and "
+            "abort.  Open MPI will *not* replace signals if handlers are already installed by the "
+            "time MPI_INIT is invoked.  Optionally append \":complain\" to any signal number in "
+            "the comma-delimited list to make Open MPI complain if it detects another signal "
+            "handler (and therefore does not insert its own).",
+            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+            MCA_BASE_VAR_SCOPE_LOCAL, &opal_signal_string);
+        free(string);
         if (0 > ret) {
             return ret;
         }
@@ -144,49 +147,47 @@ int opal_register_params(void)
      */
     string = strdup("stderr");
     opal_stacktrace_output_filename = string;
-    ret = mca_base_var_register ("opal", "opal", NULL, "stacktrace_output",
-                                 "Specifies where the stack trace output stream goes.  "
-                                 "Accepts one of the following: none (disabled), stderr (default), stdout, file[:filename].   "
-                                 "If 'filename' is not specified, a default filename of 'stacktrace' is used.  "
-                                 "The 'filename' is appended with either '.PID' or '.RANK.PID', if RANK is available.  "
-                                 "The 'filename' can be an absolute path or a relative path to the current working directory.",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_3,
-                                 MCA_BASE_VAR_SCOPE_LOCAL,
-                                 &opal_stacktrace_output_filename);
-    free (string);
+    ret = mca_base_var_register(
+        "opal", "opal", NULL, "stacktrace_output",
+        "Specifies where the stack trace output stream goes.  "
+        "Accepts one of the following: none (disabled), stderr (default), stdout, file[:filename]. "
+        "  "
+        "If 'filename' is not specified, a default filename of 'stacktrace' is used.  "
+        "The 'filename' is appended with either '.PID' or '.RANK.PID', if RANK is available.  "
+        "The 'filename' can be an absolute path or a relative path to the current working "
+        "directory.",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_LOCAL, &opal_stacktrace_output_filename);
+    free(string);
     if (0 > ret) {
         return ret;
     }
 
-
 #if defined(HAVE_SCHED_YIELD)
     opal_progress_yield_when_idle = false;
-    ret = mca_base_var_register ("opal", "opal", "progress", "yield_when_idle",
-                                 "Yield the processor when waiting on progress",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
-                                 &opal_progress_yield_when_idle);
+    ret = mca_base_var_register("opal", "opal", "progress", "yield_when_idle",
+                                "Yield the processor when waiting on progress",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
+                                &opal_progress_yield_when_idle);
 #endif
 
 #if OPAL_ENABLE_DEBUG
     opal_progress_debug = false;
-    ret = mca_base_var_register ("opal", "opal", "progress", "debug",
-				 "Set to non-zero to debug progress engine features",
-				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
-				 &opal_progress_debug);
+    ret = mca_base_var_register("opal", "opal", "progress", "debug",
+                                "Set to non-zero to debug progress engine features",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL, &opal_progress_debug);
     if (0 > ret) {
         return ret;
     }
 
     opal_debug_threads = false;
-    ret = mca_base_var_register ("opal", "opal", "debug", "threads",
-				 "Debug thread usage within OPAL. Reports out "
-				 "when threads are acquired and released.",
-				 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-				 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
-				 &opal_debug_threads);
+    ret = mca_base_var_register("opal", "opal", "debug", "threads",
+                                "Debug thread usage within OPAL. Reports out "
+                                "when threads are acquired and released.",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL, &opal_debug_threads);
     if (0 > ret) {
         return ret;
     }
@@ -201,22 +202,23 @@ int opal_register_params(void)
        - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
     */
     opal_net_private_ipv4 = "10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16";
-    ret = mca_base_var_register ("opal", "opal", "net", "private_ipv4",
-				 "Semicolon-delimited list of CIDR notation entries specifying what networks are considered \"private\" (default value based on RFC1918 and RFC3330)",
-				 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-				 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
-				 &opal_net_private_ipv4);
+    ret = mca_base_var_register(
+        "opal", "opal", "net", "private_ipv4",
+        "Semicolon-delimited list of CIDR notation entries specifying what networks are considered "
+        "\"private\" (default value based on RFC1918 and RFC3330)",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_ALL_EQ, &opal_net_private_ipv4);
     if (0 > ret) {
         return ret;
     }
 
     opal_set_max_sys_limits = NULL;
-    ret = mca_base_var_register ("opal", "opal", NULL, "set_max_sys_limits",
-				 "Set the specified system-imposed limits to the specified value, including \"unlimited\"."
-                                 "Supported params: core, filesize, maxmem, openfiles, stacksize, maxchildren",
-				 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-				 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
-				 &opal_set_max_sys_limits);
+    ret = mca_base_var_register(
+        "opal", "opal", NULL, "set_max_sys_limits",
+        "Set the specified system-imposed limits to the specified value, including \"unlimited\"."
+        "Supported params: core, filesize, maxmem, openfiles, stacksize, maxchildren",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_ALL_EQ, &opal_set_max_sys_limits);
     if (0 > ret) {
         return ret;
     }
@@ -232,100 +234,96 @@ int opal_register_params(void)
 
     /* Current default is to enable CUDA support if it is built into library */
     opal_cuda_support = opal_built_with_cuda_support;
-    ret = mca_base_var_register ("opal", "opal", NULL, "cuda_support",
-                                 "Whether CUDA GPU buffer support is enabled or not",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
-                                 &opal_cuda_support);
+    ret = mca_base_var_register("opal", "opal", NULL, "cuda_support",
+                                "Whether CUDA GPU buffer support is enabled or not",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ, &opal_cuda_support);
     if (0 > ret) {
         return ret;
     }
 
     opal_warn_on_missing_libcuda = true;
-    ret = mca_base_var_register ("opal", "opal", NULL, "warn_on_missing_libcuda",
-                                 "Whether to print a message when CUDA support is enabled but libcuda is not found",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
-                                 &opal_warn_on_missing_libcuda);
+    ret = mca_base_var_register(
+        "opal", "opal", NULL, "warn_on_missing_libcuda",
+        "Whether to print a message when CUDA support is enabled but libcuda is not found",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_ALL_EQ, &opal_warn_on_missing_libcuda);
     if (0 > ret) {
         return ret;
     }
 
     /* Leave pinned parameter */
     opal_leave_pinned = -1;
-    ret = mca_base_var_register("ompi", "mpi", NULL, "leave_pinned",
-                                "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help bandwidth performance when repeatedly sending and receiving large messages with the same buffers over RDMA-based networks (false = do not use \"leave pinned\" protocol, true = use \"leave pinned\" protocol, auto = allow network to choose at runtime).",
-                                MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_auto_bool, 0, 0,
-                                OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                &opal_leave_pinned);
+    ret = mca_base_var_register(
+        "ompi", "mpi", NULL, "leave_pinned",
+        "Whether to use the \"leave pinned\" protocol or not.  Enabling this setting can help "
+        "bandwidth performance when repeatedly sending and receiving large messages with the same "
+        "buffers over RDMA-based networks (false = do not use \"leave pinned\" protocol, true = "
+        "use \"leave pinned\" protocol, auto = allow network to choose at runtime).",
+        MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_auto_bool, 0, 0, OPAL_INFO_LVL_9,
+        MCA_BASE_VAR_SCOPE_READONLY, &opal_leave_pinned);
     mca_base_var_register_synonym(ret, "opal", "opal", NULL, "leave_pinned",
                                   MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     opal_leave_pinned_pipeline = false;
     ret = mca_base_var_register("ompi", "mpi", NULL, "leave_pinned_pipeline",
                                 "Whether to use the \"leave pinned pipeline\" protocol or not.",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_leave_pinned_pipeline);
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY, &opal_leave_pinned_pipeline);
     mca_base_var_register_synonym(ret, "opal", "opal", NULL, "leave_pinned_pipeline",
                                   MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     if (opal_leave_pinned > 0 && opal_leave_pinned_pipeline) {
         opal_leave_pinned_pipeline = 0;
-        opal_show_help("help-opal-runtime.txt",
-                       "mpi-params:leave-pinned-and-pipeline-selected",
+        opal_show_help("help-opal-runtime.txt", "mpi-params:leave-pinned-and-pipeline-selected",
                        true);
     }
 
     opal_warn_on_fork = true;
     (void) mca_base_var_register("ompi", "mpi", NULL, "warn_on_fork",
-                                 "If nonzero, issue a warning if program forks under conditions that could cause system errors",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_warn_on_fork);
+                                 "If nonzero, issue a warning if program forks under conditions "
+                                 "that could cause system errors",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_warn_on_fork);
 
     opal_abort_delay = 0;
-    ret = mca_base_var_register("opal", "opal", NULL, "abort_delay",
-                                "If nonzero, print out an identifying message when abort operation is invoked (hostname, PID of the process that called abort) and delay for that many seconds before exiting (a negative delay value means to never abort).  This allows attaching of a debugger before quitting the job.",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_5,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_abort_delay);
+    ret = mca_base_var_register(
+        "opal", "opal", NULL, "abort_delay",
+        "If nonzero, print out an identifying message when abort operation is invoked (hostname, "
+        "PID of the process that called abort) and delay for that many seconds before exiting (a "
+        "negative delay value means to never abort).  This allows attaching of a debugger before "
+        "quitting the job.",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+        &opal_abort_delay);
     if (0 > ret) {
         return ret;
     }
 
     opal_abort_print_stack = false;
     ret = mca_base_var_register("opal", "opal", NULL, "abort_print_stack",
-                                 "If nonzero, print out a stack trace when abort is invoked",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                /* If we do not have stack trace
-                                   capability, make this a constant
-                                   MCA variable */
+                                "If nonzero, print out a stack trace when abort is invoked",
+                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+    /* If we do not have stack trace
+       capability, make this a constant
+       MCA variable */
 #if OPAL_WANT_PRETTY_PRINT_STACKTRACE
-                                 0,
-                                 OPAL_INFO_LVL_5,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
 #else
-                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                 OPAL_INFO_LVL_5,
-                                 MCA_BASE_VAR_SCOPE_CONSTANT,
+                                MCA_BASE_VAR_FLAG_DEFAULT_ONLY, OPAL_INFO_LVL_5,
+                                MCA_BASE_VAR_SCOPE_CONSTANT,
 #endif
-                                 &opal_abort_print_stack);
+                                &opal_abort_print_stack);
     if (0 > ret) {
         return ret;
     }
 
     /* register the envar-forwarding params */
-    (void)mca_base_var_register ("opal", "mca", "base", "env_list",
-                                 "Set SHELL env variables",
+    (void) mca_base_var_register("opal", "mca", "base", "env_list", "Set SHELL env variables",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list);
 
     mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
-    (void)mca_base_var_register ("opal", "mca", "base", "env_list_delimiter",
+    (void) mca_base_var_register("opal", "mca", "base", "env_list_delimiter",
                                  "Set SHELL env variables delimiter. Default: semicolon ';'",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_sep);
@@ -337,7 +335,7 @@ int opal_register_params(void)
      */
     if (NULL != mca_base_env_list) {
         char *name = NULL;
-        (void) mca_base_var_env_name ("mca_base_env_list", &name);
+        (void) mca_base_var_env_name("mca_base_env_list", &name);
         if (NULL != name) {
             opal_setenv(name, mca_base_env_list, false, &environ);
             free(name);
@@ -348,16 +346,17 @@ int opal_register_params(void)
      * parsing of amca conf file and contains SHELL env variables specified via -x there.
      * Its format is the same as for mca_base_env_list.
      */
-    (void)mca_base_var_register ("opal", "mca", "base", "env_list_internal",
-            "Store SHELL env variables from amca conf file",
-            MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_3,
-            MCA_BASE_VAR_SCOPE_READONLY, &mca_base_env_list_internal);
+    (void) mca_base_var_register("opal", "mca", "base", "env_list_internal",
+                                 "Store SHELL env variables from amca conf file",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL,
+                                 OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_base_env_list_internal);
 
     /* Number of threads allowed in opal_progress. This might increase multithreaded performance. */
-    (void)mca_base_var_register ("opal", "opal", NULL, "max_thread_in_progress",
-            "Number of thread allowed in opal_progress. Default: 1",
-            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_8,
-            MCA_BASE_VAR_SCOPE_READONLY, &opal_max_thread_in_progress);
+    (void) mca_base_var_register("opal", "opal", NULL, "max_thread_in_progress",
+                                 "Number of thread allowed in opal_progress. Default: 1",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_8,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_max_thread_in_progress);
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();
@@ -370,7 +369,7 @@ int opal_register_params(void)
         return ret;
     }
 
-    opal_finalize_register_cleanup (opal_deregister_params);
+    opal_finalize_register_cleanup(opal_deregister_params);
 
     return OPAL_SUCCESS;
 }

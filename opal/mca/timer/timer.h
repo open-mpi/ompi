@@ -69,9 +69,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-
+#include "opal/mca/mca.h"
 
 /**
  * Structure for timer components.
@@ -90,7 +89,6 @@ typedef struct opal_timer_base_component_2_0_0_t opal_timer_base_component_2_0_0
 /*
  * Macro for use in components that are of type timer
  */
-#define OPAL_TIMER_BASE_VERSION_2_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("timer", 2, 0, 0)
+#define OPAL_TIMER_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("timer", 2, 0, 0)
 
 #endif /* OPAL_MCA_TIMER_TIMER_H */

@@ -20,15 +20,14 @@
  * $HEADER$
  */
 /**
-  * @file
-  * Description of the Registration Cache framework
-  */
+ * @file
+ * Description of the Registration Cache framework
+ */
 #ifndef MCA_RCACHE_H
 #define MCA_RCACHE_H
 #include "opal/mca/mca.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/threads/mutex.h"
-
 
 /* forward-declaration of rcache module structure */
 struct mca_rcache_base_module_t;
@@ -36,47 +35,47 @@ typedef struct mca_rcache_base_module_t mca_rcache_base_module_t;
 
 enum {
     /** bypass the cache when registering */
-    MCA_RCACHE_FLAGS_CACHE_BYPASS      = 0x0001,
+    MCA_RCACHE_FLAGS_CACHE_BYPASS = 0x0001,
     /** persistent registration */
-    MCA_RCACHE_FLAGS_PERSIST           = 0x0002,
+    MCA_RCACHE_FLAGS_PERSIST = 0x0002,
     /** registation requires strong ordering (disables relaxed ordering) */
-    MCA_RCACHE_FLAGS_SO_MEM            = 0x0004,
+    MCA_RCACHE_FLAGS_SO_MEM = 0x0004,
     /** address range is cuda buffer */
-    MCA_RCACHE_FLAGS_CUDA_GPU_MEM      = 0x0008,
+    MCA_RCACHE_FLAGS_CUDA_GPU_MEM = 0x0008,
     /** register with common cuda */
     MCA_RCACHE_FLAGS_CUDA_REGISTER_MEM = 0x0010,
     /** invalid registration (no valid for passing to rcache register) */
-    MCA_RCACHE_FLAGS_INVALID           = 0x0080,
+    MCA_RCACHE_FLAGS_INVALID = 0x0080,
     /** reserved for rcache module */
-    MCA_RCACHE_FLAGS_MOD_RESV0         = 0x0100,
+    MCA_RCACHE_FLAGS_MOD_RESV0 = 0x0100,
     /** reserved for rcache module */
-    MCA_RCACHE_FLAGS_MOD_RESV1         = 0x0200,
+    MCA_RCACHE_FLAGS_MOD_RESV1 = 0x0200,
     /** reserved for rcache module */
-    MCA_RCACHE_FLAGS_MOD_RESV2         = 0x0400,
+    MCA_RCACHE_FLAGS_MOD_RESV2 = 0x0400,
     /** reserved for rcache module */
-    MCA_RCACHE_FLAGS_MOD_RESV3         = 0x0800,
+    MCA_RCACHE_FLAGS_MOD_RESV3 = 0x0800,
     /** reserved for register function */
-    MCA_RCACHE_FLAGS_RESV0             = 0x1000,
+    MCA_RCACHE_FLAGS_RESV0 = 0x1000,
     /** reserved for register function */
-    MCA_RCACHE_FLAGS_RESV1             = 0x2000,
+    MCA_RCACHE_FLAGS_RESV1 = 0x2000,
     /** reserved for register function */
-    MCA_RCACHE_FLAGS_RESV2             = 0x4000,
+    MCA_RCACHE_FLAGS_RESV2 = 0x4000,
     /** reserved for register function */
-    MCA_RCACHE_FLAGS_RESV3             = 0x8000,
+    MCA_RCACHE_FLAGS_RESV3 = 0x8000,
 };
 
 /** access flags */
 enum {
     /** register for local write */
-    MCA_RCACHE_ACCESS_LOCAL_WRITE   = 0x01,
+    MCA_RCACHE_ACCESS_LOCAL_WRITE = 0x01,
     /** register for remote read */
-    MCA_RCACHE_ACCESS_REMOTE_READ   = 0x02,
+    MCA_RCACHE_ACCESS_REMOTE_READ = 0x02,
     /** register for remote write */
-    MCA_RCACHE_ACCESS_REMOTE_WRITE  = 0x04,
+    MCA_RCACHE_ACCESS_REMOTE_WRITE = 0x04,
     /** register for local/remote atomic operations */
     MCA_RCACHE_ACCESS_REMOTE_ATOMIC = 0x08,
     /** register for any access */
-    MCA_RCACHE_ACCESS_ANY           = 0x0f,
+    MCA_RCACHE_ACCESS_ANY = 0x0f,
 };
 
 /** base class for all rcache registrations */
@@ -111,47 +110,47 @@ typedef struct mca_rcache_base_registration_t mca_rcache_base_registration_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_rcache_base_registration_t);
 
 struct mca_rcache_base_resources_t {
-    char  *cache_name;
-    void  *reg_data;
+    char *cache_name;
+    void *reg_data;
     size_t sizeof_reg;
-    int (*register_mem) (void *reg_data, void *base, size_t size,
-                         mca_rcache_base_registration_t *reg);
-    int (*deregister_mem) (void *reg_data, mca_rcache_base_registration_t *reg);
+    int (*register_mem)(void *reg_data, void *base, size_t size,
+                        mca_rcache_base_registration_t *reg);
+    int (*deregister_mem)(void *reg_data, mca_rcache_base_registration_t *reg);
 };
 typedef struct mca_rcache_base_resources_t mca_rcache_base_resources_t;
-
 
 /**
  * component initialize
  */
-typedef struct mca_rcache_base_module_t *(*mca_rcache_base_component_init_fn_t)(mca_rcache_base_resources_t *);
+typedef struct mca_rcache_base_module_t *(*mca_rcache_base_component_init_fn_t)(
+    mca_rcache_base_resources_t *);
 
 /**
-  * register memory
-  */
-typedef int (*mca_rcache_base_module_register_fn_t) (mca_rcache_base_module_t *rcache,
-                                                     void *addr, size_t size, uint32_t flags,
-                                                     int32_t access_flags,
-                                                     mca_rcache_base_registration_t **reg);
+ * register memory
+ */
+typedef int (*mca_rcache_base_module_register_fn_t)(mca_rcache_base_module_t *rcache, void *addr,
+                                                    size_t size, uint32_t flags,
+                                                    int32_t access_flags,
+                                                    mca_rcache_base_registration_t **reg);
 
 /**
-  * deregister memory
-  */
-typedef int (*mca_rcache_base_module_deregister_fn_t) (mca_rcache_base_module_t *rcache,
-                                                       mca_rcache_base_registration_t *reg);
+ * deregister memory
+ */
+typedef int (*mca_rcache_base_module_deregister_fn_t)(mca_rcache_base_module_t *rcache,
+                                                      mca_rcache_base_registration_t *reg);
 
 /**
  * find registration in this memory pool
  */
 
-typedef int (*mca_rcache_base_module_find_fn_t) (mca_rcache_base_module_t *rcache, void *addr,
-                                                 size_t size, mca_rcache_base_registration_t **reg);
+typedef int (*mca_rcache_base_module_find_fn_t)(mca_rcache_base_module_t *rcache, void *addr,
+                                                size_t size, mca_rcache_base_registration_t **reg);
 
 /**
  * release memory region
  */
-typedef int (*mca_rcache_base_module_invalidate_range_fn_t) (mca_rcache_base_module_t *rcache,
-                                                             void *addr, size_t size);
+typedef int (*mca_rcache_base_module_invalidate_range_fn_t)(mca_rcache_base_module_t *rcache,
+                                                            void *addr, size_t size);
 
 /**
  * evict one stale registration
@@ -159,11 +158,11 @@ typedef int (*mca_rcache_base_module_invalidate_range_fn_t) (mca_rcache_base_mod
  * @returns true if successful
  * @returns false if no registration could be evicted
  */
-typedef bool (*mca_rcache_base_module_evict_fn_t) (mca_rcache_base_module_t *rcache);
+typedef bool (*mca_rcache_base_module_evict_fn_t)(mca_rcache_base_module_t *rcache);
 
 /**
-  * finalize
-  */
+ * finalize
+ */
 typedef void (*mca_rcache_base_module_finalize_fn_t)(mca_rcache_base_module_t *rcache);
 
 /**
@@ -171,16 +170,15 @@ typedef void (*mca_rcache_base_module_finalize_fn_t)(mca_rcache_base_module_t *r
  * open/close/init functions
  */
 
-struct mca_rcache_base_component_2_0_0_t{
-    mca_base_component_t rcache_version;      /**< version */
-    mca_base_component_data_t rcache_data; /**<metadata */
+struct mca_rcache_base_component_2_0_0_t {
+    mca_base_component_t rcache_version;             /**< version */
+    mca_base_component_data_t rcache_data;           /**<metadata */
     mca_rcache_base_component_init_fn_t rcache_init; /**<init function */
 };
 
 typedef struct mca_rcache_base_component_2_0_0_t mca_rcache_base_component_2_0_0_t;
 
 typedef struct mca_rcache_base_component_2_0_0_t mca_rcache_base_component_t;
-
 
 /**
  * rcache module descriptor
@@ -197,15 +195,15 @@ struct mca_rcache_base_module_t {
     opal_mutex_t lock;
 };
 
-#define RCACHE_MAJOR_VERSION 3
-#define RCACHE_MINOR_VERSION 0
+#define RCACHE_MAJOR_VERSION   3
+#define RCACHE_MINOR_VERSION   0
 #define RCACHE_RELEASE_VERSION 0
 
 /**
  * Macro for use in components that are of type rcache
  */
-#define MCA_RCACHE_BASE_VERSION_3_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("rcache", RCACHE_MAJOR_VERSION, RCACHE_MAJOR_VERSION, RCACHE_RELEASE_VERSION)
+#define MCA_RCACHE_BASE_VERSION_3_0_0                                                 \
+    OPAL_MCA_BASE_VERSION_2_1_0("rcache", RCACHE_MAJOR_VERSION, RCACHE_MAJOR_VERSION, \
+                                RCACHE_RELEASE_VERSION)
 
 #endif /* MCA_RCACHE_H */
-

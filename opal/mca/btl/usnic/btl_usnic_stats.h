@@ -22,7 +22,6 @@
 
 #include "opal/util/event.h"
 
-
 /**
  * Struct containing all the statistics that are trackedx
  */
@@ -67,7 +66,6 @@ typedef struct opal_btl_usnic_module_stats_t {
     opal_event_t timer_event;
     struct timeval timeout;
 } opal_btl_usnic_module_stats_t;
-
 
 /**
  * Initialize the stats on a module.  Must use "struct

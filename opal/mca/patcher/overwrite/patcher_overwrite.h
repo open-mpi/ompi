@@ -20,11 +20,11 @@
  */
 
 #if !defined(OPAL_PATCHER_OVERWRITE_H)
-#define OPAL_PATCHER_OVERWRITE_H
+#    define OPAL_PATCHER_OVERWRITE_H
 
-#include "opal_config.h"
-#include "opal/mca/patcher/patcher.h"
-#include "opal/class/opal_list.h"
+#    include "opal_config.h"
+#    include "opal/class/opal_list.h"
+#    include "opal/mca/patcher/patcher.h"
 
 extern mca_patcher_base_module_t mca_patcher_overwrite_module;
 extern mca_patcher_base_component_t mca_patcher_overwrite_component;

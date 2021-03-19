@@ -16,11 +16,10 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
-#include "opal/win32/opal_inet.h"
 #include "opal/util/output.h"
+#include "opal/win32/opal_inet.h"
 
 /*
  * convert from presentation format (which usually means ASCII printable)
@@ -35,10 +34,10 @@ int opal_inet_pton(int af, const char *src, void *dst)
 {
     int addr_len;
     struct sockaddr sa;
-    struct sockaddr_in *sin = (struct sockaddr_in *)&sa;
-    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&sa;
+    struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) &sa;
 
-    memset (&sa, 0, sizeof(struct sockaddr));
+    memset(&sa, 0, sizeof(struct sockaddr));
 
     switch (af) {
     case AF_INET:
@@ -53,23 +52,23 @@ int opal_inet_pton(int af, const char *src, void *dst)
         return -1;
     }
 
-    if ( 0 == WSAStringToAddress ((LPTSTR) src, af, NULL, (LPSOCKADDR) &sa, &addr_len )) {
+    if (0 == WSAStringToAddress((LPTSTR) src, af, NULL, (LPSOCKADDR) &sa, &addr_len)) {
         switch (af) {
         case AF_INET:
-            memcpy (dst, &sin->sin_addr, sizeof(struct in_addr));
+            memcpy(dst, &sin->sin_addr, sizeof(struct in_addr));
             break;
 
         case AF_INET6:
-            memcpy (dst, &sin6->sin6_addr, sizeof(struct in6_addr));
+            memcpy(dst, &sin6->sin6_addr, sizeof(struct in6_addr));
             break;
         }
         return 1;
     } else {
-        opal_output(0, "WSAStringToAddress failed %s:%d. Error code: %d", __FILE__, __LINE__, GetLastError());
+        opal_output(0, "WSAStringToAddress failed %s:%d. Error code: %d", __FILE__, __LINE__,
+                    GetLastError());
         return 0;
     }
 }
-
 
 /*
  * convert a network format address to presentation format.
@@ -82,32 +81,33 @@ const char *opal_inet_ntop(int af, const void *src, char *dst, size_t size)
     int addr_len;
     struct sockaddr sa;
     DWORD str_len = size;
-    struct sockaddr_in *sin = (struct sockaddr_in *)&sa;
-    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&sa;
+    struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) &sa;
 
-    memset (&sa, 0, sizeof (struct sockaddr));
+    memset(&sa, 0, sizeof(struct sockaddr));
 
     switch (af) {
     case AF_INET:
         addr_len = sizeof(struct sockaddr_in);
         sin->sin_family = af;
-        memcpy (&sin->sin_addr, src, sizeof (struct in_addr));
+        memcpy(&sin->sin_addr, src, sizeof(struct in_addr));
         break;
 
     case AF_INET6:
         addr_len = sizeof(struct sockaddr_in6);
         sin6->sin6_family = af;
-        memcpy (&sin6->sin6_addr, src, sizeof (struct in6_addr));
+        memcpy(&sin6->sin6_addr, src, sizeof(struct in6_addr));
         break;
 
     default:
         return NULL;
     }
 
-    if ( 0 == WSAAddressToString ((LPSOCKADDR) &sa, addr_len, NULL, dst, &str_len )) {
+    if (0 == WSAAddressToString((LPSOCKADDR) &sa, addr_len, NULL, dst, &str_len)) {
         return dst;
     } else {
-        opal_output(0, "WSAAddressToString failed %s:%d. Error code: %d", __FILE__, __LINE__, GetLastError());
+        opal_output(0, "WSAAddressToString failed %s:%d. Error code: %d", __FILE__, __LINE__,
+                    GetLastError());
         return NULL;
     }
 }

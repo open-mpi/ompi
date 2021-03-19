@@ -24,59 +24,56 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 #include <stdio.h>
 
-#include "opal/mca/mca.h"
-#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_alias.h"
-#include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/mca.h"
+#include "opal/util/output.h"
 
 mca_base_var_enum_flag_t *mca_btl_base_flag_enum = NULL;
 mca_base_var_enum_flag_t *mca_btl_base_atomic_enum = NULL;
 
-mca_base_var_enum_value_flag_t mca_btl_base_flag_enum_flags[] = {
-    {MCA_BTL_FLAGS_SEND, "send", 0},
-    {MCA_BTL_FLAGS_PUT, "put", MCA_BTL_FLAGS_PUT_AM},
-    {MCA_BTL_FLAGS_GET, "get", MCA_BTL_FLAGS_GET_AM},
-    {MCA_BTL_FLAGS_SEND_INPLACE, "inplace", 0},
-    {MCA_BTL_FLAGS_SIGNALED, "signaled", 0},
-    {MCA_BTL_FLAGS_ATOMIC_OPS, "atomics", MCA_BTL_FLAGS_ATOMIC_AM_FOP},
-    {MCA_BTL_FLAGS_ATOMIC_FOPS, "fetching-atomics", MCA_BTL_FLAGS_ATOMIC_AM_FOP},
-    {MCA_BTL_FLAGS_SINGLE_ADD_PROCS, "static", 0},
-    {MCA_BTL_FLAGS_CUDA_PUT, "cuda-put", 0},
-    {MCA_BTL_FLAGS_CUDA_GET, "cuda-get", 0},
-    {MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND, "cuda-async-send", 0},
-    {MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV, "cuda-async-recv", 0},
-    {MCA_BTL_FLAGS_FAILOVER_SUPPORT, "failover", 0},
-    {MCA_BTL_FLAGS_NEED_ACK, "need-ack", 0},
-    {MCA_BTL_FLAGS_NEED_CSUM, "need-csum", 0},
-    {MCA_BTL_FLAGS_HETEROGENEOUS_RDMA, "hetero-rdma", 0},
-    {MCA_BTL_FLAGS_RDMA_FLUSH, "rdma-flush", 0},
-    {MCA_BTL_FLAGS_PUT_AM, "put-am", MCA_BTL_FLAGS_PUT},
-    {MCA_BTL_FLAGS_GET_AM, "get_am", MCA_BTL_FLAGS_GET},
-    {MCA_BTL_FLAGS_ATOMIC_AM_FOP, "atomic-am", MCA_BTL_FLAGS_ATOMIC_FOPS},
-    {0, NULL, 0}
-};
+mca_base_var_enum_value_flag_t mca_btl_base_flag_enum_flags[]
+    = {{MCA_BTL_FLAGS_SEND, "send", 0},
+       {MCA_BTL_FLAGS_PUT, "put", MCA_BTL_FLAGS_PUT_AM},
+       {MCA_BTL_FLAGS_GET, "get", MCA_BTL_FLAGS_GET_AM},
+       {MCA_BTL_FLAGS_SEND_INPLACE, "inplace", 0},
+       {MCA_BTL_FLAGS_SIGNALED, "signaled", 0},
+       {MCA_BTL_FLAGS_ATOMIC_OPS, "atomics", MCA_BTL_FLAGS_ATOMIC_AM_FOP},
+       {MCA_BTL_FLAGS_ATOMIC_FOPS, "fetching-atomics", MCA_BTL_FLAGS_ATOMIC_AM_FOP},
+       {MCA_BTL_FLAGS_SINGLE_ADD_PROCS, "static", 0},
+       {MCA_BTL_FLAGS_CUDA_PUT, "cuda-put", 0},
+       {MCA_BTL_FLAGS_CUDA_GET, "cuda-get", 0},
+       {MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND, "cuda-async-send", 0},
+       {MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV, "cuda-async-recv", 0},
+       {MCA_BTL_FLAGS_FAILOVER_SUPPORT, "failover", 0},
+       {MCA_BTL_FLAGS_NEED_ACK, "need-ack", 0},
+       {MCA_BTL_FLAGS_NEED_CSUM, "need-csum", 0},
+       {MCA_BTL_FLAGS_HETEROGENEOUS_RDMA, "hetero-rdma", 0},
+       {MCA_BTL_FLAGS_RDMA_FLUSH, "rdma-flush", 0},
+       {MCA_BTL_FLAGS_PUT_AM, "put-am", MCA_BTL_FLAGS_PUT},
+       {MCA_BTL_FLAGS_GET_AM, "get_am", MCA_BTL_FLAGS_GET},
+       {MCA_BTL_FLAGS_ATOMIC_AM_FOP, "atomic-am", MCA_BTL_FLAGS_ATOMIC_FOPS},
+       {0, NULL, 0}};
 
-mca_base_var_enum_value_flag_t mca_btl_base_atomic_enum_flags[] = {
-  {MCA_BTL_ATOMIC_SUPPORTS_ADD, "add", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_AND, "and", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_OR, "or", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_XOR, "xor", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_LAND, "land", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_LOR, "lor", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_LXOR, "lxor", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_SWAP, "swap", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_MIN, "min", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_MAX, "max", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_CSWAP, "compare-and-swap", 0},
-  {MCA_BTL_ATOMIC_SUPPORTS_GLOB, "global"},
-  {0, NULL, 0}
-};
+mca_base_var_enum_value_flag_t mca_btl_base_atomic_enum_flags[]
+    = {{MCA_BTL_ATOMIC_SUPPORTS_ADD, "add", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_AND, "and", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_OR, "or", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_XOR, "xor", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_LAND, "land", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_LOR, "lor", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_LXOR, "lxor", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_SWAP, "swap", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_MIN, "min", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_MAX, "max", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_CSWAP, "compare-and-swap", 0},
+       {MCA_BTL_ATOMIC_SUPPORTS_GLOB, "global"},
+       {0, NULL, 0}};
 
 mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TAG_MAX] = {{0}};
 
@@ -84,7 +81,7 @@ mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TA
  *  mca_btl_base_descriptor_t
  */
 
-static void mca_btl_base_descriptor_constructor(mca_btl_base_descriptor_t* des)
+static void mca_btl_base_descriptor_constructor(mca_btl_base_descriptor_t *des)
 {
     des->des_segments = NULL;
     des->des_segment_count = 0;
@@ -93,16 +90,12 @@ static void mca_btl_base_descriptor_constructor(mca_btl_base_descriptor_t* des)
     des->des_flags = 0;
 }
 
-static void mca_btl_base_descriptor_destructor(mca_btl_base_descriptor_t* des)
+static void mca_btl_base_descriptor_destructor(mca_btl_base_descriptor_t *des)
 {
 }
 
-OBJ_CLASS_INSTANCE(
-    mca_btl_base_descriptor_t,
-    opal_list_item_t,
-    mca_btl_base_descriptor_constructor,
-    mca_btl_base_descriptor_destructor);
-
+OBJ_CLASS_INSTANCE(mca_btl_base_descriptor_t, opal_list_item_t, mca_btl_base_descriptor_constructor,
+                   mca_btl_base_descriptor_destructor);
 
 /*
  * The following file was created by configure.  It contains extern
@@ -110,14 +103,14 @@ OBJ_CLASS_INSTANCE(
  * component's public mca_base_component_t struct.
  */
 
-#include "opal/mca/btl/base/static-components.h"
 #include "btl_base_error.h"
+#include "opal/mca/btl/base/static-components.h"
 
 /*
  * Global variables
  */
-char* mca_btl_base_include = NULL;
-char* mca_btl_base_exclude = NULL;
+char *mca_btl_base_include = NULL;
+char *mca_btl_base_exclude = NULL;
 int mca_btl_base_warn_component_unused = 1;
 int mca_btl_base_warn_peer_error = true;
 opal_list_t mca_btl_base_modules_initialized = {{0}};
@@ -128,43 +121,37 @@ static int mca_btl_base_register(mca_base_register_flag_t flags)
     /* Override the per-BTL "don't run if THREAD_MULTIPLE selected"
        embargo? */
     mca_btl_base_thread_multiple_override = false;
-    (void) mca_base_var_register("opal", "btl", "base", "thread_multiple_override",
-                                 "Enable BTLs that are not normally enabled when MPI_THREAD_MULTIPLE is enabled (THIS IS FOR DEVELOPERS ONLY!  SHOULD NOT BE USED BY END USERS!)",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                 MCA_BASE_VAR_FLAG_INTERNAL,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_btl_base_thread_multiple_override);
+    (void) mca_base_var_register(
+        "opal", "btl", "base", "thread_multiple_override",
+        "Enable BTLs that are not normally enabled when MPI_THREAD_MULTIPLE is enabled (THIS IS "
+        "FOR DEVELOPERS ONLY!  SHOULD NOT BE USED BY END USERS!)",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_INTERNAL, OPAL_INFO_LVL_9,
+        MCA_BASE_VAR_SCOPE_READONLY, &mca_btl_base_thread_multiple_override);
 
-    (void) mca_base_var_register("opal", "btl", "base", "include", NULL,
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
+    (void) mca_base_var_register("opal", "btl", "base", "include", NULL, MCA_BASE_VAR_TYPE_STRING,
+                                 NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_btl_base_include);
-    (void) mca_base_var_register("opal", "btl", "base", "exclude", NULL,
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
+    (void) mca_base_var_register("opal", "btl", "base", "exclude", NULL, MCA_BASE_VAR_TYPE_STRING,
+                                 NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_btl_base_exclude);
-    (void) mca_base_var_register("opal", "btl", "base", "warn_peer_error",
-                                 "This parameter is used to turn on warning messages when peers disconnect unexpectedly",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_btl_base_warn_peer_error);
-    (void) mca_base_var_register("opal", "btl", "base", "warn_component_unused",
-                                 "This parameter is used to turn on warning messages when certain NICs are not used",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_btl_base_warn_component_unused);
+    (void) mca_base_var_register(
+        "opal", "btl", "base", "warn_peer_error",
+        "This parameter is used to turn on warning messages when peers disconnect unexpectedly",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_btl_base_warn_peer_error);
+    (void) mca_base_var_register(
+        "opal", "btl", "base", "warn_component_unused",
+        "This parameter is used to turn on warning messages when certain NICs are not used",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_btl_base_warn_component_unused);
 
-    (void) mca_base_var_enum_create_flag ("btl_flags", mca_btl_base_flag_enum_flags, &mca_btl_base_flag_enum);
-    (void) mca_base_var_enum_register("opal", "btl", "base", "btl_flags",
-                                 &mca_btl_base_flag_enum);
-    (void) mca_base_var_enum_create_flag ("btl_atomic_flags", mca_btl_base_atomic_enum_flags, &mca_btl_base_atomic_enum);
+    (void) mca_base_var_enum_create_flag("btl_flags", mca_btl_base_flag_enum_flags,
+                                         &mca_btl_base_flag_enum);
+    (void) mca_base_var_enum_register("opal", "btl", "base", "btl_flags", &mca_btl_base_flag_enum);
+    (void) mca_base_var_enum_create_flag("btl_atomic_flags", mca_btl_base_atomic_enum_flags,
+                                         &mca_btl_base_atomic_enum);
     (void) mca_base_var_enum_register("opal", "btl", "base", "btl_atomic_flags",
-                                 &mca_btl_base_atomic_enum);
+                                      &mca_btl_base_atomic_enum);
 
     /* Note that we break abstraction rules here by listing two
        specific BTLs here in the base.  This is necessary, however,
@@ -187,7 +174,7 @@ static int mca_btl_base_register(mca_base_register_flag_t flags)
 
        This is why we tolerate this abstraction break up here in the
        BTL component base. */
-    (void) mca_base_alias_register ("opal", "btl", "sm", "vader", MCA_BASE_ALIAS_FLAG_NONE);
+    (void) mca_base_alias_register("opal", "btl", "sm", "vader", MCA_BASE_ALIAS_FLAG_NONE);
 
     return OPAL_SUCCESS;
 }
@@ -202,22 +189,22 @@ static int mca_btl_base_open(mca_base_open_flag_t flags)
 
     /* Open up all available components */
 
-    if (OPAL_SUCCESS !=
-        (ret = mca_base_framework_components_open(&opal_btl_base_framework, flags))) {
+    if (OPAL_SUCCESS
+        != (ret = mca_base_framework_components_open(&opal_btl_base_framework, flags))) {
         return ret;
     }
 
-  /* Initialize the list so that in mca_btl_base_close(), we can
-     iterate over it (even if it's empty, as in the case of
-     opal_info) */
+    /* Initialize the list so that in mca_btl_base_close(), we can
+       iterate over it (even if it's empty, as in the case of
+       opal_info) */
 
-  OBJ_CONSTRUCT(&mca_btl_base_modules_initialized, opal_list_t);
+    OBJ_CONSTRUCT(&mca_btl_base_modules_initialized, opal_list_t);
 
-  /* get the verbosity so that BTL_VERBOSE will work */
-  mca_btl_base_verbose = opal_output_get_verbosity(opal_btl_base_framework.framework_output);
+    /* get the verbosity so that BTL_VERBOSE will work */
+    mca_btl_base_verbose = opal_output_get_verbosity(opal_btl_base_framework.framework_output);
 
-  /* All done */
-  return OPAL_SUCCESS;
+    /* All done */
+    return OPAL_SUCCESS;
 }
 
 static int mca_btl_base_close(void)
@@ -230,7 +217,8 @@ static int mca_btl_base_close(void)
 #endif
     /* Finalize all the btl components and free their list items */
 
-    OPAL_LIST_FOREACH_SAFE(sm, next, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
+    OPAL_LIST_FOREACH_SAFE (sm, next, &mca_btl_base_modules_initialized,
+                            mca_btl_base_selected_module_t) {
         /* Blatently ignore the return code (what would we do to recover,
            anyway?  This component is going away, so errors don't matter
            anymore) */

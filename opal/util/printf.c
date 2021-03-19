@@ -24,14 +24,13 @@
 
 #include "opal_config.h"
 
-#include "opal/util/printf.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 #ifndef HAVE_VASPRINTF
 /*
@@ -42,13 +41,13 @@
  */
 static int guess_strlen(const char *fmt, va_list ap)
 {
-#if HAVE_VSNPRINTF
+#    if HAVE_VSNPRINTF
     char dummy[1];
 
     /* vsnprintf() returns the number of bytes that would have been
        copied if the provided buffer were infinite. */
     return 1 + vsnprintf(dummy, sizeof(dummy), fmt, ap);
-#else
+#    else
     char *sarg, carg;
     double darg;
     float farg;
@@ -60,16 +59,16 @@ static int guess_strlen(const char *fmt, va_list ap)
     /* Start off with a fudge factor of 128 to handle the % escapes that
        we aren't calculating here */
 
-    len = (int)strlen(fmt) + 128;
+    len = (int) strlen(fmt) + 128;
     for (i = 0; i < strlen(fmt); ++i) {
-        if ('%' == fmt[i] && i + 1 < strlen(fmt)
-            && '%' != fmt[i + 1]) {
+        if ('%' == fmt[i] && i + 1 < strlen(fmt) && '%' != fmt[i + 1]) {
             ++i;
             switch (fmt[i]) {
             case 'c':
                 carg = va_arg(ap, int);
-                len += 1;  /* let's suppose it's a printable char */
-                (void)carg;  /* prevent compiler from complaining about set but not used variables */
+                len += 1; /* let's suppose it's a printable char */
+                (void)
+                    carg; /* prevent compiler from complaining about set but not used variables */
                 break;
             case 's':
                 sarg = va_arg(ap, char *);
@@ -78,11 +77,11 @@ static int guess_strlen(const char *fmt, va_list ap)
                  * use (null) */
 
                 if (NULL != sarg) {
-                    len += (int)strlen(sarg);
+                    len += (int) strlen(sarg);
                 } else {
-#if OPAL_ENABLE_DEBUG
+#        if OPAL_ENABLE_DEBUG
                     opal_output(0, "OPAL DEBUG WARNING: Got a NULL argument to opal_vasprintf!\n");
-#endif
+#        endif
                     len += 5;
                 }
                 break;
@@ -111,7 +110,7 @@ static int guess_strlen(const char *fmt, va_list ap)
                 break;
 
             case 'f':
-                farg = (float)va_arg(ap, int);
+                farg = (float) va_arg(ap, int);
                 /* Alloc for minus sign */
                 if (farg < 0) {
                     ++len;
@@ -192,7 +191,7 @@ static int guess_strlen(const char *fmt, va_list ap)
     }
 
     return len;
-#endif
+#    endif
 }
 #endif /* #ifndef HAVE_VASPRINTF */
 
@@ -208,7 +207,6 @@ int opal_asprintf(char **ptr, const char *fmt, ...)
 
     return length;
 }
-
 
 int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
 {
@@ -228,13 +226,13 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
     /* va_list might have pointer to internal state and using
        it twice is a bad idea.  So make a copy for the second
        use.  Copy order taken from Autoconf docs. */
-#if OPAL_HAVE_VA_COPY
+#    if OPAL_HAVE_VA_COPY
     va_copy(ap2, ap);
-#elif OPAL_HAVE_UNDERSCORE_VA_COPY
+#    elif OPAL_HAVE_UNDERSCORE_VA_COPY
     __va_copy(ap2, ap);
-#else
-    memcpy (&ap2, &ap, sizeof(va_list));
-#endif
+#    else
+    memcpy(&ap2, &ap, sizeof(va_list));
+#    endif
 
     /* guess the size */
     length = guess_strlen(fmt, ap);
@@ -249,12 +247,12 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
 
     /* fill the buffer */
     length = vsprintf(*ptr, fmt, ap2);
-#if OPAL_HAVE_VA_COPY || OPAL_HAVE_UNDERSCORE_VA_COPY
+#    if OPAL_HAVE_VA_COPY || OPAL_HAVE_UNDERSCORE_VA_COPY
     va_end(ap2);
-#endif  /* OPAL_HAVE_VA_COPY || OPAL_HAVE_UNDERSCORE_VA_COPY */
+#    endif /* OPAL_HAVE_VA_COPY || OPAL_HAVE_UNDERSCORE_VA_COPY */
 
     /* realloc */
-    *ptr = (char*) realloc(*ptr, (size_t) length + 1);
+    *ptr = (char *) realloc(*ptr, (size_t) length + 1);
     if (NULL == *ptr) {
         errno = ENOMEM;
         return -1;
@@ -263,7 +261,6 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
     return length;
 #endif
 }
-
 
 int opal_snprintf(char *str, size_t size, const char *fmt, ...)
 {
@@ -276,7 +273,6 @@ int opal_snprintf(char *str, size_t size, const char *fmt, ...)
 
     return length;
 }
-
 
 int opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 {
@@ -303,7 +299,6 @@ int opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 
     return length;
 }
-
 
 #ifdef TEST
 

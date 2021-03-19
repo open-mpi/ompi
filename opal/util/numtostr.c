@@ -22,17 +22,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-char*
-opal_ltostr(long num)
+char *opal_ltostr(long num)
 {
     /* waste a little bit of space, but always have a big enough buffer */
     int buflen = sizeof(long) * 8;
     char *buf = NULL;
     int ret = 0;
 
-    buf = (char*) malloc(sizeof(char) * buflen);
-    if (NULL == buf) return NULL;
+    buf = (char *) malloc(sizeof(char) * buflen);
+    if (NULL == buf) {
+        return NULL;
+    }
 
     ret = snprintf(buf, buflen, "%ld", num);
     if (ret < 0) {
@@ -43,17 +43,17 @@ opal_ltostr(long num)
     return buf;
 }
 
-
-char*
-opal_dtostr(double num)
+char *opal_dtostr(double num)
 {
     /* waste a little bit of space, but always have a big enough buffer */
     int buflen = sizeof(long) * 8;
     char *buf = NULL;
     int ret = 0;
 
-    buf = (char*) malloc(sizeof(char) * buflen);
-    if (NULL == buf) return NULL;
+    buf = (char *) malloc(sizeof(char) * buflen);
+    if (NULL == buf) {
+        return NULL;
+    }
 
     ret = snprintf(buf, buflen, "%f", num);
     if (ret < 0) {

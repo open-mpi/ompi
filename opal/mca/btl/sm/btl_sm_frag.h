@@ -94,8 +94,8 @@ static inline void mca_btl_sm_rdma_frag_advance(mca_btl_base_module_t *btl,
     if (frag->rdma.sent) {
         if (MCA_BTL_SM_OP_GET == hdr->type) {
             memcpy(frag->rdma.local_address, data, len);
-        } else if ((MCA_BTL_SM_OP_ATOMIC == hdr->type || MCA_BTL_SM_OP_CSWAP == hdr->type) &&
-                   frag->rdma.local_address) {
+        } else if ((MCA_BTL_SM_OP_ATOMIC == hdr->type || MCA_BTL_SM_OP_CSWAP == hdr->type)
+                   && frag->rdma.local_address) {
             if (8 == len) {
                 *((int64_t *) frag->rdma.local_address) = hdr->operand[0];
             } else {

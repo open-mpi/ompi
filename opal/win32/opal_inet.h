@@ -22,8 +22,8 @@
 #include "opal_config.h"
 
 #ifndef OPAL_WIN_COMPAT_H
-#error This file is supposed to be included only from win_compat.h
-#endif  /* OPAL_WIN_COMPAT_H */
+#    error This file is supposed to be included only from win_compat.h
+#endif /* OPAL_WIN_COMPAT_H */
 
 BEGIN_C_DECLS
 

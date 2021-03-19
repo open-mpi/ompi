@@ -29,13 +29,13 @@
 #define MCA_MPOOL_HUGEPAGE_H
 
 #include "opal_config.h"
-#include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
+#include "opal/class/opal_list.h"
 #include "opal/class/opal_rb_tree.h"
-#include "opal/util/event.h"
-#include "opal/mca/mpool/mpool.h"
-#include "opal/util/proc.h"
 #include "opal/mca/allocator/allocator.h"
+#include "opal/mca/mpool/mpool.h"
+#include "opal/util/event.h"
+#include "opal/util/proc.h"
 #include "opal/util/sys_limits.h"
 
 BEGIN_C_DECLS
@@ -60,13 +60,13 @@ struct mca_mpool_hugepage_hugepage_t {
     /** opal list item superclass */
     opal_list_item_t super;
     /** page size in bytes */
-    unsigned long    page_size;
+    unsigned long page_size;
     /** path for mmapped files */
-    char            *path;
+    char *path;
     /** counter to help ensure unique file names for mmaped files */
     opal_atomic_int32_t count;
     /** some platforms allow allocation of hugepages through mmap flags */
-    int              mmap_flags;
+    int mmap_flags;
 };
 typedef struct mca_mpool_hugepage_hugepage_t mca_mpool_hugepage_hugepage_t;
 
@@ -83,11 +83,11 @@ struct mca_mpool_hugepage_module_t {
 /*
  *  Initializes the mpool module.
  */
-int mca_mpool_hugepage_module_init (mca_mpool_hugepage_module_t *mpool,
-                                    mca_mpool_hugepage_hugepage_t *huge_page);
+int mca_mpool_hugepage_module_init(mca_mpool_hugepage_module_t *mpool,
+                                   mca_mpool_hugepage_hugepage_t *huge_page);
 
-void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep);
-void mca_mpool_hugepage_seg_free (void *ctx, void *addr);
+void *mca_mpool_hugepage_seg_alloc(void *ctx, size_t *sizep);
+void mca_mpool_hugepage_seg_free(void *ctx, void *addr);
 
 END_C_DECLS
 #endif

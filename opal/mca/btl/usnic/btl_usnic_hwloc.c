@@ -10,8 +10,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/hwloc/base/base.h"
 #include "opal/constants.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "opal/mca/btl/base/base.h"
 
@@ -37,15 +37,15 @@ static int get_distance_matrix(void)
      * responsible for freeing it. */
 
     if (NULL == matrix) {
-        matrix = hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
-                                                         HWLOC_OBJ_NODE);
+        matrix = hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE);
     }
 
     return (NULL == matrix) ? OPAL_ERROR : OPAL_SUCCESS;
 #else
-    if (0 != hwloc_distances_get_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE,
-                                         &matrix_nr, &matrix,
-                                         HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0) || 0 == matrix_nr) {
+    if (0
+            != hwloc_distances_get_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE, &matrix_nr, &matrix,
+                                           HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0)
+        || 0 == matrix_nr) {
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
@@ -59,28 +59,27 @@ static hwloc_obj_t find_numa_node(hwloc_bitmap_t cpuset)
 {
     hwloc_obj_t obj;
 
-    obj =
-        hwloc_get_first_largest_obj_inside_cpuset(opal_hwloc_topology, cpuset);
+    obj = hwloc_get_first_largest_obj_inside_cpuset(opal_hwloc_topology, cpuset);
 
     /* Go upwards until we hit the NUMA node or run out of parents */
-    while (obj->type > HWLOC_OBJ_NODE &&
-           NULL != obj->parent) {
+    while (obj->type > HWLOC_OBJ_NODE && NULL != obj->parent) {
         obj = obj->parent;
     }
 
     /* Make sure we ended up on the NUMA node */
     if (obj->type != HWLOC_OBJ_NODE) {
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic:filter_numa: could not find NUMA node where this process is bound; filtering by NUMA distance not possible");
+                            "btl:usnic:filter_numa: could not find NUMA node where this process is "
+                            "bound; filtering by NUMA distance not possible");
         return NULL;
     }
 
     /* Finally, make sure that our cpuset doesn't span more than 1
        NUMA node */
-    if (hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
-                                               cpuset, HWLOC_OBJ_NODE) > 1) {
+    if (hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology, cpuset, HWLOC_OBJ_NODE) > 1) {
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic:filter_numa: this process is bound to more than 1 NUMA node; filtering by NUMA distance not possible");
+                            "btl:usnic:filter_numa: this process is bound to more than 1 NUMA "
+                            "node; filtering by NUMA distance not possible");
         return NULL;
     }
 
@@ -124,10 +123,8 @@ static int find_my_numa_node(void)
 
     /* Happiness */
     my_numa_node = obj;
-    num_numa_nodes = hwloc_get_nbobjs_by_type(opal_hwloc_topology,
-                                              HWLOC_OBJ_NODE);
+    num_numa_nodes = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE);
     return OPAL_SUCCESS;
-
 }
 
 /*
@@ -162,15 +159,15 @@ static hwloc_obj_t find_device_numa(opal_btl_usnic_module_t *module)
 
     /* Search upwards to find the device's NUMA node */
     /* Go upwards until we hit the NUMA node or run out of parents */
-    while (obj->type > HWLOC_OBJ_NODE &&
-           NULL != obj->parent) {
+    while (obj->type > HWLOC_OBJ_NODE && NULL != obj->parent) {
         obj = obj->parent;
     }
 
     /* Make sure we ended up on the NUMA node */
     if (obj->type != HWLOC_OBJ_NODE) {
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic:filter_numa: could not find NUMA node for %s; filtering by NUMA distance not possible",
+                            "btl:usnic:filter_numa: could not find NUMA node for %s; filtering by "
+                            "NUMA distance not possible",
                             module->linux_device_name);
         return NULL;
     }
@@ -192,18 +189,19 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
 
     /* Is this process bound? */
     if (!proc_bound()) {
-        opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic:filter_numa: not sorting devices by NUMA distance (process not bound)");
+        opal_output_verbose(
+            5, USNIC_OUT,
+            "btl:usnic:filter_numa: not sorting devices by NUMA distance (process not bound)");
         return OPAL_SUCCESS;
     }
 
-    opal_output_verbose(5, USNIC_OUT,
-                        "btl:usnic:filter_numa: filtering devices by NUMA distance");
+    opal_output_verbose(5, USNIC_OUT, "btl:usnic:filter_numa: filtering devices by NUMA distance");
 
     /* ensure we have the topology */
     if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
-        opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic:filter_numa: not sorting devices by NUMA distance (topology not available)");
+        opal_output_verbose(
+            5, USNIC_OUT,
+            "btl:usnic:filter_numa: not sorting devices by NUMA distance (topology not available)");
         return OPAL_SUCCESS;
     }
 
@@ -229,21 +227,18 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
        the device */
 #if HWLOC_API_VERSION < 0x20000
     if (NULL != dev_numa) {
-        module->numa_distance =
-            matrix->latency[dev_numa->logical_index * num_numa_nodes +
-                            my_numa_node->logical_index];
+        module->numa_distance = matrix->latency[dev_numa->logical_index * num_numa_nodes
+                                                + my_numa_node->logical_index];
 
-        opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic:filter_numa: %s is distance %d from me",
-                            module->linux_device_name,
-                            module->numa_distance);
+        opal_output_verbose(5, USNIC_OUT, "btl:usnic:filter_numa: %s is distance %d from me",
+                            module->linux_device_name, module->numa_distance);
     }
 #else
     if (NULL != dev_numa) {
         int myindex, devindex;
         unsigned int j;
         myindex = -1;
-        for (j=0; j < matrix_nr; j++) {
+        for (j = 0; j < matrix_nr; j++) {
             if (my_numa_node == matrix->objs[j]) {
                 myindex = j;
                 break;
@@ -253,7 +248,7 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
             return OPAL_SUCCESS;
         }
         devindex = -1;
-        for (j=0; j < matrix_nr; j++) {
+        for (j = 0; j < matrix_nr; j++) {
             if (dev_numa == matrix->objs[j]) {
                 devindex = j;
                 break;
@@ -263,13 +258,10 @@ int opal_btl_usnic_hwloc_distance(opal_btl_usnic_module_t *module)
             return OPAL_SUCCESS;
         }
 
-        module->numa_distance =
-            matrix->values[(devindex * num_numa_nodes) + myindex];
+        module->numa_distance = matrix->values[(devindex * num_numa_nodes) + myindex];
 
-        opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic:filter_numa: %s is distance %d from me",
-                            module->linux_device_name,
-                            module->numa_distance);
+        opal_output_verbose(5, USNIC_OUT, "btl:usnic:filter_numa: %s is distance %d from me",
+                            module->linux_device_name, module->numa_distance);
     }
 #endif
 

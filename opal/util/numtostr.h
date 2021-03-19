@@ -30,8 +30,7 @@
  *  @param num (IN)      Input number
  *  @return              String containing number (NULL on failure)
  */
-OPAL_DECLSPEC char* opal_ltostr(long num);
-
+OPAL_DECLSPEC char *opal_ltostr(long num);
 
 /**
  * Convert a double to a char* string.  The returned buffer is allocated
@@ -40,6 +39,6 @@ OPAL_DECLSPEC char* opal_ltostr(long num);
  * @param num (IN)       Input number
  * @return               String containing number (NULL on failure)
  */
-OPAL_DECLSPEC char* opal_dtostr(double num);
+OPAL_DECLSPEC char *opal_dtostr(double num);
 
 #endif /* OPAL_NUMTOSTR_UTIL */

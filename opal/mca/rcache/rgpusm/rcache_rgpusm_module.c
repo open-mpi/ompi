@@ -84,38 +84,36 @@
 #include <errno.h>
 #include <string.h>
 #ifdef HAVE_MALLOC_H
-#include <malloc.h>
+#    include <malloc.h>
 #endif
-#include "opal/util/proc.h"
-#include "opal/mca/rcache/rcache.h"
-#include "opal/mca/rcache/base/base.h"
-#include "opal/mca/rcache/base/base.h"
 #include "opal/mca/common/cuda/common_cuda.h"
-
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/rcache/rcache.h"
+#include "opal/util/proc.h"
 
 static int mca_rcache_rgpusm_deregister_no_lock(struct mca_rcache_base_module_t *,
-                                               mca_rcache_base_registration_t *);
-static inline bool mca_rcache_rgpusm_deregister_lru (mca_rcache_base_module_t *rcache) {
+                                                mca_rcache_base_registration_t *);
+static inline bool mca_rcache_rgpusm_deregister_lru(mca_rcache_base_module_t *rcache)
+{
     mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
     mca_rcache_base_registration_t *old_reg;
     int rc;
 
     /* Remove the registration from the cache and list before
        deregistering the memory */
-    old_reg = (mca_rcache_base_registration_t*)
-        opal_list_remove_first (&rcache_rgpusm->lru_list);
+    old_reg = (mca_rcache_base_registration_t *) opal_list_remove_first(&rcache_rgpusm->lru_list);
     if (NULL == old_reg) {
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                             "RGPUSM: The LRU list is empty. There is nothing to deregister");
         return false;
     }
 
-    mca_rcache_base_vma_delete (rcache_rgpusm->vma_module, old_reg);
+    mca_rcache_base_vma_delete(rcache_rgpusm->vma_module, old_reg);
 
     /* Drop the rcache lock while we deregister the memory */
     OPAL_THREAD_UNLOCK(&rcache->lock);
     assert(old_reg->ref_count == 0);
-    rc = cuda_closememhandle (NULL, old_reg);
+    rc = cuda_closememhandle(NULL, old_reg);
     OPAL_THREAD_LOCK(&rcache->lock);
 
     /* This introduces a potential leak of registrations if
@@ -124,41 +122,36 @@ static inline bool mca_rcache_rgpusm_deregister_lru (mca_rcache_base_module_t *r
     if (OPAL_SUCCESS != rc) {
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                             "RGPUSM: Failed to deregister the memory addr=%p, size=%d",
-                            old_reg->base, (int)(old_reg->bound - old_reg->base + 1));
+                            old_reg->base, (int) (old_reg->bound - old_reg->base + 1));
         return false;
     }
 
-    opal_free_list_return (&rcache_rgpusm->reg_list,
-                           (opal_free_list_item_t*)old_reg);
+    opal_free_list_return(&rcache_rgpusm->reg_list, (opal_free_list_item_t *) old_reg);
     rcache_rgpusm->stat_evicted++;
 
     return true;
 }
 
-
 /*
  *  Initializes the rcache module.
  */
-void mca_rcache_rgpusm_module_init(mca_rcache_rgpusm_module_t* rcache)
+void mca_rcache_rgpusm_module_init(mca_rcache_rgpusm_module_t *rcache)
 {
     rcache->super.rcache_component = &mca_rcache_rgpusm_component.super;
     rcache->super.rcache_register = mca_rcache_rgpusm_register;
     rcache->super.rcache_find = mca_rcache_rgpusm_find;
     rcache->super.rcache_deregister = mca_rcache_rgpusm_deregister;
     rcache->super.rcache_finalize = mca_rcache_rgpusm_finalize;
-    rcache->vma_module = mca_rcache_base_vma_module_alloc ();
+    rcache->vma_module = mca_rcache_base_vma_module_alloc();
 
     OBJ_CONSTRUCT(&rcache->reg_list, opal_free_list_t);
-    opal_free_list_init (&rcache->reg_list, sizeof(struct mca_rcache_common_cuda_reg_t),
-            opal_cache_line_size,
-            OBJ_CLASS(mca_rcache_base_registration_t),
-            0,opal_cache_line_size,
-            0, -1, 32, NULL, 0, NULL, NULL, NULL);
+    opal_free_list_init(&rcache->reg_list, sizeof(struct mca_rcache_common_cuda_reg_t),
+                        opal_cache_line_size, OBJ_CLASS(mca_rcache_base_registration_t), 0,
+                        opal_cache_line_size, 0, -1, 32, NULL, 0, NULL, NULL, NULL);
     OBJ_CONSTRUCT(&rcache->lru_list, opal_list_t);
     rcache->stat_cache_hit = rcache->stat_cache_miss = rcache->stat_evicted = 0;
     rcache->stat_cache_found = rcache->stat_cache_notfound = 0;
     rcache->stat_cache_valid = rcache->stat_cache_invalid = 0;
-
 }
 
 /*
@@ -166,22 +159,22 @@ void mca_rcache_rgpusm_module_init(mca_rcache_rgpusm_module_t* rcache)
  * from the remote memory.  It uses the addr and size of the remote
  * memory for caching the registration.
  */
-int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
-                               size_t size, uint32_t flags, int32_t access_flags,
+int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, size_t size,
+                               uint32_t flags, int32_t access_flags,
                                mca_rcache_base_registration_t **reg)
 {
-    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t*)rcache;
+    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
     mca_rcache_common_cuda_reg_t *rgpusm_reg;
     mca_rcache_common_cuda_reg_t *rget_reg;
     opal_free_list_item_t *item;
     int rc;
-    int mypeer;  /* just for debugging */
+    int mypeer; /* just for debugging */
 
     /* In order to preserve the signature of the mca_rcache_rgpusm_register
      * function, we are using the **reg variable to not only get back the
      * registration information, but to hand in the memory handle received
      * from the remote side. */
-    rget_reg = (mca_rcache_common_cuda_reg_t *)*reg;
+    rget_reg = (mca_rcache_common_cuda_reg_t *) *reg;
 
     mypeer = flags;
     flags = 0;
@@ -194,41 +187,44 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
      * number of registrations occuring at the same time.  Since we
      * are not leaving the registrations pinned, the number of
      * registrations is unlimited and there is no need for a cache. */
-    if(!mca_rcache_rgpusm_component.leave_pinned && 0 == mca_rcache_rgpusm_component.rcache_size_limit) {
-        item = opal_free_list_get (&rcache_rgpusm->reg_list);
-        if(NULL == item) {
+    if (!mca_rcache_rgpusm_component.leave_pinned
+        && 0 == mca_rcache_rgpusm_component.rcache_size_limit) {
+        item = opal_free_list_get(&rcache_rgpusm->reg_list);
+        if (NULL == item) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        rgpusm_reg = (mca_rcache_common_cuda_reg_t*)item;
+        rgpusm_reg = (mca_rcache_common_cuda_reg_t *) item;
         rgpusm_reg->base.rcache = rcache;
         rgpusm_reg->base.base = addr;
-        rgpusm_reg->base.bound = (unsigned char *)addr + size - 1;;
+        rgpusm_reg->base.bound = (unsigned char *) addr + size - 1;
+        ;
         rgpusm_reg->base.flags = flags;
 
         /* Copy the memory handle received into the registration */
-        memcpy(rgpusm_reg->data.memHandle, rget_reg->data.memHandle, sizeof(rget_reg->data.memHandle));
+        memcpy(rgpusm_reg->data.memHandle, rget_reg->data.memHandle,
+               sizeof(rget_reg->data.memHandle));
 
         /* The rget_reg registration is holding the memory handle needed
          * to register the remote memory.  This was received from the remote
          * process.  A pointer to the memory is returned in the alloc_base field. */
-        rc = cuda_openmemhandle (addr, size, (mca_rcache_base_registration_t *)rgpusm_reg,
-                                 (mca_rcache_base_registration_t *)rget_reg);
+        rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
+                                (mca_rcache_base_registration_t *) rget_reg);
 
         /* This error should not happen with no cache in use. */
         assert(OPAL_ERR_WOULD_BLOCK != rc);
 
-        if(rc != OPAL_SUCCESS) {
-            opal_free_list_return (&rcache_rgpusm->reg_list, item);
+        if (rc != OPAL_SUCCESS) {
+            opal_free_list_return(&rcache_rgpusm->reg_list, item);
             return rc;
         }
         rgpusm_reg->base.ref_count++;
-        *reg = (mca_rcache_base_registration_t *)rgpusm_reg;
+        *reg = (mca_rcache_base_registration_t *) rgpusm_reg;
         return OPAL_SUCCESS;
     }
 
     /* Check to see if memory is registered and stored in the cache. */
     OPAL_THREAD_LOCK(&rcache->lock);
-    mca_rcache_base_vma_find (rcache_rgpusm->vma_module, addr, size, reg);
+    mca_rcache_base_vma_find(rcache_rgpusm->vma_module, addr, size, reg);
 
     /* If *reg is not NULL, we have a registration.  Let us see if the
      * memory handle matches the one we were looking for.  If not, the
@@ -240,11 +236,10 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
     if (*reg != NULL) {
         rcache_rgpusm->stat_cache_hit++;
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
-                            "RGPUSM: Found addr=%p,size=%d (base=%p,size=%d) in cache",
-                            addr, (int)size, (*reg)->base,
-                            (int)((*reg)->bound - (*reg)->base));
+                            "RGPUSM: Found addr=%p,size=%d (base=%p,size=%d) in cache", addr,
+                            (int) size, (*reg)->base, (int) ((*reg)->bound - (*reg)->base));
 
-        if (mca_common_cuda_memhandle_matches((mca_rcache_common_cuda_reg_t *)*reg, rget_reg)) {
+        if (mca_common_cuda_memhandle_matches((mca_rcache_common_cuda_reg_t *) *reg, rget_reg)) {
             /* Registration matches what was requested.  All is good. */
             rcache_rgpusm->stat_cache_valid++;
         } else {
@@ -252,15 +247,14 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
             opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                                 "RGPUSM: Mismatched Handle: Evicting/unregistering "
                                 "addr=%p,size=%d (base=%p,size=%d) from cache",
-                                addr, (int)size, (*reg)->base,
-                                (int)((*reg)->bound - (*reg)->base));
+                                addr, (int) size, (*reg)->base,
+                                (int) ((*reg)->bound - (*reg)->base));
 
             /* The ref_count has to be zero as this memory cannot possibly
              * be in use.  Assert on that just to make sure. */
             assert(0 == (*reg)->ref_count);
             if (mca_rcache_rgpusm_component.leave_pinned) {
-                opal_list_remove_item(&rcache_rgpusm->lru_list,
-                                      (opal_list_item_t*)(*reg));
+                opal_list_remove_item(&rcache_rgpusm->lru_list, (opal_list_item_t *) (*reg));
             }
 
             /* Bump the reference count to keep things copacetic in deregister */
@@ -279,42 +273,42 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
     /* If we have a registration here, then we know it is valid. */
     if (*reg != NULL) {
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
-                            "RGPUSM: CACHE HIT is good: ep=%d, addr=%p, size=%d in cache",
-                            mypeer, addr, (int)size);
+                            "RGPUSM: CACHE HIT is good: ep=%d, addr=%p, size=%d in cache", mypeer,
+                            addr, (int) size);
 
         /* When using leave pinned, we keep an LRU list. */
         if ((0 == (*reg)->ref_count) && mca_rcache_rgpusm_component.leave_pinned) {
             opal_output_verbose(20, mca_rcache_rgpusm_component.output,
-                                "RGPUSM: POP OFF LRU: ep=%d, addr=%p, size=%d in cache",
-                                mypeer, addr, (int)size);
-            opal_list_remove_item(&rcache_rgpusm->lru_list,
-                                  (opal_list_item_t*)(*reg));
+                                "RGPUSM: POP OFF LRU: ep=%d, addr=%p, size=%d in cache", mypeer,
+                                addr, (int) size);
+            opal_list_remove_item(&rcache_rgpusm->lru_list, (opal_list_item_t *) (*reg));
         }
         (*reg)->ref_count++;
         OPAL_THREAD_UNLOCK(&rcache->lock);
-        opal_output(-1, "reg->ref_count=%d", (int)(*reg)->ref_count);
+        opal_output(-1, "reg->ref_count=%d", (int) (*reg)->ref_count);
         opal_output_verbose(80, mca_rcache_rgpusm_component.output,
-                           "RGPUSM: Found entry in cache addr=%p, size=%d", addr, (int)size);
+                            "RGPUSM: Found entry in cache addr=%p, size=%d", addr, (int) size);
         return OPAL_SUCCESS;
     }
 
     /* If we are here, then we did not find a registration, or it was invalid,
      * so this is a new one, and we are going to use the cache. */
     assert(NULL == *reg);
-    opal_output_verbose(10, mca_rcache_rgpusm_component.output,
-                        "RGPUSM: New registration ep=%d, addr=%p, size=%d. Need to register and insert in cache",
-                         mypeer, addr, (int)size);
+    opal_output_verbose(
+        10, mca_rcache_rgpusm_component.output,
+        "RGPUSM: New registration ep=%d, addr=%p, size=%d. Need to register and insert in cache",
+        mypeer, addr, (int) size);
 
-    item = opal_free_list_get (&rcache_rgpusm->reg_list);
-    if(NULL == item) {
+    item = opal_free_list_get(&rcache_rgpusm->reg_list);
+    if (NULL == item) {
         OPAL_THREAD_UNLOCK(&rcache->lock);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rgpusm_reg = (mca_rcache_common_cuda_reg_t*)item;
+    rgpusm_reg = (mca_rcache_common_cuda_reg_t *) item;
 
     rgpusm_reg->base.rcache = rcache;
     rgpusm_reg->base.base = addr;
-    rgpusm_reg->base.bound = (unsigned char *)addr + size - 1;
+    rgpusm_reg->base.bound = (unsigned char *) addr + size - 1;
     rgpusm_reg->base.flags = flags;
 
     /* Need the memory handle saved in the registration */
@@ -325,8 +319,8 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
      * bound values may be changed by the registration.  The memory
      * associated with the handle comes back in the alloc_base
      * value. */
-    rc = cuda_openmemhandle (addr, size, (mca_rcache_base_registration_t *)rgpusm_reg,
-                             (mca_rcache_base_registration_t *)rget_reg);
+    rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
+                            (mca_rcache_base_registration_t *) rget_reg);
     /* There is a chance we can get the OPAL_ERR_WOULD_BLOCK from the
      * CUDA codes attempt to register the memory.  The case that this
      * can happen is as follows.  A block of memory is registered.
@@ -343,7 +337,7 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
 
         /* Need to make sure it is at least 4 bytes in size  This will
          * ensure we get the hit in the cache. */
-        mca_rcache_base_vma_find (rcache_rgpusm->vma_module, addr, 4, &oldreg);
+        mca_rcache_base_vma_find(rcache_rgpusm->vma_module, addr, 4, &oldreg);
 
         /* For most cases, we will find a registration that overlaps.
          * Removal of it should allow the registration we are
@@ -353,8 +347,7 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
              * possibly be in use.  Assert on that just to make sure. */
             assert(0 == oldreg->ref_count);
             if (mca_rcache_rgpusm_component.leave_pinned) {
-                opal_list_remove_item(&rcache_rgpusm->lru_list,
-                                      (opal_list_item_t*)oldreg);
+                opal_list_remove_item(&rcache_rgpusm->lru_list, (opal_list_item_t *) oldreg);
             }
 
             /* Bump the reference count to keep things copacetic in deregister */
@@ -365,8 +358,8 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
             rcache_rgpusm->stat_evicted++;
 
             /* And try again.  This one usually works. */
-            rc = cuda_openmemhandle (addr, size, (mca_rcache_base_registration_t *)rgpusm_reg,
-                                     (mca_rcache_base_registration_t *)rget_reg);
+            rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
+                                    (mca_rcache_base_registration_t *) rget_reg);
         }
 
         /* There is a chance that another registration is blocking our
@@ -378,25 +371,27 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
                 break;
             }
             /* Clear out one registration. */
-            rc = cuda_openmemhandle (addr, size, (mca_rcache_base_registration_t *)rgpusm_reg,
-                                     (mca_rcache_base_registration_t *)rget_reg);
+            rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
+                                    (mca_rcache_base_registration_t *) rget_reg);
         }
     }
 
-    if(rc != OPAL_SUCCESS) {
+    if (rc != OPAL_SUCCESS) {
         OPAL_THREAD_UNLOCK(&rcache->lock);
-        opal_free_list_return (&rcache_rgpusm->reg_list, item);
+        opal_free_list_return(&rcache_rgpusm->reg_list, item);
         return rc;
     }
 
     opal_output_verbose(80, mca_rcache_rgpusm_component.output,
-                        "RGPUSM: About to insert in rgpusm cache addr=%p, size=%d", addr, (int)size);
-    rc = mca_rcache_base_vma_insert (rcache_rgpusm->vma_module, (mca_rcache_base_registration_t *)rgpusm_reg,
-                                      mca_rcache_rgpusm_component.rcache_size_limit);
+                        "RGPUSM: About to insert in rgpusm cache addr=%p, size=%d", addr,
+                        (int) size);
+    rc = mca_rcache_base_vma_insert(rcache_rgpusm->vma_module,
+                                    (mca_rcache_base_registration_t *) rgpusm_reg,
+                                    mca_rcache_rgpusm_component.rcache_size_limit);
     if (OPAL_ERR_TEMP_OUT_OF_RESOURCE == rc) {
         opal_output_verbose(40, mca_rcache_rgpusm_component.output,
                             "RGPUSM: No room in the cache - boot the first one out");
-        (void)mca_rcache_rgpusm_deregister_lru(rcache);
+        (void) mca_rcache_rgpusm_deregister_lru(rcache);
         if (mca_rcache_rgpusm_component.empty_cache) {
             int remNum = 1;
             /* Empty out every registration from LRU until it is empty */
@@ -407,13 +402,15 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
             }
             opal_output_verbose(40, mca_rcache_rgpusm_component.output,
                                 "RGPUSM: Deleted and deregistered %d entries", remNum);
-            rc = mca_rcache_base_vma_insert (rcache_rgpusm->vma_module, (mca_rcache_base_registration_t *)rgpusm_reg,
-                                             mca_rcache_rgpusm_component.rcache_size_limit);
+            rc = mca_rcache_base_vma_insert(rcache_rgpusm->vma_module,
+                                            (mca_rcache_base_registration_t *) rgpusm_reg,
+                                            mca_rcache_rgpusm_component.rcache_size_limit);
         } else {
             /* Check for room after one removal. If not, remove another one until there is space */
-            while((rc = mca_rcache_base_vma_insert (rcache_rgpusm->vma_module, (mca_rcache_base_registration_t *)rgpusm_reg,
-                                                    mca_rcache_rgpusm_component.rcache_size_limit)) ==
-                  OPAL_ERR_TEMP_OUT_OF_RESOURCE) {
+            while ((rc = mca_rcache_base_vma_insert(rcache_rgpusm->vma_module,
+                                                    (mca_rcache_base_registration_t *) rgpusm_reg,
+                                                    mca_rcache_rgpusm_component.rcache_size_limit))
+                   == OPAL_ERR_TEMP_OUT_OF_RESOURCE) {
                 opal_output_verbose(40, mca_rcache_rgpusm_component.output,
                                     "RGPUSM: No room in the cache - boot one out");
                 if (!mca_rcache_rgpusm_deregister_lru(rcache)) {
@@ -423,9 +420,9 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
         }
     }
 
-    if(rc != OPAL_SUCCESS) {
+    if (rc != OPAL_SUCCESS) {
         OPAL_THREAD_UNLOCK(&rcache->lock);
-        opal_free_list_return (&rcache_rgpusm->reg_list, item);
+        opal_free_list_return(&rcache_rgpusm->reg_list, item);
         /* We cannot recover from this.  We can be here if the size of
          * the cache is smaller than the amount of memory we are
          * trying to register in a single transfer.  In that case, rc
@@ -433,21 +430,21 @@ int mca_rcache_rgpusm_register (mca_rcache_base_module_t *rcache, void *addr,
          * that point.  Therefore, just error out completely.
          */
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
-                            "RGPUSM: Failed to register addr=%p, size=%d", addr, (int)size);
+                            "RGPUSM: Failed to register addr=%p, size=%d", addr, (int) size);
         return OPAL_ERROR;
     }
 
     rgpusm_reg->base.ref_count++;
-    *reg = (mca_rcache_base_registration_t *)rgpusm_reg;
+    *reg = (mca_rcache_base_registration_t *) rgpusm_reg;
     OPAL_THREAD_UNLOCK(&rcache->lock);
 
     return OPAL_SUCCESS;
 }
 
-int mca_rcache_rgpusm_find(struct mca_rcache_base_module_t *rcache, void *addr,
-        size_t size, mca_rcache_base_registration_t **reg)
+int mca_rcache_rgpusm_find(struct mca_rcache_base_module_t *rcache, void *addr, size_t size,
+                           mca_rcache_base_registration_t **reg)
 {
-    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t*)rcache;
+    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
     int rc;
     unsigned char *base, *bound;
 
@@ -455,11 +452,11 @@ int mca_rcache_rgpusm_find(struct mca_rcache_base_module_t *rcache, void *addr,
     bound = base + size - 1; /* To keep cache hits working correctly */
 
     OPAL_THREAD_LOCK(&rcache->lock);
-    opal_output(-1, "Looking for addr=%p, size=%d", addr, (int)size);
-    rc = mca_rcache_base_vma_find (rcache_rgpusm->vma_module, addr, size, reg);
-    if(*reg != NULL && mca_rcache_rgpusm_component.leave_pinned) {
-        if(0 == (*reg)->ref_count && mca_rcache_rgpusm_component.leave_pinned) {
-            opal_list_remove_item(&rcache_rgpusm->lru_list, (opal_list_item_t*)(*reg));
+    opal_output(-1, "Looking for addr=%p, size=%d", addr, (int) size);
+    rc = mca_rcache_base_vma_find(rcache_rgpusm->vma_module, addr, size, reg);
+    if (*reg != NULL && mca_rcache_rgpusm_component.leave_pinned) {
+        if (0 == (*reg)->ref_count && mca_rcache_rgpusm_component.leave_pinned) {
+            opal_list_remove_item(&rcache_rgpusm->lru_list, (opal_list_item_t *) (*reg));
         }
         rcache_rgpusm->stat_cache_found++;
         (*reg)->ref_count++;
@@ -473,51 +470,48 @@ int mca_rcache_rgpusm_find(struct mca_rcache_base_module_t *rcache, void *addr,
 
 static inline bool registration_is_cachebale(mca_rcache_base_registration_t *reg)
 {
-     return !(reg->flags &
-             (MCA_RCACHE_FLAGS_CACHE_BYPASS |
-              MCA_RCACHE_FLAGS_INVALID));
+    return !(reg->flags & (MCA_RCACHE_FLAGS_CACHE_BYPASS | MCA_RCACHE_FLAGS_INVALID));
 }
 
 int mca_rcache_rgpusm_deregister(struct mca_rcache_base_module_t *rcache,
-                            mca_rcache_base_registration_t *reg)
+                                 mca_rcache_base_registration_t *reg)
 {
-    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t*)rcache;
+    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
     int rc = OPAL_SUCCESS;
     assert(reg->ref_count > 0);
 
     OPAL_THREAD_LOCK(&rcache->lock);
     reg->ref_count--;
-    opal_output(-1, "Deregister: reg->ref_count=%d", (int)reg->ref_count);
-    if(reg->ref_count > 0) {
+    opal_output(-1, "Deregister: reg->ref_count=%d", (int) reg->ref_count);
+    if (reg->ref_count > 0) {
         OPAL_THREAD_UNLOCK(&rcache->lock);
         return OPAL_SUCCESS;
     }
-    if(mca_rcache_rgpusm_component.leave_pinned && registration_is_cachebale(reg))
-    {
+    if (mca_rcache_rgpusm_component.leave_pinned && registration_is_cachebale(reg)) {
         /* if leave_pinned is set don't deregister memory, but put it
          * on LRU list for future use */
         opal_output_verbose(20, mca_rcache_rgpusm_component.output,
-                            "RGPUSM: Deregister: addr=%p, size=%d: cacheable and pinned, leave in cache, PUSH IN LRU",
-                            reg->base, (int)(reg->bound - reg->base + 1));
-        opal_list_prepend(&rcache_rgpusm->lru_list, (opal_list_item_t*)reg);
+                            "RGPUSM: Deregister: addr=%p, size=%d: cacheable and pinned, leave in "
+                            "cache, PUSH IN LRU",
+                            reg->base, (int) (reg->bound - reg->base + 1));
+        opal_list_prepend(&rcache_rgpusm->lru_list, (opal_list_item_t *) reg);
     } else {
         /* Remove from rcache first */
-        if(!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS))
-            mca_rcache_base_vma_delete (rcache_rgpusm->vma_module, reg);
+        if (!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS))
+            mca_rcache_base_vma_delete(rcache_rgpusm->vma_module, reg);
 
         /* Drop the rcache lock before deregistring the memory */
         OPAL_THREAD_UNLOCK(&rcache->lock);
 
         {
-             assert(reg->ref_count == 0);
-             rc = cuda_closememhandle (NULL, reg);
-         }
+            assert(reg->ref_count == 0);
+            rc = cuda_closememhandle(NULL, reg);
+        }
 
         OPAL_THREAD_LOCK(&rcache->lock);
 
-        if(OPAL_SUCCESS == rc) {
-            opal_free_list_return (&rcache_rgpusm->reg_list,
-                                   (opal_free_list_item_t*)reg);
+        if (OPAL_SUCCESS == rc) {
+            opal_free_list_return(&rcache_rgpusm->reg_list, (opal_free_list_item_t *) reg);
         }
     }
     OPAL_THREAD_UNLOCK(&rcache->lock);
@@ -526,33 +520,31 @@ int mca_rcache_rgpusm_deregister(struct mca_rcache_base_module_t *rcache,
 }
 
 int mca_rcache_rgpusm_deregister_no_lock(struct mca_rcache_base_module_t *rcache,
-                            mca_rcache_base_registration_t *reg)
+                                         mca_rcache_base_registration_t *reg)
 {
-    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t*)rcache;
+    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
     int rc = OPAL_SUCCESS;
     assert(reg->ref_count > 0);
 
     reg->ref_count--;
-    opal_output(-1, "Deregister: reg->ref_count=%d", (int)reg->ref_count);
-    if(reg->ref_count > 0) {
+    opal_output(-1, "Deregister: reg->ref_count=%d", (int) reg->ref_count);
+    if (reg->ref_count > 0) {
         return OPAL_SUCCESS;
     }
-    if(mca_rcache_rgpusm_component.leave_pinned && registration_is_cachebale(reg))
-    {
+    if (mca_rcache_rgpusm_component.leave_pinned && registration_is_cachebale(reg)) {
         /* if leave_pinned is set don't deregister memory, but put it
          * on LRU list for future use */
-        opal_list_prepend(&rcache_rgpusm->lru_list, (opal_list_item_t*)reg);
+        opal_list_prepend(&rcache_rgpusm->lru_list, (opal_list_item_t *) reg);
     } else {
         /* Remove from rcache first */
-        if(!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS))
-            mca_rcache_base_vma_delete (rcache_rgpusm->vma_module, reg);
+        if (!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS))
+            mca_rcache_base_vma_delete(rcache_rgpusm->vma_module, reg);
 
         assert(reg->ref_count == 0);
-        rc = cuda_closememhandle (NULL, reg);
+        rc = cuda_closememhandle(NULL, reg);
 
-        if(OPAL_SUCCESS == rc) {
-            opal_free_list_return (&rcache_rgpusm->reg_list,
-                                   (opal_free_list_item_t*)reg);
+        if (OPAL_SUCCESS == rc) {
+            opal_free_list_return(&rcache_rgpusm->reg_list, (opal_free_list_item_t *) reg);
         }
     }
 
@@ -563,57 +555,55 @@ int mca_rcache_rgpusm_deregister_no_lock(struct mca_rcache_base_module_t *rcache
 
 void mca_rcache_rgpusm_finalize(struct mca_rcache_base_module_t *rcache)
 {
-    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t*)rcache;
+    mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
     mca_rcache_base_registration_t *reg;
     mca_rcache_base_registration_t *regs[RGPUSM_RCACHE_NREGS];
     int reg_cnt, i;
     int rc;
 
     /* Statistic */
-    if(true == mca_rcache_rgpusm_component.print_stats) {
-        opal_output(0, "%s rgpusm: stats "
-                "(hit/valid/invalid/miss/evicted): %d/%d/%d/%d/%d\n",
-                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                rcache_rgpusm->stat_cache_hit, rcache_rgpusm->stat_cache_valid,
-                rcache_rgpusm->stat_cache_invalid, rcache_rgpusm->stat_cache_miss,
-                rcache_rgpusm->stat_evicted);
+    if (true == mca_rcache_rgpusm_component.print_stats) {
+        opal_output(0,
+                    "%s rgpusm: stats "
+                    "(hit/valid/invalid/miss/evicted): %d/%d/%d/%d/%d\n",
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), rcache_rgpusm->stat_cache_hit,
+                    rcache_rgpusm->stat_cache_valid, rcache_rgpusm->stat_cache_invalid,
+                    rcache_rgpusm->stat_cache_miss, rcache_rgpusm->stat_evicted);
     }
 
     OPAL_THREAD_LOCK(&rcache->lock);
     do {
-        reg_cnt = mca_rcache_base_vma_find_all (rcache_rgpusm->vma_module, 0, (size_t)-1,
-                regs, RGPUSM_RCACHE_NREGS);
+        reg_cnt = mca_rcache_base_vma_find_all(rcache_rgpusm->vma_module, 0, (size_t) -1, regs,
+                                               RGPUSM_RCACHE_NREGS);
         opal_output(-1, "Registration size at finalize = %d", reg_cnt);
 
-        for(i = 0; i < reg_cnt; i++) {
+        for (i = 0; i < reg_cnt; i++) {
             reg = regs[i];
 
-            if(reg->ref_count) {
+            if (reg->ref_count) {
                 reg->ref_count = 0; /* otherway dereg will fail on assert */
             } else if (mca_rcache_rgpusm_component.leave_pinned) {
-                opal_list_remove_item(&rcache_rgpusm->lru_list,
-                        (opal_list_item_t*)reg);
+                opal_list_remove_item(&rcache_rgpusm->lru_list, (opal_list_item_t *) reg);
             }
 
             /* Remove from rcache first */
-            mca_rcache_base_vma_delete (rcache_rgpusm->vma_module, reg);
+            mca_rcache_base_vma_delete(rcache_rgpusm->vma_module, reg);
 
             /* Drop lock before deregistering memory */
             OPAL_THREAD_UNLOCK(&rcache->lock);
             assert(reg->ref_count == 0);
-            rc = cuda_closememhandle (NULL, reg);
+            rc = cuda_closememhandle(NULL, reg);
             OPAL_THREAD_LOCK(&rcache->lock);
 
-            if(rc != OPAL_SUCCESS) {
+            if (rc != OPAL_SUCCESS) {
                 /* Potentially lose track of registrations
                    do we have to put it back? */
                 continue;
             }
 
-            opal_free_list_return (&rcache_rgpusm->reg_list,
-                                   (opal_free_list_item_t *) reg);
+            opal_free_list_return(&rcache_rgpusm->reg_list, (opal_free_list_item_t *) reg);
         }
-    } while(reg_cnt == RGPUSM_RCACHE_NREGS);
+    } while (reg_cnt == RGPUSM_RCACHE_NREGS);
 
     OBJ_DESTRUCT(&rcache_rgpusm->lru_list);
     OBJ_DESTRUCT(&rcache_rgpusm->reg_list);

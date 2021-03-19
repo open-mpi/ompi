@@ -42,7 +42,7 @@
 
 #include "opal_config.h"
 #ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
+#    include <sys/stat.h>
 #endif
 
 BEGIN_C_DECLS
@@ -80,14 +80,16 @@ OPAL_DECLSPEC bool opal_os_dirpath_is_empty(const char *path);
  * @retval OPAL_ERR_NOT_FOUND If directory does not exist
  * @retval OPAL_ERROR   If directory exists, and permissions do not match
  */
-OPAL_DECLSPEC int opal_os_dirpath_access(const char *path, const mode_t mode );
+OPAL_DECLSPEC int opal_os_dirpath_access(const char *path, const mode_t mode);
 
 /**
  * Callback for opal_os_dirpath_destroy(). Call for every file/directory before
  * taking action to remove/unlink it.
  *
- * @param root A pointer to a string that contains the base path name (e.g., /tmp/foo from /tmp/foo/bar)
- * @param path A pointer to a string that contains the file or directory (e.g., bar from /tmp/foo/bar)
+ * @param root A pointer to a string that contains the base path name (e.g., /tmp/foo from
+ * /tmp/foo/bar)
+ * @param path A pointer to a string that contains the file or directory (e.g., bar from
+ * /tmp/foo/bar)
  *
  * @retval true  Allow the program to remove the file/directory
  * @retval false Do not allow the program to remove the file/directory
@@ -109,8 +111,7 @@ typedef bool (*opal_os_dirpath_destroy_callback_fn_t)(const char *root, const ch
  * @retval OPAL_ERROR If the directory cannnot be removed, accessed properly, or contains
  *                    directories that could not be removed..
  */
-OPAL_DECLSPEC int opal_os_dirpath_destroy(const char *path,
-                                          bool recursive,
+OPAL_DECLSPEC int opal_os_dirpath_destroy(const char *path, bool recursive,
                                           opal_os_dirpath_destroy_callback_fn_t cbfunc);
 
 END_C_DECLS

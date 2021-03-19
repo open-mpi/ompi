@@ -29,8 +29,7 @@ BEGIN_C_DECLS
 /**
  * Globally exported variable
  */
-OPAL_DECLSPEC extern const opal_memchecker_base_component_2_0_0_t
-    mca_memchecker_valgrind_component;
+OPAL_DECLSPEC extern const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component;
 
 /**
  * memchecker query API function

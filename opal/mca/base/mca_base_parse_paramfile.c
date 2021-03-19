@@ -25,19 +25,19 @@
 #include <string.h>
 
 #include "opal/class/opal_list.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_vari.h"
+#include "opal/mca/mca.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/output.h"
 static void save_value(const char *name, const char *value);
 
-static char * file_being_read;
-static opal_list_t * _param_list;
+static char *file_being_read;
+static opal_list_t *_param_list;
 
 int mca_base_parse_paramfile(const char *paramfile, opal_list_t *list)
 {
-    file_being_read = (char*)paramfile;
+    file_being_read = (char *) paramfile;
     _param_list = list;
 
     return opal_util_keyval_parse(paramfile, save_value);
@@ -57,10 +57,10 @@ static void save_value(const char *name, const char *value)
        already have a param of this name.  If we do, just replace the
        value. */
 
-    OPAL_LIST_FOREACH(fv, _param_list, mca_base_var_file_value_t) {
+    OPAL_LIST_FOREACH (fv, _param_list, mca_base_var_file_value_t) {
         if (0 == strcmp(name, fv->mbvfv_var)) {
             if (NULL != fv->mbvfv_value) {
-                free (fv->mbvfv_value);
+                free(fv->mbvfv_value);
             }
             found = true;
             break;
@@ -79,6 +79,6 @@ static void save_value(const char *name, const char *value)
     }
 
     fv->mbvfv_value = value ? strdup(value) : NULL;
-    fv->mbvfv_file  = file_being_read;
+    fv->mbvfv_file = file_being_read;
     fv->mbvfv_lineno = opal_util_keyval_parse_lineno;
 }

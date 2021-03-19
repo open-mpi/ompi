@@ -16,8 +16,7 @@
 
 typedef uint64_t opal_timer_t;
 
-static inline opal_timer_t
-opal_sys_timer_get_cycles(void)
+static inline opal_timer_t opal_sys_timer_get_cycles(void)
 {
     opal_timer_t ret;
     struct tms accurate_clock;

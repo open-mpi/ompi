@@ -22,7 +22,6 @@
 #include "btl_usnic_proc.h"
 #include "btl_usnic_util.h"
 
-
 /**
  * Agent-based service to verify UDP connectivity between two peers.
  *
@@ -104,7 +103,7 @@ enum {
 };
 
 #define CONNECTIVITY_NODENAME_LEN 128
-#define CONNECTIVITY_IFNAME_LEN 32
+#define CONNECTIVITY_IFNAME_LEN   32
 
 /*
  * Unix domain socket name
@@ -217,10 +216,8 @@ int opal_btl_usnic_connectivity_listen(struct opal_btl_usnic_module_t *module);
  * It is safe to call this function even if the connectivity check is
  * disabled; it will be a no-op in this case.
  */
-int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port,
-                                     uint32_t dest_ipv4_addr,
-                                     uint32_t dest_netmask, int dest_port,
-                                     char *dest_nodename,
+int opal_btl_usnic_connectivity_ping(uint32_t src_ipv4_addr, int src_port, uint32_t dest_ipv4_addr,
+                                     uint32_t dest_netmask, int dest_port, char *dest_nodename,
                                      size_t max_msg_size);
 
 /**
@@ -268,25 +265,22 @@ int opal_btl_usnic_connectivity_agent_init(void);
  */
 int opal_btl_usnic_connectivity_agent_finalize(void);
 
-
 /**
  * Helper function invoked in the BTL that will invoke a ping, if the
  * ping hasn't already been invoked.
  */
-static inline void
-opal_btl_usnic_check_connectivity(opal_btl_usnic_module_t *module,
-                                  opal_btl_usnic_endpoint_t *endpoint)
+static inline void opal_btl_usnic_check_connectivity(opal_btl_usnic_module_t *module,
+                                                     opal_btl_usnic_endpoint_t *endpoint)
 {
-    if (OPAL_LIKELY(mca_btl_usnic_component.connectivity_enabled) &&
-        OPAL_UNLIKELY(!endpoint->endpoint_connectivity_checked)) {
+    if (OPAL_LIKELY(mca_btl_usnic_component.connectivity_enabled)
+        && OPAL_UNLIKELY(!endpoint->endpoint_connectivity_checked)) {
         char *host = opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal);
         opal_btl_usnic_connectivity_ping(module->local_modex.ipv4_addr,
                                          module->local_modex.connectivity_udp_port,
                                          endpoint->endpoint_remote_modex.ipv4_addr,
                                          endpoint->endpoint_remote_modex.netmask,
                                          endpoint->endpoint_remote_modex.connectivity_udp_port,
-                                         host,
-                                         endpoint->endpoint_remote_modex.max_msg_size);
+                                         host, endpoint->endpoint_remote_modex.max_msg_size);
         free(host);
         endpoint->endpoint_connectivity_checked = true;
     }

@@ -15,10 +15,10 @@
 #define MCA_PMI_BASE_H
 
 #include "opal_config.h"
-#include "opal/types.h"
-#include "opal/mca/threads/threads.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_framework.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/threads/threads.h"
+#include "opal/types.h"
 
 #include "opal/mca/pmix/pmix-internal.h"
 
@@ -33,9 +33,7 @@ OPAL_DECLSPEC int opal_pmix_base_select(void);
 
 OPAL_DECLSPEC extern bool opal_pmix_base_allow_delayed_server;
 
-OPAL_DECLSPEC int opal_pmix_base_exchange(pmix_info_t *info,
-                                          pmix_pdata_t *pdat,
-                                          int timeout);
+OPAL_DECLSPEC int opal_pmix_base_exchange(pmix_info_t *info, pmix_pdata_t *pdat, int timeout);
 
 typedef struct {
     opal_event_base_t *evbase;

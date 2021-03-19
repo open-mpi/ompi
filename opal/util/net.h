@@ -29,13 +29,13 @@
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
+#    include <sys/socket.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 
 BEGIN_C_DECLS
@@ -61,7 +61,6 @@ OPAL_DECLSPEC int opal_net_init(void);
  */
 OPAL_DECLSPEC uint32_t opal_net_prefix2netmask(uint32_t prefixlen);
 
-
 /**
  * Determine if given IP address is in the localhost range
  *
@@ -75,7 +74,6 @@ OPAL_DECLSPEC uint32_t opal_net_prefix2netmask(uint32_t prefixlen);
  */
 OPAL_DECLSPEC bool opal_net_islocalhost(const struct sockaddr *addr);
 
-
 /**
  * Are we on the same network?
  *
@@ -88,10 +86,8 @@ OPAL_DECLSPEC bool opal_net_islocalhost(const struct sockaddr *addr);
  * @return                  true if \c addr1 and \c addr2 are on the
  *                          same net, false otherwise.
  */
-OPAL_DECLSPEC bool opal_net_samenetwork(const struct sockaddr *addr1,
-                                        const struct sockaddr *addr2,
+OPAL_DECLSPEC bool opal_net_samenetwork(const struct sockaddr *addr1, const struct sockaddr *addr2,
                                         uint32_t prefixlen);
-
 
 /**
  * Is the given address a public IPv4 address?  Returns false for IPv6
@@ -121,8 +117,7 @@ OPAL_DECLSPEC bool opal_net_addr_isipv6linklocal(const struct sockaddr *addr);
  * @param addr              struct sockaddr of address
  * @return                  literal representation of \c addr
  */
-OPAL_DECLSPEC char* opal_net_get_hostname(const struct sockaddr *addr);
-
+OPAL_DECLSPEC char *opal_net_get_hostname(const struct sockaddr *addr);
 
 /**
  * Get port number from struct sockaddr

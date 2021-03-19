@@ -26,21 +26,20 @@
 #include "opal_config.h"
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 
-#include "opal/util/show_help.h"
-#include "opal/util/proc.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 
-#include "opal/mca/rcache/base/rcache_base_mem_cb.h"
 #include "opal/mca/rcache/base/base.h"
+#include "opal/mca/rcache/base/rcache_base_mem_cb.h"
 
 #include "opal/mca/mca.h"
 #include "opal/memoryhooks/memory.h"
 
 static char msg[512];
-
 
 /*
  *  memory hook callback, called when memory is free'd out from under
@@ -48,9 +47,9 @@ static char msg[512];
  *  from_alloc==true, then you cannot call malloc (or any of its
  *  friends)!
  */
-void mca_rcache_base_mem_cb (void* base, size_t size, void* cbdata, bool from_alloc)
+void mca_rcache_base_mem_cb(void *base, size_t size, void *cbdata, bool from_alloc)
 {
-    mca_rcache_base_selected_module_t* current;
+    mca_rcache_base_selected_module_t *current;
     int rc;
 
     /* Only do anything meaningful if the OPAL layer is up and running
@@ -59,25 +58,25 @@ void mca_rcache_base_mem_cb (void* base, size_t size, void* cbdata, bool from_al
         return;
     }
 
-    OPAL_LIST_FOREACH(current, &mca_rcache_base_modules, mca_rcache_base_selected_module_t) {
+    OPAL_LIST_FOREACH (current, &mca_rcache_base_modules, mca_rcache_base_selected_module_t) {
         if (current->rcache_module->rcache_invalidate_range != NULL) {
-            rc = current->rcache_module->rcache_invalidate_range (current->rcache_module,
-                                                                  base, size);
+            rc = current->rcache_module->rcache_invalidate_range(current->rcache_module, base,
+                                                                 size);
             if (rc != OPAL_SUCCESS) {
                 if (from_alloc) {
                     int len;
-                    len = snprintf(msg, sizeof(msg), "[%s:%05d] Attempt to free memory that is still in "
-                                   "use by an ongoing MPI communication (buffer %p, size %lu).  MPI job "
-                                   "will now abort.\n", opal_process_info.nodename,
-                                   getpid(), base, (unsigned long) size);
+                    len = snprintf(
+                        msg, sizeof(msg),
+                        "[%s:%05d] Attempt to free memory that is still in "
+                        "use by an ongoing MPI communication (buffer %p, size %lu).  MPI job "
+                        "will now abort.\n",
+                        opal_process_info.nodename, getpid(), base, (unsigned long) size);
                     msg[sizeof(msg) - 1] = '\0';
                     write(2, msg, len);
                 } else {
-                    opal_show_help("help-rcache-base.txt",
-                                   "cannot deregister in-use memory", true,
+                    opal_show_help("help-rcache-base.txt", "cannot deregister in-use memory", true,
                                    current->rcache_component->rcache_version.mca_component_name,
-                                   opal_process_info.nodename,
-                                   base, (unsigned long) size);
+                                   opal_process_info.nodename, base, (unsigned long) size);
                 }
 
                 /* We're in a callback from somewhere; we can't do

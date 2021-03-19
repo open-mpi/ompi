@@ -28,16 +28,17 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
-#include "opal/mca/rcache/rcache.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/rcache/rcache.h"
 
 BEGIN_C_DECLS
 
 /*
  * create a module by name
  */
-OPAL_DECLSPEC mca_rcache_base_module_t *mca_rcache_base_module_create (const char *name, void *user_data,
-                                                                       mca_rcache_base_resources_t *rcache_resources);
+OPAL_DECLSPEC mca_rcache_base_module_t *
+mca_rcache_base_module_create(const char *name, void *user_data,
+                              mca_rcache_base_resources_t *rcache_resources);
 
 /*
  * MCA framework
@@ -55,7 +56,7 @@ typedef struct mca_rcache_base_selected_module_t mca_rcache_base_selected_module
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_rcache_base_selected_module_t);
 
 OPAL_DECLSPEC mca_rcache_base_component_t *mca_rcache_base_component_lookup(const char *name);
-OPAL_DECLSPEC mca_rcache_base_module_t *mca_rcache_base_module_lookup (const char *name);
+OPAL_DECLSPEC mca_rcache_base_module_t *mca_rcache_base_module_lookup(const char *name);
 OPAL_DECLSPEC int mca_rcache_base_module_destroy(mca_rcache_base_module_t *module);
 
 extern opal_free_list_t mca_rcache_base_vma_tree_items;

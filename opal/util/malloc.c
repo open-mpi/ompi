@@ -23,26 +23,25 @@
 
 #include <stdlib.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/util/malloc.h"
 #include "opal/util/output.h"
-#include "opal/runtime/opal.h"
-
 
 /*
  * Undefine "malloc" and "free"
  */
 
 #if defined(malloc)
-#undef malloc
+#    undef malloc
 #endif
 #if defined(calloc)
-#undef calloc
+#    undef calloc
 #endif
 #if defined(free)
-#undef free
+#    undef free
 #endif
 #if defined(realloc)
-#undef realloc
+#    undef realloc
 #endif
 
 /*
@@ -50,8 +49,6 @@
  */
 int opal_malloc_debug_level = OPAL_MALLOC_DEBUG_LEVEL;
 int opal_malloc_output = -1;
-
-
 
 #if OPAL_ENABLE_DEBUG
 
@@ -83,13 +80,13 @@ void opal_malloc_init(void)
     malloc_stream.lds_prefix = "malloc debug: ";
     malloc_stream.lds_want_stderr = true;
     opal_malloc_output = opal_output_open(&malloc_stream);
-    opal_finalize_register_cleanup (opal_malloc_finalize);
+    opal_finalize_register_cleanup(opal_malloc_finalize);
 }
 #else
-void opal_malloc_init (void)
+void opal_malloc_init(void)
 {
 }
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
 
 /*
  * Debug version of malloc
@@ -100,8 +97,8 @@ void *opal_malloc(size_t size, const char *file, int line)
 #if OPAL_ENABLE_DEBUG
     if (opal_malloc_debug_level > 1) {
         if (size <= 0) {
-            opal_output(opal_malloc_output, "Request for %ld bytes (%s, %d)",
-                        (long) size, file, line);
+            opal_output(opal_malloc_output, "Request for %ld bytes (%s, %d)", (long) size, file,
+                        line);
         }
     }
 #endif /* OPAL_ENABLE_DEBUG */
@@ -111,15 +108,13 @@ void *opal_malloc(size_t size, const char *file, int line)
 #if OPAL_ENABLE_DEBUG
     if (opal_malloc_debug_level > 0) {
         if (NULL == addr) {
-            opal_output(opal_malloc_output,
-                        "Request for %ld bytes failed (%s, %d)",
-                        (long) size, file, line);
+            opal_output(opal_malloc_output, "Request for %ld bytes failed (%s, %d)", (long) size,
+                        file, line);
         }
     }
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
     return addr;
 }
-
 
 /*
  * Debug version of calloc
@@ -130,12 +125,11 @@ void *opal_calloc(size_t nmembers, size_t size, const char *file, int line)
 #if OPAL_ENABLE_DEBUG
     if (opal_malloc_debug_level > 1) {
         if (size <= 0) {
-            opal_output(opal_malloc_output,
-                        "Request for %ld zeroed elements of size %ld (%s, %d)",
+            opal_output(opal_malloc_output, "Request for %ld zeroed elements of size %ld (%s, %d)",
                         (long) nmembers, (long) size, file, line);
         }
     }
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
     addr = calloc(nmembers, size);
 #if OPAL_ENABLE_DEBUG
     if (opal_malloc_debug_level > 0) {
@@ -145,10 +139,9 @@ void *opal_calloc(size_t nmembers, size_t size, const char *file, int line)
                         (long) nmembers, (long) size, file, line);
         }
     }
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
     return addr;
 }
-
 
 /*
  * Debug version of realloc
@@ -160,29 +153,26 @@ void *opal_realloc(void *ptr, size_t size, const char *file, int line)
     if (opal_malloc_debug_level > 1) {
         if (size <= 0) {
             if (NULL == ptr) {
-                opal_output(opal_malloc_output,
-                            "Realloc NULL for %ld bytes (%s, %d)",
-                            (long) size, file, line);
+                opal_output(opal_malloc_output, "Realloc NULL for %ld bytes (%s, %d)", (long) size,
+                            file, line);
             } else {
-                opal_output(opal_malloc_output, "Realloc %p for %ld bytes (%s, %d)",
-                            ptr, (long) size, file, line);
+                opal_output(opal_malloc_output, "Realloc %p for %ld bytes (%s, %d)", ptr,
+                            (long) size, file, line);
             }
         }
     }
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
     addr = realloc(ptr, size);
 #if OPAL_ENABLE_DEBUG
     if (opal_malloc_debug_level > 0) {
         if (NULL == addr) {
-            opal_output(opal_malloc_output,
-                        "Realloc %p for %ld bytes failed (%s, %d)",
-                        ptr, (long) size, file, line);
+            opal_output(opal_malloc_output, "Realloc %p for %ld bytes failed (%s, %d)", ptr,
+                        (long) size, file, line);
         }
     }
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
     return addr;
 }
-
 
 /*
  * Debug version of free
@@ -196,5 +186,5 @@ void opal_malloc_debug(int level)
 {
 #if OPAL_ENABLE_DEBUG
     opal_malloc_debug_level = level;
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
 }

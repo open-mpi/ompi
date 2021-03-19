@@ -59,8 +59,8 @@ int mca_btl_sm_sendi(struct mca_btl_base_module_t *btl, struct mca_btl_base_endp
         opal_convertor_get_current_pointer(convertor, &data_ptr);
     }
 
-    if (!(payload_size && opal_convertor_need_buffers(convertor)) &&
-        mca_btl_sm_fbox_sendi(endpoint, tag, header, header_size, data_ptr, payload_size)) {
+    if (!(payload_size && opal_convertor_need_buffers(convertor))
+        && mca_btl_sm_fbox_sendi(endpoint, tag, header, header_size, data_ptr, payload_size)) {
         return OPAL_SUCCESS;
     }
 

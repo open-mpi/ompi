@@ -20,32 +20,31 @@
 static opal_mutex_t wait_sync_lock = OPAL_MUTEX_STATIC_INIT;
 ompi_wait_sync_t *wait_sync_list = NULL; /* not static for inline "wait_sync_st" */
 
-
 void wait_sync_global_wakeup_st(int status)
 {
-    ompi_wait_sync_t* sync;
-    for( sync = wait_sync_list; sync != NULL; sync = sync->next ) {
+    ompi_wait_sync_t *sync;
+    for (sync = wait_sync_list; sync != NULL; sync = sync->next) {
         wait_sync_update(sync, 0, status);
     }
 }
 
 void wait_sync_global_wakeup_mt(int status)
 {
-    ompi_wait_sync_t* sync;
+    ompi_wait_sync_t *sync;
     opal_mutex_lock(&wait_sync_lock);
-    for( sync = wait_sync_list; sync != NULL; sync = sync->next ) {
-        /* sync_update is going to  take the sync->lock from within 
-         * the wait_sync_lock. Thread lightly here: Idealy we should 
+    for (sync = wait_sync_list; sync != NULL; sync = sync->next) {
+        /* sync_update is going to  take the sync->lock from within
+         * the wait_sync_lock. Thread lightly here: Idealy we should
          * find a way to not take a lock in a lock as this is deadlock prone,
-         * but as of today we are the only place doing this so it is safe. 
+         * but as of today we are the only place doing this so it is safe.
          */
         wait_sync_update(sync, 0, status);
-        if( sync->next == wait_sync_list ) break; /* special case for rings */
+        if (sync->next == wait_sync_list) {
+            break; /* special case for rings */
+        }
     }
     opal_mutex_unlock(&wait_sync_lock);
 }
-
-
 
 static opal_atomic_int32_t num_thread_in_progress = 0;
 
@@ -96,9 +95,8 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
      *  - this thread has been promoted to take care of the progress
      *  - our sync has been triggered.
      */
-  check_status:
-    if (sync != wait_sync_list &&
-        num_thread_in_progress >= opal_max_thread_in_progress) {
+check_status:
+    if (sync != wait_sync_list && num_thread_in_progress >= opal_max_thread_in_progress) {
         pthread_cond_wait(&sync->condition, &sync->lock);
 
         /**
@@ -123,7 +121,7 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
     }
     OPAL_THREAD_ADD_FETCH32(&num_thread_in_progress, -1);
 
-  i_am_done:
+i_am_done:
     /* My sync is now complete. Trim the list: remove self, wake next */
     OPAL_THREAD_LOCK(&wait_sync_lock);
     sync->prev->next = sync->next;

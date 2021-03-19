@@ -40,15 +40,14 @@ BEGIN_C_DECLS
 /**
  * The item in the tree itself
  */
-struct mca_mpool_base_tree_item_t
-{
-    opal_free_list_item_t super;   /**< the parent class */
-    void* key; /**< the address this was alloc'd on */
-    size_t num_bytes; /**< the number of bytes in this alloc, only for
-                           debugging reporting with
-                           mpi_show_mpi_alloc_mem_leaks */
+struct mca_mpool_base_tree_item_t {
+    opal_free_list_item_t super; /**< the parent class */
+    void *key;                   /**< the address this was alloc'd on */
+    size_t num_bytes;            /**< the number of bytes in this alloc, only for
+                                      debugging reporting with
+                                      mpi_show_mpi_alloc_mem_leaks */
     mca_mpool_base_module_t *mpool;
-    mca_rcache_base_module_t *rcaches[MCA_MPOOL_BASE_TREE_MAX]; /**< the registration caches */
+    mca_rcache_base_module_t *rcaches[MCA_MPOOL_BASE_TREE_MAX];    /**< the registration caches */
     mca_rcache_base_registration_t *regs[MCA_MPOOL_BASE_TREE_MAX]; /**< the registrations */
     uint8_t count; /**< length of the mpools/regs array */
 };
@@ -65,28 +64,27 @@ int mca_mpool_base_tree_fini(void);
 /*
  * insert an item in the rb tree
  */
-int mca_mpool_base_tree_insert(mca_mpool_base_tree_item_t* item);
+int mca_mpool_base_tree_insert(mca_mpool_base_tree_item_t *item);
 
 /*
  * remove an item from the rb tree
  */
-int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item);
-
+int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t *item);
 
 /**
  *  find the item in the rb tree
  */
-mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base);
+mca_mpool_base_tree_item_t *mca_mpool_base_tree_find(void *base);
 
 /*
  * get a tree item from the free list
  */
-mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void);
+mca_mpool_base_tree_item_t *mca_mpool_base_tree_item_get(void);
 
 /*
  * put tree item back into the free list
  */
-void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item);
+void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t *item);
 
 /*
  * For debugging, print a show_help kind of message if there are items

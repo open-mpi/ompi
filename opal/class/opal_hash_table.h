@@ -37,28 +37,25 @@
 
 #include "opal_config.h"
 
-#include <stdint.h>
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
+#include <stdint.h>
 
 BEGIN_C_DECLS
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_hash_table_t);
 
-struct opal_hash_table_t
-{
-    opal_object_t        super;          /**< subclass of opal_object_t */
-    struct opal_hash_element_t * ht_table;       /**< table of elements (opaque to users) */
-    size_t               ht_capacity;    /**< allocated size (capacity) of table */
-    size_t               ht_size;        /**< number of extant entries */
-    size_t               ht_growth_trigger; /**< size hits this and table is grown  */
-    int                  ht_density_numer, ht_density_denom; /**< max allowed density of table */
-    int                  ht_growth_numer, ht_growth_denom;   /**< growth factor when grown  */
-    const struct opal_hash_type_methods_t * ht_type_methods;
+struct opal_hash_table_t {
+    opal_object_t super;                    /**< subclass of opal_object_t */
+    struct opal_hash_element_t *ht_table;   /**< table of elements (opaque to users) */
+    size_t ht_capacity;                     /**< allocated size (capacity) of table */
+    size_t ht_size;                         /**< number of extant entries */
+    size_t ht_growth_trigger;               /**< size hits this and table is grown  */
+    int ht_density_numer, ht_density_denom; /**< max allowed density of table */
+    int ht_growth_numer, ht_growth_denom;   /**< growth factor when grown  */
+    const struct opal_hash_type_methods_t *ht_type_methods;
 };
 typedef struct opal_hash_table_t opal_hash_table_t;
-
-
 
 /**
  *  Initializes the table size, must be called before using
@@ -71,12 +68,12 @@ typedef struct opal_hash_table_t opal_hash_table_t;
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_init(opal_hash_table_t* ht, size_t table_size);
+OPAL_DECLSPEC int opal_hash_table_init(opal_hash_table_t *ht, size_t table_size);
 
 /* this could be the new init if people wanted a more general API */
-OPAL_DECLSPEC int opal_hash_table_init2(opal_hash_table_t* ht, size_t estimated_max_size,
-                                        int density_numer, int density_denom,
-                                        int growth_numer, int growth_denom);
+OPAL_DECLSPEC int opal_hash_table_init2(opal_hash_table_t *ht, size_t estimated_max_size,
+                                        int density_numer, int density_denom, int growth_numer,
+                                        int growth_denom);
 
 /**
  *  Returns the number of elements currently stored in the table.
@@ -114,8 +111,8 @@ OPAL_DECLSPEC int opal_hash_table_remove_all(opal_hash_table_t *ht);
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t* table, uint32_t key,
-                                                   void** ptr);
+OPAL_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t *table, uint32_t key,
+                                                   void **ptr);
 
 /**
  *  Set value based on uint32_t key.
@@ -127,7 +124,8 @@ OPAL_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t* table, uin
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_set_value_uint32(opal_hash_table_t* table, uint32_t key, void* value);
+OPAL_DECLSPEC int opal_hash_table_set_value_uint32(opal_hash_table_t *table, uint32_t key,
+                                                   void *value);
 
 /**
  *  Remove value based on uint32_t key.
@@ -138,7 +136,7 @@ OPAL_DECLSPEC int opal_hash_table_set_value_uint32(opal_hash_table_t* table, uin
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_remove_value_uint32(opal_hash_table_t* table, uint32_t key);
+OPAL_DECLSPEC int opal_hash_table_remove_value_uint32(opal_hash_table_t *table, uint32_t key);
 
 /**
  *  Retrieve value via uint64_t key.
@@ -166,7 +164,8 @@ OPAL_DECLSPEC int opal_hash_table_get_value_uint64(opal_hash_table_t *table, uin
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_set_value_uint64(opal_hash_table_t *table, uint64_t key, void* value);
+OPAL_DECLSPEC int opal_hash_table_set_value_uint64(opal_hash_table_t *table, uint64_t key,
+                                                   void *value);
 
 /**
  *  Remove value based on uint64_t key.
@@ -192,7 +191,7 @@ OPAL_DECLSPEC int opal_hash_table_remove_value_uint64(opal_hash_table_t *table, 
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const void* key,
+OPAL_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const void *key,
                                                 size_t keylen, void **ptr);
 
 /**
@@ -205,7 +204,8 @@ OPAL_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const 
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_set_value_ptr(opal_hash_table_t *table, const void* key, size_t keylen, void* value);
+OPAL_DECLSPEC int opal_hash_table_set_value_ptr(opal_hash_table_t *table, const void *key,
+                                                size_t keylen, void *value);
 
 /**
  *  Remove value based on arbitrary length binary key.
@@ -216,8 +216,8 @@ OPAL_DECLSPEC int opal_hash_table_set_value_ptr(opal_hash_table_t *table, const 
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_remove_value_ptr(opal_hash_table_t *table, const void* key, size_t keylen);
-
+OPAL_DECLSPEC int opal_hash_table_remove_value_ptr(opal_hash_table_t *table, const void *key,
+                                                   size_t keylen);
 
 /** The following functions are only for allowing iterating through
     the hash table. The calls return along with a key, a pointer to
@@ -242,8 +242,7 @@ OPAL_DECLSPEC int opal_hash_table_remove_value_ptr(opal_hash_table_t *table, con
  */
 
 OPAL_DECLSPEC int opal_hash_table_get_first_key_uint32(opal_hash_table_t *table, uint32_t *key,
-                                        void **value, void **node);
-
+                                                       void **value, void **node);
 
 /**
  *  Get the next 32 bit key from the hash table, knowing the current key
@@ -260,9 +259,7 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_uint32(opal_hash_table_t *table,
  */
 
 OPAL_DECLSPEC int opal_hash_table_get_next_key_uint32(opal_hash_table_t *table, uint32_t *key,
-                                       void **value, void *in_node,
-                                       void **out_node);
-
+                                                      void **value, void *in_node, void **out_node);
 
 /**
  *  Get the first 64 key from the hash table, which can be used later to
@@ -278,8 +275,7 @@ OPAL_DECLSPEC int opal_hash_table_get_next_key_uint32(opal_hash_table_t *table, 
  */
 
 OPAL_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table, uint64_t *key,
-                                       void **value, void **node);
-
+                                                       void **value, void **node);
 
 /**
  *  Get the next 64 bit key from the hash table, knowing the current key
@@ -296,9 +292,7 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table,
  */
 
 OPAL_DECLSPEC int opal_hash_table_get_next_key_uint64(opal_hash_table_t *table, uint64_t *key,
-                                       void **value, void *in_node,
-                                       void **out_node);
-
+                                                      void **value, void *in_node, void **out_node);
 
 /**
  *  Get the first ptr bit key from the hash table, which can be used later to
@@ -314,9 +308,8 @@ OPAL_DECLSPEC int opal_hash_table_get_next_key_uint64(opal_hash_table_t *table, 
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_get_first_key_ptr(opal_hash_table_t *table, void* *key,
-                                        size_t *key_size, void **value, void **node);
-
+OPAL_DECLSPEC int opal_hash_table_get_first_key_ptr(opal_hash_table_t *table, void **key,
+                                                    size_t *key_size, void **value, void **node);
 
 /**
  *  Get the next ptr bit key from the hash table, knowing the current key
@@ -333,27 +326,22 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_ptr(opal_hash_table_t *table, vo
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_get_next_key_ptr(opal_hash_table_t *table, void* *key,
-                                       size_t *key_size, void **value,
-                                       void *in_node, void **out_node);
-
-
+OPAL_DECLSPEC int opal_hash_table_get_next_key_ptr(opal_hash_table_t *table, void **key,
+                                                   size_t *key_size, void **value, void *in_node,
+                                                   void **out_node);
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_proc_table_t);
 
-struct opal_proc_table_t
-{
-    opal_hash_table_t    super;          /**< subclass of opal_object_t */
-    size_t               pt_size;        /**< number of extant entries */
-    size_t               vpids_size;
+struct opal_proc_table_t {
+    opal_hash_table_t super; /**< subclass of opal_object_t */
+    size_t pt_size;          /**< number of extant entries */
+    size_t vpids_size;
     // FIXME
     // Begin KLUDGE!!  So ompi/debuggers/ompi_common_dll.c doesn't complain
-    size_t              pt_table_size;  /**< size of table */
+    size_t pt_table_size; /**< size of table */
     // End KLUDGE
 };
 typedef struct opal_proc_table_t opal_proc_table_t;
-
-
 
 /**
  *  Initializes the table size, must be called before using
@@ -368,7 +356,7 @@ typedef struct opal_proc_table_t opal_proc_table_t;
  *
  */
 
-OPAL_DECLSPEC int opal_proc_table_init(opal_proc_table_t* pt, size_t jobids, size_t vpids);
+OPAL_DECLSPEC int opal_proc_table_init(opal_proc_table_t *pt, size_t jobids, size_t vpids);
 
 /**
  *  Remove all elements from the table.
@@ -393,8 +381,8 @@ OPAL_DECLSPEC int opal_proc_table_remove_all(opal_proc_table_t *pt);
  *
  */
 
-OPAL_DECLSPEC int opal_proc_table_get_value(opal_proc_table_t* pt, opal_process_name_t key,
-                                                   void** ptr);
+OPAL_DECLSPEC int opal_proc_table_get_value(opal_proc_table_t *pt, opal_process_name_t key,
+                                            void **ptr);
 
 /**
  *  Set value based on opal_process_name_t key.
@@ -406,7 +394,8 @@ OPAL_DECLSPEC int opal_proc_table_get_value(opal_proc_table_t* pt, opal_process_
  *
  */
 
-OPAL_DECLSPEC int opal_proc_table_set_value(opal_proc_table_t* pt, opal_process_name_t key, void* value);
+OPAL_DECLSPEC int opal_proc_table_set_value(opal_proc_table_t *pt, opal_process_name_t key,
+                                            void *value);
 
 /**
  *  Remove value based on opal_process_name_t key.
@@ -417,8 +406,7 @@ OPAL_DECLSPEC int opal_proc_table_set_value(opal_proc_table_t* pt, opal_process_
  *
  */
 
-OPAL_DECLSPEC int opal_proc_table_remove_value(opal_proc_table_t* pt, opal_process_name_t key);
-
+OPAL_DECLSPEC int opal_proc_table_remove_value(opal_proc_table_t *pt, opal_process_name_t key);
 
 /**
  *  Get the first opal_process_name_t key from the hash table, which can be used later to
@@ -438,7 +426,6 @@ OPAL_DECLSPEC int opal_proc_table_remove_value(opal_proc_table_t* pt, opal_proce
 
 OPAL_DECLSPEC int opal_proc_table_get_first_key(opal_proc_table_t *pt, opal_process_name_t *key,
                                                 void **value, void **node1, void **node2);
-
 
 /**
  *  Get the next opal_process_name_t key from the hash table, knowing the current key
@@ -483,16 +470,19 @@ OPAL_DECLSPEC int opal_proc_table_get_next_key(opal_proc_table_t *pt, opal_proce
  * }
  */
 #define OPAL_HASH_TABLE_FOREACH(key, type, value, ht) \
-  for (void *_nptr=NULL;                                   \
-       OPAL_SUCCESS == opal_hash_table_get_next_key_##type(ht, &key, (void **)&value, _nptr, &_nptr);)
+    for (void *_nptr = NULL;                          \
+         OPAL_SUCCESS                                 \
+         == opal_hash_table_get_next_key_##type(ht, &key, (void **) &value, _nptr, &_nptr);)
 
-#define OPAL_HASH_TABLE_FOREACH_PTR(key, value, ht, body)		\
-  {									\
-    size_t key_size_;							\
-    for (void *_nptr=NULL;						\
-	 OPAL_SUCCESS == opal_hash_table_get_next_key_ptr (ht, &key, &key_size_, (void **)&value, _nptr, &_nptr);) \
-      body								\
-  }
+#define OPAL_HASH_TABLE_FOREACH_PTR(key, value, ht, body)                                       \
+    {                                                                                           \
+        size_t key_size_;                                                                       \
+        for (void *_nptr = NULL;                                                                \
+             OPAL_SUCCESS                                                                       \
+             == opal_hash_table_get_next_key_ptr(ht, &key, &key_size_, (void **) &value, _nptr, \
+                                                 &_nptr);)                                      \
+            body                                                                                \
+    }
 END_C_DECLS
 
-#endif  /* OPAL_HASH_TABLE_H */
+#endif /* OPAL_HASH_TABLE_H */

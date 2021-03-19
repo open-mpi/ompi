@@ -48,8 +48,7 @@ typedef void (*opal_keyval_parse_fn_t)(const char *key, const char *value);
  * called exactly once.  In a multithreaded context, calls to
  * opal_util_keyval_parse() will serialize multiple calls.
  */
-OPAL_DECLSPEC int opal_util_keyval_parse(const char *filename,
-                                         opal_keyval_parse_fn_t callback);
+OPAL_DECLSPEC int opal_util_keyval_parse(const char *filename, opal_keyval_parse_fn_t callback);
 
 OPAL_DECLSPEC int opal_util_keyval_parse_init(void);
 

@@ -24,7 +24,6 @@
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/memory/memory.h"
 
-
 BEGIN_C_DECLS
 
 /**
@@ -32,7 +31,7 @@ BEGIN_C_DECLS
  */
 OPAL_DECLSPEC extern mca_base_framework_t opal_memory_base_framework;
 
-OPAL_DECLSPEC void opal_memory_base_malloc_init_hook (void);
+OPAL_DECLSPEC void opal_memory_base_malloc_init_hook(void);
 
 END_C_DECLS
 #endif /* OPAL_BASE_MEMORY_H */

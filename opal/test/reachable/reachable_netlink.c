@@ -14,17 +14,16 @@
 
 #include "reachable_shared.h"
 
-#include "opal/runtime/opal.h"
-#include "opal/mca/reachable/reachable.h"
-#include "opal/util/if.h"
 #include "opal/class/opal_list.h"
+#include "opal/mca/reachable/reachable.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/if.h"
 
 /*
  * Creates list of remote interfaces for testing reachability.
  * Only minimum information is filled out.
  */
-opal_list_t* build_if_list(void)
+opal_list_t *build_if_list(void)
 {
     /* Allocate memory for and create interface list */
     opal_list_t *if_list = OBJ_NEW(opal_list_t);
@@ -93,7 +92,6 @@ opal_list_t* build_if_list(void)
     return if_list;
 }
 
-
 int main(int argc, char **argv)
 {
     opal_list_t *local_list, *remote_list;
@@ -121,69 +119,67 @@ int main(int argc, char **argv)
 
     printf("Local interfaces:\n");
     i = 0;
-    OPAL_LIST_FOREACH(local_if, local_list, opal_if_t) {
+    OPAL_LIST_FOREACH (local_if, local_list, opal_if_t) {
         char addr[128];
         char *family;
 
         switch (local_if->af_family) {
-            case AF_INET:
-                family = "IPv4";
-                inet_ntop(AF_INET, &(((struct sockaddr_in*) &local_if->if_addr))->sin_addr,
-                          addr, sizeof(addr));
-                break;
-            case AF_INET6:
-                family = "IPv6";
-                inet_ntop(AF_INET6, &(((struct sockaddr_in6*) &local_if->if_addr))->sin6_addr,
-                          addr, sizeof(addr));
-                break;
-            default:
-                family = "Unknown";
-                opal_string_copy(addr, "Unknown", sizeof(addr));
-                break;
+        case AF_INET:
+            family = "IPv4";
+            inet_ntop(AF_INET, &(((struct sockaddr_in *) &local_if->if_addr))->sin_addr, addr,
+                      sizeof(addr));
+            break;
+        case AF_INET6:
+            family = "IPv6";
+            inet_ntop(AF_INET6, &(((struct sockaddr_in6 *) &local_if->if_addr))->sin6_addr, addr,
+                      sizeof(addr));
+            break;
+        default:
+            family = "Unknown";
+            opal_string_copy(addr, "Unknown", sizeof(addr));
+            break;
         }
 
-        printf("  %3d: %s\t%s\t%s/%d\n", i, local_if->if_name,
-	       family, addr, local_if->if_mask);
+        printf("  %3d: %s\t%s\t%s/%d\n", i, local_if->if_name, family, addr, local_if->if_mask);
         i++;
     }
 
     printf("\nRemote interfaces:\n");
     i = 0;
-    OPAL_LIST_FOREACH(local_if, remote_list, opal_if_t) {
+    OPAL_LIST_FOREACH (local_if, remote_list, opal_if_t) {
         char addr[128];
         char *family;
 
         switch (local_if->af_family) {
-            case AF_INET:
-                family = "IPv4";
-                inet_ntop(AF_INET, &(((struct sockaddr_in*) &local_if->if_addr))->sin_addr,
-                          addr, sizeof(addr));
-                break;
-            case AF_INET6:
-                family = "IPv6";
-                inet_ntop(AF_INET6, &(((struct sockaddr_in6*) &local_if->if_addr))->sin6_addr,
-                          addr, sizeof(addr));
-                break;
-            default:
-                family = "Unknown";
-                opal_string_copy(addr, "Unknown", sizeof(addr));
-                break;
+        case AF_INET:
+            family = "IPv4";
+            inet_ntop(AF_INET, &(((struct sockaddr_in *) &local_if->if_addr))->sin_addr, addr,
+                      sizeof(addr));
+            break;
+        case AF_INET6:
+            family = "IPv6";
+            inet_ntop(AF_INET6, &(((struct sockaddr_in6 *) &local_if->if_addr))->sin6_addr, addr,
+                      sizeof(addr));
+            break;
+        default:
+            family = "Unknown";
+            opal_string_copy(addr, "Unknown", sizeof(addr));
+            break;
         }
 
-        printf("  %3d: %s\t%s\t%s/%d\n", i, local_if->if_name,
-	       family, addr, local_if->if_mask);
+        printf("  %3d: %s\t%s\t%s/%d\n", i, local_if->if_name, family, addr, local_if->if_mask);
         i++;
     }
 
     printf("\nConnectivity Table:\n       ");
-    for (j = 0 ; j < remote_ifs ; j++) {
+    for (j = 0; j < remote_ifs; j++) {
         printf("%3d ", j);
     }
     printf("\n");
 
-    for (i = 0; i < local_ifs ; i++) {
+    for (i = 0; i < local_ifs; i++) {
         printf("  %3d: ", i);
-        for (j = 0 ; j < remote_ifs ; j++) {
+        for (j = 0; j < remote_ifs; j++) {
             printf("%3d ", results->weights[i][j]);
         }
         printf("\n");

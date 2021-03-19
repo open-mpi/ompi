@@ -26,20 +26,20 @@
 
 #include "opal_config.h"
 
-#include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-#include "opal/util/error.h"
-#include "opal/util/string_copy.h"
 #include "opal/constants.h"
-#include "opal/util/proc.h"
-#include "opal/util/printf.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/util/error.h"
+#include "opal/util/printf.h"
+#include "opal/util/proc.h"
+#include "opal/util/string_copy.h"
 
-#define MAX_CONVERTERS 5
+#define MAX_CONVERTERS            5
 #define MAX_CONVERTER_PROJECT_LEN 10
 
 struct converter_info_t {
@@ -54,16 +54,14 @@ typedef struct converter_info_t converter_info_t;
 /* all default to NULL */
 static converter_info_t converters[MAX_CONVERTERS] = {{0}};
 
-static int
-opal_strerror_int(int errnum, const char **str)
+static int opal_strerror_int(int errnum, const char **str)
 {
     int i, ret = OPAL_SUCCESS;
     *str = NULL;
 
-    for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
-        if (0 != converters[i].init &&
-            errnum < converters[i].err_base &&
-            converters[i].err_max < errnum) {
+    for (i = 0; i < MAX_CONVERTERS; ++i) {
+        if (0 != converters[i].init && errnum < converters[i].err_base
+            && converters[i].err_max < errnum) {
             ret = converters[i].converter(errnum, str);
             break;
         }
@@ -72,21 +70,17 @@ opal_strerror_int(int errnum, const char **str)
     return ret;
 }
 
-
 /* caller must free string */
-static int
-opal_strerror_unknown(int errnum, char **str)
+static int opal_strerror_unknown(int errnum, char **str)
 {
     int i;
     *str = NULL;
 
-    for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
+    for (i = 0; i < MAX_CONVERTERS; ++i) {
         if (0 != converters[i].init) {
-            if (errnum < converters[i].err_base &&
-                errnum > converters[i].err_max) {
-                opal_asprintf(str, "Unknown error: %d (%s error %d)",
-                         errnum, converters[i].project,
-                         errnum - converters[i].err_base);
+            if (errnum < converters[i].err_base && errnum > converters[i].err_max) {
+                opal_asprintf(str, "Unknown error: %d (%s error %d)", errnum, converters[i].project,
+                              errnum - converters[i].err_base);
                 return OPAL_SUCCESS;
             }
         }
@@ -97,12 +91,10 @@ opal_strerror_unknown(int errnum, char **str)
     return OPAL_SUCCESS;
 }
 
-
-void
-opal_perror(int errnum, const char *msg)
+void opal_perror(int errnum, const char *msg)
 {
     int ret;
-    const char* errmsg;
+    const char *errmsg;
     ret = opal_strerror_int(errnum, &errmsg);
 
     if (NULL != msg && errnum != OPAL_ERR_IN_ERRNO) {
@@ -129,11 +121,10 @@ opal_perror(int errnum, const char *msg)
 #define UNKNOWN_RETBUF_LEN 50
 static char unknown_retbuf[UNKNOWN_RETBUF_LEN];
 
-const char *
-opal_strerror(int errnum)
+const char *opal_strerror(int errnum)
 {
     int ret;
-    const char* errmsg;
+    const char *errmsg;
 
     if (errnum == OPAL_ERR_IN_ERRNO) {
         return strerror(errno);
@@ -147,17 +138,15 @@ opal_strerror(int errnum)
         snprintf(unknown_retbuf, UNKNOWN_RETBUF_LEN, "%s", ue_msg);
         free(ue_msg);
         errno = EINVAL;
-        return (const char*) unknown_retbuf;
+        return (const char *) unknown_retbuf;
     } else {
         return errmsg;
     }
 }
 
-
-int
-opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
+int opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
 {
-    const char* errmsg;
+    const char *errmsg;
     int ret, len;
 
     ret = opal_strerror_int(errnum, &errmsg);
@@ -169,7 +158,7 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
         } else {
             char *ue_msg;
             ret = opal_strerror_unknown(errnum, &ue_msg);
-            len =  snprintf(strerrbuf, buflen, "%s", ue_msg);
+            len = snprintf(strerrbuf, buflen, "%s", ue_msg);
             free(ue_msg);
             if (len > (int) buflen) {
                 errno = ERANGE;
@@ -180,7 +169,7 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
             }
         }
     } else {
-        len =  snprintf(strerrbuf, buflen, "%s", errmsg);
+        len = snprintf(strerrbuf, buflen, "%s", errmsg);
         if (len > (int) buflen) {
             errno = ERANGE;
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -190,25 +179,21 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
     }
 }
 
-
-int
-opal_error_register(const char *project, int err_base, int err_max,
-                    opal_err2str_fn_t converter)
+int opal_error_register(const char *project, int err_base, int err_max, opal_err2str_fn_t converter)
 {
     int i;
 
-    for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
+    for (i = 0; i < MAX_CONVERTERS; ++i) {
         if (0 == converters[i].init) {
             converters[i].init = 1;
             opal_string_copy(converters[i].project, project, MAX_CONVERTER_PROJECT_LEN);
-            converters[i].project[MAX_CONVERTER_PROJECT_LEN-1] = '\0';
+            converters[i].project[MAX_CONVERTER_PROJECT_LEN - 1] = '\0';
             converters[i].err_base = err_base;
             converters[i].err_max = err_max;
             converters[i].converter = converter;
             return OPAL_SUCCESS;
-        } else if (converters[i].err_base == err_base &&
-                   converters[i].err_max == err_max &&
-                   !strcmp (project, converters[i].project)) {
+        } else if (converters[i].err_base == err_base && converters[i].err_max == err_max
+                   && !strcmp(project, converters[i].project)) {
             converters[i].converter = converter;
             return OPAL_SUCCESS;
         }
@@ -217,9 +202,7 @@ opal_error_register(const char *project, int err_base, int err_max,
     return OPAL_ERR_OUT_OF_RESOURCE;
 }
 
-
-void
-opal_delay_abort(void)
+void opal_delay_abort(void)
 {
     // Though snprintf and strlen are not guaranteed to be async-signal-safe
     // in POSIX, it is async-signal-safe on many implementations probably.
@@ -239,8 +222,7 @@ opal_delay_abort(void)
                 sleep(5);
             }
         } else {
-            snprintf(msg, sizeof(msg),
-                     "[%s:%05d] Delaying for %d seconds before aborting\n",
+            snprintf(msg, sizeof(msg), "[%s:%05d] Delaying for %d seconds before aborting\n",
                      opal_process_info.nodename, (int) pid, delay);
             write(STDERR_FILENO, msg, strlen(msg));
             do {

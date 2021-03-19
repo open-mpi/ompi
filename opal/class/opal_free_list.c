@@ -24,21 +24,19 @@
 
 #include "opal_config.h"
 
-#include "opal/class/opal_free_list.h"
 #include "opal/align.h"
-#include "opal/util/output.h"
-#include "opal/mca/mpool/mpool.h"
+#include "opal/class/opal_free_list.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/mpool/mpool.h"
 #include "opal/mca/rcache/rcache.h"
+#include "opal/util/output.h"
 #include "opal/util/sys_limits.h"
 
 typedef struct opal_free_list_item_t opal_free_list_memory_t;
 
-OBJ_CLASS_INSTANCE(opal_free_list_item_t,
-                   opal_list_item_t,
-                   NULL, NULL);
+OBJ_CLASS_INSTANCE(opal_free_list_item_t, opal_list_item_t, NULL, NULL);
 
-static void opal_free_list_construct(opal_free_list_t* fl)
+static void opal_free_list_construct(opal_free_list_t *fl)
 {
     OBJ_CONSTRUCT(&fl->fl_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&fl->fl_condition, opal_condition_t);
@@ -54,22 +52,21 @@ static void opal_free_list_construct(opal_free_list_t* fl)
     fl->fl_mpool = NULL;
     fl->fl_rcache = NULL;
     /* default flags */
-    fl->fl_rcache_reg_flags = MCA_RCACHE_FLAGS_CACHE_BYPASS |
-        MCA_RCACHE_FLAGS_CUDA_REGISTER_MEM;
+    fl->fl_rcache_reg_flags = MCA_RCACHE_FLAGS_CACHE_BYPASS | MCA_RCACHE_FLAGS_CUDA_REGISTER_MEM;
     fl->ctx = NULL;
     OBJ_CONSTRUCT(&(fl->fl_allocations), opal_list_t);
 }
 
-static void opal_free_list_allocation_release (opal_free_list_t *fl, opal_free_list_memory_t *fl_mem)
+static void opal_free_list_allocation_release(opal_free_list_t *fl, opal_free_list_memory_t *fl_mem)
 {
     if (NULL != fl->fl_rcache) {
-        fl->fl_rcache->rcache_deregister (fl->fl_rcache, fl_mem->registration);
+        fl->fl_rcache->rcache_deregister(fl->fl_rcache, fl_mem->registration);
     }
 
     if (NULL != fl->fl_mpool) {
-        fl->fl_mpool->mpool_free (fl->fl_mpool, fl_mem->ptr);
+        fl->fl_mpool->mpool_free(fl->fl_mpool, fl_mem->ptr);
     } else if (fl_mem->ptr) {
-        free (fl_mem->ptr);
+        free(fl_mem->ptr);
     }
 
     /* destruct the item (we constructed it), then free the memory chunk */
@@ -90,8 +87,8 @@ static void opal_free_list_destruct(opal_free_list_t *fl)
     }
 #endif
 
-    while(NULL != (item = opal_lifo_pop(&(fl->super)))) {
-        fl_item = (opal_free_list_item_t*)item;
+    while (NULL != (item = opal_lifo_pop(&(fl->super)))) {
+        fl_item = (opal_free_list_item_t *) item;
 
         /* destruct the item (we constructed it), the underlying memory will be
          * reclaimed when we free the slab (opal_free_list_memory_t ptr)
@@ -99,8 +96,8 @@ static void opal_free_list_destruct(opal_free_list_t *fl)
         OBJ_DESTRUCT(fl_item);
     }
 
-    while(NULL != (item = opal_list_remove_first(&fl->fl_allocations))) {
-        opal_free_list_allocation_release (fl, (opal_free_list_memory_t *) item);
+    while (NULL != (item = opal_list_remove_first(&fl->fl_allocations))) {
+        opal_free_list_allocation_release(fl, (opal_free_list_memory_t *) item);
     }
 
     OBJ_DESTRUCT(&fl->fl_allocations);
@@ -111,14 +108,13 @@ static void opal_free_list_destruct(opal_free_list_t *fl)
 OBJ_CLASS_INSTANCE(opal_free_list_t, opal_lifo_t, opal_free_list_construct,
                    opal_free_list_destruct);
 
-
-int opal_free_list_init (opal_free_list_t *flist, size_t frag_size, size_t frag_alignment,
-                         opal_class_t *frag_class, size_t payload_buffer_size,
-                         size_t payload_buffer_alignment, int num_elements_to_alloc,
-                         int max_elements_to_alloc, int num_elements_per_alloc,
-                         mca_mpool_base_module_t *mpool, int rcache_reg_flags,
-                         mca_rcache_base_module_t *rcache, opal_free_list_item_init_fn_t item_init,
-                         void *ctx)
+int opal_free_list_init(opal_free_list_t *flist, size_t frag_size, size_t frag_alignment,
+                        opal_class_t *frag_class, size_t payload_buffer_size,
+                        size_t payload_buffer_alignment, int num_elements_to_alloc,
+                        int max_elements_to_alloc, int num_elements_per_alloc,
+                        mca_mpool_base_module_t *mpool, int rcache_reg_flags,
+                        mca_rcache_base_module_t *rcache, opal_free_list_item_init_fn_t item_init,
+                        void *ctx)
 {
     /* alignment must be more than zero and power of two */
     if (frag_alignment <= 1 || (frag_alignment & (frag_alignment - 1))) {
@@ -126,8 +122,10 @@ int opal_free_list_init (opal_free_list_t *flist, size_t frag_size, size_t frag_
     }
 
     if (0 < payload_buffer_size) {
-        if (payload_buffer_alignment <= 1 || (payload_buffer_alignment & (payload_buffer_alignment - 1)))
+        if (payload_buffer_alignment <= 1
+            || (payload_buffer_alignment & (payload_buffer_alignment - 1))) {
             return OPAL_ERROR;
+        }
     }
 
     if (frag_class && frag_size < frag_class->cls_sizeof) {
@@ -155,13 +153,14 @@ int opal_free_list_init (opal_free_list_t *flist, size_t frag_size, size_t frag_
     flist->ctx = ctx;
 
     if (num_elements_to_alloc) {
-        return opal_free_list_grow_st (flist, num_elements_to_alloc, NULL);
+        return opal_free_list_grow_st(flist, num_elements_to_alloc, NULL);
     }
 
     return OPAL_SUCCESS;
 }
 
-int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_free_list_item_t **item_out)
+int opal_free_list_grow_st(opal_free_list_t *flist, size_t num_elements,
+                           opal_free_list_item_t **item_out)
 {
     unsigned char *ptr, *payload_ptr = NULL;
     opal_free_list_memory_t *alloc_ptr;
@@ -169,8 +168,8 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
     mca_rcache_base_registration_t *reg = NULL;
     int rc = OPAL_SUCCESS;
 
-    if (flist->fl_max_to_alloc && (flist->fl_num_allocated + num_elements) >
-        flist->fl_max_to_alloc) {
+    if (flist->fl_max_to_alloc
+        && (flist->fl_num_allocated + num_elements) > flist->fl_max_to_alloc) {
         num_elements = flist->fl_max_to_alloc - flist->fl_num_allocated;
     }
 
@@ -182,17 +181,17 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
 
     /* NTH: calculate allocation alignment first as it might change the number of elements */
     if (0 != flist->fl_payload_buffer_size) {
-        elem_size = OPAL_ALIGN(flist->fl_payload_buffer_size,
-                               flist->fl_payload_buffer_alignment, size_t);
+        elem_size = OPAL_ALIGN(flist->fl_payload_buffer_size, flist->fl_payload_buffer_alignment,
+                               size_t);
 
         /* elem_size should not be 0 here */
-        assert (elem_size > 0);
+        assert(elem_size > 0);
 
         buffer_size = num_elements * elem_size;
         align = flist->fl_payload_buffer_alignment;
 
         if (MCA_RCACHE_FLAGS_CUDA_REGISTER_MEM & flist->fl_rcache_reg_flags) {
-            size_t pagesize = opal_getpagesize ();
+            size_t pagesize = opal_getpagesize();
             /* CUDA cannot handle registering overlapping regions, so make
              * sure each region is page sized and page aligned. */
             align = OPAL_ALIGN(align, pagesize, size_t);
@@ -204,8 +203,8 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
     }
 
     /* calculate head allocation size */
-    alloc_size = num_elements * head_size + sizeof(opal_free_list_memory_t) +
-        flist->fl_frag_alignment;
+    alloc_size = num_elements * head_size + sizeof(opal_free_list_memory_t)
+                 + flist->fl_frag_alignment;
 
     alloc_ptr = (opal_free_list_memory_t *) malloc(alloc_size);
     if (OPAL_UNLIKELY(NULL == alloc_ptr)) {
@@ -214,18 +213,21 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
 
     if (0 != flist->fl_payload_buffer_size) {
         /* allocate the rest from the mpool (or use memalign/malloc) */
-        payload_ptr = (unsigned char *) flist->fl_mpool->mpool_alloc(flist->fl_mpool, buffer_size, align, 0);
+        payload_ptr = (unsigned char *) flist->fl_mpool->mpool_alloc(flist->fl_mpool, buffer_size,
+                                                                     align, 0);
         if (NULL == payload_ptr) {
             free(alloc_ptr);
             return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
         }
 
         if (flist->fl_rcache) {
-            rc = flist->fl_rcache->rcache_register (flist->fl_rcache, payload_ptr, num_elements * elem_size,
-                                                    flist->fl_rcache_reg_flags, MCA_RCACHE_ACCESS_ANY, &reg);
+            rc = flist->fl_rcache->rcache_register(flist->fl_rcache, payload_ptr,
+                                                   num_elements * elem_size,
+                                                   flist->fl_rcache_reg_flags,
+                                                   MCA_RCACHE_ACCESS_ANY, &reg);
             if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-                free (alloc_ptr);
-                flist->fl_mpool->mpool_free (flist->fl_mpool, payload_ptr);
+                free(alloc_ptr);
+                flist->fl_mpool->mpool_free(flist->fl_mpool, payload_ptr);
 
                 return rc;
             }
@@ -235,16 +237,16 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
     /* make the alloc_ptr a list item, save the chunk in the allocations list,
      * and have ptr point to memory right after the list item structure */
     OBJ_CONSTRUCT(alloc_ptr, opal_free_list_item_t);
-    opal_list_append(&(flist->fl_allocations), (opal_list_item_t*)alloc_ptr);
+    opal_list_append(&(flist->fl_allocations), (opal_list_item_t *) alloc_ptr);
 
     alloc_ptr->registration = reg;
     alloc_ptr->ptr = payload_ptr;
 
-    ptr = (unsigned char*)alloc_ptr + sizeof(opal_free_list_memory_t);
-    ptr = OPAL_ALIGN_PTR(ptr, flist->fl_frag_alignment, unsigned char*);
+    ptr = (unsigned char *) alloc_ptr + sizeof(opal_free_list_memory_t);
+    ptr = OPAL_ALIGN_PTR(ptr, flist->fl_frag_alignment, unsigned char *);
 
-    for(size_t i = 0; i < num_elements ; ++i) {
-        opal_free_list_item_t* item = (opal_free_list_item_t*)ptr;
+    for (size_t i = 0; i < num_elements; ++i) {
+        opal_free_list_item_t *item = (opal_free_list_item_t *) ptr;
         item->registration = reg;
         item->ptr = payload_ptr;
 
@@ -255,7 +257,7 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
         if (flist->item_init) {
             if (OPAL_SUCCESS != (rc = flist->item_init(item, flist->ctx))) {
                 num_elements = i;
-                OBJ_DESTRUCT (item);
+                OBJ_DESTRUCT(item);
                 break;
             }
         }
@@ -268,7 +270,7 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
              * if one is available */
             *item_out = item;
         } else {
-            opal_lifo_push_atomic (&flist->super, &item->super);
+            opal_lifo_push_atomic(&flist->super, &item->super);
         }
 
         ptr += head_size;
@@ -279,8 +281,8 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements, opal_f
 
     if (OPAL_SUCCESS != rc && 0 == num_elements) {
         /* couldn't initialize any items */
-        opal_list_remove_item (&flist->fl_allocations, (opal_list_item_t *) alloc_ptr);
-        opal_free_list_allocation_release (flist, alloc_ptr);
+        opal_list_remove_item(&flist->fl_allocations, (opal_list_item_t *) alloc_ptr);
+        opal_free_list_allocation_release(flist, alloc_ptr);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -304,16 +306,16 @@ int opal_free_list_resize_mt(opal_free_list_t *flist, size_t size)
         return OPAL_SUCCESS;
     }
 
-    opal_mutex_lock (&flist->fl_lock);
+    opal_mutex_lock(&flist->fl_lock);
     do {
-        ret = opal_free_list_grow_st (flist, flist->fl_num_per_alloc, NULL);
+        ret = opal_free_list_grow_st(flist, flist->fl_num_per_alloc, NULL);
         if (OPAL_SUCCESS != ret) {
             break;
         }
 
-        inc_num = (ssize_t)size - (ssize_t)flist->fl_num_allocated;
+        inc_num = (ssize_t) size - (ssize_t) flist->fl_num_allocated;
     } while (inc_num > 0);
-    opal_mutex_unlock (&flist->fl_lock);
+    opal_mutex_unlock(&flist->fl_lock);
 
     return ret;
 }

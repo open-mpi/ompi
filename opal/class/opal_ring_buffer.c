@@ -20,19 +20,18 @@
 
 #include "opal_config.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "opal/constants.h"
 #include "opal/class/opal_ring_buffer.h"
+#include "opal/constants.h"
 #include "opal/util/output.h"
 
 static void opal_ring_buffer_construct(opal_ring_buffer_t *);
 static void opal_ring_buffer_destruct(opal_ring_buffer_t *);
 
-OBJ_CLASS_INSTANCE(opal_ring_buffer_t, opal_object_t,
-                   opal_ring_buffer_construct,
+OBJ_CLASS_INSTANCE(opal_ring_buffer_t, opal_object_t, opal_ring_buffer_construct,
                    opal_ring_buffer_destruct);
 
 /*
@@ -54,7 +53,7 @@ static void opal_ring_buffer_construct(opal_ring_buffer_t *ring)
  */
 static void opal_ring_buffer_destruct(opal_ring_buffer_t *ring)
 {
-    if( NULL != ring->addr) {
+    if (NULL != ring->addr) {
         free(ring->addr);
         ring->addr = NULL;
     }
@@ -68,7 +67,7 @@ static void opal_ring_buffer_destruct(opal_ring_buffer_t *ring)
 /**
  * initialize a ring object
  */
-int opal_ring_buffer_init(opal_ring_buffer_t* ring, int size)
+int opal_ring_buffer_init(opal_ring_buffer_t *ring, int size)
 {
     /* check for errors */
     if (NULL == ring) {
@@ -76,7 +75,7 @@ int opal_ring_buffer_init(opal_ring_buffer_t* ring, int size)
     }
 
     /* Allocate and set the ring to NULL */
-    ring->addr = (char **)calloc(size * sizeof(char*), 1);
+    ring->addr = (char **) calloc(size * sizeof(char *), 1);
     if (NULL == ring->addr) { /* out of memory */
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -85,20 +84,20 @@ int opal_ring_buffer_init(opal_ring_buffer_t* ring, int size)
     return OPAL_SUCCESS;
 }
 
-void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr)
+void *opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr)
 {
-    char *p=NULL;
+    char *p = NULL;
 
     OPAL_ACQUIRE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
     if (NULL != ring->addr[ring->head]) {
-        p = (char*)ring->addr[ring->head];
+        p = (char *) ring->addr[ring->head];
         if (ring->tail == ring->size - 1) {
             ring->tail = 0;
         } else {
             ring->tail = ring->head + 1;
         }
     }
-    ring->addr[ring->head] = (char*)ptr;
+    ring->addr[ring->head] = (char *) ptr;
     if (ring->tail < 0) {
         ring->tail = ring->head;
     }
@@ -108,21 +107,21 @@ void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr)
         ring->head++;
     }
     OPAL_RELEASE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
-    return (void*)p;
+    return (void *) p;
 }
 
-void* opal_ring_buffer_pop(opal_ring_buffer_t *ring)
+void *opal_ring_buffer_pop(opal_ring_buffer_t *ring)
 {
-    char *p=NULL;
+    char *p = NULL;
 
     OPAL_ACQUIRE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
     if (-1 == ring->tail) {
         /* nothing has been put on the ring yet */
         p = NULL;
     } else {
-        p = (char*)ring->addr[ring->tail];
+        p = (char *) ring->addr[ring->tail];
         ring->addr[ring->tail] = NULL;
-        if (ring->tail == ring->size-1) {
+        if (ring->tail == ring->size - 1) {
             ring->tail = 0;
         } else {
             ring->tail++;
@@ -133,12 +132,12 @@ void* opal_ring_buffer_pop(opal_ring_buffer_t *ring)
         }
     }
     OPAL_RELEASE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
-    return (void*)p;
+    return (void *) p;
 }
 
- void* opal_ring_buffer_poke(opal_ring_buffer_t *ring, int i)
- {
-    char *p=NULL;
+void *opal_ring_buffer_poke(opal_ring_buffer_t *ring, int i)
+{
+    char *p = NULL;
     int offset;
 
     OPAL_ACQUIRE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
@@ -161,5 +160,5 @@ void* opal_ring_buffer_pop(opal_ring_buffer_t *ring)
         p = ring->addr[offset];
     }
     OPAL_RELEASE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
-    return (void*)p;
+    return (void *) p;
 }

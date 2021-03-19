@@ -27,19 +27,21 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "opal/datatype/opal_convertor.h"
+#include "opal/datatype/opal_datatype.h"
+#include "opal/datatype/opal_datatype_checksum.h"
+#include "opal/datatype/opal_datatype_internal.h"
 #include "opal/prefetch.h"
 #include "opal/util/output.h"
-#include "opal/datatype/opal_datatype.h"
-#include "opal/datatype/opal_convertor.h"
-#include "opal/datatype/opal_datatype_internal.h"
-#include "opal/datatype/opal_datatype_checksum.h"
-
 
 #if OPAL_ENABLE_DEBUG
-#define DO_DEBUG(INST)  if( opal_ddt_copy_debug ) { INST }
+#    define DO_DEBUG(INST)         \
+        if (opal_ddt_copy_debug) { \
+            INST                   \
+        }
 #else
-#define DO_DEBUG(INST)
-#endif  /* OPAL_ENABLE_DEBUG */
+#    define DO_DEBUG(INST)
+#endif /* OPAL_ENABLE_DEBUG */
 
 static size_t opal_datatype_memop_block_size = 128 * 1024;
 
@@ -47,72 +49,74 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
  * Non overlapping memory regions
  */
 #undef MEM_OP_NAME
-#define MEM_OP_NAME  non_overlap
+#define MEM_OP_NAME non_overlap
 #undef MEM_OP
-#define MEM_OP       MEMCPY
+#define MEM_OP MEMCPY
 #include "opal_datatype_copy.h"
 
-#define MEMMOVE(d, s, l)                                  \
-    do {                                                  \
-        if( (((d) < (s)) && (((d) + (l)) > (s))) ||       \
-            (((s) < (d)) && (((s) + (l)) > (d))) ) {      \
-            memmove( (d), (s), (l) );                     \
-        } else {                                          \
-            MEMCPY( (d), (s), (l) );                      \
-        }                                                 \
+#define MEMMOVE(d, s, l)                                                                    \
+    do {                                                                                    \
+        if ((((d) < (s)) && (((d) + (l)) > (s))) || (((s) < (d)) && (((s) + (l)) > (d)))) { \
+            memmove((d), (s), (l));                                                         \
+        } else {                                                                            \
+            MEMCPY((d), (s), (l));                                                          \
+        }                                                                                   \
     } while (0)
 
 /**
  * Overlapping memory regions
  */
 #undef MEM_OP_NAME
-#define MEM_OP_NAME  overlap
+#define MEM_OP_NAME overlap
 #undef MEM_OP
-#define MEM_OP       MEMMOVE
+#define MEM_OP MEMMOVE
 #include "opal_datatype_copy.h"
 
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#    include "opal/mca/common/cuda/common_cuda.h"
 
-#undef MEM_OP_NAME
-#define MEM_OP_NAME non_overlap_cuda
-#undef MEM_OP
-#define MEM_OP opal_cuda_memcpy_sync
-#include "opal_datatype_copy.h"
+#    undef MEM_OP_NAME
+#    define MEM_OP_NAME non_overlap_cuda
+#    undef MEM_OP
+#    define MEM_OP opal_cuda_memcpy_sync
+#    include "opal_datatype_copy.h"
 
-#undef MEM_OP_NAME
-#define MEM_OP_NAME overlap_cuda
-#undef MEM_OP
-#define MEM_OP opal_cuda_memmove
-#include "opal_datatype_copy.h"
+#    undef MEM_OP_NAME
+#    define MEM_OP_NAME overlap_cuda
+#    undef MEM_OP
+#    define MEM_OP opal_cuda_memmove
+#    include "opal_datatype_copy.h"
 
-#define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function)     \
-    do {                                                            \
-        if (true == cuda_device_bufs) {                             \
-            fct = copy_function;                                    \
-        }                                                           \
-    } while(0)
+#    define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function) \
+        do {                                                        \
+            if (true == cuda_device_bufs) {                         \
+                fct = copy_function;                                \
+            }                                                       \
+        } while (0)
 #else
-#define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function)
+#    define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function)
 #endif
 
-int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, int32_t count,
-                                             char* destination_base, char* source_base )
+int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int32_t count,
+                                            char *destination_base, char *source_base)
 {
     ptrdiff_t extent;
-    int32_t (*fct)( const opal_datatype_t*, int32_t, char*, char*);
+    int32_t (*fct)(const opal_datatype_t *, int32_t, char *, char *);
 
 #if OPAL_CUDA_SUPPORT
     bool cuda_device_bufs = opal_cuda_check_bufs(destination_base, source_base);
 #endif
 
-    DO_DEBUG( opal_output( 0, "opal_datatype_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
-                           (void*)datatype, count, (void*)destination_base, (void*)source_base ); );
+    DO_DEBUG(opal_output(0, "opal_datatype_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
+                         (void *) datatype, count, (void *) destination_base,
+                         (void *) source_base););
 
     /* empty data ? then do nothing. This should normally be trapped
      * at a higher level.
      */
-    if( 0 == count ) return 1;
+    if (0 == count) {
+        return 1;
+    }
 
     /**
      * see discussion in coll_basic_reduce.c for the computation of extent when
@@ -123,19 +127,18 @@ int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, in
 
     fct = non_overlap_copy_content_same_ddt;
     SET_CUDA_COPY_FCT(cuda_device_bufs, fct, non_overlap_cuda_copy_content_same_ddt);
-    if( destination_base < source_base ) {
-        if( (destination_base + extent) > source_base ) {
+    if (destination_base < source_base) {
+        if ((destination_base + extent) > source_base) {
             /* memmove */
             fct = overlap_copy_content_same_ddt;
             SET_CUDA_COPY_FCT(cuda_device_bufs, fct, overlap_cuda_copy_content_same_ddt);
         }
     } else {
-        if( (source_base + extent) > destination_base ) {
+        if ((source_base + extent) > destination_base) {
             /* memmove */
             fct = overlap_copy_content_same_ddt;
             SET_CUDA_COPY_FCT(cuda_device_bufs, fct, overlap_cuda_copy_content_same_ddt);
         }
     }
-    return fct( datatype, count, destination_base, source_base );
+    return fct(datatype, count, destination_base, source_base);
 }
-
