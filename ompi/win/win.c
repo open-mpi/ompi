@@ -205,28 +205,34 @@ static int config_window(void *base, size_t size, int disp_unit, int flavor, int
     int ret;
 
     ret = ompi_attr_set_c(WIN_ATTR, win, &win->w_keyhash, MPI_WIN_BASE, base, true);
-    if (OMPI_SUCCESS != ret)
+    if (OMPI_SUCCESS != ret) {
         return ret;
+    }
 
     ret = ompi_attr_set_aint(WIN_ATTR, win, &win->w_keyhash, MPI_WIN_SIZE, size, true);
-    if (OMPI_SUCCESS != ret)
+    if (OMPI_SUCCESS != ret) {
         return ret;
+    }
 
     ret = ompi_attr_set_int(WIN_ATTR, win, &win->w_keyhash, MPI_WIN_DISP_UNIT, disp_unit, true);
-    if (OMPI_SUCCESS != ret)
+    if (OMPI_SUCCESS != ret) {
         return ret;
+    }
 
     ret = ompi_attr_set_int(WIN_ATTR, win, &win->w_keyhash, MPI_WIN_CREATE_FLAVOR, flavor, true);
-    if (OMPI_SUCCESS != ret)
+    if (OMPI_SUCCESS != ret) {
         return ret;
+    }
 
     ret = ompi_attr_set_int(WIN_ATTR, win, &win->w_keyhash, MPI_WIN_MODEL, model, true);
-    if (OMPI_SUCCESS != ret)
+    if (OMPI_SUCCESS != ret) {
         return ret;
+    }
 
     win->w_f_to_c_index = opal_pointer_array_add(&ompi_mpi_windows, win);
-    if (-1 == win->w_f_to_c_index)
+    if (-1 == win->w_f_to_c_index) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     return OMPI_SUCCESS;
 }

@@ -685,8 +685,9 @@ int mca_common_ompio_merge_initial_groups(ompio_file_t *fh,
                     }
                 } else {
                     i++;
-                    if (decision_list[i] == OMPIO_MERGE)
+                    if (decision_list[i] == OMPIO_MERGE) {
                         merge_pair_flag++;
+                    }
                     sum_bytes = 0;
                     break;
                 }
@@ -719,8 +720,9 @@ int mca_common_ompio_merge_initial_groups(ompio_file_t *fh,
                 for (j = 0; j < end - start + 1; j++) {
                     merge_aggrs[j] = fh->f_init_aggr_list[start + j];
                 }
-                if (fh->f_rank == merge_aggrs[0])
+                if (fh->f_rank == merge_aggrs[0]) {
                     is_new_aggregator = 1;
+                }
 
                 for (j = 0; j < end - start + 1; j++) {
                     if (fh->f_rank == merge_aggrs[j]) {
@@ -1190,8 +1192,9 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE **s
     *end_offsets = &end_offsets_tmp[0];
 
     for (j = 0; j < fh->f_init_num_aggrs; j++) {
-        if (fh->f_rank == fh->f_init_aggr_list[j])
+        if (fh->f_rank == fh->f_init_aggr_list[j]) {
             *is_aggregator = 1;
+        }
     }
     // Decide groups going in for a merge or a split
     // Merge only if the groups are consecutive
@@ -1259,14 +1262,17 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE **s
 
         // Set the flag as per the decision list
         for (i = 0; i < fh->f_init_num_aggrs; i++) {
-            if ((decision_list_tmp[i] == OMPIO_MERGE) && (fh->f_rank == fh->f_init_aggr_list[i]))
+            if ((decision_list_tmp[i] == OMPIO_MERGE) && (fh->f_rank == fh->f_init_aggr_list[i])) {
                 *ompio_grouping_flag = OMPIO_MERGE;
+            }
 
-            if ((decision_list_tmp[i] == OMPIO_SPLIT) && (fh->f_rank == fh->f_init_aggr_list[i]))
+            if ((decision_list_tmp[i] == OMPIO_SPLIT) && (fh->f_rank == fh->f_init_aggr_list[i])) {
                 *ompio_grouping_flag = OMPIO_SPLIT;
+            }
 
-            if ((decision_list_tmp[i] == OMPIO_RETAIN) && (fh->f_rank == fh->f_init_aggr_list[i]))
+            if ((decision_list_tmp[i] == OMPIO_RETAIN) && (fh->f_rank == fh->f_init_aggr_list[i])) {
                 *ompio_grouping_flag = OMPIO_RETAIN;
+            }
         }
 
         // print decision list of aggregators

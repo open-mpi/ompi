@@ -799,8 +799,9 @@ int ompi_proc_unpack(pmix_data_buffer_t *buf, int proclistsize, ompi_proc_t ***p
         }
     }
 
-    if (NULL != newproclistsize)
+    if (NULL != newproclistsize) {
         *newproclistsize = newprocs_len;
+    }
     if (NULL != newproclist) {
         *newproclist = newprocs;
     } else if (newprocs != NULL) {

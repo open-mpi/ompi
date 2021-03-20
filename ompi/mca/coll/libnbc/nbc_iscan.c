@@ -274,8 +274,9 @@ static inline int scan_sched_recursivedoubling(int rank, int comm_size, const vo
             goto cleanup_and_return;
         }
     }
-    if (comm_size < 2)
+    if (comm_size < 2) {
         goto cleanup_and_return;
+    }
 
     char *psend = (char *) tmpbuf1;
     char *precv = (char *) tmpbuf2;

@@ -563,8 +563,9 @@ int mca_fcoll_dynamic_file_write_all(ompio_file_t *fh, const void *buf, int coun
             entries_per_aggregator = 0;
             for (i = 0; i < fh->f_procs_per_group; i++) {
                 for (j = 0; j < disp_index[i]; j++) {
-                    if (blocklen_per_process[i][j] > 0)
+                    if (blocklen_per_process[i][j] > 0) {
                         entries_per_aggregator++;
+                    }
                 }
             }
 
@@ -643,9 +644,9 @@ int mca_fcoll_dynamic_file_write_all(ompio_file_t *fh, const void *buf, int coun
                 temp_pindex = file_offsets_for_agg[sorted_file_offsets[i]].process_id;
                 displs_per_process[temp_pindex][temp_disp_index[temp_pindex]]
                     = memory_displacements[sorted_file_offsets[i]];
-                if (temp_disp_index[temp_pindex] < disp_index[temp_pindex])
+                if (temp_disp_index[temp_pindex] < disp_index[temp_pindex]) {
                     temp_disp_index[temp_pindex] += 1;
-                else {
+                } else {
                     printf("temp_disp_index[%d]: %d is greater than disp_index[%d]: %d\n",
                            temp_pindex, temp_disp_index[temp_pindex], temp_pindex,
                            disp_index[temp_pindex]);

@@ -38,16 +38,17 @@ static int block(const int *gsize_array, int dim, int ndims, int nprocs, int ran
 
     global_size = gsize_array[dim];
 
-    if (darg == MPI_DISTRIBUTE_DFLT_DARG)
+    if (darg == MPI_DISTRIBUTE_DFLT_DARG) {
         blksize = (global_size + nprocs - 1) / nprocs;
-    else {
+    } else {
         blksize = darg;
     }
 
     j = global_size - blksize * rank;
     mysize = blksize < j ? blksize : j;
-    if (mysize < 0)
+    if (mysize < 0) {
         mysize = 0;
+    }
 
     if (MPI_ORDER_C == order) {
         start_loop = ndims - 1;
@@ -60,21 +61,24 @@ static int block(const int *gsize_array, int dim, int ndims, int nprocs, int ran
     stride = orig_extent;
     if (dim == start_loop) {
         rc = ompi_datatype_create_contiguous(mysize, type_old, type_new);
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             return rc;
+        }
     } else {
         for (i = start_loop; i != dim; i += step) {
             stride *= gsize_array[i];
         }
         rc = ompi_datatype_create_hvector(mysize, 1, stride, type_old, type_new);
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             return rc;
+        }
     }
 
     *st_offset = blksize * rank;
     /* in terms of no. of elements of type oldtype in this dimension */
-    if (mysize == 0)
+    if (mysize == 0) {
         *st_offset = 0;
+    }
 
     /* need to set the UB for block-cyclic to work */
     disps[0] = 0;
@@ -89,8 +93,9 @@ static int block(const int *gsize_array, int dim, int ndims, int nprocs, int ran
         }
     }
     rc = opal_datatype_resize(&(*type_new)->super, disps[0], disps[1]);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         return rc;
+    }
 
     return OMPI_SUCCESS;
 }
@@ -135,8 +140,9 @@ static int cyclic(const int *gsize_array, int dim, int ndims, int nprocs, int ra
     }
 
     rc = ompi_datatype_create_hvector(count, blksize, stride, type_old, type_new);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         return rc;
+    }
 
     if (rem) {
         /* if the last block is of size less than blksize, include
@@ -153,8 +159,9 @@ static int cyclic(const int *gsize_array, int dim, int ndims, int nprocs, int ra
         ompi_datatype_destroy(type_new);
         /* even in error condition, need to destroy type_new, so check
            for error after destroy. */
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             return rc;
+        }
         *type_new = type_tmp;
     }
 
@@ -171,13 +178,15 @@ static int cyclic(const int *gsize_array, int dim, int ndims, int nprocs, int ra
         }
     }
     rc = opal_datatype_resize(&(*type_new)->super, disps[0], disps[1]);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         return rc;
+    }
 
     *st_offset = rank * blksize;
     /* in terms of no. of elements of type oldtype in this dimension */
-    if (local_size == 0)
+    if (local_size == 0) {
         *st_offset = 0;
+    }
 
     return OMPI_SUCCESS;
 }
@@ -201,8 +210,9 @@ int32_t ompi_datatype_create_darray(int size, int rank, int ndims, int const *gs
     }
 
     rc = ompi_datatype_type_extent(oldtype, &orig_extent);
-    if (MPI_SUCCESS != rc)
+    if (MPI_SUCCESS != rc) {
         goto cleanup;
+    }
 
     /* calculate position in grid using row-major ordering */
     {
@@ -225,8 +235,9 @@ int32_t ompi_datatype_create_darray(int size, int rank, int ndims, int const *gs
        casting and 2) eliminate need to for conditional destroy below.
        Lame, yes.  But cleaner code all around. */
     rc = ompi_datatype_duplicate(oldtype, &lastType);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup;
+    }
 
     /* figure out ordering issues */
     if (MPI_ORDER_C == order) {
@@ -271,8 +282,9 @@ int32_t ompi_datatype_create_darray(int size, int rank, int ndims, int const *gs
         ompi_datatype_destroy(&lastType);
         /* need to destroy the old type even in error condition, so
            don't check return code from above until after cleanup. */
-        if (MPI_SUCCESS != rc)
+        if (MPI_SUCCESS != rc) {
             goto cleanup;
+        }
         lastType = *newtype;
     }
 

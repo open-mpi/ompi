@@ -78,8 +78,9 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t *
             for (i = 0; i < size; ++i) {
                 if (OPAL_SUCCESS
                     == mca_common_monitoring_get_world_rank(i, data->p_comm->c_remote_group,
-                                                            &world_rank))
+                                                            &world_rank)) {
                     pos += sprintf(&tmp_procs[pos], "%d,", world_rank);
+                }
             }
             tmp_procs[pos - 1] = '\0';                            /* Remove final coma */
             data->procs = realloc(tmp_procs, pos * sizeof(char)); /* Adjust to size required */
@@ -177,8 +178,9 @@ void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t *data
 
 void mca_common_monitoring_coll_flush_all(FILE *pf)
 {
-    if (NULL == comm_data)
+    if (NULL == comm_data) {
         return; /* No hashtable */
+    }
 
     uint64_t key;
     mca_monitoring_coll_data_t *previous = NULL, *data;
@@ -196,8 +198,9 @@ void mca_common_monitoring_coll_flush_all(FILE *pf)
 
 void mca_common_monitoring_coll_reset(void)
 {
-    if (NULL == comm_data)
+    if (NULL == comm_data) {
         return; /* No hashtable */
+    }
 
     uint64_t key;
     mca_monitoring_coll_data_t *data;
@@ -233,8 +236,9 @@ int mca_common_monitoring_coll_messages_notify(mca_base_pvar_t *pvar, mca_base_p
 
 void mca_common_monitoring_coll_o2a(size_t size, mca_monitoring_coll_data_t *data)
 {
-    if (0 == mca_common_monitoring_current_state)
+    if (0 == mca_common_monitoring_current_state) {
         return; /* right now the monitoring is not started */
+    }
 #if OPAL_ENABLE_DEBUG
     if (NULL == data) {
         OPAL_MONITORING_PRINT_ERR("coll: o2a: data structure empty");
@@ -273,8 +277,9 @@ int mca_common_monitoring_coll_get_o2a_size(const struct mca_base_pvar_t *pvar, 
 
 void mca_common_monitoring_coll_a2o(size_t size, mca_monitoring_coll_data_t *data)
 {
-    if (0 == mca_common_monitoring_current_state)
+    if (0 == mca_common_monitoring_current_state) {
         return; /* right now the monitoring is not started */
+    }
 #if OPAL_ENABLE_DEBUG
     if (NULL == data) {
         OPAL_MONITORING_PRINT_ERR("coll: a2o: data structure empty");
@@ -313,8 +318,9 @@ int mca_common_monitoring_coll_get_a2o_size(const struct mca_base_pvar_t *pvar, 
 
 void mca_common_monitoring_coll_a2a(size_t size, mca_monitoring_coll_data_t *data)
 {
-    if (0 == mca_common_monitoring_current_state)
+    if (0 == mca_common_monitoring_current_state) {
         return; /* right now the monitoring is not started */
+    }
 #if OPAL_ENABLE_DEBUG
     if (NULL == data) {
         OPAL_MONITORING_PRINT_ERR("coll: a2a: data structure empty");

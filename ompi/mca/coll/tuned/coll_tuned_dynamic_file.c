@@ -296,12 +296,14 @@ on_file_error:
     OPAL_OUTPUT((ompi_coll_tuned_stream, "Fix errors as listed above and try again.\n"));
 
     /* deallocate memory if allocated */
-    if (alg_rules)
+    if (alg_rules) {
         ompi_coll_tuned_free_all_rules(alg_rules, n_collectives);
+    }
 
     /* close file */
-    if (fptr)
+    if (fptr) {
         fclose(fptr);
+    }
 
     *rules = (ompi_coll_alg_rule_t *) NULL;
     return (-1);

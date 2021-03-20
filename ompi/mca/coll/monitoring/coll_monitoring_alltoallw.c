@@ -27,8 +27,9 @@ int mca_coll_monitoring_alltoallw(const void *sbuf, const int *scounts, const in
     const int my_rank = ompi_comm_rank(comm);
     int i, rank;
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         ompi_datatype_type_size(sdtypes[i], &type_size);
         data_size = scounts[i] * type_size;
         /**
@@ -59,8 +60,9 @@ int mca_coll_monitoring_ialltoallw(const void *sbuf, const int *scounts, const i
     const int my_rank = ompi_comm_rank(comm);
     int i, rank;
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         ompi_datatype_type_size(sdtypes[i], &type_size);
         data_size = scounts[i] * type_size;
         /**

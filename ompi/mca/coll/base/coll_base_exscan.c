@@ -145,10 +145,12 @@ int ompi_coll_base_exscan_intra_recursivedoubling(const void *sendbuf, void *rec
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:exscan_intra_recursivedoubling: rank %d/%d", rank, comm_size));
-    if (count == 0)
+    if (count == 0) {
         return MPI_SUCCESS;
-    if (comm_size < 2)
+    }
+    if (comm_size < 2) {
         return MPI_SUCCESS;
+    }
 
     ptrdiff_t dsize, gap;
     dsize = opal_datatype_span(&datatype->super, count, &gap);

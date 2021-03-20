@@ -63,33 +63,31 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
      * cache.
      */
 
-    if (r > 38)
+    if (r > 38) {
         *newtype = &ompi_mpi_datatype_null.dt;
 #if OMPI_HAVE_FORTRAN_INTEGER16
-    else if (r > 18)
-        *newtype = &ompi_mpi_long_long_int.dt;
+        else if (r > 18) *newtype = &ompi_mpi_long_long_int.dt;
 #else
-    else if (r > 18)
+    } else if (r > 18) {
         *newtype = &ompi_mpi_datatype_null.dt;
 #endif /* OMPI_HAVE_F90_INTEGER16 */
 #if SIZEOF_LONG > SIZEOF_INT
-    else if (r > 9)
+    } else if (r > 9) {
         *newtype = &ompi_mpi_long.dt;
 #else
 #    if SIZEOF_LONG_LONG > SIZEOF_INT
-    else if (r > 9)
-        *newtype = &ompi_mpi_long_long_int.dt;
+        else if (r > 9) *newtype = &ompi_mpi_long_long_int.dt;
 #    else
-    else if (r > 9)
-        *newtype = &ompi_mpi_datatype_null.dt;
+        else if (r > 9) *newtype = &ompi_mpi_datatype_null.dt;
 #    endif /* SIZEOF_LONG_LONG > SIZEOF_INT */
 #endif /* SIZEOF_LONG > SIZEOF_INT */
-    else if (r > 4)
+    } else if (r > 4) {
         *newtype = &ompi_mpi_int.dt;
-    else if (r > 2)
+    } else if (r > 2) {
         *newtype = &ompi_mpi_short.dt;
-    else
+    } else {
         *newtype = &ompi_mpi_byte.dt;
+    }
 
     if (*newtype != &ompi_mpi_datatype_null.dt) {
         ompi_datatype_t *datatype;

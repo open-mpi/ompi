@@ -40,8 +40,8 @@ int32_t ompi_datatype_create_indexed(int count, const int *pBlockLength, const i
 
     /* ignore all cases that lead to an empty type */
     ompi_datatype_type_size(oldType, &dLength);
-    for (i = 0; (i < count) && (0 == pBlockLength[i]); i++)
-        ; /* find first non zero */
+    for (i = 0; (i < count) && (0 == pBlockLength[i]); i++) { /* find first non zero */
+    }
     if ((i == count) || (0 == dLength)) {
         return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
     }
@@ -53,8 +53,9 @@ int32_t ompi_datatype_create_indexed(int count, const int *pBlockLength, const i
 
     pdt = ompi_datatype_create((count - i) * (2 + oldType->super.desc.used));
     for (i += 1; i < count; i++) {
-        if (0 == pBlockLength[i]) /* ignore empty length */
+        if (0 == pBlockLength[i]) { /* ignore empty length */
             continue;
+        }
         if (endat == pDisp[i]) { /* contiguous with the previsious */
             dLength += pBlockLength[i];
             endat += pBlockLength[i];
@@ -81,8 +82,8 @@ int32_t ompi_datatype_create_hindexed(int count, const int *pBlockLength, const 
 
     /* ignore all cases that lead to an empty type */
     ompi_datatype_type_size(oldType, &dLength);
-    for (i = 0; (i < count) && (0 == pBlockLength[i]); i++)
-        ; /* find first non zero */
+    for (i = 0; (i < count) && (0 == pBlockLength[i]); i++) { /* find first non zero */
+    }
     if ((i == count) || (0 == dLength)) {
         return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
     }
@@ -94,8 +95,9 @@ int32_t ompi_datatype_create_hindexed(int count, const int *pBlockLength, const 
 
     pdt = ompi_datatype_create((count - i) * (2 + oldType->super.desc.used));
     for (i += 1; i < count; i++) {
-        if (0 == pBlockLength[i]) /* ignore empty length */
+        if (0 == pBlockLength[i]) { /* ignore empty length */
             continue;
+        }
         if (endat == pDisp[i]) { /* contiguous with the previsious */
             dLength += pBlockLength[i];
             endat += pBlockLength[i] * extent;

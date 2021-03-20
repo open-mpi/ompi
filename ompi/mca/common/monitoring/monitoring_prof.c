@@ -216,11 +216,12 @@ int MPI_Finalize(void)
                     = (exchange_size_matrix_1[i * comm_world_size + j]
                        + exchange_size_matrix_1[j * comm_world_size + i])
                       / 2;
-                if (exchange_count_matrix_1[i * comm_world_size + j] != 0)
+                if (exchange_count_matrix_1[i * comm_world_size + j] != 0) {
                     exchange_all_size_matrix[i * comm_world_size + j]
                         = exchange_all_size_matrix[j * comm_world_size + i]
                         = exchange_size_matrix_1[i * comm_world_size + j]
                           / exchange_count_matrix_1[i * comm_world_size + j];
+                }
 
                 /* Reduce COLL results */
                 exchange_count_matrix_2[i * comm_world_size + j]
@@ -233,11 +234,12 @@ int MPI_Finalize(void)
                     = (exchange_size_matrix_2[i * comm_world_size + j]
                        + exchange_size_matrix_2[j * comm_world_size + i])
                       / 2;
-                if (exchange_count_matrix_2[i * comm_world_size + j] != 0)
+                if (exchange_count_matrix_2[i * comm_world_size + j] != 0) {
                     exchange_all_count_matrix[i * comm_world_size + j]
                         = exchange_all_count_matrix[j * comm_world_size + i]
                         = exchange_size_matrix_2[i * comm_world_size + j]
                           / exchange_count_matrix_2[i * comm_world_size + j];
+                }
             }
         }
 
@@ -296,11 +298,12 @@ int MPI_Finalize(void)
                        + exchange_size_matrix_2[i * comm_world_size + j]
                        + exchange_size_matrix_2[j * comm_world_size + i])
                       / 2;
-                if (exchange_count_matrix_1[i * comm_world_size + j] != 0)
+                if (exchange_count_matrix_1[i * comm_world_size + j] != 0) {
                     exchange_all_avg_matrix[i * comm_world_size + j]
                         = exchange_all_avg_matrix[j * comm_world_size + i]
                         = exchange_size_matrix_1[i * comm_world_size + j]
                           / exchange_count_matrix_1[i * comm_world_size + j];
+                }
             }
         }
 
@@ -318,11 +321,12 @@ int MPI_Finalize(void)
                 exchange_all_count_matrix[i * comm_world_size + j]
                     = exchange_all_count_matrix[j * comm_world_size + i]
                     += exchange_count_matrix_1[i * comm_world_size + j];
-                if (exchange_all_count_matrix[i * comm_world_size + j] != 0)
+                if (exchange_all_count_matrix[i * comm_world_size + j] != 0) {
                     exchange_all_avg_matrix[i * comm_world_size + j]
                         = exchange_all_avg_matrix[j * comm_world_size + i]
                         = exchange_all_size_matrix[i * comm_world_size + j]
                           / exchange_all_count_matrix[i * comm_world_size + j];
+                }
             }
         }
 

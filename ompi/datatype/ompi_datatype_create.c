@@ -75,8 +75,9 @@ ompi_datatype_t *ompi_datatype_create(int32_t expectedSize)
     ompi_datatype_t *datatype = (ompi_datatype_t *) OBJ_NEW(ompi_datatype_t);
 
     ret = opal_datatype_create_desc(&(datatype->super), expectedSize);
-    if (OPAL_SUCCESS != ret)
+    if (OPAL_SUCCESS != ret) {
         return NULL;
+    }
 
     return datatype;
 }
@@ -85,8 +86,9 @@ int32_t ompi_datatype_destroy(ompi_datatype_t **type)
 {
     ompi_datatype_t *pData = *type;
 
-    if (ompi_datatype_is_predefined(pData) && (pData->super.super.obj_reference_count <= 1))
+    if (ompi_datatype_is_predefined(pData) && (pData->super.super.obj_reference_count <= 1)) {
         return OMPI_ERROR;
+    }
 
     OBJ_RELEASE(pData);
     *type = NULL;

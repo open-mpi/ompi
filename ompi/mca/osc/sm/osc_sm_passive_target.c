@@ -159,8 +159,9 @@ int ompi_osc_sm_lock_all(int mpi_assert, struct ompi_win_t *win)
     comm_size = ompi_comm_size(module->comm);
     for (i = 0; i < comm_size; ++i) {
         ret = ompi_osc_sm_lock(MPI_LOCK_SHARED, i, mpi_assert, win);
-        if (OMPI_SUCCESS != ret)
+        if (OMPI_SUCCESS != ret) {
             return ret;
+        }
     }
 
     return OMPI_SUCCESS;
@@ -174,8 +175,9 @@ int ompi_osc_sm_unlock_all(struct ompi_win_t *win)
     comm_size = ompi_comm_size(module->comm);
     for (i = 0; i < comm_size; ++i) {
         ret = ompi_osc_sm_unlock(i, win);
-        if (OMPI_SUCCESS != ret)
+        if (OMPI_SUCCESS != ret) {
             return ret;
+        }
     }
 
     return OMPI_SUCCESS;

@@ -194,8 +194,9 @@ int mca_pml_ob1_add_comm(ompi_communicator_t *comm)
         hdr = &frag->hdr.hdr_match;
 
         /* Is this fragment for the current communicator ? */
-        if (frag->hdr.hdr_match.hdr_ctx != comm->c_contextid)
+        if (frag->hdr.hdr_match.hdr_ctx != comm->c_contextid) {
             continue;
+        }
 
         /* As we now know we work on a fragment for this communicator
          * we should remove it from the
@@ -283,13 +284,15 @@ int mca_pml_ob1_add_procs(ompi_proc_t **procs, size_t nprocs)
     opal_bitmap_t reachable;
     int rc;
 
-    if (nprocs == 0)
+    if (nprocs == 0) {
         return OMPI_SUCCESS;
+    }
 
     OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
     rc = opal_bitmap_init(&reachable, (int) nprocs);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         return rc;
+    }
 
     /* make sure remote procs are using the same PML as us */
     if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("ob1", procs, nprocs))) {
@@ -297,8 +300,9 @@ int mca_pml_ob1_add_procs(ompi_proc_t **procs, size_t nprocs)
     }
 
     rc = mca_bml.bml_add_procs(nprocs, procs, &reachable);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     /* Check that values supplied by all initialized btls will work
        for us.  Note that this is the list of all initialized BTLs,
@@ -370,37 +374,45 @@ int mca_pml_ob1_add_procs(ompi_proc_t **procs, size_t nprocs)
     /* TODO: Move these callback registration to another place */
     rc = mca_bml.bml_register(MCA_PML_OB1_HDR_TYPE_MATCH, mca_pml_ob1_recv_frag_callback_match,
                               NULL);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     rc = mca_bml.bml_register(MCA_PML_OB1_HDR_TYPE_RNDV, mca_pml_ob1_recv_frag_callback_rndv, NULL);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     rc = mca_bml.bml_register(MCA_PML_OB1_HDR_TYPE_RGET, mca_pml_ob1_recv_frag_callback_rget, NULL);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     rc = mca_bml.bml_register(MCA_PML_OB1_HDR_TYPE_ACK, mca_pml_ob1_recv_frag_callback_ack, NULL);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     rc = mca_bml.bml_register(MCA_PML_OB1_HDR_TYPE_FRAG, mca_pml_ob1_recv_frag_callback_frag, NULL);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     rc = mca_bml.bml_register(MCA_PML_OB1_HDR_TYPE_PUT, mca_pml_ob1_recv_frag_callback_put, NULL);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     rc = mca_bml.bml_register(MCA_PML_OB1_HDR_TYPE_FIN, mca_pml_ob1_recv_frag_callback_fin, NULL);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
     /* register error handlers */
     rc = mca_bml.bml_register_error(mca_pml_ob1_error_handler);
-    if (OMPI_SUCCESS != rc)
+    if (OMPI_SUCCESS != rc) {
         goto cleanup_and_return;
+    }
 
 cleanup_and_return:
     OBJ_DESTRUCT(&reachable);
@@ -496,15 +508,17 @@ static void mca_pml_ob1_dump_frag_list(opal_list_t *queue, bool is_req)
             mca_pml_base_request_t *req = &(
                 ((mca_pml_ob1_recv_request_t *) item)->req_recv.req_base);
 
-            if (OMPI_ANY_SOURCE == req->req_peer)
+            if (OMPI_ANY_SOURCE == req->req_peer) {
                 snprintf(cpeer, 64, "%s", "ANY_SOURCE");
-            else
+            } else {
                 snprintf(cpeer, 64, "%d", req->req_peer);
+            }
 
-            if (OMPI_ANY_TAG == req->req_tag)
+            if (OMPI_ANY_TAG == req->req_tag) {
                 snprintf(ctag, 64, "%s", "ANY_TAG");
-            else
+            } else {
                 snprintf(ctag, 64, "%d", req->req_tag);
+            }
 
             opal_output(
                 0,
@@ -668,8 +682,9 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t *bml_btl)
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         pckt = (mca_pml_ob1_pckt_pending_t *) opal_list_remove_first(&mca_pml_ob1.pckt_pending);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-        if (NULL == pckt)
+        if (NULL == pckt) {
             break;
+        }
         if (pckt->bml_btl != NULL && pckt->bml_btl->btl == bml_btl->btl) {
             send_dst = pckt->bml_btl;
         } else {
@@ -726,8 +741,9 @@ void mca_pml_ob1_process_pending_rdma(void)
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         frag = (mca_pml_ob1_rdma_frag_t *) opal_list_remove_first(&mca_pml_ob1.rdma_pending);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-        if (NULL == frag)
+        if (NULL == frag) {
             break;
+        }
 
         frag->retries++;
 
@@ -736,8 +752,9 @@ void mca_pml_ob1_process_pending_rdma(void)
         } else {
             rc = mca_pml_ob1_recv_request_get_frag(frag);
         }
-        if (OMPI_ERR_OUT_OF_RESOURCE == rc)
+        if (OMPI_ERR_OUT_OF_RESOURCE == rc) {
             break;
+        }
     }
 }
 
@@ -783,10 +800,12 @@ int mca_pml_ob1_com_btl_comp(const void *v1, const void *v2)
     const mca_pml_ob1_com_btl_t *b1 = (const mca_pml_ob1_com_btl_t *) v1;
     const mca_pml_ob1_com_btl_t *b2 = (const mca_pml_ob1_com_btl_t *) v2;
 
-    if (b1->bml_btl->btl_weight < b2->bml_btl->btl_weight)
+    if (b1->bml_btl->btl_weight < b2->bml_btl->btl_weight) {
         return 1;
-    if (b1->bml_btl->btl_weight > b2->bml_btl->btl_weight)
+    }
+    if (b1->bml_btl->btl_weight > b2->bml_btl->btl_weight) {
         return -1;
+    }
 
     return 0;
 }

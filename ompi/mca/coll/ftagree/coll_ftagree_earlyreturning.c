@@ -146,10 +146,12 @@ static void era_value_constructor(era_value_t *value)
 
 static void era_value_destructor(era_value_t *value)
 {
-    if (NULL != value->bytes)
+    if (NULL != value->bytes) {
         free(value->bytes);
-    if (NULL != value->new_dead_array)
+    }
+    if (NULL != value->new_dead_array) {
         free(value->new_dead_array);
+    }
 }
 
 OBJ_CLASS_INSTANCE(era_value_t, opal_object_t, era_value_constructor, era_value_destructor);
@@ -460,8 +462,9 @@ static era_agreement_info_t *era_create_agreement_info(era_identifier_t agreemen
     }
     if (header->nb_new_dead > 0) {
         ci->current_value->new_dead_array = (int *) malloc(header->nb_new_dead * sizeof(int));
-        for (r = 0; r < header->nb_new_dead; r++)
+        for (r = 0; r < header->nb_new_dead; r++) {
             ci->current_value->new_dead_array[r] = -1;
+        }
     }
     opal_hash_table_set_value_uint64(&era_ongoing_agreements, agreement_id.ERAID_KEY, ci);
     return ci;
@@ -680,8 +683,9 @@ static void era_merge_new_dead_list(era_agreement_info_t *ci, int nb_src, int *s
     }
 #endif /*OPAL_ENABLE_DEBUG*/
 
-    if (nb_dst + nb_src == 0)
+    if (nb_dst + nb_src == 0) {
         return;
+    }
     merge = (int *) malloc((nb_dst + nb_src) * sizeof(int));
     nb_merge = 0;
     d = 0;
@@ -784,8 +788,9 @@ static void era_update_new_dead_list(era_agreement_info_t *ci)
            >= 0); /**< I should be working on an ags still attached to the communicator */
 
     /** Worst case: all processes minus me are dead */
-    if (ompi_group_size(comm->c_local_group) == 1)
+    if (ompi_group_size(comm->c_local_group) == 1) {
         return;
+    }
     ra = (int *) malloc((ompi_group_size(comm->c_local_group) - 1) * sizeof(int));
     t = 0;
     r = 0;
@@ -991,13 +996,16 @@ static void era_combine_agreement_values(era_agreement_info_t *ni, era_value_t *
             ompi_op_reduce(op, value->bytes, ni->current_value->bytes,
                            ni->current_value->header.dt_count, dt);
         }
-        if (value->header.ret > ni->current_value->header.ret)
+        if (value->header.ret > ni->current_value->header.ret) {
             ni->current_value->header.ret = value->header.ret;
+        }
 
-        if (value->header.min_aid > ni->current_value->header.min_aid)
+        if (value->header.min_aid > ni->current_value->header.min_aid) {
             ni->current_value->header.min_aid = value->header.min_aid;
-        if (value->header.max_aid < ni->current_value->header.max_aid)
+        }
+        if (value->header.max_aid < ni->current_value->header.max_aid) {
             ni->current_value->header.max_aid = value->header.max_aid;
+        }
     }
 
     era_merge_new_dead_list(ni, value->header.nb_new_dead, value->new_dead_array);
@@ -1407,8 +1415,9 @@ static void era_tree_remove_node(era_agreement_info_t *ci, int r_in_tree)
         if (s != ci->ags->tree_size) {
             while (1) {
                 ci->ags->tree[c].parent = p;
-                if (ci->ags->tree[c].next_sibling == ci->ags->tree_size)
+                if (ci->ags->tree[c].next_sibling == ci->ags->tree_size) {
                     break;
+                }
                 c = ci->ags->tree[c].next_sibling;
             }
         } /** If r_in_tree is a leaf, we don't need to do anything special */
@@ -1639,8 +1648,9 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
      *  already completed. In that case, we return silently to avoid
      *  flooding the network with more DOWN messages.
      */
-    if (ci->status == COMPLETED)
+    if (ci->status == COMPLETED) {
         return;
+    }
 
     OBJ_RETAIN(decided_value);
 
@@ -1690,24 +1700,27 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
 
         for (s = 0, r = 0; r < decided_value->header.nb_new_dead; r++) {
             while (s < AGS(comm)->afr_size
-                   && AGS(comm)->agreed_failed_ranks[s] < decided_value->new_dead_array[r])
+                   && AGS(comm)->agreed_failed_ranks[s] < decided_value->new_dead_array[r]) {
                 s++;
+            }
             if (s == AGS(comm)->afr_size) {
                 /** paste the remaining ints at the end of the array */
                 memcpy(AGS(comm)->agreed_failed_ranks + AGS(comm)->afr_size,
                        decided_value->new_dead_array + r,
                        (decided_value->header.nb_new_dead - r) * sizeof(int));
                 AGS(comm)->afr_size += decided_value->header.nb_new_dead - r;
-                if (mca_coll_ftagree_era_rebuild)
+                if (mca_coll_ftagree_era_rebuild) {
                     AGS(comm)->ags_status |= AGS_TREE_DIRTY;
+                }
                 break;
             } else if (AGS(comm)->agreed_failed_ranks[s] > decided_value->new_dead_array[r]) {
                 /** make some room for one int */
                 memmove(AGS(comm)->agreed_failed_ranks + s + 1, AGS(comm)->agreed_failed_ranks + s,
                         (AGS(comm)->afr_size - s) * sizeof(int));
                 AGS(comm)->afr_size++;
-                if (mca_coll_ftagree_era_rebuild)
+                if (mca_coll_ftagree_era_rebuild) {
                     AGS(comm)->ags_status |= AGS_TREE_DIRTY;
+                }
                 /** and insert new_dead[r] */
                 AGS(comm)->agreed_failed_ranks[s] = decided_value->new_dead_array[r];
             } else {
@@ -2482,10 +2495,11 @@ static void msg_up(era_msg_header_t *msg_header, uint8_t *bytes, int *new_dead, 
      * These pointers will need to be set to NULL *before* calling RELEASE.
      * We can do this, because combine_agreement_values does not keep a reference on av */
     av->bytes = bytes;
-    if (av->header.nb_new_dead > 0)
+    if (av->header.nb_new_dead > 0) {
         av->new_dead_array = new_dead;
-    else
+    } else {
         av->new_dead_array = NULL;
+    }
 
     /* ci holds the current agreement information structure */
     era_combine_agreement_values(ci, av);
@@ -2796,8 +2810,9 @@ static void era_on_comm_rank_failure(ompi_communicator_t *comm, int rank, bool r
                     } else {
                         shadowrank = remote ? rank : rank + ompi_group_size(comm->c_remote_group);
                     }
-                    if (NULL != ci->comm && AGS(comm) != AGS(ci->comm))
+                    if (NULL != ci->comm && AGS(comm) != AGS(ci->comm)) {
                         AGS(ci->comm)->ags_status |= AGS_AFR_DIRTY;
+                    }
                     era_mark_process_failed(ci, shadowrank);
                 }
             }
@@ -3137,8 +3152,9 @@ int mca_coll_ftagree_era_intra(void *contrib, int dt_count, ompi_datatype_t *dt,
 
     rc = mca_coll_ftagree_iera_intra(contrib, dt_count, dt, op, group, grp_update, comm, &req,
                                      module);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc))
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
+    }
     ompi_request_wait_completion(req);
     rc = req->req_status.MPI_ERROR;
     ompi_request_free(&req);
@@ -3201,8 +3217,9 @@ static int era_iagree_req_free(struct ompi_request_t **rptr)
 {
     era_iagree_request_t *req = (era_iagree_request_t *) *rptr;
 
-    if (NULL != req->ci)
+    if (NULL != req->ci) {
         req->ci->req = NULL;
+    }
     req->ci = NULL;
     OMPI_REQUEST_FINI(&req->super);
     opal_free_list_return(&era_iagree_requests, (opal_free_list_item_t *) (req));
@@ -3234,8 +3251,9 @@ int mca_coll_ftagree_iera_intra(void *contrib, int dt_count, ompi_datatype_t *dt
     era_agreement_info_t *ci;
 
     item = opal_free_list_get(&era_iagree_requests);
-    if (NULL == item)
+    if (NULL == item) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     req = (era_iagree_request_t *) item;
 
     OMPI_REQUEST_INIT(&req->super, false);

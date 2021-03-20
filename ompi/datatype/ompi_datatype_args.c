@@ -221,8 +221,9 @@ int32_t ompi_datatype_set_args(ompi_datatype_t *pData, int32_t ci, const int32_t
     }
 
     /* copy the array of MPI_Aint, aka ptrdiff_t */
-    if (pArgs->a != NULL)
+    if (pArgs->a != NULL) {
         memcpy(pArgs->a, a, ca * sizeof(ptrdiff_t));
+    }
 
     for (pos = 0; pos < cd; pos++) {
         pArgs->d[pos] = d[pos];
@@ -255,8 +256,9 @@ int32_t ompi_datatype_print_args(const ompi_datatype_t *pData)
         return OMPI_SUCCESS;
     }
 
-    if (pArgs == NULL)
+    if (pArgs == NULL) {
         return MPI_ERR_INTERN;
+    }
 
     printf("type %d count ints %d count disp %d count datatype %d\n", pArgs->create_type, pArgs->ci,
            pArgs->ca, pArgs->cd);
@@ -287,29 +289,33 @@ int32_t ompi_datatype_print_args(const ompi_datatype_t *pData)
                 continue;
             }
             if (count <= 1) {
-                if (ompi_datatype_is_predefined(old))
+                if (ompi_datatype_is_predefined(old)) {
                     printf("%s ", old->name);
-                else
+                } else {
                     printf("%p ", (void *) old);
+                }
             } else {
-                if (ompi_datatype_is_predefined(old))
+                if (ompi_datatype_is_predefined(old)) {
                     printf("(%d * %s) ", count, old->name);
-                else
+                } else {
                     printf("(%d * %p) ", count, (void *) old);
+                }
             }
             count = 1;
             old = temp;
         }
         if (count <= 1) {
-            if (ompi_datatype_is_predefined(old))
+            if (ompi_datatype_is_predefined(old)) {
                 printf("%s ", old->name);
-            else
+            } else {
                 printf("%p ", (void *) old);
+            }
         } else {
-            if (ompi_datatype_is_predefined(old))
+            if (ompi_datatype_is_predefined(old)) {
                 printf("(%d * %s) ", count, old->name);
-            else
+            } else {
                 printf("(%d * %p) ", count, (void *) old);
+            }
         }
         printf("\n");
     }
@@ -827,8 +833,9 @@ ompi_datatype_t *ompi_datatype_get_single_predefined_type_from_args(ompi_datatyp
     ompi_datatype_args_t *args = (ompi_datatype_args_t *) type->args;
     int i;
 
-    if (ompi_datatype_is_predefined(type))
+    if (ompi_datatype_is_predefined(type)) {
         return type;
+    }
 
     for (i = 0; i < args->cd; i++) {
         current_type = args->d[i];

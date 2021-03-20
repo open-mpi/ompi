@@ -14,8 +14,9 @@ int ompi_mpiext_init(void)
     while (NULL != (*tmp)) {
         if (NULL != (*tmp)->init) {
             ret = (*tmp)->init();
-            if (OMPI_SUCCESS != ret)
+            if (OMPI_SUCCESS != ret) {
                 return ret;
+            }
         }
         tmp++;
     }
@@ -31,8 +32,9 @@ int ompi_mpiext_fini(void)
     while (NULL != (*tmp)) {
         if (NULL != (*tmp)->fini) {
             ret = (*tmp)->fini();
-            if (OMPI_SUCCESS != ret)
+            if (OMPI_SUCCESS != ret) {
                 return ret;
+            }
         }
         tmp++;
     }

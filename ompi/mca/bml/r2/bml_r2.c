@@ -348,8 +348,9 @@ static void mca_bml_r2_compute_endpoint_metrics(mca_bml_base_endpoint_t *bml_end
         }
 
         /* set endpoint max send size as min of available btls */
-        if (bml_endpoint->btl_max_send_size > btl->btl_max_send_size)
+        if (bml_endpoint->btl_max_send_size > btl->btl_max_send_size) {
             bml_endpoint->btl_max_send_size = btl->btl_max_send_size;
+        }
     }
 
     /* sort BTLs in descending order according to bandwidth value */
@@ -682,8 +683,9 @@ static inline int bml_r2_remove_btl_progress(mca_btl_base_module_t *btl)
         return OMPI_SUCCESS;
     }
     for (p = 0; p < mca_bml_r2.num_btl_progress; p++) {
-        if (btl->btl_component->btl_progress != mca_bml_r2.btl_progress[p])
+        if (btl->btl_component->btl_progress != mca_bml_r2.btl_progress[p]) {
             continue;
+        }
         opal_progress_unregister(btl->btl_component->btl_progress);
         if (p < (mca_bml_r2.num_btl_progress - 1)) {
             mca_bml_r2.btl_progress[p] = mca_bml_r2.btl_progress[mca_bml_r2.num_btl_progress - 1];
@@ -703,8 +705,9 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t *proc, mca_btl_base_module_t *btl
     double total_bandwidth = 0;
     size_t b;
 
-    if (NULL == ep)
+    if (NULL == ep) {
         return OMPI_SUCCESS;
+    }
 
     /* remove btl from eager list */
     mca_bml_base_btl_array_remove(&ep->btl_eager, btl);
@@ -791,8 +794,9 @@ int mca_bml_r2_finalize(void)
 
     /* Similar to mca_bml_r2_del_btl ... */
     procs = ompi_proc_all(&num_procs);
-    if (NULL == procs)
+    if (NULL == procs) {
         goto CLEANUP;
+    }
 
     for (w_item = opal_list_get_first(&mca_btl_base_modules_initialized);
          w_item != opal_list_get_end(&mca_btl_base_modules_initialized);
@@ -853,8 +857,9 @@ static int mca_bml_r2_del_btl(mca_btl_base_module_t *btl)
     }
 
     procs = ompi_proc_all(&num_procs);
-    if (NULL == procs)
+    if (NULL == procs) {
         return OMPI_SUCCESS;
+    }
 
     /* Get rid of the associated progress function */
     bml_r2_remove_btl_progress(btl);
@@ -926,8 +931,9 @@ static int mca_bml_r2_register(mca_btl_base_tag_t tag, mca_btl_base_module_recv_
 
         for (i = 0; i < (int) mca_bml_r2.num_btl_modules; i++) {
             btl = mca_bml_r2.btl_modules[i];
-            if (NULL == btl->btl_register)
+            if (NULL == btl->btl_register) {
                 continue;
+            }
             rc = btl->btl_register(btl, tag, cbfunc, data);
             if (OMPI_SUCCESS != rc) {
                 return rc;

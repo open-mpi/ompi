@@ -400,8 +400,9 @@ int ompi_group_range_excl(ompi_group_t *group, int n_triplets, int ranges[][3],
     }
     for (j = 0; j < group->grp_proc_count; j++) {
         for (index = 0; index < i; index++) {
-            if (ranks_excluded[index] == j)
+            if (ranks_excluded[index] == j) {
                 break;
+            }
         }
         if (index == i) {
             ranks_included[k] = j;

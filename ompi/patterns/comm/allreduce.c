@@ -92,8 +92,9 @@ OMPI_DECLSPEC int ompi_comm_allreduce_pml(void *sbuf, void *rbuf, int count, omp
 
         /* get number of elements to process in this stripe */
         count_this_stripe = n_dts_per_buffer;
-        if (count_processed + count_this_stripe > count)
+        if (count_processed + count_this_stripe > count) {
             count_this_stripe = count - count_processed;
+        }
 
         /* copy data from the input buffer into the temp buffer */
         sbuf_current = (char *) sbuf + count_processed * dt_extent;

@@ -56,8 +56,9 @@ mca_coll_base_module_t *mca_coll_basic_comm_query(struct ompi_communicator_t *co
     mca_coll_basic_module_t *basic_module;
 
     basic_module = OBJ_NEW(mca_coll_basic_module_t);
-    if (NULL == basic_module)
+    if (NULL == basic_module) {
         return NULL;
+    }
 
     *priority = mca_coll_basic_priority;
 

@@ -802,8 +802,9 @@ static void ompi_report_comm_methods(int called_from_location) // 1 = from init,
             }
             for (i = 0; i < nleaderranks; ++i) {
                 for (k = 0; k < nleaderranks; ++k) {
-                    if (k == i)
+                    if (k == i) {
                         continue; // this i/k loop is for all off-host
+                    }
 
                     int this_method = method[i * nleaderranks + k];
                     ++method_count[this_method];

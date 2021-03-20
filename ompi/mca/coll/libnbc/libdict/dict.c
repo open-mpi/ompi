@@ -74,8 +74,9 @@ int dict_str_cmp(const void *k1, const void *k2)
     for (;;) {
         p = *a++;
         q = *b++;
-        if (p == 0 || p != q)
+        if (p == 0 || p != q) {
             break;
+        }
     }
     return (p > q) - (p < q);
 }

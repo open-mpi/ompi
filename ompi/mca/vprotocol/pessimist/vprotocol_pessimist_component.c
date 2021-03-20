@@ -180,8 +180,9 @@ int mca_vprotocol_pessimist_enable(bool enable)
     if (enable) {
         int ret;
         if ((ret = vprotocol_pessimist_sender_based_init(_mmap_file_name, _sender_based_size))
-            != OMPI_SUCCESS)
+            != OMPI_SUCCESS) {
             return ret;
+        }
     } else {
         vprotocol_pessimist_sender_based_finalize();
         vprotocol_pessimist_event_logger_disconnect(mca_vprotocol_pessimist.el_comm);

@@ -233,8 +233,9 @@ mca_sharedfp_individual_header_record *mca_sharedfp_individual_insert_headnode(v
         /*Allocate a headnode*/
         headnode = (mca_sharedfp_individual_header_record *) malloc(
             sizeof(mca_sharedfp_individual_header_record));
-        if (!headnode)
+        if (!headnode) {
             return NULL;
+        }
     }
 
     headnode->numofrecords = 0;       /* No records in the linked list */

@@ -111,8 +111,9 @@ static opal_print_args_buffers_t *get_print_name_buffer(void)
     }
 
     ret = opal_tsd_tracked_key_get(&print_args_tsd_key, (void **) &ptr);
-    if (OPAL_SUCCESS != ret)
+    if (OPAL_SUCCESS != ret) {
         return NULL;
+    }
 
     if (NULL == ptr) {
         ptr = (opal_print_args_buffers_t *) malloc(sizeof(opal_print_args_buffers_t));
@@ -1065,10 +1066,13 @@ static int _setup_top_session_dir(char **sdir)
 {
     char *tmpdir;
 
-    if (NULL == (tmpdir = getenv("TMPDIR")))
-        if (NULL == (tmpdir = getenv("TEMP")))
-            if (NULL == (tmpdir = getenv("TMP")))
+    if (NULL == (tmpdir = getenv("TMPDIR"))) {
+        if (NULL == (tmpdir = getenv("TEMP"))) {
+            if (NULL == (tmpdir = getenv("TMP"))) {
                 tmpdir = "/tmp";
+            }
+        }
+    }
 
     *sdir = strdup(tmpdir);
     return OPAL_SUCCESS;

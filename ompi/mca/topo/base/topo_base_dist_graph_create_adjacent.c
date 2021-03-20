@@ -97,17 +97,21 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t *module,
 
 bail_out:
     if (NULL != topo) {
-        if (NULL != topo->in)
+        if (NULL != topo->in) {
             free(topo->in);
-        if (MPI_UNWEIGHTED != sourceweights) {
-            if (NULL != topo->inw)
-                free(topo->inw);
         }
-        if (NULL != topo->out)
+        if (MPI_UNWEIGHTED != sourceweights) {
+            if (NULL != topo->inw) {
+                free(topo->inw);
+            }
+        }
+        if (NULL != topo->out) {
             free(topo->out);
+        }
         if (MPI_UNWEIGHTED != destweights) {
-            if (NULL != topo->outw)
+            if (NULL != topo->outw) {
                 free(topo->outw);
+            }
         }
         OBJ_RELEASE(topo);
     }

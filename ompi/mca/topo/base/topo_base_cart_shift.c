@@ -78,8 +78,9 @@ int mca_topo_base_cart_shift(ompi_communicator_t *comm, int direction, int disp,
         *rank_dest = MPI_PROC_NULL;
     } else {
         destord %= thisdirection;
-        if (destord < 0)
+        if (destord < 0) {
             destord += thisdirection;
+        }
         *rank_dest = ompi_comm_rank(comm);
         *rank_dest += ((destord - ord) * factor);
     }
@@ -87,8 +88,9 @@ int mca_topo_base_cart_shift(ompi_communicator_t *comm, int direction, int disp,
         *rank_source = MPI_PROC_NULL;
     } else {
         srcord %= thisdirection;
-        if (srcord < 0)
+        if (srcord < 0) {
             srcord += thisdirection;
+        }
         *rank_source = ompi_comm_rank(comm);
         *rank_source += ((srcord - ord) * factor);
     }

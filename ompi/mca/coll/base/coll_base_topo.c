@@ -34,10 +34,12 @@
 static int pown(int fanout, int num)
 {
     int j, p = 1;
-    if (num < 0)
+    if (num < 0) {
         return 0;
-    if (1 == num)
+    }
+    if (1 == num) {
         return fanout;
+    }
     if (2 == fanout) {
         return p << num;
     } else {
@@ -51,8 +53,9 @@ static int pown(int fanout, int num)
 static int calculate_level(int fanout, int rank)
 {
     int level, num;
-    if (rank < 0)
+    if (rank < 0) {
         return -1;
+    }
     for (level = 0, num = 0; num <= rank; level++) {
         num += pown(fanout, level);
     }
@@ -261,10 +264,12 @@ ompi_coll_tree_t *ompi_coll_base_topo_build_in_order_bintree(struct ompi_communi
         if (myrank == parent) {
             /* I am the parent:
                - compute real ranks of my children, and exit the loop. */
-            if (lchild >= 0)
+            if (lchild >= 0) {
                 tree->tree_next[0] = lchild + delta;
-            if (rchild >= 0)
+            }
+            if (rchild >= 0) {
                 tree->tree_next[1] = rchild + delta;
+            }
             break;
         }
         if (myrank > rchild) {
@@ -365,8 +370,9 @@ ompi_coll_tree_t *ompi_coll_base_topo_build_bmtree(struct ompi_communicator_t *c
         bmtree->tree_next[i] = -1;
     }
 
-    if (index < 0)
+    if (index < 0) {
         index += size;
+    }
 
     mask = opal_next_poweroftwo(index);
 
@@ -375,18 +381,21 @@ ompi_coll_tree_t *ompi_coll_base_topo_build_bmtree(struct ompi_communicator_t *c
         bmtree->tree_prev = root;
     } else {
         remote = (index ^ (mask >> 1)) + root;
-        if (remote >= size)
+        if (remote >= size) {
             remote -= size;
+        }
         bmtree->tree_prev = remote;
     }
     /* And now let's fill my childs */
     while (mask < size) {
         remote = (index ^ mask);
-        if (remote >= size)
+        if (remote >= size) {
             break;
+        }
         remote += root;
-        if (remote >= size)
+        if (remote >= size) {
             remote -= size;
+        }
         if (childs == MAXTREEFANOUT) {
             OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                          "coll:base:topo:build_bmtree max fanout incorrect %d needed %d",
@@ -499,8 +508,9 @@ ompi_coll_tree_t *ompi_coll_base_topo_build_kmtree(struct ompi_communicator_t *c
 
     /* nchilds <= (radix - 1) * \ceil(\log_{radix}(comm_size)) */
     int log_radix = 0;
-    for (int i = 1; i < comm_size; i *= radix)
+    for (int i = 1; i < comm_size; i *= radix) {
         log_radix++;
+    }
     int nchilds_max = (radix - 1) * log_radix;
 
     int vrank = (rank - root + comm_size) % comm_size;
@@ -586,8 +596,9 @@ ompi_coll_tree_t *ompi_coll_base_topo_build_chain(int fanout, struct ompi_commun
     }
     chain->tree_root = MPI_UNDEFINED;
     chain->tree_nextsize = -1;
-    for (i = 0; i < fanout; i++)
+    for (i = 0; i < fanout; i++) {
         chain->tree_next[i] = -1;
+    }
 
     /*
      * Set root & numchain
@@ -604,17 +615,19 @@ ompi_coll_tree_t *ompi_coll_base_topo_build_chain(int fanout, struct ompi_commun
      * Shift ranks
      */
     srank = rank - root;
-    if (srank < 0)
+    if (srank < 0) {
         srank += size;
+    }
 
     /*
      * Special case - fanout == 1
      */
     if (fanout == 1) {
-        if (srank == 0)
+        if (srank == 0) {
             chain->tree_prev = -1;
-        else
+        } else {
             chain->tree_prev = (srank - 1 + root) % size;
+        }
 
         if ((srank + 1) >= size) {
             chain->tree_next[0] = -1;
@@ -709,9 +722,10 @@ int ompi_coll_base_topo_dump_tree(ompi_coll_tree_t *tree, int rank)
                  rank, tree->tree_root, tree->tree_bmtree, tree->tree_fanout, tree->tree_nextsize,
                  tree->tree_prev));
     if (tree->tree_nextsize) {
-        for (i = 0; i < tree->tree_nextsize; i++)
+        for (i = 0; i < tree->tree_nextsize; i++) {
             OPAL_OUTPUT(
                 (ompi_coll_base_framework.framework_output, "[%1d] %d", i, tree->tree_next[i]));
+        }
     }
     return (0);
 }

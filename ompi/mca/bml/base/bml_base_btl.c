@@ -52,12 +52,14 @@ int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t *array, size_t size)
 {
     size_t old_len = sizeof(mca_bml_base_btl_t) * array->arr_reserve;
     size_t new_len = sizeof(mca_bml_base_btl_t) * size;
-    if (old_len >= new_len)
+    if (old_len >= new_len) {
         return OMPI_SUCCESS;
+    }
 
     array->bml_btls = (mca_bml_base_btl_t *) realloc(array->bml_btls, new_len);
-    if (NULL == array->bml_btls)
+    if (NULL == array->bml_btls) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     memset((unsigned char *) array->bml_btls + old_len, 0, new_len - old_len);
     array->arr_reserve = size;
     return OMPI_SUCCESS;

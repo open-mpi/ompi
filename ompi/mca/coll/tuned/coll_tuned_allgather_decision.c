@@ -57,8 +57,8 @@ int ompi_coll_tuned_allgather_intra_check_forced_init(
     mca_base_var_enum_t *new_enum;
     int cnt;
 
-    for (cnt = 0; NULL != allgather_algorithms[cnt].string; cnt++)
-        ;
+    for (cnt = 0; NULL != allgather_algorithms[cnt].string; cnt++) {
+    }
     ompi_coll_tuned_forced_max_algorithms[ALLGATHER] = cnt;
 
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,

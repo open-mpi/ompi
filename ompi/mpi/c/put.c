@@ -74,8 +74,9 @@ int MPI_Put(const void *origin_addr, int origin_count, MPI_Datatype origin_datat
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
     }
 
-    if (MPI_PROC_NULL == target_rank)
+    if (MPI_PROC_NULL == target_rank) {
         return MPI_SUCCESS;
+    }
 
     rc = win->w_osc_module->osc_put(origin_addr, origin_count, origin_datatype, target_rank,
                                     target_disp, target_count, target_datatype, win);

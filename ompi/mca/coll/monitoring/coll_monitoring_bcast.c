@@ -27,8 +27,9 @@ int mca_coll_monitoring_bcast(void *buff, int count, struct ompi_datatype_t *dat
         int i, rank;
         mca_common_monitoring_coll_o2a(data_size * (comm_size - 1), monitoring_module->data);
         for (i = 0; i < comm_size; ++i) {
-            if (i == root)
+            if (i == root) {
                 continue; /* No self sending */
+            }
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
@@ -56,8 +57,9 @@ int mca_coll_monitoring_ibcast(void *buff, int count, struct ompi_datatype_t *da
         int i, rank;
         mca_common_monitoring_coll_o2a(data_size * (comm_size - 1), monitoring_module->data);
         for (i = 0; i < comm_size; ++i) {
-            if (i == root)
+            if (i == root) {
                 continue; /* No self sending */
+            }
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank

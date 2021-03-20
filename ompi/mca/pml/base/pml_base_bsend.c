@@ -82,8 +82,9 @@ int mca_pml_base_bsend_init(bool thread_safe)
 {
     size_t tmp;
 
-    if (OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init, 1) > 1)
+    if (OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init, 1) > 1) {
         return OMPI_SUCCESS;
+    }
 
     /* initialize static objects */
     OBJ_CONSTRUCT(&mca_pml_bsend_mutex, opal_mutex_t);
@@ -111,11 +112,13 @@ int mca_pml_base_bsend_init(bool thread_safe)
  */
 int mca_pml_base_bsend_fini(void)
 {
-    if (OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init, -1) > 0)
+    if (OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init, -1) > 0) {
         return OMPI_SUCCESS;
+    }
 
-    if (NULL != mca_pml_bsend_allocator)
+    if (NULL != mca_pml_bsend_allocator) {
         mca_pml_bsend_allocator->alc_finalize(mca_pml_bsend_allocator);
+    }
     mca_pml_bsend_allocator = NULL;
 
     OBJ_DESTRUCT(&mca_pml_bsend_condition);
@@ -186,18 +189,21 @@ int mca_pml_base_bsend_detach(void *addr, int *size)
     }
 
     /* wait on any pending requests */
-    while (mca_pml_bsend_count != 0)
+    while (mca_pml_bsend_count != 0) {
         opal_condition_wait(&mca_pml_bsend_condition, &mca_pml_bsend_mutex);
+    }
 
     /* free resources associated with the allocator */
     mca_pml_bsend_allocator->alc_finalize(mca_pml_bsend_allocator);
     mca_pml_bsend_allocator = NULL;
 
     /* return current settings */
-    if (NULL != addr)
+    if (NULL != addr) {
         *((void **) addr) = mca_pml_bsend_userbase;
-    if (NULL != size)
+    }
+    if (NULL != size) {
         *size = (int) mca_pml_bsend_usersize;
+    }
 
     /* reset local variables */
     mca_pml_bsend_userbase = NULL;
@@ -349,8 +355,9 @@ int mca_pml_base_bsend_request_free(void *addr)
     mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, addr);
 
     /* decrement count of buffered requests */
-    if (--mca_pml_bsend_count == 0)
+    if (--mca_pml_bsend_count == 0) {
         opal_condition_signal(&mca_pml_bsend_condition);
+    }
 
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
@@ -363,8 +370,9 @@ int mca_pml_base_bsend_request_fini(ompi_request_t *request)
 {
     mca_pml_base_send_request_t *sendreq = (mca_pml_base_send_request_t *) request;
     if (sendreq->req_bytes_packed == 0 || sendreq->req_addr == NULL
-        || sendreq->req_addr == sendreq->req_base.req_addr)
+        || sendreq->req_addr == sendreq->req_base.req_addr) {
         return OMPI_SUCCESS;
+    }
 
     /* remove from list of pending requests */
     OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
@@ -374,8 +382,9 @@ int mca_pml_base_bsend_request_fini(ompi_request_t *request)
     sendreq->req_addr = sendreq->req_base.req_addr;
 
     /* decrement count of buffered requests */
-    if (--mca_pml_bsend_count == 0)
+    if (--mca_pml_bsend_count == 0) {
         opal_condition_signal(&mca_pml_bsend_condition);
+    }
 
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;

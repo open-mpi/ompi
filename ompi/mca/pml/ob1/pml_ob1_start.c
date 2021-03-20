@@ -87,8 +87,9 @@ int mca_pml_ob1_start(size_t count, ompi_request_t **requests)
             pml_request->req_pml_complete = false;
 
             MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
-            if (rc != OMPI_SUCCESS)
+            if (rc != OMPI_SUCCESS) {
                 return rc;
+            }
             break;
         }
         case MCA_PML_REQUEST_RECV: {

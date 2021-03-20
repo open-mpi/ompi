@@ -432,8 +432,9 @@ int mca_sharedfp_individual_getoffset(double timestamp, double *ts, int *ranks, 
     int notfound = 1;
 
     while (notfound) {
-        if (ts[i] == timestamp && ranks[i] == myrank)
+        if (ts[i] == timestamp && ranks[i] == myrank) {
             break;
+        }
 
         i++;
 

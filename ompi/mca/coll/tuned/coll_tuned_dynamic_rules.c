@@ -43,8 +43,9 @@ ompi_coll_alg_rule_t *ompi_coll_tuned_mk_alg_rules(int n_alg)
     ompi_coll_alg_rule_t *alg_rules;
 
     alg_rules = (ompi_coll_alg_rule_t *) calloc(n_alg, sizeof(ompi_coll_alg_rule_t));
-    if (!alg_rules)
+    if (!alg_rules) {
         return (alg_rules);
+    }
 
     /* set all we can at this point */
     for (i = 0; i < n_alg; i++) {
@@ -59,8 +60,9 @@ ompi_coll_com_rule_t *ompi_coll_tuned_mk_com_rules(int n_com_rules, int alg_rule
     ompi_coll_com_rule_t *com_rules;
 
     com_rules = (ompi_coll_com_rule_t *) calloc(n_com_rules, sizeof(ompi_coll_com_rule_t));
-    if (!com_rules)
+    if (!com_rules) {
         return (com_rules);
+    }
 
     for (i = 0; i < n_com_rules; i++) {
         com_rules[i].mpi_comsize = 0; /* unknown */
@@ -79,8 +81,9 @@ ompi_coll_msg_rule_t *ompi_coll_tuned_mk_msg_rules(int n_msg_rules, int alg_rule
     ompi_coll_msg_rule_t *msg_rules;
 
     msg_rules = (ompi_coll_msg_rule_t *) calloc(n_msg_rules, sizeof(ompi_coll_msg_rule_t));
-    if (!msg_rules)
+    if (!msg_rules) {
         return (msg_rules);
+    }
 
     for (i = 0; i < n_msg_rules; i++) {
         msg_rules[i].mpi_comsize = mpi_comsize;

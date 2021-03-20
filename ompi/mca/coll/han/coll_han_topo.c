@@ -141,10 +141,12 @@ int *mca_coll_han_topo_init(struct ompi_communicator_t *comm, mca_coll_han_modul
         assert(MPI_REQUEST_NULL == request);
         han_module->are_ppn_imbalanced = true;
         free(topo);
-        if (NULL != my_low_rank_map)
+        if (NULL != my_low_rank_map) {
             free(my_low_rank_map);
-        if (NULL != ranks_map)
+        }
+        if (NULL != ranks_map) {
             free(ranks_map);
+        }
         return NULL;
     }
 

@@ -42,12 +42,14 @@ mca_coll_base_module_t *mca_coll_ftagree_comm_query(struct ompi_communicator_t *
     mca_coll_ftagree_module_t *ftagree_module;
 
     /* No FT, no need for fancy agreements */
-    if (!ompi_ftmpi_enabled)
+    if (!ompi_ftmpi_enabled) {
         return NULL;
+    }
 
     ftagree_module = OBJ_NEW(mca_coll_ftagree_module_t);
-    if (NULL == ftagree_module)
+    if (NULL == ftagree_module) {
         return NULL;
+    }
 
     *priority = mca_coll_ftagree_priority;
 

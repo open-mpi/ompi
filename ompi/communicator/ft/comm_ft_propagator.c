@@ -43,8 +43,9 @@ int ompi_comm_failure_propagator_init(void)
 {
     int ret;
 
-    if (!comm_rbcast_enable || !ompi_ftmpi_enabled)
+    if (!comm_rbcast_enable || !ompi_ftmpi_enabled) {
         return OMPI_SUCCESS;
+    }
 
     ret = ompi_comm_rbcast_register_cb_type(
         (ompi_comm_rbcast_cb_t) ompi_comm_failure_propagator_local);
@@ -58,8 +59,9 @@ int ompi_comm_failure_propagator_init(void)
 int ompi_comm_failure_propagator_finalize(void)
 {
     int ret;
-    if (-1 == comm_failure_propagator_cb_type)
+    if (-1 == comm_failure_propagator_cb_type) {
         return OMPI_SUCCESS;
+    }
     ret = ompi_comm_rbcast_unregister_cb_type(comm_failure_propagator_cb_type);
     comm_failure_propagator_cb_type = -1;
     return ret;
@@ -72,8 +74,9 @@ int ompi_comm_failure_propagate(ompi_communicator_t *comm, ompi_proc_t *proc, in
 {
     int ret = OMPI_SUCCESS;
 
-    if (-1 == comm_failure_propagator_cb_type)
+    if (-1 == comm_failure_propagator_cb_type) {
         return OMPI_SUCCESS;
+    }
 
     OPAL_OUTPUT_VERBOSE(
         (2, ompi_ftmpi_output_handle,

@@ -533,8 +533,9 @@ int mca_fcoll_dynamic_gen2_file_read_all(ompio_file_t *fh, void *buf, int count,
             entries_per_aggregator = 0;
             for (i = 0; i < fh->f_procs_per_group; i++) {
                 for (j = 0; j < disp_index[i]; j++) {
-                    if (blocklen_per_process[i][j] > 0)
+                    if (blocklen_per_process[i][j] > 0) {
                         entries_per_aggregator++;
+                    }
                 }
             }
             if (entries_per_aggregator > 0) {

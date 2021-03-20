@@ -21,8 +21,9 @@ int mca_coll_monitoring_barrier(struct ompi_communicator_t *comm, mca_coll_base_
     const int comm_size = ompi_comm_size(comm);
     const int my_rank = ompi_comm_rank(comm);
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
@@ -43,8 +44,9 @@ int mca_coll_monitoring_ibarrier(struct ompi_communicator_t *comm, ompi_request_
     const int comm_size = ompi_comm_size(comm);
     const int my_rank = ompi_comm_rank(comm);
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank

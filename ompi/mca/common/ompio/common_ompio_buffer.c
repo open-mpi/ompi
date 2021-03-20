@@ -90,8 +90,9 @@ int mca_common_ompio_buffer_alloc_init(void)
 {
     bool thread_safe = true;
 
-    if (OPAL_THREAD_ADD_FETCH32(&mca_common_ompio_buffer_init, 1) > 1)
+    if (OPAL_THREAD_ADD_FETCH32(&mca_common_ompio_buffer_init, 1) > 1) {
         return OMPI_SUCCESS;
+    }
 
     /* initialize static objects */
     OBJ_CONSTRUCT(&mca_common_ompio_buffer_mutex, opal_mutex_t);

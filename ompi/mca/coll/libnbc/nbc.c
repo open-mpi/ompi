@@ -375,10 +375,11 @@ int NBC_Progress(NBC_Handle *handle)
                         || MPI_ERR_REVOKED == subreq->req_status.MPI_ERROR) {
                         NBC_DEBUG(1, "MPI Error in NBC subrequest %p : %d)", subreq,
                                   subreq->req_status.MPI_ERROR);
-                    } else // this 'else' intentionally spills outside the ifdef
+                    } else { // this 'else' intentionally spills outside the ifdef
 #endif /* OPAL_ENABLE_FT_MPI */
                         NBC_Error("MPI Error in NBC subrequest %p : %d", subreq,
                                   subreq->req_status.MPI_ERROR);
+                    }
                     /* copy the error code from the underlying request and let the
                      * round finish */
                     handle->super.super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
@@ -801,8 +802,9 @@ int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
     }
 
     OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, persistent, handle);
-    if (NULL == handle)
+    if (NULL == handle) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     handle->tmpbuf = NULL;
     handle->req_count = 0;

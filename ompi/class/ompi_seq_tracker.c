@@ -33,8 +33,9 @@ static void ompi_seq_tracker_construct(ompi_seq_tracker_t *seq_tracker)
 static void ompi_seq_tracker_destruct(ompi_seq_tracker_t *seq_tracker)
 {
     opal_list_item_t *item;
-    while (NULL != (item = opal_list_remove_first(&seq_tracker->seq_ids)))
+    while (NULL != (item = opal_list_remove_first(&seq_tracker->seq_ids))) {
         OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&seq_tracker->seq_ids);
 }
 

@@ -53,8 +53,9 @@ static int mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount,
     ptrdiff_t lb, rdextent, sdextent;
     int rc = MPI_SUCCESS, dim, nreqs;
 
-    if (0 == cart->ndims)
+    if (0 == cart->ndims) {
         return OMPI_SUCCESS;
+    }
 
     ompi_datatype_get_extent(rdtype, &lb, &rdextent);
     ompi_datatype_get_extent(sdtype, &lb, &sdextent);
@@ -77,8 +78,9 @@ static int mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount,
             nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, srank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim, comm, preqs++));
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
 
         rbuf = (char *) rbuf + rdextent * rcount;
@@ -87,8 +89,9 @@ static int mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount,
             nreqs++;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, drank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1, comm, preqs++));
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
 
         rbuf = (char *) rbuf + rdextent * rcount;
@@ -115,8 +118,9 @@ static int mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount,
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, srank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1,
                                     MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
 
         sbuf = (const char *) sbuf + sdextent * scount;
@@ -126,8 +130,9 @@ static int mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount,
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, drank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim,
                                     MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
 
         sbuf = (const char *) sbuf + sdextent * scount;
@@ -159,8 +164,9 @@ static int mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, int scount,
     const int *edges;
 
     mca_topo_base_graph_neighbors_count(comm, rank, &degree);
-    if (0 == degree)
+    if (0 == degree) {
         return OMPI_SUCCESS;
+    }
 
     edges = graph->edges;
     if (rank > 0) {
@@ -178,8 +184,9 @@ static int mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, int scount,
     for (neighbor = 0; neighbor < degree; ++neighbor) {
         rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, edges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL,
                                 comm, preqs++));
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             break;
+        }
         rbuf = (char *) rbuf + rdextent * rcount;
     }
     if (MPI_SUCCESS != rc) {
@@ -193,8 +200,9 @@ static int mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, int scount,
         rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, edges[neighbor],
                                 MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD, comm,
                                 preqs++));
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             break;
+        }
         sbuf = (const char *) sbuf + sdextent * scount;
     }
 
@@ -225,8 +233,9 @@ static int mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, int sco
 
     indegree = dist_graph->indegree;
     outdegree = dist_graph->outdegree;
-    if (0 == (indegree + outdegree))
+    if (0 == (indegree + outdegree)) {
         return OMPI_SUCCESS;
+    }
 
     inedges = dist_graph->in;
     outedges = dist_graph->out;
@@ -242,8 +251,9 @@ static int mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, int sco
     for (neighbor = 0; neighbor < indegree; ++neighbor) {
         rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, inedges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL,
                                 comm, preqs++));
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             break;
+        }
         rbuf = (char *) rbuf + rdextent * rcount;
     }
 
@@ -258,8 +268,9 @@ static int mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, int sco
         rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, outedges[neighbor],
                                 MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD, comm,
                                 preqs++));
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             break;
+        }
         sbuf = (char *) sbuf + sdextent * scount;
     }
 

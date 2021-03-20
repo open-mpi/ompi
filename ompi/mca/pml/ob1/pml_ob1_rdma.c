@@ -102,8 +102,9 @@ size_t mca_pml_ob1_rdma_btls(mca_bml_base_endpoint_t *bml_endpoint, unsigned cha
     /* if we don't use leave_pinned and all BTLs that already have this memory
      * registered amount to less then half of available bandwidth - fall back to
      * pipeline protocol */
-    if (0 == num_btls_used || (!opal_leave_pinned && weight_total < 0.5))
+    if (0 == num_btls_used || (!opal_leave_pinned && weight_total < 0.5)) {
         return 0;
+    }
 
     mca_pml_ob1_calc_weighted_length(rdma_btls, num_btls_used, size, weight_total);
 

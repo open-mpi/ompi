@@ -45,8 +45,9 @@ int mca_pml_ob1_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
 {
     mca_pml_ob1_send_request_t *sendreq = NULL;
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
-    if (NULL == sendreq)
+    if (NULL == sendreq) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag, comm, sendmode, true);
 
@@ -75,8 +76,9 @@ static inline int mca_pml_ob1_send_inline(const void *buf, size_t count, ompi_da
     int rc;
 
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
-    if (NULL == bml_btl->btl->btl_sendi)
+    if (NULL == bml_btl->btl->btl_sendi) {
         return OMPI_ERR_NOT_AVAILABLE;
+    }
 
     ompi_datatype_type_size(datatype, &size);
     if ((size * count) > 256) { /* some random number */
@@ -169,8 +171,9 @@ int mca_pml_ob1_isend(const void *buf, size_t count, ompi_datatype_t *datatype, 
     }
 
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
-    if (NULL == sendreq)
+    if (NULL == sendreq) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag, comm, sendmode, false);
 
@@ -184,8 +187,9 @@ int mca_pml_ob1_isend(const void *buf, size_t count, ompi_datatype_t *datatype, 
 alloc_ft_req:
 #endif /* OPAL_ENABLE_FT_MPI */
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
-    if (NULL == sendreq)
+    if (NULL == sendreq) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag, comm, sendmode, false);
 
@@ -256,8 +260,9 @@ int mca_pml_ob1_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
 
     if (OPAL_UNLIKELY(NULL == sendreq)) {
         MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
-        if (NULL == sendreq)
+        if (NULL == sendreq) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        }
     }
 
     sendreq->req_send.req_base.req_proc = dst_proc;

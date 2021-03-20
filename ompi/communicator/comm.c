@@ -1540,8 +1540,9 @@ int ompi_comm_get_rprocs(ompi_communicator_t *local_comm, ompi_communicator_t *b
         else {
             proc_list = (ompi_proc_t **) calloc(local_comm->c_local_group->grp_proc_count,
                                                 sizeof(ompi_proc_t *));
-            for (i = 0; i < local_comm->c_local_group->grp_proc_count; i++)
+            for (i = 0; i < local_comm->c_local_group->grp_proc_count; i++) {
                 proc_list[i] = ompi_group_peer_lookup(local_comm->c_local_group, i);
+            }
             rc = ompi_proc_pack(proc_list, local_size, sbuf);
         }
         if (OMPI_SUCCESS != rc) {
@@ -1807,14 +1808,16 @@ int ompi_comm_dump(ompi_communicator_t *comm)
 
     opal_output(0, "  Communicator is:");
     /* Display flags */
-    if (OMPI_COMM_IS_INTER(comm))
+    if (OMPI_COMM_IS_INTER(comm)) {
         opal_output(0, " inter-comm,");
-    if (OMPI_COMM_IS_CART(comm))
+    }
+    if (OMPI_COMM_IS_CART(comm)) {
         opal_output(0, " topo-cart");
-    else if (OMPI_COMM_IS_GRAPH(comm))
+    } else if (OMPI_COMM_IS_GRAPH(comm)) {
         opal_output(0, " topo-graph");
-    else if (OMPI_COMM_IS_DIST_GRAPH(comm))
+    } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
         opal_output(0, " topo-dist-graph");
+    }
     opal_output(0, "\n");
 
     if (OMPI_COMM_IS_INTER(comm)) {
@@ -1973,8 +1976,9 @@ static int ompi_comm_fill_rest(ompi_communicator_t *comm, int num_procs,
 
 static int ompi_comm_copy_topo(ompi_communicator_t *oldcomm, ompi_communicator_t *newcomm)
 {
-    if (NULL == oldcomm->c_topo)
+    if (NULL == oldcomm->c_topo) {
         return OMPI_ERR_NOT_FOUND;
+    }
 
     newcomm->c_topo = oldcomm->c_topo;
     OBJ_RETAIN(newcomm->c_topo);

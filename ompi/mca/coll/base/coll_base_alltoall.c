@@ -555,10 +555,12 @@ error_hndl:
     /* find a real error code */
     if (MPI_ERR_IN_STATUS == error) {
         for (ri = 0; ri < nreqs; ri++) {
-            if (MPI_REQUEST_NULL == reqs[ri])
+            if (MPI_REQUEST_NULL == reqs[ri]) {
                 continue;
-            if (MPI_ERR_PENDING == reqs[ri]->req_status.MPI_ERROR)
+            }
+            if (MPI_ERR_PENDING == reqs[ri]->req_status.MPI_ERROR) {
                 continue;
+            }
             error = reqs[ri]->req_status.MPI_ERROR;
             break;
         }
@@ -770,10 +772,12 @@ err_hndl:
         /* find a real error code */
         if (MPI_ERR_IN_STATUS == err) {
             for (i = 0; i < nreqs; i++) {
-                if (MPI_REQUEST_NULL == req[i])
+                if (MPI_REQUEST_NULL == req[i]) {
                     continue;
-                if (MPI_ERR_PENDING == req[i]->req_status.MPI_ERROR)
+                }
+                if (MPI_ERR_PENDING == req[i]->req_status.MPI_ERROR) {
                     continue;
+                }
                 err = req[i]->req_status.MPI_ERROR;
                 break;
             }

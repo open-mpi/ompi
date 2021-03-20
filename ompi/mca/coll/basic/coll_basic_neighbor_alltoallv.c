@@ -47,8 +47,9 @@ static int mca_coll_basic_neighbor_alltoallv_cart(
     ptrdiff_t lb, rdextent, sdextent;
     ompi_request_t **reqs, **preqs;
 
-    if (0 == cart->ndims)
+    if (0 == cart->ndims) {
         return OMPI_SUCCESS;
+    }
 
     ompi_datatype_get_extent(rdtype, &lb, &rdextent);
     ompi_datatype_get_extent(sdtype, &lb, &sdextent);
@@ -71,8 +72,9 @@ static int mca_coll_basic_neighbor_alltoallv_cart(
             nreqs++;
             rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[i] * rdextent, rcounts[i], rdtype, srank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim, comm, preqs++));
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
 
         if (MPI_PROC_NULL != drank) {
@@ -80,8 +82,9 @@ static int mca_coll_basic_neighbor_alltoallv_cart(
             rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[i + 1] * rdextent, rcounts[i + 1],
                                     rdtype, drank, MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1,
                                     comm, preqs++));
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
     }
 
@@ -106,8 +109,9 @@ static int mca_coll_basic_neighbor_alltoallv_cart(
             rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[i] * sdextent, scounts[i], sdtype, srank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1,
                                     MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
 
         if (MPI_PROC_NULL != drank) {
@@ -115,8 +119,9 @@ static int mca_coll_basic_neighbor_alltoallv_cart(
             rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[i + 1] * sdextent, scounts[i + 1],
                                     sdtype, drank, MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim,
                                     MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
-            if (OMPI_SUCCESS != rc)
+            if (OMPI_SUCCESS != rc) {
                 break;
+            }
         }
     }
 
@@ -145,8 +150,9 @@ static int mca_coll_basic_neighbor_alltoallv_graph(
     const int *edges;
 
     mca_topo_base_graph_neighbors_count(comm, rank, &degree);
-    if (0 == degree)
+    if (0 == degree) {
         return OMPI_SUCCESS;
+    }
 
     edges = graph->edges;
     if (rank > 0) {
@@ -165,8 +171,9 @@ static int mca_coll_basic_neighbor_alltoallv_graph(
         rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[neighbor] * rdextent, rcounts[neighbor],
                                 rdtype, edges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL, comm,
                                 preqs++));
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             break;
+        }
     }
 
     if (OMPI_SUCCESS != rc) {
@@ -180,8 +187,9 @@ static int mca_coll_basic_neighbor_alltoallv_graph(
         rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[neighbor] * sdextent, scounts[neighbor],
                                 sdtype, edges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL,
                                 MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             break;
+        }
     }
 
     if (OMPI_SUCCESS != rc) {
@@ -210,8 +218,9 @@ static int mca_coll_basic_neighbor_alltoallv_dist_graph(
 
     indegree = dist_graph->indegree;
     outdegree = dist_graph->outdegree;
-    if (0 == (indegree + outdegree))
+    if (0 == (indegree + outdegree)) {
         return OMPI_SUCCESS;
+    }
 
     inedges = dist_graph->in;
     outedges = dist_graph->out;
@@ -228,8 +237,9 @@ static int mca_coll_basic_neighbor_alltoallv_dist_graph(
         rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[neighbor] * rdextent, rcounts[neighbor],
                                 rdtype, inedges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL, comm,
                                 preqs++));
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             break;
+        }
     }
 
     if (OMPI_SUCCESS != rc) {
@@ -243,8 +253,9 @@ static int mca_coll_basic_neighbor_alltoallv_dist_graph(
         rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[neighbor] * sdextent, scounts[neighbor],
                                 sdtype, outedges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL,
                                 MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             break;
+        }
     }
 
     if (OMPI_SUCCESS != rc) {

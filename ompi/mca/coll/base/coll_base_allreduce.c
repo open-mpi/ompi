@@ -223,8 +223,9 @@ int ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbu
        result = value (op) result
     */
     for (distance = 0x1; distance < adjsize; distance <<= 1) {
-        if (newrank < 0)
+        if (newrank < 0) {
             break;
+        }
         /* Determine remote node */
         newremote = newrank ^ distance;
         remote = (newremote < extra_ranks) ? (newremote * 2 + 1) : (newremote + extra_ranks);
@@ -1095,8 +1096,9 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(const void *sbuf, void *rbu
     /* Temporary buffer for receiving messages */
     char *tmp_buf = NULL;
     char *tmp_buf_raw = (char *) malloc(dsize);
-    if (NULL == tmp_buf_raw)
+    if (NULL == tmp_buf_raw) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     tmp_buf = tmp_buf_raw - gap;
 
     if (sbuf != MPI_IN_PLACE) {

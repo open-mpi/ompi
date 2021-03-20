@@ -28,8 +28,9 @@ int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf, const int *
     int i, rank;
     ompi_datatype_type_size(dtype, &type_size);
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         data_size = rcounts[i] * type_size;
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
@@ -58,8 +59,9 @@ int mca_coll_monitoring_ireduce_scatter(const void *sbuf, void *rbuf, const int 
     int i, rank;
     ompi_datatype_type_size(dtype, &type_size);
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         data_size = rcounts[i] * type_size;
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD

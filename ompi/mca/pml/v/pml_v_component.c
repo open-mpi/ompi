@@ -171,13 +171,15 @@ static int mca_pml_v_component_parasite_finalize(void)
     opal_list_prepend(&ompi_pml_base_framework.framework_components, (opal_list_item_t *) cli);
 
     /* finalize vprotocol component */
-    if (mca_vprotocol_base_selected())
+    if (mca_vprotocol_base_selected()) {
         mca_vprotocol_component.pmlm_finalize();
+    }
 
-    if (mca_pml_v.host_pml_component.pmlm_finalize != NULL)
+    if (mca_pml_v.host_pml_component.pmlm_finalize != NULL) {
         return mca_pml_v.host_pml_component.pmlm_finalize();
-    else
+    } else {
         return OMPI_SUCCESS;
+    }
 }
 
 static int mca_pml_v_component_parasite_close(void)
@@ -236,13 +238,15 @@ static int mca_pml_v_enable(bool enable)
      * later)
      */
     ret = mca_pml_v.host_pml.pml_enable(enable);
-    if (OMPI_SUCCESS != ret)
+    if (OMPI_SUCCESS != ret) {
         return ret;
+    }
 
     if (enable) {
         /* Check if a protocol have been selected during init */
-        if (!mca_vprotocol_base_selected())
+        if (!mca_vprotocol_base_selected()) {
             mca_vprotocol_base_select(OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple);
+        }
 
         /* Check if we succeeded selecting a protocol */
         if (mca_vprotocol_base_selected()) {
@@ -254,12 +258,14 @@ static int mca_pml_v_enable(bool enable)
                              mca_vprotocol_component.pmlm_version.mca_component_name);
 
             ret = mca_vprotocol_base_parasite();
-            if (OMPI_SUCCESS != ret)
+            if (OMPI_SUCCESS != ret) {
                 return ret;
-            if (mca_vprotocol.enable)
+            }
+            if (mca_vprotocol.enable) {
                 return mca_vprotocol.enable(enable);
-            else
+            } else {
                 return OMPI_SUCCESS;
+            }
         }
         V_OUTPUT_VERBOSE(1, "No fault tolerant protocol selected. All are unloaded");
     }

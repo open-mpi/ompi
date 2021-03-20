@@ -124,16 +124,18 @@ static int nbc_allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI
             alg = NBC_ARED_RING;
         }
     } else {
-        if (libnbc_iallreduce_algorithm == 1)
+        if (libnbc_iallreduce_algorithm == 1) {
             alg = NBC_ARED_RING;
-        else if (libnbc_iallreduce_algorithm == 2)
+        } else if (libnbc_iallreduce_algorithm == 2) {
             alg = NBC_ARED_BINOMIAL;
-        else if (libnbc_iallreduce_algorithm == 3 && count >= nprocs_pof2 && ompi_op_is_commute(op))
+        } else if (libnbc_iallreduce_algorithm == 3 && count >= nprocs_pof2
+                   && ompi_op_is_commute(op)) {
             alg = NBC_ARED_REDSCAT_ALLGATHER;
-        else if (libnbc_iallreduce_algorithm == 4)
+        } else if (libnbc_iallreduce_algorithm == 4) {
             alg = NBC_ARED_RDBL;
-        else
+        } else {
             alg = NBC_ARED_RING;
+        }
     }
 #ifdef NBC_CACHE_SCHEDULE
     /* search schedule in communicator specific tree */
@@ -483,8 +485,9 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
         }
     }
 
-    if (0 == vrank)
+    if (0 == vrank) {
         assert(lbuf == recvbuf);
+    }
     /* now send to the right hosts */
     for (int r = 0; r < maxr; ++r) {
         if (((vrank + (1 << r) < p) && (vrank < (1 << r))) || (vrank == 0)) {
@@ -1270,14 +1273,18 @@ static inline int allred_sched_redscat_allgather(int rank, int comm_size, int co
         }
     }
 cleanup_and_return:
-    if (NULL != rindex)
+    if (NULL != rindex) {
         free(rindex);
-    if (NULL != sindex)
+    }
+    if (NULL != sindex) {
         free(sindex);
-    if (NULL != rcount)
+    }
+    if (NULL != rcount) {
         free(rcount);
-    if (NULL != scount)
+    }
+    if (NULL != scount) {
         free(scount);
+    }
     return res;
 }
 

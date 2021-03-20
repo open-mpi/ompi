@@ -55,8 +55,9 @@ hb_tree *hb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del, dict_del_func
 {
     hb_tree *tree;
 
-    if ((tree = (hb_tree *) MALLOC(sizeof(*tree))) == NULL)
+    if ((tree = (hb_tree *) MALLOC(sizeof(*tree))) == NULL) {
         return NULL;
+    }
 
     tree->root = NULL;
     tree->count = 0;
@@ -72,8 +73,9 @@ dict *hb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del, dict_del_func da
     dict *dct;
     hb_tree *tree;
 
-    if ((dct = (dict *) MALLOC(sizeof(*dct))) == NULL)
+    if ((dct = (dict *) MALLOC(sizeof(*dct))) == NULL) {
         return NULL;
+    }
 
     if ((tree = hb_tree_new(key_cmp, key_del, dat_del)) == NULL) {
         FREE(dct);
@@ -98,8 +100,9 @@ void hb_tree_destroy(hb_tree *tree, int del)
 {
     ASSERT(tree != NULL);
 
-    if (tree->root)
+    if (tree->root) {
         hb_tree_empty(tree, del);
+    }
 
     FREE(tree);
 }
@@ -119,20 +122,23 @@ void hb_tree_empty(hb_tree *tree, int del)
         }
 
         if (del) {
-            if (tree->key_del)
+            if (tree->key_del) {
                 tree->key_del(node->key);
-            if (tree->dat_del)
+            }
+            if (tree->dat_del) {
                 tree->dat_del(node->dat);
+            }
         }
 
         parent = node->parent;
         FREE(node);
 
         if (parent) {
-            if (parent->llink == node)
+            if (parent->llink == node) {
                 parent->llink = NULL;
-            else
+            } else {
                 parent->rlink = NULL;
+            }
         }
         node = parent;
     }
@@ -151,12 +157,13 @@ void *hb_tree_search(hb_tree *tree, const void *key)
     node = tree->root;
     while (node) {
         rv = tree->key_cmp(key, node->key);
-        if (rv < 0)
+        if (rv < 0) {
             node = node->llink;
-        else if (rv > 0)
+        } else if (rv > 0) {
             node = node->rlink;
-        else
+        } else {
             return node->dat;
+        }
     }
 
     return NULL;
@@ -172,37 +179,43 @@ int hb_tree_insert(hb_tree *tree, void *key, void *dat, int overwrite)
     node = tree->root;
     while (node) {
         rv = tree->key_cmp(key, node->key);
-        if (rv < 0)
+        if (rv < 0) {
             parent = node, node = node->llink;
-        else if (rv > 0)
+        } else if (rv > 0) {
             parent = node, node = node->rlink;
-        else {
-            if (overwrite == 0)
+        } else {
+            if (overwrite == 0) {
                 return 1;
-            if (tree->key_del)
+            }
+            if (tree->key_del) {
                 tree->key_del(node->key);
-            if (tree->dat_del)
+            }
+            if (tree->dat_del) {
                 tree->dat_del(node->dat);
+            }
             node->key = key;
             node->dat = dat;
             return 0;
         }
-        if (parent->bal)
+        if (parent->bal) {
             q = parent;
+        }
     }
 
-    if ((node = node_new(key, dat)) == NULL)
+    if ((node = node_new(key, dat)) == NULL) {
         return -1;
+    }
     if ((node->parent = parent) == NULL) {
         tree->root = node;
         ASSERT(tree->count == 0);
         tree->count = 1;
         return 0;
     }
-    if (rv < 0)
+    if (rv < 0) {
         parent->llink = node;
-    else
+    } else {
         parent->rlink = node;
+    }
 
     while (parent != q) {
         parent->bal = (parent->rlink == node) * 2 - 1;
@@ -212,14 +225,16 @@ int hb_tree_insert(hb_tree *tree, void *key, void *dat, int overwrite)
     if (q) {
         if (q->llink == node) {
             if (--q->bal == -2) {
-                if (q->llink->bal > 0)
+                if (q->llink->bal > 0) {
                     rot_left(tree, q->llink);
+                }
                 rot_right(tree, q);
             }
         } else {
             if (++q->bal == +2) {
-                if (q->rlink->bal < 0)
+                if (q->rlink->bal < 0) {
                     rot_right(tree, q->rlink);
+                }
                 rot_left(tree, q);
             }
         }
@@ -238,30 +253,33 @@ int hb_tree_probe(hb_tree *tree, void *key, void **dat)
     node = tree->root;
     while (node) {
         rv = tree->key_cmp(key, node->key);
-        if (rv < 0)
+        if (rv < 0) {
             parent = node, node = node->llink;
-        else if (rv > 0)
+        } else if (rv > 0) {
             parent = node, node = node->rlink;
-        else {
+        } else {
             *dat = node->dat;
             return 0;
         }
-        if (parent->bal)
+        if (parent->bal) {
             q = parent;
+        }
     }
 
-    if ((node = node_new(key, *dat)) == NULL)
+    if ((node = node_new(key, *dat)) == NULL) {
         return -1;
+    }
     if ((node->parent = parent) == NULL) {
         tree->root = node;
         ASSERT(tree->count == 0);
         tree->count = 1;
         return 1;
     }
-    if (rv < 0)
+    if (rv < 0) {
         parent->llink = node;
-    else
+    } else {
         parent->rlink = node;
+    }
 
     while (parent != q) {
         parent->bal = (parent->rlink == node) * 2 - 1;
@@ -271,14 +289,16 @@ int hb_tree_probe(hb_tree *tree, void *key, void **dat)
     if (q) {
         if (q->llink == node) {
             if (--q->bal == -2) {
-                if (q->llink->bal > 0)
+                if (q->llink->bal > 0) {
                     rot_left(tree, q->llink);
+                }
                 rot_right(tree, q);
             }
         } else {
             if (++q->bal == +2) {
-                if (q->rlink->bal < 0)
+                if (q->rlink->bal < 0) {
                     rot_right(tree, q->rlink);
+                }
                 rot_left(tree, q);
             }
         }
@@ -307,17 +327,20 @@ int hb_tree_remove(hb_tree *tree, const void *key, int del)
     node = tree->root;
     while (node) {
         rv = tree->key_cmp(key, node->key);
-        if (rv == 0)
+        if (rv == 0) {
             break;
+        }
         parent = node;
         node = rv < 0 ? node->llink : node->rlink;
     }
-    if (node == NULL)
+    if (node == NULL) {
         return -1;
+    }
 
     if (node->llink && node->rlink) {
-        for (out = node->rlink; out->llink; out = out->llink)
+        for (out = node->rlink; out->llink; out = out->llink) {
             /* void */;
+        }
         SWAP(node->key, out->key, tmp);
         SWAP(node->dat, out->dat, tmp);
         node = out;
@@ -326,8 +349,9 @@ int hb_tree_remove(hb_tree *tree, const void *key, int del)
 
     out = node->llink ? node->llink : node->rlink;
     FREE_NODE(node);
-    if (out)
+    if (out) {
         out->parent = parent;
+    }
     if (parent == NULL) {
         tree->root = out;
         tree->count--;
@@ -335,10 +359,11 @@ int hb_tree_remove(hb_tree *tree, const void *key, int del)
     }
 
     left = parent->llink == node;
-    if (left)
+    if (left) {
         parent->llink = out;
-    else
+    } else {
         parent->rlink = out;
+    }
 
     for (;;) {
         if (left) {
@@ -353,8 +378,9 @@ int hb_tree_remove(hb_tree *tree, const void *key, int del)
                     rot_left(tree, parent);
                 } else {
                     ASSERT(parent->rlink->rlink != NULL);
-                    if (rot_left(tree, parent) == 0)
+                    if (rot_left(tree, parent) == 0) {
                         break;
+                    }
                 }
             } else {
                 break;
@@ -371,8 +397,9 @@ int hb_tree_remove(hb_tree *tree, const void *key, int del)
                     rot_right(tree, parent);
                 } else {
                     ASSERT(parent->llink->llink != NULL);
-                    if (rot_right(tree, parent) == 0)
+                    if (rot_right(tree, parent) == 0) {
                         break;
+                    }
                 }
             } else {
                 break;
@@ -384,8 +411,9 @@ int hb_tree_remove(hb_tree *tree, const void *key, int del)
          * where `parent' was positioned before any rotations. */
         node = parent->parent;
     higher:
-        if ((parent = node->parent) == NULL)
+        if ((parent = node->parent) == NULL) {
             break;
+        }
         left = parent->llink == node;
     }
     tree->count--;
@@ -398,11 +426,13 @@ const void *hb_tree_min(const hb_tree *tree)
 
     ASSERT(tree != NULL);
 
-    if (tree->root == NULL)
+    if (tree->root == NULL) {
         return NULL;
+    }
 
-    for (node = tree->root; node->llink; node = node->llink)
+    for (node = tree->root; node->llink; node = node->llink) {
         /* void */;
+    }
     return node->key;
 }
 
@@ -412,11 +442,13 @@ const void *hb_tree_max(const hb_tree *tree)
 
     ASSERT(tree != NULL);
 
-    if ((node = tree->root) == NULL)
+    if ((node = tree->root) == NULL) {
         return NULL;
+    }
 
-    for (; node->rlink; node = node->rlink)
+    for (; node->rlink; node = node->rlink) {
         /* void */;
+    }
     return node->key;
 }
 
@@ -426,11 +458,14 @@ void hb_tree_walk(hb_tree *tree, dict_vis_func visit)
 
     ASSERT(tree != NULL);
 
-    if (tree->root == NULL)
+    if (tree->root == NULL) {
         return;
-    for (node = node_min(tree->root); node; node = node_next(node))
-        if (visit(node->key, node->dat) == 0)
+    }
+    for (node = node_min(tree->root); node; node = node_next(node)) {
+        if (visit(node->key, node->dat) == 0) {
             break;
+        }
+    }
 }
 
 unsigned hb_tree_count(const hb_tree *tree)
@@ -465,8 +500,9 @@ static hb_node *node_new(void *key, void *dat)
 {
     hb_node *node;
 
-    if ((node = (hb_node *) MALLOC(sizeof(*node))) == NULL)
+    if ((node = (hb_node *) MALLOC(sizeof(*node))) == NULL) {
         return NULL;
+    }
 
     node->key = key;
     node->dat = dat;
@@ -482,8 +518,9 @@ static hb_node *node_min(hb_node *node)
 {
     ASSERT(node != NULL);
 
-    while (node->llink)
+    while (node->llink) {
         node = node->llink;
+    }
     return node;
 }
 
@@ -491,8 +528,9 @@ static hb_node *node_max(hb_node *node)
 {
     ASSERT(node != NULL);
 
-    while (node->rlink)
+    while (node->rlink) {
         node = node->rlink;
+    }
     return node;
 }
 
@@ -503,8 +541,9 @@ static hb_node *node_next(hb_node *node)
     ASSERT(node != NULL);
 
     if (node->rlink) {
-        for (node = node->rlink; node->llink; node = node->llink)
+        for (node = node->rlink; node->llink; node = node->llink) {
             /* void */;
+        }
         return node;
     }
     temp = node->parent;
@@ -522,8 +561,9 @@ static hb_node *node_prev(hb_node *node)
     ASSERT(node != NULL);
 
     if (node->llink) {
-        for (node = node->llink; node->rlink; node = node->rlink)
+        for (node = node->llink; node->rlink; node = node->rlink) {
             /* void */;
+        }
         return node;
     }
     temp = node->parent;
@@ -562,10 +602,12 @@ static unsigned node_pathlen(const hb_node *node, unsigned level)
 
     ASSERT(node != NULL);
 
-    if (node->llink)
+    if (node->llink) {
         n += level + node_pathlen(node->llink, level + 1);
-    if (node->rlink)
+    }
+    if (node->rlink) {
         n += level + node_pathlen(node->rlink, level + 1);
+    }
     return n;
 }
 
@@ -591,15 +633,17 @@ static int rot_left(hb_tree *tree, hb_node *node)
 
     rlink = node->rlink;
     node->rlink = rlink->llink;
-    if (rlink->llink)
+    if (rlink->llink) {
         rlink->llink->parent = node;
+    }
     parent = node->parent;
     rlink->parent = parent;
     if (parent) {
-        if (parent->llink == node)
+        if (parent->llink == node) {
             parent->llink = rlink;
-        else
+        } else {
             parent->rlink = rlink;
+        }
     } else {
         tree->root = rlink;
     }
@@ -634,15 +678,17 @@ static int rot_right(hb_tree *tree, hb_node *node)
 
     llink = node->llink;
     node->llink = llink->rlink;
-    if (llink->rlink)
+    if (llink->rlink) {
         llink->rlink->parent = node;
+    }
     parent = node->parent;
     llink->parent = parent;
     if (parent) {
-        if (parent->llink == node)
+        if (parent->llink == node) {
             parent->llink = llink;
-        else
+        } else {
             parent->rlink = llink;
+        }
     } else {
         tree->root = llink;
     }
@@ -661,8 +707,9 @@ hb_itor *hb_itor_new(hb_tree *tree)
 
     ASSERT(tree != NULL);
 
-    if ((itor = (hb_itor *) MALLOC(sizeof(*itor))) == NULL)
+    if ((itor = (hb_itor *) MALLOC(sizeof(*itor))) == NULL) {
         return NULL;
+    }
 
     itor->tree = tree;
     hb_itor_first(itor);
@@ -675,8 +722,9 @@ dict_itor *hb_dict_itor_new(hb_tree *tree)
 
     ASSERT(tree != NULL);
 
-    if ((itor = (dict_itor *) MALLOC(sizeof(*itor))) == NULL)
+    if ((itor = (dict_itor *) MALLOC(sizeof(*itor))) == NULL) {
         return NULL;
+    }
 
     if ((itor->_itor = hb_itor_new(tree)) == NULL) {
         FREE(itor);
@@ -728,10 +776,11 @@ int hb_itor_next(hb_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    if (itor->node == NULL)
+    if (itor->node == NULL) {
         hb_itor_first(itor);
-    else
+    } else {
         itor->node = node_next(itor->node);
+    }
     RETVALID(itor);
 }
 
@@ -739,10 +788,11 @@ int hb_itor_prev(hb_itor *itor)
 {
     ASSERT(itor != NULL);
 
-    if (itor->node == NULL)
+    if (itor->node == NULL) {
         hb_itor_last(itor);
-    else
+    } else {
         itor->node = node_prev(itor->node);
+    }
     RETVALID(itor);
 }
 
@@ -756,8 +806,9 @@ int hb_itor_nextn(hb_itor *itor, unsigned count)
             count--;
         }
 
-        while (count-- && itor->node)
+        while (count-- && itor->node) {
             itor->node = node_next(itor->node);
+        }
     }
 
     RETVALID(itor);
@@ -773,8 +824,9 @@ int hb_itor_prevn(hb_itor *itor, unsigned count)
             count--;
         }
 
-        while (count-- && itor->node)
+        while (count-- && itor->node) {
             itor->node = node_prev(itor->node);
+        }
     }
 
     RETVALID(itor);
@@ -813,8 +865,9 @@ int hb_itor_search(hb_itor *itor, const void *key)
     cmp = itor->tree->key_cmp;
     for (node = itor->tree->root; node;) {
         rv = cmp(key, node->key);
-        if (rv == 0)
+        if (rv == 0) {
             break;
+        }
         node = rv < 0 ? node->llink : node->rlink;
     }
     itor->node = node;
@@ -846,11 +899,13 @@ int hb_itor_set_data(hb_itor *itor, void *dat, int del)
 {
     ASSERT(itor != NULL);
 
-    if (itor->node == NULL)
+    if (itor->node == NULL) {
         return -1;
+    }
 
-    if (del && itor->tree->dat_del)
+    if (del && itor->tree->dat_del) {
         itor->tree->dat_del(itor->node->dat);
+    }
     itor->node->dat = dat;
     return 0;
 }

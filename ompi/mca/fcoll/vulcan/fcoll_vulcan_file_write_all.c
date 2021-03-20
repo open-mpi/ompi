@@ -967,8 +967,9 @@ static int shuffle_init(int index, int cycles, int aggregator, int rank,
         entries_per_aggregator = 0;
         for (i = 0; i < data->procs_per_group; i++) {
             for (j = 0; j < data->disp_index[i]; j++) {
-                if (data->blocklen_per_process[i][j] > 0)
+                if (data->blocklen_per_process[i][j] > 0) {
                     entries_per_aggregator++;
+                }
             }
         }
 
@@ -1045,9 +1046,9 @@ static int shuffle_init(int index, int cycles, int aggregator, int rank,
                 temp_pindex = file_offsets_for_agg[sorted_file_offsets[i]].process_id;
                 data->displs_per_process[temp_pindex][temp_disp_index[temp_pindex]]
                     = memory_displacements[sorted_file_offsets[i]];
-                if (temp_disp_index[temp_pindex] < data->disp_index[temp_pindex])
+                if (temp_disp_index[temp_pindex] < data->disp_index[temp_pindex]) {
                     temp_disp_index[temp_pindex] += 1;
-                else {
+                } else {
                     printf("temp_disp_index[%d]: %d is greater than disp_index[%d]: %d\n",
                            temp_pindex, temp_disp_index[temp_pindex], temp_pindex,
                            data->disp_index[temp_pindex]);
@@ -1405,8 +1406,9 @@ int mca_fcoll_vulcan_break_file_view(struct iovec *mem_iov, int mem_count, struc
                         if (j < mem_count) {
                             memoffset = (off_t) mem_iov[j].iov_base;
                             memlen = mem_iov[j].iov_len;
-                        } else
+                        } else {
                             break;
+                        }
                     }
                 } else {
                     broken_mem_iovs[owner][broken_mem_counts[owner]].iov_base = (void *) memoffset;
@@ -1417,8 +1419,9 @@ int mca_fcoll_vulcan_break_file_view(struct iovec *mem_iov, int mem_count, struc
                     if (j < mem_count) {
                         memoffset = (off_t) mem_iov[j].iov_base;
                         memlen = mem_iov[j].iov_len;
-                    } else
+                    } else {
                         break;
+                    }
                 }
 #if DEBUG_ON
                 printf("%d: owner=%d b_mem_iovs[%d].base=%ld .len=%d\n", rank, owner,

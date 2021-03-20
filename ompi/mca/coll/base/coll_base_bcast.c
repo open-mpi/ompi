@@ -241,10 +241,12 @@ int ompi_coll_base_bcast_intra_generic(void *buffer, int original_count,
 error_hndl:
     if (MPI_ERR_IN_STATUS == err) {
         for (req_index = 0; req_index < 2; req_index++) {
-            if (MPI_REQUEST_NULL == recv_reqs[req_index])
+            if (MPI_REQUEST_NULL == recv_reqs[req_index]) {
                 continue;
-            if (MPI_ERR_PENDING == recv_reqs[req_index]->req_status.MPI_ERROR)
+            }
+            if (MPI_ERR_PENDING == recv_reqs[req_index]->req_status.MPI_ERROR) {
                 continue;
+            }
             err = recv_reqs[req_index]->req_status.MPI_ERROR;
             break;
         }
@@ -253,10 +255,12 @@ error_hndl:
     if (NULL != send_reqs) {
         if (MPI_ERR_IN_STATUS == err) {
             for (req_index = 0; req_index < tree->tree_nextsize; req_index++) {
-                if (MPI_REQUEST_NULL == send_reqs[req_index])
+                if (MPI_REQUEST_NULL == send_reqs[req_index]) {
                     continue;
-                if (MPI_ERR_PENDING == send_reqs[req_index]->req_status.MPI_ERROR)
+                }
+                if (MPI_ERR_PENDING == send_reqs[req_index]->req_status.MPI_ERROR) {
                     continue;
+                }
                 err = send_reqs[req_index]->req_status.MPI_ERROR;
                 break;
             }
@@ -402,8 +406,9 @@ int ompi_coll_base_bcast_intra_split_bintree(void *buffer, int count,
 
     /* Determine number of segments and number of elements per segment */
     counts[0] = count / 2;
-    if (count % 2 != 0)
+    if (count % 2 != 0) {
         counts[0]++;
+    }
     counts[1] = count - counts[0];
     if (segsize > 0) {
         /* Note that ompi_datatype_type_size() will never return a negative
@@ -414,11 +419,13 @@ int ompi_coll_base_bcast_intra_split_bintree(void *buffer, int count,
         }
         segcount[0] = segcount[1] = segsize / type_size;
         num_segments[0] = counts[0] / segcount[0];
-        if ((counts[0] % segcount[0]) != 0)
+        if ((counts[0] % segcount[0]) != 0) {
             num_segments[0]++;
+        }
         num_segments[1] = counts[1] / segcount[1];
-        if ((counts[1] % segcount[1]) != 0)
+        if ((counts[1] % segcount[1]) != 0) {
             num_segments[1]++;
+        }
     } else {
         segcount[0] = counts[0];
         segcount[1] = counts[1];
@@ -465,8 +472,9 @@ int ompi_coll_base_bcast_intra_split_bintree(void *buffer, int count,
                     continue;
                 }
                 /* determine how many elements are being sent in this round */
-                if (segindex == (num_segments[i] - 1))
+                if (segindex == (num_segments[i] - 1)) {
                     sendcount[i] = counts[i] - segindex * segcount[i];
+                }
                 /* send data */
                 MCA_PML_CALL(send(tmpbuf[i], sendcount[i], datatype, tree->tree_next[i],
                                   MCA_COLL_BASE_TAG_BCAST, MCA_PML_BASE_SEND_STANDARD, comm));
@@ -503,8 +511,9 @@ int ompi_coll_base_bcast_intra_split_bintree(void *buffer, int count,
 
         for (segindex = 1; segindex < num_segments[lr]; segindex++) {
             /* determine how many elements to expect in this round */
-            if (segindex == (num_segments[lr] - 1))
+            if (segindex == (num_segments[lr] - 1)) {
                 sendcount[lr] = counts[lr] - (ptrdiff_t) segindex * (ptrdiff_t) segcount[lr];
+            }
             /* post new irecv */
             err = MCA_PML_CALL(irecv(tmpbuf[lr] + realsegsize[lr], sendcount[lr], datatype,
                                      tree->tree_prev, MCA_COLL_BASE_TAG_BCAST, comm, &new_req));
@@ -548,8 +557,9 @@ int ompi_coll_base_bcast_intra_split_bintree(void *buffer, int count,
         sendcount[lr] = segcount[lr];
         for (segindex = 0; segindex < num_segments[lr]; segindex++) {
             /* determine how many elements to expect in this round */
-            if (segindex == (num_segments[lr] - 1))
+            if (segindex == (num_segments[lr] - 1)) {
                 sendcount[lr] = counts[lr] - (ptrdiff_t) segindex * (ptrdiff_t) segcount[lr];
+            }
             /* receive segments */
             err = MCA_PML_CALL(recv(tmpbuf[lr], sendcount[lr], datatype, tree->tree_prev,
                                     MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
@@ -666,8 +676,9 @@ int ompi_coll_base_bcast_intra_basic_linear(void *buff, int count, struct ompi_d
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_bcast_intra_basic_linear rank %d root %d", rank, root));
 
-    if (1 == size)
+    if (1 == size) {
         return OMPI_SUCCESS;
+    }
 
     /* Non-root receive the data. */
 
@@ -709,10 +720,12 @@ err_hndl:
     if (MPI_SUCCESS != err) { /* Free the reqs */
         /* first find the real error code */
         for (preq = reqs; preq < reqs + i; preq++) {
-            if (MPI_REQUEST_NULL == *preq)
+            if (MPI_REQUEST_NULL == *preq) {
                 continue;
-            if (MPI_ERR_PENDING == (*preq)->req_status.MPI_ERROR)
+            }
+            if (MPI_ERR_PENDING == (*preq)->req_status.MPI_ERROR) {
                 continue;
+            }
             err = (*preq)->req_status.MPI_ERROR;
             break;
         }
@@ -814,8 +827,9 @@ int ompi_coll_base_bcast_intra_scatter_allgather(void *buf, int count,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:bcast_intra_scatter_allgather: rank %d/%d", rank, comm_size));
-    if (comm_size < 2 || datatype_size == 0)
+    if (comm_size < 2 || datatype_size == 0) {
         return MPI_SUCCESS;
+    }
 
     if (count < comm_size) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -881,8 +895,9 @@ int ompi_coll_base_bcast_intra_scatter_allgather(void *buf, int count,
      */
     int rem_count = count - vrank * scatter_count;
     curr_count = (scatter_count < rem_count) ? scatter_count : rem_count;
-    if (curr_count < 0)
+    if (curr_count < 0) {
         curr_count = 0;
+    }
 
     mask = 0x1;
     while (mask < comm_size) {
@@ -896,8 +911,9 @@ int ompi_coll_base_bcast_intra_scatter_allgather(void *buf, int count,
             ptrdiff_t send_offset = vrank_tree_root * scatter_count * extent;
             ptrdiff_t recv_offset = vremote_tree_root * scatter_count * extent;
             recv_count = count - vremote_tree_root * scatter_count;
-            if (recv_count < 0)
+            if (recv_count < 0) {
                 recv_count = 0;
+            }
             err = ompi_coll_base_sendrecv((char *) buf + send_offset, curr_count, datatype, remote,
                                           MCA_COLL_BASE_TAG_BCAST, (char *) buf + recv_offset,
                                           recv_count, datatype, remote, MCA_COLL_BASE_TAG_BCAST,
@@ -996,8 +1012,9 @@ int ompi_coll_base_bcast_intra_scatter_allgather_ring(void *buf, int count,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:bcast_intra_scatter_allgather_ring: rank %d/%d", rank, comm_size));
-    if (comm_size < 2 || datatype_size == 0)
+    if (comm_size < 2 || datatype_size == 0) {
         return MPI_SUCCESS;
+    }
 
     if (count < comm_size) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -1067,15 +1084,17 @@ int ompi_coll_base_bcast_intra_scatter_allgather_ring(void *buf, int count,
         recv_count = (scatter_count < count - recv_block * scatter_count)
                          ? scatter_count
                          : count - recv_block * scatter_count;
-        if (recv_count < 0)
+        if (recv_count < 0) {
             recv_count = 0;
+        }
         ptrdiff_t recv_offset = recv_block * scatter_count * extent;
 
         send_count = (scatter_count < count - send_block * scatter_count)
                          ? scatter_count
                          : count - send_block * scatter_count;
-        if (send_count < 0)
+        if (send_count < 0) {
             send_count = 0;
+        }
         ptrdiff_t send_offset = send_block * scatter_count * extent;
 
         err = ompi_coll_base_sendrecv((char *) buf + send_offset, send_count, datatype, right,

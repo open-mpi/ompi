@@ -151,8 +151,9 @@ int ompi_coll_base_reduce_generic(const void *sendbuf, void *recvbuf, int origin
             prevcount = recvcount;
             /* recvcount - number of elements in current segment */
             recvcount = count_by_segment;
-            if (segindex == (num_segments - 1))
+            if (segindex == (num_segments - 1)) {
                 recvcount = original_count - (ptrdiff_t) count_by_segment * (ptrdiff_t) segindex;
+            }
 
             /* for each child */
             for (i = 0; i < tree->tree_nextsize; i++) {
@@ -245,8 +246,9 @@ int ompi_coll_base_reduce_generic(const void *sendbuf, void *recvbuf, int origin
 
                     /* we stop when segindex = number of segments
                        (i.e. we do num_segment+1 steps for pipelining */
-                    if (segindex == num_segments)
+                    if (segindex == num_segments) {
                         break;
+                    }
                 }
 
                 /* update input buffer index */
@@ -364,10 +366,12 @@ error_hndl: /* error handler */
     /* find a real error code */
     if (MPI_ERR_IN_STATUS == ret) {
         for (i = 0; i < 2; i++) {
-            if (MPI_REQUEST_NULL == reqs[i])
+            if (MPI_REQUEST_NULL == reqs[i]) {
                 continue;
-            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)
+            }
+            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) {
                 continue;
+            }
             ret = reqs[i]->req_status.MPI_ERROR;
             break;
         }
@@ -376,10 +380,12 @@ error_hndl: /* error handler */
     if (NULL != sreq) {
         if (MPI_ERR_IN_STATUS == ret) {
             for (i = 0; i < max_outstanding_reqs; i++) {
-                if (MPI_REQUEST_NULL == sreq[i])
+                if (MPI_REQUEST_NULL == sreq[i]) {
                     continue;
-                if (MPI_ERR_PENDING == sreq[i]->req_status.MPI_ERROR)
+                }
+                if (MPI_ERR_PENDING == sreq[i]->req_status.MPI_ERROR) {
                     continue;
+                }
                 ret = sreq[i]->req_status.MPI_ERROR;
                 break;
             }
@@ -1077,8 +1083,9 @@ int ompi_coll_base_reduce_intra_redscat_gather(const void *sbuf, void *rbuf, int
             int vdest = vrank ^ mask;
             /* Translate vdest virtual rank to real rank */
             int dest = (vdest < nprocs_rem) ? vdest * 2 : vdest + nprocs_rem;
-            if ((vdest == 0) && (root < 2 * nprocs_rem) && (root % 2 != 0))
+            if ((vdest == 0) && (root < 2 * nprocs_rem) && (root % 2 != 0)) {
                 dest = root;
+            }
 
             vdest_tree = vdest >> step;
             vdest_tree <<= step;

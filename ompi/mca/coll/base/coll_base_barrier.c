@@ -88,9 +88,10 @@ error_handler:
             if (MPI_ERR_PROC_FAILED_PENDING == rc) {
                 rc = MPI_ERR_PROC_FAILED;
             }
-        } else /* this 'else' intentionaly spills outside the ifdef */
-#endif         /* OPAL_ENABLE_FT_MPI */
+        } else { /* this 'else' intentionaly spills outside the ifdef */
+#endif           /* OPAL_ENABLE_FT_MPI */
             ompi_request_free(&req);
+        }
     }
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred\n", __FILE__,
@@ -124,8 +125,9 @@ int ompi_coll_base_barrier_intra_doublering(struct ompi_communicator_t *comm,
     int rank, size, err = 0, line = 0, left, right;
 
     size = ompi_comm_size(comm);
-    if (1 == size)
+    if (1 == size) {
         return OMPI_SUCCESS;
+    }
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -208,8 +210,9 @@ int ompi_coll_base_barrier_intra_recursivedoubling(struct ompi_communicator_t *c
     int rank, size, adjsize, err, line, mask, remote;
 
     size = ompi_comm_size(comm);
-    if (1 == size)
+    if (1 == size) {
         return OMPI_SUCCESS;
+    }
     rank = ompi_comm_rank(comm);
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_barrier_intra_recursivedoubling rank %d", rank));
@@ -249,8 +252,9 @@ int ompi_coll_base_barrier_intra_recursivedoubling(struct ompi_communicator_t *c
         while (mask < adjsize) {
             remote = rank ^ mask;
             mask <<= 1;
-            if (remote >= adjsize)
+            if (remote >= adjsize) {
                 continue;
+            }
 
             /* post receive from the remote node */
             err = ompi_coll_base_sendrecv_zero(remote, MCA_COLL_BASE_TAG_BARRIER, remote,
@@ -296,8 +300,9 @@ int ompi_coll_base_barrier_intra_bruck(struct ompi_communicator_t *comm,
     int rank, size, distance, to, from, err, line = 0;
 
     size = ompi_comm_size(comm);
-    if (1 == size)
+    if (1 == size) {
         return MPI_SUCCESS;
+    }
     rank = ompi_comm_rank(comm);
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "ompi_coll_base_barrier_intra_bruck rank %d", rank));
@@ -335,8 +340,9 @@ int ompi_coll_base_barrier_intra_two_procs(struct ompi_communicator_t *comm,
     int remote, size, err;
 
     size = ompi_comm_size(comm);
-    if (1 == size)
+    if (1 == size) {
         return MPI_SUCCESS;
+    }
     if (2 != ompi_comm_size(comm)) {
         return MPI_ERR_UNSUPPORTED_OPERATION;
     }
@@ -373,8 +379,9 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
     ompi_request_t **requests = NULL;
 
     size = ompi_comm_size(comm);
-    if (1 == size)
+    if (1 == size) {
         return MPI_SUCCESS;
+    }
     rank = ompi_comm_rank(comm);
 
     /* All non-root send & receive zero-length message. */
@@ -436,10 +443,12 @@ err_hndl:
         /* find a real error code */
         if (MPI_ERR_IN_STATUS == err) {
             for (i = 0; i < size; i++) {
-                if (MPI_REQUEST_NULL == requests[i])
+                if (MPI_REQUEST_NULL == requests[i]) {
                     continue;
-                if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR)
+                }
+                if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR) {
                     continue;
+                }
                 err = requests[i]->req_status.MPI_ERROR;
                 break;
             }
@@ -469,8 +478,9 @@ int ompi_coll_base_barrier_intra_tree(struct ompi_communicator_t *comm,
     int rank, size, depth, err, jump, partner;
 
     size = ompi_comm_size(comm);
-    if (1 == size)
+    if (1 == size) {
         return MPI_SUCCESS;
+    }
     rank = ompi_comm_rank(comm);
     OPAL_OUTPUT(
         (ompi_coll_base_framework.framework_output, "ompi_coll_base_barrier_intra_tree %d", rank));
@@ -484,13 +494,15 @@ int ompi_coll_base_barrier_intra_tree(struct ompi_communicator_t *comm,
             if (partner > rank) {
                 err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, partner, MCA_COLL_BASE_TAG_BARRIER, comm,
                                         MPI_STATUS_IGNORE));
-                if (MPI_SUCCESS != err)
+                if (MPI_SUCCESS != err) {
                     return err;
+                }
             } else if (partner < rank) {
                 err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, partner, MCA_COLL_BASE_TAG_BARRIER,
                                         MCA_PML_BASE_SEND_STANDARD, comm));
-                if (MPI_SUCCESS != err)
+                if (MPI_SUCCESS != err) {
                     return err;
+                }
             }
         }
     }
@@ -502,13 +514,15 @@ int ompi_coll_base_barrier_intra_tree(struct ompi_communicator_t *comm,
             if (partner > rank) {
                 err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, partner, MCA_COLL_BASE_TAG_BARRIER,
                                         MCA_PML_BASE_SEND_STANDARD, comm));
-                if (MPI_SUCCESS != err)
+                if (MPI_SUCCESS != err) {
                     return err;
+                }
             } else if (partner < rank) {
                 err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, partner, MCA_COLL_BASE_TAG_BARRIER, comm,
                                         MPI_STATUS_IGNORE));
-                if (MPI_SUCCESS != err)
+                if (MPI_SUCCESS != err) {
                     return err;
+                }
             }
         }
     }

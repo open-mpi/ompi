@@ -63,8 +63,9 @@ mca_pml_monitoring_module_t mca_pml_monitoring_module = {
 int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
     int ret = mca_common_monitoring_add_procs(procs, nprocs);
-    if (OMPI_SUCCESS == ret)
+    if (OMPI_SUCCESS == ret) {
         ret = pml_selected_module.pml_add_procs(procs, nprocs);
+    }
     return ret;
 }
 
@@ -110,8 +111,9 @@ static mca_pml_base_module_t *mca_pml_monitoring_component_init(int *priority,
 
 static int mca_pml_monitoring_component_finish(void)
 {
-    if (!mca_common_monitoring_enabled)
+    if (!mca_common_monitoring_enabled) {
         return OMPI_SUCCESS;
+    }
     if (!mca_pml_monitoring_active) {
         /* The monitoring component priority is always low to guarantee that the component
          * is never selected. Thus, the first time component_finish is called it is right

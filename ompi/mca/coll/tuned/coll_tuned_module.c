@@ -74,8 +74,9 @@ mca_coll_base_module_t *ompi_coll_tuned_comm_query(struct ompi_communicator_t *c
     }
 
     tuned_module = OBJ_NEW(mca_coll_tuned_module_t);
-    if (NULL == tuned_module)
+    if (NULL == tuned_module) {
         return NULL;
+    }
 
     *priority = ompi_coll_tuned_priority;
 
@@ -134,17 +135,21 @@ static int ompi_coll_tuned_forced_getvalues(enum COLLTYPE type,
 
     if (BARRIER != type) {
         mca_base_var_get_value(mca_params->segsize_param_index, &tmp, NULL, NULL);
-        if (tmp)
+        if (tmp) {
             forced_values->segsize = tmp[0];
+        }
         mca_base_var_get_value(mca_params->tree_fanout_param_index, &tmp, NULL, NULL);
-        if (tmp)
+        if (tmp) {
             forced_values->tree_fanout = tmp[0];
+        }
         mca_base_var_get_value(mca_params->chain_fanout_param_index, &tmp, NULL, NULL);
-        if (tmp)
+        if (tmp) {
             forced_values->chain_fanout = tmp[0];
+        }
         mca_base_var_get_value(mca_params->max_requests_param_index, &tmp, NULL, NULL);
-        if (tmp)
+        if (tmp) {
             forced_values->max_requests = tmp[0];
+        }
     }
     return (MPI_SUCCESS);
 }

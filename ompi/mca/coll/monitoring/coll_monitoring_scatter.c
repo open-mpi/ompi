@@ -28,8 +28,9 @@ int mca_coll_monitoring_scatter(const void *sbuf, int scount, struct ompi_dataty
         ompi_datatype_type_size(sdtype, &type_size);
         data_size = scount * type_size;
         for (i = 0; i < comm_size; ++i) {
-            if (my_rank == i)
+            if (my_rank == i) {
                 continue; /* No communication for self */
+            }
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
@@ -59,8 +60,9 @@ int mca_coll_monitoring_iscatter(const void *sbuf, int scount, struct ompi_datat
         ompi_datatype_type_size(sdtype, &type_size);
         data_size = scount * type_size;
         for (i = 0; i < comm_size; ++i) {
-            if (my_rank == i)
+            if (my_rank == i) {
                 continue; /* No communication for self */
+            }
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank

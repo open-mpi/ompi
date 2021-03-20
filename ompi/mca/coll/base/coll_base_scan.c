@@ -156,8 +156,9 @@ int ompi_coll_base_scan_intra_recursivedoubling(const void *sendbuf, void *recvb
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:scan_intra_recursivedoubling: rank %d/%d", rank, comm_size));
-    if (count == 0)
+    if (count == 0) {
         return MPI_SUCCESS;
+    }
 
     if (sendbuf != MPI_IN_PLACE) {
         err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, (char *) sendbuf);
@@ -165,8 +166,9 @@ int ompi_coll_base_scan_intra_recursivedoubling(const void *sendbuf, void *recvb
             goto cleanup_and_return;
         }
     }
-    if (comm_size < 2)
+    if (comm_size < 2) {
         return MPI_SUCCESS;
+    }
 
     ptrdiff_t dsize, gap;
     dsize = opal_datatype_span(&datatype->super, count, &gap);

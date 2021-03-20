@@ -109,19 +109,22 @@ OBJ_CLASS_INSTANCE(mca_coll_base_comm_t, opal_object_t, coll_base_comm_construct
 
 ompi_request_t **ompi_coll_base_comm_get_reqs(mca_coll_base_comm_t *data, int nreqs)
 {
-    if (0 == nreqs)
+    if (0 == nreqs) {
         return NULL;
+    }
 
     if (data->mcct_num_reqs < nreqs) {
         data->mcct_reqs = (ompi_request_t **) realloc(data->mcct_reqs,
                                                       sizeof(ompi_request_t *) * nreqs);
 
         if (NULL != data->mcct_reqs) {
-            for (int i = data->mcct_num_reqs; i < nreqs; i++)
+            for (int i = data->mcct_num_reqs; i < nreqs; i++) {
                 data->mcct_reqs[i] = MPI_REQUEST_NULL;
+            }
             data->mcct_num_reqs = nreqs;
-        } else
+        } else {
             data->mcct_num_reqs = 0; /* nothing to return */
+        }
     }
     return data->mcct_reqs;
 }

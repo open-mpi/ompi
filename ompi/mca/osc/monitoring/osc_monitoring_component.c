@@ -83,8 +83,9 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
                                                     *) ((mca_base_component_list_item_t *) item)
                                                    ->cli_component;
 
-        if (component == (ompi_osc_base_component_t *) (&mca_osc_monitoring_component))
+        if (component == (ompi_osc_base_component_t *) (&mca_osc_monitoring_component)) {
             continue; /* skip self */
+        }
 
         priority = component->osc_query(win, base, size, disp_unit, comm, info, flavor);
         if (priority < 0) {
@@ -101,8 +102,9 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
         }
     }
 
-    if (NULL == best_component)
+    if (NULL == best_component) {
         return OMPI_ERR_NOT_SUPPORTED;
+    }
     OPAL_MONITORING_PRINT_INFO("osc: chosen one: %s",
                                best_component->osc_version.mca_component_name);
     ret = best_component->osc_select(win, base, size, disp_unit, comm, info, flavor, model);

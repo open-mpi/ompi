@@ -27,8 +27,9 @@ int mca_coll_monitoring_alltoallv(const void *sbuf, const int *scounts, const in
     int i, rank;
     ompi_datatype_type_size(sdtype, &type_size);
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         data_size = scounts[i] * type_size;
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
@@ -58,8 +59,9 @@ int mca_coll_monitoring_ialltoallv(const void *sbuf, const int *scounts, const i
     int i, rank;
     ompi_datatype_type_size(sdtype, &type_size);
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         data_size = scounts[i] * type_size;
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD

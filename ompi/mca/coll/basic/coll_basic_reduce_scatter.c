@@ -79,8 +79,9 @@ int mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int 
 
     /* Find displacements and the like */
     disps = (int *) malloc(sizeof(int) * size);
-    if (NULL == disps)
+    if (NULL == disps) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     disps[0] = 0;
     for (i = 0; i < (size - 1); ++i) {
@@ -120,8 +121,9 @@ int mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int 
 
         /* copy local buffer into the temporary results */
         err = ompi_datatype_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
-        if (OMPI_SUCCESS != err)
+        if (OMPI_SUCCESS != err) {
             goto cleanup;
+        }
 
         /* figure out power of two mapping: grow until larger than
            comm size, then go back one, to get the largest power of
@@ -138,16 +140,18 @@ int mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int 
                 err = MCA_PML_CALL(send(result_buf, count, dtype, rank + 1,
                                         MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                         MCA_PML_BASE_SEND_STANDARD, comm));
-                if (OMPI_SUCCESS != err)
+                if (OMPI_SUCCESS != err) {
                     goto cleanup;
+                }
 
                 /* we don't participate from here on out */
                 tmp_rank = -1;
             } else {
                 err = MCA_PML_CALL(recv(recv_buf, count, dtype, rank - 1,
                                         MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm, MPI_STATUS_IGNORE));
-                if (OMPI_SUCCESS != err)
+                if (OMPI_SUCCESS != err) {
                     goto cleanup;
+                }
 
                 /* integrate their results into our temp results */
                 ompi_op_reduce(op, recv_buf, result_buf, count, dtype);
@@ -296,8 +300,9 @@ int mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int 
                     err = MCA_PML_CALL(recv(rbuf, rcounts[rank], dtype, rank + 1,
                                             MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
                                             MPI_STATUS_IGNORE));
-                    if (OMPI_SUCCESS != err)
+                    if (OMPI_SUCCESS != err) {
                         goto cleanup;
+                    }
                 }
             } else {
                 if (rcounts[rank - 1]) {
@@ -305,8 +310,9 @@ int mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int 
                                             rcounts[rank - 1], dtype, rank - 1,
                                             MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                             MCA_PML_BASE_SEND_STANDARD, comm));
-                    if (OMPI_SUCCESS != err)
+                    if (OMPI_SUCCESS != err) {
                         goto cleanup;
+                    }
                 }
             }
         }

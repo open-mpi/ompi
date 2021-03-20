@@ -298,8 +298,9 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
                                 for (kk = 0; kk < ex_node; kk++) {
                                     knt2 += hier_ranks[kk];
                                 }
-                                exchange_node->payload_info[i][j].s_offset = knt2; /* exchange_node->reindex_map[base_temp];
-                                                                                    */
+                                exchange_node->payload_info[i][j].s_offset
+                                    = knt2; /* exchange_node->reindex_map[base_temp];
+                                             */
                                 /*fprintf(stderr,"exchange_node->payload_info[%d][%d].s_offset
                                  * %d\n",i,j,exchange_node->payload_info[i][j].s_offset);*/
                             } else {
@@ -308,8 +309,9 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
                                 for (kk = 0; kk < ex_node; kk++) {
                                     knt2 += hier_ranks[kk];
                                 }
-                                exchange_node->payload_info[i][j].r_offset = knt2; /*exchange_node->reindex_map[peer];
-                                                                                    */
+                                exchange_node->payload_info[i][j].r_offset
+                                    = knt2; /*exchange_node->reindex_map[peer];
+                                             */
                                 /*fprintf(stderr,"exchange_node->payload_info[%d][%d].r_offset
                                  * %d\n",i,j,exchange_node->payload_info[i][j].r_offset);*/
                                 knt2 = 0;

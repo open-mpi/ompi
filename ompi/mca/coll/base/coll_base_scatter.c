@@ -148,8 +148,9 @@ int ompi_coll_base_scatter_intra_binomial(const void *sbuf, int scount,
          * (an upper bound) */
         int vparent = (bmtree->tree_prev - root + size) % size;
         int subtree_size = vrank - vparent;
-        if (size - vrank < subtree_size)
+        if (size - vrank < subtree_size) {
             subtree_size = size - vrank;
+        }
         packed_size = scount * subtree_size;
 
         ptmp = tempbuf = (char *) malloc(packed_size);
@@ -185,8 +186,9 @@ int ompi_coll_base_scatter_intra_binomial(const void *sbuf, int scount,
         /* figure out how much data I have to send to this child */
         int vchild = (bmtree->tree_next[i] - root + size) % size;
         int send_count = vchild - vrank;
-        if (send_count > size - vchild)
+        if (send_count > size - vchild) {
             send_count = size - vchild;
+        }
         send_count *= scount;
 
         err = MCA_PML_CALL(send(ptmp + (ptrdiff_t)(curr_count - send_count) * sextent, send_count,
@@ -376,10 +378,12 @@ err_hndl:
         /* find a real error code */
         if (MPI_ERR_IN_STATUS == err) {
             for (i = 0; i < nreqs; i++) {
-                if (MPI_REQUEST_NULL == reqs[i])
+                if (MPI_REQUEST_NULL == reqs[i]) {
                     continue;
-                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)
+                }
+                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) {
                     continue;
+                }
                 err = reqs[i]->req_status.MPI_ERROR;
                 break;
             }

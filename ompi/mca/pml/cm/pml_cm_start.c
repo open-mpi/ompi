@@ -73,15 +73,17 @@ int mca_pml_cm_start(size_t count, ompi_request_t **requests)
             sendreq->req_send.req_base.req_pml_complete = false;
 
             MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, rc);
-            if (rc != OMPI_SUCCESS)
+            if (rc != OMPI_SUCCESS) {
                 return rc;
+            }
             break;
         }
         case MCA_PML_CM_REQUEST_RECV_HEAVY: {
             mca_pml_cm_hvy_recv_request_t *recvreq = (mca_pml_cm_hvy_recv_request_t *) pml_request;
             MCA_PML_CM_HVY_RECV_REQUEST_START(recvreq, rc);
-            if (rc != OMPI_SUCCESS)
+            if (rc != OMPI_SUCCESS) {
                 return rc;
+            }
             break;
         }
         default:

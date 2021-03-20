@@ -134,8 +134,9 @@ int mca_topo_base_cart_sub(ompi_communicator_t *comm, const int *remain_dims,
             cart->coords = (int *) malloc(sizeof(int) * ndim);
             if (NULL == cart->coords) {
                 free(cart->periods);
-                if (NULL != cart->dims)
+                if (NULL != cart->dims) {
                     free(cart->dims);
+                }
                 OBJ_RELEASE(cart);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }

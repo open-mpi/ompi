@@ -179,9 +179,11 @@ void append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t **queue, mca_pml_ob1_re
     parent = frag; /* the frag is not part of a range yet */
 
     /* if the newly added element is closer to the next expected sequence mark it so */
-    if (parent->hdr.hdr_match.hdr_seq >= seq)
-        if (abs(parent->hdr.hdr_match.hdr_seq - seq) < abs((*queue)->hdr.hdr_match.hdr_seq - seq))
+    if (parent->hdr.hdr_match.hdr_seq >= seq) {
+        if (abs(parent->hdr.hdr_match.hdr_seq - seq) < abs((*queue)->hdr.hdr_match.hdr_seq - seq)) {
             *queue = parent;
+        }
+    }
 
 merge_ranges:
     /* is the next hdr_seq the increasing next one ? */
@@ -217,8 +219,9 @@ merge_ranges:
             next->super.super.opal_list_prev->opal_list_next = (opal_list_item_t *) parent->range;
             next->super.super.opal_list_prev = (opal_list_item_t *) frag;
         }
-        if (next == *queue)
+        if (next == *queue) {
             *queue = parent;
+        }
     }
 }
 
@@ -229,8 +232,9 @@ static mca_pml_ob1_recv_frag_t *remove_head_from_ordered_list(mca_pml_ob1_recv_f
 {
     mca_pml_ob1_recv_frag_t *frag = *queue;
     /* queue is empty, nothing to see. */
-    if (NULL == *queue)
+    if (NULL == *queue) {
         return NULL;
+    }
     if (NULL == frag->range) {
         /* head has no range, */
         if (frag->super.super.opal_list_next == (opal_list_item_t *) frag) {
@@ -343,8 +347,9 @@ int mca_pml_ob1_revoke_comm(struct ompi_communicator_t *ompi_comm, bool coll_onl
     OPAL_THREAD_LOCK(&comm->matching_lock);
     /* these assignement need to be here because we need the matching_lock */
     ompi_comm->coll_revoked = true;
-    if (!coll_only)
+    if (!coll_only) {
         ompi_comm->comm_revoked = true;
+    }
 
 #    if OPAL_ENABLE_DEBUG
     int verbose = opal_output_get_verbosity(ompi_ftmpi_output_handle);
@@ -358,8 +363,9 @@ int mca_pml_ob1_revoke_comm(struct ompi_communicator_t *ompi_comm, bool coll_onl
         proc = comm->procs[i];
         /* note this is not an ompi_proc, but a ob1_comm_proc, thus we don't
          * use ompi_proc_is_sentinel to verify if initialized. */
-        if (NULL == proc)
+        if (NULL == proc) {
             continue;
+        }
         /* remove the frag from the unexpected list, add to the nack list
          * so that we can send the nack as needed to remote cancel the send
          * from outside the match lock.
@@ -729,8 +735,9 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t *btl,
     }
 #endif /* OPAL_CUDA_SUPPORT */
 
-    if (send_request_pml_complete_check(sendreq) == false)
+    if (send_request_pml_complete_check(sendreq) == false) {
         mca_pml_ob1_send_request_schedule(sendreq);
+    }
 }
 
 void mca_pml_ob1_recv_frag_callback_frag(mca_btl_base_module_t *btl,
@@ -803,8 +810,9 @@ void mca_pml_ob1_recv_frag_callback_fin(mca_btl_base_module_t *btl,
 
 static inline mca_pml_ob1_recv_request_t *get_posted_recv(opal_list_t *queue)
 {
-    if (opal_list_get_size(queue) == 0)
+    if (opal_list_get_size(queue) == 0) {
         return NULL;
+    }
 
     return (mca_pml_ob1_recv_request_t *) opal_list_get_first(queue);
 }
@@ -814,8 +822,9 @@ static inline mca_pml_ob1_recv_request_t *get_next_posted_recv(opal_list_t *queu
 {
     opal_list_item_t *i = opal_list_get_next((opal_list_item_t *) req);
 
-    if (opal_list_get_end(queue) == i)
+    if (opal_list_get_end(queue) == i) {
         return NULL;
+    }
 
     return (mca_pml_ob1_recv_request_t *) i;
 }
@@ -1158,8 +1167,9 @@ match_this_frag:
             break;
         }
 
-        if (OPAL_UNLIKELY(frag))
+        if (OPAL_UNLIKELY(frag)) {
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+        }
     }
 
     /*

@@ -512,10 +512,11 @@ mqs_taddr_t ompi_fetch_pointer(mqs_process *proc, mqs_taddr_t addr, mpi_process_
     char buffer[8]; /* ASSUME the type fits in 8 bytes */
     mqs_taddr_t res = 0;
 
-    if (mqs_ok == mqs_fetch_data(proc, addr, isize, buffer))
+    if (mqs_ok == mqs_fetch_data(proc, addr, isize, buffer)) {
         mqs_target_to_host(proc, buffer,
                            ((char *) &res) + (host_is_big_endian ? sizeof(mqs_taddr_t) - isize : 0),
                            isize);
+    }
 
     return res;
 } /* fetch_pointer */
@@ -552,10 +553,11 @@ mqs_taddr_t ompi_fetch_size_t(mqs_process *proc, mqs_taddr_t addr, mpi_process_i
     char buffer[8]; /* ASSUME the type fits in 8 bytes */
     mqs_taddr_t res = 0;
 
-    if (mqs_ok == mqs_fetch_data(proc, addr, isize, buffer))
+    if (mqs_ok == mqs_fetch_data(proc, addr, isize, buffer)) {
         mqs_target_to_host(proc, buffer,
                            ((char *) &res) + (host_is_big_endian ? sizeof(mqs_taddr_t) - isize : 0),
                            isize);
+    }
 
     return res;
 } /* fetch_size_t */

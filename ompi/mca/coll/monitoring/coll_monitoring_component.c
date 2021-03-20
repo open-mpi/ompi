@@ -154,8 +154,9 @@ static mca_coll_base_module_t *mca_coll_monitoring_component_query(struct ompi_c
 {
     OPAL_MONITORING_PRINT_INFO("coll_module_query");
     mca_coll_monitoring_module_t *monitoring_module = OBJ_NEW(mca_coll_monitoring_module_t);
-    if (NULL == monitoring_module)
+    if (NULL == monitoring_module) {
         return (*priority = -1, NULL);
+    }
 
     /* Initialize module functions */
     monitoring_module->super.coll_module_enable = mca_coll_monitoring_module_enable;

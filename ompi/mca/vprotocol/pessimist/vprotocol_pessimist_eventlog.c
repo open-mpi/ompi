@@ -87,8 +87,9 @@ void vprotocol_pessimist_matching_replay(int *src)
          event = (mca_vprotocol_pessimist_event_t *) opal_list_get_next(event)) {
         vprotocol_pessimist_matching_event_t *mevent;
 
-        if (VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING != event->type)
+        if (VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING != event->type) {
             continue;
+        }
         mevent = &(event->u_event.e_matching);
         if (mevent->reqid == mca_vprotocol_pessimist.clock) {
             /* this is the event to replay */
@@ -124,8 +125,9 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs, int *o
          event = (mca_vprotocol_pessimist_event_t *) opal_list_get_next(event)) {
         vprotocol_pessimist_delivery_event_t *devent;
 
-        if (VPROTOCOL_PESSIMIST_EVENT_TYPE_DELIVERY != event->type)
+        if (VPROTOCOL_PESSIMIST_EVENT_TYPE_DELIVERY != event->type) {
             continue;
+        }
         devent = &(event->u_event.e_delivery);
         if (devent->probeid < mca_vprotocol_pessimist.clock) {
             /* this particular test have to return no request completed yet */

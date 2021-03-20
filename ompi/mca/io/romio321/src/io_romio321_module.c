@@ -115,7 +115,8 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 
         ompi_datatype_get_true_extent(datatype, &true_lb, &true_extent);
 
-        if (true_lb > 0)
+        if (true_lb > 0) {
             *flag = 0;
+        }
     }
 }

@@ -89,8 +89,9 @@ int mca_vprotocol_base_select(bool enable_progress_threads, bool enable_mpi_thre
         }
 
         om = (opened_component_t *) malloc(sizeof(opened_component_t));
-        if (NULL == om)
+        if (NULL == om) {
             return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         OBJ_CONSTRUCT(om, opal_list_item_t);
         om->om_component = component;
         opal_list_append(&opened, (opal_list_item_t *) om);
@@ -133,6 +134,7 @@ int mca_vprotocol_base_select(bool enable_progress_threads, bool enable_mpi_thre
         V_OUTPUT_VERBOSE(500, "vprotocol select: component %s selected",
                          mca_vprotocol_component.pmlm_version.mca_component_name);
         return OMPI_SUCCESS;
-    } else
+    } else {
         return OMPI_ERR_NOT_FOUND;
+    }
 }

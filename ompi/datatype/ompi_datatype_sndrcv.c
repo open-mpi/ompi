@@ -72,8 +72,9 @@ int32_t ompi_datatype_sndrcv(const void *sbuf, int32_t scount, const ompi_dataty
         iov_count = 1;
         iov.iov_base = (IOVBASE_TYPE *) rbuf;
         iov.iov_len = scount * sdtype->super.size;
-        if ((int32_t) iov.iov_len > rcount)
+        if ((int32_t) iov.iov_len > rcount) {
             iov.iov_len = rcount;
+        }
 
         opal_convertor_pack(&send_convertor, &iov, &iov_count, &max_data);
         OBJ_DESTRUCT(&send_convertor);
@@ -89,8 +90,9 @@ int32_t ompi_datatype_sndrcv(const void *sbuf, int32_t scount, const ompi_dataty
         iov_count = 1;
         iov.iov_base = (IOVBASE_TYPE *) sbuf;
         iov.iov_len = rcount * rdtype->super.size;
-        if ((int32_t) iov.iov_len > scount)
+        if ((int32_t) iov.iov_len > scount) {
             iov.iov_len = scount;
+        }
 
         opal_convertor_unpack(&recv_convertor, &iov, &iov_count, &max_data);
         OBJ_DESTRUCT(&recv_convertor);

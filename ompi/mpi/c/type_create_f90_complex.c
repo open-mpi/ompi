@@ -70,10 +70,12 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
      */
     p_key = p;
     r_key = r;
-    if (MPI_UNDEFINED == p)
+    if (MPI_UNDEFINED == p) {
         p_key = 0;
-    if (MPI_UNDEFINED == r)
+    }
+    if (MPI_UNDEFINED == r) {
         r_key = 0;
+    }
 
     /**
      * With respect to the MPI standard, MPI-2.0 Sect. 10.2.5, MPI_TYPE_CREATE_F90_xxxx,
@@ -84,17 +86,18 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
      * cache.
      */
 
-    if ((LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) || (-LDBL_MIN_10_EXP < r))
+    if ((LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) || (-LDBL_MIN_10_EXP < r)) {
         *newtype = &ompi_mpi_datatype_null.dt;
-    else if ((DBL_DIG < p) || (DBL_MAX_10_EXP < r) || (-DBL_MIN_10_EXP < r))
+    } else if ((DBL_DIG < p) || (DBL_MAX_10_EXP < r) || (-DBL_MIN_10_EXP < r)) {
         *newtype = &ompi_mpi_ldblcplex.dt;
-    else if ((FLT_DIG < p) || (FLT_MAX_10_EXP < r) || (-FLT_MIN_10_EXP < r))
+    } else if ((FLT_DIG < p) || (FLT_MAX_10_EXP < r) || (-FLT_MIN_10_EXP < r)) {
         *newtype = &ompi_mpi_dblcplex.dt;
-    else if (!OMPI_HAVE_FORTRAN_COMPLEX4 || (sflt_dig < p) || (sflt_max_10_exp < r)
-             || (-sflt_min_10_exp < r))
+    } else if (!OMPI_HAVE_FORTRAN_COMPLEX4 || (sflt_dig < p) || (sflt_max_10_exp < r)
+               || (-sflt_min_10_exp < r)) {
         *newtype = &ompi_mpi_cplex.dt;
-    else
+    } else {
         *newtype = &ompi_mpi_complex4.dt;
+    }
 
     if (*newtype != &ompi_mpi_datatype_null.dt) {
         ompi_datatype_t *datatype;

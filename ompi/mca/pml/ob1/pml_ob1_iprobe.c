@@ -80,8 +80,9 @@ int mca_pml_ob1_improbe(int src, int tag, struct ompi_communicator_t *comm, int 
     mca_pml_ob1_recv_request_t *recvreq;
 
     *message = ompi_message_alloc();
-    if (NULL == *message)
+    if (NULL == *message) {
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
 
     MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
     if (NULL == recvreq) {
@@ -129,8 +130,9 @@ int mca_pml_ob1_mprobe(int src, int tag, struct ompi_communicator_t *comm,
     mca_pml_ob1_recv_request_t *recvreq;
 
     *message = ompi_message_alloc();
-    if (NULL == *message)
+    if (NULL == *message) {
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
 
     MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
     if (NULL == recvreq) {

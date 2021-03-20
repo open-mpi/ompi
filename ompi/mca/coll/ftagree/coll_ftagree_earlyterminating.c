@@ -104,8 +104,9 @@ int mca_coll_ftagree_eta_intra(void *contrib, int dt_count, ompi_datatype_t *dt,
         ackedgrp = *group;
         if (0 != (npa = ompi_group_size(ackedgrp))) {
             aranks = calloc(npa, sizeof(int));
-            for (i = 0; i < npa; i++)
+            for (i = 0; i < npa; i++) {
                 aranks[i] = i;
+            }
             cranks = calloc(npa, sizeof(int));
             ompi_group_translate_ranks(ackedgrp, npa, aranks, comm->c_remote_group, cranks);
             for (i = 0; i < npa; i++) {
@@ -247,8 +248,9 @@ int mca_coll_ftagree_eta_intra(void *contrib, int dt_count, ompi_datatype_t *dt,
                             /* per spec this should already be completed; TODO remove of proven
                              * correct */
                             /* Release the request, it can't be subsequently completed */
-                            if (MPI_REQUEST_NULL != reqs[ri])
+                            if (MPI_REQUEST_NULL != reqs[ri]) {
                                 ompi_request_free(&reqs[ri]);
+                            }
                         } else if ((MPI_ERR_PENDING == statuses[ri].MPI_ERROR)) {
                             /* The pending request(s) will be waited on at the next iteration. */
                             assert(ri >= nr);
@@ -260,8 +262,9 @@ int mca_coll_ftagree_eta_intra(void *contrib, int dt_count, ompi_datatype_t *dt,
                                  "remains pending. Renaming it as Request %d\n",
                                  OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), ri, (void *) reqs[ri], i, nr));
                             reqs[nr] = reqs[ri];
-                            if (ri != nr)
+                            if (ri != nr) {
                                 reqs[ri] = MPI_REQUEST_NULL;
+                            }
                             nr++;
                         } else {
                             ret = statuses[ri].MPI_ERROR;
@@ -295,8 +298,9 @@ int mca_coll_ftagree_eta_intra(void *contrib, int dt_count, ompi_datatype_t *dt,
                             out->pf = 1;
                             /* per spec this should already be completed; TODO understand why not */
                             /* Release the request, it can't be subsequently completed */
-                            if (MPI_REQUEST_NULL != reqs[ri])
+                            if (MPI_REQUEST_NULL != reqs[ri]) {
                                 ompi_request_free(&reqs[ri]);
+                            }
                         } else if ((MPI_ERR_PENDING == statuses[ri].MPI_ERROR)) {
                             /* The pending request(s) will be waited on at the next iteration. */
                             assert(ri >= nr);
@@ -308,8 +312,9 @@ int mca_coll_ftagree_eta_intra(void *contrib, int dt_count, ompi_datatype_t *dt,
                                  "remains pending. Renaming it as Request %d\n",
                                  OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), ri, (void *) reqs[ri], i, nr));
                             reqs[nr] = reqs[ri];
-                            if (ri != nr)
+                            if (ri != nr) {
                                 reqs[ri] = MPI_REQUEST_NULL;
+                            }
                             nr++;
                         } else {
                             ret = statuses[ri].MPI_ERROR;
@@ -326,13 +331,18 @@ int mca_coll_ftagree_eta_intra(void *contrib, int dt_count, ompi_datatype_t *dt,
 #undef NEED_TO_RECV
 
         nbcrashed = 0;
-        for (i = 0; i < np; i++)
-            if (proc_status[i] & STATUS_CRASHED)
+        for (i = 0; i < np; i++) {
+            if (proc_status[i] & STATUS_CRASHED) {
                 nbcrashed++;
+            }
+        }
         nbknow = 0;
-        for (i = 0; i < np; i++)
-            if ((!(proc_status[i] & STATUS_CRASHED)) && (proc_status[i] & STATUS_TOLD_ME_HE_KNOWS))
+        for (i = 0; i < np; i++) {
+            if ((!(proc_status[i] & STATUS_CRASHED))
+                && (proc_status[i] & STATUS_TOLD_ME_HE_KNOWS)) {
                 nbknow++;
+            }
+        }
 
         OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle,
                              "%s ftagree:agreement (ETA) end of Round %d: nbcrashed = %d, nbknow = "
@@ -352,9 +362,11 @@ clean_and_exit:
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ftbasis:agreement (ETA) decided in %d rounds ",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), round));
-    for (ri = 0; ri < 2 * np; ++ri)
-        if (NULL != reqs[ri] && MPI_REQUEST_NULL != reqs[ri])
+    for (ri = 0; ri < 2 * np; ++ri) {
+        if (NULL != reqs[ri] && MPI_REQUEST_NULL != reqs[ri]) {
             ompi_request_free(&reqs[ri]);
+        }
+    }
     free(reqs);
     free(statuses);
     free(in);

@@ -57,8 +57,9 @@ static opal_atomic_int32_t mca_pml_ob1_progress_needed = 0;
 int mca_pml_ob1_enable_progress(int32_t count)
 {
     int32_t progress_count = OPAL_ATOMIC_ADD_FETCH32(&mca_pml_ob1_progress_needed, count);
-    if (1 < progress_count)
+    if (1 < progress_count) {
         return 0; /* progress was already on */
+    }
 
     opal_progress_register(mca_pml_ob1_progress);
     return 1;
@@ -81,8 +82,9 @@ int mca_pml_ob1_progress(void)
         mca_bml_base_endpoint_t *endpoint;
 
         sendreq = get_request_from_send_pending(&pending_type);
-        if (OPAL_UNLIKELY(NULL == sendreq))
+        if (OPAL_UNLIKELY(NULL == sendreq)) {
             break;
+        }
 
         switch (pending_type) {
         case MCA_PML_OB1_SEND_PENDING_NONE:

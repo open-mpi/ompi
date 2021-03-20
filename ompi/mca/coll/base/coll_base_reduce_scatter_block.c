@@ -136,10 +136,12 @@ int ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:reduce_scatter_block_intra_recursivedoubling: rank %d/%d", rank,
                  comm_size));
-    if (rcount == 0)
+    if (rcount == 0) {
         return MPI_SUCCESS;
-    if (comm_size < 2)
+    }
+    if (comm_size < 2) {
         return MPI_SUCCESS;
+    }
 
     totalcount = comm_size * rcount;
     ompi_datatype_type_extent(dtype, &extent);
@@ -304,10 +306,12 @@ int ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
     }
 
 cleanup_and_return:
-    if (dtypesend)
+    if (dtypesend) {
         ompi_datatype_destroy(&dtypesend);
-    if (dtyperecv)
+    }
+    if (dtyperecv) {
         ompi_datatype_destroy(&dtyperecv);
+    }
     free(tmpbuf_raw);
     free(tmprecv_raw);
     return err;
@@ -320,10 +324,11 @@ cleanup_and_return:
  */
 static int ompi_range_sum(int a, int b, int r)
 {
-    if (r < a)
+    if (r < a) {
         return b - a + 1;
-    else if (r > b)
+    } else if (r > b) {
         return 2 * (b - a + 1);
+    }
     return 2 * (r - a + 1) + b - r;
 }
 
@@ -353,8 +358,9 @@ int ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:reduce_scatter_block_intra_recursivehalving: rank %d/%d", rank,
                  comm_size));
-    if (rcount == 0 || comm_size < 2)
+    if (rcount == 0 || comm_size < 2) {
         return MPI_SUCCESS;
+    }
 
     if (!ompi_op_is_commute(op)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -611,8 +617,9 @@ int ompi_coll_base_reduce_scatter_block_intra_butterfly(const void *sbuf, void *
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:reduce_scatter_block_intra_butterfly: rank %d/%d", rank, comm_size));
-    if (rcount == 0 || comm_size < 2)
+    if (rcount == 0 || comm_size < 2) {
         return MPI_SUCCESS;
+    }
 
     if (!(comm_size & (comm_size - 1))) {
         /* Special case: comm_size is a power of two */
@@ -780,8 +787,9 @@ int ompi_coll_base_reduce_scatter_block_intra_butterfly(const void *sbuf, void *
                            * ((send_index <= nprocs_rem - 1) ? 2 * send_index
                                                              : nprocs_rem + send_index);
         /* If process has two blocks, then send the second block (own block) */
-        if (vpeer < nprocs_rem)
+        if (vpeer < nprocs_rem) {
             sdispl += rcount;
+        }
         if (vpeer != vrank) {
             err = ompi_coll_base_sendrecv(psend + (ptrdiff_t) sdispl * extent, rcount, dtype, peer,
                                           MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK, rbuf, rcount,
@@ -867,8 +875,9 @@ static int ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
 
-    if (rcount == 0 || comm_size < 2)
+    if (rcount == 0 || comm_size < 2) {
         return MPI_SUCCESS;
+    }
 
     totalcount = comm_size * rcount;
     ompi_datatype_type_extent(dtype, &extent);

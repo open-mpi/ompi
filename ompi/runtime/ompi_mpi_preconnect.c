@@ -36,8 +36,9 @@ int ompi_init_preconnect_mpi(void)
     const bool *value = NULL;
 
     param = mca_base_var_find("ompi", "mpi", NULL, "preconnect_mpi");
-    if (0 > param)
+    if (0 > param) {
         return OMPI_SUCCESS;
+    }
     ret = mca_base_var_get_value(param, &value, NULL, NULL);
     if (OMPI_SUCCESS != ret || (NULL != value && 0 == value[0])) {
         return OMPI_SUCCESS;
@@ -61,8 +62,9 @@ int ompi_init_preconnect_mpi(void)
 
         ret = ompi_coll_base_sendrecv_actual(outbuf, 1, MPI_CHAR, next, 1, inbuf, 1, MPI_CHAR, prev,
                                              1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        if (OMPI_SUCCESS != ret)
+        if (OMPI_SUCCESS != ret) {
             return ret;
+        }
     }
 
     return ret;

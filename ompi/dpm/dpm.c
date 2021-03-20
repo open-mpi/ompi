@@ -143,8 +143,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root, const char *por
         char *value = strrchr(port_string, '=');
         assert(NULL != value);
         rportlen = atoi(++value);
-        if (rportlen > 0)
+        if (rportlen > 0) {
             rportlen *= -1;
+        }
         goto bcast_rportlen;
     }
 

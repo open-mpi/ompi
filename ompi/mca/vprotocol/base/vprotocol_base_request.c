@@ -40,8 +40,9 @@ int mca_vprotocol_base_request_parasite(void)
                                   pml_fl_save.fl_num_per_alloc, pml_fl_save.fl_mpool,
                                   pml_fl_save.fl_rcache_reg_flags, pml_fl_save.fl_rcache,
                                   pml_fl_save.item_init, pml_fl_save.ctx);
-        if (OMPI_SUCCESS != ret)
+        if (OMPI_SUCCESS != ret) {
             return ret;
+        }
     }
     if (mca_vprotocol.req_send_class) {
         opal_free_list_t pml_fl_save = mca_pml_base_send_requests;
@@ -64,8 +65,9 @@ int mca_vprotocol_base_request_parasite(void)
                                   pml_fl_save.fl_num_per_alloc, pml_fl_save.fl_mpool,
                                   pml_fl_save.fl_rcache_reg_flags, pml_fl_save.fl_rcache,
                                   pml_fl_save.item_init, pml_fl_save.ctx);
-        if (OMPI_SUCCESS != ret)
+        if (OMPI_SUCCESS != ret) {
             return ret;
+        }
     }
     return OMPI_SUCCESS;
 }

@@ -143,8 +143,9 @@ int ompi_errhandler_init(void)
 
     /* Initialize the predefined error handlers */
     OBJ_CONSTRUCT(&ompi_mpi_errhandler_null.eh, ompi_errhandler_t);
-    if (ompi_mpi_errhandler_null.eh.eh_f_to_c_index != OMPI_ERRHANDLER_NULL_FORTRAN)
+    if (ompi_mpi_errhandler_null.eh.eh_f_to_c_index != OMPI_ERRHANDLER_NULL_FORTRAN) {
         return OMPI_ERROR;
+    }
     ompi_mpi_errhandler_null.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
     ompi_mpi_errhandler_null.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
     ompi_mpi_errhandler_null.eh.eh_comm_fn = NULL;
@@ -155,8 +156,9 @@ int ompi_errhandler_init(void)
                      sizeof(ompi_mpi_errhandler_null.eh.eh_name));
 
     OBJ_CONSTRUCT(&ompi_mpi_errors_are_fatal.eh, ompi_errhandler_t);
-    if (ompi_mpi_errors_are_fatal.eh.eh_f_to_c_index != OMPI_ERRORS_ARE_FATAL_FORTRAN)
+    if (ompi_mpi_errors_are_fatal.eh.eh_f_to_c_index != OMPI_ERRORS_ARE_FATAL_FORTRAN) {
         return OMPI_ERROR;
+    }
     ompi_mpi_errors_are_fatal.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
     ompi_mpi_errors_are_fatal.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
     ompi_mpi_errors_are_fatal.eh.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
@@ -167,8 +169,9 @@ int ompi_errhandler_init(void)
                      sizeof(ompi_mpi_errors_are_fatal.eh.eh_name));
 
     OBJ_CONSTRUCT(&ompi_mpi_errors_return.eh, ompi_errhandler_t);
-    if (ompi_mpi_errors_return.eh.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN)
+    if (ompi_mpi_errors_return.eh.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN) {
         return OMPI_ERROR;
+    }
     ompi_mpi_errors_return.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
     ompi_mpi_errors_return.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
     ompi_mpi_errors_return.eh.eh_comm_fn = ompi_mpi_errors_return_comm_handler;
@@ -179,8 +182,9 @@ int ompi_errhandler_init(void)
                      sizeof(ompi_mpi_errors_return.eh.eh_name));
 
     OBJ_CONSTRUCT(&ompi_mpi_errors_abort.eh, ompi_errhandler_t);
-    if (ompi_mpi_errors_abort.eh.eh_f_to_c_index != OMPI_ERRORS_ABORT_FORTRAN)
+    if (ompi_mpi_errors_abort.eh.eh_f_to_c_index != OMPI_ERRORS_ABORT_FORTRAN) {
         return OMPI_ERROR;
+    }
     ompi_mpi_errors_abort.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
     ompi_mpi_errors_abort.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
     ompi_mpi_errors_abort.eh.eh_comm_fn = ompi_mpi_errors_abort_comm_handler;
@@ -331,8 +335,9 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t *ompi_proc, int status, boo
         if (NULL == group) { /* Build a group with the failed process */
             rc = ompi_group_incl((remote ? comm->c_remote_group : comm->c_local_group), 1,
                                  &proc_rank, &group);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc))
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
                 goto cleanup;
+            }
         }
         OPAL_OUTPUT_VERBOSE(
             (10, ompi_ftmpi_output_handle, "%s ompi: Process %s is in comm (%d) with rank %d. [%s]",

@@ -18,8 +18,9 @@ OMPI_DECLSPEC int mca_vprotocol_pessimist_start(size_t count, ompi_request_t **r
 
     for (i = 0; i < count; i++) {
         mca_pml_base_request_t *pml_request = (mca_pml_base_request_t *) requests[i];
-        if (NULL == pml_request)
+        if (NULL == pml_request) {
             continue;
+        }
 
         switch (pml_request->req_type) {
         case MCA_PML_REQUEST_RECV:

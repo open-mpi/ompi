@@ -108,8 +108,9 @@ int mca_sharedfp_lockedfile_read_ordered(ompio_file_t *fh, void *buf, int count,
 
     if (0 == rank) {
         buff = (long *) malloc(sizeof(long) * size);
-        if (NULL == buff)
+        if (NULL == buff) {
             return OMPI_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     ret = fh->f_comm->c_coll->coll_gather(&sendBuff, sendcnt, OMPI_OFFSET_DATATYPE, buff, recvcnt,

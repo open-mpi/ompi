@@ -139,8 +139,9 @@ int ompi_osc_sm_rget_accumulate(const void *origin_addr, int origin_count,
 
     ret = ompi_datatype_sndrcv(remote_address, target_count, target_dt, result_addr, result_count,
                                result_dt);
-    if (OMPI_SUCCESS != ret || op == &ompi_mpi_op_no_op.op)
+    if (OMPI_SUCCESS != ret || op == &ompi_mpi_op_no_op.op) {
         goto done;
+    }
 
     if (op == &ompi_mpi_op_replace.op) {
         ret = ompi_datatype_sndrcv((void *) origin_addr, origin_count, origin_dt, remote_address,
@@ -256,8 +257,9 @@ int ompi_osc_sm_get_accumulate(const void *origin_addr, int origin_count,
 
     ret = ompi_datatype_sndrcv(remote_address, target_count, target_dt, result_addr, result_count,
                                result_dt);
-    if (OMPI_SUCCESS != ret || op == &ompi_mpi_op_no_op.op)
+    if (OMPI_SUCCESS != ret || op == &ompi_mpi_op_no_op.op) {
         goto done;
+    }
 
     if (op == &ompi_mpi_op_replace.op) {
         ret = ompi_datatype_sndrcv((void *) origin_addr, origin_count, origin_dt, remote_address,
@@ -321,8 +323,9 @@ int ompi_osc_sm_fetch_and_op(const void *origin_addr, void *result_addr, struct 
 
     /* fetch */
     ompi_datatype_copy_content_same_ddt(dt, 1, (char *) result_addr, (char *) remote_address);
-    if (op == &ompi_mpi_op_no_op.op)
+    if (op == &ompi_mpi_op_no_op.op) {
         goto done;
+    }
 
     /* op */
     if (op == &ompi_mpi_op_replace.op) {

@@ -149,8 +149,9 @@ int ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
             /* figure out how much data I have to send to this child */
             vkid = (bmtree->tree_next[i] - root + size) % size;
             mycount = vkid - vrank;
-            if (mycount > (size - vkid))
+            if (mycount > (size - vkid)) {
                 mycount = size - vkid;
+            }
             mycount *= rcount;
 
             OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -378,10 +379,12 @@ error_hndl:
         /* find a real error code */
         if (MPI_ERR_IN_STATUS == ret) {
             for (i = 0; i < size; i++) {
-                if (MPI_REQUEST_NULL == reqs[i])
+                if (MPI_REQUEST_NULL == reqs[i]) {
                     continue;
-                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)
+                }
+                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) {
                     continue;
+                }
                 ret = reqs[i]->req_status.MPI_ERROR;
                 break;
             }

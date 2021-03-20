@@ -834,17 +834,21 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided, bool rein
         int rc;
         const char *evmethod;
         rc = ompi_comm_rbcast_init();
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             return rc;
+        }
         rc = ompi_comm_revoke_init();
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             return rc;
+        }
         rc = ompi_comm_failure_propagator_init();
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             return rc;
+        }
         rc = ompi_comm_failure_detector_init();
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             return rc;
+        }
 
         evmethod = event_base_get_method(opal_sync_event_base);
         if (0 == strcmp("select", evmethod)) {
@@ -983,8 +987,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided, bool rein
     if (ompi_ftmpi_enabled) {
         int rc;
         rc = ompi_comm_failure_detector_start();
-        if (OMPI_SUCCESS != rc)
+        if (OMPI_SUCCESS != rc) {
             return rc;
+        }
     }
 #endif
 

@@ -69,13 +69,14 @@ static int ompi_comm_rbcast_bmg(ompi_communicator_t *comm, ompi_comm_rbcast_mess
     }
 
     /* d is the direction, forward (1*2^i), then backward (-1*2^i) */
-    for (i = 1; i <= np / 2; i *= 2)
+    for (i = 1; i <= np / 2; i *= 2) {
         for (d = 1; d >= -1; d -= 2) {
             ompi_proc_t *proc;
             int idx = (np + me + d * i) % np;
         redo:
-            if (idx == me)
+            if (idx == me) {
                 continue;
+            }
             if (OPAL_LIKELY(idx < ompi_group_size(lgrp))) {
                 proc = ompi_group_peer_lookup(lgrp, idx);
             } else {
@@ -99,6 +100,7 @@ static int ompi_comm_rbcast_bmg(ompi_communicator_t *comm, ompi_comm_rbcast_mess
                 goto redo;
             }
         }
+    }
     return OMPI_SUCCESS;
 }
 
@@ -115,13 +117,14 @@ static int ompi_comm_rbcast_n2(ompi_communicator_t *comm, ompi_comm_rbcast_messa
     /* send a message to all procs in local_group, then all procs in
      * remote_group (if distinct) */
     for (grp = comm->c_local_group; grp != NULL;
-         grp = (grp != comm->c_remote_group) ? comm->c_remote_group : NULL)
+         grp = (grp != comm->c_remote_group) ? comm->c_remote_group : NULL) {
         for (i = 0; i < ompi_group_size(grp); i++) {
             ompi_proc_t *proc;
 
             proc = ompi_group_peer_lookup(grp, i);
-            if (ompi_proc_local_proc == proc)
+            if (ompi_proc_local_proc == proc) {
                 continue;
+            }
             ret = ompi_comm_rbcast_send_msg(proc, msg, size);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 if (OPAL_UNLIKELY(OMPI_ERR_UNREACH != ret)) {
@@ -129,6 +132,7 @@ static int ompi_comm_rbcast_n2(ompi_communicator_t *comm, ompi_comm_rbcast_messa
                 }
             }
         }
+    }
     return OMPI_SUCCESS;
 }
 

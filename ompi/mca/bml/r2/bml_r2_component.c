@@ -80,8 +80,9 @@ mca_bml_base_module_t *mca_bml_r2_component_init(int *priority, bool enable_prog
 {
     /* initialize BTLs */
 
-    if (OMPI_SUCCESS != mca_btl_base_select(enable_progress_threads, enable_mpi_threads))
+    if (OMPI_SUCCESS != mca_btl_base_select(enable_progress_threads, enable_mpi_threads)) {
         return NULL;
+    }
 
     *priority = 100;
     mca_bml_r2.btls_added = false;

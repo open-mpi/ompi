@@ -201,8 +201,9 @@ int mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const i
         ompi_datatype_type_size(rdtypes[i], &msg_size);
         msg_size *= rcounts[i];
 
-        if (i == rank || 0 == msg_size)
+        if (i == rank || 0 == msg_size) {
             continue;
+        }
 
         prcv = ((char *) rbuf) + rdisps[i];
         err = MCA_PML_CALL(
@@ -221,8 +222,9 @@ int mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const i
         ompi_datatype_type_size(sdtypes[i], &msg_size);
         msg_size *= scounts[i];
 
-        if (i == rank || 0 == msg_size)
+        if (i == rank || 0 == msg_size) {
             continue;
+        }
 
         psnd = ((char *) sbuf) + sdisps[i];
         err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i], i, MCA_COLL_BASE_TAG_ALLTOALLW,
@@ -286,8 +288,9 @@ int mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const i
         ompi_datatype_type_size(rdtypes[i], &msg_size);
         msg_size *= rcounts[i];
 
-        if (0 == msg_size)
+        if (0 == msg_size) {
             continue;
+        }
 
         prcv = ((char *) rbuf) + rdisps[i];
         err = MCA_PML_CALL(
@@ -305,8 +308,9 @@ int mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const i
         ompi_datatype_type_size(sdtypes[i], &msg_size);
         msg_size *= scounts[i];
 
-        if (0 == msg_size)
+        if (0 == msg_size) {
             continue;
+        }
 
         psnd = ((char *) sbuf) + sdisps[i];
         err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i], i, MCA_COLL_BASE_TAG_ALLTOALLW,

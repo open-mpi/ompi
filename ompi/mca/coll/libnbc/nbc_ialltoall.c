@@ -110,8 +110,9 @@ static int nbc_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype se
     } else if (a2asize < (1 << 12) * (unsigned int) p) {
         /*alg = NBC_A2A_DISS;*/
         alg = NBC_A2A_LINEAR;
-    } else
+    } else {
         alg = NBC_A2A_LINEAR; /*NBC_A2A_PAIRWISE;*/
+    }
 
     /* allocate temp buffer if we need one */
     if (alg == NBC_A2A_INPLACE) {

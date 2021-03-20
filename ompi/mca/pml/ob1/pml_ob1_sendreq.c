@@ -52,8 +52,9 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
         mca_bml_base_btl_t *send_dst;
 
         sendreq = get_request_from_send_pending(&pending_type);
-        if (OPAL_UNLIKELY(NULL == sendreq))
+        if (OPAL_UNLIKELY(NULL == sendreq)) {
             break;
+        }
 
         switch (pending_type) {
         case MCA_PML_OB1_SEND_PENDING_SCHEDULE:
@@ -310,8 +311,9 @@ static void mca_pml_ob1_rget_completion(mca_pml_ob1_rdma_frag_t *frag, int64_t r
 
         if (0 == frag_remaining) { /* this frag is now completed. Update the request and be done */
             OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length);
-            if (sendreq->rdma_frag == frag)
+            if (sendreq->rdma_frag == frag) {
                 sendreq->rdma_frag = NULL;
+            }
             MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
         }
     } else {
@@ -911,8 +913,9 @@ void mca_pml_ob1_send_request_copy_in_out(mca_pml_ob1_send_request_t *sendreq, u
     int n;
     double weight_total = 0;
 
-    if (OPAL_UNLIKELY(0 == send_length))
+    if (OPAL_UNLIKELY(0 == send_length)) {
         return;
+    }
 
     i = opal_free_list_wait(&mca_pml_ob1.send_ranges);
 
@@ -941,8 +944,9 @@ static inline mca_pml_ob1_send_range_t *get_send_range_nolock(mca_pml_ob1_send_r
 
     item = opal_list_get_first(&sendreq->req_send_ranges);
 
-    if (opal_list_get_end(&sendreq->req_send_ranges) == item)
+    if (opal_list_get_end(&sendreq->req_send_ranges) == item) {
         return NULL;
+    }
 
     return (mca_pml_ob1_send_range_t *) item;
 }
@@ -986,8 +990,9 @@ int mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t *sendreq)
 
     /* check pipeline_depth here before attempting to get any locks */
     if (true == sendreq->req_throttle_sends
-        && sendreq->req_pipeline_depth >= mca_pml_ob1.send_pipeline_depth)
+        && sendreq->req_pipeline_depth >= mca_pml_ob1.send_pipeline_depth) {
         return OMPI_SUCCESS;
+    }
 
     range = get_send_range(sendreq);
 
@@ -1002,10 +1007,11 @@ int mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t *sendreq)
 
         assert(range->range_send_length != 0);
 
-        if (prev_bytes_remaining == range->range_send_length)
+        if (prev_bytes_remaining == range->range_send_length) {
             num_fail++;
-        else
+        } else {
             num_fail = 0;
+        }
 
         prev_bytes_remaining = range->range_send_length;
 
@@ -1021,8 +1027,9 @@ int mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t *sendreq)
     cannot_pack:
         do {
             btl_idx = range->range_btl_idx;
-            if (++range->range_btl_idx == range->range_btl_cnt)
+            if (++range->range_btl_idx == range->range_btl_cnt) {
                 range->range_btl_idx = 0;
+            }
         } while (!range->range_btls[btl_idx].length);
 
         bml_btl = range->range_btls[btl_idx].bml_btl;
@@ -1167,8 +1174,9 @@ static void mca_pml_ob1_send_request_put_frag_failed(mca_pml_ob1_rdma_frag_t *fr
                                              frag->rdma_length);
         /* if a pointer to a receive request is not set it means that
          * ACK was not yet received. Don't schedule sends before ACK */
-        if (NULL != sendreq->req_recv.pval)
+        if (NULL != sendreq->req_recv.pval) {
             mca_pml_ob1_send_request_schedule(sendreq);
+        }
     }
 }
 

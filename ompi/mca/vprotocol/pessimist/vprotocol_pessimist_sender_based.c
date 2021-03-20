@@ -41,9 +41,10 @@ static int sb_mmap_file_open(const char *path)
 static void sb_mmap_file_close(void)
 {
     int ret = close(sb.sb_fd);
-    if (-1 == ret)
+    if (-1 == ret) {
         V_OUTPUT_ERR("pml_v: protocol_pessimist: sender_based_finalize: close (%d): %s", sb.sb_fd,
                      strerror(errno));
+    }
 }
 
 static void sb_mmap_alloc(void)
@@ -69,9 +70,10 @@ static void sb_mmap_alloc(void)
 static void sb_mmap_free(void)
 {
     int ret = munmap((void *) sb.sb_addr, sb.sb_length);
-    if (-1 == ret)
+    if (-1 == ret) {
         V_OUTPUT_ERR("pml_v: protocol_pessimsit: sender_based_finalize: munmap (%p): %s",
                      (void *) sb.sb_addr, strerror(errno));
+    }
 }
 
 int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
@@ -95,16 +97,18 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
 #endif
 
     opal_asprintf(&path, "%s" OPAL_PATH_SEP "%s", ompi_process_info.proc_session_dir, mmapfile);
-    if (OPAL_SUCCESS != sb_mmap_file_open(path))
+    if (OPAL_SUCCESS != sb_mmap_file_open(path)) {
         return OPAL_ERR_FILE_OPEN_FAILURE;
+    }
     free(path);
     return OMPI_SUCCESS;
 }
 
 void vprotocol_pessimist_sender_based_finalize(void)
 {
-    if (((uintptr_t) NULL) != sb.sb_addr)
+    if (((uintptr_t) NULL) != sb.sb_addr) {
         sb_mmap_free();
+    }
     sb_mmap_file_close();
 }
 
@@ -113,8 +117,9 @@ void vprotocol_pessimist_sender_based_finalize(void)
  */
 void vprotocol_pessimist_sender_based_alloc(size_t len)
 {
-    if (((uintptr_t) NULL) != sb.sb_addr)
+    if (((uintptr_t) NULL) != sb.sb_addr) {
         sb_mmap_free();
+    }
 #ifdef SB_USE_SELFCOMM_METHOD
     else
         ompi_comm_dup(MPI_COMM_SELF, &sb.sb_comm, 1);
@@ -127,8 +132,9 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
 
     /* Adjusting sb_length for the largest application message to fit   */
     len += sb.sb_cursor + sizeof(vprotocol_pessimist_sender_based_header_t);
-    if (sb.sb_length < len)
+    if (sb.sb_length < len) {
         sb.sb_length = len;
+    }
     /* How much space left for application data */
     sb.sb_available = sb.sb_length - sb.sb_cursor;
 

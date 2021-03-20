@@ -29,8 +29,9 @@ int mca_coll_monitoring_allgatherv(const void *sbuf, int scount, struct ompi_dat
     data_size = scount * type_size;
     mca_common_monitoring_coll_a2a(data_size * (comm_size - 1), monitoring_module->data);
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
@@ -59,8 +60,9 @@ int mca_coll_monitoring_iallgatherv(const void *sbuf, int scount, struct ompi_da
     data_size = scount * type_size;
     mca_common_monitoring_coll_a2a(data_size * (comm_size - 1), monitoring_module->data);
     for (i = 0; i < comm_size; ++i) {
-        if (my_rank == i)
+        if (my_rank == i) {
             continue; /* No communication for self */
+        }
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
          * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank

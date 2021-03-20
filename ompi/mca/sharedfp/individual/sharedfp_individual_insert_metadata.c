@@ -99,8 +99,9 @@ int mca_sharedfp_individual_write_metadata_file(struct mca_sharedfp_base_data_t 
 
     headnode = (mca_sharedfp_individual_header_record *) sh->selected_module_data;
 
-    if (headnode->numofrecordsonfile == 0)
+    if (headnode->numofrecordsonfile == 0) {
         headnode->metadatafile_offset = headnode->metafile_start_offset;
+    }
 
     current = headnode->next;
     while (current != NULL) {

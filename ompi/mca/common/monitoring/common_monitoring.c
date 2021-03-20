@@ -152,8 +152,9 @@ static int mca_common_monitoring_set_flush(struct mca_base_pvar_t *pvar, const v
         mca_common_monitoring_current_filename = NULL;
     } else {
         mca_common_monitoring_current_filename = strdup((char *) value);
-        if (NULL == mca_common_monitoring_current_filename)
+        if (NULL == mca_common_monitoring_current_filename) {
             return OMPI_ERROR;
+        }
     }
     return OMPI_SUCCESS;
 }
@@ -209,10 +210,12 @@ static int mca_common_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
 
 int mca_common_monitoring_init(void)
 {
-    if (!mca_common_monitoring_enabled)
+    if (!mca_common_monitoring_enabled) {
         return OMPI_ERROR;
-    if (1 < opal_atomic_add_fetch_32(&mca_common_monitoring_hold, 1))
+    }
+    if (1 < opal_atomic_add_fetch_32(&mca_common_monitoring_hold, 1)) {
         return OMPI_SUCCESS; /* Already initialized */
+    }
 
     const char *hostname;
     /* Initialize constant */
@@ -232,8 +235,9 @@ int mca_common_monitoring_init(void)
 void mca_common_monitoring_finalize(void)
 {
     if (!mca_common_monitoring_enabled || /* Don't release if not last */
-        0 < opal_atomic_sub_fetch_32(&mca_common_monitoring_hold, 1))
+        0 < opal_atomic_sub_fetch_32(&mca_common_monitoring_hold, 1)) {
         return;
+    }
 
     OPAL_MONITORING_PRINT_INFO("common_component_finish");
     /* Dump monitoring informations */
@@ -457,10 +461,12 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs)
     size_t i;
     int peer_rank;
     uint64_t key;
-    if (0 > rank_world)
+    if (0 > rank_world) {
         rank_world = ompi_comm_rank((ompi_communicator_t *) &ompi_mpi_comm_world);
-    if (!nprocs_world)
+    }
+    if (!nprocs_world) {
         nprocs_world = ompi_comm_size((ompi_communicator_t *) &ompi_mpi_comm_world);
+    }
 
     if (NULL == pml_data) {
         int array_size = (10 + max_size_histogram) * nprocs_world;
@@ -487,16 +493,18 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs, size_t nprocs)
         } else {
             tmp = procs[i]->super.proc_name;
         }
-        if (tmp.jobid != ompi_proc_local_proc->super.proc_name.jobid)
+        if (tmp.jobid != ompi_proc_local_proc->super.proc_name.jobid) {
             continue;
+        }
 
         /* each process will only be added once, so there is no way it already exists in the hash */
         for (peer_rank = 0; peer_rank < nprocs_world; peer_rank++) {
             wp_name = ompi_group_get_proc_name(((ompi_communicator_t *) &ompi_mpi_comm_world)
                                                    ->c_remote_group,
                                                peer_rank);
-            if (0 != opal_compare_proc(tmp, wp_name))
+            if (0 != opal_compare_proc(tmp, wp_name)) {
                 continue;
+            }
 
             key = *((uint64_t *) &tmp);
             /* save the rank of the process in MPI_COMM_WORLD in the hash using the proc_name as the
@@ -522,16 +530,18 @@ static void mca_common_monitoring_reset(void)
 
 void mca_common_monitoring_record_pml(int world_rank, size_t data_size, int tag)
 {
-    if (0 == mca_common_monitoring_current_state)
+    if (0 == mca_common_monitoring_current_state) {
         return; /* right now the monitoring is not started */
+    }
 
     /* Keep tracks of the data_size distribution */
     if (0 == data_size) {
         opal_atomic_add_fetch_size_t(&size_histogram[world_rank * max_size_histogram], 1);
     } else {
         int log2_size = log10(data_size) / log10_2;
-        if (log2_size > max_size_histogram - 2) /* Avoid out-of-bound write */
+        if (log2_size > max_size_histogram - 2) { /* Avoid out-of-bound write */
             log2_size = max_size_histogram - 2;
+        }
         opal_atomic_add_fetch_size_t(&size_histogram[world_rank * max_size_histogram + log2_size
                                                      + 1],
                                      1);
@@ -554,8 +564,9 @@ static int mca_common_monitoring_get_pml_count(const struct mca_base_pvar_t *pva
     int i, comm_size = ompi_comm_size(comm);
     size_t *values = (size_t *) value;
 
-    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_count)
+    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_count) {
         return OMPI_ERROR;
+    }
 
     for (i = 0; i < comm_size; ++i) {
         values[i] = pml_count[i];
@@ -572,8 +583,9 @@ static int mca_common_monitoring_get_pml_size(const struct mca_base_pvar_t *pvar
     size_t *values = (size_t *) value;
     int i;
 
-    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_data)
+    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_data) {
         return OMPI_ERROR;
+    }
 
     for (i = 0; i < comm_size; ++i) {
         values[i] = pml_data[i];
@@ -585,8 +597,9 @@ static int mca_common_monitoring_get_pml_size(const struct mca_base_pvar_t *pvar
 void mca_common_monitoring_record_osc(int world_rank, size_t data_size,
                                       enum mca_monitoring_osc_direction dir)
 {
-    if (0 == mca_common_monitoring_current_state)
+    if (0 == mca_common_monitoring_current_state) {
         return; /* right now the monitoring is not started */
+    }
 
     if (SEND == dir) {
         opal_atomic_add_fetch_size_t(&osc_data_s[world_rank], data_size);
@@ -604,8 +617,9 @@ static int mca_common_monitoring_get_osc_sent_count(const struct mca_base_pvar_t
     int i, comm_size = ompi_comm_size(comm);
     size_t *values = (size_t *) value;
 
-    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_count)
+    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_count) {
         return OMPI_ERROR;
+    }
 
     for (i = 0; i < comm_size; ++i) {
         values[i] = osc_count_s[i];
@@ -622,8 +636,9 @@ static int mca_common_monitoring_get_osc_sent_size(const struct mca_base_pvar_t 
     size_t *values = (size_t *) value;
     int i;
 
-    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_data)
+    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_data) {
         return OMPI_ERROR;
+    }
 
     for (i = 0; i < comm_size; ++i) {
         values[i] = osc_data_s[i];
@@ -639,8 +654,9 @@ static int mca_common_monitoring_get_osc_recv_count(const struct mca_base_pvar_t
     int i, comm_size = ompi_comm_size(comm);
     size_t *values = (size_t *) value;
 
-    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_count)
+    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_count) {
         return OMPI_ERROR;
+    }
 
     for (i = 0; i < comm_size; ++i) {
         values[i] = osc_count_r[i];
@@ -657,8 +673,9 @@ static int mca_common_monitoring_get_osc_recv_size(const struct mca_base_pvar_t 
     size_t *values = (size_t *) value;
     int i;
 
-    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_data)
+    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_data) {
         return OMPI_ERROR;
+    }
 
     for (i = 0; i < comm_size; ++i) {
         values[i] = osc_data_r[i];
@@ -669,8 +686,9 @@ static int mca_common_monitoring_get_osc_recv_size(const struct mca_base_pvar_t 
 
 void mca_common_monitoring_record_coll(int world_rank, size_t data_size)
 {
-    if (0 == mca_common_monitoring_current_state)
+    if (0 == mca_common_monitoring_current_state) {
         return; /* right now the monitoring is not started */
+    }
 
     opal_atomic_add_fetch_size_t(&coll_data[world_rank], data_size);
     opal_atomic_add_fetch_size_t(&coll_count[world_rank], 1);
@@ -683,8 +701,9 @@ static int mca_common_monitoring_get_coll_count(const struct mca_base_pvar_t *pv
     int i, comm_size = ompi_comm_size(comm);
     size_t *values = (size_t *) value;
 
-    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_count)
+    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_count) {
         return OMPI_ERROR;
+    }
 
     for (i = 0; i < comm_size; ++i) {
         values[i] = coll_count[i];
@@ -701,8 +720,9 @@ static int mca_common_monitoring_get_coll_size(const struct mca_base_pvar_t *pva
     size_t *values = (size_t *) value;
     int i;
 
-    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_data)
+    if (comm != &ompi_mpi_comm_world.comm || NULL == pml_data) {
         return OMPI_ERROR;
+    }
 
     for (i = 0; i < comm_size; ++i) {
         values[i] = coll_data[i];
@@ -719,9 +739,10 @@ static void mca_common_monitoring_output(FILE *pf, int my_rank, int nbprocs)
         if (pml_count[i] > 0) {
             fprintf(pf, "E\t%" PRId32 "\t%" PRId32 "\t%zu bytes\t%zu msgs sent\t", my_rank, i,
                     pml_data[i], pml_count[i]);
-            for (int j = 0; j < max_size_histogram; ++j)
+            for (int j = 0; j < max_size_histogram; ++j) {
                 fprintf(pf, "%zu%s", size_histogram[i * max_size_histogram + j],
                         j < max_size_histogram - 1 ? "," : "\n");
+            }
         }
     }
 
@@ -739,9 +760,10 @@ static void mca_common_monitoring_output(FILE *pf, int my_rank, int nbprocs)
                  * the end of the internal category.
                  */
                 if (0 == pml_count[i]) {
-                    for (int j = 0; j < max_size_histogram; ++j)
+                    for (int j = 0; j < max_size_histogram; ++j) {
                         fprintf(pf, "%zu%s", size_histogram[i * max_size_histogram + j],
                                 j < max_size_histogram - 1 ? "," : "\n");
+                    }
                 }
             }
         }
@@ -778,8 +800,9 @@ static void mca_common_monitoring_output(FILE *pf, int my_rank, int nbprocs)
 static int mca_common_monitoring_flush(int fd, char *filename)
 {
     /* If we are not drived by MPIT then dump the monitoring information */
-    if (0 == mca_common_monitoring_current_state || 0 == fd) /* if disabled do nothing */
+    if (0 == mca_common_monitoring_current_state || 0 == fd) { /* if disabled do nothing */
         return OMPI_SUCCESS;
+    }
 
     if (1 == fd) {
         OPAL_MONITORING_PRINT_INFO("Proc %" PRId32 " flushing monitoring to stdout", rank_world);

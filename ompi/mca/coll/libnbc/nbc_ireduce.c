@@ -964,8 +964,9 @@ static inline int red_sched_redscat_gather(int rank, int comm_size, int root, co
             int vdest = vrank ^ mask;
             /* Translate vdest virtual rank to real rank */
             int dest = (vdest < nprocs_rem) ? vdest * 2 : vdest + nprocs_rem;
-            if ((vdest == 0) && (root < 2 * nprocs_rem) && (root % 2 != 0))
+            if ((vdest == 0) && (root < 2 * nprocs_rem) && (root % 2 != 0)) {
                 dest = root;
+            }
 
             vdest_tree = vdest >> step;
             vdest_tree <<= step;
@@ -993,14 +994,18 @@ static inline int red_sched_redscat_gather(int rank, int comm_size, int root, co
     }
 
 cleanup_and_return:
-    if (NULL != rindex)
+    if (NULL != rindex) {
         free(rindex);
-    if (NULL != sindex)
+    }
+    if (NULL != sindex) {
         free(sindex);
-    if (NULL != rcount)
+    }
+    if (NULL != rcount) {
         free(rcount);
-    if (NULL != scount)
+    }
+    if (NULL != scount) {
         free(scount);
+    }
     return res;
 }
 

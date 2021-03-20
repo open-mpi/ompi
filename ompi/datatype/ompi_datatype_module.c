@@ -854,8 +854,9 @@ int ompi_datatype_safeguard_pointer_debug_breakpoint(const void *actual_ptr, int
 static int _ompi_dump_data_flags(unsigned short usflags, char *ptr, size_t length)
 {
     int index = 0;
-    if (length < 22)
+    if (length < 22) {
         return 0;
+    }
     /* The lower-level part is the responsibility of opal_datatype_dump_data_flags */
     index += opal_datatype_dump_data_flags(usflags, ptr, length);
 
@@ -935,10 +936,12 @@ void ompi_datatype_dump(const ompi_datatype_t *pData)
     if (ompi_datatype_is_predefined(pData)) {
         index += snprintf(buffer + index, length - index, "predefined ");
     } else {
-        if (pData->super.flags & OPAL_DATATYPE_FLAG_COMMITTED)
+        if (pData->super.flags & OPAL_DATATYPE_FLAG_COMMITTED) {
             index += snprintf(buffer + index, length - index, "committed ");
-        if (pData->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)
+        }
+        if (pData->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
             index += snprintf(buffer + index, length - index, "contiguous ");
+        }
     }
     index += snprintf(buffer + index, length - index, ")");
     index += _ompi_dump_data_flags(pData->super.flags, buffer + index, length - index);

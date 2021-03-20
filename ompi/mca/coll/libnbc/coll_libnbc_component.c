@@ -135,8 +135,9 @@ static int libnbc_open(void)
                               sizeof(ompi_coll_libnbc_request_t), 8,
                               OBJ_CLASS(ompi_coll_libnbc_request_t), 0, 0, 0, -1, 8, NULL, 0, NULL,
                               NULL, NULL);
-    if (OMPI_SUCCESS != ret)
+    if (OMPI_SUCCESS != ret) {
         return ret;
+    }
 
     /* note: active comms is the number of communicators who have had
        a non-blocking collective started */
@@ -283,8 +284,9 @@ mca_coll_base_module_t *libnbc_comm_query(struct ompi_communicator_t *comm, int 
     ompi_coll_libnbc_module_t *module;
 
     module = OBJ_NEW(ompi_coll_libnbc_module_t);
-    if (NULL == module)
+    if (NULL == module) {
         return NULL;
+    }
 
     *priority = libnbc_priority;
 

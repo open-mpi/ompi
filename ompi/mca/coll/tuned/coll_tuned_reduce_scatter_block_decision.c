@@ -61,8 +61,8 @@ int ompi_coll_tuned_reduce_scatter_block_intra_check_forced_init(
     mca_base_var_enum_t *new_enum;
     int cnt;
 
-    for (cnt = 0; NULL != reduce_scatter_block_algorithms[cnt].string; cnt++)
-        ;
+    for (cnt = 0; NULL != reduce_scatter_block_algorithms[cnt].string; cnt++) {
+    }
     ompi_coll_tuned_forced_max_algorithms[REDUCESCATTERBLOCK] = cnt;
 
     (void)

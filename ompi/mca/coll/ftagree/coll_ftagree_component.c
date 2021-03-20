@@ -86,10 +86,11 @@ static int ftagree_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_ftagree_priority);
 
-    if (ompi_ftmpi_enabled)
+    if (ompi_ftmpi_enabled) {
         value = 1;
-    else
+    } else {
         value = 0; /* NOFT: do not initialize ERA */
+    }
     (void) mca_base_component_var_register(
         &mca_coll_ftagree_component.collm_version, "agreement",
         "Agreement algorithm 0: Allreduce (NOT FAULT TOLERANT); 1: Early Returning Concensus "

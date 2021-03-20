@@ -55,15 +55,18 @@ static int check_oversubscribing(int rank, int num_nodes, int num_objs_in_node,
     int oversubscribed = 0, local_oversub = 0, err;
 
     /* Only a single process per node, the local root, compute the oversubscription condition */
-    if (rank == local_procs[0])
-        if (num_objs_in_node < num_procs_in_node)
+    if (rank == local_procs[0]) {
+        if (num_objs_in_node < num_procs_in_node) {
             local_oversub = 1;
+        }
+    }
 
     if (OMPI_SUCCESS
         != (err = comm_old->c_coll->coll_allreduce(&local_oversub, &oversubscribed, 1, MPI_INT,
                                                    MPI_SUM, comm_old,
-                                                   comm_old->c_coll->coll_allreduce_module)))
+                                                   comm_old->c_coll->coll_allreduce_module))) {
         return err;
+    }
 
     return oversubscribed;
 }
@@ -106,8 +109,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
     if (OMPI_SUCCESS
         != (err = mca_topo_base_dist_graph_distribute(topo_module, comm_old, n, nodes, degrees,
                                                       targets, weights,
-                                                      &(topo_module->mtc.dist_graph))))
+                                                      &(topo_module->mtc.dist_graph)))) {
         return err;
+    }
 
     if (!reorder) { /* No reorder. Create a new communicator, then   */
                     /* jump out to attach the dist_graph and return */
@@ -146,8 +150,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
         goto fallback;
     }
     root_obj = hwloc_get_root_obj(opal_hwloc_topology);
-    if (NULL == root_obj)
+    if (NULL == root_obj) {
         goto fallback;
+    }
 
     topo = topo_module->mtc.dist_graph;
     rank = ompi_comm_rank(comm_old);
@@ -164,8 +169,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
     colors = (int *) malloc(size * sizeof(int));
     for (i = 0; i < size; i++) {
         proc = ompi_group_peer_lookup(comm_old->c_local_group, i);
-        if ((i == rank) || (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)))
+        if ((i == rank) || (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags))) {
             vpids[num_procs_in_node++] = i;
+        }
 
         pval = &val;
         OPAL_MODEX_RECV_VALUE(err, PMIX_NODEID, &(proc->super.proc_name), &pval, PMIX_UINT32);
@@ -190,12 +196,15 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
 #endif
     /* clean-up dupes in the array */
     for (i = 0; i < size; i++) {
-        if (-1 == vpids[i])
+        if (-1 == vpids[i]) {
             continue;
+        }
         num_nodes++; /* compute number of nodes */
-        for (j = i + 1; j < size; j++)
-            if (vpids[i] == vpids[j])
+        for (j = i + 1; j < size; j++) {
+            if (vpids[i] == vpids[j]) {
                 vpids[j] = -1;
+            }
+        }
     }
     if (0 == num_nodes) {
         /* No useful info has been retrieved from the runtime. Fallback
@@ -209,9 +218,11 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
     /* Only the global root needs to do this */
     if (0 == rank) {
         nodes_roots = (int *) calloc(num_nodes, sizeof(int));
-        for (i = idx = 0; i < size; i++)
-            if (vpids[i] != -1)
+        for (i = idx = 0; i < size; i++) {
+            if (vpids[i] != -1) {
                 nodes_roots[idx++] = i;
+            }
+        }
         OPAL_OUTPUT_VERBOSE(
             (10, ompi_topo_base_framework.framework_output, "num nodes is %i\n", num_nodes));
 #ifdef __DEBUG__
@@ -234,9 +245,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
 
     if (hwloc_bitmap_isincluded(root_obj->cpuset,
                                 set)) { /* processes are not bound on the machine */
-        if (0 == rank)
+        if (0 == rank) {
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                  ">>>>>>>>>>>>> Process Not bound <<<<<<<<<<<<<<<\n"));
+        }
 
         /* we try to bind to cores or above objects if enough are present */
         /* Not sure that cores are present in ALL nodes */
@@ -306,10 +318,11 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                  */
                 OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                      "Process %i failed to bind on OBJ#%i \n", rank, obj_rank));
-            } else
+            } else {
                 OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                      "Process %i not bound : binding on OBJ#%i \n", rank,
                                      obj_rank));
+            }
         } else {
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                  "Process %i bound  on OBJ #%i \n"
@@ -336,14 +349,16 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             myhierarchy[i] = hwloc_get_nbobjs_by_depth(opal_hwloc_topology, i);
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                  "hierarchy[%i] = %i\n", i, myhierarchy[i]));
-            if ((myhierarchy[i] != 0) && (myhierarchy[i] != myhierarchy[i - 1]))
+            if ((myhierarchy[i] != 0) && (myhierarchy[i] != myhierarchy[i - 1])) {
                 numlevels++;
+            }
         }
 
         tracker = (hwloc_obj_t *) calloc(numlevels, sizeof(hwloc_obj_t));
         for (idx = 0, i = 1; i < array_size; i++) {
-            if (myhierarchy[i] != myhierarchy[i - 1])
+            if (myhierarchy[i] != myhierarchy[i - 1]) {
                 tracker[idx++] = hwloc_get_obj_by_depth(opal_hwloc_topology, i - 1, 0);
+            }
         }
         tracker[idx] = hwloc_get_obj_by_depth(opal_hwloc_topology, effective_depth, 0);
         free(myhierarchy);
@@ -408,10 +423,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             local_pattern = (double *) calloc(size, sizeof(double));
         }
         if (true == topo->weighted) {
-            for (i = 0; i < topo->indegree; i++)
+            for (i = 0; i < topo->indegree; i++) {
                 local_pattern[topo->in[i]] += topo->inw[i];
-            for (i = 0; i < topo->outdegree; i++)
+            }
+            for (i = 0; i < topo->outdegree; i++) {
                 local_pattern[topo->out[i]] += topo->outw[i];
+            }
         }
         err = comm_old->c_coll->coll_gather((0 == rank ? MPI_IN_PLACE : local_pattern), size,
                                             MPI_DOUBLE, local_pattern, size,
@@ -432,11 +449,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             for (i = 0; i < num_objs_in_node; i++) {
                 obj_to_rank_in_comm[i] = -1;
                 object = hwloc_get_obj_by_depth(opal_hwloc_topology, effective_depth, i);
-                for (j = 0; j < num_procs_in_node; j++)
+                for (j = 0; j < num_procs_in_node; j++) {
                     if (localrank_to_objnum[j] == (int) (object->logical_index)) {
                         obj_to_rank_in_comm[i] = lindex_to_grank[j];
                         break;
                     }
+                }
             }
 
             /* the global master gathers info from local_masters */
@@ -447,7 +465,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                     objs_per_node = (int *) calloc(num_nodes, sizeof(int));
                     reqs = (MPI_Request *) calloc(num_nodes - 1, sizeof(MPI_Request));
                     objs_per_node[0] = num_objs_in_node;
-                    for (i = 1; i < num_nodes; i++)
+                    for (i = 1; i < num_nodes; i++) {
                         if (OMPI_SUCCESS
                             != (err = MCA_PML_CALL(irecv(objs_per_node + i, 1, MPI_INT,
                                                          nodes_roots[i], -112, comm_old,
@@ -456,6 +474,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                             free(objs_per_node);
                             goto release_and_return;
                         }
+                    }
 
                     if (OMPI_SUCCESS
                         != (err = ompi_request_wait_all(num_nodes - 1, reqs,
@@ -464,11 +483,13 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                         goto release_and_return;
                     }
 
-                    for (i = 0; i < num_nodes; i++)
+                    for (i = 0; i < num_nodes; i++) {
                         num_objs_total += objs_per_node[i];
+                    }
                     obj_mapping = (int *) malloc(num_objs_total * sizeof(int));
-                    for (i = 0; i < num_objs_total; i++)
+                    for (i = 0; i < num_objs_total; i++) {
                         obj_mapping[i] = -1;
+                    }
 
                     memcpy(obj_mapping, obj_to_rank_in_comm, objs_per_node[0] * sizeof(int));
                     displ = objs_per_node[0];
@@ -531,10 +552,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
 
             hierarchies[0] = numlevels;
 
-            for (i = 0; i < hierarchies[0]; i++)
+            for (i = 0; i < hierarchies[0]; i++) {
                 hierarchies[i + 1] = tracker[i]->arity;
-            for (; i < (TM_MAX_LEVELS + 1); i++) /* fill up everything else with 0 */
+            }
+            for (; i < (TM_MAX_LEVELS + 1); i++) { /* fill up everything else with 0 */
                 hierarchies[i] = 0;
+            }
 
             /* gather hierarchies iff more than 1 node! */
             if (num_nodes > 1) {
@@ -546,7 +569,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                         goto release_and_return;
                     }
                 } else {
-                    for (i = 1; i < num_nodes; i++)
+                    for (i = 1; i < num_nodes; i++) {
                         if (OMPI_SUCCESS
                             != (err = MCA_PML_CALL(irecv(hierarchies + i * (TM_MAX_LEVELS + 1),
                                                          (TM_MAX_LEVELS + 1), MPI_INT,
@@ -556,6 +579,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                             free(hierarchies);
                             goto release_and_return;
                         }
+                    }
                     if (OMPI_SUCCESS
                         != (err = ompi_request_wait_all(num_nodes - 1, reqs,
                                                         MPI_STATUSES_IGNORE))) {
@@ -582,17 +606,20 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                 tm_topology->nb_levels = hierarchies[0];
 
                 /* extract min depth */
-                for (i = 1; i < num_nodes; i++)
-                    if (hierarchies[i * (TM_MAX_LEVELS + 1)] < tm_topology->nb_levels)
+                for (i = 1; i < num_nodes; i++) {
+                    if (hierarchies[i * (TM_MAX_LEVELS + 1)] < tm_topology->nb_levels) {
                         tm_topology->nb_levels = hierarchies[i * (TM_MAX_LEVELS + 1)];
+                    }
+                }
 
                 /* Crush levels in hierarchies too long (ie > tm_topology->nb_levels)*/
                 for (i = 0; i < num_nodes; i++) {
                     int *base_ptr = hierarchies + i * (TM_MAX_LEVELS + 1);
                     int suppl = *base_ptr - tm_topology->nb_levels;
-                    for (j = 1; j <= suppl; j++)
+                    for (j = 1; j <= suppl; j++) {
                         *(base_ptr + tm_topology->nb_levels) *= *(base_ptr + tm_topology->nb_levels
                                                                   + j);
+                    }
                 }
                 if (num_nodes > 1) {
                     /* We aggregate all topos => +1 level!*/
@@ -602,15 +629,18 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                     for (i = 1; i < tm_topology->nb_levels;
                          i++) { /* compute the minimum for each level */
                         min = hierarchies[i];
-                        for (j = 1; j < num_nodes; j++)
-                            if (hierarchies[j * (TM_MAX_LEVELS + 1) + i] < min)
+                        for (j = 1; j < num_nodes; j++) {
+                            if (hierarchies[j * (TM_MAX_LEVELS + 1) + i] < min) {
                                 min = hierarchies[j * (TM_MAX_LEVELS + 1) + i];
+                            }
+                        }
                         tm_topology->arity[i] = min;
                     }
                 } else {
                     tm_topology->arity = (int *) calloc(tm_topology->nb_levels, sizeof(int));
-                    for (i = 0; i < tm_topology->nb_levels; i++)
+                    for (i = 0; i < tm_topology->nb_levels; i++) {
                         tm_topology->arity[i] = hierarchies[i + 1];
+                    }
                 }
                 free(hierarchies);
 
@@ -622,9 +652,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                 /* compute the number of processing elements */
                 tm_topology->nb_nodes = (size_t *) calloc(tm_topology->nb_levels, sizeof(size_t));
                 tm_topology->nb_nodes[0] = 1;
-                for (i = 1; i < tm_topology->nb_levels; i++)
+                for (i = 1; i < tm_topology->nb_levels; i++) {
                     tm_topology->nb_nodes[i] = tm_topology->nb_nodes[i - 1]
                                                * tm_topology->arity[i - 1];
+                }
 
 #ifdef __DEBUG__
                 assert(num_objs_total == (int) tm_topology->nb_nodes[tm_topology->nb_levels - 1]);
@@ -632,16 +663,19 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                 /* Build process id tab */
                 tm_topology->node_id = (int *) malloc(num_objs_total * sizeof(int));
                 tm_topology->node_rank = (int *) malloc(num_objs_total * sizeof(int));
-                for (i = 0; i < num_objs_total; i++)
+                for (i = 0; i < num_objs_total; i++) {
                     tm_topology->node_id[i] = tm_topology->node_rank[i] = -1;
+                }
                 /*note : we make the hypothesis that logical indexes in hwloc range from
                   0 to N, are contiguous and crescent.  */
                 for (i = 0; i < num_objs_total; i++) {
                     tm_topology->node_id[i] = obj_mapping[i]; /* use process ranks instead of core
                                                                  numbers */
-                    if (obj_mapping[i] != -1) /* so that k[i] is the new rank of process i */
-                        tm_topology->node_rank[obj_mapping[i]] = i; /* after computation by
-                                                                       TreeMatch */
+                    if (obj_mapping[i] != -1) { /* so that k[i] is the new rank of process i */
+                        tm_topology->node_rank[obj_mapping[i]] = i;
+                    } /* after computation by
+                                                                                            TreeMatch
+                       */
                 }
 
                 /* unused for now*/
@@ -649,14 +683,18 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                 tm_topology->nb_proc_units = num_objs_total;
 
                 tm_topology->nb_constraints = 0;
-                for (i = 0; i < tm_topology->nb_proc_units; i++)
-                    if (obj_mapping[i] != -1)
+                for (i = 0; i < tm_topology->nb_proc_units; i++) {
+                    if (obj_mapping[i] != -1) {
                         tm_topology->nb_constraints++;
+                    }
+                }
                 tm_topology->constraints = (int *) calloc(tm_topology->nb_constraints, sizeof(int));
-                for (idx = 0, i = 0; i < tm_topology->nb_proc_units; i++)
-                    if (obj_mapping[i] != -1)
+                for (idx = 0, i = 0; i < tm_topology->nb_proc_units; i++) {
+                    if (obj_mapping[i] != -1) {
                         tm_topology->constraints[idx++]
                             = obj_mapping[i]; /* use process ranks instead of core numbers */
+                    }
+                }
 #ifdef __DEBUG__
                 assert(idx == tm_topology->nb_constraints);
 #endif
@@ -674,14 +712,16 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                 tm_display_topology(tm_topology);
 #endif
                 comm_pattern = (double **) malloc(size * sizeof(double *));
-                for (i = 0; i < size; i++)
+                for (i = 0; i < size; i++) {
                     comm_pattern[i] = local_pattern + i * size;
+                }
                 /* matrix needs to be symmetric */
-                for (i = 0; i < size; i++)
+                for (i = 0; i < size; i++) {
                     for (j = i; j < size; j++) {
                         comm_pattern[i][j] = (comm_pattern[i][j] + comm_pattern[j][i]) / 2;
                         comm_pattern[j][i] = comm_pattern[i][j];
                     }
+                }
 #ifdef __DEBUG__
                 opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                                     "==== COMM PATTERN ====\n");
@@ -696,8 +736,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
                 sol = tm_compute_mapping(tm_topology, comm_tree);
 
                 k = (int *) calloc(sol->k_length, sizeof(int));
-                for (idx = 0; idx < (int) sol->k_length; idx++)
+                for (idx = 0; idx < (int) sol->k_length; idx++) {
                     k[idx] = sol->k[idx][0];
+                }
 #ifdef __DEBUG__
                 opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                                     "====> nb levels : %i\n", tm_topology->nb_levels);
@@ -724,13 +765,15 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             != (err = comm_old->c_coll->coll_scatter(k, 1, MPI_INT, &newrank, 1, MPI_INT, 0,
                                                      comm_old,
                                                      comm_old->c_coll->coll_scatter_module))) {
-            if (NULL != k)
+            if (NULL != k) {
                 free(k);
+            }
             goto release_and_return;
         }
 
-        if (0 == rank)
+        if (0 == rank) {
             free(k);
+        }
 
         /* this needs to be optimized but will do for now */
         if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old, 0, newrank, newcomm, false))) {
@@ -764,10 +807,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
         }
 
         grank_to_lrank = (int *) malloc(size * sizeof(int));
-        for (i = 0; i < size; grank_to_lrank[i++] = -1)
+        for (i = 0; i < size; grank_to_lrank[i++] = -1) {
             ;
-        for (i = 0; i < num_procs_in_node; i++)
+        }
+        for (i = 0; i < num_procs_in_node; i++) {
             grank_to_lrank[lrank_to_grank[i]] = i;
+        }
 
         /* Discover the local patterns */
         if (rank == lindex_to_grank[0]) {
@@ -780,12 +825,16 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
         }
         /* Extract the local communication pattern */
         if (true == topo->weighted) {
-            for (i = 0; i < topo->indegree; i++)
-                if (grank_to_lrank[topo->in[i]] != -1)
+            for (i = 0; i < topo->indegree; i++) {
+                if (grank_to_lrank[topo->in[i]] != -1) {
                     local_pattern[grank_to_lrank[topo->in[i]]] += topo->inw[i];
-            for (i = 0; i < topo->outdegree; i++)
-                if (grank_to_lrank[topo->out[i]] != -1)
+                }
+            }
+            for (i = 0; i < topo->outdegree; i++) {
+                if (grank_to_lrank[topo->out[i]] != -1) {
                     local_pattern[grank_to_lrank[topo->out[i]]] += topo->outw[i];
+                }
+            }
         }
         if (OMPI_SUCCESS
             != (err = localcomm->c_coll->coll_gather((rank == lindex_to_grank[0] ? MPI_IN_PLACE
@@ -815,11 +864,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             /* Matrix needs to be symmetric. Beware: as comm_patterns
              * refers to local_pattern we indirectly alter the content
              * of local_pattern */
-            for (i = 0; i < num_procs_in_node; i++)
+            for (i = 0; i < num_procs_in_node; i++) {
                 for (j = i; j < num_procs_in_node; j++) {
                     comm_pattern[i][j] = (comm_pattern[i][j] + comm_pattern[j][i]) / 2;
                     comm_pattern[j][i] = comm_pattern[i][j];
                 }
+            }
 
 #ifdef __DEBUG__
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
@@ -852,25 +902,28 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             for (i = 0; i < num_objs_in_node; i++) {
                 obj_to_rank_in_lcomm[i] = -1;
                 object = hwloc_get_obj_by_depth(opal_hwloc_topology, effective_depth, i);
-                for (j = 0; j < num_procs_in_node; j++)
+                for (j = 0; j < num_procs_in_node; j++) {
                     if (localrank_to_objnum[j] == (int) (object->logical_index)) {
                         obj_to_rank_in_lcomm[i] = j;
                         break;
                     }
+                }
             }
 
             /* Build process id tab */
             tm_topology->node_id = (int *) malloc(num_objs_in_node * sizeof(int));
             tm_topology->node_rank = (int *) malloc(num_objs_in_node * sizeof(int));
-            for (i = 1; i < num_objs_in_node; i++)
+            for (i = 1; i < num_objs_in_node; i++) {
                 tm_topology->node_id[i] = tm_topology->node_rank[i] = -1;
+            }
 
             for (i = 0; i < num_objs_in_node; i++) {
                 /*note : we make the hypothesis that logical indexes in hwloc range from
                   0 to N, are contiguous and crescent.  */
                 tm_topology->node_id[i] = obj_to_rank_in_lcomm[i];
-                if (obj_to_rank_in_lcomm[i] != -1)
+                if (obj_to_rank_in_lcomm[i] != -1) {
                     tm_topology->node_rank[obj_to_rank_in_lcomm[i]] = i;
+                }
             }
 
             /* unused for now*/
@@ -879,14 +932,18 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             tm_topology->nb_proc_units = num_objs_in_node;
             tm_topology->nb_constraints = 0;
 
-            for (i = 0; i < num_objs_in_node; i++)
-                if (obj_to_rank_in_lcomm[i] != -1)
+            for (i = 0; i < num_objs_in_node; i++) {
+                if (obj_to_rank_in_lcomm[i] != -1) {
                     tm_topology->nb_constraints++;
+                }
+            }
 
             tm_topology->constraints = (int *) calloc(tm_topology->nb_constraints, sizeof(int));
-            for (idx = 0, i = 0; i < num_objs_in_node; i++)
-                if (obj_to_rank_in_lcomm[i] != -1)
+            for (idx = 0, i = 0; i < num_objs_in_node; i++) {
+                if (obj_to_rank_in_lcomm[i] != -1) {
                     tm_topology->constraints[idx++] = obj_to_rank_in_lcomm[i];
+                }
+            }
 
             tm_topology->oversub_fact = 1;
 
@@ -912,8 +969,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             assert((int) sol->k_length == num_objs_in_node);
 
             k = (int *) calloc(sol->k_length, sizeof(int));
-            for (idx = 0; idx < (int) sol->k_length; idx++)
+            for (idx = 0; idx < (int) sol->k_length; idx++) {
                 k[idx] = sol->k[idx][0];
+            }
 
 #ifdef __DEBUG__
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
@@ -939,8 +997,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
             != (err = localcomm->c_coll->coll_scatter(k, 1, MPI_INT, &newrank, 1, MPI_INT, 0,
                                                       localcomm,
                                                       localcomm->c_coll->coll_scatter_module))) {
-            if (NULL != k)
+            if (NULL != k) {
                 free(k);
+            }
             ompi_comm_free(&localcomm);
             free(lrank_to_grank);
             free(grank_to_lrank);
@@ -950,18 +1009,23 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
         /* compute the offset of newrank before the split */
         /* use the colors array, not the vpids */
         marked = (int *) malloc((num_nodes - 1) * sizeof(int));
-        for (idx = 0; idx < num_nodes - 1; idx++)
+        for (idx = 0; idx < num_nodes - 1; idx++) {
             marked[idx] = -1;
+        }
 
         while ((node_position != rank) && (colors[node_position] != colors[rank])) {
             /* Have we already counted the current color ? */
-            for (idx = 0; idx < pos; idx++)
-                if (marked[idx] == colors[node_position])
+            for (idx = 0; idx < pos; idx++) {
+                if (marked[idx] == colors[node_position]) {
                     goto next_iter; /* yes, let's skip the rest */
+                }
+            }
             /* How many elements of this color are here ? none before the current position */
-            for (; idx < size; idx++)
-                if (colors[idx] == colors[node_position])
+            for (; idx < size; idx++) {
+                if (colors[idx] == colors[node_position]) {
                     offset++;
+                }
+            }
             marked[pos++] = colors[node_position];
         next_iter:
             node_position++;
@@ -969,8 +1033,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
         newrank += offset;
         free(marked);
 
-        if (rank == lindex_to_grank[0])
+        if (rank == lindex_to_grank[0]) {
             free(k);
+        }
 
         /* this needs to be optimized but will do for now */
         if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old, 0, newrank, newcomm, false))) {
@@ -991,25 +1056,33 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *topo_module,
     } /* distributed reordering end */
 
 release_and_return:
-    if (NULL != reqs)
+    if (NULL != reqs) {
         free(reqs);
-    if (NULL != tracker)
+    }
+    if (NULL != tracker) {
         free(tracker);
-    if (NULL != local_pattern)
+    }
+    if (NULL != local_pattern) {
         free(local_pattern);
+    }
     free(colors);
-    if (NULL != lindex_to_grank)
+    if (NULL != lindex_to_grank) {
         free(lindex_to_grank);
-    if (NULL != nodes_roots)
+    }
+    if (NULL != nodes_roots) {
         free(nodes_roots); /* only on root */
-    if (NULL != localrank_to_objnum)
+    }
+    if (NULL != localrank_to_objnum) {
         free(localrank_to_objnum);
-    if (NULL != set)
+    }
+    if (NULL != set) {
         hwloc_bitmap_free(set);
+    }
     /* As the reordering is optional, if we encountered an error during the reordering,
      * we can safely return with just a duplicate of the original communicator associated
      * with the topology. */
-    if (OMPI_SUCCESS != err)
+    if (OMPI_SUCCESS != err) {
         goto fallback;
+    }
     return OMPI_SUCCESS;
 }

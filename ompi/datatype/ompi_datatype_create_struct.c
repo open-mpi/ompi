@@ -37,8 +37,8 @@ int32_t ompi_datatype_create_struct(int count, const int *pBlockLength, const pt
     int i, start_from;
 
     /* Find first non-zero length element */
-    for (i = 0; (i < count) && (0 == pBlockLength[i]); i++)
-        ;
+    for (i = 0; (i < count) && (0 == pBlockLength[i]); i++) {
+    }
     if (i == count) { /* either nothing or nothing relevant */
         return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
     }
@@ -58,8 +58,9 @@ int32_t ompi_datatype_create_struct(int count, const int *pBlockLength, const pt
             endto = lastDisp + lastBlock * lastExtent;
         } else {
             disp += lastType->super.desc.used;
-            if (lastBlock > 1)
+            if (lastBlock > 1) {
                 disp += 2;
+            }
             lastType = (ompi_datatype_t *) pTypes[i];
             lastExtent = lastType->super.ub - lastType->super.lb;
             lastBlock = pBlockLength[i];
@@ -68,8 +69,9 @@ int32_t ompi_datatype_create_struct(int count, const int *pBlockLength, const pt
         }
     }
     disp += lastType->super.desc.used;
-    if (lastBlock != 1)
+    if (lastBlock != 1) {
         disp += 2;
+    }
 
     lastType = (ompi_datatype_t *) pTypes[start_from];
     lastBlock = pBlockLength[start_from];

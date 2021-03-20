@@ -318,8 +318,9 @@ static void backend_abort_no_aggregate(int fatal, char *type, struct ompi_commun
                 "*** function was invoked, sorry.  :-(\n",
                 NULL);
         }
-        if (fatal)
+        if (fatal) {
             out("*** Your MPI job will now abort.\n", NULL);
+        }
     } else if (state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
         if (NULL != arg) {
             out("*** The %s() function was called after MPI_FINALIZE was invoked.\n"
@@ -332,8 +333,9 @@ static void backend_abort_no_aggregate(int fatal, char *type, struct ompi_commun
                 "*** function was invoked, sorry.  :-(\n",
                 NULL);
         }
-        if (fatal)
+        if (fatal) {
             out("*** Your MPI job will now abort.\n", NULL);
+        }
     }
 
     else {
@@ -416,8 +418,9 @@ static void backend_abort(int fatal, char *type, struct ompi_communicator_t *com
         comm = &ompi_mpi_comm_self.comm;
     }
 
-    if (NULL != error_code)
+    if (NULL != error_code) {
         err = *error_code;
+    }
 
     /* Call abort without a specified comm to force RTE Job termination */
     ompi_mpi_abort(fatal ? NULL : comm, err);

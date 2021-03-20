@@ -47,8 +47,9 @@ int mca_pml_ob1_irecv_init(void *addr, size_t count, ompi_datatype_t *datatype, 
 {
     mca_pml_ob1_recv_request_t *recvreq;
     MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
-    if (NULL == recvreq)
+    if (NULL == recvreq) {
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
 
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype, src, tag, comm, true);
@@ -70,8 +71,9 @@ int mca_pml_ob1_irecv(void *addr, size_t count, ompi_datatype_t *datatype, int s
 {
     mca_pml_ob1_recv_request_t *recvreq;
     MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
-    if (NULL == recvreq)
+    if (NULL == recvreq) {
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
 
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype, src, tag, comm, false);
@@ -96,8 +98,9 @@ int mca_pml_ob1_recv(void *addr, size_t count, ompi_datatype_t *datatype, int sr
 
     if (OPAL_UNLIKELY(NULL == recvreq)) {
         MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
-        if (NULL == recvreq)
+        if (NULL == recvreq) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        }
     }
 
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;

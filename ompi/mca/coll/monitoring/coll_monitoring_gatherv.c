@@ -27,8 +27,9 @@ int mca_coll_monitoring_gatherv(const void *sbuf, int scount, struct ompi_dataty
         const int comm_size = ompi_comm_size(comm);
         ompi_datatype_type_size(rdtype, &type_size);
         for (i = 0; i < comm_size; ++i) {
-            if (root == i)
+            if (root == i) {
                 continue; /* No communication for self */
+            }
             data_size = rcounts[i] * type_size;
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
@@ -60,8 +61,9 @@ int mca_coll_monitoring_igatherv(const void *sbuf, int scount, struct ompi_datat
         const int comm_size = ompi_comm_size(comm);
         ompi_datatype_type_size(rdtype, &type_size);
         for (i = 0; i < comm_size; ++i) {
-            if (root == i)
+            if (root == i) {
                 continue; /* No communication for self */
+            }
             data_size = rcounts[i] * type_size;
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD

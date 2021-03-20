@@ -98,9 +98,10 @@ error_handler:
             if (MPI_ERR_PROC_FAILED_PENDING == err) {
                 err = MPI_ERR_PROC_FAILED;
             }
-        } else /* this 'else' intentionaly spills outside the ifdef */
-#endif         /* OPAL_ENABLE_FT_MPI */
+        } else { /* this 'else' intentionaly spills outside the ifdef */
+#endif           /* OPAL_ENABLE_FT_MPI */
             ompi_request_free(&req);
+        }
     }
     return (err);
 }
@@ -375,8 +376,9 @@ int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long *val)
         if (rc == EOF) {
             return -1;
         }
-        if ('\n' == trash)
+        if ('\n' == trash) {
             (*fileline)++;
+        }
         if ('#' == trash) {
             skiptonewline(fptr, fileline);
         }
@@ -408,8 +410,9 @@ int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char **val)
         if (rc == EOF) {
             return -1;
         }
-        if ('\n' == trash)
+        if ('\n' == trash) {
             (*fileline)++;
+        }
         if ('#' == trash) {
             skiptonewline(fptr, fileline);
         }
@@ -434,8 +437,9 @@ int ompi_coll_base_file_getnext_size_t(FILE *fptr, int *fileline, size_t *val)
         if (rc == EOF) {
             return -1;
         }
-        if ('\n' == trash)
+        if ('\n' == trash) {
             (*fileline)++;
+        }
         if ('#' == trash) {
             skiptonewline(fptr, fileline);
         }
@@ -460,12 +464,15 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
             skiptonewline(fptr, fileline);
             continue;
         }
-        if (trash == expected)
-            return 1;       /* return true and eat the char */
-        if (isblank(trash)) /* skip all spaces if that's not what we were looking for */
+        if (trash == expected) {
+            return 1; /* return true and eat the char */
+        }
+        if (isblank(trash)) { /* skip all spaces if that's not what we were looking for */
             continue;
-        if (0 != fseek(fptr, -1, SEEK_CUR))
+        }
+        if (0 != fseek(fptr, -1, SEEK_CUR)) {
             return -1;
+        }
         return 0;
     } while (1);
 }
@@ -484,19 +491,24 @@ int mca_coll_base_name_to_colltype(const char *name)
         if (0 == strncmp(name, "neighbor_all", 12)) {
             if ('t' != name[12]) {
                 if (0 == strncmp(name + 12, "gather", 6)) {
-                    if ('\0' == name[18])
+                    if ('\0' == name[18]) {
                         return NEIGHBOR_ALLGATHER;
-                    if ('v' == name[18])
+                    }
+                    if ('v' == name[18]) {
                         return NEIGHBOR_ALLGATHERV;
+                    }
                 }
             } else {
                 if (0 == strncmp(name + 12, "toall", 5)) {
-                    if ('\0' == name[17])
+                    if ('\0' == name[17]) {
                         return NEIGHBOR_ALLTOALL;
-                    if ('v' == name[17])
+                    }
+                    if ('v' == name[17]) {
                         return NEIGHBOR_ALLTOALLV;
-                    if ('w' == name[17])
+                    }
+                    if ('w' == name[17]) {
                         return NEIGHBOR_ALLTOALLW;
+                    }
                 }
             }
         }
@@ -508,67 +520,84 @@ int mca_coll_base_name_to_colltype(const char *name)
         }
         if ('t' != name[3]) {
             if ('r' == name[3]) {
-                if (0 == strcmp(name + 3, "reduce"))
+                if (0 == strcmp(name + 3, "reduce")) {
                     return ALLREDUCE;
+                }
             } else {
                 if (0 == strncmp(name + 3, "gather", 6)) {
-                    if ('\0' == name[9])
+                    if ('\0' == name[9]) {
                         return ALLGATHER;
-                    if ('v' == name[9])
+                    }
+                    if ('v' == name[9]) {
                         return ALLGATHERV;
+                    }
                 }
             }
         } else {
             if (0 == strncmp(name + 3, "toall", 5)) {
-                if ('\0' == name[8])
+                if ('\0' == name[8]) {
                     return ALLTOALL;
-                if ('v' == name[8])
+                }
+                if ('v' == name[8]) {
                     return ALLTOALLV;
-                if ('w' == name[8])
+                }
+                if ('w' == name[8]) {
                     return ALLTOALLW;
+                }
             }
         }
         return -1;
     }
     if ('r' > name[0]) {
         if ('b' == name[0]) {
-            if (0 == strcmp(name, "barrier"))
+            if (0 == strcmp(name, "barrier")) {
                 return BARRIER;
-            if (0 == strcmp(name, "bcast"))
+            }
+            if (0 == strcmp(name, "bcast")) {
                 return BCAST;
+            }
         } else if ('g' == name[0]) {
             if (0 == strncmp(name, "gather", 6)) {
-                if ('\0' == name[6])
+                if ('\0' == name[6]) {
                     return GATHER;
-                if ('v' == name[6])
+                }
+                if ('v' == name[6]) {
                     return GATHERV;
+                }
             }
         }
-        if (0 == strcmp(name, "exscan"))
+        if (0 == strcmp(name, "exscan")) {
             return EXSCAN;
+        }
         return -1;
     }
     if ('s' > name[0]) {
         if (0 == strncmp(name, "reduce", 6)) {
-            if ('\0' == name[6])
+            if ('\0' == name[6]) {
                 return REDUCE;
+            }
             if ('_' == name[6]) {
                 if (0 == strncmp(name + 7, "scatter", 7)) {
-                    if ('\0' == name[14])
+                    if ('\0' == name[14]) {
                         return REDUCESCATTER;
-                    if (0 == strcmp(name + 14, "_block"))
+                    }
+                    if (0 == strcmp(name + 14, "_block")) {
                         return REDUCESCATTERBLOCK;
+                    }
                 }
             }
         }
         return -1;
     }
-    if (0 == strcmp(name, "scan"))
+    if (0 == strcmp(name, "scan")) {
         return SCAN;
-    if (0 == strcmp(name, "scatterv"))
+    }
+    if (0 == strcmp(name, "scatterv")) {
         return SCATTERV;
-    if (0 == strcmp(name, "scatter"))
+    }
+    if (0 == strcmp(name, "scatter")) {
         return SCATTER;
+    }
     return -1;
 }
 

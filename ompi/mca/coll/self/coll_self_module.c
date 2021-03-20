@@ -55,8 +55,9 @@ mca_coll_base_module_t *mca_coll_self_comm_query(struct ompi_communicator_t *com
         *priority = ompi_coll_self_priority;
 
         module = OBJ_NEW(mca_coll_self_module_t);
-        if (NULL == module)
+        if (NULL == module) {
             return NULL;
+        }
 
         module->super.coll_module_enable = mca_coll_self_module_enable;
         module->super.coll_allgather = mca_coll_self_allgather_intra;

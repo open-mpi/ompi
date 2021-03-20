@@ -168,19 +168,25 @@ int mca_common_ompio_print_time_info(struct mca_common_ompio_print_queue *q, cha
                 final_sum[1] += final_time_details[i + 1];
                 final_sum[2] += final_time_details[i + 2];
 
-                if (final_time_details[i] < final_min[0])
+                if (final_time_details[i] < final_min[0]) {
                     final_min[0] = final_time_details[i];
-                if (final_time_details[i + 1] < final_min[1])
+                }
+                if (final_time_details[i + 1] < final_min[1]) {
                     final_min[1] = final_time_details[i + 1];
-                if (final_time_details[i + 2] < final_min[2])
+                }
+                if (final_time_details[i + 2] < final_min[2]) {
                     final_min[2] = final_time_details[i + 2];
+                }
 
-                if (final_time_details[i] > final_max[0])
+                if (final_time_details[i] > final_max[0]) {
                     final_max[0] = final_time_details[i];
-                if (final_time_details[i + 1] > final_max[1])
+                }
+                if (final_time_details[i + 1] > final_max[1]) {
                     final_max[1] = final_time_details[i + 1];
-                if (final_time_details[i + 2] > final_max[2])
+                }
+                if (final_time_details[i + 2] > final_max[2]) {
                     final_max[2] = final_time_details[i + 2];
+                }
             }
         }
 
