@@ -21,18 +21,18 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Attr_get = PMPI_Attr_get
-#endif
-#define MPI_Attr_get PMPI_Attr_get
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Attr_get = PMPI_Attr_get
+#    endif
+#    define MPI_Attr_get PMPI_Attr_get
 #endif
 
 static const char FUNC_NAME[] = "MPI_Attr_get";
@@ -41,15 +41,12 @@ int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
 {
     int ret;
 
-    MEMCHECKER(
-         memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == attribute_val) || (NULL == flag)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
@@ -57,7 +54,6 @@ int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
        src/attribute/attribute.c for a lengthy comment explaining Open
        MPI attribute behavior. */
 
-    ret = ompi_attr_get_c(comm->c_keyhash, keyval, (void**)attribute_val, flag);
+    ret = ompi_attr_get_c(comm->c_keyhash, keyval, (void **) attribute_val, flag);
     OMPI_ERRHANDLER_RETURN(ret, comm, ret, FUNC_NAME);
 }
-

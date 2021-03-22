@@ -27,10 +27,10 @@
 #include "opal/mca/btl/btl.h"
 
 #ifndef MCA_BML_R2_H
-#define MCA_BML_R2_H
+#    define MCA_BML_R2_H
 
-#include "ompi/types.h"
-#include "ompi/mca/bml/bml.h"
+#    include "ompi/mca/bml/bml.h"
+#    include "ompi/types.h"
 
 BEGIN_C_DECLS
 
@@ -40,9 +40,9 @@ BEGIN_C_DECLS
 struct mca_bml_r2_module_t {
     mca_bml_base_module_t super;
     size_t num_btl_modules;
-    mca_btl_base_module_t** btl_modules;
+    mca_btl_base_module_t **btl_modules;
     size_t num_btl_progress;
-    mca_btl_base_component_progress_fn_t * btl_progress;
+    mca_btl_base_component_progress_fn_t *btl_progress;
     bool btls_added;
     bool show_unreach_errors;
 };
@@ -55,15 +55,14 @@ extern mca_bml_r2_module_t mca_bml_r2;
 int mca_bml_r2_component_open(void);
 int mca_bml_r2_component_close(void);
 
-mca_bml_base_module_t* mca_bml_r2_component_init( int* priority,
-                                                  bool enable_progress_threads,
-                                                  bool enable_mpi_threads );
+mca_bml_base_module_t *mca_bml_r2_component_init(int *priority, bool enable_progress_threads,
+                                                 bool enable_mpi_threads);
 
 int mca_bml_r2_progress(void);
 
 int mca_bml_r2_component_fini(void);
 
-int mca_bml_r2_finalize( void );
+int mca_bml_r2_finalize(void);
 
 END_C_DECLS
 

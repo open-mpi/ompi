@@ -31,18 +31,17 @@
 #include "mpi.h"
 
 int mca_fs_ufs_priority = 10;
-int mca_fs_ufs_lock_algorithm=0; /* auto */
+int mca_fs_ufs_lock_algorithm = 0; /* auto */
 /*
  * Private functions
  */
 static int register_component(void);
 
-
 /*
  * Public string showing the fs ufs component version number
  */
-const char *mca_fs_ufs_component_version_string =
-  "OMPI/MPI ufs FS MCA component version " OMPI_VERSION;
+const char *mca_fs_ufs_component_version_string
+    = "OMPI/MPI ufs FS MCA component version " OMPI_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -74,22 +73,19 @@ mca_fs_base_component_2_0_0_t mca_fs_ufs_component = {
 static int register_component(void)
 {
     mca_fs_ufs_priority = 10;
-    (void) mca_base_component_var_register(&mca_fs_ufs_component.fsm_version,
-                                           "priority", "Priority of the fs ufs component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fs_ufs_priority);
+    (void) mca_base_component_var_register(&mca_fs_ufs_component.fsm_version, "priority",
+                                           "Priority of the fs ufs component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_ufs_priority);
 
     mca_fs_ufs_lock_algorithm = 0;
-    (void) mca_base_component_var_register(&mca_fs_ufs_component.fsm_version,
-                                           "lock_algorithm", "Locking algorithm used by the fs ufs component. "
-                                           " 0: auto (default), 1: skip locking, 2: always lock entire file, "
-                                           "3: lock only specific ranges",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fs_ufs_lock_algorithm );
+    (void) mca_base_component_var_register(
+        &mca_fs_ufs_component.fsm_version, "lock_algorithm",
+        "Locking algorithm used by the fs ufs component. "
+        " 0: auto (default), 1: skip locking, 2: always lock entire file, "
+        "3: lock only specific ranges",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_fs_ufs_lock_algorithm);
 
     return OMPI_SUCCESS;
 }

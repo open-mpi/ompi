@@ -23,4 +23,4 @@ OMPI_MODULE_DECLSPEC extern mca_pml_base_component_2_1_0_t mca_pml_v_component;
 
 END_C_DECLS
 
-#endif  /* PML_V_H_HAS_BEEN_INCLUDED */
+#endif /* PML_V_H_HAS_BEEN_INCLUDED */

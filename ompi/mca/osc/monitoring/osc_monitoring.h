@@ -15,8 +15,8 @@
 BEGIN_C_DECLS
 
 #include "ompi_config.h"
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/common/monitoring/common_monitoring.h"
+#include "ompi/mca/osc/osc.h"
 
 struct ompi_osc_monitoring_component_t {
     ompi_osc_base_component_t super;
@@ -28,4 +28,4 @@ OMPI_DECLSPEC extern ompi_osc_monitoring_component_t mca_osc_monitoring_componen
 
 END_C_DECLS
 
-#endif  /* MCA_OSC_MONITORING_H */
+#endif /* MCA_OSC_MONITORING_H */

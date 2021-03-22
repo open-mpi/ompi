@@ -24,8 +24,8 @@
 #define MCA_PML_CONSTANTS_H
 
 #include "ompi_config.h"
-#include "ompi/mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
+#include "ompi/mca/mca.h"
 
 typedef enum {
     MCA_PML_BASE_SEND_SYNCHRONOUS,
@@ -35,7 +35,6 @@ typedef enum {
     MCA_PML_BASE_SEND_STANDARD,
     MCA_PML_BASE_SEND_SIZE
 } mca_pml_base_send_mode_t;
-
 
 #define OMPI_ANY_TAG    MPI_ANY_TAG
 #define OMPI_ANY_SOURCE MPI_ANY_SOURCE

@@ -21,41 +21,38 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/dpm/dpm.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Open_port = PMPI_Open_port
-#endif
-#define MPI_Open_port PMPI_Open_port
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Open_port = PMPI_Open_port
+#    endif
+#    define MPI_Open_port PMPI_Open_port
 #endif
 
 static const char FUNC_NAME[] = "MPI_Open_port";
-
 
 int MPI_Open_port(MPI_Info info, char *port_name)
 {
     int rc;
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( NULL == port_name ) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (NULL == port_name) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
         if (NULL == info || ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
     }
 
-    if ( MPI_INFO_NULL != info ) {
+    if (MPI_INFO_NULL != info) {
         /* in theory, they user might tell us here
            how to establish the address. Since our communication
            is relying on OOB, we probably won't use the info-object.

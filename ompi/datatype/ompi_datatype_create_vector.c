@@ -28,60 +28,59 @@
 
 #include "ompi/datatype/ompi_datatype.h"
 
-int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
-                                     const ompi_datatype_t* oldType, ompi_datatype_t** newType )
+int32_t ompi_datatype_create_vector(int count, int bLength, int stride,
+                                    const ompi_datatype_t *oldType, ompi_datatype_t **newType)
 {
     ompi_datatype_t *pTempData, *pData;
     ptrdiff_t extent = oldType->super.ub - oldType->super.lb;
 
-    if( (0 == count) || (0 == bLength) ) {
-        return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
+    if ((0 == count) || (0 == bLength)) {
+        return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
     }
 
-    pData = ompi_datatype_create( oldType->super.desc.used + 2 );
-    if( (bLength == stride) || (1 >= count) ) {  /* the elements are contiguous */
-        ompi_datatype_add( pData, oldType, (size_t)count * bLength, 0, extent );
+    pData = ompi_datatype_create(oldType->super.desc.used + 2);
+    if ((bLength == stride) || (1 >= count)) { /* the elements are contiguous */
+        ompi_datatype_add(pData, oldType, (size_t) count * bLength, 0, extent);
     } else {
-        if( 1 == bLength ) {
-            ompi_datatype_add( pData, oldType, count, 0, extent * stride );
+        if (1 == bLength) {
+            ompi_datatype_add(pData, oldType, count, 0, extent * stride);
         } else {
-            ompi_datatype_add( pData, oldType, bLength, 0, extent );
+            ompi_datatype_add(pData, oldType, bLength, 0, extent);
             pTempData = pData;
-            pData = ompi_datatype_create( oldType->super.desc.used + 2 + 2 );
-            ompi_datatype_add( pData, pTempData, count, 0, extent * stride );
-            OBJ_RELEASE( pTempData );
+            pData = ompi_datatype_create(oldType->super.desc.used + 2 + 2);
+            ompi_datatype_add(pData, pTempData, count, 0, extent * stride);
+            OBJ_RELEASE(pTempData);
         }
     }
     *newType = pData;
     return OMPI_SUCCESS;
 }
 
-
-int32_t ompi_datatype_create_hvector( int count, int bLength, ptrdiff_t stride,
-                                      const ompi_datatype_t* oldType, ompi_datatype_t** newType )
+int32_t ompi_datatype_create_hvector(int count, int bLength, ptrdiff_t stride,
+                                     const ompi_datatype_t *oldType, ompi_datatype_t **newType)
 {
     ompi_datatype_t *pTempData, *pData;
     ptrdiff_t extent = oldType->super.ub - oldType->super.lb;
 
-    if( (0 == count) || (0 == bLength) ) {
-        return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
+    if ((0 == count) || (0 == bLength)) {
+        return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
     }
 
-    pTempData = ompi_datatype_create( oldType->super.desc.used + 2 );
-    if( ((extent * bLength) == stride) || (1 >= count) ) {  /* contiguous */
+    pTempData = ompi_datatype_create(oldType->super.desc.used + 2);
+    if (((extent * bLength) == stride) || (1 >= count)) { /* contiguous */
         pData = pTempData;
-        ompi_datatype_add( pData, oldType, count * bLength, 0, extent );
+        ompi_datatype_add(pData, oldType, count * bLength, 0, extent);
     } else {
-        if( 1 == bLength ) {
+        if (1 == bLength) {
             pData = pTempData;
-            ompi_datatype_add( pData, oldType, count, 0, stride );
+            ompi_datatype_add(pData, oldType, count, 0, stride);
         } else {
-            ompi_datatype_add( pTempData, oldType, bLength, 0, extent );
-            pData = ompi_datatype_create( oldType->super.desc.used + 2 + 2 );
-            ompi_datatype_add( pData, pTempData, count, 0, stride );
-            OBJ_RELEASE( pTempData );
+            ompi_datatype_add(pTempData, oldType, bLength, 0, extent);
+            pData = ompi_datatype_create(oldType->super.desc.used + 2 + 2);
+            ompi_datatype_add(pData, pTempData, count, 0, stride);
+            OBJ_RELEASE(pTempData);
         }
     }
-     *newType = pData;
+    *newType = pData;
     return OMPI_SUCCESS;
 }

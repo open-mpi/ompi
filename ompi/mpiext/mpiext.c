@@ -6,9 +6,7 @@
 #include "ompi/mpiext/mpiext.h"
 #include "ompi/mpiext/static-components.h"
 
-
-int
-ompi_mpiext_init(void)
+int ompi_mpiext_init(void)
 {
     const ompi_mpiext_component_t **tmp = ompi_mpiext_components;
     int ret;
@@ -16,7 +14,8 @@ ompi_mpiext_init(void)
     while (NULL != (*tmp)) {
         if (NULL != (*tmp)->init) {
             ret = (*tmp)->init();
-            if (OMPI_SUCCESS != ret) return ret;
+            if (OMPI_SUCCESS != ret)
+                return ret;
         }
         tmp++;
     }
@@ -24,9 +23,7 @@ ompi_mpiext_init(void)
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_mpiext_fini(void)
+int ompi_mpiext_fini(void)
 {
     const ompi_mpiext_component_t **tmp = ompi_mpiext_components;
     int ret;
@@ -34,7 +31,8 @@ ompi_mpiext_fini(void)
     while (NULL != (*tmp)) {
         if (NULL != (*tmp)->fini) {
             ret = (*tmp)->fini();
-            if (OMPI_SUCCESS != ret) return ret;
+            if (OMPI_SUCCESS != ret)
+                return ret;
         }
         tmp++;
     }

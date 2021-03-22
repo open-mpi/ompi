@@ -22,23 +22,23 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "coll_han.h"
 #include "coll_han_dynamic.h"
+#include "mpi.h"
 
-#define HAN_SUBCOM_SAVE_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)                  \
-    do {                                                                         \
-        (FALLBACKS).COLL.module_fn.COLL = (COMM)->c_coll->coll_ ## COLL;         \
-        (FALLBACKS).COLL.module = (COMM)->c_coll->coll_ ## COLL ## _module;      \
-        (COMM)->c_coll->coll_ ## COLL = (HANM)->fallback.COLL.module_fn.COLL;    \
-        (COMM)->c_coll->coll_ ## COLL ## _module = (HANM)->fallback.COLL.module; \
-    } while(0)
+#define HAN_SUBCOM_SAVE_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)              \
+    do {                                                                     \
+        (FALLBACKS).COLL.module_fn.COLL = (COMM)->c_coll->coll_##COLL;       \
+        (FALLBACKS).COLL.module = (COMM)->c_coll->coll_##COLL##_module;      \
+        (COMM)->c_coll->coll_##COLL = (HANM)->fallback.COLL.module_fn.COLL;  \
+        (COMM)->c_coll->coll_##COLL##_module = (HANM)->fallback.COLL.module; \
+    } while (0)
 
-#define HAN_SUBCOM_LOAD_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)                  \
-    do {                                                                         \
-        (COMM)->c_coll->coll_ ## COLL = (FALLBACKS).COLL.module_fn.COLL;         \
-        (COMM)->c_coll->coll_ ## COLL ## _module = (FALLBACKS).COLL.module;      \
-    } while(0)
+#define HAN_SUBCOM_LOAD_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)         \
+    do {                                                                \
+        (COMM)->c_coll->coll_##COLL = (FALLBACKS).COLL.module_fn.COLL;  \
+        (COMM)->c_coll->coll_##COLL##_module = (FALLBACKS).COLL.module; \
+    } while (0)
 
 /*
  * Routine that creates the local hierarchical sub-communicators
@@ -57,8 +57,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
 
     /* The sub communicators have already been created */
     if (han_module->enabled && NULL != han_module->sub_comm[INTRA_NODE]
-        && NULL != han_module->sub_comm[INTER_NODE]
-        && NULL != han_module->cached_vranks) {
+        && NULL != han_module->sub_comm[INTER_NODE] && NULL != han_module->cached_vranks) {
         return OMPI_SUCCESS;
     }
 
@@ -91,10 +90,9 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
      * all participants.
      */
     int local_procs = ompi_group_count_local_peers(comm->c_local_group);
-    comm->c_coll->coll_allreduce(MPI_IN_PLACE, &local_procs, 1, MPI_INT,
-                                 MPI_MAX, comm,
+    comm->c_coll->coll_allreduce(MPI_IN_PLACE, &local_procs, 1, MPI_INT, MPI_MAX, comm,
                                  comm->c_coll->coll_allreduce_module);
-    if( local_procs == 1 ) {
+    if (local_procs == 1) {
         /* restore saved collectives */
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, allgather);
@@ -103,7 +101,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, reduce);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gather);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatter);
-        han_module->enabled = false;  /* entire module set to pass-through from now on */
+        han_module->enabled = false; /* entire module set to pass-through from now on */
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
@@ -118,8 +116,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
      */
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "^han");
     opal_info_set(&comm_info, "ompi_comm_coll_han_topo_level", "INTRA_NODE");
-    ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
-                         &comm_info, low_comm);
+    ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0, &comm_info, low_comm);
 
     /*
      * Get my local rank and the local size
@@ -145,18 +142,12 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
      * TODO: find a better way of doing
      */
     vrank = low_size * up_rank + low_rank;
-    vranks = (int *)malloc(sizeof(int) * w_size);
+    vranks = (int *) malloc(sizeof(int) * w_size);
     /*
      * gather vrank from each process so every process will know other processes
      * vrank
      */
-    comm->c_coll->coll_allgather(&vrank,
-                                 1,
-                                 MPI_INT,
-                                 vranks,
-                                 1,
-                                 MPI_INT,
-                                 comm,
+    comm->c_coll->coll_allgather(&vrank, 1, MPI_INT, vranks, 1, MPI_INT, comm,
                                  comm->c_coll->coll_allgather_module);
 
     /*
@@ -182,8 +173,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
  * Called each time a collective is called.
  * comm: input communicator of the collective
  */
-int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
-                             mca_coll_han_module_t *han_module)
+int mca_coll_han_comm_create(struct ompi_communicator_t *comm, mca_coll_han_module_t *han_module)
 {
     int low_rank, low_size, up_rank, w_rank, w_size;
     mca_coll_han_collectives_fallback_t fallbacks;
@@ -193,9 +183,8 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     opal_info_t comm_info;
 
     /* use cached communicators if possible */
-    if (han_module->enabled && han_module->cached_low_comms != NULL &&
-        han_module->cached_up_comms != NULL &&
-        han_module->cached_vranks != NULL) {
+    if (han_module->enabled && han_module->cached_low_comms != NULL
+        && han_module->cached_up_comms != NULL && han_module->cached_vranks != NULL) {
         return OMPI_SUCCESS;
     }
 
@@ -228,10 +217,9 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      * all participants.
      */
     int local_procs = ompi_group_count_local_peers(comm->c_local_group);
-    comm->c_coll->coll_allreduce(MPI_IN_PLACE, &local_procs, 1, MPI_INT,
-                                 MPI_MAX, comm,
+    comm->c_coll->coll_allreduce(MPI_IN_PLACE, &local_procs, 1, MPI_INT, MPI_MAX, comm,
                                  comm->c_coll->coll_allreduce_module);
-    if( local_procs == 1 ) {
+    if (local_procs == 1) {
         /* restore saved collectives */
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, allgather);
@@ -240,17 +228,17 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, reduce);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gather);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatter);
-        han_module->enabled = false;  /* entire module set to pass-through from now on */
+        han_module->enabled = false; /* entire module set to pass-through from now on */
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
     /* create communicators if there is no cached communicator */
     w_rank = ompi_comm_rank(comm);
     w_size = ompi_comm_size(comm);
-    low_comms = (struct ompi_communicator_t **)malloc(COLL_HAN_LOW_MODULES *
-                                                      sizeof(struct ompi_communicator_t *));
-    up_comms = (struct ompi_communicator_t **)malloc(COLL_HAN_UP_MODULES *
-                                                     sizeof(struct ompi_communicator_t *));
+    low_comms = (struct ompi_communicator_t **) malloc(COLL_HAN_LOW_MODULES
+                                                       * sizeof(struct ompi_communicator_t *));
+    up_comms = (struct ompi_communicator_t **) malloc(COLL_HAN_UP_MODULES
+                                                      * sizeof(struct ompi_communicator_t *));
 
     OBJ_CONSTRUCT(&comm_info, opal_info_t);
 
@@ -259,8 +247,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      * This sub-communicator contains the ranks that share my node.
      */
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "tuned,^han");
-    ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
-                         &comm_info, &(low_comms[0]));
+    ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0, &comm_info, &(low_comms[0]));
 
     /*
      * Get my local rank and the local size
@@ -273,8 +260,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      * This sub-communicator contains the ranks that share my node.
      */
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "sm,^han");
-    ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
-                         &comm_info, &(low_comms[1]));
+    ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0, &comm_info, &(low_comms[1]));
 
     /*
      * Upgrade libnbc module priority to set up up_comms[0] with libnbc module
@@ -302,7 +288,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      * TODO: find a better way of doing
      */
     vrank = low_size * up_rank + low_rank;
-    vranks = (int *)malloc(sizeof(int) * w_size);
+    vranks = (int *) malloc(sizeof(int) * w_size);
     /*
      * gather vrank from each process so every process will know other processes
      * vrank
@@ -329,5 +315,3 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     OBJ_DESTRUCT(&comm_info);
     return OMPI_SUCCESS;
 }
-
-

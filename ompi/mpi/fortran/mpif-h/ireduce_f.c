@@ -21,56 +21,50 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_IREDUCE = ompi_ireduce_f
+#        pragma weak pmpi_ireduce = ompi_ireduce_f
+#        pragma weak pmpi_ireduce_ = ompi_ireduce_f
+#        pragma weak pmpi_ireduce__ = ompi_ireduce_f
+
+#        pragma weak PMPI_Ireduce_f = ompi_ireduce_f
+#        pragma weak PMPI_Ireduce_f08 = ompi_ireduce_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_IREDUCE, pmpi_ireduce, pmpi_ireduce_, pmpi_ireduce__,
+                           pompi_ireduce_f,
+                           (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype,
+                            MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request,
+                            MPI_Fint *ierr),
+                           (sendbuf, recvbuf, count, datatype, op, root, comm, request, ierr))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_IREDUCE = ompi_ireduce_f
-#pragma weak pmpi_ireduce = ompi_ireduce_f
-#pragma weak pmpi_ireduce_ = ompi_ireduce_f
-#pragma weak pmpi_ireduce__ = ompi_ireduce_f
+#    pragma weak MPI_IREDUCE = ompi_ireduce_f
+#    pragma weak mpi_ireduce = ompi_ireduce_f
+#    pragma weak mpi_ireduce_ = ompi_ireduce_f
+#    pragma weak mpi_ireduce__ = ompi_ireduce_f
 
-#pragma weak PMPI_Ireduce_f = ompi_ireduce_f
-#pragma weak PMPI_Ireduce_f08 = ompi_ireduce_f
+#    pragma weak MPI_Ireduce_f = ompi_ireduce_f
+#    pragma weak MPI_Ireduce_f08 = ompi_ireduce_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE,
-                            pmpi_ireduce,
-                            pmpi_ireduce_,
-                            pmpi_ireduce__,
-                            pompi_ireduce_f,
-                            (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
-                            (sendbuf, recvbuf, count, datatype, op, root, comm, request, ierr) )
-#endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_IREDUCE = ompi_ireduce_f
-#pragma weak mpi_ireduce = ompi_ireduce_f
-#pragma weak mpi_ireduce_ = ompi_ireduce_f
-#pragma weak mpi_ireduce__ = ompi_ireduce_f
-
-#pragma weak MPI_Ireduce_f = ompi_ireduce_f
-#pragma weak MPI_Ireduce_f08 = ompi_ireduce_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_IREDUCE,
-                            mpi_ireduce,
-                            mpi_ireduce_,
-                            mpi_ireduce__,
-                            ompi_ireduce_f,
-                            (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
-                            (sendbuf, recvbuf, count, datatype, op, root, comm, request, ierr) )
-#else
-#define ompi_ireduce_f pompi_ireduce_f
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_IREDUCE, mpi_ireduce, mpi_ireduce_, mpi_ireduce__, ompi_ireduce_f,
+                           (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype,
+                            MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request,
+                            MPI_Fint *ierr),
+                           (sendbuf, recvbuf, count, datatype, op, root, comm, request, ierr))
+#    else
+#        define ompi_ireduce_f pompi_ireduce_f
+#    endif
 #endif
 
-
-void ompi_ireduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
-                    MPI_Fint *datatype, MPI_Fint *op,
-                    MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request,
-                    MPI_Fint *ierr)
+void ompi_ireduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op,
+                    MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Datatype c_type;
@@ -86,11 +80,10 @@ void ompi_ireduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Ireduce(sendbuf, recvbuf,
-                         OMPI_FINT_2_INT(*count),
-                         c_type, c_op,
-                         OMPI_FINT_2_INT(*root),
-                         c_comm, &c_request);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
+    c_ierr = PMPI_Ireduce(sendbuf, recvbuf, OMPI_FINT_2_INT(*count), c_type, c_op,
+                          OMPI_FINT_2_INT(*root), c_comm, &c_request);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (MPI_SUCCESS == c_ierr)
+        *request = PMPI_Request_c2f(c_request);
 }

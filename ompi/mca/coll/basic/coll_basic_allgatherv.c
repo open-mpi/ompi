@@ -22,13 +22,12 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
-#include "mpi.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
-
+#include "mpi.h"
+#include "ompi/constants.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 
 /*
  *	allgatherv_inter
@@ -37,13 +36,11 @@
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_allgatherv_inter(const void *sbuf, int scount,
-                                struct ompi_datatype_t *sdtype,
-                                void *rbuf, const int *rcounts, const int *disps,
-                                struct ompi_datatype_t *rdtype,
-                                struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
+int mca_coll_basic_allgatherv_inter(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                    void *rbuf, const int *rcounts, const int *disps,
+                                    struct ompi_datatype_t *rdtype,
+                                    struct ompi_communicator_t *comm,
+                                    mca_coll_base_module_t *module)
 {
     int rsize, err, i;
     int *scounts, *sdisps;
@@ -61,9 +58,8 @@ mca_coll_basic_allgatherv_inter(const void *sbuf, int scount,
         sdisps[i] = 0;
     }
 
-    err = comm->c_coll->coll_alltoallv(sbuf, scounts, sdisps, sdtype,
-                                      rbuf, rcounts, disps, rdtype, comm,
-                                      comm->c_coll->coll_alltoallv_module);
+    err = comm->c_coll->coll_alltoallv(sbuf, scounts, sdisps, sdtype, rbuf, rcounts, disps, rdtype,
+                                       comm, comm->c_coll->coll_alltoallv_module);
 
     if (NULL != scounts) {
         free(scounts);

@@ -24,21 +24,20 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_set_name = PMPI_Win_set_name
-#endif
-#define MPI_Win_set_name PMPI_Win_set_name
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_set_name = PMPI_Win_set_name
+#    endif
+#    define MPI_Win_set_name PMPI_Win_set_name
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_set_name";
-
 
 int MPI_Win_set_name(MPI_Win win, const char *win_name)
 {

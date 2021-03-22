@@ -25,8 +25,8 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
 
 /*
@@ -36,13 +36,10 @@
  *	Accepts:	- same arguments as MPI_Gatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
-                             struct ompi_datatype_t *sdtype,
-                             void *rbuf, const int *rcounts, const int *disps,
-                             struct ompi_datatype_t *rdtype, int root,
-                             struct ompi_communicator_t *comm,
-                            mca_coll_base_module_t *module)
+int mca_coll_basic_gatherv_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                 void *rbuf, const int *rcounts, const int *disps,
+                                 struct ompi_datatype_t *rdtype, int root,
+                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int i, rank, size, err;
     char *ptmp;
@@ -59,8 +56,7 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
 
     if (rank != root) {
         if (scount > 0) {
-            return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
-                                     MCA_COLL_BASE_TAG_GATHERV,
+            return MCA_PML_CALL(send(sbuf, scount, sdtype, root, MCA_COLL_BASE_TAG_GATHERV,
                                      MCA_PML_BASE_SEND_STANDARD, comm));
         }
         return MPI_SUCCESS;
@@ -79,14 +75,12 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
         if (i == rank) {
             /* simple optimization */
             if (MPI_IN_PLACE != sbuf && (0 < scount) && (0 < rcounts[i])) {
-                err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
-                                      ptmp, rcounts[i], rdtype);
+                err = ompi_datatype_sndrcv(sbuf, scount, sdtype, ptmp, rcounts[i], rdtype);
             }
         } else {
             /* Only receive if there is something to receive */
             if (rcounts[i] > 0) {
-                err = MCA_PML_CALL(recv(ptmp, rcounts[i], rdtype, i,
-                                        MCA_COLL_BASE_TAG_GATHERV,
+                err = MCA_PML_CALL(recv(ptmp, rcounts[i], rdtype, i, MCA_COLL_BASE_TAG_GATHERV,
                                         comm, MPI_STATUS_IGNORE));
             }
         }
@@ -101,7 +95,6 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
     return MPI_SUCCESS;
 }
 
-
 /*
  *	gatherv_inter
  *
@@ -109,13 +102,10 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
  *	Accepts:	- same arguments as MPI_Gatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_gatherv_inter(const void *sbuf, int scount,
-                             struct ompi_datatype_t *sdtype,
-                             void *rbuf, const int *rcounts, const int *disps,
-                             struct ompi_datatype_t *rdtype, int root,
-                             struct ompi_communicator_t *comm,
-                             mca_coll_base_module_t *module)
+int mca_coll_basic_gatherv_inter(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                 void *rbuf, const int *rcounts, const int *disps,
+                                 struct ompi_datatype_t *rdtype, int root,
+                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int i, size, err;
     char *ptmp;
@@ -132,8 +122,7 @@ mca_coll_basic_gatherv_inter(const void *sbuf, int scount,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* Everyone but root sends data and returns. */
-        err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
-                                MCA_COLL_BASE_TAG_GATHERV,
+        err = MCA_PML_CALL(send(sbuf, scount, sdtype, root, MCA_COLL_BASE_TAG_GATHERV,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
     } else {
         /* I am the root, loop receiving data. */
@@ -143,13 +132,14 @@ mca_coll_basic_gatherv_inter(const void *sbuf, int scount,
         }
 
         reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
-        if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
+        if (NULL == reqs) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
         for (i = 0; i < size; ++i) {
             ptmp = ((char *) rbuf) + (extent * disps[i]);
-            err = MCA_PML_CALL(irecv(ptmp, rcounts[i], rdtype, i,
-                                     MCA_COLL_BASE_TAG_GATHERV,
-                                     comm, &reqs[i]));
+            err = MCA_PML_CALL(
+                irecv(ptmp, rcounts[i], rdtype, i, MCA_COLL_BASE_TAG_GATHERV, comm, &reqs[i]));
             if (OMPI_SUCCESS != err) {
                 ompi_coll_base_free_reqs(reqs, i + 1);
                 return err;

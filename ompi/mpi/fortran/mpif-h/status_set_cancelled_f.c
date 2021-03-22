@@ -21,51 +21,46 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_STATUS_SET_CANCELLED = ompi_status_set_cancelled_f
-#pragma weak pmpi_status_set_cancelled = ompi_status_set_cancelled_f
-#pragma weak pmpi_status_set_cancelled_ = ompi_status_set_cancelled_f
-#pragma weak pmpi_status_set_cancelled__ = ompi_status_set_cancelled_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_STATUS_SET_CANCELLED = ompi_status_set_cancelled_f
+#        pragma weak pmpi_status_set_cancelled = ompi_status_set_cancelled_f
+#        pragma weak pmpi_status_set_cancelled_ = ompi_status_set_cancelled_f
+#        pragma weak pmpi_status_set_cancelled__ = ompi_status_set_cancelled_f
 
-#pragma weak PMPI_Status_set_cancelled_f = ompi_status_set_cancelled_f
-#pragma weak PMPI_Status_set_cancelled_f08 = ompi_status_set_cancelled_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_CANCELLED,
-                           pmpi_status_set_cancelled,
-                           pmpi_status_set_cancelled_,
-                           pmpi_status_set_cancelled__,
+#        pragma weak PMPI_Status_set_cancelled_f = ompi_status_set_cancelled_f
+#        pragma weak PMPI_Status_set_cancelled_f08 = ompi_status_set_cancelled_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_STATUS_SET_CANCELLED, pmpi_status_set_cancelled,
+                           pmpi_status_set_cancelled_, pmpi_status_set_cancelled__,
                            pompi_status_set_cancelled_f,
-                           (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (status, flag, ierr) )
-#endif
+                           (MPI_Fint * status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
+                           (status, flag, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_STATUS_SET_CANCELLED = ompi_status_set_cancelled_f
-#pragma weak mpi_status_set_cancelled = ompi_status_set_cancelled_f
-#pragma weak mpi_status_set_cancelled_ = ompi_status_set_cancelled_f
-#pragma weak mpi_status_set_cancelled__ = ompi_status_set_cancelled_f
+#    pragma weak MPI_STATUS_SET_CANCELLED = ompi_status_set_cancelled_f
+#    pragma weak mpi_status_set_cancelled = ompi_status_set_cancelled_f
+#    pragma weak mpi_status_set_cancelled_ = ompi_status_set_cancelled_f
+#    pragma weak mpi_status_set_cancelled__ = ompi_status_set_cancelled_f
 
-#pragma weak MPI_Status_set_cancelled_f = ompi_status_set_cancelled_f
-#pragma weak MPI_Status_set_cancelled_f08 = ompi_status_set_cancelled_f
+#    pragma weak MPI_Status_set_cancelled_f = ompi_status_set_cancelled_f
+#    pragma weak MPI_Status_set_cancelled_f08 = ompi_status_set_cancelled_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_CANCELLED,
-                           mpi_status_set_cancelled,
-                           mpi_status_set_cancelled_,
-                           mpi_status_set_cancelled__,
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_STATUS_SET_CANCELLED, mpi_status_set_cancelled,
+                           mpi_status_set_cancelled_, mpi_status_set_cancelled__,
                            ompi_status_set_cancelled_f,
-                           (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (status, flag, ierr) )
-#else
-#define ompi_status_set_cancelled_f pompi_status_set_cancelled_f
+                           (MPI_Fint * status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
+                           (status, flag, ierr))
+#    else
+#        define ompi_status_set_cancelled_f pompi_status_set_cancelled_f
+#    endif
 #endif
-#endif
-
 
 void ompi_status_set_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
@@ -77,13 +72,13 @@ void ompi_status_set_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag,
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
         c_ierr = MPI_SUCCESS;
     } else {
-        PMPI_Status_f2c( status, &c_status );
+        PMPI_Status_f2c(status, &c_status);
 
-        c_ierr = PMPI_Status_set_cancelled(&c_status,
-                                          OMPI_LOGICAL_2_INT(*flag));
+        c_ierr = PMPI_Status_set_cancelled(&c_status, OMPI_LOGICAL_2_INT(*flag));
         if (MPI_SUCCESS == c_ierr) {
             PMPI_Status_c2f(&c_status, status);
         }
     }
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -17,32 +17,30 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_pvar_get_info = PMPI_T_pvar_get_info
+#    pragma weak MPI_T_pvar_get_info = PMPI_T_pvar_get_info
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
-                        int *verbosity, int *var_class, MPI_Datatype *datatype,
-                        MPI_T_enum *enumtype, char *desc, int *desc_len, int *bind,
-                        int *readonly, int *continuous, int *atomic)
+int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len, int *verbosity, int *var_class,
+                        MPI_Datatype *datatype, MPI_T_enum *enumtype, char *desc, int *desc_len,
+                        int *bind, int *readonly, int *continuous, int *atomic)
 {
     const mca_base_pvar_t *pvar;
     int ret;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     do {
         /* Find the performance variable. mca_base_pvar_get() handles the
            bounds checking. */
-        ret = mca_base_pvar_get (pvar_index, &pvar);
+        ret = mca_base_pvar_get(pvar_index, &pvar);
         if (OMPI_SUCCESS != ret) {
             ret = (OPAL_ERR_NOT_FOUND == ret) ? MPI_T_ERR_INVALID_INDEX : MPI_T_ERR_INVALID;
             break;
@@ -56,8 +54,8 @@ int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
         }
 
         /* Copy name an description */
-        mpit_copy_string (name, name_len, pvar->name);
-        mpit_copy_string (desc, desc_len, pvar->description);
+        mpit_copy_string(name, name_len, pvar->name);
+        mpit_copy_string(desc, desc_len, pvar->description);
 
         if (verbosity) {
             *verbosity = pvar->verbosity;
@@ -67,10 +65,10 @@ int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
             *var_class = pvar->var_class;
         }
 
-        ret = ompit_var_type_to_datatype (pvar->type, datatype);
+        ret = ompit_var_type_to_datatype(pvar->type, datatype);
         if (OMPI_SUCCESS != ret) {
-            ret = MPI_T_ERR_INVALID;  /* can't really happen as MPI_SUCCESS is the only
-                                         possible return from ompit_var_type_to_datatype */
+            ret = MPI_T_ERR_INVALID; /* can't really happen as MPI_SUCCESS is the only
+                                        possible return from ompit_var_type_to_datatype */
         }
 
         if (NULL != enumtype) {
@@ -82,19 +80,19 @@ int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
         }
 
         if (NULL != readonly) {
-            *readonly = mca_base_pvar_is_readonly (pvar);
+            *readonly = mca_base_pvar_is_readonly(pvar);
         }
 
         if (NULL != continuous) {
-            *continuous = mca_base_pvar_is_continuous (pvar);
+            *continuous = mca_base_pvar_is_continuous(pvar);
         }
 
         if (NULL != atomic) {
-            *atomic = mca_base_pvar_is_atomic (pvar);
+            *atomic = mca_base_pvar_is_atomic(pvar);
         }
     } while (0);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return ret;
 }

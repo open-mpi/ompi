@@ -23,12 +23,12 @@
 #define MCA_FBTL_PVFS2_H
 
 #include "ompi_config.h"
-#include "ompi/mca/mca.h"
-#include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fs/pvfs2/fs_pvfs2.h"
-#include "pvfs2.h"
+#include "ompi/mca/mca.h"
 #include "pvfs2-compat.h"
+#include "pvfs2.h"
 
 /*
 #ifdef HAVE_PVFS2_H
@@ -43,14 +43,13 @@ extern int mca_fbtl_pvfs2_priority;
 
 BEGIN_C_DECLS
 
-int mca_fbtl_pvfs2_component_init_query(bool enable_progress_threads,
-                                        bool enable_mpi_threads);
-struct mca_fbtl_base_module_1_0_0_t *
-mca_fbtl_pvfs2_component_file_query (ompio_file_t *file, int *priority);
-int mca_fbtl_pvfs2_component_file_unquery (ompio_file_t *file);
+int mca_fbtl_pvfs2_component_init_query(bool enable_progress_threads, bool enable_mpi_threads);
+struct mca_fbtl_base_module_1_0_0_t *mca_fbtl_pvfs2_component_file_query(ompio_file_t *file,
+                                                                         int *priority);
+int mca_fbtl_pvfs2_component_file_unquery(ompio_file_t *file);
 
-int mca_fbtl_pvfs2_module_init (ompio_file_t *file);
-int mca_fbtl_pvfs2_module_finalize (ompio_file_t *file);
+int mca_fbtl_pvfs2_module_init(ompio_file_t *file);
+int mca_fbtl_pvfs2_module_finalize(ompio_file_t *file);
 
 OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_pvfs2_component;
 /*
@@ -59,12 +58,10 @@ OMPI_MODULE_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_pvfs2_compo
  * ******************************************************************
  */
 
-ssize_t mca_fbtl_pvfs2_preadv (ompio_file_t *file);
-ssize_t mca_fbtl_pvfs2_pwritev (ompio_file_t *file);
-ssize_t mca_fbtl_pvfs2_ipreadv (ompio_file_t *file,
-                               ompi_request_t **request);
-ssize_t mca_fbtl_pvfs2_ipwritev (ompio_file_t *file,
-                               ompi_request_t **request);
+ssize_t mca_fbtl_pvfs2_preadv(ompio_file_t *file);
+ssize_t mca_fbtl_pvfs2_pwritev(ompio_file_t *file);
+ssize_t mca_fbtl_pvfs2_ipreadv(ompio_file_t *file, ompi_request_t **request);
+ssize_t mca_fbtl_pvfs2_ipwritev(ompio_file_t *file, ompi_request_t **request);
 
 /*
  * ******************************************************************

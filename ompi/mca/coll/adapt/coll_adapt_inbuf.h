@@ -3,9 +3,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -23,4 +23,4 @@ typedef struct ompi_coll_adapt_inbuf_s ompi_coll_adapt_inbuf_t;
 
 OBJ_CLASS_DECLARATION(ompi_coll_adapt_inbuf_t);
 
-#endif                          /* MCA_COLL_ADAPT_INBUF_H */
+#endif /* MCA_COLL_ADAPT_INBUF_H */

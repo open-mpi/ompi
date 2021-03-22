@@ -18,9 +18,8 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
 #include "coll_self.h"
-
+#include "ompi/constants.h"
 
 /*
  *	barrier_intra
@@ -29,8 +28,7 @@
  *	Accepts:	- same as MPI_Barrier()
  *	Returns:	- MPI_SUCCESS
  */
-int mca_coll_self_barrier_intra(struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
+int mca_coll_self_barrier_intra(struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     /* Since there is only one process, this is a no-op */
 

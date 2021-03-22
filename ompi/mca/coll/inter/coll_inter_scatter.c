@@ -25,8 +25,8 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
 
 /*
@@ -36,13 +36,9 @@
  *	Accepts:	- same arguments as MPI_Scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_inter_scatter_inter(const void *sbuf, int scount,
-                             struct ompi_datatype_t *sdtype,
-                             void *rbuf, int rcount,
-                             struct ompi_datatype_t *rdtype,
-                             int root, struct ompi_communicator_t *comm,
-                             mca_coll_base_module_t *module)
+int mca_coll_inter_scatter_inter(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                 void *rbuf, int rcount, struct ompi_datatype_t *rdtype, int root,
+                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int rank, size, err;
 
@@ -57,41 +53,39 @@ mca_coll_inter_scatter_inter(const void *sbuf, int scount,
     } else if (MPI_ROOT != root) {
         /* First process receives the data from root */
         char *ptmp_free = NULL, *ptmp = NULL;
-	if(0 == rank) {
+        if (0 == rank) {
             int size_local;
             ptrdiff_t gap, span;
 
-	    size_local = ompi_comm_size(comm->c_local_comm);
-            span = opal_datatype_span(&rdtype->super, (int64_t)rcount*(int64_t)size_local, &gap);
+            size_local = ompi_comm_size(comm->c_local_comm);
+            span = opal_datatype_span(&rdtype->super, (int64_t) rcount * (int64_t) size_local,
+                                      &gap);
             ptmp_free = malloc(span);
-	    if (NULL == ptmp_free) {
-		return OMPI_ERR_OUT_OF_RESOURCE;
-	    }
+            if (NULL == ptmp_free) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
             ptmp = ptmp_free - gap;
 
-	    err = MCA_PML_CALL(recv(ptmp, rcount*size_local, rdtype,
-				    root, MCA_COLL_BASE_TAG_SCATTER,
-				    comm, MPI_STATUS_IGNORE));
-	    if (OMPI_SUCCESS != err) {
+            err = MCA_PML_CALL(recv(ptmp, rcount * size_local, rdtype, root,
+                                    MCA_COLL_BASE_TAG_SCATTER, comm, MPI_STATUS_IGNORE));
+            if (OMPI_SUCCESS != err) {
                 return err;
             }
-	}
-	/* Perform the scatter locally with the first process as root */
-	err = comm->c_local_comm->c_coll->coll_scatter(ptmp, rcount, rdtype,
-						      rbuf, rcount, rdtype,
-						      0, comm->c_local_comm,
-                                                      comm->c_local_comm->c_coll->coll_scatter_module);
-	if (NULL != ptmp_free) {
-	    free(ptmp_free);
-	}
+        }
+        /* Perform the scatter locally with the first process as root */
+        err = comm->c_local_comm->c_coll
+                  ->coll_scatter(ptmp, rcount, rdtype, rbuf, rcount, rdtype, 0, comm->c_local_comm,
+                                 comm->c_local_comm->c_coll->coll_scatter_module);
+        if (NULL != ptmp_free) {
+            free(ptmp_free);
+        }
     } else {
-	/* Root sends data to the first process in the remote group */
-	err = MCA_PML_CALL(send(sbuf, scount*size, sdtype, 0,
-				MCA_COLL_BASE_TAG_SCATTER,
-				MCA_PML_BASE_SEND_STANDARD, comm));
-	if (OMPI_SUCCESS != err) {
-	    return err;
-	}
+        /* Root sends data to the first process in the remote group */
+        err = MCA_PML_CALL(send(sbuf, scount * size, sdtype, 0, MCA_COLL_BASE_TAG_SCATTER,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        if (OMPI_SUCCESS != err) {
+            return err;
+        }
     }
 
     return err;

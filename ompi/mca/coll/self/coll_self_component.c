@@ -29,15 +29,15 @@
 #include "ompi_config.h"
 #include "coll_self.h"
 
+#include "coll_self.h"
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
-#include "coll_self.h"
 
 /*
  * Public string showing the coll ompi_self component version number
  */
-const char *mca_coll_self_component_version_string =
-  "Open MPI self collective MCA component version " OMPI_VERSION;
+const char *mca_coll_self_component_version_string
+    = "Open MPI self collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variable
@@ -48,7 +48,6 @@ int ompi_coll_self_priority = 0;
  * Local function
  */
 static int self_register(void);
-
 
 /*
  * Instantiate the public struct with all of our public information
@@ -87,16 +86,11 @@ static int self_register(void)
     /* We'll always be picked if there's only one process in the
        communicator */
     ompi_coll_self_priority = 75;
-    (void) mca_base_component_var_register(&mca_coll_self_component.collm_version,
-                                           "priority", NULL, MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_self_priority);
+    (void) mca_base_component_var_register(&mca_coll_self_component.collm_version, "priority", NULL,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_coll_self_priority);
 
     return OMPI_SUCCESS;
 }
 
-
-OBJ_CLASS_INSTANCE(mca_coll_self_module_t,
-                   mca_coll_base_module_t,
-                   NULL, NULL);
+OBJ_CLASS_INSTANCE(mca_coll_self_module_t, mca_coll_base_module_t, NULL, NULL);

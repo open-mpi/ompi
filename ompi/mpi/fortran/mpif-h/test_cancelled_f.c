@@ -21,51 +21,44 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_TEST_CANCELLED = ompi_test_cancelled_f
-#pragma weak pmpi_test_cancelled = ompi_test_cancelled_f
-#pragma weak pmpi_test_cancelled_ = ompi_test_cancelled_f
-#pragma weak pmpi_test_cancelled__ = ompi_test_cancelled_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_TEST_CANCELLED = ompi_test_cancelled_f
+#        pragma weak pmpi_test_cancelled = ompi_test_cancelled_f
+#        pragma weak pmpi_test_cancelled_ = ompi_test_cancelled_f
+#        pragma weak pmpi_test_cancelled__ = ompi_test_cancelled_f
 
-#pragma weak PMPI_Test_cancelled_f = ompi_test_cancelled_f
-#pragma weak PMPI_Test_cancelled_f08 = ompi_test_cancelled_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_TEST_CANCELLED,
-                           pmpi_test_cancelled,
-                           pmpi_test_cancelled_,
-                           pmpi_test_cancelled__,
-                           pompi_test_cancelled_f,
-                           (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (status, flag, ierr) )
-#endif
+#        pragma weak PMPI_Test_cancelled_f = ompi_test_cancelled_f
+#        pragma weak PMPI_Test_cancelled_f08 = ompi_test_cancelled_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_TEST_CANCELLED, pmpi_test_cancelled, pmpi_test_cancelled_,
+                           pmpi_test_cancelled__, pompi_test_cancelled_f,
+                           (MPI_Fint * status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
+                           (status, flag, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_TEST_CANCELLED = ompi_test_cancelled_f
-#pragma weak mpi_test_cancelled = ompi_test_cancelled_f
-#pragma weak mpi_test_cancelled_ = ompi_test_cancelled_f
-#pragma weak mpi_test_cancelled__ = ompi_test_cancelled_f
+#    pragma weak MPI_TEST_CANCELLED = ompi_test_cancelled_f
+#    pragma weak mpi_test_cancelled = ompi_test_cancelled_f
+#    pragma weak mpi_test_cancelled_ = ompi_test_cancelled_f
+#    pragma weak mpi_test_cancelled__ = ompi_test_cancelled_f
 
-#pragma weak MPI_Test_cancelled_f = ompi_test_cancelled_f
-#pragma weak MPI_Test_cancelled_f08 = ompi_test_cancelled_f
+#    pragma weak MPI_Test_cancelled_f = ompi_test_cancelled_f
+#    pragma weak MPI_Test_cancelled_f08 = ompi_test_cancelled_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TEST_CANCELLED,
-                           mpi_test_cancelled,
-                           mpi_test_cancelled_,
-                           mpi_test_cancelled__,
-                           ompi_test_cancelled_f,
-                           (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (status, flag, ierr) )
-#else
-#define ompi_test_cancelled_f pompi_test_cancelled_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_TEST_CANCELLED, mpi_test_cancelled, mpi_test_cancelled_,
+                           mpi_test_cancelled__, ompi_test_cancelled_f,
+                           (MPI_Fint * status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
+                           (status, flag, ierr))
+#    else
+#        define ompi_test_cancelled_f pompi_test_cancelled_f
+#    endif
 #endif
-#endif
-
 
 void ompi_test_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
@@ -79,14 +72,14 @@ void ompi_test_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_F
         *flag = OMPI_INT_2_LOGICAL(0);
         c_ierr = MPI_SUCCESS;
     } else {
-        c_ierr = PMPI_Status_f2c( status, &c_status );
+        c_ierr = PMPI_Status_f2c(status, &c_status);
 
         if (MPI_SUCCESS == c_ierr) {
-            c_ierr = PMPI_Test_cancelled(&c_status,
-                                        OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+            c_ierr = PMPI_Test_cancelled(&c_status, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
 
             OMPI_SINGLE_INT_2_LOGICAL(flag);
         }
     }
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 }

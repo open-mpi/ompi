@@ -21,58 +21,58 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpiext/pcollreq/mpif-h/mpiext_pcollreq_prototypes.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPIX_SCATTERV_INIT = ompix_scatterv_init_f
+#        pragma weak pmpix_scatterv_init = ompix_scatterv_init_f
+#        pragma weak pmpix_scatterv_init_ = ompix_scatterv_init_f
+#        pragma weak pmpix_scatterv_init__ = ompix_scatterv_init_f
+
+#        pragma weak PMPIX_Scatterv_init_f = ompix_scatterv_init_f
+#        pragma weak PMPIX_Scatterv_init_f08 = ompix_scatterv_init_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPIX_SCATTERV_INIT, pmpix_scatterv_init, pmpix_scatterv_init_,
+                           pmpix_scatterv_init__, pompix_scatterv_init_f,
+                           (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs,
+                            MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+                            MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info,
+                            MPI_Fint *request, MPI_Fint *ierr),
+                           (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype,
+                            root, comm, info, request, ierr))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPIX_SCATTERV_INIT = ompix_scatterv_init_f
-#pragma weak pmpix_scatterv_init = ompix_scatterv_init_f
-#pragma weak pmpix_scatterv_init_ = ompix_scatterv_init_f
-#pragma weak pmpix_scatterv_init__ = ompix_scatterv_init_f
+#    pragma weak MPIX_SCATTERV_INIT = ompix_scatterv_init_f
+#    pragma weak mpix_scatterv_init = ompix_scatterv_init_f
+#    pragma weak mpix_scatterv_init_ = ompix_scatterv_init_f
+#    pragma weak mpix_scatterv_init__ = ompix_scatterv_init_f
 
-#pragma weak PMPIX_Scatterv_init_f = ompix_scatterv_init_f
-#pragma weak PMPIX_Scatterv_init_f08 = ompix_scatterv_init_f
+#    pragma weak MPIX_Scatterv_init_f = ompix_scatterv_init_f
+#    pragma weak MPIX_Scatterv_init_f08 = ompix_scatterv_init_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPIX_SCATTERV_INIT,
-                            pmpix_scatterv_init,
-                            pmpix_scatterv_init_,
-                            pmpix_scatterv_init__,
-                            pompix_scatterv_init_f,
-                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
-                            (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, info, request, ierr) )
-#endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_SCATTERV_INIT = ompix_scatterv_init_f
-#pragma weak mpix_scatterv_init = ompix_scatterv_init_f
-#pragma weak mpix_scatterv_init_ = ompix_scatterv_init_f
-#pragma weak mpix_scatterv_init__ = ompix_scatterv_init_f
-
-#pragma weak MPIX_Scatterv_init_f = ompix_scatterv_init_f
-#pragma weak MPIX_Scatterv_init_f08 = ompix_scatterv_init_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPIX_SCATTERV_INIT,
-                            mpix_scatterv_init,
-                            mpix_scatterv_init_,
-                            mpix_scatterv_init__,
-                            ompix_scatterv_init_f,
-                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
-                            (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, info, request, ierr) )
-#else
-#define ompix_scatterv_init_f pompix_scatterv_init_f
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPIX_SCATTERV_INIT, mpix_scatterv_init, mpix_scatterv_init_,
+                           mpix_scatterv_init__, ompix_scatterv_init_f,
+                           (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs,
+                            MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+                            MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info,
+                            MPI_Fint *request, MPI_Fint *ierr),
+                           (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype,
+                            root, comm, info, request, ierr))
+#    else
+#        define ompix_scatterv_init_f pompix_scatterv_init_f
+#    endif
 #endif
 
-
-void ompix_scatterv_init_f(char *sendbuf, MPI_Fint *sendcounts,
-                           MPI_Fint *displs, MPI_Fint *sendtype,
-                           char *recvbuf, MPI_Fint *recvcount,
-                           MPI_Fint *recvtype, MPI_Fint *root,
-                           MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr)
+void ompix_scatterv_init_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs,
+                           MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+                           MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info,
+                           MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
     MPI_Datatype c_sendtype, c_recvtype;
@@ -95,15 +95,14 @@ void ompix_scatterv_init_f(char *sendbuf, MPI_Fint *sendcounts,
     recvbuf = (char *) OMPI_F2C_IN_PLACE(recvbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPIX_Scatterv_init(sendbuf,
-                                OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                                OMPI_ARRAY_NAME_CONVERT(displs),
-                                c_sendtype, recvbuf,
-                                OMPI_FINT_2_INT(*recvcount),
-                                c_recvtype,
-                                OMPI_FINT_2_INT(*root), c_comm, c_info, &c_request);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
+    c_ierr = PMPIX_Scatterv_init(sendbuf, OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                                 OMPI_ARRAY_NAME_CONVERT(displs), c_sendtype, recvbuf,
+                                 OMPI_FINT_2_INT(*recvcount), c_recvtype, OMPI_FINT_2_INT(*root),
+                                 c_comm, c_info, &c_request);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (MPI_SUCCESS == c_ierr)
+        *request = PMPI_Request_c2f(c_request);
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);

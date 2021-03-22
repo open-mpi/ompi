@@ -11,16 +11,13 @@
 
 #include "opal/mca/memory/base/base.h"
 
-
 static int mca_pml_ucx_component_register(void);
 static int mca_pml_ucx_component_open(void);
 static int mca_pml_ucx_component_close(void);
 
-static  mca_pml_base_module_t*
-mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
-                             bool enable_mpi_threads);
+static mca_pml_base_module_t *
+mca_pml_ucx_component_init(int *priority, bool enable_progress_threads, bool enable_mpi_threads);
 static int mca_pml_ucx_component_fini(void);
-
 
 mca_pml_base_component_2_1_0_t mca_pml_ucx_component = {
 
@@ -51,19 +48,15 @@ static int mca_pml_ucx_component_register(void)
 {
     ompi_pml_ucx.priority = 51;
     (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "priority",
-                                           "Priority of the UCX component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           "Priority of the UCX component", MCA_BASE_VAR_TYPE_INT,
+                                           NULL, 0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_pml_ucx.priority);
 
     ompi_pml_ucx.num_disconnect = 1;
     (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "num_disconnect",
                                            "How may disconnects go in parallel",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &ompi_pml_ucx.num_disconnect);
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &ompi_pml_ucx.num_disconnect);
     opal_common_ucx_mca_var_register(&mca_pml_ucx_component.pmlm_version);
     return 0;
 }
@@ -88,9 +81,8 @@ static int mca_pml_ucx_component_close(void)
     return 0;
 }
 
-static mca_pml_base_module_t*
-mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
-                           bool enable_mpi_threads)
+static mca_pml_base_module_t *
+mca_pml_ucx_component_init(int *priority, bool enable_progress_threads, bool enable_mpi_threads)
 {
     opal_common_ucx_support_level_t support_level;
     int ret;
@@ -100,7 +92,7 @@ mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
         return NULL;
     }
 
-    if ( (ret = mca_pml_ucx_init(enable_mpi_threads)) != 0) {
+    if ((ret = mca_pml_ucx_init(enable_mpi_threads)) != 0) {
         return NULL;
     }
 
@@ -109,8 +101,7 @@ mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
      * Otherwise - Found only supported transports (which could be exposed by
      *             unsupported devices), so set a priority lower than ob1.
      */
-    *priority = (support_level == OPAL_COMMON_UCX_SUPPORT_DEVICE) ?
-                ompi_pml_ucx.priority : 19;
+    *priority = (support_level == OPAL_COMMON_UCX_SUPPORT_DEVICE) ? ompi_pml_ucx.priority : 19;
     PML_UCX_VERBOSE(2, "returning priority %d", *priority);
     return &ompi_pml_ucx.super;
 }
@@ -119,4 +110,3 @@ static int mca_pml_ucx_component_fini(void)
 {
     return mca_pml_ucx_cleanup();
 }
-

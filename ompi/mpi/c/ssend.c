@@ -25,23 +25,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ssend = PMPI_Ssend
-#endif
-#define MPI_Ssend PMPI_Ssend
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Ssend = PMPI_Ssend
+#    endif
+#    define MPI_Ssend PMPI_Ssend
 #endif
 
 static const char FUNC_NAME[] = "MPI_Ssend";
-
 
 int MPI_Ssend(const void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Comm comm)
 {
@@ -49,13 +48,11 @@ int MPI_Ssend(const void *buf, int count, MPI_Datatype type, int dest, int tag, 
 
     SPC_RECORD(OMPI_SPC_SSEND, 1);
 
-    MEMCHECKER(
-        memchecker_datatype(type);
-        memchecker_call(&opal_memchecker_base_isdefined, buf, count, type);
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_datatype(type);
+               memchecker_call(&opal_memchecker_base_isdefined, buf, count, type);
+               memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
@@ -65,8 +62,7 @@ int MPI_Ssend(const void *buf, int count, MPI_Datatype type, int dest, int tag, 
             rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
-        } else if (ompi_comm_peer_invalid(comm, dest) &&
-                   (MPI_PROC_NULL != dest)) {
+        } else if (ompi_comm_peer_invalid(comm, dest) && (MPI_PROC_NULL != dest)) {
             rc = MPI_ERR_RANK;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(rc, type, count);
@@ -82,7 +78,7 @@ int MPI_Ssend(const void *buf, int count, MPI_Datatype type, int dest, int tag, 
      * check for this, and other, error conditions during the completion
      * call in the PML.
      */
-    if( OPAL_UNLIKELY(!ompi_comm_iface_p2p_check_proc(comm, dest, &rc)) ) {
+    if (OPAL_UNLIKELY(!ompi_comm_iface_p2p_check_proc(comm, dest, &rc))) {
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
 #endif
@@ -91,8 +87,6 @@ int MPI_Ssend(const void *buf, int count, MPI_Datatype type, int dest, int tag, 
         return MPI_SUCCESS;
     }
 
-    rc = MCA_PML_CALL(send(buf, count, type, dest, tag,
-                           MCA_PML_BASE_SEND_SYNCHRONOUS, comm));
+    rc = MCA_PML_CALL(send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_SYNCHRONOUS, comm));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
-

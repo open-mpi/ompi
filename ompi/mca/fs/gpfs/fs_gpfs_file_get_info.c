@@ -23,12 +23,12 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fs/fs.h"
 
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
-#include <gpfs.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <gpfs.h>
 #include <gpfs_fcntl.h>
 
 /*
@@ -39,8 +39,7 @@
  *  Returns:    - new info object
  */
 
-int mca_fs_gpfs_file_get_info(ompio_file_t *fh,
-                        ompi_info_t **info_used)
+int mca_fs_gpfs_file_get_info(ompio_file_t *fh, ompi_info_t **info_used)
 {
     int ret = OMPI_SUCCESS;
 
@@ -49,7 +48,7 @@ int mca_fs_gpfs_file_get_info(ompio_file_t *fh,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    ret = ompi_info_dup ((ompi_info_t *)fh->f_info, info_used);
+    ret = ompi_info_dup((ompi_info_t *) fh->f_info, info_used);
 
     return ret;
 }

@@ -32,28 +32,29 @@
 #include "opal/mca/threads/threads.h"
 #include "opal/util/output.h"
 
-#include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
+#include "opal/mca/shmem/shmem.h"
 
-#include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/request/request.h"
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
-#include "opal/mca/btl/btl.h"
+#include "ompi/mca/osc/osc.h"
 #include "ompi/memchecker.h"
 #include "ompi/op/op.h"
+#include "ompi/request/request.h"
+#include "ompi/win/win.h"
 #include "opal/align.h"
+#include "opal/mca/btl/btl.h"
 
-#include "osc_rdma_types.h"
 #include "osc_rdma_sync.h"
+#include "osc_rdma_types.h"
 
 #include "osc_rdma_peer.h"
 
 #include "opal_stdint.h"
 
-#define RANK_ARRAY_COUNT(module) ((ompi_comm_size ((module)->comm) + (module)->node_count - 1) / (module)->node_count)
+#define RANK_ARRAY_COUNT(module) \
+    ((ompi_comm_size((module)->comm) + (module)->node_count - 1) / (module)->node_count)
 
 #define MCA_OSC_RDMA_BTLS_SIZE_INIT 4
 
@@ -191,7 +192,6 @@ struct ompi_osc_rdma_module_t {
     /* only relevant on the lowest rank on each node (shared memory) */
     ompi_osc_rdma_rank_data_t *rank_array;
 
-
     /** communicator created with this window.  This is the cid used
      * in the component's modules mapping. */
     ompi_communicator_t *comm;
@@ -230,7 +230,7 @@ struct ompi_osc_rdma_module_t {
     struct ompi_group_t *pw_group;
 
     /** list of unmatched post messages */
-    opal_list_t        pending_posts;
+    opal_list_t pending_posts;
 
     /* ********************* LOCK data ************************ */
 
@@ -243,7 +243,6 @@ struct ompi_osc_rdma_module_t {
     /** array of locks (small jobs) */
     ompi_osc_rdma_sync_t **outstanding_lock_array;
 
-
     /* ******************* peer storage *********************** */
 
     /** hash table of allocated peers */
@@ -254,7 +253,6 @@ struct ompi_osc_rdma_module_t {
 
     /** lock for peer hash table/array */
     opal_mutex_t peer_lock;
-
 
     /** BTL(s) in use. Currently this is only used to support RDMA emulation over
      * non-RDMA BTLs. The typical usage is btl/sm + btl/tcp. In the future this
@@ -283,7 +281,6 @@ struct ompi_osc_rdma_module_t {
     /** opal shared memory structure for the shared memory segment */
     opal_shmem_ds_t seg_ds;
 
-
     /* performance values */
 
     /** number of times a put had to be retried */
@@ -298,10 +295,9 @@ struct ompi_osc_rdma_module_t {
 typedef struct ompi_osc_rdma_module_t ompi_osc_rdma_module_t;
 OMPI_MODULE_DECLSPEC extern ompi_osc_rdma_component_t mca_osc_rdma_component;
 
-#define GET_MODULE(win) ((ompi_osc_rdma_module_t*) win->w_osc_module)
+#define GET_MODULE(win) ((ompi_osc_rdma_module_t *) win->w_osc_module)
 
-int ompi_osc_rdma_free (struct ompi_win_t *win);
-
+int ompi_osc_rdma_free(struct ompi_win_t *win);
 
 /* peer functions */
 
@@ -314,7 +310,7 @@ int ompi_osc_rdma_free (struct ompi_win_t *win);
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERR_OUT_OF_RESOURCE on failure
  */
-int ompi_osc_module_add_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer);
+int ompi_osc_module_add_peer(ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer);
 
 /**
  * @brief demand lock a peer
@@ -324,7 +320,7 @@ int ompi_osc_module_add_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer
  *
  * @returns OMPI_SUCCESS on success
  */
-int ompi_osc_rdma_demand_lock_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer);
+int ompi_osc_rdma_demand_lock_peer(ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer);
 
 /**
  * @brief check if a peer object is cached for a remote rank
@@ -335,11 +331,12 @@ int ompi_osc_rdma_demand_lock_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdm
  * @returns peer object on success
  * @returns NULL if a peer object is not cached for the peer
  */
-static inline ompi_osc_rdma_peer_t *ompi_osc_module_get_peer (ompi_osc_rdma_module_t *module, int peer_id)
+static inline ompi_osc_rdma_peer_t *ompi_osc_module_get_peer(ompi_osc_rdma_module_t *module,
+                                                             int peer_id)
 {
     if (NULL == module->peer_array) {
         ompi_osc_rdma_peer_t *peer = NULL;
-        (void) opal_hash_table_get_value_uint32 (&module->peer_hash, peer_id, (void **) &peer);
+        (void) opal_hash_table_get_value_uint32(&module->peer_hash, peer_id, (void **) &peer);
         return peer;
     }
 
@@ -352,16 +349,17 @@ static inline ompi_osc_rdma_peer_t *ompi_osc_module_get_peer (ompi_osc_rdma_modu
  * @param[in] module          osc rdma module
  * @param[in] peer_id         remote peer rank
  */
-static inline ompi_osc_rdma_peer_t *ompi_osc_rdma_module_peer (ompi_osc_rdma_module_t *module, int peer_id)
+static inline ompi_osc_rdma_peer_t *ompi_osc_rdma_module_peer(ompi_osc_rdma_module_t *module,
+                                                              int peer_id)
 {
     ompi_osc_rdma_peer_t *peer;
 
-    peer = ompi_osc_module_get_peer (module, peer_id);
+    peer = ompi_osc_module_get_peer(module, peer_id);
     if (NULL != peer) {
         return peer;
     }
 
-    return ompi_osc_rdma_peer_lookup (module, peer_id);
+    return ompi_osc_rdma_peer_lookup(module, peer_id);
 }
 
 /**
@@ -369,22 +367,29 @@ static inline ompi_osc_rdma_peer_t *ompi_osc_rdma_module_peer (ompi_osc_rdma_mod
  *
  * @param[in] module          osc rdma module
  */
-static inline bool ompi_osc_rdma_in_passive_epoch (ompi_osc_rdma_module_t *module)
+static inline bool ompi_osc_rdma_in_passive_epoch(ompi_osc_rdma_module_t *module)
 {
     return 0 != module->passive_target_access_epoch;
 }
 
-static inline int _ompi_osc_rdma_register (ompi_osc_rdma_module_t *module, struct mca_btl_base_endpoint_t *endpoint, void *ptr,
-                                           size_t size, uint32_t flags, mca_btl_base_registration_handle_t **handle, int line, const char *file)
+static inline int _ompi_osc_rdma_register(ompi_osc_rdma_module_t *module,
+                                          struct mca_btl_base_endpoint_t *endpoint, void *ptr,
+                                          size_t size, uint32_t flags,
+                                          mca_btl_base_registration_handle_t **handle, int line,
+                                          const char *file)
 {
     if (module->use_memory_registration) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "registering segment with btl. range: %p - %p (%lu bytes)",
-                         ptr, (void*)((char *) ptr + size), size);
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO,
+                         "registering segment with btl. range: %p - %p (%lu bytes)", ptr,
+                         (void *) ((char *) ptr + size), size);
 
-        *handle = module->selected_btls[0]->btl_register_mem (module->selected_btls[0], endpoint, ptr, size, flags);
+        *handle = module->selected_btls[0]->btl_register_mem(module->selected_btls[0], endpoint,
+                                                             ptr, size, flags);
         if (OPAL_UNLIKELY(NULL == *handle)) {
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "failed to register pointer with selected BTL. base: %p, "
-                             "size: %lu. file: %s, line: %d", ptr, (unsigned long) size, file, line);
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG,
+                             "failed to register pointer with selected BTL. base: %p, "
+                             "size: %lu. file: %s, line: %d",
+                             ptr, (unsigned long) size, file, line);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     } else {
@@ -396,17 +401,20 @@ static inline int _ompi_osc_rdma_register (ompi_osc_rdma_module_t *module, struc
 
 #define ompi_osc_rdma_register(...) _ompi_osc_rdma_register(__VA_ARGS__, __LINE__, __FILE__)
 
-static inline void _ompi_osc_rdma_deregister (ompi_osc_rdma_module_t *module, mca_btl_base_registration_handle_t *handle, int line, const char *file)
+static inline void _ompi_osc_rdma_deregister(ompi_osc_rdma_module_t *module,
+                                             mca_btl_base_registration_handle_t *handle, int line,
+                                             const char *file)
 {
     if (handle) {
-        module->selected_btls[0]->btl_deregister_mem (module->selected_btls[0], handle);
+        module->selected_btls[0]->btl_deregister_mem(module->selected_btls[0], handle);
     }
 }
 
 #define ompi_osc_rdma_deregister(...) _ompi_osc_rdma_deregister(__VA_ARGS__, __LINE__, __FILE__)
 
-static inline void ompi_osc_rdma_progress (ompi_osc_rdma_module_t *module) {
-    opal_progress ();
+static inline void ompi_osc_rdma_progress(ompi_osc_rdma_module_t *module)
+{
+    opal_progress();
 }
 
 /**
@@ -420,15 +428,17 @@ static inline void ompi_osc_rdma_progress (ompi_osc_rdma_module_t *module) {
  *
  * This function looks for an outstanding lock to the target. If a lock exists it is returned.
  */
-static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_lock_find (ompi_osc_rdma_module_t *module, int target,
-                                                                    ompi_osc_rdma_peer_t **peer)
+static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_lock_find(ompi_osc_rdma_module_t *module,
+                                                                   int target,
+                                                                   ompi_osc_rdma_peer_t **peer)
 {
     ompi_osc_rdma_sync_t *outstanding_lock = NULL;
 
     if (OPAL_LIKELY(NULL != module->outstanding_lock_array)) {
         outstanding_lock = module->outstanding_lock_array[target];
     } else {
-        (void) opal_hash_table_get_value_uint32 (&module->outstanding_locks, (uint32_t) target, (void **) &outstanding_lock);
+        (void) opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target,
+                                                (void **) &outstanding_lock);
     }
 
     if (NULL != outstanding_lock && peer) {
@@ -444,18 +454,19 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_lock_find (ompi_osc_rdm
  * @param[in] module   osc rdma module
  * @param[in] lock     lock object
  *
- * This function inserts a lock object to the list of outstanding locks. The caller must be holding the module
- * lock.
+ * This function inserts a lock object to the list of outstanding locks. The caller must be holding
+ * the module lock.
  */
-static inline void ompi_osc_rdma_module_lock_insert (struct ompi_osc_rdma_module_t *module, ompi_osc_rdma_sync_t *lock)
+static inline void ompi_osc_rdma_module_lock_insert(struct ompi_osc_rdma_module_t *module,
+                                                    ompi_osc_rdma_sync_t *lock)
 {
     if (OPAL_LIKELY(NULL != module->outstanding_lock_array)) {
         module->outstanding_lock_array[lock->sync.lock.target] = lock;
     } else {
-        (void) opal_hash_table_set_value_uint32 (&module->outstanding_locks, (uint32_t) lock->sync.lock.target, (void *) lock);
+        (void) opal_hash_table_set_value_uint32(&module->outstanding_locks,
+                                                (uint32_t) lock->sync.lock.target, (void *) lock);
     }
 }
-
 
 /**
  * Remove an outstanding lock
@@ -463,15 +474,17 @@ static inline void ompi_osc_rdma_module_lock_insert (struct ompi_osc_rdma_module
  * @param[in] module   osc rdma module
  * @param[in] lock     lock object
  *
- * This function removes a lock object to the list of outstanding locks. The caller must be holding the module
- * lock.
+ * This function removes a lock object to the list of outstanding locks. The caller must be holding
+ * the module lock.
  */
-static inline void ompi_osc_rdma_module_lock_remove (struct ompi_osc_rdma_module_t *module, ompi_osc_rdma_sync_t *lock)
+static inline void ompi_osc_rdma_module_lock_remove(struct ompi_osc_rdma_module_t *module,
+                                                    ompi_osc_rdma_sync_t *lock)
 {
     if (OPAL_LIKELY(NULL != module->outstanding_lock_array)) {
         module->outstanding_lock_array[lock->sync.lock.target] = NULL;
     } else {
-        (void) opal_hash_table_remove_value_uint32 (&module->outstanding_locks, (uint32_t) lock->sync.lock.target);
+        (void) opal_hash_table_remove_value_uint32(&module->outstanding_locks,
+                                                   (uint32_t) lock->sync.lock.target);
     }
 }
 
@@ -488,24 +501,28 @@ static inline void ompi_osc_rdma_module_lock_remove (struct ompi_osc_rdma_module
  * This function returns the synchronization object associated with an access epoch for
  * the target. If the target is not part of any current access epoch then NULL is returned.
  */
-static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_rdma_module_t *module, int target, struct ompi_osc_rdma_peer_t **peer)
+static inline ompi_osc_rdma_sync_t *
+ompi_osc_rdma_module_sync_lookup(ompi_osc_rdma_module_t *module, int target,
+                                 struct ompi_osc_rdma_peer_t **peer)
 {
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "looking for synchronization object for target %d", target);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "looking for synchronization object for target %d",
+                     target);
 
     switch (module->all_sync.type) {
     case OMPI_OSC_RDMA_SYNC_TYPE_NONE:
         if (!module->no_locks) {
-            return ompi_osc_rdma_module_lock_find (module, target, peer);
+            return ompi_osc_rdma_module_lock_find(module, target, peer);
         }
 
         return NULL;
     case OMPI_OSC_RDMA_SYNC_TYPE_LOCK:
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found lock_all access epoch for target %d", target);
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found lock_all access epoch for target %d",
+                         target);
 
-        *peer = ompi_osc_rdma_module_peer (module, target);
-        if (OPAL_UNLIKELY(OMPI_OSC_RDMA_LOCKING_ON_DEMAND == module->locking_mode &&
-                          !ompi_osc_rdma_peer_is_demand_locked (*peer))) {
-            ompi_osc_rdma_demand_lock_peer (module, *peer);
+        *peer = ompi_osc_rdma_module_peer(module, target);
+        if (OPAL_UNLIKELY(OMPI_OSC_RDMA_LOCKING_ON_DEMAND == module->locking_mode
+                          && !ompi_osc_rdma_peer_is_demand_locked(*peer))) {
+            ompi_osc_rdma_demand_lock_peer(module, *peer);
         }
 
         return &module->all_sync;
@@ -513,12 +530,13 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found fence access epoch for target %d", target);
         /* fence epoch is now active */
         module->all_sync.epoch_active = true;
-        *peer = ompi_osc_rdma_module_peer (module, target);
+        *peer = ompi_osc_rdma_module_peer(module, target);
 
         return &module->all_sync;
     case OMPI_OSC_RDMA_SYNC_TYPE_PSCW:
-        if (ompi_osc_rdma_sync_pscw_peer (module, target, peer)) {
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found PSCW access epoch target for %d", target);
+        if (ompi_osc_rdma_sync_pscw_peer(module, target, peer)) {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found PSCW access epoch target for %d",
+                             target);
             return &module->all_sync;
         }
     }
@@ -528,7 +546,7 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
     return NULL;
 }
 
-static bool ompi_osc_rdma_use_btl_flush (ompi_osc_rdma_module_t *module)
+static bool ompi_osc_rdma_use_btl_flush(ompi_osc_rdma_module_t *module)
 {
 #if defined(BTL_VERSION) && (BTL_VERSION >= 310)
     return !!(module->selected_btls[0]->btl_flush);
@@ -542,22 +560,22 @@ static bool ompi_osc_rdma_use_btl_flush (ompi_osc_rdma_module_t *module)
  *
  * @param[in] rdma_sync         osc rdma synchronization object
  */
-static inline void ompi_osc_rdma_sync_rdma_inc_always (ompi_osc_rdma_sync_t *rdma_sync)
+static inline void ompi_osc_rdma_sync_rdma_inc_always(ompi_osc_rdma_sync_t *rdma_sync)
 {
-    ompi_osc_rdma_counter_add (&rdma_sync->outstanding_rdma.counter, 1);
+    ompi_osc_rdma_counter_add(&rdma_sync->outstanding_rdma.counter, 1);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "inc: there are %ld outstanding rdma operations",
                      (unsigned long) rdma_sync->outstanding_rdma.counter);
 }
 
-static inline void ompi_osc_rdma_sync_rdma_inc (ompi_osc_rdma_sync_t *rdma_sync)
+static inline void ompi_osc_rdma_sync_rdma_inc(ompi_osc_rdma_sync_t *rdma_sync)
 {
 #if defined(BTL_VERSION) && (BTL_VERSION >= 310)
-    if (ompi_osc_rdma_use_btl_flush (rdma_sync->module)) {
+    if (ompi_osc_rdma_use_btl_flush(rdma_sync->module)) {
         return;
     }
 #endif
-    ompi_osc_rdma_sync_rdma_inc_always (rdma_sync);
+    ompi_osc_rdma_sync_rdma_inc_always(rdma_sync);
 }
 
 /**
@@ -565,23 +583,23 @@ static inline void ompi_osc_rdma_sync_rdma_inc (ompi_osc_rdma_sync_t *rdma_sync)
  *
  * @param[in] rdma_sync         osc rdma synchronization object
  */
-static inline void ompi_osc_rdma_sync_rdma_dec_always (ompi_osc_rdma_sync_t *rdma_sync)
+static inline void ompi_osc_rdma_sync_rdma_dec_always(ompi_osc_rdma_sync_t *rdma_sync)
 {
-    opal_atomic_wmb ();
-    ompi_osc_rdma_counter_add (&rdma_sync->outstanding_rdma.counter, -1);
+    opal_atomic_wmb();
+    ompi_osc_rdma_counter_add(&rdma_sync->outstanding_rdma.counter, -1);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "dec: there are %ld outstanding rdma operations",
                      (unsigned long) rdma_sync->outstanding_rdma.counter);
 }
 
-static inline void ompi_osc_rdma_sync_rdma_dec (ompi_osc_rdma_sync_t *rdma_sync)
+static inline void ompi_osc_rdma_sync_rdma_dec(ompi_osc_rdma_sync_t *rdma_sync)
 {
 #if defined(BTL_VERSION) && (BTL_VERSION >= 310)
-    if (ompi_osc_rdma_use_btl_flush (rdma_sync->module)) {
+    if (ompi_osc_rdma_use_btl_flush(rdma_sync->module)) {
         return;
     }
 #endif
-    ompi_osc_rdma_sync_rdma_dec_always (rdma_sync);
+    ompi_osc_rdma_sync_rdma_dec_always(rdma_sync);
 }
 
 /**
@@ -589,22 +607,23 @@ static inline void ompi_osc_rdma_sync_rdma_dec (ompi_osc_rdma_sync_t *rdma_sync)
  *
  * @param[in] module          osc rdma module
  */
-static inline void ompi_osc_rdma_sync_rdma_complete (ompi_osc_rdma_sync_t *sync)
+static inline void ompi_osc_rdma_sync_rdma_complete(ompi_osc_rdma_sync_t *sync)
 {
 #if !defined(BTL_VERSION) || (BTL_VERSION < 310)
     do {
-        opal_progress ();
-    }  while (ompi_osc_rdma_sync_get_count (sync));
+        opal_progress();
+    } while (ompi_osc_rdma_sync_get_count(sync));
 #else
     mca_btl_base_module_t *btl_module = sync->module->selected_btls[0];
 
     do {
-        if (!ompi_osc_rdma_use_btl_flush (sync->module)) {
-            opal_progress ();
+        if (!ompi_osc_rdma_use_btl_flush(sync->module)) {
+            opal_progress();
         } else {
-            btl_module->btl_flush (btl_module, NULL);
+            btl_module->btl_flush(btl_module, NULL);
         }
-    }  while (ompi_osc_rdma_sync_get_count (sync) || (sync->module->rdma_frag && (sync->module->rdma_frag->pending > 1)));
+    } while (ompi_osc_rdma_sync_get_count(sync)
+             || (sync->module->rdma_frag && (sync->module->rdma_frag->pending > 1)));
 #endif
 }
 
@@ -618,28 +637,33 @@ static inline void ompi_osc_rdma_sync_rdma_complete (ompi_osc_rdma_sync_t *sync)
  *
  * This function is used to check for conflicting access epochs.
  */
-static inline bool ompi_osc_rdma_access_epoch_active (ompi_osc_rdma_module_t *module)
+static inline bool ompi_osc_rdma_access_epoch_active(ompi_osc_rdma_module_t *module)
 {
-    return (module->all_sync.epoch_active || ompi_osc_rdma_in_passive_epoch (module));
+    return (module->all_sync.epoch_active || ompi_osc_rdma_in_passive_epoch(module));
 }
 
-__opal_attribute_always_inline__
-static inline bool ompi_osc_rdma_oor (int rc)
+__opal_attribute_always_inline__ static inline bool ompi_osc_rdma_oor(int rc)
 {
     /* check for OPAL_SUCCESS first to short-circuit the statement in the common case */
-    return (OPAL_SUCCESS != rc && (OPAL_ERR_OUT_OF_RESOURCE == rc || OPAL_ERR_TEMP_OUT_OF_RESOURCE == rc));
+    return (OPAL_SUCCESS != rc
+            && (OPAL_ERR_OUT_OF_RESOURCE == rc || OPAL_ERR_TEMP_OUT_OF_RESOURCE == rc));
 }
 
-__opal_attribute_always_inline__
-static inline mca_btl_base_module_t *ompi_osc_rdma_selected_btl (ompi_osc_rdma_module_t *module, uint8_t btl_index) {
+__opal_attribute_always_inline__ static inline mca_btl_base_module_t *
+ompi_osc_rdma_selected_btl(ompi_osc_rdma_module_t *module, uint8_t btl_index)
+{
     return module->selected_btls[btl_index];
 }
 
-__opal_attribute_always_inline__
-static inline void ompi_osc_rdma_selected_btl_insert (ompi_osc_rdma_module_t *module, struct mca_btl_base_module_t *btl, uint8_t btl_index) {
-    if(btl_index == module->selected_btls_size) {
+__opal_attribute_always_inline__ static inline void
+ompi_osc_rdma_selected_btl_insert(ompi_osc_rdma_module_t *module, struct mca_btl_base_module_t *btl,
+                                  uint8_t btl_index)
+{
+    if (btl_index == module->selected_btls_size) {
         module->selected_btls_size *= 2;
-        module->selected_btls = realloc(module->selected_btls, module->selected_btls_size * sizeof(struct mca_btl_base_module_t *));
+        module->selected_btls = realloc(module->selected_btls,
+                                        module->selected_btls_size
+                                            * sizeof(struct mca_btl_base_module_t *));
         assert(NULL != module->selected_btls);
     }
     module->selected_btls[btl_index] = btl;

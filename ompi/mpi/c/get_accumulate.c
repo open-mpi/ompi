@@ -23,23 +23,23 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <stdio.h>
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/win/win.h"
-#include "ompi/mca/osc/osc.h"
-#include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mca/osc/osc.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/op/op.h"
+#include "ompi/runtime/params.h"
+#include "ompi/win/win.h"
+#include <stdio.h>
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Get_accumulate = PMPI_Get_accumulate
-#endif
-#define MPI_Get_accumulate PMPI_Get_accumulate
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Get_accumulate = PMPI_Get_accumulate
+#    endif
+#    define MPI_Get_accumulate PMPI_Get_accumulate
 #endif
 
 static const char FUNC_NAME[] = "MPI_Get_accumulate";
@@ -50,13 +50,11 @@ int MPI_Get_accumulate(const void *origin_addr, int origin_count, MPI_Datatype o
                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
     int rc;
-    ompi_win_t *ompi_win = (ompi_win_t*) win;
+    ompi_win_t *ompi_win = (ompi_win_t *) win;
 
-    MEMCHECKER(
-        memchecker_datatype(origin_datatype);
-        memchecker_datatype(target_datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, (void *) origin_addr, origin_count, origin_datatype);
-    );
+    MEMCHECKER(memchecker_datatype(origin_datatype); memchecker_datatype(target_datatype);
+               memchecker_call(&opal_memchecker_base_isdefined, (void *) origin_addr, origin_count,
+                               origin_datatype););
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
@@ -67,14 +65,13 @@ int MPI_Get_accumulate(const void *origin_addr, int origin_count, MPI_Datatype o
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
         } else if (origin_count < 0 || target_count < 0) {
             rc = MPI_ERR_COUNT;
-        } else if (ompi_win_peer_invalid(win, target_rank) &&
-                   (MPI_PROC_NULL != target_rank)) {
+        } else if (ompi_win_peer_invalid(win, target_rank) && (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
         } else if (MPI_OP_NULL == op) {
             rc = MPI_ERR_OP;
         } else if (!ompi_op_is_intrinsic(op)) {
             rc = MPI_ERR_OP;
-        } else if ( MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0 ) {
+        } else if (MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0) {
             rc = MPI_ERR_DISP;
         } else {
             /* the origin datatype is meaningless when using MPI_OP_NO_OP */
@@ -106,10 +103,12 @@ int MPI_Get_accumulate(const void *origin_addr, int origin_count, MPI_Datatype o
                        predefined, then make sure it's composed of only one
                        datatype, and check that datatype against
                        ompi_op_is_valid(). */
-                    origin_check_dt = ompi_datatype_get_single_predefined_type_from_args(origin_datatype);
-                    op_check_dt = ompi_datatype_get_single_predefined_type_from_args(target_datatype);
+                    origin_check_dt = ompi_datatype_get_single_predefined_type_from_args(
+                        origin_datatype);
+                    op_check_dt = ompi_datatype_get_single_predefined_type_from_args(
+                        target_datatype);
 
-                    if( !((origin_check_dt == op_check_dt) & (NULL != op_check_dt)) ) {
+                    if (!((origin_check_dt == op_check_dt) & (NULL != op_check_dt))) {
                         OMPI_ERRHANDLER_RETURN(MPI_ERR_ARG, win, MPI_ERR_ARG, FUNC_NAME);
                     }
 
@@ -132,16 +131,9 @@ int MPI_Get_accumulate(const void *origin_addr, int origin_count, MPI_Datatype o
         return MPI_SUCCESS;
     }
 
-    rc = ompi_win->w_osc_module->osc_get_accumulate(origin_addr,
-                                                    origin_count,
-                                                    origin_datatype,
-                                                    result_addr,
-                                                    result_count,
-                                                    result_datatype,
-                                                    target_rank,
-                                                    target_disp,
-                                                    target_count,
-                                                    target_datatype,
-                                                    op, win);
+    rc = ompi_win->w_osc_module->osc_get_accumulate(origin_addr, origin_count, origin_datatype,
+                                                    result_addr, result_count, result_datatype,
+                                                    target_rank, target_disp, target_count,
+                                                    target_datatype, op, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

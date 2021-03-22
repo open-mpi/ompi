@@ -33,27 +33,27 @@
 #include "ompi_config.h"
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNISTD_H */
+#    include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_DIRENT_H
-#include <dirent.h>
+#    include <dirent.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
+#    include <sys/stat.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 
-#include "opal/mca/base/base.h"
-#include "opal/util/argv.h"
-#include "opal/util/printf.h"
-#include "opal/mca/installdirs/installdirs.h"
 #include "debuggers.h"
 #include "ompi/runtime/ompi_rte.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/installdirs/installdirs.h"
+#include "opal/util/argv.h"
+#include "opal/util/printf.h"
 /**
  * BEWARE: The following headers are required by optimized builds in order
  * to get access to the type information. Some compilers remove all type
@@ -64,44 +64,38 @@
  * otherwise the type information will be missing and the parallel
  * debuggers will be unable to initialize the Open MPI debug library.
  */
-#include "opal/class/opal_list.h"
-#include "opal/class/opal_free_list.h"
-#include "ompi/request/request.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/group/group.h"
+#include "ompi/include/mpi.h"
+#include "ompi/mca/pml/base/pml_base_recvreq.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
-#include "ompi/mca/pml/base/pml_base_recvreq.h"
-#include "opal/class/opal_pointer_array.h"
-#include "ompi/communicator/communicator.h"
 #include "ompi/mca/topo/topo.h"
-#include "ompi/group/group.h"
+#include "ompi/request/request.h"
+#include "opal/class/opal_free_list.h"
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/datatype/opal_datatype.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/include/mpi.h"
 
 #if defined(OMPI_MSGQ_DLL)
 /* This variable is old/deprecated -- the mpimsgq_dll_locations[]
    method is preferred because it's more flexible */
 OMPI_DECLSPEC char MPIR_dll_name[] = OMPI_MSGQ_DLL;
-#endif  /* defined(OMPI_MSGQ_DLL) */
+#endif /* defined(OMPI_MSGQ_DLL) */
 OMPI_DECLSPEC char **mpidbg_dll_locations = NULL;
 OMPI_DECLSPEC char **mpimsgq_dll_locations = NULL;
 
-OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
-    sizeof(short),
-    sizeof(int),
-    sizeof(long),
-    sizeof(long long),
-    sizeof(void*),
-    sizeof(bool),
-    sizeof(size_t)
-};
+OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {sizeof(short),     sizeof(int),    sizeof(long),
+                                                  sizeof(long long), sizeof(void *), sizeof(bool),
+                                                  sizeof(size_t)};
 
 /*
  * Values defined by the standardized interface; do not change these
  * values
  */
-#define MPIR_DEBUG_SPAWNED   1
-#define MPIR_DEBUG_ABORTING  2
+#define MPIR_DEBUG_SPAWNED  1
+#define MPIR_DEBUG_ABORTING 2
 
 /**
  * BEWARE: Try to outsmart some compilers. In some cases, when variables
@@ -111,20 +105,20 @@ OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
  * is compiled with a different architecture flag than the parallel
  * debugger, 32 vs. 64 bits), we have to have these variables defined.
  */
-OMPI_DECLSPEC opal_list_item_t* opal_list_item_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC opal_list_t* opal_list_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC opal_free_list_item_t* opal_free_list_item_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC opal_free_list_t* opal_free_list_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC ompi_request_t* ompi_request_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC mca_pml_base_request_t* mca_pml_base_request_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC mca_pml_base_send_request_t* mca_pml_base_send_request_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC mca_pml_base_recv_request_t* mca_pml_base_recv_request_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC opal_pointer_array_t* opal_pointer_array_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC ompi_communicator_t* ompi_communicator_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC ompi_group_t* ompi_group_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC ompi_status_public_t* ompi_status_public_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC opal_datatype_t* opal_datatype_t_type_force_inclusion = NULL;
-OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_list_item_t *opal_list_item_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_list_t *opal_list_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_free_list_item_t *opal_free_list_item_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_free_list_t *opal_free_list_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_request_t *ompi_request_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC mca_pml_base_request_t *mca_pml_base_request_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC mca_pml_base_send_request_t *mca_pml_base_send_request_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC mca_pml_base_recv_request_t *mca_pml_base_recv_request_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_pointer_array_t *opal_pointer_array_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_communicator_t *ompi_communicator_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_group_t *ompi_group_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_status_public_t *ompi_status_public_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC opal_datatype_t *opal_datatype_t_type_force_inclusion = NULL;
+OMPI_DECLSPEC ompi_datatype_t *ompi_datatype_t_type_force_inclusion = NULL;
 
 OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
 
@@ -161,20 +155,17 @@ static void check(char *dir, char *file, char **locations)
     free(str);
 }
 
-
-extern void
-ompi_debugger_setup_dlls(void)
+extern void ompi_debugger_setup_dlls(void)
 {
     int i;
     char **dirs, **tmp1 = NULL, **tmp2 = NULL;
 
     ompi_debugger_dll_path = opal_install_dirs.opallibdir;
-    (void) mca_base_var_register("ompi", "ompi", "debugger", "dll_path",
-                                 "List of directories where MPI_INIT should search for debugger plugins",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_debugger_dll_path);
+    (void) mca_base_var_register(
+        "ompi", "ompi", "debugger", "dll_path",
+        "List of directories where MPI_INIT should search for debugger plugins",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &ompi_debugger_dll_path);
 
     /* Search the directory for MPI debugger DLLs */
     if (NULL != ompi_debugger_dll_path) {

@@ -18,11 +18,8 @@
 #include "ompi/info/info.h"
 #include "ompi/mca/topo/base/base.h"
 
-
-int mca_topo_base_dist_graph_neighbors(ompi_communicator_t *comm,
-                                       int maxindegree,
-                                       int sources[], int sourceweights[],
-                                       int maxoutdegree, int destinations[],
+int mca_topo_base_dist_graph_neighbors(ompi_communicator_t *comm, int maxindegree, int sources[],
+                                       int sourceweights[], int maxoutdegree, int destinations[],
                                        int destweights[])
 {
     mca_topo_base_comm_dist_graph_2_2_0_t *dg = comm->c_topo->mtc.dist_graph;
@@ -53,4 +50,3 @@ int mca_topo_base_dist_graph_neighbors(ompi_communicator_t *comm,
 
     return MPI_SUCCESS;
 }
-

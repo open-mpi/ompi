@@ -24,52 +24,50 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
-
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_COMPARE_AND_SWAP = ompi_compare_and_swap_f
+#        pragma weak pmpi_compare_and_swap = ompi_compare_and_swap_f
+#        pragma weak pmpi_compare_and_swap_ = ompi_compare_and_swap_f
+#        pragma weak pmpi_compare_and_swap__ = ompi_compare_and_swap_f
+
+#        pragma weak PMPI_Compare_and_swap_f = ompi_compare_and_swap_f
+#        pragma weak PMPI_Compare_and_swap_f08 = ompi_compare_and_swap_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_COMPARE_AND_SWAP, pmpi_compare_and_swap, pmpi_compare_and_swap_,
+                           pmpi_compare_and_swap__, pompi_compare_and_swap_f,
+                           (char *origin_addr, char *compare_addr, char *result_addr,
+                            MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp,
+                            MPI_Fint *win, MPI_Fint *ierr),
+                           (origin_addr, compare_addr, result_addr, datatype, target_rank,
+                            target_disp, win, ierr))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_COMPARE_AND_SWAP = ompi_compare_and_swap_f
-#pragma weak pmpi_compare_and_swap = ompi_compare_and_swap_f
-#pragma weak pmpi_compare_and_swap_ = ompi_compare_and_swap_f
-#pragma weak pmpi_compare_and_swap__ = ompi_compare_and_swap_f
+#    pragma weak MPI_COMPARE_AND_SWAP = ompi_compare_and_swap_f
+#    pragma weak mpi_compare_and_swap = ompi_compare_and_swap_f
+#    pragma weak mpi_compare_and_swap_ = ompi_compare_and_swap_f
+#    pragma weak mpi_compare_and_swap__ = ompi_compare_and_swap_f
 
-#pragma weak PMPI_Compare_and_swap_f = ompi_compare_and_swap_f
-#pragma weak PMPI_Compare_and_swap_f08 = ompi_compare_and_swap_f
+#    pragma weak MPI_Compare_and_swap_f = ompi_compare_and_swap_f
+#    pragma weak MPI_Compare_and_swap_f08 = ompi_compare_and_swap_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_COMPARE_AND_SWAP,
-			    pmpi_compare_and_swap,
-			    pmpi_compare_and_swap_,
-			    pmpi_compare_and_swap__,
-			    pompi_compare_and_swap_f,
-                            (char *origin_addr, char *compare_addr, char *result_addr, MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *win, MPI_Fint *ierr),
-			    (origin_addr, compare_addr, result_addr, datatype, target_rank, target_disp, win, ierr) )
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_COMPARE_AND_SWAP, mpi_compare_and_swap, mpi_compare_and_swap_,
+                           mpi_compare_and_swap__, ompi_compare_and_swap_f,
+                           (char *origin_addr, char *compare_addr, char *result_addr,
+                            MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp,
+                            MPI_Fint *win, MPI_Fint *ierr),
+                           (origin_addr, compare_addr, result_addr, datatype, target_rank,
+                            target_disp, win, ierr))
+#    else
+#        define ompi_compare_and_swap_f pompi_compare_and_swap_f
+#    endif
 #endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_COMPARE_AND_SWAP = ompi_compare_and_swap_f
-#pragma weak mpi_compare_and_swap = ompi_compare_and_swap_f
-#pragma weak mpi_compare_and_swap_ = ompi_compare_and_swap_f
-#pragma weak mpi_compare_and_swap__ = ompi_compare_and_swap_f
-
-#pragma weak MPI_Compare_and_swap_f = ompi_compare_and_swap_f
-#pragma weak MPI_Compare_and_swap_f08 = ompi_compare_and_swap_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMPARE_AND_SWAP,
-			    mpi_compare_and_swap,
-			    mpi_compare_and_swap_,
-			    mpi_compare_and_swap__,
-			    ompi_compare_and_swap_f,
-                            (char *origin_addr, char *compare_addr, char *result_addr, MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *win, MPI_Fint *ierr),
-			    (origin_addr, compare_addr, result_addr, datatype, target_rank, target_disp, win, ierr) )
-#else
-#define ompi_compare_and_swap_f pompi_compare_and_swap_f
-#endif
-#endif
-
 
 void ompi_compare_and_swap_f(char *origin_addr, char *compare_addr, char *result_addr,
                              MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp,
@@ -79,11 +77,9 @@ void ompi_compare_and_swap_f(char *origin_addr, char *compare_addr, char *result
     MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
     MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = PMPI_Compare_and_swap(OMPI_F2C_BOTTOM(origin_addr),
-                                  OMPI_F2C_BOTTOM(compare_addr),
-                                  OMPI_F2C_BOTTOM(result_addr),
-                                  c_datatype,
-                                  OMPI_FINT_2_INT(*target_rank),
-                                  *target_disp, c_win);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Compare_and_swap(OMPI_F2C_BOTTOM(origin_addr), OMPI_F2C_BOTTOM(compare_addr),
+                                   OMPI_F2C_BOTTOM(result_addr), c_datatype,
+                                   OMPI_FINT_2_INT(*target_rank), *target_disp, c_win);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 }

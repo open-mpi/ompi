@@ -24,47 +24,38 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_IS_THREAD_MAIN = ompi_is_thread_main_f
-#pragma weak pmpi_is_thread_main = ompi_is_thread_main_f
-#pragma weak pmpi_is_thread_main_ = ompi_is_thread_main_f
-#pragma weak pmpi_is_thread_main__ = ompi_is_thread_main_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_IS_THREAD_MAIN = ompi_is_thread_main_f
+#        pragma weak pmpi_is_thread_main = ompi_is_thread_main_f
+#        pragma weak pmpi_is_thread_main_ = ompi_is_thread_main_f
+#        pragma weak pmpi_is_thread_main__ = ompi_is_thread_main_f
 
-#pragma weak PMPI_Is_thread_main_f = ompi_is_thread_main_f
-#pragma weak PMPI_Is_thread_main_f08 = ompi_is_thread_main_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_IS_THREAD_MAIN,
-                           pmpi_is_thread_main,
-                           pmpi_is_thread_main_,
-                           pmpi_is_thread_main__,
-                           pompi_is_thread_main_f,
-                           (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (flag, ierr) )
-#endif
+#        pragma weak PMPI_Is_thread_main_f = ompi_is_thread_main_f
+#        pragma weak PMPI_Is_thread_main_f08 = ompi_is_thread_main_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_IS_THREAD_MAIN, pmpi_is_thread_main, pmpi_is_thread_main_,
+                           pmpi_is_thread_main__, pompi_is_thread_main_f,
+                           (ompi_fortran_logical_t * flag, MPI_Fint *ierr), (flag, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_IS_THREAD_MAIN = ompi_is_thread_main_f
-#pragma weak mpi_is_thread_main = ompi_is_thread_main_f
-#pragma weak mpi_is_thread_main_ = ompi_is_thread_main_f
-#pragma weak mpi_is_thread_main__ = ompi_is_thread_main_f
+#    pragma weak MPI_IS_THREAD_MAIN = ompi_is_thread_main_f
+#    pragma weak mpi_is_thread_main = ompi_is_thread_main_f
+#    pragma weak mpi_is_thread_main_ = ompi_is_thread_main_f
+#    pragma weak mpi_is_thread_main__ = ompi_is_thread_main_f
 
-#pragma weak MPI_Is_thread_main_f = ompi_is_thread_main_f
-#pragma weak MPI_Is_thread_main_f08 = ompi_is_thread_main_f
+#    pragma weak MPI_Is_thread_main_f = ompi_is_thread_main_f
+#    pragma weak MPI_Is_thread_main_f08 = ompi_is_thread_main_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_IS_THREAD_MAIN,
-                           mpi_is_thread_main,
-                           mpi_is_thread_main_,
-                           mpi_is_thread_main__,
-                           ompi_is_thread_main_f,
-                           (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (flag, ierr) )
-#else
-#define ompi_is_thread_main_f pompi_is_thread_main_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_IS_THREAD_MAIN, mpi_is_thread_main, mpi_is_thread_main_,
+                           mpi_is_thread_main__, ompi_is_thread_main_f,
+                           (ompi_fortran_logical_t * flag, MPI_Fint *ierr), (flag, ierr))
+#    else
+#        define ompi_is_thread_main_f pompi_is_thread_main_f
+#    endif
 #endif
-#endif
-
 
 void ompi_is_thread_main_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
@@ -72,7 +63,8 @@ void ompi_is_thread_main_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
     OMPI_LOGICAL_NAME_DECL(flag);
 
     c_ierr = PMPI_Is_thread_main(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_LOGICAL(flag);

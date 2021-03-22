@@ -21,23 +21,21 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_get_byte_offset = PMPI_File_get_byte_offset
-#endif
-#define MPI_File_get_byte_offset PMPI_File_get_byte_offset
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_get_byte_offset = PMPI_File_get_byte_offset
+#    endif
+#    define MPI_File_get_byte_offset PMPI_File_get_byte_offset
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_get_byte_offset";
 
-
-int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
-                             MPI_Offset *disp)
+int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset *disp)
 {
     int rc;
 
@@ -57,8 +55,7 @@ int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_get_byte_offset(fh, offset, disp);
+        rc = fh->f_io_selected_module.v2_0_0.io_module_file_get_byte_offset(fh, offset, disp);
         break;
 
     default:

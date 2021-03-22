@@ -22,30 +22,27 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
-#include "ompi/message/message.h"
 #include "ompi/memchecker.h"
+#include "ompi/message/message.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Message_c2f = PMPI_Message_c2f
-#endif
-#define MPI_Message_c2f PMPI_Message_c2f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Message_c2f = PMPI_Message_c2f
+#    endif
+#    define MPI_Message_c2f PMPI_Message_c2f
 #endif
 
 static const char FUNC_NAME[] = "MPI_Message_c2f";
 
-
 MPI_Fint MPI_Message_c2f(MPI_Message message)
 {
-    MEMCHECKER(
-        memchecker_message(&message);
-    );
+    MEMCHECKER(memchecker_message(&message););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (NULL == message) {
@@ -67,9 +64,8 @@ MPI_Fint MPI_Message_c2f(MPI_Message message)
     */
 
     if (MPI_UNDEFINED == message->m_f_to_c_index) {
-        message->m_f_to_c_index =
-            opal_pointer_array_add(&ompi_message_f_to_c_table, message);
+        message->m_f_to_c_index = opal_pointer_array_add(&ompi_message_f_to_c_table, message);
     }
 
-    return OMPI_INT_2_FINT(message->m_f_to_c_index) ;
+    return OMPI_INT_2_FINT(message->m_f_to_c_index);
 }

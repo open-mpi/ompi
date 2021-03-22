@@ -24,22 +24,21 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_set_errhandler = PMPI_File_set_errhandler
-#endif
-#define MPI_File_set_errhandler PMPI_File_set_errhandler
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_set_errhandler = PMPI_File_set_errhandler
+#    endif
+#    define MPI_File_set_errhandler PMPI_File_set_errhandler
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_set_errhandler";
 
-
-int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler)
+int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
 {
     MPI_Errhandler tmp;
 
@@ -53,12 +52,10 @@ int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler)
            handler on MPI_FILE_NULL */
 
         if (NULL == file) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, MPI_ERR_FILE,
-                                          FUNC_NAME);
-        } else if (NULL == errhandler ||
-                   MPI_ERRHANDLER_NULL == errhandler ||
-                   (OMPI_ERRHANDLER_TYPE_FILE != errhandler->eh_mpi_object_type &&
-		    OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, MPI_ERR_FILE, FUNC_NAME);
+        } else if (NULL == errhandler || MPI_ERRHANDLER_NULL == errhandler
+                   || (OMPI_ERRHANDLER_TYPE_FILE != errhandler->eh_mpi_object_type
+                       && OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type)) {
             return OMPI_ERRHANDLER_INVOKE(file, MPI_ERR_ARG, FUNC_NAME);
         }
     }

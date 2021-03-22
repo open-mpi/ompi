@@ -22,30 +22,27 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/request/request.h"
-#include "ompi/memchecker.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Request_c2f = PMPI_Request_c2f
-#endif
-#define MPI_Request_c2f PMPI_Request_c2f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Request_c2f = PMPI_Request_c2f
+#    endif
+#    define MPI_Request_c2f PMPI_Request_c2f
 #endif
 
 static const char FUNC_NAME[] = "MPI_Request_c2f";
 
-
 MPI_Fint MPI_Request_c2f(MPI_Request request)
 {
-    MEMCHECKER(
-        memchecker_request(&request);
-    );
+    MEMCHECKER(memchecker_request(&request););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (NULL == request) {
@@ -67,9 +64,8 @@ MPI_Fint MPI_Request_c2f(MPI_Request request)
     */
 
     if (MPI_UNDEFINED == request->req_f_to_c_index) {
-        request->req_f_to_c_index =
-            opal_pointer_array_add(&ompi_request_f_to_c_table, request);
+        request->req_f_to_c_index = opal_pointer_array_add(&ompi_request_f_to_c_table, request);
     }
 
-    return OMPI_INT_2_FINT(request->req_f_to_c_index) ;
+    return OMPI_INT_2_FINT(request->req_f_to_c_index);
 }

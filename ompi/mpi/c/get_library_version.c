@@ -22,20 +22,19 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Get_library_version = PMPI_Get_library_version
-#endif
-#define MPI_Get_library_version PMPI_Get_library_version
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Get_library_version = PMPI_Get_library_version
+#    endif
+#    define MPI_Get_library_version PMPI_Get_library_version
 #endif
 
 static const char FUNC_NAME[] = "MPI_Get_library_version";
-
 
 int MPI_Get_library_version(char *version, int *resultlen)
 {
@@ -57,16 +56,14 @@ int MPI_Get_library_version(char *version, int *resultlen)
                default errhandler, which is abort). */
 
             int32_t state = ompi_mpi_state;
-            if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
-                state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                              FUNC_NAME);
+            if (state >= OMPI_MPI_STATE_INIT_COMPLETED
+                && state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
             } else {
                 /* We have no MPI object here so call ompi_errhandle_invoke
                  * directly */
                 return ompi_errhandler_invoke(NULL, NULL, -1,
-                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG),
-                                              FUNC_NAME);
+                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG), FUNC_NAME);
             }
         }
     }
@@ -78,8 +75,8 @@ int MPI_Get_library_version(char *version, int *resultlen)
     len_left = sizeof(tmp);
     memset(tmp, 0, MPI_MAX_LIBRARY_VERSION_STRING);
 
-    snprintf(tmp, MPI_MAX_LIBRARY_VERSION_STRING, "Open MPI v%d.%d.%d",
-             OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION);
+    snprintf(tmp, MPI_MAX_LIBRARY_VERSION_STRING, "Open MPI v%d.%d.%d", OMPI_MAJOR_VERSION,
+             OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION);
     ptr += strlen(tmp);
     len_left -= strlen(tmp);
 

@@ -20,21 +20,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Info_dup = PMPI_Info_dup
-#endif
-#define MPI_Info_dup PMPI_Info_dup
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Info_dup = PMPI_Info_dup
+#    endif
+#    define MPI_Info_dup PMPI_Info_dup
 #endif
 
 static const char FUNC_NAME[] = "MPI_Info_dup";
-
 
 /**
  *   MPI_Info_dup - Duplicate an 'MPI_Info' object
@@ -51,7 +50,8 @@ static const char FUNC_NAME[] = "MPI_Info_dup";
  *   When an info object is no longer being used, it should be freed with
  *   'MPI_Info_free'.
  */
-int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
+int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo)
+{
     int err;
 
     /**
@@ -66,22 +66,19 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info || NULL == newinfo ||
-            ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                          FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info || NULL == newinfo || ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
     }
 
     *newinfo = OBJ_NEW(ompi_info_t);
     if (NULL == *newinfo) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
-                                      FUNC_NAME);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
     }
 
     /*
      * Now to actually duplicate all the values
      */
-    err = ompi_info_dup (info, newinfo);
+    err = ompi_info_dup(info, newinfo);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

@@ -16,30 +16,25 @@
 
 BEGIN_C_DECLS
 
-#define VPROTOCOL_PESSIMIST_WAIT(req, status, rc) \
-  ((rc) = ompi_request_wait(req, status))
+#define VPROTOCOL_PESSIMIST_WAIT(req, status, rc) ((rc) = ompi_request_wait(req, status))
 
-int mca_vprotocol_pessimist_test(ompi_request_t ** rptr, int *completed,
-                                 ompi_status_public_t * status);
+int mca_vprotocol_pessimist_test(ompi_request_t **rptr, int *completed,
+                                 ompi_status_public_t *status);
 
-int mca_vprotocol_pessimist_test_all(size_t count, ompi_request_t ** requests,
-                                     int *completed,
-                                     ompi_status_public_t * statuses);
+int mca_vprotocol_pessimist_test_all(size_t count, ompi_request_t **requests, int *completed,
+                                     ompi_status_public_t *statuses);
 
-int mca_vprotocol_pessimist_test_any(size_t count, ompi_request_t ** requests,
-                                     int *index, int *completed,
-                                     ompi_status_public_t * status);
+int mca_vprotocol_pessimist_test_any(size_t count, ompi_request_t **requests, int *index,
+                                     int *completed, ompi_status_public_t *status);
 
-int mca_vprotocol_pessimist_test_some(size_t count, ompi_request_t ** requests,
-                                      int * outcount, int * indices,
-                                      ompi_status_public_t * statuses);
+int mca_vprotocol_pessimist_test_some(size_t count, ompi_request_t **requests, int *outcount,
+                                      int *indices, ompi_status_public_t *statuses);
 
-int mca_vprotocol_pessimist_wait_any(size_t count, ompi_request_t ** requests,
-                                     int *index, ompi_status_public_t * status);
+int mca_vprotocol_pessimist_wait_any(size_t count, ompi_request_t **requests, int *index,
+                                     ompi_status_public_t *status);
 
-int mca_vprotocol_pessimist_wait_some(size_t count, ompi_request_t ** requests,
-                                      int *outcount, int *indexes,
-                                      ompi_status_public_t * statuses);
+int mca_vprotocol_pessimist_wait_some(size_t count, ompi_request_t **requests, int *outcount,
+                                      int *indexes, ompi_status_public_t *statuses);
 
 END_C_DECLS
 

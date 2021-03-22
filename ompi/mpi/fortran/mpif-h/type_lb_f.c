@@ -24,47 +24,37 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_TYPE_LB = ompi_type_lb_f
-#pragma weak pmpi_type_lb = ompi_type_lb_f
-#pragma weak pmpi_type_lb_ = ompi_type_lb_f
-#pragma weak pmpi_type_lb__ = ompi_type_lb_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_TYPE_LB = ompi_type_lb_f
+#        pragma weak pmpi_type_lb = ompi_type_lb_f
+#        pragma weak pmpi_type_lb_ = ompi_type_lb_f
+#        pragma weak pmpi_type_lb__ = ompi_type_lb_f
 
-#pragma weak PMPI_Type_lb_f = ompi_type_lb_f
-#pragma weak PMPI_Type_lb_f08 = ompi_type_lb_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_LB,
-                           pmpi_type_lb,
-                           pmpi_type_lb_,
-                           pmpi_type_lb__,
-                           pompi_type_lb_f,
-                           (MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr),
-                           (type, lb, ierr) )
-#endif
+#        pragma weak PMPI_Type_lb_f = ompi_type_lb_f
+#        pragma weak PMPI_Type_lb_f08 = ompi_type_lb_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_TYPE_LB, pmpi_type_lb, pmpi_type_lb_, pmpi_type_lb__,
+                           pompi_type_lb_f, (MPI_Fint * type, MPI_Fint *lb, MPI_Fint *ierr),
+                           (type, lb, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_TYPE_LB = ompi_type_lb_f
-#pragma weak mpi_type_lb = ompi_type_lb_f
-#pragma weak mpi_type_lb_ = ompi_type_lb_f
-#pragma weak mpi_type_lb__ = ompi_type_lb_f
+#    pragma weak MPI_TYPE_LB = ompi_type_lb_f
+#    pragma weak mpi_type_lb = ompi_type_lb_f
+#    pragma weak mpi_type_lb_ = ompi_type_lb_f
+#    pragma weak mpi_type_lb__ = ompi_type_lb_f
 
-#pragma weak MPI_Type_lb_f = ompi_type_lb_f
-#pragma weak MPI_Type_lb_f08 = ompi_type_lb_f
+#    pragma weak MPI_Type_lb_f = ompi_type_lb_f
+#    pragma weak MPI_Type_lb_f08 = ompi_type_lb_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_LB,
-                           mpi_type_lb,
-                           mpi_type_lb_,
-                           mpi_type_lb__,
-                           ompi_type_lb_f,
-                           (MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr),
-                           (type, lb, ierr) )
-#else
-#define ompi_type_lb_f pompi_type_lb_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_TYPE_LB, mpi_type_lb, mpi_type_lb_, mpi_type_lb__, ompi_type_lb_f,
+                           (MPI_Fint * type, MPI_Fint *lb, MPI_Fint *ierr), (type, lb, ierr))
+#    else
+#        define ompi_type_lb_f pompi_type_lb_f
+#    endif
 #endif
-#endif
-
 
 void ompi_type_lb_f(MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr)
 {
@@ -73,7 +63,8 @@ void ompi_type_lb_f(MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr)
     MPI_Aint c_lb;
 
     c_ierr = PMPI_Type_lb(c_type, &c_lb);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         *lb = OMPI_INT_2_FINT(c_lb);

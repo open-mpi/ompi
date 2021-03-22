@@ -25,84 +25,54 @@
 #define MCA_FCOLL_BASE_COLL_ARRAY_H
 
 #include "mpi.h"
-#include "opal/class/opal_list.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/info/info.h"
-#include "opal/datatype/opal_convertor.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/info/info.h"
 #include "ompi/request/request.h"
+#include "opal/class/opal_list.h"
+#include "opal/datatype/opal_convertor.h"
 
-#define FCOLL_TAG_GATHER              100
-#define FCOLL_TAG_GATHERV             101
-#define FCOLL_TAG_BCAST               102
-#define FCOLL_TAG_SCATTERV            103
-
+#define FCOLL_TAG_GATHER   100
+#define FCOLL_TAG_GATHERV  101
+#define FCOLL_TAG_BCAST    102
+#define FCOLL_TAG_SCATTERV 103
 
 /*
  * Modified versions of Collective operations
  * Based on an array of procs in group
  */
-OMPI_DECLSPEC int ompi_fcoll_base_coll_gatherv_array (void *sbuf,
-                                                 int scount,
-                                                 ompi_datatype_t *sdtype,
-                                                 void *rbuf,
-                                                 int *rcounts,
-                                                 int *disps,
-                                                 ompi_datatype_t *rdtype,
-                                                 int root_index,
-                                                 int *procs_in_group,
-                                                 int procs_per_group,
-                                                 ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_fcoll_base_coll_scatterv_array (void *sbuf,
-                                                  int *scounts,
-                                                  int *disps,
-                                                  ompi_datatype_t *sdtype,
-                                                  void *rbuf,
-                                                  int rcount,
-                                                  ompi_datatype_t *rdtype,
-                                                  int root_index,
-                                                  int *procs_in_group,
-                                                  int procs_per_group,
-                                                  ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_fcoll_base_coll_allgather_array (void *sbuf,
-                                                   int scount,
-                                                   ompi_datatype_t *sdtype,
-                                                   void *rbuf,
-                                                   int rcount,
-                                                   ompi_datatype_t *rdtype,
-                                                   int root_index,
-                                                   int *procs_in_group,
-                                                   int procs_per_group,
-                                                   ompi_communicator_t *comm);
+OMPI_DECLSPEC int ompi_fcoll_base_coll_gatherv_array(void *sbuf, int scount,
+                                                     ompi_datatype_t *sdtype, void *rbuf,
+                                                     int *rcounts, int *disps,
+                                                     ompi_datatype_t *rdtype, int root_index,
+                                                     int *procs_in_group, int procs_per_group,
+                                                     ompi_communicator_t *comm);
+OMPI_DECLSPEC int ompi_fcoll_base_coll_scatterv_array(void *sbuf, int *scounts, int *disps,
+                                                      ompi_datatype_t *sdtype, void *rbuf,
+                                                      int rcount, ompi_datatype_t *rdtype,
+                                                      int root_index, int *procs_in_group,
+                                                      int procs_per_group,
+                                                      ompi_communicator_t *comm);
+OMPI_DECLSPEC int ompi_fcoll_base_coll_allgather_array(void *sbuf, int scount,
+                                                       ompi_datatype_t *sdtype, void *rbuf,
+                                                       int rcount, ompi_datatype_t *rdtype,
+                                                       int root_index, int *procs_in_group,
+                                                       int procs_per_group,
+                                                       ompi_communicator_t *comm);
 
-OMPI_DECLSPEC int ompi_fcoll_base_coll_allgatherv_array (void *sbuf,
-                                                    int scount,
-                                                    ompi_datatype_t *sdtype,
-                                                    void *rbuf,
-                                                    int *rcounts,
-                                                    int *disps,
-                                                    ompi_datatype_t *rdtype,
-                                                    int root_index,
-                                                    int *procs_in_group,
-                                                    int procs_per_group,
-                                                    ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_fcoll_base_coll_gather_array (void *sbuf,
-                                                int scount,
-                                                ompi_datatype_t *sdtype,
-                                                void *rbuf,
-                                                int rcount,
-                                                ompi_datatype_t *rdtype,
-                                                int root_index,
-                                                int *procs_in_group,
-                                                int procs_per_group,
-                                                ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_fcoll_base_coll_bcast_array (void *buff,
-                                               int count,
-                                               ompi_datatype_t *datatype,
-                                               int root_index,
-                                               int *procs_in_group,
-                                               int procs_per_group,
-                                               ompi_communicator_t *comm);
+OMPI_DECLSPEC int ompi_fcoll_base_coll_allgatherv_array(void *sbuf, int scount,
+                                                        ompi_datatype_t *sdtype, void *rbuf,
+                                                        int *rcounts, int *disps,
+                                                        ompi_datatype_t *rdtype, int root_index,
+                                                        int *procs_in_group, int procs_per_group,
+                                                        ompi_communicator_t *comm);
+OMPI_DECLSPEC int ompi_fcoll_base_coll_gather_array(void *sbuf, int scount, ompi_datatype_t *sdtype,
+                                                    void *rbuf, int rcount, ompi_datatype_t *rdtype,
+                                                    int root_index, int *procs_in_group,
+                                                    int procs_per_group, ompi_communicator_t *comm);
+OMPI_DECLSPEC int ompi_fcoll_base_coll_bcast_array(void *buff, int count, ompi_datatype_t *datatype,
+                                                   int root_index, int *procs_in_group,
+                                                   int procs_per_group, ompi_communicator_t *comm);
 
 END_C_DECLS
 

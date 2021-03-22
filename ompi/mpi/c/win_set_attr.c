@@ -20,22 +20,21 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/attribute/attribute.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_set_attr = PMPI_Win_set_attr
-#endif
-#define MPI_Win_set_attr PMPI_Win_set_attr
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_set_attr = PMPI_Win_set_attr
+#    endif
+#    define MPI_Win_set_attr PMPI_Win_set_attr
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_set_attr";
-
 
 int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
 {
@@ -49,7 +48,6 @@ int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
         }
     }
 
-    ret = ompi_attr_set_c(WIN_ATTR, win, &win->w_keyhash,
-                          win_keyval, attribute_val, false);
+    ret = ompi_attr_set_c(WIN_ATTR, win, &win->w_keyhash, win_keyval, attribute_val, false);
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);
 }

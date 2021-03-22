@@ -21,23 +21,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Test = PMPI_Test
-#endif
-#define MPI_Test PMPI_Test
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Test = PMPI_Test
+#    endif
+#    define MPI_Test PMPI_Test
 #endif
 
 static const char FUNC_NAME[] = "MPI_Test";
-
 
 int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
 {
@@ -45,11 +44,9 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
 
     SPC_RECORD(OMPI_SPC_TEST, 1);
 
-    MEMCHECKER(
-        memchecker_request (request);
-    );
+    MEMCHECKER(memchecker_request(request););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (request == NULL) {
@@ -65,9 +62,7 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
         *completed = 0;
     }
 
-    MEMCHECKER(
-        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
-    );
+    MEMCHECKER(opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int)););
 
     if (OMPI_SUCCESS == rc) {
         return MPI_SUCCESS;

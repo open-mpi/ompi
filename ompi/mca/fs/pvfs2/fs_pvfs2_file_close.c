@@ -27,11 +27,11 @@
 #include "ompi_config.h"
 #include "fs_pvfs2.h"
 
-#include <fcntl.h>
-#include <unistd.h>
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fs/fs.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 /*
  *	file_close_pvfs2
@@ -40,11 +40,10 @@
  *	Accepts:	- file handle
  *	Returns:	- Success if file closed
  */
-int
-mca_fs_pvfs2_file_close (ompio_file_t *fh)
+int mca_fs_pvfs2_file_close(ompio_file_t *fh)
 {
     if (NULL != fh->f_fs_ptr) {
-        free (fh->f_fs_ptr);
+        free(fh->f_fs_ptr);
         fh->f_fs_ptr = NULL;
     }
     /*

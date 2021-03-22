@@ -21,21 +21,20 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/group/group.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Group_free = PMPI_Group_free
-#endif
-#define MPI_Group_free PMPI_Group_free
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Group_free = PMPI_Group_free
+#    endif
+#    define MPI_Group_free PMPI_Group_free
 #endif
 
 static const char FUNC_NAME[] = "MPI_Group_free";
-
 
 int MPI_Group_free(MPI_Group *group)
 {
@@ -58,15 +57,12 @@ int MPI_Group_free(MPI_Group *group)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ((NULL == group) ||
-            (MPI_GROUP_NULL == *group) || (NULL == *group) ) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
-                                          FUNC_NAME);
+        if ((NULL == group) || (MPI_GROUP_NULL == *group) || (NULL == *group)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP, FUNC_NAME);
         }
-
     }
 
-    ret = ompi_group_free ( group);
+    ret = ompi_group_free(group);
     OMPI_ERRHANDLER_NOHANDLE_CHECK(ret, ret, FUNC_NAME);
 
     return MPI_SUCCESS;

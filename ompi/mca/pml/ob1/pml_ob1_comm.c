@@ -25,9 +25,7 @@
 #include "pml_ob1.h"
 #include "pml_ob1_comm.h"
 
-
-
-static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
+static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t *proc)
 {
     proc->ompi_proc = NULL;
     proc->expected_sequence = 1;
@@ -39,8 +37,7 @@ static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
 #endif
 }
 
-
-static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t* proc)
+static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t *proc)
 {
     assert(NULL == proc->frags_cant_match);
 #if !MCA_PML_OB1_CUSTOM_MATCH
@@ -52,13 +49,10 @@ static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t* proc)
     }
 }
 
-
-OBJ_CLASS_INSTANCE(mca_pml_ob1_comm_proc_t, opal_object_t,
-                   mca_pml_ob1_comm_proc_construct,
+OBJ_CLASS_INSTANCE(mca_pml_ob1_comm_proc_t, opal_object_t, mca_pml_ob1_comm_proc_construct,
                    mca_pml_ob1_comm_proc_destruct);
 
-
-static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
+static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t *comm)
 {
 #if !MCA_PML_OB1_CUSTOM_MATCH
     OBJ_CONSTRUCT(&comm->wild_receives, opal_list_t);
@@ -74,8 +68,7 @@ static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
     comm->num_procs = 0;
 }
 
-
-static void mca_pml_ob1_comm_destruct(mca_pml_ob1_comm_t* comm)
+static void mca_pml_ob1_comm_destruct(mca_pml_ob1_comm_t *comm)
 {
     if (NULL != comm->procs) {
         for (size_t i = 0; i < comm->num_procs; ++i) {
@@ -97,23 +90,16 @@ static void mca_pml_ob1_comm_destruct(mca_pml_ob1_comm_t* comm)
     OBJ_DESTRUCT(&comm->proc_lock);
 }
 
+OBJ_CLASS_INSTANCE(mca_pml_ob1_comm_t, opal_object_t, mca_pml_ob1_comm_construct,
+                   mca_pml_ob1_comm_destruct);
 
-OBJ_CLASS_INSTANCE(
-    mca_pml_ob1_comm_t,
-    opal_object_t,
-    mca_pml_ob1_comm_construct,
-    mca_pml_ob1_comm_destruct);
-
-
-int mca_pml_ob1_comm_init_size (mca_pml_ob1_comm_t* comm, size_t size)
+int mca_pml_ob1_comm_init_size(mca_pml_ob1_comm_t *comm, size_t size)
 {
     /* send message sequence-number support - sender side */
-    comm->procs = (mca_pml_ob1_comm_proc_t **) calloc(size, sizeof (mca_pml_ob1_comm_proc_t *));
-    if(NULL == comm->procs) {
+    comm->procs = (mca_pml_ob1_comm_proc_t **) calloc(size, sizeof(mca_pml_ob1_comm_proc_t *));
+    if (NULL == comm->procs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     comm->num_procs = size;
     return OMPI_SUCCESS;
 }
-
-

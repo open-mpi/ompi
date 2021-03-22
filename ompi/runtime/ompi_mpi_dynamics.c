@@ -26,11 +26,10 @@
 
 #include "opal/util/show_help.h"
 
-#include "ompi/runtime/params.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
 
 static char *ompi_mpi_dynamics_disabled_msg = "Enabled";
-
 
 void ompi_mpi_dynamics_disable(const char *msg)
 {
@@ -46,10 +45,7 @@ bool ompi_mpi_dynamics_is_enabled(const char *function)
         return true;
     }
 
-    opal_show_help("help-mpi-api.txt",
-                   "MPI function not supported",
-                   true,
-                   function,
+    opal_show_help("help-mpi-api.txt", "MPI function not supported", true, function,
                    ompi_mpi_dynamics_disabled_msg);
     return false;
 }

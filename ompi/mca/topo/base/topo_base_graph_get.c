@@ -18,8 +18,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 
 /*
  * function - retrieves graph topology information associated with a
@@ -34,10 +34,7 @@
  * @retval MPI_SUCCESS
  */
 
-int mca_topo_base_graph_get(ompi_communicator_t* comm,
-                            int maxindex,
-                            int maxedges,
-                            int *index,
+int mca_topo_base_graph_get(ompi_communicator_t *comm, int maxindex, int maxedges, int *index,
                             int *edges)
 {
     int i, *p;
@@ -46,20 +43,17 @@ int mca_topo_base_graph_get(ompi_communicator_t* comm,
     /*
      * Fill the nodes and edges arrays.
      */
-     p = comm->c_topo->mtc.graph->index;
-     for (i = 0; (i < nprocs) && (i < maxindex); ++i, ++p) {
-         *index++ = *p;
-      }
+    p = comm->c_topo->mtc.graph->index;
+    for (i = 0; (i < nprocs) && (i < maxindex); ++i, ++p) {
+        *index++ = *p;
+    }
 
-      p = comm->c_topo->mtc.graph->edges;
+    p = comm->c_topo->mtc.graph->edges;
 
-      for (i = 0;
-          (i < comm->c_topo->mtc.graph->index[nprocs-1]) && (i < maxedges);
-          ++i, ++p) {
+    for (i = 0; (i < comm->c_topo->mtc.graph->index[nprocs - 1]) && (i < maxedges); ++i, ++p) {
 
-         *edges++ = *p;
+        *edges++ = *p;
+    }
 
-      }
-
-      return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

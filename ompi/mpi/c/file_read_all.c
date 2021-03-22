@@ -21,31 +21,27 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
-#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_read_all = PMPI_File_read_all
-#endif
-#define MPI_File_read_all PMPI_File_read_all
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_read_all = PMPI_File_read_all
+#    endif
+#    define MPI_File_read_all PMPI_File_read_all
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_read_all";
 
-
-int MPI_File_read_all(MPI_File fh, void *buf, int count, MPI_Datatype
-                      datatype, MPI_Status *status)
+int MPI_File_read_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
 {
     int rc;
 
-    MEMCHECKER(
-        memchecker_datatype(datatype);
-    );
+    MEMCHECKER(memchecker_datatype(datatype););
 
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
@@ -56,7 +52,7 @@ int MPI_File_read_all(MPI_File fh, void *buf, int count, MPI_Datatype
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
         } else {
-           OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, count);
+            OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, count);
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
@@ -65,8 +61,8 @@ int MPI_File_read_all(MPI_File fh, void *buf, int count, MPI_Datatype
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_read_all(fh, buf, count, datatype, status);
+        rc = fh->f_io_selected_module.v2_0_0.io_module_file_read_all(fh, buf, count, datatype,
+                                                                     status);
         break;
 
     default:

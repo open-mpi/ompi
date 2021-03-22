@@ -47,24 +47,24 @@
 #include "ompi_config.h"
 
 #ifdef HAVE_TARGETCONDITIONALS_H
-#include <TargetConditionals.h>
+#    include <TargetConditionals.h>
 #endif
 
-#include  <mpi.h>
-#include "mpi_Errhandler.h"
 #include "mpiJava.h"
+#include "mpi_Errhandler.h"
+#include <mpi.h>
 
 JNIEXPORT jlong JNICALL Java_mpi_Errhandler_getFatal(JNIEnv *env, jclass clazz)
 {
-    return (jlong)MPI_ERRORS_ARE_FATAL;
+    return (jlong) MPI_ERRORS_ARE_FATAL;
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Errhandler_getAbort(JNIEnv *env, jclass clazz)
 {
-    return (jlong)MPI_ERRORS_ABORT;
+    return (jlong) MPI_ERRORS_ABORT;
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Errhandler_getReturn(JNIEnv *env, jclass clazz)
 {
-    return (jlong)MPI_ERRORS_RETURN;
+    return (jlong) MPI_ERRORS_RETURN;
 }

@@ -20,8 +20,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 
 /*
  * function - mca_topo_base_graph_map
@@ -38,16 +38,13 @@
  *  @retval MPI_UNDEFINED
  */
 
-int mca_topo_base_graph_map(ompi_communicator_t * comm,
-                            int nnodes,
-                            const int *index, const int *edges, int *newrank)
+int mca_topo_base_graph_map(ompi_communicator_t *comm, int nnodes, const int *index,
+                            const int *edges, int *newrank)
 {
     int myrank;
 
     myrank = ompi_comm_rank(comm);
-    *newrank =
-        ((0 > myrank) || (myrank >= nnodes)) ? MPI_UNDEFINED : myrank;
+    *newrank = ((0 > myrank) || (myrank >= nnodes)) ? MPI_UNDEFINED : myrank;
 
     return OMPI_SUCCESS;
 }
-

@@ -20,9 +20,8 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
 #include "coll_sm.h"
-
+#include "ompi/constants.h"
 
 /*
  *	reduce_scatter
@@ -32,8 +31,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_sm_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rcounts,
-                                     struct ompi_datatype_t *dtype,
-                                     struct ompi_op_t *op,
+                                     struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                      struct ompi_communicator_t *comm,
                                      mca_coll_base_module_t *module)
 {

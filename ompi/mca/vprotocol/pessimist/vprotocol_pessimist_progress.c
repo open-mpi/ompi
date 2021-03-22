@@ -9,8 +9,8 @@
  */
 
 #include "ompi_config.h"
-#include "vprotocol_pessimist_sender_based.h"
 #include "vprotocol_pessimist.h"
+#include "vprotocol_pessimist_sender_based.h"
 
 #ifdef SB_USE_PROGRESS_METHOD
 

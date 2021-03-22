@@ -21,17 +21,16 @@ struct ompi_mtl_portals4_message_t {
 typedef struct ompi_mtl_portals4_message_t ompi_mtl_portals4_message_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals4_message_t);
 
-
-static inline ompi_mtl_portals4_message_t*
-ompi_mtl_portals4_message_alloc(const ptl_event_t *ev)
+static inline ompi_mtl_portals4_message_t *ompi_mtl_portals4_message_alloc(const ptl_event_t *ev)
 {
     opal_free_list_item_t *tmp;
-    ompi_mtl_portals4_message_t* message;
+    ompi_mtl_portals4_message_t *message;
 
-    tmp = opal_free_list_get (&ompi_mtl_portals4.fl_message);
-    if (NULL == tmp) return NULL;
+    tmp = opal_free_list_get(&ompi_mtl_portals4.fl_message);
+    if (NULL == tmp)
+        return NULL;
 
-    message = (ompi_mtl_portals4_message_t*) tmp;
+    message = (ompi_mtl_portals4_message_t *) tmp;
 
     message->ev = *ev;
 
@@ -48,11 +47,9 @@ ompi_mtl_portals4_message_alloc(const ptl_event_t *ev)
     return message;
 }
 
-static inline void
-ompi_mtl_portals4_message_free(ompi_mtl_portals4_message_t *message)
+static inline void ompi_mtl_portals4_message_free(ompi_mtl_portals4_message_t *message)
 {
-    opal_free_list_return (&ompi_mtl_portals4.fl_message,
-                           &message->super);
+    opal_free_list_return(&ompi_mtl_portals4.fl_message, &message->super);
 }
 
 #endif

@@ -26,46 +26,51 @@
 #define MPI_COMM_WORLD 0
 #define MPI_COMM_SELF  1
 
-#define MPI_INTEGER   7
-#define MPI_INTEGER1  8
+#define MPI_INTEGER  7
+#define MPI_INTEGER1 8
 
-
-void mpi_send_1di(int* a, int* count, int* datatype,
-		  int* dest, int* tag, int* comm, int* ierr)
+void mpi_send_1di(int *a, int *count, int *datatype, int *dest, int *tag, int *comm, int *ierr)
 {
-  int i;
+    int i;
 
-  *ierr = 0;
-  for (i = 0; i < *count; i++) {
-    if (a[i] != 10 - i) {
-      printf("a[%d] = %d\n", i, a[i]);
-      *ierr = 1;
+    *ierr = 0;
+    for (i = 0; i < *count; i++) {
+        if (a[i] != 10 - i) {
+            printf("a[%d] = %d\n", i, a[i]);
+            *ierr = 1;
+        }
     }
-  }
-  if (*count != 10) *ierr = 1;
-  if (*datatype != MPI_INTEGER) *ierr = 1;
-  if (*dest != 59) *ierr = 1;
-  if (*tag != 999) *ierr = 1;
-  if (*comm != MPI_COMM_WORLD) *ierr = 1;
+    if (*count != 10)
+        *ierr = 1;
+    if (*datatype != MPI_INTEGER)
+        *ierr = 1;
+    if (*dest != 59)
+        *ierr = 1;
+    if (*tag != 999)
+        *ierr = 1;
+    if (*comm != MPI_COMM_WORLD)
+        *ierr = 1;
 }
 
-
-void mpi_send_1di1(char* a, int* count, int* datatype,
-		   int* dest, int* tag, int* comm, int* ierr)
+void mpi_send_1di1(char *a, int *count, int *datatype, int *dest, int *tag, int *comm, int *ierr)
 {
-  int i;
+    int i;
 
-  *ierr = 0;
-  for (i = 0; i < *count; i++) {
-    if (a[i] != i+1) {
-      printf("a[%d] = %d\n", i, a[i]);
-      *ierr = 1;
+    *ierr = 0;
+    for (i = 0; i < *count; i++) {
+        if (a[i] != i + 1) {
+            printf("a[%d] = %d\n", i, a[i]);
+            *ierr = 1;
+        }
     }
-  }
-  if (*count != 10) *ierr = 1;
-  if (*datatype != MPI_INTEGER1) *ierr = 1;
-  if (*dest != 59) *ierr = 1;
-  if (*tag != 999) *ierr = 1;
-  if (*comm != MPI_COMM_SELF) *ierr = 1;
+    if (*count != 10)
+        *ierr = 1;
+    if (*datatype != MPI_INTEGER1)
+        *ierr = 1;
+    if (*dest != 59)
+        *ierr = 1;
+    if (*tag != 999)
+        *ierr = 1;
+    if (*comm != MPI_COMM_SELF)
+        *ierr = 1;
 }
-

@@ -3,25 +3,25 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "ompi_config.h"
 
-#include "opal/util/show_help.h"
-#include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
 #include "coll_adapt.h"
 #include "coll_adapt_algorithms.h"
+#include "ompi/constants.h"
+#include "ompi/mca/coll/coll.h"
+#include "opal/util/show_help.h"
 
 /*
  * Public string showing the coll ompi_adapt component version number
  */
-const char *mca_coll_adapt_component_version_string =
-    "Open MPI ADAPT collective MCA component version " OMPI_VERSION;
+const char *mca_coll_adapt_component_version_string
+    = "Open MPI ADAPT collective MCA component version " OMPI_VERSION;
 
 /*
  * Local functions
@@ -87,7 +87,6 @@ static int adapt_open(void)
     return OMPI_SUCCESS;
 }
 
-
 /* Shut down the component */
 static int adapt_close(void)
 {
@@ -114,38 +113,33 @@ static int adapt_register(void)
        we should have a high priority */
     cs->adapt_priority = 0;
     (void) mca_base_component_var_register(c, "priority", "Priority of the adapt coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->adapt_priority);
 
     cs->adapt_verbose = ompi_coll_base_framework.framework_verbose;
-    (void) mca_base_component_var_register(c, "verbose",
-                                           "Verbose level (default set to the collective framework verbosity)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->adapt_verbose);
+    (void) mca_base_component_var_register(
+        c, "verbose", "Verbose level (default set to the collective framework verbosity)",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &cs->adapt_verbose);
 
     cs->adapt_context_free_list_min = 64;
     (void) mca_base_component_var_register(c, "context_free_list_min",
                                            "Minimum number of segments in context free list",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &cs->adapt_context_free_list_min);
 
     cs->adapt_context_free_list_max = 1024;
     (void) mca_base_component_var_register(c, "context_free_list_max",
                                            "Maximum number of segments in context free list",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &cs->adapt_context_free_list_max);
 
     cs->adapt_context_free_list_inc = 32;
     (void) mca_base_component_var_register(c, "context_free_list_inc",
                                            "Increasement number of segments in context free list",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &cs->adapt_context_free_list_inc);
     ompi_coll_adapt_ibcast_register();

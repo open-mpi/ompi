@@ -12,22 +12,21 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
-#include "ompi/communicator/communicator.h"
 #include "opal/util/info_subscriber.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_set_info = PMPI_Win_set_info
-#endif
-#define MPI_Win_set_info PMPI_Win_set_info
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_set_info = PMPI_Win_set_info
+#    endif
+#    define MPI_Win_set_info PMPI_Win_set_info
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_set_info";
-
 
 int MPI_Win_set_info(MPI_Win win, MPI_Info info)
 {
@@ -40,8 +39,7 @@ int MPI_Win_set_info(MPI_Win win, MPI_Info info)
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
         }
 
-        if (NULL == info || MPI_INFO_NULL == info ||
-            ompi_info_is_freed(info)) {
+        if (NULL == info || MPI_INFO_NULL == info || ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_INFO, FUNC_NAME);
         }
     }

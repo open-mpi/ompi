@@ -24,14 +24,14 @@
 #include "coll_inter.h"
 
 #include "mpi.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/op/op.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/op/op.h"
 
 /*
  *	allreduce_inter
@@ -40,12 +40,9 @@
  *	Accepts:	- same as MPI_Allreduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
-                               struct ompi_datatype_t *dtype,
-                               struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
+int mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
+                                   struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                   struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int err, rank, root = 0;
     char *tmpbuf = NULL, *pml_buffer = NULL;
@@ -58,39 +55,35 @@ mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
 
     tmpbuf = (char *) malloc(span);
     if (NULL == tmpbuf) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     pml_buffer = tmpbuf - gap;
 
-    err = comm->c_local_comm->c_coll->coll_reduce(sbuf, pml_buffer, count,
-						 dtype, op, root,
-						 comm->c_local_comm,
-                                                 comm->c_local_comm->c_coll->coll_reduce_module);
+    err = comm->c_local_comm->c_coll->coll_reduce(sbuf, pml_buffer, count, dtype, op, root,
+                                                  comm->c_local_comm,
+                                                  comm->c_local_comm->c_coll->coll_reduce_module);
     if (OMPI_SUCCESS != err) {
-	goto exit;
+        goto exit;
     }
 
     if (rank == root) {
-	/* Do a send-recv between the two root procs. to avoid deadlock */
+        /* Do a send-recv between the two root procs. to avoid deadlock */
         err = ompi_coll_base_sendrecv_actual(pml_buffer, count, dtype, 0,
-                                             MCA_COLL_BASE_TAG_ALLREDUCE,
-                                             rbuf, count, dtype, 0,
-                                             MCA_COLL_BASE_TAG_ALLREDUCE,
-                                             comm, MPI_STATUS_IGNORE);
+                                             MCA_COLL_BASE_TAG_ALLREDUCE, rbuf, count, dtype, 0,
+                                             MCA_COLL_BASE_TAG_ALLREDUCE, comm, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
     }
 
     /* bcast the message to all the local processes */
-    err = comm->c_local_comm->c_coll->coll_bcast(rbuf, count, dtype,
-						root, comm->c_local_comm,
-                                                comm->c_local_comm->c_coll->coll_bcast_module);
+    err = comm->c_local_comm->c_coll->coll_bcast(rbuf, count, dtype, root, comm->c_local_comm,
+                                                 comm->c_local_comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != err) {
-            goto exit;
+        goto exit;
     }
 
-  exit:
+exit:
     if (NULL != tmpbuf) {
         free(tmpbuf);
     }

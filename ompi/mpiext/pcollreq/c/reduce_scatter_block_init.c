@@ -25,72 +25,66 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/op/op.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
+#include "ompi/op/op.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Reduce_scatter_block_init = PMPIX_Reduce_scatter_block_init
-#endif
-#define MPIX_Reduce_scatter_block_init PMPIX_Reduce_scatter_block_init
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPIX_Reduce_scatter_block_init = PMPIX_Reduce_scatter_block_init
+#    endif
+#    define MPIX_Reduce_scatter_block_init PMPIX_Reduce_scatter_block_init
 #endif
 
 static const char FUNC_NAME[] = "MPIX_Reduce_scatter_block_init";
 
-
 int MPIX_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount,
-                                   MPI_Datatype datatype, MPI_Op op,
-                                   MPI_Comm comm, MPI_Info info, MPI_Request *request)
+                                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info,
+                                   MPI_Request *request)
 {
     int err;
 
     SPC_RECORD(OMPI_SPC_REDUCE_SCATTER_BLOCK_INIT, 1);
 
     MEMCHECKER(
-        memchecker_comm(comm);
-        memchecker_datatype(datatype);
+        memchecker_comm(comm); memchecker_datatype(datatype);
 
         /* check receive buffer of current proccess, whether it's addressable. */
-        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf,
-                        recvcount, datatype);
+        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, datatype);
 
         /* check whether the actual send buffer is defined. */
-        if(MPI_IN_PLACE == sendbuf) {
+        if (MPI_IN_PLACE == sendbuf) {
             memchecker_call(&opal_memchecker_base_isdefined, recvbuf, recvcount, datatype);
         } else {
             memchecker_call(&opal_memchecker_base_isdefined, sendbuf, recvcount, datatype);
-
-        }
-    );
+        });
 
     if (MPI_PARAM_CHECK) {
         char *msg;
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
 
         /* Unrooted operation; same checks for all ranks on both
            intracommunicators and intercommunicators */
 
         else if (MPI_OP_NULL == op || NULL == op) {
-          err = MPI_ERR_OP;
+            err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
         } else if (MPI_IN_PLACE == recvbuf) {
-          err = MPI_ERR_ARG;
+            err = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
@@ -100,9 +94,10 @@ int MPIX_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvc
 
     /* Invoke the coll component to perform the back-end operation */
 
-    err = comm->c_coll->coll_reduce_scatter_block_init(sendbuf, recvbuf, recvcount,
-                                                       datatype, op, comm, info, request,
-                                                       comm->c_coll->coll_reduce_scatter_block_init_module);
+    err = comm->c_coll
+              ->coll_reduce_scatter_block_init(sendbuf, recvbuf, recvcount, datatype, op, comm,
+                                               info, request,
+                                               comm->c_coll->coll_reduce_scatter_block_init_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_op(*request, op, datatype);
     }

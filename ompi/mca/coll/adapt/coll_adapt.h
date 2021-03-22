@@ -9,17 +9,16 @@
  * $HEADER$
  */
 
-
 #ifndef MCA_COLL_ADAPT_EXPORT_H
 #define MCA_COLL_ADAPT_EXPORT_H
 
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/mca/mca.h"
-#include "opal/datatype/opal_convertor.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_base_topo.h"
+#include "ompi/mca/coll/coll.h"
+#include "opal/datatype/opal_convertor.h"
+#include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
 
@@ -92,15 +91,14 @@ typedef struct mca_coll_adapt_component_t {
  */
 typedef struct mca_coll_adapt_collective_fallback_s {
     union {
-        mca_coll_base_module_reduce_fn_t   reduce;
+        mca_coll_base_module_reduce_fn_t reduce;
         mca_coll_base_module_ireduce_fn_t ireduce;
     } previous_routine;
     mca_coll_base_module_t *previous_module;
 } mca_coll_adapt_collective_fallback_t;
 
-
 typedef enum mca_coll_adapt_colltype {
-    ADAPT_REDUCE  = 0,
+    ADAPT_REDUCE = 0,
     ADAPT_IREDUCE = 1,
     ADAPT_COLLCOUNT
 } mca_coll_adapt_colltype_t;
@@ -109,12 +107,11 @@ typedef enum mca_coll_adapt_colltype {
  * Some defines to stick to the naming used in the other components in terms of
  * fallback routines
  */
-#define previous_reduce     previous_routines[ADAPT_REDUCE].previous_routine.reduce
-#define previous_ireduce    previous_routines[ADAPT_IREDUCE].previous_routine.ireduce
+#define previous_reduce  previous_routines[ADAPT_REDUCE].previous_routine.reduce
+#define previous_ireduce previous_routines[ADAPT_IREDUCE].previous_routine.ireduce
 
-#define previous_reduce_module     previous_routines[ADAPT_REDUCE].previous_module
-#define previous_ireduce_module    previous_routines[ADAPT_IREDUCE].previous_module
-
+#define previous_reduce_module  previous_routines[ADAPT_REDUCE].previous_module
+#define previous_ireduce_module previous_routines[ADAPT_IREDUCE].previous_module
 
 /* Coll adapt module per communicator*/
 struct mca_coll_adapt_module_t {
@@ -137,7 +134,7 @@ OMPI_MODULE_DECLSPEC extern mca_coll_adapt_component_t mca_coll_adapt_component;
 
 /* ADAPT module functions */
 int ompi_coll_adapt_init_query(bool enable_progress_threads, bool enable_mpi_threads);
-mca_coll_base_module_t * ompi_coll_adapt_comm_query(struct ompi_communicator_t *comm, int *priority);
+mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t *comm, int *priority);
 
 /* ADAPT request free */
 int ompi_coll_adapt_request_free(ompi_request_t **request);

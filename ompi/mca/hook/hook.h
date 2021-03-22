@@ -54,7 +54,7 @@ BEGIN_C_DECLS
  * *** Everyone (Inside MPI) ***
  *  Everyone registered will see this callback triggered. It is only triggered
  *  between ompi_mpi_init and ompi_mpi_finalize.
- * 
+ *
  */
 /* ******************************************************************** */
 
@@ -80,7 +80,8 @@ typedef void (*ompi_hook_base_component_mpi_initialized_bottom_fn_t)(int *flag);
  * Location: mpi/c/init_thread.c
  *           At the top of function
  */
-typedef void (*ompi_hook_base_component_mpi_init_thread_top_fn_t)(int *argc, char ***argv, int required, int *provided);
+typedef void (*ompi_hook_base_component_mpi_init_thread_top_fn_t)(int *argc, char ***argv,
+                                                                  int required, int *provided);
 
 /**
  * *** Static Only (Outside MPI), Everyone (Inside MPI) ***
@@ -88,7 +89,8 @@ typedef void (*ompi_hook_base_component_mpi_init_thread_top_fn_t)(int *argc, cha
  * Location: mpi/c/init_thread.c
  *           At the bottom of function
  */
-typedef void (*ompi_hook_base_component_mpi_init_thread_bottom_fn_t)(int *argc, char ***argv, int required, int *provided);
+typedef void (*ompi_hook_base_component_mpi_init_thread_bottom_fn_t)(int *argc, char ***argv,
+                                                                     int required, int *provided);
 
 /**
  * *** Static Only (Outside MPI), Everyone (Inside MPI) ***
@@ -112,7 +114,8 @@ typedef void (*ompi_hook_base_component_mpi_finalized_bottom_fn_t)(int *flag);
  * Location: runtime/ompi_mpi_init.c
  *           At top of function (outside of mutex)
  */
-typedef void (*ompi_hook_base_component_mpi_init_top_fn_t)(int argc, char **argv, int requested, int *provided);
+typedef void (*ompi_hook_base_component_mpi_init_top_fn_t)(int argc, char **argv, int requested,
+                                                           int *provided);
 
 /**
  * *** Everyone (Inside MPI) ***
@@ -122,7 +125,8 @@ typedef void (*ompi_hook_base_component_mpi_init_top_fn_t)(int argc, char **argv
  * Notes:
  *           This framework has been opened as have its components.
  */
-typedef void (*ompi_hook_base_component_mpi_init_top_post_opal_fn_t)(int argc, char **argv, int requested, int *provided);
+typedef void (*ompi_hook_base_component_mpi_init_top_post_opal_fn_t)(int argc, char **argv,
+                                                                     int requested, int *provided);
 
 /**
  * *** Everyone (Inside MPI) ***
@@ -133,7 +137,8 @@ typedef void (*ompi_hook_base_component_mpi_init_top_post_opal_fn_t)(int argc, c
  *           This framework has been opened as have its components.
  *           Can safely use all MPI functionality.
  */
-typedef void (*ompi_hook_base_component_mpi_init_bottom_fn_t)(int argc, char **argv, int requested, int *provided);
+typedef void (*ompi_hook_base_component_mpi_init_bottom_fn_t)(int argc, char **argv, int requested,
+                                                              int *provided);
 
 /**
  * *** Everyone (Inside MPI) ***
@@ -143,7 +148,8 @@ typedef void (*ompi_hook_base_component_mpi_init_bottom_fn_t)(int argc, char **a
  * Notes:
  *           This framework has been opened as have its components.
  */
-typedef void (*ompi_hook_base_component_mpi_init_error_fn_t)(int argc, char **argv, int requested, int *provided);
+typedef void (*ompi_hook_base_component_mpi_init_error_fn_t)(int argc, char **argv, int requested,
+                                                             int *provided);
 
 /**
  * *** Everyone (Inside MPI) ***
@@ -165,7 +171,6 @@ typedef void (*ompi_hook_base_component_mpi_finalize_top_fn_t)(void);
  *           This framework has been closed.
  */
 typedef void (*ompi_hook_base_component_mpi_finalize_bottom_fn_t)(void);
-
 
 /* ******************************************************************** */
 
@@ -200,7 +205,7 @@ struct ompi_hook_base_component_1_0_0_t {
 };
 typedef struct ompi_hook_base_component_1_0_0_t ompi_hook_base_component_1_0_0_t;
 typedef ompi_hook_base_component_1_0_0_t ompi_hook_base_component_t;
-/* 
+/*
  * Note: We do -not- expose a component object for this framework.
  * All interation with the component should go through the base/base.h interfaces.
  * See that header for more information on calling functions.
@@ -211,8 +216,7 @@ typedef ompi_hook_base_component_1_0_0_t ompi_hook_base_component_t;
 /*
  * Macro for use in components that are of type hook
  */
-#define OMPI_HOOK_BASE_VERSION_1_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("hook", 1, 0, 0)
+#define OMPI_HOOK_BASE_VERSION_1_0_0 OMPI_MCA_BASE_VERSION_2_1_0("hook", 1, 0, 0)
 
 END_C_DECLS
 

@@ -34,8 +34,8 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/class/opal_list.h"
 #include "opal/mca/threads/mutex.h"
 
 BEGIN_C_DECLS
@@ -132,17 +132,18 @@ OMPI_DECLSPEC extern struct ompi_status_public_t *ompi_mpi_statuses_ignore_addr;
 #define OMPI_THREADLEVEL_SERIALIZED_BF 0x00000004
 #define OMPI_THREADLEVEL_MULTIPLE_BF   0x00000008
 
-#define OMPI_THREADLEVEL_SET_BITFLAG(threadlevelin,threadlevelout) { \
-    if ( MPI_THREAD_SINGLE == threadlevelin ) {                 \
-        threadlevelout |= OMPI_THREADLEVEL_SINGLE_BF;           \
-    } else if ( MPI_THREAD_FUNNELED == threadlevelin ) {        \
-        threadlevelout |= OMPI_THREADLEVEL_FUNNELED_BF;         \
-    } else if ( MPI_THREAD_SERIALIZED == threadlevelin ) {      \
-        threadlevelout |= OMPI_THREADLEVEL_SERIALIZED_BF;       \
-    } else if ( MPI_THREAD_MULTIPLE == threadlevelin ) {       \
-        threadlevelout |= OMPI_THREADLEVEL_MULTIPLE_BF;         \
-    }}
-
+#define OMPI_THREADLEVEL_SET_BITFLAG(threadlevelin, threadlevelout) \
+    {                                                               \
+        if (MPI_THREAD_SINGLE == threadlevelin) {                   \
+            threadlevelout |= OMPI_THREADLEVEL_SINGLE_BF;           \
+        } else if (MPI_THREAD_FUNNELED == threadlevelin) {          \
+            threadlevelout |= OMPI_THREADLEVEL_FUNNELED_BF;         \
+        } else if (MPI_THREAD_SERIALIZED == threadlevelin) {        \
+            threadlevelout |= OMPI_THREADLEVEL_SERIALIZED_BF;       \
+        } else if (MPI_THREAD_MULTIPLE == threadlevelin) {          \
+            threadlevelout |= OMPI_THREADLEVEL_MULTIPLE_BF;         \
+        }                                                           \
+    }
 
 #define OMPI_THREADLEVEL_IS_MULTIPLE(threadlevel) (threadlevel & OMPI_THREADLEVEL_MULTIPLE_BF)
 
@@ -191,8 +192,7 @@ void ompi_mpi_thread_level(int requested, int *provided);
  *
  * It is permissable to pass in (0, NULL) for (argc, argv).
  */
-int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
-                  bool reinit_ok);
+int ompi_mpi_init(int argc, char **argv, int requested, int *provided, bool reinit_ok);
 
 /**
  * Finalize the Open MPI MPI environment
@@ -208,8 +208,7 @@ int ompi_mpi_finalize(void);
 /**
  * Abort the processes of comm
  */
-OMPI_DECLSPEC int ompi_mpi_abort(struct ompi_communicator_t* comm,
-                                 int errcode);
+OMPI_DECLSPEC int ompi_mpi_abort(struct ompi_communicator_t *comm, int errcode);
 
 /**
  * Do a preconnect of MPI connections (i.e., force connections to

@@ -28,10 +28,10 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
 #include "ompi/request/request.h"
+#include "opal/mca/base/base.h"
 #ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
+#    include <sys/uio.h>
 #endif
 
 BEGIN_C_DECLS
@@ -42,8 +42,7 @@ struct mca_ompio_request_t;
 /*
  * Macro for use in components that are of type coll
  */
-#define MCA_FBTL_BASE_VERSION_2_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("fbtl", 2, 0, 0)
+#define MCA_FBTL_BASE_VERSION_2_0_0 OMPI_MCA_BASE_VERSION_2_1_0("fbtl", 2, 0, 0)
 
 /*
  * The file byte transfer layer (fbtl) framework provides the abstraction
@@ -78,16 +77,13 @@ struct mca_ompio_request_t;
  * **************** component struct *******************************
  */
 
-typedef int (*mca_fbtl_base_component_init_query_1_0_0_fn_t)
-    (bool enable_progress_threads,
-     bool enable_mpi_threads);
+typedef int (*mca_fbtl_base_component_init_query_1_0_0_fn_t)(bool enable_progress_threads,
+                                                             bool enable_mpi_threads);
 
-typedef struct mca_fbtl_base_module_1_0_0_t *
-(*mca_fbtl_base_component_file_query_1_0_0_fn_t) (struct ompio_file_t *file,
-                                                  int *priority);
+typedef struct mca_fbtl_base_module_1_0_0_t *(*mca_fbtl_base_component_file_query_1_0_0_fn_t)(
+    struct ompio_file_t *file, int *priority);
 
-typedef int (*mca_fbtl_base_component_file_unquery_1_0_0_fn_t)
-    (struct ompio_file_t *file);
+typedef int (*mca_fbtl_base_component_file_unquery_1_0_0_fn_t)(struct ompio_file_t *file);
 
 /*
  * ****************** component struct ******************************
@@ -113,31 +109,21 @@ typedef struct mca_fbtl_base_component_2_0_0_t mca_fbtl_base_component_t;
  * ***********************************************************************
  */
 
-typedef int (*mca_fbtl_base_module_init_1_0_0_fn_t)
-    (struct ompio_file_t *file);
+typedef int (*mca_fbtl_base_module_init_1_0_0_fn_t)(struct ompio_file_t *file);
 
-typedef int (*mca_fbtl_base_module_finalize_1_0_0_fn_t)
-    (struct ompio_file_t *file);
+typedef int (*mca_fbtl_base_module_finalize_1_0_0_fn_t)(struct ompio_file_t *file);
 
+typedef ssize_t (*mca_fbtl_base_module_preadv_fn_t)(struct ompio_file_t *file);
+typedef ssize_t (*mca_fbtl_base_module_pwritev_fn_t)(struct ompio_file_t *file);
+typedef ssize_t (*mca_fbtl_base_module_ipreadv_fn_t)(struct ompio_file_t *file,
+                                                     ompi_request_t *request);
+typedef ssize_t (*mca_fbtl_base_module_ipwritev_fn_t)(struct ompio_file_t *file,
+                                                      ompi_request_t *request);
+typedef bool (*mca_fbtl_base_module_progress_fn_t)(struct mca_ompio_request_t *request);
 
-typedef ssize_t (*mca_fbtl_base_module_preadv_fn_t)
-    (struct ompio_file_t *file );
-typedef ssize_t (*mca_fbtl_base_module_pwritev_fn_t)
-    (struct ompio_file_t *file );
-typedef ssize_t (*mca_fbtl_base_module_ipreadv_fn_t)
-    (struct ompio_file_t *file,
-     ompi_request_t *request);
-typedef ssize_t (*mca_fbtl_base_module_ipwritev_fn_t)
-    (struct ompio_file_t *file,
-     ompi_request_t *request);
-typedef bool (*mca_fbtl_base_module_progress_fn_t)
-    ( struct mca_ompio_request_t *request);
+typedef void (*mca_fbtl_base_module_request_free_fn_t)(struct mca_ompio_request_t *request);
 
-typedef void (*mca_fbtl_base_module_request_free_fn_t)
-    ( struct mca_ompio_request_t *request);
-
-typedef bool (*mca_fbtl_base_module_check_atomicity_fn_t)
-    (struct ompio_file_t *file);
+typedef bool (*mca_fbtl_base_module_check_atomicity_fn_t)(struct ompio_file_t *file);
 
 /*
  * ***********************************************************************
@@ -154,12 +140,12 @@ struct mca_fbtl_base_module_1_0_0_t {
     mca_fbtl_base_module_finalize_1_0_0_fn_t fbtl_module_finalize;
 
     /* FBTL function pointers */
-    mca_fbtl_base_module_preadv_fn_t          fbtl_preadv;
-    mca_fbtl_base_module_ipreadv_fn_t         fbtl_ipreadv;
-    mca_fbtl_base_module_pwritev_fn_t         fbtl_pwritev;
-    mca_fbtl_base_module_ipwritev_fn_t        fbtl_ipwritev;
-    mca_fbtl_base_module_progress_fn_t        fbtl_progress;
-    mca_fbtl_base_module_request_free_fn_t    fbtl_request_free;
+    mca_fbtl_base_module_preadv_fn_t fbtl_preadv;
+    mca_fbtl_base_module_ipreadv_fn_t fbtl_ipreadv;
+    mca_fbtl_base_module_pwritev_fn_t fbtl_pwritev;
+    mca_fbtl_base_module_ipwritev_fn_t fbtl_ipwritev;
+    mca_fbtl_base_module_progress_fn_t fbtl_progress;
+    mca_fbtl_base_module_request_free_fn_t fbtl_request_free;
     mca_fbtl_base_module_check_atomicity_fn_t fbtl_check_atomicity;
 };
 typedef struct mca_fbtl_base_module_1_0_0_t mca_fbtl_base_module_1_0_0_t;

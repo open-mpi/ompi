@@ -21,59 +21,57 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_TYPE_HINDEXED = ompi_type_hindexed_f
+#        pragma weak pmpi_type_hindexed = ompi_type_hindexed_f
+#        pragma weak pmpi_type_hindexed_ = ompi_type_hindexed_f
+#        pragma weak pmpi_type_hindexed__ = ompi_type_hindexed_f
+
+#        pragma weak PMPI_Type_hindexed_f = ompi_type_hindexed_f
+#        pragma weak PMPI_Type_hindexed_f08 = ompi_type_hindexed_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_TYPE_HINDEXED, pmpi_type_hindexed, pmpi_type_hindexed_,
+                           pmpi_type_hindexed__, pompi_type_hindexed_f,
+                           (MPI_Fint * count, MPI_Fint *array_of_blocklengths,
+                            MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype,
+                            MPI_Fint *ierr),
+                           (count, array_of_blocklengths, array_of_displacements, oldtype, newtype,
+                            ierr))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_TYPE_HINDEXED = ompi_type_hindexed_f
-#pragma weak pmpi_type_hindexed = ompi_type_hindexed_f
-#pragma weak pmpi_type_hindexed_ = ompi_type_hindexed_f
-#pragma weak pmpi_type_hindexed__ = ompi_type_hindexed_f
+#    pragma weak MPI_TYPE_HINDEXED = ompi_type_hindexed_f
+#    pragma weak mpi_type_hindexed = ompi_type_hindexed_f
+#    pragma weak mpi_type_hindexed_ = ompi_type_hindexed_f
+#    pragma weak mpi_type_hindexed__ = ompi_type_hindexed_f
 
-#pragma weak PMPI_Type_hindexed_f = ompi_type_hindexed_f
-#pragma weak PMPI_Type_hindexed_f08 = ompi_type_hindexed_f
+#    pragma weak MPI_Type_hindexed_f = ompi_type_hindexed_f
+#    pragma weak MPI_Type_hindexed_f08 = ompi_type_hindexed_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_HINDEXED,
-                           pmpi_type_hindexed,
-                           pmpi_type_hindexed_,
-                           pmpi_type_hindexed__,
-                           pompi_type_hindexed_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
-                           (count, array_of_blocklengths, array_of_displacements, oldtype, newtype, ierr) )
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_TYPE_HINDEXED, mpi_type_hindexed, mpi_type_hindexed_,
+                           mpi_type_hindexed__, ompi_type_hindexed_f,
+                           (MPI_Fint * count, MPI_Fint *array_of_blocklengths,
+                            MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype,
+                            MPI_Fint *ierr),
+                           (count, array_of_blocklengths, array_of_displacements, oldtype, newtype,
+                            ierr))
+#    else
+#        define ompi_type_hindexed_f pompi_type_hindexed_f
+#    endif
 #endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_TYPE_HINDEXED = ompi_type_hindexed_f
-#pragma weak mpi_type_hindexed = ompi_type_hindexed_f
-#pragma weak mpi_type_hindexed_ = ompi_type_hindexed_f
-#pragma weak mpi_type_hindexed__ = ompi_type_hindexed_f
-
-#pragma weak MPI_Type_hindexed_f = ompi_type_hindexed_f
-#pragma weak MPI_Type_hindexed_f08 = ompi_type_hindexed_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_HINDEXED,
-                           mpi_type_hindexed,
-                           mpi_type_hindexed_,
-                           mpi_type_hindexed__,
-                           ompi_type_hindexed_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
-                           (count, array_of_blocklengths, array_of_displacements, oldtype, newtype, ierr) )
-#else
-#define ompi_type_hindexed_f pompi_type_hindexed_f
-#endif
-#endif
-
 
 static const char FUNC_NAME[] = "MPI_TYPE_HINDEXED";
 
-
 void ompi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
-			 MPI_Fint *array_of_displacements,
-			 MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
+                          MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype,
+                          MPI_Fint *ierr)
 {
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
@@ -83,9 +81,9 @@ void ompi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
 
     c_disp_array = (MPI_Aint *) malloc(*count * sizeof(MPI_Aint));
     if (NULL == c_disp_array) {
-        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
-                                        FUNC_NAME);
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
     for (i = 0; i < *count; i++) {
@@ -95,9 +93,10 @@ void ompi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
 
     c_ierr = PMPI_Type_hindexed(OMPI_FINT_2_INT(*count),
-                               OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
-                               c_disp_array, c_old, &c_new);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+                                OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths), c_disp_array, c_old,
+                                &c_new);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free(c_disp_array);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);

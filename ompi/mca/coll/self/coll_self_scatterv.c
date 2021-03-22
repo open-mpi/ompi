@@ -20,10 +20,9 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
 #include "coll_self.h"
+#include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-
 
 /*
  *	scatterv_intra
@@ -32,12 +31,10 @@
  *	Accepts:	- same arguments as MPI_Scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_self_scatterv_intra(const void *sbuf, const int *scounts,
-                                 const int *disps, struct ompi_datatype_t *sdtype,
-                                 void *rbuf, int rcount,
+int mca_coll_self_scatterv_intra(const void *sbuf, const int *scounts, const int *disps,
+                                 struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
                                  struct ompi_datatype_t *rdtype, int root,
-                                 struct ompi_communicator_t *comm,
-                                 mca_coll_base_module_t *module)
+                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     if (MPI_IN_PLACE == rbuf) {
         return MPI_SUCCESS;
@@ -48,7 +45,7 @@ int mca_coll_self_scatterv_intra(const void *sbuf, const int *scounts,
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }
-        return ompi_datatype_sndrcv(((char *) sbuf) + disps[0]*extent, scounts[0],
-                               sdtype, rbuf, rcount, rdtype);
+        return ompi_datatype_sndrcv(((char *) sbuf) + disps[0] * extent, scounts[0], sdtype, rbuf,
+                                    rcount, rdtype);
     }
 }

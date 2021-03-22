@@ -33,14 +33,14 @@
 /*
  * Public string showing the fbtl posix component version number
  */
-const char *mca_fbtl_posix_component_version_string =
-  "OMPI/MPI posix FBTL MCA component version " OMPI_VERSION;
+const char *mca_fbtl_posix_component_version_string
+    = "OMPI/MPI posix FBTL MCA component version " OMPI_VERSION;
 
 int mca_fbtl_posix_priority = 10;
-bool mca_fbtl_posix_read_datasieving  = true;
+bool mca_fbtl_posix_read_datasieving = true;
 bool mca_fbtl_posix_write_datasieving = true;
-size_t mca_fbtl_posix_max_block_size  = 1048576;  // 1MB
-size_t mca_fbtl_posix_max_gap_size    = 4096;     // Size of a block in many linux fs
+size_t mca_fbtl_posix_max_block_size = 1048576;   // 1MB
+size_t mca_fbtl_posix_max_gap_size = 4096;        // Size of a block in many linux fs
 size_t mca_fbtl_posix_max_tmpbuf_size = 67108864; // 64 MB
 /*
  * Private functions
@@ -77,58 +77,52 @@ mca_fbtl_base_component_2_0_0_t mca_fbtl_posix_component = {
 static int register_component(void)
 {
     mca_fbtl_posix_priority = 10;
-    (void) mca_base_component_var_register(&mca_fbtl_posix_component.fbtlm_version,
-                                           "priority", "Priority of the fbtl posix component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fbtl_posix_priority);
+    (void) mca_base_component_var_register(&mca_fbtl_posix_component.fbtlm_version, "priority",
+                                           "Priority of the fbtl posix component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fbtl_posix_priority);
 
     mca_fbtl_posix_max_block_size = 1048576;
-    (void) mca_base_component_var_register(&mca_fbtl_posix_component.fbtlm_version,
-                                           "max_block_size", "Maximum average size in bytes of a data block in an iovec for data sieving. "
-                                           "An average block size larger than this parameter will disable data sieving. Default: 1048576 bytes.",
-                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fbtl_posix_max_block_size );
+    (void) mca_base_component_var_register(
+        &mca_fbtl_posix_component.fbtlm_version, "max_block_size",
+        "Maximum average size in bytes of a data block in an iovec for data sieving. "
+        "An average block size larger than this parameter will disable data sieving. Default: "
+        "1048576 bytes.",
+        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_fbtl_posix_max_block_size);
 
     mca_fbtl_posix_max_gap_size = 4096;
-    (void) mca_base_component_var_register(&mca_fbtl_posix_component.fbtlm_version,
-                                           "max_gap_size", "Maximum average gap size between two blocks in an iovec for data sieving. "
-                                           "An average gap size larger than this parameter will disable data sieving. Default: 4096 bytes. " ,
-                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fbtl_posix_max_gap_size );
+    (void) mca_base_component_var_register(
+        &mca_fbtl_posix_component.fbtlm_version, "max_gap_size",
+        "Maximum average gap size between two blocks in an iovec for data sieving. "
+        "An average gap size larger than this parameter will disable data sieving. Default: 4096 "
+        "bytes. ",
+        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_fbtl_posix_max_gap_size);
 
     mca_fbtl_posix_max_tmpbuf_size = 67108864;
-    (void) mca_base_component_var_register(&mca_fbtl_posix_component.fbtlm_version,
-                                           "max_tmpbuf_size", "Maximum size of the temporary buffer used for data sieving in bytes. "
-                                           "Default: 67108864 (64MB). " ,
-                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fbtl_posix_max_tmpbuf_size );
-    
-    mca_fbtl_posix_read_datasieving  = true;
-    (void) mca_base_component_var_register(&mca_fbtl_posix_component.fbtlm_version,
-                                           "read_datasieving", "Parameter indicating whether to perform data sieving for read operations. "
-                                           "Default: true.",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fbtl_posix_read_datasieving );
+    (void) mca_base_component_var_register(
+        &mca_fbtl_posix_component.fbtlm_version, "max_tmpbuf_size",
+        "Maximum size of the temporary buffer used for data sieving in bytes. "
+        "Default: 67108864 (64MB). ",
+        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_fbtl_posix_max_tmpbuf_size);
 
-    mca_fbtl_posix_write_datasieving  = true;
-    (void) mca_base_component_var_register(&mca_fbtl_posix_component.fbtlm_version,
-                                           "write_datasieving", "Parameter indicating whether to perform data sieving for write operations. "
-                                           "Default: true.",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fbtl_posix_write_datasieving );
+    mca_fbtl_posix_read_datasieving = true;
+    (void) mca_base_component_var_register(
+        &mca_fbtl_posix_component.fbtlm_version, "read_datasieving",
+        "Parameter indicating whether to perform data sieving for read operations. "
+        "Default: true.",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_fbtl_posix_read_datasieving);
 
-    
+    mca_fbtl_posix_write_datasieving = true;
+    (void) mca_base_component_var_register(
+        &mca_fbtl_posix_component.fbtlm_version, "write_datasieving",
+        "Parameter indicating whether to perform data sieving for write operations. "
+        "Default: true.",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_fbtl_posix_write_datasieving);
+
     return OMPI_SUCCESS;
 }

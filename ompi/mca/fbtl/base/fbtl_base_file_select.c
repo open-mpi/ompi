@@ -23,13 +23,13 @@
 
 #include <string.h>
 
-#include "opal/class/opal_list.h"
-#include "opal/util/argv.h"
-#include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "ompi/mca/fbtl/fbtl.h"
-#include "ompi/mca/fbtl/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/fbtl/fbtl.h"
+#include "ompi/mca/mca.h"
+#include "opal/class/opal_list.h"
+#include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
 
 /*
  * This structure is needed so that we can close the modules
@@ -44,7 +44,6 @@ struct queried_module_t {
 };
 typedef struct queried_module_t queried_module_t;
 static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
-
 
 /*
  * Only one fbtl module can be attached to each file.
@@ -64,8 +63,7 @@ static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
  *    their module but were unfortunate to not get selected
  */
 
-int mca_fbtl_base_file_select (struct ompio_file_t *file,
-                               mca_base_component_t *preferred)
+int mca_fbtl_base_file_select(struct ompio_file_t *file, mca_base_component_t *preferred)
 {
     int priority;
     int best_priority;
@@ -87,37 +85,35 @@ int mca_fbtl_base_file_select (struct ompio_file_t *file,
         /* We have a preferred component. Check if it is available
            and if so, whether it wants to run */
 
-         str = &(preferred->mca_component_name[0]);
+        str = &(preferred->mca_component_name[0]);
 
-         opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
-                             "fbtl:base:file_select: Checking preferred component: %s",
-                             str);
+        opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
+                            "fbtl:base:file_select: Checking preferred component: %s", str);
 
-         /* query the component for its priority and get its module
-            structure. This is necessary to proceed */
+        /* query the component for its priority and get its module
+           structure. This is necessary to proceed */
 
-         component = (mca_fbtl_base_component_t *)preferred;
-         module = component->fbtlm_file_query (file, &priority);
-         if (NULL != module &&
-             NULL != module->fbtl_module_init) {
+        component = (mca_fbtl_base_component_t *) preferred;
+        module = component->fbtlm_file_query(file, &priority);
+        if (NULL != module && NULL != module->fbtl_module_init) {
 
-             /* this query seems to have returned something legitimate
-              * and we can now go ahead and initialize the
-              * file with it * but first, the functions which
-              * are null need to be filled in */
+            /* this query seems to have returned something legitimate
+             * and we can now go ahead and initialize the
+             * file with it * but first, the functions which
+             * are null need to be filled in */
 
-             /*fill_null_pointers (module);*/
-             file->f_fbtl = module;
-             file->f_fbtl_component = preferred;
+            /*fill_null_pointers (module);*/
+            file->f_fbtl = module;
+            file->f_fbtl_component = preferred;
 
-             return module->fbtl_module_init(file);
-         }
-            /* His preferred component is present, but is unable to
-             * run. This is not a good sign. We should try selecting
-             * some other component We let it fall through and select
-             * from the list of available components
-             */
-     } /*end of selection for preferred component */
+            return module->fbtl_module_init(file);
+        }
+        /* His preferred component is present, but is unable to
+         * run. This is not a good sign. We should try selecting
+         * some other component We let it fall through and select
+         * from the list of available components
+         */
+    } /*end of selection for preferred component */
 
     /*
      * We fall till here if one of the two things happened:
@@ -134,58 +130,57 @@ int mca_fbtl_base_file_select (struct ompio_file_t *file,
     best_priority = -1;
     OBJ_CONSTRUCT(&queried, opal_list_t);
 
-    OPAL_LIST_FOREACH(cli, &ompi_fbtl_base_framework.framework_components, mca_base_component_list_item_t) {
-       component = (mca_fbtl_base_component_t *) cli->cli_component;
-       opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
-                           "select: initialising %s component %s",
-                           component->fbtlm_version.mca_type_name,
-                           component->fbtlm_version.mca_component_name);
+    OPAL_LIST_FOREACH (cli, &ompi_fbtl_base_framework.framework_components,
+                       mca_base_component_list_item_t) {
+        component = (mca_fbtl_base_component_t *) cli->cli_component;
+        opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
+                            "select: initialising %s component %s",
+                            component->fbtlm_version.mca_type_name,
+                            component->fbtlm_version.mca_component_name);
 
-       /*
-        * we can call the query function only if there is a function :-)
-        */
-       if (NULL == component->fbtlm_file_query) {
-          opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
-                             "select: no query, ignoring the component");
-       } else {
-           /*
-            * call the query function and see what it returns
-            */
-           module = component->fbtlm_file_query (file, &priority);
+        /*
+         * we can call the query function only if there is a function :-)
+         */
+        if (NULL == component->fbtlm_file_query) {
+            opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
+                                "select: no query, ignoring the component");
+        } else {
+            /*
+             * call the query function and see what it returns
+             */
+            module = component->fbtlm_file_query(file, &priority);
 
-           if (NULL == module ||
-               NULL == module->fbtl_module_init) {
-               /*
-                * query did not return any action which can be used
-                */
-               opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
-                                  "select: query returned failure");
-           } else {
-               opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
-                                  "select: query returned priority %d",
-                                  priority);
-               /*
-                * is this the best component we have found till now?
-                */
-               if (priority > best_priority) {
-                   best_priority = priority;
-                   best_component = component;
-               }
+            if (NULL == module || NULL == module->fbtl_module_init) {
+                /*
+                 * query did not return any action which can be used
+                 */
+                opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
+                                    "select: query returned failure");
+            } else {
+                opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
+                                    "select: query returned priority %d", priority);
+                /*
+                 * is this the best component we have found till now?
+                 */
+                if (priority > best_priority) {
+                    best_priority = priority;
+                    best_component = component;
+                }
 
-               om = OBJ_NEW(queried_module_t);
-               /*
-                * check if we have run out of space
-                */
-               if (NULL == om) {
-                   OBJ_DESTRUCT(&queried);
-                   return OMPI_ERR_OUT_OF_RESOURCE;
-               }
-               om->om_component = component;
-               om->om_module = module;
-               opal_list_append(&queried, (opal_list_item_t *)om);
-           } /* end else of if (NULL == module) */
-       } /* end else of if (NULL == component->fbtlm_init) */
-    } /* end for ... end of traversal */
+                om = OBJ_NEW(queried_module_t);
+                /*
+                 * check if we have run out of space
+                 */
+                if (NULL == om) {
+                    OBJ_DESTRUCT(&queried);
+                    return OMPI_ERR_OUT_OF_RESOURCE;
+                }
+                om->om_component = component;
+                om->om_module = module;
+                opal_list_append(&queried, (opal_list_item_t *) om);
+            } /* end else of if (NULL == module) */
+        }     /* end else of if (NULL == component->fbtlm_init) */
+    }         /* end for ... end of traversal */
 
     /*
      * Now we have alist of components which successfully returned
@@ -195,11 +190,11 @@ int mca_fbtl_base_file_select (struct ompio_file_t *file,
      * components which should are initialized.
      */
     if (NULL == best_component) {
-       /*
-        * This typically means that there was no component which was
-        * able to run properly this time. So, we need to abort
-        * JMS replace with show_help
-        */
+        /*
+         * This typically means that there was no component which was
+         * able to run properly this time. So, we need to abort
+         * JMS replace with show_help
+         */
         OBJ_DESTRUCT(&queried);
         return OMPI_ERROR;
     }
@@ -213,15 +208,15 @@ int mca_fbtl_base_file_select (struct ompio_file_t *file,
     while (NULL != (item = opal_list_remove_first(&queried))) {
         om = (queried_module_t *) item;
         if (om->om_component == best_component) {
-           /*
-            * this is the chosen component, we have to initialise the
-            * module of this component.
-            *
-            * ANJU: a component might not have all the functions
-            * defined.  Whereever a function pointer is null in the
-            * module structure we need to fill it in with the base
-            * structure function pointers. This is yet to be done
-            */
+            /*
+             * this is the chosen component, we have to initialise the
+             * module of this component.
+             *
+             * ANJU: a component might not have all the functions
+             * defined.  Whereever a function pointer is null in the
+             * module structure we need to fill it in with the base
+             * structure function pointers. This is yet to be done
+             */
 
             /*
              * We don return here coz we still need to go through and
@@ -231,28 +226,28 @@ int mca_fbtl_base_file_select (struct ompio_file_t *file,
             /*fill_null_pointers (om->om_module);*/
             file->f_fbtl = om->om_module;
             err = om->om_module->fbtl_module_init(file);
-            file->f_fbtl_component = (mca_base_component_t *)best_component;
-         } else {
+            file->f_fbtl_component = (mca_base_component_t *) best_component;
+        } else {
             /*
              * this is not the "choosen one", finalize
              */
-             if (NULL != om->om_component->fbtlm_file_unquery) {
+            if (NULL != om->om_component->fbtlm_file_unquery) {
                 /* unquery the component only if they have some clean
                  * up job to do. Components which are queried but do
                  * not actually do anything typically do not have a
                  * unquery. Hence this check is necessary
                  */
-                 (void) om->om_component->fbtlm_file_unquery(file);
-                 opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
-                                     "select: component %s is not selected",
-                                     om->om_component->fbtlm_version.mca_component_name);
-               } /* end if */
-          } /* if not best component */
-          OBJ_RELEASE(om);
+                (void) om->om_component->fbtlm_file_unquery(file);
+                opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
+                                    "select: component %s is not selected",
+                                    om->om_component->fbtlm_version.mca_component_name);
+            } /* end if */
+        }     /* if not best component */
+        OBJ_RELEASE(om);
     } /* traversing through the entire list */
 
     opal_output_verbose(10, ompi_fbtl_base_framework.framework_output,
-                       "select: component %s selected",
+                        "select: component %s selected",
                         best_component->fbtlm_version.mca_component_name);
 
     OBJ_DESTRUCT(&queried);
@@ -260,8 +255,7 @@ int mca_fbtl_base_file_select (struct ompio_file_t *file,
     return err;
 }
 
-
-bool mca_fbtl_base_check_atomicity (struct ompio_file_t *file)
+bool mca_fbtl_base_check_atomicity(struct ompio_file_t *file)
 {
     /* by default, return false. An fbtl can overwrite this setting
     ** if they have support for atomic operations through locks or other

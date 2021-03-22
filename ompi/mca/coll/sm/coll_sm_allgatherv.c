@@ -20,9 +20,8 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
 #include "coll_sm.h"
-
+#include "ompi/constants.h"
 
 /*
  *	allgatherv_intra
@@ -31,12 +30,10 @@
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sm_allgatherv_intra(const void *sbuf, int scount,
-                                 struct ompi_datatype_t *sdtype,
-                                 void * rbuf, const int *rcounts, const int *disps,
-                                 struct ompi_datatype_t *rdtype,
-                                 struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
+int mca_coll_sm_allgatherv_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                 void *rbuf, const int *rcounts, const int *disps,
+                                 struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
+                                 mca_coll_base_module_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

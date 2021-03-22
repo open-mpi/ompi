@@ -24,27 +24,24 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/file/file.h"
+#include "ompi/mca/io/base/base.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/mca/io/base/base.h"
-#include "ompi/file/file.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Register_datarep = PMPI_Register_datarep
-#endif
-#define MPI_Register_datarep PMPI_Register_datarep
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Register_datarep = PMPI_Register_datarep
+#    endif
+#    define MPI_Register_datarep PMPI_Register_datarep
 #endif
 
 static const char FUNC_NAME[] = "MPI_Register_datarep";
 
-
-int MPI_Register_datarep(const char *datarep,
-			 MPI_Datarep_conversion_function *read_conversion_fn,
-			 MPI_Datarep_conversion_function *write_conversion_fn,
-			 MPI_Datarep_extent_function *dtype_file_extent_fn,
-			 void *extra_state)
+int MPI_Register_datarep(const char *datarep, MPI_Datarep_conversion_function *read_conversion_fn,
+                         MPI_Datarep_conversion_function *write_conversion_fn,
+                         MPI_Datarep_extent_function *dtype_file_extent_fn, void *extra_state)
 {
     int rc;
 
@@ -67,11 +64,8 @@ int MPI_Register_datarep(const char *datarep,
     }
 
     /* Call the back-end io component function */
-    rc = mca_io_base_register_datarep(datarep, read_conversion_fn,
-                                      write_conversion_fn,
-                                      dtype_file_extent_fn,
-                                      extra_state);
-
+    rc = mca_io_base_register_datarep(datarep, read_conversion_fn, write_conversion_fn,
+                                      dtype_file_extent_fn, extra_state);
 
     /* All done */
 

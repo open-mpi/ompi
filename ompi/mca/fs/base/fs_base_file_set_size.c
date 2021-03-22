@@ -19,7 +19,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "base.h"
 
@@ -36,18 +35,13 @@
  *	Accepts:	- same arguments as MPI_File_set_size()
  *	Returns:	- Success if size is set
  */
-int mca_fs_base_file_set_size (ompio_file_t *fh,
-                          OMPI_MPI_OFFSET_TYPE size)
+int mca_fs_base_file_set_size(ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE size)
 {
     int err = 0;
 
     err = ftruncate(fh->fd, size);
 
-    fh->f_comm->c_coll->coll_bcast (&err,
-                                   1,
-                                   MPI_INT,
-                                   OMPIO_ROOT,
-                                   fh->f_comm,
+    fh->f_comm->c_coll->coll_bcast(&err, 1, MPI_INT, OMPIO_ROOT, fh->f_comm,
                                    fh->f_comm->c_coll->coll_bcast_module);
     if (-1 == err) {
         return OMPI_ERROR;

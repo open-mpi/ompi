@@ -19,15 +19,14 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "base.h"
 
-#include <fcntl.h>
-#include <unistd.h>
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fs/fs.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 /*
  *	file_close_ufs
@@ -36,12 +35,11 @@
  *	Accepts:	- file handle
  *	Returns:	- Success if file closed
  */
-int mca_fs_base_file_close (ompio_file_t *fh)
+int mca_fs_base_file_close(ompio_file_t *fh)
 {
-    fh->f_comm->c_coll->coll_barrier (fh->f_comm,
-                                     fh->f_comm->c_coll->coll_barrier_module);
+    fh->f_comm->c_coll->coll_barrier(fh->f_comm, fh->f_comm->c_coll->coll_barrier_module);
     /*    close (*(int *)fh->fd);*/
-    close (fh->fd);
+    close(fh->fd);
     /*    if (NULL != fh->fd)
     {
         free (fh->fd);

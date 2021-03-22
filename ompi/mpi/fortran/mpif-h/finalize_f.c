@@ -24,50 +24,40 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_FINALIZE = ompi_finalize_f
-#pragma weak pmpi_finalize = ompi_finalize_f
-#pragma weak pmpi_finalize_ = ompi_finalize_f
-#pragma weak pmpi_finalize__ = ompi_finalize_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_FINALIZE = ompi_finalize_f
+#        pragma weak pmpi_finalize = ompi_finalize_f
+#        pragma weak pmpi_finalize_ = ompi_finalize_f
+#        pragma weak pmpi_finalize__ = ompi_finalize_f
 
-#pragma weak PMPI_Finalize_f = ompi_finalize_f
-#pragma weak PMPI_Finalize_f08 = ompi_finalize_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
-                           pmpi_finalize,
-                           pmpi_finalize_,
-                           pmpi_finalize__,
-                           pompi_finalize_f,
-                           (MPI_Fint *ierr),
-                           (ierr) )
-#endif
+#        pragma weak PMPI_Finalize_f = ompi_finalize_f
+#        pragma weak PMPI_Finalize_f08 = ompi_finalize_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_FINALIZE, pmpi_finalize, pmpi_finalize_, pmpi_finalize__,
+                           pompi_finalize_f, (MPI_Fint * ierr), (ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_FINALIZE = ompi_finalize_f
-#pragma weak mpi_finalize = ompi_finalize_f
-#pragma weak mpi_finalize_ = ompi_finalize_f
-#pragma weak mpi_finalize__ = ompi_finalize_f
+#    pragma weak MPI_FINALIZE = ompi_finalize_f
+#    pragma weak mpi_finalize = ompi_finalize_f
+#    pragma weak mpi_finalize_ = ompi_finalize_f
+#    pragma weak mpi_finalize__ = ompi_finalize_f
 
-#pragma weak MPI_Finalize_f = ompi_finalize_f
-#pragma weak MPI_Finalize_f08 = ompi_finalize_f
+#    pragma weak MPI_Finalize_f = ompi_finalize_f
+#    pragma weak MPI_Finalize_f08 = ompi_finalize_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZE,
-                           mpi_finalize,
-                           mpi_finalize_,
-                           mpi_finalize__,
-                           ompi_finalize_f,
-                           (MPI_Fint *ierr),
-                           (ierr) )
-#else
-#define ompi_finalize_f pompi_finalize_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_FINALIZE, mpi_finalize, mpi_finalize_, mpi_finalize__,
+                           ompi_finalize_f, (MPI_Fint * ierr), (ierr))
+#    else
+#        define ompi_finalize_f pompi_finalize_f
+#    endif
 #endif
-#endif
-
 
 void ompi_finalize_f(MPI_Fint *ierr)
 {
     int c_ierr = PMPI_Finalize();
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -11,5 +11,6 @@
 
 void mpiext_pcollreq_dummy(void);
 
-void mpiext_pcollreq_dummy() {
+void mpiext_pcollreq_dummy()
+{
 }

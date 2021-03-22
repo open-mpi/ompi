@@ -18,22 +18,20 @@
  */
 
 #include "coll_han.h"
+#include "coll_han_trigger.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
-#include "coll_han_trigger.h"
 
 static int mca_coll_han_bcast_t0_task(void *task_args);
 static int mca_coll_han_bcast_t1_task(void *task_args);
 
 static inline void
-mca_coll_han_set_bcast_args(mca_coll_han_bcast_args_t * args, mca_coll_task_t * cur_task, void *buff,
-                            int seg_count, struct ompi_datatype_t *dtype,
-                            int root_up_rank, int root_low_rank,
-                            struct ompi_communicator_t *up_comm,
-                            struct ompi_communicator_t *low_comm,
-                            int num_segments, int cur_seg, int w_rank, int last_seg_count,
-                            bool noop)
+mca_coll_han_set_bcast_args(mca_coll_han_bcast_args_t *args, mca_coll_task_t *cur_task, void *buff,
+                            int seg_count, struct ompi_datatype_t *dtype, int root_up_rank,
+                            int root_low_rank, struct ompi_communicator_t *up_comm,
+                            struct ompi_communicator_t *low_comm, int num_segments, int cur_seg,
+                            int w_rank, int last_seg_count, bool noop)
 {
     args->cur_task = cur_task;
     args->buff = buff;
@@ -62,14 +60,10 @@ mca_coll_han_set_bcast_args(mca_coll_han_bcast_args_t * args, mca_coll_task_t * 
  * iter 3 |       |       |  lb   |  ub   | task: t1, contains ub and lb
  * iter 4 |       |       |       |  lb   | task: t1, contains lb
  */
-int
-mca_coll_han_bcast_intra(void *buff,
-                         int count,
-                         struct ompi_datatype_t *dtype,
-                         int root,
-                         struct ompi_communicator_t *comm, mca_coll_base_module_t * module)
+int mca_coll_han_bcast_intra(void *buff, int count, struct ompi_datatype_t *dtype, int root,
+                             struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *) module;
     int err, seg_count = count, w_rank = ompi_comm_rank(comm);
     ompi_communicator_t *low_comm, *up_comm;
     ptrdiff_t extent, lb;
@@ -77,28 +71,30 @@ mca_coll_han_bcast_intra(void *buff,
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create(comm, han_module);
-    if( OMPI_SUCCESS != err ) {
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle bcast with this communicator. Fall back on another component\n"));
+    if (OMPI_SUCCESS != err) {
+        OPAL_OUTPUT_VERBOSE(
+            (30, mca_coll_han_component.han_output,
+             "han cannot handle bcast with this communicator. Fall back on another component\n"));
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_bcast(buff, count, dtype, root,
-                                        comm, comm->c_coll->coll_bcast_module);
+        return comm->c_coll->coll_bcast(buff, count, dtype, root, comm,
+                                        comm->c_coll->coll_bcast_module);
     }
     /* Topo must be initialized to know rank distribution which then is used to
      * determine if han can be used */
     mca_coll_han_topo_init(comm, han_module, 2);
     if (han_module->are_ppn_imbalanced) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle bcast with this communicator (imbalance). Fall back on another component\n"));
+                             "han cannot handle bcast with this communicator (imbalance). Fall "
+                             "back on another component\n"));
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, bcast);
-        return comm->c_coll->coll_bcast(buff, count, dtype, root,
-                                        comm, comm->c_coll->coll_bcast_module);
+        return comm->c_coll->coll_bcast(buff, count, dtype, root, comm,
+                                        comm->c_coll->coll_bcast_module);
     }
 
     ompi_datatype_get_extent(dtype, &lb, &extent);
@@ -107,13 +103,12 @@ mca_coll_han_bcast_intra(void *buff,
     /* use MCA parameters for now */
     low_comm = han_module->cached_low_comms[mca_coll_han_component.han_bcast_low_module];
     up_comm = han_module->cached_up_comms[mca_coll_han_component.han_bcast_up_module];
-    COLL_BASE_COMPUTED_SEGCOUNT(mca_coll_han_component.han_bcast_segsize, dtype_size,
-                                seg_count);
+    COLL_BASE_COMPUTED_SEGCOUNT(mca_coll_han_component.han_bcast_segsize, dtype_size, seg_count);
 
     int num_segments = (count + seg_count - 1) / seg_count;
     OPAL_OUTPUT_VERBOSE((20, mca_coll_han_component.han_output,
-                         "In HAN seg_count %d count %d num_seg %d\n",
-                         seg_count, count, num_segments));
+                         "In HAN seg_count %d count %d num_seg %d\n", seg_count, count,
+                         num_segments));
 
     int *vranks = han_module->cached_vranks;
     int low_rank = ompi_comm_rank(low_comm);
@@ -129,10 +124,9 @@ mca_coll_han_bcast_intra(void *buff,
     mca_coll_task_t *t0 = OBJ_NEW(mca_coll_task_t);
     /* Setup up t0 task arguments */
     mca_coll_han_bcast_args_t *t = malloc(sizeof(mca_coll_han_bcast_args_t));
-    mca_coll_han_set_bcast_args(t, t0, (char *) buff, seg_count, dtype,
-                                root_up_rank, root_low_rank, up_comm, low_comm,
-                                num_segments, 0, w_rank, count - (num_segments - 1) * seg_count,
-                                low_rank != root_low_rank);
+    mca_coll_han_set_bcast_args(t, t0, (char *) buff, seg_count, dtype, root_up_rank, root_low_rank,
+                                up_comm, low_comm, num_segments, 0, w_rank,
+                                count - (num_segments - 1) * seg_count, low_rank != root_low_rank);
     /* Init the first task */
     init_task(t0, mca_coll_han_bcast_t0_task, (void *) t);
     issue_task(t0);
@@ -165,8 +159,8 @@ int mca_coll_han_bcast_t0_task(void *task_args)
 {
     mca_coll_han_bcast_args_t *t = (mca_coll_han_bcast_args_t *) task_args;
 
-    OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "[%d]: in t0 %d\n", t->w_rank,
-                         t->cur_seg));
+    OPAL_OUTPUT_VERBOSE(
+        (30, mca_coll_han_component.han_output, "[%d]: in t0 %d\n", t->w_rank, t->cur_seg));
     OBJ_RELEASE(t->cur_task);
     if (t->noop) {
         return OMPI_SUCCESS;
@@ -188,27 +182,25 @@ int mca_coll_han_bcast_t1_task(void *task_args)
     int tmp_count = t->seg_count;
     ptrdiff_t extent, lb;
 
-    OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "[%d]: in t1 %d\n", t->w_rank,
-                         t->cur_seg));
+    OPAL_OUTPUT_VERBOSE(
+        (30, mca_coll_han_component.han_output, "[%d]: in t1 %d\n", t->w_rank, t->cur_seg));
     OBJ_RELEASE(t->cur_task);
     ompi_datatype_get_extent(t->dtype, &lb, &extent);
     if (!t->noop) {
-        if (t->cur_seg <= t->num_segments - 2 ) {
+        if (t->cur_seg <= t->num_segments - 2) {
             if (t->cur_seg == t->num_segments - 2) {
                 tmp_count = t->last_seg_count;
             }
-            t->up_comm->c_coll->coll_ibcast((char *) t->buff + extent * t->seg_count,
-                                            tmp_count, t->dtype, t->root_up_rank,
-                                            t->up_comm, &ibcast_req,
+            t->up_comm->c_coll->coll_ibcast((char *) t->buff + extent * t->seg_count, tmp_count,
+                                            t->dtype, t->root_up_rank, t->up_comm, &ibcast_req,
                                             t->up_comm->c_coll->coll_ibcast_module);
         }
     }
 
     /* are we the last segment to be pushed downstream ? */
     tmp_count = (t->cur_seg == (t->num_segments - 1)) ? t->last_seg_count : t->seg_count;
-    t->low_comm->c_coll->coll_bcast((char *) t->buff,
-                                    tmp_count, t->dtype, t->root_low_rank, t->low_comm,
-                                    t->low_comm->c_coll->coll_bcast_module);
+    t->low_comm->c_coll->coll_bcast((char *) t->buff, tmp_count, t->dtype, t->root_low_rank,
+                                    t->low_comm, t->low_comm->c_coll->coll_bcast_module);
 
     if (NULL != ibcast_req) {
         ompi_request_wait(&ibcast_req, MPI_STATUS_IGNORE);
@@ -221,16 +213,12 @@ int mca_coll_han_bcast_t1_task(void *task_args)
  * Short implementation of bcast that only does hierarchical
  * communications without tasks.
  */
-int
-mca_coll_han_bcast_intra_simple(void *buff,
-                                int count,
-                                struct ompi_datatype_t *dtype,
-                                int root,
-                                struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
+int mca_coll_han_bcast_intra_simple(void *buff, int count, struct ompi_datatype_t *dtype, int root,
+                                    struct ompi_communicator_t *comm,
+                                    mca_coll_base_module_t *module)
 {
     /* create the subcommunicators */
-    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *) module;
     ompi_communicator_t *low_comm, *up_comm;
     int err;
 #if OPAL_ENABLE_DEBUG
@@ -239,28 +227,30 @@ mca_coll_han_bcast_intra_simple(void *buff,
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create_new(comm, han_module);
-    if( OMPI_SUCCESS != err ) {
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle bcast with this communicator. Fall back on another component\n"));
+    if (OMPI_SUCCESS != err) {
+        OPAL_OUTPUT_VERBOSE(
+            (30, mca_coll_han_component.han_output,
+             "han cannot handle bcast with this communicator. Fall back on another component\n"));
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_bcast(buff, count, dtype, root,
-                                        comm, comm->c_coll->coll_bcast_module);
+        return comm->c_coll->coll_bcast(buff, count, dtype, root, comm,
+                                        comm->c_coll->coll_bcast_module);
     }
     /* Topo must be initialized to know rank distribution which then is used to
      * determine if han can be used */
     mca_coll_han_topo_init(comm, han_module, 2);
     if (han_module->are_ppn_imbalanced) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle bcast with this communicator (imbalance). Fall back on another component\n"));
+                             "han cannot handle bcast with this communicator (imbalance). Fall "
+                             "back on another component\n"));
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, bcast);
-        return comm->c_coll->coll_bcast(buff, count, dtype, root,
-                                        comm, comm->c_coll->coll_bcast_module);
+        return comm->c_coll->coll_bcast(buff, count, dtype, root, comm,
+                                        comm->c_coll->coll_bcast_module);
     }
 
     low_comm = han_module->sub_comm[INTRA_NODE];
@@ -273,23 +263,22 @@ mca_coll_han_bcast_intra_simple(void *buff,
 
     mca_coll_han_get_ranks(vranks, root, low_size, &root_low_rank, &root_up_rank);
     OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                         "[%d]: root_low_rank %d root_up_rank %d\n",
-                         w_rank, root_low_rank, root_up_rank));
+                         "[%d]: root_low_rank %d root_up_rank %d\n", w_rank, root_low_rank,
+                         root_up_rank));
 
     if (low_rank == root_low_rank) {
-        up_comm->c_coll->coll_bcast(buff, count, dtype, root_up_rank,
-                                    up_comm, up_comm->c_coll->coll_bcast_module);
+        up_comm->c_coll->coll_bcast(buff, count, dtype, root_up_rank, up_comm,
+                                    up_comm->c_coll->coll_bcast_module);
 
         /* To remove when han has better sub-module selection.
            For now switching to ibcast enables to make runs with libnbc. */
-        //ompi_request_t req;
-        //up_comm->c_coll->coll_ibcast(buff, count, dtype, root_up_rank,
+        // ompi_request_t req;
+        // up_comm->c_coll->coll_ibcast(buff, count, dtype, root_up_rank,
         //                             up_comm, &req, up_comm->c_coll->coll_ibcast_module);
-        //ompi_request_wait(&req, MPI_STATUS_IGNORE);
-
+        // ompi_request_wait(&req, MPI_STATUS_IGNORE);
     }
-    low_comm->c_coll->coll_bcast(buff, count, dtype, root_low_rank,
-                                 low_comm, low_comm->c_coll->coll_bcast_module);
+    low_comm->c_coll->coll_bcast(buff, count, dtype, root_low_rank, low_comm,
+                                 low_comm->c_coll->coll_bcast_module);
 
     return OMPI_SUCCESS;
 }

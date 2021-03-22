@@ -47,11 +47,11 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/attribute/attribute.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/fortran/base/datarep.h"
 #include "ompi/op/op.h"
 #include "ompi/request/grequest.h"
-#include "ompi/mpi/fortran/base/datarep.h"
 
 #include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 
@@ -80,26 +80,81 @@ BEGIN_C_DECLS
     OMPI_DECLSPEC ret P##mixed_name##_f08 args;            \
     OMPI_DECLSPEC ret P##mixed_name##_f args
 
-PN2(void, MPIX_Allgather_init, mpix_allgather_init, MPIX_ALLGATHER_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Allgatherv_init, mpix_allgatherv_init, MPIX_ALLGATHERV_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Allgather_init, mpix_allgather_init, MPIX_ALLGATHER_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+     MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Allgatherv_init, mpix_allgatherv_init, MPIX_ALLGATHERV_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts,
+     MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request,
+     MPI_Fint *ierr));
 END_C_DECLS
-PN2(void, MPIX_Allreduce_init, mpix_allreduce_init, MPIX_ALLREDUCE_INIT, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Alltoall_init, mpix_alltoall_init, MPIX_ALLTOALL_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Alltoallv_init, mpix_alltoallv_init, MPIX_ALLTOALLV_INIT, (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Alltoallw_init, mpix_alltoallw_init, MPIX_ALLTOALLW_INIT, (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtypes, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Barrier_init, mpix_barrier_init, MPIX_BARRIER_INIT, (MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Bcast_init, mpix_bcast_init, MPIX_BCAST_INIT, (char *buffer, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Exscan_init, mpix_exscan_init, MPIX_EXSCAN_INIT, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Gather_init, mpix_gather_init, MPIX_GATHER_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Gatherv_init, mpix_gatherv_init, MPIX_GATHERV_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Reduce_init, mpix_reduce_init, MPIX_REDUCE_INIT, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Reduce_scatter_init, mpix_reduce_scatter_init, MPIX_REDUCE_SCATTER_INIT, (char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Reduce_scatter_block_init, mpix_reduce_scatter_block_init, MPIX_REDUCE_SCATTER_BLOCK_INIT, (char *sendbuf, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Scan_init, mpix_scan_init, MPIX_SCAN_INIT, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Scatter_init, mpix_scatter_init, MPIX_SCATTER_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Scatterv_init, mpix_scatterv_init, MPIX_SCATTERV_INIT, (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Neighbor_allgather_init, mpix_neighbor_allgather_init, MPIX_NEIGHBOR_ALLGATHER_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Neighbor_allgatherv_init, mpix_neighbor_allgatherv_init, MPIX_NEIGHBOR_ALLGATHERV_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Neighbor_alltoall_init, mpix_neighbor_alltoall_init, MPIX_NEIGHBOR_ALLTOALL_INIT, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Neighbor_alltoallv_init, mpix_neighbor_alltoallv_init, MPIX_NEIGHBOR_ALLTOALLV_INIT, (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPIX_Neighbor_alltoallw_init, mpix_neighbor_alltoallw_init, MPIX_NEIGHBOR_ALLTOALLW_INIT, (char *sendbuf, MPI_Fint *sendcounts, MPI_Aint *sdispls, MPI_Fint *sendtypes, char *recvbuf, MPI_Fint *recvcounts, MPI_Aint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Allreduce_init, mpix_allreduce_init, MPIX_ALLREDUCE_INIT,
+    (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op,
+     MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Alltoall_init, mpix_alltoall_init, MPIX_ALLTOALL_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+     MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Alltoallv_init, mpix_alltoallv_init, MPIX_ALLTOALLV_INIT,
+    (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf,
+     MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info,
+     MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Alltoallw_init, mpix_alltoallw_init, MPIX_ALLTOALLW_INIT,
+    (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtypes, char *recvbuf,
+     MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *info,
+     MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Barrier_init, mpix_barrier_init, MPIX_BARRIER_INIT,
+    (MPI_Fint * comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Bcast_init, mpix_bcast_init, MPIX_BCAST_INIT,
+    (char *buffer, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *root, MPI_Fint *comm,
+     MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Exscan_init, mpix_exscan_init, MPIX_EXSCAN_INIT,
+    (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op,
+     MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Gather_init, mpix_gather_init, MPIX_GATHER_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+     MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request,
+     MPI_Fint *ierr));
+PN2(void, MPIX_Gatherv_init, mpix_gatherv_init, MPIX_GATHERV_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts,
+     MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info,
+     MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Reduce_init, mpix_reduce_init, MPIX_REDUCE_INIT,
+    (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op,
+     MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Reduce_scatter_init, mpix_reduce_scatter_init, MPIX_REDUCE_SCATTER_INIT,
+    (char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op,
+     MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Reduce_scatter_block_init, mpix_reduce_scatter_block_init,
+    MPIX_REDUCE_SCATTER_BLOCK_INIT,
+    (char *sendbuf, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *datatype, MPI_Fint *op,
+     MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Scan_init, mpix_scan_init, MPIX_SCAN_INIT,
+    (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op,
+     MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Scatter_init, mpix_scatter_init, MPIX_SCATTER_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+     MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request,
+     MPI_Fint *ierr));
+PN2(void, MPIX_Scatterv_init, mpix_scatterv_init, MPIX_SCATTERV_INIT,
+    (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf,
+     MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info,
+     MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Neighbor_allgather_init, mpix_neighbor_allgather_init, MPIX_NEIGHBOR_ALLGATHER_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+     MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Neighbor_allgatherv_init, mpix_neighbor_allgatherv_init,
+    MPIX_NEIGHBOR_ALLGATHERV_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts,
+     MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request,
+     MPI_Fint *ierr));
+PN2(void, MPIX_Neighbor_alltoall_init, mpix_neighbor_alltoall_init, MPIX_NEIGHBOR_ALLTOALL_INIT,
+    (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount,
+     MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Neighbor_alltoallv_init, mpix_neighbor_alltoallv_init, MPIX_NEIGHBOR_ALLTOALLV_INIT,
+    (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf,
+     MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info,
+     MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Neighbor_alltoallw_init, mpix_neighbor_alltoallw_init, MPIX_NEIGHBOR_ALLTOALLW_INIT,
+    (char *sendbuf, MPI_Fint *sendcounts, MPI_Aint *sdispls, MPI_Fint *sendtypes, char *recvbuf,
+     MPI_Fint *recvcounts, MPI_Aint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *info,
+     MPI_Fint *request, MPI_Fint *ierr));

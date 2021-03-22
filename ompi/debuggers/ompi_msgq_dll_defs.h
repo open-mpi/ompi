@@ -52,22 +52,20 @@
  * Information associated with a specific process
  */
 
-typedef struct group_t
-{
-    mqs_taddr_t group_base;          /* Where was it in the process  */
-    int         ref_count;           /* How many references to us */
-    int         entries;             /* How many entries */
-    int*        local_to_global;     /* The translation table */
+typedef struct group_t {
+    mqs_taddr_t group_base; /* Where was it in the process  */
+    int ref_count;          /* How many references to us */
+    int entries;            /* How many entries */
+    int *local_to_global;   /* The translation table */
 } group_t;
 
 /* Internal structure we hold for each communicator */
-typedef struct communicator_t
-{
-    struct communicator_t * next;
-    group_t *               group;		/* Translations */
-    mqs_taddr_t             comm_ptr;   /* pointer to the communicator in the process memory */
-    int                     present;    /* validation marker */
-    mqs_communicator        comm_info;  /* Info needed at the higher level */
+typedef struct communicator_t {
+    struct communicator_t *next;
+    group_t *group;             /* Translations */
+    mqs_taddr_t comm_ptr;       /* pointer to the communicator in the process memory */
+    int present;                /* validation marker */
+    mqs_communicator comm_info; /* Info needed at the higher level */
 } communicator_t;
 
 typedef struct mqs_ompi_opal_list_t_pos {
@@ -82,41 +80,39 @@ typedef struct {
     mqs_taddr_t upper_bound;
     mqs_tword_t header_space;
     mqs_taddr_t free_list;
-    mqs_tword_t fl_frag_class;         /* opal_class_t* */
-    mqs_tword_t fl_mpool;              /* struct mca_mpool_base_module_t* */
-    mqs_tword_t fl_frag_size;          /* size_t */
-    mqs_tword_t fl_frag_alignment;     /* size_t */
-    mqs_tword_t fl_num_per_alloc;      /* size_t */
-    mqs_tword_t fl_num_allocated;      /* size_t */
-    mqs_tword_t fl_num_initial_alloc;  /* size_t */
+    mqs_tword_t fl_frag_class;        /* opal_class_t* */
+    mqs_tword_t fl_mpool;             /* struct mca_mpool_base_module_t* */
+    mqs_tword_t fl_frag_size;         /* size_t */
+    mqs_tword_t fl_frag_alignment;    /* size_t */
+    mqs_tword_t fl_num_per_alloc;     /* size_t */
+    mqs_tword_t fl_num_allocated;     /* size_t */
+    mqs_tword_t fl_num_initial_alloc; /* size_t */
 } mqs_opal_free_list_t_pos;
-
 
 /* Information for a single process, a list of communicators, some
  * useful addresses, and the state of the iterators.
  */
-typedef struct
-{
-  struct communicator_t *communicator_list;	/* List of communicators in the process */
+typedef struct {
+    struct communicator_t *communicator_list; /* List of communicators in the process */
 
-  /* Addresses in the target process */
-  mqs_taddr_t send_queue_base;			/* Where to find the send message queues */
-  mqs_taddr_t recv_queue_base;			/* Where to find the recv message queues */
-  mqs_taddr_t sendq_base;			/* Where to find the send queue */
-  mqs_taddr_t commlist_base;			/* Where to find the list of communicators */
-  /* Other info we need to remember about it */
-  mqs_tword_t comm_number_free;         /* the number of available positions in
+    /* Addresses in the target process */
+    mqs_taddr_t send_queue_base; /* Where to find the send message queues */
+    mqs_taddr_t recv_queue_base; /* Where to find the recv message queues */
+    mqs_taddr_t sendq_base;      /* Where to find the send queue */
+    mqs_taddr_t commlist_base;   /* Where to find the list of communicators */
+    /* Other info we need to remember about it */
+    mqs_tword_t comm_number_free;       /* the number of available positions in
                                          * the communicator array. */
-  mqs_tword_t comm_lowest_free;         /* the lowest free communicator */
-  mqs_tword_t show_internal_requests;   /* show or not the Open MPI internal requests */
-  /* State for the iterators */
-  struct communicator_t *current_communicator;	/* Easy, we're walking a simple list */
+    mqs_tword_t comm_lowest_free;       /* the lowest free communicator */
+    mqs_tword_t show_internal_requests; /* show or not the Open MPI internal requests */
+    /* State for the iterators */
+    struct communicator_t *current_communicator; /* Easy, we're walking a simple list */
 
-  int world_proc_array_entries;
-  mqs_taddr_t* world_proc_array;
+    int world_proc_array_entries;
+    mqs_taddr_t *world_proc_array;
 
-  mqs_opal_free_list_t_pos next_msg;            /* And state for the message iterator */
-  mqs_op_class  what;				/* What queue are we looking on */
+    mqs_opal_free_list_t_pos next_msg; /* And state for the message iterator */
+    mqs_op_class what;                 /* What queue are we looking on */
 } mpi_process_info_extra;
 
 #endif

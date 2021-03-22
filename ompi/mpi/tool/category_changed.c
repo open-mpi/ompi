@@ -14,23 +14,22 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_category_changed = PMPI_T_category_changed
+#    pragma weak MPI_T_category_changed = PMPI_T_category_changed
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
-
 
 int MPI_T_category_changed(int *stamp)
 {
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ompi_mpit_lock ();
-    *stamp = mca_base_var_group_get_stamp ();
-    ompi_mpit_unlock ();
+    ompi_mpit_lock();
+    *stamp = mca_base_var_group_get_stamp();
+    ompi_mpit_unlock();
 
     return MPI_SUCCESS;
 }

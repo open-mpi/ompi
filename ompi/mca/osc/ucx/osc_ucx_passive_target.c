@@ -9,33 +9,32 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/mca/osc/osc.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
 
 OBJ_CLASS_INSTANCE(ompi_osc_ucx_lock_t, opal_object_t, NULL, NULL);
 
-static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
+static inline int start_shared(ompi_osc_ucx_module_t *module, int target)
+{
     uint64_t result_value = -1;
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
     int ret = OMPI_SUCCESS;
 
     while (true) {
-        ret = opal_common_ucx_wpmem_fetch(module->state_mem, UCP_ATOMIC_FETCH_OP_FADD, 1,
-                                        target, &result_value, sizeof(result_value),
-                                        remote_addr);
+        ret = opal_common_ucx_wpmem_fetch(module->state_mem, UCP_ATOMIC_FETCH_OP_FADD, 1, target,
+                                          &result_value, sizeof(result_value), remote_addr);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
 
-        assert((int64_t)result_value >= 0);
+        assert((int64_t) result_value >= 0);
         if (result_value >= TARGET_LOCK_EXCLUSIVE) {
-            ret = opal_common_ucx_wpmem_post(module->state_mem,
-                                           UCP_ATOMIC_POST_OP_ADD, (-1), target,
-                                           sizeof(uint64_t), remote_addr);
+            ret = opal_common_ucx_wpmem_post(module->state_mem, UCP_ATOMIC_POST_OP_ADD, (-1),
+                                             target, sizeof(uint64_t), remote_addr);
             if (OMPI_SUCCESS != ret) {
                 return ret;
             }
@@ -48,22 +47,23 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
     return ret;
 }
 
-static inline int end_shared(ompi_osc_ucx_module_t *module, int target) {
+static inline int end_shared(ompi_osc_ucx_module_t *module, int target)
+{
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
-    return opal_common_ucx_wpmem_post(module->state_mem, UCP_ATOMIC_POST_OP_ADD,
-                                    (-1), target, sizeof(uint64_t), remote_addr);
+    return opal_common_ucx_wpmem_post(module->state_mem, UCP_ATOMIC_POST_OP_ADD, (-1), target,
+                                      sizeof(uint64_t), remote_addr);
 }
 
-static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
+static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target)
+{
     uint64_t result_value = -1;
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
     int ret = OMPI_SUCCESS;
 
     for (;;) {
-        ret = opal_common_ucx_wpmem_cmpswp(module->state_mem,
-                                         TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
-                                         target, &result_value, sizeof(result_value),
-                                         remote_addr);
+        ret = opal_common_ucx_wpmem_cmpswp(module->state_mem, TARGET_LOCK_UNLOCKED,
+                                           TARGET_LOCK_EXCLUSIVE, target, &result_value,
+                                           sizeof(result_value), remote_addr);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
@@ -74,15 +74,17 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
     }
 }
 
-static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {
+static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target)
+{
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
     return opal_common_ucx_wpmem_post(module->state_mem, UCP_ATOMIC_POST_OP_ADD,
-                                      -((int64_t)TARGET_LOCK_EXCLUSIVE), target,
-                                      sizeof(uint64_t), remote_addr);
+                                      -((int64_t) TARGET_LOCK_EXCLUSIVE), target, sizeof(uint64_t),
+                                      remote_addr);
 }
 
-int ompi_osc_ucx_lock(int lock_type, int target, int mpi_assert, struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+int ompi_osc_ucx_lock(int lock_type, int target, int mpi_assert, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     ompi_osc_ucx_lock_t *lock = NULL;
     ompi_osc_ucx_epoch_t original_epoch = module->epoch_type.access;
     int ret = OMPI_SUCCESS;
@@ -93,14 +95,14 @@ int ompi_osc_ucx_lock(int lock_type, int target, int mpi_assert, struct ompi_win
     }
 
     if (module->lock_count == 0) {
-        if (module->epoch_type.access != NONE_EPOCH &&
-            module->epoch_type.access != FENCE_EPOCH) {
+        if (module->epoch_type.access != NONE_EPOCH && module->epoch_type.access != FENCE_EPOCH) {
             return OMPI_ERR_RMA_SYNC;
         }
     } else {
         ompi_osc_ucx_lock_t *item = NULL;
         assert(module->epoch_type.access == PASSIVE_EPOCH);
-        opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target, (void **) &item);
+        opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target,
+                                         (void **) &item);
         if (item != NULL) {
             return OMPI_ERR_RMA_SYNC;
         }
@@ -127,7 +129,8 @@ int ompi_osc_ucx_lock(int lock_type, int target, int mpi_assert, struct ompi_win
     }
 
     if (ret == OMPI_SUCCESS) {
-        opal_hash_table_set_value_uint32(&module->outstanding_locks, (uint32_t)target, (void *)lock);
+        opal_hash_table_set_value_uint32(&module->outstanding_locks, (uint32_t) target,
+                                         (void *) lock);
     } else {
         OBJ_RELEASE(lock);
         module->epoch_type.access = original_epoch;
@@ -136,8 +139,9 @@ int ompi_osc_ucx_lock(int lock_type, int target, int mpi_assert, struct ompi_win
     return ret;
 }
 
-int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     ompi_osc_ucx_lock_t *lock = NULL;
     int ret = OMPI_SUCCESS;
 
@@ -145,13 +149,13 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target, (void **) &lock);
+    opal_hash_table_get_value_uint32(&module->outstanding_locks, (uint32_t) target,
+                                     (void **) &lock);
     if (lock == NULL) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    opal_hash_table_remove_value_uint32(&module->outstanding_locks,
-                                        (uint32_t)target);
+    opal_hash_table_remove_value_uint32(&module->outstanding_locks, (uint32_t) target);
 
     ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
     if (ret != OMPI_SUCCESS) {
@@ -177,8 +181,9 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
     return ret;
 }
 
-int ompi_osc_ucx_lock_all(int mpi_assert, struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+int ompi_osc_ucx_lock_all(int mpi_assert, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
     if (module->no_locks) {
@@ -186,8 +191,7 @@ int ompi_osc_ucx_lock_all(int mpi_assert, struct ompi_win_t *win) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    if (module->epoch_type.access != NONE_EPOCH &&
-        module->epoch_type.access != FENCE_EPOCH) {
+    if (module->epoch_type.access != NONE_EPOCH && module->epoch_type.access != FENCE_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -214,8 +218,9 @@ int ompi_osc_ucx_lock_all(int mpi_assert, struct ompi_win_t *win) {
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*)win->w_osc_module;
+int ompi_osc_ucx_unlock_all(struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int comm_size = ompi_comm_size(module->comm);
     int ret = OMPI_SUCCESS;
 
@@ -242,12 +247,13 @@ int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
     return ret;
 }
 
-int ompi_osc_ucx_sync(struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+int ompi_osc_ucx_sync(struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
-    if (module->epoch_type.access != PASSIVE_EPOCH &&
-        module->epoch_type.access != PASSIVE_ALL_EPOCH) {
+    if (module->epoch_type.access != PASSIVE_EPOCH
+        && module->epoch_type.access != PASSIVE_ALL_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -261,12 +267,13 @@ int ompi_osc_ucx_sync(struct ompi_win_t *win) {
     return ret;
 }
 
-int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+int ompi_osc_ucx_flush(int target, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
-    if (module->epoch_type.access != PASSIVE_EPOCH &&
-        module->epoch_type.access != PASSIVE_ALL_EPOCH) {
+    if (module->epoch_type.access != PASSIVE_EPOCH
+        && module->epoch_type.access != PASSIVE_ALL_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -278,12 +285,13 @@ int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_ucx_flush_all(struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+int ompi_osc_ucx_flush_all(struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
-    if (module->epoch_type.access != PASSIVE_EPOCH &&
-        module->epoch_type.access != PASSIVE_ALL_EPOCH) {
+    if (module->epoch_type.access != PASSIVE_EPOCH
+        && module->epoch_type.access != PASSIVE_ALL_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -295,13 +303,15 @@ int ompi_osc_ucx_flush_all(struct ompi_win_t *win) {
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_ucx_flush_local(int target, struct ompi_win_t *win) {
+int ompi_osc_ucx_flush_local(int target, struct ompi_win_t *win)
+{
     /* TODO: currently euqals to ompi_osc_ucx_flush, should find a way
      * to implement local completion */
     return ompi_osc_ucx_flush(target, win);
 }
 
-int ompi_osc_ucx_flush_local_all(struct ompi_win_t *win) {
+int ompi_osc_ucx_flush_local_all(struct ompi_win_t *win)
+{
     /* TODO: currently euqals to ompi_osc_ucx_flush_all, should find a way
      * to implement local completion */
     return ompi_osc_ucx_flush_all(win);

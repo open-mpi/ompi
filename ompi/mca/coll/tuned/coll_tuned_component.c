@@ -31,45 +31,45 @@
  */
 
 #include "ompi_config.h"
-#include "opal/util/output.h"
 #include "coll_tuned.h"
+#include "opal/util/output.h"
 
-#include "mpi.h"
-#include "ompi/mca/coll/coll.h"
 #include "coll_tuned.h"
 #include "coll_tuned_dynamic_file.h"
+#include "mpi.h"
+#include "ompi/mca/coll/coll.h"
 
 /*
  * Public string showing the coll ompi_tuned component version number
  */
-const char *ompi_coll_tuned_component_version_string =
-    "Open MPI tuned collective MCA component version " OMPI_VERSION;
+const char *ompi_coll_tuned_component_version_string
+    = "Open MPI tuned collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variable
  */
-int   ompi_coll_tuned_stream = -1;
-int   ompi_coll_tuned_priority = 30;
-bool  ompi_coll_tuned_use_dynamic_rules = false;
-char* ompi_coll_tuned_dynamic_rules_filename = (char*) NULL;
-int   ompi_coll_tuned_init_tree_fanout = 4;
-int   ompi_coll_tuned_init_chain_fanout = 4;
-int   ompi_coll_tuned_init_max_requests = 128;
-int   ompi_coll_tuned_alltoall_small_msg = 200;
-int   ompi_coll_tuned_alltoall_intermediate_msg = 3000;
+int ompi_coll_tuned_stream = -1;
+int ompi_coll_tuned_priority = 30;
+bool ompi_coll_tuned_use_dynamic_rules = false;
+char *ompi_coll_tuned_dynamic_rules_filename = (char *) NULL;
+int ompi_coll_tuned_init_tree_fanout = 4;
+int ompi_coll_tuned_init_chain_fanout = 4;
+int ompi_coll_tuned_init_max_requests = 128;
+int ompi_coll_tuned_alltoall_small_msg = 200;
+int ompi_coll_tuned_alltoall_intermediate_msg = 3000;
 
 /* Set it to the same value as intermediate msg by default, so it does not affect
  * default algorithm selection. Changing this value will force using linear with
  * sync algorithm on certain message sizes. */
-int   ompi_coll_tuned_alltoall_large_msg = 3000;
-int   ompi_coll_tuned_alltoall_min_procs = 0; /* disable by default */
-int   ompi_coll_tuned_alltoall_max_requests  = 0; /* no limit for alltoall by default */
+int ompi_coll_tuned_alltoall_large_msg = 3000;
+int ompi_coll_tuned_alltoall_min_procs = 0;    /* disable by default */
+int ompi_coll_tuned_alltoall_max_requests = 0; /* no limit for alltoall by default */
 
 /* Disable by default */
-int   ompi_coll_tuned_scatter_intermediate_msg = 0;
-int   ompi_coll_tuned_scatter_large_msg = 0;
-int   ompi_coll_tuned_scatter_min_procs = 0;
-int   ompi_coll_tuned_scatter_blocking_send_ratio = 0;
+int ompi_coll_tuned_scatter_intermediate_msg = 0;
+int ompi_coll_tuned_scatter_large_msg = 0;
+int ompi_coll_tuned_scatter_min_procs = 0;
+int ompi_coll_tuned_scatter_blocking_send_ratio = 0;
 
 /* forced alogrithm variables */
 /* indices for the MCA parameters */
@@ -132,62 +132,56 @@ static int tuned_register(void)
     ompi_coll_tuned_priority = 30;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "priority", "Priority of the tuned coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_priority);
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_coll_tuned_priority);
 
     /* some initial guesses at topology parameters */
     ompi_coll_tuned_init_tree_fanout = 4;
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "init_tree_fanout",
-                                           "Inital fanout used in the tree topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_init_tree_fanout);
+    (void) mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "init_tree_fanout",
+        "Inital fanout used in the tree topologies for each communicator. This is only an initial "
+        "guess, if a tuned collective needs a different fanout for an operation, it build it "
+        "dynamically. This parameter is only for the first guess and might save a little time",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
+        &ompi_coll_tuned_init_tree_fanout);
 
     ompi_coll_tuned_init_chain_fanout = 4;
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "init_chain_fanout",
-                                           "Inital fanout used in the chain (fanout followed by pipeline) topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_init_chain_fanout);
+    (void) mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "init_chain_fanout",
+        "Inital fanout used in the chain (fanout followed by pipeline) topologies for each "
+        "communicator. This is only an initial guess, if a tuned collective needs a different "
+        "fanout for an operation, it build it dynamically. This parameter is only for the first "
+        "guess and might save a little time",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
+        &ompi_coll_tuned_init_chain_fanout);
 
     ompi_coll_tuned_alltoall_small_msg = 200;
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "alltoall_small_msg",
-                                           "threshold (if supported) to decide if small MSGs alltoall algorithm will be used",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_alltoall_small_msg);
+    (void) mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "alltoall_small_msg",
+        "threshold (if supported) to decide if small MSGs alltoall algorithm will be used",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
+        &ompi_coll_tuned_alltoall_small_msg);
 
     ompi_coll_tuned_alltoall_intermediate_msg = 3000;
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "alltoall_intermediate_msg",
-                                           "threshold (if supported) to decide if intermediate MSGs alltoall algorithm will be used",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_alltoall_intermediate_msg);
+    (void) mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "alltoall_intermediate_msg",
+        "threshold (if supported) to decide if intermediate MSGs alltoall algorithm will be used",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
+        &ompi_coll_tuned_alltoall_intermediate_msg);
 
-    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
-                                           "use_dynamic_rules",
-                                           "Switch used to decide if we use static (compiled/if statements) or dynamic (built at runtime) decision function rules",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_use_dynamic_rules);
+    (void) mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "use_dynamic_rules",
+        "Switch used to decide if we use static (compiled/if statements) or dynamic (built at "
+        "runtime) decision function rules",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
+        &ompi_coll_tuned_use_dynamic_rules);
 
     ompi_coll_tuned_dynamic_rules_filename = NULL;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "dynamic_rules_filename",
-                                           "Filename of configuration file that contains the dynamic (@runtime) decision function rules",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
+                                           "Filename of configuration file that contains the "
+                                           "dynamic (@runtime) decision function rules",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_dynamic_rules_filename);
 
@@ -200,8 +194,10 @@ static int tuned_register(void)
     ompi_coll_tuned_barrier_intra_check_forced_init(&ompi_coll_tuned_forced_params[BARRIER]);
     ompi_coll_tuned_bcast_intra_check_forced_init(&ompi_coll_tuned_forced_params[BCAST]);
     ompi_coll_tuned_reduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[REDUCE]);
-    ompi_coll_tuned_reduce_scatter_intra_check_forced_init(&ompi_coll_tuned_forced_params[REDUCESCATTER]);
-    ompi_coll_tuned_reduce_scatter_block_intra_check_forced_init(&ompi_coll_tuned_forced_params[REDUCESCATTERBLOCK]);
+    ompi_coll_tuned_reduce_scatter_intra_check_forced_init(
+        &ompi_coll_tuned_forced_params[REDUCESCATTER]);
+    ompi_coll_tuned_reduce_scatter_block_intra_check_forced_init(
+        &ompi_coll_tuned_forced_params[REDUCESCATTERBLOCK]);
     ompi_coll_tuned_gather_intra_check_forced_init(&ompi_coll_tuned_forced_params[GATHER]);
     ompi_coll_tuned_scatter_intra_check_forced_init(&ompi_coll_tuned_forced_params[SCATTER]);
     ompi_coll_tuned_exscan_intra_check_forced_init(&ompi_coll_tuned_forced_params[EXSCAN]);
@@ -218,27 +214,33 @@ static int tuned_open(void)
     if (ompi_coll_base_framework.framework_verbose) {
         ompi_coll_tuned_stream = opal_output_open(NULL);
     }
-#endif  /* OPAL_ENABLE_DEBUG */
+#endif /* OPAL_ENABLE_DEBUG */
 
-    /* now check that the user hasn't overrode any of the decision functions if dynamic rules are enabled */
+    /* now check that the user hasn't overrode any of the decision functions if dynamic rules are
+     * enabled */
     /* the user can redo this before every comm dup/create if they like */
     /* this is useful for benchmarking and user knows best tuning */
     /* as this is the component we only lookup the indicies of the mca params */
     /* the actual values are looked up during comm create via module init */
 
     /* intra functions first */
-    /* if dynamic rules allowed then look up dynamic rules config filename, else we leave it an empty filename (NULL) */
+    /* if dynamic rules allowed then look up dynamic rules config filename, else we leave it an
+     * empty filename (NULL) */
     /* by default DISABLE dynamic rules and instead use fixed [if based] rules */
     if (ompi_coll_tuned_use_dynamic_rules) {
-        if( ompi_coll_tuned_dynamic_rules_filename ) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:component_open Reading collective rules file [%s]",
+        if (ompi_coll_tuned_dynamic_rules_filename) {
+            OPAL_OUTPUT((ompi_coll_tuned_stream,
+                         "coll:tuned:component_open Reading collective rules file [%s]",
                          ompi_coll_tuned_dynamic_rules_filename));
-            rc = ompi_coll_tuned_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
-                                                         &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
-            if( rc >= 0 ) {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc));
+            rc = ompi_coll_tuned_read_rules_config_file(ompi_coll_tuned_dynamic_rules_filename,
+                                                        &(mca_coll_tuned_component.all_base_rules),
+                                                        COLLCOUNT);
+            if (rc >= 0) {
+                OPAL_OUTPUT(
+                    (ompi_coll_tuned_stream, "coll:tuned:module_open Read %d valid rules\n", rc));
             } else {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Reading collective rules file failed\n"));
+                OPAL_OUTPUT((ompi_coll_tuned_stream,
+                             "coll:tuned:module_open Reading collective rules file failed\n"));
                 mca_coll_tuned_component.all_base_rules = NULL;
             }
         }
@@ -260,7 +262,7 @@ static int tuned_close(void)
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: done!"));
 
-    if( NULL != mca_coll_tuned_component.all_base_rules ) {
+    if (NULL != mca_coll_tuned_component.all_base_rules) {
         ompi_coll_tuned_free_all_rules(mca_coll_tuned_component.all_base_rules, COLLCOUNT);
         mca_coll_tuned_component.all_base_rules = NULL;
     }
@@ -268,16 +270,15 @@ static int tuned_close(void)
     return OMPI_SUCCESS;
 }
 
-static void
-mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
+static void mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
 {
-    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t *) module;
 
-    for( int i = 0; i < COLLCOUNT; i++ ) {
+    for (int i = 0; i < COLLCOUNT; i++) {
         tuned_module->user_forced[i].algorithm = 0;
         tuned_module->com_rules[i] = NULL;
     }
 }
 
-OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t, mca_coll_base_module_t,
-                   mca_coll_tuned_module_construct, NULL);
+OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t, mca_coll_base_module_t, mca_coll_tuned_module_construct,
+                   NULL);

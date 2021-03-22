@@ -97,7 +97,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_show_mca_params;
  * If this argument is set then it is used when parameters are dumped
  * when the mpi_show_mca_params is set.
  */
-OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
+OMPI_DECLSPEC extern char *ompi_mpi_show_mca_params_file;
 
 /**
  * Whether an MPI_ABORT should print out a stack trace or not.
@@ -122,7 +122,8 @@ OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
  * false: use MPI4 compatibility (default)
  *
  * Behavioral changes:
- *   - errors in operations without a handle are raised on MPI_COMM_WORLD (MPI-3 behavior) or MPI_COMM_SELF (MPI-4 behavior)
+ *   - errors in operations without a handle are raised on MPI_COMM_WORLD (MPI-3 behavior) or
+ * MPI_COMM_SELF (MPI-4 behavior)
  *
  */
 OMPI_DECLSPEC extern bool ompi_mpi_compat_mpi3;
@@ -164,14 +165,13 @@ OMPI_DECLSPEC extern bool ompi_ftmpi_enabled;
  * all counters on, the string can be simply "all".  An empty string will
  * keep all counters turned off.
  */
-OMPI_DECLSPEC extern char * ompi_mpi_spc_attach_string;
+OMPI_DECLSPEC extern char *ompi_mpi_spc_attach_string;
 
 /**
  * A boolean value that determines whether or not to dump the SPC counter
  * values in MPI_Finalize.  A value of true dumps the counters and false does not.
  */
 OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
-
 
 /**
  * Register MCA parameters used by the MPI layer.

@@ -21,20 +21,19 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_read_at_all_end = PMPI_File_read_at_all_end
-#endif
-#define MPI_File_read_at_all_end PMPI_File_read_at_all_end
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_read_at_all_end = PMPI_File_read_at_all_end
+#    endif
+#    define MPI_File_read_at_all_end PMPI_File_read_at_all_end
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_read_at_all_end";
-
 
 int MPI_File_read_at_all_end(MPI_File fh, void *buf, MPI_Status *status)
 {
@@ -54,8 +53,7 @@ int MPI_File_read_at_all_end(MPI_File fh, void *buf, MPI_Status *status)
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_read_at_all_end(fh, buf, status);
+        rc = fh->f_io_selected_module.v2_0_0.io_module_file_read_at_all_end(fh, buf, status);
         break;
 
     default:

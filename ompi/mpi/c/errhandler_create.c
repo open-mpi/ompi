@@ -27,23 +27,22 @@
  * with --enable-mpi1-compatibility.
  */
 
-#include "ompi/mpi/c/bindings.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Errhandler_create = PMPI_Errhandler_create
-#endif
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Errhandler_create = PMPI_Errhandler_create
+#    endif
 /* undef before defining, to prevent possible redefinition when
  * using _Static_assert to error on usage of removed functions.
  */
-#undef MPI_Errhandler_create
-#define MPI_Errhandler_create PMPI_Errhandler_create
+#    undef MPI_Errhandler_create
+#    define MPI_Errhandler_create PMPI_Errhandler_create
 #endif
 
-int MPI_Errhandler_create(MPI_Handler_function *function,
-                          MPI_Errhandler *errhandler)
+int MPI_Errhandler_create(MPI_Handler_function *function, MPI_Errhandler *errhandler)
 {
 
     /* This is a deprecated -- just turn around and call the real

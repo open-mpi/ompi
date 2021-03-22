@@ -17,10 +17,10 @@
 
 #include "ompi_config.h"
 
-#include "ompi/request/request.h"
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/request/request.h"
 
 #include "osc_rdma.h"
 #include "osc_rdma_request.h"
@@ -32,8 +32,7 @@ static int request_cancel(struct ompi_request_t *request, int complete)
 
 static int request_free(struct ompi_request_t **ompi_req)
 {
-    ompi_osc_rdma_request_t *request =
-        (ompi_osc_rdma_request_t*) *ompi_req;
+    ompi_osc_rdma_request_t *request = (ompi_osc_rdma_request_t *) *ompi_req;
 
     if (!REQUEST_COMPLETE(&request->super)) {
         return MPI_ERR_REQUEST;
@@ -60,5 +59,4 @@ static void request_construct(ompi_osc_rdma_request_t *request)
     request->outstanding_requests = 0;
 }
 
-OBJ_CLASS_INSTANCE(ompi_osc_rdma_request_t, ompi_request_t,
-                   request_construct, NULL);
+OBJ_CLASS_INSTANCE(ompi_osc_rdma_request_t, ompi_request_t, request_construct, NULL);

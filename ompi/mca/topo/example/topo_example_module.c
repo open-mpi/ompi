@@ -24,10 +24,9 @@
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/topo/example/topo_example.h"
-
+#include "ompi/mca/topo/topo.h"
 
 /*
  * Local functions
@@ -35,9 +34,8 @@
 static void example_module_constructor(mca_topo_example_module_t *u);
 static void example_module_destructor(mca_topo_example_module_t *u);
 
-OBJ_CLASS_INSTANCE(mca_topo_example_module_t, mca_topo_base_module_t,
-                   example_module_constructor, example_module_destructor);
-
+OBJ_CLASS_INSTANCE(mca_topo_example_module_t, mca_topo_base_module_t, example_module_constructor,
+                   example_module_destructor);
 
 static void example_module_constructor(mca_topo_example_module_t *u)
 {
@@ -50,9 +48,7 @@ static void example_module_constructor(mca_topo_example_module_t *u)
     u->example_module_specific_data = 17;
 }
 
-
 static void example_module_destructor(mca_topo_example_module_t *u)
 {
     /* Do whatever is necessary to clean up / destroy the module */
 }
-

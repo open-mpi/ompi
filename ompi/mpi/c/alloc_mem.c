@@ -27,22 +27,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "opal/mca/mpool/mpool.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
-#endif
-#define MPI_Alloc_mem PMPI_Alloc_mem
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
+#    endif
+#    define MPI_Alloc_mem PMPI_Alloc_mem
 #endif
 
 static const char FUNC_NAME[] = "MPI_Alloc_mem";
-
 
 int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
@@ -52,11 +51,9 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (size < 0 || NULL == baseptr) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         } else if (NULL == info || ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
     }
 
@@ -74,25 +71,23 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 
     if (MPI_INFO_NULL != info) {
         int flag;
-        (void) ompi_info_get (info, "mpool_hints", &info_str, &flag);
+        (void) ompi_info_get(info, "mpool_hints", &info_str, &flag);
         if (flag) {
             mpool_hints = info_str->string;
         }
     }
 
-    *((void **) baseptr) = mca_mpool_base_alloc ((size_t) size, (struct opal_info_t*)info,
-                                                 mpool_hints);
+    *((void **) baseptr) = mca_mpool_base_alloc((size_t) size, (struct opal_info_t *) info,
+                                                mpool_hints);
 
     if (NULL != info_str) {
         OBJ_RELEASE(info_str);
     }
 
     if (NULL == *((void **) baseptr)) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
-                                      FUNC_NAME);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
     }
 
     /* All done */
     return MPI_SUCCESS;
 }
-

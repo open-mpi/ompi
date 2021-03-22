@@ -13,11 +13,11 @@
 #include "ompi_config.h"
 
 #include "ompi/constants.h"
-#include "opal/util/bit_ops.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/proc/proc.h"
+#include "opal/util/bit_ops.h"
 
 #include "ompi/mca/coll/ftagree/coll_ftagree.h"
 #include "ompi/mca/coll/ftagree/coll_ftagree_era.h"
@@ -34,8 +34,4 @@ static void mca_coll_ftagree_construct(mca_coll_ftagree_t *v_info)
     v_info->agreement_seq_num = 0;
 }
 
-OBJ_CLASS_INSTANCE(mca_coll_ftagree_t,
-                   opal_object_t,
-                   mca_coll_ftagree_construct,
-                   NULL);
-
+OBJ_CLASS_INSTANCE(mca_coll_ftagree_t, opal_object_t, mca_coll_ftagree_construct, NULL);

@@ -18,11 +18,10 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "ompi/mca/mca.h"
-#include "opal/util/output.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/han/coll_han.h"
-
+#include "ompi/mca/mca.h"
+#include "opal/util/output.h"
 
 /*
  * @file
@@ -110,8 +109,8 @@ typedef enum COMPONENTS {
 
 typedef struct {
     COMPONENT_T id;
-    char* component_name;
-    mca_coll_base_component_t* component;
+    char *component_name;
+    mca_coll_base_component_t *component;
 } ompi_coll_han_components;
 
 extern ompi_coll_han_components available_components[COMPONENTS_COUNT];
@@ -209,6 +208,6 @@ typedef struct mca_coll_han_collective_modules_storage_s {
 
 /* Tests if a dynamic collective is implemented */
 bool mca_coll_han_is_coll_dynamic_implemented(COLLTYPE_T coll_id);
-COMPONENT_T mca_coll_han_component_name_to_id(const char* name);
+COMPONENT_T mca_coll_han_component_name_to_id(const char *name);
 
 #endif

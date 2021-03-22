@@ -15,7 +15,7 @@
 
 BEGIN_C_DECLS
 
-#define MAX_TMP_BUFFER            8192
+#define MAX_TMP_BUFFER 8192
 
 END_C_DECLS
 

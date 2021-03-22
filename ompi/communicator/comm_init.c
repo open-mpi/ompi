@@ -34,20 +34,20 @@
 
 #include <stdio.h>
 
+#include "ompi/attribute/attribute.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
+#include "ompi/dpm/dpm.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/topo/base/base.h"
+#include "ompi/memchecker.h"
+#include "ompi/runtime/params.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/info_subscriber.h"
 #include "opal/util/string_copy.h"
-#include "opal/mca/pmix/pmix-internal.h"
-#include "ompi/constants.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/mca/coll/base/base.h"
-#include "ompi/mca/coll/base/coll_tags.h"
-#include "ompi/mca/topo/base/base.h"
-#include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/attribute/attribute.h"
-#include "ompi/dpm/dpm.h"
-#include "ompi/memchecker.h"
 
 /*
 ** Table for Fortran <-> C communicator handle conversion
@@ -58,29 +58,25 @@
 opal_pointer_array_t ompi_mpi_communicators = {{0}};
 opal_pointer_array_t ompi_comm_f_to_c_table = {{0}};
 
-ompi_predefined_communicator_t  ompi_mpi_comm_world = {{{{0}}}};
-ompi_predefined_communicator_t  ompi_mpi_comm_self = {{{{0}}}};
-ompi_predefined_communicator_t  ompi_mpi_comm_null = {{{{0}}}};
-ompi_communicator_t  *ompi_mpi_comm_parent = NULL;
+ompi_predefined_communicator_t ompi_mpi_comm_world = {{{{0}}}};
+ompi_predefined_communicator_t ompi_mpi_comm_self = {{{{0}}}};
+ompi_predefined_communicator_t ompi_mpi_comm_null = {{{{0}}}};
+ompi_communicator_t *ompi_mpi_comm_parent = NULL;
 
-ompi_predefined_communicator_t *ompi_mpi_comm_world_addr =
-    &ompi_mpi_comm_world;
-ompi_predefined_communicator_t *ompi_mpi_comm_self_addr =
-    &ompi_mpi_comm_self;
-ompi_predefined_communicator_t *ompi_mpi_comm_null_addr =
-    &ompi_mpi_comm_null;
+ompi_predefined_communicator_t *ompi_mpi_comm_world_addr = &ompi_mpi_comm_world;
+ompi_predefined_communicator_t *ompi_mpi_comm_self_addr = &ompi_mpi_comm_self;
+ompi_predefined_communicator_t *ompi_mpi_comm_null_addr = &ompi_mpi_comm_null;
 
-static void ompi_comm_construct(ompi_communicator_t* comm);
-static void ompi_comm_destruct(ompi_communicator_t* comm);
+static void ompi_comm_construct(ompi_communicator_t *comm);
+static void ompi_comm_destruct(ompi_communicator_t *comm);
 
-OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_infosubscriber_t,
-                   ompi_comm_construct,
+OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_infosubscriber_t, ompi_comm_construct,
                    ompi_comm_destruct);
 
 /* This is the counter for the number of communicators, which contain
    process with more than one jobid. This counter is a usefull
    shortcut for finalize and abort. */
-int ompi_comm_num_dyncomm=0;
+int ompi_comm_num_dyncomm = 0;
 
 /*
  * Initialize comm world/self/null/parent.
@@ -92,15 +88,15 @@ int ompi_comm_init(void)
 
     /* Setup communicator array */
     OBJ_CONSTRUCT(&ompi_mpi_communicators, opal_pointer_array_t);
-    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_communicators, 16,
-                                                OMPI_FORTRAN_HANDLE_MAX, 64) ) {
+    if (OPAL_SUCCESS
+        != opal_pointer_array_init(&ompi_mpi_communicators, 16, OMPI_FORTRAN_HANDLE_MAX, 64)) {
         return OMPI_ERROR;
     }
 
     /* Setup f to c table (we can no longer use the cid as the fortran handle) */
     OBJ_CONSTRUCT(&ompi_comm_f_to_c_table, opal_pointer_array_t);
-    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_comm_f_to_c_table, 8,
-                                                OMPI_FORTRAN_HANDLE_MAX, 32) ) {
+    if (OPAL_SUCCESS
+        != opal_pointer_array_init(&ompi_comm_f_to_c_table, 8, OMPI_FORTRAN_HANDLE_MAX, 32)) {
         return OMPI_ERROR;
     }
 
@@ -110,37 +106,37 @@ int ompi_comm_init(void)
     group = OBJ_NEW(ompi_group_t);
 
     size = ompi_process_info.num_procs;
-    group->grp_proc_pointers = (ompi_proc_t **) calloc (size, sizeof (ompi_proc_t *));
+    group->grp_proc_pointers = (ompi_proc_t **) calloc(size, sizeof(ompi_proc_t *));
     group->grp_proc_count = size;
 
-    for (size_t i = 0 ; i < size ; ++i) {
+    for (size_t i = 0; i < size; ++i) {
         opal_process_name_t name = {.vpid = i, .jobid = OMPI_PROC_MY_NAME->jobid};
         /* look for existing ompi_proc_t that matches this name */
-        group->grp_proc_pointers[i] = (ompi_proc_t *) ompi_proc_lookup (name);
+        group->grp_proc_pointers[i] = (ompi_proc_t *) ompi_proc_lookup(name);
         if (NULL == group->grp_proc_pointers[i]) {
             /* set sentinel value */
-            group->grp_proc_pointers[i] = (ompi_proc_t *) ompi_proc_name_to_sentinel (name);
+            group->grp_proc_pointers[i] = (ompi_proc_t *) ompi_proc_name_to_sentinel(name);
         } else {
-            OBJ_RETAIN (group->grp_proc_pointers[i]);
+            OBJ_RETAIN(group->grp_proc_pointers[i]);
         }
     }
 
-    OMPI_GROUP_SET_INTRINSIC (group);
-    OMPI_GROUP_SET_DENSE (group);
+    OMPI_GROUP_SET_INTRINSIC(group);
+    OMPI_GROUP_SET_DENSE(group);
     ompi_set_group_rank(group, ompi_proc_local());
 
-    ompi_mpi_comm_world.comm.c_contextid    = 0;
+    ompi_mpi_comm_world.comm.c_contextid = 0;
     ompi_mpi_comm_world.comm.c_id_start_index = 4;
     ompi_mpi_comm_world.comm.c_id_available = 4;
-    ompi_mpi_comm_world.comm.c_my_rank      = group->grp_my_rank;
-    ompi_mpi_comm_world.comm.c_local_group  = group;
+    ompi_mpi_comm_world.comm.c_my_rank = group->grp_my_rank;
+    ompi_mpi_comm_world.comm.c_local_group = group;
     ompi_mpi_comm_world.comm.c_remote_group = group;
     OBJ_RETAIN(ompi_mpi_comm_world.comm.c_remote_group);
-    ompi_mpi_comm_world.comm.c_cube_dim     = opal_cube_dim((int)size);
-    ompi_mpi_comm_world.comm.error_handler  = ompi_initial_error_handler_eh;
-    OBJ_RETAIN( ompi_mpi_comm_world.comm.error_handler );
+    ompi_mpi_comm_world.comm.c_cube_dim = opal_cube_dim((int) size);
+    ompi_mpi_comm_world.comm.error_handler = ompi_initial_error_handler_eh;
+    OBJ_RETAIN(ompi_mpi_comm_world.comm.error_handler);
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world.comm);
-    opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
+    opal_pointer_array_set_item(&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
     opal_string_copy(ompi_mpi_comm_world.comm.c_name, "MPI_COMM_WORLD",
                      sizeof(ompi_mpi_comm_world.comm.c_name));
@@ -161,12 +157,12 @@ int ompi_comm_init(void)
        ranks to use for aggregators
     */
     opal_process_name_t wildcard = {OMPI_PROC_MY_NAME->jobid, OPAL_VPID_WILDCARD};
-    char *str=NULL;
+    char *str = NULL;
     int rc;
 
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_MAPBY, &wildcard, &str, PMIX_STRING);
-    if ( 0 == rc && NULL != str) {
-        if ( strstr ( str, "BYNODE") ) {
+    if (0 == rc && NULL != str) {
+        if (strstr(str, "BYNODE")) {
             OMPI_COMM_SET_MAPBY_NODE(&ompi_mpi_comm_world.comm);
         }
         if (NULL != str) {
@@ -178,22 +174,22 @@ int ompi_comm_init(void)
     assert(ompi_mpi_comm_self.comm.c_f_to_c_index == 1);
     group = OBJ_NEW(ompi_group_t);
     group->grp_proc_pointers = ompi_proc_self(&size);
-    group->grp_my_rank       = 0;
-    group->grp_proc_count    = (int)size;
-    OMPI_GROUP_SET_INTRINSIC (group);
-    OMPI_GROUP_SET_DENSE (group);
+    group->grp_my_rank = 0;
+    group->grp_proc_count = (int) size;
+    OMPI_GROUP_SET_INTRINSIC(group);
+    OMPI_GROUP_SET_DENSE(group);
 
-    ompi_mpi_comm_self.comm.c_contextid    = 1;
+    ompi_mpi_comm_self.comm.c_contextid = 1;
     ompi_mpi_comm_self.comm.c_id_start_index = 20;
     ompi_mpi_comm_self.comm.c_id_available = 20;
-    ompi_mpi_comm_self.comm.c_my_rank      = group->grp_my_rank;
-    ompi_mpi_comm_self.comm.c_local_group  = group;
+    ompi_mpi_comm_self.comm.c_my_rank = group->grp_my_rank;
+    ompi_mpi_comm_self.comm.c_local_group = group;
     ompi_mpi_comm_self.comm.c_remote_group = group;
     OBJ_RETAIN(ompi_mpi_comm_self.comm.c_remote_group);
-    ompi_mpi_comm_self.comm.error_handler  = ompi_initial_error_handler_eh;
-    OBJ_RETAIN( ompi_mpi_comm_self.comm.error_handler );
+    ompi_mpi_comm_self.comm.error_handler = ompi_initial_error_handler_eh;
+    OBJ_RETAIN(ompi_mpi_comm_self.comm.error_handler);
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self.comm);
-    opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
+    opal_pointer_array_set_item(&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
     opal_string_copy(ompi_mpi_comm_self.comm.c_name, "MPI_COMM_SELF",
                      sizeof(ompi_mpi_comm_self.comm.c_name));
@@ -208,19 +204,19 @@ int ompi_comm_init(void)
     /* Setup MPI_COMM_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_comm_null, ompi_communicator_t);
     assert(ompi_mpi_comm_null.comm.c_f_to_c_index == 2);
-    ompi_mpi_comm_null.comm.c_local_group  = &ompi_mpi_group_null.group;
+    ompi_mpi_comm_null.comm.c_local_group = &ompi_mpi_group_null.group;
     ompi_mpi_comm_null.comm.c_remote_group = &ompi_mpi_group_null.group;
     OBJ_RETAIN(&ompi_mpi_group_null.group);
     OBJ_RETAIN(&ompi_mpi_group_null.group);
 
-    ompi_mpi_comm_null.comm.c_contextid    = 2;
-    ompi_mpi_comm_null.comm.c_my_rank      = MPI_PROC_NULL;
+    ompi_mpi_comm_null.comm.c_contextid = 2;
+    ompi_mpi_comm_null.comm.c_my_rank = MPI_PROC_NULL;
 
     /* unlike world, self, and parent, comm_null does not inherit the initial error
      * handler */
-    ompi_mpi_comm_null.comm.error_handler  = &ompi_mpi_errors_are_fatal.eh;
-    OBJ_RETAIN( ompi_mpi_comm_null.comm.error_handler );
-    opal_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
+    ompi_mpi_comm_null.comm.error_handler = &ompi_mpi_errors_are_fatal.eh;
+    OBJ_RETAIN(ompi_mpi_comm_null.comm.error_handler);
+    opal_pointer_array_set_item(&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
 
     opal_string_copy(ompi_mpi_comm_null.comm.c_name, "MPI_COMM_NULL",
                      sizeof(ompi_mpi_comm_null.comm.c_name));
@@ -236,22 +232,21 @@ int ompi_comm_init(void)
      * as comm_world (thus, the initial error handler). */
 
     /* initialize communicator requests (for ompi_comm_idup) */
-    ompi_comm_request_init ();
+    ompi_comm_request_init();
 
     return OMPI_SUCCESS;
 }
 
-
-ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
+ompi_communicator_t *ompi_comm_allocate(int local_size, int remote_size)
 {
     ompi_communicator_t *new_comm;
 
     /* create new communicator element */
     new_comm = OBJ_NEW(ompi_communicator_t);
     new_comm->super.s_info = NULL;
-    new_comm->c_local_group = ompi_group_allocate ( local_size );
-    if ( 0 < remote_size ) {
-        new_comm->c_remote_group = ompi_group_allocate (remote_size);
+    new_comm->c_local_group = ompi_group_allocate(local_size);
+    if (0 < remote_size) {
+        new_comm->c_remote_group = ompi_group_allocate(remote_size);
         new_comm->c_flags |= OMPI_COMM_INTER;
     } else {
         /*
@@ -274,7 +269,7 @@ int ompi_comm_finalize(void)
     ompi_communicator_t *comm;
 
     /* Shut down MPI_COMM_SELF */
-    OBJ_DESTRUCT( &ompi_mpi_comm_self );
+    OBJ_DESTRUCT(&ompi_mpi_comm_self);
 
     /* disconnect all dynamic communicators */
     ompi_dpm_dyn_finalize();
@@ -284,22 +279,23 @@ int ompi_comm_finalize(void)
      * is not called for comm world) */
     if (NULL != ompi_mpi_comm_world.comm.c_keyhash) {
         /* Ignore errors when deleting attributes on comm_world */
-        (void) ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_world.comm, ompi_mpi_comm_world.comm.c_keyhash);
+        (void) ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_world.comm,
+                                    ompi_mpi_comm_world.comm.c_keyhash);
         OBJ_RELEASE(ompi_mpi_comm_world.comm.c_keyhash);
     }
 
     /* Shut down MPI_COMM_WORLD */
-    OBJ_DESTRUCT( &ompi_mpi_comm_world );
+    OBJ_DESTRUCT(&ompi_mpi_comm_world);
 
     /* Shut down the parent communicator, if it exists */
-    if( ompi_mpi_comm_parent != &ompi_mpi_comm_null.comm ) {
+    if (ompi_mpi_comm_parent != &ompi_mpi_comm_null.comm) {
         /* Note that we pass ompi_mpi_comm_parent here
            (vs. &ompi_mpi_comm_parent) because it is of type
            (ompi_communicator_t*), *NOT* (ompi_communicator_t).  This
            is because a parent communicator is created dynamically
            during init, and we just set this pointer to it.  Hence, we
            just pass in the pointer here. */
-        OBJ_DESTRUCT (ompi_mpi_comm_parent);
+        OBJ_DESTRUCT(ompi_mpi_comm_parent);
 
         /* Please note, that the we did increase the reference count
            for ompi_mpi_comm_null, ompi_mpi_group_null, and
@@ -321,19 +317,19 @@ int ompi_comm_finalize(void)
     }
 
     /* Shut down MPI_COMM_NULL */
-    OBJ_DESTRUCT( &ompi_mpi_comm_null );
+    OBJ_DESTRUCT(&ompi_mpi_comm_null);
 
     /* Check whether we have some communicators left */
     max = opal_pointer_array_get_size(&ompi_mpi_communicators);
-    for ( i=3; i<max; i++ ) {
-        comm = (ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
-        if ( NULL != comm ) {
+    for (i = 3; i < max; i++) {
+        comm = (ompi_communicator_t *) opal_pointer_array_get_item(&ompi_mpi_communicators, i);
+        if (NULL != comm) {
             /* Communicator has not been freed before finalize */
             OBJ_RELEASE(comm);
-            comm=(ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
-            if ( NULL != comm ) {
+            comm = (ompi_communicator_t *) opal_pointer_array_get_item(&ompi_mpi_communicators, i);
+            if (NULL != comm) {
                 /* Still here ? */
-                if ( !OMPI_COMM_IS_EXTRA_RETAIN(comm)) {
+                if (!OMPI_COMM_IS_EXTRA_RETAIN(comm)) {
 
                     /* For communicator that have been marked as "extra retain", we do not further
                      * enforce to decrease the reference counter once more. These "extra retain"
@@ -344,9 +340,9 @@ int ompi_comm_finalize(void)
                      * parent communicator. Read the comment in comm_activate for
                      * a full explanation.
                      */
-                    if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
-                        opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
-                        ompi_comm_dump ( comm);
+                    if (ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm))) {
+                        opal_output(0, "WARNING: MPI_Comm still allocated in MPI_Finalize\n");
+                        ompi_comm_dump(comm);
                         OBJ_RELEASE(comm);
                     }
                 }
@@ -354,11 +350,11 @@ int ompi_comm_finalize(void)
         }
     }
 
-    OBJ_DESTRUCT (&ompi_mpi_communicators);
-    OBJ_DESTRUCT (&ompi_comm_f_to_c_table);
+    OBJ_DESTRUCT(&ompi_mpi_communicators);
+    OBJ_DESTRUCT(&ompi_comm_f_to_c_table);
 
     /* finalize communicator requests */
-    ompi_comm_request_fini ();
+    ompi_comm_request_fini();
 
     return OMPI_SUCCESS;
 }
@@ -368,45 +364,45 @@ int ompi_comm_finalize(void)
 /********************************************************************************/
 /* static functions */
 
-static void ompi_comm_construct(ompi_communicator_t* comm)
+static void ompi_comm_construct(ompi_communicator_t *comm)
 {
     comm->c_f_to_c_index = opal_pointer_array_add(&ompi_comm_f_to_c_table, comm);
-    comm->c_name[0]      = '\0';
-    comm->c_contextid    = MPI_UNDEFINED;
+    comm->c_name[0] = '\0';
+    comm->c_contextid = MPI_UNDEFINED;
     comm->c_id_available = MPI_UNDEFINED;
     comm->c_id_start_index = MPI_UNDEFINED;
-    comm->c_flags        = 0;
-    comm->c_my_rank      = 0;
-    comm->c_cube_dim     = 0;
-    comm->c_local_group  = NULL;
+    comm->c_flags = 0;
+    comm->c_my_rank = 0;
+    comm->c_cube_dim = 0;
+    comm->c_local_group = NULL;
     comm->c_remote_group = NULL;
-    comm->error_handler  = NULL;
-    comm->c_pml_comm     = NULL;
-    comm->c_topo         = NULL;
-    comm->c_coll         = NULL;
-    comm->c_nbc_tag      = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
+    comm->error_handler = NULL;
+    comm->c_pml_comm = NULL;
+    comm->c_topo = NULL;
+    comm->c_coll = NULL;
+    comm->c_nbc_tag = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
 
     /* A keyhash will be created if/when an attribute is cached on
        this communicator */
-    comm->c_keyhash      = NULL;
+    comm->c_keyhash = NULL;
 
-    comm->errhandler_type  = OMPI_ERRHANDLER_TYPE_COMM;
+    comm->errhandler_type = OMPI_ERRHANDLER_TYPE_COMM;
 #ifdef OMPI_WANT_PERUSE
     comm->c_peruse_handles = NULL;
 #endif
     OBJ_CONSTRUCT(&comm->c_lock, opal_mutex_t);
 
 #if OPAL_ENABLE_FT_MPI
-    comm->any_source_enabled  = true;
-    comm->any_source_offset   = 0;
-    comm->comm_revoked        = false;
-    comm->coll_revoked        = false;
-    comm->c_epoch             = 0;
-    comm->agreement_specific  = NULL;
+    comm->any_source_enabled = true;
+    comm->any_source_offset = 0;
+    comm->comm_revoked = false;
+    comm->coll_revoked = false;
+    comm->c_epoch = 0;
+    comm->agreement_specific = NULL;
 #endif
 }
 
-static void ompi_comm_destruct(ompi_communicator_t* comm)
+static void ompi_comm_destruct(ompi_communicator_t *comm)
 {
     /* Note that the attributes were already released on this
        communicator in ompi_comm_free() (i.e., from MPI_COMM_FREE /
@@ -415,7 +411,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     /* Release the collective module */
 
-    if ( NULL != comm->c_coll ) {
+    if (NULL != comm->c_coll) {
         mca_coll_base_comm_unselect(comm);
     }
 
@@ -434,8 +430,8 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
        error, not cause a seg fault in pml_del_comm because it was
        never pml_add_com'ed. */
 
-    if ( MPI_COMM_NULL != comm && OMPI_COMM_IS_PML_ADDED(comm) ) {
-        MCA_PML_CALL(del_comm (comm));
+    if (MPI_COMM_NULL != comm && OMPI_COMM_IS_PML_ADDED(comm)) {
+        MCA_PML_CALL(del_comm(comm));
     }
 
     /* Release topology module */
@@ -445,64 +441,61 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     }
 
     if (NULL != comm->c_local_group) {
-        OBJ_RELEASE ( comm->c_local_group );
+        OBJ_RELEASE(comm->c_local_group);
         comm->c_local_group = NULL;
-        if ( OMPI_COMM_IS_INTRA(comm) ) {
+        if (OMPI_COMM_IS_INTRA(comm)) {
             /* We have to decrement the ref count on the remote group
                even if it is identical to the local one in case of
                intra-comm */
-            OBJ_RELEASE ( comm->c_remote_group );
+            OBJ_RELEASE(comm->c_remote_group);
             comm->c_remote_group = NULL;
         }
     }
 
     if (NULL != comm->c_remote_group) {
-        OBJ_RELEASE ( comm->c_remote_group );
+        OBJ_RELEASE(comm->c_remote_group);
         comm->c_remote_group = NULL;
     }
 
     if (NULL != comm->error_handler) {
-        OBJ_RELEASE ( comm->error_handler );
+        OBJ_RELEASE(comm->error_handler);
         comm->error_handler = NULL;
     }
 
 #if OPAL_ENABLE_FT_MPI
-    if( NULL != comm->agreement_specific ) {
-        OBJ_RELEASE( comm->agreement_specific );
+    if (NULL != comm->agreement_specific) {
+        OBJ_RELEASE(comm->agreement_specific);
     }
-#endif  /* OPAL_ENABLE_FT_MPI */
+#endif /* OPAL_ENABLE_FT_MPI */
 
     /* mark this cid as available */
-    if ( MPI_UNDEFINED != (int)comm->c_contextid &&
-         NULL != opal_pointer_array_get_item(&ompi_mpi_communicators,
-                                             comm->c_contextid)) {
-        opal_pointer_array_set_item ( &ompi_mpi_communicators,
-                                      comm->c_contextid, NULL);
+    if (MPI_UNDEFINED != (int) comm->c_contextid
+        && NULL != opal_pointer_array_get_item(&ompi_mpi_communicators, comm->c_contextid)) {
+        opal_pointer_array_set_item(&ompi_mpi_communicators, comm->c_contextid, NULL);
     }
 
     /* reset the ompi_comm_f_to_c_table entry */
-    if ( MPI_UNDEFINED != comm->c_f_to_c_index &&
-         NULL != opal_pointer_array_get_item(&ompi_comm_f_to_c_table,
-                                             comm->c_f_to_c_index)) {
-        opal_pointer_array_set_item ( &ompi_comm_f_to_c_table,
-                                      comm->c_f_to_c_index, NULL);
+    if (MPI_UNDEFINED != comm->c_f_to_c_index
+        && NULL != opal_pointer_array_get_item(&ompi_comm_f_to_c_table, comm->c_f_to_c_index)) {
+        opal_pointer_array_set_item(&ompi_comm_f_to_c_table, comm->c_f_to_c_index, NULL);
     }
 
     OBJ_DESTRUCT(&comm->c_lock);
 }
 
-#define OMPI_COMM_SET_INFO_FN(name, flag)       \
-    static const char *ompi_comm_set_ ## name (opal_infosubscriber_t *obj, const char *key, const char *value) \
-    {                                                                   \
-        ompi_communicator_t *comm = (ompi_communicator_t *) obj;        \
-                                                                        \
-        if (opal_str_to_bool(value)) {                                  \
-            comm->c_assertions |= flag;                                 \
-        } else {                                                        \
-            comm->c_assertions &= ~flag;                                \
-        }                                                               \
-                                                                        \
-        return OMPI_COMM_CHECK_ASSERT(comm, flag) ? "true" : "false";   \
+#define OMPI_COMM_SET_INFO_FN(name, flag)                                                \
+    static const char *ompi_comm_set_##name(opal_infosubscriber_t *obj, const char *key, \
+                                            const char *value)                           \
+    {                                                                                    \
+        ompi_communicator_t *comm = (ompi_communicator_t *) obj;                         \
+                                                                                         \
+        if (opal_str_to_bool(value)) {                                                   \
+            comm->c_assertions |= flag;                                                  \
+        } else {                                                                         \
+            comm->c_assertions &= ~flag;                                                 \
+        }                                                                                \
+                                                                                         \
+        return OMPI_COMM_CHECK_ASSERT(comm, flag) ? "true" : "false";                    \
     }
 
 OMPI_COMM_SET_INFO_FN(no_any_source, OMPI_COMM_ASSERT_NO_ANY_SOURCE)
@@ -510,20 +503,24 @@ OMPI_COMM_SET_INFO_FN(no_any_tag, OMPI_COMM_ASSERT_NO_ANY_TAG)
 OMPI_COMM_SET_INFO_FN(allow_overtake, OMPI_COMM_ASSERT_ALLOW_OVERTAKE)
 OMPI_COMM_SET_INFO_FN(exact_length, OMPI_COMM_ASSERT_EXACT_LENGTH)
 
-void ompi_comm_assert_subscribe (ompi_communicator_t *comm, int32_t assert_flag)
+void ompi_comm_assert_subscribe(ompi_communicator_t *comm, int32_t assert_flag)
 {
     switch (assert_flag) {
     case OMPI_COMM_ASSERT_NO_ANY_SOURCE:
-        opal_infosubscribe_subscribe (&comm->super, "mpi_assert_no_any_source", "false", ompi_comm_set_no_any_source);
+        opal_infosubscribe_subscribe(&comm->super, "mpi_assert_no_any_source", "false",
+                                     ompi_comm_set_no_any_source);
         break;
     case OMPI_COMM_ASSERT_NO_ANY_TAG:
-        opal_infosubscribe_subscribe (&comm->super, "mpi_assert_no_any_tag", "false", ompi_comm_set_no_any_tag);
+        opal_infosubscribe_subscribe(&comm->super, "mpi_assert_no_any_tag", "false",
+                                     ompi_comm_set_no_any_tag);
         break;
     case OMPI_COMM_ASSERT_ALLOW_OVERTAKE:
-        opal_infosubscribe_subscribe (&comm->super, "mpi_assert_allow_overtaking", "false", ompi_comm_set_allow_overtake);
+        opal_infosubscribe_subscribe(&comm->super, "mpi_assert_allow_overtaking", "false",
+                                     ompi_comm_set_allow_overtake);
         break;
     case OMPI_COMM_ASSERT_EXACT_LENGTH:
-        opal_infosubscribe_subscribe (&comm->super, "mpi_assert_exact_length", "false", ompi_comm_set_exact_length);
+        opal_infosubscribe_subscribe(&comm->super, "mpi_assert_exact_length", "false",
+                                     ompi_comm_set_exact_length);
         break;
     }
 }

@@ -21,38 +21,34 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/request/grequest.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Grequest_start = PMPI_Grequest_start
-#endif
-#define MPI_Grequest_start PMPI_Grequest_start
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Grequest_start = PMPI_Grequest_start
+#    endif
+#    define MPI_Grequest_start PMPI_Grequest_start
 #endif
 
 static const char FUNC_NAME[] = "MPI_Grequest_start";
 
-
-int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
-                       MPI_Grequest_free_function *free_fn,
-                       MPI_Grequest_cancel_function *cancel_fn,
-                       void *extra_state, MPI_Request *request)
+int MPI_Grequest_start(MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function *free_fn,
+                       MPI_Grequest_cancel_function *cancel_fn, void *extra_state,
+                       MPI_Request *request)
 {
     int rc;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == request) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
         }
     }
 
-    rc = ompi_grequest_start(query_fn,free_fn,cancel_fn,extra_state,request);
+    rc = ompi_grequest_start(query_fn, free_fn, cancel_fn, extra_state, request);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }
-

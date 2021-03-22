@@ -21,53 +21,47 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_GET_PROCESSOR_NAME = ompi_get_processor_name_f
-#pragma weak pmpi_get_processor_name = ompi_get_processor_name_f
-#pragma weak pmpi_get_processor_name_ = ompi_get_processor_name_f
-#pragma weak pmpi_get_processor_name__ = ompi_get_processor_name_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_GET_PROCESSOR_NAME = ompi_get_processor_name_f
+#        pragma weak pmpi_get_processor_name = ompi_get_processor_name_f
+#        pragma weak pmpi_get_processor_name_ = ompi_get_processor_name_f
+#        pragma weak pmpi_get_processor_name__ = ompi_get_processor_name_f
 
-#pragma weak PMPI_Get_processor_name_f = ompi_get_processor_name_f
-#pragma weak PMPI_Get_processor_name_f08 = ompi_get_processor_name_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_GET_PROCESSOR_NAME,
-                            pmpi_get_processor_name,
-                            pmpi_get_processor_name_,
-                            pmpi_get_processor_name__,
-                            pompi_get_processor_name_f,
-                            (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
-                            (name, resultlen, ierr, name_len) )
-#endif
+#        pragma weak PMPI_Get_processor_name_f = ompi_get_processor_name_f
+#        pragma weak PMPI_Get_processor_name_f08 = ompi_get_processor_name_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_GET_PROCESSOR_NAME, pmpi_get_processor_name,
+                           pmpi_get_processor_name_, pmpi_get_processor_name__,
+                           pompi_get_processor_name_f,
+                           (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
+                           (name, resultlen, ierr, name_len))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_GET_PROCESSOR_NAME = ompi_get_processor_name_f
-#pragma weak mpi_get_processor_name = ompi_get_processor_name_f
-#pragma weak mpi_get_processor_name_ = ompi_get_processor_name_f
-#pragma weak mpi_get_processor_name__ = ompi_get_processor_name_f
+#    pragma weak MPI_GET_PROCESSOR_NAME = ompi_get_processor_name_f
+#    pragma weak mpi_get_processor_name = ompi_get_processor_name_f
+#    pragma weak mpi_get_processor_name_ = ompi_get_processor_name_f
+#    pragma weak mpi_get_processor_name__ = ompi_get_processor_name_f
 
-#pragma weak MPI_Get_processor_name_f = ompi_get_processor_name_f
-#pragma weak MPI_Get_processor_name_f08 = ompi_get_processor_name_f
+#    pragma weak MPI_Get_processor_name_f = ompi_get_processor_name_f
+#    pragma weak MPI_Get_processor_name_f08 = ompi_get_processor_name_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
-                            mpi_get_processor_name,
-                            mpi_get_processor_name_,
-                            mpi_get_processor_name__,
-                            ompi_get_processor_name_f,
-                            (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
-                            (name, resultlen, ierr, name_len) )
-#else
-#define ompi_get_processor_name_f pompi_get_processor_name_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_GET_PROCESSOR_NAME, mpi_get_processor_name, mpi_get_processor_name_,
+                           mpi_get_processor_name__, ompi_get_processor_name_f,
+                           (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
+                           (name, resultlen, ierr, name_len))
+#    else
+#        define ompi_get_processor_name_f pompi_get_processor_name_f
+#    endif
 #endif
-#endif
-
 
 static const char FUNC_NAME[] = "MPI_GET_PROCESSOR_NAME";
 
@@ -76,26 +70,24 @@ static const char FUNC_NAME[] = "MPI_GET_PROCESSOR_NAME";
    character array from the caller.  Hence, it's the max length of the
    string that we can use. */
 
-void ompi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr,
-                              int name_len)
+void ompi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len)
 {
     int ierr_c, ret;
     char c_name[MPI_MAX_PROCESSOR_NAME];
     OMPI_SINGLE_NAME_DECL(resultlen);
 
-    ierr_c = PMPI_Get_processor_name(c_name,
-                                     OMPI_SINGLE_NAME_CONVERT(resultlen));
+    ierr_c = PMPI_Get_processor_name(c_name, OMPI_SINGLE_NAME_CONVERT(resultlen));
 
     if (MPI_SUCCESS == ierr_c) {
         OMPI_SINGLE_INT_2_FINT(resultlen);
 
         /* Use the full length of the Fortran string, not *resultlen.
            See comment in ompi/mpi/fortran/base/strings.c. */
-        if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_name, name,
-                                                           name_len))) {
+        if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_name, name, name_len))) {
             ierr_c = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
         }
     }
 
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(ierr_c);
 }

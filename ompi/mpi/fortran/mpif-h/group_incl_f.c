@@ -21,53 +21,49 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/group/group.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_GROUP_INCL = ompi_group_incl_f
-#pragma weak pmpi_group_incl = ompi_group_incl_f
-#pragma weak pmpi_group_incl_ = ompi_group_incl_f
-#pragma weak pmpi_group_incl__ = ompi_group_incl_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_GROUP_INCL = ompi_group_incl_f
+#        pragma weak pmpi_group_incl = ompi_group_incl_f
+#        pragma weak pmpi_group_incl_ = ompi_group_incl_f
+#        pragma weak pmpi_group_incl__ = ompi_group_incl_f
 
-#pragma weak PMPI_Group_incl_f = ompi_group_incl_f
-#pragma weak PMPI_Group_incl_f08 = ompi_group_incl_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_INCL,
-                           pmpi_group_incl,
-                           pmpi_group_incl_,
-                           pmpi_group_incl__,
+#        pragma weak PMPI_Group_incl_f = ompi_group_incl_f
+#        pragma weak PMPI_Group_incl_f08 = ompi_group_incl_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_GROUP_INCL, pmpi_group_incl, pmpi_group_incl_, pmpi_group_incl__,
                            pompi_group_incl_f,
-                           (MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr),
-                           (group, n, ranks, newgroup, ierr) )
-#endif
+                           (MPI_Fint * group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup,
+                            MPI_Fint *ierr),
+                           (group, n, ranks, newgroup, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_GROUP_INCL = ompi_group_incl_f
-#pragma weak mpi_group_incl = ompi_group_incl_f
-#pragma weak mpi_group_incl_ = ompi_group_incl_f
-#pragma weak mpi_group_incl__ = ompi_group_incl_f
+#    pragma weak MPI_GROUP_INCL = ompi_group_incl_f
+#    pragma weak mpi_group_incl = ompi_group_incl_f
+#    pragma weak mpi_group_incl_ = ompi_group_incl_f
+#    pragma weak mpi_group_incl__ = ompi_group_incl_f
 
-#pragma weak MPI_Group_incl_f = ompi_group_incl_f
-#pragma weak MPI_Group_incl_f08 = ompi_group_incl_f
+#    pragma weak MPI_Group_incl_f = ompi_group_incl_f
+#    pragma weak MPI_Group_incl_f08 = ompi_group_incl_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_INCL,
-                           mpi_group_incl,
-                           mpi_group_incl_,
-                           mpi_group_incl__,
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_GROUP_INCL, mpi_group_incl, mpi_group_incl_, mpi_group_incl__,
                            ompi_group_incl_f,
-                           (MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr),
-                           (group, n, ranks, newgroup, ierr) )
-#else
-#define ompi_group_incl_f pompi_group_incl_f
-#endif
+                           (MPI_Fint * group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup,
+                            MPI_Fint *ierr),
+                           (group, n, ranks, newgroup, ierr))
+#    else
+#        define ompi_group_incl_f pompi_group_incl_f
+#    endif
 #endif
 
-
-void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr)
+void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup,
+                       MPI_Fint *ierr)
 {
     /* local variables */
     int c_ierr;
@@ -78,11 +74,10 @@ void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *
     c_group = PMPI_Group_f2c(*group);
 
     OMPI_ARRAY_FINT_2_INT(ranks, *n);
-    c_ierr = PMPI_Group_incl(c_group,
-                            OMPI_FINT_2_INT(*n),
-                            OMPI_ARRAY_NAME_CONVERT(ranks),
-                            &c_newgroup);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Group_incl(c_group, OMPI_FINT_2_INT(*n), OMPI_ARRAY_NAME_CONVERT(ranks),
+                             &c_newgroup);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     /* translate the results from c to fortran */
     if (MPI_SUCCESS == c_ierr) {

@@ -66,8 +66,8 @@
 #define MCA_PML_H
 
 #include "ompi_config.h"
-#include "ompi/mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
+#include "ompi/mca/mca.h"
 #include "ompi/mca/pml/pml_constants.h"
 #include "ompi/request/request.h"
 
@@ -94,10 +94,8 @@ struct ompi_proc_t;
  * indicates whether multiple threads may invoke this component
  * simultaneously or not.
  */
-typedef struct mca_pml_base_module_2_1_0_t * (*mca_pml_base_component_init_fn_t)(
-    int *priority,
-    bool enable_progress_threads,
-    bool enable_mpi_threads);
+typedef struct mca_pml_base_module_2_1_0_t *(*mca_pml_base_component_init_fn_t)(
+    int *priority, bool enable_progress_threads, bool enable_mpi_threads);
 
 typedef int (*mca_pml_base_component_finalize_fn_t)(void);
 
@@ -106,19 +104,17 @@ typedef int (*mca_pml_base_component_finalize_fn_t)(void);
  */
 
 struct mca_pml_base_component_2_1_0_t {
-   mca_base_component_t pmlm_version;
-   mca_base_component_data_t pmlm_data;
-   mca_pml_base_component_init_fn_t pmlm_init;
-   mca_pml_base_component_finalize_fn_t pmlm_finalize;
+    mca_base_component_t pmlm_version;
+    mca_base_component_data_t pmlm_data;
+    mca_pml_base_component_init_fn_t pmlm_init;
+    mca_pml_base_component_finalize_fn_t pmlm_finalize;
 };
 typedef struct mca_pml_base_component_2_1_0_t mca_pml_base_component_2_1_0_t;
 typedef mca_pml_base_component_2_1_0_t mca_pml_base_component_t;
 
-
 /**
  * MCA management functions.
  */
-
 
 /**
  * Downcall from MPI/RTE layer when new processes are created.
@@ -132,7 +128,6 @@ typedef mca_pml_base_component_2_1_0_t mca_pml_base_component_t;
  * (e.g. list of BTLs to use) on the ompi_proc_t data structure.
  */
 typedef int (*mca_pml_base_module_add_procs_fn_t)(struct ompi_proc_t **procs, size_t nprocs);
-
 
 /**
  * Downcall from MPI/RTE layer when processes are terminated.
@@ -152,11 +147,8 @@ typedef int (*mca_pml_base_module_del_procs_fn_t)(struct ompi_proc_t **procs, si
  *
  * @param   enable  Enable/Disable PML forwarding
  * @return          OMPI_SUCCESS or failure status.
-*/
-typedef int (*mca_pml_base_module_enable_fn_t)(
-    bool enable
-);
-
+ */
+typedef int (*mca_pml_base_module_enable_fn_t)(bool enable);
 
 /**
  * For non-threaded case, provides MCA the opportunity to
@@ -165,13 +157,12 @@ typedef int (*mca_pml_base_module_enable_fn_t)(
  *  * @return        Count of "completions", a metric of
  *                   how many items where completed in the call
  *                   to progress.
-*/
+ */
 typedef int (*mca_pml_base_module_progress_fn_t)(void);
 
 /**
  * MPI Interface Functions
  */
-
 
 /**
  * Downcall from MPI layer when a new communicator is created.
@@ -182,8 +173,7 @@ typedef int (*mca_pml_base_module_progress_fn_t)(void);
  * Provides the PML the opportunity to initialize/cache a data structure
  * on the communicator.
  */
-typedef int (*mca_pml_base_module_add_comm_fn_t)(struct ompi_communicator_t* comm);
-
+typedef int (*mca_pml_base_module_add_comm_fn_t)(struct ompi_communicator_t *comm);
 
 /**
  * Downcall from MPI layer when a communicator is destroyed.
@@ -194,7 +184,7 @@ typedef int (*mca_pml_base_module_add_comm_fn_t)(struct ompi_communicator_t* com
  * Provides the PML the opportunity to cleanup any datastructures
  * associated with the communicator.
  */
-typedef int (*mca_pml_base_module_del_comm_fn_t)(struct ompi_communicator_t* comm);
+typedef int (*mca_pml_base_module_del_comm_fn_t)(struct ompi_communicator_t *comm);
 
 /**
  * Downcall from MPI layer when a communicator is revoked.
@@ -208,7 +198,8 @@ typedef int (*mca_pml_base_module_del_comm_fn_t)(struct ompi_communicator_t* com
  * handling and purge the queues associated with the communicator.
  */
 /* not conditional on OPAL_ENABLE_FT_MPI for ABI */
-typedef int (*mca_pml_base_module_revoke_comm_fn_t)(struct ompi_communicator_t* comm, bool coll_only);
+typedef int (*mca_pml_base_module_revoke_comm_fn_t)(struct ompi_communicator_t *comm,
+                                                    bool coll_only);
 
 /**
  *  Initialize a persistent receive request.
@@ -222,15 +213,10 @@ typedef int (*mca_pml_base_module_revoke_comm_fn_t)(struct ompi_communicator_t* 
  *  @param request (OUT)    Request handle.
  *  @return                 OMPI_SUCCESS or failure status.
  */
-typedef int (*mca_pml_base_module_irecv_init_fn_t)(
-    void *buf,
-    size_t count,
-    struct ompi_datatype_t *datatype,
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    struct ompi_request_t **request
-);
+typedef int (*mca_pml_base_module_irecv_init_fn_t)(void *buf, size_t count,
+                                                   struct ompi_datatype_t *datatype, int src,
+                                                   int tag, struct ompi_communicator_t *comm,
+                                                   struct ompi_request_t **request);
 
 /**
  *  Post a receive request.
@@ -244,22 +230,14 @@ typedef int (*mca_pml_base_module_irecv_init_fn_t)(
  *  @param request (OUT)    Request handle.
  *  @return                 OMPI_SUCCESS or failure status.
  */
-typedef int (*mca_pml_base_module_irecv_fn_t)(
-    void *buf,
-    size_t count,
-    struct ompi_datatype_t *datatype,
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    struct ompi_request_t **request
-);
-typedef int (*mca_pml_base_module_imrecv_fn_t)(
-    void *buf,
-    size_t count,
-    struct ompi_datatype_t *datatype,
-    struct ompi_message_t **message,
-    struct ompi_request_t **request
-);
+typedef int (*mca_pml_base_module_irecv_fn_t)(void *buf, size_t count,
+                                              struct ompi_datatype_t *datatype, int src, int tag,
+                                              struct ompi_communicator_t *comm,
+                                              struct ompi_request_t **request);
+typedef int (*mca_pml_base_module_imrecv_fn_t)(void *buf, size_t count,
+                                               struct ompi_datatype_t *datatype,
+                                               struct ompi_message_t **message,
+                                               struct ompi_request_t **request);
 
 /**
  *  Post a receive and wait for completion.
@@ -273,22 +251,14 @@ typedef int (*mca_pml_base_module_imrecv_fn_t)(
  *  @param status (OUT)     Completion status
  *  @return                 OMPI_SUCCESS or failure status.
  */
-typedef int (*mca_pml_base_module_recv_fn_t)(
-    void *buf,
-    size_t count,
-    struct ompi_datatype_t *datatype,
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    ompi_status_public_t* status
-);
-typedef int (*mca_pml_base_module_mrecv_fn_t)(
-    void *buf,
-    size_t count,
-    struct ompi_datatype_t *datatype,
-    struct ompi_message_t **message,
-    ompi_status_public_t* status
-);
+typedef int (*mca_pml_base_module_recv_fn_t)(void *buf, size_t count,
+                                             struct ompi_datatype_t *datatype, int src, int tag,
+                                             struct ompi_communicator_t *comm,
+                                             ompi_status_public_t *status);
+typedef int (*mca_pml_base_module_mrecv_fn_t)(void *buf, size_t count,
+                                              struct ompi_datatype_t *datatype,
+                                              struct ompi_message_t **message,
+                                              ompi_status_public_t *status);
 
 /**
  *  Initialize a persistent send request.
@@ -303,17 +273,11 @@ typedef int (*mca_pml_base_module_mrecv_fn_t)(
  *  @param request (OUT)    Request handle.
  *  @return                 OMPI_SUCCESS or failure status.
  */
-typedef int (*mca_pml_base_module_isend_init_fn_t)(
-    const void *buf,
-    size_t count,
-    struct ompi_datatype_t *datatype,
-    int dst,
-    int tag,
-    mca_pml_base_send_mode_t mode,
-    struct ompi_communicator_t* comm,
-    struct ompi_request_t **request
-);
-
+typedef int (*mca_pml_base_module_isend_init_fn_t)(const void *buf, size_t count,
+                                                   struct ompi_datatype_t *datatype, int dst,
+                                                   int tag, mca_pml_base_send_mode_t mode,
+                                                   struct ompi_communicator_t *comm,
+                                                   struct ompi_request_t **request);
 
 /**
  *  Post a send request.
@@ -328,17 +292,11 @@ typedef int (*mca_pml_base_module_isend_init_fn_t)(
  *  @param request (OUT)    Request handle.
  *  @return                 OMPI_SUCCESS or failure status.
  */
-typedef int (*mca_pml_base_module_isend_fn_t)(
-    const void *buf,
-    size_t count,
-    struct ompi_datatype_t *datatype,
-    int dst,
-    int tag,
-    mca_pml_base_send_mode_t mode,
-    struct ompi_communicator_t* comm,
-    struct ompi_request_t **request
-);
-
+typedef int (*mca_pml_base_module_isend_fn_t)(const void *buf, size_t count,
+                                              struct ompi_datatype_t *datatype, int dst, int tag,
+                                              mca_pml_base_send_mode_t mode,
+                                              struct ompi_communicator_t *comm,
+                                              struct ompi_request_t **request);
 
 /**
  *  Post a send request and wait for completion.
@@ -352,15 +310,10 @@ typedef int (*mca_pml_base_module_isend_fn_t)(
  *  @param comm (IN)        Communicator.
  *  @return                 OMPI_SUCCESS or failure status.
  */
-typedef int (*mca_pml_base_module_send_fn_t)(
-    const void *buf,
-    size_t count,
-    struct ompi_datatype_t *datatype,
-    int dst,
-    int tag,
-    mca_pml_base_send_mode_t mode,
-    struct ompi_communicator_t* comm
-);
+typedef int (*mca_pml_base_module_send_fn_t)(const void *buf, size_t count,
+                                             struct ompi_datatype_t *datatype, int dst, int tag,
+                                             mca_pml_base_send_mode_t mode,
+                                             struct ompi_communicator_t *comm);
 
 /**
  * Initiate one or more persistent requests.
@@ -382,22 +335,12 @@ typedef ompi_request_start_fn_t mca_pml_base_module_start_fn_t;
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-typedef int (*mca_pml_base_module_iprobe_fn_t)(
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    int *matched,
-    ompi_status_public_t *status
-);
+typedef int (*mca_pml_base_module_iprobe_fn_t)(int src, int tag, struct ompi_communicator_t *comm,
+                                               int *matched, ompi_status_public_t *status);
 
-typedef int (*mca_pml_base_module_improbe_fn_t)(
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    int *matched,
-    struct ompi_message_t **message,
-    ompi_status_public_t *status
-);
+typedef int (*mca_pml_base_module_improbe_fn_t)(int src, int tag, struct ompi_communicator_t *comm,
+                                                int *matched, struct ompi_message_t **message,
+                                                ompi_status_public_t *status);
 
 /**
  * Blocking probe to wait for pending recv.
@@ -409,20 +352,12 @@ typedef int (*mca_pml_base_module_improbe_fn_t)(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-typedef int (*mca_pml_base_module_probe_fn_t)(
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    ompi_status_public_t *status
-);
+typedef int (*mca_pml_base_module_probe_fn_t)(int src, int tag, struct ompi_communicator_t *comm,
+                                              ompi_status_public_t *status);
 
-typedef int (*mca_pml_base_module_mprobe_fn_t)(
-    int src,
-    int tag,
-    struct ompi_communicator_t* comm,
-    struct ompi_message_t **message,
-    ompi_status_public_t *status
-);
+typedef int (*mca_pml_base_module_mprobe_fn_t)(int src, int tag, struct ompi_communicator_t *comm,
+                                               struct ompi_message_t **message,
+                                               ompi_status_public_t *status);
 
 /**
  * Cancel pending operation.
@@ -431,10 +366,7 @@ typedef int (*mca_pml_base_module_mprobe_fn_t)(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-typedef int (*mca_pml_base_module_cancel_fn_t)(
-    struct ompi_request_t* request
-);
-
+typedef int (*mca_pml_base_module_cancel_fn_t)(struct ompi_request_t *request);
 
 /**
  * Has a request been cancelled?
@@ -443,10 +375,7 @@ typedef int (*mca_pml_base_module_cancel_fn_t)(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-typedef int (*mca_pml_base_module_cancelled_fn_t)(
-    struct ompi_request_t* request,
-    int *flag
-);
+typedef int (*mca_pml_base_module_cancelled_fn_t)(struct ompi_request_t *request, int *flag);
 
 /**
  * Release resources held by a persistent mode request.
@@ -455,10 +384,7 @@ typedef int (*mca_pml_base_module_cancelled_fn_t)(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-typedef int (*mca_pml_base_module_free_fn_t)(
-    struct ompi_request_t** request
-);
-
+typedef int (*mca_pml_base_module_free_fn_t)(struct ompi_request_t **request);
 
 /**
  * A special NULL request handle.
@@ -467,9 +393,7 @@ typedef int (*mca_pml_base_module_free_fn_t)(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-typedef int (*mca_pml_base_module_null_fn_t)(
-    struct ompi_request_t** request
-);
+typedef int (*mca_pml_base_module_null_fn_t)(struct ompi_request_t **request);
 
 /**
  * Diagnostics function.
@@ -479,10 +403,7 @@ typedef int (*mca_pml_base_module_null_fn_t)(
  * @return                OMPI_SUCCESS or failure status.
  *
  */
-typedef int (*mca_pml_base_module_dump_fn_t)(
-    struct ompi_communicator_t* comm,
-    int verbose
-);
+typedef int (*mca_pml_base_module_dump_fn_t)(struct ompi_communicator_t *comm, int verbose);
 
 /**
  * pml module flags
@@ -498,36 +419,36 @@ typedef int (*mca_pml_base_module_dump_fn_t)(
 struct mca_pml_base_module_2_1_0_t {
 
     /* downcalls from MCA to PML */
-    mca_pml_base_module_add_procs_fn_t    pml_add_procs;
-    mca_pml_base_module_del_procs_fn_t    pml_del_procs;
-    mca_pml_base_module_enable_fn_t       pml_enable;
-    mca_pml_base_module_progress_fn_t     pml_progress;
+    mca_pml_base_module_add_procs_fn_t pml_add_procs;
+    mca_pml_base_module_del_procs_fn_t pml_del_procs;
+    mca_pml_base_module_enable_fn_t pml_enable;
+    mca_pml_base_module_progress_fn_t pml_progress;
 
     /* downcalls from MPI to PML */
-    mca_pml_base_module_add_comm_fn_t     pml_add_comm;
-    mca_pml_base_module_del_comm_fn_t     pml_del_comm;
-    mca_pml_base_module_revoke_comm_fn_t  pml_revoke_comm;
-    mca_pml_base_module_irecv_init_fn_t   pml_irecv_init;
-    mca_pml_base_module_irecv_fn_t        pml_irecv;
-    mca_pml_base_module_recv_fn_t         pml_recv;
-    mca_pml_base_module_isend_init_fn_t   pml_isend_init;
-    mca_pml_base_module_isend_fn_t        pml_isend;
-    mca_pml_base_module_send_fn_t         pml_send;
-    mca_pml_base_module_iprobe_fn_t       pml_iprobe;
-    mca_pml_base_module_probe_fn_t        pml_probe;
-    mca_pml_base_module_start_fn_t        pml_start;
-    mca_pml_base_module_improbe_fn_t      pml_improbe;
-    mca_pml_base_module_mprobe_fn_t       pml_mprobe;
-    mca_pml_base_module_imrecv_fn_t       pml_imrecv;
-    mca_pml_base_module_mrecv_fn_t        pml_mrecv;
+    mca_pml_base_module_add_comm_fn_t pml_add_comm;
+    mca_pml_base_module_del_comm_fn_t pml_del_comm;
+    mca_pml_base_module_revoke_comm_fn_t pml_revoke_comm;
+    mca_pml_base_module_irecv_init_fn_t pml_irecv_init;
+    mca_pml_base_module_irecv_fn_t pml_irecv;
+    mca_pml_base_module_recv_fn_t pml_recv;
+    mca_pml_base_module_isend_init_fn_t pml_isend_init;
+    mca_pml_base_module_isend_fn_t pml_isend;
+    mca_pml_base_module_send_fn_t pml_send;
+    mca_pml_base_module_iprobe_fn_t pml_iprobe;
+    mca_pml_base_module_probe_fn_t pml_probe;
+    mca_pml_base_module_start_fn_t pml_start;
+    mca_pml_base_module_improbe_fn_t pml_improbe;
+    mca_pml_base_module_mprobe_fn_t pml_mprobe;
+    mca_pml_base_module_imrecv_fn_t pml_imrecv;
+    mca_pml_base_module_mrecv_fn_t pml_mrecv;
 
     /* diagnostics */
-    mca_pml_base_module_dump_fn_t         pml_dump;
+    mca_pml_base_module_dump_fn_t pml_dump;
 
     /* maximum constant sizes */
-    uint32_t                              pml_max_contextid;
-    int                                   pml_max_tag;
-    int                                   pml_flags;
+    uint32_t pml_max_contextid;
+    int pml_max_tag;
+    int pml_flags;
 };
 typedef struct mca_pml_base_module_2_1_0_t mca_pml_base_module_2_1_0_t;
 typedef mca_pml_base_module_2_1_0_t mca_pml_base_module_t;
@@ -535,27 +456,26 @@ typedef mca_pml_base_module_2_1_0_t mca_pml_base_module_t;
 /*
  * Macro for use in components that are of type pml
  */
-#define MCA_PML_BASE_VERSION_2_1_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 1, 0)
+#define MCA_PML_BASE_VERSION_2_1_0 OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 1, 0)
 
-    /*
-     * macro for doing direct call / call through struct
-     */
+/*
+ * macro for doing direct call / call through struct
+ */
 #if MCA_ompi_pml_DIRECT_CALL
 
-#include MCA_ompi_pml_DIRECT_CALL_HEADER
+#    include MCA_ompi_pml_DIRECT_CALL_HEADER
 
-#define MCA_PML_CALL_STAMP(a, b) mca_pml_ ## a ## _ ## b
-#define MCA_PML_CALL_EXPANDER(a, b) MCA_PML_CALL_STAMP(a,b)
-#define MCA_PML_CALL(a) MCA_PML_CALL_EXPANDER(MCA_ompi_pml_DIRECT_CALL_COMPONENT, a)
+#    define MCA_PML_CALL_STAMP(a, b)    mca_pml_##a##_##b
+#    define MCA_PML_CALL_EXPANDER(a, b) MCA_PML_CALL_STAMP(a, b)
+#    define MCA_PML_CALL(a)             MCA_PML_CALL_EXPANDER(MCA_ompi_pml_DIRECT_CALL_COMPONENT, a)
 
 #else
-#define MCA_PML_CALL(a) mca_pml.pml_ ## a
+#    define MCA_PML_CALL(a) mca_pml.pml_##a
 #endif
 
 OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 
-static inline bool mca_pml_base_requires_world (void)
+static inline bool mca_pml_base_requires_world(void)
 {
     return !!(mca_pml.pml_flags & MCA_PML_BASE_FLAG_REQUIRE_WORLD);
 }

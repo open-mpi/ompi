@@ -23,38 +23,34 @@
  */
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Unpack_external = PMPI_Unpack_external
-#endif
-#define MPI_Unpack_external PMPI_Unpack_external
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Unpack_external = PMPI_Unpack_external
+#    endif
+#    define MPI_Unpack_external PMPI_Unpack_external
 #endif
 
 static const char FUNC_NAME[] = "MPI_Unpack_external";
 
-
-int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insize,
-                         MPI_Aint *position, void *outbuf, int outcount,
-                         MPI_Datatype datatype)
+int MPI_Unpack_external(const char datarep[], const void *inbuf, MPI_Aint insize,
+                        MPI_Aint *position, void *outbuf, int outcount, MPI_Datatype datatype)
 {
     int rc = MPI_SUCCESS;
 
-    MEMCHECKER(
-        memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, outbuf, outcount, datatype);
-    );
+    MEMCHECKER(memchecker_datatype(datatype);
+               memchecker_call(&opal_memchecker_base_isdefined, outbuf, outcount, datatype););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if ((NULL == inbuf) || (NULL == position)) {  /* outbuf can be MPI_BOTTOM */
+        if ((NULL == inbuf) || (NULL == position)) { /* outbuf can be MPI_BOTTOM */
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         } else if (outcount < 0) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
@@ -65,8 +61,7 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
-    rc = ompi_datatype_unpack_external(datarep, inbuf, insize,
-                                       position, outbuf, outcount,
+    rc = ompi_datatype_unpack_external(datarep, inbuf, insize, position, outbuf, outcount,
                                        datatype);
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);

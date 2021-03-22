@@ -24,9 +24,8 @@ static int register_component(void);
 /*
  * Public string showing the fbtl ime component version number
  */
-const char *mca_fbtl_ime_component_version_string =
-  "OMPI/MPI IME FBTL MCA component version " OMPI_VERSION;
-
+const char *mca_fbtl_ime_component_version_string
+    = "OMPI/MPI IME FBTL MCA component version " OMPI_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -58,22 +57,19 @@ mca_fbtl_base_component_2_0_0_t mca_fbtl_ime_component = {
 static int register_component(void)
 {
     mca_fbtl_ime_iov_max = FBTL_IME_IOV_MAX;
-    (void) mca_base_component_var_register(&mca_fbtl_ime_component.fbtlm_version,
-                                           "iov_max", "Maximum iov count that should be used when "
+    (void) mca_base_component_var_register(&mca_fbtl_ime_component.fbtlm_version, "iov_max",
+                                           "Maximum iov count that should be used when "
                                            "calling an IME native function",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fbtl_ime_iov_max);
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fbtl_ime_iov_max);
 
     mca_fbtl_ime_aio_reqs_max = FBTL_IME_AIO_REQS_MAX;
-    (void) mca_base_component_var_register(&mca_fbtl_ime_component.fbtlm_version,
-                                           "aio_reqs_max", "Maximum number of aiocb requests that should "
-                                           "be sent simultaneously when calling an IME native function",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fbtl_ime_aio_reqs_max );
+    (void) mca_base_component_var_register(
+        &mca_fbtl_ime_component.fbtlm_version, "aio_reqs_max",
+        "Maximum number of aiocb requests that should "
+        "be sent simultaneously when calling an IME native function",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_fbtl_ime_aio_reqs_max);
 
     return OMPI_SUCCESS;
 }

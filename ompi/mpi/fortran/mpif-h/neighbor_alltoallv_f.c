@@ -24,56 +24,54 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_NEIGHBOR_ALLTOALLV = ompi_neighbor_alltoallv_f
+#        pragma weak pmpi_neighbor_alltoallv = ompi_neighbor_alltoallv_f
+#        pragma weak pmpi_neighbor_alltoallv_ = ompi_neighbor_alltoallv_f
+#        pragma weak pmpi_neighbor_alltoallv__ = ompi_neighbor_alltoallv_f
+
+#        pragma weak PMPI_Neighbor_alltoallv_f = ompi_neighbor_alltoallv_f
+#        pragma weak PMPI_Neighbor_alltoallv_f08 = ompi_neighbor_alltoallv_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(
+    PMPI_NEIGHBOR_ALLTOALLV, pmpi_neighbor_alltoallv, pmpi_neighbor_alltoallv_,
+    pmpi_neighbor_alltoallv__, pompi_neighbor_alltoallv_f,
+    (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf,
+     MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
+    (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_NEIGHBOR_ALLTOALLV = ompi_neighbor_alltoallv_f
-#pragma weak pmpi_neighbor_alltoallv = ompi_neighbor_alltoallv_f
-#pragma weak pmpi_neighbor_alltoallv_ = ompi_neighbor_alltoallv_f
-#pragma weak pmpi_neighbor_alltoallv__ = ompi_neighbor_alltoallv_f
+#    pragma weak MPI_NEIGHBOR_ALLTOALLV = ompi_neighbor_alltoallv_f
+#    pragma weak mpi_neighbor_alltoallv = ompi_neighbor_alltoallv_f
+#    pragma weak mpi_neighbor_alltoallv_ = ompi_neighbor_alltoallv_f
+#    pragma weak mpi_neighbor_alltoallv__ = ompi_neighbor_alltoallv_f
 
-#pragma weak PMPI_Neighbor_alltoallv_f = ompi_neighbor_alltoallv_f
-#pragma weak PMPI_Neighbor_alltoallv_f08 = ompi_neighbor_alltoallv_f
+#    pragma weak MPI_Neighbor_alltoallv_f = ompi_neighbor_alltoallv_f
+#    pragma weak MPI_Neighbor_alltoallv_f08 = ompi_neighbor_alltoallv_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLTOALLV,
-                           pmpi_neighbor_alltoallv,
-                           pmpi_neighbor_alltoallv_,
-                           pmpi_neighbor_alltoallv__,
-                           pompi_neighbor_alltoallv_f,
-                           (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
-                           (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr) )
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_NEIGHBOR_ALLTOALLV, mpi_neighbor_alltoallv, mpi_neighbor_alltoallv_,
+                           mpi_neighbor_alltoallv__, ompi_neighbor_alltoallv_f,
+                           (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls,
+                            MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts,
+                            MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
+                           (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls,
+                            recvtype, comm, ierr))
+#    else
+#        define ompi_neighbor_alltoallv_f pompi_neighbor_alltoallv_f
+#    endif
 #endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_NEIGHBOR_ALLTOALLV = ompi_neighbor_alltoallv_f
-#pragma weak mpi_neighbor_alltoallv = ompi_neighbor_alltoallv_f
-#pragma weak mpi_neighbor_alltoallv_ = ompi_neighbor_alltoallv_f
-#pragma weak mpi_neighbor_alltoallv__ = ompi_neighbor_alltoallv_f
-
-#pragma weak MPI_Neighbor_alltoallv_f = ompi_neighbor_alltoallv_f
-#pragma weak MPI_Neighbor_alltoallv_f08 = ompi_neighbor_alltoallv_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_NEIGHBOR_ALLTOALLV,
-                           mpi_neighbor_alltoallv,
-                           mpi_neighbor_alltoallv_,
-                           mpi_neighbor_alltoallv__,
-                           ompi_neighbor_alltoallv_f,
-                           (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
-                           (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr) )
-#else
-#define ompi_neighbor_alltoallv_f pompi_neighbor_alltoallv_f
-#endif
-#endif
-
 
 void ompi_neighbor_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls,
                                MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts,
-                               MPI_Fint *rdispls, MPI_Fint *recvtype,
-                               MPI_Fint *comm, MPI_Fint *ierr)
+                               MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm,
+                               MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
     MPI_Datatype c_sendtype, c_recvtype;
@@ -97,15 +95,12 @@ void ompi_neighbor_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sd
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Neighbor_alltoallv(sendbuf,
-                                    OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                                    OMPI_ARRAY_NAME_CONVERT(sdispls),
-                                    c_sendtype,
-                                    recvbuf,
-                                    OMPI_ARRAY_NAME_CONVERT(recvcounts),
-                                    OMPI_ARRAY_NAME_CONVERT(rdispls),
-                                    c_recvtype, c_comm);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Neighbor_alltoallv(sendbuf, OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                                     OMPI_ARRAY_NAME_CONVERT(sdispls), c_sendtype, recvbuf,
+                                     OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                                     OMPI_ARRAY_NAME_CONVERT(rdispls), c_recvtype, c_comm);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);

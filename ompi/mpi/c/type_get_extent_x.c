@@ -22,45 +22,43 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_get_extent_x = PMPI_Type_get_extent_x
-#endif
-#define MPI_Type_get_extent_x PMPI_Type_get_extent_x
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_get_extent_x = PMPI_Type_get_extent_x
+#    endif
+#    define MPI_Type_get_extent_x PMPI_Type_get_extent_x
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_get_extent_x";
 
 int MPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb, MPI_Count *extent)
 {
-  MPI_Aint alb, aextent;
-  int rc;
+    MPI_Aint alb, aextent;
+    int rc;
 
-  MEMCHECKER(
-    memchecker_datatype(type);
-  );
+    MEMCHECKER(memchecker_datatype(type););
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == type || MPI_DATATYPE_NULL == type) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
-    } else if (NULL == lb || NULL == extent) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == type || MPI_DATATYPE_NULL == type) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
+        } else if (NULL == lb || NULL == extent) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        }
     }
-  }
 
-  rc = ompi_datatype_get_extent( type, &alb, &aextent );
-  if (OMPI_SUCCESS == rc) {
-    *lb = (MPI_Count) alb;
-    *extent = (MPI_Count) aextent;
-  }
+    rc = ompi_datatype_get_extent(type, &alb, &aextent);
+    if (OMPI_SUCCESS == rc) {
+        *lb = (MPI_Count) alb;
+        *extent = (MPI_Count) aextent;
+    }
 
-  OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME );
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

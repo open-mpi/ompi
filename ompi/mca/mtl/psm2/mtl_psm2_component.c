@@ -28,23 +28,23 @@
 
 #include "ompi_config.h"
 
-#include "opal/util/event.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
-#include "opal/util/opal_environ.h"
-#include "opal/util/printf.h"
 #include "ompi/proc/proc.h"
+#include "opal/util/event.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/output.h"
+#include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
 #include "mtl_psm2.h"
-#include "mtl_psm2_types.h"
 #include "mtl_psm2_request.h"
+#include "mtl_psm2_types.h"
 
 #include "psm2.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <glob.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 static int param_priority;
 /* MPI_THREAD_MULTIPLE_SUPPORT */
@@ -59,8 +59,8 @@ static int ompi_mtl_psm2_component_close(void);
 static int ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority);
 static int ompi_mtl_psm2_component_register(void);
 
-static mca_mtl_base_module_t* ompi_mtl_psm2_component_init( bool enable_progress_threads,
-                                                          bool enable_mpi_threads );
+static mca_mtl_base_module_t *ompi_mtl_psm2_component_init(bool enable_progress_threads,
+                                                           bool enable_mpi_threads);
 
 mca_mtl_psm2_component_t mca_mtl_psm2_component = {
 
@@ -100,33 +100,99 @@ struct ompi_mtl_psm2_shadow_variable {
 };
 
 struct ompi_mtl_psm2_shadow_variable ompi_mtl_psm2_shadow_variables[] = {
-    {MCA_BASE_VAR_TYPE_STRING, &ompi_mtl_psm2.psm2_devices, {.stringval = "self,shm,hfi"}, "PSM2_DEVICES", OPAL_INFO_LVL_3,
+    {MCA_BASE_VAR_TYPE_STRING,
+     &ompi_mtl_psm2.psm2_devices,
+     {.stringval = "self,shm,hfi"},
+     "PSM2_DEVICES",
+     OPAL_INFO_LVL_3,
      "devices",
-     "Comma-delimited list of PSM2 devices. Valid values: self, shm, hfi (default: self,shm,hfi. Reduced to self,shm in single node jobs)",0},
-    {MCA_BASE_VAR_TYPE_STRING, &ompi_mtl_psm2.psm2_memory, {.stringval = "normal"}, "PSM2_MEMORY", OPAL_INFO_LVL_9,
-     "memory_model", "PSM2 memory usage mode. Valid values: min, normal, large (default: normal)", 0},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_mq_sendreqs_max, {.ulval = 0}, "PSM2_MQ_SENDREQS_MAX", OPAL_INFO_LVL_3,
-     "mq_sendreqs_max", "PSM2 maximum number of isend requests in flight (default: unset, let libpsm2 use its default)", MCA_BASE_VAR_FLAG_DEF_UNSET},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_mq_recvreqs_max, {.ulval = 0}, "PSM2_MQ_RECVREQS_MAX", OPAL_INFO_LVL_3,
-     "mq_recvreqs_max", "PSM2 maximum number of irecv requests in flight (default:  unset, let libpsm2 use its default)", MCA_BASE_VAR_FLAG_DEF_UNSET},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_mq_rndv_hfi_threshold, {.ulval = 0}, "PSM2_MQ_RNDV_HFI_THRESH", OPAL_INFO_LVL_3,
-     "hfi_eager_limit", "PSM2 eager to rendezvous threshold (default: unset, let libpsm2 use its defaults)", MCA_BASE_VAR_FLAG_DEF_UNSET},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_mq_rndv_shm_threshold, {.ulval = 0}, "PSM2_MQ_RNDV_SHM_THRESH", OPAL_INFO_LVL_3,
-     "shm_eager_limit", "PSM2 shared memory eager to rendezvous threshold (default: unset, let libpsm2 use its default)", MCA_BASE_VAR_FLAG_DEF_UNSET},
-    {MCA_BASE_VAR_TYPE_BOOL, &ompi_mtl_psm2.psm2_recvthread, {.boolval = true}, "PSM2_RCVTHREAD", OPAL_INFO_LVL_3,
-     "use_receive_thread", "Use PSM2 progress thread (default: true)"},
-    {MCA_BASE_VAR_TYPE_BOOL, &ompi_mtl_psm2.psm2_shared_contexts, {.boolval = true}, "PSM2_SHAREDCONTEXTS", OPAL_INFO_LVL_6,
-     "use_shared_contexts", "Share PSM contexts between MPI processes (default: true)"},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_max_contexts_per_job, {.ulval = 0}, "PSM2_MAX_CONTEXTS_PER_JOB", OPAL_INFO_LVL_9,
-     "max_contexts_per_job", "Maximum number of contexts available on a node (default: unset, let libpsm2 use its default)", MCA_BASE_VAR_FLAG_DEF_UNSET},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_tracemask, {.ulval = 1}, "PSM2_TRACEMASK", OPAL_INFO_LVL_9,
-     "trace_mask", "PSM2 tracemask value. See PSM2 documentation for accepted values in 0x (default: 1)"},
-    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG, &ompi_mtl_psm2.psm2_opa_sl, {.ulval = 0}, "HFI_SL", OPAL_INFO_LVL_9,
-     "opa_service_level", "HFI Service Level (default: unset, let libpsm2 use its defaults)", MCA_BASE_VAR_FLAG_DEF_UNSET},
+     "Comma-delimited list of PSM2 devices. Valid values: self, shm, hfi (default: self,shm,hfi. "
+     "Reduced to self,shm in single node jobs)",
+     0},
+    {MCA_BASE_VAR_TYPE_STRING,
+     &ompi_mtl_psm2.psm2_memory,
+     {.stringval = "normal"},
+     "PSM2_MEMORY",
+     OPAL_INFO_LVL_9,
+     "memory_model",
+     "PSM2 memory usage mode. Valid values: min, normal, large (default: normal)",
+     0},
+    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+     &ompi_mtl_psm2.psm2_mq_sendreqs_max,
+     {.ulval = 0},
+     "PSM2_MQ_SENDREQS_MAX",
+     OPAL_INFO_LVL_3,
+     "mq_sendreqs_max",
+     "PSM2 maximum number of isend requests in flight (default: unset, let libpsm2 use its "
+     "default)",
+     MCA_BASE_VAR_FLAG_DEF_UNSET},
+    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+     &ompi_mtl_psm2.psm2_mq_recvreqs_max,
+     {.ulval = 0},
+     "PSM2_MQ_RECVREQS_MAX",
+     OPAL_INFO_LVL_3,
+     "mq_recvreqs_max",
+     "PSM2 maximum number of irecv requests in flight (default:  unset, let libpsm2 use its "
+     "default)",
+     MCA_BASE_VAR_FLAG_DEF_UNSET},
+    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+     &ompi_mtl_psm2.psm2_mq_rndv_hfi_threshold,
+     {.ulval = 0},
+     "PSM2_MQ_RNDV_HFI_THRESH",
+     OPAL_INFO_LVL_3,
+     "hfi_eager_limit",
+     "PSM2 eager to rendezvous threshold (default: unset, let libpsm2 use its defaults)",
+     MCA_BASE_VAR_FLAG_DEF_UNSET},
+    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+     &ompi_mtl_psm2.psm2_mq_rndv_shm_threshold,
+     {.ulval = 0},
+     "PSM2_MQ_RNDV_SHM_THRESH",
+     OPAL_INFO_LVL_3,
+     "shm_eager_limit",
+     "PSM2 shared memory eager to rendezvous threshold (default: unset, let libpsm2 use its "
+     "default)",
+     MCA_BASE_VAR_FLAG_DEF_UNSET},
+    {MCA_BASE_VAR_TYPE_BOOL,
+     &ompi_mtl_psm2.psm2_recvthread,
+     {.boolval = true},
+     "PSM2_RCVTHREAD",
+     OPAL_INFO_LVL_3,
+     "use_receive_thread",
+     "Use PSM2 progress thread (default: true)"},
+    {MCA_BASE_VAR_TYPE_BOOL,
+     &ompi_mtl_psm2.psm2_shared_contexts,
+     {.boolval = true},
+     "PSM2_SHAREDCONTEXTS",
+     OPAL_INFO_LVL_6,
+     "use_shared_contexts",
+     "Share PSM contexts between MPI processes (default: true)"},
+    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+     &ompi_mtl_psm2.psm2_max_contexts_per_job,
+     {.ulval = 0},
+     "PSM2_MAX_CONTEXTS_PER_JOB",
+     OPAL_INFO_LVL_9,
+     "max_contexts_per_job",
+     "Maximum number of contexts available on a node (default: unset, let libpsm2 use its default)",
+     MCA_BASE_VAR_FLAG_DEF_UNSET},
+    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+     &ompi_mtl_psm2.psm2_tracemask,
+     {.ulval = 1},
+     "PSM2_TRACEMASK",
+     OPAL_INFO_LVL_9,
+     "trace_mask",
+     "PSM2 tracemask value. See PSM2 documentation for accepted values in 0x (default: 1)"},
+    {MCA_BASE_VAR_TYPE_UNSIGNED_LONG,
+     &ompi_mtl_psm2.psm2_opa_sl,
+     {.ulval = 0},
+     "HFI_SL",
+     OPAL_INFO_LVL_9,
+     "opa_service_level",
+     "HFI Service Level (default: unset, let libpsm2 use its defaults)",
+     MCA_BASE_VAR_FLAG_DEF_UNSET},
     {-1},
 };
 
-static void ompi_mtl_psm2_set_shadow_env (struct ompi_mtl_psm2_shadow_variable *variable)
+static void ompi_mtl_psm2_set_shadow_env(struct ompi_mtl_psm2_shadow_variable *variable)
 {
     mca_base_var_storage_t *storage = variable->storage;
     char *env_value;
@@ -135,56 +201,57 @@ static void ompi_mtl_psm2_set_shadow_env (struct ompi_mtl_psm2_shadow_variable *
     const mca_base_var_t *mca_base_var;
 
     var_index = mca_base_var_find("ompi", "mtl", "psm2", variable->mca_name);
-    ret = mca_base_var_get (var_index,&mca_base_var);
+    ret = mca_base_var_get(var_index, &mca_base_var);
     /* Something is fundamentally broken if registered variables are
      * not found */
     if (OPAL_SUCCESS != ret) {
-        fprintf (stderr, "ERROR setting PSM2 environment variable: %s\n", variable->env_name);
+        fprintf(stderr, "ERROR setting PSM2 environment variable: %s\n", variable->env_name);
         return;
     }
 
     /** Skip setting variables for which the default behavior is "unset" */
-    if ((mca_base_var->mbv_flags & MCA_BASE_VAR_FLAG_DEF_UNSET) &&
-        (MCA_BASE_VAR_SOURCE_DEFAULT == mca_base_var->mbv_source)){
-        return ;
+    if ((mca_base_var->mbv_flags & MCA_BASE_VAR_FLAG_DEF_UNSET)
+        && (MCA_BASE_VAR_SOURCE_DEFAULT == mca_base_var->mbv_source)) {
+        return;
     }
 
     switch (variable->variable_type) {
     case MCA_BASE_VAR_TYPE_BOOL:
-        ret = opal_asprintf (&env_value, "%s=%d", variable->env_name, storage->boolval ? 1 : 0);
+        ret = opal_asprintf(&env_value, "%s=%d", variable->env_name, storage->boolval ? 1 : 0);
         break;
     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
-        if (0 == strcmp (variable->env_name, "PSM2_TRACEMASK")) {
+        if (0 == strcmp(variable->env_name, "PSM2_TRACEMASK")) {
             /* PSM2 documentation shows the tracemask as a hexidecimal number. to be consitent
              * use hexidecimal here. */
-            ret = opal_asprintf (&env_value, "%s=0x%lx", variable->env_name, storage->ulval);
+            ret = opal_asprintf(&env_value, "%s=0x%lx", variable->env_name, storage->ulval);
         } else {
-            ret = opal_asprintf (&env_value, "%s=%lu", variable->env_name, storage->ulval);
+            ret = opal_asprintf(&env_value, "%s=%lu", variable->env_name, storage->ulval);
         }
         break;
     case MCA_BASE_VAR_TYPE_STRING:
-        ret = opal_asprintf (&env_value, "%s=%s", variable->env_name, storage->stringval);
+        ret = opal_asprintf(&env_value, "%s=%s", variable->env_name, storage->stringval);
         break;
     }
 
     if (0 > ret) {
-        fprintf (stderr, "ERROR setting PSM2 environment variable: %s\n", variable->env_name);
+        fprintf(stderr, "ERROR setting PSM2 environment variable: %s\n", variable->env_name);
     } else {
-        putenv (env_value);
+        putenv(env_value);
     }
 }
 
-static void ompi_mtl_psm2_register_shadow_env (struct ompi_mtl_psm2_shadow_variable *variable)
+static void ompi_mtl_psm2_register_shadow_env(struct ompi_mtl_psm2_shadow_variable *variable)
 {
     mca_base_var_storage_t *storage = variable->storage;
     char *env_value;
 
-    env_value = getenv (variable->env_name);
+    env_value = getenv(variable->env_name);
     switch (variable->variable_type) {
     case MCA_BASE_VAR_TYPE_BOOL:
         if (env_value) {
             int tmp;
-            (void) mca_base_var_enum_bool.value_from_string (&mca_base_var_enum_bool, env_value, &tmp);
+            (void) mca_base_var_enum_bool.value_from_string(&mca_base_var_enum_bool, env_value,
+                                                            &tmp);
             storage->boolval = !!tmp;
         } else {
             storage->boolval = variable->default_value.boolval;
@@ -192,7 +259,7 @@ static void ompi_mtl_psm2_register_shadow_env (struct ompi_mtl_psm2_shadow_varia
         break;
     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
         if (env_value) {
-            storage->ulval = strtol (env_value, NULL, 0);
+            storage->ulval = strtol(env_value, NULL, 0);
         } else {
             storage->ulval = variable->default_value.ulval;
         }
@@ -206,29 +273,28 @@ static void ompi_mtl_psm2_register_shadow_env (struct ompi_mtl_psm2_shadow_varia
         break;
     }
 
-    (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version, variable->mca_name, variable->description,
-                                            variable->variable_type, NULL, 0, variable->flags, variable->info_level, MCA_BASE_VAR_SCOPE_READONLY,
-                                            variable->storage);
+    (void) mca_base_component_var_register(&mca_mtl_psm2_component.super.mtl_version,
+                                           variable->mca_name, variable->description,
+                                           variable->variable_type, NULL, 0, variable->flags,
+                                           variable->info_level, MCA_BASE_VAR_SCOPE_READONLY,
+                                           variable->storage);
 }
 
-static int
-get_num_total_procs(int *out_ntp)
+static int get_num_total_procs(int *out_ntp)
 {
-  *out_ntp = (int)ompi_process_info.num_procs;
-  return OMPI_SUCCESS;
-}
-
-static int
-get_num_local_procs(int *out_nlp)
-{
-    /* num_local_peers does not include us in
-     * its calculation, so adjust for that */
-    *out_nlp = (int)(1 + ompi_process_info.num_local_peers);
+    *out_ntp = (int) ompi_process_info.num_procs;
     return OMPI_SUCCESS;
 }
 
-static int
-ompi_mtl_psm2_component_register(void)
+static int get_num_local_procs(int *out_nlp)
+{
+    /* num_local_peers does not include us in
+     * its calculation, so adjust for that */
+    *out_nlp = (int) (1 + ompi_process_info.num_local_peers);
+    return OMPI_SUCCESS;
+}
+
+static int ompi_mtl_psm2_component_register(void)
 {
     int num_local_procs, num_total_procs;
 
@@ -236,11 +302,9 @@ ompi_mtl_psm2_component_register(void)
     (void) mca_base_component_var_register(&mca_mtl_psm2_component.super.mtl_version,
                                            "connect_timeout",
                                            "PSM2 connection timeout value in seconds",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_psm2.connect_timeout);
-
 
     (void) get_num_local_procs(&num_local_procs);
     (void) get_num_total_procs(&num_total_procs);
@@ -254,15 +318,13 @@ ompi_mtl_psm2_component_register(void)
     }
 
     param_priority = 40;
-    (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version,
-                                            "priority", "Priority of the PSM2 MTL component",
-                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
-                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                            &param_priority);
+    (void) mca_base_component_var_register(&mca_mtl_psm2_component.super.mtl_version, "priority",
+                                           "Priority of the PSM2 MTL component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &param_priority);
 
-    for (int i = 0 ; ompi_mtl_psm2_shadow_variables[i].variable_type >= 0 ; ++i) {
-        ompi_mtl_psm2_register_shadow_env (ompi_mtl_psm2_shadow_variables + i);
+    for (int i = 0; ompi_mtl_psm2_shadow_variables[i].variable_type >= 0; ++i) {
+        ompi_mtl_psm2_register_shadow_env(ompi_mtl_psm2_shadow_variables + i);
     }
 
     ompi_mtl_psm2_register_pvars();
@@ -270,76 +332,74 @@ ompi_mtl_psm2_component_register(void)
     return OMPI_SUCCESS;
 }
 
-static int
-ompi_mtl_psm2_component_open(void)
+static int ompi_mtl_psm2_component_open(void)
 {
-  int res;
-  glob_t globbuf = {0};
+    int res;
+    glob_t globbuf = {0};
 
-  /* Component available only if Omni-Path hardware is present */
-  res = glob("/dev/hfi1_[0-9]", GLOB_DOOFFS, NULL, &globbuf);
-  if (globbuf.gl_pathc > 0 || GLOB_NOMATCH==res) {
-      globfree(&globbuf);
-  }
-  if (0 != res) {
-      res = glob("/dev/hfi1_[0-9][0-9]", GLOB_APPEND, NULL, &globbuf);
-      if (globbuf.gl_pathc > 0) {
-          globfree(&globbuf);
-      }
-      if (0 != res) {
-          return OPAL_ERR_NOT_AVAILABLE;
-      }
-  }
-
-  /* Component available only if at least one hfi1 port is ACTIVE */
-  bool foundOnlineHfi1Port = false;
-  size_t i;
-  char portState[128];
-  FILE *devFile;
-  if (glob("/sys/class/infiniband/hfi1_*/ports/*/state",
-        GLOB_DOOFFS, NULL, &globbuf) != 0) {
-    return OPAL_ERR_NOT_AVAILABLE;
-  }
-
-  for (i=0;i < globbuf.gl_pathc; i++) {
-    devFile = fopen(globbuf.gl_pathv[i], "r");
-    fgets(portState, sizeof(portState), devFile);
-    fclose(devFile);
-
-    if (strstr(portState, "ACTIVE") != NULL) {
-      /* Found at least one ACTIVE port */
-      foundOnlineHfi1Port = true;
-      break;
+    /* Component available only if Omni-Path hardware is present */
+    res = glob("/dev/hfi1_[0-9]", GLOB_DOOFFS, NULL, &globbuf);
+    if (globbuf.gl_pathc > 0 || GLOB_NOMATCH == res) {
+        globfree(&globbuf);
     }
-  }
+    if (0 != res) {
+        res = glob("/dev/hfi1_[0-9][0-9]", GLOB_APPEND, NULL, &globbuf);
+        if (globbuf.gl_pathc > 0) {
+            globfree(&globbuf);
+        }
+        if (0 != res) {
+            return OPAL_ERR_NOT_AVAILABLE;
+        }
+    }
 
-  globfree(&globbuf);
+    /* Component available only if at least one hfi1 port is ACTIVE */
+    bool foundOnlineHfi1Port = false;
+    size_t i;
+    char portState[128];
+    FILE *devFile;
+    if (glob("/sys/class/infiniband/hfi1_*/ports/*/state", GLOB_DOOFFS, NULL, &globbuf) != 0) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
 
-  if (!foundOnlineHfi1Port) {
-    return OPAL_ERR_NOT_AVAILABLE;
-  }
+    for (i = 0; i < globbuf.gl_pathc; i++) {
+        devFile = fopen(globbuf.gl_pathv[i], "r");
+        fgets(portState, sizeof(portState), devFile);
+        fclose(devFile);
 
-  return OMPI_SUCCESS;
+        if (strstr(portState, "ACTIVE") != NULL) {
+            /* Found at least one ACTIVE port */
+            foundOnlineHfi1Port = true;
+            break;
+        }
+    }
+
+    globfree(&globbuf);
+
+    if (!foundOnlineHfi1Port) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    return OMPI_SUCCESS;
 }
 
-static int
-ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority)
+static int ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority)
 {
 
 #if HAVE_PSM2_LIB_REFCOUNT_CAP
     /*
-     * Mixing the PSM2 MTL with the OFI BTL (using PSM2) 
+     * Mixing the PSM2 MTL with the OFI BTL (using PSM2)
      * can cause an issue when they both call psm2_finalize
      * in older versions of libpsm2.
-     * 
+     *
      * An installer may know what they are doing and disabled
      * checking psm2 version, hence making this code conditional.
      */
     if (!psm2_get_capability_mask(PSM2_LIB_REFCOUNT_CAP)) {
-        opal_output_verbose(2, ompi_mtl_base_framework.framework_output, 
-            "This version of the PSM2 MTL needs version 11.2.173 or later of the libpsm2 library for correct operation.\n");
+        opal_output_verbose(2, ompi_mtl_base_framework.framework_output,
+                            "This version of the PSM2 MTL needs version 11.2.173 or later of the "
+                            "libpsm2 library for correct operation.\n");
         return OMPI_ERR_FATAL;
-    }   
+    }
 #endif
 
     /*
@@ -347,12 +407,11 @@ ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority)
      */
 
     *priority = param_priority;
-    *module = (mca_base_module_t *)&ompi_mtl_psm2.super;
+    *module = (mca_base_module_t *) &ompi_mtl_psm2.super;
     return OMPI_SUCCESS;
 }
 
-static int
-ompi_mtl_psm2_component_close(void)
+static int ompi_mtl_psm2_component_close(void)
 {
 #if OPAL_CUDA_SUPPORT
     if (cuda_envvar_set) {
@@ -362,24 +421,22 @@ ompi_mtl_psm2_component_close(void)
     return OMPI_SUCCESS;
 }
 
-static int
-get_local_rank(int *out_rank)
+static int get_local_rank(int *out_rank)
 {
     *out_rank = 0;
 
     if (UINT16_MAX == ompi_process_info.my_node_rank) {
         return OMPI_ERROR;
     }
-    *out_rank = (int)ompi_process_info.my_node_rank;
+    *out_rank = (int) ompi_process_info.my_node_rank;
     return OMPI_SUCCESS;
 }
 
-static mca_mtl_base_module_t *
-ompi_mtl_psm2_component_init(bool enable_progress_threads,
-                            bool enable_mpi_threads)
+static mca_mtl_base_module_t *ompi_mtl_psm2_component_init(bool enable_progress_threads,
+                                                           bool enable_mpi_threads)
 {
-    psm2_error_t	err;
-    int	verno_major = PSM2_VERNO_MAJOR;
+    psm2_error_t err;
+    int verno_major = PSM2_VERNO_MAJOR;
     int verno_minor = PSM2_VERNO_MINOR;
     int local_rank = -1, num_local_procs = 0;
 #if OPAL_CUDA_SUPPORT
@@ -394,7 +451,7 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
      */
     if (OMPI_SUCCESS != get_num_local_procs(&num_local_procs)) {
         opal_output(0, "Cannot determine number of local processes. "
-                    "Cannot continue.\n");
+                       "Cannot continue.\n");
         return NULL;
     }
     if (OMPI_SUCCESS != get_local_rank(&local_rank)) {
@@ -402,16 +459,15 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
         return NULL;
     }
 
-    err = psm2_error_register_handler(NULL /* no ep */,
-			             PSM2_ERRHANDLER_NOP);
+    err = psm2_error_register_handler(NULL /* no ep */, PSM2_ERRHANDLER_NOP);
     if (err) {
         opal_output(0, "Error in psm2_error_register_handler (error %s)\n",
-		    psm2_error_get_string(err));
-	return NULL;
+                    psm2_error_get_string(err));
+        return NULL;
     }
 
-    for (int i = 0 ; ompi_mtl_psm2_shadow_variables[i].variable_type >= 0 ; ++i) {
-        ompi_mtl_psm2_set_shadow_env (ompi_mtl_psm2_shadow_variables + i);
+    for (int i = 0; ompi_mtl_psm2_shadow_variables[i].variable_type >= 0; ++i) {
+        ompi_mtl_psm2_set_shadow_env(ompi_mtl_psm2_shadow_variables + i);
     }
 
 #if OPAL_CUDA_SUPPORT
@@ -427,9 +483,7 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
 
     cuda_env = getenv("PSM2_CUDA");
     if (!cuda_env && (0 == ret)) {
-        opal_show_help("help-mtl-psm2.txt",
-                       "no psm2 cuda env", true,
-                       ompi_process_info.nodename);
+        opal_show_help("help-mtl-psm2.txt", "no psm2 cuda env", true, ompi_process_info.nodename);
         opal_setenv("PSM2_CUDA", "1", false, &environ);
         cuda_envvar_set = true;
     }
@@ -437,18 +491,15 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
 
     err = psm2_init(&verno_major, &verno_minor);
     if (err) {
-      opal_show_help("help-mtl-psm2.txt",
-		     "psm2 init", true,
-		     psm2_error_get_string(err));
-      return NULL;
+        opal_show_help("help-mtl-psm2.txt", "psm2 init", true, psm2_error_get_string(err));
+        return NULL;
     }
 
     /* Complete PSM2 initialization */
     ompi_mtl_psm2_module_init(local_rank, num_local_procs);
 
-    ompi_mtl_psm2.super.mtl_request_size =
-      sizeof(mca_mtl_psm2_request_t) -
-      sizeof(struct mca_mtl_request_t);
+    ompi_mtl_psm2.super.mtl_request_size = sizeof(mca_mtl_psm2_request_t)
+                                           - sizeof(struct mca_mtl_request_t);
 
     return &ompi_mtl_psm2.super;
 }

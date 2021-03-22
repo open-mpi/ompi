@@ -29,7 +29,7 @@ typedef enum ompi_osc_rdma_request_type_t ompi_osc_rdma_request_type_t;
 
 struct ompi_osc_rdma_request_t;
 
-typedef void (*ompi_osc_rdma_request_cleanup_fn_t) (struct ompi_osc_rdma_request_t *);
+typedef void (*ompi_osc_rdma_request_cleanup_fn_t)(struct ompi_osc_rdma_request_t *);
 
 struct ompi_osc_rdma_request_t {
     ompi_request_t super;
@@ -46,9 +46,9 @@ struct ompi_osc_rdma_request_t {
     bool internal;
 
     ptrdiff_t offset;
-    size_t    len;
-    void     *ctx;
-    void     *frag;
+    size_t len;
+    void *ctx;
+    void *frag;
 
     uint64_t target_address;
 
@@ -63,54 +63,53 @@ OBJ_CLASS_DECLARATION(ompi_osc_rdma_request_t);
 
 /* REQUEST_ALLOC is only called from "top-level" functions (rdma_rput,
    rdma_rget, etc.), so it's ok to spin here... */
-#define OMPI_OSC_RDMA_REQUEST_ALLOC(rmodule, rpeer, req)                \
-    do {                                                                \
-        (req) = OBJ_NEW(ompi_osc_rdma_request_t);                       \
-        OMPI_REQUEST_INIT(&(req)->super, false);                        \
-        (req)->super.req_mpi_object.win = (rmodule)->win;               \
-        (req)->super.req_state = OMPI_REQUEST_ACTIVE;                   \
-        (req)->module = rmodule;                                        \
-        (req)->peer = (rpeer);                                          \
+#define OMPI_OSC_RDMA_REQUEST_ALLOC(rmodule, rpeer, req)  \
+    do {                                                  \
+        (req) = OBJ_NEW(ompi_osc_rdma_request_t);         \
+        OMPI_REQUEST_INIT(&(req)->super, false);          \
+        (req)->super.req_mpi_object.win = (rmodule)->win; \
+        (req)->super.req_state = OMPI_REQUEST_ACTIVE;     \
+        (req)->module = rmodule;                          \
+        (req)->peer = (rpeer);                            \
     } while (0)
 
-#define OMPI_OSC_RDMA_REQUEST_RETURN(req)                               \
-    do {                                                                \
-        OMPI_REQUEST_FINI(&(req)->super);                               \
-        free ((req)->buffer);                                           \
-        free (req);                                                     \
+#define OMPI_OSC_RDMA_REQUEST_RETURN(req) \
+    do {                                  \
+        OMPI_REQUEST_FINI(&(req)->super); \
+        free((req)->buffer);              \
+        free(req);                        \
     } while (0)
 
-static inline void ompi_osc_rdma_request_complete (ompi_osc_rdma_request_t *request, int mpi_error);
+static inline void ompi_osc_rdma_request_complete(ompi_osc_rdma_request_t *request, int mpi_error);
 
-
-static inline void ompi_osc_rdma_request_deref (ompi_osc_rdma_request_t *request)
+static inline void ompi_osc_rdma_request_deref(ompi_osc_rdma_request_t *request)
 {
-    if (1 == OPAL_THREAD_FETCH_ADD32 (&request->outstanding_requests, -1)) {
-        ompi_osc_rdma_request_complete (request, OMPI_SUCCESS);
+    if (1 == OPAL_THREAD_FETCH_ADD32(&request->outstanding_requests, -1)) {
+        ompi_osc_rdma_request_complete(request, OMPI_SUCCESS);
     }
 }
 
-static inline void ompi_osc_rdma_request_complete (ompi_osc_rdma_request_t *request, int mpi_error)
+static inline void ompi_osc_rdma_request_complete(ompi_osc_rdma_request_t *request, int mpi_error)
 {
     ompi_osc_rdma_request_t *parent_request = request->parent_request;
 
     if (request->cleanup) {
-        request->cleanup (request);
+        request->cleanup(request);
     }
 
-    free (request->to_free);
+    free(request->to_free);
 
     if (parent_request) {
-        ompi_osc_rdma_request_deref (parent_request);
+        ompi_osc_rdma_request_deref(parent_request);
     }
 
     if (!request->internal) {
         request->super.req_status.MPI_ERROR = mpi_error;
 
         /* mark the request complete at the mpi level */
-        ompi_request_complete (&request->super, true);
+        ompi_request_complete(&request->super, true);
     } else {
-        OMPI_OSC_RDMA_REQUEST_RETURN (request);
+        OMPI_OSC_RDMA_REQUEST_RETURN(request);
     }
 }
 

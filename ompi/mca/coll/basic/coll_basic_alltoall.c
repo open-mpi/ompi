@@ -28,10 +28,9 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
-
 
 /*
  *	alltoall_inter
@@ -40,13 +39,9 @@
  *	Accepts:	- same as MPI_Alltoall()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
-int
-mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
-                              struct ompi_datatype_t *sdtype,
-                              void *rbuf, int rcount,
-                              struct ompi_datatype_t *rdtype,
-                              struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+int mca_coll_basic_alltoall_inter(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                  void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                  struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int i;
     int size;
@@ -78,8 +73,10 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
     nreqs = size * 2;
-    req = rreq = ompi_coll_base_comm_get_reqs( module->base_data, nreqs);
-    if( NULL == req ) { return OMPI_ERR_OUT_OF_RESOURCE; }
+    req = rreq = ompi_coll_base_comm_get_reqs(module->base_data, nreqs);
+    if (NULL == req) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     sreq = rreq + size;
 
     prcv = (char *) rbuf;
@@ -87,8 +84,8 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
 
     /* Post all receives first */
     for (i = 0; i < size; i++, ++rreq) {
-        err = MCA_PML_CALL(irecv(prcv + (i * rcvinc), rcount, rdtype, i,
-                                 MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
+        err = MCA_PML_CALL(
+            irecv(prcv + (i * rcvinc), rcount, rdtype, i, MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
         if (OMPI_SUCCESS != err) {
             ompi_coll_base_free_reqs(req, i + 1);
             return err;
@@ -97,8 +94,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
 
     /* Now post all sends */
     for (i = 0; i < size; i++, ++sreq) {
-        err = MCA_PML_CALL(isend(psnd + (i * sndinc), scount, sdtype, i,
-                                 MCA_COLL_BASE_TAG_ALLTOALL,
+        err = MCA_PML_CALL(isend(psnd + (i * sndinc), scount, sdtype, i, MCA_COLL_BASE_TAG_ALLTOALL,
                                  MCA_PML_BASE_SEND_STANDARD, comm, sreq));
         if (OMPI_SUCCESS != err) {
             ompi_coll_base_free_reqs(req, i + size + 1);

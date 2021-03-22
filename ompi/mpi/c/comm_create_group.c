@@ -24,51 +24,45 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_create_group = PMPI_Comm_create_group
-#endif
-#define MPI_Comm_create_group PMPI_Comm_create_group
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_create_group = PMPI_Comm_create_group
+#    endif
+#    define MPI_Comm_create_group PMPI_Comm_create_group
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_create_group";
 
-
-int MPI_Comm_create_group (MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *newcomm) {
+int MPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *newcomm)
+{
     int rc;
 
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (ompi_comm_invalid (comm))
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+        if (ompi_comm_invalid(comm))
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
 
         if (tag < 0 || tag > mca_pml.pml_max_tag)
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TAG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TAG, FUNC_NAME);
 
-        if ( NULL == group )
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_GROUP,
-                                          FUNC_NAME);
+        if (NULL == group)
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_GROUP, FUNC_NAME);
 
-        if ( NULL == newcomm )
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (NULL == newcomm)
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
     }
 
-    if (MPI_GROUP_NULL == group || MPI_UNDEFINED == ompi_group_rank (group)) {
+    if (MPI_GROUP_NULL == group || MPI_UNDEFINED == ompi_group_rank(group)) {
         *newcomm = MPI_COMM_NULL;
         return MPI_SUCCESS;
     }
@@ -79,12 +73,12 @@ int MPI_Comm_create_group (MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *ne
      * communicator. This is not absolutely necessary since we will
      * check for this, and other, error conditions during the operation.
      */
-    if( OPAL_UNLIKELY(!ompi_comm_iface_create_check(comm, &rc)) ) {
+    if (OPAL_UNLIKELY(!ompi_comm_iface_create_check(comm, &rc))) {
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
 #endif
 
-    rc = ompi_comm_create_group ((ompi_communicator_t *) comm, (ompi_group_t *) group,
-                                 tag, (ompi_communicator_t **) newcomm);
-    OMPI_ERRHANDLER_RETURN (rc, comm, rc, FUNC_NAME);
+    rc = ompi_comm_create_group((ompi_communicator_t *) comm, (ompi_group_t *) group, tag,
+                                (ompi_communicator_t **) newcomm);
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

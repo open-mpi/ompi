@@ -26,25 +26,25 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
-#include "opal/util/bit_ops.h"
-#include "ompi/constants.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/coll_tags.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/op/op.h"
-#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_base_topo.h"
 #include "coll_base_util.h"
+#include "mpi.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/op/op.h"
+#include "opal/util/bit_ops.h"
 
 int mca_coll_base_reduce_local(const void *inbuf, void *inoutbuf, int count,
-                               struct ompi_datatype_t * dtype, struct ompi_op_t * op,
+                               struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                mca_coll_base_module_t *module)
 {
     /* XXX -- CONST -- do not cast away const -- update ompi/op/op.h */
-    ompi_op_reduce(op, (void *)inbuf, inoutbuf, count, dtype);
+    ompi_op_reduce(op, (void *) inbuf, inoutbuf, count, dtype);
     return OMPI_SUCCESS;
 }
 
@@ -59,12 +59,11 @@ int mca_coll_base_reduce_local(const void *inbuf, void *inoutbuf, int count,
  * for the first block: thus we must copy sendbuf to accumbuf on intermediate
  * to keep the optimized loop happy.
  */
-int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int original_count,
-                                    ompi_datatype_t* datatype, ompi_op_t* op,
-                                    int root, ompi_communicator_t* comm,
-                                    mca_coll_base_module_t *module,
-                                    ompi_coll_tree_t* tree, int count_by_segment,
-                                    int max_outstanding_reqs )
+int ompi_coll_base_reduce_generic(const void *sendbuf, void *recvbuf, int original_count,
+                                  ompi_datatype_t *datatype, ompi_op_t *op, int root,
+                                  ompi_communicator_t *comm, mca_coll_base_module_t *module,
+                                  ompi_coll_tree_t *tree, int count_by_segment,
+                                  int max_outstanding_reqs)
 {
     char *inbuf[2] = {NULL, NULL}, *inbuf_free[2] = {NULL, NULL};
     char *accumbuf = NULL, *accumbuf_free = NULL;
@@ -78,60 +77,68 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_datatype_type_extent( datatype, &extent );
-    num_segments = (int)(((size_t)original_count + (size_t)count_by_segment - (size_t)1) / (size_t)count_by_segment);
-    segment_increment = (ptrdiff_t)count_by_segment * extent;
+    ompi_datatype_type_extent(datatype, &extent);
+    num_segments = (int) (((size_t) original_count + (size_t) count_by_segment - (size_t) 1)
+                          / (size_t) count_by_segment);
+    segment_increment = (ptrdiff_t) count_by_segment * extent;
 
-    sendtmpbuf = (char*) sendbuf;
-    if( sendbuf == MPI_IN_PLACE ) {
-        sendtmpbuf = (char *)recvbuf;
+    sendtmpbuf = (char *) sendbuf;
+    if (sendbuf == MPI_IN_PLACE) {
+        sendtmpbuf = (char *) recvbuf;
     }
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:reduce_generic count %d, msg size %ld, segsize %ld, max_requests %d",
-                 original_count, (unsigned long)((ptrdiff_t)num_segments * (ptrdiff_t)segment_increment),
-                 (unsigned long)segment_increment, max_outstanding_reqs));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:reduce_generic count %d, msg size %ld, segsize %ld, max_requests %d",
+                 original_count,
+                 (unsigned long) ((ptrdiff_t) num_segments * (ptrdiff_t) segment_increment),
+                 (unsigned long) segment_increment, max_outstanding_reqs));
 
     rank = ompi_comm_rank(comm);
 
     /* non-leaf nodes - wait for children to send me data & forward up
        (if needed) */
-    if( tree->tree_nextsize > 0 ) {
+    if (tree->tree_nextsize > 0) {
         ptrdiff_t real_segment_size;
 
         /* handle non existant recv buffer (i.e. its NULL) and
            protect the recv buffer on non-root nodes */
-        accumbuf = (char*)recvbuf;
-        if( (NULL == accumbuf) || (root != rank) ) {
+        accumbuf = (char *) recvbuf;
+        if ((NULL == accumbuf) || (root != rank)) {
             /* Allocate temporary accumulator buffer. */
             size = opal_datatype_span(&datatype->super, original_count, &gap);
-            accumbuf_free = (char*)malloc(size);
+            accumbuf_free = (char *) malloc(size);
             if (accumbuf_free == NULL) {
-                line = __LINE__; ret = -1; goto error_hndl;
+                line = __LINE__;
+                ret = -1;
+                goto error_hndl;
             }
             accumbuf = accumbuf_free - gap;
         }
 
         /* If this is a non-commutative operation we must copy
            sendbuf to the accumbuf, in order to simplfy the loops */
-        
+
         if (!ompi_op_is_commute(op) && MPI_IN_PLACE != sendbuf) {
-            ompi_datatype_copy_content_same_ddt(datatype, original_count,
-                                                (char*)accumbuf,
-                                                (char*)sendtmpbuf);
+            ompi_datatype_copy_content_same_ddt(datatype, original_count, (char *) accumbuf,
+                                                (char *) sendtmpbuf);
         }
         /* Allocate two buffers for incoming segments */
         real_segment_size = opal_datatype_span(&datatype->super, count_by_segment, &gap);
-        inbuf_free[0] = (char*) malloc(real_segment_size);
-        if( inbuf_free[0] == NULL ) {
-            line = __LINE__; ret = -1; goto error_hndl;
+        inbuf_free[0] = (char *) malloc(real_segment_size);
+        if (inbuf_free[0] == NULL) {
+            line = __LINE__;
+            ret = -1;
+            goto error_hndl;
         }
         inbuf[0] = inbuf_free[0] - gap;
         /* if there is chance to overlap communication -
            allocate second buffer */
-        if( (num_segments > 1) || (tree->tree_nextsize > 1) ) {
-            inbuf_free[1] = (char*) malloc(real_segment_size);
-            if( inbuf_free[1] == NULL ) {
-                line = __LINE__; ret = -1; goto error_hndl;
+        if ((num_segments > 1) || (tree->tree_nextsize > 1)) {
+            inbuf_free[1] = (char *) malloc(real_segment_size);
+            if (inbuf_free[1] == NULL) {
+                line = __LINE__;
+                ret = -1;
+                goto error_hndl;
             }
             inbuf[1] = inbuf_free[1] - gap;
         }
@@ -140,23 +147,23 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
         inbi = 0;
         recvcount = 0;
         /* for each segment */
-        for( segindex = 0; segindex <= num_segments; segindex++ ) {
+        for (segindex = 0; segindex <= num_segments; segindex++) {
             prevcount = recvcount;
             /* recvcount - number of elements in current segment */
             recvcount = count_by_segment;
-            if( segindex == (num_segments-1) )
-                recvcount = original_count - (ptrdiff_t)count_by_segment * (ptrdiff_t)segindex;
+            if (segindex == (num_segments - 1))
+                recvcount = original_count - (ptrdiff_t) count_by_segment * (ptrdiff_t) segindex;
 
             /* for each child */
-            for( i = 0; i < tree->tree_nextsize; i++ ) {
+            for (i = 0; i < tree->tree_nextsize; i++) {
                 /**
                  * We try to overlap communication:
                  * either with next segment or with the next child
                  */
                 /* post irecv for current segindex on current child */
-                if( segindex < num_segments ) {
-                    void* local_recvbuf = inbuf[inbi];
-                    if( 0 == i ) {
+                if (segindex < num_segments) {
+                    void *local_recvbuf = inbuf[inbi];
+                    if (0 == i) {
                         /* for the first step (1st child per segment) and
                          * commutative operations we might be able to irecv
                          * directly into the accumulate buffer so that we can
@@ -167,82 +174,93 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
                          * BUT if the operation is non-commutative or
                          * we are root and are USING MPI_IN_PLACE this is wrong!
                          */
-                        if( (ompi_op_is_commute(op)) &&
-                            !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
-                            local_recvbuf = accumbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment;
+                        if ((ompi_op_is_commute(op))
+                            && !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root))) {
+                            local_recvbuf = accumbuf
+                                            + (ptrdiff_t) segindex * (ptrdiff_t) segment_increment;
                         }
                     }
 
-                    ret = MCA_PML_CALL(irecv(local_recvbuf, recvcount, datatype,
-                                             tree->tree_next[i],
-                                             MCA_COLL_BASE_TAG_REDUCE, comm,
-                                             &reqs[inbi]));
-                    if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;}
+                    ret = MCA_PML_CALL(irecv(local_recvbuf, recvcount, datatype, tree->tree_next[i],
+                                             MCA_COLL_BASE_TAG_REDUCE, comm, &reqs[inbi]));
+                    if (ret != MPI_SUCCESS) {
+                        line = __LINE__;
+                        goto error_hndl;
+                    }
                 }
                 /* wait for previous req to complete, if any.
                    if there are no requests reqs[inbi ^1] will be
                    MPI_REQUEST_NULL. */
                 /* wait on data from last child for previous segment */
-                ret = ompi_request_wait(&reqs[inbi ^ 1],
-                                        MPI_STATUSES_IGNORE );
-                if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                ret = ompi_request_wait(&reqs[inbi ^ 1], MPI_STATUSES_IGNORE);
+                if (ret != MPI_SUCCESS) {
+                    line = __LINE__;
+                    goto error_hndl;
+                }
                 local_op_buffer = inbuf[inbi ^ 1];
-                if( i > 0 ) {
+                if (i > 0) {
                     /* our first operation is to combine our own [sendbuf] data
                      * with the data we recvd from down stream (but only
                      * the operation is commutative and if we are not root and
                      * not using MPI_IN_PLACE)
                      */
-                    if( 1 == i ) {
-                        if( (ompi_op_is_commute(op)) &&
-                            !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
-                            local_op_buffer = sendtmpbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment;
+                    if (1 == i) {
+                        if ((ompi_op_is_commute(op))
+                            && !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root))) {
+                            local_op_buffer = sendtmpbuf
+                                              + (ptrdiff_t) segindex
+                                                    * (ptrdiff_t) segment_increment;
                         }
                     }
                     /* apply operation */
                     ompi_op_reduce(op, local_op_buffer,
-                                   accumbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment,
-                                   recvcount, datatype );
-                } else if ( segindex > 0 ) {
-                    void* accumulator = accumbuf + (ptrdiff_t)(segindex-1) * (ptrdiff_t)segment_increment;
-                    if( tree->tree_nextsize <= 1 ) {
-                        if( (ompi_op_is_commute(op)) &&
-                            !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
-                            local_op_buffer = sendtmpbuf + (ptrdiff_t)(segindex-1) * (ptrdiff_t)segment_increment;
+                                   accumbuf + (ptrdiff_t) segindex * (ptrdiff_t) segment_increment,
+                                   recvcount, datatype);
+                } else if (segindex > 0) {
+                    void *accumulator = accumbuf
+                                        + (ptrdiff_t)(segindex - 1) * (ptrdiff_t) segment_increment;
+                    if (tree->tree_nextsize <= 1) {
+                        if ((ompi_op_is_commute(op))
+                            && !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root))) {
+                            local_op_buffer = sendtmpbuf
+                                              + (ptrdiff_t)(segindex - 1)
+                                                    * (ptrdiff_t) segment_increment;
                         }
                     }
-                    ompi_op_reduce(op, local_op_buffer, accumulator, prevcount,
-                                   datatype );
+                    ompi_op_reduce(op, local_op_buffer, accumulator, prevcount, datatype);
 
                     /* all reduced on available data this step (i) complete,
                      * pass to the next process unless you are the root.
                      */
                     if (rank != tree->tree_root) {
                         /* send combined/accumulated data to parent */
-                        ret = MCA_PML_CALL( send( accumulator, prevcount,
-                                                  datatype, tree->tree_prev,
-                                                  MCA_COLL_BASE_TAG_REDUCE,
-                                                  MCA_PML_BASE_SEND_STANDARD,
-                                                  comm) );
+                        ret = MCA_PML_CALL(send(accumulator, prevcount, datatype, tree->tree_prev,
+                                                MCA_COLL_BASE_TAG_REDUCE,
+                                                MCA_PML_BASE_SEND_STANDARD, comm));
                         if (ret != MPI_SUCCESS) {
-                            line = __LINE__; goto error_hndl;
+                            line = __LINE__;
+                            goto error_hndl;
                         }
                     }
 
                     /* we stop when segindex = number of segments
                        (i.e. we do num_segment+1 steps for pipelining */
-                    if (segindex == num_segments) break;
+                    if (segindex == num_segments)
+                        break;
                 }
 
                 /* update input buffer index */
                 inbi = inbi ^ 1;
             } /* end of for each child */
-        } /* end of for each segment */
+        }     /* end of for each segment */
 
         /* clean up */
-        if( inbuf_free[0] != NULL) free(inbuf_free[0]);
-        if( inbuf_free[1] != NULL) free(inbuf_free[1]);
-        if( accumbuf_free != NULL ) free(accumbuf_free);
+        if (inbuf_free[0] != NULL)
+            free(inbuf_free[0]);
+        if (inbuf_free[1] != NULL)
+            free(inbuf_free[1]);
+        if (accumbuf_free != NULL)
+            free(accumbuf_free);
     }
 
     /* leaf nodes
@@ -260,22 +278,21 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
         /* If the number of segments is less than a maximum number of oustanding
            requests or there is no limit on the maximum number of outstanding
            requests, we send data to the parent using blocking send */
-        if ((0 == max_outstanding_reqs) ||
-            (num_segments <= max_outstanding_reqs)) {
+        if ((0 == max_outstanding_reqs) || (num_segments <= max_outstanding_reqs)) {
 
             segindex = 0;
-            while ( original_count > 0) {
+            while (original_count > 0) {
                 if (original_count < count_by_segment) {
                     count_by_segment = original_count;
                 }
-                ret = MCA_PML_CALL( send((char*)sendbuf +
-                                         (ptrdiff_t)segindex * (ptrdiff_t)segment_increment,
-                                         count_by_segment, datatype,
-                                         tree->tree_prev,
-                                         MCA_COLL_BASE_TAG_REDUCE,
-                                         MCA_PML_BASE_SEND_STANDARD,
-                                         comm) );
-                if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
+                ret = MCA_PML_CALL(
+                    send((char *) sendbuf + (ptrdiff_t) segindex * (ptrdiff_t) segment_increment,
+                         count_by_segment, datatype, tree->tree_prev, MCA_COLL_BASE_TAG_REDUCE,
+                         MCA_PML_BASE_SEND_STANDARD, comm));
+                if (ret != MPI_SUCCESS) {
+                    line = __LINE__;
+                    goto error_hndl;
+                }
                 segindex++;
                 original_count -= count_by_segment;
             }
@@ -292,80 +309,95 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
             int creq = 0;
 
             sreq = ompi_coll_base_comm_get_reqs(module->base_data, max_outstanding_reqs);
-            if (NULL == sreq) { line = __LINE__; ret = -1; goto error_hndl; }
+            if (NULL == sreq) {
+                line = __LINE__;
+                ret = -1;
+                goto error_hndl;
+            }
 
             /* post first group of requests */
             for (segindex = 0; segindex < max_outstanding_reqs; segindex++) {
-                ret = MCA_PML_CALL( isend((char*)sendbuf +
-                                          (ptrdiff_t)segindex * (ptrdiff_t)segment_increment,
-                                          count_by_segment, datatype,
-                                          tree->tree_prev,
-                                          MCA_COLL_BASE_TAG_REDUCE,
-                                          MCA_PML_BASE_SEND_SYNCHRONOUS, comm,
-                                          &sreq[segindex]) );
-                if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                ret = MCA_PML_CALL(
+                    isend((char *) sendbuf + (ptrdiff_t) segindex * (ptrdiff_t) segment_increment,
+                          count_by_segment, datatype, tree->tree_prev, MCA_COLL_BASE_TAG_REDUCE,
+                          MCA_PML_BASE_SEND_SYNCHRONOUS, comm, &sreq[segindex]));
+                if (ret != MPI_SUCCESS) {
+                    line = __LINE__;
+                    goto error_hndl;
+                }
                 original_count -= count_by_segment;
             }
 
             creq = 0;
-            while ( original_count > 0 ) {
+            while (original_count > 0) {
                 /* wait on a posted request to complete */
                 ret = ompi_request_wait(&sreq[creq], MPI_STATUS_IGNORE);
-                if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                if (ret != MPI_SUCCESS) {
+                    line = __LINE__;
+                    goto error_hndl;
+                }
 
-                if( original_count < count_by_segment ) {
+                if (original_count < count_by_segment) {
                     count_by_segment = original_count;
                 }
-                ret = MCA_PML_CALL( isend((char*)sendbuf +
-                                          (ptrdiff_t)segindex * (ptrdiff_t)segment_increment,
-                                          count_by_segment, datatype,
-                                          tree->tree_prev,
-                                          MCA_COLL_BASE_TAG_REDUCE,
-                                          MCA_PML_BASE_SEND_SYNCHRONOUS, comm,
-                                          &sreq[creq]) );
-                if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                ret = MCA_PML_CALL(
+                    isend((char *) sendbuf + (ptrdiff_t) segindex * (ptrdiff_t) segment_increment,
+                          count_by_segment, datatype, tree->tree_prev, MCA_COLL_BASE_TAG_REDUCE,
+                          MCA_PML_BASE_SEND_SYNCHRONOUS, comm, &sreq[creq]));
+                if (ret != MPI_SUCCESS) {
+                    line = __LINE__;
+                    goto error_hndl;
+                }
                 creq = (creq + 1) % max_outstanding_reqs;
                 segindex++;
                 original_count -= count_by_segment;
             }
 
             /* Wait on the remaining request to complete */
-            ret = ompi_request_wait_all( max_outstanding_reqs, sreq,
-                                         MPI_STATUSES_IGNORE );
-            if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+            ret = ompi_request_wait_all(max_outstanding_reqs, sreq, MPI_STATUSES_IGNORE);
+            if (ret != MPI_SUCCESS) {
+                line = __LINE__;
+                goto error_hndl;
+            }
         }
     }
     return OMPI_SUCCESS;
 
- error_hndl:  /* error handler */
+error_hndl: /* error handler */
     /* find a real error code */
     if (MPI_ERR_IN_STATUS == ret) {
-        for( i = 0; i < 2; i++ ) {
-            if (MPI_REQUEST_NULL == reqs[i]) continue;
-            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+        for (i = 0; i < 2; i++) {
+            if (MPI_REQUEST_NULL == reqs[i])
+                continue;
+            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)
+                continue;
             ret = reqs[i]->req_status.MPI_ERROR;
             break;
         }
     }
     ompi_coll_base_free_reqs(reqs, 2);
-    if( NULL != sreq ) {
+    if (NULL != sreq) {
         if (MPI_ERR_IN_STATUS == ret) {
-            for( i = 0; i < max_outstanding_reqs; i++ ) {
-                if (MPI_REQUEST_NULL == sreq[i]) continue;
-                if (MPI_ERR_PENDING == sreq[i]->req_status.MPI_ERROR) continue;
+            for (i = 0; i < max_outstanding_reqs; i++) {
+                if (MPI_REQUEST_NULL == sreq[i])
+                    continue;
+                if (MPI_ERR_PENDING == sreq[i]->req_status.MPI_ERROR)
+                    continue;
                 ret = sreq[i]->req_status.MPI_ERROR;
                 break;
             }
         }
         ompi_coll_base_free_reqs(sreq, max_outstanding_reqs);
     }
-    if( inbuf_free[0] != NULL ) free(inbuf_free[0]);
-    if( inbuf_free[1] != NULL ) free(inbuf_free[1]);
-    if( accumbuf_free != NULL ) free(accumbuf);
-    OPAL_OUTPUT (( ompi_coll_base_framework.framework_output,
-                   "ERROR_HNDL: node %d file %s line %d error %d\n",
-                   rank, __FILE__, line, ret ));
-    (void)line;  // silence compiler warning
+    if (inbuf_free[0] != NULL)
+        free(inbuf_free[0]);
+    if (inbuf_free[1] != NULL)
+        free(inbuf_free[1]);
+    if (accumbuf_free != NULL)
+        free(accumbuf);
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "ERROR_HNDL: node %d file %s line %d error %d\n", rank, __FILE__, line, ret));
+    (void) line; // silence compiler warning
     return ret;
 }
 
@@ -376,127 +408,109 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
      meaning that at least one datatype must fit in the segment !
 */
 
-int ompi_coll_base_reduce_intra_chain( const void *sendbuf, void *recvbuf, int count,
-                                        ompi_datatype_t* datatype,
-                                        ompi_op_t* op, int root,
-                                        ompi_communicator_t* comm,
-                                        mca_coll_base_module_t *module,
-                                        uint32_t segsize, int fanout,
-                                        int max_outstanding_reqs )
+int ompi_coll_base_reduce_intra_chain(const void *sendbuf, void *recvbuf, int count,
+                                      ompi_datatype_t *datatype, ompi_op_t *op, int root,
+                                      ompi_communicator_t *comm, mca_coll_base_module_t *module,
+                                      uint32_t segsize, int fanout, int max_outstanding_reqs)
 {
     int segcount = count;
     size_t typelng;
-    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t *) module;
     mca_coll_base_comm_t *data = base_module->base_data;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:reduce_intra_chain rank %d fo %d ss %5d", ompi_comm_rank(comm), fanout, segsize));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:reduce_intra_chain rank %d fo %d ss %5d", ompi_comm_rank(comm), fanout,
+                 segsize));
 
-    COLL_BASE_UPDATE_CHAIN( comm, base_module, root, fanout );
+    COLL_BASE_UPDATE_CHAIN(comm, base_module, root, fanout);
     /**
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
+    ompi_datatype_type_size(datatype, &typelng);
+    COLL_BASE_COMPUTED_SEGCOUNT(segsize, typelng, segcount);
 
-    return ompi_coll_base_reduce_generic( sendbuf, recvbuf, count, datatype,
-                                           op, root, comm, module,
-                                           data->cached_chain,
-                                           segcount, max_outstanding_reqs );
+    return ompi_coll_base_reduce_generic(sendbuf, recvbuf, count, datatype, op, root, comm, module,
+                                         data->cached_chain, segcount, max_outstanding_reqs);
 }
 
-
-int ompi_coll_base_reduce_intra_pipeline( const void *sendbuf, void *recvbuf,
-                                           int count, ompi_datatype_t* datatype,
-                                           ompi_op_t* op, int root,
-                                           ompi_communicator_t* comm,
-                                           mca_coll_base_module_t *module,
-                                           uint32_t segsize,
-                                           int max_outstanding_reqs  )
+int ompi_coll_base_reduce_intra_pipeline(const void *sendbuf, void *recvbuf, int count,
+                                         ompi_datatype_t *datatype, ompi_op_t *op, int root,
+                                         ompi_communicator_t *comm, mca_coll_base_module_t *module,
+                                         uint32_t segsize, int max_outstanding_reqs)
 {
     int segcount = count;
     size_t typelng;
-    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t *) module;
     mca_coll_base_comm_t *data = base_module->base_data;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:reduce_intra_pipeline rank %d ss %5d",
-                 ompi_comm_rank(comm), segsize));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:reduce_intra_pipeline rank %d ss %5d", ompi_comm_rank(comm), segsize));
 
-    COLL_BASE_UPDATE_PIPELINE( comm, base_module, root );
+    COLL_BASE_UPDATE_PIPELINE(comm, base_module, root);
 
     /**
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
+    ompi_datatype_type_size(datatype, &typelng);
+    COLL_BASE_COMPUTED_SEGCOUNT(segsize, typelng, segcount);
 
-    return ompi_coll_base_reduce_generic( sendbuf, recvbuf, count, datatype,
-                                           op, root, comm, module,
-                                           data->cached_pipeline,
-                                           segcount, max_outstanding_reqs );
+    return ompi_coll_base_reduce_generic(sendbuf, recvbuf, count, datatype, op, root, comm, module,
+                                         data->cached_pipeline, segcount, max_outstanding_reqs);
 }
 
-int ompi_coll_base_reduce_intra_binary( const void *sendbuf, void *recvbuf,
-                                         int count, ompi_datatype_t* datatype,
-                                         ompi_op_t* op, int root,
-                                         ompi_communicator_t* comm,
-                                         mca_coll_base_module_t *module,
-                                         uint32_t segsize,
-                                         int max_outstanding_reqs  )
+int ompi_coll_base_reduce_intra_binary(const void *sendbuf, void *recvbuf, int count,
+                                       ompi_datatype_t *datatype, ompi_op_t *op, int root,
+                                       ompi_communicator_t *comm, mca_coll_base_module_t *module,
+                                       uint32_t segsize, int max_outstanding_reqs)
 {
     int segcount = count;
     size_t typelng;
-    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t *) module;
     mca_coll_base_comm_t *data = base_module->base_data;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:reduce_intra_binary rank %d ss %5d",
-                 ompi_comm_rank(comm), segsize));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:reduce_intra_binary rank %d ss %5d", ompi_comm_rank(comm), segsize));
 
-    COLL_BASE_UPDATE_BINTREE( comm, base_module, root );
+    COLL_BASE_UPDATE_BINTREE(comm, base_module, root);
 
     /**
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
+    ompi_datatype_type_size(datatype, &typelng);
+    COLL_BASE_COMPUTED_SEGCOUNT(segsize, typelng, segcount);
 
-    return ompi_coll_base_reduce_generic( sendbuf, recvbuf, count, datatype,
-                                           op, root, comm, module,
-                                           data->cached_bintree,
-                                           segcount, max_outstanding_reqs );
+    return ompi_coll_base_reduce_generic(sendbuf, recvbuf, count, datatype, op, root, comm, module,
+                                         data->cached_bintree, segcount, max_outstanding_reqs);
 }
 
-int ompi_coll_base_reduce_intra_binomial( const void *sendbuf, void *recvbuf,
-                                           int count, ompi_datatype_t* datatype,
-                                           ompi_op_t* op, int root,
-                                           ompi_communicator_t* comm,
-                                           mca_coll_base_module_t *module,
-                                           uint32_t segsize,
-                                           int max_outstanding_reqs  )
+int ompi_coll_base_reduce_intra_binomial(const void *sendbuf, void *recvbuf, int count,
+                                         ompi_datatype_t *datatype, ompi_op_t *op, int root,
+                                         ompi_communicator_t *comm, mca_coll_base_module_t *module,
+                                         uint32_t segsize, int max_outstanding_reqs)
 {
     int segcount = count;
     size_t typelng;
-    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t *) module;
     mca_coll_base_comm_t *data = base_module->base_data;
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:reduce_intra_binomial rank %d ss %5d",
-                 ompi_comm_rank(comm), segsize));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:reduce_intra_binomial rank %d ss %5d", ompi_comm_rank(comm), segsize));
 
-    COLL_BASE_UPDATE_IN_ORDER_BMTREE( comm, base_module, root );
+    COLL_BASE_UPDATE_IN_ORDER_BMTREE(comm, base_module, root);
 
     /**
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
+    ompi_datatype_type_size(datatype, &typelng);
+    COLL_BASE_COMPUTED_SEGCOUNT(segsize, typelng, segcount);
 
-    return ompi_coll_base_reduce_generic( sendbuf, recvbuf, count, datatype,
-                                           op, root, comm, module,
-                                           data->cached_in_order_bmtree,
-                                           segcount, max_outstanding_reqs );
+    return ompi_coll_base_reduce_generic(sendbuf, recvbuf, count, datatype, op, root, comm, module,
+                                         data->cached_in_order_bmtree, segcount,
+                                         max_outstanding_reqs);
 }
 
 /*
@@ -506,36 +520,33 @@ int ompi_coll_base_reduce_intra_binomial( const void *sendbuf, void *recvbuf,
  * Acecpts:       same as MPI_Reduce()
  * Returns:       MPI_SUCCESS or error code
  */
-int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recvbuf,
-                                                  int count,
-                                                  ompi_datatype_t* datatype,
-                                                  ompi_op_t* op, int root,
-                                                  ompi_communicator_t* comm,
-                                                  mca_coll_base_module_t *module,
-                                                  uint32_t segsize,
-                                                  int max_outstanding_reqs  )
+int ompi_coll_base_reduce_intra_in_order_binary(const void *sendbuf, void *recvbuf, int count,
+                                                ompi_datatype_t *datatype, ompi_op_t *op, int root,
+                                                ompi_communicator_t *comm,
+                                                mca_coll_base_module_t *module, uint32_t segsize,
+                                                int max_outstanding_reqs)
 {
     int ret, rank, size, io_root, segcount = count;
     void *use_this_sendbuf = NULL;
     void *use_this_recvbuf = NULL;
     char *tmpbuf_free = NULL;
     size_t typelng;
-    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t *) module;
     mca_coll_base_comm_t *data = base_module->base_data;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:reduce_intra_in_order_binary rank %d ss %5d",
-                 rank, segsize));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:reduce_intra_in_order_binary rank %d ss %5d", rank, segsize));
 
-    COLL_BASE_UPDATE_IN_ORDER_BINTREE( comm, base_module );
+    COLL_BASE_UPDATE_IN_ORDER_BINTREE(comm, base_module);
 
     /**
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_datatype_type_size( datatype, &typelng );
-    COLL_BASE_COMPUTED_SEGCOUNT( segsize, typelng, segcount );
+    ompi_datatype_type_size(datatype, &typelng);
+    COLL_BASE_COMPUTED_SEGCOUNT(segsize, typelng, segcount);
 
     /* An in-order binary tree must use root (size-1) to preserve the order of
        operations.  Thus, if root is not rank (size - 1), then we must handle
@@ -545,7 +556,7 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
        operations for non-commutative ops.
     */
     io_root = size - 1;
-    use_this_sendbuf = (void *)sendbuf;
+    use_this_sendbuf = (void *) sendbuf;
     use_this_recvbuf = recvbuf;
     if (io_root != root) {
         ptrdiff_t dsize, gap = 0;
@@ -559,9 +570,7 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
                 return MPI_ERR_INTERN;
             }
             tmpbuf = tmpbuf_free - gap;
-            ompi_datatype_copy_content_same_ddt(datatype, count,
-                                                (char*)tmpbuf,
-                                                (char*)recvbuf);
+            ompi_datatype_copy_content_same_ddt(datatype, count, (char *) tmpbuf, (char *) recvbuf);
             use_this_sendbuf = tmpbuf;
         } else if (io_root == rank) {
             tmpbuf_free = (char *) malloc(dsize);
@@ -574,27 +583,30 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
     }
 
     /* Use generic reduce with in-order binary tree topology and io_root */
-    ret = ompi_coll_base_reduce_generic( use_this_sendbuf, use_this_recvbuf, count, datatype,
-                                          op, io_root, comm, module,
-                                          data->cached_in_order_bintree,
-                                          segcount, max_outstanding_reqs );
-    if (MPI_SUCCESS != ret) { return ret; }
+    ret = ompi_coll_base_reduce_generic(use_this_sendbuf, use_this_recvbuf, count, datatype, op,
+                                        io_root, comm, module, data->cached_in_order_bintree,
+                                        segcount, max_outstanding_reqs);
+    if (MPI_SUCCESS != ret) {
+        return ret;
+    }
 
     /* Clean up */
     if (io_root != root) {
         if (root == rank) {
             /* Receive result from rank io_root to recvbuf */
-            ret = MCA_PML_CALL(recv(recvbuf, count, datatype, io_root,
-                                    MCA_COLL_BASE_TAG_REDUCE, comm,
-                                    MPI_STATUS_IGNORE));
-            if (MPI_SUCCESS != ret) { return ret; }
+            ret = MCA_PML_CALL(recv(recvbuf, count, datatype, io_root, MCA_COLL_BASE_TAG_REDUCE,
+                                    comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != ret) {
+                return ret;
+            }
 
         } else if (io_root == rank) {
             /* Send result from use_this_recvbuf to root */
             ret = MCA_PML_CALL(send(use_this_recvbuf, count, datatype, root,
-                                    MCA_COLL_BASE_TAG_REDUCE,
-                                    MCA_PML_BASE_SEND_STANDARD, comm));
-            if (MPI_SUCCESS != ret) { return ret; }
+                                    MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != ret) {
+                return ret;
+            }
         }
     }
     if (NULL != tmpbuf_free) {
@@ -623,13 +635,10 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
  *  Accepts:    - same as MPI_Reduce()
  *  Returns:    - MPI_SUCCESS or error code
  */
-int
-ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count,
-                                         struct ompi_datatype_t *dtype,
-                                         struct ompi_op_t *op,
-                                         int root,
-                                         struct ompi_communicator_t *comm,
-                                         mca_coll_base_module_t *module)
+int ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count,
+                                             struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                             int root, struct ompi_communicator_t *comm,
+                                             mca_coll_base_module_t *module)
 {
     int i, rank, err, size;
     ptrdiff_t extent, dsize, gap = 0;
@@ -646,8 +655,7 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
     /* If not root, send data to the root. */
 
     if (rank != root) {
-        err = MCA_PML_CALL(send(sbuf, count, dtype, root,
-                                MCA_COLL_BASE_TAG_REDUCE,
+        err = MCA_PML_CALL(send(sbuf, count, dtype, root, MCA_COLL_BASE_TAG_REDUCE,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
         return err;
     }
@@ -657,7 +665,7 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
 
     if (MPI_IN_PLACE == sbuf) {
         sbuf = rbuf;
-        inplace_temp_free = (char*)malloc(dsize);
+        inplace_temp_free = (char *) malloc(dsize);
         if (NULL == inplace_temp_free) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -665,7 +673,7 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
     }
 
     if (size > 1) {
-        free_buffer = (char*)malloc(dsize);
+        free_buffer = (char *) malloc(dsize);
         if (NULL == free_buffer) {
             if (NULL != inplace_temp_free) {
                 free(inplace_temp_free);
@@ -678,11 +686,10 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
     /* Initialize the receive buffer. */
 
     if (rank == (size - 1)) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
     } else {
-        err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
-                                MCA_COLL_BASE_TAG_REDUCE, comm,
-                                MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(
+            recv(rbuf, count, dtype, size - 1, MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE));
     }
     if (MPI_SUCCESS != err) {
         if (NULL != free_buffer) {
@@ -698,10 +705,9 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
 
     for (i = size - 2; i >= 0; --i) {
         if (rank == i) {
-            inbuf = (char*)sbuf;
+            inbuf = (char *) sbuf;
         } else {
-            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
-                                    MCA_COLL_BASE_TAG_REDUCE, comm,
+            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
                 if (NULL != free_buffer) {
@@ -722,7 +728,7 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
     }
 
     if (NULL != inplace_temp_free) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, rbuf);
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) sbuf, rbuf);
         free(inplace_temp_free);
     }
     if (NULL != free_buffer) {
@@ -794,29 +800,30 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
  * Recommendations: root = 0, otherwise it is required additional steps
  *                  in the root process.
  */
-int ompi_coll_base_reduce_intra_redscat_gather(
-    const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
-    struct ompi_op_t *op, int root, struct ompi_communicator_t *comm,
-    mca_coll_base_module_t *module)
+int ompi_coll_base_reduce_intra_redscat_gather(const void *sbuf, void *rbuf, int count,
+                                               struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                               int root, struct ompi_communicator_t *comm,
+                                               mca_coll_base_module_t *module)
 {
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                 "coll:base:reduce_intra_redscat_gather: rank %d/%d, root %d",
-                 rank, comm_size, root));
+                 "coll:base:reduce_intra_redscat_gather: rank %d/%d, root %d", rank, comm_size,
+                 root));
 
     /* Find nearest power-of-two less than or equal to comm_size */
-    int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
+    int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1); /* ilog2(comm_size) */
     assert(nsteps >= 0);
-    int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
+    int nprocs_pof2 = 1 << nsteps; /* flp2(comm_size) */
 
     if (nprocs_pof2 < 2 || count < nprocs_pof2 || !ompi_op_is_commute(op)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:reduce_intra_redscat_gather: rank %d/%d count %d "
-                     "switching to basic linear reduce", rank, comm_size, count));
-        return ompi_coll_base_reduce_intra_basic_linear(sbuf, rbuf, count, dtype,
-                                                        op, root, comm, module);
+                     "switching to basic linear reduce",
+                     rank, comm_size, count));
+        return ompi_coll_base_reduce_intra_basic_linear(sbuf, rbuf, count, dtype, op, root, comm,
+                                                        module);
     }
 
     int err = MPI_SUCCESS;
@@ -844,9 +851,10 @@ int ompi_coll_base_reduce_intra_redscat_gather(
     }
 
     if ((rank != root) || (sbuf != MPI_IN_PLACE)) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, count, rbuf,
-                                                  (char *)sbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, rbuf, (char *) sbuf);
+        if (MPI_SUCCESS != err) {
+            goto cleanup_and_return;
+        }
     }
 
     /*
@@ -882,22 +890,24 @@ int ompi_coll_base_reduce_intra_redscat_gather(
              */
             err = ompi_coll_base_sendrecv(rbuf, count_lhalf, dtype, rank - 1,
                                           MCA_COLL_BASE_TAG_REDUCE,
-                                          (char *)tmp_buf + (ptrdiff_t)count_lhalf * extent,
-                                          count_rhalf, dtype, rank - 1,
-                                          MCA_COLL_BASE_TAG_REDUCE, comm,
-                                          MPI_STATUS_IGNORE, rank);
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                                          (char *) tmp_buf + (ptrdiff_t) count_lhalf * extent,
+                                          count_rhalf, dtype, rank - 1, MCA_COLL_BASE_TAG_REDUCE,
+                                          comm, MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS != err) {
+                goto cleanup_and_return;
+            }
 
             /* Reduce on the right half of the buffers (result in rbuf) */
-            ompi_op_reduce(op, (char *)tmp_buf + (ptrdiff_t)count_lhalf * extent,
-                           (char *)rbuf + count_lhalf * extent, count_rhalf, dtype);
+            ompi_op_reduce(op, (char *) tmp_buf + (ptrdiff_t) count_lhalf * extent,
+                           (char *) rbuf + count_lhalf * extent, count_rhalf, dtype);
 
             /* Send the right half to the left neighbor */
-            err = MCA_PML_CALL(send((char *)rbuf + (ptrdiff_t)count_lhalf * extent,
-                                    count_rhalf, dtype, rank - 1,
-                                    MCA_COLL_BASE_TAG_REDUCE,
+            err = MCA_PML_CALL(send((char *) rbuf + (ptrdiff_t) count_lhalf * extent, count_rhalf,
+                                    dtype, rank - 1, MCA_COLL_BASE_TAG_REDUCE,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            if (MPI_SUCCESS != err) {
+                goto cleanup_and_return;
+            }
 
             /* This process does not pariticipate in recursive doubling phase */
             vrank = -1;
@@ -908,23 +918,24 @@ int ompi_coll_base_reduce_intra_redscat_gather(
              * Send the right half of the input vector to the right neighbor,
              * Recv the left half of the input vector from the right neighbor
              */
-            err = ompi_coll_base_sendrecv((char *)rbuf + (ptrdiff_t)count_lhalf * extent,
-                                          count_rhalf, dtype, rank + 1,
-                                          MCA_COLL_BASE_TAG_REDUCE,
+            err = ompi_coll_base_sendrecv((char *) rbuf + (ptrdiff_t) count_lhalf * extent,
+                                          count_rhalf, dtype, rank + 1, MCA_COLL_BASE_TAG_REDUCE,
                                           tmp_buf, count_lhalf, dtype, rank + 1,
-                                          MCA_COLL_BASE_TAG_REDUCE, comm,
-                                          MPI_STATUS_IGNORE, rank);
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                                          MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS != err) {
+                goto cleanup_and_return;
+            }
 
             /* Reduce on the right half of the buffers (result in rbuf) */
             ompi_op_reduce(op, tmp_buf, rbuf, count_lhalf, dtype);
 
             /* Recv the right half from the right neighbor */
-            err = MCA_PML_CALL(recv((char *)rbuf + (ptrdiff_t)count_lhalf * extent,
-                                    count_rhalf, dtype, rank + 1,
-                                    MCA_COLL_BASE_TAG_REDUCE, comm,
+            err = MCA_PML_CALL(recv((char *) rbuf + (ptrdiff_t) count_lhalf * extent, count_rhalf,
+                                    dtype, rank + 1, MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            if (MPI_SUCCESS != err) {
+                goto cleanup_and_return;
+            }
 
             vrank = rank / 2;
         }
@@ -945,7 +956,7 @@ int ompi_coll_base_reduce_intra_redscat_gather(
      * each of the p' processes has 1 / p' of the total reduction result.
      */
 
-    rindex = malloc(sizeof(*rindex) * nsteps);    /* O(\log_2(p)) */
+    rindex = malloc(sizeof(*rindex) * nsteps); /* O(\log_2(p)) */
     sindex = malloc(sizeof(*sindex) * nsteps);
     rcount = malloc(sizeof(*rcount) * nsteps);
     scount = malloc(sizeof(*scount) * nsteps);
@@ -989,19 +1000,18 @@ int ompi_coll_base_reduce_intra_redscat_gather(
             }
 
             /* Send part of data from the rbuf, recv into the tmp_buf */
-            err = ompi_coll_base_sendrecv((char *)rbuf + (ptrdiff_t)sindex[step] * extent,
-                                          scount[step], dtype, dest,
-                                          MCA_COLL_BASE_TAG_REDUCE,
-                                          (char *)tmp_buf + (ptrdiff_t)rindex[step] * extent,
-                                          rcount[step], dtype, dest,
-                                          MCA_COLL_BASE_TAG_REDUCE, comm,
+            err = ompi_coll_base_sendrecv((char *) rbuf + (ptrdiff_t) sindex[step] * extent,
+                                          scount[step], dtype, dest, MCA_COLL_BASE_TAG_REDUCE,
+                                          (char *) tmp_buf + (ptrdiff_t) rindex[step] * extent,
+                                          rcount[step], dtype, dest, MCA_COLL_BASE_TAG_REDUCE, comm,
                                           MPI_STATUS_IGNORE, rank);
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            if (MPI_SUCCESS != err) {
+                goto cleanup_and_return;
+            }
 
             /* Local reduce: rbuf[] = tmp_buf[] <op> rbuf[] */
-            ompi_op_reduce(op, (char *)tmp_buf + (ptrdiff_t)rindex[step] * extent,
-                           (char *)rbuf + (ptrdiff_t)rindex[step] * extent,
-                           rcount[step], dtype);
+            ompi_op_reduce(op, (char *) tmp_buf + (ptrdiff_t) rindex[step] * extent,
+                           (char *) rbuf + (ptrdiff_t) rindex[step] * extent, rcount[step], dtype);
 
             /* Move the current window to the received message */
             if (step + 1 < nsteps) {
@@ -1046,17 +1056,20 @@ int ompi_coll_base_reduce_intra_redscat_gather(
                 }
 
                 err = MCA_PML_CALL(recv(rbuf, rcount[nsteps - 1], dtype, 0,
-                                        MCA_COLL_BASE_TAG_REDUCE, comm,
-                                        MPI_STATUS_IGNORE));
-                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                                        MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE));
+                if (MPI_SUCCESS != err) {
+                    goto cleanup_and_return;
+                }
                 vrank = 0;
 
             } else if (vrank == 0) {
                 /* Send a data to the root */
                 err = MCA_PML_CALL(send(rbuf, rcount[nsteps - 1], dtype, root,
-                                        MCA_COLL_BASE_TAG_REDUCE,
-                                        MCA_PML_BASE_SEND_STANDARD, comm));
-                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                                        MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD,
+                                        comm));
+                if (MPI_SUCCESS != err) {
+                    goto cleanup_and_return;
+                }
                 vrank = -1;
             }
         } else {
@@ -1093,25 +1106,27 @@ int ompi_coll_base_reduce_intra_redscat_gather(
             vroot_tree <<= step;
             if (vdest_tree == vroot_tree) {
                 /* Send data from rbuf and exit */
-                err = MCA_PML_CALL(send((char *)rbuf + (ptrdiff_t)rindex[step] * extent,
-                                        rcount[step], dtype, dest,
-                                        MCA_COLL_BASE_TAG_REDUCE,
+                err = MCA_PML_CALL(send((char *) rbuf + (ptrdiff_t) rindex[step] * extent,
+                                        rcount[step], dtype, dest, MCA_COLL_BASE_TAG_REDUCE,
                                         MCA_PML_BASE_SEND_STANDARD, comm));
-                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                if (MPI_SUCCESS != err) {
+                    goto cleanup_and_return;
+                }
                 break;
             } else {
                 /* Recv and continue */
-                err = MCA_PML_CALL(recv((char *)rbuf + (ptrdiff_t)sindex[step] * extent,
-                                        scount[step], dtype, dest,
-                                        MCA_COLL_BASE_TAG_REDUCE, comm,
+                err = MCA_PML_CALL(recv((char *) rbuf + (ptrdiff_t) sindex[step] * extent,
+                                        scount[step], dtype, dest, MCA_COLL_BASE_TAG_REDUCE, comm,
                                         MPI_STATUS_IGNORE));
-                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                if (MPI_SUCCESS != err) {
+                    goto cleanup_and_return;
+                }
             }
             step--;
         }
     }
 
-  cleanup_and_return:
+cleanup_and_return:
     if (NULL != tmp_buf_raw)
         free(tmp_buf_raw);
     if (NULL != rbuf_raw)

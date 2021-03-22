@@ -23,15 +23,15 @@
 
 #include "opal/util/output.h"
 
+#include "coll_sync.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "coll_sync.h"
 
 /*
  * Public string showing the coll ompi_sync component version number
  */
-const char *mca_coll_sync_component_version_string =
-    "Open MPI sync collective MCA component version " OMPI_VERSION;
+const char *mca_coll_sync_component_version_string
+    = "Open MPI sync collective MCA component version " OMPI_VERSION;
 
 /*
  * Local function
@@ -71,32 +71,29 @@ mca_coll_sync_component_t mca_coll_sync_component = {
     },
 };
 
-
 static int sync_register(void)
 {
     mca_base_component_t *c = &mca_coll_sync_component.super.collm_version;
 
     mca_coll_sync_component.priority = 50;
     (void) mca_base_component_var_register(c, "priority",
-                                           "Priority of the sync coll component; only relevant if barrier_before or barrier_after is > 0",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           "Priority of the sync coll component; only relevant if "
+                                           "barrier_before or barrier_after is > 0",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.priority);
 
     mca_coll_sync_component.barrier_before_nops = 0;
     (void) mca_base_component_var_register(c, "barrier_before",
                                            "Do a synchronization before each Nth collective",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.barrier_before_nops);
 
     mca_coll_sync_component.barrier_after_nops = 0;
     (void) mca_base_component_var_register(c, "barrier_after",
                                            "Do a synchronization after each Nth collective",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_sync_component.barrier_after_nops);
 

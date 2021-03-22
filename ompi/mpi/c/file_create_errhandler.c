@@ -21,47 +21,42 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_create_errhandler = PMPI_File_create_errhandler
-#endif
-#define MPI_File_create_errhandler PMPI_File_create_errhandler
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_create_errhandler = PMPI_File_create_errhandler
+#    endif
+#    define MPI_File_create_errhandler PMPI_File_create_errhandler
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_create_errhandler";
 
+int MPI_File_create_errhandler(MPI_File_errhandler_function *function, MPI_Errhandler *errhandler)
+{
+    int err = MPI_SUCCESS;
 
-int MPI_File_create_errhandler(MPI_File_errhandler_function *function,
-		                        MPI_Errhandler *errhandler) {
-  int err = MPI_SUCCESS;
+    /* Error checking */
 
-  /* Error checking */
-
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == function ||
-        NULL == errhandler) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                   "MPI_File_create_errhandler");
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == function || NULL == errhandler) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, "MPI_File_create_errhandler");
+        }
     }
-  }
 
-  /* Create and cache the errhandler.  Sets a refcount of 1. */
+    /* Create and cache the errhandler.  Sets a refcount of 1. */
 
-  *errhandler =
-    ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
-                           (ompi_errhandler_generic_handler_fn_t*) function,
-                           OMPI_ERRHANDLER_LANG_C);
-  if (NULL == *errhandler) {
-    err = MPI_ERR_INTERN;
-  }
+    *errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
+                                         (ompi_errhandler_generic_handler_fn_t *) function,
+                                         OMPI_ERRHANDLER_LANG_C);
+    if (NULL == *errhandler) {
+        err = MPI_ERR_INTERN;
+    }
 
-  OMPI_ERRHANDLER_NOHANDLE_RETURN(err, MPI_ERR_INTERN,
-                        "MPI_File_create_errhandler");
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, MPI_ERR_INTERN, "MPI_File_create_errhandler");
 }

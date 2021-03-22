@@ -21,86 +21,83 @@
 #include "common_ompio_request.h"
 #include "common_ompio_buffer.h"
 
-static void mca_common_ompio_request_construct(mca_ompio_request_t* req);
+static void mca_common_ompio_request_construct(mca_ompio_request_t *req);
 static void mca_common_ompio_request_destruct(mca_ompio_request_t *req);
 
-bool mca_common_ompio_progress_is_registered=false;
+bool mca_common_ompio_progress_is_registered = false;
 /*
  * Global list of requests for this component
  */
 opal_list_t mca_common_ompio_pending_requests = {{0}};
 
-
-
-static int mca_common_ompio_request_free ( struct ompi_request_t **req)
+static int mca_common_ompio_request_free(struct ompi_request_t **req)
 {
-    mca_ompio_request_t *ompio_req = ( mca_ompio_request_t *)*req;
-    if ( NULL != ompio_req->req_tbuf ) {
-        if ( MCA_OMPIO_REQUEST_READ == ompio_req->req_type ){
+    mca_ompio_request_t *ompio_req = (mca_ompio_request_t *) *req;
+    if (NULL != ompio_req->req_tbuf) {
+        if (MCA_OMPIO_REQUEST_READ == ompio_req->req_type) {
             struct iovec decoded_iov;
-            uint32_t iov_count=1;
-            size_t pos=0;
+            uint32_t iov_count = 1;
+            size_t pos = 0;
 
             decoded_iov.iov_base = ompio_req->req_tbuf;
-            decoded_iov.iov_len  = ompio_req->req_size;
-            opal_convertor_unpack (&ompio_req->req_convertor, &decoded_iov, &iov_count, &pos );
+            decoded_iov.iov_len = ompio_req->req_size;
+            opal_convertor_unpack(&ompio_req->req_convertor, &decoded_iov, &iov_count, &pos);
         }
-        mca_common_ompio_release_buf ( NULL, ompio_req->req_tbuf );
+        mca_common_ompio_release_buf(NULL, ompio_req->req_tbuf);
     }
-    if ( NULL != ompio_req->req_free_fn ) {
-        ompio_req->req_free_fn (ompio_req );
+    if (NULL != ompio_req->req_free_fn) {
+        ompio_req->req_free_fn(ompio_req);
     }
-    opal_list_remove_item (&mca_common_ompio_pending_requests, &ompio_req->req_item);
+    opal_list_remove_item(&mca_common_ompio_pending_requests, &ompio_req->req_item);
 
-    OBJ_RELEASE (*req);
+    OBJ_RELEASE(*req);
     *req = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
-static int mca_common_ompio_request_cancel ( struct ompi_request_t *req, int flag)
+static int mca_common_ompio_request_cancel(struct ompi_request_t *req, int flag)
 {
     return OMPI_SUCCESS;
 }
 
-OBJ_CLASS_INSTANCE(mca_ompio_request_t, ompi_request_t,
-                   mca_common_ompio_request_construct,
+OBJ_CLASS_INSTANCE(mca_ompio_request_t, ompi_request_t, mca_common_ompio_request_construct,
                    mca_common_ompio_request_destruct);
 
-void mca_common_ompio_request_construct(mca_ompio_request_t* req)
+void mca_common_ompio_request_construct(mca_ompio_request_t *req)
 {
-    OMPI_REQUEST_INIT (&(req->req_ompi), false );
-    req->req_ompi.req_free   = mca_common_ompio_request_free;
+    OMPI_REQUEST_INIT(&(req->req_ompi), false);
+    req->req_ompi.req_free = mca_common_ompio_request_free;
     req->req_ompi.req_cancel = mca_common_ompio_request_cancel;
-    req->req_ompi.req_type   = OMPI_REQUEST_IO;
-    req->req_data            = NULL;
-    req->req_tbuf            = NULL;
-    req->req_size            = 0;
-    req->req_progress_fn     = NULL;
-    req->req_free_fn         = NULL;
+    req->req_ompi.req_type = OMPI_REQUEST_IO;
+    req->req_data = NULL;
+    req->req_tbuf = NULL;
+    req->req_size = 0;
+    req->req_progress_fn = NULL;
+    req->req_free_fn = NULL;
 
     OBJ_CONSTRUCT(&req->req_item, opal_list_item_t);
-    opal_list_append (&mca_common_ompio_pending_requests, &req->req_item);
+    opal_list_append(&mca_common_ompio_pending_requests, &req->req_item);
     return;
 }
-void mca_common_ompio_request_destruct(mca_ompio_request_t* req)
+void mca_common_ompio_request_destruct(mca_ompio_request_t *req)
 {
-    OMPI_REQUEST_FINI ( &(req->req_ompi));
-    OBJ_DESTRUCT (&req->req_item);
-    if ( NULL != req->req_data ) {
-        free (req->req_data);
+    OMPI_REQUEST_FINI(&(req->req_ompi));
+    OBJ_DESTRUCT(&req->req_item);
+    if (NULL != req->req_data) {
+        free(req->req_data);
     }
 
     return;
 }
 
-void mca_common_ompio_request_init ( void ) 
+void mca_common_ompio_request_init(void)
 {
     /* Create the list of pending requests */
     OBJ_CONSTRUCT(&mca_common_ompio_pending_requests, opal_list_t);
     return;
 }
 
-void mca_common_ompio_request_fini ( void ) 
+void mca_common_ompio_request_fini(void)
 {
     /* Destroy the list of pending requests */
     /* JMS: Good opprotunity here to list out all the IO requests that
@@ -110,7 +107,7 @@ void mca_common_ompio_request_fini ( void )
     return;
 }
 
-void mca_common_ompio_request_alloc ( mca_ompio_request_t **req, mca_ompio_request_type_t type )
+void mca_common_ompio_request_alloc(mca_ompio_request_t **req, mca_ompio_request_type_t type)
 {
     mca_ompio_request_t *ompio_req = NULL;
 
@@ -118,40 +115,39 @@ void mca_common_ompio_request_alloc ( mca_ompio_request_t **req, mca_ompio_reque
     ompio_req->req_type = type;
     ompio_req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
 
-    *req=ompio_req;
+    *req = ompio_req;
 
     return;
 }
 
-void mca_common_ompio_register_progress ( void ) 
+void mca_common_ompio_register_progress(void)
 {
-    if ( false == mca_common_ompio_progress_is_registered) {
-        opal_progress_register (mca_common_ompio_progress);
-        mca_common_ompio_progress_is_registered=true;
+    if (false == mca_common_ompio_progress_is_registered) {
+        opal_progress_register(mca_common_ompio_progress);
+        mca_common_ompio_progress_is_registered = true;
     }
     return;
 }
-int mca_common_ompio_progress ( void )
+int mca_common_ompio_progress(void)
 {
-    mca_ompio_request_t *req=NULL;
-    opal_list_item_t *litem=NULL;
-    int completed=0;
+    mca_ompio_request_t *req = NULL;
+    opal_list_item_t *litem = NULL;
+    int completed = 0;
 
-    OPAL_LIST_FOREACH(litem, &mca_common_ompio_pending_requests, opal_list_item_t) {
+    OPAL_LIST_FOREACH (litem, &mca_common_ompio_pending_requests, opal_list_item_t) {
         req = GET_OMPIO_REQ_FROM_ITEM(litem);
-        if( REQUEST_COMPLETE(&req->req_ompi) ) {
+        if (REQUEST_COMPLETE(&req->req_ompi)) {
             continue;
         }
-        if ( NULL != req->req_progress_fn ) {
-            if ( req->req_progress_fn(req) ) {
+        if (NULL != req->req_progress_fn) {
+            if (req->req_progress_fn(req)) {
                 completed++;
-                ompi_request_complete (&req->req_ompi, true);
+                ompi_request_complete(&req->req_ompi, true);
                 /* The fbtl progress function is expected to set the
                  * status elements
                  */
             }
         }
-
     }
 
     return completed;

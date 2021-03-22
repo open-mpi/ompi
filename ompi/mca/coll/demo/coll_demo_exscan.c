@@ -19,12 +19,11 @@
 #include "ompi_config.h"
 #include "opal/util/output.h"
 
+#include "coll_demo.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "coll_demo.h"
-
+#include "ompi/mca/coll/coll.h"
 
 /*
  *	exscan_intra
@@ -33,16 +32,13 @@
  *	Accepts:	- same arguments as MPI_Exscan()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_exscan_intra(void *sbuf, void *rbuf, int count,
-                               struct ompi_datatype_t *dtype,
-                               struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm,
+int mca_coll_demo_exscan_intra(void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+                               struct ompi_op_t *op, struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo exscan_intra");
-    return demo_module->underlying.coll_exscan(sbuf, rbuf, count, dtype,
-                                               op, comm,
+    return demo_module->underlying.coll_exscan(sbuf, rbuf, count, dtype, op, comm,
                                                demo_module->underlying.coll_exscan_module);
 }
 

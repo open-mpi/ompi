@@ -11,11 +11,11 @@
  */
 
 #if !defined(OSC_RDMA_SYNC_H)
-#define OSC_RDMA_SYNC_H
+#    define OSC_RDMA_SYNC_H
 
-#include "osc_rdma_types.h"
-#include "opal/class/opal_object.h"
-#include "opal/mca/threads/threads.h"
+#    include "opal/class/opal_object.h"
+#    include "opal/mca/threads/threads.h"
+#    include "osc_rdma_types.h"
 
 /**
  * @brief synchronization types
@@ -81,9 +81,9 @@ struct ompi_osc_rdma_sync_t {
     /** array of peers for this sync */
     union {
         /** multiple peers (lock all, pscw, fence) */
-	struct ompi_osc_rdma_peer_t **peers;
+        struct ompi_osc_rdma_peer_t **peers;
         /** single peer (targeted lock) */
-	struct ompi_osc_rdma_peer_t *peer;
+        struct ompi_osc_rdma_peer_t *peer;
     } peer_list;
 
     /** demand locked peers (lock-all) */
@@ -113,14 +113,14 @@ OBJ_CLASS_DECLARATION(ompi_osc_rdma_sync_t);
  * @returns NULL on failure
  * @returns a new synchronization object on success
  */
-ompi_osc_rdma_sync_t *ompi_osc_rdma_sync_allocate (struct ompi_osc_rdma_module_t *module);
+ompi_osc_rdma_sync_t *ompi_osc_rdma_sync_allocate(struct ompi_osc_rdma_module_t *module);
 
 /**
  * @brief release a synchronization object
  *
  * @param[in] rdma_sync   synchronization object allocated by ompi_osc_rdma_sync_allocate()
  */
-void ompi_osc_rdma_sync_return (ompi_osc_rdma_sync_t *rdma_sync);
+void ompi_osc_rdma_sync_return(ompi_osc_rdma_sync_t *rdma_sync);
 
 /**
  * Check if the target is part of a PSCW access epoch
@@ -135,10 +135,10 @@ void ompi_osc_rdma_sync_return (ompi_osc_rdma_sync_t *rdma_sync);
  *
  * This functions verifies the target is part of an active PSCW access epoch.
  */
-bool ompi_osc_rdma_sync_pscw_peer (struct ompi_osc_rdma_module_t *module, int target, struct ompi_osc_rdma_peer_t **peer);
+bool ompi_osc_rdma_sync_pscw_peer(struct ompi_osc_rdma_module_t *module, int target,
+                                  struct ompi_osc_rdma_peer_t **peer);
 
-
-static inline int64_t ompi_osc_rdma_sync_get_count (ompi_osc_rdma_sync_t *rdma_sync)
+static inline int64_t ompi_osc_rdma_sync_get_count(ompi_osc_rdma_sync_t *rdma_sync)
 {
     return rdma_sync->outstanding_rdma.counter;
 }

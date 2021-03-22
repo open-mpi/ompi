@@ -12,39 +12,22 @@
 #include "ompi_config.h"
 #include "pml_example.h"
 
-int mca_pml_example_isend_init( void* buf,
-                            size_t count,
-                            ompi_datatype_t* datatype,
-                            int dst,
-                            int tag,
-                            mca_pml_base_send_mode_t sendmode,
-                            ompi_communicator_t* comm,
-                            ompi_request_t** request )
+int mca_pml_example_isend_init(void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+                               mca_pml_base_send_mode_t sendmode, ompi_communicator_t *comm,
+                               ompi_request_t **request)
 {
     return OMPI_SUCCESS;
 }
 
-
-int mca_pml_example_isend( void* buf,
-                       size_t count,
-                       ompi_datatype_t* datatype,
-                       int dst,
-                       int tag,
-                       mca_pml_base_send_mode_t sendmode,
-                       ompi_communicator_t* comm,
-                       ompi_request_t** request )
+int mca_pml_example_isend(void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+                          mca_pml_base_send_mode_t sendmode, ompi_communicator_t *comm,
+                          ompi_request_t **request)
 {
     return OMPI_SUCCESS;
 }
 
-int mca_pml_example_send( void *buf,
-                      size_t count,
-                      ompi_datatype_t* datatype,
-                      int dst,
-                      int tag,
-                      mca_pml_base_send_mode_t sendmode,
-                      ompi_communicator_t* comm )
+int mca_pml_example_send(void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+                         mca_pml_base_send_mode_t sendmode, ompi_communicator_t *comm)
 {
     return OMPI_SUCCESS;
 }
-

@@ -19,7 +19,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "sharedfp_individual.h"
 
@@ -27,10 +26,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 
-int
-mca_sharedfp_individual_get_position(ompio_file_t *fh,
-                         OMPI_MPI_OFFSET_TYPE * offset)
+int mca_sharedfp_individual_get_position(ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE *offset)
 {
-    opal_output(0,"mca_sharedfp_individual_get_position: NOT IMPLEMENTED\n");
+    opal_output(0, "mca_sharedfp_individual_get_position: NOT IMPLEMENTED\n");
     return OMPI_SUCCESS;
 }

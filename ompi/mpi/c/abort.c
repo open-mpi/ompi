@@ -20,29 +20,26 @@
  */
 #include "ompi_config.h"
 
-#include "opal/util/show_help.h"
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/runtime/mpiruntime.h"
-#include "ompi/memchecker.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
+#include "opal/util/show_help.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Abort = PMPI_Abort
-#endif
-#define MPI_Abort PMPI_Abort
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Abort = PMPI_Abort
+#    endif
+#    define MPI_Abort PMPI_Abort
 #endif
 
 static const char FUNC_NAME[] = "MPI_Abort";
 
-
 int MPI_Abort(MPI_Comm comm, int errorcode)
 {
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
     /* Don't even bother checking comm and errorcode values for
        errors */
@@ -51,10 +48,8 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    opal_show_help("help-mpi-api.txt", "mpi-abort", true,
-                   ompi_comm_rank(comm),
+    opal_show_help("help-mpi-api.txt", "mpi-abort", true, ompi_comm_rank(comm),
                    ('\0' != comm->c_name[0]) ? comm->c_name : "<Unknown>",
-                   OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                   errorcode);
+                   OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), errorcode);
     return ompi_mpi_abort(comm, errorcode);
 }

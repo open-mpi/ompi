@@ -26,48 +26,42 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Igather = PMPI_Igather
-#endif
-#define MPI_Igather PMPI_Igather
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Igather = PMPI_Igather
+#    endif
+#    define MPI_Igather PMPI_Igather
 #endif
 
 static const char FUNC_NAME[] = "MPI_Igather";
 
-
-int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                void *recvbuf, int recvcount, MPI_Datatype recvtype,
-                int root, MPI_Comm comm, MPI_Request *request)
+int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
+                int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
 {
     int err;
 
     SPC_RECORD(OMPI_SPC_IGATHER, 1);
 
     MEMCHECKER(
-        int rank;
-        ptrdiff_t ext;
+        int rank; ptrdiff_t ext;
 
-        rank = ompi_comm_rank(comm);
-        ompi_datatype_type_extent(recvtype, &ext);
+        rank = ompi_comm_rank(comm); ompi_datatype_type_extent(recvtype, &ext);
 
-        memchecker_comm(comm);
-        if(OMPI_COMM_IS_INTRA(comm)) {
-            if(ompi_comm_rank(comm) == root) {
+        memchecker_comm(comm); if (OMPI_COMM_IS_INTRA(comm)) {
+            if (ompi_comm_rank(comm) == root) {
                 /* check whether root's send buffer is defined. */
                 if (MPI_IN_PLACE == sendbuf) {
-                  memchecker_call(&opal_memchecker_base_isdefined,
-                                  (char *)(recvbuf)+rank*ext,
-                                  recvcount, recvtype);
+                    memchecker_call(&opal_memchecker_base_isdefined,
+                                    (char *) (recvbuf) + rank * ext, recvcount, recvtype);
                 } else {
                     memchecker_datatype(sendtype);
                     memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
@@ -91,17 +85,15 @@ int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                 /* check whether send buffer is defined. */
                 memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
             }
-        }
-    );
+        });
 
     if (MPI_PARAM_CHECK) {
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
-        } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == sendbuf) ||
-                   (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
+        } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == sendbuf)
+                   || (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
@@ -140,8 +132,8 @@ int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         /* Errors for intercommunicators */
 
         else {
-            if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-                   MPI_ROOT == root || MPI_PROC_NULL == root)) {
+            if (!((root >= 0 && root < ompi_comm_remote_size(comm)) || MPI_ROOT == root
+                  || MPI_PROC_NULL == root)) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
             }
 
@@ -169,9 +161,8 @@ int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_igather(sendbuf, sendcount, sendtype, recvbuf,
-                                    recvcount, recvtype, root, comm, request,
-                                    comm->c_coll->coll_igather_module);
+    err = comm->c_coll->coll_igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
+                                     root, comm, request, comm->c_coll->coll_igather_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         if (OMPI_COMM_IS_INTRA(comm)) {
             if (MPI_IN_PLACE == sendbuf) {

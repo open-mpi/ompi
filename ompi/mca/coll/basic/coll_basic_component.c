@@ -29,15 +29,15 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
+#include "coll_basic.h"
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
-#include "coll_basic.h"
 
 /*
  * Public string showing the coll ompi_basic component version number
  */
-const char *mca_coll_basic_component_version_string =
-    "Open MPI basic collective MCA component version " OMPI_VERSION;
+const char *mca_coll_basic_component_version_string
+    = "Open MPI basic collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variables
@@ -82,32 +82,23 @@ const mca_coll_base_component_2_4_0_t mca_coll_basic_component = {
     .collm_comm_query = mca_coll_basic_comm_query,
 };
 
-
-static int
-basic_register(void)
+static int basic_register(void)
 {
     /* Use a low priority, but allow other components to be lower */
 
     mca_coll_basic_priority = 10;
     (void) mca_base_component_var_register(&mca_coll_basic_component.collm_version, "priority",
                                            "Priority of the basic coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_coll_basic_priority);
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_basic_priority);
     mca_coll_basic_crossover = 4;
-    (void) mca_base_component_var_register(&mca_coll_basic_component.collm_version, "crossover",
-                                           "Minimum number of processes in a communicator before using the logarithmic algorithms",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_coll_basic_crossover);
+    (void) mca_base_component_var_register(
+        &mca_coll_basic_component.collm_version, "crossover",
+        "Minimum number of processes in a communicator before using the logarithmic algorithms",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_basic_crossover);
 
     return OMPI_SUCCESS;
 }
 
-OBJ_CLASS_INSTANCE(mca_coll_basic_module_t,
-                   mca_coll_base_module_t,
-                   NULL,
-                   NULL);
-
+OBJ_CLASS_INSTANCE(mca_coll_basic_module_t, mca_coll_base_module_t, NULL, NULL);

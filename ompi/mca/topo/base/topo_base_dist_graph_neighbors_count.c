@@ -13,12 +13,10 @@
 #include "ompi/info/info.h"
 #include "ompi/mca/topo/base/base.h"
 
-
-int mca_topo_base_dist_graph_neighbors_count(ompi_communicator_t *comm,
-                                             int *inneighbors,
+int mca_topo_base_dist_graph_neighbors_count(ompi_communicator_t *comm, int *inneighbors,
                                              int *outneighbors, int *weighted)
 {
-    mca_topo_base_comm_dist_graph_2_2_0_t* dist_graph = comm->c_topo->mtc.dist_graph;
+    mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
 
     if (!OMPI_COMM_IS_DIST_GRAPH(comm)) {
         return OMPI_ERR_NOT_FOUND;
@@ -26,7 +24,7 @@ int mca_topo_base_dist_graph_neighbors_count(ompi_communicator_t *comm,
 
     *inneighbors = dist_graph->indegree;
     *outneighbors = dist_graph->outdegree;
-    *weighted = (int)dist_graph->weighted;
+    *weighted = (int) dist_graph->weighted;
 
     return MPI_SUCCESS;
 }

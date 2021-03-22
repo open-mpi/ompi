@@ -47,10 +47,9 @@
  * Information associated with a specific executable image.  Common
  * across all DLLs.
  */
-typedef struct
-{
+typedef struct {
     /* Functions needed here */
-    const struct mqs_image_callbacks * image_callbacks;
+    const struct mqs_image_callbacks *image_callbacks;
 
     /* basic structures */
     struct {
@@ -75,14 +74,14 @@ typedef struct
         mqs_type *type;
         int size;
         struct {
-            int fl_frag_class;         /* opal_class_t* */
-            int fl_mpool;              /* struct mca_mpool_base_module_t* */
-            int fl_frag_size;          /* size_t */
-            int fl_frag_alignment;     /* size_t */
-            int fl_allocations;        /* opal_list_t */
-            int fl_max_to_alloc;       /* size_t */
-            int fl_num_per_alloc;      /* size_t */
-            int fl_num_allocated;      /* size_t */
+            int fl_frag_class;     /* opal_class_t* */
+            int fl_mpool;          /* struct mca_mpool_base_module_t* */
+            int fl_frag_size;      /* size_t */
+            int fl_frag_alignment; /* size_t */
+            int fl_allocations;    /* opal_list_t */
+            int fl_max_to_alloc;   /* size_t */
+            int fl_num_per_alloc;  /* size_t */
+            int fl_num_allocated;  /* size_t */
         } offset;
     } opal_free_list_t;
     struct {
@@ -265,11 +264,10 @@ typedef struct
 /***********************************************************************/
 /* Information for a single process.  Common across all DLLs.
  */
-typedef struct
-{
-    const struct mqs_process_callbacks * process_callbacks; /* Functions needed here */
+typedef struct {
+    const struct mqs_process_callbacks *process_callbacks; /* Functions needed here */
 
-    mqs_target_type_sizes sizes;			/* Process architecture information */
+    mqs_target_type_sizes sizes; /* Process architecture information */
 
     /* For the caller to hang their own stuff */
     void *extra;
@@ -290,17 +288,17 @@ typedef struct
 /* These macros *RELY* on the function already having set up the conventional
  * local variables i_info or p_info.
  */
-#define mqs_find_type        (i_info->image_callbacks->mqs_find_type_fp)
-#define mqs_field_offset     (i_info->image_callbacks->mqs_field_offset_fp)
-#define mqs_sizeof           (i_info->image_callbacks->mqs_sizeof_fp)
-#define mqs_get_type_sizes   (i_info->image_callbacks->mqs_get_type_sizes_fp)
-#define mqs_find_function    (i_info->image_callbacks->mqs_find_function_fp)
-#define mqs_find_symbol      (i_info->image_callbacks->mqs_find_symbol_fp)
+#define mqs_find_type      (i_info->image_callbacks->mqs_find_type_fp)
+#define mqs_field_offset   (i_info->image_callbacks->mqs_field_offset_fp)
+#define mqs_sizeof         (i_info->image_callbacks->mqs_sizeof_fp)
+#define mqs_get_type_sizes (i_info->image_callbacks->mqs_get_type_sizes_fp)
+#define mqs_find_function  (i_info->image_callbacks->mqs_find_function_fp)
+#define mqs_find_symbol    (i_info->image_callbacks->mqs_find_symbol_fp)
 
-#define mqs_get_image        (p_info->process_callbacks->mqs_get_image_fp)
-#define mqs_get_global_rank  (p_info->process_callbacks->mqs_get_global_rank_fp)
-#define mqs_fetch_data       (p_info->process_callbacks->mqs_fetch_data_fp)
-#define mqs_target_to_host   (p_info->process_callbacks->mqs_target_to_host_fp)
+#define mqs_get_image       (p_info->process_callbacks->mqs_get_image_fp)
+#define mqs_get_global_rank (p_info->process_callbacks->mqs_get_global_rank_fp)
+#define mqs_fetch_data      (p_info->process_callbacks->mqs_fetch_data_fp)
+#define mqs_target_to_host  (p_info->process_callbacks->mqs_target_to_host_fp)
 
 /* Basic callbacks into the debugger */
 extern const mqs_basic_callbacks *mqs_basic_entrypoints;
@@ -309,29 +307,23 @@ extern const mqs_basic_callbacks *mqs_basic_entrypoints;
 int ompi_fill_in_type_info(mqs_image *image, char **message);
 
 /* Fetch a pointer from the process */
-mqs_taddr_t ompi_fetch_pointer(mqs_process *proc, mqs_taddr_t addr,
-                               mpi_process_info *p_info);
+mqs_taddr_t ompi_fetch_pointer(mqs_process *proc, mqs_taddr_t addr, mpi_process_info *p_info);
 
 /* Fetch an int from the process */
-mqs_tword_t ompi_fetch_int(mqs_process *proc, mqs_taddr_t addr,
-                           mpi_process_info *p_info);
+mqs_tword_t ompi_fetch_int(mqs_process *proc, mqs_taddr_t addr, mpi_process_info *p_info);
 
 /* Fetch a bool from the process */
-mqs_tword_t ompi_fetch_bool(mqs_process *proc, mqs_taddr_t addr,
-                            mpi_process_info *p_info);
+mqs_tword_t ompi_fetch_bool(mqs_process *proc, mqs_taddr_t addr, mpi_process_info *p_info);
 
 /* Fetch a size_t from the process */
-mqs_taddr_t ompi_fetch_size_t(mqs_process *proc, mqs_taddr_t addr,
-                              mpi_process_info *p_info);
+mqs_taddr_t ompi_fetch_size_t(mqs_process *proc, mqs_taddr_t addr, mpi_process_info *p_info);
 
 /* Helpers to fetch stuff from an opal_pointer_array_t */
 int ompi_fetch_opal_pointer_array_info(mqs_process *proc, mqs_taddr_t addr,
-                                       mpi_process_info *p_info,
-                                       int *size, int *lowest_free,
+                                       mpi_process_info *p_info, int *size, int *lowest_free,
                                        int *number_free);
 int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr,
-                                       mpi_process_info *p_info, int index,
-                                       mqs_taddr_t *item);
+                                       mpi_process_info *p_info, int index, mqs_taddr_t *item);
 #define OMPI_MAX_VER_SIZE 256
 int ompi_get_lib_version(char *buf, int size);
 #endif

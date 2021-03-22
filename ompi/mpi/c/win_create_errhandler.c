@@ -21,41 +21,36 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_create_errhandler = PMPI_Win_create_errhandler
-#endif
-#define MPI_Win_create_errhandler PMPI_Win_create_errhandler
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_create_errhandler = PMPI_Win_create_errhandler
+#    endif
+#    define MPI_Win_create_errhandler PMPI_Win_create_errhandler
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_create_errhandler";
 
-
-int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function,
-                              MPI_Errhandler *errhandler)
+int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function, MPI_Errhandler *errhandler)
 {
     int err = MPI_SUCCESS;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == function ||
-            NULL == errhandler) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (NULL == function || NULL == errhandler) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
     /* Create and cache the errhandler.  Sets a refcount of 1. */
-    *errhandler =
-        ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
-                               (ompi_errhandler_generic_handler_fn_t*) function,
-                               OMPI_ERRHANDLER_LANG_C);
+    *errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
+                                         (ompi_errhandler_generic_handler_fn_t *) function,
+                                         OMPI_ERRHANDLER_LANG_C);
     if (NULL == *errhandler) {
         err = MPI_ERR_INTERN;
     }

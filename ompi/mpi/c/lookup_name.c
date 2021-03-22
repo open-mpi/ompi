@@ -30,44 +30,40 @@
 #include "opal/util/show_help.h"
 #include "opal/util/string_copy.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/communicator/communicator.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Lookup_name = PMPI_Lookup_name
-#endif
-#define MPI_Lookup_name PMPI_Lookup_name
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Lookup_name = PMPI_Lookup_name
+#    endif
+#    define MPI_Lookup_name PMPI_Lookup_name
 #endif
 
 static const char FUNC_NAME[] = "MPI_Lookup_name";
 
-
 int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
 {
-    int flag=0, ret;
+    int flag = 0, ret;
     pmix_status_t rc;
     pmix_pdata_t pdat;
     pmix_info_t pinfo;
     pmix_data_range_t rng;
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( NULL == port_name ) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (NULL == port_name) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
-        if ( NULL == service_name ) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (NULL == service_name) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
         if (NULL == info || ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
     }
 
@@ -75,16 +71,15 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
      * be searched for the given key */
     if (MPI_INFO_NULL != info) {
         opal_cstring_t *info_str;
-        ompi_info_get (info, "range", &info_str, &flag);
+        ompi_info_get(info, "range", &info_str, &flag);
         if (flag) {
             if (0 == strcmp(info_str->string, "nspace")) {
-                rng = PMIX_RANGE_NAMESPACE;  // share only with procs in same nspace
+                rng = PMIX_RANGE_NAMESPACE; // share only with procs in same nspace
             } else if (0 == strcmp(info_str->string, "session")) {
                 rng = PMIX_RANGE_SESSION; // share only with procs in same session
             } else {
                 /* unrecognized scope */
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                            FUNC_NAME);
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
             }
             OBJ_RELEASE(info_str);
         }
@@ -97,16 +92,12 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
 
     rc = PMIx_Lookup(&pdat, 1, &pinfo, 1);
     PMIX_INFO_DESTRUCT(&pinfo);
-    if (PMIX_SUCCESS != rc ||
-        PMIX_STRING != pdat.value.type ||
-        NULL == pdat.value.data.string) {
+    if (PMIX_SUCCESS != rc || PMIX_STRING != pdat.value.type || NULL == pdat.value.data.string) {
         if (PMIX_ERR_NOT_SUPPORTED == rc) {
             ret = OMPI_ERR_NOT_SUPPORTED;
-            opal_show_help("help-mpi-api.txt",
-                           "MPI function not supported",
-                           true,
-                           FUNC_NAME,
-                           "Underlying runtime environment does not support name lookup functionality");
+            opal_show_help(
+                "help-mpi-api.txt", "MPI function not supported", true, FUNC_NAME,
+                "Underlying runtime environment does not support name lookup functionality");
         } else {
             ret = MPI_ERR_NAME;
         }
@@ -114,8 +105,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
 
-    opal_string_copy( port_name, pdat.value.data.string,
-                      MPI_MAX_PORT_NAME );
+    opal_string_copy(port_name, pdat.value.data.string, MPI_MAX_PORT_NAME);
     PMIX_PDATA_DESTRUCT(&pdat);
 
     return MPI_SUCCESS;

@@ -20,21 +20,20 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_get_group = PMPI_Win_get_group
-#endif
-#define MPI_Win_get_group PMPI_Win_get_group
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_get_group = PMPI_Win_get_group
+#    endif
+#    define MPI_Win_get_group PMPI_Win_get_group
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_get_group";
-
 
 int MPI_Win_get_group(MPI_Win win, MPI_Group *group)
 {
@@ -50,6 +49,6 @@ int MPI_Win_get_group(MPI_Win win, MPI_Group *group)
         }
     }
 
-    ret = ompi_win_group(win, (ompi_group_t**) group);
+    ret = ompi_win_group(win, (ompi_group_t **) group);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

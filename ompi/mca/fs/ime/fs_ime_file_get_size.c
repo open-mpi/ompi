@@ -24,8 +24,7 @@
  *	Accepts:	- same arguments as MPI_File_get_size()
  *	Returns:	- Success if size is get
  */
-int mca_fs_ime_file_get_size (ompio_file_t *fh,
-                              OMPI_MPI_OFFSET_TYPE *size)
+int mca_fs_ime_file_get_size(ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE *size)
 {
     /* reset errno */
     errno = 0;

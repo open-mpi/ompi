@@ -11,13 +11,13 @@
 
 #include "coll_han_trigger.h"
 
-static void mca_coll_task_constructor(mca_coll_task_t * t)
+static void mca_coll_task_constructor(mca_coll_task_t *t)
 {
     t->func_ptr = NULL;
     t->func_args = NULL;
 }
 
-static void mca_coll_task_destructor(mca_coll_task_t * t)
+static void mca_coll_task_destructor(mca_coll_task_t *t)
 {
     t->func_ptr = NULL;
     t->func_args = NULL;

@@ -22,41 +22,37 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/group/group.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/group/group.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Group_range_incl = PMPI_Group_range_incl
-#endif
-#define MPI_Group_range_incl PMPI_Group_range_incl
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Group_range_incl = PMPI_Group_range_incl
+#    endif
+#    define MPI_Group_range_incl PMPI_Group_range_incl
 #endif
 
 static const char FUNC_NAME[] = "MPI_Group_range_incl";
 
-
-int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
-                         MPI_Group *new_group)
+int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3], MPI_Group *new_group)
 {
-    int err, i,indx;
+    int err, i, indx;
     int group_size;
-    int * elements_int_list;
+    int *elements_int_list;
 
     /* can't act on NULL group */
-    if( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( (MPI_GROUP_NULL == group) || (NULL == group) ||
-             (NULL == new_group) ) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
-                                          FUNC_NAME);
+        if ((MPI_GROUP_NULL == group) || (NULL == group) || (NULL == new_group)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP, FUNC_NAME);
         }
 
-        group_size = ompi_group_size ( group);
-        elements_int_list = (int *) malloc(sizeof(int) * (group_size+1));
+        group_size = ompi_group_size(group);
+        elements_int_list = (int *) malloc(sizeof(int) * (group_size + 1));
         if (NULL == elements_int_list) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OTHER, FUNC_NAME);
         }
@@ -64,7 +60,7 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
             elements_int_list[i] = -1;
         }
 
-        for ( i=0; i < n_triplets; i++) {
+        for (i = 0; i < n_triplets; i++) {
             if ((0 > ranges[i][0]) || (ranges[i][0] > group_size)) {
                 goto error_rank;
             }
@@ -109,11 +105,11 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
             }
         }
 
-        free ( elements_int_list);
+        free(elements_int_list);
     }
 
-    err = ompi_group_range_incl ( group, n_triplets, ranges, new_group );
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME );
+    err = ompi_group_range_incl(group, n_triplets, ranges, new_group);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 
 error_rank:
     free(elements_int_list);

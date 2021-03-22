@@ -25,26 +25,25 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Pack = PMPI_Pack
-#endif
-#define MPI_Pack PMPI_Pack
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Pack = PMPI_Pack
+#    endif
+#    define MPI_Pack PMPI_Pack
 #endif
 
 static const char FUNC_NAME[] = "MPI_Pack";
 
-
-int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
-             void *outbuf, int outsize, int *position, MPI_Comm comm)
+int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype, void *outbuf, int outsize,
+             int *position, MPI_Comm comm)
 {
     int rc = MPI_SUCCESS, ret;
     opal_convertor_t local_convertor;
@@ -52,18 +51,17 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
     unsigned int iov_count;
     size_t size;
 
-    MEMCHECKER(
-        memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, inbuf, incount, datatype);
-        memchecker_call(&opal_memchecker_base_isaddressable, (void *)((char *)outbuf + *position), outsize, MPI_PACKED);
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_datatype(datatype);
+               memchecker_call(&opal_memchecker_base_isdefined, inbuf, incount, datatype);
+               memchecker_call(&opal_memchecker_base_isaddressable,
+                               (void *) ((char *) outbuf + *position), outsize, MPI_PACKED);
+               memchecker_comm(comm););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
-        } else if ((NULL == outbuf) || (NULL == position)) {  /* inbuf can be MPI_BOTTOM */
+        } else if ((NULL == outbuf) || (NULL == position)) { /* inbuf can be MPI_BOTTOM */
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         } else if (incount < 0) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
@@ -87,31 +85,31 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
      */
     ompi_datatype_consolidate_t dtmod;
     rc = ompi_datatype_consolidate_create(incount, datatype, &dtmod,
-        OMPI_DATATYPE_CONSOLIDATE_THRESHOLD);
+                                          OMPI_DATATYPE_CONSOLIDATE_THRESHOLD);
     OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
 
-    OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
+    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
     /* the resulting convertor will be set to the position ZERO */
-    opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor,
-                                              &(dtmod.dt->super), dtmod.count,
-                                              (void *) inbuf, 0, &local_convertor );
+    opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor, &(dtmod.dt->super),
+                                             dtmod.count, (void *) inbuf, 0, &local_convertor);
 
     /* Check for truncation */
-    opal_convertor_get_packed_size( &local_convertor, &size );
-    if( (*position + size) > (unsigned int)outsize ) {  /* we can cast as we already checked for < 0 */
-        OBJ_DESTRUCT( &local_convertor );
+    opal_convertor_get_packed_size(&local_convertor, &size);
+    if ((*position + size)
+        > (unsigned int) outsize) { /* we can cast as we already checked for < 0 */
+        OBJ_DESTRUCT(&local_convertor);
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
     }
 
     /* Prepare the iovec with all informations */
-    invec.iov_base = (char*) outbuf + (*position);
+    invec.iov_base = (char *) outbuf + (*position);
     invec.iov_len = size;
 
     /* Do the actual packing */
     iov_count = 1;
-    ret = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
+    ret = opal_convertor_pack(&local_convertor, &invec, &iov_count, &size);
     *position += size;
-    OBJ_DESTRUCT( &local_convertor );
+    OBJ_DESTRUCT(&local_convertor);
 
     rc = ompi_datatype_consolidate_free(&dtmod);
     OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);

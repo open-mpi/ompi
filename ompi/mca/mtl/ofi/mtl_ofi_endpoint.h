@@ -36,17 +36,17 @@ struct mca_mtl_ofi_endpoint_t {
     fi_addr_t peer_fiaddr;
 };
 
-typedef struct mca_mtl_ofi_endpoint_t  mca_mtl_ofi_endpoint_t;
+typedef struct mca_mtl_ofi_endpoint_t mca_mtl_ofi_endpoint_t;
 
-static inline mca_mtl_ofi_endpoint_t *
-ompi_mtl_ofi_get_endpoint(struct mca_mtl_base_module_t* mtl,
-                          ompi_proc_t *ompi_proc)
+static inline mca_mtl_ofi_endpoint_t *ompi_mtl_ofi_get_endpoint(struct mca_mtl_base_module_t *mtl,
+                                                                ompi_proc_t *ompi_proc)
 {
     if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL])) {
         if (OPAL_UNLIKELY(OMPI_SUCCESS != MCA_PML_CALL(add_procs(&ompi_proc, 1)))) {
             /* Fatal error. exit() out */
-            opal_output(0, "%s:%d: *** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
-                           __FILE__, __LINE__);
+            opal_output(0,
+                        "%s:%d: *** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
+                        __FILE__, __LINE__);
             fflush(stderr);
             exit(1);
         }

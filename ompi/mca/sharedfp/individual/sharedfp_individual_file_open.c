@@ -20,87 +20,83 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "sharedfp_individual.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/sharedfp/sharedfp.h"
-#include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/file/file.h"
+#include "ompi/mca/sharedfp/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
 
-
-int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
-				       const char* filename,
-				       int amode,
-				       struct opal_info_t *info,
-				       ompio_file_t *fh)
+int mca_sharedfp_individual_file_open(struct ompi_communicator_t *comm, const char *filename,
+                                      int amode, struct opal_info_t *info, ompio_file_t *fh)
 {
     int err = 0;
-    char * datafilename;	/*The array size would change as it is based on the current path*/
-    char * metadatafilename;	/*The array size would change as it is based on the current path*/
-    ompio_file_t * datafilehandle;
-    ompio_file_t * metadatafilehandle;
-    mca_sharedfp_individual_header_record* headnode = NULL;
-    struct mca_sharedfp_base_data_t* sh;
-    size_t len=0;
+    char *datafilename;     /*The array size would change as it is based on the current path*/
+    char *metadatafilename; /*The array size would change as it is based on the current path*/
+    ompio_file_t *datafilehandle;
+    ompio_file_t *metadatafilehandle;
+    mca_sharedfp_individual_header_record *headnode = NULL;
+    struct mca_sharedfp_base_data_t *sh;
+    size_t len = 0;
 
-    sh = (struct mca_sharedfp_base_data_t*) malloc ( sizeof(struct mca_sharedfp_base_data_t));
-    if ( NULL == sh ){
+    sh = (struct mca_sharedfp_base_data_t *) malloc(sizeof(struct mca_sharedfp_base_data_t));
+    if (NULL == sh) {
         opal_output(0, "mca_sharedfp_individual_file_open: Error, unable to malloc "
-		    "f_sharedfp_ptr struct\n");
+                       "f_sharedfp_ptr struct\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-
     /*Populate the sh file structure based on the implementation*/
-    sh->global_offset = 0;			/* Global Offset*/
+    sh->global_offset = 0; /* Global Offset*/
     sh->selected_module_data = NULL;
 
     /* Assign the metadatalinked list to sh->handle */
-    sh->selected_module_data = (mca_sharedfp_individual_header_record *)mca_sharedfp_individual_insert_headnode();
+    sh->selected_module_data = (mca_sharedfp_individual_header_record *)
+        mca_sharedfp_individual_insert_headnode();
 
     /*--------------------------------------------------------*/
     /* Open an individual data file for each process          */
     /* NOTE: Open the data file without shared file pointer   */
     /*--------------------------------------------------------*/
-    if ( mca_sharedfp_individual_verbose ) {
-       opal_output(ompi_sharedfp_base_framework.framework_output,
-                "mca_sharedfp_individual_file_open: open data file.\n");
+    if (mca_sharedfp_individual_verbose) {
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_individual_file_open: open data file.\n");
     }
 
     /* data filename created by appending .data.$rank to the original filename*/
-    len = strlen (filename ) + 64;
-    datafilename = (char*)malloc( len );
-    if ( NULL == datafilename ) {
+    len = strlen(filename) + 64;
+    datafilename = (char *) malloc(len);
+    if (NULL == datafilename) {
         opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
-        free ( sh );
+        free(sh);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    snprintf(datafilename, len, "%s%s%d",filename,".data.",fh->f_rank);
+    snprintf(datafilename, len, "%s%s%d", filename, ".data.", fh->f_rank);
 
-
-    datafilehandle = (ompio_file_t *)malloc(sizeof(ompio_file_t));
-    if ( NULL == datafilehandle ) {
+    datafilehandle = (ompio_file_t *) malloc(sizeof(ompio_file_t));
+    if (NULL == datafilehandle) {
         opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
-        free ( sh );
-        free ( datafilename );
+        free(sh);
+        free(datafilename);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     err = mca_common_ompio_file_open(MPI_COMM_SELF, datafilename,
                                      MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                      &(MPI_INFO_NULL->super), datafilehandle, false);
-    if ( OMPI_SUCCESS != err) {
-       opal_output(ompi_sharedfp_base_framework.framework_output,
-                   "mca_sharedfp_individual_file_open: Error during datafile file open. Continuing anyway. \n");
-        free (sh);
-	free (datafilename);
-        free (datafilehandle);
+    if (OMPI_SUCCESS != err) {
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_individual_file_open: Error during datafile file open. "
+                    "Continuing anyway. \n");
+        free(sh);
+        free(datafilename);
+        free(datafilehandle);
 
         // We reset the error code here to OMPI_SUCCESS since the individual component can act as
-        // a dummy component, in case no sharedfp operations are used by the code. Invoking any write/read
-        // operations will however lead to an error, since the sharedfp_data pointer will be NULL.
+        // a dummy component, in case no sharedfp operations are used by the code. Invoking any
+        // write/read operations will however lead to an error, since the sharedfp_data pointer will
+        // be NULL.
         sh = NULL;
         err = OMPI_SUCCESS;
         goto exit;
@@ -110,69 +106,70 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     /* Open an individual metadata file for each of the process */
     /* NOTE: Open the meta file without shared file pointer     */
     /*----------------------------------------------------------*/
-    if ( mca_sharedfp_individual_verbose ) {
+    if (mca_sharedfp_individual_verbose) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
-                "mca_sharedfp_individual_file_open: metadata file.\n");
+                    "mca_sharedfp_individual_file_open: metadata file.\n");
     }
 
     /* metadata filename created by appending .metadata.$rank to the original filename*/
-    metadatafilename = (char*) malloc ( len );
-    if ( NULL == metadatafilename ) {
-        free (sh);
-	free (datafilename);
-        mca_common_ompio_file_close ( datafilehandle);
-        free (datafilehandle);
-        opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
-
-        sh=NULL;
-        err = OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit;
-    }
-    snprintf ( metadatafilename, len, "%s%s%d", filename, ".metadata.",fh->f_rank);
-
-    metadatafilehandle = (ompio_file_t *)malloc(sizeof(ompio_file_t));
-    if ( NULL == metadatafilehandle ) {
-        free (sh);
-        free (datafilename);
-        mca_common_ompio_file_close ( datafilehandle);
-        free (datafilehandle);
-        free (metadatafilename);
+    metadatafilename = (char *) malloc(len);
+    if (NULL == metadatafilename) {
+        free(sh);
+        free(datafilename);
+        mca_common_ompio_file_close(datafilehandle);
+        free(datafilehandle);
         opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
 
         sh = NULL;
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
-    err = mca_common_ompio_file_open ( MPI_COMM_SELF,metadatafilename,
-                                       MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
-                                       &(MPI_INFO_NULL->super), metadatafilehandle, false);
-    if ( OMPI_SUCCESS != err) {
-       opal_output(ompi_sharedfp_base_framework.framework_output,
-                   "mca_sharedfp_individual_file_open: Error during metadatafile file open. Continuing anyway. \n");
-        free (sh);
-        free (datafilename);
-        mca_common_ompio_file_close ( datafilehandle);
-        free (datafilehandle);
-        free (metadatafilename);
-        free (metadatafilehandle);
+    snprintf(metadatafilename, len, "%s%s%d", filename, ".metadata.", fh->f_rank);
+
+    metadatafilehandle = (ompio_file_t *) malloc(sizeof(ompio_file_t));
+    if (NULL == metadatafilehandle) {
+        free(sh);
+        free(datafilename);
+        mca_common_ompio_file_close(datafilehandle);
+        free(datafilehandle);
+        free(metadatafilename);
+        opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
+
+        sh = NULL;
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
+    }
+    err = mca_common_ompio_file_open(MPI_COMM_SELF, metadatafilename,
+                                     MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
+                                     &(MPI_INFO_NULL->super), metadatafilehandle, false);
+    if (OMPI_SUCCESS != err) {
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_individual_file_open: Error during metadatafile file open. "
+                    "Continuing anyway. \n");
+        free(sh);
+        free(datafilename);
+        mca_common_ompio_file_close(datafilehandle);
+        free(datafilehandle);
+        free(metadatafilename);
+        free(metadatafilehandle);
 
         // We reset the error code here to OMPI_SUCCESS since the individual component can act as
-        // a dummy component, in case no sharedfp operations are used by the code. Invoking any write/read
-        // operations will however lead to an error, since the sharedfp_data pointer will be NULL.
+        // a dummy component, in case no sharedfp operations are used by the code. Invoking any
+        // write/read operations will however lead to an error, since the sharedfp_data pointer will
+        // be NULL.
         sh = NULL;
         err = OMPI_SUCCESS;
         goto exit;
     }
 
     /*save the datafilehandle and metadatahandle in the sharedfp individual module data structure*/
-    headnode = (mca_sharedfp_individual_header_record*)(sh->selected_module_data);
-    if ( headnode) {
-        headnode->datafilehandle     = datafilehandle;
+    headnode = (mca_sharedfp_individual_header_record *) (sh->selected_module_data);
+    if (headnode) {
+        headnode->datafilehandle = datafilehandle;
         headnode->metadatafilehandle = metadatafilehandle;
-        headnode->datafilename       = datafilename;
-        headnode->metadatafilename   = metadatafilename;
+        headnode->datafilename = datafilename;
+        headnode->metadatafilename = metadatafilename;
     }
-
 
 exit:
     /*save the sharedfp individual module data structure in the ompio filehandle structure*/
@@ -181,67 +178,67 @@ exit:
     return err;
 }
 
-int mca_sharedfp_individual_file_close (ompio_file_t *fh)
+int mca_sharedfp_individual_file_close(ompio_file_t *fh)
 {
-    mca_sharedfp_individual_header_record* headnode = NULL;
+    mca_sharedfp_individual_header_record *headnode = NULL;
     struct mca_sharedfp_base_data_t *sh;
     int err = OMPI_SUCCESS;
 
-    if ( NULL == fh->f_sharedfp_data ){
+    if (NULL == fh->f_sharedfp_data) {
         return OMPI_SUCCESS;
     }
     sh = fh->f_sharedfp_data;
 
     /* Merge data from individal files to final output file */
-    err = mca_sharedfp_individual_collaborate_data (sh, fh);
+    err = mca_sharedfp_individual_collaborate_data(sh, fh);
 
-    headnode = (mca_sharedfp_individual_header_record*)(sh->selected_module_data);
-    if (headnode)  {
+    headnode = (mca_sharedfp_individual_header_record *) (sh->selected_module_data);
+    if (headnode) {
         /*Close datafile*/
-        if (headnode->datafilehandle)  {
+        if (headnode->datafilehandle) {
             /*TODO: properly deal with returned error code*/
             err = mca_common_ompio_file_close(headnode->datafilehandle);
             /* NOTE: No neeed to manually delete the file,
-	    ** the amode should have been set to delete on close
-	    */
+            ** the amode should have been set to delete on close
+            */
         }
-        if(headnode->datafilename){
+        if (headnode->datafilename) {
             free(headnode->datafilename);
         }
 
         /*Close metadatafile*/
-        if (headnode->metadatafilehandle)  {
+        if (headnode->metadatafilehandle) {
             /*TODO: properly deal with returned error code*/
             err = mca_common_ompio_file_close(headnode->metadatafilehandle);
             /* NOTE: No neeed to manually delete the file,
-	    ** the amode should have been set to delete on close
-	    */
+            ** the amode should have been set to delete on close
+            */
         }
-        if(headnode->metadatafilename){
+        if (headnode->metadatafilename) {
             free(headnode->metadatafilename);
         }
     }
 
     /*free shared file pointer data struct*/
     free(sh);
-    fh->f_sharedfp_data=NULL;
+    fh->f_sharedfp_data = NULL;
 
     return err;
 }
 
-
-mca_sharedfp_individual_header_record* mca_sharedfp_individual_insert_headnode ( void )
+mca_sharedfp_individual_header_record *mca_sharedfp_individual_insert_headnode(void)
 {
     mca_sharedfp_individual_header_record *headnode = NULL;
-    if ( !headnode )  {
-	/*Allocate a headnode*/
-	headnode = (mca_sharedfp_individual_header_record*)malloc(sizeof(mca_sharedfp_individual_header_record));
-	if (!headnode)
-	    return NULL;
+    if (!headnode) {
+        /*Allocate a headnode*/
+        headnode = (mca_sharedfp_individual_header_record *) malloc(
+            sizeof(mca_sharedfp_individual_header_record));
+        if (!headnode)
+            return NULL;
     }
 
-    headnode->numofrecords = 0;			/* No records in the linked list */
-    headnode->numofrecordsonfile = 0;		/* No records in the metadatafile for this file */
+    headnode->numofrecords = 0;       /* No records in the linked list */
+    headnode->numofrecordsonfile = 0; /* No records in the metadatafile for this file */
 
     headnode->datafile_offset = 0;
     headnode->metadatafile_offset = 0;
@@ -250,8 +247,8 @@ mca_sharedfp_individual_header_record* mca_sharedfp_individual_insert_headnode (
     headnode->datafile_start_offset = 0;
 
     headnode->metadatafilehandle = 0;
-    headnode->datafilehandle     = 0;
-    headnode->next   = NULL;
+    headnode->datafilehandle = 0;
+    headnode->next = NULL;
 
     return headnode;
 }

@@ -17,16 +17,16 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_cvar_get_num = PMPI_T_cvar_get_num
+#    pragma weak MPI_T_cvar_get_num = PMPI_T_cvar_get_num
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_cvar_get_num (int *num_cvar) {
-    if (!mpit_is_initialized ()) {
+int MPI_T_cvar_get_num(int *num_cvar)
+{
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
@@ -34,9 +34,9 @@ int MPI_T_cvar_get_num (int *num_cvar) {
         return MPI_T_ERR_INVALID;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
     *num_cvar = mca_base_var_get_count();
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return MPI_SUCCESS;
 }

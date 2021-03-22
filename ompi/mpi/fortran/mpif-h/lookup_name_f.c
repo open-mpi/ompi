@@ -21,54 +21,49 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_LOOKUP_NAME = ompi_lookup_name_f
-#pragma weak pmpi_lookup_name = ompi_lookup_name_f
-#pragma weak pmpi_lookup_name_ = ompi_lookup_name_f
-#pragma weak pmpi_lookup_name__ = ompi_lookup_name_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_LOOKUP_NAME = ompi_lookup_name_f
+#        pragma weak pmpi_lookup_name = ompi_lookup_name_f
+#        pragma weak pmpi_lookup_name_ = ompi_lookup_name_f
+#        pragma weak pmpi_lookup_name__ = ompi_lookup_name_f
 
-#pragma weak PMPI_Lookup_name_f = ompi_lookup_name_f
-#pragma weak PMPI_Lookup_name_f08 = ompi_lookup_name_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_LOOKUP_NAME,
-                           pmpi_lookup_name,
-                           pmpi_lookup_name_,
-                           pmpi_lookup_name__,
-                           pompi_lookup_name_f,
-                           (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len),
-                           (service_name, info, port_name, ierr, service_name_len, port_name_len) )
-#endif
+#        pragma weak PMPI_Lookup_name_f = ompi_lookup_name_f
+#        pragma weak PMPI_Lookup_name_f08 = ompi_lookup_name_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_LOOKUP_NAME, pmpi_lookup_name, pmpi_lookup_name_,
+                           pmpi_lookup_name__, pompi_lookup_name_f,
+                           (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr,
+                            int service_name_len, int port_name_len),
+                           (service_name, info, port_name, ierr, service_name_len, port_name_len))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_LOOKUP_NAME = ompi_lookup_name_f
-#pragma weak mpi_lookup_name = ompi_lookup_name_f
-#pragma weak mpi_lookup_name_ = ompi_lookup_name_f
-#pragma weak mpi_lookup_name__ = ompi_lookup_name_f
+#    pragma weak MPI_LOOKUP_NAME = ompi_lookup_name_f
+#    pragma weak mpi_lookup_name = ompi_lookup_name_f
+#    pragma weak mpi_lookup_name_ = ompi_lookup_name_f
+#    pragma weak mpi_lookup_name__ = ompi_lookup_name_f
 
-#pragma weak MPI_Lookup_name_f = ompi_lookup_name_f
-#pragma weak MPI_Lookup_name_f08 = ompi_lookup_name_f
+#    pragma weak MPI_Lookup_name_f = ompi_lookup_name_f
+#    pragma weak MPI_Lookup_name_f08 = ompi_lookup_name_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_LOOKUP_NAME,
-                           mpi_lookup_name,
-                           mpi_lookup_name_,
-                           mpi_lookup_name__,
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_LOOKUP_NAME, mpi_lookup_name, mpi_lookup_name_, mpi_lookup_name__,
                            ompi_lookup_name_f,
-                           (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len),
-                           (service_name, info, port_name, ierr, service_name_len, port_name_len) )
-#else
-#define ompi_lookup_name_f pompi_lookup_name_f
-#endif
+                           (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr,
+                            int service_name_len, int port_name_len),
+                           (service_name, info, port_name, ierr, service_name_len, port_name_len))
+#    else
+#        define ompi_lookup_name_f pompi_lookup_name_f
+#    endif
 #endif
 
-
-void ompi_lookup_name_f(char *service_name, MPI_Fint *info,
-		       char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len)
+void ompi_lookup_name_f(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr,
+                        int service_name_len, int port_name_len)
 {
     int c_ierr;
     MPI_Info c_info;
@@ -78,19 +73,21 @@ void ompi_lookup_name_f(char *service_name, MPI_Fint *info,
     c_info = PMPI_Info_f2c(*info);
     ompi_fortran_string_f2c(service_name, service_name_len, &c_service_name);
 
-    c_port_name = (char *) malloc (port_name_len+1);
-    if ( NULL == c_port_name ) {
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(MPI_ERR_OTHER);
-        free (c_service_name);
-	return;
+    c_port_name = (char *) malloc(port_name_len + 1);
+    if (NULL == c_port_name) {
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(MPI_ERR_OTHER);
+        free(c_service_name);
+        return;
     }
 
     c_ierr = PMPI_Lookup_name(c_service_name, c_info, c_port_name);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    if ( MPI_SUCCESS == c_ierr) {
-	ompi_fortran_string_c2f(c_port_name, port_name, port_name_len);
+    if (MPI_SUCCESS == c_ierr) {
+        ompi_fortran_string_c2f(c_port_name, port_name, port_name_len);
     }
-    free (c_service_name);
-    free (c_port_name);
+    free(c_service_name);
+    free(c_port_name);
 }

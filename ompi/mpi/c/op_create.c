@@ -21,23 +21,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/op/op.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Op_create = PMPI_Op_create
-#endif
-#define MPI_Op_create PMPI_Op_create
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Op_create = PMPI_Op_create
+#    endif
+#    define MPI_Op_create PMPI_Op_create
 #endif
 
 static const char FUNC_NAME[] = "MPI_Op_create";
 
-
-int MPI_Op_create(MPI_User_function * function, int commute, MPI_Op * op)
+int MPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op)
 {
     int err = MPI_SUCCESS;
 
@@ -46,18 +45,15 @@ int MPI_Op_create(MPI_User_function * function, int commute, MPI_Op * op)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == op) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP, FUNC_NAME);
         } else if (NULL == function) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
     /* Create and cache the op.  Sets a refcount of 1. */
 
-    *op = ompi_op_create_user(OPAL_INT_TO_BOOL(commute),
-                              (ompi_op_fortran_handler_fn_t *) function);
+    *op = ompi_op_create_user(OPAL_INT_TO_BOOL(commute), (ompi_op_fortran_handler_fn_t *) function);
     if (NULL == *op) {
         err = MPI_ERR_INTERN;
     }

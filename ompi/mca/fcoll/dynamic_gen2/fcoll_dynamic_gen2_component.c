@@ -34,8 +34,8 @@
 /*
  * Public string showing the fcoll ompi_dynamic_gen2 component version number
  */
-const char *mca_fcoll_dynamic_gen2_component_version_string =
-    "Open MPI dynamic_gen2 collective MCA component version " OMPI_VERSION;
+const char *mca_fcoll_dynamic_gen2_component_version_string
+    = "Open MPI dynamic_gen2 collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variables
@@ -76,23 +76,24 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_gen2_component = {
     .fcollm_file_unquery = mca_fcoll_dynamic_gen2_component_file_unquery,
 };
 
-
-static int
-dynamic_gen2_register(void)
+static int dynamic_gen2_register(void)
 {
     mca_fcoll_dynamic_gen2_priority = 10;
     (void) mca_base_component_var_register(&mca_fcoll_dynamic_gen2_component.fcollm_version,
-                                           "priority", "Priority of the dynamic_gen2 fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_gen2_priority);
+                                           "priority",
+                                           "Priority of the dynamic_gen2 fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_fcoll_dynamic_gen2_priority);
 
     mca_fcoll_dynamic_gen2_num_groups = 1;
-    (void) mca_base_component_var_register(&mca_fcoll_dynamic_gen2_component.fcollm_version,
-                                           "num_groups", "Number of subgroups created by the dynamic_gen2 component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_gen2_num_groups);
+    (void)
+        mca_base_component_var_register(&mca_fcoll_dynamic_gen2_component.fcollm_version,
+                                        "num_groups",
+                                        "Number of subgroups created by the dynamic_gen2 component",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &mca_fcoll_dynamic_gen2_num_groups);
 
     return OMPI_SUCCESS;
 }

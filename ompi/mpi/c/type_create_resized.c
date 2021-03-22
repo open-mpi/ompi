@@ -20,57 +20,48 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
-#endif
-#define MPI_Type_create_resized PMPI_Type_create_resized
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
+#    endif
+#    define MPI_Type_create_resized PMPI_Type_create_resized
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_create_resized";
 
-
-int MPI_Type_create_resized(MPI_Datatype oldtype,
-                            MPI_Aint lb,
-                            MPI_Aint extent,
+int MPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent,
                             MPI_Datatype *newtype)
 {
-   int rc;
+    int rc;
 
-   MEMCHECKER(
-      memchecker_datatype(oldtype);
-   );
+    MEMCHECKER(memchecker_datatype(oldtype););
 
-   if( MPI_PARAM_CHECK ) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype ||
-          NULL == newtype) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
-                                      FUNC_NAME );
-      }
-   }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype || NULL == newtype) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
+        }
+    }
 
-   rc = ompi_datatype_create_resized( oldtype, lb, extent, newtype );
-   if( rc != MPI_SUCCESS ) {
-      ompi_datatype_destroy( newtype );
-      OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, rc, FUNC_NAME );
-   }
+    rc = ompi_datatype_create_resized(oldtype, lb, extent, newtype);
+    if (rc != MPI_SUCCESS) {
+        ompi_datatype_destroy(newtype);
+        OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
+    }
 
-   {
-      MPI_Aint a_a[2];
-      a_a[0] = lb;
-      a_a[1] = extent;
-      ompi_datatype_set_args( *newtype, 0, NULL, 2, a_a, 1, &oldtype, MPI_COMBINER_RESIZED );
-   }
+    {
+        MPI_Aint a_a[2];
+        a_a[0] = lb;
+        a_a[1] = extent;
+        ompi_datatype_set_args(*newtype, 0, NULL, 2, a_a, 1, &oldtype, MPI_COMBINER_RESIZED);
+    }
 
-   return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }
-
-

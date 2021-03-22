@@ -11,7 +11,6 @@
  * $HEADER$
  */
 
-
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #include "ompi/runtime/ompi_info_support.h"
@@ -19,40 +18,39 @@
 #include "opal/runtime/opal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_finalize = PMPI_T_finalize
+#    pragma weak MPI_T_finalize = PMPI_T_finalize
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_finalize (void)
+int MPI_T_finalize(void)
 {
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
-    if (!mpit_is_initialized ()) {
-        ompi_mpit_unlock ();
+    if (!mpit_is_initialized()) {
+        ompi_mpit_unlock();
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
     if (0 == --ompi_mpit_init_count) {
-        (void) ompi_info_close_components ();
+        (void) ompi_info_close_components();
 
         int32_t state = ompi_mpi_state;
-        if ((state < OMPI_MPI_STATE_INIT_COMPLETED ||
-             state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) &&
-            (NULL != ompi_mpi_main_thread)) {
+        if ((state < OMPI_MPI_STATE_INIT_COMPLETED
+             || state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT)
+            && (NULL != ompi_mpi_main_thread)) {
             /* we are not between MPI_Init and MPI_Finalize so we
              * have to free the ompi_mpi_main_thread */
             OBJ_RELEASE(ompi_mpi_main_thread);
             ompi_mpi_main_thread = NULL;
         }
 
-        (void) opal_finalize_util ();
+        (void) opal_finalize_util();
     }
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return MPI_SUCCESS;
 }

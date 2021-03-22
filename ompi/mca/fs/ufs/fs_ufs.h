@@ -24,9 +24,9 @@
 #define MCA_FS_UFS_H
 
 #include "ompi_config.h"
-#include "ompi/mca/mca.h"
-#include "ompi/mca/fs/fs.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/fs/fs.h"
+#include "ompi/mca/mca.h"
 
 extern int mca_fs_ufs_priority;
 extern int mca_fs_ufs_lock_algorithm;
@@ -38,14 +38,12 @@ extern int mca_fs_ufs_lock_algorithm;
 
 BEGIN_C_DECLS
 
-int mca_fs_ufs_component_init_query(bool enable_progress_threads,
-                                        bool enable_mpi_threads);
-struct mca_fs_base_module_1_0_0_t *
-mca_fs_ufs_component_file_query (ompio_file_t *fh, int *priority);
-int mca_fs_ufs_component_file_unquery (ompio_file_t *file);
+int mca_fs_ufs_component_init_query(bool enable_progress_threads, bool enable_mpi_threads);
+struct mca_fs_base_module_1_0_0_t *mca_fs_ufs_component_file_query(ompio_file_t *fh, int *priority);
+int mca_fs_ufs_component_file_unquery(ompio_file_t *file);
 
-int mca_fs_ufs_module_init (ompio_file_t *file);
-int mca_fs_ufs_module_finalize (ompio_file_t *file);
+int mca_fs_ufs_module_init(ompio_file_t *file);
+int mca_fs_ufs_module_finalize(ompio_file_t *file);
 
 OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_ufs_component;
 /*
@@ -54,11 +52,8 @@ OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_ufs_component;
  * ******************************************************************
  */
 
-int mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
-                          const char *filename,
-                          int amode,
-                          struct opal_info_t *info,
-                          ompio_file_t *fh);
+int mca_fs_ufs_file_open(struct ompi_communicator_t *comm, const char *filename, int amode,
+                         struct opal_info_t *info, ompio_file_t *fh);
 
 /*
  * ******************************************************************

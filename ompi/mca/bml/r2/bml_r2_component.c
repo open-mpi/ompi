@@ -23,11 +23,11 @@
  */
 
 #include "ompi_config.h"
-#include "opal/util/event.h"
-#include "opal/mca/btl/base/base.h"
-#include "ompi/mca/bml/bml.h"
 #include "bml_r2.h"
 #include "mpi.h"
+#include "ompi/mca/bml/bml.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/util/event.h"
 
 static int mca_bml_r2_component_register(void);
 
@@ -56,11 +56,9 @@ mca_bml_base_component_2_0_0_t mca_bml_r2_component = {
 static int mca_bml_r2_component_register(void)
 {
     mca_bml_r2.show_unreach_errors = true;
-    (void) mca_base_component_var_register(&mca_bml_r2_component.bml_version,
-                                           "show_unreach_errors",
+    (void) mca_base_component_var_register(&mca_bml_r2_component.bml_version, "show_unreach_errors",
                                            "Show error message when procs are unreachable",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0,0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_bml_r2.show_unreach_errors);
 
@@ -72,20 +70,17 @@ int mca_bml_r2_component_open(void)
     return OMPI_SUCCESS;
 }
 
-
 int mca_bml_r2_component_close(void)
 {
     return OMPI_SUCCESS;
 }
 
-
-mca_bml_base_module_t* mca_bml_r2_component_init( int* priority,
-                                                  bool enable_progress_threads,
-                                                  bool enable_mpi_threads )
+mca_bml_base_module_t *mca_bml_r2_component_init(int *priority, bool enable_progress_threads,
+                                                 bool enable_mpi_threads)
 {
     /* initialize BTLs */
 
-    if(OMPI_SUCCESS != mca_btl_base_select(enable_progress_threads,enable_mpi_threads))
+    if (OMPI_SUCCESS != mca_btl_base_select(enable_progress_threads, enable_mpi_threads))
         return NULL;
 
     *priority = 100;

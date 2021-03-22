@@ -25,9 +25,9 @@
 
 #define MAXTREEFANOUT 32
 
-#define MEMBSIZE(type, member) (sizeof(((type *)0)->member[0]))
+#define MEMBSIZE(type, member) (sizeof(((type *) 0)->member[0]))
 #define COLL_TREE_SIZE(fanout) \
-        (offsetof(ompi_coll_tree_t, tree_next) + (fanout) * MEMBSIZE(ompi_coll_tree_t, tree_next))
+    (offsetof(ompi_coll_tree_t, tree_next) + (fanout) *MEMBSIZE(ompi_coll_tree_t, tree_next))
 
 BEGIN_C_DECLS
 
@@ -40,34 +40,25 @@ typedef struct ompi_coll_tree_t {
     int32_t tree_next[];
 } ompi_coll_tree_t;
 
-ompi_coll_tree_t*
-ompi_coll_base_topo_build_tree( int fanout,
-                                 struct ompi_communicator_t* com,
-                                 int root );
-ompi_coll_tree_t*
-ompi_coll_base_topo_build_in_order_bintree( struct ompi_communicator_t* comm );
+ompi_coll_tree_t *ompi_coll_base_topo_build_tree(int fanout, struct ompi_communicator_t *com,
+                                                 int root);
+ompi_coll_tree_t *ompi_coll_base_topo_build_in_order_bintree(struct ompi_communicator_t *comm);
 
-ompi_coll_tree_t*
-ompi_coll_base_topo_build_bmtree( struct ompi_communicator_t* comm,
-                                   int root );
-ompi_coll_tree_t*
-ompi_coll_base_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
-                                            int root );
+ompi_coll_tree_t *ompi_coll_base_topo_build_bmtree(struct ompi_communicator_t *comm, int root);
+ompi_coll_tree_t *ompi_coll_base_topo_build_in_order_bmtree(struct ompi_communicator_t *comm,
+                                                            int root);
 
-ompi_coll_tree_t*
-ompi_coll_base_topo_build_kmtree(struct ompi_communicator_t* comm,
-                                 int root, int radix);
+ompi_coll_tree_t *ompi_coll_base_topo_build_kmtree(struct ompi_communicator_t *comm, int root,
+                                                   int radix);
 
-ompi_coll_tree_t*
-ompi_coll_base_topo_build_chain( int fanout,
-                                  struct ompi_communicator_t* com,
-                                  int root );
+ompi_coll_tree_t *ompi_coll_base_topo_build_chain(int fanout, struct ompi_communicator_t *com,
+                                                  int root);
 
-int ompi_coll_base_topo_destroy_tree( ompi_coll_tree_t** tree );
+int ompi_coll_base_topo_destroy_tree(ompi_coll_tree_t **tree);
 
 /* debugging stuff, will be removed later */
-int ompi_coll_base_topo_dump_tree (ompi_coll_tree_t* tree, int rank);
+int ompi_coll_base_topo_dump_tree(ompi_coll_tree_t *tree, int rank);
 
 END_C_DECLS
 
-#endif  /* MCA_COLL_BASE_TOPO_H_HAS_BEEN_INCLUDED */
+#endif /* MCA_COLL_BASE_TOPO_H_HAS_BEEN_INCLUDED */

@@ -19,8 +19,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 
 /*
  * function - Returns the shifted source and destination ranks, given a
@@ -37,10 +37,7 @@
  *
  * @retval MPI_SUCCESS
  */
-int mca_topo_base_cart_shift(ompi_communicator_t* comm,
-                             int direction,
-                             int disp,
-                             int *rank_source,
+int mca_topo_base_cart_shift(ompi_communicator_t *comm, int direction, int disp, int *rank_source,
                              int *rank_dest)
 {
     int factor, thisdirection = 0, thisperiod = 0, ord;
@@ -77,20 +74,22 @@ int mca_topo_base_cart_shift(ompi_communicator_t* comm,
 
     srcord = ord - disp;
     destord = ord + disp;
-    if ( ((destord < 0) || (destord >= thisdirection)) && (!thisperiod) ) {
+    if (((destord < 0) || (destord >= thisdirection)) && (!thisperiod)) {
         *rank_dest = MPI_PROC_NULL;
     } else {
         destord %= thisdirection;
-        if (destord < 0) destord += thisdirection;
+        if (destord < 0)
+            destord += thisdirection;
         *rank_dest = ompi_comm_rank(comm);
         *rank_dest += ((destord - ord) * factor);
     }
-    if ( ((srcord < 0) || (srcord >= thisdirection)) && (!thisperiod) ) {
+    if (((srcord < 0) || (srcord >= thisdirection)) && (!thisperiod)) {
         *rank_source = MPI_PROC_NULL;
     } else {
         srcord %= thisdirection;
-        if (srcord < 0) srcord += thisdirection;
-        *rank_source= ompi_comm_rank(comm);
+        if (srcord < 0)
+            srcord += thisdirection;
+        *rank_source = ompi_comm_rank(comm);
         *rank_source += ((srcord - ord) * factor);
     }
 

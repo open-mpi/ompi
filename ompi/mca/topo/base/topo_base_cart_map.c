@@ -19,8 +19,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 
 /*
  * function - mca_topo_base_cart_map
@@ -38,9 +38,8 @@
  *  @retval MPI_ERR_DIMS
  */
 
-int mca_topo_base_cart_map(ompi_communicator_t* comm,
-                           int ndims,
-                           const int *dims, const int *periods, int *newrank)
+int mca_topo_base_cart_map(ompi_communicator_t *comm, int ndims, const int *dims,
+                           const int *periods, int *newrank)
 {
     int nprocs, rank, size, i;
 
@@ -48,7 +47,7 @@ int mca_topo_base_cart_map(ompi_communicator_t* comm,
      * Compute the # of processes in the grid.
      */
     nprocs = 1;
-    for (i = 0 ; i < ndims; ++i) {
+    for (i = 0; i < ndims; ++i) {
         if (dims[i] <= 0) {
             return MPI_ERR_DIMS;
         }

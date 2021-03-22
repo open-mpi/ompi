@@ -26,24 +26,23 @@
 
 #include <math.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Dims_create = PMPI_Dims_create
-#endif
-#define MPI_Dims_create PMPI_Dims_create
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Dims_create = PMPI_Dims_create
+#    endif
+#    define MPI_Dims_create PMPI_Dims_create
 #endif
 
 static const char FUNC_NAME[] = "MPI_Dims_create";
 
 /* static functions */
-static int assignnodes(int ndim, int nfactor, int *pfacts,int **pdims);
+static int assignnodes(int ndim, int nfactor, int *pfacts, int **pdims);
 static int getfactors(int num, int *nfators, int **factors);
-
 
 /*
  * This is a utility function, no need to have anything in the lower
@@ -64,47 +63,42 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (0 > ndims) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
-                                           MPI_ERR_DIMS, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_DIMS, FUNC_NAME);
         }
 
         if ((0 != ndims) && (NULL == dims)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
-                                           MPI_ERR_ARG, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         }
 
         if (1 > nnodes) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
-                                           MPI_ERR_DIMS, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_DIMS, FUNC_NAME);
         }
     }
 
     /* Get # of free-to-be-assigned processes and # of free dimensions */
     freeprocs = nnodes;
     freedims = 0;
-    for (i = 0, p = dims; i < ndims; ++i,++p) {
+    for (i = 0, p = dims; i < ndims; ++i, ++p) {
         if (*p == 0) {
             ++freedims;
         } else if ((*p < 0) || ((nnodes % *p) != 0)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_DIMS,
-                                           FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_DIMS, FUNC_NAME);
         } else {
             freeprocs /= *p;
         }
     }
 
     if (freedims == 0) {
-       if (freeprocs == 1) {
-          return MPI_SUCCESS;
-       }
-       return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_DIMS,
-                                     FUNC_NAME);
+        if (freeprocs == 1) {
+            return MPI_SUCCESS;
+        }
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_DIMS, FUNC_NAME);
     }
 
     if (freeprocs == 1) {
         for (i = 0; i < ndims; ++i, ++dims) {
             if (*dims == 0) {
-               *dims = 1;
+                *dims = 1;
             }
         }
         return MPI_SUCCESS;
@@ -112,22 +106,20 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
 
     /* Factor the number of free processes */
     if (MPI_SUCCESS != (err = getfactors(freeprocs, &nfactors, &factors))) {
-       return OMPI_ERRHANDLER_NOHANDLE_INVOKE(err,
-                                     FUNC_NAME);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(err, FUNC_NAME);
     }
 
     /* Assign free processes to free dimensions */
     if (MPI_SUCCESS != (err = assignnodes(freedims, nfactors, factors, &procs))) {
-       free(factors);
-       return OMPI_ERRHANDLER_NOHANDLE_INVOKE(err,
-                                     FUNC_NAME);
+        free(factors);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(err, FUNC_NAME);
     }
 
     /* Return assignment results */
     p = procs;
     for (i = 0; i < ndims; ++i, ++dims) {
         if (*dims == 0) {
-           *dims = *p++;
+            *dims = *p++;
         }
     }
 
@@ -152,8 +144,7 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
  *          - ptr to array of dimensions (returned value)
  *  Returns:    - 0 or ERROR
  */
-static int
-assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
+static int assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
 {
     int *bins;
     int i, j;
@@ -163,19 +154,19 @@ assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
     int *pmin;
 
     if (0 >= ndim) {
-       return MPI_ERR_DIMS;
+        return MPI_ERR_DIMS;
     }
 
     /* Allocate and initialize the bins */
     bins = (int *) malloc((unsigned) ndim * sizeof(int));
     if (NULL == bins) {
-       return MPI_ERR_NO_MEM;
+        return MPI_ERR_NO_MEM;
     }
     *pdims = bins;
 
     for (i = 0, p = bins; i < ndim; ++i, ++p) {
         *p = 1;
-     }
+    }
 
     /* Loop assigning factors from the highest to the lowest */
     for (j = nfactor - 1; j >= 0; --j) {
@@ -188,20 +179,20 @@ assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
             }
         }
         *pmin *= f;
-     }
+    }
 
-     /* Sort dimensions in decreasing order (O(n^2) for now) */
-     for (i = 0, pmin = bins; i < ndim - 1; ++i, ++pmin) {
-         for (j = i + 1, p = pmin + 1; j < ndim; ++j, ++p) {
-             if (*p > *pmin) {
+    /* Sort dimensions in decreasing order (O(n^2) for now) */
+    for (i = 0, pmin = bins; i < ndim - 1; ++i, ++pmin) {
+        for (j = i + 1, p = pmin + 1; j < ndim; ++j, ++p) {
+            if (*p > *pmin) {
                 n = *p;
                 *p = *pmin;
                 *pmin = n;
-             }
-         }
-     }
+            }
+        }
+    }
 
-     return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }
 
 /*
@@ -213,14 +204,14 @@ assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
  *          - array of prime factors
  *  Returns:    - MPI_SUCCESS or ERROR
  */
-static int
-getfactors(int num, int *nfactors, int **factors) {
+static int getfactors(int num, int *nfactors, int **factors)
+{
     int size;
     int d;
     int i;
     int sqrtnum;
 
-    if(num  < 2) {
+    if (num < 2) {
         (*nfactors) = 0;
         (*factors) = NULL;
         return MPI_SUCCESS;
@@ -232,20 +223,20 @@ getfactors(int num, int *nfactors, int **factors) {
 
     i = 0;
     /* determine all occurences of factor 2 */
-    while((num % 2) == 0) {
+    while ((num % 2) == 0) {
         num /= 2;
         (*factors)[i++] = 2;
     }
     /* determine all occurences of uneven prime numbers up to sqrt(num) */
     d = 3;
-    for(d = 3; (num > 1) && (d <= sqrtnum); d += 2) {
-        while((num % d) == 0) {
+    for (d = 3; (num > 1) && (d <= sqrtnum); d += 2) {
+        while ((num % d) == 0) {
             num /= d;
             (*factors)[i++] = d;
         }
     }
     /* as we looped only up to sqrt(num) one factor > sqrt(num) may be left over */
-    if(num != 1) {
+    if (num != 1) {
         (*factors)[i++] = num;
     }
     (*nfactors) = i;

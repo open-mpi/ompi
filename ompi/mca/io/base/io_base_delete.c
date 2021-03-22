@@ -24,20 +24,20 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mpi.h"
-#include "opal/class/opal_list.h"
-#include "opal/util/argv.h"
-#include "opal/util/output.h"
-#include "opal/util/info.h"
-#include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "ompi/mca/io/io.h"
-#include "ompi/mca/io/base/base.h"
-#include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
+#include "ompi/mca/fs/fs.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/mca.h"
+#include "opal/class/opal_list.h"
+#include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
+#include "opal/util/info.h"
+#include "opal/util/output.h"
 
 /*
  * Local types
@@ -56,14 +56,13 @@ typedef struct avail_io_t avail_io_t;
 /*
  * Local functions
  */
-static opal_list_t *check_components(opal_list_t *components,
-                                     const char *filename, struct opal_info_t *info,
-                                     char **names, int num_names);
-static avail_io_t *check_one_component(const mca_base_component_t *component,
-                                       const char *filename, struct opal_info_t *info);
+static opal_list_t *check_components(opal_list_t *components, const char *filename,
+                                     struct opal_info_t *info, char **names, int num_names);
+static avail_io_t *check_one_component(const mca_base_component_t *component, const char *filename,
+                                       struct opal_info_t *info);
 
-static avail_io_t *query(const mca_base_component_t *component,
-                         const char *filename, struct opal_info_t *info);
+static avail_io_t *query(const mca_base_component_t *component, const char *filename,
+                         struct opal_info_t *info);
 static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component,
                                const char *filename, struct opal_info_t *info);
 
@@ -73,12 +72,10 @@ static int delete_file(avail_io_t *avail, const char *filename, struct opal_info
 
 extern opal_mutex_t ompi_mpi_ompio_bootstrap_mutex;
 
-
 /*
  * Stuff for the OBJ interface
  */
 static OBJ_CLASS_INSTANCE(avail_io_t, opal_list_item_t, NULL, NULL);
-
 
 /*
  */
@@ -92,8 +89,7 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
     /* Announce */
 
     opal_output_verbose(10, ompi_io_base_framework.framework_output,
-                        "io:base:delete: deleting file: %s",
-                        filename);
+                        "io:base:delete: deleting file: %s", filename);
 
     /* See if a set of component was requested by the MCA parameter.
        Don't check for error. */
@@ -109,8 +105,8 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
     err = OMPI_ERROR;
     opal_output_verbose(10, ompi_io_base_framework.framework_output,
                         "io:base:delete: Checking all available modules");
-    selectable = check_components(&ompi_io_base_framework.framework_components,
-                                  filename, info, NULL, 0);
+    selectable = check_components(&ompi_io_base_framework.framework_components, filename, info,
+                                  NULL, 0);
 
     /* Upon return from the above, the modules list will contain the
        list of modules that returned (priority >= 0).  If we have no
@@ -147,8 +143,7 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
     }
     OBJ_RELEASE(selectable);
 
-    if (!strcmp (selected.ai_component.v2_0_0.io_version.mca_component_name,
-                 "ompio")) {
+    if (!strcmp(selected.ai_component.v2_0_0.io_version.mca_component_name, "ompio")) {
         int ret;
 
         opal_mutex_lock(&ompi_mpi_ompio_bootstrap_mutex);
@@ -158,13 +153,11 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
         }
         opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
 
-        if (OMPI_SUCCESS !=
-            (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+        if (OMPI_SUCCESS != (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
     }
 
-    
     /* Finally -- delete the file with the selected component */
     if (OMPI_SUCCESS != (err = delete_file(&selected, filename, info))) {
         return err;
@@ -179,9 +172,7 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
     return OMPI_SUCCESS;
 }
 
-
-static int avail_io_compare (opal_list_item_t **itema,
-                             opal_list_item_t **itemb)
+static int avail_io_compare(opal_list_item_t **itema, opal_list_item_t **itemb)
 {
     const avail_io_t *availa = (const avail_io_t *) *itema;
     const avail_io_t *availb = (const avail_io_t *) *itemb;
@@ -203,9 +194,8 @@ static int avail_io_compare (opal_list_item_t **itema,
  * be only those who returned that they want to run, and put them in
  * priority order.
  */
-static opal_list_t *check_components(opal_list_t *components,
-                                     const char *filename, struct opal_info_t *info,
-                                     char **names, int num_names)
+static opal_list_t *check_components(opal_list_t *components, const char *filename,
+                                     struct opal_info_t *info, char **names, int num_names)
 {
     int i;
     const mca_base_component_t *component;
@@ -222,7 +212,7 @@ static opal_list_t *check_components(opal_list_t *components,
        O(N^2), but we should never have too many components and/or
        names, so this *hopefully* shouldn't matter... */
 
-    OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH (cli, components, mca_base_component_list_item_t) {
         component = cli->cli_component;
 
         /* If we have a list of names, scan through it */
@@ -249,7 +239,7 @@ static opal_list_t *check_components(opal_list_t *components,
                    (highest priority first).  Should it go first? */
                 /* MSC actually put it Lowest priority first */
                 /* NTH sort this out later */
-                opal_list_append(selectable, (opal_list_item_t*)avail);
+                opal_list_append(selectable, (opal_list_item_t *) avail);
             }
         }
     }
@@ -268,25 +258,21 @@ static opal_list_t *check_components(opal_list_t *components,
     return selectable;
 }
 
-
 /*
  * Check a single component
  */
-static avail_io_t *check_one_component(const mca_base_component_t *component,
-                                       const char *filename, struct opal_info_t *info)
+static avail_io_t *check_one_component(const mca_base_component_t *component, const char *filename,
+                                       struct opal_info_t *info)
 {
     avail_io_t *avail;
 
     avail = query(component, filename, info);
     if (NULL != avail) {
-        avail->ai_priority = (avail->ai_priority < 100) ?
-            avail->ai_priority : 100;
-        avail->ai_priority = (avail->ai_priority < 0) ?
-            0 : avail->ai_priority;
+        avail->ai_priority = (avail->ai_priority < 100) ? avail->ai_priority : 100;
+        avail->ai_priority = (avail->ai_priority < 0) ? 0 : avail->ai_priority;
         opal_output_verbose(10, ompi_io_base_framework.framework_output,
                             "io:base:delete: component available: %s, priority: %d",
-                            component->mca_component_name,
-                            avail->ai_priority);
+                            component->mca_component_name, avail->ai_priority);
     } else {
         opal_output_verbose(10, ompi_io_base_framework.framework_output,
                             "io:base:delete: component not available: %s",
@@ -296,7 +282,6 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
     return avail;
 }
 
-
 /**************************************************************************
  * Query functions
  **************************************************************************/
@@ -305,16 +290,16 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
  * Take any version of a io module, query it, and return the right
  * module struct
  */
-static avail_io_t *query(const mca_base_component_t *component,
-                         const char *filename, struct opal_info_t *info)
+static avail_io_t *query(const mca_base_component_t *component, const char *filename,
+                         struct opal_info_t *info)
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 
     /* io v2.0.0 */
 
-    if (MCA_BASE_VERSION_MAJOR == component->mca_major_version &&
-        MCA_BASE_VERSION_MINOR == component->mca_minor_version &&
-        MCA_BASE_VERSION_RELEASE == component->mca_release_version) {
+    if (MCA_BASE_VERSION_MAJOR == component->mca_major_version
+        && MCA_BASE_VERSION_MINOR == component->mca_minor_version
+        && MCA_BASE_VERSION_RELEASE == component->mca_release_version) {
         ioc_200 = (mca_io_base_component_2_0_0_t *) component;
 
         return query_2_0_0(ioc_200, filename, info);
@@ -325,9 +310,8 @@ static avail_io_t *query(const mca_base_component_t *component,
     return NULL;
 }
 
-
-static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
-                               const char *filename, struct opal_info_t *info)
+static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component, const char *filename,
+                               struct opal_info_t *info)
 {
     bool usable;
     int priority, ret;
@@ -339,8 +323,7 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
     avail = NULL;
     private_data = NULL;
     usable = false;
-    ret = component->io_delete_query(filename, info, &private_data, &usable,
-                                     &priority);
+    ret = component->io_delete_query(filename, info, &private_data, &usable, &priority);
     if (OMPI_SUCCESS == ret && usable) {
         avail = OBJ_NEW(avail_io_t);
         avail->ai_version = MCA_IO_BASE_V_2_0_0;
@@ -352,7 +335,6 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
     return avail;
 }
 
-
 /**************************************************************************
  * Unquery functions
  **************************************************************************/
@@ -361,7 +343,7 @@ static void unquery(avail_io_t *avail, const char *filename, struct opal_info_t 
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 
-    switch(avail->ai_version) {
+    switch (avail->ai_version) {
     case MCA_IO_BASE_V_2_0_0:
         ioc_200 = &(avail->ai_component.v2_0_0);
         if (NULL != ioc_200->io_delete_unquery) {
@@ -374,7 +356,6 @@ static void unquery(avail_io_t *avail, const char *filename, struct opal_info_t 
     }
 }
 
-
 /**************************************************************************
  * File delete functions
  **************************************************************************/
@@ -386,11 +367,10 @@ static int delete_file(avail_io_t *avail, const char *filename, struct opal_info
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 
-    switch(avail->ai_version) {
+    switch (avail->ai_version) {
     case MCA_IO_BASE_V_2_0_0:
         ioc_200 = &(avail->ai_component.v2_0_0);
-        return ioc_200->io_delete_select(filename, info,
-                                         avail->ai_private_data);
+        return ioc_200->io_delete_select(filename, info, avail->ai_private_data);
         break;
 
     default:

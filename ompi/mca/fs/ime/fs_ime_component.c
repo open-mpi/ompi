@@ -20,12 +20,11 @@ int mca_fs_ime_lock_algorithm = FS_IME_LOCK_AUTO;
  */
 static int register_component(void);
 
-
 /*
  * Public string showing the fs ime component version number
  */
-const char *mca_fs_ime_component_version_string =
-  "OMPI/MPI IME FS MCA component version " OMPI_VERSION;
+const char *mca_fs_ime_component_version_string
+    = "OMPI/MPI IME FS MCA component version " OMPI_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -57,21 +56,17 @@ mca_fs_base_component_2_0_0_t mca_fs_ime_component = {
 static int register_component(void)
 {
     mca_fs_ime_priority = FS_IME_BASE_PRIORITY;
-    (void) mca_base_component_var_register(&mca_fs_ime_component.fsm_version,
-                                           "priority", "Priority of the fs ime component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fs_ime_priority);
+    (void) mca_base_component_var_register(&mca_fs_ime_component.fsm_version, "priority",
+                                           "Priority of the fs ime component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_ime_priority);
 
     mca_fs_ime_lock_algorithm = FS_IME_LOCK_AUTO;
-    (void) mca_base_component_var_register(&mca_fs_ime_component.fsm_version,
-                                           "lock_algorithm", "Locking algorithm used by the fs ime component. "
+    (void) mca_base_component_var_register(&mca_fs_ime_component.fsm_version, "lock_algorithm",
+                                           "Locking algorithm used by the fs ime component. "
                                            " 0: auto (default)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fs_ime_lock_algorithm );
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_ime_lock_algorithm);
 
     return OMPI_SUCCESS;
 }

@@ -20,26 +20,22 @@
 
 #include "ompi_config.h"
 
+#include "coll_base_functions.h"
+#include "coll_base_util.h"
 #include "mpi.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
-#include "ompi/mca/topo/base/base.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
-#include "coll_base_util.h"
-#include "coll_base_functions.h"
+#include "ompi/mca/topo/base/base.h"
 #include <ctype.h>
 
-int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
-                                    ompi_datatype_t* sdatatype,
-                                    int dest, int stag,
-                                    void* recvbuf, size_t rcount,
-                                    ompi_datatype_t* rdatatype,
-                                    int source, int rtag,
-                                    struct ompi_communicator_t* comm,
-                                    ompi_status_public_t* status )
+int ompi_coll_base_sendrecv_actual(const void *sendbuf, size_t scount, ompi_datatype_t *sdatatype,
+                                   int dest, int stag, void *recvbuf, size_t rcount,
+                                   ompi_datatype_t *rdatatype, int source, int rtag,
+                                   struct ompi_communicator_t *comm, ompi_status_public_t *status)
 
 { /* post receive first, then send, then wait... should be fast (I hope) */
     int err, line = 0;
@@ -49,18 +45,26 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
 
     /* post new irecv */
     ompi_datatype_type_size(rdatatype, &rtypesize);
-    err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag,
-                              comm, &req));
-    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+    err = MCA_PML_CALL(irecv(recvbuf, rcount, rdatatype, source, rtag, comm, &req));
+    if (err != MPI_SUCCESS) {
+        line = __LINE__;
+        goto error_handler;
+    }
 
     /* send data to children */
     ompi_datatype_type_size(sdatatype, &stypesize);
-    err = MCA_PML_CALL(send( sendbuf, scount, sdatatype, dest, stag,
-                             MCA_PML_BASE_SEND_STANDARD, comm));
-    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+    err = MCA_PML_CALL(
+        send(sendbuf, scount, sdatatype, dest, stag, MCA_PML_BASE_SEND_STANDARD, comm));
+    if (err != MPI_SUCCESS) {
+        line = __LINE__;
+        goto error_handler;
+    }
 
-    err = ompi_request_wait( &req, &rstatus);
-    if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
+    err = ompi_request_wait(&req, &rstatus);
+    if (err != MPI_SUCCESS) {
+        line = __LINE__;
+        goto error_handler;
+    }
 
     if (MPI_STATUS_IGNORE != status) {
         *status = rstatus;
@@ -68,21 +72,21 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
 
     return (MPI_SUCCESS);
 
- error_handler:
+error_handler:
     /* Error discovered during the posting of the irecv or send,
      * and no status is available.
      */
-    OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred\n",
-                  __FILE__, line, err));
-    (void)line;  // silence compiler warning
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred\n", __FILE__,
+                 line, err));
+    (void) line; // silence compiler warning
     if (MPI_STATUS_IGNORE != status) {
         status->MPI_ERROR = err;
     }
-    if( MPI_REQUEST_NULL != req ) {
+    if (MPI_REQUEST_NULL != req) {
 #if OPAL_ENABLE_FT_MPI
-        if( MPI_ERR_PROC_FAILED == req->req_status.MPI_ERROR
-         || MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR
-         || MPI_ERR_REVOKED == req->req_status.MPI_ERROR ) {
+        if (MPI_ERR_PROC_FAILED == req->req_status.MPI_ERROR
+            || MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR
+            || MPI_ERR_REVOKED == req->req_status.MPI_ERROR) {
             /* We cannot just 'free' and forget, as the PML/BTLS would still
              * be updating the request buffer after we return from the MPI
              * call!
@@ -91,12 +95,12 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
              * free, as this is the best that can be done in this case. */
             ompi_request_cancel(req);
             ompi_request_wait(&req, MPI_STATUS_IGNORE);
-            if( MPI_ERR_PROC_FAILED_PENDING == err ) {
+            if (MPI_ERR_PROC_FAILED_PENDING == err) {
                 err = MPI_ERR_PROC_FAILED;
             }
         } else /* this 'else' intentionaly spills outside the ifdef */
-#endif /* OPAL_ENABLE_FT_MPI */
-        ompi_request_free(&req);
+#endif         /* OPAL_ENABLE_FT_MPI */
+            ompi_request_free(&req);
     }
     return (err);
 }
@@ -124,10 +128,11 @@ unsigned int ompi_mirror_perm(unsigned int x, int nbits)
 int ompi_rounddown(int num, int factor)
 {
     num /= factor;
-    return num * factor;    /* floor(num / factor) * factor */
+    return num * factor; /* floor(num / factor) * factor */
 }
 
-static void release_objs_callback(struct ompi_coll_base_nbc_request_t *request) {
+static void release_objs_callback(struct ompi_coll_base_nbc_request_t *request)
+{
     if (NULL != request->data.objs.objs[0]) {
         OBJ_RELEASE(request->data.objs.objs[0]);
         request->data.objs.objs[0] = NULL;
@@ -138,10 +143,11 @@ static void release_objs_callback(struct ompi_coll_base_nbc_request_t *request) 
     }
 }
 
-static int complete_objs_callback(struct ompi_request_t *req) {
-    struct ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
+static int complete_objs_callback(struct ompi_request_t *req)
+{
+    struct ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
     int rc = OMPI_SUCCESS;
-    assert (NULL != request);
+    assert(NULL != request);
     if (NULL != request->cb.req_complete_cb) {
         rc = request->cb.req_complete_cb(request->req_complete_cb_data);
     }
@@ -149,8 +155,9 @@ static int complete_objs_callback(struct ompi_request_t *req) {
     return rc;
 }
 
-static int free_objs_callback(struct ompi_request_t **rptr) {
-    struct ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **)rptr;
+static int free_objs_callback(struct ompi_request_t **rptr)
+{
+    struct ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **) rptr;
     int rc = OMPI_SUCCESS;
     if (NULL != request->cb.req_free) {
         rc = request->cb.req_free(rptr);
@@ -159,9 +166,9 @@ static int free_objs_callback(struct ompi_request_t **rptr) {
     return rc;
 }
 
-int ompi_coll_base_retain_op( ompi_request_t *req, ompi_op_t *op,
-                              ompi_datatype_t *type) {
-    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
+int ompi_coll_base_retain_op(ompi_request_t *req, ompi_op_t *op, ompi_datatype_t *type)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
     bool retain = false;
     if (REQUEST_COMPLETE(req)) {
         return OMPI_SUCCESS;
@@ -198,9 +205,10 @@ int ompi_coll_base_retain_op( ompi_request_t *req, ompi_op_t *op,
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_base_retain_datatypes( ompi_request_t *req, ompi_datatype_t *stype,
-                                     ompi_datatype_t *rtype) {
-    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
+int ompi_coll_base_retain_datatypes(ompi_request_t *req, ompi_datatype_t *stype,
+                                    ompi_datatype_t *rtype)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
     bool retain = false;
     if (REQUEST_COMPLETE(req)) {
         return OMPI_SUCCESS;
@@ -229,16 +237,18 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *req, ompi_datatype_t *stype
     return OMPI_SUCCESS;
 }
 
-static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
+static void release_vecs_callback(ompi_coll_base_nbc_request_t *request)
+{
     ompi_communicator_t *comm = request->super.req_mpi_object.comm;
     int scount, rcount;
     if (OMPI_COMM_IS_TOPO(comm)) {
-        (void)mca_topo_base_neighbor_count (comm, &rcount, &scount);
+        (void) mca_topo_base_neighbor_count(comm, &rcount, &scount);
     } else {
-        scount = rcount = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
+        scount = rcount = OMPI_COMM_IS_INTER(comm) ? ompi_comm_remote_size(comm)
+                                                   : ompi_comm_size(comm);
     }
     if (NULL != request->data.vecs.stypes) {
-        for (int i=0; i<scount; i++) {
+        for (int i = 0; i < scount; i++) {
             if (NULL != request->data.vecs.stypes[i]) {
                 OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.vecs.stypes[i]);
             }
@@ -246,7 +256,7 @@ static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
         request->data.vecs.stypes = NULL;
     }
     if (NULL != request->data.vecs.rtypes) {
-        for (int i=0; i<rcount; i++) {
+        for (int i = 0; i < rcount; i++) {
             if (NULL != request->data.vecs.rtypes[i]) {
                 OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.vecs.rtypes[i]);
             }
@@ -255,10 +265,11 @@ static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
     }
 }
 
-static int complete_vecs_callback(struct ompi_request_t *req) {
-    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
+static int complete_vecs_callback(struct ompi_request_t *req)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
     int rc = OMPI_SUCCESS;
-    assert (NULL != request);
+    assert(NULL != request);
     if (NULL != request->cb.req_complete_cb) {
         rc = request->cb.req_complete_cb(request->req_complete_cb_data);
     }
@@ -266,8 +277,9 @@ static int complete_vecs_callback(struct ompi_request_t *req) {
     return rc;
 }
 
-static int free_vecs_callback(struct ompi_request_t **rptr) {
-    struct ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **)rptr;
+static int free_vecs_callback(struct ompi_request_t **rptr)
+{
+    struct ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **) rptr;
     int rc = OMPI_SUCCESS;
     if (NULL != request->cb.req_free) {
         rc = request->cb.req_free(rptr);
@@ -276,9 +288,10 @@ static int free_vecs_callback(struct ompi_request_t **rptr) {
     return rc;
 }
 
-int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
-                                       ompi_datatype_t * const stypes[], ompi_datatype_t * const rtypes[]) {
-    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
+int ompi_coll_base_retain_datatypes_w(ompi_request_t *req, ompi_datatype_t *const stypes[],
+                                      ompi_datatype_t *const rtypes[])
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
     bool retain = false;
     ompi_communicator_t *comm = request->super.req_mpi_object.comm;
     int scount, rcount;
@@ -286,18 +299,19 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
         return OMPI_SUCCESS;
     }
     if (OMPI_COMM_IS_TOPO(comm)) {
-        (void)mca_topo_base_neighbor_count (comm, &rcount, &scount);
+        (void) mca_topo_base_neighbor_count(comm, &rcount, &scount);
     } else {
-        scount = rcount = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
+        scount = rcount = OMPI_COMM_IS_INTER(comm) ? ompi_comm_remote_size(comm)
+                                                   : ompi_comm_size(comm);
     }
 
-    for (int i=0; i<scount; i++) {
+    for (int i = 0; i < scount; i++) {
         if (NULL != stypes && NULL != stypes[i] && !ompi_datatype_is_predefined(stypes[i])) {
             OBJ_RETAIN(stypes[i]);
             retain = true;
         }
     }
-    for (int i=0; i<rcount; i++) {
+    for (int i = 0; i < rcount; i++) {
         if (NULL != rtypes && NULL != rtypes[i] && !ompi_datatype_is_predefined(rtypes[i])) {
             OBJ_RETAIN(rtypes[i]);
             retain = true;
@@ -330,7 +344,7 @@ static void nbc_req_cons(ompi_coll_base_nbc_request_t *req)
 OBJ_CLASS_INSTANCE(ompi_coll_base_nbc_request_t, ompi_request_t, nbc_req_cons, NULL);
 
 /* File reading functions */
-static void skiptonewline (FILE *fptr, int *fileline)
+static void skiptonewline(FILE *fptr, int *fileline)
 {
     char val;
     int rc;
@@ -347,7 +361,7 @@ static void skiptonewline (FILE *fptr, int *fileline)
     } while (1);
 }
 
-int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val)
+int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long *val)
 {
     char trash;
     int rc;
@@ -365,30 +379,31 @@ int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val)
         if (rc == EOF) {
             return -1;
         }
-        if ('\n' == trash) (*fileline)++;
+        if ('\n' == trash)
+            (*fileline)++;
         if ('#' == trash) {
-            skiptonewline (fptr, fileline);
+            skiptonewline(fptr, fileline);
         }
     } while (1);
 }
 
-int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val)
+int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char **val)
 {
     char trash, token[32];
     int rc;
 
-    *val = NULL;  /* security in case we fail */
+    *val = NULL; /* security in case we fail */
     do {
         rc = fscanf(fptr, "%32s", token);
         if (rc == EOF) {
             return -1;
         }
         if (1 == rc) {
-            if( '#' == token[0] ) {
+            if ('#' == token[0]) {
                 skiptonewline(fptr, fileline);
                 continue;
             }
-            *val = (char*)malloc(strlen(token) + 1);
+            *val = (char *) malloc(strlen(token) + 1);
             strcpy(*val, token);
             return 0;
         }
@@ -397,14 +412,15 @@ int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val)
         if (rc == EOF) {
             return -1;
         }
-        if ('\n' == trash) (*fileline)++;
+        if ('\n' == trash)
+            (*fileline)++;
         if ('#' == trash) {
-            skiptonewline (fptr, fileline);
+            skiptonewline(fptr, fileline);
         }
     } while (1);
 }
 
-int ompi_coll_base_file_getnext_size_t(FILE *fptr, int *fileline, size_t* val)
+int ompi_coll_base_file_getnext_size_t(FILE *fptr, int *fileline, size_t *val)
 {
     char trash;
     int rc;
@@ -422,9 +438,10 @@ int ompi_coll_base_file_getnext_size_t(FILE *fptr, int *fileline, size_t* val)
         if (rc == EOF) {
             return -1;
         }
-        if ('\n' == trash) (*fileline)++;
+        if ('\n' == trash)
+            (*fileline)++;
         if ('#' == trash) {
-            skiptonewline (fptr, fileline);
+            skiptonewline(fptr, fileline);
         }
     } while (1);
 }
@@ -436,7 +453,7 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
 
     do {
         rc = fread(&trash, sizeof(char), 1, fptr);
-        if (0 == rc) {  /* hit the end of the file */
+        if (0 == rc) { /* hit the end of the file */
             return -1;
         }
         if ('\n' == trash) {
@@ -444,14 +461,14 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
             continue;
         }
         if ('#' == trash) {
-            skiptonewline (fptr, fileline);
+            skiptonewline(fptr, fileline);
             continue;
         }
-        if( trash == expected )
-            return 1;  /* return true and eat the char */
-        if( isblank(trash) )  /* skip all spaces if that's not what we were looking for */
+        if (trash == expected)
+            return 1;       /* return true and eat the char */
+        if (isblank(trash)) /* skip all spaces if that's not what we were looking for */
             continue;
-        if( 0 != fseek(fptr, -1, SEEK_CUR) )
+        if (0 != fseek(fptr, -1, SEEK_CUR))
             return -1;
         return 0;
     } while (1);
@@ -465,115 +482,128 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
  * The approach here is to search for the largest common denominators, to create
  * something similar to a dichotomic search.
  */
-int mca_coll_base_name_to_colltype(const char* name)
+int mca_coll_base_name_to_colltype(const char *name)
 {
-    if( 'n' == name[0] ) {
-        if( 0 == strncmp(name, "neighbor_all", 12) ) {
-            if( 't' != name[12] ) {
-                if( 0 == strncmp(name+12, "gather", 6) ) {
-                    if('\0' == name[18]) return NEIGHBOR_ALLGATHER;
-                    if( 'v' == name[18]) return NEIGHBOR_ALLGATHERV;
+    if ('n' == name[0]) {
+        if (0 == strncmp(name, "neighbor_all", 12)) {
+            if ('t' != name[12]) {
+                if (0 == strncmp(name + 12, "gather", 6)) {
+                    if ('\0' == name[18])
+                        return NEIGHBOR_ALLGATHER;
+                    if ('v' == name[18])
+                        return NEIGHBOR_ALLGATHERV;
                 }
             } else {
-                if( 0 == strncmp(name+12, "toall", 5) ) {
-                    if( '\0' == name[17] ) return NEIGHBOR_ALLTOALL;
-                    if( 'v' == name[17] ) return NEIGHBOR_ALLTOALLV;
-                    if( 'w' == name[17] ) return NEIGHBOR_ALLTOALLW;
+                if (0 == strncmp(name + 12, "toall", 5)) {
+                    if ('\0' == name[17])
+                        return NEIGHBOR_ALLTOALL;
+                    if ('v' == name[17])
+                        return NEIGHBOR_ALLTOALLV;
+                    if ('w' == name[17])
+                        return NEIGHBOR_ALLTOALLW;
                 }
             }
         }
         return -1;
     }
-    if( 'a' == name[0] ) {
-        if( 0 != strncmp(name, "all", 3) ) {
+    if ('a' == name[0]) {
+        if (0 != strncmp(name, "all", 3)) {
             return -1;
         }
-        if( 't' != name[3] ) {
-            if( 'r' == name[3] ) {
-                if( 0 == strcmp(name+3, "reduce") )
+        if ('t' != name[3]) {
+            if ('r' == name[3]) {
+                if (0 == strcmp(name + 3, "reduce"))
                     return ALLREDUCE;
             } else {
-                if( 0 == strncmp(name+3, "gather", 6) ) {
-                    if( '\0' == name[9] ) return ALLGATHER;
-                    if( 'v'  == name[9] ) return ALLGATHERV;
+                if (0 == strncmp(name + 3, "gather", 6)) {
+                    if ('\0' == name[9])
+                        return ALLGATHER;
+                    if ('v' == name[9])
+                        return ALLGATHERV;
                 }
             }
         } else {
-            if( 0 == strncmp(name+3, "toall", 5) ) {
-                if( '\0' == name[8] ) return ALLTOALL;
-                if( 'v' == name[8] ) return ALLTOALLV;
-                if( 'w' == name[8] ) return ALLTOALLW;
+            if (0 == strncmp(name + 3, "toall", 5)) {
+                if ('\0' == name[8])
+                    return ALLTOALL;
+                if ('v' == name[8])
+                    return ALLTOALLV;
+                if ('w' == name[8])
+                    return ALLTOALLW;
             }
         }
         return -1;
     }
-    if( 'r' > name[0] ) {
-        if( 'b' == name[0] ) {
-            if( 0 == strcmp(name, "barrier") )
+    if ('r' > name[0]) {
+        if ('b' == name[0]) {
+            if (0 == strcmp(name, "barrier"))
                 return BARRIER;
-            if( 0 == strcmp(name, "bcast") )
+            if (0 == strcmp(name, "bcast"))
                 return BCAST;
-        } else if( 'g'== name[0] ) {
-            if( 0 == strncmp(name, "gather", 6) ) {
-                if( '\0' == name[6] ) return GATHER;
-                if( 'v' == name[6] ) return GATHERV;
+        } else if ('g' == name[0]) {
+            if (0 == strncmp(name, "gather", 6)) {
+                if ('\0' == name[6])
+                    return GATHER;
+                if ('v' == name[6])
+                    return GATHERV;
             }
         }
-        if( 0 == strcmp(name, "exscan") )
+        if (0 == strcmp(name, "exscan"))
             return EXSCAN;
         return -1;
     }
-    if( 's' > name[0] ) {
-        if( 0 == strncmp(name, "reduce", 6) ) {
-            if( '\0' == name[6] ) return REDUCE;
-            if( '_' == name[6] ) {
-                if( 0 == strncmp(name+7, "scatter", 7) ) {
-                    if( '\0' == name[14] ) return REDUCESCATTER;
-                    if( 0 == strcmp(name+14, "_block") ) return REDUCESCATTERBLOCK;
+    if ('s' > name[0]) {
+        if (0 == strncmp(name, "reduce", 6)) {
+            if ('\0' == name[6])
+                return REDUCE;
+            if ('_' == name[6]) {
+                if (0 == strncmp(name + 7, "scatter", 7)) {
+                    if ('\0' == name[14])
+                        return REDUCESCATTER;
+                    if (0 == strcmp(name + 14, "_block"))
+                        return REDUCESCATTERBLOCK;
                 }
             }
         }
         return -1;
     }
-    if( 0 == strcmp(name, "scan") )
+    if (0 == strcmp(name, "scan"))
         return SCAN;
-    if( 0 == strcmp(name, "scatterv") )
+    if (0 == strcmp(name, "scatterv"))
         return SCATTERV;
-    if( 0 == strcmp(name, "scatter") )
+    if (0 == strcmp(name, "scatter"))
         return SCATTER;
     return -1;
 }
 
 /* conversion table for all COLLTYPE_T values defined in ompi/mca/coll/base/coll_base_functions.h */
-static const char* colltype_translation_table[] = {
-    [ALLGATHER] = "allgather",
-    [ALLGATHERV] = "allgatherv",
-    [ALLREDUCE] = "allreduce",
-    [ALLTOALL] = "alltoall",
-    [ALLTOALLV] = "alltoallv",
-    [ALLTOALLW] = "alltoallw",
-    [BARRIER] = "barrier",
-    [BCAST] = "bcast",
-    [EXSCAN] = "exscan",
-    [GATHER] = "gather",
-    [GATHERV] = "gatherv",
-    [REDUCE] = "reduce",
-    [REDUCESCATTER] = "reduce_scatter",
-    [REDUCESCATTERBLOCK] = "reduce_scatter_block",
-    [SCAN] = "scan",
-    [SCATTER] = "scatter",
-    [SCATTERV] = "scatterv",
-    [NEIGHBOR_ALLGATHER] = "neighbor_allgather",
-    [NEIGHBOR_ALLGATHERV] = "neighbor_allgatherv",
-    [NEIGHBOR_ALLTOALL] = "neighbor_alltoall",
-    [NEIGHBOR_ALLTOALLV] = "neighbor_alltoallv",
-    [NEIGHBOR_ALLTOALLW] = "neighbor_alltoallw",
-    [COLLCOUNT] = NULL
-};
+static const char *colltype_translation_table[] = {[ALLGATHER] = "allgather",
+                                                   [ALLGATHERV] = "allgatherv",
+                                                   [ALLREDUCE] = "allreduce",
+                                                   [ALLTOALL] = "alltoall",
+                                                   [ALLTOALLV] = "alltoallv",
+                                                   [ALLTOALLW] = "alltoallw",
+                                                   [BARRIER] = "barrier",
+                                                   [BCAST] = "bcast",
+                                                   [EXSCAN] = "exscan",
+                                                   [GATHER] = "gather",
+                                                   [GATHERV] = "gatherv",
+                                                   [REDUCE] = "reduce",
+                                                   [REDUCESCATTER] = "reduce_scatter",
+                                                   [REDUCESCATTERBLOCK] = "reduce_scatter_block",
+                                                   [SCAN] = "scan",
+                                                   [SCATTER] = "scatter",
+                                                   [SCATTERV] = "scatterv",
+                                                   [NEIGHBOR_ALLGATHER] = "neighbor_allgather",
+                                                   [NEIGHBOR_ALLGATHERV] = "neighbor_allgatherv",
+                                                   [NEIGHBOR_ALLTOALL] = "neighbor_alltoall",
+                                                   [NEIGHBOR_ALLTOALLV] = "neighbor_alltoallv",
+                                                   [NEIGHBOR_ALLTOALLW] = "neighbor_alltoallw",
+                                                   [COLLCOUNT] = NULL};
 
-const char* mca_coll_base_colltype_to_str(int collid)
+const char *mca_coll_base_colltype_to_str(int collid)
 {
-    if( (collid < 0) || (collid >= COLLCOUNT) ) {
+    if ((collid < 0) || (collid >= COLLCOUNT)) {
         return NULL;
     }
     return colltype_translation_table[collid];

@@ -25,25 +25,24 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/op/op.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/op/op.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ireduce_scatter = PMPI_Ireduce_scatter
-#endif
-#define MPI_Ireduce_scatter PMPI_Ireduce_scatter
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Ireduce_scatter = PMPI_Ireduce_scatter
+#    endif
+#    define MPI_Ireduce_scatter PMPI_Ireduce_scatter
 #endif
 
 static const char FUNC_NAME[] = "MPI_Ireduce_scatter";
-
 
 int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[],
                         MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
@@ -53,11 +52,9 @@ int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts
     SPC_RECORD(OMPI_SPC_IREDUCE_SCATTER, 1);
 
     MEMCHECKER(
-        int rank;
-        int count;
+        int rank; int count;
 
-        size = ompi_comm_size(comm);
-        rank = ompi_comm_rank(comm);
+        size = ompi_comm_size(comm); rank = ompi_comm_rank(comm);
         for (count = i = 0; i < size; ++i) {
             if (0 == recvcounts[i]) {
                 count += recvcounts[i];
@@ -68,40 +65,36 @@ int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts
         memchecker_datatype(datatype);
 
         /* check receive buffer of current proccess, whether it's addressable. */
-        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf,
-                        recvcounts[rank], datatype);
+        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcounts[rank], datatype);
 
         /* check whether the actual send buffer is defined. */
-        if(MPI_IN_PLACE == sendbuf) {
+        if (MPI_IN_PLACE == sendbuf) {
             memchecker_call(&opal_memchecker_base_isdefined, recvbuf, count, datatype);
         } else {
             memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
-
-        }
-    );
+        });
 
     if (MPI_PARAM_CHECK) {
         char *msg;
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
 
         /* Unrooted operation; same checks for all ranks on both
            intracommunicators and intercommunicators */
 
         else if (MPI_OP_NULL == op || NULL == op) {
-          err = MPI_ERR_OP;
+            err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
         } else if (NULL == recvcounts) {
-          err = MPI_ERR_COUNT;
+            err = MPI_ERR_COUNT;
         } else if (MPI_IN_PLACE == recvbuf) {
-          err = MPI_ERR_ARG;
+            err = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
@@ -110,8 +103,8 @@ int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts
            on the number of participants in the local group.  */
         size = ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcounts[i]);
-          OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+            OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcounts[i]);
+            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
     }
 
@@ -132,9 +125,8 @@ int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts
 
     /* Invoke the coll component to perform the back-end operation */
 
-    err = comm->c_coll->coll_ireduce_scatter(sendbuf, recvbuf, recvcounts,
-                                            datatype, op, comm, request,
-                                            comm->c_coll->coll_ireduce_scatter_module);
+    err = comm->c_coll->coll_ireduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm,
+                                             request, comm->c_coll->coll_ireduce_scatter_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_op(*request, op, datatype);
     }

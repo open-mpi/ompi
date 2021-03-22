@@ -24,11 +24,11 @@
 #include "ompi_config.h"
 
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
+#    include <sys/time.h>
 #endif
 #include <stdio.h>
 #ifdef HAVE_TIME_H
-#include <time.h>
+#    include <time.h>
 #endif
 
 #include MCA_timer_IMPLEMENTATION_HEADER
@@ -36,10 +36,10 @@
 #include "ompi/runtime/mpiruntime.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Wtick = PMPI_Wtick
-#endif
-#define MPI_Wtick PMPI_Wtick
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Wtick = PMPI_Wtick
+#    endif
+#    define MPI_Wtick PMPI_Wtick
 #endif
 
 double MPI_Wtick(void)
@@ -49,7 +49,7 @@ double MPI_Wtick(void)
      * to get an idea what's going on here.
      */
 #if 0
-#if OPAL_TIMER_CYCLE_NATIVE
+#    if OPAL_TIMER_CYCLE_NATIVE
     {
         opal_timer_t freq = opal_timer_base_get_freq();
         if (0 == freq) {
@@ -59,23 +59,23 @@ double MPI_Wtick(void)
         }
         return (double)1.0 / (double)freq;
     }
-#elif OPAL_TIMER_USEC_NATIVE
+#    elif OPAL_TIMER_USEC_NATIVE
     return 0.000001;
-#endif
+#    endif
 #else
-#if defined(__linux__) && OPAL_HAVE_CLOCK_GETTIME
+#    if defined(__linux__) && OPAL_HAVE_CLOCK_GETTIME
     struct timespec spec;
     double wtick = 0.0;
-    if (0 == clock_getres(CLOCK_MONOTONIC, &spec)){
-        wtick =  spec.tv_sec + spec.tv_nsec * 1.0e-09;
+    if (0 == clock_getres(CLOCK_MONOTONIC, &spec)) {
+        wtick = spec.tv_sec + spec.tv_nsec * 1.0e-09;
     } else {
         /* guess */
         wtick = 1.0e-09;
     }
     return wtick;
-#else
+#    else
     /* Otherwise, we already return usec precision. */
     return 0.000001;
-#endif
+#    endif
 #endif
 }

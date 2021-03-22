@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/constants.h"
 #include "ompi/mpiext/cuda/c/mpiext_cuda_c.h"
+#include "opal/constants.h"
 
 /* If CUDA-aware support is configured in, return 1. Otherwise, return 0.
  * This API may be extended to return more features in the future. */

@@ -25,52 +25,44 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Cart_sub = PMPI_Cart_sub
-#endif
-#define MPI_Cart_sub PMPI_Cart_sub
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Cart_sub = PMPI_Cart_sub
+#    endif
+#    define MPI_Cart_sub PMPI_Cart_sub
 #endif
 
 static const char FUNC_NAME[] = "MPI_Cart_sub";
-
 
 int MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *new_comm)
 {
     int err;
 
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
         }
-        if (((NULL == remain_dims) && (0 != comm->c_topo->mtc.cart->ndims))
-            && (NULL == new_comm)) {
-            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (((NULL == remain_dims) && (0 != comm->c_topo->mtc.cart->ndims)) && (NULL == new_comm)) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
     if (!OMPI_COMM_IS_CART(comm)) {
-        return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
-                                      FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TOPOLOGY, FUNC_NAME);
     }
 
 #if OPAL_ENABLE_FT_MPI
@@ -79,7 +71,7 @@ int MPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *new_comm)
      * communicator. This is not absolutely necessary since we will
      * check for this, and other, error conditions during the operation.
      */
-    if( OPAL_UNLIKELY(!ompi_comm_iface_create_check(comm, &err)) ) {
+    if (OPAL_UNLIKELY(!ompi_comm_iface_create_check(comm, &err))) {
         OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
     }
 #endif

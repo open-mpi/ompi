@@ -23,59 +23,48 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_create_hvector = PMPI_Type_create_hvector
-#endif
-#define MPI_Type_create_hvector PMPI_Type_create_hvector
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_create_hvector = PMPI_Type_create_hvector
+#    endif
+#    define MPI_Type_create_hvector PMPI_Type_create_hvector
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_create_hvector";
 
-
-int MPI_Type_create_hvector(int count,
-                            int blocklength,
-                            MPI_Aint stride,
-                            MPI_Datatype oldtype,
+int MPI_Type_create_hvector(int count, int blocklength, MPI_Aint stride, MPI_Datatype oldtype,
                             MPI_Datatype *newtype)
 {
     int rc;
 
-    MEMCHECKER(
-        memchecker_datatype(oldtype);
-        );
+    MEMCHECKER(memchecker_datatype(oldtype););
 
-    if( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( count < 0 ) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT,
-                                          FUNC_NAME );
-        } else if( blocklength < 0) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME );
-        } else if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype ||
-                   NULL == newtype) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
-                                          FUNC_NAME );
+        if (count < 0) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
+        } else if (blocklength < 0) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        } else if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype || NULL == newtype) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
         }
     }
 
-    rc = ompi_datatype_create_hvector ( count, blocklength, stride, oldtype,
-                                        newtype );
-    OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME );
+    rc = ompi_datatype_create_hvector(count, blocklength, stride, oldtype, newtype);
+    OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
 
     {
-        const int* a_i[2] = {&count, &blocklength};
+        const int *a_i[2] = {&count, &blocklength};
         MPI_Aint a_a[1] = {stride};
 
-        ompi_datatype_set_args( *newtype, 2, a_i, 1, a_a, 1, &oldtype, MPI_COMBINER_HVECTOR );
+        ompi_datatype_set_args(*newtype, 2, a_i, 1, a_a, 1, &oldtype, MPI_COMBINER_HVECTOR);
     }
 
     return MPI_SUCCESS;

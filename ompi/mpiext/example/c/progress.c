@@ -13,8 +13,8 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
-#include "ompi/mpiext/mpiext.h"
 #include "ompi/mpiext/example/mpiext_example_c.h"
+#include "ompi/mpiext/mpiext.h"
 
 static const char FUNC_NAME[] = "OMPI_Progress";
 
@@ -24,26 +24,20 @@ static const char FUNC_NAME[] = "OMPI_Progress";
  * addition to providing the hooks below, adding the line in
  * configure.m4 (documented in example's configure.m4) is also
  * required.
-*/
-static int
-example_init(void)
+ */
+static int example_init(void)
 {
     printf("example mpiext init\n");
     return OMPI_SUCCESS;
 }
 
-static int
-example_fini(void)
+static int example_fini(void)
 {
     printf("example mpiext fini\n");
     return OMPI_SUCCESS;
 }
 
-ompi_mpiext_component_t ompi_mpiext_example = {
-    example_init,
-    example_fini
-};
-
+ompi_mpiext_component_t ompi_mpiext_example = {example_init, example_fini};
 
 int OMPI_Progress(int count)
 {
@@ -51,4 +45,3 @@ int OMPI_Progress(int count)
 
     return MPI_SUCCESS;
 }
-

@@ -22,21 +22,21 @@
  */
 
 #include "ompi_config.h"
-#include <stdio.h>
 #include <limits.h>
+#include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Get_elements = PMPI_Get_elements
-#endif
-#define MPI_Get_elements PMPI_Get_elements
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Get_elements = PMPI_Get_elements
+#    endif
+#    define MPI_Get_elements PMPI_Get_elements
 #endif
 
 static const char FUNC_NAME[] = "MPI_Get_elements";
@@ -46,23 +46,21 @@ int MPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count
     size_t internal_count;
     int ret;
 
-    MEMCHECKER(
-               if (status != MPI_STATUSES_IGNORE) {
-                   /*
-                    * Before checking the complete status, we need to reset the definedness
-                    * of the MPI_ERROR-field (single-completion calls wait/test).
-                    */
-                   opal_memchecker_base_mem_defined((void*)&status->MPI_ERROR, sizeof(int));
-                   memchecker_status(status);
-                   memchecker_datatype(datatype);
-               }
-               );
+    MEMCHECKER(if (status != MPI_STATUSES_IGNORE) {
+        /*
+         * Before checking the complete status, we need to reset the definedness
+         * of the MPI_ERROR-field (single-completion calls wait/test).
+         */
+        opal_memchecker_base_mem_defined((void *) &status->MPI_ERROR, sizeof(int));
+        memchecker_status(status);
+        memchecker_datatype(datatype);
+    });
 
     if (MPI_PARAM_CHECK) {
         int err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == status || MPI_STATUSES_IGNORE == status ||
-            MPI_STATUS_IGNORE == status || NULL == count) {
+        if (NULL == status || MPI_STATUSES_IGNORE == status || MPI_STATUS_IGNORE == status
+            || NULL == count) {
             err = MPI_ERR_ARG;
         } else if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
             err = MPI_ERR_TYPE;
@@ -72,7 +70,7 @@ int MPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count
         OMPI_ERRHANDLER_NOHANDLE_CHECK(err, err, FUNC_NAME);
     }
 
-    ret = ompi_datatype_get_elements (datatype, status->_ucount, &internal_count);
+    ret = ompi_datatype_get_elements(datatype, status->_ucount, &internal_count);
     if (OMPI_SUCCESS == ret || OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret) {
         if (OMPI_SUCCESS == ret && internal_count <= INT_MAX) {
             *count = internal_count;

@@ -53,7 +53,6 @@
  * James Cownie: Etnus LLC <jcownie@etnus.com>
  **********************************************************************/
 
-
 /* Update log
  *
  * Aug  5 2002 CLG: Tiny fix to 64 bit taddr_t definition on sun.
@@ -119,7 +118,7 @@
 #define _MPI_INTERFACE_INCLUDED
 
 #include "ompi_config.h"
-#include <stdio.h>				/* For FILENAME_MAX */
+#include <stdio.h> /* For FILENAME_MAX */
 
 /* No MPI2 support yet */
 #define FOR_MPI2 0
@@ -129,12 +128,11 @@ BEGIN_C_DECLS
 /***********************************************************************
  * Version of the interface this header represents
  */
-enum
-{
+enum {
 #if (FOR_MPI2)
-  MQS_INTERFACE_COMPATIBILITY = 3		/* Has MPI-2 functions */
+    MQS_INTERFACE_COMPATIBILITY = 3 /* Has MPI-2 functions */
 #else
-  MQS_INTERFACE_COMPATIBILITY = 2
+    MQS_INTERFACE_COMPATIBILITY = 2
 #endif
 };
 
@@ -156,19 +154,19 @@ enum
  */
 
 /* Types which will be (cast to) concrete types in the DLL */
-typedef struct _mqs_image_info   mqs_image_info;
+typedef struct _mqs_image_info mqs_image_info;
 typedef struct _mqs_process_info mqs_process_info;
 #if (FOR_MPI2)
-typedef struct _mqs_job_info     mqs_job_info;
+typedef struct _mqs_job_info mqs_job_info;
 #endif
 
 /* Types which will be (cast to) concrete types in the debugger */
-typedef struct mqs_image_    mqs_image;
+typedef struct mqs_image_ mqs_image;
 #if (FOR_MPI2)
-typedef struct mqs_job_      mqs_job;
+typedef struct mqs_job_ mqs_job;
 #endif
-typedef struct mqs_process_  mqs_process;
-typedef struct mqs_type_     mqs_type;
+typedef struct mqs_process_ mqs_process;
+typedef struct mqs_type_ mqs_type;
 
 /* *** BEWARE ***
  * On machines with two pointer lengths (such as SGI -n32, -64 compilations,
@@ -187,12 +185,13 @@ typedef struct mqs_type_     mqs_type;
  * 32 bit machines, and we need the 64 bit interface in some places.
  */
 
-#if !defined (FORCE_32BIT_MPI) && (defined (__sgi) || defined (__hpux) || defined (_AIX) || defined(__sun))
-typedef unsigned long long mqs_taddr_t;		/* Something long enough for a target address */
-typedef long long          mqs_tword_t;		/* Something long enough for a word    */
+#if !defined(FORCE_32BIT_MPI) \
+    && (defined(__sgi) || defined(__hpux) || defined(_AIX) || defined(__sun))
+typedef unsigned long long mqs_taddr_t; /* Something long enough for a target address */
+typedef long long mqs_tword_t;          /* Something long enough for a word    */
 #else
-typedef unsigned long mqs_taddr_t;		/* Something long enough for a target address */
-typedef long          mqs_tword_t;		/* Something long enough for a word    */
+typedef unsigned long mqs_taddr_t; /* Something long enough for a target address */
+typedef long mqs_tword_t;          /* Something long enough for a word    */
 #endif
 
 /***********************************************************************
@@ -200,13 +199,12 @@ typedef long          mqs_tword_t;		/* Something long enough for a word    */
  */
 
 /* A structure for (target) architectural information */
-typedef struct
-{
-    int short_size;	/* sizeof (short) */
-    int int_size;	/* sizeof (int)   */
-    int long_size;	/* sizeof (long)  */
-    int long_long_size;	/* sizeof (long long) */
-    int pointer_size;	/* sizeof (void *) */
+typedef struct {
+    int short_size;     /* sizeof (short) */
+    int int_size;       /* sizeof (int)   */
+    int long_size;      /* sizeof (long)  */
+    int long_long_size; /* sizeof (long long) */
+    int pointer_size;   /* sizeof (void *) */
     int bool_size;      /* sizeof(bool) */
     int size_t_size;    /* sizeof(size_t) */
 } mqs_target_type_sizes;
@@ -226,10 +224,10 @@ typedef struct
  * See below for functions to convert codes to strings.
  */
 enum {
-  mqs_ok = 0,
-  mqs_no_information,
-  mqs_end_of_list,
-  mqs_first_user_code = 100			/* Allow for more pre-defines */
+    mqs_ok = 0,
+    mqs_no_information,
+    mqs_end_of_list,
+    mqs_first_user_code = 100 /* Allow for more pre-defines */
 };
 
 #if (FOR_MPI2)
@@ -237,42 +235,31 @@ enum {
  * where they are.
  */
 typedef struct mqs_process_location {
-  long pid;
-  char image_name [FILENAME_MAX];
-  char host_name  [64];
+    long pid;
+    char image_name[FILENAME_MAX];
+    char host_name[64];
 } mqs_process_location;
 #endif
 
 /* Languages */
 typedef enum {
-  mqs_lang_c     = 'c',
-  mqs_lang_cplus = 'C',
-  mqs_lang_f77   = 'f',
-  mqs_lang_f90   = 'F'
+    mqs_lang_c = 'c',
+    mqs_lang_cplus = 'C',
+    mqs_lang_f77 = 'f',
+    mqs_lang_f90 = 'F'
 } mqs_lang_code;
 
 /* Which queue are we interested in ? */
-typedef enum
-{
-  mqs_pending_sends,
-  mqs_pending_receives,
-  mqs_unexpected_messages
-} mqs_op_class;
+typedef enum { mqs_pending_sends, mqs_pending_receives, mqs_unexpected_messages } mqs_op_class;
 
 /* A value to represent an invalid process index. */
-enum
-{
-  MQS_INVALID_PROCESS = -1
-};
+enum { MQS_INVALID_PROCESS = -1 };
 
-enum mqs_status
-{
-  mqs_st_pending, mqs_st_matched, mqs_st_complete
-};
+enum mqs_status { mqs_st_pending, mqs_st_matched, mqs_st_complete };
 
 /* Additional error codes and error string conversion. */
 enum {
-    err_silent_failure  = mqs_first_user_code,
+    err_silent_failure = mqs_first_user_code,
 
     err_no_current_communicator,
     err_bad_request,
@@ -333,12 +320,11 @@ enum {
 };
 
 /* A structure to represent a communicator */
-typedef struct
-{
-  mqs_taddr_t unique_id;			/* A unique tag for the communicator */
-  mqs_tword_t local_rank;			/* The rank of this process Comm_rank */
-  mqs_tword_t size;				/* Comm_size  */
-  char    name[64];				/* the name if it has one */
+typedef struct {
+    mqs_taddr_t unique_id;  /* A unique tag for the communicator */
+    mqs_tword_t local_rank; /* The rank of this process Comm_rank */
+    mqs_tword_t size;       /* Comm_size  */
+    char name[64];          /* the name if it has one */
 } mqs_communicator;
 
 /*
@@ -346,34 +332,33 @@ typedef struct
  * This is potentially incorrect, but let's leave that complication for a while.
  */
 
-typedef struct
-{
-  /* Fields for all messages */
-  int status;					/* Status of the message (really enum mqs_status) */
-  mqs_tword_t desired_local_rank;		/* Rank of target/source -1 for ANY */
-  mqs_tword_t desired_global_rank;		/* As above but in COMM_WORLD  */
-  int tag_wild;					/* Flag for wildcard receive  */
-  mqs_tword_t desired_tag;			/* Only if !tag_wild */
-  mqs_tword_t desired_length;			/* Length of the message buffer */
-  int system_buffer;				/* Is it a system or user buffer ? */
-  mqs_taddr_t buffer;				/* Where data is */
+typedef struct {
+    /* Fields for all messages */
+    int status;                      /* Status of the message (really enum mqs_status) */
+    mqs_tword_t desired_local_rank;  /* Rank of target/source -1 for ANY */
+    mqs_tword_t desired_global_rank; /* As above but in COMM_WORLD  */
+    int tag_wild;                    /* Flag for wildcard receive  */
+    mqs_tword_t desired_tag;         /* Only if !tag_wild */
+    mqs_tword_t desired_length;      /* Length of the message buffer */
+    int system_buffer;               /* Is it a system or user buffer ? */
+    mqs_taddr_t buffer;              /* Where data is */
 
-  /* Fields valid if status >= matched or it's a send */
-  mqs_tword_t actual_local_rank;		/* Actual local rank */
-  mqs_tword_t actual_global_rank;		/* As above but in COMM_WORLD */
-  mqs_tword_t actual_tag;
-  mqs_tword_t actual_length;
+    /* Fields valid if status >= matched or it's a send */
+    mqs_tword_t actual_local_rank;  /* Actual local rank */
+    mqs_tword_t actual_global_rank; /* As above but in COMM_WORLD */
+    mqs_tword_t actual_tag;
+    mqs_tword_t actual_length;
 
-  /* Additional strings which can be filled in if the DLL has more
-   * info.  (Uninterpreted by the debugger, simply displayed to the
-   * user).
-   *
-   * Can be used to give the name of the function causing this request,
-   * for instance.
-   *
-   * Up to five lines each of 64 characters.
-   */
-  char extra_text[5][64];
+    /* Additional strings which can be filled in if the DLL has more
+     * info.  (Uninterpreted by the debugger, simply displayed to the
+     * user).
+     *
+     * Can be used to give the name of the function causing this request,
+     * for instance.
+     *
+     * Up to five lines each of 64 characters.
+     */
+    char extra_text[5][64];
 } mqs_pending_operation;
 
 /***********************************************************************
@@ -383,48 +368,48 @@ typedef struct
  */
 
 /* Hang information on the image */
-typedef void (*mqs_put_image_info_ft) (mqs_image *, mqs_image_info *);
+typedef void (*mqs_put_image_info_ft)(mqs_image *, mqs_image_info *);
 /* Get it back */
-typedef mqs_image_info * (*mqs_get_image_info_ft) (mqs_image *);
+typedef mqs_image_info *(*mqs_get_image_info_ft)(mqs_image *);
 
 #if (FOR_MPI2)
 /* Given a job and an index return the process object */
-typedef mqs_process * (*mqs_get_process_ft) (mqs_job *, int);
+typedef mqs_process *(*mqs_get_process_ft)(mqs_job *, int);
 
 /* Hang information on the job */
-typedef void (*mqs_put_job_info_ft) (mqs_job *, mqs_job_info *);
+typedef void (*mqs_put_job_info_ft)(mqs_job *, mqs_job_info *);
 /* Get it back */
-typedef mqs_job_info * (*mqs_get_job_info_ft) (mqs_job *);
+typedef mqs_job_info *(*mqs_get_job_info_ft)(mqs_job *);
 #endif
 
 /* Given a process return the image it is an instance of */
-typedef mqs_image * (*mqs_get_image_ft) (mqs_process *);
+typedef mqs_image *(*mqs_get_image_ft)(mqs_process *);
 
 /* Given a process return its rank in comm_world */
-typedef int (*mqs_get_global_rank_ft) (mqs_process *);
+typedef int (*mqs_get_global_rank_ft)(mqs_process *);
 
 /* Given an image look up the specified function */
-typedef int (*mqs_find_function_ft) (mqs_image *, char *, mqs_lang_code, mqs_taddr_t * );
+typedef int (*mqs_find_function_ft)(mqs_image *, char *, mqs_lang_code, mqs_taddr_t *);
 
 /* Given an image look up the specified symbol */
-typedef int (*mqs_find_symbol_ft) (mqs_image *, char *, mqs_taddr_t * );
+typedef int (*mqs_find_symbol_ft)(mqs_image *, char *, mqs_taddr_t *);
 
 /* Hang information on the process */
-typedef void (*mqs_put_process_info_ft) (mqs_process *, mqs_process_info *);
+typedef void (*mqs_put_process_info_ft)(mqs_process *, mqs_process_info *);
 /* Get it back */
-typedef mqs_process_info * (*mqs_get_process_info_ft) (mqs_process *);
+typedef mqs_process_info *(*mqs_get_process_info_ft)(mqs_process *);
 
 #if (FOR_MPI2)
 /* Given a process, return the job it belongs to */
-typedef mqs_job * (*mqs_get_process_job_ft) (mqs_process *);
+typedef mqs_job *(*mqs_get_process_job_ft)(mqs_process *);
 /* Given a process, return its identity (index in the job's universe of processes) */
-typedef int       (*mqs_get_process_identity_ft) (mqs_job *);
+typedef int (*mqs_get_process_identity_ft)(mqs_job *);
 #endif
 
 /* Allocate store */
-typedef void * (*mqs_malloc_ft) (size_t);
+typedef void *(*mqs_malloc_ft)(size_t);
 /* Free it again */
-typedef void   (*mqs_free_ft)   (void *);
+typedef void (*mqs_free_ft)(void *);
 
 /***********************************************************************
  * Type access functions
@@ -438,21 +423,21 @@ typedef void   (*mqs_free_ft)   (void *);
  * been loaded, for instance by placing them in the same file as the
  * startup breakpoint function.
  */
-typedef mqs_type * (*mqs_find_type_ft)(mqs_image *, char *, mqs_lang_code);
+typedef mqs_type *(*mqs_find_type_ft)(mqs_image *, char *, mqs_lang_code);
 
 /* Given the handle for a type (assumed to be a structure) return the
  * byte offset of the named field. If the field cannot be found
  * the result will be -1.
  */
-typedef int (*mqs_field_offset_ft) (mqs_type *, char *);
+typedef int (*mqs_field_offset_ft)(mqs_type *, char *);
 
 /* Given the handle for a type return the size of the type in bytes.
  * (Just like sizeof ())
  */
-typedef int (*mqs_sizeof_ft) (mqs_type *);
+typedef int (*mqs_sizeof_ft)(mqs_type *);
 
 /* Fill in the sizes of target types for this process */
-typedef void (*mqs_get_type_sizes_ft) (mqs_process *, mqs_target_type_sizes *);
+typedef void (*mqs_get_type_sizes_ft)(mqs_process *, mqs_target_type_sizes *);
 
 /***********************************************************************
  * Target store access functions
@@ -465,63 +450,60 @@ typedef void (*mqs_get_type_sizes_ft) (mqs_process *, mqs_target_type_sizes *);
  * necessary byte flipping if you want to look at it at larger
  * granularity.
  */
-typedef int (*mqs_fetch_data_ft) (mqs_process *, mqs_taddr_t, int, void *);
+typedef int (*mqs_fetch_data_ft)(mqs_process *, mqs_taddr_t, int, void *);
 
 /* Convert data into host format */
-typedef void (*mqs_target_to_host_ft) (mqs_process *, const void *, void *, int);
+typedef void (*mqs_target_to_host_ft)(mqs_process *, const void *, void *, int);
 
 /***********************************************************************
  * Miscellaneous functions.
  */
 /* Print a message (intended for debugging use *ONLY*). */
-typedef void (*mqs_dprints_ft) (const char *);
+typedef void (*mqs_dprints_ft)(const char *);
 /* Convert an error code from the debugger into an error message */
-typedef char * (*mqs_errorstring_ft) (int);
+typedef char *(*mqs_errorstring_ft)(int);
 
 /***********************************************************************
  * Call back tables
  */
-typedef struct mqs_basic_callbacks
-{
-  mqs_malloc_ft           mqs_malloc_fp;
-  mqs_free_ft             mqs_free_fp;
-  mqs_dprints_ft          mqs_dprints_fp;
-  mqs_errorstring_ft      mqs_errorstring_fp;
-  mqs_put_image_info_ft   mqs_put_image_info_fp;
-  mqs_get_image_info_ft	  mqs_get_image_info_fp;
-  mqs_put_process_info_ft mqs_put_process_info_fp;
-  mqs_get_process_info_ft mqs_get_process_info_fp;
+typedef struct mqs_basic_callbacks {
+    mqs_malloc_ft mqs_malloc_fp;
+    mqs_free_ft mqs_free_fp;
+    mqs_dprints_ft mqs_dprints_fp;
+    mqs_errorstring_ft mqs_errorstring_fp;
+    mqs_put_image_info_ft mqs_put_image_info_fp;
+    mqs_get_image_info_ft mqs_get_image_info_fp;
+    mqs_put_process_info_ft mqs_put_process_info_fp;
+    mqs_get_process_info_ft mqs_get_process_info_fp;
 #if (FOR_MPI2)
-  mqs_put_job_info_ft     mqs_put_job_info_fp;
-  mqs_get_job_info_ft     mqs_get_job_info_fp;
+    mqs_put_job_info_ft mqs_put_job_info_fp;
+    mqs_get_job_info_ft mqs_get_job_info_fp;
 #endif
 } mqs_basic_callbacks;
 
 #if (FOR_MPI2)
 typedef struct mqs_job_callbacks {
-  mqs_get_process_ft	mqs_get_process_fp;
+    mqs_get_process_ft mqs_get_process_fp;
 } mqs_job_callbacks;
 #endif
 
-typedef struct mqs_image_callbacks
-{
-  mqs_get_type_sizes_ft	  mqs_get_type_sizes_fp;
-  mqs_find_function_ft	  mqs_find_function_fp;
-  mqs_find_symbol_ft      mqs_find_symbol_fp;
-  mqs_find_type_ft        mqs_find_type_fp;
-  mqs_field_offset_ft	  mqs_field_offset_fp;
-  mqs_sizeof_ft	          mqs_sizeof_fp;
+typedef struct mqs_image_callbacks {
+    mqs_get_type_sizes_ft mqs_get_type_sizes_fp;
+    mqs_find_function_ft mqs_find_function_fp;
+    mqs_find_symbol_ft mqs_find_symbol_fp;
+    mqs_find_type_ft mqs_find_type_fp;
+    mqs_field_offset_ft mqs_field_offset_fp;
+    mqs_sizeof_ft mqs_sizeof_fp;
 } mqs_image_callbacks;
 
-typedef struct mqs_process_callbacks
-{
-  mqs_get_global_rank_ft       mqs_get_global_rank_fp;
-  mqs_get_image_ft             mqs_get_image_fp;
-  mqs_fetch_data_ft            mqs_fetch_data_fp;
-  mqs_target_to_host_ft        mqs_target_to_host_fp;
+typedef struct mqs_process_callbacks {
+    mqs_get_global_rank_ft mqs_get_global_rank_fp;
+    mqs_get_image_ft mqs_get_image_fp;
+    mqs_fetch_data_ft mqs_fetch_data_fp;
+    mqs_target_to_host_ft mqs_target_to_host_fp;
 #if (FOR_MPI2)
-  mqs_get_process_job_ft       mqs_get_process_job_fp;
-  mqs_get_process_identity_ft  mqs_get_process_identity_fp;
+    mqs_get_process_job_ft mqs_get_process_job_fp;
+    mqs_get_process_identity_ft mqs_get_process_identity_fp;
 #endif
 } mqs_process_callbacks;
 
@@ -536,19 +518,19 @@ typedef struct mqs_process_callbacks
  * not be messed with, or deallocated by the DLL). This applies to
  * all of the callback tables.
  */
-OMPI_DECLSPEC extern void mqs_setup_basic_callbacks (const mqs_basic_callbacks *);
+OMPI_DECLSPEC extern void mqs_setup_basic_callbacks(const mqs_basic_callbacks *);
 
 /* Version handling */
-OMPI_DECLSPEC extern char *mqs_version_string (void);
-OMPI_DECLSPEC extern int   mqs_version_compatibility(void);
+OMPI_DECLSPEC extern char *mqs_version_string(void);
+OMPI_DECLSPEC extern int mqs_version_compatibility(void);
 /* This gives the width which has been compiled into the DLL, it is
  * _not_ the width of a specific process, which could be smaller than
  * this.
  */
-OMPI_DECLSPEC extern int   mqs_dll_taddr_width(void);
+OMPI_DECLSPEC extern int mqs_dll_taddr_width(void);
 
 /* Provide a text string for an error value */
-OMPI_DECLSPEC extern char * mqs_dll_error_string (int);
+OMPI_DECLSPEC extern char *mqs_dll_error_string(int);
 
 /***********************************************************************
  * Calls related to an executable image.
@@ -567,7 +549,7 @@ OMPI_DECLSPEC extern char * mqs_dll_error_string (int);
  * This will be called once for each executable image in the parallel
  * program.
  */
-OMPI_DECLSPEC extern int mqs_setup_image (mqs_image *, const mqs_image_callbacks *);
+OMPI_DECLSPEC extern int mqs_setup_image(mqs_image *, const mqs_image_callbacks *);
 
 /* Does this image have the necessary symbols to allow access to the message
  * queues ?
@@ -583,19 +565,19 @@ OMPI_DECLSPEC extern int mqs_setup_image (mqs_image *, const mqs_image_callbacks
  * disable things, or loudly enable them).
  */
 
-OMPI_DECLSPEC extern int mqs_image_has_queues (mqs_image *, char **);
+OMPI_DECLSPEC extern int mqs_image_has_queues(mqs_image *, char **);
 
 /* This will be called by the debugger to let you tidy up whatever is
  * required when the mqs_image_info is no longer needed.
  */
-OMPI_DECLSPEC extern void mqs_destroy_image_info (mqs_image_info *);
+OMPI_DECLSPEC extern void mqs_destroy_image_info(mqs_image_info *);
 
 #if (FOR_MPI2)
 /***********************************************************************
  * Calls related to a specific job, which owns a universe of processes.
  */
-extern int mqs_setup_job (mqs_job *, const mqs_job_callbacks *);
-extern int mqs_destroy_job_info (mqs_job_info *);
+extern int mqs_setup_job(mqs_job *, const mqs_job_callbacks *);
+extern int mqs_destroy_job_info(mqs_job_info *);
 #endif
 
 /***********************************************************************
@@ -612,15 +594,15 @@ extern int mqs_destroy_job_info (mqs_job_info *);
  * rather than in the image information if anything is a dynamic library
  * which could end up mapped differently in different processes.
  */
-OMPI_DECLSPEC extern int mqs_setup_process (mqs_process *, const mqs_process_callbacks *);
-OMPI_DECLSPEC extern void mqs_destroy_process_info (mqs_process_info *);
+OMPI_DECLSPEC extern int mqs_setup_process(mqs_process *, const mqs_process_callbacks *);
+OMPI_DECLSPEC extern void mqs_destroy_process_info(mqs_process_info *);
 
 /* Like the mqs_has_message_queues function, but will only be called
  * if the image claims to have message queues. This lets you actually
  * delve inside the process to look at variables before deciding if
  * the process really can support message queue extraction.
  */
-OMPI_DECLSPEC extern int mqs_process_has_queues (mqs_process *, char **);
+OMPI_DECLSPEC extern int mqs_process_has_queues(mqs_process *, char **);
 
 /***********************************************************************
  * The functions which actually extract the information we need !
@@ -642,17 +624,16 @@ OMPI_DECLSPEC extern int mqs_process_has_queues (mqs_process *, char **);
  * mqs_process_info.
  */
 
-
 /* Check that the DLL's model of the communicators in the process is
  * up to date, ideally by checking the sequence number.
  */
-OMPI_DECLSPEC extern int mqs_update_communicator_list (mqs_process *);
+OMPI_DECLSPEC extern int mqs_update_communicator_list(mqs_process *);
 
 /* Prepare to iterate over all of the communicators in the process. */
-OMPI_DECLSPEC extern int mqs_setup_communicator_iterator (mqs_process *);
+OMPI_DECLSPEC extern int mqs_setup_communicator_iterator(mqs_process *);
 
 /* Extract information about the current communicator */
-OMPI_DECLSPEC extern int mqs_get_communicator (mqs_process *, mqs_communicator *);
+OMPI_DECLSPEC extern int mqs_get_communicator(mqs_process *, mqs_communicator *);
 
 /* Extract the group from the current communicator.
  * The debugger already knows comm_size, so can allocate a
@@ -660,35 +641,35 @@ OMPI_DECLSPEC extern int mqs_get_communicator (mqs_process *, mqs_communicator *
  * rank in COMM_WORLD of the index'th element in the current
  * communicator.
  */
-OMPI_DECLSPEC extern int mqs_get_comm_group (mqs_process *, int *);
+OMPI_DECLSPEC extern int mqs_get_comm_group(mqs_process *, int *);
 
 /* Move on to the next communicator in this process. */
-OMPI_DECLSPEC extern int mqs_next_communicator (mqs_process *);
+OMPI_DECLSPEC extern int mqs_next_communicator(mqs_process *);
 
 /* Prepare to iterate over the pending operations in the currently
  * active communicator in this process.
  *
  * The int is *really* mqs_op_class
  */
-OMPI_DECLSPEC extern int mqs_setup_operation_iterator (mqs_process *, int);
+OMPI_DECLSPEC extern int mqs_setup_operation_iterator(mqs_process *, int);
 
 /* Return information about the next appropriate pending operation in
  * the current communicator, mqs_false when we've seen them all.
  */
-OMPI_DECLSPEC extern int mqs_next_operation (mqs_process *, mqs_pending_operation *);
+OMPI_DECLSPEC extern int mqs_next_operation(mqs_process *, mqs_pending_operation *);
 
 #if (FOR_MPI2)
 /* Information about newly created (or connected to) processes.
  * This is how we pick up processes created with MPI_Spawn (and friends),
  * or attached to with MPI_Comm_connect or MPI_Comm_join.
  */
-extern int mqs_setup_new_process_iterator (mqs_process *);
-extern int mqs_next_new_process (mqs_process *, mqs_process_location *);
+extern int mqs_setup_new_process_iterator(mqs_process *);
+extern int mqs_next_new_process(mqs_process *, mqs_process_location *);
 
 /* Once the debugger has attached to a newly created process it will
  * set it up in the normal way, and then set its identity.
  */
-extern int mqs_set_process_identity (mqs_process *, int);
+extern int mqs_set_process_identity(mqs_process *, int);
 #endif
 
 END_C_DECLS

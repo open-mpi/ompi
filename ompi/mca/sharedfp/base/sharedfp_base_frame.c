@@ -20,7 +20,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include <stdio.h>
 
@@ -28,9 +27,8 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_framework.h"
 
-#include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
-
+#include "ompi/mca/sharedfp/sharedfp.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -59,7 +57,5 @@ static int mca_sharedfp_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&ompi_sharedfp_base_framework, flags);
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, sharedfp, "OMPI Shared Files", NULL,
-                           mca_sharedfp_base_open, mca_sharedfp_base_close,
-                           mca_sharedfp_base_static_components, 0);
-
+MCA_BASE_FRAMEWORK_DECLARE(ompi, sharedfp, "OMPI Shared Files", NULL, mca_sharedfp_base_open,
+                           mca_sharedfp_base_close, mca_sharedfp_base_static_components, 0);

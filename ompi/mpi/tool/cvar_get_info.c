@@ -17,43 +17,43 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_cvar_get_info = PMPI_T_cvar_get_info
+#    pragma weak MPI_T_cvar_get_info = PMPI_T_cvar_get_info
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
 int MPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosity,
-			MPI_Datatype *datatype, MPI_T_enum *enumtype, char *desc,
-			int *desc_len, int *bind, int *scope)
+                        MPI_Datatype *datatype, MPI_T_enum *enumtype, char *desc, int *desc_len,
+                        int *bind, int *scope)
 {
     const mca_base_var_t *var;
     int rc = MPI_SUCCESS;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     do {
-        rc = mca_base_var_get (cvar_index, &var);
+        rc = mca_base_var_get(cvar_index, &var);
         if (OPAL_SUCCESS != rc) {
-            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc || OPAL_ERR_NOT_FOUND == rc) ? MPI_T_ERR_INVALID_INDEX :
-                MPI_T_ERR_INVALID;
+            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc || OPAL_ERR_NOT_FOUND == rc)
+                     ? MPI_T_ERR_INVALID_INDEX
+                     : MPI_T_ERR_INVALID;
             break;
         }
 
-        mpit_copy_string (name, name_len, var->mbv_full_name);
-        mpit_copy_string (desc, desc_len, var->mbv_description);
+        mpit_copy_string(name, name_len, var->mbv_full_name);
+        mpit_copy_string(desc, desc_len, var->mbv_description);
 
         /* find the corresponding mpi type for an mca type */
-        rc = ompit_var_type_to_datatype (var->mbv_type, datatype);
+        rc = ompit_var_type_to_datatype(var->mbv_type, datatype);
         if (OMPI_SUCCESS != rc) {
-            rc = MPI_T_ERR_INVALID;  /* can't really happen as MPI_SUCCESS is the only
-                                        possible return from ompit_var_type_to_datatype */
+            rc = MPI_T_ERR_INVALID; /* can't really happen as MPI_SUCCESS is the only
+                                       possible return from ompit_var_type_to_datatype */
             break;
         }
 
@@ -75,7 +75,7 @@ int MPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosit
         }
     } while (0);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return rc;
 }

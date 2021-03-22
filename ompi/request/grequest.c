@@ -19,10 +19,9 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/communicator/communicator.h"
 #include "ompi/request/grequest.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
-
 
 /*
  * See the comment in the grequest destructor for the weird semantics
@@ -34,37 +33,36 @@
  * Note that TEST* and WAIT* will call this function when a request
  * has been completed.
  */
-static int ompi_grequest_free(ompi_request_t** req)
+static int ompi_grequest_free(ompi_request_t **req)
 {
     OBJ_RELEASE(*req);
     *req = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
-static int ompi_grequest_cancel(ompi_request_t* req, int flag)
+static int ompi_grequest_cancel(ompi_request_t *req, int flag)
 {
     int rc = OMPI_SUCCESS;
     MPI_Fint ierr;
     ompi_fortran_logical_t fflag;
-    ompi_grequest_t* greq = (ompi_grequest_t*)req;
+    ompi_grequest_t *greq = (ompi_grequest_t *) req;
 
     if (greq->greq_cancel.c_cancel != NULL) {
         if (greq->greq_funcs_are_c) {
-            rc = greq->greq_cancel.c_cancel(greq->greq_state,
-                                            REQUEST_COMPLETE(&greq->greq_base));
+            rc = greq->greq_cancel.c_cancel(greq->greq_state, REQUEST_COMPLETE(&greq->greq_base));
         } else {
             fflag = (ompi_fortran_logical_t) REQUEST_COMPLETE(&greq->greq_base);
-            greq->greq_cancel.f_cancel((MPI_Aint*)greq->greq_state, &fflag, &ierr);
+            greq->greq_cancel.f_cancel((MPI_Aint *) greq->greq_state, &fflag, &ierr);
             rc = OMPI_FINT_2_INT(ierr);
         }
     }
     return rc;
 }
 
-static void ompi_grequest_construct(ompi_grequest_t* greq)
+static void ompi_grequest_construct(ompi_grequest_t *greq)
 {
-    greq->greq_base.req_free     = ompi_grequest_free;
-    greq->greq_base.req_cancel   = ompi_grequest_cancel;
+    greq->greq_base.req_free = ompi_grequest_free;
+    greq->greq_base.req_cancel = ompi_grequest_cancel;
     greq->greq_base.req_type = OMPI_REQUEST_GEN;
     greq->greq_base.req_mpi_object.comm = &(ompi_mpi_comm_world.comm);
     /* Set the function pointers to C here; the F77 MPI API will
@@ -119,7 +117,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  * functions were invoked, then the destructor is invoked and
  * everything is cleaned up (and we invoked the grequest free_fn).
  */
-static void ompi_grequest_destruct(ompi_grequest_t* greq)
+static void ompi_grequest_destruct(ompi_grequest_t *greq)
 {
     MPI_Fint ierr;
 
@@ -127,30 +125,23 @@ static void ompi_grequest_destruct(ompi_grequest_t* greq)
         if (greq->greq_funcs_are_c) {
             greq->greq_free.c_free(greq->greq_state);
         } else {
-            greq->greq_free.f_free((MPI_Aint*)greq->greq_state, &ierr);
+            greq->greq_free.f_free((MPI_Aint *) greq->greq_state, &ierr);
         }
     }
 
     OMPI_REQUEST_FINI(&greq->greq_base);
 }
 
+OBJ_CLASS_INSTANCE(ompi_grequest_t, ompi_request_t, ompi_grequest_construct,
+                   ompi_grequest_destruct);
 
-OBJ_CLASS_INSTANCE(
-    ompi_grequest_t,
-    ompi_request_t,
-    ompi_grequest_construct,
-    ompi_grequest_destruct);
-
-
-int ompi_grequest_start(
-    MPI_Grequest_query_function *gquery_fn,
-    MPI_Grequest_free_function *gfree_fn,
-    MPI_Grequest_cancel_function *gcancel_fn,
-    void* gstate,
-    ompi_request_t** request)
+int ompi_grequest_start(MPI_Grequest_query_function *gquery_fn,
+                        MPI_Grequest_free_function *gfree_fn,
+                        MPI_Grequest_cancel_function *gcancel_fn, void *gstate,
+                        ompi_request_t **request)
 {
     ompi_grequest_t *greq = OBJ_NEW(ompi_grequest_t);
-    if(greq == NULL) {
+    if (greq == NULL) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /* We call RETAIN here specifically to increase the refcount to 2.
@@ -169,7 +160,6 @@ int ompi_grequest_start(
     return OMPI_SUCCESS;
 }
 
-
 /*
  * Beware the odd semantics listed in MPI-2:8.2...  See the comment in
  * the grequest destructor.
@@ -187,7 +177,6 @@ int ompi_grequest_complete(ompi_request_t *req)
     return rc;
 }
 
-
 /*
  * Grequest queries are invoked in two places:
  *
@@ -197,11 +186,10 @@ int ompi_grequest_complete(ompi_request_t *req)
  * completed.
  *
  */
-int ompi_grequest_invoke_query(ompi_request_t *request,
-                               ompi_status_public_t *status)
+int ompi_grequest_invoke_query(ompi_request_t *request, ompi_status_public_t *status)
 {
     int rc = OMPI_SUCCESS;
-    ompi_grequest_t *g = (ompi_grequest_t*) request;
+    ompi_grequest_t *g = (ompi_grequest_t *) request;
 
     /* MPI-3 mandates that the return value from the query function
      * (i.e., the int return value from the C function or the ierr
@@ -216,14 +204,13 @@ int ompi_grequest_invoke_query(ompi_request_t *request,
         } else {
             MPI_Fint ierr;
             MPI_Fint fstatus[sizeof(MPI_Status) / sizeof(int)];
-            g->greq_query.f_query((MPI_Aint*)g->greq_state, fstatus, &ierr);
+            g->greq_query.f_query((MPI_Aint *) g->greq_state, fstatus, &ierr);
             MPI_Status_f2c(fstatus, status);
             rc = OMPI_FINT_2_INT(ierr);
         }
     }
-    if( MPI_SUCCESS != rc ) {
+    if (MPI_SUCCESS != rc) {
         status->MPI_ERROR = rc;
     }
     return rc;
 }
-

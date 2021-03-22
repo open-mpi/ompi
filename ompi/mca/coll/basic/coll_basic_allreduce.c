@@ -22,16 +22,15 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
+#include "coll_basic.h"
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/op/op.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
-#include "coll_basic.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
-
+#include "ompi/op/op.h"
 
 /*
  *	allreduce_intra
@@ -40,12 +39,9 @@
  *	Accepts:	- same as MPI_Allreduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, int count,
-                               struct ompi_datatype_t *dtype,
-                               struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
+int mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, int count,
+                                   struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                   struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int err;
 
@@ -53,12 +49,15 @@ mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, int count,
 
     if (MPI_IN_PLACE == sbuf) {
         if (0 == ompi_comm_rank(comm)) {
-            err = comm->c_coll->coll_reduce(MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
+            err = comm->c_coll->coll_reduce(MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm,
+                                            comm->c_coll->coll_reduce_module);
         } else {
-            err = comm->c_coll->coll_reduce(rbuf, NULL, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
+            err = comm->c_coll->coll_reduce(rbuf, NULL, count, dtype, op, 0, comm,
+                                            comm->c_coll->coll_reduce_module);
         }
     } else {
-        err = comm->c_coll->coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
+        err = comm->c_coll->coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm,
+                                        comm->c_coll->coll_reduce_module);
     }
     if (MPI_SUCCESS != err) {
         return err;
@@ -67,7 +66,6 @@ mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, int count,
     return comm->c_coll->coll_bcast(rbuf, count, dtype, 0, comm, comm->c_coll->coll_bcast_module);
 }
 
-
 /*
  *	allreduce_inter
  *
@@ -75,12 +73,9 @@ mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, int count,
  *	Accepts:	- same as MPI_Allreduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
-                               struct ompi_datatype_t *dtype,
-                               struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
+int mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
+                                   struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                   struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int err, i, rank, root = 0, rsize, line;
     ptrdiff_t extent, dsize, gap;
@@ -106,40 +101,52 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
         }
         dsize = opal_datatype_span(&dtype->super, count, &gap);
         tmpbuf = (char *) malloc(dsize);
-        if (NULL == tmpbuf) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
+        if (NULL == tmpbuf) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            line = __LINE__;
+            goto exit;
+        }
         pml_buffer = tmpbuf - gap;
 
         if (rsize > 1) {
             reqs = ompi_coll_base_comm_get_reqs(module->base_data, rsize - 1);
-            if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
+            if (NULL == reqs) {
+                err = OMPI_ERR_OUT_OF_RESOURCE;
+                line = __LINE__;
+                goto exit;
+            }
         }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
-        err = ompi_coll_base_sendrecv_actual(sbuf, count, dtype, 0,
-                                             MCA_COLL_BASE_TAG_ALLREDUCE,
-                                             rbuf, count, dtype, 0,
-                                             MCA_COLL_BASE_TAG_ALLREDUCE,
+        err = ompi_coll_base_sendrecv_actual(sbuf, count, dtype, 0, MCA_COLL_BASE_TAG_ALLREDUCE,
+                                             rbuf, count, dtype, 0, MCA_COLL_BASE_TAG_ALLREDUCE,
                                              comm, MPI_STATUS_IGNORE);
-        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
+        if (OMPI_SUCCESS != err) {
+            line = __LINE__;
+            goto exit;
+        }
 
         /* Loop receiving and calling reduction function (C or Fortran). */
         for (i = 1; i < rsize; i++) {
-            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
-                                    MCA_COLL_BASE_TAG_ALLREDUCE, comm,
+            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, MCA_COLL_BASE_TAG_ALLREDUCE, comm,
                                     MPI_STATUS_IGNORE));
-            if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
+            if (OMPI_SUCCESS != err) {
+                line = __LINE__;
+                goto exit;
+            }
 
             /* Perform the reduction */
             ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
         }
     } else {
         /* If not root, send data to the root. */
-        err = MCA_PML_CALL(send(sbuf, count, dtype, root,
-                                MCA_COLL_BASE_TAG_ALLREDUCE,
+        err = MCA_PML_CALL(send(sbuf, count, dtype, root, MCA_COLL_BASE_TAG_ALLREDUCE,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
-        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
+        if (OMPI_SUCCESS != err) {
+            line = __LINE__;
+            goto exit;
+        }
     }
-
 
     /* now we have on one process the result of the remote group. To distribute
      * the data to all processes in the local group, we exchange the data between
@@ -148,12 +155,13 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
     /***************************************************************************/
     if (rank == root) {
         /* sendrecv between the two roots */
-        err = ompi_coll_base_sendrecv_actual(rbuf, count, dtype, 0,
-                                             MCA_COLL_BASE_TAG_ALLREDUCE,
+        err = ompi_coll_base_sendrecv_actual(rbuf, count, dtype, 0, MCA_COLL_BASE_TAG_ALLREDUCE,
                                              pml_buffer, count, dtype, 0,
-                                             MCA_COLL_BASE_TAG_ALLREDUCE,
-                                             comm, MPI_STATUS_IGNORE);
-        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
+                                             MCA_COLL_BASE_TAG_ALLREDUCE, comm, MPI_STATUS_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            line = __LINE__;
+            goto exit;
+        }
 
         /* distribute the data to other processes in remote group.
          * Note that we start from 1 (not from zero), since zero
@@ -162,30 +170,34 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
          */
         if (rsize > 1) {
             for (i = 1; i < rsize; i++) {
-                err = MCA_PML_CALL(isend(pml_buffer, count, dtype, i,
-                                         MCA_COLL_BASE_TAG_ALLREDUCE,
-                                         MCA_PML_BASE_SEND_STANDARD, comm,
-                                         &reqs[i - 1]));
-                if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
+                err = MCA_PML_CALL(isend(pml_buffer, count, dtype, i, MCA_COLL_BASE_TAG_ALLREDUCE,
+                                         MCA_PML_BASE_SEND_STANDARD, comm, &reqs[i - 1]));
+                if (OMPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto exit;
+                }
             }
 
-            err =
-                ompi_request_wait_all(rsize - 1, reqs,
-                                      MPI_STATUSES_IGNORE);
-            if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
+            err = ompi_request_wait_all(rsize - 1, reqs, MPI_STATUSES_IGNORE);
+            if (OMPI_SUCCESS != err) {
+                line = __LINE__;
+                goto exit;
+            }
         }
     } else {
-        err = MCA_PML_CALL(recv(rbuf, count, dtype, root,
-                                MCA_COLL_BASE_TAG_ALLREDUCE,
-                                comm, MPI_STATUS_IGNORE));
-        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
+        err = MCA_PML_CALL(
+            recv(rbuf, count, dtype, root, MCA_COLL_BASE_TAG_ALLREDUCE, comm, MPI_STATUS_IGNORE));
+        if (OMPI_SUCCESS != err) {
+            line = __LINE__;
+            goto exit;
+        }
     }
 
-  exit:
-    if( MPI_SUCCESS != err ) {
-        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d", __FILE__,
-                     line, err, rank));
-        (void)line;  // silence compiler warning
+exit:
+    if (MPI_SUCCESS != err) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err, rank));
+        (void) line; // silence compiler warning
         ompi_coll_base_free_reqs(reqs, rsize - 1);
     }
     if (NULL != tmpbuf) {

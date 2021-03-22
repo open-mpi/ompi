@@ -26,18 +26,18 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
 
-#include "mpi.h"
-#include "opal/util/bit_ops.h"
-#include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/coll_tags.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/datatype/ompi_datatype.h"
 #include "coll_basic.h"
+#include "mpi.h"
+#include "ompi/constants.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/op/op.h"
+#include "opal/util/bit_ops.h"
 
 #define COMMUTATIVE_LONG_MSG (8 * 1024 * 1024)
 
@@ -63,12 +63,10 @@
  * better algorithms for large messages with commutative operations,
  * so this should be investigated further.
  */
-int
-mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rcounts,
-                                    struct ompi_datatype_t *dtype,
-                                    struct ompi_op_t *op,
-                                    struct ompi_communicator_t *comm,
-                                    mca_coll_base_module_t *module)
+int mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rcounts,
+                                        struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                        struct ompi_communicator_t *comm,
+                                        mca_coll_base_module_t *module)
 {
     int i, rank, size, count, err = OMPI_SUCCESS;
     ptrdiff_t extent, buf_size, gap;
@@ -80,8 +78,9 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
     size = ompi_comm_size(comm);
 
     /* Find displacements and the like */
-    disps = (int*) malloc(sizeof(int) * size);
-    if (NULL == disps) return OMPI_ERR_OUT_OF_RESOURCE;
+    disps = (int *) malloc(sizeof(int) * size);
+    if (NULL == disps)
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     disps[0] = 0;
     for (i = 0; i < (size - 1); ++i) {
@@ -104,12 +103,11 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
         sbuf = rbuf;
     }
 
-    if ((op->o_flags & OMPI_OP_FLAGS_COMMUTE) &&
-        (buf_size < COMMUTATIVE_LONG_MSG)) {
+    if ((op->o_flags & OMPI_OP_FLAGS_COMMUTE) && (buf_size < COMMUTATIVE_LONG_MSG)) {
         int tmp_size, remain = 0, tmp_rank;
 
         /* temporary receive buffer.  See coll_basic_reduce.c for details on sizing */
-        recv_buf_free = (char*) malloc(buf_size);
+        recv_buf_free = (char *) malloc(buf_size);
         recv_buf = recv_buf_free - gap;
         if (NULL == recv_buf_free) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
@@ -117,12 +115,13 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
         }
 
         /* allocate temporary buffer for results */
-        result_buf_free = (char*) malloc(buf_size);
+        result_buf_free = (char *) malloc(buf_size);
         result_buf = result_buf_free - gap;
 
         /* copy local buffer into the temporary results */
         err = ompi_datatype_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
-        if (OMPI_SUCCESS != err) goto cleanup;
+        if (OMPI_SUCCESS != err)
+            goto cleanup;
 
         /* figure out power of two mapping: grow until larger than
            comm size, then go back one, to get the largest power of
@@ -138,17 +137,17 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
             if ((rank & 1) == 0) {
                 err = MCA_PML_CALL(send(result_buf, count, dtype, rank + 1,
                                         MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                        MCA_PML_BASE_SEND_STANDARD,
-                                        comm));
-                if (OMPI_SUCCESS != err) goto cleanup;
+                                        MCA_PML_BASE_SEND_STANDARD, comm));
+                if (OMPI_SUCCESS != err)
+                    goto cleanup;
 
                 /* we don't participate from here on out */
                 tmp_rank = -1;
             } else {
                 err = MCA_PML_CALL(recv(recv_buf, count, dtype, rank - 1,
-                                        MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                        comm, MPI_STATUS_IGNORE));
-                if (OMPI_SUCCESS != err) goto cleanup;
+                                        MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm, MPI_STATUS_IGNORE));
+                if (OMPI_SUCCESS != err)
+                    goto cleanup;
 
                 /* integrate their results into our temp results */
                 ompi_op_reduce(op, recv_buf, result_buf, count, dtype);
@@ -171,19 +170,19 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
             /* recalculate disps and rcounts to account for the
                special "remainder" processes that are no longer doing
                anything */
-            tmp_rcounts = (int*) malloc(tmp_size * sizeof(int));
+            tmp_rcounts = (int *) malloc(tmp_size * sizeof(int));
             if (NULL == tmp_rcounts) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
             }
-            tmp_disps = (int*) malloc(tmp_size * sizeof(int));
+            tmp_disps = (int *) malloc(tmp_size * sizeof(int));
             if (NULL == tmp_disps) {
                 free(tmp_rcounts);
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
             }
 
-            for (i = 0 ; i < tmp_size ; ++i) {
+            for (i = 0; i < tmp_size; ++i) {
                 if (i < remain) {
                     /* need to include old neighbor as well */
                     tmp_rcounts[i] = rcounts[i * 2 + 1] + rcounts[i * 2];
@@ -215,18 +214,18 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
                 send_count = recv_count = 0;
                 if (tmp_rank < tmp_peer) {
                     send_index = recv_index + mask;
-                    for (i = send_index ; i < last_index ; ++i) {
+                    for (i = send_index; i < last_index; ++i) {
                         send_count += tmp_rcounts[i];
                     }
-                    for (i = recv_index ; i < send_index ; ++i) {
+                    for (i = recv_index; i < send_index; ++i) {
                         recv_count += tmp_rcounts[i];
                     }
                 } else {
                     recv_index = send_index + mask;
-                    for (i = send_index ; i < recv_index ; ++i) {
+                    for (i = send_index; i < recv_index; ++i) {
                         send_count += tmp_rcounts[i];
                     }
-                    for (i = recv_index ; i < last_index ; ++i) {
+                    for (i = recv_index; i < last_index; ++i) {
                         recv_count += tmp_rcounts[i];
                     }
                 }
@@ -234,10 +233,9 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
                 /* actual data transfer.  Send from result_buf,
                    receive into recv_buf */
                 if (recv_count > 0) {
-                    err = MCA_PML_CALL(irecv(recv_buf + tmp_disps[recv_index] * extent,
-                                             recv_count, dtype, peer,
-                                             MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                             comm, &request));
+                    err = MCA_PML_CALL(irecv(recv_buf + tmp_disps[recv_index] * extent, recv_count,
+                                             dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+                                             &request));
                     if (OMPI_SUCCESS != err) {
                         free(tmp_rcounts);
                         free(tmp_disps);
@@ -245,11 +243,9 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
                     }
                 }
                 if (send_count > 0) {
-                    err = MCA_PML_CALL(send(result_buf + tmp_disps[send_index] * extent,
-                                            send_count, dtype, peer,
-                                            MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                            MCA_PML_BASE_SEND_STANDARD,
-                                            comm));
+                    err = MCA_PML_CALL(send(result_buf + tmp_disps[send_index] * extent, send_count,
+                                            dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                            MCA_PML_BASE_SEND_STANDARD, comm));
                     if (OMPI_SUCCESS != err) {
                         free(tmp_rcounts);
                         free(tmp_disps);
@@ -267,10 +263,8 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
                         goto cleanup;
                     }
 
-                    ompi_op_reduce(op,
-                                   recv_buf + tmp_disps[recv_index] * extent,
-                                   result_buf + tmp_disps[recv_index] * extent,
-                                   recv_count, dtype);
+                    ompi_op_reduce(op, recv_buf + tmp_disps[recv_index] * extent,
+                                   result_buf + tmp_disps[recv_index] * extent, recv_count, dtype);
                 }
 
                 /* update for next iteration */
@@ -281,9 +275,8 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
 
             /* copy local results from results buffer into real receive buffer */
             if (0 != rcounts[rank]) {
-                err = ompi_datatype_sndrcv(result_buf + disps[rank] * extent,
-                                      rcounts[rank], dtype,
-                                      rbuf, rcounts[rank], dtype);
+                err = ompi_datatype_sndrcv(result_buf + disps[rank] * extent, rcounts[rank], dtype,
+                                           rbuf, rcounts[rank], dtype);
                 if (OMPI_SUCCESS != err) {
                     free(tmp_rcounts);
                     free(tmp_disps);
@@ -301,18 +294,19 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
             if ((rank & 1) == 0) {
                 if (rcounts[rank]) {
                     err = MCA_PML_CALL(recv(rbuf, rcounts[rank], dtype, rank + 1,
-                                            MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                            comm, MPI_STATUS_IGNORE));
-                    if (OMPI_SUCCESS != err) goto cleanup;
+                                            MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+                                            MPI_STATUS_IGNORE));
+                    if (OMPI_SUCCESS != err)
+                        goto cleanup;
                 }
             } else {
                 if (rcounts[rank - 1]) {
                     err = MCA_PML_CALL(send(result_buf + disps[rank - 1] * extent,
                                             rcounts[rank - 1], dtype, rank - 1,
                                             MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                            MCA_PML_BASE_SEND_STANDARD,
-                                            comm));
-                    if (OMPI_SUCCESS != err) goto cleanup;
+                                            MCA_PML_BASE_SEND_STANDARD, comm));
+                    if (OMPI_SUCCESS != err)
+                        goto cleanup;
                 }
             }
         }
@@ -321,7 +315,7 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
         if (0 == rank) {
             /* temporary receive buffer.  See coll_basic_reduce.c for
                details on sizing */
-            recv_buf_free = (char*) malloc(buf_size);
+            recv_buf_free = (char *) malloc(buf_size);
             recv_buf = recv_buf_free - gap;
             if (NULL == recv_buf_free) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
@@ -330,26 +324,26 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
         }
 
         /* reduction */
-        err =
-            comm->c_coll->coll_reduce(sbuf, recv_buf, count, dtype, op, 0,
-                                     comm, comm->c_coll->coll_reduce_module);
+        err = comm->c_coll->coll_reduce(sbuf, recv_buf, count, dtype, op, 0, comm,
+                                        comm->c_coll->coll_reduce_module);
 
         /* scatter */
         if (MPI_SUCCESS == err) {
-            err = comm->c_coll->coll_scatterv(recv_buf, rcounts, disps, dtype,
-                                             rbuf, rcounts[rank], dtype, 0,
-                                             comm, comm->c_coll->coll_scatterv_module);
+            err = comm->c_coll->coll_scatterv(recv_buf, rcounts, disps, dtype, rbuf, rcounts[rank],
+                                              dtype, 0, comm, comm->c_coll->coll_scatterv_module);
         }
     }
 
- cleanup:
-    if (NULL != disps) free(disps);
-    if (NULL != recv_buf_free) free(recv_buf_free);
-    if (NULL != result_buf_free) free(result_buf_free);
+cleanup:
+    if (NULL != disps)
+        free(disps);
+    if (NULL != recv_buf_free)
+        free(recv_buf_free);
+    if (NULL != result_buf_free)
+        free(result_buf_free);
 
     return err;
 }
-
 
 /*
  *	reduce_scatter_inter
@@ -358,12 +352,10 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
  *	Accepts:	- same arguments as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rcounts,
-                                    struct ompi_datatype_t *dtype,
-                                    struct ompi_op_t *op,
-                                    struct ompi_communicator_t *comm,
-                                    mca_coll_base_module_t *module)
+int mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rcounts,
+                                        struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                        struct ompi_communicator_t *comm,
+                                        mca_coll_base_module_t *module)
 {
     int err, i, rank, root = 0, rsize, lsize, totalcounts;
     char *tmpbuf = NULL, *tmpbuf2 = NULL, *lbuf = NULL, *buf;
@@ -401,7 +393,7 @@ mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rco
         span = opal_datatype_span(&dtype->super, totalcounts, &gap);
 
         /* Generate displacements for the scatterv part */
-        disps = (int*) malloc(sizeof(int) * lsize);
+        disps = (int *) malloc(sizeof(int) * lsize);
         if (NULL == disps) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -420,25 +412,22 @@ mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rco
         buf = tmpbuf2 - gap;
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
-        err = MCA_PML_CALL(isend(sbuf, totalcounts, dtype, 0,
-                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+        err = MCA_PML_CALL(isend(sbuf, totalcounts, dtype, 0, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                  MCA_PML_BASE_SEND_STANDARD, comm, &req));
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
 
-        err = MCA_PML_CALL(recv(lbuf, totalcounts, dtype, 0,
-                                MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+        err = MCA_PML_CALL(recv(lbuf, totalcounts, dtype, 0, MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
                                 MPI_STATUS_IGNORE));
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
 
-        err = ompi_request_wait( &req, MPI_STATUS_IGNORE);
+        err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
-
 
         /* Loop receiving and calling reduction function (C or Fortran)
          * The result of this reduction operations is then in
@@ -446,9 +435,8 @@ mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rco
          */
         for (i = 1; i < rsize; i++) {
             char *tbuf;
-            err = MCA_PML_CALL(recv(buf, totalcounts, dtype, i,
-                                    MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
-                                    MPI_STATUS_IGNORE));
+            err = MCA_PML_CALL(recv(buf, totalcounts, dtype, i, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                    comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
                 goto exit;
             }
@@ -456,12 +444,13 @@ mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rco
             /* Perform the reduction */
             ompi_op_reduce(op, lbuf, buf, totalcounts, dtype);
             /* swap the buffers */
-            tbuf = lbuf; lbuf = buf; buf = tbuf;
+            tbuf = lbuf;
+            lbuf = buf;
+            buf = tbuf;
         }
     } else {
         /* If not root, send data to the root. */
-        err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root,
-                                MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+        err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
         if (OMPI_SUCCESS != err) {
             goto exit;
@@ -469,12 +458,11 @@ mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rco
     }
 
     /* Now do a scatterv on the local communicator */
-    err = comm->c_local_comm->c_coll->coll_scatterv(lbuf, rcounts, disps, dtype,
-                                                   rbuf, rcounts[rank], dtype, 0,
-                                                   comm->c_local_comm,
-                                                   comm->c_local_comm->c_coll->coll_scatterv_module);
+    err = comm->c_local_comm->c_coll
+              ->coll_scatterv(lbuf, rcounts, disps, dtype, rbuf, rcounts[rank], dtype, 0,
+                              comm->c_local_comm, comm->c_local_comm->c_coll->coll_scatterv_module);
 
-  exit:
+exit:
     if (NULL != tmpbuf) {
         free(tmpbuf);
     }

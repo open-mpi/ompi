@@ -28,23 +28,22 @@
 #ifndef OMPI_ATTRIBUTE_H
 #define OMPI_ATTRIBUTE_H
 
-#include <string.h>
 #include "mpi.h"
+#include <string.h>
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
-#include "opal/class/opal_object.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/class/opal_object.h"
 
 #define ATTR_HASH_SIZE 10
 
 /*
  * Flags for keyvals
  */
-#define OMPI_KEYVAL_PREDEFINED     0x0001
-#define OMPI_KEYVAL_F77            0x0002
-#define OMPI_KEYVAL_F77_INT        0x0004
-
+#define OMPI_KEYVAL_PREDEFINED 0x0001
+#define OMPI_KEYVAL_F77        0x0002
+#define OMPI_KEYVAL_F77_INT    0x0004
 
 BEGIN_C_DECLS
 
@@ -59,84 +58,66 @@ enum ompi_attribute_type_t {
 };
 typedef enum ompi_attribute_type_t ompi_attribute_type_t;
 
-
 /* Old-style MPI-1 Fortran function pointer declarations for copy and
    delete. These will only be used here and not in the front end
    functions. */
 
-typedef void (ompi_fint_copy_attr_function)(MPI_Fint *oldobj,
-                                                    MPI_Fint *keyval,
-                                                    MPI_Fint *extra_state,
-                                                    MPI_Fint *attr_in,
-                                                    MPI_Fint *attr_out,
-                                                    ompi_fortran_logical_t *flag,
-                                                    MPI_Fint *ierr);
-typedef void (ompi_fint_delete_attr_function)(MPI_Fint *obj,
-                                                      MPI_Fint *keyval,
-                                                      MPI_Fint *attr_in,
-                                                      MPI_Fint *extra_state,
-                                                      MPI_Fint *ierr);
+typedef void(ompi_fint_copy_attr_function)(MPI_Fint *oldobj, MPI_Fint *keyval,
+                                           MPI_Fint *extra_state, MPI_Fint *attr_in,
+                                           MPI_Fint *attr_out, ompi_fortran_logical_t *flag,
+                                           MPI_Fint *ierr);
+typedef void(ompi_fint_delete_attr_function)(MPI_Fint *obj, MPI_Fint *keyval, MPI_Fint *attr_in,
+                                             MPI_Fint *extra_state, MPI_Fint *ierr);
 
 /* New-style MPI-2 Fortran function pointer declarations for copy and
    delete. These will only be used here and not in the front end
    functions. */
 
-typedef void (ompi_aint_copy_attr_function)(MPI_Fint *oldobj,
-                                            MPI_Fint *keyval,
-                                            void *extra_state,
-                                            void *attr_in,
-                                            void *attr_out,
-                                            ompi_fortran_logical_t *flag,
-                                            MPI_Fint *ierr);
-typedef void (ompi_aint_delete_attr_function)(MPI_Fint *obj,
-                                              MPI_Fint *keyval,
-                                              void *attr_in,
-                                              void *extra_state,
-                                              MPI_Fint *ierr);
+typedef void(ompi_aint_copy_attr_function)(MPI_Fint *oldobj, MPI_Fint *keyval, void *extra_state,
+                                           void *attr_in, void *attr_out,
+                                           ompi_fortran_logical_t *flag, MPI_Fint *ierr);
+typedef void(ompi_aint_delete_attr_function)(MPI_Fint *obj, MPI_Fint *keyval, void *attr_in,
+                                             void *extra_state, MPI_Fint *ierr);
 /*
  * Internally the copy function for all kinds of MPI objects has one more
  * argument, the pointer to the new object. Therefore, we can do on the
  * flight modifications of the new communicator based on attributes stored
  * on the main communicator.
  */
-typedef int (MPI_Comm_internal_copy_attr_function)(MPI_Comm, int, void *,
-                                                   void *, void *, int *,
-                                                   MPI_Comm);
-typedef int (MPI_Type_internal_copy_attr_function)(MPI_Datatype, int, void *,
-                                                   void *, void *, int *,
-                                                   MPI_Datatype);
-typedef int (MPI_Win_internal_copy_attr_function)(MPI_Win, int, void *,
-                                                  void *, void *, int *,
-                                                  MPI_Win);
+typedef int(MPI_Comm_internal_copy_attr_function)(MPI_Comm, int, void *, void *, void *, int *,
+                                                  MPI_Comm);
+typedef int(MPI_Type_internal_copy_attr_function)(MPI_Datatype, int, void *, void *, void *, int *,
+                                                  MPI_Datatype);
+typedef int(MPI_Win_internal_copy_attr_function)(MPI_Win, int, void *, void *, void *, int *,
+                                                 MPI_Win);
 
-typedef void (ompi_attribute_keyval_destructor_fn_t)(int);
+typedef void(ompi_attribute_keyval_destructor_fn_t)(int);
 
 /* Union to take care of proper casting of the function pointers
    passed from the front end functions depending on the type. This
    will avoid casting function pointers to void*  */
 
 union ompi_attribute_fn_ptr_union_t {
-    MPI_Comm_delete_attr_function          *attr_communicator_delete_fn;
-    MPI_Type_delete_attr_function          *attr_datatype_delete_fn;
-    MPI_Win_delete_attr_function           *attr_win_delete_fn;
+    MPI_Comm_delete_attr_function *attr_communicator_delete_fn;
+    MPI_Type_delete_attr_function *attr_datatype_delete_fn;
+    MPI_Win_delete_attr_function *attr_win_delete_fn;
 
-    MPI_Comm_internal_copy_attr_function   *attr_communicator_copy_fn;
-    MPI_Type_internal_copy_attr_function   *attr_datatype_copy_fn;
-    MPI_Win_internal_copy_attr_function    *attr_win_copy_fn;
+    MPI_Comm_internal_copy_attr_function *attr_communicator_copy_fn;
+    MPI_Type_internal_copy_attr_function *attr_datatype_copy_fn;
+    MPI_Win_internal_copy_attr_function *attr_win_copy_fn;
 
     /* For Fortran old MPI-1 callback functions */
 
     ompi_fint_delete_attr_function *attr_fint_delete_fn;
-    ompi_fint_copy_attr_function   *attr_fint_copy_fn;
+    ompi_fint_copy_attr_function *attr_fint_copy_fn;
 
     /* For Fortran new MPI-2 callback functions */
 
     ompi_aint_delete_attr_function *attr_aint_delete_fn;
-    ompi_aint_copy_attr_function   *attr_aint_copy_fn;
+    ompi_aint_copy_attr_function *attr_aint_copy_fn;
 };
 
 typedef union ompi_attribute_fn_ptr_union_t ompi_attribute_fn_ptr_union_t;
-
 
 /**
  * Union to help convert between Fortran attributes (which must be
@@ -155,17 +136,17 @@ typedef union ompi_attribute_fortran_ptr_t ompi_attribute_fortran_ptr_t;
 
 struct ompi_attribute_keyval_t {
     opal_object_t super;
-    ompi_attribute_type_t attr_type; /**< One of COMM/WIN/DTYPE. This
-                                       will be used to cast the
-                                       copy/delete attribute functions
-                                       properly and error checking */
-    int attr_flag; /**< flag field: contains "OMPI_KEYVAL_PREDEFINED",
-                      "OMPI_KEYVAL_F77"  */
+    ompi_attribute_type_t attr_type;            /**< One of COMM/WIN/DTYPE. This
+                                                  will be used to cast the
+                                                  copy/delete attribute functions
+                                                  properly and error checking */
+    int attr_flag;                              /**< flag field: contains "OMPI_KEYVAL_PREDEFINED",
+                                                   "OMPI_KEYVAL_F77"  */
     ompi_attribute_fn_ptr_union_t copy_attr_fn; /**< Copy function for the
                                              attribute */
     ompi_attribute_fn_ptr_union_t delete_attr_fn; /**< Delete function for the
                                                attribute */
-    ompi_attribute_fortran_ptr_t extra_state; /**< Extra state of the attribute */
+    ompi_attribute_fortran_ptr_t extra_state;     /**< Extra state of the attribute */
     int key; /**< Keep a track of which key this item belongs to, so that
                 the key can be deleted when this object is destroyed */
 
@@ -176,17 +157,13 @@ struct ompi_attribute_keyval_t {
 
 typedef struct ompi_attribute_keyval_t ompi_attribute_keyval_t;
 
-
 /* Functions */
-
-
 
 /**
  * Convenient way to initialize the attribute hash table per MPI-Object
  */
 
-static inline
-int ompi_attr_hash_init(opal_hash_table_t **hash)
+static inline int ompi_attr_hash_init(opal_hash_table_t **hash)
 {
     *hash = OBJ_NEW(opal_hash_table_t);
     if (NULL == *hash) {
@@ -213,7 +190,6 @@ int ompi_attr_init(void);
  */
 
 int ompi_attr_finalize(void);
-
 
 /**
  * Create a new key for use by attribute of Comm/Win/Datatype
@@ -251,9 +227,8 @@ int ompi_attr_finalize(void);
 
 OMPI_DECLSPEC int ompi_attr_create_keyval(ompi_attribute_type_t type,
                                           ompi_attribute_fn_ptr_union_t copy_attr_fn,
-                                          ompi_attribute_fn_ptr_union_t delete_attr_fn,
-                                          int *key, void *extra_state, int flags,
-                                          void *bindings_extra_state);
+                                          ompi_attribute_fn_ptr_union_t delete_attr_fn, int *key,
+                                          void *extra_state, int flags, void *bindings_extra_state);
 
 /**
  * Same as ompi_attr_create_keyval, but extra_state is a Fortran default integer.
@@ -282,8 +257,7 @@ OMPI_DECLSPEC int ompi_attr_create_keyval_aint(ompi_attribute_type_t type,
  * @return OMPI error code
  */
 
-int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
-                          bool predefined);
+int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, bool predefined);
 
 /**
  * Set an attribute on the comm/win/datatype in a form valid for C.
@@ -310,8 +284,7 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  * So yes, this is more code, but it's clearer and less error-prone
  * (read: better) this way.
  */
-int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
-                    opal_hash_table_t **attr_hash,
+int ompi_attr_set_c(ompi_attribute_type_t type, void *object, opal_hash_table_t **attr_hash,
                     int key, void *attribute, bool predefined);
 
 /**
@@ -339,8 +312,7 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  * So yes, this is more code, but it's clearer and less error-prone
  * (read: better) this way.
  */
-int ompi_attr_set_int(ompi_attribute_type_t type, void *object,
-                      opal_hash_table_t **attr_hash,
+int ompi_attr_set_int(ompi_attribute_type_t type, void *object, opal_hash_table_t **attr_hash,
                       int key, int attribute, bool predefined);
 
 /**
@@ -370,8 +342,7 @@ int ompi_attr_set_int(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 OMPI_DECLSPEC int ompi_attr_set_fint(ompi_attribute_type_t type, void *object,
-                                     opal_hash_table_t **attr_hash,
-                                     int key, MPI_Fint attribute,
+                                     opal_hash_table_t **attr_hash, int key, MPI_Fint attribute,
                                      bool predefined);
 
 /**
@@ -401,8 +372,7 @@ OMPI_DECLSPEC int ompi_attr_set_fint(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 OMPI_DECLSPEC int ompi_attr_set_aint(ompi_attribute_type_t type, void *object,
-                                     opal_hash_table_t **attr_hash,
-                                     int key, MPI_Aint attribute,
+                                     opal_hash_table_t **attr_hash, int key, MPI_Aint attribute,
                                      bool predefined);
 
 /**
@@ -427,9 +397,7 @@ OMPI_DECLSPEC int ompi_attr_set_aint(ompi_attribute_type_t type, void *object,
  * (read: better) this way.
  */
 
-int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
-                    void **attribute, int *flag);
-
+int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key, void **attribute, int *flag);
 
 /**
  * Get an attribute on the comm/win/datatype in a form valid for
@@ -454,9 +422,8 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * (read: better) this way.
  */
 
-    OMPI_DECLSPEC int ompi_attr_get_fint(opal_hash_table_t *attr_hash, int key,
-                                         MPI_Fint *attribute, int *flag);
-
+OMPI_DECLSPEC int ompi_attr_get_fint(opal_hash_table_t *attr_hash, int key, MPI_Fint *attribute,
+                                     int *flag);
 
 /**
  * Get an attribute on the comm/win/datatype in a form valid for
@@ -481,9 +448,8 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
  * (read: better) this way.
  */
 
-OMPI_DECLSPEC int ompi_attr_get_aint(opal_hash_table_t *attr_hash, int key,
-                                     MPI_Aint *attribute, int *flag);
-
+OMPI_DECLSPEC int ompi_attr_get_aint(opal_hash_table_t *attr_hash, int key, MPI_Aint *attribute,
+                                     int *flag);
 
 /**
  * Delete an attribute on the comm/win/datatype
@@ -496,10 +462,8 @@ OMPI_DECLSPEC int ompi_attr_get_aint(opal_hash_table_t *attr_hash, int key,
  *
  */
 
-int ompi_attr_delete(ompi_attribute_type_t type, void *object,
-                     opal_hash_table_t *attr_hash , int key,
-                     bool predefined);
-
+int ompi_attr_delete(ompi_attribute_type_t type, void *object, opal_hash_table_t *attr_hash,
+                     int key, bool predefined);
 
 /**
  * This to be used from functions like MPI_*_DUP in order to copy all
@@ -514,10 +478,8 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
  *
  */
 
-int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
-                       void *new_object, opal_hash_table_t *oldattr_hash,
-                       opal_hash_table_t *newattr_hash);
-
+int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, void *new_object,
+                       opal_hash_table_t *oldattr_hash, opal_hash_table_t *newattr_hash);
 
 /**
  * This to be used to delete all the attributes from the Comm/Win/Dtype
@@ -529,9 +491,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
  *
  */
 
-int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
-                        opal_hash_table_t *attr_hash);
-
+int ompi_attr_delete_all(ompi_attribute_type_t type, void *object, opal_hash_table_t *attr_hash);
 
 /**
  * \internal
@@ -550,7 +510,6 @@ int ompi_attr_create_predefined(void);
  * @returns OMPI_SUCCESS
  */
 int ompi_attr_free_predefined(void);
-
 
 END_C_DECLS
 

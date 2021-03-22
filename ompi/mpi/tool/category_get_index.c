@@ -18,19 +18,18 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_category_get_index = PMPI_T_category_get_index
+#    pragma weak MPI_T_category_get_index = PMPI_T_category_get_index
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_category_get_index (const char *name, int *category_index)
+int MPI_T_category_get_index(const char *name, int *category_index)
 {
     int ret;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
@@ -38,9 +37,9 @@ int MPI_T_category_get_index (const char *name, int *category_index)
         return MPI_T_ERR_INVALID;
     }
 
-    ompi_mpit_lock ();
-    ret = mca_base_var_group_find_by_name (name, category_index);
-    ompi_mpit_unlock ();
+    ompi_mpit_lock();
+    ret = mca_base_var_group_find_by_name(name, category_index);
+    ompi_mpit_unlock();
     if (OPAL_SUCCESS != ret) {
         return MPI_T_ERR_INVALID_NAME;
     }

@@ -20,30 +20,28 @@
 #ifndef OMPI_MTL_PORTALS_REQUEST_H
 #define OMPI_MTL_PORTALS_REQUEST_H
 
-#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/mtl.h"
+#include "opal/datatype/opal_convertor.h"
 #include "opal/mca/timer/base/base.h"
 
 struct ompi_mtl_portals4_message_t;
 struct ompi_mtl_portals4_pending_request_t;
 
-
-typedef enum { portals4_req_isend,
-               portals4_req_send,
-               portals4_req_recv,
-               portals4_req_probe,
-               portals4_req_recv_short,
-               portals4_req_flowctl
+typedef enum {
+    portals4_req_isend,
+    portals4_req_send,
+    portals4_req_recv,
+    portals4_req_probe,
+    portals4_req_recv_short,
+    portals4_req_flowctl
 } ompi_mtl_portals4_request_type_t;
-
 
 struct ompi_mtl_portals4_base_request_t {
     struct mca_mtl_request_t super;
     ompi_mtl_portals4_request_type_t type;
-    int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_base_request_t*);
+    int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_base_request_t *);
 };
 typedef struct ompi_mtl_portals4_base_request_t ompi_mtl_portals4_base_request_t;
-
 
 struct ompi_mtl_portals4_isend_request_t {
     ompi_mtl_portals4_base_request_t super;
@@ -59,14 +57,12 @@ struct ompi_mtl_portals4_isend_request_t {
 };
 typedef struct ompi_mtl_portals4_isend_request_t ompi_mtl_portals4_isend_request_t;
 
-
 struct ompi_mtl_portals4_send_request_t {
     ompi_mtl_portals4_isend_request_t super;
     int retval;
     volatile int complete;
 };
 typedef struct ompi_mtl_portals4_send_request_t ompi_mtl_portals4_send_request_t;
-
 
 struct ompi_mtl_portals4_recv_request_t {
     ompi_mtl_portals4_base_request_t super;
@@ -89,15 +85,15 @@ struct ompi_mtl_portals4_rndv_get_frag_t {
     /* the recv request that's composed of these frags */
     ompi_mtl_portals4_recv_request_t *request;
     /* info extracted from the put_overflow event that is required to retry the rndv-get */
-    void            *frag_start;
-    ptl_size_t       frag_length;
-    ptl_process_t    frag_target;
-    ptl_hdr_data_t   frag_match_bits;
-    ptl_size_t       frag_remote_offset;
+    void *frag_start;
+    ptl_size_t frag_length;
+    ptl_process_t frag_target;
+    ptl_hdr_data_t frag_match_bits;
+    ptl_size_t frag_remote_offset;
     /* the absolute time at which this frag times out */
-    opal_timer_t     frag_abs_timeout_usec;
+    opal_timer_t frag_abs_timeout_usec;
 
-    int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_rndv_get_frag_t*);
+    int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_rndv_get_frag_t *);
 
 #if OPAL_ENABLE_DEBUG
     uint32_t frag_num;
@@ -106,13 +102,11 @@ struct ompi_mtl_portals4_rndv_get_frag_t {
 typedef struct ompi_mtl_portals4_rndv_get_frag_t ompi_mtl_portals4_rndv_get_frag_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals4_rndv_get_frag_t);
 
-
 struct ompi_mtl_portals4_recv_short_request_t {
     ompi_mtl_portals4_base_request_t super;
     struct ompi_mtl_portals4_recv_short_block_t *block;
 };
 typedef struct ompi_mtl_portals4_recv_short_request_t ompi_mtl_portals4_recv_short_request_t;
-
 
 struct ompi_mtl_portals4_probe_request_t {
     ompi_mtl_portals4_base_request_t super;
@@ -122,7 +116,6 @@ struct ompi_mtl_portals4_probe_request_t {
     struct ompi_mtl_portals4_message_t *message;
 };
 typedef struct ompi_mtl_portals4_probe_request_t ompi_mtl_portals4_probe_request_t;
-
 
 struct ompi_mtl_portals4_request_t {
     union {
@@ -134,6 +127,5 @@ struct ompi_mtl_portals4_request_t {
     } u;
 };
 typedef struct ompi_mtl_portals4_request_t ompi_mtl_portals4_request_t;
-
 
 #endif

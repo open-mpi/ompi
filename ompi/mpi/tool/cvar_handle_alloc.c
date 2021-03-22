@@ -17,21 +17,20 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_cvar_handle_alloc = PMPI_T_cvar_handle_alloc
+#    pragma weak MPI_T_cvar_handle_alloc = PMPI_T_cvar_handle_alloc
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
-                             MPI_T_cvar_handle *handle, int *count)
+int MPI_T_cvar_handle_alloc(int cvar_index, void *obj_handle, MPI_T_cvar_handle *handle, int *count)
 {
     ompi_mpit_cvar_handle_t *new_handle;
-    int rc = MPI_SUCCESS;;
+    int rc = MPI_SUCCESS;
+    ;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
@@ -39,12 +38,12 @@ int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
         return MPI_T_ERR_INVALID;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     *handle = NULL;
 
     do {
-        new_handle = (ompi_mpit_cvar_handle_t *) malloc (sizeof (ompi_mpit_cvar_handle_t));
+        new_handle = (ompi_mpit_cvar_handle_t *) malloc(sizeof(ompi_mpit_cvar_handle_t));
         if (NULL == new_handle) {
             rc = MPI_T_ERR_MEMORY;
             break;
@@ -52,9 +51,10 @@ int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
 
         rc = mca_base_var_get(cvar_index, &new_handle->var);
         if (OPAL_SUCCESS != rc) {
-            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc || OPAL_ERR_NOT_FOUND == rc) ? MPI_T_ERR_INVALID_INDEX:
-                MPI_T_ERR_INVALID;
-            free (new_handle);
+            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc || OPAL_ERR_NOT_FOUND == rc)
+                     ? MPI_T_ERR_INVALID_INDEX
+                     : MPI_T_ERR_INVALID;
+            free(new_handle);
             break;
         }
 
@@ -72,7 +72,7 @@ int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
         *handle = (MPI_T_cvar_handle) new_handle;
     } while (0);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return rc;
 }

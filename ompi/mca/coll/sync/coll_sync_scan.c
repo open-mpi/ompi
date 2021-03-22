@@ -20,7 +20,6 @@
 
 #include "coll_sync.h"
 
-
 /*
  *	scan
  *
@@ -28,18 +27,15 @@
  *	Accepts:	- same arguments as MPI_Scan()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sync_scan(const void *sbuf, void *rbuf, int count,
-                       struct ompi_datatype_t *dtype,
-                       struct ompi_op_t *op,
-                       struct ompi_communicator_t *comm,
+int mca_coll_sync_scan(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+                       struct ompi_op_t *op, struct ompi_communicator_t *comm,
                        mca_coll_base_module_t *module)
 {
-    mca_coll_sync_module_t *s = (mca_coll_sync_module_t*) module;
+    mca_coll_sync_module_t *s = (mca_coll_sync_module_t *) module;
 
     if (s->in_operation) {
-        return s->c_coll.coll_scan(sbuf, rbuf, count, dtype, op, comm,
-                                   s->c_coll.coll_scan_module);
+        return s->c_coll.coll_scan(sbuf, rbuf, count, dtype, op, comm, s->c_coll.coll_scan_module);
     }
-    COLL_SYNC(s, s->c_coll.coll_scan(sbuf, rbuf, count, dtype, op, comm,
-                                     s->c_coll.coll_scan_module));
+    COLL_SYNC(s,
+              s->c_coll.coll_scan(sbuf, rbuf, count, dtype, op, comm, s->c_coll.coll_scan_module));
 }

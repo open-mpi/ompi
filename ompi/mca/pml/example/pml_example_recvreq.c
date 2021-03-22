@@ -10,17 +10,16 @@
  */
 
 #include "ompi_config.h"
-#include "pml_example.h"
 #include "pml_example_recvreq.h"
+#include "pml_example.h"
 
 /*
  * Update the recv request status to reflect the number of bytes
  * received and actually delivered to the application.
  */
 
-void mca_pml_example_recv_request_progress( struct mca_ptl_base_module_t* ptl,
-                                        mca_pml_base_recv_request_t* req,
-                                        size_t bytes_received,
-                                        size_t bytes_delivered )
+void mca_pml_example_recv_request_progress(struct mca_ptl_base_module_t *ptl,
+                                           mca_pml_base_recv_request_t *req, size_t bytes_received,
+                                           size_t bytes_delivered)
 {
 }

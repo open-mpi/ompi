@@ -21,41 +21,36 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_delete_attr = PMPI_Comm_delete_attr
-#endif
-#define MPI_Comm_delete_attr PMPI_Comm_delete_attr
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_delete_attr = PMPI_Comm_delete_attr
+#    endif
+#    define MPI_Comm_delete_attr PMPI_Comm_delete_attr
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_delete_attr";
-
 
 int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval)
 {
     int ret;
 
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
     }
 
-    ret = ompi_attr_delete(COMM_ATTR, comm, comm->c_keyhash, comm_keyval,
-                           false);
+    ret = ompi_attr_delete(COMM_ATTR, comm, comm->c_keyhash, comm_keyval, false);
 
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);
 }

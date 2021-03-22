@@ -22,51 +22,45 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_disconnect = PMPI_Comm_disconnect
-#endif
-#define MPI_Comm_disconnect PMPI_Comm_disconnect
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_disconnect = PMPI_Comm_disconnect
+#    endif
+#    define MPI_Comm_disconnect PMPI_Comm_disconnect
 #endif
 
 #include "ompi/dpm/dpm.h"
 
-
 static const char FUNC_NAME[] = "MPI_Comm_disconnect";
-
 
 int MPI_Comm_disconnect(MPI_Comm *comm)
 {
     int ret = MPI_SUCCESS;
 
-    MEMCHECKER(
-        memchecker_comm(*comm);
-    );
+    MEMCHECKER(memchecker_comm(*comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( ompi_comm_invalid (*comm))
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+        if (ompi_comm_invalid(*comm))
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
     }
 
-    if (MPI_COMM_WORLD == *comm || MPI_COMM_SELF == *comm ) {
+    if (MPI_COMM_WORLD == *comm || MPI_COMM_SELF == *comm) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
     }
 
-    if ( OMPI_COMM_IS_DYNAMIC(*comm)) {
-        if (OMPI_SUCCESS != ompi_dpm_disconnect (*comm)) {
+    if (OMPI_COMM_IS_DYNAMIC(*comm)) {
+        if (OMPI_SUCCESS != ompi_dpm_disconnect(*comm)) {
             ret = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
-    }
-    else {
+    } else {
         (*comm)->c_coll->coll_barrier(*comm, (*comm)->c_coll->coll_barrier_module);
     }
 
