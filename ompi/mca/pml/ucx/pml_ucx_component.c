@@ -64,6 +64,21 @@ static int mca_pml_ucx_component_register(void)
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_pml_ucx.num_disconnect);
+
+#if HAVE_DECL_UCP_WORKER_FLAG_IGNORE_REQUEST_LEAK
+    ompi_pml_ucx.request_leak_check = false;
+    (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "request_leak_check",
+                                           "Enable showing a warning during MPI_Finalize if some "
+                                           "non-blocking MPI requests have not been released",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &ompi_pml_ucx.request_leak_check);
+#else
+    /* If UCX does not support ignoring leak check, then it's always enabled */
+    ompi_pml_ucx.request_leak_check = true;
+#endif
+
     opal_common_ucx_mca_var_register(&mca_pml_ucx_component.pmlm_version);
     return 0;
 }
