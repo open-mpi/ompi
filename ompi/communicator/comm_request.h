@@ -9,7 +9,7 @@
  * $HEADER$
  */
 
-#if !defined(OMPI_COMM_REQ_H)
+#ifndef OMPI_COMM_REQ_H
 #define OMPI_COMM_REQ_H
 
 #include "opal/class/opal_list.h"

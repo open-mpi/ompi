@@ -11,7 +11,7 @@
  * $HEADER$
  */
 
-#if !defined(OMPI_OSC_RDMA_COMM_H)
+#ifndef OMPI_OSC_RDMA_COMM_H
 #define OMPI_OSC_RDMA_COMM_H
 
 #include "osc_rdma_dynamic.h"
