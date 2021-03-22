@@ -13,6 +13,8 @@
 #if !defined(OSC_RDMA_SYNC_H)
 #define OSC_RDMA_SYNC_H
 
+#include "ompi/group/group.h"
+#include "opal/mca/btl/btl.h"
 #include "osc_rdma_types.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/threads/threads.h"
