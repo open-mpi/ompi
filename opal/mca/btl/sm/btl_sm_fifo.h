@@ -27,30 +27,17 @@
 #ifndef MCA_BTL_SM_FIFO_H
 #define MCA_BTL_SM_FIFO_H
 
-#include "btl_sm.h"
-#include "btl_sm_endpoint.h"
-#include "btl_sm_frag.h"
+#include "opal_config.h"
 
-#define sm_item_compare_exchange(x, y, z) opal_atomic_compare_exchange_strong_ptr ((opal_atomic_intptr_t *) (x), (intptr_t *) (y), (intptr_t) (z))
+#include "opal/mca/btl/sm/btl_sm_fbox.h"
+#include "opal/mca/btl/sm/btl_sm_types.h"
+#include "opal/mca/btl/sm/btl_sm_virtual.h"
 
-#if SIZEOF_VOID_P == 8
-#define sm_item_swap(x, y)      opal_atomic_swap_64((opal_atomic_int64_t *)(x), (int64_t)(y))
+#define sm_item_compare_exchange(x, y, z)                                                   \
+    opal_atomic_compare_exchange_strong_ptr((opal_atomic_intptr_t *) (x), (intptr_t *) (y), \
+                                            (intptr_t)(z))
 
-#define MCA_BTL_SM_OFFSET_MASK 0xffffffffll
-#define MCA_BTL_SM_OFFSET_BITS 32
-#define MCA_BTL_SM_BITNESS     64
-#else
-#define sm_item_swap(x, y)      opal_atomic_swap_32((opal_atomic_int32_t *)(x), (int32_t)(y))
-
-#define MCA_BTL_SM_OFFSET_MASK 0x00ffffffl
-#define MCA_BTL_SM_OFFSET_BITS 24
-#define MCA_BTL_SM_BITNESS     32
-#endif
-
-typedef opal_atomic_intptr_t atomic_fifo_value_t;
-typedef intptr_t fifo_value_t;
-
-#define SM_FIFO_FREE  ((fifo_value_t)-2)
+#define SM_FIFO_FREE ((fifo_value_t) -2)
 
 /*
  * Shared Memory FIFOs
@@ -66,42 +53,8 @@ typedef intptr_t fifo_value_t;
  * We introduce some padding at the end of the structure but it is probably unnecessary.
  */
 
-/* lock free fifo */
-typedef struct sm_fifo_t {
-    atomic_fifo_value_t fifo_head;
-    atomic_fifo_value_t fifo_tail;
-    opal_atomic_int32_t fbox_available;
-} sm_fifo_t;
-
 /* large enough to ensure the fifo is on its own cache line */
 #define MCA_BTL_SM_FIFO_SIZE 128
-
-/***
- * One or more FIFO components may be a pointer that must be
- * accessed by multiple processes.  Since the shared region may
- * be mmapped differently into each process's address space,
- * these pointers will be relative to some base address.  Here,
- * we define inline functions to translate between relative
- * addresses and virtual addresses.
- */
-
-/* This only works for finding the relative address for a pointer within my_segment */
-static inline fifo_value_t virtual2relative (char *addr)
-{
-    return (fifo_value_t) ((intptr_t) (addr - mca_btl_sm_component.my_segment)) | ((fifo_value_t)MCA_BTL_SM_LOCAL_RANK << MCA_BTL_SM_OFFSET_BITS);
-}
-
-static inline fifo_value_t virtual2relativepeer (struct mca_btl_base_endpoint_t *endpoint, char *addr)
-{
-    return (fifo_value_t) ((intptr_t) (addr - endpoint->segment_base)) | ((fifo_value_t)endpoint->peer_smp_rank << MCA_BTL_SM_OFFSET_BITS);
-}
-
-static inline void *relative2virtual (fifo_value_t offset)
-{
-    return (void *)(intptr_t)((offset & MCA_BTL_SM_OFFSET_MASK) + mca_btl_sm_component.endpoints[offset >> MCA_BTL_SM_OFFSET_BITS].segment_base);
-}
-
-#include "btl_sm_fbox.h"
 
 /**
  * sm_fifo_read:
@@ -115,7 +68,7 @@ static inline void *relative2virtual (fifo_value_t offset)
  *
  * This function does not currently support multiple readers.
  */
-static inline mca_btl_sm_hdr_t *sm_fifo_read (sm_fifo_t *fifo, struct mca_btl_base_endpoint_t **ep)
+static inline mca_btl_sm_hdr_t *sm_fifo_read(sm_fifo_t *fifo, struct mca_btl_base_endpoint_t **ep)
 {
     mca_btl_sm_hdr_t *hdr;
     fifo_value_t value;
@@ -124,23 +77,23 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read (sm_fifo_t *fifo, struct mca_btl_ba
         return NULL;
     }
 
-    opal_atomic_rmb ();
+    opal_atomic_rmb();
 
     value = fifo->fifo_head;
 
     *ep = &mca_btl_sm_component.endpoints[value >> MCA_BTL_SM_OFFSET_BITS];
-    hdr = (mca_btl_sm_hdr_t *) relative2virtual (value);
+    hdr = (mca_btl_sm_hdr_t *) relative2virtual(value);
 
     fifo->fifo_head = SM_FIFO_FREE;
 
-    assert (hdr->next != value);
+    assert(hdr->next != value);
 
     if (OPAL_UNLIKELY(SM_FIFO_FREE == hdr->next)) {
         opal_atomic_rmb();
 
-        if (!sm_item_compare_exchange (&fifo->fifo_tail, &value, SM_FIFO_FREE)) {
+        if (!sm_item_compare_exchange(&fifo->fifo_tail, &value, SM_FIFO_FREE)) {
             while (SM_FIFO_FREE == hdr->next) {
-                opal_atomic_rmb ();
+                opal_atomic_rmb();
             }
 
             fifo->fifo_head = hdr->next;
@@ -149,11 +102,11 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read (sm_fifo_t *fifo, struct mca_btl_ba
         fifo->fifo_head = hdr->next;
     }
 
-    opal_atomic_wmb ();
+    opal_atomic_wmb();
     return hdr;
 }
 
-static inline void sm_fifo_init (sm_fifo_t *fifo)
+static inline void sm_fifo_init(sm_fifo_t *fifo)
 {
     /* due to a compiler bug in Oracle C 5.15 the following line was broken into two. Not
      * ideal but oh well. See #5814 */
@@ -164,24 +117,24 @@ static inline void sm_fifo_init (sm_fifo_t *fifo)
     mca_btl_sm_component.my_fifo = fifo;
 }
 
-static inline void sm_fifo_write (sm_fifo_t *fifo, fifo_value_t value)
+static inline void sm_fifo_write(sm_fifo_t *fifo, fifo_value_t value)
 {
     fifo_value_t prev;
 
-    opal_atomic_wmb ();
-    prev = sm_item_swap (&fifo->fifo_tail, value);
-    opal_atomic_rmb ();
+    opal_atomic_wmb();
+    prev = opal_atomic_swap_ptr(&fifo->fifo_tail, value);
+    opal_atomic_rmb();
 
-    assert (prev != value);
+    assert(prev != value);
 
     if (OPAL_LIKELY(SM_FIFO_FREE != prev)) {
-        mca_btl_sm_hdr_t *hdr = (mca_btl_sm_hdr_t *) relative2virtual (prev);
+        mca_btl_sm_hdr_t *hdr = (mca_btl_sm_hdr_t *) relative2virtual(prev);
         hdr->next = value;
     } else {
         fifo->fifo_head = value;
     }
 
-    opal_atomic_wmb ();
+    opal_atomic_wmb();
 }
 
 /**
@@ -195,18 +148,18 @@ static inline void sm_fifo_write (sm_fifo_t *fifo, fifo_value_t value)
  * This function is used to send a fragment to a remote peer. {hdr} must belong
  * to the current process.
  */
-static inline bool sm_fifo_write_ep (mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
+static inline bool sm_fifo_write_ep(mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
 {
-    fifo_value_t rhdr = virtual2relative ((char *) hdr);
+    fifo_value_t rhdr = virtual2relative((char *) hdr);
     if (ep->fbox_out.buffer) {
         /* if there is a fast box for this peer then use the fast box to send the fragment header.
          * this is done to ensure fragment ordering */
-        opal_atomic_wmb ();
-        return mca_btl_sm_fbox_sendi (ep, 0xfe, &rhdr, sizeof (rhdr), NULL, 0);
+        opal_atomic_wmb();
+        return mca_btl_sm_fbox_sendi(ep, 0xfe, &rhdr, sizeof(rhdr), NULL, 0);
     }
-    mca_btl_sm_try_fbox_setup (ep, hdr);
+    mca_btl_sm_try_fbox_setup(ep, hdr);
     hdr->next = SM_FIFO_FREE;
-    sm_fifo_write (ep->fifo, rhdr);
+    sm_fifo_write(ep->fifo, rhdr);
 
     return true;
 }
@@ -219,13 +172,13 @@ static inline bool sm_fifo_write_ep (mca_btl_sm_hdr_t *hdr, struct mca_btl_base_
  * @param[in]  hdr - fragment header to write
  * @param[in]  ep  - endpoint the fragment belongs to
  *
- * This function is used to return a fragment to the sending process. It differs from sm_fifo_write_ep
- * in that it uses the {ep} to produce the relative address.
+ * This function is used to return a fragment to the sending process. It differs from
+ * sm_fifo_write_ep in that it uses the {ep} to produce the relative address.
  */
-static inline void sm_fifo_write_back (mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
+static inline void sm_fifo_write_back(mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endpoint_t *ep)
 {
     hdr->next = SM_FIFO_FREE;
-    sm_fifo_write(ep->fifo, virtual2relativepeer (ep, (char *) hdr));
+    sm_fifo_write(ep->fifo, virtual2relativepeer(ep, (char *) hdr));
 }
 
 #endif /* MCA_BTL_SM_FIFO_H */

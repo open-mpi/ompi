@@ -42,7 +42,9 @@ libmca_btl_sm_la_sources = \
     btl_sm_xpmem.h \
     btl_sm_knem.c \
     btl_sm_knem.h \
-    btl_sm_atomic.c
+    btl_sm_types.h \
+    btl_sm_virtual.h
+
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
