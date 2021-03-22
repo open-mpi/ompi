@@ -11,7 +11,7 @@
  * $HEADER$
  */
 
-#if !defined(OSC_RDMA_ACCUMULATE_H)
+#ifndef OSC_RDMA_ACCUMULATE_H
 #define OSC_RDMA_ACCUMULATE_H
 
 #include "osc_rdma.h"

@@ -12,7 +12,7 @@
  * $HEADER$
  */
 
-#if !defined(OMPI_OSC_RDMA_LOCK_H)
+#ifndef OMPI_OSC_RDMA_LOCK_H
 #define OMPI_OSC_RDMA_LOCK_H
 
 #include "osc_rdma_types.h"

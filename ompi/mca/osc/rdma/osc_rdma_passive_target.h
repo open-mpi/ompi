@@ -10,7 +10,7 @@
  * $HEADER$
  */
 
-#if !defined(OSC_RDMA_PASSIVE_TARGET_H)
+#ifndef OSC_RDMA_PASSIVE_TARGET_H
 #define OSC_RDMA_PASSIVE_TARGET_H
 
 #include "osc_rdma.h"
@@ -129,4 +129,4 @@ int ompi_osc_rdma_flush_local (int target, struct ompi_win_t *win);
  */
 int ompi_osc_rdma_flush_local_all (struct ompi_win_t *win);
 
-#endif
+#endif /* OSC_RDMA_PASSIVE_TARGET_H */

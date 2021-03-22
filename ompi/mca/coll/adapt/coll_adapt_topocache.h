@@ -13,6 +13,8 @@
 #ifndef MCA_COLL_ADAPT_TOPOCACHE_H
 #define MCA_COLL_ADAPT_TOPOCACHE_H
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/adapt/coll_adapt.h"
 #include "opal/class/opal_list.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_base_topo.h"

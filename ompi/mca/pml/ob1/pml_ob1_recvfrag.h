@@ -28,7 +28,8 @@
 #ifndef MCA_PML_OB1_RECVFRAG_H
 #define MCA_PML_OB1_RECVFRAG_H
 
-#include "pml_ob1_hdr.h"
+#include "ompi/mca/pml/ob1/pml_ob1_comm.h"
+#include "ompi/mca/pml/ob1/pml_ob1_hdr.h"
 
 BEGIN_C_DECLS
 
