@@ -137,8 +137,14 @@ ompi_coll_base_scatter_intra_binomial(
         scount = (int)packed_sizet;
 
         sdtype = MPI_PACKED;  /* default to MPI_PACKED as the send type */
-        packed_size = scount * (size+1)/2;  /* non-root, non-leaf nodes, allocate temp buffer for recv
-                                             * the most we need is rcount*size/2 */
+
+        /* non-root, non-leaf nodes, allocate temp buffer for recv the most we need is rcount*size/2 (an upper bound) */
+        int vparent = (bmtree->tree_prev - root + size) % size;
+        int subtree_size = vrank - vparent;
+        if (size - vrank < subtree_size)
+            subtree_size = size - vrank;
+        packed_size = scount * subtree_size;
+
         ptmp = tempbuf = (char *)malloc(packed_size);
         if (NULL == tempbuf) {
             err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
