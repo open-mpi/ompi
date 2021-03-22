@@ -10,7 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2021      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,7 +25,8 @@ AM_LDFLAGS = -lpthread
 
 check_PROGRAMS = \
 	opal_thread \
-	opal_condition
+	opal_condition \
+	opal_atomic_thread_bench
 
 # JMS possibly to be re-added when #1232 is fixed
 #TESTS = $(check_PROGRAMS)
@@ -41,6 +43,12 @@ opal_condition_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 opal_condition_DEPENDENCIES = $(opal_condition_LDADD)
+
+opal_atomic_thread_bench_SOURCES = opal_atomic_thread_bench.c
+opal_atomic_thread_bench_LDADD = \
+        $(top_builddir)/test/support/libsupport.a \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+opal_atomic_thread_bench_DEPENDENCIES = $(opal_atomic_thread_bench_LDADD)
 
 distclean:
 	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile
