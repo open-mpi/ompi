@@ -10,7 +10,7 @@
  * $HEADER$
  */
 
-#if !defined(OSC_RDMA_SYNC_H)
+#ifndef OSC_RDMA_SYNC_H
 #define OSC_RDMA_SYNC_H
 
 #include "ompi/group/group.h"
