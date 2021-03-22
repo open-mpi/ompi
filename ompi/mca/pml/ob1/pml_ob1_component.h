@@ -20,6 +20,8 @@
 #ifndef MCA_PML_OB1_COMPONENT_H
 #define MCA_PML_OB1_COMPONENT_H
 
+#include "ompi/mca/pml/pml.h"
+
 BEGIN_C_DECLS
 
 /*

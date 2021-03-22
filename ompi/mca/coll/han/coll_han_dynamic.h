@@ -21,8 +21,6 @@
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
-#include "ompi/mca/coll/han/coll_han.h"
-
 
 /*
  * @file
