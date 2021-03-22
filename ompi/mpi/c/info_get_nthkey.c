@@ -94,7 +94,7 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
     err = ompi_info_get_nthkey (info, n, &key_str);
     if (NULL != key_str) {
         opal_string_copy(key, key_str->string, MPI_MAX_INFO_KEY);
-        OBJ_RELEASE(key);
+        OBJ_RELEASE(key_str);
     }
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }
