@@ -31,6 +31,7 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "opal/util/show_help.h"
+#include "opal/util/minmax.h"
 #include "ompi/proc/proc.h"
 
 #include "mtl_psm2.h"
