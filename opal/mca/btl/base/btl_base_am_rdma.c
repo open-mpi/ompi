@@ -450,18 +450,13 @@ mca_btl_base_rdma_start (mca_btl_base_module_t *btl, struct mca_btl_base_endpoin
             /* just go ahead and send the data */
             packet_size += size;
         } else if (!mca_btl_base_rdma_use_rdma_get(btl)) {
-            packet_size += size;
-        } else if (!mca_btl_base_rdma_use_rdma_get(btl)) {
             packet_size += size_t_min (size, btl->btl_max_send_size - sizeof (*hdr));
         } else {
             use_rdma = true;
         }
     } else if (MCA_BTL_BASE_AM_GET == type) {
-        if (sizeof(mca_btl_base_rdma_response_hdr_t) + size <= btl->btl_eager_limit) {
-            packet_size += size;
-        } else if (!mca_btl_base_rdma_use_rdma_put(btl)) {
-            packet_size += size_t_min(size, btl->btl_max_send_size
-                                             - sizeof(mca_btl_base_rdma_response_hdr_t));
+        if (!mca_btl_base_rdma_use_rdma_put(btl)) {
+            packet_size += size_t_min(size, btl->btl_max_send_size - sizeof(*hdr));
         } else {
             use_rdma = true;
         }
@@ -1090,19 +1085,23 @@ int mca_btl_base_am_rdma_init (mca_btl_base_module_t *btl)
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_PUT)) {
-        BTL_VERBOSE (("Enabling AM-based RDMA put for BTL %p", btl));
         btl->btl_flags |= MCA_BTL_FLAGS_PUT_AM;
-        btl->btl_put_limit     = max_operation_size;
+        btl->btl_put_limit     = max_operation_size
+                                 - sizeof(mca_btl_base_rdma_response_hdr_t);
         btl->btl_put_alignment = operation_alignment;
         btl->btl_put           = mca_btl_base_am_rdma_put;
+        BTL_VERBOSE(("Enabling AM-based RDMA put for BTL %p. max put = %zu",
+                      btl, btl->btl_put_limit));
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_GET)) {
-        BTL_VERBOSE (("Enabling AM-based RDMA get for BTL %p", btl));
         btl->btl_flags |= MCA_BTL_FLAGS_GET_AM;
-        btl->btl_get_limit     = max_operation_size;
+        btl->btl_get_limit     = max_operation_size
+                                 - sizeof(mca_btl_base_rdma_response_hdr_t);
         btl->btl_get_alignment = operation_alignment;
         btl->btl_get           = mca_btl_base_am_rdma_get;
+        BTL_VERBOSE(("Enabling AM-based RDMA get for BTL %p. max get = %zu",
+                      btl, btl->btl_get_limit));
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_FOPS)) {
