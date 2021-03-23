@@ -976,7 +976,7 @@ static void mca_btl_base_am_process_atomic(mca_btl_base_module_t *btl,
             atomic_response = tmp;
         }
         if (8 == hdr->data.atomic.size) {
-            mca_btl_base_am_atomic_64((int64_t *) hdr->target_address,
+            mca_btl_base_am_atomic_64(&atomic_response,
                                       (opal_atomic_int64_t *) (uintptr_t) hdr->target_address,
                                       hdr->data.atomic.op);
         }
