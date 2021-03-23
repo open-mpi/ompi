@@ -17,6 +17,9 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
+#  Copyright (c) 2021     Triad National Security, LLC. All rights
+#                         reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -65,10 +68,6 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
 				  [ompi_check_psm2_happy="no"])],
               [ompi_check_psm2_happy="no"])
 
-	CPPFLAGS="$ompi_check_psm2_$1_save_CPPFLAGS"
-	LDFLAGS="$ompi_check_psm2_$1_save_LDFLAGS"
-	LIBS="$ompi_check_psm2_$1_save_LIBS"
-
 	AS_IF([test "$ompi_check_psm2_happy" = "yes" && test "$enable_progress_threads" = "yes"],
               [AC_MSG_WARN([PSM2 driver does not currently support progress threads.  Disabling MTL.])
                ompi_check_psm2_happy="no"])
@@ -81,15 +80,21 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
                ompi_check_psm2_happy="no"])])
 
         AS_IF([test "$ompi_check_psm2_happy" = "yes"],
-              [AC_CHECK_DECL([PSM2_LIB_REFCOUNT_CAP],
+              [AS_IF([ test ! -z "$ompi_check_psm2_dir"],
+                     [CPPFLAGS="-I $ompi_check_psm2_dir/include $CPPFLAGS"])
+               AC_CHECK_DECL([PSM2_LIB_REFCOUNT_CAP],
                              [AC_DEFINE([HAVE_PSM2_LIB_REFCOUNT_CAP], [1],
                                         [have PSM2_LIB_REFCOUNT_CAP in psm2.h])],
                              [AS_IF([test "x$enable_psm2_version_check" != "xno"],
                                     [ompi_check_psm2_happy="no"
                                      AC_MSG_WARN([PSM2 needs to be version 11.2.173 or later. Disabling MTL.])]
                              )],
-                             [#include <psm2.h>])
-              ])
+                             [#include <psm2.h>])]
+              )
+
+	CPPFLAGS="$ompi_check_psm2_$1_save_CPPFLAGS"
+	LDFLAGS="$ompi_check_psm2_$1_save_LDFLAGS"
+	LIBS="$ompi_check_psm2_$1_save_LIBS"
 
         OPAL_SUMMARY_ADD([[Transports]],[[Intel Omnipath (PSM2)]],[$1],[$ompi_check_psm2_happy])
     fi
