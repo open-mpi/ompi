@@ -970,7 +970,6 @@ static int output(int output_id, const char *format, va_list arglist)
                     ++ldi->ldi_file_num_lines_lost;
                 } else if (ldi->ldi_file_num_lines_lost > 0) {
                     char buffer[BUFSIZ];
-                    char *out = buffer;
                     memset(buffer, 0, BUFSIZ);
                     snprintf(buffer, BUFSIZ - 1,
                              "[WARNING: %d lines lost because the Open MPI process session "
@@ -978,9 +977,6 @@ static int output(int output_id, const char *format, va_list arglist)
                              ldi->ldi_file_num_lines_lost);
                     write(ldi->ldi_fd, buffer, (int) strlen(buffer));
                     ldi->ldi_file_num_lines_lost = 0;
-                    if (out != buffer) {
-                        free(out);
-                    }
                 }
             }
             if (ldi->ldi_fd != -1) {

@@ -38,9 +38,9 @@ BEGIN_C_DECLS
    great while.  Use a "goto" label for expdiency to exit loops. */
 #define SPIN_CONDITION_MAX 100000
 #define SPIN_CONDITION(cond, exit_label) \
-  do { int i; \
+  do { \
        if (cond) goto exit_label; \
-       for (i = 0; i < SPIN_CONDITION_MAX; ++i) { \
+       for (int spin_cond_i = 0; spin_cond_i < SPIN_CONDITION_MAX; ++spin_cond_i) { \
            if (cond) { goto exit_label; } \
        } \
        opal_progress(); \

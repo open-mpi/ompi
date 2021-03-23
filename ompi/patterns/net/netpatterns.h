@@ -43,22 +43,26 @@ OMPI_DECLSPEC extern int ompi_netpatterns_base_err(const char*, ...) __opal_attr
 #define NETPATTERNS_VERBOSE(args)
 #endif
 
-#define FIND_BASE(base,myid,level,k)    \
-    do {                                \
-        int temp = 1;                   \
-        int jj;                         \
-        int knt2;                       \
-                                        \
-        base = 0;                       \
-        for( jj = 0; jj < level; jj++) {\
-            temp *= k;                  \
-        }                               \
-        knt2 = 1;                       \
-        while(myid >= knt2*temp){       \
-            knt2++;                     \
-        }                               \
-        base = knt2*temp - temp;        \
-    } while(0)                          \
+#define FIND_BASE(base,myid,level,k)            \
+    do {                                        \
+        int find_base_tmp = 1 ;                 \
+        int find_base_knt2;                     \
+                                                \
+        base = 0;                               \
+        for( int find_base_i = 0;               \
+             find_base_i < level;               \
+             find_base_i++)                     \
+        {                                       \
+            find_base_tmp *= k;                 \
+        }                                       \
+        find_base_knt2 = 1;                     \
+        while(myid >=                           \
+              (find_base_knt2*find_base_tmp)){  \
+            find_base_knt2++;                   \
+        }                                       \
+        base = (find_base_knt2 *                \
+               find_base_tmp)-find_base_tmp;    \
+    } while(0)                                  \
 
 
 

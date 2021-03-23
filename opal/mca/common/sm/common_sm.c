@@ -264,12 +264,12 @@ void *mca_common_sm_seg_alloc(void *ctx, size_t *size)
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module)
+int mca_common_sm_fini(mca_common_sm_module_t *module)
 {
     int rc = OPAL_SUCCESS;
 
-    if (NULL != mca_common_sm_module->module_seg) {
-        if (OPAL_SUCCESS != opal_shmem_segment_detach(&mca_common_sm_module->shmem_ds)) {
+    if (NULL != module->module_seg) {
+        if (OPAL_SUCCESS != opal_shmem_segment_detach(&module->shmem_ds)) {
             rc = OPAL_ERROR;
         }
     }

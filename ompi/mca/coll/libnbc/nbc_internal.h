@@ -549,13 +549,13 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
   return OMPI_SUCCESS;
 }
 
-/* deletes elements from dict until low watermark is reached */
-static inline void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
+/* deletes elements from dict_in until low watermark is reached */
+static inline void NBC_SchedCache_dictwipe(hb_tree *dict_in, int *size) {
   hb_itor *itor;
 
-  itor = hb_itor_new(dict);
+  itor = hb_itor_new(dict_in);
   for (; hb_itor_valid(itor) && (*size>NBC_SCHED_DICT_LOWER); hb_itor_next(itor)) {
-    hb_tree_remove(dict, hb_itor_key(itor), 0);
+    hb_tree_remove(dict_in, hb_itor_key(itor), 0);
     *size = *size-1;
   }
   hb_itor_destroy(itor);

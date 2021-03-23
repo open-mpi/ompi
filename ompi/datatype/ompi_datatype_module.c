@@ -544,6 +544,9 @@ int32_t ompi_datatype_init( void )
 #define MOOG(name, index)                                               \
     do {                                                                \
         int rc;                                                         \
+         /* Silence 'unused' compiler warning in optimized builds,      \
+            where assert() is removed. */                               \
+        (void) rc;                                                      \
         ompi_mpi_##name.dt.d_f_to_c_index = index;                      \
         rc = opal_pointer_array_set_item(&ompi_datatype_f_to_c_table,   \
                                          index, &ompi_mpi_##name);      \

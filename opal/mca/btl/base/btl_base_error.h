@@ -58,14 +58,14 @@ OPAL_DECLSPEC extern int mca_btl_base_out(const char *, ...)
 #    define BTL_PEER_ERROR(proc, args)                                                            \
         do {                                                                                      \
             if (mca_btl_base_warn_peer_error || mca_btl_base_verbose > 0) { /* warn if verbose */ \
-                char *errhost;                                                                    \
+                char *btl_peer_errhost;                                                           \
                 mca_btl_base_err("[%s]%s[%s:%d:%s] ", opal_process_info.nodename,                 \
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__,          \
                                  __func__);                                                       \
                 if (proc) {                                                                       \
-                    errhost = opal_get_proc_hostname(proc);                                       \
-                    mca_btl_base_err("peer: %s ", errhost);                                       \
-                    free(errhost);                                                                \
+                    btl_peer_errhost= opal_get_proc_hostname(proc);                               \
+                    mca_btl_base_err("peer: %s ", btl_peer_errhost);                              \
+                    free(btl_peer_errhost);                                                       \
                 }                                                                                 \
                 mca_btl_base_err args;                                                            \
                 mca_btl_base_err("\n");                                                           \
@@ -86,7 +86,6 @@ OPAL_DECLSPEC extern int mca_btl_base_out(const char *, ...)
 #    else
 #        define BTL_VERBOSE(args)
 #    endif
-
 #endif
 
 BEGIN_C_DECLS
