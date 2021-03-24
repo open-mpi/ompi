@@ -14,7 +14,7 @@ Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
 Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
                         reserved.
-Copyright (c) 2010-2017 IBM Corporation.  All rights reserved.
+Copyright (c) 2010-2021 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
@@ -75,6 +75,10 @@ Master (not on release branches yet)
 * launcher.
 **********************************************************************
 
+- If configuring on a system without zlib support, PMIx will be unable
+  to compress large data streams.  This may result in longer-than-normal
+  startup times and larger memory footprints.  It is strongly recommended
+  to install zlib for a better user experience.
 - Fix rank-by algorithms to properly rank by object and span
 - Do not build Open SHMEM layer when there are no SPMLs available.
   Currently, this means the Open SHMEM layer will only build if
