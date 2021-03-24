@@ -1242,12 +1242,6 @@ opal_show_title "Final top-level OMPI configuration"
 
 opal_show_subtitle "Libtool configuration"
 
-# Use the undocumented solaris_use_stlport4 libtool variable to turn off any
-# Cstd/stlport4 linkage. This allows Open MPI to be C++ STL agnostic.
-if test "x$opal_cv_c_compiler_vendor" = "xsun"; then
-    solaris_use_stlport4="yes"
-fi
-
 # Due to this thread:
 # https://www.open-mpi.org/community/lists/users/2013/02/21356.php and
 # a helpful tip from Dave Goodell, set the precious variables for
