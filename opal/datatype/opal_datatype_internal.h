@@ -41,12 +41,12 @@ extern int opal_datatype_dfd;
 #    define DDT_DUMP_STACK(PSTACK, STACK_POS, PDESC, NAME) \
         opal_datatype_dump_stack((PSTACK), (STACK_POS), (PDESC), (NAME))
 
-#    define DUMP(ARGS...) opal_output(opal_datatype_dfd, ARGS)
+#    define DUMP(...) opal_output(opal_datatype_dfd, __VA_ARGS__)
 
 #else
 
 #    define DDT_DUMP_STACK(PSTACK, STACK_POS, PDESC, NAME)
-#    define DUMP(ARGS...)
+#    define DUMP(...)
 
 #endif /* VERBOSE */
 
