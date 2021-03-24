@@ -29,11 +29,33 @@ AC_DEFUN([OMPI_SETUP_CXX_BANNER],[
 ])
 
 AC_DEFUN([OMPI_PROG_CXX],[
-    OPAL_VAR_SCOPE_PUSH([ompi_cxxflags_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_cxxflags_save ompi_cxx_argv0])
+
     ompi_cxxflags_save="$CXXFLAGS"
     AC_PROG_CXX
     AC_PROG_CXXCPP
     CXXFLAGS="$ompi_cxxflags_save"
+
+    # Note: according to the Autoconf docs, if no C++ compiler is
+    # found, $CXX is still set to "g++" (!!).  So make sure that we
+    # actually found a C++ compiler; if not, set CXX to "no", per
+    # thread at
+    # https://www.open-mpi.org/community/lists/users/2013/02/21356.php,
+    # which advises us to set Libtool precious variables to "no" if we
+    # don't want Libtool to setup that language at all.
+    AS_IF([test "x$CXX" = "x"], [CXX=no])
+    set dummy $CXX
+    ompi_cxx_argv0=[$]2
+    OPAL_WHICH([$ompi_cxx_argv0], [OMPI_CXX_ABSOLUTE])
+    AS_IF([test "x$OMPI_CXX_ABSOLUTE" = "x"],
+          [CXX=no
+           OMPI_CXX_ABSOLUTE=no])
+
+    AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
+    AC_SUBST(OMPI_CXX_ABSOLUTE)
+
+    AM_CONDITIONAL([OMPI_HAVE_CXX_COMPILER], [test "$CXX" != "no"])
+
     OPAL_VAR_SCOPE_POP
 ])
 
@@ -44,8 +66,6 @@ dnl wrapper compiler (there is no C++ code in Open MPI, so we do not
 dnl need to setup for internal C++ compilations).  Safe to AC_REQUIRE
 dnl this macro.
 AC_DEFUN([OMPI_SETUP_CXX],[
-    OPAL_VAR_SCOPE_PUSH([ompi_cxx_argv0])
-
     # Do a little tomfoolery to get the subsection title printed first
     AC_REQUIRE([OMPI_SETUP_CXX_BANNER])
 
@@ -54,20 +74,11 @@ AC_DEFUN([OMPI_SETUP_CXX],[
     # see the docs for AC PROG_CC for details.
     AC_REQUIRE([OMPI_PROG_CXX])
 
-    BASECXX="`basename $CXX`"
-
-    AS_IF([test "x$CXX" = "x"], [CXX=none])
-    set dummy $CXX
-    ompi_cxx_argv0=[$]2
-    OPAL_WHICH([$ompi_cxx_argv0], [OMPI_CXX_ABSOLUTE])
-    AS_IF([test "x$OMPI_CXX_ABSOLUTE" = "x"], [OMPI_CXX_ABSOLUTE=none])
-
-    AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
-    AC_SUBST(OMPI_CXX_ABSOLUTE)
-
-    # Make sure we can link with the C compiler
-    OPAL_LANG_LINK_WITH_C([C++], [],
-        [cat <<EOF >&2
+    # If we have a C++ compiler, do some additional tests
+    AS_IF([test "$CXX" != "no"],
+        [ # Make sure we can link with the C compiler
+         OPAL_LANG_LINK_WITH_C([C++], [],
+            [cat <<EOF >&2
 **********************************************************************
 * It appears that your C++ compiler is unable to link against object
 * files created by your C compiler.  This generally indicates either
@@ -78,13 +89,6 @@ AC_DEFUN([OMPI_SETUP_CXX],[
 * available in the config.log file in this directory.
 **********************************************************************
 EOF
-         AC_MSG_ERROR([C and C++ compilers are not link compatible.  Can not continue.])])
-
-    # bool type size and alignment
-    AC_LANG_PUSH(C++)
-    AC_CHECK_SIZEOF(bool)
-    OPAL_C_GET_ALIGNMENT(bool, OPAL_ALIGNMENT_CXX_BOOL)
-    AC_LANG_POP(C++)
-
-    OPAL_VAR_SCOPE_POP
+             AC_MSG_ERROR([C and C++ compilers are not link compatible.  Can not continue.])])
+        ])
 ])
