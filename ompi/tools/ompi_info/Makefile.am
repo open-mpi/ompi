@@ -24,7 +24,7 @@
 # $HEADER$
 #
 
-AM_CFLAGS = \
+AM_CPPFLAGS = \
             -DOPAL_CONFIGURE_USER="\"@OPAL_CONFIGURE_USER@\"" \
             -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\"" \
             -DOPAL_CONFIGURE_DATE="\"@OPAL_CONFIGURE_DATE@\"" \
@@ -39,8 +39,18 @@ AM_CFLAGS = \
             -DOMPI_BUILD_FCFLAGS="\"@FCFLAGS@\"" \
             -DOMPI_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
             -DOMPI_BUILD_LIBS="\"@LIBS@\"" \
-            -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
-            -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
+            -DOPAL_CC_ABSOLUTE="\"`which $(CC)`\""
+
+if OMPI_HAVE_CXX_COMPILER
+AM_CPPFLAGS+=-DOMPI_CXX_ABSOLUTE="\"`which $(CXX)`\""
+else
+AM_CPPFLAGS+=-DOMPI_CXX_ABSOLUTE="\"none\""
+endif
+if OMPI_HAVE_FC_COMPILER
+AM_CPPFLAGS+=-DOMPI_FC_ABSOLUTE="\"`which $(FC)`\""
+else
+AM_CPPFLAGS+=-DOMPI_FC_ABSOLUTE="\"none\""
+endif
 
 include $(top_srcdir)/Makefile.ompi-rules
 

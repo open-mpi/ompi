@@ -28,8 +28,7 @@ AM_CPPFLAGS = \
             -DOMPI_BUILD_FCFLAGS="\"@FCFLAGS@\"" \
             -DOMPI_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
             -DOMPI_BUILD_LIBS="\"@LIBS@\"" \
-            -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
-            -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
+            -DOPAL_CC_ABSOLUTE="\"`which $(CC)`\""
 if OSHMEM_PROFILING
     AM_CPPFLAGS += -DOSHMEM_PROFILING=1
 else
@@ -37,9 +36,20 @@ else
 endif
 
 if OSHMEM_BUILD_FORTRAN_BINDINGS
-    AM_CPPFLAGS += -DOSHMEM_BUILD_FORTRAN_BINDINGS=1
+    AM_CPPFLAGS += -DOSHMEM_BUILD_FORTRAN_BINDINGS=1 \
 else
     AM_CPPFLAGS += -DOSHMEM_BUILD_FORTRAN_BINDINGS=0
+endif
+
+if OMPI_HAVE_CXX_COMPILER
+AM_CPPFLAGS+=-DOMPI_CXX_ABSOLUTE="\"`which $(CXX)`\""
+else
+AM_CPPFLAGS+=-DOMPI_CXX_ABSOLUTE="\"none\""
+endif
+if OMPI_HAVE_FC_COMPILER
+AM_CPPFLAGS+=-DOMPI_FC_ABSOLUTE="\"`which $(FC)`\""
+else
+AM_CPPFLAGS+=-DOMPI_FC_ABSOLUTE="\"none\""
 endif
 
 include $(top_srcdir)/Makefile.ompi-rules

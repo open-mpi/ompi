@@ -429,7 +429,5 @@ AC_DEFUN([_OPAL_PROG_CC],[
     AC_DEFINE_UNQUOTED(OPAL_CC, "$CC", [OMPI underlying C compiler])
     set dummy $CC
     opal_cc_argv0=[$]2
-    OPAL_WHICH([$opal_cc_argv0], [OPAL_CC_ABSOLUTE])
-    AC_SUBST(OPAL_CC_ABSOLUTE)
     OPAL_VAR_SCOPE_POP
 ])

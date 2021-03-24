@@ -623,17 +623,13 @@ end type test_mpi_handle],
     set dummy $OMPI_FC
     OMPI_FC_ARGV0=[$]2
     AS_IF([test -n "$OMPI_FC_ARGV0"],
-          [BASEFC="`basename $OMPI_FC_ARGV0`"
-           OPAL_WHICH([$OMPI_FC_ARGV0], [OMPI_FC_ABSOLUTE])],
+          [BASEFC="`basename $OMPI_FC_ARGV0`"],
           [OMPI_FC=none
-           BASEFC=none
-           OMPI_FC_ABSOLUTE=none])
+           BASEFC=none])
 
+    AM_CONDITIONAL([OMPI_HAVE_FC_COMPILER], [test "$OMPI_FC" != "none"])
     AC_SUBST(OMPI_FC)
-    AC_SUBST(OMPI_FC_ABSOLUTE)
     AC_DEFINE_UNQUOTED(OMPI_FC, ["$OMPI_FC"], [Underlying Fortran compiler])
-    AC_DEFINE_UNQUOTED(OMPI_FC_ABSOLUTE, ["$OMPI_FC_ABSOLUTE"],
-                       [Absolutey path to the underlying Fortran compiler found by configure])
 
     # These go into ompi/info/param.c
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_BUILD_SIZEOF],
