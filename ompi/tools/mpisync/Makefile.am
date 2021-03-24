@@ -26,26 +26,6 @@
 # $HEADER$
 #
 
-
-
-AM_CFLAGS = \
-            -DOPAL_CONFIGURE_USER="\"@OPAL_CONFIGURE_USER@\"" \
-            -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\"" \
-            -DOPAL_CONFIGURE_DATE="\"@OPAL_CONFIGURE_DATE@\"" \
-            -DOMPI_BUILD_USER="\"$$USER\"" \
-            -DOMPI_BUILD_HOST="\"$${HOSTNAME:-`(hostname || uname -n) | sed 1q`}\"" \
-            -DOMPI_BUILD_DATE="\"`$(top_srcdir)/config/getdate.sh`\"" \
-            -DOMPI_BUILD_CFLAGS="\"@CFLAGS@\"" \
-            -DOMPI_BUILD_CPPFLAGS="\"@CPPFLAGS@\"" \
-            -DOMPI_BUILD_CXXFLAGS="\"@CXXFLAGS@\"" \
-            -DOMPI_BUILD_CXXCPPFLAGS="\"@CXXCPPFLAGS@\"" \
-            -DOMPI_BUILD_FFLAGS="\"@FFLAGS@\"" \
-            -DOMPI_BUILD_FCFLAGS="\"@FCFLAGS@\"" \
-            -DOMPI_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
-            -DOMPI_BUILD_LIBS="\"@LIBS@\"" \
-            -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
-            -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
-
 include $(top_srcdir)/Makefile.ompi-rules
 
 man_pages = mpisync.1
