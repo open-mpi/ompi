@@ -78,8 +78,5 @@ mpisync_SOURCES = \
 mpisync_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 mpisync_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
-clean-local:
-	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || rm -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
-
 distclean-local:
 	rm -f $(man_pages)
