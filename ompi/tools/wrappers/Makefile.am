@@ -24,7 +24,11 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-generated_man_pages = mpicc.1 mpic++.1 mpicxx.1 mpifort.1 mpif77.1 mpif90.1
+generated_man_pages = mpicc.1 mpifort.1 mpif77.1 mpif90.1
+
+if OMPI_HAVE_CXX_COMPILER
+generated_man_pages += mpic++.1 mpicxx.1
+endif
 
 if OMPI_WANT_JAVA_BINDINGS
 generated_man_pages += mpijavac.1
@@ -45,8 +49,10 @@ CLEANFILES += $(bin_SCRIPTS)
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc; $(LN_S) ompi_wrapper_script mpicc)
+if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpic++; $(LN_S) ompi_wrapper_script mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx; $(LN_S) ompi_wrapper_script mpicxx)
+endif
 	(cd $(DESTDIR)$(bindir); rm -f mpifort; $(LN_S) ompi_wrapper_script mpifort)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) ompi_wrapper_script mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) ompi_wrapper_script mpif90)
@@ -64,7 +70,7 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpif90 \
 	$(DESTDIR)$(bindir)/mpijavac
 
-if CASE_SENSITIVE_FS
+if CASE_SENSITIVE_FS_AND_HAVE_CXX_COMPILER
 install-exec-hook: install-exec-hook-always
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC; $(LN_S) ompi_wrapper_script mpiCC)
 uninstall-local: uninstall-local-always
@@ -79,7 +85,11 @@ else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OPAL_INSTALL_BINARIES
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ompi.pc ompi-c.pc ompi-cxx.pc ompi-fort.pc
+pkgconfig_DATA = ompi.pc ompi-c.pc ompi-fort.pc
+
+if OMPI_HAVE_CXX_COMPILER
+pkgconfig_DATA += ompi-cxx.pc
+endif
 
 if OMPI_WANT_JAVA_BINDINGS
 bin_SCRIPTS = mpijavac.pl
@@ -89,14 +99,19 @@ man_MANS = $(man_pages)
 
 nodist_ompidata_DATA = \
         mpicc-wrapper-data.txt \
-	mpic++-wrapper-data.txt \
 	mpifort-wrapper-data.txt
+
+if OMPI_HAVE_CXX_COMPILER
+nodist_ompidata_DATA += mpic++-wrapper-data.txt
+endif
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc$(EXEEXT))
+if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpic++$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicxx$(EXEEXT))
+endif
 	(cd $(DESTDIR)$(bindir); rm -f mpifort$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpifort$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpif77$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpif90$(EXEEXT))
@@ -106,7 +121,9 @@ if OMPI_WANT_JAVA_BINDINGS
 endif
 
 install-data-hook-always:
+if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
+endif
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpif77-wrapper-data.txt; $(LN_S) mpifort-wrapper-data.txt mpif77-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpif90-wrapper-data.txt; $(LN_S) mpifort-wrapper-data.txt mpif90-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgconfigdir); rm -f ompi-f77.pc; $(LN_S) ompi-fort.pc ompi-f77.pc)
@@ -128,7 +145,7 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpijavac \
 	$(DESTDIR)$(bindir)/mpijavac.pl
 
-if CASE_SENSITIVE_FS
+if CASE_SENSITIVE_FS_AND_HAVE_CXX_COMPILER
 install-exec-hook: install-exec-hook-always
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpiCC$(EXEEXT))
 
@@ -172,9 +189,11 @@ mpic++.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpic++.1
 	sed -e 's/#COMMAND#/mpic++/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpic++.1
 
+if OMPI_HAVE_CXX_COMPILER
 mpicxx.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicxx.1
 	sed -e 's/#COMMAND#/mpicxx/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicxx.1
+endif
 
 mpifort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpifort.1
