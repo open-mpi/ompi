@@ -63,6 +63,8 @@ AC_ARG_WITH([cs_fs],
             [AS_HELP_STRING([--with-cs-fs],
                            [Destination FS is case sensitive (default: set to value of the build FS's case sensitivity)])])
 
+dnl Stupid emacs syntax hilighting: '
+
 if test "$with_cs_fs" = "yes"; then
     OPAL_WANT_CS_FS=1
 elif test -z "$with_cs_fs"; then
@@ -78,6 +80,12 @@ else
 fi
 
 AM_CONDITIONAL(CASE_SENSITIVE_FS, test "$OPAL_WANT_CS_FS" = "1")
+# There is a case in the ompi/tools/wrappers/Makefile.am where we need
+# to know if there is a case sensitive filesystem *and* if we have a
+# C++ compiler.  Since we can't use operators like "&&" or "and" to
+# join together AM CONDITIONALs in a Makefile.am, effectively make a
+# combo CONDITIONAL here.
+AM_CONDITIONAL([CASE_SENSITIVE_FS_AND_HAVE_CXX_COMPILER], [test "$OPAL_WANT_CS_FS" = "1" && test "$CXX" != "no"])
 
 if test "$OPAL_WANT_CS_FS" = "0"; then
 	cat <<EOF
