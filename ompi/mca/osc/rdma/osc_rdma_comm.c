@@ -455,7 +455,7 @@ static int ompi_osc_rdma_put_real (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_pee
 
     do {
         ret = btl->btl_put (btl, peer->data_endpoint, ptr, target_address,
-                            local_handle, target_handle, size, 0, MCA_BTL_NO_ORDER,
+                            local_handle, target_handle, size, MCA_BTL_TAG_OSC_RDMA, MCA_BTL_NO_ORDER,
                             cb, context, cbdata);
         if (OPAL_UNLIKELY(OMPI_SUCCESS == ret)) {
             return OMPI_SUCCESS;

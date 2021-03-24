@@ -1044,6 +1044,23 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void *user)
                        .cbdata = reg->cbdata};
                 reg->cbfunc(&frag->btl->super, &desc);
             }
+            else if(MCA_BTL_TCP_HDR_TYPE_PUT == frag->hdr.type && (MCA_BTL_TCP_TAG_PUT_RESP == frag->hdr.base.tag)) {
+                mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger
+                                                         + frag->hdr.base.tag;
+                const mca_btl_base_receive_descriptor_t desc = {
+                    .endpoint = btl_endpoint,
+                    .cbdata = frag->hdr.myself_on_origin
+                };
+                reg->cbfunc(&frag->btl->super, &desc);
+            }
+            else if(MCA_BTL_TCP_HDR_TYPE_PUT_ACK == frag->hdr.type) {
+                mca_btl_tcp_frag_t *frag_back = (mca_btl_tcp_frag_t *) frag->hdr.myself_on_origin;
+                assert(frag_back->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
+                if (NULL != frag_back->base.des_cbfunc) {
+                    frag_back->base.des_cbfunc(&frag_back->btl->super, frag_back->endpoint, &frag_back->base, frag_back->rc);
+                }
+                MCA_BTL_TCP_FRAG_RETURN(frag_back);
+            }
 #if MCA_BTL_TCP_ENDPOINT_CACHE
             if (0 != btl_endpoint->endpoint_cache_length) {
                 /* If the cache still contain some data we can reuse the same fragment
@@ -1113,12 +1130,15 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void *user)
 
             /* if required - update request status and release fragment */
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
-            assert(frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
-            if (NULL != frag->base.des_cbfunc) {
-                frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
-            }
-            if (btl_ownership) {
-                MCA_BTL_TCP_FRAG_RETURN(frag);
+            if(MCA_BTL_TCP_TAG_PUT_RESP != frag->hdr.base.tag) {
+                assert(frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
+                if (NULL != frag->base.des_cbfunc) {
+                    frag->base.des_cbfunc(&frag->btl->super, frag->endpoint, &frag->base, frag->rc);
+                }
+                if (btl_ownership) {
+                    MCA_BTL_TCP_FRAG_RETURN(frag);
+                }
+
             }
             /* if we fail to take the lock simply return. In the worst case the
              * send_handler will be triggered once more, and as there will be

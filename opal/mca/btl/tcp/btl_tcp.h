@@ -55,6 +55,8 @@
 #define MCA_BTL_TCP_STATISTICS 0
 BEGIN_C_DECLS
 
+#define MCA_BTL_TCP_TAG_PUT_RESP (MCA_BTL_TAG_OSC_RDMA + 1)
+
 extern opal_event_base_t *mca_btl_tcp_event_base;
 
 #define MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)                                            \
@@ -335,6 +337,9 @@ int mca_btl_tcp_send_blocking(int sd, const void *data, size_t size);
  * non-blocking most of the time.
  */
 int mca_btl_tcp_recv_blocking(int sd, void *data, size_t size);
+
+void mca_btl_tcp_put_response(mca_btl_base_module_t *btl,
+                                          const mca_btl_base_receive_descriptor_t *desc);
 
 END_C_DECLS
 #endif

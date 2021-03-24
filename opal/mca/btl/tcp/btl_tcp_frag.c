@@ -306,6 +306,7 @@ advance_iov_position:
                 goto repeat;
             }
             break;
+        case MCA_BTL_TCP_HDR_TYPE_PUT_ACK:
         case MCA_BTL_TCP_HDR_TYPE_GET:
         default:
             break;

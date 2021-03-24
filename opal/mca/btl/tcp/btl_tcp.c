@@ -60,6 +60,36 @@ mca_btl_tcp_module_t mca_btl_tcp_module =
          },
      .tcp_endpoints_mutex = OPAL_MUTEX_STATIC_INIT};
 
+void mca_btl_tcp_put_response(mca_btl_base_module_t *btl,
+                              const mca_btl_base_receive_descriptor_t *desc)  {
+
+    mca_btl_tcp_frag_t *frag = NULL;
+
+    MCA_BTL_TCP_FRAG_ALLOC_USER(frag);
+    assert(NULL != frag);
+
+    memset(frag, 0, sizeof(mca_btl_tcp_frag_t));
+
+    frag->endpoint = desc->endpoint;
+    frag->hdr.myself_on_origin = desc->cbdata;
+
+    frag->btl = btl;
+    frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_PUT_ACK;
+    frag->hdr.base.tag = MCA_BTL_TAG_BTL;
+
+    frag->base.order = MCA_BTL_NO_ORDER;
+    frag->base.des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
+
+    frag->iov_cnt = 1;
+    frag->iov_ptr = frag->iov;
+    frag->iov[0].iov_base = (IOVBASE_TYPE *) &frag->hdr;
+    frag->iov[0].iov_len = sizeof(frag->hdr);
+
+    mca_btl_tcp_endpoint_send(frag->endpoint, frag);
+}
+
+
+
 static int mca_btl_tcp_register_error_cb(struct mca_btl_base_module_t *btl,
                                          mca_btl_base_module_error_cb_fn_t cbfunc)
 {
@@ -401,7 +431,15 @@ int mca_btl_tcp_put(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *
         frag->iov[i + 2].iov_base = (IOVBASE_TYPE *) frag->segments[i].seg_addr.pval;
         frag->iov_cnt++;
     }
-    frag->hdr.base.tag = MCA_BTL_TAG_BTL;
+
+    if(flags & MCA_BTL_TAG_OSC_RDMA) {
+        frag->hdr.base.tag = MCA_BTL_TCP_TAG_PUT_RESP;
+        frag->hdr.myself_on_origin = frag;
+    }
+    else {
+        frag->hdr.base.tag = MCA_BTL_TAG_BTL;
+    }
+
     frag->hdr.type = MCA_BTL_TCP_HDR_TYPE_PUT;
     frag->hdr.count = 1;
     if (endpoint->endpoint_nbo) {
@@ -428,7 +466,6 @@ int mca_btl_tcp_get(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *
     MCA_BTL_TCP_FRAG_ALLOC_USER(frag);
     if (OPAL_UNLIKELY(NULL == frag)) {
         return OPAL_ERR_OUT_OF_RESOURCE;
-        ;
     }
 
     frag->endpoint = endpoint;

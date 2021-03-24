@@ -28,11 +28,14 @@ BEGIN_C_DECLS
 /**
  * TCP header.
  */
+typedef enum {
+     MCA_BTL_TCP_HDR_TYPE_SEND = 1,
+     MCA_BTL_TCP_HDR_TYPE_PUT,
+     MCA_BTL_TCP_HDR_TYPE_GET,
+     MCA_BTL_TCP_HDR_TYPE_FIN,
+     MCA_BTL_TCP_HDR_TYPE_PUT_ACK
+} mca_btl_tcp_hdr_type_t;
 
-#define MCA_BTL_TCP_HDR_TYPE_SEND 1
-#define MCA_BTL_TCP_HDR_TYPE_PUT  2
-#define MCA_BTL_TCP_HDR_TYPE_GET  3
-#define MCA_BTL_TCP_HDR_TYPE_FIN  4
 /* The MCA_BTL_TCP_HDR_TYPE_FIN is a special kind of message sent during normal
  * connexion closing. Before the endpoint closes the socket, it performs a
  * 1-way handshake by sending a FIN message in the socket. This lets the other
@@ -50,6 +53,7 @@ struct mca_btl_tcp_hdr_t {
     uint8_t type;
     uint16_t count;
     uint32_t size;
+    void *myself_on_origin; /* Pointer back to frag on Put initiator */
 };
 typedef struct mca_btl_tcp_hdr_t mca_btl_tcp_hdr_t;
 

@@ -1220,6 +1220,12 @@ static int mca_btl_tcp_component_exchange(void)
     return rc;
 }
 
+
+static void mca_btl_tcp_emu_init(void)
+{
+    mca_btl_base_active_message_trigger[MCA_BTL_TCP_TAG_PUT_RESP].cbfunc = mca_btl_tcp_put_response;
+}
+
 /*
  *  TCP module initialization:
  *  (1) read interface list from kernel and compare against module parameters
@@ -1318,6 +1324,9 @@ mca_btl_base_module_t **mca_btl_tcp_component_init(int *num_btl_modules,
     memcpy(btls, mca_btl_tcp_component.tcp_btls,
            mca_btl_tcp_component.tcp_num_btls * sizeof(mca_btl_tcp_module_t *));
     *num_btl_modules = mca_btl_tcp_component.tcp_num_btls;
+
+    mca_btl_tcp_emu_init();
+
     return btls;
 }
 
