@@ -36,51 +36,16 @@
 
 extern int opal_datatype_dfd;
 
-#  define DDT_DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME ) \
-     opal_datatype_dump_stack( (PSTACK), (STACK_POS), (PDESC), (NAME) )
-#  if defined(ACCEPT_C99)
-#    define DUMP( ARGS... )          opal_output(opal_datatype_dfd, __VA_ARGS__)
-#  else
-#    if defined(__GNUC__) && !defined(__STDC__)
-#      define DUMP(ARGS...)          opal_output( opal_datatype_dfd, ARGS)
-#  else
-static inline void DUMP( char* fmt, ... )
-{
-   va_list list;
+#    define DDT_DUMP_STACK(PSTACK, STACK_POS, PDESC, NAME) \
+        opal_datatype_dump_stack((PSTACK), (STACK_POS), (PDESC), (NAME))
 
-   va_start( list, fmt );
-   opal_output_vverbose( 0, opal_datatype_dfd, fmt, list );
-   va_end( list );
-}
-#    endif  /* __GNUC__ && !__STDC__ */
-#  endif  /* ACCEPT_C99 */
+#    define DUMP(...) opal_output(opal_datatype_dfd, __VA_ARGS__)
+
 #else
-#  define DDT_DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME )
-#  if defined(ACCEPT_C99)
-#    define DUMP(ARGS...)
-#  else
-#    if defined(__GNUC__) && !defined(__STDC__)
-#      define DUMP(ARGS...)
-#    else
-       /* If we do not compile with PGI, mark the parameter as unused */
-#      if !defined(__PGI)
-#        define __opal_attribute_unused_tmp__  __opal_attribute_unused__
-#      else
-#        define __opal_attribute_unused_tmp__
-#      endif
-static inline void DUMP( char* fmt __opal_attribute_unused_tmp__, ... )
-{
-#if defined(__PGI)
-           /* Some compilers complain if we have "..." arguments and no
-              corresponding va_start() */
-           va_list arglist;
-           va_start(arglist, fmt);
-           va_end(arglist);
-#endif
-}
-#         undef __opal_attribute_unused_tmp__
-#    endif  /* __GNUC__ && !__STDC__ */
-#  endif  /* ACCEPT_C99 */
+
+#    define DDT_DUMP_STACK(PSTACK, STACK_POS, PDESC, NAME)
+#    define DUMP(...)
+
 #endif  /* VERBOSE */
 
 
