@@ -719,7 +719,7 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     # static.
     if test "$STATIC_COMPONENT" = "1"; then
         $4=static
-    elif test "SHARED_COMPONENT" = "1"; then
+    elif test "$SHARED_COMPONENT" = "1"; then
         $4=dso
     elif test "$STATIC_FRAMEWORK" = "1"; then
         $4=static
