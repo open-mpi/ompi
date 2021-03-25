@@ -97,6 +97,8 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS],
           [OMPI_SETUP_FC([ompi_fortran_happy=1])])
 
+    AM_CONDITIONAL([OMPI_HAVE_FORTRAN_COMPILER], [test -n "$FC"])
+
     # These values will be determined by SETUP_FC.  We must always
     # AC_DEFINE these results, even in the --disable-mpi-fortran case,
     # for ompi_info.
