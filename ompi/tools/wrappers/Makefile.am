@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
@@ -185,11 +185,11 @@ mpicc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicc.1
 	sed -e 's/#COMMAND#/mpicc/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicc.1
 
+if OMPI_HAVE_CXX_COMPILER
 mpic++.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpic++.1
 	sed -e 's/#COMMAND#/mpic++/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpic++.1
 
-if OMPI_HAVE_CXX_COMPILER
 mpicxx.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicxx.1
 	sed -e 's/#COMMAND#/mpicxx/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicxx.1
