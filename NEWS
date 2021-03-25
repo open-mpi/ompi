@@ -20,7 +20,7 @@ Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
-Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
+Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
 $COPYRIGHT$
 
@@ -80,6 +80,8 @@ Master (not on release branches yet)
   Currently, this means the Open SHMEM layer will only build if
   a MXM or UCX library is found.
 - Remove all vestiges of the C/R support
+- Change the default component build behavior to prefer building
+  components as part of libmpi.so instead of individual DSOs.
 
 4.0.5 -- August, 2020
 ---------------------
