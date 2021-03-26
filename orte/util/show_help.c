@@ -721,6 +721,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
                     nanosleep(&tp, NULL);
                 }
                 OBJ_RELEASE(buf);
+                free(kv->data.bo.bytes);
                 kv->data.bo.bytes = NULL;
                 OPAL_LIST_DESTRUCT(&info);
                 rc = ORTE_SUCCESS;

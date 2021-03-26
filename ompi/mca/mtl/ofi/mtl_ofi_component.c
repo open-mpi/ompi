@@ -821,6 +821,12 @@ ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
         goto finalize_err;
     }
 
+    /* This was strdup()ed at L.714 */
+    if (NULL != ompi_mtl_ofi.provider_name) {
+        free(ompi_mtl_ofi.provider_name);
+        ompi_mtl_ofi.provider_name = NULL;
+    }
+
     return OMPI_SUCCESS;
 
 finalize_err:

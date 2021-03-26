@@ -358,6 +358,7 @@ static int parse_line(parsed_section_values_t *sv)
     if (0 == strcasecmp(key_buffer, "vendor_id")) {
         if (OPAL_SUCCESS != (ret = opal_btl_openib_ini_intify_list(value, &sv->vendor_ids,
                                                &sv->vendor_ids_len))) {
+            free(value);
             return ret;
         }
     }
@@ -365,6 +366,7 @@ static int parse_line(parsed_section_values_t *sv)
     else if (0 == strcasecmp(key_buffer, "vendor_part_id")) {
         if (OPAL_SUCCESS != (ret = opal_btl_openib_ini_intify_list(value, &sv->vendor_part_ids,
                                                &sv->vendor_part_ids_len))) {
+            free(value);
             return ret;
         }
     }
@@ -467,6 +469,11 @@ static void reset_section(bool had_previous_value, parsed_section_values_t *s)
         }
         if (NULL != s->vendor_part_ids) {
             free(s->vendor_part_ids);
+        }
+        // This could be freed here, or had_previous_value forwarded to
+        // reset_values...
+        if (NULL != s->values.receive_queues) {
+            free(s->values.receive_queues);
         }
     }
 

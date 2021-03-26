@@ -211,6 +211,11 @@ static int btl_openib_component_close(void)
     OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.lock);
     OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.srq_addr_table);
 
+    /* destroy the tx/rx queues */
+    OBJ_DESTRUCT(&mca_btl_openib_component.send_free_coalesced);
+    OBJ_DESTRUCT(&mca_btl_openib_component.send_user_free);
+    OBJ_DESTRUCT(&mca_btl_openib_component.recv_user_free);
+
     opal_btl_openib_connect_base_finalize();
     opal_btl_openib_ini_finalize();
 
@@ -912,6 +917,7 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->ib_channel = NULL;
 #endif
     device->btls = 0;
+    device->allowed_btls = 0;
     device->endpoints = NULL;
     device->device_btls = NULL;
     device->ib_cq[BTL_OPENIB_HP_CQ] = NULL;
@@ -1876,6 +1882,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     device->rcache =
         mca_rcache_base_module_create (mca_btl_openib_component.ib_rcache_name,
                                        device, &rcache_resources);
+    free(rcache_resources.cache_name);
+
     if (NULL == device->rcache) {
         /* Don't print an error message here -- we'll get one from
            mpool_create anyway */
@@ -2277,6 +2285,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     } else if (device->btls > 0) {
         /* no port is allowed to be used by btl/openib,
          * so release the device right away */
+        OBJ_RELEASE(device->device_btls);
         OBJ_RELEASE(device);
         return OPAL_SUCCESS;
     }
@@ -2292,6 +2301,7 @@ error:
     if (NULL != allowed_ports) {
         free(allowed_ports);
     }
+    OBJ_RELEASE(device->device_btls);
     OBJ_RELEASE(device);
     return ret;
 }
@@ -2704,6 +2714,7 @@ btl_openib_component_init(int *num_btl_modules,
         }
     }
 
+    // These are used nowhere else, ergo...
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_free_coalesced, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.send_user_free, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.recv_user_free, opal_free_list_t);
@@ -2733,6 +2744,7 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
+    free(init_data);
     init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
     if (NULL == init_data) {
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
@@ -2754,6 +2766,7 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
+    free(init_data);
     init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
     if (NULL == init_data) {
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
@@ -2772,6 +2785,8 @@ btl_openib_component_init(int *num_btl_modules,
                 NULL, 0, NULL, mca_btl_openib_frag_init, init_data)) {
         goto no_btls;
     }
+
+    free(init_data);
 
     /* If fork support is requested, try to enable it */
     if (OPAL_SUCCESS != (ret = opal_common_verbs_fork_test())) {
@@ -3058,6 +3073,8 @@ btl_openib_component_init(int *num_btl_modules,
     if (NULL != btls) {
         free(btls);
     }
+
+    opal_ibv_free_device_list(ib_devs);
     return NULL;
 }
 
