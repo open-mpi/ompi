@@ -17,6 +17,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +35,6 @@
  *********************************************************************/
 #define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
-#define OPAL_HAVE_ATOMIC_MATH_32             1
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #define OPAL_HAVE_ATOMIC_ADD_32              1
 #define OPAL_HAVE_ATOMIC_AND_32              1
@@ -42,7 +42,6 @@
 #define OPAL_HAVE_ATOMIC_XOR_32              1
 #define OPAL_HAVE_ATOMIC_SUB_32              1
 #define OPAL_HAVE_ATOMIC_SWAP_32             1
-#define OPAL_HAVE_ATOMIC_MATH_64             1
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 #define OPAL_HAVE_ATOMIC_ADD_64              1
 #define OPAL_HAVE_ATOMIC_AND_64              1

@@ -211,9 +211,6 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(intptr_t, intptr_t, ptr)
 #define OPAL_THREAD_SWAP_PTR(x, y) opal_thread_swap_ptr((opal_atomic_intptr_t *) x, (intptr_t) y)
 #define OPAL_ATOMIC_SWAP_PTR       OPAL_THREAD_SWAP_PTR
 
-/* define 64-bit macros is 64-bit atomic math is available */
-#if OPAL_HAVE_ATOMIC_MATH_64
-
 OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, add, +, 64)
 OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, and, &, 64)
 OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, or, |, 64)
@@ -251,8 +248,6 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
 #    define OPAL_THREAD_SWAP_64 opal_thread_swap_64
 #    define OPAL_ATOMIC_SWAP_64 opal_thread_swap_64
-
-#endif
 
 /* thread local storage */
 #if OPAL_C_HAVE__THREAD_LOCAL

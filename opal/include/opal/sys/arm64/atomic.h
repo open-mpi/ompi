@@ -34,7 +34,6 @@
 #        define OPAL_HAVE_ATOMIC_MEM_BARRIER         1
 #        define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #        define OPAL_HAVE_ATOMIC_SWAP_32             1
-#        define OPAL_HAVE_ATOMIC_MATH_32             1
 #        define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 #        define OPAL_HAVE_ATOMIC_SWAP_64             1
 #        define OPAL_HAVE_ATOMIC_ADD_32              1
