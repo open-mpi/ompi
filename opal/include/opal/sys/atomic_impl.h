@@ -311,8 +311,6 @@ OPAL_ATOMIC_DEFINE_CMPXCG_PTR_XX(_rel_)
 
 #endif /* (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64) */
 
-#if OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64
-
 static inline void opal_atomic_add_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length)
 {
     switch (length) {
@@ -380,7 +378,6 @@ static inline int32_t opal_atomic_max_fetch_32(opal_atomic_int32_t *addr, int32_
     return old >= value ? old : value;
 }
 
-#    if OPAL_HAVE_ATOMIC_MATH_64
 OPAL_ATOMIC_DEFINE_OP_FETCH(add, +, int64_t, int64_t, 64)
 OPAL_ATOMIC_DEFINE_OP_FETCH(and, &, int64_t, int64_t, 64)
 OPAL_ATOMIC_DEFINE_OP_FETCH(or, |, int64_t, int64_t, 64)
@@ -398,8 +395,6 @@ static inline int64_t opal_atomic_max_fetch_64(opal_atomic_int64_t *addr, int64_
     int64_t old = opal_atomic_fetch_max_64(addr, value);
     return old >= value ? old : value;
 }
-
-#    endif
 
 static inline intptr_t opal_atomic_fetch_add_ptr(opal_atomic_intptr_t *addr, void *delta)
 {
@@ -449,7 +444,6 @@ static inline intptr_t opal_atomic_sub_fetch_ptr(opal_atomic_intptr_t *addr, voi
 #    endif
 }
 
-#endif /* OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64 */
 
 /**********************************************************************
  *

@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2019      Google, LLC. All rights reserved.
+ * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -35,7 +35,6 @@
 #    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #    define OPAL_HAVE_ATOMIC_SWAP_32             1
 
-#    define OPAL_HAVE_ATOMIC_MATH_32 1
 #    define OPAL_HAVE_ATOMIC_ADD_32  1
 #    define OPAL_HAVE_ATOMIC_AND_32  1
 #    define OPAL_HAVE_ATOMIC_OR_32   1
@@ -45,7 +44,6 @@
 #    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 #    define OPAL_HAVE_ATOMIC_SWAP_64             1
 
-#    define OPAL_HAVE_ATOMIC_MATH_64 1
 #    define OPAL_HAVE_ATOMIC_ADD_64  1
 #    define OPAL_HAVE_ATOMIC_AND_64  1
 #    define OPAL_HAVE_ATOMIC_OR_64   1

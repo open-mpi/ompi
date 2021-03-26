@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,9 +169,6 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 #if OPAL_GCC_INLINE_ASSEMBLY
-
-#    define OPAL_HAVE_ATOMIC_MATH_32 1
-#    define OPAL_HAVE_ATOMIC_MATH_64 1
 
 #    define OPAL_HAVE_ATOMIC_ADD_32 1
 

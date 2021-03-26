@@ -161,11 +161,7 @@ ompi_osc_sm_start(struct ompi_group_t *group,
 
             opal_atomic_rmb ();
 
-#if OPAL_HAVE_ATOMIC_MATH_64
             (void) opal_atomic_fetch_xor_64 ((opal_atomic_int64_t *) module->posts[my_rank] + rank_byte, rank_bit);
-#else
-            (void) opal_atomic_fetch_xor_32 ((opal_atomic_int32_t *) module->posts[my_rank] + rank_byte, rank_bit);
-#endif
        }
 
         free (ranks);
@@ -247,11 +243,7 @@ ompi_osc_sm_post(struct ompi_group_t *group,
 
         gsize = ompi_group_size(module->post_group);
         for (int i = 0 ; i < gsize ; ++i) {
-#if OPAL_HAVE_ATOMIC_MATH_64
             (void) opal_atomic_fetch_add_64 ((opal_atomic_int64_t *) module->posts[ranks[i]] + my_byte, my_bit);
-#else
-            (void) opal_atomic_fetch_add_32 ((opal_atomic_int32_t *) module->posts[ranks[i]] + my_byte, my_bit);
-#endif
         }
 
         opal_atomic_wmb ();
