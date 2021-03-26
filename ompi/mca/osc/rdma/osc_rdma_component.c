@@ -581,7 +581,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     int my_rank = ompi_comm_rank (module->comm);
     int global_size = ompi_comm_size (module->comm);
     ompi_osc_rdma_region_t *state_region;
-    struct _local_data *temp;
+    struct _local_data *temp = NULL;
     char *data_file;
     int page_size = opal_getpagesize();
 
@@ -624,13 +624,12 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         size += OPAL_ALIGN_PAD_AMOUNT(size, page_size);
     }
 
-    do {
-        temp = calloc (local_size, sizeof (temp[0]));
-        if (NULL == temp) {
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
-            break;
-        }
+    temp = calloc (local_size, sizeof (temp[0]));
+    if (NULL == temp) {
+      return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
+    do {
         temp[local_rank].rank = my_rank;
         temp[local_rank].size = size;
 
@@ -788,10 +787,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                     peer->state_handle = (mca_btl_base_registration_handle_t *) state_region->btl_handle_data;
                 }
                 peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
-                if (i > 0) {
-                    peer->state_endpoint = local_leader->state_endpoint;
-                    peer->state_btl_index = local_leader->state_btl_index;
-                }
+                peer->state_endpoint = local_leader->data_endpoint; // data_endpoint initialized in ompi_osc_rdma_new_peer();
+                peer->state_btl_index = local_leader->data_btl_index;
             }
 
             if (my_rank == peer_rank) {
@@ -914,10 +911,8 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
 static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
     mca_btl_base_selected_module_t *item;
-    char **btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
     int btls_found = 0;
-
-    btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
+    char **btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
     if (NULL == btls_to_use) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no alternate BTLs requested: %s", ompi_osc_rdma_btl_alternate_names);
         return OMPI_ERR_UNREACH;
