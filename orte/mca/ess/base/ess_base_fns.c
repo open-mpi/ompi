@@ -344,6 +344,9 @@ int orte_ess_base_proc_binding(void)
                     }
                 }
             }
+        } else {
+            /* Prevent cpus from being unfreed if we fall through */
+            hwloc_bitmap_free(cpus);
         }
     } else {
         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,

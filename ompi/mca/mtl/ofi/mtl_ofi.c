@@ -105,6 +105,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
             goto bail;
         }
         memcpy(&ep_names[i*namelen], ep_name, namelen);
+        free(ep_name); // malloc'd inside OFI_COMPAT_MODEX_RECV in pmix3x.c:1097
     }
 
     /**
