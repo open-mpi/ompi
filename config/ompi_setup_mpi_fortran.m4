@@ -649,6 +649,18 @@ end type test_mpi_handle],
                        [$OMPI_FORTRAN_HAVE_STORAGE_SIZE],
                        [Whether the compiler supports STORAGE_SIZE on relevant types])
 
+    # This token is used in the mpifort wrapper compiler data file.
+    # If we are building the Fortran bindings, then include
+    # -lompi_mpifh in the link line.  If we're not building the
+    # Fortran bindings, then do not include that token in the link
+    # line (because we'll still install mpifort to link Fortran
+    # applications with the C bindings, even if the Fortran MPI
+    # bindings are not being built).
+    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS],
+          [OMPI_FORTRAN_MPIFH_LINK=-l${OMPI_LIBMPI_NAME}_mpifh],
+          [OMPI_FORTRAN_MPIFH_LINK=])
+    AC_SUBST(OMPI_FORTRAN_MPIFH_LINK)
+
     # This conditional is used to determine whether we compile the
     # various .f90 files that contain MPI_SIZEOF implementations.
     AM_CONDITIONAL([BUILD_FORTRAN_SIZEOF],
