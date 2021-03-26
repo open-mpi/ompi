@@ -27,8 +27,6 @@ build:intel:
       - examples
       - install_test
     expire_in: 1 week
-  only:
-    - scheduled
 
 build:gnu:
   stage: build
@@ -50,8 +48,6 @@ build:gnu:
       - examples
       - install_test
     expire_in: 1 week
-  only:
-    - scheduled
 
 test:intel:
   stage: test
@@ -79,8 +75,6 @@ test:intel:
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     expire_in: 1 week
-  only:
-    - scheduled
 
 test:gnu:
   stage: test
@@ -108,5 +102,3 @@ test:gnu:
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     expire_in: 1 week
-  only:
-    - scheduled
