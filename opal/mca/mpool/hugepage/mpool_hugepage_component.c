@@ -286,8 +286,8 @@ static void mca_mpool_hugepage_find_hugepages(void)
                 "found huge page with size = %lu, path = %s, mmap flags = 0x%x, with invalid "
                 "permissions, skipping",
                 hp->page_size, hp->path, hp->mmap_flags);
-            OBJ_RELEASE(hp);
         }
+        OBJ_RELEASE(hp);
     }
 
     opal_list_sort(&mca_mpool_hugepage_component.huge_pages, page_compare);

@@ -232,8 +232,18 @@ int mca_common_monitoring_init( void )
 
 void mca_common_monitoring_finalize( void )
 {
-    if( ! mca_common_monitoring_enabled || /* Don't release if not last */
-        0 < opal_atomic_sub_fetch_32(&mca_common_monitoring_hold, 1) ) return;
+    /* Even if not enabled, this string is allocated at l.310 */
+    if (!mca_common_monitoring_enabled) {
+        if (NULL != mca_common_monitoring_current_filename) {
+            free(mca_common_monitoring_current_filename);
+            mca_common_monitoring_current_filename = NULL;
+        }
+        return;
+    }
+
+    /* Don't release if not last */
+    if (0 < opal_atomic_sub_fetch_32(&mca_common_monitoring_hold, 1))
+        return;
 
     OPAL_MONITORING_PRINT_INFO("common_component_finish");
     /* Dump monitoring informations */
@@ -245,11 +255,11 @@ void mca_common_monitoring_finalize( void )
     opal_output_close(mca_common_monitoring_output_stream_id);
     free(mca_common_monitoring_output_stream_obj.lds_prefix);
     /* Free internal data structure */
-    free((void *) pml_data);  /* a single allocation */
-    opal_hash_table_remove_all( common_monitoring_translation_ht );
+    free(pml_data); /* a single allocation */
+    opal_hash_table_remove_all(common_monitoring_translation_ht);
     OBJ_RELEASE(common_monitoring_translation_ht);
     mca_common_monitoring_coll_finalize();
-    if( NULL != mca_common_monitoring_current_filename ) {
+    if (NULL != mca_common_monitoring_current_filename) {
         free(mca_common_monitoring_current_filename);
         mca_common_monitoring_current_filename = NULL;
     }
