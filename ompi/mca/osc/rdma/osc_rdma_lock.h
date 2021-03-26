@@ -87,12 +87,10 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, uint8_t
     if (OPAL_SUCCESS != ret) {
         if (OPAL_LIKELY(1 == ret)) {
             *result = ((int64_t *) pending_op->op_buffer)[0];
-            ret = OMPI_SUCCESS;
             ompi_osc_rdma_atomic_complete (selected_btl, endpoint, pending_op->op_buffer,
-                                           pending_op->op_frag->handle, (void *) pending_op, NULL, OPAL_SUCCESS);
-        } else {
-            /* need to release here because ompi_osc_rdma_atomic_complete was not called */
-            OBJ_RELEASE(pending_op);
+                                           NULL, (void *) pending_op, NULL, OPAL_SUCCESS);
+            // ompi_osc_rdma_atomic_complete() free's pending_op.
+            return OMPI_SUCCESS;
         }
     } else if (wait_for_completion) {
         while (!pending_op->op_complete) {
@@ -227,8 +225,6 @@ static inline int ompi_osc_rdma_btl_cswap (ompi_osc_rdma_module_t *module, uint8
             ret = OMPI_SUCCESS;
         }
 
-        /* need to release here because ompi_osc_rdma_atomic_complete was not called */
-        OBJ_RELEASE(pending_op);
     } else {
         while (!pending_op->op_complete) {
             ompi_osc_rdma_progress (module);
