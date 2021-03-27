@@ -78,7 +78,7 @@ test:intel:
 
 test:gnu:
   stage: test
-  tags: [dawrin-slurm-shared]
+  tags: [darwin-slurm-shared]
   dependencies:
     - build:gnu
   needs: ["build:gnu"]
