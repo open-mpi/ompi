@@ -80,10 +80,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_group_t);
  * Create an MCA variable group. If the group already exists
  * this call is equivalent to mca_base_ver_find_group().
  */
-OPAL_DECLSPEC int mca_base_var_group_register(const char *project_name,
-                                              const char *framework_name,
-                                              const char *component_name,
-                                              const char *description);
+OPAL_DECLSPEC int mca_base_var_group_register(const char *project_name, const char *framework_name,
+                                              const char *component_name, const char *description);
 
 /**
  * Register an MCA variable group for a component
@@ -95,8 +93,8 @@ OPAL_DECLSPEC int mca_base_var_group_register(const char *project_name,
  * @retval index Unique group index
  * @return opal error code on Error
  */
-OPAL_DECLSPEC int mca_base_var_group_component_register (const mca_base_component_t *component,
-                                                         const char *description);
+OPAL_DECLSPEC int mca_base_var_group_component_register(const mca_base_component_t *component,
+                                                        const char *description);
 
 /**
  * Deregister an MCA param group
@@ -106,7 +104,7 @@ OPAL_DECLSPEC int mca_base_var_group_component_register (const mca_base_componen
  *
  * This call deregisters all associated variables and subgroups.
  */
-OPAL_DECLSPEC int mca_base_var_group_deregister (int group_index);
+OPAL_DECLSPEC int mca_base_var_group_deregister(int group_index);
 
 /**
  * Find an MCA group
@@ -118,9 +116,8 @@ OPAL_DECLSPEC int mca_base_var_group_deregister (int group_index);
  * @returns OPAL_SUCCESS if found
  * @returns OPAL_ERR_NOT_FOUND if not found
  */
-OPAL_DECLSPEC int mca_base_var_group_find (const char *project_name,
-                                           const char *framework_name,
-                                           const char *component_name);
+OPAL_DECLSPEC int mca_base_var_group_find(const char *project_name, const char *framework_name,
+                                          const char *component_name);
 
 /**
  * Find an MCA group by its full name
@@ -131,7 +128,7 @@ OPAL_DECLSPEC int mca_base_var_group_find (const char *project_name,
  * @returns OPAL_SUCCESS if found
  * @returns OPAL_ERR_NOT_FOUND if not found
  */
-OPAL_DECLSPEC int mca_base_var_group_find_by_name (const char *full_name, int *index);
+OPAL_DECLSPEC int mca_base_var_group_find_by_name(const char *full_name, int *index);
 
 /**
  * Get the group at a specified index
@@ -145,8 +142,7 @@ OPAL_DECLSPEC int mca_base_var_group_find_by_name (const char *full_name, int *i
  * The returned pointer belongs to the MCA variable system. Do not modify/release/retain
  * the pointer.
  */
-OPAL_DECLSPEC int mca_base_var_group_get (const int group_index,
-                                          const mca_base_var_group_t **group);
+OPAL_DECLSPEC int mca_base_var_group_get(const int group_index, const mca_base_var_group_t **group);
 
 /**
  * Set/unset a flags for all variables in a group.
@@ -157,15 +153,14 @@ OPAL_DECLSPEC int mca_base_var_group_get (const int group_index,
  *
  * Set a flag for every variable in a group. See mca_base_var_set_flag() for more info.
  */
-OPAL_DECLSPEC int mca_base_var_group_set_var_flag (const int group_index, int flags,
-                                                   bool set);
+OPAL_DECLSPEC int mca_base_var_group_set_var_flag(const int group_index, int flags, bool set);
 
 /**
  * Get the number of registered MCA groups
  *
  * @retval count Number of registered MCA groups
  */
-OPAL_DECLSPEC int mca_base_var_group_get_count (void);
+OPAL_DECLSPEC int mca_base_var_group_get_count(void);
 
 /**
  * Get a relative timestamp for the MCA group system
@@ -174,6 +169,6 @@ OPAL_DECLSPEC int mca_base_var_group_get_count (void);
  *
  * This value will change if groups or variables are either added or removed.
  */
-OPAL_DECLSPEC int mca_base_var_group_get_stamp (void);
+OPAL_DECLSPEC int mca_base_var_group_get_stamp(void);
 
 #endif /* OPAL_MCA_BASE_VAR_GROUP_H */

@@ -348,18 +348,19 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_PLAIN], [
 # why take chances?
 #
 
-# Only run C++ and Fortran if those compilers already configured
-AC_PROVIDE_IFELSE([AC_PROG_CC],
-                  [OPAL_INTL_POSIX_THREADS_PLAIN_C],
-                  [opal_pthread_c_success=1])
+# Only run C++ and Fortran if those compilers were found
 
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [OPAL_INTL_POSIX_THREADS_PLAIN_CXX],
-                  [opal_pthread_cxx_success=1])
+OPAL_INTL_POSIX_THREADS_PLAIN_C
 
-AC_PROVIDE_IFELSE([AC_PROG_FC],
-                  [OPAL_INTL_POSIX_THREADS_PLAIN_FC],
-                  [opal_pthread_fortran_success=1])
+AS_IF([test "$CXX" != "no"],
+      [OPAL_INTL_POSIX_THREADS_PLAIN_CXX
+       opal_pthread_cxx_success=1],
+      [opal_pthread_cxx_success=0])
+
+AS_IF([test "$FC" != "no"],
+      [OPAL_INTL_POSIX_THREADS_PLAIN_FC
+       opal_pthread_fortran_success=1],
+      [opal_pthread_fortran_success=0])
 
 # End: OPAL_INTL_POSIX_THREADS_PLAIN
 ])dnl
@@ -477,18 +478,19 @@ case "${host_cpu}-${host_os}" in
   ;;
 esac
 
-# Only run C++ and Fortran if those compilers already configured
-AC_PROVIDE_IFELSE([AC_PROG_CC],
-                  [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_C],
-                  [opal_pthread_c_success=1])
+# Only run C++ and Fortran if those compilers were found
 
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_CXX],
-                  [opal_pthread_cxx_success=1])
+OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_C
 
-AC_PROVIDE_IFELSE([AC_PROG_FC],
-                  [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC],
-                  [opal_pthread_fortran_success=1])
+AS_IF([test "$CXX" != "no"],
+      [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_CXX
+       opal_pthread_cxx_success=1],
+      [opal_pthread_cxx_success=0])
+
+AS_IF([test "$FC" != "no"],
+      [OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC
+       opal_pthread_fortran_success=1],
+      [opal_pthread_fortran_success=0])
 
 OPAL_VAR_SCOPE_POP
 # End: OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS
@@ -668,18 +670,19 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_LIBS],[
 OPAL_VAR_SCOPE_PUSH([plibs])
 plibs="-lpthreads -llthread -lpthread"
 
-# Only run C++ and Fortran if those compilers already configured
-AC_PROVIDE_IFELSE([AC_PROG_CC],
-                  [OPAL_INTL_POSIX_THREADS_LIBS_C],
-                  [opal_pthread_c_success=1])
+# Only run C++ and Fortran if those compilers were found
 
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [OPAL_INTL_POSIX_THREADS_LIBS_CXX],
-                  [opal_pthread_cxx_success=1])
+OPAL_INTL_POSIX_THREADS_LIBS_C
 
-AC_PROVIDE_IFELSE([AC_PROG_FC],
-                  [OPAL_INTL_POSIX_THREADS_LIBS_FC],
-                  [opal_pthread_fortran_success=1])
+AS_IF([test "$CXX" != "no"],
+      [OPAL_INTL_POSIX_THREADS_LIBS_CXX
+       opal_pthread_cxx_success=1],
+      [opal_pthread_cxx_success=0])
+
+AS_IF([test "$FC" != "no"],
+      [OPAL_INTL_POSIX_THREADS_LIBS_FC
+       opal_pthread_fortran_success=1],
+      [opal_pthread_fortran_success=0])
 
 OPAL_VAR_SCOPE_POP
 # End: OPAL_INTL_POSIX_THREADS_LIBS]
@@ -772,6 +775,8 @@ THREAD_LDFLAGS="$TPKG_LDFLAGS"
 THREAD_LIBS="$TPKG_LIBS"
 
 OPAL_CHECK_PTHREAD_PIDS
+
+AS_IF([test "$CXX" = "no"], [opal_pthread_cxx_success=1])
 
 if test "$OMPI_TRY_FORTRAN_BINDINGS" = "$OMPI_FORTRAN_NO_BINDINGS" || \
    test $ompi_fortran_happy -ne 1; then

@@ -12,21 +12,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
+#    include <sys/stat.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #include <string.h>
 
+#include "opal/constants.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/string_copy.h"
-#include "opal/constants.h"
-
 
 /*
  * Use $PWD instead of getcwd() a) if $PWD exists and b) is a valid

@@ -32,7 +32,7 @@ struct utsname {
 };
 
 BEGIN_C_DECLS
-    OPAL_DECLSPEC int uname(struct utsname *un);
+OPAL_DECLSPEC int uname(struct utsname *un);
 END_C_DECLS
 
 #endif /* OPAL_UTSNAME_H */

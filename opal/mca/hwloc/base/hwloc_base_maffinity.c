@@ -8,14 +8,12 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include "opal/constants.h"
 
-#include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/hwloc/base/base.h"
-
+#include "opal/mca/hwloc/hwloc-internal.h"
 
 /*
  * Don't use show_help() here (or print any error message at all).
@@ -57,16 +55,14 @@ int opal_hwloc_base_set_process_membind_policy(void)
     } else {
         int e;
         hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
-        rc = hwloc_set_membind(opal_hwloc_topology,
-                               cpuset, policy, flags);
+        rc = hwloc_set_membind(opal_hwloc_topology, cpuset, policy, flags);
         e = errno;
         hwloc_bitmap_free(cpuset);
 
         /* See if hwloc was able to do it.  If hwloc failed due to
            ENOSYS, but the base_map == NONE, then it's not really an
            error. */
-        if (0 != rc && ENOSYS == e &&
-            OPAL_HWLOC_BASE_MAP_NONE == opal_hwloc_base_map) {
+        if (0 != rc && ENOSYS == e && OPAL_HWLOC_BASE_MAP_NONE == opal_hwloc_base_map) {
             rc = 0;
         }
     }
@@ -74,8 +70,7 @@ int opal_hwloc_base_set_process_membind_policy(void)
     return (0 == rc) ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
-int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
-                               size_t num_segments)
+int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments, size_t num_segments)
 {
     int rc = OPAL_SUCCESS;
     char *msg = NULL;
@@ -85,8 +80,7 @@ int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
     /* bozo check */
     if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
         msg = "hwloc_set_area_membind() failure - topology not available";
-        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
-                                                   msg, rc);
+        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__, msg, rc);
     }
 
     /* This module won't be used unless the process is already
@@ -100,18 +94,17 @@ int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
     }
     hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
     for (i = 0; i < num_segments; ++i) {
-        if (0 != hwloc_set_area_membind(opal_hwloc_topology,
-                                        segments[i].mbs_start_addr,
-                                        segments[i].mbs_len, cpuset,
-                                        HWLOC_MEMBIND_BIND,
-                                        HWLOC_MEMBIND_STRICT)) {
+        if (0
+            != hwloc_set_area_membind(opal_hwloc_topology, segments[i].mbs_start_addr,
+                                      segments[i].mbs_len, cpuset, HWLOC_MEMBIND_BIND,
+                                      HWLOC_MEMBIND_STRICT)) {
             rc = OPAL_ERROR;
             msg = "hwloc_set_area_membind() failure";
             goto out;
         }
     }
 
- out:
+out:
     if (NULL != cpuset) {
         hwloc_bitmap_free(cpuset);
     }
@@ -129,8 +122,7 @@ int opal_hwloc_base_node_name_to_id(char *node_name, int *id)
     return OPAL_SUCCESS;
 }
 
-int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs,
-                            size_t count, int node_id)
+int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs, size_t count, int node_id)
 {
     size_t i;
     int rc = OPAL_SUCCESS;
@@ -140,8 +132,7 @@ int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs,
     /* bozo check */
     if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
         msg = "hwloc_set_area_membind() failure - topology not available";
-        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
-                                                   msg, rc);
+        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__, msg, rc);
     }
 
     cpuset = hwloc_bitmap_alloc();
@@ -151,19 +142,17 @@ int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs,
         goto out;
     }
     hwloc_bitmap_set(cpuset, node_id);
-    for(i = 0; i < count; i++) {
-        if (0 != hwloc_set_area_membind(opal_hwloc_topology,
-                                        segs[i].mbs_start_addr,
-                                        segs[i].mbs_len, cpuset,
-                                        HWLOC_MEMBIND_BIND,
-                                        HWLOC_MEMBIND_STRICT)) {
+    for (i = 0; i < count; i++) {
+        if (0
+            != hwloc_set_area_membind(opal_hwloc_topology, segs[i].mbs_start_addr, segs[i].mbs_len,
+                                      cpuset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_STRICT)) {
             rc = OPAL_ERROR;
             msg = "hwloc_set_area_membind() failure";
             goto out;
         }
     }
 
- out:
+out:
     if (NULL != cpuset) {
         hwloc_bitmap_free(cpuset);
     }

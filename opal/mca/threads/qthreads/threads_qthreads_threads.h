@@ -26,8 +26,8 @@
 #ifndef OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_THREADS_H
 #define OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_THREADS_H 1
 
-#include <signal.h>
 #include "opal/mca/threads/qthreads/threads_qthreads.h"
+#include <signal.h>
 
 struct opal_thread_t {
     opal_object_t super;
@@ -41,8 +41,7 @@ struct opal_thread_t {
 /* Qthreads are cooperatively scheduled so yield when idle */
 #define OPAL_THREAD_YIELD_WHEN_IDLE_DEFAULT true
 
-static inline
-void opal_thread_yield(void)
+static inline void opal_thread_yield(void)
 {
     qthread_yield();
 }

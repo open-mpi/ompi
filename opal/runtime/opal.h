@@ -28,8 +28,8 @@
 #define OPAL_H
 
 #include "opal_config.h"
-#include "opal/types.h"
 #include "opal/class/opal_list.h"
+#include "opal/types.h"
 #include "opal/util/proc.h"
 
 #include <assert.h>
@@ -65,7 +65,7 @@ extern opal_list_t opal_finalize_cleanup_fns;
  * \note If this function is called, opal_init_util() should *not* be
  * called.
  */
-OPAL_DECLSPEC int opal_init(int* pargc, char*** pargv);
+OPAL_DECLSPEC int opal_init(int *pargc, char ***pargv);
 
 /**
  * Finalize the OPAL layer, including the MCA system.
@@ -87,7 +87,7 @@ OPAL_DECLSPEC int opal_finalize(void);
  * \note If this function is called, opal_init() should *not*
  * be called.
  */
-OPAL_DECLSPEC int opal_init_util(int* pargc, char*** pargv);
+OPAL_DECLSPEC int opal_init_util(int *pargc, char ***pargv);
 
 /**
  * Disable PSM/PSM2 signal hijacking.
@@ -177,7 +177,7 @@ OBJ_CLASS_DECLARATION(opal_finalize_domain_t);
  * This function sets the name of a finalize domain. The domain must
  * have already been initialized by OBJ_CONSTRUCT() or OBJ_NEW().
  */
-void opal_finalize_domain_init (opal_finalize_domain_t *domain, const char *domain_name);
+void opal_finalize_domain_init(opal_finalize_domain_t *domain, const char *domain_name);
 
 /**
  * @brief Set the current finalize domain for opal_finalize_append_cleanup()
@@ -187,7 +187,7 @@ void opal_finalize_domain_init (opal_finalize_domain_t *domain, const char *doma
  * This function sets the current finalize domain. This API is not thread safe
  * and is must be protected from multi-threaded invocation.
  */
-void opal_finalize_set_domain (opal_finalize_domain_t *domain);
+void opal_finalize_set_domain(opal_finalize_domain_t *domain);
 
 /**
  * @brief Finalize a domain
@@ -199,7 +199,7 @@ void opal_finalize_set_domain (opal_finalize_domain_t *domain);
  * any memory allocated by the relevant calls to opal_finalize_append_cleanup()
  * and effectively empties the cleanup domain.
  */
-void opal_finalize_cleanup_domain (opal_finalize_domain_t *domain);
+void opal_finalize_cleanup_domain(opal_finalize_domain_t *domain);
 
 /**
  * @brief Cleanup domain function
@@ -207,7 +207,7 @@ void opal_finalize_cleanup_domain (opal_finalize_domain_t *domain);
  * The argument is optional. It is valid to use the opal_finalize_register_cleanup()
  * macro to register a function that is of type void (*) (void).
  */
-typedef void (*opal_cleanup_fn_t) (void *);
+typedef void (*opal_cleanup_fn_t)(void *);
 
 /**
  * @brief Append a cleanup function to the current domain
@@ -216,16 +216,19 @@ typedef void (*opal_cleanup_fn_t) (void *);
  * @param[in] fn_name        Name of the cleanup function (for debugging)
  * @param[in] user_data      User data to pass to the cleanup function
  */
-void opal_finalize_append_cleanup (opal_cleanup_fn_t cleanup_fn, const char *fn_name, void *user_data);
+void opal_finalize_append_cleanup(opal_cleanup_fn_t cleanup_fn, const char *fn_name,
+                                  void *user_data);
 
-#define opal_finalize_register_cleanup_3(x, y, z) opal_finalize_append_cleanup((opal_cleanup_fn_t) x, y, z)
-#define opal_finalize_register_cleanup_arg(x, y) opal_finalize_append_cleanup((opal_cleanup_fn_t) x, # x "(" #y ")", y)
-#define opal_finalize_register_cleanup(x) opal_finalize_register_cleanup_3((opal_cleanup_fn_t) (x), # x, NULL)
+#define opal_finalize_register_cleanup_3(x, y, z) \
+    opal_finalize_append_cleanup((opal_cleanup_fn_t) x, y, z)
+#define opal_finalize_register_cleanup_arg(x, y) \
+    opal_finalize_append_cleanup((opal_cleanup_fn_t) x, #x "(" #y ")", y)
+#define opal_finalize_register_cleanup(x) \
+    opal_finalize_register_cleanup_3((opal_cleanup_fn_t)(x), #x, NULL)
 
 /* opal cleanup domains */
 extern opal_finalize_domain_t opal_init_util_domain;
 extern opal_finalize_domain_t opal_init_domain;
-
 
 END_C_DECLS
 

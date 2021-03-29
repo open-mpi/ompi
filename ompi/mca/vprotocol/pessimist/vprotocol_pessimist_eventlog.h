@@ -11,6 +11,7 @@
 #ifndef __VPROTOCOL_PESSIMIST_EVENTLOG_H__
 #define __VPROTOCOL_PESSIMIST_EVENTLOG_H__
 
+#include "ompi/mca/pml/v/pml_v_output.h"
 #include "vprotocol_pessimist.h"
 #include "vprotocol_pessimist_request.h"
 #include "vprotocol_pessimist_eventlog_protocol.h"

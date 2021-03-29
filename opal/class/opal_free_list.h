@@ -26,9 +26,9 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_lifo.h"
-#include "opal/prefetch.h"
-#include "opal/mca/threads/condition.h"
 #include "opal/constants.h"
+#include "opal/mca/threads/condition.h"
+#include "opal/prefetch.h"
 #include "opal/runtime/opal.h"
 
 BEGIN_C_DECLS
@@ -50,8 +50,7 @@ struct opal_free_list_item_t;
  * function should return OPAL_SUCCESS. On any error
  * opal_free_list_grow will stop initializing new items.
  */
-typedef int (*opal_free_list_item_init_fn_t) (
-        struct opal_free_list_item_t *item, void *ctx);
+typedef int (*opal_free_list_item_init_fn_t)(struct opal_free_list_item_t *item, void *ctx);
 
 struct opal_free_list_t {
     /** Items in a free list are stored last-in first-out */
@@ -97,8 +96,7 @@ typedef struct opal_free_list_t opal_free_list_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_t);
 
 struct mca_mpool_base_registration_t;
-struct opal_free_list_item_t
-{
+struct opal_free_list_item_t {
     opal_list_item_t super;
     struct mca_rcache_base_registration_t *registration;
     void *ptr;
@@ -106,14 +104,14 @@ struct opal_free_list_item_t
 typedef struct opal_free_list_item_t opal_free_list_item_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_item_t);
 
-
 /**
  * Initialize a free list.
  *
  * @param free_list                (IN)  Free list.
  * @param frag_size                (IN)  Size of each element - allocated by malloc.
  * @param frag_alignment           (IN)  Fragment alignment.
- * @param frag_class               (IN)  opal_class_t of element - used to initialize allocated elements.
+ * @param frag_class               (IN)  opal_class_t of element - used to initialize allocated
+ * elements.
  * @param payload_buffer_size      (IN)  Size of payload buffer - allocated from mpool.
  * @param payload_buffer_alignment (IN)  Payload buffer alignment.
  * @param num_elements_to_alloc    (IN)  Initial number of elements to allocate.
@@ -126,20 +124,14 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_item_t);
  * @param ctx                      (IN)  Initialization function context.
  */
 
-OPAL_DECLSPEC int opal_free_list_init (opal_free_list_t *free_list,
-                                       size_t frag_size,
-                                       size_t frag_alignment,
-                                       opal_class_t* frag_class,
-                                       size_t payload_buffer_size,
-                                       size_t payload_buffer_alignment,
-                                       int num_elements_to_alloc,
-                                       int max_elements_to_alloc,
-                                       int num_elements_per_alloc,
-                                       struct mca_mpool_base_module_t *mpool,
-                                       int rcache_reg_flags,
-                                       struct mca_rcache_base_module_t *rcache,
-                                       opal_free_list_item_init_fn_t item_init,
-                                       void *ctx);
+OPAL_DECLSPEC int opal_free_list_init(opal_free_list_t *free_list, size_t frag_size,
+                                      size_t frag_alignment, opal_class_t *frag_class,
+                                      size_t payload_buffer_size, size_t payload_buffer_alignment,
+                                      int num_elements_to_alloc, int max_elements_to_alloc,
+                                      int num_elements_per_alloc,
+                                      struct mca_mpool_base_module_t *mpool, int rcache_reg_flags,
+                                      struct mca_rcache_base_module_t *rcache,
+                                      opal_free_list_item_init_fn_t item_init, void *ctx);
 
 /**
  * Grow the free list by at most num_elements elements.
@@ -163,7 +155,8 @@ OPAL_DECLSPEC int opal_free_list_init (opal_free_list_t *free_list,
  * and assumes NULL is an out of memory condition (which it wasn't necessarily
  * before this parameter was added).
  */
-OPAL_DECLSPEC int opal_free_list_grow_st (opal_free_list_t *flist, size_t num_elements, opal_free_list_item_t **item_out);
+OPAL_DECLSPEC int opal_free_list_grow_st(opal_free_list_t *flist, size_t num_elements,
+                                         opal_free_list_item_t **item_out);
 
 /**
  * Grow the free list to be at least size elements.
@@ -179,8 +172,7 @@ OPAL_DECLSPEC int opal_free_list_grow_st (opal_free_list_t *flist, size_t num_el
  * chunks). This function is thread-safe and will obtain the free list lock before
  * growing the free list.
  */
-OPAL_DECLSPEC int opal_free_list_resize_mt (opal_free_list_t *flist, size_t size);
-
+OPAL_DECLSPEC int opal_free_list_resize_mt(opal_free_list_t *flist, size_t size);
 
 /**
  * Attemp to obtain an item from a free list.
@@ -195,44 +187,41 @@ OPAL_DECLSPEC int opal_free_list_resize_mt (opal_free_list_t *flist, size_t size
  * (opal_free_list_get_mt), single threaded (opal_free_list_get_st),
  * and opal_using_threads conditioned (opal_free_list_get).
  */
-static inline opal_free_list_item_t *opal_free_list_get_mt (opal_free_list_t *flist)
+static inline opal_free_list_item_t *opal_free_list_get_mt(opal_free_list_t *flist)
 {
-    opal_free_list_item_t *item =
-        (opal_free_list_item_t*) opal_lifo_pop_atomic (&flist->super);
+    opal_free_list_item_t *item = (opal_free_list_item_t *) opal_lifo_pop_atomic(&flist->super);
 
     if (OPAL_UNLIKELY(NULL == item)) {
-        opal_mutex_lock (&flist->fl_lock);
-        opal_free_list_grow_st (flist, flist->fl_num_per_alloc, &item);
-        opal_mutex_unlock (&flist->fl_lock);
+        opal_mutex_lock(&flist->fl_lock);
+        opal_free_list_grow_st(flist, flist->fl_num_per_alloc, &item);
+        opal_mutex_unlock(&flist->fl_lock);
     }
 
     return item;
 }
 
-static inline opal_free_list_item_t *opal_free_list_get_st (opal_free_list_t *flist)
+static inline opal_free_list_item_t *opal_free_list_get_st(opal_free_list_t *flist)
 {
-    opal_free_list_item_t *item =
-        (opal_free_list_item_t*) opal_lifo_pop_st (&flist->super);
+    opal_free_list_item_t *item = (opal_free_list_item_t *) opal_lifo_pop_st(&flist->super);
 
     if (OPAL_UNLIKELY(NULL == item)) {
-        opal_free_list_grow_st (flist, flist->fl_num_per_alloc, &item);
+        opal_free_list_grow_st(flist, flist->fl_num_per_alloc, &item);
     }
 
     return item;
 }
 
-static inline opal_free_list_item_t *opal_free_list_get (opal_free_list_t *flist)
+static inline opal_free_list_item_t *opal_free_list_get(opal_free_list_t *flist)
 {
-    if (opal_using_threads ()) {
-        return opal_free_list_get_mt (flist);
+    if (opal_using_threads()) {
+        return opal_free_list_get_mt(flist);
     }
 
-    return opal_free_list_get_st (flist);
+    return opal_free_list_get_st(flist);
 }
 
 /** compatibility macro */
-#define OPAL_FREE_LIST_GET(fl, item)            \
-    (item) = opal_free_list_get (fl)
+#define OPAL_FREE_LIST_GET(fl, item) (item) = opal_free_list_get(fl)
 
 /**
  * Blocking call to obtain an item from a free list.
@@ -247,27 +236,25 @@ static inline opal_free_list_item_t *opal_free_list_get (opal_free_list_t *flist
  */
 
 /** compatibility macro */
-#define OPAL_FREE_LIST_WAIT(fl, item)           \
-    (item) = opal_free_list_wait (fl)
+#define OPAL_FREE_LIST_WAIT(fl, item) (item) = opal_free_list_wait(fl)
 
-static inline opal_free_list_item_t *opal_free_list_wait_mt (opal_free_list_t *fl)
+static inline opal_free_list_item_t *opal_free_list_wait_mt(opal_free_list_t *fl)
 {
-    opal_free_list_item_t *item =
-        (opal_free_list_item_t *) opal_lifo_pop_atomic (&fl->super);
+    opal_free_list_item_t *item = (opal_free_list_item_t *) opal_lifo_pop_atomic(&fl->super);
 
     while (NULL == item) {
-        if (!opal_mutex_trylock (&fl->fl_lock)) {
-            if (fl->fl_max_to_alloc <= fl->fl_num_allocated ||
-                OPAL_SUCCESS != opal_free_list_grow_st (fl, fl->fl_num_per_alloc, &item)) {
+        if (!opal_mutex_trylock(&fl->fl_lock)) {
+            if (fl->fl_max_to_alloc <= fl->fl_num_allocated
+                || OPAL_SUCCESS != opal_free_list_grow_st(fl, fl->fl_num_per_alloc, &item)) {
                 fl->fl_num_waiting++;
-                opal_condition_wait (&fl->fl_condition, &fl->fl_lock);
+                opal_condition_wait(&fl->fl_condition, &fl->fl_lock);
                 fl->fl_num_waiting--;
             } else {
                 if (0 < fl->fl_num_waiting) {
                     if (1 == fl->fl_num_waiting) {
-                        opal_condition_signal (&fl->fl_condition);
+                        opal_condition_signal(&fl->fl_condition);
                     } else {
-                        opal_condition_broadcast (&fl->fl_condition);
+                        opal_condition_broadcast(&fl->fl_condition);
                     }
                 }
             }
@@ -276,42 +263,41 @@ static inline opal_free_list_item_t *opal_free_list_wait_mt (opal_free_list_t *f
              * the one holding the lock in the begining already grow the list. I will
              * release the lock and try to get a new element until I succeed.
              */
-            opal_mutex_lock (&fl->fl_lock);
+            opal_mutex_lock(&fl->fl_lock);
         }
-        opal_mutex_unlock (&fl->fl_lock);
+        opal_mutex_unlock(&fl->fl_lock);
         if (NULL == item) {
-            item = (opal_free_list_item_t *) opal_lifo_pop_atomic (&fl->super);
+            item = (opal_free_list_item_t *) opal_lifo_pop_atomic(&fl->super);
         }
     }
 
     return item;
 }
 
-static inline opal_free_list_item_t *opal_free_list_wait_st (opal_free_list_t *fl)
+static inline opal_free_list_item_t *opal_free_list_wait_st(opal_free_list_t *fl)
 {
-    opal_free_list_item_t *item =
-        (opal_free_list_item_t *) opal_lifo_pop (&fl->super);
+    opal_free_list_item_t *item = (opal_free_list_item_t *) opal_lifo_pop(&fl->super);
 
     while (NULL == item) {
-        if (fl->fl_max_to_alloc <= fl->fl_num_allocated ||
-            OPAL_SUCCESS != opal_free_list_grow_st (fl, fl->fl_num_per_alloc, &item)) {
+        if (fl->fl_max_to_alloc <= fl->fl_num_allocated
+            || OPAL_SUCCESS != opal_free_list_grow_st(fl, fl->fl_num_per_alloc, &item)) {
             /* try to make progress */
-            opal_progress ();
+            opal_progress();
         }
         if (NULL == item) {
-            item = (opal_free_list_item_t *) opal_lifo_pop (&fl->super);
+            item = (opal_free_list_item_t *) opal_lifo_pop(&fl->super);
         }
     }
 
     return item;
 }
 
-static inline opal_free_list_item_t *opal_free_list_wait (opal_free_list_t *fl)
+static inline opal_free_list_item_t *opal_free_list_wait(opal_free_list_t *fl)
 {
-    if (opal_using_threads ()) {
-        return opal_free_list_wait_mt (fl);
+    if (opal_using_threads()) {
+        return opal_free_list_wait_mt(fl);
     } else {
-        return opal_free_list_wait_st (fl);
+        return opal_free_list_wait_st(fl);
     }
 }
 
@@ -322,54 +308,49 @@ static inline opal_free_list_item_t *opal_free_list_wait (opal_free_list_t *fl)
  * @param item (OUT)     Allocated item.
  *
  */
-static inline void opal_free_list_return_mt (opal_free_list_t *flist,
-                                             opal_free_list_item_t *item)
+static inline void opal_free_list_return_mt(opal_free_list_t *flist, opal_free_list_item_t *item)
 {
-    opal_list_item_t* original;
+    opal_list_item_t *original;
 
-    original = opal_lifo_push_atomic (&flist->super, &item->super);
+    original = opal_lifo_push_atomic(&flist->super, &item->super);
     if (&flist->super.opal_lifo_ghost == original) {
         if (flist->fl_num_waiting > 0) {
             /* one one item is being returned so it doesn't make sense to wake
              * more than a single waiting thread. additionally, posix thread
              * semantics do not require that the lock be held to signal the
              * condition variable. */
-            opal_condition_signal (&flist->fl_condition);
+            opal_condition_signal(&flist->fl_condition);
         }
     }
 }
 
-static inline void opal_free_list_return_st (opal_free_list_t *flist,
-                                             opal_free_list_item_t *item)
+static inline void opal_free_list_return_st(opal_free_list_t *flist, opal_free_list_item_t *item)
 {
-    opal_list_item_t* original;
+    opal_list_item_t *original;
 
-    original = opal_lifo_push_st (&flist->super, &item->super);
+    original = opal_lifo_push_st(&flist->super, &item->super);
     if (&flist->super.opal_lifo_ghost == original) {
         if (flist->fl_num_waiting > 0) {
             /* one one item is being returned so it doesn't make sense to wake
              * more than a single waiting thread. additionally, posix thread
              * semantics do not require that the lock be held to signal the
              * condition variable. */
-            opal_condition_signal (&flist->fl_condition);
+            opal_condition_signal(&flist->fl_condition);
         }
     }
 }
 
-static inline void opal_free_list_return (opal_free_list_t *flist,
-                                          opal_free_list_item_t *item)
+static inline void opal_free_list_return(opal_free_list_t *flist, opal_free_list_item_t *item)
 {
-    if (opal_using_threads ()) {
-        opal_free_list_return_mt (flist, item);
+    if (opal_using_threads()) {
+        opal_free_list_return_mt(flist, item);
     } else {
-        opal_free_list_return_st (flist, item);
+        opal_free_list_return_st(flist, item);
     }
 }
 
 /** compatibility macro */
-#define OPAL_FREE_LIST_RETURN(fl, item)         \
-    opal_free_list_return (fl, item)
+#define OPAL_FREE_LIST_RETURN(fl, item) opal_free_list_return(fl, item)
 
 END_C_DECLS
 #endif
-

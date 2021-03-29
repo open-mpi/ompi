@@ -13,17 +13,16 @@
 
 #include "opal_config.h"
 
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 
-#include "opal/util/event.h"
 #include "opal/class/opal_hotel.h"
-
+#include "opal/util/event.h"
 
 static void local_eviction_callback(int fd, short flags, void *arg)
 {
-    opal_hotel_room_eviction_callback_arg_t *eargs =
-        (opal_hotel_room_eviction_callback_arg_t*) arg;
+    opal_hotel_room_eviction_callback_arg_t *eargs = (opal_hotel_room_eviction_callback_arg_t *)
+        arg;
     void *occupant = eargs->hotel->rooms[eargs->room_num].occupant;
 
     /* Remove the occurpant from the room.
@@ -39,23 +38,17 @@ static void local_eviction_callback(int fd, short flags, void *arg)
     hotel->unoccupied_rooms[hotel->last_unoccupied_room] = eargs->room_num;
 
     /* Invoke the user callback to tell them that they were evicted */
-    hotel->evict_callback_fn(hotel,
-                             eargs->room_num,
-                             occupant);
+    hotel->evict_callback_fn(hotel, eargs->room_num, occupant);
 }
 
-
-int opal_hotel_init(opal_hotel_t *h, int num_rooms,
-                    opal_event_base_t *evbase,
-                    uint32_t eviction_timeout,
-                    int eviction_event_priority,
+int opal_hotel_init(opal_hotel_t *h, int num_rooms, opal_event_base_t *evbase,
+                    uint32_t eviction_timeout, int eviction_event_priority,
                     opal_hotel_eviction_callback_fn_t evict_callback_fn)
 {
     int i;
 
     /* Bozo check */
-    if (num_rooms <= 0 ||
-        NULL == evict_callback_fn) {
+    if (num_rooms <= 0 || NULL == evict_callback_fn) {
         return OPAL_ERR_BAD_PARAM;
     }
 
@@ -64,12 +57,12 @@ int opal_hotel_init(opal_hotel_t *h, int num_rooms,
     h->eviction_timeout.tv_usec = eviction_timeout % 1000000;
     h->eviction_timeout.tv_sec = eviction_timeout / 1000000;
     h->evict_callback_fn = evict_callback_fn;
-    h->rooms = (opal_hotel_room_t*)malloc(num_rooms * sizeof(opal_hotel_room_t));
+    h->rooms = (opal_hotel_room_t *) malloc(num_rooms * sizeof(opal_hotel_room_t));
     if (NULL != evict_callback_fn) {
-        h->eviction_args =
-            (opal_hotel_room_eviction_callback_arg_t*)malloc(num_rooms * sizeof(opal_hotel_room_eviction_callback_arg_t));
+        h->eviction_args = (opal_hotel_room_eviction_callback_arg_t *) malloc(
+            num_rooms * sizeof(opal_hotel_room_eviction_callback_arg_t));
     }
-    h->unoccupied_rooms = (int*) malloc(num_rooms * sizeof(int));
+    h->unoccupied_rooms = (int *) malloc(num_rooms * sizeof(int));
     h->last_unoccupied_room = num_rooms - 1;
 
     for (i = 0; i < num_rooms; ++i) {
@@ -85,14 +78,11 @@ int opal_hotel_init(opal_hotel_t *h, int num_rooms,
 
         /* Create this room's event (but don't add it) */
         if (NULL != h->evbase) {
-            opal_event_set(h->evbase,
-                           &(h->rooms[i].eviction_timer_event),
-                           -1, 0, local_eviction_callback,
-                           &(h->eviction_args[i]));
+            opal_event_set(h->evbase, &(h->rooms[i].eviction_timer_event), -1, 0,
+                           local_eviction_callback, &(h->eviction_args[i]));
 
             /* Set the priority so it gets serviced properly */
-            opal_event_set_priority(&(h->rooms[i].eviction_timer_event),
-                                    eviction_event_priority);
+            opal_event_set_priority(&(h->rooms[i].eviction_timer_event), eviction_event_priority);
         }
     }
 
@@ -136,7 +126,4 @@ static void destructor(opal_hotel_t *h)
     }
 }
 
-OBJ_CLASS_INSTANCE(opal_hotel_t,
-                   opal_object_t,
-                   constructor,
-                   destructor);
+OBJ_CLASS_INSTANCE(opal_hotel_t, opal_object_t, constructor, destructor);

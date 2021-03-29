@@ -418,8 +418,7 @@ static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbea
     detector->hb_sstamp = 0.;
 
     if( comm_detector_use_rdma_hb ) {
-        ompi_communicator_t* comm = detector->comm;
-        ompi_proc_t* proc = ompi_comm_peer_lookup(comm, msg->from);
+        ompi_proc_t* proc = ompi_comm_peer_lookup(detector->comm, msg->from);
         assert( NULL != proc );
         mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc);
         assert( NULL != endpoint );
@@ -460,7 +459,7 @@ static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbea
 
 static void fd_event_cb(int fd, short flags, void* pdetector)
 {
-    comm_detector_t* detector = pdetector;;
+    comm_detector_t* detector = pdetector;
     double stamp = PMPI_Wtime();
     double lastpeek = detector->hb_lastpeek;
     detector->hb_lastpeek = stamp;

@@ -17,13 +17,11 @@
 
 #include "opal/mca/dl/base/static-components.h"
 
-
 /*
  * Globals
  */
 opal_dl_base_module_t *opal_dl = NULL;
 opal_dl_base_component_t *opal_dl_base_selected_component = NULL;
-
 
 /*
  * Function for finding and opening either all MCA components,
@@ -46,9 +44,6 @@ int opal_dl_base_open(mca_base_open_flag_t flags)
    But we must mark this framework is NO_DSO so that the MCA framework
    base doesn't try to open any dynamic components in this
    framework. */
-MCA_BASE_FRAMEWORK_DECLARE(opal, dl, "Dynamic loader framework",
-                           NULL /* register */,
-                           opal_dl_base_open /* open */,
-                           NULL /* close */,
-                           mca_dl_base_static_components,
-                           MCA_BASE_FRAMEWORK_FLAG_NO_DSO);
+MCA_BASE_FRAMEWORK_DECLARE(opal, dl, "Dynamic loader framework", NULL /* register */,
+                           opal_dl_base_open /* open */, NULL /* close */,
+                           mca_dl_base_static_components, MCA_BASE_FRAMEWORK_FLAG_NO_DSO);

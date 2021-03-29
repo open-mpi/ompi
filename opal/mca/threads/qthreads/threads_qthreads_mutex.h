@@ -34,9 +34,9 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "opal/mca/threads/qthreads/threads_qthreads.h"
-#include "opal/constants.h"
 #include "opal/class/opal_object.h"
+#include "opal/constants.h"
+#include "opal/mca/threads/qthreads/threads_qthreads.h"
 #include "opal/sys/atomic.h"
 #include "opal/util/output.h"
 
@@ -61,45 +61,33 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
 
 #if OPAL_ENABLE_DEBUG
-#define OPAL_MUTEX_STATIC_INIT                                          \
-    {                                                                   \
-        .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                    \
-        .m_lock = OPAL_ATOMIC_LOCK_INIT,                                \
-        .m_recursive = 0,                                               \
-        .m_lock_debug = 0,                                              \
-        .m_lock_file = NULL,                                            \
-        .m_lock_line = 0,                                               \
-        .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                         \
-    }
+#    define OPAL_MUTEX_STATIC_INIT                                                        \
+        {                                                                                 \
+            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t), .m_lock = OPAL_ATOMIC_LOCK_INIT, \
+            .m_recursive = 0, .m_lock_debug = 0, .m_lock_file = NULL, .m_lock_line = 0,   \
+            .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                                       \
+        }
 #else
-#define OPAL_MUTEX_STATIC_INIT                                          \
-    {                                                                   \
-        .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                    \
-        .m_lock = OPAL_ATOMIC_LOCK_INIT,                                \
-        .m_recursive = 0,                                               \
-        .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                         \
-    }
+#    define OPAL_MUTEX_STATIC_INIT                                                        \
+        {                                                                                 \
+            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t), .m_lock = OPAL_ATOMIC_LOCK_INIT, \
+            .m_recursive = 0, .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                     \
+        }
 #endif
 
 #if OPAL_ENABLE_DEBUG
-#define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                \
-    {                                                                   \
-        .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                    \
-        .m_lock = OPAL_ATOMIC_LOCK_INIT,                                \
-        .m_recursive = 1,                                               \
-        .m_lock_debug = 0,                                              \
-        .m_lock_file = NULL,                                            \
-        .m_lock_line = 0,                                               \
-        .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                         \
-    }
+#    define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                              \
+        {                                                                                 \
+            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t), .m_lock = OPAL_ATOMIC_LOCK_INIT, \
+            .m_recursive = 1, .m_lock_debug = 0, .m_lock_file = NULL, .m_lock_line = 0,   \
+            .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                                       \
+        }
 #else
-#define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                \
-    {                                                                   \
-        .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                    \
-        .m_lock = OPAL_ATOMIC_LOCK_INIT,                                \
-        .m_recursive = 1,                                               \
-        .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                         \
-    }
+#    define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                              \
+        {                                                                                 \
+            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t), .m_lock = OPAL_ATOMIC_LOCK_INIT, \
+            .m_recursive = 1, .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                     \
+        }
 #endif
 
 /************************************************************************
@@ -206,11 +194,9 @@ typedef struct opal_cond_t {
     void *m_waiter_tail;
 } opal_cond_t;
 
-#define OPAL_CONDITION_STATIC_INIT                                      \
-    {                                                                   \
-        .m_lock = OPAL_ATOMIC_LOCK_INIT,                                \
-        .m_waiter_head = NULL,                                          \
-        .m_waiter_tail = NULL,                                          \
+#define OPAL_CONDITION_STATIC_INIT                                                     \
+    {                                                                                  \
+        .m_lock = OPAL_ATOMIC_LOCK_INIT, .m_waiter_head = NULL, .m_waiter_tail = NULL, \
     }
 
 int opal_cond_init(opal_cond_t *cond);

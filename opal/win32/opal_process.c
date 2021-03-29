@@ -19,22 +19,24 @@
 #include "opal_config.h"
 #include "win32/opal_process.h"
 
-pid_t waitpid(pid_t pid, int *status, int options) {
-   return _cwait(status, pid, _WAIT_CHILD);
+pid_t waitpid(pid_t pid, int *status, int options)
+{
+    return _cwait(status, pid, _WAIT_CHILD);
 }
 
-int kill(pid_t pid, int sig) {
-   /* XXX fill this in */
-   /* Need to connect to the child process
-      Then raise the signal since Windows doesn;t
-      have the ability to 'send a signal' to a
-      process, a la the kill command in UNIX
+int kill(pid_t pid, int sig)
+{
+    /* XXX fill this in */
+    /* Need to connect to the child process
+       Then raise the signal since Windows doesn;t
+       have the ability to 'send a signal' to a
+       process, a la the kill command in UNIX
 
-      MSVC functions to look at:
-       - OpenProcess
-       - TerminateProcess
-       - raise
-   */
+       MSVC functions to look at:
+        - OpenProcess
+        - TerminateProcess
+        - raise
+    */
 
-   return 0;
+    return 0;
 }

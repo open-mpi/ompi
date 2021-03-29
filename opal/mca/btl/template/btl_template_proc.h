@@ -19,10 +19,10 @@
 #ifndef MCA_BTL_TEMPLATE_PROC_H
 #define MCA_BTL_TEMPLATE_PROC_H
 
-#include "opal/class/opal_object.h"
-#include "opal/util/proc.h"
 #include "btl_template.h"
 #include "btl_template_endpoint.h"
+#include "opal/class/opal_object.h"
+#include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
@@ -54,8 +54,8 @@ struct mca_btl_template_proc_t {
 typedef struct mca_btl_template_proc_t mca_btl_template_proc_t;
 OBJ_CLASS_DECLARATION(mca_btl_template_proc_t);
 
-mca_btl_template_proc_t* mca_btl_template_proc_create(opal_proc_t* proc);
-int mca_btl_template_proc_insert(mca_btl_template_proc_t*, mca_btl_base_endpoint_t*);
+mca_btl_template_proc_t *mca_btl_template_proc_create(opal_proc_t *proc);
+int mca_btl_template_proc_insert(mca_btl_template_proc_t *, mca_btl_base_endpoint_t *);
 
 END_C_DECLS
 #endif

@@ -24,17 +24,17 @@
 
 #include "opal_config.h"
 
+#include "memchecker_valgrind.h"
 #include "opal/constants.h"
 #include "opal/mca/memchecker/memchecker.h"
-#include "memchecker_valgrind.h"
 
 int opal_memchecker_component_priority = 0;
 
 /*
  * Public string showing the memchecker ompi_linux component version number
  */
-const char *opal_memchecker_valgrind_component_version_string =
-    "OPAL valgrind memchecker MCA component version " OPAL_VERSION;
+const char *opal_memchecker_valgrind_component_version_string
+    = "OPAL valgrind memchecker MCA component version " OPAL_VERSION;
 
 /*
  * Local function
@@ -52,35 +52,30 @@ const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component =
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    .base_version = {
-        OPAL_MEMCHECKER_BASE_VERSION_2_0_0,
+    .base_version = {OPAL_MEMCHECKER_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
-        .mca_component_name = "valgrind",
-        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-                              OPAL_RELEASE_VERSION),
+                     /* Component name and version */
+                     .mca_component_name = "valgrind",
+                     MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                           OPAL_RELEASE_VERSION),
 
-        /* Component open and close functions */
-        .mca_open_component = valgrind_open,
-        .mca_close_component = valgrind_close,
-        .mca_query_component = opal_memchecker_valgrind_component_query,
-        .mca_register_component_params = valgrind_register
-    },
-    .base_data = {
-        /* Valgrind does not offer functionality to save the state  */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
-};
-
+                     /* Component open and close functions */
+                     .mca_open_component = valgrind_open, .mca_close_component = valgrind_close,
+                     .mca_query_component = opal_memchecker_valgrind_component_query,
+                     .mca_register_component_params = valgrind_register},
+    .base_data = {/* Valgrind does not offer functionality to save the state  */
+                  MCA_BASE_METADATA_PARAM_CHECKPOINT}};
 
 static int valgrind_register(void)
 {
     opal_memchecker_component_priority = 0;
     (void) mca_base_component_var_register(&mca_memchecker_valgrind_component.base_version,
-                                           "priority", "Priority for the memchecker valgrind "
-                                           "component (default: 0)", MCA_BASE_VAR_TYPE_INT,
-                                           NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                           "priority",
+                                           "Priority for the memchecker valgrind "
+                                           "component (default: 0)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_ALL_EQ,
                                            &opal_memchecker_component_priority);
 
     return OPAL_SUCCESS;
@@ -98,7 +93,6 @@ static int valgrind_open(void)
     return OPAL_SUCCESS;
 }
 
-
 static int valgrind_close(void)
 {
     /*
@@ -110,4 +104,3 @@ static int valgrind_close(void)
      */
     return OPAL_SUCCESS;
 }
-

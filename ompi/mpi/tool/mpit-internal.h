@@ -12,7 +12,7 @@
  * $HEADER$
  */
 
-#if !defined(MPIT_INTERNAL_H)
+#ifndef MPIT_INTERNAL_H
 #define MPIT_INTERNAL_H
 
 #include "opal/util/string_copy.h"
@@ -73,4 +73,4 @@ static inline void mpit_copy_string (char *dest, int *len, const char *source)
     }
 }
 
-#endif /* !defined(MPIT_INTERNAL_H) */
+#endif /* MPIT_INTERNAL_H */

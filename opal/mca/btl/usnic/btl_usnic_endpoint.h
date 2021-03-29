@@ -26,8 +26,8 @@
 
 #include <rdma/fabric.h>
 
-#include "opal/class/opal_list.h"
 #include "opal/class/opal_hotel.h"
+#include "opal/class/opal_list.h"
 #include "opal/util/event.h"
 
 #include "btl_usnic.h"
@@ -44,18 +44,16 @@ struct opal_btl_usnic_send_segment_t;
  * Have the window size as a compile-time constant that is a power of
  * two so that we can take advantage of fast bit operations.
  */
-#define WINDOW_SIZE 4096
+#define WINDOW_SIZE        4096
 #define WINDOW_SIZE_MOD(a) (((a) & (WINDOW_SIZE - 1)))
-#define WINDOW_OPEN(E) (SEQ_LT((E)->endpoint_next_seq_to_send, \
-        ((E)->endpoint_ack_seq_rcvd + WINDOW_SIZE)))
-#define WINDOW_EMPTY(E) ((E)->endpoint_ack_seq_rcvd == \
-        ((E)->endpoint_next_seq_to_send-1))
+#define WINDOW_OPEN(E) \
+    (SEQ_LT((E)->endpoint_next_seq_to_send, ((E)->endpoint_ack_seq_rcvd + WINDOW_SIZE)))
+#define WINDOW_EMPTY(E) ((E)->endpoint_ack_seq_rcvd == ((E)->endpoint_next_seq_to_send - 1))
 
 /*
  * Returns true when an endpoint has nothing left to send
  */
-#define ENDPOINT_DRAINED(E) (WINDOW_EMPTY(E) && \
-        opal_list_is_empty(&(E)->endpoint_frag_send_queue))
+#define ENDPOINT_DRAINED(E) (WINDOW_EMPTY(E) && opal_list_is_empty(&(E)->endpoint_frag_send_queue))
 
 /*
  * Channel IDs
@@ -99,14 +97,14 @@ struct opal_btl_usnic_proc_t;
  * and waiting for retrans is just fine in this hypothetical hyper-pathological
  * case, which is what we'll do.
  */
-#define MAX_ACTIVE_FRAGS (WINDOW_SIZE/2)
+#define MAX_ACTIVE_FRAGS (WINDOW_SIZE / 2)
 typedef struct opal_btl_usnic_rx_frag_info_t {
-    uint32_t    rfi_frag_id;    /* ID for this fragment */
-    uint32_t    rfi_frag_size;  /* bytes in this fragment */
-    uint32_t    rfi_bytes_left; /* bytes remaining to RX in fragment */
-    bool        rfi_data_in_pool; /* data in data_pool if true, else malloced */
-    int         rfi_data_pool;  /* if <0, data malloced, else rx buf pool */
-    char       *rfi_data;       /* pointer to assembly area */
+    uint32_t rfi_frag_id;              /* ID for this fragment */
+    uint32_t rfi_frag_size;            /* bytes in this fragment */
+    uint32_t rfi_bytes_left;           /* bytes remaining to RX in fragment */
+    bool rfi_data_in_pool;             /* data in data_pool if true, else malloced */
+    int rfi_data_pool;                 /* if <0, data malloced, else rx buf pool */
+    char *rfi_data;                    /* pointer to assembly area */
     opal_free_list_item_t *rfi_fl_elt; /* free list elemement from buf pool
                                           when rfi_data_pool is nonzero */
 } opal_btl_usnic_rx_frag_info_t;
@@ -126,7 +124,7 @@ typedef struct mca_btl_base_endpoint_t {
 
     /** proc that owns this endpoint */
     struct opal_btl_usnic_proc_t *endpoint_proc;
-    int endpoint_proc_index;    /* index in owning proc's endpoint array */
+    int endpoint_proc_index; /* index in owning proc's endpoint array */
 
     /** True when proc has been deleted, but still have sends that need ACKs */
     bool endpoint_exiting;
@@ -160,7 +158,7 @@ typedef struct mca_btl_base_endpoint_t {
     /* Values for the current proc to send to this endpoint on the
        peer proc */
     opal_btl_usnic_seq_t endpoint_next_seq_to_send; /* n_t */
-    opal_btl_usnic_seq_t endpoint_ack_seq_rcvd; /* n_a */
+    opal_btl_usnic_seq_t endpoint_ack_seq_rcvd;     /* n_a */
 
     /* Table where sent segments sit while waiting for their ACKs.
        When a segment is ACKed, it is removed from this table. */
@@ -176,7 +174,7 @@ typedef struct mca_btl_base_endpoint_t {
     uint64_t endpoint_acktime;
 
     opal_btl_usnic_seq_t endpoint_next_contig_seq_to_recv; /* n_r */
-    opal_btl_usnic_seq_t endpoint_highest_seq_rcvd; /* n_s */
+    opal_btl_usnic_seq_t endpoint_highest_seq_rcvd;        /* n_s */
 
     bool endpoint_rcvd_segs[WINDOW_SIZE];
     uint32_t endpoint_rfstart;
@@ -199,9 +197,7 @@ typedef struct {
 /*
  * Flush all pending sends and resends from and endpoint
  */
-void
-opal_btl_usnic_flush_endpoint(
-    opal_btl_usnic_endpoint_t *endpoint);
+void opal_btl_usnic_flush_endpoint(opal_btl_usnic_endpoint_t *endpoint);
 
 END_C_DECLS
 #endif

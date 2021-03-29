@@ -26,26 +26,26 @@
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
+#    include <sys/time.h>
 #endif
-#include <stdint.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_value_array.h"
 
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/mca.h"
 
 BEGIN_C_DECLS
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#    include <windows.h>
+#    undef WIN32_LEAN_AND_MEAN
 typedef unsigned char u_char;
 typedef unsigned short u_short;
 #endif
@@ -69,9 +69,7 @@ typedef struct opal_hwloc_base_component_2_0_0_t opal_hwloc_component_t;
 /**
  * Macro for use in components that are of type hwloc
  */
-#define OPAL_HWLOC_BASE_VERSION_2_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("hwloc", 2, 0, 0)
-
+#define OPAL_HWLOC_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("hwloc", 2, 0, 0)
 
 /* ******************************************************************** */
 /* Although we cannot bind if --without-hwloc is set,
@@ -85,36 +83,36 @@ typedef uint16_t opal_hwloc_locality_t;
 
 /** Process locality definitions */
 enum {
-    OPAL_PROC_LOCALITY_UNKNOWN  = 0x0000,
-    OPAL_PROC_NON_LOCAL         = 0x8000,
-    OPAL_PROC_ON_CLUSTER        = 0x0001,
-    OPAL_PROC_ON_CU             = 0x0002,
-    OPAL_PROC_ON_HOST           = 0x0004,
-    OPAL_PROC_ON_BOARD          = 0x0008,
-    OPAL_PROC_ON_NODE           = 0x000c,   // same host and board
-    OPAL_PROC_ON_NUMA           = 0x0010,
-    OPAL_PROC_ON_SOCKET         = 0x0020,
-    OPAL_PROC_ON_L3CACHE        = 0x0040,
-    OPAL_PROC_ON_L2CACHE        = 0x0080,
-    OPAL_PROC_ON_L1CACHE        = 0x0100,
-    OPAL_PROC_ON_CORE           = 0x0200,
-    OPAL_PROC_ON_HWTHREAD       = 0x0400,
-    OPAL_PROC_ALL_LOCAL         = 0x0fff,
+    OPAL_PROC_LOCALITY_UNKNOWN = 0x0000,
+    OPAL_PROC_NON_LOCAL = 0x8000,
+    OPAL_PROC_ON_CLUSTER = 0x0001,
+    OPAL_PROC_ON_CU = 0x0002,
+    OPAL_PROC_ON_HOST = 0x0004,
+    OPAL_PROC_ON_BOARD = 0x0008,
+    OPAL_PROC_ON_NODE = 0x000c, // same host and board
+    OPAL_PROC_ON_NUMA = 0x0010,
+    OPAL_PROC_ON_SOCKET = 0x0020,
+    OPAL_PROC_ON_L3CACHE = 0x0040,
+    OPAL_PROC_ON_L2CACHE = 0x0080,
+    OPAL_PROC_ON_L1CACHE = 0x0100,
+    OPAL_PROC_ON_CORE = 0x0200,
+    OPAL_PROC_ON_HWTHREAD = 0x0400,
+    OPAL_PROC_ALL_LOCAL = 0x0fff,
 };
 
 /** Process locality macros */
-#define OPAL_PROC_ON_LOCAL_CLUSTER(n)   (!!((n) & OPAL_PROC_ON_CLUSTER))
-#define OPAL_PROC_ON_LOCAL_CU(n)        (!!((n) & OPAL_PROC_ON_CU))
-#define OPAL_PROC_ON_LOCAL_HOST(n)      (!!((n) & OPAL_PROC_ON_HOST))
-#define OPAL_PROC_ON_LOCAL_BOARD(n)     (!!((n) & OPAL_PROC_ON_BOARD))
-#define OPAL_PROC_ON_LOCAL_NODE(n)      (OPAL_PROC_ON_LOCAL_HOST(n) && OPAL_PROC_ON_LOCAL_BOARD(n))
-#define OPAL_PROC_ON_LOCAL_NUMA(n)      (!!((n) & OPAL_PROC_ON_NUMA))
-#define OPAL_PROC_ON_LOCAL_SOCKET(n)    (!!((n) & OPAL_PROC_ON_SOCKET))
-#define OPAL_PROC_ON_LOCAL_L3CACHE(n)   (!!((n) & OPAL_PROC_ON_L3CACHE))
-#define OPAL_PROC_ON_LOCAL_L2CACHE(n)   (!!((n) & OPAL_PROC_ON_L2CACHE))
-#define OPAL_PROC_ON_LOCAL_L1CACHE(n)   (!!((n) & OPAL_PROC_ON_L1CACHE))
-#define OPAL_PROC_ON_LOCAL_CORE(n)      (!!((n) & OPAL_PROC_ON_CORE))
-#define OPAL_PROC_ON_LOCAL_HWTHREAD(n)  (!!((n) & OPAL_PROC_ON_HWTHREAD))
+#define OPAL_PROC_ON_LOCAL_CLUSTER(n)  (!!((n) &OPAL_PROC_ON_CLUSTER))
+#define OPAL_PROC_ON_LOCAL_CU(n)       (!!((n) &OPAL_PROC_ON_CU))
+#define OPAL_PROC_ON_LOCAL_HOST(n)     (!!((n) &OPAL_PROC_ON_HOST))
+#define OPAL_PROC_ON_LOCAL_BOARD(n)    (!!((n) &OPAL_PROC_ON_BOARD))
+#define OPAL_PROC_ON_LOCAL_NODE(n)     (OPAL_PROC_ON_LOCAL_HOST(n) && OPAL_PROC_ON_LOCAL_BOARD(n))
+#define OPAL_PROC_ON_LOCAL_NUMA(n)     (!!((n) &OPAL_PROC_ON_NUMA))
+#define OPAL_PROC_ON_LOCAL_SOCKET(n)   (!!((n) &OPAL_PROC_ON_SOCKET))
+#define OPAL_PROC_ON_LOCAL_L3CACHE(n)  (!!((n) &OPAL_PROC_ON_L3CACHE))
+#define OPAL_PROC_ON_LOCAL_L2CACHE(n)  (!!((n) &OPAL_PROC_ON_L2CACHE))
+#define OPAL_PROC_ON_LOCAL_L1CACHE(n)  (!!((n) &OPAL_PROC_ON_L1CACHE))
+#define OPAL_PROC_ON_LOCAL_CORE(n)     (!!((n) &OPAL_PROC_ON_CORE))
+#define OPAL_PROC_ON_LOCAL_HWTHREAD(n) (!!((n) &OPAL_PROC_ON_HWTHREAD))
 
 /* ******************************************************************** */
 
@@ -143,21 +141,22 @@ typedef struct {
 #    if HWLOC_API_VERSION >= 0x20000
 #        include <hwloc/shmem.h>
 #    endif
-/* Do nothing in the 1.x case because the caller doesn't know HWLOC_API_VERSION when it sets OPAL_HWLOC_WANT_SHMEM.
- * Calls to hwloc/shmem.h are protected by HWLOC_API_VERSION >= 0x20000 in the actual code.
+/* Do nothing in the 1.x case because the caller doesn't know HWLOC_API_VERSION when it sets
+ * OPAL_HWLOC_WANT_SHMEM. Calls to hwloc/shmem.h are protected by HWLOC_API_VERSION >= 0x20000 in
+ * the actual code.
  */
 #endif
 
 #if HWLOC_API_VERSION < 0x00010b00
-#define HWLOC_OBJ_NUMANODE HWLOC_OBJ_NODE
-#define HWLOC_OBJ_PACKAGE HWLOC_OBJ_SOCKET
+#    define HWLOC_OBJ_NUMANODE HWLOC_OBJ_NODE
+#    define HWLOC_OBJ_PACKAGE  HWLOC_OBJ_SOCKET
 #endif
 
 /* define type of processor info requested */
 typedef uint8_t opal_hwloc_resource_type_t;
-#define OPAL_HWLOC_PHYSICAL   1
-#define OPAL_HWLOC_LOGICAL    2
-#define OPAL_HWLOC_AVAILABLE  3
+#define OPAL_HWLOC_PHYSICAL  1
+#define OPAL_HWLOC_LOGICAL   2
+#define OPAL_HWLOC_AVAILABLE 3
 
 /* structs for storing info on objects */
 typedef struct {
@@ -194,52 +193,46 @@ typedef uint16_t opal_binding_policy_t;
 #define OPAL_BINDING_POLICY OPAL_UINT16
 
 /* binding directives */
-#define OPAL_BIND_IF_SUPPORTED      0x1000
+#define OPAL_BIND_IF_SUPPORTED 0x1000
 /* allow assignment of multiple procs to
  * same cpu */
-#define OPAL_BIND_ALLOW_OVERLOAD    0x2000
+#define OPAL_BIND_ALLOW_OVERLOAD 0x2000
 /* the binding policy was specified by the user */
-#define OPAL_BIND_GIVEN             0x4000
+#define OPAL_BIND_GIVEN 0x4000
 /* bind each rank to the cpu in the given
  * cpu list based on its node-local-rank */
-#define OPAL_BIND_ORDERED           0x8000
+#define OPAL_BIND_ORDERED 0x8000
 
 /* binding policies - any changes in these
  * values must be reflected in orte/mca/rmaps/rmaps.h
  */
-#define OPAL_BIND_TO_NONE           1
-#define OPAL_BIND_TO_BOARD          2
-#define OPAL_BIND_TO_NUMA           3
-#define OPAL_BIND_TO_SOCKET         4
-#define OPAL_BIND_TO_L3CACHE        5
-#define OPAL_BIND_TO_L2CACHE        6
-#define OPAL_BIND_TO_L1CACHE        7
-#define OPAL_BIND_TO_CORE           8
-#define OPAL_BIND_TO_HWTHREAD       9
-#define OPAL_BIND_TO_CPUSET         10
-#define OPAL_GET_BINDING_POLICY(pol) \
-    ((pol) & 0x0fff)
+#define OPAL_BIND_TO_NONE            1
+#define OPAL_BIND_TO_BOARD           2
+#define OPAL_BIND_TO_NUMA            3
+#define OPAL_BIND_TO_SOCKET          4
+#define OPAL_BIND_TO_L3CACHE         5
+#define OPAL_BIND_TO_L2CACHE         6
+#define OPAL_BIND_TO_L1CACHE         7
+#define OPAL_BIND_TO_CORE            8
+#define OPAL_BIND_TO_HWTHREAD        9
+#define OPAL_BIND_TO_CPUSET          10
+#define OPAL_GET_BINDING_POLICY(pol) ((pol) &0x0fff)
 #define OPAL_SET_BINDING_POLICY(target, pol) \
-    (target) = (pol) | (((target) & 0xf000) | OPAL_BIND_GIVEN)
-#define OPAL_SET_DEFAULT_BINDING_POLICY(target, pol)            \
-    do {                                                        \
-        if (!OPAL_BINDING_POLICY_IS_SET((target))) {            \
-            (target) = (pol) | (((target) & 0xf000) |           \
-                                OPAL_BIND_IF_SUPPORTED);        \
-        }                                                       \
-    } while(0);
+    (target) = (pol) | (((target) &0xf000) | OPAL_BIND_GIVEN)
+#define OPAL_SET_DEFAULT_BINDING_POLICY(target, pol)                          \
+    do {                                                                      \
+        if (!OPAL_BINDING_POLICY_IS_SET((target))) {                          \
+            (target) = (pol) | (((target) &0xf000) | OPAL_BIND_IF_SUPPORTED); \
+        }                                                                     \
+    } while (0);
 
 /* check if policy is set */
-#define OPAL_BINDING_POLICY_IS_SET(pol) \
-    ((pol) & 0x4000)
+#define OPAL_BINDING_POLICY_IS_SET(pol) ((pol) &0x4000)
 /* macro to detect if binding was qualified */
-#define OPAL_BINDING_REQUIRED(n) \
-    (!(OPAL_BIND_IF_SUPPORTED & (n)))
+#define OPAL_BINDING_REQUIRED(n) (!(OPAL_BIND_IF_SUPPORTED & (n)))
 /* macro to detect if binding is forced */
-#define OPAL_BIND_OVERLOAD_ALLOWED(n) \
-    (OPAL_BIND_ALLOW_OVERLOAD & (n))
-#define OPAL_BIND_ORDERED_REQUESTED(n) \
-    (OPAL_BIND_ORDERED & (n))
+#define OPAL_BIND_OVERLOAD_ALLOWED(n)  (OPAL_BIND_ALLOW_OVERLOAD & (n))
+#define OPAL_BIND_ORDERED_REQUESTED(n) (OPAL_BIND_ORDERED & (n))
 
 /* some global values */
 OPAL_DECLSPEC extern hwloc_topology_t opal_hwloc_topology;

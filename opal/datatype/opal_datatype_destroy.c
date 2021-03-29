@@ -23,15 +23,14 @@
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_datatype_internal.h"
 
-int32_t opal_datatype_destroy( opal_datatype_t** dt )
+int32_t opal_datatype_destroy(opal_datatype_t **dt)
 {
-    opal_datatype_t* pData = *dt;
+    opal_datatype_t *pData = *dt;
 
-    if( (pData->flags & OPAL_DATATYPE_FLAG_PREDEFINED) &&
-        (pData->super.obj_reference_count <= 1) )
+    if ((pData->flags & OPAL_DATATYPE_FLAG_PREDEFINED) && (pData->super.obj_reference_count <= 1))
         return OPAL_ERROR;
 
-    OBJ_RELEASE( pData );
+    OBJ_RELEASE(pData);
     *dt = NULL;
     return OPAL_SUCCESS;
 }

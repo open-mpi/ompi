@@ -26,16 +26,16 @@
 const opal_backtrace_base_component_2_0_0_t mca_backtrace_printstack_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    .backtracec_version = {
-        OPAL_BACKTRACE_BASE_VERSION_2_0_0,
+    .backtracec_version =
+        {
+            OPAL_BACKTRACE_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
-        .mca_component_name = "printstack",
-        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-                              OPAL_RELEASE_VERSION),
-    },
-    .backtracec_data = {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+            /* Component name and version */
+            .mca_component_name = "printstack",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
+        },
+    .backtracec_data =
+        {/* The component is checkpoint ready */
+         MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };

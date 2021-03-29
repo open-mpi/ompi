@@ -25,13 +25,13 @@
 #define MCA_BTL_TCP_ADDR_H
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
+#    include <sys/socket.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 #include <assert.h>
 
@@ -46,19 +46,19 @@
  * structure.
  */
 struct mca_btl_tcp_modex_addr_t {
-    uint8_t     addr[16];       /* endpoint address.  for addr_family
-                                   of MCA_BTL_TCP_AF_INET, only the
-                                   first 4 bytes have meaning. */
-    uint32_t    addr_ifkindex;  /* endpoint kernel index */
-    uint32_t    addr_mask;      /* ip mask */
-    uint32_t    addr_bandwidth; /* interface bandwidth */
-    uint16_t    addr_port;      /* endpoint listen port */
-    uint8_t     addr_family;    /* endpoint address family.  Note that
-                                   this is
-                                   MCA_BTL_TCP_AF_{INET,INET6}, not
-                                   the traditional
-                                   AF_INET/AF_INET6. */
-    uint8_t     padding[1];     /* pad out to an 8-byte word */
+    uint8_t addr[16];        /* endpoint address.  for addr_family
+                                of MCA_BTL_TCP_AF_INET, only the
+                                first 4 bytes have meaning. */
+    uint32_t addr_ifkindex;  /* endpoint kernel index */
+    uint32_t addr_mask;      /* ip mask */
+    uint32_t addr_bandwidth; /* interface bandwidth */
+    uint16_t addr_port;      /* endpoint listen port */
+    uint8_t addr_family;     /* endpoint address family.  Note that
+                                this is
+                                MCA_BTL_TCP_AF_{INET,INET6}, not
+                                the traditional
+                                AF_INET/AF_INET6. */
+    uint8_t padding[1];      /* pad out to an 8-byte word */
 };
 typedef struct mca_btl_tcp_modex_addr_t mca_btl_tcp_modex_addr_t;
 
@@ -75,20 +75,19 @@ _Static_assert(sizeof(struct mca_btl_tcp_modex_addr_t) == 32, "mca_btl_tcp_modex
  */
 struct mca_btl_tcp_addr_t {
     union {
-        struct in_addr  addr_inet;      /* IPv6 listen address */
+        struct in_addr addr_inet; /* IPv6 listen address */
 #if OPAL_ENABLE_IPV6
-        struct in6_addr addr_inet6;     /* IPv6 listen address */
+        struct in6_addr addr_inet6; /* IPv6 listen address */
 #endif
     } addr_union;
-    in_port_t   addr_port;     /**< listen port */
-    int         addr_ifkindex; /**< remote interface index assigned with
-                                    this address */
-    uint8_t     addr_family;   /**< AF_INET or AF_INET6 */
+    in_port_t addr_port; /**< listen port */
+    int addr_ifkindex;   /**< remote interface index assigned with
+                              this address */
+    uint8_t addr_family; /**< AF_INET or AF_INET6 */
 };
 typedef struct mca_btl_tcp_addr_t mca_btl_tcp_addr_t;
 
-#define MCA_BTL_TCP_AF_INET     0
-#define MCA_BTL_TCP_AF_INET6    1
+#define MCA_BTL_TCP_AF_INET  0
+#define MCA_BTL_TCP_AF_INET6 1
 
 #endif
-

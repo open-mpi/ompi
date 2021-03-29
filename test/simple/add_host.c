@@ -4,8 +4,6 @@
 #include <unistd.h>
 #include <sys/param.h>
 
-#include "opal/runtime/opal.h"
-
 #include <mpi.h>
 
 int main(int argc, char* argv[])
@@ -13,7 +11,7 @@ int main(int argc, char* argv[])
     int msg, rc;
     MPI_Comm parent, child;
     int rank, size;
-    const char *hostname;
+    char hostname[1024];
     pid_t pid;
     char *env_rank,*env_nspace;
     MPI_Info info;
@@ -21,7 +19,7 @@ int main(int argc, char* argv[])
     env_rank = getenv("PMIX_RANK");
     env_nspace = getenv("PMIX_NAMESPACE");
     pid = getpid();
-    hostname = opal_gethostname();
+    gethostname(hostname, 1024);
 
     printf("[%s:%s pid %ld] starting up on node %s!\n", env_nspace, env_rank, (long)pid, hostname);
 
@@ -32,10 +30,15 @@ int main(int argc, char* argv[])
     MPI_Comm_get_parent(&parent);
     /* If we get COMM_NULL back, then we're the parent */
     if (MPI_COMM_NULL == parent) {
+        if (argc < 3) {
+            printf("%s requires two arguments (%d)- the name of the first host to add, and the name of the second host to add\n", argv[0], argc);
+            exit(1);
+        }
+
         pid = getpid();
         printf("Parent [pid %ld] about to spawn!\n", (long)pid);
         MPI_Info_create(&info);
-        MPI_Info_set(info, "add-host", "rhc002:24");
+        MPI_Info_set(info, "PMIX_ADD_HOST", argv[1]);
         if (MPI_SUCCESS != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, info,
                                                 0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE))) {
             printf("Child failed to spawn\n");
@@ -50,7 +53,7 @@ int main(int argc, char* argv[])
         MPI_Comm_disconnect(&child);
         printf("Parent disconnected\n");
         /* do it again */
-        MPI_Info_set(info, "add-host", "rhc003:24");
+        MPI_Info_set(info, "PMIX_ADD_HOST", argv[2]);
         if (MPI_SUCCESS != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, info,
                                                 0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE))) {
             printf("Child failed to spawn\n");

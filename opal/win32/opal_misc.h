@@ -57,7 +57,8 @@ static __inline int setenv (const char *name, const char *value, int rewrite)
 }
 #endif
 
-static __inline unsigned int sleep(unsigned int seconds) {
+static __inline unsigned int sleep(unsigned int seconds)
+{
 
     /* Allow interruptions */
     SleepEx(seconds * 1000, TRUE);
@@ -66,43 +67,48 @@ static __inline unsigned int sleep(unsigned int seconds) {
 
 /* this function can currently ONLY return the page size. for it to
    do the entire sysconf range it needs to be extended */
-static __inline size_t sysconf(int option) {
+static __inline size_t sysconf(int option)
+{
 
     SYSTEM_INFO sys_info;
 
-    if( _SC_OPEN_MAX == option ) {
+    if (_SC_OPEN_MAX == option) {
         return _getmaxstdio();
     }
 
     GetSystemInfo(&sys_info);
-    if (_SC_PAGESIZE == option){
-        return (size_t)sys_info.dwPageSize;
+    if (_SC_PAGESIZE == option) {
+        return (size_t) sys_info.dwPageSize;
     }
-    printf( "This functionality is not supported: line: %d\tfile: %s\n",
-            __LINE__, __FILE__ );
+    printf("This functionality is not supported: line: %d\tfile: %s\n", __LINE__, __FILE__);
     abort();
     return 0;
 }
 
-#define F_GETFL 0
-#define F_SETFL 1
+#define F_GETFL    0
+#define F_SETFL    1
 #define O_NONBLOCK 0
 /*
  * this function is currently defined only for setting the socket to be
  * in the non-blocking mode. Else this function returns error not implemented.
  * This calls ioctlsocket in the winsock library
  */
-static __inline int fcntl (int fildes, int cmd, ...) {
+static __inline int fcntl(int fildes, int cmd, ...)
+{
     int ret;
     int mode;
 
     switch (cmd) {
-        case F_SETFL: mode = 1; ret = ioctlsocket ((SOCKET)fildes, FIONBIO, (u_long FAR*) &mode);
-                      break;
-        case F_GETFL: ret = 0;
-                      break;
-        default: printf("Option not supported: %d %s\n", __LINE__, __FILE__);
-                      abort();
+    case F_SETFL:
+        mode = 1;
+        ret = ioctlsocket((SOCKET) fildes, FIONBIO, (u_long FAR *) &mode);
+        break;
+    case F_GETFL:
+        ret = 0;
+        break;
+    default:
+        printf("Option not supported: %d %s\n", __LINE__, __FILE__);
+        abort();
     };
 
     return ret;

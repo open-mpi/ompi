@@ -53,9 +53,7 @@ static void init_test_infra(void)
     }
 }
 
-void opal_btl_usnic_register_test(const char *name,
-                                  opal_btl_usnic_test_fn_t test_fn,
-                                  void *ctx)
+void opal_btl_usnic_register_test(const char *name, opal_btl_usnic_test_fn_t test_fn, void *ctx)
 {
     struct test_info *info = malloc(sizeof(*info));
     assert(info != NULL);
@@ -82,38 +80,34 @@ void opal_btl_usnic_run_tests(void)
     }
     test_out("STARTING TESTS\n");
 
-    OPAL_LIST_FOREACH(info, &all_tests, struct test_info) {
+    OPAL_LIST_FOREACH (info, &all_tests, struct test_info) {
         test_out("running test '%s'... ", info->name);
         result = info->test_fn(info->ctx);
 
         ++opal_btl_usnic_num_tests_run;
         switch (result) {
-            case TEST_PASSED:
-                ++opal_btl_usnic_num_tests_passed;
-                test_out("PASSED\n");
-                break;
-            case TEST_FAILED:
-                ++opal_btl_usnic_num_tests_failed;
-                test_out("FAILED\n");
-                break;
-            case TEST_SKIPPED:
-                ++opal_btl_usnic_num_tests_skipped;
-                test_out("SKIPPED\n");
-                break;
+        case TEST_PASSED:
+            ++opal_btl_usnic_num_tests_passed;
+            test_out("PASSED\n");
+            break;
+        case TEST_FAILED:
+            ++opal_btl_usnic_num_tests_failed;
+            test_out("FAILED\n");
+            break;
+        case TEST_SKIPPED:
+            ++opal_btl_usnic_num_tests_skipped;
+            test_out("SKIPPED\n");
+            break;
         }
     }
 
-    test_out("FINISHED TESTS (%d passed, %d failed, %d skipped)\n",
-             opal_btl_usnic_num_tests_passed,
-             opal_btl_usnic_num_tests_failed,
-             opal_btl_usnic_num_tests_skipped);
+    test_out("FINISHED TESTS (%d passed, %d failed, %d skipped)\n", opal_btl_usnic_num_tests_passed,
+             opal_btl_usnic_num_tests_failed, opal_btl_usnic_num_tests_skipped);
 }
 
 #else /* !OPAL_BTL_USNIC_UNIT_TESTS */
 
-void opal_btl_usnic_register_test(const char *name,
-                                  opal_btl_usnic_test_fn_t test_fn,
-                                  void *ctx)
+void opal_btl_usnic_register_test(const char *name, opal_btl_usnic_test_fn_t test_fn, void *ctx)
 {
     abort(); /* never should be called */
 }

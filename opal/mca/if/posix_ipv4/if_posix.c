@@ -18,10 +18,10 @@
 #include <string.h>
 
 #include "opal/constants.h"
+#include "opal/mca/if/base/base.h"
+#include "opal/mca/if/if.h"
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
-#include "opal/mca/if/if.h"
-#include "opal/mca/if/base/base.h"
 
 static int if_posix_open(void);
 
@@ -31,27 +31,19 @@ static int if_posix_open(void);
 opal_if_base_component_t mca_if_posix_ipv4_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    {
-        OPAL_IF_BASE_VERSION_2_0_0,
+    {OPAL_IF_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
-        "posix_ipv4",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+     /* Component name and version */
+     "posix_ipv4", OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, OPAL_RELEASE_VERSION,
 
-        /* Component open and close functions */
-        if_posix_open,
-        NULL
-    },
-    {
-        /* This component is checkpointable */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+     /* Component open and close functions */
+     if_posix_open, NULL},
+    {/* This component is checkpointable */
+     MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
 
 /* convert a netmask (in network byte order) to CIDR notation */
-static int prefix (uint32_t netmask)
+static int prefix(uint32_t netmask)
 {
     uint32_t mask = ntohl(netmask);
     int plen = 0;
@@ -82,8 +74,7 @@ static int if_posix_open(void)
        using AF_UNSPEC or AF_INET6 will cause everything to
        fail. */
     if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        opal_output(0, "opal_ifinit: socket() failed with errno=%d\n",
-                    errno);
+        opal_output(0, "opal_ifinit: socket() failed with errno=%d\n", errno);
         return OPAL_ERROR;
     }
 
@@ -158,12 +149,12 @@ static int if_posix_open(void)
     /*
      * Setup indexes
      */
-    ptr = (char*) ifconf.ifc_req;
+    ptr = (char *) ifconf.ifc_req;
     rem = ifconf.ifc_len;
 
     /* loop through all interfaces */
     while (rem > 0) {
-        struct ifreq* ifr = (struct ifreq*) ptr;
+        struct ifreq *ifr = (struct ifreq *) ptr;
         opal_if_t *intf;
         int length;
 
@@ -210,7 +201,8 @@ static int if_posix_open(void)
 
         intf = OBJ_NEW(opal_if_t);
         if (NULL == intf) {
-            opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
+            opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n",
+                        (unsigned long) sizeof(opal_if_t));
             free(ifconf.ifc_req);
             close(sd);
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -223,27 +215,27 @@ static int if_posix_open(void)
         intf->if_flags = ifr->ifr_flags;
 
         /* every new address gets its own internal if_index */
-        intf->if_index = opal_list_get_size(&opal_if_list)+1;
+        intf->if_index = opal_list_get_size(&opal_if_list) + 1;
 
-        opal_output_verbose(1, opal_if_base_framework.framework_output,
-                            "found interface %s", intf->if_name);
+        opal_output_verbose(1, opal_if_base_framework.framework_output, "found interface %s",
+                            intf->if_name);
 
         /* assign the kernel index to distinguish different NICs */
 #ifndef SIOCGIFINDEX
         intf->if_kernel_index = intf->if_index;
 #else
         if (ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
-            opal_output(0,"opal_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
+            opal_output(0, "opal_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
             OBJ_RELEASE(intf);
             continue;
         }
-#if defined(ifr_ifindex)
+#    if defined(ifr_ifindex)
         intf->if_kernel_index = ifr->ifr_ifindex;
-#elif defined(ifr_index)
+#    elif defined(ifr_index)
         intf->if_kernel_index = ifr->ifr_index;
-#else
+#    else
         intf->if_kernel_index = -1;
-#endif
+#    endif
 #endif /* SIOCGIFINDEX */
 
         /* This call returns IPv4 addresses only. Use SIOCGLIFADDR
@@ -268,7 +260,7 @@ static int if_posix_open(void)
         }
 
         /* generate CIDR and assign to netmask */
-        intf->if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr);
+        intf->if_mask = prefix(((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr.s_addr);
 
 #if defined(SIOCGIFHWADDR) && defined(HAVE_STRUCT_IFREQ_IFR_HWADDR)
         /* get the MAC address */
@@ -295,5 +287,3 @@ static int if_posix_open(void)
 
     return OPAL_SUCCESS;
 }
-
-

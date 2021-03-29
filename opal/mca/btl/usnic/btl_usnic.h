@@ -32,15 +32,14 @@
 #include "opal_config.h"
 #include <sys/types.h>
 
-#include "opal_stdint.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/util/alfg.h"
-#include "opal/class/opal_hash_table.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/util/event.h"
+#include "opal_stdint.h"
 
-#include "opal/mca/btl/btl.h"
-#include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/btl/btl.h"
 #include "opal/mca/rcache/rcache.h"
 
 #include "btl_usnic_compat.h"
@@ -58,8 +57,7 @@ extern uint64_t opal_btl_usnic_ticks;
 /* Lock for MPU_THREAD_MULTIPLE support */
 extern opal_recursive_mutex_t btl_usnic_lock;
 
-static inline uint64_t
-get_ticks(void)
+static inline uint64_t get_ticks(void)
 {
     return opal_btl_usnic_ticks;
 }
@@ -68,29 +66,32 @@ get_ticks(void)
 extern opal_rng_buff_t opal_btl_usnic_rand_buff;
 
 #ifndef container_of
-#define container_of(ptr, type, member) ( \
-        (type *)( ((char *)(ptr)) - offsetof(type,member) ))
+#    define container_of(ptr, type, member) ((type *) (((char *) (ptr)) - offsetof(type, member)))
 #endif
 
 #ifndef max
-#define max(a, b) (((a) > (b)) ? (a) : (b))
+#    define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
 /* MSGDEBUG2 prints 1 line at each BTL entry point */
-#define MSGDEBUG2 (MSGDEBUG1||0)
+#define MSGDEBUG2 (MSGDEBUG1 || 0)
 /* MSGDEBUG1 prints more info about arguments and internal functions */
 #define MSGDEBUG1 0
 
 /* output macros to declutter source */
 #if MSGDEBUG1
-#define MSGDEBUG1_OUT(...) opal_output(0, __VA_ARGS__)
+#    define MSGDEBUG1_OUT(...) opal_output(0, __VA_ARGS__)
 #else
-#define MSGDEBUG1_OUT(...) do {} while (0)
+#    define MSGDEBUG1_OUT(...) \
+        do {                   \
+        } while (0)
 #endif
 #if MSGDEBUG2
-#define MSGDEBUG2_OUT(...) opal_output(0, __VA_ARGS__)
+#    define MSGDEBUG2_OUT(...) opal_output(0, __VA_ARGS__)
 #else
-#define MSGDEBUG2_OUT(...) do {} while (0)
+#    define MSGDEBUG2_OUT(...) \
+        do {                   \
+        } while (0)
 #endif
 
 /* Set to >0 to randomly drop received frags.  The higher the number,
@@ -105,23 +106,23 @@ extern opal_rng_buff_t opal_btl_usnic_rand_buff;
 #define WANT_FAIL_TO_RESEND_FRAG 0
 
 #if WANT_RECV_DROPS > 0
-#define FAKE_RECV_DROP (opal_rand(&opal_btl_usnic_rand_buff) < WANT_RECV_DROPS)
+#    define FAKE_RECV_DROP (opal_rand(&opal_btl_usnic_rand_buff) < WANT_RECV_DROPS)
 #else
-#define FAKE_RECV_DROP 0
+#    define FAKE_RECV_DROP 0
 #endif
 
 #if WANT_FAIL_TO_SEND_ACK > 0
-#define FAKE_FAIL_TO_SEND_ACK (opal_rand(&opal_btl_usnic_rand_buff) < WANT_FAIL_TO_SEND_ACK)
+#    define FAKE_FAIL_TO_SEND_ACK (opal_rand(&opal_btl_usnic_rand_buff) < WANT_FAIL_TO_SEND_ACK)
 #else
-#define FAKE_FAIL_TO_SEND_ACK 0
+#    define FAKE_FAIL_TO_SEND_ACK 0
 #endif
 
 #if WANT_FAIL_TO_RESEND_FRAG > 0
-#define FAKE_FAIL_TO_RESEND_FRAG (opal_rand(&opal_btl_usnic_rand_buff) < WANT_FAIL_TO_RESEND_FRAG)
+#    define FAKE_FAIL_TO_RESEND_FRAG \
+        (opal_rand(&opal_btl_usnic_rand_buff) < WANT_FAIL_TO_RESEND_FRAG)
 #else
-#define FAKE_FAIL_TO_RESEND_FRAG 0
+#    define FAKE_FAIL_TO_RESEND_FRAG 0
 #endif
-
 
 /**
  * usnic BTL component
@@ -143,9 +144,9 @@ typedef struct opal_btl_usnic_component_t {
     uint64_t my_hashed_rte_name;
 
     /** array of possible BTLs (>= num_modules elements) */
-    struct opal_btl_usnic_module_t* usnic_all_modules;
+    struct opal_btl_usnic_module_t *usnic_all_modules;
     /** array of pointers to active BTLs (num_modules elements) */
-    struct opal_btl_usnic_module_t** usnic_active_modules;
+    struct opal_btl_usnic_module_t **usnic_active_modules;
 
     /** convertor packing threshold */
     int pack_lazy_threshold;
@@ -156,7 +157,7 @@ typedef struct opal_btl_usnic_component_t {
     opal_list_t usnic_procs;
 
     /** memory pool hints */
-    char* usnic_mpool_hints;
+    char *usnic_mpool_hints;
 
     /** registration cache name */
     char *usnic_rcache_name;
@@ -255,11 +256,11 @@ typedef uint16_t opal_btl_usnic_seq_t;
  * Relies on the fact that sequence numbers should be relatively close
  * together as compared to (1<<31)
  */
-#define SEQ_DIFF(A,B) ((int16_t)((A)-(B)))
-#define SEQ_LT(A,B) (SEQ_DIFF(A,B) < 0)
-#define SEQ_LE(A,B) (SEQ_DIFF(A,B) <= 0)
-#define SEQ_GT(A,B) (SEQ_DIFF(A,B) > 0)
-#define SEQ_GE(A,B) (SEQ_DIFF(A,B) >= 0)
+#define SEQ_DIFF(A, B) ((int16_t)((A) - (B)))
+#define SEQ_LT(A, B)   (SEQ_DIFF(A, B) < 0)
+#define SEQ_LE(A, B)   (SEQ_DIFF(A, B) <= 0)
+#define SEQ_GT(A, B)   (SEQ_DIFF(A, B) > 0)
+#define SEQ_GE(A, B)   (SEQ_DIFF(A, B) >= 0)
 
 /**
  * Register the usnic BTL MCA params

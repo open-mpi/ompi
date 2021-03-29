@@ -26,8 +26,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/threads/threads.h"
 #include "opal/class/opal_object.h"
+#include "opal/mca/threads/threads.h"
 #include "opal/util/output.h"
 
 BEGIN_C_DECLS
@@ -68,7 +68,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_ring_buffer_t);
  * @return OPAL_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-OPAL_DECLSPEC int opal_ring_buffer_init(opal_ring_buffer_t* ring, int size);
+OPAL_DECLSPEC int opal_ring_buffer_init(opal_ring_buffer_t *ring, int size);
 
 /**
  * Push an item onto the ring buffer
@@ -79,8 +79,7 @@ OPAL_DECLSPEC int opal_ring_buffer_init(opal_ring_buffer_t* ring, int size);
  * @return OPAL_SUCCESS. Returns error if ring cannot take
  *  another entry
  */
-OPAL_DECLSPEC void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr);
-
+OPAL_DECLSPEC void *opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr);
 
 /**
  * Pop an item off of the ring. The oldest entry on the ring will be
@@ -91,14 +90,14 @@ OPAL_DECLSPEC void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr);
  * @return Error code.  NULL indicates an error.
  */
 
-OPAL_DECLSPEC void* opal_ring_buffer_pop(opal_ring_buffer_t *ring);
+OPAL_DECLSPEC void *opal_ring_buffer_pop(opal_ring_buffer_t *ring);
 
 /*
  * Access an element of the ring, without removing it, indexed
  * starting at the tail - a value of -1 will return the element
  * at the head of the ring
  */
-OPAL_DECLSPEC void* opal_ring_buffer_poke(opal_ring_buffer_t *ring, int i);
+OPAL_DECLSPEC void *opal_ring_buffer_poke(opal_ring_buffer_t *ring, int i);
 
 END_C_DECLS
 

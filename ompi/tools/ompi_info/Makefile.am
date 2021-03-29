@@ -68,8 +68,5 @@ ompi_info_SOURCES = \
 ompi_info_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 ompi_info_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
-clean-local:
-	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || rm -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
-
 distclean-local:
 	rm -f $(man_pages)

@@ -129,16 +129,15 @@ BEGIN_C_DECLS
 
 #if OPAL_ENABLE_DEBUG
 /* Any kind of unique ID should do the job */
-#define OPAL_OBJ_MAGIC_ID ((0xdeafbeedULL << 32) + 0xdeafbeedULL)
+#    define OPAL_OBJ_MAGIC_ID ((0xdeafbeedULL << 32) + 0xdeafbeedULL)
 #endif
 
 /* typedefs ***********************************************************/
 
 typedef struct opal_object_t opal_object_t;
 typedef struct opal_class_t opal_class_t;
-typedef void (*opal_construct_t) (opal_object_t *);
-typedef void (*opal_destruct_t) (opal_object_t *);
-
+typedef void (*opal_construct_t)(opal_object_t *);
+typedef void (*opal_destruct_t)(opal_object_t *);
 
 /* types **************************************************************/
 
@@ -156,10 +155,10 @@ struct opal_class_t {
     int cls_initialized;            /**< is class initialized */
     int cls_depth;                  /**< depth of class hierarchy tree */
     opal_construct_t *cls_construct_array;
-                                    /**< array of parent class constructors */
+    /**< array of parent class constructors */
     opal_destruct_t *cls_destruct_array;
-                                    /**< array of parent class destructors */
-    size_t cls_sizeof;              /**< size of an object instance */
+    /**< array of parent class destructors */
+    size_t cls_sizeof; /**< size of an object instance */
 };
 
 extern int opal_class_init_epoch;
@@ -170,20 +169,16 @@ extern int opal_class_init_epoch;
  * @param NAME   Name of the class to initialize
  */
 #if OPAL_ENABLE_DEBUG
-#define OPAL_OBJ_STATIC_INIT(BASE_CLASS)        \
-    {                                           \
-        .obj_magic_id = OPAL_OBJ_MAGIC_ID,      \
-        .obj_class = OBJ_CLASS(BASE_CLASS),     \
-        .obj_reference_count = 1,               \
-        .cls_init_file_name = __FILE__,         \
-        .cls_init_lineno = __LINE__,            \
-    }
+#    define OPAL_OBJ_STATIC_INIT(BASE_CLASS)                                                       \
+        {                                                                                          \
+            .obj_magic_id = OPAL_OBJ_MAGIC_ID, .obj_class = OBJ_CLASS(BASE_CLASS),                 \
+            .obj_reference_count = 1, .cls_init_file_name = __FILE__, .cls_init_lineno = __LINE__, \
+        }
 #else
-#define OPAL_OBJ_STATIC_INIT(BASE_CLASS)        \
-    {                                           \
-        .obj_class = OBJ_CLASS(BASE_CLASS),     \
-        .obj_reference_count = 1,               \
-    }
+#    define OPAL_OBJ_STATIC_INIT(BASE_CLASS)                              \
+        {                                                                 \
+            .obj_class = OBJ_CLASS(BASE_CLASS), .obj_reference_count = 1, \
+        }
 #endif
 
 /**
@@ -197,12 +192,13 @@ struct opal_object_t {
         struct's memory */
     uint64_t obj_magic_id;
 #endif
-    opal_class_t *obj_class;            /**< class descriptor */
-    opal_atomic_int32_t obj_reference_count;   /**< reference count */
+    opal_class_t *obj_class;                 /**< class descriptor */
+    opal_atomic_int32_t obj_reference_count; /**< reference count */
 #if OPAL_ENABLE_DEBUG
-   const char* cls_init_file_name;        /**< In debug mode store the file where the object get contructed */
-   int   cls_init_lineno;           /**< In debug mode store the line number where the object get contructed */
-#endif  /* OPAL_ENABLE_DEBUG */
+    const char
+        *cls_init_file_name; /**< In debug mode store the file where the object get contructed */
+    int cls_init_lineno; /**< In debug mode store the line number where the object get contructed */
+#endif /* OPAL_ENABLE_DEBUG */
 };
 
 /* macros ************************************************************/
@@ -214,8 +210,7 @@ struct opal_object_t {
  * @param NAME          Name of class
  * @return              Pointer to class descriptor
  */
-#define OBJ_CLASS(NAME)     (&(NAME ## _class))
-
+#define OBJ_CLASS(NAME) (&(NAME##_class))
 
 /**
  * Static initializer for a class descriptor
@@ -227,16 +222,16 @@ struct opal_object_t {
  *
  * Put this in NAME.c
  */
-#define OBJ_CLASS_INSTANCE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)       \
-    opal_class_t NAME ## _class = {                                     \
-        # NAME,                                                         \
-        OBJ_CLASS(PARENT),                                              \
-        (opal_construct_t) CONSTRUCTOR,                                 \
-        (opal_destruct_t) DESTRUCTOR,                                   \
-        0, 0, NULL, NULL,                                               \
-        sizeof(NAME)                                                    \
-    }
-
+#define OBJ_CLASS_INSTANCE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR) \
+    opal_class_t NAME##_class = {#NAME,                           \
+                                 OBJ_CLASS(PARENT),               \
+                                 (opal_construct_t) CONSTRUCTOR,  \
+                                 (opal_destruct_t) DESTRUCTOR,    \
+                                 0,                               \
+                                 0,                               \
+                                 NULL,                            \
+                                 NULL,                            \
+                                 sizeof(NAME)}
 
 /**
  * Declaration for class descriptor
@@ -245,9 +240,7 @@ struct opal_object_t {
  *
  * Put this in NAME.h
  */
-#define OBJ_CLASS_DECLARATION(NAME)             \
-    extern opal_class_t NAME ## _class
-
+#define OBJ_CLASS_DECLARATION(NAME) extern opal_class_t NAME##_class
 
 /**
  * Create an object: dynamically allocate storage and run the class
@@ -256,22 +249,20 @@ struct opal_object_t {
  * @param type          Type (class) of the object
  * @return              Pointer to the object
  */
-static inline opal_object_t *opal_obj_new(opal_class_t * cls);
+static inline opal_object_t *opal_obj_new(opal_class_t *cls);
 #if OPAL_ENABLE_DEBUG
-static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* file, int line)
+static inline opal_object_t *opal_obj_new_debug(opal_class_t *type, const char *file, int line)
 {
-    opal_object_t* object = opal_obj_new(type);
+    opal_object_t *object = opal_obj_new(type);
     object->obj_magic_id = OPAL_OBJ_MAGIC_ID;
     object->cls_init_file_name = file;
     object->cls_init_lineno = line;
     return object;
 }
-#define OBJ_NEW(type)                                   \
-    ((type *)opal_obj_new_debug(OBJ_CLASS(type), __FILE__, __LINE__))
+#    define OBJ_NEW(type) ((type *) opal_obj_new_debug(OBJ_CLASS(type), __FILE__, __LINE__))
 #else
-#define OBJ_NEW(type)                                   \
-    ((type *) opal_obj_new(OBJ_CLASS(type)))
-#endif  /* OPAL_ENABLE_DEBUG */
+#    define OBJ_NEW(type) ((type *) opal_obj_new(OBJ_CLASS(type)))
+#endif /* OPAL_ENABLE_DEBUG */
 
 /**
  * Retain an object (by incrementing its reference count)
@@ -279,15 +270,15 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  * @param object        Pointer to the object
  */
 #if OPAL_ENABLE_DEBUG
-#define OBJ_RETAIN(object)                                              \
-    do {                                                                \
-        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
-        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
-        opal_obj_update((opal_object_t *) (object), 1);                 \
-        assert(((opal_object_t *) (object))->obj_reference_count >= 0); \
-    } while (0)
+#    define OBJ_RETAIN(object)                                                       \
+        do {                                                                         \
+            assert(NULL != ((opal_object_t *) (object))->obj_class);                 \
+            assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+            opal_obj_update((opal_object_t *) (object), 1);                          \
+            assert(((opal_object_t *) (object))->obj_reference_count >= 0);          \
+        } while (0)
 #else
-#define OBJ_RETAIN(object)  opal_obj_update((opal_object_t *) (object), 1);
+#    define OBJ_RETAIN(object) opal_obj_update((opal_object_t *) (object), 1);
 #endif
 
 /**
@@ -295,19 +286,19 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  * an object change.
  */
 #if OPAL_ENABLE_DEBUG
-#define OBJ_REMEMBER_FILE_AND_LINENO( OBJECT, FILE, LINENO )    \
-    do {                                                        \
-        ((opal_object_t*)(OBJECT))->cls_init_file_name = FILE;  \
-        ((opal_object_t*)(OBJECT))->cls_init_lineno = LINENO;   \
-    } while(0)
-#define OBJ_SET_MAGIC_ID( OBJECT, VALUE )                       \
-    do {                                                        \
-        ((opal_object_t*)(OBJECT))->obj_magic_id = (VALUE);     \
-    } while(0)
+#    define OBJ_REMEMBER_FILE_AND_LINENO(OBJECT, FILE, LINENO)       \
+        do {                                                         \
+            ((opal_object_t *) (OBJECT))->cls_init_file_name = FILE; \
+            ((opal_object_t *) (OBJECT))->cls_init_lineno = LINENO;  \
+        } while (0)
+#    define OBJ_SET_MAGIC_ID(OBJECT, VALUE)                       \
+        do {                                                      \
+            ((opal_object_t *) (OBJECT))->obj_magic_id = (VALUE); \
+        } while (0)
 #else
-#define OBJ_REMEMBER_FILE_AND_LINENO( OBJECT, FILE, LINENO )
-#define OBJ_SET_MAGIC_ID( OBJECT, VALUE )
-#endif  /* OPAL_ENABLE_DEBUG */
+#    define OBJ_REMEMBER_FILE_AND_LINENO(OBJECT, FILE, LINENO)
+#    define OBJ_SET_MAGIC_ID(OBJECT, VALUE)
+#endif /* OPAL_ENABLE_DEBUG */
 
 /**
  * Release an object (by decrementing its reference count).  If the
@@ -322,49 +313,49 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  *
  */
 #if OPAL_ENABLE_DEBUG
-#define OBJ_RELEASE(object)                                             \
-    do {                                                                \
-        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
-        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
-        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
-            OBJ_SET_MAGIC_ID((object), 0);                              \
-            opal_obj_run_destructors((opal_object_t *) (object));       \
-            OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
-            free((void *) object);                                      \
-            object = NULL;                                              \
-        }                                                               \
-    } while (0)
+#    define OBJ_RELEASE(object)                                                      \
+        do {                                                                         \
+            assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+            assert(NULL != ((opal_object_t *) (object))->obj_class);                 \
+            if (0 == opal_obj_update((opal_object_t *) (object), -1)) {              \
+                OBJ_SET_MAGIC_ID((object), 0);                                       \
+                opal_obj_run_destructors((opal_object_t *) (object));                \
+                OBJ_REMEMBER_FILE_AND_LINENO(object, __FILE__, __LINE__);            \
+                free((void *) object);                                               \
+                object = NULL;                                                       \
+            }                                                                        \
+        } while (0)
 #else
-#define OBJ_RELEASE(object)                                             \
-    do {                                                                \
-        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
-            opal_obj_run_destructors((opal_object_t *) (object));       \
-            free((void *) object);                                      \
-            object = NULL;                                              \
-        }                                                               \
-    } while (0)
+#    define OBJ_RELEASE(object)                                         \
+        do {                                                            \
+            if (0 == opal_obj_update((opal_object_t *) (object), -1)) { \
+                opal_obj_run_destructors((opal_object_t *) (object));   \
+                free((void *) object);                                  \
+                object = NULL;                                          \
+            }                                                           \
+        } while (0)
 #endif
 
 #if OPAL_ENABLE_DEBUG
-#define OBJ_RELEASE_NO_NULLIFY(object)                                  \
-    do {                                                                \
-        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
-        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
-        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
-            OBJ_SET_MAGIC_ID((object), 0);                              \
-            opal_obj_run_destructors((opal_object_t *) (object));       \
-            OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
-            free((void *) object);                                      \
-        }                                                               \
-    } while (0)
+#    define OBJ_RELEASE_NO_NULLIFY(object)                                           \
+        do {                                                                         \
+            assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+            assert(NULL != ((opal_object_t *) (object))->obj_class);                 \
+            if (0 == opal_obj_update((opal_object_t *) (object), -1)) {              \
+                OBJ_SET_MAGIC_ID((object), 0);                                       \
+                opal_obj_run_destructors((opal_object_t *) (object));                \
+                OBJ_REMEMBER_FILE_AND_LINENO(object, __FILE__, __LINE__);            \
+                free((void *) object);                                               \
+            }                                                                        \
+        } while (0)
 #else
-#define OBJ_RELEASE_NO_NULLIFY(object)                                   \
-    do {                                                                \
-        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
-            opal_obj_run_destructors((opal_object_t *) (object));       \
-            free((void *) object);                                      \
-        }                                                               \
-    } while (0)
+#    define OBJ_RELEASE_NO_NULLIFY(object)                              \
+        do {                                                            \
+            if (0 == opal_obj_update((opal_object_t *) (object), -1)) { \
+                opal_obj_run_destructors((opal_object_t *) (object));   \
+                free((void *) object);                                  \
+            }                                                           \
+        } while (0)
 #endif
 
 /**
@@ -374,23 +365,22 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  * @param type          The object type
  */
 
-#define OBJ_CONSTRUCT(object, type)                             \
-do {                                                            \
-    OBJ_CONSTRUCT_INTERNAL((object), OBJ_CLASS(type));          \
-} while (0)
+#define OBJ_CONSTRUCT(object, type)                        \
+    do {                                                   \
+        OBJ_CONSTRUCT_INTERNAL((object), OBJ_CLASS(type)); \
+    } while (0)
 
-#define OBJ_CONSTRUCT_INTERNAL(object, type)                        \
-do {                                                                \
-    OBJ_SET_MAGIC_ID((object), OPAL_OBJ_MAGIC_ID);                  \
-    if (opal_class_init_epoch != (type)->cls_initialized) {         \
-        opal_class_initialize((type));                              \
-    }                                                               \
-    ((opal_object_t *) (object))->obj_class = (type);               \
-    ((opal_object_t *) (object))->obj_reference_count = 1;          \
-    opal_obj_run_constructors((opal_object_t *) (object));          \
-    OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
-} while (0)
-
+#define OBJ_CONSTRUCT_INTERNAL(object, type)                      \
+    do {                                                          \
+        OBJ_SET_MAGIC_ID((object), OPAL_OBJ_MAGIC_ID);            \
+        if (opal_class_init_epoch != (type)->cls_initialized) {   \
+            opal_class_initialize((type));                        \
+        }                                                         \
+        ((opal_object_t *) (object))->obj_class = (type);         \
+        ((opal_object_t *) (object))->obj_reference_count = 1;    \
+        opal_obj_run_constructors((opal_object_t *) (object));    \
+        OBJ_REMEMBER_FILE_AND_LINENO(object, __FILE__, __LINE__); \
+    } while (0)
 
 /**
  * Destruct (finalize) an object that is not dynamically allocated.
@@ -398,19 +388,19 @@ do {                                                                \
  * @param object        Pointer to the object
  */
 #if OPAL_ENABLE_DEBUG
-#define OBJ_DESTRUCT(object)                                    \
-do {                                                            \
-    assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
-    OBJ_SET_MAGIC_ID((object), 0);                              \
-    opal_obj_run_destructors((opal_object_t *) (object));       \
-    OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
-} while (0)
+#    define OBJ_DESTRUCT(object)                                                     \
+        do {                                                                         \
+            assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+            OBJ_SET_MAGIC_ID((object), 0);                                           \
+            opal_obj_run_destructors((opal_object_t *) (object));                    \
+            OBJ_REMEMBER_FILE_AND_LINENO(object, __FILE__, __LINE__);                \
+        } while (0)
 #else
-#define OBJ_DESTRUCT(object)                                    \
-do {                                                            \
-    opal_obj_run_destructors((opal_object_t *) (object));       \
-    OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
-} while (0)
+#    define OBJ_DESTRUCT(object)                                      \
+        do {                                                          \
+            opal_obj_run_destructors((opal_object_t *) (object));     \
+            OBJ_REMEMBER_FILE_AND_LINENO(object, __FILE__, __LINE__); \
+        } while (0)
 #endif
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
@@ -450,19 +440,18 @@ OPAL_DECLSPEC int opal_class_finalize(void);
  * Hardwired for fairly shallow inheritance trees
  * @param size          Pointer to the object.
  */
-static inline void opal_obj_run_constructors(opal_object_t * object)
+static inline void opal_obj_run_constructors(opal_object_t *object)
 {
-    opal_construct_t* cls_construct;
+    opal_construct_t *cls_construct;
 
     assert(NULL != object->obj_class);
 
     cls_construct = object->obj_class->cls_construct_array;
-    while( NULL != *cls_construct ) {
+    while (NULL != *cls_construct) {
         (*cls_construct)(object);
         cls_construct++;
     }
 }
-
 
 /**
  * Run the hierarchy of class destructors for this object, in a
@@ -472,19 +461,18 @@ static inline void opal_obj_run_constructors(opal_object_t * object)
  *
  * @param size          Pointer to the object.
  */
-static inline void opal_obj_run_destructors(opal_object_t * object)
+static inline void opal_obj_run_destructors(opal_object_t *object)
 {
-    opal_destruct_t* cls_destruct;
+    opal_destruct_t *cls_destruct;
 
     assert(NULL != object->obj_class);
 
     cls_destruct = object->obj_class->cls_destruct_array;
-    while( NULL != *cls_destruct ) {
+    while (NULL != *cls_destruct) {
         (*cls_destruct)(object);
         cls_destruct++;
     }
 }
-
 
 /**
  * Create new object: dynamically allocate storage and run the class
@@ -496,7 +484,7 @@ static inline void opal_obj_run_destructors(opal_object_t * object)
  * @param cls           Pointer to the class descriptor of this object
  * @return              Pointer to the object
  */
-static inline opal_object_t *opal_obj_new(opal_class_t * cls)
+static inline opal_object_t *opal_obj_new(opal_class_t *cls)
 {
     opal_object_t *object;
     assert(cls->cls_sizeof >= sizeof(opal_object_t));
@@ -516,7 +504,6 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
     }
     return object;
 }
-
 
 /**
  * Atomically update the object's reference count by some increment.

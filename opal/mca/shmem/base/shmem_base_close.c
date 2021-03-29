@@ -22,19 +22,17 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/shmem/shmem.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/shmem/base/base.h"
+#include "opal/mca/shmem/shmem.h"
 #include "opal/util/output.h"
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int
-opal_shmem_base_close(void)
+int opal_shmem_base_close(void)
 {
     /* if there is a selected shmem module, finalize it */
-    if (NULL != opal_shmem_base_module &&
-        NULL != opal_shmem_base_module->module_finalize) {
+    if (NULL != opal_shmem_base_module && NULL != opal_shmem_base_module->module_finalize) {
         opal_shmem_base_module->module_finalize();
     }
 
@@ -42,7 +40,5 @@ opal_shmem_base_close(void)
     opal_shmem_base_component = NULL;
     opal_shmem_base_module = NULL;
 
-    return mca_base_framework_components_close (&opal_shmem_base_framework,
-                                                NULL);
+    return mca_base_framework_components_close(&opal_shmem_base_framework, NULL);
 }
-

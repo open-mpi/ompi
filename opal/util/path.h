@@ -29,7 +29,7 @@
 #include "opal/constants.h"
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 
 BEGIN_C_DECLS
@@ -53,8 +53,8 @@ BEGIN_C_DECLS
  *
  * The caller is responsible for freeing the returned string.
  */
-OPAL_DECLSPEC char *opal_path_find(char *fname, char **pathv, int mode,
-                                   char **envv) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
+    __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
 /**
  *  Locates a file with certain permissions from a list of search
@@ -74,8 +74,8 @@ OPAL_DECLSPEC char *opal_path_find(char *fname, char **pathv, int mode,
  *
  * The caller is responsible for freeing the returned string.
  */
-OPAL_DECLSPEC char *opal_path_findv(char *fname, int mode,
-                                    char **envv, char *wrkdir) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
+    __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 /**
  *  Detect if the requested path is absolute or relative.
  *
@@ -88,7 +88,7 @@ OPAL_DECLSPEC char *opal_path_findv(char *fname, int mode,
  *  with special care as an absolute path on Windows starts
  *  with [A-Za-z]: or \\ instead of the usual / on UNIX.
  */
-OPAL_DECLSPEC bool opal_path_is_absolute( const char *path );
+OPAL_DECLSPEC bool opal_path_is_absolute(const char *path);
 
 /**
  * Find the absolute path for an executable and return it.
@@ -107,7 +107,7 @@ OPAL_DECLSPEC bool opal_path_is_absolute( const char *path );
  * function will return NULL. Otherwise, an newly allocated string
  * will be returned.
  */
-OPAL_DECLSPEC char* opal_find_absolute_path( char* app_name ) __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC char *opal_find_absolute_path(char *app_name) __opal_attribute_warn_unused_result__;
 
 /**
  * Forms a complete pathname and checks it for existance and
@@ -122,8 +122,8 @@ OPAL_DECLSPEC char* opal_find_absolute_path( char* app_name ) __opal_attribute_w
  *
  * The caller is responsible for freeing the returned string.
  */
-OPAL_DECLSPEC char *opal_path_access(char *fname, char *path, int mode) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
-
+OPAL_DECLSPEC char *opal_path_access(char *fname, char *path, int mode)
+    __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
 /**
  * @brief Figure out, whether fname is on network file system
@@ -153,9 +153,8 @@ OPAL_DECLSPEC bool opal_path_nfs(char *fname, char **fstype) __opal_attribute_wa
  * @retval OPAL_SUCCESS  If the operation was successful
  * @retval OPAL_ERROR    otherwise
  */
-OPAL_DECLSPEC int
-opal_path_df(const char *path,
-             uint64_t *out_avail)__opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC int opal_path_df(const char *path,
+                               uint64_t *out_avail) __opal_attribute_warn_unused_result__;
 
 END_C_DECLS
 #endif /* OPAL_PATH_H */

@@ -17,7 +17,6 @@
 
 #include "opal/util/event.h"
 
-
 /**
  * Initialize a progress thread name; if a progress thread is not
  * already associated with that name, start a progress thread.

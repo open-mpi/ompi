@@ -34,8 +34,7 @@
  */
 #define TAP1 127
 #define TAP2 97
-#define CBIT 21  /* Canonical bit */
-
+#define CBIT 21 /* Canonical bit */
 
 /**
  * @brief      Galois shift register: Used to seed the ALFG's
@@ -45,13 +44,14 @@
  * @param[out] uint32_t lsb: least significant bit of the Galois
  *             register after shift
  */
-static uint32_t galois(unsigned int *seed){
+static uint32_t galois(unsigned int *seed)
+{
 
     uint32_t lsb;
     lsb = (*seed & 1) ? 1 : 0;
     *seed >>= 1;
     /* tap it with the mask */
-    *seed = *seed ^ (lsb*MASK);
+    *seed = *seed ^ (lsb * MASK);
 
     return lsb;
 }
@@ -65,7 +65,8 @@ static opal_rng_buff_t alfg_buffer;
  * @param[in]   uint32_t seed
  * @param[out]  opal_rng_buff_t *buff: handle to ALFG buffer state
  */
-int opal_srand(opal_rng_buff_t *buff, uint32_t seed) {
+int opal_srand(opal_rng_buff_t *buff, uint32_t seed)
+{
 
     int i, j;
     uint32_t seed_cpy = seed;
@@ -73,7 +74,7 @@ int opal_srand(opal_rng_buff_t *buff, uint32_t seed) {
     buff->tap2 = TAP2 - 1;
 
     /* zero out the register */
-    for( i = 0; i < TAP1; i++){
+    for (i = 0; i < TAP1; i++) {
         buff->alfg[i] = 0;
     }
     /* set the canonical bit */
@@ -81,17 +82,16 @@ int opal_srand(opal_rng_buff_t *buff, uint32_t seed) {
 
     /* seed the ALFG register by blasting
      * the canonical rectangle with bits
-    */
-    for ( j = 1; j < TAP1; j++){
-        for( i = 1; i < 32; i++){
-            buff->alfg[j] = buff->alfg[j] ^ ((galois(&seed_cpy))<<i);
+     */
+    for (j = 1; j < TAP1; j++) {
+        for (i = 1; i < 32; i++) {
+            buff->alfg[j] = buff->alfg[j] ^ ((galois(&seed_cpy)) << i);
         }
     }
     /* copy the ALFG to the global buffer */
     memcpy(&alfg_buffer, buff, sizeof(alfg_buffer));
 
     return 1;
-
 }
 
 /**
@@ -101,7 +101,8 @@ int opal_srand(opal_rng_buff_t *buff, uint32_t seed) {
  * @param[out]  32-bit unsigned random integer
  */
 
-uint32_t opal_rand(opal_rng_buff_t *buff){
+uint32_t opal_rand(opal_rng_buff_t *buff)
+{
 
     int *tap1 = &(buff->tap1);
     int *tap2 = &(buff->tap2);
@@ -111,16 +112,15 @@ uint32_t opal_rand(opal_rng_buff_t *buff){
     /* prevent overflow */
     overflow = (uint64_t) buff->alfg[*tap1] + (uint64_t) buff->alfg[*tap2];
     /* circular buffer arithmetic */
-    temp = (*tap1 + 1) == TAP1 ?  0 :  (*tap1 + 1);
+    temp = (*tap1 + 1) == TAP1 ? 0 : (*tap1 + 1);
     /* Division modulo 2^32 */
-    buff->alfg[temp] = (uint32_t) ( overflow & ((1ULL<<32) -1));
+    buff->alfg[temp] = (uint32_t)(overflow & ((1ULL << 32) - 1));
 
     /* increment tap points */
-    *tap1 = (*tap1 + 1)%TAP1;
-    *tap2 = (*tap2 + 1)%TAP1;
+    *tap1 = (*tap1 + 1) % TAP1;
+    *tap2 = (*tap2 + 1) % TAP1;
 
     return buff->alfg[temp];
-
 }
 
 /**
@@ -129,7 +129,8 @@ uint32_t opal_rand(opal_rng_buff_t *buff){
  * @param[in]  none
  * @param[out] int, the same as normal rand(3)
  */
-int opal_random(void){
+int opal_random(void)
+{
     /* always return a positive int */
-    return (int)(opal_rand(&alfg_buffer) & 0x7FFFFFFF);
+    return (int) (opal_rand(&alfg_buffer) & 0x7FFFFFFF);
 }

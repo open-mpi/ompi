@@ -19,6 +19,7 @@ BEGIN_C_DECLS
 
 #include "ompi_config.h"
 #include "opal/mca/base/mca_base_pvar.h"
+#include "ompi/mca/common/monitoring/common_monitoring.h"
 
 OMPI_DECLSPEC void mca_common_monitoring_coll_flush(FILE *pf, mca_monitoring_coll_data_t*data);
 

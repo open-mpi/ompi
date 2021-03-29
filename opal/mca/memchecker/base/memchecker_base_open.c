@@ -8,15 +8,14 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/util/output.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/memchecker/memchecker.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/memchecker/base/base.h"
+#include "opal/mca/memchecker/memchecker.h"
+#include "opal/util/output.h"
 
 /*
  * The following file was created by configure.  It contains extern

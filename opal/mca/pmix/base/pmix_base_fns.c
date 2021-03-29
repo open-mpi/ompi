@@ -20,28 +20,24 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
-
 #include <regex.h>
 
-#include <time.h>
 #include <string.h>
+#include <time.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 
-#include "opal_stdint.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal_stdint.h"
 
 #include "opal/mca/pmix/base/base.h"
 
-
-int opal_pmix_base_exchange(pmix_info_t *indat,
-                            pmix_pdata_t *outdat,
-                            int timeout)
+int opal_pmix_base_exchange(pmix_info_t *indat, pmix_pdata_t *outdat, int timeout)
 {
     pmix_status_t rc;
     pmix_info_t info[2];
@@ -83,9 +79,7 @@ typedef struct {
     pmix_nspace_t nspace;
     opal_jobid_t jobid;
 } opal_nptr_t;
-static OBJ_CLASS_INSTANCE(opal_nptr_t,
-                          opal_list_item_t,
-                          NULL, NULL);
+static OBJ_CLASS_INSTANCE(opal_nptr_t, opal_list_item_t, NULL, NULL);
 
 static opal_list_t localnspaces;
 
@@ -112,7 +106,7 @@ int opal_pmix_convert_jobid(pmix_nspace_t nspace, opal_jobid_t jobid)
     PMIX_LOAD_NSPACE(nspace, NULL);
 
     /* cycle across our list of known jobids */
-    OPAL_LIST_FOREACH(nptr, &localnspaces, opal_nptr_t) {
+    OPAL_LIST_FOREACH (nptr, &localnspaces, opal_nptr_t) {
         if (jobid == nptr->jobid) {
             PMIX_LOAD_NSPACE(nspace, nptr->nspace);
             return OPAL_SUCCESS;
@@ -141,7 +135,7 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
     }
 
     /* cycle across our list of known nspace's */
-    OPAL_LIST_FOREACH(nptr, &localnspaces, opal_nptr_t) {
+    OPAL_LIST_FOREACH (nptr, &localnspaces, opal_nptr_t) {
         if (PMIX_CHECK_NSPACE(nspace, nptr->nspace)) {
             if (NULL != jobid) {
                 *jobid = nptr->jobid;
@@ -164,7 +158,7 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
 
     /* now compress to 16-bits */
     jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
-    jid = (0xffff0000 & ((uint32_t)jobfam << 16)) | (0x0000ffff & localjob);
+    jid = (0xffff0000 & ((uint32_t) jobfam << 16)) | (0x0000ffff & localjob);
     if (NULL != jobid) {
         *jobid = jid;
     }
@@ -356,102 +350,99 @@ int opal_pmix_convert_status(pmix_status_t status)
 
 pmix_proc_state_t opal_pmix_convert_state(int state)
 {
-    switch(state) {
-        case 0:
-            return PMIX_PROC_STATE_UNDEF;
-        case 1:
-            return PMIX_PROC_STATE_LAUNCH_UNDERWAY;
-        case 2:
-            return PMIX_PROC_STATE_RESTART;
-        case 3:
-            return PMIX_PROC_STATE_TERMINATE;
-        case 4:
-            return PMIX_PROC_STATE_RUNNING;
-        case 5:
-            return PMIX_PROC_STATE_CONNECTED;
-        case 51:
-            return PMIX_PROC_STATE_KILLED_BY_CMD;
-        case 52:
-            return PMIX_PROC_STATE_ABORTED;
-        case 53:
-            return PMIX_PROC_STATE_FAILED_TO_START;
-        case 54:
-            return PMIX_PROC_STATE_ABORTED_BY_SIG;
-        case 55:
-            return PMIX_PROC_STATE_TERM_WO_SYNC;
-        case 56:
-            return PMIX_PROC_STATE_COMM_FAILED;
-        case 58:
-            return PMIX_PROC_STATE_CALLED_ABORT;
-        case 59:
-            return PMIX_PROC_STATE_MIGRATING;
-        case 61:
-            return PMIX_PROC_STATE_CANNOT_RESTART;
-        case 62:
-            return PMIX_PROC_STATE_TERM_NON_ZERO;
-        case 63:
-            return PMIX_PROC_STATE_FAILED_TO_LAUNCH;
-        default:
-            return PMIX_PROC_STATE_UNDEF;
+    switch (state) {
+    case 0:
+        return PMIX_PROC_STATE_UNDEF;
+    case 1:
+        return PMIX_PROC_STATE_LAUNCH_UNDERWAY;
+    case 2:
+        return PMIX_PROC_STATE_RESTART;
+    case 3:
+        return PMIX_PROC_STATE_TERMINATE;
+    case 4:
+        return PMIX_PROC_STATE_RUNNING;
+    case 5:
+        return PMIX_PROC_STATE_CONNECTED;
+    case 51:
+        return PMIX_PROC_STATE_KILLED_BY_CMD;
+    case 52:
+        return PMIX_PROC_STATE_ABORTED;
+    case 53:
+        return PMIX_PROC_STATE_FAILED_TO_START;
+    case 54:
+        return PMIX_PROC_STATE_ABORTED_BY_SIG;
+    case 55:
+        return PMIX_PROC_STATE_TERM_WO_SYNC;
+    case 56:
+        return PMIX_PROC_STATE_COMM_FAILED;
+    case 58:
+        return PMIX_PROC_STATE_CALLED_ABORT;
+    case 59:
+        return PMIX_PROC_STATE_MIGRATING;
+    case 61:
+        return PMIX_PROC_STATE_CANNOT_RESTART;
+    case 62:
+        return PMIX_PROC_STATE_TERM_NON_ZERO;
+    case 63:
+        return PMIX_PROC_STATE_FAILED_TO_LAUNCH;
+    default:
+        return PMIX_PROC_STATE_UNDEF;
     }
 }
 
 int opal_pmix_convert_pstate(pmix_proc_state_t state)
 {
-    switch(state) {
-        case PMIX_PROC_STATE_UNDEF:
-            return 0;
-        case PMIX_PROC_STATE_PREPPED:
-        case PMIX_PROC_STATE_LAUNCH_UNDERWAY:
-            return 1;
-        case PMIX_PROC_STATE_RESTART:
-            return 2;
-        case PMIX_PROC_STATE_TERMINATE:
-            return 3;
-        case PMIX_PROC_STATE_RUNNING:
-            return 4;
-        case PMIX_PROC_STATE_CONNECTED:
-            return 5;
-        case PMIX_PROC_STATE_UNTERMINATED:
-            return 15;
-        case PMIX_PROC_STATE_TERMINATED:
-            return 20;
-        case PMIX_PROC_STATE_KILLED_BY_CMD:
-            return 51;
-        case PMIX_PROC_STATE_ABORTED:
-            return 52;
-        case PMIX_PROC_STATE_FAILED_TO_START:
-            return 53;
-        case PMIX_PROC_STATE_ABORTED_BY_SIG:
-            return 54;
-        case PMIX_PROC_STATE_TERM_WO_SYNC:
-            return 55;
-        case PMIX_PROC_STATE_COMM_FAILED:
-            return 56;
-        case PMIX_PROC_STATE_CALLED_ABORT:
-            return 58;
-        case PMIX_PROC_STATE_MIGRATING:
-            return 60;
-        case PMIX_PROC_STATE_CANNOT_RESTART:
-            return 61;
-        case PMIX_PROC_STATE_TERM_NON_ZERO:
-            return 62;
-        case PMIX_PROC_STATE_FAILED_TO_LAUNCH:
-            return 63;
-        default:
-            return 0;  // undef
+    switch (state) {
+    case PMIX_PROC_STATE_UNDEF:
+        return 0;
+    case PMIX_PROC_STATE_PREPPED:
+    case PMIX_PROC_STATE_LAUNCH_UNDERWAY:
+        return 1;
+    case PMIX_PROC_STATE_RESTART:
+        return 2;
+    case PMIX_PROC_STATE_TERMINATE:
+        return 3;
+    case PMIX_PROC_STATE_RUNNING:
+        return 4;
+    case PMIX_PROC_STATE_CONNECTED:
+        return 5;
+    case PMIX_PROC_STATE_UNTERMINATED:
+        return 15;
+    case PMIX_PROC_STATE_TERMINATED:
+        return 20;
+    case PMIX_PROC_STATE_KILLED_BY_CMD:
+        return 51;
+    case PMIX_PROC_STATE_ABORTED:
+        return 52;
+    case PMIX_PROC_STATE_FAILED_TO_START:
+        return 53;
+    case PMIX_PROC_STATE_ABORTED_BY_SIG:
+        return 54;
+    case PMIX_PROC_STATE_TERM_WO_SYNC:
+        return 55;
+    case PMIX_PROC_STATE_COMM_FAILED:
+        return 56;
+    case PMIX_PROC_STATE_CALLED_ABORT:
+        return 58;
+    case PMIX_PROC_STATE_MIGRATING:
+        return 60;
+    case PMIX_PROC_STATE_CANNOT_RESTART:
+        return 61;
+    case PMIX_PROC_STATE_TERM_NON_ZERO:
+        return 62;
+    case PMIX_PROC_STATE_FAILED_TO_LAUNCH:
+        return 63;
+    default:
+        return 0; // undef
     }
 }
 
 #if PMIX_NUMERIC_VERSION >= 0x00030000
 
-static void cleanup_cbfunc(pmix_status_t status,
-                           pmix_info_t *info, size_t ninfo,
-                           void *cbdata,
-                           pmix_release_cbfunc_t release_fn,
-                           void *release_cbdata)
+static void cleanup_cbfunc(pmix_status_t status, pmix_info_t *info, size_t ninfo, void *cbdata,
+                           pmix_release_cbfunc_t release_fn, void *release_cbdata)
 {
-    opal_pmix_lock_t *lk = (opal_pmix_lock_t*)cbdata;
+    opal_pmix_lock_t *lk = (opal_pmix_lock_t *) cbdata;
 
     OPAL_POST_OBJECT(lk);
 
@@ -472,7 +463,7 @@ int opal_pmix_register_cleanup(char *path, bool directory, bool ignore, bool job
 #if PMIX_NUMERIC_VERSION >= 0x00030000
     opal_pmix_lock_t lk;
     pmix_info_t pinfo[3];
-    size_t n, ninfo=0;
+    size_t n, ninfo = 0;
     pmix_status_t rc, ret;
     pmix_proc_t proc;
 
@@ -498,27 +489,27 @@ int opal_pmix_register_cleanup(char *path, bool directory, bool ignore, bool job
 
     /* if they want this applied to the job, then indicate so */
     if (jobscope) {
-        rc = PMIx_Job_control_nb(NULL, 0, pinfo, ninfo, cleanup_cbfunc, (void*)&lk);
+        rc = PMIx_Job_control_nb(NULL, 0, pinfo, ninfo, cleanup_cbfunc, (void *) &lk);
     } else {
         /* only applies to us */
-        (void)snprintf(proc.nspace, PMIX_MAX_NSLEN, "%s",
-                       OPAL_JOBID_PRINT(OPAL_PROC_MY_NAME.jobid));
+        (void) snprintf(proc.nspace, PMIX_MAX_NSLEN, "%s",
+                        OPAL_JOBID_PRINT(OPAL_PROC_MY_NAME.jobid));
         proc.rank = OPAL_PROC_MY_NAME.vpid;
-        rc = PMIx_Job_control_nb(&proc, 1, pinfo, ninfo, cleanup_cbfunc, (void*)&lk);
+        rc = PMIx_Job_control_nb(&proc, 1, pinfo, ninfo, cleanup_cbfunc, (void *) &lk);
     }
     if (PMIX_SUCCESS != rc) {
         ret = rc;
     } else {
-#if PMIX_VERSION_MAJOR == 3 && PMIX_VERSION_MINOR == 0 && PMIX_VERSION_RELEASE < 3
+#    if PMIX_VERSION_MAJOR == 3 && PMIX_VERSION_MINOR == 0 && PMIX_VERSION_RELEASE < 3
         /* There is a bug in PMIx 3.0.0 up to 3.0.2 that causes the callback never
          * being called, so assumes the everything went well and avoid a deadlock. */
-        cleanup_cbfunc(PMIX_SUCCESS, NULL, 0, (void *)&lk, NULL, NULL);
-#endif
+        cleanup_cbfunc(PMIX_SUCCESS, NULL, 0, (void *) &lk, NULL, NULL);
+#    endif
         OPAL_PMIX_WAIT_THREAD(&lk);
         ret = lk.status;
     }
     OPAL_PMIX_DESTRUCT_LOCK(&lk);
-    for (n=0; n < ninfo; n++) {
+    for (n = 0; n < ninfo; n++) {
         PMIX_INFO_DESTRUCT(&pinfo[n]);
     }
     return ret;
@@ -526,7 +517,6 @@ int opal_pmix_register_cleanup(char *path, bool directory, bool ignore, bool job
     return OPAL_SUCCESS;
 #endif
 }
-
 
 /* CLASS INSTANTIATIONS */
 static void dsicon(opal_ds_info_t *p)
@@ -539,9 +529,7 @@ static void dsicon(opal_ds_info_t *p)
     p->persistence = PMIX_PERSIST_INDEF;
 #endif
 }
-OBJ_CLASS_INSTANCE(opal_ds_info_t,
-                   opal_list_item_t,
-                   dsicon, NULL);
+OBJ_CLASS_INSTANCE(opal_ds_info_t, opal_list_item_t, dsicon, NULL);
 
 static void infoitmcon(opal_info_item_t *p)
 {
@@ -551,10 +539,6 @@ static void infoitdecon(opal_info_item_t *p)
 {
     PMIX_INFO_DESTRUCT(&p->info);
 }
-OBJ_CLASS_INSTANCE(opal_info_item_t,
-                   opal_list_item_t,
-                   infoitmcon, infoitdecon);
+OBJ_CLASS_INSTANCE(opal_info_item_t, opal_list_item_t, infoitmcon, infoitdecon);
 
-OBJ_CLASS_INSTANCE(opal_proclist_t,
-                   opal_list_item_t,
-                   NULL, NULL);
+OBJ_CLASS_INSTANCE(opal_proclist_t, opal_list_item_t, NULL, NULL);

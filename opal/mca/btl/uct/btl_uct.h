@@ -29,19 +29,19 @@
 #define MCA_BTL_UCT_H
 
 #include "opal_config.h"
-#include <sys/types.h>
 #include <string.h>
+#include <sys/types.h>
 
 /* Open MPI includes */
-#include "opal/util/event.h"
-#include "opal/mca/btl/base/base.h"
-#include "opal/mca/mpool/mpool.h"
-#include "opal/mca/btl/base/btl_base_error.h"
-#include "opal/mca/rcache/base/base.h"
 #include "opal/class/opal_fifo.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/mpool/mpool.h"
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/mca/rcache/base/base.h"
 #include "opal/mca/threads/tsd.h"
+#include "opal/util/event.h"
 #include <uct/api/uct.h>
 
 #include "btl_uct_types.h"
@@ -50,9 +50,9 @@ BEGIN_C_DECLS
 
 /* detection for old vs new atomic flags */
 #if defined(UCT_IFACE_FLAG_ATOMIC_ADD32)
-#define OPAL_HAVE_UCT_EP_ATOMIC64_POST 0
+#    define OPAL_HAVE_UCT_EP_ATOMIC64_POST 0
 #else
-#define OPAL_HAVE_UCT_EP_ATOMIC64_POST 1
+#    define OPAL_HAVE_UCT_EP_ATOMIC64_POST 1
 #endif
 
 /**
@@ -176,7 +176,8 @@ typedef struct mca_btl_uct_reg_t mca_btl_uct_reg_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_uct_reg_t);
 
-#define MCA_BTL_UCT_REG_REMOTE_TO_LOCAL(reg) ((mca_btl_uct_reg_t *)((intptr_t) (reg) - offsetof (mca_btl_uct_reg_t, handle)))
+#define MCA_BTL_UCT_REG_REMOTE_TO_LOCAL(reg) \
+    ((mca_btl_uct_reg_t *) ((intptr_t)(reg) -offsetof(mca_btl_uct_reg_t, handle)))
 
 /**
  * Initiate an asynchronous put.
@@ -209,11 +210,12 @@ OBJ_CLASS_DECLARATION(mca_btl_uct_reg_t);
  * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
  *                         alignment restrictions.
  */
-int mca_btl_uct_put (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_uct_put(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                    void *local_address, uint64_t remote_address,
+                    struct mca_btl_base_registration_handle_t *local_handle,
+                    struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
+                    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                    void *cbdata);
 
 /**
  * Initiate an asynchronous get.
@@ -246,61 +248,70 @@ int mca_btl_uct_put (struct mca_btl_base_module_t *btl,
  * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
  *                         alignment restrictions.
  */
-int mca_btl_uct_get (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_uct_get(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                    void *local_address, uint64_t remote_address,
+                    struct mca_btl_base_registration_handle_t *local_handle,
+                    struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
+                    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                    void *cbdata);
 
-int mca_btl_uct_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                     uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
-                     mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+int mca_btl_uct_aop(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                    uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
+                    mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+                    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+int mca_btl_uct_afop(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                     void *local_address, uint64_t remote_address,
+                     mca_btl_base_registration_handle_t *local_handle,
+                     mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+                     uint64_t operand, int flags, int order,
                      mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
-int mca_btl_uct_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                      void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                      mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
-                      uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
-                      void *cbcontext, void *cbdata);
+int mca_btl_uct_acswap(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                       void *local_address, uint64_t remote_address,
+                       mca_btl_base_registration_handle_t *local_handle,
+                       mca_btl_base_registration_handle_t *remote_handle, uint64_t compare,
+                       uint64_t value, int flags, int order,
+                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
-int mca_btl_uct_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                        void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                        mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value, int flags,
-                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_uct_flush(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint);
+int mca_btl_uct_flush_thread(mca_btl_base_module_t *btl);
 
+int mca_btl_uct_finalize(mca_btl_base_module_t *btl);
 
-int mca_btl_uct_flush (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint);
-int mca_btl_uct_flush_thread (mca_btl_base_module_t *btl);
+int mca_btl_uct_reg_mem(void *reg_data, void *base, size_t size,
+                        mca_rcache_base_registration_t *reg);
+int mca_btl_uct_dereg_mem(void *reg_data, mca_rcache_base_registration_t *reg);
 
-int mca_btl_uct_finalize (mca_btl_base_module_t *btl);
+ucs_status_t mca_btl_uct_am_handler(void *arg, void *data, size_t length, unsigned flags);
 
-int mca_btl_uct_reg_mem (void *reg_data, void *base, size_t size, mca_rcache_base_registration_t *reg);
-int mca_btl_uct_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg);
+struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep(struct mca_btl_base_module_t *module,
+                                                   opal_proc_t *proc);
 
-ucs_status_t mca_btl_uct_am_handler (void *arg, void *data, size_t length, unsigned flags);
-
-struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep (struct mca_btl_base_module_t *module, opal_proc_t *proc);
-
-int mca_btl_uct_query_tls (mca_btl_uct_module_t *module, mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_descs, unsigned tl_count);
-int mca_btl_uct_process_connection_request (mca_btl_uct_module_t *module, mca_btl_uct_conn_req_t *req);
+int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
+                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count);
+int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
+                                           mca_btl_uct_conn_req_t *req);
 
 /**
  * @brief Checks if a tl is suitable for using for RDMA
  *
  * @param[in] tl  btl/uct tl pointer
  */
-static inline bool mca_btl_uct_tl_supports_rdma (mca_btl_uct_tl_t *tl)
+static inline bool mca_btl_uct_tl_supports_rdma(mca_btl_uct_tl_t *tl)
 {
-    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY)) ==
-        (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY);
+    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags
+            & (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY))
+           == (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY);
 }
 
 /**
  * @brief Checks if a tl is suitable for using for active messaging
  */
-static inline bool mca_btl_uct_tl_support_am (mca_btl_uct_tl_t *tl)
+static inline bool mca_btl_uct_tl_support_am(mca_btl_uct_tl_t *tl)
 {
-    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_AM_BCOPY | UCT_IFACE_FLAG_AM_ZCOPY));
+    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags
+            & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_AM_BCOPY | UCT_IFACE_FLAG_AM_ZCOPY));
 }
 
 /**
@@ -308,10 +319,11 @@ static inline bool mca_btl_uct_tl_support_am (mca_btl_uct_tl_t *tl)
  *
  * @param[in] tl  btl/uct tl pointer
  */
-static inline bool mca_btl_uct_tl_supports_conn (mca_btl_uct_tl_t *tl)
+static inline bool mca_btl_uct_tl_supports_conn(mca_btl_uct_tl_t *tl)
 {
-    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE)) ==
-        (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE);
+    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags
+            & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE))
+           == (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE);
 }
 
 /**
@@ -319,7 +331,7 @@ static inline bool mca_btl_uct_tl_supports_conn (mca_btl_uct_tl_t *tl)
  *
  * @param[in] tl  btl/uct tl pointer
  */
-static inline bool mca_btl_uct_tl_requires_connection_tl (mca_btl_uct_tl_t *tl)
+static inline bool mca_btl_uct_tl_requires_connection_tl(mca_btl_uct_tl_t *tl)
 {
     return !(MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE);
 }

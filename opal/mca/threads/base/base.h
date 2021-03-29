@@ -28,7 +28,6 @@
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/threads/threads.h"
 
-
 /*
  * Global functions for MCA overall threads open and close
  */

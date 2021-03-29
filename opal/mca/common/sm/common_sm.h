@@ -25,15 +25,15 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/mca.h"
-#include "opal/class/opal_object.h"
-#include "opal/class/opal_list.h"
-#include "opal/sys/atomic.h"
-#include "opal/mca/shmem/shmem.h"
-#include "opal/mca/btl/base/base.h"
-#include "opal/util/proc.h"
-#include "opal/mca/btl/base/btl_base_error.h"
 #include "common_sm_mpool.h"
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/mca.h"
+#include "opal/mca/shmem/shmem.h"
+#include "opal/sys/atomic.h"
+#include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
@@ -81,10 +81,8 @@ OBJ_CLASS_DECLARATION(mca_common_sm_module_t);
  *
  * @returnvalue OPAL_SUCCESS on success, something else, otherwise.
  */
-OPAL_DECLSPEC extern int
-mca_common_sm_local_proc_reorder(opal_proc_t **procs,
-                                 size_t num_procs,
-                                 size_t *out_num_local_procs);
+OPAL_DECLSPEC extern int mca_common_sm_local_proc_reorder(opal_proc_t **procs, size_t num_procs,
+                                                          size_t *out_num_local_procs);
 
 /**
  *  This routine is used to create and attach to a shared memory segment
@@ -95,9 +93,7 @@ mca_common_sm_local_proc_reorder(opal_proc_t **procs,
  *  Returns NULL if an error occurred.
  */
 OPAL_DECLSPEC extern mca_common_sm_module_t *
-mca_common_sm_module_create_and_attach(size_t size,
-                                       char *file_name,
-                                       size_t size_ctl_structure,
+mca_common_sm_module_create_and_attach(size_t size, char *file_name, size_t size_ctl_structure,
                                        size_t data_seg_alignment);
 
 /**
@@ -110,10 +106,9 @@ mca_common_sm_module_create_and_attach(size_t size,
  *  @returnvalue pointer to control structure at head of shared memory segment.
  *  Returns NULL if an error occurred.
  */
-OPAL_DECLSPEC extern mca_common_sm_module_t *
-mca_common_sm_module_attach(opal_shmem_ds_t *seg_meta,
-                            size_t size_ctl_structure,
-                            size_t data_seg_alignment);
+OPAL_DECLSPEC extern mca_common_sm_module_t *mca_common_sm_module_attach(opal_shmem_ds_t *seg_meta,
+                                                                         size_t size_ctl_structure,
+                                                                         size_t data_seg_alignment);
 
 /**
  * A thin wrapper around opal_shmem_unlink.
@@ -123,13 +118,12 @@ mca_common_sm_module_attach(opal_shmem_ds_t *seg_meta,
  * @returnvalue OPAL_SUCCESS if the operation completed successfully,
  * OPAL_ERROR otherwise.
  */
-OPAL_DECLSPEC extern int
-mca_common_sm_module_unlink(mca_common_sm_module_t *modp);
+OPAL_DECLSPEC extern int mca_common_sm_module_unlink(mca_common_sm_module_t *modp);
 
 /**
  * callback from the sm mpool
  */
-OPAL_DECLSPEC extern void *mca_common_sm_seg_alloc (void *ctx, size_t *size);
+OPAL_DECLSPEC extern void *mca_common_sm_seg_alloc(void *ctx, size_t *size);
 
 /**
  * This function will release all local resources attached to the
@@ -142,14 +136,12 @@ OPAL_DECLSPEC extern void *mca_common_sm_seg_alloc (void *ctx, size_t *size);
  * @return OPAL_SUCCESS if everything was okay, otherwise return OPAL_ERROR.
  */
 
-OPAL_DECLSPEC extern int
-mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module);
+OPAL_DECLSPEC extern int mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module);
 
 /**
  * instance that is shared between components that use shared memory.
  */
 OPAL_DECLSPEC extern mca_common_sm_module_t *mca_common_sm_module;
-
 
 END_C_DECLS
 

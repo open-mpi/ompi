@@ -916,7 +916,6 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
     mca_btl_base_selected_module_t *item;
     char **btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
     int btls_found = 0;
-    void *tmp;
 
     btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
     if (NULL == btls_to_use) {

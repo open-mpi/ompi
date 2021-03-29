@@ -21,44 +21,37 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
 
-
 /*
  * Local functions
  */
 static void cl_constructor(opal_object_t *obj);
 static void cpl_constructor(opal_object_t *obj);
 
-
 /*
  * Class instance of the mca_base_component_list_item_t class
  */
-OBJ_CLASS_INSTANCE(mca_base_component_list_item_t,
-                   opal_list_item_t, cl_constructor, NULL);
-
+OBJ_CLASS_INSTANCE(mca_base_component_list_item_t, opal_list_item_t, cl_constructor, NULL);
 
 /*
  * Class instance of the mca_base_component_priority_list_item_t class
  */
-OBJ_CLASS_INSTANCE(mca_base_component_priority_list_item_t,
-                   mca_base_component_list_item_t, cpl_constructor, NULL);
-
+OBJ_CLASS_INSTANCE(mca_base_component_priority_list_item_t, mca_base_component_list_item_t,
+                   cpl_constructor, NULL);
 
 /*
  * Just do basic sentinel intialization
  */
 static void cl_constructor(opal_object_t *obj)
 {
-  mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) obj;
-  cli->cli_component = NULL;
+    mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) obj;
+    cli->cli_component = NULL;
 }
-
 
 /*
  * Just do basic sentinel intialization
  */
 static void cpl_constructor(opal_object_t *obj)
 {
-  mca_base_component_priority_list_item_t *cpli =
-    (mca_base_component_priority_list_item_t *) obj;
-  cpli->cpli_priority = -1;
+    mca_base_component_priority_list_item_t *cpli = (mca_base_component_priority_list_item_t *) obj;
+    cpli->cpli_priority = -1;
 }

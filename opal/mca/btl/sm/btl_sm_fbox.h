@@ -143,8 +143,8 @@ static inline bool mca_btl_sm_fbox_sendi(mca_btl_base_endpoint_t *ep, unsigned c
     buffer_free = BUFFER_FREE(start, end, hbm, fbox_size);
 
     /* need space for the fragment + the header */
-    size = (size + sizeof(mca_btl_sm_fbox_hdr_t) + MCA_BTL_SM_FBOX_ALIGNMENT_MASK) &
-           ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
+    size = (size + sizeof(mca_btl_sm_fbox_hdr_t) + MCA_BTL_SM_FBOX_ALIGNMENT_MASK)
+           & ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
 
     dst = ep->fbox_out.buffer + end;
 
@@ -258,8 +258,8 @@ static inline bool mca_btl_sm_check_fboxes(void)
             /* the 0xff tag indicates we should skip the rest of the buffer */
             if (OPAL_LIKELY((0xfe & hdr.data.tag) != 0xfe)) {
                 mca_btl_base_segment_t segment;
-                const mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger +
-                                                               hdr.data.tag;
+                const mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger
+                                                               + hdr.data.tag;
                 mca_btl_base_receive_descriptor_t desc = {.endpoint = ep,
                                                           .des_segments = &segment,
                                                           .des_segment_count = 1,
@@ -279,12 +279,12 @@ static inline bool mca_btl_sm_check_fboxes(void)
             } else if (OPAL_LIKELY(0xfe == hdr.data.tag)) {
                 /* process fragment header */
                 fifo_value_t *value = (fifo_value_t *) (ep->fbox_in.buffer + start + sizeof(hdr));
-                mca_btl_sm_hdr_t *hdr = relative2virtual(*value);
-                mca_btl_sm_poll_handle_frag(hdr, ep);
+                mca_btl_sm_hdr_t *sm_hdr = relative2virtual(*value);
+                mca_btl_sm_poll_handle_frag(sm_hdr, ep);
             }
 
-            start = (start + hdr.data.size + sizeof(hdr) + MCA_BTL_SM_FBOX_ALIGNMENT_MASK) &
-                    ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
+            start = (start + hdr.data.size + sizeof(hdr) + MCA_BTL_SM_FBOX_ALIGNMENT_MASK)
+                    & ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
             if (OPAL_UNLIKELY(fbox_size == start)) {
                 /* jump to the beginning of the buffer */
                 start = MCA_BTL_SM_FBOX_ALIGNMENT;
@@ -310,9 +310,9 @@ static inline bool mca_btl_sm_check_fboxes(void)
 
 static inline void mca_btl_sm_try_fbox_setup(mca_btl_base_endpoint_t *ep, mca_btl_sm_hdr_t *hdr)
 {
-    if (OPAL_UNLIKELY(NULL == ep->fbox_out.buffer &&
-                      mca_btl_sm_component.fbox_threshold ==
-                          OPAL_THREAD_ADD_FETCH_SIZE_T(&ep->send_count, 1))) {
+    if (OPAL_UNLIKELY(NULL == ep->fbox_out.buffer
+                      && mca_btl_sm_component.fbox_threshold
+                             == OPAL_THREAD_ADD_FETCH_SIZE_T(&ep->send_count, 1))) {
         /* protect access to mca_btl_sm_component.segment_offset */
         OPAL_THREAD_LOCK(&mca_btl_sm_component.lock);
 

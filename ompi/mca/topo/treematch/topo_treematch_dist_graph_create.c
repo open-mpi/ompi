@@ -382,7 +382,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
     /* Centralized Reordering */
     if (0 == mca_topo_treematch_component.reorder_mode) {
-        int *k = NULL;
         int *obj_mapping = NULL;
         int num_objs_total = 0;
 
@@ -693,12 +692,14 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                                                   &newrank, 1, MPI_INT,
                                                                   0, comm_old,
                                                                   comm_old->c_coll->coll_scatter_module))) {
-            if (NULL != k) free(k);
+            if (NULL != k) { free(k); k = NULL; }
             goto release_and_return;
         }
 
-        if ( 0 == rank )
+        if ( 0 == rank ) {
             free(k);
+            k = NULL;
+        }
 
         /* this needs to be optimized but will do for now */
         if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old, 0, newrank, newcomm, false))) {
@@ -903,7 +904,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                                                    &newrank, 1, MPI_INT,
                                                                    0, localcomm,
                                                                    localcomm->c_coll->coll_scatter_module))) {
-            if (NULL != k) free(k);
+            if (NULL != k) { free(k); k = NULL; };
             ompi_comm_free(&localcomm);
             free(lrank_to_grank);
             free(grank_to_lrank);
@@ -932,8 +933,10 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         newrank += offset;
         free(marked);
 
-        if (rank == lindex_to_grank[0])
+        if (rank == lindex_to_grank[0]) {
             free(k);
+            k = NULL;
+        }
 
         /* this needs to be optimized but will do for now */
         if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old, 0, newrank, newcomm, false))) {

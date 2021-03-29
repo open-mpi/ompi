@@ -29,8 +29,8 @@
 
 #include <rdma/fabric.h>
 #include <rdma/fi_cm.h>
-#include <rdma/fi_eq.h>
 #include <rdma/fi_endpoint.h>
+#include <rdma/fi_eq.h>
 #include <rdma/fi_errno.h>
 #include <rdma/fi_ext_usnic.h>
 
@@ -46,10 +46,10 @@
  * These values obtained from empirical testing on Intel E5-2690
  * machines with Sereno/Lexington cards through an N3546 switch.
  */
-#define USNIC_DFLT_EAGER_LIMIT_1DEVICE (150 * 1024)
+#define USNIC_DFLT_EAGER_LIMIT_1DEVICE  (150 * 1024)
 #define USNIC_DFLT_EAGER_LIMIT_NDEVICES (25 * 1024)
-#define USNIC_DFLT_RNDV_EAGER_LIMIT 500
-#define USNIC_DFLT_PACK_LAZY_THRESHOLD (16 * 1024)
+#define USNIC_DFLT_RNDV_EAGER_LIMIT     500
+#define USNIC_DFLT_PACK_LAZY_THRESHOLD  (16 * 1024)
 
 BEGIN_C_DECLS
 
@@ -89,7 +89,7 @@ typedef struct opal_btl_usnic_channel_t {
     /** receive segments & buffers */
     opal_free_list_t recv_segs;
 
-    bool chan_error;    /* set when error detected on channel */
+    bool chan_error; /* set when error detected on channel */
 
     /* statistics */
     uint32_t num_channel_sends;
@@ -146,9 +146,9 @@ typedef struct opal_btl_usnic_module_t {
      * to fragment reassembly info.
      */
     size_t max_tiny_msg_size;
-    size_t max_frag_payload;    /* most that fits in a frag segment */
-    size_t max_chunk_payload;   /* most that can fit in chunk segment */
-    size_t max_tiny_payload;    /* threshold for using inline send */
+    size_t max_frag_payload;  /* most that fits in a frag segment */
+    size_t max_chunk_payload; /* most that can fit in chunk segment */
+    size_t max_tiny_payload;  /* threshold for using inline send */
 
     /** Hash table to keep track of senders */
     opal_hash_table_t senders;
@@ -217,8 +217,7 @@ extern opal_btl_usnic_module_t opal_btl_usnic_module_template;
 
 /* get first endpoint needing ACK */
 static inline opal_btl_usnic_endpoint_t *
-opal_btl_usnic_get_first_endpoint_needing_ack(
-    opal_btl_usnic_module_t *module)
+opal_btl_usnic_get_first_endpoint_needing_ack(opal_btl_usnic_module_t *module)
 {
     opal_list_item_t *item;
     opal_btl_usnic_endpoint_t *endpoint;
@@ -234,8 +233,7 @@ opal_btl_usnic_get_first_endpoint_needing_ack(
 
 /* get next item in chain */
 static inline opal_btl_usnic_endpoint_t *
-opal_btl_usnic_get_next_endpoint_needing_ack(
-    opal_btl_usnic_endpoint_t *endpoint)
+opal_btl_usnic_get_next_endpoint_needing_ack(opal_btl_usnic_endpoint_t *endpoint)
 {
     opal_list_item_t *item;
     opal_btl_usnic_module_t *module;
@@ -252,36 +250,31 @@ opal_btl_usnic_get_next_endpoint_needing_ack(
 }
 
 static inline void
-opal_btl_usnic_remove_from_endpoints_needing_ack(
-    opal_btl_usnic_endpoint_t *endpoint)
+opal_btl_usnic_remove_from_endpoints_needing_ack(opal_btl_usnic_endpoint_t *endpoint)
 {
-    opal_list_remove_item(
-            &(endpoint->endpoint_module->endpoints_that_need_acks),
-            &endpoint->endpoint_ack_li);
+    opal_list_remove_item(&(endpoint->endpoint_module->endpoints_that_need_acks),
+                          &endpoint->endpoint_ack_li);
     endpoint->endpoint_ack_needed = false;
     endpoint->endpoint_acktime = 0;
 #if MSGDEBUG1
-    opal_output(0, "clear ack_needed on %p\n", (void*)endpoint);
+    opal_output(0, "clear ack_needed on %p\n", (void *) endpoint);
 #endif
 }
 
-static inline void
-opal_btl_usnic_add_to_endpoints_needing_ack(
-    opal_btl_usnic_endpoint_t *endpoint)
+static inline void opal_btl_usnic_add_to_endpoints_needing_ack(opal_btl_usnic_endpoint_t *endpoint)
 {
     opal_list_append(&(endpoint->endpoint_module->endpoints_that_need_acks),
-            &endpoint->endpoint_ack_li);
+                     &endpoint->endpoint_ack_li);
     endpoint->endpoint_ack_needed = true;
 #if MSGDEBUG1
-    opal_output(0, "set ack_needed on %p\n", (void*)endpoint);
+    opal_output(0, "set ack_needed on %p\n", (void *) endpoint);
 #endif
 }
 
 /*
  * Initialize a module
  */
-int opal_btl_usnic_module_init(opal_btl_usnic_module_t* module);
-
+int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module);
 
 /*
  * Progress pending sends on a module
@@ -289,10 +282,8 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t* module);
 void opal_btl_usnic_module_progress_sends(opal_btl_usnic_module_t *module);
 
 /* opal_output statistics that are useful for debugging */
-void opal_btl_usnic_print_stats(
-    opal_btl_usnic_module_t *module,
-    const char *prefix,
-    bool reset_stats);
+void opal_btl_usnic_print_stats(opal_btl_usnic_module_t *module, const char *prefix,
+                                bool reset_stats);
 
 END_C_DECLS
 #endif

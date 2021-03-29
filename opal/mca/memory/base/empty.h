@@ -40,8 +40,7 @@ BEGIN_C_DECLS
  *
  * See opal/mca/memory/memory.h for a description of the parameters.
  */
-OPAL_DECLSPEC int opal_memory_base_component_register_empty(void *start,
-                                                            size_t len,
+OPAL_DECLSPEC int opal_memory_base_component_register_empty(void *start, size_t len,
                                                             uint64_t cookie);
 
 /**
@@ -49,8 +48,7 @@ OPAL_DECLSPEC int opal_memory_base_component_register_empty(void *start,
  *
  * See opal/mca/memory/memory.h for a description of the parameters.
  */
-OPAL_DECLSPEC int opal_memory_base_component_deregister_empty(void *start,
-                                                              size_t len,
+OPAL_DECLSPEC int opal_memory_base_component_deregister_empty(void *start, size_t len,
                                                               uint64_t cookie);
 
 /**
@@ -60,7 +58,6 @@ OPAL_DECLSPEC int opal_memory_base_component_deregister_empty(void *start,
  */
 OPAL_DECLSPEC void opal_memory_base_component_set_alignment_empty(int use_memalign,
                                                                   size_t memalign_threshold);
-
 
 END_C_DECLS
 

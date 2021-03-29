@@ -201,8 +201,8 @@ mca_rcache_base_registration_t *sm_get_registation(struct mca_btl_base_endpoint_
     }
 
     opal_atomic_wmb();
-    *local_ptr = (void *) ((uintptr_t) reg->rcache_context +
-                           (ptrdiff_t)((uintptr_t) rem_ptr - (uintptr_t) reg->base));
+    *local_ptr = (void *) ((uintptr_t) reg->rcache_context
+                           + (ptrdiff_t)((uintptr_t) rem_ptr - (uintptr_t) reg->base));
 
     return reg;
 }
@@ -234,8 +234,8 @@ void mca_btl_sm_xpmem_cleanup_endpoint(struct mca_btl_base_endpoint_t *ep)
     (void) mca_rcache_base_vma_iterate(mca_btl_sm_component.vma_module, NULL, (size_t) -1, true,
                                        mca_btl_sm_endpoint_xpmem_rcache_cleanup,
                                        (void *) &cleanup_ctx);
-    while (NULL !=
-           (reg = (mca_rcache_base_registration_t *) opal_list_remove_first(&registrations))) {
+    while (NULL
+           != (reg = (mca_rcache_base_registration_t *) opal_list_remove_first(&registrations))) {
         sm_return_registration(reg, ep);
     }
     OBJ_DESTRUCT(&registrations);

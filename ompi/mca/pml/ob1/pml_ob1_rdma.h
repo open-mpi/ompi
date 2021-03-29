@@ -25,6 +25,9 @@
 #ifndef MCA_PML_OB1_RDMA_H
 #define MCA_PML_OB1_RDMA_H
 
+#include "ompi/mca/bml/bml.h"
+#include "ompi/mca/pml/ob1/pml_ob1_comm.h"
+
 struct mca_bml_base_endpoint_t;
 
 /*

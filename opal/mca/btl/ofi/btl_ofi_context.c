@@ -21,20 +21,9 @@ int init_context_freelists(mca_btl_ofi_context_t *context)
 {
     int rc;
     OBJ_CONSTRUCT(&context->rdma_comp_list, opal_free_list_t);
-    rc = opal_free_list_init(&context->rdma_comp_list,
-                             sizeof(mca_btl_ofi_rdma_completion_t),
-                             opal_cache_line_size,
-                             OBJ_CLASS(mca_btl_ofi_rdma_completion_t),
-                             0,
-                             0,
-                             512,
-                             -1,
-                             512,
-                             NULL,
-                             0,
-                             NULL,
-                             NULL,
-                             NULL);
+    rc = opal_free_list_init(&context->rdma_comp_list, sizeof(mca_btl_ofi_rdma_completion_t),
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_ofi_rdma_completion_t), 0, 0,
+                             512, -1, 512, NULL, 0, NULL, NULL, NULL);
     if (rc != OPAL_SUCCESS) {
         BTL_VERBOSE(("cannot allocate completion freelist"));
         return rc;
@@ -42,20 +31,9 @@ int init_context_freelists(mca_btl_ofi_context_t *context)
 
     if (TWO_SIDED_ENABLED) {
         OBJ_CONSTRUCT(&context->frag_comp_list, opal_free_list_t);
-        rc = opal_free_list_init(&context->frag_comp_list,
-                                 sizeof(mca_btl_ofi_frag_completion_t),
-                                 opal_cache_line_size,
-                                 OBJ_CLASS(mca_btl_ofi_frag_completion_t),
-                                 0,
-                                 0,
-                                 512,
-                                 -1,
-                                 512,
-                                 NULL,
-                                 0,
-                                 NULL,
-                                 NULL,
-                                 NULL);
+        rc = opal_free_list_init(&context->frag_comp_list, sizeof(mca_btl_ofi_frag_completion_t),
+                                 opal_cache_line_size, OBJ_CLASS(mca_btl_ofi_frag_completion_t), 0,
+                                 0, 512, -1, 512, NULL, 0, NULL, NULL, NULL);
         if (rc != OPAL_SUCCESS) {
             BTL_VERBOSE(("cannot allocate completion freelist"));
             return rc;
@@ -64,20 +42,9 @@ int init_context_freelists(mca_btl_ofi_context_t *context)
         /* Initialize frag pool */
         OBJ_CONSTRUCT(&context->frag_list, opal_free_list_t);
         rc = opal_free_list_init(&context->frag_list,
-                                 sizeof(mca_btl_ofi_base_frag_t) +
-                                    MCA_BTL_OFI_FRAG_SIZE,
-                                 opal_cache_line_size,
-                                 OBJ_CLASS(mca_btl_ofi_base_frag_t),
-                                 0,
-                                 0,
-                                 1024,
-                                 -1,
-                                 1024,
-                                 NULL,
-                                 0,
-                                 NULL,
-                                 NULL,
-                                 NULL);
+                                 sizeof(mca_btl_ofi_base_frag_t) + MCA_BTL_OFI_FRAG_SIZE,
+                                 opal_cache_line_size, OBJ_CLASS(mca_btl_ofi_base_frag_t), 0, 0,
+                                 1024, -1, 1024, NULL, 0, NULL, NULL, NULL);
         if (OPAL_SUCCESS != rc) {
             BTL_VERBOSE(("failed to init frag pool (free_list)"));
         }
@@ -93,8 +60,7 @@ int init_context_freelists(mca_btl_ofi_context_t *context)
  * USE WITH NORMAL ENDPOINT ONLY */
 mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
                                                         struct fid_domain *domain,
-                                                        struct fid_ep *ep,
-                                                        struct fid_av *av)
+                                                        struct fid_ep *ep, struct fid_av *av)
 {
     int rc;
     uint32_t cq_flags = FI_TRANSMIT | FI_SEND | FI_RECV;
@@ -104,7 +70,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
 
     mca_btl_ofi_context_t *context;
 
-    context = (mca_btl_ofi_context_t*) calloc(1, sizeof(*context));
+    context = (mca_btl_ofi_context_t *) calloc(1, sizeof(*context));
     if (NULL == context) {
         BTL_VERBOSE(("cannot allocate context"));
         return NULL;
@@ -122,28 +88,20 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
     cq_attr.wait_obj = FI_WAIT_NONE;
     rc = fi_cq_open(domain, &cq_attr, &context->cq, NULL);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_cq_open with err=%s",
-                        linux_device_name,
-                        fi_strerror(-rc)
-                        ));
+        BTL_VERBOSE(("%s failed fi_cq_open with err=%s", linux_device_name, fi_strerror(-rc)));
         goto single_fail;
     }
 
-    rc = fi_ep_bind(ep, (fid_t)av, 0);
+    rc = fi_ep_bind(ep, (fid_t) av, 0);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_ep_bind with err=%s",
-                        linux_device_name,
-                        fi_strerror(-rc)
-                        ));
+        BTL_VERBOSE(("%s failed fi_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
         goto single_fail;
     }
 
-    rc = fi_ep_bind(ep, (fid_t)context->cq, cq_flags);
+    rc = fi_ep_bind(ep, (fid_t) context->cq, cq_flags);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_scalable_ep_bind with err=%s",
-                        linux_device_name,
-                        fi_strerror(-rc)
-                        ));
+        BTL_VERBOSE(
+            ("%s failed fi_scalable_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
         goto single_fail;
     }
 
@@ -170,8 +128,7 @@ single_fail:
  * USE WITH SCALABLE ENDPOINT ONLY */
 mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
                                                           struct fid_domain *domain,
-                                                          struct fid_ep *sep,
-                                                          struct fid_av *av,
+                                                          struct fid_ep *sep, struct fid_av *av,
                                                           size_t num_contexts)
 {
     BTL_VERBOSE(("creating %zu contexts", num_contexts));
@@ -187,7 +144,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
     mca_btl_ofi_context_t *contexts;
     tx_attr.op_flags = FI_DELIVERY_COMPLETE;
 
-    contexts = (mca_btl_ofi_context_t*) calloc(num_contexts, sizeof(*contexts));
+    contexts = (mca_btl_ofi_context_t *) calloc(num_contexts, sizeof(*contexts));
     if (NULL == contexts) {
         BTL_VERBOSE(("cannot allocate communication contexts."));
         return NULL;
@@ -201,23 +158,19 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
         goto scalable_fail;
     }
 
-     /* bind AV to endpoint */
-    rc = fi_scalable_ep_bind(sep, (fid_t)av, 0);
+    /* bind AV to endpoint */
+    rc = fi_scalable_ep_bind(sep, (fid_t) av, 0);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_scalable_ep_bind with err=%s",
-                        linux_device_name,
-                        fi_strerror(-rc)
-                        ));
+        BTL_VERBOSE(
+            ("%s failed fi_scalable_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
         goto scalable_fail;
     }
 
-    for (i=0; i < num_contexts; i++) {
+    for (i = 0; i < num_contexts; i++) {
         rc = fi_tx_context(sep, i, &tx_attr, &contexts[i].tx_ctx, NULL);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_tx_context with err=%s",
-                            linux_device_name,
-                            fi_strerror(-rc)
-                            ));
+            BTL_VERBOSE(
+                ("%s failed fi_tx_context with err=%s", linux_device_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
@@ -226,10 +179,8 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
          * also nice to have equal number of tx/rx context. */
         rc = fi_rx_context(sep, i, &rx_attr, &contexts[i].rx_ctx, NULL);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_rx_context with err=%s",
-                            linux_device_name,
-                            fi_strerror(-rc)
-                            ));
+            BTL_VERBOSE(
+                ("%s failed fi_rx_context with err=%s", linux_device_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
@@ -238,31 +189,23 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
         cq_attr.wait_obj = FI_WAIT_NONE;
         rc = fi_cq_open(domain, &cq_attr, &contexts[i].cq, NULL);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_cq_open with err=%s",
-                            linux_device_name,
-                            fi_strerror(-rc)
-                            ));
+            BTL_VERBOSE(("%s failed fi_cq_open with err=%s", linux_device_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
         /* bind cq to transmit context */
-        rc = fi_ep_bind(contexts[i].tx_ctx, (fid_t)contexts[i].cq, FI_TRANSMIT);
+        rc = fi_ep_bind(contexts[i].tx_ctx, (fid_t) contexts[i].cq, FI_TRANSMIT);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_ep_bind with err=%s",
-                            linux_device_name,
-                            fi_strerror(-rc)
-                            ));
+            BTL_VERBOSE(("%s failed fi_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
         /* bind cq to receiving  context */
         if (TWO_SIDED_ENABLED) {
-            rc = fi_ep_bind(contexts[i].rx_ctx, (fid_t)contexts[i].cq, FI_RECV);
+            rc = fi_ep_bind(contexts[i].rx_ctx, (fid_t) contexts[i].cq, FI_RECV);
             if (0 != rc) {
-                BTL_VERBOSE(("%s failed fi_ep_bind with err=%s",
-                                linux_device_name,
-                                fi_strerror(-rc)
-                                ));
+                BTL_VERBOSE(
+                    ("%s failed fi_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
                 goto scalable_fail;
             }
         }
@@ -270,19 +213,13 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
         /* enable the context. */
         rc = fi_enable(contexts[i].tx_ctx);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_enable with err=%s",
-                            linux_device_name,
-                            fi_strerror(-rc)
-                            ));
+            BTL_VERBOSE(("%s failed fi_enable with err=%s", linux_device_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
         rc = fi_enable(contexts[i].rx_ctx);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_enable with err=%s",
-                            linux_device_name,
-                            fi_strerror(-rc)
-                            ));
+            BTL_VERBOSE(("%s failed fi_enable with err=%s", linux_device_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
@@ -300,7 +237,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
 
 scalable_fail:
     /* close and free */
-    for(i=0; i < num_contexts; i++) {
+    for (i = 0; i < num_contexts; i++) {
         mca_btl_ofi_context_finalize(&contexts[i], true);
     }
     free(contexts);
@@ -308,7 +245,8 @@ scalable_fail:
     return NULL;
 }
 
-void mca_btl_ofi_context_finalize(mca_btl_ofi_context_t *context, bool scalable_ep) {
+void mca_btl_ofi_context_finalize(mca_btl_ofi_context_t *context, bool scalable_ep)
+{
 
     /* if it is a scalable ep, we have to close all contexts. */
     if (scalable_ep) {
@@ -321,7 +259,7 @@ void mca_btl_ofi_context_finalize(mca_btl_ofi_context_t *context, bool scalable_
         }
     }
 
-    if( NULL != context->cq) {
+    if (NULL != context->cq) {
         fi_close(&context->cq->fid);
     }
 
@@ -347,12 +285,12 @@ mca_btl_ofi_context_t *get_ofi_context(mca_btl_ofi_module_t *btl)
         OPAL_THREAD_LOCK(&btl->module_lock);
 
         my_context = &btl->contexts[cur_num];
-        cur_num = (cur_num + 1) %btl->num_contexts;
+        cur_num = (cur_num + 1) % btl->num_contexts;
 
         OPAL_THREAD_UNLOCK(&btl->module_lock);
     }
 
-    assert (my_context);
+    assert(my_context);
     return my_context;
 #else
     return get_ofi_context_rr(btl);
@@ -364,10 +302,11 @@ mca_btl_ofi_context_t *get_ofi_context(mca_btl_ofi_module_t *btl)
 mca_btl_ofi_context_t *get_ofi_context_rr(mca_btl_ofi_module_t *btl)
 {
     static volatile uint64_t rr_num = 0;
-    return &btl->contexts[rr_num++%btl->num_contexts];
+    return &btl->contexts[rr_num++ % btl->num_contexts];
 }
 
-int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context) {
+int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
+{
 
     int ret = 0;
     int events_read;
@@ -388,12 +327,12 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context) {
             if (NULL != cq_entry[i].op_context) {
                 ++events;
 
-                c_ctx = (mca_btl_ofi_completion_context_t*) cq_entry[i].op_context;
+                c_ctx = (mca_btl_ofi_completion_context_t *) cq_entry[i].op_context;
 
                 /* We are casting to every type  here just for simplicity. */
-                comp = (mca_btl_ofi_base_completion_t*) c_ctx->comp;
-                frag_comp = (mca_btl_ofi_frag_completion_t*) c_ctx->comp;
-                rdma_comp = (mca_btl_ofi_rdma_completion_t*) c_ctx->comp;
+                comp = (mca_btl_ofi_base_completion_t *) c_ctx->comp;
+                frag_comp = (mca_btl_ofi_frag_completion_t *) c_ctx->comp;
+                rdma_comp = (mca_btl_ofi_rdma_completion_t *) c_ctx->comp;
 
                 switch (comp->type) {
                 case MCA_BTL_OFI_TYPE_GET:
@@ -403,22 +342,22 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context) {
                 case MCA_BTL_OFI_TYPE_CSWAP:
                     /* call the callback */
                     if (rdma_comp->cbfunc) {
-                        rdma_comp->cbfunc (comp->btl, comp->endpoint,
-                                           rdma_comp->local_address, rdma_comp->local_handle,
-                                           rdma_comp->cbcontext, rdma_comp->cbdata, OPAL_SUCCESS);
+                        rdma_comp->cbfunc(comp->btl, comp->endpoint, rdma_comp->local_address,
+                                          rdma_comp->local_handle, rdma_comp->cbcontext,
+                                          rdma_comp->cbdata, OPAL_SUCCESS);
                     }
 
-                    MCA_BTL_OFI_NUM_RDMA_DEC((mca_btl_ofi_module_t*) comp->btl);
+                    MCA_BTL_OFI_NUM_RDMA_DEC((mca_btl_ofi_module_t *) comp->btl);
                     break;
 
                 case MCA_BTL_OFI_TYPE_RECV:
-                    mca_btl_ofi_recv_frag((mca_btl_ofi_module_t*)  comp->btl,
-                                          (mca_btl_ofi_endpoint_t*) comp->endpoint,
-                                          context, frag_comp->frag);
+                    mca_btl_ofi_recv_frag((mca_btl_ofi_module_t *) comp->btl,
+                                          (mca_btl_ofi_endpoint_t *) comp->endpoint, context,
+                                          frag_comp->frag);
                     break;
 
                 case MCA_BTL_OFI_TYPE_SEND:
-                    MCA_BTL_OFI_NUM_SEND_DEC((mca_btl_ofi_module_t*) comp->btl);
+                    MCA_BTL_OFI_NUM_SEND_DEC((mca_btl_ofi_module_t *) comp->btl);
                     mca_btl_ofi_frag_complete(frag_comp->frag, OPAL_SUCCESS);
                     break;
 
@@ -429,7 +368,7 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context) {
                 }
 
                 /* return the completion handler */
-                opal_free_list_return(comp->my_list, (opal_free_list_item_t*) comp);
+                opal_free_list_return(comp->my_list, (opal_free_list_item_t *) comp);
             }
         }
     } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
@@ -437,11 +376,10 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context) {
 
         /* cq readerr failed!? */
         if (0 > ret) {
-            BTL_ERROR(("%s:%d: Error returned from fi_cq_readerr: %s(%d)",
-                       __FILE__, __LINE__, fi_strerror(-ret), ret));
+            BTL_ERROR(("%s:%d: Error returned from fi_cq_readerr: %s(%d)", __FILE__, __LINE__,
+                       fi_strerror(-ret), ret));
         } else {
-            BTL_ERROR(("fi_cq_readerr: (provider err_code = %d)\n",
-                       cqerr.prov_errno));
+            BTL_ERROR(("fi_cq_readerr: (provider err_code = %d)\n", cqerr.prov_errno));
         }
         MCA_BTL_OFI_ABORT();
     }
@@ -459,5 +397,3 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context) {
 
     return events;
 }
-
-

@@ -22,16 +22,14 @@
  * $HEADER$
  */
 
-
 #include "opal_config.h"
 
 #include "opal/constants.h"
-#include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/memory/memory.h"
+#include "opal/mca/mca.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/memory/base/empty.h"
-
+#include "opal/mca/memory/memory.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -45,7 +43,7 @@ static int empty_process(void)
     return OPAL_SUCCESS;
 }
 
-static int empty_query (int *priority)
+static int empty_query(int *priority)
 {
     *priority = 0;
     return OPAL_SUCCESS;
@@ -63,17 +61,15 @@ static opal_memory_base_component_2_0_0_t empty_component = {
     .memoryc_set_alignment = opal_memory_base_component_set_alignment_empty,
 };
 
-
 /*
  * Globals
  */
 opal_memory_base_component_2_0_0_t *opal_memory = &empty_component;
 
-
-void opal_memory_base_malloc_init_hook (void)
+void opal_memory_base_malloc_init_hook(void)
 {
     if (opal_memory->memoryc_init_hook) {
-        opal_memory->memoryc_init_hook ();
+        opal_memory->memoryc_init_hook();
     }
 }
 
@@ -89,9 +85,10 @@ static int opal_memory_base_open(mca_base_open_flag_t flags)
     int ret;
 
     /* can only be zero or one */
-    OPAL_LIST_FOREACH(item, &opal_memory_base_framework.framework_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH (item, &opal_memory_base_framework.framework_components,
+                       mca_base_component_list_item_t) {
         tmp = (opal_memory_base_component_2_0_0_t *) item->cli_component;
-        ret = tmp->memoryc_query (&priority);
+        ret = tmp->memoryc_query(&priority);
         if (OPAL_SUCCESS != ret || priority < highest_priority) {
             continue;
         }
@@ -100,15 +97,17 @@ static int opal_memory_base_open(mca_base_open_flag_t flags)
         opal_memory = tmp;
     }
 
-    OPAL_LIST_FOREACH_SAFE(item, next, &opal_memory_base_framework.framework_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH_SAFE (item, next, &opal_memory_base_framework.framework_components,
+                            mca_base_component_list_item_t) {
         if ((void *) opal_memory != (void *) item->cli_component) {
-            mca_base_component_unload (item->cli_component, opal_memory_base_framework.framework_output);
-            opal_list_remove_item (&opal_memory_base_framework.framework_components, &item->super);
+            mca_base_component_unload(item->cli_component,
+                                      opal_memory_base_framework.framework_output);
+            opal_list_remove_item(&opal_memory_base_framework.framework_components, &item->super);
         }
     }
 
     /* open remaining component */
-    ret = mca_base_framework_components_open (&opal_memory_base_framework, flags);
+    ret = mca_base_framework_components_open(&opal_memory_base_framework, flags);
     if (ret != OPAL_SUCCESS) {
         return ret;
     }

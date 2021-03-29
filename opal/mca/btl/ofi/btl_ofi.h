@@ -28,38 +28,38 @@
 #define MCA_BTL_OFI_H
 
 #include "opal_config.h"
-#include <sys/types.h>
 #include <string.h>
+#include <sys/types.h>
 
 /* Open MPI includes */
-#include "opal/util/event.h"
-#include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/mpool/mpool.h"
 #include "opal/mca/btl/base/btl_base_error.h"
-#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/mpool/mpool.h"
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/util/event.h"
 
 #include "opal/class/opal_hash_table.h"
 
 #include <rdma/fabric.h>
-#include <rdma/fi_domain.h>
-#include <rdma/fi_errno.h>
 #include <rdma/fi_cm.h>
+#include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
+#include <rdma/fi_errno.h>
 #include <rdma/fi_rma.h>
 
 BEGIN_C_DECLS
-#define MCA_BTL_OFI_MAX_MODULES         16
-#define MCA_BTL_OFI_NUM_CQE_READ        64
+#define MCA_BTL_OFI_MAX_MODULES  16
+#define MCA_BTL_OFI_NUM_CQE_READ 64
 
-#define MCA_BTL_OFI_DEFAULT_RD_NUM              10
-#define MCA_BTL_OFI_DEFAULT_MAX_CQE             128
-#define MCA_BTL_OFI_DEFAULT_PROGRESS_THRESHOLD  64
+#define MCA_BTL_OFI_DEFAULT_RD_NUM             10
+#define MCA_BTL_OFI_DEFAULT_MAX_CQE            128
+#define MCA_BTL_OFI_DEFAULT_PROGRESS_THRESHOLD 64
 
-#define MCA_BTL_OFI_ABORT(args)     mca_btl_ofi_exit(args)
+#define MCA_BTL_OFI_ABORT(args) mca_btl_ofi_exit(args)
 
-#define TWO_SIDED_ENABLED           mca_btl_ofi_component.two_sided_enabled
+#define TWO_SIDED_ENABLED mca_btl_ofi_component.two_sided_enabled
 
 enum mca_btl_ofi_mode {
     MCA_BTL_OFI_MODE_ONE_SIDED = 0,
@@ -146,7 +146,7 @@ extern mca_btl_ofi_module_t mca_btl_ofi_module_template;
  * @brief OFI BTL component
  */
 struct mca_btl_ofi_component_t {
-    mca_btl_base_component_3_0_0_t super;  /**< base BTL component */
+    mca_btl_base_component_3_0_0_t super; /**< base BTL component */
 
     /** number of TL modules */
     int module_count;
@@ -161,7 +161,6 @@ struct mca_btl_ofi_component_t {
 
     /** All BTL OFI modules (1 per tl) */
     mca_btl_ofi_module_t *modules[MCA_BTL_OFI_MAX_MODULES];
-
 };
 typedef struct mca_btl_ofi_component_t mca_btl_ofi_component_t;
 
@@ -204,7 +203,6 @@ struct mca_btl_ofi_base_frag_t {
 typedef struct mca_btl_ofi_base_frag_t mca_btl_ofi_base_frag_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_ofi_base_frag_t);
-
 
 struct mca_btl_ofi_completion_context_t {
     struct fi_context ctx;
@@ -283,11 +281,12 @@ OBJ_CLASS_DECLARATION(mca_btl_ofi_frag_completion_t);
  * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
  *                         alignment restrictions.
  */
-int mca_btl_ofi_put (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_ofi_put(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                    void *local_address, uint64_t remote_address,
+                    struct mca_btl_base_registration_handle_t *local_handle,
+                    struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
+                    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                    void *cbdata);
 
 /**
  * Initiate an asynchronous get.
@@ -320,54 +319,59 @@ int mca_btl_ofi_put (struct mca_btl_base_module_t *btl,
  * @retval OPAL_ERR_NOT_AVAILABLE  Put can not be performed due to size or
  *                         alignment restrictions.
  */
-int mca_btl_ofi_get (struct mca_btl_base_module_t *btl,
-    struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-    uint64_t remote_address, struct mca_btl_base_registration_handle_t *local_handle,
-    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_ofi_get(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                    void *local_address, uint64_t remote_address,
+                    struct mca_btl_base_registration_handle_t *local_handle,
+                    struct mca_btl_base_registration_handle_t *remote_handle, size_t size,
+                    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                    void *cbdata);
 
-int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                     uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
-                     mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+int mca_btl_ofi_aop(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                    uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
+                    mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+                    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+int mca_btl_ofi_afop(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                     void *local_address, uint64_t remote_address,
+                     mca_btl_base_registration_handle_t *local_handle,
+                     mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+                     uint64_t operand, int flags, int order,
                      mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
-int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                      void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                      mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
-                      uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
-                      void *cbcontext, void *cbdata);
+int mca_btl_ofi_acswap(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                       void *local_address, uint64_t remote_address,
+                       mca_btl_base_registration_handle_t *local_handle,
+                       mca_btl_base_registration_handle_t *remote_handle, uint64_t compare,
+                       uint64_t value, int flags, int order,
+                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
 
-int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                        void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                        mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value, int flags,
-                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+int mca_btl_ofi_flush(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint);
 
+int mca_btl_ofi_finalize(mca_btl_base_module_t *btl);
 
-int mca_btl_ofi_flush (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint);
-
-int mca_btl_ofi_finalize (mca_btl_base_module_t *btl);
-
-void mca_btl_ofi_rcache_init (mca_btl_ofi_module_t *module);
-int mca_btl_ofi_reg_mem (void *reg_data, void *base, size_t size,
-                         mca_rcache_base_registration_t *reg);
-int mca_btl_ofi_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg);
+void mca_btl_ofi_rcache_init(mca_btl_ofi_module_t *module);
+int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
+                        mca_rcache_base_registration_t *reg);
+int mca_btl_ofi_dereg_mem(void *reg_data, mca_rcache_base_registration_t *reg);
 
 int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context);
 
-mca_btl_ofi_module_t * mca_btl_ofi_module_alloc (int mode);
+mca_btl_ofi_module_t *mca_btl_ofi_module_alloc(int mode);
 
-int mca_btl_ofi_post_recvs(mca_btl_base_module_t* module, mca_btl_ofi_context_t *context, int count);
+int mca_btl_ofi_post_recvs(mca_btl_base_module_t *module, mca_btl_ofi_context_t *context,
+                           int count);
 void mca_btl_ofi_exit(void);
 
 /* thread atomics */
-static inline bool mca_btl_ofi_context_trylock (mca_btl_ofi_context_t *context)
+static inline bool mca_btl_ofi_context_trylock(mca_btl_ofi_context_t *context)
 {
     return (context->lock || OPAL_ATOMIC_SWAP_32(&context->lock, 1));
 }
 
 static inline void mca_btl_ofi_context_lock(mca_btl_ofi_context_t *context)
 {
-    while (mca_btl_ofi_context_trylock(context));
+    while (mca_btl_ofi_context_trylock(context))
+        ;
 }
 
 static inline void mca_btl_ofi_context_unlock(mca_btl_ofi_context_t *context)

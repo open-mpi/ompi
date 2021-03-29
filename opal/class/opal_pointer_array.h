@@ -31,8 +31,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/threads/mutex.h"
 #include "opal/class/opal_object.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/prefetch.h"
 
 BEGIN_C_DECLS
@@ -59,7 +59,7 @@ struct opal_pointer_array_t {
     /** block size for each allocation */
     int block_size;
     /** pointer to an array of bits to speed up the research for an empty position. */
-    uint64_t* free_bits;
+    uint64_t *free_bits;
     /** pointer to array of pointers */
     void **addr;
 };
@@ -86,9 +86,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_pointer_array_t);
  * @return OPAL_SUCCESS if all initializations were succesfull. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-OPAL_DECLSPEC int opal_pointer_array_init( opal_pointer_array_t* array,
-                                           int initial_allocation,
-                                           int max_size, int block_size );
+OPAL_DECLSPEC int opal_pointer_array_init(opal_pointer_array_t *array, int initial_allocation,
+                                          int max_size, int block_size);
 
 /**
  * Add a pointer to the array (Grow the array, if need be)
@@ -110,8 +109,7 @@ OPAL_DECLSPEC int opal_pointer_array_add(opal_pointer_array_t *array, void *ptr)
  *
  * @return Error code.  (-1) indicates an error.
  */
-OPAL_DECLSPEC int opal_pointer_array_set_item(opal_pointer_array_t *array,
-                                int index, void *value);
+OPAL_DECLSPEC int opal_pointer_array_set_item(opal_pointer_array_t *array, int index, void *value);
 
 /**
  * Get the value of an element in array
@@ -122,12 +120,11 @@ OPAL_DECLSPEC int opal_pointer_array_set_item(opal_pointer_array_t *array,
  * @return Error code.  NULL indicates an error.
  */
 
-static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table,
-                                                int element_index)
+static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table, int element_index)
 {
     void *p;
 
-    if( OPAL_UNLIKELY(0 > element_index || table->size <= element_index) ) {
+    if (OPAL_UNLIKELY(0 > element_index || table->size <= element_index)) {
         return NULL;
     }
     OPAL_THREAD_LOCK(&(table->lock));
@@ -135,7 +132,6 @@ static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table,
     OPAL_THREAD_UNLOCK(&(table->lock));
     return p;
 }
-
 
 /**
  * Get the size of the pointer array
@@ -149,7 +145,7 @@ static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table,
  */
 static inline int opal_pointer_array_get_size(opal_pointer_array_t *array)
 {
-  return array->size;
+    return array->size;
 }
 
 /**
@@ -178,9 +174,8 @@ OPAL_DECLSPEC int opal_pointer_array_set_size(opal_pointer_array_t *array, int s
  * In contrary to array_set, this function does not allow to overwrite
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-OPAL_DECLSPEC bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *table,
-                                          int index,
-                                          void *value);
+OPAL_DECLSPEC bool opal_pointer_array_test_and_set_item(opal_pointer_array_t *table, int index,
+                                                        void *value);
 
 /**
  * Empty the array.
@@ -191,16 +186,17 @@ OPAL_DECLSPEC bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *t
 static inline void opal_pointer_array_remove_all(opal_pointer_array_t *array)
 {
     int i;
-    if( array->number_free == array->size )
-        return;  /* nothing to do here this time (the array is already empty) */
+    if (array->number_free == array->size)
+        return; /* nothing to do here this time (the array is already empty) */
 
     OPAL_THREAD_LOCK(&array->lock);
     array->lowest_free = 0;
     array->number_free = array->size;
-    for(i = 0; i < array->size; i++) {
+    for (i = 0; i < array->size; i++) {
         array->addr[i] = NULL;
     }
-    for(i = 0; i < (int)((array->size + 8*sizeof(uint64_t) - 1) / (8*sizeof(uint64_t))); i++) {
+    for (i = 0; i < (int) ((array->size + 8 * sizeof(uint64_t) - 1) / (8 * sizeof(uint64_t)));
+         i++) {
         array->free_bits[i] = 0;
     }
     OPAL_THREAD_UNLOCK(&array->lock);

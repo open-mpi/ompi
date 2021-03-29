@@ -54,14 +54,17 @@ typedef enum {
     OPAL_BTL_USNIC_FRAG_PUT_DEST
 } opal_btl_usnic_frag_type_t;
 
-static inline const char *
-usnic_frag_type(opal_btl_usnic_frag_type_t t)
+static inline const char *usnic_frag_type(opal_btl_usnic_frag_type_t t)
 {
     switch (t) {
-    case OPAL_BTL_USNIC_FRAG_LARGE_SEND: return "large";
-    case OPAL_BTL_USNIC_FRAG_SMALL_SEND: return "small";
-    case OPAL_BTL_USNIC_FRAG_PUT_DEST: return "put dest";
-    default: return "unknown";
+    case OPAL_BTL_USNIC_FRAG_LARGE_SEND:
+        return "large";
+    case OPAL_BTL_USNIC_FRAG_SMALL_SEND:
+        return "small";
+    case OPAL_BTL_USNIC_FRAG_PUT_DEST:
+        return "put dest";
+    default:
+        return "unknown";
     }
 }
 
@@ -72,18 +75,21 @@ typedef enum {
     OPAL_BTL_USNIC_SEG_RECV
 } opal_btl_usnic_seg_type_t;
 
-static inline const char *
-usnic_seg_type_str(opal_btl_usnic_seg_type_t t)
+static inline const char *usnic_seg_type_str(opal_btl_usnic_seg_type_t t)
 {
     switch (t) {
-    case OPAL_BTL_USNIC_SEG_ACK:   return "ACK";
-    case OPAL_BTL_USNIC_SEG_FRAG:  return "FRAG";
-    case OPAL_BTL_USNIC_SEG_CHUNK: return "CHUNK";
-    case OPAL_BTL_USNIC_SEG_RECV:  return "RECV";
-    default:                       return "unknown";
+    case OPAL_BTL_USNIC_SEG_ACK:
+        return "ACK";
+    case OPAL_BTL_USNIC_SEG_FRAG:
+        return "FRAG";
+    case OPAL_BTL_USNIC_SEG_CHUNK:
+        return "CHUNK";
+    case OPAL_BTL_USNIC_SEG_RECV:
+        return "RECV";
+    default:
+        return "unknown";
     }
 }
-
 
 /*
  * usnic registration handle (passed over the network to peers as a
@@ -109,14 +115,13 @@ typedef struct opal_btl_usnic_reg_t {
     struct fid_mr *ur_mr;
 } opal_btl_usnic_reg_t;
 
-
 /**
  * usnic header type
  */
 typedef enum {
     OPAL_BTL_USNIC_PAYLOAD_TYPE_ACK = 1,
-    OPAL_BTL_USNIC_PAYLOAD_TYPE_FRAG = 2,       /* an entire fragment */
-    OPAL_BTL_USNIC_PAYLOAD_TYPE_CHUNK = 3       /* one chunk of fragment */
+    OPAL_BTL_USNIC_PAYLOAD_TYPE_FRAG = 2, /* an entire fragment */
+    OPAL_BTL_USNIC_PAYLOAD_TYPE_CHUNK = 3 /* one chunk of fragment */
 } opal_btl_usnic_payload_type_t;
 
 /**
@@ -131,7 +136,7 @@ typedef struct {
 
     /* Sliding window sequence number (echoed back in an ACK). */
     opal_btl_usnic_seq_t pkt_seq;
-    opal_btl_usnic_seq_t ack_seq;       /* for piggy-backing ACKs */
+    opal_btl_usnic_seq_t ack_seq; /* for piggy-backing ACKs */
 
     /* payload legnth (in bytes).  We unfortunately have to include
        this in our header because the L2 layer may artifically inflate
@@ -163,9 +168,9 @@ typedef struct {
 typedef struct {
     opal_btl_usnic_btl_header_t ch_hdr;
 
-    uint32_t ch_frag_id;        /* ID for collecting segments of same frag */
-    uint32_t ch_frag_size;      /* total frag len */
-    uint32_t ch_frag_offset;    /* where in fragment this goes */
+    uint32_t ch_frag_id;     /* ID for collecting segments of same frag */
+    uint32_t ch_frag_size;   /* total frag len */
+    uint32_t ch_frag_offset; /* where in fragment this goes */
 } opal_btl_usnic_btl_chunk_header_t;
 
 /**
@@ -182,7 +187,7 @@ typedef struct opal_btl_usnic_segment_t {
         opal_btl_usnic_btl_header_t *uus_btl_header;
         opal_btl_usnic_btl_chunk_header_t *uus_btl_chunk_header;
     } us_hdr;
-#define us_btl_header us_hdr.uus_btl_header
+#define us_btl_header       us_hdr.uus_btl_header
 #define us_btl_chunk_header us_hdr.uus_btl_chunk_header
 
     union {
@@ -226,11 +231,11 @@ typedef struct opal_btl_usnic_send_segment_t {
     opal_btl_usnic_channel_id_t ss_channel;
 
     struct opal_btl_usnic_send_frag_t *ss_parent_frag;
-    int ss_hotel_room;          /* current retrans room, or -1 if none */
+    int ss_hotel_room; /* current retrans room, or -1 if none */
 
     /* How many times is this frag on a hardware queue? */
     uint32_t ss_send_posted;
-    bool ss_ack_pending;        /* true until this segment is ACKed */
+    bool ss_ack_pending; /* true until this segment is ACKed */
 
 } opal_btl_usnic_send_segment_t;
 
@@ -262,13 +267,13 @@ typedef struct opal_btl_usnic_send_frag_t {
 
     struct mca_btl_base_endpoint_t *sf_endpoint;
 
-    size_t sf_size;             /* total_fragment size (upper + user payload) */
+    size_t sf_size; /* total_fragment size (upper + user payload) */
 
     struct opal_convertor_t sf_convertor; /* copy of original message data if
                                              convertor required */
 
-    uint32_t sf_seg_post_cnt;   /* total segs currently posted for this frag */
-    size_t sf_ack_bytes_left;   /* bytes remaining to be ACKed */
+    uint32_t sf_seg_post_cnt; /* total segs currently posted for this frag */
+    size_t sf_ack_bytes_left; /* bytes remaining to be ACKed */
 
     struct opal_btl_usnic_send_frag_t *sf_next;
 } opal_btl_usnic_send_frag_t;
@@ -284,7 +289,7 @@ typedef struct opal_btl_usnic_large_send_frag_t {
     char lsf_ompi_header[64];   /* space for upper layer header */
     mca_btl_base_tag_t lsf_tag; /* save tag */
 
-    uint32_t lsf_frag_id;       /* fragment ID for reassembly */
+    uint32_t lsf_frag_id; /* fragment ID for reassembly */
 
     size_t lsf_cur_offset;      /* next byte offset to be enqueued on the
                                    endpoint (incl. any convertor payload) */
@@ -296,16 +301,16 @@ typedef struct opal_btl_usnic_large_send_frag_t {
     int lsf_cur_sge;
     size_t lsf_bytes_left_in_sge;
 
-    uint8_t *lsf_buffer;        /* attached storage for usnic_alloc() */
+    uint8_t *lsf_buffer; /* attached storage for usnic_alloc() */
 
-    opal_list_t lsf_seg_chain;  /* chain of segments for converted data */
+    opal_list_t lsf_seg_chain; /* chain of segments for converted data */
 
-    bool lsf_pack_on_the_fly;   /* true if we are packing on the fly */
+    bool lsf_pack_on_the_fly; /* true if we are packing on the fly */
 } opal_btl_usnic_large_send_frag_t;
 
 /* Shortcut member macros.  Access uf_src_seg array instead of the descriptor's
  * des_src ptr to save a deref. */
-#define lsf_des_src       lsf_base.sf_base.uf_local_seg
+#define lsf_des_src lsf_base.sf_base.uf_local_seg
 
 /**
  * small send fragment
@@ -372,7 +377,7 @@ opal_btl_usnic_small_send_frag_alloc(opal_btl_usnic_module_t *module)
         return NULL;
     }
 
-    frag = (opal_btl_usnic_small_send_frag_t*) item;
+    frag = (opal_btl_usnic_small_send_frag_t *) item;
 
     /* this belongs in constructor... */
     frag->ssf_base.sf_base.uf_freelist = &(module->small_send_frags);
@@ -395,7 +400,7 @@ opal_btl_usnic_large_send_frag_alloc(opal_btl_usnic_module_t *module)
         return NULL;
     }
 
-    frag = (opal_btl_usnic_large_send_frag_t*) item;
+    frag = (opal_btl_usnic_large_send_frag_t *) item;
 
     /* this belongs in constructor... */
     frag->lsf_base.sf_base.uf_freelist = &(module->large_send_frags);
@@ -407,8 +412,7 @@ opal_btl_usnic_large_send_frag_alloc(opal_btl_usnic_module_t *module)
 }
 
 static inline opal_btl_usnic_put_dest_frag_t *
-opal_btl_usnic_put_dest_frag_alloc(
-    struct opal_btl_usnic_module_t *module)
+opal_btl_usnic_put_dest_frag_alloc(struct opal_btl_usnic_module_t *module)
 {
     opal_free_list_item_t *item;
     opal_btl_usnic_put_dest_frag_t *frag;
@@ -418,7 +422,7 @@ opal_btl_usnic_put_dest_frag_alloc(
         return NULL;
     }
 
-    frag = (opal_btl_usnic_put_dest_frag_t*) item;
+    frag = (opal_btl_usnic_put_dest_frag_t *) item;
 
     /* this belongs in constructor... */
     frag->uf_freelist = &(module->put_dest_frags);
@@ -439,31 +443,24 @@ opal_btl_usnic_put_dest_frag_alloc(
  *    b) all of its segments have been ACKed
  *    c) it is owned by the BTL
  */
-static inline bool
-opal_btl_usnic_send_frag_ok_to_return(
-    opal_btl_usnic_module_t *module,
-    opal_btl_usnic_send_frag_t *frag)
+static inline bool opal_btl_usnic_send_frag_ok_to_return(opal_btl_usnic_module_t *module,
+                                                         opal_btl_usnic_send_frag_t *frag)
 {
     assert(frag);
 
-    if (OPAL_LIKELY(frag->sf_base.uf_base.des_flags &
-                MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) &&
-        0 == frag->sf_ack_bytes_left &&
-        0 == frag->sf_seg_post_cnt) {
+    if (OPAL_LIKELY(frag->sf_base.uf_base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)
+        && 0 == frag->sf_ack_bytes_left && 0 == frag->sf_seg_post_cnt) {
         return true;
     }
 
     return false;
 }
 
-static inline void
-opal_btl_usnic_frag_return(
-    struct opal_btl_usnic_module_t *module,
-    opal_btl_usnic_frag_t *frag)
+static inline void opal_btl_usnic_frag_return(struct opal_btl_usnic_module_t *module,
+                                              opal_btl_usnic_frag_t *frag)
 {
 #if MSGDEBUG1
-    opal_output(0, "freeing frag %p, type %s\n", (void *)frag,
-            usnic_frag_type(frag->uf_type));
+    opal_output(0, "freeing frag %p, type %s\n", (void *) frag, usnic_frag_type(frag->uf_type));
 #endif
     frag->uf_local_seg[0].seg_len = 0;
     frag->uf_local_seg[1].seg_len = 0;
@@ -473,7 +470,7 @@ opal_btl_usnic_frag_return(
      */
     if (frag->uf_type == OPAL_BTL_USNIC_FRAG_LARGE_SEND) {
         opal_btl_usnic_large_send_frag_t *lfrag;
-        lfrag = (opal_btl_usnic_large_send_frag_t *)frag;
+        lfrag = (opal_btl_usnic_large_send_frag_t *) frag;
         if (lfrag->lsf_buffer != NULL) {
             free(lfrag->lsf_buffer);
             lfrag->lsf_buffer = NULL;
@@ -481,8 +478,8 @@ opal_btl_usnic_frag_return(
         lfrag->lsf_pack_on_the_fly = false;
 
         /* JMS This should never happen any more, right? */
-        if (2 == lfrag->lsf_base.sf_base.uf_base.USNIC_SEND_LOCAL_COUNT &&
-            NULL == lfrag->lsf_des_src[1].seg_addr.pval) {
+        if (2 == lfrag->lsf_base.sf_base.uf_base.USNIC_SEND_LOCAL_COUNT
+            && NULL == lfrag->lsf_des_src[1].seg_addr.pval) {
             opal_convertor_cleanup(&lfrag->lsf_base.sf_convertor);
         }
     }
@@ -501,10 +498,8 @@ opal_btl_usnic_frag_return(
 /*
  * Return a send frag if it's all done and owned by BTL
  */
-static inline void
-opal_btl_usnic_send_frag_return_cond(
-    struct opal_btl_usnic_module_t *module,
-    opal_btl_usnic_send_frag_t *frag)
+static inline void opal_btl_usnic_send_frag_return_cond(struct opal_btl_usnic_module_t *module,
+                                                        opal_btl_usnic_send_frag_t *frag)
 {
     if (opal_btl_usnic_send_frag_ok_to_return(module, frag)) {
         opal_btl_usnic_frag_return(module, &frag->sf_base);
@@ -517,25 +512,20 @@ opal_btl_usnic_send_frag_return_cond(
  * a send frag, there are other conditions, so use the specific send frag
  * return checker.
  */
-static inline void
-opal_btl_usnic_frag_return_cond(
-    struct opal_btl_usnic_module_t *module,
-    opal_btl_usnic_frag_t *frag)
+static inline void opal_btl_usnic_frag_return_cond(struct opal_btl_usnic_module_t *module,
+                                                   opal_btl_usnic_frag_t *frag)
 {
     if (OPAL_BTL_USNIC_FRAG_PUT_DEST == frag->uf_type) {
-        if (OPAL_LIKELY(frag->uf_base.des_flags &
-                                    MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+        if (OPAL_LIKELY(frag->uf_base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
             opal_btl_usnic_frag_return(module, frag);
         }
     } else {
-        opal_btl_usnic_send_frag_return_cond(module,
-                (opal_btl_usnic_send_frag_t *)frag);
+        opal_btl_usnic_send_frag_return_cond(module, (opal_btl_usnic_send_frag_t *) frag);
     }
 }
 
 static inline opal_btl_usnic_chunk_segment_t *
-opal_btl_usnic_chunk_segment_alloc(
-    opal_btl_usnic_module_t *module)
+opal_btl_usnic_chunk_segment_alloc(opal_btl_usnic_module_t *module)
 {
     opal_free_list_item_t *item;
     opal_btl_usnic_send_segment_t *seg;
@@ -545,7 +535,7 @@ opal_btl_usnic_chunk_segment_alloc(
         return NULL;
     }
 
-    seg = (opal_btl_usnic_send_segment_t*) item;
+    seg = (opal_btl_usnic_send_segment_t *) item;
     seg->ss_channel = USNIC_DATA_CHANNEL;
 
     assert(seg);
@@ -554,10 +544,8 @@ opal_btl_usnic_chunk_segment_alloc(
     return seg;
 }
 
-static inline void
-opal_btl_usnic_chunk_segment_return(
-    opal_btl_usnic_module_t *module,
-    opal_btl_usnic_chunk_segment_t *seg)
+static inline void opal_btl_usnic_chunk_segment_return(opal_btl_usnic_module_t *module,
+                                                       opal_btl_usnic_chunk_segment_t *seg)
 {
     assert(seg);
     assert(OPAL_BTL_USNIC_SEG_CHUNK == seg->ss_base.us_type);
@@ -579,7 +567,7 @@ opal_btl_usnic_ack_segment_alloc(opal_btl_usnic_module_t *module)
         return NULL;
     }
 
-    ack = (opal_btl_usnic_ack_segment_t*) item;
+    ack = (opal_btl_usnic_ack_segment_t *) item;
     ack->ss_channel = USNIC_PRIORITY_CHANNEL;
 
     assert(ack);
@@ -591,10 +579,8 @@ opal_btl_usnic_ack_segment_alloc(opal_btl_usnic_module_t *module)
 /*
  * Return an ACK segment
  */
-static inline void
-opal_btl_usnic_ack_segment_return(
-    opal_btl_usnic_module_t *module,
-    opal_btl_usnic_ack_segment_t *ack)
+static inline void opal_btl_usnic_ack_segment_return(opal_btl_usnic_module_t *module,
+                                                     opal_btl_usnic_ack_segment_t *ack)
 {
     assert(ack);
     assert(OPAL_BTL_USNIC_SEG_ACK == ack->ss_base.us_type);
@@ -605,8 +591,7 @@ opal_btl_usnic_ack_segment_return(
 /* Compute and set the proper value for sfrag->sf_size.  This must not be used
  * during usnic_alloc, since the PML might change the segment size after
  * usnic_alloc returns. */
-static inline void
-opal_btl_usnic_compute_sf_size(opal_btl_usnic_send_frag_t *sfrag)
+static inline void opal_btl_usnic_compute_sf_size(opal_btl_usnic_send_frag_t *sfrag)
 {
     opal_btl_usnic_frag_t *frag;
 

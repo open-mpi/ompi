@@ -25,7 +25,6 @@
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/timer/timer.h"
 
-
 /*
  * Global functions for MCA overall timer open and close
  */

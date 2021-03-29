@@ -16,11 +16,9 @@
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC extern opal_reachable_base_component_t
-    mca_reachable_netlink_component;
+OPAL_DECLSPEC extern opal_reachable_base_component_t mca_reachable_netlink_component;
 
-OPAL_DECLSPEC extern const opal_reachable_base_module_t
-    opal_reachable_netlink_module;
+OPAL_DECLSPEC extern const opal_reachable_base_module_t opal_reachable_netlink_module;
 
 END_C_DECLS
 

@@ -1087,7 +1087,6 @@ dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
-    AC_REQUIRE([OPAL_SETUP_CXX])
     AC_REQUIRE([AM_PROG_AS])
 
     AC_ARG_ENABLE([c11-atomics],[AS_HELP_STRING([--enable-c11-atomics],

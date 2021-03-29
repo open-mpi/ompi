@@ -25,12 +25,11 @@
 #include "opal/constants.h"
 #include "opal/mca/backtrace/backtrace.h"
 
-int
-opal_backtrace_print(FILE *file, char *prefix, int strip)
+int opal_backtrace_print(FILE *file, char *prefix, int strip)
 {
     int fd = opal_stacktrace_output_fileno;
 
-    if( NULL != file ) {
+    if (NULL != file) {
         fd = fileno(file);
     }
 
@@ -39,9 +38,7 @@ opal_backtrace_print(FILE *file, char *prefix, int strip)
     return OPAL_SUCCESS;
 }
 
-
-int
-opal_backtrace_buffer(char ***message_out, int *len_out)
+int opal_backtrace_buffer(char ***message_out, int *len_out)
 {
     *message_out = NULL;
     *len_out = 0;

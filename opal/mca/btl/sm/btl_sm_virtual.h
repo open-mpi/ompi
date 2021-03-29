@@ -53,22 +53,22 @@
 /* This only works for finding the relative address for a pointer within my_segment */
 static inline fifo_value_t virtual2relative(char *addr)
 {
-    return (fifo_value_t)((intptr_t)(addr - mca_btl_sm_component.my_segment)) |
-           ((fifo_value_t) MCA_BTL_SM_LOCAL_RANK << MCA_BTL_SM_OFFSET_BITS);
+    return (fifo_value_t)((intptr_t)(addr - mca_btl_sm_component.my_segment))
+           | ((fifo_value_t) MCA_BTL_SM_LOCAL_RANK << MCA_BTL_SM_OFFSET_BITS);
 }
 
 static inline fifo_value_t virtual2relativepeer(struct mca_btl_base_endpoint_t *endpoint,
                                                 char *addr)
 {
-    return (fifo_value_t)((intptr_t)(addr - endpoint->segment_base)) |
-           ((fifo_value_t) endpoint->peer_smp_rank << MCA_BTL_SM_OFFSET_BITS);
+    return (fifo_value_t)((intptr_t)(addr - endpoint->segment_base))
+           | ((fifo_value_t) endpoint->peer_smp_rank << MCA_BTL_SM_OFFSET_BITS);
 }
 
 static inline void *relative2virtual(fifo_value_t offset)
 {
     return (void *) (intptr_t)(
-        (offset & MCA_BTL_SM_OFFSET_MASK) +
-        mca_btl_sm_component.endpoints[offset >> MCA_BTL_SM_OFFSET_BITS].segment_base);
+        (offset & MCA_BTL_SM_OFFSET_MASK)
+        + mca_btl_sm_component.endpoints[offset >> MCA_BTL_SM_OFFSET_BITS].segment_base);
 }
 
 #endif /* MCA_BTL_SM_VIRTUAL_H */

@@ -17,17 +17,17 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 
 #include "opal/util/output.h"
 #include "opal/util/path.h"
-#include "opal/util/show_help.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
 #include "opal/util/uri.h"
 
-const static char *uri_reserved_path_chars="!$&'()*+,;=:@ ";
+const static char *uri_reserved_path_chars = "!$&'()*+,;=:@ ";
 
 char *opal_uri_get_scheme(const char *uri)
 {
@@ -35,8 +35,7 @@ char *opal_uri_get_scheme(const char *uri)
     char *ptr;
 
     if (NULL == (ptr = strchr(turi, ':'))) {
-        opal_show_help("help-opal-util.txt", "malformed-uri",
-                       true, uri);
+        opal_show_help("help-opal-util.txt", "malformed-uri", true, uri);
         free(turi);
         return NULL;
     }
@@ -44,16 +43,14 @@ char *opal_uri_get_scheme(const char *uri)
     return turi;
 }
 
-char *opal_filename_to_uri(const char *filename,
-                           const char *hostname)
+char *opal_filename_to_uri(const char *filename, const char *hostname)
 {
     char *uri, *fn;
     size_t i, j, k, n;
 
     /* filename must be an absolute path */
     if (!opal_path_is_absolute(filename)) {
-        opal_show_help("help-opal-util.txt", "relative-path",
-                       true, filename);
+        opal_show_help("help-opal-util.txt", "relative-path", true, filename);
         return NULL;
     }
 
@@ -68,18 +65,18 @@ char *opal_filename_to_uri(const char *filename,
     /* count the number of characters that require escaping
      * in the filename
      */
-    n=0;
-    for (j=0; j < strlen(uri_reserved_path_chars)-1; j++) {
+    n = 0;
+    for (j = 0; j < strlen(uri_reserved_path_chars) - 1; j++) {
         if (NULL != strchr(filename, uri_reserved_path_chars[j])) {
             n++;
         }
     }
     /* escape them if necessary */
     if (0 < n) {
-        fn = (char*)malloc(strlen(filename) + n + 1);
-        i=0;
-        for (k=0; k < strlen(filename)-1; k++) {
-            for (j=0; j < strlen(uri_reserved_path_chars)-1; j++) {
+        fn = (char *) malloc(strlen(filename) + n + 1);
+        i = 0;
+        for (k = 0; k < strlen(filename) - 1; k++) {
+            for (j = 0; j < strlen(uri_reserved_path_chars) - 1; j++) {
                 if (filename[k] == uri_reserved_path_chars[j]) {
                     fn[i] = '\\';
                     i++;
@@ -103,8 +100,7 @@ char *opal_filename_to_uri(const char *filename,
     return uri;
 }
 
-char *opal_filename_from_uri(const char *uri,
-                             char **hostname)
+char *opal_filename_from_uri(const char *uri, char **hostname)
 {
     char *turi;
     char *ptr, *fn, *sp;
@@ -120,13 +116,12 @@ char *opal_filename_from_uri(const char *uri,
 
     /* extract the scheme */
     if (NULL == (ptr = strchr(turi, ':'))) {
-        opal_show_help("help-opal-util.txt", "malformed-uri",
-                       true, uri);
+        opal_show_help("help-opal-util.txt", "malformed-uri", true, uri);
         free(turi);
         return NULL;
     }
     *ptr = '\0';
-    ptr++;  /* step over the new NULL */
+    ptr++; /* step over the new NULL */
 
     /* if there are three '/', then there is no
      * hostname and the file is local
@@ -140,14 +135,12 @@ char *opal_filename_from_uri(const char *uri,
         fn = strdup(ptr);
     } else if (0 != strncmp(ptr, "//", 2)) {
         /* error */
-        opal_show_help("help-opal-util.txt", "malformed-uri",
-                       true, uri);
+        opal_show_help("help-opal-util.txt", "malformed-uri", true, uri);
     } else {
-        ptr += 2;  /* step to the hostname */
+        ptr += 2; /* step to the hostname */
         /* find the separator to the filename */
         if (NULL == (sp = strchr(ptr, '/'))) {
-            opal_show_help("help-opal-util.txt", "malformed-uri",
-                           true, uri);
+            opal_show_help("help-opal-util.txt", "malformed-uri", true, uri);
         } else {
             *sp = '\0';
             if (NULL != hostname) {

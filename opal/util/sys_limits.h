@@ -25,7 +25,7 @@
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 
 BEGIN_C_DECLS
@@ -54,7 +54,6 @@ OPAL_DECLSPEC int opal_util_init_sys_limits(char **errmsg);
  * Get pagesize
  */
 OPAL_DECLSPEC int opal_getpagesize(void);
-
 
 END_C_DECLS
 

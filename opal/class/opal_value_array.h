@@ -23,12 +23,12 @@
 
 #include <string.h>
 #ifdef HAVE_STRINGS_H
-#include <strings.h>
+#    include <strings.h>
 #endif /* HAVE_STRINGS_H */
 
 #include "opal/class/opal_object.h"
 #if OPAL_ENABLE_DEBUG
-#include "opal/util/output.h"
+#    include "opal/util/output.h"
 #endif
 #include "opal/constants.h"
 
@@ -38,13 +38,12 @@ BEGIN_C_DECLS
  *  @file  Array of elements maintained by value.
  */
 
-struct opal_value_array_t
-{
-    opal_object_t    super;
-    unsigned char*  array_items;
-    size_t          array_item_sizeof;
-    size_t          array_size;
-    size_t          array_alloc_size;
+struct opal_value_array_t {
+    opal_object_t super;
+    unsigned char *array_items;
+    size_t array_item_sizeof;
+    size_t array_size;
+    size_t array_alloc_size;
 };
 typedef struct opal_value_array_t opal_value_array_t;
 
@@ -68,10 +67,10 @@ static inline int opal_value_array_init(opal_value_array_t *array, size_t item_s
     array->array_item_sizeof = item_sizeof;
     array->array_alloc_size = 1;
     array->array_size = 0;
-    array->array_items = (unsigned char*)realloc(array->array_items, item_sizeof * array->array_alloc_size);
+    array->array_items = (unsigned char *) realloc(array->array_items,
+                                                   item_sizeof * array->array_alloc_size);
     return (NULL != array->array_items) ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
 }
-
 
 /**
  *  Reserve space in the array for new elements, but do not change the size.
@@ -81,21 +80,20 @@ static inline int opal_value_array_init(opal_value_array_t *array, size_t item_s
  *  @return  OPAL error code.
  */
 
-static inline int opal_value_array_reserve(opal_value_array_t* array, size_t size)
+static inline int opal_value_array_reserve(opal_value_array_t *array, size_t size)
 {
-     if(size > array->array_alloc_size) {
-         array->array_items = (unsigned char*)realloc(array->array_items, array->array_item_sizeof * size);
-         if(NULL == array->array_items) {
-             array->array_size = 0;
-             array->array_alloc_size = 0;
-             return OPAL_ERR_OUT_OF_RESOURCE;
-         }
-         array->array_alloc_size = size;
-     }
-     return OPAL_SUCCESS;
+    if (size > array->array_alloc_size) {
+        array->array_items = (unsigned char *) realloc(array->array_items,
+                                                       array->array_item_sizeof * size);
+        if (NULL == array->array_items) {
+            array->array_size = 0;
+            array->array_alloc_size = 0;
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        array->array_alloc_size = size;
+    }
+    return OPAL_SUCCESS;
 }
-
-
 
 /**
  *  Retreives the number of elements in the array.
@@ -104,11 +102,10 @@ static inline int opal_value_array_reserve(opal_value_array_t* array, size_t siz
  *  @return  The number of elements currently in use.
  */
 
-static inline size_t opal_value_array_get_size(opal_value_array_t* array)
+static inline size_t opal_value_array_get_size(opal_value_array_t *array)
 {
     return array->array_size;
 }
-
 
 /**
  *  Set the number of elements in the array.
@@ -125,8 +122,7 @@ static inline size_t opal_value_array_get_size(opal_value_array_t* array)
  *  return the new size.
  */
 
-OPAL_DECLSPEC int opal_value_array_set_size(opal_value_array_t* array, size_t size);
-
+OPAL_DECLSPEC int opal_value_array_set_size(opal_value_array_t *array, size_t size);
 
 /**
  *  Macro to retrieve an item from the array by value.
@@ -143,7 +139,7 @@ OPAL_DECLSPEC int opal_value_array_set_size(opal_value_array_t* array, size_t si
  */
 
 #define OPAL_VALUE_ARRAY_GET_ITEM(array, item_type, item_index) \
-    ((item_type*)((array)->array_items))[item_index]
+    ((item_type *) ((array)->array_items))[item_index]
 
 /**
  *  Retrieve an item from the array by reference.
@@ -157,9 +153,10 @@ OPAL_DECLSPEC int opal_value_array_set_size(opal_value_array_t* array, size_t si
  *  array size, the array is grown to satisfy the request.
  */
 
-static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t item_index)
+static inline void *opal_value_array_get_item(opal_value_array_t *array, size_t item_index)
 {
-    if(item_index >= array->array_size && opal_value_array_set_size(array, item_index+1) != OPAL_SUCCESS)
+    if (item_index >= array->array_size
+        && opal_value_array_set_size(array, item_index + 1) != OPAL_SUCCESS)
         return NULL;
     return array->array_items + (item_index * array->array_item_sizeof);
 }
@@ -181,7 +178,7 @@ static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t 
  */
 
 #define OPAL_VALUE_ARRAY_SET_ITEM(array, item_type, item_index, item_value) \
-    (((item_type*)((array)->array_items))[item_index] = item_value)
+    (((item_type *) ((array)->array_items))[item_index] = item_value)
 
 /**
  *  Set an array element by value.
@@ -197,16 +194,17 @@ static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t 
  * copied into the array by value.
  */
 
-static inline int opal_value_array_set_item(opal_value_array_t *array, size_t item_index, const void* item)
+static inline int opal_value_array_set_item(opal_value_array_t *array, size_t item_index,
+                                            const void *item)
 {
     int rc;
-    if(item_index >= array->array_size &&
-       (rc = opal_value_array_set_size(array, item_index+1)) != OPAL_SUCCESS)
+    if (item_index >= array->array_size
+        && (rc = opal_value_array_set_size(array, item_index + 1)) != OPAL_SUCCESS)
         return rc;
-    memcpy(array->array_items + (item_index * array->array_item_sizeof), item, array->array_item_sizeof);
+    memcpy(array->array_items + (item_index * array->array_item_sizeof), item,
+           array->array_item_sizeof);
     return OPAL_SUCCESS;
 }
-
 
 /**
  *  Appends an item to the end of the array.
@@ -227,7 +225,6 @@ static inline int opal_value_array_append_item(opal_value_array_t *array, const 
     return opal_value_array_set_item(array, array->array_size, item);
 }
 
-
 /**
  *  Remove a specific item from the array.
  *
@@ -244,12 +241,13 @@ static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t
 {
 #if OPAL_ENABLE_DEBUG
     if (item_index >= array->array_size) {
-        opal_output(0, "opal_value_array_remove_item: invalid index %lu\n", (unsigned long)item_index);
+        opal_output(0, "opal_value_array_remove_item: invalid index %lu\n",
+                    (unsigned long) item_index);
         return OPAL_ERR_BAD_PARAM;
     }
 #endif
-    memmove(array->array_items+(array->array_item_sizeof * item_index),
-            array->array_items+(array->array_item_sizeof * (item_index+1)),
+    memmove(array->array_items + (array->array_item_sizeof * item_index),
+            array->array_items + (array->array_item_sizeof * (item_index + 1)),
             array->array_item_sizeof * (array->array_size - item_index - 1));
     array->array_size--;
     return OPAL_SUCCESS;
@@ -271,10 +269,8 @@ static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t
  * number of pointer dereferences.
  */
 
-#define OPAL_VALUE_ARRAY_GET_BASE(array, item_type) \
-  ((item_type*) ((array)->array_items))
+#define OPAL_VALUE_ARRAY_GET_BASE(array, item_type) ((item_type *) ((array)->array_items))
 
 END_C_DECLS
 
 #endif
-

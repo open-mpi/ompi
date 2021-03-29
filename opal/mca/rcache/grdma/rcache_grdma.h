@@ -30,10 +30,10 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include "opal/util/event.h"
 #include "opal/mca/rcache/rcache.h"
+#include "opal/util/event.h"
 #if HAVE_SYS_MMAN_H
-#include <sys/mman.h>
+#    include <sys/mman.h>
 #endif
 
 #define MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU MCA_RCACHE_FLAGS_MOD_RESV0
@@ -80,7 +80,8 @@ typedef struct mca_rcache_grdma_module_t mca_rcache_grdma_module_t;
 /*
  *  Initializes the rcache module.
  */
-void mca_rcache_grdma_module_init(mca_rcache_grdma_module_t *rcache, mca_rcache_grdma_cache_t *cache);
+void mca_rcache_grdma_module_init(mca_rcache_grdma_module_t *rcache,
+                                  mca_rcache_grdma_cache_t *cache);
 
 END_C_DECLS
 #endif

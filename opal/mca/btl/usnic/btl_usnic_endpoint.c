@@ -24,8 +24,8 @@
 
 #include "opal_config.h"
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -34,18 +34,18 @@
 #include "opal/types.h"
 
 #include "btl_usnic.h"
-#include "btl_usnic_endpoint.h"
-#include "btl_usnic_module.h"
-#include "btl_usnic_frag.h"
-#include "btl_usnic_proc.h"
-#include "btl_usnic_util.h"
 #include "btl_usnic_ack.h"
+#include "btl_usnic_endpoint.h"
+#include "btl_usnic_frag.h"
+#include "btl_usnic_module.h"
+#include "btl_usnic_proc.h"
 #include "btl_usnic_send.h"
+#include "btl_usnic_util.h"
 
 /*
  * Construct/destruct an endpoint structure.
  */
-static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
+static void endpoint_construct(mca_btl_base_endpoint_t *endpoint)
 {
     int i;
 
@@ -74,10 +74,8 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_ack_needed = false;
 
     /* clear sent/received sequence number array */
-    memset(endpoint->endpoint_sent_segs, 0,
-           sizeof(endpoint->endpoint_sent_segs));
-    memset(endpoint->endpoint_rcvd_segs, 0,
-           sizeof(endpoint->endpoint_rcvd_segs));
+    memset(endpoint->endpoint_sent_segs, 0, sizeof(endpoint->endpoint_sent_segs));
+    memset(endpoint->endpoint_rcvd_segs, 0, sizeof(endpoint->endpoint_rcvd_segs));
 
     /*
      * Make a new OPAL hotel for this module
@@ -85,12 +83,8 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
      * due to timeout
      */
     OBJ_CONSTRUCT(&endpoint->endpoint_hotel, opal_hotel_t);
-    opal_hotel_init(&endpoint->endpoint_hotel,
-                    WINDOW_SIZE,
-                    opal_sync_event_base,
-                    mca_btl_usnic_component.retrans_timeout,
-                    0,
-                    opal_btl_usnic_ack_timeout);
+    opal_hotel_init(&endpoint->endpoint_hotel, WINDOW_SIZE, opal_sync_event_base,
+                    mca_btl_usnic_component.retrans_timeout, 0, opal_btl_usnic_ack_timeout);
 
     /* Setup this endpoint's list links */
     OBJ_CONSTRUCT(&(endpoint->endpoint_ack_li), opal_list_item_t);
@@ -98,8 +92,8 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_ack_needed = false;
 
     /* fragment reassembly info */
-    endpoint->endpoint_rx_frag_info =
-        calloc(sizeof(struct opal_btl_usnic_rx_frag_info_t), MAX_ACTIVE_FRAGS);
+    endpoint->endpoint_rx_frag_info = calloc(sizeof(struct opal_btl_usnic_rx_frag_info_t),
+                                             MAX_ACTIVE_FRAGS);
     assert(NULL != endpoint->endpoint_rx_frag_info);
     if (OPAL_UNLIKELY(endpoint->endpoint_rx_frag_info == NULL)) {
         BTL_ERROR(("calloc returned NULL -- this should not happen!"));
@@ -108,7 +102,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     }
 }
 
-static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
+static void endpoint_destruct(mca_btl_base_endpoint_t *endpoint)
 {
     opal_btl_usnic_proc_t *proc;
 
@@ -121,8 +115,7 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     opal_btl_usnic_module_t *module = endpoint->endpoint_module;
     opal_mutex_lock(&module->all_endpoints_lock);
     if (endpoint->endpoint_on_all_endpoints) {
-        opal_list_remove_item(&module->all_endpoints,
-                              &endpoint->endpoint_endpoint_li);
+        opal_list_remove_item(&module->all_endpoints, &endpoint->endpoint_endpoint_li);
         endpoint->endpoint_on_all_endpoints = false;
     }
     opal_mutex_unlock(&module->all_endpoints_lock);
@@ -144,25 +137,21 @@ static void endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     free(endpoint->endpoint_rx_frag_info);
 }
 
-OBJ_CLASS_INSTANCE(opal_btl_usnic_endpoint_t,
-                   opal_list_item_t,
-                   endpoint_construct,
+OBJ_CLASS_INSTANCE(opal_btl_usnic_endpoint_t, opal_list_item_t, endpoint_construct,
                    endpoint_destruct);
 
 /*
  * Forcibly drain all pending output on an endpoint, without waiting for
  * actual completion.
  */
-void
-opal_btl_usnic_flush_endpoint(
-    opal_btl_usnic_endpoint_t *endpoint)
+void opal_btl_usnic_flush_endpoint(opal_btl_usnic_endpoint_t *endpoint)
 {
     opal_btl_usnic_send_frag_t *frag;
 
     /* First, free all pending fragments */
     while (!opal_list_is_empty(&endpoint->endpoint_frag_send_queue)) {
-        frag = (opal_btl_usnic_send_frag_t *)opal_list_remove_first(
-                &endpoint->endpoint_frag_send_queue);
+        frag = (opal_btl_usnic_send_frag_t *) opal_list_remove_first(
+            &endpoint->endpoint_frag_send_queue);
 
         /* _cond still needs to check ownership, but make sure the
          * fragment is marked as done.
@@ -173,5 +162,5 @@ opal_btl_usnic_flush_endpoint(
     }
 
     /* Now, ACK everything that is pending */
-    opal_btl_usnic_handle_ack(endpoint, endpoint->endpoint_next_seq_to_send-1);
+    opal_btl_usnic_handle_ack(endpoint, endpoint->endpoint_next_seq_to_send - 1);
 }

@@ -23,11 +23,10 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/threads/thread.h"
-#include "opal/mca/threads/threads.h"
 #include "opal/constants.h"
 #include "opal/mca/threads/pthreads/threads_pthreads.h"
-
+#include "opal/mca/threads/thread.h"
+#include "opal/mca/threads/threads.h"
 
 static int opal_threads_pthreads_open(void);
 static int opal_threads_pthreads_register(void);
@@ -35,21 +34,18 @@ static int opal_threads_pthreads_register(void);
 const opal_threads_base_component_1_0_0_t mca_threads_pthreads_component = {
     /* First, the mca_component_t struct containing meta information
      * about the component itself */
-    .threadsc_version = {
-        OPAL_THREADS_BASE_VERSION_1_0_0,
+    .threadsc_version = {OPAL_THREADS_BASE_VERSION_1_0_0,
 
-        /* Component name and version */
-        .mca_component_name = "pthreads",
-        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-                              OPAL_RELEASE_VERSION),
+                         /* Component name and version */
+                         .mca_component_name = "pthreads",
+                         MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                               OPAL_RELEASE_VERSION),
 
-        .mca_open_component = opal_threads_pthreads_open,
-        .mca_register_component_params = opal_threads_pthreads_register
-    },
-    .threadsc_data = {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+                         .mca_open_component = opal_threads_pthreads_open,
+                         .mca_register_component_params = opal_threads_pthreads_register},
+    .threadsc_data =
+        {/* The component is checkpoint ready */
+         MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
 
 int opal_threads_pthreads_register(void)

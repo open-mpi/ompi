@@ -20,7 +20,7 @@
  * $HEADER$
  */
 
-#if !defined(OMPI_INFO_SUPPORT_H)
+#ifndef OMPI_INFO_SUPPORT_H
 #define OMPI_INFO_SUPPORT_H
 
 #include "opal/class/opal_pointer_array.h"
@@ -33,4 +33,4 @@ OMPI_DECLSPEC void  ompi_info_close_components(void);
 
 OMPI_DECLSPEC void ompi_info_show_ompi_version(const char *scope);
 
-#endif /* !defined(OMPI_INFO_SUPPORT_H) */
+#endif /* OMPI_INFO_SUPPORT_H */

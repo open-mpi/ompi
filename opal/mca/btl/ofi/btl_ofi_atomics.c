@@ -11,8 +11,8 @@
  * $HEADER$
  */
 
-#include <rdma/fi_atomic.h>
 #include "btl_ofi_rdma.h"
+#include <rdma/fi_atomic.h>
 
 static inline int to_fi_op(mca_btl_base_atomic_op_t op)
 {
@@ -30,18 +30,19 @@ static inline int to_fi_op(mca_btl_base_atomic_op_t op)
     }
 }
 
-int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                      void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                      mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
-                      uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
-                      void *cbcontext, void *cbdata)
+int mca_btl_ofi_afop(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                     void *local_address, uint64_t remote_address,
+                     mca_btl_base_registration_handle_t *local_handle,
+                     mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+                     uint64_t operand, int flags, int order,
+                     mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     int rc;
     int fi_datatype = FI_UINT64;
     int fi_op;
 
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
-    mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
+    mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t *) endpoint;
     mca_btl_ofi_rdma_completion_t *comp = NULL;
     mca_btl_ofi_context_t *ofi_context;
 
@@ -53,11 +54,8 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
 
     fi_op = to_fi_op(op);
 
-    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint,
-                                             ofi_context,
-                                             local_address,
-                                             local_handle,
-                                             cbfunc, cbcontext, cbdata,
+    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint, ofi_context, local_address,
+                                             local_handle, cbfunc, cbcontext, cbdata,
                                              MCA_BTL_OFI_TYPE_AFOP);
 
     /* copy the operand because it might get freed from upper layer */
@@ -65,18 +63,17 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
 
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
-    rc = fi_fetch_atomic(ofi_context->tx_ctx,
-                         (void*) &comp->operand, 1, NULL,       /* operand */
-                         local_address, local_handle->desc,     /* results */
-                         btl_endpoint->peer_addr,               /* remote addr */
-                         remote_address, remote_handle->rkey,   /* remote buffer */
+    rc = fi_fetch_atomic(ofi_context->tx_ctx, (void *) &comp->operand, 1, NULL, /* operand */
+                         local_address, local_handle->desc,                     /* results */
+                         btl_endpoint->peer_addr,                               /* remote addr */
+                         remote_address, remote_handle->rkey,                   /* remote buffer */
                          fi_datatype, fi_op, &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
-        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t *) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     } else if (rc < 0) {
-        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t *) comp);
         BTL_ERROR(("fi_fetch_atomic failed with rc=%d (%s)", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
@@ -86,17 +83,17 @@ int mca_btl_ofi_afop (struct mca_btl_base_module_t *btl, struct mca_btl_base_end
     return OPAL_SUCCESS;
 }
 
-int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                     uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
-                     mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
-                     mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+int mca_btl_ofi_aop(struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                    uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
+                    mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+                    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     int rc;
     int fi_datatype = FI_UINT64;
     int fi_op;
 
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
-    mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
+    mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t *) endpoint;
     mca_btl_ofi_rdma_completion_t *comp = NULL;
     mca_btl_ofi_context_t *ofi_context;
 
@@ -108,29 +105,24 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
 
     fi_op = to_fi_op(op);
 
-    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint,
-                                             ofi_context,
-                                             NULL,
-                                             NULL,
-                                             cbfunc, cbcontext, cbdata,
-                                             MCA_BTL_OFI_TYPE_AOP);
+    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint, ofi_context, NULL, NULL, cbfunc,
+                                             cbcontext, cbdata, MCA_BTL_OFI_TYPE_AOP);
 
     /* copy the operand because it might get freed from upper layer */
     comp->operand = (uint64_t) operand;
 
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
-    rc = fi_atomic(ofi_context->tx_ctx,
-                   (void*) &comp->operand, 1, NULL,       /* operand */
-                   btl_endpoint->peer_addr,               /* remote addr */
-                   remote_address, remote_handle->rkey,   /* remote buffer */
+    rc = fi_atomic(ofi_context->tx_ctx, (void *) &comp->operand, 1, NULL, /* operand */
+                   btl_endpoint->peer_addr,                               /* remote addr */
+                   remote_address, remote_handle->rkey,                   /* remote buffer */
                    fi_datatype, fi_op, &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
-        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t *) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     } else if (rc < 0) {
-        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t *) comp);
         BTL_ERROR(("fi_atomic failed with rc=%d (%s)", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
@@ -140,10 +132,12 @@ int mca_btl_ofi_aop (struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t 
     return OPAL_SUCCESS;
 }
 
-int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                        void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
-                        mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value, int flags,
-                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+int mca_btl_ofi_acswap(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                       void *local_address, uint64_t remote_address,
+                       mca_btl_base_registration_handle_t *local_handle,
+                       mca_btl_base_registration_handle_t *remote_handle, uint64_t compare,
+                       uint64_t value, int flags, int order,
+                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
     int rc;
     int fi_datatype = FI_UINT64;
@@ -151,7 +145,7 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
     mca_btl_ofi_rdma_completion_t *comp = NULL;
 
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
-    mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
+    mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t *) endpoint;
     mca_btl_ofi_context_t *ofi_context;
 
     ofi_context = get_ofi_context(ofi_btl);
@@ -160,11 +154,8 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
         fi_datatype = FI_UINT32;
     }
 
-    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint,
-                                             ofi_context,
-                                             local_address,
-                                             local_handle,
-                                             cbfunc, cbcontext, cbdata,
+    comp = mca_btl_ofi_rdma_completion_alloc(btl, endpoint, ofi_context, local_address,
+                                             local_handle, cbfunc, cbcontext, cbdata,
                                              MCA_BTL_OFI_TYPE_CSWAP);
 
     /* copy the operand because it might get freed from upper layer */
@@ -174,21 +165,16 @@ int mca_btl_ofi_acswap (struct mca_btl_base_module_t *btl, struct mca_btl_base_e
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
     /* perform atomic */
-    rc = fi_compare_atomic(ofi_context->tx_ctx,
-                           (void*) &comp->operand, 1, NULL,
-                           (void*) &comp->compare, NULL,
-                           local_address, local_handle->desc,
-                           btl_endpoint->peer_addr,
-                           remote_address, remote_handle->rkey,
-                           fi_datatype,
-                           FI_CSWAP,
-                           &comp->comp_ctx);
+    rc = fi_compare_atomic(ofi_context->tx_ctx, (void *) &comp->operand, 1, NULL,
+                           (void *) &comp->compare, NULL, local_address, local_handle->desc,
+                           btl_endpoint->peer_addr, remote_address, remote_handle->rkey,
+                           fi_datatype, FI_CSWAP, &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {
-        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t *) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     } else if (rc < 0) {
-        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
+        opal_free_list_return(comp->base.my_list, (opal_free_list_item_t *) comp);
         BTL_ERROR(("fi_compare_atomic failed with rc=%d (%s)", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }

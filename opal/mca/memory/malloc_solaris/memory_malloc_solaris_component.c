@@ -24,25 +24,24 @@
  */
 
 #include "opal_config.h"
-#include "opal/mca/memory/memory.h"
-#include "opal/mca/memory/base/empty.h"
-#include "opal/memoryhooks/memory_internal.h"
 #include "opal/constants.h"
+#include "opal/mca/memory/base/empty.h"
+#include "opal/mca/memory/memory.h"
+#include "opal/memoryhooks/memory_internal.h"
 
-#include <sys/types.h>
+#include <dlfcn.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-#include <dlfcn.h>
+#include <sys/types.h>
 #if defined(HAVE___MUNMAP)
 /* here so we only include others if we absolutely have to */
 #elif defined(HAVE_SYSCALL)
-#include <sys/syscall.h>
-#include <unistd.h>
+#    include <sys/syscall.h>
+#    include <unistd.h>
 #endif
 
-
 #if defined(HAVE___MUNMAP)
-int  __munmap(caddr_t addr, size_t len);
+int __munmap(caddr_t addr, size_t len);
 #endif
 
 static int opal_memory_malloc_open(void);
@@ -51,21 +50,21 @@ static int opal_memory_malloc_query(int *);
 const opal_memory_base_component_2_0_0_t mca_memory_malloc_solaris_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
-    .memoryc_version = {
-        OPAL_MEMORY_BASE_VERSION_2_0_0,
+    .memoryc_version =
+        {
+            OPAL_MEMORY_BASE_VERSION_2_0_0,
 
-        /* Component name and version */
-        .mca_component_name = "malloc_solaris",
-        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-                              OPAL_RELEASE_VERSION),
+            /* Component name and version */
+            .mca_component_name = "malloc_solaris",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
 
-        /* Component open and close functions */
-        .mca_open_component = opal_memory_malloc_open,
-    },
-    .memoryc_data = {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+            /* Component open and close functions */
+            .mca_open_component = opal_memory_malloc_open,
+        },
+    .memoryc_data =
+        {/* The component is checkpoint ready */
+         MCA_BASE_METADATA_PARAM_CHECKPOINT},
 
     /* This component doesn't need these functions, but need to
        provide safe/empty register/deregister functions to call */
@@ -87,15 +86,13 @@ const opal_memory_base_component_2_0_0_t mca_memory_malloc_solaris_component = {
  * free() may be unique to Solaris which is why this component
  * was created.
  */
-static int
-opal_memory_malloc_open(void)
+static int opal_memory_malloc_open(void)
 {
-    opal_mem_hooks_set_support(
-        (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT));
+    opal_mem_hooks_set_support((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT));
     return OPAL_SUCCESS;
 }
 
-static int opal_memory_malloc_query (int *priority)
+static int opal_memory_malloc_query(int *priority)
 {
     *priority = 79;
     return OPAL_SUCCESS;
@@ -109,17 +106,14 @@ static int opal_memory_malloc_query (int *priority)
  */
 #if USE_SOLARIS_LEGACY_MUNMAP_PROTOTYPE
 /* We are compiling using S10 so use its munmap prototype */
-int
-munmap(caddr_t addr, size_t len)
+int munmap(caddr_t addr, size_t len)
 #else
 /* From S11 on forward munmap's addr is void * */
-int
-munmap(void *addr, size_t len)
+int munmap(void *addr, size_t len)
 #endif
 {
-#if !defined(HAVE___MUNMAP) && \
-    !defined(HAVE_SYSCALL) && defined(HAVE_DLSYM)
-    static int (*realmunmap)(void*, size_t);
+#if !defined(HAVE___MUNMAP) && !defined(HAVE_SYSCALL) && defined(HAVE_DLSYM)
+    static int (*realmunmap)(void *, size_t);
 #endif
 
     opal_mem_hooks_release_hook(addr, len, 0);
@@ -131,7 +125,7 @@ munmap(void *addr, size_t len)
 #elif defined(HAVE_DLSYM)
     if (NULL == realmunmap) {
         union {
-            int (*munmap_fp)(void*, size_t);
+            int (*munmap_fp)(void *, size_t);
             void *munmap_p;
         } tmp;
 
@@ -140,6 +134,6 @@ munmap(void *addr, size_t len)
     }
     return realmunmap(addr, len);
 #else
-    #error "Can not determine how to call munmap"
+#    error "Can not determine how to call munmap"
 #endif
 }

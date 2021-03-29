@@ -71,57 +71,45 @@ typedef struct __dt_args {
 #define OMPI_DATATYPE_ALIGN_PTR(PTR, TYPE)
 #endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
 
-/**
- * Some architectures require 64 bits pointers (to pointers) to
- * be 64 bits aligned. As in the ompi_datatype_args_t structure we have
- * 2 such array of pointers and one to an array of ints, if we start by
- * setting the 64 bits aligned one we will not have any trouble. Problem
- * originally reported on SPARC 64.
- */
-#define ALLOC_ARGS(PDATA, IC, AC, DC)                                   \
-    do {                                                                \
-        int length = sizeof(ompi_datatype_args_t) + (IC) * sizeof(int) + \
-            (AC) * sizeof(ptrdiff_t) + (DC) * sizeof(MPI_Datatype); \
-        char* buf = (char*)malloc( length );                            \
-        ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)buf;       \
-        pArgs->ci = (IC);                                               \
-        pArgs->ca = (AC);                                               \
-        pArgs->cd = (DC);                                               \
-        buf += sizeof(ompi_datatype_args_t);                            \
-        if( pArgs->ca == 0 ) pArgs->a = NULL;                           \
-        else {                                                          \
-            pArgs->a = (ptrdiff_t*)buf;                         \
-            buf += pArgs->ca * sizeof(ptrdiff_t);               \
-        }                                                               \
-        if( pArgs->cd == 0 ) pArgs->d = NULL;                           \
-        else {                                                          \
-            pArgs->d = (ompi_datatype_t**)buf;                          \
-            buf += pArgs->cd * sizeof(MPI_Datatype);                    \
-        }                                                               \
-        if( pArgs->ci == 0 ) pArgs->i = NULL;                           \
-        else pArgs->i = (int*)buf;                                      \
-        pArgs->ref_count = 1;                                           \
-        pArgs->total_pack_size = (4 + (IC) + (DC)) * sizeof(int) +      \
-            (AC) * sizeof(ptrdiff_t);                                   \
-        (PDATA)->args = (void*)pArgs;                                   \
-        (PDATA)->packed_description = 0;                                \
-    } while(0)
-
-
 int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
                                 int32_t ci, const int32_t** i,
                                 int32_t ca, const ptrdiff_t* a,
                                 int32_t cd, ompi_datatype_t* const * d, int32_t type)
 {
     int pos;
-    ompi_datatype_args_t* pArgs;
 
     assert( NULL == pData->args );
-    ALLOC_ARGS( pData, ci, ca, cd );
-
-    pArgs = (ompi_datatype_args_t*)pData->args;
+    int length = sizeof(ompi_datatype_args_t) + ci * sizeof(int) +
+                 ca * sizeof(ptrdiff_t) + cd * sizeof(MPI_Datatype);
+    char* buf = (char*)malloc( length );
+    ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)buf;
+    pArgs->ci = ci; pArgs->i = NULL;
+    pArgs->ca = ca; pArgs->a = NULL;
+    pArgs->cd = cd; pArgs->d = NULL;
     pArgs->create_type = type;
 
+    /**
+     * Some architectures require 64 bits pointers (to pointers) to
+     * be 64 bits aligned. As in the ompi_datatype_args_t structure we have
+     * 2 such array of pointers and one to an array of ints, if we start by
+     * setting the 64 bits aligned one we will not have any trouble. Problem
+     * originally reported on SPARC 64.
+     */
+    buf += sizeof(ompi_datatype_args_t);
+    if( 0 != pArgs->ca ) {
+        pArgs->a = (ptrdiff_t*)buf;
+        buf += pArgs->ca * sizeof(ptrdiff_t);
+    }
+    if( 0 != pArgs->cd ) {
+        pArgs->d = (ompi_datatype_t**)buf;
+        buf += pArgs->cd * sizeof(MPI_Datatype);
+    }
+    if( 0 != pArgs->ci ) pArgs->i = (int*)buf;
+
+    pArgs->ref_count = 1;
+    pArgs->total_pack_size = (4 + ci) * sizeof(int) +
+                             cd * sizeof(MPI_Datatype) +
+                             ca * sizeof(ptrdiff_t);
     switch(type) {
 
     case MPI_COMBINER_DUP:
@@ -229,7 +217,7 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         pArgs->d[pos] = d[pos];
         if( !(ompi_datatype_is_predefined(d[pos])) ) {
             /* We handle a user defined datatype. We should make sure that the
-             * user will not have the oportunity to destroy it before all derived
+             * user will not have the opportunity to destroy it before all derived
              * datatypes are destroyed. As we keep pointers to every datatype
              * (for MPI_Type_get_content and MPI_Type_get_envelope) we have to make
              * sure that those datatype will be available if the user ask for them.
@@ -243,9 +231,11 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         pArgs->total_pack_size += sizeof(int);  /* each data has an ID */
     }
 
+    pData->args = (void*)pArgs;
+    pData->packed_description = 0;
+
     return OMPI_SUCCESS;
 }
-
 
 int32_t ompi_datatype_print_args( const ompi_datatype_t* pData )
 {

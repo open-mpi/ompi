@@ -30,15 +30,15 @@
 
 #include "opal_config.h"
 
-#include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
 
 /*
  * These units are large enough to warrant their own .h files
  */
-#include "opal/mca/mca.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_framework.h"
+#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/mca.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
 
@@ -61,8 +61,7 @@ struct mca_base_component_priority_list_item_t {
     mca_base_component_list_item_t super;
     int cpli_priority;
 };
-typedef struct mca_base_component_priority_list_item_t
-    mca_base_component_priority_list_item_t;
+typedef struct mca_base_component_priority_list_item_t mca_base_component_priority_list_item_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
 
@@ -81,23 +80,23 @@ OPAL_DECLSPEC extern char *mca_base_user_default_path;
  */
 enum {
     /** total silence */
-    MCA_BASE_VERBOSE_NONE  = -1,
+    MCA_BASE_VERBOSE_NONE = -1,
     /** only errors are printed */
     MCA_BASE_VERBOSE_ERROR = 0,
     /** emit messages about component selection, open, and unloading */
     MCA_BASE_VERBOSE_COMPONENT = 10,
     /** also emit warnings */
-    MCA_BASE_VERBOSE_WARN  = 20,
+    MCA_BASE_VERBOSE_WARN = 20,
     /** also emit general, user-relevant information, such as rationale as to why certain choices
      * or code paths were taken, information gleaned from probing the local system, etc. */
-    MCA_BASE_VERBOSE_INFO  = 40,
+    MCA_BASE_VERBOSE_INFO = 40,
     /** also emit relevant tracing information (e.g., which functions were invoked /
      * call stack entry/exit info) */
     MCA_BASE_VERBOSE_TRACE = 60,
     /** also emit Open MPI-developer-level (i.e,. highly detailed) information */
     MCA_BASE_VERBOSE_DEBUG = 80,
     /** also output anything else that might be useful */
-    MCA_BASE_VERBOSE_MAX   = 100,
+    MCA_BASE_VERBOSE_MAX = 100,
 };
 
 /*
@@ -141,8 +140,7 @@ OPAL_DECLSPEC void mca_base_close(void);
 OPAL_DECLSPEC int mca_base_select(const char *type_name, int output_id,
                                   opal_list_t *components_available,
                                   mca_base_module_t **best_module,
-                                  mca_base_component_t **best_component,
-                                  int *priority_out);
+                                  mca_base_component_t **best_component, int *priority_out);
 
 /**
  * A function for component query functions to discover if they have
@@ -153,15 +151,13 @@ OPAL_DECLSPEC int mca_base_select(const char *type_name, int output_id,
  *
  */
 OPAL_DECLSPEC int mca_base_is_component_required(opal_list_t *components_available,
-                                                 mca_base_component_t *component,
-                                                 bool exclusive,
+                                                 mca_base_component_t *component, bool exclusive,
                                                  bool *is_required);
 
 /* mca_base_cmd_line.c */
 
 OPAL_DECLSPEC int mca_base_cmd_line_setup(opal_cmd_line_t *cmd);
-OPAL_DECLSPEC int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
-                                                 char ***app_env,
+OPAL_DECLSPEC int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd, char ***app_env,
                                                  char ***global_env);
 OPAL_DECLSPEC void mca_base_cmd_line_wrap_args(char **args);
 
@@ -173,19 +169,19 @@ OPAL_DECLSPEC int mca_base_component_compare(const mca_base_component_t *a,
                                              const mca_base_component_t *b);
 OPAL_DECLSPEC int mca_base_component_compatible(const mca_base_component_t *a,
                                                 const mca_base_component_t *b);
-OPAL_DECLSPEC char * mca_base_component_to_string(const mca_base_component_t *a);
+OPAL_DECLSPEC char *mca_base_component_to_string(const mca_base_component_t *a);
 
 /* mca_base_component_find.c */
 
-OPAL_DECLSPEC int mca_base_component_find (const char *directory, mca_base_framework_t *framework,
-                                           bool ignore_requested, bool open_dso_components);
+OPAL_DECLSPEC int mca_base_component_find(const char *directory, mca_base_framework_t *framework,
+                                          bool ignore_requested, bool open_dso_components);
 
 /**
  * Parse the requested component string and return an opal_argv of the requested
  * (or not requested) components.
  */
-int mca_base_component_parse_requested (const char *requested, bool *include_mode,
-                                        char ***requested_component_names);
+int mca_base_component_parse_requested(const char *requested, bool *include_mode,
+                                       char ***requested_component_names);
 
 /**
  * Filter a list of components based on a comma-delimted list of names and/or
@@ -205,9 +201,8 @@ int mca_base_component_parse_requested (const char *requested, bool *include_mod
  * This function closes and releases any components that do not match the filter_name and
  * filter flags.
  */
-OPAL_DECLSPEC int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter_flags);
-
-
+OPAL_DECLSPEC int mca_base_components_filter(mca_base_framework_t *framework,
+                                             uint32_t filter_flags);
 
 /* Safely release some memory allocated by mca_base_component_find()
    (i.e., is safe to call even if you never called
@@ -215,12 +210,12 @@ OPAL_DECLSPEC int mca_base_components_filter (mca_base_framework_t *framework, u
 OPAL_DECLSPEC int mca_base_component_find_finalize(void);
 
 /* mca_base_components_register.c */
-OPAL_DECLSPEC int mca_base_framework_components_register (struct mca_base_framework_t *framework,
-                                                          mca_base_register_flag_t flags);
+OPAL_DECLSPEC int mca_base_framework_components_register(struct mca_base_framework_t *framework,
+                                                         mca_base_register_flag_t flags);
 
 /* mca_base_components_open.c */
-OPAL_DECLSPEC int mca_base_framework_components_open (struct mca_base_framework_t *framework,
-                                                      mca_base_open_flag_t flags);
+OPAL_DECLSPEC int mca_base_framework_components_open(struct mca_base_framework_t *framework,
+                                                     mca_base_open_flag_t flags);
 
 OPAL_DECLSPEC int mca_base_components_open(const char *type_name, int output_id,
                                            const mca_base_component_t **static_components,
@@ -236,7 +231,7 @@ OPAL_DECLSPEC int mca_base_components_open(const char *type_name, int output_id,
  *
  * After calling this function the component may no longer be used.
  */
-OPAL_DECLSPEC void mca_base_component_close (const mca_base_component_t *component, int output_id);
+OPAL_DECLSPEC void mca_base_component_close(const mca_base_component_t *component, int output_id);
 
 /**
  * Release a component without closing it.
@@ -245,13 +240,13 @@ OPAL_DECLSPEC void mca_base_component_close (const mca_base_component_t *compone
  *
  * After calling this function the component may no longer be used.
  */
-void mca_base_component_unload (const mca_base_component_t *component, int output_id);
+void mca_base_component_unload(const mca_base_component_t *component, int output_id);
 
 OPAL_DECLSPEC int mca_base_components_close(int output_id, opal_list_t *components_available,
                                             const mca_base_component_t *skip);
 
-OPAL_DECLSPEC int mca_base_framework_components_close (struct mca_base_framework_t *framework,
-						       const mca_base_component_t *skip);
+OPAL_DECLSPEC int mca_base_framework_components_close(struct mca_base_framework_t *framework,
+                                                      const mca_base_component_t *skip);
 
 END_C_DECLS
 

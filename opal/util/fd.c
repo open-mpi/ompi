@@ -13,32 +13,31 @@
 #include "opal_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
+#    include <sys/stat.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
+#    include <sys/socket.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
+#    include <arpa/inet.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/constants.h"
 #include "opal/util/fd.h"
 #include "opal/util/string_copy.h"
-#include "opal/constants.h"
-
 
 /*
  * Simple loop over reading from a fd
@@ -64,7 +63,6 @@ int opal_fd_read(int fd, int len, void *buffer)
     return OPAL_SUCCESS;
 }
 
-
 /*
  * Simple loop over writing to an fd
  */
@@ -87,7 +85,6 @@ int opal_fd_write(int fd, int len, const void *buffer)
 
     return OPAL_SUCCESS;
 }
-
 
 int opal_fd_set_cloexec(int fd)
 {
@@ -160,7 +157,7 @@ const char *opal_fd_get_peer_name(int fd)
 
     if (sa.sa_family == AF_INET) {
         struct sockaddr_in *si;
-        si = (struct sockaddr_in*) &sa;
+        si = (struct sockaddr_in *) &sa;
         ret = inet_ntop(AF_INET, &(si->sin_addr), str, INET_ADDRSTRLEN);
         if (NULL == ret) {
             free(str);
@@ -169,7 +166,7 @@ const char *opal_fd_get_peer_name(int fd)
 #if OPAL_ENABLE_IPV6
     else if (sa.sa_family == AF_INET6) {
         struct sockaddr_in6 *si6;
-        si6 = (struct sockaddr_in6*) &sa;
+        si6 = (struct sockaddr_in6 *) &sa;
         ret = inet_ntop(AF_INET6, &(si6->sin6_addr), str, INET6_ADDRSTRLEN);
         if (NULL == ret) {
             free(str);

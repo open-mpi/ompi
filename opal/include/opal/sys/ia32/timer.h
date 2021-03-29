@@ -19,7 +19,6 @@
 #ifndef OPAL_SYS_ARCH_TIMER_H
 #define OPAL_SYS_ARCH_TIMER_H 1
 
-
 typedef uint64_t opal_timer_t;
 
 /* Using RDTSC(P) results in non-monotonic timers across cores */
@@ -28,28 +27,25 @@ typedef uint64_t opal_timer_t;
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
-static inline opal_timer_t
-opal_sys_timer_get_cycles(void)
+static inline opal_timer_t opal_sys_timer_get_cycles(void)
 {
     opal_timer_t ret;
     int tmp;
 
-    __asm__ __volatile__(
-                         "xchgl %%ebx, %1\n"
+    __asm__ __volatile__("xchgl %%ebx, %1\n"
                          "cpuid\n"
                          "xchgl %%ebx, %1\n"
                          "rdtsc\n"
-                         : "=A"(ret), "=r"(tmp)
-                         :: "ecx");
+                         : "=A"(ret), "=r"(tmp)::"ecx");
 
     return ret;
 }
 
-#define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1
+#    define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1
 
 #else
 
-#define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
+#    define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 

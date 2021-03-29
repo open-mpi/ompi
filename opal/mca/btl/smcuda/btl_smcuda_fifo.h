@@ -27,17 +27,16 @@
 #include "btl_smcuda.h"
 #include "btl_smcuda_endpoint.h"
 
-static void
-add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
+static void add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
 {
     btl_smcuda_pending_send_item_t *si;
     opal_free_list_item_t *i;
-    i = opal_free_list_get (&mca_btl_smcuda_component.pending_send_fl);
+    i = opal_free_list_get(&mca_btl_smcuda_component.pending_send_fl);
 
     /* don't handle error for now */
     assert(i != NULL);
 
-    si = (btl_smcuda_pending_send_item_t*)i;
+    si = (btl_smcuda_pending_send_item_t *) i;
     si->data = data;
 
     OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_pending_sends, +1);
@@ -46,9 +45,9 @@ add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
      * minimize reordering */
     OPAL_THREAD_LOCK(&ep->endpoint_lock);
     if (resend)
-        opal_list_prepend(&ep->pending_sends, (opal_list_item_t*)si);
+        opal_list_prepend(&ep->pending_sends, (opal_list_item_t *) si);
     else
-        opal_list_append(&ep->pending_sends, (opal_list_item_t*)si);
+        opal_list_append(&ep->pending_sends, (opal_list_item_t *) si);
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 }
 
@@ -79,31 +78,31 @@ add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
  *    nfifos == 1:  In this case, all senders use the same
  *       FIFO and each receiver has just one FIFO for all senders.
  */
-#define FIFO_MAP(x)     ((x) & (mca_btl_smcuda_component.nfifos - 1))
-#define FIFO_MAP_NUM(n) ( (mca_btl_smcuda_component.nfifos) < (n) ? (mca_btl_smcuda_component.nfifos) : (n) )
+#define FIFO_MAP(x) ((x) & (mca_btl_smcuda_component.nfifos - 1))
+#define FIFO_MAP_NUM(n) \
+    ((mca_btl_smcuda_component.nfifos) < (n) ? (mca_btl_smcuda_component.nfifos) : (n))
 
-
-#define MCA_BTL_SMCUDA_FIFO_WRITE(endpoint_peer, my_smp_rank,               \
-                              peer_smp_rank, hdr, resend, retry_pending_sends, rc)        \
-do {                                                                    \
-    sm_fifo_t* fifo = &(mca_btl_smcuda_component.fifo[peer_smp_rank][FIFO_MAP(my_smp_rank)]); \
-                                                                        \
-    if ( retry_pending_sends ) {                                        \
-        if ( 0 < opal_list_get_size(&endpoint_peer->pending_sends) ) {  \
-            btl_smcuda_process_pending_sends(endpoint_peer);                \
-        }                                                               \
-    }                                                                   \
-                                                                        \
-    opal_atomic_lock(&(fifo->head_lock));                               \
-    /* post fragment */                                                 \
-    if(sm_fifo_write(hdr, fifo) != OPAL_SUCCESS) {                      \
-        add_pending(endpoint_peer, hdr, resend);                        \
-        rc = OPAL_ERR_RESOURCE_BUSY;                                    \
-    } else {                                                            \
-        MCA_BTL_SMCUDA_SIGNAL_PEER(endpoint_peer);                          \
-        rc = OPAL_SUCCESS;                                              \
-    }                                                                   \
-    opal_atomic_unlock(&(fifo->head_lock));                             \
-} while(0)
+#define MCA_BTL_SMCUDA_FIFO_WRITE(endpoint_peer, my_smp_rank, peer_smp_rank, hdr, resend,         \
+                                  retry_pending_sends, rc)                                        \
+    do {                                                                                          \
+        sm_fifo_t *fifo = &(mca_btl_smcuda_component.fifo[peer_smp_rank][FIFO_MAP(my_smp_rank)]); \
+                                                                                                  \
+        if (retry_pending_sends) {                                                                \
+            if (0 < opal_list_get_size(&endpoint_peer->pending_sends)) {                          \
+                btl_smcuda_process_pending_sends(endpoint_peer);                                  \
+            }                                                                                     \
+        }                                                                                         \
+                                                                                                  \
+        opal_atomic_lock(&(fifo->head_lock));                                                     \
+        /* post fragment */                                                                       \
+        if (sm_fifo_write(hdr, fifo) != OPAL_SUCCESS) {                                           \
+            add_pending(endpoint_peer, hdr, resend);                                              \
+            rc = OPAL_ERR_RESOURCE_BUSY;                                                          \
+        } else {                                                                                  \
+            MCA_BTL_SMCUDA_SIGNAL_PEER(endpoint_peer);                                            \
+            rc = OPAL_SUCCESS;                                                                    \
+        }                                                                                         \
+        opal_atomic_unlock(&(fifo->head_lock));                                                   \
+    } while (0)
 
 #endif

@@ -25,42 +25,41 @@
 
 #include "opal_config.h"
 
+#include <errno.h>
+#include <locale.h>
 #include <stdio.h>
 #include <string.h>
-#include <locale.h>
-#include <errno.h>
 
-#include "opal/runtime/opal.h"
+#include "opal/constants.h"
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/util/show_help.h"
-#include "opal/util/show_help_lex.h"
-#include "opal/util/printf.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
-#include "opal/constants.h"
-
+#include "opal/util/printf.h"
+#include "opal/util/show_help.h"
+#include "opal/util/show_help_lex.h"
 
 /*
  * Private variables
  */
 static const char *default_filename = "help-messages";
-static const char *dash_line = "--------------------------------------------------------------------------\n";
+static const char *dash_line
+    = "--------------------------------------------------------------------------\n";
 static int output_stream = -1;
 static char **search_dirs = NULL;
 
 /*
  * Local functions
  */
-static int opal_show_vhelp_internal(const char *filename, const char *topic,
-                                    int want_error_header, va_list arglist);
-static int opal_show_help_internal(const char *filename, const char *topic,
-                                   int want_error_header, ...);
-static void opal_show_help_finalize (void);
+static int opal_show_vhelp_internal(const char *filename, const char *topic, int want_error_header,
+                                    va_list arglist);
+static int opal_show_help_internal(const char *filename, const char *topic, int want_error_header,
+                                   ...);
+static void opal_show_help_finalize(void);
 
 opal_show_help_fn_t opal_show_help = opal_show_help_internal;
 opal_show_vhelp_fn_t opal_show_vhelp = opal_show_vhelp_internal;
-
 
 int opal_show_help_init(void)
 {
@@ -72,12 +71,12 @@ int opal_show_help_init(void)
 
     opal_argv_append_nosize(&search_dirs, opal_install_dirs.opaldatadir);
 
-    opal_finalize_register_cleanup (opal_show_help_finalize);
+    opal_finalize_register_cleanup(opal_show_help_finalize);
 
     return OPAL_SUCCESS;
 }
 
-static void opal_show_help_finalize (void)
+static void opal_show_help_finalize(void)
 {
     opal_output_close(output_stream);
     output_stream = -1;
@@ -94,8 +93,7 @@ static void opal_show_help_finalize (void)
  * efficient method in the world, but we're going for clarity here --
  * not optimization.  :-)
  */
-static int array2string(char **outstring,
-                        int want_error_header, char **lines)
+static int array2string(char **outstring, int want_error_header, char **lines)
 {
     int i, count;
     size_t len;
@@ -113,7 +111,7 @@ static int array2string(char **outstring,
 
     /* Malloc it out */
 
-    (*outstring) = (char*) malloc(len + 1);
+    (*outstring) = (char *) malloc(len + 1);
     if (NULL == *outstring) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -138,7 +136,6 @@ static int array2string(char **outstring,
     return OPAL_SUCCESS;
 }
 
-
 /*
  * Find the right file to open
  */
@@ -162,8 +159,8 @@ static int open_file(const char *base, const char *topic)
         /* Try to open the file.  If we can't find it, try it with a .txt
          * extension.
          */
-        for (i=0; NULL != search_dirs[i]; i++) {
-            filename = opal_os_path( false, search_dirs[i], base, NULL );
+        for (i = 0; NULL != search_dirs[i]; i++) {
+            filename = opal_os_path(false, search_dirs[i], base, NULL);
             opal_show_help_yyin = fopen(filename, "r");
             if (NULL == opal_show_help_yyin) {
                 opal_asprintf(&err_msg, "%s: %s", filename, strerror(errno));
@@ -183,7 +180,10 @@ static int open_file(const char *base, const char *topic)
 
     /* If we still couldn't open it, then something is wrong */
     if (NULL == opal_show_help_yyin) {
-        opal_output(output_stream, "%sSorry!  You were supposed to get help about:\n    %s\nBut I couldn't open the help file:\n    %s.  Sorry!\n%s", dash_line, topic, err_msg, dash_line);
+        opal_output(output_stream,
+                    "%sSorry!  You were supposed to get help about:\n    %s\nBut I couldn't open "
+                    "the help file:\n    %s.  Sorry!\n%s",
+                    dash_line, topic, err_msg, dash_line);
         free(err_msg);
         return OPAL_ERR_NOT_FOUND;
     }
@@ -200,7 +200,6 @@ static int open_file(const char *base, const char *topic)
 
     return OPAL_SUCCESS;
 }
-
 
 /*
  * In the file that has already been opened, find the topic that we're
@@ -233,7 +232,10 @@ static int find_topic(const char *base, const char *topic)
             break;
 
         case OPAL_SHOW_HELP_PARSE_DONE:
-            opal_output(output_stream, "%sSorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\nBut I couldn't find that topic in the file.  Sorry!\n%s", dash_line, topic, base, dash_line);
+            opal_output(output_stream,
+                        "%sSorry!  You were supposed to get help about:\n    %s\nfrom the file:\n  "
+                        "  %s\nBut I couldn't find that topic in the file.  Sorry!\n%s",
+                        dash_line, topic, base, dash_line);
             return OPAL_ERR_NOT_FOUND;
             break;
 
@@ -244,7 +246,6 @@ static int find_topic(const char *base, const char *topic)
 
     /* Never get here */
 }
-
 
 /*
  * We have an open file, and we're pointed at the right topic.  So
@@ -274,7 +275,6 @@ static int read_topic(char ***array)
     /* Never get here */
 }
 
-
 static int load_array(char ***array, const char *filename, const char *topic)
 {
     int ret;
@@ -289,7 +289,7 @@ static int load_array(char ***array, const char *filename, const char *topic)
     }
 
     fclose(opal_show_help_yyin);
-    opal_show_help_yylex_destroy ();
+    opal_show_help_yylex_destroy();
 
     if (OPAL_SUCCESS != ret) {
         opal_argv_free(*array);
@@ -298,8 +298,8 @@ static int load_array(char ***array, const char *filename, const char *topic)
     return ret;
 }
 
-char *opal_show_help_vstring(const char *filename, const char *topic,
-                             int want_error_header, va_list arglist)
+char *opal_show_help_vstring(const char *filename, const char *topic, int want_error_header,
+                             va_list arglist)
 {
     int rc;
     char *single_string, *output, **array = NULL;
@@ -322,28 +322,25 @@ char *opal_show_help_vstring(const char *filename, const char *topic,
     return (OPAL_SUCCESS == rc) ? output : NULL;
 }
 
-char *opal_show_help_string(const char *filename, const char *topic,
-                            int want_error_handler, ...)
+char *opal_show_help_string(const char *filename, const char *topic, int want_error_handler, ...)
 {
     char *output;
     va_list arglist;
 
     va_start(arglist, want_error_handler);
-    output = opal_show_help_vstring(filename, topic, want_error_handler,
-                                    arglist);
+    output = opal_show_help_vstring(filename, topic, want_error_handler, arglist);
     va_end(arglist);
 
     return output;
 }
 
-static int opal_show_vhelp_internal(const char *filename, const char *topic,
-                                    int want_error_header, va_list arglist)
+static int opal_show_vhelp_internal(const char *filename, const char *topic, int want_error_header,
+                                    va_list arglist)
 {
     char *output;
 
     /* Convert it to a single string */
-    output = opal_show_help_vstring(filename, topic, want_error_header,
-                                    arglist);
+    output = opal_show_help_vstring(filename, topic, want_error_header, arglist);
 
     /* If we got a single string, output it with formatting */
     if (NULL != output) {
@@ -354,8 +351,8 @@ static int opal_show_vhelp_internal(const char *filename, const char *topic,
     return (NULL == output) ? OPAL_ERROR : OPAL_SUCCESS;
 }
 
-static int opal_show_help_internal(const char *filename, const char *topic,
-                                   int want_error_header, ...)
+static int opal_show_help_internal(const char *filename, const char *topic, int want_error_header,
+                                   ...)
 {
     va_list arglist;
     int rc;

@@ -39,8 +39,8 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/dl/dl.h"
 #include "opal/mca/dl/base/base.h"
+#include "opal/mca/dl/dl.h"
 
 BEGIN_C_DECLS
 struct mca_base_component_repository_item_t {
@@ -88,8 +88,7 @@ OPAL_DECLSPEC int mca_base_component_repository_init(void);
  *
  * @param[in] path        delimited list of search paths to add
  */
-OPAL_DECLSPEC int mca_base_component_repository_add (const char *path);
-
+OPAL_DECLSPEC int mca_base_component_repository_add(const char *path);
 
 /**
  * @brief return the list of components that match a given framework
@@ -100,8 +99,8 @@ OPAL_DECLSPEC int mca_base_component_repository_add (const char *path);
  * The list returned in {framework_components} is owned by the component
  * repository and CAN NOT be modified by the caller.
  */
-OPAL_DECLSPEC int mca_base_component_repository_get_components (mca_base_framework_t *framework,
-                                                                opal_list_t **framework_components);
+OPAL_DECLSPEC int mca_base_component_repository_get_components(mca_base_framework_t *framework,
+                                                               opal_list_t **framework_components);
 
 /**
  * @brief finalize the mca component repository
@@ -115,14 +114,13 @@ OPAL_DECLSPEC void mca_base_component_repository_finalize(void);
  * @param[in] framework   framework that matches the component
  * @param[in] ri          dynamic component to open
  */
-int mca_base_component_repository_open (mca_base_framework_t *framework,
-                                        mca_base_component_repository_item_t *ri);
-
+int mca_base_component_repository_open(mca_base_framework_t *framework,
+                                       mca_base_component_repository_item_t *ri);
 
 /**
  * @brief Reduce the reference count of a component and dlclose it if necessary
  */
-void mca_base_component_repository_release (const mca_base_component_t *component);
+void mca_base_component_repository_release(const mca_base_component_t *component);
 
 /**
  * @brief Increase the reference count of a component
@@ -137,7 +135,7 @@ void mca_base_component_repository_release (const mca_base_component_t *componen
  * @note all components are automatically unloaded by the
  * mca_base_component_repository_finalize() call.
  */
-int mca_base_component_repository_retain_component (const char *type, const char *name);
+int mca_base_component_repository_retain_component(const char *type, const char *name);
 
 END_C_DECLS
 

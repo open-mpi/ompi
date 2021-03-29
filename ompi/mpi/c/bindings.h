@@ -89,12 +89,15 @@ BEGIN_C_DECLS
             if ( (DDT)->super.flags & OPAL_DATATYPE_FLAG_PREDEFINED ) { \
                 (RC) = MPI_ERR_BUFFER;                                  \
             } else {                                                    \
-                size_t size = 0;                                        \
-                ptrdiff_t true_lb       = 0;                            \
-                ptrdiff_t true_extended = 0;                            \
-                ompi_datatype_type_size((DDT), &size);                       \
-                ompi_datatype_get_true_extent((DDT), &true_lb, &true_extended); \
-                if ( 0 < size && 0 == true_lb ) {                       \
+                size_t ompi_chk_usr_buf_size = 0;                       \
+                ptrdiff_t ompi_chk_usr_buf_true_lb = 0;                 \
+                ptrdiff_t ompi_chk_usr_buf_true_extended = 0;           \
+                ompi_datatype_type_size((DDT), &ompi_chk_usr_buf_size); \
+                ompi_datatype_get_true_extent((DDT),                    \
+                                             &ompi_chk_usr_buf_true_lb, \
+                                       &ompi_chk_usr_buf_true_extended);\
+                if ( 0 < ompi_chk_usr_buf_size &&                       \
+                    0 == ompi_chk_usr_buf_true_extended ) {             \
                     (RC) = MPI_ERR_BUFFER;                              \
                 }                                                       \
             }                                                           \

@@ -20,7 +20,7 @@
  * $HEADER$
  */
 
-#if !defined(OSC_RDMA_ACTIVE_TARGET_H)
+#ifndef OSC_RDMA_ACTIVE_TARGET_H
 #define OSC_RDMA_ACTIVE_TARGET_H
 
 #include "osc_rdma.h"

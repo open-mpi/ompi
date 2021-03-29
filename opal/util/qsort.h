@@ -21,18 +21,18 @@
 
 #if OPAL_HAVE_BROKEN_QSORT
 
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h> /* for size_t */
-#endif
+#    ifdef HAVE_SYS_TYPES_H
+#        include <sys/types.h> /* for size_t */
+#    endif
 
 BEGIN_C_DECLS
 
-void opal_qsort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void*));
+void opal_qsort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void *));
 
 END_C_DECLS
 
 #else
-#error "Don't include opal/qsort/qsort.h directly"
+#    error "Don't include opal/qsort/qsort.h directly"
 #endif /* OPAL_HAVE_BROKEN_QSORT */
 
 #endif

@@ -29,6 +29,7 @@
 #define OMPI_DATATYPE_INTERNAL_H
 
 #include "opal/datatype/opal_datatype_internal.h"
+#include "ompi/datatype/ompi_datatype.h"
 
 /*
  * This is the OMPI-layered numbering of ALL supported MPI types

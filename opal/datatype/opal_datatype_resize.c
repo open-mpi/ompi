@@ -19,7 +19,7 @@
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_datatype_internal.h"
 
-int32_t opal_datatype_resize( opal_datatype_t* type, ptrdiff_t lb, ptrdiff_t extent )
+int32_t opal_datatype_resize(opal_datatype_t *type, ptrdiff_t lb, ptrdiff_t extent)
 {
     type->lb = lb;
     type->ub = lb + extent;
@@ -27,8 +27,7 @@ int32_t opal_datatype_resize( opal_datatype_t* type, ptrdiff_t lb, ptrdiff_t ext
     type->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
     type->flags |= OPAL_DATATYPE_FLAG_USER_LB;
     type->flags |= OPAL_DATATYPE_FLAG_USER_UB;
-    if( (extent == (ptrdiff_t)type->size) &&
-        (type->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) ) {
+    if ((extent == (ptrdiff_t) type->size) && (type->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)) {
         type->flags |= OPAL_DATATYPE_FLAG_NO_GAPS;
     }
     return OPAL_SUCCESS;

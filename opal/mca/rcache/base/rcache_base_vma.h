@@ -32,9 +32,9 @@
 #define MCA_RCACHE_BASE_VMA_H
 
 #include "opal_config.h"
-#include "opal/class/opal_list.h"
 #include "opal/class/opal_interval_tree.h"
 #include "opal/class/opal_lifo.h"
+#include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
 
@@ -52,24 +52,22 @@ typedef struct mca_rcache_base_vma_module_t mca_rcache_base_vma_module_t;
 
 OBJ_CLASS_DECLARATION(mca_rcache_base_vma_module_t);
 
-mca_rcache_base_vma_module_t *mca_rcache_base_vma_module_alloc (void);
+mca_rcache_base_vma_module_t *mca_rcache_base_vma_module_alloc(void);
 
-int mca_rcache_base_vma_find (mca_rcache_base_vma_module_t *vma_module, void *addr,
-                              size_t size, struct mca_rcache_base_registration_t **reg);
+int mca_rcache_base_vma_find(mca_rcache_base_vma_module_t *vma_module, void *addr, size_t size,
+                             struct mca_rcache_base_registration_t **reg);
 
-int mca_rcache_base_vma_find_all (mca_rcache_base_vma_module_t *vma_module, void *addr,
-                                  size_t size, struct mca_rcache_base_registration_t **regs,
-                                  int reg_cnt);
+int mca_rcache_base_vma_find_all(mca_rcache_base_vma_module_t *vma_module, void *addr, size_t size,
+                                 struct mca_rcache_base_registration_t **regs, int reg_cnt);
 
-int mca_rcache_base_vma_insert (mca_rcache_base_vma_module_t *vma_module,
-                                struct mca_rcache_base_registration_t *registration,
-                                size_t limit);
+int mca_rcache_base_vma_insert(mca_rcache_base_vma_module_t *vma_module,
+                               struct mca_rcache_base_registration_t *registration, size_t limit);
 
-int mca_rcache_base_vma_delete (mca_rcache_base_vma_module_t *vma_module,
-                                struct mca_rcache_base_registration_t *registration);
+int mca_rcache_base_vma_delete(mca_rcache_base_vma_module_t *vma_module,
+                               struct mca_rcache_base_registration_t *registration);
 
-void mca_rcache_base_vma_dump_range (mca_rcache_base_vma_module_t *vma_module,
-                                     unsigned char *base, size_t size, char *msg);
+void mca_rcache_base_vma_dump_range(mca_rcache_base_vma_module_t *vma_module, unsigned char *base,
+                                    size_t size, char *msg);
 
 /**
  * Iterate over registrations in the specified range.
@@ -87,12 +85,12 @@ void mca_rcache_base_vma_dump_range (mca_rcache_base_vma_module_t *vma_module,
  * from the callback. The iteration will terminate if the callback returns anything
  * other than OPAL_SUCCESS.
  */
-int mca_rcache_base_vma_iterate (mca_rcache_base_vma_module_t *vma_module,
-                                 unsigned char *base, size_t size, bool partial_ok,
-                                 int (*callback_fn) (struct mca_rcache_base_registration_t *, void *),
-                                 void *ctx);
+int mca_rcache_base_vma_iterate(mca_rcache_base_vma_module_t *vma_module, unsigned char *base,
+                                size_t size, bool partial_ok,
+                                int (*callback_fn)(struct mca_rcache_base_registration_t *, void *),
+                                void *ctx);
 
-size_t mca_rcache_base_vma_size (mca_rcache_base_vma_module_t *vma_module);
+size_t mca_rcache_base_vma_size(mca_rcache_base_vma_module_t *vma_module);
 
 END_C_DECLS
 

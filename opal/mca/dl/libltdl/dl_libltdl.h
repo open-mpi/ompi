@@ -16,7 +16,6 @@
 
 #include <ltdl.h>
 
-
 OPAL_DECLSPEC extern opal_dl_base_module_t opal_dl_libltdl_module;
 
 /*

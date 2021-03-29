@@ -37,7 +37,6 @@ struct mca_btl_portals4_recv_block_t {
 typedef struct mca_btl_portals4_recv_block_t mca_btl_portals4_recv_block_t;
 OBJ_CLASS_DECLARATION(mca_btl_portals4_recv_block_t);
 
-
 int mca_btl_portals4_recv_enable(mca_btl_portals4_module_t *btl);
 
 int mca_btl_portals4_recv_disable(mca_btl_portals4_module_t *btl);
@@ -55,16 +54,14 @@ int mca_btl_portals4_recv_block_free(mca_btl_portals4_recv_block_t *block);
  *
  * Module lock must be held before calling this function
  */
-mca_btl_portals4_recv_block_t*
-mca_btl_portals4_recv_block_init(mca_btl_portals4_module_t *btl);
+mca_btl_portals4_recv_block_t *mca_btl_portals4_recv_block_init(mca_btl_portals4_module_t *btl);
 
 /**
  * activate a block.  Blocks that are full (have gone inactive) can be
  * re-activated with this call.  There is no need to hold the lock
  * before calling this function
  */
-static inline int
-mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
+static inline int mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
 {
     int ret;
     ptl_me_t me;
@@ -72,7 +69,8 @@ mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
     ptl_match_bits_t match_bits, ignore_bits;
     mca_btl_portals4_module_t *btl = block->btl;
 
-    if (NULL == block->start) return OPAL_ERROR;
+    if (NULL == block->start)
+        return OPAL_ERROR;
 
     ignore_bits = BTL_PORTALS4_CONTEXT_MASK | BTL_PORTALS4_SOURCE_MASK | BTL_PORTALS4_TAG_MASK;
     match_bits = BTL_PORTALS4_SHORT_MSG;
@@ -82,11 +80,7 @@ mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
     me.ct_handle = PTL_CT_NONE;
     me.min_free = btl->super.btl_eager_limit;
     me.uid = PTL_UID_ANY;
-    me.options =
-        PTL_ME_OP_PUT |
-        PTL_ME_MANAGE_LOCAL |
-        PTL_ME_EVENT_LINK_DISABLE  |
-        PTL_ME_MAY_ALIGN;
+    me.options = PTL_ME_OP_PUT | PTL_ME_MANAGE_LOCAL | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_MAY_ALIGN;
 
     if (mca_btl_portals4_component.use_logical) {
         remote_proc.rank = PTL_RANK_ANY;
@@ -103,20 +97,18 @@ mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
     block->full = false;
     opal_atomic_mb();
 
-    ret = PtlMEAppend(btl->portals_ni_h,
-                      btl->recv_idx,
-                      &me,
-                      PTL_PRIORITY_LIST,
-                      block,
+    ret = PtlMEAppend(btl->portals_ni_h, btl->recv_idx, &me, PTL_PRIORITY_LIST, block,
                       &block->me_h);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                            "%s:%d: PtlMEAppend failed on NI %d: %d",
-                            __FILE__, __LINE__, btl->interface_num, ret);
+                            "%s:%d: PtlMEAppend failed on NI %d: %d", __FILE__, __LINE__,
+                            btl->interface_num, ret);
         return OPAL_ERROR;
     }
-    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlMEAppend (recv) block=%p me_h=%d start=%p len=%x NI=%d\n",
-        (void *)block, block->me_h, block->start, (unsigned int) block->length, btl->interface_num));
+    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+                         "PtlMEAppend (recv) block=%p me_h=%d start=%p len=%x NI=%d\n",
+                         (void *) block, block->me_h, block->start, (unsigned int) block->length,
+                         btl->interface_num));
 
     return OPAL_SUCCESS;
 }

@@ -256,15 +256,15 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
 
                 /* No, they have differing numbers of PUs */
                 else {
-                    bool first = true;
+                    bool first_iter = true;
 
                     strncat(str, "with (", OMPI_AFFINITY_STRING_MAX - strlen(str));
                     for (c2 = core; NULL != c2; c2 = c2->next_cousin) {
-                        if (!first) {
+                        if (!first_iter) {
                             strncat(str, ", ",
                                     OMPI_AFFINITY_STRING_MAX - strlen(str));
                         }
-                        first = false;
+                        first_iter = false;
 
                         i = hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
                                                                    core->cpuset,
