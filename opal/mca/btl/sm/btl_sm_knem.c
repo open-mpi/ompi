@@ -13,7 +13,6 @@
 
 #if OPAL_BTL_SM_HAVE_KNEM
 
-#    include <knem_io.h>
 #    include <sys/mman.h>
 
 #    include <fcntl.h>
