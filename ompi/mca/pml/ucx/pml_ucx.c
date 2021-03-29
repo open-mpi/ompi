@@ -299,6 +299,13 @@ int mca_pml_ucx_init(int enable_mpi_threads)
         params.thread_mode = UCS_THREAD_MODE_SINGLE;
     }
 
+#if HAVE_DECL_UCP_WORKER_FLAG_IGNORE_REQUEST_LEAK
+    if (!ompi_pml_ucx.request_leak_check) {
+        params.field_mask |= UCP_WORKER_PARAM_FIELD_FLAGS;
+        params.flags      |= UCP_WORKER_FLAG_IGNORE_REQUEST_LEAK;
+    }
+#endif
+
     status = ucp_worker_create(ompi_pml_ucx.ucp_context, &params,
                                &ompi_pml_ucx.ucp_worker);
     if (UCS_OK != status) {
