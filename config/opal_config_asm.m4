@@ -1136,6 +1136,18 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
                 AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
             fi
             OPAL_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
+
+            # See the following github PR and some performance numbers/discussion:
+            # https://github.com/open-mpi/ompi/pull/8649
+            AC_MSG_CHECKING([$opal_cv_asm_arch: Checking if force gcc atomics requested])
+            if test $force_gcc_atomics_ppc = 0 ; then
+                AC_MSG_RESULT([no])
+                opal_cv_asm_builtin="BUILTIN_NO"
+            else
+                AC_MSG_RESULT([Yes])
+                AC_MSG_WARN([$opal_cv_asm_arch: gcc atomics have been known to perform poorly on powerpc.])
+            fi
+
             ;;
         # There is no current difference between s390 and s390x
         # But use two different defines in case some come later
