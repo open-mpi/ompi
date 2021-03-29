@@ -55,7 +55,7 @@
 
 #define RANK_ARRAY_COUNT(module) ((ompi_comm_size ((module)->comm) + (module)->node_count - 1) / (module)->node_count)
 
-#define MCA_OSC_RDMA_MAX_USED_BTLS 2
+#define MCA_OSC_RDMA_BTLS_SIZE_INIT 4
 
 enum {
     OMPI_OSC_RDMA_LOCKING_TWO_LEVEL,
@@ -260,7 +260,8 @@ struct ompi_osc_rdma_module_t {
      * non-RDMA BTLs. The typical usage is btl/sm + btl/tcp. In the future this
      * could be used to support multiple RDMA-capable BTLs but the memory registration
      * paths will need to be updated to pack/unpack multiple registration handles. */
-    struct mca_btl_base_module_t *selected_btls[MCA_OSC_RDMA_MAX_USED_BTLS];
+    struct mca_btl_base_module_t **selected_btls;
+    uint8_t selected_btls_size;
     uint8_t btls_in_use;
 
     /** Only true if one BTL is in use. Memory registration is only supported when
@@ -632,6 +633,16 @@ static inline bool ompi_osc_rdma_oor (int rc)
 __opal_attribute_always_inline__
 static inline mca_btl_base_module_t *ompi_osc_rdma_selected_btl (ompi_osc_rdma_module_t *module, uint8_t btl_index) {
     return module->selected_btls[btl_index];
+}
+
+__opal_attribute_always_inline__
+static inline void ompi_osc_rdma_selected_btl_insert (ompi_osc_rdma_module_t *module, struct mca_btl_base_module_t *btl, uint8_t btl_index) {
+    if(btl_index == module->selected_btls_size) {
+        module->selected_btls_size *= 2;
+        module->selected_btls = realloc(module->selected_btls, module->selected_btls_size * sizeof(struct mca_btl_base_module_t *));
+        assert(NULL != module->selected_btls);
+    }
+    module->selected_btls[btl_index] = btl;
 }
 
 #endif /* OMPI_OSC_RDMA_H */
