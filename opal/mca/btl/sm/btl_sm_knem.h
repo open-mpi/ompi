@@ -14,6 +14,8 @@
 
 #if OPAL_BTL_SM_HAVE_KNEM
 
+#    include <knem_io.h>
+
 int mca_btl_sm_knem_init(void);
 int mca_btl_sm_knem_fini(void);
 int mca_btl_sm_knem_progress(void);
