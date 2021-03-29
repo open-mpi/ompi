@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
@@ -24,10 +24,14 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-generated_man_pages = mpicc.1 mpifort.1 mpif77.1 mpif90.1
+generated_man_pages = mpicc.1
 
 if OMPI_HAVE_CXX_COMPILER
 generated_man_pages += mpic++.1 mpicxx.1
+endif
+
+if OMPI_HAVE_FORTRAN_COMPILER
+generated_man_pages += mpifort.1 mpif77.1 mpif90.1
 endif
 
 if OMPI_WANT_JAVA_BINDINGS
@@ -53,9 +57,11 @@ if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpic++; $(LN_S) ompi_wrapper_script mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx; $(LN_S) ompi_wrapper_script mpicxx)
 endif
+if OMPI_HAVE_FORTRAN_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpifort; $(LN_S) ompi_wrapper_script mpifort)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) ompi_wrapper_script mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) ompi_wrapper_script mpif90)
+endif
 if OMPI_WANT_JAVA_BINDINGS
 	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
@@ -85,10 +91,14 @@ else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OPAL_INSTALL_BINARIES
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ompi.pc ompi-c.pc ompi-fort.pc
+pkgconfig_DATA = ompi.pc ompi-c.pc
 
 if OMPI_HAVE_CXX_COMPILER
 pkgconfig_DATA += ompi-cxx.pc
+endif
+
+if OMPI_HAVE_FORTRAN_COMPILER
+pkgconfig_DATA += ompi-fort.pc
 endif
 
 if OMPI_WANT_JAVA_BINDINGS
@@ -97,12 +107,14 @@ endif
 
 man_MANS = $(man_pages)
 
-nodist_ompidata_DATA = \
-        mpicc-wrapper-data.txt \
-	mpifort-wrapper-data.txt
+nodist_ompidata_DATA = mpicc-wrapper-data.txt
 
 if OMPI_HAVE_CXX_COMPILER
 nodist_ompidata_DATA += mpic++-wrapper-data.txt
+endif
+
+if OMPI_HAVE_FORTRAN_COMPILER
+nodist_ompidata_DATA += mpifort-wrapper-data.txt
 endif
 
 install-exec-hook-always:
@@ -112,9 +124,11 @@ if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpic++$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicxx$(EXEEXT))
 endif
+if OMPI_HAVE_FORTRAN_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpifort$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpifort$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpif77$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpif90$(EXEEXT))
+endif
 if OMPI_WANT_JAVA_BINDINGS
 	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
@@ -124,10 +138,12 @@ install-data-hook-always:
 if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
 endif
+if OMPI_HAVE_FORTRAN_COMPILER
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpif77-wrapper-data.txt; $(LN_S) mpifort-wrapper-data.txt mpif77-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpif90-wrapper-data.txt; $(LN_S) mpifort-wrapper-data.txt mpif90-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgconfigdir); rm -f ompi-f77.pc; $(LN_S) ompi-fort.pc ompi-f77.pc)
 	(cd $(DESTDIR)$(pkgconfigdir); rm -f ompi-f90.pc; $(LN_S) ompi-fort.pc ompi-f90.pc)
+endif
 
 uninstall-local-always:
 	rm -f $(DESTDIR)$(bindir)/mpicc$(EXEEXT) \
@@ -185,16 +201,17 @@ mpicc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicc.1
 	sed -e 's/#COMMAND#/mpicc/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicc.1
 
+if OMPI_HAVE_CXX_COMPILER
 mpic++.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpic++.1
 	sed -e 's/#COMMAND#/mpic++/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpic++.1
 
-if OMPI_HAVE_CXX_COMPILER
 mpicxx.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicxx.1
 	sed -e 's/#COMMAND#/mpicxx/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicxx.1
 endif
 
+if OMPI_HAVE_FORTRAN_COMPILER
 mpifort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpifort.1
 	sed -e 's/#COMMAND#/mpifort/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpifort.1
@@ -214,3 +231,4 @@ mpif77.1: mpif77.1in
 mpif90.1: mpif77.1
 	@ rm -f mpif90.1
 	$(OMPI_V_LN_S) $(LN_S) mpif77.1 mpif90.1
+endif
