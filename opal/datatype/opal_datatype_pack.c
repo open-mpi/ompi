@@ -383,42 +383,83 @@ opal_generic_simple_pack_function( opal_convertor_t* pConvertor,
  */
 
 static inline void
-pack_predefined_heterogeneous( opal_convertor_t* CONVERTOR,
-                               const dt_elem_desc_t* ELEM,
-                               size_t* COUNT,
-                               unsigned char** SOURCE,
-                               unsigned char** DESTINATION,
-                               size_t* SPACE )
+pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
+                              const dt_elem_desc_t *ELEM, size_t *COUNT,
+                              unsigned char **memory,
+                              unsigned char **packed, size_t *SPACE)
 {
-    const opal_convertor_master_t* master = (CONVERTOR)->master;
-    const ddt_elem_desc_t* _elem = &((ELEM)->elem);
-    unsigned char* _source = (*SOURCE) + _elem->disp;
-    ptrdiff_t advance;
-    size_t _count = *(COUNT);
-    size_t _r_blength;
+    const opal_convertor_master_t *master = (CONVERTOR)->master;
+    const ddt_elem_desc_t *_elem = &((ELEM)->elem);
+    size_t cando_count = *(COUNT), do_now_bytes;
+    size_t local_elem_size = opal_datatype_basicDatatypes[_elem->common.type]->size;
+    size_t remote_elem_size = master->remote_sizes[_elem->common.type];
+    size_t blocklen_bytes = remote_elem_size;
+    unsigned char *_memory = (*memory) + _elem->disp;
+    unsigned char *_packed = *packed;
+    ptrdiff_t advance = 0;
 
-    _r_blength = master->remote_sizes[_elem->common.type];
-    if( (_count * _r_blength) > *(SPACE) ) {
-        _count = (*(SPACE) / _r_blength);
-        if( 0 == _count ) return;  /* nothing to do */
+    assert(0 == (cando_count % _elem->blocklen)); /* no partials here */
+    assert(*(COUNT) <= ((size_t) _elem->count * _elem->blocklen));
+
+    if ((remote_elem_size * cando_count) > *(SPACE))
+        cando_count = (*SPACE) / blocklen_bytes;
+
+    /* premptively update the number of COUNT we will return. */
+    *(COUNT) -= cando_count;
+
+    if (_elem->blocklen == 1) {
+        master->pFunctions[_elem->common.type](CONVERTOR, cando_count,
+                                               _memory, *SPACE, _elem->extent,
+                                               _packed, *SPACE, remote_elem_size,
+                                               &advance);
+        _memory += cando_count * _elem->extent;
+        _packed += cando_count * remote_elem_size;
+        goto update_and_return;
     }
 
-    OPAL_DATATYPE_SAFEGUARD_POINTER( _source, (_count * _elem->extent), (CONVERTOR)->pBaseBuf,
-                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
-    DO_DEBUG( opal_output( 0, "pack [l %s r %s] memcpy( %p, %p, %lu ) => space %lu\n",
-                           ((ptrdiff_t)(opal_datatype_basicDatatypes[_elem->common.type]->size) == _elem->extent) ? "cont" : "----",
-                           ((ptrdiff_t)_r_blength == _elem->extent) ? "cont" : "----",
-                           (void*)*(DESTINATION), (void*)_source, (unsigned long)_r_blength,
-                           (unsigned long)(*(SPACE)) ); );
-    master->pFunctions[_elem->common.type]( CONVERTOR, _count,
-                                            _source, *SPACE, _elem->extent,
-                                            *DESTINATION, *SPACE, _r_blength,
-                                            &advance );
-    _r_blength     *= _count;  /* update the remote length to encompass all the elements */
-    *(SOURCE)      += _count * _elem->extent;
-    *(DESTINATION) += _r_blength;
-    *(SPACE)       -= _r_blength;
-    *(COUNT)       -= _count;
+    if ((1 < _elem->count) && (_elem->blocklen <= cando_count)) {
+        blocklen_bytes = remote_elem_size * _elem->blocklen;
+
+        do { /* Do as many full blocklen as possible */
+            OPAL_DATATYPE_SAFEGUARD_POINTER(_memory, blocklen_bytes, (CONVERTOR)->pBaseBuf,
+                                            (CONVERTOR)->pDesc, (CONVERTOR)->count);
+            DO_DEBUG(opal_output(0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
+                                 (void *) _packed, (void *) _memory, (unsigned long) blocklen_bytes,
+                                 (unsigned long) (*(SPACE) - (_packed - *(packed)))););
+            master->pFunctions[_elem->common.type](CONVERTOR, _elem->blocklen,
+                                                   _memory, *SPACE, local_elem_size,
+                                                   _packed, *SPACE, remote_elem_size,
+                                                   &advance);
+            _packed += blocklen_bytes;
+            _memory += _elem->extent;
+            cando_count -= _elem->blocklen;
+        } while (_elem->blocklen <= cando_count);
+    }
+
+    /**
+     * As an epilog do anything left from the last blocklen.
+     */
+    if (0 != cando_count) {
+        assert((cando_count < _elem->blocklen)
+               || ((1 == _elem->count) && (cando_count <= _elem->blocklen)));
+        do_now_bytes = cando_count * remote_elem_size;
+        OPAL_DATATYPE_SAFEGUARD_POINTER(_memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
+                                        (CONVERTOR)->pDesc, (CONVERTOR)->count);
+        DO_DEBUG(opal_output(0, "pack 3. memcpy( %p, %p, %lu ) => space %lu [epilog]\n",
+                             (void *) _packed, (void *) _memory, (unsigned long) do_now_bytes,
+                             (unsigned long) (*(SPACE) - (_packed - *(packed)))););
+        master->pFunctions[_elem->common.type](CONVERTOR, cando_count,
+                                               _memory, *SPACE, local_elem_size,
+                                               _packed, *SPACE, remote_elem_size,
+                                               &advance);
+        _memory += do_now_bytes;
+        _packed += do_now_bytes;
+    }
+
+update_and_return:
+    *(memory) = _memory - _elem->disp;
+    *(SPACE) -= (_packed - *packed);
+    *(packed) = _packed;
 }
 
 int32_t
