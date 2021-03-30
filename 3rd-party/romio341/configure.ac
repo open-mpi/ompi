@@ -68,6 +68,7 @@ AH_TOP([/*
  */
 #ifndef ROMIOCONF_H_INCLUDED
 #define ROMIOCONF_H_INCLUDED
+#include <mplconfig.h>
 
 #include "romioconf-undefs.h"
 ])

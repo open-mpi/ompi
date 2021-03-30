@@ -3,8 +3,8 @@
  *     See COPYRIGHT in top-level directory
  */
 
-#include <assert.h>
 #include "adio.h"
+#include <assert.h>
 #include "adio_extern.h"
 #include "ad_pvfs2.h"
 #include "ad_pvfs2_io.h"

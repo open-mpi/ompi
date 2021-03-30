@@ -3,10 +3,10 @@
  *     See COPYRIGHT in top-level directory
  */
 
+#include "adio.h"
 #ifdef _UNICOS
 #include <fortran.h>
 #endif
-#include "adio.h"
 #include "mpio.h"
 
 
