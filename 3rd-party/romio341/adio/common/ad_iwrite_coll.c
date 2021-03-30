@@ -12,6 +12,8 @@
 #include "mpe.h"
 #endif
 
+#ifdef HAVE_MPI_GREQUEST_EXTENSIONS
+
 /* ADIOI_GEN_IwriteStridedColl */
 struct ADIOI_GEN_IwriteStridedColl_vars {
     /* requests */
@@ -1496,3 +1498,5 @@ static int ADIOI_GEN_iwc_wait_fn(int count, void **array_of_states,
   fn_exit:
     return errcode;
 }
+
+#endif /* HAVE_MPI_GREQUEST_EXTENSIONS */

@@ -9,6 +9,16 @@
 #define MPIO_INCLUDE
 
 #include "mpi.h"
+/* Open MPI: We need to rename almost all of these functions, as well
+   a the types to be names that conform to the prefix rule */
+#include "io_romio_conv.h"
+
+#define MPIIMPL_HAVE_MPI_COMBINER_DARRAY 1
+#define MPIIMPL_HAVE_MPI_TYPE_CREATE_DARRAY 1
+#define MPIIMPL_HAVE_MPI_COMBINER_SUBARRAY 1
+#define MPIIMPL_HAVE_MPI_TYPE_CREATE_DARRAY 1
+#define MPIIMPL_HAVE_MPI_COMBINER_DUP 1
+#define MPICH_ATTR_POINTER_WITH_TYPE_TAG(x,y)
 
 #if defined(HAVE_VISIBILITY)
 #define ROMIO_API_PUBLIC __attribute__((visibility ("default")))
@@ -43,6 +53,8 @@ typedef struct ADIOI_RequestD *MPIO_Request;
 #define PMPIO_Test PMPI_Test
 #endif
 #define MPIO_REQUEST_DEFINED
+
+@DEFINE_HAVE_MPI_GREQUEST_EXTENSIONS@
 
 #ifndef HAVE_MPI_OFFSET
 /* *INDENT-OFF* */
@@ -293,8 +305,12 @@ int MPI_Type_create_darray(int size, int rank, int ndims, const int array_of_gsi
 #endif
 #endif
 /* above needed for some versions of mpi.h in MPICH!! */
+/* Open MPI: I can't seem to make these #define properly.  Oh well --
+   we don't need them anyway :-( */
+#if 0
 MPI_File MPI_File_f2c(MPI_Fint file) ROMIO_API_PUBLIC;
 MPI_Fint MPI_File_c2f(MPI_File file) ROMIO_API_PUBLIC;
+#endif
 
 
 #ifndef HAVE_MPI_GREQUEST
@@ -343,15 +359,19 @@ int MPI_Info_free(MPI_Info *info) ROMIO_API_PUBLIC;
 #endif
 #endif
 /* above needed for some versions of mpi.h in MPICH!! */
+/* Open MPI: we don't need these in ROMIO */
+#if 0
 MPI_Fint MPI_Info_c2f(MPI_Info info) ROMIO_API_PUBLIC;
 MPI_Info MPI_Info_f2c(MPI_Fint info) ROMIO_API_PUBLIC;
+#endif
 #endif
 
 #endif   /* HAVE_PRAGMA_HP_SEC_DEF */
 
 
+/* Open MPI: We don't want any of the profiling layer */
+#if 0
 /**************** BINDINGS FOR THE PROFILING INTERFACE ***************/
-
 
 /* Section 9.2 */
 int PMPI_File_open(MPI_Comm, const char *, int, MPI_Info, MPI_File *) ROMIO_API_PUBLIC;
@@ -541,6 +561,8 @@ int PMPI_Info_free(MPI_Info *) ROMIO_API_PUBLIC;
 MPI_Fint PMPI_Info_c2f(MPI_Info) ROMIO_API_PUBLIC;
 MPI_Info PMPI_Info_f2c(MPI_Fint) ROMIO_API_PUBLIC;
 #endif
+
+#endif /* Open MPI: We don't want any of the profiling layer */
 
 #if defined(__cplusplus)
 }
