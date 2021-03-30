@@ -201,19 +201,6 @@ ompi/mca/coll/ml/coll_ml_lex.c
 ompi/mca/coll/self/coll-self-version.h*
 ompi/mca/coll/sm/coll-sm-version.h*
 
-ompi/mca/io/romio321/romio/adio/include/romioconf.h
-ompi/mca/io/romio321/romio/include/mpio.h
-ompi/mca/io/romio321/romio/localdefs
-ompi/mca/io/romio321/romio/test/fcoll_test.f
-ompi/mca/io/romio321/romio/test/fmisc.f
-ompi/mca/io/romio321/romio/test/fperf.f
-ompi/mca/io/romio321/romio/test/large_file.c
-ompi/mca/io/romio321/romio/test/misc.c
-ompi/mca/io/romio321/romio/test/pfcoll_test.f
-ompi/mca/io/romio321/romio/test/runtests
-ompi/mca/io/romio321/romio/util/romioinstall
-ompi/mca/io/romio321/romio/test/syshints.c
-
 ompi/mca/osc/monitoring/osc_monitoring_template_gen.h
 
 ompi/mca/pml/v/autogen.vprotocols
