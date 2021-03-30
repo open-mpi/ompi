@@ -25,7 +25,7 @@ int MPI_File_iread_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
 #include "mpioprof.h"
 #endif
 
-#ifdef HAVE_MPI_GREQUEST
+#if HAVE_MPI_GREQUEST
 #include "mpiu_greq.h"
 #endif
 

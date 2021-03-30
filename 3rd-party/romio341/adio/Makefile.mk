@@ -13,12 +13,14 @@ noinst_HEADERS +=                      \
     adio/include/adioi_errmsg.h        \
     adio/include/adioi_error.h         \
     adio/include/adioi_fs_proto.h      \
+    adio/include/ad_tuning.h           \
     adio/include/heap_sort.h           \
     adio/include/lock_internal.h       \
     adio/include/mpio_error.h          \
     adio/include/mpipr.h               \
     adio/include/mpiu_greq.h           \
     adio/include/nopackage.h           \
+    adio/include/romioconf-undefs.h    \
     adio/include/mpiu_external32.h     \
     adio/include/hint_fns.h
 

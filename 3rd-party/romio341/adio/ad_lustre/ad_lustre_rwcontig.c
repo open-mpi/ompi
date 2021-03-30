@@ -3,11 +3,12 @@
  *     See COPYRIGHT in top-level directory
  */
 
+#include "ad_lustre.h"
+
 #include <unistd.h>
 
 #include <stdlib.h>
 #include <malloc.h>
-#include "ad_lustre.h"
 
 #define LUSTRE_MEMALIGN (1<<12) /* to use page_shift */
 

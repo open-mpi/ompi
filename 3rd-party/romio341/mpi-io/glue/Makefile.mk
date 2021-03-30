@@ -5,6 +5,7 @@
 
 include $(top_srcdir)/mpi-io/glue/default/Makefile.mk
 include $(top_srcdir)/mpi-io/glue/mpich/Makefile.mk
+include $(top_srcdir)/mpi-io/glue/openmpi/Makefile.mk
 
 if !BUILD_ROMIO_EMBEDDED
 romio_other_sources += \
