@@ -237,13 +237,8 @@ AC_DEFUN([OPAL_MCA],[
     MCA_PROJECT_SUBDIRS=
     MCA_PROJECT_DIST_SUBDIRS=
     m4_foreach(mca_project, [mca_project_list],
-               [# BWB: Until projects have separate configure scripts
-                # and can skip running all of ORTE, just avoid recursing
-                # into orte sub directory if orte disabled
-                if (test "mca_project" = "ompi" && test "$enable_mpi" != "no") || test "mca_project" = "opal" || test "mca_project" = "orte" || test "mca_project" = "oshmem"; then
-                   MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
-                   MCA_PROJECT_DIST_SUBDIRS="$MCA_PROJECT_DIST_SUBDIRS mca_project"
-                fi
+               [MCA_PROJECT_SUBDIRS="$MCA_PROJECT_SUBDIRS mca_project"
+                MCA_PROJECT_DIST_SUBDIRS="$MCA_PROJECT_DIST_SUBDIRS mca_project"
                 MCA_CONFIGURE_PROJECT(mca_project)])
 
     AC_SUBST(MCA_PROJECT_SUBDIRS)

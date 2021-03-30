@@ -383,54 +383,6 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LIBS])
     ])
 
-    m4_ifdef([project_orte], [
-       AC_MSG_CHECKING([for ORTE CPPFLAGS])
-       if test "$WANT_INSTALL_HEADERS" = "1" ; then
-           ORTE_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi'
-       fi
-       ORTE_WRAPPER_EXTRA_CPPFLAGS="$ORTE_WRAPPER_EXTRA_CPPFLAGS $orte_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
-       AC_SUBST([ORTE_WRAPPER_EXTRA_CPPFLAGS])
-       AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CPPFLAGS])
-
-       AC_MSG_CHECKING([for ORTE CFLAGS])
-       ORTE_WRAPPER_EXTRA_CFLAGS="$wrapper_extra_cflags $with_wrapper_cflags"
-       AC_SUBST([ORTE_WRAPPER_EXTRA_CFLAGS])
-       AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CFLAGS])
-
-       AC_MSG_CHECKING([for ORTE CFLAGS_PREFIX])
-       ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX="$with_wrapper_cflags_prefix"
-       AC_SUBST([ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX])
-       AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX])
-
-       AC_MSG_CHECKING([for ORTE LDFLAGS])
-       ORTE_WRAPPER_EXTRA_LDFLAGS="$orte_mca_wrapper_extra_ldflags $wrapper_extra_ldflags $with_wrapper_ldflags"
-       RPATHIFY_LDFLAGS([ORTE_WRAPPER_EXTRA_LDFLAGS])
-       AC_SUBST([ORTE_WRAPPER_EXTRA_LDFLAGS])
-       AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LDFLAGS])
-
-       # Convert @{libdir} to ${libdir} for pkg-config
-       _OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG([ORTE])
-
-       AC_MSG_CHECKING([for ORTE LIBS])
-       ORTE_WRAPPER_EXTRA_LIBS="$orte_mca_wrapper_extra_libs"
-       OPAL_FLAGS_APPEND_UNIQ([ORTE_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
-       ORTE_WRAPPER_EXTRA_LIBS="$ORTE_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
-       AC_SUBST([ORTE_WRAPPER_EXTRA_LIBS])
-       AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_LIBS])
-
-       m4_ifdef([project_ompi], [], [
-          # these are used by orte_info/ompi_info (yes, they are named poorly)
-          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$ORTE_WRAPPER_EXTRA_CFLAGS",
-              [Additional CFLAGS to pass through the wrapper compilers])
-          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS_PREFIX, "$ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX",
-              [Additional CFLAGS_PREFIX to pass through the wrapper compilers])
-          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$ORTE_WRAPPER_EXTRA_LDFLAGS",
-              [Additional LDFLAGS to pass through the wrapper compilers])
-          AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$ORTE_WRAPPER_EXTRA_LIBS",
-              [Additional LIBS to pass through the wrapper compilers])
-       ])
-    ])
-
     m4_ifdef([project_ompi], [
        AC_MSG_CHECKING([for OMPI CPPFLAGS])
        if test "$WANT_INSTALL_HEADERS" = "1" ; then
