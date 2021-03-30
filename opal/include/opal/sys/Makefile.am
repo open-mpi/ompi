@@ -15,7 +15,7 @@
 #                         reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2020      Google, LLC. All rights reserved.
+# Copyright (c) 2020-2021 Google, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,8 +34,6 @@ headers += \
         opal/sys/cma.h
 
 include opal/sys/x86_64/Makefile.am
-include opal/sys/arm/Makefile.am
 include opal/sys/arm64/Makefile.am
-include opal/sys/ia32/Makefile.am
 include opal/sys/powerpc/Makefile.am
 include opal/sys/gcc_builtin/Makefile.am

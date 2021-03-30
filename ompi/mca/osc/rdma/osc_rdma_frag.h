@@ -25,11 +25,7 @@ static inline void ompi_osc_rdma_frag_complete (ompi_osc_rdma_frag_t *frag)
         opal_atomic_rmb ();
 
         (void) opal_atomic_swap_32 (&frag->pending, 1);
-#if OPAL_HAVE_ATOMIC_MATH_64
         (void) opal_atomic_swap_64 (&frag->curr_index, 0);
-#else
-        (void) opal_atomic_swap_32 (&frag->curr_index, 0);
-#endif
     }
 }
 
@@ -88,11 +84,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "allocating frag. pending = %d", curr->pending);
     OPAL_THREAD_ADD_FETCH32(&curr->pending, 1);
 
-#if OPAL_HAVE_ATOMIC_MATH_64
     my_index = opal_atomic_fetch_add_64 (&curr->curr_index, request_len);
-#else
-    my_index = opal_atomic_fetch_add_32 (&curr->curr_index, request_len);
-#endif
     if (my_index + request_len > mca_osc_rdma_component.buffer_size) {
         if (my_index <= mca_osc_rdma_component.buffer_size) {
             /* this thread caused the buffer to spill over */

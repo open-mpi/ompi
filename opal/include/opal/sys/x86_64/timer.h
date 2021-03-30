@@ -30,6 +30,8 @@ typedef uint64_t opal_timer_t;
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 
+#    if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+
 /* TODO: add AMD mfence version and dispatch at init */
 static inline opal_timer_t opal_sys_timer_get_cycles(void)
 {
@@ -58,8 +60,26 @@ static inline bool opal_sys_timer_is_monotonic(void)
     return !!(cpuid2 & (1 << 8));
 }
 
-#    define OPAL_HAVE_SYS_TIMER_GET_CYCLES   1
 #    define OPAL_HAVE_SYS_TIMER_IS_MONOTONIC 1
+#    else
+
+static inline opal_timer_t opal_sys_timer_get_cycles(void)
+{
+    opal_timer_t ret;
+    int tmp;
+
+    __asm__ __volatile__("xchgl %%ebx, %1\n"
+                         "cpuid\n"
+                         "xchgl %%ebx, %1\n"
+                         "rdtsc\n"
+                         : "=A"(ret), "=r"(tmp)::"ecx");
+
+    return ret;
+}
+
+#    endif
+
+#    define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1
 
 #else
 

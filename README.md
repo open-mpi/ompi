@@ -201,9 +201,13 @@ base as of this writing (April 2020):
 
 * Open MPI requires a C99-capable compiler to build.
 
-* On platforms other than x86-64, ARM, and PPC, Open MPI requires a
-  compiler that either supports C11 atomics or the GCC `__atomic`
-  atomics (e.g., GCC >= v4.7.2).
+* On platforms other than x86-64, AArch64 (64-bit ARM), and PPC64,
+  Open MPI requires a compiler that either supports C11 atomics or
+  the GCC `__atomic` atomics (e.g., GCC >= v4.7.2).
+
+* 32-bit platforms are only supported with a recent compiler that
+  supports C11 atomics. This includes gcc 4.9.x+ (gcc 6.x or newer
+  recommened), icc 16, clang 3.1+, etc.
 
 * Mixing compilers from different vendors when building Open MPI
   (e.g., using the C/C++ compiler from one vendor and the Fortran
