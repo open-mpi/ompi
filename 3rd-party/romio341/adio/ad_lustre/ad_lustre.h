@@ -9,6 +9,7 @@
 /* temp*/
 #define HAVE_ASM_TYPES_H 1
 
+#include "adio.h"
 #define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <sys/types.h>
@@ -30,7 +31,6 @@
 
 #include <sys/ioctl.h>
 
-#include "adio.h"
 #include "ad_tuning.h"
 
 #ifdef HAVE_LUSTRE_LUSTRE_USER_H

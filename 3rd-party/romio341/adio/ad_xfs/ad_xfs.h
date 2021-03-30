@@ -6,10 +6,10 @@
 #ifndef AD_XFS_H_INCLUDED
 #define AD_XFS_H_INCLUDED
 
+#include "adio.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include "adio.h"
 
 #if defined(MPISGI)
 #include "xfs/xfs_fs.h"
