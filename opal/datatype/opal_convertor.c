@@ -484,8 +484,8 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
     pConvertor->remote_size = pConvertor->local_size;
     if (OPAL_UNLIKELY(datatype->bdt_used & pConvertor->master->hetero_mask)) {
         pConvertor->flags &= (~CONVERTOR_HOMOGENEOUS);
-        if (!(pConvertor->flags & CONVERTOR_SEND
-              && pConvertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)) {
+        /* Can we use the optimized description? */
+        if (pConvertor->flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
             pConvertor->use_desc = &(datatype->desc);
         }
         if (0 == (pConvertor->flags & CONVERTOR_HAS_REMOTE_SIZE)) {
