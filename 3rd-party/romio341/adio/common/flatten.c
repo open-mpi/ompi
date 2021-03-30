@@ -116,7 +116,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
      * avoid >2G integer arithmetic problems */
     ADIO_Offset top_count;
     MPI_Count i, j, old_size, prev_index, basic_num, num, nonzeroth;
-    MPI_Aint old_extent;        /* Assume extents are non-negative */
+    MPI_Aint lb, old_extent;        /* Assume extents are non-negative */
     int *ints;
     MPI_Aint *adds;             /* Make no assumptions about +/- sign on these */
     MPI_Datatype *types;
@@ -243,7 +243,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
                 num = *curr_index - prev_index;
 
 /* The noncontiguous types have to be replicated count times */
-                MPI_Type_extent(types[0], &old_extent);
+                MPI_Type_get_extent(types[0], &lb, &old_extent);
                 for (m = 1; m < top_count; m++) {
                     for (i = 0; i < num; i++) {
                         flat->indices[j] =
@@ -298,7 +298,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
 
 /* The noncontiguous types have to be replicated blocklen times
    and then strided. Replicate the first one. */
-                MPI_Type_extent(types[0], &old_extent);
+                MPI_Type_get_extent(types[0], &lb, &old_extent);
                 for (m = 1; m < blocklength; m++) {
                     for (i = 0; i < num; i++) {
                         flat->indices[j] =
@@ -361,7 +361,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
 
 /* The noncontiguous types have to be replicated blocklen times
    and then strided. Replicate the first one. */
-                MPI_Type_extent(types[0], &old_extent);
+                MPI_Type_get_extent(types[0], &lb, &old_extent);
                 for (m = 1; m < blocklength; m++) {
                     for (i = 0; i < num; i++) {
                         flat->indices[j] =
@@ -392,7 +392,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
             top_count = ints[0];
             MPI_Type_get_envelope(types[0], &old_nints, &old_nadds, &old_ntypes, &old_combiner);
             ADIOI_Datatype_iscontig(types[0], &old_is_contig);
-            MPI_Type_extent(types[0], &old_extent);
+            MPI_Type_get_extent(types[0], &lb, &old_extent);
 
             prev_index = *curr_index;
             if ((old_combiner != MPI_COMBINER_NAMED) && (!old_is_contig)) {
@@ -499,7 +499,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
             top_count = ints[0];
             MPI_Type_get_envelope(types[0], &old_nints, &old_nadds, &old_ntypes, &old_combiner);
             ADIOI_Datatype_iscontig(types[0], &old_is_contig);
-            MPI_Type_extent(types[0], &old_extent);
+            MPI_Type_get_extent(types[0], &lb, &old_extent);
 
             prev_index = *curr_index;
             if ((old_combiner != MPI_COMBINER_NAMED) && (!old_is_contig)) {
@@ -545,7 +545,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
                         if (is_hindexed_block) {
                             /* this is the one place the hindexed case uses the
                              * extent of a type */
-                            MPI_Type_extent(types[0], &old_extent);
+                            MPI_Type_get_extent(types[0], &lb, &old_extent);
                         }
                         flat->indices[j] = flat->indices[j - num] +
                             ADIOI_AINT_CAST_TO_OFFSET old_extent;
@@ -616,7 +616,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
 
 /* The noncontiguous types have to be replicated blocklens[i] times
    and then strided. Replicate the first one. */
-                MPI_Type_extent(types[0], &old_extent);
+                MPI_Type_get_extent(types[0], &lb, &old_extent);
                 for (m = 1; m < ints[1]; m++) {
                     for (i = 0, nonzeroth = j; i < num; i++) {
                         if (flat->blocklens[j - num] > 0) {
@@ -711,7 +711,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
                     num = *curr_index - prev_index;
 
 /* The current type has to be replicated blocklens[n] times */
-                    MPI_Type_extent(types[n], &old_extent);
+                    MPI_Type_get_extent(types[n], &lb, &old_extent);
                     for (m = 1; m < ints[1 + n]; m++) {
                         for (i = 0; i < num; i++) {
                             flat->indices[j] =
