@@ -100,6 +100,12 @@ elements of type \fItype\fP. The later choice will allow one to use
 array indices in RMA calls, and have those scaled correctly to byte
 displacements, even in a heterogeneous environment.
 .sp
+Calling \fBMPI_Win_free\fP will deallocate the memory allocated by \fBMPI_Win_allocate\fP. It will thus be an error to manually free \fIbaseptr\fP.
+
+.SH C NOTES
+.ft R
+While \fIbaseptr\fP is a \fIvoid *\fP type, this is to allow easy use of any pointer object for this parameter. This argument is really a \fIvoid **\fP type.
+.sp
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
@@ -119,3 +125,4 @@ MPI_Alloc_mem
 MPI_Free_mem
 MPI_Win_create
 MPI_Win_allocate_shared
+MPI_Win_free

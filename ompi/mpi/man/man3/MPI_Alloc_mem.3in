@@ -58,8 +58,12 @@ Fortran only: Error status (integer).
 .SH DESCRIPTION
 .ft R
 MPI_Alloc_mem allocates \fIsize\fP bytes of memory. The starting address
-of this memory is returned in the variable \fIbase\fP.
+of this memory is returned in the variable \fIbaseptr\fP.
 .sp
+
+.SH C NOTES
+.ft R
+While \fIbaseptr\fP is a \fIvoid *\fP type, this is to allow easy use of any pointer object for this parameter. This argument is really a \fIvoid **\fP type.
 
 .SH FORTRAN NOTES
 .ft R
