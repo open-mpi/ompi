@@ -1,4 +1,4 @@
-dnl -*- shell-script -*-
+dnl -*- autoconf -*-
 dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
