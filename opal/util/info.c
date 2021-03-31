@@ -79,6 +79,7 @@ int opal_info_dup(opal_info_t *info, opal_info_t **newinfo)
         OBJ_RETAIN(iterator->ie_key);
         newentry->ie_value = iterator->ie_value;
         OBJ_RETAIN(iterator->ie_value);
+        opal_list_append (&((*newinfo)->super), (opal_list_item_t *) newentry);
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
     return OPAL_SUCCESS;
