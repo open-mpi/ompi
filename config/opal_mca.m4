@@ -103,12 +103,10 @@ AC_DEFUN([OPAL_MCA],[
                 type=$item
             fi
             if test -z $comp ; then
-                str="`echo DISABLE_${type}=1 | sed s/-/_/g`"
-                eval $str
+                AS_VAR_COPY([AS_TR_SH([DISABLE_$type])], [1])
                 msg="$item $msg"
             else
-                str="`echo DISABLE_${type}_${comp}=1 | sed s/-/_/g`"
-                eval $str
+                AS_VAR_COPY([AS_TR_SH([DISABLE_$type_$comp])], [1])
                 msg="$item $msg"
             fi
         done
@@ -151,8 +149,7 @@ AC_DEFUN([OPAL_MCA],[
                 AC_MSG_ERROR([*** The enable-mca-direct flag requires a
 *** list of type-component pairs.  Invalid input detected.])
             else
-                str="`echo DIRECT_$type=$comp | sed s/-/_/g`"
-                eval $str
+                AS_VAR_COPY([AS_TR_SH([DIRECT_$type])], [AS_TR_SH([$comp])])
                 msg="$item $msg"
             fi
         done
@@ -187,8 +184,7 @@ AC_DEFUN([OPAL_MCA],[
         IFS="${IFS}$PATH_SEPARATOR,"
         msg=
         for item in $enable_mca_dso; do
-            str="`echo DSO_$item=1 | sed s/-/_/g`"
-            eval $str
+            AS_VAR_COPY([AS_TR_SH([DSO_$item])], [1])
             msg="$item $msg"
         done
         IFS="$ifs_save"
@@ -216,8 +212,7 @@ AC_DEFUN([OPAL_MCA],[
         IFS="${IFS}$PATH_SEPARATOR,"
         msg=
         for item in $enable_mca_static; do
-            str="`echo STATIC_$item=1 | sed s/-/_/g`"
-            eval $str
+            AS_VAR_COPY([AS_TR_SH([STATIC_$item])], [1])
             msg="$item $msg"
         done
         IFS="$ifs_save"
@@ -698,16 +693,10 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
 #   NOTE: component_name may not be determined until runtime....
 AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     SHARED_FRAMEWORK="$DSO_$2"
-    AS_LITERAL_IF([$3],
-        [SHARED_COMPONENT="$DSO_$2_$3"],
-        [str="SHARED_COMPONENT=\$DSO_$2_$3"
-         eval $str])
+    AS_VAR_COPY([SHARED_COMPONENT], [DSO_$2_$3])
 
     STATIC_FRAMEWORK="$STATIC_$2"
-    AS_LITERAL_IF([$3],
-        [STATIC_COMPONENT="$STATIC_$2_$3"],
-        [str="STATIC_COMPONENT=\$STATIC_$2_$3"
-         eval $str])
+    AS_VAR_COPY([STATIC_COMPONENT], [DSO_$2_$3])
 
     # Look for the most specific specifier between static/dso.  If
     # there is a tie (either neither or both specified), prefer
@@ -807,26 +796,25 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
         fi
     fi
 
-    # if the component is building, add it's WRAPPER_EXTRA_LDFLAGS and
-    # WRAPPER_EXTRA_LIBS.  If the component doesn't specify it's
-    # WRAPPER_EXTRA_LIBS and WRAPPER_EXTRA_LDFLAGS, try using LDFLAGS and LIBS if
-    # component didn't have it's own configure script (in which case,
-    # we know it didn't set LDFLAGS and LIBS because it can't) Don't
-    # have to do this if the component is building dynamically,
-    # because it will link against these (without a dependency from
-    # libmpi.so to these flags)
-    if test "$8" = "static"; then
-        AS_LITERAL_IF([$3],
-            [m4_foreach(flags, [LDFLAGS, LIBS],
-                    [AS_IF([test "$$2_$3_WRAPPER_EXTRA_]flags[" = ""],
-                           [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_]flags)],
-                           [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_WRAPPER_EXTRA_]flags)])
-                        ])],
-            [m4_foreach(flags, [LDFLAGS, LIBS],
-                    [[str="line=\$$2_$3_WRAPPER_EXTRA_]flags["]
-                      eval "$str"
-                      OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$line])])])
-    fi
+    # If a component is building static, we need to provide LDFLAGS
+    # and LIBS configuration to the wrapper compiler, so that it can
+    # provide them for the final link of the application.  Components
+    # can explicitly set <framework>_<component>_WRAPPER_EXTRA_<flag>
+    # for either LDFLAGS or LIBS, for cases where the component wants
+    # to explicitly manage that behavior.  If the full variable is not
+    # defined, this macro will copy <framework>_<component>_<flag>
+    # into the wrapper flags.
+    AS_IF([test "$8" = "static"],
+          [m4_foreach(flags, [LDFLAGS, LIBS],
+                      [AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_]flags,
+                                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_WRAPPER_EXTRA_]flags)],
+                                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3]_flags)])
+                       dnl yes, this is weird indenting, but the
+                       dnl combination of m4_foreach and AS_VAR_SET_IF
+                       dnl will result in the closing of one if and the
+                       dnl start of the next on the same line, resulting
+		       dnl in parse errors, if this is not here.
+		       ])])
 
     # if needed, copy over WRAPPER_EXTRA_CPPFLAGS.  Since a configure script
     # component can never be used in a STOP_AT_FIRST framework, we
@@ -925,13 +913,7 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
 
     # if we were explicitly disabled, don't build :)
     AS_IF([test "$DISABLE_$2" = "1"], [want_component=0])
-    AS_LITERAL_IF([$3],
-        [AS_IF([test "$DISABLE_$2_$3" = "1"], [want_component=0])],
-        [str="DISABLED_COMPONENT_CHECK=\$DISABLE_$2_$3"
-         eval $str
-         if test "$DISABLED_COMPONENT_CHECK" = "1" ; then
-             want_component=0
-         fi])
+    AS_VAR_IF([DISABLE_$2_$3], [1], [want_component = 0])
 
     AS_IF([test "$want_component" = "1"], [$4], [$5])
 ])
