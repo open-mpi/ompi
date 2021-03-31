@@ -48,6 +48,10 @@ Fortran only: Error status (integer).
 .ft R
 MPI_Win_free frees the window object \fIwin\fP and returns a null handle (equal to MPI_WIN_NULL). This collective call is executed by all processes in the group associated with \fIwin\fP. It can be invoked by a process only after it has completed its involvement in RMA communications on window \fIwin\fP, that is, the process has called MPI_Win_fence, or called MPI_Win_unlock to match a previous call to MPI_Win_lock. When the call returns, the window memory can be freed.
 
+.SH NOTES
+.ft R
+If the window was created through \fBMPI_Win_allocate\fP or \fBMPI_Win_allocate_shared\fP then the memory buffer from that call would be freed when calling \fBMPI_Win_free\fP.
+
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
 .sp
@@ -56,7 +60,7 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 
 .SH SEE ALSO
 MPI_Win_create
-MPI_Win_fence
-MPI_Win_unlock
+MPI_Win_allocate
+MPI_Win_allocate_shared
 .br
 
