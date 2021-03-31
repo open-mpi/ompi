@@ -725,6 +725,23 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     fi
 ])
 
+# OPAL_MCA_STRIP_LAFILES(output_variable(1),
+#                        input_list(2)
+#--------------------------------------------
+# Helper function to MCA_PROCESS_COMPONENT which will strip
+# any .la file entries in the LIBS list.  Used for when copying
+# a component's LIBS into WRAPPER_LIBS.
+AC_DEFUN([OPAL_MCA_STRIP_LAFILES], [
+    OPAL_VAR_SCOPE_PUSH([opal_tmp])
+
+    for arg in $2; do
+	opal_tmp=`echo $arg | awk '{print substr([$][1], length([$][1])-2) }'`
+        AS_IF([test "$opal_tmp" != ".la"],
+              [AS_IF([test -z "$$1"], [$1=$arg], [$1="$$1 $arg"])])
+    done
+
+    OPAL_VAR_SCOPE_POP
+])
 
 # MCA_PROCESS_COMPONENT(project_name(1), framework_name (2), component_name (3),
 #                        all_components_variable (4), static_components_variable (5)
@@ -806,15 +823,19 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # into the wrapper flags.
     AS_IF([test "$8" = "static"],
           [m4_foreach(flags, [LDFLAGS, LIBS],
-                      [AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_]flags,
+                      [m4_if(flags, [LIBS],
+                             [OPAL_MCA_STRIP_LAFILES([tmp_]flags, [$$2_$3_]flags)],
+                             [tmp_]flags[=$$2_$3_]flags)
+                       AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_]flags,
                                      [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_WRAPPER_EXTRA_]flags)],
-                                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3]_flags)])
+                                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$tmp_]flags)])
                        dnl yes, this is weird indenting, but the
                        dnl combination of m4_foreach and AS_VAR_SET_IF
                        dnl will result in the closing of one if and the
                        dnl start of the next on the same line, resulting
 		       dnl in parse errors, if this is not here.
 		       ])])
+
 
     # if needed, copy over WRAPPER_EXTRA_CPPFLAGS.  Since a configure script
     # component can never be used in a STOP_AT_FIRST framework, we
