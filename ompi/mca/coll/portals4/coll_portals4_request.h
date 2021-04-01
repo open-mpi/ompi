@@ -13,7 +13,10 @@
 #ifndef COLL_PORTALS4_REQUEST_H
 #define COLL_PORTALS4_REQUEST_H
 
+#include "ompi_config.h"
+
 #include "ompi/request/request.h"
+
 #include "coll_portals4.h"
 
 

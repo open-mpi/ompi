@@ -7,13 +7,14 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 
-#include "mpi.h"
+//#include "mpi.h"
+
+#include "opal/util/bit_ops.h"
+
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "opal/util/bit_ops.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"

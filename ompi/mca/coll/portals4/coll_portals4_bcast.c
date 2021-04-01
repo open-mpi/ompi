@@ -10,16 +10,18 @@
 
 #include "ompi_config.h"
 
-#include "coll_portals4.h"
-#include "coll_portals4_request.h"
+//#include "mpi.h"
 
-#include "mpi.h"
-#include "ompi/constants.h"
 #include "opal/util/bit_ops.h"
+
+#include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/datatype/ompi_datatype.h"
+
+#include "coll_portals4.h"
+#include "coll_portals4_request.h"
 
 /*
  * the bcast communication is based on 1 to N scheme

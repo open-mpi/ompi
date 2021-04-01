@@ -19,22 +19,25 @@
 
 #include "ompi_config.h"
 
-#include <portals4.h>
-#include "mpi.h"
+//#include "mpi.h"
+
+#include "opal/datatype/opal_convertor.h"
+
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/mca.h"
-#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/mtl/portals4/mtl_portals4_endpoint.h"
+
+#include <portals4.h>
 
 #include "ompi/mca/mtl/portals4/mtl_portals4.h"
+#include "ompi/mca/mtl/portals4/mtl_portals4_endpoint.h"
 
 #define MAXTREEFANOUT 32
 

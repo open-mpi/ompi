@@ -24,14 +24,15 @@
 
 #include "ompi_config.h"
 
-#include "coll_portals4.h"
-#include "coll_portals4_request.h"
+//#include "mpi.h"
 
-#include "mpi.h"
 #include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
+
+#include "coll_portals4.h"
+#include "coll_portals4_request.h"
 
 #define REQ_COLL_TABLE_ID           15
 #define REQ_COLL_FINISH_TABLE_ID    16
