@@ -428,10 +428,6 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
         }
         peer->regions = temp;
 
-        /* lock the region */
-        ompi_osc_rdma_lock_acquire_shared (module, &peer->super, 1, offsetof (ompi_osc_rdma_state_t, regions_lock),
-                                           OMPI_OSC_RDMA_LOCK_EXCLUSIVE);
-
         source_address = (uint64_t)(intptr_t) peer->super.state + offsetof (ompi_osc_rdma_state_t, regions);
         ret = ompi_osc_get_data_blocking (module, peer->super.state_btl_index, peer->super.state_endpoint,
                                           source_address, peer->super.state_handle, peer->regions, region_len);
@@ -439,9 +435,6 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
             OPAL_THREAD_UNLOCK(&module->lock);
             return ret;
         }
-
-        /* release the region lock */
-        ompi_osc_rdma_lock_release_shared (module, &peer->super, -1, offsetof (ompi_osc_rdma_state_t, regions_lock));
 
         /* update cached region ids */
         peer->region_id = region_id;
