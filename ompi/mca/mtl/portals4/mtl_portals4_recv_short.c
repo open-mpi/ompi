@@ -17,7 +17,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 
 #include "ompi/constants.h"

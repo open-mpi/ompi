@@ -22,14 +22,16 @@
 
 #include "ompi_config.h"
 
-#include "ompi/communicator/communicator.h"
 #include "opal/datatype/opal_convertor.h"
+
+#include "ompi/communicator/communicator.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_endpoint.h"
 #include "mtl_portals4_request.h"
+
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
 #include "mtl_portals4_flowctl.h"
 #endif

@@ -20,6 +20,9 @@
 #ifndef OMPI_MTL_PORTALS_RECV_SHORT_H
 #define OMPI_MTL_PORTALS_RECV_SHORT_H
 
+#include "ompi_config.h"
+
+#include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
 
 struct ompi_mtl_portals4_recv_short_block_t {

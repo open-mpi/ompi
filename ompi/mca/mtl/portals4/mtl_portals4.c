@@ -20,13 +20,12 @@
 
 #include "ompi_config.h"
 
-#include <portals4.h>
+#include "opal/class/opal_list.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/mtl/mtl.h"
-#include "opal/class/opal_list.h"
-#include "opal/mca/pmix/pmix-internal.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_recv_short.h"

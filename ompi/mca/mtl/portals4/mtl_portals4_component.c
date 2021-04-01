@@ -29,11 +29,12 @@
 #include "opal/util/output.h"
 #include "opal/mca/pmix/pmix-internal.h"
 
-#include "mtl_portals4.h"
-#include "mtl_portals4_request.h"
-#include "mtl_portals4_recv_short.h"
-#include "mtl_portals4_message.h"
 #include "ompi/runtime/mpiruntime.h"
+
+#include "mtl_portals4.h"
+#include "mtl_portals4_message.h"
+#include "mtl_portals4_recv_short.h"
+#include "mtl_portals4_request.h"
 
 static int param_priority;
 

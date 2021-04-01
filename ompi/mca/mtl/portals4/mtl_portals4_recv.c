@@ -21,19 +21,20 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/datatype/opal_convertor.h"
+#include "opal/mca/timer/base/base.h"
+
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/message/message.h"
-#include "opal/mca/timer/base/base.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_endpoint.h"
-#include "mtl_portals4_request.h"
-#include "mtl_portals4_recv_short.h"
 #include "mtl_portals4_message.h"
+#include "mtl_portals4_recv_short.h"
+#include "mtl_portals4_request.h"
 
 
 static int

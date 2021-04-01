@@ -18,13 +18,14 @@
  */
 
 #include "ompi_config.h"
+
 #include "ompi/communicator/communicator.h"
 #include "ompi/message/message.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_endpoint.h"
-#include "mtl_portals4_request.h"
 #include "mtl_portals4_message.h"
+#include "mtl_portals4_request.h"
 
 static int
 completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_request)

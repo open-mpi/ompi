@@ -9,11 +9,8 @@
 
 #include "ompi_config.h"
 
-#include <portals4.h>
-
 #include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
-
 
 int
 ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,

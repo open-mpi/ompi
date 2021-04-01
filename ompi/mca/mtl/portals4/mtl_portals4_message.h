@@ -13,6 +13,11 @@
 #ifndef MTL_PORTALS4_MESSAGE_H
 #define MTL_PORTALS4_MESSAGE_H
 
+#include "ompi_config.h"
+
+#include "opal/class/opal_free_list.h"
+
+
 struct ompi_mtl_portals4_message_t {
     opal_free_list_item_t super;
     ptl_event_t ev;
