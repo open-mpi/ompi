@@ -218,7 +218,7 @@ static int mca_btl_self_send(struct mca_btl_base_module_t *btl,
     if (btl_ownership) {
         mca_btl_self_free(btl, des);
     }
-    return 1;
+    return OPAL_SUCCESS;
 }
 
 static int mca_btl_self_sendi(struct mca_btl_base_module_t *btl,

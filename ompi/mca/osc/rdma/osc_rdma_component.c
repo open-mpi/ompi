@@ -266,7 +266,7 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_names);
     free(description_str);
 
-    ompi_osc_rdma_btl_alternate_names = "sm,tcp";
+    ompi_osc_rdma_btl_alternate_names = "sm,self,tcp";
     opal_asprintf(&description_str, "Comma-delimited list of alternate BTL component names to allow without verifying "
                   "connectivity (default: %s)", ompi_osc_rdma_btl_alternate_names);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "alternate_btls", description_str,
