@@ -24,8 +24,7 @@
 #ifndef BTL_PORTALS_H_HAS_BEEN_INCLUDED
 #define BTL_PORTALS_H_HAS_BEEN_INCLUDED
 
-#include <btl_portals4_frag.h>
-#include <portals4.h>
+#include "opal_config.h"
 
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
@@ -33,6 +32,10 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/btl.h"
+
+#include <portals4.h>
+
+#include "btl_portals4_frag.h"
 
 BEGIN_C_DECLS
 

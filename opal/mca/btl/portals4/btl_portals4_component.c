@@ -38,7 +38,6 @@
 #include "btl_portals4.h"
 #include "btl_portals4_frag.h"
 #include "btl_portals4_recv.h"
-#include "portals4.h"
 
 static int mca_btl_portals4_component_register(void);
 static int mca_btl_portals4_component_open(void);
@@ -638,7 +637,7 @@ int mca_btl_portals4_component_progress(void)
 
                 OPAL_OUTPUT_VERBOSE((50, opal_btl_base_framework.framework_output,
                                      "PTL_EVENT_PUT: tag=%x base_descriptor=%p cbfunc: %lx\n", tag,
-                                     (void *) &btl_base_descriptor, (uint64_t) reg->cbfunc));
+                                     (void *) &recv_descriptor, (uint64_t) reg->cbfunc));
                 reg->cbfunc(&portals4_btl->super, &recv_descriptor);
 
                 goto done;

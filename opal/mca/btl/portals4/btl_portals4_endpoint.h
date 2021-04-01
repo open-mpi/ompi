@@ -21,6 +21,8 @@
 #ifndef OPAL_BTL_PORTALS4_ENDPOINT_H
 #define OPAL_BTL_PORTALS4_ENDPOINT_H
 
+#include "opal_config.h"
+
 #include "btl_portals4.h"
 
 BEGIN_C_DECLS

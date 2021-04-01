@@ -20,6 +20,8 @@
 #ifndef OPAL_BTL_PORTALS4_RECV_H
 #define OPAL_BTL_PORTALS4_RECV_H
 
+#include "opal_config.h"
+
 #include "btl_portals4_frag.h"
 
 struct mca_btl_portals4_recv_block_t {
