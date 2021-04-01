@@ -385,15 +385,16 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int mpi_assert, ompi_win_t 
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start group size %d", sync->num_peers);
 
+    sync->type = OMPI_OSC_RDMA_SYNC_TYPE_PSCW;
+
     if (0 == ompi_group_size (group)) {
         /* nothing more to do. this is an empty start epoch */
+        sync->peer_list.peers = NULL;
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_SUCCESS;
     }
 
     opal_atomic_wmb ();
-
-    sync->type = OMPI_OSC_RDMA_SYNC_TYPE_PSCW;
 
     /* prevent us from entering a passive-target, fence, or another pscw access epoch until
      * the matching complete is called */
@@ -466,16 +467,13 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
     sync->type = OMPI_OSC_RDMA_SYNC_TYPE_NONE;
     sync->epoch_active = false;
 
-    /* phase 2 cleanup group */
-    OBJ_RELEASE(group);
-
     peers = sync->peer_list.peers;
     if (NULL == peers) {
-        /* empty peer list */
         OPAL_THREAD_UNLOCK(&(module->lock));
-        OBJ_RELEASE(group);
         return OMPI_SUCCESS;
     }
+
+    OBJ_RELEASE(group);
 
     sync->peer_list.peers = NULL;
 
