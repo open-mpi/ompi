@@ -252,28 +252,6 @@ extern int mca_btl_tcp_send(struct mca_btl_base_module_t *btl,
                             struct mca_btl_base_descriptor_t *descriptor, mca_btl_base_tag_t tag);
 
 /**
- * Initiate an asynchronous put.
- */
-
-int mca_btl_tcp_put(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                    void *local_address, uint64_t remote_address,
-                    mca_btl_base_registration_handle_t *local_handle,
-                    mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                    void *cbdata);
-
-/**
- * Initiate an asynchronous get.
- */
-
-int mca_btl_tcp_get(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                    void *local_address, uint64_t remote_address,
-                    mca_btl_base_registration_handle_t *local_handle,
-                    mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                    void *cbdata);
-
-/**
  * Allocate a descriptor with a segment of the requested size.
  * Note that the BTL layer may choose to return a smaller size
  * if it cannot support the request.

@@ -30,8 +30,6 @@ BEGIN_C_DECLS
  */
 
 #define MCA_BTL_TCP_HDR_TYPE_SEND 1
-#define MCA_BTL_TCP_HDR_TYPE_PUT  2
-#define MCA_BTL_TCP_HDR_TYPE_GET  3
 #define MCA_BTL_TCP_HDR_TYPE_FIN  4
 /* The MCA_BTL_TCP_HDR_TYPE_FIN is a special kind of message sent during normal
  * connexion closing. Before the endpoint closes the socket, it performs a
