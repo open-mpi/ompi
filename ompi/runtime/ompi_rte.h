@@ -216,6 +216,8 @@ OMPI_DECLSPEC int ompi_rte_convert_string_to_process_name(opal_process_name_t *n
 OMPI_DECLSPEC int ompi_rte_convert_process_name_to_string(char** name_string,
                                                           const opal_process_name_t *name);
 
+OMPI_DECLSPEC void ompi_rte_breakpoint(char *name);
+
 #define OMPI_LOCAL_JOBID(n) \
     ( (n) & 0x0000ffff)
 #define OMPI_JOB_FAMILY(n)  \
