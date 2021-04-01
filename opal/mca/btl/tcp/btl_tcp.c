@@ -54,7 +54,6 @@ mca_btl_tcp_module_t mca_btl_tcp_module =
              .btl_free = mca_btl_tcp_free,
              .btl_prepare_src = mca_btl_tcp_prepare_src,
              .btl_send = mca_btl_tcp_send,
-             .btl_put = mca_btl_tcp_put,
              .btl_dump = mca_btl_base_dump,
              .btl_register_error = mca_btl_tcp_register_error_cb, /* register error */
          },
