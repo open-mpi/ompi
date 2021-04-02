@@ -142,7 +142,13 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
     } else {
         opal_output(0, "Unknown sizeof(bool) for the remote architecture\n");
     }
-
+    if (opal_arch_checkmask(&master->remote_arch, OPAL_ARCH_LONGIS64)) {
+        remote_sizes[OPAL_DATATYPE_LONG] = 8;
+        remote_sizes[OPAL_DATATYPE_UNSIGNED_LONG] = 8;
+    } else {
+        remote_sizes[OPAL_DATATYPE_LONG] = 4;
+        remote_sizes[OPAL_DATATYPE_UNSIGNED_LONG] = 4;
+    }
     /**
      * Now we can compute the conversion mask. For all sizes where the remote
      * and local architecture differ a conversion is needed. Moreover, if the
@@ -434,7 +440,7 @@ int32_t opal_convertor_set_position_nocheck(opal_convertor_t *convertor, size_t 
         }
         rc = opal_convertor_generic_simple_position(convertor, position);
         /**
-         * If we have a non-contigous send convertor don't allow it move in the middle
+         * If we have a non-contiguous send convertor don't allow it move in the middle
          * of a predefined datatype, it won't be able to copy out the left-overs
          * anyway. Instead force the position to stay on predefined datatypes
          * boundaries. As we allow partial predefined datatypes on the contiguous
