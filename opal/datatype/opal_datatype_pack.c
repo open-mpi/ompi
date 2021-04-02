@@ -375,7 +375,7 @@ int32_t opal_generic_simple_pack_function(opal_convertor_t *pConvertor, struct i
     *max_data = total_packed;
     pConvertor->bConverted += total_packed; /* update the already converted bytes */
     *out_size = iov_count;
-    if (pConvertor->bConverted == pConvertor->local_size) {
+    if (pConvertor->bConverted == pConvertor->remote_size) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
@@ -398,7 +398,7 @@ int32_t opal_generic_simple_pack_function(opal_convertor_t *pConvertor, struct i
  * to a contiguous output buffer with a predefined size.
  * return OPAL_SUCCESS if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
- *        1 if everything went fine and the data was completly converted
+ *        1 if everything went fine and the data was completely converted
  *       -1 something wrong occurs.
  */
 
@@ -424,7 +424,7 @@ pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     if ((remote_elem_size * cando_count) > *(SPACE))
         cando_count = (*SPACE) / blocklen_bytes;
 
-    /* premptively update the number of COUNT we will return. */
+    /* preemptively update the number of COUNT we will return. */
     *(COUNT) -= cando_count;
 
     if (_elem->blocklen == 1) {
@@ -472,7 +472,7 @@ pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
                                                _memory, *SPACE, local_elem_size,
                                                _packed, *SPACE, remote_elem_size,
                                                &advance);
-        _memory += do_now_bytes;
+        _memory += cando_count * local_elem_size;
         _packed += do_now_bytes;
     }
 
@@ -615,7 +615,9 @@ int32_t opal_pack_general_function(opal_convertor_t *pConvertor, struct iovec *i
     *max_data = total_packed;
     pConvertor->bConverted += total_packed; /* update the already converted bytes */
     *out_size = iov_count;
-    if (pConvertor->bConverted == pConvertor->local_size) {
+    size_t expected_packed_size;
+    opal_convertor_get_packed_size(pConvertor, &expected_packed_size);
+    if (pConvertor->bConverted == expected_packed_size) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }

@@ -222,7 +222,7 @@ find_unused_byte:
     /* reload the length as it is reset by the macro */
     data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
 
-    /* For every occurence of the unused byte move data from the saved
+    /* For every occurrence of the unused byte move data from the saved
      * buffer back into the user memory.
      */
 #if OPAL_CUDA_SUPPORT
@@ -422,7 +422,7 @@ int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct
     *max_data = total_unpacked;
     pConvertor->bConverted += total_unpacked; /* update the already converted bytes */
     *out_size = iov_count;
-    if (pConvertor->bConverted == pConvertor->remote_size) {
+    if (pConvertor->bConverted == pConvertor->local_size) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
@@ -446,7 +446,7 @@ int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct
  * to a contiguous output buffer with a predefined size.
  * return OPAL_SUCCESS if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
- *        1 if everything went fine and the data was completly converted
+ *        1 if everything went fine and the data was completely converted
  *       -1 something wrong occurs.
  */
 static inline void
@@ -471,7 +471,7 @@ unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     if ((remote_elem_size * cando_count) > *(SPACE))
         cando_count = (*SPACE) / blocklen_bytes;
 
-    /* premptively update the number of COUNT we will return. */
+    /* preemptively update the number of COUNT we will return. */
     *(COUNT) -= cando_count;
 
     if (_elem->blocklen == 1) {
@@ -480,7 +480,7 @@ unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
                                                _memory, *SPACE, _elem->extent,
                                                &advance);
         _memory += cando_count * _elem->extent;
-        _packed += cando_count * local_elem_size;
+        _packed += cando_count * remote_elem_size;
         goto update_and_return;
     }
 
@@ -519,7 +519,7 @@ unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
                                                _packed, *SPACE, remote_elem_size,
                                                _memory, *SPACE, local_elem_size,
                                                &advance);
-        _memory += do_now_bytes;
+        _memory += cando_count * local_elem_size;
         _packed += do_now_bytes;
     }
 
@@ -592,17 +592,6 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
                                      opal_datatype_basicDatatypes[type]->name););
                 unpack_predefined_heterogeneous(pConvertor, pElem, &count_desc, &conv_ptr, &iov_ptr,
                                                 &iov_len_local);
-#if 0
-                rc = master->pFunctions[type](pConvertor, count_desc, iov_ptr, iov_len_local,
-                                              opal_datatype_basicDatatypes[type]->size,
-                                              conv_ptr + pElem->elem.disp,
-                                              (pConvertor->pDesc->ub - pConvertor->pDesc->lb)
-                                                  * pConvertor->count,
-                                              description[pos_desc].elem.extent, &advance);
-                iov_len_local -= advance; /* decrease the available space in the buffer */
-                iov_ptr += advance;       /* increase the pointer to the buffer */
-                count_desc -= rc;         /* compute leftovers */
-#endif
                 if (0 == count_desc) {    /* completed */
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++; /* advance to the next data */
@@ -612,9 +601,6 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
                     }
                     continue;
                 }
-#if 0
-                conv_ptr += rc * description[pos_desc].elem.extent;
-#endif
                 assert(pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED);
                 assert(0 == iov_len_local);
                 if (0 != iov_len_local) {
@@ -682,7 +668,9 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
     *max_data = total_unpacked;
     pConvertor->bConverted += total_unpacked; /* update the already converted bytes */
     *out_size = iov_count;
-    if (pConvertor->bConverted == pConvertor->remote_size) {
+    size_t expected_packed_size;
+    opal_convertor_get_packed_size(pConvertor, &expected_packed_size);
+    if (pConvertor->bConverted == expected_packed_size) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
