@@ -231,8 +231,8 @@ static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
                 req->req_recv.req_base.req_addr,
                 0,
                 &req->req_recv.req_base.req_convertor);
-        opal_convertor_get_unpacked_size(&req->req_recv.req_base.req_convertor,
-                                         &req->req_bytes_expected);
+        opal_convertor_get_packed_size(&req->req_recv.req_base.req_convertor,
+                                       &req->req_bytes_expected);
     }
 }
 

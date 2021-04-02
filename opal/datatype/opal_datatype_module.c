@@ -78,6 +78,8 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_double_complex = OPAL_DATATYPE
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_long_double_complex = OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool =        OPAL_DATATYPE_INITIALIZER_BOOL(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar =       OPAL_DATATYPE_INITIALIZER_WCHAR(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_long =  OPAL_DATATYPE_INITIALIZER_LONG(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_unsigned_long =  OPAL_DATATYPE_INITIALIZER_UNSIGNED_LONG(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable = OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED(UNAVAILABLE, 0);
 
 OPAL_DECLSPEC dt_elem_desc_t opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_MAX_PREDEFINED] = {{{{0}}}};
@@ -108,6 +110,8 @@ OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINE
     [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = sizeof(long double _Complex),
     [OPAL_DATATYPE_BOOL] = sizeof (_Bool),
     [OPAL_DATATYPE_WCHAR] = sizeof (wchar_t),
+    [OPAL_DATATYPE_LONG] = sizeof(long),
+    [OPAL_DATATYPE_UNSIGNED_LONG] = sizeof(unsigned long),
 };
 
 /*
@@ -139,6 +143,8 @@ OPAL_DECLSPEC const opal_datatype_t* opal_datatype_basicDatatypes[OPAL_DATATYPE_
     [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = &opal_datatype_long_double_complex,
     [OPAL_DATATYPE_BOOL] = &opal_datatype_bool,
     [OPAL_DATATYPE_WCHAR] = &opal_datatype_wchar,
+    [OPAL_DATATYPE_LONG] = &opal_datatype_long,
+    [OPAL_DATATYPE_UNSIGNED_LONG] = &opal_datatype_unsigned_long,
     [OPAL_DATATYPE_UNAVAILABLE] = &opal_datatype_unavailable,
 };
 
@@ -220,7 +226,7 @@ int32_t opal_datatype_init( void )
     int32_t i;
 
     /**
-     * Force he initialization of the opal_datatype_t class. This will allow us to
+     * Force the initialization of the opal_datatype_t class. This will allow us to
      * call OBJ_DESTRUCT without going too deep in the initialization process.
      */
     opal_class_initialize(OBJ_CLASS(opal_datatype_t));

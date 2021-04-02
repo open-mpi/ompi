@@ -241,29 +241,36 @@ COPY_TYPE (wchar, wchar_t, 1)
 /* Table of predefined copy functions - one for each OPAL type */
 /* NOTE: The order of this array *MUST* match the order in opal_datatype_basicDatatypes */
 conversion_fct_t opal_datatype_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED] = {
-    (conversion_fct_t)NULL,                      /* OPAL_DATATYPE_LOOP         */
-    (conversion_fct_t)NULL,                      /* OPAL_DATATYPE_END_LOOP     */
-    (conversion_fct_t)NULL,                      /* OPAL_DATATYPE_LB           */
-    (conversion_fct_t)NULL,                      /* OPAL_DATATYPE_UB           */
-    (conversion_fct_t)copy_bytes_1,              /* OPAL_DATATYPE_INT1         */
-    (conversion_fct_t)copy_bytes_2,              /* OPAL_DATATYPE_INT2         */
-    (conversion_fct_t)copy_bytes_4,              /* OPAL_DATATYPE_INT4         */
-    (conversion_fct_t)copy_bytes_8,              /* OPAL_DATATYPE_INT8         */
-    (conversion_fct_t)copy_bytes_16,             /* OPAL_DATATYPE_INT16        */
-    (conversion_fct_t)copy_bytes_1,              /* OPAL_DATATYPE_UINT1        */
-    (conversion_fct_t)copy_bytes_2,              /* OPAL_DATATYPE_UINT2        */
-    (conversion_fct_t)copy_bytes_4,              /* OPAL_DATATYPE_UINT4        */
-    (conversion_fct_t)copy_bytes_8,              /* OPAL_DATATYPE_UINT8        */
-    (conversion_fct_t)copy_bytes_16,             /* OPAL_DATATYPE_UINT16       */
-    (conversion_fct_t)copy_float_2,              /* OPAL_DATATYPE_FLOAT2       */
-    (conversion_fct_t)copy_float_4,              /* OPAL_DATATYPE_FLOAT4       */
-    (conversion_fct_t)copy_float_8,              /* OPAL_DATATYPE_FLOAT8       */
-    (conversion_fct_t)copy_float_12,             /* OPAL_DATATYPE_FLOAT12       */
-    (conversion_fct_t)copy_float_16,             /* OPAL_DATATYPE_FLOAT16      */
-    (conversion_fct_t)copy_float_complex,        /* OPAL_DATATYPE_FLOAT_COMPLEX */
-    (conversion_fct_t)copy_double_complex,       /* OPAL_DATATYPE_DOUBLE_COMPLEX */
-    (conversion_fct_t)copy_long_double_complex,  /* OPAL_DATATYPE_LONG_DOUBLE_COMPLEX */
-    (conversion_fct_t)copy_bool,                 /* OPAL_DATATYPE_BOOL         */
-    (conversion_fct_t)copy_wchar,                /* OPAL_DATATYPE_WCHAR        */
-    (conversion_fct_t)NULL                       /* OPAL_DATATYPE_UNAVAILABLE  */
+    [OPAL_DATATYPE_LOOP]                =     (conversion_fct_t) NULL,
+    [OPAL_DATATYPE_END_LOOP]            =     (conversion_fct_t) NULL,
+    [OPAL_DATATYPE_LB]                  =     (conversion_fct_t) NULL,
+    [OPAL_DATATYPE_UB]                  =     (conversion_fct_t) NULL,
+    [OPAL_DATATYPE_INT1]                =     (conversion_fct_t) copy_bytes_1,
+    [OPAL_DATATYPE_INT2]                =     (conversion_fct_t) copy_bytes_2,
+    [OPAL_DATATYPE_INT4]                =     (conversion_fct_t) copy_bytes_4,
+    [OPAL_DATATYPE_INT8]                =     (conversion_fct_t) copy_bytes_8,
+    [OPAL_DATATYPE_INT16]               =     (conversion_fct_t) copy_bytes_16,
+    [OPAL_DATATYPE_UINT1]               =     (conversion_fct_t) copy_bytes_1,
+    [OPAL_DATATYPE_UINT2]               =     (conversion_fct_t) copy_bytes_2,
+    [OPAL_DATATYPE_UINT4]               =     (conversion_fct_t) copy_bytes_4,
+    [OPAL_DATATYPE_UINT8]               =     (conversion_fct_t) copy_bytes_8,
+    [OPAL_DATATYPE_UINT16]              =     (conversion_fct_t) copy_bytes_16,
+    [OPAL_DATATYPE_FLOAT2]              =     (conversion_fct_t) copy_float_2,
+    [OPAL_DATATYPE_FLOAT4]              =     (conversion_fct_t) copy_float_4,
+    [OPAL_DATATYPE_FLOAT8]              =     (conversion_fct_t) copy_float_8,
+    [OPAL_DATATYPE_FLOAT12]             =     (conversion_fct_t) copy_float_12,
+    [OPAL_DATATYPE_FLOAT16]             =     (conversion_fct_t) copy_float_16,
+    [OPAL_DATATYPE_FLOAT_COMPLEX]       =     (conversion_fct_t) copy_float_complex,
+    [OPAL_DATATYPE_DOUBLE_COMPLEX]      =     (conversion_fct_t) copy_double_complex,
+    [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] =     (conversion_fct_t) copy_long_double_complex,
+    [OPAL_DATATYPE_BOOL]                =     (conversion_fct_t) copy_bool,
+    [OPAL_DATATYPE_WCHAR]               =     (conversion_fct_t) copy_wchar,
+#if SIZEOF_LONG == 4
+    [OPAL_DATATYPE_LONG]                =     (conversion_fct_t)copy_bytes_4,
+    [OPAL_DATATYPE_UNSIGNED_LONG]       =     (conversion_fct_t)copy_bytes_4,
+#elif SIZEOF_LONG == 8
+    [OPAL_DATATYPE_LONG]                =     (conversion_fct_t)copy_bytes_8,
+    [OPAL_DATATYPE_UNSIGNED_LONG]       =     (conversion_fct_t)copy_bytes_8,
+#endif
+    [OPAL_DATATYPE_UNAVAILABLE]         =     NULL,
 };

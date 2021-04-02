@@ -60,7 +60,9 @@ extern int opal_datatype_dfd;
  *
  * At the OPAL-level we do not care from which language the datatype came from
  * (C, C++ or FORTRAN), we only focus on their internal representation in
- * the host memory.
+ * the host memory. There is one notable exception, the long predefined type
+ * which need to be handled at the lowest level due to it's variable size but
+ * fixed XDR representation.
  *
  * NOTE: This predefined datatype order should be matched by any upper-level
  * users of the OPAL datatype.
@@ -90,7 +92,9 @@ extern int opal_datatype_dfd;
 #define OPAL_DATATYPE_LONG_DOUBLE_COMPLEX 21
 #define OPAL_DATATYPE_BOOL           22
 #define OPAL_DATATYPE_WCHAR          23
-#define OPAL_DATATYPE_UNAVAILABLE    24
+#define OPAL_DATATYPE_LONG                24
+#define OPAL_DATATYPE_UNSIGNED_LONG       25
+#define OPAL_DATATYPE_UNAVAILABLE    26
 
 #ifndef OPAL_DATATYPE_MAX_PREDEFINED
 #define OPAL_DATATYPE_MAX_PREDEFINED (OPAL_DATATYPE_UNAVAILABLE+1)
@@ -319,6 +323,11 @@ struct opal_datatype_t;
 #else
 #define OPAL_DATATYPE_INITIALIZER_UINT16(FLAGS)     OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED( INT16, FLAGS )
 #endif
+
+#define OPAL_DATATYPE_INITIALIZER_LONG(FLAGS)  \
+     OPAL_DATATYPE_INIT_BASIC_DATATYPE(long, OPAL_ALIGNMENT_LONG, LONG, FLAGS)
+#define OPAL_DATATYPE_INITIALIZER_UNSIGNED_LONG(FLAGS)  \
+     OPAL_DATATYPE_INIT_BASIC_DATATYPE(unsigned long, OPAL_ALIGNMENT_LONG, UNSIGNED_LONG, FLAGS)
 
 #if SIZEOF_FLOAT == 2
 #define OPAL_DATATYPE_INITIALIZER_FLOAT2(FLAGS)     OPAL_DATATYPE_INIT_BASIC_DATATYPE( float, OPAL_ALIGNMENT_FLOAT, FLOAT2, FLAGS )
