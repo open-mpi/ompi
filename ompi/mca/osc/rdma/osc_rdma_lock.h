@@ -86,10 +86,12 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, uint8_t
 
     if (OPAL_SUCCESS != ret) {
         if (OPAL_LIKELY(1 == ret)) {
-            *result = ((int64_t *) pending_op->op_buffer)[0];
             ret = OMPI_SUCCESS;
-            ompi_osc_rdma_atomic_complete (selected_btl, endpoint, pending_op->op_buffer,
-                                           pending_op->op_frag->handle, (void *) pending_op, NULL, OPAL_SUCCESS);
+            if(false == pending_op->op_complete) {
+                *result = ((int64_t *) pending_op->op_buffer)[0];
+                ompi_osc_rdma_atomic_complete (selected_btl, endpoint, pending_op->op_buffer,
+                                               pending_op->op_frag->handle, (void *) pending_op, NULL, OPAL_SUCCESS);
+            }
         } else {
             /* need to release here because ompi_osc_rdma_atomic_complete was not called */
             OBJ_RELEASE(pending_op);
@@ -161,8 +163,10 @@ static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, uint8_t 
         /* need to release here because ompi_osc_rdma_atomic_complete was not called */
         OBJ_RELEASE(pending_op);
         if (OPAL_LIKELY(1 == ret)) {
-            if (cbfunc) {
-                cbfunc (cbdata, cbcontext, OMPI_SUCCESS);
+            if(false == pending_op->op_complete) {
+                if (cbfunc) {
+                    cbfunc (cbdata, cbcontext, OMPI_SUCCESS);
+                }
             }
             ret = OMPI_SUCCESS;
         }

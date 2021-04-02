@@ -614,7 +614,7 @@ static int mca_btl_base_am_rdma_respond(mca_btl_base_module_t *btl,
     send_descriptor->des_cbfunc = NULL;
 
     int ret = btl->btl_send(btl, endpoint, send_descriptor, mca_btl_base_rdma_resp_tag());
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+    if (OPAL_UNLIKELY(ret < 0)) {
         *descriptor = send_descriptor;
     }
     return ret;
@@ -635,7 +635,7 @@ mca_btl_base_am_rmda_rdma_complete(mca_btl_base_module_t *btl,
     operation->is_completed = true;
     int ret = mca_btl_base_am_rdma_respond(operation->btl, operation->endpoint,
                                            &operation->descriptor, NULL, &operation->hdr);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+    if (OPAL_UNLIKELY(ret < 0)) {
         BTL_VERBOSE(
             ("could not send a response. queueing the response for later. endpoint=%p, ret=%d",
              endpoint, ret));
@@ -781,7 +781,7 @@ static int mca_btl_base_am_rdma_progress(void)
             int ret = descriptor->btl->btl_send(descriptor->btl, descriptor->endpoint,
                                                 descriptor->descriptor,
                                                 mca_btl_base_rdma_tag(context->type));
-            if (OPAL_SUCCESS == ret) {
+            if (ret <= 1) {
                 opal_list_remove_item(&default_module.queued_initiator_descriptors,
                                       &descriptor->super);
             }
@@ -932,7 +932,7 @@ static void mca_btl_base_am_process_rdma(mca_btl_base_module_t *btl,
         abort();
     }
 
-    if (OPAL_SUCCESS != ret) {
+    if (ret < 0) {
         mca_btl_base_rdma_queue_operation(btl, desc->endpoint, descriptor, 0, hdr, operation);
     }
 }
@@ -995,7 +995,7 @@ static void mca_btl_base_am_process_atomic(mca_btl_base_module_t *btl,
 
     mca_btl_base_descriptor_t *descriptor = NULL;
     int ret = mca_btl_base_am_rdma_respond(btl, desc->endpoint, &descriptor, &atomic_response, hdr);
-    if (OPAL_SUCCESS != ret) {
+    if (ret < 0) {
         mca_btl_base_rdma_queue_operation(btl, desc->endpoint, descriptor, atomic_response, hdr,
                                           NULL);
     }

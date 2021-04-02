@@ -71,6 +71,7 @@ static int ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *modul
         }
     }
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "WARNING - couldn't find a connection");
     /* unlikely but can happen when creating a peer for self */
     return OMPI_ERR_UNREACH;
 }

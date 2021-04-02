@@ -266,7 +266,7 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_names);
     free(description_str);
 
-    ompi_osc_rdma_btl_alternate_names = "sm,self,tcp";
+    ompi_osc_rdma_btl_alternate_names = "sm,tcp";
     opal_asprintf(&description_str, "Comma-delimited list of alternate BTL component names to allow without verifying "
                   "connectivity (default: %s)", ompi_osc_rdma_btl_alternate_names);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "alternate_btls", description_str,
@@ -521,7 +521,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
     my_peer->state = (uint64_t) (uintptr_t) module->state;
 
-    if (module->use_cpu_atomics) {
+    if (module->use_cpu_atomics || my_peer->rank == my_rank) {
         /* all peers are local or it is safe to mix cpu and nic atomics */
         my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
     } else {
@@ -596,7 +596,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
     if (!module->single_node) {
         for (int i = 0 ; i < module->btls_in_use ; ++i) {
-            module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
+            module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
         }
     }
 
@@ -776,7 +776,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
 
             /* set up peer state */
-            if (module->use_cpu_atomics) {
+            if (module->use_cpu_atomics || peer->rank == my_rank) {
                 /* all peers are local or it is safe to mix cpu and nic atomics */
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
                 peer->state = (osc_rdma_counter_t) peer_state;
@@ -805,7 +805,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             ompi_osc_module_add_peer (module, peer);
 
             if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor) {
-                if (module->use_cpu_atomics && peer_rank == my_rank) {
+                if (peer_rank == my_rank) {
                     peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
                 }
                 /* nothing more to do */
@@ -821,7 +821,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 ex_peer->size = temp[i].size;
             }
 
-            if (module->use_cpu_atomics && (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank)) {
+            if (module->use_cpu_atomics && (MPI_WIN_FLAVOR_ALLOCATE == module->flavor)) {
                 /* base is local and cpu atomics are available */
                 if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
                     ex_peer->super.base = (uintptr_t) module->segment_base + offset;
@@ -829,7 +829,6 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                     ex_peer->super.base = (uintptr_t) *base;
                 }
 
-                peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
                 offset += temp[i].size;
             } else {
                 ex_peer->super.base = peer_region->base;
@@ -837,6 +836,10 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 if (module->use_memory_registration) {
                     ex_peer->super.base_handle = (mca_btl_base_registration_handle_t *) peer_region->btl_handle_data;
                 }
+            }
+
+            if(my_rank == peer_rank) {
+                peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
             }
         }
     } while (0);
