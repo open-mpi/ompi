@@ -26,6 +26,7 @@
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -402,6 +403,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     pmix_status_t rc;
     OMPI_TIMING_INIT(64);
     opal_pmix_lock_t mylock;
+    opal_process_name_t pname;
 
     ompi_hook_base_mpi_init_top(argc, argv, requested, provided);
 
@@ -445,6 +447,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     ompi_mpi_thread_level(requested, provided);
 
     /* Setup enough to check get/set MCA params */
+    memset(&opal_process_info, 0, sizeof(opal_process_info));
     if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
         error = "ompi_mpi_init: opal_init_util failed";
         goto error;
@@ -467,6 +470,40 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* Register MCA variables */
     if (OPAL_SUCCESS != (ret = ompi_register_mca_variables())) {
         error = "ompi_mpi_init: ompi_register_mca_variables failed";
+        goto error;
+    }
+
+    /* setup our internal nspace hack */
+    opal_pmix_setup_nspace_tracker();
+    /* init PMIx */
+    if (PMIX_SUCCESS != (ret = PMIx_Init(&opal_process_info.myprocid, NULL, 0))) {
+        /* if we get PMIX_ERR_UNREACH indicating that we cannot reach the
+         * server, then we assume we are operating as a singleton */
+        if (PMIX_ERR_UNREACH == ret) {
+            ompi_singleton = true;
+        } else {
+            /* we cannot run - this could be due to being direct launched
+             * without the required PMI support being built, so print
+             * out a help message indicating it */
+            opal_show_help("help-mpi-runtime.txt", "no-pmi", true, PMIx_Error_string(ret));
+            return OPAL_ERR_SILENT;
+        }
+    }
+    /* setup the process name fields - also registers the new nspace */
+    OPAL_PMIX_CONVERT_PROCT(ret, &pname, &opal_process_info.myprocid);
+    if (OPAL_SUCCESS != ret) {
+        error = "ompi_mpi_init: converting process name";
+        goto error;
+    }
+    OPAL_PROC_MY_NAME.jobid = pname.jobid;
+    OPAL_PROC_MY_NAME.vpid = pname.vpid;
+    opal_process_info.my_name.jobid = OPAL_PROC_MY_NAME.jobid;
+    opal_process_info.my_name.vpid = OPAL_PROC_MY_NAME.vpid;
+
+    /* get our topology and cache line size */
+    ret = opal_hwloc_base_get_topology();
+    if (OPAL_SUCCESS != ret) {
+        error = "ompi_mpi_init: get topology";
         goto error;
     }
 
