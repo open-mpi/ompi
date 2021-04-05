@@ -33,13 +33,29 @@ int check_vector( void* send_buffer, void* packed,
 static int pack_unpack_datatype( void* send_data, ompi_datatype_t *datatype, int count,
                                  void* recv_data, checker_t validator, void *validator_arg );
 
-static void dump_hex(void* what, size_t length);
-
-static void dump_hex(void* what, size_t length)
+static void
+dump_hex(const char* msg, const void* vbuf, int nbytes,
+         int start_from, int stop_at, int vals_per_line)
 {
-    size_t i;
-    for( i = 0; i < length; i++ ) {
-        printf("%02x", (unsigned int)(((unsigned char*)what)[i]));
+    const char* buf = (const char*)vbuf;
+
+    if( -1 == stop_at ) stop_at = nbytes;
+
+    for (int i = (start_from / vals_per_line) * vals_per_line; i < nbytes; ++i) {
+        if( i >= stop_at ) return;
+        if (0 == (i % vals_per_line)) {
+            if( NULL == msg) printf("\n");
+            else printf("\n%s", msg);
+        } else {
+            if (i % 4 == 0) {
+                printf("  ");
+            }
+        }
+        printf(" ");
+        if( i < start_from )
+            printf("  ");
+        else
+            printf("%02x", *((unsigned char *)(buf + i)));
     }
 }
 
@@ -131,7 +147,8 @@ static int pack_unpack_datatype( void* send_data, ompi_datatype_t *datatype, int
         return -1;
     }
 
-    printf("packed %ld bytes into a %ld bytes buffer ", position, buffer_size); dump_hex(buffer, position); printf("\n");
+    printf("packed %ld bytes into a %ld bytes buffer ", position, buffer_size);
+    dump_hex(NULL, buffer, position, 0, -1, 24); printf("\n");
 
     position = 0;
     error = ompi_datatype_unpack_external("external32", buffer, buffer_size, &position,
@@ -155,12 +172,14 @@ int main(int argc, char *argv[])
 
         if( verbose ) {
             printf("send data %08x %08x \n", send_data[0], send_data[1]);
-            printf("data "); dump_hex(&send_data, sizeof(int32_t) * 2); printf("\n");
+            printf("data ");
+            dump_hex(NULL, &send_data, sizeof(int32_t) * 2, 0, -1, 24); printf("\n");
         }
         (void)pack_unpack_datatype( send_data, &ompi_mpi_int32_t.dt, 2,
                                     recv_data, check_contiguous, (void*)&ompi_mpi_int32_t.dt );
         if( verbose ) {
-            printf("recv "); dump_hex(&recv_data, sizeof(int32_t) * 2); printf("\n");
+            printf("recv ");
+            dump_hex(NULL, &recv_data, sizeof(int32_t) * 2, 0, -1, 24); printf("\n");
             printf("recv data %08x %08x \n", recv_data[0], recv_data[1]);
         }
         if( (send_data[0] != recv_data[0]) || (send_data[1] != recv_data[1]) ) {
@@ -175,12 +194,14 @@ int main(int argc, char *argv[])
 
         if( verbose ) {
             printf("send data %08x %08x \n", send_data[0], send_data[1]);
-            printf("data "); dump_hex(&send_data, sizeof(int16_t) * 2); printf("\n");
+            printf("data ");
+            dump_hex(NULL, &send_data, sizeof(int16_t) * 2, 0, -1, 24); printf("\n");
         }
         (void)pack_unpack_datatype( send_data, &ompi_mpi_int16_t.dt, 2,
                                     recv_data, check_contiguous, (void*)&ompi_mpi_int16_t.dt );
         if( verbose ) {
-            printf("recv "); dump_hex(&recv_data, sizeof(int16_t) * 2); printf("\n");
+            printf("recv ");
+            dump_hex(NULL, &recv_data, sizeof(int16_t) * 2, 0, -1, 24); printf("\n");
             printf("recv data %08x %08x \n", recv_data[0], recv_data[1]);
         }
         if( (send_data[0] != recv_data[0]) || (send_data[1] != recv_data[1]) ) {
@@ -208,16 +229,18 @@ int main(int argc, char *argv[])
 
         if( verbose ) {
             printf("send data %08x %x08x %08x \n", send_data[0], send_data[1], send_data[2]);
-            printf("data "); dump_hex(&send_data, sizeof(int32_t) * 3); printf("\n");
+            printf("data "); dump_hex(NULL, &send_data, sizeof(int32_t) * 3, 0, -1, 24); printf("\n");
         }
         (void)pack_unpack_datatype( send_data, ddt, 1, recv_data, check_vector, (void*)&ompi_mpi_int32_t.dt );
         if( verbose ) {
-            printf("recv "); dump_hex(&recv_data, sizeof(int32_t) * 3); printf("\n");
+            printf("recv "); dump_hex(NULL, &recv_data, sizeof(int32_t) * 3, 0, -1, 24); printf("\n");
             printf("recv data %08x %08x %08x \n", recv_data[0], recv_data[1], recv_data[2]);
         }
         ompi_datatype_destroy(&ddt);
         if( (send_data[0] != recv_data[0]) || (send_data[2] != recv_data[2]) ) {
             printf("Error during external32 pack/unack for vector types (MPI_INT32_T)\n");
+            printf("[0]: %d ? %d  |  [2]: %d ? %d  ([1]: %d ? %d)\n", send_data[0], recv_data[0],
+                   send_data[2], recv_data[2], send_data[1], recv_data[1]);
             exit(-1);
         }
     }

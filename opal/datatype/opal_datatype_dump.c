@@ -99,6 +99,8 @@ int opal_datatype_dump_data_flags(unsigned short usflags, char *ptr, size_t leng
     }
     if ((usflags & OPAL_DATATYPE_FLAG_BASIC) == OPAL_DATATYPE_FLAG_BASIC) {
         ptr[9] = 'B';
+    } else if (usflags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
+        ptr[9] = 'H';  /* optimized description restricted to homogeneous cases */
     }
     /* We know nothing about the upper level language or flags! */
     /* ... */
