@@ -543,7 +543,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     u32ptr = &u32;
     u16ptr = &u16;
-    memset(&opal_process_info, 0, sizeof(opal_process_info));
 
     /* Convince OPAL to use our naming scheme */
     opal_process_name_print = _process_name_print_for_opal;
@@ -560,34 +559,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
         error = "opal_init";
         goto error;
     }
-
-    /* setup our internal nspace hack */
-    opal_pmix_setup_nspace_tracker();
-
-    /* initialize the selected module */
-    if (PMIX_SUCCESS != (ret = PMIx_Init(&opal_process_info.myprocid, NULL, 0))) {
-        /* if we get PMIX_ERR_UNREACH indicating that we cannot reach the
-         * server, then we assume we are operating as a singleton */
-        if (PMIX_ERR_UNREACH == ret) {
-            ompi_singleton = true;
-        } else {
-            /* we cannot run - this could be due to being direct launched
-             * without the required PMI support being built, so print
-             * out a help message indicating it */
-            opal_show_help("help-mpi-runtime.txt", "no-pmi", true, PMIx_Error_string(ret));
-            return OPAL_ERR_SILENT;
-        }
-    }
-
-    /* setup the process name fields - also registers the new nspace */
-    OPAL_PMIX_CONVERT_PROCT(rc, &pname, &opal_process_info.myprocid);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
-    }
-    OPAL_PROC_MY_NAME.jobid = pname.jobid;
-    OPAL_PROC_MY_NAME.vpid = pname.vpid;
-    opal_process_info.my_name.jobid = OPAL_PROC_MY_NAME.jobid;
-    opal_process_info.my_name.vpid = OPAL_PROC_MY_NAME.vpid;
 
     /* set our hostname */
     ev1 = NULL;
