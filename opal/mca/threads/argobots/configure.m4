@@ -16,6 +16,7 @@
 # Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         Reserved.
+# Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,6 +39,7 @@ AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
     opal_check_argo_save_LIBS=$LIBS
 
     opal_argo_happy=yes
+    opal_argo11_happy=yes
     AS_IF([test "$with_argo" = "no"],
           [opal_argo_happy=no])
 
@@ -63,7 +65,15 @@ AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
                               [],
                               [opal_argo_happy=no])])
 
-    AS_IF([test $opal_argo_happy = yes && test -n "$opal_argo_dir"],
+
+    # ABT_unit_get_thread() is a new Argobots 1.1 API.
+    # It was introduced after static mutex/cond initializers.
+    AS_IF([test $opal_argo_happy = yes],
+          [AC_CHECK_FUNCS([ABT_unit_get_thread], [], [opal_argo11_happy="yes"])])
+
+    AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = no],
+          [AC_MSG_ERROR([Open MPI requires Argobots 1.1 or newer.])])
+    AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = yes && test -n "$opal_argo_dir"],
           [OPAL_ARGO_INCLUDE_PATH="$opal_argo_dir/include/"],
           [OPAL_ARGO_INCLUDE_PATH=""])
 
