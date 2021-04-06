@@ -1247,7 +1247,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get (array_of_info[i], "pernode", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "pernode", PMIX_MAPBY, "PPR:1:NODE", NULL, true);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1298,7 +1297,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     return MPI_ERR_SPAWN;
                 }
                 rc = dpm_convert(&job_info, "ppr", PMIX_MAPBY, info_str->string, NULL, true);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1319,7 +1317,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get(array_of_info[i], "map_by", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "map_by", PMIX_MAPBY, info_str->string, NULL, false);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1357,7 +1354,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get(array_of_info[i], "rank_by", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "rank_by", PMIX_RANKBY, info_str->string, NULL, false);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1389,7 +1385,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get(array_of_info[i], "bind_to", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "bind_to", PMIX_BINDTO, info_str->string, NULL, false);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
