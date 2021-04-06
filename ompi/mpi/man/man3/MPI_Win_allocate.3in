@@ -100,7 +100,7 @@ elements of type \fItype\fP. The later choice will allow one to use
 array indices in RMA calls, and have those scaled correctly to byte
 displacements, even in a heterogeneous environment.
 .sp
-Calling \fBMPI_Win_free\fP will deallocate the memory allocated by \fBMPI_Win_allocate\fP. It will thus be an error to manually free \fIbaseptr\fP.
+Calling \fBMPI_Win_free\fP will deallocate the memory allocated by \fBMPI_Win_allocate\fP. It is thus erroneous to manually free \fIbaseptr\fP.
 
 .SH C NOTES
 .ft R
