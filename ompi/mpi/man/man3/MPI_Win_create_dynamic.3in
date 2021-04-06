@@ -69,7 +69,7 @@ may allow the implementation to enable certain optimizations.
 .TP 1i
 accumulate_ordering
 By default, accumulate operations from one initiator to one target on
-the same window are strictly ordered. If the info key
+the same window memory location are strictly ordered. If the info key
 accumulate_ordering is set to \fInone\fP, no ordering of accumulate
 operations guaranteed. They key can also be a comma-separated list of
 required orderings consisting of \fIrar\fP, \fIwar\fP, \fIraw\fP, and \fIwaw\fP for
@@ -81,7 +81,7 @@ likely to result in improved performance.
 accumulate_ops
 If set to \fIsame_op\fP, the implementation will assume that all concurrent
 accumulate calls to the same target address will use the same
-operation.  If set to \fIsame_op_no_op\fP, then the implementation will
+operation. If set to \fIsame_op_no_op\fP, then the implementation will
 assume that all concurrent accumulate calls to the same target address
 will use the same operation or \fBMPI_NO_OP\fP. The default is \fIsame_op_no_op\fP.
 .sp
