@@ -186,6 +186,11 @@ enum {
     /** 2 location C: long double int */
     OMPI_OP_BASE_TYPE_LONG_DOUBLE_INT,
 
+    /** long */
+    OMPI_OP_BASE_TYPE_LONG,
+    /** unsigned long */
+    OMPI_OP_BASE_TYPE_UNSIGNED_LONG,
+
     /** 2 location C: wchar_t */
     OMPI_OP_BASE_TYPE_WCHAR,
 
