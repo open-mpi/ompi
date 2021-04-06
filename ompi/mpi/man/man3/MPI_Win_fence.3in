@@ -58,7 +58,7 @@ The \fIassert\fP argument is used to provide assertions on the context of the ca
 .ft R
 .TP 1i
 MPI_MODE_NOPRECEDE
-No locally called RMA calls must be present before this fence. This must be given to all or no members of the window. It may enable faster fence call by bypassing a barrier.
+No local RMA calls have been issued before this fence. This assertion must be provided by all or no members of the group of the window. It may enable faster fence call by avoiding unnecessary synchronization.
 .sp
 .TP 1i
 MPI_MODE_NOSTORE
@@ -68,7 +68,7 @@ MPI_MODE_NOPUT
 Informs that the local window will not be updated by any put or accummulate calls in the ensuing epoch (until next fence call).
 .TP 1i
 MPI_MODE_NOSUCCEED
-No locally called RMA calls must be present after this fence. This must be given to all or no members of the window. It may enable a faster fence call by bypassing a barrier.
+No local RMA calls will be issued after this fence. This assertion must be provided by all or no members of the group of the window. It may enable faster fence call by avoiding unnecessary synchronization.
 .sp
 
 

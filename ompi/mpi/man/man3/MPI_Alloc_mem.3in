@@ -63,7 +63,7 @@ of this memory is returned in the variable \fIbaseptr\fP.
 
 .SH C NOTES
 .ft R
-While \fIbaseptr\fP is a \fIvoid *\fP type, this is to allow easy use of any pointer object for this parameter. This argument is really a \fIvoid **\fP type.
+The parameter \fIbaseptr\fP is of type \fIvoid *\fP to allow passing any pointer object for this parameter. The provided argument should be a pointer to a pointer of arbitrary type (e.g., \fIvoid **\fP).
 
 .SH FORTRAN NOTES
 .ft R
