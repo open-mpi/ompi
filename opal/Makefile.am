@@ -86,12 +86,6 @@ lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = \
         mca/base/libmca_base.la \
         util/libopalutil.la \
         $(MCA_opal_FRAMEWORK_LIBS)
-if OPAL_cuda_support
-lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD += \
-        mca/common/cuda/libmca_common_cuda.la
-lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES += \
-        mca/common/cuda/libmca_common_cuda.la
-endif
 lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version) \
 	$(opal_libevent_LDFLAGS) \
 	$(opal_hwloc_LDFLAGS) \
