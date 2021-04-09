@@ -94,10 +94,10 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
     # Get the full path to the wrapper compiler. If it doesn't exist
     # assume that the path is not currently valid.
     wrapper_tmp="$(type -p "$with_wrapper_cc")"
-    WRAPPER_CC="${wrapper_tmp:-$with_wrapper_cc}"
     if test -z "$wrapper_tmp" ; then
 	AC_MSG_WARN([could not find \"$with_wrapper_cc\" in path])
     fi
+    WRAPPER_CC=$with_wrapper_cc
 
     AC_MSG_RESULT([$WRAPPER_CC])
 
