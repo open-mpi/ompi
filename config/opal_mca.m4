@@ -43,6 +43,8 @@ AC_DEFUN([OPAL_EVAL_ARG], [$1])
 AC_DEFUN([OPAL_MCA],[
     dnl for OPAL_CONFIGURE_USER env variable
     AC_REQUIRE([OPAL_CONFIGURE_SETUP])
+    dnl For all the path management
+    AC_REQUIRE([OPAL_SETUP_WRAPPER_INIT])
 
     # Set a special flag so that we can detect if the user calls
     # OPAL_WRAPPER_FLAGS_ADD and error.
