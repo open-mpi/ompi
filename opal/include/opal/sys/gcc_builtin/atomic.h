@@ -50,6 +50,14 @@
 #define OPAL_HAVE_ATOMIC_SUB_64              1
 #define OPAL_HAVE_ATOMIC_SWAP_64             1
 
+#if (OPAL_ASSEMBLY_ARCH == OPAL_X86_64) && defined (__GNUC__) && !defined(__llvm) && (__GNUC__ < 6)
+    /* work around a bug in older gcc versions where ACQUIRE seems to get
+     * treated as a no-op instead */
+#define OPAL_BUSTED_ATOMIC_MB 1
+#else
+#define OPAL_BUSTED_ATOMIC_MB 0
+#endif
+
 static inline void opal_atomic_mb(void)
 {
     __atomic_thread_fence(__ATOMIC_SEQ_CST);
@@ -57,9 +65,7 @@ static inline void opal_atomic_mb(void)
 
 static inline void opal_atomic_rmb(void)
 {
-#if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
-    /* work around a bug in older gcc versions where ACQUIRE seems to get
-     * treated as a no-op instead */
+#if OPAL_BUSTED_ATOMIC_MB
     __asm__ __volatile__("" : : : "memory");
 #else
     __atomic_thread_fence(__ATOMIC_ACQUIRE);
