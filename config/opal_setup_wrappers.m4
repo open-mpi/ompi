@@ -117,19 +117,19 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
     AS_IF([test "$with_wrapper_cflags_prefix" = "yes" || test "$with_wrapper_cflags_prefix" = "no"],
           [AC_MSG_ERROR([--with-wrapper-cflags-prefix must have an argument.])])
 
-    AC_ARG_WITH([wrapper-cxxflags],
-        [AS_HELP_STRING([--with-wrapper-cxxflags],
-                        [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
-    AS_IF([test "$with_wrapper_cxxflags" = "yes" || test "$with_wrapper_cxxflags" = "no"],
-          [AC_MSG_ERROR([--with-wrapper-cxxflags must have an argument.])])
-
-    AC_ARG_WITH([wrapper-cxxflags-prefix],
-        [AS_HELP_STRING([--with-wrapper-cxxflags-prefix],
-                        [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
-    AS_IF([test "$with_wrapper_cxxflags_prefix" = "yes" || test "$with_wrapper_cxxflags_prefix" = "no"],
-          [AC_MSG_ERROR([--with-wrapper-cxxflags-prefix must have an argument.])])
-
     m4_ifdef([project_ompi], [
+            AC_ARG_WITH([wrapper-cxxflags],
+                [AS_HELP_STRING([--with-wrapper-cxxflags],
+                                [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
+            AS_IF([test "$with_wrapper_cxxflags" = "yes" || test "$with_wrapper_cxxflags" = "no"],
+                  [AC_MSG_ERROR([--with-wrapper-cxxflags must have an argument.])])
+
+            AC_ARG_WITH([wrapper-cxxflags-prefix],
+                [AS_HELP_STRING([--with-wrapper-cxxflags-prefix],
+                                [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
+            AS_IF([test "$with_wrapper_cxxflags_prefix" = "yes" || test "$with_wrapper_cxxflags_prefix" = "no"],
+                  [AC_MSG_ERROR([--with-wrapper-cxxflags-prefix must have an argument.])])
+
             AC_ARG_WITH([wrapper-fcflags],
                 [AS_HELP_STRING([--with-wrapper-fcflags],
                         [Extra flags to add to FCFLAGS when using mpifort])])

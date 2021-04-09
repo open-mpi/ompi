@@ -40,21 +40,18 @@ dist_opaldata_DATA = help-opal-wrapper.txt
 if WANT_INSTALL_HEADERS
 
 nodist_opaldata_DATA = \
-	opalcc-wrapper-data.txt \
-	opalc++-wrapper-data.txt
+	opalcc-wrapper-data.txt
 
-nodist_man_MANS += opalcc.1 opalc++.1
+nodist_man_MANS += opalcc.1
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = opal.pc
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper$(EXEECT) opalcc$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper$(EXEECT) opalc++$(EXEEXT))
 
 uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
-	$(DESTDIR)$(bindir)/opalc++$(EXEEXT)
+	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT)
 
 endif # WANT_INSTALL_HEADERS
 
@@ -73,9 +70,5 @@ opalcc.1: generic_wrapper.1
 	rm -f opalcc.1
 	sed -e 's/#COMMAND#/opalcc/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > opalcc.1
 
-opalc++.1: generic_wrapper.1
-	rm -f opalc++.1
-	sed -e 's/#COMMAND#/opalc++/g' -e 's/#PROJECT#/Open PAL/g' -e 's/#PROJECT_SHORT#/OPAL/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > opalc++.1
-
 distclean-local:
-	rm -f $(real_man_pages) opalcc.1 opalc++.1
+	rm -f $(real_man_pages) opalcc.1
