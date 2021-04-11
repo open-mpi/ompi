@@ -696,7 +696,7 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     AS_VAR_COPY([SHARED_COMPONENT], [DSO_$2_$3])
 
     STATIC_FRAMEWORK="$STATIC_$2"
-    AS_VAR_COPY([STATIC_COMPONENT], [DSO_$2_$3])
+    AS_VAR_COPY([STATIC_COMPONENT], [STATIC_$2_$3])
 
     # Look for the most specific specifier between static/dso.  If
     # there is a tie (either neither or both specified), prefer
