@@ -98,6 +98,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
 
 static inline void opal_mutex_create(struct opal_mutex_t *m)
 {
+    opal_threads_ensure_init_qthreads();
+
     opal_atomic_lock_init(&m->m_lock, 0);
     opal_atomic_lock_init(&m->m_lock_atomic, 0);
     m->m_recursive = 0;
@@ -108,9 +110,24 @@ static inline void opal_mutex_create(struct opal_mutex_t *m)
 #endif
 }
 
+static inline void opal_mutex_recursive_create(struct opal_mutex_t *m)
+{
+    opal_threads_ensure_init_qthreads();
+
+    opal_atomic_lock_init(&m->m_lock, 0);
+    opal_atomic_lock_init(&m->m_lock_atomic, 0);
+    m->m_recursive = 1;
+#if OPAL_ENABLE_DEBUG
+    m->m_lock_debug = 0;
+    m->m_lock_file = NULL;
+    m->m_lock_line = 0;
+#endif
+}
+
 static inline int opal_mutex_trylock(opal_mutex_t *m)
 {
     opal_threads_ensure_init_qthreads();
+
     int ret = opal_atomic_trylock(&m->m_lock);
     if (0 != ret) {
         /* Yield to avoid a deadlock. */
@@ -122,6 +139,7 @@ static inline int opal_mutex_trylock(opal_mutex_t *m)
 static inline void opal_mutex_lock(opal_mutex_t *m)
 {
     opal_threads_ensure_init_qthreads();
+
     int ret = opal_atomic_trylock(&m->m_lock);
     while (0 != ret) {
         qthread_yield();

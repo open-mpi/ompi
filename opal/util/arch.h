@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -51,7 +51,7 @@
 ** The fortran integer is dismissed here, since there is no
 ** platform known to me, were fortran and C-integer do not match
 **
-** The following abbriviations are introduced:
+** The following abbreviations are introduced:
 **
 ** a) il32 (int long are 32 bits) (e.g. IA32 LINUX, SGI n32, SUN)
 **

@@ -880,53 +880,6 @@ AC_DEFUN([OPAL_CHECK_POWERPC_REG],[
                        [Whether r notation is used for ppc registers])
 ])dnl
 
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_POWERPC_64BIT
-dnl
-dnl On some powerpc chips (the PPC970 or G5), the OS usually runs in
-dnl 32 bit mode, even though the hardware can do 64bit things.  If
-dnl the compiler will let us, emit code for 64bit test and set type
-dnl operations (on a long long).
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_POWERPC_64BIT],[
-    if test "$ac_cv_sizeof_long" != "4" ; then
-        # this function should only be called in the 32 bit case
-        AC_MSG_ERROR([CHECK_POWERPC_64BIT called on 64 bit platform.  Internal error.])
-    fi
-    AC_MSG_CHECKING([for 64-bit PowerPC assembly support])
-        case $host in
-            *-darwin*)
-                ppc64_result=0
-                if test "$opal_cv_asm_powerpc_r_reg" = "1" ; then
-                   ldarx_asm="        ldarx r1,r1,r1";
-                else
-                   ldarx_asm="        ldarx 1,1,1";
-                fi
-                OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-        $ldarx_asm],
-                    [ppc64_result=1],
-                    [ppc64_result=0])
-            ;;
-            *)
-                ppc64_result=0
-            ;;
-        esac
-
-    if test "$ppc64_result" = "1" ; then
-        AC_MSG_RESULT([yes])
-        ifelse([$1],,:,[$1])
-    else
-        AC_MSG_RESULT([no])
-        ifelse([$2],,:,[$2])
-    fi
-
-    unset ppc64_result ldarx_asm
-])dnl
-
-
 dnl #################################################################
 dnl
 dnl OPAL_CHECK_CMPXCHG16B
@@ -1108,7 +1061,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         AC_MSG_ERROR([Cannot continue])
     elif test "$enable_builtin_atomics" = "yes" ; then
 	if test $opal_cv_have___atomic = "yes" ; then
-	   opal_cv_asm_builtin="BUILTIN_GCC"
+	    opal_cv_asm_builtin="BUILTIN_GCC"
 	else
 	    AC_MSG_WARN([GCC built-in atomics requested but not found.])
 	    AC_MSG_ERROR([Cannot continue])
@@ -1129,63 +1082,43 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         # find our architecture for purposes of assembly stuff
         opal_cv_asm_arch="UNSUPPORTED"
         OPAL_GCC_INLINE_ASSIGN=""
-	if test "$opal_cv_have___atomic_64" ; then
-            OPAL_ASM_SUPPORT_64BIT=1
-	else
-	    OPAL_ASM_SUPPORT_64BIT=0
-	fi
 
         case "${host}" in
-        x86_64-*x32)
-            opal_cv_asm_arch="X86_64"
-            OPAL_ASM_SUPPORT_64BIT=1
-            OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
-            ;;
-        i?86-*|x86_64*|amd64*)
+        x86_64-*x32|i?86-*|x86_64*|amd64*)
             if test "$ac_cv_sizeof_long" = "4" ; then
-                opal_cv_asm_arch="IA32"
-            else
-                opal_cv_asm_arch="X86_64"
-            fi
-            OPAL_ASM_SUPPORT_64BIT=1
+		if test $opal_cv_asm_builtin = BUILTIN_NO ; then
+		    AC_MSG_ERROR([IA32 atomics are no longer supported. Use a C11 compiler])
+		fi
+		opal_cv_asm_arch="IA32"
+	    else
+		opal_cv_asm_arch="X86_64"
+		OPAL_CHECK_CMPXCHG16B
+	    fi
             OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
-            OPAL_CHECK_CMPXCHG16B
             ;;
 
         aarch64*)
             opal_cv_asm_arch="ARM64"
-            OPAL_ASM_SUPPORT_64BIT=1
-            OPAL_ASM_ARM_VERSION=8
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
-        armv7*|arm-*-linux-gnueabihf)
-            opal_cv_asm_arch="ARM"
-            OPAL_ASM_SUPPORT_64BIT=1
-            OPAL_ASM_ARM_VERSION=7
-            OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
-            ;;
+        armv7*|arm-*-linux-gnueabihf|armv6*)
+            if test $opal_cv_asm_builtin = BUILTIN_NO ; then
+		AC_MSG_ERROR([32-bit ARM atomics are no longer supported. Use a C11 compiler])
+	    fi
 
-        armv6*)
             opal_cv_asm_arch="ARM"
-            OPAL_ASM_SUPPORT_64BIT=0
-            OPAL_ASM_ARM_VERSION=6
-            CCASFLAGS="$CCASFLAGS -march=armv7-a"
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
         powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
             OPAL_CHECK_POWERPC_REG
             if test "$ac_cv_sizeof_long" = "4" ; then
-                opal_cv_asm_arch="POWERPC32"
-
-                # Note that on some platforms (Apple G5), even if we are
-                # compiling in 32 bit mode (and therefore should assume
-                # sizeof(long) == 4), we can use the 64 bit test and set
-                # operations.
-                OPAL_CHECK_POWERPC_64BIT(OPAL_ASM_SUPPORT_64BIT=1)
-            elif test "$ac_cv_sizeof_long" = "8" ; then
-                OPAL_ASM_SUPPORT_64BIT=1
+		if test $opal_cv_asm_builtin = BUILTIN_NO ; then
+		    AC_MSG_ERROR([PowerPC 32-bit atomics are no longer supported. Use a C11 compiler])
+		fi
+		opal_cv_asm_arch="POWERPC32"
+	    elif test "$ac_cv_sizeof_long" = "8" ; then
                 opal_cv_asm_arch="POWERPC64"
             else
                 AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
@@ -1213,20 +1146,10 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 	    ;;
         esac
 
-	if ! test -z "$OPAL_ASM_ARM_VERSION" ; then
-	    AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
-                               [What ARM assembly version to use])
-	fi
-
 	if test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
          AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
 		   [Whether C compiler supports GCC style inline assembly])
 	else
-         AC_DEFINE_UNQUOTED([OPAL_ASM_SUPPORT_64BIT],
-			    [$OPAL_ASM_SUPPORT_64BIT],
-			    [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
-         AC_SUBST([OPAL_ASM_SUPPORT_64BIT])
-
          opal_cv_asm_inline_supported="no"
          # now that we know our architecture, try to inline assemble
          OPAL_CHECK_INLINE_C_GCC([$OPAL_GCC_INLINE_ASSIGN])
@@ -1239,12 +1162,12 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
          asm_format="${asm_format}-${opal_cv_asm_lsym}"
          asm_format="${asm_format}-${opal_cv_asm_type}-${opal_asm_size}"
          asm_format="${asm_format}-${opal_asm_align_log_result}"
-         if test "$opal_cv_asm_arch" = "POWERPC32" || test "$opal_cv_asm_arch" = "POWERPC64" ; then
+         if test "$opal_cv_asm_arch" = "POWERPC64" ; then
              asm_format="${asm_format}-${opal_cv_asm_powerpc_r_reg}"
          else
              asm_format="${asm_format}-1"
          fi
-         asm_format="${asm_format}-${OPAL_ASM_SUPPORT_64BIT}"
+         asm_format="${asm_format}-1"
          opal_cv_asm_format="${asm_format}-${opal_cv_asm_gnu_stack}"
          # For the Makefile, need to escape the $ as $$.  Don't display
          # this version, but make sure the Makefile gives the right thing
@@ -1256,7 +1179,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_FORMAT], ["$OPAL_ASSEMBLY_FORMAT"],
                            [Format of assembly file])
         AC_SUBST([OPAL_ASSEMBLY_FORMAT])
-      fi # if opal_cv_asm_builtin = BUILTIN_GCC
+    fi # if opal_cv_asm_builtin = BUILTIN_GCC
 
     result="OPAL_$opal_cv_asm_arch"
     OPAL_ASSEMBLY_ARCH="$opal_cv_asm_arch"

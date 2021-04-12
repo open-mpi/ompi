@@ -61,7 +61,9 @@ extern int opal_datatype_dfd;
  *
  * At the OPAL-level we do not care from which language the datatype came from
  * (C, C++ or FORTRAN), we only focus on their internal representation in
- * the host memory.
+ * the host memory. There is one notable exception, the long predefined type
+ * which need to be handled at the lowest level due to it's variable size but
+ * fixed XDR representation.
  *
  * NOTE: This predefined datatype order should be matched by any upper-level
  * users of the OPAL datatype.
@@ -92,7 +94,9 @@ extern int opal_datatype_dfd;
 #define OPAL_DATATYPE_LONG_DOUBLE_COMPLEX 22
 #define OPAL_DATATYPE_BOOL                23
 #define OPAL_DATATYPE_WCHAR               24
-#define OPAL_DATATYPE_UNAVAILABLE         25
+#define OPAL_DATATYPE_LONG                25
+#define OPAL_DATATYPE_UNSIGNED_LONG       26
+#define OPAL_DATATYPE_UNAVAILABLE         27
 
 #ifndef OPAL_DATATYPE_MAX_PREDEFINED
 #    define OPAL_DATATYPE_MAX_PREDEFINED (OPAL_DATATYPE_UNAVAILABLE + 1)
@@ -381,6 +385,12 @@ struct opal_datatype_t;
 #    define OPAL_DATATYPE_HANDLE_UINT16(AV, NOTAV, FLAGS) NOTAV(INT16, FLAGS)
 #endif
 
+
+#define OPAL_DATATYPE_INITIALIZER_LONG(FLAGS)  \
+     OPAL_DATATYPE_INIT_BASIC_DATATYPE(long, OPAL_ALIGNMENT_LONG, LONG, FLAGS)
+#define OPAL_DATATYPE_INITIALIZER_UNSIGNED_LONG(FLAGS)  \
+     OPAL_DATATYPE_INIT_BASIC_DATATYPE(unsigned long, OPAL_ALIGNMENT_LONG, UNSIGNED_LONG, FLAGS)
+
 #if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 2
 #    define OPAL_DATATYPE_HANDLE_FLOAT2(AV, NOTAV, FLAGS) \
         AV(short float, OPAL_ALIGNMENT_SHORT_FLOAT, FLOAT2, FLAGS)
@@ -497,7 +507,8 @@ struct opal_datatype_t;
 #define OPAL_DATATYPE_HANDLE_LONG_DOUBLE_COMPLEX(AV, NOTAV, FLAGS) \
     AV(long double _Complex, OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX, LONG_DOUBLE_COMPLEX, FLAGS)
 
-#define OPAL_DATATYPE_HANDLE_BOOL(AV, NOTAV, FLAGS) AV(_Bool, OPAL_ALIGNMENT_BOOL, BOOL, FLAGS)
+#define OPAL_DATATYPE_HANDLE_BOOL(AV, NOTAV, FLAGS) \
+    AV(_Bool, OPAL_ALIGNMENT_BOOL, BOOL, FLAGS)
 
 #if OPAL_ALIGNMENT_WCHAR != 0
 #    define OPAL_DATATYPE_HANDLE_WCHAR(AV, NOTAV, FLAGS) \

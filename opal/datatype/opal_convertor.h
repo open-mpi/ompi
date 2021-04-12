@@ -199,22 +199,19 @@ static inline int32_t opal_convertor_need_buffers(const opal_convertor_t *pConve
 size_t opal_convertor_compute_remote_size(opal_convertor_t *pConv);
 
 /**
- * Return the local size of the convertor (count times the size of the datatype).
+ * Return the packed size of the memory layout represented by this
+ * convertor. This is the size of the buffer that would be needed
+ * for the conversion (takes in account the type of the operation,
+ * aka pack or unpack, as well as which side is supposed to do the
+ * type conversion).
  */
-static inline void opal_convertor_get_packed_size(const opal_convertor_t *pConv, size_t *pSize)
+static inline void
+opal_convertor_get_packed_size(const opal_convertor_t *pConv, size_t *pSize)
 {
     *pSize = pConv->local_size;
-}
-
-/**
- * Return the remote size of the convertor (count times the remote size of the
- * datatype). On homogeneous environments the local and remote sizes are
- * identical.
- */
-static inline void opal_convertor_get_unpacked_size(const opal_convertor_t *pConv, size_t *pSize)
-{
-    if (pConv->flags & CONVERTOR_HOMOGENEOUS) {
-        *pSize = pConv->local_size;
+    if ((pConv->flags & CONVERTOR_HOMOGENEOUS) ||
+        ((pConv->flags & CONVERTOR_SEND) && !(pConv->flags & CONVERTOR_SEND_CONVERSION)) ||
+        ((pConv->flags & CONVERTOR_RECV) && (pConv->flags & CONVERTOR_SEND_CONVERSION))) {
         return;
     }
     if (0 == (CONVERTOR_HAS_REMOTE_SIZE & pConv->flags)) {

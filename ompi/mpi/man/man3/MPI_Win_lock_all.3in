@@ -56,8 +56,13 @@ Locks are used to protect accesses to the locked target window effected by RMA c
 Accesses that are protected by an exclusive lock will not be concurrent at the window site with other accesses to the same window that are lock protected. Accesses that are protected by a shared lock will not be concurrent at the window site with accesses protected by an exclusive lock to the same window.
 .sp
 The \fIassert\fP argument is used to provide assertions on the context of the call that may be used for various optimizations. (See Section 6.4.4 of the MPI-2 Standard.) A value of \fIassert\fP = 0 is always valid.
+The following assertion value is supported:
+.ft R
+.TP 1i
+MPI_MODE_NOCHECK
+No other processes will hold or attempt to acquire a conflicting lock while the caller holds the window lock.
 .sp
-.ft
+
 .SH NOTES
 .ft R
 In a client/server environment in which clients connect to

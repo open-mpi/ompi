@@ -82,6 +82,10 @@ all processes in the group attached to the window specified \fIsize\fP
 = 0, then the call returns \fIsize\fP = 0 and a \fIbaseptr\fP as if
 \fBMPI_Alloc_mem\fP was called with \fIsize\fP = 0.
 
+.SH C NOTES
+.ft R
+The parameter \fIbaseptr\fP is of type \fIvoid *\fP to allow passing any pointer object for this parameter. The provided argument should be a pointer to a pointer of arbitrary type (e.g. \fIvoid **\fP).
+
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value
 of the function and Fortran routines in the last argument.

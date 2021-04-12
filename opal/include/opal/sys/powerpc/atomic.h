@@ -13,6 +13,7 @@
  * Copyright (c) 2010-2021 IBM Corporation.  All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +35,7 @@
 
 /**********************************************************************
  *
- * Define constants for PowerPC 32
+ * Define constants for PowerPC 64
  *
  *********************************************************************/
 #define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
@@ -43,24 +44,19 @@
 #define OPAL_HAVE_ATOMIC_SWAP_32             1
 #define OPAL_HAVE_ATOMIC_LLSC_32             1
 
-#define OPAL_HAVE_ATOMIC_MATH_32 1
 #define OPAL_HAVE_ATOMIC_ADD_32  1
 #define OPAL_HAVE_ATOMIC_AND_32  1
 #define OPAL_HAVE_ATOMIC_OR_32   1
 #define OPAL_HAVE_ATOMIC_XOR_32  1
 #define OPAL_HAVE_ATOMIC_SUB_32  1
-
-#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64) || OPAL_ASM_SUPPORT_64BIT
-#    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
-#    define OPAL_HAVE_ATOMIC_SWAP_64             1
-#    define OPAL_HAVE_ATOMIC_LLSC_64             1
-#    define OPAL_HAVE_ATOMIC_MATH_64             1
-#    define OPAL_HAVE_ATOMIC_ADD_64              1
-#    define OPAL_HAVE_ATOMIC_AND_64              1
-#    define OPAL_HAVE_ATOMIC_OR_64               1
-#    define OPAL_HAVE_ATOMIC_XOR_64              1
-#    define OPAL_HAVE_ATOMIC_SUB_64              1
-#endif
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
+#define OPAL_HAVE_ATOMIC_SWAP_64             1
+#define OPAL_HAVE_ATOMIC_LLSC_64             1
+#define OPAL_HAVE_ATOMIC_ADD_64              1
+#define OPAL_HAVE_ATOMIC_AND_64              1
+#define OPAL_HAVE_ATOMIC_OR_64               1
+#define OPAL_HAVE_ATOMIC_XOR_64              1
+#define OPAL_HAVE_ATOMIC_SUB_64              1
 
 /**********************************************************************
  *
@@ -203,26 +199,23 @@ static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t new
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
-#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
+#if OPAL_GCC_INLINE_ASSEMBLY
 
-#    if OPAL_GCC_INLINE_ASSEMBLY
-
-#        define OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(type, instr)                                \
-            static inline int64_t opal_atomic_fetch_##type##_64(opal_atomic_int64_t *v,          \
-                                                                int64_t val)                     \
-            {                                                                                    \
-                int64_t t, old;                                                                  \
+#    define OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(type, instr)                                    \
+        static inline int64_t opal_atomic_fetch_##type##_64(opal_atomic_int64_t *v, int64_t val) \
+        {                                                                                        \
+            int64_t t, old;                                                                      \
                                                                                                  \
-                __asm__ __volatile__("1:   ldarx   %1, 0, %4    \n\t"                            \
-                                     "     " #instr "     %0, %3, %1   \n\t"                     \
-                                     "     stdcx.  %0, 0, %4    \n\t"                            \
-                                     "     bne-    1b           \n\t"                            \
-                                     : "=&r"(t), "=&r"(old), "=m"(*v)                            \
-                                     : "r"(OPAL_ASM_VALUE64(val)), "r" OPAL_ASM_ADDR(v), "m"(*v) \
-                                     : "cc");                                                    \
+            __asm__ __volatile__("1:   ldarx   %1, 0, %4    \n\t"                                \
+                                 "     " #instr "     %0, %3, %1   \n\t"                         \
+                                 "     stdcx.  %0, 0, %4    \n\t"                                \
+                                 "     bne-    1b           \n\t"                                \
+                                 : "=&r"(t), "=&r"(old), "=m"(*v)                                \
+                                 : "r"(OPAL_ASM_VALUE64(val)), "r" OPAL_ASM_ADDR(v), "m"(*v)     \
+                                 : "cc");                                                        \
                                                                                                  \
-                return old;                                                                      \
-            }
+            return old;                                                                          \
+        }
 
 OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(add, add)
 OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(and, and)
@@ -292,54 +285,6 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
 }
 
 #    endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
-#elif (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32) && OPAL_ASM_SUPPORT_64BIT
-
-#    ifndef ll_low /* GLIBC provides these somewhere, so protect */
-#        define ll_low(x)  *(((unsigned int *) &(x)) + 0)
-#        define ll_high(x) *(((unsigned int *) &(x)) + 1)
-#    endif
-
-#    if OPAL_GCC_INLINE_ASSEMBLY
-
-static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *addr,
-                                                          int64_t *oldval, int64_t newval)
-{
-    int64_t prev;
-    int ret;
-
-    /*
-     * We force oldval and newval into memory because PPC doesn't
-     * appear to have a way to do a move register with offset.  Since
-     * this is 32-bit code, a 64 bit integer will be loaded into two
-     * registers (assuming no inlining, addr will be in r3, oldval
-     * will be in r4 and r5, and newval will be r6 and r7.  We need
-     * to load the whole thing into one register.  So we have the
-     * compiler push the values into memory and load the double word
-     * into registers.  We use r4,r5 so that the main block of code
-     * is very similar to the pure 64 bit version.
-     */
-    __asm__ __volatile__("ld r4,%3         \n\t"
-                         "ld r5,%4        \n\t"
-                         "1: ldarx   %1, 0, %2  \n\t"
-                         "   cmpd    0, %1, r4  \n\t"
-                         "   bne-    2f         \n\t"
-                         "   stdcx.  r5, 0, %2  \n\t"
-                         "   bne-    1b         \n\t"
-                         "2:                    \n\t"
-                         "xor r5,r4,%1          \n\t"
-                         "subfic r9,r5,0        \n\t"
-                         "adde %0,r9,r5         \n\t"
-                         : "=&r"(ret), "+r"(prev)
-                         : "r" OPAL_ASM_ADDR(addr), "m"(*oldval), "m"(newval)
-                         : "r4", "r5", "r9", "cc", "memory");
-    *oldval = prev;
-    return (bool) ret;
-}
-
-#    endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
-#endif /* OPAL_ASM_SUPPORT_64BIT */
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 

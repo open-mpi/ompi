@@ -126,7 +126,7 @@ int ompi_datatype_pack_external_size(const char datarep[], int incount,
                                               CONVERTOR_SEND_CONVERSION,
                                               &local_convertor );
 
-    opal_convertor_get_unpacked_size( &local_convertor, &length );
+    opal_convertor_get_packed_size( &local_convertor, &length );
     *size = (MPI_Aint)length;
     OBJ_DESTRUCT( &local_convertor );
 

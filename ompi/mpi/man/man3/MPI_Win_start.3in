@@ -60,7 +60,7 @@ call to MPI_Win_post. MPI_Win_start
 is allowed to block until the corresponding MPI_Win_post calls have been executed, but is not required to.
 .sp
 The \fIassert\fP argument is used to provide assertions on the context of the call that may be used for various optimizations. (See Section 6.4.4 of the MPI-2 Standard.) A value of \fIassert\fP = 0 is always valid. The following assertion value is supported:
-.sp
+.ft R
 .TP 1i
 MPI_MODE_NOCHECK
 When this value is passed in to this call, the library assumes that

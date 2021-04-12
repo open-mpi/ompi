@@ -61,6 +61,12 @@ AC_DEFUN([OMPI_SETUP_FC],[
     # Autoconf (version >= 2.64) docs.
     AC_REQUIRE([_OMPI_SETUP_FC_COMPILER])
 
+    # If $FC is "no", that's another way of the user telling us "I
+    # don't want any Fortran compiler".  That being said, there are
+    # already existing code paths that expect an empty $FC to mean "no
+    # Fortran compiler", so turn "no" into "" here.
+    AS_IF([test "$FC" = "no"], [FC=])
+
     AS_IF([test -z "$FC"],
           [AC_MSG_WARN([*** All Fortran MPI bindings disabled (could not find compiler)])
            ompi_fc_happy=0],

@@ -11,8 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
- *
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,16 +32,6 @@
 #include "opal/prefetch.h"
 #include "opal/util/output.h"
 #include "opal/util/sys_limits.h"
-
-struct opal_tsd_key_value {
-    opal_tsd_key_t key;
-    opal_tsd_destructor_t destructor;
-};
-
-static opal_mutex_t opal_tsd_lock = OPAL_MUTEX_STATIC_INIT;
-static struct opal_tsd_key_value *opal_tsd_key_values = NULL;
-static int opal_tsd_key_values_count = 0;
-static int opal_tsd_key_values_size = 0;
 
 /*
  * Constructor

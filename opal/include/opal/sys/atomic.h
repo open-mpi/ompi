@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +41,6 @@
  *
  *  - \c OPAL_HAVE_ATOMIC_MEM_BARRIER atomic memory barriers
  *  - \c OPAL_HAVE_ATOMIC_SPINLOCKS atomic spinlocks
- *  - \c OPAL_HAVE_ATOMIC_MATH_32 if 32 bit add/sub/compare-exchange can be done "atomicly"
- *  - \c OPAL_HAVE_ATOMIC_MATH_64 if 64 bit add/sub/compare-exchange can be done "atomicly"
  *
  * Note that for the Atomic math, atomic add/sub may be implemented as
  * C code using opal_atomic_compare_exchange.  The appearance of atomic
@@ -396,13 +394,6 @@ static inline
 
 #    endif
 
-#    if !defined(OPAL_HAVE_ATOMIC_MATH_32) && !defined(DOXYGEN)
-/* define to 0 for these tests.  WIll fix up later. */
-#        define OPAL_HAVE_ATOMIC_MATH_32 0
-#    endif
-
-#    if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32
-
 static inline int32_t opal_atomic_add_fetch_32(opal_atomic_int32_t *addr, int delta);
 static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t *addr, int delta);
 static inline int32_t opal_atomic_and_fetch_32(opal_atomic_int32_t *addr, int32_t value);
@@ -418,20 +409,6 @@ static inline int32_t opal_atomic_fetch_min_32(opal_atomic_int32_t *addr, int32_
 static inline int32_t opal_atomic_max_fetch_32(opal_atomic_int32_t *addr, int32_t value);
 static inline int32_t opal_atomic_fetch_max_32(opal_atomic_int32_t *addr, int32_t value);
 
-#    endif /* OPAL_HAVE_ATOMIC_MATH_32 */
-
-#    if !OPAL_HAVE_ATOMIC_MATH_32
-/* fix up the value of opal_have_atomic_math_32 to allow for C versions */
-#        undef OPAL_HAVE_ATOMIC_MATH_32
-#        define OPAL_HAVE_ATOMIC_MATH_32 OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32
-#    endif
-
-#    ifndef OPAL_HAVE_ATOMIC_MATH_64
-/* define to 0 for these tests.  WIll fix up later. */
-#        define OPAL_HAVE_ATOMIC_MATH_64 0
-#    endif
-
-#    if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MATH_64 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
 
 static inline int64_t opal_atomic_add_fetch_64(opal_atomic_int64_t *addr, int64_t delta);
 static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *addr, int64_t delta);
@@ -447,13 +424,6 @@ static inline int64_t opal_atomic_fetch_min_64(opal_atomic_int64_t *addr, int64_
 static inline int64_t opal_atomic_max_fetch_64(opal_atomic_int64_t *addr, int64_t value);
 static inline int64_t opal_atomic_fetch_max_64(opal_atomic_int64_t *addr, int64_t value);
 
-#    endif /* OPAL_HAVE_ATOMIC_MATH_64 */
-
-#    if !OPAL_HAVE_ATOMIC_MATH_64
-/* fix up the value of opal_have_atomic_math_64 to allow for C versions */
-#        undef OPAL_HAVE_ATOMIC_MATH_64
-#        define OPAL_HAVE_ATOMIC_MATH_64 OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
-#    endif
 
 /* provide a size_t add/subtract.  When in debug mode, make it an
  * inline function so that we don't have any casts in the
@@ -607,8 +577,6 @@ static inline bool opal_atomic_compare_exchange_strong_rel_ptr(opal_atomic_intpt
 
 #    endif /* (OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64) */
 
-#    if defined(DOXYGEN) || (OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64)
-
 static inline void opal_atomic_add_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length);
 static inline void opal_atomic_sub_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length);
 
@@ -643,7 +611,6 @@ static inline intptr_t opal_atomic_fetch_sub_ptr(opal_atomic_intptr_t *addr, voi
 #        define opal_atomic_sub(ADDR, VALUE) \
             opal_atomic_sub_xx((opal_atomic_intptr_t *) (ADDR), (int32_t)(VALUE), sizeof(*(ADDR)))
 
-#    endif /* OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64 */
 
 /*
  * Include inline implementations of everything not defined directly

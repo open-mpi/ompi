@@ -7,6 +7,7 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2019-2021 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -23,24 +24,26 @@ static ompi_wait_sync_t *wait_sync_list = NULL;
 
 void wait_sync_global_wakeup_st(int status)
 {
-    ompi_wait_sync_t* sync;
-    for( sync = wait_sync_list; sync != NULL; sync = sync->next ) {
+    ompi_wait_sync_t *sync;
+    for (sync = wait_sync_list; sync != NULL; sync = sync->next) {
         wait_sync_update(sync, 0, status);
     }
 }
 
 void wait_sync_global_wakeup_mt(int status)
 {
-    ompi_wait_sync_t* sync;
+    ompi_wait_sync_t *sync;
     opal_mutex_lock(&wait_sync_lock);
-    for( sync = wait_sync_list; sync != NULL; sync = sync->next ) {
-        /* sync_update is going to  take the sync->lock from within 
-         * the wait_sync_lock. Thread lightly here: Idealy we should 
+    for (sync = wait_sync_list; sync != NULL; sync = sync->next) {
+        /* sync_update is going to  take the sync->lock from within
+         * the wait_sync_lock. Thread lightly here: Idealy we should
          * find a way to not take a lock in a lock as this is deadlock prone,
-         * but as of today we are the only place doing this so it is safe. 
+         * but as of today we are the only place doing this so it is safe.
          */
         wait_sync_update(sync, 0, status);
-        if( sync->next == wait_sync_list ) break; /* special case for rings */
+        if (sync->next == wait_sync_list) {
+            break; /* special case for rings */
+        }
     }
     opal_mutex_unlock(&wait_sync_lock);
 }

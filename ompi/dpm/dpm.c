@@ -1247,7 +1247,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get (array_of_info[i], "pernode", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "pernode", PMIX_MAPBY, "PPR:1:NODE", NULL, true);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1298,7 +1297,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     return MPI_ERR_SPAWN;
                 }
                 rc = dpm_convert(&job_info, "ppr", PMIX_MAPBY, info_str->string, NULL, true);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1319,7 +1317,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get(array_of_info[i], "map_by", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "map_by", PMIX_MAPBY, info_str->string, NULL, false);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1357,7 +1354,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get(array_of_info[i], "rank_by", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "rank_by", PMIX_RANKBY, info_str->string, NULL, false);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1389,7 +1385,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             ompi_info_get(array_of_info[i], "bind_to", &info_str, &flag);
             if ( flag ) {
                 rc = dpm_convert(&job_info, "bind_to", PMIX_BINDTO, info_str->string, NULL, false);
-                free(tmp);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -2005,6 +2000,10 @@ static int start_dvm(char **hostfiles, char **dash_host)
      * spawn processes - see if they gave us any hostfile
      * or dash-host options we should pass along */
     opal_argv_append_nosize(&args, "prte");
+    /* ensure we use the PRRTE personality */
+    opal_argv_append_nosize(&args, "--prtemca");
+    opal_argv_append_nosize(&args, "schizo");
+    opal_argv_append_nosize(&args, "prte");
     if (NULL != hostfiles) {
         tmp = opal_argv_join(hostfiles, ',');
         opal_argv_append_nosize(&args, "--hostfile");
@@ -2029,9 +2028,6 @@ static int start_dvm(char **hostfiles, char **dash_host)
     opal_argv_append_nosize(&args, tmp);
     free(tmp);
     opal_argv_append_nosize(&args, "&");
-
-    tmp = opal_argv_join(args, ' ');
-    free(tmp);
 
     /* Fork off the child */
     pid = fork();

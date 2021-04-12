@@ -101,7 +101,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_EXTERNAL], [
 
     OPAL_CHECK_PACKAGE([opal_libevent],
                        [event2/event.h],
-                       [event],
+                       [event_core],
                        [event_config_new],
                        [-levent_pthreads],
                        [$with_libevent],
@@ -118,7 +118,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_EXTERNAL], [
     # "evthread_set_lock_callbacks", which will only exist if
     # libevent was configured with thread support.
     AS_IF([test "$opal_libevent_external_support" = "yes"],
-          [AC_CHECK_LIB([event], [evthread_set_lock_callbacks],
+          [AC_CHECK_LIB([event_core], [evthread_set_lock_callbacks],
                         [],
                         [AC_MSG_WARN([External libevent does not have thread support])
                          AC_MSG_WARN([Open MPI requires libevent to be compiled with])
@@ -199,7 +199,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
          # No need to update LDFLAGS, because they will install into
          # our tree and in the mean time are referenced by their .la
          # files.
-         opal_libevent_LIBS="$OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent.la $OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_pthreads.la"
+         opal_libevent_LIBS="$OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_core.la $OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_pthreads.la"
 
          opal_libevent_header="$OMPI_TOP_BUILDDIR/$internal_libevent_location/event.h"
 

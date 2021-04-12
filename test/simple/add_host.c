@@ -52,6 +52,8 @@ int main(int argc, char* argv[])
         }
         MPI_Comm_disconnect(&child);
         printf("Parent disconnected\n");
+        sleep(2);
+        printf("\n\n\n");
         /* do it again */
         MPI_Info_set(info, "PMIX_ADD_HOST", argv[2]);
         if (MPI_SUCCESS != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, info,

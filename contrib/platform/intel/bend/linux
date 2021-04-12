@@ -1,35 +1,21 @@
 enable_orterun_prefix_by_default=yes
-enable_mpi_thread_multiple=no
-enable_mem_debug=no
+enable_oshmem=no
+enable_sensors=no
 enable_mem_profile=no
 enable_debug_symbols=yes
 enable_binaries=yes
-enable_heterogeneous=no
 enable_picky=yes
 enable_debug=yes
 enable_shared=yes
 enable_static=no
-enable_memchecker=no
-enable_ipv6=no
-enable_mpi_fortran=no
-enable_mpi_cxx=no
-enable_mpi_cxx_seek=no
-enable_cxx_exceptions=no
-enable_mpi_java=no
 enable_io_romio=no
-enable_contrib_no_build=libnbc
-enable_install_libpmix=yes
+enable_ipv6=no
+enable_man_pages=no
+enable_mpi_fortran=no
+enable_memchecker=no
+enable_mca_no_build=memchecker,coll-adapt,coll-cuda,coll-demo,coll-ftagree,coll-han,coll-hcoll,coll-inter,coll-libnbc,coll-monitoring,coll-portals4,coll-tuned,common-monitoring,common-ompio,fbtl,fcoll,fs,io,mtl,osc,pml-cm,pml-monitoring,pml-ucx,pml-v,sharedfp,topo,vprotocol,btl-ofi,btl-portals4,btl-smcuda,btl-uct,btl-ugni,btl-usnic,common-cuda,common-ofi,common-ucx
+enable_contrib_no_build=libompitrace
 with_memory_manager=no
-with_tm=no
-with_psm=no
-with_psm2=no
 with_devel_headers=yes
-with_libfabric=no
-with_portals=no
-with_valgrind=no
-if [ -n "$SLURMHOME" ] ; then
-    with_slurm=$SLURMHOME
-    with_pmi=$SLURMHOME
-else
-    with_slurm=no
-fi
+with_xgrid=no
+with_slurm=no

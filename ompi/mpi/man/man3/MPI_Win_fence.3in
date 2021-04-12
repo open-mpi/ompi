@@ -54,7 +54,23 @@ MPI_Win_fence synchronizes RMA calls on \fIwin\fP. The call is collective on the
 .sp
 The call completes an RMA access epoch if it was preceded by another fence call and the local process issued RMA communication calls on \fIwin\fP between these two calls. The call completes an RMA exposure epoch if it was preceded by another fence call and the local window was the target of RMA accesses between these two calls. The call starts an RMA access epoch if it is followed by another fence call and by RMA communication calls issued between these two fence calls. The call starts an exposure epoch if it is followed by another fence call and the local window is the target of RMA accesses between these two fence calls. Thus, the fence call is equivalent to calls to a subset of \fIpost, start, complete, wait\fP.
 .sp
-A fence call usually entails a barrier synchronization: a process completes a call to MPI_Win_fence only after all other processes in the group have entered their matching call. However, a call to MPI_Win_fence that is known not to end any epoch (in particular, a call with \fIassert\fP = MPI_MODE_NOPRECEDE) does not necessarily act as a barrier.
+The \fIassert\fP argument is used to provide assertions on the context of the call that may be used for various optimizations. A value of \fIassert\fP = 0 is always valid. The following assertion value is supported:
+.ft R
+.TP 1i
+MPI_MODE_NOPRECEDE
+No local RMA calls have been issued before this fence. This assertion must be provided by all or no members of the group of the window. It may enable faster fence call by avoiding unnecessary synchronization.
+.sp
+.TP 1i
+MPI_MODE_NOSTORE
+Informs that the local window was not updated by local stores or get calls in the preceding epoch.
+.TP 1i
+MPI_MODE_NOPUT
+Informs that the local window will not be updated by any put or accummulate calls in the ensuing epoch (until next fence call).
+.TP 1i
+MPI_MODE_NOSUCCEED
+No local RMA calls will be issued after this fence. This assertion must be provided by all or no members of the group of the window. It may enable faster fence call by avoiding unnecessary synchronization.
+.sp
+
 
 .SH NOTE
 Calls to MPI_Win_fence should both precede and follow calls to put, get or accumulate that are synchronized with fence calls.
