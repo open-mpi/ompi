@@ -17,6 +17,9 @@
 #include "oshmem/util/oshmem_util.h"
 
 #include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <pthread.h>
 
 struct map_segment_desc {
     void* start;
@@ -127,7 +130,41 @@ static int _check_address(struct map_segment_desc *seg)
 
 static int _check_pathname(struct map_segment_desc *seg)
 {
-    /* Probably we need to check found path but
+    static const char *proc_self_exe = "/proc/self/exe";
+    static int warned = 0;
+    char exe_path[PATH_MAX];
+    char module_path[PATH_MAX];
+    char *path;
+
+    if (0 == seg->inode) {
+        /* segment is not mapped to file, allow sharing it */
+        return OSHMEM_SUCCESS;
+    }
+
+    path = realpath(proc_self_exe, exe_path);
+    if (NULL == path) {
+        if (0 == warned) {
+            MEMHEAP_VERBOSE(100, "failed to read link %s: %m", proc_self_exe);
+            MEMHEAP_VERBOSE(100, "all segments will be registered");
+            warned = 1;
+        }
+
+        return OSHMEM_SUCCESS;
+    }
+
+    /* for file-mapped segments allow segments from start process only */
+    path = realpath(seg->pathname, module_path);
+    if (NULL == path) {
+        return OSHMEM_ERROR;
+    }
+
+    if (!strncmp(exe_path, module_path, sizeof(exe_path))) {
+        return OSHMEM_SUCCESS;
+    }
+
+    return OSHMEM_ERROR;
+
+    /* Probably we need more accurate path check
      * To press check coverity issue following code is disabled
      */
 #if 0
