@@ -6,6 +6,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -672,6 +673,17 @@ int ompi_rte_init(int *pargc, char ***pargv)
         }
     } else {
         peers = NULL;
+    }
+
+    /* get our cpuset */
+    val = NULL;
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_CPUSET,
+                                   &pmix_process_info.my_name,
+                                   &val, OPAL_STRING);
+    if (OPAL_SUCCESS == ret && NULL != val) {
+        pmix_process_info.cpuset = val;
+    } else {
+        pmix_process_info.cpuset = NULL;
     }
 
     /* set the locality */
