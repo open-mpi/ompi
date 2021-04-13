@@ -22,6 +22,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019-2020 Google, Inc. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -566,8 +567,10 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
     if (MCA_BTL_VADER_XPMEM != mca_btl_vader_component.single_copy_mechanism) {
         char *sm_file;
 
-        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%x.%d", mca_btl_vader_component.backing_directory,
-                      opal_process_info.nodename, OPAL_PROC_MY_NAME.jobid, MCA_BTL_VADER_LOCAL_RANK);
+        rc = asprintf(&sm_file, "%s" OPAL_PATH_SEP "vader_segment.%s.%u.%x.%d",
+                      mca_btl_vader_component.backing_directory,
+                      opal_process_info.nodename, geteuid(), OPAL_PROC_MY_NAME.jobid,
+                      MCA_BTL_VADER_LOCAL_RANK);
         if (0 > rc) {
             free (btls);
             return NULL;
