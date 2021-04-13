@@ -46,7 +46,7 @@ int MPI_SGI_type_is_contig(MPI_Datatype datatype);
 void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 {
     MPI_Aint displacement;
-    MPI_Type_lb(datatype, &distplacement);
+    MPI_Type_lb(datatype, &displacement);
 
     /* SGI's MPI_SGI_type_is_contig() returns true for indexed
      * datatypes with holes at the beginning, which causes
