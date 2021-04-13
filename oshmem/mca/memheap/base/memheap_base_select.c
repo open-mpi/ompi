@@ -169,14 +169,15 @@ static memheap_context_t* _memheap_create(void)
     OPAL_TIMING_ENV_NEXT(timing, "memheap_oob_init()");
 
     if (OSHMEM_SUCCESS == rc) {
+        map_segment_t *s = NULL;
         context.user_size = user_size;
         context.private_size = MEMHEAP_BASE_PRIVATE_SIZE;
+        s = mca_memheap_base_segment_get(&mca_memheap_base_map, HEAP_SEG_INDEX);
+        assert(NULL != s);
         context.user_base_addr =
-                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].super.va_base
-                        + 0);
+                (void*) ((unsigned char*)s->super.va_base + 0);
         context.private_base_addr =
-                (void*) ((unsigned char*) mca_memheap_base_map.mem_segs[HEAP_SEG_INDEX].super.va_base
-                        + context.user_size);
+                (void*) ((unsigned char*)s->super.va_base + context.user_size);
     }
     OPAL_TIMING_ENV_NEXT(timing, "DONE");
 

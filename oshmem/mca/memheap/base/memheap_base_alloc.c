@@ -20,22 +20,75 @@
 #include "ompi/util/timings.h"
 
 
+int mca_memheap_base_segment_add(mca_memheap_map_t *map)
+{
+    int index = -1;
+    if (MCA_MEMHEAP_MAX_SEGMENTS <= map->n_segments) {
+        MEMHEAP_ERROR("FAILED to obtain new segment: max number (%d) of segments descriptors is exhausted",
+                      MCA_MEMHEAP_MAX_SEGMENTS);
+        goto error;
+    }
+    index = map->n_segments;
+    map->mem_segs_ptr = realloc(map->mem_segs_ptr,
+                                sizeof(map->mem_segs_ptr[0]) * ++map->n_segments);
+    if (NULL == map->mem_segs_ptr) {
+        MEMHEAP_ERROR("FAILED to obtain new segment: OOM - failed to expand the descriptor buffer");
+        assert(NULL != map->mem_segs_ptr);
+    }
+error:
+    return index;
+}
+
+int mca_memheap_base_segment_add_fail(mca_memheap_map_t *map)
+{
+    if ( 0>= map->n_segments) {
+        return -1;
+    }
+    map->num_transports--;
+    map->mem_segs_ptr = realloc(map->mem_segs_ptr,
+                                sizeof(map->mem_segs_ptr[0]) * map->n_segments);
+    if (NULL == map->mem_segs_ptr) {
+        MEMHEAP_ERROR("FAILED to handle add failure: OOM - failed to reduce the descriptor buffer");
+        assert(NULL != map->mem_segs_ptr);
+    }
+    return 0;
+}
+
+void mca_memheap_base_segments_release(mca_memheap_map_t *map)
+{
+    if (map->n_segments) {
+        free(map->mem_segs_ptr);
+        map->mem_segs_ptr = NULL;
+    }
+}
+
 int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size, long hint,
                                 char *timing_prefix)
 {
     int ret = OSHMEM_SUCCESS;
     char * seg_filename = NULL;
+    map_segment_t *s = NULL;
+    int index;
 
     OPAL_TIMING_ENV_INIT_PREFIX(timing_prefix, timing);
 
     assert(map);
-    if (hint == 0) {
-        assert(HEAP_SEG_INDEX == map->n_segments);
-    } else {
-        assert(HEAP_SEG_INDEX < map->n_segments);
+
+    index = mca_memheap_base_segment_add(map);
+    if (0 > index) {
+        ret = OSHMEM_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
-    map_segment_t *s = &map->mem_segs[map->n_segments];
+    if (hint == 0) {
+        assert(HEAP_SEG_INDEX == index);
+    } else {
+        assert(HEAP_SEG_INDEX < index);
+    }
+
+    s = mca_memheap_base_segment_get(map, index);
+    assert(NULL != s);
+
     seg_filename = oshmem_get_unique_file_name(oshmem_my_proc_id());
 
     OPAL_TIMING_ENV_NEXT(timing, "oshmem_get_unique_file_name()");
@@ -44,16 +97,17 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size, long hint,
 
     OPAL_TIMING_ENV_NEXT(timing, "mca_sshmem_segment_create()");
 
-    if (OSHMEM_SUCCESS == ret) {
-        map->n_segments++;
+    if (OSHMEM_SUCCESS != ret) {
+        mca_memheap_base_segment_add_fail(map);
+        free(seg_filename);
+    } else {
         MEMHEAP_VERBOSE(1,
                         "Memheap alloc memory: %llu byte(s), %d segments by method: %d",
                         (unsigned long long)size, map->n_segments, s->type);
     }
-
-    free(seg_filename);
     OPAL_TIMING_ENV_NEXT(timing, "DONE");
 
+exit:
     return ret;
 }
 
@@ -66,12 +120,14 @@ void mca_memheap_base_alloc_exit(mca_memheap_map_t *map)
     }
 
     for (i = 0; i < map->n_segments; ++i) {
-        map_segment_t *s = &map->mem_segs[i];
+        map_segment_t *s = mca_memheap_base_segment_get(map, i);
+        assert(NULL != s);
         if (s->type != MAP_SEGMENT_STATIC) {
             mca_sshmem_segment_detach(s, NULL);
             mca_sshmem_unlink(s);
         }
     }
+    mca_memheap_base_segments_release(map);
 }
 
 int mca_memheap_alloc_with_hint(size_t size, long hint, void** ptr)
@@ -79,7 +135,8 @@ int mca_memheap_alloc_with_hint(size_t size, long hint, void** ptr)
     int i;
 
     for (i = 0; i < mca_memheap_base_map.n_segments; i++) {
-        map_segment_t *s = &mca_memheap_base_map.mem_segs[i];
+        map_segment_t *s = mca_memheap_base_segment_get(&mca_memheap_base_map, i);
+        assert(NULL != s);
         if (s->allocator && (hint & s->alloc_hints)) {
             /* Do not fall back to default allocator since it will break the
              * symmetry between PEs

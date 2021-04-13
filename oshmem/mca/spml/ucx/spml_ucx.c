@@ -710,7 +710,8 @@ static int mca_spml_ucx_ctx_create_common(long options, mca_spml_ucx_ctx_t **ucx
         }
 
         for (j = 0; j < memheap_map->n_segments; j++) {
-            mkey = &memheap_map->mem_segs[j].mkeys_cache[i][0];
+            map_segment_t *s = mca_memheap_base_segment_get(memheap_map, j);
+            mkey = &s->mkeys_cache[i][0];
             ucx_mkey = &ucx_ctx->ucp_peers[i].mkeys[j].key;
             if (mkey->u.data) {
                 err = ucp_ep_rkey_unpack(ucx_ctx->ucp_peers[i].ucp_conn,

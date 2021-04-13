@@ -58,7 +58,15 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
         size_t total_mem;
 
         for (i = 0, total_mem = 0; i < memheap_context.n_segments; i++) {
-            map_segment_t *s = &map->mem_segs[map->n_segments];
+            int index;
+            map_segment_t *s = NULL;
+
+            index = mca_memheap_base_segment_add(map);
+            if (0 > index) {
+                ret = OSHMEM_ERR_OUT_OF_RESOURCE;
+                goto exit;
+            }
+            s = mca_memheap_base_segment_get(map, index);
 
             memset(s, 0, sizeof(*s));
             MAP_SEGMENT_RESET_FLAGS(s);
@@ -67,21 +75,20 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
             s->super.va_end  = memheap_context.mem_segs[i].end;
             s->seg_size = ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
             s->type = MAP_SEGMENT_STATIC;
-            map->n_segments++;
 
             total_mem += ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
         }
-        MEMHEAP_VERBOSE(1,
-                        "Memheap static memory: %llu byte(s), %d segments",
+        MEMHEAP_VERBOSE(1, "Memheap static memory: %llu byte(s), %d segments",
                         (unsigned long long)total_mem, map->n_segments);
     }
-
+exit:
     return ret;
 }
 
 void mca_memheap_base_static_exit(mca_memheap_map_t *map)
 {
     assert(map);
+    mca_memheap_base_segments_release(map);
 }
 
 static int _check_perms(struct map_segment_desc *seg)

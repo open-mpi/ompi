@@ -54,7 +54,7 @@ typedef struct mca_memheap_base_config {
 
 
 typedef struct mca_memheap_map {
-    map_segment_t   mem_segs[MCA_MEMHEAP_MAX_SEGMENTS]; /* TODO: change into pointer array */
+    map_segment_t   *mem_segs_ptr; /* TODO: change into pointer array */
     int             n_segments;
     int             num_transports;
 } mca_memheap_map_t;
@@ -159,6 +159,33 @@ extern int mca_memheap_seg_cmp(const void *k, const void *v);
 #endif
 #define MEMHEAP_VERBOSE_FASTPATH(...)
 
+/* Segment allocation and access */
+
+int mca_memheap_base_segment_add(mca_memheap_map_t *map);
+static inline map_segment_t *
+mca_memheap_base_segment_get(mca_memheap_map_t *map, int index)
+{
+    if (OPAL_UNLIKELY(MCA_MEMHEAP_MAX_SEGMENTS <= index || 0 > index) ) {
+        MEMHEAP_ERROR("FAILED to GET segment: bad index = %d, MAX=%d",
+                      index, MCA_MEMHEAP_MAX_SEGMENTS);
+        return NULL;
+    }
+    return &map->mem_segs_ptr[index];
+}
+static inline int
+mca_memheap_base_segment_idx(mca_memheap_map_t *map, map_segment_t *s)
+{
+    ssize_t index = s - map->mem_segs_ptr;
+    if (OPAL_UNLIKELY(MCA_MEMHEAP_MAX_SEGMENTS <= index || 0 > index) ) {
+        MEMHEAP_ERROR("FAILED to GET segment index: bad pointer %p, base= %p",
+                      s, map->mem_segs_ptr);
+        return -1;
+    }
+    return index;
+}
+int mca_memheap_base_segment_add_fail(mca_memheap_map_t *map);
+void mca_memheap_base_segments_release(mca_memheap_map_t *map);
+
 extern mca_memheap_map_t* memheap_map;
 
 static inline int map_segment_is_va_in(map_base_segment_t *s, void *va)
@@ -168,7 +195,7 @@ static inline int map_segment_is_va_in(map_base_segment_t *s, void *va)
 
 static inline map_segment_t *memheap_find_seg(int segno)
 {
-    return &mca_memheap_base_map.mem_segs[segno];
+    return mca_memheap_base_segment_get(&mca_memheap_base_map, segno);
 }
 
 static inline int memheap_is_va_in_segment(void *va, int segno) 
@@ -225,7 +252,7 @@ static inline map_segment_t *memheap_find_va(void* va)
 
     for (i = 0; i < memheap_map->n_segments; i++) {
         if (memheap_is_va_in_segment(va, i)) {
-            s = &memheap_map->mem_segs[i];
+            s = mca_memheap_base_segment_get(memheap_map, i);
             break;
         }
     }
@@ -284,7 +311,9 @@ static inline int mca_memheap_base_num_transports(void)
 
 static inline void* mca_memheap_seg2base_va(int seg)
 {
-    return memheap_map->mem_segs[seg].super.va_base;
+    map_segment_t *s = mca_memheap_base_segment_get(memheap_map, seg);
+    assert(NULL != s);
+    return s->super.va_base;
 }
 
 END_C_DECLS

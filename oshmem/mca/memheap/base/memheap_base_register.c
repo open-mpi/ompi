@@ -27,7 +27,8 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
     int i;
 
     for (i = 0; i < memheap_map->n_segments; i++) {
-        map_segment_t *s = &memheap_map->mem_segs[i];
+        map_segment_t *s = mca_memheap_base_segment_get(memheap_map, i);
+        assert(NULL != s);
 
         MEMHEAP_VERBOSE(5,
                         "register seg#%02d: 0x%p - 0x%p %llu bytes type=0x%X id=0x%X",
@@ -52,7 +53,8 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
     int i;
 
     for (i = 0; i < memheap_map->n_segments; i++) {
-        map_segment_t *s = &memheap_map->mem_segs[i];
+        map_segment_t *s = mca_memheap_base_segment_get(memheap_map, i);
+        assert(NULL != s);
 
         if (!MAP_SEGMENT_IS_VALID(s))
             continue;
