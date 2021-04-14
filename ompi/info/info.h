@@ -30,24 +30,23 @@
 #include <string.h>
 
 #include "mpi.h"
-#include "opal/util/info.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/threads/mutex.h"
+#include "opal/util/info.h"
 
 #include "opal/mca/base/mca_base_var_enum.h"
 
-
 struct ompi_info_t {
     struct opal_info_t super;
-  /**< generic list pointer which is the container for (key,value)
-       pairs */
-  int i_f_to_c_index;
-  /**< fortran handle for info. This is needed for translation from
-       fortran to C and vice versa */
-  /**< Mutex for thread safety */
-  bool i_freed;
-  /**< Whether this info has been freed or not */
+    /**< generic list pointer which is the container for (key,value)
+         pairs */
+    int i_f_to_c_index;
+    /**< fortran handle for info. This is needed for translation from
+         fortran to C and vice versa */
+    /**< Mutex for thread safety */
+    bool i_freed;
+    /**< Whether this info has been freed or not */
 };
 typedef struct ompi_info_t ompi_info_t;
 
@@ -91,8 +90,7 @@ int ompi_mpiinfo_init(void);
 /**
  * This function is used to free a ompi level info
  */
-int ompi_info_free (ompi_info_t **info);
-
+int ompi_info_free(ompi_info_t **info);
 
 /**
  * This functions is called during ompi_mpi_finalize() and shuts
@@ -103,48 +101,48 @@ int ompi_mpiinfo_finalize(void);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo);
+OMPI_DECLSPEC int ompi_info_dup(ompi_info_t *info, ompi_info_t **newinfo);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_dup_mpistandard (ompi_info_t *info, ompi_info_t **newinfo);
+OMPI_DECLSPEC int ompi_info_dup_mpistandard(ompi_info_t *info, ompi_info_t **newinfo);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_set (ompi_info_t *info, const char *key, const char *value);
+OMPI_DECLSPEC int ompi_info_set(ompi_info_t *info, const char *key, const char *value);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
-                                            mca_base_var_enum_t *var_enum);
+OMPI_DECLSPEC int ompi_info_set_value_enum(ompi_info_t *info, const char *key, int value,
+                                           mca_base_var_enum_t *var_enum);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_get_bool (ompi_info_t *info, const char *key, bool *value, int *flag);
+OMPI_DECLSPEC int ompi_info_get_bool(ompi_info_t *info, const char *key, bool *value, int *flag);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_get_value_enum (ompi_info_t *info, const char *key,
-                                            int *value, int default_value,
-                                            mca_base_var_enum_t *var_enum, int *flag);
+OMPI_DECLSPEC int ompi_info_get_value_enum(ompi_info_t *info, const char *key, int *value,
+                                           int default_value, mca_base_var_enum_t *var_enum,
+                                           int *flag);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_get (ompi_info_t *info, const char *key,
-                                 opal_cstring_t **value, int *flag);
+OMPI_DECLSPEC int ompi_info_get(ompi_info_t *info, const char *key, opal_cstring_t **value,
+                                int *flag);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_delete (ompi_info_t *info, const char *key);
+OMPI_DECLSPEC int ompi_info_delete(ompi_info_t *info, const char *key);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_get_valuelen (ompi_info_t *info, const char *key, int *valuelen,
-                                          int *flag);
+OMPI_DECLSPEC int ompi_info_get_valuelen(ompi_info_t *info, const char *key, int *valuelen,
+                                         int *flag);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
-OMPI_DECLSPEC int ompi_info_get_nthkey (ompi_info_t *info, int n, opal_cstring_t **key);
+OMPI_DECLSPEC int ompi_info_get_nthkey(ompi_info_t *info, int n, opal_cstring_t **key);
 /**
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
@@ -153,7 +151,6 @@ OMPI_DECLSPEC int ompi_info_value_to_bool(char *value, bool *interp);
  * ompi_info_foo() wrapper around various opal_info_foo() calls
  */
 OMPI_DECLSPEC int ompi_info_get_nkeys(ompi_info_t *info, int *nkeys);
-
 
 END_C_DECLS
 
@@ -174,9 +171,7 @@ END_C_DECLS
  */
 static inline bool ompi_info_is_freed(ompi_info_t *info)
 {
-  return info->i_freed;
+    return info->i_freed;
 }
-
-
 
 #endif /* OMPI_INFO_H */

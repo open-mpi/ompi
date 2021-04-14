@@ -24,18 +24,18 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_size = PMPI_Type_size
-#endif
-#define MPI_Type_size PMPI_Type_size
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_size = PMPI_Type_size
+#    endif
+#    define MPI_Type_size PMPI_Type_size
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_size";
@@ -43,9 +43,7 @@ static const char FUNC_NAME[] = "MPI_Type_size";
 int MPI_Type_size(MPI_Datatype type, int *size)
 {
     size_t type_size;
-    MEMCHECKER(
-        memchecker_datatype(type);
-    );
+    MEMCHECKER(memchecker_datatype(type););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -56,7 +54,7 @@ int MPI_Type_size(MPI_Datatype type, int *size)
         }
     }
 
-    opal_datatype_type_size ( &type->super, &type_size);
+    opal_datatype_type_size(&type->super, &type_size);
 
     *size = (type_size > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) type_size;
 

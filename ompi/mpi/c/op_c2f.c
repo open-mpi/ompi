@@ -21,21 +21,20 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/op/op.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Op_c2f = PMPI_Op_c2f
-#endif
-#define MPI_Op_c2f PMPI_Op_c2f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Op_c2f = PMPI_Op_c2f
+#    endif
+#    define MPI_Op_c2f PMPI_Op_c2f
 #endif
 
 static const char FUNC_NAME[] = "MPI_Op_c2f";
-
 
 MPI_Fint MPI_Op_c2f(MPI_Op op)
 {

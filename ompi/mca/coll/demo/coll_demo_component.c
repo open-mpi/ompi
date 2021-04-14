@@ -28,15 +28,15 @@
 
 #include "ompi_config.h"
 
+#include "coll_demo.h"
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
-#include "coll_demo.h"
 
 /*
  * Public string showing the coll ompi_demo component version number
  */
-const char *mca_coll_demo_component_version_string =
-  "OMPI/MPI demo collective MCA component version " OMPI_VERSION;
+const char *mca_coll_demo_component_version_string
+    = "OMPI/MPI demo collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variable
@@ -48,7 +48,6 @@ int mca_coll_demo_verbose = 0;
  * Local function
  */
 static int demo_register(void);
-
 
 /*
  * Instantiate the public struct with all of our public information
@@ -82,41 +81,33 @@ const mca_coll_base_component_2_4_0_t mca_coll_demo_component = {
     .collm_comm_query = mca_coll_demo_comm_query,
 };
 
-
 static int demo_register(void)
 {
     mca_coll_demo_priority = 20;
-    (void) mca_base_component_var_register(&mca_coll_demo_component.collm_version, "priority",
-                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_coll_demo_priority);
+    (void) mca_base_component_var_register(&mca_coll_demo_component.collm_version, "priority", NULL,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_demo_priority);
     mca_coll_demo_verbose = 0;
-    (void) mca_base_component_var_register(&mca_coll_demo_component.collm_version, "verbose",
-                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_coll_demo_verbose);
+    (void) mca_base_component_var_register(&mca_coll_demo_component.collm_version, "verbose", NULL,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_demo_verbose);
 
     return OMPI_SUCCESS;
 }
 
-
-static void
-mca_coll_demo_module_construct(mca_coll_demo_module_t *module)
+static void mca_coll_demo_module_construct(mca_coll_demo_module_t *module)
 {
     memset(&module->underlying, 0, sizeof(mca_coll_base_comm_coll_t));
 }
 
-#define RELEASE(module, func)                                           \
-    do {                                                                \
-        if (NULL != module->underlying.coll_ ## func ## _module) { \
-            OBJ_RELEASE(module->underlying.coll_ ## func ## _module); \
-        }                                                               \
+#define RELEASE(module, func)                                     \
+    do {                                                          \
+        if (NULL != module->underlying.coll_##func##_module) {    \
+            OBJ_RELEASE(module->underlying.coll_##func##_module); \
+        }                                                         \
     } while (0)
 
-static void
-mca_coll_demo_module_destruct(mca_coll_demo_module_t *module)
+static void mca_coll_demo_module_destruct(mca_coll_demo_module_t *module)
 {
     RELEASE(module, allgather);
     RELEASE(module, allgatherv);
@@ -136,8 +127,5 @@ mca_coll_demo_module_destruct(mca_coll_demo_module_t *module)
     RELEASE(module, scatterv);
 }
 
-
-OBJ_CLASS_INSTANCE(mca_coll_demo_module_t,
-                   mca_coll_base_module_t,
-                   mca_coll_demo_module_construct,
+OBJ_CLASS_INSTANCE(mca_coll_demo_module_t, mca_coll_base_module_t, mca_coll_demo_module_construct,
                    mca_coll_demo_module_destruct);

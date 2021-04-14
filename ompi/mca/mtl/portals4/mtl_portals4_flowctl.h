@@ -32,7 +32,6 @@ struct ompi_mtl_portals4_pending_request_t {
 typedef struct ompi_mtl_portals4_pending_request_t ompi_mtl_portals4_pending_request_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals4_pending_request_t);
 
-
 struct ompi_mtl_portals4_flowctl_t {
     int32_t flowctl_active;
 
@@ -84,14 +83,11 @@ struct ompi_mtl_portals4_flowctl_t {
 };
 typedef struct ompi_mtl_portals4_flowctl_t ompi_mtl_portals4_flowctl_t;
 
-
 int ompi_mtl_portals4_flowctl_init(void);
 
 int ompi_mtl_portals4_flowctl_fini(void);
 
-int ompi_mtl_portals4_flowctl_add_procs(size_t me,
-                                        size_t npeers,
-                                        struct ompi_proc_t **procs);
+int ompi_mtl_portals4_flowctl_add_procs(size_t me, size_t npeers, struct ompi_proc_t **procs);
 
 int ompi_mtl_portals4_flowctl_trigger(void);
 

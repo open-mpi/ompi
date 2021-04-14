@@ -34,8 +34,8 @@
 /*
  * Public string showing the fcoll ompi_dynamic component version number
  */
-const char *mca_fcoll_dynamic_component_version_string =
-    "Open MPI dynamic collective MCA component version " OMPI_VERSION;
+const char *mca_fcoll_dynamic_component_version_string
+    = "Open MPI dynamic collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variables
@@ -75,16 +75,14 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_component = {
     .fcollm_file_unquery = mca_fcoll_dynamic_component_file_unquery,
 };
 
-
-static int
-dynamic_register(void)
+static int dynamic_register(void)
 {
     mca_fcoll_dynamic_priority = 10;
-    (void) mca_base_component_var_register(&mca_fcoll_dynamic_component.fcollm_version,
-                                           "priority", "Priority of the dynamic fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_dynamic_priority);
+    (void) mca_base_component_var_register(&mca_fcoll_dynamic_component.fcollm_version, "priority",
+                                           "Priority of the dynamic fcoll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_fcoll_dynamic_priority);
 
     return OMPI_SUCCESS;
 }

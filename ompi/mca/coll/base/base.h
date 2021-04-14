@@ -63,8 +63,7 @@ BEGIN_C_DECLS
  * this MPI process.  If a component does not want to run it is closed and
  * removed from the framework components list.
  */
-int mca_coll_base_find_available(bool enable_progress_threads,
-                                 bool enable_mpi_threads);
+int mca_coll_base_find_available(bool enable_progress_threads, bool enable_mpi_threads);
 
 /**
  * Select an available component for a new communicator.

@@ -20,8 +20,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
+#include "ompi/mca/pml/pml.h"
 
 /**
  * If you wonder why these 2 freelists are declared here read the comment
@@ -30,15 +30,9 @@
 opal_free_list_t mca_pml_base_send_requests = {{{0}}};
 opal_free_list_t mca_pml_base_recv_requests = {{{0}}};
 
-static void mca_pml_base_request_construct(mca_pml_base_request_t* req)
+static void mca_pml_base_request_construct(mca_pml_base_request_t *req)
 {
     req->req_ompi.req_type = OMPI_REQUEST_PML;
 }
 
-OBJ_CLASS_INSTANCE(
-    mca_pml_base_request_t,
-    ompi_request_t,
-    mca_pml_base_request_construct,
-    NULL
-);
-
+OBJ_CLASS_INSTANCE(mca_pml_base_request_t, ompi_request_t, mca_pml_base_request_construct, NULL);

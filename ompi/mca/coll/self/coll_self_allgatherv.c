@@ -20,10 +20,9 @@
 
 #include "ompi_config.h"
 
+#include "coll_self.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "coll_self.h"
-
 
 /*
  *	allgatherv_intra
@@ -32,11 +31,9 @@
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_self_allgatherv_intra(const void *sbuf, int scount,
-                                   struct ompi_datatype_t *sdtype,
-                                   void * rbuf, const int *rcounts, const int *disps,
-                                   struct ompi_datatype_t *rdtype,
-                                   struct ompi_communicator_t *comm,
+int mca_coll_self_allgatherv_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                   void *rbuf, const int *rcounts, const int *disps,
+                                   struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                    mca_coll_base_module_t *module)
 {
     if (MPI_IN_PLACE == sbuf) {
@@ -48,7 +45,7 @@ int mca_coll_self_allgatherv_intra(const void *sbuf, int scount,
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }
-        return ompi_datatype_sndrcv(sbuf, scount, sdtype,
-                               ((char *) rbuf) + disps[0] * extent, rcounts[0], rdtype);
+        return ompi_datatype_sndrcv(sbuf, scount, sdtype, ((char *) rbuf) + disps[0] * extent,
+                                    rcounts[0], rdtype);
     }
 }

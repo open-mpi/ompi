@@ -21,14 +21,14 @@ opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
 
 volatile uint32_t ompi_mpit_init_count = 0;
 
-void ompi_mpit_lock (void)
+void ompi_mpit_lock(void)
 {
-    opal_mutex_lock (&ompi_mpit_big_lock);
+    opal_mutex_lock(&ompi_mpit_big_lock);
 }
 
-void ompi_mpit_unlock (void)
+void ompi_mpit_unlock(void)
 {
-    opal_mutex_unlock (&ompi_mpit_big_lock);
+    opal_mutex_unlock(&ompi_mpit_big_lock);
 }
 
 static MPI_Datatype mca_to_mpi_datatypes[MCA_BASE_VAR_TYPE_MAX] = {
@@ -58,19 +58,19 @@ static MPI_Datatype mca_to_mpi_datatypes[MCA_BASE_VAR_TYPE_MAX] = {
     [MCA_BASE_VAR_TYPE_UINT64_T] = MPI_UINT64_T,
 };
 
-int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)
+int ompit_var_type_to_datatype(mca_base_var_type_t type, MPI_Datatype *datatype)
 {
     if (!datatype) {
         return OMPI_SUCCESS;
     }
 
     *datatype = mca_to_mpi_datatypes[type];
-    assert (*datatype);
+    assert(*datatype);
 
     return OMPI_SUCCESS;
 }
 
-int ompit_opal_to_mpit_error (int rc)
+int ompit_opal_to_mpit_error(int rc)
 {
     if (rc >= 0) {
         /* Already an MPI error (always >= 0) */

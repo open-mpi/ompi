@@ -46,16 +46,16 @@ BEGIN_C_DECLS
 /**
  * Function typedef for the conversion function pointer in
  * MPI_REGISTER_DATAREP */
-typedef void (ompi_mpi2_fortran_datarep_conversion_fn_t)
-    (char *userbuf, MPI_Fint *datatype, MPI_Fint *count, char *filebuf,
-     MPI_Offset *position, MPI_Aint *extra_state, MPI_Fint *ierr);
+typedef void(ompi_mpi2_fortran_datarep_conversion_fn_t)(char *userbuf, MPI_Fint *datatype,
+                                                        MPI_Fint *count, char *filebuf,
+                                                        MPI_Offset *position, MPI_Aint *extra_state,
+                                                        MPI_Fint *ierr);
 
 /**
  * Function typedef for the extent function pointer in
  * MPI_REGISTER_DATAREP */
-typedef void (ompi_mpi2_fortran_datarep_extent_fn_t)
-    (MPI_Fint *datatype, MPI_Aint *extent, MPI_Aint *extra_state,
-     MPI_Fint *ierr);
+typedef void(ompi_mpi2_fortran_datarep_extent_fn_t)(MPI_Fint *datatype, MPI_Aint *extent,
+                                                    MPI_Aint *extra_state, MPI_Fint *ierr);
 
 /**
  * Macro for declaring each of the 5 back-end Fortran functions for
@@ -66,16 +66,18 @@ typedef void (ompi_mpi2_fortran_datarep_extent_fn_t)
  * Fortran MPI API bindings and other callback functions).
  */
 #define OMPI_DATAREP_FORTRAN_DECLARE(lower_name, upper_name, args) \
-  OMPI_DECLSPEC void lower_name##_f args;    \
-  OMPI_DECLSPEC void lower_name args;        \
-  OMPI_DECLSPEC void lower_name##_ args;     \
-  OMPI_DECLSPEC void lower_name##__ args;    \
-  OMPI_DECLSPEC void upper_name args;
+    OMPI_DECLSPEC void lower_name##_f args;                        \
+    OMPI_DECLSPEC void lower_name args;                            \
+    OMPI_DECLSPEC void lower_name##_ args;                         \
+    OMPI_DECLSPEC void lower_name##__ args;                        \
+    OMPI_DECLSPEC void upper_name args;
 
 /*
  * Declare the 5 functions.
  */
-OMPI_DATAREP_FORTRAN_DECLARE(mpi_conversion_fn_null, MPI_CONVERSION_FN_NULL, (char *userbuf, MPI_Fint *datatype, MPI_Fint *count, char *filebuf, MPI_Offset *position, MPI_Aint *extra_state, MPI_Fint *ierr))
+OMPI_DATAREP_FORTRAN_DECLARE(mpi_conversion_fn_null, MPI_CONVERSION_FN_NULL,
+                             (char *userbuf, MPI_Fint *datatype, MPI_Fint *count, char *filebuf,
+                              MPI_Offset *position, MPI_Aint *extra_state, MPI_Fint *ierr))
 
 /* Be social and remove this private macro from the global header file
    space */
@@ -87,19 +89,15 @@ OMPI_DATAREP_FORTRAN_DECLARE(mpi_conversion_fn_null, MPI_CONVERSION_FN_NULL, (ch
  * MPI_CONVERSION_FN_NULL.
  */
 #if OMPI_FORTRAN_CAPS
-#define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
-  (MPI_CONVERSION_FN_NULL == addr)
+#    define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) (MPI_CONVERSION_FN_NULL == addr)
 #elif OMPI_FORTRAN_PLAIN
-#define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
-  (mpi_conversion_fn_null == addr)
+#    define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) (mpi_conversion_fn_null == addr)
 #elif OMPI_FORTRAN_SINGLE_UNDERSCORE
-#define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
-  (mpi_conversion_fn_null_ == addr)
+#    define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) (mpi_conversion_fn_null_ == addr)
 #elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
-#define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
-  (mpi_conversion_fn_null__ == addr)
+#    define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) (mpi_conversion_fn_null__ == addr)
 #else
-#error Unrecognized Fortran name mangling scheme
+#    error Unrecognized Fortran name mangling scheme
 #endif
 
 END_C_DECLS

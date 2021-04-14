@@ -22,43 +22,37 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
-#endif
-#define MPI_Type_get_true_extent PMPI_Type_get_true_extent
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
+#    endif
+#    define MPI_Type_get_true_extent PMPI_Type_get_true_extent
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_get_true_extent";
 
-int MPI_Type_get_true_extent(MPI_Datatype datatype,
-                             MPI_Aint *true_lb,
-                             MPI_Aint *true_extent)
+int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent)
 {
-   int rc;
+    int rc;
 
-   MEMCHECKER(
-      memchecker_datatype(datatype);
-   );
+    MEMCHECKER(memchecker_datatype(datatype););
 
-   if( MPI_PARAM_CHECK ) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
-                                      FUNC_NAME );
-      } else if (NULL == true_lb || NULL == true_extent) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                      FUNC_NAME );
-      }
-   }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
+        } else if (NULL == true_lb || NULL == true_extent) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        }
+    }
 
-   rc = ompi_datatype_get_true_extent( datatype, true_lb, true_extent );
-   OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME );
+    rc = ompi_datatype_get_true_extent(datatype, true_lb, true_extent);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

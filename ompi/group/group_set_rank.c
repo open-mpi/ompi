@@ -21,8 +21,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/group/group.h"
 #include "ompi/constants.h"
+#include "ompi/group/group.h"
 
 /*
  * Set group rank in a group structure.
@@ -41,10 +41,10 @@ void ompi_set_group_rank(ompi_group_t *group, struct ompi_proc_t *proc_pointer)
         for (proc = 0; proc < group->grp_proc_count; proc++) {
             /* check and see if this proc pointer matches proc_pointer
              */
-	    if (ompi_group_peer_lookup_existing (group, proc) == proc_pointer) {
+            if (ompi_group_peer_lookup_existing(group, proc) == proc_pointer) {
                 group->grp_my_rank = proc;
-		break;
-	    }
-        }                       /* end proc loop */
+                break;
+            }
+        } /* end proc loop */
     }
 }

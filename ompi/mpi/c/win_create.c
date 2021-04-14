@@ -23,49 +23,44 @@
 
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/win/win.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_create = PMPI_Win_create
-#endif
-#define MPI_Win_create PMPI_Win_create
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_create = PMPI_Win_create
+#    endif
+#    define MPI_Win_create PMPI_Win_create
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_create";
 
-
-int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
-                   MPI_Info info, MPI_Comm comm, MPI_Win *win)
+int MPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm,
+                   MPI_Win *win)
 {
     int ret = MPI_SUCCESS;
 
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
     /* argument checking */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (ompi_comm_invalid (comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
 
         } else if (NULL == info || ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INFO,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INFO, FUNC_NAME);
 
         } else if (NULL == win) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_WIN, FUNC_NAME);
-        } else if ( size < 0 ) {
+        } else if (size < 0) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_SIZE, FUNC_NAME);
-        } else if ( disp_unit <= 0 ) {
+        } else if (disp_unit <= 0) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_DISP, FUNC_NAME);
         }
     }
@@ -76,8 +71,7 @@ int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
     }
 
     /* create window and return */
-    ret = ompi_win_create(base, (size_t)size, disp_unit, comm,
-                          &(info->super), win);
+    ret = ompi_win_create(base, (size_t) size, disp_unit, comm, &(info->super), win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_WIN, FUNC_NAME);

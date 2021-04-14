@@ -21,53 +21,46 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_INFO_DELETE = ompi_info_delete_f
-#pragma weak pmpi_info_delete = ompi_info_delete_f
-#pragma weak pmpi_info_delete_ = ompi_info_delete_f
-#pragma weak pmpi_info_delete__ = ompi_info_delete_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_INFO_DELETE = ompi_info_delete_f
+#        pragma weak pmpi_info_delete = ompi_info_delete_f
+#        pragma weak pmpi_info_delete_ = ompi_info_delete_f
+#        pragma weak pmpi_info_delete__ = ompi_info_delete_f
 
-#pragma weak PMPI_Info_delete_f = ompi_info_delete_f
-#pragma weak PMPI_Info_delete_f08 = ompi_info_delete_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_DELETE,
-                            pmpi_info_delete,
-                            pmpi_info_delete_,
-                            pmpi_info_delete__,
-                            pompi_info_delete_f,
-                            (MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len),
-                            (info, key, ierr, key_len) )
-#endif
+#        pragma weak PMPI_Info_delete_f = ompi_info_delete_f
+#        pragma weak PMPI_Info_delete_f08 = ompi_info_delete_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_INFO_DELETE, pmpi_info_delete, pmpi_info_delete_,
+                           pmpi_info_delete__, pompi_info_delete_f,
+                           (MPI_Fint * info, char *key, MPI_Fint *ierr, int key_len),
+                           (info, key, ierr, key_len))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_INFO_DELETE = ompi_info_delete_f
-#pragma weak mpi_info_delete = ompi_info_delete_f
-#pragma weak mpi_info_delete_ = ompi_info_delete_f
-#pragma weak mpi_info_delete__ = ompi_info_delete_f
+#    pragma weak MPI_INFO_DELETE = ompi_info_delete_f
+#    pragma weak mpi_info_delete = ompi_info_delete_f
+#    pragma weak mpi_info_delete_ = ompi_info_delete_f
+#    pragma weak mpi_info_delete__ = ompi_info_delete_f
 
-#pragma weak MPI_Info_delete_f = ompi_info_delete_f
-#pragma weak MPI_Info_delete_f08 = ompi_info_delete_f
+#    pragma weak MPI_Info_delete_f = ompi_info_delete_f
+#    pragma weak MPI_Info_delete_f08 = ompi_info_delete_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_INFO_DELETE,
-                            mpi_info_delete,
-                            mpi_info_delete_,
-                            mpi_info_delete__,
-                            ompi_info_delete_f,
-                            (MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len),
-                            (info, key, ierr, key_len) )
-#else
-#define ompi_info_delete_f pompi_info_delete_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_INFO_DELETE, mpi_info_delete, mpi_info_delete_, mpi_info_delete__,
+                           ompi_info_delete_f,
+                           (MPI_Fint * info, char *key, MPI_Fint *ierr, int key_len),
+                           (info, key, ierr, key_len))
+#    else
+#        define ompi_info_delete_f pompi_info_delete_f
+#    endif
 #endif
-#endif
-
 
 static const char FUNC_NAME[] = "MPI_INFO_DELETE";
 
@@ -84,13 +77,15 @@ void ompi_info_delete_f(MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len)
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(key, key_len, &c_key))) {
         c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
     c_info = PMPI_Info_f2c(*info);
 
     c_ierr = PMPI_Info_delete(c_info, c_key);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free(c_key);
 }

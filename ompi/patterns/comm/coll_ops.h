@@ -24,20 +24,15 @@ BEGIN_C_DECLS
 #define OMPI_COMMON_TAG_ALLREDUCE 99
 #define OMPI_COMMON_TAG_BCAST     98
 
-
-
-
 OMPI_DECLSPEC int ompi_comm_allgather_pml(void *src_buf, void *dest_buf, int count,
-        ompi_datatype_t *dtype, int my_rank_in_group, int n_peers,
-        int *ranks_in_comm,ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_comm_allreduce_pml(void *sbuf, void *rbuf, int count,
-        ompi_datatype_t *dtype, int my_rank_in_group,
-        struct ompi_op_t *op, int n_peers,int *ranks_in_comm,
-        ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_comm_bcast_pml(void *buffer, int root, int count,
-        ompi_datatype_t *dtype, int my_rank_in_group,
-        int n_peers, int *ranks_in_comm,ompi_communicator_t
-        *comm);
+                                          ompi_datatype_t *dtype, int my_rank_in_group, int n_peers,
+                                          int *ranks_in_comm, ompi_communicator_t *comm);
+OMPI_DECLSPEC int ompi_comm_allreduce_pml(void *sbuf, void *rbuf, int count, ompi_datatype_t *dtype,
+                                          int my_rank_in_group, struct ompi_op_t *op, int n_peers,
+                                          int *ranks_in_comm, ompi_communicator_t *comm);
+OMPI_DECLSPEC int ompi_comm_bcast_pml(void *buffer, int root, int count, ompi_datatype_t *dtype,
+                                      int my_rank_in_group, int n_peers, int *ranks_in_comm,
+                                      ompi_communicator_t *comm);
 
 /* reduction operations supported */
 #define OP_SUM 1
@@ -45,7 +40,6 @@ OMPI_DECLSPEC int ompi_comm_bcast_pml(void *buffer, int root, int count,
 #define OP_MIN 3
 
 #define TYPE_INT4 1
-
 
 END_C_DECLS
 

@@ -9,10 +9,10 @@
 
 #include "ompi_config.h"
 
-#include "ompi/request/request.h"
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/request/request.h"
 
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
@@ -24,9 +24,9 @@ static int request_cancel(struct ompi_request_t *request, int complete)
 
 static int request_free(struct ompi_request_t **ompi_req)
 {
-    ompi_osc_ucx_request_t *request = (ompi_osc_ucx_request_t*) *ompi_req;
+    ompi_osc_ucx_request_t *request = (ompi_osc_ucx_request_t *) *ompi_req;
 
-    if (true != (bool)(request->super.req_complete)) {
+    if (true != (bool) (request->super.req_complete)) {
         return MPI_ERR_REQUEST;
     }
 
@@ -45,12 +45,12 @@ static void request_construct(ompi_osc_ucx_request_t *request)
     request->super.req_cancel = request_cancel;
 }
 
-void req_completion(void *request) {
-    ompi_osc_ucx_request_t *req = (ompi_osc_ucx_request_t *)request;
+void req_completion(void *request)
+{
+    ompi_osc_ucx_request_t *req = (ompi_osc_ucx_request_t *) request;
     ompi_request_complete(&(req->super), true);
     mca_osc_ucx_component.num_incomplete_req_ops--;
     assert(mca_osc_ucx_component.num_incomplete_req_ops >= 0);
 }
 
-OBJ_CLASS_INSTANCE(ompi_osc_ucx_request_t, ompi_request_t,
-                   request_construct, NULL);
+OBJ_CLASS_INSTANCE(ompi_osc_ucx_request_t, ompi_request_t, request_construct, NULL);

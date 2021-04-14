@@ -21,17 +21,16 @@
 #include "pml_cm.h"
 #include "pml_cm_request.h"
 
-
-static void mca_pml_cm_request_construct( mca_pml_cm_request_t* req) {
+static void mca_pml_cm_request_construct(mca_pml_cm_request_t *req)
+{
     OBJ_CONSTRUCT(&req->req_convertor, opal_convertor_t);
     req->req_ompi.req_type = OMPI_REQUEST_PML;
 }
 
-static void mca_pml_cm_request_destruct( mca_pml_cm_request_t* req) {
+static void mca_pml_cm_request_destruct(mca_pml_cm_request_t *req)
+{
     OBJ_DESTRUCT(&req->req_convertor);
 }
 
-OBJ_CLASS_INSTANCE(mca_pml_cm_request_t,
-                   ompi_request_t,
-                   mca_pml_cm_request_construct,
+OBJ_CLASS_INSTANCE(mca_pml_cm_request_t, ompi_request_t, mca_pml_cm_request_construct,
                    mca_pml_cm_request_destruct);

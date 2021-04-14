@@ -24,51 +24,45 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_contiguous = PMPI_Type_contiguous
-#endif
-#define MPI_Type_contiguous PMPI_Type_contiguous
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_contiguous = PMPI_Type_contiguous
+#    endif
+#    define MPI_Type_contiguous PMPI_Type_contiguous
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_contiguous";
 
-
-int MPI_Type_contiguous(int count,
-                        MPI_Datatype oldtype,
-                        MPI_Datatype *newtype)
+int MPI_Type_contiguous(int count, MPI_Datatype oldtype, MPI_Datatype *newtype)
 {
     int rc;
 
-    MEMCHECKER(
-        memchecker_datatype(oldtype);
-        );
+    MEMCHECKER(memchecker_datatype(oldtype););
 
-    if( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (MPI_DATATYPE_NULL == oldtype || NULL == oldtype ||
-            NULL == newtype) {
+        if (MPI_DATATYPE_NULL == oldtype || NULL == oldtype || NULL == newtype) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
-        } else if( count < 0 ) {
+        } else if (count < 0) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
         }
     }
 
-    rc = ompi_datatype_create_contiguous( count, oldtype, newtype );
-    OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME );
+    rc = ompi_datatype_create_contiguous(count, oldtype, newtype);
+    OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
 
     /* data description */
     {
-        const int* a_i[1] = {&count};
-        ompi_datatype_set_args( *newtype, 1, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
+        const int *a_i[1] = {&count};
+        ompi_datatype_set_args(*newtype, 1, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS);
     }
 
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME );
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

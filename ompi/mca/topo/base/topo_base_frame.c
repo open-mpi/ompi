@@ -25,11 +25,10 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
-#include "opal/class/opal_list.h"
-#include "opal/util/output.h"
 #include "ompi/mca/mca.h"
+#include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
-
+#include "opal/util/output.h"
 
 #include "ompi/mca/topo/base/base.h"
 
@@ -40,11 +39,13 @@
  */
 #include "ompi/mca/topo/base/static-components.h"
 
-static void mca_topo_base_module_construct(mca_topo_base_module_t * topo) {
+static void mca_topo_base_module_construct(mca_topo_base_module_t *topo)
+{
     memset(&(topo->mtc), 0, sizeof(topo->mtc));
 }
 
-static void mca_topo_base_module_destruct(mca_topo_base_module_t * topo) {
+static void mca_topo_base_module_destruct(mca_topo_base_module_t *topo)
+{
     /* topo->mtc is an union of pointers to opal_object_t.
        In order to release it, we just have to call OBJ_RELEASE on any of the member,
        (cart in this case) and the appropriate object destructor will be called */
@@ -53,8 +54,7 @@ static void mca_topo_base_module_destruct(mca_topo_base_module_t * topo) {
     }
 }
 
-OBJ_CLASS_INSTANCE(mca_topo_base_module_t, opal_object_t,
-                   mca_topo_base_module_construct,
+OBJ_CLASS_INSTANCE(mca_topo_base_module_t, opal_object_t, mca_topo_base_module_construct,
                    mca_topo_base_module_destruct);
 
 static int mca_topo_base_close(void)
@@ -71,34 +71,33 @@ static int mca_topo_base_open(mca_base_open_flag_t flags)
     return mca_base_framework_components_open(&ompi_topo_base_framework, flags);
 }
 
-int mca_topo_base_neighbor_count (ompi_communicator_t *comm, int *indegree, int *outdegree) {
-  if (!OMPI_COMM_IS_TOPO(comm)) {
-    return OMPI_ERR_BAD_PARAM;
-  }
+int mca_topo_base_neighbor_count(ompi_communicator_t *comm, int *indegree, int *outdegree)
+{
+    if (!OMPI_COMM_IS_TOPO(comm)) {
+        return OMPI_ERR_BAD_PARAM;
+    }
 
-  if (OMPI_COMM_IS_CART(comm)) {
-    /* cartesian */
-    /* outdegree is always 2*ndims because we need to iterate over
-       empty buffers for MPI_PROC_NULL */
-    *outdegree = *indegree = 2 * comm->c_topo->mtc.cart->ndims;
-  } else if (OMPI_COMM_IS_GRAPH(comm)) {
-    /* graph */
-    int rank, nneighbors;
+    if (OMPI_COMM_IS_CART(comm)) {
+        /* cartesian */
+        /* outdegree is always 2*ndims because we need to iterate over
+           empty buffers for MPI_PROC_NULL */
+        *outdegree = *indegree = 2 * comm->c_topo->mtc.cart->ndims;
+    } else if (OMPI_COMM_IS_GRAPH(comm)) {
+        /* graph */
+        int rank, nneighbors;
 
-    rank = ompi_comm_rank (comm);
-    mca_topo_base_graph_neighbors_count (comm, rank, &nneighbors);
+        rank = ompi_comm_rank(comm);
+        mca_topo_base_graph_neighbors_count(comm, rank, &nneighbors);
 
-    *outdegree = *indegree = nneighbors;
-  } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
-    /* graph */
-    *indegree = comm->c_topo->mtc.dist_graph->indegree;
-    *outdegree = comm->c_topo->mtc.dist_graph->outdegree;
-  }
+        *outdegree = *indegree = nneighbors;
+    } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
+        /* graph */
+        *indegree = comm->c_topo->mtc.dist_graph->indegree;
+        *outdegree = comm->c_topo->mtc.dist_graph->outdegree;
+    }
 
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, topo, "OMPI Topo", NULL,
-                           mca_topo_base_open, mca_topo_base_close,
+MCA_BASE_FRAMEWORK_DECLARE(ompi, topo, "OMPI Topo", NULL, mca_topo_base_open, mca_topo_base_close,
                            mca_topo_base_static_components, 0);
-

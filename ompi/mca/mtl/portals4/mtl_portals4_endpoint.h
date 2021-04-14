@@ -20,8 +20,8 @@
 #ifndef OMPI_MTL_PORTALS_ENDPOINT_H
 #define OMPI_MTL_PORTALS_ENDPOINT_H
 
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/portals4/mtl_portals4.h"
+#include "ompi/mca/pml/pml.h"
 
 struct mca_mtl_base_endpoint_t {
     ptl_process_t ptl_proc;
@@ -29,12 +29,13 @@ struct mca_mtl_base_endpoint_t {
 typedef struct mca_mtl_base_endpoint_t mca_mtl_base_endpoint_t;
 
 static inline mca_mtl_base_endpoint_t *
-ompi_mtl_portals4_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
+ompi_mtl_portals4_get_endpoint(struct mca_mtl_base_module_t *mtl, ompi_proc_t *ompi_proc)
 {
     if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4])) {
         int rc;
         if (OPAL_UNLIKELY(OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(&ompi_proc, 1))))) {
-            ompi_rte_abort(rc,"ompi_mtl_portals4_get_endpoint(): pml->add_procs() failed.  Aborting.\n");
+            ompi_rte_abort(
+                rc, "ompi_mtl_portals4_get_endpoint(): pml->add_procs() failed.  Aborting.\n");
         }
     }
 

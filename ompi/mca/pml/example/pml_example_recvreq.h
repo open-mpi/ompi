@@ -14,9 +14,8 @@
 
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
 
-void mca_pml_example_recv_request_progress( struct mca_ptl_base_module_t* ptl,
-                                        mca_pml_base_recv_request_t* req,
-                                        size_t bytes_received,
-                                        size_t bytes_delivered );
+void mca_pml_example_recv_request_progress(struct mca_ptl_base_module_t *ptl,
+                                           mca_pml_base_recv_request_t *req, size_t bytes_received,
+                                           size_t bytes_delivered);
 
-#endif  /* PML_EXAMPLE_RECVREQ_H_HAS_BEEN_INCLUDED */
+#endif /* PML_EXAMPLE_RECVREQ_H_HAS_BEEN_INCLUDED */

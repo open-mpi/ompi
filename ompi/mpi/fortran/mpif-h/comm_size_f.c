@@ -24,60 +24,52 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_COMM_SIZE = ompi_comm_size_f
-#pragma weak pmpi_comm_size = ompi_comm_size_f
-#pragma weak pmpi_comm_size_ = ompi_comm_size_f
-#pragma weak pmpi_comm_size__ = ompi_comm_size_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_COMM_SIZE = ompi_comm_size_f
+#        pragma weak pmpi_comm_size = ompi_comm_size_f
+#        pragma weak pmpi_comm_size_ = ompi_comm_size_f
+#        pragma weak pmpi_comm_size__ = ompi_comm_size_f
 
-#pragma weak PMPI_Comm_size_f = ompi_comm_size_f
-#pragma weak PMPI_Comm_size_f08 = ompi_comm_size_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SIZE,
-                           pmpi_comm_size,
-                           pmpi_comm_size_,
-                           pmpi_comm_size__,
-                           pompi_comm_size_f,
-                           (MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr),
-                           (comm, size, ierr) )
-#endif
+#        pragma weak PMPI_Comm_size_f = ompi_comm_size_f
+#        pragma weak PMPI_Comm_size_f08 = ompi_comm_size_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_COMM_SIZE, pmpi_comm_size, pmpi_comm_size_, pmpi_comm_size__,
+                           pompi_comm_size_f, (MPI_Fint * comm, MPI_Fint *size, MPI_Fint *ierr),
+                           (comm, size, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_COMM_SIZE = ompi_comm_size_f
-#pragma weak mpi_comm_size = ompi_comm_size_f
-#pragma weak mpi_comm_size_ = ompi_comm_size_f
-#pragma weak mpi_comm_size__ = ompi_comm_size_f
+#    pragma weak MPI_COMM_SIZE = ompi_comm_size_f
+#    pragma weak mpi_comm_size = ompi_comm_size_f
+#    pragma weak mpi_comm_size_ = ompi_comm_size_f
+#    pragma weak mpi_comm_size__ = ompi_comm_size_f
 
-#pragma weak MPI_Comm_size_f = ompi_comm_size_f
-#pragma weak MPI_Comm_size_f08 = ompi_comm_size_f
+#    pragma weak MPI_Comm_size_f = ompi_comm_size_f
+#    pragma weak MPI_Comm_size_f08 = ompi_comm_size_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SIZE,
-                           mpi_comm_size,
-                           mpi_comm_size_,
-                           mpi_comm_size__,
-                           ompi_comm_size_f,
-                           (MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr),
-                           (comm, size, ierr) )
-#else
-#define ompi_comm_size_f pompi_comm_size_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_COMM_SIZE, mpi_comm_size, mpi_comm_size_, mpi_comm_size__,
+                           ompi_comm_size_f, (MPI_Fint * comm, MPI_Fint *size, MPI_Fint *ierr),
+                           (comm, size, ierr))
+#    else
+#        define ompi_comm_size_f pompi_comm_size_f
+#    endif
 #endif
-#endif
-
 
 #include <stdio.h>
 
 void ompi_comm_size_f(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Comm c_comm = PMPI_Comm_f2c( *comm );
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     OMPI_SINGLE_NAME_DECL(size);
 
-    c_ierr = PMPI_Comm_size( c_comm, OMPI_SINGLE_NAME_CONVERT(size) );
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Comm_size(c_comm, OMPI_SINGLE_NAME_CONVERT(size));
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-       OMPI_SINGLE_INT_2_FINT(size);
+        OMPI_SINGLE_INT_2_FINT(size);
     }
 }

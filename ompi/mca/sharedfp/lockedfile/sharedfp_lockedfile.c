@@ -26,14 +26,14 @@
  */
 
 #include "ompi_config.h"
-#include "mpi.h"
-#include "ompi/mca/sharedfp/sharedfp.h"
-#include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/sharedfp/lockedfile/sharedfp_lockedfile.h"
+#include "mpi.h"
+#include "ompi/mca/sharedfp/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
 
 /* included so that we can test file locking availability */
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 /*
@@ -41,25 +41,24 @@
  * ************************ actions structure ************************
  * *******************************************************************
  */
- /* IMPORTANT: Update here when adding sharedfp component interface functions*/
-static mca_sharedfp_base_module_1_0_0_t lockedfile =  {
-    mca_sharedfp_lockedfile_module_init, /* initalise after being selected */
-    mca_sharedfp_lockedfile_module_finalize, /* close a module on a communicator */
-    mca_sharedfp_lockedfile_seek,
-    mca_sharedfp_lockedfile_get_position,
-    mca_sharedfp_lockedfile_read,
-    mca_sharedfp_lockedfile_read_ordered,
-    mca_sharedfp_lockedfile_read_ordered_begin,
-    mca_sharedfp_lockedfile_read_ordered_end,
-    mca_sharedfp_lockedfile_iread,
-    mca_sharedfp_lockedfile_write,
-    mca_sharedfp_lockedfile_write_ordered,
-    mca_sharedfp_lockedfile_write_ordered_begin,
-    mca_sharedfp_lockedfile_write_ordered_end,
-    mca_sharedfp_lockedfile_iwrite,
-    mca_sharedfp_lockedfile_file_open,
-    mca_sharedfp_lockedfile_file_close
-};
+/* IMPORTANT: Update here when adding sharedfp component interface functions*/
+static mca_sharedfp_base_module_1_0_0_t lockedfile
+    = {mca_sharedfp_lockedfile_module_init,     /* initalise after being selected */
+       mca_sharedfp_lockedfile_module_finalize, /* close a module on a communicator */
+       mca_sharedfp_lockedfile_seek,
+       mca_sharedfp_lockedfile_get_position,
+       mca_sharedfp_lockedfile_read,
+       mca_sharedfp_lockedfile_read_ordered,
+       mca_sharedfp_lockedfile_read_ordered_begin,
+       mca_sharedfp_lockedfile_read_ordered_end,
+       mca_sharedfp_lockedfile_iread,
+       mca_sharedfp_lockedfile_write,
+       mca_sharedfp_lockedfile_write_ordered,
+       mca_sharedfp_lockedfile_write_ordered_begin,
+       mca_sharedfp_lockedfile_write_ordered_end,
+       mca_sharedfp_lockedfile_iwrite,
+       mca_sharedfp_lockedfile_file_open,
+       mca_sharedfp_lockedfile_file_close};
 /*
  * *******************************************************************
  * ************************* structure ends **************************
@@ -74,18 +73,20 @@ int mca_sharedfp_lockedfile_component_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
-struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file_query(ompio_file_t *fh, int *priority) {
+struct mca_sharedfp_base_module_1_0_0_t *
+mca_sharedfp_lockedfile_component_file_query(ompio_file_t *fh, int *priority)
+{
     struct flock lock;
     int fd, err;
     /*char *filename;*/
     char filename[256];
     int rank;
-    bool has_file_lock_support=false;
+    bool has_file_lock_support = false;
 
     *priority = mca_sharedfp_lockedfile_priority;
 
     /*get the rank of this process*/
-    rank = ompi_comm_rank ( fh->f_comm);
+    rank = ompi_comm_rank(fh->f_comm);
 
     /*test, and update priority*/
     /*
@@ -115,78 +116,83 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file
 
     /* Set the filename. */
     /*data filename created by appending .locktest.$rank to the original filename*/
-    sprintf(filename,"%s%s%d",fh->f_filename,".locktest.",rank);
+    sprintf(filename, "%s%s%d", fh->f_filename, ".locktest.", rank);
 
-    lock.l_type   = F_WRLCK;
-    lock.l_start  = 0;
+    lock.l_type = F_WRLCK;
+    lock.l_start = 0;
     lock.l_whence = SEEK_SET;
-    lock.l_len    = 100;
-    lock.l_pid      = getpid();
+    lock.l_len = 100;
+    lock.l_pid = getpid();
 
     fd = open(filename, O_RDWR | O_CREAT, 0644);
 
-    if ( -1 == fd ){
+    if (-1 == fd) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
-		    "mca_sharedfp_lockedfile_component_file_query: error opening file %s %s", filename, strerror(errno));
-        has_file_lock_support=false;
-    }
-    else{
+                    "mca_sharedfp_lockedfile_component_file_query: error opening file %s %s",
+                    filename, strerror(errno));
+        has_file_lock_support = false;
+    } else {
         err = fcntl(fd, F_SETLKW, &lock);
-	opal_output(ompi_sharedfp_base_framework.framework_output,
-		    "mca_sharedfp_lockedfile_component_file_query: returned err=%d, for fd=%d\n",err,fd);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_lockedfile_component_file_query: returned err=%d, for fd=%d\n",
+                    err, fd);
 
         if (err) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
-			"mca_sharedfp_lockedfile_component_file_query: Failed to set a file lock on %s %s\n", filename, strerror(errno) );
+                        "mca_sharedfp_lockedfile_component_file_query: Failed to set a file lock "
+                        "on %s %s\n",
+                        filename, strerror(errno));
             opal_output(ompi_sharedfp_base_framework.framework_output,
-			"err=%d, errno=%d, EOPNOTSUPP=%d, EINVAL=%d, ENOSYS=%d, EACCES=%d, EAGAIN=%d, EBADF=%d\n",
+                        "err=%d, errno=%d, EOPNOTSUPP=%d, EINVAL=%d, ENOSYS=%d, EACCES=%d, "
+                        "EAGAIN=%d, EBADF=%d\n",
                         err, errno, EOPNOTSUPP, EINVAL, ENOSYS, EACCES, EAGAIN, EBADF);
 
             if (errno == EACCES || errno == EAGAIN) {
                 opal_output(ompi_sharedfp_base_framework.framework_output,
-			    "errno=EACCES || EAGAIN, Already locked by another process\n");
+                            "errno=EACCES || EAGAIN, Already locked by another process\n");
             }
 
-        }
-        else {
-	    opal_output(ompi_sharedfp_base_framework.framework_output,
-			"mca_sharedfp_lockedfile_component_file_query: fcntl claims success in setting a file lock on %s\n", filename );
+        } else {
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "mca_sharedfp_lockedfile_component_file_query: fcntl claims success in "
+                        "setting a file lock on %s\n",
+                        filename);
 
-            has_file_lock_support=true;
+            has_file_lock_support = true;
         }
         /* printf("err = %d, errno = %d\n", err, errno); */
         close(fd);
-        unlink( filename );
+        unlink(filename);
     }
     /**priority=100;*/
-    if(has_file_lock_support){
+    if (has_file_lock_support) {
         return &lockedfile;
     }
 
     *priority = 0;
     /*module can not run!, return NULL to indicate that we are unable to run*/
 
-    opal_output(ompi_sharedfp_base_framework.framework_output,
-		"mca_sharedfp_lockedfile_component_file_query: Can not run!, file locking not supported\n");
+    opal_output(
+        ompi_sharedfp_base_framework.framework_output,
+        "mca_sharedfp_lockedfile_component_file_query: Can not run!, file locking not supported\n");
     return NULL;
 }
 
-int mca_sharedfp_lockedfile_component_file_unquery (ompio_file_t *file)
+int mca_sharedfp_lockedfile_component_file_unquery(ompio_file_t *file)
 {
     /* This function might be needed for some purposes later. for now it
-    * does not have anything to do since there are no steps which need
-    * to be undone if this module is not selected */
+     * does not have anything to do since there are no steps which need
+     * to be undone if this module is not selected */
 
     return OMPI_SUCCESS;
 }
 
-int mca_sharedfp_lockedfile_module_init (ompio_file_t *file)
+int mca_sharedfp_lockedfile_module_init(ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }
 
-
-int mca_sharedfp_lockedfile_module_finalize (ompio_file_t *file)
+int mca_sharedfp_lockedfile_module_finalize(ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

@@ -23,30 +23,26 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
-#endif
-#define MPI_Test_cancelled PMPI_Test_cancelled
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
+#    endif
+#    define MPI_Test_cancelled PMPI_Test_cancelled
 #endif
 
 static const char FUNC_NAME[] = "MPI_Test_cancelled";
-
 
 int MPI_Test_cancelled(const MPI_Status *status, int *flag)
 {
     int rc = MPI_SUCCESS;
 
-    MEMCHECKER (
-        if(status != MPI_STATUSES_IGNORE)
-            memchecker_status(status);
-    );
+    MEMCHECKER(if (status != MPI_STATUSES_IGNORE) memchecker_status(status););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -58,4 +54,3 @@ int MPI_Test_cancelled(const MPI_Status *status, int *flag)
     *flag = status->_cancelled;
     return rc;
 }
-

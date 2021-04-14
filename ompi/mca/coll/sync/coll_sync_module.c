@@ -23,7 +23,7 @@
 #include "ompi_config.h"
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#    include <string.h>
 #endif
 #include <stdio.h>
 
@@ -31,15 +31,14 @@
 
 #include "mpi.h"
 
-#include "opal/util/show_help.h"
 #include "ompi/runtime/ompi_rte.h"
+#include "opal/util/show_help.h"
 
-#include "ompi/constants.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/base.h"
 #include "coll_sync.h"
-
+#include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/coll.h"
 
 static void mca_coll_sync_module_construct(mca_coll_sync_module_t *module)
 {
@@ -67,38 +66,32 @@ static void mca_coll_sync_module_destruct(mca_coll_sync_module_t *module)
     }
 }
 
-OBJ_CLASS_INSTANCE(mca_coll_sync_module_t, mca_coll_base_module_t,
-                   mca_coll_sync_module_construct,
+OBJ_CLASS_INSTANCE(mca_coll_sync_module_t, mca_coll_base_module_t, mca_coll_sync_module_construct,
                    mca_coll_sync_module_destruct);
-
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this component to disqualify itself if it doesn't support the
  * required level of thread support.
  */
-int mca_coll_sync_init_query(bool enable_progress_threads,
-                             bool enable_mpi_threads)
+int mca_coll_sync_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
     /* Nothing to do */
     return OMPI_SUCCESS;
 }
-
 
 /*
  * Invoked when there's a new communicator that has been created.
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_t *
-mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
-                         int *priority)
+mca_coll_base_module_t *mca_coll_sync_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_sync_module_t *sync_module;
 
     /* If both MCA params are 0, then disqualify us */
-    if (0 == mca_coll_sync_component.barrier_before_nops &&
-        0 == mca_coll_sync_component.barrier_after_nops) {
+    if (0 == mca_coll_sync_component.barrier_before_nops
+        && 0 == mca_coll_sync_component.barrier_after_nops) {
         return NULL;
     }
 
@@ -114,46 +107,44 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
 
     /* The "all" versions are already synchronous.  So no need for an
        additional barrier there. */
-    sync_module->super.coll_allgather  = NULL;
+    sync_module->super.coll_allgather = NULL;
     sync_module->super.coll_allgatherv = NULL;
-    sync_module->super.coll_allreduce  = NULL;
-    sync_module->super.coll_alltoall   = NULL;
-    sync_module->super.coll_alltoallv  = NULL;
-    sync_module->super.coll_alltoallw  = NULL;
-    sync_module->super.coll_barrier    = NULL;
-    sync_module->super.coll_bcast      = mca_coll_sync_bcast;
-    sync_module->super.coll_exscan     = mca_coll_sync_exscan;
-    sync_module->super.coll_gather     = mca_coll_sync_gather;
-    sync_module->super.coll_gatherv    = mca_coll_sync_gatherv;
-    sync_module->super.coll_reduce     = mca_coll_sync_reduce;
+    sync_module->super.coll_allreduce = NULL;
+    sync_module->super.coll_alltoall = NULL;
+    sync_module->super.coll_alltoallv = NULL;
+    sync_module->super.coll_alltoallw = NULL;
+    sync_module->super.coll_barrier = NULL;
+    sync_module->super.coll_bcast = mca_coll_sync_bcast;
+    sync_module->super.coll_exscan = mca_coll_sync_exscan;
+    sync_module->super.coll_gather = mca_coll_sync_gather;
+    sync_module->super.coll_gatherv = mca_coll_sync_gatherv;
+    sync_module->super.coll_reduce = mca_coll_sync_reduce;
     sync_module->super.coll_reduce_scatter = mca_coll_sync_reduce_scatter;
-    sync_module->super.coll_scan       = mca_coll_sync_scan;
-    sync_module->super.coll_scatter    = mca_coll_sync_scatter;
-    sync_module->super.coll_scatterv   = mca_coll_sync_scatterv;
+    sync_module->super.coll_scan = mca_coll_sync_scan;
+    sync_module->super.coll_scatter = mca_coll_sync_scatter;
+    sync_module->super.coll_scatterv = mca_coll_sync_scatterv;
 
     return &(sync_module->super);
 }
 
-
 /*
  * Init module on the communicator
  */
-int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
-                                struct ompi_communicator_t *comm)
+int mca_coll_sync_module_enable(mca_coll_base_module_t *module, struct ompi_communicator_t *comm)
 {
     bool good = true;
     char *msg = NULL;
-    mca_coll_sync_module_t *s = (mca_coll_sync_module_t*) module;
+    mca_coll_sync_module_t *s = (mca_coll_sync_module_t *) module;
 
     /* Save the prior layer of coll functions */
     s->c_coll = *comm->c_coll;
 
-#define CHECK_AND_RETAIN(name)                           \
-    if (NULL == s->c_coll.coll_ ## name ## _module) {    \
-        good = false;                                    \
-        msg = #name;                                     \
-    } else if (good) {                                   \
-        OBJ_RETAIN(s->c_coll.coll_ ## name ## _module);  \
+#define CHECK_AND_RETAIN(name)                      \
+    if (NULL == s->c_coll.coll_##name##_module) {   \
+        good = false;                               \
+        msg = #name;                                \
+    } else if (good) {                              \
+        OBJ_RETAIN(s->c_coll.coll_##name##_module); \
     }
 
     CHECK_AND_RETAIN(bcast);
@@ -173,8 +164,7 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
     if (good) {
         return OMPI_SUCCESS;
     }
-    opal_show_help("help-coll-sync.txt", "missing collective", true,
-                   ompi_process_info.nodename,
+    opal_show_help("help-coll-sync.txt", "missing collective", true, ompi_process_info.nodename,
                    mca_coll_sync_component.priority, msg);
     return OMPI_ERR_NOT_FOUND;
 }

@@ -236,11 +236,11 @@
 #include "opal/sys/atomic.h"
 
 #include "ompi/attribute/attribute.h"
+#include "ompi/communicator/communicator.h" /* ompi_communicator_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/communicator/communicator.h"  /* ompi_communicator_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
-#include "ompi/win/win.h"                    /* ompi_win_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
 #include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/win/win.h" /* ompi_win_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
 
 /*
  * Macros
@@ -252,14 +252,13 @@
    here */
 
 #define MPI_DATATYPE_NULL_COPY_FN MPI_TYPE_NULL_COPY_FN
-#define attr_communicator_f c_f_to_c_index
-#define attr_datatype_f d_f_to_c_index
-#define attr_win_f w_f_to_c_index
+#define attr_communicator_f       c_f_to_c_index
+#define attr_datatype_f           d_f_to_c_index
+#define attr_win_f                w_f_to_c_index
 
 #define CREATE_KEY(key) opal_bitmap_find_and_set_first_unset_bit(key_bitmap, (key))
 
 #define FREE_KEY(key) opal_bitmap_clear_bit(key_bitmap, (key))
-
 
 /* Not checking for NULL_DELETE_FN here, since according to the
    MPI-standard it should be a valid function that returns
@@ -283,104 +282,103 @@
    Ick.
  */
 
-#define DELETE_ATTR_CALLBACKS(type, attribute, keyval_obj, object, err)     \
-do { \
-    OPAL_THREAD_UNLOCK(&attribute_lock); \
-    if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
-        MPI_Fint f_key = OMPI_INT_2_FINT(key); \
-        MPI_Fint f_err; \
-        MPI_Fint attr_##type##_f;                \
-        attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *)keyval_obj)->attr_##type##_f); \
-        /* MPI-1 Fortran-style */ \
-        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_INT)) { \
-            MPI_Fint attr_val = translate_to_fint(attribute); \
-            (*((keyval_obj->delete_attr_fn).attr_fint_delete_fn)) \
-                (&attr_##type##_f,                                        \
-                 &f_key, &attr_val, &keyval_obj->extra_state.f_integer, &f_err); \
-            if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
-                err = OMPI_FINT_2_INT(f_err);           \
-            } \
-        } \
-        /* MPI-2 Fortran-style */ \
-        else { \
-            MPI_Aint attr_val = translate_to_aint(attribute); \
-            (*((keyval_obj->delete_attr_fn).attr_aint_delete_fn)) \
-                (&attr_##type##_f,                                        \
-                 &f_key, (int*)&attr_val, &keyval_obj->extra_state.f_address, &f_err); \
-            if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
-                err = OMPI_FINT_2_INT(f_err); \
-            } \
-        } \
-    } \
-    /* C style */ \
-    else { \
-        void *attr_val = translate_to_c(attribute); \
-        err = (*((keyval_obj->delete_attr_fn).attr_##type##_delete_fn)) \
-            ((ompi_##type##_t *)object,                                 \
-             key, attr_val,                                             \
-             keyval_obj->extra_state.c_ptr);                            \
-    } \
-    OPAL_THREAD_LOCK(&attribute_lock); \
-} while (0)
+#define DELETE_ATTR_CALLBACKS(type, attribute, keyval_obj, object, err)                           \
+    do {                                                                                          \
+        OPAL_THREAD_UNLOCK(&attribute_lock);                                                      \
+        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) {                                     \
+            MPI_Fint f_key = OMPI_INT_2_FINT(key);                                                \
+            MPI_Fint f_err;                                                                       \
+            MPI_Fint attr_##type##_f;                                                             \
+            attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *) keyval_obj)->attr_##type##_f); \
+            /* MPI-1 Fortran-style */                                                             \
+            if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_INT)) {                             \
+                MPI_Fint attr_val = translate_to_fint(attribute);                                 \
+                (*((keyval_obj->delete_attr_fn)                                                   \
+                       .attr_fint_delete_fn))(&attr_##type##_f, &f_key, &attr_val,                \
+                                              &keyval_obj->extra_state.f_integer, &f_err);        \
+                if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) {                                      \
+                    err = OMPI_FINT_2_INT(f_err);                                                 \
+                }                                                                                 \
+            } /* MPI-2 Fortran-style */                                                           \
+            else {                                                                                \
+                MPI_Aint attr_val = translate_to_aint(attribute);                                 \
+                (*((keyval_obj->delete_attr_fn)                                                   \
+                       .attr_aint_delete_fn))(&attr_##type##_f, &f_key, (int *) &attr_val,        \
+                                              &keyval_obj->extra_state.f_address, &f_err);        \
+                if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) {                                      \
+                    err = OMPI_FINT_2_INT(f_err);                                                 \
+                }                                                                                 \
+            }                                                                                     \
+        } /* C style */                                                                           \
+        else {                                                                                    \
+            void *attr_val = translate_to_c(attribute);                                           \
+            err = (*((keyval_obj->delete_attr_fn)                                                 \
+                         .attr_##type##_delete_fn))((ompi_##type##_t *) object, key, attr_val,    \
+                                                    keyval_obj->extra_state.c_ptr);               \
+        }                                                                                         \
+        OPAL_THREAD_LOCK(&attribute_lock);                                                        \
+    } while (0)
 
 /* See the big, long comment above from DELETE_ATTR_CALLBACKS -- most of
    that text applies here, too. */
 
-#define COPY_ATTR_CALLBACKS(type, old_object, keyval_obj, in_attr, new_object, out_attr, err) \
-do { \
-    OPAL_THREAD_UNLOCK(&attribute_lock); \
-    if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
-        MPI_Fint f_key = OMPI_INT_2_FINT(key); \
-        MPI_Fint f_err; \
-        ompi_fortran_logical_t f_flag; \
-        /* MPI-1 Fortran-style */ \
-        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_INT)) { \
-            MPI_Fint in, out;                        \
-            MPI_Fint attr_##type##_f;                \
-            in = translate_to_fint(in_attr); \
-            attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *)old_object)->attr_##type##_f); \
-            (*((keyval_obj->copy_attr_fn).attr_fint_copy_fn)) \
-                (&attr_##type##_f, \
-                 &f_key, &keyval_obj->extra_state.f_integer, \
-                 &in, &out, &f_flag, &f_err); \
-            if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
-                err = OMPI_FINT_2_INT(f_err);           \
-            } else {                                    \
-                out_attr->av_value = (void*) 0;         \
-                *out_attr->av_fint_pointer = out;    \
-                flag = OMPI_LOGICAL_2_INT(f_flag);      \
-            }                                           \
-        } \
-        /* MPI-2 Fortran-style */ \
-        else { \
-            MPI_Aint in, out;                        \
-            MPI_Fint attr_##type##_f;                \
-            in = translate_to_aint(in_attr); \
-            attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *)old_object)->attr_##type##_f); \
-            (*((keyval_obj->copy_attr_fn).attr_aint_copy_fn)) \
-                (&attr_##type##_f, \
-                 &f_key, &keyval_obj->extra_state.f_address, &in, &out, \
-                 &f_flag, &f_err); \
-            if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
-                err = OMPI_FINT_2_INT(f_err);           \
-            } else {                                    \
-                out_attr->av_value = (void *) out;      \
-                flag = OMPI_LOGICAL_2_INT(f_flag);      \
-            }                                           \
-        } \
-    } \
-    /* C style */ \
-    else { \
-        void *in, *out; \
-        in = translate_to_c(in_attr); \
-        if ((err = (*((keyval_obj->copy_attr_fn).attr_##type##_copy_fn)) \
-              ((ompi_##type##_t *)old_object, key, keyval_obj->extra_state.c_ptr, \
-               in, &out, &flag, (ompi_##type##_t *)(new_object))) == MPI_SUCCESS) { \
-            out_attr->av_value = out;                                   \
-        }                                                               \
-    } \
-    OPAL_THREAD_LOCK(&attribute_lock); \
-} while (0)
+#define COPY_ATTR_CALLBACKS(type, old_object, keyval_obj, in_attr, new_object, out_attr, err)    \
+    do {                                                                                         \
+        OPAL_THREAD_UNLOCK(&attribute_lock);                                                     \
+        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) {                                    \
+            MPI_Fint f_key = OMPI_INT_2_FINT(key);                                               \
+            MPI_Fint f_err;                                                                      \
+            ompi_fortran_logical_t f_flag;                                                       \
+            /* MPI-1 Fortran-style */                                                            \
+            if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_INT)) {                            \
+                MPI_Fint in, out;                                                                \
+                MPI_Fint attr_##type##_f;                                                        \
+                in = translate_to_fint(in_attr);                                                 \
+                attr_##type##_f = OMPI_INT_2_FINT(                                               \
+                    ((ompi_##type##_t *) old_object)->attr_##type##_f);                          \
+                (*((keyval_obj->copy_attr_fn).attr_fint_copy_fn))(&attr_##type##_f, &f_key,      \
+                                                                  &keyval_obj->extra_state       \
+                                                                       .f_integer,               \
+                                                                  &in, &out, &f_flag, &f_err);   \
+                if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) {                                     \
+                    err = OMPI_FINT_2_INT(f_err);                                                \
+                } else {                                                                         \
+                    out_attr->av_value = (void *) 0;                                             \
+                    *out_attr->av_fint_pointer = out;                                            \
+                    flag = OMPI_LOGICAL_2_INT(f_flag);                                           \
+                }                                                                                \
+            } /* MPI-2 Fortran-style */                                                          \
+            else {                                                                               \
+                MPI_Aint in, out;                                                                \
+                MPI_Fint attr_##type##_f;                                                        \
+                in = translate_to_aint(in_attr);                                                 \
+                attr_##type##_f = OMPI_INT_2_FINT(                                               \
+                    ((ompi_##type##_t *) old_object)->attr_##type##_f);                          \
+                (*((keyval_obj->copy_attr_fn).attr_aint_copy_fn))(&attr_##type##_f, &f_key,      \
+                                                                  &keyval_obj->extra_state       \
+                                                                       .f_address,               \
+                                                                  &in, &out, &f_flag, &f_err);   \
+                if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) {                                     \
+                    err = OMPI_FINT_2_INT(f_err);                                                \
+                } else {                                                                         \
+                    out_attr->av_value = (void *) out;                                           \
+                    flag = OMPI_LOGICAL_2_INT(f_flag);                                           \
+                }                                                                                \
+            }                                                                                    \
+        } /* C style */                                                                          \
+        else {                                                                                   \
+            void *in, *out;                                                                      \
+            in = translate_to_c(in_attr);                                                        \
+            if ((err = (*((keyval_obj->copy_attr_fn)                                             \
+                              .attr_##type##_copy_fn))((ompi_##type##_t *) old_object, key,      \
+                                                       keyval_obj->extra_state.c_ptr, in, &out,  \
+                                                       &flag, (ompi_##type##_t *) (new_object))) \
+                == MPI_SUCCESS) {                                                                \
+                out_attr->av_value = out;                                                        \
+            }                                                                                    \
+        }                                                                                        \
+        OPAL_THREAD_LOCK(&attribute_lock);                                                       \
+    } while (0)
 
 /*
  * Cases for attribute values
@@ -406,43 +404,32 @@ typedef struct attribute_value_t {
     int av_sequence;
 } attribute_value_t;
 
-
 /*
  * Local functions
  */
 static void attribute_value_construct(attribute_value_t *item);
 static void ompi_attribute_keyval_construct(ompi_attribute_keyval_t *keyval);
 static void ompi_attribute_keyval_destruct(ompi_attribute_keyval_t *keyval);
-static int set_value(ompi_attribute_type_t type, void *object,
-                     opal_hash_table_t **attr_hash, int key,
-                     attribute_value_t *new_attr,
-                     bool predefined);
-static int get_value(opal_hash_table_t *attr_hash, int key,
-                     attribute_value_t **attribute, int *flag);
+static int set_value(ompi_attribute_type_t type, void *object, opal_hash_table_t **attr_hash,
+                     int key, attribute_value_t *new_attr, bool predefined);
+static int get_value(opal_hash_table_t *attr_hash, int key, attribute_value_t **attribute,
+                     int *flag);
 static void *translate_to_c(attribute_value_t *val);
 static MPI_Fint translate_to_fint(attribute_value_t *val);
 static MPI_Aint translate_to_aint(attribute_value_t *val);
 
 static int compare_attr_sequence(const void *attr1, const void *attr2);
 
-
 /*
  * attribute_value_t class
  */
-static OBJ_CLASS_INSTANCE(attribute_value_t,
-                          opal_object_t,
-                          attribute_value_construct,
-                          NULL);
-
+static OBJ_CLASS_INSTANCE(attribute_value_t, opal_object_t, attribute_value_construct, NULL);
 
 /*
  * ompi_attribute_entry_t classes
  */
-static OBJ_CLASS_INSTANCE(ompi_attribute_keyval_t,
-                          opal_object_t,
-                          ompi_attribute_keyval_construct,
+static OBJ_CLASS_INSTANCE(ompi_attribute_keyval_t, opal_object_t, ompi_attribute_keyval_construct,
                           ompi_attribute_keyval_destruct);
-
 
 /*
  * Static variables
@@ -461,26 +448,23 @@ static unsigned int integer_pos = 12345;
  */
 static opal_mutex_t attribute_lock;
 
-
 /*
  * attribute_value_t constructor function
  */
 static void attribute_value_construct(attribute_value_t *item)
 {
     item->av_key = MPI_KEYVAL_INVALID;
-    item->av_aint_pointer = (MPI_Aint*) &item->av_value;
-    item->av_int_pointer = (int *)&item->av_value + int_pos;
-    item->av_fint_pointer = (MPI_Fint *)&item->av_value + integer_pos;
+    item->av_aint_pointer = (MPI_Aint *) &item->av_value;
+    item->av_int_pointer = (int *) &item->av_value + int_pos;
+    item->av_fint_pointer = (MPI_Fint *) &item->av_value + integer_pos;
     item->av_set_from = 0;
     item->av_sequence = -1;
 }
 
-
 /*
  * ompi_attribute_keyval_t constructor / destructor
  */
-static void
-ompi_attribute_keyval_construct(ompi_attribute_keyval_t *keyval)
+static void ompi_attribute_keyval_construct(ompi_attribute_keyval_t *keyval)
 {
     keyval->attr_type = UNUSED_ATTR;
     keyval->attr_flag = 0;
@@ -497,9 +481,7 @@ ompi_attribute_keyval_construct(ompi_attribute_keyval_t *keyval)
     keyval->key = -1;
 }
 
-
-static void
-ompi_attribute_keyval_destruct(ompi_attribute_keyval_t *keyval)
+static void ompi_attribute_keyval_destruct(ompi_attribute_keyval_t *keyval)
 {
     if (-1 != keyval->key) {
         /* If the bindings_extra_state pointer is not NULL, free it */
@@ -512,7 +494,6 @@ ompi_attribute_keyval_destruct(ompi_attribute_keyval_t *keyval)
     }
 }
 
-
 /*
  * This will initialize the main list to store key- attribute
  * items. This will be called one time, during MPI_INIT().
@@ -520,7 +501,7 @@ ompi_attribute_keyval_destruct(ompi_attribute_keyval_t *keyval)
 int ompi_attr_init(void)
 {
     int ret;
-    void *bogus = (void*) 1;
+    void *bogus = (void *) 1;
     int *p = (int *) &bogus;
 
     keyval_hash = OBJ_NEW(opal_hash_table_t);
@@ -531,20 +512,18 @@ int ompi_attr_init(void)
     /*
      * Set the max size to OMPI_FORTRAN_HANDLE_MAX to enforce bound
      */
-    opal_bitmap_set_max_size (key_bitmap, OMPI_FORTRAN_HANDLE_MAX);
+    opal_bitmap_set_max_size(key_bitmap, OMPI_FORTRAN_HANDLE_MAX);
     if (0 != opal_bitmap_init(key_bitmap, 32)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for (int_pos = 0; int_pos < (sizeof(void*) / sizeof(int));
-         ++int_pos) {
+    for (int_pos = 0; int_pos < (sizeof(void *) / sizeof(int)); ++int_pos) {
         if (p[int_pos] == 1) {
             break;
         }
     }
 
-    for (integer_pos = 0; integer_pos < (sizeof(void*) / sizeof(MPI_Fint));
-         ++integer_pos) {
+    for (integer_pos = 0; integer_pos < (sizeof(void *) / sizeof(MPI_Fint)); ++integer_pos) {
         if (p[integer_pos] == 1) {
             break;
         }
@@ -552,8 +531,7 @@ int ompi_attr_init(void)
 
     OBJ_CONSTRUCT(&attribute_lock, opal_mutex_t);
 
-    if (OMPI_SUCCESS != (ret = opal_hash_table_init(keyval_hash,
-                                                    ATTR_TABLE_SIZE))) {
+    if (OMPI_SUCCESS != (ret = opal_hash_table_init(keyval_hash, ATTR_TABLE_SIZE))) {
         return ret;
     }
     if (OMPI_SUCCESS != (ret = ompi_attr_create_predefined())) {
@@ -562,7 +540,6 @@ int ompi_attr_init(void)
 
     return OMPI_SUCCESS;
 }
-
 
 /*
  * Cleanup everything during MPI_Finalize().
@@ -580,12 +557,10 @@ int ompi_attr_finalize(void)
 /*****************************************************************************/
 
 static int ompi_attr_create_keyval_impl(ompi_attribute_type_t type,
-                            ompi_attribute_fn_ptr_union_t copy_attr_fn,
-                            ompi_attribute_fn_ptr_union_t delete_attr_fn,
-                            int *key,
-                            ompi_attribute_fortran_ptr_t *extra_state,
-                            int flags,
-                            void *bindings_extra_state)
+                                        ompi_attribute_fn_ptr_union_t copy_attr_fn,
+                                        ompi_attribute_fn_ptr_union_t delete_attr_fn, int *key,
+                                        ompi_attribute_fortran_ptr_t *extra_state, int flags,
+                                        void *bindings_extra_state)
 {
     ompi_attribute_keyval_t *keyval;
     int ret;
@@ -626,29 +601,21 @@ static int ompi_attr_create_keyval_impl(ompi_attribute_type_t type,
     return ret;
 }
 
-int ompi_attr_create_keyval(ompi_attribute_type_t type,
-                            ompi_attribute_fn_ptr_union_t copy_attr_fn,
-                            ompi_attribute_fn_ptr_union_t delete_attr_fn,
-                            int *key,
-                            void *extra_state,
-                            int flags,
-                            void *bindings_extra_state)
+int ompi_attr_create_keyval(ompi_attribute_type_t type, ompi_attribute_fn_ptr_union_t copy_attr_fn,
+                            ompi_attribute_fn_ptr_union_t delete_attr_fn, int *key,
+                            void *extra_state, int flags, void *bindings_extra_state)
 {
     ompi_attribute_fortran_ptr_t es_tmp;
 
     es_tmp.c_ptr = extra_state;
-    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
-                                        key, &es_tmp, flags,
+    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn, key, &es_tmp, flags,
                                         bindings_extra_state);
 }
 
 int ompi_attr_create_keyval_fint(ompi_attribute_type_t type,
                                  ompi_attribute_fn_ptr_union_t copy_attr_fn,
-                                 ompi_attribute_fn_ptr_union_t delete_attr_fn,
-                                 int *key,
-                                 MPI_Fint extra_state,
-                                 int flags,
-                                 void *bindings_extra_state)
+                                 ompi_attribute_fn_ptr_union_t delete_attr_fn, int *key,
+                                 MPI_Fint extra_state, int flags, void *bindings_extra_state)
 {
     ompi_attribute_fortran_ptr_t es_tmp;
 
@@ -656,42 +623,34 @@ int ompi_attr_create_keyval_fint(ompi_attribute_type_t type,
 #if SIZEOF_INT == OMPI_SIZEOF_FORTRAN_INTEGER
     flags |= OMPI_KEYVAL_F77_INT;
 #endif
-    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
-                                        key, &es_tmp, flags,
+    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn, key, &es_tmp, flags,
                                         bindings_extra_state);
 }
 
 int ompi_attr_create_keyval_aint(ompi_attribute_type_t type,
                                  ompi_attribute_fn_ptr_union_t copy_attr_fn,
-                                 ompi_attribute_fn_ptr_union_t delete_attr_fn,
-                                 int *key,
-                                 MPI_Aint extra_state,
-                                 int flags,
-                                 void *bindings_extra_state)
+                                 ompi_attribute_fn_ptr_union_t delete_attr_fn, int *key,
+                                 MPI_Aint extra_state, int flags, void *bindings_extra_state)
 {
     ompi_attribute_fortran_ptr_t es_tmp;
 
     es_tmp.f_address = extra_state;
-    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
-                                        key, &es_tmp, flags,
+    return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn, key, &es_tmp, flags,
                                         bindings_extra_state);
 }
 
 /*****************************************************************************/
 
-int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
-                          bool predefined)
+int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, bool predefined)
 {
     int ret;
     ompi_attribute_keyval_t *keyval;
 
     /* Find the key-value pair */
     OPAL_THREAD_LOCK(&attribute_lock);
-    ret = opal_hash_table_get_value_uint32(keyval_hash, *key,
-                                           (void **) &keyval);
-    if ((OMPI_SUCCESS != ret) || (NULL == keyval) ||
-        (keyval->attr_type != type) ||
-        ((!predefined) && (keyval->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
+    ret = opal_hash_table_get_value_uint32(keyval_hash, *key, (void **) &keyval);
+    if ((OMPI_SUCCESS != ret) || (NULL == keyval) || (keyval->attr_type != type)
+        || ((!predefined) && (keyval->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
         OPAL_THREAD_UNLOCK(&attribute_lock);
         return OMPI_ERR_BAD_PARAM;
     }
@@ -716,8 +675,7 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  * Front-end function called by the C MPI API functions to set an
  * attribute.
  */
-int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
-                    opal_hash_table_t **attr_hash,
+int ompi_attr_set_c(ompi_attribute_type_t type, void *object, opal_hash_table_t **attr_hash,
                     int key, void *attribute, bool predefined)
 {
     int ret;
@@ -741,13 +699,11 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
     return ret;
 }
 
-
 /*
  * Front-end function internally called by the C API functions to set an
  * int attribute.
  */
-int ompi_attr_set_int(ompi_attribute_type_t type, void *object,
-                      opal_hash_table_t **attr_hash,
+int ompi_attr_set_int(ompi_attribute_type_t type, void *object, opal_hash_table_t **attr_hash,
                       int key, int attribute, bool predefined)
 {
     int ret;
@@ -772,15 +728,12 @@ int ompi_attr_set_int(ompi_attribute_type_t type, void *object,
     return ret;
 }
 
-
 /*
  * Front-end function called by the Fortran MPI-1 API functions to set
  * an attribute.
  */
-int ompi_attr_set_fint(ompi_attribute_type_t type, void *object,
-                       opal_hash_table_t **attr_hash,
-                       int key, MPI_Fint attribute,
-                       bool predefined)
+int ompi_attr_set_fint(ompi_attribute_type_t type, void *object, opal_hash_table_t **attr_hash,
+                       int key, MPI_Fint attribute, bool predefined)
 {
     int ret;
     attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
@@ -804,15 +757,12 @@ int ompi_attr_set_fint(ompi_attribute_type_t type, void *object,
     return ret;
 }
 
-
 /*
  * Front-end function called by the Fortran MPI-2 API functions to set
  * an attribute.
  */
-int ompi_attr_set_aint(ompi_attribute_type_t type, void *object,
-                       opal_hash_table_t **attr_hash,
-                       int key, MPI_Aint attribute,
-                       bool predefined)
+int ompi_attr_set_aint(ompi_attribute_type_t type, void *object, opal_hash_table_t **attr_hash,
+                       int key, MPI_Aint attribute, bool predefined)
 {
     int ret;
     attribute_value_t *new_attr = OBJ_NEW(attribute_value_t);
@@ -841,8 +791,7 @@ int ompi_attr_set_aint(ompi_attribute_type_t type, void *object,
  * Front-end function called by the C MPI API functions to get
  * attributes.
  */
-int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
-                    void **attribute, int *flag)
+int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key, void **attribute, int *flag)
 {
     attribute_value_t *val = NULL;
     int ret;
@@ -859,13 +808,11 @@ int ompi_attr_get_c(opal_hash_table_t *attr_hash, int key,
     return ret;
 }
 
-
 /*
  * Front-end function called by the Fortran MPI-1 API functions to get
  * attributes.
  */
-int ompi_attr_get_fint(opal_hash_table_t *attr_hash, int key,
-                       MPI_Fint *attribute, int *flag)
+int ompi_attr_get_fint(opal_hash_table_t *attr_hash, int key, MPI_Fint *attribute, int *flag)
 {
     attribute_value_t *val = NULL;
     int ret;
@@ -882,13 +829,11 @@ int ompi_attr_get_fint(opal_hash_table_t *attr_hash, int key,
     return ret;
 }
 
-
 /*
  * Front-end function called by the Fortran MPI-2 API functions to get
  * attributes.
  */
-int ompi_attr_get_aint(opal_hash_table_t *attr_hash, int key,
-                       MPI_Aint *attribute, int *flag)
+int ompi_attr_get_aint(opal_hash_table_t *attr_hash, int key, MPI_Aint *attribute, int *flag)
 {
     attribute_value_t *val = NULL;
     int ret;
@@ -912,9 +857,8 @@ int ompi_attr_get_aint(opal_hash_table_t *attr_hash, int key,
  * when MPI objects are copied (e.g., back-end actions to
  * MPI_COMM_DUP).
  */
-int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
-                       void *new_object, opal_hash_table_t *oldattr_hash,
-                       opal_hash_table_t *newattr_hash)
+int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, void *new_object,
+                       opal_hash_table_t *oldattr_hash, opal_hash_table_t *newattr_hash)
 {
     int ret;
     int err;
@@ -932,9 +876,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
     OPAL_THREAD_LOCK(&attribute_lock);
 
     /* Get the first attribute in the object's hash */
-    ret = opal_hash_table_get_first_key_uint32(oldattr_hash, &key,
-                                               (void **) &old_attr,
-                                               &node);
+    ret = opal_hash_table_get_first_key_uint32(oldattr_hash, &key, (void **) &old_attr, &node);
 
     /* While we still have some attribute in the object's key hash */
     while (OMPI_SUCCESS == ret) {
@@ -942,8 +884,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
         /* Get the keyval in the main keyval hash - so that we know
            what the copy_attr_fn is */
-        err = opal_hash_table_get_value_uint32(keyval_hash, key,
-                                               (void **) &hash_value);
+        err = opal_hash_table_get_value_uint32(keyval_hash, key, (void **) &hash_value);
         if (OMPI_SUCCESS != err) {
             /* This should not happen! */
             ret = MPI_ERR_INTERN;
@@ -955,20 +896,19 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         switch (type) {
         case COMM_ATTR:
             /* Now call the copy_attr_fn */
-            COPY_ATTR_CALLBACKS(communicator, old_object, hash_value,
-                                old_attr, new_object, new_attr, err);
+            COPY_ATTR_CALLBACKS(communicator, old_object, hash_value, old_attr, new_object,
+                                new_attr, err);
             break;
 
         case TYPE_ATTR:
             /* Now call the copy_attr_fn */
-            COPY_ATTR_CALLBACKS(datatype, old_object, hash_value,
-                                old_attr, new_object, new_attr, err);
+            COPY_ATTR_CALLBACKS(datatype, old_object, hash_value, old_attr, new_object, new_attr,
+                                err);
             break;
 
         case WIN_ATTR:
             /* Now call the copy_attr_fn */
-            COPY_ATTR_CALLBACKS(win, old_object, hash_value,
-                                old_attr, new_object, new_attr, err);
+            COPY_ATTR_CALLBACKS(win, old_object, hash_value, old_attr, new_object, new_attr, err);
             break;
 
         default:
@@ -999,8 +939,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
             } else {
                 new_attr->av_set_from = OMPI_ATTRIBUTE_C;
             }
-            ret = set_value(type, new_object, &newattr_hash, key,
-                            new_attr, true);
+            ret = set_value(type, new_object, &newattr_hash, key, new_attr, true);
             if (MPI_SUCCESS != ret) {
                 goto out;
             }
@@ -1008,13 +947,12 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
             OBJ_RELEASE(new_attr);
         }
 
-        ret = opal_hash_table_get_next_key_uint32(oldattr_hash, &key,
-                                                  (void **) &old_attr,
-                                                  in_node, &node);
+        ret = opal_hash_table_get_next_key_uint32(oldattr_hash, &key, (void **) &old_attr, in_node,
+                                                  &node);
     }
     ret = MPI_SUCCESS;
 
- out:
+out:
     /* All done */
     opal_atomic_wmb();
     OPAL_THREAD_UNLOCK(&attribute_lock);
@@ -1029,20 +967,17 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
  * Assumes that you DO already have the attribute_lock.
  */
 static int ompi_attr_delete_impl(ompi_attribute_type_t type, void *object,
-                                 opal_hash_table_t *attr_hash, int key,
-                                 bool predefined)
+                                 opal_hash_table_t *attr_hash, int key, bool predefined)
 {
     ompi_attribute_keyval_t *keyval;
     int ret = OMPI_SUCCESS;
     attribute_value_t *attr;
 
     /* Check if the key is valid in the master keyval hash */
-    ret = opal_hash_table_get_value_uint32(keyval_hash, key,
-                                           (void **) &keyval);
+    ret = opal_hash_table_get_value_uint32(keyval_hash, key, (void **) &keyval);
 
-    if ((OMPI_SUCCESS != ret) || (NULL == keyval) ||
-        (keyval->attr_type!= type) ||
-        ((!predefined) && (keyval->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
+    if ((OMPI_SUCCESS != ret) || (NULL == keyval) || (keyval->attr_type != type)
+        || ((!predefined) && (keyval->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
         ret = OMPI_ERR_BAD_PARAM;
         goto exit;
     }
@@ -1056,7 +991,7 @@ static int ompi_attr_delete_impl(ompi_attribute_type_t type, void *object,
     /* Check if the key is valid for the communicator/window/dtype. If
        yes, then delete the attribute and key entry from the object's
        hash */
-    ret = opal_hash_table_get_value_uint32(attr_hash, key, (void**) &attr);
+    ret = opal_hash_table_get_value_uint32(attr_hash, key, (void **) &attr);
     if (OMPI_SUCCESS == ret) {
         switch (type) {
         case COMM_ATTR:
@@ -1086,7 +1021,7 @@ static int ompi_attr_delete_impl(ompi_attribute_type_t type, void *object,
         OBJ_RELEASE(attr);
     }
 
- exit:
+exit:
     /* Decrement the ref count for the keyval.  If ref count goes to
        0, destroy the keyval (the destructor deletes the key
        implicitly for this object).  The ref count will only go to 0
@@ -1102,9 +1037,8 @@ static int ompi_attr_delete_impl(ompi_attribute_type_t type, void *object,
 /*
  * Front end function to delete a single attribute.
  */
-int ompi_attr_delete(ompi_attribute_type_t type, void *object,
-                     opal_hash_table_t *attr_hash, int key,
-                     bool predefined)
+int ompi_attr_delete(ompi_attribute_type_t type, void *object, opal_hash_table_t *attr_hash,
+                     int key, bool predefined)
 {
     int ret;
 
@@ -1118,8 +1052,7 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
 /*
  * Front-end function to delete all the attributes on an MPI object
  */
-int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
-                         opal_hash_table_t *attr_hash)
+int ompi_attr_delete_all(ompi_attribute_type_t type, void *object, opal_hash_table_t *attr_hash)
 {
     int ret, i, num_attrs;
     uint32_t key;
@@ -1151,8 +1084,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
     for (i = 0; OMPI_SUCCESS == ret; i++) {
         attrs[i] = attr;
         in_node = node;
-        ret = opal_hash_table_get_next_key_uint32(attr_hash, &key, &attr,
-                                                  in_node, &node);
+        ret = opal_hash_table_get_next_key_uint32(attr_hash, &key, &attr, in_node, &node);
     }
 
     /* Sort attributes in the order that they were set */
@@ -1164,8 +1096,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
        Termination, but we do it for everything -- what the heck.
        :-) */
     for (i = num_attrs - 1; i >= 0; i--) {
-        ret = ompi_attr_delete_impl(type, object, attr_hash,
-                                    attrs[i]->av_key, true);
+        ret = ompi_attr_delete_impl(type, object, attr_hash, attrs[i]->av_key, true);
         if (OMPI_SUCCESS != ret) {
             break;
         }
@@ -1185,10 +1116,8 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
  * Back-end function to set an attribute on an MPI object.  Assumes
  * that you already hold the attribute_lock.
  */
-static int set_value(ompi_attribute_type_t type, void *object,
-                     opal_hash_table_t **attr_hash, int key,
-                     attribute_value_t *new_attr,
-                     bool predefined)
+static int set_value(ompi_attribute_type_t type, void *object, opal_hash_table_t **attr_hash,
+                     int key, attribute_value_t *new_attr, bool predefined)
 {
     ompi_attribute_keyval_t *keyval;
     int ret;
@@ -1198,13 +1127,11 @@ static int set_value(ompi_attribute_type_t type, void *object,
     /* Note that this function can be invoked by ompi_attr_copy_all()
        to set attributes on the new object (in addition to the
        top-level MPI_* functions that set attributes). */
-    ret = opal_hash_table_get_value_uint32(keyval_hash, key,
-                                           (void **) &keyval);
+    ret = opal_hash_table_get_value_uint32(keyval_hash, key, (void **) &keyval);
 
     /* If key not found */
-    if ((OMPI_SUCCESS != ret ) || (NULL == keyval) ||
-        (keyval->attr_type != type) ||
-        ((!predefined) && (keyval->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
+    if ((OMPI_SUCCESS != ret) || (NULL == keyval) || (keyval->attr_type != type)
+        || ((!predefined) && (keyval->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
         return OMPI_ERR_BAD_PARAM;
     }
 
@@ -1215,8 +1142,8 @@ static int set_value(ompi_attribute_type_t type, void *object,
 
     /* Now see if an attribute is already present in the object's hash
        on the old keyval. If so, delete the old attribute value. */
-    ret = opal_hash_table_get_value_uint32(*attr_hash, key, (void**) &old_attr);
-    if (OMPI_SUCCESS == ret)  {
+    ret = opal_hash_table_get_value_uint32(*attr_hash, key, (void **) &old_attr);
+    if (OMPI_SUCCESS == ret) {
         switch (type) {
         case COMM_ATTR:
             DELETE_ATTR_CALLBACKS(communicator, old_attr, keyval, object, ret);
@@ -1242,9 +1169,8 @@ static int set_value(ompi_attribute_type_t type, void *object,
         had_old = true;
     }
 
-    ret = opal_hash_table_get_value_uint32(keyval_hash, key,
-                                           (void **) &keyval);
-    if ((OMPI_SUCCESS != ret ) || (NULL == keyval)) {
+    ret = opal_hash_table_get_value_uint32(keyval_hash, key, (void **) &keyval);
+    if ((OMPI_SUCCESS != ret) || (NULL == keyval)) {
         /* Keyval has disappeared underneath us -- this shouldn't
            happen! */
         assert(0);
@@ -1275,8 +1201,8 @@ static int set_value(ompi_attribute_type_t type, void *object,
  *
  * Assumes that you do NOT already have the attribute lock.
  */
-static int get_value(opal_hash_table_t *attr_hash, int key,
-                     attribute_value_t **attribute, int *flag)
+static int get_value(opal_hash_table_t *attr_hash, int key, attribute_value_t **attribute,
+                     int *flag)
 {
     int ret;
     void *attr;
@@ -1288,8 +1214,7 @@ static int get_value(opal_hash_table_t *attr_hash, int key,
        with the key, then the call is valid and returns FALSE in the
        flag argument */
     *flag = 0;
-    ret = opal_hash_table_get_value_uint32(keyval_hash, key,
-                                           (void**) &keyval);
+    ret = opal_hash_table_get_value_uint32(keyval_hash, key, (void **) &keyval);
     if (OMPI_ERR_NOT_FOUND == ret) {
         return MPI_KEYVAL_INVALID;
     }
@@ -1302,7 +1227,7 @@ static int get_value(opal_hash_table_t *attr_hash, int key,
 
     ret = opal_hash_table_get_value_uint32(attr_hash, key, &attr);
     if (OMPI_SUCCESS == ret) {
-        *attribute = (attribute_value_t*)attr;
+        *attribute = (attribute_value_t *) attr;
         *flag = 1;
     }
 
@@ -1344,7 +1269,6 @@ static void *translate_to_c(attribute_value_t *val)
     }
 }
 
-
 /*
  * Take an attribute and translate it according to the cases listed in
  * the comments at the top of this file.
@@ -1357,11 +1281,11 @@ static MPI_Fint translate_to_fint(attribute_value_t *val)
     switch (val->av_set_from) {
     case OMPI_ATTRIBUTE_C:
         /* Case 2: wrote a C pointer, read a MPI_Fint */
-        return (MPI_Fint)*val->av_int_pointer;
+        return (MPI_Fint) *val->av_int_pointer;
 
     case OMPI_ATTRIBUTE_INT:
         /* Case 5: wrote an int, read a MPI_Fint */
-        return (MPI_Fint)*val->av_int_pointer;
+        return (MPI_Fint) *val->av_int_pointer;
 
     case OMPI_ATTRIBUTE_FINT:
         /* Case 8: wrote a MPI_Fint, read a MPI_Fint
@@ -1370,14 +1294,13 @@ static MPI_Fint translate_to_fint(attribute_value_t *val)
 
     case OMPI_ATTRIBUTE_AINT:
         /* Case 11: wrote a MPI_Aint, read a MPI_Fint */
-        return (MPI_Fint)*val->av_fint_pointer;
+        return (MPI_Fint) *val->av_fint_pointer;
 
     default:
         /* Should never reach here */
         return 0;
     }
 }
-
 
 /*
  * Take an attribute and translate it according to the cases listed in
@@ -1390,7 +1313,7 @@ static MPI_Aint translate_to_aint(attribute_value_t *val)
 {
     switch (val->av_set_from) {
     case OMPI_ATTRIBUTE_C:
-       /* Case 3: wrote a C pointer, read a MPI_Aint */
+        /* Case 3: wrote a C pointer, read a MPI_Aint */
         return (MPI_Aint) val->av_value;
 
     case OMPI_ATTRIBUTE_INT:
@@ -1417,6 +1340,6 @@ static MPI_Aint translate_to_aint(attribute_value_t *val)
  */
 static int compare_attr_sequence(const void *attr1, const void *attr2)
 {
-    return (*(attribute_value_t **)attr1)->av_sequence -
-           (*(attribute_value_t **)attr2)->av_sequence;
+    return (*(attribute_value_t **) attr1)->av_sequence
+           - (*(attribute_value_t **) attr2)->av_sequence;
 }

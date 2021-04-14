@@ -28,9 +28,9 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
+#include "ompi/info/info.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "ompi/info/info.h"
 
 BEGIN_C_DECLS
 
@@ -39,8 +39,7 @@ struct ompio_file_t;
 /*
  * Macro for use in components that are of type coll
  */
-#define MCA_FS_BASE_VERSION_2_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("fs", 2, 0, 0)
+#define MCA_FS_BASE_VERSION_2_0_0 OMPI_MCA_BASE_VERSION_2_1_0("fs", 2, 0, 0)
 
 /*
  * This framework provides the abstraction for file management operations
@@ -69,16 +68,13 @@ struct ompio_file_t;
  * **************** component struct *******************************
  */
 
-typedef int (*mca_fs_base_component_init_query_1_0_0_fn_t)
-    (bool enable_progress_threads,
-     bool enable_mpi_threads);
+typedef int (*mca_fs_base_component_init_query_1_0_0_fn_t)(bool enable_progress_threads,
+                                                           bool enable_mpi_threads);
 
-typedef struct mca_fs_base_module_1_0_0_t *
-(*mca_fs_base_component_file_query_1_0_0_fn_t) (struct ompio_file_t *file,
-                                                int *priority);
+typedef struct mca_fs_base_module_1_0_0_t *(*mca_fs_base_component_file_query_1_0_0_fn_t)(
+    struct ompio_file_t *file, int *priority);
 
-typedef int (*mca_fs_base_component_file_unquery_1_0_0_fn_t)
-    (struct ompio_file_t *file);
+typedef int (*mca_fs_base_component_file_unquery_1_0_0_fn_t)(struct ompio_file_t *file);
 
 /*
  * ****************** component struct ******************************
@@ -104,24 +100,20 @@ typedef struct mca_fs_base_component_2_0_0_t mca_fs_base_component_t;
  * ***********************************************************************
  */
 
-typedef int (*mca_fs_base_module_init_1_0_0_fn_t)
-(struct ompio_file_t *file);
+typedef int (*mca_fs_base_module_init_1_0_0_fn_t)(struct ompio_file_t *file);
 
-typedef int (*mca_fs_base_module_finalize_1_0_0_fn_t)
-(struct ompio_file_t *file);
+typedef int (*mca_fs_base_module_finalize_1_0_0_fn_t)(struct ompio_file_t *file);
 
-typedef int (*mca_fs_base_module_file_open_fn_t)(
-    struct ompi_communicator_t *comm, const char *filename, int amode,
-    struct opal_info_t *info, struct ompio_file_t *fh);
+typedef int (*mca_fs_base_module_file_open_fn_t)(struct ompi_communicator_t *comm,
+                                                 const char *filename, int amode,
+                                                 struct opal_info_t *info, struct ompio_file_t *fh);
 typedef int (*mca_fs_base_module_file_close_fn_t)(struct ompio_file_t *fh);
-typedef int (*mca_fs_base_module_file_delete_fn_t)(
-    char *filename, struct opal_info_t *info);
-typedef int (*mca_fs_base_module_file_set_size_fn_t)
-    (struct ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE size);
-typedef int (*mca_fs_base_module_file_get_size_fn_t)
-    (struct ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE *size);
-typedef int (*mca_fs_base_module_file_sync_fn_t)
-    (struct ompio_file_t *fh);
+typedef int (*mca_fs_base_module_file_delete_fn_t)(char *filename, struct opal_info_t *info);
+typedef int (*mca_fs_base_module_file_set_size_fn_t)(struct ompio_file_t *fh,
+                                                     OMPI_MPI_OFFSET_TYPE size);
+typedef int (*mca_fs_base_module_file_get_size_fn_t)(struct ompio_file_t *fh,
+                                                     OMPI_MPI_OFFSET_TYPE *size);
+typedef int (*mca_fs_base_module_file_sync_fn_t)(struct ompio_file_t *fh);
 
 /*
  * ***********************************************************************
@@ -138,12 +130,12 @@ struct mca_fs_base_module_1_0_0_t {
     mca_fs_base_module_finalize_1_0_0_fn_t fs_module_finalize;
 
     /* FS function pointers */
-    mca_fs_base_module_file_open_fn_t        fs_file_open;
-    mca_fs_base_module_file_close_fn_t       fs_file_close;
-    mca_fs_base_module_file_delete_fn_t      fs_file_delete;
-    mca_fs_base_module_file_set_size_fn_t    fs_file_set_size;
-    mca_fs_base_module_file_get_size_fn_t    fs_file_get_size;
-    mca_fs_base_module_file_sync_fn_t        fs_file_sync;
+    mca_fs_base_module_file_open_fn_t fs_file_open;
+    mca_fs_base_module_file_close_fn_t fs_file_close;
+    mca_fs_base_module_file_delete_fn_t fs_file_delete;
+    mca_fs_base_module_file_set_size_fn_t fs_file_set_size;
+    mca_fs_base_module_file_get_size_fn_t fs_file_get_size;
+    mca_fs_base_module_file_sync_fn_t fs_file_sync;
 };
 typedef struct mca_fs_base_module_1_0_0_t mca_fs_base_module_1_0_0_t;
 typedef mca_fs_base_module_1_0_0_t mca_fs_base_module_t;

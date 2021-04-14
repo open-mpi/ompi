@@ -33,25 +33,25 @@
 
 #if MCA_PML_OB1_CUSTOM_MATCHING != MCA_PML_OB1_CUSTOM_MATCHING_NONE
 
-#define MCA_PML_OB1_CUSTOM_MATCH 1
+#    define MCA_PML_OB1_CUSTOM_MATCH 1
 
-#if MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_LINKEDLIST
-#include "pml_ob1_custom_match_linkedlist.h"
-#elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_ARRAYS
-#include "pml_ob1_custom_match_arrays.h"
-#elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_FUZZY_BYTE
-#include "pml_ob1_custom_match_fuzzy512-byte.h"
-#elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_FUZZY_SHORT
-#include "pml_ob1_custom_match_fuzzy512-short.h"
-#elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_FUZZY_WORD
-#include "pml_ob1_custom_match_fuzzy512-word.h"
-#elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_VECTOR
-#include "pml_ob1_custom_match_vectors.h"
-#endif
+#    if MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_LINKEDLIST
+#        include "pml_ob1_custom_match_linkedlist.h"
+#    elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_ARRAYS
+#        include "pml_ob1_custom_match_arrays.h"
+#    elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_FUZZY_BYTE
+#        include "pml_ob1_custom_match_fuzzy512-byte.h"
+#    elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_FUZZY_SHORT
+#        include "pml_ob1_custom_match_fuzzy512-short.h"
+#    elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_FUZZY_WORD
+#        include "pml_ob1_custom_match_fuzzy512-word.h"
+#    elif MCA_PML_OB1_CUSTOM_MATCHING == MCA_PML_OB1_CUSTOM_MATCHING_VECTOR
+#        include "pml_ob1_custom_match_vectors.h"
+#    endif
 
 #else
 
-#define MCA_PML_OB1_CUSTOM_MATCH 0
+#    define MCA_PML_OB1_CUSTOM_MATCH 0
 
 #endif
 

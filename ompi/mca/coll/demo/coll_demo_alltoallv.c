@@ -19,12 +19,11 @@
 #include "ompi_config.h"
 #include "opal/util/output.h"
 
+#include "coll_demo.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "coll_demo.h"
-
+#include "ompi/mca/coll/coll.h"
 
 /*
  *	alltoallv_intra
@@ -33,22 +32,17 @@
  *	Accepts:	- same as MPI_Alltoallv()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
-int
-mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
-                              struct ompi_datatype_t *sdtype,
-                              void *rbuf, int *rcounts, int *rdisps,
-                              struct ompi_datatype_t *rdtype,
-                              struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+int mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
+                                  struct ompi_datatype_t *sdtype, void *rbuf, int *rcounts,
+                                  int *rdisps, struct ompi_datatype_t *rdtype,
+                                  struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo alltoallv_intra");
-    return demo_module->underlying.coll_alltoallv(sbuf, scounts, sdisps,
-                                                  sdtype, rbuf, rcounts,
+    return demo_module->underlying.coll_alltoallv(sbuf, scounts, sdisps, sdtype, rbuf, rcounts,
                                                   rdisps, rdtype, comm,
                                                   demo_module->underlying.coll_alltoallv_module);
 }
-
 
 /*
  *	alltoallv_inter
@@ -57,18 +51,14 @@ mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
  *	Accepts:	- same as MPI_Alltoallv()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
-int
-mca_coll_demo_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
-                              struct ompi_datatype_t *sdtype, void *rbuf,
-                              int *rcounts, int *rdisps,
-                              struct ompi_datatype_t *rdtype,
-                              struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+int mca_coll_demo_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
+                                  struct ompi_datatype_t *sdtype, void *rbuf, int *rcounts,
+                                  int *rdisps, struct ompi_datatype_t *rdtype,
+                                  struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo alltoallv_inter");
-    return demo_module->underlying.coll_alltoallv(sbuf, scounts, sdisps,
-                                                  sdtype, rbuf, rcounts,
+    return demo_module->underlying.coll_alltoallv(sbuf, scounts, sdisps, sdtype, rbuf, rcounts,
                                                   rdisps, rdtype, comm,
                                                   demo_module->underlying.coll_alltoallv_module);
 }

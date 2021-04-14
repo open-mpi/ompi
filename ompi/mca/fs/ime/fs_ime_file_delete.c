@@ -24,8 +24,7 @@
  *	Accepts:	- file name & info
  *	Returns:	- Success if file closed
  */
-int mca_fs_ime_file_delete (char* file_name,
-                            struct opal_info_t *info)
+int mca_fs_ime_file_delete(char *file_name, struct opal_info_t *info)
 {
     int ret;
 

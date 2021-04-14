@@ -22,8 +22,8 @@
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
-#include "ompi/request/request.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/request/request.h"
 
 #include "ompi/runtime/params.h"
 
@@ -38,22 +38,22 @@
  **************************/
 bool ompi_request_is_failed_fn(ompi_request_t *req)
 {
-    mca_pml_base_request_t* pml_req = NULL;
+    mca_pml_base_request_t *pml_req = NULL;
 
-    if( !ompi_ftmpi_enabled ) {
+    if (!ompi_ftmpi_enabled) {
         return false;
     }
 
     /* Pick our behavior depending upon the type of request */
-    switch(req->req_type) {
+    switch (req->req_type) {
     case OMPI_REQUEST_PML:
-        pml_req = (mca_pml_base_request_t*)req;
+        pml_req = (mca_pml_base_request_t *) req;
         /*
          * Toggle 'off' the MPI_ANY_SOURCE MPI_ERR_PROC_FAILED_PENDING flag
          * We will recheck, but in the case the request is complete we
          * need to remove the error code.
          */
-        if( MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR ) {
+        if (MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR) {
             req->req_status.MPI_ERROR = MPI_SUCCESS;
         }
         break;
@@ -70,12 +70,12 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
     /*
      * Sanity check
      */
-    assert( NULL != req->req_mpi_object.comm );
+    assert(NULL != req->req_mpi_object.comm);
 
     /*
      * If the request is complete, then just skip it
      */
-    if( REQUEST_COMPLETE(req) ) {
+    if (REQUEST_COMPLETE(req)) {
         return false;
     }
 
@@ -85,15 +85,18 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
      * If so unless we are in the FT part (propagate revoke, agreement or
      * shrink) this should fail.
      */
-    if( OPAL_UNLIKELY(ompi_comm_is_revoked(req->req_mpi_object.comm) &&
-                      req->req_type == OMPI_REQUEST_PML && !ompi_request_tag_is_ft(pml_req->req_tag)) ) {
+    if (OPAL_UNLIKELY(ompi_comm_is_revoked(req->req_mpi_object.comm)
+                      && req->req_type == OMPI_REQUEST_PML
+                      && !ompi_request_tag_is_ft(pml_req->req_tag))) {
         /* Do not set req->req_status.MPI_SOURCE */
-        req->req_status.MPI_ERROR  = MPI_ERR_REVOKED;
+        req->req_status.MPI_ERROR = MPI_ERR_REVOKED;
 
         opal_output_verbose(10, ompi_ftmpi_output_handle,
-                            "%s ompi_request_is_failed: %p (peer %d, tag %d) is on communicator %s(%d) that has been revoked!",
-                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag,
-                            req->req_mpi_object.comm->c_name, req->req_mpi_object.comm->c_contextid);
+                            "%s ompi_request_is_failed: %p (peer %d, tag %d) is on communicator "
+                            "%s(%d) that has been revoked!",
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void *) req, pml_req->req_peer,
+                            pml_req->req_tag, req->req_mpi_object.comm->c_name,
+                            req->req_mpi_object.comm->c_contextid);
         goto return_with_error;
     }
 
@@ -102,71 +105,81 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
      * If the request is part of a collective, then the whole communicator
      * must be ok to continue. If not then return first failed process
      */
-    if(OPAL_UNLIKELY( ompi_comm_coll_revoked(req->req_mpi_object.comm) &&
-                      (req->req_type == OMPI_REQUEST_PML && ompi_request_tag_is_collective(pml_req->req_tag)) )) {
+    if (OPAL_UNLIKELY(ompi_comm_coll_revoked(req->req_mpi_object.comm)
+                      && (req->req_type == OMPI_REQUEST_PML
+                          && ompi_request_tag_is_collective(pml_req->req_tag)))) {
         /* Do not set req->req_status.MPI_SOURCE */
-        req->req_status.MPI_ERROR  = MPI_ERR_PROC_FAILED;
+        req->req_status.MPI_ERROR = MPI_ERR_PROC_FAILED;
 
         opal_output_verbose(10, ompi_ftmpi_output_handle,
-                            "%s ompi_request_is_failed: Request %p (peer %d) is part of a collective (tag %d), and some process died. (mpi_source %3d)",
-                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag, req->req_status.MPI_SOURCE );
+                            "%s ompi_request_is_failed: Request %p (peer %d) is part of a "
+                            "collective (tag %d), and some process died. (mpi_source %3d)",
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void *) req, pml_req->req_peer,
+                            pml_req->req_tag, req->req_status.MPI_SOURCE);
         goto return_with_error;
     }
 
     /* Corner-cases: two processes that can't fail (NULL and myself) */
-    if((pml_req->req_peer == MPI_PROC_NULL) ||
-       (OMPI_COMM_IS_INTRA(req->req_mpi_object.comm) && pml_req->req_peer == req->req_mpi_object.comm->c_local_group->grp_my_rank)) {
+    if ((pml_req->req_peer == MPI_PROC_NULL)
+        || (OMPI_COMM_IS_INTRA(req->req_mpi_object.comm)
+            && pml_req->req_peer == req->req_mpi_object.comm->c_local_group->grp_my_rank)) {
         return false;
     }
 
     /* If any_source but not FT related then the request is always marked for return */
-    if( OPAL_UNLIKELY(MPI_ANY_SOURCE == pml_req->req_peer && !ompi_comm_is_any_source_enabled(req->req_mpi_object.comm)) ) {
-        if( !ompi_request_tag_is_ft(pml_req->req_tag) ) {
-            req->req_status.MPI_ERROR  = MPI_ERR_PROC_FAILED_PENDING;
+    if (OPAL_UNLIKELY(MPI_ANY_SOURCE == pml_req->req_peer
+                      && !ompi_comm_is_any_source_enabled(req->req_mpi_object.comm))) {
+        if (!ompi_request_tag_is_ft(pml_req->req_tag)) {
+            req->req_status.MPI_ERROR = MPI_ERR_PROC_FAILED_PENDING;
             /* If it is a probe/mprobe, escalate the error */
-            if( (MCA_PML_REQUEST_MPROBE == pml_req->req_type) ||
-                (MCA_PML_REQUEST_PROBE == pml_req->req_type) ) {
-                req->req_status.MPI_ERROR  = MPI_ERR_PROC_FAILED;
+            if ((MCA_PML_REQUEST_MPROBE == pml_req->req_type)
+                || (MCA_PML_REQUEST_PROBE == pml_req->req_type)) {
+                req->req_status.MPI_ERROR = MPI_ERR_PROC_FAILED;
             }
             opal_output_verbose(10, ompi_ftmpi_output_handle,
-                                "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm %s(%d) peer ANY_SOURCE %s!",
-                                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag,
-                                req->req_mpi_object.comm->c_name, req->req_mpi_object.comm->c_contextid,
+                                "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm "
+                                "%s(%d) peer ANY_SOURCE %s!",
+                                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void *) req, pml_req->req_peer,
+                                pml_req->req_tag, req->req_mpi_object.comm->c_name,
+                                req->req_mpi_object.comm->c_contextid,
                                 ompi_mpi_errnum_get_string(req->req_status.MPI_ERROR));
             goto return_with_error;
         }
     }
 
     /* Any type of request with a dead process must be terminated with error */
-    if( OPAL_UNLIKELY(!ompi_comm_is_proc_active(req->req_mpi_object.comm, pml_req->req_peer,
-                                  OMPI_COMM_IS_INTER(req->req_mpi_object.comm))) ) {
+    if (OPAL_UNLIKELY(!ompi_comm_is_proc_active(req->req_mpi_object.comm, pml_req->req_peer,
+                                                OMPI_COMM_IS_INTER(req->req_mpi_object.comm)))) {
         req->req_status.MPI_SOURCE = pml_req->req_peer;
-        req->req_status.MPI_ERROR  = MPI_ERR_PROC_FAILED;
+        req->req_status.MPI_ERROR = MPI_ERR_PROC_FAILED;
         assert(MPI_ANY_SOURCE != pml_req->req_peer); /* this case is handled above, so... */
         opal_output_verbose(10, ompi_ftmpi_output_handle,
-                            "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm %s(%d) mpi_source %3d failed - Ret %s",
-                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag,
-                            req->req_mpi_object.comm->c_name, req->req_mpi_object.comm->c_contextid,
-                            req->req_status.MPI_SOURCE,
+                            "%s ompi_request_is_failed: Request %p (peer %d, tag %d) in comm "
+                            "%s(%d) mpi_source %3d failed - Ret %s",
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void *) req, pml_req->req_peer,
+                            pml_req->req_tag, req->req_mpi_object.comm->c_name,
+                            req->req_mpi_object.comm->c_contextid, req->req_status.MPI_SOURCE,
                             ompi_mpi_errnum_get_string(req->req_status.MPI_ERROR));
         goto return_with_error;
     }
 
-    OPAL_OUTPUT_VERBOSE((100, ompi_ftmpi_output_handle,
-                         "%s ompi_request_is_failed: Request %p (peer %d tag %d) is still ok. (mpi_source %3d)",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void*)req, pml_req->req_peer, pml_req->req_tag, req->req_status.MPI_SOURCE ));
+    OPAL_OUTPUT_VERBOSE(
+        (100, ompi_ftmpi_output_handle,
+         "%s ompi_request_is_failed: Request %p (peer %d tag %d) is still ok. (mpi_source %3d)",
+         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), (void *) req, pml_req->req_peer, pml_req->req_tag,
+         req->req_status.MPI_SOURCE));
 
     return false;
 
- return_with_error:
-    if( MPI_ERR_PROC_FAILED_PENDING != req->req_status.MPI_ERROR ) {
+return_with_error:
+    if (MPI_ERR_PROC_FAILED_PENDING != req->req_status.MPI_ERROR) {
         int cancelled = req->req_status._cancelled;
 #if OPAL_ENABLE_DEBUG
         int verbose = opal_output_get_verbosity(ompi_ftmpi_output_handle);
-        if( verbose > 90 ) {
+        if (verbose > 90) {
             opal_backtrace_print(stderr, NULL, 1);
         }
-        if( verbose > 50 ) {
+        if (verbose > 50) {
             MCA_PML_CALL(dump(req->req_mpi_object.comm, ompi_ftmpi_output_handle));
         }
 #endif /* OPAL_ENABLE_DEBUG */
@@ -176,8 +189,10 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
          * wire cancelled).
          */
         ompi_request_cancel(req);
-        req->req_status._cancelled = cancelled; /* This request is not user cancelled here, it is completed in error */
-        return REQUEST_COMPLETE(req); /* If this request is not complete yet, it is stil ok and needs more spinning */
+        req->req_status._cancelled
+            = cancelled; /* This request is not user cancelled here, it is completed in error */
+        return REQUEST_COMPLETE(
+            req); /* If this request is not complete yet, it is stil ok and needs more spinning */
     }
     return (MPI_SUCCESS != req->req_status.MPI_ERROR);
 }

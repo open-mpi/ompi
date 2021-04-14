@@ -21,16 +21,15 @@
 
 #include "ompi_config.h"
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "opal/util/argv.h"
 #include "opal/util/string_copy.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
-
 
 /*
  * creates a C string from an F77 string
@@ -75,7 +74,6 @@ int ompi_fortran_string_f2c(char *fstr, int len, char **cstr)
     return OMPI_SUCCESS;
 }
 
-
 /*
  * Copy a C string into a Fortran string.  Note that when Fortran
  * copies strings, even if it operates on subsets of the strings, it
@@ -102,7 +100,6 @@ int ompi_fortran_string_c2f(const char *cstr, char *fstr, int len)
     return OMPI_SUCCESS;
 }
 
-
 /*
  * Creates a C argument vector from an F77 array of strings.  The
  * array is terminated by a blank string.
@@ -115,8 +112,7 @@ int ompi_fortran_string_c2f(const char *cstr, char *fstr, int len)
  * This function is used to convert "argv" in MPI_COMM_SPAWN (which is
  * defined to be terminated by a blank string).
  */
-int ompi_fortran_argv_blank_f2c(char *array, int string_len, int advance,
-                                char ***argv)
+int ompi_fortran_argv_blank_f2c(char *array, int string_len, int advance, char ***argv)
 {
     int err, argc = 0;
     char *cstr;
@@ -126,30 +122,28 @@ int ompi_fortran_argv_blank_f2c(char *array, int string_len, int advance,
 
     *argv = NULL;
     while (1) {
-	if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, string_len,
-                                                           &cstr))) {
-	    opal_argv_free(*argv);
-	    return err;
-	}
+        if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, string_len, &cstr))) {
+            opal_argv_free(*argv);
+            return err;
+        }
 
-	if ('\0' == *cstr) {
-	    break;
-	}
+        if ('\0' == *cstr) {
+            break;
+        }
 
-	if (OMPI_SUCCESS != (err = opal_argv_append(&argc, argv, cstr))) {
-	    opal_argv_free(*argv);
+        if (OMPI_SUCCESS != (err = opal_argv_append(&argc, argv, cstr))) {
+            opal_argv_free(*argv);
             free(cstr);
-	    return err;
-	}
+            return err;
+        }
 
-	free(cstr);
-	array += advance;
+        free(cstr);
+        array += advance;
     }
 
     free(cstr);
     return OMPI_SUCCESS;
 }
-
 
 /*
  * Creates a C argument vector from an F77 array of array_len strings.
@@ -174,44 +168,40 @@ int ompi_fortran_argv_count_f2c(char *array, int array_len, int string_len, int 
 
     *argv = NULL;
     for (int i = 0; i < array_len; ++i) {
-	if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, string_len,
-                                                           &cstr))) {
-	    opal_argv_free(*argv);
-	    return err;
-	}
+        if (OMPI_SUCCESS != (err = ompi_fortran_string_f2c(array, string_len, &cstr))) {
+            opal_argv_free(*argv);
+            return err;
+        }
 
-	if (OMPI_SUCCESS != (err = opal_argv_append(&argc, argv, cstr))) {
-	    opal_argv_free(*argv);
+        if (OMPI_SUCCESS != (err = opal_argv_append(&argc, argv, cstr))) {
+            opal_argv_free(*argv);
             free(cstr);
-	    return err;
-	}
+            return err;
+        }
 
-	free(cstr);
-	array += advance;
+        free(cstr);
+        array += advance;
     }
 
     return OMPI_SUCCESS;
 }
-
 
 /*
  * Creates a set of C argv arrays from an F77 array of argv's (where
  * each argv array is terminated by a blank string).  The returned
  * arrays need to be freed by the caller.
  */
-int ompi_fortran_multiple_argvs_f2c(int num_argv_arrays, char *array,
-                                    int string_len, char ****argv)
+int ompi_fortran_multiple_argvs_f2c(int num_argv_arrays, char *array, int string_len, char ****argv)
 {
     char ***argv_array;
     int i;
     char *current_array = array;
     int ret;
 
-    argv_array = (char ***) malloc (num_argv_arrays * sizeof(char **));
+    argv_array = (char ***) malloc(num_argv_arrays * sizeof(char **));
 
     for (i = 0; i < num_argv_arrays; ++i) {
-        ret = ompi_fortran_argv_blank_f2c(current_array, string_len,
-                                          string_len * num_argv_arrays,
+        ret = ompi_fortran_argv_blank_f2c(current_array, string_len, string_len * num_argv_arrays,
                                           &argv_array[i]);
         if (OMPI_SUCCESS != ret) {
             free(argv_array);

@@ -14,13 +14,13 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
-#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/op/op.h"
 
@@ -31,12 +31,10 @@
  * Accepts:   Same as MPI_Scan
  * Returns:   MPI_SUCCESS or error code
  */
-int
-ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
-                                struct ompi_datatype_t *dtype,
-                                struct ompi_op_t *op,
-                                struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
+int ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
+                                     struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                     struct ompi_communicator_t *comm,
+                                     mca_coll_base_module_t *module)
 {
     int size, rank, err;
     ptrdiff_t dsize, gap;
@@ -52,7 +50,7 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
 
     if (0 == rank) {
         if (MPI_IN_PLACE != sbuf) {
-            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
+            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
             if (MPI_SUCCESS != err) {
                 return err;
             }
@@ -76,7 +74,7 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
         /* Copy the send buffer into the receive buffer. */
 
         if (MPI_IN_PLACE != sbuf) {
-            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
+            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
             if (MPI_SUCCESS != err) {
                 if (NULL != free_buffer) {
                     free(free_buffer);
@@ -87,8 +85,7 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
 
         /* Receive the prior answer */
 
-        err = MCA_PML_CALL(recv(pml_buffer, count, dtype,
-                                rank - 1, MCA_COLL_BASE_TAG_SCAN, comm,
+        err = MCA_PML_CALL(recv(pml_buffer, count, dtype, rank - 1, MCA_COLL_BASE_TAG_SCAN, comm,
                                 MPI_STATUS_IGNORE));
         if (MPI_SUCCESS != err) {
             if (NULL != free_buffer) {
@@ -111,8 +108,7 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
     /* Send result to next process. */
 
     if (rank < (size - 1)) {
-        return MCA_PML_CALL(send(rbuf, count, dtype, rank + 1,
-                                 MCA_COLL_BASE_TAG_SCAN,
+        return MCA_PML_CALL(send(rbuf, count, dtype, rank + 1, MCA_COLL_BASE_TAG_SCAN,
                                  MCA_PML_BASE_SEND_STANDARD, comm));
     }
 
@@ -120,7 +116,6 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
 
     return MPI_SUCCESS;
 }
-
 
 /*
  * ompi_coll_base_scan_intra_recursivedoubling
@@ -154,10 +149,11 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, int count,
  * Memory requirements (per process): 2 * count * typesize = O(count)
  * Limitations: intra-communicators only
  */
-int ompi_coll_base_scan_intra_recursivedoubling(
-    const void *sendbuf, void *recvbuf, int count, struct ompi_datatype_t *datatype,
-    struct ompi_op_t *op, struct ompi_communicator_t *comm,
-    mca_coll_base_module_t *module)
+int ompi_coll_base_scan_intra_recursivedoubling(const void *sendbuf, void *recvbuf, int count,
+                                                struct ompi_datatype_t *datatype,
+                                                struct ompi_op_t *op,
+                                                struct ompi_communicator_t *comm,
+                                                mca_coll_base_module_t *module)
 {
     int err = MPI_SUCCESS;
     char *tmpsend_raw = NULL, *tmprecv_raw = NULL;
@@ -165,14 +161,15 @@ int ompi_coll_base_scan_intra_recursivedoubling(
     int rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                 "coll:base:scan_intra_recursivedoubling: rank %d/%d",
-                 rank, comm_size));
+                 "coll:base:scan_intra_recursivedoubling: rank %d/%d", rank, comm_size));
     if (count == 0)
         return MPI_SUCCESS;
 
     if (sendbuf != MPI_IN_PLACE) {
-        err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, (char *)sendbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, (char *) sendbuf);
+        if (MPI_SUCCESS != err) {
+            goto cleanup_and_return;
+        }
     }
     if (comm_size < 2)
         return MPI_SUCCESS;
@@ -188,18 +185,20 @@ int ompi_coll_base_scan_intra_recursivedoubling(
     char *psend = tmpsend_raw - gap;
     char *precv = tmprecv_raw - gap;
     err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, recvbuf);
-    if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+    if (MPI_SUCCESS != err) {
+        goto cleanup_and_return;
+    }
     int is_commute = ompi_op_is_commute(op);
 
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
         if (remote < comm_size) {
-            err = ompi_coll_base_sendrecv(psend, count, datatype, remote,
-                                          MCA_COLL_BASE_TAG_SCAN,
-                                          precv, count, datatype, remote,
-                                          MCA_COLL_BASE_TAG_SCAN, comm,
-                                          MPI_STATUS_IGNORE, rank);
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            err = ompi_coll_base_sendrecv(psend, count, datatype, remote, MCA_COLL_BASE_TAG_SCAN,
+                                          precv, count, datatype, remote, MCA_COLL_BASE_TAG_SCAN,
+                                          comm, MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS != err) {
+                goto cleanup_and_return;
+            }
 
             if (rank > remote) {
                 /* Accumulate prefix reduction: recvbuf = precv <op> recvbuf */

@@ -21,60 +21,53 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/mpi/fortran/base/constants.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_TESTSOME = ompi_testsome_f
-#pragma weak pmpi_testsome = ompi_testsome_f
-#pragma weak pmpi_testsome_ = ompi_testsome_f
-#pragma weak pmpi_testsome__ = ompi_testsome_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_TESTSOME = ompi_testsome_f
+#        pragma weak pmpi_testsome = ompi_testsome_f
+#        pragma weak pmpi_testsome_ = ompi_testsome_f
+#        pragma weak pmpi_testsome__ = ompi_testsome_f
 
-#pragma weak PMPI_Testsome_f = ompi_testsome_f
-#pragma weak PMPI_Testsome_f08 = ompi_testsome_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_TESTSOME,
-                           pmpi_testsome,
-                           pmpi_testsome_,
-                           pmpi_testsome__,
-                           pompi_testsome_f,
-                           (MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
-                           (incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr) )
-#endif
+#        pragma weak PMPI_Testsome_f = ompi_testsome_f
+#        pragma weak PMPI_Testsome_f08 = ompi_testsome_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(
+    PMPI_TESTSOME, pmpi_testsome, pmpi_testsome_, pmpi_testsome__, pompi_testsome_f,
+    (MPI_Fint * incount, MPI_Fint *array_of_requests, MPI_Fint *outcount,
+     MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
+    (incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_TESTSOME = ompi_testsome_f
-#pragma weak mpi_testsome = ompi_testsome_f
-#pragma weak mpi_testsome_ = ompi_testsome_f
-#pragma weak mpi_testsome__ = ompi_testsome_f
+#    pragma weak MPI_TESTSOME = ompi_testsome_f
+#    pragma weak mpi_testsome = ompi_testsome_f
+#    pragma weak mpi_testsome_ = ompi_testsome_f
+#    pragma weak mpi_testsome__ = ompi_testsome_f
 
-#pragma weak MPI_Testsome_f = ompi_testsome_f
-#pragma weak MPI_Testsome_f08 = ompi_testsome_f
+#    pragma weak MPI_Testsome_f = ompi_testsome_f
+#    pragma weak MPI_Testsome_f08 = ompi_testsome_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TESTSOME,
-                           mpi_testsome,
-                           mpi_testsome_,
-                           mpi_testsome__,
-                           ompi_testsome_f,
-                           (MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
-                           (incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr) )
-#else
-#define ompi_testsome_f pompi_testsome_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(
+    MPI_TESTSOME, mpi_testsome, mpi_testsome_, mpi_testsome__, ompi_testsome_f,
+    (MPI_Fint * incount, MPI_Fint *array_of_requests, MPI_Fint *outcount,
+     MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
+    (incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr))
+#    else
+#        define ompi_testsome_f pompi_testsome_f
+#    endif
 #endif
-#endif
-
 
 static const char FUNC_NAME[] = "MPI_TESTSOME";
 
-
-void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
-		    MPI_Fint *outcount, MPI_Fint *array_of_indices,
-		    MPI_Fint *array_of_statuses, MPI_Fint *ierr)
+void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount,
+                     MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status *c_status;
@@ -90,27 +83,25 @@ void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
         return;
     }
 
-    c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*incount) *
-                   (sizeof(MPI_Request) + sizeof(MPI_Status)));
+    c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*incount)
+                                   * (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req) {
-        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(
-                                        MPI_ERR_NO_MEM,
-                                        FUNC_NAME);
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
-    c_status = (MPI_Status*) (c_req + OMPI_FINT_2_INT(*incount));
+    c_status = (MPI_Status *) (c_req + OMPI_FINT_2_INT(*incount));
 
     for (i = 0; i < OMPI_FINT_2_INT(*incount); ++i) {
         c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_indices, OMPI_FINT_2_INT(*incount));
-    c_ierr = PMPI_Testsome(OMPI_FINT_2_INT(*incount), c_req,
-                          OMPI_SINGLE_NAME_CONVERT(outcount),
-                          OMPI_ARRAY_NAME_CONVERT(array_of_indices),
-                          c_status);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Testsome(OMPI_FINT_2_INT(*incount), c_req, OMPI_SINGLE_NAME_CONVERT(outcount),
+                           OMPI_ARRAY_NAME_CONVERT(array_of_indices), c_status);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_SINGLE_INT_2_FINT(outcount);
     OMPI_ARRAY_INT_2_FINT(array_of_indices, *incount);
@@ -118,15 +109,16 @@ void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     if (MPI_SUCCESS == c_ierr) {
         if (MPI_UNDEFINED != OMPI_FINT_2_INT(*outcount)) {
             for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
-                array_of_requests[OMPI_INT_2_FINT(array_of_indices[i])] =
-                    c_req[OMPI_INT_2_FINT(array_of_indices[i])]->req_f_to_c_index;
+                array_of_requests[OMPI_INT_2_FINT(array_of_indices[i])]
+                    = c_req[OMPI_INT_2_FINT(array_of_indices[i])]->req_f_to_c_index;
                 ++array_of_indices[i];
             }
         }
         if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses)) {
             for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
                 if (!OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                    PMPI_Status_c2f(&c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
+                    PMPI_Status_c2f(&c_status[i],
+                                    &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
                 }
             }
         }

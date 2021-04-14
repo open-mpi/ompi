@@ -26,52 +26,43 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/info/info.h"
 #include "ompi/file/file.h"
-#include "ompi/mca/io/io.h"
+#include "ompi/info/info.h"
 #include "ompi/mca/io/base/base.h"
+#include "ompi/mca/io/io.h"
 #include "ompi/memchecker.h"
-
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 extern opal_mutex_t ompi_mpi_file_bootstrap_mutex;
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_open = PMPI_File_open
-#endif
-#define MPI_File_open PMPI_File_open
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_open = PMPI_File_open
+#    endif
+#    define MPI_File_open PMPI_File_open
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_open";
 
-
-int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
-                  MPI_Info info, MPI_File *fh)
+int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info, MPI_File *fh)
 {
     int rc;
 
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info || ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         } else if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
         }
-
     }
 
     /* Note that MPI-2:9.7 (p265 in the ps; p261 in the pdf) says that

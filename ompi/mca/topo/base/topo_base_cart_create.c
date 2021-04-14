@@ -47,18 +47,14 @@
  * @retval OMPI_SUCCESS
  */
 
-int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
-                              ompi_communicator_t* old_comm,
-                              int ndims,
-                              const int *dims,
-                              const int *periods,
-                              bool reorder,
-                              ompi_communicator_t** comm_topo)
+int mca_topo_base_cart_create(mca_topo_base_module_t *topo, ompi_communicator_t *old_comm,
+                              int ndims, const int *dims, const int *periods, bool reorder,
+                              ompi_communicator_t **comm_topo)
 {
     int nprocs = 1, i, new_rank, num_procs, ret;
     ompi_communicator_t *new_comm;
     ompi_proc_t **topo_procs = NULL;
-    mca_topo_base_comm_cart_2_2_0_t* cart;
+    mca_topo_base_comm_cart_2_2_0_t *cart;
 
     num_procs = old_comm->c_local_group->grp_proc_count;
     new_rank = old_comm->c_local_group->grp_my_rank;
@@ -66,7 +62,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
 
     /* Calculate the number of processes in this grid */
     for (i = 0; i < ndims; ++i) {
-        if(dims[i] <= 0) {
+        if (dims[i] <= 0) {
             return OMPI_ERROR;
         }
         nprocs *= dims[i];
@@ -82,22 +78,22 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         num_procs = nprocs;
     }
 
-    if (new_rank > (nprocs-1)) {
+    if (new_rank > (nprocs - 1)) {
         ndims = 0;
         new_rank = MPI_UNDEFINED;
         num_procs = 0;
     }
 
     cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
-    if( NULL == cart ) {
+    if (NULL == cart) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     cart->ndims = ndims;
 
     /* MPI-2.1 allows 0-dimension cartesian communicators, so prevent
        a 0-byte malloc -- leave dims as NULL */
-    if( ndims > 0 ) {
-        cart->dims = (int*)malloc(sizeof(int) * ndims);
+    if (ndims > 0) {
+        cart->dims = (int *) malloc(sizeof(int) * ndims);
         if (NULL == cart->dims) {
             OBJ_RELEASE(cart);
             return OMPI_ERROR;
@@ -105,19 +101,19 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         memcpy(cart->dims, dims, ndims * sizeof(int));
 
         /* Cartesian communicator; copy the right data to the common information */
-        cart->periods = (int*)malloc(sizeof(int) * ndims);
+        cart->periods = (int *) malloc(sizeof(int) * ndims);
         if (NULL == cart->periods) {
             OBJ_RELEASE(cart);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         memcpy(cart->periods, periods, ndims * sizeof(int));
 
-        cart->coords = (int*)malloc(sizeof(int) * ndims);
+        cart->coords = (int *) malloc(sizeof(int) * ndims);
         if (NULL == cart->coords) {
             OBJ_RELEASE(cart);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        {  /* setup the cartesian topology */
+        { /* setup the cartesian topology */
             int n_procs = num_procs, rank = new_rank;
 
             for (i = 0; i < ndims; ++i) {
@@ -136,18 +132,17 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         /* Copy the proc structure from the previous communicator over to
            the new one.  The topology module is then able to work on this
            copy and rearrange it as it deems fit. */
-        topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
+        topo_procs = (ompi_proc_t **) malloc(num_procs * sizeof(ompi_proc_t *));
         if (NULL == topo_procs) {
             OBJ_RELEASE(cart);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
-            memcpy(topo_procs,
-                   old_comm->c_local_group->grp_proc_pointers,
+        if (OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
+            memcpy(topo_procs, old_comm->c_local_group->grp_proc_pointers,
                    num_procs * sizeof(ompi_proc_t *));
         } else {
-            for(i = 0 ; i < num_procs; i++) {
-                topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
+            for (i = 0; i < num_procs; i++) {
+                topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group, i);
             }
         }
     }
@@ -160,8 +155,7 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         return MPI_ERR_INTERN;
     }
 
-    ret = ompi_comm_enable(old_comm, new_comm,
-                           new_rank, num_procs, topo_procs);
+    ret = ompi_comm_enable(old_comm, new_comm, new_rank, num_procs, topo_procs);
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
         free(topo_procs);
@@ -169,18 +163,18 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         if (MPI_COMM_NULL != new_comm) {
             new_comm->c_topo = NULL;
             new_comm->c_flags &= ~OMPI_COMM_CART;
-            ompi_comm_free (&new_comm);
+            ompi_comm_free(&new_comm);
         }
         return ret;
     }
 
-    new_comm->c_topo           = topo;
+    new_comm->c_topo = topo;
     new_comm->c_topo->mtc.cart = cart;
-    new_comm->c_topo->reorder  = reorder;
-    new_comm->c_flags         |= OMPI_COMM_CART;
+    new_comm->c_topo->reorder = reorder;
+    new_comm->c_flags |= OMPI_COMM_CART;
     *comm_topo = new_comm;
 
-    if( MPI_UNDEFINED == new_rank ) {
+    if (MPI_UNDEFINED == new_rank) {
         ompi_comm_free(&new_comm);
         *comm_topo = MPI_COMM_NULL;
     }
@@ -189,14 +183,16 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
     return OMPI_SUCCESS;
 }
 
-static void mca_topo_base_comm_cart_2_2_0_construct(mca_topo_base_comm_cart_2_2_0_t * cart) {
+static void mca_topo_base_comm_cart_2_2_0_construct(mca_topo_base_comm_cart_2_2_0_t *cart)
+{
     cart->ndims = 0;
     cart->dims = NULL;
     cart->periods = NULL;
     cart->coords = NULL;
 }
 
-static void mca_topo_base_comm_cart_2_2_0_destruct(mca_topo_base_comm_cart_2_2_0_t * cart) {
+static void mca_topo_base_comm_cart_2_2_0_destruct(mca_topo_base_comm_cart_2_2_0_t *cart)
+{
     if (NULL != cart->dims) {
         free(cart->dims);
     }
@@ -209,5 +205,4 @@ static void mca_topo_base_comm_cart_2_2_0_destruct(mca_topo_base_comm_cart_2_2_0
 }
 
 OBJ_CLASS_INSTANCE(mca_topo_base_comm_cart_2_2_0_t, opal_object_t,
-                   mca_topo_base_comm_cart_2_2_0_construct,
-                   mca_topo_base_comm_cart_2_2_0_destruct);
+                   mca_topo_base_comm_cart_2_2_0_construct, mca_topo_base_comm_cart_2_2_0_destruct);

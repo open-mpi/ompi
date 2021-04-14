@@ -24,9 +24,9 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/mca.h"
-#include "opal/mca/base/mca_base_framework.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/mca/base/mca_base_framework.h"
 
 #include "ompi/mca/pml/pml.h"
 
@@ -50,14 +50,12 @@ OMPI_DECLSPEC extern mca_base_framework_t ompi_pml_base_framework;
 /*
  * Select an available component.
  */
-OMPI_DECLSPEC  int mca_pml_base_select(bool enable_progress_threads,
-                                       bool enable_mpi_threads);
-OMPI_DECLSPEC  int mca_pml_base_progress(void);
-    /* share in modex the name of the selected component */
+OMPI_DECLSPEC int mca_pml_base_select(bool enable_progress_threads, bool enable_mpi_threads);
+OMPI_DECLSPEC int mca_pml_base_progress(void);
+/* share in modex the name of the selected component */
 OMPI_DECLSPEC int mca_pml_base_pml_selected(const char *name);
-    /* verify that all new procs are using the currently selected component */
-OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml,
-                                                  struct ompi_proc_t **procs,
+/* verify that all new procs are using the currently selected component */
+OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml, struct ompi_proc_t **procs,
                                                   size_t nprocs);
 
 OMPI_DECLSPEC int mca_pml_base_finalize(void);

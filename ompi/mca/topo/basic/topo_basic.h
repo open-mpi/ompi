@@ -23,10 +23,8 @@ BEGIN_C_DECLS
 
 typedef mca_topo_base_component_2_2_0_t mca_topo_basic_component_t;
 /* Public component instance */
-OMPI_MODULE_DECLSPEC extern mca_topo_basic_component_t
-    mca_topo_basic_component;
+OMPI_MODULE_DECLSPEC extern mca_topo_basic_component_t mca_topo_basic_component;
 
 END_C_DECLS
 
 #endif /* MCA_TOPO_BASIC_H */
-

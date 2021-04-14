@@ -17,13 +17,12 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_category_get_pvars = PMPI_T_category_get_pvars
+#    pragma weak MPI_T_category_get_pvars = PMPI_T_category_get_pvars
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
-
 
 int MPI_T_category_get_pvars(int cat_index, int len, int indices[])
 {
@@ -32,14 +31,14 @@ int MPI_T_category_get_pvars(int cat_index, int len, int indices[])
     const int *vars;
     int i, size;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     do {
-        rc = mca_base_var_group_get (cat_index, &group);
+        rc = mca_base_var_group_get(cat_index, &group);
         if (0 > rc) {
             rc = (OPAL_ERR_NOT_FOUND == rc) ? MPI_T_ERR_INVALID_INDEX : MPI_T_ERR_INVALID;
             break;
@@ -48,12 +47,12 @@ int MPI_T_category_get_pvars(int cat_index, int len, int indices[])
         size = opal_value_array_get_size((opal_value_array_t *) &group->group_pvars);
         vars = OPAL_VALUE_ARRAY_GET_BASE(&group->group_pvars, int);
 
-        for (i = 0 ; i < len && i < size ; ++i) {
+        for (i = 0; i < len && i < size; ++i) {
             indices[i] = vars[i];
         }
     } while (0);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return rc;
 }

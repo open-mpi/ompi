@@ -21,55 +21,49 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_ALLREDUCE = ompi_allreduce_f
-#pragma weak pmpi_allreduce = ompi_allreduce_f
-#pragma weak pmpi_allreduce_ = ompi_allreduce_f
-#pragma weak pmpi_allreduce__ = ompi_allreduce_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_ALLREDUCE = ompi_allreduce_f
+#        pragma weak pmpi_allreduce = ompi_allreduce_f
+#        pragma weak pmpi_allreduce_ = ompi_allreduce_f
+#        pragma weak pmpi_allreduce__ = ompi_allreduce_f
 
-#pragma weak PMPI_Allreduce_f = ompi_allreduce_f
-#pragma weak PMPI_Allreduce_f08 = ompi_allreduce_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_ALLREDUCE,
-                           pmpi_allreduce,
-                           pmpi_allreduce_,
-                           pmpi_allreduce__,
+#        pragma weak PMPI_Allreduce_f = ompi_allreduce_f
+#        pragma weak PMPI_Allreduce_f08 = ompi_allreduce_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_ALLREDUCE, pmpi_allreduce, pmpi_allreduce_, pmpi_allreduce__,
                            pompi_allreduce_f,
-                           (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr),
-                           (sendbuf, recvbuf, count, datatype, op, comm, ierr) )
-#endif
+                           (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype,
+                            MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr),
+                           (sendbuf, recvbuf, count, datatype, op, comm, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_ALLREDUCE = ompi_allreduce_f
-#pragma weak mpi_allreduce = ompi_allreduce_f
-#pragma weak mpi_allreduce_ = ompi_allreduce_f
-#pragma weak mpi_allreduce__ = ompi_allreduce_f
+#    pragma weak MPI_ALLREDUCE = ompi_allreduce_f
+#    pragma weak mpi_allreduce = ompi_allreduce_f
+#    pragma weak mpi_allreduce_ = ompi_allreduce_f
+#    pragma weak mpi_allreduce__ = ompi_allreduce_f
 
-#pragma weak MPI_Allreduce_f = ompi_allreduce_f
-#pragma weak MPI_Allreduce_f08 = ompi_allreduce_f
+#    pragma weak MPI_Allreduce_f = ompi_allreduce_f
+#    pragma weak MPI_Allreduce_f08 = ompi_allreduce_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ALLREDUCE,
-                           mpi_allreduce,
-                           mpi_allreduce_,
-                           mpi_allreduce__,
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_ALLREDUCE, mpi_allreduce, mpi_allreduce_, mpi_allreduce__,
                            ompi_allreduce_f,
-                           (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr),
-                           (sendbuf, recvbuf, count, datatype, op, comm, ierr) )
-#else
-#define ompi_allreduce_f pompi_allreduce_f
-#endif
+                           (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype,
+                            MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr),
+                           (sendbuf, recvbuf, count, datatype, op, comm, ierr))
+#    else
+#        define ompi_allreduce_f pompi_allreduce_f
+#    endif
 #endif
 
-
-void ompi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
-		     MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm,
-		     MPI_Fint *ierr)
+void ompi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype,
+                      MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr)
 {
     int ierr_c;
     MPI_Comm c_comm;
@@ -84,8 +78,7 @@ void ompi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    ierr_c = PMPI_Allreduce(sendbuf, recvbuf,
-                            OMPI_FINT_2_INT(*count),
-                            c_type, c_op, c_comm);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
+    ierr_c = PMPI_Allreduce(sendbuf, recvbuf, OMPI_FINT_2_INT(*count), c_type, c_op, c_comm);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(ierr_c);
 }

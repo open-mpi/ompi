@@ -24,47 +24,38 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_WIN_GET_GROUP = ompi_win_get_group_f
-#pragma weak pmpi_win_get_group = ompi_win_get_group_f
-#pragma weak pmpi_win_get_group_ = ompi_win_get_group_f
-#pragma weak pmpi_win_get_group__ = ompi_win_get_group_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_WIN_GET_GROUP = ompi_win_get_group_f
+#        pragma weak pmpi_win_get_group = ompi_win_get_group_f
+#        pragma weak pmpi_win_get_group_ = ompi_win_get_group_f
+#        pragma weak pmpi_win_get_group__ = ompi_win_get_group_f
 
-#pragma weak PMPI_Win_get_group_f = ompi_win_get_group_f
-#pragma weak PMPI_Win_get_group_f08 = ompi_win_get_group_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_GET_GROUP,
-                           pmpi_win_get_group,
-                           pmpi_win_get_group_,
-                           pmpi_win_get_group__,
-                           pompi_win_get_group_f,
-                           (MPI_Fint *win, MPI_Fint *group, MPI_Fint *ierr),
-                           (win, group, ierr) )
-#endif
+#        pragma weak PMPI_Win_get_group_f = ompi_win_get_group_f
+#        pragma weak PMPI_Win_get_group_f08 = ompi_win_get_group_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_WIN_GET_GROUP, pmpi_win_get_group, pmpi_win_get_group_,
+                           pmpi_win_get_group__, pompi_win_get_group_f,
+                           (MPI_Fint * win, MPI_Fint *group, MPI_Fint *ierr), (win, group, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WIN_GET_GROUP = ompi_win_get_group_f
-#pragma weak mpi_win_get_group = ompi_win_get_group_f
-#pragma weak mpi_win_get_group_ = ompi_win_get_group_f
-#pragma weak mpi_win_get_group__ = ompi_win_get_group_f
+#    pragma weak MPI_WIN_GET_GROUP = ompi_win_get_group_f
+#    pragma weak mpi_win_get_group = ompi_win_get_group_f
+#    pragma weak mpi_win_get_group_ = ompi_win_get_group_f
+#    pragma weak mpi_win_get_group__ = ompi_win_get_group_f
 
-#pragma weak MPI_Win_get_group_f = ompi_win_get_group_f
-#pragma weak MPI_Win_get_group_f08 = ompi_win_get_group_f
+#    pragma weak MPI_Win_get_group_f = ompi_win_get_group_f
+#    pragma weak MPI_Win_get_group_f08 = ompi_win_get_group_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_GROUP,
-                           mpi_win_get_group,
-                           mpi_win_get_group_,
-                           mpi_win_get_group__,
-                           ompi_win_get_group_f,
-                           (MPI_Fint *win, MPI_Fint *group, MPI_Fint *ierr),
-                           (win, group, ierr) )
-#else
-#define ompi_win_get_group_f pompi_win_get_group_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_WIN_GET_GROUP, mpi_win_get_group, mpi_win_get_group_,
+                           mpi_win_get_group__, ompi_win_get_group_f,
+                           (MPI_Fint * win, MPI_Fint *group, MPI_Fint *ierr), (win, group, ierr))
+#    else
+#        define ompi_win_get_group_f pompi_win_get_group_f
+#    endif
 #endif
-#endif
-
 
 void ompi_win_get_group_f(MPI_Fint *win, MPI_Fint *group, MPI_Fint *ierr)
 {
@@ -73,7 +64,8 @@ void ompi_win_get_group_f(MPI_Fint *win, MPI_Fint *group, MPI_Fint *ierr)
     MPI_Win c_win = PMPI_Win_f2c(*win);
 
     c_ierr = PMPI_Win_get_group(c_win, &c_grp);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         *group = PMPI_Group_c2f(c_grp);

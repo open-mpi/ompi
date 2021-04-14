@@ -21,30 +21,27 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_c2f = PMPI_Comm_c2f
-#endif
-#define MPI_Comm_c2f PMPI_Comm_c2f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_c2f = PMPI_Comm_c2f
+#    endif
+#    define MPI_Comm_c2f PMPI_Comm_c2f
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_c2f";
 
-
 MPI_Fint MPI_Comm_c2f(MPI_Comm comm)
 {
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         /* Note that ompi_comm_invalid() explicitly checks for
@@ -55,7 +52,7 @@ MPI_Fint MPI_Comm_c2f(MPI_Comm comm)
 
            See a big comment in ompi/communicator/communicator.h about
            this. */
-        if (ompi_comm_invalid (comm) && MPI_COMM_NULL != comm) {
+        if (ompi_comm_invalid(comm) && MPI_COMM_NULL != comm) {
             return OMPI_INT_2_FINT(-1);
         }
     }

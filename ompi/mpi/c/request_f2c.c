@@ -21,21 +21,20 @@
  */
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/request/request.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Request_f2c = PMPI_Request_f2c
-#endif
-#define MPI_Request_f2c PMPI_Request_f2c
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Request_f2c = PMPI_Request_f2c
+#    endif
+#    define MPI_Request_f2c PMPI_Request_f2c
 #endif
 
 static const char FUNC_NAME[] = "MPI_Request_f2c";
-
 
 MPI_Request MPI_Request_f2c(MPI_Fint request)
 {
@@ -49,12 +48,10 @@ MPI_Request MPI_Request_f2c(MPI_Fint request)
        invalid fortran handle.  If we get an invalid fortran handle,
        return an invalid C handle. */
 
-    if (request_index < 0 ||
-        request_index >=
-        opal_pointer_array_get_size(&ompi_request_f_to_c_table)) {
+    if (request_index < 0
+        || request_index >= opal_pointer_array_get_size(&ompi_request_f_to_c_table)) {
         return NULL;
     }
 
-    return (MPI_Request)opal_pointer_array_get_item(&ompi_request_f_to_c_table,
-                                                    request_index);
+    return (MPI_Request) opal_pointer_array_get_item(&ompi_request_f_to_c_table, request_index);
 }

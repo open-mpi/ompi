@@ -23,12 +23,12 @@
 #include <portals4.h>
 
 #include "opal/include/opal_config.h"
+#include "ompi/mca/mtl/base/base.h"
+#include "ompi/mca/mtl/mtl.h"
+#include "ompi/proc/proc.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/proc/proc.h"
-#include "ompi/mca/mtl/mtl.h"
-#include "ompi/mca/mtl/base/base.h"
 
 #include "ompi/communicator/communicator.h"
 
@@ -41,7 +41,8 @@ struct mca_mtl_portals4_send_request_t;
 struct mca_mtl_portals4_module_t {
     mca_mtl_base_module_t base;
 
-    /* add_procs() can get called multiple times.  this prevents multiple calls to portals4_init_interface(). */
+    /* add_procs() can get called multiple times.  this prevents multiple calls to
+     * portals4_init_interface(). */
     int32_t need_init;
 
     /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
@@ -107,8 +108,8 @@ struct mca_mtl_portals4_module_t {
     opal_list_t recv_short_blocks;
 
     /** Number of active short receive blocks. Active means that the ME
-        was posted to the overflow list, the LINK event has been received but the UNLINK or the FREE event has not
-        yet been received. */
+        was posted to the overflow list, the LINK event has been received but the UNLINK or the FREE
+       event has not yet been received. */
     uint32_t active_recv_short_blocks;
 
     /** Mutex to protect opal_list */
@@ -152,7 +153,7 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
  * +---- protocol
  */
 
-#define MTL_PORTALS4_MAX_TAG       ((1UL << 24) -1)
+#define MTL_PORTALS4_MAX_TAG ((1UL << 24) - 1)
 
 #define MTL_PORTALS4_PROTOCOL_MASK 0xF000000000000000ULL
 #define MTL_PORTALS4_CONTEXT_MASK  0x0FFF000000000000ULL
@@ -164,151 +165,125 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 #define MTL_PORTALS4_SOURCE_IGNR   MTL_PORTALS4_SOURCE_MASK
 #define MTL_PORTALS4_TAG_IGNR      0x00000000007FFFFFULL
 
-#define MTL_PORTALS4_SHORT_MSG      0x1000000000000000ULL
-#define MTL_PORTALS4_LONG_MSG       0x2000000000000000ULL
+#define MTL_PORTALS4_SHORT_MSG 0x1000000000000000ULL
+#define MTL_PORTALS4_LONG_MSG  0x2000000000000000ULL
 
 /* send posting */
 #define MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, source, tag, type) \
-    {                                                                   \
-        match_bits = contextid;                                         \
-        match_bits = (match_bits << 24);                                \
-        match_bits |= source;                                           \
-        match_bits = (match_bits << 24);                                \
-        match_bits |= (MTL_PORTALS4_TAG_MASK & tag) | type;             \
+    {                                                                        \
+        match_bits = contextid;                                              \
+        match_bits = (match_bits << 24);                                     \
+        match_bits |= source;                                                \
+        match_bits = (match_bits << 24);                                     \
+        match_bits |= (MTL_PORTALS4_TAG_MASK & tag) | type;                  \
     }
 
 /* receive posting */
 #define MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, contextid, source, tag) \
-    {                                                                   \
-        match_bits = 0;                                                 \
-        ignore_bits = MTL_PORTALS4_PROTOCOL_IGNR;                       \
-                                                                        \
-        match_bits = contextid;                                         \
-        match_bits = (match_bits << 24);                                \
-                                                                        \
-        if (MPI_ANY_SOURCE == source) {                                 \
-            match_bits = (match_bits << 24);                            \
-            ignore_bits |= MTL_PORTALS4_SOURCE_IGNR;                    \
-        } else {                                                        \
-            match_bits |= source;                                       \
-            match_bits = (match_bits << 24);                            \
-        }                                                               \
-                                                                        \
-        if (MPI_ANY_TAG == tag) {                                       \
-            ignore_bits |= MTL_PORTALS4_TAG_IGNR;                       \
-        } else {                                                        \
-            match_bits |= (MTL_PORTALS4_TAG_MASK & tag);                \
-        }                                                               \
+    {                                                                               \
+        match_bits = 0;                                                             \
+        ignore_bits = MTL_PORTALS4_PROTOCOL_IGNR;                                   \
+                                                                                    \
+        match_bits = contextid;                                                     \
+        match_bits = (match_bits << 24);                                            \
+                                                                                    \
+        if (MPI_ANY_SOURCE == source) {                                             \
+            match_bits = (match_bits << 24);                                        \
+            ignore_bits |= MTL_PORTALS4_SOURCE_IGNR;                                \
+        } else {                                                                    \
+            match_bits |= source;                                                   \
+            match_bits = (match_bits << 24);                                        \
+        }                                                                           \
+                                                                                    \
+        if (MPI_ANY_TAG == tag) {                                                   \
+            ignore_bits |= MTL_PORTALS4_TAG_IGNR;                                   \
+        } else {                                                                    \
+            match_bits |= (MTL_PORTALS4_TAG_MASK & tag);                            \
+        }                                                                           \
     }
 
-#define MTL_PORTALS4_IS_SHORT_MSG(match_bits)           \
-    (0 != (MTL_PORTALS4_SHORT_MSG & match_bits))
-#define MTL_PORTALS4_IS_LONG_MSG(match_bits)            \
-    (0 != (MTL_PORTALS4_LONG_MSG & match_bits))
-#define MTL_PORTALS4_IS_READY_MSG(match_bits)           \
-    (0 != (MTL_PORTALS4_READY_MSG & match_bits))
+#define MTL_PORTALS4_IS_SHORT_MSG(match_bits) (0 != (MTL_PORTALS4_SHORT_MSG & match_bits))
+#define MTL_PORTALS4_IS_LONG_MSG(match_bits)  (0 != (MTL_PORTALS4_LONG_MSG & match_bits))
+#define MTL_PORTALS4_IS_READY_MSG(match_bits) (0 != (MTL_PORTALS4_READY_MSG & match_bits))
 
-#define MTL_PORTALS4_GET_TAG(match_bits)                \
-    ((int)(match_bits & MTL_PORTALS4_TAG_MASK))
-#define MTL_PORTALS4_GET_SOURCE(match_bits)             \
-    ((int)((match_bits & MTL_PORTALS4_SOURCE_MASK) >> 24))
+#define MTL_PORTALS4_GET_TAG(match_bits)    ((int) (match_bits & MTL_PORTALS4_TAG_MASK))
+#define MTL_PORTALS4_GET_SOURCE(match_bits) ((int) ((match_bits & MTL_PORTALS4_SOURCE_MASK) >> 24))
 
+#define MTL_PORTALS4_SYNC_MSG 0x8000000000000000ULL
 
-#define MTL_PORTALS4_SYNC_MSG       0x8000000000000000ULL
-
-#define MTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length, sync)   \
-    {                                                                \
-        hdr_data = (sync) ? 1 : 0;                                   \
-        hdr_data = (hdr_data << 15);                                 \
-        hdr_data |= opcount & 0x7FFFULL;                             \
-        hdr_data = (hdr_data << 48);                                 \
-        hdr_data |= (length & 0xFFFFFFFFFFFFULL);                    \
+#define MTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length, sync) \
+    {                                                              \
+        hdr_data = (sync) ? 1 : 0;                                 \
+        hdr_data = (hdr_data << 15);                               \
+        hdr_data |= opcount & 0x7FFFULL;                           \
+        hdr_data = (hdr_data << 48);                               \
+        hdr_data |= (length & 0xFFFFFFFFFFFFULL);                  \
     }
 
-#define MTL_PORTALS4_GET_LENGTH(hdr_data) ((size_t)(hdr_data & 0xFFFFFFFFFFFFULL))
-#define MTL_PORTALS4_IS_SYNC_MSG(hdr_data)            \
-    (0 != (MTL_PORTALS4_SYNC_MSG & hdr_data))
+#define MTL_PORTALS4_GET_LENGTH(hdr_data)  ((size_t)(hdr_data & 0xFFFFFFFFFFFFULL))
+#define MTL_PORTALS4_IS_SYNC_MSG(hdr_data) (0 != (MTL_PORTALS4_SYNC_MSG & hdr_data))
 
 /* mtl-portals4 helpers */
-OMPI_DECLSPEC ompi_proc_t *
-ompi_mtl_portals4_get_proc_group(struct ompi_group_t *group, int rank);
+OMPI_DECLSPEC ompi_proc_t *ompi_mtl_portals4_get_proc_group(struct ompi_group_t *group, int rank);
 
-static inline ptl_process_t
-ompi_mtl_portals4_get_peer_group(struct ompi_group_t *group, int rank)
+static inline ptl_process_t ompi_mtl_portals4_get_peer_group(struct ompi_group_t *group, int rank)
 {
-    return *((ptl_process_t*)(ompi_mtl_portals4_get_proc_group(group, rank)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]));
+    return *((ptl_process_t *) (ompi_mtl_portals4_get_proc_group(group, rank)
+                                    ->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]));
 }
 
-static inline ompi_proc_t *
-ompi_mtl_portals4_get_proc(struct ompi_communicator_t *comm, int rank)
+static inline ompi_proc_t *ompi_mtl_portals4_get_proc(struct ompi_communicator_t *comm, int rank)
 {
     return ompi_mtl_portals4_get_proc_group(comm->c_remote_group, rank);
 }
 
-static inline ptl_process_t
-ompi_mtl_portals4_get_peer(struct ompi_communicator_t *comm, int rank)
+static inline ptl_process_t ompi_mtl_portals4_get_peer(struct ompi_communicator_t *comm, int rank)
 {
-    return *((ptl_process_t*)(ompi_mtl_portals4_get_proc(comm, rank)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]));
+    return *((ptl_process_t *) (ompi_mtl_portals4_get_proc(comm, rank)
+                                    ->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]));
 }
-
 
 /* MTL interface functions */
 extern int ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl);
 
-extern int ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t* mtl,
-                                       size_t nprocs,
-                                       struct ompi_proc_t** procs);
+extern int ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
+                                       struct ompi_proc_t **procs);
 
-extern int ompi_mtl_portals4_del_procs(struct mca_mtl_base_module_t* mtl,
-                                       size_t nprocs,
-                                       struct ompi_proc_t** procs);
+extern int ompi_mtl_portals4_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
+                                       struct ompi_proc_t **procs);
 
-extern int ompi_mtl_portals4_send(struct mca_mtl_base_module_t* mtl,
-                                  struct ompi_communicator_t* comm,
-                                  int dest,
-                                  int tag,
+extern int ompi_mtl_portals4_send(struct mca_mtl_base_module_t *mtl,
+                                  struct ompi_communicator_t *comm, int dest, int tag,
                                   struct opal_convertor_t *convertor,
                                   mca_pml_base_send_mode_t mode);
 
-extern int ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
-                                   struct ompi_communicator_t* comm,
-                                   int dest,
-                                   int tag,
+extern int ompi_mtl_portals4_isend(struct mca_mtl_base_module_t *mtl,
+                                   struct ompi_communicator_t *comm, int dest, int tag,
                                    struct opal_convertor_t *convertor,
-                                   mca_pml_base_send_mode_t mode,
-                                   bool blocking,
+                                   mca_pml_base_send_mode_t mode, bool blocking,
                                    mca_mtl_request_t *mtl_request);
 
-extern int ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
-                                   struct ompi_communicator_t *comm,
-                                   int src,
-                                   int tag,
+extern int ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t *mtl,
+                                   struct ompi_communicator_t *comm, int src, int tag,
                                    struct opal_convertor_t *convertor,
                                    mca_mtl_request_t *mtl_request);
 
-extern int ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
-                                    struct ompi_communicator_t *comm,
-                                    int src,
-                                    int tag,
-                                    int *flag,
+extern int ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t *mtl,
+                                    struct ompi_communicator_t *comm, int src, int tag, int *flag,
                                     struct ompi_status_public_t *status);
 
-extern int ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
+extern int ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t *mtl,
                                     struct opal_convertor_t *convertor,
                                     struct ompi_message_t **message,
                                     struct mca_mtl_request_t *mtl_request);
 
 extern int ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
-                                     struct ompi_communicator_t *comm,
-                                     int src,
-                                     int tag,
-                                     int *matched,
-                                     struct ompi_message_t **message,
+                                     struct ompi_communicator_t *comm, int src, int tag,
+                                     int *matched, struct ompi_message_t **message,
                                      struct ompi_status_public_t *status);
 
-extern int ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
-                                    mca_mtl_request_t *mtl_request,
-                                    int flag);
+extern int ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t *mtl,
+                                    mca_mtl_request_t *mtl_request, int flag);
 
 extern int ompi_mtl_portals4_add_comm(struct mca_mtl_base_module_t *mtl,
                                       struct ompi_communicator_t *comm);
@@ -322,4 +297,4 @@ extern int ompi_mtl_portals4_get_error(int ptl_error);
 
 END_C_DECLS
 
-#endif  /* MTL_PORTALS_H_HAS_BEEN_INCLUDED */
+#endif /* MTL_PORTALS_H_HAS_BEEN_INCLUDED */

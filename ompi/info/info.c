@@ -30,30 +30,30 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 
-#include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
-#include <limits.h>
 #include <ctype.h>
+#include <limits.h>
 #ifdef HAVE_SYS_UTSNAME_H
-#include <sys/utsname.h>
+#    include <sys/utsname.h>
 #endif
 #include <assert.h>
 
 #include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
+#include "opal/util/info.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "opal/util/info.h"
 
 #include "ompi/info/info.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "ompi/runtime/params.h"
 #include "ompi/runtime/ompi_rte.h"
+#include "ompi/runtime/params.h"
 
 /*
  * Global variables
@@ -71,10 +71,7 @@ static void info_destructor(ompi_info_t *info);
 /*
  * ompi_info_t classes
  */
-OBJ_CLASS_INSTANCE(ompi_info_t,
-                   opal_info_t,
-                   info_constructor,
-                   info_destructor);
+OBJ_CLASS_INSTANCE(ompi_info_t, opal_info_t, info_constructor, info_destructor);
 
 /*
  * The global fortran <-> C translation table
@@ -93,8 +90,8 @@ int ompi_mpiinfo_init(void)
     /* initialize table */
 
     OBJ_CONSTRUCT(&ompi_info_f_to_c_table, opal_pointer_array_t);
-    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_info_f_to_c_table, 0,
-                                                OMPI_FORTRAN_HANDLE_MAX, 16) ) {
+    if (OPAL_SUCCESS
+        != opal_pointer_array_init(&ompi_info_f_to_c_table, 0, OMPI_FORTRAN_HANDLE_MAX, 16)) {
         return OMPI_ERROR;
     }
 
@@ -134,7 +131,8 @@ int ompi_mpiinfo_init(void)
     /* the initial error handler, set it as requested (nothing if not
      * requested) */
     if (NULL != ompi_process_info.initial_errhandler) {
-        opal_info_set(&ompi_mpi_info_env.info.super, "mpi_initial_errhandler", ompi_process_info.initial_errhandler);
+        opal_info_set(&ompi_mpi_info_env.info.super, "mpi_initial_errhandler",
+                      ompi_process_info.initial_errhandler);
     }
 
     /* local host name */
@@ -196,7 +194,8 @@ int ompi_mpiinfo_init(void)
      * the user may have requested
      */
     if (NULL != ompi_process_info.proc_session_dir) {
-        opal_info_set(&ompi_mpi_info_env.info.super, "ompi_positioned_file_dir", ompi_process_info.proc_session_dir);
+        opal_info_set(&ompi_mpi_info_env.info.super, "ompi_positioned_file_dir",
+                      ompi_process_info.proc_session_dir);
     }
 
     /* All done */
@@ -210,51 +209,52 @@ int ompi_mpiinfo_init(void)
 // it's convenient to have ompi_info_t wrappers for some of the opal_info_t
 // related calls:
 
-int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo) {
-    return opal_info_dup (&(info->super), (opal_info_t **)newinfo);
-}
-int ompi_info_dup_mpistandard (ompi_info_t *info, ompi_info_t **newinfo) {
-    return opal_info_dup_mpistandard (&(info->super), (opal_info_t **)newinfo);
-}
-int ompi_info_set (ompi_info_t *info, const char *key, const char *value) {
-    return opal_info_set (&(info->super), key, value);
-}
-int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
-                              mca_base_var_enum_t *var_enum)
+int ompi_info_dup(ompi_info_t *info, ompi_info_t **newinfo)
 {
-    return opal_info_set_value_enum (&(info->super), key, value, var_enum);
+    return opal_info_dup(&(info->super), (opal_info_t **) newinfo);
 }
-int ompi_info_get (ompi_info_t *info, const char *key,
-                   opal_cstring_t **value, int *flag)
+int ompi_info_dup_mpistandard(ompi_info_t *info, ompi_info_t **newinfo)
 {
-    return opal_info_get (&(info->super), key, value, flag);
+    return opal_info_dup_mpistandard(&(info->super), (opal_info_t **) newinfo);
 }
-int ompi_info_get_value_enum (ompi_info_t *info, const char *key, int *value,
-                              int default_value, mca_base_var_enum_t *var_enum,
-                              int *flag)
+int ompi_info_set(ompi_info_t *info, const char *key, const char *value)
 {
-    return opal_info_get_value_enum (&(info->super), key, value,
-                              default_value, var_enum, flag);
+    return opal_info_set(&(info->super), key, value);
 }
-int ompi_info_get_bool(ompi_info_t *info, const char *key, bool *value, int *flag) {
+int ompi_info_set_value_enum(ompi_info_t *info, const char *key, int value,
+                             mca_base_var_enum_t *var_enum)
+{
+    return opal_info_set_value_enum(&(info->super), key, value, var_enum);
+}
+int ompi_info_get(ompi_info_t *info, const char *key, opal_cstring_t **value, int *flag)
+{
+    return opal_info_get(&(info->super), key, value, flag);
+}
+int ompi_info_get_value_enum(ompi_info_t *info, const char *key, int *value, int default_value,
+                             mca_base_var_enum_t *var_enum, int *flag)
+{
+    return opal_info_get_value_enum(&(info->super), key, value, default_value, var_enum, flag);
+}
+int ompi_info_get_bool(ompi_info_t *info, const char *key, bool *value, int *flag)
+{
     return opal_info_get_bool(&(info->super), key, value, flag);
 }
-int ompi_info_delete (ompi_info_t *info, const char *key) {
-    return opal_info_delete (&(info->super), key);
-}
-int ompi_info_get_valuelen (ompi_info_t *info, const char *key, int *valuelen,
-                            int *flag)
+int ompi_info_delete(ompi_info_t *info, const char *key)
 {
-    return opal_info_get_valuelen (&(info->super), key, valuelen, flag);
+    return opal_info_delete(&(info->super), key);
 }
-int ompi_info_get_nthkey (ompi_info_t *info, int n, opal_cstring_t **key) {
-    return opal_info_get_nthkey (&(info->super), n, key);
+int ompi_info_get_valuelen(ompi_info_t *info, const char *key, int *valuelen, int *flag)
+{
+    return opal_info_get_valuelen(&(info->super), key, valuelen, flag);
+}
+int ompi_info_get_nthkey(ompi_info_t *info, int n, opal_cstring_t **key)
+{
+    return opal_info_get_nthkey(&(info->super), n, key);
 }
 int ompi_info_get_nkeys(ompi_info_t *info, int *nkeys)
 {
-    return opal_info_get_nkeys (&(info->super), nkeys);
+    return opal_info_get_nkeys(&(info->super), nkeys);
 }
-
 
 /*
  * Shut down MPI_Info handling
@@ -275,7 +275,7 @@ int ompi_mpiinfo_finalize(void)
 
     max = opal_pointer_array_get_size(&ompi_info_f_to_c_table);
     for (i = 2; i < max; ++i) {
-        info = (ompi_info_t *)opal_pointer_array_get_item(&ompi_info_f_to_c_table, i);
+        info = (ompi_info_t *) opal_pointer_array_get_item(&ompi_info_f_to_c_table, i);
 
         /* If the info was freed but still exists because the user
            told us to never free handles, then do an OBJ_RELEASE it
@@ -284,7 +284,7 @@ int ompi_mpiinfo_finalize(void)
 
         if (NULL != info && ompi_debug_no_free_handles && info->i_freed) {
             OBJ_RELEASE(info);
-            info = (ompi_info_t *)opal_pointer_array_get_item(&ompi_info_f_to_c_table, i);
+            info = (ompi_info_t *) opal_pointer_array_get_item(&ompi_info_f_to_c_table, i);
         }
 
         /* If it still exists here and was never freed, then it's an
@@ -303,8 +303,7 @@ int ompi_mpiinfo_finalize(void)
                          opal_list_get_end(&(info->super.super)) != item;
                          item = opal_list_get_next(item)) {
                         entry = (opal_info_entry_t *) item;
-                        opal_output(0, "WARNING:   key=\"%s\", value=\"%s\"",
-                                    entry->ie_key->string,
+                        opal_output(0, "WARNING:   key=\"%s\", value=\"%s\"", entry->ie_key->string,
                                     NULL != entry->ie_value ? entry->ie_value->string : "(null)");
                         found = true;
                     }
@@ -328,22 +327,19 @@ int ompi_mpiinfo_finalize(void)
     return OPAL_SUCCESS;
 }
 
-
-
 /*
  * This function is invoked when OBJ_NEW() is called. Here, we add this
  * info pointer to the table and then store its index as the handle
  */
 static void info_constructor(ompi_info_t *info)
 {
-    info->i_f_to_c_index = opal_pointer_array_add(&ompi_info_f_to_c_table,
-                                                  info);
+    info->i_f_to_c_index = opal_pointer_array_add(&ompi_info_f_to_c_table, info);
     info->i_freed = false;
 
-/*
- * If the user doesn't want us to ever free it, then add an extra
- * RETAIN here
- */
+    /*
+     * If the user doesn't want us to ever free it, then add an extra
+     * RETAIN here
+     */
     if (ompi_debug_no_free_handles) {
         OBJ_RETAIN(&(info->super));
     }
@@ -356,23 +352,19 @@ static void info_constructor(ompi_info_t *info)
  *     */
 static void info_destructor(ompi_info_t *info)
 {
-   /* reset the &ompi_info_f_to_c_table entry - make sure that the
-      entry is in the table */
+    /* reset the &ompi_info_f_to_c_table entry - make sure that the
+       entry is in the table */
 
-    if (MPI_UNDEFINED != info->i_f_to_c_index &&
-        NULL != opal_pointer_array_get_item(&ompi_info_f_to_c_table,
-                                            info->i_f_to_c_index)){
-        opal_pointer_array_set_item(&ompi_info_f_to_c_table,
-                                    info->i_f_to_c_index, NULL);
+    if (MPI_UNDEFINED != info->i_f_to_c_index
+        && NULL != opal_pointer_array_get_item(&ompi_info_f_to_c_table, info->i_f_to_c_index)) {
+        opal_pointer_array_set_item(&ompi_info_f_to_c_table, info->i_f_to_c_index, NULL);
     }
-
 }
-
 
 /*
  * Free an info handle and all of its keys and values.
  */
-int ompi_info_free (ompi_info_t **info)
+int ompi_info_free(ompi_info_t **info)
 {
     (*info)->i_freed = true;
     OBJ_RELEASE(*info);

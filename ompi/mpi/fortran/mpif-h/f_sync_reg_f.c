@@ -22,49 +22,39 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_F_SYNC_REG = ompi_f_sync_reg_f
-#pragma weak pmpi_f_sync_reg = ompi_f_sync_reg_f
-#pragma weak pmpi_f_sync_reg_ = ompi_f_sync_reg_f
-#pragma weak pmpi_f_sync_reg__ = ompi_f_sync_reg_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_F_SYNC_REG = ompi_f_sync_reg_f
+#        pragma weak pmpi_f_sync_reg = ompi_f_sync_reg_f
+#        pragma weak pmpi_f_sync_reg_ = ompi_f_sync_reg_f
+#        pragma weak pmpi_f_sync_reg__ = ompi_f_sync_reg_f
 
-#pragma weak PMPI_F_sync_reg_f = ompi_f_sync_reg_f
-#pragma weak PMPI_F_sync_reg_f08 = ompi_f_sync_reg_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_F_SYNC_REG,
-                           pmpi_f_sync_reg,
-                           pmpi_f_sync_reg_,
-                           pmpi_f_sync_reg__,
-                           pompi_f_sync_reg_f,
-                           (char *buf),
-                           (buf) )
-#endif
+#        pragma weak PMPI_F_sync_reg_f = ompi_f_sync_reg_f
+#        pragma weak PMPI_F_sync_reg_f08 = ompi_f_sync_reg_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_F_SYNC_REG, pmpi_f_sync_reg, pmpi_f_sync_reg_, pmpi_f_sync_reg__,
+                           pompi_f_sync_reg_f, (char *buf), (buf))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_F_SYNC_REG = ompi_f_sync_reg_f
-#pragma weak mpi_f_sync_reg = ompi_f_sync_reg_f
-#pragma weak mpi_f_sync_reg_ = ompi_f_sync_reg_f
-#pragma weak mpi_f_sync_reg__ = ompi_f_sync_reg_f
+#    pragma weak MPI_F_SYNC_REG = ompi_f_sync_reg_f
+#    pragma weak mpi_f_sync_reg = ompi_f_sync_reg_f
+#    pragma weak mpi_f_sync_reg_ = ompi_f_sync_reg_f
+#    pragma weak mpi_f_sync_reg__ = ompi_f_sync_reg_f
 
-#pragma weak MPI_F_sync_reg_f = ompi_f_sync_reg_f
-#pragma weak MPI_F_sync_reg_f08 = ompi_f_sync_reg_f
+#    pragma weak MPI_F_sync_reg_f = ompi_f_sync_reg_f
+#    pragma weak MPI_F_sync_reg_f08 = ompi_f_sync_reg_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_F_SYNC_REG,
-                           mpi_f_sync_reg,
-                           mpi_f_sync_reg_,
-                           mpi_f_sync_reg__,
-                           ompi_f_sync_reg_f,
-                           (char *buf),
-                           (buf) )
-#else
-#define ompi_f_sync_reg_f pompi_f_sync_reg_f
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_F_SYNC_REG, mpi_f_sync_reg, mpi_f_sync_reg_, mpi_f_sync_reg__,
+                           ompi_f_sync_reg_f, (char *buf), (buf))
+#    else
+#        define ompi_f_sync_reg_f pompi_f_sync_reg_f
+#    endif
 #endif
 
 void ompi_f_sync_reg_f(char *buf)

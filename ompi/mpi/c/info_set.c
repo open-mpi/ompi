@@ -22,24 +22,23 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "opal/util/show_help.h"
 #include <stdlib.h>
 #include <string.h>
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Info_set = PMPI_Info_set
-#endif
-#define MPI_Info_set PMPI_Info_set
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Info_set = PMPI_Info_set
+#    endif
+#    define MPI_Info_set PMPI_Info_set
 #endif
 
 static const char FUNC_NAME[] = "MPI_Info_set";
-
 
 /**
  *   MPI_Info_set - Set a (key, value) pair in an 'MPI_Info' object
@@ -78,36 +77,30 @@ int MPI_Info_set(MPI_Info info, const char *key, const char *value)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info ||
-            ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO,
-                                           FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info || ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO, FUNC_NAME);
         }
 
-        key_length = (key) ? (int)strlen (key) : 0;
-        if ((NULL == key) || (0 == key_length) ||
-            (MPI_MAX_INFO_KEY <= key_length)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
-                                           FUNC_NAME);
+        key_length = (key) ? (int) strlen(key) : 0;
+        if ((NULL == key) || (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY, FUNC_NAME);
         }
 
-        value_length = (value) ? (int)strlen (value) : 0;
-        if ((NULL == value) || (0 == value_length) ||
-            (MPI_MAX_INFO_VAL <= value_length)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_VALUE,
-                                           FUNC_NAME);
+        value_length = (value) ? (int) strlen(value) : 0;
+        if ((NULL == value) || (0 == value_length) || (MPI_MAX_INFO_VAL <= value_length)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_VALUE, FUNC_NAME);
         }
     }
 
-// An extra warning condition is a key that uses our reserved prefix "__IN_".
-// That one is used internally to deal with the dynamic nature the key/val
-// pairs where we have callbacks that modify the val, and the MPI standard
-// wants the get_info call to give back the original setting rather than
-// the callback-modified setting. So if a user directly used a key __IN_foo
-// it would confuse our accounting slightly.
+    // An extra warning condition is a key that uses our reserved prefix "__IN_".
+    // That one is used internally to deal with the dynamic nature the key/val
+    // pairs where we have callbacks that modify the val, and the MPI standard
+    // wants the get_info call to give back the original setting rather than
+    // the callback-modified setting. So if a user directly used a key __IN_foo
+    // it would confuse our accounting slightly.
     if (0 == strncmp(key, OPAL_INFO_SAVE_PREFIX, strlen(OPAL_INFO_SAVE_PREFIX))) {
-        opal_show_help("help-mpi-api.txt", "info-set-with-reserved-prefix", true,
-            key, OPAL_INFO_SAVE_PREFIX);
+        opal_show_help("help-mpi-api.txt", "info-set-with-reserved-prefix", true, key,
+                       OPAL_INFO_SAVE_PREFIX);
     }
 
     /*
@@ -115,6 +108,6 @@ int MPI_Info_set(MPI_Info info, const char *key, const char *value)
      * allocator.
      */
 
-    err = ompi_info_set (info, key, value);
+    err = ompi_info_set(info, key, value);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

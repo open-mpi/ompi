@@ -22,27 +22,26 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
-#endif
-#define MPI_Comm_f2c PMPI_Comm_f2c
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
+#    endif
+#    define MPI_Comm_f2c PMPI_Comm_f2c
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_f2c";
 
-
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm)
 {
-    int o_index= OMPI_FINT_2_INT(comm);
+    int o_index = OMPI_FINT_2_INT(comm);
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
@@ -50,10 +49,9 @@ MPI_Comm MPI_Comm_f2c(MPI_Fint comm)
        invalid fortran handle.  If we get an invalid fortran handle,
        return an invalid C handle. */
 
-    if ( 0 > o_index ||
-         o_index >= opal_pointer_array_get_size(&ompi_comm_f_to_c_table)) {
+    if (0 > o_index || o_index >= opal_pointer_array_get_size(&ompi_comm_f_to_c_table)) {
         return NULL;
     }
 
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
+    return (MPI_Comm) opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
 }

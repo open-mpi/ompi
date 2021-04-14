@@ -15,32 +15,32 @@
 
 #include "ompi_config.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/group/group.h"
-#include "ompi/request/request.h"
-#include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/win/win.h"
-#include "ompi/info/info.h"
 #include "ompi/file/file.h"
+#include "ompi/group/group.h"
+#include "ompi/info/info.h"
+#include "ompi/op/op.h"
+#include "ompi/request/request.h"
+#include "ompi/win/win.h"
 
 #include <stdlib.h>
 
 /*
  * See if there is a gap between two fields in a given struct
  */
-#define GAP_CHECK(NAME, BASE, F1, F2, CGAP) \
-    {                                                                   \
-        offset = (size_t)&BASE.F1 - (size_t)&BASE;                      \
-        exp_offset = ((size_t)&BASE.F2 - (size_t)&BASE) + sizeof(BASE.F2); \
+#define GAP_CHECK(NAME, BASE, F1, F2, CGAP)                                           \
+    {                                                                                 \
+        offset = (size_t) &BASE.F1 - (size_t) &BASE;                                  \
+        exp_offset = ((size_t) &BASE.F2 - (size_t) &BASE) + sizeof(BASE.F2);          \
         printf(NAME " offset from base = %lu, sizeof %lu ", offset, sizeof(BASE.F1)); \
-        if (CGAP && offset != exp_offset) {                             \
-            printf("(*** gap between " #F1 " and " #F2 " ***)");        \
-        }                                                               \
-        printf("\n");                                                   \
+        if (CGAP && offset != exp_offset) {                                           \
+            printf("(*** gap between " #F1 " and " #F2 " ***)");                      \
+        }                                                                             \
+        printf("\n");                                                                 \
     }
 
-
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     ompi_communicator_t test_comm;
     ompi_group_t test_group;
     ompi_request_t test_req;
@@ -60,12 +60,12 @@ int main(int argc, char **argv) {
     GAP_CHECK("c_my_rank", test_comm, c_my_rank, c_contextid, 1);
     GAP_CHECK("c_flags", test_comm, c_flags, c_my_rank, 1);
     GAP_CHECK("c_id_available", test_comm, c_id_available, c_flags, 1);
-    GAP_CHECK("c_id_start_index", test_comm, c_id_start_index, c_id_available,  1);
+    GAP_CHECK("c_id_start_index", test_comm, c_id_start_index, c_id_available, 1);
     GAP_CHECK("c_remote_group", test_comm, c_remote_group, c_local_group, 1);
-    GAP_CHECK("c_local_comm", test_comm, c_local_comm,  c_remote_group,  1);
-    GAP_CHECK("c_keyhash", test_comm, c_keyhash, c_local_comm,  1);
-    GAP_CHECK("c_cube_dim", test_comm, c_cube_dim, c_keyhash,  1);
-    GAP_CHECK("c_topo", test_comm, c_topo, c_cube_dim,  1);
+    GAP_CHECK("c_local_comm", test_comm, c_local_comm, c_remote_group, 1);
+    GAP_CHECK("c_keyhash", test_comm, c_keyhash, c_local_comm, 1);
+    GAP_CHECK("c_cube_dim", test_comm, c_cube_dim, c_keyhash, 1);
+    GAP_CHECK("c_topo", test_comm, c_topo, c_cube_dim, 1);
     GAP_CHECK("c_f_to_c_index", test_comm, c_f_to_c_index, c_topo, 1);
 #ifdef OMPI_WANT_PERUSE
     GAP_CHECK("c_peruse_handles", test_comm, c_peruse_handles, c_f_to_c_index, 1);
@@ -147,8 +147,8 @@ int main(int argc, char **argv) {
     GAP_CHECK("super", test_file, super, super, 0);
     GAP_CHECK("f_comm", test_file, f_comm, super, 1);
     GAP_CHECK("f_filename", test_file, f_filename, f_comm, 1);
-    GAP_CHECK("f_amode", test_file, f_amode,  f_filename, 1);
-    GAP_CHECK("f_flags", test_file, f_flags, f_amode,  1);
+    GAP_CHECK("f_amode", test_file, f_amode, f_filename, 1);
+    GAP_CHECK("f_flags", test_file, f_flags, f_amode, 1);
     GAP_CHECK("f_f_to_c_index", test_file, f_f_to_c_index, f_flags, 1);
     GAP_CHECK("error_handler", test_file, error_handler, f_f_to_c_index, 1);
     GAP_CHECK("errhandler_type", test_file, errhandler_type, error_handler, 1);

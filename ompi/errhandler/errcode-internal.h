@@ -40,11 +40,11 @@ BEGIN_C_DECLS
  * Back-end type for MPI error codes
  */
 struct ompi_errcode_intern_t {
-    opal_object_t                       super;
-    int                                  code;
-    int                              mpi_code;
-    int                                 index;
-    char      errstring[OMPI_MAX_ERROR_STRING];
+    opal_object_t super;
+    int code;
+    int mpi_code;
+    int index;
+    char errstring[OMPI_MAX_ERROR_STRING];
 };
 typedef struct ompi_errcode_intern_t ompi_errcode_intern_t;
 
@@ -68,7 +68,7 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
     /* Otherwise, it's an internal OMPI code and we need to translate
        it */
     for (i = 0; i < ompi_errcode_intern_lastused; i++) {
-        errc = (ompi_errcode_intern_t *)opal_pointer_array_get_item(&ompi_errcodes_intern, i);
+        errc = (ompi_errcode_intern_t *) opal_pointer_array_get_item(&ompi_errcodes_intern, i);
         if (errc->code == errcode) {
             ret = errc->mpi_code;
             break;

@@ -21,20 +21,19 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_seek = PMPI_File_seek
-#endif
-#define MPI_File_seek PMPI_File_seek
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_seek = PMPI_File_seek
+#    endif
+#    define MPI_File_seek PMPI_File_seek
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_seek";
-
 
 int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
 {
@@ -46,8 +45,7 @@ int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
         if (ompi_file_invalid(fh)) {
             rc = MPI_ERR_FILE;
             fh = MPI_FILE_NULL;
-        } else if (MPI_SEEK_SET != whence && MPI_SEEK_CUR != whence &&
-                   MPI_SEEK_END != whence) {
+        } else if (MPI_SEEK_SET != whence && MPI_SEEK_CUR != whence && MPI_SEEK_END != whence) {
             rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
@@ -57,8 +55,7 @@ int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_seek(fh, offset, whence);
+        rc = fh->f_io_selected_module.v2_0_0.io_module_file_seek(fh, offset, whence);
         break;
 
     default:

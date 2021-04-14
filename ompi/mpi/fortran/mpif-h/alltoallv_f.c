@@ -21,56 +21,50 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_ALLTOALLV = ompi_alltoallv_f
-#pragma weak pmpi_alltoallv = ompi_alltoallv_f
-#pragma weak pmpi_alltoallv_ = ompi_alltoallv_f
-#pragma weak pmpi_alltoallv__ = ompi_alltoallv_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_ALLTOALLV = ompi_alltoallv_f
+#        pragma weak pmpi_alltoallv = ompi_alltoallv_f
+#        pragma weak pmpi_alltoallv_ = ompi_alltoallv_f
+#        pragma weak pmpi_alltoallv__ = ompi_alltoallv_f
 
-#pragma weak PMPI_Alltoallv_f = ompi_alltoallv_f
-#pragma weak PMPI_Alltoallv_f08 = ompi_alltoallv_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALLV,
-                           pmpi_alltoallv,
-                           pmpi_alltoallv_,
-                           pmpi_alltoallv__,
-                           pompi_alltoallv_f,
-                           (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
-                           (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr) )
-#endif
+#        pragma weak PMPI_Alltoallv_f = ompi_alltoallv_f
+#        pragma weak PMPI_Alltoallv_f08 = ompi_alltoallv_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(
+    PMPI_ALLTOALLV, pmpi_alltoallv, pmpi_alltoallv_, pmpi_alltoallv__, pompi_alltoallv_f,
+    (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf,
+     MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
+    (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_ALLTOALLV = ompi_alltoallv_f
-#pragma weak mpi_alltoallv = ompi_alltoallv_f
-#pragma weak mpi_alltoallv_ = ompi_alltoallv_f
-#pragma weak mpi_alltoallv__ = ompi_alltoallv_f
+#    pragma weak MPI_ALLTOALLV = ompi_alltoallv_f
+#    pragma weak mpi_alltoallv = ompi_alltoallv_f
+#    pragma weak mpi_alltoallv_ = ompi_alltoallv_f
+#    pragma weak mpi_alltoallv__ = ompi_alltoallv_f
 
-#pragma weak MPI_Alltoallv_f = ompi_alltoallv_f
-#pragma weak MPI_Alltoallv_f08 = ompi_alltoallv_f
+#    pragma weak MPI_Alltoallv_f = ompi_alltoallv_f
+#    pragma weak MPI_Alltoallv_f08 = ompi_alltoallv_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALLV,
-                           mpi_alltoallv,
-                           mpi_alltoallv_,
-                           mpi_alltoallv__,
-                           ompi_alltoallv_f,
-                           (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
-                           (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr) )
-#else
-#define ompi_alltoallv_f pompi_alltoallv_f
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(
+    MPI_ALLTOALLV, mpi_alltoallv, mpi_alltoallv_, mpi_alltoallv__, ompi_alltoallv_f,
+    (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf,
+     MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
+    (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr))
+#    else
+#        define ompi_alltoallv_f pompi_alltoallv_f
+#    endif
 #endif
 
-
-void ompi_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls,
-		     MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts,
-		     MPI_Fint *rdispls, MPI_Fint *recvtype,
-		     MPI_Fint *comm, MPI_Fint *ierr)
+void ompi_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype,
+                      char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype,
+                      MPI_Fint *comm, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
     MPI_Datatype c_sendtype, c_recvtype;
@@ -94,15 +88,12 @@ void ompi_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Alltoallv(sendbuf,
-                           OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                           OMPI_ARRAY_NAME_CONVERT(sdispls),
-                           c_sendtype,
-                           recvbuf,
-                           OMPI_ARRAY_NAME_CONVERT(recvcounts),
-                           OMPI_ARRAY_NAME_CONVERT(rdispls),
-                           c_recvtype, c_comm);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Alltoallv(sendbuf, OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                            OMPI_ARRAY_NAME_CONVERT(sdispls), c_sendtype, recvbuf,
+                            OMPI_ARRAY_NAME_CONVERT(recvcounts), OMPI_ARRAY_NAME_CONVERT(rdispls),
+                            c_recvtype, c_comm);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);

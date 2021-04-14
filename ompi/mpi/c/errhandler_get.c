@@ -27,38 +27,35 @@
  * with --enable-mpi1-compatibility.
  */
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Errhandler_get = PMPI_Errhandler_get
-#endif
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Errhandler_get = PMPI_Errhandler_get
+#    endif
 /* undef before defining, to prevent possible redefinition when
  * using _Static_assert to error on usage of removed functions.
  */
-#undef MPI_Errhandler_get
-#define MPI_Errhandler_get PMPI_Errhandler_get
+#    undef MPI_Errhandler_get
+#    define MPI_Errhandler_get PMPI_Errhandler_get
 #endif
 
 static const char FUNC_NAME[] = "MPI_Errhandler_get";
 
-
 int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    }
 
-  /* This is a deprecated -- just turn around and call the real
-     function */
+    /* This is a deprecated -- just turn around and call the real
+       function */
 
-  return PMPI_Comm_get_errhandler(comm, errhandler);
+    return PMPI_Comm_get_errhandler(comm, errhandler);
 }

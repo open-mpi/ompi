@@ -24,9 +24,9 @@
 #define MCA_COMMON_OMPIO_REQUEST_H
 
 #include "ompi_config.h"
-#include "ompi/request/request.h"
-#include "ompi/mca/fbtl/fbtl.h"
 #include "common_ompio.h"
+#include "ompi/mca/fbtl/fbtl.h"
+#include "ompi/request/request.h"
 
 BEGIN_C_DECLS
 
@@ -43,32 +43,32 @@ typedef enum {
     MCA_OMPIO_REQUEST_READ_ALL,
 } mca_ompio_request_type_t;
 
-
 /**
  * Main structure for OMPIO requests
  */
 struct mca_ompio_request_t {
-    ompi_request_t                                 req_ompi;
-    mca_ompio_request_type_t                       req_type;
-    void                                          *req_data;
-    opal_list_item_t                               req_item;
-    void                                          *req_tbuf;
-    size_t                                         req_size;
-    opal_convertor_t                          req_convertor;
-    mca_fbtl_base_module_progress_fn_t      req_progress_fn;
-    mca_fbtl_base_module_request_free_fn_t      req_free_fn;
+    ompi_request_t req_ompi;
+    mca_ompio_request_type_t req_type;
+    void *req_data;
+    opal_list_item_t req_item;
+    void *req_tbuf;
+    size_t req_size;
+    opal_convertor_t req_convertor;
+    mca_fbtl_base_module_progress_fn_t req_progress_fn;
+    mca_fbtl_base_module_request_free_fn_t req_free_fn;
 };
 typedef struct mca_ompio_request_t mca_ompio_request_t;
 OBJ_CLASS_DECLARATION(mca_ompio_request_t);
 
-#define GET_OMPIO_REQ_FROM_ITEM(ITEM) ((mca_ompio_request_t *)((char *)ITEM - offsetof(struct mca_ompio_request_t,req_item)))
+#define GET_OMPIO_REQ_FROM_ITEM(ITEM) \
+    ((mca_ompio_request_t *) ((char *) ITEM - offsetof(struct mca_ompio_request_t, req_item)))
 
-
-OMPI_DECLSPEC void mca_common_ompio_request_init ( void);
-OMPI_DECLSPEC void mca_common_ompio_request_fini ( void ); 
-OMPI_DECLSPEC void mca_common_ompio_request_alloc ( mca_ompio_request_t **req, mca_ompio_request_type_t type);
-OMPI_DECLSPEC int mca_common_ompio_progress ( void);
-OMPI_DECLSPEC void mca_common_ompio_register_progress ( void ); 
+OMPI_DECLSPEC void mca_common_ompio_request_init(void);
+OMPI_DECLSPEC void mca_common_ompio_request_fini(void);
+OMPI_DECLSPEC void mca_common_ompio_request_alloc(mca_ompio_request_t **req,
+                                                  mca_ompio_request_type_t type);
+OMPI_DECLSPEC int mca_common_ompio_progress(void);
+OMPI_DECLSPEC void mca_common_ompio_register_progress(void);
 
 END_C_DECLS
 

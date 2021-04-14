@@ -27,8 +27,8 @@
 
 #include "ompi_config.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
+#include "ompi/proc/proc.h"
 
 BEGIN_C_DECLS
 
@@ -47,16 +47,15 @@ BEGIN_C_DECLS
  * @retval NULL       A failure occrred
  * @retval non-NULL   A fully operational datatype
  */
-static inline
-struct ompi_datatype_t*
-ompi_osc_base_datatype_create(ompi_proc_t *remote_proc,  void **payload)
+static inline struct ompi_datatype_t *ompi_osc_base_datatype_create(ompi_proc_t *remote_proc,
+                                                                    void **payload)
 {
-    struct ompi_datatype_t *datatype =
-        ompi_datatype_create_from_packed_description(payload, remote_proc);
-    if (NULL == datatype) return NULL;
+    struct ompi_datatype_t *datatype = ompi_datatype_create_from_packed_description(payload,
+                                                                                    remote_proc);
+    if (NULL == datatype)
+        return NULL;
     return datatype;
 }
-
 
 /**
  * Create operation based on Fortran Index
@@ -71,15 +70,12 @@ ompi_osc_base_datatype_create(ompi_proc_t *remote_proc,  void **payload)
  * @retval NULL       A failure occrred
  * @retval non-NULL   An op handle
  */
-static inline
-ompi_op_t *
-ompi_osc_base_op_create(int op_id)
+static inline ompi_op_t *ompi_osc_base_op_create(int op_id)
 {
     ompi_op_t *op = PMPI_Op_f2c(op_id);
     OBJ_RETAIN(op);
     return op;
 }
-
 
 /**
  * Get the primitive datatype information for a legal one-sided accumulate datatype
@@ -100,7 +96,6 @@ OMPI_DECLSPEC int ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatyp
                                                         ompi_datatype_t **prim_datatype,
                                                         uint32_t *prim_count);
 
-
 /**
  * Apply the operation specified from inbuf to outbut
  *
@@ -111,19 +106,13 @@ OMPI_DECLSPEC int ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatyp
  * @retval OMPI_SUCCESS           Success
  * @retval OMPI_ERR_NOT_SUPPORTED Called with op == ompi_mpi_op_replace
  */
-OMPI_DECLSPEC int ompi_osc_base_process_op(void *outbuf,
-                                           void *inbuf,
-                                           size_t inbuflen,
-                                           struct ompi_datatype_t *datatype,
-                                           int count,
+OMPI_DECLSPEC int ompi_osc_base_process_op(void *outbuf, void *inbuf, size_t inbuflen,
+                                           struct ompi_datatype_t *datatype, int count,
                                            ompi_op_t *op);
 
-OMPI_DECLSPEC int ompi_osc_base_sndrcv_op(const void *origin,
-                                          int32_t origin_count,
-                                          struct ompi_datatype_t *origin_dt,
-                                          void *target,
-                                          int32_t target_count,
-                                          struct ompi_datatype_t *target_dt,
+OMPI_DECLSPEC int ompi_osc_base_sndrcv_op(const void *origin, int32_t origin_count,
+                                          struct ompi_datatype_t *origin_dt, void *target,
+                                          int32_t target_count, struct ompi_datatype_t *target_dt,
                                           ompi_op_t *op);
 
 END_C_DECLS

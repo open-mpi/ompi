@@ -21,59 +21,52 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/mpi/fortran/base/constants.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_WAITALL = ompi_waitall_f
-#pragma weak pmpi_waitall = ompi_waitall_f
-#pragma weak pmpi_waitall_ = ompi_waitall_f
-#pragma weak pmpi_waitall__ = ompi_waitall_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_WAITALL = ompi_waitall_f
+#        pragma weak pmpi_waitall = ompi_waitall_f
+#        pragma weak pmpi_waitall_ = ompi_waitall_f
+#        pragma weak pmpi_waitall__ = ompi_waitall_f
 
-#pragma weak PMPI_Waitall_f = ompi_waitall_f
-#pragma weak PMPI_Waitall_f08 = ompi_waitall_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_WAITALL,
-                           pmpi_waitall,
-                           pmpi_waitall_,
-                           pmpi_waitall__,
+#        pragma weak PMPI_Waitall_f = ompi_waitall_f
+#        pragma weak PMPI_Waitall_f08 = ompi_waitall_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_WAITALL, pmpi_waitall, pmpi_waitall_, pmpi_waitall__,
                            pompi_waitall_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
-                           (count, array_of_requests, array_of_statuses, ierr) )
-#endif
+                           (MPI_Fint * count, MPI_Fint *array_of_requests,
+                            MPI_Fint *array_of_statuses, MPI_Fint *ierr),
+                           (count, array_of_requests, array_of_statuses, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WAITALL = ompi_waitall_f
-#pragma weak mpi_waitall = ompi_waitall_f
-#pragma weak mpi_waitall_ = ompi_waitall_f
-#pragma weak mpi_waitall__ = ompi_waitall_f
+#    pragma weak MPI_WAITALL = ompi_waitall_f
+#    pragma weak mpi_waitall = ompi_waitall_f
+#    pragma weak mpi_waitall_ = ompi_waitall_f
+#    pragma weak mpi_waitall__ = ompi_waitall_f
 
-#pragma weak MPI_Waitall_f = ompi_waitall_f
-#pragma weak MPI_Waitall_f08 = ompi_waitall_f
+#    pragma weak MPI_Waitall_f = ompi_waitall_f
+#    pragma weak MPI_Waitall_f08 = ompi_waitall_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WAITALL,
-                           mpi_waitall,
-                           mpi_waitall_,
-                           mpi_waitall__,
-                           ompi_waitall_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
-                           (count, array_of_requests, array_of_statuses, ierr) )
-#else
-#define ompi_waitall_f pompi_waitall_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_WAITALL, mpi_waitall, mpi_waitall_, mpi_waitall__, ompi_waitall_f,
+                           (MPI_Fint * count, MPI_Fint *array_of_requests,
+                            MPI_Fint *array_of_statuses, MPI_Fint *ierr),
+                           (count, array_of_requests, array_of_statuses, ierr))
+#    else
+#        define ompi_waitall_f pompi_waitall_f
+#    endif
 #endif
-#endif
-
 
 static const char FUNC_NAME[] = "MPI_WAITALL";
 
-
-void ompi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
-		   MPI_Fint *array_of_statuses, MPI_Fint *ierr)
+void ompi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *array_of_statuses,
+                    MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status *c_status;
@@ -86,30 +79,31 @@ void ompi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
         return;
     }
 
-    c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) *
-                   (sizeof(MPI_Request) + sizeof(MPI_Status)));
+    c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count)
+                                   * (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req) {
-        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(
-                                        MPI_ERR_NO_MEM,
-                                        FUNC_NAME);
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
-    c_status = (MPI_Status*) (c_req + OMPI_FINT_2_INT(*count));
+    c_status = (MPI_Status *) (c_req + OMPI_FINT_2_INT(*count));
 
     for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
         c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
     c_ierr = PMPI_Waitall(OMPI_FINT_2_INT(*count), c_req, c_status);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
             array_of_requests[i] = c_req[i]->req_f_to_c_index;
-            if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
-                !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                PMPI_Status_c2f( &c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
+            if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses)
+                && !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
+                PMPI_Status_c2f(&c_status[i],
+                                &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
             }
         }
     }

@@ -10,12 +10,10 @@
  */
 
 #include "ompi_config.h"
-#include "pml_example.h"
 #include "pml_example_sendreq.h"
+#include "pml_example.h"
 
-void mca_pml_example_send_request_progress( struct mca_ptl_base_module_t* ptl,
-                                        mca_pml_base_send_request_t* req,
-                                        size_t bytes_sent )
+void mca_pml_example_send_request_progress(struct mca_ptl_base_module_t *ptl,
+                                           mca_pml_base_send_request_t *req, size_t bytes_sent)
 {
 }
-

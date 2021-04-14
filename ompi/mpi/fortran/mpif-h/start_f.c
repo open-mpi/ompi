@@ -24,47 +24,36 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_START = ompi_start_f
-#pragma weak pmpi_start = ompi_start_f
-#pragma weak pmpi_start_ = ompi_start_f
-#pragma weak pmpi_start__ = ompi_start_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_START = ompi_start_f
+#        pragma weak pmpi_start = ompi_start_f
+#        pragma weak pmpi_start_ = ompi_start_f
+#        pragma weak pmpi_start__ = ompi_start_f
 
-#pragma weak PMPI_Start_f = ompi_start_f
-#pragma weak PMPI_Start_f08 = ompi_start_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_START,
-                           pmpi_start,
-                           pmpi_start_,
-                           pmpi_start__,
-                           pompi_start_f,
-                           (MPI_Fint *request, MPI_Fint *ierr),
-                           (request, ierr) )
-#endif
+#        pragma weak PMPI_Start_f = ompi_start_f
+#        pragma weak PMPI_Start_f08 = ompi_start_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_START, pmpi_start, pmpi_start_, pmpi_start__, pompi_start_f,
+                           (MPI_Fint * request, MPI_Fint *ierr), (request, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_START = ompi_start_f
-#pragma weak mpi_start = ompi_start_f
-#pragma weak mpi_start_ = ompi_start_f
-#pragma weak mpi_start__ = ompi_start_f
+#    pragma weak MPI_START = ompi_start_f
+#    pragma weak mpi_start = ompi_start_f
+#    pragma weak mpi_start_ = ompi_start_f
+#    pragma weak mpi_start__ = ompi_start_f
 
-#pragma weak MPI_Start_f = ompi_start_f
-#pragma weak MPI_Start_f08 = ompi_start_f
+#    pragma weak MPI_Start_f = ompi_start_f
+#    pragma weak MPI_Start_f08 = ompi_start_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_START,
-                           mpi_start,
-                           mpi_start_,
-                           mpi_start__,
-                           ompi_start_f,
-                           (MPI_Fint *request, MPI_Fint *ierr),
-                           (request, ierr) )
-#else
-#define ompi_start_f pompi_start_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_START, mpi_start, mpi_start_, mpi_start__, ompi_start_f,
+                           (MPI_Fint * request, MPI_Fint *ierr), (request, ierr))
+#    else
+#        define ompi_start_f pompi_start_f
+#    endif
 #endif
-#endif
-
 
 void ompi_start_f(MPI_Fint *request, MPI_Fint *ierr)
 {
@@ -73,7 +62,8 @@ void ompi_start_f(MPI_Fint *request, MPI_Fint *ierr)
     MPI_Request tmp_req = c_req;
 
     c_ierr = PMPI_Start(&c_req);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         /* For a persistent request, the underlying request descriptor could
@@ -81,7 +71,7 @@ void ompi_start_f(MPI_Fint *request, MPI_Fint *ierr)
            reused).
            So commit new descriptor.
         */
-        if ( tmp_req != c_req ) {
+        if (tmp_req != c_req) {
             *request = PMPI_Request_c2f(c_req);
         }
     }

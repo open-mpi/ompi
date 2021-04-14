@@ -13,15 +13,14 @@
 
 #include "pml_example.h"
 
-int mca_pml_example_cancel(ompi_request_t* request)
+int mca_pml_example_cancel(ompi_request_t *request)
 {
     return OMPI_SUCCESS;
 }
 
-int mca_pml_example_cancelled(ompi_request_t* request, int* flag)
+int mca_pml_example_cancelled(ompi_request_t *request, int *flag)
 {
-    if(NULL != flag)
+    if (NULL != flag)
         *flag = 0;
     return OMPI_SUCCESS;
 }
-

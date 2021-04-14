@@ -105,43 +105,42 @@ void mpi_wtick_f90__(double *w)
 
 void MPI_AINT_ADD_F90(MPI_Aint *base, MPI_Aint *diff, MPI_Aint *w)
 {
-    *w = MPI_Aint_add (*base, *diff);
+    *w = MPI_Aint_add(*base, *diff);
 }
 
 void mpi_aint_add_f90(MPI_Aint *base, MPI_Aint *diff, MPI_Aint *w)
 {
-    *w = MPI_Aint_add (*base, *diff);
+    *w = MPI_Aint_add(*base, *diff);
 }
 
 void mpi_aint_add_f90_(MPI_Aint *base, MPI_Aint *diff, MPI_Aint *w)
 {
-    *w = MPI_Aint_add (*base, *diff);
+    *w = MPI_Aint_add(*base, *diff);
 }
 
 void mpi_aint_add_f90__(MPI_Aint *base, MPI_Aint *diff, MPI_Aint *w)
 {
-    *w = MPI_Aint_add (*base, *diff);
+    *w = MPI_Aint_add(*base, *diff);
 }
-
 
 /**********************************************************************/
 
 void MPI_AINT_DIFF_F90(MPI_Aint *addr1, MPI_Aint *addr2, MPI_Aint *w)
 {
-    *w = MPI_Aint_diff (*addr1, *addr2);
+    *w = MPI_Aint_diff(*addr1, *addr2);
 }
 
 void mpi_aint_diff_f90(MPI_Aint *addr1, MPI_Aint *addr2, MPI_Aint *w)
 {
-    *w = MPI_Aint_diff (*addr1, *addr2);
+    *w = MPI_Aint_diff(*addr1, *addr2);
 }
 
 void mpi_aint_diff_f90_(MPI_Aint *addr1, MPI_Aint *addr2, MPI_Aint *w)
 {
-    *w = MPI_Aint_diff (*addr1, *addr2);
+    *w = MPI_Aint_diff(*addr1, *addr2);
 }
 
 void mpi_aint_diff_f90__(MPI_Aint *addr1, MPI_Aint *addr2, MPI_Aint *w)
 {
-    *w = MPI_Aint_diff (*addr1, *addr2);
+    *w = MPI_Aint_diff(*addr1, *addr2);
 }

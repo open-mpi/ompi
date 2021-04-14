@@ -18,20 +18,19 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_cvar_read = PMPI_T_cvar_read
+#    pragma weak MPI_T_cvar_read = PMPI_T_cvar_read
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
+int MPI_T_cvar_read(MPI_T_cvar_handle handle, void *buf)
 {
     const mca_base_var_storage_t *value = NULL;
     int rc = MPI_SUCCESS;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
@@ -39,7 +38,7 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
         return MPI_T_ERR_INVALID;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     do {
         rc = mca_base_var_get_value(handle->var->mbv_index, &value, NULL, NULL);
@@ -80,9 +79,9 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
             break;
         case MCA_BASE_VAR_TYPE_STRING:
             if (NULL == value->stringval) {
-                ((char *)buf)[0] = '\0';
+                ((char *) buf)[0] = '\0';
             } else {
-                strcpy ((char *) buf, value->stringval);
+                strcpy((char *) buf, value->stringval);
             }
 
             break;
@@ -91,7 +90,7 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
         }
     } while (0);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return rc;
 }

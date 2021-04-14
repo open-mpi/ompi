@@ -23,11 +23,7 @@
 
 #include "opal/datatype/opal_convertor.h"
 
-
-typedef enum {
-    OMPI_mtl_psm2_ISEND,
-    OMPI_mtl_psm2_IRECV
-} mca_mtl_psm2_request_type_t;
+typedef enum { OMPI_mtl_psm2_ISEND, OMPI_mtl_psm2_IRECV } mca_mtl_psm2_request_type_t;
 
 struct mca_mtl_psm2_request_t {
     struct mca_mtl_request_t super;

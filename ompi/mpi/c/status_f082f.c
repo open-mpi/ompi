@@ -23,24 +23,23 @@
  */
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Status_f082f = PMPI_Status_f082f
-#endif
-#define MPI_Status_f082f PMPI_Status_f082f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Status_f082f = PMPI_Status_f082f
+#    endif
+#    define MPI_Status_f082f PMPI_Status_f082f
 #endif
 
 static const char FUNC_NAME[] = "MPI_Status_f082f";
 
-
-int MPI_Status_f082f(const MPI_F08_status  *f08_status, MPI_Fint *f_status)
+int MPI_Status_f082f(const MPI_F08_status *f08_status, MPI_Fint *f_status)
 {
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -54,12 +53,11 @@ int MPI_Status_f082f(const MPI_F08_status  *f08_status, MPI_Fint *f_status)
                fortran bindings because these macros check values
                against constants that only exist if the fortran
                bindings exist. */
-            OMPI_IS_FORTRAN_STATUS_IGNORE(f08_status) ||
-            OMPI_IS_FORTRAN_STATUSES_IGNORE(f08_status) ||
+            OMPI_IS_FORTRAN_STATUS_IGNORE(f08_status) || OMPI_IS_FORTRAN_STATUSES_IGNORE(f08_status)
+            ||
 #endif
             NULL == f_status) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-                                          MPI_ERR_IN_STATUS, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_IN_STATUS, FUNC_NAME);
         }
     }
 

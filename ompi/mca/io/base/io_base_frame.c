@@ -16,11 +16,9 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 
 #include "ompi/mca/io/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern
@@ -33,8 +31,8 @@ static int mca_io_base_open(mca_base_open_flag_t flags)
 {
     int ret;
 
-    if (OPAL_SUCCESS !=
-        (ret = mca_base_framework_components_open(&ompi_io_base_framework, flags))) {
+    if (OPAL_SUCCESS
+        != (ret = mca_base_framework_components_open(&ompi_io_base_framework, flags))) {
         return ret;
     }
 

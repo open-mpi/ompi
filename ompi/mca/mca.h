@@ -31,9 +31,8 @@
 #include "ompi_config.h"
 #include "opal/mca/mca.h"
 
-#define OMPI_MCA_BASE_VERSION_2_1_0(type, type_major, type_minor, type_release) \
-    MCA_BASE_VERSION_2_1_0("ompi", OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,      \
-                           OMPI_RELEASE_VERSION, type, type_major, type_minor,  \
-                           type_release)
+#define OMPI_MCA_BASE_VERSION_2_1_0(type, type_major, type_minor, type_release)                  \
+    MCA_BASE_VERSION_2_1_0("ompi", OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION, \
+                           type, type_major, type_minor, type_release)
 
 #endif /* OMPI_MCA_H */

@@ -28,8 +28,8 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
 #include "ompi/request/request.h"
+#include "opal/mca/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -39,8 +39,7 @@ struct mca_fcoll_request_t;
 /*
  * Macro for use in components that are of type coll
  */
-#define MCA_FCOLL_BASE_VERSION_2_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("fcoll", 2, 0, 0)
+#define MCA_FCOLL_BASE_VERSION_2_0_0 OMPI_MCA_BASE_VERSION_2_1_0("fcoll", 2, 0, 0)
 
 /*
  * This framework provides the abstraction for the collective file
@@ -71,16 +70,13 @@ struct mca_fcoll_request_t;
  * **************** component struct *******************************
  */
 
-typedef int (*mca_fcoll_base_component_init_query_1_0_0_fn_t)
-    (bool enable_progress_threads,
-     bool enable_mpi_threads);
+typedef int (*mca_fcoll_base_component_init_query_1_0_0_fn_t)(bool enable_progress_threads,
+                                                              bool enable_mpi_threads);
 
-typedef struct mca_fcoll_base_module_1_0_0_t *
-(*mca_fcoll_base_component_file_query_1_0_0_fn_t) (struct ompio_file_t *file,
-                                                   int *priority);
+typedef struct mca_fcoll_base_module_1_0_0_t *(*mca_fcoll_base_component_file_query_1_0_0_fn_t)(
+    struct ompio_file_t *file, int *priority);
 
-typedef int (*mca_fcoll_base_component_file_unquery_1_0_0_fn_t)
-    (struct ompio_file_t *file);
+typedef int (*mca_fcoll_base_component_file_unquery_1_0_0_fn_t)(struct ompio_file_t *file);
 
 /*
  * ****************** component struct ******************************
@@ -106,45 +102,32 @@ typedef struct mca_fcoll_base_component_2_0_0_t mca_fcoll_base_component_t;
  * ***********************************************************************
  */
 
-typedef int (*mca_fcoll_base_module_init_1_0_0_fn_t)
-(struct ompio_file_t *file);
+typedef int (*mca_fcoll_base_module_init_1_0_0_fn_t)(struct ompio_file_t *file);
 
-typedef int (*mca_fcoll_base_module_finalize_1_0_0_fn_t)
-(struct ompio_file_t *file);
+typedef int (*mca_fcoll_base_module_finalize_1_0_0_fn_t)(struct ompio_file_t *file);
 
-typedef int (*mca_fcoll_base_module_file_read_all_fn_t)
-(struct ompio_file_t *fh,
- void *buf,
- int count,
- struct ompi_datatype_t *datatype,
- ompi_status_public_t *status);
+typedef int (*mca_fcoll_base_module_file_read_all_fn_t)(struct ompio_file_t *fh, void *buf,
+                                                        int count, struct ompi_datatype_t *datatype,
+                                                        ompi_status_public_t *status);
 
-typedef int (*mca_fcoll_base_module_file_iread_all_fn_t)
-(struct ompio_file_t *fh,
- void *buf,
- int count,
- struct ompi_datatype_t *datatype,
- ompi_request_t **request);
+typedef int (*mca_fcoll_base_module_file_iread_all_fn_t)(struct ompio_file_t *fh, void *buf,
+                                                         int count,
+                                                         struct ompi_datatype_t *datatype,
+                                                         ompi_request_t **request);
 
-typedef int (*mca_fcoll_base_module_file_write_all_fn_t)
-(struct ompio_file_t *fh,
- const void *buf,
- int count,
- struct ompi_datatype_t *datatype,
- ompi_status_public_t *status);
+typedef int (*mca_fcoll_base_module_file_write_all_fn_t)(struct ompio_file_t *fh, const void *buf,
+                                                         int count,
+                                                         struct ompi_datatype_t *datatype,
+                                                         ompi_status_public_t *status);
 
-typedef int (*mca_fcoll_base_module_file_iwrite_all_fn_t)
-(struct ompio_file_t *fh,
- const void *buf,
- int count,
- struct ompi_datatype_t *datatype,
- ompi_request_t **request);
+typedef int (*mca_fcoll_base_module_file_iwrite_all_fn_t)(struct ompio_file_t *fh, const void *buf,
+                                                          int count,
+                                                          struct ompi_datatype_t *datatype,
+                                                          ompi_request_t **request);
 
-typedef bool (*mca_fcoll_base_module_progress_fn_t)
-( struct mca_fcoll_request_t *request);
+typedef bool (*mca_fcoll_base_module_progress_fn_t)(struct mca_fcoll_request_t *request);
 
-typedef void (*mca_fcoll_base_module_request_free_fn_t)
-( struct mca_fcoll_request_t *request);
+typedef void (*mca_fcoll_base_module_request_free_fn_t)(struct mca_fcoll_request_t *request);
 
 /*
  * ***********************************************************************
@@ -161,13 +144,12 @@ struct mca_fcoll_base_module_1_0_0_t {
     mca_fcoll_base_module_finalize_1_0_0_fn_t fcoll_module_finalize;
 
     /* FCOLL function pointers */
-    mca_fcoll_base_module_file_read_all_fn_t           fcoll_file_read_all;
-    mca_fcoll_base_module_file_iread_all_fn_t          fcoll_file_iread_all;
-    mca_fcoll_base_module_file_write_all_fn_t          fcoll_file_write_all;
-    mca_fcoll_base_module_file_iwrite_all_fn_t         fcoll_file_iwrite_all;
-    mca_fcoll_base_module_progress_fn_t                fcoll_progress;
-    mca_fcoll_base_module_request_free_fn_t            fcoll_request_free;
-
+    mca_fcoll_base_module_file_read_all_fn_t fcoll_file_read_all;
+    mca_fcoll_base_module_file_iread_all_fn_t fcoll_file_iread_all;
+    mca_fcoll_base_module_file_write_all_fn_t fcoll_file_write_all;
+    mca_fcoll_base_module_file_iwrite_all_fn_t fcoll_file_iwrite_all;
+    mca_fcoll_base_module_progress_fn_t fcoll_progress;
+    mca_fcoll_base_module_request_free_fn_t fcoll_request_free;
 };
 typedef struct mca_fcoll_base_module_1_0_0_t mca_fcoll_base_module_1_0_0_t;
 typedef mca_fcoll_base_module_1_0_0_t mca_fcoll_base_module_t;

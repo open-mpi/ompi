@@ -18,24 +18,25 @@
 
 #include "ompi_config.h"
 
+#include "ompi/constants.h"
+#include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/vprotocol/base/base.h"
+#include "ompi/mca/vprotocol/vprotocol.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/util/printf.h"
 #include "opal/util/string_copy.h"
-#include "ompi/constants.h"
-#include "ompi/mca/pml/base/base.h"
-#include "ompi/mca/vprotocol/vprotocol.h"
-#include "ompi/mca/vprotocol/base/base.h"
-#include "pml_v_output.h"
 #include "pml_v.h"
-#include "ompi/runtime/mpiruntime.h"
+#include "pml_v_output.h"
 
 static int mca_pml_v_component_register(void);
 static int mca_pml_v_component_open(void);
 static int mca_pml_v_component_close(void);
 static int mca_pml_v_component_parasite_close(void);
 
-static mca_pml_base_module_t *mca_pml_v_component_init(int* priority, bool enable_progress_threads, bool enable_mpi_thread_multiple);
+static mca_pml_base_module_t *mca_pml_v_component_init(int *priority, bool enable_progress_threads,
+                                                       bool enable_mpi_thread_multiple);
 static int mca_pml_v_component_finalize(void);
 static int mca_pml_v_component_parasite_finalize(void);
 
@@ -74,25 +75,22 @@ static int mca_pml_v_component_register(void)
     int var_id;
 
     ompi_pml_v_output = "stderr";
-    (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
-                                           "output", NULL, MCA_BASE_VAR_TYPE_STRING,
-                                           NULL, 0, 0, OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_pml_v_output);
+    (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version, "output", NULL,
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_pml_v_output);
 
     ompi_pml_v_verbose = 0;
-    (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
-                                           "verbose", "Verbosity of the pml v component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_pml_v_verbose);
+    (void) mca_base_component_var_register(&mca_pml_v_component.pmlm_version, "verbose",
+                                           "Verbosity of the pml v component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &ompi_pml_v_verbose);
 
     ompi_pml_vprotocol_include_list = "";
     /* This parameter needs to go away if pml/v is unloaded so register it with a pml/v name */
-    var_id = mca_base_component_var_register(&mca_pml_v_component.pmlm_version,
-                                             "vprotocol", "Specify a specific vprotocol to use",
-                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                             OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+    var_id = mca_base_component_var_register(&mca_pml_v_component.pmlm_version, "vprotocol",
+                                             "Specify a specific vprotocol to use",
+                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                             MCA_BASE_VAR_SCOPE_READONLY,
                                              &ompi_pml_vprotocol_include_list);
     (void) mca_base_var_register_synonym(var_id, "ompi", "vprotocol", NULL, NULL, 0);
 
@@ -112,7 +110,7 @@ static int mca_pml_v_component_open(void)
         return rc;
     }
 
-    if( NULL == mca_vprotocol_base_include_list ) {
+    if (NULL == mca_vprotocol_base_include_list) {
         ompi_pml_v_output_close();
         return mca_base_framework_close(&ompi_vprotocol_base_framework);
     }
@@ -122,7 +120,7 @@ static int mca_pml_v_component_open(void)
 
 static int mca_pml_v_component_close(void)
 {
-    if( NULL == mca_vprotocol_base_include_list ) {
+    if (NULL == mca_vprotocol_base_include_list) {
         /* Nothing to do, let's just close and move away */
         return OMPI_SUCCESS;
     }
@@ -138,21 +136,18 @@ static int mca_pml_v_component_close(void)
     }
 
     /* Make sure to close out output even if vprotocol isn't in use */
-    ompi_pml_v_output_close ();
+    ompi_pml_v_output_close();
 
     /* Mark that we have changed something */
     char *new_name;
-    opal_asprintf(&new_name, "%s]v%s",
-             mca_pml_v.host_pml_component.pmlm_version.mca_component_name,
-             mca_vprotocol_component.pmlm_version.mca_component_name);
-    opal_string_copy(mca_pml_base_selected_component.pmlm_version.mca_component_name,
-                     new_name,
+    opal_asprintf(&new_name, "%s]v%s", mca_pml_v.host_pml_component.pmlm_version.mca_component_name,
+                  mca_vprotocol_component.pmlm_version.mca_component_name);
+    opal_string_copy(mca_pml_base_selected_component.pmlm_version.mca_component_name, new_name,
                      sizeof(mca_pml_base_selected_component.pmlm_version.mca_component_name));
     free(new_name);
 
     /* Replace finalize */
-    mca_pml_base_selected_component.pmlm_finalize =
-        mca_pml_v_component_parasite_finalize;
+    mca_pml_base_selected_component.pmlm_finalize = mca_pml_v_component_parasite_finalize;
 
     /* Make sure we get initialized if some Vprotocol is enabled */
     mca_pml.pml_enable = mca_pml_v_enable;
@@ -170,18 +165,16 @@ static int mca_pml_v_component_parasite_finalize(void)
     V_OUTPUT_VERBOSE(500, "parasite_finalize");
 
     /* Make sure we'll get closed again with the true close function */
-    mca_pml_v_component.pmlm_version.mca_close_component =
-        mca_pml_v_component_parasite_close;
+    mca_pml_v_component.pmlm_version.mca_close_component = mca_pml_v_component_parasite_close;
     cli = OBJ_NEW(mca_base_component_list_item_t);
     cli->cli_component = (mca_base_component_t *) &mca_pml_v_component;
-    opal_list_prepend(&ompi_pml_base_framework.framework_components,
-                      (opal_list_item_t *) cli);
+    opal_list_prepend(&ompi_pml_base_framework.framework_components, (opal_list_item_t *) cli);
 
     /* finalize vprotocol component */
-    if(mca_vprotocol_base_selected())
+    if (mca_vprotocol_base_selected())
         mca_vprotocol_component.pmlm_finalize();
 
-    if(mca_pml_v.host_pml_component.pmlm_finalize != NULL)
+    if (mca_pml_v.host_pml_component.pmlm_finalize != NULL)
         return mca_pml_v.host_pml_component.pmlm_finalize();
     else
         return OMPI_SUCCESS;
@@ -190,7 +183,7 @@ static int mca_pml_v_component_parasite_finalize(void)
 static int mca_pml_v_component_parasite_close(void)
 {
     V_OUTPUT_VERBOSE(500, "parasite_close: Ok, I accept to die and let %s component finish",
-                          mca_pml_v.host_pml_component.pmlm_version.mca_component_name);
+                     mca_pml_v.host_pml_component.pmlm_version.mca_component_name);
     mca_pml_base_selected_component = mca_pml_v.host_pml_component;
 
     (void) mca_base_framework_close(&ompi_vprotocol_base_framework);
@@ -201,7 +194,6 @@ static int mca_pml_v_component_parasite_close(void)
     return OMPI_SUCCESS; /* ignore any errors as we are leaving anyway */
 }
 
-
 /*******************************************************************************
  * The init function for the V PML is never supposed to be called, as the mechanism
  * that enables the PML V to work require a real PML to move data across. Thus, a
@@ -209,12 +201,12 @@ static int mca_pml_v_component_parasite_close(void)
  * and if the PML V is enabled (via the activation of a vprotocol) it will insert
  * itself before the selected PML (assuming no DIRECT_call PML).
  */
-static mca_pml_base_module_t*
-mca_pml_v_component_init(int *priority,
-                         bool enable_progress_threads,
-                         bool enable_mpi_thread_multiple)
+static mca_pml_base_module_t *mca_pml_v_component_init(int *priority, bool enable_progress_threads,
+                                                       bool enable_mpi_thread_multiple)
 {
-    V_OUTPUT_VERBOSE(1, "init: I'm not supposed to be here until BTL loading stuff gets fixed!? That's strange...");
+    V_OUTPUT_VERBOSE(
+        1,
+        "init: I'm not supposed to be here until BTL loading stuff gets fixed!? That's strange...");
 
     /* I NEVER want to be the selected PML, so I report less than possible
      * priority and a NULL module
@@ -225,13 +217,13 @@ mca_pml_v_component_init(int *priority,
 
 static int mca_pml_v_component_finalize(void)
 {
-    V_OUTPUT_VERBOSE(1, "finalize: I'm not supposed to be here until BTL loading stuff gets fixed!? That's strange...");
+    V_OUTPUT_VERBOSE(1, "finalize: I'm not supposed to be here until BTL loading stuff gets "
+                        "fixed!? That's strange...");
     /* Nothing to do here. We are not sure we need to be unloaded or not at
      * this stage
      */
     return OMPI_SUCCESS;
 }
-
 
 /*******************************************************************************
  * Enable the PML V (and initialize the Vprotocol)
@@ -244,25 +236,27 @@ static int mca_pml_v_enable(bool enable)
      * later)
      */
     ret = mca_pml_v.host_pml.pml_enable(enable);
-    if(OMPI_SUCCESS != ret) return ret;
+    if (OMPI_SUCCESS != ret)
+        return ret;
 
-    if(enable) {
+    if (enable) {
         /* Check if a protocol have been selected during init */
-        if(! mca_vprotocol_base_selected())
-            mca_vprotocol_base_select(OPAL_ENABLE_PROGRESS_THREADS,
-                                      ompi_mpi_thread_multiple);
+        if (!mca_vprotocol_base_selected())
+            mca_vprotocol_base_select(OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple);
 
         /* Check if we succeeded selecting a protocol */
-        if(mca_vprotocol_base_selected()) {
-            V_OUTPUT_VERBOSE(1, "I don't want to die: I will parasite %s host component %s with %s %s",
+        if (mca_vprotocol_base_selected()) {
+            V_OUTPUT_VERBOSE(1,
+                             "I don't want to die: I will parasite %s host component %s with %s %s",
                              mca_pml_base_selected_component.pmlm_version.mca_type_name,
                              mca_pml_base_selected_component.pmlm_version.mca_component_name,
                              mca_vprotocol_component.pmlm_version.mca_type_name,
                              mca_vprotocol_component.pmlm_version.mca_component_name);
 
             ret = mca_vprotocol_base_parasite();
-            if(OMPI_SUCCESS != ret) return ret;
-            if(mca_vprotocol.enable)
+            if (OMPI_SUCCESS != ret)
+                return ret;
+            if (mca_vprotocol.enable)
                 return mca_vprotocol.enable(enable);
             else
                 return OMPI_SUCCESS;

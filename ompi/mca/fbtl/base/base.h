@@ -32,26 +32,25 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/mca/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/fbtl/fbtl.h"
-
+#include "opal/mca/base/base.h"
 
 BEGIN_C_DECLS
 
 OMPI_DECLSPEC int mca_fbtl_base_file_select(struct ompio_file_t *file,
-                            mca_base_component_t *preferred);
+                                            mca_base_component_t *preferred);
 
 OMPI_DECLSPEC int mca_fbtl_base_file_unselect(struct ompio_file_t *file);
 
 OMPI_DECLSPEC int mca_fbtl_base_find_available(bool enable_progress_threads,
                                                bool enable_mpi_threads);
 
-OMPI_DECLSPEC int mca_fbtl_base_init_file (struct ompio_file_t *file);
+OMPI_DECLSPEC int mca_fbtl_base_init_file(struct ompio_file_t *file);
 
-OMPI_DECLSPEC int mca_fbtl_base_get_param (struct ompio_file_t *file, int keyval);
+OMPI_DECLSPEC int mca_fbtl_base_get_param(struct ompio_file_t *file, int keyval);
 
-OMPI_DECLSPEC bool mca_fbtl_base_check_atomicity (struct ompio_file_t *file);
+OMPI_DECLSPEC bool mca_fbtl_base_check_atomicity(struct ompio_file_t *file);
 /*
  * Globals
  */

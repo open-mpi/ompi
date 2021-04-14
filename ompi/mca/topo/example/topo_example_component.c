@@ -27,15 +27,15 @@
 /*
  * Public string showing the topo example module version number
  */
-const char *mca_topo_example_component_version_string =
-    "Open MPI example topology MCA component version" OMPI_VERSION;
+const char *mca_topo_example_component_version_string
+    = "Open MPI example topology MCA component version" OMPI_VERSION;
 
 /*
  * Local funtions
  */
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads);
-static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type);
+static struct mca_topo_base_module_t *comm_query(const ompi_communicator_t *comm, int *priority,
+                                                 uint32_t type);
 
 /*
  * Public component structure
@@ -60,7 +60,6 @@ mca_topo_base_component_2_2_0_t mca_topo_example_component =
     .topoc_comm_query = comm_query,
 };
 
-
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
     /* Nothing to do */
@@ -68,17 +67,16 @@ static int init_query(bool enable_progress_threads, bool enable_mpi_threads)
     return OMPI_SUCCESS;
 }
 
-
-static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
+static struct mca_topo_base_module_t *comm_query(const ompi_communicator_t *comm, int *priority,
+                                                 uint32_t type)
 {
     mca_topo_example_module_t *example = OBJ_NEW(mca_topo_example_module_t);
     if (NULL == example) {
         return NULL;
     }
-    if( OMPI_COMM_CART == type ) {
+    if (OMPI_COMM_CART == type) {
         example->super.topo.cart.cart_map = mca_topo_example_cart_map;
-    } else if( OMPI_COMM_GRAPH == type ) {
+    } else if (OMPI_COMM_GRAPH == type) {
         example->super.topo.graph.graph_map = mca_topo_example_graph_map;
     }
 
@@ -87,5 +85,3 @@ comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
     example->super.type = type;
     return &(example->super);
 }
-
-

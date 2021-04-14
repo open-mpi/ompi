@@ -16,13 +16,13 @@
 #ifndef OSC_PORTALS4_PORTALS4_H
 #define OSC_PORTALS4_PORTALS4_H
 
-#include <portals4.h>
-#include "ompi/group/group.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
+#include <portals4.h>
 
 #include "ompi/mca/mtl/portals4/mtl_portals4.h"
 
-#define REQ_OSC_TABLE_ID     4
+#define REQ_OSC_TABLE_ID 4
 
 #define OSC_PORTALS4_IOVEC_MAX 64
 
@@ -84,27 +84,36 @@ typedef struct ompi_osc_portals4_node_state_t ompi_osc_portals4_node_state_t;
 struct ompi_osc_portals4_module_t {
     ompi_osc_base_module_t super;
     void *free_after; /* if non-null, this pointer should be free()ed when window destroyed */
-    struct ompi_communicator_t *comm; /* communicator which backs this window (unique to this window) */
-    int disp_unit; /* if -1, have to look at disp_units */
-    int *disp_units; /* array (possibly NULL!) of displacement units, per peer */
+    struct ompi_communicator_t
+        *comm;            /* communicator which backs this window (unique to this window) */
+    int disp_unit;        /* if -1, have to look at disp_units */
+    int *disp_units;      /* array (possibly NULL!) of displacement units, per peer */
     ptl_handle_ni_t ni_h; /* network interface used by this window */
-    ptl_pt_index_t pt_idx; /* portal table index used by this window (this will be same across window) */
-    ptl_handle_ct_t ct_h; /* Counting event handle used for completion in this window */
-    int ct_link; /* PTL_EVENT_LINK flag */
-    ptl_handle_md_t md_h; /* memory descriptor describing all of memory used by this window */
-    ptl_handle_md_t req_md_h; /* memory descriptor with event completion used by this window */
+    ptl_pt_index_t
+        pt_idx; /* portal table index used by this window (this will be same across window) */
+    ptl_handle_ct_t ct_h;      /* Counting event handle used for completion in this window */
+    int ct_link;               /* PTL_EVENT_LINK flag */
+    ptl_handle_md_t md_h;      /* memory descriptor describing all of memory used by this window */
+    ptl_handle_md_t req_md_h;  /* memory descriptor with event completion used by this window */
     ptl_handle_me_t data_me_h; /* data match list entry (MB are CID | OSC_PORTALS4_MB_DATA) */
-    ptl_handle_me_t control_me_h; /* match list entry for control data (node_state_t).  Match bits are (CID | OSC_PORTALS4_MB_CONTROL). */
+    ptl_handle_me_t control_me_h; /* match list entry for control data (node_state_t).  Match bits
+                                     are (CID | OSC_PORTALS4_MB_CONTROL). */
     opal_atomic_int64_t opcount;
     ptl_match_bits_t match_bits; /* match bits for module.  Same as cid for comm in most cases. */
 
-    ptl_iovec_t     *origin_iovec_list; /* list of memory segments that compose the noncontiguous region */
-    ptl_handle_md_t  origin_iovec_md_h; /* memory descriptor describing a noncontiguous region in this window */
-    ptl_iovec_t     *result_iovec_list; /* list of memory segments that compose the noncontiguous region */
-    ptl_handle_md_t  result_iovec_md_h; /* memory descriptor describing a noncontiguous region in this window */
+    ptl_iovec_t
+        *origin_iovec_list; /* list of memory segments that compose the noncontiguous region */
+    ptl_handle_md_t
+        origin_iovec_md_h; /* memory descriptor describing a noncontiguous region in this window */
+    ptl_iovec_t
+        *result_iovec_list; /* list of memory segments that compose the noncontiguous region */
+    ptl_handle_md_t
+        result_iovec_md_h; /* memory descriptor describing a noncontiguous region in this window */
 
-    ptl_size_t atomic_max; /* max size of atomic messages.  Will guarantee ordering IF ordering requested */
-    ptl_size_t fetch_atomic_max; /* max size of fetchatomic messages.  Will guarantee ordering IF ordering requested */
+    ptl_size_t atomic_max; /* max size of atomic messages.  Will guarantee ordering IF ordering
+                              requested */
+    ptl_size_t fetch_atomic_max; /* max size of fetchatomic messages.  Will guarantee ordering IF
+                                    ordering requested */
 
     /* variable containing specified value.  Needed for atomic
     increments so they can be non-blocking */
@@ -115,17 +124,15 @@ struct ompi_osc_portals4_module_t {
     ompi_group_t *post_group;
     opal_list_t outstanding_locks;
 
-    bool passive_target_access_epoch; /* True if the access epoch is a passive target access epoch */
+    bool
+        passive_target_access_epoch; /* True if the access epoch is a passive target access epoch */
 
     /* things that are remotely accessible */
     ompi_osc_portals4_node_state_t state;
 };
 typedef struct ompi_osc_portals4_module_t ompi_osc_portals4_module_t;
 
-
-static inline size_t
-get_displacement(ompi_osc_portals4_module_t *module,
-                 int target)
+static inline size_t get_displacement(ompi_osc_portals4_module_t *module, int target)
 {
     if (-1 == module->disp_unit) {
         return module->disp_units[target];
@@ -134,156 +141,92 @@ get_displacement(ompi_osc_portals4_module_t *module,
     }
 }
 
-
 int ompi_osc_portals4_attach(struct ompi_win_t *win, void *base, size_t len);
 int ompi_osc_portals4_detach(struct ompi_win_t *win, const void *base);
 
 int ompi_osc_portals4_free(struct ompi_win_t *win);
 
-int ompi_osc_portals4_put(const void *origin_addr,
-                          int origin_count,
-                          struct ompi_datatype_t *origin_dt,
-                          int target,
-                          ptrdiff_t target_disp,
-                          int target_count,
-                          struct ompi_datatype_t *target_dt,
+int ompi_osc_portals4_put(const void *origin_addr, int origin_count,
+                          struct ompi_datatype_t *origin_dt, int target, ptrdiff_t target_disp,
+                          int target_count, struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
-int ompi_osc_portals4_get(void *origin_addr,
-                          int origin_count,
-                          struct ompi_datatype_t *origin_dt,
-                          int target,
-                          ptrdiff_t target_disp,
-                          int target_count,
-                          struct ompi_datatype_t *target_dt,
-                          struct ompi_win_t *win);
+int ompi_osc_portals4_get(void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
+                          int target, ptrdiff_t target_disp, int target_count,
+                          struct ompi_datatype_t *target_dt, struct ompi_win_t *win);
 
-int ompi_osc_portals4_accumulate(const void *origin_addr,
-                                 int origin_count,
-                                 struct ompi_datatype_t *origin_dt,
-                                 int target,
-                                 ptrdiff_t target_disp,
-                                 int target_count,
-                                 struct ompi_datatype_t *target_dt,
-                                 struct ompi_op_t *op,
+int ompi_osc_portals4_accumulate(const void *origin_addr, int origin_count,
+                                 struct ompi_datatype_t *origin_dt, int target,
+                                 ptrdiff_t target_disp, int target_count,
+                                 struct ompi_datatype_t *target_dt, struct ompi_op_t *op,
                                  struct ompi_win_t *win);
 
-int ompi_osc_portals4_compare_and_swap(const void *origin_addr,
-                                       const void *compare_addr,
-                                       void *result_addr,
-                                       struct ompi_datatype_t *dt,
-                                       int target,
-                                       ptrdiff_t target_disp,
-                                       struct ompi_win_t *win);
+int ompi_osc_portals4_compare_and_swap(const void *origin_addr, const void *compare_addr,
+                                       void *result_addr, struct ompi_datatype_t *dt, int target,
+                                       ptrdiff_t target_disp, struct ompi_win_t *win);
 
-int ompi_osc_portals4_fetch_and_op(const void *origin_addr,
-                                   void *result_addr,
-                                   struct ompi_datatype_t *dt,
-                                   int target,
-                                   ptrdiff_t target_disp,
-                                   struct ompi_op_t *op,
-                                   struct ompi_win_t *win);
+int ompi_osc_portals4_fetch_and_op(const void *origin_addr, void *result_addr,
+                                   struct ompi_datatype_t *dt, int target, ptrdiff_t target_disp,
+                                   struct ompi_op_t *op, struct ompi_win_t *win);
 
-int ompi_osc_portals4_get_accumulate(const void *origin_addr,
-                                     int origin_count,
-                                     struct ompi_datatype_t *origin_datatype,
-                                     void *result_addr,
-                                     int result_count,
-                                     struct ompi_datatype_t *result_datatype,
-                                     int target_rank,
-                                     ptrdiff_t target_disp,
-                                     int target_count,
-                                     struct ompi_datatype_t *target_datatype,
-                                     struct ompi_op_t *op,
+int ompi_osc_portals4_get_accumulate(const void *origin_addr, int origin_count,
+                                     struct ompi_datatype_t *origin_datatype, void *result_addr,
+                                     int result_count, struct ompi_datatype_t *result_datatype,
+                                     int target_rank, ptrdiff_t target_disp, int target_count,
+                                     struct ompi_datatype_t *target_datatype, struct ompi_op_t *op,
                                      struct ompi_win_t *win);
 
-int ompi_osc_portals4_rput(const void *origin_addr,
-                           int origin_count,
-                           struct ompi_datatype_t *origin_dt,
-                           int target,
-                           ptrdiff_t target_disp,
-                           int target_count,
-                           struct ompi_datatype_t *target_dt,
-                           struct ompi_win_t *win,
+int ompi_osc_portals4_rput(const void *origin_addr, int origin_count,
+                           struct ompi_datatype_t *origin_dt, int target, ptrdiff_t target_disp,
+                           int target_count, struct ompi_datatype_t *target_dt,
+                           struct ompi_win_t *win, struct ompi_request_t **request);
+
+int ompi_osc_portals4_rget(void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
+                           int target, ptrdiff_t target_disp, int target_count,
+                           struct ompi_datatype_t *target_dt, struct ompi_win_t *win,
                            struct ompi_request_t **request);
 
-int ompi_osc_portals4_rget(void *origin_addr,
-                           int origin_count,
-                           struct ompi_datatype_t *origin_dt,
-                           int target,
-                           ptrdiff_t target_disp,
-                           int target_count,
-                           struct ompi_datatype_t *target_dt,
-                           struct ompi_win_t *win,
-                           struct ompi_request_t **request);
+int ompi_osc_portals4_raccumulate(const void *origin_addr, int origin_count,
+                                  struct ompi_datatype_t *origin_dt, int target,
+                                  ptrdiff_t target_disp, int target_count,
+                                  struct ompi_datatype_t *target_dt, struct ompi_op_t *op,
+                                  struct ompi_win_t *win, struct ompi_request_t **request);
 
-int ompi_osc_portals4_raccumulate(const void *origin_addr,
-                                  int origin_count,
-                                  struct ompi_datatype_t *origin_dt,
-                                  int target,
-                                  ptrdiff_t target_disp,
-                                  int target_count,
-                                  struct ompi_datatype_t *target_dt,
-                                  struct ompi_op_t *op,
-                                  struct ompi_win_t *win,
-                                  struct ompi_request_t **request);
-
-int ompi_osc_portals4_rget_accumulate(const void *origin_addr,
-                                      int origin_count,
-                                      struct ompi_datatype_t *origin_datatype,
-                                      void *result_addr,
-                                      int result_count,
-                                      struct ompi_datatype_t *result_datatype,
-                                      int target_rank,
-                                      ptrdiff_t target_disp,
-                                      int target_count,
-                                      struct ompi_datatype_t *target_datatype,
-                                      struct ompi_op_t *op,
-                                      struct ompi_win_t *win,
-                                      struct ompi_request_t **request);
+int ompi_osc_portals4_rget_accumulate(const void *origin_addr, int origin_count,
+                                      struct ompi_datatype_t *origin_datatype, void *result_addr,
+                                      int result_count, struct ompi_datatype_t *result_datatype,
+                                      int target_rank, ptrdiff_t target_disp, int target_count,
+                                      struct ompi_datatype_t *target_datatype, struct ompi_op_t *op,
+                                      struct ompi_win_t *win, struct ompi_request_t **request);
 
 int ompi_osc_portals4_fence(int mpi_assert, struct ompi_win_t *win);
 
-int ompi_osc_portals4_start(struct ompi_group_t *group,
-                            int mpi_assert,
-                            struct ompi_win_t *win);
+int ompi_osc_portals4_start(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win);
 
 int ompi_osc_portals4_complete(struct ompi_win_t *win);
 
-int ompi_osc_portals4_post(struct ompi_group_t *group,
-                           int mpi_assert,
-                           struct ompi_win_t *win);
+int ompi_osc_portals4_post(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win);
 
 int ompi_osc_portals4_wait(struct ompi_win_t *win);
 
-int ompi_osc_portals4_test(struct ompi_win_t *win,
-                           int *flag);
+int ompi_osc_portals4_test(struct ompi_win_t *win, int *flag);
 
-int ompi_osc_portals4_lock(int lock_type,
-                           int target,
-                           int mpi_assert,
-                           struct ompi_win_t *win);
+int ompi_osc_portals4_lock(int lock_type, int target, int mpi_assert, struct ompi_win_t *win);
 
-int ompi_osc_portals4_unlock(int target,
-                             struct ompi_win_t *win);
+int ompi_osc_portals4_unlock(int target, struct ompi_win_t *win);
 
-
-int ompi_osc_portals4_lock_all(int mpi_assert,
-                               struct ompi_win_t *win);
+int ompi_osc_portals4_lock_all(int mpi_assert, struct ompi_win_t *win);
 
 int ompi_osc_portals4_unlock_all(struct ompi_win_t *win);
 
 int ompi_osc_portals4_sync(struct ompi_win_t *win);
 
-int ompi_osc_portals4_flush(int target,
-                            struct ompi_win_t *win);
+int ompi_osc_portals4_flush(int target, struct ompi_win_t *win);
 int ompi_osc_portals4_flush_all(struct ompi_win_t *win);
-int ompi_osc_portals4_flush_local(int target,
-                                  struct ompi_win_t *win);
+int ompi_osc_portals4_flush_local(int target, struct ompi_win_t *win);
 int ompi_osc_portals4_flush_local_all(struct ompi_win_t *win);
 
-static inline int
-ompi_osc_portals4_complete_all(ompi_osc_portals4_module_t *module)
+static inline int ompi_osc_portals4_complete_all(ompi_osc_portals4_module_t *module)
 {
     int ret;
     ptl_ct_event_t event;
@@ -291,8 +234,8 @@ ompi_osc_portals4_complete_all(ompi_osc_portals4_module_t *module)
     ret = PtlCTWait(module->ct_h, module->opcount, &event);
     if (PTL_OK != ret || 0 != event.failure) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: flush_all ct failure: ret=%d, failure=%d\n",
-                            __FILE__, __LINE__, ret, (int) event.failure);
+                            "%s:%d: flush_all ct failure: ret=%d, failure=%d\n", __FILE__, __LINE__,
+                            ret, (int) event.failure);
         event.success = event.failure = 0;
         PtlCTSet(module->ct_h, event);
         module->opcount = 0;
@@ -304,14 +247,12 @@ ompi_osc_portals4_complete_all(ompi_osc_portals4_module_t *module)
     return ret;
 }
 
-static inline ptl_process_t
-ompi_osc_portals4_get_peer_group(struct ompi_group_t *group, int rank)
+static inline ptl_process_t ompi_osc_portals4_get_peer_group(struct ompi_group_t *group, int rank)
 {
     return ompi_mtl_portals4_get_peer_group(group, rank);
 }
 
-static inline ptl_process_t
-ompi_osc_portals4_get_peer(ompi_osc_portals4_module_t *module, int rank)
+static inline ptl_process_t ompi_osc_portals4_get_peer(ompi_osc_portals4_module_t *module, int rank)
 {
     return ompi_osc_portals4_get_peer_group(module->comm->c_remote_group, rank);
 }

@@ -21,27 +21,24 @@
 #include "pml_v_output.h"
 
 #if defined(HAVE_UNISTD_H)
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #include <string.h>
 
-int ompi_pml_v_output_open(char *output, int verbosity) {
+int ompi_pml_v_output_open(char *output, int verbosity)
+{
     opal_output_stream_t lds;
     const char *hostname;
 
     OBJ_CONSTRUCT(&lds, opal_output_stream_t);
-    if(!output) {
-      mca_pml_v.output = 0;
-    }
-    else {
-        if(!strcmp(output, "stdout")) {
+    if (!output) {
+        mca_pml_v.output = 0;
+    } else {
+        if (!strcmp(output, "stdout")) {
             lds.lds_want_stdout = true;
-        }
-        else if(!strcmp(output, "stderr")) {
+        } else if (!strcmp(output, "stderr")) {
             lds.lds_want_stderr = true;
-        }
-        else
-        {
+        } else {
             lds.lds_want_file = true;
             lds.lds_file_suffix = output;
         }
@@ -55,7 +52,8 @@ int ompi_pml_v_output_open(char *output, int verbosity) {
     return mca_pml_v.output;
 }
 
-void ompi_pml_v_output_close(void) {
+void ompi_pml_v_output_close(void)
+{
     opal_output_close(mca_pml_v.output);
     mca_pml_v.output = -1;
 }

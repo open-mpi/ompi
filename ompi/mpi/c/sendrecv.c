@@ -23,31 +23,29 @@
  */
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Sendrecv = PMPI_Sendrecv
-#endif
-#define MPI_Sendrecv PMPI_Sendrecv
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Sendrecv = PMPI_Sendrecv
+#    endif
+#    define MPI_Sendrecv PMPI_Sendrecv
 #endif
 
 static const char FUNC_NAME[] = "MPI_Sendrecv";
 
-
-int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                 int dest, int sendtag, void *recvbuf, int recvcount,
-                 MPI_Datatype recvtype, int source, int recvtag,
-                 MPI_Comm comm,  MPI_Status *status)
+int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, int dest, int sendtag,
+                 void *recvbuf, int recvcount, MPI_Datatype recvtype, int source, int recvtag,
+                 MPI_Comm comm, MPI_Status *status)
 {
-    ompi_request_t* req;
+    ompi_request_t *req;
     int rc = MPI_SUCCESS;
 #if OPAL_ENABLE_FT_MPI
     int rcs = MPI_SUCCESS;
@@ -55,14 +53,11 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     SPC_RECORD(OMPI_SPC_SENDRECV, 1);
 
-    MEMCHECKER(
-        memchecker_datatype(sendtype);
-        memchecker_datatype(recvtype);
-        memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_datatype(sendtype); memchecker_datatype(recvtype);
+               memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+               memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         OMPI_CHECK_DATATYPE_FOR_SEND(rc, sendtype, sendcount);
         OMPI_CHECK_DATATYPE_FOR_RECV(rc, recvtype, recvcount);
@@ -75,30 +70,30 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             rc = MPI_ERR_RANK;
         } else if (sendtag < 0 || sendtag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
-        } else if (source != MPI_PROC_NULL && source != MPI_ANY_SOURCE && ompi_comm_peer_invalid(comm, source)) {
+        } else if (source != MPI_PROC_NULL && source != MPI_ANY_SOURCE
+                   && ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
-        } else if (((recvtag < 0) && (recvtag !=  MPI_ANY_TAG)) || (recvtag > mca_pml.pml_max_tag)) {
+        } else if (((recvtag < 0) && (recvtag != MPI_ANY_TAG)) || (recvtag > mca_pml.pml_max_tag)) {
             rc = MPI_ERR_TAG;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
     if (source != MPI_PROC_NULL) { /* post recv */
-        rc = MCA_PML_CALL(irecv(recvbuf, recvcount, recvtype,
-                                source, recvtag, comm, &req));
+        rc = MCA_PML_CALL(irecv(recvbuf, recvcount, recvtype, source, recvtag, comm, &req));
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
     if (dest != MPI_PROC_NULL) { /* send */
-        rc = MCA_PML_CALL(send(sendbuf, sendcount, sendtype, dest,
-                               sendtag, MCA_PML_BASE_SEND_STANDARD, comm));
+        rc = MCA_PML_CALL(
+            send(sendbuf, sendcount, sendtype, dest, sendtag, MCA_PML_BASE_SEND_STANDARD, comm));
 #if OPAL_ENABLE_FT_MPI
         /* If ULFM is enabled we need to wait for the posted receive to
          * complete, hence we cannot return here */
         rcs = rc;
 #else
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
-#endif  /* OPAL_ENABLE_FT_MPI */
+#endif /* OPAL_ENABLE_FT_MPI */
     }
 
     if (source != MPI_PROC_NULL) { /* wait for recv */
@@ -107,7 +102,7 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         /* Sendrecv never returns ERR_PROC_FAILED_PENDING because it is
          * blocking. Lets complete now that irecv and promote the error
          * to ERR_PROC_FAILED */
-        if( OPAL_UNLIKELY(MPI_ERR_PROC_FAILED_PENDING == rc) ) {
+        if (OPAL_UNLIKELY(MPI_ERR_PROC_FAILED_PENDING == rc)) {
             ompi_request_cancel(req);
             ompi_request_wait(&req, MPI_STATUS_IGNORE);
             rc = MPI_ERR_PROC_FAILED;
@@ -120,7 +115,7 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         rc = MPI_SUCCESS;
     }
 #if OPAL_ENABLE_FT_MPI
-    if( OPAL_UNLIKELY(MPI_SUCCESS != rcs && MPI_SUCCESS == rc) ) {
+    if (OPAL_UNLIKELY(MPI_SUCCESS != rcs && MPI_SUCCESS == rc)) {
         rc = rcs;
     }
 #endif

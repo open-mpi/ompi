@@ -23,68 +23,69 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "ompi/attribute/attribute.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/printf.h"
 #include "opal/util/string_copy.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/attribute/attribute.h"
 
-static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
+static void __ompi_datatype_allocate(ompi_datatype_t *datatype)
 {
-    datatype->args               = NULL;
+    datatype->args = NULL;
     /* Do not add the newly created datatypes to the f2c translation table. We will add them only
      * if necessary, basically upon the first call the MPI_Datatype_f2c.
      */
-    datatype->d_f_to_c_index     = -1;
-    datatype->id                 = -1;
-    datatype->d_keyhash          = NULL;
-    datatype->name[0]            = '\0';
+    datatype->d_f_to_c_index = -1;
+    datatype->id = -1;
+    datatype->d_keyhash = NULL;
+    datatype->name[0] = '\0';
     datatype->packed_description = 0;
-    datatype->pml_data           = 0;
+    datatype->pml_data = 0;
 }
 
-static void __ompi_datatype_release(ompi_datatype_t * datatype)
+static void __ompi_datatype_release(ompi_datatype_t *datatype)
 {
-    if( NULL != datatype->args ) {
-        ompi_datatype_release_args( datatype );
+    if (NULL != datatype->args) {
+        ompi_datatype_release_args(datatype);
         datatype->args = NULL;
     }
 
-    free ((void *) datatype->packed_description );
+    free((void *) datatype->packed_description);
     datatype->packed_description = 0;
 
-    if( datatype->d_f_to_c_index >= 0 ) {
-        opal_pointer_array_set_item( &ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL );
+    if (datatype->d_f_to_c_index >= 0) {
+        opal_pointer_array_set_item(&ompi_datatype_f_to_c_table, datatype->d_f_to_c_index, NULL);
         datatype->d_f_to_c_index = -1;
     }
     /* any pending attributes ? */
     if (NULL != datatype->d_keyhash) {
-        ompi_attr_delete_all( TYPE_ATTR, datatype, datatype->d_keyhash );
-        OBJ_RELEASE( datatype->d_keyhash );
+        ompi_attr_delete_all(TYPE_ATTR, datatype, datatype->d_keyhash);
+        OBJ_RELEASE(datatype->d_keyhash);
     }
     /* make sure the name is set to empty */
     datatype->name[0] = '\0';
 }
 
-OBJ_CLASS_INSTANCE(ompi_datatype_t, opal_datatype_t, __ompi_datatype_allocate, __ompi_datatype_release);
+OBJ_CLASS_INSTANCE(ompi_datatype_t, opal_datatype_t, __ompi_datatype_allocate,
+                   __ompi_datatype_release);
 
-ompi_datatype_t * ompi_datatype_create( int32_t expectedSize )
+ompi_datatype_t *ompi_datatype_create(int32_t expectedSize)
 {
     int ret;
-    ompi_datatype_t * datatype = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);
+    ompi_datatype_t *datatype = (ompi_datatype_t *) OBJ_NEW(ompi_datatype_t);
 
-    ret = opal_datatype_create_desc( &(datatype->super), expectedSize);
+    ret = opal_datatype_create_desc(&(datatype->super), expectedSize);
     if (OPAL_SUCCESS != ret)
         return NULL;
 
     return datatype;
 }
 
-int32_t ompi_datatype_destroy( ompi_datatype_t** type)
+int32_t ompi_datatype_destroy(ompi_datatype_t **type)
 {
-    ompi_datatype_t* pData = *type;
+    ompi_datatype_t *pData = *type;
 
-    if( ompi_datatype_is_predefined(pData) && (pData->super.super.obj_reference_count <= 1) )
+    if (ompi_datatype_is_predefined(pData) && (pData->super.super.obj_reference_count <= 1))
         return OMPI_ERROR;
 
     OBJ_RELEASE(pData);
@@ -92,16 +93,15 @@ int32_t ompi_datatype_destroy( ompi_datatype_t** type)
     return OMPI_SUCCESS;
 }
 
-int32_t
-ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType )
+int32_t ompi_datatype_duplicate(const ompi_datatype_t *oldType, ompi_datatype_t **newType)
 {
-    ompi_datatype_t * new_ompi_datatype = ompi_datatype_create( oldType->super.desc.used + 2 );
+    ompi_datatype_t *new_ompi_datatype = ompi_datatype_create(oldType->super.desc.used + 2);
 
     *newType = new_ompi_datatype;
-    if( NULL == new_ompi_datatype ) {
+    if (NULL == new_ompi_datatype) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    opal_datatype_clone( &oldType->super, &new_ompi_datatype->super);
+    opal_datatype_clone(&oldType->super, &new_ompi_datatype->super);
     /* Strip the predefined flag at the OMPI level. */
     new_ompi_datatype->super.flags &= ~OMPI_DATATYPE_FLAG_PREDEFINED;
     /* By default maintain the relationships related to the old data (such as ops) */
@@ -120,4 +120,3 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
 
     return OMPI_SUCCESS;
 }
-

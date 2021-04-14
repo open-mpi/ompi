@@ -20,21 +20,20 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_call_errhandler = PMPI_Win_call_errhandler
-#endif
-#define MPI_Win_call_errhandler PMPI_Win_call_errhandler
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_call_errhandler = PMPI_Win_call_errhandler
+#    endif
+#    define MPI_Win_call_errhandler PMPI_Win_call_errhandler
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_call_errhandler";
-
 
 int MPI_Win_call_errhandler(MPI_Win win, int errorcode)
 {
@@ -42,14 +41,13 @@ int MPI_Win_call_errhandler(MPI_Win win, int errorcode)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(win)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
         }
     }
 
-  /* Invoke the errhandler */
-  OMPI_ERRHANDLER_INVOKE(win, errorcode, FUNC_NAME);
+    /* Invoke the errhandler */
+    OMPI_ERRHANDLER_INVOKE(win, errorcode, FUNC_NAME);
 
-  /* See MPI-2 8.5 why this function has to return MPI_SUCCESS */
-  return MPI_SUCCESS;
+    /* See MPI-2 8.5 why this function has to return MPI_SUCCESS */
+    return MPI_SUCCESS;
 }

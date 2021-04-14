@@ -23,13 +23,12 @@
 #ifndef MCA_COMMON_OMPIO_PRINT_QUEUE_H
 #define MCA_COMMON_OMPIO_PRINT_QUEUE_H
 
-
 #include "mpi.h"
 
 #define MCA_COMMON_OMPIO_QUEUESIZE 2048
 
 /*To extract time-information */
-struct mca_common_ompio_print_entry{
+struct mca_common_ompio_print_entry {
     double time[3];
     int nprocs_for_coll;
     int aggregator;
@@ -45,22 +44,20 @@ struct mca_common_ompio_print_queue {
 };
 typedef struct mca_common_ompio_print_queue mca_common_ompio_print_queue;
 
+OMPI_DECLSPEC int mca_common_ompio_register_print_entry(struct mca_common_ompio_print_queue *q,
+                                                        mca_common_ompio_print_entry x);
 
-OMPI_DECLSPEC int mca_common_ompio_register_print_entry (struct mca_common_ompio_print_queue *q,
-                                                         mca_common_ompio_print_entry x);
+OMPI_DECLSPEC int mca_common_ompio_unregister_print_entry(struct mca_common_ompio_print_queue *q,
+                                                          mca_common_ompio_print_entry *x);
 
-OMPI_DECLSPEC int mca_common_ompio_unregister_print_entry (struct mca_common_ompio_print_queue *q,
-                                                           mca_common_ompio_print_entry *x);
+OMPI_DECLSPEC int mca_common_ompio_empty_print_queue(struct mca_common_ompio_print_queue *q);
 
-OMPI_DECLSPEC int mca_common_ompio_empty_print_queue( struct mca_common_ompio_print_queue *q);
-
-OMPI_DECLSPEC int mca_common_ompio_full_print_queue( struct mca_common_ompio_print_queue *q);
+OMPI_DECLSPEC int mca_common_ompio_full_print_queue(struct mca_common_ompio_print_queue *q);
 
 OMPI_DECLSPEC int mca_common_ompio_initialize_print_queue(struct mca_common_ompio_print_queue **q);
 
-OMPI_DECLSPEC int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
-                                                    char *name_operation, struct ompio_file_t *fh);
-
+OMPI_DECLSPEC int mca_common_ompio_print_time_info(struct mca_common_ompio_print_queue *q,
+                                                   char *name_operation, struct ompio_file_t *fh);
 
 END_C_DECLS
 

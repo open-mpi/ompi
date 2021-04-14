@@ -25,11 +25,11 @@
 
 #include "opal/class/opal_pointer_array.h"
 
-OMPI_DECLSPEC void  ompi_info_register_types(opal_pointer_array_t *mca_types);
+OMPI_DECLSPEC void ompi_info_register_types(opal_pointer_array_t *mca_types);
 
 OMPI_DECLSPEC int ompi_info_register_framework_params(opal_pointer_array_t *component_map);
 
-OMPI_DECLSPEC void  ompi_info_close_components(void);
+OMPI_DECLSPEC void ompi_info_close_components(void);
 
 OMPI_DECLSPEC void ompi_info_show_ompi_version(const char *scope);
 

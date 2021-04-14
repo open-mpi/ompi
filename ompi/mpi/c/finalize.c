@@ -20,20 +20,19 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Finalize = PMPI_Finalize
-#endif
-#define MPI_Finalize PMPI_Finalize
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Finalize = PMPI_Finalize
+#    endif
+#    define MPI_Finalize PMPI_Finalize
 #endif
 
 static const char FUNC_NAME[] = "MPI_Finalize";
-
 
 int MPI_Finalize(void)
 {

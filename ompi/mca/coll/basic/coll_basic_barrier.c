@@ -21,14 +21,13 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
+#include "coll_basic.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "opal/util/bit_ops.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
-#include "coll_basic.h"
-
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/pml/pml.h"
+#include "opal/util/bit_ops.h"
 
 /*
  *	barrier_intra_log
@@ -37,9 +36,8 @@
  *	Accepts:	- same as MPI_Barrier()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
-                                 mca_coll_base_module_t *module)
+int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
+                                     mca_coll_base_module_t *module)
 {
     int i;
     int err;
@@ -62,9 +60,8 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
     for (i = dim, mask = 1 << i; i > hibit; --i, mask >>= 1) {
         peer = rank | mask;
         if (peer < size) {
-            err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, peer,
-                                    MCA_COLL_BASE_TAG_BARRIER,
-                                    comm, MPI_STATUS_IGNORE));
+            err = MCA_PML_CALL(
+                recv(NULL, 0, MPI_BYTE, peer, MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
                 return err;
             }
@@ -75,18 +72,14 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
 
     if (rank > 0) {
         peer = rank & ~(1 << hibit);
-        err =
-            MCA_PML_CALL(send
-                         (NULL, 0, MPI_BYTE, peer,
-                          MCA_COLL_BASE_TAG_BARRIER,
-                          MCA_PML_BASE_SEND_STANDARD, comm));
+        err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, peer, MCA_COLL_BASE_TAG_BARRIER,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
         if (MPI_SUCCESS != err) {
             return err;
         }
 
-        err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, peer,
-                                MCA_COLL_BASE_TAG_BARRIER,
-                                comm, MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(
+            recv(NULL, 0, MPI_BYTE, peer, MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
         if (MPI_SUCCESS != err) {
             return err;
         }
@@ -97,8 +90,7 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
     for (i = hibit + 1, mask = 1 << i; i <= dim; ++i, mask <<= 1) {
         peer = rank | mask;
         if (peer < size) {
-            err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, peer,
-                                    MCA_COLL_BASE_TAG_BARRIER,
+            err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, peer, MCA_COLL_BASE_TAG_BARRIER,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
             if (MPI_SUCCESS != err) {
                 return err;
@@ -111,7 +103,6 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
     return MPI_SUCCESS;
 }
 
-
 /*
  *	barrier_inter_lin
  *
@@ -119,14 +110,13 @@ mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm,
  *	Accepts:	- same as MPI_Barrier()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm,
-                                 mca_coll_base_module_t *module)
+int mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm,
+                                     mca_coll_base_module_t *module)
 {
     int rank;
     int result;
 
     rank = ompi_comm_rank(comm);
-    return comm->c_coll->coll_allreduce(&rank, &result, 1, MPI_INT, MPI_MAX,
-                                       comm, comm->c_coll->coll_allreduce_module);
+    return comm->c_coll->coll_allreduce(&rank, &result, 1, MPI_INT, MPI_MAX, comm,
+                                        comm->c_coll->coll_allreduce_module);
 }

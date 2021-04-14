@@ -24,8 +24,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 
 /*
  * function - partitions a communicator into subgroups which
@@ -42,17 +42,16 @@
  * @retval MPI_ERR_TOPOLOGY
  * @retval MPI_ERR_COMM
  */
-int mca_topo_base_cart_sub (ompi_communicator_t* comm,
-                            const int *remain_dims,
-                            ompi_communicator_t** new_comm)
+int mca_topo_base_cart_sub(ompi_communicator_t *comm, const int *remain_dims,
+                           ompi_communicator_t **new_comm)
 {
     struct ompi_communicator_t *temp_comm;
     mca_topo_base_comm_cart_2_2_0_t *old_cart;
     int errcode, colour, key, colfactor, keyfactor;
     int ndim, dim, i;
     int *d, *dorig = NULL, *dold, *c, *p, *porig = NULL, *pold;
-    mca_topo_base_module_t* topo;
-    mca_topo_base_comm_cart_2_2_0_t* cart;
+    mca_topo_base_module_t *topo;
+    mca_topo_base_comm_cart_2_2_0_t *cart;
 
     *new_comm = MPI_COMM_NULL;
     old_cart = comm->c_topo->mtc.cart;
@@ -83,7 +82,7 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
        a 0-dimension cartesian communicator with just ourselves in it
        (you can't have a communicator unless you're in it). */
     if (0 == ndim) {
-        colour = ompi_comm_rank (comm);
+        colour = ompi_comm_rank(comm);
     }
     /* Split the communicator. */
     errcode = ompi_comm_split(comm, colour, key, &temp_comm, false);
@@ -94,20 +93,19 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
     /* Fill the communicator with topology information. */
     if (temp_comm != MPI_COMM_NULL) {
 
-        assert( NULL == temp_comm->c_topo );
-        if (OMPI_SUCCESS != (errcode = mca_topo_base_comm_select(temp_comm,
-                                                                 comm->c_topo,
-                                                                 &topo,
-                                                                 OMPI_COMM_CART))) {
+        assert(NULL == temp_comm->c_topo);
+        if (OMPI_SUCCESS
+            != (errcode = mca_topo_base_comm_select(temp_comm, comm->c_topo, &topo,
+                                                    OMPI_COMM_CART))) {
             ompi_comm_free(&temp_comm);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         if (ndim >= 1) {
             /* Copy the dimensions */
-            dorig = d = (int*)malloc(ndim * sizeof(int));
+            dorig = d = (int *) malloc(ndim * sizeof(int));
             dold = old_cart->dims;
             /* Copy the periods */
-            porig = p = (int*)malloc(ndim * sizeof(int));
+            porig = p = (int *) malloc(ndim * sizeof(int));
             pold = old_cart->periods;
             for (i = 0; i < old_cart->ndims; ++i, ++dold, ++pold) {
                 if (remain_dims[i]) {
@@ -117,7 +115,7 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
             }
         }
         cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
-        if( NULL == cart ) {
+        if (NULL == cart) {
             ompi_comm_free(&temp_comm);
             if (NULL != dorig) {
                 free(dorig);
@@ -133,16 +131,17 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
 
         /* NTH: protect against a 0-byte alloc in the ndims = 0 case */
         if (ndim > 0) {
-            cart->coords = (int*)malloc(sizeof(int) * ndim);
+            cart->coords = (int *) malloc(sizeof(int) * ndim);
             if (NULL == cart->coords) {
                 free(cart->periods);
-                if(NULL != cart->dims) free(cart->dims);
+                if (NULL != cart->dims)
+                    free(cart->dims);
                 OBJ_RELEASE(cart);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            {  /* setup the cartesian topology */
+            { /* setup the cartesian topology */
                 int nprocs = temp_comm->c_local_group->grp_proc_count,
-                    rank   = temp_comm->c_local_group->grp_my_rank;
+                    rank = temp_comm->c_local_group->grp_my_rank;
 
                 for (i = 0; i < ndim; ++i) {
                     nprocs /= cart->dims[i];
@@ -152,10 +151,10 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
             }
         }
 
-        temp_comm->c_topo           = topo;
+        temp_comm->c_topo = topo;
         temp_comm->c_topo->mtc.cart = cart;
-        temp_comm->c_topo->reorder  = false;
-        temp_comm->c_flags         |= OMPI_COMM_CART;
+        temp_comm->c_topo->reorder = false;
+        temp_comm->c_flags |= OMPI_COMM_CART;
     }
 
     *new_comm = temp_comm;

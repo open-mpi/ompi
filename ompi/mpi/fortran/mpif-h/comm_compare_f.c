@@ -24,47 +24,40 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_COMM_COMPARE = ompi_comm_compare_f
-#pragma weak pmpi_comm_compare = ompi_comm_compare_f
-#pragma weak pmpi_comm_compare_ = ompi_comm_compare_f
-#pragma weak pmpi_comm_compare__ = ompi_comm_compare_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_COMM_COMPARE = ompi_comm_compare_f
+#        pragma weak pmpi_comm_compare = ompi_comm_compare_f
+#        pragma weak pmpi_comm_compare_ = ompi_comm_compare_f
+#        pragma weak pmpi_comm_compare__ = ompi_comm_compare_f
 
-#pragma weak PMPI_Comm_compare_f = ompi_comm_compare_f
-#pragma weak PMPI_Comm_compare_f08 = ompi_comm_compare_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_COMPARE,
-                           pmpi_comm_compare,
-                           pmpi_comm_compare_,
-                           pmpi_comm_compare__,
-                           pompi_comm_compare_f,
-                           (MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr),
-                           (comm1, comm2, result, ierr) )
-#endif
+#        pragma weak PMPI_Comm_compare_f = ompi_comm_compare_f
+#        pragma weak PMPI_Comm_compare_f08 = ompi_comm_compare_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_COMM_COMPARE, pmpi_comm_compare, pmpi_comm_compare_,
+                           pmpi_comm_compare__, pompi_comm_compare_f,
+                           (MPI_Fint * comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr),
+                           (comm1, comm2, result, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_COMM_COMPARE = ompi_comm_compare_f
-#pragma weak mpi_comm_compare = ompi_comm_compare_f
-#pragma weak mpi_comm_compare_ = ompi_comm_compare_f
-#pragma weak mpi_comm_compare__ = ompi_comm_compare_f
+#    pragma weak MPI_COMM_COMPARE = ompi_comm_compare_f
+#    pragma weak mpi_comm_compare = ompi_comm_compare_f
+#    pragma weak mpi_comm_compare_ = ompi_comm_compare_f
+#    pragma weak mpi_comm_compare__ = ompi_comm_compare_f
 
-#pragma weak MPI_Comm_compare_f = ompi_comm_compare_f
-#pragma weak MPI_Comm_compare_f08 = ompi_comm_compare_f
+#    pragma weak MPI_Comm_compare_f = ompi_comm_compare_f
+#    pragma weak MPI_Comm_compare_f08 = ompi_comm_compare_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
-                           mpi_comm_compare,
-                           mpi_comm_compare_,
-                           mpi_comm_compare__,
-                           ompi_comm_compare_f,
-                           (MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr),
-                           (comm1, comm2, result, ierr) )
-#else
-#define ompi_comm_compare_f pompi_comm_compare_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_COMM_COMPARE, mpi_comm_compare, mpi_comm_compare_,
+                           mpi_comm_compare__, ompi_comm_compare_f,
+                           (MPI_Fint * comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr),
+                           (comm1, comm2, result, ierr))
+#    else
+#        define ompi_comm_compare_f pompi_comm_compare_f
+#    endif
 #endif
-#endif
-
 
 void ompi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr)
 {
@@ -73,9 +66,9 @@ void ompi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI
     MPI_Comm c_comm2 = PMPI_Comm_f2c(*comm2);
     OMPI_SINGLE_NAME_DECL(result);
 
-    c_ierr = PMPI_Comm_compare(c_comm1, c_comm2,
-                              OMPI_SINGLE_NAME_CONVERT(result));
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Comm_compare(c_comm1, c_comm2, OMPI_SINGLE_NAME_CONVERT(result));
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_FINT(result);

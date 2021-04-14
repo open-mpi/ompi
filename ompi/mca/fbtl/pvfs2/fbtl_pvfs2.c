@@ -26,17 +26,17 @@
  */
 
 #include "ompi_config.h"
-#include "mpi.h"
-#include "ompi/mca/fbtl/fbtl.h"
-#include "ompi/mca/fbtl/base/base.h"
 #include "ompi/mca/fbtl/pvfs2/fbtl_pvfs2.h"
+#include "mpi.h"
+#include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/fbtl/fbtl.h"
 
 /*
  * *******************************************************************
  * ************************ actions structure ************************
  * *******************************************************************
  */
-static mca_fbtl_base_module_1_0_0_t pvfs2 =  {
+static mca_fbtl_base_module_1_0_0_t pvfs2 = {
     mca_fbtl_pvfs2_module_init,     /* initalise after being selected */
     mca_fbtl_pvfs2_module_finalize, /* close a module on a communicator */
     mca_fbtl_pvfs2_preadv,          /* blocking read */
@@ -53,39 +53,42 @@ static mca_fbtl_base_module_1_0_0_t pvfs2 =  {
  * *******************************************************************
  */
 
-int mca_fbtl_pvfs2_component_init_query(bool enable_progress_threads,
-                                      bool enable_mpi_threads) {
+int mca_fbtl_pvfs2_component_init_query(bool enable_progress_threads, bool enable_mpi_threads)
+{
     /* Nothing to do */
 
-   return OMPI_SUCCESS;
-}
-
-struct mca_fbtl_base_module_1_0_0_t *
-mca_fbtl_pvfs2_component_file_query (ompio_file_t *fh, int *priority) {
-   *priority = mca_fbtl_pvfs2_priority;
-
-   if (PVFS2 == fh->f_fstype) {
-       if (*priority < 50) {
-           *priority = 50;
-       }
-   }
-
-   return &pvfs2;
-}
-
-int mca_fbtl_pvfs2_component_file_unquery (ompio_file_t *file) {
-   /* This function might be needed for some purposes later. for now it
-    * does not have anything to do since there are no steps which need
-    * to be undone if this module is not selected */
-
-   return OMPI_SUCCESS;
-}
-
-int mca_fbtl_pvfs2_module_init (ompio_file_t *file) {
     return OMPI_SUCCESS;
 }
 
+struct mca_fbtl_base_module_1_0_0_t *mca_fbtl_pvfs2_component_file_query(ompio_file_t *fh,
+                                                                         int *priority)
+{
+    *priority = mca_fbtl_pvfs2_priority;
 
-int mca_fbtl_pvfs2_module_finalize (ompio_file_t *file) {
+    if (PVFS2 == fh->f_fstype) {
+        if (*priority < 50) {
+            *priority = 50;
+        }
+    }
+
+    return &pvfs2;
+}
+
+int mca_fbtl_pvfs2_component_file_unquery(ompio_file_t *file)
+{
+    /* This function might be needed for some purposes later. for now it
+     * does not have anything to do since there are no steps which need
+     * to be undone if this module is not selected */
+
+    return OMPI_SUCCESS;
+}
+
+int mca_fbtl_pvfs2_module_init(ompio_file_t *file)
+{
+    return OMPI_SUCCESS;
+}
+
+int mca_fbtl_pvfs2_module_finalize(ompio_file_t *file)
+{
     return OMPI_SUCCESS;
 }

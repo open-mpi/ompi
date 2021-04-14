@@ -23,17 +23,15 @@
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_endpoint.h"
-#include "mtl_portals4_request.h"
 #include "mtl_portals4_message.h"
+#include "mtl_portals4_request.h"
 
-static int
-completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_request)
+static int completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_request)
 {
-    ompi_mtl_portals4_probe_request_t *ptl_request =
-        (ompi_mtl_portals4_probe_request_t*) ptl_base_request;
+    ompi_mtl_portals4_probe_request_t *ptl_request = (ompi_mtl_portals4_probe_request_t *)
+        ptl_base_request;
 
-    opal_output_verbose(10, ompi_mtl_base_framework.framework_output,
-                        "%s:%d: completion_fn: %d %d",
+    opal_output_verbose(10, ompi_mtl_base_framework.framework_output, "%s:%d: completion_fn: %d %d",
                         __FILE__, __LINE__, ev->type, ev->ni_fail_type);
 
     if (OPAL_UNLIKELY(ev->ni_fail_type == PTL_OK)) {
@@ -54,13 +52,8 @@ completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_reques
     return OMPI_SUCCESS;
 }
 
-int
-ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
-                         struct ompi_communicator_t *comm,
-                         int src,
-                         int tag,
-                         int *flag,
-                         struct ompi_status_public_t *status)
+int ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t *mtl, struct ompi_communicator_t *comm,
+                             int src, int tag, int *flag, struct ompi_status_public_t *status)
 {
     struct ompi_mtl_portals4_probe_request_t request;
     ptl_me_t me;
@@ -68,7 +61,7 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
     ptl_match_bits_t match_bits, ignore_bits;
     int ret;
 
-    if  (MPI_ANY_SOURCE == src) {
+    if (MPI_ANY_SOURCE == src) {
         if (ompi_mtl_portals4.use_logical) {
             remote_proc.rank = PTL_RANK_ANY;
         } else {
@@ -78,12 +71,11 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
     } else if ((ompi_mtl_portals4.use_logical) && (MPI_COMM_WORLD == comm)) {
         remote_proc.rank = src;
     } else {
-        ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
-        remote_proc = *((ptl_process_t*) ompi_mtl_portals4_get_endpoint (mtl, ompi_proc));
+        ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(comm, src);
+        remote_proc = *((ptl_process_t *) ompi_mtl_portals4_get_endpoint(mtl, ompi_proc));
     }
 
-    MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,
-                               src, tag);
+    MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid, src, tag);
 
     me.start = NULL;
     me.length = 0;
@@ -102,15 +94,11 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
 
     opal_atomic_wmb();
 
-    ret = PtlMESearch(ompi_mtl_portals4.ni_h,
-                      ompi_mtl_portals4.recv_idx,
-                      &me,
-                      PTL_SEARCH_ONLY,
+    ret = PtlMESearch(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx, &me, PTL_SEARCH_ONLY,
                       &request);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: PtlMESearch failed: %d",
-                            __FILE__, __LINE__, ret);
+                            "%s:%d: PtlMESearch failed: %d", __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
     }
 
@@ -126,15 +114,9 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
-                          struct ompi_communicator_t *comm,
-                          int src,
-                          int tag,
-                          int *matched,
-                          struct ompi_message_t **message,
-                          struct ompi_status_public_t *status)
+int ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl, struct ompi_communicator_t *comm,
+                              int src, int tag, int *matched, struct ompi_message_t **message,
+                              struct ompi_status_public_t *status)
 {
     struct ompi_mtl_portals4_probe_request_t request;
     ptl_me_t me;
@@ -142,11 +124,10 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
     ptl_match_bits_t match_bits, ignore_bits;
     int ret;
 
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "%s:%d: improbe %d %d %d",
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, "%s:%d: improbe %d %d %d",
                         __FILE__, __LINE__, comm->c_contextid, src, tag);
 
-    if  (MPI_ANY_SOURCE == src) {
+    if (MPI_ANY_SOURCE == src) {
         if (ompi_mtl_portals4.use_logical) {
             remote_proc.rank = PTL_RANK_ANY;
         } else {
@@ -156,12 +137,11 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
     } else if ((ompi_mtl_portals4.use_logical) && (MPI_COMM_WORLD == comm)) {
         remote_proc.rank = src;
     } else {
-        ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
-        remote_proc = *((ptl_process_t*) ompi_mtl_portals4_get_endpoint (mtl, ompi_proc));
+        ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(comm, src);
+        remote_proc = *((ptl_process_t *) ompi_mtl_portals4_get_endpoint(mtl, ompi_proc));
     }
 
-    MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,
-                               src, tag);
+    MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid, src, tag);
 
     me.start = NULL;
     me.length = 0;
@@ -180,15 +160,11 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
 
     opal_atomic_wmb();
 
-    ret = PtlMESearch(ompi_mtl_portals4.ni_h,
-                      ompi_mtl_portals4.recv_idx,
-                      &me,
-                      PTL_SEARCH_DELETE,
+    ret = PtlMESearch(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx, &me, PTL_SEARCH_DELETE,
                       &request);
     if (OPAL_UNLIKELY(PTL_OK != ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: PtlMESearch failed: %d",
-                            __FILE__, __LINE__, ret);
+                            "%s:%d: PtlMESearch failed: %d", __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
     }
 

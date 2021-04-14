@@ -25,32 +25,28 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/op/op.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/op/op.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Reduce_local = PMPI_Reduce_local
-#endif
-#define MPI_Reduce_local PMPI_Reduce_local
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Reduce_local = PMPI_Reduce_local
+#    endif
+#    define MPI_Reduce_local PMPI_Reduce_local
 #endif
 
 static const char FUNC_NAME[] = "MPI_Reduce_local";
 
-
-int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
-                     MPI_Datatype datatype, MPI_Op op)
+int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count, MPI_Datatype datatype, MPI_Op op)
 {
     int err;
 
-    MEMCHECKER(
-        memchecker_datatype(datatype);
-    );
+    MEMCHECKER(memchecker_datatype(datatype););
 
     if (MPI_PARAM_CHECK) {
         char *msg;
@@ -81,7 +77,7 @@ int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
     // this is a local operation to this process.
     ompi_communicator_t *comm = &ompi_mpi_comm_self.comm;
     err = comm->c_coll->coll_reduce_local(inbuf, inoutbuf, count, datatype, op,
-                                         comm->c_coll->coll_reduce_local_module);
+                                          comm->c_coll->coll_reduce_local_module);
     OBJ_RELEASE(datatype);
     OBJ_RELEASE(op);
 

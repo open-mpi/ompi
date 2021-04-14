@@ -21,21 +21,20 @@
  */
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/op/op.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Op_f2c = PMPI_Op_f2c
-#endif
-#define MPI_Op_f2c PMPI_Op_f2c
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Op_f2c = PMPI_Op_f2c
+#    endif
+#    define MPI_Op_f2c PMPI_Op_f2c
 #endif
 
 static const char FUNC_NAME[] = "MPI_Op_f2c";
-
 
 MPI_Op MPI_Op_f2c(MPI_Fint op_f)
 {
@@ -51,11 +50,9 @@ MPI_Op MPI_Op_f2c(MPI_Fint op_f)
        invalid fortran handle.  If we get an invalid fortran handle,
        return an invalid C handle. */
 
-    if (op_index < 0 ||
-        op_index >=
-        opal_pointer_array_get_size(ompi_op_f_to_c_table)) {
+    if (op_index < 0 || op_index >= opal_pointer_array_get_size(ompi_op_f_to_c_table)) {
         return NULL;
     }
 
-    return (MPI_Op)opal_pointer_array_get_item(ompi_op_f_to_c_table, op_index);
+    return (MPI_Op) opal_pointer_array_get_item(ompi_op_f_to_c_table, op_index);
 }

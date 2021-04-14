@@ -20,59 +20,57 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Errhandler_free = PMPI_Errhandler_free
-#endif
-#define MPI_Errhandler_free PMPI_Errhandler_free
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Errhandler_free = PMPI_Errhandler_free
+#    endif
+#    define MPI_Errhandler_free PMPI_Errhandler_free
 #endif
 
 static const char FUNC_NAME[] = "MPI_Errhandler_free";
 
-
 int MPI_Errhandler_free(MPI_Errhandler *errhandler)
 {
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    /* Raise an MPI error if we got NULL or if we got an intrinsic
-       *and* the reference count is 1 (meaning that this FREE would
-       actually free the underlying intrinsic object).  This is ugly
-       but necessary -- see below. */
-    if (NULL == errhandler ||
-        (ompi_errhandler_is_intrinsic(*errhandler) &&
-         1 == (*errhandler)->super.obj_reference_count)) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                   "MPI_Errhandler_free");
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        /* Raise an MPI error if we got NULL or if we got an intrinsic
+           *and* the reference count is 1 (meaning that this FREE would
+           actually free the underlying intrinsic object).  This is ugly
+           but necessary -- see below. */
+        if (NULL == errhandler
+            || (ompi_errhandler_is_intrinsic(*errhandler)
+                && 1 == (*errhandler)->super.obj_reference_count)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, "MPI_Errhandler_free");
+        }
     }
-  }
 
-  /* Return the errhandler.  According to MPI-2 errata, any errhandler
-     obtained by MPI_*_GET_ERRHANDLER or MPI_ERRHANDLER_GET must also
-     be freed by MPI_ERRHANDLER_FREE (including intrinsic error
-     handlers).  For example, this is valid:
+    /* Return the errhandler.  According to MPI-2 errata, any errhandler
+       obtained by MPI_*_GET_ERRHANDLER or MPI_ERRHANDLER_GET must also
+       be freed by MPI_ERRHANDLER_FREE (including intrinsic error
+       handlers).  For example, this is valid:
 
-     int main() {
-         MPI_Errhandler errhdl;
-         MPI_Init(NULL, NULL);
-         MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhdl);
-         MPI_Errhandler_free(&errhdl);
-         MPI_Finalize();
-         return 0;
-     }
+       int main() {
+           MPI_Errhandler errhdl;
+           MPI_Init(NULL, NULL);
+           MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhdl);
+           MPI_Errhandler_free(&errhdl);
+           MPI_Finalize();
+           return 0;
+       }
 
-     So decrease the refcount here. */
+       So decrease the refcount here. */
 
-  OBJ_RELEASE(*errhandler);
-  *errhandler = MPI_ERRHANDLER_NULL;
+    OBJ_RELEASE(*errhandler);
+    *errhandler = MPI_ERRHANDLER_NULL;
 
-  /* All done */
+    /* All done */
 
-  return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

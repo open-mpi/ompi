@@ -29,12 +29,11 @@
 
 #include "ompi/communicator/communicator.h"
 
-#include "ompi/mca/mtl/mtl.h"
-#include "ompi/mca/mtl/base/base.h"
 #include "mtl_psm2_endpoint.h"
+#include "ompi/mca/mtl/base/base.h"
+#include "ompi/mca/mtl/mtl.h"
 
 #include "psm2.h"
-
 
 BEGIN_C_DECLS
 
@@ -44,11 +43,11 @@ BEGIN_C_DECLS
 struct mca_mtl_psm2_module_t {
     mca_mtl_base_module_t super; /**< base MTL interface */
 
-    int32_t      connect_timeout;
+    int32_t connect_timeout;
 
-    psm2_ep_t	 ep;
-    psm2_mq_t	 mq;
-    psm2_epid_t  epid;
+    psm2_ep_t ep;
+    psm2_mq_t mq;
+    psm2_epid_t epid;
     psm2_epaddr_t epaddr;
     char *psm2_devices;
     char *psm2_memory;
@@ -68,38 +67,36 @@ typedef struct mca_mtl_psm2_module_t mca_mtl_psm2_module_t;
 extern mca_mtl_psm2_module_t ompi_mtl_psm2;
 
 struct mca_mtl_psm2_component_t {
-    mca_mtl_base_component_2_0_0_t          super;  /**< base MTL component */
+    mca_mtl_base_component_2_0_0_t super; /**< base MTL component */
 };
 typedef struct mca_mtl_psm2_component_t mca_mtl_psm2_component_t;
 
 OMPI_DECLSPEC extern mca_mtl_psm2_component_t mca_mtl_psm2_component;
 
-#define PSM2_MAKE_MQTAG(ctxt,rank,utag,tag) \
-    do {                                    \
-      (tag).tag0 = utag;                    \
-      (tag).tag1 = rank;                    \
-      (tag).tag2 = ctxt;                    \
+#define PSM2_MAKE_MQTAG(ctxt, rank, utag, tag) \
+    do {                                       \
+        (tag).tag0 = utag;                     \
+        (tag).tag1 = rank;                     \
+        (tag).tag2 = ctxt;                     \
     } while (0)
 
-#define PSM2_MAKE_TAGSEL(user_rank, user_tag, user_ctxt, tag, _tagsel)  \
-	do {								\
-        (tag).tag0 = user_tag;                                          \
-        (tag).tag1 = user_rank;                                         \
-        (tag).tag2 = user_ctxt;                                         \
-        (_tagsel).tag0 = 0xffffffffULL;                                 \
-        (_tagsel).tag1 = 0xffffffffULL;                                 \
-        (_tagsel).tag2 = 0xffffffffULL;                                 \
-        if((user_tag) == MPI_ANY_TAG)                                   \
-        {                                                               \
-            (_tagsel).tag0 = 0x80000000ULL;                             \
-            (tag).tag0 = 0x00000000ULL;                                 \
-        }                                                               \
-        if((user_rank) == MPI_ANY_SOURCE)                               \
-        {                                                               \
-            (_tagsel).tag1 = 0x00000000ULL;                             \
-        }                                                               \
+#define PSM2_MAKE_TAGSEL(user_rank, user_tag, user_ctxt, tag, _tagsel) \
+    do {                                                               \
+        (tag).tag0 = user_tag;                                         \
+        (tag).tag1 = user_rank;                                        \
+        (tag).tag2 = user_ctxt;                                        \
+        (_tagsel).tag0 = 0xffffffffULL;                                \
+        (_tagsel).tag1 = 0xffffffffULL;                                \
+        (_tagsel).tag2 = 0xffffffffULL;                                \
+        if ((user_tag) == MPI_ANY_TAG) {                               \
+            (_tagsel).tag0 = 0x80000000ULL;                            \
+            (tag).tag0 = 0x00000000ULL;                                \
+        }                                                              \
+        if ((user_rank) == MPI_ANY_SOURCE) {                           \
+            (_tagsel).tag1 = 0x00000000ULL;                            \
+        }                                                              \
     } while (0)
 
 END_C_DECLS
 
-#endif  /* MTL_PSM2_TYPES_H_HAS_BEEN_INCLUDED */
+#endif /* MTL_PSM2_TYPES_H_HAS_BEEN_INCLUDED */

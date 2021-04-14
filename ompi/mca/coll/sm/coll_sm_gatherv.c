@@ -20,9 +20,8 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
 #include "coll_sm.h"
-
+#include "ompi/constants.h"
 
 /*
  *	gatherv_intra
@@ -31,12 +30,10 @@
  *	Accepts:	- same arguments as MPI_Gatherb()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sm_gatherv_intra(const void *sbuf, int scount,
-                              struct ompi_datatype_t *sdtype,
+int mca_coll_sm_gatherv_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
                               void *rbuf, const int *rcounts, const int *disps,
                               struct ompi_datatype_t *rdtype, int root,
-                              struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+                              struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

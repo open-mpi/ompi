@@ -24,23 +24,22 @@
 
 #include "ompi_config.h"
 
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/file/file.h"
+#include "ompi/info/info.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/io/io.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/info/info.h"
-#include "ompi/file/file.h"
-#include "ompi/mca/io/io.h"
-#include "ompi/mca/io/base/base.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_delete = PMPI_File_delete
-#endif
-#define MPI_File_delete PMPI_File_delete
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_delete = PMPI_File_delete
+#    endif
+#    define MPI_File_delete PMPI_File_delete
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_delete";
-
 
 int MPI_File_delete(const char *filename, MPI_Info info)
 {

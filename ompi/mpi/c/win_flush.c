@@ -22,19 +22,19 @@
 
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/win/win.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_flush = PMPI_Win_flush
-#endif
-#define MPI_Win_flush PMPI_Win_flush
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_flush = PMPI_Win_flush
+#    endif
+#    define MPI_Win_flush PMPI_Win_flush
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_flush";

@@ -20,22 +20,21 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
 #include "opal/mca/threads/threads.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Is_thread_main = PMPI_Is_thread_main
-#endif
-#define MPI_Is_thread_main PMPI_Is_thread_main
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Is_thread_main = PMPI_Is_thread_main
+#    endif
+#    define MPI_Is_thread_main PMPI_Is_thread_main
 #endif
 
 static const char FUNC_NAME[] = "MPI_Is_thread_main";
-
 
 int MPI_Is_thread_main(int *flag)
 {

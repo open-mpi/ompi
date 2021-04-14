@@ -21,34 +21,30 @@
 
 #include "ompi_config.h"
 
-#include <stdio.h>
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include <stdio.h>
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Topo_test = PMPI_Topo_test
-#endif
-#define MPI_Topo_test PMPI_Topo_test
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Topo_test = PMPI_Topo_test
+#    endif
+#    define MPI_Topo_test PMPI_Topo_test
 #endif
 
 static const char FUNC_NAME[] = "MPI_Topo_test";
 
-
 int MPI_Topo_test(MPI_Comm comm, int *status)
 {
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_comm_invalid (comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
-        } else if ( NULL == status ) {
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
+        } else if (NULL == status) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
     }

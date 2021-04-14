@@ -21,24 +21,23 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Barrier_init = PMPIX_Barrier_init
-#endif
-#define MPIX_Barrier_init PMPIX_Barrier_init
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPIX_Barrier_init = PMPIX_Barrier_init
+#    endif
+#    define MPIX_Barrier_init PMPIX_Barrier_init
 #endif
 
 static const char FUNC_NAME[] = "MPIX_Barrier_init";
-
 
 int MPIX_Barrier_init(MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
@@ -46,9 +45,7 @@ int MPIX_Barrier_init(MPI_Comm comm, MPI_Info info, MPI_Request *request)
 
     SPC_RECORD(OMPI_SPC_BARRIER_INIT, 1);
 
-    MEMCHECKER(
-            memchecker_comm(comm);
-            );
+    MEMCHECKER(memchecker_comm(comm););
 
     /* Error checking */
 
@@ -59,7 +56,8 @@ int MPIX_Barrier_init(MPI_Comm comm, MPI_Info info, MPI_Request *request)
         }
     }
 
-    err = comm->c_coll->coll_barrier_init(comm, info, request, comm->c_coll->coll_barrier_init_module);
+    err = comm->c_coll->coll_barrier_init(comm, info, request,
+                                          comm->c_coll->coll_barrier_init_module);
 
     /* All done */
 

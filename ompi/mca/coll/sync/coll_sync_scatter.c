@@ -21,7 +21,6 @@
 
 #include "coll_sync.h"
 
-
 /*
  *	scatter
  *
@@ -29,21 +28,16 @@
  *	Accepts:	- same arguments as MPI_Scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sync_scatter(const void *sbuf, int scount,
-                          struct ompi_datatype_t *sdtype,
-                          void *rbuf, int rcount,
-                          struct ompi_datatype_t *rdtype,
-                          int root, struct ompi_communicator_t *comm,
-                          mca_coll_base_module_t *module)
+int mca_coll_sync_scatter(const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf,
+                          int rcount, struct ompi_datatype_t *rdtype, int root,
+                          struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    mca_coll_sync_module_t *s = (mca_coll_sync_module_t*) module;
+    mca_coll_sync_module_t *s = (mca_coll_sync_module_t *) module;
 
     if (s->in_operation) {
-        return s->c_coll.coll_scatter(sbuf, scount, sdtype,
-                                      rbuf, rcount, rdtype, root, comm,
+        return s->c_coll.coll_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
                                       s->c_coll.coll_scatter_module);
     }
-    COLL_SYNC(s, s->c_coll.coll_scatter(sbuf, scount, sdtype,
-                                        rbuf, rcount, rdtype, root, comm,
+    COLL_SYNC(s, s->c_coll.coll_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
                                         s->c_coll.coll_scatter_module));
 }

@@ -20,13 +20,11 @@
 #include "ompi/constants.h"
 
 #include "ompi/mca/mca.h"
-#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 
-
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
-
+#include "ompi/mca/osc/osc.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -36,22 +34,21 @@
 
 #include "ompi/mca/osc/base/static-components.h"
 
-int
-ompi_osc_base_find_available(bool enable_progress_threads,
-                            bool enable_mpi_threads)
+int ompi_osc_base_find_available(bool enable_progress_threads, bool enable_mpi_threads)
 {
     mca_base_component_list_item_t *cli, *next;
 
-    OPAL_LIST_FOREACH_SAFE(cli, next, &ompi_osc_base_framework.framework_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH_SAFE (cli, next, &ompi_osc_base_framework.framework_components,
+                            mca_base_component_list_item_t) {
         int ret;
-        ompi_osc_base_component_t *component = (ompi_osc_base_component_t*) cli->cli_component;
+        ompi_osc_base_component_t *component = (ompi_osc_base_component_t *) cli->cli_component;
 
         /* see if this component is ready to run... */
         ret = component->osc_init(enable_progress_threads, enable_mpi_threads);
         if (OMPI_SUCCESS != ret) {
             /* not available. close the component */
             opal_list_remove_item(&ompi_osc_base_framework.framework_components, &cli->super);
-            mca_base_component_close((mca_base_component_t *)component,
+            mca_base_component_close((mca_base_component_t *) component,
                                      ompi_osc_base_framework.framework_output);
             OBJ_RELEASE(cli);
         }
@@ -59,16 +56,15 @@ ompi_osc_base_find_available(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
-int
-ompi_osc_base_finalize(void)
+int ompi_osc_base_finalize(void)
 {
-    opal_list_item_t* item;
+    opal_list_item_t *item;
 
     /* Finalize all available modules */
-    while (NULL !=
-           (item = opal_list_remove_first(&ompi_osc_base_framework.framework_components))) {
-        ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
-            ((mca_base_component_list_item_t*) item)->cli_component;
+    while (NULL != (item = opal_list_remove_first(&ompi_osc_base_framework.framework_components))) {
+        ompi_osc_base_component_t *component = (ompi_osc_base_component_t
+                                                    *) ((mca_base_component_list_item_t *) item)
+                                                   ->cli_component;
         component->osc_finalize();
         OBJ_RELEASE(item);
     }

@@ -28,11 +28,10 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "ompi/request/request.h"
 #include "ompi/info/info.h"
-
+#include "ompi/mca/mca.h"
+#include "ompi/request/request.h"
+#include "opal/mca/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -41,8 +40,7 @@ struct ompi_file_t;
 /*
  * Macro for use in components that are of type coll
  */
-#define MCA_SHAREDFP_BASE_VERSION_2_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("sharedfp", 2, 0, 0)
+#define MCA_SHAREDFP_BASE_VERSION_2_0_0 OMPI_MCA_BASE_VERSION_2_1_0("sharedfp", 2, 0, 0)
 
 /*
  * This framework abstracts out operations of the shared filepointer
@@ -74,16 +72,13 @@ struct ompi_file_t;
  * **************** component struct *******************************
  */
 
-typedef int (*mca_sharedfp_base_component_init_query_1_0_0_fn_t)
-(bool enable_progress_threads,
- bool enable_mpi_threads);
+typedef int (*mca_sharedfp_base_component_init_query_1_0_0_fn_t)(bool enable_progress_threads,
+                                                                 bool enable_mpi_threads);
 
-typedef struct mca_sharedfp_base_module_1_0_0_t *
-        (*mca_sharedfp_base_component_file_query_1_0_0_fn_t)
-        (struct ompio_file_t *file, int *priority);
+typedef struct mca_sharedfp_base_module_1_0_0_t *(
+    *mca_sharedfp_base_component_file_query_1_0_0_fn_t)(struct ompio_file_t *file, int *priority);
 
-typedef int (*mca_sharedfp_base_component_file_unquery_1_0_0_fn_t)
-        (struct ompio_file_t *file);
+typedef int (*mca_sharedfp_base_component_file_unquery_1_0_0_fn_t)(struct ompio_file_t *file);
 
 /*
  * ****************** component struct ******************************
@@ -110,77 +105,52 @@ typedef struct mca_sharedfp_base_component_2_0_0_t mca_sharedfp_base_component_t
  * ***********************************************************************
  */
 
-typedef int (*mca_sharedfp_base_module_init_1_0_0_fn_t)
-(struct ompio_file_t *file);
+typedef int (*mca_sharedfp_base_module_init_1_0_0_fn_t)(struct ompio_file_t *file);
 
-typedef int (*mca_sharedfp_base_module_finalize_1_0_0_fn_t)
-(struct ompio_file_t *file);
+typedef int (*mca_sharedfp_base_module_finalize_1_0_0_fn_t)(struct ompio_file_t *file);
 
 /* SHAREDFP function definitions */
 /* IMPORTANT: Update here when adding sharedfp component interface functions*/
-typedef int (*mca_sharedfp_base_module_seek_fn_t)(
-        struct ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset, int whence);
-typedef int (*mca_sharedfp_base_module_get_position_fn_t)(
-        struct ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE * offset);
-typedef int (*mca_sharedfp_base_module_write_fn_t)(
-        struct ompio_file_t *fh,
-        const void *buf,
-        int count,
-        struct ompi_datatype_t *datatype,
-        ompi_status_public_t *status);
-typedef int (*mca_sharedfp_base_module_write_ordered_fn_t)(
-        struct ompio_file_t *fh,
-        const void *buf,
-        int count,
-        struct ompi_datatype_t *datatype,
-        ompi_status_public_t *status);
-typedef int (*mca_sharedfp_base_module_write_ordered_begin_fn_t)(
-        struct ompio_file_t *fh,
-        const void *buf,
-        int count,
-        struct ompi_datatype_t *datatype);
-typedef int (*mca_sharedfp_base_module_write_ordered_end_fn_t)(
-        struct ompio_file_t *fh,
-        const void *buf,
-        ompi_status_public_t *status);
-typedef int (*mca_sharedfp_base_module_iwrite_fn_t)(
-        struct ompio_file_t *fh,
-        const void *buf,
-        int count,
-        struct ompi_datatype_t *datatype,
-        ompi_request_t ** request);
-typedef int (*mca_sharedfp_base_module_read_fn_t)(
-        struct ompio_file_t *fh,
-        void *buf,
-        int count,
-        struct ompi_datatype_t *datatype,
-        ompi_status_public_t *status);
-typedef int (*mca_sharedfp_base_module_read_ordered_fn_t)(
-        struct ompio_file_t *fh,
-        void *buf,
-        int count,
-        struct ompi_datatype_t *datatype,
-        ompi_status_public_t *status);
-typedef int (*mca_sharedfp_base_module_iread_fn_t)(
-        struct ompio_file_t *fh,
-        void *buf,
-        int count,
-        struct ompi_datatype_t *datatype,
-        ompi_request_t ** request);
-typedef int (*mca_sharedfp_base_module_read_ordered_begin_fn_t)(
-        struct ompio_file_t *fh,
-        void *buf,
-        int count,
-        struct ompi_datatype_t *datatype);
-typedef int (*mca_sharedfp_base_module_read_ordered_end_fn_t)(
-        struct ompio_file_t *fh,
-        void *buf,
-        ompi_status_public_t *status);
-typedef int (*mca_sharedfp_base_module_file_open_fn_t)(
-        struct ompi_communicator_t *comm, const char *filename, int amode,
-        struct opal_info_t *info, struct ompio_file_t *fh);
+typedef int (*mca_sharedfp_base_module_seek_fn_t)(struct ompio_file_t *fh,
+                                                  OMPI_MPI_OFFSET_TYPE offset, int whence);
+typedef int (*mca_sharedfp_base_module_get_position_fn_t)(struct ompio_file_t *fh,
+                                                          OMPI_MPI_OFFSET_TYPE *offset);
+typedef int (*mca_sharedfp_base_module_write_fn_t)(struct ompio_file_t *fh, const void *buf,
+                                                   int count, struct ompi_datatype_t *datatype,
+                                                   ompi_status_public_t *status);
+typedef int (*mca_sharedfp_base_module_write_ordered_fn_t)(struct ompio_file_t *fh, const void *buf,
+                                                           int count,
+                                                           struct ompi_datatype_t *datatype,
+                                                           ompi_status_public_t *status);
+typedef int (*mca_sharedfp_base_module_write_ordered_begin_fn_t)(struct ompio_file_t *fh,
+                                                                 const void *buf, int count,
+                                                                 struct ompi_datatype_t *datatype);
+typedef int (*mca_sharedfp_base_module_write_ordered_end_fn_t)(struct ompio_file_t *fh,
+                                                               const void *buf,
+                                                               ompi_status_public_t *status);
+typedef int (*mca_sharedfp_base_module_iwrite_fn_t)(struct ompio_file_t *fh, const void *buf,
+                                                    int count, struct ompi_datatype_t *datatype,
+                                                    ompi_request_t **request);
+typedef int (*mca_sharedfp_base_module_read_fn_t)(struct ompio_file_t *fh, void *buf, int count,
+                                                  struct ompi_datatype_t *datatype,
+                                                  ompi_status_public_t *status);
+typedef int (*mca_sharedfp_base_module_read_ordered_fn_t)(struct ompio_file_t *fh, void *buf,
+                                                          int count,
+                                                          struct ompi_datatype_t *datatype,
+                                                          ompi_status_public_t *status);
+typedef int (*mca_sharedfp_base_module_iread_fn_t)(struct ompio_file_t *fh, void *buf, int count,
+                                                   struct ompi_datatype_t *datatype,
+                                                   ompi_request_t **request);
+typedef int (*mca_sharedfp_base_module_read_ordered_begin_fn_t)(struct ompio_file_t *fh, void *buf,
+                                                                int count,
+                                                                struct ompi_datatype_t *datatype);
+typedef int (*mca_sharedfp_base_module_read_ordered_end_fn_t)(struct ompio_file_t *fh, void *buf,
+                                                              ompi_status_public_t *status);
+typedef int (*mca_sharedfp_base_module_file_open_fn_t)(struct ompi_communicator_t *comm,
+                                                       const char *filename, int amode,
+                                                       struct opal_info_t *info,
+                                                       struct ompio_file_t *fh);
 typedef int (*mca_sharedfp_base_module_file_close_fn_t)(struct ompio_file_t *fh);
-
 
 /*
  * ***********************************************************************
@@ -198,36 +168,35 @@ struct mca_sharedfp_base_module_1_0_0_t {
 
     /* SHAREDFP function pointers */
     /* IMPORTANT: Update here when adding sharedfp component interface functions*/
-    mca_sharedfp_base_module_seek_fn_t        sharedfp_seek;
+    mca_sharedfp_base_module_seek_fn_t sharedfp_seek;
     mca_sharedfp_base_module_get_position_fn_t sharedfp_get_position;
-    mca_sharedfp_base_module_read_fn_t        sharedfp_read;
-    mca_sharedfp_base_module_read_ordered_fn_t        sharedfp_read_ordered;
-    mca_sharedfp_base_module_read_ordered_begin_fn_t       sharedfp_read_ordered_begin;
-    mca_sharedfp_base_module_read_ordered_end_fn_t       sharedfp_read_ordered_end;
-    mca_sharedfp_base_module_iread_fn_t       sharedfp_iread;
-    mca_sharedfp_base_module_write_fn_t       sharedfp_write;
-    mca_sharedfp_base_module_write_ordered_fn_t       sharedfp_write_ordered;
-    mca_sharedfp_base_module_write_ordered_begin_fn_t       sharedfp_write_ordered_begin;
-    mca_sharedfp_base_module_write_ordered_end_fn_t       sharedfp_write_ordered_end;
-    mca_sharedfp_base_module_iwrite_fn_t       sharedfp_iwrite;
-    mca_sharedfp_base_module_file_open_fn_t   sharedfp_file_open;
-    mca_sharedfp_base_module_file_close_fn_t  sharedfp_file_close;
+    mca_sharedfp_base_module_read_fn_t sharedfp_read;
+    mca_sharedfp_base_module_read_ordered_fn_t sharedfp_read_ordered;
+    mca_sharedfp_base_module_read_ordered_begin_fn_t sharedfp_read_ordered_begin;
+    mca_sharedfp_base_module_read_ordered_end_fn_t sharedfp_read_ordered_end;
+    mca_sharedfp_base_module_iread_fn_t sharedfp_iread;
+    mca_sharedfp_base_module_write_fn_t sharedfp_write;
+    mca_sharedfp_base_module_write_ordered_fn_t sharedfp_write_ordered;
+    mca_sharedfp_base_module_write_ordered_begin_fn_t sharedfp_write_ordered_begin;
+    mca_sharedfp_base_module_write_ordered_end_fn_t sharedfp_write_ordered_end;
+    mca_sharedfp_base_module_iwrite_fn_t sharedfp_iwrite;
+    mca_sharedfp_base_module_file_open_fn_t sharedfp_file_open;
+    mca_sharedfp_base_module_file_close_fn_t sharedfp_file_close;
 };
 typedef struct mca_sharedfp_base_module_1_0_0_t mca_sharedfp_base_module_1_0_0_t;
 typedef mca_sharedfp_base_module_1_0_0_t mca_sharedfp_base_module_t;
-
 
 /* This structure keeps all of the data needed by a sharedfp module.
  * This structure is assigned to the ompio file handle's
  * 'f_sharedfp_data' attribute during the call to the file_open function.
  */
-struct mca_sharedfp_base_data_t{
+struct mca_sharedfp_base_data_t {
     /* attributes that will be used by all of the sharedfp components */
     OMPI_MPI_OFFSET_TYPE global_offset;
 
     /* attributes that are specific to a component are
      * combined into a structure that is assigned to this attribute */
-    void   *selected_module_data;
+    void *selected_module_data;
 };
 
 /**************************************/

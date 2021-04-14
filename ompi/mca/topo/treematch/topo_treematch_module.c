@@ -17,8 +17,8 @@
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
+#include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/treematch/topo_treematch.h"
 
 /*
@@ -30,14 +30,12 @@ static void treematch_module_destructor(mca_topo_treematch_module_t *u);
 OBJ_CLASS_INSTANCE(mca_topo_treematch_module_t, mca_topo_base_module_t,
                    treematch_module_constructor, treematch_module_destructor);
 
-
 static void treematch_module_constructor(mca_topo_treematch_module_t *u)
 {
     mca_topo_base_module_t *m = &(u->super);
 
     memset(&m->topo, 0, sizeof(m->topo));
 }
-
 
 static void treematch_module_destructor(mca_topo_treematch_module_t *u)
 {

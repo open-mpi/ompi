@@ -15,18 +15,18 @@
 
 #include "ompi_config.h"
 
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
 #include "opal/util/info.h"
 #include "opal/util/info_subscriber.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_get_info = PMPI_Win_get_info
-#endif
-#define MPI_Win_get_info PMPI_Win_get_info
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_get_info = PMPI_Win_get_info
+#    endif
+#    define MPI_Win_get_info PMPI_Win_get_info
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_get_info";
@@ -48,15 +48,15 @@ int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
     }
 
     if (NULL == win->super.s_info) {
-/*
- * Setup any defaults if MPI_Win_set_info was never called
- */
-	opal_infosubscribe_change_info(&win->super, &MPI_INFO_NULL->super); 	
+        /*
+         * Setup any defaults if MPI_Win_set_info was never called
+         */
+        opal_infosubscribe_change_info(&win->super, &MPI_INFO_NULL->super);
     }
 
     (*info_used) = OBJ_NEW(ompi_info_t);
     if (NULL == (*info_used)) {
-       return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_NO_MEM, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_NO_MEM, FUNC_NAME);
     }
     opal_info_t *opal_info_used = &(*info_used)->super;
 

@@ -22,14 +22,13 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
+#include "coll_basic.h"
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
-#include "coll_basic.h"
-
 
 /*
  *	scatter_inter
@@ -38,13 +37,9 @@
  *	Accepts:	- same arguments as MPI_Scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_scatter_inter(const void *sbuf, int scount,
-                             struct ompi_datatype_t *sdtype,
-                             void *rbuf, int rcount,
-                             struct ompi_datatype_t *rdtype,
-                             int root, struct ompi_communicator_t *comm,
-                             mca_coll_base_module_t *module)
+int mca_coll_basic_scatter_inter(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                 void *rbuf, int rcount, struct ompi_datatype_t *rdtype, int root,
+                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int i, size, err;
     char *ptmp;
@@ -59,9 +54,8 @@ mca_coll_basic_scatter_inter(const void *sbuf, int scount,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* If not root, receive data. */
-        err = MCA_PML_CALL(recv(rbuf, rcount, rdtype, root,
-                                MCA_COLL_BASE_TAG_SCATTER,
-                                comm, MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(
+            recv(rbuf, rcount, rdtype, root, MCA_COLL_BASE_TAG_SCATTER, comm, MPI_STATUS_IGNORE));
     } else {
         /* I am the root, loop sending data. */
         err = ompi_datatype_get_extent(sdtype, &lb, &incr);
@@ -70,14 +64,14 @@ mca_coll_basic_scatter_inter(const void *sbuf, int scount,
         }
 
         reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
-        if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
+        if (NULL == reqs) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
         incr *= scount;
         for (i = 0, ptmp = (char *) sbuf; i < size; ++i, ptmp += incr) {
-            err = MCA_PML_CALL(isend(ptmp, scount, sdtype, i,
-                                     MCA_COLL_BASE_TAG_SCATTER,
-                                     MCA_PML_BASE_SEND_STANDARD, comm,
-                                     reqs++));
+            err = MCA_PML_CALL(isend(ptmp, scount, sdtype, i, MCA_COLL_BASE_TAG_SCATTER,
+                                     MCA_PML_BASE_SEND_STANDARD, comm, reqs++));
             if (OMPI_SUCCESS != err) {
                 ompi_coll_base_free_reqs(reqs, i + 1);
                 return err;

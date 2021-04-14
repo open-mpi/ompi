@@ -88,13 +88,14 @@
  * file.
  */
 
-#include "mpif-c-constants-decl.h"
+#    include "mpif-c-constants-decl.h"
 
 /* Convert between Fortran and C MPI_BOTTOM */
-#define OMPI_F2C_BOTTOM(addr)      (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
-#define OMPI_F2C_IN_PLACE(addr)    (OMPI_IS_FORTRAN_IN_PLACE(addr) ? MPI_IN_PLACE : (addr))
-#define OMPI_F2C_UNWEIGHTED(addr)  (OMPI_IS_FORTRAN_UNWEIGHTED(addr) ? MPI_UNWEIGHTED : (addr))
-#define OMPI_F2C_WEIGHTS_EMPTY(addr)  (OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) ? MPI_WEIGHTS_EMPTY : (addr))
+#    define OMPI_F2C_BOTTOM(addr)     (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
+#    define OMPI_F2C_IN_PLACE(addr)   (OMPI_IS_FORTRAN_IN_PLACE(addr) ? MPI_IN_PLACE : (addr))
+#    define OMPI_F2C_UNWEIGHTED(addr) (OMPI_IS_FORTRAN_UNWEIGHTED(addr) ? MPI_UNWEIGHTED : (addr))
+#    define OMPI_F2C_WEIGHTS_EMPTY(addr) \
+        (OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) ? MPI_WEIGHTS_EMPTY : (addr))
 
 #endif /* OMPI_BUILD_FORTRAN_BINDINGS */
 

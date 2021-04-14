@@ -26,54 +26,46 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Graph_create = PMPI_Graph_create
-#endif
-#define MPI_Graph_create PMPI_Graph_create
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Graph_create = PMPI_Graph_create
+#    endif
+#    define MPI_Graph_create PMPI_Graph_create
 #endif
 
 static const char FUNC_NAME[] = "MPI_Graph_create";
 
-
-int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[],
-                     const int edges[], int reorder, MPI_Comm *comm_graph)
+int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[], const int edges[],
+                     int reorder, MPI_Comm *comm_graph)
 {
-    mca_topo_base_module_t* topo;
+    mca_topo_base_module_t *topo;
     int err;
 
-    MEMCHECKER(
-        memchecker_comm(old_comm);
-    );
+    MEMCHECKER(memchecker_comm(old_comm););
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(old_comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                           FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (OMPI_COMM_IS_INTER(old_comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
         if (nnodes < 0) {
-            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
-                                           FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(old_comm, MPI_ERR_ARG, FUNC_NAME);
         } else if (nnodes >= 1 && ((NULL == indx) || (NULL == edges))) {
-            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
-                                           FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(old_comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
         if (nnodes > ompi_comm_size(old_comm)) {
-            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
-                                           FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(old_comm, MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
@@ -83,9 +75,8 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[],
         *comm_graph = MPI_COMM_NULL;
         return MPI_SUCCESS;
     }
-    if( nnodes > old_comm->c_local_group->grp_proc_count ) {
-        return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
-                                       FUNC_NAME);
+    if (nnodes > old_comm->c_local_group->grp_proc_count) {
+        return OMPI_ERRHANDLER_INVOKE(old_comm, MPI_ERR_ARG, FUNC_NAME);
     }
 
     /*
@@ -93,10 +84,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[],
      * ahead and select a topology module for this purpose and create
      * the new graph communicator
      */
-    if (OMPI_SUCCESS != (err = mca_topo_base_comm_select(old_comm,
-                                                         NULL,
-                                                         &topo,
-                                                         OMPI_COMM_GRAPH))) {
+    if (OMPI_SUCCESS != (err = mca_topo_base_comm_select(old_comm, NULL, &topo, OMPI_COMM_GRAPH))) {
         return err;
     }
 
@@ -106,14 +94,13 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[],
      * communicator. This is not absolutely necessary since we will
      * check for this, and other, error conditions during the operation.
      */
-    if( OPAL_UNLIKELY(!ompi_comm_iface_create_check(old_comm, &err)) ) {
+    if (OPAL_UNLIKELY(!ompi_comm_iface_create_check(old_comm, &err))) {
         OMPI_ERRHANDLER_RETURN(err, old_comm, err, FUNC_NAME);
     }
 #endif
 
     /* Now let that topology module rearrange procs/ranks if it wants to */
-    err = topo->topo.graph.graph_create(topo, old_comm,
-                                        nnodes, indx, edges,
+    err = topo->topo.graph.graph_create(topo, old_comm, nnodes, indx, edges,
                                         (0 == reorder) ? false : true, comm_graph);
     if (MPI_SUCCESS != err) {
         OBJ_RELEASE(topo);

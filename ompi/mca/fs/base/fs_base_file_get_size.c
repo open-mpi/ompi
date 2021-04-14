@@ -19,7 +19,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "base.h"
 #include "mpi.h"
@@ -35,17 +34,16 @@
  *	Accepts:	- same arguments as MPI_File_get_size()
  *	Returns:	- Success if size is retrieved
  */
-int mca_fs_base_file_get_size (ompio_file_t *fh,
-                               OMPI_MPI_OFFSET_TYPE *size)
+int mca_fs_base_file_get_size(ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE *size)
 {
     *size = lseek(fh->fd, 0, SEEK_END);
     if (-1 == *size) {
-        perror ("lseek");
+        perror("lseek");
         return OMPI_ERROR;
     }
 
     if (-1 == (lseek(fh->fd, fh->f_offset, SEEK_SET))) {
-        perror ("lseek");
+        perror("lseek");
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;

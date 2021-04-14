@@ -27,63 +27,49 @@
  * with --enable-mpi1-compatibility.
  */
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_hindexed = PMPI_Type_hindexed
-#endif
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_hindexed = PMPI_Type_hindexed
+#    endif
 /* undef before defining, to prevent possible redefinition when
  * using _Static_assert to error on usage of removed functions.
  */
-#undef MPI_Type_hindexed
-#define MPI_Type_hindexed PMPI_Type_hindexed
+#    undef MPI_Type_hindexed
+#    define MPI_Type_hindexed PMPI_Type_hindexed
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_hindexed";
 
-
-int MPI_Type_hindexed(int count,
-                      int array_of_blocklengths[],
-                      MPI_Aint array_of_displacements[],
-                      MPI_Datatype oldtype,
-                      MPI_Datatype *newtype)
+int MPI_Type_hindexed(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[],
+                      MPI_Datatype oldtype, MPI_Datatype *newtype)
 {
-   int i;
+    int i;
 
-    MEMCHECKER(
-        memchecker_datatype(oldtype);
-    );
+    MEMCHECKER(memchecker_datatype(oldtype););
 
-   if ( MPI_PARAM_CHECK ) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype ||
-          NULL == newtype) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
-                                      FUNC_NAME );
-      } else if (count < 0) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT,
-                                      FUNC_NAME );
-      } else if ((count > 0) && (NULL == array_of_blocklengths ||
-                                 NULL == array_of_displacements) ) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                      FUNC_NAME );
-      }
-      for (i = 0; i < count; ++i) {
-        if (array_of_blocklengths[i] < 0) {
-          return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                        FUNC_NAME );
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype || NULL == newtype) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
+        } else if (count < 0) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
+        } else if ((count > 0)
+                   && (NULL == array_of_blocklengths || NULL == array_of_displacements)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
-      }
-   }
+        for (i = 0; i < count; ++i) {
+            if (array_of_blocklengths[i] < 0) {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+            }
+        }
+    }
 
-   return PMPI_Type_create_hindexed(count,
-                                   array_of_blocklengths,
-                                   array_of_displacements,
-                                   oldtype,
-                                   newtype);
+    return PMPI_Type_create_hindexed(count, array_of_blocklengths, array_of_displacements, oldtype,
+                                     newtype);
 }

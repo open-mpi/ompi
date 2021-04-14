@@ -13,35 +13,26 @@
 #include "ompi_config.h"
 #include "pml_example.h"
 
-int mca_pml_example_iprobe( int src, int tag,
-                        struct ompi_communicator_t *comm,
-                        int *matched, ompi_status_public_t * status )
+int mca_pml_example_iprobe(int src, int tag, struct ompi_communicator_t *comm, int *matched,
+                           ompi_status_public_t *status)
 {
     return OMPI_SUCCESS;
 }
 
-int mca_pml_example_probe( int src, int tag,
-                       struct ompi_communicator_t *comm,
-                       ompi_status_public_t * status )
+int mca_pml_example_probe(int src, int tag, struct ompi_communicator_t *comm,
+                          ompi_status_public_t *status)
 {
     return OMPI_SUCCESS;
 }
 
-int mca_pml_example_improbe(int dst,
-                            int tag,
-                            struct ompi_communicator_t* comm,
-                            int *matched,
-                            struct ompi_message_t **message,
-                            ompi_status_public_t* status)
+int mca_pml_example_improbe(int dst, int tag, struct ompi_communicator_t *comm, int *matched,
+                            struct ompi_message_t **message, ompi_status_public_t *status)
 {
     return OMPI_SUCCESS;
 }
 
-int mca_pml_example_mprobe(int dst,
-                           int tag,
-                           struct ompi_communicator_t* comm,
-                           struct ompi_message_t **message,
-                           ompi_status_public_t* status)
+int mca_pml_example_mprobe(int dst, int tag, struct ompi_communicator_t *comm,
+                           struct ompi_message_t **message, ompi_status_public_t *status)
 {
     return OMPI_SUCCESS;
 }

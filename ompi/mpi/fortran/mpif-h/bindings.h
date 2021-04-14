@@ -28,43 +28,35 @@
 #include "ompi/request/grequest.h"
 
 #if OMPI_FORTRAN_CAPS
-#define OMPI_GENERATE_F77_BINDINGS(upper_case, \
-                                  lower_case, \
-                                  single_underscore, \
-                                  double_underscore, \
-                                  wrapper_function, \
-                                  signature, \
-                                  params) \
-            void upper_case signature { wrapper_function params; }
+#    define OMPI_GENERATE_F77_BINDINGS(upper_case, lower_case, single_underscore,              \
+                                       double_underscore, wrapper_function, signature, params) \
+        void upper_case signature                                                              \
+        {                                                                                      \
+            wrapper_function params;                                                           \
+        }
 #elif OMPI_FORTRAN_PLAIN
-#define OMPI_GENERATE_F77_BINDINGS(upper_case, \
-                                  lower_case, \
-                                  single_underscore, \
-                                  double_underscore, \
-                                  wrapper_function, \
-                                  signature, \
-                                  params) \
-            void lower_case signature { wrapper_function params; }
+#    define OMPI_GENERATE_F77_BINDINGS(upper_case, lower_case, single_underscore,              \
+                                       double_underscore, wrapper_function, signature, params) \
+        void lower_case signature                                                              \
+        {                                                                                      \
+            wrapper_function params;                                                           \
+        }
 #elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
-#define OMPI_GENERATE_F77_BINDINGS(upper_case, \
-                                  lower_case, \
-                                  single_underscore, \
-                                  double_underscore, \
-                                  wrapper_function, \
-                                  signature, \
-                                  params) \
-            void double_underscore signature { wrapper_function params; }
+#    define OMPI_GENERATE_F77_BINDINGS(upper_case, lower_case, single_underscore,              \
+                                       double_underscore, wrapper_function, signature, params) \
+        void double_underscore signature                                                       \
+        {                                                                                      \
+            wrapper_function params;                                                           \
+        }
 #elif OMPI_FORTRAN_SINGLE_UNDERSCORE
-#define OMPI_GENERATE_F77_BINDINGS(upper_case, \
-                                  lower_case, \
-                                  single_underscore, \
-                                  double_underscore, \
-                                  wrapper_function, \
-                                  signature, \
-                                  params) \
-            void single_underscore signature { wrapper_function params; }
+#    define OMPI_GENERATE_F77_BINDINGS(upper_case, lower_case, single_underscore,              \
+                                       double_underscore, wrapper_function, signature, params) \
+        void single_underscore signature                                                       \
+        {                                                                                      \
+            wrapper_function params;                                                           \
+        }
 #else
-#error Unrecognized Fortran name mangling scheme
+#    error Unrecognized Fortran name mangling scheme
 #endif
 /*
  * We maintain 2 separate sets of defines and prototypes. This ensures

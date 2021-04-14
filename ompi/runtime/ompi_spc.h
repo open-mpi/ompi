@@ -17,9 +17,9 @@
 
 #include "ompi_config.h"
 
-#include "opal/sys/atomic.h"
 #include "opal/include/opal/prefetch.h"
 #include "opal/mca/threads/thread_usage.h"
+#include "opal/sys/atomic.h"
 
 #include MCA_timer_IMPLEMENTATION_HEADER
 
@@ -161,7 +161,7 @@ typedef enum ompi_spc_counters {
 typedef long long ompi_spc_value_t;
 
 /* A structure for storing the event data */
-typedef struct ompi_spc_s{
+typedef struct ompi_spc_s {
     opal_atomic_int64_t value;
     opal_atomic_int32_t num_attached;
     bool is_high_watermark;
@@ -181,40 +181,32 @@ void ompi_spc_cycles_to_usecs(opal_timer_t *cycles);
 /* An array of event structures to store the event data value, attachments, flags)
  * The memory is statically allocated to reduce the number of loads required.
  */
-OPAL_DECLSPEC extern
-ompi_spc_t ompi_spc_events[OMPI_SPC_NUM_COUNTERS] __opal_attribute_aligned__(sizeof(ompi_spc_t));
+OPAL_DECLSPEC extern ompi_spc_t
+    ompi_spc_events[OMPI_SPC_NUM_COUNTERS] __opal_attribute_aligned__(sizeof(ompi_spc_t));
 
-#define SPC_INIT()  \
-    ompi_spc_init()
+#    define SPC_INIT() ompi_spc_init()
 
-#define SPC_FINI()  \
-    ompi_spc_fini()
+#    define SPC_FINI() ompi_spc_fini()
 
-#define SPC_RECORD(event_id, value)  \
-    ompi_spc_record(event_id, value)
+#    define SPC_RECORD(event_id, value) ompi_spc_record(event_id, value)
 
-#define SPC_TIMER_START(event_id, usec)  \
-    ompi_spc_timer_start(event_id, usec)
+#    define SPC_TIMER_START(event_id, usec) ompi_spc_timer_start(event_id, usec)
 
-#define SPC_TIMER_STOP(event_id, usec)  \
-    ompi_spc_timer_stop(event_id, usec)
+#    define SPC_TIMER_STOP(event_id, usec) ompi_spc_timer_stop(event_id, usec)
 
-#define SPC_USER_OR_MPI(tag, value, enum_if_user, enum_if_mpi) \
-    ompi_spc_user_or_mpi(tag, value, enum_if_user, enum_if_mpi)
+#    define SPC_USER_OR_MPI(tag, value, enum_if_user, enum_if_mpi) \
+        ompi_spc_user_or_mpi(tag, value, enum_if_user, enum_if_mpi)
 
-#define SPC_CYCLES_TO_USECS(cycles) \
-    ompi_spc_cycles_to_usecs(cycles)
+#    define SPC_CYCLES_TO_USECS(cycles) ompi_spc_cycles_to_usecs(cycles)
 
-#define SPC_UPDATE_WATERMARK(watermark_enum, value_enum) \
-    ompi_spc_update_watermark(watermark_enum, value_enum)
-
+#    define SPC_UPDATE_WATERMARK(watermark_enum, value_enum) \
+        ompi_spc_update_watermark(watermark_enum, value_enum)
 
 /* Records an update to a counter using an atomic add operation. */
-static inline
-void ompi_spc_record(unsigned int event_id, ompi_spc_value_t value)
+static inline void ompi_spc_record(unsigned int event_id, ompi_spc_value_t value)
 {
     /* Denoted unlikely because counters will often be turned off. */
-    if( ompi_spc_events[event_id].num_attached > 0 ) {
+    if (ompi_spc_events[event_id].num_attached > 0) {
         OPAL_THREAD_ADD_FETCH64(&(ompi_spc_events[event_id].value), value);
     }
 }
@@ -222,32 +214,30 @@ void ompi_spc_record(unsigned int event_id, ompi_spc_value_t value)
 /* Checks a tag, and records the user version of the counter if it's greater
  * than or equal to 0 and records the mpi version of the counter otherwise.
  */
-static inline
-void ompi_spc_user_or_mpi(int tag, ompi_spc_value_t value, unsigned int user_enum, unsigned int mpi_enum)
+static inline void ompi_spc_user_or_mpi(int tag, ompi_spc_value_t value, unsigned int user_enum,
+                                        unsigned int mpi_enum)
 {
-    ompi_spc_record( (tag >= 0 ? user_enum : mpi_enum), value);
+    ompi_spc_record((tag >= 0 ? user_enum : mpi_enum), value);
 }
 
 /* Checks whether the counter denoted by value_enum exceeds the current value of the
  * counter denoted by watermark_enum, and if so sets the watermark_enum counter to the
  * value of the value_enum counter.
  */
-static inline
-void ompi_spc_update_watermark(unsigned int watermark_enum, unsigned int value_enum)
+static inline void ompi_spc_update_watermark(unsigned int watermark_enum, unsigned int value_enum)
 {
     ompi_spc_t *watermark_event = &ompi_spc_events[watermark_enum];
     ompi_spc_t *value_event = &ompi_spc_events[value_enum];
     /* Denoted unlikely because counters will often be turned off. */
-    if( watermark_event->num_attached &&
-        value_event->num_attached ) {
+    if (watermark_event->num_attached && value_event->num_attached) {
         int64_t watermark = watermark_event->value;
         int64_t value = watermark_event->value;
         /* Try to atomically replace the watermark while the value is larger
          * (i.e, while no thread has replaced it with a larger value, including this thread) */
-        while (value > watermark &&
-               !OPAL_THREAD_COMPARE_EXCHANGE_STRONG_64(&watermark_event->value,
-                                                       &watermark, value))
-        { }
+        while (value > watermark
+               && !OPAL_THREAD_COMPARE_EXCHANGE_STRONG_64(&watermark_event->value, &watermark,
+                                                          value)) {
+        }
     }
 }
 
@@ -256,13 +246,12 @@ void ompi_spc_update_watermark(unsigned int watermark_enum, unsigned int value_e
  * The value is always stored in 'cycles' to avoid race conditions with other threads
  * activating a previously inactive timer counter in between start and stop.
  */
-static inline
-void ompi_spc_timer_start(unsigned int event_id, opal_timer_t *cycles)
+static inline void ompi_spc_timer_start(unsigned int event_id, opal_timer_t *cycles)
 {
-    (void)event_id; /* unused */
+    (void) event_id; /* unused */
     *cycles = 0;
 
-    if( (ompi_spc_events[event_id].num_attached > 0) ) {
+    if ((ompi_spc_events[event_id].num_attached > 0)) {
         *cycles = opal_timer_base_get_cycles();
     }
 }
@@ -271,41 +260,31 @@ void ompi_spc_timer_start(unsigned int event_id, opal_timer_t *cycles)
  * based on the starting time in 'cycles' and stores the result in the
  * 'cycles' argument.
  */
-static inline
-void ompi_spc_timer_stop(unsigned int event_id, opal_timer_t *cycles)
+static inline void ompi_spc_timer_stop(unsigned int event_id, opal_timer_t *cycles)
 {
-    if( ompi_spc_events[event_id].num_attached > 0 && *cycles > 0 ) {
+    if (ompi_spc_events[event_id].num_attached > 0 && *cycles > 0) {
         *cycles = opal_timer_base_get_cycles() - *cycles;
         OPAL_THREAD_ADD_FETCH64(&ompi_spc_events[event_id].value, *cycles);
     }
 }
 
-
 #else /* SPCs are not enabled */
 
-#define SPC_INIT()  \
-    ((void)0)
+#    define SPC_INIT() ((void) 0)
 
-#define SPC_FINI()  \
-    ((void)0)
+#    define SPC_FINI() ((void) 0)
 
-#define SPC_RECORD(event_id, value)  \
-    ((void)0)
+#    define SPC_RECORD(event_id, value) ((void) 0)
 
-#define SPC_TIMER_START(event_id, usec)  \
-    ((void)0)
+#    define SPC_TIMER_START(event_id, usec) ((void) 0)
 
-#define SPC_TIMER_STOP(event_id, usec)  \
-    ((void)0)
+#    define SPC_TIMER_STOP(event_id, usec) ((void) 0)
 
-#define SPC_USER_OR_MPI(tag, value, enum_if_user, enum_if_mpi) \
-    ((void)0)
+#    define SPC_USER_OR_MPI(tag, value, enum_if_user, enum_if_mpi) ((void) 0)
 
-#define SPC_CYCLES_TO_USECS(cycles) \
-    ((void)0)
+#    define SPC_CYCLES_TO_USECS(cycles) ((void) 0)
 
-#define SPC_UPDATE_WATERMARK(watermark_enum, value_enum) \
-    ((void)0)
+#    define SPC_UPDATE_WATERMARK(watermark_enum, value_enum) ((void) 0)
 
 #endif
 

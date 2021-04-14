@@ -127,21 +127,21 @@ typedef struct ompi_osc_rdma_rank_data_t ompi_osc_rdma_rank_data_t;
 
 enum {
     /** peer is locked for exclusive access */
-    OMPI_OSC_RDMA_PEER_EXCLUSIVE            = 0x01,
+    OMPI_OSC_RDMA_PEER_EXCLUSIVE = 0x01,
     /** peer's base is accessible with direct loads/stores */
-    OMPI_OSC_RDMA_PEER_LOCAL_BASE           = 0x02,
+    OMPI_OSC_RDMA_PEER_LOCAL_BASE = 0x02,
     /** peer state is local */
-    OMPI_OSC_RDMA_PEER_LOCAL_STATE          = 0x04,
+    OMPI_OSC_RDMA_PEER_LOCAL_STATE = 0x04,
     /** currently accumulating on peer */
-    OMPI_OSC_RDMA_PEER_ACCUMULATING         = 0x08,
+    OMPI_OSC_RDMA_PEER_ACCUMULATING = 0x08,
     /** peer is in an active access epoch (pscw) */
-    OMPI_OSC_RDMA_PEER_ACCESS_ACTIVE_EPOCH  = 0x10,
+    OMPI_OSC_RDMA_PEER_ACCESS_ACTIVE_EPOCH = 0x10,
     /** peer state handle should be freed */
-    OMPI_OSC_RDMA_PEER_STATE_FREE           = 0x20,
+    OMPI_OSC_RDMA_PEER_STATE_FREE = 0x20,
     /** peer base handle should be freed */
-    OMPI_OSC_RDMA_PEER_BASE_FREE            = 0x40,
+    OMPI_OSC_RDMA_PEER_BASE_FREE = 0x40,
     /** peer was demand locked as part of lock-all (when in demand locking mode) */
-    OMPI_OSC_RDMA_PEER_DEMAND_LOCKED        = 0x80,
+    OMPI_OSC_RDMA_PEER_DEMAND_LOCKED = 0x80,
 };
 
 /**
@@ -154,7 +154,8 @@ enum {
  * The type of the object returned depends on the window settings. For example for a dynamic window
  * this will return a peer of type \ref ompi_osc_rdma_peer_dynamic_t.
  */
-int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, ompi_osc_rdma_peer_t **peer_out);
+int ompi_osc_rdma_new_peer(struct ompi_osc_rdma_module_t *module, int peer_id,
+                           ompi_osc_rdma_peer_t **peer_out);
 
 /**
  * @brief lookup (or allocate) a peer
@@ -162,17 +163,18 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
  * @param[in]  module         osc rdma module
  * @param[in]  peer_id        peer's rank in the communicator
  *
- * This function is used by the ompi_osc_rdma_module_peer() inline function to allocate a peer object. It is not
- * intended to be called from anywhere else.
+ * This function is used by the ompi_osc_rdma_module_peer() inline function to allocate a peer
+ * object. It is not intended to be called from anywhere else.
  */
-struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup (struct ompi_osc_rdma_module_t *module, int peer_id);
+struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup(struct ompi_osc_rdma_module_t *module,
+                                                       int peer_id);
 
 /**
  * @brief check if this process holds an exclusive lock on a peer
  *
  * @param[in] peer            peer object to check
  */
-static inline bool ompi_osc_rdma_peer_is_exclusive (ompi_osc_rdma_peer_t *peer)
+static inline bool ompi_osc_rdma_peer_is_exclusive(ompi_osc_rdma_peer_t *peer)
 {
     return !!(peer->flags & OMPI_OSC_RDMA_PEER_EXCLUSIVE);
 }
@@ -186,18 +188,18 @@ static inline bool ompi_osc_rdma_peer_is_exclusive (ompi_osc_rdma_peer_t *peer)
  * @returns true if the flag was not already set
  * @returns flase otherwise
  */
-static inline bool ompi_osc_rdma_peer_test_set_flag (ompi_osc_rdma_peer_t *peer, int flag)
+static inline bool ompi_osc_rdma_peer_test_set_flag(ompi_osc_rdma_peer_t *peer, int flag)
 {
     int32_t flags;
 
-    opal_atomic_mb ();
+    opal_atomic_mb();
     flags = peer->flags;
 
     do {
         if (flags & flag) {
             return false;
         }
-    } while (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32 (&peer->flags, &flags, flags | flag));
+    } while (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_32(&peer->flags, &flags, flags | flag));
 
     return true;
 }
@@ -208,10 +210,10 @@ static inline bool ompi_osc_rdma_peer_test_set_flag (ompi_osc_rdma_peer_t *peer,
  * @param[in] peer            peer object to modify
  * @param[in] flag            flag to set
  */
-static inline void ompi_osc_rdma_peer_clear_flag (ompi_osc_rdma_peer_t *peer, int flag)
+static inline void ompi_osc_rdma_peer_clear_flag(ompi_osc_rdma_peer_t *peer, int flag)
 {
     OPAL_ATOMIC_AND_FETCH32(&peer->flags, ~flag);
-    opal_atomic_mb ();
+    opal_atomic_mb();
 }
 
 /**
@@ -219,7 +221,7 @@ static inline void ompi_osc_rdma_peer_clear_flag (ompi_osc_rdma_peer_t *peer, in
  *
  * @param[in] peer            peer object to check
  */
-static inline bool ompi_osc_rdma_peer_local_base (ompi_osc_rdma_peer_t *peer)
+static inline bool ompi_osc_rdma_peer_local_base(ompi_osc_rdma_peer_t *peer)
 {
     return !!(peer->flags & OMPI_OSC_RDMA_PEER_LOCAL_BASE);
 }
@@ -233,7 +235,7 @@ static inline bool ompi_osc_rdma_peer_local_base (ompi_osc_rdma_peer_t *peer)
  * will not be mixing btl atomics and cpu atomics, or 2) it is safe to mix
  * btl and cpu atomics.
  */
-static inline bool ompi_osc_rdma_peer_local_state (ompi_osc_rdma_peer_t *peer)
+static inline bool ompi_osc_rdma_peer_local_state(ompi_osc_rdma_peer_t *peer)
 {
     return !!(peer->flags & OMPI_OSC_RDMA_PEER_LOCAL_STATE);
 }
@@ -244,7 +246,7 @@ static inline bool ompi_osc_rdma_peer_local_state (ompi_osc_rdma_peer_t *peer)
  * @param[in] peer            peer object to check
  *
  */
-static inline bool ompi_osc_rdma_peer_is_demand_locked (ompi_osc_rdma_peer_t *peer)
+static inline bool ompi_osc_rdma_peer_is_demand_locked(ompi_osc_rdma_peer_t *peer)
 {
     return !!(peer->flags & OMPI_OSC_RDMA_PEER_DEMAND_LOCKED);
 }

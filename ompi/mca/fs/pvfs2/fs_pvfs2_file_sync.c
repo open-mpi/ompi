@@ -38,25 +38,20 @@
  *	Accepts:	- file handle
  *	Returns:	- Success if file closed
  */
-int
-mca_fs_pvfs2_file_sync (ompio_file_t *fh)
+int mca_fs_pvfs2_file_sync(ompio_file_t *fh)
 {
     int ret;
     mca_fs_pvfs2 *pvfs2_fs;
 
     ret = OMPI_SUCCESS;
 
-    pvfs2_fs = (mca_fs_pvfs2 *)fh->f_fs_ptr;
+    pvfs2_fs = (mca_fs_pvfs2 *) fh->f_fs_ptr;
 
     if (OMPIO_ROOT == fh->f_rank) {
         ret = PVFS_sys_flush(pvfs2_fs->object_ref, &(pvfs2_fs->credentials));
     }
 
-    fh->f_comm->c_coll->coll_bcast (&ret,
-                                   1,
-                                   MPI_INT,
-                                   OMPIO_ROOT,
-                                   fh->f_comm,
+    fh->f_comm->c_coll->coll_bcast(&ret, 1, MPI_INT, OMPIO_ROOT, fh->f_comm,
                                    fh->f_comm->c_coll->coll_bcast_module);
 
     if (0 != ret) {

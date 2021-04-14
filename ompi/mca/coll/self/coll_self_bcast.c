@@ -18,10 +18,9 @@
 
 #include "ompi_config.h"
 
+#include "coll_self.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "coll_self.h"
-
 
 /*
  *	bcast_lin_intra
@@ -30,10 +29,8 @@
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS
  */
-int mca_coll_self_bcast_intra(void *buff, int count,
-                              struct ompi_datatype_t *datatype, int root,
-                              struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+int mca_coll_self_bcast_intra(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+                              struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     /* Since there's only one process, there's nothing to do */
 

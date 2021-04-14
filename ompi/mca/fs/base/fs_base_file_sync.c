@@ -19,7 +19,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "base.h"
 
@@ -29,7 +28,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fs/fs.h"
 
-int mca_fs_base_file_sync (ompio_file_t *fh)
+int mca_fs_base_file_sync(ompio_file_t *fh)
 {
     int err;
 

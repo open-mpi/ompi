@@ -30,7 +30,6 @@
 
 #include "ompi_config.h"
 
-
 BEGIN_C_DECLS
 
 /* declare the presence of the OMPI library to other
@@ -38,7 +37,6 @@ BEGIN_C_DECLS
  * register for callbacks when any other such libraries
  * declare themselves */
 OMPI_DECLSPEC int ompi_interlib_declare(int threadlevel, char *version);
-
 
 END_C_DECLS
 

@@ -20,9 +20,8 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
 #include "coll_sm.h"
-
+#include "ompi/constants.h"
 
 /*
  *	alltoallw_intra
@@ -32,11 +31,10 @@
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int mca_coll_sm_alltoallw_intra(const void *sbuf, const int *scounts, const int *sdisps,
-                                struct ompi_datatype_t * const *sdtypes,
-                                void *rbuf, const int *rcounts, const int *rdisps,
-                                struct ompi_datatype_t * const *rdtypes,
-                                struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
+                                struct ompi_datatype_t *const *sdtypes, void *rbuf,
+                                const int *rcounts, const int *rdisps,
+                                struct ompi_datatype_t *const *rdtypes,
+                                struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

@@ -24,18 +24,18 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
 
-#include "mpi.h"
-#include "opal/util/bit_ops.h"
-#include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/coll_tags.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/datatype/ompi_datatype.h"
 #include "coll_basic.h"
+#include "mpi.h"
+#include "ompi/constants.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/op/op.h"
+#include "opal/util/bit_ops.h"
 
 #define COMMUTATIVE_LONG_MSG 8 * 1024 * 1024
 
@@ -50,14 +50,13 @@
  *     reduce and scatter (needs to be cleaned
  *     up at some point)
  */
-int
-mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, int rcount,
-                                          struct ompi_datatype_t *dtype,
-                                          struct ompi_op_t *op,
-                                          struct ompi_communicator_t *comm,
-                                          mca_coll_base_module_t *module)
+int mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, int rcount,
+                                              struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                              struct ompi_communicator_t *comm,
+                                              mca_coll_base_module_t *module)
 {
-    return ompi_coll_base_reduce_scatter_block_basic_linear(sbuf, rbuf, rcount, dtype, op, comm, module);
+    return ompi_coll_base_reduce_scatter_block_basic_linear(sbuf, rbuf, rcount, dtype, op, comm,
+                                                            module);
 }
 
 /*
@@ -67,12 +66,10 @@ mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, int rcou
  *	Accepts:	- same arguments as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcount,
-                                          struct ompi_datatype_t *dtype,
-                                          struct ompi_op_t *op,
-                                          struct ompi_communicator_t *comm,
-                                          mca_coll_base_module_t *module)
+int mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcount,
+                                              struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                              struct ompi_communicator_t *comm,
+                                              mca_coll_base_module_t *module)
 {
     int err, i, rank, root = 0, rsize, lsize;
     int totalcounts;
@@ -113,25 +110,22 @@ mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcou
         buf = tmpbuf2 - gap;
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
-        err = MCA_PML_CALL(isend(sbuf, totalcounts, dtype, 0,
-                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+        err = MCA_PML_CALL(isend(sbuf, totalcounts, dtype, 0, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                  MCA_PML_BASE_SEND_STANDARD, comm, &req));
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
 
-        err = MCA_PML_CALL(recv(lbuf, totalcounts, dtype, 0,
-                                MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
+        err = MCA_PML_CALL(recv(lbuf, totalcounts, dtype, 0, MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
                                 MPI_STATUS_IGNORE));
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
 
-        err = ompi_request_wait( &req, MPI_STATUS_IGNORE);
+        err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
-
 
         /* Loop receiving and calling reduction function (C or Fortran)
          * The result of this reduction operations is then in
@@ -139,9 +133,8 @@ mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcou
          */
         for (i = 1; i < rsize; i++) {
             char *tbuf;
-            err = MCA_PML_CALL(recv(buf, totalcounts, dtype, i,
-                                    MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
-                                    MPI_STATUS_IGNORE));
+            err = MCA_PML_CALL(recv(buf, totalcounts, dtype, i, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+                                    comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
                 goto exit;
             }
@@ -149,12 +142,13 @@ mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcou
             /* Perform the reduction */
             ompi_op_reduce(op, lbuf, buf, totalcounts, dtype);
             /* swap the buffers */
-            tbuf = lbuf; lbuf = buf; buf = tbuf;
+            tbuf = lbuf;
+            lbuf = buf;
+            buf = tbuf;
         }
     } else {
         /* If not root, send data to the root. */
-        err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root,
-                                MCA_COLL_BASE_TAG_REDUCE_SCATTER,
+        err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root, MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
         if (OMPI_SUCCESS != err) {
             goto exit;
@@ -162,12 +156,11 @@ mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcou
     }
 
     /* Now do a scatterv on the local communicator */
-    err = comm->c_local_comm->c_coll->coll_scatter(lbuf, rcount, dtype,
-				   rbuf, rcount, dtype, 0,
-				   comm->c_local_comm,
-				   comm->c_local_comm->c_coll->coll_scatter_module);
+    err = comm->c_local_comm->c_coll->coll_scatter(lbuf, rcount, dtype, rbuf, rcount, dtype, 0,
+                                                   comm->c_local_comm,
+                                                   comm->c_local_comm->c_coll->coll_scatter_module);
 
-  exit:
+exit:
     if (NULL != tmpbuf) {
         free(tmpbuf);
     }

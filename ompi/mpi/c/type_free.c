@@ -21,46 +21,41 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_free = PMPI_Type_free
-#endif
-#define MPI_Type_free PMPI_Type_free
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_free = PMPI_Type_free
+#    endif
+#    define MPI_Type_free PMPI_Type_free
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_free";
 
-
 int MPI_Type_free(MPI_Datatype *type)
 {
-   int rc;
+    int rc;
 
-   MEMCHECKER(
-      memchecker_datatype(*type);
-   );
+    MEMCHECKER(memchecker_datatype(*type););
 
-   if( MPI_PARAM_CHECK ) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == type || NULL == *type || MPI_DATATYPE_NULL == *type ||
-          ompi_datatype_is_predefined(*type)) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
-                                      FUNC_NAME );
-      }
-   }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == type || NULL == *type || MPI_DATATYPE_NULL == *type
+            || ompi_datatype_is_predefined(*type)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
+        }
+    }
 
-   rc = ompi_datatype_destroy( type );
-   if( rc != MPI_SUCCESS ) {
-      OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
-                             MPI_ERR_INTERN, FUNC_NAME );
-   }
-   *type = MPI_DATATYPE_NULL;
+    rc = ompi_datatype_destroy(type);
+    if (rc != MPI_SUCCESS) {
+        OMPI_ERRHANDLER_NOHANDLE_RETURN(MPI_ERR_INTERN, MPI_ERR_INTERN, FUNC_NAME);
+    }
+    *type = MPI_DATATYPE_NULL;
 
-   return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

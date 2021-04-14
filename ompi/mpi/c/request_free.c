@@ -21,36 +21,32 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Request_free = PMPI_Request_free
-#endif
-#define MPI_Request_free PMPI_Request_free
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Request_free = PMPI_Request_free
+#    endif
+#    define MPI_Request_free PMPI_Request_free
 #endif
 
 static const char FUNC_NAME[] = "MPI_Request_free";
-
 
 int MPI_Request_free(MPI_Request *request)
 {
     int rc;
 
-    MEMCHECKER(
-        memchecker_request(request);
-    );
+    MEMCHECKER(memchecker_request(request););
 
     if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == request || NULL == *request ||
-            MPI_REQUEST_NULL == *request) {
+        if (NULL == request || NULL == *request || MPI_REQUEST_NULL == *request) {
             rc = MPI_ERR_REQUEST;
         }
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
@@ -59,4 +55,3 @@ int MPI_Request_free(MPI_Request *request)
     rc = ompi_request_free(request);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }
-

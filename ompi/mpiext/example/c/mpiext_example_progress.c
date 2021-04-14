@@ -24,8 +24,8 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
-#include "ompi/mpiext/mpiext.h"
 #include "ompi/mpiext/example/c/mpiext_example_c.h"
+#include "ompi/mpiext/mpiext.h"
 
 static const char FUNC_NAME[] = "OMPI_Progress";
 
@@ -52,4 +52,3 @@ int OMPI_Progress(int count, MPI_Comm comm)
 
     return MPI_SUCCESS;
 }
-

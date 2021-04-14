@@ -25,47 +25,40 @@
 #include "ompi/mpiext/pcollreq/mpif-h/mpiext_pcollreq_prototypes.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPIX_BARRIER_INIT = ompix_barrier_init_f
-#pragma weak pmpix_barrier_init = ompix_barrier_init_f
-#pragma weak pmpix_barrier_init_ = ompix_barrier_init_f
-#pragma weak pmpix_barrier_init__ = ompix_barrier_init_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPIX_BARRIER_INIT = ompix_barrier_init_f
+#        pragma weak pmpix_barrier_init = ompix_barrier_init_f
+#        pragma weak pmpix_barrier_init_ = ompix_barrier_init_f
+#        pragma weak pmpix_barrier_init__ = ompix_barrier_init_f
 
-#pragma weak PMPIX_Barrier_init_f = ompix_barrier_init_f
-#pragma weak PMPIX_Barrier_init_f08 = ompix_barrier_init_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPIX_BARRIER_INIT,
-                            pmpix_barrier_init,
-                            pmpix_barrier_init_,
-                            pmpix_barrier_init__,
-                            pompix_barrier_init_f,
-                            (MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
-                            (comm, info, request, ierr) )
-#endif
+#        pragma weak PMPIX_Barrier_init_f = ompix_barrier_init_f
+#        pragma weak PMPIX_Barrier_init_f08 = ompix_barrier_init_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPIX_BARRIER_INIT, pmpix_barrier_init, pmpix_barrier_init_,
+                           pmpix_barrier_init__, pompix_barrier_init_f,
+                           (MPI_Fint * comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
+                           (comm, info, request, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_BARRIER_INIT = ompix_barrier_init_f
-#pragma weak mpix_barrier_init = ompix_barrier_init_f
-#pragma weak mpix_barrier_init_ = ompix_barrier_init_f
-#pragma weak mpix_barrier_init__ = ompix_barrier_init_f
+#    pragma weak MPIX_BARRIER_INIT = ompix_barrier_init_f
+#    pragma weak mpix_barrier_init = ompix_barrier_init_f
+#    pragma weak mpix_barrier_init_ = ompix_barrier_init_f
+#    pragma weak mpix_barrier_init__ = ompix_barrier_init_f
 
-#pragma weak MPIX_Barrier_init_f = ompix_barrier_init_f
-#pragma weak MPIX_Barrier_init_f08 = ompix_barrier_init_f
+#    pragma weak MPIX_Barrier_init_f = ompix_barrier_init_f
+#    pragma weak MPIX_Barrier_init_f08 = ompix_barrier_init_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPIX_BARRIER_INIT,
-                            mpix_barrier_init,
-                            mpix_barrier_init_,
-                            mpix_barrier_init__,
-                            ompix_barrier_init_f,
-                            (MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
-                            (comm, info, request, ierr) )
-#else
-#define ompix_barrier_init_f pompix_barrier_init_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPIX_BARRIER_INIT, mpix_barrier_init, mpix_barrier_init_,
+                           mpix_barrier_init__, ompix_barrier_init_f,
+                           (MPI_Fint * comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
+                           (comm, info, request, ierr))
+#    else
+#        define ompix_barrier_init_f pompix_barrier_init_f
+#    endif
 #endif
-#endif
-
 
 void ompix_barrier_init_f(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr)
 {
@@ -78,7 +71,9 @@ void ompix_barrier_init_f(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI
     c_info = PMPI_Info_f2c(*info);
 
     ierr_c = PMPIX_Barrier_init(c_comm, c_info, &c_req);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(ierr_c);
 
-    if (MPI_SUCCESS == ierr_c) *request = PMPI_Request_c2f(c_req);
+    if (MPI_SUCCESS == ierr_c)
+        *request = PMPI_Request_c2f(c_req);
 }

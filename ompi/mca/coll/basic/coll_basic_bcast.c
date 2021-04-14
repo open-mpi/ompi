@@ -23,15 +23,14 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
+#include "coll_basic.h"
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
-#include "coll_basic.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/util/bit_ops.h"
-
 
 /*
  *	bcast_log_intra
@@ -40,11 +39,9 @@
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_bcast_log_intra(void *buff, int count,
-                               struct ompi_datatype_t *datatype, int root,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
+int mca_coll_basic_bcast_log_intra(void *buff, int count, struct ompi_datatype_t *datatype,
+                                   int root, struct ompi_communicator_t *comm,
+                                   mca_coll_base_module_t *module)
 {
     int i;
     int size;
@@ -72,9 +69,8 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
         assert(hibit >= 0);
         peer = ((vrank & ~(1 << hibit)) + root) % size;
 
-        err = MCA_PML_CALL(recv(buff, count, datatype, peer,
-                                MCA_COLL_BASE_TAG_BCAST,
-                                comm, MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(
+            recv(buff, count, datatype, peer, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
         if (MPI_SUCCESS != err) {
             return err;
         }
@@ -83,7 +79,9 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
     /* Send data to the children. */
 
     reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
-    if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
+    if (NULL == reqs) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     err = MPI_SUCCESS;
     preq = reqs;
@@ -94,10 +92,8 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
             peer = (peer + root) % size;
             ++nreqs;
 
-            err = MCA_PML_CALL(isend(buff, count, datatype, peer,
-                                     MCA_COLL_BASE_TAG_BCAST,
-                                     MCA_PML_BASE_SEND_STANDARD,
-                                     comm, preq++));
+            err = MCA_PML_CALL(isend(buff, count, datatype, peer, MCA_COLL_BASE_TAG_BCAST,
+                                     MCA_PML_BASE_SEND_STANDARD, comm, preq++));
             if (MPI_SUCCESS != err) {
                 ompi_coll_base_free_reqs(reqs, nreqs);
                 return err;
@@ -117,7 +113,7 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
          * error, and return the error after we free everything. */
 
         err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
-        if( MPI_SUCCESS != err ) {
+        if (MPI_SUCCESS != err) {
             ompi_coll_base_free_reqs(reqs, nreqs);
         }
     }
@@ -127,7 +123,6 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
     return err;
 }
 
-
 /*
  *	bcast_lin_inter
  *
@@ -135,11 +130,9 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_bcast_lin_inter(void *buff, int count,
-                               struct ompi_datatype_t *datatype, int root,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
+int mca_coll_basic_bcast_lin_inter(void *buff, int count, struct ompi_datatype_t *datatype,
+                                   int root, struct ompi_communicator_t *comm,
+                                   mca_coll_base_module_t *module)
 {
     int i;
     int rsize;
@@ -153,19 +146,18 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* Non-root receive the data. */
-        err = MCA_PML_CALL(recv(buff, count, datatype, root,
-                                MCA_COLL_BASE_TAG_BCAST, comm,
-                                MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(
+            recv(buff, count, datatype, root, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
     } else {
         reqs = ompi_coll_base_comm_get_reqs(module->base_data, rsize);
-        if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
+        if (NULL == reqs) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
         /* root section */
         for (i = 0; i < rsize; i++) {
-            err = MCA_PML_CALL(isend(buff, count, datatype, i,
-                                     MCA_COLL_BASE_TAG_BCAST,
-                                     MCA_PML_BASE_SEND_STANDARD,
-                                     comm, &(reqs[i])));
+            err = MCA_PML_CALL(isend(buff, count, datatype, i, MCA_COLL_BASE_TAG_BCAST,
+                                     MCA_PML_BASE_SEND_STANDARD, comm, &(reqs[i])));
             if (OMPI_SUCCESS != err) {
                 ompi_coll_base_free_reqs(reqs, i + 1);
                 return err;
@@ -177,11 +169,9 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
         }
     }
 
-
     /* All done */
     return err;
 }
-
 
 /*
  *	bcast_log_inter
@@ -190,11 +180,9 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_bcast_log_inter(void *buff, int count,
-                               struct ompi_datatype_t *datatype, int root,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
+int mca_coll_basic_bcast_log_inter(void *buff, int count, struct ompi_datatype_t *datatype,
+                                   int root, struct ompi_communicator_t *comm,
+                                   mca_coll_base_module_t *module)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

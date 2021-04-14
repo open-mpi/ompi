@@ -27,8 +27,8 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -37,20 +37,20 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 
-#define CLOSE(comm, func)                                        \
-    do {                                                         \
-        if (NULL != comm->c_coll->coll_ ## func ## _module) {    \
-            if (NULL != comm->c_coll->coll_ ## func ## _module->coll_module_disable) { \
-                comm->c_coll->coll_ ## func ## _module->coll_module_disable(           \
-                              comm->c_coll->coll_ ## func ## _module, comm);           \
-            }                                                    \
-            OBJ_RELEASE(comm->c_coll->coll_ ## func ## _module); \
-            comm->c_coll->coll_## func = NULL;                   \
-            comm->c_coll->coll_## func ## _module = NULL;        \
-        }                                                        \
+#define CLOSE(comm, func)                                                            \
+    do {                                                                             \
+        if (NULL != comm->c_coll->coll_##func##_module) {                            \
+            if (NULL != comm->c_coll->coll_##func##_module->coll_module_disable) {   \
+                comm->c_coll->coll_##func##_module                                   \
+                    ->coll_module_disable(comm->c_coll->coll_##func##_module, comm); \
+            }                                                                        \
+            OBJ_RELEASE(comm->c_coll->coll_##func##_module);                         \
+            comm->c_coll->coll_##func = NULL;                                        \
+            comm->c_coll->coll_##func##_module = NULL;                               \
+        }                                                                            \
     } while (0)
 
-int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
+int mca_coll_base_comm_unselect(ompi_communicator_t *comm)
 {
     opal_list_item_t *item;
 
@@ -133,11 +133,11 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, iagree);
 #endif
 
-    for (item = opal_list_remove_first(comm->c_coll->module_list);
-         NULL != item; item = opal_list_remove_first(comm->c_coll->module_list)) {
+    for (item = opal_list_remove_first(comm->c_coll->module_list); NULL != item;
+         item = opal_list_remove_first(comm->c_coll->module_list)) {
         mca_coll_base_avail_coll_t *avail = (mca_coll_base_avail_coll_t *) item;
 
-        if(avail->ac_module) {
+        if (avail->ac_module) {
             OBJ_RELEASE(avail->ac_module);
         }
         OBJ_RELEASE(avail);
@@ -150,4 +150,3 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     /* All done */
     return OMPI_SUCCESS;
 }
-

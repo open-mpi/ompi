@@ -22,15 +22,14 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include <stdio.h>
 
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 
-#include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/fbtl/fbtl.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -46,5 +45,4 @@
 mca_fbtl_base_component_t mca_fbtl_base_selected_component = {{0}};
 mca_fbtl_base_module_t mca_fbtl = {0};
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, fbtl, NULL, NULL, NULL, NULL,
-                           mca_fbtl_base_static_components, 0);
+MCA_BASE_FRAMEWORK_DECLARE(ompi, fbtl, NULL, NULL, NULL, NULL, mca_fbtl_base_static_components, 0);

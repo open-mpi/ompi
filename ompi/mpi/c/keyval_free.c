@@ -20,21 +20,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Keyval_free = PMPI_Keyval_free
-#endif
-#define MPI_Keyval_free PMPI_Keyval_free
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Keyval_free = PMPI_Keyval_free
+#    endif
+#    define MPI_Keyval_free PMPI_Keyval_free
 #endif
 
 static const char FUNC_NAME[] = "MPI_Keyval_free";
-
 
 int MPI_Keyval_free(int *keyval)
 {
@@ -43,8 +42,7 @@ int MPI_Keyval_free(int *keyval)
     /* Check for valid key pointer */
     if (MPI_PARAM_CHECK) {
         if (NULL == keyval) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_KEYVAL,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_KEYVAL, FUNC_NAME);
         }
     }
 

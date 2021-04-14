@@ -22,21 +22,20 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/file/file.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/file/file.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_get_info = PMPI_File_get_info
-#endif
-#define MPI_File_get_info PMPI_File_get_info
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_get_info = PMPI_File_get_info
+#    endif
+#    define MPI_File_get_info PMPI_File_get_info
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_get_info";
-
 
 int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
 {
@@ -46,20 +45,18 @@ int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
             return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_INFO, FUNC_NAME);
         }
         if (ompi_file_invalid(fh)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
     }
 
-// Some components we're still letting handle info internally, eg romio321.
-// Components that want to handle it themselves will fill in the get/set
-// info function pointers, components that don't will use NULL.
+    // Some components we're still letting handle info internally, eg romio321.
+    // Components that want to handle it themselves will fill in the get/set
+    // info function pointers, components that don't will use NULL.
     if (fh->f_io_selected_module.v2_0_0.io_module_file_get_info != NULL) {
         int rc;
         switch (fh->f_io_version) {
         case MCA_IO_BASE_V_2_0_0:
-            rc = fh->f_io_selected_module.v2_0_0.
-              io_module_file_get_info(fh, info_used);
+            rc = fh->f_io_selected_module.v2_0_0.io_module_file_get_info(fh, info_used);
             break;
 
         default:
@@ -70,16 +67,15 @@ int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
     }
 
     if (NULL == fh->super.s_info) {
-/*
- * Setup any defaults if MPI_Win_set_info was never called
- */
+        /*
+         * Setup any defaults if MPI_Win_set_info was never called
+         */
         opal_infosubscribe_change_info(&fh->super, &MPI_INFO_NULL->super);
     }
 
-
     (*info_used) = OBJ_NEW(ompi_info_t);
     if (NULL == (*info_used)) {
-       return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_NO_MEM, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_NO_MEM, FUNC_NAME);
     }
     opal_info_t *opal_info_used = &(*info_used)->super;
 

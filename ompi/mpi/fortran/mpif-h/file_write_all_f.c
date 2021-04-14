@@ -22,67 +22,62 @@
 
 #include "ompi_config.h"
 
+#include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/mpif-h/status-conversion.h"
-#include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_FILE_WRITE_ALL = ompi_file_write_all_f
-#pragma weak pmpi_file_write_all = ompi_file_write_all_f
-#pragma weak pmpi_file_write_all_ = ompi_file_write_all_f
-#pragma weak pmpi_file_write_all__ = ompi_file_write_all_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_FILE_WRITE_ALL = ompi_file_write_all_f
+#        pragma weak pmpi_file_write_all = ompi_file_write_all_f
+#        pragma weak pmpi_file_write_all_ = ompi_file_write_all_f
+#        pragma weak pmpi_file_write_all__ = ompi_file_write_all_f
 
-#pragma weak PMPI_File_write_all_f = ompi_file_write_all_f
-#pragma weak PMPI_File_write_all_f08 = ompi_file_write_all_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_ALL,
-                           pmpi_file_write_all,
-                           pmpi_file_write_all_,
-                           pmpi_file_write_all__,
-                           pompi_file_write_all_f,
-                           (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
-                           (fh, buf, count, datatype, status, ierr) )
-#endif
+#        pragma weak PMPI_File_write_all_f = ompi_file_write_all_f
+#        pragma weak PMPI_File_write_all_f08 = ompi_file_write_all_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_FILE_WRITE_ALL, pmpi_file_write_all, pmpi_file_write_all_,
+                           pmpi_file_write_all__, pompi_file_write_all_f,
+                           (MPI_Fint * fh, char *buf, MPI_Fint *count, MPI_Fint *datatype,
+                            MPI_Fint *status, MPI_Fint *ierr),
+                           (fh, buf, count, datatype, status, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_FILE_WRITE_ALL = ompi_file_write_all_f
-#pragma weak mpi_file_write_all = ompi_file_write_all_f
-#pragma weak mpi_file_write_all_ = ompi_file_write_all_f
-#pragma weak mpi_file_write_all__ = ompi_file_write_all_f
+#    pragma weak MPI_FILE_WRITE_ALL = ompi_file_write_all_f
+#    pragma weak mpi_file_write_all = ompi_file_write_all_f
+#    pragma weak mpi_file_write_all_ = ompi_file_write_all_f
+#    pragma weak mpi_file_write_all__ = ompi_file_write_all_f
 
-#pragma weak MPI_File_write_all_f = ompi_file_write_all_f
-#pragma weak MPI_File_write_all_f08 = ompi_file_write_all_f
+#    pragma weak MPI_File_write_all_f = ompi_file_write_all_f
+#    pragma weak MPI_File_write_all_f08 = ompi_file_write_all_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ALL,
-                           mpi_file_write_all,
-                           mpi_file_write_all_,
-                           mpi_file_write_all__,
-                           ompi_file_write_all_f,
-                           (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
-                           (fh, buf, count, datatype, status, ierr) )
-#else
-#define ompi_file_write_all_f pompi_file_write_all_f
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_FILE_WRITE_ALL, mpi_file_write_all, mpi_file_write_all_,
+                           mpi_file_write_all__, ompi_file_write_all_f,
+                           (MPI_Fint * fh, char *buf, MPI_Fint *count, MPI_Fint *datatype,
+                            MPI_Fint *status, MPI_Fint *ierr),
+                           (fh, buf, count, datatype, status, ierr))
+#    else
+#        define ompi_file_write_all_f pompi_file_write_all_f
+#    endif
 #endif
 
-
-void ompi_file_write_all_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
-			  MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr)
+void ompi_file_write_all_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype,
+                           MPI_Fint *status, MPI_Fint *ierr)
 {
-   int c_ierr;
-   MPI_File c_fh = PMPI_File_f2c(*fh);
-   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
-    OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
+    int c_ierr;
+    MPI_File c_fh = PMPI_File_f2c(*fh);
+    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
+    OMPI_FORTRAN_STATUS_DECLARATION(c_status, c_status2)
 
-    OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
+    OMPI_FORTRAN_STATUS_SET_POINTER(c_status, c_status2, status)
 
-   c_ierr = PMPI_File_write_all(c_fh, OMPI_F2C_BOTTOM(buf),
-                               OMPI_FINT_2_INT(*count),
-                               c_type, c_status);
-   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_File_write_all(c_fh, OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count), c_type,
+                                 c_status);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
+    OMPI_FORTRAN_STATUS_RETURN(c_status, c_status2, status, c_ierr)
 }

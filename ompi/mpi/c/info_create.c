@@ -20,17 +20,17 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Info_create = PMPI_Info_create
-#endif
-#define MPI_Info_create PMPI_Info_create
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Info_create = PMPI_Info_create
+#    endif
+#    define MPI_Info_create PMPI_Info_create
 #endif
 
 static const char FUNC_NAME[] = "MPI_Info_create";
@@ -52,8 +52,7 @@ int MPI_Info_create(MPI_Info *info)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
     }
 
@@ -65,8 +64,7 @@ int MPI_Info_create(MPI_Info *info)
      */
     (*info) = OBJ_NEW(ompi_info_t);
     if (NULL == (*info)) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
-                                      FUNC_NAME);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
     }
 
     return MPI_SUCCESS;

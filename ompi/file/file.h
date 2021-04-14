@@ -28,17 +28,17 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "opal/class/opal_list.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mca/io/io.h"
+#include "opal/class/opal_list.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/info_subscriber.h"
-#include "ompi/mca/io/io.h"
 
 /*
  * Flags
  */
-#define OMPI_FILE_ISCLOSED     0x00000001
-#define OMPI_FILE_HIDDEN       0x00000002
+#define OMPI_FILE_ISCLOSED 0x00000001
+#define OMPI_FILE_HIDDEN   0x00000002
 
 BEGIN_C_DECLS
 
@@ -114,9 +114,8 @@ typedef struct ompi_predefined_file_t ompi_predefined_file_t;
 /**
  * Back-end instances for MPI_FILE_NULL (_addr flavor is for F03 bindings)
  */
-OMPI_DECLSPEC extern ompi_predefined_file_t  ompi_mpi_file_null;
-OMPI_DECLSPEC extern ompi_predefined_file_t  *ompi_mpi_file_null_addr;
-
+OMPI_DECLSPEC extern ompi_predefined_file_t ompi_mpi_file_null;
+OMPI_DECLSPEC extern ompi_predefined_file_t *ompi_mpi_file_null_addr;
 
 /**
  * Fortran to C conversion table
@@ -150,9 +149,8 @@ int ompi_file_init(void);
  * mainly calls OBJ_RELEASE() but also does some other error
  * handling as well.
  */
-int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
-                   int amode, struct opal_info_t *info,
-                   ompi_file_t **fh);
+int ompi_file_open(struct ompi_communicator_t *comm, const char *filename, int amode,
+                   struct opal_info_t *info, ompi_file_t **fh);
 
 /**
  * Atomicly set a name on a file handle.
@@ -207,9 +205,8 @@ int ompi_file_finalize(void);
  */
 static inline bool ompi_file_invalid(ompi_file_t *file)
 {
-    return (NULL == file ||
-            &ompi_mpi_file_null.file == file ||
-            0 != (file->f_flags & OMPI_FILE_ISCLOSED));
+    return (NULL == file || &ompi_mpi_file_null.file == file
+            || 0 != (file->f_flags & OMPI_FILE_ISCLOSED));
 }
 
 END_C_DECLS

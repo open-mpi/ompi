@@ -22,30 +22,29 @@
  */
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Get_address = PMPI_Get_address
-#endif
-#define MPI_Get_address PMPI_Get_address
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Get_address = PMPI_Get_address
+#    endif
+#    define MPI_Get_address PMPI_Get_address
 #endif
 
 static const char FUNC_NAME[] = "MPI_Get_address";
 
-
 int MPI_Get_address(const void *location, MPI_Aint *address)
 {
-    if( MPI_PARAM_CHECK ) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == address) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
-      }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == address) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        }
     }
 
-    *address = (MPI_Aint)location;
+    *address = (MPI_Aint) location;
     return MPI_SUCCESS;
 }

@@ -20,21 +20,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_get_group = PMPI_File_get_group
-#endif
-#define MPI_File_get_group PMPI_File_get_group
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_get_group = PMPI_File_get_group
+#    endif
+#    define MPI_File_get_group PMPI_File_get_group
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_get_group";
-
 
 int MPI_File_get_group(MPI_File fh, MPI_Group *group)
 {
@@ -54,6 +53,6 @@ int MPI_File_get_group(MPI_File fh, MPI_Group *group)
 
     /* Does not need to invoke a back-end io function */
 
-    rc = ompi_comm_group (fh->f_comm, group);
+    rc = ompi_comm_group(fh->f_comm, group);
     OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
 }

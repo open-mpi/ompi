@@ -30,15 +30,15 @@
 #include "ompi_config.h"
 #include "fcoll_individual.h"
 
+#include "fcoll_individual.h"
 #include "mpi.h"
 #include "ompi/mca/fcoll/fcoll.h"
-#include "fcoll_individual.h"
 
 /*
  * Public string showing the fcoll ompi_individual component version number
  */
-const char *mca_fcoll_individual_component_version_string =
-    "Open MPI individual collective MCA component version " OMPI_VERSION;
+const char *mca_fcoll_individual_component_version_string
+    = "Open MPI individual collective MCA component version " OMPI_VERSION;
 
 /*
  * Global variables
@@ -78,15 +78,13 @@ mca_fcoll_base_component_2_0_0_t mca_fcoll_individual_component = {
     .fcollm_file_unquery = mca_fcoll_individual_component_file_unquery,
 };
 
-
-static int
-individual_register(void)
+static int individual_register(void)
 {
     mca_fcoll_individual_priority = 10;
     (void) mca_base_component_var_register(&mca_fcoll_individual_component.fcollm_version,
                                            "priority", "Priority of the individual fcoll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_individual_priority);
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_fcoll_individual_priority);
     return OMPI_SUCCESS;
 }

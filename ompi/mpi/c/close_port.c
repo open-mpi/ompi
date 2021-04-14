@@ -24,33 +24,30 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/dpm/dpm.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/dpm/dpm.h"
-
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Close_port = PMPI_Close_port
-#endif
-#define MPI_Close_port PMPI_Close_port
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Close_port = PMPI_Close_port
+#    endif
+#    define MPI_Close_port PMPI_Close_port
 #endif
 
 static const char FUNC_NAME[] = "MPI_Close_port";
-
 
 int MPI_Close_port(const char *port_name)
 {
     int ret;
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( NULL == port_name )
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (NULL == port_name)
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
     }
 
     ret = ompi_dpm_close_port(port_name);

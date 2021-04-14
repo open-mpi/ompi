@@ -31,32 +31,31 @@
 #include "ompi_config.h"
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 #include <errno.h>
 
-#include "opal/runtime/opal.h"
 #include "opal/mca/backtrace/backtrace.h"
-#include "opal/util/error.h"
+#include "opal/runtime/opal.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/util/error.h"
 
 #include "ompi/communicator/communicator.h"
-#include "ompi/runtime/mpiruntime.h"
-#include "ompi/runtime/params.h"
 #include "ompi/debuggers/debuggers.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
 
 static bool have_been_invoked = false;
-
 
 /*
  * Local helper function to build an array of all the procs in a
@@ -73,8 +72,7 @@ static bool have_been_invoked = false;
  *      - MPI_ERRORS_ARE_FATAL
  *      - Victim of MPI_Abort()
  */
-static void try_kill_peers(ompi_communicator_t *comm,
-                           int errcode)
+static void try_kill_peers(ompi_communicator_t *comm, int errcode)
 {
     int nprocs;
     ompi_process_name_t *procs;
@@ -84,7 +82,7 @@ static void try_kill_peers(ompi_communicator_t *comm,
        this is safe */
     nprocs += ompi_comm_remote_size(comm);
 
-    procs = (ompi_process_name_t*) calloc(nprocs, sizeof(ompi_process_name_t));
+    procs = (ompi_process_name_t *) calloc(nprocs, sizeof(ompi_process_name_t));
     if (NULL == procs) {
         /* quick clean RTE and get out */
         ompi_rte_abort(errcode, "Abort: unable to alloc memory to kill procs");
@@ -99,16 +97,16 @@ static void try_kill_peers(ompi_communicator_t *comm,
             --nprocs;
         } else {
             assert(count <= nprocs);
-            procs[count++] =
-                *OMPI_CAST_RTE_NAME(&ompi_group_get_proc_ptr(comm->c_remote_group, i, true)->super.proc_name);
+            procs[count++] = *OMPI_CAST_RTE_NAME(
+                &ompi_group_get_proc_ptr(comm->c_remote_group, i, true)->super.proc_name);
         }
     }
 
     /* if requested, kill off remote group procs too */
     for (i = 0; i < ompi_comm_remote_size(comm); ++i) {
         assert(count <= nprocs);
-        procs[count++] =
-            *OMPI_CAST_RTE_NAME(&ompi_group_get_proc_ptr(comm->c_remote_group, i, true)->super.proc_name);
+        procs[count++] = *OMPI_CAST_RTE_NAME(
+            &ompi_group_get_proc_ptr(comm->c_remote_group, i, true)->super.proc_name);
     }
 
     if (nprocs > 0) {
@@ -121,9 +119,7 @@ static void try_kill_peers(ompi_communicator_t *comm,
     free(procs);
 }
 
-int
-ompi_mpi_abort(struct ompi_communicator_t* comm,
-               int errcode)
+int ompi_mpi_abort(struct ompi_communicator_t *comm, int errcode)
 {
     const char *host;
     pid_t pid = 0;
@@ -151,8 +147,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
         if (OPAL_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
-                fprintf(stderr, "[%s:%05d] [%d] func:%s\n", host, (int) pid,
-                        i, messages[i]);
+                fprintf(stderr, "[%s:%05d] [%d] func:%s\n", host, (int) pid, i, messages[i]);
                 fflush(stderr);
             }
             free(messages);
@@ -171,18 +166,19 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
        killing everyone.  Sorry, Charlie... */
     int32_t state = ompi_mpi_state;
     if (!ompi_rte_initialized) {
-        fprintf(stderr, "[%s:%05d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
+        fprintf(stderr,
+                "[%s:%05d] Local abort %s completed successfully, but am not able to aggregate "
+                "error messages, and not able to guarantee that all other processes were killed!\n",
                 host, (int) pid,
-                state >= OMPI_MPI_STATE_FINALIZE_STARTED ?
-                "after MPI_FINALIZE started" : "before MPI_INIT completed");
+                state >= OMPI_MPI_STATE_FINALIZE_STARTED ? "after MPI_FINALIZE started"
+                                                         : "before MPI_INIT completed");
         _exit(errcode == 0 ? 1 : errcode);
     }
 
     /* If OMPI is initialized and we have a non-NULL communicator,
        then try to kill just that set of processes */
-    if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
-        state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT &&
-        NULL != comm) {
+    if (state >= OMPI_MPI_STATE_INIT_COMPLETED
+        && state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT && NULL != comm) {
         try_kill_peers(comm, errcode); /* kill only the specified groups, no return if it worked. */
     }
 

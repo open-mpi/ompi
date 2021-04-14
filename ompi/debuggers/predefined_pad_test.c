@@ -22,34 +22,42 @@
 #include "opal_stdint.h"
 
 #include "ompi/communicator/communicator.h"
-#include "ompi/group/group.h"
-#include "ompi/request/request.h"
-#include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/win/win.h"
-#include "ompi/info/info.h"
 #include "ompi/file/file.h"
+#include "ompi/group/group.h"
+#include "ompi/info/info.h"
 #include "ompi/message/message.h"
+#include "ompi/op/op.h"
+#include "ompi/request/request.h"
+#include "ompi/win/win.h"
 
 static int warnings = 0;
 static int errors = 0;
 
 #define THRESHHOLD 32
 
-
-#define PAD_CHECK(TYPE)                                                 \
-    do {                                                                \
-        size_t psize = sizeof(ompi_predefined_##TYPE##_t);              \
-        size_t size = sizeof(ompi_##TYPE##_t);                          \
-        size_t diff = psize - size;                                     \
-        if (diff <= 0) {                                                \
-            fprintf(stderr, "ERROR: Predefined " #TYPE " size: %" PRIsize_t ", " #TYPE " size: %" PRIsize_t " (%" PRIsize_t " bytes over)\n", psize, size, size - psize); \
-        } else if (diff <= THRESHHOLD) {                                \
-            fprintf(stderr, "WARNING: Predefined " #TYPE " has very little space left -- size : %" PRIsize_t ", " #TYPE " size: %" PRIsize_t " (%" PRIsize_t " bytes left)\n", psize, size, psize - size); \
-        } else {                                                        \
-            printf("Predefined " #TYPE " size : %" PRIsize_t ", " #TYPE " size: %" PRIsize_t " (%" PRIsize_t " bytes left)\n", psize, size, psize - size); \
-        }                                                               \
-    } while(0)
+#define PAD_CHECK(TYPE)                                                                      \
+    do {                                                                                     \
+        size_t psize = sizeof(ompi_predefined_##TYPE##_t);                                   \
+        size_t size = sizeof(ompi_##TYPE##_t);                                               \
+        size_t diff = psize - size;                                                          \
+        if (diff <= 0) {                                                                     \
+            fprintf(stderr,                                                                  \
+                    "ERROR: Predefined " #TYPE " size: %" PRIsize_t ", " #TYPE               \
+                    " size: %" PRIsize_t " (%" PRIsize_t " bytes over)\n",                   \
+                    psize, size, size - psize);                                              \
+        } else if (diff <= THRESHHOLD) {                                                     \
+            fprintf(stderr,                                                                  \
+                    "WARNING: Predefined " #TYPE                                             \
+                    " has very little space left -- size : %" PRIsize_t ", " #TYPE           \
+                    " size: %" PRIsize_t " (%" PRIsize_t " bytes left)\n",                   \
+                    psize, size, psize - size);                                              \
+        } else {                                                                             \
+            printf("Predefined " #TYPE " size : %" PRIsize_t ", " #TYPE " size: %" PRIsize_t \
+                   " (%" PRIsize_t " bytes left)\n",                                         \
+                   psize, size, psize - size);                                               \
+        }                                                                                    \
+    } while (0)
 
 int main(int argc, char **argv)
 {

@@ -19,7 +19,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "base.h"
 
@@ -36,20 +35,20 @@
  *	Accepts:	- file name & info
  *	Returns:	- Success if file closed
  */
-int mca_fs_base_file_delete (char* file_name,
-                             struct opal_info_t *info)
+int mca_fs_base_file_delete(char *file_name, struct opal_info_t *info)
 {
     int ret;
 
     ret = unlink(file_name);
 
-    if (0 > ret ) {
-        if ( ENOENT == errno ) {
+    if (0 > ret) {
+        if (ENOENT == errno) {
             return MPI_ERR_NO_SUCH_FILE;
         } else {
-            opal_output (0, "mca_fs_base_file_delete: Could not remove file "
-                            "%s errno = %d %s\n",
-                            file_name, errno, strerror(errno));
+            opal_output(0,
+                        "mca_fs_base_file_delete: Could not remove file "
+                        "%s errno = %d %s\n",
+                        file_name, errno, strerror(errno));
             return MPI_ERR_ACCESS;
         }
     }

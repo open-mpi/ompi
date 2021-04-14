@@ -34,8 +34,8 @@
 #define MCA_OP_BASE_H
 
 #include "ompi_config.h"
-#include "opal/mca/base/base.h"
 #include "ompi/mca/op/op.h"
+#include "opal/mca/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -44,7 +44,6 @@ typedef struct ompi_op_base_selected_module_t {
     ompi_op_base_component_t *op_component;
     ompi_op_base_module_t *op_module;
 } ompi_op_base_selected_module_t;
-
 
 /**
  * Find all available op components.

@@ -21,80 +21,74 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/group/group.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_GROUP_TRANSLATE_RANKS = ompi_group_translate_ranks_f
-#pragma weak pmpi_group_translate_ranks = ompi_group_translate_ranks_f
-#pragma weak pmpi_group_translate_ranks_ = ompi_group_translate_ranks_f
-#pragma weak pmpi_group_translate_ranks__ = ompi_group_translate_ranks_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_GROUP_TRANSLATE_RANKS = ompi_group_translate_ranks_f
+#        pragma weak pmpi_group_translate_ranks = ompi_group_translate_ranks_f
+#        pragma weak pmpi_group_translate_ranks_ = ompi_group_translate_ranks_f
+#        pragma weak pmpi_group_translate_ranks__ = ompi_group_translate_ranks_f
 
-#pragma weak PMPI_Group_translate_ranks_f = ompi_group_translate_ranks_f
-#pragma weak PMPI_Group_translate_ranks_f08 = ompi_group_translate_ranks_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
-                           pmpi_group_translate_ranks,
-                           pmpi_group_translate_ranks_,
-                           pmpi_group_translate_ranks__,
+#        pragma weak PMPI_Group_translate_ranks_f = ompi_group_translate_ranks_f
+#        pragma weak PMPI_Group_translate_ranks_f08 = ompi_group_translate_ranks_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_GROUP_TRANSLATE_RANKS, pmpi_group_translate_ranks,
+                           pmpi_group_translate_ranks_, pmpi_group_translate_ranks__,
                            pompi_group_translate_ranks_f,
-                           (MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr),
-                           (group1, n, ranks1, group2, ranks2, ierr) )
-#endif
+                           (MPI_Fint * group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2,
+                            MPI_Fint *ranks2, MPI_Fint *ierr),
+                           (group1, n, ranks1, group2, ranks2, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_GROUP_TRANSLATE_RANKS = ompi_group_translate_ranks_f
-#pragma weak mpi_group_translate_ranks = ompi_group_translate_ranks_f
-#pragma weak mpi_group_translate_ranks_ = ompi_group_translate_ranks_f
-#pragma weak mpi_group_translate_ranks__ = ompi_group_translate_ranks_f
+#    pragma weak MPI_GROUP_TRANSLATE_RANKS = ompi_group_translate_ranks_f
+#    pragma weak mpi_group_translate_ranks = ompi_group_translate_ranks_f
+#    pragma weak mpi_group_translate_ranks_ = ompi_group_translate_ranks_f
+#    pragma weak mpi_group_translate_ranks__ = ompi_group_translate_ranks_f
 
-#pragma weak MPI_Group_translate_ranks_f = ompi_group_translate_ranks_f
-#pragma weak MPI_Group_translate_ranks_f08 = ompi_group_translate_ranks_f
+#    pragma weak MPI_Group_translate_ranks_f = ompi_group_translate_ranks_f
+#    pragma weak MPI_Group_translate_ranks_f08 = ompi_group_translate_ranks_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
-                           mpi_group_translate_ranks,
-                           mpi_group_translate_ranks_,
-                           mpi_group_translate_ranks__,
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_GROUP_TRANSLATE_RANKS, mpi_group_translate_ranks,
+                           mpi_group_translate_ranks_, mpi_group_translate_ranks__,
                            ompi_group_translate_ranks_f,
-                           (MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr),
-                           (group1, n, ranks1, group2, ranks2, ierr) )
-#else
-#define ompi_group_translate_ranks_f pompi_group_translate_ranks_f
-#endif
+                           (MPI_Fint * group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2,
+                            MPI_Fint *ranks2, MPI_Fint *ierr),
+                           (group1, n, ranks1, group2, ranks2, ierr))
+#    else
+#        define ompi_group_translate_ranks_f pompi_group_translate_ranks_f
+#    endif
 #endif
 
-
-void ompi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n,
-				  MPI_Fint *ranks1, MPI_Fint *group2,
-				  MPI_Fint *ranks2, MPI_Fint *ierr)
+void ompi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2,
+                                  MPI_Fint *ranks2, MPI_Fint *ierr)
 {
-  int c_ierr;
-  ompi_group_t *c_group1, *c_group2;
-  OMPI_ARRAY_NAME_DECL(ranks1);
-  OMPI_ARRAY_NAME_DECL(ranks2);
+    int c_ierr;
+    ompi_group_t *c_group1, *c_group2;
+    OMPI_ARRAY_NAME_DECL(ranks1);
+    OMPI_ARRAY_NAME_DECL(ranks2);
 
-  /* Make the fortran to c representation conversion */
-  c_group1 = PMPI_Group_f2c(*group1);
-  c_group2 = PMPI_Group_f2c(*group2);
+    /* Make the fortran to c representation conversion */
+    c_group1 = PMPI_Group_f2c(*group1);
+    c_group2 = PMPI_Group_f2c(*group2);
 
-  OMPI_ARRAY_FINT_2_INT(ranks1, *n);
-  OMPI_ARRAY_FINT_2_INT_ALLOC(ranks2, *n);
+    OMPI_ARRAY_FINT_2_INT(ranks1, *n);
+    OMPI_ARRAY_FINT_2_INT_ALLOC(ranks2, *n);
 
-  c_ierr = PMPI_Group_translate_ranks(c_group1,
-                                     OMPI_FINT_2_INT(*n),
-                                     OMPI_ARRAY_NAME_CONVERT(ranks1),
-                                     c_group2,
-                                     OMPI_ARRAY_NAME_CONVERT(ranks2)
-                                     );
-  if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Group_translate_ranks(c_group1, OMPI_FINT_2_INT(*n),
+                                        OMPI_ARRAY_NAME_CONVERT(ranks1), c_group2,
+                                        OMPI_ARRAY_NAME_CONVERT(ranks2));
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
-  if (MPI_SUCCESS == c_ierr) {
-      OMPI_ARRAY_INT_2_FINT(ranks2, *n);
-  } else {
-      OMPI_ARRAY_FINT_2_INT_CLEANUP(ranks2);
-  }
-  OMPI_ARRAY_FINT_2_INT_CLEANUP(ranks1);
+    if (MPI_SUCCESS == c_ierr) {
+        OMPI_ARRAY_INT_2_FINT(ranks2, *n);
+    } else {
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(ranks2);
+    }
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(ranks1);
 }

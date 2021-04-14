@@ -22,16 +22,16 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mpi.h"
-#include "opal/util/show_help.h"
+#include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "ompi/mca/fbtl/fbtl.h"
-#include "ompi/mca/fbtl/base/base.h"
-#include "ompi/mca/common/ompio/common_ompio.h"
+#include "opal/util/show_help.h"
 
 int mca_fbtl_base_file_unselect(ompio_file_t *file)
 {

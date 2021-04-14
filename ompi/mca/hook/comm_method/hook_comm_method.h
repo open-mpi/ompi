@@ -13,8 +13,8 @@
 
 #include "ompi/constants.h"
 
-#include "ompi/mca/hook/hook.h"
 #include "ompi/mca/hook/base/base.h"
+#include "ompi/mca/hook/hook.h"
 
 BEGIN_C_DECLS
 

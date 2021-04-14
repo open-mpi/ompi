@@ -36,20 +36,20 @@
  * original function that had been saved in the
  * ompi_osc_monitoring_module_## template ##_template variable.
  */
-#define OSC_MONITORING_MODULE_TEMPLATE_GENERATE(template)               \
-    /* Generate the proper symbol for the                               \
-       ompi_osc_monitoring_module_## template ##_template variable */   \
-    OMPI_OSC_MONITORING_MODULE_GENERATE(template)                       \
-    /* Generate each module specific functions */                       \
-    OSC_MONITORING_GENERATE_TEMPLATE_ACCUMULATE(template)               \
-    OSC_MONITORING_GENERATE_TEMPLATE_ACTIVE_TARGET(template)            \
-    OSC_MONITORING_GENERATE_TEMPLATE_COMM(template)                     \
-    OSC_MONITORING_GENERATE_TEMPLATE_DYNAMIC(template)                  \
-    OSC_MONITORING_GENERATE_TEMPLATE_MODULE(template)                   \
-    OSC_MONITORING_GENERATE_TEMPLATE_PASSIVE_TARGET(template)           \
-    /* Generate template specific module initialization function:       \
+#define OSC_MONITORING_MODULE_TEMPLATE_GENERATE(template)                             \
+    /* Generate the proper symbol for the                                             \
+       ompi_osc_monitoring_module_## template ##_template variable */                 \
+    OMPI_OSC_MONITORING_MODULE_GENERATE(template)                                     \
+    /* Generate each module specific functions */                                     \
+    OSC_MONITORING_GENERATE_TEMPLATE_ACCUMULATE(template)                             \
+    OSC_MONITORING_GENERATE_TEMPLATE_ACTIVE_TARGET(template)                          \
+    OSC_MONITORING_GENERATE_TEMPLATE_COMM(template)                                   \
+    OSC_MONITORING_GENERATE_TEMPLATE_DYNAMIC(template)                                \
+    OSC_MONITORING_GENERATE_TEMPLATE_MODULE(template)                                 \
+    OSC_MONITORING_GENERATE_TEMPLATE_PASSIVE_TARGET(template)                         \
+    /* Generate template specific module initialization function:                     \
      * ompi_osc_monitoring_## template ##_set_template(ompi_osc_base_module_t*module) \
-     */                                                                 \
+     */                                                                               \
     MCA_OSC_MONITORING_MODULE_TEMPLATE_GENERATE(template)
 
 #endif /* MCA_OSC_MONITORING_TEMPLATE_H */

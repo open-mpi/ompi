@@ -21,53 +21,46 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_INFO_GET_NTHKEY = ompi_info_get_nthkey_f
-#pragma weak pmpi_info_get_nthkey = ompi_info_get_nthkey_f
-#pragma weak pmpi_info_get_nthkey_ = ompi_info_get_nthkey_f
-#pragma weak pmpi_info_get_nthkey__ = ompi_info_get_nthkey_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_INFO_GET_NTHKEY = ompi_info_get_nthkey_f
+#        pragma weak pmpi_info_get_nthkey = ompi_info_get_nthkey_f
+#        pragma weak pmpi_info_get_nthkey_ = ompi_info_get_nthkey_f
+#        pragma weak pmpi_info_get_nthkey__ = ompi_info_get_nthkey_f
 
-#pragma weak PMPI_Info_get_nthkey_f = ompi_info_get_nthkey_f
-#pragma weak PMPI_Info_get_nthkey_f08 = ompi_info_get_nthkey_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NTHKEY,
-                            pmpi_info_get_nthkey,
-                            pmpi_info_get_nthkey_,
-                            pmpi_info_get_nthkey__,
-                            pompi_info_get_nthkey_f,
-                            (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len),
-                            (info, n, key, ierr, key_len) )
-#endif
+#        pragma weak PMPI_Info_get_nthkey_f = ompi_info_get_nthkey_f
+#        pragma weak PMPI_Info_get_nthkey_f08 = ompi_info_get_nthkey_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_INFO_GET_NTHKEY, pmpi_info_get_nthkey, pmpi_info_get_nthkey_,
+                           pmpi_info_get_nthkey__, pompi_info_get_nthkey_f,
+                           (MPI_Fint * info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len),
+                           (info, n, key, ierr, key_len))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_INFO_GET_NTHKEY = ompi_info_get_nthkey_f
-#pragma weak mpi_info_get_nthkey = ompi_info_get_nthkey_f
-#pragma weak mpi_info_get_nthkey_ = ompi_info_get_nthkey_f
-#pragma weak mpi_info_get_nthkey__ = ompi_info_get_nthkey_f
+#    pragma weak MPI_INFO_GET_NTHKEY = ompi_info_get_nthkey_f
+#    pragma weak mpi_info_get_nthkey = ompi_info_get_nthkey_f
+#    pragma weak mpi_info_get_nthkey_ = ompi_info_get_nthkey_f
+#    pragma weak mpi_info_get_nthkey__ = ompi_info_get_nthkey_f
 
-#pragma weak MPI_Info_get_nthkey_f = ompi_info_get_nthkey_f
-#pragma weak MPI_Info_get_nthkey_f08 = ompi_info_get_nthkey_f
+#    pragma weak MPI_Info_get_nthkey_f = ompi_info_get_nthkey_f
+#    pragma weak MPI_Info_get_nthkey_f08 = ompi_info_get_nthkey_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NTHKEY,
-                            mpi_info_get_nthkey,
-                            mpi_info_get_nthkey_,
-                            mpi_info_get_nthkey__,
-                            ompi_info_get_nthkey_f,
-                            (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len),
-                            (info, n, key, ierr, key_len) )
-#else
-#define ompi_info_get_nthkey_f pompi_info_get_nthkey_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_INFO_GET_NTHKEY, mpi_info_get_nthkey, mpi_info_get_nthkey_,
+                           mpi_info_get_nthkey__, ompi_info_get_nthkey_f,
+                           (MPI_Fint * info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len),
+                           (info, n, key, ierr, key_len))
+#    else
+#        define ompi_info_get_nthkey_f pompi_info_get_nthkey_f
+#    endif
 #endif
-#endif
-
 
 static const char FUNC_NAME[] = "MPI_INFO_GET_NTHKEY";
 
@@ -76,8 +69,7 @@ static const char FUNC_NAME[] = "MPI_INFO_GET_NTHKEY";
    character array from the caller.  Hence, it's the max length of the
    string that we can use. */
 
-void ompi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key,
-			   MPI_Fint *ierr, int key_len)
+void ompi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len)
 {
     int c_ierr, ret;
     MPI_Info c_info;
@@ -86,14 +78,15 @@ void ompi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key,
     c_info = PMPI_Info_f2c(*info);
 
     c_ierr = ompi_info_get_nthkey(c_info, OMPI_FINT_2_INT(*n), &key_str);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (NULL != key_str) {
         if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(key_str->string, key, key_len))) {
             c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
-            if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+            if (NULL != ierr)
+                *ierr = OMPI_INT_2_FINT(c_ierr);
         }
         OBJ_RELEASE(key_str);
     }
-
 }

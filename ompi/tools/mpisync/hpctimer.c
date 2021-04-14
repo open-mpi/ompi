@@ -43,11 +43,11 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include <inttypes.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
-#include <math.h>
-#include <inttypes.h>
 
 #include <mpi.h>
 
@@ -72,13 +72,13 @@
  */
 
 #if defined(__GNUC__)
-#   define __inline__ __inline__
-#   define __asm__ __asm__
-#   define __volatile__ __volatile__
+#    define __inline__ __inline__
+#    define __asm__ __asm__
+#    define __volatile__ __volatile__
 #elif defined(__SUNPRO_C)
-#   define __inline__ __inline__
-#   define __asm__ __asm__
-#   define __volatile__ __volatile__
+#    define __inline__ __inline__
+#    define __asm__ __asm__
+#    define __volatile__ __volatile__
 #endif
 
 typedef int (*hpctimer_initialize_func_ptr_t)(void);
@@ -94,8 +94,8 @@ typedef struct hpctimer {
     hpctimer_wtime_func_ptr_t wtime;
 } hpctimer_t;
 
-static uint64_t hpctimer_overhead;  /* Timer overhead (seconds) */
-static uint64_t hpctimer_freq;      /* Timer frequency (ticks per usec) */
+static uint64_t hpctimer_overhead; /* Timer overhead (seconds) */
+static uint64_t hpctimer_freq;     /* Timer frequency (ticks per usec) */
 
 static double hpctimer_wtime_tsc(void);
 static int hpctimer_tsc_initialize(void);
@@ -107,11 +107,11 @@ static double hpctimer_wtime_gettimeofday(void);
 /*
  * Timers
  */
-static hpctimer_t hpctimer_timers[] = {
-    {"MPI_Wtime", NULL, NULL, NULL, MPI_Wtime},
-    {"gettimeofday", NULL, NULL, NULL, hpctimer_wtime_gettimeofday},
-    {"tsc", hpctimer_tsc_initialize, NULL, NULL, hpctimer_wtime_tsc}
-};
+static hpctimer_t hpctimer_timers[] = {{"MPI_Wtime", NULL, NULL, NULL, MPI_Wtime},
+                                       {"gettimeofday", NULL, NULL, NULL,
+                                        hpctimer_wtime_gettimeofday},
+                                       {"tsc", hpctimer_tsc_initialize, NULL, NULL,
+                                        hpctimer_wtime_tsc}};
 
 static hpctimer_wtime_func_ptr_t hpctimer_wtime_func_ptr = NULL;
 static int hpctimer_timer = -1;
@@ -206,7 +206,7 @@ static double hpctimer_wtime_gettimeofday(void)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    return (double)tv.tv_sec + 1E-6 * tv.tv_usec;
+    return (double) tv.tv_sec + 1E-6 * tv.tv_usec;
 }
 
 /*
@@ -214,7 +214,7 @@ static double hpctimer_wtime_gettimeofday(void)
  */
 static double hpctimer_wtime_tsc(void)
 {
-    return (double)(hpctimer_gettsc() - hpctimer_overhead) / (double)hpctimer_freq;
+    return (double) (hpctimer_gettsc() - hpctimer_overhead) / (double) hpctimer_freq;
 }
 
 /*
@@ -237,42 +237,30 @@ static __inline__ uint64_t hpctimer_gettsc(void)
 {
 #if defined(__x86_64__)
     uint32_t low, high;
-    __asm__ __volatile__(
-        "xorl %%eax, %%eax\n"
-        "cpuid\n"
-        ::: "%rax", "%rbx", "%rcx", "%rdx"
-    );
-    __asm__ __volatile__(
-        "rdtsc\n"
-        : "=a" (low), "=d" (high)
-    );
-    return ((uint64_t)high << 32) | low;
+    __asm__ __volatile__("xorl %%eax, %%eax\n"
+                         "cpuid\n" ::
+                             : "%rax", "%rbx", "%rcx", "%rdx");
+    __asm__ __volatile__("rdtsc\n" : "=a"(low), "=d"(high));
+    return ((uint64_t) high << 32) | low;
 
 #elif defined(__i386__)
     uint64_t tsc;
-    __asm__ __volatile__(
-        "xorl %%eax, %%eax\n"
-        "cpuid\n"
-        ::: "%eax", "%ebx", "%ecx", "%edx"
-    );
-    __asm__ __volatile__(
-        "rdtsc\n"
-        : "=A" (tsc)
-    );
+    __asm__ __volatile__("xorl %%eax, %%eax\n"
+                         "cpuid\n" ::
+                             : "%eax", "%ebx", "%ecx", "%edx");
+    __asm__ __volatile__("rdtsc\n" : "=A"(tsc));
     return tsc;
 #else
-#   error "Unsupported platform"
+#    error "Unsupported platform"
 #endif
 }
 
 /* hpctimer_measure_overhead: Returns overhead of TSC reading (in tics). */
 static uint64_t hpctimer_measure_overhead(void)
 {
-    enum {
-        TSC_OVERHEAD_NTESTS = 10
-    };
+    enum { TSC_OVERHEAD_NTESTS = 10 };
     int i;
-    uint64_t count, overhead = (uint64_t)~0x01;
+    uint64_t count, overhead = (uint64_t) ~0x01;
 
     /* Make warm-up passes and determine timer overhead */
     for (i = 0; i < TSC_OVERHEAD_NTESTS; i++) {

@@ -28,20 +28,19 @@ BEGIN_C_DECLS
 OMPI_DECLSPEC int mca_pml_base_bsend_init(bool enable_mpi_threads);
 OMPI_DECLSPEC int mca_pml_base_bsend_fini(void);
 
-int mca_pml_base_bsend_attach(void* addr, int size);
-int mca_pml_base_bsend_detach(void* addr, int* size);
+int mca_pml_base_bsend_attach(void *addr, int size);
+int mca_pml_base_bsend_detach(void *addr, int *size);
 
-OMPI_DECLSPEC int mca_pml_base_bsend_request_alloc(ompi_request_t*);
-OMPI_DECLSPEC int mca_pml_base_bsend_request_start(ompi_request_t*);
-OMPI_DECLSPEC int mca_pml_base_bsend_request_fini(ompi_request_t*);
-OMPI_DECLSPEC void*  mca_pml_base_bsend_request_alloc_buf( size_t length );
-OMPI_DECLSPEC int mca_pml_base_bsend_request_free(void* addr);
+OMPI_DECLSPEC int mca_pml_base_bsend_request_alloc(ompi_request_t *);
+OMPI_DECLSPEC int mca_pml_base_bsend_request_start(ompi_request_t *);
+OMPI_DECLSPEC int mca_pml_base_bsend_request_fini(ompi_request_t *);
+OMPI_DECLSPEC void *mca_pml_base_bsend_request_alloc_buf(size_t length);
+OMPI_DECLSPEC int mca_pml_base_bsend_request_free(void *addr);
 
-extern unsigned char   *mca_pml_bsend_userbase;   /* user provided buffer base */
-extern unsigned char   *mca_pml_bsend_base;       /* adjusted base of user buffer */
-extern unsigned char   *mca_pml_bsend_addr;       /* current offset into user buffer */
+extern unsigned char *mca_pml_bsend_userbase; /* user provided buffer base */
+extern unsigned char *mca_pml_bsend_base;     /* adjusted base of user buffer */
+extern unsigned char *mca_pml_bsend_addr;     /* current offset into user buffer */
 
 END_C_DECLS
 
 #endif
-

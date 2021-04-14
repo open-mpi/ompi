@@ -39,16 +39,9 @@
  * Types and macros
  **************************************************************************/
 
-enum {
-    MPIDBG_MAX_OBJECT_NAME = MPI_MAX_OBJECT_NAME
-};
-enum {
-    MPIDBG_MAX_FILENAME = 1024
-};
-enum {
-    MPIDBG_INTERFACE_VERSION = 1
-};
-
+enum { MPIDBG_MAX_OBJECT_NAME = MPI_MAX_OBJECT_NAME };
+enum { MPIDBG_MAX_FILENAME = 1024 };
+enum { MPIDBG_INTERFACE_VERSION = 1 };
 
 /*-----------------------------------------------------------------------
  * Global initialization information for the DLL
@@ -192,59 +185,59 @@ struct mpidbg_attribute_pair_t {
  *-----------------------------------------------------------------------*/
 
 /* Using an enum instead of #define because debuggers can show the
-   *names* of enum values, not just the values. */
+ *names* of enum values, not just the values. */
 enum mpidbg_comm_capabilities_t {
     /* Whether this MPI DLL supports returning basic information about
        communicators */
-    MPIDBG_COMM_CAP_BASIC =                  0x01,
+    MPIDBG_COMM_CAP_BASIC = 0x01,
     /* Whether this MPI DLL supports returning names of
        communicators */
-    MPIDBG_COMM_CAP_STRING_NAMES =           0x02,
+    MPIDBG_COMM_CAP_STRING_NAMES = 0x02,
     /* Whether this MPI DLL supports indicating whether a communicator
        has been freed by the user application */
-    MPIDBG_COMM_CAP_FREED_HANDLE =           0x04,
+    MPIDBG_COMM_CAP_FREED_HANDLE = 0x04,
     /* Whether this MPI DLL supports indicating whether a communicator
        object has been freed by the MPI implementation or not */
-    MPIDBG_COMM_CAP_FREED_OBJECT =           0x08,
+    MPIDBG_COMM_CAP_FREED_OBJECT = 0x08,
     /* Whether this MPI DLL supports returning the list of MPI request
        handles that are pending on a communicator */
-    MPIDBG_COMM_CAP_REQUEST_LIST =           0x10,
+    MPIDBG_COMM_CAP_REQUEST_LIST = 0x10,
     /* Whether this MPI DLL supports returning the list of MPI window
        handles that were derived from a given communicator */
-    MPIDBG_COMM_CAP_WINDOW_LIST =            0x20,
+    MPIDBG_COMM_CAP_WINDOW_LIST = 0x20,
     /* Whether this MPI DLL supports returning the list of MPI file
        handles that were derived from a given communicator */
-    MPIDBG_COMM_CAP_FILE_LIST =              0x40,
+    MPIDBG_COMM_CAP_FILE_LIST = 0x40,
     /* Sentinel max value */
     MPIDBG_COMM_CAP_MAX
 };
 
 enum mpidbg_comm_info_bitmap_t {
     /* Predefined communicator if set (user-defined if not set) */
-    MPIDBG_COMM_INFO_PREDEFINED =      0x01,
+    MPIDBG_COMM_INFO_PREDEFINED = 0x01,
     /* Whether this communicator is a cartesian communicator or not
        (mutually exclusive with _GRAPH and _INTERCOMM) */
-    MPIDBG_COMM_INFO_CARTESIAN =       0x02,
+    MPIDBG_COMM_INFO_CARTESIAN = 0x02,
     /* Whether this communicator is a graph communicator or not
        (mutually exclusive with _CARTESIAN and _INTERCOMM) */
-    MPIDBG_COMM_INFO_GRAPH =           0x04,
+    MPIDBG_COMM_INFO_GRAPH = 0x04,
     /* If a cartesian or graph communicator, whether the processes in
        this communicator were re-ordered when the topology was
        assigned. */
-    MPIDBG_COMM_INFO_TOPO_REORDERED =  0x08,
+    MPIDBG_COMM_INFO_TOPO_REORDERED = 0x08,
     /* Whether this is an intercommunicator or not (this communicator
        is an intracommunicator if this flag is not yet). */
-    MPIDBG_COMM_INFO_INTERCOMM =       0x10,
+    MPIDBG_COMM_INFO_INTERCOMM = 0x10,
     /* This communicator has been marked for freeing by the user
        application if set */
-    MPIDBG_COMM_INFO_FREED_HANDLE =    0x20,
+    MPIDBG_COMM_INFO_FREED_HANDLE = 0x20,
     /* This communicator has actually been freed by the MPI
        implementation if set */
-    MPIDBG_COMM_INFO_FREED_OBJECT =    0x40,
+    MPIDBG_COMM_INFO_FREED_OBJECT = 0x40,
     /* The queried communicator is MPI_COMM_NULL */
-    MPIDBG_COMM_INFO_COMM_NULL =       0x80,
+    MPIDBG_COMM_INFO_COMM_NULL = 0x80,
     /* The queried communicator has a distributed graph topology attached to it */
-    MPIDBG_COMM_INFO_DIST_GRAPH =      0x00000400,
+    MPIDBG_COMM_INFO_DIST_GRAPH = 0x00000400,
     /* Sentinel max value */
     MPIDBG_COMM_INFO_MAX
 };
@@ -331,24 +324,23 @@ struct mpidbg_comm_info_t {
     mqs_taddr_t *comm_derived_files;
 };
 
-
 /*-----------------------------------------------------------------------
  * Requests
  *-----------------------------------------------------------------------*/
 
 /* Using an enum instead of #define because debuggers can show the
-   *names* of enum values, not just the values. */
+ *names* of enum values, not just the values. */
 enum mpidbg_request_capabilities_t {
     /* Whether this MPI DLL supports returning basic information about
        requests */
-    MPIDBG_REQUEST_CAP_BASIC =           0x01,
+    MPIDBG_REQUEST_CAP_BASIC = 0x01,
     /* Sentinel max value */
     MPIDBG_REQUEST_CAP_MAX
 };
 
 enum mpidbg_request_info_bitmap_t {
     /* Predefined request if set (user-defined if not set) */
-    MPIDBG_REQUEST_INFO_PREDEFINED =      0x01,
+    MPIDBG_REQUEST_INFO_PREDEFINED = 0x01,
     /* Sentinel max value */
     MPIDBG_REQUEST_INFO_MAX
 };
@@ -371,14 +363,14 @@ struct mpidbg_request_info_t {
 enum mpidbg_status_capabilities_t {
     /* Whether this MPI DLL supports returning basic information about
        statuses */
-    MPIDBG_STATUS_CAP_BASIC =           0x01,
+    MPIDBG_STATUS_CAP_BASIC = 0x01,
     /* Sentinel max value */
     MPIDBG_STATUS_CAP_MAX
 };
 
 enum mpidbg_status_info_bitmap_t {
     /* Predefined status if set (user-defined if not set) */
-    MPIDBG_STATUS_INFO_PREDEFINED =      0x01,
+    MPIDBG_STATUS_INFO_PREDEFINED = 0x01,
     /* Sentinel max value */
     MPIDBG_STATUS_INFO_MAX
 };
@@ -393,45 +385,45 @@ struct mpidbg_status_info_t {
  *-----------------------------------------------------------------------*/
 
 /* Using an enum instead of #define because debuggers can show the
-   *names* of enum values, not just the values. */
+ *names* of enum values, not just the values. */
 enum mpidbg_errhandler_capabilities_t {
     /* Whether this MPI DLL supports returning basic information about
        error handlers */
-    MPIDBG_ERRH_CAP_BASIC =           0x01,
+    MPIDBG_ERRH_CAP_BASIC = 0x01,
     /* Whether this MPI DLL supports returning names of the predefined
        error handlers */
-    MPIDBG_ERRH_CAP_STRING_NAMES =    0x02,
+    MPIDBG_ERRH_CAP_STRING_NAMES = 0x02,
     /* Whether this MPI DLL supports indicating whether an error
        handler has been freed by the user application */
-    MPIDBG_ERRH_CAP_FREED_HANDLE =    0x04,
+    MPIDBG_ERRH_CAP_FREED_HANDLE = 0x04,
     /* Whether this MPI DLL supports indicating whether an error
        handler object has been freed by the MPI implementation or
        not */
-    MPIDBG_ERRH_CAP_FREED_OBJECT =    0x08,
+    MPIDBG_ERRH_CAP_FREED_OBJECT = 0x08,
     /* Whether this MPI DLL supports returning the list of MPI handles
        that an MPI error handler is attached to */
-    MPIDBG_ERRH_CAP_HANDLE_LIST =     0x10,
+    MPIDBG_ERRH_CAP_HANDLE_LIST = 0x10,
     /* Sentinel max value */
     MPIDBG_ERRH_CAP_MAX
 };
 
 enum mpidbg_errhandler_info_bitmap_t {
     /* Predefined error handler if set (user-defined if not set) */
-    MPIDBG_ERRH_INFO_PREDEFINED =      0x01,
+    MPIDBG_ERRH_INFO_PREDEFINED = 0x01,
     /* Communicator error handler if set */
-    MPIDBG_ERRH_INFO_COMMUNICATOR =    0x02,
+    MPIDBG_ERRH_INFO_COMMUNICATOR = 0x02,
     /* File error handler if set */
-    MPIDBG_ERRH_INFO_FILE =            0x04,
+    MPIDBG_ERRH_INFO_FILE = 0x04,
     /* Window error handler if set */
-    MPIDBG_ERRH_INFO_WINDOW =          0x08,
+    MPIDBG_ERRH_INFO_WINDOW = 0x08,
     /* Callback is in C if set (Fortran if not set) */
-    MPIDBG_ERRH_INFO_C_CALLBACK =      0x10,
+    MPIDBG_ERRH_INFO_C_CALLBACK = 0x10,
     /* This errorhandler has been marked for freeing by the user
        application if set */
-    MPIDBG_ERRH_INFO_FREED_HANDLE =    0x20,
+    MPIDBG_ERRH_INFO_FREED_HANDLE = 0x20,
     /* This errorhandler has actually been freed by the MPI
        implementation if set */
-    MPIDBG_ERRH_INFO_FREED_OBJECT =    0x40,
+    MPIDBG_ERRH_INFO_FREED_OBJECT = 0x40,
     /* Sentinel max value */
     MPIDBG_ERRH_INFO_MAX
 };
@@ -645,8 +637,7 @@ int mpidbg_dll_taddr_width(void);
                    mpidbg_finalize_per_image()).
    MPIDBG_ERR_*: if something went wrong.
 */
-int mpidbg_init_per_image(mqs_image *image,
-                          const mqs_image_callbacks *callbacks,
+int mpidbg_init_per_image(mqs_image *image, const mqs_image_callbacks *callbacks,
                           struct mpidbg_handle_info_t *handle_types);
 
 /* This function will be called once when an application image that
@@ -706,8 +697,7 @@ void mpidbg_finalize_per_image(mqs_image *image, mqs_image_info *image_info);
                    mpidbg_finalize_per_process()).
    MPIDBG_ERR_*: if something went wrong.
 */
-int mpidbg_init_per_process(mqs_process *process,
-                            const mqs_process_callbacks *callbacks,
+int mpidbg_init_per_process(mqs_process *process, const mqs_process_callbacks *callbacks,
                             struct mpidbg_handle_info_t *handle_types);
 
 /* This function will be called once when an application image that
@@ -721,8 +711,7 @@ int mpidbg_init_per_process(mqs_process *process,
    IN: process: the application process.
    IN: process_info: the info associated with the application process.
 */
-void mpidbg_finalize_per_process(mqs_process *process,
-                                 mqs_process_info *process_info);
+void mpidbg_finalize_per_process(mqs_process *process, mqs_process_info *process_info);
 
 /*-----------------------------------------------------------------------
  * MPI handle query functions
@@ -751,9 +740,9 @@ void mpidbg_finalize_per_process(mqs_process *process,
    MPIDBG_ERR_NOT_FOUND: if the handle is not valid / found.
    MPIDBG_ERR_UNSUPPORTED: if this function is unsupported.
 */
-int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
-                      mqs_process *process, mqs_process_info *process_info,
-                      mqs_taddr_t c_comm, struct mpidbg_comm_info_t **info);
+int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                      mqs_process_info *process_info, mqs_taddr_t c_comm,
+                      struct mpidbg_comm_info_t **info);
 
 /* Query function to turn a Fortran INTEGER handle into its equivalent
    C handle (that can then be queried with mpidbg_comm_query()).
@@ -777,9 +766,8 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
    MPIDBG_ERR_NOT_FOUND: if the handle is not valid / found.
    MPIDBG_ERR_UNSUPPORTED: if this function is unsupported.
 */
-int mpidbg_comm_f2c(mqs_image *image, mqs_image_info *image_info,
-                    mqs_process *process, mqs_process_info *process_info,
-                    mqs_taddr_t f77_comm, mqs_taddr_t *c_comm);
+int mpidbg_comm_f2c(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                    mqs_process_info *process_info, mqs_taddr_t f77_comm, mqs_taddr_t *c_comm);
 
 /* Query function to turn a C++ handle into its equivalent C handle
    (that can then be queried with mpidbg_comm_query()).  Pass the
@@ -809,11 +797,9 @@ int mpidbg_comm_f2c(mqs_image *image, mqs_image_info *image_info,
    MPIDBG_ERR_NOT_FOUND: if the handle is not valid / found.
    MPIDBG_ERR_UNSUPPORTED: if this function is unsupported.
 */
-int mpidbg_comm_cxx2c(mqs_image *image, mqs_image_info *image_info,
-                      mqs_process *process, mqs_process_info *process_info,
-                      mqs_taddr_t cxx_comm,
-                      enum mpidbg_comm_info_bitmap_t comm_type,
-                      mqs_taddr_t *c_comm);
+int mpidbg_comm_cxx2c(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                      mqs_process_info *process_info, mqs_taddr_t cxx_comm,
+                      enum mpidbg_comm_info_bitmap_t comm_type, mqs_taddr_t *c_comm);
 
 /*-----------------------------------------------------------------------
  * MPI handle query functions
@@ -825,17 +811,14 @@ int mpidbg_comm_cxx2c(mqs_image *image, mqs_image_info *image_info,
    "errhandler_type" argument to the cxx2c function because
    MPI::Errhandler has no derived classes. */
 
-int mpidbg_errhandler_query(mqs_image *image, mqs_image_info *image_info,
-                            mqs_process *process, mqs_process_info *process_info,
-                            mqs_taddr_t errhandler,
+int mpidbg_errhandler_query(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                            mqs_process_info *process_info, mqs_taddr_t errhandler,
                             struct mpidbg_errhandler_info_t **info);
-int mpidbg_errhandler_f2c(mqs_image *image, mqs_image_info *image_info,
-                          mqs_process *process, mqs_process_info *process_info,
-                          mqs_taddr_t f77_errhandler,
+int mpidbg_errhandler_f2c(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                          mqs_process_info *process_info, mqs_taddr_t f77_errhandler,
                           mqs_taddr_t *c_errhandler);
-int mpidbg_errhandler_cxx2c(mqs_image *image, mqs_image_info *image_info,
-                            mqs_process *process, mqs_process_info *process_info,
-                            mqs_taddr_t cxx_errhandler,
+int mpidbg_errhandler_cxx2c(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                            mqs_process_info *process_info, mqs_taddr_t cxx_errhandler,
                             mqs_taddr_t *c_errhandler);
 
 /*-----------------------------------------------------------------------
@@ -846,18 +829,15 @@ int mpidbg_errhandler_cxx2c(mqs_image *image, mqs_image_info *image_info,
 /* These functions are analogous to the mpidbg_comm_* functions, but
    for MPI_Request. */
 
-int mpidbg_request_query(mqs_image *image, mqs_image_info *image_info,
-                         mqs_process *process, mqs_process_info *process_info,
-                         mqs_taddr_t request,
+int mpidbg_request_query(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                         mqs_process_info *process_info, mqs_taddr_t request,
                          struct mpidbg_request_info_t **info);
-int mpidbg_request_f2c(mqs_image *image, mqs_image_info *image_info,
-                       mqs_process *process, mqs_process_info *process_info,
-                       mqs_taddr_t f77_request, mqs_taddr_t *c_request);
-int mpidbg_request_cxx2c(mqs_image *image, mqs_image_info *image_info,
-                         mqs_process *process, mqs_process_info *process_info,
-                         mqs_taddr_t cxx_request,
-                         enum mpidbg_request_info_bitmap_t request_type,
-                         mqs_taddr_t *c_request);
+int mpidbg_request_f2c(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                       mqs_process_info *process_info, mqs_taddr_t f77_request,
+                       mqs_taddr_t *c_request);
+int mpidbg_request_cxx2c(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                         mqs_process_info *process_info, mqs_taddr_t cxx_request,
+                         enum mpidbg_request_info_bitmap_t request_type, mqs_taddr_t *c_request);
 
 /*-----------------------------------------------------------------------
  * MPI handle query functions
@@ -867,16 +847,14 @@ int mpidbg_request_cxx2c(mqs_image *image, mqs_image_info *image_info,
 /* These functions are analogous to the mpidbg_comm_* functions, but
    for MPI_Status. */
 
-int mpidbg_status_query(mqs_image *image, mqs_image_info *image_info,
-                        mqs_process *process, mqs_process_info *process_info,
-                        mqs_taddr_t status,
+int mpidbg_status_query(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                        mqs_process_info *process_info, mqs_taddr_t status,
                         struct mpidbg_status_info_t **info);
-int mpidbg_status_f2c(mqs_image *image, mqs_image_info *image_info,
-                      mqs_process *process, mqs_process_info *process_info,
-                      mqs_taddr_t f77_status, mqs_taddr_t *c_status);
-int mpidbg_status_cxx2c(mqs_image *image, mqs_image_info *image_info,
-                        mqs_process *process, mqs_process_info *process_info,
-                        mqs_taddr_t cxx_status,
+int mpidbg_status_f2c(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                      mqs_process_info *process_info, mqs_taddr_t f77_status,
+                      mqs_taddr_t *c_status);
+int mpidbg_status_cxx2c(mqs_image *image, mqs_image_info *image_info, mqs_process *process,
+                        mqs_process_info *process_info, mqs_taddr_t cxx_status,
                         mqs_taddr_t *c_status);
 
 #endif /* __MPIDBG_INTERFACE_H__ */

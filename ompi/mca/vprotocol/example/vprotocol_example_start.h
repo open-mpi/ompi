@@ -9,10 +9,10 @@
  */
 
 #ifndef __VPROTOCOL_EXAMPLE_START_H__
-#define __VPROTOCOL_EXAMPLE_START_H__
+#    define __VPROTOCOL_EXAMPLE_START_H__
 
-#include "ompi_config.h"
-#include "vprotocol_example.h"
+#    include "ompi_config.h"
+#    include "vprotocol_example.h"
 
 #endif /* __VPROTOCOL_EXAMPLE_START_H__ */
 

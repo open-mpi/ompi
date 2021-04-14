@@ -26,12 +26,12 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/request/request.h"
-#include "pml_ob1_recvreq.h"
-#include "pml_ob1_recvfrag.h"
-#include "ompi/peruse/peruse-internal.h"
-#include "ompi/message/message.h"
 #include "ompi/memchecker.h"
+#include "ompi/message/message.h"
+#include "ompi/peruse/peruse-internal.h"
+#include "ompi/request/request.h"
+#include "pml_ob1_recvfrag.h"
+#include "pml_ob1_recvreq.h"
 
 /**
  * Single usage request. As we allow recursive calls to recv
@@ -42,13 +42,8 @@
  */
 mca_pml_ob1_recv_request_t *mca_pml_ob1_recvreq = NULL;
 
-int mca_pml_ob1_irecv_init(void *addr,
-                           size_t count,
-                           ompi_datatype_t * datatype,
-                           int src,
-                           int tag,
-                           struct ompi_communicator_t *comm,
-                           struct ompi_request_t **request)
+int mca_pml_ob1_irecv_init(void *addr, size_t count, ompi_datatype_t *datatype, int src, int tag,
+                           struct ompi_communicator_t *comm, struct ompi_request_t **request)
 {
     mca_pml_ob1_recv_request_t *recvreq;
     MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
@@ -56,13 +51,9 @@ int mca_pml_ob1_irecv_init(void *addr,
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
-    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
-                                   addr,
-                                   count, datatype, src, tag, comm, true);
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype, src, tag, comm, true);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
+    PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_ACTIVATE, &((recvreq)->req_recv.req_base), PERUSE_RECV);
 
     /* Work around a leak in start by marking this request as complete. The
      * problem occured because we do not have a way to differentiate an
@@ -74,13 +65,8 @@ int mca_pml_ob1_irecv_init(void *addr,
     return OMPI_SUCCESS;
 }
 
-int mca_pml_ob1_irecv(void *addr,
-                      size_t count,
-                      ompi_datatype_t * datatype,
-                      int src,
-                      int tag,
-                      struct ompi_communicator_t *comm,
-                      struct ompi_request_t **request)
+int mca_pml_ob1_irecv(void *addr, size_t count, ompi_datatype_t *datatype, int src, int tag,
+                      struct ompi_communicator_t *comm, struct ompi_request_t **request)
 {
     mca_pml_ob1_recv_request_t *recvreq;
     MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
@@ -88,27 +74,17 @@ int mca_pml_ob1_irecv(void *addr,
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
-    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
-                                   addr,
-                                   count, datatype, src, tag, comm, false);
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype, src, tag, comm, false);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
+    PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_ACTIVATE, &((recvreq)->req_recv.req_base), PERUSE_RECV);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     *request = (ompi_request_t *) recvreq;
     return OMPI_SUCCESS;
 }
 
-
-int mca_pml_ob1_recv(void *addr,
-                     size_t count,
-                     ompi_datatype_t * datatype,
-                     int src,
-                     int tag,
-                     struct ompi_communicator_t *comm,
-                     ompi_status_public_t * status)
+int mca_pml_ob1_recv(void *addr, size_t count, ompi_datatype_t *datatype, int src, int tag,
+                     struct ompi_communicator_t *comm, ompi_status_public_t *status)
 {
     mca_pml_ob1_recv_request_t *recvreq = NULL;
     int rc;
@@ -118,40 +94,35 @@ int mca_pml_ob1_recv(void *addr,
         mca_pml_ob1_recvreq = NULL;
     }
 
-    if( OPAL_UNLIKELY(NULL == recvreq) ) {
+    if (OPAL_UNLIKELY(NULL == recvreq)) {
         MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
         if (NULL == recvreq)
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
-    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
-                                  src, tag, comm, false);
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype, src, tag, comm, false);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(recvreq->req_recv.req_base),
-                             PERUSE_RECV);
+    PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_ACTIVATE, &(recvreq->req_recv.req_base), PERUSE_RECV);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
 
     if (recvreq->req_recv.req_base.req_pml_complete) {
         /* make buffer defined when the request is completed */
-        MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_defined,
-                            recvreq->req_recv.req_base.req_addr,
-                            recvreq->req_recv.req_base.req_count,
-                            recvreq->req_recv.req_base.req_datatype);
-        );
+        MEMCHECKER(memchecker_call(&opal_memchecker_base_mem_defined,
+                                   recvreq->req_recv.req_base.req_addr,
+                                   recvreq->req_recv.req_base.req_count,
+                                   recvreq->req_recv.req_base.req_datatype););
     }
 
-    if (NULL != status) {  /* return status */
+    if (NULL != status) { /* return status */
         *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
 
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
 #if OPAL_ENABLE_FT_MPI
-    if( OPAL_UNLIKELY( MPI_ERR_PROC_FAILED_PENDING == rc )) {
+    if (OPAL_UNLIKELY(MPI_ERR_PROC_FAILED_PENDING == rc)) {
         ompi_request_cancel(&recvreq->req_recv.req_base.req_ompi);
         ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
         rc = MPI_ERR_PROC_FAILED;
@@ -161,44 +132,37 @@ int mca_pml_ob1_recv(void *addr,
     if (recvreq->req_recv.req_base.req_pml_complete) {
         /* make buffer defined when the request is completed,
            and before releasing the objects. */
-        MEMCHECKER(
-            memchecker_call(&opal_memchecker_base_mem_defined,
-                            recvreq->req_recv.req_base.req_addr,
-                            recvreq->req_recv.req_base.req_count,
-                            recvreq->req_recv.req_base.req_datatype);
-        );
+        MEMCHECKER(memchecker_call(&opal_memchecker_base_mem_defined,
+                                   recvreq->req_recv.req_base.req_addr,
+                                   recvreq->req_recv.req_base.req_count,
+                                   recvreq->req_recv.req_base.req_datatype););
     }
 
     if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_recvreq)) {
         MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
     } else {
-        mca_pml_ob1_recv_request_fini (recvreq);
+        mca_pml_ob1_recv_request_fini(recvreq);
         mca_pml_ob1_recvreq = recvreq;
     }
 
     return rc;
 }
 
-
-int
-mca_pml_ob1_imrecv( void *buf,
-                    size_t count,
-                    ompi_datatype_t *datatype,
-                    struct ompi_message_t **message,
-                    struct ompi_request_t **request )
+int mca_pml_ob1_imrecv(void *buf, size_t count, ompi_datatype_t *datatype,
+                       struct ompi_message_t **message, struct ompi_request_t **request)
 {
-    mca_pml_ob1_recv_frag_t* frag;
+    mca_pml_ob1_recv_frag_t *frag;
     mca_pml_ob1_recv_request_t *recvreq;
     mca_pml_ob1_hdr_t *hdr;
     int src, tag;
     ompi_communicator_t *comm;
-    mca_pml_ob1_comm_proc_t* proc;
+    mca_pml_ob1_comm_proc_t *proc;
     uint64_t seq;
 
     /* get the request from the message and the frag from the request
        before we overwrite everything */
-    recvreq = (mca_pml_ob1_recv_request_t*) (*message)->req_ptr;
-    frag = (mca_pml_ob1_recv_frag_t*) recvreq->req_recv.req_base.req_addr;
+    recvreq = (mca_pml_ob1_recv_request_t *) (*message)->req_ptr;
+    frag = (mca_pml_ob1_recv_frag_t *) recvreq->req_recv.req_base.req_addr;
     src = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
     tag = recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG;
     comm = (*message)->comm;
@@ -215,20 +179,15 @@ mca_pml_ob1_imrecv( void *buf,
     OBJ_RETAIN(comm);
     MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq->req_recv);
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
-    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
-                                  buf,
-                                  count, datatype,
-                                  src, tag, comm, false);
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, buf, count, datatype, src, tag, comm, false);
     OBJ_RELEASE(comm);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
+    PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_ACTIVATE, &((recvreq)->req_recv.req_base), PERUSE_RECV);
 
     /* init/re-init the request */
     recvreq->req_lock = 0;
-    recvreq->req_pipeline_depth  = 0;
-    recvreq->req_bytes_received  = 0;
+    recvreq->req_pipeline_depth = 0;
+    recvreq->req_bytes_received = 0;
     /* What about req_rdma_cnt ? */
     recvreq->req_rdma_idx = 0;
     recvreq->req_pending = false;
@@ -239,15 +198,15 @@ mca_pml_ob1_imrecv( void *buf,
     /* Note - sequence number already assigned */
     recvreq->req_recv.req_base.req_sequence = seq;
 
-    proc = mca_pml_ob1_peer_lookup (comm, recvreq->req_recv.req_base.req_peer);
+    proc = mca_pml_ob1_peer_lookup(comm, recvreq->req_recv.req_base.req_peer);
     recvreq->req_recv.req_base.req_proc = proc->ompi_proc;
     prepare_recv_req_converter(recvreq);
 
     /* we can't go through the match, since we already have the match.
        Cheat and do what REQUEST_START does, but without the frag
        search */
-    hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
-    switch(hdr->hdr_common.hdr_type) {
+    hdr = (mca_pml_ob1_hdr_t *) frag->segments->seg_addr.pval;
+    switch (hdr->hdr_common.hdr_type) {
     case MCA_PML_OB1_HDR_TYPE_MATCH:
         mca_pml_ob1_recv_request_progress_match(recvreq, frag->btl, frag->segments,
                                                 frag->num_segments);
@@ -272,27 +231,22 @@ mca_pml_ob1_imrecv( void *buf,
     return OMPI_SUCCESS;
 }
 
-
-int
-mca_pml_ob1_mrecv( void *buf,
-                   size_t count,
-                   ompi_datatype_t *datatype,
-                   struct ompi_message_t **message,
-                   ompi_status_public_t* status )
+int mca_pml_ob1_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
+                      struct ompi_message_t **message, ompi_status_public_t *status)
 {
-    mca_pml_ob1_recv_frag_t* frag;
+    mca_pml_ob1_recv_frag_t *frag;
     mca_pml_ob1_recv_request_t *recvreq;
     mca_pml_ob1_hdr_t *hdr;
     int src, tag, rc;
     ompi_communicator_t *comm;
-    mca_pml_ob1_comm_proc_t* proc;
+    mca_pml_ob1_comm_proc_t *proc;
     uint64_t seq;
 
     /* get the request from the message and the frag from the request
        before we overwrite everything */
     comm = (*message)->comm;
-    recvreq = (mca_pml_ob1_recv_request_t*) (*message)->req_ptr;
-    frag = (mca_pml_ob1_recv_frag_t*) recvreq->req_recv.req_base.req_addr;
+    recvreq = (mca_pml_ob1_recv_request_t *) (*message)->req_ptr;
+    frag = (mca_pml_ob1_recv_frag_t *) recvreq->req_recv.req_base.req_addr;
     src = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
     tag = recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG;
     seq = recvreq->req_recv.req_base.req_sequence;
@@ -308,20 +262,15 @@ mca_pml_ob1_mrecv( void *buf,
     OBJ_RETAIN(comm);
     MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq->req_recv);
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
-    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
-                                  buf,
-                                  count, datatype,
-                                  src, tag, comm, false);
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, buf, count, datatype, src, tag, comm, false);
     OBJ_RELEASE(comm);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
+    PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_ACTIVATE, &((recvreq)->req_recv.req_base), PERUSE_RECV);
 
     /* init/re-init the request */
     recvreq->req_lock = 0;
-    recvreq->req_pipeline_depth  = 0;
-    recvreq->req_bytes_received  = 0;
+    recvreq->req_pipeline_depth = 0;
+    recvreq->req_bytes_received = 0;
     recvreq->req_rdma_cnt = 0;
     recvreq->req_rdma_idx = 0;
     recvreq->req_pending = false;
@@ -331,15 +280,15 @@ mca_pml_ob1_mrecv( void *buf,
     /* Note - sequence number already assigned */
     recvreq->req_recv.req_base.req_sequence = seq;
 
-    proc = mca_pml_ob1_peer_lookup (comm, recvreq->req_recv.req_base.req_peer);
+    proc = mca_pml_ob1_peer_lookup(comm, recvreq->req_recv.req_base.req_peer);
     recvreq->req_recv.req_base.req_proc = proc->ompi_proc;
     prepare_recv_req_converter(recvreq);
 
     /* we can't go through the match, since we already have the match.
        Cheat and do what REQUEST_START does, but without the frag
        search */
-    hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
-    switch(hdr->hdr_common.hdr_type) {
+    hdr = (mca_pml_ob1_hdr_t *) frag->segments->seg_addr.pval;
+    switch (hdr->hdr_common.hdr_type) {
     case MCA_PML_OB1_HDR_TYPE_MATCH:
         mca_pml_ob1_recv_request_progress_match(recvreq, frag->btl, frag->segments,
                                                 frag->num_segments);
@@ -362,18 +311,17 @@ mca_pml_ob1_mrecv( void *buf,
 
     MCA_PML_OB1_RECV_FRAG_RETURN(frag);
 
-    if (NULL != status) {  /* return status */
+    if (NULL != status) { /* return status */
         *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
 #if OPAL_ENABLE_FT_MPI
-    if( OPAL_UNLIKELY( MPI_ERR_PROC_FAILED_PENDING == rc )) {
+    if (OPAL_UNLIKELY(MPI_ERR_PROC_FAILED_PENDING == rc)) {
         ompi_request_cancel(&recvreq->req_recv.req_base.req_ompi);
         ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
         rc = MPI_ERR_PROC_FAILED;
     }
 #endif
-    ompi_request_free( (ompi_request_t**)&recvreq );
+    ompi_request_free((ompi_request_t **) &recvreq);
     return rc;
 }
-

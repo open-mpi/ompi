@@ -33,11 +33,10 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/class/opal_list.h"
-#include "ompi/mca/mca.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
-
+#include "opal/class/opal_list.h"
 
 BEGIN_C_DECLS
 
@@ -54,9 +53,9 @@ OMPI_DECLSPEC int mca_sharedfp_base_file_unselect(struct ompio_file_t *file);
 OMPI_DECLSPEC int mca_sharedfp_base_find_available(bool enable_progress_threads,
                                                    bool enable_mpi_threads);
 
-OMPI_DECLSPEC int mca_sharedfp_base_init_file (struct ompio_file_t *file);
+OMPI_DECLSPEC int mca_sharedfp_base_init_file(struct ompio_file_t *file);
 
-OMPI_DECLSPEC int mca_sharedfp_base_get_param (struct ompio_file_t *file, int keyval);
+OMPI_DECLSPEC int mca_sharedfp_base_get_param(struct ompio_file_t *file, int keyval);
 /*
  * Globals
  */

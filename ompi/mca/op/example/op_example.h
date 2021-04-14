@@ -85,20 +85,17 @@ OBJ_CLASS_DECLARATION(ompi_op_example_module_bxor_t);
  * itself can cache additional information after that that can be used
  * by both the component and modules.
  */
-OMPI_DECLSPEC extern ompi_op_example_component_t
-    mca_op_example_component;
+OMPI_DECLSPEC extern ompi_op_example_component_t mca_op_example_component;
 
 /**
  * Setup for MPI_MAX and return a module.
  */
-OMPI_DECLSPEC ompi_op_base_module_t *
-    ompi_op_example_setup_max(ompi_op_t *op);
+OMPI_DECLSPEC ompi_op_base_module_t *ompi_op_example_setup_max(ompi_op_t *op);
 
 /**
  * Setup for MPI_BXOR and return a module.
  */
-OMPI_DECLSPEC ompi_op_base_module_t *
-    ompi_op_example_setup_bxor(ompi_op_t *op);
+OMPI_DECLSPEC ompi_op_base_module_t *ompi_op_example_setup_bxor(ompi_op_t *op);
 
 END_C_DECLS
 

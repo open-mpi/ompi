@@ -19,52 +19,45 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "sharedfp_individual.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
 
-int mca_sharedfp_individual_read ( ompio_file_t *fh,
-				   void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
+int mca_sharedfp_individual_read(ompio_file_t *fh, void *buf, int count, MPI_Datatype datatype,
+                                 MPI_Status *status)
 {
-    opal_output(0,"mca_sharedfp_individual_read: NOT SUPPORTED by this component\n");
+    opal_output(0, "mca_sharedfp_individual_read: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
-int mca_sharedfp_individual_read_ordered ( ompio_file_t *fh,
-                                   void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
+int mca_sharedfp_individual_read_ordered(ompio_file_t *fh, void *buf, int count,
+                                         MPI_Datatype datatype, MPI_Status *status)
 {
-    opal_output(0,"mca_sharedfp_individual_read_ordered: NOT SUPPORTED by this component\n");
+    opal_output(0, "mca_sharedfp_individual_read_ordered: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
-int mca_sharedfp_individual_iread(ompio_file_t *fh,
-                                   void *buf,
-                                   int count,
-                                   ompi_datatype_t *datatype,
-                                   MPI_Request * request)
+int mca_sharedfp_individual_iread(ompio_file_t *fh, void *buf, int count, ompi_datatype_t *datatype,
+                                  MPI_Request *request)
 {
-    opal_output(0,"mca_sharedfp_individual_iread: NOT SUPPORTED by this component\n");
+    opal_output(0, "mca_sharedfp_individual_iread: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
-int mca_sharedfp_individual_read_ordered_begin(ompio_file_t *fh,
-                                                void *buf,
-                                                int count,
-                                                struct ompi_datatype_t *datatype)
+int mca_sharedfp_individual_read_ordered_begin(ompio_file_t *fh, void *buf, int count,
+                                               struct ompi_datatype_t *datatype)
 {
-    opal_output(0,"mca_sharedfp_individual_read_ordered_begin: NOT SUPPORTED by this component\n");
+    opal_output(0, "mca_sharedfp_individual_read_ordered_begin: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
-int mca_sharedfp_individual_read_ordered_end(ompio_file_t *fh,
-                                              void *buf,
-                                              ompi_status_public_t *status)
+int mca_sharedfp_individual_read_ordered_end(ompio_file_t *fh, void *buf,
+                                             ompi_status_public_t *status)
 {
-    opal_output(0,"mca_sharedfp_individual_read_ordered_end: NOT SUPPORTED by this component\n");
+    opal_output(0, "mca_sharedfp_individual_read_ordered_end: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }

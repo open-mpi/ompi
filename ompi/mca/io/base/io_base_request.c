@@ -21,18 +21,17 @@
 #include "ompi_config.h"
 
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
+#    include <sys/time.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 
-#include "opal/class/opal_object.h"
 #include "ompi/file/file.h"
-#include "opal/mca/base/base.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/io/base/io_base_request.h"
-
+#include "opal/class/opal_object.h"
+#include "opal/mca/base/base.h"
 
 /*
  * Private functions
@@ -43,7 +42,4 @@ static void io_base_request_constructor(mca_io_base_request_t *req)
     req->free_called = false;
 }
 
-OBJ_CLASS_INSTANCE(mca_io_base_request_t,
-                   ompi_request_t,
-                   io_base_request_constructor,
-                   NULL);
+OBJ_CLASS_INSTANCE(mca_io_base_request_t, ompi_request_t, io_base_request_constructor, NULL);

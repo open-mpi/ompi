@@ -24,40 +24,33 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Testall = PMPI_Testall
-#endif
-#define MPI_Testall PMPI_Testall
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Testall = PMPI_Testall
+#    endif
+#    define MPI_Testall PMPI_Testall
 #endif
 
 static const char FUNC_NAME[] = "MPI_Testall";
 
-
-int MPI_Testall(int count, MPI_Request requests[], int *flag,
-                MPI_Status statuses[])
+int MPI_Testall(int count, MPI_Request requests[], int *flag, MPI_Status statuses[])
 {
     SPC_RECORD(OMPI_SPC_TESTALL, 1);
 
-    MEMCHECKER(
-        int j;
-        for (j = 0; j < count; j++){
-            memchecker_request(&requests[j]);
-        }
-    );
+    MEMCHECKER(int j; for (j = 0; j < count; j++) { memchecker_request(&requests[j]); });
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         int i, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( (NULL == requests) && (0 != count) ) {
+        if ((NULL == requests) && (0 != count)) {
             rc = MPI_ERR_REQUEST;
         } else {
             for (i = 0; i < count; i++) {
@@ -78,13 +71,11 @@ int MPI_Testall(int count, MPI_Request requests[], int *flag,
         return MPI_SUCCESS;
     }
 
-    if (OMPI_SUCCESS == ompi_request_test_all(count, requests, flag,
-                                              statuses)) {
+    if (OMPI_SUCCESS == ompi_request_test_all(count, requests, flag, statuses)) {
         return MPI_SUCCESS;
     }
 
-    if (MPI_SUCCESS !=
-        ompi_errhandler_request_invoke(count, requests, FUNC_NAME)) {
+    if (MPI_SUCCESS != ompi_errhandler_request_invoke(count, requests, FUNC_NAME)) {
         return MPI_ERR_IN_STATUS;
     }
 

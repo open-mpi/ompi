@@ -24,47 +24,36 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_WIN_FREE = ompi_win_free_f
-#pragma weak pmpi_win_free = ompi_win_free_f
-#pragma weak pmpi_win_free_ = ompi_win_free_f
-#pragma weak pmpi_win_free__ = ompi_win_free_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_WIN_FREE = ompi_win_free_f
+#        pragma weak pmpi_win_free = ompi_win_free_f
+#        pragma weak pmpi_win_free_ = ompi_win_free_f
+#        pragma weak pmpi_win_free__ = ompi_win_free_f
 
-#pragma weak PMPI_Win_free_f = ompi_win_free_f
-#pragma weak PMPI_Win_free_f08 = ompi_win_free_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FREE,
-                           pmpi_win_free,
-                           pmpi_win_free_,
-                           pmpi_win_free__,
-                           pompi_win_free_f,
-                           (MPI_Fint *win, MPI_Fint *ierr),
-                           (win, ierr) )
-#endif
+#        pragma weak PMPI_Win_free_f = ompi_win_free_f
+#        pragma weak PMPI_Win_free_f08 = ompi_win_free_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_WIN_FREE, pmpi_win_free, pmpi_win_free_, pmpi_win_free__,
+                           pompi_win_free_f, (MPI_Fint * win, MPI_Fint *ierr), (win, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WIN_FREE = ompi_win_free_f
-#pragma weak mpi_win_free = ompi_win_free_f
-#pragma weak mpi_win_free_ = ompi_win_free_f
-#pragma weak mpi_win_free__ = ompi_win_free_f
+#    pragma weak MPI_WIN_FREE = ompi_win_free_f
+#    pragma weak mpi_win_free = ompi_win_free_f
+#    pragma weak mpi_win_free_ = ompi_win_free_f
+#    pragma weak mpi_win_free__ = ompi_win_free_f
 
-#pragma weak MPI_Win_free_f = ompi_win_free_f
-#pragma weak MPI_Win_free_f08 = ompi_win_free_f
+#    pragma weak MPI_Win_free_f = ompi_win_free_f
+#    pragma weak MPI_Win_free_f08 = ompi_win_free_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FREE,
-                           mpi_win_free,
-                           mpi_win_free_,
-                           mpi_win_free__,
-                           ompi_win_free_f,
-                           (MPI_Fint *win, MPI_Fint *ierr),
-                           (win, ierr) )
-#else
-#define ompi_win_free_f pompi_win_free_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_WIN_FREE, mpi_win_free, mpi_win_free_, mpi_win_free__,
+                           ompi_win_free_f, (MPI_Fint * win, MPI_Fint *ierr), (win, ierr))
+#    else
+#        define ompi_win_free_f pompi_win_free_f
+#    endif
 #endif
-#endif
-
 
 void ompi_win_free_f(MPI_Fint *win, MPI_Fint *ierr)
 {
@@ -72,9 +61,10 @@ void ompi_win_free_f(MPI_Fint *win, MPI_Fint *ierr)
     MPI_Win c_win = PMPI_Win_f2c(*win);
 
     c_ierr = PMPI_Win_free(&c_win);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-       *win = PMPI_Win_c2f(c_win);
+        *win = PMPI_Win_c2f(c_win);
     }
 }

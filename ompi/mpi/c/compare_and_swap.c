@@ -25,23 +25,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mca/osc/osc.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
-#include "ompi/mca/osc/osc.h"
-#include "ompi/datatype/ompi_datatype.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Compare_and_swap = PMPI_Compare_and_swap
-#endif
-#define MPI_Compare_and_swap PMPI_Compare_and_swap
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Compare_and_swap = PMPI_Compare_and_swap
+#    endif
+#    define MPI_Compare_and_swap PMPI_Compare_and_swap
 #endif
 
 static const char FUNC_NAME[] = "MPI_Compare_and_swap";
-
 
 int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr, void *result_addr,
                          MPI_Datatype datatype, int target_rank, MPI_Aint target_disp, MPI_Win win)
@@ -55,10 +54,9 @@ int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr, void
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
-        } else if (ompi_win_peer_invalid(win, target_rank) &&
-                   (MPI_PROC_NULL != target_rank)) {
+        } else if (ompi_win_peer_invalid(win, target_rank) && (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
-        } else if ( MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0 ) {
+        } else if (MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0) {
             rc = MPI_ERR_DISP;
         } else {
             OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, datatype, 1);
@@ -66,9 +64,10 @@ int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr, void
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
     }
 
-    if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
+    if (MPI_PROC_NULL == target_rank)
+        return MPI_SUCCESS;
 
-    rc = win->w_osc_module->osc_compare_and_swap(origin_addr, compare_addr, result_addr,
-                                                 datatype, target_rank, target_disp, win);
+    rc = win->w_osc_module->osc_compare_and_swap(origin_addr, compare_addr, result_addr, datatype,
+                                                 target_rank, target_disp, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

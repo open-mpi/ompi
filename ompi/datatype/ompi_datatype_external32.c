@@ -20,9 +20,9 @@
 
 #include "ompi_config.h"
 
+#include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/util/arch.h"
-#include "ompi/datatype/ompi_datatype.h"
 
 /* From the MPI standard. external32 use the following types:
  *   Type Length
@@ -103,30 +103,29 @@
  * consider the data stored in external32 as being packed.
  */
 
-uint32_t ompi_datatype_external32_arch_id = OPAL_ARCH_LDEXPSIZEIS15 | OPAL_ARCH_LDMANTDIGIS113 |
-                                            OPAL_ARCH_LONGDOUBLEIS128 | OPAL_ARCH_ISBIGENDIAN |
-                                            OPAL_ARCH_HEADERMASK | OPAL_ARCH_HEADERMASK2 |
-                                            OPAL_ARCH_BOOLIS8 | OPAL_ARCH_LOGICALIS8;
+uint32_t ompi_datatype_external32_arch_id = OPAL_ARCH_LDEXPSIZEIS15 | OPAL_ARCH_LDMANTDIGIS113
+                                            | OPAL_ARCH_LONGDOUBLEIS128 | OPAL_ARCH_ISBIGENDIAN
+                                            | OPAL_ARCH_HEADERMASK | OPAL_ARCH_HEADERMASK2
+                                            | OPAL_ARCH_BOOLIS8 | OPAL_ARCH_LOGICALIS8;
 
-opal_convertor_t* ompi_mpi_external32_convertor = NULL;
-opal_convertor_t* ompi_mpi_local_convertor = NULL;
+opal_convertor_t *ompi_mpi_external32_convertor = NULL;
+opal_convertor_t *ompi_mpi_local_convertor = NULL;
 
-int32_t ompi_datatype_default_convertors_init( void )
+int32_t ompi_datatype_default_convertors_init(void)
 {
-   /* create the extern32 convertor */
-    ompi_mpi_external32_convertor = opal_convertor_create( ompi_datatype_external32_arch_id, 0 );
+    /* create the extern32 convertor */
+    ompi_mpi_external32_convertor = opal_convertor_create(ompi_datatype_external32_arch_id, 0);
 
     /* create the local convertor */
-    ompi_mpi_local_convertor = opal_convertor_create( opal_local_arch, 0 );
+    ompi_mpi_local_convertor = opal_convertor_create(opal_local_arch, 0);
 
     return OMPI_SUCCESS;
 }
 
-
-int32_t ompi_datatype_default_convertors_fini( void )
+int32_t ompi_datatype_default_convertors_fini(void)
 {
-    OBJ_RELEASE( ompi_mpi_external32_convertor );
-    OBJ_RELEASE( ompi_mpi_local_convertor );
+    OBJ_RELEASE(ompi_mpi_external32_convertor);
+    OBJ_RELEASE(ompi_mpi_local_convertor);
 
     return OMPI_SUCCESS;
 }

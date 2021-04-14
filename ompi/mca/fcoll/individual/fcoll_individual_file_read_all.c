@@ -22,22 +22,18 @@
 #include "ompi_config.h"
 #include "fcoll_individual.h"
 
+#include "math.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
-#include "math.h"
+#include "ompi/mca/fcoll/fcoll.h"
 #include <unistd.h>
-
 
 /* this component just directly calls the individual I/O operations */
 
-int
-mca_fcoll_individual_file_read_all (ompio_file_t *fh,
-                                    void *buf,
-                                    int count,
-                                    struct ompi_datatype_t *datatype,
-                                    ompi_status_public_t *status)
+int mca_fcoll_individual_file_read_all(ompio_file_t *fh, void *buf, int count,
+                                       struct ompi_datatype_t *datatype,
+                                       ompi_status_public_t *status)
 {
-    return mca_common_ompio_file_read( fh, buf, count, datatype, status);
+    return mca_common_ompio_file_read(fh, buf, count, datatype, status);
 }

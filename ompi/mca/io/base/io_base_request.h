@@ -25,10 +25,10 @@
 #define IO_BASE_REQUEST_H
 
 #include "ompi_config.h"
-#include "opal/class/opal_object.h"
-#include "ompi/request/request.h"
 #include "ompi/file/file.h"
 #include "ompi/mca/io/base/base.h"
+#include "ompi/request/request.h"
+#include "opal/class/opal_object.h"
 
 /**
  * Base request type.
@@ -55,10 +55,10 @@ typedef struct mca_io_base_request_t mca_io_base_request_t;
 
 BEGIN_C_DECLS
 
-    /**
-     * Declare the class
-     */
-    OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_io_base_request_t);
+/**
+ * Declare the class
+ */
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_io_base_request_t);
 
 END_C_DECLS
 

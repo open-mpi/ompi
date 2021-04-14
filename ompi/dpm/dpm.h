@@ -31,8 +31,8 @@
 
 #include "ompi_config.h"
 
-#include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/info/info.h"
 
 BEGIN_C_DECLS
 
@@ -44,8 +44,7 @@ int ompi_dpm_init(void);
 /*
  * Connect/accept communications
  */
-int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
-                            const char *port, bool send_first,
+int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root, const char *port, bool send_first,
                             ompi_communicator_t **newcomm);
 
 /**
@@ -57,10 +56,8 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm);
 /*
  * Dynamically spawn processes
  */
-int ompi_dpm_spawn(int count, char const *array_of_commands[],
-                   char **array_of_argv[],
-                   const int array_of_maxprocs[],
-                   const MPI_Info array_of_info[],
+int ompi_dpm_spawn(int count, char const *array_of_commands[], char **array_of_argv[],
+                   const int array_of_maxprocs[], const MPI_Info array_of_info[],
                    const char *port_name);
 
 /*

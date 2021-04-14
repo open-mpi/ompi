@@ -15,19 +15,19 @@
 #include "ompi_config.h"
 #include "pml_monitoring.h"
 
-int mca_pml_monitoring_add_comm(struct ompi_communicator_t* comm)
+int mca_pml_monitoring_add_comm(struct ompi_communicator_t *comm)
 {
     return pml_selected_module.pml_add_comm(comm);
 }
 
-int mca_pml_monitoring_del_comm(struct ompi_communicator_t* comm)
+int mca_pml_monitoring_del_comm(struct ompi_communicator_t *comm)
 {
     mca_common_monitoring_coll_cache_name(comm);
     return pml_selected_module.pml_del_comm(comm);
 }
 
 #if OPAL_ENABLE_FT_MPI
-int mca_pml_monitoring_revoke_comm(struct ompi_communicator_t* comm, bool coll_only)
+int mca_pml_monitoring_revoke_comm(struct ompi_communicator_t *comm, bool coll_only)
 {
     return pml_selected_module.pml_revoke_comm(comm, coll_only);
 }

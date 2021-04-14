@@ -21,14 +21,13 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
+#include "coll_basic.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "coll_basic.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
-
 
 /*
  *	gather_inter
@@ -37,13 +36,9 @@
  *	Accepts:	- same arguments as MPI_Gather()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_gather_inter(const void *sbuf, int scount,
-                            struct ompi_datatype_t *sdtype,
-                            void *rbuf, int rcount,
-                            struct ompi_datatype_t *rdtype,
-                            int root, struct ompi_communicator_t *comm,
-                            mca_coll_base_module_t *module)
+int mca_coll_basic_gather_inter(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                void *rbuf, int rcount, struct ompi_datatype_t *rdtype, int root,
+                                struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int i;
     int err;
@@ -60,8 +55,7 @@ mca_coll_basic_gather_inter(const void *sbuf, int scount,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* Everyone but root sends data and returns. */
-        err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
-                                MCA_COLL_BASE_TAG_GATHER,
+        err = MCA_PML_CALL(send(sbuf, scount, sdtype, root, MCA_COLL_BASE_TAG_GATHER,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
     } else {
         /* I am the root, loop receiving the data. */
@@ -72,9 +66,8 @@ mca_coll_basic_gather_inter(const void *sbuf, int scount,
 
         incr = extent * rcount;
         for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
-            err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
-                                    MCA_COLL_BASE_TAG_GATHER,
-                                    comm, MPI_STATUS_IGNORE));
+            err = MCA_PML_CALL(
+                recv(ptmp, rcount, rdtype, i, MCA_COLL_BASE_TAG_GATHER, comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
                 return err;
             }

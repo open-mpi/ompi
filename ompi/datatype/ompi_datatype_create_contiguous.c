@@ -20,21 +20,22 @@
  */
 
 #include "ompi_config.h"
+#include "mpi.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
-#include "mpi.h"
 
-int32_t ompi_datatype_create_contiguous( int count, const ompi_datatype_t* oldType,
-                                         ompi_datatype_t** newType )
+int32_t ompi_datatype_create_contiguous(int count, const ompi_datatype_t *oldType,
+                                        ompi_datatype_t **newType)
 {
-    ompi_datatype_t* pdt;
+    ompi_datatype_t *pdt;
 
-    if( (0 == count) || (0 == oldType->super.size) ) {
-        return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
+    if ((0 == count) || (0 == oldType->super.size)) {
+        return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
     }
 
-    pdt = ompi_datatype_create( oldType->super.desc.used + 2 );
-    opal_datatype_add( &(pdt->super), &(oldType->super), count, 0, (oldType->super.ub - oldType->super.lb) );
+    pdt = ompi_datatype_create(oldType->super.desc.used + 2);
+    opal_datatype_add(&(pdt->super), &(oldType->super), count, 0,
+                      (oldType->super.ub - oldType->super.lb));
     *newType = pdt;
     return OMPI_SUCCESS;
 }

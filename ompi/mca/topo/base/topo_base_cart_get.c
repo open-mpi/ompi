@@ -22,8 +22,8 @@
 
 #include <string.h>
 
-#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 
 /*
  * function - retrieves Cartesian topology information associated with a
@@ -40,14 +40,10 @@
  *
  * @retval MPI_SUCCESS
  */
-int mca_topo_base_cart_get(ompi_communicator_t* comm,
-                           int maxdims,
-                           int *dims,
-                           int *periods,
+int mca_topo_base_cart_get(ompi_communicator_t *comm, int maxdims, int *dims, int *periods,
                            int *coords)
 {
-    int m = (maxdims <= comm->c_topo->mtc.cart->ndims) ?
-        maxdims : comm->c_topo->mtc.cart->ndims;
+    int m = (maxdims <= comm->c_topo->mtc.cart->ndims) ? maxdims : comm->c_topo->mtc.cart->ndims;
 
     memcpy(dims, comm->c_topo->mtc.cart->dims, m * sizeof(int));
     memcpy(periods, comm->c_topo->mtc.cart->periods, m * sizeof(int));

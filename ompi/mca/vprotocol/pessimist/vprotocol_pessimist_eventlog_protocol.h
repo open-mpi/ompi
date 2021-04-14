@@ -34,8 +34,7 @@ typedef enum {
 
 #define VPROTOCOL_EVENT_LOGGER_NAME_FMT "ompi_ft_event_logger[%d]"
 
-static inline void vprotocol_pessimist_event_datatype_create(
-                                                    MPI_Datatype *event_dtt)
+static inline void vprotocol_pessimist_event_datatype_create(MPI_Datatype *event_dtt)
 {
     MPI_Type_contiguous(2, MPI_UNSIGNED_LONG_LONG, event_dtt);
     MPI_Type_commit(event_dtt);

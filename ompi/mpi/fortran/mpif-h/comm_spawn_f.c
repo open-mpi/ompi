@@ -21,58 +21,54 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "opal/util/argv.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_COMM_SPAWN = ompi_comm_spawn_f
+#        pragma weak pmpi_comm_spawn = ompi_comm_spawn_f
+#        pragma weak pmpi_comm_spawn_ = ompi_comm_spawn_f
+#        pragma weak pmpi_comm_spawn__ = ompi_comm_spawn_f
+
+#        pragma weak PMPI_Comm_spawn_f = ompi_comm_spawn_f
+#        pragma weak PMPI_Comm_spawn_f08 = ompi_comm_spawn_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(
+    PMPI_COMM_SPAWN, pmpi_comm_spawn, pmpi_comm_spawn_, pmpi_comm_spawn__, pompi_comm_spawn_f,
+    (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm,
+     MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
+    (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len,
+     string_len))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_COMM_SPAWN = ompi_comm_spawn_f
-#pragma weak pmpi_comm_spawn = ompi_comm_spawn_f
-#pragma weak pmpi_comm_spawn_ = ompi_comm_spawn_f
-#pragma weak pmpi_comm_spawn__ = ompi_comm_spawn_f
+#    pragma weak MPI_COMM_SPAWN = ompi_comm_spawn_f
+#    pragma weak mpi_comm_spawn = ompi_comm_spawn_f
+#    pragma weak mpi_comm_spawn_ = ompi_comm_spawn_f
+#    pragma weak mpi_comm_spawn__ = ompi_comm_spawn_f
 
-#pragma weak PMPI_Comm_spawn_f = ompi_comm_spawn_f
-#pragma weak PMPI_Comm_spawn_f08 = ompi_comm_spawn_f
+#    pragma weak MPI_Comm_spawn_f = ompi_comm_spawn_f
+#    pragma weak MPI_Comm_spawn_f08 = ompi_comm_spawn_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
-                            pmpi_comm_spawn,
-                            pmpi_comm_spawn_,
-                            pmpi_comm_spawn__,
-                            pompi_comm_spawn_f,
-                            (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
-                            (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, string_len) )
-#endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_COMM_SPAWN = ompi_comm_spawn_f
-#pragma weak mpi_comm_spawn = ompi_comm_spawn_f
-#pragma weak mpi_comm_spawn_ = ompi_comm_spawn_f
-#pragma weak mpi_comm_spawn__ = ompi_comm_spawn_f
-
-#pragma weak MPI_Comm_spawn_f = ompi_comm_spawn_f
-#pragma weak MPI_Comm_spawn_f08 = ompi_comm_spawn_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
-                            mpi_comm_spawn,
-                            mpi_comm_spawn_,
-                            mpi_comm_spawn__,
-                            ompi_comm_spawn_f,
-                            (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
-                            (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, string_len) )
-#else
-#define ompi_comm_spawn_f pompi_comm_spawn_f
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(
+    MPI_COMM_SPAWN, mpi_comm_spawn, mpi_comm_spawn_, mpi_comm_spawn__, ompi_comm_spawn_f,
+    (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm,
+     MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
+    (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len,
+     string_len))
+#    else
+#        define ompi_comm_spawn_f pompi_comm_spawn_f
+#    endif
 #endif
 
-
-void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
-		      MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm,
-		      MPI_Fint *intercomm, MPI_Fint *array_of_errcodes,
-		      MPI_Fint *ierr, int cmd_len, int string_len)
+void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info,
+                       MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm,
+                       MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len)
 {
     MPI_Comm c_comm, c_new_comm;
     MPI_Info c_info;
@@ -103,12 +99,10 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
         ompi_fortran_argv_blank_f2c(argv, string_len, string_len, &c_argv);
     }
 
-    c_ierr = PMPI_Comm_spawn(c_command, c_argv,
-                            OMPI_FINT_2_INT(*maxprocs),
-                            c_info,
-                            OMPI_FINT_2_INT(*root),
-                            c_comm, &c_new_comm, c_errs);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Comm_spawn(c_command, c_argv, OMPI_FINT_2_INT(*maxprocs), c_info,
+                             OMPI_FINT_2_INT(*root), c_comm, &c_new_comm, c_errs);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         *intercomm = PMPI_Comm_c2f(c_new_comm);
@@ -118,7 +112,6 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
         opal_argv_free(c_argv);
     }
     if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_of_errcodes)) {
-	OMPI_ARRAY_INT_2_FINT(array_of_errcodes, OMPI_FINT_2_INT(*maxprocs));
+        OMPI_ARRAY_INT_2_FINT(array_of_errcodes, OMPI_FINT_2_INT(*maxprocs));
     }
 }
-

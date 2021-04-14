@@ -23,7 +23,6 @@
 
 #include "ompi/mca/mca.h"
 
-
 /*
  * Global functions for the BML
  */
@@ -33,9 +32,8 @@ BEGIN_C_DECLS
 /* forward declarations */
 struct mca_bml_base_btl_array_t;
 
-OMPI_DECLSPEC int mca_bml_base_btl_array_reserve(struct mca_bml_base_btl_array_t* array, size_t size);
-
+OMPI_DECLSPEC int mca_bml_base_btl_array_reserve(struct mca_bml_base_btl_array_t *array,
+                                                 size_t size);
 
 END_C_DECLS
 #endif /* MCA_BML_BASE_H */
-

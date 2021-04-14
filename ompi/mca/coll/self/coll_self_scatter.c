@@ -20,10 +20,9 @@
 
 #include "ompi_config.h"
 
+#include "coll_self.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "coll_self.h"
-
 
 /*
  *	scatter_intra
@@ -32,18 +31,13 @@
  *	Accepts:	- same arguments as MPI_Scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_self_scatter_intra(const void *sbuf, int scount,
-                                struct ompi_datatype_t *sdtype,
-                                void *rbuf, int rcount,
-                                struct ompi_datatype_t *rdtype,
-                                int root,
-                                struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
+int mca_coll_self_scatter_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                void *rbuf, int rcount, struct ompi_datatype_t *rdtype, int root,
+                                struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     if (MPI_IN_PLACE == rbuf) {
         return MPI_SUCCESS;
     } else {
-        return ompi_datatype_sndrcv(sbuf, scount, sdtype,
-                               rbuf, rcount, rdtype);
+        return ompi_datatype_sndrcv(sbuf, scount, sdtype, rbuf, rcount, rdtype);
     }
 }

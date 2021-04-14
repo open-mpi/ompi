@@ -10,36 +10,26 @@
  */
 
 #include "ompi_config.h"
-#include "opal/util/bit_ops.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/base.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
+#include "opal/util/bit_ops.h"
 
-int
-ompi_coll_base_agree_noft(void *contrib,
-                         int dt_count,
-                         struct ompi_datatype_t *dt,
-                         struct ompi_op_t *op,
-                         struct ompi_group_t **group, bool update_grp,
-                         struct ompi_communicator_t* comm,
-                         mca_coll_base_module_t *module)
+int ompi_coll_base_agree_noft(void *contrib, int dt_count, struct ompi_datatype_t *dt,
+                              struct ompi_op_t *op, struct ompi_group_t **group, bool update_grp,
+                              struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    return comm->c_coll->coll_allreduce(MPI_IN_PLACE, contrib, dt_count, dt, op,
-                                       comm, comm->c_coll->coll_allreduce_module);
+    return comm->c_coll->coll_allreduce(MPI_IN_PLACE, contrib, dt_count, dt, op, comm,
+                                        comm->c_coll->coll_allreduce_module);
 }
 
-int
-ompi_coll_base_iagree_noft(void *contrib,
-                          int dt_count,
-                          struct ompi_datatype_t *dt,
-                          struct ompi_op_t *op,
-                          struct ompi_group_t **group, bool update_grp,
-                          struct ompi_communicator_t* comm,
-                          ompi_request_t **request,
-                          mca_coll_base_module_t *module)
+int ompi_coll_base_iagree_noft(void *contrib, int dt_count, struct ompi_datatype_t *dt,
+                               struct ompi_op_t *op, struct ompi_group_t **group, bool update_grp,
+                               struct ompi_communicator_t *comm, ompi_request_t **request,
+                               mca_coll_base_module_t *module)
 {
-    return comm->c_coll->coll_iallreduce(MPI_IN_PLACE, contrib, dt_count, dt, op,
-                                        comm, request, comm->c_coll->coll_iallreduce_module);
+    return comm->c_coll->coll_iallreduce(MPI_IN_PLACE, contrib, dt_count, dt, op, comm, request,
+                                         comm->c_coll->coll_iallreduce_module);
 }

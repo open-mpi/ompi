@@ -47,10 +47,7 @@
 extern "C" {
 #endif
 
-enum {
-    HPCTIMER_SUCCESS = 0,
-    HPCTIMER_FAILURE = 1
-};
+enum { HPCTIMER_SUCCESS = 0, HPCTIMER_FAILURE = 1 };
 
 int hpctimer_initialize(const char *timername);
 void hpctimer_finalize(void);

@@ -14,20 +14,18 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_pvar_write = PMPI_T_pvar_write
+#    pragma weak MPI_T_pvar_write = PMPI_T_pvar_write
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
-                     const void* buf)
+int MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void *buf)
 {
     int ret;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
@@ -35,11 +33,11 @@ int MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
         return MPI_T_ERR_INVALID_HANDLE;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
-    ret = mca_base_pvar_handle_write_value (handle, buf);
+    ret = mca_base_pvar_handle_write_value(handle, buf);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
-    return ompit_opal_to_mpit_error (ret);
+    return ompit_opal_to_mpit_error(ret);
 }

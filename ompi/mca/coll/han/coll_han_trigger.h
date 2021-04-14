@@ -22,11 +22,10 @@
 #define MCA_COLL_HAN_TRIGGER_EXPORT_H
 
 #include "ompi/communicator/communicator.h"
-#include "ompi/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/op/op.h"
 
-
-typedef int (*task_func_ptr) (void *);
+typedef int (*task_func_ptr)(void *);
 
 struct mca_coll_task_s {
     opal_object_t super;
@@ -39,8 +38,7 @@ typedef struct mca_coll_task_s mca_coll_task_t;
 OBJ_CLASS_DECLARATION(mca_coll_task_t);
 
 /* Init task */
-static inline int
-init_task(mca_coll_task_t * t, task_func_ptr func_ptr, void *func_args)
+static inline int init_task(mca_coll_task_t *t, task_func_ptr func_ptr, void *func_args)
 {
     OBJ_CONSTRUCT(t, mca_coll_task_t);
     t->func_ptr = func_ptr;
@@ -49,10 +47,9 @@ init_task(mca_coll_task_t * t, task_func_ptr func_ptr, void *func_args)
 }
 
 /* Issue the task */
-static inline int
-issue_task(mca_coll_task_t * t)
+static inline int issue_task(mca_coll_task_t *t)
 {
     return t->func_ptr(t->func_args);
 }
 
-#endif  /* MCA_COLL_HAN_TRIGGER_EXPORT_H */
+#endif /* MCA_COLL_HAN_TRIGGER_EXPORT_H */
