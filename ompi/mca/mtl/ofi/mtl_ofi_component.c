@@ -900,6 +900,19 @@ select_prov:
          prov->domain_attr->mr_mode = FI_MR_BASIC;
     }
 
+#if OPAL_CUDA_SUPPORT
+    /**
+     * Some providers do not require the use of the CUDA convertor
+     * in OMPI and its use will cause performance degradation. The
+     * following providers will disable it when selected.
+     */
+    if (!strncmp(prov->fabric_attr->prov_name, "psm3", 4)
+        || !strncmp(prov->fabric_attr->prov_name, "psm2", 4))
+    {
+        ompi_mtl_ofi.base.mtl_flags |= MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE;
+    }
+#endif /* OPAL_CUDA_SUPPORT */
+
     /**
      * Create the access domain, which is the physical or virtual network or
      * hardware port/collection of ports.  Returns a domain object that can be
