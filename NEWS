@@ -20,7 +20,7 @@ Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
-Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights
+Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
 Copyright (c) 2019-2021 Triad National Security, LLC. All rights
                         reserved.
@@ -58,9 +58,12 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.1 -- March, 2021
------------------------
+4.1.1 -- April, 2021
+--------------------
 
+- Change UCX PML to not warn about MPI_Request leaks during
+  MPI_FINALIZE by default.  The old behavior can be restored with
+  the mca_pml_ucx_request_leak_check MCA parameter.
 - Reverted temporary solution that worked around launch issues in
   SLURM v20.11.{0,1,2}. SchedMD encourages users to avoid these
   versions and to upgrade to v20.11.3 or newer.
