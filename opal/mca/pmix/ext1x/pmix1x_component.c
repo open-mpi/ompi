@@ -93,8 +93,7 @@ static int external_component_query(mca_base_module_t **module, int *priority)
     char *t, *id;
 
     /* see if a PMIx server is present */
-    if (NULL != (t = getenv("PMIX_SERVER_URI")) ||
-	NULL != (id = getenv("PMIX_ID"))) {
+    if (NULL != (t = getenv("PMIX_NAMESPACE"))) {
 	/* if PMIx is present, then we are a client and need to use it */
 	*priority = 100;
     } else {
