@@ -181,8 +181,14 @@
 #define MPI_Pack_external PMPI_Pack_external
 #define MPI_Pack_external_size PMPI_Pack_external_size
 #define MPI_Pack_size PMPI_Pack_size
+#define MPI_Parrived PMPI_Parrived
 #define MPI_Pcontrol PMPI_Pcontrol
+#define MPI_Pready PMPI_Pready
+#define MPI_Pready_list PMPI_Pready_list
+#define MPI_Pready_range PMPI_Pready_range
+#define MPI_Precv_init PMPI_Precv_init
 #define MPI_Probe PMPI_Probe
+#define MPI_Psend_init PMPI_Psend_init
 #define MPI_Publish_name PMPI_Publish_name
 #define MPI_Put PMPI_Put
 #define MPI_Query_thread PMPI_Query_thread

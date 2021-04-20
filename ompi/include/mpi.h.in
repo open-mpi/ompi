@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2020 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
- * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2011-2020 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
@@ -1699,8 +1699,19 @@ OMPI_DECLSPEC  int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatyp
                             void *outbuf, int outsize, int *position, MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
                                  int *size);
+OMPI_DECLSPEC  int MPI_Parrived(MPI_Request request, MPI_Count partition, int *flag);
 OMPI_DECLSPEC  int MPI_Pcontrol(const int level, ...);
+OMPI_DECLSPEC  int MPI_Pready(int partitions, MPI_Request request);
+OMPI_DECLSPEC  int MPI_Pready_range(int partition_low, int partition_high,
+                                    MPI_Request request);
+OMPI_DECLSPEC  int MPI_Pready_list(int length, int partition_list[], MPI_Request request);
+OMPI_DECLSPEC  int MPI_Precv_init(const void* buf, int partitions, MPI_Count count,
+                                  MPI_Datatype datatype, int source, int tag, MPI_Comm comm,
+                                  MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
+OMPI_DECLSPEC  int MPI_Psend_init(const void* buf, int partitions, MPI_Count count,
+                                  MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
+                                  MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Publish_name(const char *service_name, MPI_Info info,
                                     const char *port_name);
 OMPI_DECLSPEC  int MPI_Put(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
@@ -2310,6 +2321,17 @@ OMPI_DECLSPEC  int PMPI_Isend(const void *buf, int count, MPI_Datatype datatype,
                               int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Issend(const void *buf, int count, MPI_Datatype datatype, int dest,
                                int tag, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Precv_init(const void* buf, int partitions, MPI_Count count,
+                                  MPI_Datatype datatype, int source, int tag, MPI_Comm comm,
+                                  MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Psend_init(const void* buf, int partitions, MPI_Count count,
+                                  MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
+                                  MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Pready(int partitions, MPI_Request request);
+OMPI_DECLSPEC  int PMPI_Pready_range(int partition_low, int partition_high,
+                                    MPI_Request request);
+OMPI_DECLSPEC  int PMPI_Pready_list(int length, int partition_list[], MPI_Request request);
+OMPI_DECLSPEC  int PMPI_Parrived(MPI_Request request, MPI_Count partition, int *flag);
 OMPI_DECLSPEC  int PMPI_Is_thread_main(int *flag);
 OMPI_DECLSPEC  int PMPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint PMPI_Message_c2f(MPI_Message message);

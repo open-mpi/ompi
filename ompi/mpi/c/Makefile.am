@@ -300,8 +300,14 @@ libmpi_c_mpi_la_SOURCES = \
         pack_external_size.c \
         pack.c \
         pack_size.c \
+        parrived.c \
         pcontrol.c \
+        pready.c \
+        pready_list.c \
+        pready_range.c \
+        precv_init.c \
         probe.c \
+        psend_init.c \
         publish_name.c \
         query_thread.c \
 	raccumulate.c \
