@@ -6,12 +6,11 @@
  */
 #include "opal_config.h"
 
-#include <stdio.h>
 #include "mpi.h"
 #include "opal/util/output.h"
+#include <stdio.h>
 
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
     int stream, stream2;

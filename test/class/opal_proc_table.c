@@ -24,47 +24,32 @@
  */
 
 #include "opal_config.h"
+#include "opal/class/opal_hash_table.h"
+#include "opal/class/opal_object.h"
+#include "opal/constants.h"
+#include "opal/runtime/opal.h"
+#include "support.h"
 #include <stdint.h>
 #include <string.h>
-#include "support.h"
-#include "opal/class/opal_object.h"
-#include "opal/class/opal_hash_table.h"
-#include "opal/runtime/opal.h"
-#include "opal/constants.h"
 
-static FILE *error_out=NULL;
+static FILE *error_out = NULL;
 
-char *num_keys[] = {
-    "0", "1234", "1234",
-    "0", "5678", "5678",
-    "1", "12450", "12450",
-    "1", "45623", "45623",
-    NULL
-};
+char *num_keys[] = {"0",     "1234",  "1234", "0",     "5678",  "5678", "1",
+                    "12450", "12450", "1",    "45623", "45623", NULL};
 
+char *str_keys[] = {"foo",
+                    "bar",
+                    "2",
+                    "this cow jumped over the moon",
+                    "this is another key",
+                    "this is another value",
+                    "key key",
+                    "value value",
+                    NULL};
 
-char *str_keys[] = {
-    "foo", "bar",
-    "2", "this cow jumped over the moon",
-    "this is another key", "this is another value",
-    "key key", "value value",
-    NULL
-};
-
-
-char *perm_keys[] = {
-    "abcdef", "abcdef",
-    "bcdefa", "bcdefa",
-    "cdefab", "cdefab",
-    "defabc", "defabc",
-    "efabcd", "efabcd",
-    "fabcde", "fabcde",
-    "badcfe", "badcfe",
-    "badcef", "badcef",
-    "abdcfe", "abdcfe",
-    "bcdaef", "bcdaef",
-    NULL
-};
+char *perm_keys[] = {"abcdef", "abcdef", "bcdefa", "bcdefa", "cdefab", "cdefab", "defabc",
+                     "defabc", "efabcd", "efabcd", "fabcde", "fabcde", "badcfe", "badcfe",
+                     "badcef", "badcef", "abdcfe", "abdcfe", "bcdaef", "bcdaef", NULL};
 
 #if 0
 /*
@@ -92,19 +77,18 @@ typedef union {
 
 static void validate_table(opal_proc_table_t *table, char *keys[])
 {
-    int         j, ret;
+    int j, ret;
     value_t value;
 
-    for ( j = 0; keys[j]; j += 3) {
+    for (j = 0; keys[j]; j += 3) {
         opal_process_name_t key;
         key.jobid = atoi(keys[j]);
-        key.vpid = atoi(keys[j+1]);
-        ret = opal_proc_table_get_value(table, key,
-                                        (void**) &value.uvalue);
+        key.vpid = atoi(keys[j + 1]);
+        ret = opal_proc_table_get_value(table, key, (void **) &value.uvalue);
         if (OPAL_SUCCESS != ret) {
             test_failure("opal_proc_table_get_value failed");
         }
-        test_verify_str(keys[j+2], value.vvalue);
+        test_verify_str(keys[j + 2], value.vvalue);
     }
 }
 
@@ -175,43 +159,40 @@ static void test_ptable(opal_proc_table_t *table)
 {
     int j;
     char *n1, *n2;
-    char * v;
+    char *v;
     int rc;
     opal_process_name_t key;
     fprintf(error_out, "\nTesting integer keys...\n");
-    for ( j = 0; num_keys[j]; j += 3)
-    {
+    for (j = 0; num_keys[j]; j += 3) {
         opal_process_name_t key;
         key.jobid = atoi(num_keys[j]);
-        key.vpid = atoi(num_keys[j+1]);
-        opal_proc_table_set_value(table, key, num_keys[j+2]);
+        key.vpid = atoi(num_keys[j + 1]);
+        opal_proc_table_set_value(table, key, num_keys[j + 2]);
     }
     validate_table(table, num_keys);
-    rc = opal_proc_table_get_first_key(table, &key, (void **)&v, (void **)&n1, (void **)&n2);
+    rc = opal_proc_table_get_first_key(table, &key, (void **) &v, (void **) &n1, (void **) &n2);
     if (OPAL_SUCCESS != rc) {
         fprintf(error_out, "*** FAILED opal_proc_table_get_first_key ***\n");
-        return ;
-    }
-    for (j=0; num_keys[j]; j+=3) {
-        if (OPAL_SUCCESS != rc) {
-            fprintf(error_out, "*** FAILED opal_proc_table_get_next_key (%d) ***\n", j/3);
-        }
-
-        if (key.jobid != (opal_jobid_t)atoi(num_keys[j]) ||
-            key.vpid != (opal_vpid_t)atoi(num_keys[j+1]) ||
-            0 != strcmp(num_keys[j+2], v)) {
-                fprintf(error_out, "*** FAILED at %d, expected ((%s,%s),%s) got ((%d,%d),%s)\n", j/3,
-                        num_keys[j], num_keys[j+1], num_keys[j+2],
-                        key.jobid, key.vpid, v);
-        }
-
-        rc = opal_proc_table_get_next_key(table, &key, (void **)&v, n1, (void **)&n1, n2, (void **)&n2);
-    }
-    if (OPAL_SUCCESS == rc) {
-        fprintf(error_out, "*** DID NOT FAIL last opal_proc_table_get_next_key %d\n", j/3);
         return;
     }
+    for (j = 0; num_keys[j]; j += 3) {
+        if (OPAL_SUCCESS != rc) {
+            fprintf(error_out, "*** FAILED opal_proc_table_get_next_key (%d) ***\n", j / 3);
+        }
 
+        if (key.jobid != (opal_jobid_t) atoi(num_keys[j])
+            || key.vpid != (opal_vpid_t) atoi(num_keys[j + 1]) || 0 != strcmp(num_keys[j + 2], v)) {
+            fprintf(error_out, "*** FAILED at %d, expected ((%s,%s),%s) got ((%d,%d),%s)\n", j / 3,
+                    num_keys[j], num_keys[j + 1], num_keys[j + 2], key.jobid, key.vpid, v);
+        }
+
+        rc = opal_proc_table_get_next_key(table, &key, (void **) &v, n1, (void **) &n1, n2,
+                                          (void **) &n2);
+    }
+    if (OPAL_SUCCESS == rc) {
+        fprintf(error_out, "*** DID NOT FAIL last opal_proc_table_get_next_key %d\n", j / 3);
+        return;
+    }
 
 #if 0
     /* remove all values for next test */
@@ -242,14 +223,12 @@ static void test_ptable(opal_proc_table_t *table)
     fprintf(error_out, "\n\n");
 }
 
-
 static void test_dynamic(void)
 {
-    opal_proc_table_t     *table;
+    opal_proc_table_t *table;
 
     table = OBJ_NEW(opal_proc_table_t);
-    if ( NULL == table )
-    {
+    if (NULL == table) {
         fprintf(error_out, "Error: Unable to create hash table.\n");
         exit(-1);
     }
@@ -260,10 +239,9 @@ static void test_dynamic(void)
     OBJ_RELEASE(table);
 }
 
-
 static void test_static(void)
 {
-    opal_proc_table_t     table;
+    opal_proc_table_t table;
 
     OBJ_CONSTRUCT(&table, opal_proc_table_t);
     opal_proc_table_init(&table, 8, 128);
@@ -273,7 +251,6 @@ static void test_static(void)
 
     OBJ_DESTRUCT(&table);
 }
-
 
 int main(int argc, char **argv)
 {
@@ -291,17 +268,18 @@ int main(int argc, char **argv)
 #ifdef STANDALONE
     error_out = stderr;
 #else
-    error_out = fopen( "./opal_proc_table_test_out.txt", "w" );
-    if( error_out == NULL ) error_out = stderr;
+    error_out = fopen("./opal_proc_table_test_out.txt", "w");
+    if (error_out == NULL)
+        error_out = stderr;
 #endif
 
     test_dynamic();
     test_static();
 #ifndef STANDALONE
-    fclose( error_out );
+    fclose(error_out);
 #endif
 
-    opal_finalize_util ();
+    opal_finalize_util();
 
     return test_finalize();
 }

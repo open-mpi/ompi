@@ -19,25 +19,24 @@
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 
-#include "support.h"
 #include "orte/runtime/runtime.h"
+#include "support.h"
 
 #define NUM_ITERS 3
 
 FILE *test_out;
 
-int main (int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rc, i;
 
@@ -50,14 +49,16 @@ int main (int argc, char* argv[])
         exit(1);
     }
 
-    for (i=0; i < NUM_ITERS; i++) {
+    for (i = 0; i < NUM_ITERS; i++) {
         if (ORTE_SUCCESS != (rc = orte_finalize())) {
-            fprintf(test_out, "iter %d: couldn't complete orte system finalize - error %d\n", i, rc);
+            fprintf(test_out, "iter %d: couldn't complete orte system finalize - error %d\n", i,
+                    rc);
             exit(1);
         }
         fprintf(test_out, "\tfinalize successful\n");
         if (ORTE_SUCCESS != (rc = orte_init(true))) {
-            fprintf(test_out, "iter %d: couldn't complete orte system init - error code %d\n", i, rc);
+            fprintf(test_out, "iter %d: couldn't complete orte system init - error code %d\n", i,
+                    rc);
             exit(1);
         }
     }

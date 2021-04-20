@@ -61,31 +61,30 @@ A2A     1       0 bytes 0 msgs sent
 
 */
 
-
 #include "mpi.h"
 #include <stdio.h>
 #include <string.h>
 
 static MPI_T_pvar_handle flush_handle;
 static const char flush_pvar_name[] = "pml_monitoring_flush";
-static const void*nullbuf = NULL;
+static const void *nullbuf = NULL;
 static int flush_pvar_idx;
 static int with_mpit = 0;
-static int with_rma  = 1;
+static int with_rma = 1;
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size, n, to, from, tagno, MPIT_result, provided, count, world_rank;
     MPI_T_pvar_session session;
     MPI_Comm newcomm;
     MPI_Comm comm = MPI_COMM_WORLD;
     char filename[1024];
-    
-    for ( int arg_it = 1; argc > 1 && arg_it < argc; ++arg_it ) {
-        if( 0 == strcmp(argv[arg_it], "--with-mpit") ) {
+
+    for (int arg_it = 1; argc > 1 && arg_it < argc; ++arg_it) {
+        if (0 == strcmp(argv[arg_it], "--with-mpit")) {
             with_mpit = 1;
             printf("enable MPIT support\n");
-        } else if( 0 == strcmp(argv[arg_it], "--without-rma") ) {
+        } else if (0 == strcmp(argv[arg_it], "--without-rma")) {
             with_rma = 0;
             printf("disable RMA testing\n");
         }
@@ -101,12 +100,13 @@ int main(int argc, char* argv[])
     from = (rank - 1) % size;
     tagno = 201;
 
-    if( with_mpit ) {
+    if (with_mpit) {
         MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
         if (MPIT_result != MPI_SUCCESS)
             MPI_Abort(MPI_COMM_WORLD, MPIT_result);
 
-        MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, MPI_T_PVAR_CLASS_GENERIC, &flush_pvar_idx);
+        MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, MPI_T_PVAR_CLASS_GENERIC,
+                                           &flush_pvar_idx);
         if (MPIT_result != MPI_SUCCESS) {
             printf("cannot find monitoring MPI_T \"%s\" pvar, check that you have monitoring pml\n",
                    flush_pvar_name);
@@ -120,8 +120,8 @@ int main(int argc, char* argv[])
         }
 
         /* Allocating a new PVAR in a session will reset the counters */
-        MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx,
-                                              &comm, &flush_handle, &count);
+        MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx, &comm, &flush_handle,
+                                              &count);
         if (MPIT_result != MPI_SUCCESS) {
             printf("failed to allocate handle on \"%s\" pvar, check that you have monitoring pml\n",
                    flush_pvar_name);
@@ -138,19 +138,25 @@ int main(int argc, char* argv[])
 
     if (rank == 0) {
         n = 25;
-        MPI_Send(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD);
+        MPI_Send(&n, 1, MPI_INT, to, tagno, MPI_COMM_WORLD);
     }
     while (1) {
         MPI_Recv(&n, 1, MPI_INT, from, tagno, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        if (rank == 0) {n--;tagno++;}
+        if (rank == 0) {
+            n--;
+            tagno++;
+        }
         MPI_Send(&n, 1, MPI_INT, to, tagno, MPI_COMM_WORLD);
-        if (rank != 0) {n--;tagno++;}
-        if (n<0){
+        if (rank != 0) {
+            n--;
+            tagno++;
+        }
+        if (n < 0) {
             break;
         }
     }
 
-    if( with_mpit ) {
+    if (with_mpit) {
         /* Build one file per processes
               Every thing that has been monitored by each
               process since the last flush will be output in filename */
@@ -162,9 +168,9 @@ int main(int argc, char* argv[])
         */
         sprintf(filename, "prof/phase_1");
 
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
-            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n",
-                    world_rank, filename, world_rank);
+        if (MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename)) {
+            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n", world_rank,
+                    filename, world_rank);
         }
         /* Force the writing of the monitoring data */
         MPIT_result = MPI_T_pvar_stop(session, flush_handle);
@@ -183,7 +189,7 @@ int main(int argc, char* argv[])
         /* Don't set a filename. If we stop the session before setting it, then no output file
          * will be generated.
          */
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf) ) {
+        if (MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void *) &nullbuf)) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", world_rank, filename);
         }
     }
@@ -193,25 +199,31 @@ int main(int argc, char* argv[])
       even ranks will circulate a token
       while odd ranks will perform a all_to_all
     */
-    MPI_Comm_split(MPI_COMM_WORLD, rank%2, rank, &newcomm);
+    MPI_Comm_split(MPI_COMM_WORLD, rank % 2, rank, &newcomm);
 
-    if(rank%2){ /*odd ranks (in COMM_WORD) circulate a token*/
+    if (rank % 2) { /*odd ranks (in COMM_WORD) circulate a token*/
         MPI_Comm_rank(newcomm, &rank);
         MPI_Comm_size(newcomm, &size);
-        if( size > 1 ) {
+        if (size > 1) {
             to = (rank + 1) % size;
             from = (rank - 1) % size;
             tagno = 201;
-            if (rank == 0){
+            if (rank == 0) {
                 n = 50;
                 MPI_Send(&n, 1, MPI_INT, to, tagno, newcomm);
             }
-            while (1){
+            while (1) {
                 MPI_Recv(&n, 1, MPI_INT, from, tagno, newcomm, MPI_STATUS_IGNORE);
-                if (rank == 0) {n--; tagno++;}
+                if (rank == 0) {
+                    n--;
+                    tagno++;
+                }
                 MPI_Send(&n, 1, MPI_INT, to, tagno, newcomm);
-                if (rank != 0) {n--; tagno++;}
-                if (n<0){
+                if (rank != 0) {
+                    n--;
+                    tagno++;
+                }
+                if (n < 0) {
                     break;
                 }
             }
@@ -222,13 +234,13 @@ int main(int argc, char* argv[])
         MPI_Comm newcomm2;
         MPI_Comm_rank(newcomm, &rank);
         MPI_Comm_size(newcomm, &size);
-        MPI_Alltoall(send_buff, 10240/size, MPI_INT, recv_buff, 10240/size, MPI_INT, newcomm);
-        MPI_Comm_split(newcomm, rank%2, rank, &newcomm2);
+        MPI_Alltoall(send_buff, 10240 / size, MPI_INT, recv_buff, 10240 / size, MPI_INT, newcomm);
+        MPI_Comm_split(newcomm, rank % 2, rank, &newcomm2);
         MPI_Barrier(newcomm2);
         MPI_Comm_free(&newcomm2);
     }
 
-    if( with_mpit ) {
+    if (with_mpit) {
         /* Build one file per processes
               Every thing that has been monitored by each
               process since the last flush will be output in filename */
@@ -240,9 +252,9 @@ int main(int argc, char* argv[])
                                                   */
         sprintf(filename, "prof/phase_2");
 
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
-            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n",
-                    world_rank, filename, world_rank);
+        if (MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename)) {
+            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n", world_rank,
+                    filename, world_rank);
         }
 
         /* Force the writing of the monitoring data */
@@ -262,90 +274,93 @@ int main(int argc, char* argv[])
         /* Don't set a filename. If we stop the session before setting it, then no output
          * will be generated.
          */
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void*)&nullbuf ) ) {
+        if (MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, (void *) &nullbuf)) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", world_rank, filename);
         }
     }
 
-    if( with_rma ) {
-      MPI_Win win;
-      int rs_buff[10240];
-      int win_buff[10240];
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      MPI_Comm_size(MPI_COMM_WORLD, &size);
-      to = (rank + 1) % size;
-      from = (rank + size - 1) % size;
-      for( int v = 0; v < 10240; ++v )
-        rs_buff[v] = win_buff[v] = rank;
+    if (with_rma) {
+        MPI_Win win;
+        int rs_buff[10240];
+        int win_buff[10240];
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        to = (rank + 1) % size;
+        from = (rank + size - 1) % size;
+        for (int v = 0; v < 10240; ++v)
+            rs_buff[v] = win_buff[v] = rank;
 
-      MPI_Win_create(win_buff, 10240 * sizeof(int), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-      MPI_Win_fence(MPI_MODE_NOPRECEDE, win);
-      if( rank%2 ) {
-        MPI_Win_fence(MPI_MODE_NOSTORE | MPI_MODE_NOPUT, win);
-        MPI_Get(rs_buff, 10240, MPI_INT, from, 0, 10240, MPI_INT, win);
-      } else {
-        MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
-        MPI_Win_fence(MPI_MODE_NOSTORE | MPI_MODE_NOPUT, win);
-      }
-      MPI_Win_fence(MPI_MODE_NOSUCCEED, win);
-
-      for( int v = 0; v < 10240; ++v )
-        if( rs_buff[v] != win_buff[v] && ((rank%2 && rs_buff[v] != from) || (!(rank%2) && rs_buff[v] != rank)) ) {
-	  printf("Error on checking exchanged values: %s_buff[%d] == %d instead of %d\n",
-		 rank%2 ? "rs" : "win", v, rs_buff[v], rank%2 ? from : rank);
-	  MPI_Abort(MPI_COMM_WORLD, -1);
+        MPI_Win_create(win_buff, 10240 * sizeof(int), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD,
+                       &win);
+        MPI_Win_fence(MPI_MODE_NOPRECEDE, win);
+        if (rank % 2) {
+            MPI_Win_fence(MPI_MODE_NOSTORE | MPI_MODE_NOPUT, win);
+            MPI_Get(rs_buff, 10240, MPI_INT, from, 0, 10240, MPI_INT, win);
+        } else {
+            MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
+            MPI_Win_fence(MPI_MODE_NOSTORE | MPI_MODE_NOPUT, win);
         }
+        MPI_Win_fence(MPI_MODE_NOSUCCEED, win);
 
-      MPI_Group world_group, newcomm_group, distant_group;
-      MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-      MPI_Comm_group(newcomm, &newcomm_group);
-      MPI_Group_difference(world_group, newcomm_group, &distant_group);
-      if( rank%2 ) {
-        MPI_Win_post(distant_group, 0, win);
-        MPI_Win_wait(win);
+        for (int v = 0; v < 10240; ++v)
+            if (rs_buff[v] != win_buff[v]
+                && ((rank % 2 && rs_buff[v] != from) || (!(rank % 2) && rs_buff[v] != rank))) {
+                printf("Error on checking exchanged values: %s_buff[%d] == %d instead of %d\n",
+                       rank % 2 ? "rs" : "win", v, rs_buff[v], rank % 2 ? from : rank);
+                MPI_Abort(MPI_COMM_WORLD, -1);
+            }
+
+        MPI_Group world_group, newcomm_group, distant_group;
+        MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+        MPI_Comm_group(newcomm, &newcomm_group);
+        MPI_Group_difference(world_group, newcomm_group, &distant_group);
+        if (rank % 2) {
+            MPI_Win_post(distant_group, 0, win);
+            MPI_Win_wait(win);
+            /* Check received values */
+            for (int v = 0; v < 10240; ++v)
+                if (from != win_buff[v]) {
+                    printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
+                           v, win_buff[v], from);
+                    MPI_Abort(MPI_COMM_WORLD, -1);
+                }
+        } else {
+            MPI_Win_start(distant_group, 0, win);
+            MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
+            MPI_Win_complete(win);
+        }
+        MPI_Group_free(&world_group);
+        MPI_Group_free(&newcomm_group);
+        MPI_Group_free(&distant_group);
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        for (int v = 0; v < 10240; ++v)
+            rs_buff[v] = rank;
+
+        MPI_Win_lock(MPI_LOCK_EXCLUSIVE, to, 0, win);
+        MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
+        MPI_Win_unlock(to, win);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
         /* Check received values */
-        for( int v = 0; v < 10240; ++v )
-	  if( from != win_buff[v] ) {
-	    printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
-		   v, win_buff[v], from);
-	    MPI_Abort(MPI_COMM_WORLD, -1);
-	  }
-      } else {
-        MPI_Win_start(distant_group, 0, win);
-        MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
-        MPI_Win_complete(win);
-      }
-      MPI_Group_free(&world_group);
-      MPI_Group_free(&newcomm_group);
-      MPI_Group_free(&distant_group);
-      MPI_Barrier(MPI_COMM_WORLD);
+        for (int v = 0; v < 10240; ++v)
+            if (from != win_buff[v]) {
+                printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n", v,
+                       win_buff[v], from);
+                MPI_Abort(MPI_COMM_WORLD, -1);
+            }
 
-      for( int v = 0; v < 10240; ++v ) rs_buff[v] = rank;
-
-      MPI_Win_lock(MPI_LOCK_EXCLUSIVE, to, 0, win);
-      MPI_Put(rs_buff, 10240, MPI_INT, to, 0, 10240, MPI_INT, win);
-      MPI_Win_unlock(to, win);
-
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      /* Check received values */
-      for( int v = 0; v < 10240; ++v )
-        if( from != win_buff[v] ) {
-	  printf("Error on checking exchanged values: win_buff[%d] == %d instead of %d\n",
-		 v, win_buff[v], from);
-	  MPI_Abort(MPI_COMM_WORLD, -1);
-        }
-
-      MPI_Win_free(&win);
+        MPI_Win_free(&win);
     }
 
-    if( with_mpit ) {
+    if (with_mpit) {
         /* the filename for flushing monitoring now uses 3 as phase number! */
         sprintf(filename, "prof/phase_3");
 
-        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
-            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n",
-                    world_rank, filename, world_rank);
+        if (MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename)) {
+            fprintf(stderr, "Process %d cannot save monitoring in %s.%d.prof\n", world_rank,
+                    filename, world_rank);
         }
 
         MPIT_result = MPI_T_pvar_stop(session, flush_handle);
@@ -368,7 +383,7 @@ int main(int argc, char* argv[])
             MPI_Abort(MPI_COMM_WORLD, MPIT_result);
         }
 
-        (void)MPI_T_finalize();
+        (void) MPI_T_finalize();
     }
 
     MPI_Comm_free(&newcomm);

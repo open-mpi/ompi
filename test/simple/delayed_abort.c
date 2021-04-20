@@ -9,11 +9,11 @@
 
 #include "opal/runtime/opal.h"
 
+#include "mpi.h"
 #include <stdio.h>
 #include <unistd.h>
-#include "mpi.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
     const char *hostname;
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     hostname = opal_gethostname();
     printf("%s: I am %d of %d. pid=%d\n", hostname, rank, size, getpid());
 
-    if (rank%3 == 0) {
+    if (rank % 3 == 0) {
         printf("%s: rank %d aborts\n", hostname, rank);
         if (rank == 3) {
             printf("%s: rank %d is going to sleep\n", hostname, rank);

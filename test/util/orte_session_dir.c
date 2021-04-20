@@ -19,116 +19,105 @@
 #include "orte_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNISTD_H */
+#    include <unistd.h>
+#endif /* HAVE_UNISTD_H */
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif  /* HAVE_SYS_PARAM_H */
+#    include <sys/param.h>
+#endif /* HAVE_SYS_PARAM_H */
 #include <sys/stat.h>
 
-#include "support.h"
+#include "opal/util/os_path.h"
 #include "orte/constants.h"
 #include "orte/util/proc_info.h"
-#include "opal/util/os_path.h"
 #include "orte/util/session_dir.h"
-#include "orte/util/proc_info.h"
+#include "support.h"
 
-
-static bool test1(void);   /* given prefix, both one that works and one that fails */
-static bool test2(void);   /* no prefix given, ORTE_PREFIX_ENV set, one good and one bad */
-static bool test3(void);   /* no prefix given, TMPDIR set, one good and one bad */
-static bool test4(void);   /* no prefix given, TMP set, one good and one bad */
-static bool test5(void);   /* no prefix given, HOME set, one good and one bad */
-static bool test6(void);   /* no prefix given, nothing set, one good and one bad */
-static bool test7(void);   /* remove session directory tree */
-static bool test8(void);   /* attempt to remove tree when subdirs present */
+static bool test1(void); /* given prefix, both one that works and one that fails */
+static bool test2(void); /* no prefix given, ORTE_PREFIX_ENV set, one good and one bad */
+static bool test3(void); /* no prefix given, TMPDIR set, one good and one bad */
+static bool test4(void); /* no prefix given, TMP set, one good and one bad */
+static bool test5(void); /* no prefix given, HOME set, one good and one bad */
+static bool test6(void); /* no prefix given, nothing set, one good and one bad */
+static bool test7(void); /* remove session directory tree */
+static bool test8(void); /* attempt to remove tree when subdirs present */
 
 void clear_proc_info(void);
 
-static FILE *test_out=NULL;
+static FILE *test_out = NULL;
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     orte_proc_info(); /* initialize proc info structure */
-    orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    orte_process_info.my_name = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
     orte_process_info.my_name->cellid = 0;
     orte_process_info.my_name->jobid = 0;
     orte_process_info.my_name->vpid = 0;
 
     test_init("orte_session_dir_t");
-    test_out = fopen( "test_session_dir_out", "w+" );
-    if( test_out == NULL ) {
-      test_failure("test_session_dir couldn't open test file failed");
-      test_finalize();
-      exit(1);
+    test_out = fopen("test_session_dir_out", "w+");
+    if (test_out == NULL) {
+        test_failure("test_session_dir couldn't open test file failed");
+        test_finalize();
+        exit(1);
     }
-
 
     fprintf(test_out, "running test1\n");
     if (test1()) {
         test_success();
-    }
-    else {
-      test_failure("orte_session_dir_t test1 failed");
+    } else {
+        test_failure("orte_session_dir_t test1 failed");
     }
 
     fprintf(test_out, "running test2\n");
     if (test2()) {
         test_success();
-    }
-    else {
-      test_failure("orte_session_dir_t test2 failed");
+    } else {
+        test_failure("orte_session_dir_t test2 failed");
     }
 
     fprintf(test_out, "running test3\n");
     if (test3()) {
         test_success();
-    }
-    else {
-      test_failure("orte_session_dir_t test3 failed");
+    } else {
+        test_failure("orte_session_dir_t test3 failed");
     }
 
     fprintf(test_out, "running test4\n");
     if (test4()) {
         test_success();
-    }
-    else {
-      test_failure("orte_session_dir_t test4 failed");
+    } else {
+        test_failure("orte_session_dir_t test4 failed");
     }
 
     fprintf(test_out, "running test5\n");
     if (test5()) {
         test_success();
-    }
-    else {
-      test_failure("orte_session_dir_t test5 failed");
+    } else {
+        test_failure("orte_session_dir_t test5 failed");
     }
 
     fprintf(test_out, "running test6\n");
     if (test6()) {
         test_success();
-    }
-    else {
-      test_failure("orte_session_dir_t test6 failed");
+    } else {
+        test_failure("orte_session_dir_t test6 failed");
     }
 
     fprintf(test_out, "running test7\n");
     if (test7()) {
         test_success();
-    }
-    else {
-      test_failure("orte_session_dir_t test7 failed");
+    } else {
+        test_failure("orte_session_dir_t test7 failed");
     }
 
     fprintf(test_out, "running test8\n");
     if (test8()) {
         test_success();
-    }
-    else {
-      test_failure("orte_session_dir_t test8 failed");
+    } else {
+        test_failure("orte_session_dir_t test8 failed");
     }
 
     fprintf(test_out, "completed all tests\n");
@@ -142,7 +131,6 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-
 static bool test1(void)
 {
     /* Test proper action when given a prefix */
@@ -155,16 +143,16 @@ static bool test1(void)
 
     prefix = opal_os_path(false, "tmp", NULL);
     if (ORTE_SUCCESS != orte_session_dir(true, prefix, NULL, NULL, "test-universe", NULL, NULL)) {
-	fprintf(test_out, "test1 - couldn't create specified path\n");
+        fprintf(test_out, "test1 - couldn't create specified path\n");
         free(prefix);
-        return(false);
+        return false;
     }
     /* see if it can access an existing path */
 
     if (ORTE_SUCCESS != orte_session_dir(false, prefix, NULL, NULL, "test-universe", NULL, NULL)) {
-	fprintf(test_out, "test1 - couldn't access existing path\n");
+        fprintf(test_out, "test1 - couldn't access existing path\n");
         free(prefix);
-        return(false);
+        return false;
     }
 
     orte_session_dir_finalize(orte_process_info.my_name);
@@ -173,7 +161,6 @@ static bool test1(void)
 
     return true;
 }
-
 
 static bool test2(void)
 {
@@ -184,18 +171,16 @@ static bool test2(void)
     setenv("OMPI_PREFIX_ENV", "/tmp/trythis", 1);
 
     if (ORTE_SUCCESS != orte_session_dir(true, NULL, NULL, NULL, "test-universe", NULL, NULL)) {
-	unsetenv("OMPI_PREFIX_ENV");
-        return(false);
+        unsetenv("OMPI_PREFIX_ENV");
+        return false;
     }
 
     orte_session_dir_finalize(orte_process_info.my_name);
 
     unsetenv("OMPI_PREFIX_ENV");
 
-    return(true);
-
+    return true;
 }
-
 
 static bool test3(void)
 {
@@ -205,17 +190,16 @@ static bool test3(void)
     setenv("TMPDIR", "/tmp/trythis", 1);
 
     if (ORTE_SUCCESS != orte_session_dir(true, NULL, NULL, NULL, "test-universe", NULL, NULL)) {
-	unsetenv("TMPDIR");
-        return(false);
+        unsetenv("TMPDIR");
+        return false;
     }
 
     orte_session_dir_finalize(orte_process_info.my_name);
 
     unsetenv("TMPDIR");
 
-    return(true);
+    return true;
 }
-
 
 static bool test4(void)
 {
@@ -226,17 +210,16 @@ static bool test4(void)
     setenv("TMP", "/tmp/trythis", 1);
 
     if (ORTE_SUCCESS != orte_session_dir(true, NULL, NULL, NULL, "test-universe", NULL, NULL)) {
-	unsetenv("TMP");
-        return(false);
+        unsetenv("TMP");
+        return false;
     }
 
     orte_session_dir_finalize(orte_process_info.my_name);
 
     unsetenv("TMP");
 
-    return(true);
+    return true;
 }
-
 
 static bool test5(void)
 {
@@ -247,17 +230,16 @@ static bool test5(void)
     setenv("HOME", "/tmp/trythis", 1);
 
     if (ORTE_SUCCESS != orte_session_dir(true, NULL, NULL, NULL, "test-universe", NULL, NULL)) {
-	unsetenv("HOME");
-        return(false);
+        unsetenv("HOME");
+        return false;
     }
 
     orte_session_dir_finalize(orte_process_info.my_name);
 
     unsetenv("HOME");
 
-    return(true);
+    return true;
 }
-
 
 static bool test6(void)
 {
@@ -265,16 +247,16 @@ static bool test6(void)
     clear_proc_info();
 
     /* no enviro variables set, no prefix given
-    * Program should turn to default of /tmp (where "/" is whatever
-    * top-level directory is appropriate for given system)
-    */
+     * Program should turn to default of /tmp (where "/" is whatever
+     * top-level directory is appropriate for given system)
+     */
     if (ORTE_SUCCESS != orte_session_dir(true, NULL, NULL, NULL, "test-universe", NULL, NULL)) {
-        return(false);
+        return false;
     }
 
     orte_session_dir_finalize(orte_process_info.my_name);
 
-    return(true);
+    return true;
 }
 
 static bool test7(void)
@@ -286,14 +268,14 @@ static bool test7(void)
     clear_proc_info();
 
     /* create test proc session directory tree */
-    if (ORTE_SUCCESS != orte_session_dir(true, NULL, "localhost", NULL, "test-universe", "test-job", "test-proc")) {
-	return(false);
+    if (ORTE_SUCCESS
+        != orte_session_dir(true, NULL, "localhost", NULL, "test-universe", "test-job",
+                            "test-proc")) {
+        return false;
     }
 
-    fprintf(test_out, "removing directories: %s\n\t%s\n\t%s\n",
-	    orte_process_info.proc_session_dir,
-	    orte_process_info.job_session_dir,
-	    orte_process_info.universe_session_dir);
+    fprintf(test_out, "removing directories: %s\n\t%s\n\t%s\n", orte_process_info.proc_session_dir,
+            orte_process_info.job_session_dir, orte_process_info.universe_session_dir);
 
     /* create some files */
 
@@ -313,10 +295,11 @@ static bool test7(void)
     fclose(fp);
 
     if (ORTE_SUCCESS != orte_session_dir_finalize(orte_process_info.my_name)) {
-	return(false);
+        return false;
     }
 
-    for (i=0; i < 3; i++) unlink(filenm[i]);
+    for (i = 0; i < 3; i++)
+        unlink(filenm[i]);
     orte_session_dir_finalize(orte_process_info.my_name);
 
     return true;
@@ -331,14 +314,14 @@ static bool test8(void)
     clear_proc_info();
 
     /* create test proc session directory tree */
-    if (ORTE_SUCCESS != orte_session_dir(true, NULL, "localhost", NULL, "test-universe2", "test-job2", "test-proc2")) {
-	return(false);
+    if (ORTE_SUCCESS
+        != orte_session_dir(true, NULL, "localhost", NULL, "test-universe2", "test-job2",
+                            "test-proc2")) {
+        return false;
     }
 
-    fprintf(test_out, "removing directories: %s\n\t%s\n\t%s\n",
-	    orte_process_info.proc_session_dir,
-	    orte_process_info.job_session_dir,
-	    orte_process_info.universe_session_dir);
+    fprintf(test_out, "removing directories: %s\n\t%s\n\t%s\n", orte_process_info.proc_session_dir,
+            orte_process_info.job_session_dir, orte_process_info.universe_session_dir);
 
     /* create some files */
 
@@ -357,12 +340,12 @@ static bool test8(void)
     fprintf(fp, "ss");
     fclose(fp);
 
-
     if (ORTE_SUCCESS != orte_session_dir_finalize(orte_process_info.my_name)) {
-	   return(false);
+        return false;
     }
 
-    for (i=0; i < 3; i++) unlink(filenm[i]);
+    for (i = 0; i < 3; i++)
+        unlink(filenm[i]);
     orte_session_dir_finalize(orte_process_info.my_name);
 
     return true;
@@ -375,5 +358,4 @@ void clear_proc_info(void)
     orte_process_info.universe_session_dir = NULL;
     orte_process_info.job_session_dir = NULL;
     orte_process_info.proc_session_dir = NULL;
-
 }

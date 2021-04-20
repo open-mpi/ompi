@@ -1,7 +1,7 @@
 #include <mpi.h>
 #include <stdio.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int myid, nprocs, tag;
     int i, m, nt;
@@ -33,4 +33,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-

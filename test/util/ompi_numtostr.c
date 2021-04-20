@@ -1,16 +1,15 @@
 #include "ompi_config.h"
 #include "opal/util/numtostr.h"
 
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "support.h"
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-    char * tst;
-    char * expected;
+    char *tst;
+    char *expected;
 
     test_init("ompi_numtostr_t");
 
@@ -18,10 +17,9 @@ main(int argc, char *argv[])
     expected = malloc(sizeof(long) * 8);
     snprintf(expected, sizeof(long) * 8, "%d", 10);
     if (strcmp(tst, expected) != 0) {
-      test_failure("opal_ltostr test failed");
-    }
-    else {
-      test_success();
+        test_failure("opal_ltostr test failed");
+    } else {
+        test_success();
     }
 
     free(tst);
@@ -31,10 +29,9 @@ main(int argc, char *argv[])
     expected = malloc(sizeof(long) * 8);
     snprintf(expected, sizeof(long) * 8, "%f", 5.32);
     if (strcmp(tst, expected) != 0) {
-      test_failure("opal_dtostr test failed");
-    }
-    else {
-      test_success();
+        test_failure("opal_dtostr test failed");
+    } else {
+        test_success();
     }
 
     test_finalize();

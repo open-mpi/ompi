@@ -5,17 +5,17 @@
  * The most basic of MPI applications
  */
 
+#include "mpi.h"
 #include <stdio.h>
 #include <unistd.h>
-#include "mpi.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
     MPI_Comm parent;
     int msg;
 
-    printf("Slave [pid %ld] starting up!\n", (long)getpid());
+    printf("Slave [pid %ld] starting up!\n", (long) getpid());
 
     MPI_Init(&argc, &argv);
 

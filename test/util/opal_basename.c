@@ -20,37 +20,34 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "support.h"
 #include "opal/util/basename.h"
 #include "opal/util/printf.h"
+#include "support.h"
 
+static void test(const char *in, const char *out);
 
-static void test(const char* in, const char* out);
-
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-  test_init("opal_basename()");
+    test_init("opal_basename()");
 
-  test("foo.txt", "foo.txt");
-  test("/foo/bar/baz", "baz");
-  test("/yow.c", "yow.c");
-  test("/", "/");
+    test("foo.txt", "foo.txt");
+    test("/foo/bar/baz", "baz");
+    test("/yow.c", "yow.c");
+    test("/", "/");
 
-  test("foo.txt/", "foo.txt");
-  test("/foo/bar/baz/", "baz");
-  test("/yow.c/", "yow.c");
-  test("//", "/");
+    test("foo.txt/", "foo.txt");
+    test("/foo/bar/baz/", "baz");
+    test("/yow.c/", "yow.c");
+    test("//", "/");
 
-  /* All done */
-  return test_finalize();
+    /* All done */
+    return test_finalize();
 }
 
-
-void test(const char* in, const char* out)
+void test(const char *in, const char *out)
 {
     char *msg;
     char *ret = opal_basename(in);
@@ -58,8 +55,7 @@ void test(const char* in, const char* out)
     if (0 == strcmp(ret, out)) {
         test_success();
     } else {
-        opal_asprintf(&msg, "Mismatch: input \"%s\", expected \"%s\", got \"%s\"\n",
-                 in, out, ret);
+        opal_asprintf(&msg, "Mismatch: input \"%s\", expected \"%s\", got \"%s\"\n", in, out, ret);
         test_failure(msg);
         free(msg);
     }
@@ -67,5 +63,3 @@ void test(const char* in, const char* out)
         free(ret);
     }
 }
-
-

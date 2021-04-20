@@ -22,8 +22,7 @@
 
 #include "opal/sys/atomic.h"
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 #if OPAL_HAVE_ATOMIC_MEM_BARRIER
 
@@ -40,4 +39,3 @@ main(int argc, char *argv[])
     return 77;
 #endif
 }
-

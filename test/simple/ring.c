@@ -1,9 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#define SIZE 20
-#define POS 10
+#define SIZE          20
+#define POS           10
 #define INITIAL_VALUE 10
 
 int main(int argc, char *argv[])
@@ -32,14 +32,12 @@ int main(int argc, char *argv[])
 
     if (0 == rank) {
         send_array[pos] = INITIAL_VALUE;
-        MPI_Send(send_array, array_size, MPI_INT, next, tag,
-                 MPI_COMM_WORLD);
+        MPI_Send(send_array, array_size, MPI_INT, next, tag, MPI_COMM_WORLD);
     }
 
     while (1) {
         recv_array[pos] = -1;
-        MPI_Recv(recv_array, array_size, MPI_INT, prev, tag,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(recv_array, array_size, MPI_INT, prev, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         send_array[pos] = recv_array[pos];
         if (rank == 0) {
             --send_array[pos];
@@ -51,8 +49,7 @@ int main(int argc, char *argv[])
     }
 
     if (rank == 0) {
-        MPI_Recv(recv_array, array_size, MPI_INT, prev, tag,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(recv_array, array_size, MPI_INT, prev, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     fprintf(stderr, "Rank %d has completed ring\n", rank);

@@ -12,10 +12,10 @@
 #include <stdio.h>
 
 #if !defined(OSHMEM_SPEC_VERSION) || OSHMEM_SPEC_VERSION < 10200
-#error This application uses API 1.2 and up
+#    error This application uses API 1.2 and up
 #endif
 
-int main (int argc, char * argv[])
+int main(int argc, char *argv[])
 {
     static int rbuf = -1;
     int proc, nproc, next;
@@ -30,8 +30,7 @@ int main (int argc, char * argv[])
 
     next = (proc + 1) % nproc;
 
-    if(proc == 0)
-    {
+    if (proc == 0) {
         printf("Process 0 puts message %d to %d (%d processes in ring)\n", message, next, nproc);
         shmem_int_put(&rbuf, &message, 1, next);
     }
@@ -44,14 +43,14 @@ int main (int argc, char * argv[])
        message first, every process gets the 0 message and can quit
        normally. */
 
-    while(message > 0) {
+    while (message > 0) {
         shmem_int_wait_until(&rbuf, SHMEM_CMP_EQ, message);
-        if(proc == 0) {
+        if (proc == 0) {
             --message;
             printf("Process 0 decremented value: %d\n", message);
         }
         shmem_int_put(&rbuf, &message, 1, next);
-        if(proc != 0) {
+        if (proc != 0) {
             --message;
         }
     }

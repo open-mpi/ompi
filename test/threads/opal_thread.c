@@ -13,30 +13,28 @@
 
 #include <stdio.h>
 
-#include "support.h"
 #include "opal/constants.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/sys/atomic.h"
-
+#include "support.h"
 
 /* Only have the body of this test if we have thread support */
 
 static opal_atomic_int_t count = 0;
 
-
-static void* thr1_run(opal_object_t* obj)
+static void *thr1_run(opal_object_t *obj)
 {
-    opal_atomic_add (&count, 1);
+    opal_atomic_add(&count, 1);
     return NULL;
 }
 
-static void* thr2_run(opal_object_t* obj)
+static void *thr2_run(opal_object_t *obj)
 {
-    opal_atomic_add (&count, 2);
+    opal_atomic_add(&count, 2);
     return NULL;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int rc;
     opal_thread_t thr1;

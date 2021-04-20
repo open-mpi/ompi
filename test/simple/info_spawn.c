@@ -3,14 +3,14 @@
 #include "opal/runtime/opal.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include <mpi.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int msg, rc, i;
     MPI_Comm parent, child;
@@ -34,9 +34,9 @@ int main(int argc, char* argv[])
         }
 
         pid = getpid();
-        printf("Parent [pid %ld] about to spawn!\n", (long)pid);
+        printf("Parent [pid %ld] about to spawn!\n", (long) pid);
         MPI_Info_create(&info);
-        for (i=1; i < argc; i++) {
+        for (i = 1; i < argc; i++) {
             tmp = strdup(argv[i]);
             keyval = strchr(tmp, ':');
             if (NULL == keyval) {
@@ -49,8 +49,9 @@ int main(int argc, char* argv[])
             MPI_Info_set(info, tmp, keyval);
             free(tmp);
         }
-        if (MPI_SUCCESS != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, info,
-                                                0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE))) {
+        if (MPI_SUCCESS
+            != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, info, 0, MPI_COMM_WORLD, &child,
+                                    MPI_ERRCODES_IGNORE))) {
             printf("Child failed to spawn\n");
             return rc;
         }
@@ -69,7 +70,7 @@ int main(int argc, char* argv[])
         MPI_Comm_size(MPI_COMM_WORLD, &size);
         hostname = opal_gethostname();
         pid = getpid();
-        printf("Hello from the child %d of %d on host %s pid %ld\n", rank, 3, hostname, (long)pid);
+        printf("Hello from the child %d of %d on host %s pid %ld\n", rank, 3, hostname, (long) pid);
         if (0 == rank) {
             MPI_Recv(&msg, 1, MPI_INT, 0, 1, parent, MPI_STATUS_IGNORE);
             printf("Child %d received msg: %d\n", rank, msg);

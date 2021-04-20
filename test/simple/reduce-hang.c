@@ -8,8 +8,8 @@ int main(int argc, char *argv[])
     int i = 8, j;
     int self;
     int do_barrier = 0;
-int k;
-double pi;
+    int k;
+    double pi;
 
     if (getenv("DO_BARRIER")) {
         do_barrier = 1;

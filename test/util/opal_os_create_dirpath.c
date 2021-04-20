@@ -19,32 +19,31 @@
 #include "orte_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #include <sys/stat.h>
 
-#include "support.h"
-#include "opal/runtime/opal.h"
 #include "opal/constants.h"
-#include "opal/util/os_path.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/os_path.h"
+#include "support.h"
 
 #define PATH_SEP "/"
 
 static const char *path_sep = PATH_SEP;
 
-static bool test1(void);   /* trivial test */
-static bool test2(void);   /* test existing path, both with and without correct mode */
-static bool test3(void);   /* test making a directory tree */
+static bool test1(void); /* trivial test */
+static bool test2(void); /* test existing path, both with and without correct mode */
+static bool test3(void); /* test making a directory tree */
 
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     opal_init(&argc, &argv);
 
@@ -54,23 +53,20 @@ int main(int argc, char* argv[])
 
     if (test1()) {
         test_success();
-    }
-    else {
-      test_failure("opal_os_create_dirpath test1 failed");
+    } else {
+        test_failure("opal_os_create_dirpath test1 failed");
     }
 
     if (test2()) {
         test_success();
-    }
-    else {
-      test_failure("opal_os_create_dirpath test2 failed");
+    } else {
+        test_failure("opal_os_create_dirpath test2 failed");
     }
 
     if (test3()) {
         test_success();
-    }
-    else {
-      test_failure("opal_os_create_dirpath test3 failed");
+    } else {
+        test_failure("opal_os_create_dirpath test3 failed");
     }
 
     test_finalize();
@@ -79,18 +75,16 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-
 static bool test1(void)
 {
 
     /* Test trivial functionality. Program should return OPAL_ERROR when called with NULL path. */
 
     if (OPAL_SUCCESS == opal_os_dirpath_create(NULL, S_IRWXU))
-            return(false);
+        return false;
 
     return true;
 }
-
 
 static bool test2(void)
 {
@@ -99,30 +93,30 @@ static bool test2(void)
 
     if (NULL == path_sep) {
         printf("test2 cannot be run\n");
-        return(false);
+        return false;
     }
     tmp = opal_os_path(true, "tmp", NULL);
     if (0 != mkdir(tmp, S_IRWXU)) {
         printf("test2 could not be run - directory could not be made\n");
-        return(false);
+        return false;
     }
 
     if (OPAL_SUCCESS != opal_os_dirpath_create(tmp, S_IRWXU)) {
         rmdir(tmp);
-        return(false);
+        return false;
     }
 
     chmod(tmp, S_IRUSR);
 
     if (OPAL_SUCCESS != opal_os_dirpath_create(tmp, S_IRWXU)) {
         rmdir(tmp);
-        return(false);
+        return false;
     }
 
     stat(tmp, &buf);
     if (S_IRWXU != (S_IRWXU & buf.st_mode)) {
         rmdir(tmp);
-        return(false);
+        return false;
     }
 
     rmdir(tmp);
@@ -131,16 +125,15 @@ static bool test2(void)
     return true;
 }
 
-
 static bool test3(void)
 {
     char *out;
     struct stat buf;
-    char *a[] = { "aaa", "bbb", "ccc", NULL };
+    char *a[] = {"aaa", "bbb", "ccc", NULL};
 
     if (NULL == path_sep) {
         printf("test3 cannot be run\n");
-        return(false);
+        return false;
     }
 
     out = opal_os_path(true, a[0], a[1], a[2], NULL);
@@ -154,10 +147,10 @@ static bool test3(void)
         out = opal_os_path(true, a[0], NULL);
         if (0 == stat(out, &buf))
             rmdir(out);
-        return(false);
+        return false;
     }
 
     free(out);
 
-    return(true);
+    return true;
 }

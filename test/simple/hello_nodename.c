@@ -12,12 +12,12 @@
 #include "opal/runtime/opal.h"
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "mpi.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
     const char *hostname;
@@ -36,17 +36,18 @@ int main(int argc, char* argv[])
     if (NULL == appnum) {
         opal_asprintf(&appstr, "UNDEFINED");
     } else {
-        opal_asprintf(&appstr, "%d", *(int*)appnum);
+        opal_asprintf(&appstr, "%d", *(int *) appnum);
     }
     MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_UNIVERSE_SIZE, &univ_size, &flag);
     if (NULL == univ_size) {
         opal_asprintf(&unistr, "UNDEFINED");
     } else {
-        opal_asprintf(&unistr, "%d", *(int*)univ_size);
+        opal_asprintf(&unistr, "%d", *(int *) univ_size);
     }
 
     hostname = opal_gethostname();
-    printf("Hello, World, I am %d of %d on host %s from app number %s universe size %s universe envar %s\n",
+    printf("Hello, World, I am %d of %d on host %s from app number %s universe size %s universe "
+           "envar %s\n",
            rank, size, hostname, appstr, unistr, (NULL == envar) ? "NULL" : envar);
 
     MPI_Finalize();

@@ -1,10 +1,10 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <mpi.h>
 #include <pmix.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#define SIZE 20
-#define POS 10
+#define SIZE          20
+#define POS           10
 #define INITIAL_VALUE 10
 
 static pmix_proc_t myproc;
@@ -13,13 +13,10 @@ static pmix_proc_t myproc;
  * when registering for general events - i.e.,, the default
  * handler. We don't technically need to register one, but it
  * is usually good practice to catch any events that occur */
-static void notification_fn(size_t evhdlr_registration_id,
-                            pmix_status_t status,
-                            const pmix_proc_t *source,
-                            pmix_info_t info[], size_t ninfo,
+static void notification_fn(size_t evhdlr_registration_id, pmix_status_t status,
+                            const pmix_proc_t *source, pmix_info_t info[], size_t ninfo,
                             pmix_info_t results[], size_t nresults,
-                            pmix_event_notification_cbfunc_fn_t cbfunc,
-                            void *cbdata)
+                            pmix_event_notification_cbfunc_fn_t cbfunc, void *cbdata)
 {
     /* this example doesn't do anything with default events */
     fprintf(stderr, "Default event handler called with status %s\n", PMIx_Error_string(status));
@@ -36,20 +33,18 @@ static void notification_fn(size_t evhdlr_registration_id,
  * to declare a use-specific notification callback point. In this case,
  * we are asking to know whenever a programming model library is
  * instantiated */
-static void model_callback(size_t evhdlr_registration_id,
-                           pmix_status_t status,
-                           const pmix_proc_t *source,
-                           pmix_info_t info[], size_t ninfo,
+static void model_callback(size_t evhdlr_registration_id, pmix_status_t status,
+                           const pmix_proc_t *source, pmix_info_t info[], size_t ninfo,
                            pmix_info_t results[], size_t nresults,
-                           pmix_event_notification_cbfunc_fn_t cbfunc,
-                           void *cbdata)
+                           pmix_event_notification_cbfunc_fn_t cbfunc, void *cbdata)
 {
     size_t n;
 
-    fprintf(stderr, "Model event handler called with status %d(%s)\n", status, PMIx_Error_string(status));
+    fprintf(stderr, "Model event handler called with status %d(%s)\n", status,
+            PMIx_Error_string(status));
 
     /* check to see what model declared itself */
-    for (n=0; n < ninfo; n++) {
+    for (n = 0; n < ninfo; n++) {
         if (PMIX_STRING == info[n].value.type) {
             fprintf(stderr, "\t%s:\t%s\n", info[n].key, info[n].value.data.string);
         }
@@ -70,15 +65,13 @@ static void model_callback(size_t evhdlr_registration_id,
  * to the registered event. The index is used later on to deregister
  * an event handler - if we don't explicitly deregister it, then the
  * PMIx server will do so when it see us exit */
-static void model_registration_callback(pmix_status_t status,
-                                        size_t evhandler_ref,
-                                        void *cbdata)
+static void model_registration_callback(pmix_status_t status, size_t evhandler_ref, void *cbdata)
 {
-    volatile int *active = (volatile int*)cbdata;
+    volatile int *active = (volatile int *) cbdata;
 
     if (PMIX_SUCCESS != status) {
         fprintf(stderr, "Client %s:%d EVENT HANDLER REGISTRATION FAILED WITH STATUS %d, ref=%lu\n",
-                   myproc.nspace, myproc.rank, status, (unsigned long)evhandler_ref);
+                myproc.nspace, myproc.rank, status, (unsigned long) evhandler_ref);
     }
     *active = status;
 }
@@ -95,7 +88,6 @@ int main(int argc, char *argv[])
     pmix_status_t code = PMIX_MODEL_DECLARED;
     pmix_status_t rc;
     volatile int active;
-
 
     if (1 < argc) {
         fprintf(stderr, "Declaring ourselves\n");
@@ -117,8 +109,8 @@ int main(int argc, char *argv[])
         ninfo = 1;
         PMIX_INFO_CREATE(info, ninfo);
         PMIX_INFO_LOAD(&info[0], PMIX_EVENT_HDLR_NAME, "APP-MODEL", PMIX_STRING);
-        PMIx_Register_event_handler(&code, 1, info, ninfo,
-                                    model_callback, model_registration_callback, (void*)&active);
+        PMIx_Register_event_handler(&code, 1, info, ninfo, model_callback,
+                                    model_registration_callback, (void *) &active);
         while (-1 == active) {
             usleep(10);
         }
@@ -140,8 +132,8 @@ int main(int argc, char *argv[])
         PMIX_INFO_CREATE(info, ninfo);
         PMIX_INFO_LOAD(&info[0], PMIX_EVENT_HDLR_NAME, "APP-MODEL", PMIX_STRING);
 
-        PMIx_Register_event_handler(&code, 1, info, ninfo,
-                                    model_callback, model_registration_callback, (void*)&active);
+        PMIx_Register_event_handler(&code, 1, info, ninfo, model_callback,
+                                    model_registration_callback, (void *) &active);
         while (-1 == active) {
             usleep(10);
         }
@@ -165,8 +157,7 @@ int main(int argc, char *argv[])
 
     if (0 == rank) {
         send_array[pos] = INITIAL_VALUE;
-        MPI_Send(send_array, array_size, MPI_INT, next, tag,
-                 MPI_COMM_WORLD);
+        MPI_Send(send_array, array_size, MPI_INT, next, tag, MPI_COMM_WORLD);
     }
 
     /* if we didn't already do it, declare another model now */
@@ -189,8 +180,7 @@ int main(int argc, char *argv[])
 
     while (1) {
         recv_array[pos] = -1;
-        MPI_Recv(recv_array, array_size, MPI_INT, prev, tag,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(recv_array, array_size, MPI_INT, prev, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         send_array[pos] = recv_array[pos];
         if (rank == 0) {
             --send_array[pos];
@@ -202,8 +192,7 @@ int main(int argc, char *argv[])
     }
 
     if (rank == 0) {
-        MPI_Recv(recv_array, array_size, MPI_INT, prev, tag,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(recv_array, array_size, MPI_INT, prev, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     fprintf(stderr, "Rank %d has completed ring\n", rank);

@@ -5,14 +5,14 @@
  * The most basic of MPI applications
  */
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     unsigned char fifo_cmd = 1;
     int fd;
