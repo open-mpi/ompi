@@ -24,6 +24,8 @@ extern int mca_hook_comm_method_verbose;
 extern int mca_hook_comm_method_output;
 extern bool mca_hook_comm_method_enable_mpi_init;
 extern bool mca_hook_comm_method_enable_mpi_finalize;
+extern bool mca_hook_comm_method_enable_show_aff;
+extern int mca_hook_comm_method_aff_columns;
 extern int mca_hook_comm_method_max;
 extern int mca_hook_comm_method_brief;
 extern char *mca_hook_comm_method_fakefile;

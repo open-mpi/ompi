@@ -216,6 +216,11 @@ static char* comm_method_to_string(int method);
 static int icompar(const void *a, const void *b);
 static void abbreviate_list_into_string(char *str, int max, int *list, int nlist);
 static void ompi_report_comm_methods(int called_from_location);
+static void host_leader_printstring(char *hoststring,
+    int myleaderrank, int nleaderranks, ompi_communicator_t *leader_comm,
+    int cols, int indent);
+static void host_local_get_affstring(char **affstring, int indentation,
+    int mylocalrank, int nlocalranks, ompi_communicator_t *local_comm);
 
 void ompi_hook_comm_method_mpi_init_bottom(int argc, char **argv, int requested, int *provided)
 {
@@ -328,8 +333,9 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
     int ret;
     ompi_communicator_t *local_comm, *leader_comm;
     int *method;
+    int *mymethod;
     char *hoststring;
-    char **allhoststrings;
+    char *affstring;
     int comm_mode; // MODE_IS_BTL / MTL / PML
 
 // early return in the case of spawn
@@ -364,6 +370,26 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
         return;
     }
 
+    char prefix_string[64];
+    char *unprefixed_affstring;
+    prefix_string[0] = 0;
+    if (mylocalrank == 0) {
+        myleaderrank = ompi_comm_rank(leader_comm);
+        sprintf(prefix_string, "H%d: ", myleaderrank);
+    }
+    int indentation = strlen(prefix_string);
+    /* reject really small aff_columns settings*/
+    if (mca_hook_comm_method_aff_columns < indentation + 16) {
+        mca_hook_comm_method_aff_columns = indentation + 16;
+    }
+    host_local_get_affstring(&unprefixed_affstring, indentation,
+        mylocalrank, nlocalranks, local_comm);
+    if (mylocalrank == 0) {
+        affstring = malloc(strlen(prefix_string) + strlen(unprefixed_affstring) + 16);
+        sprintf(affstring, "%s%s", prefix_string, unprefixed_affstring);
+        free(unprefixed_affstring);
+    }
+
 // Non-host-leaders return early.
     if (mylocalrank != 0) {
         ompi_comm_free(&local_comm);
@@ -380,8 +406,11 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
  *  on a per-host basis.  But rank 0 gets enough space to store the
  *  data for all pairs of hosts.
  */
-    method = malloc(numhosts * sizeof(int) * (hpmp_myrank?1:numhosts));
-    if (!method) {
+    mymethod = method = malloc(numhosts * sizeof(int));
+    if (hpmp_myrank == 0) {
+        method = malloc(numhosts * sizeof(int) * numhosts);
+    }
+    if (!method || !mymethod) {
         ompi_comm_free(&local_comm);
         ompi_comm_free(&leader_comm);
         return;
@@ -473,7 +502,7 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 // Each host leader fills in a "numhosts" sized array method[] of
 // how it communicates with each peer.
     for (i=0; i<nleaderranks; ++i) {
-        method[i] = comm_method(leader_comm, i);
+        mymethod[i] = comm_method(leader_comm, i);
 
 // For looking at our own local host though, we don't really want "self"
 // unless there's only one rank and "self" is the best answer. So if
@@ -481,65 +510,16 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 // communication method for a neighbor on this host.
         if (i == myleaderrank) {
             if (nlocalranks > 1) {
-                method[i] = comm_method(local_comm, 1);
+                mymethod[i] = comm_method(local_comm, 1);
             }
         }
     }
 
-// Gather the strings and the methods at rank 0.
-// The gatherv of the strings takes a few steps since we have to get
-// the sizes first and allocate the receiving string.
-    {
-        int len, *lens, *disps;
-
-        len = strlen(hoststring) + 1;
-        if (myleaderrank == 0) {
-            lens = malloc(nleaderranks * sizeof(int));
-            disps = malloc(nleaderranks * sizeof(int));
-        } else {
-            lens = disps = NULL;
-        }
-        leader_comm->c_coll->coll_gather(
-            &len, 1, MPI_INT,
-            lens, 1, MPI_INT,
-            0, leader_comm, leader_comm->c_coll->coll_gather_module);
-        if (myleaderrank == 0) {
-            int tlen = 0;
-            char *p;
-            for (i=0; i<nleaderranks; ++i) {
-                disps[i] = tlen;
-                tlen += lens[i];
-            }
-            allhoststrings = malloc(nleaderranks * sizeof(char*)  +  tlen);
-            p = (char*) (allhoststrings + nleaderranks);
-            for (i=0; i<nleaderranks; ++i) {
-                allhoststrings[i] = p;
-                p += lens[i];
-            }
-            leader_comm->c_coll->coll_gatherv(
-                hoststring, strlen(hoststring) + 1, MPI_CHAR,
-                &allhoststrings[0][0], lens, disps, MPI_CHAR,
-                0, leader_comm, leader_comm->c_coll->coll_gatherv_module);
-        } else {
-            // matching above call from rank 0, just &allhoststrings[0][0]
-            // isn't legal here, and those args aren't used at non-root anyway
-            leader_comm->c_coll->coll_gatherv(
-                hoststring, strlen(hoststring) + 1, MPI_CHAR,
-                NULL, NULL, NULL, MPI_CHAR,
-                0, leader_comm, leader_comm->c_coll->coll_gatherv_module);
-        }
-        if (myleaderrank == 0) {
-            free(lens);
-            free(disps);
-        }
-// and a simpler gather for the methods
-        leader_comm->c_coll->coll_gather(
-            method, nleaderranks, MPI_INT,
-            method, nleaderranks, MPI_INT,
-            0, leader_comm, leader_comm->c_coll->coll_gather_module);
-    }
-    ompi_comm_free(&local_comm);
-    ompi_comm_free(&leader_comm);
+// Gather the methods at rank 0.
+    leader_comm->c_coll->coll_gather(
+        mymethod, nleaderranks, MPI_INT,
+        method, nleaderranks, MPI_INT,
+        0, leader_comm, leader_comm->c_coll->coll_gather_module);
 
 // Interception for testing purposes. Let rank-0 meddle with all its method[]
 // settings, this is only for testing, eg to make sure the printing comes out
@@ -567,12 +547,31 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 // 1. the hoststring each host contributed
 // 2. the 2d table in method[] if it isn't too big
 // 3. summary of on/off host interconnect, and list the exceptions
-    if (myleaderrank == 0) {
+
 // 1: hoststring for each host
-        for (i=0; i<nleaderranks; ++i) {
-          printf("%s\n", allhoststrings[i]);
-        }
+    host_leader_printstring(hoststring, myleaderrank, nleaderranks, leader_comm, -1, -1);
+    if (myleaderrank == 0) {
         printf("\n");
+    }
+
+// 1b: affstring for each host
+    if (mca_hook_comm_method_enable_show_aff) {
+        if (myleaderrank == 0) {
+            printf("Affinity per host: (with ompi_display_comm_aff_columns %d)\n",
+                mca_hook_comm_method_aff_columns);
+        }
+        host_leader_printstring(affstring, myleaderrank, nleaderranks, leader_comm,
+            mca_hook_comm_method_aff_columns, indentation + 2);
+        if (myleaderrank == 0) {
+            printf("\n");
+        }
+        free(affstring);
+    }
+
+    ompi_comm_free(&local_comm);
+    ompi_comm_free(&leader_comm);
+
+    if (myleaderrank == 0) {
 // 2: 2d table
         if (nleaderranks <= max2Dprottable) {
             char *str, *p;
@@ -874,8 +873,375 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
         }
     }
 
+    free(mymethod);
+    if (hpmp_myrank == 0) {
+        free(method);
+    }
+}
+
+/*
+ *  Input is a multiline string containing \n but not ending with one.
+ *  Ex:
+ * "H1 aff: [......../......../......../........] Lrank 0-1\n
+ *          [......../......../......../........] Lrank 2-3"
+ */
+static void
+multiline_print(char *instr, int cols, int indentation) {
+    if (!instr) { return; }
+    if (instr[0] == 0) { return; }
+
+    if (cols < 0) { cols = INT_MAX; }
+
+    char *str = strdup(instr);
+    int len = strlen(str);
+    int i;
+    char *p1 = str;
+    char *p2;
+    char save;
+    int prev_line_completed = 1;
+    while (p1 < str + len) {
+        p2 = p1;
+        if (prev_line_completed) {
+            while (*p2 != 0 && *p2 != '\n' && p2-p1<cols) { ++p2; }
+        } else {
+            while (*p2 != 0 && *p2 != '\n' && p2-p1<cols-indentation) { ++p2; }
+        }
+        save = *p2;
+        *p2 = 0;
+        if (!prev_line_completed) {
+            for (i=0; i<indentation; ++i) {
+                printf(" ");
+            }
+        }
+        printf("%s\n", p1);
+        if (save == '\n') {
+            prev_line_completed = 1;
+        } else {
+            prev_line_completed = 0;
+        }
+
+        p1 = p2 + 1;
+    }
+    free(str);
+}
+
+static void
+host_leader_printstring(
+    char *hoststring,
+    int myleaderrank, int nleaderranks,
+    ompi_communicator_t *leader_comm, int cols, int indentation)
+{
+// Gather strings at rank 0.
+// The gatherv of the strings takes a few steps since we have to get
+// the sizes first and allocate the receiving string.
+    int len, *lens, *disps, i;
+    char **allhoststrings;
+
+    len = strlen(hoststring) + 1;
     if (myleaderrank == 0) {
+        lens = malloc(nleaderranks * sizeof(int));
+        disps = malloc(nleaderranks * sizeof(int));
+    } else {
+        lens = disps = NULL;
+    }
+    leader_comm->c_coll->coll_gather(
+        &len, 1, MPI_INT,
+        lens, 1, MPI_INT,
+        0, leader_comm, leader_comm->c_coll->coll_gather_module);
+    if (myleaderrank == 0) {
+        int tlen = 0;
+        char *p;
+        for (i=0; i<nleaderranks; ++i) {
+            disps[i] = tlen;
+            tlen += lens[i];
+        }
+        allhoststrings = malloc(nleaderranks * sizeof(char*)  +  tlen);
+        p = (char*) (allhoststrings + nleaderranks);
+        for (i=0; i<nleaderranks; ++i) {
+            allhoststrings[i] = p;
+            p += lens[i];
+        }
+        leader_comm->c_coll->coll_gatherv(
+            hoststring, strlen(hoststring) + 1, MPI_CHAR,
+            &allhoststrings[0][0], lens, disps, MPI_CHAR,
+            0, leader_comm, leader_comm->c_coll->coll_gatherv_module);
+    } else {
+        // matching above call from rank 0, just &allhoststrings[0][0]
+        // isn't legal here, and those args aren't used at non-root anyway
+        leader_comm->c_coll->coll_gatherv(
+            hoststring, strlen(hoststring) + 1, MPI_CHAR,
+            NULL, NULL, NULL, MPI_CHAR,
+            0, leader_comm, leader_comm->c_coll->coll_gatherv_module);
+    }
+    if (myleaderrank == 0) {
+        free(lens);
+        free(disps);
+    }
+
+    if (myleaderrank == 0) {
+        for (i=0; i<nleaderranks; ++i) {
+            //printf("%s\n", allhoststrings[i]);
+            multiline_print(allhoststrings[i], cols, indentation);
+        }
         free(allhoststrings);
     }
-    free(method);
 }
+
+#include "opal/mca/hwloc/base/base.h"
+#define LENGTHEN(affstring, nextchar, affstring_cursz, amount) do { \
+    if ((int)(nextchar + amount + 16) >= (int)(*affstring_cursz)) { \
+        *affstring_cursz *= 1.25; \
+        *affstring_cursz += (amount + 16); \
+        *affstring = realloc(*affstring, *affstring_cursz); \
+    } \
+} while (0)
+
+/*
+ *  If the old --report-bindings output would have been this:
+ *            [BB/../../..][../../../..]
+ *            [../BB/../..][../../../..]
+ *            [../../../..][BB/../../..]
+ *            [../../../..][../BB/../..]
+ *  this function returns a string
+ *            [aa/bb/../..][cc/dd/../..]
+ *
+ *  This function decides how many ranks' bitmasks to process based on
+ *  1. avoiding overlap, and
+ *  2. only using 52 letters a-zA-Z
+ *  The *position argument should come in as 0 for the first call, and
+ *  it gets updated to point to the next host needing to be processed.
+ *
+ *  Each call to this function adds another line to an existing *affstring
+ *  (realloc()ing if needed).  The second-and-later lines get a carriage
+ *  return in front of them.  The last line does not end with a carriage
+ *  return.
+ */
+static void
+sprint_bitmaps(char **affstring, int *affstring_cursz,
+    int indentation,
+    hwloc_cpuset_t *cpus_forrank, int nranks,
+    int *position)
+{
+    int i, r;
+    int nchildren_done[32], depth, some_cores_printed_under_containing_obj;
+    int nextchar;
+    hwloc_obj_t obj;
+    hwloc_bitmap_t cpus;
+    char *key = "abcdefghijklmnopqrstuvwxyzABCDEGHIJKLMNOPQRSTUVWXYZ";
+    int rankA, rankB;
+
+/* pre-computing how many ranks to use
+ */
+    cpus = hwloc_bitmap_alloc();
+    r = *position;
+    hwloc_bitmap_copy(cpus, cpus_forrank[r]);
+    while (r < nranks-1) {
+        if (!hwloc_bitmap_intersects(cpus, cpus_forrank[r+1]) &&
+            (r - *position + 1) < (int)strlen(key))
+        {
+            ++r;
+            hwloc_bitmap_or(cpus, cpus, cpus_forrank[r]);
+        } else {
+            break;
+        }
+    }
+    hwloc_bitmap_free(cpus);
+/* update position, save a rankA and rankB to note the range we'll use */
+    rankA = *position;
+    rankB = r;
+    *position = *position + (rankB - rankA + 1);
+
+    nextchar = strlen(*affstring);
+    LENGTHEN(affstring, nextchar, affstring_cursz, indentation + 1);
+    if (rankA != 0) {
+        (*affstring)[nextchar++] = '\n';
+        (*affstring)[nextchar] = 0;
+        for (i=0; i<indentation; ++i) {
+            (*affstring)[nextchar++] = ' ';
+        }
+        (*affstring)[nextchar] = 0;
+    }
+
+/* for bookkeeping:
+ * let the top of the stack be the obj we're processing, and keep
+ * nchildren_done in the stack for each obj
+ */
+    obj = hwloc_get_root_obj(opal_hwloc_topology);
+    depth = 0;
+    nchildren_done[depth] = 0;
+    while (obj) {
+        LENGTHEN(affstring, nextchar, affstring_cursz, 2);
+        if (obj->type == HWLOC_OBJ_PACKAGE) {
+            (*affstring)[nextchar++] = '[';
+            (*affstring)[nextchar] = 0;
+            some_cores_printed_under_containing_obj = 0;
+        }
+        if (obj->type == HWLOC_OBJ_CORE && some_cores_printed_under_containing_obj) {
+            (*affstring)[nextchar++] = '/';
+            (*affstring)[nextchar] = 0;
+        }
+        /* if this is a numa level it doesn't have .type NUMA, it just
+         * has a .memory_arity on the side.
+         * The below code prints the "<...>" for both interesting
+         * and non-interesting numas.  Eg if each package is a numa
+         * this might print "[<../..>]".  We could change this to only
+         * print the intersting cases by adding .type==GROUP here,
+         * because the GROUP .type is used when the numa level isn't a 1:1
+         * match for some other obj in the tree.
+         *
+         * The iszero() check is for skipping numas that have no PUs under
+         * them.  Without that check my PPC machines at least look like
+         * "[<../..>][<../..>]<><><><><><>"
+         */
+        if (obj->memory_arity > 0 && !hwloc_bitmap_iszero(obj->memory_first_child->cpuset)) {
+            (*affstring)[nextchar++] = '<';
+            (*affstring)[nextchar] = 0;
+            some_cores_printed_under_containing_obj = 0;
+        }
+
+        if (obj->type == HWLOC_OBJ_PU) {
+            char c = '.';
+            for (r=rankA; r<=rankB; ++r) {
+                if (hwloc_bitmap_isset(cpus_forrank[r], obj->os_index)) {
+                    c = key[r - rankA];
+                    break;
+                }
+            }
+            (*affstring)[nextchar++] = c;
+            (*affstring)[nextchar] = 0;
+            some_cores_printed_under_containing_obj = 1;
+        }
+
+
+/*
+ * traverse up till we find an obj we haven't yet processed all the children for
+ */
+        i = nchildren_done[depth];
+        while (depth >= 0 && i >= (int)obj->arity) {
+            LENGTHEN(affstring, nextchar, affstring_cursz, 2);
+            if (obj->memory_arity > 0 && !hwloc_bitmap_iszero(obj->memory_first_child->cpuset)) {
+                (*affstring)[nextchar++] = '>';
+                (*affstring)[nextchar] = 0;
+                some_cores_printed_under_containing_obj = 0;
+            }
+            if (obj->type == HWLOC_OBJ_PACKAGE) {
+                (*affstring)[nextchar++] = ']';
+                (*affstring)[nextchar] = 0;
+                some_cores_printed_under_containing_obj = 0;
+            }
+
+            obj = obj->parent;
+            --depth;
+            if (depth >= 0) { i = nchildren_done[depth]; }
+        }
+/*
+ * we're either ready to go to the next child of this obj, or we've walked off
+ * the top of the tree and are done
+ */
+        if (obj && i < (int)obj->arity) {
+            obj = obj->children[i];
+            ++nchildren_done[depth];
+            ++depth;
+            nchildren_done[depth] = 0;
+        } else {
+            obj = NULL;
+        }
+    }
+}
+static void
+host_local_get_affstring(
+    char **affstring, int indentation,
+    int mylocalrank, int nlocalranks,
+    ompi_communicator_t *local_comm)
+{
+    hwloc_cpuset_t mycpus;
+    hwloc_cpuset_t *cpus_forrank;
+    char *mybitmap_string;
+    char **bitmap_strings;
+
+    mycpus = hwloc_bitmap_alloc();
+    hwloc_get_cpubind(opal_hwloc_topology, mycpus, HWLOC_CPUBIND_PROCESS);
+    hwloc_bitmap_list_asprintf(&mybitmap_string, mycpus);
+    hwloc_bitmap_free(mycpus);
+
+// Gather hwloc_bitmap_t strings at host-local rank 0.
+    int len, *lens, *disps, i;
+
+    len = strlen(mybitmap_string) + 1;
+    if (mylocalrank == 0) {
+        lens = malloc(nlocalranks * sizeof(int));
+        disps = malloc(nlocalranks * sizeof(int));
+    } else {
+        lens = disps = NULL;
+    }
+    local_comm->c_coll->coll_gather(
+        &len, 1, MPI_INT,
+        lens, 1, MPI_INT,
+        0, local_comm, local_comm->c_coll->coll_gather_module);
+    if (mylocalrank == 0) {
+        int tlen = 0;
+        char *p;
+        for (i=0; i<nlocalranks; ++i) {
+            disps[i] = tlen;
+            tlen += lens[i];
+        }
+        bitmap_strings = malloc(nlocalranks * sizeof(char*)  +  tlen);
+        p = (char*) (bitmap_strings + nlocalranks);
+        for (i=0; i<nlocalranks; ++i) {
+            bitmap_strings[i] = p;
+            p += lens[i];
+        }
+        local_comm->c_coll->coll_gatherv(
+            mybitmap_string, len, MPI_CHAR,
+            &bitmap_strings[0][0], lens, disps, MPI_CHAR,
+            0, local_comm, local_comm->c_coll->coll_gatherv_module);
+    } else {
+        // matching above call from rank 0, just &bitmap_strings[0][0]
+        // isn't legal here, and those args aren't used at non-root anyway
+        local_comm->c_coll->coll_gatherv(
+            mybitmap_string, len, MPI_CHAR,
+            NULL, NULL, NULL, MPI_CHAR,
+            0, local_comm, local_comm->c_coll->coll_gatherv_module);
+    }
+
+    free(mybitmap_string);
+    if (mylocalrank != 0) { return; }
+
+/* only the host leader runs the rest */
+    free(lens);
+    free(disps);
+
+    cpus_forrank = malloc(nlocalranks * sizeof(hwloc_cpuset_t));
+    for (i=0; i<nlocalranks; ++i) {
+        cpus_forrank[i] = hwloc_bitmap_alloc();
+        hwloc_bitmap_list_sscanf(cpus_forrank[i], bitmap_strings[i]);
+    }
+    free(bitmap_strings);
+
+    int affstring_cursz = 512;
+    int position = 0;
+    *affstring = malloc(affstring_cursz);
+    (*affstring)[0] = 0;
+    int a, b;
+    while (position < nlocalranks) {
+        a = position;
+        sprint_bitmaps(affstring, &affstring_cursz, indentation,
+            cpus_forrank, nlocalranks, &position);
+        b = position - 1;
+        if (1 || position < nlocalranks) {
+            int nextchar = strlen(*affstring);
+            LENGTHEN(affstring, nextchar, &affstring_cursz, 32);
+            if (a != b) {
+                sprintf(&(*affstring)[strlen(*affstring)], " Lranks %d-%d", a, b);
+            } else {
+                sprintf(&(*affstring)[strlen(*affstring)], " Lrank %d", a);
+            }
+        }
+    }
+
+    for (i=0; i<nlocalranks; ++i) {
+        hwloc_bitmap_free(cpus_forrank[i]);
+    }
+    free(cpus_forrank);
+}
+
