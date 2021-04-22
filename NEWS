@@ -61,6 +61,9 @@ included in the vX.Y.Z section and be denoted as:
 4.1.1 -- April, 2021
 --------------------
 
+- Fix a number of datatype issues, including an issue with
+  improper handling of partial datatypes that could lead to
+  an unexpected application failure.
 - Change UCX PML to not warn about MPI_Request leaks during
   MPI_FINALIZE by default.  The old behavior can be restored with
   the mca_pml_ucx_request_leak_check MCA parameter.
