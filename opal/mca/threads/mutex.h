@@ -11,11 +11,13 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC.  All rights reserved.
+ * Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -28,6 +30,7 @@
 #define OPAL_MCA_THREADS_MUTEX_H
 
 #include "opal_config.h"
+#include "opal/sys/atomic.h"
 
 BEGIN_C_DECLS
 
@@ -48,8 +51,53 @@ typedef struct opal_mutex_t opal_recursive_mutex_t;
 
 #include MCA_threads_mutex_base_include_HEADER
 
-OBJ_CLASS_DECLARATION(opal_mutex_t);
-OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
+struct opal_mutex_t {
+    opal_object_t super;
+    opal_thread_internal_mutex_t m_lock;
+#if OPAL_ENABLE_DEBUG
+    int m_lock_debug;
+    const char *m_lock_file;
+    int m_lock_line;
+#endif
+    opal_atomic_lock_t m_lock_atomic;
+};
+
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
+
+#if OPAL_ENABLE_DEBUG
+#    define OPAL_MUTEX_STATIC_INIT                                                         \
+        {                                                                                  \
+            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                                   \
+            .m_lock = OPAL_THREAD_INTERNAL_MUTEX_INITIALIZER, .m_lock_debug = 0,           \
+            .m_lock_file = NULL, .m_lock_line = 0, .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT, \
+        }
+#else
+#    define OPAL_MUTEX_STATIC_INIT                            \
+        {                                                     \
+            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),      \
+            .m_lock = OPAL_THREAD_INTERNAL_MUTEX_INITIALIZER, \
+            .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,           \
+        }
+#endif
+
+#if defined(OPAL_THREAD_INTERNAL_RECURSIVE_MUTEX_INITIALIZER)
+#    if OPAL_ENABLE_DEBUG
+#        define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                               \
+            {                                                                                  \
+                .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                                   \
+                .m_lock = OPAL_THREAD_INTERNAL_RECURSIVE_MUTEX_INITIALIZER, .m_lock_debug = 0, \
+                .m_lock_file = NULL, .m_lock_line = 0, .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT, \
+            }
+#    else
+#        define OPAL_RECURSIVE_MUTEX_STATIC_INIT                            \
+            {                                                               \
+                .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                \
+                .m_lock = OPAL_THREAD_INTERNAL_RECURSIVE_MUTEX_INITIALIZER, \
+                .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                     \
+            }
+#    endif
+#endif /* OPAL_THREAD_INTERNAL_RECURSIVE_MUTEX_INITIALIZER */
 
 /**
  * Try to acquire a mutex.
@@ -57,21 +105,30 @@ OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
  * @param mutex         Address of the mutex.
  * @return              0 if the mutex was acquired, 1 otherwise.
  */
-static inline int opal_mutex_trylock(opal_mutex_t *mutex);
+static inline int opal_mutex_trylock(opal_mutex_t *mutex)
+{
+    return opal_thread_internal_mutex_trylock(&mutex->m_lock);
+}
 
 /**
  * Acquire a mutex.
  *
  * @param mutex         Address of the mutex.
  */
-static inline void opal_mutex_lock(opal_mutex_t *mutex);
+static inline void opal_mutex_lock(opal_mutex_t *mutex)
+{
+    opal_thread_internal_mutex_lock(&mutex->m_lock);
+}
 
 /**
  * Release a mutex.
  *
  * @param mutex         Address of the mutex.
  */
-static inline void opal_mutex_unlock(opal_mutex_t *mutex);
+static inline void opal_mutex_unlock(opal_mutex_t *mutex)
+{
+    opal_thread_internal_mutex_unlock(&mutex->m_lock);
+}
 
 /**
  * Try to acquire a mutex using atomic operations.
@@ -79,21 +136,42 @@ static inline void opal_mutex_unlock(opal_mutex_t *mutex);
  * @param mutex         Address of the mutex.
  * @return              0 if the mutex was acquired, 1 otherwise.
  */
-static inline int opal_mutex_atomic_trylock(opal_mutex_t *mutex);
+static inline int opal_mutex_atomic_trylock(opal_mutex_t *mutex)
+{
+#if OPAL_HAVE_ATOMIC_SPINLOCKS
+    return opal_atomic_trylock(&mutex->m_lock_atomic);
+#else
+    return opal_mutex_trylock(mutex);
+#endif
+}
 
 /**
  * Acquire a mutex using atomic operations.
  *
  * @param mutex         Address of the mutex.
  */
-static inline void opal_mutex_atomic_lock(opal_mutex_t *mutex);
+static inline void opal_mutex_atomic_lock(opal_mutex_t *mutex)
+{
+#if OPAL_HAVE_ATOMIC_SPINLOCKS
+    opal_atomic_lock(&mutex->m_lock_atomic);
+#else
+    opal_mutex_lock(mutex);
+#endif
+}
 
 /**
  * Release a mutex using atomic operations.
  *
  * @param mutex         Address of the mutex.
  */
-static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
+static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex)
+{
+#if OPAL_HAVE_ATOMIC_SPINLOCKS
+    opal_atomic_unlock(&mutex->m_lock_atomic);
+#else
+    opal_mutex_unlock(mutex);
+#endif
+}
 
 /**
  * Lock a mutex if opal_using_threads() says that multiple threads may
@@ -178,6 +256,14 @@ static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex);
             action;                                \
         }                                          \
     } while (0)
+
+typedef opal_thread_internal_cond_t opal_cond_t;
+#define OPAL_CONDITION_STATIC_INIT OPAL_THREAD_INTERNAL_COND_INITIALIZER
+int opal_cond_init(opal_cond_t *cond);
+int opal_cond_wait(opal_cond_t *cond, opal_mutex_t *lock);
+int opal_cond_broadcast(opal_cond_t *cond);
+int opal_cond_signal(opal_cond_t *cond);
+int opal_cond_destroy(opal_cond_t *cond);
 
 END_C_DECLS
 

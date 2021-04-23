@@ -112,9 +112,6 @@ AC_DEFUN([MCA_opal_threads_qthreads_POST_CONFIG],[
            AC_DEFINE_UNQUOTED([MCA_threads_tsd_base_include_HEADER],
                               ["opal/mca/threads/qthreads/threads_qthreads_tsd.h"],
                               [Header to include for tsd implementation])
-           AC_DEFINE_UNQUOTED([MCA_threads_wait_sync_base_include_HEADER],
-                              ["opal/mca/threads/qthreads/threads_qthreads_wait_sync.h"],
-                              [Header to include for wait_sync implementation])
            THREAD_CFLAGS="$TPKG_CFLAGS"
            THREAD_FCFLAGS="$TPKG_FCFLAGS"
            THREAD_CXXFLAGS="$TPKG_CXXFLAGS"

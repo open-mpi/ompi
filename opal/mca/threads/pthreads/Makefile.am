@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
+# Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,11 +26,8 @@ libmca_threads_pthreads_la_SOURCES = \
     threads_pthreads_component.c \
     threads_pthreads_condition.c \
     threads_pthreads_module.c \
-    threads_pthreads_mutex.c \
     threads_pthreads_mutex.h \
     threads_pthreads_threads.h \
     threads_pthreads_tsd.h \
-    threads_pthreads_wait_sync.c \
-    threads_pthreads_wait_sync.h \
     threads_pthreads_yield.c \
     threads_pthreads.h
