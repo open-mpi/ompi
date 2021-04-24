@@ -214,9 +214,9 @@ static MPI_Datatype create_indexed_gap_optimized_ddt(void)
 #define MIN_LENGTH 1024
 #define MAX_LENGTH (1024 * 1024)
 
-static int cycles = 100;
-static int trials = 20;
-static int warmups = 2;
+static int global_cycles  = 100;
+static int global_trials  = 20;
+static int global_warmups = 2;
 
 static void print_result(int length, int trials, double *timers)
 {
@@ -269,21 +269,21 @@ static void print_result(int length, int trials, double *timers)
 static int pack(int cycles, MPI_Datatype sdt, int scount, void *sbuf, void *packed_buf)
 {
     int position, myself, c, t, outsize;
-    double timers[trials];
+    double timers[global_trials];
 
     MPI_Type_size(sdt, &outsize);
     outsize *= scount;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
-    for (t = 0; t < warmups; t++) {
+    for (t = 0; t < global_warmups; t++) {
         for (c = 0; c < cycles; c++) {
             position = 0;
             MPI_Pack(sbuf, scount, sdt, packed_buf, outsize, &position, MPI_COMM_WORLD);
         }
     }
-
-    for (t = 0; t < trials; t++) {
+    
+    for (t = 0; t < global_trials; t++) {
         timers[t] = MPI_Wtime();
         for (c = 0; c < cycles; c++) {
             position = 0;
@@ -291,28 +291,28 @@ static int pack(int cycles, MPI_Datatype sdt, int scount, void *sbuf, void *pack
         }
         timers[t] = (MPI_Wtime() - timers[t]) / cycles;
     }
-    print_result(outsize, trials, timers);
+    print_result(outsize, global_trials, timers);
     return 0;
 }
 
 static int unpack(int cycles, void *packed_buf, MPI_Datatype rdt, int rcount, void *rbuf)
 {
     int position, myself, c, t, insize;
-    double timers[trials];
+    double timers[global_trials];
 
     MPI_Type_size(rdt, &insize);
     insize *= rcount;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
-    for (t = 0; t < warmups; t++) {
-        for (c = 0; c < cycles; c++) {
+    for (t = 0; t < global_warmups; t++) {
+        for( c = 0; c < cycles; c++ ) {
             position = 0;
             MPI_Unpack(packed_buf, insize, &position, rbuf, rcount, rdt, MPI_COMM_WORLD);
         }
     }
 
-    for (t = 0; t < trials; t++) {
+    for (t = 0; t < global_trials; t++) {
         timers[t] = MPI_Wtime();
         for (c = 0; c < cycles; c++) {
             position = 0;
@@ -320,7 +320,7 @@ static int unpack(int cycles, void *packed_buf, MPI_Datatype rdt, int rcount, vo
         }
         timers[t] = (MPI_Wtime() - timers[t]) / cycles;
     }
-    print_result(insize, trials, timers);
+    print_result(insize, global_trials, timers);
     return 0;
 }
 
@@ -330,7 +330,7 @@ static int isend_recv(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_
     int myself, tag = 0, c, t, slength, rlength;
     MPI_Status status;
     MPI_Request req;
-    double timers[trials];
+    double timers[global_trials];
 
     MPI_Type_size(sdt, &slength);
     slength *= scount;
@@ -339,7 +339,7 @@ static int isend_recv(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
-    for (t = 0; t < trials; t++) {
+    for (t = 0; t < global_trials; t++) {
         timers[t] = MPI_Wtime();
         for (c = 0; c < cycles; c++) {
             MPI_Isend(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &req);
@@ -348,7 +348,7 @@ static int isend_recv(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_
         }
         timers[t] = (MPI_Wtime() - timers[t]) / cycles;
     }
-    print_result(rlength, trials, timers);
+    print_result(rlength, global_trials, timers);
     return 0;
 }
 
@@ -358,7 +358,7 @@ static int irecv_send(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_
     int myself, tag = 0, c, t, slength, rlength;
     MPI_Request req;
     MPI_Status status;
-    double timers[trials];
+    double timers[global_trials];
 
     MPI_Type_size(sdt, &slength);
     slength *= scount;
@@ -367,7 +367,7 @@ static int irecv_send(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
-    for (t = 0; t < trials; t++) {
+    for (t = 0; t < global_trials; t++) {
         timers[t] = MPI_Wtime();
         for (c = 0; c < cycles; c++) {
             MPI_Irecv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &req);
@@ -376,7 +376,7 @@ static int irecv_send(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_
         }
         timers[t] = (MPI_Wtime() - timers[t]) / cycles;
     }
-    print_result(rlength, trials, timers);
+    print_result(rlength, global_trials, timers);
     return 0;
 }
 
@@ -386,7 +386,7 @@ static int isend_irecv_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf
     int myself, tag = 0, c, t, slength, rlength;
     MPI_Request requests[2];
     MPI_Status statuses[2];
-    double timers[trials];
+    double timers[global_trials];
 
     MPI_Type_size(sdt, &slength);
     slength *= scount;
@@ -395,7 +395,7 @@ static int isend_irecv_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
-    for (t = 0; t < trials; t++) {
+    for (t = 0; t < global_trials; t++) {
         timers[t] = MPI_Wtime();
         for (c = 0; c < cycles; c++) {
             MPI_Isend(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &requests[0]);
@@ -404,7 +404,7 @@ static int isend_irecv_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf
         }
         timers[t] = (MPI_Wtime() - timers[t]) / cycles;
     }
-    print_result(rlength, trials, timers);
+    print_result(rlength, global_trials, timers);
     return 0;
 }
 
@@ -414,7 +414,7 @@ static int irecv_isend_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf
     int myself, tag = 0, c, t, slength, rlength;
     MPI_Request requests[2];
     MPI_Status statuses[2];
-    double timers[trials];
+    double timers[global_trials];
 
     MPI_Type_size(sdt, &slength);
     slength *= scount;
@@ -423,7 +423,7 @@ static int irecv_isend_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
-    for (t = 0; t < trials; t++) {
+    for (t = 0; t < global_trials; t++) {
         timers[t] = MPI_Wtime();
         for (c = 0; c < cycles; c++) {
             MPI_Irecv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &requests[0]);
@@ -432,7 +432,7 @@ static int irecv_isend_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf
         }
         timers[t] = (MPI_Wtime() - timers[t]) / cycles;
     }
-    print_result(rlength, trials, timers);
+    print_result(rlength, global_trials, timers);
     return 0;
 }
 
@@ -447,43 +447,43 @@ static int do_test_for_ddt(int doop, MPI_Datatype sddt, MPI_Datatype rddt, int l
     rbuf = (char *) malloc(length);
     if (doop & DO_PACK) {
         printf("# Pack (max length %d)\n", length);
-        for (i = 1; i <= (length / extent); i *= 2) {
-            pack(cycles, sddt, i, sbuf, rbuf);
+        for (i = 1; i <= (length/extent); i *= 2) {
+            pack( global_cycles, sddt, i, sbuf, rbuf );
         }
     }
 
     if (doop & DO_UNPACK) {
         printf("# Unpack (length %d)\n", length);
-        for (i = 1; i <= (length / extent); i *= 2) {
-            unpack(cycles, sbuf, rddt, i, rbuf);
+        for (i = 1; i <= (length/extent); i *= 2) {
+            unpack( global_cycles, sbuf, rddt, i, rbuf );
         }
     }
 
     if (doop & DO_ISEND_RECV) {
-        printf("# Isend recv (length %d)\n", length);
-        for (i = 1; i <= (length / extent); i *= 2) {
-            isend_recv(cycles, sddt, i, sbuf, rddt, i, rbuf);
+        printf( "# Isend recv (length %d)\n", length );
+        for (i = 1; i <= (length/extent); i *= 2) {
+            isend_recv(global_cycles, sddt, i, sbuf, rddt, i, rbuf);
         }
     }
 
     if (doop & DO_ISEND_IRECV) {
-        printf("# Isend Irecv Wait (length %d)\n", length);
-        for (i = 1; i <= (length / extent); i *= 2) {
-            isend_irecv_wait(cycles, sddt, i, sbuf, rddt, i, rbuf);
+        printf( "# Isend Irecv Wait (length %d)\n", length );
+        for (i = 1; i <= (length/extent); i *= 2) {
+            isend_irecv_wait(global_cycles, sddt, i, sbuf, rddt, i, rbuf);
         }
     }
 
     if (doop & DO_IRECV_SEND) {
-        printf("# Irecv send (length %d)\n", length);
-        for (i = 1; i <= (length / extent); i *= 2) {
-            irecv_send(cycles, sddt, i, sbuf, rddt, i, rbuf);
+        printf( "# Irecv send (length %d)\n", length );
+        for (i = 1; i <= (length/extent); i *= 2) {
+            irecv_send(global_cycles, sddt, i, sbuf, rddt, i, rbuf);
         }
     }
 
     if (doop & DO_IRECV_SEND) {
-        printf("# Irecv Isend Wait (length %d)\n", length);
-        for (i = 1; i <= (length / extent); i *= 2) {
-            irecv_isend_wait(cycles, sddt, i, sbuf, rddt, i, rbuf);
+        printf( "# Irecv Isend Wait (length %d)\n", length );
+        for (i = 1; i <= (length/extent); i *= 2) {
+            irecv_isend_wait(global_cycles, sddt, i, sbuf, rddt, i, rbuf);
         }
     }
     free(sbuf);

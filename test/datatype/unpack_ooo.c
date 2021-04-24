@@ -150,7 +150,7 @@ static int testcase(ompi_datatype_t *newtype, size_t arr[][2])
                     displ = (char *) &bar[j] - (char *) &bar[0];
                 }
                 for (i = 0; 0 != arr[i][0]; i++) {
-                    if ((displ >= arr[i][1]) && (displ <= (arr[i][1] + arr[i][0]))) {
+                    if ((displ >= (ptrdiff_t) arr[i][1]) && (displ <= (ptrdiff_t) (arr[i][1] + arr[i][0]))) {
                         fprintf(stderr,
                                 "Problem encountered %li bytes into the %d unpack [%" PRIsize_t
                                 ":%" PRIsize_t "]\n",

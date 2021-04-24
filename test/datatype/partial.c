@@ -53,7 +53,7 @@ static void show_neighborhood(double *ptr, int how_many, bool show_hex)
         for (i = -how_many; i < how_many; i++) {
             if (0 == i)
                 printf(" <");
-            for (int j = 0; j < sizeof(double); j++) {
+            for (size_t j = 0; j < sizeof(double); j++) {
                 printf("%02x", cptr[i * sizeof(double) + j]);
             }
             if (0 == i)
@@ -76,8 +76,7 @@ static void show_neighborhood(double *ptr, int how_many, bool show_hex)
 
 int main(int argc, char *argv[])
 {
-    opal_datatype_t *vector;
-    ompi_datatype_t *base;
+    ompi_datatype_t *vector, *base;
     uint32_t iov_count;
     size_t max_data, size, length;
     struct iovec iov[2];
@@ -93,13 +92,13 @@ int main(int argc, char *argv[])
     ompi_datatype_create_vector(TYPE_COUNT, TYPE_BLEN, TYPE_STRIDE, MPI_DOUBLE, &base);
     ompi_datatype_create_contiguous(CONT_COUNT, base, &vector);
 
-    opal_datatype_commit(vector);
+    opal_datatype_commit(&vector->super);
 
     ompi_datatype_dump(vector);
 
-    opal_datatype_type_size(vector, &size);
-    opal_datatype_type_extent(vector, &extent);
-    opal_datatype_type_extent(base, &base_extent);
+    opal_datatype_type_size(&vector->super, &size);
+    opal_datatype_type_extent(&vector->super, &extent);
+    opal_datatype_type_extent(&base->super, &base_extent);
 
     array = (double *) malloc(extent * COUNT);
     packed = (double *) malloc(size * COUNT);
@@ -118,7 +117,7 @@ int main(int argc, char *argv[])
      * of the buffered operation.
      */
     convertor = opal_convertor_create(opal_local_arch, 0);
-    opal_convertor_prepare_for_recv(convertor, vector, COUNT, array);
+    opal_convertor_prepare_for_recv(convertor, &vector->super, COUNT, array);
 
     for (length = 0; length < (size * COUNT);) {
         iov[0].iov_base = bpacked + length;
@@ -129,7 +128,8 @@ int main(int argc, char *argv[])
         opal_convertor_unpack(convertor, iov, &iov_count, &max_data);
         length += max_data;
 
-        int idx = 0, checked = 0;
+        int idx = 0;
+        size_t checked = 0;
         for (int m = 0; m < COUNT; m++) {
             char *mptr = (char *) array + m * extent;
             for (int k = 0; k < CONT_COUNT; k++) {

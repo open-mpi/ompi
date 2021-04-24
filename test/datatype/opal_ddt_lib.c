@@ -29,18 +29,24 @@ uint32_t outputFlags = VALIDATE_DATA | CHECK_PACK_UNPACK | RESET_CONVERTORS | QU
 static int32_t opal_datatype_create_indexed(int count, const int *pBlockLength, const int *pDisp,
                                             const opal_datatype_t *oldType,
                                             opal_datatype_t **newType);
+#if 0
+// This is not currently used.
 static int32_t opal_datatype_create_hindexed(int count, const int *pBlockLength,
                                              const ptrdiff_t *pDisp, const opal_datatype_t *oldType,
                                              opal_datatype_t **newType);
+#endif
 static int32_t opal_datatype_create_struct(int count, const int *pBlockLength,
                                            const ptrdiff_t *pDisp, opal_datatype_t **pTypes,
                                            opal_datatype_t **newType);
 static int32_t opal_datatype_create_vector(int count, int bLength, int stride,
                                            const opal_datatype_t *oldType,
                                            opal_datatype_t **newType);
+#if 0
+// This is not currently used.
 static int32_t opal_datatype_create_hvector(int count, int bLength, ptrdiff_t stride,
                                             const opal_datatype_t *oldType,
                                             opal_datatype_t **newType);
+#endif
 
 /**
  * Cache cleanup.
@@ -317,6 +323,8 @@ static int32_t opal_datatype_create_indexed(int count, const int *pBlockLength, 
     return OPAL_SUCCESS;
 }
 
+#if 0
+// This is not currently used.
 static int32_t opal_datatype_create_hindexed(int count, const int *pBlockLength,
                                              const ptrdiff_t *pDisp, const opal_datatype_t *oldType,
                                              opal_datatype_t **newType)
@@ -359,6 +367,7 @@ static int32_t opal_datatype_create_hindexed(int count, const int *pBlockLength,
     *newType = pdt;
     return OPAL_SUCCESS;
 }
+#endif
 
 static int32_t opal_datatype_create_struct(int count, const int *pBlockLength,
                                            const ptrdiff_t *pDisp, opal_datatype_t **pTypes,
@@ -462,6 +471,8 @@ static int32_t opal_datatype_create_vector(int count, int bLength, int stride,
     return OPAL_SUCCESS;
 }
 
+#if 0
+// This is not currently used.
 static int32_t opal_datatype_create_hvector(int count, int bLength, ptrdiff_t stride,
                                             const opal_datatype_t *oldType,
                                             opal_datatype_t **newType)
@@ -493,6 +504,7 @@ static int32_t opal_datatype_create_hvector(int count, int bLength, ptrdiff_t st
     *newType = pData;
     return OPAL_SUCCESS;
 }
+#endif
 
 /*****************************************************************************/
 int init_random_upper_matrix(unsigned int N, double *mat)

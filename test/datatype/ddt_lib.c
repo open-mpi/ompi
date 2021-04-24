@@ -345,7 +345,7 @@ struct structure {
 ompi_datatype_t *create_struct_constant_gap_resized_ddt(ompi_datatype_t *type)
 {
     struct structure data[1];
-    ompi_datatype_t *struct_type, *temp_type;
+    ompi_datatype_t *struct_type = NULL, *temp_type = NULL;
     ompi_datatype_t *types[2] = {type, type};
     int blocklens[2] = {1, 1};
     MPI_Aint disps[3];
@@ -390,7 +390,7 @@ ompi_datatype_t *create_strange_dt(void)
     ompi_datatype_t *types[3] = {&ompi_mpi_int.dt};
     sstrange t[2];
     int pBlock[3] = {1, 10, 1}, dispi[3];
-    ompi_datatype_t *pdt, *pdt1, *pdt2, *pdtTemp;
+    ompi_datatype_t *pdt = NULL, *pdt1 = NULL, *pdt2 = NULL, *pdtTemp = NULL;
 
     dispi[0] = (int) ((char *) &(v[0].i1) - (char *) &(v[0]));                   /* 0 */
     dispi[1] = (int) (((char *) (&(v[0].i2)) - (char *) &(v[0])) / sizeof(int)); /* 2 */
