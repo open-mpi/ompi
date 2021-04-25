@@ -102,7 +102,7 @@ reduce_local_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
-partial_local_SOURCES = partial.c
+partial_SOURCES = partial.c
 partial_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 partial_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
