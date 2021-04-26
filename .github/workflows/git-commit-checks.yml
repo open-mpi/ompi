@@ -14,7 +14,13 @@ jobs:
         name: Git commit checker
         runs-on: ubuntu-latest
         steps:
-          - name: Check out the code
+          - name: Debug base repo
+            env:
+              JSM: ${{ toJSON(github) }}
+            run: |
+              echo github context: "$JSM"
+
+          - name: Check out pull request code
             uses: actions/checkout@v2
             with:
                 # Get all branches and history
