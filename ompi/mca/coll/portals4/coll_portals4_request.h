@@ -179,7 +179,6 @@ OBJ_CLASS_DECLARATION(ompi_coll_portals4_request_t);
                 req = (ompi_coll_portals4_request_t*) item;               \
                 OMPI_REQUEST_INIT(&req->super, false);                    \
                 req->super.req_mpi_object.comm = comm;                    \
-                req->super.req_complete = false;                          \
                 req->super.req_state = OMPI_REQUEST_ACTIVE;               \
     } while (0)
 

@@ -76,7 +76,7 @@ static ompi_coll_portals4_tree_t*
 ompi_coll_portals4_build_in_order_bmtree( struct ompi_communicator_t* comm,
                                             int root )
 {
-    int childs = 0, rank, vrank, vparent, size, mask = 1, remote, i;
+    int childs = 0, rank, vrank, vparent, size, mask = 1, remote;
     ompi_coll_portals4_tree_t *bmtree;
 
     /*
@@ -97,7 +97,7 @@ ompi_coll_portals4_build_in_order_bmtree( struct ompi_communicator_t* comm,
     bmtree->tree_bmtree   = 1;
     bmtree->tree_root     = MPI_UNDEFINED;
     bmtree->tree_nextsize = MPI_UNDEFINED;
-    for(i=0;i<MAXTREEFANOUT;i++) {
+    for(int i = 0; i < MAXTREEFANOUT; i++) {
         bmtree->tree_next[i] = -1;
     }
 
@@ -520,8 +520,6 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
 
     int vrank=-1;
 
-    int32_t i=0;
-
     ompi_coll_portals4_tree_t* bmtree;
 
     int32_t expected_ops =0;
@@ -606,7 +604,7 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
                          "%s:%d: packed_size=%lu, fragment_size=%lu",
                          __FILE__, __LINE__, request->u.gather.packed_size, mca_coll_portals4_component.ni_limits.max_msg_size));
 
-    for (int i =0; i < bmtree->tree_nextsize; i++) {
+    for (int i = 0; i < bmtree->tree_nextsize; i++) {
         int child_vrank = VRANK(bmtree->tree_next[i], request->u.gather.root_rank, request->u.gather.size);
         int sub_tree_size = get_tree_numdescendants_of(comm, child_vrank) + 1;
         ptl_size_t local_number_of_fragment = ((sub_tree_size * request->u.gather.packed_size) + mca_coll_portals4_component.ni_limits.max_msg_size -1) / mca_coll_portals4_component.ni_limits.max_msg_size;
@@ -688,7 +686,7 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
     /************************************/
     /* put Recv-ACK to each child       */
     /************************************/
-    for (i=0;i<bmtree->tree_nextsize;i++) {
+    for (int i = 0; i < bmtree->tree_nextsize; i++) {
         int32_t child=bmtree->tree_next[i];
         ret = PtlTriggeredPut(request->u.gather.sync_mdh,
                               0,
@@ -730,7 +728,7 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
     /**********************************/
     /* put RTR to each child          */
     /**********************************/
-    for (i=0;i<bmtree->tree_nextsize;i++) {
+    for (int i = 0; i < bmtree->tree_nextsize; i++) {
         int32_t child=bmtree->tree_next[i];
         ret = PtlTriggeredPut(request->u.gather.sync_mdh,
                               0,
@@ -750,7 +748,7 @@ ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struc
     /**********************************/
     /* put RTR to each child          */
     /**********************************/
-    for (i=0;i<bmtree->tree_nextsize;i++) {
+    for (int i = 0; i < bmtree->tree_nextsize; i++) {
         int32_t child=bmtree->tree_next[i];
         ret = PtlPut(request->u.gather.sync_mdh,
                      0,
@@ -817,8 +815,6 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
     ptl_ct_event_t sync_incr_event;
 
     int8_t i_am_root;
-
-    int32_t i=0;
 
     int32_t expected_ops =0;
     int32_t expected_acks=0;
@@ -975,7 +971,7 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
     /* root puts Recv-ACK to all other ranks */
     /*****************************************/
     if (i_am_root) {
-        for (i=0;i<request->u.gather.size;i++) {
+        for (int i = 0; i < request->u.gather.size; i++) {
             if (i == request->u.gather.root_rank) { continue; }
             ret = PtlTriggeredPut(request->u.gather.sync_mdh,
                                   0,
@@ -1019,7 +1015,7 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
     /* root puts RTR to all other ranks */
     /************************************/
     if (i_am_root) {
-        for (i=0;i<request->u.gather.size;i++) {
+        for (int i = 0; i < request->u.gather.size; i++) {
             if (i == request->u.gather.root_rank) { continue; }
             ret = PtlTriggeredPut(request->u.gather.sync_mdh,
                                   0,
@@ -1041,7 +1037,7 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
     /* root puts RTR to all other ranks */
     /************************************/
     if (i_am_root) {
-        for (i=0;i<request->u.gather.size;i++) {
+        for (int i = 0; i < request->u.gather.size; i++) {
             if (i == request->u.gather.root_rank) { continue; }
             ret = PtlPut(request->u.gather.sync_mdh,
                          0,
@@ -1093,7 +1089,6 @@ ompi_coll_portals4_gather_intra_binomial_bottom(struct ompi_communicator_t *comm
                                                 ompi_coll_portals4_request_t *request)
 {
     int ret, line;
-    int i;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_binomial_bottom enter rank %d", request->u.gather.my_rank));
@@ -1109,7 +1104,7 @@ ompi_coll_portals4_gather_intra_binomial_bottom(struct ompi_communicator_t *comm
         struct iovec iov;
         size_t max_data;
 
-        for (i=0;i<request->u.gather.size;i++) {
+        for (int i = 0; i < request->u.gather.size; i++) {
             uint64_t offset = request->u.gather.unpack_dst_extent * request->u.gather.unpack_dst_count * ((request->u.gather.my_rank + i) % request->u.gather.size);
 
             opal_output_verbose(30, ompi_coll_base_framework.framework_output,
@@ -1161,7 +1156,6 @@ ompi_coll_portals4_gather_intra_linear_bottom(struct ompi_communicator_t *comm,
                                               ompi_coll_portals4_request_t *request)
 {
     int ret, line;
-    int i;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_linear_bottom enter rank %d", request->u.gather.my_rank));
@@ -1177,7 +1171,7 @@ ompi_coll_portals4_gather_intra_linear_bottom(struct ompi_communicator_t *comm,
         struct iovec iov;
         size_t max_data;
 
-        for (i=0;i<request->u.gather.size;i++) {
+        for (int i = 0; i < request->u.gather.size; i++) {
             ompi_coll_portals4_create_recv_converter (&request->u.gather.recv_converter,
                                                       request->u.gather.unpack_dst_buf + (request->u.gather.unpack_dst_extent*request->u.gather.unpack_dst_count*i),
                                                       ompi_comm_peer_lookup(comm, request->u.gather.my_rank),

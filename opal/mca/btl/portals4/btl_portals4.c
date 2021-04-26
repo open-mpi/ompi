@@ -175,14 +175,14 @@ static int btl_portals4_init_interface(void)
         }
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                              "PtlMEAppend (overflow list) OK for NI %d", interface));
-    }
 
-    ret = mca_btl_portals4_recv_enable(portals4_btl);
-    if (PTL_OK != ret) {
-        opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                            "%s:%d: Initialization of recv buffer failed: %d", __FILE__, __LINE__,
-                            ret);
-        goto error;
+        ret = mca_btl_portals4_recv_enable(portals4_btl);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: Initialization of recv buffer failed: %d", __FILE__, __LINE__,
+                                ret);
+            goto error;
+        }
     }
 
     return OPAL_SUCCESS;
@@ -522,8 +522,7 @@ mca_btl_base_descriptor_t *mca_btl_portals4_prepare_src(struct mca_btl_base_modu
                                                         uint8_t order, size_t reserve, size_t *size,
                                                         uint32_t flags)
 {
-    struct mca_btl_portals4_module_t *portals4_btl = (struct mca_btl_portals4_module_t *) btl_base;
-    mca_btl_portals4_frag_t *frag;
+    mca_btl_portals4_frag_t *frag = NULL;
     size_t max_data = *size;
     struct iovec iov;
     uint32_t iov_count = 1;
@@ -531,7 +530,8 @@ mca_btl_base_descriptor_t *mca_btl_portals4_prepare_src(struct mca_btl_base_modu
 
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                          "mca_btl_portals4_prepare_src NI=%d reserve=%ld size=%ld max_data=%ld\n",
-                         portals4_btl->interface_num, reserve, *size, max_data));
+                         ((struct mca_btl_portals4_module_t *) btl_base)->interface_num,
+                         reserve, *size, max_data));
 
     if (0 != reserve || 0 != opal_convertor_need_buffers(convertor)) {
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
@@ -629,11 +629,11 @@ int mca_btl_portals4_deregister_mem(mca_btl_base_module_t *btl_base,
                                     mca_btl_base_registration_handle_t *handle)
 {
     int ret;
-    struct mca_btl_portals4_module_t *portals4_btl = (struct mca_btl_portals4_module_t *) btl_base;
 
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                          "mca_btl_portals4_deregister_mem NI=%d handle=%p key=%ld me_h=%d\n",
-                         portals4_btl->interface_num, (void *) handle, handle->key, handle->me_h));
+                         ((struct mca_btl_portals4_module_t *) btl_base)->interface_num,
+                         (void *) handle, handle->key, handle->me_h));
 
     if (!PtlHandleIsEqual(handle->me_h, PTL_INVALID_HANDLE)) {
         ret = PtlMEUnlink(handle->me_h);

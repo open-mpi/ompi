@@ -40,7 +40,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
                            ompi_mtl_portals4_base_request_t* ptl_base_request,
                            bool *complete)
 {
-    int retval = OMPI_SUCCESS, ret, val, add = 1;
+    int retval = OMPI_SUCCESS, ret = 0, val = 0, add = 1;
     ompi_mtl_portals4_isend_request_t* ptl_request =
         (ompi_mtl_portals4_isend_request_t*) ptl_base_request;
 
@@ -161,7 +161,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         ptl_request->me_h = PTL_INVALID_HANDLE;
         add++;
     }
-    val = OPAL_THREAD_ADD_FETCH32((int32_t*)&ptl_request->event_count, add);
+    val = OPAL_THREAD_ADD_FETCH32(&ptl_request->event_count, add);
     assert(val <= 3);
 
     if (val == 3) {
@@ -492,7 +492,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
     if (OMPI_SUCCESS != ret) return ret;
 
-    ptl_request->opcount = OPAL_THREAD_ADD_FETCH64((int64_t*)&ompi_mtl_portals4.opcount, 1);
+    ptl_request->opcount = OPAL_THREAD_ADD_FETCH64((opal_atomic_int64_t*)&ompi_mtl_portals4.opcount, 1);
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
     ptl_request->length = length;
     ptl_request->event_count = 0;
