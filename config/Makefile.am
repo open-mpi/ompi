@@ -33,7 +33,8 @@ EXTRA_DIST = \
         make_manpage.pl \
         md2nroff.pl \
         from-savannah/upstream-config.guess \
-        from-savannah/upstream-config.sub
+        from-savannah/upstream-config.sub \
+        extract-3rd-party-configure.pl
 
 maintainer-clean-local:
 	rm -f opal_get_version.sh
