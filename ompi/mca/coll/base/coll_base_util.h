@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,7 @@
 
 #include "mpi.h"
 #include "ompi/mca/mca.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
@@ -96,6 +98,14 @@ struct mca_coll_base_avail_coll_t {
 };
 typedef struct mca_coll_base_avail_coll_t mca_coll_base_avail_coll_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_avail_coll_t);
+
+/* hostname item used to get the number of nodes of a communicator */
+struct ompi_coll_base_hostname_item_t {
+    opal_list_item_t super;
+    char* hostname;
+};
+typedef struct ompi_coll_base_hostname_item_t ompi_coll_base_hostname_item_t ;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_coll_base_hostname_item_t);
 
 /**
  * A MPI_like function doing a send and a receive simultaneously.
@@ -189,6 +199,10 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
 /* Miscelaneous function */
 const char* mca_coll_base_colltype_to_str(int collid);
 int mca_coll_base_name_to_colltype(const char* name);
+int ompi_coll_base_get_nnodes(struct ompi_communicator_t *comm);
+
+#define COMM_MSG_FORMAT       0
+#define NODES_COMM_MSG_FORMAT 1
 
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */

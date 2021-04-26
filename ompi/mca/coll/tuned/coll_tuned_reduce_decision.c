@@ -31,6 +31,7 @@ static int coll_tuned_reduce_segment_size = 0;
 static int coll_tuned_reduce_max_requests;
 static int coll_tuned_reduce_tree_fanout;
 static int coll_tuned_reduce_chain_fanout;
+static bool coll_tuned_reduce_allow_non_commutative_support = true;
 
 /* valid values for coll_tuned_reduce_forced_algorithm */
 static const mca_base_var_enum_value_t reduce_algorithms[] = {
@@ -140,6 +141,19 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
         }
         coll_tuned_reduce_max_requests = 0;
     }
+    /* Add a MCA parameter to enable/disable discarding of algorithm in case of non commutative operations.
+     * When algorithm configuration file (including reduce definition) or reduce_algorithm MCA parameter are used
+     * loaded algorithms may not support non commutative operations. Consequently, an issue happens when
+     * the operation argument of the MPI_Reduce call is non commutative. To avoid this strong limitation, we provide
+     * a discarding mechanism on top of algorithm selection to force the use of a fallback algorithm. This mechanism
+     * can be enable/disable using the following MCA parameter. */
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "reduce_allow_non_commutative_support",
+                                           "Switch to allow non commutative operations in reduce algorithms designed for only commutative operations. Be carefull, enabling this parameter may lead to erroneous numerical results.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &coll_tuned_reduce_allow_non_commutative_support);
 
     return (MPI_SUCCESS);
 }
@@ -154,6 +168,25 @@ int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void* rbuf, int count
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this selected algorithm %d topo faninout %d segsize %d",
                  algorithm, faninout, segsize));
+
+    if(!coll_tuned_reduce_allow_non_commutative_support) {
+        /* fallback algorithm mechanism */
+        /* If the operation is non commutative and algorithm is neither basic linear nor ignore */
+        if(!ompi_op_is_commute(op) && 1 != algorithm && 0 != algorithm) {
+            /* If algorithm is in-order binary with segmentation */
+            if(6 == algorithm) {
+                if (0 != segsize) {
+                    opal_output_verbose(5,ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this in_order_binary: segmentation can't be enabled when op is not commutative");
+                    /* disabling segmentation is enough */
+                    segsize = 0;
+                }
+            } else {
+                /* Otherwise we have to restrict selection to linear or in-order_binary */
+                opal_output_verbose(5,ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this algorithm id %d can't be chosen when op is not commutative", algorithm);
+                return ompi_coll_tuned_reduce_intra_dec_fixed(sbuf, rbuf, count, dtype, op, root, comm, module);
+            }
+        }
+    }
 
     switch (algorithm) {
     case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed(sbuf, rbuf, count, dtype,

@@ -11,6 +11,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,8 @@
 
 #include "nbc_internal.h"
 
+#define IREDUCE_DEFAULT_SEGSIZE 8192
+
 static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, char tmpredbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, char inplace, NBC_Schedule *schedule, void *tmpbuf);
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -37,6 +40,47 @@ static inline int red_sched_redscat_gather(
     int rank, int comm_size, int root, const void *sbuf, void *rbuf,
     char tmpredbuf, int count, MPI_Datatype datatype, MPI_Op op, char inplace,
     NBC_Schedule *schedule, void *tmp_buf, struct ompi_communicator_t *comm);
+
+typedef enum { NBC_RED_BINOMIAL, NBC_RED_CHAIN, NBC_RED_REDSCAT_GATHER} reduce_algorithm_t;
+
+static mca_base_var_enum_value_t ireduce_algorithms[] = {
+    {0, "ignore"},
+    {1, "chain"},
+    {2, "binomial"},
+    {3, "rabenseifner"},
+    {0, NULL}
+};
+
+/* The following are used by dynamic and forced rules */
+
+/* this routine is called by the component only */
+/* module does not call this it calls the forced_getvalues routine instead */
+
+int ompi_coll_libnbc_reduce_check_forced_init (void)
+{
+  mca_base_var_enum_t *new_enum;
+
+  mca_coll_libnbc_component.forced_params[REDUCE].algorithm = 0;
+  (void) mca_base_var_enum_create("coll_libnbc_ireduce_algorithms", ireduce_algorithms, &new_enum);
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "ireduce_algorithm",
+                                         "Which ireduce algorithm is used: 0 ignore, 1 chain, 2 binomial, 3 rabenseifner",
+                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                         OPAL_INFO_LVL_5,
+                                         MCA_BASE_VAR_SCOPE_ALL,
+                                         &mca_coll_libnbc_component.forced_params[REDUCE].algorithm);
+
+  mca_coll_libnbc_component.forced_params[REDUCE].segsize = IREDUCE_DEFAULT_SEGSIZE;
+  mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                  "ireduce_algorithm_segmentsize",
+                                  "Segment size in bytes used by default for ireduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_5,
+                                  MCA_BASE_VAR_SCOPE_ALL,
+                                  &mca_coll_libnbc_component.forced_params[REDUCE].segsize);
+  OBJ_RELEASE(new_enum);
+  return OMPI_SUCCESS;
+}
 
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
@@ -57,6 +101,18 @@ int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param)
   return 1;
 }
 #endif
+
+static reduce_algorithm_t nbc_reduce_default_algorithm(int p, size_t size, int count,
+                                                       MPI_Op op, int nprocs_pof2)
+{
+  if (ompi_op_is_commute(op) && p > 2 && count >= nprocs_pof2) {
+    return NBC_RED_REDSCAT_GATHER;
+  } else if (p > 4 || size * count < 65536 || !ompi_op_is_commute(op)) {
+    return NBC_RED_BINOMIAL;
+  } else {
+    return NBC_RED_CHAIN;
+  }
+}
 
 /* the non-blocking reduce */
 static int nbc_reduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
@@ -102,27 +158,30 @@ static int nbc_reduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Da
   }
 
   span = opal_datatype_span(&datatype->super, count, &gap);
+  int nprocs_pof2 = opal_next_poweroftwo(p) >> 1;
 
   /* algorithm selection */
-  int nprocs_pof2 = opal_next_poweroftwo(p) >> 1;
-  if (libnbc_ireduce_algorithm == 0) {
-    if (ompi_op_is_commute(op) && p > 2 && count >= nprocs_pof2) {
-      alg = NBC_RED_REDSCAT_GATHER;
-    } else if (p > 4 || size * count < 65536 || !ompi_op_is_commute(op)) {
-      alg = NBC_RED_BINOMIAL;
+  if (libnbc_module->com_rules[REDUCE]) {
+    int algorithm,dummy1,dummy2;
+    algorithm = ompi_coll_base_get_target_method_params (libnbc_module->com_rules[REDUCE],
+                                                         size * count, &dummy1, &segsize, &dummy2);
+    if (algorithm) {
+      alg = algorithm - 1;/* -1 is to shift from algorithm ID to enum */
     } else {
-      alg = NBC_RED_CHAIN;
+      alg = nbc_reduce_default_algorithm(p, size, count, op, nprocs_pof2);
     }
+  } else if (0 != mca_coll_libnbc_component.forced_params[REDUCE].algorithm) {
+    alg = mca_coll_libnbc_component.forced_params[REDUCE].algorithm - 1; /* -1 is to shift from algorithm ID to enum */
+    segsize = mca_coll_libnbc_component.forced_params[REDUCE].segsize;
   } else {
-    if (libnbc_ireduce_algorithm == 1) {
-      alg = NBC_RED_CHAIN;
-    } else if (libnbc_ireduce_algorithm == 2) {
-      alg = NBC_RED_BINOMIAL;
-    } else if (libnbc_ireduce_algorithm == 3 && ompi_op_is_commute(op) && p > 2 && count >= nprocs_pof2) {
-      alg = NBC_RED_REDSCAT_GATHER;
-    } else {
-      alg = NBC_RED_CHAIN;
-    }
+    /* default */
+    alg = nbc_reduce_default_algorithm(p, size, count, op, nprocs_pof2);
+    segsize = IREDUCE_DEFAULT_SEGSIZE;
+  }
+
+  if (NBC_RED_REDSCAT_GATHER == alg && (!ompi_op_is_commute(op) || p <= 2 || count < nprocs_pof2)) {
+    alg = NBC_RED_CHAIN;
+    segsize = IREDUCE_DEFAULT_SEGSIZE;
   }
 
   /* allocate temporary buffers */
@@ -140,9 +199,14 @@ static int nbc_reduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Da
     }
   } else {
     tmpbuf = malloc (span);
-    segsize = 16384/2;
   }
 
+  opal_output_verbose(10, mca_coll_libnbc_component.stream,
+                      "Libnbc ireduce : algorithm %d segmentsize %d",
+                      alg + 1, segsize);
+  if(0 == segsize) {
+    segsize = count * size; /* only one frag */
+  }
   if (OPAL_UNLIKELY(NULL == tmpbuf)) {
     return OMPI_ERR_OUT_OF_RESOURCE;
   }

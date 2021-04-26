@@ -12,6 +12,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,34 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
                                  int recvcount, MPI_Datatype recvtype, MPI_Comm comm, void* tmpbuf);
 static inline int a2a_sched_inplace(int rank, int p, NBC_Schedule* schedule, void* buf, int count,
                                    MPI_Datatype type, MPI_Aint ext, ptrdiff_t gap, MPI_Comm comm);
+
+static mca_base_var_enum_value_t ialltoall_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "pairwise"},
+    {3, "binomial"},
+    {0, NULL}
+};
+
+/* The following are used by dynamic and forced rules */
+/* this routine is called by the component only */
+
+int ompi_coll_libnbc_alltoall_check_forced_init (void)
+{
+  mca_base_var_enum_t *new_enum;
+
+  mca_coll_libnbc_component.forced_params[ALLTOALL].algorithm = 0;
+  (void) mca_base_var_enum_create("coll_libnbc_ialltoall_algorithms", ialltoall_algorithms, &new_enum);
+  (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                         "ialltoall_algorithm",
+                                         "Which ialltoall algorithm is used unless MPI_IN_PLACE flag has been specified: 0 ignore, 1 linear, 2 pairwise, 3 binomial",
+                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                         OPAL_INFO_LVL_5,
+                                         MCA_BASE_VAR_SCOPE_ALL,
+                                         &mca_coll_libnbc_component.forced_params[ALLTOALL].algorithm);
+  OBJ_RELEASE(new_enum);
+  return OMPI_SUCCESS;
+}
 
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
@@ -60,7 +89,7 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
 {
   int rank, p, res;
   MPI_Aint datasize;
-  size_t a2asize, sndsize;
+  size_t sndsize;
   NBC_Schedule *schedule;
   MPI_Aint rcvext, sndext;
 #ifdef NBC_CACHE_SCHEDULE
@@ -95,22 +124,26 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
     return res;
   }
 
-  /* algorithm selection */
-  a2asize = sndsize * sendcount * p;
-  /* this number is optimized for TCP on odin.cs.indiana.edu */
-  if (inplace) {
+  if(inplace) {
     alg = NBC_A2A_INPLACE;
-  } else if((p <= 8) && ((a2asize < 1<<17) || (sndsize*sendcount < 1<<12))) {
-    /* just send as fast as we can if we have less than 8 peers, if the
-     * total communicated size is smaller than 1<<17 *and* if we don't
-     * have eager messages (msgsize < 1<<13) */
-    alg = NBC_A2A_LINEAR;
-  } else if(a2asize < (1<<12)*(unsigned int)p) {
-    /*alg = NBC_A2A_DISS;*/
-    alg = NBC_A2A_LINEAR;
-  } else
-    alg = NBC_A2A_LINEAR; /*NBC_A2A_PAIRWISE;*/
+  } else if(libnbc_module->com_rules[ALLTOALL]) {
+    int algorithm,dummy1,dummy2,dummy3;
+    algorithm = ompi_coll_base_get_target_method_params (libnbc_module->com_rules[ALLTOALL],
+                                                         sndsize * sendcount, &dummy1, &dummy2, &dummy3);
+    if(algorithm) {
+      alg = algorithm - 1;
+    } else {
+      alg = NBC_A2A_LINEAR; /* default if not inplace */
+    }
+  } else if(0 != mca_coll_libnbc_component.forced_params[ALLTOALL].algorithm) {
+    alg = mca_coll_libnbc_component.forced_params[ALLTOALL].algorithm - 1; /* -1 is to shift from algorithm ID to enum */
+  } else {
+    alg = NBC_A2A_LINEAR; /* default if not inplace */
+  }
 
+  opal_output_verbose(10, mca_coll_libnbc_component.stream,
+                      "Libnbc ialltoall : algorithm %d (no segmentation supported)",
+                      alg + 1);
   /* allocate temp buffer if we need one */
   if (alg == NBC_A2A_INPLACE) {
     span = opal_datatype_span(&recvtype->super, recvcount, &gap);
@@ -197,7 +230,7 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
       free(tmpbuf);
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
+    // cppcheck-suppress knownConditionTrueFalse
     if (!inplace) {
       /* copy my data to receive buffer */
       rbuf = (char *) recvbuf + (MPI_Aint)rank * (MPI_Aint)recvcount * rcvext;

@@ -17,6 +17,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,12 +33,13 @@
 
 #include "ompi_config.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "coll_tuned.h"
 
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
 #include "coll_tuned.h"
-#include "coll_tuned_dynamic_file.h"
+#include "ompi/mca/coll/base/coll_base_dynamic_file.h"
 
 /*
  * Public string showing the coll ompi_tuned component version number
@@ -49,9 +51,11 @@ const char *ompi_coll_tuned_component_version_string =
  * Global variable
  */
 int   ompi_coll_tuned_stream = -1;
+int   ompi_coll_tuned_verbose = 0;
 int   ompi_coll_tuned_priority = 30;
 bool  ompi_coll_tuned_use_dynamic_rules = false;
 char* ompi_coll_tuned_dynamic_rules_filename = (char*) NULL;
+int   ompi_coll_tuned_dynamic_rules_fileformat = 0;
 int   ompi_coll_tuned_init_tree_fanout = 4;
 int   ompi_coll_tuned_init_chain_fanout = 4;
 int   ompi_coll_tuned_init_max_requests = 128;
@@ -191,6 +195,23 @@ static int tuned_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_dynamic_rules_filename);
 
+    ompi_coll_tuned_dynamic_rules_fileformat = 0;
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "dynamic_rules_fileformat",
+                                           "Format of configuration file that contains the dynamic (@runtime) decision function rules. Accepted values are: 0 <comm_size, msg_size>, 1 <nodes_nb, comm_size, msg_size>",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_dynamic_rules_fileformat);
+    ompi_coll_tuned_verbose = 0;
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version, "verbose",
+                                           "Verbose level of the tuned coll component."
+                                           " Examples: 0: no verbose, 1: errors, 10: basic, 50: dynamic rules, 100: maximum verbosity level.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_verbose);
+
     /* register forced params */
     ompi_coll_tuned_allreduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLREDUCE]);
     ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALL]);
@@ -212,13 +233,10 @@ static int tuned_register(void)
 
 static int tuned_open(void)
 {
-    int rc;
-
-#if OPAL_ENABLE_DEBUG
-    if (ompi_coll_base_framework.framework_verbose) {
+    if (ompi_coll_tuned_verbose > 0) {
         ompi_coll_tuned_stream = opal_output_open(NULL);
+        opal_output_set_verbosity(ompi_coll_tuned_stream, ompi_coll_tuned_verbose);
     }
-#endif  /* OPAL_ENABLE_DEBUG */
 
     /* now check that the user hasn't overrode any of the decision functions if dynamic rules are enabled */
     /* the user can redo this before every comm dup/create if they like */
@@ -231,20 +249,32 @@ static int tuned_open(void)
     /* by default DISABLE dynamic rules and instead use fixed [if based] rules */
     if (ompi_coll_tuned_use_dynamic_rules) {
         if( ompi_coll_tuned_dynamic_rules_filename ) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:component_open Reading collective rules file [%s]",
-                         ompi_coll_tuned_dynamic_rules_filename));
-            rc = ompi_coll_tuned_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
-                                                         &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
+            int rc;
+            opal_output_verbose(10, ompi_coll_tuned_stream,
+                "coll:tuned:component_open Reading collective rules file [%s] which format is %d",
+                         ompi_coll_tuned_dynamic_rules_filename,
+                         ompi_coll_tuned_dynamic_rules_fileformat);
+            rc = ompi_coll_base_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
+                                                        ompi_coll_tuned_dynamic_rules_fileformat,
+                                                        &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
             if( rc >= 0 ) {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc));
+                opal_output_verbose(10, ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc);
+                if(ompi_coll_base_framework.framework_verbose >= 50) {
+                    ompi_coll_base_dump_all_rules (mca_coll_tuned_component.all_base_rules, COLLCOUNT);
+                }
             } else {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Reading collective rules file failed\n"));
+                opal_output_verbose(1, ompi_coll_tuned_stream,"coll:tuned:module_open Reading collective rules file failed\n");
+                char error_name[12];
+                sprintf(error_name,"file fail%1d", rc);
+                error_name[11] = '\0';
+                opal_show_help("help-mpi-coll-tuned.txt", (const char*)error_name, true,
+                               ompi_coll_tuned_dynamic_rules_filename, ompi_coll_tuned_dynamic_rules_fileformat);
                 mca_coll_tuned_component.all_base_rules = NULL;
             }
         }
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_open: done!"));
+    opal_output_verbose(10, ompi_coll_tuned_stream, "coll:tuned:component_open: done!");
 
     return OMPI_SUCCESS;
 }
@@ -253,16 +283,16 @@ static int tuned_open(void)
 /* i.e. alg table and dynamic changable rules if allocated etc */
 static int tuned_close(void)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: called"));
-
     /* dealloc alg table if allocated */
     /* dealloc dynamic changable rules if allocated */
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: done!"));
-
     if( NULL != mca_coll_tuned_component.all_base_rules ) {
-        ompi_coll_tuned_free_all_rules(mca_coll_tuned_component.all_base_rules, COLLCOUNT);
+        ompi_coll_base_free_all_rules(mca_coll_tuned_component.all_base_rules, COLLCOUNT);
         mca_coll_tuned_component.all_base_rules = NULL;
+    }
+    opal_output_verbose(10, ompi_coll_tuned_stream, "coll:tuned:component_close: done!");
+    /* close stream */
+    if(ompi_coll_tuned_stream >= 0) {
+        opal_output_close(ompi_coll_tuned_stream);
     }
 
     return OMPI_SUCCESS;

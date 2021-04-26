@@ -13,6 +13,7 @@
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2020      Bull SAS. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,8 +32,9 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_base_topo.h"
 #include "coll_tuned.h"
-#include "coll_tuned_dynamic_rules.h"
-#include "coll_tuned_dynamic_file.h"
+#include "ompi/mca/coll/base/coll_base_dynamic_rules.h"
+#include "ompi/mca/coll/base/coll_base_dynamic_file.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 static int tuned_module_enable(mca_coll_base_module_t *module,
                    struct ompi_communicator_t *comm);
@@ -159,8 +161,8 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
         }                                                               \
         if( NULL != mca_coll_tuned_component.all_base_rules ) {         \
             (TMOD)->com_rules[(TYPE)]                                   \
-                = ompi_coll_tuned_get_com_rule_ptr( mca_coll_tuned_component.all_base_rules, \
-                                                    (TYPE), size );     \
+                = ompi_coll_base_get_com_rule_ptr( mca_coll_tuned_component.all_base_rules, \
+                                                   (TYPE), nnodes, size );                 \
             if( NULL != (TMOD)->com_rules[(TYPE)] ) {                   \
                 need_dynamic_decision = 1;                              \
             }                                                           \
@@ -178,7 +180,9 @@ static int
 tuned_module_enable( mca_coll_base_module_t *module,
                      struct ompi_communicator_t *comm )
 {
-    int size;
+    /* Variables used in COLL_TUNED_EXECUTE_IF_DYNAMIC macro */
+    int size, nnodes;
+
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t *) module;
     mca_coll_base_comm_t *data = NULL;
 
@@ -191,6 +195,9 @@ tuned_module_enable( mca_coll_base_module_t *module,
         size = ompi_comm_size(comm);
     }
 
+    /* Get the number of nodes in communicator */
+    nnodes = ompi_coll_base_get_nnodes(comm);
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init nnodes %d.", nnodes));
     /**
      * we still malloc data as it is used by the TUNED modules
      * if we don't allocate it and fall back to a BASIC module routine then confuses debuggers
