@@ -205,7 +205,7 @@ process:
             }
 
             req = (ompi_osc_portals4_request_t*) ev.user_ptr;
-            opal_atomic_add_fetch_size_t(&req->super.req_status._ucount, ev.mlength);
+            req->super.req_status._ucount = opal_atomic_add_fetch_32(&req->bytes_committed, ev.mlength);
             ops = opal_atomic_add_fetch_32(&req->ops_committed, 1);
             if (ops == req->ops_expected) {
                 ompi_request_complete(&req->super, true);
