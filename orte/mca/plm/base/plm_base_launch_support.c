@@ -17,6 +17,7 @@
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -862,7 +863,10 @@ void orte_plm_base_daemon_topology(int status, orte_process_name_t* sender,
             opal_dss.load(&datbuf, cmpdata, cmplen);
             data = &datbuf;
         } else {
-            data = buffer;
+            orte_show_help("help-orte-runtime.txt", "failed-to-uncompress",
+                           true, orte_process_info.nodename);
+            orted_failed_launch = true;
+            goto CLEANUP;
         }
         free(packed_data);
     } else {
@@ -1191,7 +1195,10 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     opal_dss.load(&datbuf, cmpdata, cmplen);
                     data = &datbuf;
                 } else {
-                    data = buffer;
+                    orte_show_help("help-orte-runtime.txt", "failed-to-uncompress",
+                                   true, orte_process_info.nodename);
+                    orted_failed_launch = true;
+                    goto CLEANUP;
                 }
                 free(packed_data);
             } else {
