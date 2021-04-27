@@ -106,18 +106,19 @@ ltoptions.m4
 3rd-party/hwloc-*
 !3rd-party/hwloc-*.tar.*
 3rd-party/treematch/config.h
-3rd-party/romio321/adio/include/romioconf.h
-3rd-party/romio321/adio/include/romioconf.h.in
-3rd-party/romio321/include/mpio.h
-3rd-party/romio321/localdefs
-3rd-party/romio321/test/fcoll_test.f
-3rd-party/romio321/test/fmisc.f
-3rd-party/romio321/test/fperf.f
-3rd-party/romio321/test/large_file.c
-3rd-party/romio321/test/misc.c
-3rd-party/romio321/test/pfcoll_test.f
-3rd-party/romio321/test/runtests
-3rd-party/romio321/util/romioinstall
+
+3rd-party/romio341/adio/include/romioconf.h
+3rd-party/romio341/adio/include/romioconf.h.in
+3rd-party/romio341/include/mpio.h
+3rd-party/romio341/localdefs
+3rd-party/romio341/mpl/confdb/test-driver
+3rd-party/romio341/mpl/include/config.h
+3rd-party/romio341/mpl/include/config.h.in
+3rd-party/romio341/mpl/include/mplconfig.h
+3rd-party/romio341/mpl/include/mpl_timer.h
+3rd-party/romio341/mpl/localdefs
+3rd-party/romio341/test/runtests
+3rd-party/romio341/util/romioinstall
 
 config/project_list.m4
 config/autogen_found_items.m4
@@ -200,19 +201,6 @@ ompi/mca/coll/demo/coll-demo-version.h*
 ompi/mca/coll/ml/coll_ml_lex.c
 ompi/mca/coll/self/coll-self-version.h*
 ompi/mca/coll/sm/coll-sm-version.h*
-
-ompi/mca/io/romio321/romio/adio/include/romioconf.h
-ompi/mca/io/romio321/romio/include/mpio.h
-ompi/mca/io/romio321/romio/localdefs
-ompi/mca/io/romio321/romio/test/fcoll_test.f
-ompi/mca/io/romio321/romio/test/fmisc.f
-ompi/mca/io/romio321/romio/test/fperf.f
-ompi/mca/io/romio321/romio/test/large_file.c
-ompi/mca/io/romio321/romio/test/misc.c
-ompi/mca/io/romio321/romio/test/pfcoll_test.f
-ompi/mca/io/romio321/romio/test/runtests
-ompi/mca/io/romio321/romio/util/romioinstall
-ompi/mca/io/romio321/romio/test/syshints.c
 
 ompi/mca/osc/monitoring/osc_monitoring_template_gen.h
 

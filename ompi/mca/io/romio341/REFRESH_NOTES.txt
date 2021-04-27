@@ -1,0 +1,36 @@
+1. update .gitignore
+
+2. import new romio
+cp -a <mpich dir>/src/mpi/romio 3rd-party/<new romio>
+# cp -a /.../mpich-3.4.1/src/mpi/romio 3rd-party/romio341
+git add <new romio>
+# git add 3rd-party/romio341
+# git commit
+
+3. patch romio
+cd <new romio>
+# cd 3rd-party/romio341
+modernize ROMIO
+# git show 7d1dce82198e50e998e8079a044676831f713d1c | patch -p3
+# git add .
+# git commit
+patch ROMIO
+# git show bb7396248655cecfd0542ddb7b5904064bc13677 | patch -p3
+# git add .
+# git commit
+
+4.  create new romio component
+cp -a <old romio> <new romio>
+# cp -a ompi/mca/io/romio321 ompi/mca/io/romio341
+vi <new romio>/Makefile.am <new romio>/configure.m4 <new romio>/src/Makefile.extra
+# vi ompi/mca/io/romio341/Makefile.am ompi/mca/io/romio341/configure.m4 ompi/mca/io/romio341/src/Makefile.extra
+git add <new romio>
+# git add ompi/mca/io/romio341
+# git commit
+
+5. remove old romio
+git rm -r <old romio>
+# git rm -r 3rd-party/romio321 ompi/mca/io/romio321
+# git commit
+rm -rf <old romio>
+# rm -rf 3rd-party/romio321 ompi/mca/io/romio321
