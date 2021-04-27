@@ -785,7 +785,7 @@ static int ompi_comm_split_verify (ompi_communicator_t *comm, int split_type, in
     }
 
     for (int i = 0 ; i < size ; ++i) {
-        if (MPI_UNDEFINED == results[i * 2] || (i > 1 && results[i * 2 + 1] < results[i * 2 - 1])) {
+        if (MPI_UNDEFINED == results[i * 2] || (i >= 1 && results[i * 2 + 1] < results[i * 2 - 1])) {
             *need_split = true;
             break;
         }
