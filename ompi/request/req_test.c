@@ -35,7 +35,7 @@ int ompi_request_default_test(ompi_request_t ** rptr,
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
 
- recheck_request_status:
+recheck_request_status:
 #endif
     opal_atomic_mb();
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
@@ -94,9 +94,10 @@ int ompi_request_default_test(ompi_request_t ** rptr,
          * If we run the opal_progress then check the status of the request before
          * leaving. We will call the opal_progress only once per call.
          */
-        opal_progress();
-        do_it_once++;
-        goto recheck_request_status;
+        ++do_it_once;
+        if (0 != opal_progress()) {
+            goto recheck_request_status;
+        }
     }
 #endif
     *completed = false;
