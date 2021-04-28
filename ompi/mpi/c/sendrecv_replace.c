@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2021 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -47,7 +47,11 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
                          MPI_Comm comm, MPI_Status *status)
 
 {
+    ompi_request_t* req;
     int rc = MPI_SUCCESS;
+#if OPAL_ENABLE_FT_MPI
+    int rcs = MPI_SUCCESS;
+#endif
 
     SPC_RECORD(OMPI_SPC_SENDRECV_REPLACE, 1);
 
@@ -104,7 +108,6 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     struct iovec iov = { .iov_base = packed_data, .iov_len = sizeof(packed_data) };
     size_t packed_size, max_data;
     uint32_t iov_count;
-    ompi_status_public_t recv_status;
     ompi_proc_t* proc = ompi_comm_peer_lookup(comm, dest);
     if(proc == NULL) {
         rc = MPI_ERR_RANK;
@@ -116,7 +119,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     opal_convertor_copy_and_prepare_for_send( proc->super.proc_convertor, &(datatype->super),
                                               count, buf, 0, &convertor );
 
-    /* setup a buffer for recv */
+    /* setup a temporary buffer to send */
     opal_convertor_get_packed_size( &convertor, &packed_size );
     if( packed_size > sizeof(packed_data) ) {
         rc = PMPI_Alloc_mem(packed_size, MPI_INFO_NULL, &iov.iov_base);
@@ -130,15 +133,45 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     iov_count = 1;
     rc = opal_convertor_pack(&convertor, &iov, &iov_count, &max_data);
 
-    /* recv into temporary buffer */
-    rc = PMPI_Sendrecv( iov.iov_base, packed_size, MPI_PACKED, dest, sendtag, buf, count,
-                        datatype, source, recvtag, comm, &recv_status );
+    /* receive into the buffer */
+    rc = MCA_PML_CALL(irecv(buf, count, datatype,
+                            source, recvtag, comm, &req));
+    if(OMPI_SUCCESS != rc) {
+        goto cleanup_and_return;
+    }
+
+    /* send from the temporary buffer */
+    rc = MCA_PML_CALL(send(iov.iov_base, packed_size, MPI_PACKED, dest,
+                           sendtag, MCA_PML_BASE_SEND_STANDARD, comm));
+#if OPAL_ENABLE_FT_MPI
+    /* If ULFM is enabled we need to wait for the posted receive to
+     * complete, hence we cannot return here */
+    rcs = rc;
+#else
+    if(OMPI_SUCCESS != rc) {
+        goto cleanup_and_return;
+    }
+#endif  /* OPAL_ENABLE_FT_MPI */
+
+    rc = ompi_request_wait(&req, status);
+#if OPAL_ENABLE_FT_MPI
+    /* Sendrecv_replace never returns ERR_PROC_FAILED_PENDING because it is
+     * blocking. Lets complete now that irecv and promote the error
+     * to ERR_PROC_FAILED */
+    if( OPAL_UNLIKELY(MPI_ERR_PROC_FAILED_PENDING == rc) ) {
+        ompi_request_cancel(req);
+        ompi_request_wait(&req, MPI_STATUS_IGNORE);
+        rc = MPI_ERR_PROC_FAILED;
+    }
+#endif
+
+#if OPAL_ENABLE_FT_MPI
+    if( OPAL_UNLIKELY(MPI_SUCCESS != rcs && MPI_SUCCESS == rc) ) {
+        rc = rcs;
+    }
+#endif
 
  cleanup_and_return:
-    /* return status to user */
-    if(status != MPI_STATUS_IGNORE) {
-        *status = recv_status;
-    }
 
     /* release resources */
     if(packed_size > sizeof(packed_data)) {
