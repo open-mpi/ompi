@@ -15,7 +15,7 @@
 
 CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(DEBUGGER_CFLAGS)
 
-lib_LTLIBRARIES = lib@ORTE_LIB_PREFIX@open-orted-mpir.la
+noinst_LTLIBRARIES = lib@ORTE_LIB_PREFIX@open-orted-mpir.la
 lib@ORTE_LIB_PREFIX@open_orted_mpir_la_SOURCES = \
         orted_mpir_breakpoint.c \
         orted_mpir.h
