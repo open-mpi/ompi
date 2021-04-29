@@ -54,7 +54,7 @@ int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
         }
     }
 
-    copy_fn.attr_win_copy_fn = (MPI_Win_internal_copy_attr_function*)win_copy_attr_fn;
+    copy_fn.attr_win_copy_fn = (MPI_Win_internal_copy_attr_function) win_copy_attr_fn;
     del_fn.attr_win_delete_fn = win_delete_attr_fn;
 
     ret = ompi_attr_create_keyval(WIN_ATTR, copy_fn, del_fn,
