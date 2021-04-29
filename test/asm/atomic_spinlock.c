@@ -23,10 +23,10 @@
 #include "opal_config.h"
 
 #ifdef HAVE_PTHREAD_H
-#include <pthread.h>
+#    include <pthread.h>
 #endif
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "opal/sys/atomic.h"
 
@@ -42,25 +42,29 @@ struct start_info {
 
 static int atomic_spinlock_test(opal_atomic_lock_t *lock, int count, int id);
 
-static void* atomic_spinlock_start(void* arg)
+static void *atomic_spinlock_start(void *arg)
 {
-    struct start_info *data = (struct start_info*) arg;
+    struct start_info *data = (struct start_info *) arg;
 
-    return (void*) (unsigned long) atomic_spinlock_test(data->lock, data->count,
-                                        data->tid);
+    return (void *) (unsigned long) atomic_spinlock_test(data->lock, data->count, data->tid);
 }
 
-static int
-atomic_spinlock_test_th(opal_atomic_lock_t *lock, int count, int id, int thr_count)
+static int atomic_spinlock_test_th(opal_atomic_lock_t *lock, int count, int id, int thr_count)
 {
     pthread_t *th;
     int tid, ret = 0;
     struct start_info *data;
 
     th = (pthread_t *) malloc(thr_count * sizeof(pthread_t));
-    if (!th) { perror("malloc"); exit(EXIT_FAILURE); }
+    if (!th) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
     data = (struct start_info *) malloc(thr_count * sizeof(struct start_info));
-    if (!th) { perror("malloc"); exit(EXIT_FAILURE); }
+    if (!th) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
 
     for (tid = 0; tid < thr_count; tid++) {
         data[tid].tid = tid;
@@ -90,28 +94,30 @@ atomic_spinlock_test_th(opal_atomic_lock_t *lock, int count, int id, int thr_cou
     return ret;
 }
 
-
-static int
-atomic_spinlock_test(opal_atomic_lock_t *lock, int count, int id)
+static int atomic_spinlock_test(opal_atomic_lock_t *lock, int count, int id)
 {
     int i;
 
-    for (i = 0 ; i < count ; ++i) {
+    for (i = 0; i < count; ++i) {
         opal_atomic_lock(lock);
-        if (atomic_verbose) { printf("id %03d has the lock (lock)\n", id); }
+        if (atomic_verbose) {
+            printf("id %03d has the lock (lock)\n", id);
+        }
         opal_atomic_unlock(lock);
 
-        while (opal_atomic_trylock(lock)) { ; }
-        if (atomic_verbose) { printf("id %03d has the lock (trylock)\n", id); }
+        while (opal_atomic_trylock(lock)) {
+            ;
+        }
+        if (atomic_verbose) {
+            printf("id %03d has the lock (trylock)\n", id);
+        }
         opal_atomic_unlock(lock);
     }
 
     return 0;
 }
 
-
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int ret = 77;
     opal_atomic_lock_t lock;

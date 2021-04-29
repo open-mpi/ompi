@@ -22,17 +22,16 @@
  */
 
 #include "opal_config.h"
-#include <stdlib.h>
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "support.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/runtime/opal.h"
+#include "support.h"
 
 #define NUM_ITEMS 10
-
 
 int main(int argc, char **argv)
 {
@@ -55,13 +54,13 @@ int main(int argc, char **argv)
     test_verify_int(0, opal_value_array_get_size(&array));
 
     /* add several items to the array */
-    for(i=0; i < NUM_ITEMS; i++) {
+    for (i = 0; i < NUM_ITEMS; i++) {
         opal_value_array_append_item(&array, &i);
     }
     test_verify_int(NUM_ITEMS, opal_value_array_get_size(&array));
 
     /* verify contents */
-    for(i=0; i < NUM_ITEMS; i++) {
+    for (i = 0; i < NUM_ITEMS; i++) {
         val = OPAL_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i);
         if (val != i) {
             test_failure("Comparison failure");
@@ -80,12 +79,12 @@ int main(int argc, char **argv)
 
     /* initialize array */
     count = 0;
-    for(i=0; i < NUM_ITEMS; i++) {
+    for (i = 0; i < NUM_ITEMS; i++) {
         OPAL_VALUE_ARRAY_SET_ITEM(&array, uint64_t, i, count++);
     }
 
     /* grow it */
-    for(i=0; i < NUM_ITEMS; i++) {
+    for (i = 0; i < NUM_ITEMS; i++) {
         opal_value_array_append_item(&array, &count);
         count++;
     }
@@ -93,7 +92,7 @@ int main(int argc, char **argv)
     test_verify_int(count, opal_value_array_get_size(&array));
 
     /* validate contents */
-    for(i=0; i < count; i++) {
+    for (i = 0; i < count; i++) {
         test_verify_int(i, OPAL_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
     }
 
@@ -101,12 +100,12 @@ int main(int argc, char **argv)
     opal_value_array_remove_item(&array, NUM_ITEMS);
 
     /* check size */
-    test_verify_int(count-1, opal_value_array_get_size(&array));
+    test_verify_int(count - 1, opal_value_array_get_size(&array));
 
     /* validate contents */
-    for(i=0; i < count-1; i++) {
-        if(i >= NUM_ITEMS) {
-            test_verify_int(i+1, OPAL_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
+    for (i = 0; i < count - 1; i++) {
+        if (i >= NUM_ITEMS) {
+            test_verify_int(i + 1, OPAL_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
         } else {
             test_verify_int(i, OPAL_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
         }
@@ -114,7 +113,7 @@ int main(int argc, char **argv)
 
     OBJ_DESTRUCT(&array);
 
-    opal_finalize_util ();
+    opal_finalize_util();
 
     return test_finalize();
 }

@@ -8,26 +8,26 @@
  * $HEADER$
  */
 
-#include <stdio.h>
 #include "mpi.h"
+#include <stdio.h>
 
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
     int rank, size;
-    int send_value[10],recv_value[10];
+    int send_value[10], recv_value[10];
     int i;
     MPI_Status status;
     MPI_Request send_request;
     MPI_Request recv_request;
 
-    MPI_Init( &argc, &argv );
+    MPI_Init(&argc, &argv);
 
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    MPI_Comm_size( MPI_COMM_WORLD, &size );
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    for(i=0; i < 10; i++) {
+    for (i = 0; i < 10; i++) {
         send_value[i] = i;
-        printf("\n%d:%d",i,send_value[i]);
+        printf("\n%d:%d", i, send_value[i]);
     }
 
     /*
@@ -37,8 +37,8 @@ int main( int argc, char *argv[] )
     recv_value[9] = 100;
 
     if (size != 2) {
-        fprintf (stderr, "Error: Need 2 processes\n");
-        MPI_Finalize ();
+        fprintf(stderr, "Error: Need 2 processes\n");
+        MPI_Finalize();
     }
 
     /*
@@ -46,20 +46,18 @@ int main( int argc, char *argv[] )
      * Perfectly valid, but the receiver (in strict mode?) should not
      * depend on the data.
      */
-    MPI_Isend (&send_value, 9, MPI_INT,
-               (rank + 1) % size, 4711, MPI_COMM_WORLD, &send_request);
-    MPI_Irecv (&recv_value, 10, MPI_INT,
-               (rank + size - 1) % size, 4711, MPI_COMM_WORLD, &recv_request);
+    MPI_Isend(&send_value, 9, MPI_INT, (rank + 1) % size, 4711, MPI_COMM_WORLD, &send_request);
+    MPI_Irecv(&recv_value, 10, MPI_INT, (rank + size - 1) % size, 4711, MPI_COMM_WORLD,
+              &recv_request);
 
-    MPI_Wait (&send_request, &status);
-    MPI_Wait (&recv_request, &status);
+    MPI_Wait(&send_request, &status);
+    MPI_Wait(&recv_request, &status);
 
     /*
      * In strict mode, this should return an error.
      */
     printf("\nError in strict mode: buf[9]:%d", recv_value[9]);
 
-    MPI_Finalize ();
+    MPI_Finalize();
     return 0;
 }
-

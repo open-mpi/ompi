@@ -18,15 +18,15 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "orte/runtime/orte_wait.h"
 #include "opal/runtime/opal_progress.h"
+#include "orte/runtime/orte_wait.h"
 #include "runtime/runtime.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +38,6 @@ static void callback(pid_t pid, int status, void *data)
     printf("callback for %d, %d\n", pid, status);
     count--;
 }
-
 
 int main(int argc, char *argv[])
 {

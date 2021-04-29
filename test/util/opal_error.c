@@ -19,43 +19,44 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 #include <errno.h>
 
-#include "opal/util/error.h"
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"
+#include "opal/util/error.h"
 #include "orte/constants.h"
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     int i;
-    int errors[] = { OPAL_SUCCESS,
-                     OPAL_ERROR,
-                     OPAL_ERR_OUT_OF_RESOURCE,
-                     OPAL_ERR_NOT_FOUND,
-                     OPAL_ERR_BAD_PARAM,
-                     OPAL_ERR_MAX + 10, /* bad value */
-                     1 }; /* sentinal */
+    int errors[] = {
+        OPAL_SUCCESS,
+        OPAL_ERROR,
+        OPAL_ERR_OUT_OF_RESOURCE,
+        OPAL_ERR_NOT_FOUND,
+        OPAL_ERR_BAD_PARAM,
+        OPAL_ERR_MAX + 10, /* bad value */
+        1,                 /* sentinal */
+    };
     char buf[1024];
 
     opal_init(&argc, &argv);
 
-    for (i = 0 ; errors[i] <= 0 ; ++i) {
+    for (i = 0; errors[i] <= 0; ++i) {
         printf("--> error code: %d\n", errors[i]);
         opal_perror(errors[i], "perror test");
         printf("strerror test: %s\n", opal_strerror(errors[i]));

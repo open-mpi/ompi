@@ -11,17 +11,17 @@
  * $HEADER$
  *
  */
-#include <stdio.h>
 #include <stdbool.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <mpi.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int nppn;
     struct timeval tv;
@@ -41,8 +41,8 @@ int main(int argc, char* argv[])
     gettimeofday(&tv, NULL);
 
     /* form the command */
-    opal_asprintf(&cmd, "mpirun -npernode %d ./ziaprobe %ld %d",
-             nppn, (long) tv.tv_sec, tv.tv_usec);
+    opal_asprintf(&cmd, "mpirun -npernode %d ./ziaprobe %ld %d", nppn, (long) tv.tv_sec,
+                  tv.tv_usec);
 
     /* execute it */
     system(cmd);

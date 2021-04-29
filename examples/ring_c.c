@@ -7,8 +7,8 @@
  * Simple ring test program in C.
  */
 
-#include <stdio.h>
 #include "mpi.h"
+#include <stdio.h>
 
 int main(int argc, char *argv[])
 {
@@ -34,8 +34,8 @@ int main(int argc, char *argv[])
     if (0 == rank) {
         message = 10;
 
-        printf("Process 0 sending %d to %d, tag %d (%d processes in ring)\n",
-               message, next, tag, size);
+        printf("Process 0 sending %d to %d, tag %d (%d processes in ring)\n", message, next, tag,
+               size);
         MPI_Send(&message, 1, MPI_INT, next, tag, MPI_COMM_WORLD);
         printf("Process 0 sent to %d\n", next);
     }
@@ -49,8 +49,7 @@ int main(int argc, char *argv[])
        and can quit normally. */
 
     while (1) {
-        MPI_Recv(&message, 1, MPI_INT, prev, tag, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
+        MPI_Recv(&message, 1, MPI_INT, prev, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         if (0 == rank) {
             --message;
@@ -68,8 +67,7 @@ int main(int argc, char *argv[])
        to be received before the program can exit */
 
     if (0 == rank) {
-        MPI_Recv(&message, 1, MPI_INT, prev, tag, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
+        MPI_Recv(&message, 1, MPI_INT, prev, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     /* All done */

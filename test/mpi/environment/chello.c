@@ -22,14 +22,13 @@
 #include <mpi.h>
 #include <stdio.h>
 
-int
-main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-  MPI_Init(&argc, &argv);
+    MPI_Init(&argc, &argv);
 
-  printf("Hello, World\n");
+    printf("Hello, World\n");
 
-  MPI_Finalize();
+    MPI_Finalize();
 
-  return 0;
+    return 0;
 }

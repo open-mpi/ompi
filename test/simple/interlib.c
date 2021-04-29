@@ -5,31 +5,27 @@
  * The most basic of MPI applications
  */
 
-#include <stdio.h>
 #include <pthread.h>
+#include <stdio.h>
 
-#include "opal/mca/hwloc/base/base.h"
 #include "mpi.h"
+#include "opal/mca/hwloc/base/base.h"
 
-#include "orte/util/proc_info.h"
 #include "opal/mca/pmix/base/base.h"
+#include "orte/util/proc_info.h"
 
 static size_t interlibhandler_id = SIZE_MAX;
 static opal_pmix_lock_t thread_complete;
 
-static void model_registration_callback(int status,
-                                        size_t errhandler_ref,
-                                        void *cbdata)
+static void model_registration_callback(int status, size_t errhandler_ref, void *cbdata)
 {
-    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t *) cbdata;
 
     interlibhandler_id = errhandler_ref;
     OPAL_PMIX_WAKEUP_THREAD(lock);
 }
-static void model_callback(int status,
-                           const opal_process_name_t *source,
-                           opal_list_t *info, opal_list_t *results,
-                           opal_pmix_notification_complete_fn_t cbfunc,
+static void model_callback(int status, const opal_process_name_t *source, opal_list_t *info,
+                           opal_list_t *results, opal_pmix_notification_complete_fn_t cbfunc,
                            void *cbdata)
 {
     opal_value_t *val;
@@ -37,9 +33,9 @@ static void model_callback(int status,
     /* we can ignore our own callback as we obviously
      * know that we are OpenMP */
     if (NULL != info) {
-        OPAL_LIST_FOREACH(val, info, opal_value_t) {
-            if (0 == strcmp(val->key, OPAL_PMIX_PROGRAMMING_MODEL) &&
-                0 == strcmp(val->data.string, "OpenMP")) {
+        OPAL_LIST_FOREACH (val, info, opal_value_t) {
+            if (0 == strcmp(val->key, OPAL_PMIX_PROGRAMMING_MODEL)
+                && 0 == strcmp(val->data.string, "OpenMP")) {
                 goto cback;
             }
             if (PMIX_STRING == val->type) {
@@ -49,7 +45,7 @@ static void model_callback(int status,
     }
     /* otherwise, do something clever here */
 
-  cback:
+cback:
     /* we must NOT tell the event handler state machine that we
      * are the last step as that will prevent it from notifying
      * anyone else that might be listening for declarations */
@@ -61,20 +57,17 @@ static void model_callback(int status,
 
 static void opcbfunc(int status, void *cbdata)
 {
-    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t *) cbdata;
     OPAL_PMIX_WAKEUP_THREAD(lock);
 }
 
-static void infocb(int status,
-                   opal_list_t *info,
-                   void *cbdata,
-                   opal_pmix_release_cbfunc_t release_fn,
-                   void *release_cbdata)
+static void infocb(int status, opal_list_t *info, void *cbdata,
+                   opal_pmix_release_cbfunc_t release_fn, void *release_cbdata)
 {
-    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t *) cbdata;
     opal_value_t *kv;
 
-    OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+    OPAL_LIST_FOREACH (kv, info, opal_value_t) {
         opal_output(0, "QUERY DATA KEY: %s VALUE %s", kv->key, kv->data.string);
     }
     if (NULL != release_fn) {
@@ -130,10 +123,8 @@ static void *mylib(void *ptr)
         /* it is, so let's just use the event notification
          * API to let everyone know we are here */
         OPAL_PMIX_CONSTRUCT_LOCK(&lock);
-        ret = opal_pmix.notify_event(OPAL_ERR_MODEL_DECLARED,
-                                     &orte_process_info.my_name,
-                                     OPAL_PMIX_RANGE_PROC_LOCAL, &info,
-                                     opcbfunc, &lock);
+        ret = opal_pmix.notify_event(OPAL_ERR_MODEL_DECLARED, &orte_process_info.my_name,
+                                     OPAL_PMIX_RANGE_PROC_LOCAL, &info, opcbfunc, &lock);
         OPAL_PMIX_WAIT_THREAD(&lock);
         OPAL_PMIX_DESTRUCT_LOCK(&lock);
         OPAL_LIST_DESTRUCT(&info);
@@ -156,7 +147,7 @@ static void *mylib(void *ptr)
     /* specify the event code */
     OBJ_CONSTRUCT(&info, opal_list_t);
     kv = OBJ_NEW(opal_value_t);
-    kv->key = strdup("status");   // the key here is irrelevant
+    kv->key = strdup("status"); // the key here is irrelevant
     kv->type = OPAL_INT;
     kv->data.integer = OPAL_ERR_MODEL_DECLARED;
     opal_list_append(&info, &kv->super);
@@ -165,9 +156,8 @@ static void *mylib(void *ptr)
      * the event stipulates its range as proc_local. We rely
      * on that here */
     OPAL_PMIX_CONSTRUCT_LOCK(&lock);
-    opal_pmix.register_evhandler(&info, &directives, model_callback,
-                                 model_registration_callback,
-                                 (void*)&lock);
+    opal_pmix.register_evhandler(&info, &directives, model_callback, model_registration_callback,
+                                 (void *) &lock);
     OPAL_PMIX_WAIT_THREAD(&lock);
     OPAL_PMIX_DESTRUCT_LOCK(&lock);
     OPAL_LIST_DESTRUCT(&info);
@@ -189,8 +179,7 @@ static void *mylib(void *ptr)
     OPAL_LIST_DESTRUCT(&info);
 
     /* Get something */
-    opal_pmix.get(&orte_process_info.my_name,
-                  "WASSUP", NULL, &kv);
+    opal_pmix.get(&orte_process_info.my_name, "WASSUP", NULL, &kv);
     if (NULL == kv) {
         fprintf(stderr, "ERROR GETTING WASSUP\n");
     } else {
@@ -209,13 +198,13 @@ static void *mylib(void *ptr)
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_WAIT);
     kv->type = OPAL_INT;
-    kv->data.integer = 0;  // wait for all
+    kv->data.integer = 0; // wait for all
     opal_list_append(&directives, &kv->super);
 
     if (OPAL_SUCCESS != opal_pmix.lookup(&info, &directives)) {
         fprintf(stderr, "LOOKUP FAILED\n");
     } else {
-        pdata = (opal_pmix_pdata_t*)opal_list_get_first(&info);
+        pdata = (opal_pmix_pdata_t *) opal_list_get_first(&info);
         fprintf(stderr, "LOOKUP RETURNED %s\n", pdata->value.data.string);
     }
     OPAL_LIST_DESTRUCT(&info);
@@ -230,7 +219,7 @@ static void *mylib(void *ptr)
     return NULL;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size, rc;
     hwloc_cpuset_t cpus;
@@ -260,7 +249,7 @@ int main(int argc, char* argv[])
         goto done;
     }
 
-    printf("[%lu] Rank %d: getting topology\n", (unsigned long)pid, rank);
+    printf("[%lu] Rank %d: getting topology\n", (unsigned long) pid, rank);
     fflush(stdout);
     if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
         cpus = hwloc_bitmap_alloc();
@@ -268,9 +257,8 @@ int main(int argc, char* argv[])
         hwloc_bitmap_list_asprintf(&bindings, cpus);
     }
 
-    printf("Hello, World, I am %d of %d [%d local peers]: get_cpubind: %d bitmap %s\n",
-           rank, size, orte_process_info.num_local_peers, rc,
-           (NULL == bindings) ? "NULL" : bindings);
+    printf("Hello, World, I am %d of %d [%d local peers]: get_cpubind: %d bitmap %s\n", rank, size,
+           orte_process_info.num_local_peers, rc, (NULL == bindings) ? "NULL" : bindings);
 
     /* publish something */
     OBJ_CONSTRUCT(&list, opal_list_t);
@@ -287,7 +275,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Error joining thread\n");
     }
 
-  done:
+done:
     MPI_Finalize();
     return 0;
 }

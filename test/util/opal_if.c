@@ -21,29 +21,27 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 
-#include "support.h"
+#include "opal/constants.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/if.h"
-#include "opal/constants.h"
+#include "support.h"
 
-
-static bool
-test_ifaddrtoname(char *addr)
+static bool test_ifaddrtoname(char *addr)
 {
     int ret;
     char addrname[100];
@@ -58,8 +56,7 @@ test_ifaddrtoname(char *addr)
     }
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     const char *hostname;
 

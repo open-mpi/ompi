@@ -24,25 +24,26 @@
  */
 
 #include "opal_config.h"
-#include <stdlib.h>
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "support.h"
 #include "opal/class/opal_pointer_array.h"
+#include "support.h"
 
 typedef union {
     int ivalue;
     char *cvalue;
 } value_t;
 
-static void test(bool thread_usage){
+static void test(bool thread_usage)
+{
 
     /* local variables */
     opal_pointer_array_t *array;
     value_t *test_data;
-    int len_test_data,i,test_len_in_array,error_cnt;
+    int len_test_data, i, test_len_in_array, error_cnt;
     int ele_index;
     int error_code;
     value_t value;
@@ -50,39 +51,39 @@ static void test(bool thread_usage){
     /* initialize thread levels */
     opal_set_using_threads(thread_usage);
 
-    array=OBJ_NEW(opal_pointer_array_t);
+    array = OBJ_NEW(opal_pointer_array_t);
     assert(array);
 
-    len_test_data=5;
-    test_data=malloc(sizeof(value_t)*len_test_data);
+    len_test_data = 5;
+    test_data = malloc(sizeof(value_t) * len_test_data);
     assert(test_data);
 
-    for(i=0 ; i < len_test_data ; i++ ) {
-        test_data[i].ivalue = (i+1);
+    for (i = 0; i < len_test_data; i++) {
+        test_data[i].ivalue = (i + 1);
     }
 
     /* add data to table */
-    test_len_in_array=3;
-    assert(len_test_data>=test_len_in_array);
-    for(i=0 ; i < test_len_in_array ; i++ ) {
-        opal_pointer_array_add(array,test_data[i].cvalue);
+    test_len_in_array = 3;
+    assert(len_test_data >= test_len_in_array);
+    for (i = 0; i < test_len_in_array; i++) {
+        opal_pointer_array_add(array, test_data[i].cvalue);
     }
     /* check to see that test_len_in_array are in array */
-    if( (array->size - array->number_free) == test_len_in_array) {
+    if ((array->size - array->number_free) == test_len_in_array) {
         test_success();
     } else {
         test_failure("check on number of elements in array");
     }
 
     /* check order of data */
-    error_cnt=0;
-    for(i=0 ; i < test_len_in_array ; i++ ) {
+    error_cnt = 0;
+    for (i = 0; i < test_len_in_array; i++) {
         value.cvalue = array->addr[i];
-        if( (i+1) != value.ivalue ) {
+        if ((i + 1) != value.ivalue) {
             error_cnt++;
         }
     }
-    if( 0 == error_cnt ) {
+    if (0 == error_cnt) {
         test_success();
     } else {
         test_failure(" data check ");
@@ -90,19 +91,19 @@ static void test(bool thread_usage){
 
     /* free 2nd element and make sure that value is reset correctly,
      *   and that the lowest_index is also reset correctly */
-    ele_index=1;
-    error_code=opal_pointer_array_set_item(array,ele_index,NULL);
-    if( 0 == error_code ) {
+    ele_index = 1;
+    error_code = opal_pointer_array_set_item(array, ele_index, NULL);
+    if (0 == error_code) {
         test_success();
     } else {
         test_failure(" opal_pointer_array_set_item ");
     }
-    if( NULL == array->addr[ele_index]){
+    if (NULL == array->addr[ele_index]) {
         test_success();
     } else {
         test_failure(" set pointer value");
     }
-    if( ele_index == array->lowest_free ) {
+    if (ele_index == array->lowest_free) {
         test_success();
     } else {
         test_failure(" lowest free ");
@@ -110,28 +111,28 @@ static void test(bool thread_usage){
 
     /* test opal_pointer_array_get_item */
     opal_pointer_array_remove_all(array);
-    error_cnt=0;
-    for(i=0 ; i < array->size ; i++ ) {
+    error_cnt = 0;
+    for (i = 0; i < array->size; i++) {
         value.ivalue = i + 2;
-        ele_index=opal_pointer_array_add(array, value.cvalue);
-        if( i != ele_index ) {
+        ele_index = opal_pointer_array_add(array, value.cvalue);
+        if (i != ele_index) {
             error_cnt++;
         }
     }
-    if( 0 == error_cnt ) {
+    if (0 == error_cnt) {
         test_success();
     } else {
         test_failure(" opal_pointer_array_add 2nd ");
     }
 
-    error_cnt=0;
-    for(i=0 ; i < array->size ; i++ ) {
-        value.cvalue = opal_pointer_array_get_item(array,i);
-        if( (i+2) != value.ivalue ) {
+    error_cnt = 0;
+    for (i = 0; i < array->size; i++) {
+        value.cvalue = opal_pointer_array_get_item(array, i);
+        if ((i + 2) != value.ivalue) {
             error_cnt++;
         }
     }
-    if( 0 == error_cnt ) {
+    if (0 == error_cnt) {
         test_success();
     } else {
         test_failure(" data check - 2nd ");
@@ -140,23 +141,23 @@ static void test(bool thread_usage){
     OBJ_RELEASE(array);
     assert(NULL == array);
 
-    array=OBJ_NEW(opal_pointer_array_t);
+    array = OBJ_NEW(opal_pointer_array_t);
     assert(array);
     opal_pointer_array_init(array, 0, 4, 2);
-    for( i = 0; i < 4; i++ ) {
+    for (i = 0; i < 4; i++) {
         value.ivalue = i + 1;
-        if( 0 > opal_pointer_array_add( array, value.cvalue ) ) {
+        if (0 > opal_pointer_array_add(array, value.cvalue)) {
             test_failure("Add/Remove: failure during initial data_add ");
         }
     }
-    for( i = i-1; i >= 0; i-- ) {
-        if( i % 2 )
-            if( 0 != opal_pointer_array_set_item(array, i, NULL) )
+    for (i = i - 1; i >= 0; i--) {
+        if (i % 2)
+            if (0 != opal_pointer_array_set_item(array, i, NULL))
                 test_failure("Add/Remove: failure during item removal ");
     }
-    for( i = 0; i < 4; i++ ) {
-        if( !opal_pointer_array_add( array, (void*)(uintptr_t)(i+1) ) ) {
-            if( i != 2 ) {
+    for (i = 0; i < 4; i++) {
+        if (!opal_pointer_array_add(array, (void *) (uintptr_t)(i + 1))) {
+            if (i != 2) {
                 test_failure("Add/Remove: failure during the readd ");
                 break;
             }
@@ -168,7 +169,6 @@ static void test(bool thread_usage){
 
     free(test_data);
 }
-
 
 int main(int argc, char **argv)
 {

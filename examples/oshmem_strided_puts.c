@@ -24,12 +24,12 @@
  *
  */
 
-#include <stdio.h>
 #include <shmem.h>
+#include <stdio.h>
 
 int main(void)
 {
-    short source[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    short source[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     static short target[10];
     int me;
 
@@ -44,9 +44,8 @@ int main(void)
     shmem_barrier_all(); /* sync sender and receiver */
 
     if (me == 1) {
-        printf("target on PE %d is %hd %hd %hd %hd %hd\n", me,
-        target[0], target[1], target[2],
-        target[3], target[4] );
+        printf("target on PE %d is %hd %hd %hd %hd %hd\n", me, target[0], target[1], target[2],
+               target[3], target[4]);
     }
     shmem_barrier_all(); /* sync before exiting */
     shmem_finalize();

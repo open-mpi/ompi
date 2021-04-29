@@ -8,10 +8,10 @@
  * $HEADER$
  */
 
-#include <stdio.h>
 #include <shmem.h>
+#include <stdio.h>
 
-int main (void)
+int main(void)
 {
     static int aaa, bbb;
     int num_pes, my_pe, peer;
@@ -32,4 +32,3 @@ int main (void)
 
     return 0;
 }
-

@@ -5,17 +5,17 @@
  * The most basic of MPI applications
  */
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
 #include "mpi.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
     MPI_Info info, srch;
     char port[MPI_MAX_PORT_NAME];
-    bool local=false;
+    bool local = false;
 
     if (1 < argc) {
         if (0 == strcmp("local", argv[1])) {

@@ -5,10 +5,10 @@
  * Test of connect/accept - the accept (server) side
  */
 
-#include <stdio.h>
 #include "mpi.h"
+#include <stdio.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
     MPI_Comm server;

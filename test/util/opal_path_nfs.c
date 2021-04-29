@@ -28,26 +28,26 @@
 
 #include "opal_config.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <sys/param.h>
 #ifdef HAVE_SYS_MOUNT_H
-#include <sys/mount.h>
+#    include <sys/mount.h>
 #endif
 #ifdef HAVE_SYS_STATFS_H
-#include <sys/statfs.h>
+#    include <sys/statfs.h>
 #endif
 #ifdef HAVE_SYS_VFS_H
-#include <sys/vfs.h>
+#    include <sys/vfs.h>
 #endif
 
-#include "support.h"
-#include "opal/util/path.h"
 #include "opal/util/output.h"
+#include "opal/util/path.h"
 #include "opal/util/printf.h"
+#include "support.h"
 
 #define DEBUG
 
@@ -65,15 +65,15 @@
  */
 
 #if !defined(__linux__)
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (argc > 1) {
         int i;
 
         printf("Interactive opal_path_nfs() test:\n");
         for (i = 1; i < argc; i++) {
-            printf ("Is dir[%d]:%s one of the detected network file systems? %s\n",
-                    i, argv[i], opal_path_nfs (argv[i], NULL) ? "Yes": "No");
+            printf("Is dir[%d]:%s one of the detected network file systems? %s\n", i, argv[i],
+                   opal_path_nfs(argv[i], NULL) ? "Yes" : "No");
         }
 
         return 0;
@@ -85,70 +85,67 @@ int main(int argc, char* argv[])
 
 #else /* __linux__ */
 
-static void test(char* file, bool expect);
-static void get_mounts (int * num_dirs, char ** dirs[], bool ** nfs);
+static void test(char *file, bool expect);
+static void get_mounts(int *num_dirs, char **dirs[], bool **nfs);
 
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int num_dirs;
-    char ** dirs;
-    bool * nfs;
+    char **dirs;
+    bool *nfs;
 
     test_init("opal_path_nfs()");
-#ifdef DEBUG
-    printf ("Test usage: ./opal_path_nfs [DIR]\n");
-    printf ("On Linux interprets output from mount(8) to check for nfs and verify opal_path_nfs()\n");
-    printf ("Additionally, you may specify multiple DIR on the cmd-line, of which you the output\n");
-#endif
+#    ifdef DEBUG
+    printf("Test usage: ./opal_path_nfs [DIR]\n");
+    printf(
+        "On Linux interprets output from mount(8) to check for nfs and verify opal_path_nfs()\n");
+    printf("Additionally, you may specify multiple DIR on the cmd-line, of which you the output\n");
+#    endif
 
     if (1 < argc) {
         int i;
         for (i = 1; i < argc; i++)
-            printf ("Is dir[%d]:%s one of the detected network file systems? %s\n",
-                    i, argv[i], opal_path_nfs (argv[i], NULL) ? "Yes": "No");
+            printf("Is dir[%d]:%s one of the detected network file systems? %s\n", i, argv[i],
+                   opal_path_nfs(argv[i], NULL) ? "Yes" : "No");
     }
 
-    get_mounts (&num_dirs, &dirs, &nfs);
+    get_mounts(&num_dirs, &dirs, &nfs);
     while (num_dirs--) {
-        test (dirs[num_dirs], nfs[num_dirs]);
+        test(dirs[num_dirs], nfs[num_dirs]);
     }
 
     /* All done */
     return test_finalize();
 }
 
-
-void test(char* file, bool expect)
+void test(char *file, bool expect)
 {
-#ifdef DEBUG
-    printf ("test(): file:%s bool:%d\n",
-            file, expect);
-#endif
-    if (expect == opal_path_nfs (file, NULL)) {
+#    ifdef DEBUG
+    printf("test(): file:%s bool:%d\n", file, expect);
+#    endif
+    if (expect == opal_path_nfs(file, NULL)) {
         test_success();
     } else {
-        char * msg;
-        opal_asprintf(&msg, "Mismatch: input \"%s\", expected:%d got:%d\n",
-                 file, expect, !expect);
+        char *msg;
+        opal_asprintf(&msg, "Mismatch: input \"%s\", expected:%d got:%d\n", file, expect, !expect);
         test_failure(msg);
         free(msg);
     }
 }
 
-void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
+void get_mounts(int *num_dirs, char **dirs[], bool *nfs[])
 {
-#define SIZE 1024
-    char * cmd = "mount | cut -f3,5 -d' ' > opal_path_nfs.out";
+#    define SIZE 1024
+    char *cmd = "mount | cut -f3,5 -d' ' > opal_path_nfs.out";
     int rc;
     int i;
-    FILE * file;
-    char ** dirs_tmp;
-    bool * nfs_tmp;
+    FILE *file;
+    char **dirs_tmp;
+    bool *nfs_tmp;
     char buffer[SIZE];
     struct statfs mystatfs;
 
-    rc = system (cmd);
+    rc = system(cmd);
 
     if (-1 == rc) {
         *num_dirs = 0;
@@ -164,7 +161,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
        have an array large enough. */
     file = fopen("opal_path_nfs.out", "r");
     int count = 0;
-    while (NULL != fgets (buffer, SIZE, file)) {
+    while (NULL != fgets(buffer, SIZE, file)) {
         ++count;
     }
     printf("Found %d mounts\n", count);
@@ -172,22 +169,22 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
     // Add one more so we can have a NULL entry at the end
     ++count;
 
-    dirs_tmp = (char**) calloc (count, sizeof(char*));
-    nfs_tmp = (bool*) calloc (count, sizeof(bool));
+    dirs_tmp = (char **) calloc(count, sizeof(char *));
+    nfs_tmp = (bool *) calloc(count, sizeof(bool));
 
     i = 0;
     rc = 4711;
     rewind(file);
     // i should never be more than count, but be safe anyway.
-    while (i < count && NULL != fgets (buffer, SIZE, file)) {
+    while (i < count && NULL != fgets(buffer, SIZE, file)) {
         int mount_known;
         char fs[MAXNAMLEN];
 
         if (!dirs_tmp[i]) {
-            dirs_tmp[i] = malloc (MAXNAMLEN);
+            dirs_tmp[i] = malloc(MAXNAMLEN);
         }
 
-        if (2 != (rc = sscanf (buffer, "%s %s\n", dirs_tmp[i], fs))) {
+        if (2 != (rc = sscanf(buffer, "%s %s\n", dirs_tmp[i], fs))) {
             goto out;
         }
 
@@ -196,7 +193,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
          * Cannot distinguish it from NFS in opal_path_nfs, therefore just
          * disregard it, as it is NOT an parallel filesystem...
          */
-        if (0 == strcasecmp (fs, "rpc_pipefs")) {
+        if (0 == strcasecmp(fs, "rpc_pipefs")) {
             continue;
         }
 
@@ -213,7 +210,7 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
         }
 
         /* If we can not stat the fs, skip it */
-        if (statfs (dirs_tmp[i], &mystatfs)) {
+        if (statfs(dirs_tmp[i], &mystatfs)) {
             continue;
         }
 
@@ -223,31 +220,26 @@ void get_mounts (int * num_dirs, char ** dirs[], bool * nfs[])
          */
         for (mount_known = 0; mount_known < i; mount_known++) {
             /* If we know this mount-point, then exit early */
-            if (0 == strcasecmp (dirs_tmp[mount_known], dirs_tmp[i])) {
-#ifdef DEBUG
-                printf ("get_mounts: already know dir[%d]:%s\n",
-                        mount_known, dirs_tmp[mount_known]);
-#endif
+            if (0 == strcasecmp(dirs_tmp[mount_known], dirs_tmp[i])) {
+#    ifdef DEBUG
+                printf("get_mounts: already know dir[%d]:%s\n", mount_known, dirs_tmp[mount_known]);
+#    endif
                 break;
             }
         }
 
         nfs_tmp[mount_known] = false;
-        if (0 == strcasecmp (fs, "nfs") ||
-            0 == strcasecmp (fs, "nfs4") ||
-            0 == strcasecmp (fs, "lustre") ||
-            0 == strcasecmp (fs, "panfs") ||
-            0 == strcasecmp (fs, "gpfs"))
+        if (0 == strcasecmp(fs, "nfs") || 0 == strcasecmp(fs, "nfs4")
+            || 0 == strcasecmp(fs, "lustre") || 0 == strcasecmp(fs, "panfs")
+            || 0 == strcasecmp(fs, "gpfs"))
             nfs_tmp[mount_known] = true;
-#ifdef DEBUG
-        printf ("get_mounts: dirs[%d]:%s fs:%s nfs:%s\n",
-                mount_known, dirs_tmp[mount_known],
-                fs, nfs_tmp[mount_known] ? "Yes" : "No");
-#endif
+#    ifdef DEBUG
+        printf("get_mounts: dirs[%d]:%s fs:%s nfs:%s\n", mount_known, dirs_tmp[mount_known], fs,
+               nfs_tmp[mount_known] ? "Yes" : "No");
+#    endif
 
         if (mount_known >= i)
             i++;
-
     }
 out:
     *num_dirs = i;

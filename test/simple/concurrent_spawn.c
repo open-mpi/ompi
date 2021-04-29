@@ -4,22 +4,22 @@
 #include "opal/runtime/opal.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 #include <mpi.h>
 
 #define NUM_CHILDREN 5
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int msg;
     MPI_Comm parent, children[NUM_CHILDREN];
     int rank, size, i;
     const char *hostname;
     pid_t pid;
-    char *child_argv[2] = { "", NULL };
+    char *child_argv[2] = {"", NULL};
 
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -32,11 +32,9 @@ int main(int argc, char* argv[])
         /* First, spawn all the children.  Give them an argv
            identifying which child they are */
         for (i = 0; i < NUM_CHILDREN; ++i) {
-            printf("Parent [pid %ld] about to spawn child #%d\n",
-                   (long)pid, i);
+            printf("Parent [pid %ld] about to spawn child #%d\n", (long) pid, i);
             opal_asprintf(&(child_argv[0]), "%d", i);
-            MPI_Comm_spawn(argv[0], child_argv, 1, MPI_INFO_NULL,
-                           0, MPI_COMM_WORLD, &children[i],
+            MPI_Comm_spawn(argv[0], child_argv, 1, MPI_INFO_NULL, 0, MPI_COMM_WORLD, &children[i],
                            MPI_ERRCODES_IGNORE);
             printf("Parent done with spawn of child %d\n", i);
         }
@@ -66,13 +64,12 @@ int main(int argc, char* argv[])
             i = atoi(argv[1]);
         }
         pid = getpid();
-        printf("Hello from the child %d on host %s pid %ld\n", i, hostname, (long)pid);
+        printf("Hello from the child %d on host %s pid %ld\n", i, hostname, (long) pid);
         if (0 == rank) {
             MPI_Recv(&msg, 1, MPI_INT, 0, 1, parent, MPI_STATUS_IGNORE);
             printf("Child %d received msg: %d\n", i, msg);
             if (i != msg) {
-                printf("ERROR: Child %d got wrong message (got %d, expected %d)\n",
-                       i, msg, i);
+                printf("ERROR: Child %d got wrong message (got %d, expected %d)\n", i, msg, i);
             }
         }
         MPI_Comm_disconnect(&parent);

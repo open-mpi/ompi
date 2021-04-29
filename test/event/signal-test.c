@@ -4,66 +4,63 @@
  */
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #include <sys/stat.h>
 #ifndef WIN32
-#ifdef HAVE_SYS_QUEUE_H
-#include <sys/queue.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
+#    ifdef HAVE_SYS_QUEUE_H
+#        include <sys/queue.h>
+#    endif
+#    ifdef HAVE_UNISTD_H
+#        include <unistd.h>
+#    endif
+#    ifdef HAVE_SYS_TIME_H
+#        include <sys/time.h>
+#    endif
 #else
-#include <windows.h>
+#    include <windows.h>
 #endif
-#include <signal.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "opal/util/event.h"
 #include "opal/runtime/opal.h"
+#include "opal/util/event.h"
 
 int called = 0;
 
-void
-signal_cb(int fd, short event, void *arg)
+void signal_cb(int fd, short event, void *arg)
 {
-	opal_event_t *signal = arg;
+    opal_event_t *signal = arg;
 
-	printf("%s: got signal %d\n", __func__, OPAL_EVENT_SIGNAL(signal));
+    printf("%s: got signal %d\n", __func__, OPAL_EVENT_SIGNAL(signal));
 
-	if (called >= 2)
-		opal_event.del(signal);
+    if (called >= 2)
+        opal_event.del(signal);
 
-	called++;
+    called++;
 }
 
-int
-main (int argc, char **argv)
+int main(int argc, char **argv)
 {
     opal_event_t signal_int, signal_term;
 
-	/* Initialize the event library */
-	opal_init();
+    /* Initialize the event library */
+    opal_init();
 
-	/* Initialize one event */
-	opal_event.set(opal_event_base, &signal_term, SIGUSR1, OPAL_EV_SIGNAL|OPAL_EV_PERSIST, signal_cb,
-	    &signal_term);
-	opal_event.set(opal_event_base, &signal_int, SIGUSR2, OPAL_EV_SIGNAL|OPAL_EV_PERSIST, signal_cb,
-	    &signal_int);
+    /* Initialize one event */
+    opal_event.set(opal_event_base, &signal_term, SIGUSR1, OPAL_EV_SIGNAL | OPAL_EV_PERSIST,
+                   signal_cb, &signal_term);
+    opal_event.set(opal_event_base, &signal_int, SIGUSR2, OPAL_EV_SIGNAL | OPAL_EV_PERSIST,
+                   signal_cb, &signal_int);
 
-	opal_event.add(&signal_int, NULL);
-	opal_event.add(&signal_term, NULL);
+    opal_event.add(&signal_int, NULL);
+    opal_event.add(&signal_term, NULL);
 
-	opal_event.dispatch(opal_event_base);
+    opal_event.dispatch(opal_event_base);
 
-	return (0);
+    return (0);
 }
-

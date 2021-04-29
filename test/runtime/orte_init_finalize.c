@@ -19,20 +19,19 @@
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
+#    include <netinet/in.h>
 #endif
 
 #include "orte/runtime/runtime.h"
 
-int main (int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rc;
 

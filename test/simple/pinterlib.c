@@ -5,10 +5,10 @@
  * The most basic of MPI applications
  */
 
-#include <stdio.h>
-#include <pthread.h>
 #include "mpi.h"
 #include "pmix.h"
+#include <pthread.h>
+#include <stdio.h>
 
 typedef struct {
     pthread_mutex_t mutex;
@@ -17,77 +17,72 @@ typedef struct {
     pmix_status_t status;
 } mylock_t;
 
-#define MY_CONSTRUCT_LOCK(l)                     \
-    do {                                            \
-        pthread_mutex_init(&(l)->mutex, NULL);      \
-        pthread_cond_init(&(l)->cond, NULL);        \
-        (l)->active = true;                         \
-        (l)->status = PMIX_SUCCESS;                 \
-    } while(0)
+#define MY_CONSTRUCT_LOCK(l)                   \
+    do {                                       \
+        pthread_mutex_init(&(l)->mutex, NULL); \
+        pthread_cond_init(&(l)->cond, NULL);   \
+        (l)->active = true;                    \
+        (l)->status = PMIX_SUCCESS;            \
+    } while (0)
 
-#define MY_DESTRUCT_LOCK(l)              \
+#define MY_DESTRUCT_LOCK(l)                 \
     do {                                    \
         pthread_mutex_destroy(&(l)->mutex); \
         pthread_cond_destroy(&(l)->cond);   \
-    } while(0)
+    } while (0)
 
-#define MY_WAIT_THREAD(lck)                                      \
-    do {                                                            \
-        pthread_mutex_lock(&(lck)->mutex);                          \
-        while ((lck)->active) {                                     \
-            pthread_cond_wait(&(lck)->cond, &(lck)->mutex);         \
-        }                                                           \
-        pthread_mutex_unlock(&(lck)->mutex);                        \
-    } while(0)
+#define MY_WAIT_THREAD(lck)                                 \
+    do {                                                    \
+        pthread_mutex_lock(&(lck)->mutex);                  \
+        while ((lck)->active) {                             \
+            pthread_cond_wait(&(lck)->cond, &(lck)->mutex); \
+        }                                                   \
+        pthread_mutex_unlock(&(lck)->mutex);                \
+    } while (0)
 
-#define MY_WAKEUP_THREAD(lck)                        \
-    do {                                                \
-        pthread_mutex_lock(&(lck)->mutex);              \
-        (lck)->active = false;                          \
-        pthread_cond_broadcast(&(lck)->cond);           \
-        pthread_mutex_unlock(&(lck)->mutex);            \
-    } while(0)
-
+#define MY_WAKEUP_THREAD(lck)                 \
+    do {                                      \
+        pthread_mutex_lock(&(lck)->mutex);    \
+        (lck)->active = false;                \
+        pthread_cond_broadcast(&(lck)->cond); \
+        pthread_mutex_unlock(&(lck)->mutex);  \
+    } while (0)
 
 static size_t interlibhandler_id = SIZE_MAX;
 static mylock_t thread_complete;
 static pmix_proc_t myproc;
 
-static void model_registration_callback(pmix_status_t status,
-                                        size_t errhandler_ref,
-                                        void *cbdata)
+static void model_registration_callback(pmix_status_t status, size_t errhandler_ref, void *cbdata)
 {
-    mylock_t *lock = (mylock_t*)cbdata;
+    mylock_t *lock = (mylock_t *) cbdata;
 
     interlibhandler_id = errhandler_ref;
     MY_WAKEUP_THREAD(lock);
 }
-static void model_callback(size_t evhdlr_registration_id,
-                           pmix_status_t status,
-                           const pmix_proc_t *source,
-                           pmix_info_t info[], size_t ninfo,
+static void model_callback(size_t evhdlr_registration_id, pmix_status_t status,
+                           const pmix_proc_t *source, pmix_info_t info[], size_t ninfo,
                            pmix_info_t *results, size_t nresults,
-                           pmix_event_notification_cbfunc_fn_t cbfunc,
-                           void *cbdata)
+                           pmix_event_notification_cbfunc_fn_t cbfunc, void *cbdata)
 {
     size_t n;
 
     /* we can ignore our own callback as we obviously
      * know that we are OpenMP */
     if (NULL != info) {
-        for (n=0; n < ninfo; n++) {
-            if (0 == strcmp(info[n].key, PMIX_PROGRAMMING_MODEL) &&
-                0 == strcmp(info[n].value.data.string, "OpenMP")) {
+        for (n = 0; n < ninfo; n++) {
+            if (0 == strcmp(info[n].key, PMIX_PROGRAMMING_MODEL)
+                && 0 == strcmp(info[n].value.data.string, "OpenMP")) {
                 goto cback;
             }
             if (PMIX_STRING == info[n].value.type) {
-                fprintf(stderr, "Thread Model Callback Key: %s Val %s\n", info[n].key, info[n].value.data.string);
+                fprintf(stderr, "Thread Model Callback Key: %s Val %s\n", info[n].key,
+                        info[n].value.data.string);
             }
         }
     }
     /* otherwise, do something clever here */
 
-  cback:
+cback:
     /* we must NOT tell the event handler state machine that we
      * are the last step as that will prevent it from notifying
      * anyone else that might be listening for declarations */
@@ -99,20 +94,17 @@ static void model_callback(size_t evhdlr_registration_id,
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {
-    mylock_t *lock = (mylock_t*)cbdata;
+    mylock_t *lock = (mylock_t *) cbdata;
     MY_WAKEUP_THREAD(lock);
 }
 
-static void infocb(pmix_status_t status,
-                   pmix_info_t *info, size_t ninfo,
-                   void *cbdata,
-                   pmix_release_cbfunc_t release_fn,
-                   void *release_cbdata)
+static void infocb(pmix_status_t status, pmix_info_t *info, size_t ninfo, void *cbdata,
+                   pmix_release_cbfunc_t release_fn, void *release_cbdata)
 {
-    mylock_t *lock = (mylock_t*)cbdata;
+    mylock_t *lock = (mylock_t *) cbdata;
     size_t n;
 
-    for (n=0; n < ninfo; n++) {
+    for (n = 0; n < ninfo; n++) {
         fprintf(stderr, "QUERY DATA KEY: %s VALUE %s\n", info[n].key, info[n].value.data.string);
     }
     if (NULL != release_fn) {
@@ -155,10 +147,8 @@ static void *mylib(void *ptr)
         /* it is, so let's just use the event notification
          * API to let everyone know we are here */
         MY_CONSTRUCT_LOCK(&lock);
-        ret = PMIx_Notify_event(code, &myproc,
-                                PMIX_RANGE_PROC_LOCAL,
-                                info, 5,
-                                opcbfunc, (void*)&lock);
+        ret = PMIx_Notify_event(code, &myproc, PMIX_RANGE_PROC_LOCAL, info, 5, opcbfunc,
+                                (void *) &lock);
         MY_WAIT_THREAD(&lock);
         MY_DESTRUCT_LOCK(&lock);
     } else {
@@ -178,10 +168,8 @@ static void *mylib(void *ptr)
      * the event stipulates its range as proc_local. We rely
      * on that here */
     MY_CONSTRUCT_LOCK(&lock);
-    PMIx_Register_event_handler(&code, 1, directives, 1,
-                                model_callback,
-                                model_registration_callback,
-                                (void*)&lock);
+    PMIx_Register_event_handler(&code, 1, directives, 1, model_callback,
+                                model_registration_callback, (void *) &lock);
     MY_WAIT_THREAD(&lock);
     MY_DESTRUCT_LOCK(&lock);
     PMIX_INFO_FREE(directives, 1);
@@ -235,7 +223,7 @@ static void *mylib(void *ptr)
     return NULL;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size, rc;
     pid_t pid;
@@ -295,7 +283,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Error joining thread\n");
     }
 
-  done:
+done:
     MPI_Finalize();
     return 0;
 }

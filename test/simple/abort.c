@@ -11,7 +11,7 @@
 
 #include "mpi.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
     int errcode;
@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     printf("Hello, World, I am %d of %d\n", rank, size);
 
     if (1 == size) {
-            MPI_Abort(MPI_COMM_WORLD, errcode);
+        MPI_Abort(MPI_COMM_WORLD, errcode);
     } else {
         if (1 == rank) {
             MPI_Abort(MPI_COMM_WORLD, errcode);

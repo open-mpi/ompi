@@ -20,22 +20,22 @@
 #include "orte/constants.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 
 #include "orte/util/univ_info.h"
 #include "orte/util/universe_setup_file_io.h"
 #include "support.h"
 
-static bool test1(void);   /* verify it returns info */
-static bool test2(void);   /* test second time through */
+static bool test1(void); /* verify it returns info */
+static bool test2(void); /* test second time through */
 
 orte_universe_t orte_universe_info;
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     test_init("universe_setup_file_io");
 
@@ -52,22 +52,19 @@ int main(int argc, char* argv[])
 
     if (test1()) {
         test_success();
-    }
-    else {
-      test_failure("universe_setup_file_io write failed");
+    } else {
+        test_failure("universe_setup_file_io write failed");
     }
 
     if (test2()) {
         test_success();
-    }
-    else {
-      test_failure("universe_setup_file_io read failed");
+    } else {
+        test_failure("universe_setup_file_io read failed");
     }
 
     test_finalize();
     return 0;
 }
-
 
 static bool test1(void)
 {
@@ -83,7 +80,6 @@ static bool test1(void)
     return true;
 }
 
-
 static bool test2(void)
 {
     int rc;
@@ -96,15 +92,15 @@ static bool test2(void)
         return false;
     }
 
-    if (0 != strcmp(orte_universe_info.name, univ.name) ||
-        0 != strcmp(orte_universe_info.host, univ.host) ||
-        0 != strcmp(orte_universe_info.uid, univ.uid) ||
-        orte_universe_info.persistence != univ.persistence ||
-        0 != strcmp(orte_universe_info.scope, univ.scope) ||
-        orte_universe_info.console != univ.console ||
-        0 != strcmp(orte_universe_info.seed_uri, univ.seed_uri) ||
-        orte_universe_info.console_connected != univ.console_connected ||
-        orte_universe_info.scriptfile != univ.scriptfile) {
+    if (0 != strcmp(orte_universe_info.name, univ.name)
+        || 0 != strcmp(orte_universe_info.host, univ.host)
+        || 0 != strcmp(orte_universe_info.uid, univ.uid)
+        || orte_universe_info.persistence != univ.persistence
+        || 0 != strcmp(orte_universe_info.scope, univ.scope)
+        || orte_universe_info.console != univ.console
+        || 0 != strcmp(orte_universe_info.seed_uri, univ.seed_uri)
+        || orte_universe_info.console_connected != univ.console_connected
+        || orte_universe_info.scriptfile != univ.scriptfile) {
         fprintf(stderr, "universe_setup_file_io: read mismatch\n");
         return false;
     }

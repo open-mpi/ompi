@@ -5,13 +5,13 @@
  * The most basic of MPI applications
  */
 
+#include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include "mpi.h"
+#include <unistd.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
     char *rk;

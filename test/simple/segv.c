@@ -5,14 +5,14 @@
  * The most basic of MPI applications
  */
 
+#include "mpi.h"
 #include <stdio.h>
 #include <unistd.h>
-#include "mpi.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int rank, size;
-    char *foo=0;
+    char *foo = 0;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);

@@ -22,16 +22,17 @@
 
 #include "ompi_config.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include <time.h>
 #include <stdlib.h>
+#include <time.h>
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
+#    include <sys/time.h>
 #endif
 #include <stdio.h>
 
 #define TIMER_DATA_TYPE struct timeval
-#define GET_TIME(TV)   gettimeofday( &(TV), NULL )
-#define ELAPSED_TIME(TSTART, TEND)  (((TEND).tv_sec - (TSTART).tv_sec) * 1000000 + ((TEND).tv_usec - (TSTART).tv_usec))
+#define GET_TIME(TV)    gettimeofday(&(TV), NULL)
+#define ELAPSED_TIME(TSTART, TEND) \
+    (((TEND).tv_sec - (TSTART).tv_sec) * 1000000 + ((TEND).tv_usec - (TSTART).tv_usec))
 
 #define DUMP_DATA_AFTER_COMMIT 0x00000001
 #define CHECK_PACK_UNPACK      0x00000002
@@ -41,22 +42,22 @@ extern uint32_t outputFlags;
 /**
  * Cache cleanup.
  */
-extern void cache_trash( void );
+extern void cache_trash(void);
 
 /**
  * Data-type functions.
  */
-ompi_datatype_t* create_inversed_vector( const ompi_datatype_t* type, int length );
+ompi_datatype_t *create_inversed_vector(const ompi_datatype_t *type, int length);
 
-extern void print_double_mat( unsigned int N, double* mat );
-extern int init_random_upper_matrix( unsigned int N, double* mat );
-extern int check_diag_matrix( unsigned int N, double* mat1, double* mat2 );
-extern ompi_datatype_t* upper_matrix( unsigned int mat_size );
-extern ompi_datatype_t* lower_matrix( unsigned int mat_size );
-extern ompi_datatype_t* test_matrix_borders( unsigned int size, unsigned int width );
-extern ompi_datatype_t* test_contiguous( void );
-extern ompi_datatype_t* test_struct_char_double( void );
-extern ompi_datatype_t* test_create_twice_two_doubles( void );
+extern void print_double_mat(unsigned int N, double *mat);
+extern int init_random_upper_matrix(unsigned int N, double *mat);
+extern int check_diag_matrix(unsigned int N, double *mat1, double *mat2);
+extern ompi_datatype_t *upper_matrix(unsigned int mat_size);
+extern ompi_datatype_t *lower_matrix(unsigned int mat_size);
+extern ompi_datatype_t *test_matrix_borders(unsigned int size, unsigned int width);
+extern ompi_datatype_t *test_contiguous(void);
+extern ompi_datatype_t *test_struct_char_double(void);
+extern ompi_datatype_t *test_create_twice_two_doubles(void);
 
 /*
   Datatype 0x832cf28 size 0 align 1 id 0 length 4 used 0
@@ -82,13 +83,12 @@ extern ompi_datatype_t* test_create_twice_two_doubles( void );
   --C-----D*-[ C ][INT]        MPI_INT count 2 disp 0xa24 (2596) extent 4
   --C-----D*-[ C ][INT]        MPI_INT count 1 disp 0xa80 (2688) extent 4
 */
-extern ompi_datatype_t* test_create_blacs_type( void );
-extern ompi_datatype_t* test_create_blacs_type1( const ompi_datatype_t* base_type );
-extern ompi_datatype_t* test_create_blacs_type2( const ompi_datatype_t* base_type );
-extern ompi_datatype_t* test_struct( void );
-extern ompi_datatype_t* create_strange_dt( void );
-extern ompi_datatype_t* create_contiguous_type( const ompi_datatype_t* data, int count );
-extern ompi_datatype_t* create_vector_type( const ompi_datatype_t* data, int count,
-                                            int length, int stride );
-extern ompi_datatype_t* create_struct_constant_gap_resized_ddt( ompi_datatype_t* type );
-
+extern ompi_datatype_t *test_create_blacs_type(void);
+extern ompi_datatype_t *test_create_blacs_type1(const ompi_datatype_t *base_type);
+extern ompi_datatype_t *test_create_blacs_type2(const ompi_datatype_t *base_type);
+extern ompi_datatype_t *test_struct(void);
+extern ompi_datatype_t *create_strange_dt(void);
+extern ompi_datatype_t *create_contiguous_type(const ompi_datatype_t *data, int count);
+extern ompi_datatype_t *create_vector_type(const ompi_datatype_t *data, int count, int length,
+                                           int stride);
+extern ompi_datatype_t *create_struct_constant_gap_resized_ddt(ompi_datatype_t *type);

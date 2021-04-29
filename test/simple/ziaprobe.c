@@ -10,17 +10,17 @@
  * $HEADER$
  *
  */
-#include <stdio.h>
 #include <stdbool.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <mpi.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int msg;
     int rank, size, my_twin;
@@ -54,8 +54,10 @@ int main(int argc, char* argv[])
     /* this program requires that the size be an integer multiple of ppn */
     if (0 != (size % ppn)) {
         if (0 == rank) {
-            fprintf(stderr, "The number of procs must be an integer multiple of the ppn\n"
-                    "Given: num_procs %d ppn %d\n", size, ppn);
+            fprintf(stderr,
+                    "The number of procs must be an integer multiple of the ppn\n"
+                    "Given: num_procs %d ppn %d\n",
+                    size, ppn);
             MPI_Abort(MPI_COMM_WORLD, 1);
         } else {
             goto cleanup;
@@ -84,7 +86,7 @@ int main(int argc, char* argv[])
     /* first, determine if my node is odd or even */
     my_node = rank / ppn;
 
-     if (0 != (my_node % 2)) {
+    if (0 != (my_node % 2)) {
         /* compute my twin's rank - as I am an odd numbered node, my
          * twin will be on the node below me. Thus, its rank will be
          * my rank - ppn
@@ -145,8 +147,7 @@ int main(int argc, char* argv[])
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
     }
-    MPI_Gather(&my_timestamp, 2, MPI_LONG,
-               timestamps, 2, MPI_LONG, 0, MPI_COMM_WORLD);
+    MPI_Gather(&my_timestamp, 2, MPI_LONG, timestamps, 2, MPI_LONG, 0, MPI_COMM_WORLD);
     if (0 == rank) {
         /* The "timestamps" array will now have everyone's timestamp
          (i.e., rank 0's timestamp will be in pos 0 & 1,, rank 1's timestamp
@@ -155,17 +156,16 @@ int main(int argc, char* argv[])
         maxsec = start_sec;
         maxusec = start_usec;
         maxrank = -1;
-        for (i=0; i < 2*size; i+=2) {
+        for (i = 0; i < 2 * size; i += 2) {
             if (timestamps[i] < maxsec) {
                 continue;
             }
-            if (timestamps[i] == maxsec &&
-                timestamps[i+1] < maxusec) {
+            if (timestamps[i] == maxsec && timestamps[i + 1] < maxusec) {
                 continue;
             }
             maxsec = timestamps[i];
-            maxusec = timestamps[i+1];
-            maxrank = i/2;
+            maxusec = timestamps[i + 1];
+            maxrank = i / 2;
         }
         free(timestamps);
         /* subtract starting time to get time in microsecs for test */
@@ -181,9 +181,9 @@ int main(int argc, char* argv[])
         minutes = seconds / 60l;
         seconds = seconds % 60l;
         if (0 == minutes && 0 == seconds) {
-            fsecs = ((float)(maxsec)*1000000.0 + (float)maxusec) / 1000.0;
-            fprintf(stderr, "Time test was completed in %8.2f millisecs\nSlowest rank: %d\n",
-                    fsecs, maxrank);
+            fsecs = ((float) (maxsec) *1000000.0 + (float) maxusec) / 1000.0;
+            fprintf(stderr, "Time test was completed in %8.2f millisecs\nSlowest rank: %d\n", fsecs,
+                    maxrank);
         } else {
             fprintf(stderr, "Time test was completed in %3lu:%02lu min:sec\nSlowest rank: %d\n",
                     minutes, seconds, maxrank);

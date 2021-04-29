@@ -9,14 +9,14 @@
  * $HEADER$
  */
 
-#include <stdio.h>
 #include "shmem.h"
+#include <stdio.h>
 
 #if !defined(OSHMEM_SPEC_VERSION) || OSHMEM_SPEC_VERSION < 10200
-#error This application uses API 1.2 and up
+#    error This application uses API 1.2 and up
 #endif
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int proc, nproc;
     char name[SHMEM_MAX_NAME_LEN];
@@ -28,8 +28,7 @@ int main(int argc, char* argv[])
     shmem_info_get_name(name);
     shmem_info_get_version(&major, &minor);
 
-    printf("Hello, world, I am %d of %d: %s (version: %d.%d)\n",
-           proc, nproc, name, major, minor);
+    printf("Hello, world, I am %d of %d: %s (version: %d.%d)\n", proc, nproc, name, major, minor);
     shmem_finalize();
 
     return 0;

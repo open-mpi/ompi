@@ -8,12 +8,12 @@
  * $HEADER$
  */
 
-#include <stdio.h>
 #include <shmem.h>
+#include <stdio.h>
 
 #define SIZE 16
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     short source[SIZE];
     static short target[SIZE];
@@ -27,13 +27,13 @@ int main(int argc, char* argv[])
 
     if (my_pe == 0) {
         /* initialize array */
-        for(i = 0; i < SIZE; i++) {
+        for (i = 0; i < SIZE; i++) {
             source[i] = i;
         }
         /* local, not symmetric */
         /* static makes it symmetric */
         /* put "size" words into target on each PE */
-        for(i = 1; i < num_pe; i++) {
+        for (i = 1; i < num_pe; i++) {
             shmem_short_put(target, source, SIZE, i);
         }
     }
@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
     if (my_pe != 0) {
         printf("Target on PE %d is \t", my_pe);
 
-        for(i = 0; i < SIZE; i++) {
+        for (i = 0; i < SIZE; i++) {
             printf("%hd \t", target[i]);
         }
         printf("\n");

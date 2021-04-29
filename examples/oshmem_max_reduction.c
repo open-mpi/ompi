@@ -23,7 +23,7 @@ long src[N];
 long dst[N];
 long pWrk[_SHMEM_REDUCE_SYNC_SIZE];
 
-int  main(void)
+int main(void)
 {
     int i;
     int my_pe, num_pes;
@@ -47,7 +47,7 @@ int  main(void)
 
     printf("%d/%d dst =", my_pe, num_pes);
 
-    for (i = 0; i < N; i+= 1) {
+    for (i = 0; i < N; i += 1) {
         printf(" %ld", dst[i]);
     }
 
@@ -56,4 +56,3 @@ int  main(void)
 
     return 0;
 }
-

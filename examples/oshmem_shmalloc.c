@@ -27,4 +27,3 @@ int main(void)
 
     shmem_finalize();
 }
-

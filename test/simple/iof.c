@@ -1,11 +1,11 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include <mpi.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#define ORTE_IOF_BASE_MSG_MAX   2048
+#define ORTE_IOF_BASE_MSG_MAX 2048
 
 int main(int argc, char *argv[])
 {
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Rank %d: recvd blob %d\n", rank, pos);
             ++pos;
             done = true;
-            for (i=0; i < ORTE_IOF_BASE_MSG_MAX; i++) {
+            for (i = 0; i < ORTE_IOF_BASE_MSG_MAX; i++) {
                 if (0 != msg[i]) {
                     done = false;
                     break;
