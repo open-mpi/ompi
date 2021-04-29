@@ -294,8 +294,9 @@ int opal_ifbegin(void)
     opal_if_t *intf;
 
     intf = (opal_if_t *) opal_list_get_first(&opal_if_list);
-    if (NULL != intf)
+    if (NULL != intf) {
         return intf->if_index;
+    }
     return (-1);
 }
 
@@ -507,9 +508,11 @@ static int parse_ipv4_dots(const char *addr, uint32_t *net, int *dots)
             return OPAL_ERR_NETWORK_NOT_PARSEABLE;
         }
         /* skip all the . */
-        for (start = end; '\0' != *start; start++)
-            if ('.' != *start)
+        for (start = end; '\0' != *start; start++) {
+            if ('.' != *start) {
                 break;
+            }
+        }
     }
     *dots = i;
     *net = OPAL_IF_ASSEMBLE_NETWORK(n[0], n[1], n[2], n[3]);

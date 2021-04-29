@@ -84,10 +84,12 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
     if ((ptrdiff_t) pData->size == extent) {
         for (iov_idx = 0; iov_idx < (*out_size); iov_idx++) {
             remaining = pConv->local_size - pConv->bConverted;
-            if (0 == remaining)
+            if (0 == remaining) {
                 break; /* we're done this time */
-            if (remaining > iov[iov_idx].iov_len)
+            }
+            if (remaining > iov[iov_idx].iov_len) {
                 remaining = iov[iov_idx].iov_len;
+            }
 
             packed_buffer = (unsigned char *) iov[iov_idx].iov_base;
             user_memory = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
@@ -104,10 +106,12 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
     } else {
         for (iov_idx = 0; iov_idx < (*out_size); iov_idx++) {
             remaining = pConv->local_size - pConv->bConverted;
-            if (0 == remaining)
+            if (0 == remaining) {
                 break; /* we're done this time */
-            if (remaining > iov[iov_idx].iov_len)
+            }
+            if (remaining > iov[iov_idx].iov_len) {
                 remaining = iov[iov_idx].iov_len;
+            }
 
             packed_buffer = (unsigned char *) iov[iov_idx].iov_base;
             user_memory = pConv->pBaseBuf + pData->true_lb + stack[0].disp + stack[1].disp;
@@ -151,8 +155,9 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
     }
     *out_size = iov_idx; /* we only reach this line after the for loop succesfully complete */
     *max_data = pConv->bConverted - initial_bytes_converted;
-    if (pConv->bConverted == pConv->local_size)
+    if (pConv->bConverted == pConv->local_size) {
         pConv->flags |= CONVERTOR_COMPLETED;
+    }
     return !!(pConv->flags & CONVERTOR_COMPLETED); /* done or not */
 }
 
@@ -235,8 +240,9 @@ find_unused_byte:
     }
 #else
     for (size_t i = 0; i < data_length; i++) {
-        if (unused_byte == user_data[i])
+        if (unused_byte == user_data[i]) {
             user_data[i] = saved_data[i];
+        }
     }
 #endif
 }
@@ -318,8 +324,9 @@ int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct
                 /* we have a partial (less than blocklen) basic datatype */
                 int rc = UNPACK_PARTIAL_BLOCKLEN(pConvertor, pElem, count_desc, iov_ptr, conv_ptr,
                                                  iov_len_local);
-                if (0 == rc) /* not done */
+                if (0 == rc) { /* not done */
                     goto complete_loop;
+                }
                 if (0 == count_desc) {
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++; /* advance to the next data */
@@ -333,8 +340,9 @@ int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct
                 /* we have a basic datatype (working on full blocks) */
                 UNPACK_PREDEFINED_DATATYPE(pConvertor, pElem, count_desc, iov_ptr, conv_ptr,
                                            iov_len_local);
-                if (0 != count_desc) /* completed? */
+                if (0 != count_desc) { /* completed? */
                     goto complete_loop;
+                }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++; /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
@@ -514,8 +522,9 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++; /* advance to the next data */
                     UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                    if (0 == iov_len_local)
+                    if (0 == iov_len_local) {
                         goto complete_loop; /* escape if we're done */
+                    }
                     continue;
                 }
                 conv_ptr += rc * description[pos_desc].elem.extent;

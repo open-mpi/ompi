@@ -87,14 +87,16 @@ size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t *frag, char *msg, char *buf, siz
 
     used = snprintf(buf, length, "%s frag %p iov_cnt %d iov_idx %d size %lu\n", msg, (void *) frag,
                     (int) frag->iov_cnt, (int) frag->iov_idx, frag->size);
-    if ((size_t) used >= length)
+    if ((size_t) used >= length) {
         return length;
+    }
     for (i = 0; i < (int) frag->iov_cnt; i++) {
         used += snprintf(&buf[used], length - used, "[%s%p:%lu] ",
                          (i < (int) frag->iov_idx ? "*" : ""), frag->iov[i].iov_base,
                          frag->iov[i].iov_len);
-        if ((size_t) used >= length)
+        if ((size_t) used >= length) {
             return length;
+        }
     }
     return used;
 }
@@ -172,8 +174,9 @@ repeat:
          */
         cnt = length = btl_endpoint->endpoint_cache_length;
         for (i = 0; i < (int) frag->iov_cnt; i++) {
-            if (length > frag->iov_ptr[i].iov_len)
+            if (length > frag->iov_ptr[i].iov_len) {
                 length = frag->iov_ptr[i].iov_len;
+            }
             if ((0 == dont_copy_data) || (length < frag->iov_ptr[i].iov_len)) {
                 memcpy(frag->iov_ptr[i].iov_base, btl_endpoint->endpoint_cache_pos, length);
             } else {
@@ -202,12 +205,14 @@ repeat:
     /* non-blocking read, but continue if interrupted */
     do {
         cnt = readv(sd, frag->iov_ptr, num_vecs);
-        if (0 < cnt)
+        if (0 < cnt) {
             goto advance_iov_position;
+        }
         if (cnt == 0) {
             OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
-            if (MCA_BTL_TCP_CONNECTED == btl_endpoint->endpoint_state)
+            if (MCA_BTL_TCP_CONNECTED == btl_endpoint->endpoint_state) {
                 btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
+            }
             mca_btl_tcp_endpoint_close(btl_endpoint);
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
             return false;
@@ -265,8 +270,9 @@ advance_iov_position:
 
     /* read header */
     if (frag->iov_cnt == 0) {
-        if (btl_endpoint->endpoint_nbo && frag->iov_idx == 1)
+        if (btl_endpoint->endpoint_nbo && frag->iov_idx == 1) {
             MCA_BTL_TCP_HDR_NTOH(frag->hdr);
+        }
         switch (frag->hdr.type) {
         case MCA_BTL_TCP_HDR_TYPE_FIN:
             frag->endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
@@ -290,8 +296,9 @@ advance_iov_position:
                 goto repeat;
             } else if (frag->iov_idx == 2) {
                 for (i = 0; i < frag->hdr.count; i++) {
-                    if (btl_endpoint->endpoint_nbo)
+                    if (btl_endpoint->endpoint_nbo) {
                         MCA_BTL_BASE_SEGMENT_NTOH(frag->segments[i]);
+                    }
                     frag->iov[i + 2].iov_base = (IOVBASE_TYPE *) frag->segments[i].seg_addr.pval;
                     frag->iov[i + 2].iov_len = frag->segments[i].seg_len;
                 }

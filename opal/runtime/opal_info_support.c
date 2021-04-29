@@ -900,8 +900,9 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
     len = strlen(v);
 
     if (len > 0) {
-        while (len > 0 && isspace(v[len - 1]))
+        while (len > 0 && isspace(v[len - 1])) {
             len--;
+        }
         v[len] = '\0';
     }
 

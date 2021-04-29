@@ -117,8 +117,9 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
 #endif
         /* pointer to element 0 */
         ptr = list->opal_list_sentinel.opal_list_next;
-        for (i = 0; i < idx - 1; i++)
+        for (i = 0; i < idx - 1; i++) {
             ptr = ptr->opal_list_next;
+        }
 
         next = ptr->opal_list_next;
         item->opal_list_next = next;

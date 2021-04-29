@@ -115,8 +115,9 @@ void opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc)
 {
     callback_list_item_t *cbitem, *next;
 
-    if (!release_run_callbacks)
+    if (!release_run_callbacks) {
         return;
+    }
 
     /*
      * This is not really thread safe - but we can't hold the lock

@@ -73,10 +73,12 @@ int32_t opal_pack_homogeneous_contig_function(opal_convertor_t *pConv, struct io
      * does not provide a buffer.
      */
     for (iov_count = 0; iov_count < (*out_size); iov_count++) {
-        if (0 == length)
+        if (0 == length) {
             break;
-        if ((size_t) iov[iov_count].iov_len > length)
+        }
+        if ((size_t) iov[iov_count].iov_len > length) {
             iov[iov_count].iov_len = length;
+        }
         if (iov[iov_count].iov_base == NULL) {
             iov[iov_count].iov_base = (IOVBASE_TYPE *) source_base;
             COMPUTE_CSUM(iov[iov_count].iov_base, iov[iov_count].iov_len, pConv);
@@ -148,10 +150,12 @@ int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv,
     for (idx = 0; idx < (*out_size); idx++) {
         /* Limit the amount of packed data to the data left over on this convertor */
         remaining = pConv->local_size - pConv->bConverted;
-        if (0 == remaining)
+        if (0 == remaining) {
             break; /* we're done this time */
-        if (remaining > iov[idx].iov_len)
+        }
+        if (remaining > iov[idx].iov_len) {
             remaining = iov[idx].iov_len;
+        }
         packed_buffer = (unsigned char *) iov[idx].iov_base;
         pConv->bConverted += remaining;
         user_memory = pConv->pBaseBuf + pData->true_lb + stack[0].disp + stack[1].disp;
@@ -178,8 +182,9 @@ int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv,
             if (0 == stack[1].count) { /* one completed element */
                 stack[0].count--;
                 stack[0].disp += extent;
-                if (0 == stack[0].count) /* not yet done */
+                if (0 == stack[0].count) { /* not yet done */
                     break;
+                }
                 stack[1].count = pData->size;
                 stack[1].disp = 0;
             }
@@ -222,8 +227,9 @@ int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv,
 update_status_and_return:
     *out_size = idx;
     *max_data = pConv->bConverted - initial_bytes_converted;
-    if (pConv->bConverted == pConv->local_size)
+    if (pConv->bConverted == pConv->local_size) {
         pConv->flags |= CONVERTOR_COMPLETED;
+    }
     return !!(pConv->flags & CONVERTOR_COMPLETED); /* done or not */
 }
 
@@ -284,8 +290,9 @@ int32_t opal_generic_simple_pack_function(opal_convertor_t *pConvertor, struct i
                 /* we have a partial (less than blocklen) basic datatype */
                 int rc = PACK_PARTIAL_BLOCKLEN(pConvertor, pElem, count_desc, conv_ptr, iov_ptr,
                                                iov_len_local);
-                if (0 == rc) /* not done */
+                if (0 == rc) { /* not done */
                     goto complete_loop;
+                }
                 if (0 == count_desc) {
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++; /* advance to the next data */
@@ -299,8 +306,9 @@ int32_t opal_generic_simple_pack_function(opal_convertor_t *pConvertor, struct i
                 /* we have a basic datatype (working on full blocks) */
                 PACK_PREDEFINED_DATATYPE(pConvertor, pElem, count_desc, conv_ptr, iov_ptr,
                                          iov_len_local);
-                if (0 != count_desc) /* completed? */
+                if (0 != count_desc) { /* completed? */
                     goto complete_loop;
+                }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++; /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
@@ -409,8 +417,9 @@ static inline void pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     _r_blength = master->remote_sizes[_elem->common.type];
     if ((_count * _r_blength) > *(SPACE)) {
         _count = (*(SPACE) / _r_blength);
-        if (0 == _count)
+        if (0 == _count) {
             return; /* nothing to do */
+        }
     }
 
     OPAL_DATATYPE_SAFEGUARD_POINTER(_source, (_count * _elem->extent), (CONVERTOR)->pBaseBuf,

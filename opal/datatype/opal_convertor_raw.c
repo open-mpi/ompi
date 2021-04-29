@@ -47,8 +47,9 @@ static inline int opal_convertor_merge_iov(struct iovec *iov, uint32_t *iov_coun
             return 0;
         } /* cannot merge, move to the next position */
         *idx = *idx + 1;
-        if (*idx == *iov_count)
+        if (*idx == *iov_count) {
             return 1; /* do not overwrite outside the iovec array boundaries */
+        }
     }
     iov[*idx].iov_base = base;
     iov[*idx].iov_len = len;
@@ -170,8 +171,9 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
                 DO_DEBUG(opal_output(0, "raw 2. iov[%d] = {base %p, length %" PRIsize_t "}\n",
                                      index, (void *) source_base, blength););
                 if (opal_convertor_merge_iov(iov, iov_count, (IOVBASE_TYPE *) source_base, blength,
-                                             &index))
+                                             &index)) {
                     break; /* no more iovec available, bail out */
+                }
 
                 source_base += current->extent;
                 sum_iov_len += blength;

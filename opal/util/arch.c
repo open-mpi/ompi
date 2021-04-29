@@ -30,11 +30,13 @@ static inline int32_t opal_arch_isbigendian(void)
     int x = 0;
 
     /* if( sizeof(int) == 8 ) x = 4; */
-    if (ptr[x] == 0x12)
+    if (ptr[x] == 0x12) {
         return 1; /* big endian, true */
-    if (ptr[x] == 0x78)
+    }
+    if (ptr[x] == 0x78) {
         return 0; /* little endian, false */
-    assert(0);    /* unknown architecture not little nor big endian */
+    }
+    assert(0); /* unknown architecture not little nor big endian */
     return -1;
 }
 
@@ -82,8 +84,9 @@ int opal_arch_init(void)
     opal_local_arch = (OPAL_ARCH_HEADERMASK | OPAL_ARCH_UNUSEDMASK);
 
     /* Handle the size of long (can hold a pointer) */
-    if (8 == sizeof(long))
+    if (8 == sizeof(long)) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LONGIS64);
+    }
 
     /* sizeof bool */
     if (1 == sizeof(bool)) {
@@ -98,34 +101,39 @@ int opal_arch_init(void)
        abstractions a little less painful... */
 
     /* Initialize the information regarding the long double */
-    if (12 == sizeof(long double))
+    if (12 == sizeof(long double)) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LONGDOUBLEIS96);
-    else if (16 == sizeof(long double))
+    } else if (16 == sizeof(long double)) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LONGDOUBLEIS128);
+    }
 
     /* Big endian or little endian ? That's the question */
-    if (opal_arch_isbigendian())
+    if (opal_arch_isbigendian()) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_ISBIGENDIAN);
+    }
 
     /* What's the maximum exponent ? */
-    if (LDBL_MAX_EXP == 16384)
+    if (LDBL_MAX_EXP == 16384) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LDEXPSIZEIS15);
+    }
 
     /* How about the length in bits of the mantissa */
-    if (LDBL_MANT_DIG == 64)
+    if (LDBL_MANT_DIG == 64) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LDMANTDIGIS64);
-    else if (LDBL_MANT_DIG == 105)
+    } else if (LDBL_MANT_DIG == 105) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LDMANTDIGIS105);
-    else if (LDBL_MANT_DIG == 106)
+    } else if (LDBL_MANT_DIG == 106) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LDMANTDIGIS106);
-    else if (LDBL_MANT_DIG == 107)
+    } else if (LDBL_MANT_DIG == 107) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LDMANTDIGIS107);
-    else if (LDBL_MANT_DIG == 113)
+    } else if (LDBL_MANT_DIG == 113) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LDMANTDIGIS113);
+    }
 
     /* Intel data representation or Sparc ? */
-    if (opal_arch_ldisintel())
+    if (opal_arch_ldisintel()) {
         opal_arch_setmask(&opal_local_arch, OPAL_ARCH_LDISINTEL);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -154,10 +162,12 @@ int32_t opal_arch_checkmask(uint32_t *var, uint32_t mask)
 
             if ((tmpvar & OPAL_ARCH_HEADERMASK) && (!(tmpvar & OPAL_ARCH_HEADERMASK2))) {
                 *var = tmpvar;
-            } else
+            } else {
                 return -1;
-        } else
+            }
+        } else {
             return -1;
+        }
     }
 
     /* Here is the real evaluation of the bitmask */

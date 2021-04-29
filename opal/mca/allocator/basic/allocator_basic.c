@@ -215,11 +215,13 @@ void *mca_allocator_basic_realloc(mca_allocator_base_module_t *base, void *ptr, 
 {
     unsigned char *addr = ((unsigned char *) ptr) - sizeof(size_t);
     size_t alloc_size = *(size_t *) addr;
-    if (size <= alloc_size)
+    if (size <= alloc_size) {
         return ptr;
+    }
     addr = (unsigned char *) mca_allocator_basic_alloc(base, size, 0);
-    if (addr == NULL)
+    if (addr == NULL) {
         return addr;
+    }
     memcpy(addr, ptr, alloc_size);
     mca_allocator_basic_free(base, ptr);
     return addr;

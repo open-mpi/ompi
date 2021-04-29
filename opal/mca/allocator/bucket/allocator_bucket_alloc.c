@@ -328,8 +328,9 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t *mem)
             while (NULL != segment) {
                 next_segment = segment->next_segment;
                 /* free the memory */
-                if (mem_options->free_mem_fn)
+                if (mem_options->free_mem_fn) {
                     mem_options->free_mem_fn(mem->alc_context, segment);
+                }
                 segment = next_segment;
             }
             mem_options->buckets[i].free_chunk = NULL;
@@ -365,8 +366,9 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t *mem)
                     segment = *segment_header;
                     *segment_header = segment->next_segment;
                     /* free the memory */
-                    if (mem_options->free_mem_fn)
+                    if (mem_options->free_mem_fn) {
                         mem_options->free_mem_fn(mem->alc_context, segment);
+                    }
                 } else {
                     /* go to next segment */
                     segment_header = &((*segment_header)->next_segment);

@@ -219,12 +219,13 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
 #if defined(HAVE_SYSLOG) && defined(HAVE_SYSLOG_H)
             lds->lds_want_syslog = true;
             have_output = true;
-            if (strcasecmp(ptr + 10, "notice") == 0)
+            if (strcasecmp(ptr + 10, "notice") == 0) {
                 lds->lds_syslog_priority = LOG_NOTICE;
-            else if (strcasecmp(ptr + 10, "INFO") == 0)
+            } else if (strcasecmp(ptr + 10, "INFO") == 0) {
                 lds->lds_syslog_priority = LOG_INFO;
-            else if (strcasecmp(ptr + 10, "DEBUG") == 0)
+            } else if (strcasecmp(ptr + 10, "DEBUG") == 0) {
                 lds->lds_syslog_priority = LOG_DEBUG;
+            }
 #else
             opal_output(0, "syslog support requested but not available on this system");
 #endif /* defined(HAVE_SYSLOG) && defined(HAVE_SYSLOG_H) */
@@ -260,8 +261,9 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
 
         else if (strncasecmp(ptr, "level", 5) == 0) {
             lds->lds_verbose_level = 0;
-            if (ptr[5] == OPAL_ENV_SEP)
+            if (ptr[5] == OPAL_ENV_SEP) {
                 lds->lds_verbose_level = atoi(ptr + 6);
+            }
         }
 
         if (NULL == next) {

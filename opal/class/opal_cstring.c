@@ -87,11 +87,13 @@ int opal_cstring_to_int(opal_cstring_t *string, int *interp)
     errno = 0;
     tmp = strtol(string->string, &endp, 10);
     /* we found something not a number */
-    if (*endp != '\0')
+    if (*endp != '\0') {
         return OPAL_ERR_BAD_PARAM;
+    }
     /* underflow */
-    if (tmp == 0 && errno == EINVAL)
+    if (tmp == 0 && errno == EINVAL) {
         return OPAL_ERR_BAD_PARAM;
+    }
 
     *interp = (int) tmp;
 

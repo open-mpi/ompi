@@ -315,8 +315,9 @@ opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void)
     }
 
     ret = opal_tsd_tracked_key_get(print_tsd_key, (void **) &ptr);
-    if (OPAL_SUCCESS != ret)
+    if (OPAL_SUCCESS != ret) {
         return NULL;
+    }
 
     if (NULL == ptr) {
         ptr = (opal_hwloc_print_buffers_t *) malloc(sizeof(opal_hwloc_print_buffers_t));

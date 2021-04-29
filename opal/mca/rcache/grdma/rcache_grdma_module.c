@@ -91,8 +91,8 @@ static void mca_rcache_grdma_cache_contructor(mca_rcache_grdma_cache_t *cache)
 static void mca_rcache_grdma_cache_destructor(mca_rcache_grdma_cache_t *cache)
 {
     /* clear the lru before releasing the list */
-    while (NULL != opal_list_remove_first(&cache->lru_list))
-        ;
+    while (NULL != opal_list_remove_first(&cache->lru_list)) {
+    }
 
     OBJ_DESTRUCT(&cache->lru_list);
     OBJ_DESTRUCT(&cache->gc_lifo);
@@ -262,8 +262,8 @@ static inline void mca_rcache_grdma_remove_from_lru(mca_rcache_grdma_module_t *r
      * function to be called then some thread deregistered the region. it may be the
      * case that the deregistration is still ongoing so wait until the deregistration
      * thread has marked this registration as being in the lru before continuing */
-    while (!(grdma_reg->flags & MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU))
-        ;
+    while (!(grdma_reg->flags & MCA_RCACHE_GRDMA_REG_FLAG_IN_LRU)) {
+    }
 
     /* opal lists are not thread safe at this time so we must lock :'( */
     opal_mutex_lock(&rcache_grdma->cache->vma_module->vma_lock);

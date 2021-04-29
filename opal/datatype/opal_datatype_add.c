@@ -138,14 +138,16 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
      * non-negative integers. If the value is zero, no elements are generated in
      * the type map and there is no effect on datatype bounds or extent.
      */
-    if (0 == count)
+    if (0 == count) {
         return OPAL_SUCCESS;
+    }
 
     /* the extent should always be positive. So a negative value here have a
      * special meaning ie. default extent as computed by ub - lb
      */
-    if (extent == -1)
+    if (extent == -1) {
         extent = (pdtAdd->ub - pdtAdd->lb);
+    }
 
     /* Deal with the special markers (OPAL_DATATYPE_LB and OPAL_DATATYPE_UB) */
     if (OPAL_DATATYPE_LB == pdtAdd->id) {
@@ -279,10 +281,11 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
      * the data-type we can update the size, true_lb and true_ub.
      */
     pdtBase->size += count * pdtAdd->size;
-    if (0 == pdtBase->nbElems)
+    if (0 == pdtBase->nbElems) {
         old_true_ub = disp;
-    else
+    } else {
         old_true_ub = pdtBase->true_ub;
+    }
     if (0 != pdtBase->size) {
         pdtBase->true_lb = LMIN(true_lb, pdtBase->true_lb);
         pdtBase->true_ub = LMAX(true_ub, pdtBase->true_ub);
@@ -306,8 +309,9 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
      */
     if ((pdtAdd->flags & (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA))
         == (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_DATA)) {
-        if (NULL != pdtBase->ptypes)
+        if (NULL != pdtBase->ptypes) {
             pdtBase->ptypes[pdtAdd->id] += count;
+        }
 
         pLast->elem.common.flags = pdtAdd->flags & ~(OPAL_DATATYPE_FLAG_COMMITTED);
         pLast->elem.common.type = pdtAdd->id;
@@ -332,9 +336,11 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
         pdtBase->flags |= (pdtAdd->flags & OPAL_DATATYPE_FLAG_USER_LB);
         pdtBase->flags |= (pdtAdd->flags & OPAL_DATATYPE_FLAG_USER_UB);
         if ((NULL != pdtBase->ptypes) && (NULL != pdtAdd->ptypes)) {
-            for (i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++)
-                if (pdtAdd->ptypes[i] != 0)
+            for (i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++) {
+                if (pdtAdd->ptypes[i] != 0) {
                     pdtBase->ptypes[i] += (count * pdtAdd->ptypes[i]);
+                }
+            }
         }
         if (1 == pdtAdd->desc.used) {
             pLast->elem = pdtAdd->desc.desc[0].elem;
@@ -393,9 +399,9 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
 
             for (i = 0; i < pdtAdd->desc.used; i++) {
                 pLast->elem = pdtAdd->desc.desc[i].elem;
-                if (OPAL_DATATYPE_FLAG_DATA & pLast->elem.common.flags)
+                if (OPAL_DATATYPE_FLAG_DATA & pLast->elem.common.flags) {
                     pLast->elem.disp += disp;
-                else if (OPAL_DATATYPE_END_LOOP == pLast->elem.common.type) {
+                } else if (OPAL_DATATYPE_END_LOOP == pLast->elem.common.type) {
                     pLast->end_loop.first_elem_disp += disp;
                 }
                 pLast++;
@@ -424,8 +430,9 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
                                                       * added type have to match */
             || (count < 2))) {                       /* if the count is bigger than 2 */
         SET_CONTIGUOUS_FLAG(pdtBase->flags);
-        if ((ptrdiff_t) pdtBase->size == (pdtBase->ub - pdtBase->lb))
+        if ((ptrdiff_t) pdtBase->size == (pdtBase->ub - pdtBase->lb)) {
             SET_NO_GAP_FLAG(pdtBase->flags);
+        }
     }
 
     /* If the NO_GAP flag is set the contiguous have to be set too */
