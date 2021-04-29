@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +20,7 @@ static int vprotocol_pessimist_request_no_free(ompi_request_t **req) {
 }
 
 #define PREPARE_REQUESTS_WITH_NO_FREE(count, requests) do { \
-    for(int i = 0; i < count; i++) \
+    for (typeof(count) i = 0; i < count; i++)     \
     { \
         if(requests[i] == MPI_REQUEST_NULL) continue; \
         requests[i]->req_free = vprotocol_pessimist_request_no_free; \
