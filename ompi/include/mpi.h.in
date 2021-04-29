@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2020 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2007-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011-2020 Sandia National Laboratories. All rights reserved.
@@ -1774,7 +1774,7 @@ OMPI_DECLSPEC  int MPI_Pready(int partitions, MPI_Request request);
 OMPI_DECLSPEC  int MPI_Pready_range(int partition_low, int partition_high,
                                     MPI_Request request);
 OMPI_DECLSPEC  int MPI_Pready_list(int length, int partition_list[], MPI_Request request);
-OMPI_DECLSPEC  int MPI_Precv_init(const void* buf, int partitions, MPI_Count count,
+OMPI_DECLSPEC  int MPI_Precv_init(void* buf, int partitions, MPI_Count count,
                                   MPI_Datatype datatype, int source, int tag, MPI_Comm comm,
                                   MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
@@ -2431,7 +2431,7 @@ OMPI_DECLSPEC  int PMPI_Isend(const void *buf, int count, MPI_Datatype datatype,
                               int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Issend(const void *buf, int count, MPI_Datatype datatype, int dest,
                                int tag, MPI_Comm comm, MPI_Request *request);
-OMPI_DECLSPEC  int PMPI_Precv_init(const void* buf, int partitions, MPI_Count count,
+OMPI_DECLSPEC  int PMPI_Precv_init(void* buf, int partitions, MPI_Count count,
                                   MPI_Datatype datatype, int source, int tag, MPI_Comm comm,
                                   MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Psend_init(const void* buf, int partitions, MPI_Count count,
