@@ -56,7 +56,7 @@ int MPI_Keyval_create(MPI_Copy_function *copy_attr_fn,
         }
     }
 
-    copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*)copy_attr_fn;
+    copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function) copy_attr_fn;
     del_fn.attr_communicator_delete_fn = delete_attr_fn;
 
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn,

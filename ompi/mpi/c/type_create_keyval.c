@@ -56,7 +56,7 @@ int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
         }
     }
 
-    copy_fn.attr_datatype_copy_fn = (MPI_Type_internal_copy_attr_function*)type_copy_attr_fn;
+    copy_fn.attr_datatype_copy_fn = (MPI_Type_internal_copy_attr_function) type_copy_attr_fn;
     del_fn.attr_datatype_delete_fn = type_delete_attr_fn;
 
     ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,

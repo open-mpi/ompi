@@ -64,50 +64,34 @@ typedef enum ompi_attribute_type_t ompi_attribute_type_t;
    delete. These will only be used here and not in the front end
    functions. */
 
-typedef void (ompi_fint_copy_attr_function)(MPI_Fint *oldobj,
-                                                    MPI_Fint *keyval,
-                                                    MPI_Fint *extra_state,
-                                                    MPI_Fint *attr_in,
-                                                    MPI_Fint *attr_out,
-                                                    ompi_fortran_logical_t *flag,
-                                                    MPI_Fint *ierr);
-typedef void (ompi_fint_delete_attr_function)(MPI_Fint *obj,
-                                                      MPI_Fint *keyval,
-                                                      MPI_Fint *attr_in,
-                                                      MPI_Fint *extra_state,
-                                                      MPI_Fint *ierr);
+typedef void (*ompi_fint_copy_attr_function)(MPI_Fint *oldobj, MPI_Fint *keyval,
+                                             MPI_Fint *extra_state, MPI_Fint *attr_in,
+                                             MPI_Fint *attr_out, ompi_fortran_logical_t *flag,
+                                             MPI_Fint *ierr);
+typedef void (*ompi_fint_delete_attr_function)(MPI_Fint *obj, MPI_Fint *keyval, MPI_Fint *attr_in,
+                                               MPI_Fint *extra_state, MPI_Fint *ierr);
 
 /* New-style MPI-2 Fortran function pointer declarations for copy and
    delete. These will only be used here and not in the front end
    functions. */
 
-typedef void (ompi_aint_copy_attr_function)(MPI_Fint *oldobj,
-                                            MPI_Fint *keyval,
-                                            void *extra_state,
-                                            void *attr_in,
-                                            void *attr_out,
-                                            ompi_fortran_logical_t *flag,
-                                            MPI_Fint *ierr);
-typedef void (ompi_aint_delete_attr_function)(MPI_Fint *obj,
-                                              MPI_Fint *keyval,
-                                              void *attr_in,
-                                              void *extra_state,
-                                              MPI_Fint *ierr);
+typedef void (*ompi_aint_copy_attr_function)(MPI_Fint *oldobj, MPI_Fint *keyval, void *extra_state,
+                                             void *attr_in, void *attr_out,
+                                             ompi_fortran_logical_t *flag, MPI_Fint *ierr);
+typedef void (*ompi_aint_delete_attr_function)(MPI_Fint *obj, MPI_Fint *keyval, void *attr_in,
+                                               void *extra_state, MPI_Fint *ierr);
 /*
  * Internally the copy function for all kinds of MPI objects has one more
  * argument, the pointer to the new object. Therefore, we can do on the
  * flight modifications of the new communicator based on attributes stored
  * on the main communicator.
  */
-typedef int (MPI_Comm_internal_copy_attr_function)(MPI_Comm, int, void *,
-                                                   void *, void *, int *,
-                                                   MPI_Comm);
-typedef int (MPI_Type_internal_copy_attr_function)(MPI_Datatype, int, void *,
-                                                   void *, void *, int *,
-                                                   MPI_Datatype);
-typedef int (MPI_Win_internal_copy_attr_function)(MPI_Win, int, void *,
-                                                  void *, void *, int *,
-                                                  MPI_Win);
+typedef int (*MPI_Comm_internal_copy_attr_function)(MPI_Comm, int, void *, void *, void *, int *,
+                                                    MPI_Comm);
+typedef int (*MPI_Type_internal_copy_attr_function)(MPI_Datatype, int, void *, void *, void *,
+                                                    int *, MPI_Datatype);
+typedef int (*MPI_Win_internal_copy_attr_function)(MPI_Win, int, void *, void *, void *, int *,
+                                                   MPI_Win);
 
 typedef void (ompi_attribute_keyval_destructor_fn_t)(int);
 
@@ -120,19 +104,19 @@ union ompi_attribute_fn_ptr_union_t {
     MPI_Type_delete_attr_function          *attr_datatype_delete_fn;
     MPI_Win_delete_attr_function           *attr_win_delete_fn;
 
-    MPI_Comm_internal_copy_attr_function   *attr_communicator_copy_fn;
-    MPI_Type_internal_copy_attr_function   *attr_datatype_copy_fn;
-    MPI_Win_internal_copy_attr_function    *attr_win_copy_fn;
+    MPI_Comm_internal_copy_attr_function attr_communicator_copy_fn;
+    MPI_Type_internal_copy_attr_function attr_datatype_copy_fn;
+    MPI_Win_internal_copy_attr_function attr_win_copy_fn;
 
     /* For Fortran old MPI-1 callback functions */
 
-    ompi_fint_delete_attr_function *attr_fint_delete_fn;
-    ompi_fint_copy_attr_function   *attr_fint_copy_fn;
+    ompi_fint_delete_attr_function attr_fint_delete_fn;
+    ompi_fint_copy_attr_function attr_fint_copy_fn;
 
     /* For Fortran new MPI-2 callback functions */
 
-    ompi_aint_delete_attr_function *attr_aint_delete_fn;
-    ompi_aint_copy_attr_function   *attr_aint_copy_fn;
+    ompi_aint_delete_attr_function attr_aint_delete_fn;
+    ompi_aint_copy_attr_function attr_aint_copy_fn;
 };
 
 typedef union ompi_attribute_fn_ptr_union_t ompi_attribute_fn_ptr_union_t;
