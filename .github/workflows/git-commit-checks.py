@@ -50,6 +50,8 @@ from github import Github
 GOOD = "good"
 BAD  = "bad"
 
+NACP = "bot:notacherrypick"
+
 GITHUB_WORKSPACE  = os.environ.get('GITHUB_WORKSPACE')
 GITHUB_SHA        = os.environ.get('GITHUB_SHA')
 GITHUB_BASE_REF   = os.environ.get('GITHUB_BASE_REF')
@@ -218,7 +220,7 @@ def check_cherry_pick(config, repo, commit):
 
     else:
         if config['cherry pick required']:
-            return BAD, "does not include a cherry pick message"
+            return BAD, f"does not include a cherry pick message (did you need to {NACP}?)"
         else:
             return GOOD, None
 
@@ -284,7 +286,7 @@ def check_github_pr_description(config):
     pr_num = int(match.group(1))
     pr     = repo.get_pull(pr_num)
 
-    if "bot:notacherrypick" in pr.body:
+    if NACP in pr.body:
         config['cherry pick required'] = False
 
 #----------------------------------------------------------------------------
