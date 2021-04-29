@@ -12,6 +12,7 @@
  * Copyright (c) 2019-2021 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2021      University of Alabama at Birmingham. All rights reserved.
  * Copyright (c) 2021      Tennessee Technological University. All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -313,8 +314,10 @@ mca_part_persist_progress(void)
     OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
     block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
     if(to_delete) {
-        int err = mca_part_persist_free_req(to_delete);
-        if(OMPI_SUCCESS != err) return OMPI_ERROR;
+        err =  mca_part_persist_free_req(to_delete);
+        if (OMPI_SUCCESS != err) {
+            return OMPI_ERROR;
+        }
     }
 
     return OMPI_SUCCESS;

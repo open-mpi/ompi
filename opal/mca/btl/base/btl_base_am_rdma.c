@@ -3,6 +3,7 @@
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -480,7 +481,7 @@ mca_btl_base_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
 
     BTL_VERBOSE(("Initiating RDMA operation. context=%p, size=%" PRIsize_t
                  ", packet_size=%" PRIsize_t,
-                 context, size, packet_size));
+                 (void*) context, size, packet_size));
 
     descriptor = btl->btl_alloc(btl, endpoint, order, packet_size,
                                 MCA_BTL_DES_SEND_ALWAYS_CALLBACK | MCA_BTL_DES_FLAGS_SIGNAL);
@@ -609,7 +610,7 @@ static int mca_btl_base_am_rdma_respond(mca_btl_base_module_t *btl,
         }
     }
 
-    BTL_VERBOSE(("sending descriptor %p", send_descriptor));
+    BTL_VERBOSE(("sending descriptor %p", (void*) send_descriptor));
 
     send_descriptor->des_cbfunc = NULL;
 
@@ -638,7 +639,7 @@ mca_btl_base_am_rmda_rdma_complete(mca_btl_base_module_t *btl,
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         BTL_VERBOSE(
             ("could not send a response. queueing the response for later. endpoint=%p, ret=%d",
-             endpoint, ret));
+             (void*) endpoint, ret));
         mca_btl_base_rdma_queue_operation(btl, NULL, NULL, 0, NULL, operation);
     }
 
@@ -873,7 +874,7 @@ static void mca_btl_base_am_rdma_response(mca_btl_base_module_t *btl,
     mca_btl_base_rdma_context_t *context = (mca_btl_base_rdma_context_t *) (uintptr_t)
                                                resp_hdr->context;
 
-    BTL_VERBOSE(("received response for RDMA operation. context=%p, size=%" PRIu64, context,
+    BTL_VERBOSE(("received response for RDMA operation. context=%p, size=%" PRIu64, (void*) context,
                  resp_hdr->response_size));
 
     if (MCA_BTL_BASE_AM_PUT != context->type) {
@@ -890,7 +891,7 @@ static void mca_btl_base_am_rdma_response(mca_btl_base_module_t *btl,
     }
 
     if (context->total_size
-        == opal_atomic_add_fetch_64(&context->acknowledged, resp_hdr->response_size)) {
+        == (uint64_t) opal_atomic_add_fetch_64(&context->acknowledged, resp_hdr->response_size)) {
         context->cbfunc(btl, desc->endpoint, context->local_address, context->local_handle,
                         context->cbcontext, context->cbdata, OPAL_SUCCESS);
         OBJ_RELEASE(context);
@@ -1001,7 +1002,7 @@ static void mca_btl_base_am_process_atomic(mca_btl_base_module_t *btl,
     }
 }
 
-void mca_btl_sm_sc_emu_init(void)
+static void mca_btl_sm_sc_emu_init(void)
 {
     mca_btl_base_active_message_trigger[MCA_BTL_BASE_TAG_RDMA].cbfunc
         = mca_btl_base_am_process_rdma;
@@ -1093,7 +1094,7 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
         btl->btl_put_limit = max_operation_size - sizeof(mca_btl_base_rdma_hdr_t);
         btl->btl_put_alignment = operation_alignment;
         btl->btl_put = mca_btl_base_am_rdma_put;
-        BTL_VERBOSE(("Enabling AM-based RDMA put for BTL %p. max put = %zu", btl, btl->btl_put_limit));
+        BTL_VERBOSE(("Enabling AM-based RDMA put for BTL %p. max put = %zu", (void*) btl, btl->btl_put_limit));
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_GET)) {
@@ -1101,11 +1102,11 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
         btl->btl_get_limit = max_operation_size - sizeof(mca_btl_base_rdma_response_hdr_t);
         btl->btl_get_alignment = operation_alignment;
         btl->btl_get = mca_btl_base_am_rdma_get;
-        BTL_VERBOSE(("Enabling AM-based RDMA get for BTL %p. max get = %zu", btl, btl->btl_get_limit));
+        BTL_VERBOSE(("Enabling AM-based RDMA get for BTL %p. max get = %zu", (void*) btl, btl->btl_get_limit));
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_FOPS)) {
-        BTL_VERBOSE(("Enabling AM-based FOPs get for BTL %p", btl));
+        BTL_VERBOSE(("Enabling AM-based FOPs get for BTL %p", (void*) btl));
         btl->btl_flags |= MCA_BTL_FLAGS_ATOMIC_AM_FOP;
 
         btl->btl_atomic_fop = mca_btl_base_am_fop;

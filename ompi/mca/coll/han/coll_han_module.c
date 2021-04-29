@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -222,8 +223,6 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     han_module->topologic_level = GLOBAL_COMMUNICATOR;
 
     if (NULL != comm->super.s_info) {
-        char info_val[OPAL_MAX_INFO_VAL+1];
-
         /* Get the info value disaqualifying coll components */
         opal_cstring_t *info_str;
         opal_info_get(comm->super.s_info, "ompi_comm_coll_han_topo_level",
