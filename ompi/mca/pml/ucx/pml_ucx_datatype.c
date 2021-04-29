@@ -220,18 +220,23 @@ ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
     if (mca_pml_ucx_datatype_is_contig(datatype)) {
         ompi_datatype_type_size(datatype, &size);
         ucp_datatype = ucp_dt_make_contig(size);
-        goto out;
-    }
-
-    status = ucp_dt_create_generic(&pml_ucx_generic_datatype_ops,
-                                   datatype, &ucp_datatype);
-    if (status != UCS_OK) {
-        int err = MPI_ERR_INTERN;
-        PML_UCX_ERROR("Failed to create UCX datatype for %s", datatype->name);
-        /* TODO: this error should return to the caller and invoke an error
-         * handler from the MPI API call.
-         * For now, it is fatal. */
-        ompi_mpi_errors_are_fatal_comm_handler(NULL, &err, "Failed to allocate datatype structure");
+        PML_UCX_VERBOSE(7, "created contig UCX datatype 0x%"PRIx64,
+                        ucp_datatype)
+    } else {
+        status = ucp_dt_create_generic(&pml_ucx_generic_datatype_ops,
+                                       datatype, &ucp_datatype);
+        if (status != UCS_OK) {
+            int err = MPI_ERR_INTERN;
+            PML_UCX_ERROR("Failed to create UCX datatype for %s",
+                          datatype->name);
+            /* TODO: this error should return to the caller and invoke an error
+             * handler from the MPI API call.
+             * For now, it is fatal. */
+            ompi_mpi_errors_are_fatal_comm_handler(NULL, &err,
+                                                   "Failed to allocate "
+                                                   "datatype structure");
+        }
+        PML_UCX_VERBOSE(7, "created generic UCX datatype 0x%"PRIx64, ucp_datatype)
     }
 
     /* Add custom attribute, to clean up UCX resources when OMPI datatype is
@@ -254,8 +259,6 @@ ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
             ompi_mpi_errors_are_fatal_comm_handler(NULL, &err, "Failed to allocate datatype structure");
         }
     }
-out:
-    PML_UCX_VERBOSE(7, "created generic UCX datatype 0x%"PRIx64, ucp_datatype)
 
 #ifdef HAVE_UCP_REQUEST_PARAM_T
     UCS_STATIC_ASSERT(sizeof(datatype->pml_data) >= sizeof(pml_ucx_datatype_t*));
