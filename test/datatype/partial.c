@@ -39,30 +39,32 @@ static void show_neighborhood(double *ptr, int how_many, bool show_hex)
 {
     int i;
 
-    printf("%12p: ", (void *) ptr);
+    fprintf(stderr, "%12p: ", (void *) ptr);
     for (i = -how_many; i < how_many; i++) {
         if (0 == i) {
-            printf(" <%g> ", ptr[i]);
+            fprintf(stderr, " <%g> ", ptr[i]);
         } else {
-            printf("  %g  ", ptr[i]);
+            fprintf(stderr, "  %g  ", ptr[i]);
         }
     }
     if (show_hex) {
         char *cptr = (char *) ptr;
-        printf("\n            : ");
+        fprintf(stderr, "\n            : ");
         for (i = -how_many; i < how_many; i++) {
-            if (0 == i)
-                printf(" <");
-            for (size_t j = 0; j < sizeof(double); j++) {
-                printf("%02x", cptr[i * sizeof(double) + j]);
+            if (0 == i) {
+                fprintf(stderr, " <");
             }
-            if (0 == i)
-                printf("> ");
-            else
-                printf(" ");
+            for (size_t j = 0; j < sizeof(double); j++) {
+                fprintf(stderr, "%02x", cptr[i * sizeof(double) + j]);
+            }
+            if (0 == i) {
+                fprintf(stderr, "> ");
+            } else {
+                fprintf(stderr, " ");
+            }
         }
     }
-    printf("\n\n");
+    fprintf(stderr, "\n\n");
 }
 
 /**
