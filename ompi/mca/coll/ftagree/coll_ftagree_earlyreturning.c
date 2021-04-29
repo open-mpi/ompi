@@ -3332,6 +3332,11 @@ int mca_coll_ftagree_iera_intra(void *contrib,
     return OMPI_SUCCESS;
 }
 
+#if 0
+// Per @bosilca and @jsquyres discussion 29 Apr 2021: there is
+// probably a memory leak in MPI_FINALIZE right now, because this
+// function does not appear to be being called from anywhere.
+// @bosilca's team is looking into it.
 int mca_coll_ftagree_era_free_comm(ompi_communicator_t* comm,
                                    mca_coll_base_module_t *module)
 {
@@ -3369,3 +3374,4 @@ int mca_coll_ftagree_era_free_comm(ompi_communicator_t* comm,
 
     return OMPI_SUCCESS;
 }
+#endif

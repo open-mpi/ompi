@@ -1793,7 +1793,7 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
   /*  if(nb_groups>30000||depth>5){*/
   if( nbg > 30000 ){
 
-    double duration;
+    double duration_loc;
 
     TIC;
     if( arity <= 2 ){
@@ -1811,9 +1811,9 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
       val = k_partition_grouping(cost_mat, tab_node, new_tab_node, arity, solution_size);
     }
 
-    duration = TOC;
+    duration_loc = TOC;
     if(verbose_level >= INFO)
-      printf("Fast grouping duration=%f\n", duration);
+      printf("Fast grouping duration=%f\n", duration_loc);
 
     if(verbose_level >= INFO)
       display_grouping(new_tab_node, solution_size, arity, val);

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -940,14 +940,9 @@ int main(int argc, char *argv[])
     if (flags & COMP_DRY_RUN) {
         exec_command = opal_argv_join(exec_argv, ' ');
         printf("%s\n", exec_command);
+        free(exec_command);
     } else {
         char *tmp;
-
-#if 0
-        exec_command = opal_argv_join(exec_argv, ' ');
-        printf("command: %s\n", exec_command);
-#endif
-
         tmp = opal_path_findv(exec_argv[0], 0, environ, NULL);
         if (NULL == tmp) {
             opal_show_help("help-opal-wrapper.txt", "no-compiler-found", true, exec_argv[0], NULL);
@@ -964,17 +959,12 @@ int main(int argc, char *argv[])
                                                    ? WTERMSIG(status)
                                                    : (WIFSTOPPED(status) ? WSTOPSIG(status) : 255));
             if ((OPAL_SUCCESS != ret) || ((0 != exit_status) && (flags & COMP_SHOW_ERROR))) {
-                char* exec_cmd = opal_argv_join(exec_argv, ' ');
                 if (OPAL_SUCCESS != ret) {
+                    exec_command = opal_argv_join(exec_argv, ' ');
                     opal_show_help("help-opal-wrapper.txt", "spawn-failed", true, exec_argv[0],
                                    strerror(status), exec_command, NULL);
-                } else {
-#if 0
-                    opal_show_help("help-opal-wrapper.txt", "compiler-failed", true,
-                                   exec_argv[0], exit_status, exec_cmd, NULL);
-#endif
+                    free(exec_command);
                 }
-                free(exec_cmd);
             }
         }
     }
