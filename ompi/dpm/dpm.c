@@ -2000,6 +2000,10 @@ static int start_dvm(char **hostfiles, char **dash_host)
      * spawn processes - see if they gave us any hostfile
      * or dash-host options we should pass along */
     opal_argv_append_nosize(&args, "prte");
+    /* ensure we use the PRRTE personality */
+    opal_argv_append_nosize(&args, "--prtemca");
+    opal_argv_append_nosize(&args, "schizo");
+    opal_argv_append_nosize(&args, "prte");
     if (NULL != hostfiles) {
         tmp = opal_argv_join(hostfiles, ',');
         opal_argv_append_nosize(&args, "--hostfile");
@@ -2024,9 +2028,6 @@ static int start_dvm(char **hostfiles, char **dash_host)
     opal_argv_append_nosize(&args, tmp);
     free(tmp);
     opal_argv_append_nosize(&args, "&");
-
-    tmp = opal_argv_join(args, ' ');
-    free(tmp);
 
     /* Fork off the child */
     pid = fork();
