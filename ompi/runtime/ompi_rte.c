@@ -1022,32 +1022,35 @@ static void _release_fn(size_t refid, pmix_status_t status,
     debugger_event_active = false;
 }
 
-/*
- * Wait for a debugger if asked.  We support two ways of waiting for
- * attaching debuggers
- */
-void ompi_rte_wait_for_debugger(void)
+void ompi_rte_breakpoint(char *name)
 {
     pmix_info_t directive;
     char *evar;
-    int time, code = PMIX_ERR_DEBUGGER_RELEASE;
-    pmix_info_t info;
+    int rc, code = PMIX_DEBUGGER_RELEASE;
+    pmix_info_t info[2];
+    uint32_t u32, *u32ptr;
+    opal_process_name_t pname;
 
-    /* check PMIx to see if we are under a debugger */
-    if (NULL == getenv("PMIX_DEBUG_WAIT_FOR_NOTIFY") &&
-        NULL == getenv("PMIX_TEST_DEBUGGER_ATTACH")) {
-        /* if not, just return */
+    if (NULL != name
+        && NULL != (evar = getenv("OMPI_BREAKPOINT"))
+        && 0 != strcasecmp(evar, name)) {
+        /* they don't want to stop here */
         return;
     }
 
-    /* if we are being debugged, then we need to find
-     * the correct plug-ins
-     */
-    ompi_debugger_setup_dlls();
-
-    if (NULL != (evar = getenv("PMIX_TEST_DEBUGGER_SLEEP"))) {
-        time = strtol(evar, NULL, 10);
-        sleep(time);
+    /* check PMIx to see if we are under a debugger */
+    u32ptr = &u32;
+    pname.jobid = opal_process_info.my_name.jobid;
+    pname.vpid = OPAL_VPID_WILDCARD;
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "PMIX_DEBUG_STOP_IN_APP",
+                                   &pname, &u32ptr, PMIX_PROC_RANK);
+    if (PMIX_SUCCESS != rc) {
+        /* if not, just return */
+        return;
+    }
+    /* are we included? */
+    if (!PMIX_CHECK_RANK(u32, opal_process_info.myprocid.rank)) {
+        /* no - ignore it */
         return;
     }
 
@@ -1057,17 +1060,35 @@ void ompi_rte_wait_for_debugger(void)
     PMIX_INFO_DESTRUCT(&directive);
 
     /* notify the host that we are waiting */
-    PMIX_INFO_LOAD(&info, PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
-    PMIx_Notify_event(PMIX_DEBUG_WAITING_FOR_NOTIFY,
+    PMIX_INFO_LOAD(&info[0], PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
+    PMIX_INFO_LOAD(&info[1], PMIX_BREAKPOINT, "mpi-init", PMIX_STRING);
+    PMIx_Notify_event(PMIX_READY_FOR_DEBUG,
                       &opal_process_info.myprocid,
-                      PMIX_RANGE_RM, &info, 1, NULL, NULL);
-    PMIX_INFO_DESTRUCT(&info);
+                      PMIX_RANGE_RM, info, 2, NULL, NULL);
+    PMIX_INFO_DESTRUCT(&info[0]);
+    PMIX_INFO_DESTRUCT(&info[1]);
 
     /* let the MPI progress engine run while we wait for debugger release */
     OMPI_WAIT_FOR_COMPLETION(debugger_event_active);
 
     /* deregister the event handler */
     PMIx_Deregister_event_handler(handler, NULL, NULL);
+}
+
+/*
+ * Wait for a debugger if asked.  We support two ways of waiting for
+ * attaching debuggers
+ */
+void ompi_rte_wait_for_debugger(void)
+{
+    if (NULL != getenv("PMIX_TEST_DEBUGGER_ATTACH")
+        || NULL == getenv("OMPI_BREAKPOINT")) {
+        ompi_rte_breakpoint(NULL);
+        return;
+    }
+
+    /* check for the "mpi-init" breakpoint */
+    ompi_rte_breakpoint("mpi-init");
 }
 
 static int _setup_top_session_dir(char **sdir)
