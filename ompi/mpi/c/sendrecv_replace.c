@@ -107,7 +107,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
 
-    /* initialize convertor to unpack recv buffer */
+    /* initialize convertor to pack send buffer */
     OBJ_CONSTRUCT(&convertor, opal_convertor_t);
     opal_convertor_copy_and_prepare_for_send( proc->super.proc_convertor, &(datatype->super),
                                               count, buf, 0, &convertor );
@@ -125,6 +125,9 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     max_data = packed_size;
     iov_count = 1;
     rc = opal_convertor_pack(&convertor, &iov, &iov_count, &max_data);
+    if(OMPI_SUCCESS != rc) {
+        goto cleanup_and_return;
+    }
 
     /* receive into the buffer */
     rc = MCA_PML_CALL(irecv(buf, count, datatype,
