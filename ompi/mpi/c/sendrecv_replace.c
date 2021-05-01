@@ -124,10 +124,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     }
     max_data = packed_size;
     iov_count = 1;
-    rc = opal_convertor_pack(&convertor, &iov, &iov_count, &max_data);
-    if(OMPI_SUCCESS != rc) {
-        goto cleanup_and_return;
-    }
+    (void)opal_convertor_pack(&convertor, &iov, &iov_count, &max_data);
 
     /* receive into the buffer */
     rc = MCA_PML_CALL(irecv(buf, count, datatype,
