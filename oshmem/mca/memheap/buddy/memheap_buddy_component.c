@@ -10,12 +10,15 @@
  *
  * $HEADER$
  */
+
+/* clang-format off */
 #include "oshmem_config.h"
-#include "memheap_buddy_component.h"
 #include "opal/util/output.h"
+#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/memheap/buddy/memheap_buddy.h"
-#include "oshmem/mca/memheap/memheap.h"
+#include "memheap_buddy_component.h"
+/* clang-format on */
 
 static int mca_memheap_buddy_component_close(void);
 static int mca_memheap_buddy_component_query(mca_base_module_t **module, int *priority);

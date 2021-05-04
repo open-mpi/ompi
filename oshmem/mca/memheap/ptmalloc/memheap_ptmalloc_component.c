@@ -10,12 +10,15 @@
  *
  * $HEADER$
  */
+
+/* clang-format off */
 #include "oshmem_config.h"
-#include "memheap_ptmalloc_component.h"
 #include "opal/util/output.h"
-#include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/memheap/ptmalloc/memheap_ptmalloc.h"
+#include "memheap_ptmalloc_component.h"
+/* clang-format on */
 
 static int mca_memheap_ptmalloc_component_close(void);
 static int mca_memheap_ptmalloc_component_query(mca_base_module_t **module, int *priority);

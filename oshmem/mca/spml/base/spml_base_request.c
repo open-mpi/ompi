@@ -14,8 +14,10 @@
  */
 
 #include "oshmem_config.h"
-#include "oshmem/mca/spml/base/spml_base_request.h"
+/* clang-format off */
 #include "oshmem/mca/spml/spml.h"
+#include "oshmem/mca/spml/base/spml_base_request.h"
+/* clang-format on */
 
 /**
  * If you wonder why these 2 freelists are declared here read the comment
