@@ -28,7 +28,7 @@ struct ompi_mtl_portals4_recv_short_block_t {
     ptl_handle_me_t me_h;
     struct ompi_mtl_portals4_recv_short_request_t request;
     bool release_on_free;
-    char status;   /* see Note after */
+    char status; /* see Note after */
 };
 /* Note: Even if portals4 may guarantee that PTL_EVENT_AUTO_UNLINK comes before
  *       PTL_EVENT_AUTO_FREE, we are not sure that this is the case in a
@@ -37,11 +37,14 @@ struct ompi_mtl_portals4_recv_short_block_t {
  *       event comes after. That is why we introduce the status field with the
  *       following STATUSES. */
 
-#define BLOCK_STATUS_INACTIVE       0    /* The block has just been malloc'ed */
-#define BLOCK_STATUS_WAITING_LINK   1    /* The PtlMEAppend has been called. Now wait for PTL_EVENT_LINK */
-#define BLOCK_STATUS_ACTIVATED      2    /* PTL_EVENT_LINK has been received, the block is operational */
-#define BLOCK_STATUS_WAITING_FREE   3    /* The PTL_EVENT_AUTO_UNLINK has been received, now wait for a PTL_EVENT_AUTO_FREE */
-#define BLOCK_STATUS_WAITING_UNLINK 4    /* The PTL_EVENT_AUTO_FREE has been received, now wait for a PTL_EVENT_AUTO_UNLINK (rare) */
+#define BLOCK_STATUS_INACTIVE 0 /* The block has just been malloc'ed */
+#define BLOCK_STATUS_WAITING_LINK \
+    1                            /* The PtlMEAppend has been called. Now wait for PTL_EVENT_LINK */
+#define BLOCK_STATUS_ACTIVATED 2 /* PTL_EVENT_LINK has been received, the block is operational */
+#define BLOCK_STATUS_WAITING_FREE \
+    3 /* The PTL_EVENT_AUTO_UNLINK has been received, now wait for a PTL_EVENT_AUTO_FREE */
+#define BLOCK_STATUS_WAITING_UNLINK \
+    4 /* The PTL_EVENT_AUTO_FREE has been received, now wait for a PTL_EVENT_AUTO_UNLINK (rare) */
 
 typedef struct ompi_mtl_portals4_recv_short_block_t ompi_mtl_portals4_recv_short_block_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals4_recv_short_block_t);

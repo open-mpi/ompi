@@ -14,44 +14,44 @@
 #include "oshmem_config.h"
 #include "ompi/mca/bml/base/base.h"
 #include "opal/datatype/opal_convertor.h"
-#include "oshmem/proc/proc.h"
-#include "oshmem/mca/spml/base/base.h"
 #include "opal/mca/btl/btl.h"
+#include "oshmem/mca/spml/base/base.h"
+#include "oshmem/proc/proc.h"
 
 #define SPML_BASE_DO_CMP(_res, _addr, _op, _val) \
-    switch((_op)) { \
-        case SHMEM_CMP_EQ: \
-            _res = *(_addr) == (_val) ? 1 : 0; \
-            break; \
-        case SHMEM_CMP_NE: \
-            _res = *(_addr) != (_val) ? 1 : 0; \
-            break; \
-        case SHMEM_CMP_GT: \
-            _res =  *(_addr) > (_val) ? 1 : 0; \
-            break; \
-        case SHMEM_CMP_LE: \
-            _res = *(_addr) <= (_val) ? 1 : 0; \
-            break; \
-        case SHMEM_CMP_LT: \
-            _res = *(_addr) < (_val) ?  1 : 0; \
-            break; \
-        case SHMEM_CMP_GE: \
-            _res = *(_addr) >= (_val) ? 1 : 0; \
-            break; \
+    switch ((_op)) {                             \
+    case SHMEM_CMP_EQ:                           \
+        _res = *(_addr) == (_val) ? 1 : 0;       \
+        break;                                   \
+    case SHMEM_CMP_NE:                           \
+        _res = *(_addr) != (_val) ? 1 : 0;       \
+        break;                                   \
+    case SHMEM_CMP_GT:                           \
+        _res = *(_addr) > (_val) ? 1 : 0;        \
+        break;                                   \
+    case SHMEM_CMP_LE:                           \
+        _res = *(_addr) <= (_val) ? 1 : 0;       \
+        break;                                   \
+    case SHMEM_CMP_LT:                           \
+        _res = *(_addr) < (_val) ? 1 : 0;        \
+        break;                                   \
+    case SHMEM_CMP_GE:                           \
+        _res = *(_addr) >= (_val) ? 1 : 0;       \
+        break;                                   \
     }
 
-#define SPML_BASE_DO_WAIT(_res, _addr, _op, _val)  \
-    do {                                           \
-        SPML_BASE_DO_CMP(_res, _addr, _op, _val);  \
-        if (_res == 0) {                           \
-            opal_progress();                       \
-        }                                          \
+#define SPML_BASE_DO_WAIT(_res, _addr, _op, _val) \
+    do {                                          \
+        SPML_BASE_DO_CMP(_res, _addr, _op, _val); \
+        if (_res == 0) {                          \
+            opal_progress();                      \
+        }                                         \
     } while (_res == 0);
 
 /**
  * Check on a variable given in addr to see it is not equal to value.
  */
-int mca_spml_base_test(void* addr, int cmp, void* value, int datatype, int *out_value)
+int mca_spml_base_test(void *addr, int cmp, void *value, int datatype, int *out_value)
 {
     volatile int *int_addr;
     volatile long *long_addr;
@@ -75,43 +75,43 @@ int mca_spml_base_test(void* addr, int cmp, void* value, int datatype, int *out_
 
     /* Int */
     case SHMEM_INT:
-        int_value = *(int*) value;
-        int_addr = (int*) addr;
+        int_value = *(int *) value;
+        int_addr = (int *) addr;
         SPML_BASE_DO_CMP((*out_value), int_addr, cmp, int_value);
         break;
 
         /* Short */
     case SHMEM_SHORT:
-        short_value = *(short*) value;
-        short_addr = (short*) addr;
+        short_value = *(short *) value;
+        short_addr = (short *) addr;
         SPML_BASE_DO_CMP((*out_value), short_addr, cmp, short_value);
         break;
 
         /* Long */
     case SHMEM_LONG:
-        long_value = *(long*) value;
-        long_addr = (long*) addr;
+        long_value = *(long *) value;
+        long_addr = (long *) addr;
         SPML_BASE_DO_CMP((*out_value), long_addr, cmp, long_value);
         break;
 
         /* Long-Long */
     case SHMEM_LLONG:
-        longlong_value = *(long long*) value;
-        longlong_addr = (long long*) addr;
+        longlong_value = *(long long *) value;
+        longlong_addr = (long long *) addr;
         SPML_BASE_DO_CMP((*out_value), longlong_addr, cmp, longlong_value);
         break;
 
-       /* Int32_t */
+        /* Int32_t */
     case SHMEM_INT32_T:
-        int32_value = *(int32_t*) value;
-        int32_addr = (int32_t*) addr;
+        int32_value = *(int32_t *) value;
+        int32_addr = (int32_t *) addr;
         SPML_BASE_DO_CMP((*out_value), int32_addr, cmp, int32_value);
         break;
 
-       /* Int64_t */
+        /* Int64_t */
     case SHMEM_INT64_T:
-        int64_value = *(int64_t*) value;
-        int64_addr = (int64_t*) addr;
+        int64_value = *(int64_t *) value;
+        int64_addr = (int64_t *) addr;
         SPML_BASE_DO_CMP((*out_value), int64_addr, cmp, int64_value);
         break;
 
@@ -140,7 +140,7 @@ int mca_spml_base_test(void* addr, int cmp, void* value, int datatype, int *out_
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
+int mca_spml_base_wait(void *addr, int cmp, void *value, int datatype)
 {
     volatile int *int_addr;
     volatile long *long_addr;
@@ -166,43 +166,43 @@ int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
 
     /* Int */
     case SHMEM_INT:
-        int_value = *(int*) value;
-        int_addr = (int*) addr;
+        int_value = *(int *) value;
+        int_addr = (int *) addr;
         SPML_BASE_DO_WAIT(res, int_addr, cmp, int_value);
         break;
 
         /* Short */
     case SHMEM_SHORT:
-        short_value = *(short*) value;
-        short_addr = (short*) addr;
+        short_value = *(short *) value;
+        short_addr = (short *) addr;
         SPML_BASE_DO_WAIT(res, short_addr, cmp, short_value);
         break;
 
         /* Long */
     case SHMEM_LONG:
-        long_value = *(long*) value;
-        long_addr = (long*) addr;
+        long_value = *(long *) value;
+        long_addr = (long *) addr;
         SPML_BASE_DO_WAIT(res, long_addr, cmp, long_value);
         break;
 
         /* Long-Long */
     case SHMEM_LLONG:
-        longlong_value = *(long long*) value;
-        longlong_addr = (long long*) addr;
+        longlong_value = *(long long *) value;
+        longlong_addr = (long long *) addr;
         SPML_BASE_DO_WAIT(res, longlong_addr, cmp, longlong_value);
         break;
 
-       /* Int32_t */
+        /* Int32_t */
     case SHMEM_INT32_T:
-        int32_value = *(int32_t*) value;
-        int32_addr = (int32_t*) addr;
+        int32_value = *(int32_t *) value;
+        int32_addr = (int32_t *) addr;
         SPML_BASE_DO_WAIT(res, int32_addr, cmp, int32_value);
         break;
 
-       /* Int64_t */
+        /* Int64_t */
     case SHMEM_INT64_T:
-        int64_value = *(int64_t*) value;
-        int64_addr = (int64_t*) addr;
+        int64_value = *(int64_t *) value;
+        int64_addr = (int64_t *) addr;
         SPML_BASE_DO_WAIT(res, int64_addr, cmp, int64_value);
         break;
 
@@ -231,7 +231,6 @@ int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
     return OSHMEM_SUCCESS;
 }
 
-
 /**
  * Waits for completion of a non-blocking put or get issued by the calling PE.
  * This function waits for completion of a single non-blocking transfer issued by
@@ -240,7 +239,7 @@ int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
  * Completion of the call to shmem_wait_nb() ensures that a non-blocking transfer has
  * completed. The source buffer may then be reused.
  */
-int mca_spml_base_wait_nb(void* handle)
+int mca_spml_base_wait_nb(void *handle)
 {
     MCA_SPML_CALL(quiet(oshmem_ctx_default));
 
@@ -252,7 +251,8 @@ int mca_spml_base_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t segno, sshmem_
     return OSHMEM_ERROR;
 }
 
-void mca_spml_base_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id)
+void mca_spml_base_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t segno, int pe,
+                                int tr_id)
 {
 }
 
@@ -265,14 +265,12 @@ void *mca_spml_base_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *mkey, int pe)
     return NULL;
 }
 
-int mca_spml_base_put_nb(void *dst_addr, size_t size,
-                         void *src_addr, int dst, void **handle)
+int mca_spml_base_put_nb(void *dst_addr, size_t size, void *src_addr, int dst, void **handle)
 {
     return OSHMEM_ERROR;
 }
 
-int mca_spml_base_get_nb(void *dst_addr, size_t size,
-                         void *src_addr, int src, void **handle)
+int mca_spml_base_get_nb(void *dst_addr, size_t size, void *src_addr, int src, void **handle)
 {
     return OSHMEM_ERROR;
 }
@@ -281,8 +279,7 @@ void mca_spml_base_memuse_hook(void *addr, size_t length)
 {
 }
 
-int mca_spml_base_put_all_nb(void *target, const void *source,
-                             size_t size, long *counter)
+int mca_spml_base_put_all_nb(void *target, const void *source, size_t size, long *counter)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }

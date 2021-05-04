@@ -219,35 +219,35 @@ OPAL_THREAD_DEFINE_ATOMIC_OP(int64_t, sub, -, 64)
 OPAL_THREAD_DEFINE_ATOMIC_COMPARE_EXCHANGE(int64_t, int64_t, 64)
 OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 
-#    define OPAL_THREAD_ADD_FETCH64 opal_thread_add_fetch_64
-#    define OPAL_ATOMIC_ADD_FETCH64 opal_thread_add_fetch_64
+#define OPAL_THREAD_ADD_FETCH64 opal_thread_add_fetch_64
+#define OPAL_ATOMIC_ADD_FETCH64 opal_thread_add_fetch_64
 
-#    define OPAL_THREAD_AND_FETCH64 opal_thread_and_fetch_64
-#    define OPAL_ATOMIC_AND_FETCH64 opal_thread_and_fetch_64
+#define OPAL_THREAD_AND_FETCH64 opal_thread_and_fetch_64
+#define OPAL_ATOMIC_AND_FETCH64 opal_thread_and_fetch_64
 
-#    define OPAL_THREAD_OR_FETCH64 opal_thread_or_fetch_64
-#    define OPAL_ATOMIC_OR_FETCH64 opal_thread_or_fetch_64
+#define OPAL_THREAD_OR_FETCH64 opal_thread_or_fetch_64
+#define OPAL_ATOMIC_OR_FETCH64 opal_thread_or_fetch_64
 
-#    define OPAL_THREAD_XOR_FETCH64 opal_thread_xor_fetch_64
-#    define OPAL_ATOMIC_XOR_FETCH64 opal_thread_xor_fetch_64
+#define OPAL_THREAD_XOR_FETCH64 opal_thread_xor_fetch_64
+#define OPAL_ATOMIC_XOR_FETCH64 opal_thread_xor_fetch_64
 
-#    define OPAL_THREAD_FETCH_ADD64 opal_thread_fetch_add_64
-#    define OPAL_ATOMIC_FETCH_ADD64 opal_thread_fetch_add_64
+#define OPAL_THREAD_FETCH_ADD64 opal_thread_fetch_add_64
+#define OPAL_ATOMIC_FETCH_ADD64 opal_thread_fetch_add_64
 
-#    define OPAL_THREAD_FETCH_AND64 opal_thread_fetch_and_64
-#    define OPAL_ATOMIC_FETCH_AND64 opal_thread_fetch_and_64
+#define OPAL_THREAD_FETCH_AND64 opal_thread_fetch_and_64
+#define OPAL_ATOMIC_FETCH_AND64 opal_thread_fetch_and_64
 
-#    define OPAL_THREAD_FETCH_OR64 opal_thread_fetch_or_64
-#    define OPAL_ATOMIC_FETCH_OR64 opal_thread_fetch_or_64
+#define OPAL_THREAD_FETCH_OR64 opal_thread_fetch_or_64
+#define OPAL_ATOMIC_FETCH_OR64 opal_thread_fetch_or_64
 
-#    define OPAL_THREAD_FETCH_XOR64 opal_thread_fetch_xor_64
-#    define OPAL_ATOMIC_FETCH_XOR64 opal_thread_fetch_xor_64
+#define OPAL_THREAD_FETCH_XOR64 opal_thread_fetch_xor_64
+#define OPAL_ATOMIC_FETCH_XOR64 opal_thread_fetch_xor_64
 
-#    define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64
-#    define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64
+#define OPAL_THREAD_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64
+#define OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_64 opal_thread_compare_exchange_strong_64
 
-#    define OPAL_THREAD_SWAP_64 opal_thread_swap_64
-#    define OPAL_ATOMIC_SWAP_64 opal_thread_swap_64
+#define OPAL_THREAD_SWAP_64 opal_thread_swap_64
+#define OPAL_ATOMIC_SWAP_64 opal_thread_swap_64
 
 /* thread local storage */
 #if OPAL_C_HAVE__THREAD_LOCAL

@@ -27,50 +27,46 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
-#include "ompi/memchecker.h"
-#include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
+#include "ompi/mca/topo/topo.h"
+#include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ineighbor_allgather = PMPI_Ineighbor_allgather
-#endif
-#define MPI_Ineighbor_allgather PMPI_Ineighbor_allgather
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Ineighbor_allgather = PMPI_Ineighbor_allgather
+#    endif
+#    define MPI_Ineighbor_allgather PMPI_Ineighbor_allgather
 #endif
 
 static const char FUNC_NAME[] = "MPI_Ineighbor_allgather";
 
-
 int MPI_Ineighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                            void *recvbuf, int recvcount, MPI_Datatype recvtype,
-                            MPI_Comm comm,  MPI_Request *request)
+                            void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm,
+                            MPI_Request *request)
 {
     int err;
 
     SPC_RECORD(OMPI_SPC_INEIGHBOR_ALLGATHER, 1);
 
-    MEMCHECKER(
-        ptrdiff_t ext;
+    MEMCHECKER(ptrdiff_t ext;
 
-        ompi_datatype_type_extent(recvtype, &ext);
+               ompi_datatype_type_extent(recvtype, &ext);
 
-        memchecker_datatype(recvtype);
-        memchecker_comm(comm);
-        /* check whether the actual send buffer is defined. */
-        if (MPI_IN_PLACE != sendbuf) {
-            memchecker_datatype(sendtype);
-            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
-        }
-        /* check whether the receive buffer is addressable. */
-        memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
-    );
+               memchecker_datatype(recvtype); memchecker_comm(comm);
+               /* check whether the actual send buffer is defined. */
+               if (MPI_IN_PLACE != sendbuf) {
+                   memchecker_datatype(sendtype);
+                   memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+               }
+               /* check whether the receive buffer is addressable. */
+               memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype););
 
     if (MPI_PARAM_CHECK) {
 
@@ -80,47 +76,45 @@ int MPI_Ineighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sen
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm) || OMPI_COMM_IS_INTER(comm)) {
-          OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
-        } else if (! OMPI_COMM_IS_TOPO(comm)) {
-          OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TOPOLOGY, FUNC_NAME);
+            OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
+        } else if (!OMPI_COMM_IS_TOPO(comm)) {
+            OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TOPOLOGY, FUNC_NAME);
         } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
-          err = MPI_ERR_TYPE;
+            err = MPI_ERR_TYPE;
         } else if (recvcount < 0) {
-          err = MPI_ERR_COUNT;
+            err = MPI_ERR_COUNT;
         } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
-        if( OMPI_COMM_IS_CART(comm) ) {
+        if (OMPI_COMM_IS_CART(comm)) {
             const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
-            if( 0 > cart->ndims ) {
+            if (0 > cart->ndims) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
-        }
-        else if( OMPI_COMM_IS_GRAPH(comm) ) {
+        } else if (OMPI_COMM_IS_GRAPH(comm)) {
             int degree;
             mca_topo_base_graph_neighbors_count(comm, ompi_comm_rank(comm), &degree);
-            if( 0 > degree ) {
+            if (0 > degree) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
-        }
-        else if( OMPI_COMM_IS_DIST_GRAPH(comm) ) {
+        } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
             const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
-            int indegree  = dist_graph->indegree;
+            int indegree = dist_graph->indegree;
             int outdegree = dist_graph->outdegree;
-            if( indegree <  0 || outdegree <  0 ) {
+            if (indegree < 0 || outdegree < 0) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
         }
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_ineighbor_allgather(sendbuf, sendcount, sendtype, recvbuf,
-                                                recvcount, recvtype, comm, request,
-                                                comm->c_coll->coll_ineighbor_allgather_module);
+    err = comm->c_coll->coll_ineighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                                                 recvtype, comm, request,
+                                                 comm->c_coll->coll_ineighbor_allgather_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_datatypes(*request, sendtype, recvtype);
     }

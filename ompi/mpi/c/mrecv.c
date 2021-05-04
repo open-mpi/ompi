@@ -16,40 +16,35 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
-#include "ompi/request/request.h"
 #include "ompi/message/message.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Mrecv = PMPI_Mrecv
-#endif
-#define MPI_Mrecv PMPI_Mrecv
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Mrecv = PMPI_Mrecv
+#    endif
+#    define MPI_Mrecv PMPI_Mrecv
 #endif
 
 static const char FUNC_NAME[] = "MPI_Mrecv";
 
-
-int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
-              MPI_Message *message, MPI_Status *status)
+int MPI_Mrecv(void *buf, int count, MPI_Datatype type, MPI_Message *message, MPI_Status *status)
 {
     int rc = MPI_SUCCESS;
     ompi_communicator_t *comm;
 
     SPC_RECORD(OMPI_SPC_MRECV, 1);
 
-    MEMCHECKER(
-        memchecker_datatype(type);
-        memchecker_message(message);
-        memchecker_call(&opal_memchecker_base_isaddressable, buf, count, type);
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_datatype(type); memchecker_message(message);
+               memchecker_call(&opal_memchecker_base_isaddressable, buf, count, type);
+               memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         OMPI_CHECK_DATATYPE_FOR_RECV(rc, type, count);
         OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
@@ -72,7 +67,7 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
         }
         *message = MPI_MESSAGE_NULL;
         return MPI_SUCCESS;
-     }
+    }
 
 #if OPAL_ENABLE_FT_MPI
     /*
@@ -84,9 +79,7 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
     rc = MCA_PML_CALL(mrecv(buf, count, type, message, status));
     /* Per MPI-1, the MPI_ERROR field is not defined for
        single-completion calls */
-    MEMCHECKER(
-        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
-    );
+    MEMCHECKER(opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int)););
 
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

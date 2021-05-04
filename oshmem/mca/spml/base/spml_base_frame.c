@@ -18,17 +18,17 @@
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNIST_H */
-#include "oshmem/mca/mca.h"
-#include "opal/util/output.h"
+#    include <unistd.h>
+#endif /* HAVE_UNIST_H */
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
+#include "oshmem/mca/mca.h"
 
 #include "oshmem/constants.h"
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/spml/base/spml_base_request.h"
+#include "oshmem/mca/spml/spml.h"
+#include "oshmem/util/oshmem_util.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -39,7 +39,7 @@
 #include "oshmem/mca/spml/base/static-components.h"
 
 #define xstringify(spml) #spml
-#define stringify(spml) xstringify(spml)
+#define stringify(spml)  xstringify(spml)
 
 /*
  * Global variables
@@ -48,7 +48,6 @@ mca_spml_base_module_t mca_spml = {0};
 
 mca_spml_base_component_t mca_spml_base_selected_component = {{0}};
 opal_pointer_array_t mca_spml_base_spml = {{0}};
-
 
 static int mca_spml_base_register(mca_base_register_flag_t flags)
 {
@@ -78,7 +77,7 @@ static int mca_spml_base_close(void)
     /* Free all the strings in the array */
     j = opal_pointer_array_get_size(&mca_spml_base_spml);
     for (i = 0; i < j; i++) {
-        char * tmp_val;
+        char *tmp_val;
         tmp_val = (char *) opal_pointer_array_get_item(&mca_spml_base_spml, i);
         if (NULL == tmp_val) {
             continue;
@@ -112,8 +111,7 @@ static int mca_spml_base_open(mca_base_open_flag_t flags)
     oshmem_framework_open_output(&oshmem_spml_base_framework);
 
     /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_framework_components_open(&oshmem_spml_base_framework, flags)) {
+    if (OPAL_SUCCESS != mca_base_framework_components_open(&oshmem_spml_base_framework, flags)) {
         return OSHMEM_ERROR;
     }
 
@@ -141,8 +139,8 @@ static int mca_spml_base_open(mca_base_open_flag_t flags)
         var_id = mca_base_var_find("oshmem", "spml", NULL, NULL);
         mca_base_var_get_value(var_id, &default_spml, NULL, NULL);
 
-        if( (NULL == default_spml || NULL == default_spml[0] ||
-             0 == strlen(default_spml[0])) || (default_spml[0][0] == '^') ) {
+        if ((NULL == default_spml || NULL == default_spml[0] || 0 == strlen(default_spml[0]))
+            || (default_spml[0][0] == '^')) {
             opal_pointer_array_add(&mca_spml_base_spml, strdup("ikrit"));
             opal_pointer_array_add(&mca_spml_base_spml, strdup("ucx"));
         } else {
@@ -154,10 +152,6 @@ static int mca_spml_base_open(mca_base_open_flag_t flags)
     return OSHMEM_SUCCESS;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(oshmem, spml,
-                           "OSHMEM SPML",
-                           mca_spml_base_register,
-                           mca_spml_base_open,
-                           mca_spml_base_close,
-                           mca_spml_base_static_components,
+MCA_BASE_FRAMEWORK_DECLARE(oshmem, spml, "OSHMEM SPML", mca_spml_base_register, mca_spml_base_open,
+                           mca_spml_base_close, mca_spml_base_static_components,
                            MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

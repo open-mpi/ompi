@@ -37,9 +37,9 @@
 #    include <sys/un.h>
 #endif
 
+#include "opal/class/opal_list.h"
 #include "opal/hash_string.h"
 #include "opal/mca/mca.h"
-#include "opal/class/opal_list.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/util/error.h"
 #include "opal/util/event.h"

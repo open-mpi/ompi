@@ -16,8 +16,8 @@
  */
 typedef enum {
     MCA_SPML_REQUEST_NULL,
-    MCA_SPML_REQUEST_PUT, /* Added */
-    MCA_SPML_REQUEST_GET, /* Added */
+    MCA_SPML_REQUEST_PUT,        /* Added */
+    MCA_SPML_REQUEST_GET,        /* Added */
     MCA_SPML_REQUEST_ATOMIC_CAS, /* Added */
     MCA_SPML_REQUEST_ATOMIC_FAAD /* Added */
 } mca_spml_base_request_type_t;

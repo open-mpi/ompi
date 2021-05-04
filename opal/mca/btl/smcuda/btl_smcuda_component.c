@@ -191,7 +191,7 @@ static int smcuda_register(void)
     mca_btl_smcuda_component.cuda_ipc_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_btl_smcuda_component.cuda_ipc_output,
                               mca_btl_smcuda_component.cuda_ipc_verbose);
-#else /* OPAL_CUDA_SUPPORT */
+#else  /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
 #endif /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_eager_limit = 4 * 1024;

@@ -28,12 +28,11 @@ BEGIN_C_DECLS
  * with a corresponding basic function. */
 
 #define BARRIER_FUNC mca_scoll_basic_barrier
-#define BCAST_FUNC mca_scoll_basic_broadcast
+#define BCAST_FUNC   mca_scoll_basic_broadcast
 
 /* Globally exported variables */
 
-OSHMEM_MODULE_DECLSPEC extern mca_scoll_base_component_1_0_0_t
-mca_scoll_basic_component;
+OSHMEM_MODULE_DECLSPEC extern mca_scoll_base_component_1_0_0_t mca_scoll_basic_component;
 
 extern int mca_scoll_basic_priority_param;
 OSHMEM_DECLSPEC extern int mca_scoll_basic_param_barrier_algorithm;
@@ -44,8 +43,7 @@ extern int mca_scoll_basic_param_reduce_algorithm;
 /* API functions */
 
 int mca_scoll_basic_init(bool enable_progress_threads, bool enable_threads);
-mca_scoll_base_module_t*
-mca_scoll_basic_query(struct oshmem_group_t *group, int *priority);
+mca_scoll_base_module_t *mca_scoll_basic_query(struct oshmem_group_t *group, int *priority);
 
 enum {
     SHMEM_SYNC_INIT = _SHMEM_SYNC_VALUE,
@@ -55,37 +53,16 @@ enum {
 };
 
 int mca_scoll_basic_barrier(struct oshmem_group_t *group, long *pSync, int alg);
-int mca_scoll_basic_broadcast(struct oshmem_group_t *group,
-                              int PE_root,
-                              void *target,
-                              const void *source,
-                              size_t nlong,
-                              long *pSync,
-                              bool nlong_type,
+int mca_scoll_basic_broadcast(struct oshmem_group_t *group, int PE_root, void *target,
+                              const void *source, size_t nlong, long *pSync, bool nlong_type,
                               int alg);
-int mca_scoll_basic_collect(struct oshmem_group_t *group,
-                            void *target,
-                            const void *source,
-                            size_t nlong,
-                            long *pSync,
-                            bool nlong_type,
-                            int alg);
-int mca_scoll_basic_reduce(struct oshmem_group_t *group,
-                           struct oshmem_op_t *op,
-                           void *target,
-                           const void *source,
-                           size_t nlong,
-                           long *pSync,
-                           void *pWrk,
-                           int alg);
-int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
-                             void *target,
-                             const void *source,
-                             ptrdiff_t dst, ptrdiff_t sst,
-                             size_t nelems,
-                             size_t element_size,
-                             long *pSync,
-                             int alg);
+int mca_scoll_basic_collect(struct oshmem_group_t *group, void *target, const void *source,
+                            size_t nlong, long *pSync, bool nlong_type, int alg);
+int mca_scoll_basic_reduce(struct oshmem_group_t *group, struct oshmem_op_t *op, void *target,
+                           const void *source, size_t nlong, long *pSync, void *pWrk, int alg);
+int mca_scoll_basic_alltoall(struct oshmem_group_t *group, void *target, const void *source,
+                             ptrdiff_t dst, ptrdiff_t sst, size_t nelems, size_t element_size,
+                             long *pSync, int alg);
 
 static inline unsigned int scoll_log2(unsigned long val)
 {

@@ -24,51 +24,45 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_TYPE_VECTOR = ompi_type_vector_f
-#pragma weak pmpi_type_vector = ompi_type_vector_f
-#pragma weak pmpi_type_vector_ = ompi_type_vector_f
-#pragma weak pmpi_type_vector__ = ompi_type_vector_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_TYPE_VECTOR = ompi_type_vector_f
+#        pragma weak pmpi_type_vector = ompi_type_vector_f
+#        pragma weak pmpi_type_vector_ = ompi_type_vector_f
+#        pragma weak pmpi_type_vector__ = ompi_type_vector_f
 
-#pragma weak PMPI_Type_vector_f = ompi_type_vector_f
-#pragma weak PMPI_Type_vector_f08 = ompi_type_vector_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_VECTOR,
-                           pmpi_type_vector,
-                           pmpi_type_vector_,
-                           pmpi_type_vector__,
-                           pompi_type_vector_f,
-                           (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
-                           (count, blocklength, stride, oldtype, newtype, ierr) )
-#endif
+#        pragma weak PMPI_Type_vector_f = ompi_type_vector_f
+#        pragma weak PMPI_Type_vector_f08 = ompi_type_vector_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_TYPE_VECTOR, pmpi_type_vector, pmpi_type_vector_,
+                           pmpi_type_vector__, pompi_type_vector_f,
+                           (MPI_Fint * count, MPI_Fint *blocklength, MPI_Fint *stride,
+                            MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
+                           (count, blocklength, stride, oldtype, newtype, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_TYPE_VECTOR = ompi_type_vector_f
-#pragma weak mpi_type_vector = ompi_type_vector_f
-#pragma weak mpi_type_vector_ = ompi_type_vector_f
-#pragma weak mpi_type_vector__ = ompi_type_vector_f
+#    pragma weak MPI_TYPE_VECTOR = ompi_type_vector_f
+#    pragma weak mpi_type_vector = ompi_type_vector_f
+#    pragma weak mpi_type_vector_ = ompi_type_vector_f
+#    pragma weak mpi_type_vector__ = ompi_type_vector_f
 
-#pragma weak MPI_Type_vector_f = ompi_type_vector_f
-#pragma weak MPI_Type_vector_f08 = ompi_type_vector_f
+#    pragma weak MPI_Type_vector_f = ompi_type_vector_f
+#    pragma weak MPI_Type_vector_f08 = ompi_type_vector_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_VECTOR,
-                           mpi_type_vector,
-                           mpi_type_vector_,
-                           mpi_type_vector__,
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_TYPE_VECTOR, mpi_type_vector, mpi_type_vector_, mpi_type_vector__,
                            ompi_type_vector_f,
-                           (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
-                           (count, blocklength, stride, oldtype, newtype, ierr) )
-#else
-#define ompi_type_vector_f pompi_type_vector_f
-#endif
+                           (MPI_Fint * count, MPI_Fint *blocklength, MPI_Fint *stride,
+                            MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
+                           (count, blocklength, stride, oldtype, newtype, ierr))
+#    else
+#        define ompi_type_vector_f pompi_type_vector_f
+#    endif
 #endif
 
-
-void ompi_type_vector_f(MPI_Fint *count, MPI_Fint *blocklength,
-		       MPI_Fint *stride, MPI_Fint *oldtype,
-		       MPI_Fint *newtype, MPI_Fint *ierr)
+void ompi_type_vector_f(MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype,
+                        MPI_Fint *newtype, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Datatype c_old;
@@ -76,11 +70,10 @@ void ompi_type_vector_f(MPI_Fint *count, MPI_Fint *blocklength,
 
     c_old = PMPI_Type_f2c(*oldtype);
 
-    c_ierr = PMPI_Type_vector(OMPI_FINT_2_INT(*count),
-                             OMPI_FINT_2_INT(*blocklength),
-                             OMPI_FINT_2_INT(*stride),
-                             c_old, &c_new);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Type_vector(OMPI_FINT_2_INT(*count), OMPI_FINT_2_INT(*blocklength),
+                              OMPI_FINT_2_INT(*stride), c_old, &c_new);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         *newtype = PMPI_Type_c2f(c_new);

@@ -26,24 +26,22 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mpi.h"
 #include "ompi/constants.h"
 
-#include "opal/util/output.h"
+#include "ompi/mca/mca.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
-#include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 
-
-#include "ompi/op/op.h"
-#include "ompi/mca/op/op.h"
 #include "ompi/mca/op/base/base.h"
 #include "ompi/mca/op/base/functions.h"
-
+#include "ompi/mca/op/op.h"
+#include "ompi/op/op.h"
 
 /*
  * Local types
@@ -55,29 +53,23 @@ typedef struct avail_op_t {
     ompi_op_base_module_1_0_0_t *ao_module;
 } avail_op_t;
 
-
 /*
  * Local functions
  */
-static opal_list_t *check_components(opal_list_t *components,
-                                     ompi_op_t *op);
-static int check_one_component(ompi_op_t *op,
-                               const mca_base_component_t *component,
+static opal_list_t *check_components(opal_list_t *components, ompi_op_t *op);
+static int check_one_component(ompi_op_t *op, const mca_base_component_t *component,
                                ompi_op_base_module_1_0_0_t **module);
 
-static int query(const mca_base_component_t *component,
-                 ompi_op_t *op, int *priority,
+static int query(const mca_base_component_t *component, ompi_op_t *op, int *priority,
                  ompi_op_base_module_1_0_0_t **module);
 
-static int query_1_0_0(const ompi_op_base_component_1_0_0_t *op_component,
-                       ompi_op_t *op, int *priority,
-                       ompi_op_base_module_1_0_0_t **module);
+static int query_1_0_0(const ompi_op_base_component_1_0_0_t *op_component, ompi_op_t *op,
+                       int *priority, ompi_op_base_module_1_0_0_t **module);
 
 /*
  * Stuff for the OBJ interface
  */
 static OBJ_CLASS_INSTANCE(avail_op_t, opal_list_item_t, NULL, NULL);
-
 
 /*
  * This function is called at the initialization time of every
@@ -96,8 +88,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
 
     /* Announce */
     opal_output_verbose(10, ompi_op_base_framework.framework_output,
-                        "op:base:op_select: new op: %s",
-                        op->o_name);
+                        "op:base:op_select: new op: %s", op->o_name);
 
     /* Make a module for all the base functions so that other modules
        can RETAIN it (vs. having NULL for the base function modules,
@@ -112,12 +103,10 @@ int ompi_op_base_op_select(ompi_op_t *op)
     memset(&op->o_func, 0, sizeof(op->o_func));
     memset(&op->o_3buff_intrinsic, 0, sizeof(op->o_3buff_intrinsic));
     for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
-        op->o_func.intrinsic.fns[i] =
-            ompi_op_base_functions[op->o_f_to_c_index][i];
+        op->o_func.intrinsic.fns[i] = ompi_op_base_functions[op->o_f_to_c_index][i];
         op->o_func.intrinsic.modules[i] = module;
         OBJ_RETAIN(module);
-        op->o_3buff_intrinsic.fns[i] =
-            ompi_op_base_3buff_functions[op->o_f_to_c_index][i];
+        op->o_3buff_intrinsic.fns[i] = ompi_op_base_3buff_functions[op->o_f_to_c_index][i];
         op->o_3buff_intrinsic.modules[i] = module;
         OBJ_RETAIN(module);
     }
@@ -134,10 +123,9 @@ int ompi_op_base_op_select(ompi_op_t *op)
 
     /* Do the selection loop.  The selectable list is in priority
        order; lowest priority first. */
-    for (item = opal_list_remove_first(selectable);
-         NULL != item;
+    for (item = opal_list_remove_first(selectable); NULL != item;
          item = opal_list_remove_first(selectable)) {
-        avail_op_t *avail = (avail_op_t*) item;
+        avail_op_t *avail = (avail_op_t *) item;
 
         /* Enable the module */
         if (NULL != avail->ao_module->opm_enable) {
@@ -164,8 +152,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
             /* 3-buffer variants */
             if (NULL != avail->ao_module->opm_3buff_fns[i]) {
                 OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
-                op->o_3buff_intrinsic.fns[i] =
-                    avail->ao_module->opm_3buff_fns[i];
+                op->o_3buff_intrinsic.fns[i] = avail->ao_module->opm_3buff_fns[i];
                 op->o_3buff_intrinsic.modules[i] = avail->ao_module;
                 OBJ_RETAIN(avail->ao_module);
             }
@@ -185,10 +172,10 @@ int ompi_op_base_op_select(ompi_op_t *op)
        values may be different, of course, but the pattern of
        NULL/non-NULL should be exactly the same. */
     for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
-        if ((NULL == ompi_op_base_functions[op->o_f_to_c_index][i] &&
-             NULL != op->o_func.intrinsic.fns[i]) ||
-            (NULL != ompi_op_base_functions[op->o_f_to_c_index][i] &&
-             NULL == op->o_func.intrinsic.fns[i])) {
+        if ((NULL == ompi_op_base_functions[op->o_f_to_c_index][i]
+             && NULL != op->o_func.intrinsic.fns[i])
+            || (NULL != ompi_op_base_functions[op->o_f_to_c_index][i]
+                && NULL == op->o_func.intrinsic.fns[i])) {
             /* Oops -- we found a mismatch.  This shouldn't happen; so
                go release everything and return an error (yes, re-use
                the "i" index because we're going to return without
@@ -205,8 +192,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
     return OMPI_SUCCESS;
 }
 
-static int avail_op_compare(opal_list_item_t **itema,
-                            opal_list_item_t **itemb)
+static int avail_op_compare(opal_list_item_t **itema, opal_list_item_t **itemb)
 {
     avail_op_t *availa = (avail_op_t *) *itema;
     avail_op_t *availb = (avail_op_t *) *itemb;
@@ -226,8 +212,7 @@ static int avail_op_compare(opal_list_item_t **itema,
  * only those who returned that they want to run, and put them in
  * priority order (lowest to highest).
  */
-static opal_list_t *check_components(opal_list_t *components,
-                                     ompi_op_t *op)
+static opal_list_t *check_components(opal_list_t *components, ompi_op_t *op)
 {
     int priority;
     mca_base_component_list_item_t *cli;
@@ -243,7 +228,7 @@ static opal_list_t *check_components(opal_list_t *components,
        but we should never have too many components and/or names, so this
        *hopefully* shouldn't matter... */
 
-    OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH (cli, components, mca_base_component_list_item_t) {
         component = cli->cli_component;
 
         priority = check_one_component(op, component, &module);
@@ -254,7 +239,7 @@ static opal_list_t *check_components(opal_list_t *components,
             avail->ao_priority = priority;
             avail->ao_module = module;
 
-            opal_list_append(selectable, (opal_list_item_t*)avail);
+            opal_list_append(selectable, (opal_list_item_t *) avail);
         }
     }
 
@@ -264,12 +249,10 @@ static opal_list_t *check_components(opal_list_t *components,
     return selectable;
 }
 
-
 /*
  * Check a single component
  */
-static int check_one_component(ompi_op_t *op,
-                               const mca_base_component_t *component,
+static int check_one_component(ompi_op_t *op, const mca_base_component_t *component,
                                ompi_op_base_module_1_0_0_t **module)
 {
     int err;
@@ -293,7 +276,6 @@ static int check_one_component(ompi_op_t *op,
     return priority;
 }
 
-
 /**************************************************************************
  * Query functions
  **************************************************************************/
@@ -302,16 +284,13 @@ static int check_one_component(ompi_op_t *op,
  * Take any version of a op module, query it, and return the right
  * module struct
  */
-static int query(const mca_base_component_t *component,
-                 ompi_op_t *op,
-                 int *priority, ompi_op_base_module_1_0_0_t **module)
+static int query(const mca_base_component_t *component, ompi_op_t *op, int *priority,
+                 ompi_op_base_module_1_0_0_t **module)
 {
     *module = NULL;
-    if (1 == component->mca_type_major_version &&
-        0 == component->mca_type_minor_version &&
-        0 == component->mca_type_release_version) {
-        const ompi_op_base_component_1_0_0_t *op100 =
-            (ompi_op_base_component_1_0_0_t *) component;
+    if (1 == component->mca_type_major_version && 0 == component->mca_type_minor_version
+        && 0 == component->mca_type_release_version) {
+        const ompi_op_base_component_1_0_0_t *op100 = (ompi_op_base_component_1_0_0_t *) component;
 
         return query_1_0_0(op100, op, priority, module);
     }
@@ -321,10 +300,8 @@ static int query(const mca_base_component_t *component,
     return OMPI_ERROR;
 }
 
-
-static int query_1_0_0(const ompi_op_base_component_1_0_0_t *component,
-                       ompi_op_t *op, int *priority,
-                       ompi_op_base_module_1_0_0_t **module)
+static int query_1_0_0(const ompi_op_base_component_1_0_0_t *component, ompi_op_t *op,
+                       int *priority, ompi_op_base_module_1_0_0_t **module)
 {
     ompi_op_base_module_1_0_0_t *ret;
 

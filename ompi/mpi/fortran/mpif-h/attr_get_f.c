@@ -21,54 +21,50 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_ATTR_GET = ompi_attr_get_f
-#pragma weak pmpi_attr_get = ompi_attr_get_f
-#pragma weak pmpi_attr_get_ = ompi_attr_get_f
-#pragma weak pmpi_attr_get__ = ompi_attr_get_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_ATTR_GET = ompi_attr_get_f
+#        pragma weak pmpi_attr_get = ompi_attr_get_f
+#        pragma weak pmpi_attr_get_ = ompi_attr_get_f
+#        pragma weak pmpi_attr_get__ = ompi_attr_get_f
 
-#pragma weak PMPI_Attr_get_f = ompi_attr_get_f
-#pragma weak PMPI_Attr_get_f08 = ompi_attr_get_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_GET,
-                           pmpi_attr_get,
-                           pmpi_attr_get_,
-                           pmpi_attr_get__,
+#        pragma weak PMPI_Attr_get_f = ompi_attr_get_f
+#        pragma weak PMPI_Attr_get_f08 = ompi_attr_get_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_ATTR_GET, pmpi_attr_get, pmpi_attr_get_, pmpi_attr_get__,
                            pompi_attr_get_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (comm, keyval, attribute_val, flag, ierr) )
-#endif
+                           (MPI_Fint * comm, MPI_Fint *keyval, MPI_Fint *attribute_val,
+                            ompi_fortran_logical_t *flag, MPI_Fint *ierr),
+                           (comm, keyval, attribute_val, flag, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_ATTR_GET = ompi_attr_get_f
-#pragma weak mpi_attr_get = ompi_attr_get_f
-#pragma weak mpi_attr_get_ = ompi_attr_get_f
-#pragma weak mpi_attr_get__ = ompi_attr_get_f
+#    pragma weak MPI_ATTR_GET = ompi_attr_get_f
+#    pragma weak mpi_attr_get = ompi_attr_get_f
+#    pragma weak mpi_attr_get_ = ompi_attr_get_f
+#    pragma weak mpi_attr_get__ = ompi_attr_get_f
 
-#pragma weak MPI_Attr_get_f = ompi_attr_get_f
-#pragma weak MPI_Attr_get_f08 = ompi_attr_get_f
+#    pragma weak MPI_Attr_get_f = ompi_attr_get_f
+#    pragma weak MPI_Attr_get_f08 = ompi_attr_get_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
-                           mpi_attr_get,
-                           mpi_attr_get_,
-                           mpi_attr_get__,
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_ATTR_GET, mpi_attr_get, mpi_attr_get_, mpi_attr_get__,
                            ompi_attr_get_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (comm, keyval, attribute_val, flag, ierr) )
-#else
-#define ompi_attr_get_f pompi_attr_get_f
-#endif
+                           (MPI_Fint * comm, MPI_Fint *keyval, MPI_Fint *attribute_val,
+                            ompi_fortran_logical_t *flag, MPI_Fint *ierr),
+                           (comm, keyval, attribute_val, flag, ierr))
+#    else
+#        define ompi_attr_get_f pompi_attr_get_f
+#    endif
 #endif
 
-void ompi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
-                    MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
+void ompi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val,
+                     ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
@@ -77,11 +73,10 @@ void ompi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
     /* This stuff is very confusing.  Be sure to see the comment at
        the top of src/attributes/attributes.c. */
 
-    c_ierr = ompi_attr_get_fint(c_comm->c_keyhash,
-                                OMPI_FINT_2_INT(*keyval),
-                                attribute_val,
+    c_ierr = ompi_attr_get_fint(c_comm->c_keyhash, OMPI_FINT_2_INT(*keyval), attribute_val,
                                 OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_SINGLE_INT_2_LOGICAL(flag);
 }

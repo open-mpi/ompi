@@ -45,8 +45,8 @@
 #include "opal/util/printf.h"
 
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/mca/op/op.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
 
 BEGIN_C_DECLS
 
@@ -58,48 +58,41 @@ BEGIN_C_DECLS
  * repeated code, but it's better this way (and this typedef will
  * never change, so there's not much of a maintenance worry).
  */
-typedef void (ompi_op_c_handler_fn_t)(void *, void *, int *,
-                                      struct ompi_datatype_t **);
+typedef void(ompi_op_c_handler_fn_t)(void *, void *, int *, struct ompi_datatype_t **);
 
 /**
  * Typedef for fortran user-defined MPI_Ops.
  */
-typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
-                                            MPI_Fint *, MPI_Fint *);
+typedef void(ompi_op_fortran_handler_fn_t)(void *, void *, MPI_Fint *, MPI_Fint *);
 
 /**
  * Typedef for Java op functions intercept (used for user-defined
  * MPI.Ops).
  */
-typedef void (ompi_op_java_handler_fn_t)(void *, void *, int *,
-                                         struct ompi_datatype_t **,
-                                         int baseType,
-                                         void *jnienv, void *object);
+typedef void(ompi_op_java_handler_fn_t)(void *, void *, int *, struct ompi_datatype_t **,
+                                        int baseType, void *jnienv, void *object);
 
 /*
  * Flags for MPI_Op
  */
 /** Set if the MPI_Op is a built-in operation */
-#define OMPI_OP_FLAGS_INTRINSIC    0x0001
+#define OMPI_OP_FLAGS_INTRINSIC 0x0001
 /** Set if the callback function is in Fortran */
 #define OMPI_OP_FLAGS_FORTRAN_FUNC 0x0002
 /** Set if the callback function is in Java */
-#define OMPI_OP_FLAGS_JAVA_FUNC    0x0008
+#define OMPI_OP_FLAGS_JAVA_FUNC 0x0008
 /** Set if the callback function is associative (MAX and SUM will both
     have ASSOC set -- in fact, it will only *not* be set if we
     implement some extensions to MPI, because MPI says that all
     MPI_Op's should be associative, so this flag is really here for
     future expansion) */
-#define OMPI_OP_FLAGS_ASSOC        0x0010
+#define OMPI_OP_FLAGS_ASSOC 0x0010
 /** Set if the callback function is associative for floating point
     operands (e.g., MPI_SUM will have ASSOC set, but will *not* have
     FLOAT_ASSOC set)  */
-#define OMPI_OP_FLAGS_FLOAT_ASSOC  0x0020
+#define OMPI_OP_FLAGS_FLOAT_ASSOC 0x0020
 /** Set if the callback function is communative */
-#define OMPI_OP_FLAGS_COMMUTE      0x0040
-
-
-
+#define OMPI_OP_FLAGS_COMMUTE 0x0040
 
 /*
  * Basic operation type for predefined types.
@@ -308,7 +301,6 @@ OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_replace_addr;
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_no_op;
 
-
 /**
  * Table for Fortran <-> C op handle conversion
  */
@@ -363,15 +355,14 @@ int ompi_op_finalize(void);
  * wrapper for MPI_OP_CREATE is expected to reset this flag to true
  * manually.
  */
-ompi_op_t *ompi_op_create_user(bool commute,
-                               ompi_op_fortran_handler_fn_t func);
+ompi_op_t *ompi_op_create_user(bool commute, ompi_op_fortran_handler_fn_t func);
 
 /**
  * Mark an MPI_Op as holding a Java calback function, and cache that
  * function in the MPI_Op.
  */
-OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op,  void *jnienv,
-                                             void *object, int baseType);
+OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op, void *jnienv, void *object,
+                                             int baseType);
 
 /**
  * Check to see if an op is intrinsic.
@@ -385,11 +376,10 @@ OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op,  void *jnienv,
  * this function is provided to hide the internal structure field
  * names.
  */
-static inline bool ompi_op_is_intrinsic(ompi_op_t * op)
+static inline bool ompi_op_is_intrinsic(ompi_op_t *op)
 {
     return (bool) (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC));
 }
-
 
 /**
  * Check to see if an op is communative or not
@@ -403,7 +393,7 @@ static inline bool ompi_op_is_intrinsic(ompi_op_t * op)
  * this function is provided to hide the internal structure field
  * names.
  */
-static inline bool ompi_op_is_commute(ompi_op_t * op)
+static inline bool ompi_op_is_commute(ompi_op_t *op)
 {
     return (bool) (0 != (op->o_flags & OMPI_OP_FLAGS_COMMUTE));
 }
@@ -420,11 +410,10 @@ static inline bool ompi_op_is_commute(ompi_op_t * op)
  * this function is provided to hide the internal structure field
  * names.
  */
-static inline bool ompi_op_is_float_assoc(ompi_op_t * op)
+static inline bool ompi_op_is_float_assoc(ompi_op_t *op)
 {
     return (bool) (0 != (op->o_flags & OMPI_OP_FLAGS_FLOAT_ASSOC));
 }
-
 
 /**
  * Check to see if an op is valid on a given datatype
@@ -439,8 +428,8 @@ static inline bool ompi_op_is_float_assoc(ompi_op_t * op)
  * this function is provided to hide the internal structure field
  * names.
  */
-static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
-                                    char **msg, const char *func)
+static inline bool ompi_op_is_valid(ompi_op_t *op, ompi_datatype_t *ddt, char **msg,
+                                    const char *func)
 {
     /* Check:
        - non-intrinsic ddt's cannot be invoked on intrinsic op's
@@ -452,23 +441,26 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
     if (ompi_op_is_intrinsic(op)) {
         if (ompi_datatype_is_predefined(ddt)) {
             /* Intrinsic ddt on intrinsic op */
-            if (-1 == ompi_op_ddt_map[ddt->id] ||
-                NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->id]]) {
-                (void) opal_asprintf(msg,
-                                "%s: the reduction operation %s is not defined on the %s datatype",
-                                func, op->o_name, ddt->name);
+            if (-1 == ompi_op_ddt_map[ddt->id]
+                || NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->id]]) {
+                (void) opal_asprintf(
+                    msg, "%s: the reduction operation %s is not defined on the %s datatype", func,
+                    op->o_name, ddt->name);
                 return false;
             }
         } else {
             /* Non-intrinsic ddt on intrinsic op */
             if ('\0' != ddt->name[0]) {
-                (void) opal_asprintf(msg,
-                                "%s: the reduction operation %s is not defined for non-intrinsic datatypes (attempted with datatype named \"%s\")",
-                                func, op->o_name, ddt->name);
+                (void)
+                    opal_asprintf(msg,
+                                  "%s: the reduction operation %s is not defined for non-intrinsic "
+                                  "datatypes (attempted with datatype named \"%s\")",
+                                  func, op->o_name, ddt->name);
             } else {
-                (void) opal_asprintf(msg,
-                                "%s: the reduction operation %s is not defined for non-intrinsic datatypes",
-                                func, op->o_name);
+                (void) opal_asprintf(
+                    msg,
+                    "%s: the reduction operation %s is not defined for non-intrinsic datatypes",
+                    func, op->o_name);
             }
             return false;
         }
@@ -477,7 +469,6 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
     /* All other cases ok */
     return true;
 }
-
 
 /**
  * Perform a reduction operation.
@@ -509,9 +500,8 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
  * optimization).  If you give it an intrinsic op with a datatype that
  * is not defined to have that operation, it is likely to seg fault.
  */
-static inline void ompi_op_reduce(ompi_op_t * op, void *source,
-                                  void *target, int count,
-                                  ompi_datatype_t * dtype)
+static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target, int count,
+                                  ompi_datatype_t *dtype)
 {
     MPI_Fint f_dtype, f_count;
 
@@ -547,8 +537,7 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
         } else {
             dtype_id = ompi_op_ddt_map[dtype->id];
         }
-        op->o_func.intrinsic.fns[dtype_id](source, target,
-                                           &count, &dtype,
+        op->o_func.intrinsic.fns[dtype_id](source, target, &count, &dtype,
                                            op->o_func.intrinsic.modules[dtype_id]);
         return;
     }
@@ -562,19 +551,19 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
     } else if (0 != (op->o_flags & OMPI_OP_FLAGS_JAVA_FUNC)) {
         op->o_func.java_data.intercept_fn(source, target, &count, &dtype,
                                           op->o_func.java_data.baseType,
-                                          op->o_func.java_data.jnienv,
-                                          op->o_func.java_data.object);
+                                          op->o_func.java_data.jnienv, op->o_func.java_data.object);
         return;
     }
     op->o_func.c_fn(source, target, &count, &dtype);
     return;
 }
 
-static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, void * restrict source2,
-                                       void * restrict result, int count, struct ompi_datatype_t *dtype)
+static inline void ompi_3buff_op_user(ompi_op_t *op, void *restrict source1, void *restrict source2,
+                                      void *restrict result, int count,
+                                      struct ompi_datatype_t *dtype)
 {
-    ompi_datatype_copy_content_same_ddt (dtype, count, result, source1);
-    op->o_func.c_fn (source2, result, &count, &dtype);
+    ompi_datatype_copy_content_same_ddt(dtype, count, result, source1);
+    op->o_func.c_fn(source2, result, &count, &dtype);
 }
 
 /**
@@ -600,9 +589,8 @@ static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, v
  *
  * Otherwise, this function is the same as ompi_op_reduce.
  */
-static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
-                                        void *source2, void *target,
-                                        int count, ompi_datatype_t * dtype)
+static inline void ompi_3buff_op_reduce(ompi_op_t *op, void *source1, void *source2, void *target,
+                                        int count, ompi_datatype_t *dtype)
 {
     void *restrict src1;
     void *restrict src2;
@@ -611,13 +599,12 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
     src2 = source2;
     tgt = target;
 
-    if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
-        op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
-                                                              tgt, &count,
-                                                              &dtype,
-                                                              op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+    if (OPAL_LIKELY(ompi_op_is_intrinsic(op))) {
+        op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](
+            src1, src2, tgt, &count, &dtype,
+            op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
     } else {
-        ompi_3buff_op_user (op, src1, src2, tgt, count, dtype);
+        ompi_3buff_op_user(op, src1, src2, tgt, count, dtype);
     }
 }
 

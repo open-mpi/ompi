@@ -21,10 +21,10 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/request/grequest.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/request/grequestx.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/request/grequest.h"
 
 static bool requests_initialized = false;
 static opal_list_t requests;
@@ -32,7 +32,8 @@ static opal_atomic_int32_t active_requests = 0;
 static bool in_progress = false;
 static opal_mutex_t lock = OPAL_MUTEX_STATIC_INIT;
 
-static int grequestx_progress(void) {
+static int grequestx_progress(void)
+{
     ompi_grequest_t *request, *next;
     int completed = 0;
 
@@ -40,7 +41,7 @@ static int grequestx_progress(void) {
     if (!in_progress) {
         in_progress = true;
 
-        OPAL_LIST_FOREACH_SAFE(request, next, &requests, ompi_grequest_t) {
+        OPAL_LIST_FOREACH_SAFE (request, next, &requests, ompi_grequest_t) {
             MPI_Status status;
             OPAL_THREAD_UNLOCK(&lock);
             request->greq_poll.c_poll(request->greq_state, &status);
@@ -58,13 +59,11 @@ static int grequestx_progress(void) {
     return completed;
 }
 
-int ompi_grequestx_start(
-    MPI_Grequest_query_function *gquery_fn,
-    MPI_Grequest_free_function *gfree_fn,
-    MPI_Grequest_cancel_function *gcancel_fn,
-    ompi_grequestx_poll_function *gpoll_fn,
-    void* extra_state,
-    ompi_request_t** request)
+int ompi_grequestx_start(MPI_Grequest_query_function *gquery_fn,
+                         MPI_Grequest_free_function *gfree_fn,
+                         MPI_Grequest_cancel_function *gcancel_fn,
+                         ompi_grequestx_poll_function *gpoll_fn, void *extra_state,
+                         ompi_request_t **request)
 {
     int rc;
 
@@ -72,12 +71,12 @@ int ompi_grequestx_start(
     if (OMPI_SUCCESS != rc) {
         return rc;
     }
-    ((ompi_grequest_t *)*request)->greq_poll.c_poll = gpoll_fn;
+    ((ompi_grequest_t *) *request)->greq_poll.c_poll = gpoll_fn;
 
     /* prevent the request from being destroyed upon completion,
      * we first have to remove it from the list of active requests
      */
-    OBJ_RETAIN(((ompi_grequest_t *)*request));
+    OBJ_RETAIN(((ompi_grequest_t *) *request));
 
     OPAL_THREAD_LOCK(&lock);
     if (!requests_initialized) {
@@ -95,7 +94,6 @@ int ompi_grequestx_start(
     return OMPI_SUCCESS;
 }
 
-
 struct grequestx_class {
     opal_object_t super;
     MPI_Grequest_query_function *gquery_fn;
@@ -103,7 +101,7 @@ struct grequestx_class {
     MPI_Grequest_cancel_function *gcancel_fn;
     ompi_grequestx_poll_function *gpoll_fn;
     ompi_grequestx_wait_function *gwait_fn;
-} ;
+};
 
 typedef struct grequestx_class grequestx_class;
 
@@ -113,15 +111,14 @@ static OBJ_CLASS_INSTANCE(grequestx_class, opal_object_t, NULL, NULL);
 
 static opal_pointer_array_t classes;
 
-int ompi_grequestx_class_create(
-    MPI_Grequest_query_function *gquery_fn,
-    MPI_Grequest_free_function *gfree_fn,
-    MPI_Grequest_cancel_function *gcancel_fn,
-    ompi_grequestx_poll_function *gpoll_fn,
-    ompi_grequestx_wait_function *gwait_fn,
-    ompi_grequestx_class *greq_class)
+int ompi_grequestx_class_create(MPI_Grequest_query_function *gquery_fn,
+                                MPI_Grequest_free_function *gfree_fn,
+                                MPI_Grequest_cancel_function *gcancel_fn,
+                                ompi_grequestx_poll_function *gpoll_fn,
+                                ompi_grequestx_wait_function *gwait_fn,
+                                ompi_grequestx_class *greq_class)
 {
-    grequestx_class * class = OBJ_NEW(grequestx_class);
+    grequestx_class *class = OBJ_NEW(grequestx_class);
     class->gquery_fn = gquery_fn;
     class->gfree_fn = gfree_fn;
     class->gcancel_fn = gcancel_fn;
@@ -132,18 +129,17 @@ int ompi_grequestx_class_create(
         OBJ_CONSTRUCT(&classes, opal_pointer_array_t);
     }
     opal_pointer_array_add(&classes, class);
-    next_class ++;
+    next_class++;
 
     return OMPI_SUCCESS;
 }
 
-int ompi_grequestx_class_allocate(
-    ompi_grequestx_class greq_class,
-    void *extra_state,
-    ompi_request_t **request)
+int ompi_grequestx_class_allocate(ompi_grequestx_class greq_class, void *extra_state,
+                                  ompi_request_t **request)
 {
     grequestx_class *class = opal_pointer_array_get_item(&classes, greq_class);
-    ompi_grequestx_start(class->gquery_fn, class->gfree_fn, class->gcancel_fn, class->gpoll_fn, extra_state, request);
+    ompi_grequestx_start(class->gquery_fn, class->gfree_fn, class->gcancel_fn, class->gpoll_fn,
+                         extra_state, request);
 
     return OMPI_SUCCESS;
 }

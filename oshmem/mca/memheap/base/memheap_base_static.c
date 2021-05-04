@@ -10,20 +10,19 @@
  */
 #include "oshmem_config.h"
 
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/proc/proc.h"
-#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/proc/proc.h"
 #include "oshmem/util/oshmem_util.h"
 
-#include <stdio.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 struct map_segment_desc {
-    void* start;
-    void* end;
+    void *start;
+    void *end;
     char perms[8];
     uint64_t offset;
     char dev[8];
@@ -33,8 +32,8 @@ struct map_segment_desc {
 
 typedef struct memheap_static_context {
     struct {
-        void* start;
-        void* end;
+        void *start;
+        void *end;
     } mem_segs[MCA_MEMHEAP_MAX_SEGMENTS];
     int n_segments;
 } memheap_static_context_t;
@@ -67,16 +66,15 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
             MAP_SEGMENT_RESET_FLAGS(s);
             s->seg_id = MAP_SEGMENT_SHM_INVALID;
             s->super.va_base = memheap_context.mem_segs[i].start;
-            s->super.va_end  = memheap_context.mem_segs[i].end;
-            s->seg_size = ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
+            s->super.va_end = memheap_context.mem_segs[i].end;
+            s->seg_size = ((uintptr_t) s->super.va_end - (uintptr_t) s->super.va_base);
             s->type = MAP_SEGMENT_STATIC;
             map->n_segments++;
 
-            total_mem += ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
+            total_mem += ((uintptr_t) s->super.va_end - (uintptr_t) s->super.va_base);
         }
-        MEMHEAP_VERBOSE(1,
-                        "Memheap static memory: %llu byte(s), %d segments",
-                        (unsigned long long)total_mem, map->n_segments);
+        MEMHEAP_VERBOSE(1, "Memheap static memory: %llu byte(s), %d segments",
+                        (unsigned long long) total_mem, map->n_segments);
     }
 
     return ret;
@@ -100,7 +98,7 @@ static int _check_address(struct map_segment_desc *seg)
     /* FIXME Linux specific code */
 #ifdef __linux__
     extern unsigned _end;
-    void* data_end = &_end;
+    void *data_end = &_end;
 
     /**
      * SGI shmem only supports globals&static in main program.
@@ -111,18 +109,16 @@ static int _check_address(struct map_segment_desc *seg)
      * FIXME: make sure we do not register symmetric heap twice
      * if we decide to allow shared objects
      */
-    if ((uintptr_t)seg->start > (uintptr_t)data_end) {
-        MEMHEAP_VERBOSE(100,
-                        "skip segment: data _end < segment start (%p < %p)",
-                        data_end, seg->start);
+    if ((uintptr_t) seg->start > (uintptr_t) data_end) {
+        MEMHEAP_VERBOSE(100, "skip segment: data _end < segment start (%p < %p)", data_end,
+                        seg->start);
         return OSHMEM_ERROR;
     }
 
-    if ((uintptr_t)seg->end > (uintptr_t)data_end) {
-        MEMHEAP_VERBOSE(100,
-                        "adjust segment: data _end < segment end (%p < %p",
-                        data_end, seg->end);
-         seg->end = data_end;
+    if ((uintptr_t) seg->end > (uintptr_t) data_end) {
+        MEMHEAP_VERBOSE(100, "adjust segment: data _end < segment end (%p < %p", data_end,
+                        seg->end);
+        seg->end = data_end;
     }
 #endif
     return OSHMEM_SUCCESS;
@@ -221,15 +217,10 @@ static int _load_segments(void)
 
     while (NULL != fgets(line, sizeof(line), fp)) {
         memset(&seg, 0, sizeof(seg));
-        if (3 > sscanf(line,
-               "%llx-%llx %s %llx %s %llx %s",
-               (unsigned long long *) &seg.start,
-               (unsigned long long *) &seg.end,
-               seg.perms,
-               (unsigned long long *) &seg.offset,
-               seg.dev,
-               (unsigned long long *) &seg.inode,
-               seg.pathname)) {
+        if (3 > sscanf(line, "%llx-%llx %s %llx %s %llx %s", (unsigned long long *) &seg.start,
+                       (unsigned long long *) &seg.end, seg.perms,
+                       (unsigned long long *) &seg.offset, seg.dev,
+                       (unsigned long long *) &seg.inode, seg.pathname)) {
             MEMHEAP_ERROR("Failed to sscanf /proc/self/maps output %s", line);
             fclose(fp);
             return OSHMEM_ERROR;
@@ -246,20 +237,15 @@ static int _load_segments(void)
 
         MEMHEAP_VERBOSE(5, "add: %s", line);
         if (MCA_MEMHEAP_MAX_SEGMENTS <= memheap_context.n_segments) {
-            MEMHEAP_ERROR("too many segments (max = %d): skip %s",
-                          MCA_MEMHEAP_MAX_SEGMENTS, line);
+            MEMHEAP_ERROR("too many segments (max = %d): skip %s", MCA_MEMHEAP_MAX_SEGMENTS, line);
             continue;
         }
         if (memheap_context.n_segments > 0
-                && seg.start
-                        == memheap_context.mem_segs[memheap_context.n_segments
-                                - 1].end) {
+            && seg.start == memheap_context.mem_segs[memheap_context.n_segments - 1].end) {
             MEMHEAP_VERBOSE(5, "Coalescing segment");
-            memheap_context.mem_segs[memheap_context.n_segments - 1].end =
-                    seg.end;
+            memheap_context.mem_segs[memheap_context.n_segments - 1].end = seg.end;
         } else {
-            memheap_context.mem_segs[memheap_context.n_segments].start =
-                    seg.start;
+            memheap_context.mem_segs[memheap_context.n_segments].start = seg.start;
             memheap_context.mem_segs[memheap_context.n_segments].end = seg.end;
             memheap_context.n_segments++;
         }

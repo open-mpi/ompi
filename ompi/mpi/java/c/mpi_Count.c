@@ -35,18 +35,18 @@
 
 #include <stdlib.h>
 #ifdef HAVE_TARGETCONDITIONALS_H
-#include <TargetConditionals.h>
+#    include <TargetConditionals.h>
 #endif
 
 #include "mpi.h"
-#include "mpi_Count.h"
 #include "mpiJava.h"
+#include "mpi_Count.h"
 
 JNIEXPORT void JNICALL Java_mpi_Count_initCount(JNIEnv *env, jclass jthis)
 {
-	jclass c = (*env)->FindClass(env, "mpi/Count");
-	ompi_java.CountClass = (*env)->NewGlobalRef(env, c);
-	ompi_java.CountInit = (*env)->GetMethodID(env, ompi_java.CountClass, "<init>", "(J)V");
+    jclass c = (*env)->FindClass(env, "mpi/Count");
+    ompi_java.CountClass = (*env)->NewGlobalRef(env, c);
+    ompi_java.CountInit = (*env)->GetMethodID(env, ompi_java.CountClass, "<init>", "(J)V");
 
-	(*env)->DeleteLocalRef(env, c);
+    (*env)->DeleteLocalRef(env, c);
 }

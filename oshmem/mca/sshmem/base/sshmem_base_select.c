@@ -13,12 +13,12 @@
 #include <string.h>
 
 #include "opal/constants.h"
+#include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "oshmem/mca/mca.h"
-#include "opal/mca/base/base.h"
 
-#include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/mca/sshmem/sshmem.h"
 
 /*
  * globals
@@ -28,9 +28,8 @@ const mca_sshmem_base_component_2_0_0_t *mca_sshmem_base_component = NULL;
 const mca_sshmem_base_module_2_0_0_t *mca_sshmem_base_module = NULL;
 
 /* ////////////////////////////////////////////////////////////////////////// */
-static int
-mca_sshmem_base_runtime_query(mca_base_module_t **best_module,
-                              mca_base_component_t **best_component)
+static int mca_sshmem_base_runtime_query(mca_base_module_t **best_module,
+                                         mca_base_component_t **best_component)
 {
     mca_base_component_list_item_t *cli = NULL;
     mca_base_component_t *component = NULL;
@@ -48,14 +47,14 @@ mca_sshmem_base_runtime_query(mca_base_module_t **best_module,
      * for each call their 'run-time query' functions to determine relative
      * priority.
      */
-    OPAL_LIST_FOREACH(cli, &oshmem_sshmem_base_framework.framework_components, mca_base_component_list_item_t) {
-        component = (mca_base_component_t *)cli->cli_component;
+    OPAL_LIST_FOREACH (cli, &oshmem_sshmem_base_framework.framework_components,
+                       mca_base_component_list_item_t) {
+        component = (mca_base_component_t *) cli->cli_component;
 
         /* if there is a run-time query function then use it. otherwise, skip
          * the component.
          */
-        if (NULL == ((mca_sshmem_base_component_2_0_0_t *)
-                     component)->runtime_query) {
+        if (NULL == ((mca_sshmem_base_component_2_0_0_t *) component)->runtime_query) {
             opal_output_verbose(5, oshmem_sshmem_base_framework.framework_output,
                                 "sshmem: base: runtime_query: "
                                 "(sshmem) Skipping component [%s]. It does not "
@@ -70,8 +69,7 @@ mca_sshmem_base_runtime_query(mca_base_module_t **best_module,
                             "(shmem) Querying component (run-time) [%s]",
                             component->mca_component_name);
 
-        ((mca_sshmem_base_component_2_0_0_t *)
-         component)->runtime_query(&module, &priority, NULL);
+        ((mca_sshmem_base_component_2_0_0_t *) component)->runtime_query(&module, &priority, NULL);
 
         /* if no module was returned, then skip component.
          * this probably means that the run-time test deemed the shared memory
@@ -106,32 +104,32 @@ mca_sshmem_base_runtime_query(mca_base_module_t **best_module,
     if (NULL == *best_component) {
         opal_output_verbose(5, oshmem_sshmem_base_framework.framework_output,
                             "sshmem: base: runtime_query: "
-                            "(%5s) No component selected!", "shmem");
+                            "(%5s) No component selected!",
+                            "shmem");
         return OSHMEM_ERR_NOT_FOUND;
     }
 
     opal_output_verbose(5, oshmem_sshmem_base_framework.framework_output,
                         "sshmem: base: runtime_query: "
-                        "(%5s) Selected component [%s]", "shmem",
-                        (*best_component)->mca_component_name);
+                        "(%5s) Selected component [%s]",
+                        "shmem", (*best_component)->mca_component_name);
 
     /* close the non-selected components */
-    (void) mca_base_framework_components_close (&oshmem_sshmem_base_framework,
-                                                (mca_base_component_t *)(*best_component));
+    (void) mca_base_framework_components_close(&oshmem_sshmem_base_framework,
+                                               (mca_base_component_t *) (*best_component));
 
     return OSHMEM_SUCCESS;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int
-mca_sshmem_base_select(void)
+int mca_sshmem_base_select(void)
 {
     mca_sshmem_base_component_2_0_0_t *best_component = NULL;
     mca_sshmem_base_module_2_0_0_t *best_module = NULL;
     /* select the best component */
-    if (OSHMEM_SUCCESS != mca_sshmem_base_runtime_query(
-                                (mca_base_module_t **)&best_module,
-                                (mca_base_component_t **)&best_component)) {
+    if (OSHMEM_SUCCESS
+        != mca_sshmem_base_runtime_query((mca_base_module_t **) &best_module,
+                                         (mca_base_component_t **) &best_component)) {
         /* it is NOT okay if we don't find a module because we need at
          * least one shared memory backing facility component instance.
          */
@@ -140,15 +138,13 @@ mca_sshmem_base_select(void)
 
     /* save the winner */
     mca_sshmem_base_component = best_component;
-    mca_sshmem_base_module    = best_module;
-    mca_sshmem_base_selected  = true;
+    mca_sshmem_base_module = best_module;
+    mca_sshmem_base_selected = true;
 
     /* initialize the winner */
     if (NULL != mca_sshmem_base_module) {
         return mca_sshmem_base_module->module_init();
-    }
-    else {
+    } else {
         return OSHMEM_ERROR;
     }
 }
-

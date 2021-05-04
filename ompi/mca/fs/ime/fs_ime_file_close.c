@@ -24,12 +24,11 @@
  *	Accepts:	- file handle
  *	Returns:	- Success if file closed
  */
-int mca_fs_ime_file_close (ompio_file_t *fh)
+int mca_fs_ime_file_close(ompio_file_t *fh)
 {
     int ret;
 
-    fh->f_comm->c_coll->coll_barrier (fh->f_comm,
-                                     fh->f_comm->c_coll->coll_barrier_module);
+    fh->f_comm->c_coll->coll_barrier(fh->f_comm, fh->f_comm->c_coll->coll_barrier_module);
     /* reset errno */
     errno = 0;
 

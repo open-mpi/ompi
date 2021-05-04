@@ -225,7 +225,7 @@ static inline void opal_dt_swap_long_double(void *to_p, const void *from_p, cons
                    && (ptrdiff_t) sizeof(TYPE) == from_extent) {                                   \
             MEMCPY(to, from, count * sizeof(TYPE));                                                \
         } else {                                                                                   \
-            /* source or destination are non-contiguous */                                          \
+            /* source or destination are non-contiguous */                                         \
             for (i = 0; i < count; i++) {                                                          \
                 MEMCPY(to, from, sizeof(TYPE));                                                    \
                 to += to_extent;                                                                   \
@@ -265,10 +265,10 @@ static inline void opal_dt_swap_long_double(void *to_p, const void *from_p, cons
             }                                                                                   \
         } else if ((ptrdiff_t)(sizeof(TYPE1) + sizeof(TYPE2)) == to_extent                      \
                    && (ptrdiff_t)(sizeof(TYPE1) + sizeof(TYPE2)) == from_extent) {              \
-            /* source and destination are contiguous */                                          \
+            /* source and destination are contiguous */                                         \
             MEMCPY(to, from, count *(sizeof(TYPE1) + sizeof(TYPE2)));                           \
         } else {                                                                                \
-            /* source or destination are non-contiguous */                                       \
+            /* source or destination are non-contiguous */                                      \
             for (i = 0; i < count; i++) {                                                       \
                 MEMCPY(to, from, sizeof(TYPE1) + sizeof(TYPE2));                                \
                 to += to_extent;                                                                \
@@ -458,18 +458,18 @@ COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL(long_double_complex, long double, 1)
 COPY_TYPE_HETEROGENEOUS(wchar, wchar_t)
 
 #if SIZEOF_LONG == 8
-static int32_t
-copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
-                        const char* from, size_t from_len, ptrdiff_t from_extent,
-                        char* to, size_t to_length, ptrdiff_t to_extent,
-                        ptrdiff_t *advance)
+static int32_t copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count, const char *from,
+                                       size_t from_len, ptrdiff_t from_extent, char *to,
+                                       size_t to_length, ptrdiff_t to_extent, ptrdiff_t *advance)
 {
     size_t i;
 
-    datatype_check("long", sizeof(long), pConvertor->master->remote_sizes[OPAL_DATATYPE_LONG], &count, from, from_len, from_extent, to,
-                   to_length, to_extent);
-    if (!((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_LONGIS64)) {  /* same sizeof(long) */
-        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianess */
+    datatype_check("long", sizeof(long), pConvertor->master->remote_sizes[OPAL_DATATYPE_LONG],
+                   &count, from, from_len, from_extent, to, to_length, to_extent);
+    if (!((pConvertor->remoteArch ^ opal_local_arch)
+          & OPAL_ARCH_LONGIS64)) { /* same sizeof(long) */
+        if ((pConvertor->remoteArch ^ opal_local_arch)
+            & OPAL_ARCH_ISBIGENDIAN) { /* different endianess */
             for (i = 0; i < count; i++) {
                 opal_dt_swap_bytes(to, from, sizeof(long), 1);
                 to += to_extent;
@@ -477,59 +477,59 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
             }
         } else {
             for (i = 0; i < count; i++) {
-                *(long*)to = *(long*)from;
+                *(long *) to = *(long *) from;
                 to += to_extent;
                 from += from_extent;
             }
         }
     } else {
         /* the two sides have different lengths for sizeof(long) */
-        if( CONVERTOR_SEND & pConvertor->flags ) { /* we're doing a pack */
+        if (CONVERTOR_SEND & pConvertor->flags) { /* we're doing a pack */
             assert(CONVERTOR_SEND_CONVERSION & pConvertor->flags);
             if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {
                 /* different sizeof, we need to convert */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
-                        int64_t val = *(int64_t*)from;
-                        int32_t i32 = (int32_t)val;
+                        int64_t val = *(int64_t *) from;
+                        int32_t i32 = (int32_t) val;
                         opal_dt_swap_bytes(to, &i32, sizeof(int32_t), 1);
                         to += to_extent;
                         from += from_extent;
                     }
                 } else {
                     for (i = 0; i < count; i++) { /* from 4 to 8 bytes */
-                        int32_t val = *(int32_t*)from;
-                        int64_t i64 = (int64_t)val;
+                        int32_t val = *(int32_t *) from;
+                        int64_t i64 = (int64_t) val;
                         opal_dt_swap_bytes(to, &i64, sizeof(int64_t), 1);
                         to += to_extent;
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else { /* both have the same endianess */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
-                        long val = *(long*)from;
-                        *(int32_t*)to = (int32_t)val;
+                        long val = *(long *) from;
+                        *(int32_t *) to = (int32_t) val;
                         to += to_extent;
                         from += from_extent;
                     }
                 } else {
                     for (i = 0; i < count; i++) { /* from 4 to 8 bytes */
-                        long val = *(long*)from;
-                        *(int64_t*)to = (int64_t)val;
+                        long val = *(long *) from;
+                        *(int64_t *) to = (int64_t) val;
                         to += to_extent;
                         from += from_extent;
                     }
                 }
             }
-        } else {  /* unpack */
+        } else { /* unpack */
             if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {
                 /* different endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 4 to 8 bytes */
                         int32_t val;
                         opal_dt_swap_bytes(&val, from, sizeof(int32_t), 1);
-                        *(long*)to = (long)val;
+                        *(long *) to = (long) val;
                         to += to_extent;
                         from += from_extent;
                     }
@@ -537,23 +537,23 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         int64_t val;
                         opal_dt_swap_bytes(&val, from, sizeof(int64_t), 1);
-                        *(long*)to = (long)val;
+                        *(long *) to = (long) val;
                         to += to_extent;
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else { /* both have the same endianess */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
-                        int32_t val = *(int32_t*)from;
-                        *(long*)to = (long)val;
+                        int32_t val = *(int32_t *) from;
+                        *(long *) to = (long) val;
                         to += to_extent;
                         from += from_extent;
                     }
                 } else {
                     for (i = 0; i < count; i++) { /* from 4 to 8 bytes */
-                        int64_t val = *(int64_t*)from;
-                        *(long*)to = (long)val;
+                        int64_t val = *(int64_t *) from;
+                        *(long *) to = (long) val;
                         to += to_extent;
                         from += from_extent;
                     }
@@ -565,18 +565,20 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
     return count;
 }
 
-static int32_t
-copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
-                                 const char* from, size_t from_len, ptrdiff_t from_extent,
-                                 char* to, size_t to_length, ptrdiff_t to_extent,
-                                 ptrdiff_t *advance)
+static int32_t copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
+                                                const char *from, size_t from_len,
+                                                ptrdiff_t from_extent, char *to, size_t to_length,
+                                                ptrdiff_t to_extent, ptrdiff_t *advance)
 {
     size_t i;
 
-    datatype_check("unsigned long", sizeof(unsigned long), pConvertor->master->remote_sizes[OPAL_DATATYPE_UNSIGNED_LONG],
-                   &count, from, from_len, from_extent, to, to_length, to_extent);
-    if (!((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_LONGIS64)) {  /* same sizeof(long) */
-        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianess */
+    datatype_check("unsigned long", sizeof(unsigned long),
+                   pConvertor->master->remote_sizes[OPAL_DATATYPE_UNSIGNED_LONG], &count, from,
+                   from_len, from_extent, to, to_length, to_extent);
+    if (!((pConvertor->remoteArch ^ opal_local_arch)
+          & OPAL_ARCH_LONGIS64)) { /* same sizeof(long) */
+        if ((pConvertor->remoteArch ^ opal_local_arch)
+            & OPAL_ARCH_ISBIGENDIAN) { /* different endianess */
             for (i = 0; i < count; i++) {
                 opal_dt_swap_bytes(to, from, sizeof(unsigned long), 1);
                 to += to_extent;
@@ -584,59 +586,59 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
             }
         } else {
             for (i = 0; i < count; i++) {
-                *(unsigned long*)to = *(unsigned long*)from;
+                *(unsigned long *) to = *(unsigned long *) from;
                 to += to_extent;
                 from += from_extent;
             }
         }
     } else {
         /* the two sides have different lengths for sizeof(long) */
-        if( CONVERTOR_SEND & pConvertor->flags ) { /* we're doing a pack */
+        if (CONVERTOR_SEND & pConvertor->flags) { /* we're doing a pack */
             assert(CONVERTOR_SEND_CONVERSION & pConvertor->flags);
             if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {
                 /* different sizeof, we need to convert */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
-                        uint64_t val = *(uint64_t*)from;
-                        uint32_t i32 = (uint32_t)val;
+                        uint64_t val = *(uint64_t *) from;
+                        uint32_t i32 = (uint32_t) val;
                         opal_dt_swap_bytes(to, &i32, sizeof(uint32_t), 1);
                         to += to_extent;
                         from += from_extent;
                     }
                 } else {
                     for (i = 0; i < count; i++) { /* from 4 to 8 bytes */
-                        uint32_t val = *(uint32_t*)from;
-                        uint64_t i64 = (uint64_t)val;
+                        uint32_t val = *(uint32_t *) from;
+                        uint64_t i64 = (uint64_t) val;
                         opal_dt_swap_bytes(to, &i64, sizeof(uint64_t), 1);
                         to += to_extent;
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else { /* both have the same endianess */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
-                        unsigned long val = *(unsigned long*)from;
-                        *(uint32_t*)to = (uint32_t)val;
+                        unsigned long val = *(unsigned long *) from;
+                        *(uint32_t *) to = (uint32_t) val;
                         to += to_extent;
                         from += from_extent;
                     }
                 } else {
                     for (i = 0; i < count; i++) { /* from 4 to 8 bytes */
-                        unsigned long val = *(unsigned long*)from;
-                        *(uint64_t*)to = (uint64_t)val;
+                        unsigned long val = *(unsigned long *) from;
+                        *(uint64_t *) to = (uint64_t) val;
                         to += to_extent;
                         from += from_extent;
                     }
                 }
             }
-        } else {  /* unpack */
+        } else { /* unpack */
             if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {
                 /* different endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 4 to 8 bytes */
                         uint32_t val;
                         opal_dt_swap_bytes(&val, from, sizeof(uint32_t), 1);
-                        *(unsigned long*)to = (unsigned long)val;
+                        *(unsigned long *) to = (unsigned long) val;
                         to += to_extent;
                         from += from_extent;
                     }
@@ -644,23 +646,23 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         uint64_t val;
                         opal_dt_swap_bytes(&val, from, sizeof(uint64_t), 1);
-                        *(unsigned long*)to = (unsigned long)val;
+                        *(unsigned long *) to = (unsigned long) val;
                         to += to_extent;
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else { /* both have the same endianess */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
-                        uint32_t val = *(uint32_t*)from;
-                        *(unsigned long*)to = (unsigned long)val;
+                        uint32_t val = *(uint32_t *) from;
+                        *(unsigned long *) to = (unsigned long) val;
                         to += to_extent;
                         from += from_extent;
                     }
                 } else {
                     for (i = 0; i < count; i++) { /* from 4 to 8 bytes */
-                        uint64_t val = *(uint64_t*)from;
-                        *(unsigned long*)to = (unsigned long)val;
+                        uint64_t val = *(uint64_t *) from;
+                        *(unsigned long *) to = (unsigned long) val;
                         to += to_extent;
                         from += from_extent;
                     }
@@ -671,41 +673,41 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
     *advance = count * from_extent;
     return count;
 }
-#endif  /* SIZEOF_LONG == 8 */
+#endif /* SIZEOF_LONG == 8 */
 
 /* table of predefined copy functions - one for each MPI type */
 conversion_fct_t opal_datatype_heterogeneous_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED] = {
-    [OPAL_DATATYPE_LOOP]                = NULL,
-    [OPAL_DATATYPE_END_LOOP]            = NULL,
-    [OPAL_DATATYPE_LB]                  = NULL,
-    [OPAL_DATATYPE_UB]                  = NULL,
-    [OPAL_DATATYPE_INT1]                = (conversion_fct_t) copy_int1_heterogeneous,
-    [OPAL_DATATYPE_INT2]                = (conversion_fct_t) copy_int2_heterogeneous,
-    [OPAL_DATATYPE_INT4]                = (conversion_fct_t) copy_int4_heterogeneous,
-    [OPAL_DATATYPE_INT8]                = (conversion_fct_t) copy_int8_heterogeneous,
-    [OPAL_DATATYPE_INT16]               = (conversion_fct_t) copy_int16_heterogeneous,
-    [OPAL_DATATYPE_UINT1]               = (conversion_fct_t) copy_int1_heterogeneous,
-    [OPAL_DATATYPE_UINT2]               = (conversion_fct_t) copy_int2_heterogeneous,
-    [OPAL_DATATYPE_UINT4]               = (conversion_fct_t) copy_int4_heterogeneous,
-    [OPAL_DATATYPE_UINT8]               = (conversion_fct_t) copy_int8_heterogeneous,
-    [OPAL_DATATYPE_UINT16]              = (conversion_fct_t) copy_int16_heterogeneous,
-    [OPAL_DATATYPE_FLOAT2]              = (conversion_fct_t) copy_float2_heterogeneous,
-    [OPAL_DATATYPE_FLOAT4]              = (conversion_fct_t) copy_float4_heterogeneous,
-    [OPAL_DATATYPE_FLOAT8]              = (conversion_fct_t) copy_float8_heterogeneous,
-    [OPAL_DATATYPE_FLOAT12]             = (conversion_fct_t) copy_float12_heterogeneous,
-    [OPAL_DATATYPE_FLOAT16]             = (conversion_fct_t) copy_float16_heterogeneous,
+    [OPAL_DATATYPE_LOOP] = NULL,
+    [OPAL_DATATYPE_END_LOOP] = NULL,
+    [OPAL_DATATYPE_LB] = NULL,
+    [OPAL_DATATYPE_UB] = NULL,
+    [OPAL_DATATYPE_INT1] = (conversion_fct_t) copy_int1_heterogeneous,
+    [OPAL_DATATYPE_INT2] = (conversion_fct_t) copy_int2_heterogeneous,
+    [OPAL_DATATYPE_INT4] = (conversion_fct_t) copy_int4_heterogeneous,
+    [OPAL_DATATYPE_INT8] = (conversion_fct_t) copy_int8_heterogeneous,
+    [OPAL_DATATYPE_INT16] = (conversion_fct_t) copy_int16_heterogeneous,
+    [OPAL_DATATYPE_UINT1] = (conversion_fct_t) copy_int1_heterogeneous,
+    [OPAL_DATATYPE_UINT2] = (conversion_fct_t) copy_int2_heterogeneous,
+    [OPAL_DATATYPE_UINT4] = (conversion_fct_t) copy_int4_heterogeneous,
+    [OPAL_DATATYPE_UINT8] = (conversion_fct_t) copy_int8_heterogeneous,
+    [OPAL_DATATYPE_UINT16] = (conversion_fct_t) copy_int16_heterogeneous,
+    [OPAL_DATATYPE_FLOAT2] = (conversion_fct_t) copy_float2_heterogeneous,
+    [OPAL_DATATYPE_FLOAT4] = (conversion_fct_t) copy_float4_heterogeneous,
+    [OPAL_DATATYPE_FLOAT8] = (conversion_fct_t) copy_float8_heterogeneous,
+    [OPAL_DATATYPE_FLOAT12] = (conversion_fct_t) copy_float12_heterogeneous,
+    [OPAL_DATATYPE_FLOAT16] = (conversion_fct_t) copy_float16_heterogeneous,
     [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = (conversion_fct_t) copy_short_float_complex_heterogeneous,
-    [OPAL_DATATYPE_FLOAT_COMPLEX]       = (conversion_fct_t) copy_float_complex_heterogeneous,
-    [OPAL_DATATYPE_DOUBLE_COMPLEX]      = (conversion_fct_t) copy_double_complex_heterogeneous,
+    [OPAL_DATATYPE_FLOAT_COMPLEX] = (conversion_fct_t) copy_float_complex_heterogeneous,
+    [OPAL_DATATYPE_DOUBLE_COMPLEX] = (conversion_fct_t) copy_double_complex_heterogeneous,
     [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = (conversion_fct_t) copy_long_double_complex_heterogeneous,
-    [OPAL_DATATYPE_BOOL]                = (conversion_fct_t) copy_cxx_bool_heterogeneous,
-    [OPAL_DATATYPE_WCHAR]               = (conversion_fct_t) copy_wchar_heterogeneous,
+    [OPAL_DATATYPE_BOOL] = (conversion_fct_t) copy_cxx_bool_heterogeneous,
+    [OPAL_DATATYPE_WCHAR] = (conversion_fct_t) copy_wchar_heterogeneous,
 #if SIZEOF_LONG == 4
-    [OPAL_DATATYPE_LONG]                = (conversion_fct_t) copy_int4_heterogeneous,
-    [OPAL_DATATYPE_UNSIGNED_LONG]       = (conversion_fct_t) copy_int4_heterogeneous,
+    [OPAL_DATATYPE_LONG] = (conversion_fct_t) copy_int4_heterogeneous,
+    [OPAL_DATATYPE_UNSIGNED_LONG] = (conversion_fct_t) copy_int4_heterogeneous,
 #else
-    [OPAL_DATATYPE_LONG]                = (conversion_fct_t) copy_long_heterogeneous,
-    [OPAL_DATATYPE_UNSIGNED_LONG]       = (conversion_fct_t) copy_unsigned_long_heterogeneous,
+    [OPAL_DATATYPE_LONG] = (conversion_fct_t) copy_long_heterogeneous,
+    [OPAL_DATATYPE_UNSIGNED_LONG] = (conversion_fct_t) copy_unsigned_long_heterogeneous,
 #endif
-    [OPAL_DATATYPE_UNAVAILABLE]         = NULL,
+    [OPAL_DATATYPE_UNAVAILABLE] = NULL,
 };

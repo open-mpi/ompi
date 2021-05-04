@@ -22,20 +22,19 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Get_version = PMPI_Get_version
-#endif
-#define MPI_Get_version PMPI_Get_version
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Get_version = PMPI_Get_version
+#    endif
+#    define MPI_Get_version PMPI_Get_version
 #endif
 
 static const char FUNC_NAME[] = "MPI_Get_version";
-
 
 int MPI_Get_version(int *version, int *subversion)
 {
@@ -54,16 +53,14 @@ int MPI_Get_version(int *version, int *subversion)
                default errhandler, which is abort). */
 
             int32_t state = ompi_mpi_state;
-            if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
-                state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                              FUNC_NAME);
+            if (state >= OMPI_MPI_STATE_INIT_COMPLETED
+                && state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
             } else {
                 /* We have no MPI object here so call ompi_errhandle_invoke
                  * directly */
                 return ompi_errhandler_invoke(NULL, NULL, -1,
-                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG),
-                                              FUNC_NAME);
+                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG), FUNC_NAME);
             }
         }
     }

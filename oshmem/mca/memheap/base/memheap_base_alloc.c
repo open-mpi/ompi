@@ -12,19 +12,17 @@
 
 #include "oshmem_config.h"
 
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/mca/sshmem/sshmem.h"
-#include "oshmem/mca/sshmem/base/base.h"
-#include "oshmem/mca/memheap/memheap.h"
-#include "oshmem/mca/memheap/base/base.h"
 #include "ompi/util/timings.h"
+#include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/mca/sshmem/sshmem.h"
+#include "oshmem/util/oshmem_util.h"
 
-
-int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size, long hint,
-                                char *timing_prefix)
+int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size, long hint, char *timing_prefix)
 {
     int ret = OSHMEM_SUCCESS;
-    char * seg_filename = NULL;
+    char *seg_filename = NULL;
 
     OPAL_TIMING_ENV_INIT_PREFIX(timing_prefix, timing);
 
@@ -46,9 +44,8 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *map, size_t size, long hint,
 
     if (OSHMEM_SUCCESS == ret) {
         map->n_segments++;
-        MEMHEAP_VERBOSE(1,
-                        "Memheap alloc memory: %llu byte(s), %d segments by method: %d",
-                        (unsigned long long)size, map->n_segments, s->type);
+        MEMHEAP_VERBOSE(1, "Memheap alloc memory: %llu byte(s), %d segments by method: %d",
+                        (unsigned long long) size, map->n_segments, s->type);
     }
 
     free(seg_filename);
@@ -74,7 +71,7 @@ void mca_memheap_base_alloc_exit(mca_memheap_map_t *map)
     }
 }
 
-int mca_memheap_alloc_with_hint(size_t size, long hint, void** ptr)
+int mca_memheap_alloc_with_hint(size_t size, long hint, void **ptr)
 {
     int i;
 

@@ -14,32 +14,32 @@
 
 #include "oshmem/shmem/shmem_api_logger.h"
 
-#include "oshmem/runtime/runtime.h"
 #include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/runtime/runtime.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_align = pshmem_align
-#pragma weak shmemalign = pshmemalign
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_align = pshmem_align
+#    pragma weak shmemalign = pshmemalign
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-static inline void* _shmemalign(size_t align, size_t size);
+static inline void *_shmemalign(size_t align, size_t size);
 
-void* shmem_align(size_t align, size_t size)
+void *shmem_align(size_t align, size_t size)
 {
     return _shmemalign(align, size);
 }
 
-void* shmemalign(size_t align, size_t size)
+void *shmemalign(size_t align, size_t size)
 {
     return _shmemalign(align, size);
 }
 
-static inline void* _shmemalign(size_t align, size_t size)
+static inline void *_shmemalign(size_t align, size_t size)
 {
     int rc;
-    void* pBuff = NULL;
+    void *pBuff = NULL;
 
     RUNTIME_CHECK_INIT();
 
@@ -50,10 +50,9 @@ static inline void* _shmemalign(size_t align, size_t size)
     SHMEM_MUTEX_UNLOCK(shmem_internal_mutex_alloc);
 
     if (OSHMEM_SUCCESS != rc) {
-        SHMEM_API_VERBOSE(1,
-                          "Allocation with shmemalign(align=%lu, size=%lu) failed.",
-                          (unsigned long)align, (unsigned long)size);
-        return NULL ;
+        SHMEM_API_VERBOSE(1, "Allocation with shmemalign(align=%lu, size=%lu) failed.",
+                          (unsigned long) align, (unsigned long) size);
+        return NULL;
     }
 
 #if OSHMEM_SPEC_COMPAT == 1
@@ -61,4 +60,3 @@ static inline void* _shmemalign(size_t align, size_t size)
 #endif
     return pBuff;
 }
-

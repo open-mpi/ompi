@@ -19,31 +19,30 @@
 #include "mpi.h"
 #include "shmem.h"
 
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 
 #include MCA_timer_IMPLEMENTATION_HEADER
-#include "opal/include/opal/version.h"
-#include "opal/class/opal_value_array.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/util/printf.h"
+#include "opal/class/opal_value_array.h"
+#include "opal/include/opal/version.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_info_support.h"
+#include "opal/util/printf.h"
 
-#include "ompi/tools/ompi_info/ompi_info.h"
 #include "ompi/include/mpi_portable_platform.h"
+#include "ompi/tools/ompi_info/ompi_info.h"
 
 #include "oshmem/tools/oshmem_info/oshmem_info.h"
-
 
 const char *opal_info_deprecated_value = "deprecated-ompi-info-value";
 
@@ -115,17 +114,23 @@ void oshmem_info_do_config(bool want_all)
 
     /* setup strings that require allocation */
     if (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) {
-        (void)opal_asprintf(&fortran_binding, "yes (%s)",
-                       (OPAL_HAVE_WEAK_SYMBOLS ? "all" :
-                        (OMPI_FORTRAN_CAPS ? "caps" :
-                         (OMPI_FORTRAN_PLAIN ? "lower case" :
-                          (OMPI_FORTRAN_SINGLE_UNDERSCORE ? "single underscore" : "double underscore")))));
+        (void) opal_asprintf(&fortran_binding, "yes (%s)",
+                             (OPAL_HAVE_WEAK_SYMBOLS
+                                  ? "all"
+                                  : (OMPI_FORTRAN_CAPS
+                                         ? "caps"
+                                         : (OMPI_FORTRAN_PLAIN ? "lower case"
+                                                               : (OMPI_FORTRAN_SINGLE_UNDERSCORE
+                                                                      ? "single underscore"
+                                                                      : "double underscore")))));
     } else {
         fortran_binding = strdup("no");
     }
 
-    (void)opal_asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
-                   "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void) opal_asprintf(
+        &threads,
+        "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
+        "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 
     /* output values */
     opal_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
@@ -141,11 +146,9 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("Fort shmem.fh", "bindings:fortran", fortran_binding);
     free(fortran_binding);
 
-    opal_info_out("Wrapper compiler rpath", "compiler:all:rpath",
-                  WRAPPER_RPATH_SUPPORT);
+    opal_info_out("Wrapper compiler rpath", "compiler:all:rpath", WRAPPER_RPATH_SUPPORT);
     opal_info_out("C compiler", "compiler:c:command", OPAL_CC);
-    opal_info_out("C compiler absolute", "compiler:c:absolute",
-                  OPAL_CC_ABSOLUTE);
+    opal_info_out("C compiler absolute", "compiler:c:absolute", OPAL_CC_ABSOLUTE);
     opal_info_out("C compiler family name", "compiler:c:familyname",
                   _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
     opal_info_out("C compiler version", "compiler:c:version",
@@ -177,21 +180,19 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("C++ compiler", "compiler:cxx:command", OMPI_CXX);
     opal_info_out("C++ compiler absolute", "compiler:cxx:absolute", OMPI_CXX_ABSOLUTE);
     opal_info_out("Fort compiler", "compiler:fortran:command", OMPI_FC);
-    opal_info_out("Fort compiler abs", "compiler:fortran:absolute",
-                  OMPI_FC_ABSOLUTE);
+    opal_info_out("Fort compiler abs", "compiler:fortran:absolute", OMPI_FC_ABSOLUTE);
 
     if (want_all) {
 
         /* Will always have the size of Fortran integer */
 
         opal_info_out_int("Fort integer size", "compiler:fortran:sizeof:integer",
-                      OMPI_SIZEOF_FORTRAN_INTEGER);
+                          OMPI_SIZEOF_FORTRAN_INTEGER);
 
         opal_info_out_int("Fort logical size", "compiler:fortran:sizeof:logical",
-                      OMPI_SIZEOF_FORTRAN_LOGICAL);
+                          OMPI_SIZEOF_FORTRAN_LOGICAL);
         opal_info_out_int("Fort logical value true", "compiler:fortran:value:true",
-                      OMPI_FORTRAN_VALUE_TRUE);
-
+                          OMPI_FORTRAN_VALUE_TRUE);
 
         /* May or may not have the other Fortran sizes */
 
@@ -222,100 +223,98 @@ void oshmem_info_do_config(bool want_all)
                           OMPI_HAVE_FORTRAN_COMPLEX32 && OMPI_REAL16_MATCHES_C ? "yes" : "no");
 
             opal_info_out_int("Fort integer1 size", "compiler:fortran:sizeof:integer1",
-                          OMPI_HAVE_FORTRAN_INTEGER1 ? OMPI_SIZEOF_FORTRAN_INTEGER1 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER1 ? OMPI_SIZEOF_FORTRAN_INTEGER1 : -1);
             opal_info_out_int("Fort integer2 size", "compiler:fortran:sizeof:integer2",
-                          OMPI_HAVE_FORTRAN_INTEGER2 ? OMPI_SIZEOF_FORTRAN_INTEGER2 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER2 ? OMPI_SIZEOF_FORTRAN_INTEGER2 : -1);
             opal_info_out_int("Fort integer4 size", "compiler:fortran:sizeof:integer4",
-                          OMPI_HAVE_FORTRAN_INTEGER4 ? OMPI_SIZEOF_FORTRAN_INTEGER4 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER4 ? OMPI_SIZEOF_FORTRAN_INTEGER4 : -1);
             opal_info_out_int("Fort integer8 size", "compiler:fortran:sizeof:integer8",
-                          OMPI_HAVE_FORTRAN_INTEGER8 ? OMPI_SIZEOF_FORTRAN_INTEGER8 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER8 ? OMPI_SIZEOF_FORTRAN_INTEGER8 : -1);
             opal_info_out_int("Fort integer16 size", "compiler:fortran:sizeof:integer16",
-                          OMPI_HAVE_FORTRAN_INTEGER16 ? OMPI_SIZEOF_FORTRAN_INTEGER16 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER16 ? OMPI_SIZEOF_FORTRAN_INTEGER16 : -1);
 
             opal_info_out_int("Fort real size", "compiler:fortran:sizeof:real",
-                          OMPI_SIZEOF_FORTRAN_REAL);
+                              OMPI_SIZEOF_FORTRAN_REAL);
             opal_info_out_int("Fort real4 size", "compiler:fortran:sizeof:real4",
-                          OMPI_HAVE_FORTRAN_REAL4 ? OMPI_SIZEOF_FORTRAN_REAL4 : -1);
+                              OMPI_HAVE_FORTRAN_REAL4 ? OMPI_SIZEOF_FORTRAN_REAL4 : -1);
             opal_info_out_int("Fort real8 size", "compiler:fortran:sizeof:real8",
-                          OMPI_HAVE_FORTRAN_REAL8 ? OMPI_SIZEOF_FORTRAN_REAL8 : -1);
+                              OMPI_HAVE_FORTRAN_REAL8 ? OMPI_SIZEOF_FORTRAN_REAL8 : -1);
             opal_info_out_int("Fort real16 size", "compiler:fortran:sizeof:real17",
-                          OMPI_HAVE_FORTRAN_REAL16 ? OMPI_SIZEOF_FORTRAN_REAL16 : -1);
+                              OMPI_HAVE_FORTRAN_REAL16 ? OMPI_SIZEOF_FORTRAN_REAL16 : -1);
 
-            opal_info_out_int("Fort dbl prec size",
-                          "compiler:fortran:sizeof:double_precision",
-                          OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION);
+            opal_info_out_int("Fort dbl prec size", "compiler:fortran:sizeof:double_precision",
+                              OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION);
 
             opal_info_out_int("Fort cplx size", "compiler:fortran:sizeof:complex",
-                          OMPI_SIZEOF_FORTRAN_COMPLEX);
-            opal_info_out_int("Fort dbl cplx size",
-                          "compiler:fortran:sizeof:double_complex",
-                          OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX ? OMPI_SIZEOF_FORTRAN_DOUBLE_COMPLEX : -1);
+                              OMPI_SIZEOF_FORTRAN_COMPLEX);
+            opal_info_out_int("Fort dbl cplx size", "compiler:fortran:sizeof:double_complex",
+                              OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX ? OMPI_SIZEOF_FORTRAN_DOUBLE_COMPLEX
+                                                               : -1);
             opal_info_out_int("Fort cplx8 size", "compiler:fortran:sizeof:complex8",
-                          OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_SIZEOF_FORTRAN_COMPLEX8 : -1);
+                              OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_SIZEOF_FORTRAN_COMPLEX8 : -1);
             opal_info_out_int("Fort cplx16 size", "compiler:fortran:sizeof:complex16",
-                          OMPI_HAVE_FORTRAN_COMPLEX16 ? OMPI_SIZEOF_FORTRAN_COMPLEX16 : -1);
+                              OMPI_HAVE_FORTRAN_COMPLEX16 ? OMPI_SIZEOF_FORTRAN_COMPLEX16 : -1);
             opal_info_out_int("Fort cplx32 size", "compiler:fortran:sizeof:complex32",
-                          OMPI_HAVE_FORTRAN_COMPLEX32 ? OMPI_SIZEOF_FORTRAN_COMPLEX32 : -1);
+                              OMPI_HAVE_FORTRAN_COMPLEX32 ? OMPI_SIZEOF_FORTRAN_COMPLEX32 : -1);
 
             opal_info_out_int("Fort integer align", "compiler:fortran:align:integer",
-                          OMPI_ALIGNMENT_FORTRAN_INTEGER);
+                              OMPI_ALIGNMENT_FORTRAN_INTEGER);
             opal_info_out_int("Fort integer1 align", "compiler:fortran:align:integer1",
-                          OMPI_HAVE_FORTRAN_INTEGER1 ? OMPI_ALIGNMENT_FORTRAN_INTEGER1 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER1 ? OMPI_ALIGNMENT_FORTRAN_INTEGER1 : -1);
             opal_info_out_int("Fort integer2 align", "compiler:fortran:align:integer2",
-                          OMPI_HAVE_FORTRAN_INTEGER2 ? OMPI_ALIGNMENT_FORTRAN_INTEGER2 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER2 ? OMPI_ALIGNMENT_FORTRAN_INTEGER2 : -1);
             opal_info_out_int("Fort integer4 align", "compiler:fortran:align:integer4",
-                          OMPI_HAVE_FORTRAN_INTEGER4 ? OMPI_ALIGNMENT_FORTRAN_INTEGER4 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER4 ? OMPI_ALIGNMENT_FORTRAN_INTEGER4 : -1);
             opal_info_out_int("Fort integer8 align", "compiler:fortran:align:integer8",
-                          OMPI_HAVE_FORTRAN_INTEGER8 ? OMPI_ALIGNMENT_FORTRAN_INTEGER8 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER8 ? OMPI_ALIGNMENT_FORTRAN_INTEGER8 : -1);
             opal_info_out_int("Fort integer16 align", "compiler:fortran:align:integer16",
-                          OMPI_HAVE_FORTRAN_INTEGER16 ? OMPI_ALIGNMENT_FORTRAN_INTEGER16 : -1);
+                              OMPI_HAVE_FORTRAN_INTEGER16 ? OMPI_ALIGNMENT_FORTRAN_INTEGER16 : -1);
 
             opal_info_out_int("Fort real align", "compiler:fortran:align:real",
-                          OMPI_ALIGNMENT_FORTRAN_REAL);
+                              OMPI_ALIGNMENT_FORTRAN_REAL);
             opal_info_out_int("Fort real4 align", "compiler:fortran:align:real4",
-                          OMPI_HAVE_FORTRAN_REAL4 ? OMPI_ALIGNMENT_FORTRAN_REAL4 : -1);
+                              OMPI_HAVE_FORTRAN_REAL4 ? OMPI_ALIGNMENT_FORTRAN_REAL4 : -1);
             opal_info_out_int("Fort real8 align", "compiler:fortran:align:real8",
-                          OMPI_HAVE_FORTRAN_REAL8 ? OMPI_ALIGNMENT_FORTRAN_REAL8 : -1);
+                              OMPI_HAVE_FORTRAN_REAL8 ? OMPI_ALIGNMENT_FORTRAN_REAL8 : -1);
             opal_info_out_int("Fort real16 align", "compiler:fortran:align:real16",
-                          OMPI_HAVE_FORTRAN_REAL16 ? OMPI_ALIGNMENT_FORTRAN_REAL16 : -1);
+                              OMPI_HAVE_FORTRAN_REAL16 ? OMPI_ALIGNMENT_FORTRAN_REAL16 : -1);
 
-            opal_info_out_int("Fort dbl prec align",
-                          "compiler:fortran:align:double_precision",
-                          OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION);
+            opal_info_out_int("Fort dbl prec align", "compiler:fortran:align:double_precision",
+                              OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION);
 
             opal_info_out_int("Fort cplx align", "compiler:fortran:align:complex",
-                          OMPI_ALIGNMENT_FORTRAN_COMPLEX);
-            opal_info_out_int("Fort dbl cplx align",
-                          "compiler:fortran:align:double_complex",
-                          OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX ? OMPI_ALIGNMENT_FORTRAN_DOUBLE_COMPLEX : -1);
+                              OMPI_ALIGNMENT_FORTRAN_COMPLEX);
+            opal_info_out_int("Fort dbl cplx align", "compiler:fortran:align:double_complex",
+                              OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
+                                  ? OMPI_ALIGNMENT_FORTRAN_DOUBLE_COMPLEX
+                                  : -1);
             opal_info_out_int("Fort cplx8 align", "compiler:fortran:align:complex8",
-                          OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX8 : -1);
+                              OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX8 : -1);
             opal_info_out_int("Fort cplx16 align", "compiler:fortran:align:complex16",
-                          OMPI_HAVE_FORTRAN_COMPLEX16 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX16 : -1);
+                              OMPI_HAVE_FORTRAN_COMPLEX16 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX16 : -1);
             opal_info_out_int("Fort cplx32 align", "compiler:fortran:align:complex32",
-                          OMPI_HAVE_FORTRAN_COMPLEX32 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX32 : -1);
+                              OMPI_HAVE_FORTRAN_COMPLEX32 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX32 : -1);
 
         } else {
             opal_info_out("Fort real size", "compiler:fortran:sizeof:real", "skipped");
-            opal_info_out("Fort dbl prec size",
-                          "compiler:fortran:sizeof:double_precision", "skipped");
+            opal_info_out("Fort dbl prec size", "compiler:fortran:sizeof:double_precision",
+                          "skipped");
             opal_info_out("Fort cplx size", "compiler:fortran:sizeof:complex", "skipped");
-            opal_info_out("Fort dbl cplx size",
-                          "compiler:fortran:sizeof:double_complex", "skipped");
+            opal_info_out("Fort dbl cplx size", "compiler:fortran:sizeof:double_complex",
+                          "skipped");
 
             opal_info_out("Fort integer align", "compiler:fortran:align:integer", "skipped");
             opal_info_out("Fort real align", "compiler:fortran:align:real", "skipped");
-            opal_info_out("Fort dbl prec align",
-                          "compiler:fortran:align:double_precision","skipped");
+            opal_info_out("Fort dbl prec align", "compiler:fortran:align:double_precision",
+                          "skipped");
             opal_info_out("Fort cplx align", "compiler:fortran:align:complex", "skipped");
-            opal_info_out("Fort dbl cplx align",
-                          "compiler:fortran:align:double_complex", "skipped");
+            opal_info_out("Fort dbl cplx align", "compiler:fortran:align:double_complex",
+                          "skipped");
         }
     }
 
     opal_info_out("C profiling", "option:profiling:c", cprofiling);
-    opal_info_out("Fort shmem.fh profiling", "option:profiling:shmem.fh",
-                  fortran_profiling);
+    opal_info_out("Fort shmem.fh profiling", "option:profiling:shmem.fh", fortran_profiling);
 
     opal_info_out("Thread support", "option:threads", threads);
     free(threads);
@@ -334,16 +333,14 @@ void oshmem_info_do_config(bool want_all)
         opal_info_out("Build LDFLAGS", "option:build:ldflags", OMPI_BUILD_LDFLAGS);
         opal_info_out("Build LIBS", "option:build:libs", OMPI_BUILD_LIBS);
 
-        opal_info_out("Wrapper extra CFLAGS", "option:wrapper:extra_cflags",
-                      WRAPPER_EXTRA_CFLAGS);
+        opal_info_out("Wrapper extra CFLAGS", "option:wrapper:extra_cflags", WRAPPER_EXTRA_CFLAGS);
         opal_info_out("Wrapper extra CXXFLAGS", "option:wrapper:extra_cxxflags",
                       WRAPPER_EXTRA_CXXFLAGS);
         opal_info_out("Wrapper extra FCFLAGS", "option:wrapper:extra_fcflags",
                       WRAPPER_EXTRA_FCFLAGS);
         opal_info_out("Wrapper extra LDFLAGS", "option:wrapper:extra_ldflags",
                       WRAPPER_EXTRA_LDFLAGS);
-        opal_info_out("Wrapper extra LIBS", "option:wrapper:extra_libs",
-                      WRAPPER_EXTRA_LIBS);
+        opal_info_out("Wrapper extra LIBS", "option:wrapper:extra_libs", WRAPPER_EXTRA_LIBS);
     }
 
     opal_info_out("Internal debug support", "option:debug", debug);
@@ -355,25 +352,19 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
     opal_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
     opal_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
-    opal_info_out("Host topology support", "options:host-topology",
-                  topology_support);
+    opal_info_out("Host topology support", "options:host-topology", topology_support);
 
     opal_info_out("MPI extensions", "options:mpi_ext", OMPI_MPIEXT_COMPONENTS);
 
     opal_info_out_int("MPI_MAX_PROCESSOR_NAME", "options:mpi-max-processor-name",
-                  MPI_MAX_PROCESSOR_NAME);
-    opal_info_out_int("MPI_MAX_ERROR_STRING",   "options:mpi-max-error-string",
-                  MPI_MAX_ERROR_STRING);
-    opal_info_out_int("MPI_MAX_OBJECT_NAME",    "options:mpi-max-object-name",
-                  MPI_MAX_OBJECT_NAME);
-    opal_info_out_int("MPI_MAX_INFO_KEY",       "options:mpi-max-info-key",
-                  MPI_MAX_INFO_KEY);
-    opal_info_out_int("MPI_MAX_INFO_VAL",       "options:mpi-max-info-val",
-                  MPI_MAX_INFO_VAL);
-    opal_info_out_int("MPI_MAX_PORT_NAME",      "options:mpi-max-port-name",
-                  MPI_MAX_PORT_NAME);
+                      MPI_MAX_PROCESSOR_NAME);
+    opal_info_out_int("MPI_MAX_ERROR_STRING", "options:mpi-max-error-string", MPI_MAX_ERROR_STRING);
+    opal_info_out_int("MPI_MAX_OBJECT_NAME", "options:mpi-max-object-name", MPI_MAX_OBJECT_NAME);
+    opal_info_out_int("MPI_MAX_INFO_KEY", "options:mpi-max-info-key", MPI_MAX_INFO_KEY);
+    opal_info_out_int("MPI_MAX_INFO_VAL", "options:mpi-max-info-val", MPI_MAX_INFO_VAL);
+    opal_info_out_int("MPI_MAX_PORT_NAME", "options:mpi-max-port-name", MPI_MAX_PORT_NAME);
     opal_info_out_int("MPI_MAX_DATAREP_STRING", "options:mpi-max-datarep-string",
-                  MPI_MAX_DATAREP_STRING);
+                      MPI_MAX_DATAREP_STRING);
 
     /* This block displays all the options with which the current
      * installation of oshmem was configured. */

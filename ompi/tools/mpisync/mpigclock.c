@@ -45,15 +45,15 @@
 
 #include <mpi.h>
 
-#include "mpigclock.h"
 #include "hpctimer.h"
+#include "mpigclock.h"
 
-#define INVALIDTIME -1.0
+#define INVALIDTIME                     -1.0
 #define MPIGCLOCK_RTTMIN_NOTCHANGED_MAX 100
-#define MPIGCLOCK_MSGTAG 128
+#define MPIGCLOCK_MSGTAG                128
 
-static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int peer, double *min_rtt, double root_offset);
-
+static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int peer, double *min_rtt,
+                                                double root_offset);
 
 /*
  * mpigclock_sync_linear: Clock synchronization algorithm with O(n) steps.
@@ -116,11 +116,11 @@ double mpigclock_sync_log(MPI_Comm comm, int root, double *rtt)
 }
 
 /* mpigclock_measure_offset_adaptive: Measures clock's offset of peer. */
-static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int peer, double *min_rtt, double root_offset)
+static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int peer, double *min_rtt,
+                                                double root_offset)
 {
     int rank, commsize, rttmin_notchanged = 0;
-    double starttime, stoptime, peertime, rtt, rttmin = 1E12,
-           invalidtime = INVALIDTIME, offset;
+    double starttime, stoptime, peertime, rtt, rttmin = 1E12, invalidtime = INVALIDTIME, offset;
 
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &commsize);
@@ -131,26 +131,23 @@ static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int pee
             /* Peer process */
             starttime = hpctimer_wtime();
             MPI_Send(&starttime, 1, MPI_DOUBLE, root, MPIGCLOCK_MSGTAG, comm);
-            MPI_Recv(&peertime, 1, MPI_DOUBLE, root, MPIGCLOCK_MSGTAG, comm,
-                     MPI_STATUS_IGNORE);
+            MPI_Recv(&peertime, 1, MPI_DOUBLE, root, MPIGCLOCK_MSGTAG, comm, MPI_STATUS_IGNORE);
             stoptime = hpctimer_wtime();
             rtt = stoptime - starttime;
 
             if (rtt < rttmin) {
                 rttmin = rtt;
                 rttmin_notchanged = 0;
-                offset =  peertime - rtt / 2.0 - starttime;
+                offset = peertime - rtt / 2.0 - starttime;
             } else {
                 if (++rttmin_notchanged == MPIGCLOCK_RTTMIN_NOTCHANGED_MAX) {
-                    MPI_Send(&invalidtime, 1, MPI_DOUBLE, root, MPIGCLOCK_MSGTAG,
-                             comm);
+                    MPI_Send(&invalidtime, 1, MPI_DOUBLE, root, MPIGCLOCK_MSGTAG, comm);
                     break;
                 }
             }
         } else {
             /* Root process */
-            MPI_Recv(&starttime, 1, MPI_DOUBLE, peer, MPIGCLOCK_MSGTAG, comm,
-                     MPI_STATUS_IGNORE);
+            MPI_Recv(&starttime, 1, MPI_DOUBLE, peer, MPIGCLOCK_MSGTAG, comm, MPI_STATUS_IGNORE);
             peertime = hpctimer_wtime() + root_offset;
             if (starttime < 0.0) {
                 break;
@@ -159,7 +156,7 @@ static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int pee
         }
     } /* for */
 
-    if( rank != root ){
+    if (rank != root) {
         *min_rtt = rttmin;
     } else {
         rtt = 0.0;

@@ -22,63 +22,53 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_PREADY = ompi_pready_f
-#pragma weak pmpi_pready = ompi_pready_f
-#pragma weak pmpi_pready_ = ompi_pready_f
-#pragma weak pmpi_pready__ = ompi_pready_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_PREADY = ompi_pready_f
+#        pragma weak pmpi_pready = ompi_pready_f
+#        pragma weak pmpi_pready_ = ompi_pready_f
+#        pragma weak pmpi_pready__ = ompi_pready_f
 
-#pragma weak PMPI_Pready_f = ompi_pready_f
-#pragma weak PMPI_Pready_f08 = ompi_pready_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_PREADY,
-                           pmpi_pready,
-                           pmpi_pready_,
-                           pmpi_pready__,
-                           pompi_pready_f,
-                           (MPI_Fint *partition, MPI_Fint *request, MPI_Fint *ierr),
-                           (partition, request, ierr) )
-#endif
+#        pragma weak PMPI_Pready_f = ompi_pready_f
+#        pragma weak PMPI_Pready_f08 = ompi_pready_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_PREADY, pmpi_pready, pmpi_pready_, pmpi_pready__, pompi_pready_f,
+                           (MPI_Fint * partition, MPI_Fint *request, MPI_Fint *ierr),
+                           (partition, request, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_PREADY = ompi_pready_f
-#pragma weak mpi_pready = ompi_pready_f
-#pragma weak mpi_pready_ = ompi_pready_f
-#pragma weak mpi_pready__ = ompi_pready_f
+#    pragma weak MPI_PREADY = ompi_pready_f
+#    pragma weak mpi_pready = ompi_pready_f
+#    pragma weak mpi_pready_ = ompi_pready_f
+#    pragma weak mpi_pready__ = ompi_pready_f
 
-#pragma weak MPI_Pready_f = ompi_pready_f
-#pragma weak MPI_Pready_f08 = ompi_pready_f
+#    pragma weak MPI_Pready_f = ompi_pready_f
+#    pragma weak MPI_Pready_f08 = ompi_pready_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_PREADY,
-                           mpi_pready,
-                           mpi_pready_,
-                           mpi_pready__,
-                           ompi_pready_f,
-                           (MPI_Fint *partition, MPI_Fint *request, MPI_Fint *ierr),
-                           (partition, request, ierr) )
-#else
-#define ompi_pready_f pompi_pready_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_PREADY, mpi_pready, mpi_pready_, mpi_pready__, ompi_pready_f,
+                           (MPI_Fint * partition, MPI_Fint *request, MPI_Fint *ierr),
+                           (partition, request, ierr))
+#    else
+#        define ompi_pready_f pompi_pready_f
+#    endif
 #endif
-#endif
-
 
 void ompi_pready_f(MPI_Fint *partition, MPI_Fint *request, MPI_Fint *ierr)
 {
-   int c_ierr;
-   MPI_Request c_req = PMPI_Request_f2c(*request);
+    int c_ierr;
+    MPI_Request c_req = PMPI_Request_f2c(*request);
 
-   c_ierr = PMPI_Pready(OMPI_FINT_2_INT(*partition), c_req);
-   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Pready(OMPI_FINT_2_INT(*partition), c_req);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
-
-   if (MPI_SUCCESS == c_ierr) 
-   {
-       *request = PMPI_Request_c2f(c_req);
-   }
+    if (MPI_SUCCESS == c_ierr) {
+        *request = PMPI_Request_c2f(c_req);
+    }
 }

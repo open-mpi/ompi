@@ -19,7 +19,6 @@ BEGIN_C_DECLS
  * Global variables
  */
 
-
 /**
  * Whether or not the lock routines are recursive
  * (ie support embedded calls)

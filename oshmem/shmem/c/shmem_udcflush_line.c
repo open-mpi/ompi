@@ -15,19 +15,22 @@
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
 
-#include "oshmem/shmem/shmem_api_logger.h"
 #include "opal/sys/architecture.h"
+#include "oshmem/shmem/shmem_api_logger.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_udcflush_line = pshmem_udcflush_line
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_udcflush_line = pshmem_udcflush_line
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 void shmem_udcflush_line(void *target)
 {
 #if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
-    do {SHMEM_API_VERBOSE(10,"shmem_udcflush_line is not supported by the current CPU architecture");}while (0);
+    do {
+        SHMEM_API_VERBOSE(10,
+                          "shmem_udcflush_line is not supported by the current CPU architecture");
+    } while (0);
 #else
     /* another implementation */
 #endif

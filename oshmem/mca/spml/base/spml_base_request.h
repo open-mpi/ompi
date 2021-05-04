@@ -50,10 +50,10 @@ OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_atomic_requests;
  */
 typedef enum {
     MCA_SPML_REQUEST_NULL,
-    MCA_SPML_REQUEST_PUT, /* Put request */
-    MCA_SPML_REQUEST_GET, /* Get Request */
-    MCA_SPML_REQUEST_SEND, /* Send Request */
-    MCA_SPML_REQUEST_RECV, /* Receive Request */
+    MCA_SPML_REQUEST_PUT,        /* Put request */
+    MCA_SPML_REQUEST_GET,        /* Get Request */
+    MCA_SPML_REQUEST_SEND,       /* Send Request */
+    MCA_SPML_REQUEST_RECV,       /* Receive Request */
     MCA_SPML_REQUEST_ATOMIC_CAS, /* Atomic Compare-And-Swap request */
     MCA_SPML_REQUEST_ATOMIC_FAAD /* Atomic Fatch-And-Add request */
 } mca_spml_base_request_type_t;
@@ -64,15 +64,17 @@ typedef enum {
 struct mca_spml_base_request_t {
 
     oshmem_request_t req_oshmem; /**< base request */
-    volatile bool req_spml_complete; /**< flag indicating if the one sided layer is done with this request */
+    volatile bool
+        req_spml_complete; /**< flag indicating if the one sided layer is done with this request */
     mca_spml_base_request_type_t req_type; /**< SHMEM request type */
-    volatile bool req_free_called; /**< flag indicating if the user has freed this request */
+    volatile bool req_free_called;  /**< flag indicating if the user has freed this request */
     opal_convertor_t req_convertor; /**< always need the convertor */
 
-    void *req_addr; /**< pointer to application buffer */
-    size_t req_count; /**< count of user datatype elements *//* TODO: Need to remove since we are going to remove datatype*/
-    int32_t req_peer; /**< peer process - rank of process executing the parallel program */
-    ompi_proc_t* req_proc; /**< peer process */
+    void *req_addr;                                           /**< pointer to application buffer */
+    size_t req_count; /**< count of user datatype elements */ /* TODO: Need to remove since we are
+                                                                 going to remove datatype*/
+    int32_t req_peer;      /**< peer process - rank of process executing the parallel program */
+    ompi_proc_t *req_proc; /**< peer process */
     uint64_t req_sequence; /**< sequence number for shmem one sided ordering */
 };
 typedef struct mca_spml_base_request_t mca_spml_base_request_t;
@@ -82,4 +84,3 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_spml_base_request_t);
 END_C_DECLS
 
 #endif
-

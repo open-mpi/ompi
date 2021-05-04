@@ -21,56 +21,48 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_COMM_SET_NAME = ompi_comm_set_name_f
-#pragma weak pmpi_comm_set_name = ompi_comm_set_name_f
-#pragma weak pmpi_comm_set_name_ = ompi_comm_set_name_f
-#pragma weak pmpi_comm_set_name__ = ompi_comm_set_name_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_COMM_SET_NAME = ompi_comm_set_name_f
+#        pragma weak pmpi_comm_set_name = ompi_comm_set_name_f
+#        pragma weak pmpi_comm_set_name_ = ompi_comm_set_name_f
+#        pragma weak pmpi_comm_set_name__ = ompi_comm_set_name_f
 
-#pragma weak PMPI_Comm_set_name_f = ompi_comm_set_name_f
-#pragma weak PMPI_Comm_set_name_f08 = ompi_comm_set_name_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_NAME,
-                            pmpi_comm_set_name,
-                            pmpi_comm_set_name_,
-                            pmpi_comm_set_name__,
-                            pompi_comm_set_name_f,
-                            (MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len),
-                            (comm, comm_name, ierr, name_len) )
-#endif
+#        pragma weak PMPI_Comm_set_name_f = ompi_comm_set_name_f
+#        pragma weak PMPI_Comm_set_name_f08 = ompi_comm_set_name_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_COMM_SET_NAME, pmpi_comm_set_name, pmpi_comm_set_name_,
+                           pmpi_comm_set_name__, pompi_comm_set_name_f,
+                           (MPI_Fint * comm, char *comm_name, MPI_Fint *ierr, int name_len),
+                           (comm, comm_name, ierr, name_len))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_COMM_SET_NAME = ompi_comm_set_name_f
-#pragma weak mpi_comm_set_name = ompi_comm_set_name_f
-#pragma weak mpi_comm_set_name_ = ompi_comm_set_name_f
-#pragma weak mpi_comm_set_name__ = ompi_comm_set_name_f
+#    pragma weak MPI_COMM_SET_NAME = ompi_comm_set_name_f
+#    pragma weak mpi_comm_set_name = ompi_comm_set_name_f
+#    pragma weak mpi_comm_set_name_ = ompi_comm_set_name_f
+#    pragma weak mpi_comm_set_name__ = ompi_comm_set_name_f
 
-#pragma weak MPI_Comm_set_name_f = ompi_comm_set_name_f
-#pragma weak MPI_Comm_set_name_f08 = ompi_comm_set_name_f
+#    pragma weak MPI_Comm_set_name_f = ompi_comm_set_name_f
+#    pragma weak MPI_Comm_set_name_f08 = ompi_comm_set_name_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_NAME,
-                            mpi_comm_set_name,
-                            mpi_comm_set_name_,
-                            mpi_comm_set_name__,
-                            ompi_comm_set_name_f,
-                            (MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len),
-                            (comm, comm_name, ierr, name_len) )
-#else
-#define ompi_comm_set_name_f pompi_comm_set_name_f
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_COMM_SET_NAME, mpi_comm_set_name, mpi_comm_set_name_,
+                           mpi_comm_set_name__, ompi_comm_set_name_f,
+                           (MPI_Fint * comm, char *comm_name, MPI_Fint *ierr, int name_len),
+                           (comm, comm_name, ierr, name_len))
+#    else
+#        define ompi_comm_set_name_f pompi_comm_set_name_f
+#    endif
 #endif
 
-
-void ompi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr,
-                          int name_len)
+void ompi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len)
 {
     int ret, c_ierr;
     char *c_name;
@@ -78,18 +70,18 @@ void ompi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr,
 
     /* Convert the fortran string */
 
-    if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(comm_name, name_len,
-                                                       &c_name))) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(c_comm, ret,
-                                        "MPI_COMM_SET_NAME");
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(comm_name, name_len, &c_name))) {
+        c_ierr = OMPI_ERRHANDLER_INVOKE(c_comm, ret, "MPI_COMM_SET_NAME");
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
 
     /* Call the C function */
 
     c_ierr = PMPI_Comm_set_name(c_comm, c_name);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     /* Free the C name */
 

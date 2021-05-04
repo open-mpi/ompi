@@ -33,27 +33,26 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "opal/mca/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/fcoll/fcoll.h"
+#include "opal/mca/base/base.h"
 
 BEGIN_C_DECLS
 
 OMPI_DECLSPEC int mca_fcoll_base_file_select(struct ompio_file_t *file,
                                              mca_base_component_t *preferred);
-OMPI_DECLSPEC int mca_fcoll_base_query_table (struct ompio_file_t *file,
-                                              char *name);
+OMPI_DECLSPEC int mca_fcoll_base_query_table(struct ompio_file_t *file, char *name);
 OMPI_DECLSPEC int mca_fcoll_base_file_unselect(struct ompio_file_t *file);
 
 OMPI_DECLSPEC int mca_fcoll_base_find_available(bool enable_progress_threads,
                                                 bool enable_mpi_threads);
 
-OMPI_DECLSPEC int mca_fcoll_base_init_file (struct ompio_file_t *file);
+OMPI_DECLSPEC int mca_fcoll_base_init_file(struct ompio_file_t *file);
 
-OMPI_DECLSPEC int mca_fcoll_base_get_param (struct ompio_file_t *file, int keyval);
-OMPI_DECLSPEC int ompi_fcoll_base_sort_iovec (struct iovec *iov, int num_entries, int *sorted);
+OMPI_DECLSPEC int mca_fcoll_base_get_param(struct ompio_file_t *file, int keyval);
+OMPI_DECLSPEC int ompi_fcoll_base_sort_iovec(struct iovec *iov, int num_entries, int *sorted);
 
-OMPI_DECLSPEC mca_fcoll_base_component_t* mca_fcoll_base_component_lookup(const char* name);
+OMPI_DECLSPEC mca_fcoll_base_component_t *mca_fcoll_base_component_lookup(const char *name);
 
 /*
  * Globals

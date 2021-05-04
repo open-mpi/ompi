@@ -70,10 +70,9 @@ static inline int mca_btl_uct_get_context_index(void)
 
         context_id = uct_index;
         if (OPAL_UNLIKELY(-1 == context_id)) {
-            context_id = uct_index = opal_atomic_fetch_add_32((opal_atomic_int32_t
-                                                                   *) &next_uct_index,
-                                                              1)
-                                     % mca_btl_uct_component.num_contexts_per_module;
+            context_id = uct_index
+                = opal_atomic_fetch_add_32((opal_atomic_int32_t *) &next_uct_index, 1)
+                  % mca_btl_uct_component.num_contexts_per_module;
         }
     } else {
 #    endif

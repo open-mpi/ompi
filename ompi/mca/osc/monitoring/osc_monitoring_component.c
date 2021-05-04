@@ -10,16 +10,15 @@
  */
 
 #include "ompi_config.h"
-#include <string.h>
-#include "osc_monitoring.h"
-#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/info/info.h"
-#include "ompi/win/win.h"
-#include "ompi/info/info.h"
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/osc/osc.h"
+#include "ompi/win/win.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "osc_monitoring.h"
+#include <string.h>
 
 /**************************************************/
 /* Include templated macros and inlined functions */
@@ -28,8 +27,7 @@
 
 /**************************************************/
 
-static int mca_osc_monitoring_component_init(bool enable_progress_threads,
-                                             bool enable_mpi_threads)
+static int mca_osc_monitoring_component_init(bool enable_progress_threads, bool enable_mpi_threads)
 {
     OPAL_MONITORING_PRINT_INFO("osc_component_init");
     return mca_common_monitoring_init();
@@ -47,21 +45,20 @@ static int mca_osc_monitoring_component_register(void)
     return OMPI_SUCCESS;
 }
 
-static int mca_osc_monitoring_component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                                              struct ompi_communicator_t *comm, struct opal_info_t *info,
-                                              int flavor)
+static int mca_osc_monitoring_component_query(struct ompi_win_t *win, void **base, size_t size,
+                                              int disp_unit, struct ompi_communicator_t *comm,
+                                              struct opal_info_t *info, int flavor)
 {
     OPAL_MONITORING_PRINT_INFO("osc_component_query");
     return mca_osc_monitoring_component.priority;
 }
 
-static inline int
-ompi_mca_osc_monitoring_set_template(ompi_osc_base_component_t *best_component,
-                                     ompi_osc_base_module_t *module)
+static inline int ompi_mca_osc_monitoring_set_template(ompi_osc_base_component_t *best_component,
+                                                       ompi_osc_base_module_t *module)
 {
     osc_monitoring_components_list_t comp = osc_monitoring_components_list[0];
     for (unsigned i = 0; NULL != comp.name; comp = osc_monitoring_components_list[++i]) {
-        if ( 0 == strcmp(comp.name, best_component->osc_version.mca_component_name) ) {
+        if (0 == strcmp(comp.name, best_component->osc_version.mca_component_name)) {
             comp.fct(module);
             return OMPI_SUCCESS;
         }
@@ -69,9 +66,9 @@ ompi_mca_osc_monitoring_set_template(ompi_osc_base_component_t *best_component,
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                                               struct ompi_communicator_t *comm, struct opal_info_t *info,
-                                               int flavor, int *model)
+static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **base, size_t size,
+                                               int disp_unit, struct ompi_communicator_t *comm,
+                                               struct opal_info_t *info, int flavor, int *model)
 {
     OPAL_MONITORING_PRINT_INFO("osc_component_select");
     opal_list_item_t *item;
@@ -79,15 +76,16 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
     int best_priority = -1, priority, ret = OMPI_SUCCESS;
 
     /* Redo the select loop to add our layer in the middle */
-    for (item = opal_list_get_first(&ompi_osc_base_framework.framework_components) ;
-         item != opal_list_get_end(&ompi_osc_base_framework.framework_components) ;
+    for (item = opal_list_get_first(&ompi_osc_base_framework.framework_components);
+         item != opal_list_get_end(&ompi_osc_base_framework.framework_components);
          item = opal_list_get_next(item)) {
-        ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
-            ((mca_base_component_list_item_t*) item)->cli_component;
+        ompi_osc_base_component_t *component = (ompi_osc_base_component_t
+                                                    *) ((mca_base_component_list_item_t *) item)
+                                                   ->cli_component;
 
-        if( component == (ompi_osc_base_component_t*)(&mca_osc_monitoring_component) )
+        if (component == (ompi_osc_base_component_t *) (&mca_osc_monitoring_component))
             continue; /* skip self */
-        
+
         priority = component->osc_query(win, base, size, disp_unit, comm, info, flavor);
         if (priority < 0) {
             if (MPI_WIN_FLAVOR_SHARED == flavor && OMPI_ERR_RMA_SHARED == priority) {
@@ -103,15 +101,18 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
         }
     }
 
-    if (NULL == best_component) return OMPI_ERR_NOT_SUPPORTED;
-    OPAL_MONITORING_PRINT_INFO("osc: chosen one: %s", best_component->osc_version.mca_component_name);
+    if (NULL == best_component)
+        return OMPI_ERR_NOT_SUPPORTED;
+    OPAL_MONITORING_PRINT_INFO("osc: chosen one: %s",
+                               best_component->osc_version.mca_component_name);
     ret = best_component->osc_select(win, base, size, disp_unit, comm, info, flavor, model);
-    if( OMPI_SUCCESS == ret ) {
+    if (OMPI_SUCCESS == ret) {
         /* Intercept module functions with ours, based on selected component */
         ret = ompi_mca_osc_monitoring_set_template(best_component, win->w_osc_module);
         if (OMPI_ERR_NOT_SUPPORTED == ret) {
             OPAL_MONITORING_PRINT_WARN("osc: monitoring disabled: no module for this component "
-                                       "(%s)", best_component->osc_version.mca_component_name);
+                                       "(%s)",
+                                       best_component->osc_version.mca_component_name);
             return OMPI_SUCCESS;
         }
     }

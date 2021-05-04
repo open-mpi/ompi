@@ -14,13 +14,13 @@
 #include "oshmem_config.h"
 #include <stdio.h>
 
-#include "oshmem/mca/mca.h"
-#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
+#include "oshmem/mca/mca.h"
 
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/util/oshmem_util.h"
 
 /*
  * The following file was created by configure. It contains extern
@@ -30,7 +30,6 @@
 
 #include "oshmem/mca/memheap/base/static-components.h"
 
-
 int mca_memheap_base_output = -1;
 int mca_memheap_base_key_exchange = 1;
 opal_list_t mca_memheap_base_components_opened = {{0}};
@@ -39,25 +38,17 @@ mca_memheap_map_t mca_memheap_base_map = {{{{0}}}};
 
 static int mca_memheap_base_register(mca_base_register_flag_t flags)
 {
-    (void) mca_base_var_register("oshmem",
-                                 "memheap",
-                                 "base",
-                                 "key_exchange",
+    (void) mca_base_var_register("oshmem", "memheap", "base", "key_exchange",
                                  "0|1 - disabled, enabled(default) force memory keys exchange",
-                                 MCA_BASE_VAR_TYPE_INT,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memheap_base_key_exchange);
 
-    mca_base_var_register("oshmem", "memheap", "base", "device_nic_mem_seg_size",
-                          "Size of memory block used for allocations with hint SHMEM_HINT_DEVICE_NIC_MEM",
-                          MCA_BASE_VAR_TYPE_LONG, NULL, 0,
-                          MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                          MCA_BASE_VAR_SCOPE_LOCAL,
-                          &mca_memheap_base_config.device_nic_mem_seg_size);
+    mca_base_var_register(
+        "oshmem", "memheap", "base", "device_nic_mem_seg_size",
+        "Size of memory block used for allocations with hint SHMEM_HINT_DEVICE_NIC_MEM",
+        MCA_BASE_VAR_TYPE_LONG, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_LOCAL, &mca_memheap_base_config.device_nic_mem_seg_size);
 
     return OSHMEM_SUCCESS;
 }
@@ -97,18 +88,13 @@ static int mca_memheap_base_open(mca_base_open_flag_t flags)
     oshmem_framework_open_output(&oshmem_memheap_base_framework);
 
     /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_framework_components_open(&oshmem_memheap_base_framework, flags)) {
+    if (OPAL_SUCCESS != mca_base_framework_components_open(&oshmem_memheap_base_framework, flags)) {
         return OSHMEM_ERROR;
     }
 
     return OSHMEM_SUCCESS;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(oshmem, memheap,
-                           "OSHMEM MEMHEAP",
-                           mca_memheap_base_register,
-                           mca_memheap_base_open,
-                           mca_memheap_base_close,
-                           mca_memheap_base_static_components,
-                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
+MCA_BASE_FRAMEWORK_DECLARE(oshmem, memheap, "OSHMEM MEMHEAP", mca_memheap_base_register,
+                           mca_memheap_base_open, mca_memheap_base_close,
+                           mca_memheap_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

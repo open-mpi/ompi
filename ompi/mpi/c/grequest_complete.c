@@ -21,35 +21,32 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/request/grequest.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/grequest.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
-#endif
-#define MPI_Grequest_complete PMPI_Grequest_complete
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
+#    endif
+#    define MPI_Grequest_complete PMPI_Grequest_complete
 #endif
 
 static const char FUNC_NAME[] = "MPI_Grequest_complete";
-
 
 int MPI_Grequest_complete(MPI_Request request)
 {
     int rc = MPI_SUCCESS;
 
-    MEMCHECKER(
-        memchecker_request(&request);
-    );
+    MEMCHECKER(memchecker_request(&request););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (MPI_REQUEST_NULL == request || NULL == request) {
-           rc = MPI_ERR_REQUEST;
+            rc = MPI_ERR_REQUEST;
         } else if (OMPI_REQUEST_GEN != request->req_type) {
             rc = MPI_ERR_REQUEST;
         }
@@ -59,4 +56,3 @@ int MPI_Grequest_complete(MPI_Request request)
     rc = ompi_grequest_complete(request);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, MPI_ERR_INTERN, FUNC_NAME);
 }
-

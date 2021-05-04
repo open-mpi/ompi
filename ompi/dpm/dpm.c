@@ -31,44 +31,44 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 
-#include <string.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
 #if HAVE_SYS_TIME_H
-#include <sys/time.h>
+#    include <sys/time.h>
 #endif
 #include <fcntl.h>
 
-#include "opal/util/alfg.h"
-#include "opal/util/argv.h"
-#include "opal/util/opal_getcwd.h"
-#include "opal/util/opal_environ.h"
-#include "opal/util/path.h"
-#include "opal/util/proc.h"
-#include "opal/util/show_help.h"
-#include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/base/base.h"
+#include "opal/util/alfg.h"
+#include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/opal_getcwd.h"
+#include "opal/util/path.h"
+#include "opal/util/printf.h"
+#include "opal/util/proc.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
-#include "ompi/proc/proc.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/runtime/ompi_rte.h"
 #include "ompi/info/info.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/proc/proc.h"
+#include "ompi/runtime/ompi_rte.h"
 
 #include "ompi/dpm/dpm.h"
 
 static opal_rng_buff_t rnd;
 
 typedef struct {
-    ompi_communicator_t       *comm;
-    int                       size;
-    struct ompi_request_t     **reqs;
-    int                       buf;
+    ompi_communicator_t *comm;
+    int size;
+    struct ompi_request_t **reqs;
+    int buf;
 } ompi_dpm_disconnect_obj;
-static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs);
+static int disconnect_waitall(int count, ompi_dpm_disconnect_obj **objs);
 static ompi_dpm_disconnect_obj *disconnect_init(ompi_communicator_t *comm);
 static int start_dvm(char **hostfiles, char **dash_host);
 
@@ -76,9 +76,7 @@ typedef struct {
     opal_list_item_t super;
     ompi_proc_t *p;
 } ompi_dpm_proct_caddy_t;
-static OBJ_CLASS_INSTANCE(ompi_dpm_proct_caddy_t,
-                          opal_list_item_t,
-                          NULL, NULL);
+static OBJ_CLASS_INSTANCE(ompi_dpm_proct_caddy_t, opal_list_item_t, NULL, NULL);
 
 /*
  * Init the module
@@ -95,12 +93,11 @@ int ompi_dpm_init(void)
     return OMPI_SUCCESS;
 }
 
-int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
-                            const char *port_string, bool send_first,
-                            ompi_communicator_t **newcomm)
+int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root, const char *port_string,
+                            bool send_first, ompi_communicator_t **newcomm)
 {
-    int k, size, rsize, rank, rc, rportlen=0;
-    char **members = NULL, *nstring, *rport=NULL, *key, *pkey;
+    int k, size, rsize, rank, rc, rportlen = 0;
+    char **members = NULL, *nstring, *rport = NULL, *key, *pkey;
     bool dense, isnew;
     opal_process_name_t pname;
     opal_list_t ilist, mlist, rlist;
@@ -112,10 +109,10 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     pmix_status_t pret;
     opal_proclist_t *plt;
 
-    ompi_communicator_t *newcomp=MPI_COMM_NULL;
+    ompi_communicator_t *newcomp = MPI_COMM_NULL;
     ompi_proc_t *proc;
-    ompi_group_t *group=comm->c_local_group;
-    ompi_proc_t **proc_list=NULL, **new_proc_list = NULL;
+    ompi_group_t *group = comm->c_local_group;
+    ompi_proc_t **proc_list = NULL, **new_proc_list = NULL;
     int32_t i;
     ompi_group_t *new_group_pointer;
     ompi_dpm_proct_caddy_t *cd;
@@ -123,8 +120,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     /* set default error return */
     *newcomm = MPI_COMM_NULL;
 
-    size = ompi_comm_size ( comm );
-    rank = ompi_comm_rank ( comm );
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
 
     /* the "send_first" end will append ":connect" to the port name and publish
      * the list of its participating procs on that key. The receiving root proc
@@ -146,7 +143,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         char *value = strrchr(port_string, '=');
         assert(NULL != value);
         rportlen = atoi(++value);
-        if (rportlen > 0) rportlen *= -1;
+        if (rportlen > 0)
+            rportlen *= -1;
         goto bcast_rportlen;
     }
 
@@ -159,7 +157,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
         /* add the number of procs in this job */
-        (void)opal_asprintf(&nstring, "%d", size);
+        (void) opal_asprintf(&nstring, "%d", size);
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
     } else {
@@ -167,10 +165,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             proc_list = group->grp_proc_pointers;
             dense = true;
         } else {
-            proc_list = (ompi_proc_t**)calloc(group->grp_proc_count,
-                                              sizeof(ompi_proc_t *));
-            for (i=0 ; i<group->grp_proc_count ; i++) {
-                if (NULL == (proc_list[i] = ompi_group_peer_lookup(group,i))) {
+            proc_list = (ompi_proc_t **) calloc(group->grp_proc_count, sizeof(ompi_proc_t *));
+            for (i = 0; i < group->grp_proc_count; i++) {
+                if (NULL == (proc_list[i] = ompi_group_peer_lookup(group, i))) {
                     OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
                     rc = OMPI_ERR_NOT_FOUND;
                     free(proc_list);
@@ -179,10 +176,10 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             }
             dense = false;
         }
-        for (i=0; i < size; i++) {
+        for (i = 0; i < size; i++) {
             opal_process_name_t proc_name;
-            if (ompi_proc_is_sentinel (proc_list[i])) {
-                proc_name = ompi_proc_sentinel_to_name ((uintptr_t) proc_list[i]);
+            if (ompi_proc_is_sentinel(proc_list[i])) {
+                proc_name = ompi_proc_sentinel_to_name((uintptr_t) proc_list[i]);
             } else {
                 proc_name = proc_list[i]->super.proc_name;
             }
@@ -200,11 +197,11 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     if (rank == root) {
         /* the roots for each side exchange their list of participants */
         if (send_first) {
-            (void)opal_asprintf(&key, "%s:connect", port_string);
-            (void)opal_asprintf(&pkey, "%s:accept", port_string);
+            (void) opal_asprintf(&key, "%s:connect", port_string);
+            (void) opal_asprintf(&pkey, "%s:accept", port_string);
         } else {
-            (void)opal_asprintf(&key, "%s:accept", port_string);
-            (void)opal_asprintf(&pkey, "%s:connect", port_string);
+            (void) opal_asprintf(&key, "%s:accept", port_string);
+            (void) opal_asprintf(&pkey, "%s:connect", port_string);
         }
         nstring = opal_argv_join(members, ':');
         PMIX_INFO_LOAD(&info, key, nstring, PMIX_STRING);
@@ -213,7 +210,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         free(key);
         free(pkey);
 
-        rc = opal_pmix_base_exchange(&info, &pdat, 600);  // give them 10 minutes
+        rc = opal_pmix_base_exchange(&info, &pdat, 600); // give them 10 minutes
         PMIX_INFO_DESTRUCT(&info);
         if (OPAL_SUCCESS != rc) {
             PMIX_PDATA_DESTRUCT(&pdat);
@@ -221,8 +218,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         }
 
         /* save the result */
-        rport = strdup(pdat.value.data.string);  // need this later
-        rportlen = strlen(rport) + 1;  // retain the NULL terminator
+        rport = strdup(pdat.value.data.string); // need this later
+        rportlen = strlen(rport) + 1;           // retain the NULL terminator
         PMIX_PDATA_DESTRUCT(&pdat);
     }
 
@@ -233,7 +230,7 @@ bcast_rportlen:
 
     /* bcast the list-length to all processes in the local comm */
     rc = comm->c_coll->coll_bcast(&rportlen, 1, MPI_INT, root, comm,
-                                 comm->c_coll->coll_bcast_module);
+                                  comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != rc) {
         free(rport);
         goto exit;
@@ -249,7 +246,7 @@ bcast_rportlen:
 
     if (rank != root) {
         /* non root processes need to allocate the buffer manually */
-        rport = (char*)malloc(rportlen);
+        rport = (char *) malloc(rportlen);
         if (NULL == rport) {
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
@@ -257,7 +254,7 @@ bcast_rportlen:
     }
     /* now share the list of remote participants */
     rc = comm->c_coll->coll_bcast(rport, rportlen, MPI_BYTE, root, comm,
-                                 comm->c_coll->coll_bcast_module);
+                                  comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != rc) {
         free(rport);
         goto exit;
@@ -266,7 +263,7 @@ bcast_rportlen:
     /* initiate a list of participants for the connect,
      * starting with our own members */
     OBJ_CONSTRUCT(&mlist, opal_list_t);
-    for (i=0; NULL != members[i]; i++) {
+    for (i = 0; NULL != members[i]; i++) {
         OPAL_PMIX_CONVERT_STRING_TO_PROCT(&pxproc, members[i]);
         plt = OBJ_NEW(opal_proclist_t);
         memcpy(&plt->procid, &pxproc, sizeof(pmix_proc_t));
@@ -290,7 +287,7 @@ bcast_rportlen:
     OBJ_CONSTRUCT(&ilist, opal_list_t);
     OBJ_CONSTRUCT(&rlist, opal_list_t);
 
-    for (i=0; NULL != members[i]; i++) {
+    for (i = 0; NULL != members[i]; i++) {
         OPAL_PMIX_CONVERT_STRING_TO_PROCT(&pxproc, members[i]);
         plt = OBJ_NEW(opal_proclist_t);
         memcpy(&plt->procid, &pxproc, sizeof(pmix_proc_t));
@@ -300,7 +297,7 @@ bcast_rportlen:
             /* if the rank is wildcard, then we are including all ranks
              * of that job, and the next entry in members should be the
              * number of procs in the job */
-            if (NULL == members[i+1]) {
+            if (NULL == members[i + 1]) {
                 /* just protect against the error */
                 OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
                 opal_argv_free(members);
@@ -310,9 +307,9 @@ bcast_rportlen:
                 rc = OMPI_ERR_BAD_PARAM;
                 goto exit;
             }
-            rsize = strtoul(members[i+1], NULL, 10);
+            rsize = strtoul(members[i + 1], NULL, 10);
             ++i;
-            for (k=0; k < rsize; k++) {
+            for (k = 0; k < rsize; k++) {
                 pxproc.rank = k;
                 OPAL_PMIX_CONVERT_PROCT(rc, &pname, &pxproc);
                 if (OPAL_SUCCESS != rc) {
@@ -364,7 +361,7 @@ bcast_rportlen:
     nprocs = opal_list_get_size(&mlist);
     PMIX_PROC_CREATE(procs, nprocs);
     n = 0;
-    OPAL_LIST_FOREACH(plt, &mlist, opal_proclist_t) {
+    OPAL_LIST_FOREACH (plt, &mlist, opal_proclist_t) {
         memcpy(&procs[n], &plt->procid, sizeof(pmix_proc_t));
         ++n;
     }
@@ -389,21 +386,19 @@ bcast_rportlen:
         uint16_t u16;
         opal_process_name_t wildcard_rank;
         /* convert the list of new procs to a proc_t array */
-        new_proc_list = (ompi_proc_t**)calloc(opal_list_get_size(&ilist),
-                                              sizeof(ompi_proc_t *));
+        new_proc_list = (ompi_proc_t **) calloc(opal_list_get_size(&ilist), sizeof(ompi_proc_t *));
         /* get the list of local peers for the new procs */
-        cd = (ompi_dpm_proct_caddy_t*)opal_list_get_first(&ilist);
+        cd = (ompi_dpm_proct_caddy_t *) opal_list_get_first(&ilist);
         proc = cd->p;
         wildcard_rank.jobid = proc->super.proc_name.jobid;
         wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
         /* retrieve the local peers */
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_PEERS,
-                                       &wildcard_rank, &val, PMIX_STRING);
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_PEERS, &wildcard_rank, &val, PMIX_STRING);
         if (OPAL_SUCCESS == rc && NULL != val) {
             char **peers = opal_argv_split(val, ',');
             free(val);
             nprn = opal_argv_count(peers);
-            peer_ranks = (uint32_t*)calloc(nprn, sizeof(uint32_t));
+            peer_ranks = (uint32_t *) calloc(nprn, sizeof(uint32_t));
             for (prn = 0; NULL != peers[prn]; prn++) {
                 peer_ranks[prn] = strtoul(peers[prn], NULL, 10);
             }
@@ -411,23 +406,24 @@ bcast_rportlen:
         }
 
         i = 0;
-        OPAL_LIST_FOREACH(cd, &ilist, ompi_dpm_proct_caddy_t) {
+        OPAL_LIST_FOREACH (cd, &ilist, ompi_dpm_proct_caddy_t) {
             proc = cd->p;
-            new_proc_list[i] = proc ;
+            new_proc_list[i] = proc;
             /* ompi_proc_complete_init_single() initializes and optionally retrieves
              * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
              * them, we are just fine */
             ompi_proc_complete_init_single(proc);
             /* if this proc is local, then get its locality */
             if (NULL != peer_ranks) {
-                for (prn=0; prn < nprn; prn++) {
+                for (prn = 0; prn < nprn; prn++) {
                     if (peer_ranks[prn] == proc->super.proc_name.vpid) {
                         /* get their locality string */
                         val = NULL;
                         OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCALITY_STRING,
-                                                       &proc->super.proc_name, &val, PMIX_STRING);
+                                                        &proc->super.proc_name, &val, PMIX_STRING);
                         if (OPAL_SUCCESS == rc && NULL != ompi_process_info.locality) {
-                            u16 = opal_hwloc_compute_relative_locality(ompi_process_info.locality, val);
+                            u16 = opal_hwloc_compute_relative_locality(ompi_process_info.locality,
+                                                                       val);
                             free(val);
                         } else {
                             /* all we can say is that it shares our node */
@@ -462,15 +458,15 @@ bcast_rportlen:
 
     /* now deal with the remote group */
     rsize = opal_list_get_size(&rlist);
-    new_group_pointer=ompi_group_allocate(rsize);
+    new_group_pointer = ompi_group_allocate(rsize);
     if (NULL == new_group_pointer) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         OPAL_LIST_DESTRUCT(&rlist);
         goto exit;
     }
     /* assign group elements */
-    i=0;
-    OPAL_LIST_FOREACH(cd, &rlist, ompi_dpm_proct_caddy_t) {
+    i = 0;
+    OPAL_LIST_FOREACH (cd, &rlist, ompi_dpm_proct_caddy_t) {
         new_group_pointer->grp_proc_pointers[i++] = cd->p;
         /* retain the proc */
         OBJ_RETAIN(cd->p);
@@ -478,18 +474,18 @@ bcast_rportlen:
     OPAL_LIST_DESTRUCT(&rlist);
 
     /* set up communicator structure */
-    rc = ompi_comm_set ( &newcomp,                 /* new comm */
-                         comm,                     /* old comm */
-                         group->grp_proc_count,    /* local_size */
-                         NULL,                     /* local_procs */
-                         rsize,                    /* remote_size */
-                         NULL  ,                   /* remote_procs */
-                         NULL,                     /* attrs */
-                         comm->error_handler,      /* error handler */
-                         NULL,                     /* topo component */
-                         group,                    /* local group */
-                         new_group_pointer         /* remote group */
-                         );
+    rc = ompi_comm_set(&newcomp,              /* new comm */
+                       comm,                  /* old comm */
+                       group->grp_proc_count, /* local_size */
+                       NULL,                  /* local_procs */
+                       rsize,                 /* remote_size */
+                       NULL,                  /* remote_procs */
+                       NULL,                  /* attrs */
+                       comm->error_handler,   /* error handler */
+                       NULL,                  /* topo component */
+                       group,                 /* local group */
+                       new_group_pointer      /* remote group */
+    );
     if (OMPI_SUCCESS != rc) {
         goto exit;
     }
@@ -498,25 +494,25 @@ bcast_rportlen:
     new_group_pointer = MPI_GROUP_NULL;
 
     /* allocate comm_cid */
-    rc = ompi_comm_nextcid ( newcomp,                   /* new communicator */
-                             comm,                      /* old communicator */
-                             NULL,                      /* bridge comm */
-                             &root,                     /* local leader */
-                             (void*)port_string,        /* rendezvous point */
-                             send_first,                /* send or recv first */
-                             OMPI_COMM_CID_INTRA_PMIX); /* mode */
+    rc = ompi_comm_nextcid(newcomp,                   /* new communicator */
+                           comm,                      /* old communicator */
+                           NULL,                      /* bridge comm */
+                           &root,                     /* local leader */
+                           (void *) port_string,      /* rendezvous point */
+                           send_first,                /* send or recv first */
+                           OMPI_COMM_CID_INTRA_PMIX); /* mode */
     if (OMPI_SUCCESS != rc) {
         goto exit;
     }
 
     /* activate comm and init coll-component */
-    rc = ompi_comm_activate ( &newcomp,                  /* new communicator */
-                              comm,                      /* old communicator */
-                              NULL,                      /* bridge comm */
-                              &root,                     /* local leader */
-                              (void*)port_string,        /* rendezvous point */
-                              send_first,                /* send or recv first */
-                              OMPI_COMM_CID_INTRA_PMIX); /* mode */
+    rc = ompi_comm_activate(&newcomp,                  /* new communicator */
+                            comm,                      /* old communicator */
+                            NULL,                      /* bridge comm */
+                            &root,                     /* local leader */
+                            (void *) port_string,      /* rendezvous point */
+                            send_first,                /* send or recv first */
+                            OMPI_COMM_CID_INTRA_PMIX); /* mode */
     if (OMPI_SUCCESS != rc) {
         goto exit;
     }
@@ -526,7 +522,7 @@ bcast_rportlen:
        between the two worlds ?
     */
 
- exit:
+exit:
     if (OMPI_SUCCESS != rc) {
         if (MPI_COMM_NULL != newcomp && NULL != newcomp) {
             OBJ_RELEASE(newcomp);
@@ -545,7 +541,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
     ompi_proc_t *proct;
     opal_process_name_t proc_name;
 
-    for (i=0; i < group->grp_proc_count; i++) {
+    for (i = 0; i < group->grp_proc_count; i++) {
         if (OMPI_GROUP_IS_DENSE(group)) {
             proct = group->grp_proc_pointers[i];
         } else {
@@ -555,8 +551,8 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
             OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
             return OMPI_ERR_NOT_FOUND;
         }
-        if (ompi_proc_is_sentinel (proct)) {
-            proc_name = ompi_proc_sentinel_to_name ((uintptr_t)proct);
+        if (ompi_proc_is_sentinel(proct)) {
+            proc_name = ompi_proc_sentinel_to_name((uintptr_t) proct);
         } else {
             proc_name = proct->super.proc_name;
         }
@@ -566,7 +562,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
         nm->name = proc_name;
         /* need to maintain an ordered list to ensure the tracker signatures
          * match across all procs */
-        OPAL_LIST_FOREACH(n2, peers, opal_namelist_t) {
+        OPAL_LIST_FOREACH (n2, peers, opal_namelist_t) {
             if (opal_compare_proc(nm->name, n2->name) < 0) {
                 opal_list_insert_pos(peers, &n2->super, &nm->super);
                 nm = NULL;
@@ -616,7 +612,7 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
     nprocs = opal_list_get_size(&coll);
     PMIX_PROC_CREATE(procs, nprocs);
     n = 0;
-    OPAL_LIST_FOREACH(nm, &coll, opal_namelist_t) {
+    OPAL_LIST_FOREACH (nm, &coll, opal_namelist_t) {
         OPAL_PMIX_CONVERT_NAME(&procs[n], &nm->name);
         ++n;
     }
@@ -640,28 +636,24 @@ typedef struct {
     char **conflicts;
 } dpm_conflicts_t;
 
-static dpm_conflicts_t mapby_modifiers[] = {
-    {.name = "oversubscribe", .conflicts = (char *[]){"nooversubscribe", NULL}},
-    {.name = "nooversubscribe", .conflicts = (char *[]){"oversubscribe", NULL}},
-    {.name = ""}
-};
+static dpm_conflicts_t mapby_modifiers[] = {{.name = "oversubscribe",
+                                             .conflicts = (char *[]){"nooversubscribe", NULL}},
+                                            {.name = "nooversubscribe",
+                                             .conflicts = (char *[]){"oversubscribe", NULL}},
+                                            {.name = ""}};
 
-static dpm_conflicts_t rankby_modifiers[] = {
-    {.name = ""}
-};
+static dpm_conflicts_t rankby_modifiers[] = {{.name = ""}};
 
-static dpm_conflicts_t bindto_modifiers[] = {
-    {.name = ""}
-};
+static dpm_conflicts_t bindto_modifiers[] = {{.name = ""}};
 
 static int check_modifiers(const char *modifier, char **checks, dpm_conflicts_t *conflicts)
 {
     int n, m, k;
 
-    for (n=0; 0 != strlen(conflicts[n].name); n++) {
+    for (n = 0; 0 != strlen(conflicts[n].name); n++) {
         if (0 == strcasecmp(conflicts[n].name, modifier)) {
-            for (m=0; NULL != checks[m]; m++) {
-                for (k=0; NULL != conflicts[n].conflicts[k]; k++) {
+            for (m = 0; NULL != checks[m]; m++) {
+                for (k = 0; NULL != conflicts[n].conflicts[k]; k++) {
                     if (0 == strcasecmp(checks[m], conflicts[n].conflicts[k])) {
                         return OMPI_ERR_BAD_PARAM;
                     }
@@ -673,12 +665,8 @@ static int check_modifiers(const char *modifier, char **checks, dpm_conflicts_t 
     return OMPI_SUCCESS;
 }
 
-static int dpm_convert(opal_list_t *infos,
-                       const char *infokey,
-                       const char *option,
-                       const char *directive,
-                       const char *modifier,
-                       bool deprecated)
+static int dpm_convert(opal_list_t *infos, const char *infokey, const char *option,
+                       const char *directive, const char *modifier, bool deprecated)
 {
     opal_info_item_t *iptr;
     char *ck, *ptr, *help_str = NULL;
@@ -695,23 +683,23 @@ static int dpm_convert(opal_list_t *infos,
             modifiers = rankby_modifiers;
         } else if (0 == strcmp(option, PMIX_BINDTO)) {
             modifiers = bindto_modifiers;
-        } else  {
+        } else {
             return OMPI_ERR_BAD_PARAM;
         }
     }
 
     /* does the matching option already exist? */
-    OPAL_LIST_FOREACH(iptr, infos, opal_info_item_t) {
+    OPAL_LIST_FOREACH (iptr, infos, opal_info_item_t) {
         if (PMIX_CHECK_KEY(&iptr->info, option)) {
             ck = strdup(iptr->info.value.data.string);
             if (NULL != (ptr = strchr(ck, ':'))) {
                 *ptr = '\0';
                 ++ptr;
             }
-             /* were we given a directive? */
+            /* were we given a directive? */
             if (NULL != directive) {
                 /* does it conflict? */
-               if (0 != strncasecmp(ck, directive, strlen(directive))) {
+                if (0 != strncasecmp(ck, directive, strlen(directive))) {
                     opal_asprintf(&help_str, "Conflicting directives \"%s %s\"", ck, directive);
 #if PMIX_NUMERIC_VERSION >= 0x00040000
                     /* TODO: remove strdup if PMIx_Get_attribute_string takes const char* */
@@ -721,8 +709,8 @@ static int dpm_convert(opal_list_t *infos,
 #else
                     attr = option;
 #endif
-                    opal_show_help("help-dpm.txt", "deprecated-fail", true,
-                                   infokey, attr, help_str);
+                    opal_show_help("help-dpm.txt", "deprecated-fail", true, infokey, attr,
+                                   help_str);
                     free(help_str);
                     free(ck);
                     return OMPI_ERR_BAD_PARAM;
@@ -746,7 +734,8 @@ static int dpm_convert(opal_list_t *infos,
                     opal_argv_free(tmp);
                     if (OMPI_SUCCESS != rc) {
                         /* we have a conflict */
-                        opal_asprintf(&ptr, "  Option %s\n  Conflicting modifiers \"%s %s\"", option, infokey, modifier);
+                        opal_asprintf(&ptr, "  Option %s\n  Conflicting modifiers \"%s %s\"",
+                                      option, infokey, modifier);
 #if PMIX_NUMERIC_VERSION >= 0x00040000
                         /* TODO: remove strdup if PMIx_Get_attribute_string takes const char* */
                         char *option_dup = strdup(option);
@@ -755,8 +744,7 @@ static int dpm_convert(opal_list_t *infos,
 #else
                         attr = option;
 #endif
-                        opal_show_help("help-dpm.txt", "deprecated-fail", true,
-                                       infokey, attr, ptr);
+                        opal_show_help("help-dpm.txt", "deprecated-fail", true, infokey, attr, ptr);
                         free(ptr);
                         free(ck);
                         return OMPI_ERR_BAD_PARAM;
@@ -766,8 +754,8 @@ static int dpm_convert(opal_list_t *infos,
                     free(iptr->info.value.data.string);
                     iptr->info.value.data.string = ptr;
                     free(ck);
-                    opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                   infokey, iptr->info.value.data.string);
+                    opal_show_help("help-dpm.txt", "deprecated-converted", true, infokey,
+                                   iptr->info.value.data.string);
                     return OMPI_SUCCESS;
                 }
             }
@@ -790,10 +778,9 @@ static int dpm_convert(opal_list_t *infos,
     opal_list_append(infos, &iptr->super);
 
     /* alert them */
-    if(deprecated) {
+    if (deprecated) {
         opal_asprintf(&help_str, "Key: %s Value: %s", option, ptr);
-        opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                       infokey, help_str);
+        opal_show_help("help-dpm.txt", "deprecated-converted", true, infokey, help_str);
     }
     free(help_str);
     free(ptr);
@@ -801,16 +788,13 @@ static int dpm_convert(opal_list_t *infos,
     return OMPI_SUCCESS;
 }
 
-
-int ompi_dpm_spawn(int count, const char *array_of_commands[],
-                   char **array_of_argv[],
-                   const int array_of_maxprocs[],
-                   const MPI_Info array_of_info[],
+int ompi_dpm_spawn(int count, const char *array_of_commands[], char **array_of_argv[],
+                   const int array_of_maxprocs[], const MPI_Info array_of_info[],
                    const char *port_name)
 {
     int rc, i, j;
-    int have_wdir=0;
-    int flag=0;
+    int have_wdir = 0;
+    int flag = 0;
     opal_cstring_t *info_str;
     uint32_t ui32;
     bool personality = false;
@@ -885,9 +869,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         app->maxprocs = array_of_maxprocs[i];
 
         /* copy over the argv array */
-        if (MPI_ARGVS_NULL != array_of_argv &&
-            MPI_ARGV_NULL != array_of_argv[i]) {
-            for (j=0; NULL != array_of_argv[i][j]; j++) {
+        if (MPI_ARGVS_NULL != array_of_argv && MPI_ARGV_NULL != array_of_argv[i]) {
+            for (j = 0; NULL != array_of_argv[i][j]; j++) {
                 opal_argv_append_nosize(&app->argv, array_of_argv[i][j]);
             }
         }
@@ -904,21 +887,21 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
         /* Check for well-known info keys */
         have_wdir = 0;
-        if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
+        if (array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL) {
             /* check for personality - this is a job-level key */
-            ompi_info_get (array_of_info[i], "personality", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "personality", &info_str, &flag);
+            if (flag) {
                 /* deprecate --> PMIX_PERSONALITY */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "personality", "PMIX_PERSONALITY");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "personality",
+                               "PMIX_PERSONALITY");
                 personality = true;
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
                 OBJ_RELEASE(info_str);
             }
-            ompi_info_get (array_of_info[i], "PMIX_PERSONALITY", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_PERSONALITY", &info_str, &flag);
+            if (flag) {
                 personality = true;
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, info_str->string, PMIX_STRING);
@@ -927,8 +910,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_PERSONALITY");
-            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+            if (flag) {
                 personality = true;
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, info_str->string, PMIX_STRING);
@@ -941,16 +924,16 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
              * MPI standard ch. 10.3.4 */
 
             /* check for 'host' */
-            ompi_info_get (array_of_info[i], "host", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "host", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
                 opal_argv_append_nosize(&dash_host, info_str->string);
                 OBJ_RELEASE(info_str);
             }
-            ompi_info_get (array_of_info[i], "PMIX_HOST", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_HOST", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -959,8 +942,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_HOST");
-            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -970,8 +953,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for 'wdir' */
-            ompi_info_get (array_of_info[i], "wdir", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "wdir", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_WDIR, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -979,8 +962,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 have_wdir = 1;
             }
             if (!have_wdir) {
-                ompi_info_get (array_of_info[i], "PMIX_WDIR", &info_str, &flag);
-                if ( flag ) {
+                ompi_info_get(array_of_info[i], "PMIX_WDIR", &info_str, &flag);
+                if (flag) {
                     info = OBJ_NEW(opal_info_item_t);
                     PMIX_INFO_LOAD(&info->info, PMIX_WDIR, info_str->string, PMIX_STRING);
                     opal_list_append(&app_info, &info->super);
@@ -991,8 +974,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             if (!have_wdir) {
                 checkkey = PMIx_Get_attribute_string("PMIX_WDIR");
-                ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-                if ( flag ) {
+                ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+                if (flag) {
                     info = OBJ_NEW(opal_info_item_t);
                     PMIX_INFO_LOAD(&info->info, PMIX_WDIR, info_str->string, PMIX_STRING);
                     opal_list_append(&app_info, &info->super);
@@ -1003,8 +986,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for 'mpi_initial_errhandler' */
-            ompi_info_get (array_of_info[i], "mpi_initial_errhandler", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "mpi_initial_errhandler", &info_str, &flag);
+            if (flag) {
                 /* this is set as an environment because it must be available
                  * before pmix_init */
                 opal_setenv("OMPI_MCA_mpi_initial_errhandler", info_str->string, true, &app->env);
@@ -1021,16 +1004,16 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
              * deprecated in the non-prefixed form */
 
             /* check for 'hostfile' */
-            ompi_info_get (array_of_info[i], "hostfile", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "hostfile", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
                 opal_argv_append_nosize(&hostfiles, info_str->string);
                 OBJ_RELEASE(info_str);
             }
-            ompi_info_get (array_of_info[i], "PMIX_HOSTFILE", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_HOSTFILE", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -1039,8 +1022,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_HOSTFILE");
-            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -1050,18 +1033,18 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for 'add-hostfile' */
-            ompi_info_get (array_of_info[i], "add-hostfile", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "add-hostfile", &info_str, &flag);
+            if (flag) {
                 /* deprecate --> PMIX_ADD_HOSTFILE */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "add-hostfile", "PMIX_ADD_HOSTFILE");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "add-hostfile",
+                               "PMIX_ADD_HOSTFILE");
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
                 OBJ_RELEASE(info_str);
             }
-            ompi_info_get (array_of_info[i], "PMIX_ADD_HOSTFILE", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_ADD_HOSTFILE", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -1069,8 +1052,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_ADD_HOSTFILE");
-            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOSTFILE, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -1079,18 +1062,18 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for 'add-host' */
-            ompi_info_get (array_of_info[i], "add-host", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "add-host", &info_str, &flag);
+            if (flag) {
                 /* deprecate --> PMIX_ADD_HOST */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "add-host", "PMIX_ADD_HOST");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "add-host",
+                               "PMIX_ADD_HOST");
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
                 OBJ_RELEASE(info_str);
             }
-            ompi_info_get (array_of_info[i], "PMIX_ADD_HOST", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_ADD_HOST", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -1098,8 +1081,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_ADD_HOST");
-            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_ADD_HOST, info_str->string, PMIX_STRING);
                 opal_list_append(&app_info, &info->super);
@@ -1108,34 +1091,33 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for env */
-            ompi_info_get (array_of_info[i], "env", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "env", &info_str, &flag);
+            if (flag) {
                 /* deprecate --> PMIX_ENVAR */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "env", "PMIX_ENVAR");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "env", "PMIX_ENVAR");
                 envars = opal_argv_split(info_str->string, '\n');
                 OBJ_RELEASE(info_str);
-                for (j=0; NULL != envars[j]; j++) {
+                for (j = 0; NULL != envars[j]; j++) {
                     opal_argv_append_nosize(&app->env, envars[j]);
                 }
                 opal_argv_free(envars);
             }
-            ompi_info_get (array_of_info[i], "PMIX_ENVAR", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_ENVAR", &info_str, &flag);
+            if (flag) {
                 envars = opal_argv_split(info_str->string, '\n');
                 OBJ_RELEASE(info_str);
-                for (j=0; NULL != envars[j]; j++) {
+                for (j = 0; NULL != envars[j]; j++) {
                     opal_argv_append_nosize(&app->env, envars[j]);
                 }
                 opal_argv_free(envars);
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_ENVAR");
-            ompi_info_get (array_of_info[i], "PMIX_ENVAR", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_ENVAR", &info_str, &flag);
+            if (flag) {
                 envars = opal_argv_split(info_str->string, '\n');
                 OBJ_RELEASE(info_str);
-                for (j=0; NULL != envars[j]; j++) {
+                for (j = 0; NULL != envars[j]; j++) {
                     opal_argv_append_nosize(&app->env, envars[j]);
                 }
                 opal_argv_free(envars);
@@ -1147,18 +1129,18 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
              *
              * This is a job-level key
              */
-            ompi_info_get (array_of_info[i], "ompi_prefix", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "ompi_prefix", &info_str, &flag);
+            if (flag) {
                 /* deprecate --> PMIX_PREFIX */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "ompi_prefix", "PMIX_PREFIX");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "ompi_prefix",
+                               "PMIX_PREFIX");
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
                 OBJ_RELEASE(info_str);
             }
-            ompi_info_get (array_of_info[i], "PMIX_PREFIX", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_PREFIX", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1166,8 +1148,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_PREFIX");
-            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PREFIX, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1177,17 +1159,17 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
             /* check for 'mapper' - a job-level key */
             ompi_info_get(array_of_info[i], "mapper", &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 /* deprecate --> PMIX_MAPPER */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "mapper", "PMIX_MAPPER");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "mapper",
+                               "PMIX_MAPPER");
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
                 OBJ_RELEASE(info_str);
             }
             ompi_info_get(array_of_info[i], "PMIX_MAPPER", &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1196,7 +1178,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_MAPPER");
             ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_MAPPER, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1206,7 +1188,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
             /* check for 'display_map' - a job-level key */
             ompi_info_get_bool(array_of_info[i], "display_map", &local_spawn, &flag);
-            if ( flag ) {
+            if (flag) {
                 rc = dpm_convert(&job_info, "display_map", PMIX_MAPBY, NULL, "DISPLAYMAP", true);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
@@ -1224,8 +1206,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'npernode' and 'ppr' - job-level key */
-            ompi_info_get (array_of_info[i], "npernode", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "npernode", &info_str, &flag);
+            if (flag) {
                 opal_asprintf(&tmp, "PPR:%s:NODE", info_str->string);
                 rc = dpm_convert(&job_info, "npernode", PMIX_MAPBY, tmp, NULL, true);
                 free(tmp);
@@ -1244,8 +1226,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     return MPI_ERR_SPAWN;
                 }
             }
-            ompi_info_get (array_of_info[i], "pernode", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "pernode", &info_str, &flag);
+            if (flag) {
                 rc = dpm_convert(&job_info, "pernode", PMIX_MAPBY, "PPR:1:NODE", NULL, true);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
@@ -1262,8 +1244,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     return MPI_ERR_SPAWN;
                 }
             }
-            ompi_info_get (array_of_info[i], "ppr", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "ppr", &info_str, &flag);
+            if (flag) {
                 /* must have correct syntax with two colons */
                 if (NULL == (tmp = strchr(info_str->string, ':'))) {
                     opal_show_help("help-dpm.txt", "bad-ppr", true, info_str->string);
@@ -1315,7 +1297,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
             /* check for 'map_by' - job-level key */
             ompi_info_get(array_of_info[i], "map_by", &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 rc = dpm_convert(&job_info, "map_by", PMIX_MAPBY, info_str->string, NULL, false);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
@@ -1333,7 +1315,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 }
             }
             ompi_info_get(array_of_info[i], "PMIX_MAPBY", &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_MAPBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1342,7 +1324,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_MAPBY");
             ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_MAPBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1352,7 +1334,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
             /* check for 'rank_by' - job-level key */
             ompi_info_get(array_of_info[i], "rank_by", &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 rc = dpm_convert(&job_info, "rank_by", PMIX_RANKBY, info_str->string, NULL, false);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
@@ -1364,7 +1346,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 }
             }
             ompi_info_get(array_of_info[i], "PMIX_RANKBY", &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1373,7 +1355,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_RANKBY");
             ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1383,7 +1365,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
             /* check for 'bind_to' - job-level key */
             ompi_info_get(array_of_info[i], "bind_to", &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 rc = dpm_convert(&job_info, "bind_to", PMIX_BINDTO, info_str->string, NULL, false);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
@@ -1395,7 +1377,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 }
             }
             ompi_info_get(array_of_info[i], "PMIX_BINDTO", &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_BINDTO, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1404,7 +1386,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_BINDTO");
             ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_BINDTO, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1414,16 +1396,16 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 
             /* check for 'preload_binary' - job-level key */
             ompi_info_get_bool(array_of_info[i], "ompi_preload_binary", &local_spawn, &flag);
-            if ( flag ) {
+            if (flag) {
                 /* deprecate --> PMIX_PRELOAD_BIN */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "ompi_preload_binary", "PMIX_PRELOAD_BIN");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "ompi_preload_binary",
+                               "PMIX_PRELOAD_BIN");
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_BIN, &local_spawn, PMIX_BOOL);
                 opal_list_append(&job_info, &info->super);
             }
             ompi_info_get_bool(array_of_info[i], "PMIX_PRELOAD_BIN", &local_spawn, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_BIN, &local_spawn, PMIX_BOOL);
                 opal_list_append(&job_info, &info->super);
@@ -1431,7 +1413,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_PRELOAD_BIN");
             ompi_info_get_bool(array_of_info[i], checkkey, &local_spawn, &flag);
-            if ( flag ) {
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_BIN, &local_spawn, PMIX_BOOL);
                 opal_list_append(&job_info, &info->super);
@@ -1439,18 +1421,18 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for 'preload_files' - job-level key */
-            ompi_info_get (array_of_info[i], "ompi_preload_files", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "ompi_preload_files", &info_str, &flag);
+            if (flag) {
                 /* deprecate --> PMIX_PRELOAD_FILES */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "ompi_preload_files", "PMIX_PRELOAD_FILES");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "ompi_preload_files",
+                               "PMIX_PRELOAD_FILES");
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
                 OBJ_RELEASE(info_str);
             }
-            ompi_info_get (array_of_info[i], "PMIX_PRELOAD_FILES", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_PRELOAD_FILES", &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1458,8 +1440,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_PRELOAD_FILES");
-            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+            if (flag) {
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_PRELOAD_FILES, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1472,15 +1454,15 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
              */
             ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
             if (flag && non_mpi) {
-                opal_show_help("help-dpm.txt", "deprecated-inform", true,
-                                "ompi_non_mpi", "No longer relevant as RTE automatically detects this scenario");
+                opal_show_help("help-dpm.txt", "deprecated-inform", true, "ompi_non_mpi",
+                               "No longer relevant as RTE automatically detects this scenario");
             }
 
             /* see if this is an MCA param that the user wants applied to the child job */
-            ompi_info_get (array_of_info[i], "ompi_param", &info_str, &flag);
-            if ( flag ) {
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "ompi_param", "PMIX_ENVAR");
+            ompi_info_get(array_of_info[i], "ompi_param", &info_str, &flag);
+            if (flag) {
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "ompi_param",
+                               "PMIX_ENVAR");
                 opal_argv_append_unique_nosize(&app->env, info_str->string, true);
                 OBJ_RELEASE(info_str);
             }
@@ -1488,11 +1470,11 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* see if user specified what to do with stdin - defaults to
              * not forwarding stdin to child processes - job-level key
              */
-            ompi_info_get (array_of_info[i], "ompi_stdin_target", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "ompi_stdin_target", &info_str, &flag);
+            if (flag) {
                 /* deprecate --> PMIX_STDIN_TGT */
-                opal_show_help("help-dpm.txt", "deprecated-converted", true,
-                                "ompi_stdin_target", "PMIX_STDIN_TGT");
+                opal_show_help("help-dpm.txt", "deprecated-converted", true, "ompi_stdin_target",
+                               "PMIX_STDIN_TGT");
                 if (0 == strcmp(info_str->string, "all")) {
                     ui32 = OPAL_VPID_WILDCARD;
                 } else if (0 == strcmp(info_str->string, "none")) {
@@ -1505,8 +1487,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 opal_list_append(&job_info, &info->super);
                 OBJ_RELEASE(info_str);
             }
-            ompi_info_get (array_of_info[i], "PMIX_STDIN_TGT", &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], "PMIX_STDIN_TGT", &info_str, &flag);
+            if (flag) {
                 if (0 == strcmp(info_str->string, "all")) {
                     ui32 = OPAL_VPID_WILDCARD;
                 } else if (0 == strcmp(info_str->string, "none")) {
@@ -1521,8 +1503,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #if PMIX_NUMERIC_VERSION >= 0x00040000
             checkkey = PMIx_Get_attribute_string("PMIX_STDIN_TGT");
-            ompi_info_get (array_of_info[i], checkkey, &info_str, &flag);
-            if ( flag ) {
+            ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
+            if (flag) {
                 if (0 == strcmp(info_str->string, "all")) {
                     ui32 = OPAL_VPID_WILDCARD;
                 } else if (0 == strcmp(info_str->string, "none")) {
@@ -1541,11 +1523,11 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         /* default value: If the user did not tell us where to look for the
          * executable, we assume the current working directory
          */
-        if ( !have_wdir ) {
+        if (!have_wdir) {
             char cwd[OPAL_PATH_MAX];
             if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OPAL_PATH_MAX))) {
                 OMPI_ERROR_LOG(rc);
-                PMIX_APP_FREE(apps, (size_t)count);
+                PMIX_APP_FREE(apps, (size_t) count);
                 opal_progress_event_users_decrement();
                 if (NULL != hostfiles) {
                     opal_argv_free(hostfiles);
@@ -1569,7 +1551,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             PMIX_INFO_CREATE(app->info, ninfo);
             app->ninfo = ninfo;
             n = 0;
-            OPAL_LIST_FOREACH(info, &app_info, opal_info_item_t) {
+            OPAL_LIST_FOREACH (info, &app_info, opal_info_item_t) {
                 PMIX_INFO_XFER(&app->info[n], &info->info);
                 ++n;
             }
@@ -1589,7 +1571,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     if (0 < ninfo) {
         PMIX_INFO_CREATE(pinfo, ninfo);
         n = 0;
-        OPAL_LIST_FOREACH(info, &job_info, opal_info_item_t) {
+        OPAL_LIST_FOREACH (info, &job_info, opal_info_item_t) {
             PMIX_INFO_XFER(&pinfo[n], &info->info);
             ++n;
         }
@@ -1643,7 +1625,7 @@ int ompi_dpm_open_port(char *port_name)
 
     r = opal_rand(&rnd);
     opal_convert_process_name_to_string(&tmp, OMPI_PROC_MY_NAME);
-    snprintf(port_name, MPI_MAX_PORT_NAME-1, "%s:%u", tmp, r);
+    snprintf(port_name, MPI_MAX_PORT_NAME - 1, "%s:%u", tmp, r);
     port_name[MPI_MAX_PORT_NAME - 1] = '\0';
     free(tmp);
     return OMPI_SUCCESS;
@@ -1657,10 +1639,10 @@ int ompi_dpm_close_port(const char *port_name)
 
 int ompi_dpm_dyn_init(void)
 {
-    int root=0, rc;
+    int root = 0, rc;
     bool send_first = true;
-    ompi_communicator_t *newcomm=NULL;
-    char *port_name=NULL, *tmp, *ptr;
+    ompi_communicator_t *newcomm = NULL;
+    char *port_name = NULL, *tmp, *ptr;
 
     /* check for appropriate env variable */
     tmp = getenv("OMPI_PARENT_PORT");
@@ -1671,11 +1653,11 @@ int ompi_dpm_dyn_init(void)
 
     /* the value passed to us may have quote marks around it to protect
      * the value if passed on the command line. We must remove those
-    * to have a correct string
+     * to have a correct string
      */
-     if ('"' == tmp[0]) {
+    if ('"' == tmp[0]) {
         /* if the first char is a quote, then so will the last one be */
-        tmp[strlen(tmp)-1] = '\0';
+        tmp[strlen(tmp) - 1] = '\0';
         ptr = &tmp[1];
     } else {
         ptr = &tmp[0];
@@ -1706,7 +1688,6 @@ int ompi_dpm_dyn_init(void)
     return OMPI_SUCCESS;
 }
 
-
 /*
  * finalize the module
  */
@@ -1717,7 +1698,7 @@ int ompi_dpm_finalize(void)
 
 static void cleanup_dpm_disconnect_objs(ompi_dpm_disconnect_obj **objs, int count)
 {
-    for(int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         if (NULL != objs[i]->reqs) {
             free(objs[i]->reqs);
         }
@@ -1733,21 +1714,21 @@ static void cleanup_dpm_disconnect_objs(ompi_dpm_disconnect_obj **objs, int coun
    and does the disconnect for all dynamic communicators */
 int ompi_dpm_dyn_finalize(void)
 {
-    int i,j=0, max=0;
-    ompi_dpm_disconnect_obj **objs=NULL;
-    ompi_communicator_t *comm=NULL;
+    int i, j = 0, max = 0;
+    ompi_dpm_disconnect_obj **objs = NULL;
+    ompi_communicator_t *comm = NULL;
 
-    if (1 <ompi_comm_num_dyncomm) {
-        objs = (ompi_dpm_disconnect_obj**)malloc(ompi_comm_num_dyncomm *
-                               sizeof(ompi_dpm_disconnect_obj*));
+    if (1 < ompi_comm_num_dyncomm) {
+        objs = (ompi_dpm_disconnect_obj **) malloc(ompi_comm_num_dyncomm
+                                                   * sizeof(ompi_dpm_disconnect_obj *));
         if (NULL == objs) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         max = opal_pointer_array_get_size(&ompi_mpi_communicators);
-        for (i=3; i<max; i++) {
-            comm = (ompi_communicator_t*)opal_pointer_array_get_item(&ompi_mpi_communicators,i);
-            if (NULL != comm &&  OMPI_COMM_IS_DYNAMIC(comm)) {
+        for (i = 3; i < max; i++) {
+            comm = (ompi_communicator_t *) opal_pointer_array_get_item(&ompi_mpi_communicators, i);
+            if (NULL != comm && OMPI_COMM_IS_DYNAMIC(comm)) {
                 objs[j++] = disconnect_init(comm);
             }
         }
@@ -1779,11 +1760,11 @@ The communicators can than be released.
 
 static ompi_dpm_disconnect_obj *disconnect_init(ompi_communicator_t *comm)
 {
-    ompi_dpm_disconnect_obj *obj=NULL;
+    ompi_dpm_disconnect_obj *obj = NULL;
     int ret;
     int i;
 
-    obj = (ompi_dpm_disconnect_obj*)calloc(1,sizeof(ompi_dpm_disconnect_obj));
+    obj = (ompi_dpm_disconnect_obj *) calloc(1, sizeof(ompi_dpm_disconnect_obj));
     if (NULL == obj) {
         opal_output(0, "Could not allocate disconnect object");
         return NULL;
@@ -1796,7 +1777,7 @@ static ompi_dpm_disconnect_obj *disconnect_init(ompi_communicator_t *comm)
     }
 
     obj->comm = comm;
-    obj->reqs = (ompi_request_t**)malloc(2*obj->size*sizeof(ompi_request_t *));
+    obj->reqs = (ompi_request_t **) malloc(2 * obj->size * sizeof(ompi_request_t *));
     if (NULL == obj->reqs) {
         opal_output(0, "Could not allocate request array for disconnect object");
         free(obj);
@@ -1805,10 +1786,9 @@ static ompi_dpm_disconnect_obj *disconnect_init(ompi_communicator_t *comm)
 
     /* initiate all isend_irecvs. We use a dummy buffer stored on
        the object, since we are sending zero size messages anyway. */
-    for (i=0; i < obj->size; i++) {
-        ret = MCA_PML_CALL(irecv(&(obj->buf), 0, MPI_INT, i,
-                                 OMPI_COMM_BARRIER_TAG, comm,
-                                 &(obj->reqs[2*i])));
+    for (i = 0; i < obj->size; i++) {
+        ret = MCA_PML_CALL(
+            irecv(&(obj->buf), 0, MPI_INT, i, OMPI_COMM_BARRIER_TAG, comm, &(obj->reqs[2 * i])));
 
         if (OMPI_SUCCESS != ret) {
             opal_output(0, "dpm_disconnect_init: error %d in irecv to process %d", ret, i);
@@ -1816,10 +1796,8 @@ static ompi_dpm_disconnect_obj *disconnect_init(ompi_communicator_t *comm)
             free(obj);
             return NULL;
         }
-        ret = MCA_PML_CALL(isend(&(obj->buf), 0, MPI_INT, i,
-                                 OMPI_COMM_BARRIER_TAG,
-                                 MCA_PML_BASE_SEND_SYNCHRONOUS,
-                                 comm, &(obj->reqs[2*i+1])));
+        ret = MCA_PML_CALL(isend(&(obj->buf), 0, MPI_INT, i, OMPI_COMM_BARRIER_TAG,
+                                 MCA_PML_BASE_SEND_SYNCHRONOUS, comm, &(obj->reqs[2 * i + 1])));
 
         if (OMPI_SUCCESS != ret) {
             opal_output(0, "dpm_disconnect_init: error %d in isend to process %d", ret, i);
@@ -1841,16 +1819,16 @@ static ompi_dpm_disconnect_obj *disconnect_init(ompi_communicator_t *comm)
  * - call waitall on the overall request array
  * - free the objects
  */
-static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
+static int disconnect_waitall(int count, ompi_dpm_disconnect_obj **objs)
 {
 
-    ompi_request_t **reqs=NULL;
-    char *treq=NULL;
+    ompi_request_t **reqs = NULL;
+    char *treq = NULL;
     int totalcount = 0;
     int i;
     int ret;
 
-    for (i=0; i<count; i++) {
+    for (i = 0; i < count; i++) {
         if (NULL == objs[i]) {
             opal_output(0, "Error in comm_disconnect_waitall");
             return OMPI_ERROR;
@@ -1859,21 +1837,21 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
         totalcount += objs[i]->size;
     }
 
-    reqs = (ompi_request_t**)malloc(2*totalcount*sizeof(ompi_request_t *));
+    reqs = (ompi_request_t **) malloc(2 * totalcount * sizeof(ompi_request_t *));
     if (NULL == reqs) {
         opal_output(0, "ompi_comm_disconnect_waitall: error allocating memory");
         return OMPI_ERROR;
     }
 
     /* generate a single, large array of pending requests */
-    treq = (char *)reqs;
-    for (i=0; i<count; i++) {
-        memcpy(treq, objs[i]->reqs, 2*objs[i]->size * sizeof(ompi_request_t *));
-        treq += 2*objs[i]->size * sizeof(ompi_request_t *);
+    treq = (char *) reqs;
+    for (i = 0; i < count; i++) {
+        memcpy(treq, objs[i]->reqs, 2 * objs[i]->size * sizeof(ompi_request_t *));
+        treq += 2 * objs[i]->size * sizeof(ompi_request_t *);
     }
 
     /* force all non-blocking all-to-alls to finish */
-    ret = ompi_request_wait_all(2*totalcount, reqs, MPI_STATUSES_IGNORE);
+    ret = ompi_request_wait_all(2 * totalcount, reqs, MPI_STATUSES_IGNORE);
 
     /* Finally, free everything */
     cleanup_dpm_disconnect_objs(objs, count);
@@ -1885,12 +1863,12 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-static bool ompi_dpm_group_is_dyn (ompi_group_t *group, ompi_jobid_t thisjobid)
+static bool ompi_dpm_group_is_dyn(ompi_group_t *group, ompi_jobid_t thisjobid)
 {
-    int size = group ? ompi_group_size (group) : 0;
+    int size = group ? ompi_group_size(group) : 0;
 
-    for (int i = 0 ; i < size ; ++i) {
-        opal_process_name_t name = ompi_group_get_proc_name (group, i);
+    for (int i = 0; i < size; ++i) {
+        opal_process_name_t name = ompi_group_get_proc_name(group, i);
 
         if (thisjobid != ((ompi_process_name_t *) &name)->jobid) {
             /* at least one is different */
@@ -1916,17 +1894,17 @@ void ompi_dpm_mark_dyncomm(ompi_communicator_t *comm)
         return;
     }
 
-    thisjobid = ompi_group_get_proc_name (comm->c_local_group, 0).jobid;
+    thisjobid = ompi_group_get_proc_name(comm->c_local_group, 0).jobid;
 
     /* loop over all processes in local group and check for
      * a different jobid
      */
-    found = ompi_dpm_group_is_dyn (comm->c_local_group, thisjobid);
+    found = ompi_dpm_group_is_dyn(comm->c_local_group, thisjobid);
     if (!found) {
         /* if inter-comm, loop over all processes in remote_group
          * and see if any are different from thisjobid
          */
-        found = ompi_dpm_group_is_dyn (comm->c_remote_group, thisjobid);
+        found = ompi_dpm_group_is_dyn(comm->c_remote_group, thisjobid);
     }
 
     /* if a different jobid was found, set the disconnect flag*/
@@ -1938,7 +1916,7 @@ void ompi_dpm_mark_dyncomm(ompi_communicator_t *comm)
 
 #if OMPI_HAVE_PRRTE
 
-#define DVM_URI_MSG_LGTH   256
+#    define DVM_URI_MSG_LGTH 256
 
 static void set_handler_default(int sig)
 {
@@ -1948,7 +1926,7 @@ static void set_handler_default(int sig)
     act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
 
-    sigaction(sig, &act, (struct sigaction *)0);
+    sigaction(sig, &act, (struct sigaction *) 0);
 }
 
 static int start_dvm(char **hostfiles, char **dash_host)
@@ -1996,7 +1974,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
         return OMPI_ERROR;
     }
 
-   /* we need to start the PRRTE DVM first so we can
+    /* we need to start the PRRTE DVM first so we can
      * spawn processes - see if they gave us any hostfile
      * or dash-host options we should pass along */
     opal_argv_append_nosize(&args, "prte");
@@ -2072,25 +2050,23 @@ static int start_dvm(char **hostfiles, char **dash_host)
         execv(cmd, args);
 
         /* if I get here, the execv failed! */
-        opal_show_help("help-ess-base.txt", "ess-base:execv-error",
-                       true, cmd, strerror(errno));
+        opal_show_help("help-ess-base.txt", "ess-base:execv-error", true, cmd, strerror(errno));
         exit(1);
-
     }
 
     free(cmd);
     /* I am the parent - wait to hear something back and
      * report results
      */
-    close(p[1]);  /* parent closes the write - prte will write its contact info to it*/
-    close(death_pipe[0]);  /* parent closes the death_pipe's read */
+    close(p[1]);          /* parent closes the write - prte will write its contact info to it*/
+    close(death_pipe[0]); /* parent closes the death_pipe's read */
     opal_argv_free(args);
 
     /* setup the buffer to read the DVM's uri */
     buffer_length = DVM_URI_MSG_LGTH;
-    chunk = DVM_URI_MSG_LGTH-1;
+    chunk = DVM_URI_MSG_LGTH - 1;
     num_chars_read = 0;
-    uri = (char*)malloc(buffer_length);
+    uri = (char *) malloc(buffer_length);
     memset(uri, 0, buffer_length);
 
     while (0 != (rc = read(p[0], &uri[num_chars_read], chunk))) {
@@ -2105,7 +2081,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
         chunk -= rc;
         if (0 == chunk) {
             chunk = DVM_URI_MSG_LGTH;
-            uri = realloc((void*)uri, buffer_length+chunk);
+            uri = realloc((void *) uri, buffer_length + chunk);
             memset(&uri[buffer_length], 0, chunk);
             buffer_length += chunk;
         }

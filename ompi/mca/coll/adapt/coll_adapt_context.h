@@ -9,14 +9,14 @@
  * $HEADER$
  */
 
+#include "coll_adapt_inbuf.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/coll/base/coll_base_topo.h"
 #include "ompi/mca/coll/coll.h"
+#include "ompi/op/op.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/op/op.h"
-#include "ompi/mca/coll/base/coll_base_topo.h"
-#include "coll_adapt_inbuf.h"
 
 /* Bcast constant context in bcast context */
 struct ompi_coll_adapt_constant_bcast_context_s {
@@ -46,11 +46,10 @@ typedef struct ompi_coll_adapt_constant_bcast_context_s ompi_coll_adapt_constant
 
 OBJ_CLASS_DECLARATION(ompi_coll_adapt_constant_bcast_context_t);
 
-
 /* Bcast context of each segment*/
 typedef struct ompi_coll_adapt_bcast_context_s ompi_coll_adapt_bcast_context_t;
 
-typedef int (*ompi_coll_adapt_bcast_cuda_callback_fn_t) (ompi_coll_adapt_bcast_context_t * context);
+typedef int (*ompi_coll_adapt_bcast_cuda_callback_fn_t)(ompi_coll_adapt_bcast_context_t *context);
 
 struct ompi_coll_adapt_bcast_context_s {
     opal_free_list_item_t super;
@@ -112,7 +111,7 @@ OBJ_CLASS_DECLARATION(ompi_coll_adapt_constant_reduce_context_t);
 /* Reduce context of each segment */
 typedef struct ompi_coll_adapt_reduce_context_s ompi_coll_adapt_reduce_context_t;
 
-typedef int (*ompi_coll_adapt_reduce_cuda_callback_fn_t) (ompi_coll_adapt_reduce_context_t * context);
+typedef int (*ompi_coll_adapt_reduce_cuda_callback_fn_t)(ompi_coll_adapt_reduce_context_t *context);
 
 struct ompi_coll_adapt_reduce_context_s {
     opal_free_list_item_t super;

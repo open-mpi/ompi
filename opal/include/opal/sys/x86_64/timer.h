@@ -60,7 +60,7 @@ static inline bool opal_sys_timer_is_monotonic(void)
     return !!(cpuid2 & (1 << 8));
 }
 
-#    define OPAL_HAVE_SYS_TIMER_IS_MONOTONIC 1
+#        define OPAL_HAVE_SYS_TIMER_IS_MONOTONIC 1
 #    else
 
 static inline opal_timer_t opal_sys_timer_get_cycles(void)

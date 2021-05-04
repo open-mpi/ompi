@@ -21,11 +21,11 @@
 
 #include <stdio.h>
 
+#include "coll_demo.h"
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "coll_demo.h"
+#include "ompi/mca/coll/coll.h"
 
 #if 0
 
@@ -97,8 +97,7 @@ static const mca_coll_base_module_1_0_0_t inter = {
  * this component to disqualify itself if it doesn't support the
  * required level of thread support.
  */
-int mca_coll_demo_init_query(bool enable_progress_threads,
-                             bool enable_mpi_threads)
+int mca_coll_demo_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
     /* Nothing to do */
 
@@ -110,74 +109,73 @@ int mca_coll_demo_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_t *
-mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority)
+mca_coll_base_module_t *mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_demo_module_t *demo_module;
 
     demo_module = OBJ_NEW(mca_coll_demo_module_t);
-    if (NULL == demo_module) return NULL;
+    if (NULL == demo_module)
+        return NULL;
 
     *priority = mca_coll_demo_priority;
 
     demo_module->super.coll_module_enable = mca_coll_demo_module_enable;
 
     if (OMPI_COMM_IS_INTRA(comm)) {
-        demo_module->super.coll_allgather  = mca_coll_demo_allgather_intra;
+        demo_module->super.coll_allgather = mca_coll_demo_allgather_intra;
         demo_module->super.coll_allgatherv = mca_coll_demo_allgatherv_intra;
-        demo_module->super.coll_allreduce  = mca_coll_demo_allreduce_intra;
-        demo_module->super.coll_alltoall   = mca_coll_demo_alltoall_intra;
-        demo_module->super.coll_alltoallv  = mca_coll_demo_alltoallv_intra;
-        demo_module->super.coll_alltoallw  = mca_coll_demo_alltoallw_intra;
-        demo_module->super.coll_barrier    = mca_coll_demo_barrier_intra;
-        demo_module->super.coll_bcast      = mca_coll_demo_bcast_intra;
-        demo_module->super.coll_exscan     = mca_coll_demo_exscan_intra;
-        demo_module->super.coll_gather     = mca_coll_demo_gather_intra;
-        demo_module->super.coll_gatherv    = mca_coll_demo_gatherv_intra;
-        demo_module->super.coll_reduce     = mca_coll_demo_reduce_intra;
+        demo_module->super.coll_allreduce = mca_coll_demo_allreduce_intra;
+        demo_module->super.coll_alltoall = mca_coll_demo_alltoall_intra;
+        demo_module->super.coll_alltoallv = mca_coll_demo_alltoallv_intra;
+        demo_module->super.coll_alltoallw = mca_coll_demo_alltoallw_intra;
+        demo_module->super.coll_barrier = mca_coll_demo_barrier_intra;
+        demo_module->super.coll_bcast = mca_coll_demo_bcast_intra;
+        demo_module->super.coll_exscan = mca_coll_demo_exscan_intra;
+        demo_module->super.coll_gather = mca_coll_demo_gather_intra;
+        demo_module->super.coll_gatherv = mca_coll_demo_gatherv_intra;
+        demo_module->super.coll_reduce = mca_coll_demo_reduce_intra;
         demo_module->super.coll_reduce_scatter = mca_coll_demo_reduce_scatter_intra;
-        demo_module->super.coll_scan       = mca_coll_demo_scan_intra;
-        demo_module->super.coll_scatter    = mca_coll_demo_scatter_intra;
-        demo_module->super.coll_scatterv   = mca_coll_demo_scatterv_intra;
+        demo_module->super.coll_scan = mca_coll_demo_scan_intra;
+        demo_module->super.coll_scatter = mca_coll_demo_scatter_intra;
+        demo_module->super.coll_scatterv = mca_coll_demo_scatterv_intra;
     } else {
-        demo_module->super.coll_allgather  = mca_coll_demo_allgather_inter;
+        demo_module->super.coll_allgather = mca_coll_demo_allgather_inter;
         demo_module->super.coll_allgatherv = mca_coll_demo_allgatherv_inter;
-        demo_module->super.coll_allreduce  = mca_coll_demo_allreduce_inter;
-        demo_module->super.coll_alltoall   = mca_coll_demo_alltoall_inter;
-        demo_module->super.coll_alltoallv  = mca_coll_demo_alltoallv_inter;
-        demo_module->super.coll_alltoallw  = mca_coll_demo_alltoallw_inter;
-        demo_module->super.coll_barrier    = mca_coll_demo_barrier_inter;
-        demo_module->super.coll_bcast      = mca_coll_demo_bcast_inter;
-        demo_module->super.coll_exscan     = NULL;
-        demo_module->super.coll_gather     = mca_coll_demo_gather_inter;
-        demo_module->super.coll_gatherv    = mca_coll_demo_gatherv_inter;
-        demo_module->super.coll_reduce     = mca_coll_demo_reduce_inter;
+        demo_module->super.coll_allreduce = mca_coll_demo_allreduce_inter;
+        demo_module->super.coll_alltoall = mca_coll_demo_alltoall_inter;
+        demo_module->super.coll_alltoallv = mca_coll_demo_alltoallv_inter;
+        demo_module->super.coll_alltoallw = mca_coll_demo_alltoallw_inter;
+        demo_module->super.coll_barrier = mca_coll_demo_barrier_inter;
+        demo_module->super.coll_bcast = mca_coll_demo_bcast_inter;
+        demo_module->super.coll_exscan = NULL;
+        demo_module->super.coll_gather = mca_coll_demo_gather_inter;
+        demo_module->super.coll_gatherv = mca_coll_demo_gatherv_inter;
+        demo_module->super.coll_reduce = mca_coll_demo_reduce_inter;
         demo_module->super.coll_reduce_scatter = mca_coll_demo_reduce_scatter_inter;
-        demo_module->super.coll_scan       = NULL;
-        demo_module->super.coll_scatter    = mca_coll_demo_scatter_inter;
-        demo_module->super.coll_scatterv   = mca_coll_demo_scatterv_inter;
+        demo_module->super.coll_scan = NULL;
+        demo_module->super.coll_scatter = mca_coll_demo_scatter_inter;
+        demo_module->super.coll_scatterv = mca_coll_demo_scatterv_inter;
     }
 
     return &(demo_module->super);
 }
 
-#define COPY(comm, module, func)                                        \
-    do {                                                                \
-        module->underlying.coll_ ## func  = comm->c_coll->coll_ ## func; \
-        module->underlying.coll_ ## func  = comm->c_coll->coll_ ## func; \
-        if (NULL != module->underlying.coll_ ## func ## _module) {      \
-            OBJ_RETAIN(module->underlying.coll_ ## func ## _module);    \
-        }                                                               \
+#define COPY(comm, module, func)                                    \
+    do {                                                            \
+        module->underlying.coll_##func = comm->c_coll->coll_##func; \
+        module->underlying.coll_##func = comm->c_coll->coll_##func; \
+        if (NULL != module->underlying.coll_##func##_module) {      \
+            OBJ_RETAIN(module->underlying.coll_##func##_module);    \
+        }                                                           \
     } while (0)
 
-int
-mca_coll_demo_module_enable(mca_coll_base_module_t *module,
-                            struct ompi_communicator_t *comm)
+int mca_coll_demo_module_enable(mca_coll_base_module_t *module, struct ompi_communicator_t *comm)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
 
     if (mca_coll_demo_verbose > 0) {
-        printf("Hello!  This is the \"demo\" coll component.  I'll be your coll component\ntoday.  Please tip your waitresses well.\n");
+        printf("Hello!  This is the \"demo\" coll component.  I'll be your coll component\ntoday.  "
+               "Please tip your waitresses well.\n");
     }
 
     /* save the old pointers */

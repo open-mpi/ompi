@@ -14,9 +14,9 @@
 #include "oshmem_config.h"
 #include <complex.h>
 
+#include "opal/class/opal_pointer_array.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_datatype_internal.h"
-#include "opal/class/opal_pointer_array.h"
 
 #include "oshmem/constants.h"
 #include "oshmem/op/op.h"
@@ -35,156 +35,152 @@ static void oshmem_op_destruct(oshmem_op_t *object);
 /*
  * Class instance
  */
-OBJ_CLASS_INSTANCE(oshmem_op_t,
-                   opal_object_t,
-                   oshmem_op_construct,
-                   oshmem_op_destruct);
+OBJ_CLASS_INSTANCE(oshmem_op_t, opal_object_t, oshmem_op_construct, oshmem_op_destruct);
 
 /*
  * Intrinsic Operation objects
  */
 /* Bitwise AND */
-oshmem_op_t* oshmem_op_and_short = NULL;
-oshmem_op_t* oshmem_op_and_int = NULL;
-oshmem_op_t* oshmem_op_and_long = NULL;
-oshmem_op_t* oshmem_op_and_longlong = NULL;
-oshmem_op_t* oshmem_op_and_fint2 = NULL;
-oshmem_op_t* oshmem_op_and_fint4 = NULL;
-oshmem_op_t* oshmem_op_and_fint8 = NULL;
-oshmem_op_t* oshmem_op_and_int16 = NULL;
-oshmem_op_t* oshmem_op_and_int32 = NULL;
-oshmem_op_t* oshmem_op_and_int64 = NULL;
+oshmem_op_t *oshmem_op_and_short = NULL;
+oshmem_op_t *oshmem_op_and_int = NULL;
+oshmem_op_t *oshmem_op_and_long = NULL;
+oshmem_op_t *oshmem_op_and_longlong = NULL;
+oshmem_op_t *oshmem_op_and_fint2 = NULL;
+oshmem_op_t *oshmem_op_and_fint4 = NULL;
+oshmem_op_t *oshmem_op_and_fint8 = NULL;
+oshmem_op_t *oshmem_op_and_int16 = NULL;
+oshmem_op_t *oshmem_op_and_int32 = NULL;
+oshmem_op_t *oshmem_op_and_int64 = NULL;
 
 /* Bitwise OR */
-oshmem_op_t* oshmem_op_or_short = NULL;
-oshmem_op_t* oshmem_op_or_int = NULL;
-oshmem_op_t* oshmem_op_or_long = NULL;
-oshmem_op_t* oshmem_op_or_longlong = NULL;
-oshmem_op_t* oshmem_op_or_fint2 = NULL;
-oshmem_op_t* oshmem_op_or_fint4 = NULL;
-oshmem_op_t* oshmem_op_or_fint8 = NULL;
-oshmem_op_t* oshmem_op_or_int16 = NULL;
-oshmem_op_t* oshmem_op_or_int32 = NULL;
-oshmem_op_t* oshmem_op_or_int64 = NULL;
+oshmem_op_t *oshmem_op_or_short = NULL;
+oshmem_op_t *oshmem_op_or_int = NULL;
+oshmem_op_t *oshmem_op_or_long = NULL;
+oshmem_op_t *oshmem_op_or_longlong = NULL;
+oshmem_op_t *oshmem_op_or_fint2 = NULL;
+oshmem_op_t *oshmem_op_or_fint4 = NULL;
+oshmem_op_t *oshmem_op_or_fint8 = NULL;
+oshmem_op_t *oshmem_op_or_int16 = NULL;
+oshmem_op_t *oshmem_op_or_int32 = NULL;
+oshmem_op_t *oshmem_op_or_int64 = NULL;
 
 /* Bitwise XOR */
-oshmem_op_t* oshmem_op_xor_short = NULL;
-oshmem_op_t* oshmem_op_xor_int = NULL;
-oshmem_op_t* oshmem_op_xor_long = NULL;
-oshmem_op_t* oshmem_op_xor_longlong = NULL;
-oshmem_op_t* oshmem_op_xor_fint2 = NULL;
-oshmem_op_t* oshmem_op_xor_fint4 = NULL;
-oshmem_op_t* oshmem_op_xor_fint8 = NULL;
-oshmem_op_t* oshmem_op_xor_int16 = NULL;
-oshmem_op_t* oshmem_op_xor_int32 = NULL;
-oshmem_op_t* oshmem_op_xor_int64 = NULL;
+oshmem_op_t *oshmem_op_xor_short = NULL;
+oshmem_op_t *oshmem_op_xor_int = NULL;
+oshmem_op_t *oshmem_op_xor_long = NULL;
+oshmem_op_t *oshmem_op_xor_longlong = NULL;
+oshmem_op_t *oshmem_op_xor_fint2 = NULL;
+oshmem_op_t *oshmem_op_xor_fint4 = NULL;
+oshmem_op_t *oshmem_op_xor_fint8 = NULL;
+oshmem_op_t *oshmem_op_xor_int16 = NULL;
+oshmem_op_t *oshmem_op_xor_int32 = NULL;
+oshmem_op_t *oshmem_op_xor_int64 = NULL;
 
 /* MAX */
-oshmem_op_t* oshmem_op_max_short = NULL;
-oshmem_op_t* oshmem_op_max_int = NULL;
-oshmem_op_t* oshmem_op_max_long = NULL;
-oshmem_op_t* oshmem_op_max_longlong = NULL;
-oshmem_op_t* oshmem_op_max_float = NULL;
-oshmem_op_t* oshmem_op_max_double = NULL;
-oshmem_op_t* oshmem_op_max_longdouble = NULL;
-oshmem_op_t* oshmem_op_max_fint2 = NULL;
-oshmem_op_t* oshmem_op_max_fint4 = NULL;
-oshmem_op_t* oshmem_op_max_fint8 = NULL;
-oshmem_op_t* oshmem_op_max_freal4 = NULL;
-oshmem_op_t* oshmem_op_max_freal8 = NULL;
-oshmem_op_t* oshmem_op_max_freal16 = NULL;
-oshmem_op_t* oshmem_op_max_int16 = NULL;
-oshmem_op_t* oshmem_op_max_int32 = NULL;
-oshmem_op_t* oshmem_op_max_int64 = NULL;
+oshmem_op_t *oshmem_op_max_short = NULL;
+oshmem_op_t *oshmem_op_max_int = NULL;
+oshmem_op_t *oshmem_op_max_long = NULL;
+oshmem_op_t *oshmem_op_max_longlong = NULL;
+oshmem_op_t *oshmem_op_max_float = NULL;
+oshmem_op_t *oshmem_op_max_double = NULL;
+oshmem_op_t *oshmem_op_max_longdouble = NULL;
+oshmem_op_t *oshmem_op_max_fint2 = NULL;
+oshmem_op_t *oshmem_op_max_fint4 = NULL;
+oshmem_op_t *oshmem_op_max_fint8 = NULL;
+oshmem_op_t *oshmem_op_max_freal4 = NULL;
+oshmem_op_t *oshmem_op_max_freal8 = NULL;
+oshmem_op_t *oshmem_op_max_freal16 = NULL;
+oshmem_op_t *oshmem_op_max_int16 = NULL;
+oshmem_op_t *oshmem_op_max_int32 = NULL;
+oshmem_op_t *oshmem_op_max_int64 = NULL;
 
 /* MIN */
-oshmem_op_t* oshmem_op_min_short = NULL;
-oshmem_op_t* oshmem_op_min_int = NULL;
-oshmem_op_t* oshmem_op_min_long = NULL;
-oshmem_op_t* oshmem_op_min_longlong = NULL;
-oshmem_op_t* oshmem_op_min_float = NULL;
-oshmem_op_t* oshmem_op_min_double = NULL;
-oshmem_op_t* oshmem_op_min_longdouble = NULL;
-oshmem_op_t* oshmem_op_min_fint2 = NULL;
-oshmem_op_t* oshmem_op_min_fint4 = NULL;
-oshmem_op_t* oshmem_op_min_fint8 = NULL;
-oshmem_op_t* oshmem_op_min_freal4 = NULL;
-oshmem_op_t* oshmem_op_min_freal8 = NULL;
-oshmem_op_t* oshmem_op_min_freal16 = NULL;
-oshmem_op_t* oshmem_op_min_int16 = NULL;
-oshmem_op_t* oshmem_op_min_int32 = NULL;
-oshmem_op_t* oshmem_op_min_int64 = NULL;
+oshmem_op_t *oshmem_op_min_short = NULL;
+oshmem_op_t *oshmem_op_min_int = NULL;
+oshmem_op_t *oshmem_op_min_long = NULL;
+oshmem_op_t *oshmem_op_min_longlong = NULL;
+oshmem_op_t *oshmem_op_min_float = NULL;
+oshmem_op_t *oshmem_op_min_double = NULL;
+oshmem_op_t *oshmem_op_min_longdouble = NULL;
+oshmem_op_t *oshmem_op_min_fint2 = NULL;
+oshmem_op_t *oshmem_op_min_fint4 = NULL;
+oshmem_op_t *oshmem_op_min_fint8 = NULL;
+oshmem_op_t *oshmem_op_min_freal4 = NULL;
+oshmem_op_t *oshmem_op_min_freal8 = NULL;
+oshmem_op_t *oshmem_op_min_freal16 = NULL;
+oshmem_op_t *oshmem_op_min_int16 = NULL;
+oshmem_op_t *oshmem_op_min_int32 = NULL;
+oshmem_op_t *oshmem_op_min_int64 = NULL;
 
 /* SUM */
-oshmem_op_t* oshmem_op_sum_short = NULL;
-oshmem_op_t* oshmem_op_sum_int = NULL;
-oshmem_op_t* oshmem_op_sum_long = NULL;
-oshmem_op_t* oshmem_op_sum_longlong = NULL;
-oshmem_op_t* oshmem_op_sum_float = NULL;
-oshmem_op_t* oshmem_op_sum_double = NULL;
-oshmem_op_t* oshmem_op_sum_longdouble = NULL;
-oshmem_op_t* oshmem_op_sum_complexf = NULL;
-oshmem_op_t* oshmem_op_sum_complexd = NULL;
-oshmem_op_t* oshmem_op_sum_fint2 = NULL;
-oshmem_op_t* oshmem_op_sum_fint4 = NULL;
-oshmem_op_t* oshmem_op_sum_fint8 = NULL;
-oshmem_op_t* oshmem_op_sum_freal4 = NULL;
-oshmem_op_t* oshmem_op_sum_freal8 = NULL;
-oshmem_op_t* oshmem_op_sum_freal16 = NULL;
-oshmem_op_t* oshmem_op_sum_int16 = NULL;
-oshmem_op_t* oshmem_op_sum_int32 = NULL;
-oshmem_op_t* oshmem_op_sum_int64 = NULL;
+oshmem_op_t *oshmem_op_sum_short = NULL;
+oshmem_op_t *oshmem_op_sum_int = NULL;
+oshmem_op_t *oshmem_op_sum_long = NULL;
+oshmem_op_t *oshmem_op_sum_longlong = NULL;
+oshmem_op_t *oshmem_op_sum_float = NULL;
+oshmem_op_t *oshmem_op_sum_double = NULL;
+oshmem_op_t *oshmem_op_sum_longdouble = NULL;
+oshmem_op_t *oshmem_op_sum_complexf = NULL;
+oshmem_op_t *oshmem_op_sum_complexd = NULL;
+oshmem_op_t *oshmem_op_sum_fint2 = NULL;
+oshmem_op_t *oshmem_op_sum_fint4 = NULL;
+oshmem_op_t *oshmem_op_sum_fint8 = NULL;
+oshmem_op_t *oshmem_op_sum_freal4 = NULL;
+oshmem_op_t *oshmem_op_sum_freal8 = NULL;
+oshmem_op_t *oshmem_op_sum_freal16 = NULL;
+oshmem_op_t *oshmem_op_sum_int16 = NULL;
+oshmem_op_t *oshmem_op_sum_int32 = NULL;
+oshmem_op_t *oshmem_op_sum_int64 = NULL;
 
 /* PROD */
-oshmem_op_t* oshmem_op_prod_short = NULL;
-oshmem_op_t* oshmem_op_prod_int = NULL;
-oshmem_op_t* oshmem_op_prod_long = NULL;
-oshmem_op_t* oshmem_op_prod_longlong = NULL;
-oshmem_op_t* oshmem_op_prod_float = NULL;
-oshmem_op_t* oshmem_op_prod_double = NULL;
-oshmem_op_t* oshmem_op_prod_longdouble = NULL;
-oshmem_op_t* oshmem_op_prod_complexf = NULL;
-oshmem_op_t* oshmem_op_prod_complexd = NULL;
-oshmem_op_t* oshmem_op_prod_fint2 = NULL;
-oshmem_op_t* oshmem_op_prod_fint4 = NULL;
-oshmem_op_t* oshmem_op_prod_fint8 = NULL;
-oshmem_op_t* oshmem_op_prod_freal4 = NULL;
-oshmem_op_t* oshmem_op_prod_freal8 = NULL;
-oshmem_op_t* oshmem_op_prod_freal16 = NULL;
-oshmem_op_t* oshmem_op_prod_int16 = NULL;
-oshmem_op_t* oshmem_op_prod_int32 = NULL;
-oshmem_op_t* oshmem_op_prod_int64 = NULL;
+oshmem_op_t *oshmem_op_prod_short = NULL;
+oshmem_op_t *oshmem_op_prod_int = NULL;
+oshmem_op_t *oshmem_op_prod_long = NULL;
+oshmem_op_t *oshmem_op_prod_longlong = NULL;
+oshmem_op_t *oshmem_op_prod_float = NULL;
+oshmem_op_t *oshmem_op_prod_double = NULL;
+oshmem_op_t *oshmem_op_prod_longdouble = NULL;
+oshmem_op_t *oshmem_op_prod_complexf = NULL;
+oshmem_op_t *oshmem_op_prod_complexd = NULL;
+oshmem_op_t *oshmem_op_prod_fint2 = NULL;
+oshmem_op_t *oshmem_op_prod_fint4 = NULL;
+oshmem_op_t *oshmem_op_prod_fint8 = NULL;
+oshmem_op_t *oshmem_op_prod_freal4 = NULL;
+oshmem_op_t *oshmem_op_prod_freal8 = NULL;
+oshmem_op_t *oshmem_op_prod_freal16 = NULL;
+oshmem_op_t *oshmem_op_prod_int16 = NULL;
+oshmem_op_t *oshmem_op_prod_int32 = NULL;
+oshmem_op_t *oshmem_op_prod_int64 = NULL;
 
 /* SWAP */
-oshmem_op_t* oshmem_op_swap_int = NULL;
-oshmem_op_t* oshmem_op_swap_long = NULL;
-oshmem_op_t* oshmem_op_swap_longlong = NULL;
-oshmem_op_t* oshmem_op_swap_int32 = NULL;
-oshmem_op_t* oshmem_op_swap_int64 = NULL;
+oshmem_op_t *oshmem_op_swap_int = NULL;
+oshmem_op_t *oshmem_op_swap_long = NULL;
+oshmem_op_t *oshmem_op_swap_longlong = NULL;
+oshmem_op_t *oshmem_op_swap_int32 = NULL;
+oshmem_op_t *oshmem_op_swap_int64 = NULL;
 
-#define FUNC_OP_CREATE(name, type_name, type, calc)  \
+#define FUNC_OP_CREATE(name, type_name, type, calc)                             \
     void oshmem_op_##name##_##type_name##_func(void *in, void *out, int count); \
-    void oshmem_op_##name##_##type_name##_func(void *in, void *out, int count) \
-    {                                                                       \
-        int i;                                                              \
-        type *a = (type *) in;                                              \
-        type *b = (type *) out;                                             \
-        for (i = 0; i < count; ++i) {                                       \
-            *(b) = calc(*(b), *(a));                                        \
-            ++b;                                                            \
-            ++a;                                                            \
-        }                                                                   \
+    void oshmem_op_##name##_##type_name##_func(void *in, void *out, int count)  \
+    {                                                                           \
+        int i;                                                                  \
+        type *a = (type *) in;                                                  \
+        type *b = (type *) out;                                                 \
+        for (i = 0; i < count; ++i) {                                           \
+            *(b) = calc(*(b), *(a));                                            \
+            ++b;                                                                \
+            ++a;                                                                \
+        }                                                                       \
     }
 
-#define OBJ_OP_CREATE(name, type_name, type, op_id, dt_id)  \
-    oshmem_op_##name##_##type_name = OBJ_NEW(oshmem_op_t);                                      \
-    if (oshmem_op_##name##_##type_name)                                                         \
-    {                                                                                           \
-        oshmem_op_##name##_##type_name->op = op_id;                                             \
-        oshmem_op_##name##_##type_name->dt = dt_id;                                             \
-        oshmem_op_##name##_##type_name->dt_size = sizeof(type);                                 \
-        oshmem_op_##name##_##type_name->o_func.c_fn = oshmem_op_##name##_##type_name##_func;    \
-    }                                                                                           \
+#define OBJ_OP_CREATE(name, type_name, type, op_id, dt_id)                                   \
+    oshmem_op_##name##_##type_name = OBJ_NEW(oshmem_op_t);                                   \
+    if (oshmem_op_##name##_##type_name) {                                                    \
+        oshmem_op_##name##_##type_name->op = op_id;                                          \
+        oshmem_op_##name##_##type_name->dt = dt_id;                                          \
+        oshmem_op_##name##_##type_name->dt_size = sizeof(type);                              \
+        oshmem_op_##name##_##type_name->o_func.c_fn = oshmem_op_##name##_##type_name##_func; \
+    }
 
 /* Bitwise AND */
 #define __and_op(a, b) ((a) & (b))
@@ -326,11 +322,7 @@ int oshmem_op_init(void)
 
     /* Setup operation array */
     OBJ_CONSTRUCT(&oshmem_op_array, opal_pointer_array_t);
-    if (OPAL_SUCCESS
-            != opal_pointer_array_init(&oshmem_op_array,
-                                       0,
-                                       INT_MAX,
-                                       1)) {
+    if (OPAL_SUCCESS != opal_pointer_array_init(&oshmem_op_array, 0, INT_MAX, 1)) {
         return OSHMEM_ERROR;
     }
 
@@ -505,6 +497,6 @@ static void oshmem_op_construct(oshmem_op_t *object)
 static void oshmem_op_destruct(oshmem_op_t *object)
 {
     if (NULL != opal_pointer_array_get_item(&oshmem_op_array, object->id)) {
-        opal_pointer_array_set_item(&oshmem_op_array, object->id, NULL );
+        opal_pointer_array_set_item(&oshmem_op_array, object->id, NULL);
     }
 }

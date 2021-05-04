@@ -22,15 +22,15 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mpi.h"
-#include "opal/util/show_help.h"
+#include "ompi/mca/fs/base/base.h"
+#include "ompi/mca/fs/fs.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "ompi/mca/fs/fs.h"
-#include "ompi/mca/fs/base/base.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mca/common/ompio/common_ompio.h"
 

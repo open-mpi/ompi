@@ -19,14 +19,14 @@
 #include "oshmem/include/shmem.h"
 #include "oshmem/runtime/params.h"
 #include "oshmem/runtime/runtime.h"
-#include <stdlib.h>
 #include <memory.h>
+#include <stdlib.h>
 
+#include "oshmem/mca/atomic/atomic.h"
+#include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/shmem/shmem_api_logger.h"
 #include "oshmem/shmem/shmem_lock.h"
-#include "oshmem/mca/memheap/memheap.h"
-#include "oshmem/mca/memheap/base/base.h"
-#include "oshmem/mca/atomic/atomic.h"
 
 #define OPAL_BITWISE_SIZEOF_LONG (SIZEOF_LONG * 8)
 
@@ -56,21 +56,14 @@ static int lock_save_prev_pe(void *lock, int prev_pe);
 static int lock_restore_prev_pe(void *lock, int *prev_pe);
 
 static int shmem_lock_try_inform_server(void *lock, int lock_size);
-static void shmem_get_wrapper(uint64_t *target,
-                              const void *source,
-                              int source_size,
-                              size_t nelems,
+static void shmem_get_wrapper(uint64_t *target, const void *source, int source_size, size_t nelems,
                               int pe);
 static void shmem_wait_wrapper(void *target, int target_size, uint64_t value);
 
 static int shmem_lock_extract_pe_next(void *lock, int lock_size, int *pe_next);
-static int shmem_lock_pack_pe_next_pe_last(void *lock,
-                                           int lock_size,
-                                           const int *pe_next,
+static int shmem_lock_pack_pe_next_pe_last(void *lock, int lock_size, const int *pe_next,
                                            const int *pe_last);
-static int shmem_lock_pack_pe_next(void *lock,
-                                   int lock_size,
-                                   const int *pe_next);
+static int shmem_lock_pack_pe_next(void *lock, int lock_size, const int *pe_next);
 
 static void shmem_lock_increment_counter(void *lock, int lock_size);
 static int shmem_lock_decrement_counter(void *lock, int lock_size);
@@ -79,13 +72,8 @@ static int shmem_lock_get_server(void *lock);
 static int shmem_lock_is_mine(void *lock, int lock_size);
 
 static int shmem_lock_get_ticket(void *lock);
-static int shmem_lock_wait_for_ticket(void *lock,
-                                      int lock_size,
-                                      int ticket,
-                                      int *pe_last);
-static int shmem_lock_subscribe_for_informing(void *lock,
-                                              int lock_size,
-                                              int pe_last);
+static int shmem_lock_wait_for_ticket(void *lock, int lock_size, int ticket, int *pe_last);
+static int shmem_lock_subscribe_for_informing(void *lock, int lock_size, int pe_last);
 static int shmem_lock_wait_for_informing(void *lock, int lock_size);
 static int shmem_lock_inform_next(void *lock, int lock_size, int pe_next);
 
@@ -95,13 +83,13 @@ static int shmem_lock_inform_next(void *lock, int lock_size, int pe_next);
 
 int shmem_lock_init()
 {
-    void* ptr = 0;
+    void *ptr = 0;
 
 #if (OPAL_BITWISE_SIZEOF_LONG == 32)
     int number_of_pes = shmem_n_pes();
-    if (number_of_pes >= 65534)
-    {
-        SHMEM_API_ERROR("SHMEM distributed locking implementation does not support total number of PEs greater than 65534 if sizeof(long) = 4");
+    if (number_of_pes >= 65534) {
+        SHMEM_API_ERROR("SHMEM distributed locking implementation does not support total number of "
+                        "PEs greater than 65534 if sizeof(long) = 4");
         return OSHMEM_ERROR;
     }
 #endif
@@ -134,8 +122,7 @@ int shmem_lock_init()
 int shmem_lock_finalize()
 {
     oshmem_lock_counter_t *current_counter = lock_counter_head;
-    oshmem_lock_prev_pe_container_t *current_pe_container =
-            lock_prev_pe_container_head;
+    oshmem_lock_prev_pe_container_t *current_pe_container = lock_prev_pe_container_head;
 
     if (0 != lock_turn) {
         MCA_MEMHEAP_CALL(private_free(lock_turn));
@@ -159,8 +146,7 @@ int shmem_lock_finalize()
     lock_counter_head = 0;
 
     while (0 != current_pe_container) {
-        oshmem_lock_prev_pe_container_t *container_to_free =
-                current_pe_container;
+        oshmem_lock_prev_pe_container_t *container_to_free = current_pe_container;
         current_pe_container = current_pe_container->next;
         free(container_to_free);
     }
@@ -180,7 +166,7 @@ static int shmem_lock_get_server(void *lock)
         return 0;
     }
 
-    return ((int)((uintptr_t)lock - (uintptr_t)s->super.va_base)/8) % shmem_n_pes();
+    return ((int) ((uintptr_t) lock - (uintptr_t) s->super.va_base) / 8) % shmem_n_pes();
 }
 
 static uint64_t get_lock_value(const void *lock, int lock_size)
@@ -229,10 +215,7 @@ static int extract_2_words(const void *lock, int lock_size, int *one, int *two)
     return OSHMEM_SUCCESS;
 }
 
-static int pack_2_words(void *lock,
-                        int lock_size,
-                        const int *one,
-                        const int *two)
+static int pack_2_words(void *lock, int lock_size, const int *one, const int *two)
 {
     uint64_t lock_value = 0;
     int lock_bitwise_size = lock_size * 8;
@@ -241,8 +224,7 @@ static int pack_2_words(void *lock,
         return OSHMEM_ERROR;
     }
 
-    lock_value = (uint64_t) *two
-            | (((uint64_t) *one) << (lock_bitwise_size / 2));
+    lock_value = (uint64_t) *two | (((uint64_t) *one) << (lock_bitwise_size / 2));
     set_lock_value(lock, lock_size, lock_value);
 
     return OSHMEM_SUCCESS;
@@ -260,36 +242,32 @@ static int extract_second_word(void *lock, int lock_size, int *two)
     return extract_2_words(lock, lock_size, &one, two);
 }
 
-static uint64_t shmem_lock_cswap(void *target,
-                                 int target_size,
-                                 uint64_t cond,
-                                 uint64_t value,
+static uint64_t shmem_lock_cswap(void *target, int target_size, uint64_t cond, uint64_t value,
                                  int pe)
 {
     uint64_t prev_value = 0;
 
     if (target_size == 8) {
-        MCA_ATOMIC_CALL(cswap(oshmem_ctx_default, target, (void*)&prev_value, cond, value, target_size, pe));
+        MCA_ATOMIC_CALL(
+            cswap(oshmem_ctx_default, target, (void *) &prev_value, cond, value, target_size, pe));
     } else if (target_size == 4) {
         uint32_t prev_value_32 = 0;
         uint32_t cond32 = (uint32_t) cond;
         uint32_t value32 = (uint32_t) value;
 
-        MCA_ATOMIC_CALL(cswap(oshmem_ctx_default, target, (void*)&prev_value_32, cond32, value32, target_size, pe));
+        MCA_ATOMIC_CALL(cswap(oshmem_ctx_default, target, (void *) &prev_value_32, cond32, value32,
+                              target_size, pe));
 
         prev_value = prev_value_32;
     }
     return prev_value;
 }
 
-/* function is used to busy wait for the value. 
+/* function is used to busy wait for the value.
  * Call opal_progress() so that ompi will no deadlock
  * (for example may need to respond to rkey requests)
  */
-static uint64_t shmem_lock_cswap_poll(void *target,
-                                      int target_size,
-                                      uint64_t cond,
-                                      uint64_t value,
+static uint64_t shmem_lock_cswap_poll(void *target, int target_size, uint64_t cond, uint64_t value,
                                       int pe)
 {
     uint64_t prev_value;
@@ -299,32 +277,22 @@ static uint64_t shmem_lock_cswap_poll(void *target,
     return prev_value;
 }
 
-static uint64_t shmem_lock_fadd(void *target,
-                                int target_size,
-                                uint64_t value,
-                                int pe)
+static uint64_t shmem_lock_fadd(void *target, int target_size, uint64_t value, int pe)
 {
     uint64_t prev_value = 0;
 
     if (target_size == sizeof(int)) {
         prev_value = (uint64_t) shmem_int_fadd((int *) target, (int) value, pe);
     } else if (target_size == sizeof(long)) {
-        prev_value = (uint64_t) shmem_long_fadd((long *) target,
-                                                (long) value,
-                                                pe);
+        prev_value = (uint64_t) shmem_long_fadd((long *) target, (long) value, pe);
     } else if (target_size == sizeof(long long)) {
-        prev_value = (uint64_t) shmem_longlong_fadd((long long *) target,
-                                                    (long long) value,
-                                                    pe);
+        prev_value = (uint64_t) shmem_longlong_fadd((long long *) target, (long long) value, pe);
     }
 
     return prev_value;
 }
 
-static int pack_first_word(void *lock,
-                           int lock_size,
-                           const int *one,
-                           int use_atomic)
+static int pack_first_word(void *lock, int lock_size, const int *one, int use_atomic)
 {
     int my_pe = shmem_my_pe();
     uint64_t lock_value = 0;
@@ -340,12 +308,9 @@ static int pack_first_word(void *lock,
         lock_value = get_lock_value(lock, lock_size);
         extract_second_word(&lock_value, lock_size, &two);
         pack_2_words(&new_long_value, lock_size, one, &two);
-        while (lock_value
-                != (temp = shmem_lock_cswap_poll(lock,
-                                                 lock_size,
-                                                 lock_value,
-                                                 new_long_value,
-                                                 my_pe))) {
+        while (
+            lock_value
+            != (temp = shmem_lock_cswap_poll(lock, lock_size, lock_value, new_long_value, my_pe))) {
             lock_value = temp;
             extract_second_word(&lock_value, lock_size, &two);
             pack_2_words(&new_long_value, lock_size, one, &two);
@@ -372,10 +337,7 @@ static int pack_first_word(void *lock,
     return OSHMEM_SUCCESS;
 }
 
-static int pack_second_word(void *lock,
-                            int lock_size,
-                            const int *two,
-                            int use_atomic)
+static int pack_second_word(void *lock, int lock_size, const int *two, int use_atomic)
 {
     int my_pe = shmem_my_pe();
     uint64_t lock_value = 0;
@@ -391,12 +353,9 @@ static int pack_second_word(void *lock,
         lock_value = get_lock_value(lock, lock_size);
         extract_first_word(&lock_value, lock_size, &one);
         pack_2_words(&new_long_value, lock_size, &one, two);
-        while (lock_value
-                != (temp = shmem_lock_cswap_poll(lock,
-                                                 lock_size,
-                                                 lock_value,
-                                                 new_long_value,
-                                                 my_pe))) {
+        while (
+            lock_value
+            != (temp = shmem_lock_cswap_poll(lock, lock_size, lock_value, new_long_value, my_pe))) {
             lock_value = temp;
             extract_first_word(&lock_value, lock_size, &one);
             pack_2_words(&new_long_value, lock_size, &one, two);
@@ -423,10 +382,7 @@ static int pack_second_word(void *lock,
     return OSHMEM_SUCCESS;
 }
 
-static int lock_extract_pe_next_counter(void *lock,
-                                        int lock_size,
-                                        int *pe_next,
-                                        int *counter)
+static int lock_extract_pe_next_counter(void *lock, int lock_size, int *pe_next, int *counter)
 {
     int status = extract_2_words(lock, lock_size, counter, pe_next);
 
@@ -468,9 +424,7 @@ static int lock_extract_counter(void *lock, int lock_size, int *count)
     return status;
 }
 
-static int shmem_lock_pack_pe_next_pe_last(void *lock,
-                                           int lock_size,
-                                           const int *pe_next,
+static int shmem_lock_pack_pe_next_pe_last(void *lock, int lock_size, const int *pe_next,
                                            const int *pe_last)
 {
     int pe_next_plus_one = *pe_next + 1;
@@ -479,9 +433,7 @@ static int shmem_lock_pack_pe_next_pe_last(void *lock,
     return pack_2_words(lock, lock_size, &pe_last_plus_one, &pe_next_plus_one);
 }
 
-static int lock_pack_pe_next_counter(void *lock,
-                                     int lock_size,
-                                     const int *pe_next,
+static int lock_pack_pe_next_counter(void *lock, int lock_size, const int *pe_next,
                                      const int *counter)
 {
     int pe_next_plus_one = *pe_next + 1;
@@ -489,27 +441,19 @@ static int lock_pack_pe_next_counter(void *lock,
     return pack_2_words(lock, lock_size, counter, &pe_next_plus_one);
 }
 
-static int shmem_lock_pack_pe_next(void *lock,
-                                   int lock_size,
-                                   const int *pe_next)
+static int shmem_lock_pack_pe_next(void *lock, int lock_size, const int *pe_next)
 {
     int pe_next_plus_one = *pe_next + 1;
 
     return pack_second_word(lock, lock_size, &pe_next_plus_one, 1);
 }
 
-static int lock_pack_counter(void *lock,
-                             int lock_size,
-                             const int *counter,
-                             int use_atomic)
+static int lock_pack_counter(void *lock, int lock_size, const int *counter, int use_atomic)
 {
     return pack_first_word(lock, lock_size, counter, use_atomic);
 }
 
-static int lock_pack_pe_last(void *lock,
-                             int lock_size,
-                             const int *pe_last,
-                             int use_atomic)
+static int lock_pack_pe_last(void *lock, int lock_size, const int *pe_last, int use_atomic)
 {
     int pe_last_plus_one = *pe_last + 1;
 
@@ -678,10 +622,7 @@ static int shmem_lock_get_ticket(void *lock)
     return my_ticket;
 }
 
-static void shmem_get_wrapper(uint64_t *target,
-                              const void *source,
-                              int source_size,
-                              size_t nelems,
+static void shmem_get_wrapper(uint64_t *target, const void *source, int source_size, size_t nelems,
                               int pe)
 {
     if (source_size == 8) {
@@ -693,10 +634,7 @@ static void shmem_get_wrapper(uint64_t *target,
     }
 }
 
-static int shmem_lock_wait_for_ticket(void *lock,
-                                      int lock_size,
-                                      int ticket,
-                                      int *pe_last)
+static int shmem_lock_wait_for_ticket(void *lock, int lock_size, int ticket, int *pe_last)
 {
     int my_pe = shmem_my_pe();
     int server_pe = shmem_lock_get_server(lock);
@@ -717,11 +655,8 @@ static int shmem_lock_wait_for_ticket(void *lock,
         new_server_lock = server_lock = temp;
         lock_pack_pe_last(&new_server_lock, lock_size, &my_pe, 0);
     } while (server_lock
-            != (temp = shmem_lock_cswap_poll(lock,
-                                             lock_size,
-                                             server_lock,
-                                             new_server_lock,
-                                             server_pe)));
+             != (temp = shmem_lock_cswap_poll(lock, lock_size, server_lock, new_server_lock,
+                                              server_pe)));
     lock_extract_pe_last(&server_lock, lock_size, pe_last);
     if (*pe_last == -1) {
         /* we are first in queue for the lock */
@@ -741,9 +676,7 @@ static int shmem_lock_wait_for_ticket(void *lock,
     return OSHMEM_SUCCESS;
 }
 
-static int shmem_lock_subscribe_for_informing(void *lock,
-                                              int lock_size,
-                                              int pe_last)
+static int shmem_lock_subscribe_for_informing(void *lock, int lock_size, int pe_last)
 {
     int my_pe = shmem_my_pe();
     int server_pe = shmem_lock_get_server(lock);
@@ -758,38 +691,25 @@ static int shmem_lock_subscribe_for_informing(void *lock,
     /* Check the previous value of pe_next is -1
      * if not 0 report a bug in distributed locking implementation
      */
-    shmem_lock_extract_pe_next(&prev_remote_value,
-                               lock_size,
-                               &remote_prev_pe_next);
+    shmem_lock_extract_pe_next(&prev_remote_value, lock_size, &remote_prev_pe_next);
     if (remote_prev_pe_next != -1) {
         int remote_counter = 0;
         uint64_t new_remote_value = 0;
         uint64_t temp_value = 0;
-        SHMEM_API_ERROR("PE #%i noticed incorrect pe_next value=%i on PE#%i",
-                        my_pe, remote_prev_pe_next, pe_last);
+        SHMEM_API_ERROR("PE #%i noticed incorrect pe_next value=%i on PE#%i", my_pe,
+                        remote_prev_pe_next, pe_last);
 
         /* Trying to restore */
         lock_extract_counter(&prev_remote_value, lock_size, &remote_counter);
-        lock_pack_pe_next_counter(&new_remote_value,
-                                  lock_size,
-                                  &my_pe,
-                                  &remote_counter);
+        lock_pack_pe_next_counter(&new_remote_value, lock_size, &my_pe, &remote_counter);
         prev_remote_value += my_pe + 1;
 
         while (prev_remote_value
-                != (temp_value = shmem_lock_cswap_poll(lock,
-                                                       lock_size,
-                                                       prev_remote_value,
-                                                       new_remote_value,
-                                                       pe_last))) {
+               != (temp_value = shmem_lock_cswap_poll(lock, lock_size, prev_remote_value,
+                                                      new_remote_value, pe_last))) {
             prev_remote_value = temp_value;
-            lock_extract_counter(&prev_remote_value,
-                                 lock_size,
-                                 &remote_counter);
-            lock_pack_pe_next_counter(&new_remote_value,
-                                      lock_size,
-                                      &my_pe,
-                                      &remote_counter);
+            lock_extract_counter(&prev_remote_value, lock_size, &remote_counter);
+            lock_pack_pe_next_counter(&new_remote_value, lock_size, &my_pe, &remote_counter);
         }
     }
 
@@ -839,7 +759,6 @@ static int shmem_lock_wait_for_informing(void *lock, int lock_size)
         if (OSHMEM_SUCCESS != lock_restore_prev_pe(lock, &prev_pe)) {
             SHMEM_API_ERROR("Unable to restore prev_pe on server PE#%i", my_pe);
             oshmem_shmem_abort(-1);
-
         }
 
         if (prev_pe == server_pe) {
@@ -849,10 +768,7 @@ static int shmem_lock_wait_for_informing(void *lock, int lock_size)
         do {
             uint64_t remote_lock = 0;
             shmem_get_wrapper(&remote_lock, lock, lock_size, 1, prev_pe);
-            lock_extract_pe_next_counter(&remote_lock,
-                                         lock_size,
-                                         &remote_pe_next,
-                                         &remote_counter);
+            lock_extract_pe_next_counter(&remote_lock, lock_size, &remote_pe_next, &remote_counter);
             if ((remote_counter > 0) && (remote_pe_next == my_pe)) {
                 shmem_int_wait(lock_inform, prev_value);
                 prev_value = *lock_inform;
@@ -871,18 +787,13 @@ static int shmem_lock_inform_next(void *lock, int lock_size, int pe_next)
     if (server_pe != pe_next) {
         uint64_t temp_value = 0, remote_value = 0;
         shmem_get_wrapper(&remote_value, lock, lock_size, 1, pe_next);
-        uint64_t new_remote_value = remote_value
-                | (((uint64_t) 1) << (lock_bitwise_size - 1));
+        uint64_t new_remote_value = remote_value | (((uint64_t) 1) << (lock_bitwise_size - 1));
 
         while (remote_value
-                != (temp_value = shmem_lock_cswap_poll(lock,
-                                                       lock_size,
-                                                       remote_value,
-                                                       new_remote_value,
-                                                       pe_next))) {
+               != (temp_value = shmem_lock_cswap_poll(lock, lock_size, remote_value,
+                                                      new_remote_value, pe_next))) {
             remote_value = temp_value;
-            new_remote_value = remote_value
-                    | (((uint64_t) 1) << (lock_bitwise_size - 1));
+            new_remote_value = remote_value | (((uint64_t) 1) << (lock_bitwise_size - 1));
         }
     } else {
         shmem_int_inc(lock_inform, pe_next);
@@ -959,12 +870,8 @@ static int shmem_lock_try_inform_server(void *lock, int lock_size)
     int incorrect_pe = -1;
     uint64_t remote_value = 0;
 
-    shmem_lock_pack_pe_next_pe_last(&remote_value,
-                                    lock_size,
-                                    &incorrect_pe,
-                                    &my_pe);
-    return !(remote_value
-            == shmem_lock_cswap_poll(lock, lock_size, remote_value, zero, server_pe));
+    shmem_lock_pack_pe_next_pe_last(&remote_value, lock_size, &incorrect_pe, &my_pe);
+    return !(remote_value == shmem_lock_cswap_poll(lock, lock_size, remote_value, zero, server_pe));
 }
 
 /***************************************************************************/
@@ -1006,18 +913,11 @@ int _shmem_test_lock(void *lock, int lock_size)
 
     shmem_lock_increment_counter(lock, lock_size);
     if (!my_lock) {
-        if (shmem_lock_pack_pe_next_pe_last(&new_lock_value,
-                                            lock_size,
-                                            &incorrect_value,
-                                            &my_pe)) {
+        if (shmem_lock_pack_pe_next_pe_last(&new_lock_value, lock_size, &incorrect_value, &my_pe)) {
             goto FreeMemory;
         }
 
-        prev_lock_value = shmem_lock_cswap(lock,
-                                           lock_size,
-                                           0,
-                                           new_lock_value,
-                                           server_pe);
+        prev_lock_value = shmem_lock_cswap(lock, lock_size, 0, new_lock_value, server_pe);
     }
 
     if (0 == prev_lock_value || my_lock) {
@@ -1026,7 +926,8 @@ int _shmem_test_lock(void *lock, int lock_size)
         shmem_lock_decrement_counter(lock, lock_size);
     }
 
-    FreeMemory: return status;
+FreeMemory:
+    return status;
 }
 
 void _shmem_clear_lock(void *lock, int lock_size)

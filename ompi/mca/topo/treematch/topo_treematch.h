@@ -44,8 +44,7 @@ typedef struct mca_topo_treematch_component_2_2_0_t {
     int reorder_mode;
 } mca_topo_treematch_component_2_2_0_t;
 
-OMPI_MODULE_DECLSPEC extern mca_topo_treematch_component_2_2_0_t
-    mca_topo_treematch_component;
+OMPI_MODULE_DECLSPEC extern mca_topo_treematch_component_2_2_0_t mca_topo_treematch_component;
 
 /*
  * A unique module class for the module so that we can both cache
@@ -60,17 +59,14 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(mca_topo_treematch_module_t);
 
-
 /*
  * Module functions
  */
 
-int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* module,
-                                         ompi_communicator_t *comm_old,
-                                         int n, const int nodes[],
+int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t *module,
+                                         ompi_communicator_t *comm_old, int n, const int nodes[],
                                          const int degrees[], const int targets[],
-                                         const int weights[],
-                                         struct opal_info_t *info, int reorder,
+                                         const int weights[], struct opal_info_t *info, int reorder,
                                          ompi_communicator_t **newcomm);
 /*
  * ******************************************************************

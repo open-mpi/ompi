@@ -23,15 +23,16 @@
 
 #include "ompi/mca/part/persist/part_persist.h"
 
-#include "ompi/mca/part/persist/part_persist_sendreq.h"
-#include "ompi/mca/part/persist/part_persist_recvreq.h"
 #include "ompi/mca/part/persist/part_persist_component.h"
+#include "ompi/mca/part/persist/part_persist_recvreq.h"
+#include "ompi/mca/part/persist/part_persist_sendreq.h"
 
 static int mca_part_persist_component_register(void);
 static int mca_part_persist_component_open(void);
 static int mca_part_persist_component_close(void);
-static mca_part_base_module_t* mca_part_persist_component_init( int* priority,
-                            bool enable_progress_threads, bool enable_mpi_threads);
+static mca_part_base_module_t *mca_part_persist_component_init(int *priority,
+                                                               bool enable_progress_threads,
+                                                               bool enable_mpi_threads);
 static int mca_part_persist_component_fini(void);
 
 mca_part_base_component_4_0_0_t mca_part_persist_component = {
@@ -57,46 +58,42 @@ mca_part_base_component_4_0_0_t mca_part_persist_component = {
     .partm_finalize = mca_part_persist_component_fini,
 };
 
-static int
-mca_part_persist_component_register(void)
+static int mca_part_persist_component_register(void)
 {
     ompi_part_persist.free_list_num = 4;
-    (void) mca_base_component_var_register(&mca_part_persist_component.partm_version, "free_list_num",
-                                           "Initial size of request free lists",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+    (void) mca_base_component_var_register(&mca_part_persist_component.partm_version,
+                                           "free_list_num", "Initial size of request free lists",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_part_persist.free_list_num);
 
     ompi_part_persist.free_list_max = -1;
-    (void) mca_base_component_var_register(&mca_part_persist_component.partm_version, "free_list_max",
-                                           "Maximum size of request free lists",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+    (void) mca_base_component_var_register(&mca_part_persist_component.partm_version,
+                                           "free_list_max", "Maximum size of request free lists",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_part_persist.free_list_max);
 
     ompi_part_persist.free_list_inc = 64;
-    (void) mca_base_component_var_register(&mca_part_persist_component.partm_version, "free_list_inc",
-                                           "Number of elements to add when growing request free lists",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_part_persist.free_list_inc);
-
+    (void)
+        mca_base_component_var_register(&mca_part_persist_component.partm_version, "free_list_inc",
+                                        "Number of elements to add when growing request free lists",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                        MCA_BASE_VAR_SCOPE_READONLY,
+                                        &ompi_part_persist.free_list_inc);
 
     return OPAL_SUCCESS;
 }
 
-static int
-mca_part_persist_component_open(void)
+static int mca_part_persist_component_open(void)
 {
     OBJ_CONSTRUCT(&ompi_part_persist.lock, opal_mutex_t);
 
-    ompi_part_persist.next_send_tag = 0;                /**< This is a counter for send tags for the actual data transfer. */
-    ompi_part_persist.next_recv_tag = 0; 
+    ompi_part_persist.next_send_tag
+        = 0; /**< This is a counter for send tags for the actual data transfer. */
+    ompi_part_persist.next_recv_tag = 0;
 
-    mca_part_persist_init_lists(); 
+    mca_part_persist_init_lists();
 
     ompi_part_persist.init_comms = 0;
     ompi_part_persist.init_world = -1;
@@ -108,32 +105,24 @@ mca_part_persist_component_open(void)
     return OMPI_SUCCESS;
 }
 
-
-static int
-mca_part_persist_component_close(void)
+static int mca_part_persist_component_close(void)
 {
     OBJ_DESTRUCT(&ompi_part_persist.lock);
-    return OMPI_SUCCESS; 
+    return OMPI_SUCCESS;
 }
 
-
-static mca_part_base_module_t*
-mca_part_persist_component_init(int* priority,
-                            bool enable_progress_threads,
-                            bool enable_mpi_threads)
+static mca_part_base_module_t *mca_part_persist_component_init(int *priority,
+                                                               bool enable_progress_threads,
+                                                               bool enable_mpi_threads)
 {
     *priority = 1;
 
-    opal_output_verbose( 10, 0,
-                         "in persist part priority is %d\n", *priority);
+    opal_output_verbose(10, 0, "in persist part priority is %d\n", *priority);
 
     return &ompi_part_persist.super;
 }
 
-
-static int
-mca_part_persist_component_fini(void)
+static int mca_part_persist_component_fini(void)
 {
     return OMPI_SUCCESS;
 }
-

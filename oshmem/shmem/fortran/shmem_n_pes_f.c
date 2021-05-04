@@ -10,23 +10,18 @@
  */
 
 #include "oshmem_config.h"
-#include "oshmem/shmem/fortran/bindings.h"
 #include "oshmem/include/shmem.h"
+#include "oshmem/shmem/fortran/bindings.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#    include "oshmem/shmem/fortran/profile/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_N_PES, shmem_n_pes)
 SHMEM_GENERATE_WEAK_BINDINGS(NUM_PES, num_pes)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#    include "oshmem/shmem/fortran/profile/defines.h"
 #endif
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
-        SHMEM_N_PES,
-        shmem_n_pes_,
-        shmem_n_pes__,
-        shmem_n_pes_f,
-        (void),
-        () )
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION(MPI_Fint, SHMEM_N_PES, shmem_n_pes_, shmem_n_pes__,
+                                         shmem_n_pes_f, (void), ())
 
 MPI_Fint shmem_n_pes_f(void)
 {
@@ -35,13 +30,8 @@ MPI_Fint shmem_n_pes_f(void)
     return rc;
 }
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
-        NUM_PES,
-        num_pes_,
-        num_pes__,
-        num_pes_f,
-        (void),
-        () )
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION(MPI_Fint, NUM_PES, num_pes_, num_pes__, num_pes_f, (void),
+                                         ())
 
 MPI_Fint num_pes_f(void)
 {

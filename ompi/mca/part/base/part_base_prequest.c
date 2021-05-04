@@ -21,8 +21,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/part/part.h"
 #include "ompi/mca/part/base/part_base_prequest.h"
+#include "ompi/mca/part/part.h"
 
 /**
  * If you wonder why these 2 freelists are declared here read the comment
@@ -31,15 +31,10 @@
 opal_free_list_t mca_part_base_psend_requests = {{{0}}};
 opal_free_list_t mca_part_base_precv_requests = {{{0}}};
 
-static void mca_part_base_prequest_construct(mca_part_base_prequest_t* req)
+static void mca_part_base_prequest_construct(mca_part_base_prequest_t *req)
 {
     req->req_ompi.req_type = OMPI_REQUEST_PART;
 }
 
-OBJ_CLASS_INSTANCE(
-    mca_part_base_prequest_t,
-    ompi_request_t,
-    mca_part_base_prequest_construct,
-    NULL
-);
-
+OBJ_CLASS_INSTANCE(mca_part_base_prequest_t, ompi_request_t, mca_part_base_prequest_construct,
+                   NULL);

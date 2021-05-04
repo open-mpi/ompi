@@ -19,13 +19,12 @@
 #include "oshmem/runtime/params.h"
 #include "oshmem/runtime/runtime.h"
 
-#include "opal/runtime/opal_info_support.h"
-#include "ompi/runtime/ompi_info_support.h"
-#include "oshmem/runtime/oshmem_info_support.h"
-#include "opal/util/show_help.h"
-#include "opal/util/printf.h"
-#include "opal/util/printf.h"
 #include "ompi/include/ompi/constants.h"
+#include "ompi/runtime/ompi_info_support.h"
+#include "opal/runtime/opal_info_support.h"
+#include "opal/util/printf.h"
+#include "opal/util/show_help.h"
+#include "oshmem/runtime/oshmem_info_support.h"
 
 const char *oshmem_info_type_oshmem = "oshmem";
 
@@ -36,7 +35,7 @@ void oshmem_info_register_types(opal_pointer_array_t *mca_types)
     int i;
 
     /* add the top-level type */
-    opal_pointer_array_add(mca_types, (void *)oshmem_info_type_oshmem);
+    opal_pointer_array_add(mca_types, (void *) oshmem_info_type_oshmem);
 
     /* push all the types found by autogen */
     for (i = 0; NULL != oshmem_frameworks[i]; i++) {
@@ -66,7 +65,8 @@ int oshmem_info_register_framework_params(opal_pointer_array_t *component_map)
         return rc;
     }
 
-    return opal_info_register_project_frameworks(oshmem_info_type_oshmem, oshmem_frameworks, component_map);
+    return opal_info_register_project_frameworks(oshmem_info_type_oshmem, oshmem_frameworks,
+                                                 component_map);
 }
 
 void oshmem_info_close_components(void)
@@ -86,16 +86,14 @@ void oshmem_info_show_oshmem_version(const char *scope)
     char *tmp, *tmp2;
 
     if (0 < opal_asprintf(&tmp, "%s:version:full", oshmem_info_type_oshmem)) {
-        tmp2 = opal_info_make_version_str(scope,
-                OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
-                OSHMEM_RELEASE_VERSION,
-                OSHMEM_GREEK_VERSION,
-                OSHMEM_REPO_REV);
+        tmp2 = opal_info_make_version_str(scope, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
+                                          OSHMEM_RELEASE_VERSION, OSHMEM_GREEK_VERSION,
+                                          OSHMEM_REPO_REV);
         opal_info_out("Open SHMEM", tmp, tmp2);
         free(tmp);
         free(tmp2);
     }
-    if(0 < opal_asprintf(&tmp, "%s:version:repo", oshmem_info_type_oshmem)) {
+    if (0 < opal_asprintf(&tmp, "%s:version:repo", oshmem_info_type_oshmem)) {
         opal_info_out("Open SHMEM repo revision", tmp, OSHMEM_REPO_REV);
         free(tmp);
     }

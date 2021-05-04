@@ -28,8 +28,8 @@
 
 #include "ompi/datatype/ompi_datatype.h"
 
-int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
-                                     ompi_datatype_t* const * pTypes, ompi_datatype_t** newType )
+int32_t ompi_datatype_create_struct(int count, const int *pBlockLength, const ptrdiff_t *pDisp,
+                                    ompi_datatype_t *const *pTypes, ompi_datatype_t **newType)
 {
     ptrdiff_t disp = 0, endto, lastExtent, lastDisp;
     ompi_datatype_t *pdt, *lastType;
@@ -37,28 +37,30 @@ int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const p
     int i, start_from;
 
     /* Find first non-zero length element */
-    for( i = 0; (i < count) && (0 == pBlockLength[i]); i++ );
-    if( i == count ) {  /* either nothing or nothing relevant */
-        return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
+    for (i = 0; (i < count) && (0 == pBlockLength[i]); i++)
+        ;
+    if (i == count) { /* either nothing or nothing relevant */
+        return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
     }
     /* compute the total number of elements before we can
      * avoid increasing the size of the desc array often.
      */
     start_from = i;
-    lastType = (ompi_datatype_t*)pTypes[start_from];
+    lastType = (ompi_datatype_t *) pTypes[start_from];
     lastBlock = pBlockLength[start_from];
     lastExtent = lastType->super.ub - lastType->super.lb;
     lastDisp = pDisp[start_from];
     endto = pDisp[start_from] + lastExtent * lastBlock;
 
-    for( i = (start_from + 1); i < count; i++ ) {
-        if( (pTypes[i] == lastType) && (pDisp[i] == endto) ) {
+    for (i = (start_from + 1); i < count; i++) {
+        if ((pTypes[i] == lastType) && (pDisp[i] == endto)) {
             lastBlock += pBlockLength[i];
             endto = lastDisp + lastBlock * lastExtent;
         } else {
             disp += lastType->super.desc.used;
-            if( lastBlock > 1 ) disp += 2;
-            lastType = (ompi_datatype_t*)pTypes[i];
+            if (lastBlock > 1)
+                disp += 2;
+            lastType = (ompi_datatype_t *) pTypes[i];
             lastExtent = lastType->super.ub - lastType->super.lb;
             lastBlock = pBlockLength[i];
             lastDisp = pDisp[i];
@@ -66,32 +68,33 @@ int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const p
         }
     }
     disp += lastType->super.desc.used;
-    if( lastBlock != 1 ) disp += 2;
+    if (lastBlock != 1)
+        disp += 2;
 
-    lastType = (ompi_datatype_t*)pTypes[start_from];
+    lastType = (ompi_datatype_t *) pTypes[start_from];
     lastBlock = pBlockLength[start_from];
     lastExtent = lastType->super.ub - lastType->super.lb;
     lastDisp = pDisp[start_from];
     endto = pDisp[start_from] + lastExtent * lastBlock;
 
-    pdt = ompi_datatype_create( (int32_t)disp );
+    pdt = ompi_datatype_create((int32_t) disp);
 
     /* Do again the same loop but now add the elements */
-    for( i = (start_from + 1); i < count; i++ ) {
-        if( (pTypes[i] == lastType) && (pDisp[i] == endto) ) {
+    for (i = (start_from + 1); i < count; i++) {
+        if ((pTypes[i] == lastType) && (pDisp[i] == endto)) {
             lastBlock += pBlockLength[i];
             endto = lastDisp + lastBlock * lastExtent;
         } else {
-            ompi_datatype_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
-            lastType = (ompi_datatype_t*)pTypes[i];
+            ompi_datatype_add(pdt, lastType, lastBlock, lastDisp, lastExtent);
+            lastType = (ompi_datatype_t *) pTypes[i];
             lastExtent = lastType->super.ub - lastType->super.lb;
             lastBlock = pBlockLength[i];
             lastDisp = pDisp[i];
             endto = lastDisp + lastExtent * lastBlock;
         }
     }
-    ompi_datatype_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
+    ompi_datatype_add(pdt, lastType, lastBlock, lastDisp, lastExtent);
 
-     *newType = pdt;
+    *newType = pdt;
     return OMPI_SUCCESS;
 }

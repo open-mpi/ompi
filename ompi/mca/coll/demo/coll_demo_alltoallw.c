@@ -19,12 +19,11 @@
 #include "ompi_config.h"
 #include "opal/util/output.h"
 
+#include "coll_demo.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "coll_demo.h"
-
+#include "ompi/mca/coll/coll.h"
 
 /*
  *	alltoallw_intra
@@ -34,20 +33,16 @@
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int mca_coll_demo_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
-                                  struct ompi_datatype_t **sdtypes,
-                                  void *rbuf, int *rcounts, int *rdisps,
-                                  struct ompi_datatype_t **rdtypes,
-                                  struct ompi_communicator_t *comm,
-                                  mca_coll_base_module_t *module)
+                                  struct ompi_datatype_t **sdtypes, void *rbuf, int *rcounts,
+                                  int *rdisps, struct ompi_datatype_t **rdtypes,
+                                  struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo alltoallw_intra");
-    return demo_module->underlying.coll_alltoallw(sbuf, scounts, sdisps,
-                                                  sdtypes, rbuf, rcounts,
+    return demo_module->underlying.coll_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts,
                                                   rdisps, rdtypes, comm,
                                                   demo_module->underlying.coll_alltoallw_module);
 }
-
 
 /*
  *	alltoallw_inter
@@ -57,16 +52,13 @@ int mca_coll_demo_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int mca_coll_demo_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
-                                  struct ompi_datatype_t **sdtypes,
-                                  void *rbuf, int *rcounts, int *rdisps,
-                                  struct ompi_datatype_t **rdtypes,
-                                  struct ompi_communicator_t *comm,
-                                  mca_coll_base_module_t *module)
+                                  struct ompi_datatype_t **sdtypes, void *rbuf, int *rcounts,
+                                  int *rdisps, struct ompi_datatype_t **rdtypes,
+                                  struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo alltoallw_inter");
-    return demo_module->underlying.coll_alltoallw(sbuf, scounts, sdisps,
-                                                  sdtypes, rbuf, rcounts,
+    return demo_module->underlying.coll_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts,
                                                   rdisps, rdtypes, comm,
                                                   demo_module->underlying.coll_alltoallw_module);
 }

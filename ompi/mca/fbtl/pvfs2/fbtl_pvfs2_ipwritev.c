@@ -19,7 +19,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "fbtl_pvfs2.h"
 
@@ -27,9 +26,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-ssize_t  mca_fbtl_pvfs2_ipwritev (ompio_file_t *file,
-				 ompi_request_t **request)
+ssize_t mca_fbtl_pvfs2_ipwritev(ompio_file_t *file, ompi_request_t **request)
 {
-    printf ("PVFS2 IPWRITEV\n");
+    printf("PVFS2 IPWRITEV\n");
     return OMPI_SUCCESS;
 }

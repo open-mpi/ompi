@@ -23,11 +23,11 @@
 #include "oshmem/shmem/shmem_api_logger.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_init = pshmem_init
-#pragma weak shmem_init_thread = pshmem_init_thread
-#pragma weak start_pes = pstart_pes
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_init = pshmem_init
+#    pragma weak shmem_init_thread = pshmem_init_thread
+#    pragma weak start_pes = pstart_pes
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 extern int oshmem_shmem_globalexit_status;
@@ -82,4 +82,3 @@ static inline void _shmem_init(int required, int *provided)
     on_exit(shmem_onexit, NULL);
 #endif
 }
-

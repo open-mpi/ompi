@@ -12,8 +12,8 @@
 
 #include <ucp/api/ucp.h>
 
-#include "ompi/group/group.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 #include "opal/mca/common/ucx/common_ucx_wpool.h"
 
@@ -21,16 +21,16 @@
 #define OSC_UCX_ERROR   MCA_COMMON_UCX_ERROR
 #define OSC_UCX_VERBOSE MCA_COMMON_UCX_VERBOSE
 
-#define OMPI_OSC_UCX_POST_PEER_MAX 32
-#define OMPI_OSC_UCX_ATTACH_MAX    32
-#define OMPI_OSC_UCX_MEM_ADDR_MAX_LEN  1024
+#define OMPI_OSC_UCX_POST_PEER_MAX    32
+#define OMPI_OSC_UCX_ATTACH_MAX       32
+#define OMPI_OSC_UCX_MEM_ADDR_MAX_LEN 1024
 
 typedef struct ompi_osc_ucx_component {
     ompi_osc_base_component_t super;
     opal_common_ucx_wpool_t *wpool;
     bool enable_mpi_threads;
     opal_free_list_t requests; /* request free list for the r* communication variants */
-    bool env_initialized; /* UCX environment is initialized or not */
+    bool env_initialized;      /* UCX environment is initialized or not */
     int num_incomplete_req_ops;
     int num_modules;
     bool no_locks; /* Default value of the no_locks info key for new windows */
@@ -59,12 +59,12 @@ typedef struct ompi_osc_ucx_epoch_type {
 
 #define OSC_UCX_IOVEC_MAX 128
 
-#define OSC_UCX_STATE_LOCK_OFFSET 0
-#define OSC_UCX_STATE_REQ_FLAG_OFFSET sizeof(uint64_t)
-#define OSC_UCX_STATE_ACC_LOCK_OFFSET (sizeof(uint64_t) * 2)
-#define OSC_UCX_STATE_COMPLETE_COUNT_OFFSET (sizeof(uint64_t) * 3)
-#define OSC_UCX_STATE_POST_INDEX_OFFSET (sizeof(uint64_t) * 4)
-#define OSC_UCX_STATE_POST_STATE_OFFSET (sizeof(uint64_t) * 5)
+#define OSC_UCX_STATE_LOCK_OFFSET            0
+#define OSC_UCX_STATE_REQ_FLAG_OFFSET        sizeof(uint64_t)
+#define OSC_UCX_STATE_ACC_LOCK_OFFSET        (sizeof(uint64_t) * 2)
+#define OSC_UCX_STATE_COMPLETE_COUNT_OFFSET  (sizeof(uint64_t) * 3)
+#define OSC_UCX_STATE_POST_INDEX_OFFSET      (sizeof(uint64_t) * 4)
+#define OSC_UCX_STATE_POST_STATE_OFFSET      (sizeof(uint64_t) * 5)
 #define OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET (sizeof(uint64_t) * (5 + OMPI_OSC_UCX_POST_PEER_MAX))
 
 typedef struct ompi_osc_dynamic_win_info {
@@ -122,10 +122,7 @@ typedef struct ompi_osc_ucx_module {
     opal_common_ucx_wpmem_t *state_mem;
 } ompi_osc_ucx_module_t;
 
-typedef enum locktype {
-    LOCK_EXCLUSIVE,
-    LOCK_SHARED
-} lock_type_t;
+typedef enum locktype { LOCK_EXCLUSIVE, LOCK_SHARED } lock_type_t;
 
 typedef struct ompi_osc_ucx_lock {
     opal_object_t super;
@@ -134,64 +131,56 @@ typedef struct ompi_osc_ucx_lock {
     bool is_nocheck;
 } ompi_osc_ucx_lock_t;
 
-#define OSC_UCX_GET_EP(comm_, rank_) (ompi_comm_peer_lookup(comm_, rank_)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_UCX])
-#define OSC_UCX_GET_DISP(module_, rank_) ((module_->disp_unit < 0) ? module_->disp_units[rank_] : module_->disp_unit)
+#define OSC_UCX_GET_EP(comm_, rank_) \
+    (ompi_comm_peer_lookup(comm_, rank_)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_UCX])
+#define OSC_UCX_GET_DISP(module_, rank_) \
+    ((module_->disp_unit < 0) ? module_->disp_units[rank_] : module_->disp_unit)
 
 int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len);
 int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base);
 int ompi_osc_ucx_free(struct ompi_win_t *win);
 
-int ompi_osc_ucx_put(const void *origin_addr, int origin_count,
-                     struct ompi_datatype_t *origin_dt,
+int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
                      int target, ptrdiff_t target_disp, int target_count,
                      struct ompi_datatype_t *target_dt, struct ompi_win_t *win);
-int ompi_osc_ucx_get(void *origin_addr, int origin_count,
-                     struct ompi_datatype_t *origin_dt,
+int ompi_osc_ucx_get(void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
                      int target, ptrdiff_t target_disp, int target_count,
                      struct ompi_datatype_t *target_dt, struct ompi_win_t *win);
 int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
-                            struct ompi_datatype_t *origin_dt,
-                            int target, ptrdiff_t target_disp, int target_count,
-                            struct ompi_datatype_t *target_dt,
+                            struct ompi_datatype_t *origin_dt, int target, ptrdiff_t target_disp,
+                            int target_count, struct ompi_datatype_t *target_dt,
                             struct ompi_op_t *op, struct ompi_win_t *win);
 int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_addr,
-                                  void *result_addr, struct ompi_datatype_t *dt,
-                                  int target, ptrdiff_t target_disp,
-                                  struct ompi_win_t *win);
+                                  void *result_addr, struct ompi_datatype_t *dt, int target,
+                                  ptrdiff_t target_disp, struct ompi_win_t *win);
 int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
-                              struct ompi_datatype_t *dt, int target,
-                              ptrdiff_t target_disp, struct ompi_op_t *op,
-                              struct ompi_win_t *win);
+                              struct ompi_datatype_t *dt, int target, ptrdiff_t target_disp,
+                              struct ompi_op_t *op, struct ompi_win_t *win);
 int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
-                                struct ompi_datatype_t *origin_datatype,
-                                void *result_addr, int result_count,
-                                struct ompi_datatype_t *result_datatype,
-                                int target_rank, ptrdiff_t target_disp,
-                                int target_count, struct ompi_datatype_t *target_datatype,
-                                struct ompi_op_t *op, struct ompi_win_t *win);
-int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
-                      struct ompi_datatype_t *origin_dt,
+                                struct ompi_datatype_t *origin_datatype, void *result_addr,
+                                int result_count, struct ompi_datatype_t *result_datatype,
+                                int target_rank, ptrdiff_t target_disp, int target_count,
+                                struct ompi_datatype_t *target_datatype, struct ompi_op_t *op,
+                                struct ompi_win_t *win);
+int ompi_osc_ucx_rput(const void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
                       int target, ptrdiff_t target_disp, int target_count,
-                      struct ompi_datatype_t *target_dt,
-                      struct ompi_win_t *win, struct ompi_request_t **request);
-int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
-                      struct ompi_datatype_t *origin_dt,
+                      struct ompi_datatype_t *target_dt, struct ompi_win_t *win,
+                      struct ompi_request_t **request);
+int ompi_osc_ucx_rget(void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
                       int target, ptrdiff_t target_disp, int target_count,
                       struct ompi_datatype_t *target_dt, struct ompi_win_t *win,
                       struct ompi_request_t **request);
 int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
-                             struct ompi_datatype_t *origin_dt,
-                             int target, ptrdiff_t target_disp, int target_count,
-                             struct ompi_datatype_t *target_dt, struct ompi_op_t *op,
-                             struct ompi_win_t *win, struct ompi_request_t **request);
+                             struct ompi_datatype_t *origin_dt, int target, ptrdiff_t target_disp,
+                             int target_count, struct ompi_datatype_t *target_dt,
+                             struct ompi_op_t *op, struct ompi_win_t *win,
+                             struct ompi_request_t **request);
 int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
-                                 struct ompi_datatype_t *origin_datatype,
-                                 void *result_addr, int result_count,
-                                 struct ompi_datatype_t *result_datatype,
+                                 struct ompi_datatype_t *origin_datatype, void *result_addr,
+                                 int result_count, struct ompi_datatype_t *result_datatype,
                                  int target_rank, ptrdiff_t target_disp, int target_count,
-                                 struct ompi_datatype_t *target_datatype,
-                                 struct ompi_op_t *op, struct ompi_win_t *win,
-                                 struct ompi_request_t **request);
+                                 struct ompi_datatype_t *target_datatype, struct ompi_op_t *op,
+                                 struct ompi_win_t *win, struct ompi_request_t **request);
 
 int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win);
 int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win);
@@ -210,8 +199,7 @@ int ompi_osc_ucx_flush_all(struct ompi_win_t *win);
 int ompi_osc_ucx_flush_local(int target, struct ompi_win_t *win);
 int ompi_osc_ucx_flush_local_all(struct ompi_win_t *win);
 
-int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_wins,
-                                           int min_index, int max_index,
-                                           uint64_t base, size_t len, int *insert);
+int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_wins, int min_index,
+                                           int max_index, uint64_t base, size_t len, int *insert);
 
 #endif /* OMPI_OSC_UCX_H */

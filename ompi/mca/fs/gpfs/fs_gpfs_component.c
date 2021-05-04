@@ -33,8 +33,8 @@
 /*
  * Public string showing the fs gpfs component version number
  */
-const char *mca_fs_gpfs_component_version_string =
-  "OMPI/MPI gpfs FS MCA component version " OMPI_VERSION;
+const char *mca_fs_gpfs_component_version_string
+    = "OMPI/MPI gpfs FS MCA component version " OMPI_VERSION;
 
 static int gpfs_register(void);
 
@@ -69,10 +69,9 @@ mca_fs_base_component_2_0_0_t mca_fs_gpfs_component = {
 static int gpfs_register(void)
 {
     mca_fs_gpfs_priority = 20;
-    (void) mca_base_component_var_register(&mca_fs_gpfs_component.fsm_version,
-                                           "priority", "Priority of the gpfs fs component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+    (void) mca_base_component_var_register(&mca_fs_gpfs_component.fsm_version, "priority",
+                                           "Priority of the gpfs fs component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_gpfs_priority);
     return OMPI_SUCCESS;
 }

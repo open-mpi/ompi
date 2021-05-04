@@ -11,7 +11,7 @@
 #ifndef SHMEM_FORTRAN_POINTER_H
 #define SHMEM_FORTRAN_POINTER_H
 
-#define FORTRAN_POINTER_T uintptr_t
-#define FPTR_2_VOID_PTR(a) ((void *)(a))
+#define FORTRAN_POINTER_T  uintptr_t
+#define FPTR_2_VOID_PTR(a) ((void *) (a))
 
 #endif

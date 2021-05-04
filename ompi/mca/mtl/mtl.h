@@ -53,17 +53,16 @@ struct mca_mtl_base_module_t;
 struct mca_mtl_request_t {
     /** pointer to associated ompi_request_t */
     struct ompi_request_t *ompi_req;
-    void (*completion_callback)(struct mca_mtl_request_t* mtl_request);
+    void (*completion_callback)(struct mca_mtl_request_t *mtl_request);
 };
 typedef struct mca_mtl_request_t mca_mtl_request_t;
-
 
 /**
  * MTL module flags
  */
 #define MCA_MTL_BASE_FLAG_REQUIRE_WORLD 0x00000001
 #if OPAL_CUDA_SUPPORT
-#define MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE 0x00000002
+#    define MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE 0x00000002
 #endif
 
 /**
@@ -96,19 +95,16 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  * @retval NULL     component can not operate on the current machine
  * @retval non-NULL component interface function
  */
-typedef struct mca_mtl_base_module_t*
-(*mca_mtl_base_component_init_fn_t)(bool enable_progress_threads,
-                                    bool enable_mpi_threads);
-
+typedef struct mca_mtl_base_module_t *(*mca_mtl_base_component_init_fn_t)(
+    bool enable_progress_threads, bool enable_mpi_threads);
 
 struct mca_mtl_base_component_2_0_0_t {
-  mca_base_component_t mtl_version;
-  mca_base_component_data_t mtl_data;
-  mca_mtl_base_component_init_fn_t mtl_init;
+    mca_base_component_t mtl_version;
+    mca_base_component_data_t mtl_data;
+    mca_mtl_base_component_init_fn_t mtl_init;
 };
 typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_2_0_0_t;
 typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_t;
-
 
 /**
  * MCA->MTL Clean up any resources held by MTL module
@@ -125,8 +121,7 @@ typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_t;
  * @retval other        failure during cleanup
  *
  */
-typedef int (*mca_mtl_base_module_finalize_fn_t)(struct mca_mtl_base_module_t* mtl);
-
+typedef int (*mca_mtl_base_module_finalize_fn_t)(struct mca_mtl_base_module_t *mtl);
 
 /**
  * PML->MTL notification of change in the process list.
@@ -153,11 +148,8 @@ typedef int (*mca_mtl_base_module_finalize_fn_t)(struct mca_mtl_base_module_t* m
  * @retval OMPI_SUCCESS successfully connected to processes
  * @retval other failure during setup
  */
-typedef int (*mca_mtl_base_module_add_procs_fn_t)(
-                            struct mca_mtl_base_module_t* mtl,
-                            size_t nprocs,
-                            struct ompi_proc_t** procs);
-
+typedef int (*mca_mtl_base_module_add_procs_fn_t)(struct mca_mtl_base_module_t *mtl, size_t nprocs,
+                                                  struct ompi_proc_t **procs);
 
 /**
  * Notification of change to the process list.
@@ -175,11 +167,8 @@ typedef int (*mca_mtl_base_module_add_procs_fn_t)(
  *
  * @return             Status indicating if cleanup was successful
  */
-typedef int (*mca_mtl_base_module_del_procs_fn_t)(
-                            struct mca_mtl_base_module_t* mtl,
-                            size_t nprocs,
-                            struct ompi_proc_t** procs);
-
+typedef int (*mca_mtl_base_module_del_procs_fn_t)(struct mca_mtl_base_module_t *mtl, size_t nprocs,
+                                                  struct ompi_proc_t **procs);
 
 /**
  * Blocking send to peer
@@ -211,14 +200,10 @@ typedef int (*mca_mtl_base_module_del_procs_fn_t)(
  * collective operations.  Therefore, the MTL can *not* cause an error
  * if a negative tag is used.
  */
-typedef int (*mca_mtl_base_module_send_fn_t)(
-                          struct mca_mtl_base_module_t* mtl,
-                          struct ompi_communicator_t *comm,
-                          int dest,
-                          int tag,
-                          struct opal_convertor_t *convertor,
-                          mca_pml_base_send_mode_t mode);
-
+typedef int (*mca_mtl_base_module_send_fn_t)(struct mca_mtl_base_module_t *mtl,
+                                             struct ompi_communicator_t *comm, int dest, int tag,
+                                             struct opal_convertor_t *convertor,
+                                             mca_pml_base_send_mode_t mode);
 
 /**
  * Non-blocking send to peer
@@ -259,16 +244,11 @@ typedef int (*mca_mtl_base_module_send_fn_t)(
  * collective operations.  Therefore, the MTL can *not* cause an error
  * if a negative tag is used.
  */
-typedef int (*mca_mtl_base_module_isend_fn_t)(
-                          struct mca_mtl_base_module_t* mtl,
-                          struct ompi_communicator_t *comm,
-                          int dest,
-                          int tag,
-                          struct opal_convertor_t *convertor,
-                          mca_pml_base_send_mode_t mode,
-                          bool blocking,
-                          mca_mtl_request_t *mtl_request);
-
+typedef int (*mca_mtl_base_module_isend_fn_t)(struct mca_mtl_base_module_t *mtl,
+                                              struct ompi_communicator_t *comm, int dest, int tag,
+                                              struct opal_convertor_t *convertor,
+                                              mca_pml_base_send_mode_t mode, bool blocking,
+                                              mca_mtl_request_t *mtl_request);
 
 /**
  * Non-blocking receive
@@ -301,14 +281,10 @@ typedef int (*mca_mtl_base_module_isend_fn_t)(
  * if a negative tag is used.  Further, MPI_ANY_TAG should *not* match
  * against negative tags.
  */
-typedef int (*mca_mtl_base_module_irecv_fn_t)(
-                          struct mca_mtl_base_module_t* mtl,
-                          struct ompi_communicator_t *comm,
-                          int src,
-                          int tag,
-                          struct opal_convertor_t *convertor,
-                          struct mca_mtl_request_t *mtl_request);
-
+typedef int (*mca_mtl_base_module_irecv_fn_t)(struct mca_mtl_base_module_t *mtl,
+                                              struct ompi_communicator_t *comm, int src, int tag,
+                                              struct opal_convertor_t *convertor,
+                                              struct mca_mtl_request_t *mtl_request);
 
 /**
  * Non-blocking probe
@@ -329,26 +305,18 @@ typedef int (*mca_mtl_base_module_irecv_fn_t)(
  * if a negative tag is used.  Further, MPI_ANY_TAG should *not* match
  * against negative tags.
  */
-typedef int (*mca_mtl_base_module_iprobe_fn_t)(
-                          struct mca_mtl_base_module_t* mtl,
-                          struct ompi_communicator_t *comm,
-                          int src,
-                          int tag,
-                          int *flag,
-                          struct ompi_status_public_t *status);
+typedef int (*mca_mtl_base_module_iprobe_fn_t)(struct mca_mtl_base_module_t *mtl,
+                                               struct ompi_communicator_t *comm, int src, int tag,
+                                               int *flag, struct ompi_status_public_t *status);
 
-
-typedef int (*mca_mtl_base_module_imrecv_fn_t)(struct mca_mtl_base_module_t* mtl,
+typedef int (*mca_mtl_base_module_imrecv_fn_t)(struct mca_mtl_base_module_t *mtl,
                                                struct opal_convertor_t *convertor,
                                                struct ompi_message_t **message,
                                                struct mca_mtl_request_t *mtl_request);
 
 typedef int (*mca_mtl_base_module_improbe_fn_t)(struct mca_mtl_base_module_t *mtl,
-                                                struct ompi_communicator_t *comm,
-                                                int src,
-                                                int tag,
-                                                int *matched,
-                                                struct ompi_message_t **message,
+                                                struct ompi_communicator_t *comm, int src, int tag,
+                                                int *matched, struct ompi_message_t **message,
                                                 struct ompi_status_public_t *status);
 
 /**
@@ -366,11 +334,8 @@ typedef int (*mca_mtl_base_module_improbe_fn_t)(struct mca_mtl_base_module_t *mt
  * @param flag            Unknown exactly what this does.
  *
  */
-typedef int (*mca_mtl_base_module_cancel_fn_t)(
-                          struct mca_mtl_base_module_t* mtl,
-                          mca_mtl_request_t *mtl_request,
-                          int flag);
-
+typedef int (*mca_mtl_base_module_cancel_fn_t)(struct mca_mtl_base_module_t *mtl,
+                                               mca_mtl_request_t *mtl_request, int flag);
 
 /**
  * Downcall from PML layer when a new communicator is created.
@@ -381,10 +346,8 @@ typedef int (*mca_mtl_base_module_cancel_fn_t)(
  * Provides the MTL the opportunity to initialize/cache a data structure
  * on the communicator.
  */
-typedef int (*mca_mtl_base_module_add_comm_fn_t)(
-                          struct mca_mtl_base_module_t* mtl,
-                          struct ompi_communicator_t* comm);
-
+typedef int (*mca_mtl_base_module_add_comm_fn_t)(struct mca_mtl_base_module_t *mtl,
+                                                 struct ompi_communicator_t *comm);
 
 /**
  * Downcall from PML layer when a communicator is destroyed.
@@ -395,45 +358,42 @@ typedef int (*mca_mtl_base_module_add_comm_fn_t)(
  * Provides the MTL the opportunity to cleanup any datastructures
  * associated with the communicator.
  */
-typedef int (*mca_mtl_base_module_del_comm_fn_t)(
-                          struct mca_mtl_base_module_t* mtl,
-                          struct ompi_communicator_t* comm);
-
+typedef int (*mca_mtl_base_module_del_comm_fn_t)(struct mca_mtl_base_module_t *mtl,
+                                                 struct ompi_communicator_t *comm);
 
 /**
  * MTL module interface functions and attributes.
  */
 struct mca_mtl_base_module_t {
-    int      mtl_max_contextid;   /**< maximum allowable contextid */
-    int      mtl_max_tag;         /**< maximum tag value.  note that negative tags must be allowed */
-    size_t   mtl_request_size;    /**< number of bytes to reserve with request structure */
+    int mtl_max_contextid;   /**< maximum allowable contextid */
+    int mtl_max_tag;         /**< maximum tag value.  note that negative tags must be allowed */
+    size_t mtl_request_size; /**< number of bytes to reserve with request structure */
 
-    uint32_t mtl_flags;           /**< flags (put/get...) */
+    uint32_t mtl_flags; /**< flags (put/get...) */
 
     /* MTL function table */
-    mca_mtl_base_module_add_procs_fn_t   mtl_add_procs;
-    mca_mtl_base_module_del_procs_fn_t   mtl_del_procs;
-    mca_mtl_base_module_finalize_fn_t    mtl_finalize;
+    mca_mtl_base_module_add_procs_fn_t mtl_add_procs;
+    mca_mtl_base_module_del_procs_fn_t mtl_del_procs;
+    mca_mtl_base_module_finalize_fn_t mtl_finalize;
 
-    mca_mtl_base_module_send_fn_t        mtl_send;
-    mca_mtl_base_module_isend_fn_t       mtl_isend;
-    mca_mtl_base_module_irecv_fn_t       mtl_irecv;
-    mca_mtl_base_module_iprobe_fn_t      mtl_iprobe;
-    mca_mtl_base_module_imrecv_fn_t      mtl_imrecv;
-    mca_mtl_base_module_improbe_fn_t     mtl_improbe;
+    mca_mtl_base_module_send_fn_t mtl_send;
+    mca_mtl_base_module_isend_fn_t mtl_isend;
+    mca_mtl_base_module_irecv_fn_t mtl_irecv;
+    mca_mtl_base_module_iprobe_fn_t mtl_iprobe;
+    mca_mtl_base_module_imrecv_fn_t mtl_imrecv;
+    mca_mtl_base_module_improbe_fn_t mtl_improbe;
 
     /* Optional MTL functions */
-    mca_mtl_base_module_cancel_fn_t      mtl_cancel;
-    mca_mtl_base_module_add_comm_fn_t    mtl_add_comm;
-    mca_mtl_base_module_del_comm_fn_t    mtl_del_comm;
+    mca_mtl_base_module_cancel_fn_t mtl_cancel;
+    mca_mtl_base_module_add_comm_fn_t mtl_add_comm;
+    mca_mtl_base_module_del_comm_fn_t mtl_del_comm;
 };
 typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
 
 /*
  * Macro for use in modules that are of type mtl
  */
-#define MCA_MTL_BASE_VERSION_2_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("mtl", 2, 0, 0)
+#define MCA_MTL_BASE_VERSION_2_0_0 OMPI_MCA_BASE_VERSION_2_1_0("mtl", 2, 0, 0)
 
 OMPI_DECLSPEC extern mca_mtl_base_module_t *ompi_mtl;
 
@@ -442,17 +402,15 @@ OMPI_DECLSPEC extern mca_mtl_base_module_t *ompi_mtl;
  */
 #if MCA_ompi_mtl_DIRECT_CALL
 
+#    define OMPI_MTL_CALL_STAMP(a, b)    ompi_mtl_##a##_##b
+#    define OMPI_MTL_CALL_EXPANDER(a, b) OMPI_MTL_CALL_STAMP(a, b)
+#    define OMPI_MTL_CALL(a)             OMPI_MTL_CALL_EXPANDER(MCA_ompi_mtl_DIRECT_CALL_COMPONENT, a)
 
-#define OMPI_MTL_CALL_STAMP(a, b) ompi_mtl_ ## a ## _ ## b
-#define OMPI_MTL_CALL_EXPANDER(a, b) OMPI_MTL_CALL_STAMP(a,b)
-#define OMPI_MTL_CALL(a) OMPI_MTL_CALL_EXPANDER(MCA_ompi_mtl_DIRECT_CALL_COMPONENT, a)
-
-#include MCA_ompi_mtl_DIRECT_CALL_HEADER
+#    include MCA_ompi_mtl_DIRECT_CALL_HEADER
 
 #else
-#define OMPI_MTL_CALL(a) ompi_mtl->mtl_ ## a
+#    define OMPI_MTL_CALL(a) ompi_mtl->mtl_##a
 #endif
-
 
 END_C_DECLS
 #endif

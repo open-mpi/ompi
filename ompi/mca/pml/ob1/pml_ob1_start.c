@@ -27,13 +27,12 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_sendreq.h"
 
-
-int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
+int mca_pml_ob1_start(size_t count, ompi_request_t **requests)
 {
     int rc;
 
-    for (size_t i = 0 ; i < count ; ++i) {
-        mca_pml_base_request_t *pml_request = (mca_pml_base_request_t*)requests[i];
+    for (size_t i = 0; i < count; ++i) {
+        mca_pml_base_request_t *pml_request = (mca_pml_base_request_t *) requests[i];
         if (NULL == pml_request || OMPI_REQUEST_PML != requests[i]->req_type) {
             continue;
         }
@@ -47,70 +46,59 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
         opal_atomic_rmb();
 
         /* start the request */
-        switch(pml_request->req_type) {
-            case MCA_PML_REQUEST_SEND:
-            {
-                mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)pml_request;
-                MEMCHECKER(
-                    memchecker_call(&opal_memchecker_base_isdefined,
-                                    pml_request->req_addr, pml_request->req_count,
-                                    pml_request->req_datatype);
-                );
+        switch (pml_request->req_type) {
+        case MCA_PML_REQUEST_SEND: {
+            mca_pml_ob1_send_request_t *sendreq = (mca_pml_ob1_send_request_t *) pml_request;
+            MEMCHECKER(memchecker_call(&opal_memchecker_base_isdefined, pml_request->req_addr,
+                                       pml_request->req_count, pml_request->req_datatype););
 
-                if (!pml_request->req_pml_complete) {
-                    ompi_request_t *request;
+            if (!pml_request->req_pml_complete) {
+                ompi_request_t *request;
 
-                    /* buffered sends can be mpi complete and pml incomplete. to support this
-                     * case we need to allocate a new request. */
-                    rc = mca_pml_ob1_isend_init (pml_request->req_addr,
-                                                 pml_request->req_count,
-                                                 pml_request->req_datatype,
-                                                 pml_request->req_peer,
-                                                 pml_request->req_tag,
-                                                 sendreq->req_send.req_send_mode,
-                                                 pml_request->req_comm,
-                                                 &request);
-                    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-                        return rc;
-                    }
-
-                    /* copy the callback and callback data to the new requests */
-                    request->req_complete_cb = pml_request->req_ompi.req_complete_cb;
-                    request->req_complete_cb_data = pml_request->req_ompi.req_complete_cb_data;
-
-                    /* ensure the old request gets released */
-                    pml_request->req_free_called = true;
-
-                    sendreq = (mca_pml_ob1_send_request_t *) request;
-                    requests[i] = request;
-                } else if (sendreq->req_send.req_bytes_packed != 0) {
-                    size_t offset = 0;
-                    /**
-                     * Reset the convertor in case we're dealing with the original
-                     * request, which when completed do not reset the convertor.
-                     */
-                    opal_convertor_set_position (&sendreq->req_send.req_base.req_convertor,
-                                                 &offset);
+                /* buffered sends can be mpi complete and pml incomplete. to support this
+                 * case we need to allocate a new request. */
+                rc = mca_pml_ob1_isend_init(pml_request->req_addr, pml_request->req_count,
+                                            pml_request->req_datatype, pml_request->req_peer,
+                                            pml_request->req_tag, sendreq->req_send.req_send_mode,
+                                            pml_request->req_comm, &request);
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                    return rc;
                 }
 
-                /* reset the completion flag */
-                pml_request->req_pml_complete = false;
+                /* copy the callback and callback data to the new requests */
+                request->req_complete_cb = pml_request->req_ompi.req_complete_cb;
+                request->req_complete_cb_data = pml_request->req_ompi.req_complete_cb_data;
 
-                MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
-                if(rc != OMPI_SUCCESS)
-                    return rc;
-                break;
+                /* ensure the old request gets released */
+                pml_request->req_free_called = true;
+
+                sendreq = (mca_pml_ob1_send_request_t *) request;
+                requests[i] = request;
+            } else if (sendreq->req_send.req_bytes_packed != 0) {
+                size_t offset = 0;
+                /**
+                 * Reset the convertor in case we're dealing with the original
+                 * request, which when completed do not reset the convertor.
+                 */
+                opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor, &offset);
             }
-            case MCA_PML_REQUEST_RECV:
-            {
-                mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)pml_request;
-                MCA_PML_OB1_RECV_REQUEST_START(recvreq);
-                break;
-            }
-            default:
-                return OMPI_ERR_REQUEST;
+
+            /* reset the completion flag */
+            pml_request->req_pml_complete = false;
+
+            MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
+            if (rc != OMPI_SUCCESS)
+                return rc;
+            break;
+        }
+        case MCA_PML_REQUEST_RECV: {
+            mca_pml_ob1_recv_request_t *recvreq = (mca_pml_ob1_recv_request_t *) pml_request;
+            MCA_PML_OB1_RECV_REQUEST_START(recvreq);
+            break;
+        }
+        default:
+            return OMPI_ERR_REQUEST;
         }
     }
     return OMPI_SUCCESS;
 }
-

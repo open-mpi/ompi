@@ -19,61 +19,62 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_DIST_GRAPH_CREATE_ADJACENT = ompi_dist_graph_create_adjacent_f
+#        pragma weak pmpi_dist_graph_create_adjacent = ompi_dist_graph_create_adjacent_f
+#        pragma weak pmpi_dist_graph_create_adjacent_ = ompi_dist_graph_create_adjacent_f
+#        pragma weak pmpi_dist_graph_create_adjacent__ = ompi_dist_graph_create_adjacent_f
+
+#        pragma weak PMPI_Dist_graph_create_adjacent_f = ompi_dist_graph_create_adjacent_f
+#        pragma weak PMPI_Dist_graph_create_adjacent_f08 = ompi_dist_graph_create_adjacent_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_DIST_GRAPH_CREATE_ADJACENT, pmpi_dist_graph_create_adjacent,
+                           pmpi_dist_graph_create_adjacent_, pmpi_dist_graph_create_adjacent__,
+                           pompi_dist_graph_create_adjacent_f,
+                           (MPI_Fint * comm_old, MPI_Fint *indegree, MPI_Fint *sources,
+                            MPI_Fint *sourceweights, MPI_Fint *outdegree, MPI_Fint *destinations,
+                            MPI_Fint *destweights, MPI_Fint *info, ompi_fortran_logical_t *reorder,
+                            MPI_Fint *comm_graph, MPI_Fint *ierr),
+                           (comm_old, indegree, sources, sourceweights, outdegree, destinations,
+                            destweights, info, reorder, comm_graph, ierr))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_DIST_GRAPH_CREATE_ADJACENT = ompi_dist_graph_create_adjacent_f
-#pragma weak pmpi_dist_graph_create_adjacent = ompi_dist_graph_create_adjacent_f
-#pragma weak pmpi_dist_graph_create_adjacent_ = ompi_dist_graph_create_adjacent_f
-#pragma weak pmpi_dist_graph_create_adjacent__ = ompi_dist_graph_create_adjacent_f
+#    pragma weak MPI_DIST_GRAPH_CREATE_ADJACENT = ompi_dist_graph_create_adjacent_f
+#    pragma weak mpi_dist_graph_create_adjacent = ompi_dist_graph_create_adjacent_f
+#    pragma weak mpi_dist_graph_create_adjacent_ = ompi_dist_graph_create_adjacent_f
+#    pragma weak mpi_dist_graph_create_adjacent__ = ompi_dist_graph_create_adjacent_f
 
-#pragma weak PMPI_Dist_graph_create_adjacent_f = ompi_dist_graph_create_adjacent_f
-#pragma weak PMPI_Dist_graph_create_adjacent_f08 = ompi_dist_graph_create_adjacent_f
+#    pragma weak MPI_Dist_graph_create_adjacent_f = ompi_dist_graph_create_adjacent_f
+#    pragma weak MPI_Dist_graph_create_adjacent_f08 = ompi_dist_graph_create_adjacent_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_CREATE_ADJACENT,
-                            pmpi_dist_graph_create_adjacent,
-                            pmpi_dist_graph_create_adjacent_,
-                            pmpi_dist_graph_create_adjacent__,
-                            pompi_dist_graph_create_adjacent_f,
-                            (MPI_Fint *comm_old, MPI_Fint *indegree,  MPI_Fint *sources, MPI_Fint *sourceweights, MPI_Fint *outdegree,  MPI_Fint *destinations, MPI_Fint *destweights, MPI_Fint *info, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
-                            (comm_old, indegree, sources, sourceweights, outdegree, destinations, destweights, info, reorder, comm_graph, ierr) )
-#endif
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_DIST_GRAPH_CREATE_ADJACENT, mpi_dist_graph_create_adjacent,
+                           mpi_dist_graph_create_adjacent_, mpi_dist_graph_create_adjacent__,
+                           ompi_dist_graph_create_adjacent_f,
+                           (MPI_Fint * comm_old, MPI_Fint *indegree, MPI_Fint *sources,
+                            MPI_Fint *sourceweights, MPI_Fint *outdegree, MPI_Fint *destinations,
+                            MPI_Fint *destweights, MPI_Fint *info, ompi_fortran_logical_t *reorder,
+                            MPI_Fint *comm_graph, MPI_Fint *ierr),
+                           (comm_old, indegree, sources, sourceweights, outdegree, destinations,
+                            destweights, info, reorder, comm_graph, ierr))
+#    endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_DIST_GRAPH_CREATE_ADJACENT = ompi_dist_graph_create_adjacent_f
-#pragma weak mpi_dist_graph_create_adjacent = ompi_dist_graph_create_adjacent_f
-#pragma weak mpi_dist_graph_create_adjacent_ = ompi_dist_graph_create_adjacent_f
-#pragma weak mpi_dist_graph_create_adjacent__ = ompi_dist_graph_create_adjacent_f
-
-#pragma weak MPI_Dist_graph_create_adjacent_f = ompi_dist_graph_create_adjacent_f
-#pragma weak MPI_Dist_graph_create_adjacent_f08 = ompi_dist_graph_create_adjacent_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE_ADJACENT,
-                            mpi_dist_graph_create_adjacent,
-                            mpi_dist_graph_create_adjacent_,
-                            mpi_dist_graph_create_adjacent__,
-                            ompi_dist_graph_create_adjacent_f,
-                            (MPI_Fint *comm_old, MPI_Fint *indegree,  MPI_Fint *sources, MPI_Fint *sourceweights, MPI_Fint *outdegree,  MPI_Fint *destinations, MPI_Fint *destweights, MPI_Fint *info, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
-                            (comm_old, indegree,  sources, sourceweights, outdegree, destinations, destweights, info, reorder, comm_graph, ierr) )
+#    if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_SYMBOLS
+#        define ompi_dist_graph_create_adjacent_f pompi_dist_graph_create_adjacent_f
+#    endif
 #endif
 
-#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
-#define ompi_dist_graph_create_adjacent_f pompi_dist_graph_create_adjacent_f
-#endif
-#endif
-
-
-
-void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
-                                       MPI_Fint *sources, MPI_Fint *sourceweights,
-                                       MPI_Fint *outdegree,
-                                       MPI_Fint *destinations, MPI_Fint *destweights, MPI_Fint *info,
-                                       ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph,
-                                       MPI_Fint *ierr)
+void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree, MPI_Fint *sources,
+                                       MPI_Fint *sourceweights, MPI_Fint *outdegree,
+                                       MPI_Fint *destinations, MPI_Fint *destweights,
+                                       MPI_Fint *info, ompi_fortran_logical_t *reorder,
+                                       MPI_Fint *comm_graph, MPI_Fint *ierr)
 {
     MPI_Info c_info;
     MPI_Comm c_comm_old, c_comm_graph;
@@ -107,25 +108,22 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
     }
 
     c_ierr = PMPI_Dist_graph_create_adjacent(c_comm_old, OMPI_FINT_2_INT(*indegree),
-                                             OMPI_ARRAY_NAME_CONVERT(sources),
-                                             c_sourceweights,
+                                             OMPI_ARRAY_NAME_CONVERT(sources), c_sourceweights,
                                              OMPI_FINT_2_INT(*outdegree),
-                                             OMPI_ARRAY_NAME_CONVERT(destinations),
-                                             c_destweights,
-                                             c_info,
-                                             OMPI_LOGICAL_2_INT(*reorder),
-                                             &c_comm_graph);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+                                             OMPI_ARRAY_NAME_CONVERT(destinations), c_destweights,
+                                             c_info, OMPI_LOGICAL_2_INT(*reorder), &c_comm_graph);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
     if (OMPI_SUCCESS == c_ierr) {
         *comm_graph = PMPI_Comm_c2f(c_comm_graph);
     }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sources);
-    if( MPI_UNWEIGHTED != c_sourceweights && MPI_WEIGHTS_EMPTY != c_sourceweights ) {
+    if (MPI_UNWEIGHTED != c_sourceweights && MPI_WEIGHTS_EMPTY != c_sourceweights) {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sourceweights);
     }
     OMPI_ARRAY_FINT_2_INT_CLEANUP(destinations);
-    if( MPI_UNWEIGHTED != c_destweights && MPI_WEIGHTS_EMPTY != c_destweights ) {
+    if (MPI_UNWEIGHTED != c_destweights && MPI_WEIGHTS_EMPTY != c_destweights) {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(destweights);
     }
 }

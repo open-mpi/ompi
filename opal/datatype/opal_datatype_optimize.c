@@ -94,9 +94,9 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
                     assert(1 == current->count);
                     if ((current->common.type == OPAL_DATATYPE_LOOP)
                         || compress.common.type != current->common.type) {
-                        compress.common.type   = OPAL_DATATYPE_UINT1;
+                        compress.common.type = OPAL_DATATYPE_UINT1;
                         compress.common.flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
-                        pData->flags          |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+                        pData->flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                         compress.blocklen = end_loop->size;
                         break;
                     }
@@ -196,9 +196,9 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
                 ddt_elem_desc_t save = last; /* safekeep the type and blocklen */
                 if (last.common.type != current->common.type) {
                     last.blocklen *= opal_datatype_basicDatatypes[last.common.type]->size;
-                    last.common.type   = OPAL_DATATYPE_UINT1;
+                    last.common.type = OPAL_DATATYPE_UINT1;
                     last.common.flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
-                    pData->flags      |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+                    pData->flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                 }
 
                 if ((last.extent * (ptrdiff_t) last.count + last.disp) == current->disp) {
@@ -247,14 +247,13 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
                 if (last.common.type == current->common.type) {
                     last.blocklen += current->blocklen;
                 } else {
-                    last.blocklen = ((last.blocklen
-                                      * opal_datatype_basicDatatypes[last.common.type]->size)
-                                     + (current->blocklen
-                                        * opal_datatype_basicDatatypes[current->common.type]
-                                              ->size));
-                    last.common.type   = OPAL_DATATYPE_UINT1;
+                    last.blocklen
+                        = ((last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size)
+                           + (current->blocklen
+                              * opal_datatype_basicDatatypes[current->common.type]->size));
+                    last.common.type = OPAL_DATATYPE_UINT1;
                     last.common.flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
-                    pData->flags      |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+                    pData->flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                 }
                 last.extent += current->extent;
                 if (current->count != 1) {

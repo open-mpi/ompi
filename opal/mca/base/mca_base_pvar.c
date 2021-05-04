@@ -584,10 +584,9 @@ int mca_base_pvar_handle_update(mca_base_pvar_handle_t *handle)
                                                                       handle->last_value)[i];
                     break;
                 case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
-                    ((unsigned long *) handle->current_value)[i] += ((unsigned long *)
-                                                                         handle->tmp_value)[i]
-                                                                    - ((unsigned long *)
-                                                                           handle->last_value)[i];
+                    ((unsigned long *) handle->current_value)[i]
+                        += ((unsigned long *) handle->tmp_value)[i]
+                           - ((unsigned long *) handle->last_value)[i];
                     break;
                 case MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG:
                     ((unsigned long long *) handle->current_value)[i]

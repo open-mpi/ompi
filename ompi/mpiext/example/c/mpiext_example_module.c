@@ -22,8 +22,8 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
-#include "ompi/mpiext/mpiext.h"
 #include "ompi/mpiext/example/c/mpiext_example_c.h"
+#include "ompi/mpiext/mpiext.h"
 
 /*
  * The init/fini functions and the component struct are not required,
@@ -50,7 +50,4 @@ static int example_fini(void)
  * must be a global symbol of the form ompi_mpiext_<ext_name> and be
  * of type ompi_mpiext_component_t.
  */
-ompi_mpiext_component_t ompi_mpiext_example = {
-    example_init,
-    example_fini
-};
+ompi_mpiext_component_t ompi_mpiext_example = {example_init, example_fini};

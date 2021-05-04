@@ -10,28 +10,24 @@
  */
 
 #include "oshmem_config.h"
-#include "oshmem/shmem/fortran/bindings.h"
-#include "oshmem/include/shmem.h"
-#include "oshmem/constants.h"
-#include "oshmem/mca/spml/spml.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "oshmem/constants.h"
+#include "oshmem/include/shmem.h"
+#include "oshmem/mca/spml/spml.h"
+#include "oshmem/shmem/fortran/bindings.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#    include "oshmem/shmem/fortran/profile/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT8_WAIT, shmem_int8_wait)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#    include "oshmem/shmem/fortran/profile/defines.h"
 #endif
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
-        SHMEM_INT8_WAIT,
-        shmem_int8_wait_,
-        shmem_int8_wait__,
-        shmem_int8_wait_f,
-        (ompi_fortran_integer8_t *var, ompi_fortran_integer8_t *value),
-        (var,value))
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB(void, SHMEM_INT8_WAIT, shmem_int8_wait_, shmem_int8_wait__,
+                                    shmem_int8_wait_f,
+                                    (ompi_fortran_integer8_t * var, ompi_fortran_integer8_t *value),
+                                    (var, value))
 
 void shmem_int8_wait_f(ompi_fortran_integer8_t *var, ompi_fortran_integer8_t *value)
 {
-    MCA_SPML_CALL(wait((void*)var, SHMEM_CMP_NE, (void*)value, SHMEM_FINT8));
+    MCA_SPML_CALL(wait((void *) var, SHMEM_CMP_NE, (void *) value, SHMEM_FINT8));
 }
-

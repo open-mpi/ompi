@@ -26,14 +26,11 @@
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
-                     struct ompi_datatype_t *dtype,
-                     struct ompi_op_t *op,
-                     int root, struct ompi_communicator_t *comm,
-                     mca_coll_base_module_t *module)
+int mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+                         struct ompi_op_t *op, int root, struct ompi_communicator_t *comm,
+                         mca_coll_base_module_t *module)
 {
-    mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
+    mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t *) module;
     ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     const char *sbuf2;
@@ -42,9 +39,8 @@ mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
 
     bufsize = opal_datatype_span(&dtype->super, count, &gap);
 
-
-    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *)sbuf, NULL))) {
-        sbuf1 = (char*)malloc(bufsize);
+    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *) sbuf, NULL))) {
+        sbuf1 = (char *) malloc(bufsize);
         if (NULL == sbuf1) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -54,17 +50,17 @@ mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
     }
 
     if (opal_cuda_check_bufs(rbuf, NULL)) {
-        rbuf1 = (char*)malloc(bufsize);
+        rbuf1 = (char *) malloc(bufsize);
         if (NULL == rbuf1) {
-            if (NULL != sbuf1) free(sbuf1);
+            if (NULL != sbuf1)
+                free(sbuf1);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, bufsize);
         rbuf2 = rbuf; /* save away original buffer */
         rbuf = rbuf1 - gap;
     }
-    rc = s->c_coll.coll_reduce((void *) sbuf, rbuf, count,
-                               dtype, op, root, comm,
+    rc = s->c_coll.coll_reduce((void *) sbuf, rbuf, count, dtype, op, root, comm,
                                s->c_coll.coll_reduce_module);
 
     if (NULL != sbuf1) {

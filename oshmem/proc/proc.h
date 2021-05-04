@@ -15,15 +15,15 @@
 #define OSHMEM_PROC_PROC_H
 
 #include "oshmem_config.h"
-#include "oshmem/types.h"
 #include "oshmem/constants.h"
+#include "oshmem/types.h"
 
 #include "opal/class/opal_list.h"
-#include "opal/util/proc.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
+#include "opal/util/proc.h"
 
-#include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/proc/proc.h"
 
 #include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/runtime/runtime.h"
@@ -35,20 +35,19 @@ BEGIN_C_DECLS
 
 struct oshmem_group_t;
 
-#define OSHMEM_PE_INVALID   (-1)
+#define OSHMEM_PE_INVALID (-1)
 
 /* This struct will be copied into the padding field of an ompi_proc_t
  * so the size of oshmem_proc_data_t must be less or equal than
  * OMPI_PROC_PADDING_SIZE */
 struct oshmem_proc_data_t {
-    char * transport_ids;
+    char *transport_ids;
     int num_transports;
 };
 
 typedef struct oshmem_proc_data_t oshmem_proc_data_t;
 
-#define OSHMEM_PROC_DATA(proc) \
-    ((oshmem_proc_data_t *)(proc)->padding)
+#define OSHMEM_PROC_DATA(proc) ((oshmem_proc_data_t *) (proc)->padding)
 
 /**
  * Group of Open SHMEM processes structure
@@ -56,26 +55,25 @@ typedef struct oshmem_proc_data_t oshmem_proc_data_t;
  * Set of processes used in collective operations.
  */
 struct oshmem_group_t {
-    opal_object_t               base;
-    int                         id;             /**< index in global array */
-    int                         my_pe;
-    int                         proc_count;     /**< number of processes in group */
-    int                         is_member;   /* true if my_pe is part of the group, participate in collectives */
-    struct ompi_proc_t          **proc_array; /**< list of pointers to ompi_proc_t structures
-                                                   for each process in the group */
-    opal_list_t                 peer_list;
+    opal_object_t base;
+    int id; /**< index in global array */
+    int my_pe;
+    int proc_count; /**< number of processes in group */
+    int is_member;  /* true if my_pe is part of the group, participate in collectives */
+    struct ompi_proc_t **proc_array; /**< list of pointers to ompi_proc_t structures
+                                          for each process in the group */
+    opal_list_t peer_list;
 
     /* Collectives module interface and data */
     mca_scoll_base_group_scoll_t g_scoll;
-    ompi_communicator_t*         ompi_comm;
+    ompi_communicator_t *ompi_comm;
 };
 typedef struct oshmem_group_t oshmem_group_t;
 OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(oshmem_group_t);
 
-OSHMEM_DECLSPEC extern oshmem_group_t* oshmem_group_all;
-OSHMEM_DECLSPEC extern oshmem_group_t* oshmem_group_self;
-OSHMEM_DECLSPEC extern oshmem_group_t* oshmem_group_null;
-
+OSHMEM_DECLSPEC extern oshmem_group_t *oshmem_group_all;
+OSHMEM_DECLSPEC extern oshmem_group_t *oshmem_group_self;
+OSHMEM_DECLSPEC extern oshmem_group_t *oshmem_group_null;
 
 /* ******************************************************************** */
 
@@ -121,7 +119,7 @@ OSHMEM_DECLSPEC int oshmem_proc_finalize(void);
  */
 static inline ompi_proc_t *oshmem_proc_local(void)
 {
-    return (ompi_proc_t *)ompi_proc_local_proc;
+    return (ompi_proc_t *) ompi_proc_local_proc;
 }
 
 /**
@@ -137,7 +135,7 @@ static inline ompi_proc_t *oshmem_proc_local(void)
  */
 static inline ompi_proc_t *oshmem_proc_for_find(const ompi_process_name_t name)
 {
-    return (ompi_proc_t *)ompi_proc_for_name(name);
+    return (ompi_proc_t *) ompi_proc_for_name(name);
 }
 
 static inline ompi_proc_t *oshmem_proc_find(int pe)
@@ -151,11 +149,11 @@ static inline ompi_proc_t *oshmem_proc_find(int pe)
 
 static inline int oshmem_proc_pe(ompi_proc_t *proc)
 {
-    return (proc ? (int) ((ompi_process_name_t*)&proc->super.proc_name)->vpid : -1);
+    return (proc ? (int) ((ompi_process_name_t *) &proc->super.proc_name)->vpid : -1);
 }
 
-#define OSHMEM_PROC_JOBID(PROC)    (((ompi_process_name_t*)&((PROC)->super.proc_name))->jobid)
-#define OSHMEM_PROC_VPID(PROC)     (((ompi_process_name_t*)&((PROC)->super.proc_name))->vpid)
+#define OSHMEM_PROC_JOBID(PROC) (((ompi_process_name_t *) &((PROC)->super.proc_name))->jobid)
+#define OSHMEM_PROC_VPID(PROC)  (((ompi_process_name_t *) &((PROC)->super.proc_name))->vpid)
 
 /**
  * Initialize the OSHMEM process predefined groups
@@ -200,15 +198,13 @@ OSHMEM_DECLSPEC void oshmem_proc_group_finalize_scoll(void);
  * @return Array of pointers to proc instances in the current
  * known universe, or NULL if there is an internal failure.
  */
-OSHMEM_DECLSPEC oshmem_group_t *oshmem_proc_group_create(int pe_start,
-                                                         int pe_stride,
-                                                         int pe_size);
+OSHMEM_DECLSPEC oshmem_group_t *oshmem_proc_group_create(int pe_start, int pe_stride, int pe_size);
 
 /**
  * same as above but abort on failure
  */
-static inline oshmem_group_t *
-oshmem_proc_group_create_nofail(int pe_start, int pe_stride, int pe_size)
+static inline oshmem_group_t *oshmem_proc_group_create_nofail(int pe_start, int pe_stride,
+                                                              int pe_size)
 {
     oshmem_group_t *group;
 
@@ -219,29 +215,26 @@ oshmem_proc_group_create_nofail(int pe_start, int pe_stride, int pe_size)
     return group;
 
 fatal:
-    SHMEM_API_ERROR("Failed to create group (%d,%d,%d)",
-                    pe_start, pe_stride, pe_size);
+    SHMEM_API_ERROR("Failed to create group (%d,%d,%d)", pe_start, pe_stride, pe_size);
     oshmem_shmem_abort(-1);
     return NULL;
 }
-
 
 /**
  * Destroy processes group.
  *
  */
-OSHMEM_DECLSPEC void oshmem_proc_group_destroy(oshmem_group_t* group);
+OSHMEM_DECLSPEC void oshmem_proc_group_destroy(oshmem_group_t *group);
 
 static inline ompi_proc_t *oshmem_proc_group_all(int pe)
 {
     return oshmem_group_all->proc_array[pe];
 }
 
-static inline ompi_proc_t *oshmem_proc_group_find(oshmem_group_t* group,
-                                                    int pe)
+static inline ompi_proc_t *oshmem_proc_group_find(oshmem_group_t *group, int pe)
 {
     int i = 0;
-    ompi_proc_t* proc = NULL;
+    ompi_proc_t *proc = NULL;
 
     if (OPAL_LIKELY(group)) {
         if (OPAL_LIKELY(group == oshmem_group_all)) {
@@ -266,7 +259,7 @@ static inline ompi_proc_t *oshmem_proc_group_find(oshmem_group_t* group,
     return proc;
 }
 
-static inline int oshmem_proc_group_find_id(oshmem_group_t* group, int pe)
+static inline int oshmem_proc_group_find_id(oshmem_group_t *group, int pe)
 {
     int i = 0;
     int id = -1;
@@ -290,8 +283,8 @@ static inline int oshmem_proc_group_is_member(oshmem_group_t *group)
 
 static inline int oshmem_num_procs(void)
 {
-    return (oshmem_group_all ?
-        oshmem_group_all->proc_count : (int)opal_list_get_size(&ompi_proc_list));
+    return (oshmem_group_all ? oshmem_group_all->proc_count
+                             : (int) opal_list_get_size(&ompi_proc_list));
 }
 
 static inline int oshmem_my_proc_id(void)

@@ -10,29 +10,28 @@
  */
 
 #include "oshmem_config.h"
-#include "oshmem/shmem/fortran/bindings.h"
-#include "oshmem/include/shmem.h"
-#include "oshmem/shmem/shmem_api_logger.h"
-#include "oshmem/runtime/runtime.h"
-#include "oshmem/mca/spml/spml.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "oshmem/include/shmem.h"
+#include "oshmem/mca/spml/spml.h"
+#include "oshmem/runtime/runtime.h"
+#include "oshmem/shmem/fortran/bindings.h"
+#include "oshmem/shmem/shmem_api_logger.h"
 #include "stdio.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#    include "oshmem/shmem/fortran/profile/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_REAL_IGET, shmem_real_iget)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#    include "oshmem/shmem/fortran/profile/defines.h"
 #endif
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
-        SHMEM_REAL_IGET,
-        shmem_real_iget_,
-        shmem_real_iget__,
-        shmem_real_iget_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe),
-        (target,source,tst,sst,len,pe) )
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB(void, SHMEM_REAL_IGET, shmem_real_iget_, shmem_real_iget__,
+                                    shmem_real_iget_f,
+                                    (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source,
+                                     MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe),
+                                    (target, source, tst, sst, len, pe))
 
-void shmem_real_iget_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe)
+void shmem_real_iget_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst,
+                       MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe)
 {
     int i;
     int length = OMPI_FINT_2_INT(*len);
@@ -42,12 +41,11 @@ void shmem_real_iget_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_F
     size_t real_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_real.dt, &real_type_size);
 
-    for (i=0; i<length; i++)
-    {
-        MCA_SPML_CALL(get(oshmem_ctx_default, (uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * real_type_size,
-            real_type_size,
-            (uint8_t *)FPTR_2_VOID_PTR(target) + i * tst_c * real_type_size,
-            OMPI_FINT_2_INT(*pe)));
+    for (i = 0; i < length; i++) {
+        MCA_SPML_CALL(get(oshmem_ctx_default,
+                          (uint8_t *) FPTR_2_VOID_PTR(source) + i * sst_c * real_type_size,
+                          real_type_size,
+                          (uint8_t *) FPTR_2_VOID_PTR(target) + i * tst_c * real_type_size,
+                          OMPI_FINT_2_INT(*pe)));
     }
 }
-

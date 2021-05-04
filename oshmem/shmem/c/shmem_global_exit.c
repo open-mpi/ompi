@@ -15,9 +15,9 @@
 #include "oshmem/runtime/runtime.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_global_exit = pshmem_global_exit
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_global_exit = pshmem_global_exit
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 extern int oshmem_shmem_inglobalexit;

@@ -19,20 +19,17 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "sharedfp_sm.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
 
-int
-mca_sharedfp_sm_get_position(ompio_file_t *fh,
-                             OMPI_MPI_OFFSET_TYPE * offset)
+int mca_sharedfp_sm_get_position(ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE *offset)
 {
-    if(fh->f_sharedfp_data==NULL){
+    if (fh->f_sharedfp_data == NULL) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
                     "sharedfp_sm_write - module not initialized\n");
         return OMPI_ERROR;
@@ -42,5 +39,5 @@ mca_sharedfp_sm_get_position(ompio_file_t *fh,
      *returns the current offset w/o updating it
      */
 
-    return mca_sharedfp_sm_request_position(fh,0,offset);
+    return mca_sharedfp_sm_request_position(fh, 0, offset);
 }

@@ -21,11 +21,11 @@
 #include "opal/runtime/opal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_init_thread = PMPI_T_init_thread
+#    pragma weak MPI_T_init_thread = PMPI_T_init_thread
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
 extern opal_mutex_t ompi_mpit_big_lock;
@@ -33,12 +33,11 @@ extern opal_mutex_t ompi_mpit_big_lock;
 extern volatile uint32_t ompi_mpit_init_count;
 extern volatile int32_t initted;
 
-
-int MPI_T_init_thread (int required, int *provided)
+int MPI_T_init_thread(int required, int *provided)
 {
     int rc = MPI_SUCCESS;
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     do {
         if (0 != ompi_mpit_init_count++) {
@@ -46,14 +45,14 @@ int MPI_T_init_thread (int required, int *provided)
         }
 
         /* call opal_init_util to intialize the MCA system */
-        rc = opal_init_util (NULL, NULL);
+        rc = opal_init_util(NULL, NULL);
         if (OPAL_SUCCESS != rc) {
             rc = MPI_T_ERR_INVALID;
             break;
         }
 
         /* register all parameters */
-        rc = ompi_info_register_framework_params (NULL);
+        rc = ompi_info_register_framework_params(NULL);
         if (OMPI_SUCCESS != rc) {
             rc = MPI_T_ERR_INVALID;
             break;
@@ -61,10 +60,10 @@ int MPI_T_init_thread (int required, int *provided)
 
         /* determine the thread level. TODO -- this might
            be wrong */
-        ompi_mpi_thread_level (required, provided);
+        ompi_mpi_thread_level(required, provided);
     } while (0);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return rc;
 }

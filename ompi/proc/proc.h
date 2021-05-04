@@ -24,7 +24,6 @@
  * $HEADER$
  */
 
-
 /** @file
  * Process identification structure interface
  *
@@ -39,15 +38,13 @@
 #include "ompi_config.h"
 #include "ompi/types.h"
 
-#include "opal/util/proc.h"
-#include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_rte.h"
-
+#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
 /* ******************************************************************** */
-
 
 /**
  * Remote Open MPI process structure
@@ -71,15 +68,15 @@ BEGIN_C_DECLS
 #define OMPI_PROC_PADDING_SIZE 16
 
 struct ompi_proc_t {
-    opal_proc_t                     super;
+    opal_proc_t super;
 
     /** Is the process active? Used for OPAL_ENABLE_FT_MPI */
-    bool                            proc_active;
+    bool proc_active;
 
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
 
-    /* for future extensions 
+    /* for future extensions
      * Note that OSHMEM also uses this area, and requires it be pointer
      * aligned; thus, the preceding field in the structure must be a pointer.
      */
@@ -87,7 +84,6 @@ struct ompi_proc_t {
 };
 typedef struct ompi_proc_t ompi_proc_t;
 OBJ_CLASS_DECLARATION(ompi_proc_t);
-
 
 /**
  * @private
@@ -98,11 +94,10 @@ OBJ_CLASS_DECLARATION(ompi_proc_t);
  * within this header file to access the local process quickly.
  * Please use ompi_proc_local() instead.
  */
-OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
-OMPI_DECLSPEC extern opal_list_t  ompi_proc_list;
+OMPI_DECLSPEC extern ompi_proc_t *ompi_proc_local_proc;
+OMPI_DECLSPEC extern opal_list_t ompi_proc_list;
 
 /* ******************************************************************** */
-
 
 /**
  * Initialize the OMPI process subsystem
@@ -144,7 +139,7 @@ OMPI_DECLSPEC int ompi_proc_complete_init(void);
  * @retval OMPI_SUCCESS All information correctly set.
  * @retval OMPI_ERROR   Some info could not be initialized.
  */
-OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc);
+OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t *proc);
 
 /**
  * Finalize the OMPI Process subsystem
@@ -156,7 +151,6 @@ OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc);
  * @retval OMPI_SUCCESS  System successfully finalized
  */
 OMPI_DECLSPEC int ompi_proc_finalize(void);
-
 
 /**
  * Returns the list of proc instances associated with this job.
@@ -179,7 +173,7 @@ OMPI_DECLSPEC int ompi_proc_finalize(void);
  * @return Array of pointers to proc instances in the current
  * MPI_COMM_WORLD, or NULL if there is an internal failure.
  */
-OMPI_DECLSPEC ompi_proc_t** ompi_proc_world(size_t* size);
+OMPI_DECLSPEC ompi_proc_t **ompi_proc_world(size_t *size);
 
 /**
  * Returns the number of processes in the associated with this job.
@@ -190,7 +184,7 @@ OMPI_DECLSPEC ompi_proc_t** ompi_proc_world(size_t* size);
  * MPI_COMM_WORLD.
  */
 
-OMPI_DECLSPEC int ompi_proc_world_size (void);
+OMPI_DECLSPEC int ompi_proc_world_size(void);
 
 /**
  * Returns the list of proc instances associated with this job.
@@ -210,7 +204,7 @@ OMPI_DECLSPEC int ompi_proc_world_size (void);
  * @return Array of pointers to allocated proc instances in the current
  * MPI_COMM_WORLD, or NULL if there is an internal failure.
  */
-OMPI_DECLSPEC ompi_proc_t **ompi_proc_get_allocated (size_t *size);
+OMPI_DECLSPEC ompi_proc_t **ompi_proc_get_allocated(size_t *size);
 
 /**
  * Returns the list of all known proc instances.
@@ -230,8 +224,7 @@ OMPI_DECLSPEC ompi_proc_t **ompi_proc_get_allocated (size_t *size);
  * @return Array of pointers to proc instances in the current
  * known universe, or NULL if there is an internal failure.
  */
-OMPI_DECLSPEC ompi_proc_t** ompi_proc_all(size_t* size);
-
+OMPI_DECLSPEC ompi_proc_t **ompi_proc_all(size_t *size);
 
 /**
  * Returns a list of the local process
@@ -249,8 +242,7 @@ OMPI_DECLSPEC ompi_proc_t** ompi_proc_all(size_t* size);
  * @return Array of pointers to proc instances in the current
  * known universe, or NULL if there is an internal failure.
  */
-OMPI_DECLSPEC ompi_proc_t** ompi_proc_self(size_t* size);
-
+OMPI_DECLSPEC ompi_proc_t **ompi_proc_self(size_t *size);
 
 /**
  * Returns a pointer to the local process
@@ -261,11 +253,10 @@ OMPI_DECLSPEC ompi_proc_t** ompi_proc_self(size_t* size);
  *
  * @return Pointer to the local process structure
  */
-static inline ompi_proc_t* ompi_proc_local(void)
+static inline ompi_proc_t *ompi_proc_local(void)
 {
     return ompi_proc_local_proc;
 }
-
 
 /**
  * Returns the proc instance for a given name
@@ -277,10 +268,10 @@ static inline ompi_proc_t* ompi_proc_local(void)
  * @param[in] name     The process name to look for
  *
  * @return Pointer to the process instance for \c name
-*/
-OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const ompi_process_name_t* name );
+ */
+OMPI_DECLSPEC ompi_proc_t *ompi_proc_find(const ompi_process_name_t *name);
 
-OMPI_DECLSPEC ompi_proc_t * ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew);
+OMPI_DECLSPEC ompi_proc_t *ompi_proc_find_and_add(const ompi_process_name_t *name, bool *isnew);
 
 /**
  * Pack proc list into portable buffer
@@ -300,10 +291,7 @@ OMPI_DECLSPEC ompi_proc_t * ompi_proc_find_and_add(const ompi_process_name_t * n
  * @retval OMPI_SUCCESS    Success
  * @retval OMPI_ERROR      Unspecified error
  */
-OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist,
-                                 int proclistsize,
-                                 pmix_data_buffer_t *buf);
-
+OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, pmix_data_buffer_t *buf);
 
 /**
  * Unpack a portable buffer of procs
@@ -344,10 +332,8 @@ OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist,
  *   OMPI_SUCCESS               on success
  *   OMPI_ERROR                 else
  */
-OMPI_DECLSPEC int ompi_proc_unpack(pmix_data_buffer_t *buf,
-                                   int proclistsize,
-                                   ompi_proc_t ***proclist,
-                                   int *newproclistsize,
+OMPI_DECLSPEC int ompi_proc_unpack(pmix_data_buffer_t *buf, int proclistsize,
+                                   ompi_proc_t ***proclist, int *newproclistsize,
                                    ompi_proc_t ***newproclist);
 
 /**
@@ -380,15 +366,14 @@ OMPI_DECLSPEC int ompi_proc_refresh(void);
  * added to any communicator. ompi_comm_peer_lookup is responsible for caching
  * the ompi_proc_t on a communicator.
  */
-OMPI_DECLSPEC opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name);
+OMPI_DECLSPEC opal_proc_t *ompi_proc_for_name(const opal_process_name_t proc_name);
 
-
-OMPI_DECLSPEC opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name);
+OMPI_DECLSPEC opal_proc_t *ompi_proc_lookup(const opal_process_name_t proc_name);
 
 /**
  * Check if an ompi_proc_t is a sentinel
  */
-static inline bool ompi_proc_is_sentinel (ompi_proc_t *proc)
+static inline bool ompi_proc_is_sentinel(ompi_proc_t *proc)
 {
     return (intptr_t) proc & 0x1;
 }
@@ -404,70 +389,78 @@ static inline bool ompi_proc_is_sentinel (ompi_proc_t *proc)
  * - bits 16-31 : job family
  * - bits 32-63 : vpid
  */
-static inline uintptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
+static inline uintptr_t ompi_proc_name_to_sentinel(opal_process_name_t name)
 {
     uintptr_t tmp, sentinel = 0;
     /* local jobid must fit in 15 bits */
-    assert(! (OMPI_LOCAL_JOBID(name.jobid) & 0x8000));
+    assert(!(OMPI_LOCAL_JOBID(name.jobid) & 0x8000));
     sentinel |= 0x1;
-    tmp = (uintptr_t)OMPI_LOCAL_JOBID(name.jobid);
+    tmp = (uintptr_t) OMPI_LOCAL_JOBID(name.jobid);
     sentinel |= ((tmp << 1) & 0xfffe);
-    tmp = (uintptr_t)OMPI_JOB_FAMILY(name.jobid);
+    tmp = (uintptr_t) OMPI_JOB_FAMILY(name.jobid);
     sentinel |= ((tmp << 16) & 0xffff0000);
-    tmp = (uintptr_t)name.vpid;
+    tmp = (uintptr_t) name.vpid;
     sentinel |= ((tmp << 32) & 0xffffffff00000000);
     return sentinel;
 }
 
-static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel)
+static inline opal_process_name_t ompi_proc_sentinel_to_name(uintptr_t sentinel)
 {
-  opal_process_name_t name;
-  uint32_t local, family;
-  uint32_t vpid;
-  assert(sentinel & 0x1);
-  local = (sentinel >> 1) & 0x7fff;
-  family = (sentinel >> 16) & 0xffff;
-  vpid = (sentinel >> 32) & 0xffffffff;
-  name.jobid = OMPI_CONSTRUCT_JOBID(family,local);
-  name.vpid = vpid;
-  return name;
+    opal_process_name_t name;
+    uint32_t local, family;
+    uint32_t vpid;
+    assert(sentinel & 0x1);
+    local = (sentinel >> 1) & 0x7fff;
+    family = (sentinel >> 16) & 0xffff;
+    vpid = (sentinel >> 32) & 0xffffffff;
+    name.jobid = OMPI_CONSTRUCT_JOBID(family, local);
+    name.vpid = vpid;
+    return name;
 }
 #elif 4 == SIZEOF_VOID_P
 /*
  * currently, a sentinel is only made from the current jobid aka OMPI_PROC_MY_NAME->jobid
  * so we only store the first 31 bits of the vpid
  */
-static inline uintptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
+static inline uintptr_t ompi_proc_name_to_sentinel(opal_process_name_t name)
 {
     assert(OMPI_PROC_MY_NAME->jobid == name.jobid);
-    return (uintptr_t)((name.vpid <<1) | 0x1);
+    return (uintptr_t)((name.vpid << 1) | 0x1);
 }
 
-static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel)
+static inline opal_process_name_t ompi_proc_sentinel_to_name(uintptr_t sentinel)
 {
-  opal_process_name_t name;
-  name.jobid = OMPI_PROC_MY_NAME->jobid;
-  name.vpid = sentinel >> 1;
-  return name;
+    opal_process_name_t name;
+    name.jobid = OMPI_PROC_MY_NAME->jobid;
+    name.vpid = sentinel >> 1;
+    return name;
 }
 #else
-#error unsupported pointer size
+#    error unsupported pointer size
 #endif
 
 #if OPAL_ENABLE_FT_MPI
-static inline bool ompi_proc_is_active(ompi_proc_t *proc) {
-    assert( NULL != proc );
-    assert( !ompi_proc_is_sentinel(proc) );
+static inline bool ompi_proc_is_active(ompi_proc_t *proc)
+{
+    assert(NULL != proc);
+    assert(!ompi_proc_is_sentinel(proc));
     return (proc->proc_active);
 }
 
 /* Made a function, so we can do something smarter in the future */
-static inline void ompi_proc_mark_as_failed(ompi_proc_t *proc) {
-    assert( NULL != proc );
-    assert( !ompi_proc_is_sentinel(proc) );
-    if( proc == ompi_proc_local() ) {
-        opal_output(0, "%s %s: I have been reported dead by someone else. This is abnormal: since the current rank is executing this code, the failure detector made a mistake. The root cause may be that this rank missed its heartbeat send deadlines, or that the observer process got very slow. One way to resolve such issues is to increase the detector timeout, or enable the threaded detector. This is abnormal; Aborting.",
-                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__);
+static inline void ompi_proc_mark_as_failed(ompi_proc_t *proc)
+{
+    assert(NULL != proc);
+    assert(!ompi_proc_is_sentinel(proc));
+    if (proc == ompi_proc_local()) {
+        opal_output(
+            0,
+            "%s %s: I have been reported dead by someone else. This is abnormal: since the current "
+            "rank is executing this code, the failure detector made a mistake. The root cause may "
+            "be that this rank missed its heartbeat send deadlines, or that the observer process "
+            "got very slow. One way to resolve such issues is to increase the detector timeout, or "
+            "enable the threaded detector. This is abnormal; Aborting.",
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__);
         abort();
     }
     proc->proc_active = false;

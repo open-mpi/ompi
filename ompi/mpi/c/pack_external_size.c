@@ -24,32 +24,28 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Pack_external_size = PMPI_Pack_external_size
-#endif
-#define MPI_Pack_external_size PMPI_Pack_external_size
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Pack_external_size = PMPI_Pack_external_size
+#    endif
+#    define MPI_Pack_external_size PMPI_Pack_external_size
 #endif
 
 static const char FUNC_NAME[] = "MPI_Pack_external_size";
 
-
-int MPI_Pack_external_size(const char datarep[], int incount,
-                           MPI_Datatype datatype, MPI_Aint *size)
+int MPI_Pack_external_size(const char datarep[], int incount, MPI_Datatype datatype, MPI_Aint *size)
 {
     int rc = MPI_SUCCESS;
 
-    MEMCHECKER(
-        memchecker_datatype(datatype);
-    );
+    MEMCHECKER(memchecker_datatype(datatype););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -60,8 +56,7 @@ int MPI_Pack_external_size(const char datarep[], int incount,
         }
     }
 
-    rc = ompi_datatype_pack_external_size(datarep, incount,
-                                          datatype, size);
+    rc = ompi_datatype_pack_external_size(datarep, incount, datatype, size);
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

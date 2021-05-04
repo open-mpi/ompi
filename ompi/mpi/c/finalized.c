@@ -22,21 +22,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/hook/base/base.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Finalized = PMPI_Finalized
-#endif
-#define MPI_Finalized PMPI_Finalized
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Finalized = PMPI_Finalized
+#    endif
+#    define MPI_Finalized PMPI_Finalized
 #endif
 
 static const char FUNC_NAME[] = "MPI_Finalized";
-
 
 int MPI_Finalized(int *flag)
 {
@@ -51,16 +50,14 @@ int MPI_Finalized(int *flag)
                whether we're currently (after MPI_Init and before
                MPI_Finalize) or not */
 
-            if (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
-                state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                              FUNC_NAME);
+            if (state >= OMPI_MPI_STATE_INIT_COMPLETED
+                && state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
             } else {
                 /* We have no MPI object here so call ompi_errhandle_invoke
                  * directly */
                 return ompi_errhandler_invoke(NULL, NULL, -1,
-                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG),
-                                              FUNC_NAME);
+                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG), FUNC_NAME);
             }
         }
     }

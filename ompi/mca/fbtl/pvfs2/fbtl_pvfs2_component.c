@@ -33,8 +33,8 @@
 /*
  * Public string showing the fbtl pvfs2 component version number
  */
-const char *mca_fbtl_pvfs2_component_version_string =
-  "OMPI/MPI pvfs2 FBTL MCA component version " OMPI_VERSION;
+const char *mca_fbtl_pvfs2_component_version_string
+    = "OMPI/MPI pvfs2 FBTL MCA component version " OMPI_VERSION;
 
 int mca_fbtl_pvfs2_priority = 0;
 

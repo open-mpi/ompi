@@ -17,13 +17,13 @@
 #include "oshmem/proc/proc.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_n_pes = pshmem_n_pes
-#pragma weak shmem_my_pe = pshmem_my_pe
-#pragma weak shmem_query_thread = pshmem_query_thread
-#pragma weak _num_pes = p_num_pes
-#pragma weak _my_pe = p_my_pe
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_n_pes = pshmem_n_pes
+#    pragma weak shmem_my_pe = pshmem_my_pe
+#    pragma weak shmem_query_thread = pshmem_query_thread
+#    pragma weak _num_pes = p_num_pes
+#    pragma weak _my_pe = p_my_pe
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 int _num_pes(void)

@@ -1184,7 +1184,7 @@ void mca_common_wait_stream_synchronize(mca_rcache_common_cuda_reg_t *rget_reg)
 #if OPAL_CUDA_SYNC_MEMOPS
     /* No need for any of this with SYNC_MEMOPS feature */
     return;
-#else /* OPAL_CUDA_SYNC_MEMOPS */
+#else  /* OPAL_CUDA_SYNC_MEMOPS */
     CUipcEventHandle evtHandle;
     CUevent event;
     CUresult result;
@@ -1731,7 +1731,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
     }
     /* Must be a device pointer */
     assert(memType == CU_MEMORYTYPE_DEVICE);
-#else /* OPAL_CUDA_GET_ATTRIBUTES */
+#else  /* OPAL_CUDA_GET_ATTRIBUTES */
     res = cuFunc.cuPointerGetAttribute(&memType, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
     if (res != CUDA_SUCCESS) {
         /* If we cannot determine it is device pointer,

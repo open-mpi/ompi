@@ -4,9 +4,9 @@
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #define _GNU_SOURCE
@@ -16,23 +16,21 @@
 #include <unistd.h>
 
 #include "oshmem_config.h"
-#include "shmem.h"
-#include "oshmem/runtime/params.h"
-#include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/base/base.h"
-#include "spml_ucx_component.h"
+#include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/ucx/spml_ucx.h"
+#include "oshmem/runtime/params.h"
+#include "shmem.h"
+#include "spml_ucx_component.h"
 
-#include "opal/util/opal_environ.h"
 #include "opal/runtime/opal_progress_threads.h"
+#include "opal/util/opal_environ.h"
 
 static int mca_spml_ucx_component_register(void);
 static int mca_spml_ucx_component_open(void);
 static int mca_spml_ucx_component_close(void);
-static mca_spml_base_module_t*
-mca_spml_ucx_component_init(int* priority,
-                              bool enable_progress_threads,
-                              bool enable_mpi_threads);
+static mca_spml_base_module_t *
+mca_spml_ucx_component_init(int *priority, bool enable_progress_threads, bool enable_mpi_threads);
 static int mca_spml_ucx_component_fini(void);
 mca_spml_base_component_2_0_0_t mca_spml_ucx_component = {
 
@@ -60,125 +58,100 @@ mca_spml_base_component_2_0_0_t mca_spml_ucx_component = {
     .spmlm_finalize                    = mca_spml_ucx_component_fini
 };
 
-static inline void mca_spml_ucx_param_register_ulong(const char* param_name,
-                                                    unsigned long default_value,
-                                                    const char *help_msg,
-                                                    unsigned long *storage)
+static inline void mca_spml_ucx_param_register_ulong(const char *param_name,
+                                                     unsigned long default_value,
+                                                     const char *help_msg, unsigned long *storage)
 {
     *storage = default_value;
-    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version,
-                                           param_name,
-                                           help_msg,
-                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           storage);
+    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version, param_name,
+                                           help_msg, MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY, storage);
 }
 
-static inline void mca_spml_ucx_param_register_uint(const char* param_name,
+static inline void mca_spml_ucx_param_register_uint(const char *param_name,
                                                     unsigned int default_value,
-                                                    const char *help_msg,
-                                                    unsigned int *storage)
+                                                    const char *help_msg, unsigned int *storage)
 {
     *storage = default_value;
-    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version,
-                                           param_name,
-                                           help_msg,
-                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           storage);
+    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version, param_name,
+                                           help_msg, MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY, storage);
 }
 
-static inline void mca_spml_ucx_param_register_int(const char* param_name,
-                                                    int default_value,
-                                                    const char *help_msg,
-                                                    int *storage)
+static inline void mca_spml_ucx_param_register_int(const char *param_name, int default_value,
+                                                   const char *help_msg, int *storage)
 {
     *storage = default_value;
-    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version,
-                                           param_name,
-                                           help_msg,
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           storage);
+    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version, param_name,
+                                           help_msg, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY, storage);
 }
 
-static inline void  mca_spml_ucx_param_register_string(const char* param_name,
-                                                    char* default_value,
-                                                    const char *help_msg,
-                                                    char **storage)
+static inline void mca_spml_ucx_param_register_string(const char *param_name, char *default_value,
+                                                      const char *help_msg, char **storage)
 {
     *storage = default_value;
-    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version,
-                                           param_name,
-                                           help_msg,
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           storage);
+    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version, param_name,
+                                           help_msg, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY, storage);
 }
 
-static inline void  mca_spml_ucx_param_register_bool(const char* param_name,
-                                                     bool default_value,
-                                                     const char *help_msg,
-                                                     bool *storage)
+static inline void mca_spml_ucx_param_register_bool(const char *param_name, bool default_value,
+                                                    const char *help_msg, bool *storage)
 {
     *storage = default_value;
-    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version,
-                                           param_name,
-                                           help_msg,
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           storage);
+    (void) mca_base_component_var_register(&mca_spml_ucx_component.spmlm_version, param_name,
+                                           help_msg, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY, storage);
 }
 
 static int mca_spml_ucx_component_register(void)
 {
-    mca_spml_ucx_param_register_int("priority", 21,
-                                    "[integer] ucx priority",
+    mca_spml_ucx_param_register_int("priority", 21, "[integer] ucx priority",
                                     &mca_spml_ucx.priority);
 
-    mca_spml_ucx_param_register_int("num_disconnect", 1,
-                                    "How may disconnects go in parallel",
+    mca_spml_ucx_param_register_int("num_disconnect", 1, "How may disconnects go in parallel",
                                     &mca_spml_ucx.num_disconnect);
 
     mca_spml_ucx_param_register_int("heap_reg_nb", 0,
                                     "Use non-blocking memory registration for shared heap",
                                     &mca_spml_ucx.heap_reg_nb);
 
-    mca_spml_ucx_param_register_bool("async_progress", 0,
-                                     "Enable asynchronous progress thread",
+    mca_spml_ucx_param_register_bool("async_progress", 0, "Enable asynchronous progress thread",
                                      &mca_spml_ucx.async_progress);
 
     mca_spml_ucx_param_register_int("async_tick_usec", 3000,
                                     "Asynchronous progress tick granularity (in usec)",
                                     &mca_spml_ucx.async_tick);
 
-    mca_spml_ucx_param_register_bool("synchronized_quiet", 0,
-                                     "Use synchronized quiet on shmem_quiet or shmem_barrier_all operations",
-                                     &mca_spml_ucx_ctx_default.synchronized_quiet);
+    mca_spml_ucx_param_register_bool(
+        "synchronized_quiet", 0,
+        "Use synchronized quiet on shmem_quiet or shmem_barrier_all operations",
+        &mca_spml_ucx_ctx_default.synchronized_quiet);
 
-    mca_spml_ucx_param_register_ulong("nb_progress_thresh_global", 0,
-                                    "Number of nb_put or nb_get operations before ucx progress is triggered. Disabled by default (0). Setting this value will override nb_put/get_progress_thresh.",
-                                    &mca_spml_ucx.nb_progress_thresh_global);
+    mca_spml_ucx_param_register_ulong(
+        "nb_progress_thresh_global", 0,
+        "Number of nb_put or nb_get operations before ucx progress is triggered. Disabled by "
+        "default (0). Setting this value will override nb_put/get_progress_thresh.",
+        &mca_spml_ucx.nb_progress_thresh_global);
 
-    mca_spml_ucx_param_register_ulong("nb_put_progress_thresh", 2048,
-                                    "Number of nb_put operations before ucx progress is triggered. Default (2048).",
-                                    &mca_spml_ucx.nb_put_progress_thresh);
+    mca_spml_ucx_param_register_ulong(
+        "nb_put_progress_thresh", 2048,
+        "Number of nb_put operations before ucx progress is triggered. Default (2048).",
+        &mca_spml_ucx.nb_put_progress_thresh);
 
-    mca_spml_ucx_param_register_ulong("nb_get_progress_thresh", 4096,
-                                    "Number of nb_get operations before ucx progress is triggered. Default (4096).",
-                                    &mca_spml_ucx.nb_get_progress_thresh);
+    mca_spml_ucx_param_register_ulong(
+        "nb_get_progress_thresh", 4096,
+        "Number of nb_get operations before ucx progress is triggered. Default (4096).",
+        &mca_spml_ucx.nb_get_progress_thresh);
 
-    mca_spml_ucx_param_register_ulong("nb_ucp_worker_progress", 32,
-                                    "Maximum number of ucx worker progress calls if triggered during nb_put or nb_get",
-                                    &mca_spml_ucx.nb_ucp_worker_progress);
+    mca_spml_ucx_param_register_ulong(
+        "nb_ucp_worker_progress", 32,
+        "Maximum number of ucx worker progress calls if triggered during nb_put or nb_get",
+        &mca_spml_ucx.nb_ucp_worker_progress);
     mca_spml_ucx_param_register_uint("default_ctx_ucp_workers", 1,
-                                    "Number of ucp workers per default context",
-                                    &mca_spml_ucx.ucp_workers);
+                                     "Number of ucp workers per default context",
+                                     &mca_spml_ucx.ucp_workers);
 
     opal_common_ucx_mca_var_register(&mca_spml_ucx_component.spmlm_version);
 
@@ -196,7 +169,7 @@ int spml_ucx_ctx_progress(void)
 
 int spml_ucx_default_progress(void)
 {
-    unsigned int i=0;
+    unsigned int i = 0;
     int completed = 0;
     for (i = 0; i < mca_spml_ucx.ucp_workers; i++) {
         completed += ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker[i]);
@@ -232,7 +205,7 @@ void mca_spml_ucx_async_cb(int fd, short event, void *cbdata)
 
     do {
         count = ucp_worker_progress(mca_spml_ucx.aux_ctx->ucp_worker[0]);
-    }  while (count);
+    } while (count);
 
     pthread_spin_unlock(&mca_spml_ucx.async_lock);
 }
@@ -265,12 +238,9 @@ static int spml_ucx_init(void)
     opal_common_ucx_mca_register();
 
     memset(&params, 0, sizeof(params));
-    params.field_mask        = UCP_PARAM_FIELD_FEATURES          |
-                               UCP_PARAM_FIELD_ESTIMATED_NUM_EPS |
-                               UCP_PARAM_FIELD_MT_WORKERS_SHARED;
-    params.features          = UCP_FEATURE_RMA   |
-                               UCP_FEATURE_AMO32 |
-                               UCP_FEATURE_AMO64;
+    params.field_mask = UCP_PARAM_FIELD_FEATURES | UCP_PARAM_FIELD_ESTIMATED_NUM_EPS
+                        | UCP_PARAM_FIELD_MT_WORKERS_SHARED;
+    params.features = UCP_FEATURE_RMA | UCP_FEATURE_AMO32 | UCP_FEATURE_AMO64;
     params.estimated_num_eps = ompi_proc_world_size();
     if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE) {
         params.mt_workers_shared = 1;
@@ -280,7 +250,7 @@ static int spml_ucx_init(void)
 
 #if HAVE_DECL_UCP_PARAM_FIELD_ESTIMATED_NUM_PPN
     params.estimated_num_ppn = opal_process_info.num_local_peers + 1;
-    params.field_mask       |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
+    params.field_mask |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
 #endif
 
     err = ucp_init(&params, ucp_config, &mca_spml_ucx.ucp_context);
@@ -295,13 +265,14 @@ static int spml_ucx_init(void)
         return OSHMEM_ERROR;
     }
 
-    if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE &&
-        attr.thread_mode != UCS_THREAD_MODE_MULTI) {
+    if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE
+        && attr.thread_mode != UCS_THREAD_MODE_MULTI) {
         oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
     }
 
     mca_spml_ucx.active_array.ctxs_count = mca_spml_ucx.idle_array.ctxs_count = 0;
-    mca_spml_ucx.active_array.ctxs_num = mca_spml_ucx.idle_array.ctxs_num = MCA_SPML_UCX_CTXS_ARRAY_SIZE;
+    mca_spml_ucx.active_array.ctxs_num = mca_spml_ucx.idle_array.ctxs_num
+        = MCA_SPML_UCX_CTXS_ARRAY_SIZE;
     mca_spml_ucx.active_array.ctxs = calloc(mca_spml_ucx.active_array.ctxs_num,
                                             sizeof(mca_spml_ucx_ctx_t *));
     mca_spml_ucx.idle_array.ctxs = calloc(mca_spml_ucx.idle_array.ctxs_num,
@@ -310,13 +281,13 @@ static int spml_ucx_init(void)
     SHMEM_MUTEX_INIT(mca_spml_ucx.internal_mutex);
     pthread_mutex_init(&mca_spml_ucx.ctx_create_mutex, NULL);
 
-    wkr_params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
+    wkr_params.field_mask = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE) {
         wkr_params.thread_mode = UCS_THREAD_MODE_MULTI;
     } else {
         wkr_params.thread_mode = UCS_THREAD_MODE_SINGLE;
     }
-    
+
     mca_spml_ucx_ctx_default.ucp_worker = calloc(mca_spml_ucx.ucp_workers, sizeof(ucp_worker_h));
     for (i = 0; i < mca_spml_ucx.ucp_workers; i++) {
         err = ucp_worker_create(mca_spml_ucx.ucp_context, &wkr_params,
@@ -330,8 +301,8 @@ static int spml_ucx_init(void)
     wrk_attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
     err = ucp_worker_query(mca_spml_ucx_ctx_default.ucp_worker[0], &wrk_attr);
 
-    if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE &&
-        wrk_attr.thread_mode != UCS_THREAD_MODE_MULTI) {
+    if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE
+        && wrk_attr.thread_mode != UCS_THREAD_MODE_MULTI) {
         oshmem_mpi_thread_provided = SHMEM_THREAD_SINGLE;
     }
 
@@ -344,11 +315,11 @@ static int spml_ucx_init(void)
         }
 
         mca_spml_ucx.tick_event = opal_event_alloc();
-        opal_event_set(mca_spml_ucx.async_event_base, mca_spml_ucx.tick_event,
-                       -1, EV_PERSIST, mca_spml_ucx_async_cb, NULL);
+        opal_event_set(mca_spml_ucx.async_event_base, mca_spml_ucx.tick_event, -1, EV_PERSIST,
+                       mca_spml_ucx_async_cb, NULL);
     }
 
-    mca_spml_ucx.aux_ctx    = NULL;
+    mca_spml_ucx.aux_ctx = NULL;
     mca_spml_ucx.aux_refcnt = 0;
 
     if (mca_spml_ucx.nb_progress_thresh_global) {
@@ -367,21 +338,19 @@ static int spml_ucx_init(void)
     return OSHMEM_SUCCESS;
 }
 
-static mca_spml_base_module_t*
-mca_spml_ucx_component_init(int* priority,
-                              bool enable_progress_threads,
-                              bool enable_mpi_threads)
+static mca_spml_base_module_t *
+mca_spml_ucx_component_init(int *priority, bool enable_progress_threads, bool enable_mpi_threads)
 {
-    SPML_UCX_VERBOSE( 10, "in ucx, my priority is %d\n", mca_spml_ucx.priority);
+    SPML_UCX_VERBOSE(10, "in ucx, my priority is %d\n", mca_spml_ucx.priority);
 
     if ((*priority) > mca_spml_ucx.priority) {
         *priority = mca_spml_ucx.priority;
-        return NULL ;
+        return NULL;
     }
     *priority = mca_spml_ucx.priority;
 
     if (OSHMEM_SUCCESS != spml_ucx_init())
-        return NULL ;
+        return NULL;
 
     SPML_UCX_VERBOSE(50, "*** ucx initialized ****");
     return &mca_spml_ucx.super;
@@ -401,14 +370,13 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
             }
         }
 
-        del_procs[i].ep   = ctx->ucp_peers[i].ucp_conn;
+        del_procs[i].ep = ctx->ucp_peers[i].ucp_conn;
         del_procs[i].vpid = i;
         ctx->ucp_peers[i].ucp_conn = NULL;
     }
 
     opal_common_ucx_del_procs_nofence(del_procs, nprocs, oshmem_my_proc_id(),
-                                      mca_spml_ucx.num_disconnect,
-                                      ctx->ucp_worker[0]);
+                                      mca_spml_ucx.num_disconnect, ctx->ucp_worker[0]);
     free(del_procs);
     mca_spml_ucx_clear_put_op_mask(ctx);
     free(ctx->ucp_peers);
@@ -424,7 +392,7 @@ static int mca_spml_ucx_component_fini(void)
         opal_progress_unregister(spml_ucx_ctx_progress);
     }
 
-    if(!mca_spml_ucx.enabled)
+    if (!mca_spml_ucx.enabled)
         return OSHMEM_SUCCESS; /* never selected.. return success.. */
 
     if (mca_spml_ucx.async_progress) {
@@ -446,7 +414,6 @@ static int mca_spml_ucx_component_fini(void)
         _ctx_cleanup(mca_spml_ucx.idle_array.ctxs[i]);
     }
 
-
     ret = opal_common_ucx_mca_pmix_fence_nb(&fenced);
     if (OPAL_SUCCESS != ret) {
         return ret;
@@ -460,8 +427,8 @@ static int mca_spml_ucx_component_fini(void)
         for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
             ucp_worker_progress(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker[0]);
         }
-        
-        for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
+
+        for (i = 0; i < (signed int) mca_spml_ucx.ucp_workers; i++) {
             ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker[i]);
         }
 
@@ -484,7 +451,7 @@ static int mca_spml_ucx_component_fini(void)
     }
 
     if (mca_spml_ucx_ctx_default.ucp_worker) {
-        for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
+        for (i = 0; i < (signed int) mca_spml_ucx.ucp_workers; i++) {
             ucp_worker_destroy(mca_spml_ucx_ctx_default.ucp_worker[i]);
         }
         free(mca_spml_ucx_ctx_default.ucp_worker);
@@ -495,7 +462,7 @@ static int mca_spml_ucx_component_fini(void)
         free(mca_spml_ucx.aux_ctx->ucp_worker);
     }
 
-    mca_spml_ucx.enabled = false;  /* not anymore */
+    mca_spml_ucx.enabled = false; /* not anymore */
 
     free(mca_spml_ucx.active_array.ctxs);
     free(mca_spml_ucx.idle_array.ctxs);

@@ -11,23 +11,22 @@
  */
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/proc/proc.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/proc/proc.h"
+#include "ompi/runtime/params.h"
 
 #include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Comm_failure_ack = PMPIX_Comm_failure_ack
-#endif
-#define MPIX_Comm_failure_ack PMPIX_Comm_failure_ack
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPIX_Comm_failure_ack = PMPIX_Comm_failure_ack
+#    endif
+#    define MPIX_Comm_failure_ack PMPIX_Comm_failure_ack
 #endif
 
 static const char FUNC_NAME[] = "MPIX_Comm_failure_ack";
-
 
 int MPIX_Comm_failure_ack(MPI_Comm comm)
 {
@@ -42,7 +41,6 @@ int MPIX_Comm_failure_ack(MPI_Comm comm)
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = ompi_comm_failure_ack_internal( (ompi_communicator_t*)comm );
+    rc = ompi_comm_failure_ack_internal((ompi_communicator_t *) comm);
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
-

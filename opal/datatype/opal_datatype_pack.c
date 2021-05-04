@@ -402,11 +402,10 @@ int32_t opal_generic_simple_pack_function(opal_convertor_t *pConvertor, struct i
  *       -1 something wrong occurs.
  */
 
-static inline void
-pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
-                              const dt_elem_desc_t *ELEM, size_t *COUNT,
-                              unsigned char **memory,
-                              unsigned char **packed, size_t *SPACE)
+static inline void pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
+                                                 const dt_elem_desc_t *ELEM, size_t *COUNT,
+                                                 unsigned char **memory, unsigned char **packed,
+                                                 size_t *SPACE)
 {
     const opal_convertor_master_t *master = (CONVERTOR)->master;
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
@@ -428,9 +427,8 @@ pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     *(COUNT) -= cando_count;
 
     if (_elem->blocklen == 1) {
-        master->pFunctions[_elem->common.type](CONVERTOR, cando_count,
-                                               _memory, *SPACE, _elem->extent,
-                                               _packed, *SPACE, remote_elem_size,
+        master->pFunctions[_elem->common.type](CONVERTOR, cando_count, _memory, *SPACE,
+                                               _elem->extent, _packed, *SPACE, remote_elem_size,
                                                &advance);
         _memory += cando_count * _elem->extent;
         _packed += cando_count * remote_elem_size;
@@ -446,10 +444,9 @@ pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
             DO_DEBUG(opal_output(0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
                                  (void *) _packed, (void *) _memory, (unsigned long) blocklen_bytes,
                                  (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-            master->pFunctions[_elem->common.type](CONVERTOR, _elem->blocklen,
-                                                   _memory, *SPACE, local_elem_size,
-                                                   _packed, *SPACE, remote_elem_size,
-                                                   &advance);
+            master->pFunctions[_elem->common.type](CONVERTOR, _elem->blocklen, _memory, *SPACE,
+                                                   local_elem_size, _packed, *SPACE,
+                                                   remote_elem_size, &advance);
             _packed += blocklen_bytes;
             _memory += _elem->extent;
             cando_count -= _elem->blocklen;
@@ -468,9 +465,8 @@ pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
         DO_DEBUG(opal_output(0, "pack 3. memcpy( %p, %p, %lu ) => space %lu [epilog]\n",
                              (void *) _packed, (void *) _memory, (unsigned long) do_now_bytes,
                              (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-        master->pFunctions[_elem->common.type](CONVERTOR, cando_count,
-                                               _memory, *SPACE, local_elem_size,
-                                               _packed, *SPACE, remote_elem_size,
+        master->pFunctions[_elem->common.type](CONVERTOR, cando_count, _memory, *SPACE,
+                                               local_elem_size, _packed, *SPACE, remote_elem_size,
                                                &advance);
         _memory += cando_count * local_elem_size;
         _packed += do_now_bytes;

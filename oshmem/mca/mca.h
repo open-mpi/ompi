@@ -32,8 +32,7 @@
 #include "opal/mca/mca.h"
 
 #define OSHMEM_MCA_BASE_VERSION_2_1_0(type, type_major, type_minor, type_release) \
-    MCA_BASE_VERSION_2_1_0("oshmem", OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION, \
-                           OSHMEM_RELEASE_VERSION, type, type_major, type_minor, \
-                           type_release)
+    MCA_BASE_VERSION_2_1_0("oshmem", OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,  \
+                           OSHMEM_RELEASE_VERSION, type, type_major, type_minor, type_release)
 
 #endif /* OSHMEM_MCA_H */

@@ -18,12 +18,12 @@
 #define MCA_SPML_H
 
 #include "oshmem_config.h"
-#include "oshmem/types.h"
 #include "oshmem/constants.h"
+#include "oshmem/types.h"
 
+#include "opal/mca/btl/btl.h"
 #include "opal_stdint.h"
 #include "oshmem/mca/mca.h"
-#include "opal/mca/btl/btl.h"
 #include "oshmem/proc/proc.h"
 
 #include "oshmem/mca/sshmem/sshmem.h"
@@ -57,9 +57,8 @@ typedef enum {
     MCA_SPML_BASE_PUT_SIZE
 } mca_spml_base_put_mode_t;
 
-typedef struct mca_spml_base_module_1_0_0_t * (*mca_spml_base_component_init_fn_t)(int *priority,
-                                                                                   bool enable_progress_threads,
-                                                                                   bool enable_mpi_threads);
+typedef struct mca_spml_base_module_1_0_0_t *(*mca_spml_base_component_init_fn_t)(
+    int *priority, bool enable_progress_threads, bool enable_mpi_threads);
 
 typedef int (*mca_spml_base_component_finalize_fn_t)(void);
 
@@ -84,9 +83,11 @@ static inline char *mca_spml_base_mkey2str(sshmem_mkey_t *mkey)
     static char buf[64];
 
     if (mkey->len == 0) {
-        snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%" PRIu64, mkey->va_base, mkey->len, mkey->u.key);
+        snprintf(buf, sizeof(buf), "mkey: base=%p len=%d key=%" PRIu64, mkey->va_base, mkey->len,
+                 mkey->u.key);
     } else {
-        snprintf(buf, sizeof(buf), "mkey: base=%p len=%d data=0x%p", mkey->va_base, mkey->len, mkey->u.data);
+        snprintf(buf, sizeof(buf), "mkey: base=%p len=%d data=0x%p", mkey->va_base, mkey->len,
+                 mkey->u.data);
     }
 
     return buf;
@@ -108,10 +109,7 @@ typedef int (*mca_spml_base_module_enable_fn_t)(bool enable);
  * @param value  The value to pool on. Pool until the value held in addr is different than value.
  * @return       OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_wait_fn_t)(void* addr,
-                                              int cmp,
-                                              void* value,
-                                              int datatype);
+typedef int (*mca_spml_base_module_wait_fn_t)(void *addr, int cmp, void *value, int datatype);
 
 /**
  * Test for an int variable to change on the local PE.
@@ -121,10 +119,7 @@ typedef int (*mca_spml_base_module_wait_fn_t)(void* addr,
  * @param out_value Return value to indicated if variable is equal to given cmp value.
  * @return       OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_test_fn_t)(void* addr,
-                                              int cmp,
-                                              void* value,
-                                              int datatype,
+typedef int (*mca_spml_base_module_test_fn_t)(void *addr, int cmp, void *value, int datatype,
                                               int *out_value);
 
 /**
@@ -132,7 +127,8 @@ typedef int (*mca_spml_base_module_test_fn_t)(void* addr,
  *
  * @param mkey remote mkey
  */
-typedef void (*mca_spml_base_module_mkey_unpack_fn_t)(shmem_ctx_t ctx, sshmem_mkey_t *, uint32_t segno, int remote_pe, int tr_id);
+typedef void (*mca_spml_base_module_mkey_unpack_fn_t)(shmem_ctx_t ctx, sshmem_mkey_t *,
+                                                      uint32_t segno, int remote_pe, int tr_id);
 
 /**
  * If possible, get a pointer to the remote memory described by the mkey
@@ -143,7 +139,8 @@ typedef void (*mca_spml_base_module_mkey_unpack_fn_t)(shmem_ctx_t ctx, sshmem_mk
  *
  * @return pointer to remote memory or NULL
  */
-typedef void * (*mca_spml_base_module_mkey_ptr_fn_t)(const void *dst_addr, sshmem_mkey_t *mkey, int pe);
+typedef void *(*mca_spml_base_module_mkey_ptr_fn_t)(const void *dst_addr, sshmem_mkey_t *mkey,
+                                                    int pe);
 
 /**
  * free resources used by deserialized remote mkey
@@ -162,10 +159,8 @@ typedef void (*mca_spml_base_module_mkey_free_fn_t)(sshmem_mkey_t *);
  * @return       array of mkeys (one mkey per "btl") or NULL on failure
  *
  */
-typedef sshmem_mkey_t * (*mca_spml_base_module_register_fn_t)(void *addr,
-                                                                size_t size,
-                                                                uint64_t shmid,
-                                                                int *count);
+typedef sshmem_mkey_t *(*mca_spml_base_module_register_fn_t)(void *addr, size_t size,
+                                                             uint64_t shmid, int *count);
 
 /**
  * deregister memory pinned by register()
@@ -180,8 +175,7 @@ typedef int (*mca_spml_base_module_deregister_fn_t)(sshmem_mkey_t *mkeys);
  *
  * @return OSHMEM_SUCCSESS if keys are found
  */
-typedef int (*mca_spml_base_module_oob_get_mkeys_fn_t)(shmem_ctx_t ctx, int pe,
-                                                       uint32_t seg,
+typedef int (*mca_spml_base_module_oob_get_mkeys_fn_t)(shmem_ctx_t ctx, int pe, uint32_t seg,
                                                        sshmem_mkey_t *mkeys);
 
 /**
@@ -193,11 +187,8 @@ typedef int (*mca_spml_base_module_oob_get_mkeys_fn_t)(shmem_ctx_t ctx, int pe,
  * @return OSHMEM_SUCCESS or failure status.
  *
  */
-typedef int (*mca_spml_base_module_add_procs_fn_t)(ompi_proc_t** procs,
-                                                   size_t nprocs);
-typedef int (*mca_spml_base_module_del_procs_fn_t)(ompi_proc_t** procs,
-                                                   size_t nprocs);
-
+typedef int (*mca_spml_base_module_add_procs_fn_t)(ompi_proc_t **procs, size_t nprocs);
+typedef int (*mca_spml_base_module_del_procs_fn_t)(ompi_proc_t **procs, size_t nprocs);
 
 /**
  * Create a communication context.
@@ -207,7 +198,6 @@ typedef int (*mca_spml_base_module_del_procs_fn_t)(ompi_proc_t** procs,
  * @return         OSHMEM_SUCCESS or failure status.
  */
 typedef int (*mca_spml_base_module_ctx_create_fn_t)(long options, shmem_ctx_t *ctx);
-
 
 /**
  * Destroy a communication context.
@@ -226,11 +216,8 @@ typedef void (*mca_spml_base_module_ctx_destroy_fn_t)(shmem_ctx_t ctx);
  * @param dst      The remote PE to be written to.
  * @return         OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_put_fn_t)(shmem_ctx_t ctx,
-                                             void *dst_addr,
-                                             size_t size,
-                                             void *src_addr,
-                                             int dst);
+typedef int (*mca_spml_base_module_put_fn_t)(shmem_ctx_t ctx, void *dst_addr, size_t size,
+                                             void *src_addr, int dst);
 
 /**
  * These routines provide the means for copying contiguous data to another PE without
@@ -246,12 +233,8 @@ typedef int (*mca_spml_base_module_put_fn_t)(shmem_ctx_t ctx,
  *                 shmem_test_nb() to wait or poll for the completion of the transfer.
  * @return         OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_put_nb_fn_t)(shmem_ctx_t ctx,
-                                                void *dst_addr,
-                                                size_t size,
-                                                void *src_addr,
-                                                int dst,
-                                                void **handle);
+typedef int (*mca_spml_base_module_put_nb_fn_t)(shmem_ctx_t ctx, void *dst_addr, size_t size,
+                                                void *src_addr, int dst, void **handle);
 
 /**
  * Blocking data transfer from remote PE.
@@ -264,11 +247,8 @@ typedef int (*mca_spml_base_module_put_nb_fn_t)(shmem_ctx_t ctx,
  * @param src      The ID of the remote PE.
  * @return         OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_get_fn_t)(shmem_ctx_t ctx,
-                                             void *dst_addr,
-                                             size_t size,
-                                             void *src_addr,
-                                             int src);
+typedef int (*mca_spml_base_module_get_fn_t)(shmem_ctx_t ctx, void *dst_addr, size_t size,
+                                             void *src_addr, int src);
 
 /**
  * Non-blocking data transfer from remote PE.
@@ -283,12 +263,8 @@ typedef int (*mca_spml_base_module_get_fn_t)(shmem_ctx_t ctx,
  *                 shmem_test_nb() to wait or poll for the completion of the transfer.
  * @return         - OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_get_nb_fn_t)(shmem_ctx_t ctx,
-                                               void *dst_addr,
-                                               size_t size,
-                                               void *src_addr,
-                                               int src,
-                                               void **handle);
+typedef int (*mca_spml_base_module_get_nb_fn_t)(shmem_ctx_t ctx, void *dst_addr, size_t size,
+                                                void *src_addr, int src, void **handle);
 
 /**
  *  Post a receive and wait for completion.
@@ -309,9 +285,7 @@ typedef int (*mca_spml_base_module_recv_fn_t)(void *buf, size_t count, int src);
  *  @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  *  @return                 OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_send_fn_t)(void *buf,
-                                              size_t count,
-                                              int dst,
+typedef int (*mca_spml_base_module_send_fn_t)(void *buf, size_t count, int dst,
                                               mca_spml_base_put_mode_t mode);
 
 /**
@@ -338,9 +312,7 @@ typedef int (*mca_spml_base_module_send_fn_t)(void *buf,
  *
  *  @return            OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_put_all_nb_fn_t)(void *dest,
-                                                    const void *source,
-                                                    size_t size,
+typedef int (*mca_spml_base_module_put_all_nb_fn_t)(void *dest, const void *source, size_t size,
                                                     long *counter);
 
 /**
@@ -406,11 +378,11 @@ struct mca_spml_base_module_1_0_0_t {
     mca_spml_base_module_quiet_fn_t spml_quiet;
 
     mca_spml_base_module_mkey_unpack_fn_t spml_rmkey_unpack;
-    mca_spml_base_module_mkey_free_fn_t   spml_rmkey_free;
-    mca_spml_base_module_mkey_ptr_fn_t    spml_rmkey_ptr;
+    mca_spml_base_module_mkey_free_fn_t spml_rmkey_free;
+    mca_spml_base_module_mkey_ptr_fn_t spml_rmkey_ptr;
 
     mca_spml_base_module_memuse_hook_fn_t spml_memuse_hook;
-    mca_spml_base_module_put_all_nb_fn_t  spml_put_all_nb;
+    mca_spml_base_module_put_all_nb_fn_t spml_put_all_nb;
     void *self;
 };
 
@@ -420,22 +392,21 @@ typedef mca_spml_base_module_1_0_0_t mca_spml_base_module_t;
 /*
  * Macro for use in components that are of type spml
  */
-#define MCA_SPML_BASE_VERSION_2_0_0 \
-    OSHMEM_MCA_BASE_VERSION_2_1_0("spml", 2, 0, 0)
+#define MCA_SPML_BASE_VERSION_2_0_0 OSHMEM_MCA_BASE_VERSION_2_1_0("spml", 2, 0, 0)
 
 /*
  * macro for doing direct call / call through struct
  */
 #if MCA_oshmem_spml_DIRECT_CALL
 
-#include MCA_oshmem_spml_DIRECT_CALL_HEADER
+#    include MCA_oshmem_spml_DIRECT_CALL_HEADER
 
-#define MCA_SPML_CALL_STAMP(a, b) mca_spml_ ## a ## _ ## b
-#define MCA_SPML_CALL_EXPANDER(a, b) MCA_SPML_CALL_STAMP(a,b)
-#define MCA_SPML_CALL(a) MCA_SPML_CALL_EXPANDER(MCA_oshmem_spml_DIRECT_CALL_COMPONENT, a)
+#    define MCA_SPML_CALL_STAMP(a, b)    mca_spml_##a##_##b
+#    define MCA_SPML_CALL_EXPANDER(a, b) MCA_SPML_CALL_STAMP(a, b)
+#    define MCA_SPML_CALL(a)             MCA_SPML_CALL_EXPANDER(MCA_oshmem_spml_DIRECT_CALL_COMPONENT, a)
 
 #else
-#define MCA_SPML_CALL(a) mca_spml.spml_ ## a
+#    define MCA_SPML_CALL(a) mca_spml.spml_##a
 #endif
 
 OSHMEM_DECLSPEC extern mca_spml_base_module_t mca_spml;

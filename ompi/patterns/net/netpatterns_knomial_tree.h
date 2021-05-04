@@ -20,16 +20,12 @@
 
 BEGIN_C_DECLS
 
-
 /*
  * Pair-wise data exchange
  */
 
 /* enum for node type */
-enum {
-    EXCHANGE_NODE,
-    EXTRA_NODE
-};
+enum { EXCHANGE_NODE, EXTRA_NODE };
 
 struct netpatterns_pair_exchange_node_t {
 
@@ -63,7 +59,6 @@ struct netpatterns_pair_exchange_node_t {
 
     /* node type */
     int node_type;
-
 };
 typedef struct netpatterns_pair_exchange_node_t netpatterns_pair_exchange_node_t;
 
@@ -108,31 +103,30 @@ struct netpatterns_k_exchange_node_t {
     /* 2-d array that hold payload info for each level of recursive k-ing */
     netpatterns_payload_t **payload_info;
 };
-typedef struct netpatterns_k_exchange_node_t
-               netpatterns_k_exchange_node_t;
+typedef struct netpatterns_k_exchange_node_t netpatterns_k_exchange_node_t;
 
-OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
-    netpatterns_pair_exchange_node_t *exchange_node);
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_n_tree_node(
+    int num_nodes, int node_rank, int tree_order, netpatterns_pair_exchange_node_t *exchange_node);
 
 OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_doubling_tree_node(
     netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,
-    netpatterns_pair_exchange_node_t *exchange_node);
+OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_tree_node(
+    int num_nodes, int node_rank, netpatterns_pair_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_tree_node(
-   int num_nodes, int node_rank, int tree_order,
-   netpatterns_k_exchange_node_t *exchange_node);
+OMPI_DECLSPEC int
+ompi_netpatterns_setup_recursive_knomial_tree_node(int num_nodes, int node_rank, int tree_order,
+                                                   netpatterns_k_exchange_node_t *exchange_node);
 
-OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_knomial_tree_node(
-   netpatterns_k_exchange_node_t *exchange_node);
+OMPI_DECLSPEC void
+ompi_netpatterns_cleanup_recursive_knomial_tree_node(netpatterns_k_exchange_node_t *exchange_node);
 
 OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
-        int num_nodes, int node_rank, int tree_order, int *hier_ranks,
-        netpatterns_k_exchange_node_t *exchange_node);
+    int num_nodes, int node_rank, int tree_order, int *hier_ranks,
+    netpatterns_k_exchange_node_t *exchange_node);
 
 OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_knomial_allgather_tree_node(
-        netpatterns_k_exchange_node_t *exchange_node);
+    netpatterns_k_exchange_node_t *exchange_node);
 
 /* Input: k_exchange_node structure
       Output: index in rank_exchanges array that points
@@ -144,14 +138,10 @@ OMPI_DECLSPEC void ompi_netpatterns_cleanup_recursive_knomial_allgather_tree_nod
               send messages to exchange_node->rank_exchanges[i][k];
 */
 
-static inline __opal_attribute_always_inline__
-int netpatterns_get_knomial_level(
-    int my_rank, int src_rank,
-    int radix,   int size,
-    int *k_level)
+static inline __opal_attribute_always_inline__ int
+netpatterns_get_knomial_level(int my_rank, int src_rank, int radix, int size, int *k_level)
 {
-    int distance,
-        pow_k;
+    int distance, pow_k;
     int logk_level = 0;
 
     /* Calculate disctance from source of data */
@@ -163,7 +153,7 @@ int netpatterns_get_knomial_level(
     }
 
     pow_k = 1;
-    while(distance / (pow_k * radix)) {
+    while (distance / (pow_k * radix)) {
         pow_k *= radix;
         ++logk_level;
     }
@@ -176,22 +166,20 @@ int netpatterns_get_knomial_level(
 /* Input: my_rank, root, radix, size
  * Output: source of the data, offset in power of K
  */
-static inline __opal_attribute_always_inline__
-int netpatterns_get_knomial_data_source(
-    int my_rank, int root, int radix, int size,
-    int *k_level, int *logk_level)
+static inline __opal_attribute_always_inline__ int
+netpatterns_get_knomial_data_source(int my_rank, int root, int radix, int size, int *k_level,
+                                    int *logk_level)
 {
     int level = radix;
     int step = 0;
 
     /* Calculate source of the data */
-    while((0 == (root - my_rank) % level)
-            && (level <= size)) {
+    while ((0 == (root - my_rank) % level) && (level <= size)) {
         level *= radix;
         ++step;
     }
 
-    *k_level = level/radix;
+    *k_level = level / radix;
     *logk_level = step;
     return my_rank - (my_rank % level - root % level);
 }
@@ -220,43 +208,42 @@ typedef struct netpatterns_knomial_step_info_t {
     int k_tmp_peer;
 } netpatterns_knomial_step_info_t;
 
-#define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_UPDATE_LEVEL_FOR_BCAST(step_info, radix)\
-do {                                                                                    \
-    if (1 != step_info.k_step) {                                                        \
-        step_info.k_level /= radix;                                                     \
-    }                                                                                   \
-} while (0)                                                                             \
+#define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_UPDATE_LEVEL_FOR_BCAST(step_info, radix) \
+    do {                                                                                 \
+        if (1 != step_info.k_step) {                                                     \
+            step_info.k_level /= radix;                                                  \
+        }                                                                                \
+    } while (0)
 
-#define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_INIT(step_info, in_k_level, in_peer)\
-do {                                                                                \
-    step_info.k_step  = 1;                                                          \
-    step_info.k_level = in_k_level;                                                 \
-    step_info.k_tmp_peer = in_peer;                                                 \
-} while (0)
+#define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_INIT(step_info, in_k_level, in_peer) \
+    do {                                                                             \
+        step_info.k_step = 1;                                                        \
+        step_info.k_level = in_k_level;                                              \
+        step_info.k_tmp_peer = in_peer;                                              \
+    } while (0)
 
-#define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_PEER_CHECK_LEVEL(step_info) \
-                                                    (step_info.k_level > 1)
+#define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_PEER_CHECK_LEVEL(step_info) (step_info.k_level > 1)
 
-#define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_PEER(my_rank, radix, step_info, peer)           \
-do {                                                                                            \
-    int rank_radix_base = my_rank/step_info.k_level;                                            \
-                                                                                                \
-    peer = step_info.k_tmp_peer + step_info.k_level/radix;                                      \
-    if (rank_radix_base != peer/step_info.k_level) {                                            \
-        /* Wraparound the number */                                                             \
-        peer -= step_info.k_level;                                                              \
-        assert(peer >=0);                                                                       \
-    }                                                                                           \
-    ++step_info.k_step;                                                                         \
-    if (radix == step_info.k_step) {                                                            \
-        step_info.k_level /= radix;                                                             \
-        step_info.k_step = 1;                                                                   \
-        step_info.k_tmp_peer = my_rank;                                                         \
-    } else {                                                                                    \
-        step_info.k_tmp_peer = peer;                                                            \
-    }                                                                                           \
-                                                                                                \
-} while (0)
+#define MCA_COMMON_NETPATTERNS_GET_NEXT_KNOMIAL_PEER(my_rank, radix, step_info, peer) \
+    do {                                                                              \
+        int rank_radix_base = my_rank / step_info.k_level;                            \
+                                                                                      \
+        peer = step_info.k_tmp_peer + step_info.k_level / radix;                      \
+        if (rank_radix_base != peer / step_info.k_level) {                            \
+            /* Wraparound the number */                                               \
+            peer -= step_info.k_level;                                                \
+            assert(peer >= 0);                                                        \
+        }                                                                             \
+        ++step_info.k_step;                                                           \
+        if (radix == step_info.k_step) {                                              \
+            step_info.k_level /= radix;                                               \
+            step_info.k_step = 1;                                                     \
+            step_info.k_tmp_peer = my_rank;                                           \
+        } else {                                                                      \
+            step_info.k_tmp_peer = peer;                                              \
+        }                                                                             \
+                                                                                      \
+    } while (0)
 
 END_C_DECLS
 #endif

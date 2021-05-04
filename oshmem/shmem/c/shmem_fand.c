@@ -15,8 +15,8 @@
 
 #include "oshmem/runtime/runtime.h"
 
-#include "oshmem/op/op.h"
 #include "oshmem/mca/atomic/atomic.h"
+#include "oshmem/op/op.h"
 
 /*
  * These routines perform an atomic fetch-and-and operation.
@@ -26,34 +26,34 @@
  * the time of the fetch and the update.
  */
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_int_atomic_fetch_and       = pshmem_int_atomic_fetch_and
-#pragma weak shmem_long_atomic_fetch_and      = pshmem_long_atomic_fetch_and
-#pragma weak shmem_longlong_atomic_fetch_and  = pshmem_longlong_atomic_fetch_and
-#pragma weak shmem_uint_atomic_fetch_and      = pshmem_uint_atomic_fetch_and
-#pragma weak shmem_ulong_atomic_fetch_and     = pshmem_ulong_atomic_fetch_and
-#pragma weak shmem_ulonglong_atomic_fetch_and = pshmem_ulonglong_atomic_fetch_and
-#pragma weak shmem_int32_atomic_fetch_and     = pshmem_int32_atomic_fetch_and
-#pragma weak shmem_int64_atomic_fetch_and     = pshmem_int64_atomic_fetch_and
-#pragma weak shmem_uint32_atomic_fetch_and    = pshmem_uint32_atomic_fetch_and
-#pragma weak shmem_uint64_atomic_fetch_and    = pshmem_uint64_atomic_fetch_and
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_int_atomic_fetch_and = pshmem_int_atomic_fetch_and
+#    pragma weak shmem_long_atomic_fetch_and = pshmem_long_atomic_fetch_and
+#    pragma weak shmem_longlong_atomic_fetch_and = pshmem_longlong_atomic_fetch_and
+#    pragma weak shmem_uint_atomic_fetch_and = pshmem_uint_atomic_fetch_and
+#    pragma weak shmem_ulong_atomic_fetch_and = pshmem_ulong_atomic_fetch_and
+#    pragma weak shmem_ulonglong_atomic_fetch_and = pshmem_ulonglong_atomic_fetch_and
+#    pragma weak shmem_int32_atomic_fetch_and = pshmem_int32_atomic_fetch_and
+#    pragma weak shmem_int64_atomic_fetch_and = pshmem_int64_atomic_fetch_and
+#    pragma weak shmem_uint32_atomic_fetch_and = pshmem_uint32_atomic_fetch_and
+#    pragma weak shmem_uint64_atomic_fetch_and = pshmem_uint64_atomic_fetch_and
 
-#pragma weak shmem_ctx_int_atomic_fetch_and   = pshmem_ctx_int_atomic_fetch_and
-#pragma weak shmem_ctx_long_atomic_fetch_and  = pshmem_ctx_long_atomic_fetch_and
-#pragma weak shmem_ctx_longlong_atomic_fetch_and = pshmem_ctx_longlong_atomic_fetch_and
-#pragma weak shmem_ctx_uint_atomic_fetch_and  = pshmem_ctx_uint_atomic_fetch_and
-#pragma weak shmem_ctx_ulong_atomic_fetch_and = pshmem_ctx_ulong_atomic_fetch_and
-#pragma weak shmem_ctx_ulonglong_atomic_fetch_and = pshmem_ctx_ulonglong_atomic_fetch_and
-#pragma weak shmem_ctx_int32_atomic_fetch_and  = pshmem_ctx_int32_atomic_fetch_and
-#pragma weak shmem_ctx_int64_atomic_fetch_and  = pshmem_ctx_int64_atomic_fetch_and
-#pragma weak shmem_ctx_uint32_atomic_fetch_and = pshmem_ctx_uint32_atomic_fetch_and
-#pragma weak shmem_ctx_uint64_atomic_fetch_and = pshmem_ctx_uint64_atomic_fetch_and
+#    pragma weak shmem_ctx_int_atomic_fetch_and = pshmem_ctx_int_atomic_fetch_and
+#    pragma weak shmem_ctx_long_atomic_fetch_and = pshmem_ctx_long_atomic_fetch_and
+#    pragma weak shmem_ctx_longlong_atomic_fetch_and = pshmem_ctx_longlong_atomic_fetch_and
+#    pragma weak shmem_ctx_uint_atomic_fetch_and = pshmem_ctx_uint_atomic_fetch_and
+#    pragma weak shmem_ctx_ulong_atomic_fetch_and = pshmem_ctx_ulong_atomic_fetch_and
+#    pragma weak shmem_ctx_ulonglong_atomic_fetch_and = pshmem_ctx_ulonglong_atomic_fetch_and
+#    pragma weak shmem_ctx_int32_atomic_fetch_and = pshmem_ctx_int32_atomic_fetch_and
+#    pragma weak shmem_ctx_int64_atomic_fetch_and = pshmem_ctx_int64_atomic_fetch_and
+#    pragma weak shmem_ctx_uint32_atomic_fetch_and = pshmem_ctx_uint32_atomic_fetch_and
+#    pragma weak shmem_ctx_uint64_atomic_fetch_and = pshmem_ctx_uint64_atomic_fetch_and
 
-#pragma weak shmemx_int32_atomic_fetch_and    = pshmemx_int32_atomic_fetch_and
-#pragma weak shmemx_int64_atomic_fetch_and    = pshmemx_int64_atomic_fetch_and
-#pragma weak shmemx_uint32_atomic_fetch_and   = pshmemx_uint32_atomic_fetch_and
-#pragma weak shmemx_uint64_atomic_fetch_and   = pshmemx_uint64_atomic_fetch_and
-#include "oshmem/shmem/c/profile/defines.h"
+#    pragma weak shmemx_int32_atomic_fetch_and = pshmemx_int32_atomic_fetch_and
+#    pragma weak shmemx_int64_atomic_fetch_and = pshmemx_int64_atomic_fetch_and
+#    pragma weak shmemx_uint32_atomic_fetch_and = pshmemx_uint32_atomic_fetch_and
+#    pragma weak shmemx_uint64_atomic_fetch_and = pshmemx_uint64_atomic_fetch_and
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 OSHMEM_TYPE_FOP(int, int, shmem, and)

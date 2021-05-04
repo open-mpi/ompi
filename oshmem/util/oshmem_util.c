@@ -19,8 +19,8 @@
 #include "oshmem/constants.h"
 #include "oshmem/util/oshmem_util.h"
 
-void oshmem_output_verbose(int level, int output_id, const char* prefix,
-    const char* file, int line, const char* function, const char* format, ...)
+void oshmem_output_verbose(int level, int output_id, const char *prefix, const char *file, int line,
+                           const char *function, const char *format, ...)
 {
     va_list args;
     char *buff, *str;
@@ -46,9 +46,8 @@ void oshmem_output_verbose(int level, int output_id, const char* prefix,
     }
 }
 
-
-void oshmem_output(int output_id, const char* prefix, const char* file,
-    int line, const char* function, const char* format, ...)
+void oshmem_output(int output_id, const char *prefix, const char *file, int line,
+                   const char *function, const char *format, ...)
 {
     va_list args;
     char *buff, *str;

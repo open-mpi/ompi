@@ -13,66 +13,48 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/mca/osc/osc.h"
 
 #include "osc_sm.h"
 
-
-static inline uint32_t
-lk_fetch_add32(ompi_osc_sm_module_t *module,
-               int target,
-               size_t offset,
-               uint32_t delta)
+static inline uint32_t lk_fetch_add32(ompi_osc_sm_module_t *module, int target, size_t offset,
+                                      uint32_t delta)
 {
     /* opal_atomic_add_fetch_32 is an add then fetch so delta needs to be subtracted out to get the
      * old value */
-    return opal_atomic_add_fetch_32((opal_atomic_int32_t *) ((char*) &module->node_states[target].lock + offset),
-                              delta) - delta;
+    return opal_atomic_add_fetch_32((opal_atomic_int32_t
+                                         *) ((char *) &module->node_states[target].lock + offset),
+                                    delta)
+           - delta;
 }
 
-
-static inline void
-lk_add32(ompi_osc_sm_module_t *module,
-         int target,
-         size_t offset,
-         uint32_t delta)
+static inline void lk_add32(ompi_osc_sm_module_t *module, int target, size_t offset, uint32_t delta)
 {
-    opal_atomic_add_fetch_32((opal_atomic_int32_t *) ((char*) &module->node_states[target].lock + offset),
-                       delta);
+    opal_atomic_add_fetch_32((opal_atomic_int32_t *) ((char *) &module->node_states[target].lock
+                                                      + offset),
+                             delta);
 }
 
-
-static inline uint32_t
-lk_fetch32(ompi_osc_sm_module_t *module,
-           int target,
-           size_t offset)
+static inline uint32_t lk_fetch32(ompi_osc_sm_module_t *module, int target, size_t offset)
 {
-    opal_atomic_mb ();
-    return *((uint32_t *)((char*) &module->node_states[target].lock + offset));
+    opal_atomic_mb();
+    return *((uint32_t *) ((char *) &module->node_states[target].lock + offset));
 }
 
-
-static inline int
-start_exclusive(ompi_osc_sm_module_t *module,
-                int target)
+static inline int start_exclusive(ompi_osc_sm_module_t *module, int target)
 {
-    uint32_t me = lk_fetch_add32(module, target,
-                                 offsetof(ompi_osc_sm_lock_t, counter), 1);
+    uint32_t me = lk_fetch_add32(module, target, offsetof(ompi_osc_sm_lock_t, counter), 1);
 
-    while (me != lk_fetch32(module, target,
-                            offsetof(ompi_osc_sm_lock_t, write))) {
+    while (me != lk_fetch32(module, target, offsetof(ompi_osc_sm_lock_t, write))) {
         opal_progress();
     }
 
     return OMPI_SUCCESS;
 }
 
-
-static inline int
-end_exclusive(ompi_osc_sm_module_t *module,
-              int target)
+static inline int end_exclusive(ompi_osc_sm_module_t *module, int target)
 {
     lk_add32(module, target, offsetof(ompi_osc_sm_lock_t, write), 1);
     lk_add32(module, target, offsetof(ompi_osc_sm_lock_t, read), 1);
@@ -80,16 +62,11 @@ end_exclusive(ompi_osc_sm_module_t *module,
     return OMPI_SUCCESS;
 }
 
-
-static inline int
-start_shared(ompi_osc_sm_module_t *module,
-             int target)
+static inline int start_shared(ompi_osc_sm_module_t *module, int target)
 {
-    uint32_t me = lk_fetch_add32(module, target,
-                                 offsetof(ompi_osc_sm_lock_t, counter), 1);
+    uint32_t me = lk_fetch_add32(module, target, offsetof(ompi_osc_sm_lock_t, counter), 1);
 
-    while (me != lk_fetch32(module, target,
-                            offsetof(ompi_osc_sm_lock_t, read))) {
+    while (me != lk_fetch32(module, target, offsetof(ompi_osc_sm_lock_t, read))) {
         opal_progress();
     }
 
@@ -98,25 +75,16 @@ start_shared(ompi_osc_sm_module_t *module,
     return OMPI_SUCCESS;
 }
 
-
-static inline int
-end_shared(ompi_osc_sm_module_t *module,
-           int target)
+static inline int end_shared(ompi_osc_sm_module_t *module, int target)
 {
     lk_add32(module, target, offsetof(ompi_osc_sm_lock_t, write), 1);
 
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_lock(int lock_type,
-                 int target,
-                 int mpi_assert,
-                 struct ompi_win_t *win)
+int ompi_osc_sm_lock(int lock_type, int target, int mpi_assert, struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     int ret;
 
     if (lock_none != module->outstanding_locks[target]) {
@@ -139,13 +107,9 @@ ompi_osc_sm_lock(int lock_type,
     return ret;
 }
 
-
-int
-ompi_osc_sm_unlock(int target,
-                   struct ompi_win_t *win)
+int ompi_osc_sm_unlock(int target, struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     int ret;
 
     /* ensure all memory operations have completed */
@@ -169,14 +133,15 @@ ompi_osc_sm_unlock(int target,
 
     default:
         // This is an OMPI programming error -- cause some pain.
-        assert(module->outstanding_locks[target] == lock_none ||
-               module->outstanding_locks[target] == lock_nocheck ||
-               module->outstanding_locks[target] == lock_exclusive ||
-               module->outstanding_locks[target] == lock_shared);
+        assert(module->outstanding_locks[target] == lock_none
+               || module->outstanding_locks[target] == lock_nocheck
+               || module->outstanding_locks[target] == lock_exclusive
+               || module->outstanding_locks[target] == lock_shared);
 
-         // In non-developer builds, assert() will be a no-op, so
-         // ensure the error gets reported
-        opal_output(0, "Unknown lock type in ompi_osc_sm_unlock -- this is an OMPI programming error");
+        // In non-developer builds, assert() will be a no-op, so
+        // ensure the error gets reported
+        opal_output(0,
+                    "Unknown lock type in ompi_osc_sm_unlock -- this is an OMPI programming error");
         ret = OMPI_ERR_BAD_PARAM;
         break;
     }
@@ -186,82 +151,65 @@ ompi_osc_sm_unlock(int target,
     return ret;
 }
 
-
-int
-ompi_osc_sm_lock_all(int mpi_assert,
-                           struct ompi_win_t *win)
+int ompi_osc_sm_lock_all(int mpi_assert, struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     int ret, i, comm_size;
 
     comm_size = ompi_comm_size(module->comm);
-    for (i = 0 ; i < comm_size ; ++i) {
+    for (i = 0; i < comm_size; ++i) {
         ret = ompi_osc_sm_lock(MPI_LOCK_SHARED, i, mpi_assert, win);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret)
+            return ret;
     }
 
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_unlock_all(struct ompi_win_t *win)
+int ompi_osc_sm_unlock_all(struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     int ret, i, comm_size;
 
     comm_size = ompi_comm_size(module->comm);
-    for (i = 0 ; i < comm_size ; ++i) {
+    for (i = 0; i < comm_size; ++i) {
         ret = ompi_osc_sm_unlock(i, win);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret)
+            return ret;
     }
 
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_sync(struct ompi_win_t *win)
+int ompi_osc_sm_sync(struct ompi_win_t *win)
 {
     opal_atomic_mb();
 
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_flush(int target,
-                        struct ompi_win_t *win)
+int ompi_osc_sm_flush(int target, struct ompi_win_t *win)
 {
     opal_atomic_mb();
 
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_flush_all(struct ompi_win_t *win)
+int ompi_osc_sm_flush_all(struct ompi_win_t *win)
 {
     opal_atomic_mb();
 
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_flush_local(int target,
-                              struct ompi_win_t *win)
+int ompi_osc_sm_flush_local(int target, struct ompi_win_t *win)
 {
     opal_atomic_mb();
 
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_flush_local_all(struct ompi_win_t *win)
+int ompi_osc_sm_flush_local_all(struct ompi_win_t *win)
 {
     opal_atomic_mb();
 

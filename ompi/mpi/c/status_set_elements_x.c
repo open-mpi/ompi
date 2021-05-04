@@ -24,18 +24,18 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
-#endif
-#define MPI_Status_set_elements_x PMPI_Status_set_elements_x
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
+#    endif
+#    define MPI_Status_set_elements_x PMPI_Status_set_elements_x
 #endif
 
 static const char FUNC_NAME[] = "MPI_Status_set_elements_x";
@@ -45,17 +45,15 @@ int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Cou
     int rc = MPI_SUCCESS;
     size_t size;
 
-    MEMCHECKER(
-        if(status != MPI_STATUSES_IGNORE) {
-            /*
-             * Before checking the complete status, we need to reset the definedness
-             * of the MPI_ERROR-field (single-completion calls wait/test).
-             */
-            opal_memchecker_base_mem_defined(&status->MPI_ERROR, sizeof(int));
-            memchecker_status (status);
-            memchecker_datatype(datatype);
-        }
-    );
+    MEMCHECKER(if (status != MPI_STATUSES_IGNORE) {
+        /*
+         * Before checking the complete status, we need to reset the definedness
+         * of the MPI_ERROR-field (single-completion calls wait/test).
+         */
+        opal_memchecker_base_mem_defined(&status->MPI_ERROR, sizeof(int));
+        memchecker_status(status);
+        memchecker_datatype(datatype);
+    });
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -73,11 +71,11 @@ int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Cou
         return MPI_SUCCESS;
     }
 
-    if( ompi_datatype_is_predefined(datatype) ) {
-        ompi_datatype_type_size( datatype, &size );
+    if (ompi_datatype_is_predefined(datatype)) {
+        ompi_datatype_type_size(datatype, &size);
         status->_ucount = count * size;
     } else {
-        ompi_datatype_set_element_count( datatype, count, &size );
+        ompi_datatype_set_element_count(datatype, count, &size);
         status->_ucount = size;
     }
     return MPI_SUCCESS;

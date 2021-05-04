@@ -24,20 +24,18 @@
 #define OSC_RDMA_ACTIVE_TARGET_H
 
 #include "osc_rdma.h"
-#include "osc_rdma_sync.h"
 #include "osc_rdma_lock.h"
+#include "osc_rdma_sync.h"
 
-int ompi_osc_rdma_fence_atomic (int mpi_assert, struct ompi_win_t *win);
+int ompi_osc_rdma_fence_atomic(int mpi_assert, struct ompi_win_t *win);
 
-int ompi_osc_rdma_start_atomic (struct ompi_group_t *group,
-                                int mpi_assert, struct ompi_win_t *win);
-int ompi_osc_rdma_complete_atomic (struct ompi_win_t *win);
+int ompi_osc_rdma_start_atomic(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win);
+int ompi_osc_rdma_complete_atomic(struct ompi_win_t *win);
 
-int ompi_osc_rdma_post_atomic (struct ompi_group_t *group,
-                               int mpi_assert, struct ompi_win_t *win);
+int ompi_osc_rdma_post_atomic(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win);
 
-int ompi_osc_rdma_wait_atomic (struct ompi_win_t *win);
+int ompi_osc_rdma_wait_atomic(struct ompi_win_t *win);
 
-int ompi_osc_rdma_test_atomic (struct ompi_win_t *win, int *flag);
+int ompi_osc_rdma_test_atomic(struct ompi_win_t *win, int *flag);
 
 #endif /* OSC_RDMA_ACTIVE_TARGET_H */

@@ -24,24 +24,22 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include <stdio.h>
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNIST_H */
+#    include <unistd.h>
+#endif /* HAVE_UNIST_H */
 #include "ompi/mca/mca.h"
+#include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "opal/mca/base/base.h"
-
 
 #include "ompi/constants.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
+#include "ompi/mca/pml/pml.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -63,32 +61,32 @@ int mca_pml_base_revoke_comm(ompi_communicator_t *comm, bool coll_only)
 }
 
 #define xstringify(pml) #pml
-#define stringify(pml) xstringify(pml)
+#define stringify(pml)  xstringify(pml)
 
 /*
  * Global variables
  */
 mca_pml_base_module_t mca_pml = {
-    NULL,                    /* pml_add_procs */
-    NULL,                    /* pml_del_procs */
-    NULL,                    /* pml_enable */
-    mca_pml_base_progress,   /* pml_progress */
-    NULL,                    /* pml_add_comm */
-    NULL,                    /* pml_del_comm */
-    mca_pml_base_revoke_comm,/* pml_revoke_comm */
-    NULL,                    /* pml_irecv_init */
-    NULL,                    /* pml_irecv */
-    NULL,                    /* pml_recv */
-    NULL,                    /* pml_isend_init */
-    NULL,                    /* pml_isend */
-    NULL,                    /* pml_send */
-    NULL,                    /* pml_iprobe */
-    NULL,                    /* pml_probe */
-    NULL,                    /* pml_start */
-    NULL,                    /* pml_dump */
-    0,                       /* pml_max_contextid */
-    0,                       /* pml_max_tag */
-    0                        /* pml_flags */
+    NULL,                     /* pml_add_procs */
+    NULL,                     /* pml_del_procs */
+    NULL,                     /* pml_enable */
+    mca_pml_base_progress,    /* pml_progress */
+    NULL,                     /* pml_add_comm */
+    NULL,                     /* pml_del_comm */
+    mca_pml_base_revoke_comm, /* pml_revoke_comm */
+    NULL,                     /* pml_irecv_init */
+    NULL,                     /* pml_irecv */
+    NULL,                     /* pml_recv */
+    NULL,                     /* pml_isend_init */
+    NULL,                     /* pml_isend */
+    NULL,                     /* pml_send */
+    NULL,                     /* pml_iprobe */
+    NULL,                     /* pml_probe */
+    NULL,                     /* pml_start */
+    NULL,                     /* pml_dump */
+    0,                        /* pml_max_contextid */
+    0,                        /* pml_max_tag */
+    0                         /* pml_flags */
 };
 
 mca_pml_base_component_t mca_pml_base_selected_component = {{0}};
@@ -107,39 +105,35 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
 
     ompi_pml_base_bsend_allocator_name = "basic";
     (void) mca_base_var_register("ompi", "pml", "base", "bsend_allocator", NULL,
-                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_pml_base_bsend_allocator_name);
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &ompi_pml_base_bsend_allocator_name);
 
 #if !MCA_ompi_pml_DIRECT_CALL
     ompi_pml_base_wrapper = NULL;
     var_id = mca_base_var_register("ompi", "pml", "base", "wrapper",
                                    "Use a Wrapper component around the selected PML component",
-                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                   OPAL_INFO_LVL_9,
-                                   MCA_BASE_VAR_SCOPE_READONLY,
-                                   &ompi_pml_base_wrapper);
+                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                   MCA_BASE_VAR_SCOPE_READONLY, &ompi_pml_base_wrapper);
     (void) mca_base_var_register_synonym(var_id, "ompi", "pml", NULL, "wrapper", 0);
 #endif
 
     return OMPI_SUCCESS;
 }
 
-int mca_pml_base_finalize(void) {
-  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
-    return mca_pml_base_selected_component.pmlm_finalize();
-  }
-  return OMPI_SUCCESS;
+int mca_pml_base_finalize(void)
+{
+    if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
+        return mca_pml_base_selected_component.pmlm_finalize();
+    }
+    return OMPI_SUCCESS;
 }
-
 
 static int mca_pml_base_close(void)
 {
     int i, j;
 
     /* turn off the progress code for the pml */
-    if( NULL != mca_pml.pml_progress ) {
+    if (NULL != mca_pml.pml_progress) {
         opal_progress_unregister(mca_pml.pml_progress);
     }
 
@@ -161,7 +155,7 @@ static int mca_pml_base_close(void)
     j = opal_pointer_array_get_size(&mca_pml_base_pml);
     for (i = 0; i < j; ++i) {
         char *str;
-        str = (char*) opal_pointer_array_get_item(&mca_pml_base_pml, i);
+        str = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);
         free(str);
     }
     OBJ_DESTRUCT(&mca_pml_base_pml);
@@ -190,8 +184,7 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
 
     /* Open up all available components */
 
-    if (OPAL_SUCCESS !=
-        mca_base_framework_components_open(&ompi_pml_base_framework, flags)) {
+    if (OPAL_SUCCESS != mca_base_framework_components_open(&ompi_pml_base_framework, flags)) {
         return OMPI_ERROR;
     }
 
@@ -219,33 +212,33 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
         var_id = mca_base_var_find("ompi", "pml", NULL, NULL);
         mca_base_var_get_value(var_id, &default_pml, NULL, NULL);
 
-        if( (NULL == default_pml || NULL == default_pml[0] ||
-             0 == strlen(default_pml[0])) || (default_pml[0][0] == '^') ) {
+        if ((NULL == default_pml || NULL == default_pml[0] || 0 == strlen(default_pml[0]))
+            || (default_pml[0][0] == '^')) {
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("ucx"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else {
-#if OPAL_ENABLE_DEBUG
+#    if OPAL_ENABLE_DEBUG
             char **req_pml = opal_argv_split(default_pml[0], ',');
-            if( NULL != req_pml[1] ) {
-                opal_output(0, "Only one PML must be provided. Using %s PML (the"
-                            " first on the MCA pml list)", req_pml[0]);
+            if (NULL != req_pml[1]) {
+                opal_output(0,
+                            "Only one PML must be provided. Using %s PML (the"
+                            " first on the MCA pml list)",
+                            req_pml[0]);
                 opal_pointer_array_add(&mca_pml_base_pml, strdup(req_pml[0]));
             } else {
                 opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml[0]));
             }
             opal_argv_free(req_pml);
-#else
+#    else
             opal_pointer_array_add(&mca_pml_base_pml, strdup(default_pml[0]));
-#endif  /* OPAL_ENABLE_DEBUG */
+#    endif /* OPAL_ENABLE_DEBUG */
         }
     }
 #endif
 
     return OMPI_SUCCESS;
-
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, pml, "OMPI PML", mca_pml_base_register,
-                           mca_pml_base_open, mca_pml_base_close,
-                           mca_pml_base_static_components, 0);
+MCA_BASE_FRAMEWORK_DECLARE(ompi, pml, "OMPI PML", mca_pml_base_register, mca_pml_base_open,
+                           mca_pml_base_close, mca_pml_base_static_components, 0);

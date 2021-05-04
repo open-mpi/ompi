@@ -22,21 +22,20 @@
 
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/op/op.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Op_commutative = PMPI_Op_commutative
-#endif
-#define MPI_Op_commutative PMPI_Op_commutative
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Op_commutative = PMPI_Op_commutative
+#    endif
+#    define MPI_Op_commutative PMPI_Op_commutative
 #endif
 
 static const char FUNC_NAME[] = "MPI_Op_commutative";
-
 
 int MPI_Op_commutative(MPI_Op op, int *commute)
 {
@@ -45,12 +44,10 @@ int MPI_Op_commutative(MPI_Op op, int *commute)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == op || MPI_OP_NULL == op) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP, FUNC_NAME);
         }
         if (NULL == commute) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
 

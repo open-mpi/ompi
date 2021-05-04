@@ -24,30 +24,30 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mpi.h"
 #include "ompi/file/file.h"
-#include "opal/util/argv.h"
-#include "opal/util/output.h"
-#include "opal/util/show_help.h"
-#include "opal/util/info.h"
-#include "opal/class/opal_list.h"
-#include "opal/class/opal_object.h"
-#include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "ompi/mca/io/io.h"
+#include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/fbtl/fbtl.h"
+#include "ompi/mca/fcoll/base/base.h"
+#include "ompi/mca/fcoll/fcoll.h"
+#include "ompi/mca/fs/base/base.h"
+#include "ompi/mca/fs/fs.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/io/base/io_base_request.h"
-#include "ompi/mca/fs/fs.h"
-#include "ompi/mca/fs/base/base.h"
-#include "ompi/mca/fcoll/fcoll.h"
-#include "ompi/mca/fcoll/base/base.h"
-#include "ompi/mca/fbtl/fbtl.h"
-#include "ompi/mca/fbtl/base/base.h"
-#include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/io/io.h"
+#include "ompi/mca/mca.h"
 #include "ompi/mca/sharedfp/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
+#include "opal/mca/base/base.h"
+#include "opal/util/argv.h"
+#include "opal/util/info.h"
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 opal_mutex_t ompi_mpi_ompio_bootstrap_mutex = OPAL_MUTEX_STATIC_INIT;
 /*
@@ -68,14 +68,11 @@ typedef struct avail_io_t avail_io_t;
 /*
  * Local functions
  */
-static opal_list_t *check_components(opal_list_t *components,
-                                     ompi_file_t *file,
-                                     char **names, int num_names);
-static avail_io_t *check_one_component(ompi_file_t *file,
-                                       const mca_base_component_t *component);
+static opal_list_t *check_components(opal_list_t *components, ompi_file_t *file, char **names,
+                                     int num_names);
+static avail_io_t *check_one_component(ompi_file_t *file, const mca_base_component_t *component);
 
-static avail_io_t *query(const mca_base_component_t *component,
-                         ompi_file_t *file);
+static avail_io_t *query(const mca_base_component_t *component, ompi_file_t *file);
 static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component,
                                ompi_file_t *file);
 
@@ -83,20 +80,17 @@ static void unquery(avail_io_t *avail, ompi_file_t *file);
 
 static int module_init(ompi_file_t *file);
 
-
 /*
  * Stuff for the OBJ interface
  */
 static OBJ_CLASS_INSTANCE(avail_io_t, opal_list_item_t, NULL, NULL);
-
 
 /*
  * This function is called at the initialization time of every
  * file.  It is used to select which io component will be
  * active for a given file.
  */
-int mca_io_base_file_select(ompi_file_t *file,
-                            mca_base_component_t *preferred)
+int mca_io_base_file_select(ompi_file_t *file, mca_base_component_t *preferred)
 {
     int err;
     char *str;
@@ -107,8 +101,7 @@ int mca_io_base_file_select(ompi_file_t *file,
     /* Announce */
 
     opal_output_verbose(10, ompi_io_base_framework.framework_output,
-                        "io:base:file_select: new file: %s",
-                        file->f_filename);
+                        "io:base:file_select: new file: %s", file->f_filename);
 
     /* Initialize all the relevant pointers, since they're used as
        sentinel values */
@@ -130,10 +123,8 @@ int mca_io_base_file_select(ompi_file_t *file,
         str = &(preferred->mca_component_name[0]);
 
         opal_output_verbose(10, ompi_io_base_framework.framework_output,
-                            "io:base:file_select: Checking preferred module: %s",
-                            str);
-        selectable = check_components(&ompi_io_base_framework.framework_components,
-                                      file, &str, 1);
+                            "io:base:file_select: Checking preferred module: %s", str);
+        selectable = check_components(&ompi_io_base_framework.framework_components, file, &str, 1);
 
         /* If we didn't get a preferred module, then call again
            without a preferred module.  This makes the logic below
@@ -153,8 +144,7 @@ int mca_io_base_file_select(ompi_file_t *file,
     else {
         opal_output_verbose(10, ompi_io_base_framework.framework_output,
                             "io:base:file_select: Checking all available modules");
-        selectable = check_components(&ompi_io_base_framework.framework_components,
-                                      file, NULL, 0);
+        selectable = check_components(&ompi_io_base_framework.framework_components, file, NULL, 0);
     }
 
     /* Upon return from the above, the modules list will contain the
@@ -201,8 +191,7 @@ int mca_io_base_file_select(ompi_file_t *file,
     file->f_io_selected_module = selected.ai_module;
     file->f_io_selected_data = selected.ai_module_data;
 
-    if (!strcmp (selected.ai_component.v2_0_0.io_version.mca_component_name,
-                 "ompio")) {
+    if (!strcmp(selected.ai_component.v2_0_0.io_version.mca_component_name, "ompio")) {
         int ret;
 
         opal_mutex_lock(&ompi_mpi_ompio_bootstrap_mutex);
@@ -224,23 +213,20 @@ int mca_io_base_file_select(ompi_file_t *file,
         }
         opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
 
-        if (OMPI_SUCCESS !=
-            (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+        if (OMPI_SUCCESS != (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
-        if (OMPI_SUCCESS !=
-            (ret = mca_fcoll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+        if (OMPI_SUCCESS
+            != (ret = mca_fcoll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
-        if (OMPI_SUCCESS !=
-            (ret = mca_fbtl_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+        if (OMPI_SUCCESS != (ret = mca_fbtl_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
-        if (OMPI_SUCCESS !=
-            (ret = mca_sharedfp_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+        if (OMPI_SUCCESS
+            != (ret = mca_sharedfp_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
-
     }
     /* Finally -- intialize the selected module. */
 
@@ -255,21 +241,19 @@ int mca_io_base_file_select(ompi_file_t *file,
                         selected.ai_component.v2_0_0.io_version.mca_component_name);
 
 #if OPAL_ENABLE_FT_MPI
-    if(ompi_ftmpi_enabled) {
+    if (ompi_ftmpi_enabled) {
         /* check if module is tested for FT, warn if not. */
-        const char* ft_whitelist="";
+        const char *ft_whitelist = "";
         opal_show_help("help-mpi-ft.txt", "module:untested:failundef", true,
-            selected.ai_component.v2_0_0.io_version.mca_type_name,
-            selected.ai_component.v2_0_0.io_version.mca_component_name,
-            ft_whitelist);
+                       selected.ai_component.v2_0_0.io_version.mca_type_name,
+                       selected.ai_component.v2_0_0.io_version.mca_component_name, ft_whitelist);
     }
 #endif /* OPAL_ENABLE_FT_MPI */
 
     return OMPI_SUCCESS;
 }
 
-static int avail_io_compare (opal_list_item_t **itema,
-                             opal_list_item_t **itemb)
+static int avail_io_compare(opal_list_item_t **itema, opal_list_item_t **itemb)
 {
     const avail_io_t *availa = (const avail_io_t *) *itema;
     const avail_io_t *availb = (const avail_io_t *) *itemb;
@@ -291,9 +275,8 @@ static int avail_io_compare (opal_list_item_t **itema,
  * (component, module) tuples (of type avail_io_t) to be only those
  * who returned that they want to run, and put them in priority order.
  */
-static opal_list_t *check_components(opal_list_t *components,
-                                     ompi_file_t *file,
-                                     char **names, int num_names)
+static opal_list_t *check_components(opal_list_t *components, ompi_file_t *file, char **names,
+                                     int num_names)
 {
     int i;
     const mca_base_component_t *component;
@@ -310,7 +293,7 @@ static opal_list_t *check_components(opal_list_t *components,
        O(N^2), but we should never have too many components and/or
        names, so this *hopefully* shouldn't matter... */
 
-    OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH (cli, components, mca_base_component_list_item_t) {
         component = cli->cli_component;
 
         /* If we have a list of names, scan through it */
@@ -336,7 +319,7 @@ static opal_list_t *check_components(opal_list_t *components,
                    (highest priority first).  Should it go first? */
                 /* MSC actually put it Lowest priority first */
                 /* NTH sorted later */
-                opal_list_append(selectable, (opal_list_item_t*)avail);
+                opal_list_append(selectable, (opal_list_item_t *) avail);
             }
         }
     }
@@ -358,21 +341,17 @@ static opal_list_t *check_components(opal_list_t *components,
 /*
  * Check a single component
  */
-static avail_io_t *check_one_component(ompi_file_t *file,
-                                       const mca_base_component_t *component)
+static avail_io_t *check_one_component(ompi_file_t *file, const mca_base_component_t *component)
 {
     avail_io_t *avail;
 
     avail = query(component, file);
     if (NULL != avail) {
-        avail->ai_priority = (avail->ai_priority < 100) ?
-            avail->ai_priority : 100;
-        avail->ai_priority = (avail->ai_priority < 0) ?
-            0 : avail->ai_priority;
+        avail->ai_priority = (avail->ai_priority < 100) ? avail->ai_priority : 100;
+        avail->ai_priority = (avail->ai_priority < 0) ? 0 : avail->ai_priority;
         opal_output_verbose(10, ompi_io_base_framework.framework_output,
                             "io:base:file_select: component available: %s, priority: %d",
-                            component->mca_component_name,
-                            avail->ai_priority);
+                            component->mca_component_name, avail->ai_priority);
     } else {
         opal_output_verbose(10, ompi_io_base_framework.framework_output,
                             "io:base:file_select: component not available: %s",
@@ -382,7 +361,6 @@ static avail_io_t *check_one_component(ompi_file_t *file,
     return avail;
 }
 
-
 /**************************************************************************
  * Query functions
  **************************************************************************/
@@ -391,16 +369,15 @@ static avail_io_t *check_one_component(ompi_file_t *file,
  * Take any version of a io module, query it, and return the right
  * module struct
  */
-static avail_io_t *query(const mca_base_component_t *component,
-                         ompi_file_t *file)
+static avail_io_t *query(const mca_base_component_t *component, ompi_file_t *file)
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 
     /* MCA version check */
 
-    if (MCA_BASE_VERSION_MAJOR == component->mca_major_version &&
-        MCA_BASE_VERSION_MINOR == component->mca_minor_version &&
-        MCA_BASE_VERSION_RELEASE == component->mca_release_version) {
+    if (MCA_BASE_VERSION_MAJOR == component->mca_major_version
+        && MCA_BASE_VERSION_MINOR == component->mca_minor_version
+        && MCA_BASE_VERSION_RELEASE == component->mca_release_version) {
         ioc_200 = (mca_io_base_component_2_0_0_t *) component;
 
         return query_2_0_0(ioc_200, file);
@@ -411,9 +388,7 @@ static avail_io_t *query(const mca_base_component_t *component,
     return NULL;
 }
 
-
-static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
-                               ompi_file_t *file)
+static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component, ompi_file_t *file)
 {
     int priority;
     avail_io_t *avail;
@@ -437,7 +412,6 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
     return avail;
 }
 
-
 /**************************************************************************
  * Unquery functions
  **************************************************************************/
@@ -446,7 +420,7 @@ static void unquery(avail_io_t *avail, ompi_file_t *file)
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
 
-    switch(avail->ai_version) {
+    switch (avail->ai_version) {
     case MCA_IO_BASE_V_2_0_0:
         ioc_200 = &(avail->ai_component.v2_0_0);
         ioc_200->io_file_unquery(file, avail->ai_module_data);
@@ -456,7 +430,6 @@ static void unquery(avail_io_t *avail, ompi_file_t *file)
         break;
     }
 }
-
 
 /**************************************************************************
  * Module_Init functions
@@ -469,12 +442,11 @@ static int module_init(ompi_file_t *file)
 {
     const mca_io_base_module_2_0_0_t *iom_200;
 
-    switch(file->f_io_version) {
+    switch (file->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
         iom_200 = &(file->f_io_selected_module.v2_0_0);
-        return iom_200->io_module_file_open(file->f_comm, file->f_filename,
-                                            file->f_amode, file->super.s_info,
-                                            file);
+        return iom_200->io_module_file_open(file->f_comm, file->f_filename, file->f_amode,
+                                            file->super.s_info, file);
         break;
 
     default:

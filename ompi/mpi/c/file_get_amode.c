@@ -21,20 +21,19 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_get_amode = PMPI_File_get_amode
-#endif
-#define MPI_File_get_amode PMPI_File_get_amode
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_get_amode = PMPI_File_get_amode
+#    endif
+#    define MPI_File_get_amode PMPI_File_get_amode
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_get_amode";
-
 
 int MPI_File_get_amode(MPI_File fh, int *amode)
 {
@@ -56,8 +55,7 @@ int MPI_File_get_amode(MPI_File fh, int *amode)
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_get_amode(fh, amode);
+        rc = fh->f_io_selected_module.v2_0_0.io_module_file_get_amode(fh, amode);
         break;
 
     default:

@@ -20,16 +20,16 @@
  * Enum inidicating the type of the request
  */
 typedef enum {
-    OMPI_REQUEST_PML,      /**< MPI point-to-point request */
-    OMPI_REQUEST_IO,       /**< MPI-2 IO request */
-    OMPI_REQUEST_GEN,      /**< MPI-2 generalized request */
-    OMPI_REQUEST_WIN,      /**< MPI-2 one-sided request */
-    OMPI_REQUEST_COLL,     /**< MPI-3 non-blocking collectives request */
-    OMPI_REQUEST_NULL,     /**< NULL request */
-    OMPI_REQUEST_NOOP,     /**< A request that does nothing (e.g., to PROC_NULL) */
-    OMPI_REQUEST_COMM,     /**< MPI-3 non-blocking communicator duplication */
-    OMPI_REQUEST_PART,     /**< MPI-4 partitioned communication request */
-    OMPI_REQUEST_MAX       /**< Maximum request type */
+    OMPI_REQUEST_PML,  /**< MPI point-to-point request */
+    OMPI_REQUEST_IO,   /**< MPI-2 IO request */
+    OMPI_REQUEST_GEN,  /**< MPI-2 generalized request */
+    OMPI_REQUEST_WIN,  /**< MPI-2 one-sided request */
+    OMPI_REQUEST_COLL, /**< MPI-3 non-blocking collectives request */
+    OMPI_REQUEST_NULL, /**< NULL request */
+    OMPI_REQUEST_NOOP, /**< A request that does nothing (e.g., to PROC_NULL) */
+    OMPI_REQUEST_COMM, /**< MPI-3 non-blocking communicator duplication */
+    OMPI_REQUEST_PART, /**< MPI-4 partitioned communication request */
+    OMPI_REQUEST_MAX   /**< Maximum request type */
 } ompi_request_type_t;
 
 /**

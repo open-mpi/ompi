@@ -21,13 +21,13 @@
 
 #include <string.h>
 
-#include "opal/datatype/opal_convertor.h"
-#include "ompi/constants.h"
+#include "coll_sm.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
+#include "opal/datatype/opal_convertor.h"
 #include "opal/sys/atomic.h"
-#include "coll_sm.h"
 
 /**
  * Shared memory broadcast.
@@ -53,13 +53,11 @@
  * have children, they copy the data directly from the parent's shared
  * data segment into the user's output buffer.
  */
-int mca_coll_sm_bcast_intra(void *buff, int count,
-                            struct ompi_datatype_t *datatype, int root,
-                            struct ompi_communicator_t *comm,
-                            mca_coll_base_module_t *module)
+int mca_coll_sm_bcast_intra(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+                            struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     struct iovec iov;
-    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t *) module;
     mca_coll_sm_comm_t *data;
     int i, ret, rank, size, num_children, src_rank;
     int flag_num, segment_num, max_segment_num;
@@ -107,14 +105,10 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
         /* The root needs a send convertor to pack from the user's
            buffer to shared memory */
 
-        if (OMPI_SUCCESS !=
-            (ret =
-             opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
-                                                      &(datatype->super),
-                                                      count,
-                                                      buff,
-                                                      0,
-                                                      &convertor))) {
+        if (OMPI_SUCCESS
+            != (ret = opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
+                                                               &(datatype->super), count, buff, 0,
+                                                               &convertor))) {
             return ret;
         }
         opal_convertor_get_packed_size(&convertor, &total_size);
@@ -122,8 +116,8 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
         /* Main loop over sending fragments */
 
         do {
-            flag_num = (data->mcb_operation_count++ %
-                        mca_coll_sm_component.sm_comm_num_in_use_flags);
+            flag_num = (data->mcb_operation_count++
+                        % mca_coll_sm_component.sm_comm_num_in_use_flags);
 
             FLAG_SETUP(flag_num, flag, data);
             FLAG_WAIT_FOR_IDLE(flag, bcast_root_label);
@@ -131,10 +125,8 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
             /* Loop over all the segments in this set */
 
-            segment_num =
-                flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
-            max_segment_num =
-                (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
+            segment_num = flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
+            max_segment_num = (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
             do {
                 index = &(data->mcb_data_index[segment_num]);
 
@@ -148,8 +140,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                 opal_atomic_wmb();
 
                 /* Tell my children that this fragment is ready */
-                PARENT_NOTIFY_CHILDREN(children, num_children, index,
-                                       max_data);
+                PARENT_NOTIFY_CHILDREN(children, num_children, index, max_data);
 
                 ++segment_num;
             } while (bytes < total_size && segment_num < max_segment_num);
@@ -165,14 +156,10 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
         /* Non-root processes need a receive convertor to unpack from
            shared mmory to the user's buffer */
 
-        if (OMPI_SUCCESS !=
-            (ret =
-             opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor,
-                                                      &(datatype->super),
-                                                      count,
-                                                      buff,
-                                                      0,
-                                                      &convertor))) {
+        if (OMPI_SUCCESS
+            != (ret = opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor,
+                                                               &(datatype->super), count, buff, 0,
+                                                               &convertor))) {
             return ret;
         }
         opal_convertor_get_packed_size(&convertor, &total_size);
@@ -181,8 +168,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
            fragments */
 
         do {
-            flag_num = (data->mcb_operation_count %
-                        mca_coll_sm_component.sm_comm_num_in_use_flags);
+            flag_num = (data->mcb_operation_count % mca_coll_sm_component.sm_comm_num_in_use_flags);
 
             /* Wait for the root to mark this set of segments as
                ours */
@@ -192,10 +178,8 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
 
             /* Loop over all the segments in this set */
 
-            segment_num =
-                flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
-            max_segment_num =
-                (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
+            segment_num = flag_num * mca_coll_sm_component.sm_segs_per_inuse_flag;
+            max_segment_num = (flag_num + 1) * mca_coll_sm_component.sm_segs_per_inuse_flag;
             do {
 
                 /* Pre-calculate some values */
@@ -215,8 +199,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                     opal_atomic_wmb();
 
                     /* Tell my children that this fragment is ready */
-                    PARENT_NOTIFY_CHILDREN(children, num_children, index,
-                                           max_data);
+                    PARENT_NOTIFY_CHILDREN(children, num_children, index, max_data);
 
                     /* Set the "copy from buffer" to be my local
                        segment buffer so that we don't potentially

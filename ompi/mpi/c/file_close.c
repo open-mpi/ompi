@@ -20,20 +20,19 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_close = PMPI_File_close
-#endif
-#define MPI_File_close PMPI_File_close
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_close = PMPI_File_close
+#    endif
+#    define MPI_File_close PMPI_File_close
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_close";
-
 
 int MPI_File_close(MPI_File *fh)
 {
@@ -47,8 +46,7 @@ int MPI_File_close(MPI_File *fh)
            MPI_FILE_NULL */
 
         if (NULL == fh || ompi_file_invalid(*fh)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, MPI_ERR_FILE,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, MPI_ERR_FILE, FUNC_NAME);
         }
     }
 

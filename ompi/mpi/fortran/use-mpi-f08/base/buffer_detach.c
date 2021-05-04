@@ -31,11 +31,9 @@
  * file.  To avoid compiler warnings about no protoype, we prototype
  * it here.
  */
-OMPI_DECLSPEC void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size,
-                                          MPI_Fint *ierr);
+OMPI_DECLSPEC void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr);
 
-OMPI_DECLSPEC void pompi_buffer_detach_f08(char *buffer, MPI_Fint *size,
-                                          MPI_Fint *ierr);
+OMPI_DECLSPEC void pompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr);
 
 /* (this comment is repeated in ompi/mpi/fortran/mpif-h/buffer_detach_f.c)
  *
@@ -67,7 +65,7 @@ void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_FINT(size);
-        *(void **)buffer = dummy;
+        *(void **) buffer = dummy;
     }
 }
 

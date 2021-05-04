@@ -11,14 +11,14 @@
 #include "oshmem_config.h"
 
 #include "opal/constants.h"
-#include "opal/util/output.h"
-#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/util/output.h"
+#include "oshmem/mca/mca.h"
 
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/mca/sshmem/sshmem.h"
+#include "oshmem/util/oshmem_util.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -36,52 +36,36 @@
  * to let OS allocate segment automatically
  */
 #if UINTPTR_MAX == 0xFFFFFFFF
-void *mca_sshmem_base_start_address = (void*)0;
+void *mca_sshmem_base_start_address = (void *) 0;
 #else
-void* mca_sshmem_base_start_address = (void*)0xFF000000;
+void *mca_sshmem_base_start_address = (void *) 0xFF000000;
 #endif
 
-char * mca_sshmem_base_backing_file_dir = NULL;
+char *mca_sshmem_base_backing_file_dir = NULL;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /**
  * Register some sshmem-wide MCA params
  */
-static int
-mca_sshmem_base_register (mca_base_register_flag_t flags)
+static int mca_sshmem_base_register(mca_base_register_flag_t flags)
 {
     int index;
 
-    index = mca_base_var_register("oshmem",
-                                 "sshmem",
-                                 "base",
-                                 "start_address",
-                                 "Specify base address for shared memory region",
-                                 MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_sshmem_base_start_address);
-    (void) mca_base_var_register_synonym(index, "oshmem", "memheap", "base",
-                                         "start_address",
+    index = mca_base_var_register("oshmem", "sshmem", "base", "start_address",
+                                  "Specify base address for shared memory region",
+                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG_LONG, NULL, 0,
+                                  MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
+                                  MCA_BASE_VAR_SCOPE_READONLY, &mca_sshmem_base_start_address);
+    (void) mca_base_var_register_synonym(index, "oshmem", "memheap", "base", "start_address",
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     mca_sshmem_base_backing_file_dir = "/dev/shm";
-    index = mca_base_var_register("oshmem",
-                                 "sshmem",
-                                 "base",
-                                 "backing_file_dir",
-                                 "Specifies where backing files will be created when "
-                                 "mmap is used and shmem_mmap_anonymous set to 0.",
-                                 MCA_BASE_VAR_TYPE_STRING,
-                                 NULL,
-                                 0,
-                                 MCA_BASE_VAR_FLAG_SETTABLE,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_sshmem_base_backing_file_dir);
+    index = mca_base_var_register("oshmem", "sshmem", "base", "backing_file_dir",
+                                  "Specifies where backing files will be created when "
+                                  "mmap is used and shmem_mmap_anonymous set to 0.",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &mca_sshmem_base_backing_file_dir);
     return OSHMEM_SUCCESS;
 }
 
@@ -90,8 +74,7 @@ static int mca_sshmem_base_open(mca_base_open_flag_t flags)
     oshmem_framework_open_output(&oshmem_sshmem_base_framework);
 
     /* Open up all available components */
-    if (OPAL_SUCCESS !=
-        mca_base_framework_components_open(&oshmem_sshmem_base_framework, flags)) {
+    if (OPAL_SUCCESS != mca_base_framework_components_open(&oshmem_sshmem_base_framework, flags)) {
         return OSHMEM_ERROR;
     }
 
@@ -99,10 +82,6 @@ static int mca_sshmem_base_open(mca_base_open_flag_t flags)
 }
 
 /* Use the default open function */
-MCA_BASE_FRAMEWORK_DECLARE(oshmem, sshmem,
-                           "OSHMEM SSHMEM",
-                           mca_sshmem_base_register,
-                           mca_sshmem_base_open,
-                           mca_sshmem_base_close,
-                           mca_sshmem_base_static_components,
-                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
+MCA_BASE_FRAMEWORK_DECLARE(oshmem, sshmem, "OSHMEM SSHMEM", mca_sshmem_base_register,
+                           mca_sshmem_base_open, mca_sshmem_base_close,
+                           mca_sshmem_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

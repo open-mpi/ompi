@@ -44,11 +44,11 @@
 #define OPAL_HAVE_ATOMIC_SWAP_32             1
 #define OPAL_HAVE_ATOMIC_LLSC_32             1
 
-#define OPAL_HAVE_ATOMIC_ADD_32  1
-#define OPAL_HAVE_ATOMIC_AND_32  1
-#define OPAL_HAVE_ATOMIC_OR_32   1
-#define OPAL_HAVE_ATOMIC_XOR_32  1
-#define OPAL_HAVE_ATOMIC_SUB_32  1
+#define OPAL_HAVE_ATOMIC_ADD_32              1
+#define OPAL_HAVE_ATOMIC_AND_32              1
+#define OPAL_HAVE_ATOMIC_OR_32               1
+#define OPAL_HAVE_ATOMIC_XOR_32              1
+#define OPAL_HAVE_ATOMIC_SUB_32              1
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 #define OPAL_HAVE_ATOMIC_SWAP_64             1
 #define OPAL_HAVE_ATOMIC_LLSC_64             1
@@ -245,30 +245,30 @@ static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *a
     return ret;
 }
 
-#        define opal_atomic_ll_64(addr, ret)                                                \
-            do {                                                                            \
-                opal_atomic_int64_t *_addr = (addr);                                        \
-                int64_t _ret;                                                               \
-                __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(_ret) : "r"(_addr)); \
-                ret = (typeof(ret)) _ret;                                                   \
-            } while (0)
+#    define opal_atomic_ll_64(addr, ret)                                                \
+        do {                                                                            \
+            opal_atomic_int64_t *_addr = (addr);                                        \
+            int64_t _ret;                                                               \
+            __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(_ret) : "r"(_addr)); \
+            ret = (typeof(ret)) _ret;                                                   \
+        } while (0)
 
-#        define opal_atomic_sc_64(addr, value, ret)                               \
-            do {                                                                  \
-                opal_atomic_int64_t *_addr = (addr);                              \
-                int64_t _newval = (int64_t) value;                                \
-                int32_t _ret;                                                     \
-                                                                                  \
-                __asm__ __volatile__("   stdcx.  %2, 0, %1  \n\t"                 \
-                                     "   li      %0,0       \n\t"                 \
-                                     "   bne-    1f         \n\t"                 \
-                                     "   ori     %0,%0,1    \n\t"                 \
-                                     "1:"                                         \
-                                     : "=r"(_ret)                                 \
-                                     : "r"(_addr), "r"(OPAL_ASM_VALUE64(_newval)) \
-                                     : "cc", "memory");                           \
-                ret = _ret;                                                       \
-            } while (0)
+#    define opal_atomic_sc_64(addr, value, ret)                               \
+        do {                                                                  \
+            opal_atomic_int64_t *_addr = (addr);                              \
+            int64_t _newval = (int64_t) value;                                \
+            int32_t _ret;                                                     \
+                                                                              \
+            __asm__ __volatile__("   stdcx.  %2, 0, %1  \n\t"                 \
+                                 "   li      %0,0       \n\t"                 \
+                                 "   bne-    1f         \n\t"                 \
+                                 "   ori     %0,%0,1    \n\t"                 \
+                                 "1:"                                         \
+                                 : "=r"(_ret)                                 \
+                                 : "r"(_addr), "r"(OPAL_ASM_VALUE64(_newval)) \
+                                 : "cc", "memory");                           \
+            ret = _ret;                                                       \
+        } while (0)
 
 static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t newval)
 {
@@ -284,7 +284,7 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
     return ret;
 }
 
-#    endif /* OPAL_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 #if OPAL_GCC_INLINE_ASSEMBLY
 

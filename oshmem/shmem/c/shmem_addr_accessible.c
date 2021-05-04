@@ -12,19 +12,19 @@
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
 
-#include "oshmem/runtime/runtime.h"
-#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/runtime/runtime.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_addr_accessible = pshmem_addr_accessible
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_addr_accessible = pshmem_addr_accessible
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 int shmem_addr_accessible(const void *addr, int pe)
 {
-    void* rva;
+    void *rva;
     sshmem_mkey_t *mkey;
     int i;
 
@@ -32,7 +32,7 @@ int shmem_addr_accessible(const void *addr, int pe)
 
     for (i = 0; i < mca_memheap_base_num_transports(); i++) {
         /* TODO: iterate on all ctxs, try to get cached mkey */
-        mkey = mca_memheap_base_get_cached_mkey(oshmem_ctx_default, pe, (void *)addr, i, &rva);
+        mkey = mca_memheap_base_get_cached_mkey(oshmem_ctx_default, pe, (void *) addr, i, &rva);
         if (mkey) {
             return 1;
         }

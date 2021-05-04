@@ -11,13 +11,13 @@
 #include "opal_config.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
+#include "opal/mca/dl/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/printf.h"
-#include "opal/mca/dl/base/base.h"
 
 #if !OPAL_HAVE_DL_SUPPORT
 int main(int argc, char *argv[])
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     return 77;
 }
 
-#else /* OPAL_HAVE_DL_SUPPORT */
+#else  /* OPAL_HAVE_DL_SUPPORT */
 
 static int try_open(const char *filename)
 {
@@ -52,8 +52,7 @@ static int try_open(const char *filename)
         return 0;
     }
 
-    fprintf(stderr, "File failed to open with global namespace: %s\n",
-            err_msg);
+    fprintf(stderr, "File failed to open with global namespace: %s\n", err_msg);
 
     return 2;
 }
@@ -70,9 +69,7 @@ static int do_test(void)
        not, skip this test. */
     fp = fopen(full_filename, "r");
     if (NULL == fp) {
-        fprintf(stderr,
-                "File %s.la doesn't seem to exist; skipping this test\n",
-                full_filename);
+        fprintf(stderr, "File %s.la doesn't seem to exist; skipping this test\n", full_filename);
         exit(77);
     }
     /* We know the .la file is there, so read it, looking for the

@@ -24,9 +24,9 @@
 #ifndef MTL_PSM2_H_HAS_BEEN_INCLUDED
 #define MTL_PSM2_H_HAS_BEEN_INCLUDED
 
-#include "ompi/mca/pml/pml.h"
-#include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
+#include "ompi/mca/mtl/mtl.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/proc/proc.h"
 #include "opal/datatype/opal_convertor.h"
 #include <psm2.h>
@@ -38,76 +38,52 @@ BEGIN_C_DECLS
 extern opal_mutex_t mtl_psm2_mq_mutex;
 
 /* MTL interface functions */
-extern int ompi_mtl_psm2_add_procs(struct mca_mtl_base_module_t* mtl,
-                          size_t nprocs,
-                          struct ompi_proc_t** procs);
+extern int ompi_mtl_psm2_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
+                                   struct ompi_proc_t **procs);
 
-extern int ompi_mtl_psm2_del_procs(struct mca_mtl_base_module_t* mtl,
-                                 size_t nprocs,
-                                 struct ompi_proc_t** procs);
+extern int ompi_mtl_psm2_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
+                                   struct ompi_proc_t **procs);
 
-int
-ompi_mtl_psm2_send(struct mca_mtl_base_module_t* mtl,
-                 struct ompi_communicator_t* comm,
-                 int dest,
-                 int tag,
-                 struct opal_convertor_t *convertor,
-                 mca_pml_base_send_mode_t mode);
+int ompi_mtl_psm2_send(struct mca_mtl_base_module_t *mtl, struct ompi_communicator_t *comm,
+                       int dest, int tag, struct opal_convertor_t *convertor,
+                       mca_pml_base_send_mode_t mode);
 
-extern int ompi_mtl_psm2_isend(struct mca_mtl_base_module_t* mtl,
-                             struct ompi_communicator_t* comm,
-                             int dest,
-                             int tag,
-                             struct opal_convertor_t *convertor,
-                             mca_pml_base_send_mode_t mode,
-                             bool blocking,
-                             mca_mtl_request_t * mtl_request);
+extern int ompi_mtl_psm2_isend(struct mca_mtl_base_module_t *mtl, struct ompi_communicator_t *comm,
+                               int dest, int tag, struct opal_convertor_t *convertor,
+                               mca_pml_base_send_mode_t mode, bool blocking,
+                               mca_mtl_request_t *mtl_request);
 
-extern int ompi_mtl_psm2_irecv(struct mca_mtl_base_module_t* mtl,
-                             struct ompi_communicator_t *comm,
-                             int src,
-                             int tag,
-                             struct opal_convertor_t *convertor,
-                             struct mca_mtl_request_t *mtl_request);
-
-
-extern int ompi_mtl_psm2_iprobe(struct mca_mtl_base_module_t* mtl,
-                              struct ompi_communicator_t *comm,
-                              int src,
-                              int tag,
-                              int *flag,
-                              struct ompi_status_public_t *status);
-
-extern int ompi_mtl_psm2_imrecv(struct mca_mtl_base_module_t* mtl,
-                               struct opal_convertor_t *convertor,
-                               struct ompi_message_t **message,
+extern int ompi_mtl_psm2_irecv(struct mca_mtl_base_module_t *mtl, struct ompi_communicator_t *comm,
+                               int src, int tag, struct opal_convertor_t *convertor,
                                struct mca_mtl_request_t *mtl_request);
 
-extern int ompi_mtl_psm2_improbe(struct mca_mtl_base_module_t *mtl,
-                                struct ompi_communicator_t *comm,
-                                int src,
-                                int tag,
-                                int *matched,
-                                struct ompi_message_t **message,
-                                struct ompi_status_public_t *status);
+extern int ompi_mtl_psm2_iprobe(struct mca_mtl_base_module_t *mtl, struct ompi_communicator_t *comm,
+                                int src, int tag, int *flag, struct ompi_status_public_t *status);
 
-extern int ompi_mtl_psm2_cancel(struct mca_mtl_base_module_t* mtl,
-                              struct mca_mtl_request_t *mtl_request,
-                              int flag);
+extern int ompi_mtl_psm2_imrecv(struct mca_mtl_base_module_t *mtl,
+                                struct opal_convertor_t *convertor, struct ompi_message_t **message,
+                                struct mca_mtl_request_t *mtl_request);
+
+extern int ompi_mtl_psm2_improbe(struct mca_mtl_base_module_t *mtl,
+                                 struct ompi_communicator_t *comm, int src, int tag, int *matched,
+                                 struct ompi_message_t **message,
+                                 struct ompi_status_public_t *status);
+
+extern int ompi_mtl_psm2_cancel(struct mca_mtl_base_module_t *mtl,
+                                struct mca_mtl_request_t *mtl_request, int flag);
 
 extern int ompi_mtl_psm2_add_comm(struct mca_mtl_base_module_t *mtl,
-                                 struct ompi_communicator_t *comm);
+                                  struct ompi_communicator_t *comm);
 
 extern int ompi_mtl_psm2_del_comm(struct mca_mtl_base_module_t *mtl,
-                                 struct ompi_communicator_t *comm);
+                                  struct ompi_communicator_t *comm);
 
-extern int ompi_mtl_psm2_finalize(struct mca_mtl_base_module_t* mtl);
+extern int ompi_mtl_psm2_finalize(struct mca_mtl_base_module_t *mtl);
 
 int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs);
 
 extern int ompi_mtl_psm2_register_pvars(void);
 
-
 END_C_DECLS
 
-#endif  /* MTL_PSM2_H_HAS_BEEN_INCLUDED */
+#endif /* MTL_PSM2_H_HAS_BEEN_INCLUDED */

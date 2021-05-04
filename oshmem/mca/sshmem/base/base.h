@@ -22,25 +22,20 @@
 
 BEGIN_C_DECLS
 
-extern void* mca_sshmem_base_start_address;
-extern char* mca_sshmem_base_backing_file_dir;
+extern void *mca_sshmem_base_start_address;
+extern char *mca_sshmem_base_backing_file_dir;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* Public API for the sshmem framework */
 /* ////////////////////////////////////////////////////////////////////////// */
-OSHMEM_DECLSPEC int
-mca_sshmem_segment_create(map_segment_t *ds_buf,
-                          const char *file_name,
-                          size_t size, long hint);
+OSHMEM_DECLSPEC int mca_sshmem_segment_create(map_segment_t *ds_buf, const char *file_name,
+                                              size_t size, long hint);
 
-OSHMEM_DECLSPEC void *
-mca_sshmem_segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);
+OSHMEM_DECLSPEC void *mca_sshmem_segment_attach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);
 
-OSHMEM_DECLSPEC int
-mca_sshmem_segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);
+OSHMEM_DECLSPEC int mca_sshmem_segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey);
 
-OSHMEM_DECLSPEC int
-mca_sshmem_unlink(map_segment_t *ds_buf);
+OSHMEM_DECLSPEC int mca_sshmem_unlink(map_segment_t *ds_buf);
 /* ////////////////////////////////////////////////////////////////////////// */
 /* End Public API for the sshmem framework */
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -80,8 +75,7 @@ mca_sshmem_unlink(map_segment_t *ds_buf);
  * selected.  If no component was selected, subsequent invocation
  * of the shmem wrapper functions will return an error.
  */
-OSHMEM_DECLSPEC int
-mca_sshmem_base_select(void);
+OSHMEM_DECLSPEC int mca_sshmem_base_select(void);
 
 /**
  * Shut down the sshmem MCA framework.
@@ -94,8 +88,7 @@ mca_sshmem_base_select(void);
  * It must be the last function invoked on the sshmem MCA
  * framework.
  */
-OSHMEM_DECLSPEC int
-mca_sshmem_base_close(void);
+OSHMEM_DECLSPEC int mca_sshmem_base_close(void);
 
 /**
  * Indication of whether a component was successfully selected or
@@ -106,14 +99,12 @@ OSHMEM_DECLSPEC extern bool mca_sshmem_base_selected;
 /**
  * Global component struct for the selected component
  */
-OSHMEM_DECLSPEC extern const mca_sshmem_base_component_2_0_0_t
-*mca_sshmem_base_component;
+OSHMEM_DECLSPEC extern const mca_sshmem_base_component_2_0_0_t *mca_sshmem_base_component;
 
 /**
  * Global module struct for the selected module
  */
-OSHMEM_DECLSPEC extern const mca_sshmem_base_module_2_0_0_t
-*mca_sshmem_base_module;
+OSHMEM_DECLSPEC extern const mca_sshmem_base_module_2_0_0_t *mca_sshmem_base_module;
 
 /**
  * Framework structure declaration
@@ -122,34 +113,34 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_sshmem_base_framework;
 
 /* ******************************************************************** */
 #ifdef __BASE_FILE__
-#define __SSHMEM_FILE__ __BASE_FILE__
+#    define __SSHMEM_FILE__ __BASE_FILE__
 #else
-#define __SSHMEM_FILE__ __FILE__
+#    define __SSHMEM_FILE__ __FILE__
 #endif
 
 #if OPAL_ENABLE_DEBUG
-#define SSHMEM_VERBOSE(level, ...) \
-    oshmem_output_verbose(level, oshmem_sshmem_base_framework.framework_output, \
-        "%s:%d - %s()", __SSHMEM_FILE__, __LINE__, __func__, __VA_ARGS__)
+#    define SSHMEM_VERBOSE(level, ...)                                              \
+        oshmem_output_verbose(level, oshmem_sshmem_base_framework.framework_output, \
+                              "%s:%d - %s()", __SSHMEM_FILE__, __LINE__, __func__, __VA_ARGS__)
 #else
-#define SSHMEM_VERBOSE(level, ...)
+#    define SSHMEM_VERBOSE(level, ...)
 #endif
 
-#define SSHMEM_ERROR(...) \
-    oshmem_output(oshmem_sshmem_base_framework.framework_output, \
-        "Error %s:%d - %s()", __SSHMEM_FILE__, __LINE__, __func__, __VA_ARGS__)
+#define SSHMEM_ERROR(...)                                                              \
+    oshmem_output(oshmem_sshmem_base_framework.framework_output, "Error %s:%d - %s()", \
+                  __SSHMEM_FILE__, __LINE__, __func__, __VA_ARGS__)
 
-#define SSHMEM_WARN(...) \
-    oshmem_output_verbose(0, oshmem_sshmem_base_framework.framework_output, \
-        "Warning %s:%d - %s()", __SSHMEM_FILE__, __LINE__, __func__, __VA_ARGS__)
-
+#define SSHMEM_WARN(...)                                                               \
+    oshmem_output_verbose(0, oshmem_sshmem_base_framework.framework_output,            \
+                          "Warning %s:%d - %s()", __SSHMEM_FILE__, __LINE__, __func__, \
+                          __VA_ARGS__)
 
 OSHMEM_DECLSPEC extern void shmem_ds_reset(map_segment_t *ds_buf);
 
 /*
  * Get unique file name
  */
-OSHMEM_DECLSPEC extern char * oshmem_get_unique_file_name(uint64_t pe);
+OSHMEM_DECLSPEC extern char *oshmem_get_unique_file_name(uint64_t pe);
 
 END_C_DECLS
 

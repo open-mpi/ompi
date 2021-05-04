@@ -35,67 +35,67 @@
 #include "ompi_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 
-#include "opal/util/event.h"
-#include "opal/util/output.h"
-#include "opal/runtime/opal_progress.h"
+#include "opal/mca/allocator/base/base.h"
 #include "opal/mca/base/base.h"
-#include "opal/sys/atomic.h"
-#include "opal/runtime/opal.h"
-#include "opal/util/show_help.h"
-#include "opal/util/opal_environ.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/base/mpool_base_tree.h"
-#include "opal/mca/rcache/base/base.h"
-#include "opal/mca/allocator/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/runtime/opal.h"
+#include "opal/runtime/opal_progress.h"
+#include "opal/sys/atomic.h"
+#include "opal/util/event.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/util/timings.h"
 
 #include "mpi.h"
-#include "ompi/constants.h"
-#include "ompi/errhandler/errcode.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/message/message.h"
-#include "ompi/op/op.h"
+#include "ompi/dpm/dpm.h"
+#include "ompi/errhandler/errcode.h"
 #include "ompi/file/file.h"
 #include "ompi/info/info.h"
-#include "ompi/runtime/mpiruntime.h"
-#include "ompi/attribute/attribute.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/mca/bml/bml.h"
-#include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
+#include "ompi/mca/bml/bml.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "ompi/mca/hook/base/base.h"
+#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/io/io.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/part/base/base.h"
-#include "ompi/mca/coll/base/coll_base_functions.h"
-#include "ompi/mca/coll/base/base.h"
-#include "ompi/runtime/ompi_rte.h"
-#include "ompi/mca/topo/base/base.h"
-#include "ompi/mca/io/io.h"
-#include "ompi/mca/io/base/base.h"
+#include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
-#include "ompi/runtime/params.h"
-#include "ompi/dpm/dpm.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/mca/topo/base/base.h"
+#include "ompi/message/message.h"
 #include "ompi/mpiext/mpiext.h"
-#include "ompi/mca/hook/base/base.h"
+#include "ompi/op/op.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_rte.h"
+#include "ompi/runtime/params.h"
 
 extern bool ompi_enable_timing;
 
 static void fence_cbfunc(pmix_status_t status, void *cbdata)
 {
-    volatile bool *active = (volatile bool*)cbdata;
+    volatile bool *active = (volatile bool *) cbdata;
     OPAL_ACQUIRE_OBJECT(active);
     *active = false;
     OPAL_POST_OBJECT(active);
@@ -105,18 +105,17 @@ int ompi_mpi_finalize(void)
 {
     int ret = MPI_SUCCESS;
     opal_list_item_t *item;
-    ompi_proc_t** procs;
+    ompi_proc_t **procs;
     size_t nprocs;
     volatile bool active;
     uint32_t key;
-    ompi_datatype_t * datatype;
+    ompi_datatype_t *datatype;
     pmix_status_t rc;
 
     ompi_hook_base_mpi_finalize_top();
 
     int32_t state = ompi_mpi_state;
-    if (state < OMPI_MPI_STATE_INIT_COMPLETED ||
-        state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
+    if (state < OMPI_MPI_STATE_INIT_COMPLETED || state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
         /* Note that if we're not initialized or already finalized, we
            cannot raise an MPI error.  The best that we can do is
            write something to stderr. */
@@ -125,13 +124,11 @@ int ompi_mpi_finalize(void)
         hostname = opal_gethostname();
 
         if (state < OMPI_MPI_STATE_INIT_COMPLETED) {
-            opal_show_help("help-mpi-runtime.txt",
-                           "mpi_finalize: not initialized",
-                           true, hostname, pid);
+            opal_show_help("help-mpi-runtime.txt", "mpi_finalize: not initialized", true, hostname,
+                           pid);
         } else if (state >= OMPI_MPI_STATE_FINALIZE_STARTED) {
-            opal_show_help("help-mpi-runtime.txt",
-                           "mpi_finalize:invoked_multiple_times",
-                           true, hostname, pid);
+            opal_show_help("help-mpi-runtime.txt", "mpi_finalize:invoked_multiple_times", true,
+                           hostname, pid);
         }
         return MPI_ERR_OTHER;
     }
@@ -145,31 +142,31 @@ int ompi_mpi_finalize(void)
        MPI_FINALIZED will return true). */
 
     if (NULL != ompi_mpi_comm_self.comm.c_keyhash) {
-        ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_self,
-                             ompi_mpi_comm_self.comm.c_keyhash);
+        ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_self, ompi_mpi_comm_self.comm.c_keyhash);
         OBJ_RELEASE(ompi_mpi_comm_self.comm.c_keyhash);
         ompi_mpi_comm_self.comm.c_keyhash = NULL;
     }
 
 #if OPAL_ENABLE_FT_MPI
-    if( ompi_ftmpi_enabled ) {
-        ompi_communicator_t* comm = &ompi_mpi_comm_world.comm;
-        OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle, "FT: Rank %d entering finalize", ompi_comm_rank(comm)));
+    if (ompi_ftmpi_enabled) {
+        ompi_communicator_t *comm = &ompi_mpi_comm_world.comm;
+        OPAL_OUTPUT_VERBOSE(
+            (50, ompi_ftmpi_output_handle, "FT: Rank %d entering finalize", ompi_comm_rank(comm)));
 
         /* grpcomm barrier does not tolerate /new/ failures. Let's make sure
          * we drain all preexisting failures before we proceed;
          * TODO: when we have better failure support in the runtime, we can
          * remove that agreement */
-        ompi_communicator_t* ncomm;
+        ompi_communicator_t *ncomm;
         ret = ompi_comm_shrink_internal(comm, &ncomm);
-        if( MPI_SUCCESS != ret ) {
+        if (MPI_SUCCESS != ret) {
             OMPI_ERROR_LOG(ret);
             goto done;
         }
         /* do a barrier with closest neighbors in the ring, using doublering as
          * it is synchronous and will help flush all past communications */
         ret = ompi_coll_base_barrier_intra_doublering(ncomm, ncomm->c_coll->coll_barrier_module);
-        if( MPI_SUCCESS != ret ) {
+        if (MPI_SUCCESS != ret) {
             OMPI_ERROR_LOG(ret);
             goto done;
         }
@@ -178,12 +175,14 @@ int ompi_mpi_finalize(void)
 
         /* finalize the fault tolerant infrastructure (revoke,
          * failure propagator, etc). From now-on we do not tolerate new failures. */
-        OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle, "FT: Rank %05d turning off FT", ompi_comm_rank(comm)));
+        OPAL_OUTPUT_VERBOSE(
+            (50, ompi_ftmpi_output_handle, "FT: Rank %05d turning off FT", ompi_comm_rank(comm)));
         ompi_comm_failure_detector_finalize();
         ompi_comm_failure_propagator_finalize();
         ompi_comm_revoke_finalize();
         ompi_comm_rbcast_finalize();
-        opal_output_verbose(40, ompi_ftmpi_output_handle, "Rank %05d: DONE WITH FINALIZE", ompi_comm_rank(comm));
+        opal_output_verbose(40, ompi_ftmpi_output_handle, "Rank %05d: DONE WITH FINALIZE",
+                            ompi_comm_rank(comm));
     }
 #endif /* OPAL_ENABLE_FT_MPI */
 
@@ -193,13 +192,12 @@ int ompi_mpi_finalize(void)
        COMM_SELF is destroyed / all the attribute callbacks have been
        invoked) */
     opal_atomic_wmb();
-    opal_atomic_swap_32(&ompi_mpi_state,
-                        OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT);
+    opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT);
 
     /* As finalize is the last legal MPI call, we are allowed to force the release
      * of the user buffer used for bsend, before going anywhere further.
      */
-    (void)mca_pml_base_bsend_detach(NULL, NULL);
+    (void) mca_pml_base_bsend_detach(NULL, NULL);
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
@@ -293,7 +291,8 @@ int ompi_mpi_finalize(void)
          * communications/actions to complete.  See
          * https://github.com/open-mpi/ompi/issues/1576 for the
          * original bug report. */
-        if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, NULL, 0, fence_cbfunc, (void*)&active))) {
+        if (PMIX_SUCCESS
+            != (rc = PMIx_Fence_nb(NULL, 0, NULL, 0, fence_cbfunc, (void *) &active))) {
             ret = opal_pmix_convert_status(rc);
             OMPI_ERROR_LOG(ret);
             /* Reset the active flag to false, to avoid waiting for
@@ -315,13 +314,13 @@ int ompi_mpi_finalize(void)
     OBJ_DESTRUCT(&ompi_registered_datareps);
 
     /* Remove all F90 types from the hash tables */
-    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_integer_hashtable)
+    OPAL_HASH_TABLE_FOREACH (key, uint32, datatype, &ompi_mpi_f90_integer_hashtable)
         OBJ_RELEASE(datatype);
     OBJ_DESTRUCT(&ompi_mpi_f90_integer_hashtable);
-    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_real_hashtable)
+    OPAL_HASH_TABLE_FOREACH (key, uint32, datatype, &ompi_mpi_f90_real_hashtable)
         OBJ_RELEASE(datatype);
     OBJ_DESTRUCT(&ompi_mpi_f90_real_hashtable);
-    OPAL_HASH_TABLE_FOREACH(key, uint32, datatype, &ompi_mpi_f90_complex_hashtable)
+    OPAL_HASH_TABLE_FOREACH (key, uint32, datatype, &ompi_mpi_f90_complex_hashtable)
         OBJ_RELEASE(datatype);
     OBJ_DESTRUCT(&ompi_mpi_f90_complex_hashtable);
 
@@ -343,7 +342,6 @@ int ompi_mpi_finalize(void)
         goto done;
     }
 
-
     /* free communicator resources. this MUST come before finalizing the PML
      * as this will call into the pml */
     if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
@@ -354,12 +352,12 @@ int ompi_mpi_finalize(void)
      * to the pml layer. the pml layer is expected to be resilient and ignore
      * any unknown procs. */
     nprocs = 0;
-    procs = ompi_proc_get_allocated (&nprocs);
+    procs = ompi_proc_get_allocated(&nprocs);
     MCA_PML_CALL(del_procs(procs, nprocs));
     free(procs);
 
     /* free pml resource */
-    if(OMPI_SUCCESS != (ret = mca_pml_base_finalize())) {
+    if (OMPI_SUCCESS != (ret = mca_pml_base_finalize())) {
         goto done;
     }
 
@@ -380,7 +378,7 @@ int ompi_mpi_finalize(void)
 
     /* Now that all MPI objects dealing with communications are gone,
        shut down MCA types having to do with communications */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pml_base_framework) ) ) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pml_base_framework))) {
         OMPI_ERROR_LOG(ret);
         goto done;
     }
@@ -401,7 +399,7 @@ int ompi_mpi_finalize(void)
     }
 
     /* finalize the DPM subsystem */
-    if ( OMPI_SUCCESS != (ret = ompi_dpm_finalize())) {
+    if (OMPI_SUCCESS != (ret = ompi_dpm_finalize())) {
         goto done;
     }
 
@@ -473,7 +471,7 @@ int ompi_mpi_finalize(void)
     }
 
     /* free proc resources */
-    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
+    if (OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
         goto done;
     }
 
@@ -494,7 +492,7 @@ int ompi_mpi_finalize(void)
     ompi_rte_initialized = false;
 
     /* Now close the hook framework */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_hook_base_framework) ) ) {
+    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_hook_base_framework))) {
         OMPI_ERROR_LOG(ret);
         goto done;
     }
@@ -516,7 +514,7 @@ int ompi_mpi_finalize(void)
 
     /* All done */
 
-  done:
+done:
     opal_atomic_wmb();
     opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_FINALIZE_COMPLETED);
 

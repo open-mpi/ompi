@@ -11,10 +11,10 @@
  */
 #include "oshmem_config.h"
 
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/proc/proc.h"
-#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/proc/proc.h"
+#include "oshmem/util/oshmem_util.h"
 
 #include <stdio.h>
 
@@ -29,14 +29,10 @@ int mca_memheap_base_reg(mca_memheap_map_t *memheap_map)
     for (i = 0; i < memheap_map->n_segments; i++) {
         map_segment_t *s = &memheap_map->mem_segs[i];
 
-        MEMHEAP_VERBOSE(5,
-                        "register seg#%02d: 0x%p - 0x%p %llu bytes type=0x%X id=0x%X",
-                        i,
-                        s->super.va_base,
-                        s->super.va_end,
-                        (long long)((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base),
-                        s->type,
-                        s->seg_id);
+        MEMHEAP_VERBOSE(5, "register seg#%02d: 0x%p - 0x%p %llu bytes type=0x%X id=0x%X", i,
+                        s->super.va_base, s->super.va_end,
+                        (long long) ((uintptr_t) s->super.va_end - (uintptr_t) s->super.va_base),
+                        s->type, s->seg_id);
         ret = _reg_segment(s, &memheap_map->num_transports);
         if (OSHMEM_SUCCESS != ret) {
             mca_memheap_base_dereg(memheap_map);
@@ -57,13 +53,10 @@ int mca_memheap_base_dereg(mca_memheap_map_t *memheap_map)
         if (!MAP_SEGMENT_IS_VALID(s))
             continue;
 
-        MEMHEAP_VERBOSE(5,
-                        "deregistering segment#%d: %p - %p %llu bytes",
-                        i,
-                        s->super.va_base,
+        MEMHEAP_VERBOSE(5, "deregistering segment#%d: %p - %p %llu bytes", i, s->super.va_base,
                         s->super.va_end,
-                        (long long)((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base));
-        (void)_dereg_segment(s);
+                        (long long) ((uintptr_t) s->super.va_end - (uintptr_t) s->super.va_base));
+        (void) _dereg_segment(s);
     }
 
     return OSHMEM_SUCCESS;
@@ -112,18 +105,17 @@ static int _reg_segment(map_segment_t *s, int *num_btl)
     nprocs = oshmem_num_procs();
     my_pe = oshmem_my_proc_id();
 
-    s->mkeys_cache = (sshmem_mkey_t **) calloc(nprocs,
-                                                 sizeof(sshmem_mkey_t *));
+    s->mkeys_cache = (sshmem_mkey_t **) calloc(nprocs, sizeof(sshmem_mkey_t *));
     if (NULL == s->mkeys_cache) {
         MEMHEAP_ERROR("Failed to allocate memory for remote segments");
         rc = OSHMEM_ERROR;
     }
 
     if (!rc) {
-        s->mkeys = MCA_SPML_CALL(register((void *)(unsigned long)s->super.va_base,
-                        (uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base,
-                        s->seg_id,
-                        num_btl));
+        s->mkeys = MCA_SPML_CALL(
+            register((void *) (unsigned long) s->super.va_base,
+                     (uintptr_t) s->super.va_end - (uintptr_t) s->super.va_base, s->seg_id,
+                     num_btl));
         if (NULL == s->mkeys) {
             free(s->mkeys_cache);
             s->mkeys_cache = NULL;

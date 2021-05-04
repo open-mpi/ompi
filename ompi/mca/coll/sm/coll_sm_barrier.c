@@ -20,11 +20,11 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
+#include "coll_sm.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
-#include "coll_sm.h"
 
 /**
  * Shared memory barrier.
@@ -50,8 +50,7 @@
  * parent, and the leaves that have no children.  But that's the
  * general idea.
  */
-int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int rank, buffer_set;
     mca_coll_sm_comm_t *data;
@@ -59,7 +58,7 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
     volatile uint32_t *me_in, *me_out, *children = NULL;
     opal_atomic_uint32_t *parent;
     int uint_control_size;
-    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t *) module;
 
     /* Lazily enable the module the first time we invoke a collective
        on it */
@@ -70,22 +69,19 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
         }
     }
 
-    uint_control_size =
-        mca_coll_sm_component.sm_control_size / sizeof(uint32_t);
+    uint_control_size = mca_coll_sm_component.sm_control_size / sizeof(uint32_t);
     data = sm_module->sm_comm_data;
     rank = ompi_comm_rank(comm);
     num_children = data->mcb_tree[rank].mcstn_num_children;
     buffer_set = ((data->mcb_barrier_count++) % 2) * 2;
     me_in = &data->mcb_barrier_control_me[buffer_set];
-    me_out = (uint32_t*)
-        (((char*) me_in) + mca_coll_sm_component.sm_control_size);
+    me_out = (uint32_t *) (((char *) me_in) + mca_coll_sm_component.sm_control_size);
 
     /* Wait for my children to write to my *in* buffer */
 
     if (0 != num_children) {
         /* Get children *out* buffer */
-        children = data->mcb_barrier_control_children + buffer_set +
-            uint_control_size;
+        children = data->mcb_barrier_control_children + buffer_set + uint_control_size;
         SPIN_CONDITION(*me_in == num_children, exit_label1);
         *me_in = 0;
     }
@@ -102,7 +98,7 @@ int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
     if (0 != rank) {
         /* Get parent *in* buffer */
         parent = &data->mcb_barrier_control_parent[buffer_set];
-        opal_atomic_add (parent, 1);
+        opal_atomic_add(parent, 1);
 
         SPIN_CONDITION(0 != *me_out, exit_label2);
         *me_out = 0;

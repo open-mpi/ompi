@@ -38,31 +38,19 @@
  *	Accepts:	- same arguments as MPI_File_set_size()
  *	Returns:	- Success if size is set
  */
-int
-mca_fs_pvfs2_file_set_size (ompio_file_t *fh,
-                            OMPI_MPI_OFFSET_TYPE size)
+int mca_fs_pvfs2_file_set_size(ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE size)
 {
     int ret;
     mca_fs_pvfs2 *pvfs2_fs;
 
-    pvfs2_fs = (mca_fs_pvfs2 *)fh->f_fs_ptr;
+    pvfs2_fs = (mca_fs_pvfs2 *) fh->f_fs_ptr;
 
     if (OMPIO_ROOT == fh->f_rank) {
-        ret = PVFS_sys_truncate(pvfs2_fs->object_ref,
-                                size, &(pvfs2_fs->credentials));
-        fh->f_comm->c_coll->coll_bcast (&ret,
-                                       1,
-                                       MPI_INT,
-                                       OMPIO_ROOT,
-                                       fh->f_comm,
+        ret = PVFS_sys_truncate(pvfs2_fs->object_ref, size, &(pvfs2_fs->credentials));
+        fh->f_comm->c_coll->coll_bcast(&ret, 1, MPI_INT, OMPIO_ROOT, fh->f_comm,
                                        fh->f_comm->c_coll->coll_bcast_module);
-    }
-    else {
-        fh->f_comm->c_coll->coll_bcast (&ret,
-                                       1,
-                                       MPI_INT,
-                                       OMPIO_ROOT,
-                                       fh->f_comm,
+    } else {
+        fh->f_comm->c_coll->coll_bcast(&ret, 1, MPI_INT, OMPIO_ROOT, fh->f_comm,
                                        fh->f_comm->c_coll->coll_bcast_module);
     }
 

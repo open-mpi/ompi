@@ -37,21 +37,19 @@
  *	Accepts:	- file name & info
  *	Returns:	- Success if file closed
  */
-int
-mca_fs_pvfs2_file_delete (char* file_name,
-                          struct opal_info_t *info)
+int mca_fs_pvfs2_file_delete(char *file_name, struct opal_info_t *info)
 {
     PVFS_credentials credentials;
     PVFS_sysresp_getparent resp_getparent;
     int ret;
     PVFS_fs_id pvfs2_id;
     char pvfs2_path[OMPIO_PVFS2_MAX_NAME] = {0};
-    char * ncache_timeout;
+    char *ncache_timeout;
 
     if (!mca_fs_pvfs2_IS_INITIALIZED) {
         /* disable the pvfs2 ncache */
         ncache_timeout = getenv("PVFS2_NCACHE_TIMEOUT");
-        if (ncache_timeout == NULL )
+        if (ncache_timeout == NULL)
             setenv("PVFS2_NCACHE_TIMEOUT", "0", 1);
 
         ret = PVFS_util_init_defaults();
@@ -61,8 +59,8 @@ mca_fs_pvfs2_file_delete (char* file_name,
         mca_fs_pvfs2_IS_INITIALIZED = 1;
     }
 
-    memset (&credentials, 0, sizeof(PVFS_credentials));
-    PVFS_util_gen_credentials (&credentials);
+    memset(&credentials, 0, sizeof(PVFS_credentials));
+    PVFS_util_gen_credentials(&credentials);
 
     ret = PVFS_util_resolve(file_name, &pvfs2_id, pvfs2_path, OMPIO_PVFS2_MAX_NAME);
     if (ret != 0) {
@@ -71,8 +69,7 @@ mca_fs_pvfs2_file_delete (char* file_name,
 
     ret = PVFS_sys_getparent(pvfs2_id, pvfs2_path, &credentials, &resp_getparent);
 
-    ret = PVFS_sys_remove(resp_getparent.basename,
-                          resp_getparent.parent_ref, &credentials);
+    ret = PVFS_sys_remove(resp_getparent.basename, resp_getparent.parent_ref, &credentials);
     if (ret != 0) {
         return OMPI_ERROR;
     }

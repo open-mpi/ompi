@@ -17,19 +17,22 @@
 
 #include "oshmem/mca/spml/spml.h"
 
-#include "oshmem/shmem/shmem_api_logger.h"
 #include "opal/sys/architecture.h"
+#include "oshmem/shmem/shmem_api_logger.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_clear_cache_inv = pshmem_clear_cache_inv
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_clear_cache_inv = pshmem_clear_cache_inv
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 void shmem_clear_cache_inv(void)
 {
 #if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
-    do {SHMEM_API_VERBOSE(10,"shmem_clear_cache_inv is not supported by the current CPU architecture");}while (0);
+    do {
+        SHMEM_API_VERBOSE(10,
+                          "shmem_clear_cache_inv is not supported by the current CPU architecture");
+    } while (0);
 #else
     /* another implementation */
 #endif

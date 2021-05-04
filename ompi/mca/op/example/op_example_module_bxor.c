@@ -29,10 +29,10 @@
 #include "opal/util/output.h"
 
 #include "ompi/constants.h"
-#include "ompi/op/op.h"
-#include "ompi/mca/op/op.h"
 #include "ompi/mca/op/base/base.h"
 #include "ompi/mca/op/example/op_example.h"
+#include "ompi/mca/op/op.h"
+#include "ompi/op/op.h"
 
 /**
  * Derive a struct from the base op module struct, allowing us to
@@ -87,11 +87,11 @@ static void module_bxor_destructor(module_bxor_t *m)
        members to sentinel values to know that the object has been
        destructed. */
     m->fallback_int = (ompi_op_base_handler_fn_t) 0xdeadbeef;
-    m->fallback_int_module = (ompi_op_base_module_t*) 0xdeadbeef;
+    m->fallback_int_module = (ompi_op_base_module_t *) 0xdeadbeef;
     m->fallback_long = (ompi_op_base_handler_fn_t) 0xdeadbeef;
-    m->fallback_long_module = (ompi_op_base_module_t*) 0xdeadbeef;
+    m->fallback_long_module = (ompi_op_base_module_t *) 0xdeadbeef;
     m->fallback_integer = (ompi_op_base_handler_fn_t) 0xdeadbeef;
-    m->fallback_integer_module = (ompi_op_base_module_t*) 0xdeadbeef;
+    m->fallback_integer_module = (ompi_op_base_module_t *) 0xdeadbeef;
 }
 
 /**
@@ -101,18 +101,16 @@ static void module_bxor_destructor(module_bxor_t *m)
  * - function pointer for the constructor (or NULL)
  * - function pointer for the destructor (or NULL)
  */
-static OBJ_CLASS_INSTANCE(module_bxor_t,
-                          ompi_op_base_module_t,
-                          module_bxor_constructor,
+static OBJ_CLASS_INSTANCE(module_bxor_t, ompi_op_base_module_t, module_bxor_constructor,
                           module_bxor_destructor);
 
 /**
  * Bxor function for C int
  */
-static void bxor_int(void *in, void *out, int *count,
-                    ompi_datatype_t **type, ompi_op_base_module_t *module)
+static void bxor_int(void *in, void *out, int *count, ompi_datatype_t **type,
+                     ompi_op_base_module_t *module)
 {
-    module_bxor_t *m = (module_bxor_t*) module;
+    module_bxor_t *m = (module_bxor_t *) module;
 
     /* Be chatty to the output, just so that we can see that this
        function was called */
@@ -143,10 +141,10 @@ static void bxor_int(void *in, void *out, int *count,
 /**
  * Bxor function for C long
  */
-static void bxor_long(void *in, void *out, int *count,
-                     ompi_datatype_t **type, ompi_op_base_module_t *module)
+static void bxor_long(void *in, void *out, int *count, ompi_datatype_t **type,
+                      ompi_op_base_module_t *module)
 {
-    module_bxor_t *m = (module_bxor_t*) module;
+    module_bxor_t *m = (module_bxor_t *) module;
     opal_output(0, "In example bxor long function");
 
     /* Just another example function -- similar to bxor_int() */
@@ -157,10 +155,10 @@ static void bxor_long(void *in, void *out, int *count,
 /**
  * Bxor function for Fortran INTEGER
  */
-static void bxor_integer(void *in, void *out, int *count,
-                        ompi_datatype_t **type, ompi_op_base_module_t *module)
+static void bxor_integer(void *in, void *out, int *count, ompi_datatype_t **type,
+                         ompi_op_base_module_t *module)
 {
-    module_bxor_t *m = (module_bxor_t*) module;
+    module_bxor_t *m = (module_bxor_t *) module;
     opal_output(0, "In example bxor integer function");
 
     /* Just another example function -- similar to bxor_int() */
@@ -193,8 +191,7 @@ ompi_op_base_module_t *ompi_op_example_setup_bxor(ompi_op_t *op)
     /* C int */
     module->super.opm_fns[OMPI_OP_BASE_TYPE_INT] = bxor_int;
     module->fallback_int = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INT];
-    module->fallback_int_module =
-        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INT];
+    module->fallback_int_module = op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INT];
     /* If you cache a fallback function, you *must* RETAIN (i.e.,
        increase the refcount) its module so that the module knows that
        it is being used and won't be freed/destructed. */
@@ -203,20 +200,17 @@ ompi_op_base_module_t *ompi_op_example_setup_bxor(ompi_op_t *op)
     /* C long */
     module->super.opm_fns[OMPI_OP_BASE_TYPE_LONG] = bxor_long;
     module->fallback_long = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_LONG];
-    module->fallback_long_module =
-        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_LONG];
+    module->fallback_long_module = op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_LONG];
     OBJ_RETAIN(module->fallback_long_module);
 
     /* Fortran INTEGER */
     module->super.opm_fns[OMPI_OP_BASE_TYPE_INTEGER] = bxor_integer;
-    module->fallback_integer =
-        op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INTEGER];
-    module->fallback_integer_module =
-        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INTEGER];
+    module->fallback_integer = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INTEGER];
+    module->fallback_integer_module = op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INTEGER];
     OBJ_RETAIN(module->fallback_integer_module);
 
     /* ...not listing the rest of the integer-typed functions in this
        example... */
 
-    return (ompi_op_base_module_t*) module;
+    return (ompi_op_base_module_t *) module;
 }

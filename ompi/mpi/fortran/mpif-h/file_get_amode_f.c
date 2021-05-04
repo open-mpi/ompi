@@ -24,47 +24,38 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_FILE_GET_AMODE = ompi_file_get_amode_f
-#pragma weak pmpi_file_get_amode = ompi_file_get_amode_f
-#pragma weak pmpi_file_get_amode_ = ompi_file_get_amode_f
-#pragma weak pmpi_file_get_amode__ = ompi_file_get_amode_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_FILE_GET_AMODE = ompi_file_get_amode_f
+#        pragma weak pmpi_file_get_amode = ompi_file_get_amode_f
+#        pragma weak pmpi_file_get_amode_ = ompi_file_get_amode_f
+#        pragma weak pmpi_file_get_amode__ = ompi_file_get_amode_f
 
-#pragma weak PMPI_File_get_amode_f = ompi_file_get_amode_f
-#pragma weak PMPI_File_get_amode_f08 = ompi_file_get_amode_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_AMODE,
-                           pmpi_file_get_amode,
-                           pmpi_file_get_amode_,
-                           pmpi_file_get_amode__,
-                           pompi_file_get_amode_f,
-                           (MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr),
-                           (fh, amode, ierr) )
-#endif
+#        pragma weak PMPI_File_get_amode_f = ompi_file_get_amode_f
+#        pragma weak PMPI_File_get_amode_f08 = ompi_file_get_amode_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_FILE_GET_AMODE, pmpi_file_get_amode, pmpi_file_get_amode_,
+                           pmpi_file_get_amode__, pompi_file_get_amode_f,
+                           (MPI_Fint * fh, MPI_Fint *amode, MPI_Fint *ierr), (fh, amode, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_FILE_GET_AMODE = ompi_file_get_amode_f
-#pragma weak mpi_file_get_amode = ompi_file_get_amode_f
-#pragma weak mpi_file_get_amode_ = ompi_file_get_amode_f
-#pragma weak mpi_file_get_amode__ = ompi_file_get_amode_f
+#    pragma weak MPI_FILE_GET_AMODE = ompi_file_get_amode_f
+#    pragma weak mpi_file_get_amode = ompi_file_get_amode_f
+#    pragma weak mpi_file_get_amode_ = ompi_file_get_amode_f
+#    pragma weak mpi_file_get_amode__ = ompi_file_get_amode_f
 
-#pragma weak MPI_File_get_amode_f = ompi_file_get_amode_f
-#pragma weak MPI_File_get_amode_f08 = ompi_file_get_amode_f
+#    pragma weak MPI_File_get_amode_f = ompi_file_get_amode_f
+#    pragma weak MPI_File_get_amode_f08 = ompi_file_get_amode_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_AMODE,
-                           mpi_file_get_amode,
-                           mpi_file_get_amode_,
-                           mpi_file_get_amode__,
-                           ompi_file_get_amode_f,
-                           (MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr),
-                           (fh, amode, ierr) )
-#else
-#define ompi_file_get_amode_f pompi_file_get_amode_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_FILE_GET_AMODE, mpi_file_get_amode, mpi_file_get_amode_,
+                           mpi_file_get_amode__, ompi_file_get_amode_f,
+                           (MPI_Fint * fh, MPI_Fint *amode, MPI_Fint *ierr), (fh, amode, ierr))
+#    else
+#        define ompi_file_get_amode_f pompi_file_get_amode_f
+#    endif
 #endif
-#endif
-
 
 void ompi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
 {
@@ -74,7 +65,8 @@ void ompi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
 
     c_fh = PMPI_File_f2c(*fh);
     c_ierr = PMPI_File_get_amode(c_fh, OMPI_SINGLE_NAME_CONVERT(amode));
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_FINT(amode);

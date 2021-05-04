@@ -24,47 +24,38 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_CARTDIM_GET = ompi_cartdim_get_f
-#pragma weak pmpi_cartdim_get = ompi_cartdim_get_f
-#pragma weak pmpi_cartdim_get_ = ompi_cartdim_get_f
-#pragma weak pmpi_cartdim_get__ = ompi_cartdim_get_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_CARTDIM_GET = ompi_cartdim_get_f
+#        pragma weak pmpi_cartdim_get = ompi_cartdim_get_f
+#        pragma weak pmpi_cartdim_get_ = ompi_cartdim_get_f
+#        pragma weak pmpi_cartdim_get__ = ompi_cartdim_get_f
 
-#pragma weak PMPI_Cartdim_get_f = ompi_cartdim_get_f
-#pragma weak PMPI_Cartdim_get_f08 = ompi_cartdim_get_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_CARTDIM_GET,
-                           pmpi_cartdim_get,
-                           pmpi_cartdim_get_,
-                           pmpi_cartdim_get__,
-                           pompi_cartdim_get_f,
-                           (MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr),
-                           (comm, ndims, ierr) )
-#endif
+#        pragma weak PMPI_Cartdim_get_f = ompi_cartdim_get_f
+#        pragma weak PMPI_Cartdim_get_f08 = ompi_cartdim_get_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_CARTDIM_GET, pmpi_cartdim_get, pmpi_cartdim_get_,
+                           pmpi_cartdim_get__, pompi_cartdim_get_f,
+                           (MPI_Fint * comm, MPI_Fint *ndims, MPI_Fint *ierr), (comm, ndims, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_CARTDIM_GET = ompi_cartdim_get_f
-#pragma weak mpi_cartdim_get = ompi_cartdim_get_f
-#pragma weak mpi_cartdim_get_ = ompi_cartdim_get_f
-#pragma weak mpi_cartdim_get__ = ompi_cartdim_get_f
+#    pragma weak MPI_CARTDIM_GET = ompi_cartdim_get_f
+#    pragma weak mpi_cartdim_get = ompi_cartdim_get_f
+#    pragma weak mpi_cartdim_get_ = ompi_cartdim_get_f
+#    pragma weak mpi_cartdim_get__ = ompi_cartdim_get_f
 
-#pragma weak MPI_Cartdim_get_f = ompi_cartdim_get_f
-#pragma weak MPI_Cartdim_get_f08 = ompi_cartdim_get_f
+#    pragma weak MPI_Cartdim_get_f = ompi_cartdim_get_f
+#    pragma weak MPI_Cartdim_get_f08 = ompi_cartdim_get_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_CARTDIM_GET,
-                           mpi_cartdim_get,
-                           mpi_cartdim_get_,
-                           mpi_cartdim_get__,
-                           ompi_cartdim_get_f,
-                           (MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr),
-                           (comm, ndims, ierr) )
-#else
-#define ompi_cartdim_get_f pompi_cartdim_get_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_CARTDIM_GET, mpi_cartdim_get, mpi_cartdim_get_, mpi_cartdim_get__,
+                           ompi_cartdim_get_f, (MPI_Fint * comm, MPI_Fint *ndims, MPI_Fint *ierr),
+                           (comm, ndims, ierr))
+#    else
+#        define ompi_cartdim_get_f pompi_cartdim_get_f
+#    endif
 #endif
-#endif
-
 
 void ompi_cartdim_get_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr)
 {
@@ -75,7 +66,8 @@ void ompi_cartdim_get_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr)
     c_comm = PMPI_Comm_f2c(*comm);
 
     c_ierr = PMPI_Cartdim_get(c_comm, OMPI_SINGLE_NAME_CONVERT(ndims));
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_FINT(ndims);

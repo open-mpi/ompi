@@ -23,14 +23,13 @@
 
 #include <stdio.h>
 
+#include "coll_basic.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/op/op.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
-#include "coll_basic.h"
-
+#include "ompi/op/op.h"
 
 /*
  *	scan
@@ -39,12 +38,9 @@
  *	Accepts:	- same arguments as MPI_Scan()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_scan_intra(const void *sbuf, void *rbuf, int count,
-                          struct ompi_datatype_t *dtype,
-                          struct ompi_op_t *op,
-                          struct ompi_communicator_t *comm,
-                          mca_coll_base_module_t *module)
+int mca_coll_basic_scan_intra(const void *sbuf, void *rbuf, int count,
+                              struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                              struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     return ompi_coll_base_scan_intra_linear(sbuf, rbuf, count, dtype, op, comm, module);
 }

@@ -25,25 +25,24 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/part/part.h"
-#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Pready_list = PMPI_Pready_list
-#endif
-#define MPI_Pready_list PMPI_Pready_list
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Pready_list = PMPI_Pready_list
+#    endif
+#    define MPI_Pready_list PMPI_Pready_list
 #endif
 
 static const char FUNC_NAME[] = "MPI_Pready_list";
 
-
-int MPI_Pready_list(int length, int* partitions, MPI_Request request)
+int MPI_Pready_list(int length, int *partitions, MPI_Request request)
 {
     int rc = OMPI_SUCCESS;
     SPC_RECORD(OMPI_SPC_PREADY, 1);
@@ -58,7 +57,7 @@ int MPI_Pready_list(int length, int* partitions, MPI_Request request)
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    for(int i = 0; i < length && OMPI_SUCCESS == rc; i++) {
+    for (int i = 0; i < length && OMPI_SUCCESS == rc; i++) {
         rc = mca_part.part_pready(partitions[i], partitions[i], request);
     }
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);

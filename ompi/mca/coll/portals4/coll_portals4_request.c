@@ -15,17 +15,14 @@
 #include "coll_portals4.h"
 #include "coll_portals4_request.h"
 
-static int
-request_cancel(struct ompi_request_t *request, int complete)
+static int request_cancel(struct ompi_request_t *request, int complete)
 {
     return MPI_ERR_REQUEST;
 }
 
-static int
-request_free(struct ompi_request_t **ompi_req)
+static int request_free(struct ompi_request_t **ompi_req)
 {
-    ompi_coll_portals4_request_t *request =
-        (ompi_coll_portals4_request_t*) *ompi_req;
+    ompi_coll_portals4_request_t *request = (ompi_coll_portals4_request_t *) *ompi_req;
 
     if (true != request->super.req_complete) {
         return MPI_ERR_REQUEST;
@@ -38,9 +35,7 @@ request_free(struct ompi_request_t **ompi_req)
     return OMPI_SUCCESS;
 }
 
-static
-void
-request_construct(ompi_coll_portals4_request_t *request)
+static void request_construct(ompi_coll_portals4_request_t *request)
 {
     request->super.req_type = OMPI_REQUEST_COLL;
     request->super.req_status._cancelled = 0;
@@ -48,7 +43,4 @@ request_construct(ompi_coll_portals4_request_t *request)
     request->super.req_cancel = request_cancel;
 }
 
-OBJ_CLASS_INSTANCE(ompi_coll_portals4_request_t,
-                   ompi_request_t,
-                   request_construct,
-                   NULL);
+OBJ_CLASS_INSTANCE(ompi_coll_portals4_request_t, ompi_request_t, request_construct, NULL);

@@ -32,73 +32,57 @@
 #include "nbc_internal.h"
 
 #include "mpi.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/coll.h"
 
 /*
  * Public string showing the coll ompi_libnbc component version number
  */
-const char *mca_coll_libnbc_component_version_string =
-    "Open MPI libnbc collective MCA component version " OMPI_VERSION;
-
+const char *mca_coll_libnbc_component_version_string
+    = "Open MPI libnbc collective MCA component version " OMPI_VERSION;
 
 static int libnbc_priority = 10;
-static bool libnbc_in_progress = false;     /* protect from recursive calls */
+static bool libnbc_in_progress = false; /* protect from recursive calls */
 bool libnbc_ibcast_skip_dt_decision = true;
 
-int libnbc_iallgather_algorithm = 0;             /* iallgather user forced algorithm */
-static mca_base_var_enum_value_t iallgather_algorithms[] = {
-    {0, "ignore"},
-    {1, "linear"},
-    {2, "recursive_doubling"},
-    {0, NULL}
-};
+int libnbc_iallgather_algorithm = 0; /* iallgather user forced algorithm */
+static mca_base_var_enum_value_t iallgather_algorithms[] = {{0, "ignore"},
+                                                            {1, "linear"},
+                                                            {2, "recursive_doubling"},
+                                                            {0, NULL}};
 
-int libnbc_iallreduce_algorithm = 0;             /* iallreduce user forced algorithm */
-static mca_base_var_enum_value_t iallreduce_algorithms[] = {
-    {0, "ignore"},
-    {1, "ring"},
-    {2, "binomial"},
-    {3, "rabenseifner"},
-    {4, "recursive_doubling"},
-    {0, NULL}
-};
+int libnbc_iallreduce_algorithm = 0; /* iallreduce user forced algorithm */
+static mca_base_var_enum_value_t iallreduce_algorithms[] = {{0, "ignore"},
+                                                            {1, "ring"},
+                                                            {2, "binomial"},
+                                                            {3, "rabenseifner"},
+                                                            {4, "recursive_doubling"},
+                                                            {0, NULL}};
 
-int libnbc_ibcast_algorithm = 0;             /* ibcast user forced algorithm */
+int libnbc_ibcast_algorithm = 0; /* ibcast user forced algorithm */
 int libnbc_ibcast_knomial_radix = 4;
-static mca_base_var_enum_value_t ibcast_algorithms[] = {
-    {0, "ignore"},
-    {1, "linear"},
-    {2, "binomial"},
-    {3, "chain"},
-    {4, "knomial"},
-    {0, NULL}
-};
+static mca_base_var_enum_value_t ibcast_algorithms[] = {{0, "ignore"},   {1, "linear"},
+                                                        {2, "binomial"}, {3, "chain"},
+                                                        {4, "knomial"},  {0, NULL}};
 
-int libnbc_iexscan_algorithm = 0;             /* iexscan user forced algorithm */
-static mca_base_var_enum_value_t iexscan_algorithms[] = {
-    {0, "ignore"},
-    {1, "linear"},
-    {2, "recursive_doubling"},
-    {0, NULL}
-};
+int libnbc_iexscan_algorithm = 0; /* iexscan user forced algorithm */
+static mca_base_var_enum_value_t iexscan_algorithms[] = {{0, "ignore"},
+                                                         {1, "linear"},
+                                                         {2, "recursive_doubling"},
+                                                         {0, NULL}};
 
-int libnbc_ireduce_algorithm = 0;            /* ireduce user forced algorithm */
-static mca_base_var_enum_value_t ireduce_algorithms[] = {
-    {0, "ignore"},
-    {1, "chain"},
-    {2, "binomial"},
-    {3, "rabenseifner"},
-    {0, NULL}
-};
+int libnbc_ireduce_algorithm = 0; /* ireduce user forced algorithm */
+static mca_base_var_enum_value_t ireduce_algorithms[] = {{0, "ignore"},
+                                                         {1, "chain"},
+                                                         {2, "binomial"},
+                                                         {3, "rabenseifner"},
+                                                         {0, NULL}};
 
-int libnbc_iscan_algorithm = 0;             /* iscan user forced algorithm */
-static mca_base_var_enum_value_t iscan_algorithms[] = {
-    {0, "ignore"},
-    {1, "linear"},
-    {2, "recursive_doubling"},
-    {0, NULL}
-};
+int libnbc_iscan_algorithm = 0; /* iscan user forced algorithm */
+static mca_base_var_enum_value_t iscan_algorithms[] = {{0, "ignore"},
+                                                       {1, "linear"},
+                                                       {2, "recursive_doubling"},
+                                                       {0, NULL}};
 
 static int libnbc_open(void);
 static int libnbc_close(void);
@@ -140,20 +124,19 @@ ompi_coll_libnbc_component_t mca_coll_libnbc_component = {
     }
 };
 
-
-static int
-libnbc_open(void)
+static int libnbc_open(void)
 {
     int ret;
 
     OBJ_CONSTRUCT(&mca_coll_libnbc_component.requests, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_coll_libnbc_component.active_requests, opal_list_t);
     OBJ_CONSTRUCT(&mca_coll_libnbc_component.lock, opal_mutex_t);
-    ret = opal_free_list_init (&mca_coll_libnbc_component.requests,
-                               sizeof(ompi_coll_libnbc_request_t), 8,
-                               OBJ_CLASS(ompi_coll_libnbc_request_t),
-                               0, 0, 0, -1, 8, NULL, 0, NULL, NULL, NULL);
-    if (OMPI_SUCCESS != ret) return ret;
+    ret = opal_free_list_init(&mca_coll_libnbc_component.requests,
+                              sizeof(ompi_coll_libnbc_request_t), 8,
+                              OBJ_CLASS(ompi_coll_libnbc_request_t), 0, 0, 0, -1, 8, NULL, 0, NULL,
+                              NULL, NULL);
+    if (OMPI_SUCCESS != ret)
+        return ret;
 
     /* note: active comms is the number of communicators who have had
        a non-blocking collective started */
@@ -162,8 +145,7 @@ libnbc_open(void)
     return OMPI_SUCCESS;
 }
 
-static int
-libnbc_close(void)
+static int libnbc_close(void)
 {
     if (0 != mca_coll_libnbc_component.active_comms) {
         opal_progress_unregister(ompi_coll_libnbc_progress);
@@ -176,9 +158,7 @@ libnbc_close(void)
     return OMPI_SUCCESS;
 }
 
-
-static int
-libnbc_register(void)
+static int libnbc_register(void)
 {
     mca_base_var_enum_t *new_enum = NULL;
 
@@ -186,10 +166,8 @@ libnbc_register(void)
     libnbc_priority = 10;
     (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
                                            "priority", "Priority of the libnbc coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &libnbc_priority);
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &libnbc_priority);
 
     /* ibcast decision function can make the wrong decision if a legal
      * non-uniform data type signature is used. This has resulted in the
@@ -204,29 +182,32 @@ libnbc_register(void)
      * parameter can be removed.
      */
     libnbc_ibcast_skip_dt_decision = true;
-    (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
-                                           "ibcast_skip_dt_decision",
-                                           "In ibcast only use size of communicator to choose algorithm, exclude data type signature. Set to 'false' to use data type signature in decision. WARNING: If you set this to 'false' then your application should not use non-uniform data type signatures in calls to ibcast.",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &libnbc_ibcast_skip_dt_decision);
+    (void) mca_base_component_var_register(
+        &mca_coll_libnbc_component.super.collm_version, "ibcast_skip_dt_decision",
+        "In ibcast only use size of communicator to choose algorithm, exclude data type signature. "
+        "Set to 'false' to use data type signature in decision. WARNING: If you set this to "
+        "'false' then your application should not use non-uniform data type signatures in calls to "
+        "ibcast.",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &libnbc_ibcast_skip_dt_decision);
 
     libnbc_iallgather_algorithm = 0;
-    (void) mca_base_var_enum_create("coll_libnbc_iallgather_algorithms", iallgather_algorithms, &new_enum);
-    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
-                                    "iallgather_algorithm",
-                                    "Which iallgather algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
-                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
-                                    &libnbc_iallgather_algorithm);
+    (void) mca_base_var_enum_create("coll_libnbc_iallgather_algorithms", iallgather_algorithms,
+                                    &new_enum);
+    mca_base_component_var_register(
+        &mca_coll_libnbc_component.super.collm_version, "iallgather_algorithm",
+        "Which iallgather algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &libnbc_iallgather_algorithm);
     OBJ_RELEASE(new_enum);
 
     libnbc_iallreduce_algorithm = 0;
-    (void) mca_base_var_enum_create("coll_libnbc_iallreduce_algorithms", iallreduce_algorithms, &new_enum);
+    (void) mca_base_var_enum_create("coll_libnbc_iallreduce_algorithms", iallreduce_algorithms,
+                                    &new_enum);
     mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
                                     "iallreduce_algorithm",
-                                    "Which iallreduce algorithm is used: 0 ignore, 1 ring, 2 binomial, 3 rabenseifner, 4 recursive_doubling",
+                                    "Which iallreduce algorithm is used: 0 ignore, 1 ring, 2 "
+                                    "binomial, 3 rabenseifner, 4 recursive_doubling",
                                     MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
                                     &libnbc_iallreduce_algorithm);
@@ -234,50 +215,48 @@ libnbc_register(void)
 
     libnbc_ibcast_algorithm = 0;
     (void) mca_base_var_enum_create("coll_libnbc_ibcast_algorithms", ibcast_algorithms, &new_enum);
-    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
-                                    "ibcast_algorithm",
-                                    "Which ibcast algorithm is used: 0 ignore, 1 linear, 2 binomial, 3 chain, 4 knomial",
-                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
-                                    &libnbc_ibcast_algorithm);
+    mca_base_component_var_register(
+        &mca_coll_libnbc_component.super.collm_version, "ibcast_algorithm",
+        "Which ibcast algorithm is used: 0 ignore, 1 linear, 2 binomial, 3 chain, 4 knomial",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &libnbc_ibcast_algorithm);
     OBJ_RELEASE(new_enum);
 
     libnbc_ibcast_knomial_radix = 4;
-    (void) mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
-                                           "ibcast_knomial_radix", "k-nomial tree radix for the ibcast algorithm (radix > 1)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &libnbc_ibcast_knomial_radix);
+    (void)
+        mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
+                                        "ibcast_knomial_radix",
+                                        "k-nomial tree radix for the ibcast algorithm (radix > 1)",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                        MCA_BASE_VAR_SCOPE_READONLY, &libnbc_ibcast_knomial_radix);
 
     libnbc_iexscan_algorithm = 0;
-    (void) mca_base_var_enum_create("coll_libnbc_iexscan_algorithms", iexscan_algorithms, &new_enum);
-    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
-                                    "iexscan_algorithm",
-                                    "Which iexscan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
-                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
-                                    &libnbc_iexscan_algorithm);
+    (void) mca_base_var_enum_create("coll_libnbc_iexscan_algorithms", iexscan_algorithms,
+                                    &new_enum);
+    mca_base_component_var_register(
+        &mca_coll_libnbc_component.super.collm_version, "iexscan_algorithm",
+        "Which iexscan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &libnbc_iexscan_algorithm);
     OBJ_RELEASE(new_enum);
 
     libnbc_ireduce_algorithm = 0;
-    (void) mca_base_var_enum_create("coll_libnbc_ireduce_algorithms", ireduce_algorithms, &new_enum);
-    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
-                                    "ireduce_algorithm",
-                                    "Which ireduce algorithm is used: 0 ignore, 1 chain, 2 binomial, 3 rabenseifner",
-                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
-                                    &libnbc_ireduce_algorithm);
+    (void) mca_base_var_enum_create("coll_libnbc_ireduce_algorithms", ireduce_algorithms,
+                                    &new_enum);
+    mca_base_component_var_register(
+        &mca_coll_libnbc_component.super.collm_version, "ireduce_algorithm",
+        "Which ireduce algorithm is used: 0 ignore, 1 chain, 2 binomial, 3 rabenseifner",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &libnbc_ireduce_algorithm);
     OBJ_RELEASE(new_enum);
 
     libnbc_iscan_algorithm = 0;
     (void) mca_base_var_enum_create("coll_libnbc_iscan_algorithms", iscan_algorithms, &new_enum);
-    mca_base_component_var_register(&mca_coll_libnbc_component.super.collm_version,
-                                    "iscan_algorithm",
-                                    "Which iscan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
-                                    MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                    OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
-                                    &libnbc_iscan_algorithm);
+    mca_base_component_var_register(
+        &mca_coll_libnbc_component.super.collm_version, "iscan_algorithm",
+        "Which iscan algorithm is used: 0 ignore, 1 linear, 2 recursive_doubling",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &libnbc_iscan_algorithm);
     OBJ_RELEASE(new_enum);
 
     return OMPI_SUCCESS;
@@ -288,9 +267,7 @@ libnbc_register(void)
  * this component to disqualify itself if it doesn't support the
  * required level of thread support.
  */
-static int
-libnbc_init_query(bool enable_progress_threads,
-                  bool enable_mpi_threads)
+static int libnbc_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
     /* Nothing to do */
     return OMPI_SUCCESS;
@@ -301,14 +278,13 @@ libnbc_init_query(bool enable_progress_threads,
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_coll_base_module_t *
-libnbc_comm_query(struct ompi_communicator_t *comm,
-                  int *priority)
+mca_coll_base_module_t *libnbc_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     ompi_coll_libnbc_module_t *module;
 
     module = OBJ_NEW(ompi_coll_libnbc_module_t);
-    if (NULL == module) return NULL;
+    if (NULL == module)
+        return NULL;
 
     *priority = libnbc_priority;
 
@@ -345,7 +321,8 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
         module->super.coll_gatherv_init = ompi_coll_libnbc_gatherv_inter_init;
         module->super.coll_reduce_init = ompi_coll_libnbc_reduce_inter_init;
         module->super.coll_reduce_scatter_init = ompi_coll_libnbc_reduce_scatter_inter_init;
-        module->super.coll_reduce_scatter_block_init = ompi_coll_libnbc_reduce_scatter_block_inter_init;
+        module->super.coll_reduce_scatter_block_init
+            = ompi_coll_libnbc_reduce_scatter_block_inter_init;
         module->super.coll_scan_init = NULL;
         module->super.coll_scatter_init = ompi_coll_libnbc_scatter_inter_init;
         module->super.coll_scatterv_init = ompi_coll_libnbc_scatterv_inter_init;
@@ -407,27 +384,22 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
     return &(module->super);
 }
 
-
 /*
  * Init module on the communicator
  */
-static int
-libnbc_module_enable(mca_coll_base_module_t *module,
-                     struct ompi_communicator_t *comm)
+static int libnbc_module_enable(mca_coll_base_module_t *module, struct ompi_communicator_t *comm)
 {
     /* All done */
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_coll_libnbc_progress(void)
+int ompi_coll_libnbc_progress(void)
 {
-    ompi_coll_libnbc_request_t* request, *next;
+    ompi_coll_libnbc_request_t *request, *next;
     int res;
     int completed = 0;
 
-    if (0 == opal_list_get_size (&mca_coll_libnbc_component.active_requests)) {
+    if (0 == opal_list_get_size(&mca_coll_libnbc_component.active_requests)) {
         /* no requests -- nothing to do. do not grab a lock */
         return 0;
     }
@@ -439,29 +411,29 @@ ompi_coll_libnbc_progress(void)
     if (!libnbc_in_progress) {
         libnbc_in_progress = true;
 
-        OPAL_LIST_FOREACH_SAFE(request, next, &mca_coll_libnbc_component.active_requests,
-                               ompi_coll_libnbc_request_t) {
+        OPAL_LIST_FOREACH_SAFE (request, next, &mca_coll_libnbc_component.active_requests,
+                                ompi_coll_libnbc_request_t) {
             OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
             res = NBC_Progress(request);
-            if( NBC_CONTINUE != res ) {
+            if (NBC_CONTINUE != res) {
                 /* done, remove and complete */
                 OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
                 opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
                                       &request->super.super.super.super);
                 OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
 
-                if( OMPI_SUCCESS == res || NBC_OK == res || NBC_SUCCESS == res ) {
+                if (OMPI_SUCCESS == res || NBC_OK == res || NBC_SUCCESS == res) {
                     request->super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
-                }
-                else {
+                } else {
                     request->super.super.req_status.MPI_ERROR = res;
                 }
-                if(request->super.super.req_persistent) {
+                if (request->super.super.req_persistent) {
                     /* reset for the next communication */
                     request->row_offset = 0;
                 }
-                if(!request->super.super.req_persistent || !REQUEST_COMPLETE(&request->super.super)) {
-            	    ompi_request_complete(&request->super.super, true);
+                if (!request->super.super.req_persistent
+                    || !REQUEST_COMPLETE(&request->super.super)) {
+                    ompi_request_complete(&request->super.super, true);
                 }
                 completed++;
             }
@@ -474,39 +446,29 @@ ompi_coll_libnbc_progress(void)
     return completed;
 }
 
-
-static void
-libnbc_module_construct(ompi_coll_libnbc_module_t *module)
+static void libnbc_module_construct(ompi_coll_libnbc_module_t *module)
 {
     OBJ_CONSTRUCT(&module->mutex, opal_mutex_t);
     module->comm_registered = false;
 }
 
-
-static void
-libnbc_module_destruct(ompi_coll_libnbc_module_t *module)
+static void libnbc_module_destruct(ompi_coll_libnbc_module_t *module)
 {
     OBJ_DESTRUCT(&module->mutex);
 
     /* if we ever were used for a collective op, do the progress cleanup. */
     if (true == module->comm_registered) {
-        int32_t tmp =
-            OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, -1);
+        int32_t tmp = OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, -1);
         if (0 == tmp) {
             opal_progress_unregister(ompi_coll_libnbc_progress);
         }
     }
 }
 
-
-OBJ_CLASS_INSTANCE(ompi_coll_libnbc_module_t,
-                   mca_coll_base_module_t,
-                   libnbc_module_construct,
+OBJ_CLASS_INSTANCE(ompi_coll_libnbc_module_t, mca_coll_base_module_t, libnbc_module_construct,
                    libnbc_module_destruct);
 
-
-static int
-request_start(size_t count, ompi_request_t ** requests)
+static int request_start(size_t count, ompi_request_t **requests)
 {
     int res;
     size_t i;
@@ -522,8 +484,10 @@ request_start(size_t count, ompi_request_t ** requests)
         NBC_DEBUG(5, "handle %p size %u\n", &handle, sizeof(handle));
         NBC_DEBUG(5, "data %p size %u\n", &schedule->data, sizeof(schedule->data));
         NBC_DEBUG(5, "req_array %p size %u\n", &handle->req_array, sizeof(handle->req_array));
-        NBC_DEBUG(5, "row_offset=%u address=%p size=%u\n", handle->row_offset, &handle->row_offset, sizeof(handle->row_offset));
-        NBC_DEBUG(5, "req_count=%u address=%p size=%u\n", handle->req_count, &handle->req_count, sizeof(handle->req_count));
+        NBC_DEBUG(5, "row_offset=%u address=%p size=%u\n", handle->row_offset, &handle->row_offset,
+                  sizeof(handle->row_offset));
+        NBC_DEBUG(5, "req_count=%u address=%p size=%u\n", handle->req_count, &handle->req_count,
+                  sizeof(handle->req_count));
         NBC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
         NBC_DEBUG(5, "--------------------------------\n");
 
@@ -540,24 +504,18 @@ request_start(size_t count, ompi_request_t ** requests)
     NBC_DEBUG(5, " ** LEAVING request_start **\n");
 
     return OMPI_SUCCESS;
-
 }
 
-
-static int
-request_cancel(struct ompi_request_t *request, int complete)
+static int request_cancel(struct ompi_request_t *request, int complete)
 {
     return MPI_ERR_REQUEST;
 }
 
-
-static int
-request_free(struct ompi_request_t **ompi_req)
+static int request_free(struct ompi_request_t **ompi_req)
 {
-    ompi_coll_libnbc_request_t *request =
-        (ompi_coll_libnbc_request_t*) *ompi_req;
+    ompi_coll_libnbc_request_t *request = (ompi_coll_libnbc_request_t *) *ompi_req;
 
-    if( !REQUEST_COMPLETE(&request->super.super) ) {
+    if (!REQUEST_COMPLETE(&request->super.super)) {
         return MPI_ERR_REQUEST;
     }
 
@@ -567,9 +525,7 @@ request_free(struct ompi_request_t **ompi_req)
     return OMPI_SUCCESS;
 }
 
-
-static void
-request_construct(ompi_coll_libnbc_request_t *request)
+static void request_construct(ompi_coll_libnbc_request_t *request)
 {
     request->super.super.req_type = OMPI_REQUEST_COLL;
     request->super.super.req_status._cancelled = 0;
@@ -578,8 +534,5 @@ request_construct(ompi_coll_libnbc_request_t *request)
     request->super.super.req_cancel = request_cancel;
 }
 
-
-OBJ_CLASS_INSTANCE(ompi_coll_libnbc_request_t,
-                   ompi_coll_base_nbc_request_t,
-                   request_construct,
+OBJ_CLASS_INSTANCE(ompi_coll_libnbc_request_t, ompi_coll_base_nbc_request_t, request_construct,
                    NULL);

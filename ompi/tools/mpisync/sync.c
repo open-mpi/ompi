@@ -13,13 +13,13 @@
 #include "opal_config.h"
 #include "opal/runtime/opal.h"
 
-#include <stdio.h>
-#include <mpi.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <string.h>
-#include <stdlib.h>
 #include <errno.h>
+#include <getopt.h>
+#include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "hpctimer.h"
 #include "mpigclock.h"
@@ -41,24 +41,22 @@ int parse_opts(int rank, int argc, char **argv)
 {
     while (1) {
         int option_index = 0;
-        static struct option long_options[] = {
-            {"output", required_argument, 0, 'o' },
-            {"alg", required_argument, 0, 'a' },
-            {"help",   required_argument, 0, 'h' },
-            { 0,       0,                 0, 0   } };
+        static struct option long_options[] = {{"output", required_argument, 0, 'o'},
+                                               {"alg", required_argument, 0, 'a'},
+                                               {"help", required_argument, 0, 'h'},
+                                               {0, 0, 0, 0}};
 
-        int c = getopt_long(argc, argv, "o:a:h",
-            long_options, &option_index);
+        int c = getopt_long(argc, argv, "o:a:h", long_options, &option_index);
         if (c == -1)
             break;
         switch (c) {
         case 'h':
-            if( rank == 0 )
+            if (rank == 0)
                 print_help(argv[0]);
             return 1;
         case 'o':
             filename = strdup(optarg);
-            if( filename == NULL ){
+            if (filename == NULL) {
                 perror("Cannot allocate memory");
                 return -1;
             }
@@ -81,23 +79,23 @@ int main(int argc, char **argv)
     double offs = 0, rtt = 0;
     char hname[OPAL_MAXHOSTNAMELEN];
     const char *local_hname;
- 
+
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &commsize);
 
     int ret = parse_opts(rank, argc, argv);
-    if( ret < 0 ){
+    if (ret < 0) {
         // Error exit
         MPI_Finalize();
         exit(1);
-    }else if( ret > 0 ){
+    } else if (ret > 0) {
         // Normal exit after help printout
         MPI_Finalize();
         exit(0);
     }
 
-    if( filename == NULL ){
-        if( rank == 0 ){
+    if (filename == NULL) {
+        if (rank == 0) {
             print_help(argv[0]);
         }
         MPI_Finalize();
@@ -120,11 +118,10 @@ int main(int argc, char **argv)
 
     int rc = hpctimer_initialize("gettimeofday");
 
-    if( rc == HPCTIMER_FAILURE ){
+    if (rc == HPCTIMER_FAILURE) {
         fprintf(stderr, "Fail to initialize hpc timer. Abort\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
-
 
     if (commsize < 2) {
         rtt = 0.0;
@@ -137,37 +134,39 @@ int main(int argc, char **argv)
         }
     }
 
-    double send[2] = { rtt, offs };
-    if( rank == 0 ){
-        double *measure = malloc(commsize*2*sizeof(double));
-        if( measure == NULL ){
-             fprintf(stderr, "Fail to allocate memory. Abort\n");
-             MPI_Abort(MPI_COMM_WORLD, 1);
+    double send[2] = {rtt, offs};
+    if (rank == 0) {
+        double *measure = malloc(commsize * 2 * sizeof(double));
+        if (measure == NULL) {
+            fprintf(stderr, "Fail to allocate memory. Abort\n");
+            MPI_Abort(MPI_COMM_WORLD, 1);
         }
         char *hnames = malloc(OPAL_MAXHOSTNAMELEN * commsize);
-        if( hnames == NULL ){
-             fprintf(stderr, "Fail to allocate memory. Abort\n");
-             MPI_Abort(MPI_COMM_WORLD, 1);
+        if (hnames == NULL) {
+            fprintf(stderr, "Fail to allocate memory. Abort\n");
+            MPI_Abort(MPI_COMM_WORLD, 1);
         }
 
-        MPI_Gather(hname,sizeof(hname),MPI_CHAR,hnames,sizeof(hname),MPI_CHAR, 0, MPI_COMM_WORLD);
-        MPI_Gather(send,2,MPI_DOUBLE,measure,2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        FILE *fp = fopen(filename,"w");
-        if( fp == NULL ){
-             fprintf(stderr, "Fail to open the file %s. Abort\n", filename);
-             MPI_Abort(MPI_COMM_WORLD, 1);
+        MPI_Gather(hname, sizeof(hname), MPI_CHAR, hnames, sizeof(hname), MPI_CHAR, 0,
+                   MPI_COMM_WORLD);
+        MPI_Gather(send, 2, MPI_DOUBLE, measure, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        FILE *fp = fopen(filename, "w");
+        if (fp == NULL) {
+            fprintf(stderr, "Fail to open the file %s. Abort\n", filename);
+            MPI_Abort(MPI_COMM_WORLD, 1);
         }
-        double (*m)[2] = (void*)measure;
-        char (*h)[OPAL_MAXHOSTNAMELEN] = (void*)hnames;
+        double(*m)[2] = (void *) measure;
+        char(*h)[OPAL_MAXHOSTNAMELEN] = (void *) hnames;
         int i;
         fprintf(fp, "# Used algorithm: %s\n", (alg ? "binary tree" : "linear"));
-        for(i=0; i<commsize;i++){
+        for (i = 0; i < commsize; i++) {
             fprintf(fp, "%s %lf %lf\n", h[i], m[i][0], m[i][1]);
         }
         fclose(fp);
     } else {
-        MPI_Gather(hname, sizeof(hname), MPI_CHAR, NULL, sizeof(hname), MPI_CHAR, 0, MPI_COMM_WORLD);
-        MPI_Gather(send,2, MPI_DOUBLE, NULL, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(hname, sizeof(hname), MPI_CHAR, NULL, sizeof(hname), MPI_CHAR, 0,
+                   MPI_COMM_WORLD);
+        MPI_Gather(send, 2, MPI_DOUBLE, NULL, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 
     MPI_Finalize();

@@ -24,36 +24,30 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Waitany = PMPI_Waitany
-#endif
-#define MPI_Waitany PMPI_Waitany
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Waitany = PMPI_Waitany
+#    endif
+#    define MPI_Waitany PMPI_Waitany
 #endif
 
 static const char FUNC_NAME[] = "MPI_Waitany";
-
 
 int MPI_Waitany(int count, MPI_Request requests[], int *indx, MPI_Status *status)
 {
     SPC_RECORD(OMPI_SPC_WAITANY, 1);
 
-    MEMCHECKER(
-        int j;
-        for (j = 0; j < count; j++){
-            memchecker_request(&requests[j]);
-        }
-    );
+    MEMCHECKER(int j; for (j = 0; j < count; j++) { memchecker_request(&requests[j]); });
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         int i, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == requests) && (0 != count)) {
@@ -66,8 +60,7 @@ int MPI_Waitany(int count, MPI_Request requests[], int *indx, MPI_Status *status
                 }
             }
         }
-        if ((NULL == indx && count > 0) ||
-            count < 0) {
+        if ((NULL == indx && count > 0) || count < 0) {
             rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);

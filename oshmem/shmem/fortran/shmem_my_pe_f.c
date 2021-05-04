@@ -10,24 +10,19 @@
  */
 
 #include "oshmem_config.h"
-#include "oshmem/shmem/fortran/bindings.h"
 #include "oshmem/include/shmem.h"
+#include "oshmem/shmem/fortran/bindings.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#    include "oshmem/shmem/fortran/profile/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_MY_PE, shmem_my_pe)
 SHMEM_GENERATE_WEAK_BINDINGS(MY_PE, my_pe)
-#pragma weak _my_pe_ = p_my_pe_
-#include "oshmem/shmem/fortran/profile/defines.h"
+#    pragma weak _my_pe_ = p_my_pe_
+#    include "oshmem/shmem/fortran/profile/defines.h"
 #endif
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
-        SHMEM_MY_PE,
-        shmem_my_pe_,
-        shmem_my_pe__,
-        shmem_my_pe_f,
-        (void),
-        () )
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION(MPI_Fint, SHMEM_MY_PE, shmem_my_pe_, shmem_my_pe__,
+                                         shmem_my_pe_f, (void), ())
 
 MPI_Fint shmem_my_pe_f(void)
 {
@@ -36,13 +31,7 @@ MPI_Fint shmem_my_pe_f(void)
     return rc;
 }
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
-        MY_PE,
-        my_pe_,
-        my_pe__,
-        my_pe_f,
-        (void),
-        () )
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION(MPI_Fint, MY_PE, my_pe_, my_pe__, my_pe_f, (void), ())
 
 MPI_Fint my_pe_f(void)
 {

@@ -9,11 +9,11 @@
  */
 
 #if !defined(OSHMEM_INFO_SUPPORT_H)
-#define OSHMEM_INFO_SUPPORT_H
+#    define OSHMEM_INFO_SUPPORT_H
 
-#include "oshmem_config.h"
+#    include "oshmem_config.h"
 
-#include "opal/class/opal_pointer_array.h"
+#    include "opal/class/opal_pointer_array.h"
 
 OSHMEM_DECLSPEC void oshmem_info_register_types(opal_pointer_array_t *mca_types);
 

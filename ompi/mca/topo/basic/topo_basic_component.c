@@ -22,15 +22,15 @@
 /*
  * Public string showing the topo basic module version number
  */
-const char *mca_topo_basic_component_version_string =
-    "Open MPI basic topology MCA component version" OMPI_VERSION;
+const char *mca_topo_basic_component_version_string
+    = "Open MPI basic topology MCA component version" OMPI_VERSION;
 
 /*
  * Local funtions
  */
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads);
-static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type);
+static struct mca_topo_base_module_t *comm_query(const ompi_communicator_t *comm, int *priority,
+                                                 uint32_t type);
 
 /*
  * Public component structure
@@ -55,16 +55,14 @@ mca_topo_basic_component_t mca_topo_basic_component =
     .topoc_comm_query = comm_query,
 };
 
-
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
     /* Nothing to do */
     return OMPI_SUCCESS;
 }
 
-
-static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
+static struct mca_topo_base_module_t *comm_query(const ompi_communicator_t *comm, int *priority,
+                                                 uint32_t type)
 {
     /* Don't use OBJ_NEW, we need to zero the memory or the functions pointers
      * will not be correctly copied over from the base.
@@ -81,5 +79,3 @@ comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
     basic->type = type;
     return basic;
 }
-
-

@@ -20,22 +20,21 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_post = PMPI_Win_post
-#endif
-#define MPI_Win_post PMPI_Win_post
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_post = PMPI_Win_post
+#    endif
+#    define MPI_Win_post PMPI_Win_post
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_post";
-
 
 int MPI_Win_post(MPI_Group group, int mpi_assert, MPI_Win win)
 {
@@ -46,8 +45,7 @@ int MPI_Win_post(MPI_Group group, int mpi_assert, MPI_Win win)
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
-        } else if (0 != (mpi_assert & ~(MPI_MODE_NOCHECK | MPI_MODE_NOSTORE |
-                                    MPI_MODE_NOPUT))) {
+        } else if (0 != (mpi_assert & ~(MPI_MODE_NOCHECK | MPI_MODE_NOSTORE | MPI_MODE_NOPUT))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
         }
     }

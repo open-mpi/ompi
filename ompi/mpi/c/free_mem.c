@@ -24,20 +24,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ompi/mpi/c/bindings.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "opal/mca/mpool/mpool.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Free_mem = PMPI_Free_mem
-#endif
-#define MPI_Free_mem PMPI_Free_mem
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Free_mem = PMPI_Free_mem
+#    endif
+#    define MPI_Free_mem PMPI_Free_mem
 #endif
 
 static const char FUNC_NAME[] = "MPI_Free_mem";
-
 
 int MPI_Free_mem(void *baseptr)
 {
@@ -54,4 +53,3 @@ int MPI_Free_mem(void *baseptr)
 
     return MPI_SUCCESS;
 }
-

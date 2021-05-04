@@ -20,8 +20,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 
 /*
  * function - Retrieves graph topology information associated with a
@@ -36,13 +36,11 @@
  * @retval MPI_ERR_COMM
  * @retval MPI_ERR_ARG
  */
-int mca_topo_base_graphdims_get (ompi_communicator_t* comm,
-                                 int *nodes,
-                                 int *nedges)
+int mca_topo_base_graphdims_get(ompi_communicator_t *comm, int *nodes, int *nedges)
 {
-    mca_topo_base_comm_graph_2_2_0_t* graph = comm->c_topo->mtc.graph;
+    mca_topo_base_comm_graph_2_2_0_t *graph = comm->c_topo->mtc.graph;
     *nodes = ompi_comm_size(comm);
-    *nedges = graph->index[*nodes -1];
+    *nedges = graph->index[*nodes - 1];
 
     return MPI_SUCCESS;
 }

@@ -459,8 +459,8 @@ mca_btl_base_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
         if (sizeof(*hdr) + size <= btl->btl_eager_limit) {
             /* just go ahead and send the data */
             packet_size += size;
-        } else if (!mca_btl_base_rdma_use_rdma_get (btl)) {
-            packet_size += size_t_min (size, btl->btl_max_send_size - sizeof (*hdr));
+        } else if (!mca_btl_base_rdma_use_rdma_get(btl)) {
+            packet_size += size_t_min(size, btl->btl_max_send_size - sizeof(*hdr));
         } else {
             use_rdma = true;
         }
@@ -481,7 +481,7 @@ mca_btl_base_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
 
     BTL_VERBOSE(("Initiating RDMA operation. context=%p, size=%" PRIsize_t
                  ", packet_size=%" PRIsize_t,
-                 (void*) context, size, packet_size));
+                 (void *) context, size, packet_size));
 
     descriptor = btl->btl_alloc(btl, endpoint, order, packet_size,
                                 MCA_BTL_DES_SEND_ALWAYS_CALLBACK | MCA_BTL_DES_FLAGS_SIGNAL);
@@ -610,7 +610,7 @@ static int mca_btl_base_am_rdma_respond(mca_btl_base_module_t *btl,
         }
     }
 
-    BTL_VERBOSE(("sending descriptor %p", (void*) send_descriptor));
+    BTL_VERBOSE(("sending descriptor %p", (void *) send_descriptor));
 
     send_descriptor->des_cbfunc = NULL;
 
@@ -639,7 +639,7 @@ mca_btl_base_am_rmda_rdma_complete(mca_btl_base_module_t *btl,
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         BTL_VERBOSE(
             ("could not send a response. queueing the response for later. endpoint=%p, ret=%d",
-             (void*) endpoint, ret));
+             (void *) endpoint, ret));
         mca_btl_base_rdma_queue_operation(btl, NULL, NULL, 0, NULL, operation);
     }
 
@@ -874,8 +874,8 @@ static void mca_btl_base_am_rdma_response(mca_btl_base_module_t *btl,
     mca_btl_base_rdma_context_t *context = (mca_btl_base_rdma_context_t *) (uintptr_t)
                                                resp_hdr->context;
 
-    BTL_VERBOSE(("received response for RDMA operation. context=%p, size=%" PRIu64, (void*) context,
-                 resp_hdr->response_size));
+    BTL_VERBOSE(("received response for RDMA operation. context=%p, size=%" PRIu64,
+                 (void *) context, resp_hdr->response_size));
 
     if (MCA_BTL_BASE_AM_PUT != context->type) {
         uint64_t local_address = resp_hdr->initiator_address ? resp_hdr->initiator_address
@@ -958,10 +958,10 @@ static void mca_btl_base_am_process_atomic(mca_btl_base_module_t *btl,
         abort();
     }
 
-    BTL_VERBOSE(("got active-message atomic request. hdr->context=0x%" PRIx64
-                 ", target_address=%p, "
-                 "segment 0 size=%" PRIu64,
-                 hdr->context, (void *)(intptr_t)hdr->target_address, desc->des_segments[0].seg_len));
+    BTL_VERBOSE(
+        ("got active-message atomic request. hdr->context=0x%" PRIx64 ", target_address=%p, "
+         "segment 0 size=%" PRIu64,
+         hdr->context, (void *) (intptr_t) hdr->target_address, desc->des_segments[0].seg_len));
 
     switch (hdr->type) {
     case MCA_BTL_BASE_AM_ATOMIC:
@@ -1094,7 +1094,8 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
         btl->btl_put_limit = max_operation_size - sizeof(mca_btl_base_rdma_hdr_t);
         btl->btl_put_alignment = operation_alignment;
         btl->btl_put = mca_btl_base_am_rdma_put;
-        BTL_VERBOSE(("Enabling AM-based RDMA put for BTL %p. max put = %zu", (void*) btl, btl->btl_put_limit));
+        BTL_VERBOSE(("Enabling AM-based RDMA put for BTL %p. max put = %zu", (void *) btl,
+                     btl->btl_put_limit));
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_GET)) {
@@ -1102,11 +1103,12 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
         btl->btl_get_limit = max_operation_size - sizeof(mca_btl_base_rdma_response_hdr_t);
         btl->btl_get_alignment = operation_alignment;
         btl->btl_get = mca_btl_base_am_rdma_get;
-        BTL_VERBOSE(("Enabling AM-based RDMA get for BTL %p. max get = %zu", (void*) btl, btl->btl_get_limit));
+        BTL_VERBOSE(("Enabling AM-based RDMA get for BTL %p. max get = %zu", (void *) btl,
+                     btl->btl_get_limit));
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_FOPS)) {
-        BTL_VERBOSE(("Enabling AM-based FOPs get for BTL %p", (void*) btl));
+        BTL_VERBOSE(("Enabling AM-based FOPs get for BTL %p", (void *) btl));
         btl->btl_flags |= MCA_BTL_FLAGS_ATOMIC_AM_FOP;
 
         btl->btl_atomic_fop = mca_btl_base_am_fop;

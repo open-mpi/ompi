@@ -11,15 +11,14 @@
  * $HEADER$
  */
 #include "oshmem_config.h"
-#include "opal/util/output.h"
-#include "oshmem/mca/memheap/memheap.h"
-#include "oshmem/mca/memheap/base/base.h"
-#include "oshmem/mca/memheap/ptmalloc/memheap_ptmalloc.h"
 #include "memheap_ptmalloc_component.h"
+#include "opal/util/output.h"
+#include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/ptmalloc/memheap_ptmalloc.h"
 
 static int mca_memheap_ptmalloc_component_close(void);
-static int mca_memheap_ptmalloc_component_query(mca_base_module_t **module, 
-                                                int *priority);
+static int mca_memheap_ptmalloc_component_query(mca_base_module_t **module, int *priority);
 
 static int _basic_open(void);
 
@@ -49,11 +48,10 @@ static int _basic_open(void)
 }
 
 /* query component */
-static int
-mca_memheap_ptmalloc_component_query(mca_base_module_t **module, int *priority)
+static int mca_memheap_ptmalloc_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = memheap_ptmalloc.priority;
-    *module = (mca_base_module_t *)&memheap_ptmalloc.super;
+    *module = (mca_base_module_t *) &memheap_ptmalloc.super;
     return OSHMEM_SUCCESS;
 }
 

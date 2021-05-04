@@ -18,8 +18,8 @@ static int ompi_hook_demo_component_register(void);
 /*
  * Public string showing the component version number
  */
-const char *mca_hook_demo_component_version_string =
-    "Open MPI 'demo' hook MCA component version " OMPI_VERSION;
+const char *mca_hook_demo_component_version_string
+    = "Open MPI 'demo' hook MCA component version " OMPI_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -82,7 +82,7 @@ static int ompi_hook_demo_component_open(void)
 
     // Register the 'extra' callback(s) to be called the next time those
     // functions are encountered.
-    ompi_hook_base_register_callbacks( &hook_demo_extra_component );
+    ompi_hook_base_register_callbacks(&hook_demo_extra_component);
 
     return OMPI_SUCCESS;
 }
@@ -94,7 +94,7 @@ static int ompi_hook_demo_component_close(void)
     // Deregister the 'extra' callback(s) so that they are no longer called.
     // Must pass in the same 'component' structure that was passed to the
     // ompi_hook_base_register_callbacks() earlier.
-    ompi_hook_base_deregister_callbacks( &hook_demo_extra_component );
+    ompi_hook_base_deregister_callbacks(&hook_demo_extra_component);
 
     return OMPI_SUCCESS;
 }
@@ -104,4 +104,3 @@ static int ompi_hook_demo_component_register(void)
     opal_output(0, "hook/demo: component_register()");
     return OMPI_SUCCESS;
 }
-

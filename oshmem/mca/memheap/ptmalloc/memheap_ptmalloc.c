@@ -10,34 +10,25 @@
  */
 
 #include "oshmem_config.h"
-#include "oshmem/proc/proc.h"
-#include "oshmem/mca/spml/spml.h"
-#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/ptmalloc/memheap_ptmalloc.h"
-#include "oshmem/mca/memheap/ptmalloc/memheap_ptmalloc_component.h"
-#include "oshmem/mca/memheap/base/base.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_object.h"
+#include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/ptmalloc/memheap_ptmalloc_component.h"
+#include "oshmem/mca/spml/spml.h"
+#include "oshmem/proc/proc.h"
 
 mca_memheap_ptmalloc_module_t memheap_ptmalloc = {
-    {
-        &mca_memheap_ptmalloc_component,
-        mca_memheap_ptmalloc_finalize,
-        mca_memheap_ptmalloc_alloc,
-        mca_memheap_ptmalloc_align,
-        mca_memheap_ptmalloc_realloc,
-        mca_memheap_ptmalloc_free,
+    {&mca_memheap_ptmalloc_component, mca_memheap_ptmalloc_finalize, mca_memheap_ptmalloc_alloc,
+     mca_memheap_ptmalloc_align, mca_memheap_ptmalloc_realloc, mca_memheap_ptmalloc_free,
 
-        mca_memheap_ptmalloc_alloc,
-        mca_memheap_ptmalloc_free,
+     mca_memheap_ptmalloc_alloc, mca_memheap_ptmalloc_free,
 
-        mca_memheap_base_get_mkey,
-        mca_memheap_base_is_symmetric_addr,
-        mca_memheap_modex_recv_all,
+     mca_memheap_base_get_mkey, mca_memheap_base_is_symmetric_addr, mca_memheap_modex_recv_all,
 
-        0
-    },
-    100   /* priority */
+     0},
+    100 /* priority */
 };
 
 /* Memory Heap Buddy Implementation */
@@ -57,21 +48,19 @@ int mca_memheap_ptmalloc_module_init(memheap_context_t *context)
     memheap_ptmalloc.max_size = context->user_size + context->private_size;
     memheap_ptmalloc.max_alloc_size = context->user_size;
 
-    MEMHEAP_VERBOSE(1,
-                    "symmetric heap memory (user+private): %llu bytes",
-                    (unsigned long long)(context->user_size + context->private_size));
+    MEMHEAP_VERBOSE(1, "symmetric heap memory (user+private): %llu bytes",
+                    (unsigned long long) (context->user_size + context->private_size));
 
     /* disable till we figure out double modex&grpcomm.bad problem */
     //        memheap_modex_mkey_exchange();
     return OSHMEM_SUCCESS;
-
 }
 
 /**
  * Allocate size bytes on the symmetric heap.
  * The allocated variable is aligned to its size.
  */
-int mca_memheap_ptmalloc_alloc(size_t size, void** p_buff)
+int mca_memheap_ptmalloc_alloc(size_t size, void **p_buff)
 {
     if (size > memheap_ptmalloc.max_alloc_size) {
         *p_buff = 0;
@@ -118,9 +107,7 @@ int mca_memheap_ptmalloc_align(size_t align, size_t size, void **p_buff)
     return OSHMEM_SUCCESS;
 }
 
-int mca_memheap_ptmalloc_realloc(size_t new_size,
-                                 void *p_buff,
-                                 void **p_new_buff)
+int mca_memheap_ptmalloc_realloc(size_t new_size, void *p_buff, void **p_new_buff)
 {
     if (new_size > memheap_ptmalloc.max_alloc_size) {
         *p_new_buff = 0;
@@ -142,7 +129,7 @@ int mca_memheap_ptmalloc_realloc(size_t new_size,
  * Free a variable allocated on the
  * symmetric heap.
  */
-int mca_memheap_ptmalloc_free(void* ptr)
+int mca_memheap_ptmalloc_free(void *ptr)
 {
     OPAL_THREAD_LOCK(&memheap_ptmalloc.lock);
     dlfree(ptr);
@@ -162,14 +149,14 @@ int mca_memheap_ptmalloc_getpagesize(void)
 }
 
 /* must be same as in malloc.c */
-#define PTMALLOC_MAX_SIZE_T           (~(size_t)0)
-#define PTMALLOC_MFAIL                ((void*)(PTMALLOC_MAX_SIZE_T))
+#define PTMALLOC_MAX_SIZE_T (~(size_t) 0)
+#define PTMALLOC_MFAIL      ((void *) (PTMALLOC_MAX_SIZE_T))
 void *mca_memheap_ptmalloc_sbrk(size_t size)
 {
     char *ret;
 
     if (memheap_ptmalloc.cur_size + size > memheap_ptmalloc.max_size) {
-        return PTMALLOC_MFAIL ;
+        return PTMALLOC_MFAIL;
     }
 
     ret = (char *) memheap_ptmalloc.base + memheap_ptmalloc.cur_size;
@@ -177,4 +164,3 @@ void *mca_memheap_ptmalloc_sbrk(size_t size)
 
     return ret;
 }
-

@@ -24,64 +24,59 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
-#endif
-#define MPI_Type_create_subarray PMPI_Type_create_subarray
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
+#    endif
+#    define MPI_Type_create_subarray PMPI_Type_create_subarray
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_create_subarray";
 
-
-int MPI_Type_create_subarray(int ndims,
-                             const int size_array[],
-                             const int subsize_array[],
-                             const int start_array[],
-                             int order,
-                             MPI_Datatype oldtype,
+int MPI_Type_create_subarray(int ndims, const int size_array[], const int subsize_array[],
+                             const int start_array[], int order, MPI_Datatype oldtype,
                              MPI_Datatype *newtype)
 {
     int32_t i, rc;
 
-    MEMCHECKER(
-        memchecker_datatype(oldtype);
-        );
+    MEMCHECKER(memchecker_datatype(oldtype););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( ndims < 0 ) {
+        if (ndims < 0) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
-        } else if( (ndims > 0) && ((NULL == size_array) || (NULL == subsize_array) || (NULL == start_array)) ) {
+        } else if ((ndims > 0)
+                   && ((NULL == size_array) || (NULL == subsize_array) || (NULL == start_array))) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
-        } else if( (NULL == oldtype) || (MPI_DATATYPE_NULL == oldtype) || (NULL == newtype) ) {
+        } else if ((NULL == oldtype) || (MPI_DATATYPE_NULL == oldtype) || (NULL == newtype)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
-        } else if( (MPI_ORDER_C != order) && (MPI_ORDER_FORTRAN != order) ) {
+        } else if ((MPI_ORDER_C != order) && (MPI_ORDER_FORTRAN != order)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
-        for( i = 0; i < ndims; i++ ) {
-            if( (subsize_array[i] < 1) || (subsize_array[i] > size_array[i]) ) {
+        for (i = 0; i < ndims; i++) {
+            if ((subsize_array[i] < 1) || (subsize_array[i] > size_array[i])) {
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
-            } else if( (start_array[i] < 0) || (start_array[i] > (size_array[i] - subsize_array[i])) ) {
+            } else if ((start_array[i] < 0)
+                       || (start_array[i] > (size_array[i] - subsize_array[i]))) {
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
             }
         }
     }
 
-    rc = ompi_datatype_create_subarray( ndims, size_array, subsize_array, start_array,
-                                        order, oldtype, newtype);
-    if( OMPI_SUCCESS == rc ) {
-        const int* a_i[5] = {&ndims, size_array, subsize_array, start_array, &order};
+    rc = ompi_datatype_create_subarray(ndims, size_array, subsize_array, start_array, order,
+                                       oldtype, newtype);
+    if (OMPI_SUCCESS == rc) {
+        const int *a_i[5] = {&ndims, size_array, subsize_array, start_array, &order};
 
-        ompi_datatype_set_args( *newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
-                                MPI_COMBINER_SUBARRAY );
+        ompi_datatype_set_args(*newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
+                               MPI_COMBINER_SUBARRAY);
     }
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);

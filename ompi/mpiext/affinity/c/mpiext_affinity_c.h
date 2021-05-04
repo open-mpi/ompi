@@ -19,6 +19,6 @@ typedef enum ompi_affinity_fmt {
 } ompi_affinity_fmt_t;
 
 OMPI_DECLSPEC int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
-				    char ompi_bound[OMPI_AFFINITY_STRING_MAX],
+                                    char ompi_bound[OMPI_AFFINITY_STRING_MAX],
                                     char current_binding[OMPI_AFFINITY_STRING_MAX],
                                     char exists[OMPI_AFFINITY_STRING_MAX]);

@@ -14,10 +14,10 @@
 /********************************
  * Error codes and classes
  ********************************/
-#define MPIX_ERR_PROC_FAILED          MPI_ERR_PROC_FAILED
-#define MPIX_ERR_PROC_FAILED_PENDING  MPI_ERR_PROC_FAILED_PENDING
-#define MPIX_ERR_REVOKED              MPI_ERR_REVOKED
-#define MPIX_FT                       MPI_FT
+#define MPIX_ERR_PROC_FAILED         MPI_ERR_PROC_FAILED
+#define MPIX_ERR_PROC_FAILED_PENDING MPI_ERR_PROC_FAILED_PENDING
+#define MPIX_ERR_REVOKED             MPI_ERR_REVOKED
+#define MPIX_FT                      MPI_FT
 
 /********************************
  * Communicators
@@ -40,4 +40,3 @@ OMPI_DECLSPEC int PMPIX_Comm_iagree(MPI_Comm comm, int *flag, MPI_Request *reque
 
 #include <stdbool.h>
 OMPI_DECLSPEC int OMPI_Comm_failure_inject(MPI_Comm comm, bool notify);
-

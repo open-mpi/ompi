@@ -15,20 +15,19 @@
 #include "oshmem_config.h"
 
 #include "opal/class/opal_list.h"
-#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "oshmem/mca/mca.h"
 
-#include "oshmem/util/oshmem_util.h"
 #include "oshmem/constants.h"
-#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/scoll/scoll.h"
+#include "oshmem/util/oshmem_util.h"
 
 /*
  * Private functions
  */
-static int init_query(const mca_base_component_t * ls,
-                      bool enable_progress_threads,
+static int init_query(const mca_base_component_t *ls, bool enable_progress_threads,
                       bool enable_threads);
 
 /*
@@ -44,20 +43,19 @@ static int init_query(const mca_base_component_t * ls,
  * it in a global variable so that we can find it easily later (e.g.,
  * during scope selection).
  */
-int mca_scoll_base_find_available(bool enable_progress_threads,
-                                  bool enable_threads)
+int mca_scoll_base_find_available(bool enable_progress_threads, bool enable_threads)
 {
     mca_base_component_list_item_t *cli, *next;
     const mca_base_component_t *component;
 
-    OPAL_LIST_FOREACH_SAFE(cli, next, &oshmem_scoll_base_framework.framework_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH_SAFE (cli, next, &oshmem_scoll_base_framework.framework_components,
+                            mca_base_component_list_item_t) {
         component = cli->cli_component;
 
         /* Call a subroutine to do the work, because the component may
            represent different versions of the coll MCA. */
 
-        if (OSHMEM_SUCCESS != init_query(component, enable_progress_threads,
-                                       enable_threads)) {
+        if (OSHMEM_SUCCESS != init_query(component, enable_progress_threads, enable_threads)) {
             /* If the component doesn't want to run, then close it.
                Now close it out and release it from the DSO repository (if it's there). */
             opal_list_remove_item(&oshmem_scoll_base_framework.framework_components, &cli->super);
@@ -70,8 +68,7 @@ int mca_scoll_base_find_available(bool enable_progress_threads,
        Thanks for playing! */
 
     if (opal_list_get_size(&oshmem_scoll_base_framework.framework_components) == 0) {
-        SCOLL_VERBOSE(10,
-                      "scoll:find_available: no components available!");
+        SCOLL_VERBOSE(10, "scoll:find_available: no components available!");
         return OSHMEM_ERROR;
     }
 
@@ -84,25 +81,21 @@ int mca_scoll_base_find_available(bool enable_progress_threads,
  * Query a component, see if it wants to run at all.  If it does, save
  * some information.  If it doesn't, close it.
  */
-static int init_query(const mca_base_component_t * component,
-                      bool enable_progress_threads,
+static int init_query(const mca_base_component_t *component, bool enable_progress_threads,
                       bool enable_threads)
 {
     int ret;
 
-    SCOLL_VERBOSE(10,
-                  "scoll:find_available: querying scoll component %s",
+    SCOLL_VERBOSE(10, "scoll:find_available: querying scoll component %s",
                   component->mca_component_name);
 
     /* This component has already been successfully opened.  So now
      query it. */
 
-    if (1 == component->mca_type_major_version
-            && 0 == component->mca_type_minor_version
-            && 0 == component->mca_type_release_version) {
+    if (1 == component->mca_type_major_version && 0 == component->mca_type_minor_version
+        && 0 == component->mca_type_release_version) {
 
-        mca_scoll_base_component_t *scoll =
-                (mca_scoll_base_component_t *) component;
+        mca_scoll_base_component_t *scoll = (mca_scoll_base_component_t *) component;
 
         ret = scoll->scoll_init(enable_progress_threads, enable_threads);
     } else {
@@ -110,8 +103,7 @@ static int init_query(const mca_base_component_t * component,
 
         SCOLL_VERBOSE(10,
                       "scoll:find_available: unrecognized scoll API version (%d.%d.%d, ignored)",
-                      component->mca_type_major_version,
-                      component->mca_type_minor_version,
+                      component->mca_type_major_version, component->mca_type_minor_version,
                       component->mca_type_release_version);
         return OSHMEM_ERROR;
     }
@@ -119,15 +111,13 @@ static int init_query(const mca_base_component_t * component,
     /* Query done -- look at the return value to see what happened */
 
     if (OSHMEM_SUCCESS != ret) {
-        SCOLL_VERBOSE(10,
-                      "scoll:find_available: scoll component %s is not available",
+        SCOLL_VERBOSE(10, "scoll:find_available: scoll component %s is not available",
                       component->mca_component_name);
         if (NULL != component->mca_close_component) {
             component->mca_close_component();
         }
     } else {
-        SCOLL_VERBOSE(10,
-                      "scoll:find_available: scoll component %s is available",
+        SCOLL_VERBOSE(10, "scoll:find_available: scoll component %s is available",
                       component->mca_component_name);
     }
 

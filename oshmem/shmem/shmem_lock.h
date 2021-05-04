@@ -22,5 +22,4 @@ void _shmem_set_lock(void *lock, int lock_size);
 int _shmem_test_lock(void *lock, int lock_size);
 void _shmem_clear_lock(void *lock, int lock_size);
 
-
 #endif /*SHMEM_LOCK_H*/

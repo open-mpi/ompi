@@ -13,8 +13,8 @@
 
 #include "oshmem_config.h"
 
-#include "oshmem/mca/mca.h"
 #include "oshmem/mca/atomic/atomic.h"
+#include "oshmem/mca/mca.h"
 #include "oshmem/util/oshmem_util.h"
 
 BEGIN_C_DECLS
@@ -23,8 +23,7 @@ BEGIN_C_DECLS
 
 /* Globally exported variables */
 
-OSHMEM_MODULE_DECLSPEC extern mca_atomic_base_component_1_0_0_t
-mca_atomic_basic_component;
+OSHMEM_MODULE_DECLSPEC extern mca_atomic_base_component_1_0_0_t mca_atomic_basic_component;
 
 OSHMEM_DECLSPEC void atomic_basic_lock(shmem_ctx_t ctx, int pe);
 OSHMEM_DECLSPEC void atomic_basic_unlock(shmem_ctx_t ctx, int pe);
@@ -33,16 +32,10 @@ OSHMEM_DECLSPEC void atomic_basic_unlock(shmem_ctx_t ctx, int pe);
 
 int mca_atomic_basic_startup(bool enable_progress_threads, bool enable_threads);
 int mca_atomic_basic_finalize(void);
-mca_atomic_base_module_t*
-mca_atomic_basic_query(int *priority);
+mca_atomic_base_module_t *mca_atomic_basic_query(int *priority);
 
-int mca_atomic_basic_cswap(shmem_ctx_t ctx,
-                           void *target,
-                           uint64_t *prev,
-                           uint64_t cond,
-                           uint64_t value,
-                           size_t size,
-                           int pe);
+int mca_atomic_basic_cswap(shmem_ctx_t ctx, void *target, uint64_t *prev, uint64_t cond,
+                           uint64_t value, size_t size, int pe);
 
 struct mca_atomic_basic_module_t {
     mca_atomic_base_module_t super;

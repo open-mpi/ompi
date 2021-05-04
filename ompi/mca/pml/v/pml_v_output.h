@@ -16,16 +16,16 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal_stdint.h"
-#include <stdio.h>
 #include "pml_v.h"
+#include <stdio.h>
 
 BEGIN_C_DECLS
 
 int ompi_pml_v_output_open(char *output, int verbosity);
 void ompi_pml_v_output_close(void);
 
-static inline void V_OUTPUT_ERR(const char *fmt, ... ) __opal_attribute_format__(__printf__, 1, 2);
-static inline void V_OUTPUT_ERR(const char *fmt, ... )
+static inline void V_OUTPUT_ERR(const char *fmt, ...) __opal_attribute_format__(__printf__, 1, 2);
+static inline void V_OUTPUT_ERR(const char *fmt, ...)
 {
     va_list list;
     char *str;
@@ -33,7 +33,7 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
     va_start(list, fmt);
     ret = opal_vasprintf(&str, fmt, list);
     assert(-1 != ret);
-    (void)ret;  // silence compiler warning
+    (void) ret; // silence compiler warning
     opal_output(0, "%s", str);
     free(str);
     va_end(list);
@@ -41,22 +41,18 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
 
 /* Tricky stuff to define V_OUTPUT and V_OUTPUT_VERBOSE with variadic arguments
  */
-#if   defined(ACCEPT_C99)
-#   define V_OUTPUT(ARGS...)                                                   \
-        OPAL_OUTPUT((pml_v_output, __VA_ARGS__))
-#   define V_OUTPUT_VERBOSE(V, ARGS...)                                        \
-        OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, __VA_ARGS__))
+#if defined(ACCEPT_C99)
+#    define V_OUTPUT(ARGS...)            OPAL_OUTPUT((pml_v_output, __VA_ARGS__))
+#    define V_OUTPUT_VERBOSE(V, ARGS...) OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, __VA_ARGS__))
 
 #elif defined(__GNUC__) && !defined(__STDC__)
-#   define V_OUTPUT(ARGS...)                                                   \
-        OPAL_OUTPUT((pml_v_output, ARGS))
-#   define V_OUTPUT_VERBOSE(V, ARGS...)                                        \
-        OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, ARGS))
+#    define V_OUTPUT(ARGS...)            OPAL_OUTPUT((pml_v_output, ARGS))
+#    define V_OUTPUT_VERBOSE(V, ARGS...) OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, ARGS))
 
 #elif OPAL_ENABLE_DEBUG
-    /* No variadic macros available... So sad */
-static inline void V_OUTPUT(const char* fmt, ... ) __opal_attribute_format__(__printf__, 1, 2);
-static inline void V_OUTPUT(const char* fmt, ... )
+/* No variadic macros available... So sad */
+static inline void V_OUTPUT(const char *fmt, ...) __opal_attribute_format__(__printf__, 1, 2);
+static inline void V_OUTPUT(const char *fmt, ...)
 {
     va_list list;
     char *str;
@@ -68,8 +64,10 @@ static inline void V_OUTPUT(const char* fmt, ... )
     free(str);
     va_end(list);
 }
-static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) __opal_attribute_format__(__printf__, 2, 3);
-static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
+static inline void V_OUTPUT_VERBOSE(int V, const char *fmt, ...)
+    __opal_attribute_format__(__printf__, 2, 3);
+static inline void V_OUTPUT_VERBOSE(int V, const char *fmt, ...)
+{
     va_list list;
     char *str;
     int ret;
@@ -82,20 +80,22 @@ static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
 }
 
 #else /* !DEBUG */
-   /* Some compilers complain if we have ... and no corresponding va_start() */
-static inline void V_OUTPUT(const char* fmt, ... ) {
-#if defined(__PGI)
+/* Some compilers complain if we have ... and no corresponding va_start() */
+static inline void V_OUTPUT(const char *fmt, ...)
+{
+#    if defined(__PGI)
     va_list list;
     va_start(list, fmt);
     va_end(list);
-#endif
+#    endif
 }
-static inline void V_OUTPUT_VERBOSE(int V, const char* fmt, ... ) {
-#if defined(__PGI)
+static inline void V_OUTPUT_VERBOSE(int V, const char *fmt, ...)
+{
+#    if defined(__PGI)
     va_list list;
     va_start(list, fmt);
     va_end(list);
-#endif
+#    endif
 }
 #endif /* DEBUG */
 

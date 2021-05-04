@@ -16,28 +16,28 @@
 #include "oshmem_config.h"
 
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 
 #include "opal/mca/backtrace/backtrace.h"
-#include "opal/util/error.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/util/error.h"
 #include "opal/util/show_help.h"
 
-#include "oshmem/runtime/params.h"
-#include "oshmem/runtime/runtime.h"
 #include "oshmem/constants.h"
 #include "oshmem/proc/proc.h"
+#include "oshmem/runtime/params.h"
+#include "oshmem/runtime/runtime.h"
 
 static bool have_been_invoked = false;
 
@@ -64,12 +64,7 @@ int oshmem_shmem_abort(int errcode)
     }
     pid = getpid();
 
-    opal_show_help("help-shmem-api.txt",
-                   "shmem-abort",
-                   true,
-                   OMPI_PROC_MY_NAME->vpid,
-                   pid,
-                   host,
+    opal_show_help("help-shmem-api.txt", "shmem-abort", true, OMPI_PROC_MY_NAME->vpid, pid, host,
                    errcode);
 
     /* Should we print a stack trace?  Not aggregated because they
@@ -80,12 +75,7 @@ int oshmem_shmem_abort(int errcode)
 
         if (OPAL_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
-                fprintf(stderr,
-                        "[%s:%05d] [%d] func:%s\n",
-                        host,
-                        (int) pid,
-                        i,
-                        messages[i]);
+                fprintf(stderr, "[%s:%05d] [%d] func:%s\n", host, (int) pid, i, messages[i]);
                 fflush(stderr);
             }
             free(messages);
@@ -104,15 +94,12 @@ int oshmem_shmem_abort(int errcode)
         if (!opal_initialized) {
             /* TODO help message from SHMEM not from MPI is needed*/
             opal_show_help("help-shmem-runtime.txt",
-                           "oshmem shmem abort:cannot guarantee all killed",
-                           true,
-                           host,
-                           (int) pid);
+                           "oshmem shmem abort:cannot guarantee all killed", true, host, (int) pid);
         } else {
             fprintf(stderr,
-                    "[%s:%05d] Local abort completed successfully; not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
-                    host,
-                    (int) pid);
+                    "[%s:%05d] Local abort completed successfully; not able to aggregate error "
+                    "messages, and not able to guarantee that all other processes were killed!\n",
+                    host, (int) pid);
         }
         oshmem_shmem_aborted = true;
         exit(errcode);
@@ -125,7 +112,7 @@ int oshmem_shmem_abort(int errcode)
     oshmem_shmem_aborted = true;
     /* now that we've aborted everyone else, gracefully die. */
 
-    ompi_rte_abort(errcode, NULL );
+    ompi_rte_abort(errcode, NULL);
 
     return OSHMEM_SUCCESS;
 }

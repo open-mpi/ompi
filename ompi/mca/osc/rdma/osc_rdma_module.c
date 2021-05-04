@@ -27,12 +27,12 @@
 
 #include "mpi.h"
 
-int ompi_osc_module_add_peer (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer)
+int ompi_osc_module_add_peer(ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer)
 {
     int ret = OMPI_SUCCESS;
 
     if (NULL == module->peer_array) {
-        ret = opal_hash_table_set_value_uint32 (&module->peer_hash, peer->rank, (void *) peer);
+        ret = opal_hash_table_set_value_uint32(&module->peer_hash, peer->rank, (void *) peer);
     } else {
         module->peer_array[peer->rank] = peer;
     }
@@ -53,7 +53,7 @@ int ompi_osc_rdma_free(ompi_win_t *win)
     }
 
     while (module->pending_ops) {
-        ompi_osc_rdma_progress (module);
+        ompi_osc_rdma_progress(module);
     }
 
     if (NULL != module->comm) {
@@ -63,7 +63,7 @@ int ompi_osc_rdma_free(ompi_win_t *win)
 
         /* finish with a barrier */
         if (ompi_group_size(win->w_group) > 1) {
-            (void) module->comm->c_coll->coll_barrier (module->comm,
+            (void) module->comm->c_coll->coll_barrier(module->comm,
                                                       module->comm->c_coll->coll_barrier_module);
         }
 
@@ -79,13 +79,13 @@ int ompi_osc_rdma_free(ompi_win_t *win)
     if (module->state) {
         int region_count = module->state->region_count & 0xffffffffL;
         if (NULL != module->dynamic_handles) {
-            for (int i = 0 ; i < region_count ; ++i) {
+            for (int i = 0; i < region_count; ++i) {
                 ompi_osc_rdma_handle_t *region_handle = module->dynamic_handles[i];
-                ompi_osc_rdma_deregister (module, region_handle->btl_handle);
+                ompi_osc_rdma_deregister(module, region_handle->btl_handle);
                 OBJ_RELEASE(region_handle);
             }
 
-            free (module->dynamic_handles);
+            free(module->dynamic_handles);
         }
     }
 
@@ -94,27 +94,28 @@ int ompi_osc_rdma_free(ompi_win_t *win)
     OBJ_DESTRUCT(&module->peer_lock);
     OBJ_DESTRUCT(&module->all_sync);
 
-    ompi_osc_rdma_deregister (module, module->state_handle);
-    ompi_osc_rdma_deregister (module, module->base_handle);
+    ompi_osc_rdma_deregister(module, module->state_handle);
+    ompi_osc_rdma_deregister(module, module->base_handle);
 
     OPAL_LIST_DESTRUCT(&module->pending_posts);
 
     if (NULL != module->rdma_frag) {
-        ompi_osc_rdma_deregister (module, module->rdma_frag->handle);
+        ompi_osc_rdma_deregister(module, module->rdma_frag->handle);
     }
 
     /* remove all cached peers */
     if (NULL == module->peer_array) {
-        ret = opal_hash_table_get_first_key_uint32 (&module->peer_hash, &key, (void **) &peer, &node);
+        ret = opal_hash_table_get_first_key_uint32(&module->peer_hash, &key, (void **) &peer,
+                                                   &node);
         while (OPAL_SUCCESS == ret) {
             OBJ_RELEASE(peer);
-            ret = opal_hash_table_get_next_key_uint32 (&module->peer_hash, &key, (void **) &peer,
-                                                       node, &node);
+            ret = opal_hash_table_get_next_key_uint32(&module->peer_hash, &key, (void **) &peer,
+                                                      node, &node);
         }
 
         OBJ_DESTRUCT(&module->peer_hash);
     } else if (NULL != module->comm) {
-        for (int i = 0 ; i < ompi_comm_size (module->comm) ; ++i) {
+        for (int i = 0; i < ompi_comm_size(module->comm); ++i) {
             if (NULL != module->peer_array[i]) {
                 OBJ_RELEASE(module->peer_array[i]);
             }
@@ -122,27 +123,27 @@ int ompi_osc_rdma_free(ompi_win_t *win)
     }
 
     if (module->local_leaders && MPI_COMM_NULL != module->local_leaders) {
-        ompi_comm_free (&module->local_leaders);
+        ompi_comm_free(&module->local_leaders);
     }
 
     if (module->shared_comm && MPI_COMM_NULL != module->shared_comm) {
-        ompi_comm_free (&module->shared_comm);
+        ompi_comm_free(&module->shared_comm);
     }
 
     if (module->comm && MPI_COMM_NULL != module->comm) {
-        ompi_comm_free (&module->comm);
+        ompi_comm_free(&module->comm);
     }
 
     if (module->segment_base) {
-        opal_shmem_segment_detach (&module->seg_ds);
+        opal_shmem_segment_detach(&module->seg_ds);
         module->segment_base = NULL;
     }
 
-    free (module->peer_array);
-    free (module->outstanding_lock_array);
-    free (module->free_after);
-    free (module->selected_btls);
-    free (module);
+    free(module->peer_array);
+    free(module->outstanding_lock_array);
+    free(module->free_after);
+    free(module->selected_btls);
+    free(module);
 
     return OMPI_SUCCESS;
 }

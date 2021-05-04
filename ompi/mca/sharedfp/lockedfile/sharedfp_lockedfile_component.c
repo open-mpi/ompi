@@ -27,19 +27,19 @@
  */
 
 #include "ompi_config.h"
-#include "sharedfp_lockedfile.h"
 #include "mpi.h"
+#include "sharedfp_lockedfile.h"
 
 /*
  * Public string showing the sharedfp lockedfile component version number
  */
-const char *mca_sharedfp_lockedfile_component_version_string =
-  "OMPI/MPI lockedfile SHAREDFP MCA component version " OMPI_VERSION;
+const char *mca_sharedfp_lockedfile_component_version_string
+    = "OMPI/MPI lockedfile SHAREDFP MCA component version " OMPI_VERSION;
 /*
  * Global variables
  */
-int mca_sharedfp_lockedfile_priority=10;
-int mca_sharedfp_lockedfile_verbose=0;
+int mca_sharedfp_lockedfile_priority = 10;
+int mca_sharedfp_lockedfile_verbose = 0;
 
 static int lockedfile_register(void);
 
@@ -74,16 +74,18 @@ static int lockedfile_register(void)
 {
     mca_sharedfp_lockedfile_priority = 10;
     (void) mca_base_component_var_register(&mca_sharedfp_lockedfile_component.sharedfpm_version,
-                                           "priority", "Priority of the lockedfile sharedfp component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_sharedfp_lockedfile_priority);
+                                           "priority",
+                                           "Priority of the lockedfile sharedfp component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_sharedfp_lockedfile_priority);
     mca_sharedfp_lockedfile_verbose = 0;
     (void) mca_base_component_var_register(&mca_sharedfp_lockedfile_component.sharedfpm_version,
-                                           "verbose", "Verbosity of the lockedfile sharedfp component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_sharedfp_lockedfile_verbose);
+                                           "verbose",
+                                           "Verbosity of the lockedfile sharedfp component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_sharedfp_lockedfile_verbose);
 
     return OMPI_SUCCESS;
 }

@@ -22,8 +22,7 @@
 #include "ompi/mca/part/persist/part_persist.h"
 #include "ompi/mca/part/persist/part_persist_sendreq.h"
 
-
-static void mca_part_persist_psend_request_construct(mca_part_persist_psend_request_t* sendreq)
+static void mca_part_persist_psend_request_construct(mca_part_persist_psend_request_t *sendreq)
 {
     /* no need to reinit for every send -- never changes */
     sendreq->req_base.req_ompi.req_start = mca_part_persist_start;
@@ -32,8 +31,5 @@ static void mca_part_persist_psend_request_construct(mca_part_persist_psend_requ
     sendreq->req_base.req_ompi.req_cancel = NULL;
 }
 
-OBJ_CLASS_INSTANCE(mca_part_persist_psend_request_t,
-                   mca_part_persist_request_t,
-                   mca_part_persist_psend_request_construct,
-                   NULL);
-
+OBJ_CLASS_INSTANCE(mca_part_persist_psend_request_t, mca_part_persist_request_t,
+                   mca_part_persist_psend_request_construct, NULL);

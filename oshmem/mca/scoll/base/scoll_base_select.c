@@ -17,17 +17,17 @@
 
 #include "oshmem/constants.h"
 
+#include "ompi/util/timings.h"
 #include "opal/class/opal_list.h"
-#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-#include "ompi/util/timings.h"
+#include "oshmem/mca/mca.h"
 
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/runtime/runtime.h"
+#include "oshmem/util/oshmem_util.h"
 
 /*
  * Local types
@@ -43,25 +43,18 @@ typedef struct avail_com_t avail_com_t;
 /*
  * Local functions
  */
-static opal_list_t *check_components(opal_list_t * components,
-                                     oshmem_group_t * group);
-static int check_one_component(oshmem_group_t * group,
-                               const mca_base_component_t * component,
-                               mca_scoll_base_module_1_0_0_t ** module);
+static opal_list_t *check_components(opal_list_t *components, oshmem_group_t *group);
+static int check_one_component(oshmem_group_t *group, const mca_base_component_t *component,
+                               mca_scoll_base_module_1_0_0_t **module);
 
-static int query(const mca_base_component_t * component,
-                 oshmem_group_t * group,
-                 int *priority,
-                 mca_scoll_base_module_1_0_0_t ** module);
+static int query(const mca_base_component_t *component, oshmem_group_t *group, int *priority,
+                 mca_scoll_base_module_1_0_0_t **module);
 
-static int query_1_0_0(const mca_scoll_base_component_1_0_0_t * scoll_component,
-                       oshmem_group_t * group,
-                       int *priority,
-                       mca_scoll_base_module_1_0_0_t ** module);
+static int query_1_0_0(const mca_scoll_base_component_1_0_0_t *scoll_component,
+                       oshmem_group_t *group, int *priority,
+                       mca_scoll_base_module_1_0_0_t **module);
 
-static int scoll_null_barrier(struct oshmem_group_t *group,
-                              long *pSync,
-                              int alg)
+static int scoll_null_barrier(struct oshmem_group_t *group, long *pSync, int alg)
 {
     if (oshmem_proc_group_is_member(group)) {
         SCOLL_ERROR("internal error");
@@ -71,13 +64,8 @@ static int scoll_null_barrier(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 }
 
-static int scoll_null_broadcast(struct oshmem_group_t *group,
-                                int PE_root,
-                                void *target,
-                                const void *source,
-                                size_t nlong,
-                                long *pSync,
-                                bool nlong_type,
+static int scoll_null_broadcast(struct oshmem_group_t *group, int PE_root, void *target,
+                                const void *source, size_t nlong, long *pSync, bool nlong_type,
                                 int alg)
 {
     if (oshmem_proc_group_is_member(group)) {
@@ -88,13 +76,8 @@ static int scoll_null_broadcast(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 }
 
-static int scoll_null_collect(struct oshmem_group_t *group,
-                              void *target,
-                              const void *source,
-                              size_t nlong,
-                              long *pSync,
-                              bool nlong_type,
-                              int alg)
+static int scoll_null_collect(struct oshmem_group_t *group, void *target, const void *source,
+                              size_t nlong, long *pSync, bool nlong_type, int alg)
 {
     if (oshmem_proc_group_is_member(group)) {
         SCOLL_ERROR("internal error");
@@ -104,14 +87,8 @@ static int scoll_null_collect(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 }
 
-static int scoll_null_reduce(struct oshmem_group_t *group,
-                             struct oshmem_op_t *op,
-                             void *target,
-                             const void *source,
-                             size_t nlong,
-                             long *pSync,
-                             void *pWrk,
-                             int alg)
+static int scoll_null_reduce(struct oshmem_group_t *group, struct oshmem_op_t *op, void *target,
+                             const void *source, size_t nlong, long *pSync, void *pWrk, int alg)
 {
     if (oshmem_proc_group_is_member(group)) {
         SCOLL_ERROR("internal error");
@@ -121,14 +98,9 @@ static int scoll_null_reduce(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 }
 
-static int scoll_null_alltoall(struct oshmem_group_t *group,
-                              void *target,
-                              const void *source,
-                              ptrdiff_t dst, ptrdiff_t sst,
-                              size_t nlong,
-                              size_t element_size,
-                              long *pSync,
-                              int alg)
+static int scoll_null_alltoall(struct oshmem_group_t *group, void *target, const void *source,
+                               ptrdiff_t dst, ptrdiff_t sst, size_t nlong, size_t element_size,
+                               long *pSync, int alg)
 {
     if (oshmem_proc_group_is_member(group)) {
         SCOLL_ERROR("internal error");
@@ -143,28 +115,28 @@ static int scoll_null_alltoall(struct oshmem_group_t *group,
  */
 static OBJ_CLASS_INSTANCE(avail_com_t, opal_list_item_t, NULL, NULL);
 
-#define COPY(module, group, func)                                        \
-    do {                                                                \
-        if (NULL != module->scoll_ ## func) {                            \
-            if (NULL != group->g_scoll.scoll_ ## func ## _module) {        \
-                OBJ_RELEASE(group->g_scoll.scoll_ ## func ## _module);     \
-            }                                                           \
-            group->g_scoll.scoll_ ## func = module->scoll_ ## func;         \
-            group->g_scoll.scoll_ ## func ## _module = module;             \
-            OBJ_RETAIN(module);                                         \
-        }                                                               \
+#define COPY(module, group, func)                                  \
+    do {                                                           \
+        if (NULL != module->scoll_##func) {                        \
+            if (NULL != group->g_scoll.scoll_##func##_module) {    \
+                OBJ_RELEASE(group->g_scoll.scoll_##func##_module); \
+            }                                                      \
+            group->g_scoll.scoll_##func = module->scoll_##func;    \
+            group->g_scoll.scoll_##func##_module = module;         \
+            OBJ_RETAIN(module);                                    \
+        }                                                          \
     } while (0)
 
-#define CLOSE(group, func)                                       \
-    do {                                                        \
-            if (NULL != group->g_scoll.scoll_ ## func ## _module) {    \
-            OBJ_RELEASE(group->g_scoll.scoll_ ## func ## _module); \
-            group->g_scoll.scoll_## func = NULL;                   \
-            group->g_scoll.scoll_## func ## _module = NULL;        \
-        }                                                       \
+#define CLOSE(group, func)                                     \
+    do {                                                       \
+        if (NULL != group->g_scoll.scoll_##func##_module) {    \
+            OBJ_RELEASE(group->g_scoll.scoll_##func##_module); \
+            group->g_scoll.scoll_##func = NULL;                \
+            group->g_scoll.scoll_##func##_module = NULL;       \
+        }                                                      \
     } while (0)
 
-int mca_scoll_base_group_unselect(struct oshmem_group_t * group)
+int mca_scoll_base_group_unselect(struct oshmem_group_t *group)
 {
     /*
      * scoll close() is called before group destructors, so
@@ -213,8 +185,7 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
 
     OPAL_TIMING_ENV_NEXT(mca_scoll_base_select, "setup");
 
-    SCOLL_VERBOSE(10,
-                  "scoll:base:group_select: Checking all available modules");
+    SCOLL_VERBOSE(10, "scoll:base:group_select: Checking all available modules");
     selectable = check_components(&oshmem_scoll_base_framework.framework_components, group);
 
     /* Upon return from the above, the modules list will contain the
@@ -228,8 +199,8 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
     OPAL_TIMING_ENV_NEXT(mca_scoll_base_select, "check_components");
 
     /* do the selection loop */
-    for (item = opal_list_remove_first(selectable); NULL != item; item =
-            opal_list_remove_first(selectable)) {
+    for (item = opal_list_remove_first(selectable); NULL != item;
+         item = opal_list_remove_first(selectable)) {
         avail_com_t *avail = (avail_com_t *) item;
         ret = avail->ac_module->scoll_module_enable(avail->ac_module, group);
         if (OSHMEM_SUCCESS != ret) {
@@ -249,11 +220,9 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
 
     /* Done with the list from the check_components() call so release it. */
     OBJ_RELEASE(selectable);
-    if ((NULL == group->g_scoll.scoll_barrier)
-            || (NULL == group->g_scoll.scoll_broadcast)
-            || (NULL == group->g_scoll.scoll_collect)
-            || (NULL == group->g_scoll.scoll_reduce)
-            || (NULL == group->g_scoll.scoll_alltoall)) {
+    if ((NULL == group->g_scoll.scoll_barrier) || (NULL == group->g_scoll.scoll_broadcast)
+        || (NULL == group->g_scoll.scoll_collect) || (NULL == group->g_scoll.scoll_reduce)
+        || (NULL == group->g_scoll.scoll_alltoall)) {
         mca_scoll_base_group_unselect(group);
         return OSHMEM_ERR_NOT_FOUND;
     }
@@ -263,8 +232,7 @@ int mca_scoll_base_select(struct oshmem_group_t *group)
     return OSHMEM_SUCCESS;
 }
 
-static int avail_coll_compare(opal_list_item_t **a,
-                              opal_list_item_t **b)
+static int avail_coll_compare(opal_list_item_t **a, opal_list_item_t **b)
 {
     avail_com_t *acom = (avail_com_t *) *a;
     avail_com_t *bcom = (avail_com_t *) *b;
@@ -284,8 +252,7 @@ static int avail_coll_compare(opal_list_item_t **a,
  * only those who returned that they want to run, and put them in
  * priority order.
  */
-static opal_list_t *check_components(opal_list_t *components,
-                                     oshmem_group_t *group)
+static opal_list_t *check_components(opal_list_t *components, oshmem_group_t *group)
 {
     int priority;
     const mca_base_component_t *component;
@@ -298,7 +265,8 @@ static opal_list_t *check_components(opal_list_t *components,
     selectable = OBJ_NEW(opal_list_t);
 
     /* Scan through the list of components */
-    OPAL_LIST_FOREACH(cli, &oshmem_scoll_base_framework.framework_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH (cli, &oshmem_scoll_base_framework.framework_components,
+                       mca_base_component_list_item_t) {
         component = cli->cli_component;
 
         priority = check_one_component(group, component, &module);
@@ -329,8 +297,7 @@ static opal_list_t *check_components(opal_list_t *components,
 /*
  * Check a single component
  */
-static int check_one_component(oshmem_group_t *group,
-                               const mca_base_component_t *component,
+static int check_one_component(oshmem_group_t *group, const mca_base_component_t *component,
                                mca_scoll_base_module_1_0_0_t **module)
 {
     int err;
@@ -340,14 +307,12 @@ static int check_one_component(oshmem_group_t *group,
 
     if (OSHMEM_SUCCESS == err) {
         priority = (priority < 100) ? priority : 100;
-        SCOLL_VERBOSE(10,
-                      "scoll:base:group_select: component available: %s, priority: %d",
+        SCOLL_VERBOSE(10, "scoll:base:group_select: component available: %s, priority: %d",
                       component->mca_component_name, priority);
 
     } else {
         priority = -1;
-        SCOLL_VERBOSE(10,
-                      "scoll:base:group_select: component not available: %s",
+        SCOLL_VERBOSE(10, "scoll:base:group_select: component not available: %s",
                       component->mca_component_name);
     }
 
@@ -362,17 +327,14 @@ static int check_one_component(oshmem_group_t *group,
  * Take any version of a coll module, query it, and return the right
  * module struct
  */
-static int query(const mca_base_component_t * component,
-                 oshmem_group_t *group,
-                 int *priority,
+static int query(const mca_base_component_t *component, oshmem_group_t *group, int *priority,
                  mca_scoll_base_module_1_0_0_t **module)
 {
     *module = NULL;
-    if (1 == component->mca_type_major_version
-            && 0 == component->mca_type_minor_version
-            && 0 == component->mca_type_release_version) {
-        const mca_scoll_base_component_1_0_0_t *coll100 =
-                (mca_scoll_base_component_1_0_0_t *) component;
+    if (1 == component->mca_type_major_version && 0 == component->mca_type_minor_version
+        && 0 == component->mca_type_release_version) {
+        const mca_scoll_base_component_1_0_0_t *coll100 = (mca_scoll_base_component_1_0_0_t *)
+            component;
 
         return query_1_0_0(coll100, group, priority, module);
     }
@@ -382,10 +344,8 @@ static int query(const mca_base_component_t * component,
     return OSHMEM_ERROR;
 }
 
-static int query_1_0_0(const mca_scoll_base_component_1_0_0_t *component,
-                       oshmem_group_t *group,
-                       int *priority,
-                       mca_scoll_base_module_1_0_0_t **module)
+static int query_1_0_0(const mca_scoll_base_component_1_0_0_t *component, oshmem_group_t *group,
+                       int *priority, mca_scoll_base_module_1_0_0_t **module)
 {
     mca_scoll_base_module_1_0_0_t *ret;
 

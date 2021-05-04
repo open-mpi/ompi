@@ -28,34 +28,33 @@
  * with --enable-mpi1-compatibility.
  */
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Address = PMPI_Address
-#endif
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Address = PMPI_Address
+#    endif
 /* undef before defining, to prevent possible redefinition when
  * using _Static_assert to error on usage of removed functions.
  */
-#undef MPI_Address
-#define MPI_Address PMPI_Address
+#    undef MPI_Address
+#    define MPI_Address PMPI_Address
 #endif
 
 static const char FUNC_NAME[] = "MPI_Address";
 
-
 int MPI_Address(void *location, MPI_Aint *address)
 {
-    if( MPI_PARAM_CHECK ) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == location || NULL == address) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
-      }
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == location || NULL == address) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        }
     }
 
-    *address = (MPI_Aint)location;
+    *address = (MPI_Aint) location;
     return MPI_SUCCESS;
 }

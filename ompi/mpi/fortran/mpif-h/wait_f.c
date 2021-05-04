@@ -21,60 +21,52 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_WAIT = ompi_wait_f
-#pragma weak pmpi_wait = ompi_wait_f
-#pragma weak pmpi_wait_ = ompi_wait_f
-#pragma weak pmpi_wait__ = ompi_wait_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_WAIT = ompi_wait_f
+#        pragma weak pmpi_wait = ompi_wait_f
+#        pragma weak pmpi_wait_ = ompi_wait_f
+#        pragma weak pmpi_wait__ = ompi_wait_f
 
-#pragma weak PMPI_Wait_f = ompi_wait_f
-#pragma weak PMPI_Wait_f08 = ompi_wait_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_WAIT,
-                           pmpi_wait,
-                           pmpi_wait_,
-                           pmpi_wait__,
-                           pompi_wait_f,
-                           (MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr),
-                           (request, status, ierr) )
-#endif
+#        pragma weak PMPI_Wait_f = ompi_wait_f
+#        pragma weak PMPI_Wait_f08 = ompi_wait_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_WAIT, pmpi_wait, pmpi_wait_, pmpi_wait__, pompi_wait_f,
+                           (MPI_Fint * request, MPI_Fint *status, MPI_Fint *ierr),
+                           (request, status, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WAIT = ompi_wait_f
-#pragma weak mpi_wait = ompi_wait_f
-#pragma weak mpi_wait_ = ompi_wait_f
-#pragma weak mpi_wait__ = ompi_wait_f
+#    pragma weak MPI_WAIT = ompi_wait_f
+#    pragma weak mpi_wait = ompi_wait_f
+#    pragma weak mpi_wait_ = ompi_wait_f
+#    pragma weak mpi_wait__ = ompi_wait_f
 
-#pragma weak MPI_Wait_f = ompi_wait_f
-#pragma weak MPI_Wait_f08 = ompi_wait_f
+#    pragma weak MPI_Wait_f = ompi_wait_f
+#    pragma weak MPI_Wait_f08 = ompi_wait_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WAIT,
-                           mpi_wait,
-                           mpi_wait_,
-                           mpi_wait__,
-                           ompi_wait_f,
-                           (MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr),
-                           (request, status, ierr) )
-#else
-#define ompi_wait_f pompi_wait_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_WAIT, mpi_wait, mpi_wait_, mpi_wait__, ompi_wait_f,
+                           (MPI_Fint * request, MPI_Fint *status, MPI_Fint *ierr),
+                           (request, status, ierr))
+#    else
+#        define ompi_wait_f pompi_wait_f
+#    endif
 #endif
-#endif
-
 
 void ompi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Request c_req = PMPI_Request_f2c(*request);
-    MPI_Status  c_status;
+    MPI_Status c_status;
 
     c_ierr = PMPI_Wait(&c_req, &c_status);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         *request = OMPI_INT_2_FINT(c_req->req_f_to_c_index);

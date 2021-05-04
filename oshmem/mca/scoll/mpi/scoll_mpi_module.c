@@ -11,13 +11,13 @@
  */
 
 #include "ompi_config.h"
-#include "scoll_mpi.h"
 #include "opal/util/show_help.h"
+#include "scoll_mpi.h"
 
-#include "oshmem/proc/proc.h"
-#include "oshmem/runtime/runtime.h"
 #include "ompi/mca/coll/base/base.h"
 #include "opal/util/timings.h"
+#include "oshmem/proc/proc.h"
+#include "oshmem/runtime/runtime.h"
 
 int mca_scoll_mpi_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
@@ -26,11 +26,11 @@ int mca_scoll_mpi_init_query(bool enable_progress_threads, bool enable_mpi_threa
 
 static void mca_scoll_mpi_module_clear(mca_scoll_mpi_module_t *mpi_module)
 {
-    mpi_module->previous_barrier      = NULL;
-    mpi_module->previous_broadcast    = NULL;
-    mpi_module->previous_reduce       = NULL;
-    mpi_module->previous_collect      = NULL;
-    mpi_module->previous_alltoall     = NULL;
+    mpi_module->previous_barrier = NULL;
+    mpi_module->previous_broadcast = NULL;
+    mpi_module->previous_reduce = NULL;
+    mpi_module->previous_collect = NULL;
+    mpi_module->previous_alltoall = NULL;
 }
 
 static void mca_scoll_mpi_module_construct(mca_scoll_mpi_module_t *mpi_module)
@@ -54,19 +54,21 @@ static void mca_scoll_mpi_module_destruct(mca_scoll_mpi_module_t *mpi_module)
     }
 }
 
-#define MPI_SAVE_PREV_SCOLL_API(__api) do {\
-    mpi_module->previous_ ## __api            = osh_group->g_scoll.scoll_ ## __api;\
-    mpi_module->previous_ ## __api ## _module = osh_group->g_scoll.scoll_ ## __api ## _module;\
-    if (!osh_group->g_scoll.scoll_ ## __api || !osh_group->g_scoll.scoll_ ## __api ## _module) {\
-        MPI_COLL_VERBOSE(1, "no underlying " # __api"; disqualifying myself");\
-        return OSHMEM_ERROR;\
-    }\
-    OBJ_RETAIN(mpi_module->previous_ ## __api ## _module);\
-} while(0)
+#define MPI_SAVE_PREV_SCOLL_API(__api)                                                         \
+    do {                                                                                       \
+        mpi_module->previous_##__api = osh_group->g_scoll.scoll_##__api;                       \
+        mpi_module->previous_##__api##_module = osh_group->g_scoll.scoll_##__api##_module;     \
+        if (!osh_group->g_scoll.scoll_##__api || !osh_group->g_scoll.scoll_##__api##_module) { \
+            MPI_COLL_VERBOSE(1, "no underlying " #__api "; disqualifying myself");             \
+            return OSHMEM_ERROR;                                                               \
+        }                                                                                      \
+        OBJ_RETAIN(mpi_module->previous_##__api##_module);                                     \
+    } while (0)
 
-static int mca_scoll_mpi_save_coll_handlers(mca_scoll_base_module_t *module, oshmem_group_t *osh_group)
+static int mca_scoll_mpi_save_coll_handlers(mca_scoll_base_module_t *module,
+                                            oshmem_group_t *osh_group)
 {
-    mca_scoll_mpi_module_t* mpi_module = (mca_scoll_mpi_module_t*) module;
+    mca_scoll_mpi_module_t *mpi_module = (mca_scoll_mpi_module_t *) module;
     MPI_SAVE_PREV_SCOLL_API(barrier);
     MPI_SAVE_PREV_SCOLL_API(broadcast);
     MPI_SAVE_PREV_SCOLL_API(reduce);
@@ -78,16 +80,16 @@ static int mca_scoll_mpi_save_coll_handlers(mca_scoll_base_module_t *module, osh
 /*
  * Initialize module on the communicator
  */
-static int mca_scoll_mpi_module_enable(mca_scoll_base_module_t *module,
-                                        oshmem_group_t *osh_group)
+static int mca_scoll_mpi_module_enable(mca_scoll_base_module_t *module, oshmem_group_t *osh_group)
 {
 
-    if (OSHMEM_SUCCESS != mca_scoll_mpi_save_coll_handlers(module, osh_group)){
-        MPI_COLL_ERROR("MPI module enable failed - aborting to prevent inconsistent application state");
+    if (OSHMEM_SUCCESS != mca_scoll_mpi_save_coll_handlers(module, osh_group)) {
+        MPI_COLL_ERROR(
+            "MPI module enable failed - aborting to prevent inconsistent application state");
         /* There's no modules available */
-        opal_show_help("help-oshmem-scoll-mpi.txt",
-                       "module_enable:fatal", true,
-		       		   "MPI module enable failed - aborting to prevent inconsistent application state");
+        opal_show_help(
+            "help-oshmem-scoll-mpi.txt", "module_enable:fatal", true,
+            "MPI module enable failed - aborting to prevent inconsistent application state");
 
         oshmem_shmem_abort(-1);
         return OSHMEM_ERROR;
@@ -96,27 +98,24 @@ static int mca_scoll_mpi_module_enable(mca_scoll_base_module_t *module,
     return OSHMEM_SUCCESS;
 }
 
-
-
 /*
  * Invoked when there's a new communicator that has been created.
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-mca_scoll_base_module_t *
-mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
+mca_scoll_base_module_t *mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
 {
     mca_scoll_base_module_t *module;
     mca_scoll_mpi_module_t *mpi_module;
     int err, i;
     int tag;
-    ompi_group_t* world_group, *new_group;
-    ompi_communicator_t* newcomm = NULL;
+    ompi_group_t *world_group, *new_group;
+    ompi_communicator_t *newcomm = NULL;
     *priority = 0;
     mca_scoll_mpi_component_t *cm;
     cm = &mca_scoll_mpi_component;
-    int* ranks;
-    if (!cm->mpi_enable){
+    int *ranks;
+    if (!cm->mpi_enable) {
         return NULL;
     }
     if ((osh_group->proc_count < 2) || (osh_group->proc_count < cm->mpi_np)) {
@@ -135,7 +134,7 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
         }
         OPAL_TIMING_ENV_NEXT(comm_query, "ompi_comm_group");
 
-        ranks = (int*) malloc(osh_group->proc_count * sizeof(int));
+        ranks = (int *) malloc(osh_group->proc_count * sizeof(int));
         if (OPAL_UNLIKELY(NULL == ranks)) {
             return NULL;
         }
@@ -176,7 +175,7 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
         OPAL_TIMING_ENV_NEXT(comm_query, "set_group_comm");
     }
     mpi_module = OBJ_NEW(mca_scoll_mpi_module_t);
-    if (!mpi_module){
+    if (!mpi_module) {
         return NULL;
     }
     mpi_module->comm = osh_group->ompi_comm;
@@ -194,11 +193,5 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
     return module;
 }
 
-
-OBJ_CLASS_INSTANCE(mca_scoll_mpi_module_t,
-        mca_scoll_base_module_t,
-        mca_scoll_mpi_module_construct,
-        mca_scoll_mpi_module_destruct);
-
-
-
+OBJ_CLASS_INSTANCE(mca_scoll_mpi_module_t, mca_scoll_base_module_t, mca_scoll_mpi_module_construct,
+                   mca_scoll_mpi_module_destruct);

@@ -17,30 +17,29 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_pvar_handle_alloc = PMPI_T_pvar_handle_alloc
+#    pragma weak MPI_T_pvar_handle_alloc = PMPI_T_pvar_handle_alloc
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
-                            void *obj_handle, MPI_T_pvar_handle *handle, int *count)
+int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index, void *obj_handle,
+                            MPI_T_pvar_handle *handle, int *count)
 {
     const mca_base_pvar_t *pvar;
     int ret;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     do {
         /* Find the performance variable. mca_base_pvar_get() handles the
            bounds checking. */
-        ret = mca_base_pvar_get (pvar_index, &pvar);
+        ret = mca_base_pvar_get(pvar_index, &pvar);
         if (OMPI_SUCCESS != ret) {
             ret = (OPAL_ERR_NOT_FOUND == ret) ? MPI_T_ERR_INVALID_INDEX : MPI_T_ERR_INVALID;
             break;
@@ -53,11 +52,10 @@ int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
             break;
         }
 
-        ret = mca_base_pvar_handle_alloc (session, pvar_index, obj_handle,
-                                          handle, count);
+        ret = mca_base_pvar_handle_alloc(session, pvar_index, obj_handle, handle, count);
     } while (0);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return ompit_opal_to_mpit_error(ret);
 }

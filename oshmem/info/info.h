@@ -12,16 +12,16 @@
 #define OSHMEM_INFO_H
 
 #include "oshmem_config.h"
-#include "oshmem/types.h"
 #include "oshmem/constants.h"
+#include "oshmem/types.h"
 
 /*
  * Environment variables
  */
-#define OSHMEM_ENV_SYMMETRIC_SIZE      "SMA_SYMMETRIC_SIZE"
-#define OSHMEM_ENV_DEBUG               "SMA_DEBUG"
-#define OSHMEM_ENV_INFO                "SMA_INFO"
-#define OSHMEM_ENV_VERSION             "SMA_VERSION"
+#define OSHMEM_ENV_SYMMETRIC_SIZE "SMA_SYMMETRIC_SIZE"
+#define OSHMEM_ENV_DEBUG          "SMA_DEBUG"
+#define OSHMEM_ENV_INFO           "SMA_INFO"
+#define OSHMEM_ENV_VERSION        "SMA_VERSION"
 
 /**
  * \internal
@@ -43,7 +43,6 @@ struct oshmem_info_t {
  * Convenience typedef
  */
 typedef struct oshmem_info_t oshmem_info_t;
-
 
 BEGIN_C_DECLS
 

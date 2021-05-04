@@ -2,31 +2,30 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "oshmem_config.h"
 #include <stdio.h>
 
+#include "atomic_ucx.h"
 #include "oshmem/constants.h"
 #include "oshmem/mca/atomic/atomic.h"
-#include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/spml/spml.h"
 #include "oshmem/proc/proc.h"
-#include "atomic_ucx.h"
 
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
 /*
  * A static params array, for datatypes of size 4 and 8. "size >> 3" is used to
  * access the corresponding offset.
  */
-static ucp_request_param_t mca_spml_ucp_request_params[] = {
-    {.op_attr_mask = UCP_OP_ATTR_FIELD_DATATYPE, .datatype = ucp_dt_make_contig(4)},
-    {.op_attr_mask = UCP_OP_ATTR_FIELD_DATATYPE, .datatype = ucp_dt_make_contig(8)}
-};
+static ucp_request_param_t mca_spml_ucp_request_params[]
+    = {{.op_attr_mask = UCP_OP_ATTR_FIELD_DATATYPE, .datatype = ucp_dt_make_contig(4)},
+       {.op_attr_mask = UCP_OP_ATTR_FIELD_DATATYPE, .datatype = ucp_dt_make_contig(8)}};
 #endif
 
 /*
@@ -43,42 +42,35 @@ int mca_atomic_ucx_finalize(void)
     return OSHMEM_SUCCESS;
 }
 
-static inline
-int mca_atomic_ucx_op(shmem_ctx_t ctx,
-                      void *target,
-                      uint64_t value,
-                      size_t size,
-                      int pe,
+static inline int mca_atomic_ucx_op(shmem_ctx_t ctx, void *target, uint64_t value, size_t size,
+                                    int pe,
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
-                      ucp_atomic_op_t op)
+                                    ucp_atomic_op_t op)
 #else
-                      ucp_atomic_post_op_t op)
+                                    ucp_atomic_post_op_t op)
 #endif
 {
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
-    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
+    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *) ctx;
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     ucs_status_ptr_t status_ptr;
 #endif
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ctx, pe, target, (void *)&rva, mca_spml_self);
+    ucx_mkey = mca_spml_ucx_get_mkey(ctx, pe, target, (void *) &rva, mca_spml_self);
 
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
-    status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn,
-                                   op, &value, 1, rva, ucx_mkey->rkey,
-                                   &mca_spml_ucp_request_params[size >> 3]);
+    status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn, op, &value, 1, rva,
+                                   ucx_mkey->rkey, &mca_spml_ucp_request_params[size >> 3]);
     if (OPAL_LIKELY(!UCS_PTR_IS_ERR(status_ptr))) {
         mca_spml_ucx_remote_op_posted(ucx_ctx, pe);
     }
     status = UCS_PTR_STATUS(status_ptr);
 #else
-    status = ucp_atomic_post(ucx_ctx->ucp_peers[pe].ucp_conn,
-                             op, value, size, rva,
-                             ucx_mkey->rkey);
+    status = ucp_atomic_post(ucx_ctx->ucp_peers[pe].ucp_conn, op, value, size, rva, ucx_mkey->rkey);
 #endif
     if (OPAL_LIKELY(UCS_OK == status)) {
         mca_spml_ucx_remote_op_posted(ucx_ctx, pe);
@@ -87,55 +79,40 @@ int mca_atomic_ucx_op(shmem_ctx_t ctx,
     return ucx_status_to_oshmem(status);
 }
 
-static inline
-int mca_atomic_ucx_fop(shmem_ctx_t ctx,
-                       void *target,
-                       void *prev,
-                       uint64_t value,
-                       size_t size,
-                       int pe,
+static inline int mca_atomic_ucx_fop(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
+                                     size_t size, int pe,
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
-                       ucp_atomic_op_t op)
+                                     ucp_atomic_op_t op)
 #else
-                       ucp_atomic_fetch_op_t op)
+                                     ucp_atomic_fetch_op_t op)
 #endif
 {
     ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
-    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
+    mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *) ctx;
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
-    ucp_request_param_t param = {
-        .op_attr_mask = UCP_OP_ATTR_FIELD_DATATYPE |
-                        UCP_OP_ATTR_FIELD_REPLY_BUFFER,
-        .datatype     = ucp_dt_make_contig(size),
-        .reply_buffer = prev
-    };
+    ucp_request_param_t param = {.op_attr_mask = UCP_OP_ATTR_FIELD_DATATYPE
+                                                 | UCP_OP_ATTR_FIELD_REPLY_BUFFER,
+                                 .datatype = ucp_dt_make_contig(size),
+                                 .reply_buffer = prev};
 #endif
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ctx, pe, target, (void *)&rva, mca_spml_self);
+    ucx_mkey = mca_spml_ucx_get_mkey(ctx, pe, target, (void *) &rva, mca_spml_self);
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
-    status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn, op, &value, 1,
-                                   rva, ucx_mkey->rkey, &param);
-    return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
-                                        "ucp_atomic_op_nbx");
+    status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn, op, &value, 1, rva,
+                                   ucx_mkey->rkey, &param);
+    return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0], "ucp_atomic_op_nbx");
 #else
-    status_ptr = ucp_atomic_fetch_nb(ucx_ctx->ucp_peers[pe].ucp_conn,
-                                     op, value, prev, size,
-                                     rva, ucx_mkey->rkey,
-                                     opal_common_ucx_empty_complete_cb);
-    return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
-                                        "ucp_atomic_fetch_nb");
+    status_ptr = ucp_atomic_fetch_nb(ucx_ctx->ucp_peers[pe].ucp_conn, op, value, prev, size, rva,
+                                     ucx_mkey->rkey, opal_common_ucx_empty_complete_cb);
+    return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0], "ucp_atomic_fetch_nb");
 #endif
 }
 
-static int mca_atomic_ucx_add(shmem_ctx_t ctx,
-                              void *target,
-                              uint64_t value,
-                              size_t size,
-                              int pe)
+static int mca_atomic_ucx_add(shmem_ctx_t ctx, void *target, uint64_t value, size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_op(ctx, target, value, size, pe, UCP_ATOMIC_OP_ADD);
@@ -144,11 +121,7 @@ static int mca_atomic_ucx_add(shmem_ctx_t ctx,
 #endif
 }
 
-static int mca_atomic_ucx_and(shmem_ctx_t ctx,
-                              void *target,
-                              uint64_t value,
-                              size_t size,
-                              int pe)
+static int mca_atomic_ucx_and(shmem_ctx_t ctx, void *target, uint64_t value, size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_op(ctx, target, value, size, pe, UCP_ATOMIC_OP_AND);
@@ -159,11 +132,7 @@ static int mca_atomic_ucx_and(shmem_ctx_t ctx,
 #endif
 }
 
-static int mca_atomic_ucx_or(shmem_ctx_t ctx,
-                              void *target,
-                              uint64_t value,
-                              size_t size,
-                              int pe)
+static int mca_atomic_ucx_or(shmem_ctx_t ctx, void *target, uint64_t value, size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_op(ctx, target, value, size, pe, UCP_ATOMIC_OP_OR);
@@ -174,11 +143,7 @@ static int mca_atomic_ucx_or(shmem_ctx_t ctx,
 #endif
 }
 
-static int mca_atomic_ucx_xor(shmem_ctx_t ctx,
-                              void *target,
-                              uint64_t value,
-                              size_t size,
-                              int pe)
+static int mca_atomic_ucx_xor(shmem_ctx_t ctx, void *target, uint64_t value, size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_op(ctx, target, value, size, pe, UCP_ATOMIC_OP_XOR);
@@ -189,12 +154,8 @@ static int mca_atomic_ucx_xor(shmem_ctx_t ctx,
 #endif
 }
 
-static int mca_atomic_ucx_fadd(shmem_ctx_t ctx,
-                               void *target,
-                               void *prev,
-                               uint64_t value,
-                               size_t size,
-                               int pe)
+static int mca_atomic_ucx_fadd(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
+                               size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_fop(ctx, target, prev, value, size, pe, UCP_ATOMIC_OP_ADD);
@@ -203,12 +164,8 @@ static int mca_atomic_ucx_fadd(shmem_ctx_t ctx,
 #endif
 }
 
-static int mca_atomic_ucx_fand(shmem_ctx_t ctx,
-                               void *target,
-                               void *prev,
-                               uint64_t value,
-                               size_t size,
-                               int pe)
+static int mca_atomic_ucx_fand(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
+                               size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_fop(ctx, target, prev, value, size, pe, UCP_ATOMIC_OP_AND);
@@ -219,12 +176,8 @@ static int mca_atomic_ucx_fand(shmem_ctx_t ctx,
 #endif
 }
 
-static int mca_atomic_ucx_for(shmem_ctx_t ctx,
-                               void *target,
-                               void *prev,
-                               uint64_t value,
-                               size_t size,
-                               int pe)
+static int mca_atomic_ucx_for(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
+                              size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_fop(ctx, target, prev, value, size, pe, UCP_ATOMIC_OP_OR);
@@ -235,12 +188,8 @@ static int mca_atomic_ucx_for(shmem_ctx_t ctx,
 #endif
 }
 
-static int mca_atomic_ucx_fxor(shmem_ctx_t ctx,
-                               void *target,
-                               void *prev,
-                               uint64_t value,
-                               size_t size,
-                               int pe)
+static int mca_atomic_ucx_fxor(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
+                               size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_fop(ctx, target, prev, value, size, pe, UCP_ATOMIC_OP_XOR);
@@ -251,12 +200,8 @@ static int mca_atomic_ucx_fxor(shmem_ctx_t ctx,
 #endif
 }
 
-static int mca_atomic_ucx_swap(shmem_ctx_t ctx,
-                               void *target,
-                               void *prev,
-                               uint64_t value,
-                               size_t size,
-                               int pe)
+static int mca_atomic_ucx_swap(shmem_ctx_t ctx, void *target, void *prev, uint64_t value,
+                               size_t size, int pe)
 {
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     return mca_atomic_ucx_fop(ctx, target, prev, value, size, pe, UCP_ATOMIC_OP_SWAP);
@@ -265,9 +210,7 @@ static int mca_atomic_ucx_swap(shmem_ctx_t ctx,
 #endif
 }
 
-
-mca_atomic_base_module_t *
-mca_atomic_ucx_query(int *priority)
+mca_atomic_base_module_t *mca_atomic_ucx_query(int *priority)
 {
     mca_atomic_ucx_module_t *module;
 
@@ -275,18 +218,18 @@ mca_atomic_ucx_query(int *priority)
 
     module = OBJ_NEW(mca_atomic_ucx_module_t);
     if (module) {
-        module->super.atomic_add   = mca_atomic_ucx_add;
-        module->super.atomic_and   = mca_atomic_ucx_and;
-        module->super.atomic_or    = mca_atomic_ucx_or;
-        module->super.atomic_xor   = mca_atomic_ucx_xor;
-        module->super.atomic_fadd  = mca_atomic_ucx_fadd;
-        module->super.atomic_fand  = mca_atomic_ucx_fand;
-        module->super.atomic_for   = mca_atomic_ucx_for;
-        module->super.atomic_fxor  = mca_atomic_ucx_fxor;
-        module->super.atomic_swap  = mca_atomic_ucx_swap;
+        module->super.atomic_add = mca_atomic_ucx_add;
+        module->super.atomic_and = mca_atomic_ucx_and;
+        module->super.atomic_or = mca_atomic_ucx_or;
+        module->super.atomic_xor = mca_atomic_ucx_xor;
+        module->super.atomic_fadd = mca_atomic_ucx_fadd;
+        module->super.atomic_fand = mca_atomic_ucx_fand;
+        module->super.atomic_for = mca_atomic_ucx_for;
+        module->super.atomic_fxor = mca_atomic_ucx_fxor;
+        module->super.atomic_swap = mca_atomic_ucx_swap;
         module->super.atomic_cswap = mca_atomic_ucx_cswap;
         return &(module->super);
     }
 
-    return NULL ;
+    return NULL;
 }

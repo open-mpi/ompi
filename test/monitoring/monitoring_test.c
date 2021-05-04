@@ -15,22 +15,26 @@
 /*
 pml monitoring tester.
 
-Designed by George Bosilca <bosilca@icl.utk.edu> Emmanuel Jeannot <emmanuel.jeannot@inria.fr> and Clément Foyer <clement.foyer@inria.fr>
-Contact the authors for questions.
+Designed by George Bosilca <bosilca@icl.utk.edu> Emmanuel Jeannot <emmanuel.jeannot@inria.fr> and
+Clément Foyer <clement.foyer@inria.fr> Contact the authors for questions.
 
-To options are available for this test, with/without MPI_Tools, and with/without RMA operations. The default mode is without MPI_Tools, and with RMA operations.
-To enable the MPI_Tools use, add "--with-mpit" as an application parameter.
-To disable the RMA operations testing, add "--without-rma" as an application parameter.
+To options are available for this test, with/without MPI_Tools, and with/without RMA operations. The
+default mode is without MPI_Tools, and with RMA operations. To enable the MPI_Tools use, add
+"--with-mpit" as an application parameter. To disable the RMA operations testing, add
+"--without-rma" as an application parameter.
 
 To be run as (without using MPI_Tool):
 
-mpirun -np 4 --mca pml_monitoring_enable 2 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename prof/output ./monitoring_test
+mpirun -np 4 --mca pml_monitoring_enable 2 --mca pml_monitoring_enable_output 3 --mca
+pml_monitoring_filename prof/output ./monitoring_test
 
 with the results being, as an example:
 output.1.prof
 # POINT TO POINT
-E       1       2       104 bytes       26 msgs sent    0,0,0,26,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-E       1       3       208 bytes       52 msgs sent    8,0,0,65,1,5,2,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+E       1       2       104 bytes       26 msgs sent
+0,0,0,26,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+E       1       3       208 bytes       52 msgs sent
+8,0,0,65,1,5,2,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 I       1       0       140 bytes       27 msgs sent
 I       1       2       2068 bytes      1 msgs sent
 I       1       3       2256 bytes      31 msgs sent

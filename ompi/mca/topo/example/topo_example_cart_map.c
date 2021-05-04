@@ -39,11 +39,8 @@
  *  @retval MPI_ERR_DIMS
  */
 
-int mca_topo_example_cart_map (ompi_communicator_t* comm,
-                               int ndims,
-                               int *dims,
-                               int *periods,
-                               int *newrank)
+int mca_topo_example_cart_map(ompi_communicator_t *comm, int ndims, int *dims, int *periods,
+                              int *newrank)
 {
     int nprocs;
     int rank;

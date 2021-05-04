@@ -20,21 +20,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
-#endif
-#define MPI_Info_get_nkeys PMPI_Info_get_nkeys
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
+#    endif
+#    define MPI_Info_get_nkeys PMPI_Info_get_nkeys
 #endif
 
 static const char FUNC_NAME[] = "MPI_Info_get_nkeys";
-
 
 /**
  * MPI_Info_get_nkeys - Returns the number of keys defined on an
@@ -56,14 +55,11 @@ int MPI_Info_get_nkeys(MPI_Info info, int *nkeys)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info ||
-            ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                          FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info || ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
         if (NULL == nkeys) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
 

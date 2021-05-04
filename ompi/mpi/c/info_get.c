@@ -24,20 +24,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "opal/util/string_copy.h"
 #include <stdlib.h>
 #include <string.h>
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Info_get = PMPI_Info_get
-#endif
-#define MPI_Info_get PMPI_Info_get
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Info_get = PMPI_Info_get
+#    endif
+#    define MPI_Info_get PMPI_Info_get
 #endif
 
 static const char FUNC_NAME[] = "MPI_Info_get";
@@ -61,8 +61,7 @@ static const char FUNC_NAME[] = "MPI_Info_get";
  *   In C and C++, 'valuelen' should be one less than the allocated space
  *   to allow for for the null terminator.
  */
-int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
-                 char *value, int *flag)
+int MPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag)
 {
     int err;
     int key_length;
@@ -75,35 +74,28 @@ int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
      */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info ||
-            ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                          FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info || ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
-        if (0 > valuelen){
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (0 > valuelen) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
 
-        key_length = (key) ? (int)strlen (key) : 0;
-        if ((NULL == key) || (0 == key_length) ||
-            (MPI_MAX_INFO_KEY <= key_length)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO_KEY,
-                                          FUNC_NAME);
+        key_length = (key) ? (int) strlen(key) : 0;
+        if ((NULL == key) || (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO_KEY, FUNC_NAME);
         }
         if (NULL == value) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO_VALUE,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO_VALUE, FUNC_NAME);
         }
         if (NULL == flag) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
     err = ompi_info_get(info, key, &info_str, flag);
     if (*flag) {
-        opal_string_copy(value, info_str->string, valuelen+1);
+        opal_string_copy(value, info_str->string, valuelen + 1);
         OBJ_RELEASE(info_str);
     }
 

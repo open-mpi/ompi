@@ -17,20 +17,15 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <string.h>
-#include "ompi/mca/part/part.h"
 #include "ompi/mca/part/base/part_base_psendreq.h"
+#include "ompi/mca/part/part.h"
+#include <string.h>
 
-static void mca_part_base_psend_request_construct(mca_part_base_psend_request_t* request)
+static void mca_part_base_psend_request_construct(mca_part_base_psend_request_t *request)
 {
     /* no need to reinit for every send -- never changes */
     OBJ_CONSTRUCT(&request->req_base.req_convertor, opal_convertor_t);
 }
 
-OBJ_CLASS_INSTANCE(
-    mca_part_base_psend_request_t,
-    mca_part_base_prequest_t,
-    mca_part_base_psend_request_construct,
-    0
-);
-
+OBJ_CLASS_INSTANCE(mca_part_base_psend_request_t, mca_part_base_prequest_t,
+                   mca_part_base_psend_request_construct, 0);

@@ -16,9 +16,9 @@
 
 #define SHMEM_GENERATE_WEAK_PRAGMA(x) _Pragma(#x)
 
-#define SHMEM_GENERATE_WEAK_BINDINGS(UPPER_NAME, lower_name)                 \
-    SHMEM_GENERATE_WEAK_PRAGMA(weak UPPER_NAME = P ## UPPER_NAME)            \
-    SHMEM_GENERATE_WEAK_PRAGMA(weak lower_name ## _ = p ## lower_name ## _)  \
-    SHMEM_GENERATE_WEAK_PRAGMA(weak lower_name ## __ = p ## lower_name ## __)
+#define SHMEM_GENERATE_WEAK_BINDINGS(UPPER_NAME, lower_name)          \
+    SHMEM_GENERATE_WEAK_PRAGMA(weak UPPER_NAME = P##UPPER_NAME)       \
+    SHMEM_GENERATE_WEAK_PRAGMA(weak lower_name##_ = p##lower_name##_) \
+    SHMEM_GENERATE_WEAK_PRAGMA(weak lower_name##__ = p##lower_name##__)
 
 #endif /*SHMEM_FORTRAN_PBINDINGS_H*/

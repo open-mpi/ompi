@@ -22,8 +22,8 @@
 #include "oshmem_config.h"
 #include "shmem.h"
 
-#include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/class/opal_list.h"
 
 #include "ompi/include/mpi.h"
 #include <pthread.h>
@@ -53,27 +53,26 @@ OSHMEM_DECLSPEC extern shmem_internal_mutex_t shmem_internal_mutex_alloc;
 
 OSHMEM_DECLSPEC extern shmem_ctx_t oshmem_ctx_default;
 
-#   define SHMEM_MUTEX_INIT(_mutex)                                     \
-    do {                                                                \
-        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE)        \
-            pthread_mutex_init(&_mutex, NULL);                          \
+#define SHMEM_MUTEX_INIT(_mutex)                                 \
+    do {                                                         \
+        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE) \
+            pthread_mutex_init(&_mutex, NULL);                   \
     } while (0)
-#   define SHMEM_MUTEX_DESTROY(_mutex)                                  \
-    do {                                                                \
-        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE)        \
-            pthread_mutex_destroy(&_mutex);                             \
+#define SHMEM_MUTEX_DESTROY(_mutex)                              \
+    do {                                                         \
+        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE) \
+            pthread_mutex_destroy(&_mutex);                      \
     } while (0)
-#   define SHMEM_MUTEX_LOCK(_mutex)                                     \
-    do {                                                                \
-        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE)        \
-            pthread_mutex_lock(&_mutex);                                \
+#define SHMEM_MUTEX_LOCK(_mutex)                                 \
+    do {                                                         \
+        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE) \
+            pthread_mutex_lock(&_mutex);                         \
     } while (0)
-#   define SHMEM_MUTEX_UNLOCK(_mutex)                                   \
-    do {                                                                \
-        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE)        \
-            pthread_mutex_unlock(&_mutex);                              \
+#define SHMEM_MUTEX_UNLOCK(_mutex)                               \
+    do {                                                         \
+        if (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE) \
+            pthread_mutex_unlock(&_mutex);                       \
     } while (0)
-
 
 /** Bitflags to be used for the modex exchange for the various thread
  *  levels. Required to support heterogeneous environments */
@@ -136,8 +135,8 @@ OSHMEM_DECLSPEC int oshmem_shmem_allgather(void *send_buf, void *rcv_buf, int el
 /**
  * Allgatherv between all PEs
  */
-OSHMEM_DECLSPEC int oshmem_shmem_allgatherv(void *send_buf, void* rcv_buf, int send_count,
-                            int *rcv_size, int* displs);
+OSHMEM_DECLSPEC int oshmem_shmem_allgatherv(void *send_buf, void *rcv_buf, int send_count,
+                                            int *rcv_size, int *displs);
 
 /**
  * Barrier between all PEs
@@ -151,79 +150,72 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 
 #if OSHMEM_PARAM_CHECK == 1
 
-#define RUNTIME_CHECK_ERROR(...)                                    \
-    do {                                                            \
-        fprintf(stderr, "[%s]%s[%s:%d:%s] ",                        \
-                ompi_process_info.nodename,                         \
-                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),                 \
-                __FILE__, __LINE__, __func__);                      \
-        fprintf(stderr, __VA_ARGS__);                               \
-    } while(0);
+#    define RUNTIME_CHECK_ERROR(...)                                                   \
+        do {                                                                           \
+            fprintf(stderr, "[%s]%s[%s:%d:%s] ", ompi_process_info.nodename,           \
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __FILE__, __LINE__, __func__); \
+            fprintf(stderr, __VA_ARGS__);                                              \
+        } while (0);
 
 /**
  * Check if SHMEM API generates internal error return code
  * Note: most API does not return error code
  */
-#define RUNTIME_CHECK_RC(x)    \
-    if (OPAL_UNLIKELY(OSHMEM_SUCCESS != (x)))                                           \
-    {                                                                                   \
-        RUNTIME_CHECK_ERROR("Internal error is appeared rc = %d\n", (x));               \
-    }
+#    define RUNTIME_CHECK_RC(x)                                               \
+        if (OPAL_UNLIKELY(OSHMEM_SUCCESS != (x))) {                           \
+            RUNTIME_CHECK_ERROR("Internal error is appeared rc = %d\n", (x)); \
+        }
 
 /**
  * Check if we called start_pes() and passed initialization phase
  */
-#define RUNTIME_CHECK_INIT()    \
-    if (OPAL_UNLIKELY(!oshmem_shmem_initialized))                                       \
-    {                                                                                   \
-        RUNTIME_CHECK_ERROR("SHMEM is not initialized\n");                              \
-        oshmem_shmem_abort(-1);                                                         \
-    }
+#    define RUNTIME_CHECK_INIT()                               \
+        if (OPAL_UNLIKELY(!oshmem_shmem_initialized)) {        \
+            RUNTIME_CHECK_ERROR("SHMEM is not initialized\n"); \
+            oshmem_shmem_abort(-1);                            \
+        }
 
 /**
  * Check if we target PE is valid
  */
-#define RUNTIME_CHECK_PE(x)    \
-    if (OPAL_UNLIKELY(((x) < 0) ||                                                      \
-                      ((int)(x) > (int)(ompi_process_info.num_procs - 1))))             \
-    {                                                                                   \
-        RUNTIME_CHECK_ERROR("Target PE #%d is not in valid range\n", (x));              \
-        oshmem_shmem_abort(-1);                                                         \
-    }
+#    define RUNTIME_CHECK_PE(x)                                                                  \
+        if (OPAL_UNLIKELY(((x) < 0) || ((int) (x) > (int) (ompi_process_info.num_procs - 1)))) { \
+            RUNTIME_CHECK_ERROR("Target PE #%d is not in valid range\n", (x));                   \
+            oshmem_shmem_abort(-1);                                                              \
+        }
 
 /**
  * Check if required address is in symmetric address space
  */
-#include "oshmem/mca/memheap/memheap.h"
-#define RUNTIME_CHECK_ADDR(x)    \
-    if (OPAL_UNLIKELY(!MCA_MEMHEAP_CALL(is_symmetric_addr((x)))))        \
-    {                                                                                   \
-        RUNTIME_CHECK_ERROR("Required address %p is not in symmetric space\n", ((void*)x));    \
-        oshmem_shmem_abort(-1);                                                         \
-    }
+#    include "oshmem/mca/memheap/memheap.h"
+#    define RUNTIME_CHECK_ADDR(x)                                                                 \
+        if (OPAL_UNLIKELY(!MCA_MEMHEAP_CALL(is_symmetric_addr((x))))) {                           \
+            RUNTIME_CHECK_ERROR("Required address %p is not in symmetric space\n", ((void *) x)); \
+            oshmem_shmem_abort(-1);                                                               \
+        }
 /* Check if address is in symmetric space or size is zero */
-#define RUNTIME_CHECK_ADDR_SIZE(x,s)    \
-    if (OPAL_UNLIKELY((s) && !MCA_MEMHEAP_CALL(is_symmetric_addr((x)))))        \
-    {                                                                                   \
-        RUNTIME_CHECK_ERROR("Required address %p is not in symmetric space\n", ((void*)x));    \
-        oshmem_shmem_abort(-1);                                                         \
-    }
-#define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)    \
-    if (OPAL_UNLIKELY((long)(x) > MCA_MEMHEAP_CALL(size)))        \
-    {                                                                                   \
-        RUNTIME_CHECK_ERROR("Requested (%ld)bytes and it exceeds symmetric space size (%ld)bytes\n", (long)(x), MCA_MEMHEAP_CALL(size));    \
-    }
+#    define RUNTIME_CHECK_ADDR_SIZE(x, s)                                                         \
+        if (OPAL_UNLIKELY((s) && !MCA_MEMHEAP_CALL(is_symmetric_addr((x))))) {                    \
+            RUNTIME_CHECK_ERROR("Required address %p is not in symmetric space\n", ((void *) x)); \
+            oshmem_shmem_abort(-1);                                                               \
+        }
+#    define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)                                           \
+        if (OPAL_UNLIKELY((long) (x) > MCA_MEMHEAP_CALL(size))) {                        \
+            RUNTIME_CHECK_ERROR(                                                         \
+                "Requested (%ld)bytes and it exceeds symmetric space size (%ld)bytes\n", \
+                (long) (x), MCA_MEMHEAP_CALL(size));                                     \
+        }
 
 #else
 
-#define RUNTIME_CHECK_RC(x)     (x = x)
-#define RUNTIME_CHECK_INIT()
-#define RUNTIME_CHECK_PE(x)
-#define RUNTIME_CHECK_ADDR(x)
-#define RUNTIME_CHECK_ADDR_SIZE(x,s)
-#define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)
+#    define RUNTIME_CHECK_RC(x) (x = x)
+#    define RUNTIME_CHECK_INIT()
+#    define RUNTIME_CHECK_PE(x)
+#    define RUNTIME_CHECK_ADDR(x)
+#    define RUNTIME_CHECK_ADDR_SIZE(x, s)
+#    define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)
 
-#endif  /* OSHMEM_PARAM_CHECK */
+#endif /* OSHMEM_PARAM_CHECK */
 
 END_C_DECLS
 

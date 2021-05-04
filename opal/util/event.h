@@ -59,7 +59,7 @@ OPAL_DECLSPEC extern opal_event_base_t *opal_sync_event_base;
 /* Persistent event: won't get removed automatically when activated. */
 #define OPAL_EV_PERSIST EV_PERSIST
 
-#define OPAL_EVLOOP_ONCE     EVLOOP_ONCE /**< Block at most once. */
+#define OPAL_EVLOOP_ONCE     EVLOOP_ONCE     /**< Block at most once. */
 #define OPAL_EVLOOP_NONBLOCK EVLOOP_NONBLOCK /**< Do not block. */
 
 /* Global function to create and release an event base */

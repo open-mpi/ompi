@@ -18,8 +18,8 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/topo/base/base.h"
 
 /*
  * function - retrieves Cartesian topology information associated with a
@@ -31,10 +31,8 @@
  * @retval MPI_SUCCESS
  * @retval MPI_ERR_COMM
  */
-int mca_topo_base_cartdim_get(ompi_communicator_t* comm, int *ndims)
+int mca_topo_base_cartdim_get(ompi_communicator_t *comm, int *ndims)
 {
     *ndims = comm->c_topo->mtc.cart->ndims;
     return MPI_SUCCESS;
 }
-
-

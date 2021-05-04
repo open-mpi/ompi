@@ -188,7 +188,7 @@ static int opal_progress_events(void)
             events += opal_event_loop(opal_sync_event_base, opal_progress_event_flag);
         }
 
-#else /* OPAL_PROGRESS_USE_TIMERS */
+#else  /* OPAL_PROGRESS_USE_TIMERS */
         /* trip the event library if we've reached our tick rate and we are
            enabled */
         if (OPAL_THREAD_ADD_FETCH32(&event_progress_counter, -1) <= 0) {

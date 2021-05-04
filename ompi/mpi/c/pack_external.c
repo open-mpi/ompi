@@ -24,38 +24,34 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Pack_external = PMPI_Pack_external
-#endif
-#define MPI_Pack_external PMPI_Pack_external
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Pack_external = PMPI_Pack_external
+#    endif
+#    define MPI_Pack_external PMPI_Pack_external
 #endif
 
 static const char FUNC_NAME[] = "MPI_Pack_external";
 
-
-int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
-                      MPI_Datatype datatype, void *outbuf,
-                      MPI_Aint outsize, MPI_Aint *position)
+int MPI_Pack_external(const char datarep[], const void *inbuf, int incount, MPI_Datatype datatype,
+                      void *outbuf, MPI_Aint outsize, MPI_Aint *position)
 {
     int rc = MPI_SUCCESS;
 
-    MEMCHECKER(
-        memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, inbuf, incount, datatype);
-    );
+    MEMCHECKER(memchecker_datatype(datatype);
+               memchecker_call(&opal_memchecker_base_isdefined, inbuf, incount, datatype););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if ((NULL == outbuf) || (NULL == position)) {  /* inbuf can be MPI_BOTTOM */
+        if ((NULL == outbuf) || (NULL == position)) { /* inbuf can be MPI_BOTTOM */
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         } else if (incount < 0) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
@@ -68,9 +64,7 @@ int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
-    rc = ompi_datatype_pack_external(datarep, inbuf, incount,
-                                     datatype, outbuf, 
-                                     outsize, position);
+    rc = ompi_datatype_pack_external(datarep, inbuf, incount, datatype, outbuf, outsize, position);
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

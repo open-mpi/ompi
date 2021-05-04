@@ -13,41 +13,40 @@
 
 #include "oshmem_config.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #include <errno.h>
 #include <signal.h>
 
-#include "opal/version.h"
-#include "opal/mca/installdirs/installdirs.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/runtime/opal.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/installdirs/installdirs.h"
+#include "opal/runtime/opal.h"
 #include "opal/runtime/opal_info_support.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
+#include "opal/version.h"
 
 #include "ompi/runtime/ompi_info_support.h"
 
 #include "oshmem/include/oshmem/constants.h"
-#include "oshmem/tools/oshmem_info/oshmem_info.h"
 #include "oshmem/runtime/oshmem_info_support.h"
+#include "oshmem/tools/oshmem_info/oshmem_info.h"
 
 /*
  * Public variables
  */
-
 
 int main(int argc, char *argv[])
 {
@@ -66,16 +65,16 @@ int main(int argc, char *argv[])
 
     /* Initialize the argv parsing handle */
     if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
-        opal_show_help("help-oshmem-info.txt", "lib-call-fail", true,
-                       "opal_init_util", __FILE__, __LINE__, NULL);
+        opal_show_help("help-oshmem-info.txt", "lib-call-fail", true, "opal_init_util", __FILE__,
+                       __LINE__, NULL);
         exit(ret);
     }
 
     info_cmd_line = OBJ_NEW(opal_cmd_line_t);
     if (NULL == info_cmd_line) {
         ret = errno;
-        opal_show_help("help-oshmem-info.txt", "lib-call-fail", true,
-                       "opal_cmd_line_create", __FILE__, __LINE__, NULL);
+        opal_show_help("help-oshmem-info.txt", "lib-call-fail", true, "opal_cmd_line_create",
+                       __FILE__, __LINE__, NULL);
         exit(ret);
     }
 
@@ -87,8 +86,7 @@ int main(int argc, char *argv[])
     }
 
     if (opal_cmd_line_is_taken(info_cmd_line, "version")) {
-        fprintf(stdout, "Open MPI/SHMEM v%s\n\n%s\n",
-                OPAL_VERSION, PACKAGE_BUGREPORT);
+        fprintf(stdout, "Open MPI/SHMEM v%s\n\n%s\n", OPAL_VERSION, PACKAGE_BUGREPORT);
         exit(0);
     }
 
@@ -113,8 +111,8 @@ int main(int argc, char *argv[])
     if (OSHMEM_SUCCESS != (ret = oshmem_info_register_framework_params(&component_map))) {
         if (OSHMEM_ERR_BAD_PARAM == ret) {
             /* output what we got */
-            opal_info_do_params(true, opal_cmd_line_is_taken(info_cmd_line, "internal"),
-                                &mca_types, &component_map, NULL);
+            opal_info_do_params(true, opal_cmd_line_is_taken(info_cmd_line, "internal"), &mca_types,
+                                &component_map, NULL);
         }
         exit(1);
     }
@@ -137,10 +135,10 @@ int main(int argc, char *argv[])
         oshmem_info_do_config(true);
         acted = true;
     }
-    if (want_all || opal_cmd_line_is_taken(info_cmd_line, "param") ||
-        opal_cmd_line_is_taken(info_cmd_line, "params")) {
-        opal_info_do_params(want_all, opal_cmd_line_is_taken(info_cmd_line, "internal"),
-                            &mca_types, &component_map, info_cmd_line);
+    if (want_all || opal_cmd_line_is_taken(info_cmd_line, "param")
+        || opal_cmd_line_is_taken(info_cmd_line, "params")) {
+        opal_info_do_params(want_all, opal_cmd_line_is_taken(info_cmd_line, "internal"), &mca_types,
+                            &component_map, info_cmd_line);
         acted = true;
     }
 
@@ -163,8 +161,10 @@ int main(int argc, char *argv[])
     oshmem_info_close_components();
     OBJ_RELEASE(info_cmd_line);
     OBJ_DESTRUCT(&mca_types);
-    for (i=0; i < component_map.size; i++) {
-        if (NULL != (map = (opal_info_component_map_t*)opal_pointer_array_get_item(&component_map, i))) {
+    for (i = 0; i < component_map.size; i++) {
+        if (NULL
+            != (map = (opal_info_component_map_t *) opal_pointer_array_get_item(&component_map,
+                                                                                i))) {
             OBJ_RELEASE(map);
         }
     }

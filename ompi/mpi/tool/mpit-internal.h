@@ -15,15 +15,15 @@
 #ifndef MPIT_INTERNAL_H
 #define MPIT_INTERNAL_H
 
-#include "opal/util/string_copy.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
+#include "opal/mca/base/mca_base_var.h"
+#include "opal/util/string_copy.h"
 
 #include "ompi/include/ompi_config.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/runtime/params.h"
 
 #include "mpi.h"
 
@@ -32,23 +32,23 @@
 typedef struct ompi_mpit_cvar_handle_t {
     const mca_base_var_t *var;
     /* XXX -- TODO -- allow binding objects */
-    void           *bound_object;
+    void *bound_object;
 } ompi_mpit_cvar_handle_t;
 
-void ompi_mpit_lock (void);
-void ompi_mpit_unlock (void);
+void ompi_mpit_lock(void);
+void ompi_mpit_unlock(void);
 
 extern volatile uint32_t ompi_mpit_init_count;
 
-int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype);
-int ompit_opal_to_mpit_error (int rc);
+int ompit_var_type_to_datatype(mca_base_var_type_t type, MPI_Datatype *datatype);
+int ompit_opal_to_mpit_error(int rc);
 
-static inline int mpit_is_initialized (void)
+static inline int mpit_is_initialized(void)
 {
     return !!ompi_mpit_init_count;
 }
 
-static inline void mpit_copy_string (char *dest, int *len, const char *source)
+static inline void mpit_copy_string(char *dest, int *len, const char *source)
 {
     if (NULL == len)
         return;
@@ -63,13 +63,13 @@ static inline void mpit_copy_string (char *dest, int *len, const char *source)
     }
 
     if (0 != *len && NULL != dest) {
-        if ((int) strlen (source) < *len) {
-            *len = strlen (source) + 1;
+        if ((int) strlen(source) < *len) {
+            *len = strlen(source) + 1;
         }
 
-        opal_string_copy (dest, source, *len);
+        opal_string_copy(dest, source, *len);
     } else {
-        *len = strlen (source) + 1;
+        *len = strlen(source) + 1;
     }
 }
 

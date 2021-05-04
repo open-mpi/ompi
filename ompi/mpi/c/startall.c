@@ -26,23 +26,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Startall = PMPI_Startall
-#endif
-#define MPI_Startall PMPI_Startall
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Startall = PMPI_Startall
+#    endif
+#    define MPI_Startall PMPI_Startall
 #endif
 
 static const char FUNC_NAME[] = "MPI_Startall";
-
 
 int MPI_Startall(int count, MPI_Request requests[])
 {
@@ -50,13 +49,9 @@ int MPI_Startall(int count, MPI_Request requests[])
     int ret = OMPI_SUCCESS;
     ompi_request_start_fn_t start_fn = NULL;
 
-    MEMCHECKER(
-        for (j = 0; j < count; j++){
-            memchecker_request(&requests[j]);
-        }
-    );
+    MEMCHECKER(for (j = 0; j < count; j++) { memchecker_request(&requests[j]); });
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == requests) {
@@ -65,11 +60,10 @@ int MPI_Startall(int count, MPI_Request requests[])
             rc = MPI_ERR_ARG;
         } else {
             for (i = 0; i < count; ++i) {
-                if (NULL == requests[i] ||
-                    ! requests[i]->req_persistent ||
-                    (OMPI_REQUEST_PML  != requests[i]->req_type &&
-                     OMPI_REQUEST_COLL != requests[i]->req_type &&
-                     OMPI_REQUEST_NOOP != requests[i]->req_type)) {
+                if (NULL == requests[i] || !requests[i]->req_persistent
+                    || (OMPI_REQUEST_PML != requests[i]->req_type
+                        && OMPI_REQUEST_COLL != requests[i]->req_type
+                        && OMPI_REQUEST_NOOP != requests[i]->req_type)) {
                     rc = MPI_ERR_REQUEST;
                     break;
                 }
@@ -118,4 +112,3 @@ int MPI_Startall(int count, MPI_Request requests[])
 
     return ret;
 }
-

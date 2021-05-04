@@ -32,20 +32,19 @@
 
 #include "opal/util/printf.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
-#endif
-#define MPI_Type_create_f90_real PMPI_Type_create_f90_real
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
+#    endif
+#    define MPI_Type_create_f90_real PMPI_Type_create_f90_real
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_create_f90_real";
-
 
 int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 {
@@ -71,8 +70,10 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
      */
     p_key = p;
     r_key = r;
-    if( MPI_UNDEFINED == p ) p_key = 0;
-    if( MPI_UNDEFINED == r ) r_key = 0;
+    if (MPI_UNDEFINED == p)
+        p_key = 0;
+    if (MPI_UNDEFINED == r)
+        r_key = 0;
 
     /**
      * With respect to the MPI standard, MPI-2.0 Sect. 10.2.5, MPI_TYPE_CREATE_F90_xxxx,
@@ -83,29 +84,34 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
      * cache.
      */
 
-    if     ( (LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) || (-LDBL_MIN_10_EXP < r) ) *newtype = &ompi_mpi_datatype_null.dt;
-    else if( (DBL_DIG  < p) || (DBL_MAX_10_EXP  < r) || (-DBL_MIN_10_EXP  < r) ) *newtype = &ompi_mpi_long_double.dt;
-    else if( (FLT_DIG  < p) || (FLT_MAX_10_EXP  < r) || (-FLT_MIN_10_EXP  < r) ) *newtype = &ompi_mpi_double.dt;
-    else if( ! OMPI_HAVE_FORTRAN_REAL2 ||
-             (sflt_dig < p) || (sflt_max_10_exp < r) || (-sflt_min_10_exp < r) ) *newtype = &ompi_mpi_float.dt;
-    else                                                                         *newtype = &ompi_mpi_real2.dt;
+    if ((LDBL_DIG < p) || (LDBL_MAX_10_EXP < r) || (-LDBL_MIN_10_EXP < r))
+        *newtype = &ompi_mpi_datatype_null.dt;
+    else if ((DBL_DIG < p) || (DBL_MAX_10_EXP < r) || (-DBL_MIN_10_EXP < r))
+        *newtype = &ompi_mpi_long_double.dt;
+    else if ((FLT_DIG < p) || (FLT_MAX_10_EXP < r) || (-FLT_MIN_10_EXP < r))
+        *newtype = &ompi_mpi_double.dt;
+    else if (!OMPI_HAVE_FORTRAN_REAL2 || (sflt_dig < p) || (sflt_max_10_exp < r)
+             || (-sflt_min_10_exp < r))
+        *newtype = &ompi_mpi_float.dt;
+    else
+        *newtype = &ompi_mpi_real2.dt;
 
-    if( *newtype != &ompi_mpi_datatype_null.dt ) {
-        ompi_datatype_t* datatype;
-        const int* a_i[2] = {&p, &r};
+    if (*newtype != &ompi_mpi_datatype_null.dt) {
+        ompi_datatype_t *datatype;
+        const int *a_i[2] = {&p, &r};
         int rc;
 
-        key = (((uint64_t)p_key) << 32) | ((uint64_t)r_key);
-        if( OPAL_SUCCESS == opal_hash_table_get_value_uint64( &ompi_mpi_f90_real_hashtable,
-                                                              key, (void**)newtype ) ) {
+        key = (((uint64_t) p_key) << 32) | ((uint64_t) r_key);
+        if (OPAL_SUCCESS
+            == opal_hash_table_get_value_uint64(&ompi_mpi_f90_real_hashtable, key,
+                                                (void **) newtype)) {
             return MPI_SUCCESS;
         }
         /* Create the duplicate type corresponding to selected type, then
          * set the argument to be a COMBINER with the correct value of r
          * and add it to the hash table. */
-        if (OMPI_SUCCESS != ompi_datatype_duplicate( *newtype, &datatype)) {
-            OMPI_ERRHANDLER_RETURN (MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                    MPI_ERR_INTERN, FUNC_NAME );
+        if (OMPI_SUCCESS != ompi_datatype_duplicate(*newtype, &datatype)) {
+            OMPI_ERRHANDLER_RETURN(MPI_ERR_INTERN, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
         }
         /* Make sure the user is not allowed to free this datatype as specified
          * in the MPI standard.
@@ -116,12 +122,11 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
         // snprintf()) so that over-eager compilers do not warn us
         // that we may be truncating the output.  We *know* that the
         // output may be truncated, and it's ok.
-        opal_snprintf(datatype->name, sizeof(datatype->name),
-                      "COMBINER %s", (*newtype)->name);
+        opal_snprintf(datatype->name, sizeof(datatype->name), "COMBINER %s", (*newtype)->name);
 
-        ompi_datatype_set_args( datatype, 2, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_REAL );
+        ompi_datatype_set_args(datatype, 2, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_REAL);
 
-        rc = opal_hash_table_set_value_uint64( &ompi_mpi_f90_real_hashtable, key, datatype );
+        rc = opal_hash_table_set_value_uint64(&ompi_mpi_f90_real_hashtable, key, datatype);
         if (OMPI_SUCCESS != rc) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
         }

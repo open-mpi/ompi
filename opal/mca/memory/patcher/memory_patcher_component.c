@@ -135,7 +135,7 @@ static void *_intercept_mremap(void *start, size_t oldlen, size_t newlen, int fl
 static void *_intercept_mremap(void *start, size_t oldlen, void *new_address, size_t newlen,
                                int flags) __opal_attribute_noinline__;
 #    endif // defined(__linux__)
-#endif // defined(SYS_mremap)
+#endif     // defined(SYS_mremap)
 static int _intercept_madvise(void *start, size_t length, int advice) __opal_attribute_noinline__;
 #if defined SYS_brk
 static int _intercept_brk(void *addr) __opal_attribute_noinline__;
@@ -148,7 +148,7 @@ static void *_intercept_shmat(int shmid, const void *shmaddr,
 #    if HAS_SHMDT
 static int _intercept_shmdt(const void *shmaddr) __opal_attribute_noinline__;
 #    endif // HAS_SHMDT
-#endif // defined(__linux__)
+#endif     // defined(__linux__)
 
 #if defined(SYS_mmap)
 

@@ -20,22 +20,21 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_complete = PMPI_Win_complete
-#endif
-#define MPI_Win_complete PMPI_Win_complete
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_complete = PMPI_Win_complete
+#    endif
+#    define MPI_Win_complete PMPI_Win_complete
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_complete";
-
 
 int MPI_Win_complete(MPI_Win win)
 {

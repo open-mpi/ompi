@@ -15,13 +15,12 @@
 #include "oshmem/runtime/runtime.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_finalize = pshmem_finalize
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_finalize = pshmem_finalize
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 void shmem_finalize(void)
 {
     oshmem_shmem_finalize();
 }
-

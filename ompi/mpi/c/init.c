@@ -24,22 +24,21 @@
 
 #include <stdlib.h>
 
-#include "opal/util/show_help.h"
-#include "ompi/runtime/ompi_spc.h"
-#include "ompi/mpi/c/bindings.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/ompi_spc.h"
+#include "opal/util/show_help.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Init = PMPI_Init
-#endif
-#define MPI_Init PMPI_Init
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Init = PMPI_Init
+#    endif
+#    define MPI_Init PMPI_Init
 #endif
 
 static const char FUNC_NAME[] = "MPI_Init";
-
 
 int MPI_Init(int *argc, char ***argv)
 {
@@ -75,11 +74,8 @@ int MPI_Init(int *argc, char ***argv)
        back-end function directly. */
 
     if (MPI_SUCCESS != err) {
-        return ompi_errhandler_invoke(NULL, NULL,
-                                      OMPI_ERRHANDLER_TYPE_COMM,
-                                      err <
-                                      0 ? ompi_errcode_get_mpi_code(err) :
-                                      err, FUNC_NAME);
+        return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM,
+                                      err < 0 ? ompi_errcode_get_mpi_code(err) : err, FUNC_NAME);
     }
 
     SPC_INIT();

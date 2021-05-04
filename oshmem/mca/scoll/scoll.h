@@ -22,13 +22,13 @@
 #define OSHMEM_MCA_SCOLL_H
 
 #include "oshmem_config.h"
-#include "oshmem/types.h"
 #include "oshmem/constants.h"
+#include "oshmem/types.h"
 
-#include "opal/util/output.h"
 #include "mpi.h"
-#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
+#include "oshmem/mca/mca.h"
 
 BEGIN_C_DECLS
 
@@ -42,8 +42,8 @@ struct oshmem_op_t;
 typedef int (*mca_scoll_base_component_init_fn_t)(bool enable_progress_threads,
                                                   bool enable_threads);
 
-typedef struct mca_scoll_base_module_1_0_0_t* (*mca_scoll_base_component_query_fn_t)(struct oshmem_group_t *group,
-                                                                                     int *priority);
+typedef struct mca_scoll_base_module_1_0_0_t *(*mca_scoll_base_component_query_fn_t)(
+    struct oshmem_group_t *group, int *priority);
 
 /* ******************************************************************** */
 
@@ -86,67 +86,48 @@ typedef struct mca_scoll_base_component_1_0_0_t mca_scoll_base_component_t;
  * function, so the component is free to create a structure that
  * inherits from this one for use as the module structure.
  */
-typedef int
-(*mca_scoll_base_module_enable_1_0_0_fn_t)(struct mca_scoll_base_module_1_0_0_t* module,
-                                           struct oshmem_group_t *comm);
+typedef int (*mca_scoll_base_module_enable_1_0_0_fn_t)(struct mca_scoll_base_module_1_0_0_t *module,
+                                                       struct oshmem_group_t *comm);
 
-#define SCOLL_DEFAULT_ALG   (-1)
+#define SCOLL_DEFAULT_ALG (-1)
 
-#define SCOLL_ALG_BARRIER_CENTRAL_COUNTER       0
-#define SCOLL_ALG_BARRIER_TOURNAMENT            1
-#define SCOLL_ALG_BARRIER_RECURSIVE_DOUBLING    2
-#define SCOLL_ALG_BARRIER_DISSEMINATION         3
-#define SCOLL_ALG_BARRIER_BASIC                 4
-#define SCOLL_ALG_BARRIER_ADAPTIVE              5
+#define SCOLL_ALG_BARRIER_CENTRAL_COUNTER    0
+#define SCOLL_ALG_BARRIER_TOURNAMENT         1
+#define SCOLL_ALG_BARRIER_RECURSIVE_DOUBLING 2
+#define SCOLL_ALG_BARRIER_DISSEMINATION      3
+#define SCOLL_ALG_BARRIER_BASIC              4
+#define SCOLL_ALG_BARRIER_ADAPTIVE           5
 
-#define SCOLL_ALG_BROADCAST_CENTRAL_COUNTER     0
-#define SCOLL_ALG_BROADCAST_BINOMIAL            1
+#define SCOLL_ALG_BROADCAST_CENTRAL_COUNTER 0
+#define SCOLL_ALG_BROADCAST_BINOMIAL        1
 
-#define SCOLL_ALG_COLLECT_CENTRAL_COUNTER       0
-#define SCOLL_ALG_COLLECT_TOURNAMENT            1
-#define SCOLL_ALG_COLLECT_RECURSIVE_DOUBLING    2
-#define SCOLL_ALG_COLLECT_RING                  3
+#define SCOLL_ALG_COLLECT_CENTRAL_COUNTER    0
+#define SCOLL_ALG_COLLECT_TOURNAMENT         1
+#define SCOLL_ALG_COLLECT_RECURSIVE_DOUBLING 2
+#define SCOLL_ALG_COLLECT_RING               3
 
-#define SCOLL_ALG_REDUCE_CENTRAL_COUNTER        0
-#define SCOLL_ALG_REDUCE_TOURNAMENT             1
-#define SCOLL_ALG_REDUCE_RECURSIVE_DOUBLING     2
-#define SCOLL_ALG_REDUCE_LEGACY_LINEAR          3   /* Based linear algorithm from OMPI coll:basic */
-#define SCOLL_ALG_REDUCE_LEGACY_LOG             4   /* Based log algorithm from OMPI coll:basic */
+#define SCOLL_ALG_REDUCE_CENTRAL_COUNTER    0
+#define SCOLL_ALG_REDUCE_TOURNAMENT         1
+#define SCOLL_ALG_REDUCE_RECURSIVE_DOUBLING 2
+#define SCOLL_ALG_REDUCE_LEGACY_LINEAR      3 /* Based linear algorithm from OMPI coll:basic */
+#define SCOLL_ALG_REDUCE_LEGACY_LOG         4 /* Based log algorithm from OMPI coll:basic */
 
-typedef int (*mca_scoll_base_module_barrier_fn_t)(struct oshmem_group_t *group,
-                                                  long *pSync,
+typedef int (*mca_scoll_base_module_barrier_fn_t)(struct oshmem_group_t *group, long *pSync,
                                                   int alg);
-typedef int (*mca_scoll_base_module_broadcast_fn_t)(struct oshmem_group_t *group,
-                                                    int PE_root,
-                                                    void *target,
-                                                    const void *source,
-                                                    size_t nlong,
-                                                    long *pSync,
-                                                    bool nlong_type,
-                                                    int alg);
-typedef int (*mca_scoll_base_module_collect_fn_t)(struct oshmem_group_t *group,
-                                                  void *target,
-                                                  const void *source,
-                                                  size_t nlong,
-                                                  long *pSync,
-                                                  bool nlong_type,
-                                                  int alg);
+typedef int (*mca_scoll_base_module_broadcast_fn_t)(struct oshmem_group_t *group, int PE_root,
+                                                    void *target, const void *source, size_t nlong,
+                                                    long *pSync, bool nlong_type, int alg);
+typedef int (*mca_scoll_base_module_collect_fn_t)(struct oshmem_group_t *group, void *target,
+                                                  const void *source, size_t nlong, long *pSync,
+                                                  bool nlong_type, int alg);
 typedef int (*mca_scoll_base_module_reduce_fn_t)(struct oshmem_group_t *group,
-                                                 struct oshmem_op_t *op,
-                                                 void *target,
-                                                 const void *source,
-                                                 size_t nlong,
-                                                 long *pSync,
-                                                 void *pWrk,
-                                                 int alg);
-typedef int (*mca_scoll_base_module_alltoall_fn_t)(struct oshmem_group_t *group,
-                                                  void *target,
-                                                  const void *source,
-                                                  ptrdiff_t dst, ptrdiff_t sst,
-                                                  size_t nelems,
-                                                  size_t element_size,
-                                                  long *pSync,
-                                                  int alg);
+                                                 struct oshmem_op_t *op, void *target,
+                                                 const void *source, size_t nlong, long *pSync,
+                                                 void *pWrk, int alg);
+typedef int (*mca_scoll_base_module_alltoall_fn_t)(struct oshmem_group_t *group, void *target,
+                                                   const void *source, ptrdiff_t dst, ptrdiff_t sst,
+                                                   size_t nelems, size_t element_size, long *pSync,
+                                                   int alg);
 
 struct mca_scoll_base_module_1_0_0_t {
     /** Collective modules all inherit from opal_object */
@@ -173,8 +154,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_scoll_base_module_t);
 /*
  * Macro for use in components that are of type coll
  */
-#define MCA_SCOLL_BASE_VERSION_2_0_0 \
-    OSHMEM_MCA_BASE_VERSION_2_1_0("scoll", 1, 0, 0)
+#define MCA_SCOLL_BASE_VERSION_2_0_0 OSHMEM_MCA_BASE_VERSION_2_1_0("scoll", 1, 0, 0)
 
 /* ******************************************************************** */
 /*
@@ -197,11 +177,13 @@ struct mca_scoll_base_group_scoll_t {
 };
 typedef struct mca_scoll_base_group_scoll_t mca_scoll_base_group_scoll_t;
 
-#define PREVIOUS_SCOLL_FN(module, __api, group, ...) do { \
-    group->g_scoll.scoll_ ## __api ## _module = (mca_scoll_base_module_1_0_0_t*) module->previous_ ## __api ## _module; \
-    rc = module->previous_ ## __api (group, __VA_ARGS__); \
-    group->g_scoll.scoll_ ## __api ## _module = (mca_scoll_base_module_1_0_0_t*) module; \
-} while(0)
+#define PREVIOUS_SCOLL_FN(module, __api, group, ...)                                      \
+    do {                                                                                  \
+        group->g_scoll.scoll_##__api##_module = (mca_scoll_base_module_1_0_0_t *)         \
+                                                    module->previous_##__api##_module;    \
+        rc = module->previous_##__api(group, __VA_ARGS__);                                \
+        group->g_scoll.scoll_##__api##_module = (mca_scoll_base_module_1_0_0_t *) module; \
+    } while (0)
 
 END_C_DECLS
 

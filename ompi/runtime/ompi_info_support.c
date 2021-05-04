@@ -25,17 +25,17 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
 #include "ompi/include/ompi/constants.h"
 #include "ompi/include/ompi/frameworks.h"
-#include "ompi/communicator/communicator.h"
 
 #include "ompi/runtime/params.h"
 
-#include "opal/runtime/opal_info_support.h"
 #include "ompi/runtime/ompi_info_support.h"
+#include "opal/runtime/opal_info_support.h"
 
-#include "opal/util/show_help.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
 const char *ompi_info_type_ompi = "ompi";
 const char *ompi_info_type_base = "base";
@@ -47,11 +47,11 @@ void ompi_info_register_types(opal_pointer_array_t *mca_types)
     int i;
 
     /* add the top-level type */
-    opal_pointer_array_add(mca_types, (void *)ompi_info_type_ompi);
+    opal_pointer_array_add(mca_types, (void *) ompi_info_type_ompi);
     opal_pointer_array_add(mca_types, "mpi");
 
     /* push all the types found by autogen */
-    for (i=0; NULL != ompi_frameworks[i]; i++) {
+    for (i = 0; NULL != ompi_frameworks[i]; i++) {
         opal_pointer_array_add(mca_types, ompi_frameworks[i]->framework_name);
     }
 }
@@ -75,7 +75,8 @@ int ompi_info_register_framework_params(opal_pointer_array_t *component_map)
         return rc;
     }
 
-    return opal_info_register_project_frameworks(ompi_info_type_ompi, ompi_frameworks, component_map);
+    return opal_info_register_project_frameworks(ompi_info_type_ompi, ompi_frameworks,
+                                                 component_map);
 }
 
 void ompi_info_close_components(void)
@@ -96,7 +97,7 @@ void ompi_info_close_components(void)
      * close() functions -- what would we do if there was an
      * error?
      */
-    for (i=0; NULL != ompi_frameworks[i]; i++) {
+    for (i = 0; NULL != ompi_frameworks[i]; i++) {
         (void) mca_base_framework_close(ompi_frameworks[i]);
     }
 
@@ -107,25 +108,20 @@ void ompi_info_show_ompi_version(const char *scope)
 {
     char *tmp, *tmp2;
 
-    (void)opal_asprintf(&tmp, "%s:version:full", ompi_info_type_ompi);
-    tmp2 = opal_info_make_version_str(scope,
-                                      OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
-                                      OMPI_RELEASE_VERSION,
-                                      OMPI_GREEK_VERSION,
-                                      OMPI_REPO_REV);
+    (void) opal_asprintf(&tmp, "%s:version:full", ompi_info_type_ompi);
+    tmp2 = opal_info_make_version_str(scope, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                      OMPI_RELEASE_VERSION, OMPI_GREEK_VERSION, OMPI_REPO_REV);
     opal_info_out("Open MPI", tmp, tmp2);
     free(tmp);
     free(tmp2);
-    (void)opal_asprintf(&tmp, "%s:version:repo", ompi_info_type_ompi);
+    (void) opal_asprintf(&tmp, "%s:version:repo", ompi_info_type_ompi);
     opal_info_out("Open MPI repo revision", tmp, OMPI_REPO_REV);
     free(tmp);
-    (void)opal_asprintf(&tmp, "%s:version:release_date", ompi_info_type_ompi);
+    (void) opal_asprintf(&tmp, "%s:version:release_date", ompi_info_type_ompi);
     opal_info_out("Open MPI release date", tmp, OMPI_RELEASE_DATE);
     free(tmp);
 
-    tmp2 = opal_info_make_version_str(scope,
-                                      MPI_VERSION, MPI_SUBVERSION,
-                                      0, "", "");
+    tmp2 = opal_info_make_version_str(scope, MPI_VERSION, MPI_SUBVERSION, 0, "", "");
     opal_info_out("MPI API", "mpi-api:version:full", tmp2);
     free(tmp2);
 

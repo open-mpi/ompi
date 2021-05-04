@@ -14,14 +14,14 @@
 
 #include "oshmem/constants.h"
 
-#include "oshmem/mca/mca.h"
-#include "opal/util/output.h"
-#include "opal/mca/base/base.h"
 #include "ompi/util/timings.h"
+#include "opal/mca/base/base.h"
+#include "opal/util/output.h"
+#include "oshmem/mca/mca.h"
 
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/scoll/scoll.h"
+#include "oshmem/util/oshmem_util.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -35,7 +35,7 @@
  * Global variables; most of which are loaded by back-ends of MCA
  * variables
  */
-long* mca_scoll_sync_array = NULL;
+long *mca_scoll_sync_array = NULL;
 
 /*
  * Ensure all function pointers are NULL'ed out to start with
@@ -51,8 +51,7 @@ static void scoll_base_module_construct(mca_scoll_base_module_t *m)
     m->scoll_module_enable = NULL;
 }
 
-OBJ_CLASS_INSTANCE(mca_scoll_base_module_t, opal_object_t,
-                   scoll_base_module_construct, NULL);
+OBJ_CLASS_INSTANCE(mca_scoll_base_module_t, opal_object_t, scoll_base_module_construct, NULL);
 
 int mca_scoll_enable(void)
 {
@@ -61,10 +60,11 @@ int mca_scoll_enable(void)
     OPAL_TIMING_ENV_INIT(mca_scoll_enable);
 
     if (!mca_scoll_sync_array) {
-        void* ptr = (void*) mca_scoll_sync_array;
+        void *ptr = (void *) mca_scoll_sync_array;
         int i = 0;
 
-        MCA_MEMHEAP_CALL(private_alloc((_SHMEM_BARRIER_SYNC_SIZE * sizeof(*mca_scoll_sync_array)), &ptr));
+        MCA_MEMHEAP_CALL(
+            private_alloc((_SHMEM_BARRIER_SYNC_SIZE * sizeof(*mca_scoll_sync_array)), &ptr));
         mca_scoll_sync_array = ptr;
 
         for (i = 0; i < _SHMEM_BARRIER_SYNC_SIZE; i++) {
@@ -101,7 +101,7 @@ static int mca_scoll_base_close(void)
 {
     /* This call should be done before memheap close */
     if (mca_scoll_sync_array) {
-        void* ptr = (void*) mca_scoll_sync_array;
+        void *ptr = (void *) mca_scoll_sync_array;
 
         MCA_MEMHEAP_CALL(private_free(ptr));
         mca_scoll_sync_array = NULL;
@@ -115,17 +115,12 @@ static int mca_scoll_base_open(mca_base_open_flag_t flags)
     oshmem_framework_open_output(&oshmem_scoll_base_framework);
 
     /* Open up all available components */
-    if (OPAL_SUCCESS !=
-            mca_base_framework_components_open(&oshmem_scoll_base_framework, flags)) {
+    if (OPAL_SUCCESS != mca_base_framework_components_open(&oshmem_scoll_base_framework, flags)) {
         return OSHMEM_ERROR;
     }
     return OSHMEM_SUCCESS;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(oshmem, scoll,
-                           "OSHMEM SCOLL",
-                           mca_scoll_base_register,
-                           mca_scoll_base_open,
-                           mca_scoll_base_close,
-                           mca_scoll_base_static_components,
-                           MCA_BASE_FRAMEWORK_FLAG_DEFAULT);
+MCA_BASE_FRAMEWORK_DECLARE(oshmem, scoll, "OSHMEM SCOLL", mca_scoll_base_register,
+                           mca_scoll_base_open, mca_scoll_base_close,
+                           mca_scoll_base_static_components, MCA_BASE_FRAMEWORK_FLAG_DEFAULT);

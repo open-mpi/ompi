@@ -21,33 +21,30 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Wait = PMPI_Wait
-#endif
-#define MPI_Wait PMPI_Wait
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Wait = PMPI_Wait
+#    endif
+#    define MPI_Wait PMPI_Wait
 #endif
 
 static const char FUNC_NAME[] = "MPI_Wait";
-
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status)
 {
     SPC_RECORD(OMPI_SPC_WAIT, 1);
 
-    MEMCHECKER(
-        memchecker_request(request);
-    );
+    MEMCHECKER(memchecker_request(request););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (request == NULL) {
@@ -62,9 +59,7 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
             /*
              * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
              */
-            MEMCHECKER(
-                opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
-            );
+            MEMCHECKER(opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int)););
         }
         return MPI_SUCCESS;
     }
@@ -73,18 +68,14 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         /*
          * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
          */
-        MEMCHECKER(
-            if (MPI_STATUS_IGNORE != status) {
-                opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
-            }
-        );
+        MEMCHECKER(if (MPI_STATUS_IGNORE != status) {
+            opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+        });
         return MPI_SUCCESS;
     }
 
-    MEMCHECKER(
-        if (MPI_STATUS_IGNORE != status) {
-            opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
-        }
-    );
+    MEMCHECKER(if (MPI_STATUS_IGNORE != status) {
+        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+    });
     return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
 }

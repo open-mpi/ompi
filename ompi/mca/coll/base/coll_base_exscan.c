@@ -14,13 +14,13 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
-#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
+#include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/op/op.h"
 
@@ -31,12 +31,10 @@
  * Accepts:   Same as MPI_Exscan
  * Returns:   MPI_SUCCESS or error code
  */
-int
-ompi_coll_base_exscan_intra_linear(const void *sbuf, void *rbuf, int count,
-                                  struct ompi_datatype_t *dtype,
-                                  struct ompi_op_t *op,
-                                  struct ompi_communicator_t *comm,
-                                  mca_coll_base_module_t *module)
+int ompi_coll_base_exscan_intra_linear(const void *sbuf, void *rbuf, int count,
+                                       struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                       struct ompi_communicator_t *comm,
+                                       mca_coll_base_module_t *module)
 {
     int size, rank, err;
     ptrdiff_t dsize, gap;
@@ -55,17 +53,15 @@ ompi_coll_base_exscan_intra_linear(const void *sbuf, void *rbuf, int count,
     /* If we're rank 0, then just send our sbuf to the next rank, and
      * we are done. */
     if (0 == rank) {
-        return MCA_PML_CALL(send(sbuf, count, dtype, rank + 1,
-                                 MCA_COLL_BASE_TAG_EXSCAN,
+        return MCA_PML_CALL(send(sbuf, count, dtype, rank + 1, MCA_COLL_BASE_TAG_EXSCAN,
                                  MCA_PML_BASE_SEND_STANDARD, comm));
     }
 
     /* If we're the last rank, then just receive the result from the
      * prior rank, and we are done. */
     else if ((size - 1) == rank) {
-        return MCA_PML_CALL(recv(rbuf, count, dtype, rank - 1,
-                                 MCA_COLL_BASE_TAG_EXSCAN, comm,
-                                 MPI_STATUS_IGNORE));
+        return MCA_PML_CALL(
+            recv(rbuf, count, dtype, rank - 1, MCA_COLL_BASE_TAG_EXSCAN, comm, MPI_STATUS_IGNORE));
     }
 
     /* Otherwise, get the result from the prior rank, combine it with my
@@ -75,17 +71,16 @@ ompi_coll_base_exscan_intra_linear(const void *sbuf, void *rbuf, int count,
      * for malloc'ing this size is provided in coll_basic_reduce.c. */
     dsize = opal_datatype_span(&dtype->super, count, &gap);
 
-    free_buffer = (char*)malloc(dsize);
+    free_buffer = (char *) malloc(dsize);
     if (NULL == free_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     reduce_buffer = free_buffer - gap;
-    err = ompi_datatype_copy_content_same_ddt(dtype, count,
-                                              reduce_buffer, (char*)sbuf);
+    err = ompi_datatype_copy_content_same_ddt(dtype, count, reduce_buffer, (char *) sbuf);
 
     /* Receive the reduced value from the prior rank */
-    err = MCA_PML_CALL(recv(rbuf, count, dtype, rank - 1,
-                            MCA_COLL_BASE_TAG_EXSCAN, comm, MPI_STATUS_IGNORE));
+    err = MCA_PML_CALL(
+        recv(rbuf, count, dtype, rank - 1, MCA_COLL_BASE_TAG_EXSCAN, comm, MPI_STATUS_IGNORE));
     if (MPI_SUCCESS != err) {
         goto error;
     }
@@ -95,17 +90,15 @@ ompi_coll_base_exscan_intra_linear(const void *sbuf, void *rbuf, int count,
     ompi_op_reduce(op, rbuf, reduce_buffer, count, dtype);
 
     /* Send my result off to the next rank */
-    err = MCA_PML_CALL(send(reduce_buffer, count, dtype, rank + 1,
-                            MCA_COLL_BASE_TAG_EXSCAN,
+    err = MCA_PML_CALL(send(reduce_buffer, count, dtype, rank + 1, MCA_COLL_BASE_TAG_EXSCAN,
                             MCA_PML_BASE_SEND_STANDARD, comm));
     /* Error */
-  error:
+error:
     free(free_buffer);
 
     /* All done */
     return err;
 }
-
 
 /*
  * ompi_coll_base_exscan_intra_recursivedoubling
@@ -139,18 +132,19 @@ ompi_coll_base_exscan_intra_linear(const void *sbuf, void *rbuf, int count,
  * Memory requirements (per process): 2 * count * typesize = O(count)
  * Limitations: intra-communicators only
  */
-int ompi_coll_base_exscan_intra_recursivedoubling(
-    const void *sendbuf, void *recvbuf, int count, struct ompi_datatype_t *datatype,
-    struct ompi_op_t *op, struct ompi_communicator_t *comm,
-    mca_coll_base_module_t *module)
+int ompi_coll_base_exscan_intra_recursivedoubling(const void *sendbuf, void *recvbuf, int count,
+                                                  struct ompi_datatype_t *datatype,
+                                                  struct ompi_op_t *op,
+                                                  struct ompi_communicator_t *comm,
+                                                  mca_coll_base_module_t *module)
 {
     int err = MPI_SUCCESS;
     char *tmpsend_raw = NULL, *tmprecv_raw = NULL;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
 
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:exscan_intra_recursivedoubling: rank %d/%d",
-                 rank, comm_size));
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:exscan_intra_recursivedoubling: rank %d/%d", rank, comm_size));
     if (count == 0)
         return MPI_SUCCESS;
     if (comm_size < 2)
@@ -167,11 +161,15 @@ int ompi_coll_base_exscan_intra_recursivedoubling(
     char *psend = tmpsend_raw - gap;
     char *precv = tmprecv_raw - gap;
     if (sendbuf != MPI_IN_PLACE) {
-        err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, (char *)sendbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, (char *) sendbuf);
+        if (MPI_SUCCESS != err) {
+            goto cleanup_and_return;
+        }
     } else {
         err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, recvbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        if (MPI_SUCCESS != err) {
+            goto cleanup_and_return;
+        }
     }
     int is_commute = ompi_op_is_commute(op);
     int is_first_block = 1;
@@ -179,19 +177,20 @@ int ompi_coll_base_exscan_intra_recursivedoubling(
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
         if (remote < comm_size) {
-            err = ompi_coll_base_sendrecv(psend, count, datatype, remote,
-                                          MCA_COLL_BASE_TAG_EXSCAN,
-                                          precv, count, datatype, remote,
-                                          MCA_COLL_BASE_TAG_EXSCAN, comm,
-                                          MPI_STATUS_IGNORE, rank);
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            err = ompi_coll_base_sendrecv(psend, count, datatype, remote, MCA_COLL_BASE_TAG_EXSCAN,
+                                          precv, count, datatype, remote, MCA_COLL_BASE_TAG_EXSCAN,
+                                          comm, MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS != err) {
+                goto cleanup_and_return;
+            }
 
             if (rank > remote) {
                 /* Assertion: rank > 0 and rbuf is valid */
                 if (is_first_block) {
-                    err = ompi_datatype_copy_content_same_ddt(datatype, count,
-                                                              recvbuf, precv);
-                    if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                    err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, precv);
+                    if (MPI_SUCCESS != err) {
+                        goto cleanup_and_return;
+                    }
                     is_first_block = 0;
                 } else {
                     /* Accumulate prefix reduction: recvbuf = precv <op> recvbuf */

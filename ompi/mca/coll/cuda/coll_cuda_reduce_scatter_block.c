@@ -30,14 +30,12 @@
  *     reduce and scatter (needs to be cleaned
  *     up at some point)
  */
-int
-mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
-                                   struct ompi_datatype_t *dtype,
-                                   struct ompi_op_t *op,
-                                   struct ompi_communicator_t *comm,
-                                   mca_coll_base_module_t *module)
+int mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
+                                       struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                       struct ompi_communicator_t *comm,
+                                       mca_coll_base_module_t *module)
 {
-    mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
+    mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t *) module;
     ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     size_t sbufsize, rbufsize;
@@ -47,8 +45,8 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
 
     sbufsize = rbufsize * ompi_comm_size(comm);
 
-    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *)sbuf, NULL))) {
-        sbuf1 = (char*)malloc(sbufsize);
+    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *) sbuf, NULL))) {
+        sbuf1 = (char *) malloc(sbufsize);
         if (NULL == sbuf1) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -57,9 +55,10 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
     }
 
     if (opal_cuda_check_bufs(rbuf, NULL)) {
-        rbuf1 = (char*)malloc(rbufsize);
+        rbuf1 = (char *) malloc(rbufsize);
         if (NULL == rbuf1) {
-            if (NULL != sbuf1) free(sbuf1);
+            if (NULL != sbuf1)
+                free(sbuf1);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, rbufsize);
@@ -78,4 +77,3 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
     }
     return rc;
 }
-

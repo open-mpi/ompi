@@ -17,30 +17,29 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_pvar_session_create = PMPI_T_pvar_session_create
+#    pragma weak MPI_T_pvar_session_create = PMPI_T_pvar_session_create
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
-
 
 int MPI_T_pvar_session_create(MPI_T_pvar_session *session)
 {
     int ret = MPI_SUCCESS;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     *session = OBJ_NEW(mca_base_pvar_session_t);
     if (NULL == *session) {
         ret = MPI_T_ERR_MEMORY;
     }
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return ret;
 }

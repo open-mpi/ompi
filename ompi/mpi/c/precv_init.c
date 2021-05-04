@@ -25,25 +25,25 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/part/part.h"
-#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Precv_init = PMPI_Precv_init
-#endif
-#define MPI_Precv_init PMPI_Precv_init
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Precv_init = PMPI_Precv_init
+#    endif
+#    define MPI_Precv_init PMPI_Precv_init
 #endif
 
 static const char FUNC_NAME[] = "MPI_Precv_init";
 
-
-int MPI_Precv_init(void* buf, int partitions, MPI_Count count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request)
+int MPI_Precv_init(void *buf, int partitions, MPI_Count count, MPI_Datatype datatype, int source,
+                   int tag, MPI_Comm comm, MPI_Request *request)
 {
     int rc;
 

@@ -263,8 +263,8 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH    (64 * 1024) /* internal loopback */
-#define MCA_BTL_EXCLUSIVITY_DEFAULT 1024 /* GM/IB/etc. */
-#define MCA_BTL_EXCLUSIVITY_LOW     0 /* TCP used as a last resort */
+#define MCA_BTL_EXCLUSIVITY_DEFAULT 1024        /* GM/IB/etc. */
+#define MCA_BTL_EXCLUSIVITY_LOW     0           /* TCP used as a last resort */
 
 /* error callback flags */
 #define MCA_BTL_ERROR_FLAGS_FATAL        0x1
@@ -1217,11 +1217,11 @@ struct mca_btl_base_module_t {
 #if OPAL_CUDA_GDR_SUPPORT
     size_t btl_cuda_eager_limit; /**< switch from eager to RDMA */
     size_t btl_cuda_rdma_limit;  /**< switch from RDMA to rndv pipeline */
-#endif /* OPAL_CUDA_GDR_SUPPORT */
+#endif                           /* OPAL_CUDA_GDR_SUPPORT */
 #if OPAL_CUDA_SUPPORT
     size_t btl_cuda_max_send_size; /**< set if CUDA max send_size is different from host max send
                                       size */
-#endif /* OPAL_CUDA_SUPPORT */
+#endif                             /* OPAL_CUDA_SUPPORT */
 
     mca_btl_base_module_flush_fn_t btl_flush; /**< flush all previous operations on an endpoint */
 

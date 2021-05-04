@@ -25,94 +25,90 @@
  * transfer and may return before the data is delivered to the remote PE.
  */
 
-#define DO_SHMEM_TYPE_P(ctx, type, addr, value, pe) do {            \
-        int rc = OSHMEM_SUCCESS;                                    \
-        size_t size = 0;                                            \
-                                                                    \
-        RUNTIME_CHECK_INIT();                                       \
-        RUNTIME_CHECK_PE(pe);                                       \
-        RUNTIME_CHECK_ADDR(addr);                                   \
-                                                                    \
-        size = sizeof(type);                                        \
-        rc = MCA_SPML_CALL(put(                                     \
-            ctx,                                                    \
-            (void*)addr,                                            \
-            size,                                                   \
-            (void*)&value,                                          \
-            pe));                                                   \
-        RUNTIME_CHECK_RC(rc);                                       \
-    } while(0)
+#define DO_SHMEM_TYPE_P(ctx, type, addr, value, pe)                             \
+    do {                                                                        \
+        int rc = OSHMEM_SUCCESS;                                                \
+        size_t size = 0;                                                        \
+                                                                                \
+        RUNTIME_CHECK_INIT();                                                   \
+        RUNTIME_CHECK_PE(pe);                                                   \
+        RUNTIME_CHECK_ADDR(addr);                                               \
+                                                                                \
+        size = sizeof(type);                                                    \
+        rc = MCA_SPML_CALL(put(ctx, (void *) addr, size, (void *) &value, pe)); \
+        RUNTIME_CHECK_RC(rc);                                                   \
+    } while (0)
 
-#define SHMEM_CTX_TYPE_P(type_name, type, prefix)                   \
+#define SHMEM_CTX_TYPE_P(type_name, type, prefix)                                     \
     void prefix##_ctx##type_name##_p(shmem_ctx_t ctx, type *addr, type value, int pe) \
-    {                                                               \
-        DO_SHMEM_TYPE_P(ctx, type, addr, value, pe);                \
-        return ;                                                    \
+    {                                                                                 \
+        DO_SHMEM_TYPE_P(ctx, type, addr, value, pe);                                  \
+        return;                                                                       \
     }
 
 #define SHMEM_TYPE_P(type_name, type, prefix)                       \
     void prefix##type_name##_p(type *addr, type value, int pe)      \
     {                                                               \
-        DO_SHMEM_TYPE_P(oshmem_ctx_default, type, addr, value, pe);  \
-        return ;                                                    \
+        DO_SHMEM_TYPE_P(oshmem_ctx_default, type, addr, value, pe); \
+        return;                                                     \
     }
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_ctx_char_p       = pshmem_ctx_char_p
-#pragma weak shmem_ctx_short_p      = pshmem_ctx_short_p
-#pragma weak shmem_ctx_int_p        = pshmem_ctx_int_p
-#pragma weak shmem_ctx_long_p       = pshmem_ctx_long_p
-#pragma weak shmem_ctx_float_p      = pshmem_ctx_float_p
-#pragma weak shmem_ctx_double_p     = pshmem_ctx_double_p
-#pragma weak shmem_ctx_longlong_p   = pshmem_ctx_longlong_p
-#pragma weak shmem_ctx_schar_p      = pshmem_ctx_schar_p
-#pragma weak shmem_ctx_uchar_p      = pshmem_ctx_uchar_p
-#pragma weak shmem_ctx_ushort_p     = pshmem_ctx_ushort_p
-#pragma weak shmem_ctx_uint_p       = pshmem_ctx_uint_p
-#pragma weak shmem_ctx_ulong_p      = pshmem_ctx_ulong_p
-#pragma weak shmem_ctx_ulonglong_p  = pshmem_ctx_ulonglong_p
-#pragma weak shmem_ctx_longdouble_p = pshmem_ctx_longdouble_p
-#pragma weak shmem_ctx_int8_p       = pshmem_ctx_int8_p
-#pragma weak shmem_ctx_int16_p      = pshmem_ctx_int16_p
-#pragma weak shmem_ctx_int32_p      = pshmem_ctx_int32_p
-#pragma weak shmem_ctx_int64_p      = pshmem_ctx_int64_p
-#pragma weak shmem_ctx_uint8_p      = pshmem_ctx_uint8_p
-#pragma weak shmem_ctx_uint16_p     = pshmem_ctx_uint16_p
-#pragma weak shmem_ctx_uint32_p     = pshmem_ctx_uint32_p
-#pragma weak shmem_ctx_uint64_p     = pshmem_ctx_uint64_p
-#pragma weak shmem_ctx_size_p       = pshmem_ctx_size_p
-#pragma weak shmem_ctx_ptrdiff_p    = pshmem_ctx_ptrdiff_p
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_ctx_char_p = pshmem_ctx_char_p
+#    pragma weak shmem_ctx_short_p = pshmem_ctx_short_p
+#    pragma weak shmem_ctx_int_p = pshmem_ctx_int_p
+#    pragma weak shmem_ctx_long_p = pshmem_ctx_long_p
+#    pragma weak shmem_ctx_float_p = pshmem_ctx_float_p
+#    pragma weak shmem_ctx_double_p = pshmem_ctx_double_p
+#    pragma weak shmem_ctx_longlong_p = pshmem_ctx_longlong_p
+#    pragma weak shmem_ctx_schar_p = pshmem_ctx_schar_p
+#    pragma weak shmem_ctx_uchar_p = pshmem_ctx_uchar_p
+#    pragma weak shmem_ctx_ushort_p = pshmem_ctx_ushort_p
+#    pragma weak shmem_ctx_uint_p = pshmem_ctx_uint_p
+#    pragma weak shmem_ctx_ulong_p = pshmem_ctx_ulong_p
+#    pragma weak shmem_ctx_ulonglong_p = pshmem_ctx_ulonglong_p
+#    pragma weak shmem_ctx_longdouble_p = pshmem_ctx_longdouble_p
+#    pragma weak shmem_ctx_int8_p = pshmem_ctx_int8_p
+#    pragma weak shmem_ctx_int16_p = pshmem_ctx_int16_p
+#    pragma weak shmem_ctx_int32_p = pshmem_ctx_int32_p
+#    pragma weak shmem_ctx_int64_p = pshmem_ctx_int64_p
+#    pragma weak shmem_ctx_uint8_p = pshmem_ctx_uint8_p
+#    pragma weak shmem_ctx_uint16_p = pshmem_ctx_uint16_p
+#    pragma weak shmem_ctx_uint32_p = pshmem_ctx_uint32_p
+#    pragma weak shmem_ctx_uint64_p = pshmem_ctx_uint64_p
+#    pragma weak shmem_ctx_size_p = pshmem_ctx_size_p
+#    pragma weak shmem_ctx_ptrdiff_p = pshmem_ctx_ptrdiff_p
 
-#pragma weak shmem_char_p           = pshmem_char_p
-#pragma weak shmem_short_p          = pshmem_short_p
-#pragma weak shmem_int_p            = pshmem_int_p
-#pragma weak shmem_long_p           = pshmem_long_p
-#pragma weak shmem_float_p          = pshmem_float_p
-#pragma weak shmem_double_p         = pshmem_double_p
-#pragma weak shmem_longlong_p       = pshmem_longlong_p
-#pragma weak shmem_schar_p          = pshmem_schar_p
-#pragma weak shmem_uchar_p          = pshmem_uchar_p
-#pragma weak shmem_ushort_p         = pshmem_ushort_p
-#pragma weak shmem_uint_p           = pshmem_uint_p
-#pragma weak shmem_ulong_p          = pshmem_ulong_p
-#pragma weak shmem_ulonglong_p      = pshmem_ulonglong_p
-#pragma weak shmem_longdouble_p     = pshmem_longdouble_p
-#pragma weak shmem_int8_p           = pshmem_int8_p
-#pragma weak shmem_int16_p          = pshmem_int16_p
-#pragma weak shmem_int32_p          = pshmem_int32_p
-#pragma weak shmem_int64_p          = pshmem_int64_p
-#pragma weak shmem_uint8_p          = pshmem_uint8_p
-#pragma weak shmem_uint16_p         = pshmem_uint16_p
-#pragma weak shmem_uint32_p         = pshmem_uint32_p
-#pragma weak shmem_uint64_p         = pshmem_uint64_p
-#pragma weak shmem_size_p           = pshmem_size_p
-#pragma weak shmem_ptrdiff_p        = pshmem_ptrdiff_p
+#    pragma weak shmem_char_p = pshmem_char_p
+#    pragma weak shmem_short_p = pshmem_short_p
+#    pragma weak shmem_int_p = pshmem_int_p
+#    pragma weak shmem_long_p = pshmem_long_p
+#    pragma weak shmem_float_p = pshmem_float_p
+#    pragma weak shmem_double_p = pshmem_double_p
+#    pragma weak shmem_longlong_p = pshmem_longlong_p
+#    pragma weak shmem_schar_p = pshmem_schar_p
+#    pragma weak shmem_uchar_p = pshmem_uchar_p
+#    pragma weak shmem_ushort_p = pshmem_ushort_p
+#    pragma weak shmem_uint_p = pshmem_uint_p
+#    pragma weak shmem_ulong_p = pshmem_ulong_p
+#    pragma weak shmem_ulonglong_p = pshmem_ulonglong_p
+#    pragma weak shmem_longdouble_p = pshmem_longdouble_p
+#    pragma weak shmem_int8_p = pshmem_int8_p
+#    pragma weak shmem_int16_p = pshmem_int16_p
+#    pragma weak shmem_int32_p = pshmem_int32_p
+#    pragma weak shmem_int64_p = pshmem_int64_p
+#    pragma weak shmem_uint8_p = pshmem_uint8_p
+#    pragma weak shmem_uint16_p = pshmem_uint16_p
+#    pragma weak shmem_uint32_p = pshmem_uint32_p
+#    pragma weak shmem_uint64_p = pshmem_uint64_p
+#    pragma weak shmem_size_p = pshmem_size_p
+#    pragma weak shmem_ptrdiff_p = pshmem_ptrdiff_p
 
-#pragma weak shmemx_int16_p = pshmemx_int16_p
-#pragma weak shmemx_int32_p = pshmemx_int32_p
-#pragma weak shmemx_int64_p = pshmemx_int64_p
-#include "oshmem/shmem/c/profile/defines.h"
+#    pragma weak shmemx_int16_p = pshmemx_int16_p
+#    pragma weak shmemx_int32_p = pshmemx_int32_p
+#    pragma weak shmemx_int64_p = pshmemx_int64_p
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 SHMEM_CTX_TYPE_P(_char, char, shmem)

@@ -21,20 +21,19 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_preallocate = PMPI_File_preallocate
-#endif
-#define MPI_File_preallocate PMPI_File_preallocate
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_preallocate = PMPI_File_preallocate
+#    endif
+#    define MPI_File_preallocate PMPI_File_preallocate
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_preallocate";
-
 
 int MPI_File_preallocate(MPI_File fh, MPI_Offset size)
 {
@@ -54,8 +53,7 @@ int MPI_File_preallocate(MPI_File fh, MPI_Offset size)
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_preallocate(fh, size);
+        rc = fh->f_io_selected_module.v2_0_0.io_module_file_preallocate(fh, size);
         break;
 
     default:

@@ -22,12 +22,11 @@
 #include "coll_inter.h"
 
 #include "mpi.h"
-#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/coll/coll.h"
+#include "ompi/constants.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
-
 
 /*
  *	bcast_inter
@@ -36,11 +35,8 @@
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_inter_bcast_inter(void *buff, int count,
-                           struct ompi_datatype_t *datatype, int root,
-                           struct ompi_communicator_t *comm,
-                           mca_coll_base_module_t *module)
+int mca_coll_inter_bcast_inter(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+                               struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int rank;
     int err;
@@ -52,29 +48,24 @@ mca_coll_inter_bcast_inter(void *buff, int count,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* Non-root, first process recieves the data and bcast to others */
-	if ( 0 == rank ) {
-	    err = MCA_PML_CALL(recv(buff, count, datatype, root,
-				    MCA_COLL_BASE_TAG_BCAST, comm,
-				    MPI_STATUS_IGNORE));
-	    if (OMPI_SUCCESS != err) {
+        if (0 == rank) {
+            err = MCA_PML_CALL(recv(buff, count, datatype, root, MCA_COLL_BASE_TAG_BCAST, comm,
+                                    MPI_STATUS_IGNORE));
+            if (OMPI_SUCCESS != err) {
                 return err;
             }
-	}
-	err = comm->c_local_comm->c_coll->coll_bcast(buff, count, datatype, 0,
-                                                    comm->c_local_comm,
-                                                    comm->c_local_comm->c_coll->coll_bcast_module);
+        }
+        err = comm->c_local_comm->c_coll->coll_bcast(buff, count, datatype, 0, comm->c_local_comm,
+                                                     comm->c_local_comm->c_coll->coll_bcast_module);
     } else {
         /* root section, send to the first process of the remote group */
-	err = MCA_PML_CALL(send(buff, count, datatype, 0,
-				MCA_COLL_BASE_TAG_BCAST,
-				MCA_PML_BASE_SEND_STANDARD,
-				comm));
-	if (OMPI_SUCCESS != err) {
-	    return err;
-	}
+        err = MCA_PML_CALL(send(buff, count, datatype, 0, MCA_COLL_BASE_TAG_BCAST,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        if (OMPI_SUCCESS != err) {
+            return err;
+        }
     }
 
     /* All done */
     return err;
 }
-

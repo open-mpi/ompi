@@ -24,47 +24,36 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_BARRIER = ompi_barrier_f
-#pragma weak pmpi_barrier = ompi_barrier_f
-#pragma weak pmpi_barrier_ = ompi_barrier_f
-#pragma weak pmpi_barrier__ = ompi_barrier_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_BARRIER = ompi_barrier_f
+#        pragma weak pmpi_barrier = ompi_barrier_f
+#        pragma weak pmpi_barrier_ = ompi_barrier_f
+#        pragma weak pmpi_barrier__ = ompi_barrier_f
 
-#pragma weak PMPI_Barrier_f = ompi_barrier_f
-#pragma weak PMPI_Barrier_f08 = ompi_barrier_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_BARRIER,
-                           pmpi_barrier,
-                           pmpi_barrier_,
-                           pmpi_barrier__,
-                           pompi_barrier_f,
-                           (MPI_Fint *comm, MPI_Fint *ierr),
-                           (comm, ierr) )
-#endif
+#        pragma weak PMPI_Barrier_f = ompi_barrier_f
+#        pragma weak PMPI_Barrier_f08 = ompi_barrier_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_BARRIER, pmpi_barrier, pmpi_barrier_, pmpi_barrier__,
+                           pompi_barrier_f, (MPI_Fint * comm, MPI_Fint *ierr), (comm, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_BARRIER = ompi_barrier_f
-#pragma weak mpi_barrier = ompi_barrier_f
-#pragma weak mpi_barrier_ = ompi_barrier_f
-#pragma weak mpi_barrier__ = ompi_barrier_f
+#    pragma weak MPI_BARRIER = ompi_barrier_f
+#    pragma weak mpi_barrier = ompi_barrier_f
+#    pragma weak mpi_barrier_ = ompi_barrier_f
+#    pragma weak mpi_barrier__ = ompi_barrier_f
 
-#pragma weak MPI_Barrier_f = ompi_barrier_f
-#pragma weak MPI_Barrier_f08 = ompi_barrier_f
+#    pragma weak MPI_Barrier_f = ompi_barrier_f
+#    pragma weak MPI_Barrier_f08 = ompi_barrier_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_BARRIER,
-                           mpi_barrier,
-                           mpi_barrier_,
-                           mpi_barrier__,
-                           ompi_barrier_f,
-                           (MPI_Fint *comm, MPI_Fint *ierr),
-                           (comm, ierr) )
-#else
-#define ompi_barrier_f pompi_barrier_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_BARRIER, mpi_barrier, mpi_barrier_, mpi_barrier__, ompi_barrier_f,
+                           (MPI_Fint * comm, MPI_Fint *ierr), (comm, ierr))
+#    else
+#        define ompi_barrier_f pompi_barrier_f
+#    endif
 #endif
-#endif
-
 
 void ompi_barrier_f(MPI_Fint *comm, MPI_Fint *ierr)
 {
@@ -74,5 +63,6 @@ void ompi_barrier_f(MPI_Fint *comm, MPI_Fint *ierr)
     c_comm = PMPI_Comm_f2c(*comm);
 
     ierr_c = PMPI_Barrier(c_comm);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(ierr_c);
 }

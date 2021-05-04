@@ -24,4 +24,3 @@
 OMPI_DECLSPEC extern int ompi_tv_comm_sequence_number;
 
 #endif /* OMPI_TOTALVIEW_H */
-

@@ -23,22 +23,21 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_lock = PMPI_Win_lock
-#endif
-#define MPI_Win_lock PMPI_Win_lock
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_lock = PMPI_Win_lock
+#    endif
+#    define MPI_Win_lock PMPI_Win_lock
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_lock";
-
 
 int MPI_Win_lock(int lock_type, int rank, int mpi_assert, MPI_Win win)
 {
@@ -49,14 +48,13 @@ int MPI_Win_lock(int lock_type, int rank, int mpi_assert, MPI_Win win)
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
-        } else if (lock_type != MPI_LOCK_EXCLUSIVE &&
-                   lock_type != MPI_LOCK_SHARED) {
+        } else if (lock_type != MPI_LOCK_EXCLUSIVE && lock_type != MPI_LOCK_SHARED) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_LOCKTYPE, FUNC_NAME);
         } else if (ompi_win_peer_invalid(win, rank)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RANK, FUNC_NAME);
         } else if (0 != (mpi_assert & ~(MPI_MODE_NOCHECK))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
-        } else if (! ompi_win_allow_locks(win)) {
+        } else if (!ompi_win_allow_locks(win)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);
         }
     }

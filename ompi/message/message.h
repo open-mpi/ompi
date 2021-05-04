@@ -23,12 +23,12 @@ BEGIN_C_DECLS
 struct ompi_communicator_t;
 
 struct ompi_message_t {
-    opal_free_list_item_t super;        /**< Base type */
-    int m_f_to_c_index;                 /**< Fortran handle for this message */
-    struct ompi_communicator_t *comm;   /**< communicator used in probe */
-    void* req_ptr;                      /**< PML data */
-    int peer;                           /**< peer, same as status.MPI_SOURCE */
-    size_t count;                       /**< same value as status._ucount */
+    opal_free_list_item_t super;      /**< Base type */
+    int m_f_to_c_index;               /**< Fortran handle for this message */
+    struct ompi_communicator_t *comm; /**< communicator used in probe */
+    void *req_ptr;                    /**< PML data */
+    int peer;                         /**< peer, same as status.MPI_SOURCE */
+    size_t count;                     /**< same value as status._ucount */
 };
 typedef struct ompi_message_t ompi_message_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_message_t);
@@ -52,30 +52,23 @@ int ompi_message_init(void);
 int ompi_message_finalize(void);
 
 OMPI_DECLSPEC extern opal_free_list_t ompi_message_free_list;
-OMPI_DECLSPEC extern opal_pointer_array_t  ompi_message_f_to_c_table;
-OMPI_DECLSPEC extern ompi_predefined_message_t  ompi_message_no_proc;
+OMPI_DECLSPEC extern opal_pointer_array_t ompi_message_f_to_c_table;
+OMPI_DECLSPEC extern ompi_predefined_message_t ompi_message_no_proc;
 
-static inline
-ompi_message_t*
-ompi_message_alloc(void)
+static inline ompi_message_t *ompi_message_alloc(void)
 {
-    return (ompi_message_t *) opal_free_list_get (&ompi_message_free_list);
+    return (ompi_message_t *) opal_free_list_get(&ompi_message_free_list);
 }
 
-static inline
-void
-ompi_message_return(ompi_message_t* msg)
+static inline void ompi_message_return(ompi_message_t *msg)
 {
     if (MPI_UNDEFINED != msg->m_f_to_c_index) {
-        opal_pointer_array_set_item(&ompi_message_f_to_c_table,
-                                    msg->m_f_to_c_index, NULL);
+        opal_pointer_array_set_item(&ompi_message_f_to_c_table, msg->m_f_to_c_index, NULL);
         msg->m_f_to_c_index = MPI_UNDEFINED;
     }
 
-    opal_free_list_return (&ompi_message_free_list,
-                           &msg->super);
+    opal_free_list_return(&ompi_message_free_list, &msg->super);
 }
-
 
 END_C_DECLS
 

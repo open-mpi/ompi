@@ -15,17 +15,15 @@
 #include <stdlib.h>
 
 #include "oshmem/constants.h"
-#include "oshmem/mca/spml/spml.h"
-#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/scoll/scoll.h"
+#include "oshmem/mca/spml/spml.h"
 #include "oshmem/proc/proc.h"
 #include "scoll_basic.h"
 
-static int _algorithm_central_counter(struct oshmem_group_t *group,
-                                       long *pSync);
+static int _algorithm_central_counter(struct oshmem_group_t *group, long *pSync);
 static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync);
-static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
-                                          long *pSync);
+static int _algorithm_recursive_doubling(struct oshmem_group_t *group, long *pSync);
 static int _algorithm_dissemination(struct oshmem_group_t *group, long *pSync);
 static int _algorithm_basic(struct oshmem_group_t *group, long *pSync);
 static int _algorithm_adaptive(struct oshmem_group_t *group, long *pSync);
@@ -42,43 +40,35 @@ int mca_scoll_basic_barrier(struct oshmem_group_t *group, long *pSync, int alg)
 
     if ((rc == OSHMEM_SUCCESS) && oshmem_proc_group_is_member(group)) {
         if (pSync) {
-            alg = (alg == SCOLL_DEFAULT_ALG ?
-                    mca_scoll_basic_param_barrier_algorithm : alg);
+            alg = (alg == SCOLL_DEFAULT_ALG ? mca_scoll_basic_param_barrier_algorithm : alg);
             switch (alg) {
-            case SCOLL_ALG_BARRIER_CENTRAL_COUNTER:
-                {
-                    rc = _algorithm_central_counter(group, pSync);
-                    break;
-                }
-            case SCOLL_ALG_BARRIER_TOURNAMENT:
-                {
-                    rc = _algorithm_tournament(group, pSync);
-                    break;
-                }
-            case SCOLL_ALG_BARRIER_RECURSIVE_DOUBLING:
-                {
-                    rc = _algorithm_recursive_doubling(group, pSync);
-                    break;
-                }
-            case SCOLL_ALG_BARRIER_DISSEMINATION:
-                {
-                    rc = _algorithm_dissemination(group, pSync);
-                    break;
-                }
-            case SCOLL_ALG_BARRIER_BASIC:
-                {
-                    rc = _algorithm_basic(group, pSync);
-                    break;
-                }
-            case SCOLL_ALG_BARRIER_ADAPTIVE:
-                {
-                    rc = _algorithm_adaptive(group, pSync);
-                    break;
-                }
-            default:
-                {
-                    rc = _algorithm_recursive_doubling(group, pSync);
-                }
+            case SCOLL_ALG_BARRIER_CENTRAL_COUNTER: {
+                rc = _algorithm_central_counter(group, pSync);
+                break;
+            }
+            case SCOLL_ALG_BARRIER_TOURNAMENT: {
+                rc = _algorithm_tournament(group, pSync);
+                break;
+            }
+            case SCOLL_ALG_BARRIER_RECURSIVE_DOUBLING: {
+                rc = _algorithm_recursive_doubling(group, pSync);
+                break;
+            }
+            case SCOLL_ALG_BARRIER_DISSEMINATION: {
+                rc = _algorithm_dissemination(group, pSync);
+                break;
+            }
+            case SCOLL_ALG_BARRIER_BASIC: {
+                rc = _algorithm_basic(group, pSync);
+                break;
+            }
+            case SCOLL_ALG_BARRIER_ADAPTIVE: {
+                rc = _algorithm_adaptive(group, pSync);
+                break;
+            }
+            default: {
+                rc = _algorithm_recursive_doubling(group, pSync);
+            }
             }
         } else {
             SCOLL_ERROR("Incorrect argument pSync");
@@ -97,8 +87,7 @@ int mca_scoll_basic_barrier(struct oshmem_group_t *group, long *pSync, int alg)
  NP-1 competing network transfers are needed to implement the counter
  The memory usage is constant (1 byte) per node.
  */
-static int _algorithm_central_counter(struct oshmem_group_t *group,
-                                       long *pSync)
+static int _algorithm_central_counter(struct oshmem_group_t *group, long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
     long value = SHMEM_SYNC_INIT;
@@ -116,7 +105,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
     if (PE_root == group->my_pe) {
         int pe_cur = 0;
         long wait_pe_count = 0;
-        int* wait_pe_array = NULL;
+        int *wait_pe_array = NULL;
 
         wait_pe_array = malloc(sizeof(*wait_pe_array) * group->proc_count);
         if (wait_pe_array) {
@@ -130,18 +119,16 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
             wait_pe_count--;
 
             while (wait_pe_count) {
-                for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS);
-                        i++) {
+                for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
                     pe_cur = wait_pe_array[i];
                     if (pe_cur != OSHMEM_PE_INVALID) {
-                        rc = MCA_SPML_CALL(get(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, pe_cur));
-                        if ((rc == OSHMEM_SUCCESS)
-                                && (value == SHMEM_SYNC_WAIT)) {
+                        rc = MCA_SPML_CALL(get(oshmem_ctx_default, (void *) pSync, sizeof(value),
+                                               (void *) &value, pe_cur));
+                        if ((rc == OSHMEM_SUCCESS) && (value == SHMEM_SYNC_WAIT)) {
                             wait_pe_array[i] = OSHMEM_PE_INVALID;
                             wait_pe_count--;
-                            SCOLL_VERBOSE(14,
-                                          "[#%d] PE#%d is ready (wait list counter: %d)",
-                                          group->my_pe, pe_cur, (int)wait_pe_count);
+                            SCOLL_VERBOSE(14, "[#%d] PE#%d is ready (wait list counter: %d)",
+                                          group->my_pe, pe_cur, (int) wait_pe_count);
                         }
                     }
                 }
@@ -149,11 +136,11 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
 
             SCOLL_VERBOSE(14, "[#%d] PE signals to all", group->my_pe);
             value = SHMEM_SYNC_RUN;
-            for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS);
-                    i++) {
+            for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
                 pe_cur = oshmem_proc_pe(group->proc_array[i]);
                 if (pe_cur != PE_root) {
-                    rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, pe_cur));
+                    rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void *) pSync, sizeof(value),
+                                           (void *) &value, pe_cur));
                 }
             }
 
@@ -163,26 +150,23 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
         }
 
         /* Possibly this is unnecessary...
-         But imagine the scenario when you have 2 sequential barriers and the root PE is the fastest one.
-         The root could leave the first barrier and in the second barrier it could get SHMEM_SYNC_WAIT value on
-         remote node before the remote node receives its SHMEM_SYNC_RUN value in the first barrier
+         But imagine the scenario when you have 2 sequential barriers and the root PE is the fastest
+         one. The root could leave the first barrier and in the second barrier it could get
+         SHMEM_SYNC_WAIT value on remote node before the remote node receives its SHMEM_SYNC_RUN
+         value in the first barrier
          */
         MCA_SPML_CALL(quiet(oshmem_ctx_default));
     }
     /* Wait for RUN signal */
     else {
-        SCOLL_VERBOSE(14,
-                      "[#%d] PE waits for a signal from root",
-                      group->my_pe);
+        SCOLL_VERBOSE(14, "[#%d] PE waits for a signal from root", group->my_pe);
 
         value = SHMEM_SYNC_RUN;
-        rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_EQ, (void*)&value, SHMEM_LONG));
+        rc = MCA_SPML_CALL(wait((void *) pSync, SHMEM_CMP_EQ, (void *) &value, SHMEM_LONG));
     }
 
     /* Restore initial values */
-    SCOLL_VERBOSE(12,
-                  "[#%d] Restore special synchronization array",
-                  group->my_pe);
+    SCOLL_VERBOSE(12, "[#%d] Restore special synchronization array", group->my_pe);
     for (i = 0; i < _SHMEM_BARRIER_SYNC_SIZE; i++) {
         pSync[i] = _SHMEM_SYNC_VALUE;
     }
@@ -196,11 +180,10 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
  The Tournament Barrier, proposed by Hengsen, Finkel and Manser is mostly suitable for shared memory
  multiprocessors because it benefits from several caching mechanisms.
  The algorithm is similar to a tournament game. In each round two
- nodes play against each other. The winner is known in advance and waits until the looser arrives. The
- winners play against each other in the next round. The overall winner (the champion) notifies all others
- about the end of the barrier.
- Outlay:
- The game scales with log2(NP) and uses 1 byte of memory.
+ nodes play against each other. The winner is known in advance and waits until the looser arrives.
+ The winners play against each other in the next round. The overall winner (the champion) notifies
+ all others about the end of the barrier. Outlay: The game scales with log2(NP) and uses 1 byte of
+ memory.
  */
 static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync)
 {
@@ -236,42 +219,40 @@ static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync)
             value = my_id;
 
             SCOLL_VERBOSE(14, "[#%d] round = %d wait", group->my_pe, round);
-            rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_EQ, (void*)&value, SHMEM_LONG));
+            rc = MCA_SPML_CALL(wait((void *) pSync, SHMEM_CMP_EQ, (void *) &value, SHMEM_LONG));
         } else {
             peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
 
-#if 1 /* It is ugly implementation of compare and swap operation
-         Usage of this hack does not give performance improvement but
-         it is expected that shmem_long_cswap() will make it faster.
+#if 1 /* It is ugly implementation of compare and swap operation      \
+         Usage of this hack does not give performance improvement but \
+         it is expected that shmem_long_cswap() will make it faster.  \
        */
             do {
-                MCA_SPML_CALL(get(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+                MCA_SPML_CALL(get(oshmem_ctx_default, (void *) pSync, sizeof(value),
+                                  (void *) &value, peer_pe));
             } while (value != my_id);
 
-            SCOLL_VERBOSE(14,
-                          "[#%d] round = %d signals to #%d",
-                          group->my_pe, round, peer_pe);
+            SCOLL_VERBOSE(14, "[#%d] round = %d signals to #%d", group->my_pe, round, peer_pe);
             value = peer_id;
-            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(
+                put(oshmem_ctx_default, (void *) pSync, sizeof(value), (void *) &value, peer_pe));
 #else
             SCOLL_VERBOSE(14, "[#%d] round = %d signals to #%d", group->my_pe, round, peer_pe);
-            do
-            {
-                rc = MCA_ATOMIC_CALL(cswap((void*)pSync, (void*)&value, (const void*)&my_id, (const void*)&peer_id, sizeof(value), peer_pe));
-            }while (value != my_id);
+            do {
+                rc = MCA_ATOMIC_CALL(cswap((void *) pSync, (void *) &value, (const void *) &my_id,
+                                           (const void *) &peer_id, sizeof(value), peer_pe));
+            } while (value != my_id);
 #endif
             SCOLL_VERBOSE(14, "[#%d] round = %d wait", group->my_pe, round);
             value = SHMEM_SYNC_RUN;
-            rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_EQ, (void*)&value, SHMEM_LONG));
+            rc = MCA_SPML_CALL(wait((void *) pSync, SHMEM_CMP_EQ, (void *) &value, SHMEM_LONG));
 
             break;
         }
     }
 
     /* Restore initial values */
-    SCOLL_VERBOSE(12,
-                  "[#%d] Restore special synchronization array",
-                  group->my_pe);
+    SCOLL_VERBOSE(12, "[#%d] Restore special synchronization array", group->my_pe);
     for (i = 0; i < _SHMEM_BARRIER_SYNC_SIZE; i++) {
         pSync[i] = _SHMEM_SYNC_VALUE;
     }
@@ -281,11 +262,10 @@ static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync)
         SCOLL_VERBOSE(14, "[#%d] signals to all", group->my_pe);
 
         value = SHMEM_SYNC_RUN;
-        for (peer_id = 1;
-                (peer_id < group->proc_count) && (rc == OSHMEM_SUCCESS);
-                peer_id++) {
+        for (peer_id = 1; (peer_id < group->proc_count) && (rc == OSHMEM_SUCCESS); peer_id++) {
             peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
-            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(
+                put(oshmem_ctx_default, (void *) pSync, sizeof(value), (void *) &value, peer_pe));
         }
     }
 
@@ -302,8 +282,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync)
  Outlay:
  The algorithm uses a maximum of log2(NP) + 2 network writes and P bytes memory per node.
  */
-static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
-                                          long *pSync)
+static int _algorithm_recursive_doubling(struct oshmem_group_t *group, long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
     int round = 0;
@@ -323,32 +302,25 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
         floor2_proc <<= 1;
     }
 
-    SCOLL_VERBOSE(12,
-                  "[#%d] Barrier algorithm: Recursive Doubling",
-                  group->my_pe);
-    SCOLL_VERBOSE(15,
-                  "[#%d] pSync[0] = %ld floor2_proc = %d",
-                  group->my_pe, pSync[0], floor2_proc);
+    SCOLL_VERBOSE(12, "[#%d] Barrier algorithm: Recursive Doubling", group->my_pe);
+    SCOLL_VERBOSE(15, "[#%d] pSync[0] = %ld floor2_proc = %d", group->my_pe, pSync[0], floor2_proc);
 
     if (my_id >= floor2_proc) {
         /* I am in extra group, my partner is node (my_id-y) in basic group */
         peer_id = my_id - floor2_proc;
         peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
 
-        SCOLL_VERBOSE(14,
-                      "[#%d] is extra and signal to #%d",
-                      group->my_pe, peer_pe);
+        SCOLL_VERBOSE(14, "[#%d] is extra and signal to #%d", group->my_pe, peer_pe);
         value = SHMEM_SYNC_WAIT;
-        rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+        rc = MCA_SPML_CALL(
+            put(oshmem_ctx_default, (void *) pSync, sizeof(value), (void *) &value, peer_pe));
 
         SCOLL_VERBOSE(14, "[#%d] wait", group->my_pe);
         value = SHMEM_SYNC_RUN;
-        rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_EQ, (void*)&value, SHMEM_LONG));
+        rc = MCA_SPML_CALL(wait((void *) pSync, SHMEM_CMP_EQ, (void *) &value, SHMEM_LONG));
 
         /* Restore initial values */
-        SCOLL_VERBOSE(12,
-                      "[#%d] Restore special synchronization array",
-                      group->my_pe);
+        SCOLL_VERBOSE(12, "[#%d] Restore special synchronization array", group->my_pe);
         for (i = 0; i < _SHMEM_BARRIER_SYNC_SIZE; i++) {
             pSync[i] = _SHMEM_SYNC_VALUE;
         }
@@ -359,11 +331,9 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
             peer_id = my_id + floor2_proc;
             peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
 
-            SCOLL_VERBOSE(14,
-                          "[#%d] wait a signal from #%d",
-                          group->my_pe, peer_pe);
+            SCOLL_VERBOSE(14, "[#%d] wait a signal from #%d", group->my_pe, peer_pe);
             value = SHMEM_SYNC_WAIT;
-            rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_EQ, (void*)&value, SHMEM_LONG));
+            rc = MCA_SPML_CALL(wait((void *) pSync, SHMEM_CMP_EQ, (void *) &value, SHMEM_LONG));
         }
 
         /* Pairwise exchange  */
@@ -379,39 +349,38 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
 
             peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
 
-#if 1 /* It is ugly implementation of compare and swap operation
-         Usage of this hack does not give performance improvement but
-         it is expected that shmem_long_cswap() will make it faster.
+#if 1 /* It is ugly implementation of compare and swap operation      \
+         Usage of this hack does not give performance improvement but \
+         it is expected that shmem_long_cswap() will make it faster.  \
        */
             do {
-                MCA_SPML_CALL(get(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+                MCA_SPML_CALL(get(oshmem_ctx_default, (void *) pSync, sizeof(value),
+                                  (void *) &value, peer_pe));
             } while (value != (round - 1));
 
-            SCOLL_VERBOSE(14,
-                          "[#%d] round = %d signals to #%d",
-                          group->my_pe, round, peer_pe);
+            SCOLL_VERBOSE(14, "[#%d] round = %d signals to #%d", group->my_pe, round, peer_pe);
             value = round;
-            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(
+                put(oshmem_ctx_default, (void *) pSync, sizeof(value), (void *) &value, peer_pe));
 #else
             SCOLL_VERBOSE(14, "[#%d] round = %d signals to #%d", group->my_pe, round, peer_pe);
             {
                 long cond = round - 1;
-                do
-                {
-                    rc = MCA_ATOMIC_CALL(cswap((void*)pSync, (void*)&value, (const void*)&cond, (const void*)&round, sizeof(value), peer_pe));
-                }while (value != (round-1));
+                do {
+                    rc = MCA_ATOMIC_CALL(cswap((void *) pSync, (void *) &value,
+                                               (const void *) &cond, (const void *) &round,
+                                               sizeof(value), peer_pe));
+                } while (value != (round - 1));
             }
 #endif
 
             SCOLL_VERBOSE(14, "[#%d] round = %d wait", group->my_pe, round);
             value = round;
-            rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_GE, (void*)&value, SHMEM_LONG));
+            rc = MCA_SPML_CALL(wait((void *) pSync, SHMEM_CMP_GE, (void *) &value, SHMEM_LONG));
         }
 
         /* Restore initial values */
-        SCOLL_VERBOSE(12,
-                      "[#%d] Restore special synchronization array",
-                      group->my_pe);
+        SCOLL_VERBOSE(12, "[#%d] Restore special synchronization array", group->my_pe);
         for (i = 0; i < _SHMEM_BARRIER_SYNC_SIZE; i++) {
             pSync[i] = _SHMEM_SYNC_VALUE;
         }
@@ -424,7 +393,8 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
 
             SCOLL_VERBOSE(14, "[#%d] signals to #%d", group->my_pe, peer_pe);
             value = SHMEM_SYNC_RUN;
-            rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            rc = MCA_SPML_CALL(
+                put(oshmem_ctx_default, (void *) pSync, sizeof(value), (void *) &value, peer_pe));
         }
     }
 
@@ -435,10 +405,9 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
 
 /*
  The Dissemination Barrier, introduced by Hengsen, Finkel and Manser in 1998.
- The algorithm is mostly an improvement of the Butterfly Barrier for non power of two processor counts.
- It uses the same pairwise synchronization but with other partners.
- Outlay:
- The game scales with log2(NP) and uses 1 byte of memory.
+ The algorithm is mostly an improvement of the Butterfly Barrier for non power of two processor
+ counts. It uses the same pairwise synchronization but with other partners. Outlay: The game scales
+ with log2(NP) and uses 1 byte of memory.
  */
 static int _algorithm_dissemination(struct oshmem_group_t *group, long *pSync)
 {
@@ -454,9 +423,7 @@ static int _algorithm_dissemination(struct oshmem_group_t *group, long *pSync)
     log2_proc = scoll_log2((unsigned long) group->proc_count);
 
     SCOLL_VERBOSE(12, "[#%d] Barrier algorithm: Dissemination", group->my_pe);
-    SCOLL_VERBOSE(15,
-                  "[#%d] pSync[0] = %ld floor2_proc = %d",
-                  group->my_pe, pSync[0], log2_proc);
+    SCOLL_VERBOSE(15, "[#%d] pSync[0] = %ld floor2_proc = %d", group->my_pe, pSync[0], log2_proc);
 
     pSync[0] = round;
     for (round = 0; (round <= log2_proc) && (rc == OSHMEM_SUCCESS); round++) {
@@ -465,30 +432,28 @@ static int _algorithm_dissemination(struct oshmem_group_t *group, long *pSync)
 
         peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
 
-#if 1 /* It is ugly implementation of compare and swap operation
-         Usage of this hack does not give performance improvement but
-         it is expected that shmem_long_cswap() will make it faster.
+#if 1 /* It is ugly implementation of compare and swap operation      \
+         Usage of this hack does not give performance improvement but \
+         it is expected that shmem_long_cswap() will make it faster.  \
        */
         do {
-            MCA_SPML_CALL(get(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+            MCA_SPML_CALL(
+                get(oshmem_ctx_default, (void *) pSync, sizeof(value), (void *) &value, peer_pe));
         } while (value != round);
 
-        SCOLL_VERBOSE(14,
-                      "[#%d] round = %d signals to #%d",
-                      group->my_pe, round, peer_pe);
+        SCOLL_VERBOSE(14, "[#%d] round = %d signals to #%d", group->my_pe, round, peer_pe);
         value = round + 1;
-        rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
+        rc = MCA_SPML_CALL(
+            put(oshmem_ctx_default, (void *) pSync, sizeof(value), (void *) &value, peer_pe));
 #endif
 
         SCOLL_VERBOSE(14, "[#%d] round = %d wait", group->my_pe, round);
         value = round + 1;
-        rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_GE, (void*)&value, SHMEM_LONG));
+        rc = MCA_SPML_CALL(wait((void *) pSync, SHMEM_CMP_GE, (void *) &value, SHMEM_LONG));
     }
 
     /* Restore initial values */
-    SCOLL_VERBOSE(12,
-                  "[#%d] Restore special synchronization array",
-                  group->my_pe);
+    SCOLL_VERBOSE(12, "[#%d] Restore special synchronization array", group->my_pe);
     for (i = 0; i < _SHMEM_BARRIER_SYNC_SIZE; i++) {
         pSync[i] = _SHMEM_SYNC_VALUE;
     }
@@ -527,7 +492,7 @@ static int _algorithm_basic(struct oshmem_group_t *group, long *pSync)
         for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
             pe_cur = oshmem_proc_pe(group->proc_array[i]);
             if (pe_cur != PE_root) {
-                rc = MCA_SPML_CALL(recv(NULL, 0, pe_cur)); 
+                rc = MCA_SPML_CALL(recv(NULL, 0, pe_cur));
             }
             if (OSHMEM_SUCCESS != rc) {
                 return rc;

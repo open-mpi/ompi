@@ -21,25 +21,24 @@
  */
 #include "ompi_config.h"
 
-#include "ompi/win/win.h"
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/runtime/params.h"
+#include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_f2c = PMPI_Win_f2c
-#endif
-#define MPI_Win_f2c PMPI_Win_f2c
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_f2c = PMPI_Win_f2c
+#    endif
+#    define MPI_Win_f2c PMPI_Win_f2c
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_f2c";
 
-
 MPI_Win MPI_Win_f2c(MPI_Fint win)
 {
-    int o_index= OMPI_FINT_2_INT(win);
+    int o_index = OMPI_FINT_2_INT(win);
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -49,10 +48,9 @@ MPI_Win MPI_Win_f2c(MPI_Fint win)
        invalid fortran handle.  If we get an invalid fortran handle,
        return an invalid C handle. */
 
-    if ( 0 > o_index ||
-         o_index >= opal_pointer_array_get_size(&ompi_mpi_windows)) {
+    if (0 > o_index || o_index >= opal_pointer_array_get_size(&ompi_mpi_windows)) {
         return NULL;
     }
 
-    return (MPI_Win)opal_pointer_array_get_item(&ompi_mpi_windows, o_index);
+    return (MPI_Win) opal_pointer_array_get_item(&ompi_mpi_windows, o_index);
 }

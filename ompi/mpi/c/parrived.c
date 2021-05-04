@@ -25,25 +25,24 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/part/part.h"
-#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Parrived = PMPI_Parrived
-#endif
-#define MPI_Parrived PMPI_Parrived
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Parrived = PMPI_Parrived
+#    endif
+#    define MPI_Parrived PMPI_Parrived
 #endif
 
 static const char FUNC_NAME[] = "MPI_Parrived";
 
-
-int MPI_Parrived(MPI_Request request, MPI_Count partition,  int *flag)
+int MPI_Parrived(MPI_Request request, MPI_Count partition, int *flag)
 {
     int rc;
 

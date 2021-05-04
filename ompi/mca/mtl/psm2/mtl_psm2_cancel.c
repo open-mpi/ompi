@@ -22,34 +22,33 @@
 #include "mtl_psm2.h"
 #include "mtl_psm2_request.h"
 
-int ompi_mtl_psm2_cancel(struct mca_mtl_base_module_t* mtl,
-                       struct mca_mtl_request_t *mtl_request,
-                       int flag) {
+int ompi_mtl_psm2_cancel(struct mca_mtl_base_module_t *mtl, struct mca_mtl_request_t *mtl_request,
+                         int flag)
+{
 
-  psm2_error_t err;
-  psm2_mq_status_t status;
+    psm2_error_t err;
+    psm2_mq_status_t status;
 
-  mca_mtl_psm2_request_t *mtl_psm2_request =
-    (mca_mtl_psm2_request_t*) mtl_request;
+    mca_mtl_psm2_request_t *mtl_psm2_request = (mca_mtl_psm2_request_t *) mtl_request;
 
-  /* PSM2 does not support canceling sends */
-  if(OMPI_mtl_psm2_ISEND == mtl_psm2_request->type) {
-    return OMPI_SUCCESS;
-  }
-
-  err = psm2_mq_cancel(&mtl_psm2_request->psm2_request);
-  if(PSM2_OK == err) {
-    err = psm2_mq_test(&mtl_psm2_request->psm2_request, &status);
-    if(PSM2_OK == err) {
-      mtl_request->ompi_req->req_status._cancelled = true;
-      mtl_psm2_request->super.completion_callback(&mtl_psm2_request->super);
-      return OMPI_SUCCESS;
-    } else {
-      return OMPI_ERROR;
+    /* PSM2 does not support canceling sends */
+    if (OMPI_mtl_psm2_ISEND == mtl_psm2_request->type) {
+        return OMPI_SUCCESS;
     }
-  } else if(PSM2_MQ_INCOMPLETE == err) {
-    return OMPI_SUCCESS;
-  }
 
-  return OMPI_ERROR;
+    err = psm2_mq_cancel(&mtl_psm2_request->psm2_request);
+    if (PSM2_OK == err) {
+        err = psm2_mq_test(&mtl_psm2_request->psm2_request, &status);
+        if (PSM2_OK == err) {
+            mtl_request->ompi_req->req_status._cancelled = true;
+            mtl_psm2_request->super.completion_callback(&mtl_psm2_request->super);
+            return OMPI_SUCCESS;
+        } else {
+            return OMPI_ERROR;
+        }
+    } else if (PSM2_MQ_INCOMPLETE == err) {
+        return OMPI_SUCCESS;
+    }
+
+    return OMPI_ERROR;
 }

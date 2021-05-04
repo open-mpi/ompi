@@ -15,9 +15,9 @@
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/adapt/coll_adapt.h"
-#include "opal/class/opal_list.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_base_topo.h"
+#include "ompi/mca/coll/coll.h"
+#include "opal/class/opal_list.h"
 
 typedef struct adapt_topology_cache_item_t {
     opal_list_item_t super;
@@ -28,11 +28,9 @@ typedef struct adapt_topology_cache_item_t {
 
 OBJ_CLASS_DECLARATION(adapt_topology_cache_item_t);
 
-
-OMPI_DECLSPEC ompi_coll_tree_t* adapt_module_cached_topology(
-    mca_coll_base_module_t *module,
-    struct ompi_communicator_t *comm,
-    int root,
-    ompi_coll_adapt_algorithm_t algorithm);
+OMPI_DECLSPEC ompi_coll_tree_t *adapt_module_cached_topology(mca_coll_base_module_t *module,
+                                                             struct ompi_communicator_t *comm,
+                                                             int root,
+                                                             ompi_coll_adapt_algorithm_t algorithm);
 
 #endif /* MCA_COLL_ADAPT_TOPOCACHE_H */

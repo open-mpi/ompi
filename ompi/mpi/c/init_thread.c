@@ -25,27 +25,25 @@
 
 #include "ompi_config.h"
 
-#include "opal/util/show_help.h"
-#include "ompi/runtime/ompi_spc.h"
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/hook/base/base.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
+#include "opal/util/show_help.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Init_thread = PMPI_Init_thread
-#endif
-#define MPI_Init_thread PMPI_Init_thread
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Init_thread = PMPI_Init_thread
+#    endif
+#    define MPI_Init_thread PMPI_Init_thread
 #endif
 
 static const char FUNC_NAME[] = "MPI_Init_thread";
 
-
-int MPI_Init_thread(int *argc, char ***argv, int required,
-                    int *provided)
+int MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
 {
     int err, safe_required = MPI_THREAD_SERIALIZED;
 
@@ -54,8 +52,8 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
     /* Detect an incorrect thread support level, but dont report until we have the minimum
      * infrastructure setup.
      */
-    if( (MPI_THREAD_SINGLE == required) || (MPI_THREAD_SERIALIZED == required) ||
-        (MPI_THREAD_FUNNELED == required) || (MPI_THREAD_MULTIPLE == required) ) {
+    if ((MPI_THREAD_SINGLE == required) || (MPI_THREAD_SERIALIZED == required)
+        || (MPI_THREAD_FUNNELED == required) || (MPI_THREAD_MULTIPLE == required)) {
         safe_required = required;
     }
 
@@ -71,12 +69,12 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
         err = ompi_mpi_init(0, NULL, safe_required, provided, false);
     }
 
-    if( safe_required != required ) {
+    if (safe_required != required) {
         /* Trigger the error handler for the incorrect argument. Keep it separate from the
          * check on the ompi_mpi_init return and report a nice, meaningful error message to
          * the user. */
-        return ompi_errhandler_invoke((ompi_errhandler_t*)&ompi_mpi_errors_are_fatal, NULL, OMPI_ERRHANDLER_TYPE_COMM,
-                                      MPI_ERR_ARG, FUNC_NAME);
+        return ompi_errhandler_invoke((ompi_errhandler_t *) &ompi_mpi_errors_are_fatal, NULL,
+                                      OMPI_ERRHANDLER_TYPE_COMM, MPI_ERR_ARG, FUNC_NAME);
     }
 
     /* Since we don't have a communicator to invoke an errorhandler on
@@ -86,8 +84,7 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
 
     if (MPI_SUCCESS != err) {
         return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM,
-                                      err < 0 ? ompi_errcode_get_mpi_code(err) :
-                                      err, FUNC_NAME);
+                                      err < 0 ? ompi_errcode_get_mpi_code(err) : err, FUNC_NAME);
     }
 
     SPC_INIT();

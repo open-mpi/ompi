@@ -12,10 +12,10 @@
  */
 
 #include "coll_han.h"
+#include "coll_han_trigger.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
-#include "coll_han_trigger.h"
 
 /*
  * @file
@@ -29,22 +29,12 @@ static int mca_coll_han_gather_ug_task(void *task_args);
 
 /* only work with regular situation (each node has equal number of processes) */
 
-static inline void
-mca_coll_han_set_gather_args(mca_coll_han_gather_args_t * args,
-                             mca_coll_task_t * cur_task,
-                             void *sbuf,
-                             void *sbuf_inter_free,
-                             int scount,
-                             struct ompi_datatype_t *sdtype,
-                             void *rbuf,
-                             int rcount,
-                             struct ompi_datatype_t *rdtype,
-                             int root,
-                             int root_up_rank,
-                             int root_low_rank,
-                             struct ompi_communicator_t *up_comm,
-                             struct ompi_communicator_t *low_comm,
-                             int w_rank, bool noop, bool is_mapbycore, ompi_request_t * req)
+static inline void mca_coll_han_set_gather_args(
+    mca_coll_han_gather_args_t *args, mca_coll_task_t *cur_task, void *sbuf, void *sbuf_inter_free,
+    int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+    struct ompi_datatype_t *rdtype, int root, int root_up_rank, int root_low_rank,
+    struct ompi_communicator_t *up_comm, struct ompi_communicator_t *low_comm, int w_rank,
+    bool noop, bool is_mapbycore, ompi_request_t *req)
 {
     args->cur_task = cur_task;
     args->sbuf = sbuf;
@@ -65,21 +55,15 @@ mca_coll_han_set_gather_args(mca_coll_han_gather_args_t * args,
     args->req = req;
 }
 
-
 /*
  * Main function for taskified gather: calls lg task, a gather on low comm
  */
-int
-mca_coll_han_gather_intra(const void *sbuf, int scount,
-                          struct ompi_datatype_t *sdtype,
-                          void *rbuf, int rcount,
-                          struct ompi_datatype_t *rdtype,
-                          int root,
-                          struct ompi_communicator_t *comm,
-                          mca_coll_base_module_t * module)
+int mca_coll_han_gather_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                              void *rbuf, int rcount, struct ompi_datatype_t *rdtype, int root,
+                              struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     mca_coll_han_module_t *han_module = (mca_coll_han_module_t *) module;
-    int w_rank, w_size; /* information about the global communicator */
+    int w_rank, w_size;              /* information about the global communicator */
     int root_low_rank, root_up_rank; /* root ranks for both sub-communicators */
     char *reorder_buf = NULL, *reorder_rbuf = NULL;
     int err, *vranks, low_rank, low_size, *topo;
@@ -87,14 +71,14 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create(comm, han_module);
-    if( OMPI_SUCCESS != err ) {
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle gather with this communicator. Fall back on another component\n"));
+    if (OMPI_SUCCESS != err) {
+        OPAL_OUTPUT_VERBOSE(
+            (30, mca_coll_han_component.han_output,
+             "han cannot handle gather with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf,
-                                         rcount, rdtype, root,
-                                         comm, comm->c_coll->coll_gather_module);
+        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
+                                         comm->c_coll->coll_gather_module);
     }
 
     /* Topo must be initialized to know rank distribution which then is used to
@@ -102,14 +86,14 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
     topo = mca_coll_han_topo_init(comm, han_module, 2);
     if (han_module->are_ppn_imbalanced) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle gather with this communicator (imbalance). Fall back on another component\n"));
+                             "han cannot handle gather with this communicator (imbalance). Fall "
+                             "back on another component\n"));
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, gather);
-        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf,
-                                         rcount, rdtype, root,
-                                         comm, comm->c_coll->coll_gather_module);
+        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
+                                         comm->c_coll->coll_gather_module);
     }
 
     w_rank = ompi_comm_rank(comm);
@@ -124,10 +108,10 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
     temp_request->req_complete = REQUEST_PENDING;
 
     /* create the subcommunicators */
-    ompi_communicator_t *low_comm =
-        han_module->cached_low_comms[mca_coll_han_component.han_gather_low_module];
-    ompi_communicator_t *up_comm =
-        han_module->cached_up_comms[mca_coll_han_component.han_gather_up_module];
+    ompi_communicator_t *low_comm
+        = han_module->cached_low_comms[mca_coll_han_component.han_gather_low_module];
+    ompi_communicator_t *up_comm
+        = han_module->cached_up_comms[mca_coll_han_component.han_gather_up_module];
 
     /* Get the 'virtual ranks' mapping correspondong to the communicators */
     vranks = han_module->cached_vranks;
@@ -138,9 +122,8 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
     mca_coll_han_get_ranks(vranks, root, low_size, &root_low_rank, &root_up_rank);
 
     OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                         "[%d]: Han Gather root %d root_low_rank %d root_up_rank %d\n",
-                         w_rank, root, root_low_rank, root_up_rank));
-
+                         "[%d]: Han Gather root %d root_low_rank %d root_up_rank %d\n", w_rank,
+                         root, root_low_rank, root_up_rank));
 
     /* Allocate reorder buffers */
     if (w_rank == root) {
@@ -148,33 +131,28 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
          * distribution of ranks on core first and node next,
          * in a increasing order for both patterns */
         if (han_module->is_mapbycore) {
-            OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                                 "[%d]: Han Gather is_bycore: ", w_rank));
-            reorder_rbuf = (char *)rbuf;
+            OPAL_OUTPUT_VERBOSE(
+                (30, mca_coll_han_component.han_output, "[%d]: Han Gather is_bycore: ", w_rank));
+            reorder_rbuf = (char *) rbuf;
 
         } else {
             /* Need a buffer to store unordered final result */
             ptrdiff_t rsize, rgap;
-            rsize = opal_datatype_span(&rdtype->super,
-                                       (int64_t)rcount * w_size,
-                                       &rgap);
-            reorder_buf = (char *)malloc(rsize);        //TODO:free
+            rsize = opal_datatype_span(&rdtype->super, (int64_t) rcount * w_size, &rgap);
+            reorder_buf = (char *) malloc(rsize); // TODO:free
             /* rgap is the size of unused space at the start of the datatype */
             reorder_rbuf = reorder_buf - rgap;
 
             if (MPI_IN_PLACE == sbuf) {
                 ptrdiff_t rextent;
                 ompi_datatype_type_extent(rdtype, &rextent);
-                ptrdiff_t block_size = rextent * (ptrdiff_t)rcount;
+                ptrdiff_t block_size = rextent * (ptrdiff_t) rcount;
                 ptrdiff_t shift = block_size * w_rank;
-                ompi_datatype_copy_content_same_ddt(rdtype,
-                                                    (ptrdiff_t)rcount,
-                                                    (char *)rbuf + shift,
-                                                    reorder_rbuf + shift);
+                ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t) rcount,
+                                                    (char *) rbuf + shift, reorder_rbuf + shift);
             }
         }
     }
-
 
     /* Create lg task */
     mca_coll_task_t *lg = OBJ_NEW(mca_coll_task_t);
@@ -182,7 +160,8 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
     mca_coll_han_gather_args_t *lg_args = malloc(sizeof(mca_coll_han_gather_args_t));
     mca_coll_han_set_gather_args(lg_args, lg, (char *) sbuf, NULL, scount, sdtype, reorder_rbuf,
                                  rcount, rdtype, root, root_up_rank, root_low_rank, up_comm,
-                                 low_comm, w_rank, low_rank != root_low_rank, han_module->is_mapbycore, temp_request);
+                                 low_comm, w_rank, low_rank != root_low_rank,
+                                 han_module->is_mapbycore, temp_request);
     /* Init lg task */
     init_task(lg, mca_coll_han_gather_lg_task, (void *) (lg_args));
     /* Issure lg task */
@@ -202,19 +181,16 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
     if (w_rank == root && !han_module->is_mapbycore) {
         ptrdiff_t rextent;
         ompi_datatype_type_extent(rdtype, &rextent);
-        for (int i = 0 ; i < w_size ; i++) {
+        for (int i = 0; i < w_size; i++) {
             OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                                 "[%d]: Han Gather copy from %d to %d\n",
-                                 w_rank,
-                                 i * 2 + 1,
+                                 "[%d]: Han Gather copy from %d to %d\n", w_rank, i * 2 + 1,
                                  topo[i * 2 + 1]));
-            ptrdiff_t block_size = rextent * (ptrdiff_t)rcount;
+            ptrdiff_t block_size = rextent * (ptrdiff_t) rcount;
             ptrdiff_t src_shift = block_size * i;
-            ptrdiff_t dest_shift = block_size * (ptrdiff_t)topo[i * 2 + 1];
-            ompi_datatype_copy_content_same_ddt(rdtype,
-                                                (ptrdiff_t)rcount,
+            ptrdiff_t dest_shift = block_size * (ptrdiff_t) topo[i * 2 + 1];
+            ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t) rcount,
                                                 reorder_rbuf + src_shift,
-                                                (char *)rbuf + dest_shift);
+                                                (char *) rbuf + dest_shift);
         }
         free(reorder_buf);
     }
@@ -226,8 +202,8 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
 int mca_coll_han_gather_lg_task(void *task_args)
 {
     mca_coll_han_gather_args_t *t = (mca_coll_han_gather_args_t *) task_args;
-    OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output, "[%d] Han Gather:  lg\n",
-                         t->w_rank));
+    OPAL_OUTPUT_VERBOSE(
+        (30, mca_coll_han_component.han_output, "[%d] Han Gather:  lg\n", t->w_rank));
     ompi_datatype_t *dtype;
     size_t count;
     if (t->w_rank == t->root) {
@@ -247,35 +223,25 @@ int mca_coll_han_gather_lg_task(void *task_args)
         int low_size = ompi_comm_size(t->low_comm);
         int low_rank = ompi_comm_rank(t->low_comm);
         ptrdiff_t rsize, rgap = 0;
-        rsize = opal_datatype_span(&dtype->super,
-                                   count * low_size,
-                                   &rgap);
+        rsize = opal_datatype_span(&dtype->super, count * low_size, &rgap);
         tmp_buf = (char *) malloc(rsize);
         tmp_rbuf = tmp_buf - rgap;
         if (t->w_rank == t->root) {
             if (MPI_IN_PLACE == t->sbuf) {
                 ptrdiff_t rextent;
                 ompi_datatype_type_extent(dtype, &rextent);
-                ptrdiff_t block_size = rextent * (ptrdiff_t)count;
+                ptrdiff_t block_size = rextent * (ptrdiff_t) count;
                 ptrdiff_t src_shift = block_size * t->w_rank;
                 ptrdiff_t dest_shift = block_size * low_rank;
-                ompi_datatype_copy_content_same_ddt(dtype,
-                                                    (ptrdiff_t)count,
-                                                    tmp_rbuf + dest_shift,
-                                                    (char *)t->rbuf + src_shift);
+                ompi_datatype_copy_content_same_ddt(dtype, (ptrdiff_t) count, tmp_rbuf + dest_shift,
+                                                    (char *) t->rbuf + src_shift);
             }
         }
     }
 
     /* Low level (usually intra-node or shared memory) node gather */
-    t->low_comm->c_coll->coll_gather((char *)t->sbuf,
-                                     count,
-                                     dtype,
-                                     tmp_rbuf,
-                                     count,
-                                     dtype,
-                                     t->root_low_rank,
-                                     t->low_comm,
+    t->low_comm->c_coll->coll_gather((char *) t->sbuf, count, dtype, tmp_rbuf, count, dtype,
+                                     t->root_low_rank, t->low_comm,
                                      t->low_comm->c_coll->coll_gather_module);
 
     /* Prepare up comm gather */
@@ -299,8 +265,8 @@ int mca_coll_han_gather_ug_task(void *task_args)
     OBJ_RELEASE(t->cur_task);
 
     if (t->noop) {
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "[%d] Han Gather:  ug noop\n", t->w_rank));
+        OPAL_OUTPUT_VERBOSE(
+            (30, mca_coll_han_component.han_output, "[%d] Han Gather:  ug noop\n", t->w_rank));
     } else {
         ompi_datatype_t *dtype;
         size_t count;
@@ -312,17 +278,10 @@ int mca_coll_han_gather_ug_task(void *task_args)
             count = t->scount;
         }
 
-
         int low_size = ompi_comm_size(t->low_comm);
         /* inter node gather */
-        t->up_comm->c_coll->coll_gather((char *)t->sbuf,
-                                        count*low_size,
-                                        dtype,
-                                        (char *)t->rbuf,
-                                        count*low_size,
-                                        dtype,
-                                        t->root_up_rank,
-                                        t->up_comm,
+        t->up_comm->c_coll->coll_gather((char *) t->sbuf, count * low_size, dtype, (char *) t->rbuf,
+                                        count * low_size, dtype, t->root_up_rank, t->up_comm,
                                         t->up_comm->c_coll->coll_gather_module);
 
         if (t->sbuf_inter_free != NULL) {
@@ -339,43 +298,39 @@ int mca_coll_han_gather_ug_task(void *task_args)
 }
 
 /* only work with regular situation (each node has equal number of processes) */
-int
-mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
-                                 struct ompi_datatype_t *sdtype,
-                                 void *rbuf, int rcount,
-                                 struct ompi_datatype_t *rdtype,
-                                 int root,
-                                 struct ompi_communicator_t *comm,
-                                 mca_coll_base_module_t *module)
+int mca_coll_han_gather_intra_simple(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                     void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                     int root, struct ompi_communicator_t *comm,
+                                     mca_coll_base_module_t *module)
 {
-    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t *) module;
     int *topo, w_rank = ompi_comm_rank(comm);
     int w_size = ompi_comm_size(comm);
 
     /* Create the subcommunicators */
-    if( OMPI_SUCCESS != mca_coll_han_comm_create_new(comm, han_module) ) {
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle gather with this communicator. Fall back on another component\n"));
+    if (OMPI_SUCCESS != mca_coll_han_comm_create_new(comm, han_module)) {
+        OPAL_OUTPUT_VERBOSE(
+            (30, mca_coll_han_component.han_output,
+             "han cannot handle gather with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf,
-                                         rcount, rdtype, root,
-                                         comm, comm->c_coll->coll_gather_module);
+        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
+                                         comm->c_coll->coll_gather_module);
     }
 
     /* Topo must be initialized to know rank distribution which then is used to
      * determine if han can be used */
     topo = mca_coll_han_topo_init(comm, han_module, 2);
-    if (han_module->are_ppn_imbalanced){
+    if (han_module->are_ppn_imbalanced) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle gather with this communicator (imbalance). Fall back on another component\n"));
+                             "han cannot handle gather with this communicator (imbalance). Fall "
+                             "back on another component\n"));
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, gather);
-        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf,
-                                         rcount, rdtype, root,
-                                         comm, comm->c_coll->coll_gather_module);
+        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
+                                         comm->c_coll->coll_gather_module);
     }
 
     ompi_communicator_t *low_comm = han_module->sub_comm[INTRA_NODE];
@@ -391,7 +346,6 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
         count = scount;
     }
 
-
     /* Get the 'virtual ranks' mapping corresponding to the communicators */
     int *vranks = han_module->cached_vranks;
     /* information about sub-communicators */
@@ -405,60 +359,42 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
      * if the processes are mapped-by core, no need to reorder:
      * distribution of ranks on core first and node next,
      * in a increasing order for both patterns */
-    char *reorder_buf = NULL;  // allocated memory
+    char *reorder_buf = NULL;       // allocated memory
     char *reorder_buf_start = NULL; // start of the data
     if (w_rank == root) {
         if (han_module->is_mapbycore) {
-            reorder_buf_start = (char *)rbuf;
+            reorder_buf_start = (char *) rbuf;
         } else {
             OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                                  "[%d]: Future Gather needs reordering: ", w_rank));
             ptrdiff_t rgap = 0;
-            ptrdiff_t rsize = opal_datatype_span(&rdtype->super,
-                                                 (int64_t)rcount * w_size,
-                                                 &rgap);
-            reorder_buf = (char *)malloc(rsize);
+            ptrdiff_t rsize = opal_datatype_span(&rdtype->super, (int64_t) rcount * w_size, &rgap);
+            reorder_buf = (char *) malloc(rsize);
             /* rgap is the size of unused space at the start of the datatype */
             reorder_buf_start = reorder_buf - rgap;
         }
-
     }
 
     /* allocate the intermediary buffer
      * to gather on leaders on the low sub communicator */
-    char *tmp_buf = NULL; // allocated memory
+    char *tmp_buf = NULL;       // allocated memory
     char *tmp_buf_start = NULL; // start of the data
     if (low_rank == root_low_rank) {
         ptrdiff_t rsize, rgap = 0;
-        rsize = opal_datatype_span(&dtype->super,
-                                   count * low_size,
-                                   &rgap);
+        rsize = opal_datatype_span(&dtype->super, count * low_size, &rgap);
         tmp_buf = (char *) malloc(rsize);
         tmp_buf_start = tmp_buf - rgap;
     }
 
     /* 1. low gather on nodes leaders */
-    low_comm->c_coll->coll_gather((char *)sbuf,
-                                  count,
-                                  dtype,
-                                  tmp_buf_start,
-                                  count,
-                                  dtype,
-                                  root_low_rank,
-                                  low_comm,
-                                  low_comm->c_coll->coll_gather_module);
+    low_comm->c_coll->coll_gather((char *) sbuf, count, dtype, tmp_buf_start, count, dtype,
+                                  root_low_rank, low_comm, low_comm->c_coll->coll_gather_module);
 
     /* 2. upper gather (inter-node) between node leaders */
     if (low_rank == root_low_rank) {
-        up_comm->c_coll->coll_gather((char *)tmp_buf_start,
-                                     count*low_size,
-                                     dtype,
-                                     (char *)reorder_buf_start,
-                                     count*low_size,
-                                     dtype,
-                                     root_up_rank,
-                                     up_comm,
-                                     up_comm->c_coll->coll_gather_module);
+        up_comm->c_coll->coll_gather((char *) tmp_buf_start, count * low_size, dtype,
+                                     (char *) reorder_buf_start, count * low_size, dtype,
+                                     root_up_rank, up_comm, up_comm->c_coll->coll_gather_module);
 
         if (tmp_buf != NULL) {
             free(tmp_buf);
@@ -474,9 +410,7 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
      * (see reorder_gather)
      */
     if (w_rank == root && !han_module->is_mapbycore) {
-        ompi_coll_han_reorder_gather(reorder_buf_start,
-                                     rbuf, rcount, rdtype,
-                                     comm, topo);
+        ompi_coll_han_reorder_gather(reorder_buf_start, rbuf, rcount, rdtype, comm, topo);
         free(reorder_buf);
     }
 
@@ -493,12 +427,9 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
  * i-th element must be recopied at the place given by the i-th entry of the
  * topology, which is topo[i*topolevel +1]
  */
-void
-ompi_coll_han_reorder_gather(const void *sbuf,
-                             void *rbuf, int count,
-                             struct ompi_datatype_t *dtype,
-                             struct ompi_communicator_t *comm,
-                             int * topo)
+void ompi_coll_han_reorder_gather(const void *sbuf, void *rbuf, int count,
+                                  struct ompi_datatype_t *dtype, struct ompi_communicator_t *comm,
+                                  int *topo)
 {
     int i, topolevel = 2; // always 2 levels in topo
 #if OPAL_ENABLE_DEBUG
@@ -507,18 +438,14 @@ ompi_coll_han_reorder_gather(const void *sbuf,
     int w_size = ompi_comm_size(comm);
     ptrdiff_t rextent;
     ompi_datatype_type_extent(dtype, &rextent);
-    for ( i = 0; i < w_size; i++ ) {
+    for (i = 0; i < w_size; i++) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "[%d]: Future reorder from %d to %d\n",
-                             w_rank,
-                             i * topolevel + 1,
+                             "[%d]: Future reorder from %d to %d\n", w_rank, i * topolevel + 1,
                              topo[i * topolevel + 1]));
-        ptrdiff_t block_size = rextent * (ptrdiff_t)count;
+        ptrdiff_t block_size = rextent * (ptrdiff_t) count;
         ptrdiff_t src_shift = block_size * i;
-        ptrdiff_t dest_shift = block_size * (ptrdiff_t)topo[i * topolevel + 1];
-        ompi_datatype_copy_content_same_ddt(dtype,
-                                            (ptrdiff_t)count,
-                                            (char *)rbuf + dest_shift,
-                                            (char *)sbuf + src_shift);
+        ptrdiff_t dest_shift = block_size * (ptrdiff_t) topo[i * topolevel + 1];
+        ompi_datatype_copy_content_same_ddt(dtype, (ptrdiff_t) count, (char *) rbuf + dest_shift,
+                                            (char *) sbuf + src_shift);
     }
 }

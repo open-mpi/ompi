@@ -30,10 +30,10 @@
 #define MCA_PART_BASE_PSEND_REQUEST_H
 
 #include "ompi_config.h"
-#include "ompi/mca/part/part.h"
 #include "ompi/mca/part/base/part_base_prequest.h"
-#include "opal/datatype/opal_convertor.h"
+#include "ompi/mca/part/part.h"
 #include "ompi/peruse/peruse-internal.h"
+#include "opal/datatype/opal_convertor.h"
 
 BEGIN_C_DECLS
 
@@ -41,13 +41,14 @@ BEGIN_C_DECLS
  * Base type for send requests
  */
 struct mca_part_base_psend_request_t {
-    mca_part_base_prequest_t req_base;       /**< base request type - common data structure for use by wait/test */
-    const void *req_addr;                    /**< pointer to send buffer - may not be application buffer */
-    size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
+    mca_part_base_prequest_t
+        req_base;            /**< base request type - common data structure for use by wait/test */
+    const void *req_addr;    /**< pointer to send buffer - may not be application buffer */
+    size_t req_bytes_packed; /**< packed size of a message given the datatype and count */
 };
 typedef struct mca_part_base_psend_request_t mca_part_base_psend_request_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_part_base_psend_request_t );
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_part_base_psend_request_t);
 
 END_C_DECLS
 

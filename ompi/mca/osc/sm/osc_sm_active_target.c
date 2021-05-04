@@ -15,10 +15,10 @@
 
 #include "ompi_config.h"
 
-#include "opal/sys/atomic.h"
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/mca/osc/osc.h"
+#include "opal/sys/atomic.h"
 
 #include "osc_sm.h"
 
@@ -35,7 +35,7 @@
  * This function is used to sort the rank list. It can be removed if
  * groups are always in order.
  */
-static int compare_ranks (const void *ptra, const void *ptrb)
+static int compare_ranks(const void *ptra, const void *ptrb)
 {
     int a = *((int *) ptra);
     int b = *((int *) ptrb);
@@ -60,49 +60,46 @@ static int compare_ranks (const void *ptra, const void *ptrb)
  * Translate the ranks given in {sub_group} into ranks in the
  * communicator used to create {module}.
  */
-static int *ompi_osc_sm_group_ranks (ompi_group_t *group, ompi_group_t *sub_group)
+static int *ompi_osc_sm_group_ranks(ompi_group_t *group, ompi_group_t *sub_group)
 {
     int size = ompi_group_size(sub_group);
     int *ranks1, *ranks2;
     int ret;
 
-    ranks1 = calloc (size, sizeof(int));
-    ranks2 = calloc (size, sizeof(int));
+    ranks1 = calloc(size, sizeof(int));
+    ranks2 = calloc(size, sizeof(int));
     if (NULL == ranks1 || NULL == ranks2) {
-        free (ranks1);
-        free (ranks2);
+        free(ranks1);
+        free(ranks2);
         return NULL;
     }
 
-    for (int i = 0 ; i < size ; ++i) {
+    for (int i = 0; i < size; ++i) {
         ranks1[i] = i;
     }
 
-    ret = ompi_group_translate_ranks (sub_group, size, ranks1, group, ranks2);
-    free (ranks1);
+    ret = ompi_group_translate_ranks(sub_group, size, ranks1, group, ranks2);
+    free(ranks1);
     if (OMPI_SUCCESS != ret) {
-        free (ranks2);
+        free(ranks2);
         return NULL;
     }
 
-    qsort (ranks2, size, sizeof (int), compare_ranks);
+    qsort(ranks2, size, sizeof(int), compare_ranks);
 
     return ranks2;
 }
 
-
-int
-ompi_osc_sm_fence(int mpi_assert, struct ompi_win_t *win)
+int ompi_osc_sm_fence(int mpi_assert, struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
 
     /* ensure all memory operations have completed */
     opal_atomic_mb();
 
     if (module->global_state->use_barrier_for_fence) {
         return module->comm->c_coll->coll_barrier(module->comm,
-                                                 module->comm->c_coll->coll_barrier_module);
+                                                  module->comm->c_coll->coll_barrier_module);
     } else {
         module->my_sense = !module->my_sense;
         pthread_mutex_lock(&module->global_state->mtx);
@@ -122,14 +119,10 @@ ompi_osc_sm_fence(int mpi_assert, struct ompi_win_t *win)
     }
 }
 
-int
-ompi_osc_sm_start(struct ompi_group_t *group,
-                  int mpi_assert,
-                  struct ompi_win_t *win)
+int ompi_osc_sm_start(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
-    int my_rank = ompi_comm_rank (module->comm);
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
+    int my_rank = ompi_comm_rank(module->comm);
     void *_tmp_ptr = NULL;
 
     OBJ_RETAIN(group);
@@ -142,14 +135,14 @@ ompi_osc_sm_start(struct ompi_group_t *group,
     if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         int size;
 
-        int *ranks = ompi_osc_sm_group_ranks (module->comm->c_local_group, group);
+        int *ranks = ompi_osc_sm_group_ranks(module->comm->c_local_group, group);
         if (NULL == ranks) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         size = ompi_group_size(module->start_group);
 
-        for (int i = 0 ; i < size ; ++i) {
+        for (int i = 0; i < size; ++i) {
             int rank_byte = ranks[i] >> OSC_SM_POST_BITS;
             osc_sm_post_type_t rank_bit = ((osc_sm_post_type_t) 1) << (ranks[i] & OSC_SM_POST_MASK);
 
@@ -159,24 +152,23 @@ ompi_osc_sm_start(struct ompi_group_t *group,
                 opal_atomic_mb();
             }
 
-            opal_atomic_rmb ();
+            opal_atomic_rmb();
 
-            (void) opal_atomic_fetch_xor_64 ((opal_atomic_int64_t *) module->posts[my_rank] + rank_byte, rank_bit);
-       }
+            (void) opal_atomic_fetch_xor_64((opal_atomic_int64_t *) module->posts[my_rank]
+                                                + rank_byte,
+                                            rank_bit);
+        }
 
-        free (ranks);
+        free(ranks);
     }
 
     opal_atomic_mb();
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_complete(struct ompi_win_t *win)
+int ompi_osc_sm_complete(struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     ompi_group_t *group;
     int gsize;
 
@@ -184,23 +176,25 @@ ompi_osc_sm_complete(struct ompi_win_t *win)
     opal_atomic_mb();
 
     group = module->start_group;
-    if (NULL == group || !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR((opal_atomic_intptr_t *) &module->start_group, (opal_atomic_intptr_t *) &group, 0)) {
+    if (NULL == group
+        || !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR((opal_atomic_intptr_t *) &module->start_group,
+                                                    (opal_atomic_intptr_t *) &group, 0)) {
         return OMPI_ERR_RMA_SYNC;
     }
 
     opal_atomic_mb();
 
-    int *ranks = ompi_osc_sm_group_ranks (module->comm->c_local_group, group);
+    int *ranks = ompi_osc_sm_group_ranks(module->comm->c_local_group, group);
     if (NULL == ranks) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     gsize = ompi_group_size(group);
-    for (int i = 0 ; i < gsize ; ++i) {
+    for (int i = 0; i < gsize; ++i) {
         (void) opal_atomic_add_fetch_32(&module->node_states[ranks[i]].complete_count, 1);
     }
 
-    free (ranks);
+    free(ranks);
 
     OBJ_RELEASE(group);
 
@@ -208,15 +202,10 @@ ompi_osc_sm_complete(struct ompi_win_t *win)
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_post(struct ompi_group_t *group,
-                       int mpi_assert,
-                       struct ompi_win_t *win)
+int ompi_osc_sm_post(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
-    int my_rank = ompi_comm_rank (module->comm);
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
+    int my_rank = ompi_comm_rank(module->comm);
     int my_byte = my_rank >> OSC_SM_POST_BITS;
     osc_sm_post_type_t my_bit = ((osc_sm_post_type_t) 1) << (my_rank & OSC_SM_POST_MASK);
     int gsize;
@@ -233,7 +222,7 @@ ompi_osc_sm_post(struct ompi_group_t *group,
     OBJ_RETAIN(group);
 
     if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
-        int *ranks = ompi_osc_sm_group_ranks (module->comm->c_local_group, group);
+        int *ranks = ompi_osc_sm_group_ranks(module->comm->c_local_group, group);
         if (NULL == ranks) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -242,15 +231,17 @@ ompi_osc_sm_post(struct ompi_group_t *group,
         opal_atomic_mb();
 
         gsize = ompi_group_size(module->post_group);
-        for (int i = 0 ; i < gsize ; ++i) {
-            (void) opal_atomic_fetch_add_64 ((opal_atomic_int64_t *) module->posts[ranks[i]] + my_byte, my_bit);
+        for (int i = 0; i < gsize; ++i) {
+            (void) opal_atomic_fetch_add_64((opal_atomic_int64_t *) module->posts[ranks[i]]
+                                                + my_byte,
+                                            my_bit);
         }
 
-        opal_atomic_wmb ();
+        opal_atomic_wmb();
 
-        free (ranks);
+        free(ranks);
 
-        opal_progress ();
+        opal_progress();
     }
 
     OPAL_THREAD_UNLOCK(&module->lock);
@@ -258,12 +249,9 @@ ompi_osc_sm_post(struct ompi_group_t *group,
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_wait(struct ompi_win_t *win)
+int ompi_osc_sm_wait(struct ompi_win_t *win)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     ompi_group_t *group;
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -275,7 +263,7 @@ ompi_osc_sm_wait(struct ompi_win_t *win)
 
     group = module->post_group;
 
-    int size = ompi_group_size (group);
+    int size = ompi_group_size(group);
 
     while (module->my_node_state->complete_count != size) {
         opal_progress();
@@ -293,13 +281,9 @@ ompi_osc_sm_wait(struct ompi_win_t *win)
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_osc_sm_test(struct ompi_win_t *win,
-                       int *flag)
+int ompi_osc_sm_test(struct ompi_win_t *win, int *flag)
 {
-    ompi_osc_sm_module_t *module =
-        (ompi_osc_sm_module_t*) win->w_osc_module;
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
 
     OPAL_THREAD_LOCK(&module->lock);
 

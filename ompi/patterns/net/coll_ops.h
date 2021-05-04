@@ -15,14 +15,13 @@
 
 BEGIN_C_DECLS
 
-int comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
-                int op, opal_list_t *peers);
+int comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype, int op,
+                   opal_list_t *peers);
 
 /* reduction operations supported */
 #define OP_SUM 1
 
 #define TYPE_INT4 1
-
 
 END_C_DECLS
 

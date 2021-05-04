@@ -25,27 +25,26 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Scatterv = PMPI_Scatterv
-#endif
-#define MPI_Scatterv PMPI_Scatterv
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Scatterv = PMPI_Scatterv
+#    endif
+#    define MPI_Scatterv PMPI_Scatterv
 #endif
 
 static const char FUNC_NAME[] = "MPI_Scatterv";
 
-
 int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[],
-                 MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                 MPI_Datatype recvtype, int root, MPI_Comm comm)
+                 MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                 int root, MPI_Comm comm)
 {
     int i, size, err;
 
@@ -54,53 +53,48 @@ int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[]
     MEMCHECKER(
         ptrdiff_t ext;
 
-        size = ompi_comm_remote_size(comm);
-        ompi_datatype_type_extent(recvtype, &ext);
+        size = ompi_comm_remote_size(comm); ompi_datatype_type_extent(recvtype, &ext);
 
-        memchecker_comm(comm);
-        if(OMPI_COMM_IS_INTRA(comm)) {
-              if(ompi_comm_rank(comm) == root) {
+        memchecker_comm(comm); if (OMPI_COMM_IS_INTRA(comm)) {
+            if (ompi_comm_rank(comm) == root) {
                 memchecker_datatype(sendtype);
                 /* check whether root's send buffer is defined. */
                 for (i = 0; i < size; i++) {
                     memchecker_call(&opal_memchecker_base_isdefined,
-                                    (char *)(sendbuf)+displs[i]*ext,
-                                    sendcounts[i], sendtype);
+                                    (char *) (sendbuf) + displs[i] * ext, sendcounts[i], sendtype);
                 }
-                if(MPI_IN_PLACE != recvbuf) {
+                if (MPI_IN_PLACE != recvbuf) {
                     memchecker_datatype(recvtype);
                     /* check whether receive buffer is addressable. */
-                    memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+                    memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount,
+                                    recvtype);
                 }
-              } else {
-                  memchecker_datatype(recvtype);
-                  /* check whether receive buffer is addressable. */
-                  memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
-              }
+            } else {
+                memchecker_datatype(recvtype);
+                /* check whether receive buffer is addressable. */
+                memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
+            }
         } else {
-            if(MPI_ROOT == root) {
-                  memchecker_datatype(sendtype);
-                  /* check whether root's send buffer is defined. */
-                  for (i = 0; i < size; i++) {
-                      memchecker_call(&opal_memchecker_base_isdefined,
-                                      (char *)(sendbuf)+displs[i]*ext,
-                                      sendcounts[i], sendtype);
-                  }
+            if (MPI_ROOT == root) {
+                memchecker_datatype(sendtype);
+                /* check whether root's send buffer is defined. */
+                for (i = 0; i < size; i++) {
+                    memchecker_call(&opal_memchecker_base_isdefined,
+                                    (char *) (sendbuf) + displs[i] * ext, sendcounts[i], sendtype);
+                }
             } else if (MPI_PROC_NULL != root) {
                 /* check whether receive buffer is addressable. */
                 memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
             }
-        }
-    );
+        });
 
     if (MPI_PARAM_CHECK) {
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
-        } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == recvbuf) ||
-                   (ompi_comm_rank(comm) == root && MPI_IN_PLACE == sendbuf)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
+        } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == recvbuf)
+                   || (ompi_comm_rank(comm) == root && MPI_IN_PLACE == sendbuf)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
@@ -116,13 +110,11 @@ int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[]
 
             if (MPI_IN_PLACE != recvbuf) {
                 if (recvcount < 0) {
-                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT,
-                                                  FUNC_NAME);
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
                 }
 
                 if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
-                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE,
-                                                  FUNC_NAME);
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
                 }
             }
 
@@ -152,12 +144,12 @@ int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[]
         /* Errors for intercommunicators */
 
         else {
-            if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-                   MPI_ROOT == root || MPI_PROC_NULL == root)) {
+            if (!((root >= 0 && root < ompi_comm_remote_size(comm)) || MPI_ROOT == root
+                  || MPI_PROC_NULL == root)) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
             }
 
-          /* Errors for the receivers */
+            /* Errors for the receivers */
 
             if (MPI_ROOT != root && MPI_PROC_NULL != root) {
                 if (recvcount < 0) {
@@ -197,14 +189,13 @@ int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[]
      * communicator. This is not absolutely necessary since we will
      * check for this, and other, error conditions during the operation.
      */
-    if( OPAL_UNLIKELY(!ompi_comm_iface_coll_check(comm, &err)) ) {
+    if (OPAL_UNLIKELY(!ompi_comm_iface_coll_check(comm, &err))) {
         OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
     }
 #endif
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_scatterv(sendbuf, sendcounts, displs,
-                                     sendtype, recvbuf, recvcount, recvtype, root, comm,
-                                     comm->c_coll->coll_scatterv_module);
+    err = comm->c_coll->coll_scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
+                                      recvtype, root, comm, comm->c_coll->coll_scatterv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

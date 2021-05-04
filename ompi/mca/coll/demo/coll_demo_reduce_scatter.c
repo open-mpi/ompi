@@ -19,12 +19,11 @@
 #include "ompi_config.h"
 #include "opal/util/output.h"
 
+#include "coll_demo.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "coll_demo.h"
-
+#include "ompi/mca/coll/coll.h"
 
 /*
  *	reduce_scatter
@@ -34,18 +33,16 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_demo_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
-                                       struct ompi_datatype_t *dtype,
-                                       struct ompi_op_t *op,
+                                       struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scatter_intra");
-    return demo_module->underlying.coll_reduce_scatter(sbuf, rbuf, rcounts,
-                                                       dtype, op, comm,
-                                                       demo_module->underlying.coll_reduce_scatter_module);
+    return demo_module->underlying
+        .coll_reduce_scatter(sbuf, rbuf, rcounts, dtype, op, comm,
+                             demo_module->underlying.coll_reduce_scatter_module);
 }
-
 
 /*
  *	reduce_scatter_inter
@@ -55,14 +52,13 @@ int mca_coll_demo_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int mca_coll_demo_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
-                                       struct ompi_datatype_t *dtype,
-                                       struct ompi_op_t *op,
+                                       struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scatter_inter");
-    return demo_module->underlying.coll_reduce_scatter(sbuf, rbuf, rcounts,
-                                                       dtype, op, comm,
-                                                       demo_module->underlying.coll_reduce_scatter_module);
+    return demo_module->underlying
+        .coll_reduce_scatter(sbuf, rbuf, rcounts, dtype, op, comm,
+                             demo_module->underlying.coll_reduce_scatter_module);
 }

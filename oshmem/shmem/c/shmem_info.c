@@ -9,8 +9,8 @@
  */
 #include "oshmem_config.h"
 
-#include <string.h>
 #include <assert.h>
+#include <string.h>
 
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"

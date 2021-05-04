@@ -12,19 +12,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "atomic_basic.h"
 #include "oshmem/constants.h"
-#include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/mca/atomic/base/base.h"
-#include "atomic_basic.h"
+#include "oshmem/mca/spml/spml.h"
 
-int mca_atomic_basic_cswap(shmem_ctx_t ctx,
-                           void *target,
-                           uint64_t *prev,
-                           uint64_t cond,
-                           uint64_t value,
-                           size_t nlong,
-                           int pe)
+int mca_atomic_basic_cswap(shmem_ctx_t ctx, void *target, uint64_t *prev, uint64_t cond,
+                           uint64_t value, size_t nlong, int pe)
 {
     int rc = OSHMEM_SUCCESS;
 
@@ -38,7 +33,7 @@ int mca_atomic_basic_cswap(shmem_ctx_t ctx,
         rc = MCA_SPML_CALL(get(ctx, target, nlong, prev, pe));
 
         if ((rc == OSHMEM_SUCCESS) && (!cond || !memcmp(prev, &cond, nlong))) {
-            rc = MCA_SPML_CALL(put(ctx, target, nlong, (void*)&value, pe));
+            rc = MCA_SPML_CALL(put(ctx, target, nlong, (void *) &value, pe));
             shmem_quiet();
         }
 

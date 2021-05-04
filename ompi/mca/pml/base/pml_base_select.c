@@ -27,23 +27,23 @@
 
 #include <string.h>
 
+#include "ompi/mca/mca.h"
 #include "opal/class/opal_list.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/runtime/opal.h"
+#include "opal/runtime/opal_progress.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/runtime/opal_progress.h"
-#include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
-#include "opal/runtime/opal.h"
-#include "opal/mca/pmix/pmix-internal.h"
 
 #include "ompi/constants.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/proc/proc.h"
 
 typedef struct opened_component_t {
-  opal_list_item_t super;
-  mca_pml_base_component_t *om_component;
+    opal_list_item_t super;
+    mca_pml_base_component_t *om_component;
 } opened_component_t;
 
 /**
@@ -56,8 +56,7 @@ typedef struct opened_component_t {
  * will have all of its function pointers saved and returned to the
  * caller.
  */
-int mca_pml_base_select(bool enable_progress_threads,
-                        bool enable_mpi_threads)
+int mca_pml_base_select(bool enable_progress_threads, bool enable_mpi_threads)
 {
     int i, priority = 0, best_priority = 0, num_pml = 0, ret = 0;
     opal_list_item_t *item = NULL;
@@ -75,38 +74,40 @@ int mca_pml_base_select(bool enable_progress_threads,
     best_component = NULL;
     module = NULL;
     OBJ_CONSTRUCT(&opened, opal_list_t);
-    OPAL_LIST_FOREACH(cli, &ompi_pml_base_framework.framework_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH (cli, &ompi_pml_base_framework.framework_components,
+                       mca_base_component_list_item_t) {
         component = (mca_pml_base_component_t *) cli->cli_component;
 
         /* if there is an include list - item must be in the list to be included */
         found_pml = false;
-        for( i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) {
-            char * tmp_val = NULL;
+        for (i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) {
+            char *tmp_val = NULL;
             tmp_val = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);
-            if( NULL == tmp_val) {
+            if (NULL == tmp_val) {
                 continue;
             }
 
-            if(0 == strncmp(component->pmlm_version.mca_component_name,
-                            tmp_val, strlen(component->pmlm_version.mca_component_name)) ) {
+            if (0
+                == strncmp(component->pmlm_version.mca_component_name, tmp_val,
+                           strlen(component->pmlm_version.mca_component_name))) {
                 found_pml = true;
                 break;
             }
         }
 
-        if(!found_pml && opal_pointer_array_get_size(&mca_pml_base_pml)) {
-            opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                                     "select: component %s not in the include list",
-                                     component->pmlm_version.mca_component_name );
+        if (!found_pml && opal_pointer_array_get_size(&mca_pml_base_pml)) {
+            opal_output_verbose(10, ompi_pml_base_framework.framework_output,
+                                "select: component %s not in the include list",
+                                component->pmlm_version.mca_component_name);
 
             continue;
         }
 
         /* if there is no init function - ignore it */
         if (NULL == component->pmlm_init) {
-            opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                                 "select: no init function; ignoring component %s",
-                                 component->pmlm_version.mca_component_name );
+            opal_output_verbose(10, ompi_pml_base_framework.framework_output,
+                                "select: no init function; ignoring component %s",
+                                component->pmlm_version.mca_component_name);
             continue;
         }
 
@@ -114,77 +115,73 @@ int mca_pml_base_select(bool enable_progress_threads,
         num_pml++;
 
         /* Init component to get its priority */
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                             "select: initializing %s component %s",
-                             component->pmlm_version.mca_type_name,
-                             component->pmlm_version.mca_component_name );
+        opal_output_verbose(10, ompi_pml_base_framework.framework_output,
+                            "select: initializing %s component %s",
+                            component->pmlm_version.mca_type_name,
+                            component->pmlm_version.mca_component_name);
         priority = best_priority;
-        module = component->pmlm_init(&priority, enable_progress_threads,
-                                      enable_mpi_threads);
+        module = component->pmlm_init(&priority, enable_progress_threads, enable_mpi_threads);
         if (NULL == module) {
-            opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                                 "select: init returned failure for component %s",
-                                 component->pmlm_version.mca_component_name );
+            opal_output_verbose(10, ompi_pml_base_framework.framework_output,
+                                "select: init returned failure for component %s",
+                                component->pmlm_version.mca_component_name);
             continue;
         }
 
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                             "select: init returned priority %d", priority );
+        opal_output_verbose(10, ompi_pml_base_framework.framework_output,
+                            "select: init returned priority %d", priority);
         if (priority > best_priority) {
             best_priority = priority;
             best_component = component;
             best_module = module;
         }
 
-        om = (opened_component_t*)malloc(sizeof(opened_component_t));
+        om = (opened_component_t *) malloc(sizeof(opened_component_t));
         if (NULL == om) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         OBJ_CONSTRUCT(om, opal_list_item_t);
         om->om_component = component;
-        opal_list_append(&opened, (opal_list_item_t*) om);
+        opal_list_append(&opened, (opal_list_item_t *) om);
     }
 
     /* Finished querying all components.  Check for the bozo case. */
 
-    if( NULL == best_component ) {
-        opal_show_help("help-mca-base.txt", "find-available:none found",
-                       true, "pml",
-                       opal_process_info.nodename,
-                       "pml");
-        for( i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) {
-            char * tmp_val = NULL;
+    if (NULL == best_component) {
+        opal_show_help("help-mca-base.txt", "find-available:none found", true, "pml",
+                       opal_process_info.nodename, "pml");
+        for (i = 0; i < opal_pointer_array_get_size(&mca_pml_base_pml); i++) {
+            char *tmp_val = NULL;
             tmp_val = (char *) opal_pointer_array_get_item(&mca_pml_base_pml, i);
-            if( NULL == tmp_val) {
+            if (NULL == tmp_val) {
                 continue;
             }
             ompi_rte_abort(1, "PML %s cannot be selected", tmp_val);
         }
-        if(0 == i) {
+        if (0 == i) {
             ompi_rte_abort(2, "No pml component available.  This shouldn't happen.");
         }
     }
 
-    opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                         "selected %s best priority %d\n",
-                         best_component->pmlm_version.mca_component_name, best_priority);
+    opal_output_verbose(10, ompi_pml_base_framework.framework_output,
+                        "selected %s best priority %d\n",
+                        best_component->pmlm_version.mca_component_name, best_priority);
 
     /* Save the winner */
 
     mca_pml_base_selected_component = *best_component;
     mca_pml = *best_module;
-    opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
-                         "select: component %s selected",
-                         mca_pml_base_selected_component.pmlm_version.mca_component_name );
+    opal_output_verbose(10, ompi_pml_base_framework.framework_output,
+                        "select: component %s selected",
+                        mca_pml_base_selected_component.pmlm_version.mca_component_name);
 
     /* Finalize all non-selected components */
 
-    for (item = opal_list_remove_first(&opened);
-         NULL != item;
+    for (item = opal_list_remove_first(&opened); NULL != item;
          item = opal_list_remove_first(&opened)) {
         om = (opened_component_t *) item;
 
-        if (om->om_component != best_component ) {
+        if (om->om_component != best_component) {
             /* Finalize */
 
             if (NULL != om->om_component->pmlm_finalize) {
@@ -199,10 +196,10 @@ int mca_pml_base_select(bool enable_progress_threads,
                                     om->om_component->pmlm_version.mca_component_name);
             }
         }
-        OBJ_DESTRUCT( om );
+        OBJ_DESTRUCT(om);
         free(om);
     }
-    OBJ_DESTRUCT( &opened );
+    OBJ_DESTRUCT(&opened);
 
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
@@ -213,12 +210,12 @@ int mca_pml_base_select(bool enable_progress_threads,
                               (mca_base_component_t *) best_component);
 
     /* register the winner's callback */
-    if( NULL != mca_pml.pml_progress ) {
+    if (NULL != mca_pml.pml_progress) {
         opal_progress_register(mca_pml.pml_progress);
     }
 
 #if OPAL_ENABLE_FT_MPI
-    if( NULL == mca_pml.pml_revoke_comm ) {
+    if (NULL == mca_pml.pml_revoke_comm) {
         /* do not crash when calling a not implemented function after a failure is
          * reported, return a NOT_IMPLEMENTED error */
         mca_pml.pml_revoke_comm = mca_pml_base_revoke_comm;
@@ -243,7 +240,6 @@ static mca_base_component_t pml_base_component = {
     .mca_component_release_version = 0,
 };
 
-
 /*
  * If direct modex, then publish PML for all procs. If full modex then
  * publish PML for rank 0 only. This information is used during add_procs
@@ -259,21 +255,17 @@ static mca_base_component_t pml_base_component = {
  * zero-byte barrier and we would still require direct modex during
  * add_procs
  */
-int
-mca_pml_base_pml_selected(const char *name)
+int mca_pml_base_pml_selected(const char *name)
 {
     int rc = 0;
 
     if (!opal_pmix_collect_all_data || 0 == OMPI_PROC_MY_NAME->vpid) {
-        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name,
-                        strlen(name) + 1);
+        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
     }
     return rc;
 }
 
-static int
-mca_pml_base_pml_check_selected_impl(const char *my_pml,
-                                     opal_process_name_t proc_name)
+static int mca_pml_base_pml_check_selected_impl(const char *my_pml, opal_process_name_t proc_name)
 {
     size_t size;
     int ret = 0;
@@ -281,15 +273,14 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
 
     /* if we are proc_name=OMPI_PROC_MY_NAME, then we can also assume success */
     if (0 == opal_compare_proc(ompi_proc_local()->super.proc_name, proc_name)) {
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
+        opal_output_verbose(10, ompi_pml_base_framework.framework_output,
                             "check:select: PML check not necessary on self");
         return OMPI_SUCCESS;
     }
-    OPAL_MODEX_RECV_STRING(ret,
-                           mca_base_component_to_string(&pml_base_component),
-                           &proc_name, (void**) &remote_pml, &size);
+    OPAL_MODEX_RECV_STRING(ret, mca_base_component_to_string(&pml_base_component), &proc_name,
+                           (void **) &remote_pml, &size);
     if (PMIX_ERR_NOT_FOUND == ret) {
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
+        opal_output_verbose(10, ompi_pml_base_framework.framework_output,
                             "check:select: PML modex for process %s not found",
                             OMPI_NAME_PRINT(&proc_name));
         return OMPI_ERR_NOT_FOUND;
@@ -300,31 +291,28 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
      * is fast...let's be sure
      */
     if (NULL == remote_pml) {
-        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
+        opal_output_verbose(10, ompi_pml_base_framework.framework_output,
                             "check:select: got a NULL pml from process %s",
                             OMPI_NAME_PRINT(&proc_name));
         return OMPI_ERR_UNREACH;
     }
 
-    opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
+    opal_output_verbose(10, ompi_pml_base_framework.framework_output,
                         "check:select: checking my pml %s against process %s"
-                        " pml %s", my_pml, OMPI_NAME_PRINT(&proc_name),
-                        remote_pml);
+                        " pml %s",
+                        my_pml, OMPI_NAME_PRINT(&proc_name), remote_pml);
 
     /* if that module doesn't match my own, return an error */
-    if ((size != strlen(my_pml) + 1) ||
-        (0 != strcmp(my_pml, remote_pml))) {
+    if ((size != strlen(my_pml) + 1) || (0 != strcmp(my_pml, remote_pml))) {
         char *errhost = NULL;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc_name,
-                                       &(errhost), PMIX_STRING);
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc_name, &(errhost), PMIX_STRING);
         opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
-                    OMPI_NAME_PRINT(&ompi_proc_local()->super.proc_name),
-                    my_pml, OMPI_NAME_PRINT(&proc_name),
-                    (NULL == errhost) ? "unknown" : errhost,
+                    OMPI_NAME_PRINT(&ompi_proc_local()->super.proc_name), my_pml,
+                    OMPI_NAME_PRINT(&proc_name), (NULL == errhost) ? "unknown" : errhost,
                     remote_pml);
         free(remote_pml);
         free(errhost);
-         /* cleanup before returning */
+        /* cleanup before returning */
         return OMPI_ERR_UNREACH;
     }
 
@@ -332,10 +320,7 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
     return OMPI_SUCCESS;
 }
 
-int
-mca_pml_base_pml_check_selected(const char *my_pml,
-                                ompi_proc_t **procs,
-                                size_t nprocs)
+int mca_pml_base_pml_check_selected(const char *my_pml, ompi_proc_t **procs, size_t nprocs)
 {
     int ret = 0;
     size_t i;
@@ -346,22 +331,16 @@ mca_pml_base_pml_check_selected(const char *my_pml,
          * for all procs
          */
         for (i = 0; i < nprocs; i++) {
-            ret = mca_pml_base_pml_check_selected_impl(
-                                                 my_pml,
-                                                 procs[i]->super.proc_name);
+            ret = mca_pml_base_pml_check_selected_impl(my_pml, procs[i]->super.proc_name);
             if (ret) {
                 return ret;
             }
         }
     } else {
         /* else if full modex compare our PML with rank 0 */
-        opal_process_name_t proc_name = {
-                           .jobid = ompi_proc_local()->super.proc_name.jobid,
-                           .vpid = 0
-        };
-        ret = mca_pml_base_pml_check_selected_impl(
-                                                 my_pml,
-                                                 proc_name);
+        opal_process_name_t proc_name = {.jobid = ompi_proc_local()->super.proc_name.jobid,
+                                         .vpid = 0};
+        ret = mca_pml_base_pml_check_selected_impl(my_pml, proc_name);
     }
 
     return ret;

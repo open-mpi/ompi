@@ -13,34 +13,21 @@
 #include <stdlib.h>
 
 #include "oshmem/constants.h"
-#include "oshmem/op/op.h"
-#include "oshmem/mca/spml/spml.h"
-#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/scoll/scoll.h"
+#include "oshmem/mca/spml/spml.h"
+#include "oshmem/op/op.h"
 #include "scoll_basic.h"
 
-static int a2a_alg_simple(struct oshmem_group_t *group,
-                          void *target,
-                          const void *source,
-                          size_t nelems,
-                          size_t element_size);
+static int a2a_alg_simple(struct oshmem_group_t *group, void *target, const void *source,
+                          size_t nelems, size_t element_size);
 
-static int a2as_alg_simple(struct oshmem_group_t *group,
-                           void *target,
-                           const void *source,
-                           ptrdiff_t dst, ptrdiff_t sst,
-                           size_t nelems,
-                           size_t element_size);
+static int a2as_alg_simple(struct oshmem_group_t *group, void *target, const void *source,
+                           ptrdiff_t dst, ptrdiff_t sst, size_t nelems, size_t element_size);
 
-
-int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
-                             void *target,
-                             const void *source,
-                             ptrdiff_t dst, ptrdiff_t sst,
-                             size_t nelems,
-                             size_t element_size,
-                             long *pSync,
-                             int alg)
+int mca_scoll_basic_alltoall(struct oshmem_group_t *group, void *target, const void *source,
+                             ptrdiff_t dst, ptrdiff_t sst, size_t nelems, size_t element_size,
+                             long *pSync, int alg)
 {
     int rc;
     int i;
@@ -69,12 +56,11 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
     if ((sst == 1) && (dst == 1)) {
         rc = a2a_alg_simple(group, target, source, nelems, element_size);
     } else {
-        rc = a2as_alg_simple(group, target, source, dst, sst, nelems,
-                             element_size);
+        rc = a2as_alg_simple(group, target, source, dst, sst, nelems, element_size);
     }
 
     if (rc != OSHMEM_SUCCESS) {
-       return rc;
+        return rc;
     }
 
     /* quiet is needed because scoll level barrier does not
@@ -87,8 +73,7 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
     rc = BARRIER_FUNC(group, pSync, SCOLL_DEFAULT_ALG);
 
     /* Restore initial values */
-    SCOLL_VERBOSE(12, "PE#%d Restore special synchronization array",
-                  group->my_pe);
+    SCOLL_VERBOSE(12, "PE#%d Restore special synchronization array", group->my_pe);
 
     for (i = 0; pSync && (i < _SHMEM_ALLTOALL_SYNC_SIZE); i++) {
         pSync[i] = _SHMEM_SYNC_VALUE;
@@ -97,20 +82,18 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
     return rc;
 }
 
-
-static inline void *
-get_stride_elem(const void *base, ptrdiff_t sst, size_t nelems, size_t elem_size,
-                int block_idx, int elem_idx)
+static inline void *get_stride_elem(const void *base, ptrdiff_t sst, size_t nelems,
+                                    size_t elem_size, int block_idx, int elem_idx)
 {
     /*
      * j th block starts at: nelems * element_size * sst * j
      * offset of the l th element in the block is: element_size * sst * l
      */
-    return (char *)base + elem_size * sst * (nelems * block_idx + elem_idx);
+    return (char *) base + elem_size * sst * (nelems * block_idx + elem_idx);
 }
 
-static inline int
-get_dst_pe(struct oshmem_group_t *group, int src_blk_idx, int dst_blk_idx, int *dst_pe_idx)
+static inline int get_dst_pe(struct oshmem_group_t *group, int src_blk_idx, int dst_blk_idx,
+                             int *dst_pe_idx)
 {
     /* index permutation for better distribution of traffic */
     (*dst_pe_idx) = (dst_blk_idx + src_blk_idx) % group->proc_count;
@@ -119,12 +102,8 @@ get_dst_pe(struct oshmem_group_t *group, int src_blk_idx, int dst_blk_idx, int *
     return oshmem_proc_pe(group->proc_array[*dst_pe_idx]);
 }
 
-static int a2as_alg_simple(struct oshmem_group_t *group,
-                           void *target,
-                           const void *source,
-                           ptrdiff_t tst, ptrdiff_t sst,
-                           size_t nelems,
-                           size_t element_size)
+static int a2as_alg_simple(struct oshmem_group_t *group, void *target, const void *source,
+                           ptrdiff_t tst, ptrdiff_t sst, size_t nelems, size_t element_size)
 {
     int rc;
     int dst_pe;
@@ -133,9 +112,7 @@ static int a2as_alg_simple(struct oshmem_group_t *group,
     int dst_pe_idx;
     size_t elem_idx;
 
-    SCOLL_VERBOSE(14,
-                  "[#%d] send data to all PE in the group",
-                  group->my_pe);
+    SCOLL_VERBOSE(14, "[#%d] send data to all PE in the group", group->my_pe);
 
     dst_blk_idx = oshmem_proc_group_find_id(group, group->my_pe);
 
@@ -143,13 +120,12 @@ static int a2as_alg_simple(struct oshmem_group_t *group,
 
         dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx, &dst_pe_idx);
         for (elem_idx = 0; elem_idx < nelems; elem_idx++) {
-            rc = MCA_SPML_CALL(put(oshmem_ctx_default, 
-                        get_stride_elem(target, tst, nelems, element_size,
-                                        dst_blk_idx, elem_idx),
-                        element_size,
-                        get_stride_elem(source, sst, nelems, element_size,
-                                        dst_pe_idx, elem_idx),
-                        dst_pe));
+            rc = MCA_SPML_CALL(
+                put(oshmem_ctx_default,
+                    get_stride_elem(target, tst, nelems, element_size, dst_blk_idx, elem_idx),
+                    element_size,
+                    get_stride_elem(source, sst, nelems, element_size, dst_pe_idx, elem_idx),
+                    dst_pe));
             if (OSHMEM_SUCCESS != rc) {
                 return rc;
             }
@@ -158,11 +134,8 @@ static int a2as_alg_simple(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 }
 
-static int a2a_alg_simple(struct oshmem_group_t *group,
-                           void *target,
-                           const void *source,
-                           size_t nelems,
-                           size_t element_size)
+static int a2a_alg_simple(struct oshmem_group_t *group, void *target, const void *source,
+                          size_t nelems, size_t element_size)
 {
     int rc;
     int dst_pe;
@@ -171,9 +144,7 @@ static int a2a_alg_simple(struct oshmem_group_t *group,
     int dst_pe_idx;
     void *dst_blk;
 
-    SCOLL_VERBOSE(14,
-                  "[#%d] send data to all PE in the group",
-                  group->my_pe);
+    SCOLL_VERBOSE(14, "[#%d] send data to all PE in the group", group->my_pe);
 
     dst_blk_idx = oshmem_proc_group_find_id(group, group->my_pe);
 
@@ -183,11 +154,9 @@ static int a2a_alg_simple(struct oshmem_group_t *group,
     for (src_blk_idx = 0; src_blk_idx < group->proc_count; src_blk_idx++) {
 
         dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx, &dst_pe_idx);
-        rc = MCA_SPML_CALL(put(oshmem_ctx_default, dst_blk,
-                                nelems * element_size,
-                                get_stride_elem(source, 1, nelems,
-                                                element_size, dst_pe_idx, 0),
-                                dst_pe));
+        rc = MCA_SPML_CALL(put(oshmem_ctx_default, dst_blk, nelems * element_size,
+                               get_stride_elem(source, 1, nelems, element_size, dst_pe_idx, 0),
+                               dst_pe));
         if (OSHMEM_SUCCESS != rc) {
             return rc;
         }

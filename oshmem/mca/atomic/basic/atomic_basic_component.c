@@ -13,16 +13,16 @@
 
 #include "oshmem_config.h"
 
+#include "atomic_basic.h"
 #include "oshmem/constants.h"
 #include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/mca/atomic/base/base.h"
-#include "atomic_basic.h"
 
 /*
  * Public string showing the scoll basic component version number
  */
-const char *mca_atomic_basic_component_version_string =
-"Open SHMEM basic atomic MCA component version " OSHMEM_VERSION;
+const char *mca_atomic_basic_component_version_string
+    = "Open SHMEM basic atomic MCA component version " OSHMEM_VERSION;
 
 /*
  * Global variable
@@ -70,13 +70,12 @@ mca_atomic_base_component_t mca_atomic_basic_component = {
 static int _basic_register(void)
 {
     mca_atomic_basic_component.priority = 75;
-    mca_base_component_var_register (&mca_atomic_basic_component.atomic_version,
-                                     "priority", "Priority of the atomic:basic "
-                                     "component (default: 75)", MCA_BASE_VAR_TYPE_INT,
-                                     NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                     OPAL_INFO_LVL_3,
-                                     MCA_BASE_VAR_SCOPE_ALL_EQ,
-                                     &mca_atomic_basic_component.priority);
+    mca_base_component_var_register(&mca_atomic_basic_component.atomic_version, "priority",
+                                    "Priority of the atomic:basic "
+                                    "component (default: 75)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                    &mca_atomic_basic_component.priority);
 
     return OSHMEM_SUCCESS;
 }
@@ -86,7 +85,4 @@ static int _basic_open(void)
     return OSHMEM_SUCCESS;
 }
 
-OBJ_CLASS_INSTANCE(mca_atomic_basic_module_t,
-                   mca_atomic_base_module_t,
-                   NULL,
-                   NULL);
+OBJ_CLASS_INSTANCE(mca_atomic_basic_module_t, mca_atomic_base_module_t, NULL, NULL);

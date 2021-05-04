@@ -27,88 +27,81 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "opal/util/show_help.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
-#include "ompi/runtime/mpiruntime.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_spawn_multiple = PMPI_Comm_spawn_multiple
-#endif
-#define MPI_Comm_spawn_multiple PMPI_Comm_spawn_multiple
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_spawn_multiple = PMPI_Comm_spawn_multiple
+#    endif
+#    define MPI_Comm_spawn_multiple PMPI_Comm_spawn_multiple
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_spawn_multiple";
 
-
 int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_of_argv[],
-                            const int array_of_maxprocs[], const MPI_Info array_of_info[],
-                            int root, MPI_Comm comm, MPI_Comm *intercomm,
-                            int array_of_errcodes[])
+                            const int array_of_maxprocs[], const MPI_Info array_of_info[], int root,
+                            MPI_Comm comm, MPI_Comm *intercomm, int array_of_errcodes[])
 {
-    int i=0, rc=0, rank=0, size=0, flag;
-    ompi_communicator_t *newcomp=MPI_COMM_NULL;
-    bool send_first=false; /* they are contacting us first */
-    char port_name[MPI_MAX_PORT_NAME]; char *port_string = NULL;
+    int i = 0, rc = 0, rank = 0, size = 0, flag;
+    ompi_communicator_t *newcomp = MPI_COMM_NULL;
+    bool send_first = false; /* they are contacting us first */
+    char port_name[MPI_MAX_PORT_NAME];
+    char *port_string = NULL;
     bool non_mpi = false, cumulative = false;
 
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( ompi_comm_invalid (comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
-        if ( OMPI_COMM_IS_INTER(comm)) {
+        if (OMPI_COMM_IS_INTER(comm)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
         }
-        if ( (0 > root) || (ompi_comm_size(comm) <= root) ) {
+        if ((0 > root) || (ompi_comm_size(comm) <= root)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
-        if ( NULL == intercomm ) {
+        if (NULL == intercomm) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
-    rank = ompi_comm_rank ( comm );
-    if ( MPI_PARAM_CHECK ) {
-        if ( rank == root ) {
-            if ( 0 > count ) {
+    rank = ompi_comm_rank(comm);
+    if (MPI_PARAM_CHECK) {
+        if (rank == root) {
+            if (0 > count) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
-            if ( NULL == array_of_commands ) {
+            if (NULL == array_of_commands) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
-            if ( NULL ==  array_of_maxprocs ) {
+            if (NULL == array_of_maxprocs) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
-            if ( NULL == array_of_info ) {
+            if (NULL == array_of_info) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INFO, FUNC_NAME);
             }
             for (i = 0; i < count; ++i) {
-                if (NULL == array_of_info[i] ||
-                    ompi_info_is_freed(array_of_info[i])) {
-                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                                  FUNC_NAME);
+                if (NULL == array_of_info[i] || ompi_info_is_freed(array_of_info[i])) {
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
                 }
                 /* If ompi_non_mpi is set to true on any info, it must
                    be set to true on all of them.  Note that not
                    setting ompi_non_mpi is the same as setting it to
                    false. */
-                ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi,
-                                   &flag);
+                ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
                 if (flag && 0 == i) {
                     /* If this is the first info, save its
                        ompi_non_mpi value */
@@ -119,16 +112,14 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
                 /* If this info's effective value doesn't agree with
                    the rest of them, error */
                 if (cumulative != non_mpi) {
-                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(
-                                                  MPI_ERR_INFO,
-                                                  FUNC_NAME);
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
                 }
             }
-            for ( i=0; i<count; i++ ) {
-                if ( NULL == array_of_commands[i] ) {
+            for (i = 0; i < count; i++) {
+                if (NULL == array_of_commands[i]) {
                     return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
                 }
-                if ( 0 > array_of_maxprocs[i] ) {
+                if (0 > array_of_maxprocs[i]) {
                     return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
                 }
             }
@@ -143,8 +134,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
         if (MPI_INFO_NULL == array_of_info[0]) {
             non_mpi = false;
         } else {
-            ompi_info_get_bool(array_of_info[0], "ompi_non_mpi", &non_mpi,
-                               &flag);
+            ompi_info_get_bool(array_of_info[0], "ompi_non_mpi", &non_mpi, &flag);
             if (!flag) {
                 non_mpi = false;
             }
@@ -152,7 +142,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
     }
 
 #if OPAL_ENABLE_FT_MPI
-    if( OPAL_UNLIKELY(!ompi_comm_iface_coll_check(comm, &rc)) ) {
+    if (OPAL_UNLIKELY(!ompi_comm_iface_coll_check(comm, &rc))) {
         return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
     }
 #endif
@@ -160,12 +150,11 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
     /* initialize the port name to avoid problems */
     memset(port_name, 0, MPI_MAX_PORT_NAME);
 
-
-    if ( rank == root ) {
+    if (rank == root) {
         if (!non_mpi) {
             /* Open a port. The port_name is passed as an environment
                variable to the children. */
-            if (OMPI_SUCCESS != (rc = ompi_dpm_open_port (port_name))) {
+            if (OMPI_SUCCESS != (rc = ompi_dpm_open_port(port_name))) {
                 goto error;
             }
         } else if (1 < ompi_comm_size(comm)) {
@@ -173,9 +162,9 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
         }
-        if (OMPI_SUCCESS != (rc = ompi_dpm_spawn(count, (const char **) array_of_commands,
-                                                 array_of_argv, array_of_maxprocs,
-                                                 array_of_info, port_name))) {
+        if (OMPI_SUCCESS
+            != (rc = ompi_dpm_spawn(count, (const char **) array_of_commands, array_of_argv,
+                                    array_of_maxprocs, array_of_info, port_name))) {
             goto error;
         }
     }
@@ -187,27 +176,23 @@ error:
          * non-root ranks do not deadlock.
          * Add the error code to the port string for connect_accept
          * to propagate the error code. */
-        (void)opal_asprintf(&port_string, "%s:error=%d", port_name, rc);
-    }
-    else {
+        (void) opal_asprintf(&port_string, "%s:error=%d", port_name, rc);
+    } else {
         port_string = port_name;
     }
 
     if (non_mpi) {
         newcomp = MPI_COMM_NULL;
     } else {
-        rc = ompi_dpm_connect_accept (comm, root, port_string, send_first, &newcomp);
+        rc = ompi_dpm_connect_accept(comm, root, port_string, send_first, &newcomp);
     }
 
     if (OPAL_ERR_NOT_SUPPORTED == rc) {
-        opal_show_help("help-mpi-api.txt",
-                       "MPI function not supported",
-                       true,
-                       FUNC_NAME,
+        opal_show_help("help-mpi-api.txt", "MPI function not supported", true, FUNC_NAME,
                        "Underlying runtime environment does not support spawn functionality");
     }
 
-    if(port_string != port_name) {
+    if (port_string != port_name) {
         free(port_string);
     }
 
@@ -221,16 +206,15 @@ error:
         if (MPI_COMM_NULL != newcomp) {
             size = newcomp->c_remote_group->grp_proc_count;
         } else {
-            for ( i=0; i < count; i++) {
+            for (i = 0; i < count; i++) {
                 size = size + array_of_maxprocs[i];
             }
         }
-        for ( i=0; i < size; i++ ) {
-            array_of_errcodes[i]=rc;
+        for (i = 0; i < size; i++) {
+            array_of_errcodes[i] = rc;
         }
     }
 
     *intercomm = newcomp;
-    OMPI_ERRHANDLER_RETURN (rc, comm, rc, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
-

@@ -20,9 +20,9 @@
 #include "oshmem/runtime/runtime.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_pe_accessible = pshmem_pe_accessible
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_pe_accessible = pshmem_pe_accessible
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 int shmem_pe_accessible(int pe)
@@ -32,4 +32,3 @@ int shmem_pe_accessible(int pe)
     /* Assume that everything between 0 and num_pes() is reachable. */
     return 0 <= pe && pe < _num_pes() ? 1 : 0;
 }
-

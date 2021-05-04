@@ -17,29 +17,29 @@
 
 #include "oshmem/runtime/runtime.h"
 
-#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_free = pshmem_free
-#pragma weak shfree = pshfree
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_free = pshmem_free
+#    pragma weak shfree = pshfree
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-static inline void _shfree(void* ptr);
+static inline void _shfree(void *ptr);
 
-void shmem_free(void* ptr)
+void shmem_free(void *ptr)
 {
     _shfree(ptr);
 }
 
-void shfree(void* ptr)
+void shfree(void *ptr)
 {
     _shfree(ptr);
 }
 
-static inline void _shfree(void* ptr)
+static inline void _shfree(void *ptr)
 {
     int rc;
     map_segment_t *s;
@@ -73,4 +73,3 @@ static inline void _shfree(void* ptr)
         SHMEM_API_VERBOSE(10, "shfree failure.");
     }
 }
-

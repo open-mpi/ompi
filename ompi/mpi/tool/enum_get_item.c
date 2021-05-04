@@ -17,28 +17,26 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_T_enum_get_item = PMPI_T_enum_get_item
+#    pragma weak MPI_T_enum_get_item = PMPI_T_enum_get_item
 #endif
 
 #if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#    include "ompi/mpi/tool/profile/defines.h"
 #endif
 
-
-int MPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
-                        int *name_len)
+int MPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name, int *name_len)
 {
     const char *tmp;
     int rc, count;
 
-    if (!mpit_is_initialized ()) {
+    if (!mpit_is_initialized()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    ompi_mpit_lock ();
+    ompi_mpit_lock();
 
     do {
-        rc = enumtype->get_count (enumtype, &count);
+        rc = enumtype->get_count(enumtype, &count);
         if (OPAL_SUCCESS != rc) {
             rc = MPI_T_ERR_INVALID;
             break;
@@ -58,7 +56,7 @@ int MPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
         mpit_copy_string(name, name_len, tmp);
     } while (0);
 
-    ompi_mpit_unlock ();
+    ompi_mpit_unlock();
 
     return rc;
 }

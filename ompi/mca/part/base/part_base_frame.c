@@ -25,23 +25,21 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include <stdio.h>
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNIST_H */
+#    include <unistd.h>
+#endif /* HAVE_UNIST_H */
 #include "ompi/mca/mca.h"
-#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-
+#include "opal/util/output.h"
 
 #include "ompi/constants.h"
-#include "ompi/mca/part/part.h"
 #include "ompi/mca/part/base/base.h"
 #include "ompi/mca/part/base/part_base_prequest.h"
+#include "ompi/mca/part/part.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -61,13 +59,13 @@ int mca_part_base_progress(void)
 }
 
 #define xstringify(part) #part
-#define stringify(part) xstringify(part)
+#define stringify(part)  xstringify(part)
 
 /*
  * Global variables
  */
 mca_part_base_module_t mca_part = {
-    .part_progress = mca_part_base_progress   /* part_progress */
+    .part_progress = mca_part_base_progress /* part_progress */
 };
 
 mca_part_base_component_t mca_part_base_selected_component = {{0}};
@@ -78,20 +76,20 @@ static int mca_part_base_register(mca_base_register_flag_t flags)
     return OMPI_SUCCESS;
 }
 
-int mca_part_base_finalize(void) {
-  if (NULL != mca_part_base_selected_component.partm_finalize) {
-    return mca_part_base_selected_component.partm_finalize();
-  }
-  return OMPI_SUCCESS;
+int mca_part_base_finalize(void)
+{
+    if (NULL != mca_part_base_selected_component.partm_finalize) {
+        return mca_part_base_selected_component.partm_finalize();
+    }
+    return OMPI_SUCCESS;
 }
-
 
 static int mca_part_base_close(void)
 {
     int i, j;
 
     /* unregister the progress function */
-    if( NULL != mca_part.part_progress ) {
+    if (NULL != mca_part.part_progress) {
         opal_progress_unregister(mca_part.part_progress);
     }
 
@@ -102,7 +100,7 @@ static int mca_part_base_close(void)
     j = opal_pointer_array_get_size(&mca_part_base_part);
     for (i = 0; i < j; ++i) {
         char *str;
-        str = (char*) opal_pointer_array_get_item(&mca_part_base_part, i);
+        str = (char *) opal_pointer_array_get_item(&mca_part_base_part, i);
         free(str);
     }
     OBJ_DESTRUCT(&mca_part_base_part);
@@ -122,13 +120,11 @@ static int mca_part_base_open(mca_base_open_flag_t flags)
 {
     OBJ_CONSTRUCT(&mca_part_base_part, opal_pointer_array_t);
 
-    
     OBJ_CONSTRUCT(&mca_part_base_psend_requests, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_part_base_precv_requests, opal_free_list_t);
     /* Open up all available components */
 
-    if (OPAL_SUCCESS !=
-        mca_base_framework_components_open(&ompi_part_base_framework, flags)) {
+    if (OPAL_SUCCESS != mca_base_framework_components_open(&ompi_part_base_framework, flags)) {
         return OMPI_ERROR;
     }
 
@@ -143,6 +139,5 @@ static int mca_part_base_open(mca_base_open_flag_t flags)
     return OMPI_SUCCESS;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, part, "OMPI PART", mca_part_base_register,
-                           mca_part_base_open, mca_part_base_close,
-                           mca_part_base_static_components, 0);
+MCA_BASE_FRAMEWORK_DECLARE(ompi, part, "OMPI PART", mca_part_base_register, mca_part_base_open,
+                           mca_part_base_close, mca_part_base_static_components, 0);

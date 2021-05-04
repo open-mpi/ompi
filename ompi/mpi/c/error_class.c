@@ -20,31 +20,28 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/errhandler/errcode.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Error_class = PMPI_Error_class
-#endif
-#define MPI_Error_class PMPI_Error_class
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Error_class = PMPI_Error_class
+#    endif
+#    define MPI_Error_class PMPI_Error_class
 #endif
 
 static const char FUNC_NAME[] = "MPI_Error_class";
 
-
 int MPI_Error_class(int errorcode, int *errorclass)
 {
-    if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_errcode_is_invalid(errorcode)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                                   FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        if (ompi_mpi_errcode_is_invalid(errorcode)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
-
 
     *errorclass = ompi_mpi_errcode_get_class(errorcode);
     return MPI_SUCCESS;

@@ -13,8 +13,8 @@
 #include "oshmem_config.h"
 
 #include "oshmem/constants.h"
-#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/scoll/scoll.h"
 #include "scoll_basic.h"
 
 /*
@@ -32,15 +32,13 @@ int mca_scoll_basic_init(bool enable_progress_threads, bool enable_threads)
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-static int mca_scoll_basic_enable(mca_scoll_base_module_t *module,
-                                  struct oshmem_group_t *comm)
+static int mca_scoll_basic_enable(mca_scoll_base_module_t *module, struct oshmem_group_t *comm)
 {
     /*nothing to do here*/
     return OSHMEM_SUCCESS;
 }
 
-mca_scoll_base_module_t *
-mca_scoll_basic_query(struct oshmem_group_t *group, int *priority)
+mca_scoll_base_module_t *mca_scoll_basic_query(struct oshmem_group_t *group, int *priority)
 {
     mca_scoll_basic_module_t *module;
 

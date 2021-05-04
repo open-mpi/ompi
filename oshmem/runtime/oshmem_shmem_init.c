@@ -14,11 +14,11 @@
 #include "oshmem_config.h"
 
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif  /* HAVE_SYS_TIME_H */
+#    include <sys/time.h>
+#endif /* HAVE_SYS_TIME_H */
 #include <pthread.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 
 #include <float.h>
@@ -26,49 +26,49 @@
 #include "math.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
-#include "opal/runtime/opal_progress.h"
 #include "opal/mca/threads/threads.h"
-#include "opal/util/argv.h"
-#include "opal/util/output.h"
-#include "opal/util/error.h"
-#include "opal/util/stacktrace.h"
-#include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_progress.h"
+#include "opal/util/argv.h"
+#include "opal/util/error.h"
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
+#include "opal/util/stacktrace.h"
 
 #include "ompi/datatype/ompi_datatype.h"
-#include "opal/mca/rcache/base/base.h"
-#include "opal/mca/mpool/base/base.h"
-#include "opal/mca/allocator/base/base.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/util/timings.h"
+#include "opal/mca/allocator/base/base.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/rcache/base/base.h"
 
 #include "oshmem/constants.h"
-#include "oshmem/runtime/runtime.h"
-#include "oshmem/runtime/params.h"
-#include "oshmem/runtime/oshmem_shmem_preconnect.h"
-#include "oshmem/mca/spml/base/base.h"
-#include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/info/info.h"
 #include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/sshmem/base/base.h"
-#include "oshmem/info/info.h"
+#include "oshmem/op/op.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
-#include "oshmem/op/op.h"
 #include "oshmem/request/request.h"
+#include "oshmem/runtime/oshmem_shmem_preconnect.h"
+#include "oshmem/runtime/params.h"
+#include "oshmem/runtime/runtime.h"
 #include "oshmem/shmem/shmem_api_logger.h"
 
 #include "oshmem/shmem/shmem_lock.h"
 
 #ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
+#    include <sys/mman.h>
 #endif
 
 #if OPAL_CC_USE_PRAGMA_IDENT
-#pragma ident OMPI_IDENT_STRING
+#    pragma ident OMPI_IDENT_STRING
 #elif OPAL_CC_USE_IDENT
-#ident OSHMEM_IDENT_STRING
+#    ident OSHMEM_IDENT_STRING
 #endif
 
 /*
@@ -104,15 +104,15 @@ shmem_ctx_t oshmem_ctx_default = NULL;
 static int _shmem_init(int argc, char **argv, int requested, int *provided);
 
 #if OSHMEM_OPAL_THREAD_ENABLE
-static void* shmem_opal_thread(void* argc)
+static void *shmem_opal_thread(void *argc)
 {
-/*
- * WHAT: sleep() invocation
- * WHY:  there occures a segfault sometimes and sleep()
- *       reduces it's possibility
- */
+    /*
+     * WHAT: sleep() invocation
+     * WHY:  there occures a segfault sometimes and sleep()
+     *       reduces it's possibility
+     */
     sleep(1);
-    while(oshmem_shmem_initialized)
+    while (oshmem_shmem_initialized)
         opal_progress();
     return NULL;
 }
@@ -123,9 +123,8 @@ int oshmem_shmem_globalexit_status = -1;
 
 static void sighandler__SIGUSR1(int signum)
 {
-    if (0 != oshmem_shmem_inglobalexit)
-    {
-	return;
+    if (0 != oshmem_shmem_inglobalexit) {
+        return;
     }
     _exit(0);
 }
@@ -170,7 +169,7 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
         oshmem_shmem_initialized = true;
 
         if (OSHMEM_SUCCESS != shmem_lock_init()) {
-            SHMEM_API_ERROR( "shmem_lock_init() failed");
+            SHMEM_API_ERROR("shmem_lock_init() failed");
             return OSHMEM_ERROR;
         }
         OMPI_TIMING_NEXT("shmem_lock_init");
@@ -195,8 +194,8 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
         OMPI_TIMING_NEXT("THREAD_ENABLE");
     }
 #ifdef SIGUSR1
-    signal(SIGUSR1,sighandler__SIGUSR1);
-    signal(SIGTERM,sighandler__SIGTERM);
+    signal(SIGUSR1, sighandler__SIGUSR1);
+    signal(SIGTERM, sighandler__SIGTERM);
 #endif
     OMPI_TIMING_OUT;
     OMPI_TIMING_FINALIZE;
@@ -217,8 +216,7 @@ int oshmem_shmem_preconnect_all(void)
         val = 0xdeadbeaf;
 
         if (!preconnect_value) {
-            rc =
-                    MCA_MEMHEAP_CALL(private_alloc(sizeof(long), (void **)&preconnect_value));
+            rc = MCA_MEMHEAP_CALL(private_alloc(sizeof(long), (void **) &preconnect_value));
         }
         if (!preconnect_value || (rc != OSHMEM_SUCCESS)) {
             SHMEM_API_ERROR("shmem_preconnect_all failed");
@@ -266,8 +264,7 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
      * We need to set it right after registering mca verbosity variables
      */
     shmem_api_logger_output = opal_output_open(NULL);
-    opal_output_set_verbosity(shmem_api_logger_output,
-                              oshmem_shmem_api_verbose);
+    opal_output_set_verbosity(shmem_api_logger_output, oshmem_shmem_api_verbose);
 
     OPAL_TIMING_ENV_NEXT(timing, "shmem_params");
     /* initialize info */
@@ -293,14 +290,16 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     OPAL_TIMING_ENV_NEXT(timing, "oshmem_op_init()");
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_spml_base_framework, MCA_BASE_OPEN_DEFAULT))) {
+    if (OSHMEM_SUCCESS
+        != (ret = mca_base_framework_open(&oshmem_spml_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_spml_base_open() failed";
         goto error;
     }
 
     OPAL_TIMING_ENV_NEXT(timing, "open SPML framework");
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_scoll_base_framework, MCA_BASE_OPEN_DEFAULT))) {
+    if (OSHMEM_SUCCESS
+        != (ret = mca_base_framework_open(&oshmem_scoll_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_scoll_base_open() failed";
         goto error;
     }
@@ -346,8 +345,7 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     OPAL_TIMING_ENV_NEXT(timing, "MCA_SPML_CALL(enable())");
 
-    ret =
-            MCA_SPML_CALL(add_procs(oshmem_group_all->proc_array, oshmem_group_all->proc_count));
+    ret = MCA_SPML_CALL(add_procs(oshmem_group_all->proc_array, oshmem_group_all->proc_count));
     if (OSHMEM_SUCCESS != ret) {
         error = "SPML add procs failed";
         goto error;
@@ -355,7 +353,8 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     OPAL_TIMING_ENV_NEXT(timing, "MCA_SPML_CALL(add_procs())");
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_sshmem_base_framework, MCA_BASE_OPEN_DEFAULT))) {
+    if (OSHMEM_SUCCESS
+        != (ret = mca_base_framework_open(&oshmem_sshmem_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_sshmem_base_open() failed";
         goto error;
     }
@@ -369,13 +368,13 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     OPAL_TIMING_ENV_NEXT(timing, "select SSHMEM framework");
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_memheap_base_framework, MCA_BASE_OPEN_DEFAULT))) {
+    if (OSHMEM_SUCCESS
+        != (ret = mca_base_framework_open(&oshmem_memheap_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_memheap_base_open() failed";
         goto error;
     }
 
     OPAL_TIMING_ENV_NEXT(timing, "open MEMHEAP framework");
-
 
     if (OSHMEM_SUCCESS != (ret = mca_memheap_base_select())) {
         error = "mca_memheap_base_select() failed";
@@ -384,7 +383,8 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     OPAL_TIMING_ENV_NEXT(timing, "select MEMHEAP framework");
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_open(&oshmem_atomic_base_framework, MCA_BASE_OPEN_DEFAULT))) {
+    if (OSHMEM_SUCCESS
+        != (ret = mca_base_framework_open(&oshmem_atomic_base_framework, MCA_BASE_OPEN_DEFAULT))) {
         error = "mca_atomic_base_open() failed";
         goto error;
     }
@@ -408,19 +408,14 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     (*provided) = oshmem_mpi_thread_provided;
 
-    oshmem_mpi_thread_multiple = (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE) ? true : false;
+    oshmem_mpi_thread_multiple = (oshmem_mpi_thread_provided == SHMEM_THREAD_MULTIPLE) ? true
+                                                                                       : false;
 
-
-    error: if (ret != OSHMEM_SUCCESS) {
+error:
+    if (ret != OSHMEM_SUCCESS) {
         const char *err_msg = opal_strerror(ret);
-        opal_show_help("help-shmem-runtime.txt",
-                       "shmem_init:startup:internal-failure",
-                       true,
-                       "SHMEM_INIT",
-                       "SHMEM_INIT",
-                       error,
-                       err_msg,
-                       ret);
+        opal_show_help("help-shmem-runtime.txt", "shmem_init:startup:internal-failure", true,
+                       "SHMEM_INIT", "SHMEM_INIT", error, err_msg, ret);
         return ret;
     }
     OPAL_TIMING_ENV_NEXT(timing, "DONE");

@@ -16,33 +16,33 @@
 
 #include "oshmem/runtime/runtime.h"
 
-#include "oshmem/shmem/shmem_api_logger.h"
-#include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/shmem/shmem_api_logger.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_realloc = pshmem_realloc
-#pragma weak shrealloc = pshrealloc
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_realloc = pshmem_realloc
+#    pragma weak shrealloc = pshrealloc
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-static inline void* _shrealloc(void *ptr, size_t size);
+static inline void *_shrealloc(void *ptr, size_t size);
 
-void* shmem_realloc(void *ptr, size_t size)
+void *shmem_realloc(void *ptr, size_t size)
 {
     return _shrealloc(ptr, size);
 }
 
-void* shrealloc(void *ptr, size_t size)
+void *shrealloc(void *ptr, size_t size)
 {
     return _shrealloc(ptr, size);
 }
 
-static inline void* _shrealloc(void *ptr, size_t size)
+static inline void *_shrealloc(void *ptr, size_t size)
 {
     int rc;
-    void* pBuff = NULL;
+    void *pBuff = NULL;
     map_segment_t *s;
 
     RUNTIME_CHECK_INIT();
@@ -64,10 +64,9 @@ static inline void* _shrealloc(void *ptr, size_t size)
     SHMEM_MUTEX_UNLOCK(shmem_internal_mutex_alloc);
 
     if (OSHMEM_SUCCESS != rc) {
-        SHMEM_API_VERBOSE(1,
-                          "Allocation with shrealloc(ptr=%p, size=%lu) failed.",
-                          ptr, (unsigned long)size);
-        return NULL ;
+        SHMEM_API_VERBOSE(1, "Allocation with shrealloc(ptr=%p, size=%lu) failed.", ptr,
+                          (unsigned long) size);
+        return NULL;
     }
 
 #if OSHMEM_SPEC_COMPAT == 1

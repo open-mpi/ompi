@@ -22,19 +22,17 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include <stdio.h>
 
 #include "ompi/constants.h"
 #include "ompi/mca/mca.h"
-#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 
-
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
+#include "ompi/mca/coll/coll.h"
 
 /*
  * The following file was created by configure.  It contains extern
@@ -49,34 +47,30 @@
 static void coll_base_module_construct(mca_coll_base_module_t *m)
 {
     /* zero out all functions */
-    memset ((char *) m + sizeof (m->super), 0, sizeof (*m) - sizeof (m->super));
+    memset((char *) m + sizeof(m->super), 0, sizeof(*m) - sizeof(m->super));
     m->coll_module_disable = NULL;
     m->base_data = NULL;
 }
 
-static void
-coll_base_module_destruct(mca_coll_base_module_t *module)
+static void coll_base_module_destruct(mca_coll_base_module_t *module)
 {
     if (NULL != module->base_data) {
         OBJ_RELEASE(module->base_data);
     }
 }
 
-OBJ_CLASS_INSTANCE(mca_coll_base_module_t, opal_object_t,
-                   coll_base_module_construct, coll_base_module_destruct);
+OBJ_CLASS_INSTANCE(mca_coll_base_module_t, opal_object_t, coll_base_module_construct,
+                   coll_base_module_destruct);
 
-
-static void
-coll_base_comm_construct(mca_coll_base_comm_t *data)
+static void coll_base_comm_construct(mca_coll_base_comm_t *data)
 {
-    memset ((char *) data + sizeof (data->super), 0, sizeof (*data) - sizeof (data->super));
+    memset((char *) data + sizeof(data->super), 0, sizeof(*data) - sizeof(data->super));
 }
 
-static void
-coll_base_comm_destruct(mca_coll_base_comm_t *data)
+static void coll_base_comm_destruct(mca_coll_base_comm_t *data)
 {
-    if( NULL != data->mcct_reqs ) {
-        ompi_coll_base_free_reqs( data->mcct_reqs, data->mcct_num_reqs );
+    if (NULL != data->mcct_reqs) {
+        ompi_coll_base_free_reqs(data->mcct_reqs, data->mcct_num_reqs);
         free(data->mcct_reqs);
         data->mcct_reqs = NULL;
         data->mcct_num_reqs = 0;
@@ -85,47 +79,49 @@ coll_base_comm_destruct(mca_coll_base_comm_t *data)
 
     /* free any cached information that has been allocated */
     if (data->cached_ntree) { /* destroy general tree if defined */
-        ompi_coll_base_topo_destroy_tree (&data->cached_ntree);
+        ompi_coll_base_topo_destroy_tree(&data->cached_ntree);
     }
     if (data->cached_bintree) { /* destroy bintree if defined */
-        ompi_coll_base_topo_destroy_tree (&data->cached_bintree);
+        ompi_coll_base_topo_destroy_tree(&data->cached_bintree);
     }
     if (data->cached_bmtree) { /* destroy bmtree if defined */
-        ompi_coll_base_topo_destroy_tree (&data->cached_bmtree);
+        ompi_coll_base_topo_destroy_tree(&data->cached_bmtree);
     }
     if (data->cached_in_order_bmtree) { /* destroy bmtree if defined */
-        ompi_coll_base_topo_destroy_tree (&data->cached_in_order_bmtree);
+        ompi_coll_base_topo_destroy_tree(&data->cached_in_order_bmtree);
     }
     if (data->cached_kmtree) { /* destroy kmtree if defined */
-        ompi_coll_base_topo_destroy_tree (&data->cached_kmtree);
+        ompi_coll_base_topo_destroy_tree(&data->cached_kmtree);
     }
     if (data->cached_chain) { /* destroy general chain if defined */
-        ompi_coll_base_topo_destroy_tree (&data->cached_chain);
+        ompi_coll_base_topo_destroy_tree(&data->cached_chain);
     }
     if (data->cached_pipeline) { /* destroy pipeline if defined */
-        ompi_coll_base_topo_destroy_tree (&data->cached_pipeline);
+        ompi_coll_base_topo_destroy_tree(&data->cached_pipeline);
     }
     if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
-        ompi_coll_base_topo_destroy_tree (&data->cached_in_order_bintree);
+        ompi_coll_base_topo_destroy_tree(&data->cached_in_order_bintree);
     }
 }
 
-OBJ_CLASS_INSTANCE(mca_coll_base_comm_t, opal_object_t,
-                   coll_base_comm_construct, coll_base_comm_destruct);
+OBJ_CLASS_INSTANCE(mca_coll_base_comm_t, opal_object_t, coll_base_comm_construct,
+                   coll_base_comm_destruct);
 
-ompi_request_t** ompi_coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs)
+ompi_request_t **ompi_coll_base_comm_get_reqs(mca_coll_base_comm_t *data, int nreqs)
 {
-    if( 0 == nreqs ) return NULL;
+    if (0 == nreqs)
+        return NULL;
 
-    if( data->mcct_num_reqs < nreqs ) {
-        data->mcct_reqs = (ompi_request_t**)realloc(data->mcct_reqs, sizeof(ompi_request_t*) * nreqs);
+    if (data->mcct_num_reqs < nreqs) {
+        data->mcct_reqs = (ompi_request_t **) realloc(data->mcct_reqs,
+                                                      sizeof(ompi_request_t *) * nreqs);
 
-        if( NULL != data->mcct_reqs ) {
-            for( int i = data->mcct_num_reqs; i < nreqs; i++ )
+        if (NULL != data->mcct_reqs) {
+            for (int i = data->mcct_num_reqs; i < nreqs; i++)
                 data->mcct_reqs[i] = MPI_REQUEST_NULL;
             data->mcct_num_reqs = nreqs;
         } else
-            data->mcct_num_reqs = 0;  /* nothing to return */
+            data->mcct_num_reqs = 0; /* nothing to return */
     }
     return data->mcct_reqs;
 }

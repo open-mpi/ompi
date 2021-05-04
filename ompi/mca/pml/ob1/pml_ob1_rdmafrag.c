@@ -24,13 +24,10 @@
 #include "pml_ob1.h"
 #include "pml_ob1_rdmafrag.h"
 
-static void mca_pml_ob1_rdma_frag_constructor (mca_pml_ob1_rdma_frag_t *frag)
+static void mca_pml_ob1_rdma_frag_constructor(mca_pml_ob1_rdma_frag_t *frag)
 {
     frag->local_handle = NULL;
 }
 
-OBJ_CLASS_INSTANCE(
-    mca_pml_ob1_rdma_frag_t,
-    opal_free_list_item_t,
-    mca_pml_ob1_rdma_frag_constructor,
-    NULL);
+OBJ_CLASS_INSTANCE(mca_pml_ob1_rdma_frag_t, opal_free_list_item_t,
+                   mca_pml_ob1_rdma_frag_constructor, NULL);

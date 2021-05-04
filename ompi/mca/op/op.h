@@ -84,8 +84,8 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/opal_object.h"
 #include "ompi/mca/mca.h"
+#include "opal/class/opal_object.h"
 
 /*
  * This file includes some basic struct declarations (but not
@@ -203,7 +203,6 @@ enum {
     OMPI_OP_BASE_TYPE_MAX
 };
 
-
 /**
  * Fortran handles; must be [manually set to be] equivalent to the
  * values in mpif.h.
@@ -269,9 +268,7 @@ typedef ompi_op_base_handler_fn_1_0_0_t ompi_op_base_handler_fn_t;
 /*
  * Typedef for 3-buffer (two input and one output) op functions.
  */
-typedef void (*ompi_op_base_3buff_handler_fn_1_0_0_t)(const void *,
-                                                      const void *,
-                                                      void *, int *,
+typedef void (*ompi_op_base_3buff_handler_fn_1_0_0_t)(const void *, const void *, void *, int *,
                                                       struct ompi_datatype_t **,
                                                       struct ompi_op_base_module_1_0_0_t *);
 
@@ -296,9 +293,8 @@ typedef ompi_op_base_3buff_handler_fn_1_0_0_t ompi_op_base_3buff_handler_fn_t;
  * @retval OMPI_SUCCESS Component successfully initialized
  * @retval OMPI_ERROR   An unspecified error occurred
  */
-typedef int (*ompi_op_base_component_init_query_fn_t)
-     (bool enable_progress_threads, bool enable_mpi_threads);
-
+typedef int (*ompi_op_base_component_init_query_fn_t)(bool enable_progress_threads,
+                                                      bool enable_mpi_threads);
 
 /**
  * Query whether a component is available for a specific MPI_Op.
@@ -322,9 +318,8 @@ typedef int (*ompi_op_base_component_init_query_fn_t)
  * provide a module with the requested functionality or NULL if the
  * component should not be used on the given communicator.
  */
-typedef struct ompi_op_base_module_1_0_0_t *
-  (*ompi_op_base_component_op_query_1_0_0_fn_t)
-    (struct ompi_op_t *op, int *priority);
+typedef struct ompi_op_base_module_1_0_0_t *(*ompi_op_base_component_op_query_1_0_0_fn_t)(
+    struct ompi_op_t *op, int *priority);
 
 /**
  * Op component interface.
@@ -345,7 +340,6 @@ typedef struct ompi_op_base_component_1_0_0_t {
     ompi_op_base_component_op_query_1_0_0_fn_t opc_op_query;
 } ompi_op_base_component_1_0_0_t;
 
-
 /** Per guidence in mca.h, use the unversioned struct name if you just
     want to always keep up with the most recent version of the
     interace. */
@@ -357,9 +351,8 @@ typedef struct ompi_op_base_component_1_0_0_t ompi_op_base_component_t;
  * if the module doesn't need to do anything between the component
  * query function and being invoked for MPI_Op operations.
  */
-typedef int (*ompi_op_base_module_enable_1_0_0_fn_t)
-    (struct ompi_op_base_module_1_0_0_t *module,
-     struct ompi_op_t *op);
+typedef int (*ompi_op_base_module_enable_1_0_0_fn_t)(struct ompi_op_base_module_1_0_0_t *module,
+                                                     struct ompi_op_t *op);
 
 /**
  * Module struct
@@ -419,8 +412,7 @@ typedef ompi_op_base_op_3buff_fns_1_0_0_t ompi_op_base_op_3buff_fns_t;
 /*
  * Macro for use in modules that are of type op v2.0.0
  */
-#define OMPI_OP_BASE_VERSION_1_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("op", 1, 0, 0)
+#define OMPI_OP_BASE_VERSION_1_0_0 OMPI_MCA_BASE_VERSION_2_1_0("op", 1, 0, 0)
 
 END_C_DECLS
 

@@ -25,13 +25,13 @@
 #include <stdlib.h>
 
 #include "mpi.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/coll/base/coll_tags.h"
-#include "ompi/mca/coll/base/coll_base_util.h"
 
 /*
  *	allgather_inter
@@ -40,13 +40,9 @@
  *	Accepts:	- same as MPI_Allgather()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_inter_allgather_inter(const void *sbuf, int scount,
-                               struct ompi_datatype_t *sdtype,
-                               void *rbuf, int rcount,
-                               struct ompi_datatype_t *rdtype,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
+int mca_coll_inter_allgather_inter(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                   void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                   struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int rank, root = 0, size, rsize, err = OMPI_SUCCESS;
     char *ptmp_free = NULL, *ptmp = NULL;
@@ -57,45 +53,43 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
     rsize = ompi_comm_remote_size(comm);
 
     /* Perform the gather locally at the root */
-    if ( scount > 0 ) {
-        span = opal_datatype_span(&sdtype->super, (int64_t)scount*(int64_t)size, &gap);
-	ptmp_free = (char*)malloc(span);
-	if (NULL == ptmp_free) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+    if (scount > 0) {
+        span = opal_datatype_span(&sdtype->super, (int64_t) scount * (int64_t) size, &gap);
+        ptmp_free = (char *) malloc(span);
+        if (NULL == ptmp_free) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         ptmp = ptmp_free - gap;
 
-	err = comm->c_local_comm->c_coll->coll_gather(sbuf, scount, sdtype,
-						     ptmp, scount, sdtype,
-						     0, comm->c_local_comm,
-						     comm->c_local_comm->c_coll->coll_gather_module);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+        err = comm->c_local_comm->c_coll
+                  ->coll_gather(sbuf, scount, sdtype, ptmp, scount, sdtype, 0, comm->c_local_comm,
+                                comm->c_local_comm->c_coll->coll_gather_module);
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
     }
 
     if (rank == root) {
-	/* Do a send-recv between the two root procs. to avoid deadlock */
-        err = ompi_coll_base_sendrecv_actual(ptmp, scount*size, sdtype, 0,
-                                             MCA_COLL_BASE_TAG_ALLGATHER,
-                                             rbuf, rcount*rsize, rdtype, 0,
-                                             MCA_COLL_BASE_TAG_ALLGATHER,
-                                             comm, MPI_STATUS_IGNORE);
+        /* Do a send-recv between the two root procs. to avoid deadlock */
+        err = ompi_coll_base_sendrecv_actual(ptmp, scount * size, sdtype, 0,
+                                             MCA_COLL_BASE_TAG_ALLGATHER, rbuf, rcount * rsize,
+                                             rdtype, 0, MCA_COLL_BASE_TAG_ALLGATHER, comm,
+                                             MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
     }
     /* bcast the message to all the local processes */
-    if ( rcount > 0 ) {
-	err = comm->c_local_comm->c_coll->coll_bcast(rbuf, rcount*rsize, rdtype,
-						    root, comm->c_local_comm,
-						    comm->c_local_comm->c_coll->coll_bcast_module);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+    if (rcount > 0) {
+        err = comm->c_local_comm->c_coll->coll_bcast(rbuf, rcount * rsize, rdtype, root,
+                                                     comm->c_local_comm,
+                                                     comm->c_local_comm->c_coll->coll_bcast_module);
+        if (OMPI_SUCCESS != err) {
+            goto exit;
+        }
     }
 
- exit:
+exit:
     if (NULL != ptmp_free) {
         free(ptmp_free);
     }

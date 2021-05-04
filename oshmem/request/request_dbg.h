@@ -22,13 +22,13 @@
  */
 typedef enum {
     OSHMEM_REQUEST_SPML, /**< MPI point-to-point request */
-    OSHMEM_REQUEST_IO, /**< MPI-2 IO request */
-    OSHMEM_REQUEST_GEN, /**< MPI-2 generalized request */
-    OSHMEM_REQUEST_WIN,      /**< MPI-2 one-sided request */
-    OSHMEM_REQUEST_COLL,     /**< MPI-3 non-blocking collectives request */
+    OSHMEM_REQUEST_IO,   /**< MPI-2 IO request */
+    OSHMEM_REQUEST_GEN,  /**< MPI-2 generalized request */
+    OSHMEM_REQUEST_WIN,  /**< MPI-2 one-sided request */
+    OSHMEM_REQUEST_COLL, /**< MPI-3 non-blocking collectives request */
     OSHMEM_REQUEST_NULL, /**< NULL request */
     OSHMEM_REQUEST_NOOP, /**< A request that does nothing (e.g., to PROC_NULL) */
-    OSHMEM_REQUEST_MAX /**< Maximum request type */
+    OSHMEM_REQUEST_MAX   /**< Maximum request type */
 } oshmem_request_type_t;
 
 /**

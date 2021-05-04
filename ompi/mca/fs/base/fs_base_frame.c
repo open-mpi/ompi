@@ -17,11 +17,9 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 
 #include "ompi/mca/fs/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern
@@ -30,5 +28,4 @@
  */
 #include "ompi/mca/fs/base/static-components.h"
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, fs, NULL, NULL, NULL, NULL,
-                           mca_fs_base_static_components, 0);
+MCA_BASE_FRAMEWORK_DECLARE(ompi, fs, NULL, NULL, NULL, NULL, mca_fs_base_static_components, 0);

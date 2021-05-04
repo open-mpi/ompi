@@ -24,68 +24,69 @@
 
 #include "opal/class/opal_object.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
+#include "ompi/file/file.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/mpi/fortran/base/datarep.h"
-#include "ompi/mpi/fortran/base/fortran_base_strings.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
-#include "ompi/file/file.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_REGISTER_DATAREP = ompi_register_datarep_f
+#        pragma weak pmpi_register_datarep = ompi_register_datarep_f
+#        pragma weak pmpi_register_datarep_ = ompi_register_datarep_f
+#        pragma weak pmpi_register_datarep__ = ompi_register_datarep_f
+
+#        pragma weak PMPI_Register_datarep_f = ompi_register_datarep_f
+#        pragma weak PMPI_Register_datarep_f08 = ompi_register_datarep_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_REGISTER_DATAREP, pmpi_register_datarep, pmpi_register_datarep_,
+                           pmpi_register_datarep__, pompi_register_datarep_f,
+                           (char *datarep,
+                            ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn,
+                            ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn,
+                            ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn,
+                            MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
+                           (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn,
+                            extra_state, ierr, datarep_len))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_REGISTER_DATAREP = ompi_register_datarep_f
-#pragma weak pmpi_register_datarep = ompi_register_datarep_f
-#pragma weak pmpi_register_datarep_ = ompi_register_datarep_f
-#pragma weak pmpi_register_datarep__ = ompi_register_datarep_f
+#    pragma weak MPI_REGISTER_DATAREP = ompi_register_datarep_f
+#    pragma weak mpi_register_datarep = ompi_register_datarep_f
+#    pragma weak mpi_register_datarep_ = ompi_register_datarep_f
+#    pragma weak mpi_register_datarep__ = ompi_register_datarep_f
 
-#pragma weak PMPI_Register_datarep_f = ompi_register_datarep_f
-#pragma weak PMPI_Register_datarep_f08 = ompi_register_datarep_f
+#    pragma weak MPI_Register_datarep_f = ompi_register_datarep_f
+#    pragma weak MPI_Register_datarep_f08 = ompi_register_datarep_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
-                           pmpi_register_datarep,
-                           pmpi_register_datarep_,
-                           pmpi_register_datarep__,
-                           pompi_register_datarep_f,
-                           (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
-                           (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
-#endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_REGISTER_DATAREP = ompi_register_datarep_f
-#pragma weak mpi_register_datarep = ompi_register_datarep_f
-#pragma weak mpi_register_datarep_ = ompi_register_datarep_f
-#pragma weak mpi_register_datarep__ = ompi_register_datarep_f
-
-#pragma weak MPI_Register_datarep_f = ompi_register_datarep_f
-#pragma weak MPI_Register_datarep_f08 = ompi_register_datarep_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
-                           mpi_register_datarep,
-                           mpi_register_datarep_,
-                           mpi_register_datarep__,
-                           ompi_register_datarep_f,
-                           (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
-                           (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
-#else
-#define ompi_register_datarep_f pompi_register_datarep_f
-#endif
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_REGISTER_DATAREP, mpi_register_datarep, mpi_register_datarep_,
+                           mpi_register_datarep__, ompi_register_datarep_f,
+                           (char *datarep,
+                            ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn,
+                            ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn,
+                            ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn,
+                            MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
+                           (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn,
+                            extra_state, ierr, datarep_len))
+#    else
+#        define ompi_register_datarep_f pompi_register_datarep_f
+#    endif
 #endif
 
 static const char FUNC_NAME[] = "MPI_REGISTER_DATAREP";
 
 /* Intercept functions used below (see below for explanations in
    comments) */
-static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
-                             void *filebuf, MPI_Offset position,
-                             void *extra_state);
-static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
-                             void *filebuf, MPI_Offset position,
-                              void *extra_state);
-static int extent_intercept_fn(MPI_Datatype type_c, MPI_Aint *file_extent,
-                               void *extra_state);
+static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c, void *filebuf,
+                             MPI_Offset position, void *extra_state);
+static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c, void *filebuf,
+                              MPI_Offset position, void *extra_state);
+static int extent_intercept_fn(MPI_Datatype type_c, MPI_Aint *file_extent, void *extra_state);
 
 /* Data structure passed to the intercepts (see below).  It is an OPAL
    list_item_t so that we can clean this memory up during
@@ -109,10 +110,9 @@ static void intercept_extra_state_constructor(ompi_intercept_extra_state_t *obj)
     obj->extra_state_f77 = NULL;
 }
 
-OBJ_CLASS_INSTANCE(ompi_intercept_extra_state_t,
-                   opal_list_item_t,
+OBJ_CLASS_INSTANCE(ompi_intercept_extra_state_t, opal_list_item_t,
                    intercept_extra_state_constructor, NULL);
-#endif  /* !OMPI_BUILD_MPI_PROFILING */
+#endif /* !OMPI_BUILD_MPI_PROFILING */
 
 /*
  * This function works by calling the C version of
@@ -128,12 +128,10 @@ OBJ_CLASS_INSTANCE(ompi_intercept_extra_state_t,
  * arguments to Fortran and then invoke the registered callback
  * function.
  */
-void ompi_register_datarep_f(char *datarep,
-                            ompi_mpi2_fortran_datarep_conversion_fn_t *read_fn_f77,
-                            ompi_mpi2_fortran_datarep_conversion_fn_t *write_fn_f77,
-                            ompi_mpi2_fortran_datarep_extent_fn_t *extent_fn_f77,
-                            MPI_Aint *extra_state_f77,
-                            MPI_Fint *ierr, int datarep_len)
+void ompi_register_datarep_f(char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_fn_f77,
+                             ompi_mpi2_fortran_datarep_conversion_fn_t *write_fn_f77,
+                             ompi_mpi2_fortran_datarep_extent_fn_t *extent_fn_f77,
+                             MPI_Aint *extra_state_f77, MPI_Fint *ierr, int datarep_len)
 {
     char *c_datarep;
     int c_ierr, ret;
@@ -143,9 +141,9 @@ void ompi_register_datarep_f(char *datarep,
     /* Malloc space for the intercept callback data */
     intercept = OBJ_NEW(ompi_intercept_extra_state_t);
     if (NULL == intercept) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL,
-                                        OMPI_ERR_OUT_OF_RESOURCE, FUNC_NAME);
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, OMPI_ERR_OUT_OF_RESOURCE, FUNC_NAME);
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
     /* Save the new object on a global list because per MPI-2:9.5.3,
@@ -157,10 +155,10 @@ void ompi_register_datarep_f(char *datarep,
     opal_list_append(&ompi_registered_datareps, &(intercept->base));
 
     /* Convert the fortran string */
-    if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(datarep, datarep_len,
-                                                       &c_datarep))) {
+    if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(datarep, datarep_len, &c_datarep))) {
         c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, ret, FUNC_NAME);
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
 
@@ -174,7 +172,7 @@ void ompi_register_datarep_f(char *datarep,
         /* Can't use the MPI_CONVERSION_FN_NULL macro here because it
            is specifically not defined when compiling this file so
            that we can prototype an all-caps Fortran function */
-        read_fn_c = (MPI_Datarep_conversion_function*) 0;
+        read_fn_c = (MPI_Datarep_conversion_function *) 0;
     } else {
         intercept->read_fn_f77 = read_fn_f77;
         read_fn_c = read_intercept_fn;
@@ -183,7 +181,7 @@ void ompi_register_datarep_f(char *datarep,
         /* Can't use the MPI_CONVERSION_FN_NULL macro here because it
            is specifically not defined when compiling this file so
            that we can prototype an all-caps Fortran function */
-        write_fn_c = (MPI_Datarep_conversion_function*) 0;
+        write_fn_c = (MPI_Datarep_conversion_function *) 0;
     } else {
         intercept->write_fn_f77 = write_fn_f77;
         write_fn_c = write_intercept_fn;
@@ -194,62 +192,52 @@ void ompi_register_datarep_f(char *datarep,
     /* Now that the intercept data has been setup, call the C function
        with the setup intercept routines and the intercept-specific
        data/extra state. */
-    c_ierr = PMPI_Register_datarep(c_datarep,
-                                  read_fn_c, write_fn_c,
-                                  extent_intercept_fn,
-                                  intercept);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = PMPI_Register_datarep(c_datarep, read_fn_c, write_fn_c, extent_intercept_fn,
+                                   intercept);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
     free(c_datarep);
 }
 
 /*
  * C->Fortran intercept for the read conversion.
  */
-static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
-                             void *filebuf, MPI_Offset position,
-                             void *extra_state)
+static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c, void *filebuf,
+                             MPI_Offset position, void *extra_state)
 {
     MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
     MPI_Fint type_f77 = PMPI_Type_c2f(type_c);
-    ompi_intercept_extra_state_t *intercept_data =
-        (ompi_intercept_extra_state_t*) extra_state;
+    ompi_intercept_extra_state_t *intercept_data = (ompi_intercept_extra_state_t *) extra_state;
 
     intercept_data->read_fn_f77((char *) userbuf, &type_f77, &count_f77, (char *) filebuf,
-                                &position, intercept_data->extra_state_f77,
-                                &ierr);
+                                &position, intercept_data->extra_state_f77, &ierr);
     return OMPI_FINT_2_INT(ierr);
 }
 
 /*
  * C->Fortran intercept for the write conversion.
  */
-static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
-                             void *filebuf, MPI_Offset position,
-                             void *extra_state)
+static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c, void *filebuf,
+                              MPI_Offset position, void *extra_state)
 {
     MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
     MPI_Fint type_f77 = PMPI_Type_c2f(type_c);
-    ompi_intercept_extra_state_t *intercept_data =
-        (ompi_intercept_extra_state_t*) extra_state;
+    ompi_intercept_extra_state_t *intercept_data = (ompi_intercept_extra_state_t *) extra_state;
 
     intercept_data->write_fn_f77((char *) userbuf, &type_f77, &count_f77, (char *) filebuf,
-                                 &position, intercept_data->extra_state_f77,
-                                 &ierr);
+                                 &position, intercept_data->extra_state_f77, &ierr);
     return OMPI_FINT_2_INT(ierr);
 }
 
 /*
  * C->Fortran intercept for the extent calculation.
  */
-static int extent_intercept_fn(MPI_Datatype type_c, MPI_Aint *file_extent_f77,
-                               void *extra_state)
+static int extent_intercept_fn(MPI_Datatype type_c, MPI_Aint *file_extent_f77, void *extra_state)
 {
     MPI_Fint ierr, type_f77 = PMPI_Type_c2f(type_c);
-    ompi_intercept_extra_state_t *intercept_data =
-        (ompi_intercept_extra_state_t*) extra_state;
+    ompi_intercept_extra_state_t *intercept_data = (ompi_intercept_extra_state_t *) extra_state;
 
-    intercept_data->extent_fn_f77(&type_f77, file_extent_f77,
-                                 intercept_data->extra_state_f77, &ierr);
+    intercept_data->extent_fn_f77(&type_f77, file_extent_f77, intercept_data->extra_state_f77,
+                                  &ierr);
     return OMPI_FINT_2_INT(ierr);
 }
-

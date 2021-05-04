@@ -21,4 +21,3 @@ OMPI_DECLSPEC int mca_vprotocol_pessimist_start(size_t count, ompi_request_t **r
 END_C_DECLS
 
 #endif /* __VPROTOCOL_PESSIMIST_START_H__ */
-

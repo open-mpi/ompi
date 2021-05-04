@@ -15,8 +15,7 @@
 
 #include "mtl_ofi.h"
 
-#define TO_OFI_REQ(_ptr_ctx) \
-    container_of((_ptr_ctx), struct ompi_mtl_ofi_request_t, ctx)
+#define TO_OFI_REQ(_ptr_ctx) container_of((_ptr_ctx), struct ompi_mtl_ofi_request_t, ctx)
 
 typedef enum {
     OMPI_MTL_OFI_SEND,
@@ -40,12 +39,10 @@ struct ompi_mtl_ofi_request_t {
     volatile int completion_count;
 
     /** Event callback */
-    int (*event_callback)(struct fi_cq_tagged_entry *wc,
-                          struct ompi_mtl_ofi_request_t*);
+    int (*event_callback)(struct fi_cq_tagged_entry *wc, struct ompi_mtl_ofi_request_t *);
 
     /** Error callback */
-    int (*error_callback)(struct fi_cq_err_entry *error,
-                          struct ompi_mtl_ofi_request_t*);
+    int (*error_callback)(struct fi_cq_err_entry *error, struct ompi_mtl_ofi_request_t *);
 
     /** Request status */
     struct ompi_status_public_t status;
@@ -59,7 +56,7 @@ struct ompi_mtl_ofi_request_t {
 
     /** Reference to the MTL used to lookup */
     /*  source of an ANY_SOURCE Recv        */
-    struct mca_mtl_base_module_t* mtl;
+    struct mca_mtl_base_module_t *mtl;
 
     /** Pack buffer */
     void *buffer;

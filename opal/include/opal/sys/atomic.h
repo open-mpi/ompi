@@ -409,7 +409,6 @@ static inline int32_t opal_atomic_fetch_min_32(opal_atomic_int32_t *addr, int32_
 static inline int32_t opal_atomic_max_fetch_32(opal_atomic_int32_t *addr, int32_t value);
 static inline int32_t opal_atomic_fetch_max_32(opal_atomic_int32_t *addr, int32_t value);
 
-
 static inline int64_t opal_atomic_add_fetch_64(opal_atomic_int64_t *addr, int64_t delta);
 static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *addr, int64_t delta);
 static inline int64_t opal_atomic_and_fetch_64(opal_atomic_int64_t *addr, int64_t value);
@@ -423,7 +422,6 @@ static inline int64_t opal_atomic_min_fetch_64(opal_atomic_int64_t *addr, int64_
 static inline int64_t opal_atomic_fetch_min_64(opal_atomic_int64_t *addr, int64_t value);
 static inline int64_t opal_atomic_max_fetch_64(opal_atomic_int64_t *addr, int64_t value);
 static inline int64_t opal_atomic_fetch_max_64(opal_atomic_int64_t *addr, int64_t value);
-
 
 /* provide a size_t add/subtract.  When in debug mode, make it an
  * inline function so that we don't have any casts in the
@@ -595,8 +593,8 @@ static inline intptr_t opal_atomic_fetch_sub_ptr(opal_atomic_intptr_t *addr, voi
  * @param addr          Address of <TYPE>
  * @param delta         Value to add (converted to <TYPE>).
  */
-#        define opal_atomic_add(ADDR, VALUE) \
-            opal_atomic_add_xx((opal_atomic_intptr_t *) (ADDR), (int32_t)(VALUE), sizeof(*(ADDR)))
+#    define opal_atomic_add(ADDR, VALUE) \
+        opal_atomic_add_xx((opal_atomic_intptr_t *) (ADDR), (int32_t)(VALUE), sizeof(*(ADDR)))
 
 /**
  * Atomically decrement the content depending on the type. This
@@ -608,9 +606,8 @@ static inline intptr_t opal_atomic_fetch_sub_ptr(opal_atomic_intptr_t *addr, voi
  * @param addr          Address of <TYPE>
  * @param delta         Value to substract (converted to <TYPE>).
  */
-#        define opal_atomic_sub(ADDR, VALUE) \
-            opal_atomic_sub_xx((opal_atomic_intptr_t *) (ADDR), (int32_t)(VALUE), sizeof(*(ADDR)))
-
+#    define opal_atomic_sub(ADDR, VALUE) \
+        opal_atomic_sub_xx((opal_atomic_intptr_t *) (ADDR), (int32_t)(VALUE), sizeof(*(ADDR)))
 
 /*
  * Include inline implementations of everything not defined directly

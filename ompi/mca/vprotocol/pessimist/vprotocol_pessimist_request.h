@@ -12,8 +12,8 @@
 #define __INCLUDE_VPROTOCOL_PESSIMIST_REQUEST_H_
 
 #include "ompi_config.h"
-#include "ompi/request/request.h"
 #include "../base/vprotocol_base_request.h"
+#include "ompi/request/request.h"
 #include "vprotocol_pessimist_event.h"
 #include "vprotocol_pessimist_sender_based_types.h"
 
@@ -33,8 +33,7 @@ typedef mca_vprotocol_pessimist_request_t mca_vprotocol_pessimist_send_request_t
 OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_recv_request_t);
 OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_send_request_t);
 
-#define VPESSIMIST_FTREQ(req) \
-    ((mca_vprotocol_pessimist_request_t *) VPROTOCOL_FTREQ(req))
+#define VPESSIMIST_FTREQ(req) ((mca_vprotocol_pessimist_request_t *) VPROTOCOL_FTREQ(req))
 
 #define VPESSIMIST_RECV_FTREQ(req) \
     ((mca_vprotocol_pessimist_recv_request_t *) VPROTOCOL_RECV_FTREQ(req))
@@ -42,9 +41,10 @@ OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_send_request_t);
 #define VPESSIMIST_SEND_FTREQ(req) \
     ((mca_vprotocol_pessimist_send_request_t *) VPROTOCOL_SEND_FTREQ(req))
 
-#define VPESSIMIST_FTREQ_INIT(req) do {                                         \
-        VPESSIMIST_FTREQ(req)->reqid = mca_vprotocol_pessimist.clock++;        \
-} while(0)
+#define VPESSIMIST_FTREQ_INIT(req)                                      \
+    do {                                                                \
+        VPESSIMIST_FTREQ(req)->reqid = mca_vprotocol_pessimist.clock++; \
+    } while (0)
 
 int mca_vprotocol_pessimist_request_free(ompi_request_t **req);
 

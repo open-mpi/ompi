@@ -22,14 +22,13 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
+#include "coll_basic.h"
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/pml/pml.h"
-#include "coll_basic.h"
-
 
 /*
  *	scatterv_intra
@@ -38,13 +37,10 @@
  *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
-                              const int *disps, struct ompi_datatype_t *sdtype,
-                              void *rbuf, int rcount,
-                              struct ompi_datatype_t *rdtype, int root,
-                              struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+int mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts, const int *disps,
+                                  struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+                                  struct ompi_datatype_t *rdtype, int root,
+                                  struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int i, rank, size, err;
     char *ptmp;
@@ -60,9 +56,8 @@ mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
     if (rank != root) {
         /* Only receive if there is something to receive */
         if (rcount > 0) {
-            return MCA_PML_CALL(recv(rbuf, rcount, rdtype,
-                                     root, MCA_COLL_BASE_TAG_SCATTERV,
-                                     comm, MPI_STATUS_IGNORE));
+            return MCA_PML_CALL(recv(rbuf, rcount, rdtype, root, MCA_COLL_BASE_TAG_SCATTERV, comm,
+                                     MPI_STATUS_IGNORE));
         }
         return MPI_SUCCESS;
     }
@@ -82,14 +77,12 @@ mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
         if (i == rank) {
             /* simple optimization or a local operation */
             if (scounts[i] > 0 && MPI_IN_PLACE != rbuf) {
-                err = ompi_datatype_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
-                                      rdtype);
+                err = ompi_datatype_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount, rdtype);
             }
         } else {
             /* Only send if there is something to send */
             if (scounts[i] > 0) {
-                err = MCA_PML_CALL(send(ptmp, scounts[i], sdtype, i,
-                                        MCA_COLL_BASE_TAG_SCATTERV,
+                err = MCA_PML_CALL(send(ptmp, scounts[i], sdtype, i, MCA_COLL_BASE_TAG_SCATTERV,
                                         MCA_PML_BASE_SEND_STANDARD, comm));
                 if (MPI_SUCCESS != err) {
                     return err;
@@ -103,7 +96,6 @@ mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
     return MPI_SUCCESS;
 }
 
-
 /*
  *	scatterv_inter
  *
@@ -111,13 +103,10 @@ mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
  *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts,
-                              const int *disps, struct ompi_datatype_t *sdtype,
-                              void *rbuf, int rcount,
-                              struct ompi_datatype_t *rdtype, int root,
-                              struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+int mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts, const int *disps,
+                                  struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+                                  struct ompi_datatype_t *rdtype, int root,
+                                  struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int i, size, err;
     char *ptmp;
@@ -135,9 +124,8 @@ mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* If not root, receive data. */
-        err = MCA_PML_CALL(recv(rbuf, rcount, rdtype,
-                                root, MCA_COLL_BASE_TAG_SCATTERV,
-                                comm, MPI_STATUS_IGNORE));
+        err = MCA_PML_CALL(
+            recv(rbuf, rcount, rdtype, root, MCA_COLL_BASE_TAG_SCATTERV, comm, MPI_STATUS_IGNORE));
     } else {
         /* I am the root, loop sending data. */
         err = ompi_datatype_get_extent(sdtype, &lb, &extent);
@@ -146,14 +134,14 @@ mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts,
         }
 
         reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
-        if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
+        if (NULL == reqs) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
         for (i = 0; i < size; ++i) {
             ptmp = ((char *) sbuf) + (extent * disps[i]);
-            err = MCA_PML_CALL(isend(ptmp, scounts[i], sdtype, i,
-                                     MCA_COLL_BASE_TAG_SCATTERV,
-                                     MCA_PML_BASE_SEND_STANDARD, comm,
-                                     &(reqs[i])));
+            err = MCA_PML_CALL(isend(ptmp, scounts[i], sdtype, i, MCA_COLL_BASE_TAG_SCATTERV,
+                                     MCA_PML_BASE_SEND_STANDARD, comm, &(reqs[i])));
             if (OMPI_SUCCESS != err) {
                 ompi_coll_base_free_reqs(reqs, i + 1);
                 return err;

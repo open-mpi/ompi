@@ -49,14 +49,14 @@ oshmem_group_t *oshmem_group_cache_find(int pe_start, int pe_stride, int pe_size
         return NULL;
     }
 
-    key.pe_start  = pe_start;
-    key.pe_size   = pe_size;
+    key.pe_start = pe_start;
+    key.pe_size = pe_size;
     key.pe_stride = pe_stride;
 
     group_cache_n_lookups++;
 
-    if (OPAL_SUCCESS != opal_hash_table_get_value_ptr(&group_cache, &key,
-                                                      sizeof(key), (void **)&group)) {
+    if (OPAL_SUCCESS
+        != opal_hash_table_get_value_ptr(&group_cache, &key, sizeof(key), (void **) &group)) {
         return NULL;
     }
 
@@ -64,8 +64,7 @@ oshmem_group_t *oshmem_group_cache_find(int pe_start, int pe_stride, int pe_size
     return group;
 }
 
-int oshmem_group_cache_insert(oshmem_group_t *group, int pe_start,
-                              int pe_stride, int pe_size)
+int oshmem_group_cache_insert(oshmem_group_t *group, int pe_start, int pe_stride, int pe_size)
 {
     oshmem_group_key_t key;
 
@@ -73,14 +72,12 @@ int oshmem_group_cache_insert(oshmem_group_t *group, int pe_start,
         return OSHMEM_SUCCESS;
     }
 
-    key.pe_start  = pe_start;
-    key.pe_size   = pe_size;
+    key.pe_start = pe_start;
+    key.pe_size = pe_size;
     key.pe_stride = pe_stride;
 
-    if (OPAL_SUCCESS != opal_hash_table_set_value_ptr(&group_cache, &key,
-                                                      sizeof(key), group)) {
+    if (OPAL_SUCCESS != opal_hash_table_set_value_ptr(&group_cache, &key, sizeof(key), group)) {
         return OSHMEM_ERROR;
     }
     return OSHMEM_SUCCESS;
 }
-

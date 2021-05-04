@@ -25,9 +25,9 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/mca.h"
-#include "opal/mca/base/mca_base_framework.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/mca/base/mca_base_framework.h"
 
 #include "ompi/mca/part/part.h"
 
@@ -52,10 +52,9 @@ OMPI_DECLSPEC extern mca_base_framework_t ompi_part_base_framework;
 /*
  * Select an available component.
  */
-OMPI_DECLSPEC  int mca_part_base_select(bool enable_progress_threads,
-                                        bool enable_mpi_threads);
+OMPI_DECLSPEC int mca_part_base_select(bool enable_progress_threads, bool enable_mpi_threads);
 
-OMPI_DECLSPEC  int mca_part_base_progress(void);
+OMPI_DECLSPEC int mca_part_base_progress(void);
 
 OMPI_DECLSPEC int mca_part_base_finalize(void);
 

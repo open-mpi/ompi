@@ -20,29 +20,27 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_get_parent = PMPI_Comm_get_parent
-#endif
-#define MPI_Comm_get_parent PMPI_Comm_get_parent
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_get_parent = PMPI_Comm_get_parent
+#    endif
+#    define MPI_Comm_get_parent PMPI_Comm_get_parent
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_get_parent";
 
-
 int MPI_Comm_get_parent(MPI_Comm *parent)
 {
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( NULL == parent ) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (NULL == parent) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
@@ -52,6 +50,6 @@ int MPI_Comm_get_parent(MPI_Comm *parent)
      * This is also the return value required by MPI-2.
      */
 
-     *parent = ompi_mpi_comm_parent;
-     return MPI_SUCCESS;
+    *parent = ompi_mpi_comm_parent;
+    return MPI_SUCCESS;
 }

@@ -34,17 +34,17 @@
 #include "opal/util/printf.h"
 
 #include "ompi/constants.h"
-#include "ompi/op/op.h"
-#include "ompi/mca/op/op.h"
 #include "ompi/mca/op/base/base.h"
 #include "ompi/mca/op/example/op_example.h"
+#include "ompi/mca/op/op.h"
+#include "ompi/op/op.h"
 
 static int example_component_open(void);
 static int example_component_close(void);
 static int example_component_init_query(bool enable_progress_threads,
-                                     bool enable_mpi_thread_multiple);
-static struct ompi_op_base_module_1_0_0_t *
-    example_component_op_query(struct ompi_op_t *op, int *priority);
+                                        bool enable_mpi_thread_multiple);
+static struct ompi_op_base_module_1_0_0_t *example_component_op_query(struct ompi_op_t *op,
+                                                                      int *priority);
 static int example_component_register(void);
 
 ompi_op_example_component_t mca_op_example_component = {
@@ -97,7 +97,6 @@ static int example_component_open(void)
     return OMPI_SUCCESS;
 }
 
-
 /*
  * Component close
  */
@@ -135,19 +134,14 @@ static int example_component_register(void)
        containing the major.minor.release version number from the
        libfoo support library (see configure.m4 for how we got these C
        macros). */
-    opal_asprintf(&str, "%s.%s.%s",
-             OP_EXAMPLE_LIBFOO_VERSION_MAJOR,
-             OP_EXAMPLE_LIBFOO_VERSION_MINOR,
-             OP_EXAMPLE_LIBFOO_VERSION_RELEASE);
+    opal_asprintf(&str, "%s.%s.%s", OP_EXAMPLE_LIBFOO_VERSION_MAJOR,
+                  OP_EXAMPLE_LIBFOO_VERSION_MINOR, OP_EXAMPLE_LIBFOO_VERSION_RELEASE);
     example_component_version = str;
-    (void) mca_base_component_var_register(&mca_op_example_component.super.opc_version,
-                                           "libfoo_version",
-                                           "Version of the libfoo support library that this component was built against.",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_CONSTANT,
-                                           &example_component_version);
+    (void) mca_base_component_var_register(
+        &mca_op_example_component.super.opc_version, "libfoo_version",
+        "Version of the libfoo support library that this component was built against.",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY, OPAL_INFO_LVL_9,
+        MCA_BASE_VAR_SCOPE_CONSTANT, &example_component_version);
     /* The variable system duplicated the string. */
     free(str);
 
@@ -161,23 +155,19 @@ static int example_component_register(void)
     (void) mca_base_component_var_register(&mca_op_example_component.super.opc_version,
                                            "hardware_available",
                                            "Whether the hardware is available or not",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_op_example_component.hardware_available);
 
     mca_op_example_component.double_supported = true;
-    (void) mca_base_component_var_register(&mca_op_example_component.super.opc_version,
-                                           "double_supported",
-                                           "Whether the double precision data types are supported or not",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_op_example_component.double_supported);
+    (void) mca_base_component_var_register(
+        &mca_op_example_component.super.opc_version, "double_supported",
+        "Whether the double precision data types are supported or not", MCA_BASE_VAR_TYPE_BOOL,
+        NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_op_example_component.double_supported);
 
     return OMPI_SUCCESS;
 }
-
 
 /*
  * Query whether this component wants to be used in this process.
@@ -244,12 +234,11 @@ static int example_component_init_query(bool enable_progress_threads,
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-
 /*
  * Query whether this component can be used for a specific op
  */
-static struct ompi_op_base_module_1_0_0_t *
-    example_component_op_query(struct ompi_op_t *op, int *priority)
+static struct ompi_op_base_module_1_0_0_t *example_component_op_query(struct ompi_op_t *op,
+                                                                      int *priority)
 {
     ompi_op_base_module_t *module = NULL;
 

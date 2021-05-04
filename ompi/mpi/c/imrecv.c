@@ -13,37 +13,32 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
-#include "ompi/request/request.h"
 #include "ompi/message/message.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Imrecv = PMPI_Imrecv
-#endif
-#define MPI_Imrecv PMPI_Imrecv
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Imrecv = PMPI_Imrecv
+#    endif
+#    define MPI_Imrecv PMPI_Imrecv
 #endif
 
 static const char FUNC_NAME[] = "MPI_Imrecv";
 
-
-int MPI_Imrecv(void *buf, int count, MPI_Datatype type,
-               MPI_Message *message, MPI_Request *request)
+int MPI_Imrecv(void *buf, int count, MPI_Datatype type, MPI_Message *message, MPI_Request *request)
 {
     int rc = MPI_SUCCESS;
     ompi_communicator_t *comm;
 
-    MEMCHECKER(
-        memchecker_datatype(type);
-        memchecker_message(message);
-        memchecker_call(&opal_memchecker_base_isaddressable, buf, count, type);
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_datatype(type); memchecker_message(message);
+               memchecker_call(&opal_memchecker_base_isaddressable, buf, count, type);
+               memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         OMPI_CHECK_DATATYPE_FOR_RECV(rc, type, count);
         OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
@@ -64,7 +59,7 @@ int MPI_Imrecv(void *buf, int count, MPI_Datatype type,
         *request = &ompi_request_empty;
         *message = MPI_MESSAGE_NULL;
         return MPI_SUCCESS;
-     }
+    }
 
 #if OPAL_ENABLE_FT_MPI
     /*

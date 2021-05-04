@@ -88,8 +88,8 @@
 
 #include "ompi/attribute/attribute.h"
 
-#include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errcode.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/ompi_rte.h"
 
@@ -104,7 +104,6 @@ static int free_win(int keyval);
 
 static int set_f(int keyval, MPI_Fint value);
 
-
 int ompi_attr_create_predefined(void)
 {
     int ret;
@@ -115,39 +114,39 @@ int ompi_attr_create_predefined(void)
        strictly adheres to the order in mpi.h.  If you change the
        order here, you must change the order in mpi.h as well! */
 
-    if (OMPI_SUCCESS != (ret = create_comm(MPI_TAG_UB, true)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_HOST, true)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_IO, true)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_WTIME_IS_GLOBAL, true)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_APPNUM, true)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_LASTUSEDCODE, false)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_UNIVERSE_SIZE, true)) ||
-        OMPI_SUCCESS != (ret = create_win(MPI_WIN_BASE)) ||
-        OMPI_SUCCESS != (ret = create_win(MPI_WIN_SIZE)) ||
-        OMPI_SUCCESS != (ret = create_win(MPI_WIN_DISP_UNIT)) ||
-        OMPI_SUCCESS != (ret = create_win(MPI_WIN_CREATE_FLAVOR)) ||
-        OMPI_SUCCESS != (ret = create_win(MPI_WIN_MODEL)) ||
-        OMPI_SUCCESS != (ret = create_comm(MPI_FT, false)) || /* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
+    if (OMPI_SUCCESS != (ret = create_comm(MPI_TAG_UB, true))
+        || OMPI_SUCCESS != (ret = create_comm(MPI_HOST, true))
+        || OMPI_SUCCESS != (ret = create_comm(MPI_IO, true))
+        || OMPI_SUCCESS != (ret = create_comm(MPI_WTIME_IS_GLOBAL, true))
+        || OMPI_SUCCESS != (ret = create_comm(MPI_APPNUM, true))
+        || OMPI_SUCCESS != (ret = create_comm(MPI_LASTUSEDCODE, false))
+        || OMPI_SUCCESS != (ret = create_comm(MPI_UNIVERSE_SIZE, true))
+        || OMPI_SUCCESS != (ret = create_win(MPI_WIN_BASE))
+        || OMPI_SUCCESS != (ret = create_win(MPI_WIN_SIZE))
+        || OMPI_SUCCESS != (ret = create_win(MPI_WIN_DISP_UNIT))
+        || OMPI_SUCCESS != (ret = create_win(MPI_WIN_CREATE_FLAVOR))
+        || OMPI_SUCCESS != (ret = create_win(MPI_WIN_MODEL))
+        || OMPI_SUCCESS != (ret = create_comm(MPI_FT, false))
+        || /* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
         0) {
         return ret;
     }
 
     /* Set default values for everything except MPI_UNIVERSE_SIZE */
 
-    if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, mca_pml.pml_max_tag)) ||
-        OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL)) ||
-        OMPI_SUCCESS != (ret = set_f(MPI_IO, MPI_ANY_SOURCE)) ||
-        OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
+    if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, mca_pml.pml_max_tag))
+        || OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL))
+        || OMPI_SUCCESS != (ret = set_f(MPI_IO, MPI_ANY_SOURCE))
+        || OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
 #if OPAL_ENABLE_FT_MPI
         /* Although we always define the key to ease fortran integration,
-         * lets not set a default value to the attribute if we do not 
+         * lets not set a default value to the attribute if we do not
          * have fault tolerance built in. */
         OMPI_SUCCESS != (ret = set_f(MPI_FT, ompi_ftmpi_enabled)) ||
 #else
         OMPI_SUCCESS != (ret = set_f(MPI_FT, false)) ||
 #endif /* OPAL_ENABLE_FT_MPI */
-        OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE,
-                                     ompi_mpi_errcode_lastused))) {
+        OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE, ompi_mpi_errcode_lastused))) {
         return ret;
     }
 
@@ -162,29 +161,27 @@ int ompi_attr_create_predefined(void)
     return ret;
 }
 
-
 int ompi_attr_free_predefined(void)
 {
     int ret;
 
-    if (OMPI_SUCCESS != (ret = free_comm(MPI_TAG_UB)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_HOST)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_IO)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_WTIME_IS_GLOBAL)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_APPNUM)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_LASTUSEDCODE)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_UNIVERSE_SIZE)) ||
-        OMPI_SUCCESS != (ret = free_comm(MPI_FT)) || /* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_BASE)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_SIZE)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_DISP_UNIT)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_CREATE_FLAVOR)) ||
-        OMPI_SUCCESS != (ret = free_win(MPI_WIN_MODEL))) {
+    if (OMPI_SUCCESS != (ret = free_comm(MPI_TAG_UB)) || OMPI_SUCCESS != (ret = free_comm(MPI_HOST))
+        || OMPI_SUCCESS != (ret = free_comm(MPI_IO))
+        || OMPI_SUCCESS != (ret = free_comm(MPI_WTIME_IS_GLOBAL))
+        || OMPI_SUCCESS != (ret = free_comm(MPI_APPNUM))
+        || OMPI_SUCCESS != (ret = free_comm(MPI_LASTUSEDCODE))
+        || OMPI_SUCCESS != (ret = free_comm(MPI_UNIVERSE_SIZE))
+        || OMPI_SUCCESS != (ret = free_comm(MPI_FT))
+        || /* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
+        OMPI_SUCCESS != (ret = free_win(MPI_WIN_BASE))
+        || OMPI_SUCCESS != (ret = free_win(MPI_WIN_SIZE))
+        || OMPI_SUCCESS != (ret = free_win(MPI_WIN_DISP_UNIT))
+        || OMPI_SUCCESS != (ret = free_win(MPI_WIN_CREATE_FLAVOR))
+        || OMPI_SUCCESS != (ret = free_win(MPI_WIN_MODEL))) {
         return ret;
     }
     return OMPI_SUCCESS;
 }
-
 
 static int create_comm(int target_keyval, bool want_inherit)
 {
@@ -194,11 +191,12 @@ static int create_comm(int target_keyval, bool want_inherit)
     ompi_attribute_fn_ptr_union_t del;
 
     keyval = -1;
-    copy.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*)
-        (want_inherit ? MPI_COMM_DUP_FN : MPI_COMM_NULL_COPY_FN);
+    copy.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function
+                                          *) (want_inherit ? MPI_COMM_DUP_FN
+                                                           : MPI_COMM_NULL_COPY_FN);
     del.attr_communicator_delete_fn = MPI_COMM_NULL_DELETE_FN;
-    err = ompi_attr_create_keyval(COMM_ATTR, copy, del,
-                                  &keyval, NULL, OMPI_KEYVAL_PREDEFINED, NULL);
+    err = ompi_attr_create_keyval(COMM_ATTR, copy, del, &keyval, NULL, OMPI_KEYVAL_PREDEFINED,
+                                  NULL);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -208,13 +206,11 @@ static int create_comm(int target_keyval, bool want_inherit)
     return OMPI_SUCCESS;
 }
 
-
 static int free_comm(int keyval)
 {
-  int key = keyval;
-  return ompi_attr_free_keyval (COMM_ATTR, &key, true);
+    int key = keyval;
+    return ompi_attr_free_keyval(COMM_ATTR, &key, true);
 }
-
 
 static int create_win(int target_keyval)
 {
@@ -224,10 +220,9 @@ static int create_win(int target_keyval)
     ompi_attribute_fn_ptr_union_t del;
 
     keyval = -1;
-    copy.attr_win_copy_fn = (MPI_Win_internal_copy_attr_function*)MPI_WIN_NULL_COPY_FN;
+    copy.attr_win_copy_fn = (MPI_Win_internal_copy_attr_function *) MPI_WIN_NULL_COPY_FN;
     del.attr_win_delete_fn = MPI_WIN_NULL_DELETE_FN;
-    err = ompi_attr_create_keyval(WIN_ATTR, copy, del,
-                                  &keyval, NULL, OMPI_KEYVAL_PREDEFINED, NULL);
+    err = ompi_attr_create_keyval(WIN_ATTR, copy, del, &keyval, NULL, OMPI_KEYVAL_PREDEFINED, NULL);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -237,18 +232,14 @@ static int create_win(int target_keyval)
     return OMPI_SUCCESS;
 }
 
-
 static int free_win(int keyval)
 {
-  int key = keyval;
-  return ompi_attr_free_keyval (WIN_ATTR, &key, true);
+    int key = keyval;
+    return ompi_attr_free_keyval(WIN_ATTR, &key, true);
 }
-
 
 static int set_f(int keyval, MPI_Fint value)
 {
-    return ompi_attr_set_fint(COMM_ATTR, MPI_COMM_WORLD,
-                              &MPI_COMM_WORLD->c_keyhash,
-                              keyval, value,
+    return ompi_attr_set_fint(COMM_ATTR, MPI_COMM_WORLD, &MPI_COMM_WORLD->c_keyhash, keyval, value,
                               true);
 }

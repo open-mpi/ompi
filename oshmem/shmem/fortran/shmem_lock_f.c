@@ -10,43 +10,29 @@
  */
 
 #include "oshmem_config.h"
-#include "oshmem/shmem/fortran/bindings.h"
-#include "oshmem/include/shmem.h"
-#include "oshmem/shmem/shmem_api_logger.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "oshmem/include/shmem.h"
+#include "oshmem/shmem/fortran/bindings.h"
+#include "oshmem/shmem/shmem_api_logger.h"
 #include "oshmem/shmem/shmem_lock.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#    include "oshmem/shmem/fortran/profile/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_SET_LOCK, shmem_set_lock)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_CLEAR_LOCK, shmem_clear_lock)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_TEST_LOCK, shmem_test_lock)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#    include "oshmem/shmem/fortran/profile/defines.h"
 #endif
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
-        SHMEM_SET_LOCK,
-        shmem_set_lock_,
-        shmem_set_lock__,
-        shmem_set_lock_f,
-        (FORTRAN_POINTER_T lock),
-        (lock))
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB(void, SHMEM_SET_LOCK, shmem_set_lock_, shmem_set_lock__,
+                                    shmem_set_lock_f, (FORTRAN_POINTER_T lock), (lock))
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
-        SHMEM_CLEAR_LOCK,
-        shmem_clear_lock_,
-        shmem_clear_lock__,
-        shmem_clear_lock_f,
-        (FORTRAN_POINTER_T lock),
-        (lock))
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB(void, SHMEM_CLEAR_LOCK, shmem_clear_lock_, shmem_clear_lock__,
+                                    shmem_clear_lock_f, (FORTRAN_POINTER_T lock), (lock))
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
-        SHMEM_TEST_LOCK,
-        shmem_test_lock_,
-        shmem_test_lock__,
-        shmem_test_lock_f,
-        (FORTRAN_POINTER_T lock),
-        (lock))
+SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION(MPI_Fint, SHMEM_TEST_LOCK, shmem_test_lock_,
+                                         shmem_test_lock__, shmem_test_lock_f,
+                                         (FORTRAN_POINTER_T lock), (lock))
 
 void shmem_set_lock_f(FORTRAN_POINTER_T lock)
 {

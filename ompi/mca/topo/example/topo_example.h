@@ -42,8 +42,7 @@ BEGIN_C_DECLS
 /*
  * Public component instance
  */
-OMPI_MODULE_DECLSPEC extern mca_topo_base_component_2_2_0_t
-    mca_topo_example_component;
+OMPI_MODULE_DECLSPEC extern mca_topo_base_component_2_2_0_t mca_topo_example_component;
 
 /*
  * A unique module class for the module so that we can both cache
@@ -59,21 +58,14 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(mca_topo_example_module_t);
 
-
 /*
  * Module functions
  */
 
-int mca_topo_example_cart_map(struct ompi_communicator_t *comm,
-                              int ndims,
-                              int *dims,
-                              int *periods,
+int mca_topo_example_cart_map(struct ompi_communicator_t *comm, int ndims, int *dims, int *periods,
                               int *newrank);
 
-int mca_topo_example_graph_map(struct ompi_communicator_t *comm,
-                               int nnodes,
-                               int *index,
-                               int *edges,
+int mca_topo_example_graph_map(struct ompi_communicator_t *comm, int nnodes, int *index, int *edges,
                                int *newrank);
 /*
  * ******************************************************************

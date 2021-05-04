@@ -25,23 +25,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/part/part.h"
-#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Pready_range = PMPI_Pready_range
-#endif
-#define MPI_Pready_range PMPI_Pready_range
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Pready_range = PMPI_Pready_range
+#    endif
+#    define MPI_Pready_range PMPI_Pready_range
 #endif
 
 static const char FUNC_NAME[] = "MPI_Pready_range";
-
 
 int MPI_Pready_range(int partition_low, int partition_high, MPI_Request request)
 {

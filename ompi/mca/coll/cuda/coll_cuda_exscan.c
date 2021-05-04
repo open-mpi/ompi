@@ -19,13 +19,11 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/common/cuda/common_cuda.h"
 
-int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count,
-                         struct ompi_datatype_t *dtype,
-                         struct ompi_op_t *op,
-                         struct ompi_communicator_t *comm,
+int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+                         struct ompi_op_t *op, struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module)
 {
-    mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
+    mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t *) module;
     ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     size_t bufsize;
@@ -33,8 +31,8 @@ int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count,
 
     bufsize = opal_datatype_span(&dtype->super, count, &gap);
 
-    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *)sbuf, NULL))) {
-        sbuf1 = (char*)malloc(bufsize);
+    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *) sbuf, NULL))) {
+        sbuf1 = (char *) malloc(bufsize);
         if (NULL == sbuf1) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -43,9 +41,10 @@ int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count,
     }
 
     if (opal_cuda_check_bufs(rbuf, NULL)) {
-        rbuf1 = (char*)malloc(bufsize);
+        rbuf1 = (char *) malloc(bufsize);
         if (NULL == rbuf1) {
-            if (NULL != sbuf1) free(sbuf1);
+            if (NULL != sbuf1)
+                free(sbuf1);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, bufsize);
@@ -53,8 +52,7 @@ int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count,
         rbuf = rbuf1 - gap;
     }
 
-    rc = s->c_coll.coll_exscan(sbuf, rbuf, count, dtype, op, comm,
-                               s->c_coll.coll_exscan_module);
+    rc = s->c_coll.coll_exscan(sbuf, rbuf, count, dtype, op, comm, s->c_coll.coll_exscan_module);
     if (NULL != sbuf1) {
         free(sbuf1);
     }

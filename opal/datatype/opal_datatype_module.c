@@ -88,8 +88,9 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_long_double_complex
     = OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool = OPAL_DATATYPE_INITIALIZER_BOOL(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar = OPAL_DATATYPE_INITIALIZER_WCHAR(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_long =  OPAL_DATATYPE_INITIALIZER_LONG(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_unsigned_long =  OPAL_DATATYPE_INITIALIZER_UNSIGNED_LONG(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_long = OPAL_DATATYPE_INITIALIZER_LONG(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_unsigned_long
+    = OPAL_DATATYPE_INITIALIZER_UNSIGNED_LONG(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable
     = OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED(UNAVAILABLE, 0);
 

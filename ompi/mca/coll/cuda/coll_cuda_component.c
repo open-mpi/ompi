@@ -17,15 +17,15 @@
 
 #include <string.h>
 
+#include "coll_cuda.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "coll_cuda.h"
 
 /*
  * Public string showing the coll ompi_cuda component version number
  */
-const char *mca_coll_cuda_component_version_string =
-    "Open MPI cuda collective MCA component version " OMPI_VERSION;
+const char *mca_coll_cuda_component_version_string
+    = "Open MPI cuda collective MCA component version " OMPI_VERSION;
 
 /*
  * Local function
@@ -70,22 +70,20 @@ mca_coll_cuda_component_t mca_coll_cuda_component = {
     78,
 };
 
-
 static int cuda_register(void)
 {
-    (void) mca_base_component_var_register(&mca_coll_cuda_component.super.collm_version,
-                                           "priority", "Priority of the cuda coll component; only relevant if barrier_before or barrier_after is > 0",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
+    (void) mca_base_component_var_register(&mca_coll_cuda_component.super.collm_version, "priority",
+                                           "Priority of the cuda coll component; only relevant if "
+                                           "barrier_before or barrier_after is > 0",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_cuda_component.priority);
 
-    (void) mca_base_component_var_register(&mca_coll_cuda_component.super.collm_version,
-                                           "disable_cuda_coll", "Automatically handle the CUDA buffers for the MPI collective.",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_2,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_coll_cuda_component.disable_cuda_coll);
+    (void) mca_base_component_var_register(
+        &mca_coll_cuda_component.super.collm_version, "disable_cuda_coll",
+        "Automatically handle the CUDA buffers for the MPI collective.", MCA_BASE_VAR_TYPE_INT,
+        NULL, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_cuda_component.disable_cuda_coll);
 
     return OMPI_SUCCESS;
 }

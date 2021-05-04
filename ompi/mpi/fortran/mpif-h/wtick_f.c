@@ -32,41 +32,64 @@
  * manually.
  */
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_WTICK = ompi_wtick_f
+#        pragma weak pmpi_wtick = ompi_wtick_f
+#        pragma weak pmpi_wtick_ = ompi_wtick_f
+#        pragma weak pmpi_wtick__ = ompi_wtick_f
+
+#        pragma weak PMPI_Wtick_f = ompi_wtick_f
+#        pragma weak PMPI_Wtick_f08 = ompi_wtick_f
+#    else
+double PMPI_WTICK(void)
+{
+    return pompi_wtick_f();
+}
+double pmpi_wtick(void)
+{
+    return pompi_wtick_f();
+}
+double pmpi_wtick_(void)
+{
+    return pompi_wtick_f();
+}
+double pmpi_wtick__(void)
+{
+    return pompi_wtick_f();
+}
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_WTICK = ompi_wtick_f
-#pragma weak pmpi_wtick = ompi_wtick_f
-#pragma weak pmpi_wtick_ = ompi_wtick_f
-#pragma weak pmpi_wtick__ = ompi_wtick_f
+#    pragma weak MPI_WTICK = ompi_wtick_f
+#    pragma weak mpi_wtick = ompi_wtick_f
+#    pragma weak mpi_wtick_ = ompi_wtick_f
+#    pragma weak mpi_wtick__ = ompi_wtick_f
 
-#pragma weak PMPI_Wtick_f = ompi_wtick_f
-#pragma weak PMPI_Wtick_f08 = ompi_wtick_f
+#    pragma weak MPI_Wtick_f = ompi_wtick_f
+#    pragma weak MPI_Wtick_f08 = ompi_wtick_f
 #else
-double PMPI_WTICK(void) { return pompi_wtick_f(); }
-double pmpi_wtick(void) { return pompi_wtick_f(); }
-double pmpi_wtick_(void) { return pompi_wtick_f(); }
-double pmpi_wtick__(void) { return pompi_wtick_f(); }
+#    if !OMPI_BUILD_MPI_PROFILING
+double MPI_WTICK(void)
+{
+    return ompi_wtick_f();
+}
+double mpi_wtick(void)
+{
+    return ompi_wtick_f();
+}
+double mpi_wtick_(void)
+{
+    return ompi_wtick_f();
+}
+double mpi_wtick__(void)
+{
+    return ompi_wtick_f();
+}
+#    else
+#        define ompi_wtick_f pompi_wtick_f
+#    endif
 #endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WTICK = ompi_wtick_f
-#pragma weak mpi_wtick = ompi_wtick_f
-#pragma weak mpi_wtick_ = ompi_wtick_f
-#pragma weak mpi_wtick__ = ompi_wtick_f
-
-#pragma weak MPI_Wtick_f = ompi_wtick_f
-#pragma weak MPI_Wtick_f08 = ompi_wtick_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-double MPI_WTICK(void) { return ompi_wtick_f(); }
-double mpi_wtick(void) { return ompi_wtick_f(); }
-double mpi_wtick_(void) { return ompi_wtick_f(); }
-double mpi_wtick__(void) { return ompi_wtick_f(); }
-#else
-#define ompi_wtick_f pompi_wtick_f
-#endif
-#endif
-
 
 double ompi_wtick_f(void)
 {

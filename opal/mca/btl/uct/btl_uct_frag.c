@@ -13,10 +13,9 @@
 
 static void mca_btl_uct_frag_completion(uct_completion_t *uct_comp, ucs_status_t status)
 {
-    mca_btl_uct_uct_completion_t *comp = (mca_btl_uct_uct_completion_t
-                                              *) ((uintptr_t) uct_comp
-                                                  - offsetof(mca_btl_uct_uct_completion_t,
-                                                             uct_comp));
+    mca_btl_uct_uct_completion_t *comp
+        = (mca_btl_uct_uct_completion_t *) ((uintptr_t) uct_comp
+                                            - offsetof(mca_btl_uct_uct_completion_t, uct_comp));
 
     BTL_VERBOSE(("frag operation complete. frag = %p. status = %d", (void *) comp->frag, status));
 

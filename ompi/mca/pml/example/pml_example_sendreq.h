@@ -14,8 +14,7 @@
 
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 
-void mca_pml_example_send_request_progress( struct mca_ptl_base_module_t* ptl,
-                                        mca_pml_base_send_request_t* req,
-                                        size_t bytes_sent );
+void mca_pml_example_send_request_progress(struct mca_ptl_base_module_t *ptl,
+                                           mca_pml_base_send_request_t *req, size_t bytes_sent);
 
-#endif  /* PML_EXAMPLE_SENDREQ_H_HAS_BEEN_INCLUDED */
+#endif /* PML_EXAMPLE_SENDREQ_H_HAS_BEEN_INCLUDED */

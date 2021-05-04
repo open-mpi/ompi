@@ -14,23 +14,22 @@
 
 #include "oshmem/runtime/runtime.h"
 
-#include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/scoll/scoll.h"
 
 #include "oshmem/proc/proc.h"
 
-
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_barrier = pshmem_barrier
-#pragma weak shmem_barrier_all = pshmem_barrier_all
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_barrier = pshmem_barrier
+#    pragma weak shmem_barrier_all = pshmem_barrier_all
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync)
 {
     int rc;
-    oshmem_group_t* group;
+    oshmem_group_t *group;
 
     RUNTIME_CHECK_INIT();
 
@@ -40,7 +39,7 @@ void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync)
 #endif
 
     /* Create group basing PE_start, logPE_stride and PE_size */
-    group = oshmem_proc_group_create_nofail(PE_start, 1<<logPE_stride, PE_size);
+    group = oshmem_proc_group_create_nofail(PE_start, 1 << logPE_stride, PE_size);
     /* Call barrier operation */
     rc = group->g_scoll.scoll_barrier(group, pSync, SCOLL_DEFAULT_ALG);
 
@@ -58,8 +57,7 @@ void shmem_barrier_all(void)
 #endif
 
     if (mca_scoll_sync_array) {
-        rc = oshmem_group_all->g_scoll.scoll_barrier(oshmem_group_all,
-                                                     mca_scoll_sync_array,
+        rc = oshmem_group_all->g_scoll.scoll_barrier(oshmem_group_all, mca_scoll_sync_array,
                                                      SCOLL_DEFAULT_ALG);
     }
     RUNTIME_CHECK_RC(rc);

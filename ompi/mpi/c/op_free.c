@@ -20,41 +20,38 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/op/op.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Op_free = PMPI_Op_free
-#endif
-#define MPI_Op_free PMPI_Op_free
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Op_free = PMPI_Op_free
+#    endif
+#    define MPI_Op_free PMPI_Op_free
 #endif
 
 static const char FUNC_NAME[] = "MPI_Op_free";
 
-
 int MPI_Op_free(MPI_Op *op)
 {
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == op ||
-        ompi_op_is_intrinsic(*op)) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP,
-                                    FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == op || ompi_op_is_intrinsic(*op)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP, FUNC_NAME);
+        }
     }
-  }
 
-  /* We have a valid op, release it */
+    /* We have a valid op, release it */
 
-  OBJ_RELEASE(*op);
-  *op = MPI_OP_NULL;
+    OBJ_RELEASE(*op);
+    *op = MPI_OP_NULL;
 
-  /* All done */
+    /* All done */
 
-  return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

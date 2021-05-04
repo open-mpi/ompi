@@ -1,11 +1,11 @@
 #ifndef SCOLL_MPI_DTYPES_H
 #define SCOLL_MPI_DTYPES_H
 
-#include "oshmem/op/op.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
+#include "oshmem/op/op.h"
 
-static struct ompi_datatype_t* shmem_dtype_to_ompi_dtype(oshmem_op_t *op)
+static struct ompi_datatype_t *shmem_dtype_to_ompi_dtype(oshmem_op_t *op)
 {
     int dtype = op->dt;
     int dtsize = op->dt_size * 8;
@@ -32,21 +32,21 @@ static struct ompi_datatype_t* shmem_dtype_to_ompi_dtype(oshmem_op_t *op)
         return &ompi_mpi_real16.dt;
     default:
         switch (dtsize) {
-            case 64:
-                return &ompi_mpi_int64_t.dt;
-            case 32:
-                return &ompi_mpi_int32_t.dt;
-            case 16:
-                return &ompi_mpi_int16_t.dt;
-            case 8:
-                return &ompi_mpi_int8_t.dt;
-            default:
-                return &ompi_mpi_datatype_null.dt;
+        case 64:
+            return &ompi_mpi_int64_t.dt;
+        case 32:
+            return &ompi_mpi_int32_t.dt;
+        case 16:
+            return &ompi_mpi_int16_t.dt;
+        case 8:
+            return &ompi_mpi_int8_t.dt;
+        default:
+            return &ompi_mpi_datatype_null.dt;
         }
     }
 }
 
-static struct ompi_op_t* shmem_op_to_ompi_op(int op)
+static struct ompi_op_t *shmem_op_to_ompi_op(int op)
 {
     switch (op) {
     case OSHMEM_OP_AND:

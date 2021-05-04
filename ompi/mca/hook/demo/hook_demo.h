@@ -15,8 +15,8 @@
 
 #include "opal/util/output.h"
 
-#include "ompi/mca/hook/hook.h"
 #include "ompi/mca/hook/base/base.h"
+#include "ompi/mca/hook/hook.h"
 
 BEGIN_C_DECLS
 

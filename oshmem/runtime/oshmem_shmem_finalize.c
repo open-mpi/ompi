@@ -14,44 +14,44 @@
 #include "oshmem_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#    include <unistd.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#    include <netdb.h>
 #endif
 
-#include "opal/util/output.h"
-#include "opal/runtime/opal_progress.h"
 #include "opal/mca/base/base.h"
-#include "opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_progress.h"
+#include "opal/sys/atomic.h"
+#include "opal/util/output.h"
 
-#include "opal/mca/rcache/base/base.h"
-#include "opal/mca/mpool/base/base.h"
-#include "opal/mca/allocator/base/base.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "opal/mca/allocator/base/base.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/rcache/base/base.h"
 
 #include "oshmem/constants.h"
-#include "oshmem/runtime/runtime.h"
-#include "oshmem/runtime/params.h"
-#include "oshmem/mca/spml/base/base.h"
-#include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/info/info.h"
 #include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/scoll/base/base.h"
+#include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/sshmem/base/base.h"
-#include "oshmem/info/info.h"
+#include "oshmem/op/op.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
-#include "oshmem/op/op.h"
 #include "oshmem/request/request.h"
-#include "oshmem/shmem/shmem_lock.h"
 #include "oshmem/runtime/oshmem_shmem_preconnect.h"
+#include "oshmem/runtime/params.h"
+#include "oshmem/runtime/runtime.h"
+#include "oshmem/shmem/shmem_lock.h"
 
 extern int oshmem_shmem_globalexit_status;
 
@@ -76,10 +76,10 @@ int oshmem_shmem_finalize(void)
        ompi_mpi_finalize().  Those 2 functions have the appropriate
        memory barriers such that we don't need one here. */
     int32_t state = ompi_mpi_state;
-    if ((OSHMEM_SUCCESS == ret) &&
-        (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
-         state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) &&
-        oshmem_shmem_globalexit_status == 0) {
+    if ((OSHMEM_SUCCESS == ret)
+        && (state >= OMPI_MPI_STATE_INIT_COMPLETED
+            && state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT)
+        && oshmem_shmem_globalexit_status == 0) {
         PMPI_Comm_free(&oshmem_comm_world);
         ret = ompi_mpi_finalize();
     }
@@ -108,25 +108,25 @@ static int _shmem_finalize(void)
     oshmem_proc_group_finalize_scoll();
 
     /* Close down MCA modules */
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_atomic_base_framework) ) ) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_atomic_base_framework))) {
         return ret;
     }
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_scoll_base_framework) ) ) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_scoll_base_framework))) {
         return ret;
     }
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_memheap_base_framework) ) ) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_memheap_base_framework))) {
         return ret;
     }
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_sshmem_base_framework) ) ) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_sshmem_base_framework))) {
         return ret;
     }
 
     if (OSHMEM_SUCCESS
-            != (ret =
-                    MCA_SPML_CALL(del_procs(oshmem_group_all->proc_array, oshmem_group_all->proc_count)))) {
+        != (ret = MCA_SPML_CALL(
+                del_procs(oshmem_group_all->proc_array, oshmem_group_all->proc_count)))) {
         return ret;
     }
 
@@ -137,7 +137,7 @@ static int _shmem_finalize(void)
         return ret;
     }
 
-    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_spml_base_framework) ) ) {
+    if (OSHMEM_SUCCESS != (ret = mca_base_framework_close(&oshmem_spml_base_framework))) {
         return ret;
     }
 
@@ -163,4 +163,3 @@ static int _shmem_finalize(void)
 
     return ret;
 }
-

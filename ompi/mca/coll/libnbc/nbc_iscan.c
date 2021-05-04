@@ -18,54 +18,52 @@
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  */
-#include "opal/align.h"
 #include "ompi/op/op.h"
+#include "opal/align.h"
 
 #include "nbc_internal.h"
 
-static inline int scan_sched_linear(
-    int rank, int comm_size, const void *sendbuf, void *recvbuf, int count,
-    MPI_Datatype datatype,  MPI_Op op, char inplace, NBC_Schedule *schedule,
-    void *tmpbuf);
-static inline int scan_sched_recursivedoubling(
-    int rank, int comm_size, const void *sendbuf, void *recvbuf,
-    int count, MPI_Datatype datatype,  MPI_Op op, char inplace,
-    NBC_Schedule *schedule, void *tmpbuf1, void *tmpbuf2);
+static inline int scan_sched_linear(int rank, int comm_size, const void *sendbuf, void *recvbuf,
+                                    int count, MPI_Datatype datatype, MPI_Op op, char inplace,
+                                    NBC_Schedule *schedule, void *tmpbuf);
+static inline int scan_sched_recursivedoubling(int rank, int comm_size, const void *sendbuf,
+                                               void *recvbuf, int count, MPI_Datatype datatype,
+                                               MPI_Op op, char inplace, NBC_Schedule *schedule,
+                                               void *tmpbuf1, void *tmpbuf2);
 
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
-int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param) {
-  if ((a->sendbuf == b->sendbuf) &&
-      (a->recvbuf == b->recvbuf) &&
-      (a->count == b->count) &&
-      (a->datatype == b->datatype) &&
-      (a->op == b->op) ) {
-    return 0;
-  }
+int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param)
+{
+    if ((a->sendbuf == b->sendbuf) && (a->recvbuf == b->recvbuf) && (a->count == b->count)
+        && (a->datatype == b->datatype) && (a->op == b->op)) {
+        return 0;
+    }
 
-  if (a->sendbuf < b->sendbuf) {
-    return -1;
-  }
+    if (a->sendbuf < b->sendbuf) {
+        return -1;
+    }
 
-  return 1;
+    return 1;
 }
 #endif
 
-static int nbc_scan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                         struct ompi_communicator_t *comm, ompi_request_t ** request,
-                         mca_coll_base_module_t *module, bool persistent) {
+static int nbc_scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+                         MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t **request,
+                         mca_coll_base_module_t *module, bool persistent)
+{
     int rank, p, res;
     ptrdiff_t gap, span;
     NBC_Schedule *schedule;
     void *tmpbuf = NULL, *tmpbuf1 = NULL, *tmpbuf2 = NULL;
     enum { NBC_SCAN_LINEAR, NBC_SCAN_RDBL } alg;
     char inplace;
-    ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+    ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t *) module;
 
     NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
-    rank = ompi_comm_rank (comm);
-    p = ompi_comm_size (comm);
+    rank = ompi_comm_rank(comm);
+    p = ompi_comm_size(comm);
 
     if (count == 0) {
         return nbc_get_noop_request(persistent, request);
@@ -76,84 +74,89 @@ static int nbc_scan_init(const void* sendbuf, void* recvbuf, int count, MPI_Data
         alg = NBC_SCAN_RDBL;
         ptrdiff_t span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
         tmpbuf = malloc(span_align + span);
-        if (NULL == tmpbuf) { return OMPI_ERR_OUT_OF_RESOURCE; }
-        tmpbuf1 = (void *)(-gap);
-        tmpbuf2 = (char *)(span_align) - gap;
+        if (NULL == tmpbuf) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        tmpbuf1 = (void *) (-gap);
+        tmpbuf2 = (char *) (span_align) -gap;
     } else {
         alg = NBC_SCAN_LINEAR;
         if (rank > 0) {
             tmpbuf = malloc(span);
-            if (NULL == tmpbuf) { return OMPI_ERR_OUT_OF_RESOURCE; }
+            if (NULL == tmpbuf) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
         }
     }
 
 #ifdef NBC_CACHE_SCHEDULE
-  NBC_Scan_args *args, *found, search;
+    NBC_Scan_args *args, *found, search;
 
-  /* search schedule in communicator specific tree */
-  search.sendbuf = sendbuf;
-  search.recvbuf = recvbuf;
-  search.count = count;
-  search.datatype = datatype;
-  search.op = op;
-  found = (NBC_Scan_args *) hb_tree_search ((hb_tree *) libnbc_module->NBC_Dict[NBC_SCAN], &search);
-  if (NULL == found) {
+    /* search schedule in communicator specific tree */
+    search.sendbuf = sendbuf;
+    search.recvbuf = recvbuf;
+    search.count = count;
+    search.datatype = datatype;
+    search.op = op;
+    found = (NBC_Scan_args *) hb_tree_search((hb_tree *) libnbc_module->NBC_Dict[NBC_SCAN],
+                                             &search);
+    if (NULL == found) {
 #endif
-    schedule = OBJ_NEW(NBC_Schedule);
-    if (OPAL_UNLIKELY(NULL == schedule)) {
-        free(tmpbuf);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+        schedule = OBJ_NEW(NBC_Schedule);
+        if (OPAL_UNLIKELY(NULL == schedule)) {
+            free(tmpbuf);
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
-    if (alg == NBC_SCAN_LINEAR) {
-        res = scan_sched_linear(rank, p, sendbuf, recvbuf, count, datatype,
-                                op, inplace, schedule, tmpbuf);
-    } else {
-        res = scan_sched_recursivedoubling(rank, p, sendbuf, recvbuf, count,
-                                           datatype, op, inplace, schedule, tmpbuf1, tmpbuf2);
-    }
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        OBJ_RELEASE(schedule);
-        free(tmpbuf);
-        return res;
-    }
+        if (alg == NBC_SCAN_LINEAR) {
+            res = scan_sched_linear(rank, p, sendbuf, recvbuf, count, datatype, op, inplace,
+                                    schedule, tmpbuf);
+        } else {
+            res = scan_sched_recursivedoubling(rank, p, sendbuf, recvbuf, count, datatype, op,
+                                               inplace, schedule, tmpbuf1, tmpbuf2);
+        }
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            OBJ_RELEASE(schedule);
+            free(tmpbuf);
+            return res;
+        }
 
-    res = NBC_Sched_commit(schedule);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        OBJ_RELEASE(schedule);
-        free(tmpbuf);
-        return res;
-    }
+        res = NBC_Sched_commit(schedule);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            OBJ_RELEASE(schedule);
+            free(tmpbuf);
+            return res;
+        }
 
 #ifdef NBC_CACHE_SCHEDULE
-    /* save schedule to tree */
-    args = (NBC_Scan_args *) malloc (sizeof (args));
-    if (NULL != args) {
-      args->sendbuf = sendbuf;
-      args->recvbuf = recvbuf;
-      args->count = count;
-      args->datatype = datatype;
-      args->op = op;
-      args->schedule = schedule;
-      res = hb_tree_insert ((hb_tree *) libnbc_module->NBC_Dict[NBC_SCAN], args, args, 0);
-      if (0 == res) {
-        OBJ_RETAIN(schedule);
+        /* save schedule to tree */
+        args = (NBC_Scan_args *) malloc(sizeof(args));
+        if (NULL != args) {
+            args->sendbuf = sendbuf;
+            args->recvbuf = recvbuf;
+            args->count = count;
+            args->datatype = datatype;
+            args->op = op;
+            args->schedule = schedule;
+            res = hb_tree_insert((hb_tree *) libnbc_module->NBC_Dict[NBC_SCAN], args, args, 0);
+            if (0 == res) {
+                OBJ_RETAIN(schedule);
 
-        /* increase number of elements for A2A */
-        if (++libnbc_module->NBC_Dict_size[NBC_SCAN] > NBC_SCHED_DICT_UPPER) {
-          NBC_SchedCache_dictwipe ((hb_tree *) libnbc_module->NBC_Dict[NBC_SCAN],
-                                   &libnbc_module->NBC_Dict_size[NBC_SCAN]);
+                /* increase number of elements for A2A */
+                if (++libnbc_module->NBC_Dict_size[NBC_SCAN] > NBC_SCHED_DICT_UPPER) {
+                    NBC_SchedCache_dictwipe((hb_tree *) libnbc_module->NBC_Dict[NBC_SCAN],
+                                            &libnbc_module->NBC_Dict_size[NBC_SCAN]);
+                }
+            } else {
+                NBC_Error("error in dict_insert() (%i)", res);
+                free(args);
+            }
         }
-      } else {
-        NBC_Error("error in dict_insert() (%i)", res);
-        free (args);
-      }
+    } else {
+        /* found schedule */
+        schedule = found->schedule;
+        OBJ_RETAIN(schedule);
     }
-  } else {
-    /* found schedule */
-    schedule = found->schedule;
-    OBJ_RETAIN(schedule);
-  }
 #endif
 
     res = NBC_Schedule_request(schedule, comm, libnbc_module, persistent, request, tmpbuf);
@@ -180,37 +183,44 @@ static int nbc_scan_init(const void* sendbuf, void* recvbuf, int count, MPI_Data
  *
  * Schedule length: O(1)
  */
-static inline int scan_sched_linear(
-    int rank, int comm_size, const void *sendbuf, void *recvbuf, int count,
-    MPI_Datatype datatype,  MPI_Op op, char inplace, NBC_Schedule *schedule,
-    void *tmpbuf)
+static inline int scan_sched_linear(int rank, int comm_size, const void *sendbuf, void *recvbuf,
+                                    int count, MPI_Datatype datatype, MPI_Op op, char inplace,
+                                    NBC_Schedule *schedule, void *tmpbuf)
 {
     int res = OMPI_SUCCESS;
 
     if (!inplace) {
         /* Copy data to recvbuf */
-        res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
-                             recvbuf, false, count, datatype, schedule, false);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+        res = NBC_Sched_copy((void *) sendbuf, false, count, datatype, recvbuf, false, count,
+                             datatype, schedule, false);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            goto cleanup_and_return;
+        }
     }
 
     if (rank > 0) {
         ptrdiff_t gap;
         opal_datatype_span(&datatype->super, count, &gap);
         /* We have to wait until we have the data */
-        res = NBC_Sched_recv((void *)(-gap), true, count, datatype, rank - 1, schedule, true);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+        res = NBC_Sched_recv((void *) (-gap), true, count, datatype, rank - 1, schedule, true);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            goto cleanup_and_return;
+        }
 
         /* Perform the reduce in my local buffer */
         /* this cannot be done until tmpbuf is unused :-( so barrier after the op */
-        res = NBC_Sched_op((void *)(-gap), true, recvbuf, false, count, datatype, op, schedule,
+        res = NBC_Sched_op((void *) (-gap), true, recvbuf, false, count, datatype, op, schedule,
                            true);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            goto cleanup_and_return;
+        }
     }
 
     if (rank != comm_size - 1) {
         res = NBC_Sched_send(recvbuf, false, count, datatype, rank + 1, schedule, false);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            goto cleanup_and_return;
+        }
     }
 
 cleanup_and_return:
@@ -250,56 +260,71 @@ cleanup_and_return:
  * Limitations: intra-communicators only
  * Schedule length: O(log(p))
  */
-static inline int scan_sched_recursivedoubling(
-    int rank, int comm_size, const void *sendbuf, void *recvbuf, int count,
-    MPI_Datatype datatype, MPI_Op op, char inplace,
-    NBC_Schedule *schedule, void *tmpbuf1, void *tmpbuf2)
+static inline int scan_sched_recursivedoubling(int rank, int comm_size, const void *sendbuf,
+                                               void *recvbuf, int count, MPI_Datatype datatype,
+                                               MPI_Op op, char inplace, NBC_Schedule *schedule,
+                                               void *tmpbuf1, void *tmpbuf2)
 {
     int res = OMPI_SUCCESS;
 
     if (!inplace) {
-        res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
-                              recvbuf, false, count, datatype, schedule, true);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+        res = NBC_Sched_copy((void *) sendbuf, false, count, datatype, recvbuf, false, count,
+                             datatype, schedule, true);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            goto cleanup_and_return;
+        }
     }
     if (comm_size < 2)
         goto cleanup_and_return;
 
-    char *psend = (char *)tmpbuf1;
-    char *precv = (char *)tmpbuf2;
-    res = NBC_Sched_copy(recvbuf, false, count, datatype,
-                         psend, true, count, datatype, schedule, true);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+    char *psend = (char *) tmpbuf1;
+    char *precv = (char *) tmpbuf2;
+    res = NBC_Sched_copy(recvbuf, false, count, datatype, psend, true, count, datatype, schedule,
+                         true);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        goto cleanup_and_return;
+    }
 
     int is_commute = ompi_op_is_commute(op);
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
         if (remote < comm_size) {
             res = NBC_Sched_send(psend, true, count, datatype, remote, schedule, false);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+                goto cleanup_and_return;
+            }
             res = NBC_Sched_recv(precv, true, count, datatype, remote, schedule, true);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+                goto cleanup_and_return;
+            }
 
             if (rank > remote) {
                 /* Accumulate prefix reduction: recvbuf = precv <op> recvbuf */
-                res = NBC_Sched_op(precv, true, recvbuf, false, count,
-                                   datatype, op, schedule, false);
-                if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+                res = NBC_Sched_op(precv, true, recvbuf, false, count, datatype, op, schedule,
+                                   false);
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+                    goto cleanup_and_return;
+                }
                 /* Partial result: psend = precv <op> psend */
-                res = NBC_Sched_op(precv, true, psend, true, count,
-                                   datatype, op, schedule, true);
-                if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+                res = NBC_Sched_op(precv, true, psend, true, count, datatype, op, schedule, true);
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+                    goto cleanup_and_return;
+                }
             } else {
                 if (is_commute) {
                     /* psend = precv <op> psend */
-                    res = NBC_Sched_op(precv, true, psend, true, count,
-                                       datatype, op, schedule, true);
-                    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+                    res = NBC_Sched_op(precv, true, psend, true, count, datatype, op, schedule,
+                                       true);
+                    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+                        goto cleanup_and_return;
+                    }
                 } else {
                     /* precv = psend <op> precv */
-                    res = NBC_Sched_op(psend, true, precv, true, count,
-                                       datatype, op, schedule, true);
-                    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
+                    res = NBC_Sched_op(psend, true, precv, true, count, datatype, op, schedule,
+                                       true);
+                    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+                        goto cleanup_and_return;
+                    }
                     char *tmp = psend;
                     psend = precv;
                     precv = tmp;
@@ -308,21 +333,21 @@ static inline int scan_sched_recursivedoubling(
         }
     }
 
- cleanup_and_return:
+cleanup_and_return:
     return res;
 }
 
-int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                           struct ompi_communicator_t *comm, ompi_request_t ** request,
-                           mca_coll_base_module_t *module) {
-    int res = nbc_scan_init(sendbuf, recvbuf, count, datatype, op,
-                            comm, request, module, false);
+int ompi_coll_libnbc_iscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+                           MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t **request,
+                           mca_coll_base_module_t *module)
+{
+    int res = nbc_scan_init(sendbuf, recvbuf, count, datatype, op, comm, request, module, false);
     if (OPAL_LIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
-    res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
+    res = NBC_Start(*(ompi_coll_libnbc_request_t **) request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-        NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
+        NBC_Return_handle(*(ompi_coll_libnbc_request_t **) request);
         *request = &ompi_request_null.request;
         return res;
     }
@@ -330,11 +355,11 @@ int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Da
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_scan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
-                               struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
-                               mca_coll_base_module_t *module) {
-    int res = nbc_scan_init(sendbuf, recvbuf, count, datatype, op,
-                            comm, request, module, true);
+int ompi_coll_libnbc_scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+                               MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info,
+                               ompi_request_t **request, mca_coll_base_module_t *module)
+{
+    int res = nbc_scan_init(sendbuf, recvbuf, count, datatype, op, comm, request, module, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }

@@ -16,19 +16,18 @@
 #include "oshmem_config.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/constants.h"
-#include "oshmem/runtime/runtime.h"
 #include "oshmem/mca/scoll/base/base.h"
 #include "oshmem/proc/proc_group_cache.h"
+#include "oshmem/runtime/runtime.h"
 
 #ifdef HAVE_STRINGS_H
-#include <strings.h>
+#    include <strings.h>
 #endif
 
+#include "opal/class/opal_list.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/arch.h"
-#include "opal/class/opal_list.h"
-
 
 static opal_mutex_t oshmem_proc_lock;
 
@@ -39,7 +38,7 @@ int oshmem_proc_init(void)
     /* check oshmem_proc_data_t can fit within ompi_proc_t padding */
     assert(sizeof(oshmem_proc_data_t) <= OMPI_PROC_PADDING_SIZE);
     /* check ompi_proc_t padding is aligned on a pointer */
-    assert(0 == (offsetof(ompi_proc_t, padding) & (sizeof(char *)-1)));
+    assert(0 == (offsetof(ompi_proc_t, padding) & (sizeof(char *) - 1)));
 
     return OSHMEM_SUCCESS;
 }
@@ -53,14 +52,13 @@ int oshmem_proc_finalize(void)
 
 opal_pointer_array_t oshmem_group_array = {{0}};
 
-oshmem_group_t* oshmem_group_all = NULL;
-oshmem_group_t* oshmem_group_self = NULL;
-oshmem_group_t* oshmem_group_null = NULL;
+oshmem_group_t *oshmem_group_all = NULL;
+oshmem_group_t *oshmem_group_self = NULL;
+oshmem_group_t *oshmem_group_null = NULL;
 
 OBJ_CLASS_INSTANCE(oshmem_group_t, opal_object_t, NULL, NULL);
 
-static void oshmem_proc_group_destroy_internal(oshmem_group_t* group,
-                                               int scoll_unselect);
+static void oshmem_proc_group_destroy_internal(oshmem_group_t *group, int scoll_unselect);
 
 int oshmem_proc_group_init(void)
 {
@@ -74,8 +72,7 @@ int oshmem_proc_group_init(void)
     /* Setup communicator array */
     OBJ_CONSTRUCT(&oshmem_group_array, opal_pointer_array_t);
 
-    rc = opal_pointer_array_init(&oshmem_group_array, 0,
-                                 INT_MAX, 1);
+    rc = opal_pointer_array_init(&oshmem_group_array, 0, INT_MAX, 1);
     if (OPAL_SUCCESS != rc) {
         goto err1;
     }
@@ -114,8 +111,7 @@ void oshmem_proc_group_finalize_scoll(void)
     /* Check whether we have some left */
     max = opal_pointer_array_get_size(&oshmem_group_array);
     for (i = 0; i < max; i++) {
-        group = (oshmem_group_t *) opal_pointer_array_get_item(&oshmem_group_array,
-                                                               i);
+        group = (oshmem_group_t *) opal_pointer_array_get_item(&oshmem_group_array, i);
         if (NULL != group) {
             mca_scoll_base_group_unselect(group);
         }
@@ -130,9 +126,7 @@ int oshmem_proc_group_finalize(void)
     /* Check whether we have some left */
     max = opal_pointer_array_get_size(&oshmem_group_array);
     for (i = 0; i < max; i++) {
-        group =
-                (oshmem_group_t *) opal_pointer_array_get_item(&oshmem_group_array,
-                                                               i);
+        group = (oshmem_group_t *) opal_pointer_array_get_item(&oshmem_group_array, i);
         if (NULL != group) {
             /* Group has not been freed before finalize */
             oshmem_proc_group_destroy_internal(group, 0);
@@ -145,13 +139,13 @@ int oshmem_proc_group_finalize(void)
     return OSHMEM_SUCCESS;
 }
 
-oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_size)
+oshmem_group_t *oshmem_proc_group_create(int pe_start, int pe_stride, int pe_size)
 {
     int cur_pe, count_pe;
     int i;
-    oshmem_group_t* group = NULL;
-    ompi_proc_t** proc_array = NULL;
-    ompi_proc_t* proc = NULL;
+    oshmem_group_t *group = NULL;
+    ompi_proc_t **proc_array = NULL;
+    ompi_proc_t *proc = NULL;
 
     assert(oshmem_proc_local());
 
@@ -171,20 +165,19 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
     OPAL_THREAD_LOCK(&oshmem_proc_lock);
 
     /* allocate an array */
-    proc_array = (ompi_proc_t**) malloc(pe_size * sizeof(ompi_proc_t*));
+    proc_array = (ompi_proc_t **) malloc(pe_size * sizeof(ompi_proc_t *));
     if (NULL == proc_array) {
         OBJ_RELEASE(group);
         OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
-        return NULL ;
+        return NULL;
     }
 
     group->my_pe = oshmem_proc_pe(oshmem_proc_local());
     group->is_member = 0;
-    for (i = 0 ; i < ompi_comm_size(oshmem_comm_world) ; i++) {
+    for (i = 0; i < ompi_comm_size(oshmem_comm_world); i++) {
         proc = oshmem_proc_find(i);
         if (NULL == proc) {
-            opal_output(0,
-                    "Error: Can not find proc object for pe = %d", i);
+            opal_output(0, "Error: Can not find proc object for pe = %d", i);
             free(proc_array);
             OBJ_RELEASE(group);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
@@ -193,8 +186,7 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
         if (count_pe >= (int) pe_size) {
             break;
         } else if ((cur_pe >= pe_start)
-                && ((pe_stride == 0)
-                    || (((cur_pe - pe_start) % pe_stride) == 0))) {
+                   && ((pe_stride == 0) || (((cur_pe - pe_start) % pe_stride) == 0))) {
             proc_array[count_pe++] = proc;
             if (oshmem_proc_pe(proc) == group->my_pe)
                 group->is_member = 1;
@@ -222,15 +214,14 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
     memset(&group->g_scoll, 0, sizeof(mca_scoll_base_group_scoll_t));
 
     if (OSHMEM_SUCCESS != mca_scoll_base_select(group)) {
-        opal_output(0,
-                "Error: No collective modules are available: group is not created, returning NULL");
+        opal_output(
+            0, "Error: No collective modules are available: group is not created, returning NULL");
         oshmem_proc_group_destroy_internal(group, 0);
         OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
         return NULL;
     }
 
-    if (OSHMEM_SUCCESS != oshmem_group_cache_insert(group, pe_start,
-                                                    pe_stride, pe_size)) {
+    if (OSHMEM_SUCCESS != oshmem_group_cache_insert(group, pe_start, pe_stride, pe_size)) {
         oshmem_proc_group_destroy_internal(group, 1);
         OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
         return NULL;
@@ -240,8 +231,7 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
     return group;
 }
 
-static void
-oshmem_proc_group_destroy_internal(oshmem_group_t* group, int scoll_unselect)
+static void oshmem_proc_group_destroy_internal(oshmem_group_t *group, int scoll_unselect)
 {
     if (NULL == group) {
         return;
@@ -269,16 +259,14 @@ oshmem_proc_group_destroy_internal(oshmem_group_t* group, int scoll_unselect)
 
     /* reset the oshmem_group_array entry - make sure that the
      * entry is in the table */
-    if (NULL
-            != opal_pointer_array_get_item(&oshmem_group_array,
-                group->id)) {
-        opal_pointer_array_set_item(&oshmem_group_array, group->id, NULL );
+    if (NULL != opal_pointer_array_get_item(&oshmem_group_array, group->id)) {
+        opal_pointer_array_set_item(&oshmem_group_array, group->id, NULL);
     }
 
     OBJ_RELEASE(group);
 }
 
-void oshmem_proc_group_destroy(oshmem_group_t* group)
+void oshmem_proc_group_destroy(oshmem_group_t *group)
 {
     if (oshmem_group_cache_enabled()) {
         return;

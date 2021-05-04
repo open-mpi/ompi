@@ -18,21 +18,20 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
-#include <sys/time.h>
-#include <time.h>
-#include "ompi/types.h"
+#include "mtl_psm2_endpoint.h"
 #include "mtl_psm2.h"
 #include "mtl_psm2_types.h"
-#include "mtl_psm2_endpoint.h"
+#include "ompi/types.h"
+#include <sys/time.h>
+#include <time.h>
 
 /*
  * Initialize state of the endpoint instance.
  *
  */
 
-static void mca_mtl_psm2_endpoint_construct(mca_mtl_psm2_endpoint_t* endpoint)
+static void mca_mtl_psm2_endpoint_construct(mca_mtl_psm2_endpoint_t *endpoint)
 {
     endpoint->mtl_psm2_module = NULL;
 }
@@ -42,13 +41,9 @@ static void mca_mtl_psm2_endpoint_construct(mca_mtl_psm2_endpoint_t* endpoint)
  *
  */
 
-static void mca_mtl_psm2_endpoint_destruct(mca_mtl_psm2_endpoint_t* endpoint)
+static void mca_mtl_psm2_endpoint_destruct(mca_mtl_psm2_endpoint_t *endpoint)
 {
 }
 
-
-OBJ_CLASS_INSTANCE(
-    mca_mtl_psm2_endpoint_t,
-    opal_list_item_t,
-    mca_mtl_psm2_endpoint_construct,
-    mca_mtl_psm2_endpoint_destruct);
+OBJ_CLASS_INSTANCE(mca_mtl_psm2_endpoint_t, opal_list_item_t, mca_mtl_psm2_endpoint_construct,
+                   mca_mtl_psm2_endpoint_destruct);

@@ -35,16 +35,15 @@ struct mca_bml_base_endpoint_t;
  * find those that already have registrations - or
  * register if required (for leave_pinned option)
  */
-size_t mca_pml_ob1_rdma_btls(struct mca_bml_base_endpoint_t* endpoint,
-    unsigned char* base, size_t size, struct mca_pml_ob1_com_btl_t* btls);
+size_t mca_pml_ob1_rdma_btls(struct mca_bml_base_endpoint_t *endpoint, unsigned char *base,
+                             size_t size, struct mca_pml_ob1_com_btl_t *btls);
 
 /* Choose RDMA BTLs to use for sending of a request by pipeline protocol.
  * Calculate number of bytes to send through each BTL according to available
  * bandwidth */
-size_t mca_pml_ob1_rdma_pipeline_btls(struct mca_bml_base_endpoint_t* endpoint,
-                size_t size, mca_pml_ob1_com_btl_t* rdma_btls);
+size_t mca_pml_ob1_rdma_pipeline_btls(struct mca_bml_base_endpoint_t *endpoint, size_t size,
+                                      mca_pml_ob1_com_btl_t *rdma_btls);
 
-size_t mca_pml_ob1_rdma_pipeline_btls_count (mca_bml_base_endpoint_t* bml_endpoint);
+size_t mca_pml_ob1_rdma_pipeline_btls_count(mca_bml_base_endpoint_t *bml_endpoint);
 
 #endif
-

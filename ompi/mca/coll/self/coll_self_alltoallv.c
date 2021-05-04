@@ -21,10 +21,9 @@
 
 #include "ompi_config.h"
 
+#include "coll_self.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
-#include "coll_self.h"
-
 
 /*
  *	alltoallv_intra
@@ -33,13 +32,10 @@
  *	Accepts:	- same as MPI_Alltoallv()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
-int
-mca_coll_self_alltoallv_intra(const void *sbuf, const int *scounts, const int *sdisps,
-                              struct ompi_datatype_t *sdtype,
-                              void *rbuf, const int *rcounts, const int *rdisps,
-                              struct ompi_datatype_t *rdtype,
-                              struct ompi_communicator_t *comm,
-                              mca_coll_base_module_t *module)
+int mca_coll_self_alltoallv_intra(const void *sbuf, const int *scounts, const int *sdisps,
+                                  struct ompi_datatype_t *sdtype, void *rbuf, const int *rcounts,
+                                  const int *rdisps, struct ompi_datatype_t *rdtype,
+                                  struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int err;
     ptrdiff_t lb, rextent, sextent;
@@ -56,8 +52,6 @@ mca_coll_self_alltoallv_intra(const void *sbuf, const int *scounts, const int *s
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
-    return ompi_datatype_sndrcv(((char *) sbuf) + sdisps[0] * sextent,
-                           scounts[0], sdtype,
-                           ((char *) rbuf) + rdisps[0] * rextent,
-                           rcounts[0], rdtype);
+    return ompi_datatype_sndrcv(((char *) sbuf) + sdisps[0] * sextent, scounts[0], sdtype,
+                                ((char *) rbuf) + rdisps[0] * rextent, rcounts[0], rdtype);
 }

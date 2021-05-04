@@ -27,17 +27,15 @@
 #include "ompi/mca/mca.h"
 #include "ompi/mca/mtl/mtl.h"
 
-
 /*
  * Global functions for the MTL
  */
 
 BEGIN_C_DECLS
 
-OMPI_DECLSPEC extern mca_mtl_base_component_t* ompi_mtl_base_selected_component;
+OMPI_DECLSPEC extern mca_mtl_base_component_t *ompi_mtl_base_selected_component;
 
-OMPI_DECLSPEC int ompi_mtl_base_select(bool enable_progress_threads,
-                                       bool enable_mpi_threads,
+OMPI_DECLSPEC int ompi_mtl_base_select(bool enable_progress_threads, bool enable_mpi_threads,
                                        int *priority);
 
 OMPI_DECLSPEC extern mca_base_framework_t ompi_mtl_base_framework;

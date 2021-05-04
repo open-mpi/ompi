@@ -21,51 +21,44 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_OPEN_PORT = ompi_open_port_f
-#pragma weak pmpi_open_port = ompi_open_port_f
-#pragma weak pmpi_open_port_ = ompi_open_port_f
-#pragma weak pmpi_open_port__ = ompi_open_port_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_OPEN_PORT = ompi_open_port_f
+#        pragma weak pmpi_open_port = ompi_open_port_f
+#        pragma weak pmpi_open_port_ = ompi_open_port_f
+#        pragma weak pmpi_open_port__ = ompi_open_port_f
 
-#pragma weak PMPI_Open_port_f = ompi_open_port_f
-#pragma weak PMPI_Open_port_f08 = ompi_open_port_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_OPEN_PORT,
-                           pmpi_open_port,
-                           pmpi_open_port_,
-                           pmpi_open_port__,
+#        pragma weak PMPI_Open_port_f = ompi_open_port_f
+#        pragma weak PMPI_Open_port_f08 = ompi_open_port_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_OPEN_PORT, pmpi_open_port, pmpi_open_port_, pmpi_open_port__,
                            pompi_open_port_f,
-                           (MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len),
-                           (info, port_name, ierr, port_name_len) )
-#endif
+                           (MPI_Fint * info, char *port_name, MPI_Fint *ierr, int port_name_len),
+                           (info, port_name, ierr, port_name_len))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_OPEN_PORT = ompi_open_port_f
-#pragma weak mpi_open_port = ompi_open_port_f
-#pragma weak mpi_open_port_ = ompi_open_port_f
-#pragma weak mpi_open_port__ = ompi_open_port_f
+#    pragma weak MPI_OPEN_PORT = ompi_open_port_f
+#    pragma weak mpi_open_port = ompi_open_port_f
+#    pragma weak mpi_open_port_ = ompi_open_port_f
+#    pragma weak mpi_open_port__ = ompi_open_port_f
 
-#pragma weak MPI_Open_port_f = ompi_open_port_f
-#pragma weak MPI_Open_port_f08 = ompi_open_port_f
+#    pragma weak MPI_Open_port_f = ompi_open_port_f
+#    pragma weak MPI_Open_port_f08 = ompi_open_port_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_OPEN_PORT,
-                           mpi_open_port,
-                           mpi_open_port_,
-                           mpi_open_port__,
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_OPEN_PORT, mpi_open_port, mpi_open_port_, mpi_open_port__,
                            ompi_open_port_f,
-                           (MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len),
-                           (info, port_name, ierr, port_name_len) )
-#else
-#define ompi_open_port_f pompi_open_port_f
+                           (MPI_Fint * info, char *port_name, MPI_Fint *ierr, int port_name_len),
+                           (info, port_name, ierr, port_name_len))
+#    else
+#        define ompi_open_port_f pompi_open_port_f
+#    endif
 #endif
-#endif
-
 
 void ompi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len)
 {
@@ -76,9 +69,10 @@ void ompi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_
     c_info = PMPI_Info_f2c(*info);
 
     c_ierr = PMPI_Open_port(c_info, c_port_name);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    if ( MPI_SUCCESS == c_ierr ) {
-	ompi_fortran_string_c2f(c_port_name, port_name, port_name_len );
+    if (MPI_SUCCESS == c_ierr) {
+        ompi_fortran_string_c2f(c_port_name, port_name, port_name_len);
     }
 }

@@ -21,30 +21,27 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_commit = PMPI_Type_commit
-#endif
-#define MPI_Type_commit PMPI_Type_commit
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_commit = PMPI_Type_commit
+#    endif
+#    define MPI_Type_commit PMPI_Type_commit
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_commit";
-
 
 int MPI_Type_commit(MPI_Datatype *type)
 {
     int rc;
 
-    MEMCHECKER(
-               memchecker_datatype(*type);
-               );
+    MEMCHECKER(memchecker_datatype(*type););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -53,6 +50,6 @@ int MPI_Type_commit(MPI_Datatype *type)
         }
     }
 
-    rc = ompi_datatype_commit( type );
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME );
+    rc = ompi_datatype_commit(type);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

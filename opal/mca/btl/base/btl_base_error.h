@@ -63,7 +63,7 @@ OPAL_DECLSPEC extern int mca_btl_base_out(const char *, ...)
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__,          \
                                  __func__);                                                       \
                 if (proc) {                                                                       \
-                    btl_peer_errhost= opal_get_proc_hostname(proc);                               \
+                    btl_peer_errhost = opal_get_proc_hostname(proc);                              \
                     mca_btl_base_err("peer: %s ", btl_peer_errhost);                              \
                     free(btl_peer_errhost);                                                       \
                 }                                                                                 \

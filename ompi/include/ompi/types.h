@@ -19,11 +19,10 @@
 #ifndef OMPI_TYPES_H
 #define OMPI_TYPES_H
 
-
 /*
  * handle to describe a parallel job
  */
-typedef char* ompi_job_handle_t;
+typedef char *ompi_job_handle_t;
 
 /*
  * Predefine some internal types so we dont need all the include

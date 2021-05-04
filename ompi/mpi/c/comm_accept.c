@@ -28,67 +28,58 @@
 
 #include "opal/util/show_help.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
-#include "ompi/runtime/mpiruntime.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_accept = PMPI_Comm_accept
-#endif
-#define MPI_Comm_accept PMPI_Comm_accept
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_accept = PMPI_Comm_accept
+#    endif
+#    define MPI_Comm_accept PMPI_Comm_accept
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_accept";
 
-
-int MPI_Comm_accept(const char *port_name, MPI_Info info, int root,
-                    MPI_Comm comm, MPI_Comm *newcomm)
+int MPI_Comm_accept(const char *port_name, MPI_Info info, int root, MPI_Comm comm,
+                    MPI_Comm *newcomm)
 {
     int rank, rc;
-    bool send_first=false; /* we receive first */
-    ompi_communicator_t *newcomp=MPI_COMM_NULL;
+    bool send_first = false; /* we receive first */
+    ompi_communicator_t *newcomp = MPI_COMM_NULL;
 
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (ompi_comm_invalid (comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
-        if ( OMPI_COMM_IS_INTER(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM,
-                                          FUNC_NAME);
+        if (OMPI_COMM_IS_INTER(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
         }
-        if ( (0 > root) || (ompi_comm_size(comm) <= root) ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if ((0 > root) || (ompi_comm_size(comm) <= root)) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
-        if ( NULL == newcomm ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          FUNC_NAME);
+        if (NULL == newcomm) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
         if (NULL == info || ompi_info_is_freed(info)) {
-          return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
-                                        FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
     }
 
-    rank = ompi_comm_rank ( comm );
-    if ( MPI_PARAM_CHECK ) {
-        if ( rank == root ) {
-            if ( NULL == port_name )
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                              FUNC_NAME);
+    rank = ompi_comm_rank(comm);
+    if (MPI_PARAM_CHECK) {
+        if (rank == root) {
+            if (NULL == port_name)
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
@@ -111,24 +102,18 @@ int MPI_Comm_accept(const char *port_name, MPI_Info info, int root,
      */
 #endif
 
-    if ( rank == root ) {
-	rc = ompi_dpm_connect_accept (comm, root, port_name, send_first,
-				      &newcomp);
+    if (rank == root) {
+        rc = ompi_dpm_connect_accept(comm, root, port_name, send_first, &newcomp);
+    } else {
+        rc = ompi_dpm_connect_accept(comm, root, NULL, send_first, &newcomp);
     }
-    else {
-	rc = ompi_dpm_connect_accept (comm, root, NULL, send_first,
-				      &newcomp);
-    }
-
 
     if (OPAL_ERR_NOT_SUPPORTED == rc) {
-        opal_show_help("help-mpi-api.txt",
-                       "MPI function not supported",
-                       true,
-                       FUNC_NAME,
-                       "Underlying runtime environment does not support accept/connect functionality");
+        opal_show_help(
+            "help-mpi-api.txt", "MPI function not supported", true, FUNC_NAME,
+            "Underlying runtime environment does not support accept/connect functionality");
     }
 
     *newcomm = newcomp;
-    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME );
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

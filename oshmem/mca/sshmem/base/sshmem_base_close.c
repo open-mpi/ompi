@@ -11,23 +11,19 @@
 #include "oshmem_config.h"
 
 #include "opal/constants.h"
-#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "oshmem/mca/mca.h"
 
-#include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/mca/sshmem/sshmem.h"
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int
-mca_sshmem_base_close(void)
+int mca_sshmem_base_close(void)
 {
     /* if there is a selected sshmem module, finalize it */
-    if (NULL != mca_sshmem_base_module &&
-        NULL != mca_sshmem_base_module->module_finalize) {
+    if (NULL != mca_sshmem_base_module && NULL != mca_sshmem_base_module->module_finalize) {
         mca_sshmem_base_module->module_finalize();
     }
 
-    return mca_base_framework_components_close (&oshmem_sshmem_base_framework,
-                                                NULL);
+    return mca_base_framework_components_close(&oshmem_sshmem_base_framework, NULL);
 }
-

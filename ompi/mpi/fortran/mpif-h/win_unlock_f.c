@@ -24,47 +24,38 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_WIN_UNLOCK = ompi_win_unlock_f
-#pragma weak pmpi_win_unlock = ompi_win_unlock_f
-#pragma weak pmpi_win_unlock_ = ompi_win_unlock_f
-#pragma weak pmpi_win_unlock__ = ompi_win_unlock_f
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_WIN_UNLOCK = ompi_win_unlock_f
+#        pragma weak pmpi_win_unlock = ompi_win_unlock_f
+#        pragma weak pmpi_win_unlock_ = ompi_win_unlock_f
+#        pragma weak pmpi_win_unlock__ = ompi_win_unlock_f
 
-#pragma weak PMPI_Win_unlock_f = ompi_win_unlock_f
-#pragma weak PMPI_Win_unlock_f08 = ompi_win_unlock_f
-#else
-OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_UNLOCK,
-                           pmpi_win_unlock,
-                           pmpi_win_unlock_,
-                           pmpi_win_unlock__,
-                           pompi_win_unlock_f,
-                           (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr),
-                           (rank, win, ierr) )
-#endif
+#        pragma weak PMPI_Win_unlock_f = ompi_win_unlock_f
+#        pragma weak PMPI_Win_unlock_f08 = ompi_win_unlock_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_WIN_UNLOCK, pmpi_win_unlock, pmpi_win_unlock_, pmpi_win_unlock__,
+                           pompi_win_unlock_f, (MPI_Fint * rank, MPI_Fint *win, MPI_Fint *ierr),
+                           (rank, win, ierr))
+#    endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WIN_UNLOCK = ompi_win_unlock_f
-#pragma weak mpi_win_unlock = ompi_win_unlock_f
-#pragma weak mpi_win_unlock_ = ompi_win_unlock_f
-#pragma weak mpi_win_unlock__ = ompi_win_unlock_f
+#    pragma weak MPI_WIN_UNLOCK = ompi_win_unlock_f
+#    pragma weak mpi_win_unlock = ompi_win_unlock_f
+#    pragma weak mpi_win_unlock_ = ompi_win_unlock_f
+#    pragma weak mpi_win_unlock__ = ompi_win_unlock_f
 
-#pragma weak MPI_Win_unlock_f = ompi_win_unlock_f
-#pragma weak MPI_Win_unlock_f08 = ompi_win_unlock_f
+#    pragma weak MPI_Win_unlock_f = ompi_win_unlock_f
+#    pragma weak MPI_Win_unlock_f08 = ompi_win_unlock_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_UNLOCK,
-                           mpi_win_unlock,
-                           mpi_win_unlock_,
-                           mpi_win_unlock__,
-                           ompi_win_unlock_f,
-                           (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr),
-                           (rank, win, ierr) )
-#else
-#define ompi_win_unlock_f pompi_win_unlock_f
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_WIN_UNLOCK, mpi_win_unlock, mpi_win_unlock_, mpi_win_unlock__,
+                           ompi_win_unlock_f, (MPI_Fint * rank, MPI_Fint *win, MPI_Fint *ierr),
+                           (rank, win, ierr))
+#    else
+#        define ompi_win_unlock_f pompi_win_unlock_f
+#    endif
 #endif
-#endif
-
 
 void ompi_win_unlock_f(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr)
 {
@@ -72,5 +63,6 @@ void ompi_win_unlock_f(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr)
     MPI_Win c_win = PMPI_Win_f2c(*win);
 
     c_ierr = PMPI_Win_unlock(OMPI_FINT_2_INT(*rank), c_win);
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 }

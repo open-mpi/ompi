@@ -2,13 +2,13 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
- *  @file 
+ *  @file
  */
 
 #ifndef MCA_SPML_UCX_COMPONENT_H

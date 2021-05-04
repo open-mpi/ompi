@@ -15,8 +15,8 @@
 #include "ompi_config.h"
 #include "base.h"
 #include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
 #include "ompi/mca/vprotocol/base/static-components.h"
+#include "opal/mca/base/base.h"
 
 char *mca_vprotocol_base_include_list = NULL;
 mca_pml_v_t mca_pml_v = {-1, 0, 0};
@@ -41,7 +41,7 @@ void mca_vprotocol_base_set_include_list(char *vprotocol_include_list)
     mca_vprotocol_base_include_list = NULL;
 
     if (NULL != vprotocol_include_list && vprotocol_include_list[0] != '\0') {
-        mca_vprotocol_base_include_list = strdup (vprotocol_include_list);
+        mca_vprotocol_base_include_list = strdup(vprotocol_include_list);
     }
 }
 
@@ -53,10 +53,9 @@ static int mca_vprotocol_base_close(void)
         free(mca_vprotocol_base_include_list);
     }
 
-    return mca_base_framework_components_close(&ompi_vprotocol_base_framework, NULL);;
+    return mca_base_framework_components_close(&ompi_vprotocol_base_framework, NULL);
+    ;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, vprotocol, "OMPI Vprotocol", NULL,
-                           mca_vprotocol_base_open, mca_vprotocol_base_close,
-                           mca_vprotocol_base_static_components, 0);
-
+MCA_BASE_FRAMEWORK_DECLARE(ompi, vprotocol, "OMPI Vprotocol", NULL, mca_vprotocol_base_open,
+                           mca_vprotocol_base_close, mca_vprotocol_base_static_components, 0);

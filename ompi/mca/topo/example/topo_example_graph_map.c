@@ -38,11 +38,8 @@
  *  @retval MPI_UNDEFINED
  */
 
-int mca_topo_example_graph_map (ompi_communicator_t* comm,
-                              int nnodes,
-                              int *index,
-                              int *edges,
-                              int *newrank)
+int mca_topo_example_graph_map(ompi_communicator_t *comm, int nnodes, int *index, int *edges,
+                               int *newrank)
 {
     int myrank;
 
@@ -51,8 +48,7 @@ int mca_topo_example_graph_map (ompi_communicator_t* comm,
      * component, start with a rank that is size-my_initial_rank.
      */
     myrank = ompi_comm_size(comm) - 1 - ompi_comm_rank(comm);
-    *newrank =
-        ((0 > myrank) || (myrank >= nnodes)) ? MPI_UNDEFINED : myrank;
+    *newrank = ((0 > myrank) || (myrank >= nnodes)) ? MPI_UNDEFINED : myrank;
 
     return OMPI_SUCCESS;
 }

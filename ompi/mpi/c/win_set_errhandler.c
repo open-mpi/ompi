@@ -24,21 +24,20 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 #include "ompi/win/win.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Win_set_errhandler = PMPI_Win_set_errhandler
-#endif
-#define MPI_Win_set_errhandler PMPI_Win_set_errhandler
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Win_set_errhandler = PMPI_Win_set_errhandler
+#    endif
+#    define MPI_Win_set_errhandler PMPI_Win_set_errhandler
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_set_errhandler";
-
 
 int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
 {
@@ -48,12 +47,10 @@ int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(win)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN,
-                                          FUNC_NAME);
-        } else if (NULL == errhandler ||
-                   MPI_ERRHANDLER_NULL == errhandler ||
-                   (OMPI_ERRHANDLER_TYPE_WIN != errhandler->eh_mpi_object_type &&
-                    OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
+        } else if (NULL == errhandler || MPI_ERRHANDLER_NULL == errhandler
+                   || (OMPI_ERRHANDLER_TYPE_WIN != errhandler->eh_mpi_object_type
+                       && OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
         }
     }

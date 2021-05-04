@@ -16,17 +16,17 @@
 
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
-#include "oshmem/shmem/shmem_api_logger.h"
 #include "oshmem/runtime/runtime.h"
+#include "oshmem/shmem/shmem_api_logger.h"
 #include "oshmem/shmem/shmem_lock.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/include/pshmem.h"
-#pragma weak shmem_test_lock = pshmem_test_lock
-#include "oshmem/shmem/c/profile/defines.h"
+#    include "oshmem/include/pshmem.h"
+#    pragma weak shmem_test_lock = pshmem_test_lock
+#    include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 int shmem_test_lock(volatile long *lock)
 {
-    return _shmem_test_lock((void *)lock, sizeof(long));
+    return _shmem_test_lock((void *) lock, sizeof(long));
 }

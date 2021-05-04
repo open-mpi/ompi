@@ -13,29 +13,27 @@
 
 #include "oshmem_config.h"
 
-#include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_framework.h"
+#include "opal/util/output.h"
 
 /*
  * Environment variables
  */
-#define OSHMEM_ENV_SYMMETRIC_SIZE      "SMA_SYMMETRIC_SIZE"
-#define OSHMEM_ENV_DEBUG               "SMA_DEBUG"
-#define OSHMEM_ENV_INFO                "SMA_INFO"
-#define OSHMEM_ENV_VERSION             "SMA_VERSION"
+#define OSHMEM_ENV_SYMMETRIC_SIZE "SMA_SYMMETRIC_SIZE"
+#define OSHMEM_ENV_DEBUG          "SMA_DEBUG"
+#define OSHMEM_ENV_INFO           "SMA_INFO"
+#define OSHMEM_ENV_VERSION        "SMA_VERSION"
 
-
-void oshmem_output_verbose(int level, int output_id, const char* prefix,
-    const char* file, int line, const char* function, const char* format, ...);
+void oshmem_output_verbose(int level, int output_id, const char *prefix, const char *file, int line,
+                           const char *function, const char *format, ...);
 
 /*
  * Temporary wrapper which ingores output verbosity level
  * to ensure error messages are seeing by user
  */
-void oshmem_output(int output_id, const char* prefix, const char* file,
-    int line, const char* function, const char* format, ...);
-
+void oshmem_output(int output_id, const char *prefix, const char *file, int line,
+                   const char *function, const char *format, ...);
 
 /* Force opening output for framework
  * We would like to display error messages in any case (debug/release mode,
@@ -48,6 +46,5 @@ static inline void oshmem_framework_open_output(struct mca_base_framework_t *fra
         framework->framework_output = opal_output_open(NULL);
     }
 }
-
 
 #endif /* OSHMEM_UTIL_H */

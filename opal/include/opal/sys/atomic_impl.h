@@ -314,17 +314,17 @@ OPAL_ATOMIC_DEFINE_CMPXCG_PTR_XX(_rel_)
 static inline void opal_atomic_add_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length)
 {
     switch (length) {
-#    if OPAL_HAVE_ATOMIC_ADD_32
+#if OPAL_HAVE_ATOMIC_ADD_32
     case 4:
         (void) opal_atomic_fetch_add_32((opal_atomic_int32_t *) addr, (int32_t) value);
         break;
-#    endif /* OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 */
+#endif /* OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 */
 
-#    if OPAL_HAVE_ATOMIC_ADD_64
+#if OPAL_HAVE_ATOMIC_ADD_64
     case 8:
         (void) opal_atomic_fetch_add_64((opal_atomic_int64_t *) addr, (int64_t) value);
         break;
-#    endif /* OPAL_HAVE_ATOMIC_ADD_64 */
+#endif /* OPAL_HAVE_ATOMIC_ADD_64 */
     default:
         /* This should never happen, so deliberately abort (hopefully
            leaving a corefile for analysis) */
@@ -335,17 +335,17 @@ static inline void opal_atomic_add_xx(opal_atomic_intptr_t *addr, int32_t value,
 static inline void opal_atomic_sub_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length)
 {
     switch (length) {
-#    if OPAL_HAVE_ATOMIC_SUB_32
+#if OPAL_HAVE_ATOMIC_SUB_32
     case 4:
         (void) opal_atomic_fetch_sub_32((opal_atomic_int32_t *) addr, (int32_t) value);
         break;
-#    endif /* OPAL_HAVE_ATOMIC_SUB_32 */
+#endif /* OPAL_HAVE_ATOMIC_SUB_32 */
 
-#    if OPAL_HAVE_ATOMIC_SUB_64
+#if OPAL_HAVE_ATOMIC_SUB_64
     case 8:
         (void) opal_atomic_fetch_sub_64((opal_atomic_int64_t *) addr, (int64_t) value);
         break;
-#    endif /* OPAL_HAVE_ATOMIC_SUB_64 */
+#endif /* OPAL_HAVE_ATOMIC_SUB_64 */
     default:
         /* This should never happen, so deliberately abort (hopefully
            leaving a corefile for analysis) */
@@ -353,12 +353,11 @@ static inline void opal_atomic_sub_xx(opal_atomic_intptr_t *addr, int32_t value,
     }
 }
 
-#    define OPAL_ATOMIC_DEFINE_OP_FETCH(op, operation, type, ptr_type, suffix)             \
-        static inline type opal_atomic_##op##_fetch_##suffix(opal_atomic_##ptr_type *addr, \
-                                                             type value)                   \
-        {                                                                                  \
-            return opal_atomic_fetch_##op##_##suffix(addr, value) operation value;         \
-        }
+#define OPAL_ATOMIC_DEFINE_OP_FETCH(op, operation, type, ptr_type, suffix)                         \
+    static inline type opal_atomic_##op##_fetch_##suffix(opal_atomic_##ptr_type *addr, type value) \
+    {                                                                                              \
+        return opal_atomic_fetch_##op##_##suffix(addr, value) operation value;                     \
+    }
 
 OPAL_ATOMIC_DEFINE_OP_FETCH(add, +, int32_t, int32_t, 32)
 OPAL_ATOMIC_DEFINE_OP_FETCH(and, &, int32_t, int32_t, 32)
@@ -398,52 +397,51 @@ static inline int64_t opal_atomic_max_fetch_64(opal_atomic_int64_t *addr, int64_
 
 static inline intptr_t opal_atomic_fetch_add_ptr(opal_atomic_intptr_t *addr, void *delta)
 {
-#    if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_ADD_32
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_ADD_32
     return opal_atomic_fetch_add_32((opal_atomic_int32_t *) addr, (unsigned long) delta);
-#    elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_ADD_64
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_ADD_64
     return opal_atomic_fetch_add_64((opal_atomic_int64_t *) addr, (unsigned long) delta);
-#    else
+#else
     abort();
     return 0;
-#    endif
+#endif
 }
 
 static inline intptr_t opal_atomic_add_fetch_ptr(opal_atomic_intptr_t *addr, void *delta)
 {
-#    if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_ADD_32
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_ADD_32
     return opal_atomic_add_fetch_32((opal_atomic_int32_t *) addr, (unsigned long) delta);
-#    elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_ADD_64
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_ADD_64
     return opal_atomic_add_fetch_64((opal_atomic_int64_t *) addr, (unsigned long) delta);
-#    else
+#else
     abort();
     return 0;
-#    endif
+#endif
 }
 
 static inline intptr_t opal_atomic_fetch_sub_ptr(opal_atomic_intptr_t *addr, void *delta)
 {
-#    if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SUB_32
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SUB_32
     return opal_atomic_fetch_sub_32((opal_atomic_int32_t *) addr, (unsigned long) delta);
-#    elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SUB_32
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SUB_32
     return opal_atomic_fetch_sub_64((opal_atomic_int64_t *) addr, (unsigned long) delta);
-#    else
+#else
     abort();
     return 0;
-#    endif
+#endif
 }
 
 static inline intptr_t opal_atomic_sub_fetch_ptr(opal_atomic_intptr_t *addr, void *delta)
 {
-#    if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SUB_32
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SUB_32
     return opal_atomic_sub_fetch_32((opal_atomic_int32_t *) addr, (unsigned long) delta);
-#    elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SUB_32
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SUB_32
     return opal_atomic_sub_fetch_64((opal_atomic_int64_t *) addr, (unsigned long) delta);
-#    else
+#else
     abort();
     return 0;
-#    endif
+#endif
 }
-
 
 /**********************************************************************
  *

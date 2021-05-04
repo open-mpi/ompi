@@ -19,10 +19,10 @@
 #include "oshmem/constants.h"
 
 #include "opal/class/opal_list.h"
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
+#include "oshmem/mca/mca.h"
+#include "oshmem/util/oshmem_util.h"
 
 #include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/mca/atomic/base/base.h"
@@ -47,17 +47,15 @@ typedef struct avail_com_t avail_com_t;
 /*
  * Local functions
  */
-static opal_list_t *check_components(opal_list_t * components);
-static int check_one_component(const mca_base_component_t * component,
-                               mca_atomic_base_module_1_0_0_t ** module);
+static opal_list_t *check_components(opal_list_t *components);
+static int check_one_component(const mca_base_component_t *component,
+                               mca_atomic_base_module_1_0_0_t **module);
 
-static int query(const mca_base_component_t * component,
-                 int *priority,
-                 mca_atomic_base_module_1_0_0_t ** module);
+static int query(const mca_base_component_t *component, int *priority,
+                 mca_atomic_base_module_1_0_0_t **module);
 
-static int query_1_0_0(const mca_atomic_base_component_1_0_0_t * atomic_component,
-                       int *priority,
-                       mca_atomic_base_module_1_0_0_t ** module);
+static int query_1_0_0(const mca_atomic_base_component_1_0_0_t *atomic_component, int *priority,
+                       mca_atomic_base_module_1_0_0_t **module);
 
 /*
  * Stuff for the OBJ interface
@@ -75,8 +73,7 @@ int mca_atomic_base_select(void)
     opal_list_item_t *item;
 
     /* Announce */
-    ATOMIC_VERBOSE(10,
-                   "atomic:base:atomic_select: Checking all available modules");
+    ATOMIC_VERBOSE(10, "atomic:base:atomic_select: Checking all available modules");
     selectable = check_components(&oshmem_atomic_base_framework.framework_components);
 
     /* Upon return from the above, the modules list will contain the
@@ -88,8 +85,8 @@ int mca_atomic_base_select(void)
     }
 
     /* do the selection loop */
-    for (item = opal_list_remove_first(selectable); NULL != item; item =
-            opal_list_remove_first(selectable)) {
+    for (item = opal_list_remove_first(selectable); NULL != item;
+         item = opal_list_remove_first(selectable)) {
         avail_com_t *avail = (avail_com_t *) item;
 
         /* Set module having the highest priority */
@@ -98,11 +95,10 @@ int mca_atomic_base_select(void)
         OBJ_RELEASE(avail->ac_module);
         OBJ_RELEASE(avail);
         /* check correctness */
-        if (!(mca_atomic.atomic_fadd)  || !(mca_atomic.atomic_add) ||
-            !(mca_atomic.atomic_fand)  || !(mca_atomic.atomic_and) ||
-            !(mca_atomic.atomic_for)   || !(mca_atomic.atomic_or) ||
-            !(mca_atomic.atomic_fxor)  || !(mca_atomic.atomic_xor) ||
-            !(mca_atomic.atomic_cswap) || !(mca_atomic.atomic_swap)) {
+        if (!(mca_atomic.atomic_fadd) || !(mca_atomic.atomic_add) || !(mca_atomic.atomic_fand)
+            || !(mca_atomic.atomic_and) || !(mca_atomic.atomic_for) || !(mca_atomic.atomic_or)
+            || !(mca_atomic.atomic_fxor) || !(mca_atomic.atomic_xor) || !(mca_atomic.atomic_cswap)
+            || !(mca_atomic.atomic_swap)) {
             return OSHMEM_ERR_NOT_FOUND;
         }
     }
@@ -113,8 +109,7 @@ int mca_atomic_base_select(void)
     return OSHMEM_SUCCESS;
 }
 
-static int avail_com_compare (opal_list_item_t **a,
-                               opal_list_item_t **b)
+static int avail_com_compare(opal_list_item_t **a, opal_list_item_t **b)
 {
     avail_com_t *acom = (avail_com_t *) *a;
     avail_com_t *bcom = (avail_com_t *) *b;
@@ -147,7 +142,8 @@ static opal_list_t *check_components(opal_list_t *components)
     selectable = OBJ_NEW(opal_list_t);
 
     /* Scan through the list of components */
-    OPAL_LIST_FOREACH(cli, &oshmem_atomic_base_framework.framework_components, mca_base_component_list_item_t) {
+    OPAL_LIST_FOREACH (cli, &oshmem_atomic_base_framework.framework_components,
+                       mca_base_component_list_item_t) {
         component = cli->cli_component;
 
         priority = check_one_component(component, &module);
@@ -188,14 +184,12 @@ static int check_one_component(const mca_base_component_t *component,
 
     if (OSHMEM_SUCCESS == err) {
         priority = (priority < 100) ? priority : 100;
-        ATOMIC_VERBOSE(10,
-                       "atomic:base:atomic_select: component available: %s, priority: %d",
+        ATOMIC_VERBOSE(10, "atomic:base:atomic_select: component available: %s, priority: %d",
                        component->mca_component_name, priority);
 
     } else {
         priority = -1;
-        ATOMIC_VERBOSE(10,
-                       "atomic:base:atomic_select: component not available: %s",
+        ATOMIC_VERBOSE(10, "atomic:base:atomic_select: component not available: %s",
                        component->mca_component_name);
     }
 
@@ -210,16 +204,14 @@ static int check_one_component(const mca_base_component_t *component,
  * Take any version of a atomic module, query it, and return the right
  * module struct
  */
-static int query(const mca_base_component_t *component,
-                 int *priority,
+static int query(const mca_base_component_t *component, int *priority,
                  mca_atomic_base_module_1_0_0_t **module)
 {
     *module = NULL;
-    if (1 == component->mca_type_major_version
-            && 0 == component->mca_type_minor_version
-            && 0 == component->mca_type_release_version) {
-        const mca_atomic_base_component_1_0_0_t *atomic100 =
-                (mca_atomic_base_component_1_0_0_t *) component;
+    if (1 == component->mca_type_major_version && 0 == component->mca_type_minor_version
+        && 0 == component->mca_type_release_version) {
+        const mca_atomic_base_component_1_0_0_t *atomic100 = (mca_atomic_base_component_1_0_0_t *)
+            component;
 
         return query_1_0_0(atomic100, priority, module);
     }
@@ -229,8 +221,7 @@ static int query(const mca_base_component_t *component,
     return OSHMEM_ERROR;
 }
 
-static int query_1_0_0(const mca_atomic_base_component_1_0_0_t *component,
-                       int *priority,
+static int query_1_0_0(const mca_atomic_base_component_1_0_0_t *component, int *priority,
                        mca_atomic_base_module_1_0_0_t **module)
 {
     mca_atomic_base_module_1_0_0_t *ret;

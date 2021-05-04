@@ -22,23 +22,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Cancel = PMPI_Cancel
-#endif
-#define MPI_Cancel PMPI_Cancel
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Cancel = PMPI_Cancel
+#    endif
+#    define MPI_Cancel PMPI_Cancel
 #endif
 
 static const char FUNC_NAME[] = "MPI_Cancel";
-
 
 int MPI_Cancel(MPI_Request *request)
 {
@@ -46,17 +45,13 @@ int MPI_Cancel(MPI_Request *request)
 
     SPC_RECORD(OMPI_SPC_CANCEL, 1);
 
-    MEMCHECKER(
-        memchecker_request(request);
-    );
+    MEMCHECKER(memchecker_request(request););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == request || NULL == *request ||
-            MPI_REQUEST_NULL == *request) {
-            OMPI_ERRHANDLER_NOHANDLE_RETURN(MPI_ERR_REQUEST, 
-                                   MPI_ERR_REQUEST, FUNC_NAME);
+        if (NULL == request || NULL == *request || MPI_REQUEST_NULL == *request) {
+            OMPI_ERRHANDLER_NOHANDLE_RETURN(MPI_ERR_REQUEST, MPI_ERR_REQUEST, FUNC_NAME);
         }
     }
 
@@ -67,4 +62,3 @@ int MPI_Cancel(MPI_Request *request)
     rc = ompi_request_cancel(*request);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }
-

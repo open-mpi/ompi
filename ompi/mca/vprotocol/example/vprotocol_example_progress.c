@@ -13,12 +13,12 @@
 
 int mca_vprotocol_example_enable(bool enable)
 {
-  V_OUTPUT_VERBOSE(15, "enable=%d", enable);
-  return mca_pml_v.host_pml.pml_enable(enable);
+    V_OUTPUT_VERBOSE(15, "enable=%d", enable);
+    return mca_pml_v.host_pml.pml_enable(enable);
 }
 
 int mca_vprotocol_example_progress(void)
 {
-  V_OUTPUT_VERBOSE(100, "progress...");
-  return mca_pml_v.host_pml.pml_progress();
+    V_OUTPUT_VERBOSE(100, "progress...");
+    return mca_pml_v.host_pml.pml_progress();
 }

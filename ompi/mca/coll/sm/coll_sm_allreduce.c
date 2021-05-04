@@ -22,10 +22,9 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
-#include "ompi/communicator/communicator.h"
 #include "coll_sm.h"
-
+#include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 
 /**
  * Shared memory allreduce.
@@ -34,10 +33,8 @@
  * broadcast.  It is possible that we'll do something better someday.
  */
 int mca_coll_sm_allreduce_intra(const void *sbuf, void *rbuf, int count,
-                                struct ompi_datatype_t *dtype,
-                                struct ompi_op_t *op,
-                                struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
+                                struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     int ret;
 
@@ -47,16 +44,13 @@ int mca_coll_sm_allreduce_intra(const void *sbuf, void *rbuf, int count,
     if (MPI_IN_PLACE == sbuf) {
         int rank = ompi_comm_rank(comm);
         if (0 == rank) {
-            ret = mca_coll_sm_reduce_intra(sbuf, rbuf, count, dtype, op, 0,
-                                           comm, module);
+            ret = mca_coll_sm_reduce_intra(sbuf, rbuf, count, dtype, op, 0, comm, module);
         } else {
-            ret = mca_coll_sm_reduce_intra(rbuf, NULL, count, dtype, op, 0,
-                                           comm, module);
+            ret = mca_coll_sm_reduce_intra(rbuf, NULL, count, dtype, op, 0, comm, module);
         }
     } else {
-        ret = mca_coll_sm_reduce_intra(sbuf, rbuf, count, dtype, op, 0,
-                                       comm, module);
+        ret = mca_coll_sm_reduce_intra(sbuf, rbuf, count, dtype, op, 0, comm, module);
     }
-    return (ret == OMPI_SUCCESS) ?
-        mca_coll_sm_bcast_intra(rbuf, count, dtype, 0, comm, module) : ret;
+    return (ret == OMPI_SUCCESS) ? mca_coll_sm_bcast_intra(rbuf, count, dtype, 0, comm, module)
+                                 : ret;
 }

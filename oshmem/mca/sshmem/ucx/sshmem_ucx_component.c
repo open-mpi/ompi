@@ -13,18 +13,17 @@
 
 #include "opal/constants.h"
 
-#include "oshmem/mca/sshmem/sshmem.h"
-#include "oshmem/mca/sshmem/base/base.h"
 #include "oshmem/mca/spml/base/base.h"
+#include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/mca/sshmem/sshmem.h"
 
 #include "sshmem_ucx.h"
 
 /**
  * public string showing the shmem ompi_ucx component version number
  */
-const char *mca_sshmem_ucx_component_version_string =
-    "OSHMEM ucx sshmem MCA component version " OSHMEM_VERSION;
-
+const char *mca_sshmem_ucx_component_version_string
+    = "OSHMEM ucx sshmem MCA component version " OSHMEM_VERSION;
 
 /**
  * local functions
@@ -33,9 +32,7 @@ static int ucx_register(void);
 static int ucx_open(void);
 static int ucx_close(void);
 static int ucx_query(mca_base_module_t **module, int *priority);
-static int ucx_runtime_query(mca_base_module_t **module,
-                             int *priority,
-                             const char *hint);
+static int ucx_runtime_query(mca_base_module_t **module, int *priority, const char *hint);
 
 /**
  * instantiate the public struct with all of our public information
@@ -71,10 +68,7 @@ mca_sshmem_ucx_component_t mca_sshmem_ucx_component = {
     },
 };
 
-static int
-ucx_runtime_query(mca_base_module_t **module,
-                   int *priority,
-                   const char *hint)
+static int ucx_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
 {
     /* check that spml ucx was selected. Otherwise disqualify */
     if (strcmp(mca_spml_base_selected_component.spmlm_version.mca_component_name, "ucx")) {
@@ -83,43 +77,37 @@ ucx_runtime_query(mca_base_module_t **module,
     }
 
     *priority = mca_sshmem_ucx_component.priority;
-    *module = (mca_base_module_t *)&mca_sshmem_ucx_module.super;
+    *module = (mca_base_module_t *) &mca_sshmem_ucx_module.super;
     return OPAL_SUCCESS;
 }
 
-static int
-ucx_register(void)
+static int ucx_register(void)
 {
     /* (default) priority - set high to make ucx the default */
     mca_sshmem_ucx_component.priority = 100;
-    mca_base_component_var_register (&mca_sshmem_ucx_component.super.base_version,
-                                     "priority", "Priority for sshmem ucx "
-                                     "component (default: 100)", MCA_BASE_VAR_TYPE_INT,
-                                     NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                     OPAL_INFO_LVL_3,
-                                     MCA_BASE_VAR_SCOPE_ALL_EQ,
-                                     &mca_sshmem_ucx_component.priority);
+    mca_base_component_var_register(&mca_sshmem_ucx_component.super.base_version, "priority",
+                                    "Priority for sshmem ucx "
+                                    "component (default: 100)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL_EQ,
+                                    &mca_sshmem_ucx_component.priority);
 
     return OSHMEM_SUCCESS;
 }
 
-static int
-ucx_open(void)
+static int ucx_open(void)
 {
     return OSHMEM_SUCCESS;
 }
 
-static int
-ucx_query(mca_base_module_t **module, int *priority)
+static int ucx_query(mca_base_module_t **module, int *priority)
 {
     *priority = mca_sshmem_ucx_component.priority;
-    *module = (mca_base_module_t *)&mca_sshmem_ucx_module.super;
+    *module = (mca_base_module_t *) &mca_sshmem_ucx_module.super;
     return OSHMEM_SUCCESS;
 }
 
-static int
-ucx_close(void)
+static int ucx_close(void)
 {
     return OSHMEM_SUCCESS;
 }
-

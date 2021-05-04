@@ -19,28 +19,28 @@
 
 #include "oshmem/util/oshmem_util.h"
 
-#include "oshmem/proc/proc.h"
-#include "oshmem/util/oshmem_util.h"
-#include "oshmem/runtime/runtime.h"
-#include "oshmem/mca/sshmem/sshmem.h"
-#include "oshmem/mca/sshmem/base/base.h"
-#include "oshmem/mca/memheap/memheap.h"
-#include "oshmem/mca/memheap/base/base.h"
-#include "oshmem/mca/spml/spml.h"
-#include "opal/util/timings.h"
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/util/timings.h"
+#include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/spml/spml.h"
+#include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/mca/sshmem/sshmem.h"
+#include "oshmem/proc/proc.h"
+#include "oshmem/runtime/runtime.h"
+#include "oshmem/util/oshmem_util.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef MEMHEAP_BASE_DEBUG
-#define MEMHEAP_BASE_DEBUG    0
+#    define MEMHEAP_BASE_DEBUG 0
 #endif
 
-#define MEMHEAP_RKEY_REQ            0xA1
-#define MEMHEAP_RKEY_RESP           0xA2
-#define MEMHEAP_RKEY_RESP_FAIL      0xA3
+#define MEMHEAP_RKEY_REQ       0xA1
+#define MEMHEAP_RKEY_RESP      0xA2
+#define MEMHEAP_RKEY_RESP_FAIL 0xA3
 
-#define MEMHEAP_MKEY_MAXSIZE   4096
-#define MEMHEAP_RECV_REQS_MAX  16
+#define MEMHEAP_MKEY_MAXSIZE  4096
+#define MEMHEAP_RECV_REQS_MAX 16
 
 typedef struct oob_comm_request {
     opal_list_item_t super;
@@ -60,7 +60,7 @@ struct oob_comm {
     shmem_ctx_t ctx;
 };
 
-mca_memheap_map_t* memheap_map = NULL;
+mca_memheap_map_t *memheap_map = NULL;
 
 struct oob_comm memheap_oob = {{{0}}};
 
@@ -69,18 +69,16 @@ static int send_buffer(int pe, pmix_data_buffer_t *msg);
 static int oshmem_mkey_recv_cb(void);
 
 /* pickup list of rkeys and remote va */
-static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe,
-                                 uint32_t va_seg_num,
-                                 sshmem_mkey_t *mkey);
+static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t va_seg_num, sshmem_mkey_t *mkey);
 
 int mca_memheap_seg_cmp(const void *k, const void *v)
 {
     uintptr_t va = (uintptr_t) k;
     map_segment_t *s = (map_segment_t *) v;
 
-    if (va < (uintptr_t)s->super.va_base)
+    if (va < (uintptr_t) s->super.va_base)
         return -1;
-    if (va >= (uintptr_t)s->super.va_end)
+    if (va >= (uintptr_t) s->super.va_end)
         return 1;
 
     return 0;
@@ -98,8 +96,7 @@ static int pack_local_mkeys(pmix_data_buffer_t *msg, int pe, int seg)
     for (i = 0; i < n; i++) {
         mkey = mca_memheap_base_get_mkey(mca_memheap_seg2base_va(seg), i);
         if (!mkey) {
-            MEMHEAP_ERROR("seg#%d tr_id: %d failed to find local mkey",
-                          seg, i);
+            MEMHEAP_ERROR("seg#%d tr_id: %d failed to find local mkey", seg, i);
             return OSHMEM_ERROR;
         }
         PMIx_Data_pack(NULL, msg, &i, 1, PMIX_UINT32);
@@ -112,9 +109,7 @@ static int pack_local_mkeys(pmix_data_buffer_t *msg, int pe, int seg)
                 PMIx_Data_pack(NULL, msg, mkey->u.data, mkey->len, PMIX_BYTE);
             }
         }
-        MEMHEAP_VERBOSE(5,
-                        "seg#%d tr_id: %d %s",
-                        seg, i, mca_spml_base_mkey2str(mkey));
+        MEMHEAP_VERBOSE(5, "seg#%d tr_id: %d %s", seg, i, mca_spml_base_mkey2str(mkey));
     }
     return OSHMEM_SUCCESS;
 }
@@ -130,20 +125,17 @@ static void memheap_attach_segment(sshmem_mkey_t *mkey, int tr_id)
     assert(mkey->va_base == 0);
     assert(mkey->len == 0);
 
-    MEMHEAP_VERBOSE(5,
-            "shared memory usage tr_id: %d va_base: 0x%p len: %d key %llx",
-            tr_id,
-            mkey->va_base, mkey->len, (unsigned long long)mkey->u.key);
+    MEMHEAP_VERBOSE(5, "shared memory usage tr_id: %d va_base: 0x%p len: %d key %llx", tr_id,
+                    mkey->va_base, mkey->len, (unsigned long long) mkey->u.key);
 
     mca_sshmem_segment_attach(&(memheap_map->mem_segs[HEAP_SEG_INDEX]), mkey);
 
     if ((void *) -1 == (void *) mkey->va_base) {
-        MEMHEAP_ERROR("tr_id: %d key %llx attach failed: errno = %d",
-                tr_id, (unsigned long long)mkey->u.key, errno);
+        MEMHEAP_ERROR("tr_id: %d key %llx attach failed: errno = %d", tr_id,
+                      (unsigned long long) mkey->u.key, errno);
         oshmem_shmem_abort(-1);
     }
 }
-
 
 static void unpack_remote_mkeys(shmem_ctx_t ctx, pmix_data_buffer_t *msg, int remote_pe)
 {
@@ -160,10 +152,7 @@ static void unpack_remote_mkeys(shmem_ctx_t ctx, pmix_data_buffer_t *msg, int re
         cnt = 1;
         PMIx_Data_unpack(NULL, msg, &tr_id, &cnt, PMIX_UINT32);
         cnt = 1;
-        PMIx_Data_unpack(NULL, msg,
-                        &memheap_oob.mkeys[tr_id].va_base,
-                        &cnt,
-                        PMIX_UINT64);
+        PMIx_Data_unpack(NULL, msg, &memheap_oob.mkeys[tr_id].va_base, &cnt, PMIX_UINT64);
 
         if (0 == memheap_oob.mkeys[tr_id].va_base) {
             cnt = 1;
@@ -185,16 +174,16 @@ static void unpack_remote_mkeys(shmem_ctx_t ctx, pmix_data_buffer_t *msg, int re
             } else {
                 memheap_oob.mkeys[tr_id].u.key = MAP_SEGMENT_SHM_INVALID;
             }
-            MCA_SPML_CALL(rmkey_unpack(ctx, &memheap_oob.mkeys[tr_id], memheap_oob.segno, remote_pe, tr_id));
+            MCA_SPML_CALL(
+                rmkey_unpack(ctx, &memheap_oob.mkeys[tr_id], memheap_oob.segno, remote_pe, tr_id));
         }
 
-        MEMHEAP_VERBOSE(5,
-                        "tr_id: %d %s",
-                        tr_id, mca_spml_base_mkey2str(&memheap_oob.mkeys[tr_id]));
+        MEMHEAP_VERBOSE(5, "tr_id: %d %s", tr_id,
+                        mca_spml_base_mkey2str(&memheap_oob.mkeys[tr_id]));
     }
 }
 
-static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
+static void do_recv(int source_pe, pmix_data_buffer_t *buffer)
 {
     int32_t cnt = 1;
     int rc;
@@ -264,7 +253,8 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
     }
     return;
 
-    send_fail: PMIX_DATA_BUFFER_CREATE(msg);
+send_fail:
+    PMIX_DATA_BUFFER_CREATE(msg);
     if (!msg) {
         MEMHEAP_ERROR("failed to get msg buffer");
         OMPI_ERROR_LOG(rc);
@@ -278,7 +268,6 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
         OMPI_ERROR_LOG(rc);
     }
-
 }
 
 /**
@@ -287,9 +276,7 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
  * - does not do any progress
  * - can be safely called from within opal_progress()
  */
-static inline int my_MPI_Test(ompi_request_t ** rptr,
-                              int *completed,
-                              ompi_status_public_t * status)
+static inline int my_MPI_Test(ompi_request_t **rptr, int *completed, ompi_status_public_t *status)
 {
     ompi_request_t *request = *rptr;
 
@@ -324,9 +311,9 @@ static int oshmem_mkey_recv_cb(void)
     oob_comm_request_t *r;
 
     n = 0;
-    r = (oob_comm_request_t *)opal_list_get_first(&memheap_oob.req_list);
+    r = (oob_comm_request_t *) opal_list_get_first(&memheap_oob.req_list);
     assert(r);
-    while(r != (oob_comm_request_t *)opal_list_get_end(&memheap_oob.req_list)) {
+    while (r != (oob_comm_request_t *) opal_list_get_end(&memheap_oob.req_list)) {
         my_MPI_Test(&r->recv_req, &flag, &status);
         if (OPAL_LIKELY(0 == flag)) {
             return n;
@@ -346,15 +333,15 @@ static int oshmem_mkey_recv_cb(void)
             OMPI_ERROR_LOG(0);
             return n;
         } else {
-		    memcpy(tmp_buf, (void*)&r->buf, size);
-		    PMIX_DATA_BUFFER_CREATE(msg);
-		    if (NULL == msg) {
-		        MEMHEAP_ERROR("not enough memory");
-		        OMPI_ERROR_LOG(0);
-		        free(tmp_buf);
-		        return n;
-		    }
-            PMIX_DATA_BUFFER_LOAD(msg, (void*)tmp_buf, size);
+            memcpy(tmp_buf, (void *) &r->buf, size);
+            PMIX_DATA_BUFFER_CREATE(msg);
+            if (NULL == msg) {
+                MEMHEAP_ERROR("not enough memory");
+                OMPI_ERROR_LOG(0);
+                free(tmp_buf);
+                return n;
+            }
+            PMIX_DATA_BUFFER_LOAD(msg, (void *) tmp_buf, size);
 
             /*
              * send reply before posting the receive request again to limit the recursion size to
@@ -374,8 +361,7 @@ static int oshmem_mkey_recv_cb(void)
         }
         opal_list_append(&memheap_oob.req_list, &r->super);
 
-
-        r = (oob_comm_request_t *)opal_list_get_first(&memheap_oob.req_list);
+        r = (oob_comm_request_t *) opal_list_get_first(&memheap_oob.req_list);
         assert(r);
     }
 
@@ -394,13 +380,10 @@ int memheap_oob_init(mca_memheap_map_t *map)
     OBJ_CONSTRUCT(&memheap_oob.cond, opal_condition_t);
     OBJ_CONSTRUCT(&memheap_oob.req_list, opal_list_t);
 
-
     for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) {
         r = &memheap_oob.req_pool[i];
-        rc = PMPI_Recv_init(r->buf, sizeof(r->buf), MPI_BYTE,
-                MPI_ANY_SOURCE, 0,
-                oshmem_comm_world,
-                &r->recv_req);
+        rc = PMPI_Recv_init(r->buf, sizeof(r->buf), MPI_BYTE, MPI_ANY_SOURCE, 0, oshmem_comm_world,
+                            &r->recv_req);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("Failed to created recv request %d", rc);
             return rc;
@@ -467,10 +450,7 @@ static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t seg, sshmem_m
 
     if (OSHMEM_SUCCESS == MCA_SPML_CALL(oob_get_mkeys(ctx, pe, seg, mkeys))) {
         for (i = 0; i < memheap_map->num_transports; i++) {
-            MEMHEAP_VERBOSE(5,
-                            "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d %s",
-                            pe,
-                            i,
+            MEMHEAP_VERBOSE(5, "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d %s", pe, i,
                             mca_spml_base_mkey2str(&mkeys[i]));
         }
         return OSHMEM_SUCCESS;
@@ -544,21 +524,21 @@ void mca_memheap_modex_recv_all(void)
     /* buffer allocation for num_transports
      * message sizes and offsets */
 
-    rcv_size = (int *)malloc(nprocs * sizeof(int));
+    rcv_size = (int *) malloc(nprocs * sizeof(int));
     if (NULL == rcv_size) {
         MEMHEAP_ERROR("failed to get rcv_size buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto exit_fatal;
     }
 
-    rcv_offsets = (int *)malloc(nprocs * sizeof(int));
+    rcv_offsets = (int *) malloc(nprocs * sizeof(int));
     if (NULL == rcv_offsets) {
         MEMHEAP_ERROR("failed to get rcv_offsets buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto exit_fatal;
     }
 
-    rcv_n_transports = (int *)malloc(nprocs * sizeof(int));
+    rcv_n_transports = (int *) malloc(nprocs * sizeof(int));
     if (NULL == rcv_offsets) {
         MEMHEAP_ERROR("failed to get rcv_offsets buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
@@ -585,10 +565,10 @@ void mca_memheap_modex_recv_all(void)
 
     /* Do allgather */
     PMIX_DATA_BUFFER_UNLOAD(msg, send_buffer, size);
-    MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %d segments", size, memheap_map->n_segments);
+    MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %d segments", size,
+                    memheap_map->n_segments);
 
     OPAL_TIMING_ENV_NEXT(recv_all, "serialize data");
-
 
     /* we need to send num_transports and message sizes separately
      * since message sizes depend on types of btl used */
@@ -600,7 +580,6 @@ void mca_memheap_modex_recv_all(void)
     }
 
     OPAL_TIMING_ENV_NEXT(recv_all, "allgather: transport cnt");
-
 
     rc = oshmem_shmem_allgather(&size, rcv_size, sizeof(int));
     if (MPI_SUCCESS != rc) {
@@ -619,7 +598,7 @@ void mca_memheap_modex_recv_all(void)
 
     buffer_size = rcv_offsets[nprocs - 1] + rcv_size[nprocs - 1];
 
-    rcv_buffer = malloc (buffer_size);
+    rcv_buffer = malloc(buffer_size);
     if (NULL == rcv_buffer) {
         MEMHEAP_ERROR("failed to allocate recieve buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
@@ -630,7 +609,7 @@ void mca_memheap_modex_recv_all(void)
 
     rc = oshmem_shmem_allgatherv(send_buffer, rcv_buffer, size, rcv_size, rcv_offsets);
     if (MPI_SUCCESS != rc) {
-        free (rcv_buffer);
+        free(rcv_buffer);
         MEMHEAP_ERROR("allgatherv failed");
         goto exit_fatal;
     }
@@ -646,7 +625,7 @@ void mca_memheap_modex_recv_all(void)
             continue;
         }
 
-        msg->unpack_ptr = (void *)((intptr_t) msg->base_ptr + rcv_offsets[i]);
+        msg->unpack_ptr = (void *) ((intptr_t) msg->base_ptr + rcv_offsets[i]);
 
         for (j = 0; j < memheap_map->n_segments; j++) {
             map_segment_t *s;
@@ -656,7 +635,7 @@ void mca_memheap_modex_recv_all(void)
                 MEMHEAP_VERBOSE(10, "PE%d: segment%d already exists, mkey will be replaced", i, j);
             } else {
                 s->mkeys_cache[i] = (sshmem_mkey_t *) calloc(rcv_n_transports[i],
-                        sizeof(sshmem_mkey_t));
+                                                             sizeof(sshmem_mkey_t));
                 if (NULL == s->mkeys_cache[i]) {
                     MEMHEAP_ERROR("PE%d: segment%d: Failed to allocate mkeys cache entry", i, j);
                     oshmem_shmem_abort(-1);
@@ -696,12 +675,8 @@ exit_fatal:
     }
 }
 
-sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(shmem_ctx_t ctx,
-                                                      map_segment_t *s,
-                                                      int pe,
-                                                      void* va,
-                                                      int btl_id,
-                                                      void** rva)
+sshmem_mkey_t *mca_memheap_base_get_cached_mkey_slow(shmem_ctx_t ctx, map_segment_t *s, int pe,
+                                                     void *va, int btl_id, void **rva)
 {
     int rc;
     sshmem_mkey_t *mkey;
@@ -711,39 +686,37 @@ sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(shmem_ctx_t ctx,
     }
 
     s->mkeys_cache[pe] = (sshmem_mkey_t *) calloc(memheap_map->num_transports,
-                                                    sizeof(sshmem_mkey_t));
+                                                  sizeof(sshmem_mkey_t));
     if (!s->mkeys_cache[pe])
-        return NULL ;
+        return NULL;
 
-    rc = memheap_oob_get_mkeys(ctx, pe,
-                               s - memheap_map->mem_segs,
-                               s->mkeys_cache[pe]);
+    rc = memheap_oob_get_mkeys(ctx, pe, s - memheap_map->mem_segs, s->mkeys_cache[pe]);
     if (OSHMEM_SUCCESS != rc)
-        return NULL ;
+        return NULL;
 
     mkey = &s->mkeys_cache[pe][btl_id];
     *rva = memheap_va2rva(va, s->super.va_base, mkey->va_base);
 
-    MEMHEAP_VERBOSE_FASTPATH(5, "rkey: pe=%d va=%p -> (remote lookup) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
+    MEMHEAP_VERBOSE_FASTPATH(5, "rkey: pe=%d va=%p -> (remote lookup) %lx %p", pe, (void *) va,
+                             mkey->u.key, (void *) *rva);
     return mkey;
 }
 
-sshmem_mkey_t *mca_memheap_base_get_mkey(void* va, int tr_id)
+sshmem_mkey_t *mca_memheap_base_get_mkey(void *va, int tr_id)
 {
     map_segment_t *s;
 
     s = memheap_find_va(va);
 
-    return ((s && MAP_SEGMENT_IS_VALID(s)) ? &s->mkeys[tr_id] : NULL );
+    return ((s && MAP_SEGMENT_IS_VALID(s)) ? &s->mkeys[tr_id] : NULL);
 }
 
-
-int mca_memheap_base_is_symmetric_addr(const void* va)
+int mca_memheap_base_is_symmetric_addr(const void *va)
 {
-    return (memheap_find_va((void *)va) ? 1 : 0);
+    return (memheap_find_va((void *) va) ? 1 : 0);
 }
 
-int mca_memheap_base_detect_addr_type(void* va)
+int mca_memheap_base_detect_addr_type(void *va)
 {
     int addr_type = ADDR_INVALID;
     map_segment_t *s;
@@ -753,11 +726,14 @@ int mca_memheap_base_detect_addr_type(void* va)
     if (s) {
         if (s->type == MAP_SEGMENT_STATIC) {
             addr_type = ADDR_STATIC;
-        } else if ((uintptr_t)va >= (uintptr_t) s->super.va_base
-                   && (uintptr_t)va < (uintptr_t) ((uintptr_t)s->super.va_base + mca_memheap.memheap_size)) {
+        } else if ((uintptr_t) va >= (uintptr_t) s->super.va_base
+                   && (uintptr_t) va
+                          < (uintptr_t)((uintptr_t) s->super.va_base + mca_memheap.memheap_size)) {
             addr_type = ADDR_USER;
         } else {
-            assert( (uintptr_t)va >= (uintptr_t) ((uintptr_t)s->super.va_base + mca_memheap.memheap_size) && (uintptr_t)va < (uintptr_t)s->super.va_end);
+            assert((uintptr_t) va
+                       >= (uintptr_t)((uintptr_t) s->super.va_base + mca_memheap.memheap_size)
+                   && (uintptr_t) va < (uintptr_t) s->super.va_end);
             addr_type = ADDR_PRIVATE;
         }
     }
@@ -777,7 +753,6 @@ void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno)
     assert(NULL != s);
 
     seg->super.va_base = s->super.va_base;
-    seg->super.va_end  = s->super.va_end;
-    seg->rva_base      = mkey->va_base;
+    seg->super.va_end = s->super.va_end;
+    seg->rva_base = mkey->va_base;
 }
-

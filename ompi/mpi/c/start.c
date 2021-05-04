@@ -24,33 +24,30 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/request/request.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/request/request.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Start = PMPI_Start
-#endif
-#define MPI_Start PMPI_Start
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Start = PMPI_Start
+#    endif
+#    define MPI_Start PMPI_Start
 #endif
 
 static const char FUNC_NAME[] = "MPI_Start";
-
 
 int MPI_Start(MPI_Request *request)
 {
     int ret = OMPI_SUCCESS;
 
-    MEMCHECKER(
-        memchecker_request(request);
-    );
+    MEMCHECKER(memchecker_request(request););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (request == NULL) {
@@ -74,11 +71,11 @@ int MPI_Start(MPI_Request *request)
      */
 #endif
 
-    switch((*request)->req_type) {
+    switch ((*request)->req_type) {
     case OMPI_REQUEST_PML:
     case OMPI_REQUEST_COLL:
     case OMPI_REQUEST_PART:
-        if ( MPI_PARAM_CHECK && !(*request)->req_persistent) {
+        if (MPI_PARAM_CHECK && !(*request)->req_persistent) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
         }
 
@@ -93,7 +90,7 @@ int MPI_Start(MPI_Request *request)
          * Otherwise, mark it active so we can correctly handle it in
          * the wait*.
          */
-        if( OMPI_REQUEST_INACTIVE == (*request)->req_state ) {
+        if (OMPI_REQUEST_INACTIVE == (*request)->req_state) {
             (*request)->req_state = OMPI_REQUEST_ACTIVE;
             return MPI_SUCCESS;
         }
@@ -102,4 +99,3 @@ int MPI_Start(MPI_Request *request)
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
     }
 }
-

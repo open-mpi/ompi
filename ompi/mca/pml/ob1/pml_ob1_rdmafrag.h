@@ -29,14 +29,12 @@
 
 BEGIN_C_DECLS
 
-typedef enum {
-    MCA_PML_OB1_RDMA_PUT,
-    MCA_PML_OB1_RDMA_GET
-} mca_pml_ob1_rdma_state_t;
+typedef enum { MCA_PML_OB1_RDMA_PUT, MCA_PML_OB1_RDMA_GET } mca_pml_ob1_rdma_state_t;
 
 struct mca_pml_ob1_rdma_frag_t;
 
-typedef void (*mca_pml_ob1_rdma_frag_callback_t)(struct mca_pml_ob1_rdma_frag_t *frag, int64_t rdma_length);
+typedef void (*mca_pml_ob1_rdma_frag_callback_t)(struct mca_pml_ob1_rdma_frag_t *frag,
+                                                 int64_t rdma_length);
 
 /**
  * Used to keep track of local and remote RDMA operations.
@@ -46,8 +44,8 @@ struct mca_pml_ob1_rdma_frag_t {
     mca_bml_base_btl_t *rdma_bml;
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;
-    size_t rdma_length;  /* how much the fragment will transfer */
-    opal_atomic_size_t rdma_bytes_remaining;  /* how much is left to be transferred */
+    size_t rdma_length;                      /* how much the fragment will transfer */
+    opal_atomic_size_t rdma_bytes_remaining; /* how much is left to be transferred */
     void *rdma_req;
     uint32_t retries;
     mca_pml_ob1_rdma_frag_callback_t cbfunc;
@@ -63,24 +61,20 @@ typedef struct mca_pml_ob1_rdma_frag_t mca_pml_ob1_rdma_frag_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_rdma_frag_t);
 
+#define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag)                                                \
+    do {                                                                                 \
+        frag = (mca_pml_ob1_rdma_frag_t *) opal_free_list_wait(&mca_pml_ob1.rdma_frags); \
+    } while (0)
 
-#define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag)                          \
-    do {                                                           \
-        frag = (mca_pml_ob1_rdma_frag_t *)                         \
-            opal_free_list_wait (&mca_pml_ob1.rdma_frags);         \
-    } while(0)
-
-#define MCA_PML_OB1_RDMA_FRAG_RETURN(frag)                              \
-    do {                                                                \
-        if (frag->local_handle) {                                       \
-            mca_bml_base_deregister_mem (frag->rdma_bml, frag->local_handle); \
-            frag->local_handle = NULL;                                  \
-        }                                                               \
-        opal_free_list_return (&mca_pml_ob1.rdma_frags,                 \
-                               (opal_free_list_item_t*)frag);           \
+#define MCA_PML_OB1_RDMA_FRAG_RETURN(frag)                                              \
+    do {                                                                                \
+        if (frag->local_handle) {                                                       \
+            mca_bml_base_deregister_mem(frag->rdma_bml, frag->local_handle);            \
+            frag->local_handle = NULL;                                                  \
+        }                                                                               \
+        opal_free_list_return(&mca_pml_ob1.rdma_frags, (opal_free_list_item_t *) frag); \
     } while (0)
 
 END_C_DECLS
 
 #endif
-

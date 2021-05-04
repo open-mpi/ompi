@@ -15,8 +15,8 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/util/cmd_line.h"
 #include "opal/mca/mca.h"
+#include "opal/util/cmd_line.h"
 
 BEGIN_C_DECLS
 

@@ -169,15 +169,15 @@
 
 #include <stdint.h>
 #ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
+#    include <sys/types.h>
 #endif
 
 struct opal_proc_t;
 
-#include "opal/mca/threads/threads.h"
-#include "opal/util/proc.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/mca/threads/threads.h"
+#include "opal/util/proc.h"
 
 struct ompi_proc_t;
 struct ompi_communicator_t;
@@ -192,66 +192,61 @@ typedef uint32_t ompi_vpid_t;
 /* some local storage */
 OMPI_DECLSPEC extern hwloc_cpuset_t ompi_proc_applied_binding;
 
-#define OMPI_PROC_MY_NAME (&opal_process_info.my_name)
-#define OMPI_NAME_WILDCARD  (&opal_name_wildcard)
-#define OMPI_PROC_MYID (&opal_process_info.myprocid)
-#define OMPI_PRINT_ID(a) ompi_pmix_print_id(a)
-OMPI_DECLSPEC char* ompi_pmix_print_id(const pmix_proc_t *procid);
+#define OMPI_PROC_MY_NAME  (&opal_process_info.my_name)
+#define OMPI_NAME_WILDCARD (&opal_name_wildcard)
+#define OMPI_PROC_MYID     (&opal_process_info.myprocid)
+#define OMPI_PRINT_ID(a)   ompi_pmix_print_id(a)
+OMPI_DECLSPEC char *ompi_pmix_print_id(const pmix_proc_t *procid);
 
 typedef uint8_t ompi_rte_cmp_bitmask_t;
-#define OMPI_RTE_CMP_NONE   0x00
-#define OMPI_RTE_CMP_JOBID  0x02
-#define OMPI_RTE_CMP_VPID   0x04
-#define OMPI_RTE_CMP_ALL    0x0f
-#define OMPI_RTE_CMP_WILD   0x10
+#define OMPI_RTE_CMP_NONE  0x00
+#define OMPI_RTE_CMP_JOBID 0x02
+#define OMPI_RTE_CMP_VPID  0x04
+#define OMPI_RTE_CMP_ALL   0x0f
+#define OMPI_RTE_CMP_WILD  0x10
 
-OMPI_DECLSPEC char* ompi_pmix_print_name(const ompi_process_name_t *name);
+OMPI_DECLSPEC char *ompi_pmix_print_name(const ompi_process_name_t *name);
 
 #define OMPI_NAME_PRINT(a) ompi_pmix_print_name(a)
 OMPI_DECLSPEC int ompi_rte_compare_name_fields(ompi_rte_cmp_bitmask_t mask,
-                                               const opal_process_name_t* name1,
-                                               const opal_process_name_t* name2);
+                                               const opal_process_name_t *name1,
+                                               const opal_process_name_t *name2);
 OMPI_DECLSPEC int ompi_rte_convert_string_to_process_name(opal_process_name_t *name,
-                                                          const char* name_string);
-OMPI_DECLSPEC int ompi_rte_convert_process_name_to_string(char** name_string,
+                                                          const char *name_string);
+OMPI_DECLSPEC int ompi_rte_convert_process_name_to_string(char **name_string,
                                                           const opal_process_name_t *name);
 
 OMPI_DECLSPEC void ompi_rte_breakpoint(char *name);
 
-#define OMPI_LOCAL_JOBID(n) \
-    ( (n) & 0x0000ffff)
-#define OMPI_JOB_FAMILY(n)  \
-    (((n) >> 16) & 0x0000ffff)
-#define OMPI_CONSTRUCT_LOCAL_JOBID(local, job) \
-    ( ((local) & 0xffff0000) | ((job) & 0x0000ffff) )
-#define OMPI_CONSTRUCT_JOB_FAMILY(n) \
-    ( ((n) << 16) & 0xffff0000)
+#define OMPI_LOCAL_JOBID(n)                    ((n) &0x0000ffff)
+#define OMPI_JOB_FAMILY(n)                     (((n) >> 16) & 0x0000ffff)
+#define OMPI_CONSTRUCT_LOCAL_JOBID(local, job) (((local) &0xffff0000) | ((job) &0x0000ffff))
+#define OMPI_CONSTRUCT_JOB_FAMILY(n)           (((n) << 16) & 0xffff0000)
 
 #define OMPI_CONSTRUCT_JOBID(family, local) \
     OMPI_CONSTRUCT_LOCAL_JOBID(OMPI_CONSTRUCT_JOB_FAMILY(family), local)
 
 /* This is the DSS tag to serialize a proc name */
-#define OMPI_NAME OPAL_NAME
+#define OMPI_NAME              OPAL_NAME
 #define OMPI_PROCESS_NAME_HTON OPAL_PROCESS_NAME_HTON
 #define OMPI_PROCESS_NAME_NTOH OPAL_PROCESS_NAME_NTOH
 
 #if OPAL_ENABLE_DEBUG
-static inline opal_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * name) {
-    return (opal_process_name_t *)name;
+static inline opal_process_name_t *OMPI_CAST_RTE_NAME(opal_process_name_t *name)
+{
+    return (opal_process_name_t *) name;
 }
 #else
-#define OMPI_CAST_RTE_NAME(a) ((opal_process_name_t*)(a))
+#    define OMPI_CAST_RTE_NAME(a) ((opal_process_name_t *) (a))
 #endif
 
 /* Process info struct and values */
-#define ompi_process_info opal_process_info
+#define ompi_process_info      opal_process_info
 #define ompi_rte_proc_is_bound opal_process_info.proc_is_bound
 
 /* Error handling objects and operations */
-OMPI_DECLSPEC void __opal_attribute_noreturn__
-  ompi_rte_abort(int error_code, char *fmt, ...);
-OMPI_DECLSPEC void ompi_rte_abort_peers(opal_process_name_t *procs,
-                                        int32_t num_procs,
+OMPI_DECLSPEC void __opal_attribute_noreturn__ ompi_rte_abort(int error_code, char *fmt, ...);
+OMPI_DECLSPEC void ompi_rte_abort_peers(opal_process_name_t *procs, int32_t num_procs,
                                         int error_code);
 #define OMPI_ERROR_LOG OPAL_ERROR_LOG
 
@@ -267,20 +262,20 @@ OMPI_DECLSPEC extern bool ompi_singleton;
  * progress while waiting, so we loop over opal_progress, letting
  * the RTE progress thread move the RTE along
  */
-#define OMPI_WAIT_FOR_COMPLETION(flg)                                       \
-    do {                                                                    \
-        while ((flg)) {                                                     \
-            opal_progress();                                                \
-        }                                                                   \
-    }while(0);
+#define OMPI_WAIT_FOR_COMPLETION(flg) \
+    do {                              \
+        while ((flg)) {               \
+            opal_progress();          \
+        }                             \
+    } while (0);
 
-#define OMPI_LAZY_WAIT_FOR_COMPLETION(flg)                                  \
-    do {                                                                    \
-        while ((flg)) {                                                     \
-            opal_progress();                                                \
-            usleep(100);                                                    \
-        }                                                                   \
-    }while(0);
+#define OMPI_LAZY_WAIT_FOR_COMPLETION(flg) \
+    do {                                   \
+        while ((flg)) {                    \
+            opal_progress();               \
+            usleep(100);                   \
+        }                                  \
+    } while (0);
 
 END_C_DECLS
 

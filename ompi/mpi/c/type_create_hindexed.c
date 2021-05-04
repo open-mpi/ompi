@@ -23,69 +23,59 @@
 
 #include "ompi_config.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_create_hindexed = PMPI_Type_create_hindexed
-#endif
-#define MPI_Type_create_hindexed PMPI_Type_create_hindexed
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_create_hindexed = PMPI_Type_create_hindexed
+#    endif
+#    define MPI_Type_create_hindexed PMPI_Type_create_hindexed
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_create_hindexed";
 
-
-int MPI_Type_create_hindexed(int count,
-                             const int array_of_blocklengths[],
-                             const MPI_Aint array_of_displacements[],
-                             MPI_Datatype oldtype,
+int MPI_Type_create_hindexed(int count, const int array_of_blocklengths[],
+                             const MPI_Aint array_of_displacements[], MPI_Datatype oldtype,
                              MPI_Datatype *newtype)
 {
     int rc, i;
 
-    MEMCHECKER(
-        memchecker_datatype(oldtype);
-        );
+    MEMCHECKER(memchecker_datatype(oldtype););
 
-    if( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( count < 0 ) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT,
-                                          FUNC_NAME);
-        } else if ((count > 0) && (NULL == array_of_blocklengths ||
-                                   NULL == array_of_displacements)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
-        } else if (MPI_DATATYPE_NULL == oldtype || NULL == oldtype ||
-                   NULL == newtype) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
-                                          FUNC_NAME);
+        if (count < 0) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
+        } else if ((count > 0)
+                   && (NULL == array_of_blocklengths || NULL == array_of_displacements)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        } else if (MPI_DATATYPE_NULL == oldtype || NULL == oldtype || NULL == newtype) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
         }
-        for ( i = 0; i < count; i++ ) {
+        for (i = 0; i < count; i++) {
             if (array_of_blocklengths[i] < 0) {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                              FUNC_NAME );
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
             }
         }
     }
 
-    rc = ompi_datatype_create_hindexed( count, array_of_blocklengths, array_of_displacements,
-                                        oldtype, newtype );
-    if( rc != MPI_SUCCESS ) {
-        ompi_datatype_destroy( newtype );
-        OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, rc, FUNC_NAME );
+    rc = ompi_datatype_create_hindexed(count, array_of_blocklengths, array_of_displacements,
+                                       oldtype, newtype);
+    if (rc != MPI_SUCCESS) {
+        ompi_datatype_destroy(newtype);
+        OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
     }
     /* data description */
     {
-        const int* a_i[2] = {&count, array_of_blocklengths};
+        const int *a_i[2] = {&count, array_of_blocklengths};
 
-        ompi_datatype_set_args( *newtype, count + 1, a_i, count, array_of_displacements,
-                                1, &oldtype, MPI_COMBINER_HINDEXED );
+        ompi_datatype_set_args(*newtype, count + 1, a_i, count, array_of_displacements, 1, &oldtype,
+                               MPI_COMBINER_HINDEXED);
     }
 
     return MPI_SUCCESS;

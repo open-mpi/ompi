@@ -17,16 +17,12 @@
 
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
 
-#include "oshmem/shmem/fortran/bindings.h"
 #include "oshmem/include/shmem.h"
+#include "oshmem/shmem/fortran/bindings.h"
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
-        SHMEM_INFO_GET_VERSION,
-        shmem_info_get_version_,
-        shmem_info_get_version__,
-        shmem_info_get_version_f,
-        (MPI_Fint *major, MPI_Fint *minor),
-        (major,minor) )
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB(void, SHMEM_INFO_GET_VERSION, shmem_info_get_version_,
+                                    shmem_info_get_version__, shmem_info_get_version_f,
+                                    (MPI_Fint * major, MPI_Fint *minor), (major, minor))
 
 void shmem_info_get_version_f(MPI_Fint *major, MPI_Fint *minor)
 {
@@ -37,13 +33,9 @@ void shmem_info_get_version_f(MPI_Fint *major, MPI_Fint *minor)
     *minor = OMPI_INT_2_FINT(c_minor);
 }
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
-        SHMEM_INFO_GET_NAME,
-        shmem_info_get_name_,
-        shmem_info_get_name__,
-        shmem_info_get_name_f,
-        (char *name),
-        (name) )
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB(void, SHMEM_INFO_GET_NAME, shmem_info_get_name_,
+                                    shmem_info_get_name__, shmem_info_get_name_f, (char *name),
+                                    (name))
 
 void shmem_info_get_name_f(char *name)
 {

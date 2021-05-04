@@ -26,22 +26,22 @@
  */
 
 #include "ompi_config.h"
-#include "mpi.h"
 #include "ompi/mca/fs/fs.h"
+#include "mpi.h"
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fs/gpfs/fs_gpfs.h"
 
 #ifdef HAVE_SYS_STATFS_H
-#include <sys/statfs.h> /* or <sys/vfs.h> */
+#    include <sys/statfs.h> /* or <sys/vfs.h> */
 #endif
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
+#    include <sys/param.h>
 #endif
 #ifdef HAVE_SYS_MOUNT_H
-#include <sys/mount.h>
+#    include <sys/mount.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
+#    include <sys/stat.h>
 #endif
 
 #include <sys/ioctl.h>
@@ -51,32 +51,25 @@
  * ************************ actions structure ************************
  * *******************************************************************
  */
-static mca_fs_base_module_1_0_0_t gpfs =  {
-    mca_fs_gpfs_module_init, /* initalise after being selected */
-    mca_fs_gpfs_module_finalize, /* close a module on a communicator */
-    mca_fs_gpfs_file_open,
-    mca_fs_base_file_close,
-    mca_fs_base_file_delete,
-    mca_fs_base_file_set_size,
-    mca_fs_base_file_get_size,
-    mca_fs_base_file_sync
-};
+static mca_fs_base_module_1_0_0_t gpfs
+    = {mca_fs_gpfs_module_init,     /* initalise after being selected */
+       mca_fs_gpfs_module_finalize, /* close a module on a communicator */
+       mca_fs_gpfs_file_open,       mca_fs_base_file_close,    mca_fs_base_file_delete,
+       mca_fs_base_file_set_size,   mca_fs_base_file_get_size, mca_fs_base_file_sync};
 /*
  * *******************************************************************
  * ************************* structure ends **************************
  * *******************************************************************
  */
 
-int mca_fs_gpfs_component_init_query(bool enable_progress_threads,
-                                      bool enable_mpi_threads)
+int mca_fs_gpfs_component_init_query(bool enable_progress_threads, bool enable_mpi_threads)
 {
     /* Nothing to do */
 
-   return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
-struct mca_fs_base_module_1_0_0_t *
-mca_fs_gpfs_component_file_query (ompio_file_t *fh, int *priority)
+struct mca_fs_base_module_1_0_0_t *mca_fs_gpfs_component_file_query(ompio_file_t *fh, int *priority)
 {
     char *tmp;
 
@@ -87,56 +80,49 @@ mca_fs_gpfs_component_file_query (ompio_file_t *fh, int *priority)
 
     *priority = mca_fs_gpfs_priority;
 
-    tmp = strchr (fh->f_filename, ':');
+    tmp = strchr(fh->f_filename, ':');
     if (!tmp) {
         if (OMPIO_ROOT == fh->f_rank) {
-            fh->f_fstype = mca_fs_base_get_fstype ( (char *) fh->f_filename );
+            fh->f_fstype = mca_fs_base_get_fstype((char *) fh->f_filename);
         }
         if (MPI_COMM_NULL != fh->f_comm) {
-            fh->f_comm->c_coll->coll_bcast (&(fh->f_fstype),
-                              				       1,
-                              				       MPI_INT,
-                              				       OMPIO_ROOT,
-                              				       fh->f_comm,
-                              				       fh->f_comm->c_coll->coll_bcast_module);
+            fh->f_comm->c_coll->coll_bcast(&(fh->f_fstype), 1, MPI_INT, OMPIO_ROOT, fh->f_comm,
+                                           fh->f_comm->c_coll->coll_bcast_module);
         }
-    }
-    else {
-	if (!strncmp(fh->f_filename, "gpfs:", 5) ||
-	    !strncmp(fh->f_filename, "GPFS:", 5)) {
+    } else {
+        if (!strncmp(fh->f_filename, "gpfs:", 5) || !strncmp(fh->f_filename, "GPFS:", 5)) {
             fh->f_fstype = GPFS;
         }
     }
 
-   if (GPFS == fh->f_fstype) {
-       if (*priority < 50) {
-           *priority = 50;
-	   return &gpfs;
-       }
-   }
+    if (GPFS == fh->f_fstype) {
+        if (*priority < 50) {
+            *priority = 50;
+            return &gpfs;
+        }
+    }
 
-   return NULL;
+    return NULL;
 }
 
-int mca_fs_gpfs_component_file_unquery (ompio_file_t *file)
+int mca_fs_gpfs_component_file_unquery(ompio_file_t *file)
 {
-   /* This function might be needed for some purposes later. for now it
-    * does not have anything to do since there are no steps which need
-    * to be undone if this module is not selected */
+    /* This function might be needed for some purposes later. for now it
+     * does not have anything to do since there are no steps which need
+     * to be undone if this module is not selected */
 
     return OMPI_SUCCESS;
 }
 
-int mca_fs_gpfs_module_init (ompio_file_t *file)
+int mca_fs_gpfs_module_init(ompio_file_t *file)
 {
     /* Make sure the file type is not overwritten by the last queried
-	 * component */
+     * component */
     file->f_fstype = GPFS;
     return OMPI_SUCCESS;
 }
 
-
-int mca_fs_gpfs_module_finalize (ompio_file_t *file)
+int mca_fs_gpfs_module_finalize(ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

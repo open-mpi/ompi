@@ -18,8 +18,8 @@ static int ompi_hook_comm_method_component_register(void);
 /*
  * Public string showing the component version number
  */
-const char *mca_hook_comm_method_component_version_string =
-    "Open MPI 'comm_method' hook MCA component version " OMPI_VERSION;
+const char *mca_hook_comm_method_component_version_string
+    = "Open MPI 'comm_method' hook MCA component version " OMPI_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -74,7 +74,7 @@ enum mca_hook_comm_method_mode_flags_t {
 };
 
 int mca_hook_comm_method_verbose = 0;
-int mca_hook_comm_method_output  = -1;
+int mca_hook_comm_method_output = -1;
 bool mca_hook_comm_method_enable_mpi_init = false;
 bool mca_hook_comm_method_enable_mpi_finalize = false;
 uint32_t mca_hook_comm_method_enabled_flags = 0x00;
@@ -82,12 +82,10 @@ int mca_hook_comm_method_max = 12;
 int mca_hook_comm_method_brief = 0;
 char *mca_hook_comm_method_fakefile = NULL;
 
-static mca_base_var_enum_value_flag_t mca_hook_comm_method_modes[] = {
-    {.flag = OMPI_HOOK_COMM_METHOD_INIT, .string = "mpi_init"},
-    {.flag = OMPI_HOOK_COMM_METHOD_FINALIZE, .string = "mpi_finalize"},
-    {0, NULL, 0}
-};
-
+static mca_base_var_enum_value_flag_t mca_hook_comm_method_modes[]
+    = {{.flag = OMPI_HOOK_COMM_METHOD_INIT, .string = "mpi_init"},
+       {.flag = OMPI_HOOK_COMM_METHOD_FINALIZE, .string = "mpi_finalize"},
+       {0, NULL, 0}};
 
 static int ompi_hook_comm_method_component_open(void)
 {
@@ -110,17 +108,13 @@ static int ompi_hook_comm_method_component_register(void)
      * Component verbosity level
      */
     // Inherit the verbosity of the base framework, but also allow this to be overridden
-    if( ompi_hook_base_framework.framework_verbose > MCA_BASE_VERBOSE_NONE ) {
+    if (ompi_hook_base_framework.framework_verbose > MCA_BASE_VERBOSE_NONE) {
         mca_hook_comm_method_verbose = ompi_hook_base_framework.framework_verbose;
-    }
-    else {
+    } else {
         mca_hook_comm_method_verbose = MCA_BASE_VERBOSE_NONE;
     }
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "verbose",
-                                           NULL,
-                                           MCA_BASE_VAR_TYPE_INT, NULL,
-                                           0, 0,
-                                           OPAL_INFO_LVL_9,
+                                           NULL, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_hook_comm_method_verbose);
 
@@ -137,58 +131,52 @@ static int ompi_hook_comm_method_component_register(void)
      */
     mca_hook_comm_method_enable_mpi_init = false;
     mca_hook_comm_method_enable_mpi_finalize = false;
-    mca_base_var_enum_create_flag("ompi_comm_method", mca_hook_comm_method_modes, &mca_hook_comm_method_flags);
-    
-    ret = mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "display",
-                                "Enable the communication protocol report: when MPI_INIT is invoked (using the 'mpi_init' value) and/or when MPI_FINALIZE is invoked (using the 'mpi_finalize' value).",
-                                MCA_BASE_VAR_TYPE_UNSIGNED_INT,
-                                &mca_hook_comm_method_flags->super,
-                                0, 0,
-                                OPAL_INFO_LVL_3,
-                                MCA_BASE_VAR_SCOPE_READONLY,
-                                &mca_hook_comm_method_enabled_flags);
+    mca_base_var_enum_create_flag("ompi_comm_method", mca_hook_comm_method_modes,
+                                  &mca_hook_comm_method_flags);
 
-    (void) mca_base_var_register_synonym(ret, "ompi", "ompi", NULL, "display_comm", MCA_BASE_VAR_SYN_FLAG_INTERNAL);
+    ret = mca_base_component_var_register(
+        &mca_hook_comm_method_component.hookm_version, "display",
+        "Enable the communication protocol report: when MPI_INIT is invoked (using the 'mpi_init' "
+        "value) and/or when MPI_FINALIZE is invoked (using the 'mpi_finalize' value).",
+        MCA_BASE_VAR_TYPE_UNSIGNED_INT, &mca_hook_comm_method_flags->super, 0, 0, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_READONLY, &mca_hook_comm_method_enabled_flags);
+
+    (void) mca_base_var_register_synonym(ret, "ompi", "ompi", NULL, "display_comm",
+                                         MCA_BASE_VAR_SYN_FLAG_INTERNAL);
 
     OBJ_RELEASE(mca_hook_comm_method_flags);
-    if(OPAL_ERR_VALUE_OUT_OF_BOUNDS == ret) {
+    if (OPAL_ERR_VALUE_OUT_OF_BOUNDS == ret) {
         opal_output(0, "hook:comm_method: Warning invalid comm_method specified.");
-    }
-    else {
-        if( mca_hook_comm_method_enabled_flags & OMPI_HOOK_COMM_METHOD_INIT ) {
+    } else {
+        if (mca_hook_comm_method_enabled_flags & OMPI_HOOK_COMM_METHOD_INIT) {
             mca_hook_comm_method_enable_mpi_init = true;
         }
-        if( mca_hook_comm_method_enabled_flags & OMPI_HOOK_COMM_METHOD_FINALIZE ) {
+        if (mca_hook_comm_method_enabled_flags & OMPI_HOOK_COMM_METHOD_FINALIZE) {
             mca_hook_comm_method_enable_mpi_finalize = true;
         }
     }
 
     // hook_comm_method_max
-    (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "max",
-                                 "Number of hosts for which to print unabbreviated 2d table of comm methods.",
-                                 MCA_BASE_VAR_TYPE_INT, NULL,
-                                 0, 0,
-                                 OPAL_INFO_LVL_3,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_hook_comm_method_max);
+    (void) mca_base_component_var_register(
+        &mca_hook_comm_method_component.hookm_version, "max",
+        "Number of hosts for which to print unabbreviated 2d table of comm methods.",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_hook_comm_method_max);
     // hook_comm_method_brief
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "brief",
-                                 "Only print the comm method summary, skip the 2d table.",
-                                 MCA_BASE_VAR_TYPE_INT, NULL,
-                                 0, 0,
-                                 OPAL_INFO_LVL_3,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_hook_comm_method_brief);
+                                           "Only print the comm method summary, skip the 2d table.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_hook_comm_method_brief);
 
     // hook_comm_method_fakefile is just for debugging, allows complete override of all the
     // comm method in the table
-    (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "fakefile",
-                                 "For debugging only: read comm methods from a file",
-                                 MCA_BASE_VAR_TYPE_STRING, NULL,
-                                 0, 0,
-                                 OPAL_INFO_LVL_3,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_hook_comm_method_fakefile);
+    (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version,
+                                           "fakefile",
+                                           "For debugging only: read comm methods from a file",
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_hook_comm_method_fakefile);
 
     return OMPI_SUCCESS;
 }

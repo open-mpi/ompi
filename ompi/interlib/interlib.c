@@ -28,18 +28,15 @@
 
 #include <string.h>
 
-#include "opal/mca/pmix/pmix-internal.h"
-#include "ompi/runtime/ompi_rte.h"
 #include "ompi/interlib/interlib.h"
+#include "ompi/runtime/ompi_rte.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "mpi.h"
 
-static void model_callback(size_t refid, pmix_status_t status,
-                           const pmix_proc_t *source,
-                           pmix_info_t *info, size_t ninfo,
-                           pmix_info_t *results, size_t nresults,
-                           pmix_event_notification_cbfunc_fn_t cbfunc,
-                           void *cbdata)
+static void model_callback(size_t refid, pmix_status_t status, const pmix_proc_t *source,
+                           pmix_info_t *info, size_t ninfo, pmix_info_t *results, size_t nresults,
+                           pmix_event_notification_cbfunc_fn_t cbfunc, void *cbdata)
 {
     size_t n;
 
@@ -47,20 +44,21 @@ static void model_callback(size_t refid, pmix_status_t status,
         /* we can ignore our own callback as we obviously
          * know that we are MPI */
         if (NULL != info) {
-            for (n=0; n < ninfo; n++) {
-                if (PMIX_CHECK_KEY(&info[n], PMIX_PROGRAMMING_MODEL) &&
-                    0 == strcmp(info[n].value.data.string, "MPI")) {
+            for (n = 0; n < ninfo; n++) {
+                if (PMIX_CHECK_KEY(&info[n], PMIX_PROGRAMMING_MODEL)
+                    && 0 == strcmp(info[n].value.data.string, "MPI")) {
                     goto cback;
                 }
                 if (PMIX_STRING == info[n].value.type) {
-                        opal_output(0, "OMPI Model Callback Key: %s Val %s", info[n].key, info[n].value.data.string);
+                    opal_output(0, "OMPI Model Callback Key: %s Val %s", info[n].key,
+                                info[n].value.data.string);
                 }
             }
         }
     }
     /* otherwise, do something clever here */
 
-  cback:
+cback:
     /* we must NOT tell the event handler state machine that we
      * are the last step as that will prevent it from notifying
      * anyone else that might be listening for declarations */
@@ -69,11 +67,9 @@ static void model_callback(size_t refid, pmix_status_t status,
     }
 }
 
-static void evhandler_reg_callbk(pmix_status_t status,
-                                 size_t evhandler_ref,
-                                 void *cbdata)
+static void evhandler_reg_callbk(pmix_status_t status, size_t evhandler_ref, void *cbdata)
 {
-    opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t *) cbdata;
 
     lock->status = status;
     OPAL_PMIX_WAKEUP_THREAD(lock);
@@ -95,7 +91,8 @@ int ompi_interlib_declare(int threadlevel, char *version)
      * the event stipulates its range as proc_local. We rely
      * on that here */
     OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
-    PMIx_Register_event_handler(&code, 1, &directives, 1, model_callback, evhandler_reg_callbk, (void*)&mylock);
+    PMIx_Register_event_handler(&code, 1, &directives, 1, model_callback, evhandler_reg_callbk,
+                                (void *) &mylock);
     OPAL_PMIX_WAIT_THREAD(&mylock);
     PMIX_INFO_DESTRUCT(&directives);
     rc = mylock.status;

@@ -21,21 +21,20 @@
  */
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/message/message.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Message_f2c = PMPI_Message_f2c
-#endif
-#define MPI_Message_f2c PMPI_Message_f2c
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Message_f2c = PMPI_Message_f2c
+#    endif
+#    define MPI_Message_f2c PMPI_Message_f2c
 #endif
 
 static const char FUNC_NAME[] = "MPI_Message_f2c";
-
 
 MPI_Message MPI_Message_f2c(MPI_Fint message)
 {
@@ -49,12 +48,10 @@ MPI_Message MPI_Message_f2c(MPI_Fint message)
        invalid fortran handle.  If we get an invalid fortran handle,
        return an invalid C handle. */
 
-    if (message_index < 0 ||
-        message_index >=
-        opal_pointer_array_get_size(&ompi_message_f_to_c_table)) {
+    if (message_index < 0
+        || message_index >= opal_pointer_array_get_size(&ompi_message_f_to_c_table)) {
         return NULL;
     }
 
-    return (MPI_Message)opal_pointer_array_get_item(&ompi_message_f_to_c_table,
-                                                    message_index);
+    return (MPI_Message) opal_pointer_array_get_item(&ompi_message_f_to_c_table, message_index);
 }

@@ -21,24 +21,23 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Probe = PMPI_Probe
-#endif
-#define MPI_Probe PMPI_Probe
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Probe = PMPI_Probe
+#    endif
+#    define MPI_Probe PMPI_Probe
 #endif
 
 static const char FUNC_NAME[] = "MPI_Probe";
-
 
 int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
 {
@@ -46,20 +45,17 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
 
     SPC_RECORD(OMPI_SPC_PROBE, 1);
 
-    MEMCHECKER(
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_comm(comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (((tag < 0) && (tag != MPI_ANY_TAG)) || (tag > mca_pml.pml_max_tag)) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_invalid(comm)) {
             rc = MPI_ERR_COMM;
-        } else if ((source != MPI_ANY_SOURCE) &&
-                   (MPI_PROC_NULL != source) &&
-                   ompi_comm_peer_invalid(comm, source)) {
+        } else if ((source != MPI_ANY_SOURCE) && (MPI_PROC_NULL != source)
+                   && ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Probe");
@@ -71,9 +67,7 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
             /*
              * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
              */
-            MEMCHECKER(
-                opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
-            );
+            MEMCHECKER(opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int)););
         }
         return MPI_SUCCESS;
     }
@@ -83,10 +77,10 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
      * Check here for issues with the peer, so we do not have to duplicate the
      * functionality in the PML.
      */
-    if( OPAL_UNLIKELY(!ompi_comm_iface_p2p_check_proc(comm, source, &rc)) ) {
+    if (OPAL_UNLIKELY(!ompi_comm_iface_p2p_check_proc(comm, source, &rc))) {
         if (MPI_STATUS_IGNORE != status) {
             status->MPI_SOURCE = source;
-            status->MPI_TAG    = tag;
+            status->MPI_TAG = tag;
         }
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
@@ -96,9 +90,7 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
     /*
      * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
      */
-    MEMCHECKER(
-        opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
-    );
+    MEMCHECKER(opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int)););
 
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, "MPI_Probe");
 }

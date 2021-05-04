@@ -71,7 +71,6 @@
  *   been visible.
  */
 
-
 /*
  * First, we have two preliminary checks:
  * - OMPI_FORTRAN_STATUS_NEED_CONVERSION_1
@@ -84,33 +83,23 @@
  * The compile-time check is used to conditionalize compilation of references to c_status2.
  */
 
-
 #if defined(__sparc) && SIZEOF_SIZE_T == 8
-#define OMPI_FORTRAN_STATUS_NEED_CONVERSION_1 \
-  ((OMPI_SIZEOF_FORTRAN_INTEGER!=SIZEOF_INT) || \
-   (OMPI_ALIGNMENT_FORTRAN_INTEGER!=OPAL_ALIGNMENT_SIZE_T))
+#    define OMPI_FORTRAN_STATUS_NEED_CONVERSION_1    \
+        ((OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT) \
+         || (OMPI_ALIGNMENT_FORTRAN_INTEGER != OPAL_ALIGNMENT_SIZE_T))
 #else
-#define OMPI_FORTRAN_STATUS_NEED_CONVERSION_1 \
-   (OMPI_SIZEOF_FORTRAN_INTEGER!=SIZEOF_INT)
+#    define OMPI_FORTRAN_STATUS_NEED_CONVERSION_1 (OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT)
 #endif
 
-
 #if defined(__sparc) && SIZEOF_SIZE_T == 8
-#define OMPI_FORTRAN_STATUS_NEED_CONVERSION_2(status) \
-  ( \
-    (OMPI_SIZEOF_FORTRAN_INTEGER!=SIZEOF_INT) \
-    || \
-    ( \
-      (OMPI_ALIGNMENT_FORTRAN_INTEGER!=OPAL_ALIGNMENT_SIZE_T) \
-      && \
-      (((ulong) (status)) & (OPAL_ALIGNMENT_SIZE_T-1)) \
-    ) \
-  )
+#    define OMPI_FORTRAN_STATUS_NEED_CONVERSION_2(status)              \
+        ((OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT)                   \
+         || ((OMPI_ALIGNMENT_FORTRAN_INTEGER != OPAL_ALIGNMENT_SIZE_T) \
+             && (((ulong)(status)) & (OPAL_ALIGNMENT_SIZE_T - 1))))
 #else
-#define OMPI_FORTRAN_STATUS_NEED_CONVERSION_2(status) \
-   (OMPI_SIZEOF_FORTRAN_INTEGER!=SIZEOF_INT)
+#    define OMPI_FORTRAN_STATUS_NEED_CONVERSION_2(status) \
+        (OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT)
 #endif
-
 
 /*
  * Now, the macros:
@@ -119,53 +108,46 @@
  * - OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
  */
 
-
 #if OMPI_FORTRAN_STATUS_NEED_CONVERSION_1
-#define OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2) MPI_Status *c_status, c_status2;
+#    define OMPI_FORTRAN_STATUS_DECLARATION(c_status, c_status2) MPI_Status *c_status, c_status2;
 #else
-#define OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2) MPI_Status *c_status;
+#    define OMPI_FORTRAN_STATUS_DECLARATION(c_status, c_status2) MPI_Status *c_status;
 #endif
 
-
 #if OMPI_FORTRAN_STATUS_NEED_CONVERSION_1
-#define OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status) \
-  do { \
-      if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) { \
-          c_status = MPI_STATUS_IGNORE; \
-      } else { \
-          if ( OMPI_FORTRAN_STATUS_NEED_CONVERSION_2(status) ) { \
-              c_status = &c_status2; \
-          } else { \
-              c_status = (MPI_Status *) status; \
-          } \
-      } \
-  } while (0);
+#    define OMPI_FORTRAN_STATUS_SET_POINTER(c_status, c_status2, status) \
+        do {                                                             \
+            if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {                 \
+                c_status = MPI_STATUS_IGNORE;                            \
+            } else {                                                     \
+                if (OMPI_FORTRAN_STATUS_NEED_CONVERSION_2(status)) {     \
+                    c_status = &c_status2;                               \
+                } else {                                                 \
+                    c_status = (MPI_Status *) status;                    \
+                }                                                        \
+            }                                                            \
+        } while (0);
 #else
-#define OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status) \
-  do { \
-      if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) { \
-          c_status = MPI_STATUS_IGNORE; \
-      } else { \
-          c_status = (MPI_Status *) status; \
-      } \
-  } while (0);
+#    define OMPI_FORTRAN_STATUS_SET_POINTER(c_status, c_status2, status) \
+        do {                                                             \
+            if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {                 \
+                c_status = MPI_STATUS_IGNORE;                            \
+            } else {                                                     \
+                c_status = (MPI_Status *) status;                        \
+            }                                                            \
+        } while (0);
 #endif
 
-
 #if OMPI_FORTRAN_STATUS_NEED_CONVERSION_1
-#define OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr) \
-  do { \
-      if ( \
-          OMPI_FORTRAN_STATUS_NEED_CONVERSION_2(status) && \
-          MPI_SUCCESS == c_ierr && \
-          MPI_STATUS_IGNORE != c_status ) \
-      { \
-          MPI_Status_c2f(c_status, status); \
-      } \
-  } while (0);
+#    define OMPI_FORTRAN_STATUS_RETURN(c_status, c_status2, status, c_ierr)            \
+        do {                                                                           \
+            if (OMPI_FORTRAN_STATUS_NEED_CONVERSION_2(status) && MPI_SUCCESS == c_ierr \
+                && MPI_STATUS_IGNORE != c_status) {                                    \
+                MPI_Status_c2f(c_status, status);                                      \
+            }                                                                          \
+        } while (0);
 #else
-#define OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
+#    define OMPI_FORTRAN_STATUS_RETURN(c_status, c_status2, status, c_ierr)
 #endif
-
 
 #endif /* OMPI_FORTRAN_STATUS_CONVERSION_H */

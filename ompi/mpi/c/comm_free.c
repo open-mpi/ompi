@@ -20,45 +20,38 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_free = PMPI_Comm_free
-#endif
-#define MPI_Comm_free PMPI_Comm_free
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Comm_free = PMPI_Comm_free
+#    endif
+#    define MPI_Comm_free PMPI_Comm_free
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_free";
-
 
 int MPI_Comm_free(MPI_Comm *comm)
 {
     int ret;
 
-    MEMCHECKER(
-        memchecker_comm(*comm);
-    );
+    MEMCHECKER(memchecker_comm(*comm););
 
-    if ( MPI_PARAM_CHECK ) {
+    if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( NULL == *comm ||
-             ompi_comm_invalid (*comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
-        } else if (MPI_COMM_WORLD == *comm ||
-                   MPI_COMM_SELF == *comm) {
-            return OMPI_ERRHANDLER_INVOKE(*comm, MPI_ERR_COMM,
-                                          FUNC_NAME);
+        if (NULL == *comm || ompi_comm_invalid(*comm)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
+        } else if (MPI_COMM_WORLD == *comm || MPI_COMM_SELF == *comm) {
+            return OMPI_ERRHANDLER_INVOKE(*comm, MPI_ERR_COMM, FUNC_NAME);
         }
     }
 
-    ret = ompi_comm_free ( comm );
+    ret = ompi_comm_free(comm);
     OMPI_ERRHANDLER_CHECK(ret, *comm, ret, FUNC_NAME);
 
     return MPI_SUCCESS;

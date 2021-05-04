@@ -25,9 +25,9 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/mca/osc/osc.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
@@ -39,7 +39,10 @@ typedef struct ompi_osc_ucx_pending_post {
 
 OBJ_CLASS_INSTANCE(ompi_osc_ucx_pending_post_t, opal_list_item_t, NULL, NULL);
 
-static inline void ompi_osc_ucx_handle_incoming_post(ompi_osc_ucx_module_t *module, volatile uint64_t *post_ptr, int ranks_in_win_grp[], int grp_size) {
+static inline void ompi_osc_ucx_handle_incoming_post(ompi_osc_ucx_module_t *module,
+                                                     volatile uint64_t *post_ptr,
+                                                     int ranks_in_win_grp[], int grp_size)
+{
     int i, post_rank = (*post_ptr) - 1;
     ompi_osc_ucx_pending_post_t *pending_post = NULL;
 
@@ -58,12 +61,12 @@ static inline void ompi_osc_ucx_handle_incoming_post(ompi_osc_ucx_module_t *modu
     opal_list_append(&module->pending_posts, &pending_post->super);
 }
 
-int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
-    if (module->epoch_type.access != NONE_EPOCH &&
-        module->epoch_type.access != FENCE_EPOCH) {
+    if (module->epoch_type.access != NONE_EPOCH && module->epoch_type.access != FENCE_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -74,7 +77,7 @@ int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win) {
     }
 
     if (!(mpi_assert & MPI_MODE_NOPRECEDE)) {
-        ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
+        ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0 /*ignore*/);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
@@ -84,14 +87,14 @@ int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win) {
                                               module->comm->c_coll->coll_barrier_module);
 }
 
-int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int i, size, *ranks_in_grp = NULL, *ranks_in_win_grp = NULL;
     ompi_group_t *win_group = NULL;
     int ret = OMPI_SUCCESS;
 
-    if (module->epoch_type.access != NONE_EPOCH &&
-        module->epoch_type.access != FENCE_EPOCH) {
+    if (module->epoch_type.access != NONE_EPOCH && module->epoch_type.access != FENCE_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -115,8 +118,8 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_w
         return OMPI_ERROR;
     }
 
-    ret = ompi_group_translate_ranks(module->start_group, size, ranks_in_grp,
-                                     win_group, ranks_in_win_grp);
+    ret = ompi_group_translate_ranks(module->start_group, size, ranks_in_grp, win_group,
+                                     ranks_in_win_grp);
     if (ret != OMPI_SUCCESS) {
         free(ranks_in_grp);
         free(ranks_in_win_grp);
@@ -127,7 +130,8 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_w
         ompi_osc_ucx_pending_post_t *pending_post, *next;
 
         /* first look through the pending list */
-        OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_ucx_pending_post_t) {
+        OPAL_LIST_FOREACH_SAFE (pending_post, next, &module->pending_posts,
+                                ompi_osc_ucx_pending_post_t) {
             for (i = 0; i < size; i++) {
                 if (pending_post->rank == ranks_in_win_grp[i]) {
                     opal_list_remove_item(&module->pending_posts, &pending_post->super);
@@ -145,7 +149,8 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_w
                     continue;
                 }
 
-                ompi_osc_ucx_handle_incoming_post(module, &(module->state.post_state[i]), ranks_in_win_grp, size);
+                ompi_osc_ucx_handle_incoming_post(module, &(module->state.post_state[i]),
+                                                  ranks_in_win_grp, size);
             }
             opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
         }
@@ -161,8 +166,9 @@ int ompi_osc_ucx_start(struct ompi_group_t *group, int mpi_assert, struct ompi_w
     return ret;
 }
 
-int ompi_osc_ucx_complete(struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+int ompi_osc_ucx_complete(struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int i, size;
     int ret = OMPI_SUCCESS;
 
@@ -172,24 +178,25 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
 
     module->epoch_type.access = NONE_EPOCH;
 
-    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
+    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0 /*ignore*/);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
 
     size = ompi_group_size(module->start_group);
     for (i = 0; i < size; i++) {
-        uint64_t remote_addr = module->state_addrs[module->start_grp_ranks[i]] + OSC_UCX_STATE_COMPLETE_COUNT_OFFSET; // write to state.complete_count on remote side
+        uint64_t remote_addr
+            = module->state_addrs[module->start_grp_ranks[i]]
+              + OSC_UCX_STATE_COMPLETE_COUNT_OFFSET; // write to state.complete_count on remote side
 
-        ret = opal_common_ucx_wpmem_post(module->mem, UCP_ATOMIC_POST_OP_ADD,
-                                       1, module->start_grp_ranks[i], sizeof(uint64_t),
-                                       remote_addr);
+        ret = opal_common_ucx_wpmem_post(module->mem, UCP_ATOMIC_POST_OP_ADD, 1,
+                                         module->start_grp_ranks[i], sizeof(uint64_t), remote_addr);
         if (ret != OMPI_SUCCESS) {
             OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_post failed: %d", ret);
         }
 
         ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP,
-                                        module->start_grp_ranks[i]);
+                                          module->start_grp_ranks[i]);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
@@ -202,8 +209,9 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
     return ret;
 }
 
-int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int ret = OMPI_SUCCESS;
 
     if (module->epoch_type.exposure != NONE_EPOCH) {
@@ -232,21 +240,23 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_wi
             ranks_in_grp[i] = i;
         }
 
-        ret = ompi_group_translate_ranks(module->post_group, size, ranks_in_grp,
-                                         win_group, ranks_in_win_grp);
+        ret = ompi_group_translate_ranks(module->post_group, size, ranks_in_grp, win_group,
+                                         ranks_in_win_grp);
         if (ret != OMPI_SUCCESS) {
             ret = OMPI_ERROR;
             goto cleanup;
         }
 
         for (i = 0; i < size; i++) {
-            uint64_t remote_addr = module->state_addrs[ranks_in_win_grp[i]] + OSC_UCX_STATE_POST_INDEX_OFFSET; // write to state.post_index on remote side
+            uint64_t remote_addr
+                = module->state_addrs[ranks_in_win_grp[i]]
+                  + OSC_UCX_STATE_POST_INDEX_OFFSET; // write to state.post_index on remote side
             uint64_t curr_idx = 0, result = 0;
 
             /* do fop first to get an post index */
-            ret = opal_common_ucx_wpmem_fetch(module->mem, UCP_ATOMIC_FETCH_OP_FADD,
-                                            1, ranks_in_win_grp[i], &result,
-                                            sizeof(result), remote_addr);
+            ret = opal_common_ucx_wpmem_fetch(module->mem, UCP_ATOMIC_FETCH_OP_FADD, 1,
+                                              ranks_in_win_grp[i], &result, sizeof(result),
+                                              remote_addr);
             if (ret != OMPI_SUCCESS) {
                 ret = OMPI_ERROR;
                 goto cleanup;
@@ -254,13 +264,13 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_wi
 
             curr_idx = result & (OMPI_OSC_UCX_POST_PEER_MAX - 1);
 
-            remote_addr = module->state_addrs[ranks_in_win_grp[i]] + OSC_UCX_STATE_POST_STATE_OFFSET + sizeof(uint64_t) * curr_idx;
+            remote_addr = module->state_addrs[ranks_in_win_grp[i]] + OSC_UCX_STATE_POST_STATE_OFFSET
+                          + sizeof(uint64_t) * curr_idx;
 
             /* do cas to send post message */
             do {
-                ret = opal_common_ucx_wpmem_cmpswp(module->mem, 0, result,
-                                                 myrank + 1, &result, sizeof(result),
-                                                 remote_addr);
+                ret = opal_common_ucx_wpmem_cmpswp(module->mem, 0, result, myrank + 1, &result,
+                                                   sizeof(result), remote_addr);
                 if (ret != OMPI_SUCCESS) {
                     ret = OMPI_ERROR;
                     goto cleanup;
@@ -276,7 +286,8 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_wi
                         continue;
                     }
 
-                    ompi_osc_ucx_handle_incoming_post(module, &(module->state.post_state[j]), NULL, 0);
+                    ompi_osc_ucx_handle_incoming_post(module, &(module->state.post_state[j]), NULL,
+                                                      0);
                 }
 
                 opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
@@ -284,11 +295,12 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_wi
             } while (1);
         }
 
-cleanup:
+    cleanup:
         free(ranks_in_grp);
         free(ranks_in_win_grp);
         ompi_group_free(&win_group);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret)
+            return ret;
     }
 
     module->epoch_type.exposure = POST_WAIT_EPOCH;
@@ -296,8 +308,9 @@ cleanup:
     return ret;
 }
 
-int ompi_osc_ucx_wait(struct ompi_win_t *win) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+int ompi_osc_ucx_wait(struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int size;
 
     if (module->epoch_type.exposure != POST_WAIT_EPOCH) {
@@ -306,7 +319,7 @@ int ompi_osc_ucx_wait(struct ompi_win_t *win) {
 
     size = ompi_group_size(module->post_group);
 
-    while (module->state.complete_count != (uint64_t)size) {
+    while (module->state.complete_count != (uint64_t) size) {
         /* not sure if this is required */
         opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
     }
@@ -321,8 +334,9 @@ int ompi_osc_ucx_wait(struct ompi_win_t *win) {
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_ucx_test(struct ompi_win_t *win, int *flag) {
-    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+int ompi_osc_ucx_test(struct ompi_win_t *win, int *flag)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *) win->w_osc_module;
     int size;
 
     if (module->epoch_type.exposure != POST_WAIT_EPOCH) {
@@ -333,7 +347,7 @@ int ompi_osc_ucx_test(struct ompi_win_t *win, int *flag) {
 
     opal_progress();
 
-    if (module->state.complete_count == (uint64_t)size) {
+    if (module->state.complete_count == (uint64_t) size) {
         OBJ_RELEASE(module->post_group);
         module->post_group = NULL;
 

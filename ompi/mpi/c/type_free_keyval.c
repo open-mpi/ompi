@@ -20,21 +20,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/attribute/attribute.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_free_keyval = PMPI_Type_free_keyval
-#endif
-#define MPI_Type_free_keyval PMPI_Type_free_keyval
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_free_keyval = PMPI_Type_free_keyval
+#    endif
+#    define MPI_Type_free_keyval PMPI_Type_free_keyval
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_free_keyval";
-
 
 int MPI_Type_free_keyval(int *type_keyval)
 {
@@ -45,14 +44,11 @@ int MPI_Type_free_keyval(int *type_keyval)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == type_keyval) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(
-                                          MPI_ERR_ARG,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
     ret = ompi_attr_free_keyval(TYPE_ATTR, type_keyval, 0);
 
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, 
-			  MPI_ERR_OTHER, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, FUNC_NAME);
 }

@@ -23,10 +23,10 @@
 #ifndef MCA_MTL_PSM2_ENDPOINT_H
 #define MCA_MTL_PSM2_ENDPOINT_H
 
+#include "mtl_psm2.h"
+#include "ompi/mca/mtl/mtl.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/event.h"
-#include "ompi/mca/mtl/mtl.h"
-#include "mtl_psm2.h"
 
 #include "psm2.h"
 
@@ -44,25 +44,26 @@ OBJ_CLASS_DECLARATION(mca_mtl_psm2_endpoint_t);
 struct mca_mtl_psm2_endpoint_t {
     opal_list_item_t super;
 
-    struct mca_mtl_psm2_module_t* mtl_psm2_module;
+    struct mca_mtl_psm2_module_t *mtl_psm2_module;
     /**< MTL instance that created this connection */
 
-    psm2_epid_t	    peer_epid;
+    psm2_epid_t peer_epid;
     /**< The unique epid for the opened port */
 
-    psm2_epaddr_t    peer_addr;
+    psm2_epaddr_t peer_addr;
     /**< The connected endpoint handle*/
 };
 
-typedef struct mca_mtl_psm2_endpoint_t  mca_mtl_psm2_endpoint_t;
+typedef struct mca_mtl_psm2_endpoint_t mca_mtl_psm2_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_mtl_psm2_endpoint);
 
-static inline mca_mtl_psm2_endpoint_t *ompi_mtl_psm2_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
+static inline mca_mtl_psm2_endpoint_t *ompi_mtl_psm2_get_endpoint(struct mca_mtl_base_module_t *mtl,
+                                                                  ompi_proc_t *ompi_proc)
 {
     if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL])) {
         int rc;
         if (OPAL_UNLIKELY(OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(&ompi_proc, 1))))) {
-            ompi_rte_abort(rc,"Error in ompi_mtl_psm2_get_endpoint.\n");
+            ompi_rte_abort(rc, "Error in ompi_mtl_psm2_get_endpoint.\n");
         }
     }
 

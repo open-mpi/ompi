@@ -19,27 +19,19 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
-#include "ompi/types.h"
-#include "ompi/mca/part/part.h"
 #include "ompi/mca/part/base/part_base_precvreq.h"
+#include "ompi/mca/part/part.h"
+#include "ompi/types.h"
 
-
-static void mca_part_base_precv_request_construct(mca_part_base_precv_request_t* request)
+static void mca_part_base_precv_request_construct(mca_part_base_precv_request_t *request)
 {
     OBJ_CONSTRUCT(&request->req_base.req_convertor, opal_convertor_t);
 }
-
 
 /* For each request the convertor get cleaned after each message
  * (in the base _FINI macro). Therefore, as the convertor is a static object
  * we don't have to call OBJ_DESTRUCT here.
  */
 
-OBJ_CLASS_INSTANCE(
-    mca_part_base_precv_request_t,
-    mca_part_base_prequest_t,
-    mca_part_base_precv_request_construct,
-    0
-);
-
-
+OBJ_CLASS_INSTANCE(mca_part_base_precv_request_t, mca_part_base_prequest_t,
+                   mca_part_base_precv_request_construct, 0);

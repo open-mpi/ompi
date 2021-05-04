@@ -22,27 +22,25 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Unpack = PMPI_Unpack
-#endif
-#define MPI_Unpack PMPI_Unpack
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Unpack = PMPI_Unpack
+#    endif
+#    define MPI_Unpack PMPI_Unpack
 #endif
 
 static const char FUNC_NAME[] = "MPI_Unpack";
 
-
-int MPI_Unpack(const void *inbuf, int insize, int *position,
-               void *outbuf, int outcount, MPI_Datatype datatype,
-               MPI_Comm comm)
+int MPI_Unpack(const void *inbuf, int insize, int *position, void *outbuf, int outcount,
+               MPI_Datatype datatype, MPI_Comm comm)
 {
     int rc = MPI_SUCCESS;
     opal_convertor_t local_convertor;
@@ -50,21 +48,18 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
     unsigned int iov_count;
     size_t size;
 
-    MEMCHECKER(
-        memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, inbuf, insize, MPI_PACKED);
-        memchecker_call(&opal_memchecker_base_isaddressable, outbuf, outcount, datatype);
-        memchecker_comm(comm);
-    );
+    MEMCHECKER(memchecker_datatype(datatype);
+               memchecker_call(&opal_memchecker_base_isdefined, inbuf, insize, MPI_PACKED);
+               memchecker_call(&opal_memchecker_base_isaddressable, outbuf, outcount, datatype);
+               memchecker_comm(comm););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
-                                          FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
 
-        if ((NULL == inbuf) || (NULL == position)) {  /* outbuf can be MPI_BOTTOM */
+        if ((NULL == inbuf) || (NULL == position)) { /* outbuf can be MPI_BOTTOM */
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
@@ -78,44 +73,43 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-   /*
-    * If a datatype's description contains a single element that describes
-    * a large vector that path is reasonably optimized in pack/unpack. On
-    * the other hand if the count and datatype combined describe the same
-    * vector that is processed one element at a time.
-    *
-    * So at the top level we morph the call if the count and datatype look
-    * like a good vector.
-    */
+    /*
+     * If a datatype's description contains a single element that describes
+     * a large vector that path is reasonably optimized in pack/unpack. On
+     * the other hand if the count and datatype combined describe the same
+     * vector that is processed one element at a time.
+     *
+     * So at the top level we morph the call if the count and datatype look
+     * like a good vector.
+     */
     ompi_datatype_consolidate_t dtmod;
     rc = ompi_datatype_consolidate_create(outcount, datatype, &dtmod,
-        OMPI_DATATYPE_CONSOLIDATE_THRESHOLD);
+                                          OMPI_DATATYPE_CONSOLIDATE_THRESHOLD);
     OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
 
-    if( insize > 0 ) {
+    if (insize > 0) {
         int ret;
-        OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
+        OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
         /* the resulting convertor will be set the the position ZERO */
-        opal_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor,
-                                                  &(dtmod.dt->super), dtmod.count,
-                                                  outbuf, 0, &local_convertor );
+        opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor, &(dtmod.dt->super),
+                                                 dtmod.count, outbuf, 0, &local_convertor);
 
         /* Check for truncation */
-        opal_convertor_get_packed_size( &local_convertor, &size );
-        if( (*position + size) > (unsigned int)insize ) {
-            OBJ_DESTRUCT( &local_convertor );
+        opal_convertor_get_packed_size(&local_convertor, &size);
+        if ((*position + size) > (unsigned int) insize) {
+            OBJ_DESTRUCT(&local_convertor);
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
         }
 
         /* Prepare the iovec with all informations */
-        outvec.iov_base = (char*) inbuf + (*position);
+        outvec.iov_base = (char *) inbuf + (*position);
         outvec.iov_len = size;
 
         /* Do the actual unpacking */
         iov_count = 1;
-        ret = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
+        ret = opal_convertor_unpack(&local_convertor, &outvec, &iov_count, &size);
         *position += size;
-        OBJ_DESTRUCT( &local_convertor );
+        OBJ_DESTRUCT(&local_convertor);
         /* All done.  Note that the convertor returns 1 upon success, not
            OPAL_SUCCESS. */
         if (1 != ret) {

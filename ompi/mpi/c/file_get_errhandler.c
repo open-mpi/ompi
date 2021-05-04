@@ -24,50 +24,47 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_get_errhandler = PMPI_File_get_errhandler
-#endif
-#define MPI_File_get_errhandler PMPI_File_get_errhandler
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_File_get_errhandler = PMPI_File_get_errhandler
+#    endif
+#    define MPI_File_get_errhandler PMPI_File_get_errhandler
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_get_errhandler";
 
-
-int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler)
+int MPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler)
 {
-  /* Error checking */
+    /* Error checking */
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-    /* Note that MPI-2:9.7 (p265 in the ps; 261 in the pdf) explicitly
-       says that you are allowed to set the error handler on
-       MPI_FILE_NULL */
+        /* Note that MPI-2:9.7 (p265 in the ps; 261 in the pdf) explicitly
+           says that you are allowed to set the error handler on
+           MPI_FILE_NULL */
 
-    if (NULL == file) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_FILE,
-                                   "MPI_File_get_errhandler");
-    } else if (NULL == errhandler) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                   "MPI_File_get_errhandler");
+        if (NULL == file) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_FILE, "MPI_File_get_errhandler");
+        } else if (NULL == errhandler) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, "MPI_File_get_errhandler");
+        }
     }
-  }
 
-  OPAL_THREAD_LOCK(&file->f_lock);
-  /* Retain the errhandler, corresponding to object refcount
-     decrease in errhandler_free.c. */
-  *errhandler = file->error_handler;
-  OBJ_RETAIN(file->error_handler);
-  OPAL_THREAD_UNLOCK(&file->f_lock);
+    OPAL_THREAD_LOCK(&file->f_lock);
+    /* Retain the errhandler, corresponding to object refcount
+       decrease in errhandler_free.c. */
+    *errhandler = file->error_handler;
+    OBJ_RETAIN(file->error_handler);
+    OPAL_THREAD_UNLOCK(&file->f_lock);
 
-  /* All done */
+    /* All done */
 
-  return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

@@ -40,20 +40,20 @@
 /* MPI_Fint is the same as ompi_fortran_INTEGER_t */
 #define MPI_Fint ompi_fortran_integer_t
 
-#  if OPAL_C_HAVE_VISIBILITY
+#if OPAL_C_HAVE_VISIBILITY
 #    ifndef OMPI_DECLSPEC
-#      define OMPI_DECLSPEC            __opal_attribute_visibility__("default")
+#        define OMPI_DECLSPEC __opal_attribute_visibility__("default")
 #    endif
 #    ifndef OMPI_MODULE_DECLSPEC
-#      define OMPI_MODULE_DECLSPEC     __opal_attribute_visibility__("default")
+#        define OMPI_MODULE_DECLSPEC __opal_attribute_visibility__("default")
 #    endif
-#  else
+#else
 #    ifndef OMPI_DECLSPEC
-#      define OMPI_DECLSPEC
+#        define OMPI_DECLSPEC
 #    endif
 #    ifndef OMPI_MODULE_DECLSPEC
-#      define OMPI_MODULE_DECLSPEC
+#        define OMPI_MODULE_DECLSPEC
 #    endif
-#  endif
+#endif
 
 #endif

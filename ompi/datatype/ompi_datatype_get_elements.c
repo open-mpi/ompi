@@ -20,20 +20,20 @@
  */
 
 #include "ompi_config.h"
-#include <stdio.h>
 #include <limits.h>
+#include <stdio.h>
 
-#include "ompi/runtime/params.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/runtime/params.h"
 #include "opal/datatype/opal_datatype_internal.h"
 
-int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount, size_t *count)
+int ompi_datatype_get_elements(ompi_datatype_t *datatype, size_t ucount, size_t *count)
 {
     size_t internal_count, size, total;
     int rc, i;
 
     *count = 0;
-    if (OMPI_SUCCESS != (rc = ompi_datatype_type_size (datatype, &size))) {
+    if (OMPI_SUCCESS != (rc = ompi_datatype_type_size(datatype, &size))) {
         return OMPI_ERR_BAD_PARAM;
     }
 
@@ -42,8 +42,8 @@ int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount, size_t
         return OMPI_SUCCESS;
     }
 
-    internal_count = ucount / size;    /* how many full types? */
-    size = ucount - internal_count * size;  /* leftover bytes */
+    internal_count = ucount / size;        /* how many full types? */
+    size = ucount - internal_count * size; /* leftover bytes */
 
     /* if basic type we should return the same result as MPI_Get_count (internal_count) if
        there are no leftover bytes */
@@ -51,7 +51,7 @@ int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount, size_t
         if (0 != internal_count) {
             opal_datatype_compute_ptypes(&datatype->super);
             /* count the basic elements in the datatype */
-            for (i = OPAL_DATATYPE_FIRST_TYPE, total = 0 ; i < OPAL_DATATYPE_MAX_PREDEFINED ; ++i) {
+            for (i = OPAL_DATATYPE_FIRST_TYPE, total = 0; i < OPAL_DATATYPE_MAX_PREDEFINED; ++i) {
                 total += datatype->super.ptypes[i];
             }
             internal_count = total * internal_count;
@@ -60,7 +60,7 @@ int ompi_datatype_get_elements (ompi_datatype_t *datatype, size_t ucount, size_t
             /* If there are any leftover bytes, compute the number of predefined
              * types in the datatype that can fit in these bytes.
              */
-            if (-1 == (i = ompi_datatype_get_element_count (datatype, size))) {
+            if (-1 == (i = ompi_datatype_get_element_count(datatype, size))) {
                 return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
             }
 

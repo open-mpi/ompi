@@ -18,8 +18,8 @@
 
 #include <stdio.h>
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #include "ompi/mpiext/example/c/mpiext_example_c.h"
 
@@ -45,23 +45,27 @@ void OMPI_Progress_f(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr)
 
     c_err = OMPI_Progress(OMPI_FINT_2_INT(*count), c_comm);
 
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_err);
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_err);
 }
 
 /* Front-end functions */
-void OMPI_PROGRESS(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
+void OMPI_PROGRESS(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr)
+{
     OMPI_Progress_f(count, comm, ierr);
 }
 
-void ompi_progress(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
+void ompi_progress(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr)
+{
     OMPI_Progress_f(count, comm, ierr);
 }
 
-void ompi_progress_(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
+void ompi_progress_(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr)
+{
     OMPI_Progress_f(count, comm, ierr);
 }
 
-void ompi_progress__(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
+void ompi_progress__(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr)
+{
     OMPI_Progress_f(count, comm, ierr);
 }
-

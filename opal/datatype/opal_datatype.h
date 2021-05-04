@@ -91,7 +91,7 @@ BEGIN_C_DECLS
  * A datatype with this flag cannot use the optimized description in heterogeneous
  * setups.
  */
-#define OPAL_DATATYPE_OPTIMIZED_RESTRICTED  0x1000
+#define OPAL_DATATYPE_OPTIMIZED_RESTRICTED 0x1000
 
 /**
  * The number of supported entries in the data-type definition and the

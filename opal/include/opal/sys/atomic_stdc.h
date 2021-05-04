@@ -35,20 +35,20 @@
 #    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #    define OPAL_HAVE_ATOMIC_SWAP_32             1
 
-#    define OPAL_HAVE_ATOMIC_ADD_32  1
-#    define OPAL_HAVE_ATOMIC_AND_32  1
-#    define OPAL_HAVE_ATOMIC_OR_32   1
-#    define OPAL_HAVE_ATOMIC_XOR_32  1
-#    define OPAL_HAVE_ATOMIC_SUB_32  1
+#    define OPAL_HAVE_ATOMIC_ADD_32 1
+#    define OPAL_HAVE_ATOMIC_AND_32 1
+#    define OPAL_HAVE_ATOMIC_OR_32  1
+#    define OPAL_HAVE_ATOMIC_XOR_32 1
+#    define OPAL_HAVE_ATOMIC_SUB_32 1
 
 #    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 #    define OPAL_HAVE_ATOMIC_SWAP_64             1
 
-#    define OPAL_HAVE_ATOMIC_ADD_64  1
-#    define OPAL_HAVE_ATOMIC_AND_64  1
-#    define OPAL_HAVE_ATOMIC_OR_64   1
-#    define OPAL_HAVE_ATOMIC_XOR_64  1
-#    define OPAL_HAVE_ATOMIC_SUB_64  1
+#    define OPAL_HAVE_ATOMIC_ADD_64 1
+#    define OPAL_HAVE_ATOMIC_AND_64 1
+#    define OPAL_HAVE_ATOMIC_OR_64  1
+#    define OPAL_HAVE_ATOMIC_XOR_64 1
+#    define OPAL_HAVE_ATOMIC_SUB_64 1
 
 #    define OPAL_HAVE_ATOMIC_MIN_32 1
 #    define OPAL_HAVE_ATOMIC_MAX_32 1

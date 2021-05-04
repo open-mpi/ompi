@@ -26,7 +26,7 @@
  * completes the region will be available for RMA access by all peers in
  * the window.
  */
-int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len);
+int ompi_osc_rdma_attach(struct ompi_win_t *win, void *base, size_t len);
 
 /**
  * @brief detach a region from a window
@@ -41,7 +41,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len);
  * This function requires that a region with the same base has been attached
  * using the ompi_osc_rdma_attach() function.
  */
-int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base);
+int ompi_osc_rdma_detach(struct ompi_win_t *win, const void *base);
 
 /**
  * @brief find dynamic region associated with a peer, base, and len
@@ -56,5 +56,5 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base);
  * @returns OMPI_ERR_OUT_OF_RESOURCE on resource failure
  * @returns OMPI_ERR_RMA_RANGE if no region matches
  */
-int ompi_osc_rdma_find_dynamic_region (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer, uint64_t base, size_t len,
-				       ompi_osc_rdma_region_t **region);
+int ompi_osc_rdma_find_dynamic_region(ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer,
+                                      uint64_t base, size_t len, ompi_osc_rdma_region_t **region);

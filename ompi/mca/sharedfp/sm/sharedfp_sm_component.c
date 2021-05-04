@@ -27,19 +27,19 @@
  */
 
 #include "ompi_config.h"
-#include "sharedfp_sm.h"
 #include "mpi.h"
+#include "sharedfp_sm.h"
 
 /*
  * Public string showing the sharedfp sm component version number
  */
-const char *mca_sharedfp_sm_component_version_string =
-  "OMPI/MPI sm SHAREDFP MCA component version " OMPI_VERSION;
+const char *mca_sharedfp_sm_component_version_string
+    = "OMPI/MPI sm SHAREDFP MCA component version " OMPI_VERSION;
 /*
  * Global variables
  */
-int mca_sharedfp_sm_priority=30;
-int mca_sharedfp_sm_verbose=0;
+int mca_sharedfp_sm_priority = 30;
+int mca_sharedfp_sm_verbose = 0;
 
 static int sm_register(void);
 
@@ -73,16 +73,14 @@ mca_sharedfp_base_component_2_0_0_t mca_sharedfp_sm_component = {
 static int sm_register(void)
 {
     mca_sharedfp_sm_priority = 30;
-    (void) mca_base_component_var_register(&mca_sharedfp_sm_component.sharedfpm_version,
-                                           "priority", "Priority of the sm sharedfp component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+    (void) mca_base_component_var_register(&mca_sharedfp_sm_component.sharedfpm_version, "priority",
+                                           "Priority of the sm sharedfp component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_sharedfp_sm_priority);
     mca_sharedfp_sm_verbose = 0;
-    (void) mca_base_component_var_register(&mca_sharedfp_sm_component.sharedfpm_version,
-                                           "verbose", "Verbosity of the sm sharedfp component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
+    (void) mca_base_component_var_register(&mca_sharedfp_sm_component.sharedfpm_version, "verbose",
+                                           "Verbosity of the sm sharedfp component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_sharedfp_sm_verbose);
 
     return OMPI_SUCCESS;

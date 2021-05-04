@@ -48,8 +48,8 @@ typedef struct oshmem_request_t *SHMEM_Request;
 typedef struct oshmem_status_public_t SHMEM_Status;
 
 /* This constants are used to check status of  request->req_status.SHMEM_ERROR */
-#define SHMEM_SUCCESS                   0
-#define SHMEM_ERR_IN_STATUS             18
+#define SHMEM_SUCCESS       0
+#define SHMEM_ERR_IN_STATUS 18
 
 /*
  * SHMEM_Status
@@ -63,29 +63,28 @@ struct oshmem_status_public_t {
 };
 typedef struct oshmem_status_public_t oshmem_status_public_t;
 
-typedef int (SHMEM_Grequest_query_function)(void *, SHMEM_Status *);
-typedef int (SHMEM_Grequest_free_function)(void *);
-typedef int (SHMEM_Grequest_cancel_function)(void *, int);
+typedef int(SHMEM_Grequest_query_function)(void *, SHMEM_Status *);
+typedef int(SHMEM_Grequest_free_function)(void *);
+typedef int(SHMEM_Grequest_cancel_function)(void *, int);
 
 #define SHMEM_REQUEST_NULL OSHMEM_PREDEFINED_GLOBAL(SHMEM_Request, oshmem_request_null)
 
 /*
  * Required function to free the request and any associated resources.
  */
-typedef int (*oshmem_request_free_fn_t)(struct oshmem_request_t** rptr);
+typedef int (*oshmem_request_free_fn_t)(struct oshmem_request_t **rptr);
 
 /*
  * Optional function to cancel a pending request.
  */
-typedef int (*oshmem_request_cancel_fn_t)(struct oshmem_request_t* request,
-                                          int flag);
+typedef int (*oshmem_request_cancel_fn_t)(struct oshmem_request_t *request, int flag);
 
 /*
  * Optional function called when the request is completed from the SHMEM
  * library perspective. This function is not allowed to release any
  * ressources related to the request.
  */
-typedef int (*oshmem_request_complete_fn_t)(struct oshmem_request_t* request);
+typedef int (*oshmem_request_complete_fn_t)(struct oshmem_request_t *request);
 
 /* TODO: decide whether to remove comm */
 /**
@@ -103,28 +102,29 @@ struct oshmem_group_t;
  */
 typedef union oshmem_shmem_object_t {
     struct oshmem_group_t *comm;
-/*    struct oshmem_file_t *file;*/
+    /*    struct oshmem_file_t *file;*/
 } oshmem_shmem_object_t;
 
 /**
  * Main top-level request struct definition
  */
 struct oshmem_request_t {
-    opal_free_list_item_t super; /**< Base type *//*TODO: Implement in shmem */
-    oshmem_request_type_t req_type; /**< Enum indicating the type of the request */
-    oshmem_status_public_t req_status; /**< Completion status */
-    volatile bool req_complete; /**< Flag indicating completion on a request */
-    volatile oshmem_request_state_t req_state; /**< enum indicate the state of the request */
-    bool req_persistent; /* TODO: NOT Required */
+    opal_free_list_item_t super; /**< Base type */ /*TODO: Implement in shmem */
+    oshmem_request_type_t req_type;                /**< Enum indicating the type of the request */
+    oshmem_status_public_t req_status;             /**< Completion status */
+    volatile bool req_complete;                    /**< Flag indicating completion on a request */
+    volatile oshmem_request_state_t req_state;     /**< enum indicate the state of the request */
+    bool req_persistent;                           /* TODO: NOT Required */
     /**< flag indicating if this is a persistent request */
     int req_f_to_c_index; /* TODO: NOT Required */
     /**< Index in Fortran <-> C translation array */
-    oshmem_request_free_fn_t req_free; /**< Called by free */
+    oshmem_request_free_fn_t req_free;     /**< Called by free */
     oshmem_request_cancel_fn_t req_cancel; /* TODO: Not Required */
     /**< Optional function to cancel the request */
     oshmem_request_complete_fn_t req_complete_cb; /**< Called when the request is SHMEM completed */
     void *req_complete_cb_data;
-    oshmem_shmem_object_t req_shmem_object; /**< Pointer to SHMEM object that created this request */
+    oshmem_shmem_object_t
+        req_shmem_object; /**< Pointer to SHMEM object that created this request */
 };
 
 /**
@@ -153,10 +153,10 @@ typedef struct oshmem_predefined_request_t oshmem_predefined_request_t;
  * that we will have to initialize a request multiple times).
  */
 #define OSHMEM_REQUEST_INIT(request, persistent)        \
-    do {                                              \
-        (request)->req_complete = false;              \
+    do {                                                \
+        (request)->req_complete = false;                \
         (request)->req_state = OSHMEM_REQUEST_INACTIVE; \
-        (request)->req_persistent = (persistent);     \
+        (request)->req_persistent = (persistent);       \
     } while (0);
 
 /**
@@ -174,15 +174,15 @@ typedef struct oshmem_predefined_request_t oshmem_predefined_request_t;
  * When the user call MPI_Request_free we should release all SHMEM level
  * ressources, so we have to call this function too.
  */
-#define OSHMEM_REQUEST_FINI(request)                                      \
-do {                                                                    \
-    (request)->req_state = OSHMEM_REQUEST_INVALID;                        \
-    if (SHMEM_UNDEFINED != (request)->req_f_to_c_index) {                 \
-        opal_pointer_array_set_item(&oshmem_request_f_to_c_table,         \
-                                    (request)->req_f_to_c_index, NULL); \
-        (request)->req_f_to_c_index = SHMEM_UNDEFINED;                    \
-    }                                                                   \
-} while (0);
+#define OSHMEM_REQUEST_FINI(request)                                                               \
+    do {                                                                                           \
+        (request)->req_state = OSHMEM_REQUEST_INVALID;                                             \
+        if (SHMEM_UNDEFINED != (request)->req_f_to_c_index) {                                      \
+            opal_pointer_array_set_item(&oshmem_request_f_to_c_table, (request)->req_f_to_c_index, \
+                                        NULL);                                                     \
+            (request)->req_f_to_c_index = SHMEM_UNDEFINED;                                         \
+        }                                                                                          \
+    } while (0);
 
 /**
  * Non-blocking test for request completion.
@@ -195,9 +195,8 @@ do {                                                                    \
  * Note that upon completion, the request is freed, and the
  * request handle at index set to NULL.
  */
-typedef int (*oshmem_request_test_fn_t)(oshmem_request_t ** rptr,
-                                        int *completed,
-                                        oshmem_status_public_t * status);
+typedef int (*oshmem_request_test_fn_t)(oshmem_request_t **rptr, int *completed,
+                                        oshmem_status_public_t *status);
 /**
  * Non-blocking test for request completion.
  *
@@ -211,11 +210,8 @@ typedef int (*oshmem_request_test_fn_t)(oshmem_request_t ** rptr,
  * Note that upon completion, the request is freed, and the
  * request handle at index set to NULL.
  */
-typedef int (*oshmem_request_test_any_fn_t)(size_t count,
-                                            oshmem_request_t ** requests,
-                                            int *index,
-                                            int *completed,
-                                            oshmem_status_public_t * status);
+typedef int (*oshmem_request_test_any_fn_t)(size_t count, oshmem_request_t **requests, int *index,
+                                            int *completed, oshmem_status_public_t *status);
 /**
  * Non-blocking test for request completion.
  *
@@ -230,10 +226,8 @@ typedef int (*oshmem_request_test_any_fn_t)(size_t count,
  * the requests array is not modified (no requests freed), unless all requests
  * have completed.
  */
-typedef int (*oshmem_request_test_all_fn_t)(size_t count,
-                                            oshmem_request_t ** requests,
-                                            int *completed,
-                                            oshmem_status_public_t * statuses);
+typedef int (*oshmem_request_test_all_fn_t)(size_t count, oshmem_request_t **requests,
+                                            int *completed, oshmem_status_public_t *statuses);
 /**
  * Non-blocking test for some of N requests to complete.
  *
@@ -245,11 +239,9 @@ typedef int (*oshmem_request_test_all_fn_t)(size_t count,
  * @return                  OSHMEM_SUCCESS, OSHMEM_ERR_IN_STATUS or failure status.
  *
  */
-typedef int (*oshmem_request_test_some_fn_t)(size_t count,
-                                             oshmem_request_t ** requests,
-                                             int * outcount,
-                                             int * indices,
-                                             oshmem_status_public_t * statuses);
+typedef int (*oshmem_request_test_some_fn_t)(size_t count, oshmem_request_t **requests,
+                                             int *outcount, int *indices,
+                                             oshmem_status_public_t *statuses);
 /**
  * Wait (blocking-mode) for one requests to complete.
  *
@@ -258,8 +250,7 @@ typedef int (*oshmem_request_test_some_fn_t)(size_t count,
  * @return                OSHMEM_SUCCESS or failure status.
  *
  */
-typedef int (*oshmem_request_wait_fn_t)(oshmem_request_t ** req_ptr,
-                                        oshmem_status_public_t * status);
+typedef int (*oshmem_request_wait_fn_t)(oshmem_request_t **req_ptr, oshmem_status_public_t *status);
 /**
  * Wait (blocking-mode) for one of N requests to complete.
  *
@@ -270,10 +261,8 @@ typedef int (*oshmem_request_wait_fn_t)(oshmem_request_t ** req_ptr,
  * @return                OSHMEM_SUCCESS or failure status.
  *
  */
-typedef int (*oshmem_request_wait_any_fn_t)(size_t count,
-                                            oshmem_request_t ** requests,
-                                            int *index,
-                                            oshmem_status_public_t * status);
+typedef int (*oshmem_request_wait_any_fn_t)(size_t count, oshmem_request_t **requests, int *index,
+                                            oshmem_status_public_t *status);
 /**
  * Wait (blocking-mode) for all of N requests to complete.
  *
@@ -283,9 +272,8 @@ typedef int (*oshmem_request_wait_any_fn_t)(size_t count,
  * @return                OSHMEM_SUCCESS or failure status.
  *
  */
-typedef int (*oshmem_request_wait_all_fn_t)(size_t count,
-                                            oshmem_request_t ** requests,
-                                            oshmem_status_public_t * statuses);
+typedef int (*oshmem_request_wait_all_fn_t)(size_t count, oshmem_request_t **requests,
+                                            oshmem_status_public_t *statuses);
 /**
  * Wait (blocking-mode) for some of N requests to complete.
  *
@@ -297,11 +285,9 @@ typedef int (*oshmem_request_wait_all_fn_t)(size_t count,
  * @return                  OSHMEM_SUCCESS, OSHMEM_ERR_IN_STATUS or failure status.
  *
  */
-typedef int (*oshmem_request_wait_some_fn_t)(size_t count,
-                                             oshmem_request_t ** requests,
-                                             int * outcount,
-                                             int * indices,
-                                             oshmem_status_public_t * statuses);
+typedef int (*oshmem_request_wait_some_fn_t)(size_t count, oshmem_request_t **requests,
+                                             int *outcount, int *indices,
+                                             oshmem_status_public_t *statuses);
 
 /**
  * Replaceable request functions
@@ -350,9 +336,9 @@ int oshmem_request_finalize(void);
 /**
  * Cancel a pending request.
  */
-static inline int oshmem_request_cancel(oshmem_request_t* request)
+static inline int oshmem_request_cancel(oshmem_request_t *request)
 {
-    if (request->req_cancel != NULL ) {
+    if (request->req_cancel != NULL) {
         return request->req_cancel(request, true);
     }
     return OSHMEM_SUCCESS;
@@ -363,19 +349,19 @@ static inline int oshmem_request_cancel(oshmem_request_t* request)
  *
  * @param request (INOUT)   Pointer to request.
  */
-static inline int oshmem_request_free(oshmem_request_t** request)
+static inline int oshmem_request_free(oshmem_request_t **request)
 {
     return (*request)->req_free(request);
 }
 
-#define oshmem_request_test       (oshmem_request_functions.req_test)
-#define oshmem_request_test_any   (oshmem_request_functions.req_test_any)
-#define oshmem_request_test_all   (oshmem_request_functions.req_test_all)
-#define oshmem_request_test_some  (oshmem_request_functions.req_test_some)
-#define oshmem_request_wait       (oshmem_request_functions.req_wait)
-#define oshmem_request_wait_any   (oshmem_request_functions.req_wait_any)
-#define oshmem_request_wait_all   (oshmem_request_functions.req_wait_all)
-#define oshmem_request_wait_some  (oshmem_request_functions.req_wait_some)
+#define oshmem_request_test      (oshmem_request_functions.req_test)
+#define oshmem_request_test_any  (oshmem_request_functions.req_test_any)
+#define oshmem_request_test_all  (oshmem_request_functions.req_test_all)
+#define oshmem_request_test_some (oshmem_request_functions.req_test_some)
+#define oshmem_request_wait      (oshmem_request_functions.req_wait)
+#define oshmem_request_wait_any  (oshmem_request_functions.req_wait_any)
+#define oshmem_request_wait_all  (oshmem_request_functions.req_wait_all)
+#define oshmem_request_wait_some (oshmem_request_functions.req_wait_some)
 
 /**
  * Wait for any completion. It is a caller responsibility to check for
@@ -397,7 +383,7 @@ static inline void oshmem_request_wait_completion(oshmem_request_t *req)
 {
     if (false == req->req_complete) {
 #if OPAL_ENABLE_PROGRESS_THREADS
-        if(opal_progress_spin(&req->req_complete)) {
+        if (opal_progress_spin(&req->req_complete)) {
             return;
         }
 #endif
@@ -420,8 +406,7 @@ static inline void oshmem_request_wait_completion(oshmem_request_t *req)
  *  we know the current execution flow created the request, and is still
  *  in the _START macro.
  */
-static inline int oshmem_request_complete(oshmem_request_t* request,
-                                          bool with_signal)
+static inline int oshmem_request_complete(oshmem_request_t *request, bool with_signal)
 {
     if (NULL != request->req_complete_cb) {
         request->req_complete_cb(request);

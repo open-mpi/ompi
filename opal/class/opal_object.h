@@ -198,7 +198,7 @@ struct opal_object_t {
     const char
         *cls_init_file_name; /**< In debug mode store the file where the object get contructed */
     int cls_init_lineno; /**< In debug mode store the line number where the object get contructed */
-#endif /* OPAL_ENABLE_DEBUG */
+#endif                   /* OPAL_ENABLE_DEBUG */
 };
 
 /* macros ************************************************************/

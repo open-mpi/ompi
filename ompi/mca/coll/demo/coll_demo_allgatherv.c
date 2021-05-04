@@ -19,12 +19,11 @@
 #include "ompi_config.h"
 #include "opal/util/output.h"
 
+#include "coll_demo.h"
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "coll_demo.h"
-
+#include "ompi/mca/coll/coll.h"
 
 /*
  *	allgatherv_intra
@@ -33,21 +32,17 @@
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_allgatherv_intra(void *sbuf, int scount,
-                                   struct ompi_datatype_t *sdtype,
-                                   void * rbuf, int *rcounts, int *disps,
-                                   struct ompi_datatype_t *rdtype,
-                                   struct ompi_communicator_t *comm,
+int mca_coll_demo_allgatherv_intra(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                   void *rbuf, int *rcounts, int *disps,
+                                   struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                    mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo allgatherv_intra");
-    return demo_module->underlying.coll_allgatherv(sbuf, scount, sdtype,
-                                                   rbuf, rcounts, disps,
+    return demo_module->underlying.coll_allgatherv(sbuf, scount, sdtype, rbuf, rcounts, disps,
                                                    rdtype, comm,
                                                    demo_module->underlying.coll_allgatherv_module);
 }
-
 
 /*
  *	allgatherv_inter
@@ -56,17 +51,14 @@ int mca_coll_demo_allgatherv_intra(void *sbuf, int scount,
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_allgatherv_inter(void *sbuf, int scount,
-                                    struct ompi_datatype_t *sdtype,
-                                    void * rbuf, int *rcounts, int *disps,
-                                    struct ompi_datatype_t *rdtype,
-                                   struct ompi_communicator_t *comm,
+int mca_coll_demo_allgatherv_inter(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                   void *rbuf, int *rcounts, int *disps,
+                                   struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                    mca_coll_base_module_t *module)
 {
-    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t *) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo allgatherv_inter");
-    return demo_module->underlying.coll_allgatherv(sbuf, scount, sdtype,
-                                                   rbuf, rcounts, disps,
+    return demo_module->underlying.coll_allgatherv(sbuf, scount, sdtype, rbuf, rcounts, disps,
                                                    rdtype, comm,
                                                    demo_module->underlying.coll_allgatherv_module);
 }

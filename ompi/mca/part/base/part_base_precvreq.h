@@ -28,8 +28,8 @@
 
 #include "ompi_config.h"
 #include "ompi/mca/part/base/part_base_prequest.h"
-#include "opal/datatype/opal_convertor.h"
 #include "ompi/peruse/peruse-internal.h"
+#include "opal/datatype/opal_convertor.h"
 
 BEGIN_C_DECLS
 
@@ -37,8 +37,8 @@ BEGIN_C_DECLS
  * Base type for receive requests.
  */
 struct mca_part_base_precv_request_t {
-   mca_part_base_prequest_t req_base;  /**< base request */
-   size_t parts;                       /**< number of partitions */
+    mca_part_base_prequest_t req_base; /**< base request */
+    size_t parts;                      /**< number of partitions */
 };
 typedef struct mca_part_base_precv_request_t mca_part_base_precv_request_t;
 
@@ -47,4 +47,3 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_part_base_precv_request_t);
 END_C_DECLS
 
 #endif
-

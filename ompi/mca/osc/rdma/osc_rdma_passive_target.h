@@ -14,8 +14,8 @@
 #define OSC_RDMA_PASSIVE_TARGET_H
 
 #include "osc_rdma.h"
-#include "osc_rdma_sync.h"
 #include "osc_rdma_lock.h"
+#include "osc_rdma_sync.h"
 
 /**
  * @brief lock the target in the window using network/cpu atomics
@@ -28,7 +28,7 @@
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERR_RMA_SYNC if there is a conflicting RMA epoch
  */
-int ompi_osc_rdma_lock_atomic (int lock_type, int target, int mpi_assert, ompi_win_t *win);
+int ompi_osc_rdma_lock_atomic(int lock_type, int target, int mpi_assert, ompi_win_t *win);
 
 /**
  * @brief unlock the target in the window using network/cpu atomics
@@ -39,7 +39,7 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int mpi_assert, ompi_w
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERR_RMA_SYNC if the target is not locked
  */
-int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win);
+int ompi_osc_rdma_unlock_atomic(int target, ompi_win_t *win);
 
 /**
  * @brief lock all targets in window using network/cpu atomics
@@ -50,7 +50,7 @@ int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win);
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERR_RMA_SYNC if there is a conflicting RMA epoch
  */
-int ompi_osc_rdma_lock_all_atomic (int mpi_assert, struct ompi_win_t *win);
+int ompi_osc_rdma_lock_all_atomic(int mpi_assert, struct ompi_win_t *win);
 
 /**
  * @brief unlock all targets in window using network/cpu atomics
@@ -61,7 +61,7 @@ int ompi_osc_rdma_lock_all_atomic (int mpi_assert, struct ompi_win_t *win);
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERR_RMA_SYNC if the window is not in a lock all access epoch
  */
-int ompi_osc_rdma_unlock_all_atomic (struct ompi_win_t *win);
+int ompi_osc_rdma_unlock_all_atomic(struct ompi_win_t *win);
 
 /**
  * @brief synchronize the public and private copies of the window
@@ -73,7 +73,7 @@ int ompi_osc_rdma_unlock_all_atomic (struct ompi_win_t *win);
  * Just acts as a memory barrier since this module only supports a unified memory
  * model.
  */
-int ompi_osc_rdma_sync (struct ompi_win_t *win);
+int ompi_osc_rdma_sync(struct ompi_win_t *win);
 
 /**
  * @brief flush rdma transactions to a target
@@ -84,7 +84,7 @@ int ompi_osc_rdma_sync (struct ompi_win_t *win);
  * @returns OMPI_SUCCESS on success
  * @returns OMPI_ERR_RMA_SYNC if the target is not locked
  */
-int ompi_osc_rdma_flush (int target, struct ompi_win_t *win);
+int ompi_osc_rdma_flush(int target, struct ompi_win_t *win);
 
 /**
  * @brief flush rdma transactions to all target(s)
@@ -98,7 +98,7 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win);
  * completion. this could change in a future release as small messages
  * may be internally buffered.
  */
-int ompi_osc_rdma_flush_all (struct ompi_win_t *win);
+int ompi_osc_rdma_flush_all(struct ompi_win_t *win);
 
 /**
  * @brief flush rdma transactions to a target (local completion)
@@ -113,7 +113,7 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win);
  * completion. this could change in a future release as small messages
  * may be internally buffered.
  */
-int ompi_osc_rdma_flush_local (int target, struct ompi_win_t *win);
+int ompi_osc_rdma_flush_local(int target, struct ompi_win_t *win);
 
 /**
  * @brief flush rdma transactions to all target(s) (local completion)
@@ -127,6 +127,6 @@ int ompi_osc_rdma_flush_local (int target, struct ompi_win_t *win);
  * completion. this could change in a future release as small messages
  * may be internally buffered.
  */
-int ompi_osc_rdma_flush_local_all (struct ompi_win_t *win);
+int ompi_osc_rdma_flush_local_all(struct ompi_win_t *win);
 
 #endif /* OSC_RDMA_PASSIVE_TARGET_H */

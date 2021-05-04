@@ -30,10 +30,9 @@ BEGIN_C_DECLS
 int oshmem_group_cache_init(void);
 void oshmem_group_cache_destroy(void);
 
-oshmem_group_t* oshmem_group_cache_find(int pe_start, int pe_stride, int pe_size);
+oshmem_group_t *oshmem_group_cache_find(int pe_start, int pe_stride, int pe_size);
 
-int oshmem_group_cache_insert(oshmem_group_t *group, int pe_start,
-                              int pe_stride, int pe_size);
+int oshmem_group_cache_insert(oshmem_group_t *group, int pe_start, int pe_stride, int pe_size);
 
 static inline int oshmem_group_cache_enabled(void)
 {

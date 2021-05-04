@@ -21,23 +21,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Ibarrier = PMPI_Ibarrier
-#endif
-#define MPI_Ibarrier PMPI_Ibarrier
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Ibarrier = PMPI_Ibarrier
+#    endif
+#    define MPI_Ibarrier PMPI_Ibarrier
 #endif
 
 static const char FUNC_NAME[] = "MPI_Ibarrier";
-
 
 int MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
 {
@@ -45,9 +44,7 @@ int MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
 
     SPC_RECORD(OMPI_SPC_IBARRIER, 1);
 
-    MEMCHECKER(
-            memchecker_comm(comm);
-            );
+    MEMCHECKER(memchecker_comm(comm););
 
     /* Error checking */
 

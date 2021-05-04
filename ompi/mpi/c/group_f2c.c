@@ -22,21 +22,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/c/bindings.h"
-#include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/group/group.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/runtime/params.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Group_f2c = PMPI_Group_f2c
-#endif
-#define MPI_Group_f2c PMPI_Group_f2c
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Group_f2c = PMPI_Group_f2c
+#    endif
+#    define MPI_Group_f2c PMPI_Group_f2c
 #endif
 
 static const char FUNC_NAME[] = "MPI_Group_f2c";
-
 
 MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 {
@@ -50,11 +49,9 @@ MPI_Group MPI_Group_f2c(MPI_Fint group_f)
        invalid fortran handle.  If we get an invalid fortran handle,
        return an invalid C handle. */
 
-    if (group_index < 0 ||
-        group_index >=
-        opal_pointer_array_get_size(&ompi_group_f_to_c_table)) {
+    if (group_index < 0 || group_index >= opal_pointer_array_get_size(&ompi_group_f_to_c_table)) {
         return NULL;
     }
 
-    return (MPI_Group)opal_pointer_array_get_item(&ompi_group_f_to_c_table, group_index);
+    return (MPI_Group) opal_pointer_array_get_item(&ompi_group_f_to_c_table, group_index);
 }

@@ -13,32 +13,26 @@
 
 #include "oshmem_config.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include "opal/util/opal_environ.h"
-#include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/runtime/ompi_rte.h"
 
-#include "oshmem/version.h"
 #include "oshmem/constants.h"
 #include "oshmem/info/info.h"
 #include "oshmem/shmem/shmem_api_logger.h"
-
+#include "oshmem/version.h"
 
 /*
  * Global variables
  */
-oshmem_info_t oshmem_shmem_info_env = {
-    false,
-    false,
-    false,
-    256 * 1024 * 1024
-};
+oshmem_info_t oshmem_shmem_info_env = {false, false, false, 256 * 1024 * 1024};
 
 #define OSHMEM_MAX_LIBRARY_VERSION_STRING 256
 
@@ -49,7 +43,6 @@ static int oshmem_info_value_to_bool(char *value, bool *interp);
 static int oshmem_info_value_to_int(char *value, int *interp);
 static int oshmem_info_get_heap_size(char *value, size_t *interp);
 static int oshmem_info_get_library_version(char *version, int *len);
-
 
 /*
  * This function is called during oshmem_init.
@@ -75,10 +68,7 @@ int oshmem_info_init(void)
         if (OSHMEM_SUCCESS != ret || 0 == len) {
             goto out;
         }
-        opal_show_help("help-shmem-runtime.txt",
-                       "oshmem_init:print-version",
-                       true,
-                       version);
+        opal_show_help("help-shmem-runtime.txt", "oshmem_init:print-version", true, version);
     }
 
     if (NULL != (cptr = getenv(OSHMEM_ENV_INFO))) {
@@ -88,13 +78,8 @@ int oshmem_info_init(void)
         }
     }
     if (oshmem_shmem_info_env.print_info && 0 == OMPI_PROC_MY_NAME->vpid) {
-        opal_show_help("help-shmem-runtime.txt",
-                       "oshmem_init:print-info",
-                       true,
-                       OSHMEM_ENV_VERSION,
-                       OSHMEM_ENV_INFO,
-                       OSHMEM_ENV_SYMMETRIC_SIZE,
-                       OSHMEM_ENV_DEBUG);
+        opal_show_help("help-shmem-runtime.txt", "oshmem_init:print-info", true, OSHMEM_ENV_VERSION,
+                       OSHMEM_ENV_INFO, OSHMEM_ENV_SYMMETRIC_SIZE, OSHMEM_ENV_DEBUG);
     }
 
     if (NULL != (cptr = getenv(OSHMEM_ENV_DEBUG))) {
@@ -108,7 +93,7 @@ int oshmem_info_init(void)
         char *p1 = getenv(SHMEM_HEAP_SIZE);
         if (p1 && strcmp(cptr, p1)) {
             SHMEM_API_ERROR("Found conflict between env '%s' and '%s'.\n",
-                          OSHMEM_ENV_SYMMETRIC_SIZE, SHMEM_HEAP_SIZE);
+                            OSHMEM_ENV_SYMMETRIC_SIZE, SHMEM_HEAP_SIZE);
             ret = OSHMEM_ERR_BAD_PARAM;
             goto out;
         }
@@ -131,7 +116,6 @@ out:
     return ret;
 }
 
-
 /*
  * Shut down oshmem_info handling
  */
@@ -142,7 +126,6 @@ int oshmem_info_finalize(void)
 
     return OSHMEM_SUCCESS;
 }
-
 
 /**
  * Convert value string to boolean
@@ -162,7 +145,8 @@ static int oshmem_info_value_to_bool(char *value, bool *interp)
     int tmp;
 
     /* idiot case */
-    if (NULL == value || NULL == interp) return OSHMEM_ERR_BAD_PARAM;
+    if (NULL == value || NULL == interp)
+        return OSHMEM_ERR_BAD_PARAM;
 
     /* is it true / false? */
     if (0 == strcmp(value, "true")) {
@@ -172,7 +156,7 @@ static int oshmem_info_value_to_bool(char *value, bool *interp)
         *interp = false;
         return OSHMEM_SUCCESS;
 
-    /* is it a number? */
+        /* is it a number? */
     } else if (OSHMEM_SUCCESS == oshmem_info_value_to_int(value, &tmp)) {
         if (tmp == 0) {
             *interp = false;
@@ -184,7 +168,6 @@ static int oshmem_info_value_to_bool(char *value, bool *interp)
 
     return OSHMEM_ERR_BAD_PARAM;
 }
-
 
 /**
  * Convert value string to integer
@@ -203,14 +186,17 @@ static int oshmem_info_value_to_int(char *value, int *interp)
     long tmp;
     char *endp;
 
-    if (NULL == value || '\0' == value[0]) return OSHMEM_ERR_BAD_PARAM;
+    if (NULL == value || '\0' == value[0])
+        return OSHMEM_ERR_BAD_PARAM;
 
     errno = 0;
     tmp = strtol(value, &endp, 10);
     /* we found something not a number */
-    if (*endp != '\0') return OSHMEM_ERR_BAD_PARAM;
+    if (*endp != '\0')
+        return OSHMEM_ERR_BAD_PARAM;
     /* underflow */
-    if (tmp == 0 && errno == EINVAL) return OSHMEM_ERR_BAD_PARAM;
+    if (tmp == 0 && errno == EINVAL)
+        return OSHMEM_ERR_BAD_PARAM;
 
     *interp = (int) tmp;
 
@@ -294,8 +280,8 @@ static int oshmem_info_get_library_version(char *version, int *resultlen)
     len_left = sizeof(tmp);
     memset(tmp, 0, OSHMEM_MAX_LIBRARY_VERSION_STRING);
 
-    snprintf(tmp, OSHMEM_MAX_LIBRARY_VERSION_STRING, "Open SHMEM v%d.%d.%d",
-             OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION, OSHMEM_RELEASE_VERSION);
+    snprintf(tmp, OSHMEM_MAX_LIBRARY_VERSION_STRING, "Open SHMEM v%d.%d.%d", OSHMEM_MAJOR_VERSION,
+             OSHMEM_MINOR_VERSION, OSHMEM_RELEASE_VERSION);
     ptr += strlen(tmp);
     len_left -= strlen(tmp);
 

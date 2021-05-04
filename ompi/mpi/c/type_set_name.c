@@ -28,28 +28,25 @@
 
 #include "opal/util/string_copy.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_set_name = PMPI_Type_set_name
-#endif
-#define MPI_Type_set_name PMPI_Type_set_name
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak MPI_Type_set_name = PMPI_Type_set_name
+#    endif
+#    define MPI_Type_set_name PMPI_Type_set_name
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_set_name";
 
-
-int MPI_Type_set_name (MPI_Datatype type, const char *type_name)
+int MPI_Type_set_name(MPI_Datatype type, const char *type_name)
 {
-    MEMCHECKER(
-        memchecker_datatype(type);
-        );
+    MEMCHECKER(memchecker_datatype(type););
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -61,6 +58,6 @@ int MPI_Type_set_name (MPI_Datatype type, const char *type_name)
     }
 
     memset(type->name, 0, MPI_MAX_OBJECT_NAME);
-    opal_string_copy( type->name, type_name, MPI_MAX_OBJECT_NAME);
+    opal_string_copy(type->name, type_name, MPI_MAX_OBJECT_NAME);
     return MPI_SUCCESS;
 }

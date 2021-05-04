@@ -21,53 +21,50 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
+#include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
+#    if OPAL_HAVE_WEAK_SYMBOLS
+#        pragma weak PMPI_INFO_GET = ompi_info_get_f
+#        pragma weak pmpi_info_get = ompi_info_get_f
+#        pragma weak pmpi_info_get_ = ompi_info_get_f
+#        pragma weak pmpi_info_get__ = ompi_info_get_f
+
+#        pragma weak PMPI_Info_get_f = ompi_info_get_f
+#        pragma weak PMPI_Info_get_f08 = ompi_info_get_f
+#    else
+OMPI_GENERATE_F77_BINDINGS(PMPI_INFO_GET, pmpi_info_get, pmpi_info_get_, pmpi_info_get__,
+                           pompi_info_get_f,
+                           (MPI_Fint * info, char *key, MPI_Fint *valuelen, char *value,
+                            ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len,
+                            int value_len),
+                           (info, key, valuelen, value, flag, ierr, key_len, value_len))
+#    endif
+#endif
+
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_INFO_GET = ompi_info_get_f
-#pragma weak pmpi_info_get = ompi_info_get_f
-#pragma weak pmpi_info_get_ = ompi_info_get_f
-#pragma weak pmpi_info_get__ = ompi_info_get_f
+#    pragma weak MPI_INFO_GET = ompi_info_get_f
+#    pragma weak mpi_info_get = ompi_info_get_f
+#    pragma weak mpi_info_get_ = ompi_info_get_f
+#    pragma weak mpi_info_get__ = ompi_info_get_f
 
-#pragma weak PMPI_Info_get_f = ompi_info_get_f
-#pragma weak PMPI_Info_get_f08 = ompi_info_get_f
+#    pragma weak MPI_Info_get_f = ompi_info_get_f
+#    pragma weak MPI_Info_get_f08 = ompi_info_get_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET,
-                            pmpi_info_get,
-                            pmpi_info_get_,
-                            pmpi_info_get__,
-                            pompi_info_get_f,
-                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len, int value_len),
-                            (info, key, valuelen, value, flag, ierr, key_len, value_len) )
+#    if !OMPI_BUILD_MPI_PROFILING
+OMPI_GENERATE_F77_BINDINGS(MPI_INFO_GET, mpi_info_get, mpi_info_get_, mpi_info_get__,
+                           ompi_info_get_f,
+                           (MPI_Fint * info, char *key, MPI_Fint *valuelen, char *value,
+                            ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len,
+                            int value_len),
+                           (info, key, valuelen, value, flag, ierr, key_len, value_len))
+#    else
+#        define ompi_info_get_f pompi_info_get_f
+#    endif
 #endif
-#endif
-
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_INFO_GET = ompi_info_get_f
-#pragma weak mpi_info_get = ompi_info_get_f
-#pragma weak mpi_info_get_ = ompi_info_get_f
-#pragma weak mpi_info_get__ = ompi_info_get_f
-
-#pragma weak MPI_Info_get_f = ompi_info_get_f
-#pragma weak MPI_Info_get_f08 = ompi_info_get_f
-#else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET,
-                            mpi_info_get,
-                            mpi_info_get_,
-                            mpi_info_get__,
-                            ompi_info_get_f,
-                            (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len, int value_len),
-                            (info, key, valuelen, value, flag, ierr, key_len, value_len) )
-#else
-#define ompi_info_get_f pompi_info_get_f
-#endif
-#endif
-
 
 static const char FUNC_NAME[] = "MPI_INFO_GET";
 
@@ -76,9 +73,8 @@ static const char FUNC_NAME[] = "MPI_INFO_GET";
    length of the character array from the caller.  Hence, it's the max
    length of the string that we can use. */
 
-void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
-                    char *value, ompi_fortran_logical_t *flag, MPI_Fint *ierr,
-                    int key_len, int value_len)
+void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value,
+                     ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len, int value_len)
 {
     int c_ierr, ret;
     MPI_Info c_info;
@@ -88,14 +84,15 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(key, key_len, &c_key))) {
         c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
-        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        if (NULL != ierr)
+            *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
     c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = ompi_info_get(c_info, c_key, &info_str,
-                           OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+    c_ierr = ompi_info_get(c_info, c_key, &info_str, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    if (NULL != ierr)
+        *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_LOGICAL(flag);
@@ -107,10 +104,11 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
            length of the Fortran string, not *valuelen.  See comment
            in ompi/mpi/fortran/base/strings.c. */
         if (*flag) {
-            if (OMPI_SUCCESS !=
-                (ret = ompi_fortran_string_c2f(info_str->string, value, value_len))) {
+            if (OMPI_SUCCESS
+                != (ret = ompi_fortran_string_c2f(info_str->string, value, value_len))) {
                 c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
-                if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+                if (NULL != ierr)
+                    *ierr = OMPI_INT_2_FINT(c_ierr);
             }
             OBJ_RELEASE(info_str);
         }

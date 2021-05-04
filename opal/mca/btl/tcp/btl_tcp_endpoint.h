@@ -60,7 +60,7 @@ struct mca_btl_base_endpoint_t {
     char *endpoint_cache;         /**< cache for the recv (reduce the number of recv syscall) */
     char *endpoint_cache_pos;     /**< current position in the cache */
     size_t endpoint_cache_length; /**< length of the data in the cache */
-#endif /* MCA_BTL_TCP_ENDPOINT_CACHE */
+#endif                            /* MCA_BTL_TCP_ENDPOINT_CACHE */
     struct mca_btl_tcp_frag_t *endpoint_send_frag; /**< current send frag being processed */
     struct mca_btl_tcp_frag_t *endpoint_recv_frag; /**< current recv frag being processed */
     mca_btl_tcp_state_t endpoint_state;            /**< current state of the connection */

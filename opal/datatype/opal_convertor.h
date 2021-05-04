@@ -205,13 +205,12 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConv);
  * aka pack or unpack, as well as which side is supposed to do the
  * type conversion).
  */
-static inline void
-opal_convertor_get_packed_size(const opal_convertor_t *pConv, size_t *pSize)
+static inline void opal_convertor_get_packed_size(const opal_convertor_t *pConv, size_t *pSize)
 {
     *pSize = pConv->local_size;
-    if ((pConv->flags & CONVERTOR_HOMOGENEOUS) ||
-        ((pConv->flags & CONVERTOR_SEND) && !(pConv->flags & CONVERTOR_SEND_CONVERSION)) ||
-        ((pConv->flags & CONVERTOR_RECV) && (pConv->flags & CONVERTOR_SEND_CONVERSION))) {
+    if ((pConv->flags & CONVERTOR_HOMOGENEOUS)
+        || ((pConv->flags & CONVERTOR_SEND) && !(pConv->flags & CONVERTOR_SEND_CONVERSION))
+        || ((pConv->flags & CONVERTOR_RECV) && (pConv->flags & CONVERTOR_SEND_CONVERSION))) {
         return;
     }
     if (0 == (CONVERTOR_HAS_REMOTE_SIZE & pConv->flags)) {

@@ -29,8 +29,7 @@ typedef struct mca_sshmem_mmap_component_t {
     int is_start_addr_fixed;
 } mca_sshmem_mmap_component_t;
 
-OSHMEM_MODULE_DECLSPEC extern mca_sshmem_mmap_component_t
-mca_sshmem_mmap_component;
+OSHMEM_MODULE_DECLSPEC extern mca_sshmem_mmap_component_t mca_sshmem_mmap_component;
 
 typedef struct mca_sshmem_mmap_module_t {
     mca_sshmem_base_module_t super;
