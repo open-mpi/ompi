@@ -332,10 +332,9 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init (int *num_btl_modules,
     /* ask for capabilities */
     /* TODO: catch the caps here. */
     hints.caps = required_caps;
-    hints.mode = FI_CONTEXT;
 
     /* Ask for completion context */
-    hints.mode = FI_CONTEXT;
+    hints.mode = FI_CONTEXT | FI_CONTEXT2;
 
     hints.fabric_attr = &fabric_attr;
     hints.domain_attr = &domain_attr;

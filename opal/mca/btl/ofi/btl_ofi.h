@@ -205,7 +205,7 @@ OBJ_CLASS_DECLARATION(mca_btl_ofi_base_frag_t);
 
 
 struct mca_btl_ofi_completion_context_t {
-    struct fi_context ctx;
+    struct fi_context2 ctx;
     void *comp;
 };
 
