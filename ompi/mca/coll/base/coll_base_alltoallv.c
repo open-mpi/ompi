@@ -281,8 +281,10 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
         for( i = 0; i < nreqs; i++ ) {
             if (MPI_REQUEST_NULL == reqs[i]) continue;
             if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
-            err = reqs[i]->req_status.MPI_ERROR;
-            break;
+            if (reqs[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
+                err = reqs[i]->req_status.MPI_ERROR;
+                break;
+            }
         }
     }
     /* Free the requests in all cases as they are persistent */
