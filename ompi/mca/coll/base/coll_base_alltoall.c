@@ -474,8 +474,10 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
         for( ri = 0; ri < nreqs; ri++ ) {
             if (MPI_REQUEST_NULL == reqs[ri]) continue;
             if (MPI_ERR_PENDING == reqs[ri]->req_status.MPI_ERROR) continue;
-            error = reqs[ri]->req_status.MPI_ERROR;
-            break;
+            if (reqs[ri]->req_status.MPI_ERROR != MPI_SUCCESS) {
+                error = reqs[ri]->req_status.MPI_ERROR;
+                break;
+            }
         }
     }
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -677,8 +679,10 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
             for( i = 0; i < nreqs; i++ ) {
                 if (MPI_REQUEST_NULL == req[i]) continue;
                 if (MPI_ERR_PENDING == req[i]->req_status.MPI_ERROR) continue;
-                err = req[i]->req_status.MPI_ERROR;
-                break;
+                if (req[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
+                    err = req[i]->req_status.MPI_ERROR;
+                    break;
+                }
             }
         }
         OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
