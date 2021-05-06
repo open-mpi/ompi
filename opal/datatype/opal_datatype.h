@@ -52,16 +52,15 @@ BEGIN_C_DECLS
  * This must match the same definition as in opal_datatype_internal.h
  */
 #if !defined(OPAL_DATATYPE_MAX_PREDEFINED)
-#    define OPAL_DATATYPE_MAX_PREDEFINED 26
+#    define OPAL_DATATYPE_MAX_PREDEFINED 28
 #endif
 /*
- * No more than this number of _Basic_ datatypes in C/CPP or Fortran
- * are supported (in order to not change setup and usage of the predefined
- * datatypes).
+ * Upper limit of the number of _Basic_ datatypes supported (in order to
+ * not change setup and usage of the predefined datatypes).
  *
  * BEWARE: This constant should reflect whatever the OMPI-layer needs.
  */
-#define OPAL_DATATYPE_MAX_SUPPORTED 50
+#define OPAL_DATATYPE_MAX_SUPPORTED 64
 
 /* flags for the datatypes. */
 #define OPAL_DATATYPE_FLAG_UNAVAILABLE \
@@ -84,6 +83,15 @@ BEGIN_C_DECLS
 #define OPAL_DATATYPE_FLAG_BASIC                                                                \
     (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS \
      | OPAL_DATATYPE_FLAG_DATA | OPAL_DATATYPE_FLAG_COMMITTED)
+/*
+ * If during the datatype optimization process we collapse contiguous elements with
+ * different types, we cannot use this optimized description for any communication
+ * in a heterogeneous setting, especially not for the exteranl32 support.
+ *
+ * A datatype with this flag cannot use the optimized description in heterogeneous
+ * setups.
+ */
+#define OPAL_DATATYPE_OPTIMIZED_RESTRICTED  0x1000
 
 /**
  * The number of supported entries in the data-type definition and the
@@ -178,6 +186,8 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_double_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_long_double_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_bool;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_wchar;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_long;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_unsigned_long;
 
 /*
  * Functions exported externally
