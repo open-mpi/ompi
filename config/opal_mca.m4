@@ -103,10 +103,10 @@ AC_DEFUN([OPAL_MCA],[
                 type=$item
             fi
             if test -z $comp ; then
-                AS_VAR_COPY([AS_TR_SH([DISABLE_$type])], [1])
+                AS_VAR_SET([AS_TR_SH([DISABLE_$type])], [1])
                 msg="$item $msg"
             else
-                AS_VAR_COPY([AS_TR_SH([DISABLE_$type_$comp])], [1])
+                AS_VAR_SET([AS_TR_SH([DISABLE_$type_$comp])], [1])
                 msg="$item $msg"
             fi
         done
@@ -149,7 +149,7 @@ AC_DEFUN([OPAL_MCA],[
                 AC_MSG_ERROR([*** The enable-mca-direct flag requires a
 *** list of type-component pairs.  Invalid input detected.])
             else
-                AS_VAR_COPY([AS_TR_SH([DIRECT_$type])], [AS_TR_SH([$comp])])
+                AS_VAR_SET([AS_TR_SH([DIRECT_$type])], [AS_TR_SH([$comp])])
                 msg="$item $msg"
             fi
         done
@@ -184,7 +184,7 @@ AC_DEFUN([OPAL_MCA],[
         IFS="${IFS}$PATH_SEPARATOR,"
         msg=
         for item in $enable_mca_dso; do
-            AS_VAR_COPY([AS_TR_SH([DSO_$item])], [1])
+            AS_VAR_SET([AS_TR_SH([DSO_$item])], [1])
             msg="$item $msg"
         done
         IFS="$ifs_save"
@@ -212,7 +212,7 @@ AC_DEFUN([OPAL_MCA],[
         IFS="${IFS}$PATH_SEPARATOR,"
         msg=
         for item in $enable_mca_static; do
-            AS_VAR_COPY([AS_TR_SH([STATIC_$item])], [1])
+            AS_VAR_SET([AS_TR_SH([STATIC_$item])], [1])
             msg="$item $msg"
         done
         IFS="$ifs_save"
@@ -696,7 +696,7 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     AS_VAR_COPY([SHARED_COMPONENT], [DSO_$2_$3])
 
     STATIC_FRAMEWORK="$STATIC_$2"
-    AS_VAR_COPY([STATIC_COMPONENT], [DSO_$2_$3])
+    AS_VAR_COPY([STATIC_COMPONENT], [STATIC_$2_$3])
 
     # Look for the most specific specifier between static/dso.  If
     # there is a tie (either neither or both specified), prefer

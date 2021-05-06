@@ -22,6 +22,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019-2020 Google, Inc. All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -546,9 +547,9 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
     if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism) {
         char *sm_file;
 
-        rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%x.%d",
+        rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%u.%x.%d",
                            mca_btl_sm_component.backing_directory, opal_process_info.nodename,
-                           OPAL_PROC_MY_NAME.jobid, MCA_BTL_SM_LOCAL_RANK);
+                           geteuid(), OPAL_PROC_MY_NAME.jobid, MCA_BTL_SM_LOCAL_RANK);
         if (0 > rc) {
             free(btls);
             return NULL;

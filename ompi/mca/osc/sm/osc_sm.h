@@ -18,21 +18,10 @@
 
 #include "opal/mca/shmem/base/base.h"
 
-#if OPAL_HAVE_ATOMIC_MATH_64
-
 typedef uint64_t osc_sm_post_type_t;
 typedef opal_atomic_uint64_t osc_sm_post_atomic_type_t;
 #define OSC_SM_POST_BITS 6
 #define OSC_SM_POST_MASK 0x3f
-
-#else
-
-typedef uint32_t osc_sm_post_type_t;
-typedef opal_atomic_uint32_t osc_sm_post_atomic_type_t;
-#define OSC_SM_POST_BITS 5
-#define OSC_SM_POST_MASK 0x1f
-
-#endif
 
 /* data shared across all peers */
 struct ompi_osc_sm_global_state_t {

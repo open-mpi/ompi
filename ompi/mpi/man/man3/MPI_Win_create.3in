@@ -89,9 +89,9 @@ may allow the implementation to enable certain optimizations.
 .TP 1i
 accumulate_ordering
 By default, accumulate operations from one initiator to one target on
-the same window are strictly ordered.  If the info key
+the same window memory location are strictly ordered. If the info key
 accumulate_ordering is set to \fInone\fP, no ordering of accumulate
-operations guaranteed.  They key can also be a comma-separated list of
+operations guaranteed. They key can also be a comma-separated list of
 required orderings consisting of \fIrar\fP, \fIwar\fP, \fIraw\fP, and \fIwaw\fP for
 read-after-read, write-after-read, read-after-write, and
 write-after-write, respectively.  Looser ordering constraints are

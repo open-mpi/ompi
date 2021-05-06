@@ -50,12 +50,10 @@ opal_atomic_int32_t val32 = 0;
 int32_t old32 = 0;
 int32_t new32 = 0;
 
-#if OPAL_HAVE_ATOMIC_MATH_64
 opal_atomic_int64_t vol64 = 0;
 opal_atomic_int64_t val64 = 0;
 int64_t old64 = 0;
 int64_t new64 = 0;
-#endif
 
 #if OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
 opal_atomic_int128_t vol128;
@@ -83,9 +81,7 @@ static void *thread_main(void *arg)
 
     for (i = 0; i < nreps; i++) {
         opal_atomic_add_fetch_32(&val32, 5);
-#if OPAL_HAVE_ATOMIC_MATH_64
         opal_atomic_add_fetch_64(&val64, 5);
-#endif
         opal_atomic_add (&valint, 5);
     }
 
@@ -144,7 +140,6 @@ int main(int argc, char *argv[])
 
     /* -- cmpset 64-bit tests -- */
 
-#if OPAL_HAVE_ATOMIC_MATH_64
     vol64 = 42, old64 = 42, new64 = 50;
     assert(opal_atomic_compare_exchange_strong_64 (&vol64, &old64, new64) == true);
     opal_atomic_rmb();
@@ -178,7 +173,6 @@ int main(int argc, char *argv[])
     opal_atomic_rmb();
     assert(vol64 == 42);
     assert(old64 == 42);
-#endif
 
     /* -- cmpset 128-bit tests -- */
 
@@ -277,12 +271,10 @@ int main(int argc, char *argv[])
     assert((42 + 5) == val32);
 
     /* -- add_64 tests -- */
-#if OPAL_HAVE_ATOMIC_MATH_64
     val64 = 42;
     assert(opal_atomic_add_fetch_64(&val64, 5) == (42 + 5));
     opal_atomic_rmb();
     assert((42 + 5) == val64);
-#endif
     /* -- add_int tests -- */
 
     valint = 42;
@@ -294,9 +286,7 @@ int main(int argc, char *argv[])
     /* threaded tests */
 
     val32 = 0;
-#if OPAL_HAVE_ATOMIC_MATH_64
     val64 = 0ul;
-#endif
     valint = 0;
 
     /* -- create the thread set -- */
@@ -326,10 +316,8 @@ int main(int argc, char *argv[])
 
     opal_atomic_rmb();
     assert((5 * nthreads * nreps) == val32);
-#if OPAL_HAVE_ATOMIC_MATH_64
     opal_atomic_rmb();
     assert((5 * nthreads * nreps) ==  val64);
-#endif
     opal_atomic_rmb();
     assert((5 * nthreads * nreps) == valint);
 

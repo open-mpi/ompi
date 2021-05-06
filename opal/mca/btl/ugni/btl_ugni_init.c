@@ -7,6 +7,8 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -242,7 +244,7 @@ int mca_btl_ugni_init(void)
     FILE *fh;
 
     if (0 == mca_btl_ugni_component.virtual_device_count) {
-        int core_count;
+        uint32_t core_count;
 
         (void) opal_hwloc_base_get_topology();
         core_count = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE);

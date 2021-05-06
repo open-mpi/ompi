@@ -21,6 +21,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019-2021 IBM Corporation. All rights reserved.
  * Copyright (c) 2019-2020 Inria.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -369,9 +370,10 @@ int opal_hwloc_base_get_topology(void)
             return OPAL_ERROR;
         }
         if (0 != hwloc_topology_set_xmlbuffer(opal_hwloc_topology, val, strlen(val) + 1)) {
+            /* default to discovery */
             free(val);
             hwloc_topology_destroy(opal_hwloc_topology);
-            return OPAL_ERROR;
+            goto discover;
         }
         /* since we are loading this from an external source, we have to
          * explicitly set a flag so hwloc sets things up correctly
@@ -379,15 +381,17 @@ int opal_hwloc_base_get_topology(void)
         if (0
             != opal_hwloc_base_topology_set_flags(opal_hwloc_topology,
                                                   HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM, true)) {
+            /* default to discovery */
             hwloc_topology_destroy(opal_hwloc_topology);
             free(val);
-            return OPAL_ERROR;
+            goto discover;
         }
         /* now load the topology */
         if (0 != hwloc_topology_load(opal_hwloc_topology)) {
+            /* default to discovery */
             hwloc_topology_destroy(opal_hwloc_topology);
             free(val);
-            return OPAL_ERROR;
+            goto discover;
         }
         free(val);
         /* filter the cpus thru any default cpu set */
@@ -396,6 +400,7 @@ int opal_hwloc_base_get_topology(void)
             return rc;
         }
     } else {
+    discover:
         opal_output_verbose(1, opal_hwloc_base_framework.framework_output,
                             "hwloc:base discovering topology");
         if (0 != hwloc_topology_init(&opal_hwloc_topology)

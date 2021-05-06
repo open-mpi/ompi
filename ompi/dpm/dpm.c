@@ -2140,7 +2140,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
     return OMPI_SUCCESS;
 }
 #else
-static int start_dvm(char *hostfile, char *dash_host)
+static int start_dvm(char **hostfiles, char **dash_host)
 {
     return OMPI_ERROR;
 }
