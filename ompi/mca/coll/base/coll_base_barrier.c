@@ -435,9 +435,11 @@ err_hndl:
     if (NULL != requests) {
         /* find a real error code */
         if (MPI_ERR_IN_STATUS == err) {
-            for( i = 0; i < size; i++ ) {
-                if (MPI_REQUEST_NULL == requests[i]) continue;
-                if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR) continue;
+            for (i = 0; i < size; i++) {
+                if (MPI_REQUEST_NULL == requests[i])
+                    continue;
+                if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR)
+                    continue;
                 if (requests[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
                     err = requests[i]->req_status.MPI_ERROR;
                     break;

@@ -378,8 +378,10 @@ err_hndl:
         /* find a real error code */
         if (MPI_ERR_IN_STATUS == err) {
             for (i = 0; i < nreqs; i++) {
-                if (MPI_REQUEST_NULL == reqs[i]) continue;
-                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+                if (MPI_REQUEST_NULL == reqs[i])
+                    continue;
+                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)
+                    continue;
                 if (reqs[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
                     err = reqs[i]->req_status.MPI_ERROR;
                     break;

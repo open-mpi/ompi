@@ -559,9 +559,11 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
 error_hndl:
     /* find a real error code */
     if (MPI_ERR_IN_STATUS == error) {
-        for( ri = 0; ri < nreqs; ri++ ) {
-            if (MPI_REQUEST_NULL == reqs[ri]) continue;
-            if (MPI_ERR_PENDING == reqs[ri]->req_status.MPI_ERROR) continue;
+        for (ri = 0; ri < nreqs; ri++) {
+            if (MPI_REQUEST_NULL == reqs[ri])
+                continue;
+            if (MPI_ERR_PENDING == reqs[ri]->req_status.MPI_ERROR)
+                continue;
             if (reqs[ri]->req_status.MPI_ERROR != MPI_SUCCESS) {
                 error = reqs[ri]->req_status.MPI_ERROR;
                 break;
@@ -774,9 +776,11 @@ err_hndl:
     if (MPI_SUCCESS != err) {
         /* find a real error code */
         if (MPI_ERR_IN_STATUS == err) {
-            for( i = 0; i < nreqs; i++ ) {
-                if (MPI_REQUEST_NULL == req[i]) continue;
-                if (MPI_ERR_PENDING == req[i]->req_status.MPI_ERROR) continue;
+            for (i = 0; i < nreqs; i++) {
+                if (MPI_REQUEST_NULL == req[i])
+                    continue;
+                if (MPI_ERR_PENDING == req[i]->req_status.MPI_ERROR)
+                    continue;
                 if (req[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
                     err = req[i]->req_status.MPI_ERROR;
                     break;

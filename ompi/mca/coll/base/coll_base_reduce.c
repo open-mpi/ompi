@@ -366,9 +366,11 @@ int ompi_coll_base_reduce_generic(const void *sendbuf, void *recvbuf, int origin
 error_hndl: /* error handler */
     /* find a real error code */
     if (MPI_ERR_IN_STATUS == ret) {
-        for( i = 0; i < 2; i++ ) {
-            if (MPI_REQUEST_NULL == reqs[i]) continue;
-            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+        for (i = 0; i < 2; i++) {
+            if (MPI_REQUEST_NULL == reqs[i])
+                continue;
+            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)
+                continue;
             if (reqs[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
                 ret = reqs[i]->req_status.MPI_ERROR;
                 break;
@@ -378,9 +380,11 @@ error_hndl: /* error handler */
     ompi_coll_base_free_reqs(reqs, 2);
     if (NULL != sreq) {
         if (MPI_ERR_IN_STATUS == ret) {
-            for( i = 0; i < max_outstanding_reqs; i++ ) {
-                if (MPI_REQUEST_NULL == sreq[i]) continue;
-                if (MPI_ERR_PENDING == sreq[i]->req_status.MPI_ERROR) continue;
+            for (i = 0; i < max_outstanding_reqs; i++) {
+                if (MPI_REQUEST_NULL == sreq[i])
+                    continue;
+                if (MPI_ERR_PENDING == sreq[i]->req_status.MPI_ERROR)
+                    continue;
                 if (sreq[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
                     ret = sreq[i]->req_status.MPI_ERROR;
                     break;
