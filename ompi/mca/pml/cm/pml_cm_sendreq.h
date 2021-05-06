@@ -15,6 +15,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +33,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "opal/prefetch.h"
+#include "opal/runtime/opal_params.h"
 
 struct mca_pml_cm_send_request_t {
     mca_pml_cm_request_t req_base;
@@ -242,14 +245,16 @@ do {                                                                    \
             (unsigned char*)buf + datatype->super.true_lb;              \
         (req_send)->req_base.req_convertor.count      = count;          \
         (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
-        /* Switches off CUDA detection if                               \
-         MTL set MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE during init */     \
-        MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);   \
-        (req_send)->req_base.req_convertor.flags |= flags;              \
-        /* Sets CONVERTOR_CUDA flag if CUDA buffer */                   \
-        opal_convertor_prepare_for_send(                                \
-            &req_send->req_base.req_convertor,                          \
-            &datatype->super, count, buf );                             \
+        if (opal_built_with_cuda_support) {                             \
+            /* Switches off CUDA detection if                               \
+             MTL set MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE during init */     \
+            MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);   \
+            (req_send)->req_base.req_convertor.flags |= flags;              \
+            /* Sets CONVERTOR_CUDA flag if CUDA buffer */                   \
+            opal_convertor_prepare_for_send(                            \
+                &req_send->req_base.req_convertor,                      \
+                &datatype->super, count, buf );                         \
+        }                                                               \
     } else {                                                            \
         MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);   \
         opal_convertor_copy_and_prepare_for_send(                       \
