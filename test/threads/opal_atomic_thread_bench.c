@@ -21,6 +21,65 @@
 #define ITERATIONS             1000000
 #define ITEM_COUNT             100
 
+#ifdef __APPLE__
+/* pthread barrier implementation copied from stack overflow.
+ * Source:
+ * https://stackoverflow.com/questions/3640853/performance-test-sem-t-v-s-dispatch-semaphore-t-and-pthread-once-t-v-s-dispatch
+ */
+typedef int pthread_barrierattr_t;
+struct pthread_barrier_t {
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    int count;
+    int tripCount;
+};
+
+typedef struct pthread_barrier_t pthread_barrier_t;
+
+int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t *attr,
+                         unsigned int count)
+{
+    if (count == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (pthread_mutex_init(&barrier->mutex, 0) < 0) {
+        return -1;
+    }
+    if (pthread_cond_init(&barrier->cond, 0) < 0) {
+        pthread_mutex_destroy(&barrier->mutex);
+        return -1;
+    }
+    barrier->tripCount = count;
+    barrier->count = 0;
+
+    return 0;
+}
+
+int pthread_barrier_destroy(pthread_barrier_t *barrier)
+{
+    pthread_cond_destroy(&barrier->cond);
+    pthread_mutex_destroy(&barrier->mutex);
+    return 0;
+}
+
+int pthread_barrier_wait(pthread_barrier_t *barrier)
+{
+    pthread_mutex_lock(&barrier->mutex);
+    ++(barrier->count);
+    if (barrier->count >= barrier->tripCount) {
+        barrier->count = 0;
+        pthread_cond_broadcast(&barrier->cond);
+        pthread_mutex_unlock(&barrier->mutex);
+        return 1;
+    }
+
+    pthread_cond_wait(&barrier->cond, &(barrier->mutex));
+    pthread_mutex_unlock(&barrier->mutex);
+    return 0;
+}
+#endif
+
 static opal_atomic_int64_t var_64 = 0;
 static opal_atomic_int32_t var_32 = 0;
 static pthread_barrier_t barrier;
