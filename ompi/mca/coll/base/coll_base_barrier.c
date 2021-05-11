@@ -384,8 +384,10 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
             for( i = 0; i < size; i++ ) {
                 if (MPI_REQUEST_NULL == requests[i]) continue;
                 if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR) continue;
-                err = requests[i]->req_status.MPI_ERROR;
-                break;
+                if (requests[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
+                    err = requests[i]->req_status.MPI_ERROR;
+                    break;
+                }
             }
         }
         ompi_coll_base_free_reqs(requests, size);
