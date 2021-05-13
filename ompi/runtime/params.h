@@ -175,6 +175,10 @@ OMPI_DECLSPEC extern char * ompi_mpi_spc_attach_string;
  */
 OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
 
+/**
+ * Timeout for calls to PMIx_Connect(defaut 0, no timeout)
+ */
+OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
 
 /**
  * Register MCA parameters used by the MPI layer.
