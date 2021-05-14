@@ -16,6 +16,8 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -172,6 +174,10 @@ OMPI_DECLSPEC extern char * ompi_mpi_spc_attach_string;
  */
 OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
 
+/**
+ * Timeout for calls to PMIx_Connect(defaut 0, no timeout)
+ */
+OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
 
 /**
  * Register MCA parameters used by the MPI layer.
