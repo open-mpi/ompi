@@ -854,6 +854,7 @@ int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base) {
 int ompi_osc_ucx_free(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int i, ret;
+    uint64_t idx;
 
     assert(module->global_ops_num == 0);
     assert(module->lock_count == 0);
@@ -873,6 +874,14 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
 
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
+
+   /* MPI_Win_free should detach any memory attached to dynamic windows */
+    for (idx = 0; idx < module->state.dynamic_win_count; idx++) {
+        assert(module->local_dynamic_win_info[idx].refcnt == 1);
+        ucp_mem_unmap(mca_osc_ucx_component.ucp_context,
+                      module->local_dynamic_win_info[idx].memh);
+    }
+    module->state.dynamic_win_count = 0;
 
     for (i = 0; i < ompi_comm_size(module->comm); i++) {
         if ((module->win_info_array[i]).rkey_init == true) {
