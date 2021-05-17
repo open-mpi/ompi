@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2021 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -47,6 +47,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
                          MPI_Comm comm, MPI_Status *status)
 
 {
+    ompi_request_t* req;
     int rc = MPI_SUCCESS;
 
     SPC_RECORD(OMPI_SPC_SENDRECV_REPLACE, 1);
@@ -100,19 +101,18 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     struct iovec iov = { .iov_base = packed_data, .iov_len = sizeof(packed_data) };
     size_t packed_size, max_data;
     uint32_t iov_count;
-    ompi_status_public_t recv_status;
     ompi_proc_t* proc = ompi_comm_peer_lookup(comm, dest);
     if(proc == NULL) {
         rc = MPI_ERR_RANK;
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
 
-    /* initialize convertor to unpack recv buffer */
+    /* initialize convertor to pack send buffer */
     OBJ_CONSTRUCT(&convertor, opal_convertor_t);
     opal_convertor_copy_and_prepare_for_send( proc->super.proc_convertor, &(datatype->super),
                                               count, buf, 0, &convertor );
 
-    /* setup a buffer for recv */
+    /* setup a temporary buffer to send */
     opal_convertor_get_packed_size( &convertor, &packed_size );
     if( packed_size > sizeof(packed_data) ) {
         rc = PMPI_Alloc_mem(packed_size, MPI_INFO_NULL, &iov.iov_base);
@@ -124,17 +124,25 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     }
     max_data = packed_size;
     iov_count = 1;
-    rc = opal_convertor_pack(&convertor, &iov, &iov_count, &max_data);
-    
-    /* recv into temporary buffer */
-    rc = PMPI_Sendrecv( iov.iov_base, packed_size, MPI_PACKED, dest, sendtag, buf, count,
-                        datatype, source, recvtag, comm, &recv_status );
+    (void)opal_convertor_pack(&convertor, &iov, &iov_count, &max_data);
+
+    /* receive into the buffer */
+    rc = MCA_PML_CALL(irecv(buf, count, datatype,
+                            source, recvtag, comm, &req));
+    if(OMPI_SUCCESS != rc) {
+        goto cleanup_and_return;
+    }
+
+    /* send from the temporary buffer */
+    rc = MCA_PML_CALL(send(iov.iov_base, packed_size, MPI_PACKED, dest,
+                           sendtag, MCA_PML_BASE_SEND_STANDARD, comm));
+    if(OMPI_SUCCESS != rc) {
+        goto cleanup_and_return;
+    }
+
+    rc = ompi_request_wait(&req, status);
 
  cleanup_and_return:
-    /* return status to user */
-    if(status != MPI_STATUS_IGNORE) {
-        *status = recv_status;
-    }
 
     /* release resources */
     if(packed_size > sizeof(packed_data)) {
