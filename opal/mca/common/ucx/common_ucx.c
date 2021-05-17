@@ -3,6 +3,9 @@
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +36,8 @@ opal_common_ucx_module_t opal_common_ucx = {.verbose = 0,
                                             .opal_mem_hooks = 0,
                                             .tls = NULL};
 
+static opal_mutex_t opal_common_ucx_mutex = OPAL_MUTEX_STATIC_INIT;
+
 static void opal_common_ucx_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
 {
     ucm_vm_munmap(buf, length);
@@ -42,19 +47,26 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
 {
     static const char *default_tls = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,cuda_ipc,rocm_ipc";
     static const char *default_devices = "mlx*";
-    static int registered = 0;
     static int hook_index;
     static int verbose_index;
     static int progress_index;
     static int tls_index;
     static int devices_index;
+    int param;
 
-    if (!registered) {
+    OPAL_THREAD_LOCK(&opal_common_ucx_mutex);
+
+    param = mca_base_var_find("opal", "opal_common", "ucx", "verbose");
+    if (0 > param) {
         verbose_index = mca_base_var_register("opal", "opal_common", "ucx", "verbose",
                                               "Verbose level of the UCX components",
                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                               MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                               MCA_BASE_VAR_SCOPE_LOCAL, &opal_common_ucx.verbose);
+    }
+
+    param = mca_base_var_find("opal", "opal_common", "ucx", "progress_iterations");
+    if (0 > param) {
         progress_index = mca_base_var_register("opal", "opal_common", "ucx", "progress_iterations",
                                                "Set number of calls of internal UCX progress "
                                                "calls per opal_progress call",
@@ -62,14 +74,31 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                                MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                                MCA_BASE_VAR_SCOPE_LOCAL,
                                                &opal_common_ucx.progress_iterations);
+    }
+
+    param = mca_base_var_find("opal", "opal_common", "ucx", "opal_mem_hooks");
+    if (0 > param) {
         hook_index = mca_base_var_register("opal", "opal_common", "ucx", "opal_mem_hooks",
                                            "Use OPAL memory hooks, instead of UCX internal "
                                            "memory hooks",
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &opal_common_ucx.opal_mem_hooks);
+    }
 
-        opal_common_ucx.tls = malloc(sizeof(*opal_common_ucx.tls));
+    param = mca_base_var_find("opal", "opal_common", "ucx", "tls");
+    if (0 > param) {
+
+        /*
+         * this monkey business is needed because of the way the MCA VARs framework tries to handle pointers to strings
+         * when destructing the MCA var database.  If you don't do something like this,the MCA var framework will try
+         * to dereference a pointer which itself is no longer a valid address owing to having been previously dlclosed.
+         * Same for the devices pointer below.
+         */
+        if (NULL == opal_common_ucx.tls) {
+            opal_common_ucx.tls  = malloc(sizeof(*opal_common_ucx.tls));
+            assert(NULL != opal_common_ucx.tls);
+        }
         *opal_common_ucx.tls = strdup(default_tls);
         tls_index = mca_base_var_register(
             "opal", "opal_common", "ucx", "tls",
@@ -80,8 +109,15 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
             "please set to '^posix,sysv,self,tcp,cma,knem,xpmem'.",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
             opal_common_ucx.tls);
+    }
 
-        opal_common_ucx.devices = malloc(sizeof(*opal_common_ucx.devices));
+    param = mca_base_var_find("opal", "opal_common", "ucx", "devices");
+    if (0 > param) {
+
+        if (NULL == opal_common_ucx.devices) {
+            opal_common_ucx.devices = malloc(sizeof(*opal_common_ucx.devices));
+            assert(NULL != opal_common_ucx.devices);
+        }
         *opal_common_ucx.devices = strdup(default_devices);
         devices_index = mca_base_var_register(
             "opal", "opal_common", "ucx", "devices",
@@ -89,8 +125,8 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
             "bump its priority above ob1. Special values: any (any available)",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
             opal_common_ucx.devices);
-        registered = 1;
     }
+
     if (component) {
         mca_base_var_register_synonym(verbose_index, component->mca_project_name,
                                       component->mca_type_name, component->mca_component_name,
@@ -108,6 +144,8 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                       component->mca_type_name, component->mca_component_name,
                                       "devices", 0);
     }
+
+    OPAL_THREAD_UNLOCK(&opal_common_ucx_mutex);
 }
 
 OPAL_DECLSPEC void opal_common_ucx_mca_register(void)

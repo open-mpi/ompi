@@ -2,7 +2,7 @@
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2020      Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
@@ -32,6 +32,7 @@ OPAL_DECLSPEC opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                                           .verbose = 0};
 
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream";
+static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
 
 OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item)
 {
@@ -54,23 +55,29 @@ OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item)
 
 OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component)
 {
-    static int registered = 0;
     static int include_index;
     static int exclude_index;
     static int verbose_index;
+    int param;
 
     if (fi_version() < FI_VERSION(1, 0)) {
         return OPAL_ERROR;
     }
 
-    if (!registered) {
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
+
+    param = mca_base_var_find("opal", "opal_common", "ofi", "provider_incude");
+    if (0 > param) {
         /*
          * this monkey business is needed because of the way the MCA VARs stuff tries to handle
          * pointers to strings when when destructing the MCA var database.  If you don't do
          * something like this,the MCA var framework will try to dereference a pointer which itself
          * is no longer a valid address owing to having been previously dlclosed.
          */
-        opal_common_ofi.prov_include = (char **) malloc(sizeof(char *));
+        if (NULL == opal_common_ofi.prov_include) {
+            opal_common_ofi.prov_include = (char **) malloc(sizeof(char *));
+            assert(NULL != opal_common_ofi.prov_include);
+        }
         *opal_common_ofi.prov_include = NULL;
         include_index = mca_base_var_register(
             "opal", "opal_common", "ofi", "provider_include",
@@ -79,7 +86,14 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
             "exclusive with mtl_ofi_provider_exclude.",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_1, MCA_BASE_VAR_SCOPE_READONLY,
             opal_common_ofi.prov_include);
-        opal_common_ofi.prov_exclude = (char **) malloc(sizeof(char *));
+    }
+
+    param = mca_base_var_find("opal", "opal_common", "ofi", "provider_exclude");
+    if (0 > param) {
+        if (NULL == opal_common_ofi.prov_exclude) {
+            opal_common_ofi.prov_exclude = (char **) malloc(sizeof(char *));
+            assert(NULL != opal_common_ofi.prov_exclude);
+        }
         *opal_common_ofi.prov_exclude = strdup(default_prov_exclude_list);
         exclude_index = mca_base_var_register(
             "opal", "opal_common", "ofi", "provider_exclude",
@@ -88,12 +102,16 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
             "exclusive with mtl_ofi_provider_include.",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_1, MCA_BASE_VAR_SCOPE_READONLY,
             opal_common_ofi.prov_exclude);
+    }
+
+    param = mca_base_var_find("opal", "opal_common", "ofi", "verbose");
+    if (0 > param) {
         verbose_index = mca_base_var_register("opal", "opal_common", "ofi", "verbose",
                                               "Verbose level of the OFI components",
                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                               MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                                              MCA_BASE_VAR_SCOPE_LOCAL, &opal_common_ofi.verbose);
-        registered = 1;
+                                              MCA_BASE_VAR_SCOPE_LOCAL,
+                                              &opal_common_ofi.verbose);
     }
 
     if (component) {
@@ -107,6 +125,8 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
                                       component->mca_type_name, component->mca_component_name,
                                       "verbose", 0);
     }
+
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
 
     return OPAL_SUCCESS;
 }
