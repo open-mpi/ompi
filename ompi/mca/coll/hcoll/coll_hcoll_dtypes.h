@@ -34,7 +34,7 @@ extern mca_coll_hcoll_dtype_t zero_dte_mapping;
 total 15 types
 */
 
-static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OMPI_DATATYPE_MAX_PREDEFINED] = {
+static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OPAL_DATATYPE_MAX_PREDEFINED] = {
     &DTE_ZERO,                  /*OPAL_DATATYPE_LOOP           0 */
     &DTE_ZERO,                  /*OPAL_DATATYPE_END_LOOP       1 */
 #if defined(DTE_LB)
@@ -92,7 +92,17 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OMPI_DATATYPE_MAX
 #else
     &DTE_ZERO,
 #endif
-    &DTE_ZERO                   /*OPAL_DATATYPE_UNAVAILABLE    25 */
+#if SIZEOF_LONG == 4
+    &DTE_UINT32,
+#else
+    &DTE_UINT64,                /*OPAL_DATATYPE_LONG           25 */
+#endif
+#if SIZEOF_UNSIGNED_LONG == 4
+    &DTE_UINT32,
+#else
+    &DTE_UINT64,                /*OPAL_DATATYPE_UNSIGNED_LONG  26 */
+#endif
+    &DTE_ZERO                   /*OPAL_DATATYPE_UNAVAILABLE    27 */
 };
 
 enum {
