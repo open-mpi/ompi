@@ -14,6 +14,8 @@ dnl Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
 dnl                         All Rights reserved.
+dnl Copyright (c) 2021      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -103,10 +105,10 @@ AC_DEFUN([OPAL_MCA],[
                 type=$item
             fi
             if test -z $comp ; then
-                AS_VAR_SET([AS_TR_SH([DISABLE_$type])], [1])
+                AS_VAR_SET([AS_TR_SH([DISABLE_${type}])], [1])
                 msg="$item $msg"
             else
-                AS_VAR_SET([AS_TR_SH([DISABLE_$type_$comp])], [1])
+                AS_VAR_SET([AS_TR_SH([DISABLE_${type}_${comp}])], [1])
                 msg="$item $msg"
             fi
         done
@@ -934,7 +936,7 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
 
     # if we were explicitly disabled, don't build :)
     AS_IF([test "$DISABLE_$2" = "1"], [want_component=0])
-    AS_VAR_IF([DISABLE_$2_$3], [1], [want_component = 0])
+    AS_VAR_IF([DISABLE_$2_$3], [1], [want_component=0])
 
     AS_IF([test "$want_component" = "1"], [$4], [$5])
 ])
