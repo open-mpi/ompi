@@ -17,5 +17,5 @@ pkgincludedir=@opalincludedir@
 # dependencies), so only list these in Libs.private.
 #
 Libs: -L${libdir} @OMPI_PKG_CONFIG_LDFLAGS@ @OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@ @OMPI_FORTRAN_MPIFH_LINK@ -l@OMPI_LIBMPI_NAME@
-Libs.private: -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
+Libs.private: -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
 Cflags: -I${includedir} @OMPI_WRAPPER_EXTRA_CPPFLAGS@ @OMPI_WRAPPER_EXTRA_FCFLAGS@
