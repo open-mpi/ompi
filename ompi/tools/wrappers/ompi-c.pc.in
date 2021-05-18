@@ -13,10 +13,9 @@ libdir=@libdir@
 pkgincludedir=@opalincludedir@
 #
 # Note that -lopen-pal and all the EXTRA_LIBS are only necessary when
-# static linking (they're pulled in by libopen-rte.so's implicit
-# dependencies), so only list these in Libs.private.
+# static linking, so only list these in Libs.private.
 #
 Libs: -L${libdir} @OMPI_PKG_CONFIG_LDFLAGS@ -l@OMPI_LIBMPI_NAME@
-Libs.private: -lopen-rte -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
+Libs.private: -lopen-pal @OMPI_WRAPPER_EXTRA_LIBS@
 #
 Cflags: -I${includedir} @OMPI_WRAPPER_EXTRA_CPPFLAGS@ @OMPI_WRAPPER_EXTRA_CFLAGS@
