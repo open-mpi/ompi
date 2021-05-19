@@ -1148,7 +1148,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
-             * behavior as --prefix option to orterun)
+             * behavior as --prefix option to prun)
              *
              * This is a job-level key
              */
@@ -1472,7 +1472,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #endif
 
-            /* see if this is a non-mpi job - if so, then set the flag so ORTE
+            /* see if this is a non-mpi job - if so, then set the flag so PRTE
              * knows what to do - job-level key
              */
             ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
@@ -2057,7 +2057,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
          will) reset them.  If we don't do this, the event
          library may have left some set that, at least on some
          OS's, don't get reset via fork() or exec().  Hence, the
-         orted could be unkillable (for example). */
+         prted could be unkillable (for example). */
         set_handler_default(SIGTERM);
         set_handler_default(SIGINT);
         set_handler_default(SIGHUP);
@@ -2067,9 +2067,9 @@ static int start_dvm(char **hostfiles, char **dash_host)
         /* Unblock all signals, for many of the same reasons that
          we set the default handlers, above.  This is noticable
          on Linux where the event library blocks SIGTERM, but we
-         don't want that blocked by the orted (or, more
+         don't want that blocked by the prted (or, more
          specifically, we don't want it to be blocked by the
-         orted and then inherited by the ORTE processes that it
+         prted and then inherited by the PRTE processes that it
          forks, making them unkillable by SIGTERM). */
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);

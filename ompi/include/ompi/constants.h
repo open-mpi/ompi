@@ -27,7 +27,7 @@
 
 /* error codes */
 enum {
-    /* Error codes inherited from ORTE/OPAL.  Still enum values so
+    /* Error codes inherited from OPAL.  Still enum values so
        that we might get nice debugger help */
     OMPI_SUCCESS                    = OPAL_SUCCESS,
     OMPI_ERROR                      = OPAL_ERROR,

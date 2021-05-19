@@ -62,7 +62,7 @@ my $comp_flags = "";
 my $comp_flags_prefix = "";
 my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
 # Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
-# intentionally only link in the MPI libraries (ORTE, OPAL, etc. are
+# intentionally only link in the MPI libraries (OPAL, etc. are
 # pulled in implicitly) because we intend MPI applications to only use
 # the MPI API.
 my $libs = "-l".$ompi_libmpi_name." " . $extra_libs;
