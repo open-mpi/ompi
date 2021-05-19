@@ -42,7 +42,7 @@ opal_shmem_base_module_t *opal_shmem_base_module = NULL;
 /*
  * Performs a run-time query across all available shmem components.
  * Similar to mca_base_select, but take into consideration environment
- * hints provided by orte.
+ * hints provided by prte.
  */
 static int opal_shmem_base_runtime_query(mca_base_module_t **best_module,
                                          mca_base_component_t **best_component)
