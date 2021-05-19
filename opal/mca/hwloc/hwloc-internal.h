@@ -203,8 +203,8 @@ typedef uint16_t opal_binding_policy_t;
  * cpu list based on its node-local-rank */
 #define OPAL_BIND_ORDERED 0x8000
 
-/* binding policies - any changes in these
- * values must be reflected in orte/mca/rmaps/rmaps.h
+/*
+ * binding policies
  */
 #define OPAL_BIND_TO_NONE            1
 #define OPAL_BIND_TO_BOARD           2

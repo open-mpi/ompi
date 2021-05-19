@@ -55,7 +55,7 @@ OPAL_DECLSPEC int opal_shmem_unlink(opal_shmem_ds_t *ds_buf);
  *
  * @retval name of best component.  NULL if no component is found.
  *
- * see: orte/mca/odls/base/odls_base_default_fns.c
+ * see: 3rd-party/prrte/src/mca/odls/base/odls_base_default_fns.c
  */
 OPAL_DECLSPEC char *opal_shmem_base_best_runnable_component_name(void);
 

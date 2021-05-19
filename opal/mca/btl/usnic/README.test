@@ -23,7 +23,7 @@ Goals
 Anti-Goals
 ----------
 * Testing the low level networking API (e.g., libfabric).
-* Testing inter-process interaction, such as ORTE-related functionality.
+* Testing inter-process interaction, such as PRTE-related functionality.
 
 Constraints
 -----------

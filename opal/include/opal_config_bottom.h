@@ -551,7 +551,7 @@ typedef struct {
    directly in opal_config.h because they'll be turned into #defines'
    via autoconf.
 
-   So put them here in case any only else includes OMPI/ORTE/OPAL's
+   So put them here in case any only else includes OMPI/OPAL's
    config.h files. */
 
 #    undef PACKAGE_BUGREPORT
