@@ -66,7 +66,7 @@ ompi_info_SOURCES = \
         param.c
 
 ompi_info_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
-ompi_info_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+ompi_info_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 distclean-local:
 	rm -f $(man_pages)

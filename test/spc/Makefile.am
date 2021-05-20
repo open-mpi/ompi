@@ -17,7 +17,7 @@ if PROJECT_OMPI
     spc_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     spc_test_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 endif # PROJECT_OMPI
 
 distclean:

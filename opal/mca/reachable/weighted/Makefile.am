@@ -29,7 +29,7 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_reachable_weighted_la_SOURCES = $(sources)
 mca_reachable_weighted_la_LDFLAGS = -module -avoid-version
-mca_reachable_weighted_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+mca_reachable_weighted_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_reachable_weighted_la_SOURCES =$(sources)

@@ -60,8 +60,8 @@ sources = \
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = lib@OPAL_LIB_PREFIX@mca_common_ofi.la
-comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst.la
+comp_inst = lib@OPAL_LIB_NAME@mca_common_ofi.la
+comp_noinst = lib@OPAL_LIB_NAME@mca_common_ofi_noinst.la
 
 
 if MCA_BUILD_opal_common_ofi_DSO
@@ -70,15 +70,15 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-lib@OPAL_LIB_PREFIX@mca_common_ofi_la_SOURCES = $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_ofi_la_LDFLAGS = \
+lib@OPAL_LIB_NAME@mca_common_ofi_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_NAME@mca_common_ofi_la_LDFLAGS = \
         $(opal_ofi_LDFLAGS) \
         -version-info $(libmca_opal_common_ofi_so_version)
-lib@OPAL_LIB_PREFIX@mca_common_ofi_la_LIBADD = $(opal_ofi_LIBS)
+lib@OPAL_LIB_NAME@mca_common_ofi_la_LIBADD = $(opal_ofi_LIBS)
 
-lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_SOURCES = $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_LDFLAGS = $(opal_ofi_LDFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ofi_noinst_la_LIBADD = $(opal_ofi_LIBS)
+lib@OPAL_LIB_NAME@mca_common_ofi_noinst_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_NAME@mca_common_ofi_noinst_la_LDFLAGS = $(opal_ofi_LDFLAGS)
+lib@OPAL_LIB_NAME@mca_common_ofi_noinst_la_LIBADD = $(opal_ofi_LIBS)
 
 # Conditionally install the header files
 

@@ -31,7 +31,7 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_memkind_la_SOURCES = $(memkind_SOURCES)
 nodist_mca_mpool_memkind_la_SOURCES = $(memkind_nodist_SOURCES)
-mca_mpool_memkind_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+mca_mpool_memkind_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(mpool_memkind_LIBS)
 mca_mpool_memkind_la_LDFLAGS = -module -avoid-version $(mpool_memkind_LDFLAGS)
 

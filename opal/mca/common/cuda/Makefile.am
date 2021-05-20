@@ -71,8 +71,8 @@ dist_opaldata_DATA = help-mpi-common-cuda.txt
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = lib@OPAL_LIB_PREFIX@mca_common_cuda.la
-comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_cuda_noinst.la
+comp_inst = lib@OPAL_LIB_NAME@mca_common_cuda.la
+comp_noinst = lib@OPAL_LIB_NAME@mca_common_cuda_noinst.la
 
 if MCA_BUILD_opal_common_cuda_DSO
 lib_LTLIBRARIES += $(comp_inst)
@@ -80,14 +80,14 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-lib@OPAL_LIB_PREFIX@mca_common_cuda_la_SOURCES = $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_cuda_la_LDFLAGS = \
+lib@OPAL_LIB_NAME@mca_common_cuda_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_NAME@mca_common_cuda_la_LDFLAGS = \
         -version-info $(libmca_opal_common_cuda_so_version)
-lib@OPAL_LIB_PREFIX@mca_common_cuda_la_LIBADD = $(common_cuda_LIBS)
+lib@OPAL_LIB_NAME@mca_common_cuda_la_LIBADD = $(common_cuda_LIBS)
 
-lib@OPAL_LIB_PREFIX@mca_common_cuda_noinst_la_SOURCES = $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_cuda_noinst_la_LDFLAGS = $(common_cuda_LDFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_cuda_noinst_la_LIBADD = $(common_cuda_LIBS)
+lib@OPAL_LIB_NAME@mca_common_cuda_noinst_la_SOURCES = $(headers) $(sources)
+lib@OPAL_LIB_NAME@mca_common_cuda_noinst_la_LDFLAGS = $(common_cuda_LDFLAGS)
+lib@OPAL_LIB_NAME@mca_common_cuda_noinst_la_LIBADD = $(common_cuda_LIBS)
 
 # Conditionally install the header files
 

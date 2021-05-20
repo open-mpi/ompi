@@ -72,7 +72,7 @@ oshmem_info_SOURCES = \
 
 oshmem_info_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 oshmem_info_LDADD += $(top_builddir)/oshmem/liboshmem.la
-oshmem_info_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+oshmem_info_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 distclean-local:
 	rm -f $(man_pages)
