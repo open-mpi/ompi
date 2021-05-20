@@ -101,11 +101,6 @@ typedef struct {
     char *mem_addrs;
     int *mem_displs;
 
-    /* A list of mem records
-     * We need to kepp trakc o fallocated memory records so that we can free them at the end
-     * if a thread fails to release the memory record */
-    opal_list_t mem_records;
-
     /* TLS item that allows each thread to
      * store endpoints and rkey arrays
      * for faster access */

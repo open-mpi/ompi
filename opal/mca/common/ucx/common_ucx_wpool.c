@@ -433,7 +433,6 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx, void **mem_base, si
     mem->mem_displs = NULL;
 
     OBJ_CONSTRUCT(&mem->mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&mem->mem_records, opal_list_t);
 
     ret = _comm_ucx_wpmem_map(ctx->wpool, mem_base, mem_size, &mem->memh, mem_type);
     if (ret != OPAL_SUCCESS) {
@@ -527,13 +526,6 @@ void opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem)
     }
 
     OBJ_DESTRUCT(&mem->tls_key);
-
-    /* Loop through list of records */
-    OPAL_LIST_FOREACH_SAFE (mem_rec, next, &mem->mem_records, _mem_record_t) {
-        _tlocal_mem_rec_cleanup(mem_rec);
-    }
-
-    OBJ_DESTRUCT(&mem->mem_records);
 
     free(mem->mem_addrs);
     free(mem->mem_displs);
@@ -673,11 +665,6 @@ static void _tlocal_mem_rec_cleanup(_mem_record_t *mem_rec)
     opal_mutex_unlock(&mem_rec->winfo->mutex);
     free(mem_rec->rkeys);
 
-    /* Remove item from the list */
-    opal_mutex_lock(&mem_rec->gmem->mutex);
-    opal_list_remove_item(&mem_rec->gmem->mem_records, &mem_rec->super);
-    opal_mutex_unlock(&mem_rec->gmem->mutex);
-
     OBJ_RELEASE(mem_rec);
 
     return;
@@ -700,10 +687,6 @@ static _mem_record_t *_tlocal_add_mem_rec(opal_common_ucx_wpmem_t *mem, _ctx_rec
     if (OPAL_SUCCESS != rc) {
         return NULL;
     }
-
-    opal_mutex_lock(&mem->mutex);
-    opal_list_append(&mem->mem_records, &mem_rec->super);
-    opal_mutex_unlock(&mem->mutex);
 
     return mem_rec;
 }
@@ -752,11 +735,19 @@ OPAL_DECLSPEC int opal_common_ucx_tlocal_fetch_spath(opal_common_ucx_wpmem_t *me
     }
     ep = winfo->endpoints[target];
 
-    /* Obtain the memory region info */
-    mem_rec = _tlocal_add_mem_rec(mem, ctx_rec);
+
+    rc = opal_tsd_tracked_key_get(&mem->tls_key, (void **) &mem_rec);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    if (NULL == mem_rec) {
+        /* Allocate a memory region info */
+        mem_rec = _tlocal_add_mem_rec(mem, ctx_rec);
+    }
 
     /* Obtain the rkey */
-    if (OPAL_UNLIKELY(NULL == mem_rec->rkeys[target])) {
+    if (NULL == mem_rec->rkeys[target]) {
         /* Create the rkey */
         rc = _tlocal_mem_create_rkey(mem_rec, ep, target);
         if (rc) {
