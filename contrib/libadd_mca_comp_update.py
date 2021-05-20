@@ -7,7 +7,7 @@
 
 import glob, os, re, shutil
 
-projects= {'opal' : ["$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la"],
+projects= {'opal' : ["$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la"],
            'ompi' : ["$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la"],
            'oshmem' : ["$(top_builddir)/oshmem/liboshmem.la"],
           }

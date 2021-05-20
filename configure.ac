@@ -328,7 +328,9 @@ fi
 
 # The library prefixes must be set before we call OPAL MCA.  Here is
 # as good a place as any.
-OPAL_SET_LIB_PREFIX([])
+m4_ifdef([project_opal],
+[OPAL_SET_LIB_NAME([open-pal])])
+
 m4_ifdef([project_ompi],
           [OMPI_SET_LIB_NAME([])])
 

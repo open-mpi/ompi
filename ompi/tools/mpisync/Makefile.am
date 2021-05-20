@@ -76,7 +76,7 @@ mpisync_SOURCES = \
         sync.c
 
 mpisync_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
-mpisync_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+mpisync_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 distclean-local:
 	rm -f $(man_pages)

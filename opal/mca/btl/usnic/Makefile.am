@@ -92,7 +92,7 @@ mca_btl_usnic_la_LDFLAGS = \
         $(opal_btl_usnic_LDFLAGS) \
         $(opal_ofi_LDFLAGS) \
         -module -avoid-version
-mca_btl_usnic_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+mca_btl_usnic_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(opal_ofi_LIBS)
 
 noinst_LTLIBRARIES = $(lib)

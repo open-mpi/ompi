@@ -744,7 +744,7 @@ int main(int argc, char *argv[])
                switch.  It should only be used by Open MPI developers
                -- not end users.  It will cause mpicc to use the
                static library list, even if we're compiling
-               dynamically (i.e., it'll specifically -lopen-pal
+               dynamically (i.e., it'll specifically -l@OPAL_LIB_NAME@
                (and all their dependent libs)).  We provide
                this flag for test MPI applications that also invoke
                OPAL function calls.

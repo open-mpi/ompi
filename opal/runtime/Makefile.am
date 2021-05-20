@@ -37,7 +37,7 @@ headers += \
         runtime/opal_params.h \
         runtime/opal_progress_threads.h
 
-lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
+lib@OPAL_LIB_NAME@_la_SOURCES += \
         runtime/opal_progress.c \
         runtime/opal_finalize.c \
         runtime/opal_init.c \

@@ -50,6 +50,7 @@ my $fc_module_flag = "@OMPI_FC_MODULE_FLAG@";
 my $dynamic_lib_suffix = "@OPAL_DYN_LIB_SUFFIX@";
 my $fortran_libs = "@OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@";
 my $ompi_libmpi_name = "@OMPI_LIBMPI_NAME@";
+my $opal_libopal_name = "@OPAL_LIB_NAME@";
 
 # Someone might want to fix for windows
 my $include_flag = "-I";
@@ -66,7 +67,7 @@ my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
 # pulled in implicitly) because we intend MPI applications to only use
 # the MPI API.
 my $libs = "-l".$ompi_libmpi_name." " . $extra_libs;
-my $libs_static = "-l".$ompi_libmpi_name." -lopen-pal " . $extra_libs;
+my $libs_static = "-l".$ompi_libmpi_name. "-l".$opal_libopal_name. $extra_libs;
 
 my $have_dynamic = 0;
 if (-e $libdir . "/lib".$ompi_libmpi_name."." . $dynamic_lib_suffix) {

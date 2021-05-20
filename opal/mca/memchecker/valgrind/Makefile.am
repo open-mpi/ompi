@@ -32,7 +32,7 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_memchecker_valgrind_la_SOURCES = $(sources)
 mca_memchecker_valgrind_la_LDFLAGS = -module -avoid-version
-mca_memchecker_valgrind_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+mca_memchecker_valgrind_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(OPAL_TOP_BUILDDIR)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(component_noinst)

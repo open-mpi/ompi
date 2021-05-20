@@ -15,7 +15,7 @@ pkgincludedir=@opalincludedir@
 # (they're pulled in via libopen-pal.so's implicit dependencies), so
 # list them in Libs.private.
 #
-Libs: -L${libdir} @OPAL_PKG_CONFIG_LDFLAGS@ -lopen-pal
+Libs: -L${libdir} @OPAL_PKG_CONFIG_LDFLAGS@ -l@OPAL_LIB_NAME@
 Libs.private: @OPAL_WRAPPER_EXTRA_LIBS@
 #
 # It is safe to hard-wire the -I before the EXTRA_INCLUDES because we

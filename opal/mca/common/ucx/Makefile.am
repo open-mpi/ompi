@@ -42,8 +42,8 @@ sources = \
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = lib@OPAL_LIB_PREFIX@mca_common_ucx.la
-comp_noinst = lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst.la
+comp_inst = lib@OPAL_LIB_NAME@mca_common_ucx.la
+comp_noinst = lib@OPAL_LIB_NAME@mca_common_ucx_noinst.la
 
 if MCA_BUILD_opal_common_ucx_DSO
 lib_LTLIBRARIES += $(comp_inst)
@@ -51,28 +51,28 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-lib@OPAL_LIB_PREFIX@mca_common_ucx_la_SOURCES = \
+lib@OPAL_LIB_NAME@mca_common_ucx_la_SOURCES = \
         $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_la_CFLAGS = \
+lib@OPAL_LIB_NAME@mca_common_ucx_la_CFLAGS = \
 		$(common_ucx_CFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_la_CPPFLAGS = \
+lib@OPAL_LIB_NAME@mca_common_ucx_la_CPPFLAGS = \
 		$(common_ucx_CPPFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_la_LDFLAGS = \
+lib@OPAL_LIB_NAME@mca_common_ucx_la_LDFLAGS = \
         -version-info $(libmca_opal_common_ucx_so_version) \
 		$(common_ucx_LDFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_la_LIBADD = \
+lib@OPAL_LIB_NAME@mca_common_ucx_la_LIBADD = \
 		$(common_ucx_LIBS) \
-		$(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+		$(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la \
 		$(OMPI_TOP_BUILDDIR)/opal/mca/memory/libmca_memory.la
-lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_SOURCES = \
+lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_SOURCES = \
         $(headers) $(sources)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_CFLAGS = \
+lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_CFLAGS = \
 		$(common_ucx_CFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_CPPFLAGS = \
+lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_CPPFLAGS = \
 		$(common_ucx_CPPFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_LDFLAGS = \
+lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_LDFLAGS = \
 		$(common_ucx_LDFLAGS)
-lib@OPAL_LIB_PREFIX@mca_common_ucx_noinst_la_LIBADD = \
+lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_LIBADD = \
 		$(common_ucx_LIBS)
 
 # Conditionally install the header files

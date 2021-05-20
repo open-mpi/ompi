@@ -35,7 +35,7 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_osc_ucx_la_SOURCES = $(ucx_sources)
 mca_osc_ucx_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la $(osc_ucx_LIBS) \
-                        $(OPAL_TOP_BUILDDIR)/opal/mca/common/ucx/lib@OPAL_LIB_PREFIX@mca_common_ucx.la
+                        $(OPAL_TOP_BUILDDIR)/opal/mca/common/ucx/lib@OPAL_LIB_NAME@mca_common_ucx.la
 mca_osc_ucx_la_LDFLAGS = -module -avoid-version $(osc_ucx_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
