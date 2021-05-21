@@ -18,8 +18,8 @@
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016-2019 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2021 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -85,7 +85,7 @@ bool ompi_mpi_compat_mpi3 = false;
 
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
-uint32_t ompi_pmix_connect_timeout;
+uint32_t ompi_pmix_connect_timeout = 0;
 
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
