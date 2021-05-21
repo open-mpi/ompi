@@ -87,10 +87,12 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                 compress.blocklen = pData->desc.desc[pos_desc + index].elem.blocklen;
                 for( uint32_t i = index+1; i < loop->items; i++ ) {
                     current = &pData->desc.desc[pos_desc + i].elem;
-                    assert(1 ==  current->count);
-                    if( (current->common.type == OPAL_DATATYPE_LOOP) ||
-                        compress.common.type != current->common.type ) {
-                        compress.common.type = OPAL_DATATYPE_UINT1;
+                    assert(1 == current->count);
+                    if ((current->common.type == OPAL_DATATYPE_LOOP)
+                        || compress.common.type != current->common.type) {
+                        compress.common.type   = OPAL_DATATYPE_UINT1;
+                        compress.common.flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+                        pData->flags          |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                         compress.blocklen = end_loop->size;
                         break;
                     }
@@ -174,12 +176,14 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
             /* are the two elements compatible: aka they have very similar values and they
              * can be merged together by increasing the count, and/or changing the extent.
              */
-            if( (last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size) ==
-                (current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size) ) {
-                ddt_elem_desc_t save = last;  /* safekeep the type and blocklen */
-                if( last.common.type != current->common.type ) {
-                    last.blocklen    *= opal_datatype_basicDatatypes[last.common.type]->size;
-                    last.common.type  = OPAL_DATATYPE_UINT1;
+            if ((last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size)
+                == (current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size)) {
+                ddt_elem_desc_t save = last; /* safekeep the type and blocklen */
+                if (last.common.type != current->common.type) {
+                    last.blocklen *= opal_datatype_basicDatatypes[last.common.type]->size;
+                    last.common.type   = OPAL_DATATYPE_UINT1;
+                    last.common.flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+                    pData->flags      |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                 }
 
                 if( (last.extent * (ptrdiff_t)last.count + last.disp) == current->disp ) {
@@ -225,9 +229,14 @@ opal_datatype_optimize_short( opal_datatype_t* pData,
                 if( last.common.type == current->common.type ) {
                     last.blocklen += current->blocklen;
                 } else {
-                    last.blocklen = ((last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size) +
-                                     (current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size));
-                    last.common.type = OPAL_DATATYPE_UINT1;
+                    last.blocklen = ((last.blocklen
+                                      * opal_datatype_basicDatatypes[last.common.type]->size)
+                                     + (current->blocklen
+                                        * opal_datatype_basicDatatypes[current->common.type]
+                                              ->size));
+                    last.common.type   = OPAL_DATATYPE_UINT1;
+                    last.common.flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+                    pData->flags      |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                 }
                 last.extent += current->extent;
                 if( current->count != 1 ) {

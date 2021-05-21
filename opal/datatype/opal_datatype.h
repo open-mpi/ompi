@@ -75,11 +75,18 @@ BEGIN_C_DECLS
  * We should make the difference here between the predefined contiguous and non contiguous
  * datatypes. The OPAL_DATATYPE_FLAG_BASIC is held by all predefined contiguous datatypes.
  */
-#define OPAL_DATATYPE_FLAG_BASIC         (OPAL_DATATYPE_FLAG_PREDEFINED | \
-                                          OPAL_DATATYPE_FLAG_CONTIGUOUS | \
-                                          OPAL_DATATYPE_FLAG_NO_GAPS |    \
-                                          OPAL_DATATYPE_FLAG_DATA |       \
-                                          OPAL_DATATYPE_FLAG_COMMITTED)
+#define OPAL_DATATYPE_FLAG_BASIC                                                                \
+    (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS \
+     | OPAL_DATATYPE_FLAG_DATA | OPAL_DATATYPE_FLAG_COMMITTED)
+/*
+ * If during the datatype optimization process we collapse contiguous elements with
+ * different types, we cannot use this optimized description for any communication
+ * in a heterogeneous setting, especially not for the exteranl32 support.
+ *
+ * A datatype with this flag cannot use the optimized description in heterogeneous
+ * setups.
+ */
+#define OPAL_DATATYPE_OPTIMIZED_RESTRICTED  0x1000
 
 /**
  * The number of supported entries in the data-type definition and the
