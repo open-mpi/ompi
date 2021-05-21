@@ -86,7 +86,7 @@ bool ompi_mpi_compat_mpi3 = false;
 
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
-uint32_t ompi_pmix_connect_timeout;
+uint32_t ompi_pmix_connect_timeout = 0;
 
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
