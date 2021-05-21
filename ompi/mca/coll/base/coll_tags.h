@@ -59,7 +59,9 @@
 /* one extra reserved to avoid revoke for normal reqs, see request/req_ft.c*/
 #define MCA_COLL_BASE_TAG_FT_END                 (MCA_COLL_BASE_TAG_FT_BASE - 3)
 
-#define MCA_COLL_BASE_TAG_STATIC_END             MCA_COLL_BASE_TAG_FT_END
+#define MCA_COLL_BASE_TAG_UCC                    (MCA_COLL_BASE_TAG_FT_END - 1)
+
+#define MCA_COLL_BASE_TAG_STATIC_END             (MCA_COLL_BASE_TAG_UCC - 1)
 
 
 
