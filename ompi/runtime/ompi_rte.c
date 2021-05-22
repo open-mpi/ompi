@@ -871,6 +871,16 @@ int ompi_rte_init(int *pargc, char ***pargv)
         }
     }
 
+#ifdef PMIX_NODE_OVERSUBSCRIBED
+    pname.jobid = opal_process_info.my_name.jobid;
+    pname.vpid = OPAL_VPID_WILDCARD;
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_NODE_OVERSUBSCRIBED, &pname,
+                                   NULL, PMIX_BOOL);
+    if (PMIX_SUCCESS == ret) {
+        ompi_mpi_oversubscribed = true;
+    }
+#endif
+
     return OPAL_SUCCESS;
 
   error:

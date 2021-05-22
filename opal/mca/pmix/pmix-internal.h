@@ -301,7 +301,7 @@ typedef struct {
             (r) = PMIX_ERR_NOT_FOUND;                                                  \
         } else if (_kv->type != (t)) {                                                 \
             (r) = PMIX_ERR_TYPE_MISMATCH;                                              \
-        } else if (PMIX_SUCCESS == (r)) {                                              \
+        } else if (PMIX_SUCCESS == (r) && NULL != (d)) {                               \
             PMIX_VALUE_UNLOAD((r), _kv, (void **) (d), &_sz);                          \
         }                                                                              \
         if (NULL != _kv) {                                                             \

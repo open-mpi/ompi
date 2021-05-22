@@ -22,6 +22,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,7 +92,7 @@ static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
 static bool show_enviro_mca_params = false;
 static bool show_override_mca_params = false;
-static bool ompi_mpi_oversubscribe = false;
+bool ompi_mpi_oversubscribed = false;
 
 #if OPAL_ENABLE_FT_MPI
 int ompi_ftmpi_output_handle = 0;
@@ -147,20 +148,7 @@ int ompi_mpi_register_params(void)
         ompi_mpi_param_check = false;
     }
 
-    /*
-     * opal_progress: decide whether to yield and the event library
-     * tick rate
-     */
-    ompi_mpi_oversubscribe = false;
-    (void) mca_base_var_register("ompi", "mpi", NULL, "oversubscribe",
-                                 "Internal MCA parameter set by the runtime environment when oversubscribing nodes",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_mpi_oversubscribe);
-
     /* yield if the node is oversubscribed and allow users to override */
-    ompi_mpi_yield_when_idle |= ompi_mpi_oversubscribe;
     (void) mca_base_var_register("ompi", "mpi", NULL, "yield_when_idle",
                                  "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
