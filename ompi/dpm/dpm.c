@@ -1217,7 +1217,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1239,7 +1238,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1257,7 +1255,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1275,7 +1272,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1291,7 +1287,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1307,7 +1302,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1327,7 +1321,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1364,7 +1357,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     return MPI_ERR_SPAWN;
                 }
             }
@@ -1395,7 +1387,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     return MPI_ERR_SPAWN;
                 }
             }
@@ -1551,7 +1542,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OPAL_PATH_MAX))) {
                 OMPI_ERROR_LOG(rc);
                 PMIX_APP_FREE(apps, (size_t)count);
-                opal_progress_event_users_decrement();
                 if (NULL != hostfiles) {
                     opal_argv_free(hostfiles);
                 }
@@ -1608,7 +1598,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 PMIX_INFO_FREE(pinfo, ninfo);
             }
             PMIX_APP_FREE(apps, scount);
-            opal_progress_event_users_decrement();
             if (NULL != hostfiles) {
                 opal_argv_free(hostfiles);
             }
@@ -1633,7 +1622,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     PMIX_APP_FREE(apps, scount);
 
     if (OPAL_SUCCESS != rc) {
-        opal_progress_event_users_decrement();
         return MPI_ERR_SPAWN;
     }
 
@@ -2130,7 +2118,6 @@ static int start_dvm(char **hostfiles, char **dash_host)
     pret = PMIx_Init(NULL, &info, 1);
     rc = opal_pmix_convert_status(pret);
     if (OPAL_SUCCESS != rc) {
-        opal_progress_event_users_decrement();
         return MPI_ERR_SPAWN;
     }
     /* decrement the PMIx init refcount */
