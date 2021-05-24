@@ -204,10 +204,6 @@ int ompi_mpi_finalize(void)
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
 #endif
 
-    /* Redo PRTE calling opal_progress_event_users_increment() during
-       MPI lifetime, to get better latency when not using TCP */
-    opal_progress_event_users_increment();
-
     /* NOTE: MPI-2.1 requires that MPI_FINALIZE is "collective" across
        *all* connected processes.  This only means that all processes
        have to call it.  It does *not* mean that all connected
