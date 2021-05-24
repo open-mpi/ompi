@@ -2,8 +2,6 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2018-2020 FUJITSU LIMITED.  All rights reserved.
 dnl Copyright (c) 2020 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2021      Triad National Security, LLC. All rights
-dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -16,16 +14,7 @@ dnl Check whether the user wants to use an alternate type of C 'short float'.
 dnl OPAL_CHECK_ALT_SHORT_FLOAT
 dnl ------------------------------------------------------------
 AC_DEFUN([OPAL_CHECK_ALT_SHORT_FLOAT], [
-dnl
-dnl Testing for this without checking if compiler generates warnings makes for a messy build.
-dnl Hence the twiddling of the CFLAGS
-dnl
-    OPAL_VAR_SCOPE_PUSH([CFLAGS_save])
-    CFLAGS_save=$CFLAGS
-    CFLAGS="-Werror $CFLAGS"
     AC_CHECK_TYPES(_Float16)
-    CFLAGS=$CFLAGS_save
-    OPAL_VAR_SCOPE_POP
     AC_MSG_CHECKING([if want alternate C type of short float])
     AC_ARG_ENABLE([alt-short-float],
         [AS_HELP_STRING([--enable-alt-short-float=TYPE],
