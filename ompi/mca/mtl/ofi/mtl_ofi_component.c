@@ -613,7 +613,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
     /* Make sure to get a RDM provider that can do the tagged matching
        interface and local communication and remote communication. */
-    hints->mode               = FI_CONTEXT;
+    hints->mode               = FI_CONTEXT | FI_CONTEXT2;
     hints->ep_attr->type      = FI_EP_RDM;
     hints->caps               = FI_TAGGED | FI_LOCAL_COMM | FI_REMOTE_COMM | FI_DIRECTED_RECV;
     hints->tx_attr->msg_order = FI_ORDER_SAS;
