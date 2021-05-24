@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2021      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -535,6 +536,26 @@ static inline uint16_t ntohs(uint16_t netvar)
 #        define restrict
 #    endif
 
+/* We need to define the opal_short_float_t macro in the configure script
+   because we use it in some other places of the configure script. However
+   we cannot define it as a macro like "__extension__ [TYPENAME]" because
+   the __extension__ keyword can only be attached to a C expression. As a
+   workaround, we once define opal_short_float_t as a macro without
+   __extension__ in configure and redefine it using typedef here. */
+#    ifdef HAVE_OPAL_SHORT_FLOAT_T
+#        undef opal_short_float_t
+#        if OPAL_SHORT_FLOAT_NEEDS_EXTENSION
+__extension__ typedef OPAL_SHORT_FLOAT_TYPE opal_short_float_t;
+#        else
+typedef OPAL_SHORT_FLOAT_TYPE opal_short_float_t;
+#        endif
+#    endif
+
+/* We need to define the opal_short_float_complex_t macro in the configure
+   script because we use it in some other places of the configure script.
+   However we cannot define it as a macro like "struct { ... }" in configure.
+   As a workaround, we once define opal_short_float_complex_t as an array
+   in configure and redefine it as a structure using typedef here. */
 #    ifdef HAVE_OPAL_SHORT_FLOAT_COMPLEX_T
 #        undef opal_short_float_complex_t
 typedef struct {
