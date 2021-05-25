@@ -19,8 +19,11 @@
  */
 
 #include "opal_config.h"
-#include "btl_portals4.h"
+
 #include "opal/constants.h"
+
+#include "btl_portals4.h"
+#include "btl_portals4_frag.h"
 
 int mca_btl_portals4_put(struct mca_btl_base_module_t *btl_base,
                          struct mca_btl_base_endpoint_t *btl_peer,

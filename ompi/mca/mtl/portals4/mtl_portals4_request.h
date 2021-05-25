@@ -20,9 +20,16 @@
 #ifndef OMPI_MTL_PORTALS_REQUEST_H
 #define OMPI_MTL_PORTALS_REQUEST_H
 
+#include "ompi_config.h"
+
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/mca/mtl/mtl.h"
 #include "opal/mca/timer/base/base.h"
+
+#include "ompi/mca/mtl/mtl.h"
+
+#include "mtl_portals4.h"
+
+#include <portals4.h>
 
 struct ompi_mtl_portals4_message_t;
 struct ompi_mtl_portals4_pending_request_t;

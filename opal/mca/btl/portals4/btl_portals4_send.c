@@ -22,10 +22,12 @@
  */
 
 #include "opal_config.h"
+
 #include "opal/constants.h"
 #include "opal/datatype/opal_convertor.h"
 
 #include "btl_portals4.h"
+#include "btl_portals4_frag.h"
 
 int mca_btl_portals4_send(struct mca_btl_base_module_t *btl_base,
                           struct mca_btl_base_endpoint_t *endpoint,
