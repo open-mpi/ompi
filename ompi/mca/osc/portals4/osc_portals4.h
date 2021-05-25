@@ -16,11 +16,14 @@
 #ifndef OSC_PORTALS4_PORTALS4_H
 #define OSC_PORTALS4_PORTALS4_H
 
-#include <portals4.h>
-#include "ompi/group/group.h"
+#include "ompi_config.h"
+
 #include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
 
 #include "ompi/mca/mtl/portals4/mtl_portals4.h"
+
+#include <portals4.h>
 
 #define REQ_OSC_TABLE_ID     4
 

@@ -12,20 +12,21 @@
  */
 
 #include "ompi_config.h"
+
+#include "opal/util/bit_ops.h"
+
+#include "ompi/constants.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/datatype/ompi_datatype_internal.h"
+#include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/coll.h"
+#include "ompi/mca/pml/pml.h"
+#include "ompi/op/op.h"
+
 #include "coll_portals4.h"
 #include "coll_portals4_request.h"
 
 #include <stdio.h>
-
-#include "mpi.h"
-#include "ompi/constants.h"
-#include "ompi/datatype/ompi_datatype.h"
-#include "ompi/datatype/ompi_datatype_internal.h"
-#include "ompi/op/op.h"
-#include "opal/util/bit_ops.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/mca/coll/coll.h"
-#include "ompi/mca/coll/base/base.h"
 
 #define COLL_PORTALS4_REDUCE_MAX_CHILDREN	2
 

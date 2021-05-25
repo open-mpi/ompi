@@ -20,19 +20,21 @@
 #ifndef MTL_PORTALS_H_HAS_BEEN_INCLUDED
 #define MTL_PORTALS_H_HAS_BEEN_INCLUDED
 
-#include <portals4.h>
+#include "ompi_config.h"
 
-#include "opal/include/opal_config.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/proc/proc.h"
-#include "ompi/mca/mtl/mtl.h"
-#include "ompi/mca/mtl/base/base.h"
 
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/mtl/base/base.h"
+#include "ompi/mca/mtl/mtl.h"
+#include "ompi/proc/proc.h"
 
 #include "mtl_portals4_flowctl.h"
+#include "mtl_portals4_request.h"
+
+#include <portals4.h>
 
 BEGIN_C_DECLS
 

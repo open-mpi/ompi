@@ -38,7 +38,6 @@
 #include "btl_portals4.h"
 #include "btl_portals4_frag.h"
 #include "btl_portals4_recv.h"
-#include "portals4.h"
 
 static int mca_btl_portals4_component_register(void);
 static int mca_btl_portals4_component_open(void);

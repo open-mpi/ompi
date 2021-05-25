@@ -37,6 +37,7 @@
 #include "opal/util/proc.h"
 
 #include "btl_portals4.h"
+#include "btl_portals4_frag.h"
 #include "btl_portals4_recv.h"
 
 mca_btl_base_registration_handle_t *mca_btl_portals4_register_mem(mca_btl_base_module_t *btl,
