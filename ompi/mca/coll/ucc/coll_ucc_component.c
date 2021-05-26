@@ -45,9 +45,9 @@ mca_coll_ucc_component_t mca_coll_ucc_component = {
         .collm_init_query = mca_coll_ucc_init_query,
         .collm_comm_query = mca_coll_ucc_comm_query,
     },
-    100,               /* ucc_priority                */
+    10,               /* ucc_priority                */
     0,                 /* ucc_verbose                 */
-    1,                 /* ucc_enable                  */
+    0,                 /* ucc_enable                  */
     2,                 /* ucc_np                      */
     "basic",           /* cls                         */
     COLL_UCC_CTS_STR,  /* requested coll_types string */
