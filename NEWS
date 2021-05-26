@@ -57,10 +57,18 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.0.6 -- March, 2021
------------------------
+4.0.6 -- May, 2021
+------------------
 - Update embedded PMIx to 3.2.2.  This update addresses several
   MPI_COMM_SPAWN problems.
+- Fix an issue with MPI_FILE_GET_BYTE_OFFSET when supplying a 
+  zero size file view.  Thanks to @shanedsnyder for reporting.
+- Fix an issue with MPI_COMM_SPLIT_TYPE not observing key correctly.
+  Thanks to Wolfgang Bangerth for reporting.
+- Fix a derived datatype issue that could lead to potential data
+  corruption when using UCX.  Thanks to @jayeshkrishna for reporting.
+- Fix a problem with shared memory transport file name collisions.
+  Thanks to Moritz Kreutzer for reporting.
 - Fix a problem when using Flux PMI and UCX.  Thanks to Sami Ilvonen
   for reporting and supplying a fix.
 - Fix a problem with MPIR breakpoint being compiled out using PGI
