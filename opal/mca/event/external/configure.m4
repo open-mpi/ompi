@@ -7,6 +7,8 @@
 #
 # Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
 # Copyright (c) 2020      IBM Corporation.  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -84,12 +86,10 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                          AC_MSG_RESULT([found])],
                         [opal_event_libdir_found=no
                          AC_MSG_RESULT([not found])])
-                  AS_IF([test "$opal_event_libdir_found" = "yes"],
-                        [opal_event_libdir="$with_libevent/lib64"],
+                  AS_IF([test "$opal_event_libdir_found" != "yes"],
                         [AC_MSG_CHECKING([for $with_libevent/lib])
                          AS_IF([test -d "$with_libevent/lib"],
-                               [AC_MSG_RESULT([found])
-                                opal_event_libdir="$with_libevent/lib"],
+                               [AC_MSG_RESULT([found])],
                                [AC_MSG_RESULT([not found])
                                 AC_MSG_WARN([Library directories were not found:])
                                 AC_MSG_WARN([    $with_libevent/lib64])
