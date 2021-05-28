@@ -17,6 +17,8 @@ dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
+dnl                         All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -291,9 +293,11 @@ AC_DEFUN([RPATHIFY_LDFLAGS_INTERNAL],[
                esac
            done
 
-           # Now add in the RPATH args for @{libdir}, and the RUNPATH args
+           # add in the RPATH args for @{libdir}, and the RUNPATH
+           # args.  The install libdir goes first, so that we prefer
+           # our libmpi over any imposter libmpi we might find.
            rpath_tmp=`echo ${$2} | sed -e s/LIBDIR/@{libdir}/`
-           $1="${$1} $rpath_out $rpath_tmp ${$3}"
+           $1="${$1} $rpath_tmp $rpath_out ${$3}"
           ])
     OPAL_VAR_SCOPE_POP
 ])
