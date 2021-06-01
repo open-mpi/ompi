@@ -11,7 +11,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2015-2018 Research Organization for Information Science
+dnl Copyright (c) 2015-2021 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
@@ -178,15 +178,39 @@ int main(int argc, char** argv)
 dnl ------------------------------------------------------------------
 
 dnl
-dnl Check to see if a specific function is linkable.
+dnl Helper to Check if a specific function is usable.
 dnl
-dnl Check with:
+dnl
+dnl $1: function name to print
+dnl $2: program to test
+dnl $3: action if success
+dnl #4: action if fail
+dnl
+AC_DEFUN([_OPAL_ASM_CHECK_ATOMIC_FUNC],[
+    AC_LINK_IFELSE([$2],
+        [AC_MSG_RESULT([yes])
+         dnl make sure it works
+         AC_MSG_CHECKING([if $1() gives correct results])
+         AC_RUN_IFELSE([$2],
+               [$3
+                AC_MSG_RESULT([yes])],
+               [$4
+                AC_MSG_RESULT([no])],
+               [$3
+                AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])],
+        [$4
+         AC_MSG_RESULT([no])])
+])
+
+dnl
+dnl Check to see if a specific function is usable.
+dnl
+dnl Check compilation and actually try ro run the test code
+dnl (if we're not cross-compiling) in order to verify that
+dnl it actually gives us the correct result:
 dnl 1. No compiler/linker flags.
-dnl 2. CFLAGS += -mcx16
+dnl 2. CFLAGS += -mcx16 (unless --disable-cx16-atomics is used)
 dnl 3. LIBS += -latomic
-dnl 4. Finally, if it links ok with any of #1, #2, or #3, actually try
-dnl to run the test code (if we're not cross-compiling) and verify
-dnl that it actually gives us the correct result.
 dnl
 dnl Note that we unfortunately can't use AC SEARCH_LIBS because its
 dnl check incorrectly fails (because these functions are special compiler
@@ -213,47 +237,27 @@ AC_DEFUN([OPAL_ASM_CHECK_ATOMIC_FUNC],[
 
     dnl Check with no compiler/linker flags
     AC_MSG_CHECKING([for $1])
-    AC_LINK_IFELSE([$2],
-        [opal_asm_check_func_happy=1
-         AC_MSG_RESULT([yes])],
-        [opal_asm_check_func_happy=0
-         AC_MSG_RESULT([no])])
-
+    _OPAL_ASM_CHECK_ATOMIC_FUNC([$1], [$2], [opal_asm_check_func_happy=1], [opal_asm_check_func_happy=0])
     dnl If that didn't work, try again with CFLAGS+=mcx16
     AS_IF([test $opal_asm_check_func_happy -eq 0],
-        [AC_MSG_CHECKING([for $1 with -mcx16])
-         CFLAGS="$CFLAGS -mcx16"
-         AC_LINK_IFELSE([$2],
-             [opal_asm_check_func_happy=1
-              AC_MSG_RESULT([yes])],
-             [opal_asm_check_func_happy=0
-              CFLAGS=$opal_asm_check_func_CFLAGS_save
-              AC_MSG_RESULT([no])])
-         ])
+          [AC_MSG_CHECKING([for $1 with -mcx16])
+           AS_IF([test "$enable_cx16_atomics" = "no"],
+                 [AC_MSG_RESULT([skipped])],
+                 [CFLAGS="$CFLAGS -mcx16"
+                  _OPAL_ASM_CHECK_ATOMIC_FUNC([$1], [$2],
+                                              [opal_asm_check_func_happy=1],
+                                              [opal_asm_check_func_happy=0
+                                               CFLAGS=$opal_asm_check_func_CFLAGS_save])])
+          ])
 
     dnl If that didn't work, try again with LIBS+=-latomic
     AS_IF([test $opal_asm_check_func_happy -eq 0],
-        [AC_MSG_CHECKING([for $1 with -latomic])
-         LIBS="$LIBS -latomic"
-         AC_LINK_IFELSE([$2],
-             [opal_asm_check_func_happy=1
-              AC_MSG_RESULT([yes])],
-             [opal_asm_check_func_happy=0
-              LIBS=$opal_asm_check_func_LIBS_save
-              AC_MSG_RESULT([no])])
-         ])
-
-    dnl If we have it, try it and make sure it gives a correct result.
-    dnl As of Aug 2018, we know that it links but does *not* work on clang
-    dnl 6 on ARM64.
-    AS_IF([test $opal_asm_check_func_happy -eq 1],
-        [AC_MSG_CHECKING([if $1() gives correct results])
-         AC_RUN_IFELSE([$2],
-              [AC_MSG_RESULT([yes])],
-              [opal_asm_check_func_happy=0
-               AC_MSG_RESULT([no])],
-              [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
-         ])
+          [AC_MSG_CHECKING([for $1 with -latomic])
+           LIBS="$LIBS -latomic"
+           _OPAL_ASM_CHECK_ATOMIC_FUNC([$1], [$2],
+                                       [opal_asm_check_func_happy=1],
+                                       [opal_asm_check_func_happy=0
+                                        LIBS=$opal_asm_check_func_LIBS_save])])
 
     dnl If we were unsuccessful, restore CFLAGS/LIBS
     AS_IF([test $opal_asm_check_func_happy -eq 0],
@@ -1048,6 +1052,10 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_ARG_ENABLE([builtin-atomics],
       [AS_HELP_STRING([--enable-builtin-atomics],
          [Enable use of GCC built-in atomics (default: autodetect)])])
+
+    AC_ARG_ENABLE([cx16-atomics],
+      [AS_HELP_STRING([--enable-cx16-atomics],
+         [Try using -mcx16 flag if needed (default: autodetect)])])
 
     OPAL_CHECK_C11_CSWAP_INT128
     opal_cv_asm_builtin="BUILTIN_NO"
