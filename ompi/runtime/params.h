@@ -18,6 +18,7 @@
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -197,6 +198,12 @@ OMPI_DECLSPEC int ompi_mpi_register_params(void);
  * Displays in key = value format
  */
 int ompi_show_all_mca_params(int32_t, int, char *);
+
+/**
+ * Set by checking PMIx to see if we are running in an oversubscribed
+ * environment or not.
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_oversubscribed;
 
 END_C_DECLS
 
