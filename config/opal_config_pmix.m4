@@ -122,10 +122,16 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     # so try the internal version.
     AS_IF([test "$external_pmix_happy" = "0" -a "$internal_pmix_happy" = "1"],
           [opal_pmix_mode="internal"
-           _OPAL_CONFIG_PMIX_INTERNAL_POST()])
+           OPAL_USING_INTERNAL_PMIX=1
+           _OPAL_CONFIG_PMIX_INTERNAL_POST()],
+          [OPAL_USING_INTERNAL_PMIX=0])
 
     AS_IF([test "$external_pmix_happy" = "0" -a "$internal_pmix_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable pmix build.])])
+
+    AC_DEFINE_UNQUOTED([OPAL_USING_INTERNAL_PMIX],
+                       [$OPAL_USING_INTERNAL_PMIX],
+                       [Whether or not we are using the internal PMIx])
 
     AC_SUBST(opal_pmix_CPPFLAGS)
     AC_SUBST(opal_pmix_LDFLAGS)

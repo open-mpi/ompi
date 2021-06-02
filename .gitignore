@@ -341,6 +341,7 @@ ompi/tools/mpisync/mpisync
 ompi/tools/mpisync/mpirun_prof
 ompi/tools/mpisync/ompi_timing_post
 ompi/tools/mpisync/mpisync.1
+ompi/tools/mpirun/mpirun
 
 ompi/tools/ompi_info/ompi_info
 ompi/tools/ompi_info/ompi_info.1
