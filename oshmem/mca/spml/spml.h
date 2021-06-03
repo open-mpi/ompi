@@ -150,7 +150,7 @@ typedef void * (*mca_spml_base_module_mkey_ptr_fn_t)(const void *dst_addr, sshme
  *
  * @param mkey remote mkey
  */
-typedef void (*mca_spml_base_module_mkey_free_fn_t)(sshmem_mkey_t *);
+typedef void (*mca_spml_base_module_mkey_free_fn_t)(sshmem_mkey_t *, int pe);
 
 /**
  * Register (Pinn) a buffer of 'size' bits starting in address addr
