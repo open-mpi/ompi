@@ -256,7 +256,7 @@ void mca_spml_base_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t s
 {
 }
 
-void mca_spml_base_rmkey_free(sshmem_mkey_t *mkey)
+void mca_spml_base_rmkey_free(sshmem_mkey_t *mkey, int pe)
 {
 }
 

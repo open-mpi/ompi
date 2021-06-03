@@ -65,8 +65,8 @@ int mca_atomic_ucx_op(shmem_ctx_t ctx,
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ctx, pe, target, (void *)&rva, mca_spml_self);
-
+    ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, pe, target, (void *)&rva, mca_spml_self);
+    assert(NULL != ucx_mkey);
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn,
                                    op, &value, 1, rva, ucx_mkey->rkey,
@@ -115,7 +115,8 @@ int mca_atomic_ucx_fop(shmem_ctx_t ctx,
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_get_mkey(ctx, pe, target, (void *)&rva, mca_spml_self);
+    ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, pe, target, (void *)&rva, mca_spml_self);
+    assert(NULL != ucx_mkey);
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn, op, &value, 1,
                                    rva, ucx_mkey->rkey, &param);

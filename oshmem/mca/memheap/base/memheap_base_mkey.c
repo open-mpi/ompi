@@ -774,7 +774,6 @@ void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno)
 
     s = memheap_find_seg(segno);
     assert(NULL != s);
-
     seg->super.va_base = s->super.va_base;
     seg->super.va_end  = s->super.va_end;
     seg->rva_base      = mkey->va_base;
