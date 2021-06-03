@@ -305,7 +305,7 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     int i;
     uint16_t relative_locality, *package_rank_ptr;
     uint16_t current_package_rank = 0;
-    uint16_t package_ranks[process_info->num_local_peers];
+    uint16_t package_ranks[process_info->num_local_peers + 1];
     opal_process_name_t pname;
     pmix_status_t rc;
     char **peers = NULL;
