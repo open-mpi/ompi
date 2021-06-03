@@ -200,22 +200,6 @@ static inline void *map_segment_va2rva(mkey_segment_t *seg, void *va)
     return memheap_va2rva(va, seg->super.va_base, seg->rva_base);
 }
 
-static inline map_base_segment_t *map_segment_find_va(map_base_segment_t *segs,
-                                                      size_t elem_size, void *va)
-{
-    map_base_segment_t *rseg;
-    int i;
-
-    for (i = 0; i < MCA_MEMHEAP_MAX_SEGMENTS; i++) {
-        rseg = (map_base_segment_t *)((char *)segs + elem_size * i);
-        if (OPAL_LIKELY(map_segment_is_va_in(rseg, va))) {
-            return rseg;
-        }
-    }
-
-    return NULL;
-}
-
 void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno);
 
 static inline map_segment_t *memheap_find_va(void* va)
