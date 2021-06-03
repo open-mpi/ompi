@@ -15,6 +15,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -322,7 +323,7 @@ data_callback(const char *key, const char *value)
                 char *line;
                 asprintf(&line, OPAL_INCLUDE_FLAG"%s",
                          options_data[parse_options_idx].path_includedir);
-                opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
+                opal_argv_prepend_nosize(&options_data[parse_options_idx].preproc_flags, line);
                 free(line);
             }
         }
@@ -333,7 +334,7 @@ data_callback(const char *key, const char *value)
             char *line;
             asprintf(&line, OPAL_LIBDIR_FLAG"%s",
                      options_data[parse_options_idx].path_libdir);
-            opal_argv_append_nosize(&options_data[parse_options_idx].link_flags, line);
+            opal_argv_prepend_nosize(&options_data[parse_options_idx].link_flags, line);
             free(line);
         }
     } else if (0 == strcmp(key, "opalincludedir")) {
