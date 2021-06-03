@@ -14,7 +14,7 @@ Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
 Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
                         reserved.
-Copyright (c) 2010-2020 IBM Corporation.  All rights reserved.
+Copyright (c) 2010-2021 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
@@ -22,7 +22,7 @@ Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
-Copyright (c) 2019-2020 Triad National Security, LLC. All rights
+Copyright (c) 2019-2021 Triad National Security, LLC. All rights
                         reserved.
 $COPYRIGHT$
 
@@ -57,10 +57,18 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.0.6 -- March, 2021
------------------------
-- Update embedded PMIx to 3.2.2.  This update addresses several
+4.0.6 -- June, 2021
+------------------
+- Update embedded PMIx to 3.2.3.  This update addresses several
   MPI_COMM_SPAWN problems.
+- Fix an issue with MPI_FILE_GET_BYTE_OFFSET when supplying a
+  zero size file view.  Thanks to @shanedsnyder for reporting.
+- Fix an issue with MPI_COMM_SPLIT_TYPE not observing key correctly.
+  Thanks to Wolfgang Bangerth for reporting.
+- Fix a derived datatype issue that could lead to potential data
+  corruption when using UCX.  Thanks to @jayeshkrishna for reporting.
+- Fix a problem with shared memory transport file name collisions.
+  Thanks to Moritz Kreutzer for reporting.
 - Fix a problem when using Flux PMI and UCX.  Thanks to Sami Ilvonen
   for reporting and supplying a fix.
 - Fix a problem with MPIR breakpoint being compiled out using PGI
