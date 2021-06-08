@@ -23,7 +23,9 @@
 #ifndef OPAL_BTL_PORTALS4_FRAG_H
 #define OPAL_BTL_PORTALS4_FRAG_H
 
-#include "opal/mca/btl/btl.h"
+#include "opal_config.h"
+
+#include "btl_portals4.h"
 
 BEGIN_C_DECLS
 

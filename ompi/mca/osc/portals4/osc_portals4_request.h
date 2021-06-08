@@ -13,6 +13,8 @@
 #ifndef OSC_PORTALS4_REQUEST_H
 #define OSC_PORTALS4_REQUEST_H
 
+#include "ompi_config.h"
+
 #include "ompi/request/request.h"
 
 struct ompi_osc_portals4_request_t {

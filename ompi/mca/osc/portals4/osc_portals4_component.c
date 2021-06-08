@@ -21,9 +21,9 @@
 
 #include "opal/util/printf.h"
 
-#include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/mca/osc/osc.h"
 #include "ompi/request/request.h"
 
 #include "osc_portals4.h"
