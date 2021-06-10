@@ -10,9 +10,14 @@
 #ifndef MTL_PORTALS_FLOWCTL_H
 #define MTL_PORTALS_FLOWCTL_H
 
+#include "ompi_config.h"
+
 #include "opal/class/opal_free_list.h"
 
+#include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
+
+#include <portals4.h>
 
 struct mca_mtl_base_endpoint_t;
 struct ompi_mtl_portals4_isend_request_t;
