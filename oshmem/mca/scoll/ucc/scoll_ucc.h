@@ -42,6 +42,7 @@ struct mca_scoll_ucc_component_t {
     int ucc_np;
     char * cls;
     char * cts;
+    int nr_modules;
     bool libucc_initialized;
     ucc_lib_h ucc_lib;
     ucc_lib_attr_t ucc_lib_attr;
