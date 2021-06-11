@@ -301,6 +301,8 @@ libmpi_c_mpi_la_SOURCES = \
         pack.c \
         pack_size.c \
         parrived.c \
+        pbuf_prepare.c \
+        pbuf_prepareall.c \
         pcontrol.c \
         pready.c \
         pready_list.c \

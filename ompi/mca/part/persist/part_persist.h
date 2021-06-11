@@ -494,6 +494,7 @@ mca_part_persist_start(size_t count, ompi_request_t** requests)
                 memset((void*)req->flags,0,sizeof(int32_t)*req->real_parts);
             } else {
                 req->done_count = 0;
+                req->synched = 0;
                 err = req->persist_reqs[0]->req_start(req->real_parts, req->persist_reqs);
                 memset((void*)req->flags,0,sizeof(int32_t)*req->real_parts);
             } 
@@ -574,6 +575,44 @@ mca_part_persist_parrived(size_t min_part,
     return err;
 }
 
+__opal_attribute_always_inline__ static inline int 
+mca_part_persist_pbuf_prepare(int count, ompi_request_t** requests)
+{
+    int err = OMPI_SUCCESS;
+    int not_synched = 1; int test;
+    while(not_synched) {
+        not_synched = 0;
+        for(int i = 0; i < count; i++) {
+            mca_part_persist_request_t* req = (mca_part_persist_request_t*)requests[i];
+            if(true == req->initialized) {   
+                if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
+                    if(0 == req->synched) {
+                        err = MCA_PML_CALL(irecv(NULL, 0, MPI_BYTE, OMPI_ANY_SOURCE, req->my_recv_tag, ompi_part_persist.part_comm_setup, &req->setup_req[1]));
+                        req->synched = 1;
+                    } else if (1 == req->synched) {
+                        ompi_request_test(&(req->setup_req[1]), &test, MPI_STATUS_IGNORE);
+                        if(test) req->synched = 2;
+                    }
+                } else {
+                    if(0 == req->synched) {
+                        err = MCA_PML_CALL(isend(NULL, 0, MPI_BYTE, req->world_peer, req->my_recv_tag, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist.part_comm_setup, &req->setup_req[0]));
+                        req->synched = 1;
+                    } else if (1 == req->synched) {
+                        ompi_request_test(&(req->setup_req[0]), &test, MPI_STATUS_IGNORE);
+                        if(test) req->synched = 2;    
+                    } 
+                }
+                if(2 != req->synched) {
+                    not_synched = 1;
+                }
+            } else {
+                not_synched = 1;
+            }
+        }
+        mca_part_persist_progress(); /* Manually invoke the progress engine */
+    }
+    return err;
+}
 
 /**
  * mca_part_persist_free marks an entry as free called and sets the request to 

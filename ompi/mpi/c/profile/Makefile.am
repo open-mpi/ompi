@@ -281,6 +281,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ppack.c \
         ppack_size.c \
         pparrived.c \
+        ppbuf_prepare.c \
+        ppbuf_prepareall.c \
         ppcontrol.c \
         ppready.c \
         ppready_list.c \
