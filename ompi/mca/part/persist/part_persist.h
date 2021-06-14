@@ -486,6 +486,7 @@ mca_part_persist_start(size_t count, ompi_request_t** requests)
 
     for(i = 0; i < _count && OMPI_SUCCESS == err; i++) {
         mca_part_persist_request_t *req = (mca_part_persist_request_t *)(requests[i]);
+        req->synched = 0;
         /* First use is a special case, to support lazy initialization */
         if(false == req->first_send)
         {
@@ -494,7 +495,6 @@ mca_part_persist_start(size_t count, ompi_request_t** requests)
                 memset((void*)req->flags,0,sizeof(int32_t)*req->real_parts);
             } else {
                 req->done_count = 0;
-                req->synched = 0;
                 err = req->persist_reqs[0]->req_start(req->real_parts, req->persist_reqs);
                 memset((void*)req->flags,0,sizeof(int32_t)*req->real_parts);
             } 
