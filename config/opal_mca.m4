@@ -769,12 +769,12 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
     else
         if test "$2" = "common"; then
             # Static libraries in "common" frameworks are installed, and
-            # therefore must obey the $FRAMEWORK_LIB_PREFIX that was
+            # therefore must obey the $FRAMEWORK_LIB_NAME that was
             # set.
-            $7="mca/$2/$3/lib${m4_translit([$1], [a-z], [A-Z])_LIB_PREFIX}mca_$2_$3.la $$7"
+            $7="mca/$2/$3/lib${m4_translit([$1], [a-z], [A-Z])_LIB_NAME}mca_$2_$3.la $$7"
         else
             # Other frameworks do not have to obey the
-            # $FRAMEWORK_LIB_PREFIX prefix.
+            # $FRAMEWORK_LIB_NAME prefix.
             $7="mca/$2/$3/libmca_$2_$3.la $$7"
         fi
         echo "extern const mca_base_component_t mca_$2_$3_component;" >> $outfile.extern

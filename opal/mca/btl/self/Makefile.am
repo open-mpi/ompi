@@ -41,7 +41,7 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_self_la_SOURCES = $(libmca_btl_self_la_sources)
 mca_btl_self_la_LDFLAGS = -module -avoid-version
-mca_btl_self_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+mca_btl_self_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_self_la_SOURCES = $(libmca_btl_self_la_sources)

@@ -38,7 +38,7 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_reachable_netlink_la_SOURCES = $(sources)
 mca_reachable_netlink_la_LDFLAGS = -module -avoid-version
-mca_reachable_netlink_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+mca_reachable_netlink_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(opal_reachable_netlink_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -11,7 +11,7 @@ mpi_no_op: mpi_no_op.c
 	mpicc -o mpi_no_op mpi_no_op.c
 
 mpi_memprobe: mpi_memprobe.c
-	mpicc -o mpi_memprobe mpi_memprobe.c -lopen-pal -lopen-rte
+	mpicc -o mpi_memprobe mpi_memprobe.c -lopen-pal
 
 clean:
 	rm -f $(PROGS) *~

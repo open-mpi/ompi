@@ -17,6 +17,9 @@ man_pages = oshcc.1 shmemcc.1 oshc++.1 shmemc++.1 oshcxx.1 shmemcxx.1 oshfort.1 
 if PROJECT_OSHMEM
 man_MANS = $(man_pages)
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = oshmem.pc oshmem-c.pc oshmem-cxx.pc oshmem-fort.pc
+
 nodist_oshmemdata_DATA =  \
 	shmemcc-wrapper-data.txt \
 	shmemc++-wrapper-data.txt \

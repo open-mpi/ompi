@@ -157,7 +157,7 @@ lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
 
 
 lib@OMPI_LIBMPI_NAME@_la_LIBADD += \
-        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la
 lib@OMPI_LIBMPI_NAME@_la_DEPENDENCIES = $(lib@OMPI_LIBMPI_NAME@_la_LIBADD)
 lib@OMPI_LIBMPI_NAME@_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \

@@ -14,7 +14,7 @@ check_PROGRAMS = $(TESTS) $(MPI_CHECKS)
 mpool_memkind_SOURCES = mpool_memkind.c
 
 LDFLAGS = $(OPAL_PKG_CONFIG_LDFLAGS)
-LDADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+LDADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 distclean:
 	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile

@@ -35,19 +35,19 @@ TESTS =
 opal_thread_SOURCES = opal_thread.c
 opal_thread_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 opal_thread_DEPENDENCIES = $(opal_thread_LDADD)
 
 opal_condition_SOURCES = opal_condition.c
 opal_condition_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 opal_condition_DEPENDENCIES = $(opal_condition_LDADD)
 
 opal_atomic_thread_bench_SOURCES = opal_atomic_thread_bench.c
 opal_atomic_thread_bench_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 opal_atomic_thread_bench_DEPENDENCIES = $(opal_atomic_thread_bench_LDADD)
 
 distclean:

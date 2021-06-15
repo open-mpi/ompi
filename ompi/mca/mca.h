@@ -22,7 +22,7 @@
 /**
  * @file
  *
- * Top-level interface for \em all orte MCA components.
+ * Top-level interface for all MCA components.
  */
 
 #ifndef OMPI_MCA_H

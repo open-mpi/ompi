@@ -45,7 +45,7 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mpool_hugepage_la_SOURCES = $(sources)
 mca_mpool_hugepage_la_LDFLAGS = -module -avoid-version
-mca_mpool_hugepage_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+mca_mpool_hugepage_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(mpool_hugepage_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -26,8 +26,6 @@
  * MPI portion of debugger support: initially based on the
  * TotalView/Etnus API for debuggers to attach to MPI jobs.
  *
- * There is a lengthy explanation of how OMPI handles parallel
- * debuggers attaching to MPI jobs in orte/tools/orterun/debuggers.c.
  */
 
 #include "ompi_config.h"

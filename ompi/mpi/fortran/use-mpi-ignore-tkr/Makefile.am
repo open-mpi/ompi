@@ -82,7 +82,7 @@ endif
 # all platforms).
 lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_LIBADD = \
         $(libusempi_internal_modules) \
-        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la
 lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_LDFLAGS = \
         -version-info $(libmpi_usempi_ignore_tkr_so_version) \
         $(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)

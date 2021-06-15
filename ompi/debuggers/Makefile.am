@@ -46,7 +46,7 @@ headers = \
 dlopen_test_SOURCES = dlopen_test.c
 dlopen_test_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 dlopen_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
 predefined_gap_test_SOURCES = predefined_gap_test.c

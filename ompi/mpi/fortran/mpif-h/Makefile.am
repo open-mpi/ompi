@@ -55,7 +55,7 @@ CLEANFILES =
 lib@OMPI_LIBMPI_NAME@_mpifh_la_LIBADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(OMPI_MPIEXT_MPIFH_LIBS) \
-        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la
 
 lib@OMPI_LIBMPI_NAME@_mpifh_la_LDFLAGS = -version-info $(libmpi_mpifh_so_version)
 

@@ -80,8 +80,8 @@ back-end compiler.
 .
 .
 .SS Background
-Open MPI is comprised of three software layers: OPAL (Open Portable
-Access Layer), ORTE (Open Run-Time Environment), and OMPI (Open MPI).
+Open MPI is comprised of two software layers:
+OPAL (Open Portable Access Layer), and OMPI (Open MPI).
 There are wrapper compilers for each layer; each layer's wrapper only
 links in the libraries relevant for that layer.  Specifically, each
 layer provides the following wrapper compilers:
@@ -89,10 +89,6 @@ layer provides the following wrapper compilers:
 .TP 4
 OPAL
 \fIopalcc\fR and \fIopalc++\fR
-.
-.TP
-ORTE
-\fIortecc\fR and \fIortec++\fR
 .
 .TP
 OMPI

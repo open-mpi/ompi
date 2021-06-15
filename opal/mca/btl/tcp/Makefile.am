@@ -55,8 +55,8 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_btl_tcp_la_SOURCES = $(component_sources)
 mca_btl_tcp_la_LDFLAGS = -module -avoid-version
 if OPAL_cuda_support
-mca_btl_tcp_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_PREFIX@mca_common_cuda.la
+mca_btl_tcp_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_NAME@mca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(lib)
