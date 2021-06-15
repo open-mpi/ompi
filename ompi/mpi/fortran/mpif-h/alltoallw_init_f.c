@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2019 Research Organization for Information Science
+ * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
@@ -24,56 +24,55 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mpiext/pcollreq/mpif-h/mpiext_pcollreq_prototypes.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPIX_ALLTOALLW_INIT = ompix_alltoallw_init_f
-#pragma weak pmpix_alltoallw_init = ompix_alltoallw_init_f
-#pragma weak pmpix_alltoallw_init_ = ompix_alltoallw_init_f
-#pragma weak pmpix_alltoallw_init__ = ompix_alltoallw_init_f
+#pragma weak PMPI_ALLTOALLW_INIT = ompi_alltoallw_init_f
+#pragma weak pmpi_alltoallw_init = ompi_alltoallw_init_f
+#pragma weak pmpi_alltoallw_init_ = ompi_alltoallw_init_f
+#pragma weak pmpi_alltoallw_init__ = ompi_alltoallw_init_f
 
-#pragma weak PMPIX_Alltoallw_init_f = ompix_alltoallw_init_f
-#pragma weak PMPIX_Alltoallw_init_f08 = ompix_alltoallw_init_f
+#pragma weak PMPI_Alltoallw_init_f = ompi_alltoallw_init_f
+#pragma weak PMPI_Alltoallw_init_f08 = ompi_alltoallw_init_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPIX_ALLTOALLW_INIT,
-                            pmpix_alltoallw_init,
-                            pmpix_alltoallw_init_,
-                            pmpix_alltoallw_init__,
-                            pompix_alltoallw_init_f,
+OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALLW_INIT,
+                            pmpi_alltoallw_init,
+                            pmpi_alltoallw_init_,
+                            pmpi_alltoallw_init__,
+                            pompi_alltoallw_init_f,
                             (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtypes, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, info, request, ierr) )
 #endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_ALLTOALLW_INIT = ompix_alltoallw_init_f
-#pragma weak mpix_alltoallw_init = ompix_alltoallw_init_f
-#pragma weak mpix_alltoallw_init_ = ompix_alltoallw_init_f
-#pragma weak mpix_alltoallw_init__ = ompix_alltoallw_init_f
+#pragma weak MPI_ALLTOALLW_INIT = ompi_alltoallw_init_f
+#pragma weak mpi_alltoallw_init = ompi_alltoallw_init_f
+#pragma weak mpi_alltoallw_init_ = ompi_alltoallw_init_f
+#pragma weak mpi_alltoallw_init__ = ompi_alltoallw_init_f
 
-#pragma weak MPIX_Alltoallw_init_f = ompix_alltoallw_init_f
-#pragma weak MPIX_Alltoallw_init_f08 = ompix_alltoallw_init_f
+#pragma weak MPI_Alltoallw_init_f = ompi_alltoallw_init_f
+#pragma weak MPI_Alltoallw_init_f08 = ompi_alltoallw_init_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPIX_ALLTOALLW_INIT,
-                            mpix_alltoallw_init,
-                            mpix_alltoallw_init_,
-                            mpix_alltoallw_init__,
-                            ompix_alltoallw_init_f,
+OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALLW_INIT,
+                            mpi_alltoallw_init,
+                            mpi_alltoallw_init_,
+                            mpi_alltoallw_init__,
+                            ompi_alltoallw_init_f,
                             (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtypes, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, info, request, ierr) )
 #else
-#define ompix_alltoallw_init_f pompix_alltoallw_init_f
+#define ompi_alltoallw_init_f pompi_alltoallw_init_f
 #endif
 #endif
 
 
-void ompix_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
-                            MPI_Fint *sdispls, MPI_Fint *sendtypes,
-                            char *recvbuf, MPI_Fint *recvcounts,
-                            MPI_Fint *rdispls, MPI_Fint *recvtypes,
-                            MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr)
+void ompi_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
+                           MPI_Fint *sdispls, MPI_Fint *sendtypes,
+                           char *recvbuf, MPI_Fint *recvcounts,
+                           MPI_Fint *rdispls, MPI_Fint *recvtypes,
+                           MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
     MPI_Datatype *c_sendtypes = NULL, *c_recvtypes;
@@ -109,14 +108,14 @@ void ompix_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPIX_Alltoallw_init(sendbuf,
-                                  OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                                  OMPI_ARRAY_NAME_CONVERT(sdispls),
-                                  c_sendtypes,
-                                  recvbuf,
-                                  OMPI_ARRAY_NAME_CONVERT(recvcounts),
-                                  OMPI_ARRAY_NAME_CONVERT(rdispls),
-                                  c_recvtypes, c_comm, c_info, &c_request);
+    c_ierr = PMPI_Alltoallw_init(sendbuf,
+                                 OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                                 OMPI_ARRAY_NAME_CONVERT(sdispls),
+                                 c_sendtypes,
+                                 recvbuf,
+                                 OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                                 OMPI_ARRAY_NAME_CONVERT(rdispls),
+                                 c_recvtypes, c_comm, c_info, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 

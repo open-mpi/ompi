@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2021 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,56 +23,55 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
-#include "ompi/mpiext/pcollreq/mpif-h/mpiext_pcollreq_prototypes.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPIX_SCATTER_INIT = ompix_scatter_init_f
-#pragma weak pmpix_scatter_init = ompix_scatter_init_f
-#pragma weak pmpix_scatter_init_ = ompix_scatter_init_f
-#pragma weak pmpix_scatter_init__ = ompix_scatter_init_f
+#pragma weak PMPI_SCATTER_INIT = ompi_scatter_init_f
+#pragma weak pmpi_scatter_init = ompi_scatter_init_f
+#pragma weak pmpi_scatter_init_ = ompi_scatter_init_f
+#pragma weak pmpi_scatter_init__ = ompi_scatter_init_f
 
-#pragma weak PMPIX_Scatter_init_f = ompix_scatter_init_f
-#pragma weak PMPIX_Scatter_init_f08 = ompix_scatter_init_f
+#pragma weak PMPI_Scatter_init_f = ompi_scatter_init_f
+#pragma weak PMPI_Scatter_init_f08 = ompi_scatter_init_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPIX_SCATTER_INIT,
-                            pmpix_scatter_init,
-                            pmpix_scatter_init_,
-                            pmpix_scatter_init__,
-                            pompix_scatter_init_f,
+OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTER_INIT,
+                            pmpi_scatter_init,
+                            pmpi_scatter_init_,
+                            pmpi_scatter_init__,
+                            pompi_scatter_init_f,
                             (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, info, request, ierr) )
 #endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_SCATTER_INIT = ompix_scatter_init_f
-#pragma weak mpix_scatter_init = ompix_scatter_init_f
-#pragma weak mpix_scatter_init_ = ompix_scatter_init_f
-#pragma weak mpix_scatter_init__ = ompix_scatter_init_f
+#pragma weak MPI_SCATTER_INIT = ompi_scatter_init_f
+#pragma weak mpi_scatter_init = ompi_scatter_init_f
+#pragma weak mpi_scatter_init_ = ompi_scatter_init_f
+#pragma weak mpi_scatter_init__ = ompi_scatter_init_f
 
-#pragma weak MPIX_Scatter_init_f = ompix_scatter_init_f
-#pragma weak MPIX_Scatter_init_f08 = ompix_scatter_init_f
+#pragma weak MPI_Scatter_init_f = ompi_scatter_init_f
+#pragma weak MPI_Scatter_init_f08 = ompi_scatter_init_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPIX_SCATTER_INIT,
-                            mpix_scatter_init,
-                            mpix_scatter_init_,
-                            mpix_scatter_init__,
-                            ompix_scatter_init_f,
+OMPI_GENERATE_F77_BINDINGS (MPI_SCATTER_INIT,
+                            mpi_scatter_init,
+                            mpi_scatter_init_,
+                            mpi_scatter_init__,
+                            ompi_scatter_init_f,
                             (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, info, request, ierr) )
 #else
-#define ompix_scatter_init_f pompix_scatter_init_f
+#define ompi_scatter_init_f pompi_scatter_init_f
 #endif
 #endif
 
 
-void ompix_scatter_init_f(char *sendbuf, MPI_Fint *sendcount,
-                          MPI_Fint *sendtype, char *recvbuf,
-                          MPI_Fint *recvcount, MPI_Fint *recvtype,
-                          MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request,
-                          MPI_Fint *ierr)
+void ompi_scatter_init_f(char *sendbuf, MPI_Fint *sendcount,
+                         MPI_Fint *sendtype, char *recvbuf,
+                         MPI_Fint *recvcount, MPI_Fint *recvtype,
+                         MPI_Fint *root, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request,
+                         MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Datatype c_sendtype, c_recvtype;
@@ -88,11 +87,11 @@ void ompix_scatter_init_f(char *sendbuf, MPI_Fint *sendcount,
     recvbuf = (char *) OMPI_F2C_IN_PLACE(recvbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPIX_Scatter_init(sendbuf,OMPI_FINT_2_INT(*sendcount),
-                                c_sendtype, recvbuf,
-                                OMPI_FINT_2_INT(*recvcount),
-                                c_recvtype,
-                                OMPI_FINT_2_INT(*root), c_comm, c_info, &c_request);
+    c_ierr = PMPI_Scatter_init(sendbuf,OMPI_FINT_2_INT(*sendcount),
+                               c_sendtype, recvbuf,
+                               OMPI_FINT_2_INT(*recvcount),
+                               c_recvtype,
+                               OMPI_FINT_2_INT(*root), c_comm, c_info, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 }
