@@ -11,6 +11,8 @@
 
 #include "mpi-f08-rename.h"
 
+#include "mpi-f08-rename.h"
+
 subroutine MPI_Bsend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    use :: ompi_mpifh_bindings, only : ompi_bsend_init_f

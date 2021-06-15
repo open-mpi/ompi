@@ -117,14 +117,22 @@ mpi_api_files = \
         aint_add_f08.F90 \
         aint_diff_f08.F90 \
         allgather_f08.F90 \
+        allgather_init_f08.F90 \
         allgatherv_f08.F90 \
+        allgatherv_init_f08.F90 \
         alloc_mem_f08.F90 \
         allreduce_f08.F90 \
+        allreduce_init_f08.F90 \
         alltoall_f08.F90 \
+        alltoall_init_f08.F90 \
         alltoallv_f08.F90 \
+        alltoallv_init_f08.F90 \
         alltoallw_f08.F90 \
+        alltoallw_init_f08.F90 \
         barrier_f08.F90 \
+        barrier_init_f08.F90 \
         bcast_f08.F90 \
+        bcast_init_f08.F90 \
         bsend_f08.F90 \
         bsend_init_f08.F90 \
         buffer_attach_f08.F90 \
@@ -184,6 +192,7 @@ mpi_api_files = \
         error_class_f08.F90 \
         error_string_f08.F90 \
         exscan_f08.F90 \
+        exscan_init_f08.F90 \
         f_sync_reg_f08.F90 \
         fetch_and_op_f08.F90 \
         file_call_errhandler_f08.F90 \
@@ -249,7 +258,9 @@ mpi_api_files = \
         finalize_f08.F90 \
         free_mem_f08.F90 \
         gather_f08.F90 \
+        gather_init_f08.F90 \
         gatherv_f08.F90 \
+        gatherv_init_f08.F90 \
         get_accumulate_f08.F90 \
         get_address_f08.F90 \
         get_count_f08.F90 \
@@ -328,10 +339,15 @@ mpi_api_files = \
         mprobe_f08.F90 \
         mrecv_f08.F90 \
         neighbor_allgather_f08.F90 \
+        neighbor_allgather_init_f08.F90 \
         neighbor_allgatherv_f08.F90 \
+        neighbor_allgatherv_init_f08.F90 \
         neighbor_alltoall_f08.F90 \
+        neighbor_alltoall_init_f08.F90 \
         neighbor_alltoallv_f08.F90 \
+        neighbor_alltoallv_init_f08.F90 \
         neighbor_alltoallw_f08.F90 \
+        neighbor_alltoallw_init_f08.F90 \
         op_commutative_f08.F90 \
         op_create_f08.F90 \
         open_port_f08.F90 \
@@ -349,9 +365,12 @@ mpi_api_files = \
         recv_f08.F90 \
         recv_init_f08.F90 \
         reduce_f08.F90 \
+        reduce_init_f08.F90 \
         reduce_local_f08.F90 \
         reduce_scatter_f08.F90 \
+        reduce_scatter_init_f08.F90 \
         reduce_scatter_block_f08.F90 \
+        reduce_scatter_block_init_f08.F90 \
         register_datarep_f08.F90 \
         request_free_f08.F90 \
         request_get_status_f08.F90 \
@@ -361,8 +380,11 @@ mpi_api_files = \
         rsend_f08.F90 \
         rsend_init_f08.F90 \
         scan_f08.F90 \
+        scan_init_f08.F90 \
         scatter_f08.F90 \
+        scatter_init_f08.F90 \
         scatterv_f08.F90 \
+        scatterv_init_f08.F90 \
         send_f08.F90 \
         send_init_f08.F90 \
         sendrecv_f08.F90 \

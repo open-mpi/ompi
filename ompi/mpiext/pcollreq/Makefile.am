@@ -7,6 +7,6 @@
 # $HEADER$
 #
 
-SUBDIRS = c use-mpi-f08
+SUBDIRS = c
 
 EXTRA_DIST = README.md
