@@ -16,7 +16,6 @@ AC_DEFUN([OMPI_MPIEXT_pcollreq_CONFIG],[
     AC_CONFIG_FILES([
         ompi/mpiext/pcollreq/Makefile
         ompi/mpiext/pcollreq/c/Makefile
-        ompi/mpiext/pcollreq/use-mpi/Makefile
         ompi/mpiext/pcollreq/use-mpi-f08/Makefile
     ])
 
