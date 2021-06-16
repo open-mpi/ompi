@@ -266,6 +266,7 @@ bcast_rportlen:
     /* initiate a list of participants for the connect,
      * starting with our own members */
     OBJ_CONSTRUCT(&mlist, opal_list_t);
+    assert(NULL != members /* would mean comm had 0-sized group! */);
     for (i=0; NULL != members[i]; i++) {
         OPAL_PMIX_CONVERT_STRING_TO_PROCT(&pxproc, members[i]);
         plt = OBJ_NEW(opal_proclist_t);
