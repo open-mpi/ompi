@@ -182,12 +182,22 @@ struct mca_btl_uct_conn_completion_t {
 };
 typedef struct mca_btl_uct_conn_completion_t mca_btl_uct_conn_completion_t;
 
-static void mca_btl_uct_endpoint_flush_complete(uct_completion_t *self, ucs_status_t status)
+#if UCT_API >= ((1L<<UCT_MAJOR_BIT)|(10L << UCT_MINOR_BIT))
+static void mca_btl_uct_endpoint_flush_complete(uct_completion_t *self)
 {
     mca_btl_uct_conn_completion_t *completion = (mca_btl_uct_conn_completion_t *) self;
     BTL_VERBOSE(("connection flush complete"));
     completion->complete = true;
 }
+#else
+static void mca_btl_uct_endpoint_flush_complete(uct_completion_t *self, ucs_status_t status)
+{
+    mca_btl_uct_conn_completion_t *completion = (mca_btl_uct_conn_completion_t *) self;
+    (void) status;
+    BTL_VERBOSE(("connection flush complete"));
+    completion->complete = true;
+}
+#endif
 
 static int mca_btl_uct_endpoint_send_conn_req(mca_btl_uct_module_t *uct_btl,
                                               mca_btl_base_endpoint_t *endpoint,

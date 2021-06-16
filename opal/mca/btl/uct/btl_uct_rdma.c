@@ -11,7 +11,7 @@
 
 #include "btl_uct_device_context.h"
 
-void mca_btl_uct_uct_completion(uct_completion_t *uct_comp, ucs_status_t status)
+static void mca_btl_uct_uct_completion_compat(uct_completion_t *uct_comp, ucs_status_t status)
 {
     mca_btl_uct_uct_completion_t *comp = (mca_btl_uct_uct_completion_t
                                               *) ((uintptr_t) uct_comp
@@ -23,6 +23,16 @@ void mca_btl_uct_uct_completion(uct_completion_t *uct_comp, ucs_status_t status)
     comp->status = status;
     opal_fifo_push(&comp->dev_context->completion_fifo, &comp->super.super);
 }
+
+#if UCT_API >= ((1L<<UCT_MAJOR_BIT)|(10L << UCT_MINOR_BIT))
+static void mca_btl_uct_uct_completion(uct_completion_t *uct_comp) {
+    mca_btl_uct_uct_completion_compat(uct_comp, uct_comp->status);
+}
+#else
+static void mca_btl_uct_uct_completion(uct_completion_t *uct_comp, ucs_status_t status) {
+     mca_btl_uct_uct_completion_compat(uct_comp, status);
+}
+#endif
 
 static void mca_btl_uct_uct_completion_construct(mca_btl_uct_uct_completion_t *comp)
 {

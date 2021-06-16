@@ -11,7 +11,7 @@
 
 #include "btl_uct_frag.h"
 
-static void mca_btl_uct_frag_completion(uct_completion_t *uct_comp, ucs_status_t status)
+static void mca_btl_uct_frag_completion_compat(uct_completion_t *uct_comp, ucs_status_t status)
 {
     mca_btl_uct_uct_completion_t *comp = (mca_btl_uct_uct_completion_t
                                               *) ((uintptr_t) uct_comp
@@ -23,6 +23,16 @@ static void mca_btl_uct_frag_completion(uct_completion_t *uct_comp, ucs_status_t
     comp->status = status;
     opal_fifo_push(&comp->dev_context->completion_fifo, &comp->super.super);
 }
+
+#if UCT_API >= ((1L<<UCT_MAJOR_BIT)|(10L << UCT_MINOR_BIT))
+static void mca_btl_uct_frag_completion(uct_completion_t *uct_comp) {
+    mca_btl_uct_frag_completion_compat(uct_comp, uct_comp->status);
+}
+#else
+static void mca_btl_uct_frag_completion(uct_completion_t *uct_comp, ucs_status_t status) {
+    mca_btl_uct_frag_completion_compat(uct_comp, status);
+}
+#endif
 
 static void mca_btl_uct_base_frag_constructor(mca_btl_uct_base_frag_t *frag)
 {
