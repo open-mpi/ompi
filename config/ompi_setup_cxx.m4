@@ -16,6 +16,7 @@ dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -33,7 +34,6 @@ AC_DEFUN([OMPI_PROG_CXX],[
 
     ompi_cxxflags_save="$CXXFLAGS"
     AC_PROG_CXX
-    AC_PROG_CXXCPP
     CXXFLAGS="$ompi_cxxflags_save"
 
     # Note: according to the Autoconf docs, if no C++ compiler is
@@ -43,13 +43,14 @@ AC_DEFUN([OMPI_PROG_CXX],[
     # https://www.open-mpi.org/community/lists/users/2013/02/21356.php,
     # which advises us to set Libtool precious variables to "no" if we
     # don't want Libtool to setup that language at all.
-    AS_IF([test "x$CXX" = "x"], [CXX=no])
     set dummy $CXX
     ompi_cxx_argv0=[$]2
     OPAL_WHICH([$ompi_cxx_argv0], [OMPI_CXX_ABSOLUTE])
     AS_IF([test "x$OMPI_CXX_ABSOLUTE" = "x"],
           [CXX=no
-           OMPI_CXX_ABSOLUTE=no])
+           OMPI_CXX_ABSOLUTE=no],
+          [ # If we did actually find a C++ compiler, find the C++ CPP
+           AC_PROG_CXXCPP])
 
     AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
     AC_SUBST(OMPI_CXX_ABSOLUTE)
