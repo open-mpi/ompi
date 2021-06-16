@@ -28,8 +28,6 @@ mca_btl_uct_uct_completion_t *mca_btl_uct_uct_completion_alloc(
  */
 void mca_btl_uct_uct_completion_release(mca_btl_uct_uct_completion_t *comp);
 
-void mca_btl_uct_uct_completion(uct_completion_t *uct_comp, ucs_status_t status);
-
 /**
  * @brief unpack the registration key and ensure the endpoint is connected
  *
