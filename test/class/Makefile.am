@@ -41,56 +41,56 @@ TESTS = $(check_PROGRAMS)
 
 opal_bitmap_SOURCES = opal_bitmap.c
 opal_bitmap_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_bitmap_DEPENDENCIES = $(opal_bitmap_LDADD)
 
 opal_list_SOURCES = opal_list.c
 opal_list_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_list_DEPENDENCIES = $(opal_list_LDADD)
 
 opal_hash_table_SOURCES = opal_hash_table.c
 opal_hash_table_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_hash_table_DEPENDENCIES = $(opal_hash_table_LDADD)
 
 opal_proc_table_SOURCES = opal_proc_table.c
 opal_proc_table_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_proc_table_DEPENDENCIES = $(opal_proc_table_LDADD)
 
 opal_pointer_array_SOURCES = opal_pointer_array.c
 opal_pointer_array_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_pointer_array_DEPENDENCIES = $(opal_pointer_array_LDADD)
 
 opal_value_array_SOURCES = opal_value_array.c
 opal_value_array_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_value_array_DEPENDENCIES = $(opal_value_array_LDADD)
 
 ompi_rb_tree_SOURCES = ompi_rb_tree.c
 ompi_rb_tree_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(top_builddir)/test/support/libsupport.a
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
 
 opal_lifo_SOURCES = opal_lifo.c
 opal_lifo_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(top_builddir)/test/support/libsupport.a
 opal_lifo_DEPENDENCIES = $(opal_lifo_LDADD)
 
 opal_fifo_SOURCES = opal_fifo.c
 opal_fifo_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(top_builddir)/test/support/libsupport.a
 opal_fifo_DEPENDENCIES = $(opal_fifo_LDADD)
 

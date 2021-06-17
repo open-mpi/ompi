@@ -189,8 +189,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     /* We can fall through to here in a few cases:
 
        1. The attempt to kill just a subset of peers via
-          try_kill_peers() failed (e.g., as of July 2014, ORTE does
-          returns NOT_IMPLENTED from orte_rte_abort_peers()).
+          try_kill_peers() failed.
        2. MPI wasn't initialized, was already finalized, or we got a
           NULL communicator.
 

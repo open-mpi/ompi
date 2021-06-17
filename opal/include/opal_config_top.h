@@ -22,7 +22,7 @@
 /* The only purpose of this file is to undef the PACKAGE_<foo> macros
    that are put in by autoconf/automake projects.  Specifically, if
    you include a .h file from another project that defines these
-   macros (e.g., gmp.h) and then include OMPI/ORTE/OPAL's config.h,
+   macros (e.g., gmp.h) and then include OMPI/OPAL's config.h,
    you'll get a preprocessor conflict.  So put these undef's here to
    protect us from other package's PACKAGE_<foo> macros.
 

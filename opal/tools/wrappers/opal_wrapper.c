@@ -744,18 +744,18 @@ int main(int argc, char *argv[])
                switch.  It should only be used by Open MPI developers
                -- not end users.  It will cause mpicc to use the
                static library list, even if we're compiling
-               dynamically (i.e., it'll specifically -lopen-rte and
-               -lopen-pal (and all their dependent libs)).  We provide
+               dynamically (i.e., it'll specifically -l@OPAL_LIB_NAME@
+               (and all their dependent libs)).  We provide
                this flag for test MPI applications that also invoke
-               ORTE and/or OPAL function calls.
+               OPAL function calls.
 
                On some systems (e.g., OS X), if the top-level
-               application calls ORTE/OPAL functions and you don't -l
-               ORTE and OPAL, then the functions won't be resolved at
+               application calls OPAL functions and you don't -l
+               OPAL, then the functions won't be resolved at
                link time (i.e., the implicit library dependencies of
                libmpi won't be pulled in at link time), and therefore
                the link will fail.  This flag will cause the wrapper
-               to explicitly list the ORTE and OPAL libs on the
+               to explicitly list the OPAL libs on the
                underlying compiler command line, so the application
                will therefore link properly. */
             flags |= COMP_WANT_LINKALL;

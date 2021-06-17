@@ -77,7 +77,7 @@ mca_pml_ob1_la_LDFLAGS = -module -avoid-version
 
 if OPAL_cuda_support
 mca_pml_ob1_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_PREFIX@mca_common_cuda.la
+    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_NAME@mca_common_cuda.la
 endif
 
 noinst_LTLIBRARIES = $(component_noinst)

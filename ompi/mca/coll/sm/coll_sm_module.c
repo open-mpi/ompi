@@ -507,7 +507,7 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     /* Make the rendezvous filename for this communicators shmem data
        segment.  The CID is not guaranteed to be unique among all
        procs on this node, so also pair it with the PID of the proc
-       with the lowest ORTE name to form a unique filename. */
+       with the lowest PMIx name to form a unique filename. */
     proc = ompi_group_peer_lookup(comm->c_local_group, 0);
     lowest_name = OMPI_CAST_RTE_NAME(&proc->super.proc_name);
     for (int i = 1; i < comm_size; ++i) {

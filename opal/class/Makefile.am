@@ -42,7 +42,7 @@ headers += \
         class/opal_rb_tree.h \
         class/opal_interval_tree.h
 
-lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
+lib@OPAL_LIB_NAME@_la_SOURCES += \
         class/opal_bitmap.c \
         class/opal_cstring.c \
         class/opal_free_list.c \

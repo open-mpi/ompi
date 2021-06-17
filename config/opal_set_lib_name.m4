@@ -12,19 +12,19 @@
 
 # OPAL_SET_LIB_PREFIX([library_prefix]
 #
-# This macro sets a prefix for the libopen-pal library.  Specifically,
-# libopen-pal.la becomes libPREFIXopen-pal.la.
+# This macro sets a name for the libopen-pal library.  Specifically,
+# libopen-pal.la becomes libopen-pal.la by default.
 #
 # --------------------------------------------------------
-AC_DEFUN([OPAL_SET_LIB_PREFIX],[
+AC_DEFUN([OPAL_SET_LIB_NAME],[
     AS_IF([test "$opal_lib_prefix_set" = "yes"],
-          [AC_MSG_WARN([OPAL lib prefix was already set!])
+          [AC_MSG_WARN([OPAL lib name was already set!])
            AC_MSG_WARN([This is a configury programming error])
            AC_MSG_ERROR([Cannot continue])])
 
-    OPAL_LIB_PREFIX=$1
+    OPAL_LIB_NAME=$1
     opal_lib_prefix_set=yes
-    AC_SUBST(OPAL_LIB_PREFIX)
+    AC_SUBST(OPAL_LIB_NAME)
 ])dnl
 
 #

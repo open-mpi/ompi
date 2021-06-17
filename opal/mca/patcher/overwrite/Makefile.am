@@ -40,7 +40,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_patcher_overwrite_la_SOURCES = $(overwrite_SOURCES)
 nodist_mca_patcher_overwrite_la_SOURCES = $(overwrite_nodist_SOURCES)
 mca_patcher_overwrite_la_LDFLAGS = -module -avoid-version
-mca_patcher_overwrite_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+mca_patcher_overwrite_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_patcher_overwrite_la_SOURCES = $(overwrite_SOURCES)

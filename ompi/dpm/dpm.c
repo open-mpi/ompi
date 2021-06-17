@@ -1143,7 +1143,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #endif
 
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
-             * behavior as --prefix option to orterun)
+             * behavior as --prefix option to prun)
              *
              * This is a job-level key
              */
@@ -1212,7 +1212,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1234,7 +1233,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1252,7 +1250,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1270,7 +1267,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1286,7 +1282,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1302,7 +1297,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1322,7 +1316,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     if (NULL != hostfiles) {
                         opal_argv_free(hostfiles);
                     }
@@ -1359,7 +1352,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     return MPI_ERR_SPAWN;
                 }
             }
@@ -1390,7 +1382,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
                     PMIX_APP_FREE(apps, scount);
-                    opal_progress_event_users_decrement();
                     return MPI_ERR_SPAWN;
                 }
             }
@@ -1467,7 +1458,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 #endif
 
-            /* see if this is a non-mpi job - if so, then set the flag so ORTE
+            /* see if this is a non-mpi job - if so, then set the flag so PRTE
              * knows what to do - job-level key
              */
             ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
@@ -1546,7 +1537,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             if (OMPI_SUCCESS != (rc = opal_getcwd(cwd, OPAL_PATH_MAX))) {
                 OMPI_ERROR_LOG(rc);
                 PMIX_APP_FREE(apps, (size_t)count);
-                opal_progress_event_users_decrement();
                 if (NULL != hostfiles) {
                     opal_argv_free(hostfiles);
                 }
@@ -1603,7 +1593,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 PMIX_INFO_FREE(pinfo, ninfo);
             }
             PMIX_APP_FREE(apps, scount);
-            opal_progress_event_users_decrement();
             if (NULL != hostfiles) {
                 opal_argv_free(hostfiles);
             }
@@ -1628,7 +1617,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     PMIX_APP_FREE(apps, scount);
 
     if (OPAL_SUCCESS != rc) {
-        opal_progress_event_users_decrement();
         return MPI_ERR_SPAWN;
     }
 
@@ -2052,7 +2040,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
          will) reset them.  If we don't do this, the event
          library may have left some set that, at least on some
          OS's, don't get reset via fork() or exec().  Hence, the
-         orted could be unkillable (for example). */
+         prted could be unkillable (for example). */
         set_handler_default(SIGTERM);
         set_handler_default(SIGINT);
         set_handler_default(SIGHUP);
@@ -2062,9 +2050,9 @@ static int start_dvm(char **hostfiles, char **dash_host)
         /* Unblock all signals, for many of the same reasons that
          we set the default handlers, above.  This is noticable
          on Linux where the event library blocks SIGTERM, but we
-         don't want that blocked by the orted (or, more
+         don't want that blocked by the prted (or, more
          specifically, we don't want it to be blocked by the
-         orted and then inherited by the ORTE processes that it
+         prted and then inherited by the PRTE processes that it
          forks, making them unkillable by SIGTERM). */
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);
@@ -2125,7 +2113,6 @@ static int start_dvm(char **hostfiles, char **dash_host)
     pret = PMIx_Init(NULL, &info, 1);
     rc = opal_pmix_convert_status(pret);
     if (OPAL_SUCCESS != rc) {
-        opal_progress_event_users_decrement();
         return MPI_ERR_SPAWN;
     }
     /* decrement the PMIx init refcount */

@@ -117,7 +117,7 @@ endif
 lib@OMPI_LIBMPI_NAME@_usempi_la_LIBADD = \
         $(top_builddir)/ompi/mpi/fortran/mpif-h/lib@OMPI_LIBMPI_NAME@_mpifh.la \
         $(libusempi_internal_modules) \
-        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la
 # Set the library version
 lib@OMPI_LIBMPI_NAME@_usempi_la_LDFLAGS = \
         -version-info $(libmpi_usempi_tkr_so_version) \

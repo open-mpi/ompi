@@ -48,7 +48,7 @@ local_sources = \
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_portals4_la_SOURCES = $(local_sources)
-mca_btl_portals4_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+mca_btl_portals4_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
     $(btl_portals4_LIBS)
 mca_btl_portals4_la_LDFLAGS = -module -avoid-version $(btl_portals4_LDFLAGS)
 

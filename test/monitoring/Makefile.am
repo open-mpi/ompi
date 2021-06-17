@@ -22,27 +22,27 @@ if PROJECT_OMPI
     monitoring_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     monitoring_test_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     test_pvar_access_SOURCES = test_pvar_access.c
     test_pvar_access_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     test_pvar_access_LDADD = \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     test_overhead_SOURCES = test_overhead.c
     test_overhead_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     test_overhead_LDADD = \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     check_monitoring_SOURCES = check_monitoring.c
     check_monitoring_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     check_monitoring_LDADD = \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     example_reduce_count_SOURCES = example_reduce_count.c
     example_reduce_count_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     example_reduce_count_LDADD = \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 endif # PROJECT_OMPI
 
 distclean:

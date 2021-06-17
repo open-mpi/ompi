@@ -48,7 +48,7 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_ugni_la_SOURCES = $(ugni_SOURCES)
 nodist_mca_btl_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
-mca_btl_ugni_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
+mca_btl_ugni_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(btl_ugni_LIBS)
 mca_btl_ugni_la_LDFLAGS = -module -avoid-version $(btl_ugni_LDFLAGS)
 

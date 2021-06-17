@@ -60,9 +60,9 @@ static inline opal_btl_usnic_endpoint_t *lookup_sender(opal_btl_usnic_module_t *
     int ret;
     opal_btl_usnic_endpoint_t *sender;
 
-    /* Use the hashed ORTE process name in the BTL header to uniquely
+    /* Use the hashed PRTE process name in the BTL header to uniquely
        identify the sending process (using the MAC/hardware address
-       only identifies the sending server -- not the sending ORTE
+       only identifies the sending server -- not the sending PRTE
        process). */
     /* JMS We've experimented with using a handshake before sending
        any data so that instead of looking up a hash on the

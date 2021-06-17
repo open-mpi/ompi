@@ -71,9 +71,9 @@ DIST_SUBDIRS = \
 endif
 
 # Build the main OPAL library
-lib_LTLIBRARIES = lib@OPAL_LIB_PREFIX@open-pal.la
-lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES =
-lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
+lib_LTLIBRARIES = lib@OPAL_LIB_NAME@.la
+lib@OPAL_LIB_NAME@_la_SOURCES =
+lib@OPAL_LIB_NAME@_la_LIBADD = \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
@@ -81,12 +81,12 @@ lib@OPAL_LIB_PREFIX@open_pal_la_LIBADD = \
 	$(opal_libevent_LIBS) \
 	$(opal_hwloc_LIBS) \
 	$(opal_pmix_LIBS)
-lib@OPAL_LIB_PREFIX@open_pal_la_DEPENDENCIES = \
+lib@OPAL_LIB_NAME@_la_DEPENDENCIES = \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
         $(MCA_opal_FRAMEWORK_LIBS)
-lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version) \
+lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@ \
 	$(opal_libevent_LDFLAGS) \
 	$(opal_hwloc_LDFLAGS) \
 	$(opal_pmix_LDFLAGS)
@@ -95,7 +95,7 @@ lib@OPAL_LIB_PREFIX@open_pal_la_LDFLAGS = -version-info $(libopen_pal_so_version
 headers =
 noinst_LTLIBRARIES =
 dist_opaldata_DATA =
-lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += $(headers)
+lib@OPAL_LIB_NAME@_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 

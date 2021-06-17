@@ -17,9 +17,7 @@
 /*
  * Don't use show_help() here (or print any error message at all).
  * Let the upper layer output a relevant message, because doing so may
- * be complicated (e.g., this might be called from the ORTE ODLS,
- * which has to do some extra steps to get error messages to be
- * displayed).
+ * be complicated.
  */
 int opal_hwloc_base_set_process_membind_policy(void)
 {

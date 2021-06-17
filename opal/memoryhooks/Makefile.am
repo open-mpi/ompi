@@ -24,5 +24,5 @@ headers += \
 	memoryhooks/memory.h \
 	memoryhooks/memory_internal.h
 
-lib@OPAL_LIB_PREFIX@open_pal_la_SOURCES += \
+lib@OPAL_LIB_NAME@_la_SOURCES += \
 	memoryhooks/memory.c
