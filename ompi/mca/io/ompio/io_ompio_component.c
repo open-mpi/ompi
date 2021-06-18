@@ -13,8 +13,8 @@
  * Copyright (c) 2008-2020 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * $COPYRIGHT$
@@ -35,11 +35,6 @@
 #include "io_ompio.h"
 #include "ompi/mca/common/ompio/common_ompio_request.h"
 #include "ompi/mca/common/ompio/common_ompio_buffer.h"
-
-#ifdef HAVE_IME_NATIVE_H
-#include "ompi/mca/fs/ime/fs_ime.h"
-#endif
-
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
@@ -280,10 +275,6 @@ static int close_component(void)
     mca_common_ompio_request_fini ();
     mca_common_ompio_buffer_alloc_fini();
     OBJ_DESTRUCT(&mca_io_ompio_mutex);
-
-#ifdef HAVE_IME_NATIVE_H
-    mca_fs_ime_native_fini();
-#endif
 
     return OMPI_SUCCESS;
 }
