@@ -132,7 +132,7 @@ static int _shmem_finalize(void)
 
     if (OSHMEM_SUCCESS
             != (ret =
-                    MCA_SPML_CALL(del_procs(oshmem_group_all->proc_array, oshmem_group_all->proc_count)))) {
+                    MCA_SPML_CALL(del_procs(oshmem_group_all, oshmem_group_all->proc_count)))) {
         return ret;
     }
 

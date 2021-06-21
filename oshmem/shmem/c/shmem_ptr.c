@@ -31,7 +31,6 @@
 
 void *shmem_ptr(const void *dst_addr, int pe)
 {
-    ompi_proc_t *proc;
     sshmem_mkey_t *mkey;
     int i;
     void *rva;
@@ -46,8 +45,7 @@ void *shmem_ptr(const void *dst_addr, int pe)
     }
 
     /* The memory must be on the local node */
-    proc = oshmem_proc_group_find(oshmem_group_all, pe);
-    if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+    if (!oshmem_proc_on_local_node(pe)) {
         return NULL;
     }
 

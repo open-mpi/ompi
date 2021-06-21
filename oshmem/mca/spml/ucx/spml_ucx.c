@@ -251,7 +251,7 @@ int mca_spml_ucx_ctx_mkey_del(mca_spml_ucx_ctx_t *ucx_ctx, int pe, uint32_t segn
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs)
+int mca_spml_ucx_del_procs(oshmem_group_t* group, size_t nprocs)
 {
     opal_common_ucx_del_proc_t *del_procs;
     size_t i, w, n;
@@ -433,7 +433,7 @@ int mca_spml_ucx_clear_put_op_mask(mca_spml_ucx_ctx_t *ctx)
     return OSHMEM_SUCCESS;
 }
 
-int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
+int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
 {
     size_t i, j, k, w, n;
     int rc = OSHMEM_ERROR;
@@ -507,9 +507,6 @@ int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs)
                     ucs_status_string(err));
             goto error2;
         }
-
-        OSHMEM_PROC_DATA(procs[i])->num_transports = 1;
-        OSHMEM_PROC_DATA(procs[i])->transport_ids = spml_ucx_transport_ids;
 
         /* Initialize mkeys as NULL for all processes */
         mca_spml_ucx_peer_mkey_cache_init(&mca_spml_ucx_ctx_default, i);

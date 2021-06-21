@@ -144,7 +144,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
                       "[#%d] send data to all PE in the group",
                       group->my_pe);
         for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
-            pe_cur = oshmem_proc_pe(group->proc_array[i]);
+            pe_cur = oshmem_proc_pe_vpid(group, i);
             if (pe_cur != PE_root) {
                 SCOLL_VERBOSE(15,
                               "[#%d] send data to #%d",
@@ -233,7 +233,7 @@ static int _algorithm_binomial_tree(struct oshmem_group_t *group,
         if (peer_id < group->proc_count) {
             /* Wait for the child to be ready to receive (pSync must have the initial value) */
             peer_id = (peer_id + root_id) % group->proc_count;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             SCOLL_VERBOSE(14,
                           "[#%d] check remote pe is ready to receive #%d",
