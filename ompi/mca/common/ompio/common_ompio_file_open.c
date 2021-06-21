@@ -235,6 +235,10 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
     int delete_flag = 0;
     char name[256];
 
+    /* Call coll_barrier only if collectives are set (same reasoning as below for f_fs) */
+    if (NULL == ompio_fh->f_comm || NULL == ompio_fh->f_comm->c_coll)
+        return OMPI_SUCCESS;
+
     ret = ompio_fh->f_comm->c_coll->coll_barrier ( ompio_fh->f_comm, ompio_fh->f_comm->c_coll->coll_barrier_module);
     if ( OMPI_SUCCESS != ret ) {
         /* Not sure what to do */
