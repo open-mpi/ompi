@@ -12,8 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2017-2021 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -42,7 +42,8 @@ lib@OMPI_LIBMPI_NAME@_cxx_la_SOURCES = \
 	win.cc \
 	cxx_glue.c
 
-lib@OMPI_LIBMPI_NAME@_cxx_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+lib@OMPI_LIBMPI_NAME@_cxx_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+                                      $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 lib@OMPI_LIBMPI_NAME@_cxx_la_LDFLAGS = -version-info $(libmpi_cxx_so_version)
 
 headers = \
