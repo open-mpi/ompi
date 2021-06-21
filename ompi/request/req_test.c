@@ -346,6 +346,7 @@ int ompi_request_default_test_some(
         }
         if( REQUEST_COMPLETE(request) ) {
             indices[num_requests_done++] = i;
+            continue;
         }
 #if OPAL_ENABLE_FT_MPI
         /* Check for dead requests due to process failure */
