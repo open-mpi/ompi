@@ -155,7 +155,7 @@ static int _algorithm_f_central_counter(struct oshmem_group_t *group,
 {
     int rc = OSHMEM_SUCCESS;
     int i = 0;
-    int PE_root = oshmem_proc_pe(group->proc_array[0]);
+    int PE_root = oshmem_proc_pe_vpid(group, 0);
 
     SCOLL_VERBOSE(12,
                   "[#%d] Collect algorithm: Central Counter (identical size)",
@@ -174,7 +174,7 @@ static int _algorithm_f_central_counter(struct oshmem_group_t *group,
                       group->my_pe);
         for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
             /* Get PE ID of a peer from the group */
-            pe_cur = oshmem_proc_pe(group->proc_array[i]);
+            pe_cur = oshmem_proc_pe_vpid(group, i);
 
             if (pe_cur == group->my_pe)
                 continue;
@@ -221,7 +221,7 @@ static int _algorithm_f_tournament(struct oshmem_group_t *group,
     int my_id = oshmem_proc_group_find_id(group, group->my_pe);
     int peer_id = 0;
     int peer_pe = 0;
-    int PE_root = oshmem_proc_pe(group->proc_array[0]);
+    int PE_root = oshmem_proc_pe_vpid(group, 0);
 
     SCOLL_VERBOSE(12,
                   "[#%d] Collect algorithm: Tournament (identical size)",
@@ -255,7 +255,7 @@ static int _algorithm_f_tournament(struct oshmem_group_t *group,
             SCOLL_VERBOSE(14, "[#%d] round = %d wait", group->my_pe, round);
             rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_EQ, (void*)&value, SHMEM_LONG));
         } else {
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
 #if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
@@ -294,7 +294,7 @@ static int _algorithm_f_tournament(struct oshmem_group_t *group,
         for (peer_id = 1;
                 (peer_id < group->proc_count) && (rc == OSHMEM_SUCCESS);
                 peer_id++) {
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
             rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
         }
     }
@@ -339,7 +339,7 @@ static int _algorithm_f_ring(struct oshmem_group_t *group,
     SCOLL_VERBOSE(15, "[#%d] pSync[0] = %ld", group->my_pe, pSync[0]);
 
     peer_id = (my_id + 1) % group->proc_count;
-    peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+    peer_pe = oshmem_proc_pe_vpid(group, peer_id);
     memcpy((void*) ((unsigned char*) target + my_id * nlong),
            (void *) source,
            nlong);
@@ -420,13 +420,12 @@ static int _algorithm_f_recursive_doubling(struct oshmem_group_t *group,
 
         /* I am in extra group, my partner is node (my_id-y) in basic group */
         peer_id = my_id - floor2_proc;
-        peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+        peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
         for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
             if (i == my_id)
                 continue;
-
-            pe_cur = oshmem_proc_pe(group->proc_array[i]);
+            pe_cur = oshmem_proc_pe_vpid(group, i);
 
             SCOLL_VERBOSE(14,
                           "[#%d] is extra send data to #%d",
@@ -450,7 +449,7 @@ static int _algorithm_f_recursive_doubling(struct oshmem_group_t *group,
         if ((group->proc_count - floor2_proc) > my_id) {
             /* I am in basic group, my partner is node (my_id+y) in extra group */
             peer_id = my_id + floor2_proc;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             SCOLL_VERBOSE(14,
                           "[#%d] wait a signal from #%d",
@@ -469,8 +468,7 @@ static int _algorithm_f_recursive_doubling(struct oshmem_group_t *group,
             /* Update exit condition and round counter */
             exit_flag >>= 1;
             round++;
-
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
 #if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
@@ -507,7 +505,7 @@ static int _algorithm_f_recursive_doubling(struct oshmem_group_t *group,
         if ((group->proc_count - floor2_proc) > my_id) {
             /* I am in basic group, my partner is node (my_id+y) in extra group */
             peer_id = my_id + floor2_proc;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             SCOLL_VERBOSE(14,
                           "[#%d] is extra send data to #%d",
@@ -542,7 +540,7 @@ static int _algorithm_central_collector(struct oshmem_group_t *group,
     int rc = OSHMEM_SUCCESS;
     size_t offset = 0;
     int i = 0;
-    int PE_root = oshmem_proc_pe(group->proc_array[0]);
+    int PE_root = oshmem_proc_pe_vpid(group, 0);
 
     SCOLL_VERBOSE(12,
                   "[#%d] Collect algorithm: Central Counter (vary size)",
@@ -573,7 +571,7 @@ static int _algorithm_central_collector(struct oshmem_group_t *group,
                 for (i = 1; (i < group->proc_count) && (rc == OSHMEM_SUCCESS);
                         i++) {
                     if (wait_pe_array[i] == 0) {
-                        pe_cur = oshmem_proc_pe(group->proc_array[i]);
+                        pe_cur = oshmem_proc_pe_vpid(group, i);
                         value = 0;
                         rc = MCA_SPML_CALL(get(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, pe_cur));
                         if ((rc == OSHMEM_SUCCESS)
@@ -602,7 +600,7 @@ static int _algorithm_central_collector(struct oshmem_group_t *group,
                 }
 
                 /* Get PE ID of a peer from the group */
-                pe_cur = oshmem_proc_pe(group->proc_array[i]);
+                pe_cur = oshmem_proc_pe_vpid(group, i);
 
                 /* Get data from the current peer */
                 rc = MCA_SPML_CALL(get(oshmem_ctx_default, (void *)source, (size_t)wait_pe_array[i], (void*)((unsigned char*)target + offset), pe_cur));
