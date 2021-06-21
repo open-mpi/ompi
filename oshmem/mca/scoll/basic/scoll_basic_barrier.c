@@ -103,7 +103,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
     int rc = OSHMEM_SUCCESS;
     long value = SHMEM_SYNC_INIT;
     int root_id = 0;
-    int PE_root = oshmem_proc_pe(group->proc_array[root_id]);
+    int PE_root = oshmem_proc_pe_vpid(group, root_id);
     int i = 0;
 
     SCOLL_VERBOSE(12, "[#%d] Barrier algorithm: Central Counter", group->my_pe);
@@ -124,7 +124,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
 
             wait_pe_count = group->proc_count;
             for (i = 0; i < group->proc_count; i++) {
-                wait_pe_array[i] = oshmem_proc_pe(group->proc_array[i]);
+                wait_pe_array[i] = oshmem_proc_pe_vpid(group, i);
             }
             wait_pe_array[root_id] = OSHMEM_PE_INVALID;
             wait_pe_count--;
@@ -151,7 +151,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
             value = SHMEM_SYNC_RUN;
             for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS);
                     i++) {
-                pe_cur = oshmem_proc_pe(group->proc_array[i]);
+                pe_cur = oshmem_proc_pe_vpid(group, i);
                 if (pe_cur != PE_root) {
                     rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, pe_cur));
                 }
@@ -238,7 +238,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync)
             SCOLL_VERBOSE(14, "[#%d] round = %d wait", group->my_pe, round);
             rc = MCA_SPML_CALL(wait((void*)pSync, SHMEM_CMP_EQ, (void*)&value, SHMEM_LONG));
         } else {
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
 #if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
@@ -284,7 +284,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group, long *pSync)
         for (peer_id = 1;
                 (peer_id < group->proc_count) && (rc == OSHMEM_SUCCESS);
                 peer_id++) {
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
             rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
         }
     }
@@ -333,7 +333,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
     if (my_id >= floor2_proc) {
         /* I am in extra group, my partner is node (my_id-y) in basic group */
         peer_id = my_id - floor2_proc;
-        peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+        peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
         SCOLL_VERBOSE(14,
                       "[#%d] is extra and signal to #%d",
@@ -357,7 +357,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
         if ((group->proc_count - floor2_proc) > my_id) {
             /* I am in basic group, my partner is node (my_id+y) in extra group */
             peer_id = my_id + floor2_proc;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             SCOLL_VERBOSE(14,
                           "[#%d] wait a signal from #%d",
@@ -376,8 +376,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
             /* Update exit condition and round counter */
             exit_flag >>= 1;
             round++;
-
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
 #if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
@@ -420,7 +419,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
         if ((group->proc_count - floor2_proc) > my_id) {
             /* I am in basic group, my partner is node (my_id+y) in extra group */
             peer_id = my_id + floor2_proc;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             SCOLL_VERBOSE(14, "[#%d] signals to #%d", group->my_pe, peer_pe);
             value = SHMEM_SYNC_RUN;
@@ -462,8 +461,7 @@ static int _algorithm_dissemination(struct oshmem_group_t *group, long *pSync)
     for (round = 0; (round <= log2_proc) && (rc == OSHMEM_SUCCESS); round++) {
         /* Define a peer to send signal */
         peer_id = (my_id + (1 << round)) % group->proc_count;
-
-        peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+        peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
 #if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
@@ -502,7 +500,7 @@ static int _algorithm_basic(struct oshmem_group_t *group, long *pSync)
 {
     int rc = OSHMEM_SUCCESS;
     int root_id = 0;
-    int PE_root = oshmem_proc_pe(group->proc_array[root_id]);
+    int PE_root = oshmem_proc_pe_vpid(group, root_id);
     int i = 0;
 
     SCOLL_VERBOSE(12, "[#%d] Barrier algorithm: Basic", group->my_pe);
@@ -525,7 +523,7 @@ static int _algorithm_basic(struct oshmem_group_t *group, long *pSync)
         int pe_cur = 0;
 
         for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
-            pe_cur = oshmem_proc_pe(group->proc_array[i]);
+            pe_cur = oshmem_proc_pe_vpid(group, i);
             if (pe_cur != PE_root) {
                 rc = MCA_SPML_CALL(recv(NULL, 0, pe_cur)); 
             }
@@ -535,7 +533,7 @@ static int _algorithm_basic(struct oshmem_group_t *group, long *pSync)
         }
 
         for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
-            pe_cur = oshmem_proc_pe(group->proc_array[i]);
+            pe_cur = oshmem_proc_pe_vpid(group, i);
             if (pe_cur != PE_root) {
                 rc = MCA_SPML_CALL(send(NULL, 0, pe_cur, MCA_SPML_BASE_PUT_STANDARD));
             }
@@ -564,7 +562,7 @@ static int _algorithm_adaptive(struct oshmem_group_t *group, long *pSync)
             if (i == my_id)
                 continue;
 
-            if (!OPAL_PROC_ON_LOCAL_NODE(group->proc_array[i]->super.proc_flags)) {
+            if (!oshmem_proc_on_local_node(i)) {
                 local_peers_only = false;
                 break;
             }
