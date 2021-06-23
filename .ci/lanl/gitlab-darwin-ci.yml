@@ -35,9 +35,10 @@ build:ibm:
     SCHEDULER_PARAMETERS: "-ppower9 -t 1:00:00 -N 1 --ntasks-per-node=16"
   script:
     - module load ibm
+    - module load cuda/11.0
     - git submodule update --init
     - ./autogen.pl
-    - ./configure CC=xlc FC=xlf CXX=xlc++ --prefix=$PWD/install_test --with-libevent=internal
+    - ./configure CC=xlc FC=xlf CXX=xlc++ --prefix=$PWD/install_test --with-libevent=internal --with-cuda=/usr/local/cuda-11.0 --with-ucx=$UCX_INSTALL_PATH_P9
     - make -j 8 install
     - make check
     - export PATH=$PWD/install_test/bin:$PATH
@@ -134,6 +135,7 @@ test:ibm:
     - pwd
     - ls
     - module load ibm
+    - module load cuda/11.0
     - export PATH=$PWD/install_test/bin:$PATH
     - which mpirun
     - cd examples
