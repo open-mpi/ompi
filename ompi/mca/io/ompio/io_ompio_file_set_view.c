@@ -66,7 +66,8 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     mca_common_ompio_data_t *data;
     ompio_file_t *fh;
 
-    if ( (strcmp(datarep, "native") && strcmp(datarep, "NATIVE"))) {
+    if ( (strcmp(datarep, "native") && strcmp(datarep, "NATIVE") &&
+          strcmp(datarep, "external32") && strcmp(datarep, "EXTERNAL32"))) {
         return MPI_ERR_UNSUPPORTED_DATAREP;
     }
 
