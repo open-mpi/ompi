@@ -42,19 +42,6 @@ struct oshmem_group_t;
 
 #define OSHMEM_PE_INVALID   (-1)
 
-/* This struct will be copied into the padding field of an ompi_proc_t
- * so the size of oshmem_proc_data_t must be less or equal than
- * OMPI_PROC_PADDING_SIZE */
-struct oshmem_proc_data_t {
-    char * transport_ids;
-    int num_transports;
-};
-
-typedef struct oshmem_proc_data_t oshmem_proc_data_t;
-
-#define OSHMEM_PROC_DATA(proc) \
-    ((oshmem_proc_data_t *)(proc)->padding)
-
 /**
  * Group of Open SHMEM processes structure
  *
@@ -67,7 +54,6 @@ struct oshmem_group_t {
     int                         proc_count;     /**< number of processes in group */
     int                         is_member;   /* true if my_pe is part of the group, participate in collectives */
     opal_vpid_t                 *proc_vpids; /* vpids of each process in group */
-    opal_list_t                 peer_list;
 
     /* Collectives module interface and data */
     mca_scoll_base_group_scoll_t g_scoll;
@@ -167,7 +153,6 @@ static inline int oshmem_proc_pe(ompi_proc_t *proc)
     return (proc ? (int) ((orte_process_name_t*)&proc->super.proc_name)->vpid : -1);
 }
 
-int oshmem_proc_init_set_local_vpids();
 bool oshmem_proc_on_local_node(int pe);
 /**
  * Initialize the OSHMEM process predefined groups

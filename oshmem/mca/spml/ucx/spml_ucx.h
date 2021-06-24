@@ -262,7 +262,7 @@ mca_spml_ucx_ctx_mkey_by_va(shmem_ctx_t ctx, int pe, void *va, void **rva, mca_s
 {
     spml_ucx_cached_mkey_t **mkey;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
-    int i;
+    size_t i;
 
     mkey = ucx_ctx->ucp_peers[pe].mkeys;
     for (i = 0; i < ucx_ctx->ucp_peers[pe].mkeys_cnt; i++) {
