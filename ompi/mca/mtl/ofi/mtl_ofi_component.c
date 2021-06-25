@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
  *
- * Copyright (c) 2014-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -40,8 +40,8 @@ static int av_type;
 static int ofi_tag_mode;
 
 #if OPAL_HAVE_THREAD_LOCAL
-    opal_thread_local int per_thread_ctx;
-    opal_thread_local struct fi_cq_tagged_entry wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
+    opal_thread_local int ompi_mtl_ofi_per_thread_ctx;
+    opal_thread_local struct fi_cq_tagged_entry ompi_mtl_ofi_wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
 #endif
 
 /*
@@ -374,8 +374,8 @@ select_ofi_provider(struct fi_info *providers,
 }
 
 static void
-ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode, int *bits_for_cid) {
-    switch (ofi_tag_mode) {
+ompi_mtl_ofi_define_tag_mode(int ofi_tag_mode_arg, int *bits_for_cid) {
+    switch (ofi_tag_mode_arg) {
         case MTL_OFI_TAG_1:
             *bits_for_cid = (int) MTL_OFI_CID_BIT_COUNT_1;
             ompi_mtl_ofi.base.mtl_max_tag = (int)((1ULL << (MTL_OFI_TAG_BIT_COUNT_1 - 1)) - 1);
