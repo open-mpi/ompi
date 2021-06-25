@@ -62,8 +62,8 @@ extern int ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
 int ompi_mtl_ofi_progress_no_inline(void);
 
 #if OPAL_HAVE_THREAD_LOCAL
-extern opal_thread_local int per_thread_ctx;
-extern opal_thread_local struct fi_cq_tagged_entry wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
+extern opal_thread_local int ompi_mtl_ofi_per_thread_ctx;
+extern opal_thread_local struct fi_cq_tagged_entry ompi_mtl_ofi_wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
 #endif
 
 /* Set OFI context for operations which generate completion events */
@@ -71,7 +71,7 @@ __opal_attribute_always_inline__ static inline void
 set_thread_context(int ctxt)
 {
 #if OPAL_HAVE_THREAD_LOCAL
-    per_thread_ctx = ctxt;
+    ompi_mtl_ofi_per_thread_ctx = ctxt;
     return;
 #endif
 }
@@ -81,7 +81,7 @@ __opal_attribute_always_inline__ static inline void
 get_thread_context(int *ctxt)
 {
 #if OPAL_HAVE_THREAD_LOCAL
-    *ctxt = per_thread_ctx;
+    *ctxt = ompi_mtl_ofi_per_thread_ctx;
 #endif
     return;
 }
@@ -100,7 +100,7 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
     struct fi_cq_err_entry error = { 0 };
     ssize_t ret;
 #if !OPAL_HAVE_THREAD_LOCAL
-    struct fi_cq_tagged_entry wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
+    struct fi_cq_tagged_entry ompi_mtl_ofi_wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
 #endif
 
     /**
@@ -109,16 +109,16 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
      * Call the request's callback.
      */
     while (true) {
-        ret = fi_cq_read(ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq, (void *)&wc,
+        ret = fi_cq_read(ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq, (void *)&ompi_mtl_ofi_wc,
                          ompi_mtl_ofi.ofi_progress_event_count);
         if (ret > 0) {
             count+= ret;
             events_read = ret;
             for (i = 0; i < events_read; i++) {
-                if (NULL != wc[i].op_context) {
-                    ofi_req = TO_OFI_REQ(wc[i].op_context);
+                if (NULL != ompi_mtl_ofi_wc[i].op_context) {
+                    ofi_req = TO_OFI_REQ(ompi_mtl_ofi_wc[i].op_context);
                     assert(ofi_req);
-                    ret = ofi_req->event_callback(&wc[i], ofi_req);
+                    ret = ofi_req->event_callback(&ompi_mtl_ofi_wc[i], ofi_req);
                     if (OMPI_SUCCESS != ret) {
                         opal_output(0, "%s:%d: Error returned by request event callback: %zd.\n"
                                        "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
