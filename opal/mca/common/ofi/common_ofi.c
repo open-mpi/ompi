@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020-2021 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2020-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,7 +31,7 @@ OPAL_DECLSPEC opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                                           .registered = 0,
                                                           .verbose = 0};
 
-static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream";
+static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic";
 static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
 
 OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item)
