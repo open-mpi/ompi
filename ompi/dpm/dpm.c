@@ -268,6 +268,7 @@ bcast_rportlen:
     /* initiate a list of participants for the connect,
      * starting with our own members */
     OBJ_CONSTRUCT(&mlist, opal_list_t);
+    assert(NULL != members /* would mean comm had 0-sized group! */);
     for (i=0; NULL != members[i]; i++) {
         OPAL_PMIX_CONVERT_STRING_TO_PROCT(&pxproc, members[i]);
         plt = OBJ_NEW(opal_proclist_t);
@@ -1674,6 +1675,9 @@ int ompi_dpm_dyn_init(void)
         ptr = &tmp[0];
     }
     port_name = strdup(ptr);
+    if (NULL == port_name) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     rc = ompi_dpm_connect_accept(MPI_COMM_WORLD, root, port_name, send_first, &newcomm);
     free(port_name);
