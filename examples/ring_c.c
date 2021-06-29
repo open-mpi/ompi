@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
        put the number of times to go around the ring in the
        message. */
 
+
     if (0 == rank) {
         message = 10;
 
