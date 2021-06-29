@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -245,11 +245,11 @@ static void mca_mpool_hugepage_finalize(struct mca_mpool_base_module_t *mpool)
 {
     mca_mpool_hugepage_module_t *hugepage_module = (mca_mpool_hugepage_module_t *) mpool;
 
-    OBJ_DESTRUCT(&hugepage_module->lock);
-    OBJ_DESTRUCT(&hugepage_module->allocation_tree);
-
     if (hugepage_module->allocator) {
         (void) hugepage_module->allocator->alc_finalize(hugepage_module->allocator);
         hugepage_module->allocator = NULL;
     }
+    OBJ_DESTRUCT(&hugepage_module->lock);
+    OBJ_DESTRUCT(&hugepage_module->allocation_tree);
+
 }
