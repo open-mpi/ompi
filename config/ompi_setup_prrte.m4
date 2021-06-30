@@ -98,7 +98,9 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     # so try the internal version.
     AS_IF([test "$prrte_setup_external_happy" = "0" -a "$prrte_setup_internal_happy" = "1"],
           [opal_prrte_mode="internal"
-           _OMPI_SETUP_PRRTE_INTERNAL_POST()])
+           OMPI_USING_INTERNAL_PRRTE=1
+           _OMPI_SETUP_PRRTE_INTERNAL_POST()],
+          [OMPI_USING_INTERNAL_PRRTE=0])
 
     AS_IF([test "$opal_prrte_mode" != "disabled"],
           [AS_IF([test "$prrte_setup_external_happy" = "0" -a "$prrte_setup_internal_happy" = "0"],
@@ -114,6 +116,10 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     AC_DEFINE_UNQUOTED([OMPI_HAVE_PRRTE],
                        [$OMPI_HAVE_PRRTE],
                        [Whether or not PRRTE is available])
+
+    AC_DEFINE_UNQUOTED([OMPI_USING_INTERNAL_PRRTE],
+                       [$OMPI_USING_INTERNAL_PRRTE],
+                       [Whether or not we are using the internal PRRTE])
 
     OPAL_SUMMARY_ADD([[Miscellaneous]], [[prrte]], [prrte], [$opal_prrte_mode])
 
