@@ -61,6 +61,7 @@ bool opal_timing_overhead = true;
 #endif
 
 bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
+bool opal_cuda_runtime_initialized = false;
 bool opal_cuda_support = false;
 bool opal_warn_on_missing_libcuda = true;
 
