@@ -6,7 +6,7 @@
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2020      Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -340,7 +340,7 @@ select_ofi_provider(struct fi_info *providers,
     }
 
     opal_output_verbose(1, opal_common_ofi.output,
-                        "%s:%d: mtl:ofi:prov: %s\n",
+                        "%s:%d: mtl:ofi:provider: %s\n",
                         __FILE__, __LINE__,
                         (prov ? prov->fabric_attr->prov_name : "none"));
 
@@ -364,8 +364,8 @@ select_ofi_provider(struct fi_info *providers,
       */
     if (NULL != prov) {
         prov = opal_mca_common_ofi_select_provider(prov, &ompi_process_info);
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: mtl:ofi:provider: %s\n",
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d: mtl:ofi:provider:domain: %s\n",
                             __FILE__, __LINE__,
                             (prov ? prov->domain_attr->name : "none"));
     }
