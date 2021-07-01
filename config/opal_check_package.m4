@@ -13,8 +13,8 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2012-2017 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2015-2016 Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2021 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -185,6 +185,7 @@ dnl * header_filename: the foo.h file to check for
 dnl * library_name / function_name: check for function function_name in
 dnl   -llibrary_name.  Specifically, for library_name, use the "foo" form,
 dnl   as opposed to "libfoo".
+dnl * function: the function to check for existence
 dnl * extra_libraries: if the library_name you are checking for requires
 dnl   additional -l arguments to link successfully, list them here.
 dnl * dir_prefix: if the header/library is located in a non-standard

@@ -1,6 +1,8 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2018      DataDirect Networks. All rights reserved.
+dnl Copyright (c) 2021      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -15,13 +17,7 @@ dnl
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_IME],[
 
-    check_ime_CPPFLAGS=
-    check_ime_LDFLAGS=
-    check_ime_LIBS=
-
-    check_ime_configuration="none"
-    ompi_check_ime_happy="yes"
-
+    OPAL_VAR_SCOPE_PUSH([ompi_check_ime_happy ompi_check_ime_dir])
 
     # Get some configuration information
     AC_ARG_WITH([ime],
@@ -30,33 +26,21 @@ AC_DEFUN([OMPI_CHECK_IME],[
     OPAL_CHECK_WITHDIR([ime], [$with_ime], [include/ime_native.h])
 
     AS_IF([test "$with_ime" = "no"],
-        [ompi_check_ime_happy="no"],
-        [AS_IF([test -z "$with_ime"],
-                [ompi_check_ime_dir="/usr/local"],
-                [ompi_check_ime_dir=$with_ime])
+          [ompi_check_ime_happy="no"],
+          [AS_IF([test -n "$with_ime" && test "$with_ime" != "yes"],
+                 [ompi_check_ime_dir=$with_ime])
 
-            if test -e "$ompi_check_ime_dir/lib64" ; then
-                ompi_check_ime_libdir="$ompi_check_ime_dir/lib64"
-            else
-                ompi_check_ime_libdir="$ompi_check_ime_dir/lib"
-            fi
-
-            # Add correct -I and -L flags
-            OPAL_CHECK_PACKAGE([$1], [ime_native.h], [im_client], [ime_client_native2_init], [],
-                [$ompi_check_ime_dir], [$ompi_check_ime_libdir], 
-                [ompi_check_ime_happy="yes"],
-                [OPAL_CHECK_PACKAGE([$1], [ime_native.h], [im_client], [ime_native_init], [],
-                    [$ompi_check_ime_dir], [$ompi_check_ime_libdir], 
-                    [ompi_check_ime_happy="yes"],
-                    [ompi_check_ime_happy="no"])
-                ])
-        ])
+           OPAL_CHECK_PACKAGE([$1], [ime_native.h], [im_client], [ime_client_native2_init],
+                              [], [$ompi_check_ime_dir], [],
+                              [ompi_check_ime_happy="yes"],
+                              [ompi_check_ime_happy="no"])])
 
     AS_IF([test "$ompi_check_ime_happy" = "yes"],
-        [$2],
-        [AS_IF([test ! -z "$with_ime" && test "$with_ime" != "no"],
-                [echo IME support not found])
-            $3])
-    
-    ])
+          [$2],
+          [AS_IF([test ! -z "$with_ime" && test "$with_ime" != "no"],
+                 [AC_MSG_ERROR([IME support requested but not found.  Aborting])])
+           $3])
+
+    OPAL_VAR_SCOPE_POP
+])
 

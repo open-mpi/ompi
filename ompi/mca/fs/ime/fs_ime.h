@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
+ * Copyright (c) 2021      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +35,7 @@ int mca_fs_ime_component_file_unquery (ompio_file_t *file);
 int mca_fs_ime_module_init (ompio_file_t *file);
 int mca_fs_ime_module_finalize (ompio_file_t *file);
 
-int mca_fs_ime_native_fini();
+int mca_fs_ime_native_fini(void);
 
 OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_ime_component;
 /*
