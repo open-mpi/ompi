@@ -96,10 +96,10 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
     # Get the full path to the wrapper compiler. If it doesn't exist
     # assume that the path is not currently valid.
     wrapper_tmp="$(type -p "$with_wrapper_cc")"
-    WRAPPER_CC="${wrapper_tmp:-$with_wrapper_cc}"
     if test -z "$wrapper_tmp" ; then
 	AC_MSG_WARN([could not find \"$with_wrapper_cc\" in path])
     fi
+    WRAPPER_CC=$with_wrapper_cc
 
     AC_MSG_RESULT([$WRAPPER_CC])
 
@@ -117,19 +117,19 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
     AS_IF([test "$with_wrapper_cflags_prefix" = "yes" || test "$with_wrapper_cflags_prefix" = "no"],
           [AC_MSG_ERROR([--with-wrapper-cflags-prefix must have an argument.])])
 
-    AC_ARG_WITH([wrapper-cxxflags],
-        [AS_HELP_STRING([--with-wrapper-cxxflags],
-                        [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
-    AS_IF([test "$with_wrapper_cxxflags" = "yes" || test "$with_wrapper_cxxflags" = "no"],
-          [AC_MSG_ERROR([--with-wrapper-cxxflags must have an argument.])])
-
-    AC_ARG_WITH([wrapper-cxxflags-prefix],
-        [AS_HELP_STRING([--with-wrapper-cxxflags-prefix],
-                        [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
-    AS_IF([test "$with_wrapper_cxxflags_prefix" = "yes" || test "$with_wrapper_cxxflags_prefix" = "no"],
-          [AC_MSG_ERROR([--with-wrapper-cxxflags-prefix must have an argument.])])
-
     m4_ifdef([project_ompi], [
+            AC_ARG_WITH([wrapper-cxxflags],
+                [AS_HELP_STRING([--with-wrapper-cxxflags],
+                                [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
+            AS_IF([test "$with_wrapper_cxxflags" = "yes" || test "$with_wrapper_cxxflags" = "no"],
+                  [AC_MSG_ERROR([--with-wrapper-cxxflags must have an argument.])])
+
+            AC_ARG_WITH([wrapper-cxxflags-prefix],
+                [AS_HELP_STRING([--with-wrapper-cxxflags-prefix],
+                                [Extra flags to add to CXXFLAGS when using mpiCC/mpic++])])
+            AS_IF([test "$with_wrapper_cxxflags_prefix" = "yes" || test "$with_wrapper_cxxflags_prefix" = "no"],
+                  [AC_MSG_ERROR([--with-wrapper-cxxflags-prefix must have an argument.])])
+
             AC_ARG_WITH([wrapper-fcflags],
                 [AS_HELP_STRING([--with-wrapper-fcflags],
                         [Extra flags to add to FCFLAGS when using mpifort])])
