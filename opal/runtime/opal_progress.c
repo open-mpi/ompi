@@ -213,7 +213,7 @@ static int opal_progress_events(void)
  * care, as the cost of that happening is far outweighed by the cost
  * of the if checks (they were resulting in bad pipe stalling behavior)
  */
-void opal_progress(void)
+int opal_progress(void)
 {
     static uint32_t num_calls = 0;
     size_t i;
@@ -250,6 +250,8 @@ void opal_progress(void)
          */
         opal_thread_yield();
     }
+
+    return events;
 }
 
 int opal_progress_set_event_flag(int flag)

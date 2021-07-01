@@ -57,8 +57,10 @@ OPAL_DECLSPEC int opal_progress_init(void);
  * opal_progress_event_users_delete()) or the time since the last call
  * into the event library is greater than the progress tick rate (by
  * default, 10ms).
+ *
+ * Returns 0 if no progress has been observed, non-zero otherwise.
  */
-OPAL_DECLSPEC void opal_progress(void);
+OPAL_DECLSPEC int opal_progress(void);
 
 /**
  * Control how the event library is called
