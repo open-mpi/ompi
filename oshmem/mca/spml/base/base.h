@@ -78,7 +78,7 @@ OSHMEM_DECLSPEC int mca_spml_base_oob_get_mkeys(shmem_ctx_t ctx,
                                                 sshmem_mkey_t *mkeys);
 
 OSHMEM_DECLSPEC void mca_spml_base_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t seg, int pe, int tr_id);
-OSHMEM_DECLSPEC void mca_spml_base_rmkey_free(sshmem_mkey_t *mkey);
+OSHMEM_DECLSPEC void mca_spml_base_rmkey_free(sshmem_mkey_t *mkey, int pe);
 OSHMEM_DECLSPEC void *mca_spml_base_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *mkey, int pe);
 
 OSHMEM_DECLSPEC int mca_spml_base_put_nb(void *dst_addr,
