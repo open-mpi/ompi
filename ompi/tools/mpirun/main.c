@@ -74,8 +74,8 @@ int main(int argc, char *argv[])
     } else {
         /* in case --enable-prefix-by-default was given */
         mca_base_framework_open(&opal_installdirs_base_framework, 0);  // fill in the installdirs
-        if (NULL != opal_install_dirs.prefix) {
-            pfx = strdup(opal_install_dirs.prefix);
+        if (NULL != opal_install_dirs.bindir) {
+            pfx = strdup(opal_install_dirs.bindir);
         }
 #endif
     }
@@ -93,6 +93,8 @@ int main(int argc, char *argv[])
     }
 
     execve(truepath, pargs, environ);
+    fprintf(stderr, "The mpirun cmd failed to exec its actual executable - your application will NOT execute. Error: %s\n", strerror(errno));
+    exit(1);
 }
 
 /*
