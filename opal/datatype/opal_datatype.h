@@ -49,16 +49,15 @@ BEGIN_C_DECLS
  * This must match the same definition as in opal_datatype_internal.h
  */
 #if !defined(OPAL_DATATYPE_MAX_PREDEFINED)
-#define OPAL_DATATYPE_MAX_PREDEFINED 25
+#define OPAL_DATATYPE_MAX_PREDEFINED 27
 #endif
 /*
- * No more than this number of _Basic_ datatypes in C/CPP or Fortran
- * are supported (in order to not change setup and usage of the predefined
- * datatypes).
+ * Upper limit of the number of _Basic_ datatypes supported (in order to
+ * not change setup and usage of the predefined datatypes).
  *
  * BEWARE: This constant should reflect whatever the OMPI-layer needs.
  */
-#define OPAL_DATATYPE_MAX_SUPPORTED  47
+#define OPAL_DATATYPE_MAX_SUPPORTED  61
 
 
 /* flags for the datatypes. */
@@ -180,6 +179,8 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_double_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_long_double_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_bool;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_wchar;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_long;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_unsigned_long;
 
 
 /*
