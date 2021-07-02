@@ -401,7 +401,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     volatile bool active;
     bool background_fence = false;
     pmix_info_t info[2];
-    pmix_status_t codes[1] = { PMIX_ERR_PROC_ABORTED };
+    pmix_status_t codes[] = {
+        PMIX_ERR_PROC_ABORTED,
+        PMIX_ERR_LOST_CONNECTION
+    };
+    size_t ncodes;
     pmix_status_t rc;
     OMPI_TIMING_INIT(64);
     opal_pmix_lock_t mylock;
@@ -581,7 +585,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* give it a name so we can distinguish it */
     PMIX_INFO_LOAD(&info[1], PMIX_EVENT_HDLR_NAME, "MPI-Default", PMIX_STRING);
     OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
-    PMIx_Register_event_handler(codes, 1, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
+    ncodes = sizeof(codes)/sizeof(pmix_status_t);
+    PMIx_Register_event_handler(codes, ncodes, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
     OPAL_PMIX_WAIT_THREAD(&mylock);
     rc = mylock.status;
     OPAL_PMIX_DESTRUCT_LOCK(&mylock);
