@@ -12,8 +12,8 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2021 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,6 +58,9 @@
 #ifdef HAVE_LIBUTIL_H
 #include <libutil.h>
 #endif
+#ifdef HAVE_SYS_IOCTL_H
+#    include <sys/ioctl.h>
+#endif
 
 #include "opal/util/opal_pty.h"
 #include "opal/util/opal_environ.h"
@@ -83,6 +86,7 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
     /* first check to make sure we can do ptys */
 #if OPAL_ENABLE_PTY_SUPPORT
     if (opts->usepty) {
+        struct winsize *wp = NULL;
         /**
          * It has been reported that on MAC OS X 10.4 and prior one cannot
          * safely close the writing side of a pty before completly reading
@@ -93,8 +97,14 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
          * pty exactly as we use the pipes.
          * This comment is here as a reminder.
          */
+#ifdef TIOCGWINSZ
+        struct winsize ws;
+        if (0 == ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws)) {
+            wp = &ws;
+        }
+#endif
         ret = opal_openpty(&(opts->p_stdout[0]), &(opts->p_stdout[1]),
-                           (char*)NULL, (struct termios*)NULL, (struct winsize*)NULL);
+                           (char*)NULL, (struct termios*)NULL, wp);
     }
 #else
     opts->usepty = 0;
