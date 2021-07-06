@@ -1,3 +1,41 @@
+#if 0
+
+# NOTE: The comments below cannot use tokens that will be intepreted
+# as C++ preprocessor directives.  So when you read "if 0", the reader
+# must mentally prepend a # to the "if" token.
+#
+# This file is carefully constructed so that it can be a) run as a
+# Bourne shell script and b) compiled as a C/C++ header file.
+#
+# Specifically, this file is used in the following ways:
+#
+# 1. This file is executed as a Bourne shell script to assign version
+#    numbers to shell variables in config/opal_get_version.* and
+#    configure.ac.
+# 2. On case-insensitive filesystems, this file can get included by
+#    C++ STL header files when compiling the MPI C++ bindings (i.e.,
+#    when they "include <version>", that will end up including this
+#    file).
+#
+# Case #2 was discovered in
+# https://github.com/open-mpi/ompi/issues/9122.  The obvious fix for
+# this issue would be to rename VERSION (e.g., VERSION.sh).  However,
+# since the MPI C++ bindings were removed in Open MPI v5.0.0, this
+# issue issue only affects legacy Open MPI release series (namely:
+# v4.1.x and v4.0.x).  As such, do something simple / safe to fix it:
+# protect the main body of this file with an "if" preprocessor
+# directive.
+#
+# 1. For case 1, C++ preprocessor directives become Bourne shell comments.
+# 2. For case 2, we "if 0" the main body of the file and in the "else"
+#    block, "include_next<version>" to get the "real" <version> file.
+#
+# This is a bit of a gross (or clever, depending on your viewpoint)
+# hack, but it makes both cases work with minimal changes to the
+# legacy v4.0.x and v4.1.x release series.
+
+############################################################################
+
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2008-2021 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
@@ -121,3 +159,9 @@ libmca_opal_common_sm_so_version=70:0:30
 libmca_opal_common_ucx_so_version=70:1:30
 libmca_opal_common_ugni_so_version=70:0:30
 libmca_opal_common_verbs_so_version=70:0:30
+
+#else
+
+#include_next <version>
+
+#endif
