@@ -43,10 +43,7 @@ int ompi_request_default_wait(
     /* Special case for MPI_ANY_SOURCE */
     if( MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR ) {
         if( MPI_STATUS_IGNORE != status ) {
-            status->MPI_TAG    = req->req_status.MPI_TAG;
-            status->MPI_SOURCE = req->req_status.MPI_SOURCE;
-            status->_ucount = req->req_status._ucount;
-            status->_cancelled = req->req_status._cancelled;
+            OMPI_COPY_STATUS(status, req->req_status, false);
         }
         return MPI_ERR_PROC_FAILED_PENDING;
     }
@@ -59,17 +56,12 @@ int ompi_request_default_wait(
         ompi_grequest_invoke_query(req, &req->req_status);
     }
     if( MPI_STATUS_IGNORE != status ) {
-        /* Do *NOT* set status->MPI_ERROR here!  See MPI-1.1 doc, sec
-           3.2.5, p.22 */
-        status->MPI_TAG    = req->req_status.MPI_TAG;
-        status->MPI_SOURCE = req->req_status.MPI_SOURCE;
-        status->_ucount    = req->req_status._ucount;
-        status->_cancelled = req->req_status._cancelled;
+        OMPI_COPY_STATUS(status, req->req_status, false);
     }
     if( req->req_persistent ) {
         if( req->req_state == OMPI_REQUEST_INACTIVE ) {
             if (MPI_STATUS_IGNORE != status) {
-                *status = ompi_status_empty;
+                OMPI_COPY_STATUS(status, ompi_status_empty, false);
             }
             return OMPI_SUCCESS;
         }
@@ -142,7 +134,7 @@ recheck:
     if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
-            *status = ompi_status_empty;
+            OMPI_COPY_STATUS(status, ompi_status_empty, false);
         }
         /* No signal-in-flight can be in this case */
         WAIT_SYNC_RELEASE_NOWAIT(&sync);
@@ -206,11 +198,7 @@ recheck:
         rc = ompi_grequest_invoke_query(request, &request->req_status);
     }
     if (MPI_STATUS_IGNORE != status) {
-        /* Do *NOT* set status->MPI_ERROR here!  See MPI-1.1 doc,
-           sec 3.2.5, p.22 */
-        int old_error = status->MPI_ERROR;
-        *status = request->req_status;
-        status->MPI_ERROR = old_error;
+        OMPI_COPY_STATUS(status, request->req_status, false);
     }
     rc = request->req_status.MPI_ERROR;
     if( request->req_persistent ) {
@@ -321,7 +309,7 @@ recheck:
             request = *rptr;
 
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
-                statuses[i] = ompi_status_empty;
+                OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, true);
                 continue;
             }
 
@@ -356,7 +344,7 @@ recheck:
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
 
-            statuses[i] = request->req_status;
+            OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
 
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -593,7 +581,7 @@ int ompi_request_default_wait_some(size_t count,
         if( MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR ) {
             rc = MPI_ERR_IN_STATUS;
             if (MPI_STATUSES_IGNORE != statuses) {
-                statuses[i] = request->req_status;
+                OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
                 statuses[i].MPI_ERROR = MPI_ERR_PROC_FAILED_PENDING;
             } else {
                 if( (MPI_ERR_PROC_FAILED == request->req_status.MPI_ERROR) ||
@@ -612,7 +600,7 @@ int ompi_request_default_wait_some(size_t count,
             ompi_grequest_invoke_query(request, &request->req_status);
         }
         if (MPI_STATUSES_IGNORE != statuses) {
-            statuses[i] = request->req_status;
+            OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
         }
 
         if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
