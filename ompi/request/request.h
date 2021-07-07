@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -200,6 +200,28 @@ do {                                                                    \
         (request)->req_f_to_c_index = MPI_UNDEFINED;                    \
     }                                                                   \
 } while (0);
+
+/*
+ * Except in procedures that return MPI_ERR_IN_STATUS, the MPI_ERROR
+ * field of a status object shall never be modified
+ * See MPI-1.1 doc, sec 3.2.5, p.22
+ *
+ * Add a small macro that helps setting the status appropriately
+ * depending on the use case
+ */
+#define OMPI_COPY_STATUS(pdst, src, is_err_in_status)                   \
+do {                                                                    \
+    if (is_err_in_status) {                                             \
+        *(pdst) = (src);                                                \
+    }                                                                   \
+    else {                                                              \
+        (pdst)->MPI_TAG = (src).MPI_TAG;                                \
+        (pdst)->MPI_SOURCE = (src).MPI_SOURCE;                          \
+        (pdst)->_ucount = (src)._ucount;                                \
+        (pdst)->_cancelled = (src)._cancelled;                          \
+    }                                                                   \
+} while(0);
+
 
 /**
  * Non-blocking test for request completion.
