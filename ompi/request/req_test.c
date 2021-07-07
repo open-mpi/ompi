@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -43,7 +43,7 @@ int ompi_request_default_test(ompi_request_t ** rptr,
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
-            *status = ompi_status_empty;
+            OMPI_COPY_STATUS(status, ompi_status_empty, false);
         }
         return OMPI_SUCCESS;
     }
@@ -61,17 +61,9 @@ int ompi_request_default_test(ompi_request_t ** rptr,
            STATUS_IGNORE.  See MPI-2:8.2. */
         if (OMPI_REQUEST_GEN == request->req_type) {
             ompi_grequest_invoke_query(request, &request->req_status);
-            if (MPI_STATUS_IGNORE != status) {
-                int old_error = status->MPI_ERROR;
-                *status = request->req_status;
-                status->MPI_ERROR = old_error;
-            }
-        } else if (MPI_STATUS_IGNORE != status) {
-            /* Do *NOT* set a new value for status->MPI_ERROR here!
-               See MPI-1.1 doc, sec 3.2.5, p.22 */
-            int old_error = status->MPI_ERROR;
-            *status = request->req_status;
-            status->MPI_ERROR = old_error;
+        }
+        if (MPI_STATUS_IGNORE != status) {
+            OMPI_COPY_STATUS(status, request->req_status, false);
         }
         if( request->req_persistent ) {
             request->req_state = OMPI_REQUEST_INACTIVE;
@@ -139,19 +131,9 @@ int ompi_request_default_test_any(
                STATUS_IGNORE */
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
-                if (MPI_STATUS_IGNORE != status) {
-                    /* Do *NOT* set a new value for status->MPI_ERROR
-                       here!  See MPI-1.1 doc, sec 3.2.5, p.22 */
-                    int old_error = status->MPI_ERROR;
-                    *status = request->req_status;
-                    status->MPI_ERROR = old_error;
-                }
-            } else if (MPI_STATUS_IGNORE != status) {
-                /* Do *NOT* set a new value for status->MPI_ERROR
-                   here!  See MPI-1.1 doc, sec 3.2.5, p.22 */
-                int old_error = status->MPI_ERROR;
-                *status = request->req_status;
-                status->MPI_ERROR = old_error;
+            }
+            if (MPI_STATUS_IGNORE != status) {
+                OMPI_COPY_STATUS(status, request->req_status, false);
             }
 
             if( request->req_persistent ) {
@@ -179,7 +161,7 @@ int ompi_request_default_test_any(
     } else {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
-            *status = ompi_status_empty;
+            OMPI_COPY_STATUS(status, ompi_status_empty, false);
         }
     }
     return OMPI_SUCCESS;
@@ -228,7 +210,7 @@ int ompi_request_default_test_all(
              * to ompi_status_empty.
              */
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
-                statuses[i] = ompi_status_empty;
+                OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, true);
                 continue;
             }
             if (OMPI_REQUEST_GEN == request->req_type) {
@@ -239,7 +221,7 @@ int ompi_request_default_test_all(
                 OMPI_CRCP_REQUEST_COMPLETE(request);
             }
 #endif
-            statuses[i] = request->req_status;
+            OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 continue;
@@ -352,7 +334,7 @@ int ompi_request_default_test_some(
             ompi_grequest_invoke_query(request, &request->req_status);
         }
         if (MPI_STATUSES_IGNORE != statuses) {
-            statuses[i] = request->req_status;
+            OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
         }
 
         if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
