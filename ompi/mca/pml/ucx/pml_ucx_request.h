@@ -1,6 +1,6 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2015.  ALL RIGHTS RESERVED.
- * Copyright (c) 2016      The University of Tennessee and The University
+ * Copyright (c) 2016-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -151,6 +151,12 @@ static inline void mca_pml_ucx_request_reset(ompi_request_t *req)
     req->req_complete          = REQUEST_PENDING;
 }
 
+/* Use when setting a request's status field.
+ * Note that a new function 'mca_mpl_ucx_set_send_status_public' shall
+ * be created and used instead if updating a publicly visible status becomes
+ * necessary (i.e., the status argument in an user-visible procedure), see the
+ * recv_status case below for rationale.
+ */
 __opal_attribute_always_inline__
 static inline void mca_pml_ucx_set_send_status(ompi_status_public_t* mpi_status,
                                                ucs_status_t status)
@@ -165,6 +171,11 @@ static inline void mca_pml_ucx_set_send_status(ompi_status_public_t* mpi_status,
     }
 }
 
+/* Use when setting a request's status field.
+ * Note that the next function 'mca_mpl_ucx_set_recv_status_public' shall
+ * be used instead when updating a  publicly visible status (i.e., the 
+ * status argument in an user-visible procedure).
+ */
 static inline int mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
                                                ucs_status_t ucp_status,
                                                const ucp_tag_recv_info_t *info)
@@ -180,6 +191,10 @@ static inline int mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
         mpi_status->_ucount    = info->length;
     } else if (ucp_status == UCS_ERR_MESSAGE_TRUNCATED) {
         mpi_status->MPI_ERROR = MPI_ERR_TRUNCATE;
+        mpi_status->MPI_SOURCE = PML_UCX_TAG_GET_SOURCE(tag);
+        mpi_status->MPI_TAG    = PML_UCX_TAG_GET_MPI_TAG(tag);
+        mpi_status->_cancelled = false;
+        mpi_status->_ucount    = info->length;
     } else if (ucp_status == UCS_ERR_CANCELED) {
         mpi_status->MPI_ERROR  = MPI_SUCCESS;
         mpi_status->_cancelled = true;
@@ -190,16 +205,41 @@ static inline int mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
     return mpi_status->MPI_ERROR;
 }
 
-static inline int mca_pml_ucx_set_recv_status_safe(ompi_status_public_t* mpi_status,
+/* Use when setting a publicly visible status (i.e., the status argument in an
+ * user-visible procedure).
+ * Except in procedures that return MPI_ERR_IN_STATUS, the MPI_ERROR
+ * field of a status object shall never be modified
+ * See MPI-1.1 doc, sec 3.2.5, p.22
+ */
+static inline int mca_pml_ucx_set_recv_status_public(ompi_status_public_t* mpi_status,
                                                    ucs_status_t ucp_status,
                                                    const ucp_tag_recv_info_t *info)
 {
     if (mpi_status != MPI_STATUS_IGNORE) {
-        return mca_pml_ucx_set_recv_status(mpi_status, ucp_status, info);
-    } else if (OPAL_LIKELY(ucp_status == UCS_OK) || (ucp_status == UCS_ERR_CANCELED)) {
-        return UCS_OK;
+        if (OPAL_LIKELY(ucp_status == UCS_OK)) {
+            uint64_t tag = info->sender_tag;
+            mpi_status->MPI_SOURCE = PML_UCX_TAG_GET_SOURCE(tag);
+            mpi_status->MPI_TAG = PML_UCX_TAG_GET_MPI_TAG(tag);
+            mpi_status->_cancelled = false;
+            mpi_status->_ucount = info->length;
+            return MPI_SUCCESS;
+        } else if (ucp_status == UCS_ERR_MESSAGE_TRUNCATED) {
+            uint64_t tag = info->sender_tag;
+            mpi_status->MPI_SOURCE = PML_UCX_TAG_GET_SOURCE(tag);
+            mpi_status->MPI_TAG = PML_UCX_TAG_GET_MPI_TAG(tag);
+            mpi_status->_cancelled = false;
+            mpi_status->_ucount = info->length;
+            return MPI_ERR_TRUNCATE;
+        } else if (ucp_status == UCS_ERR_CANCELED) {
+            mpi_status->_cancelled = true;
+            return MPI_SUCCESS;
+        } else {
+            return MPI_ERR_INTERN;
+        }
     } else if (ucp_status == UCS_ERR_MESSAGE_TRUNCATED) {
         return MPI_ERR_TRUNCATE;
+    } else if (OPAL_LIKELY(ucp_status == UCS_OK) || (ucp_status == UCS_ERR_CANCELED)) {
+        return MPI_SUCCESS;
     }
 
     return MPI_ERR_INTERN;
