@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2014-2020 The University of Tennessee and The University
+ * Copyright (c) 2014-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  *
@@ -1006,6 +1006,7 @@ static void era_combine_agreement_values(era_agreement_info_t *ni, era_value_t *
             ni->current_value->header.max_aid = value->header.max_aid;
     }
 
+    assert(NULL != value->new_dead_array || 0 == value->header.nb_new_dead);
     era_merge_new_dead_list(ni, value->header.nb_new_dead, value->new_dead_array);
 }
 
@@ -1655,7 +1656,7 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
     OPAL_OUTPUT_VERBOSE(((ci->comm->c_my_rank == r)? 2: 10, ompi_ftmpi_output_handle,
                          "%s ftagree:agreement (ERA) decide %08x.%d.%d.. on agreement (%d.%d).%d\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                         (0!=ERA_VALUE_BYTES_COUNT(&decided_value->header))? *(int*)decided_value->bytes: 0,
+                         (NULL != decided_value->bytes)? *(int*)decided_value->bytes: 0,
                          decided_value->header.ret,
                          decided_value->header.nb_new_dead,
                          ci->agreement_id.ERAID_FIELDS.contextid,
@@ -1673,7 +1674,7 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
         OPAL_OUTPUT_VERBOSE((30, ompi_ftmpi_output_handle,
                              "%s ftagree:agreement (ERA) decide %08x.%d.%d on agreement (%d.%d).%d: adding up to %d processes to the list of agreed deaths\n",
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                             (0!=ERA_VALUE_BYTES_COUNT(&decided_value->header))? *(int*)decided_value->bytes: 0,
+                             (NULL != decided_value->bytes)? *(int*)decided_value->bytes: 0,
                              decided_value->header.ret,
                              decided_value->header.nb_new_dead,
                              ci->agreement_id.ERAID_FIELDS.contextid,
@@ -1734,7 +1735,7 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ftagree:agreement (ERA) decide %08x.%d.%d.. on agreement (%d.%d).%d: group of agreed deaths is of size %d\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                         (0!=ERA_VALUE_BYTES_COUNT(&decided_value->header))? *(int*)decided_value->bytes: 0,
+                         (NULL != decided_value->bytes)? *(int*)decided_value->bytes: 0,
                          decided_value->header.ret,
                          decided_value->header.nb_new_dead,
                          ci->agreement_id.ERAID_FIELDS.contextid,
@@ -2119,7 +2120,7 @@ static void send_msg(ompi_communicator_t *comm,
                              agreement_id.ERAID_FIELDS.epoch,
                              agreement_id.ERAID_FIELDS.agreementid,
                              era_msg_type_to_string(type),
-                             (0!=ERA_VALUE_BYTES_COUNT(&value->header))? *(int*)value->bytes: 0,
+                             (NULL != value->bytes)? *(int*)value->bytes: 0,
                              value->header.ret,
                              value->header.nb_new_dead,
                              dst,
@@ -2136,7 +2137,7 @@ static void send_msg(ompi_communicator_t *comm,
                              agreement_id.ERAID_FIELDS.epoch,
                              agreement_id.ERAID_FIELDS.agreementid,
                              era_msg_type_to_string(type),
-                             (0!=ERA_VALUE_BYTES_COUNT(&value->header))? *(int*)value->bytes: 0,
+                             (NULL != value->bytes)? *(int*)value->bytes: 0,
                              value->header.ret,
                              value->header.nb_new_dead,
                              nb_ack_failed,
@@ -2150,7 +2151,7 @@ static void send_msg(ompi_communicator_t *comm,
                              agreement_id.ERAID_FIELDS.epoch,
                              agreement_id.ERAID_FIELDS.agreementid,
                              era_msg_type_to_string(type),
-                             (0!=ERA_VALUE_BYTES_COUNT(&value->header))? *(int*)value->bytes: 0,
+                             (NULL != value->bytes)? *(int*)value->bytes: 0,
                              value->header.ret,
                              value->header.nb_new_dead,
                              dst,
@@ -2230,7 +2231,7 @@ static void send_msg(ompi_communicator_t *comm,
                          agreement_id.ERAID_FIELDS.epoch,
                          agreement_id.ERAID_FIELDS.agreementid,
                          era_msg_type_to_string(type),
-                         (0!=ERA_VALUE_BYTES_COUNT(&value->header))? *(int*)value->bytes: 0,
+                         (NULL != value->bytes)? *(int*)value->bytes: 0,
                          value->header.ret,
                          value->header.nb_new_dead,
                          msg_header.nb_ack,
@@ -2274,7 +2275,7 @@ static void send_msg(ompi_communicator_t *comm,
                                      agreement_id.ERAID_FIELDS.epoch,
                                      agreement_id.ERAID_FIELDS.agreementid,
                                      era_msg_type_to_string(type),
-                                     (0!=ERA_VALUE_BYTES_COUNT(&value->header))? *(int*)value->bytes: 0,
+                                     (NULL != value->bytes)? *(int*)value->bytes: 0,
                                      value->header.ret,
                                      value->header.nb_new_dead,
                                      msg_header.nb_ack,
@@ -2421,7 +2422,7 @@ static void msg_up(era_msg_header_t *msg_header, uint8_t *bytes, int *new_dead, 
                          msg_header->agreement_id.ERAID_FIELDS.agreementid,
                          msg_header->src_comm_rank,
                          OMPI_NAME_PRINT(&msg_header->src_proc_name),
-                         (0!=ERA_VALUE_BYTES_COUNT(&msg_header->agreement_value_header))? *(int*)bytes: 0,
+                         (NULL != bytes)? *(int*)bytes: 0,
                          msg_header->agreement_value_header.ret,
                          msg_header->agreement_value_header.nb_new_dead,
                          msg_header->nb_ack));
@@ -2552,7 +2553,7 @@ static void msg_down(era_msg_header_t *msg_header, uint8_t *bytes, int *new_dead
                          msg_header->agreement_id.ERAID_FIELDS.agreementid,
                          msg_header->src_comm_rank,
                          OMPI_NAME_PRINT(&msg_header->src_proc_name),
-                         (0!=ERA_VALUE_BYTES_COUNT(&msg_header->agreement_value_header))? *(int*)bytes: 0,
+                         (NULL != bytes)? *(int*)bytes: 0,
                          msg_header->agreement_value_header.nb_new_dead));
 
     ci = era_lookup_agreement_info( msg_header->agreement_id );
@@ -2723,7 +2724,7 @@ static void era_cb_fn(struct mca_btl_base_module_t* btl,
                              msg_header->agreement_id.ERAID_FIELDS.epoch,
                              msg_header->agreement_id.ERAID_FIELDS.agreementid,
                              msg_header->msg_type,
-                             (0!=ERA_VALUE_BYTES_COUNT(&msg_header->agreement_value_header))? *(int*)value_bytes: 0,
+                             (NULL != value_bytes)? *(int*)value_bytes: 0,
                              msg_header->agreement_value_header.ret,
                              msg_header->agreement_value_header.nb_new_dead,
                              msg_header->src_comm_rank,
@@ -3115,11 +3116,11 @@ static int mca_coll_ftagree_era_complete_agreement(era_identifier_t agreement_id
 
     assert(0 != agreement_id.ERAID_FIELDS.agreementid);
     ci = era_lookup_agreement_info(agreement_id);
+    assert(NULL != ci);
+    comm = ci->comm;
 
     /** Now, it's time to remove that guy from the ongoing agreements */
     opal_hash_table_remove_value_uint64(&era_ongoing_agreements, agreement_id.ERAID_KEY);
-
-    comm = ci->comm;
 
     OBJ_RELEASE(ci); /* This will take care of the content of ci too */
 
@@ -3156,7 +3157,7 @@ static int mca_coll_ftagree_era_complete_agreement(era_identifier_t agreement_id
                          agreement_id.ERAID_FIELDS.epoch,
                          agreement_id.ERAID_FIELDS.agreementid,
                          ret,
-                         (0!=ERA_VALUE_BYTES_COUNT(&av->header))? *(int*)contrib: 0));
+                         (NULL != contrib)? *(int*)contrib: 0));
 
     return ret;
 }

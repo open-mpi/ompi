@@ -101,7 +101,7 @@ mca_coll_ftagree_eta_intra(void *contrib,
     { /* ignore acked failures (add them later to the result) */
         ompi_group_t* ackedgrp = NULL; int npa; int *aranks, *cranks;
         ackedgrp = *group;
-        if( 0 != (npa = ompi_group_size(ackedgrp)) ) {
+        if( 0 != (npa = (NULL == ackedgrp? 0: ompi_group_size(ackedgrp))) ) {
             aranks = calloc( npa, sizeof(int) );
             for( i = 0; i < npa; i++ ) aranks[i] = i;
             cranks = calloc( npa, sizeof(int) );
@@ -336,7 +336,7 @@ mca_coll_ftagree_eta_intra(void *contrib,
     free(statuses);
     free(in);
     /* Let's build the group of failed processes */
-    if( NULL != group ) {
+    if( update_grp ) {
         int pos;
         /* We overwrite proc_status because it is not used anymore */
         int *failed = proc_status;
@@ -346,10 +346,10 @@ mca_coll_ftagree_eta_intra(void *contrib,
                 failed[pos++] = i;
             }
         }
-        if( update_grp ) {
+        if( NULL != *group ) {
             OBJ_RELEASE(*group);
-            ompi_group_incl(comm->c_remote_group, pos, failed, group);
         }
+        ompi_group_incl(comm->c_remote_group, pos, failed, group);
     }
     free(proc_status);
 
@@ -363,7 +363,7 @@ mca_coll_ftagree_eta_intra(void *contrib,
     OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
                          "%s ftagree:agreement (ETA) return %d with 4 first bytes of result 0x%08x and dead group with %d processes",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), ret, *(int*)contrib,
-                         (NULL == group) ? 0 : (*group)->grp_proc_count));
+                         (NULL == *group) ? 0 : (*group)->grp_proc_count));
     return ret;
 }
 
