@@ -53,7 +53,7 @@
 
 static inline void opal_atomic_mb(void)
 {
-    MB();
+    __asm__ __volatile__("mfence": : :"memory");
 }
 
 
