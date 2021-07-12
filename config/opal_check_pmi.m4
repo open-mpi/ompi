@@ -14,7 +14,7 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014-2018 Research Organization for Information Science
+# Copyright (c) 2014-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -139,15 +139,6 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
 AC_DEFUN([OPAL_CHECK_PMI],[
     OPAL_VAR_SCOPE_PUSH([check_pmi_install_dir check_pmi_lib_dir default_pmi_libloc slurm_pmi_found])
 
-    AC_ARG_WITH([pmi],
-                [AC_HELP_STRING([--with-pmi(=DIR)],
-                                [Build PMI support, optionally adding DIR to the search path (default: no)])],
-                                [], with_pmi=no)
-
-    AC_ARG_WITH([pmi-libdir],
-                [AC_HELP_STRING([--with-pmi-libdir=DIR],
-                                [Look for libpmi or libpmi2 in the given directory DIR, DIR/lib or DIR/lib64])])
-
     check_pmi_install_dir=
     check_pmi_lib_dir=
     default_pmi_libloc=
@@ -209,12 +200,12 @@ AC_DEFUN([OPAL_CHECK_PMI],[
                          opal_pmi2_rpath="$pmi2_rpath"
                          AC_SUBST(opal_pmi2_rpath)])])
 
-           # check for pmix lib installed by slurm */
-           slurm_pmix_found=no
-           OPAL_CHECK_PMIX_LIB([$check_pmi_install_dir],
-                               [$check_pmi_lib_dir],
-                               [opal_enable_pmix=yes],
-                               [opal_enable_pmix=no])
+           # check for pmix lib installed by slurm unless an other PMIx library is requested
+           AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "external"],
+                 [OPAL_CHECK_PMIX_LIB([$check_pmi_install_dir],
+                                      [$check_pmi_lib_dir],
+                                      [opal_enable_pmix=yes],
+                                      [opal_enable_pmix=no])])
 
            # since support was explicitly requested, then we should error out
            # if we didn't find the required support
@@ -398,14 +389,6 @@ AC_DEFUN([OPAL_CHECK_PMIX_LIB],[
 
 AC_DEFUN([OPAL_CHECK_PMIX],[
 
-    AC_ARG_WITH([pmix],
-                [AC_HELP_STRING([--with-pmix(=DIR)],
-                                [Build PMIx support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of PMIx.  "external" forces Open MPI to use an external installation of PMIx.  Supplying a valid directory name also forces Open MPI to use an external installation of PMIx, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI does not support --without-pmix.])])
-
-    AC_ARG_WITH([pmix-libdir],
-                [AC_HELP_STRING([--with-pmix-libdir=DIR],
-                                [Look for libpmix the given directory DIR, DIR/lib or DIR/lib64])])
-
     AS_IF([test "$with_pmix" = "no"],
           [AC_MSG_WARN([Open MPI requires PMIx support. It can be built])
            AC_MSG_WARN([with either its own internal copy of PMIx, or with])
@@ -474,4 +457,31 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
                  [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [External (1.2.5) WARNING - DYNAMIC OPS NOT SUPPORTED])],
                  [OPAL_SUMMARY_ADD([[Miscellaneous]],[[PMIx support]], [opal_pmix], [External ($opal_external_pmix_version)])])],
           [OPAL_SUMMARY_ADD([[Miscellaneous]], [[PMIx support]], [opal_pmix], [Internal])])
+])
+
+# Check both PMI and PMIx
+#
+# OPAL_CHECK_ALL_PMI()
+# --------------------------------------------------------
+AC_DEFUN([OPAL_CHECK_ALL_PMI],
+[
+    AC_ARG_WITH([pmi],
+                [AC_HELP_STRING([--with-pmi(=DIR)],
+                                [Build PMI support, optionally adding DIR to the search path (default: no)])],
+                                [], with_pmi=no)
+
+    AC_ARG_WITH([pmi-libdir],
+                [AC_HELP_STRING([--with-pmi-libdir=DIR],
+                                [Look for libpmi or libpmi2 in the given directory DIR, DIR/lib or DIR/lib64])])
+
+    AC_ARG_WITH([pmix],
+                [AC_HELP_STRING([--with-pmix(=DIR)],
+                                [Build PMIx support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of PMIx.  "external" forces Open MPI to use an external installation of PMIx.  Supplying a valid directory name also forces Open MPI to use an external installation of PMIx, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI does not support --without-pmix.])])
+
+    AC_ARG_WITH([pmix-libdir],
+                [AC_HELP_STRING([--with-pmix-libdir=DIR],
+                                [Look for libpmix the given directory DIR, DIR/lib or DIR/lib64])])
+
+    OPAL_CHECK_PMI
+    OPAL_CHECK_PMIX
 ])
