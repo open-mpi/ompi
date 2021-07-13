@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         opal_argv_append_nosize(&pargs, argv[m]);
         /* Did the user specify a prefix, or want prefix by default? */
         if (0 == strcmp(argv[m], "--prefix")) {
-            pfx = strdup(argv[m+1]);
+            asprintf(&pfx, "%s%s", argv[m+1], "/bin");
         }
     }
 
@@ -93,7 +93,8 @@ int main(int argc, char *argv[])
     }
 
     execve(truepath, pargs, environ);
-    fprintf(stderr, "The mpirun cmd failed to exec its actual executable - your application will NOT execute. Error: %s\n", strerror(errno));
+    fprintf(stderr, "The mpirun (\"%s\") cmd failed to exec its actual executable - your application will NOT execute. Error: %s\n",
+                     truepath ? truepath : "NULL", strerror(errno));
     exit(1);
 }
 
