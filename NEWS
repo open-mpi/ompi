@@ -172,6 +172,29 @@ included in the vX.Y.Z section and be denoted as:
 - OFI/libfabric: Multiple small bugfixes
 - libnbc: Adding numerous performance-improving algorithms
 
+4.0.6 -- March, 2021
+-----------------------
+- Update embedded PMIx to 3.2.2.  This update addresses several
+  MPI_COMM_SPAWN problems.
+- Fix a problem when using Flux PMI and UCX.  Thanks to Sami Ilvonen
+  for reporting and supplying a fix.
+- Fix a problem with MPIR breakpoint being compiled out using PGI
+  compilers.  Thanks to @louisespellacy-arm for reporting.
+- Fix some ROMIO issues when using Lustre.  Thanks to Mark Dixon for
+  reporting.
+- Fix a problem using an external PMIx 4 to build Open MPI 4.0.x.
+- Fix a compile problem when using the enable-timing configure option
+  and UCX.  Thanks to Jan Bierbaum for reporting.
+- Fix a symbol name collision when using the Cray compiler to build
+  Open SHMEM.  Thanks to Pak Lui for reporting and fixing.
+- Correct an issue encountered when building Open MPI under OSX Big Sur.
+  Thanks to FX Coudert for reporting.
+- Various fixes to the OFI MTL.
+- Fix an issue with allocation of sufficient memory for parsing long
+  environment variable values.  Thanks to @zrss for reporting.
+- Improve reproducibility of builds to assist Open MPI packages.
+  Thanks to Bernhard Wiedmann for bringing this to our attention.
+
 4.0.5 -- August, 2020
 ---------------------
 
