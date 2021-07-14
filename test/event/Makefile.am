@@ -44,5 +44,5 @@ event_test_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 event_test_DEPENDENCIES = $(event_test_LDADD)
 
-distclean:
+distclean-local:
 	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile

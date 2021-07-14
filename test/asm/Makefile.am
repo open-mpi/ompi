@@ -90,5 +90,5 @@ maintainer-clean-local:
 	atomic_math_noinline.c \
 	atomic_cmpset_noinline.c
 
-distclean:
+distclean-local:
 	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile
