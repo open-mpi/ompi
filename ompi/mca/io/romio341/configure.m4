@@ -79,10 +79,10 @@ AC_DEFUN([MCA_ompi_io_romio341_CONFIG],[
                         AS_IF([test ! -z $target], [io_romio341_flags="$io_romio341_flags --target=$target"])])
                    AS_IF([test "$enable_grequest_extensions" = "yes"],
                          [io_romio341_flags="$io_romio341_flags --enable-grequest-extensions"])
-                   io_romio341_flags_define="$io_romio341_flags FROM_OMPI=yes CC='$CC' CFLAGS='$CFLAGS -D__EXTENSIONS__' CPPFLAGS='$CPPFLAGS' FFLAGS='$FFLAGS' LDFLAGS='$LDFLAGS' --$io_romio341_shared-shared --$io_romio341_static-static $io_romio341_flags $io_romio341_prefix_arg --disable-aio --disable-weak-symbols --enable-strict --disable-f77 --disable-f90"
+                   io_romio341_flags_define="$io_romio341_flags FROM_OMPI=yes CC='$CC' CFLAGS='$CFLAGS -D__EXTENSIONS__' CPPFLAGS='$CPPFLAGS' FFLAGS='$FFLAGS' LDFLAGS='$LDFLAGS' --$io_romio341_shared-shared --$io_romio341_static-static $io_romio341_flags $io_romio341_prefix_arg --disable-aio --disable-weak-symbols --enable-strict --disable-f77 --disable-f90 ac_cv_lib_cuda_cuMemGetAddressRange=no"
                    AC_DEFINE_UNQUOTED([MCA_io_romio341_COMPLETE_CONFIGURE_FLAGS], ["$io_romio341_flags_define"], [Complete set of command line arguments given to ROMIOs configure script])
 
-                   io_romio341_flags="$io_romio341_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS -D__EXTENSIONS__"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio341_shared-shared --$io_romio341_static-static $io_romio341_flags $io_romio341_prefix_arg --disable-aio --disable-weak-symbols --enable-strict --disable-f77 --disable-f90"
+                   io_romio341_flags="$io_romio341_flags FROM_OMPI=yes CC="'"'"$CC"'"'" CFLAGS="'"'"$CFLAGS -D__EXTENSIONS__"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio341_shared-shared --$io_romio341_static-static $io_romio341_flags $io_romio341_prefix_arg --disable-aio --disable-weak-symbols --enable-strict --disable-f77 --disable-f90 ac_cv_lib_cuda_cuMemGetAddressRange=no"
 
                    opal_show_subtitle "Configuring ROMIO distribution"
                    OPAL_CONFIG_SUBDIR([3rd-party/romio341],
