@@ -213,6 +213,22 @@ else
 fi
 AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 
+#
+# If there's no pkg-config available, allow users to pass in -l/-L flags manually.
+#
+AC_MSG_CHECKING([if want extra libs for static builds])
+AC_ARG_WITH([extra-libs],[AS_HELP_STRING([--with-extra-libs],
+                  [A comma seperated list of extra libraries to link in for static builds (example: -lbar,-lbat) (default: None.). This should be used if pkg-config is not available.])])
+    OPAL_EXTRA_LIBS=""
+if test -n "x$with_extra_libs"; then
+    # Iterate over the list, removing the commas.
+    for i in $(echo $with_extra_libs | sed "s/,/ /g"); do
+      OPAL_FLAGS_APPEND_UNIQ([OPAL_EXTRA_LIBS], [$i])
+    done
+    AC_MSG_RESULT($OPAL_EXTRA_LIBS)
+else
+    AC_MSG_RESULT(default)
+fi
 
 #
 # Do we want the pretty-print stack trace feature?
