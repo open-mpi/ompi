@@ -29,5 +29,5 @@ chello_LDADD = \
 chello_DEPENDENCIES = $(chello_LDADD)
 
 
-distclean:
+distclean-local:
 	rm -rf *.dSYM .deps *.log *.o *.trs $(noinst_PROGRAMS) Makefile

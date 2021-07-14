@@ -60,5 +60,5 @@ non_blocking_recv_test_LDADD = \
         $(top_builddir)/ompi/lib@OPAL_LIB_NAME@mpi.la
 non_blocking_recv_test_DEPENDENCIES = $(non_blocking_recv_test_LDADD)
 
-distclean:
+distclean-local:
 	rm -rf *.dSYM .deps *.log *.o *.trs $(check_PROGRAMS) Makefile
