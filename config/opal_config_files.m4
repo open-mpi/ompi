@@ -24,7 +24,6 @@ AC_DEFUN([OPAL_CONFIG_FILES],[
         opal/mca/base/Makefile
         opal/tools/wrappers/Makefile
         opal/tools/wrappers/opalcc-wrapper-data.txt
-        opal/tools/wrappers/opalc++-wrapper-data.txt
         opal/tools/wrappers/opal.pc
     ])
 ])
