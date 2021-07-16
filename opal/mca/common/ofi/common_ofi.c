@@ -66,7 +66,7 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
 
     OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
 
-    param = mca_base_var_find("opal", "opal_common", "ofi", "provider_incude");
+    param = mca_base_var_find("opal", "opal_common", "ofi", "provider_include");
     if (0 > param) {
         /*
          * this monkey business is needed because of the way the MCA VARs stuff tries to handle
@@ -86,6 +86,8 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
             "exclusive with mtl_ofi_provider_exclude.",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_1, MCA_BASE_VAR_SCOPE_READONLY,
             opal_common_ofi.prov_include);
+    } else {
+        include_index = param;
     }
 
     param = mca_base_var_find("opal", "opal_common", "ofi", "provider_exclude");
@@ -102,6 +104,8 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
             "exclusive with mtl_ofi_provider_include.",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_1, MCA_BASE_VAR_SCOPE_READONLY,
             opal_common_ofi.prov_exclude);
+    } else {
+        exclude_index = param;
     }
 
     param = mca_base_var_find("opal", "opal_common", "ofi", "verbose");
@@ -112,6 +116,8 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
                                               MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                               MCA_BASE_VAR_SCOPE_LOCAL,
                                               &opal_common_ofi.verbose);
+    } else {
+        verbose_index = param;
     }
 
     if (component) {
