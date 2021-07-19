@@ -13,7 +13,7 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
-# Copyright (c) 2020      Google, LLC. All rights reserved.
+# Copyright (c) 2020-2021 Google, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,10 +38,6 @@ libmca_btl_sm_la_sources = \
     btl_sm_fbox.h \
     btl_sm_get.c \
     btl_sm_put.c \
-    btl_sm_xpmem.c \
-    btl_sm_xpmem.h \
-    btl_sm_knem.c \
-    btl_sm_knem.h \
     btl_sm_types.h \
     btl_sm_virtual.h
 
