@@ -18,6 +18,13 @@
         }                                       \
     } while(0)
 
+#define COLL_UCC_POST_AND_CHECK(_req) do {           \
+        if (UCC_OK != ucc_collective_post(_req)) {   \
+            ucc_collective_finalize(_req);           \
+            goto fallback;                           \
+        }                                            \
+    } while(0)
+
 #define COLL_UCC_GET_REQ(_coll_req) do {                                \
         opal_free_list_item_t *item;                                    \
         item = opal_free_list_wait (&mca_coll_ucc_component.requests);  \
@@ -55,6 +62,7 @@ static inline ucc_status_t coll_ucc_req_wait(ucc_coll_req_h req)
         if (status < 0) {
             UCC_ERROR("ucc_collective_test failed: %s",
                       ucc_status_string(status));
+            ucc_collective_finalize(req);
             return status;
         }
         ucc_context_progress(mca_coll_ucc_component.ucc_context);
