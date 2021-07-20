@@ -218,7 +218,9 @@ static int mca_pml_ucx_persistent_request_free(ompi_request_t **rptr)
     }
     if ((preq->flags & MCA_PML_UCX_REQUEST_FLAG_SEND) &&
          (MCA_PML_BASE_SEND_BUFFERED == preq->send.mode)) {
-        OBJ_RELEASE(preq->datatype.ompi_datatype);
+        OBJ_RELEASE(preq->ompi_datatype);
+    } else {
+        OMPI_DATATYPE_RELEASE(preq->ompi_datatype);
     }
     PML_UCX_FREELIST_RETURN(&ompi_pml_ucx.persistent_reqs, &preq->ompi.super);
     *rptr = MPI_REQUEST_NULL;
