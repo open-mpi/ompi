@@ -565,6 +565,7 @@ int mca_pml_ucx_irecv_init(void *buf, size_t count, ompi_datatype_t *datatype,
     req->buffer                   = buf;
     req->count                    = count;
     req->datatype.datatype        = mca_pml_ucx_get_datatype(datatype);
+    OMPI_DATATYPE_RETAIN(datatype);
 
     PML_UCX_MAKE_RECV_TAG(req->tag, req->recv.tag_mask, tag, src, comm);
 
@@ -705,6 +706,7 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
         OBJ_RETAIN(datatype);
     } else {
         req->datatype.datatype = mca_pml_ucx_get_datatype(datatype);
+        OMPI_DATATYPE_RETAIN(datatype);
     }
 
     *request = &req->ompi;
