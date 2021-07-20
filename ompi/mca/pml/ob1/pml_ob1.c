@@ -22,6 +22,7 @@
  *                         All rights reserved.
  * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,32 +61,34 @@
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {
-        mca_pml_ob1_add_procs,
-        mca_pml_ob1_del_procs,
-        mca_pml_ob1_enable,
-        NULL,  /* mca_pml_ob1_progress, */
-        mca_pml_ob1_add_comm,
-        mca_pml_ob1_del_comm,
+        .pml_add_procs      = mca_pml_ob1_add_procs,
+        .pml_del_procs      = mca_pml_ob1_del_procs,
+        .pml_enable         = mca_pml_ob1_enable,
+        .pml_progress       = NULL,  /* mca_pml_ob1_progress, */
+        .pml_add_comm       = mca_pml_ob1_add_comm,
+        .pml_del_comm       = mca_pml_ob1_del_comm,
 #if OPAL_ENABLE_FT_MPI
-        mca_pml_ob1_revoke_comm,
+        .pml_revoke_comm    = mca_pml_ob1_revoke_comm,
+#else
+        .pml_revoke_comm    = NULL,
 #endif
-        mca_pml_ob1_irecv_init,
-        mca_pml_ob1_irecv,
-        mca_pml_ob1_recv,
-        mca_pml_ob1_isend_init,
-        mca_pml_ob1_isend,
-        mca_pml_ob1_send,
-        mca_pml_ob1_iprobe,
-        mca_pml_ob1_probe,
-        mca_pml_ob1_start,
-        mca_pml_ob1_improbe,
-        mca_pml_ob1_mprobe,
-        mca_pml_ob1_imrecv,
-        mca_pml_ob1_mrecv,
-        mca_pml_ob1_dump,
-        65535,
-        INT_MAX,
-        0 /* flags */
+        .pml_irecv_init     = mca_pml_ob1_irecv_init,
+        .pml_irecv          = mca_pml_ob1_irecv,
+        .pml_recv           = mca_pml_ob1_recv,
+        .pml_isend_init     = mca_pml_ob1_isend_init,
+        .pml_isend          = mca_pml_ob1_isend,
+        .pml_send           = mca_pml_ob1_send,
+        .pml_iprobe         = mca_pml_ob1_iprobe,
+        .pml_probe          = mca_pml_ob1_probe,
+        .pml_start          = mca_pml_ob1_start,
+        .pml_improbe        = mca_pml_ob1_improbe,
+        .pml_mprobe         = mca_pml_ob1_mprobe,
+        .pml_imrecv         = mca_pml_ob1_imrecv,
+        .pml_mrecv          = mca_pml_ob1_mrecv,
+        .pml_dump           = mca_pml_ob1_dump,
+        .pml_max_contextid  = 65535,
+        .pml_max_tag        = INT_MAX,
+        .pml_flags          = 0 /* flags */
     }
 };
 
