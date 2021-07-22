@@ -396,6 +396,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
+    char *evar;
     volatile bool active;
     bool background_fence = false;
     pmix_info_t info[2];
@@ -437,6 +438,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
             return MPI_ERR_OTHER;
         }
     }
+
+    /* deal with OPAL_PREFIX to ensure that an internal PMIx installation
+     * is also relocated if necessary */
+#if OPAL_USING_INTERNAL_PMIX
+    if (NULL != (evar = getenv("OPAL_PREFIX"))) {
+        opal_setenv("PMIX_PREFIX", evar, true, &environ);
+    }
+#endif
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
