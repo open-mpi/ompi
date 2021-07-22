@@ -19,7 +19,9 @@
 #include "oshmem/constants.h"
 
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/util/proc.h"
+#include "opal/util/argv.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
 
 #include "ompi/proc/proc.h"
@@ -37,19 +39,6 @@ struct oshmem_group_t;
 
 #define OSHMEM_PE_INVALID   (-1)
 
-/* This struct will be copied into the padding field of an ompi_proc_t
- * so the size of oshmem_proc_data_t must be less or equal than
- * OMPI_PROC_PADDING_SIZE */
-struct oshmem_proc_data_t {
-    char * transport_ids;
-    int num_transports;
-};
-
-typedef struct oshmem_proc_data_t oshmem_proc_data_t;
-
-#define OSHMEM_PROC_DATA(proc) \
-    ((oshmem_proc_data_t *)(proc)->padding)
-
 /**
  * Group of Open SHMEM processes structure
  *
@@ -61,9 +50,7 @@ struct oshmem_group_t {
     int                         my_pe;
     int                         proc_count;     /**< number of processes in group */
     int                         is_member;   /* true if my_pe is part of the group, participate in collectives */
-    struct ompi_proc_t          **proc_array; /**< list of pointers to ompi_proc_t structures
-                                                   for each process in the group */
-    opal_list_t                 peer_list;
+    opal_vpid_t                 *proc_vpids; /* vpids of each process in group */
 
     /* Collectives module interface and data */
     mca_scoll_base_group_scoll_t g_scoll;
@@ -149,14 +136,21 @@ static inline ompi_proc_t *oshmem_proc_find(int pe)
     return oshmem_proc_for_find(name);
 }
 
+static inline int oshmem_proc_pe_vpid(oshmem_group_t *group, int pe)
+{
+    if (OPAL_LIKELY(pe < group->proc_count)) {
+        return (group->proc_vpids[pe]);
+    } else {
+        return -1;
+    }
+}
+
 static inline int oshmem_proc_pe(ompi_proc_t *proc)
 {
     return (proc ? (int) ((ompi_process_name_t*)&proc->super.proc_name)->vpid : -1);
 }
 
-#define OSHMEM_PROC_JOBID(PROC)    (((ompi_process_name_t*)&((PROC)->super.proc_name))->jobid)
-#define OSHMEM_PROC_VPID(PROC)     (((ompi_process_name_t*)&((PROC)->super.proc_name))->vpid)
-
+bool oshmem_proc_on_local_node(int pe);
 /**
  * Initialize the OSHMEM process predefined groups
  *
@@ -232,40 +226,6 @@ fatal:
  */
 OSHMEM_DECLSPEC void oshmem_proc_group_destroy(oshmem_group_t* group);
 
-static inline ompi_proc_t *oshmem_proc_group_all(int pe)
-{
-    return oshmem_group_all->proc_array[pe];
-}
-
-static inline ompi_proc_t *oshmem_proc_group_find(oshmem_group_t* group,
-                                                    int pe)
-{
-    int i = 0;
-    ompi_proc_t* proc = NULL;
-
-    if (OPAL_LIKELY(group)) {
-        if (OPAL_LIKELY(group == oshmem_group_all)) {
-            /* To improve performance use direct index. It is feature of oshmem_group_all */
-            proc = group->proc_array[pe];
-        } else {
-            for (i = 0; i < group->proc_count; i++) {
-                if (pe == oshmem_proc_pe(group->proc_array[i])) {
-                    proc = group->proc_array[i];
-                    break;
-                }
-            }
-        }
-    } else {
-        ompi_process_name_t name;
-
-        name.jobid = OMPI_PROC_MY_NAME->jobid;
-        name.vpid = pe;
-        proc = oshmem_proc_for_find(name);
-    }
-
-    return proc;
-}
-
 static inline int oshmem_proc_group_find_id(oshmem_group_t* group, int pe)
 {
     int i = 0;
@@ -273,7 +233,7 @@ static inline int oshmem_proc_group_find_id(oshmem_group_t* group, int pe)
 
     if (group) {
         for (i = 0; i < group->proc_count; i++) {
-            if (pe == oshmem_proc_pe(group->proc_array[i])) {
+            if (pe == oshmem_proc_pe_vpid(group, i)) {
                 id = i;
                 break;
             }
@@ -297,22 +257,6 @@ static inline int oshmem_num_procs(void)
 static inline int oshmem_my_proc_id(void)
 {
     return oshmem_group_self->my_pe;
-}
-
-static inline int oshmem_get_transport_id(int pe)
-{
-    ompi_proc_t *proc;
-
-    proc = oshmem_proc_group_find(oshmem_group_all, pe);
-
-    return (int) OSHMEM_PROC_DATA(proc)->transport_ids[0];
-}
-
-static inline int oshmem_get_transport_count(int pe)
-{
-    ompi_proc_t *proc;
-    proc = oshmem_proc_group_find(oshmem_group_all, pe);
-    return OSHMEM_PROC_DATA(proc)->num_transports;
 }
 
 END_C_DECLS

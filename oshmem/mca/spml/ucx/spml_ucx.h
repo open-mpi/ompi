@@ -193,8 +193,8 @@ extern void mca_spml_ucx_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint
 extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey, int pe);
 extern void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *, int pe);
 
-extern int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs);
-extern int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs);
+extern int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs);
+extern int mca_spml_ucx_del_procs(oshmem_group_t* group, size_t nprocs);
 extern int mca_spml_ucx_fence(shmem_ctx_t ctx);
 extern int mca_spml_ucx_quiet(shmem_ctx_t ctx);
 extern int spml_ucx_default_progress(void);
@@ -261,7 +261,7 @@ mca_spml_ucx_ctx_mkey_by_va(shmem_ctx_t ctx, int pe, void *va, void **rva, mca_s
 {
     spml_ucx_cached_mkey_t **mkey;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
-    int i;
+    size_t i;
 
     mkey = ucx_ctx->ucp_peers[pe].mkeys;
     for (i = 0; i < ucx_ctx->ucp_peers[pe].mkeys_cnt; i++) {

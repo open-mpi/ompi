@@ -193,9 +193,9 @@ typedef int (*mca_spml_base_module_oob_get_mkeys_fn_t)(shmem_ctx_t ctx, int pe,
  * @return OSHMEM_SUCCESS or failure status.
  *
  */
-typedef int (*mca_spml_base_module_add_procs_fn_t)(ompi_proc_t** procs,
+typedef int (*mca_spml_base_module_add_procs_fn_t)(struct oshmem_group_t* group,
                                                    size_t nprocs);
-typedef int (*mca_spml_base_module_del_procs_fn_t)(ompi_proc_t** procs,
+typedef int (*mca_spml_base_module_del_procs_fn_t)(struct oshmem_group_t* group,
                                                    size_t nprocs);
 
 

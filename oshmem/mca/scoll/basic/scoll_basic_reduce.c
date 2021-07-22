@@ -186,7 +186,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
 {
     int rc = OSHMEM_SUCCESS;
     int i = 0;
-    int PE_root = oshmem_proc_pe(group->proc_array[0]);
+    int PE_root = oshmem_proc_pe_vpid(group, 0);
 
     SCOLL_VERBOSE(12, "[#%d] Reduce algorithm: Central Counter", group->my_pe);
 
@@ -204,7 +204,7 @@ static int _algorithm_central_counter(struct oshmem_group_t *group,
             for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS);
                     i++) {
                 /* Get PE ID of a peer from the group */
-                pe_cur = oshmem_proc_pe(group->proc_array[i]);
+                pe_cur = oshmem_proc_pe_vpid(group, i);
 
                 if (pe_cur == group->my_pe)
                     continue;
@@ -265,7 +265,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group,
     int peer_id = 0;
     int peer_pe = 0;
     void *target_cur = NULL;
-    int PE_root = oshmem_proc_pe(group->proc_array[0]);
+    int PE_root = oshmem_proc_pe_vpid(group, 0);
 
     SCOLL_VERBOSE(12, "[#%d] Reduce algorithm: Tournament", group->my_pe);
     SCOLL_VERBOSE(15, "[#%d] pSync[0] = %ld", group->my_pe, pSync[0]);
@@ -304,7 +304,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group,
                 op->o_func.c_fn(target, target_cur, nlong / op->dt_size);
             }
         } else {
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
 #if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
@@ -345,7 +345,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group,
         for (peer_id = 1;
                 (peer_id < group->proc_count) && (rc == OSHMEM_SUCCESS);
                 peer_id++) {
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
             rc = MCA_SPML_CALL(put(oshmem_ctx_default, (void*)pSync, sizeof(value), (void*)&value, peer_pe));
         }
     }
@@ -416,7 +416,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
     if (my_id >= floor2_proc) {
         /* I am in extra group, my partner is node (my_id-y) in basic group */
         peer_id = my_id - floor2_proc;
-        peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+        peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
         /* Special procedure is needed in case target and source are the same */
         if (source == target) {
@@ -448,7 +448,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
         if ((group->proc_count - floor2_proc) > my_id) {
             /* I am in basic group, my partner is node (my_id+y) in extra group */
             peer_id = my_id + floor2_proc;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             /* Special procedure is needed in case target and source are the same */
             if (source == target) {
@@ -481,8 +481,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
             /* Update exit condition and round counter */
             exit_flag >>= 1;
             round++;
-
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
 #if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
@@ -524,7 +523,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
         if ((group->proc_count - floor2_proc) > my_id) {
             /* I am in basic group, my partner is node (my_id+y) in extra group */
             peer_id = my_id + floor2_proc;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             SCOLL_VERBOSE(14,
                           "[#%d] is extra send data to #%d",
@@ -566,7 +565,7 @@ static int _algorithm_linear(struct oshmem_group_t *group,
     rank = group->my_pe;
     size = group->proc_count;
     int root_id = size - 1;
-    int root_pe = oshmem_proc_pe(group->proc_array[root_id]);
+    int root_pe = oshmem_proc_pe_vpid(group, root_id);
 
     SCOLL_VERBOSE(12, "[#%d] Reduce algorithm: Basic", group->my_pe);
 
@@ -592,7 +591,7 @@ static int _algorithm_linear(struct oshmem_group_t *group,
             memcpy(target, (void *) source, nlong);
         } else {
             peer_id = size - 1;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
             rc = MCA_SPML_CALL(recv(target, nlong, peer_pe));
         }
         if (OSHMEM_SUCCESS != rc) {
@@ -609,7 +608,7 @@ static int _algorithm_linear(struct oshmem_group_t *group,
                 inbuf = (char*) source;
             } else {
                 peer_id = i;
-                peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+                peer_pe = oshmem_proc_pe_vpid(group, peer_id);
                 rc = MCA_SPML_CALL(recv(pml_buffer, nlong, peer_pe));
                 if (OSHMEM_SUCCESS != rc) {
                     if (NULL != free_buffer) {
@@ -671,7 +670,7 @@ static int _algorithm_log(struct oshmem_group_t *group,
     int peer_id = 0;
     int peer_pe = 0;
     int root_id = 0;
-    int root_pe = oshmem_proc_pe(group->proc_array[root_id]);
+    int root_pe = oshmem_proc_pe_vpid(group, root_id);
     int dim = 0;
 
     /* Initialize */
@@ -719,7 +718,7 @@ static int _algorithm_log(struct oshmem_group_t *group,
         if (vrank & mask) {
             peer_id = vrank & ~mask;
             peer_id = (peer_id + root_id) % size;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             rc = MCA_SPML_CALL(send((void*)snd_buffer, nlong, peer_pe, MCA_SPML_BASE_PUT_STANDARD));
             if (OSHMEM_SUCCESS != rc) {
@@ -738,7 +737,7 @@ static int _algorithm_log(struct oshmem_group_t *group,
                 continue;
             }
             peer_id = (peer_id + root_id) % size;
-            peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
+            peer_pe = oshmem_proc_pe_vpid(group, peer_id);
 
             /* Most of the time (all except the first one for commutative
              * operations) we receive in the user provided buffer
