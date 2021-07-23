@@ -98,11 +98,15 @@ AC_DEFUN([MCA_opal_pmix_pmix3x_CONFIG],[
    AC_SUBST([opal_pmix_pmix3x_DEPENDENCIES])
 
    # Finally, add some flags to the wrapper compiler so that our
-   # headers can be found.
-   pmix_pmix3x_status_filename="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix3x_basedir/pmix/config.status"
-   pmix_pmix3x_WRAPPER_EXTRA_CPPFLAGS=`egrep PMIX_EMBEDDED_CPPFLAGS $pmix_pmix3x_status_filename | cut -d\" -f4`
-   pmix_pmix3x_WRAPPER_EXTRA_LDFLAGS=`egrep PMIX_EMBEDDED_LDFLAGS $pmix_pmix3x_status_filename | cut -d\" -f4`
-   pmix_pmix3x_WRAPPER_EXTRA_LIBS=`egrep PMIX_EMBEDDED_LIBS $pmix_pmix3x_status_filename | cut -d\" -f4`
+   # headers can be found.  Do not grab them from config.status,
+   # because the value is located in an area that is part of an awk
+   # script, and sometimes autoconf decides to break up super-long
+   # lines into multiple lines (awk has line continuation syntax).
+   # Instead, grab it from the generated Makefile.
+   pmix_pmix3x_makefile_filename="$OPAL_TOP_BUILDDIR/$opal_pmix_pmix3x_basedir/pmix/Makefile"
+   pmix_pmix3x_WRAPPER_EXTRA_CPPFLAGS=`egrep PMIX_EMBEDDED_CPPFLAGS $pmix_pmix3x_makefile_filename | cut -d= -f2-`
+   pmix_pmix3x_WRAPPER_EXTRA_LDFLAGS=`egrep PMIX_EMBEDDED_LDFLAGS $pmix_pmix3x_makefile_filename | cut -d= -f2-`
+   pmix_pmix3x_WRAPPER_EXTRA_LIBS=`egrep PMIX_EMBEDDED_LIBS $pmix_pmix3x_makefile_filename | cut -d= -f2-`
 
    AC_MSG_CHECKING([PMIx extra wrapper CPPFLAGS])
    AC_MSG_RESULT([$pmix_pmix3x_WRAPPER_EXTRA_CPPFLAGS])
