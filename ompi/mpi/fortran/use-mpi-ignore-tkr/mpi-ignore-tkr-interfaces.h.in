@@ -11,6 +11,7 @@
 !                         reserved.
 ! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2021      Bull S.A.S. All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -2498,7 +2499,7 @@ end interface
 interface
 
 subroutine MPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
-        comm, request, ierror)
+        comm, info, request, ierror)
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
   integer, intent(in) :: partitions 
@@ -2507,6 +2508,7 @@ subroutine MPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
   integer, intent(in) :: dest
   integer, intent(in) :: tag
   integer, intent(in) :: comm
+  integer, intent(in) :: info
   integer, intent(out) :: request
   integer, intent(out) :: ierror
 end subroutine MPI_Psend_init
@@ -2517,7 +2519,7 @@ end interface
 interface
 
 subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
-        comm, request, ierror)
+        comm, info, request, ierror)
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
   integer, intent(in) :: partitions
@@ -2526,6 +2528,7 @@ subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
   integer, intent(in) :: dest
   integer, intent(in) :: tag
   integer, intent(in) :: comm
+  integer, intent(in) :: info
   integer, intent(out) :: request
   integer, intent(out) :: ierror
 end subroutine MPI_Precv_init
