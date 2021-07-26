@@ -116,7 +116,7 @@ get_dst_pe(struct oshmem_group_t *group, int src_blk_idx, int dst_blk_idx, int *
     (*dst_pe_idx) = (dst_blk_idx + src_blk_idx) % group->proc_count;
 
     /* convert to the global pe */
-    return oshmem_proc_pe(group->proc_array[*dst_pe_idx]);
+    return oshmem_proc_pe_vpid(group, *dst_pe_idx);
 }
 
 static int a2as_alg_simple(struct oshmem_group_t *group,

@@ -347,7 +347,7 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     OPAL_TIMING_ENV_NEXT(timing, "MCA_SPML_CALL(enable())");
 
     ret =
-            MCA_SPML_CALL(add_procs(oshmem_group_all->proc_array, oshmem_group_all->proc_count));
+            MCA_SPML_CALL(add_procs(oshmem_group_all, oshmem_group_all->proc_count));
     if (OSHMEM_SUCCESS != ret) {
         error = "SPML add procs failed";
         goto error;

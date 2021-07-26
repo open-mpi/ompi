@@ -31,13 +31,53 @@
 
 
 static opal_mutex_t oshmem_proc_lock;
+static opal_bitmap_t _oshmem_local_vpids;       /* Track the vpids in local node */
+int oshmem_proc_init_set_local_vpids()
+{
+    opal_process_name_t wildcard_rank;
+    int ret = OMPI_SUCCESS;
+    char *val = NULL;
+    
+    ret = opal_bitmap_init(&_oshmem_local_vpids, ompi_comm_size(oshmem_comm_world));
+    if (OSHMEM_SUCCESS != ret) {
+        return ret;
+    }
+    /* Add all local peers first */
+    wildcard_rank.jobid = OMPI_PROC_MY_NAME->jobid;
+    wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
+    /* retrieve the local peers */
+    OPAL_MODEX_RECV_VALUE(ret, PMIX_LOCAL_PEERS,
+                          &wildcard_rank, &val, PMIX_STRING);
+
+    if (OPAL_SUCCESS == ret && NULL != val) {
+        char **peers = opal_argv_split(val, ',');
+        int i;
+        free(val);
+        for (i=0; NULL != peers[i]; i++) {
+            ompi_vpid_t local_rank = strtoul(peers[i], NULL, 10);
+            opal_bitmap_set_bit(&_oshmem_local_vpids, local_rank);
+        }
+        opal_argv_free(peers);
+    }
+    return OSHMEM_SUCCESS;
+}
+
+bool oshmem_proc_on_local_node(int pe)
+{
+    return opal_bitmap_is_set_bit(&_oshmem_local_vpids, pe);
+}
 
 int oshmem_proc_init(void)
 {
+    int ret;
     OBJ_CONSTRUCT(&oshmem_proc_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&_oshmem_local_vpids, opal_bitmap_t);
 
-    /* check oshmem_proc_data_t can fit within ompi_proc_t padding */
-    assert(sizeof(oshmem_proc_data_t) <= OMPI_PROC_PADDING_SIZE);
+    ret = oshmem_proc_init_set_local_vpids();
+    if(OSHMEM_SUCCESS != ret) {
+        return ret;
+    }
+
     /* check ompi_proc_t padding is aligned on a pointer */
     assert(0 == (offsetof(ompi_proc_t, padding) & (sizeof(char *)-1)));
 
@@ -150,8 +190,6 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
     int cur_pe, count_pe;
     int i;
     oshmem_group_t* group = NULL;
-    ompi_proc_t** proc_array = NULL;
-    ompi_proc_t* proc = NULL;
 
     assert(oshmem_proc_local());
 
@@ -171,52 +209,28 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
     OPAL_THREAD_LOCK(&oshmem_proc_lock);
 
     /* allocate an array */
-    proc_array = (ompi_proc_t**) malloc(pe_size * sizeof(ompi_proc_t*));
-    if (NULL == proc_array) {
-        OBJ_RELEASE(group);
-        OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
-        return NULL ;
+    group->proc_vpids = (opal_vpid_t *) malloc(pe_size * sizeof(group->proc_vpids[0]));
+    if (NULL == group->proc_vpids) {
+        return NULL;
     }
 
     group->my_pe = oshmem_proc_pe(oshmem_proc_local());
     group->is_member = 0;
     for (i = 0 ; i < ompi_comm_size(oshmem_comm_world) ; i++) {
-        proc = oshmem_proc_find(i);
-        if (NULL == proc) {
-            opal_output(0,
-                    "Error: Can not find proc object for pe = %d", i);
-            free(proc_array);
-            OBJ_RELEASE(group);
-            OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
-            return NULL;
-        }
         if (count_pe >= (int) pe_size) {
             break;
         } else if ((cur_pe >= pe_start)
                 && ((pe_stride == 0)
                     || (((cur_pe - pe_start) % pe_stride) == 0))) {
-            proc_array[count_pe++] = proc;
-            if (oshmem_proc_pe(proc) == group->my_pe)
+            group->proc_vpids[count_pe] = i;
+            count_pe ++;
+            if (i == group->my_pe)
                 group->is_member = 1;
         }
         cur_pe++;
     }
-    group->proc_array = proc_array;
     group->proc_count = (int) count_pe;
     group->ompi_comm = NULL;
-
-    /* Prepare peers list */
-    OBJ_CONSTRUCT(&(group->peer_list), opal_list_t);
-    {
-        opal_namelist_t *peer = NULL;
-
-        for (i = 0; i < group->proc_count; i++) {
-            peer = OBJ_NEW(opal_namelist_t);
-            peer->name.jobid = OSHMEM_PROC_JOBID(group->proc_array[i]);
-            peer->name.vpid = OSHMEM_PROC_VPID(group->proc_array[i]);
-            opal_list_append(&(group->peer_list), &peer->super);
-        }
-    }
     group->id = opal_pointer_array_add(&oshmem_group_array, group);
 
     memset(&group->g_scoll, 0, sizeof(mca_scoll_base_group_scoll_t));
@@ -252,19 +266,9 @@ oshmem_proc_group_destroy_internal(oshmem_group_t* group, int scoll_unselect)
     }
 
     /* Destroy proc array */
-    if (group->proc_array) {
-        free(group->proc_array);
-    }
-
-    /* Destroy peer list */
-    {
-        opal_list_item_t *item;
-
-        while (NULL != (item = opal_list_remove_first(&(group->peer_list)))) {
-            /* destruct the item (we constructed it), then free the memory chunk */
-            OBJ_RELEASE(item);
-        }
-        OBJ_DESTRUCT(&(group->peer_list));
+    OBJ_DESTRUCT(&_oshmem_local_vpids);
+    if (group->proc_vpids) {
+        free(group->proc_vpids);
     }
 
     /* reset the oshmem_group_array entry - make sure that the
