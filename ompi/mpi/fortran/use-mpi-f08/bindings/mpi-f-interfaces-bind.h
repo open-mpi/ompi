@@ -9,6 +9,7 @@
 ! Copyright (c) 2012      Inria.  All rights reserved.
 ! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2021      Bull S.A.S. All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -145,6 +146,7 @@
 ! MPI_Is_thread_main
 ! MPI_Op_commutative
 ! MPI_Op_create
+! MPI_Parrived
 ! MPI_Type_get_attr
 ! MPI_Win_get_attr
 ! MPI_Win_test
@@ -276,24 +278,26 @@ subroutine ompi_issend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_issend_f
 
-subroutine ompi_psend_init_f(buf,partitions,count,datatype,dest,tag,comm,request,ierror) &
+subroutine ompi_psend_init_f(buf,partitions,count,datatype,dest,tag,comm,info,request,ierror) &
    BIND(C, name="ompi_psend_init_f")
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: partitions, count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(IN) :: info
    INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_psend_init_f
 
-subroutine ompi_precv_init_f(buf,partitions,count,datatype,dest,tag,comm,request,ierror) &
+subroutine ompi_precv_init_f(buf,partitions,count,datatype,dest,tag,comm,info,request,ierror) &
    BIND(C, name="ompi_precv_init_f")
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: partitions, count, dest, tag
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(IN) :: info
    INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_precv_init_f

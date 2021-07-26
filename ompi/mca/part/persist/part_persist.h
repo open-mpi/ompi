@@ -13,6 +13,7 @@
  * Copyright (c) 2021      University of Alabama at Birmingham. All rights reserved.
  * Copyright (c) 2021      Tennessee Technological University. All rights reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2021      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -331,6 +332,7 @@ mca_part_persist_precv_init(void *buf,
                         int src,
                         int tag,
                         struct ompi_communicator_t *comm,
+                        struct ompi_info_t * info,
                         struct ompi_request_t **request)
 {
     int err = OMPI_SUCCESS;
@@ -398,6 +400,7 @@ mca_part_persist_psend_init(const void* buf,
                         int dst,
                         int tag,
                         ompi_communicator_t* comm,
+                        struct ompi_info_t * info,
                         ompi_request_t** request)
 {
     int err = OMPI_SUCCESS;
