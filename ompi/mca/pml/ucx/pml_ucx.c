@@ -697,12 +697,12 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
     req->send.mode                = mode;
     req->send.ep                  = ep;
     req->ompi_datatype            = datatype;
+    OMPI_DATATYPE_RETAIN(datatype);
 
     if (MCA_PML_BASE_SEND_BUFFERED == mode) {
-        OBJ_RETAIN(datatype);
+        req->datatype = NULL;
     } else {
         req->datatype = mca_pml_ucx_get_datatype(datatype);
-        OMPI_DATATYPE_RETAIN(datatype);
     }
 
     *request = &req->ompi;
