@@ -401,7 +401,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     volatile bool active;
     bool background_fence = false;
     pmix_info_t info[2];
-    pmix_status_t codes[1] = { PMIX_ERR_PROC_ABORTED };
+    pmix_status_t codes[2] = { PMIX_ERR_PROC_ABORTED, PMIX_ERR_LOST_CONNECTION };
     pmix_status_t rc;
     OMPI_TIMING_INIT(64);
     opal_pmix_lock_t mylock;
@@ -576,12 +576,27 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     }
 
     /* Register the default errhandler callback  */
+    /* give it a name so we can distinguish it */
+    PMIX_INFO_LOAD(&info[0], PMIX_EVENT_HDLR_NAME, "MPI-Default", PMIX_STRING);
+    OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
+    PMIx_Register_event_handler(NULL, 0, info, 1, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
+    OPAL_PMIX_WAIT_THREAD(&mylock);
+    rc = mylock.status;
+    OPAL_PMIX_DESTRUCT_LOCK(&mylock);
+    PMIX_INFO_DESTRUCT(&info[0]);
+    if (PMIX_SUCCESS != rc) {
+        error = "Error handler registration";
+        ret = opal_pmix_convert_status(rc);
+        goto error;
+    }
+
+   /* Register the ULFM errhandler callback  */
     /* we want to go first */
     PMIX_INFO_LOAD(&info[0], PMIX_EVENT_HDLR_PREPEND, NULL, PMIX_BOOL);
     /* give it a name so we can distinguish it */
-    PMIX_INFO_LOAD(&info[1], PMIX_EVENT_HDLR_NAME, "MPI-Default", PMIX_STRING);
+    PMIX_INFO_LOAD(&info[1], PMIX_EVENT_HDLR_NAME, "ULFM-Default", PMIX_STRING);
     OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
-    PMIx_Register_event_handler(codes, 1, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
+    PMIx_Register_event_handler(codes, 2, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
     OPAL_PMIX_WAIT_THREAD(&mylock);
     rc = mylock.status;
     OPAL_PMIX_DESTRUCT_LOCK(&mylock);
