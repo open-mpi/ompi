@@ -16,6 +16,8 @@
 #ifndef OPAL_MINMAX_H
 #define OPAL_MINMAX_H
 
+#include "opal_stdint.h"
+
 #define OPAL_DEFINE_MINMAX(type, suffix)                                   \
     static inline const type opal_min_##suffix(const type a, const type b) \
     {                                                                      \
