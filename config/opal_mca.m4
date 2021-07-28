@@ -93,7 +93,7 @@ AC_DEFUN([OPAL_MCA],[
     if test "$enable_mca_no_build" = "yes"; then
         AC_MSG_RESULT([yes])
         AC_MSG_ERROR([*** The enable-mca-no-build flag requires an explicit list
-*** of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
+of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
     else
         ifs_save="$IFS"
         IFS="${IFS}$PATH_SEPARATOR,"
@@ -123,11 +123,7 @@ AC_DEFUN([OPAL_MCA],[
     # in the form DIRECT_[type]=[component]
     #
     AC_MSG_CHECKING([which components should be direct-linked into the library])
-    if test "$enable_mca_direct" = "yes" ; then
-        AC_MSG_RESULT([yes])
-        AC_MSG_ERROR([*** The enable-mca-direct flag requires an explicit list of
-*** type-component pairs.  For example, --enable-mca-direct=pml-ob1,coll-basic])
-    elif test ! -z "$enable_mca_direct" && test "$enable_mca_direct" != "" ; then
+    if test -n "$enable_mca_direct" ; then
         #
         # we need to add this into the static list, unless the static list
         # is everything
@@ -145,15 +141,21 @@ AC_DEFUN([OPAL_MCA],[
         IFS="${IFS}$PATH_SEPARATOR,"
         msg=
         for item in $enable_mca_direct; do
-            type="`echo $item | cut -f1 -d-`"
-            comp="`echo $item | cut -f2- -d-`"
+            type="`echo $item | cut -s -f1 -d-`"
+            comp="`echo $item | cut -s -f2- -d-`"
             if test -z $type || test -z $comp ; then
-                AC_MSG_ERROR([*** The enable-mca-direct flag requires a
-*** list of type-component pairs.  Invalid input detected.])
-            else
-                AS_VAR_SET([AS_TR_SH([DIRECT_$type])], [AS_TR_SH([$comp])])
-                msg="$item $msg"
+                AC_MSG_ERROR([enable-mca-direct requires a list of type-component pairs (ex. --enable-mca-direct=pml-ob1,smsc-xpmem)])
             fi
+
+            var_name=AS_TR_SH([DIRECT_${type}])
+            AS_VAR_COPY([var_value], [$var_name])
+
+            if test -n "$var_value" ; then
+                AC_MSG_ERROR([enable-mca-direct can only enable a single component per framwork: specified both ${type}-${var_value} and ${type}-${comp}.])
+            fi
+
+            AS_VAR_SET([$var_name], AS_TR_SH([${comp}]))
+            msg="$item $msg"
         done
         IFS="$ifs_save"
     fi
@@ -455,6 +457,18 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                         [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
                                                [static_components], [dso_components],
                                                [static_ltlibs])])])])])
+
+    AS_VAR_SET_IF([OPAL_EVAL_ARG([DIRECT_$2])], [
+                      AC_MSG_CHECKING([if direct-selection component exists for $2 framework])
+                      direct_component_happy=no
+                      for component in $all_components ; do
+                          AS_IF([test $component = "$DIRECT_$2"], [direct_component_happy=yes])
+                      done
+                      if test $direct_component_happy = no ; then
+                          AC_MSG_ERROR([direct component $DIRECT_$2 requested but not found in $all_components])
+                      fi
+                      AC_MSG_RESULT([$DIRECT_$2])
+                  ])
 
     MCA_$1_$2_ALL_COMPONENTS="$all_components"
     MCA_$1_$2_STATIC_COMPONENTS="$static_components"
