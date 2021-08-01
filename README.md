@@ -12,6 +12,8 @@ researchers.
 See [the MPI Forum web site](https://mpi-forum.org/) for information
 about the MPI API specification.
 
+Meaningless change to test Jenkins.
+
 ## Quick start
 
 In many cases, Open MPI can be built and installed by simply
