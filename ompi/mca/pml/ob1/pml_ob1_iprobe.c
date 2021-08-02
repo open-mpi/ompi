@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2016 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -40,10 +40,10 @@ int mca_pml_ob1_iprobe(int src,
     MCA_PML_OB1_RECV_REQUEST_START(&recvreq);
 
     if( REQUEST_COMPLETE( &(recvreq.req_recv.req_base.req_ompi)) ) {
-        if( NULL != status ) {
-            *status = recvreq.req_recv.req_base.req_ompi.req_status;
-        }
         rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+        if( MPI_STATUS_IGNORE != status ) {
+            OMPI_COPY_STATUS(status, recvreq.req_recv.req_base.req_ompi.req_status, false);
+        }
         *matched = 1;
     } else {
         *matched = 0;
@@ -71,8 +71,8 @@ int mca_pml_ob1_probe(int src,
 
     ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
     rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
-    if (NULL != status) {
-        *status = recvreq.req_recv.req_base.req_ompi.req_status;
+    if( MPI_STATUS_IGNORE != status ) {
+        OMPI_COPY_STATUS(status, recvreq.req_recv.req_base.req_ompi.req_status, false);
     }
 
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
@@ -107,8 +107,9 @@ mca_pml_ob1_improbe(int src,
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
 
     if( REQUEST_COMPLETE( &(recvreq->req_recv.req_base.req_ompi)) ) {
-        if( NULL != status ) {
-            *status = recvreq->req_recv.req_base.req_ompi.req_status;
+        rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+        if( MPI_STATUS_IGNORE != status ) {
+            OMPI_COPY_STATUS(status, recvreq->req_recv.req_base.req_ompi.req_status, false);
         }
         *matched = 1;
 
@@ -116,8 +117,6 @@ mca_pml_ob1_improbe(int src,
         (*message)->req_ptr = recvreq;
         (*message)->peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
         (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
-
-        rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
     } else {
         *matched = 0;
 
@@ -162,9 +161,8 @@ mca_pml_ob1_mprobe(int src,
 
     ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
-
-    if( NULL != status ) {
-        *status = recvreq->req_recv.req_base.req_ompi.req_status;
+    if( MPI_STATUS_IGNORE != status ) {
+       OMPI_COPY_STATUS(status, recvreq->req_recv.req_base.req_ompi.req_status, false);
     }
 
     if( OMPI_SUCCESS == rc ) {

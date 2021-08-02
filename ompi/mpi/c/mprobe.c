@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2020      The University of Tennessee and The University
+ * Copyright (c) 2020-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -62,7 +62,7 @@ int MPI_Mprobe(int source, int tag, MPI_Comm comm,
 
     if (MPI_PROC_NULL == source) {
         if (MPI_STATUS_IGNORE != status) {
-            *status = ompi_request_empty.req_status;
+            OMPI_COPY_STATUS(status, ompi_request_empty.req_status, false);
             /* Per MPI-1, the MPI_ERROR field is not defined for
                single-completion calls */
             MEMCHECKER(
