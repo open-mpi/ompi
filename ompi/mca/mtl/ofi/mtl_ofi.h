@@ -4,7 +4,9 @@
  *                         reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
- *
+ * Copyright (c) 2021      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -969,7 +971,7 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     *flag = ofi_req.match_state;
     if (1 == *flag) {
         if (MPI_STATUS_IGNORE != status) {
-            *status = ofi_req.status;
+            OMPI_COPY_STATUS(status, ofi_req.status, false);
         }
     }
 
@@ -1058,7 +1060,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     *matched = ofi_req->match_state;
     if (1 == *matched) {
         if (MPI_STATUS_IGNORE != status) {
-            *status = ofi_req->status;
+            OMPI_COPY_STATUS(status, ofi_req->status, false);
         }
 
         (*message) = ompi_message_alloc();

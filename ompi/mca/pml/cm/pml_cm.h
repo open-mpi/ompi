@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -212,8 +212,8 @@ mca_pml_cm_recv(void *addr,
 
     ompi_request_wait_completion(&req.req_ompi);
 
-    if (NULL != status) {  /* return status */
-        *status = req.req_ompi.req_status;
+    if (MPI_STATUS_IGNORE != status) {
+        OMPI_COPY_STATUS(status, req.req_ompi.req_status, false);
     }
     ret = req.req_ompi.req_status.MPI_ERROR;
     OBJ_DESTRUCT(&convertor);
@@ -539,8 +539,8 @@ mca_pml_cm_mrecv(void *buf,
 
     ompi_request_wait_completion(&recvreq->req_base.req_ompi);
 
-    if (NULL != status) {  /* return status */
-        *status = recvreq->req_base.req_ompi.req_status;
+    if (MPI_STATUS_IGNORE != status) {
+        OMPI_COPY_STATUS(status, recvreq->req_base.req_ompi.req_status, false);
     }
     ret = recvreq->req_base.req_ompi.req_status.MPI_ERROR;
     ompi_request_free( (ompi_request_t**)&recvreq );
