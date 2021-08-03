@@ -17,7 +17,6 @@ static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, const i
                                                        ucc_coll_req_h *req,
                                                        mca_coll_ucc_req_t *coll_req)
 {
-    size_t                 dt_size;
     ucc_datatype_t         ucc_sdt, ucc_rdt;
 
     ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
@@ -30,12 +29,9 @@ static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, const i
         goto fallback;
     }
 
-    opal_datatype_type_size(&sdtype->super, &dt_size);
     ucc_coll_args_t coll = {
-        .mask      = UCC_COLL_ARGS_FIELD_FLAGS,
+        .mask      = 0,
         .coll_type = UCC_COLL_TYPE_ALLTOALLV,
-        .flags = UCC_COLL_ARGS_FLAG_CONTIG_SRC_BUFFER |
-                 UCC_COLL_ARGS_FLAG_CONTIG_DST_BUFFER,
         .src.info_v = {
             .buffer        = (void*)sbuf,
             .counts        = (ucc_count_t*)scounts,
@@ -53,6 +49,7 @@ static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, const i
     };
 
     if (MPI_IN_PLACE == sbuf) {
+        coll.mask  = UCC_COLL_ARGS_FIELD_FLAGS;
         coll.flags = UCC_COLL_ARGS_FLAG_IN_PLACE;
     }
     COLL_UCC_REQ_INIT(coll_req, req, coll, ucc_module);
@@ -76,7 +73,7 @@ int mca_coll_ucc_alltoallv(const void *sbuf, const int *scounts,
     COLL_UCC_CHECK(mca_coll_ucc_alltoallv_init(sbuf, scounts, sdisps, sdtype,
                                                rbuf, rcounts, rdisps, rdtype,
                                                ucc_module, &req, NULL));
-    COLL_UCC_CHECK(ucc_collective_post(req));
+    COLL_UCC_POST_AND_CHECK(req);
     COLL_UCC_CHECK(coll_ucc_req_wait(req));
     return OMPI_SUCCESS;
 fallback:
@@ -96,18 +93,21 @@ int mca_coll_ucc_ialltoallv(const void *sbuf, const int *scounts,
 {
     mca_coll_ucc_module_t *ucc_module = (mca_coll_ucc_module_t*)module;
     ucc_coll_req_h         req;
-    mca_coll_ucc_req_t    *coll_req;
+    mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc ialltoallv");
     COLL_UCC_GET_REQ(coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_alltoallv_init(sbuf, scounts, sdisps, sdtype,
                                                rbuf, rcounts, rdisps, rdtype,
                                                ucc_module, &req, coll_req));
-    COLL_UCC_CHECK(ucc_collective_post(req));
+    COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback ialltoallv");
+    if (coll_req) {
+        mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
+    }
     return ucc_module->previous_ialltoallv(sbuf, scounts, sdisps, sdtype,
                                           rbuf, rcounts, rdisps, rdtype,
                                            comm, request, ucc_module->previous_ialltoallv_module);

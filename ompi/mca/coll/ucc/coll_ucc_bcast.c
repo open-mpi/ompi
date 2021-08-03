@@ -45,7 +45,7 @@ int mca_coll_ucc_bcast(void *buf, int count, struct ompi_datatype_t *dtype,
     UCC_VERBOSE(3, "running ucc bcast");
     COLL_UCC_CHECK(mca_coll_ucc_bcast_init(buf, count, dtype, root,
                                            ucc_module, &req, NULL));
-    COLL_UCC_CHECK(ucc_collective_post(req));
+    COLL_UCC_POST_AND_CHECK(req);
     COLL_UCC_CHECK(coll_ucc_req_wait(req));
     return OMPI_SUCCESS;
 fallback:
@@ -61,17 +61,20 @@ int mca_coll_ucc_ibcast(void *buf, int count, struct ompi_datatype_t *dtype,
 {
     mca_coll_ucc_module_t *ucc_module = (mca_coll_ucc_module_t*)module;
     ucc_coll_req_h         req;
-    mca_coll_ucc_req_t    *coll_req;
+    mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc ibcast");
     COLL_UCC_GET_REQ(coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_bcast_init(buf, count, dtype, root,
                                            ucc_module, &req, coll_req));
-    COLL_UCC_CHECK(ucc_collective_post(req));
+    COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback ibcast");
+    if (coll_req) {
+        mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
+    }
     return ucc_module->previous_ibcast(buf, count, dtype, root,
                                        comm, request, ucc_module->previous_ibcast_module);
 }

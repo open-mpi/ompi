@@ -28,6 +28,8 @@ AC_DEFUN([MCA_ompi_coll_ucc_CONFIG],[
            coll_ucc_WRAPPER_EXTRA_LIBS="$coll_ucc_LIBS"
            $1],
           [$2])
+    
+    OPAL_SUMMARY_ADD([[Miscellaneous]],[[Open UCC]],[$1],[$coll_ucc_happy])])])
 
     # substitute in the things needed to build ucc
     AC_SUBST([coll_ucc_CFLAGS])

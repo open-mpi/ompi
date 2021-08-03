@@ -27,17 +27,23 @@ int mca_coll_ucc_init_query(bool enable_progress_threads, bool enable_mpi_thread
 
 static void mca_coll_ucc_module_clear(mca_coll_ucc_module_t *ucc_module)
 {
-    ucc_module->ucc_team            = NULL;
-    ucc_module->previous_allreduce  = NULL;
-    ucc_module->previous_iallreduce = NULL;
-    ucc_module->previous_barrier    = NULL;
-    ucc_module->previous_ibarrier   = NULL;
-    ucc_module->previous_bcast      = NULL;
-    ucc_module->previous_ibcast     = NULL;
-    ucc_module->previous_alltoall   = NULL;
-    ucc_module->previous_ialltoall  = NULL;
-    ucc_module->previous_alltoallv  = NULL;
-    ucc_module->previous_ialltoallv = NULL;
+    ucc_module->ucc_team             = NULL;
+    ucc_module->previous_allreduce   = NULL;
+    ucc_module->previous_iallreduce  = NULL;
+    ucc_module->previous_barrier     = NULL;
+    ucc_module->previous_ibarrier    = NULL;
+    ucc_module->previous_bcast       = NULL;
+    ucc_module->previous_ibcast      = NULL;
+    ucc_module->previous_alltoall    = NULL;
+    ucc_module->previous_ialltoall   = NULL;
+    ucc_module->previous_alltoallv   = NULL;
+    ucc_module->previous_ialltoallv  = NULL;
+    ucc_module->previous_allgather   = NULL;
+    ucc_module->previous_iallgather  = NULL;
+    ucc_module->previous_allgatherv  = NULL;
+    ucc_module->previous_iallgatherv = NULL;
+    ucc_module->previous_reduce      = NULL;
+    ucc_module->previous_ireduce     = NULL;
 }
 
 static void mca_coll_ucc_module_construct(mca_coll_ucc_module_t *ucc_module)
@@ -68,6 +74,12 @@ static void mca_coll_ucc_module_destruct(mca_coll_ucc_module_t *ucc_module)
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ialltoall_module);
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_alltoallv_module);
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ialltoallv_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_allgather_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iallgather_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_allgatherv_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iallgatherv_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_reduce_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ireduce_module);
     mca_coll_ucc_module_clear(ucc_module);
 }
 
@@ -93,6 +105,12 @@ static int mca_coll_ucc_save_coll_handlers(mca_coll_ucc_module_t *ucc_module)
     SAVE_PREV_COLL_API(ialltoall);
     SAVE_PREV_COLL_API(alltoallv);
     SAVE_PREV_COLL_API(ialltoallv);
+    SAVE_PREV_COLL_API(allgather);
+    SAVE_PREV_COLL_API(iallgather);
+    SAVE_PREV_COLL_API(allgatherv);
+    SAVE_PREV_COLL_API(iallgatherv);
+    SAVE_PREV_COLL_API(reduce);
+    SAVE_PREV_COLL_API(ireduce);
     return OMPI_SUCCESS;
 }
 
@@ -414,11 +432,14 @@ mca_coll_ucc_comm_query(struct ompi_communicator_t *comm, int *priority)
     ucc_module->comm                     = comm;
     ucc_module->super.coll_module_enable = mca_coll_ucc_module_enable;
     *priority                            = cm->ucc_priority;
-    SET_COLL_PTR(ucc_module, BARRIER,   barrier);
-    SET_COLL_PTR(ucc_module, BCAST,     bcast);
-    SET_COLL_PTR(ucc_module, ALLREDUCE, allreduce);
-    SET_COLL_PTR(ucc_module, ALLTOALL,  alltoall);
-    SET_COLL_PTR(ucc_module, ALLTOALLV, alltoallv);
+    SET_COLL_PTR(ucc_module, BARRIER,    barrier);
+    SET_COLL_PTR(ucc_module, BCAST,      bcast);
+    SET_COLL_PTR(ucc_module, ALLREDUCE,  allreduce);
+    SET_COLL_PTR(ucc_module, ALLTOALL,   alltoall);
+    SET_COLL_PTR(ucc_module, ALLTOALLV,  alltoallv);
+    SET_COLL_PTR(ucc_module, REDUCE,     reduce);
+    SET_COLL_PTR(ucc_module, ALLGATHER,  allgather);
+    SET_COLL_PTR(ucc_module, ALLGATHERV, allgatherv);
     return &ucc_module->super;
 }
 
