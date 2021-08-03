@@ -114,6 +114,12 @@ static ucc_coll_type_t mca_coll_ucc_str_to_type(const char *str)
         return UCC_COLL_TYPE_ALLTOALL;
     } else if (0 == strcasecmp(str, "alltoallv")) {
         return UCC_COLL_TYPE_ALLTOALLV;
+    } else if (0 == strcasecmp(str, "allgather")) {
+        return UCC_COLL_TYPE_ALLGATHER;
+    } else if (0 == strcasecmp(str, "allgatherv")) {
+        return UCC_COLL_TYPE_ALLGATHERV;
+    } else if (0 == strcasecmp(str, "reduce")) {
+        return UCC_COLL_TYPE_REDUCE;
     }
     UCC_ERROR("incorrect value for cts: %s, allowed: %s",
               str, COLL_UCC_CTS_STR);
