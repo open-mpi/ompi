@@ -55,13 +55,15 @@ int mca_atomic_ucx_op(shmem_ctx_t ctx,
                       ucp_atomic_post_op_t op)
 #endif
 {
-    ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     ucs_status_ptr_t status_ptr;
+#else
+    ucs_status_t status;
 #endif
+    int res;
 
     assert((8 == size) || (4 == size));
 
@@ -71,20 +73,20 @@ int mca_atomic_ucx_op(shmem_ctx_t ctx,
     status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn,
                                    op, &value, 1, rva, ucx_mkey->rkey,
                                    &mca_spml_ucp_request_params[size >> 3]);
-    if (OPAL_LIKELY(!UCS_PTR_IS_ERR(status_ptr))) {
-        mca_spml_ucx_remote_op_posted(ucx_ctx, pe);
-    }
-    status = UCS_PTR_STATUS(status_ptr);
+    res = opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
+                                       "ucp_atomic_op_nbx post");
 #else
     status = ucp_atomic_post(ucx_ctx->ucp_peers[pe].ucp_conn,
                              op, value, size, rva,
                              ucx_mkey->rkey);
+    res = ucx_status_to_oshmem(status);
 #endif
-    if (OPAL_LIKELY(UCS_OK == status)) {
+
+    if (OPAL_LIKELY(OSHMEM_SUCCESS == res)) {
         mca_spml_ucx_remote_op_posted(ucx_ctx, pe);
     }
 
-    return ucx_status_to_oshmem(status);
+    return res;
 }
 
 static inline
