@@ -312,19 +312,17 @@ static uint32_t get_package_rank(int32_t num_local_peers, uint16_t my_local_rank
     char *local_peers = NULL;
     char *locality_string = NULL;
     char *mylocality = NULL;
+    uint16_t *package_rank_ptr;
 
     pname.jobid = OPAL_PROC_MY_NAME.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
 
-#if HAVE_DECL_PMIX_PACKAGE_RANK
-    uint16_t *package_rank_ptr;
     // Try to get the PACKAGE_RANK from PMIx
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_PACKAGE_RANK,
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_PACKAGE_RANK,
                                    &pname, &package_rank_ptr, OPAL_UINT16);
     if (OPAL_SUCCESS == rc) {
         return (uint32_t)*package_rank_ptr;
     }
-#endif
 
     // Get the local peers
     OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_LOCAL_PEERS,
