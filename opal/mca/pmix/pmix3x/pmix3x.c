@@ -8,6 +8,7 @@
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -966,6 +967,7 @@ int pmix3x_value_unload(opal_value_t *kv,
     opal_list_t *lt;
     opal_value_t *ival;
     size_t n;
+    pmix_info_t *iptr;
 
     switch(v->type) {
     case PMIX_UNDEF:
@@ -1178,27 +1180,30 @@ int pmix3x_value_unload(opal_value_t *kv,
         kv->data.pinfo.state = pmix3x_convert_state(v->data.pinfo->state);
         break;
     case PMIX_DATA_ARRAY:
-        if (NULL == v->data.darray || NULL == v->data.darray->array) {
+        if (NULL == v->data.darray || NULL == v->data.darray->array ||
+            PMIX_INFO != v->data.darray->type) {
             kv->data.ptr = NULL;
             break;
         }
         lt = OBJ_NEW(opal_list_t);
         kv->type = OPAL_PTR;
         kv->data.ptr = (void*)lt;
+        iptr = (pmix_info_t*)v->data.darray->array;
         for (n=0; n < v->data.darray->size; n++) {
+            if (0 == strcmp("pmix.topo2", iptr[n].key)) {
+                /* we do not know (yet) how to convert the pmix.topo2 key from PMIx 4.0.0
+                 * but since we are not going to use it, simply ignore it and move on */
+                continue;
+            }
             ival = OBJ_NEW(opal_value_t);
             opal_list_append(lt, &ival->super);
-            /* handle the various types */
-            if (PMIX_INFO == v->data.darray->type) {
-                pmix_info_t *iptr = (pmix_info_t*)v->data.darray->array;
-                ival->key = strdup(iptr[n].key);
-                rc = pmix3x_value_unload(ival, &iptr[n].value);
-                if (OPAL_SUCCESS != rc) {
-                    OPAL_LIST_RELEASE(lt);
-                    kv->type = OPAL_UNDEF;
-                    kv->data.ptr = NULL;
-                    break;
-                }
+            ival->key = strdup(iptr[n].key);
+            rc = pmix3x_value_unload(ival, &iptr[n].value);
+            if (OPAL_SUCCESS != rc) {
+                OPAL_LIST_RELEASE(lt);
+                kv->type = OPAL_UNDEF;
+                kv->data.ptr = NULL;
+                break;
             }
         }
         break;
