@@ -453,8 +453,8 @@ void ADIOI_GPFS_WriteStridedColl(ADIO_File fd, const void *buf, int count,
     ADIOI_Free(count_my_req_per_proc);
     for (i=0; i < nprocs; i++) {
 	if (my_req[i].count) {
-	    ADIOI_Free(my_req[i].offsets);
-	    ADIOI_Free(my_req[i].lens);
+	    if (my_req[i].offsets) { ADIOI_Free(my_req[i].offsets); }
+	    if (my_req[i].lens) { ADIOI_Free(my_req[i].lens); }
 	}
     }
     ADIOI_Free(my_req);
@@ -475,9 +475,9 @@ void ADIOI_GPFS_WriteStridedColl(ADIO_File fd, const void *buf, int count,
 
     for (i=0; i<nprocs; i++) {
 	if (others_req[i].count) {
-	    ADIOI_Free(others_req[i].offsets);
-	    ADIOI_Free(others_req[i].lens);
-	    ADIOI_Free(others_req[i].mem_ptrs);
+	    if (others_req[i].offsets) { ADIOI_Free(others_req[i].offsets); }
+	    if (others_req[i].lens) { ADIOI_Free(others_req[i].lens); }
+	    if (others_req[i].mem_ptrs) { ADIOI_Free(others_req[i].mem_ptrs); }
 	}
     }
     ADIOI_Free(others_req);
