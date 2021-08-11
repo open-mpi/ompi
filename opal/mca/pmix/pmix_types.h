@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,6 +131,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_NPROC_OFFSET                  "pmix.offset"           // (uint32_t) starting global rank of this job
 #define OPAL_PMIX_LOCAL_RANK                    "pmix.lrank"            // (uint16_t) rank on this node within this job
 #define OPAL_PMIX_NODE_RANK                     "pmix.nrank"            // (uint16_t) rank on this node spanning all jobs
+#define OPAL_PMIX_PACKAGE_RANK                  "pmix.pkgrank"          // (uint16_t) rank within this job on the package where this proc resides
 #define OPAL_PMIX_LOCALLDR                      "pmix.lldr"             // (uint64_t) opal_identifier of lowest rank on this node within this job
 #define OPAL_PMIX_APPLDR                        "pmix.aldr"             // (uint32_t) lowest rank in this app within this job
 #define OPAL_PMIX_PROC_PID                      "pmix.ppid"             // (pid_t) pid of specified proc
