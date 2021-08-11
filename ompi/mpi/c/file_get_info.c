@@ -70,9 +70,9 @@ int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
     }
 
     if (NULL == fh->super.s_info) {
-/*
- * Setup any defaults if MPI_Win_set_info was never called
- */
+        /*
+         * Setup any defaults if MPI_Win_set_info was never called
+         */
         opal_infosubscribe_change_info(&fh->super, &MPI_INFO_NULL->super);
     }
 
@@ -83,7 +83,7 @@ int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
     }
     opal_info_t *opal_info_used = &(*info_used)->super;
 
-    opal_info_dup_mpistandard(fh->super.s_info, &opal_info_used);
+    opal_info_dup(fh->super.s_info, &opal_info_used);
 
     return OMPI_SUCCESS;
 }

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -169,124 +169,6 @@ static int opal_info_set_nolock(opal_info_t *info, const char *key, const char *
         opal_list_append(&(info->super), (opal_list_item_t *) new_info);
     }
     return OPAL_SUCCESS;
-}
-
-/*
- * An object's info can be set, but those settings can be modified by
- * system callbacks. When those callbacks happen, we save a "__IN_<key>"/"val"
- * copy of changed or erased values.
- *
- * extra options for how to dup:
- *   include_system_extras (default 1)
- *   omit_ignored          (default 1)
- *   show_modifications    (default 0)
- */
-static int opal_info_dup_mode(opal_info_t *info, opal_info_t **newinfo,
-                              int include_system_extras, // (k/v with no corresponding __IN_k)
-                              int omit_ignored,          // (__IN_k with no k/v)
-                              int show_modifications)    // (pick v from k/v or __IN_k/v)
-{
-    int err, flag;
-    opal_info_entry_t *iterator;
-
-    const char *pkey;
-    int is_IN_key;
-    int exists_IN_key, exists_reg_key;
-
-    OPAL_THREAD_LOCK(info->i_lock);
-    OPAL_LIST_FOREACH (iterator, &info->super, opal_info_entry_t) {
-        // If we see an __IN_<key> key but no <key>, decide what to do based on mode.
-        // If we see an __IN_<key> and a <key>, skip since it'll be handled when
-        // we process <key>.
-        is_IN_key = 0;
-        exists_IN_key = 0;
-        exists_reg_key = 0;
-        pkey = iterator->ie_key->string;
-        opal_cstring_t *savedval = NULL;
-        opal_cstring_t *valstr = NULL;
-        if (0
-            == strncmp(iterator->ie_key->string, OPAL_INFO_SAVE_PREFIX,
-                       strlen(OPAL_INFO_SAVE_PREFIX))) {
-            pkey += strlen(OPAL_INFO_SAVE_PREFIX);
-
-            is_IN_key = 1;
-            exists_IN_key = 1;
-            opal_info_get_nolock(info, pkey, NULL, &flag);
-            if (flag) {
-                exists_reg_key = 1;
-            }
-        } else {
-            is_IN_key = 0;
-            exists_reg_key = 1;
-
-            // see if there is an __IN_<key> for the current <key>
-            if (strlen(OPAL_INFO_SAVE_PREFIX) + strlen(pkey) < OPAL_MAX_INFO_KEY) {
-                char savedkey[OPAL_MAX_INFO_KEY + 1]; // iterator->ie_key has this as its size
-                snprintf(savedkey, OPAL_MAX_INFO_KEY + 1, OPAL_INFO_SAVE_PREFIX "%s", pkey);
-                // (the prefix macro is a string, so the unreadable part above is a string
-                // concatenation)
-                opal_info_get_nolock(info, savedkey, &savedval, &flag);
-                // release savedval, it remains valid as long we're holding the lock
-                OBJ_RELEASE(savedval);
-                exists_IN_key = 1;
-            } else {
-                flag = 0;
-            }
-        }
-
-        if (is_IN_key) {
-            if (exists_reg_key) {
-                // we're processing __IN_<key> and there exists a <key> so we'll handle it then
-                continue;
-            } else {
-                // we're processing __IN_<key> and no <key> exists
-                // this would mean <key> was set by the user but ignored by the system
-                // so base our behavior on the omit_ignored
-                if (!omit_ignored) {
-                    err = opal_info_set_cstring_nolock(*newinfo, pkey, iterator->ie_value);
-                    if (OPAL_SUCCESS != err) {
-                        OPAL_THREAD_UNLOCK(info->i_lock);
-                        return err;
-                    }
-                }
-            }
-        } else {
-            if (!exists_IN_key) {
-                // we're processing <key> and no __IN_<key> <key> exists
-                // this would mean it's a system setting, not something that came from the user
-                if (include_system_extras) {
-                    valstr = iterator->ie_value;
-                }
-            } else {
-                // we're processing <key> and __IN_<key> also exists
-                // pick which value to use
-                if (!show_modifications) {
-                    valstr = savedval;
-                } else {
-                    valstr = iterator->ie_value;
-                }
-            }
-            if (NULL != valstr) {
-                err = opal_info_set_cstring_nolock(*newinfo, pkey, valstr);
-                /* NOTE: we have not retained valstr so don't release here after using it */
-                if (OPAL_SUCCESS != err) {
-                    OPAL_THREAD_UNLOCK(info->i_lock);
-                    return err;
-                }
-            }
-        }
-    }
-    OPAL_THREAD_UNLOCK(info->i_lock);
-    return OPAL_SUCCESS;
-}
-
-/*
- * Implement opal_info_dup_mpistandard by using whatever mode
- * settings represent our interpretation of the standard
- */
-int opal_info_dup_mpistandard(opal_info_t *info, opal_info_t **newinfo)
-{
-    return opal_info_dup_mode(info, newinfo, 1, 1, 0);
 }
 
 /*
