@@ -7,7 +7,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Allgather 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Allgather, MPI_Iallgather\fP \- Gathers data from all processes and distributes it to all processes
+\fBMPI_Allgather, MPI_Iallgather, MPI_Allgather_init\fP \- Gathers data from all processes and distributes it to all processes
 
 .SH SYNTAX
 .ft R
@@ -21,6 +21,10 @@ int MPI_Allgather(const void\fI *sendbuf\fP, int \fI sendcount\fP,
 int MPI_Iallgather(const void\fI *sendbuf\fP, int \fI sendcount\fP,
 	 MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP, MPI_Request \fI*request\fP)
+
+int MPI_Allgather_init(const void\fI *sendbuf\fP, int \fI sendcount\fP,
+	 MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
+	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP, MPI_Info\fI info\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -38,6 +42,12 @@ MPI_IALLGATHER(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
 	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP (*)
 	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, COMM\fP
 	INTEGER	\fIREQUEST, IERROR\fP
+
+MPI_ALLGATHER_INIT(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+			RECVTYPE, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP (*)
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, COMM\fP
+	INTEGER	\fIINFO, REQUEST, IERROR\fP
 
 .fi
 .SH Fortran 2008 Syntax
@@ -62,6 +72,16 @@ MPI_Iallgather(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \f
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
+MPI_Allgather_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP, \fIrecvtype\fP,
+			\fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 .fi
 .SH INPUT PARAMETERS
 .ft R
@@ -86,6 +106,9 @@ Datatype of receive buffer elements (handle).
 .TP 1i
 comm
 Communicator (handle).
+.TP 1i
+info
+Info (handle, persistent only).
 
 .SH OUTPUT PARAMETERS
 .ft R

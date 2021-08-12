@@ -7,7 +7,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Allgatherv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Allgatherv, MPI_Iallgatherv\fP \- Gathers data from all processes and delivers it to all. Each process may contribute a different amount of data.
+\fBMPI_Allgatherv, MPI_Iallgatherv, MPI_Allgatherv_init\fP \- Gathers data from all processes and delivers it to all. Each process may contribute a different amount of data.
 
 .SH SYNTAX
 .ft R
@@ -23,6 +23,11 @@ int MPI_Iallgatherv(const void\fI *sendbuf\fP, int\fI sendcount\fP,
 	const int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP,
         MPI_Request \fI*request\fP)
 
+int MPI_Allgatherv_init(const void\fI *sendbuf\fP, int\fI sendcount\fP,
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, const int\fI recvcounts[]\fP,
+	const int\fI displs[]\fP, MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP,
+        MPI_Info\fI info\fP, MPI_Request \fI*request\fP)
+
 .fi
 .SH Fortran Syntax
 .nf
@@ -34,11 +39,17 @@ MPI_ALLGATHERV(\fISENDBUF\fP,\fI SENDCOUNT\fP, \fISENDTYPE\fP,\fI RECVBUF\fP,
 	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP, \fIRECVCOUNT\fP(*)
 	INTEGER	\fIDISPLS\fP(*),\fI RECVTYPE\fP,\fI COMM\fP,\fI IERROR\fP
 
-MPI_IALLGATHERV(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF,
-		RECVCOUNT, DISPLS, RECVTYPE, COMM, REQUEST, IERROR\fP)
+MPI_IALLGATHERV(\fISENDBUF\fP,\fI SENDCOUNT\fP, \fISENDTYPE\fP,\fI RECVBUF\fP,
+		\fIRECVCOUNT\fP,\fI DISPLS\fP, \fIRECVTYPE\fP,\fI COMM\fP, \fI REQUEST\fP, \fI IERROR\fP)
 	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP(*)
 	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT\fP(*),
 	INTEGER	\fIDISPLS\fP(*)\fI, RECVTYPE, COMM, REQUEST, IERROR\fP
+
+MPI_ALLGATHERV_INIT(\fISENDBUF\fP,\fI SENDCOUNT\fP, \fISENDTYPE\fP,\fI RECVBUF\fP,
+		\fIRECVCOUNT\fP,\fI DISPLS\fP, \fIRECVTYPE\fP,\fI COMM\fP, \fI INFO\fP, \fI REQUEST\fP, \fI IERROR\fP)
+	<type>	\fISENDBUF\fP(*)\fI, RECVBUF\fP(*)
+	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT\fP(*),
+	INTEGER	\fIDISPLS\fP(*)\fI, RECVTYPE, COMM, INFO, REQUEST, IERROR\fP
 
 .fi
 .SH Fortran 2008 Syntax
@@ -61,6 +72,18 @@ MPI_Iallgatherv(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \
 	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIrecvcounts(*)\fP, \fIdispls(*)\fP
 	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
 	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Allgatherv_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcounts\fP, \fIdispls\fP,
+			\fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIrecvcounts(*)\fP, \fIdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
@@ -88,6 +111,9 @@ Datatype of receive buffer elements (handle).
 .TP 1i
 comm
 Communicator (handle).
+.TP 1i
+info
+Info (handle, persistent only).
 .sp
 .SH OUTPUT PARAMETERS
 .ft R

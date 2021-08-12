@@ -1,6 +1,6 @@
 # Name
 
-`MPI_Gatherv`, `MPI_Igatherv` - Gathers varying amounts of data from all
+`MPI_Gatherv`, `MPI_Igatherv`, `MPI_Gatherv_init` - Gathers varying amounts of data from all
 processes to the root process
 
 # Syntax
@@ -17,6 +17,10 @@ int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype,
     int root, MPI_Comm comm, MPI_Request *request)
+
+int MPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+    void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype,
+    int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 ```
 
 ## Fortran Syntax
@@ -36,6 +40,12 @@ MPI_IGATHERV(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNTS,
     <type>	SENDBUF(*), RECVBUF(*)
     INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNTS(*), DISPLS(*)
     INTEGER	RECVTYPE, ROOT, COMM, REQUEST, IERROR
+
+MPI_GATHERV_INIT(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNTS,
+    	DISPLS, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR)
+    <type>	SENDBUF(*), RECVBUF(*)
+    INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNTS(*), DISPLS(*)
+    INTEGER	RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR
 ```
 
 ## Fortran 2008 Syntax
@@ -62,6 +72,18 @@ MPI_Igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
     TYPE(MPI_Comm), INTENT(IN) :: comm
     TYPE(MPI_Request), INTENT(OUT) :: request
     INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+
+MPI_Gatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
+    	recvtype, root, comm, info, request, ierror)
+    TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
+    TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
+    INTEGER, INTENT(IN) :: sendcount, root
+    INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
+    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+    TYPE(MPI_Comm), INTENT(IN) :: comm
+    TYPE(MPI_Info), INTENT(IN) :: info
+    TYPE(MPI_Request), INTENT(OUT) :: request
+    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 ```
 
 # Input Parameters
@@ -79,6 +101,7 @@ from process i (significant only at root).
 (handle).
 * `root` : Rank of receiving process (integer).
 * `comm` : Communicator (handle).
+* `info` : Info (handle, persistent only).
 
 
 
