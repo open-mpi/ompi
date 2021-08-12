@@ -21,21 +21,20 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Bcast_init = PMPIX_Bcast_init
+#pragma weak MPI_Bcast_init = PMPI_Bcast_init
 #endif
-#define MPIX_Bcast_init PMPIX_Bcast_init
+#define MPI_Bcast_init PMPI_Bcast_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Bcast_init";
+static const char FUNC_NAME[] = "MPI_Bcast_init";
 
 
-int MPIX_Bcast_init(void *buffer, int count, MPI_Datatype datatype,
-                    int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+int MPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype,
+                   int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int err;
 

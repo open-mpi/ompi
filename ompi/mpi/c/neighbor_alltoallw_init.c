@@ -36,22 +36,21 @@
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/runtime/ompi_spc.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Neighbor_alltoallw_init = PMPIX_Neighbor_alltoallw_init
+#pragma weak MPI_Neighbor_alltoallw_init = PMPI_Neighbor_alltoallw_init
 #endif
-#define MPIX_Neighbor_alltoallw_init PMPIX_Neighbor_alltoallw_init
+#define MPI_Neighbor_alltoallw_init PMPI_Neighbor_alltoallw_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Neighbor_alltoallw_init";
+static const char FUNC_NAME[] = "MPI_Neighbor_alltoallw_init";
 
 
-int MPIX_Neighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[],
-                                 const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
-                                 const MPI_Aint rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
-                                 MPI_Info info, MPI_Request *request)
+int MPI_Neighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[],
+                                const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
+                                const MPI_Aint rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
+                                MPI_Info info, MPI_Request *request)
 {
     int i, err;
     int indegree, outdegree;

@@ -10,10 +10,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2010      University of Houston.  All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2019 Research Organization for Information Science
+ * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -36,64 +37,52 @@
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/runtime/ompi_spc.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Neighbor_alltoallv_init = PMPIX_Neighbor_alltoallv_init
+#pragma weak MPI_Neighbor_allgatherv_init = PMPI_Neighbor_allgatherv_init
 #endif
-#define MPIX_Neighbor_alltoallv_init PMPIX_Neighbor_alltoallv_init
+#define MPI_Neighbor_allgatherv_init PMPI_Neighbor_allgatherv_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Neighbor_alltoallv_init";
+static const char FUNC_NAME[] = "MPI_Neighbor_allgatherv_init";
 
 
-int MPIX_Neighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
-                                 MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
-                                 const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
+int MPI_Neighbor_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                 void *recvbuf, const int recvcounts[], const int displs[],
+                                 MPI_Datatype recvtype, MPI_Comm comm,
                                  MPI_Info info, MPI_Request *request)
 {
-    int i, err;
-    int indegree, outdegree;
+    int i, size, err;
 
-    SPC_RECORD(OMPI_SPC_NEIGHBOR_ALLTOALLV_INIT, 1);
+    SPC_RECORD(OMPI_SPC_NEIGHBOR_ALLGATHERV_INIT, 1);
 
     MEMCHECKER(
-        ptrdiff_t recv_ext;
-        ptrdiff_t send_ext;
+        ptrdiff_t ext;
 
-        memchecker_comm(comm);
-
-        if (MPI_IN_PLACE != sendbuf) {
-            memchecker_datatype(sendtype);
-            ompi_datatype_type_extent(recvtype, &recv_ext);
-        }
+        size = ompi_comm_size(comm);
+        ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_datatype(recvtype);
-        ompi_datatype_type_extent(sendtype, &send_ext);
+        memchecker_comm (comm);
+        /* check whether the receive buffer is addressable. */
+        for (i = 0; i < size; i++) {
+            memchecker_call(&opal_memchecker_base_isaddressable,
+                            (char *)(recvbuf)+displs[i]*ext,
+                            recvcounts[i], recvtype);
+        }
 
-        err = mca_topo_base_neighbor_count (comm, &indegree, &outdegree);
-        if (MPI_SUCCESS == err) {
-            if (MPI_IN_PLACE != sendbuf) {
-                for ( i = 0; i < outdegree; i++ ) {
-                    /* check if send chunks are defined. */
-                    memchecker_call(&opal_memchecker_base_isdefined,
-                                    (char *)(sendbuf)+sdispls[i]*send_ext,
-                                    sendcounts[i], sendtype);
-                }
-            }
-            for ( i = 0; i < indegree; i++ ) {
-                /* check if receive chunks are addressable. */
-                memchecker_call(&opal_memchecker_base_isaddressable,
-                                (char *)(recvbuf)+rdispls[i]*recv_ext,
-                                recvcounts[i], recvtype);
-            }
+        /* check whether the actual send buffer is defined. */
+        if (MPI_IN_PLACE != sendbuf) {
+            memchecker_datatype(sendtype);
+            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
         }
     );
 
     if (MPI_PARAM_CHECK) {
 
-        /* Unrooted operation -- same checks for all ranks */
+        /* Unrooted operation -- same checks for all ranks on both
+           intracommunicators and intercommunicators */
 
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -103,21 +92,29 @@ int MPIX_Neighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], co
         } else if (! OMPI_COMM_IS_TOPO(comm)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TOPOLOGY,
                                           FUNC_NAME);
-        } else if ((NULL == sendcounts) || (NULL == sdispls) ||
-            (NULL == recvcounts) || (NULL == rdispls) ||
-            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+        } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        } else if (MPI_DATATYPE_NULL == recvtype) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
         }
 
-        err = mca_topo_base_neighbor_count (comm, &indegree, &outdegree);
+        OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-        for (i = 0; i < outdegree; ++i) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
-            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+
+      /* We always define the remote group to be the same as the local
+         group in the case of an intracommunicator, so it's safe to
+         get the size of the remote group here for both intra- and
+         intercommunicators */
+
+        size = ompi_comm_remote_size(comm);
+        for (i = 0; i < size; ++i) {
+          if (recvcounts[i] < 0) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+          }
         }
-        for (i = 0; i < indegree; ++i) {
-            OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtype, recvcounts[i]);
-            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+
+        if (NULL == displs) {
+          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_BUFFER, FUNC_NAME);
         }
 
         if( OMPI_COMM_IS_CART(comm) ) {
@@ -135,8 +132,8 @@ int MPIX_Neighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], co
         }
         else if( OMPI_COMM_IS_DIST_GRAPH(comm) ) {
             const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
-            indegree  = dist_graph->indegree;
-            outdegree = dist_graph->outdegree;
+            int indegree  = dist_graph->indegree;
+            int outdegree = dist_graph->outdegree;
             if( indegree <  0 || outdegree <  0 ) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }
@@ -144,10 +141,10 @@ int MPIX_Neighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], co
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_neighbor_alltoallv_init(sendbuf, sendcounts, sdispls,
-                                                     sendtype, recvbuf, recvcounts, rdispls,
-                                                     recvtype, comm, info, request,
-                                                     comm->c_coll->coll_neighbor_alltoallv_init_module);
+    err = comm->c_coll->coll_neighbor_allgatherv_init(sendbuf, sendcount, sendtype,
+                                                      recvbuf, (int *) recvcounts, (int *) displs,
+                                                      recvtype, comm, info, request,
+                                                      comm->c_coll->coll_neighbor_allgatherv_init_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_datatypes(*request, sendtype, recvtype);
     }

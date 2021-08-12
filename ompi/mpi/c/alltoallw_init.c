@@ -32,23 +32,22 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Alltoallw_init = PMPIX_Alltoallw_init
+#pragma weak MPI_Alltoallw_init = PMPI_Alltoallw_init
 #endif
-#define MPIX_Alltoallw_init PMPIX_Alltoallw_init
+#define MPI_Alltoallw_init PMPI_Alltoallw_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Alltoallw_init";
+static const char FUNC_NAME[] = "MPI_Alltoallw_init";
 
 
-int MPIX_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
-                        const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
-                        const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
-                        MPI_Info info, MPI_Request *request)
+int MPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sdispls[],
+                       const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
+                       const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
+                       MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
 

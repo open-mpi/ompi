@@ -32,22 +32,21 @@
 #include "ompi/op/op.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Scan_init = PMPIX_Scan_init
+#pragma weak MPI_Scan_init = PMPI_Scan_init
 #endif
-#define MPIX_Scan_init PMPIX_Scan_init
+#define MPI_Scan_init PMPI_Scan_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Scan_init";
+static const char FUNC_NAME[] = "MPI_Scan_init";
 
 
-int MPIX_Scan_init(const void *sendbuf, void *recvbuf, int count,
-                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-                   MPI_Info info, MPI_Request *request)
+int MPI_Scan_init(const void *sendbuf, void *recvbuf, int count,
+                  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
+                  MPI_Info info, MPI_Request *request)
 {
     int err;
 

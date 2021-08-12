@@ -33,23 +33,22 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Allgatherv_init = PMPIX_Allgatherv_init
+#pragma weak MPI_Allgatherv_init = PMPI_Allgatherv_init
 #endif
-#define MPIX_Allgatherv_init PMPIX_Allgatherv_init
+#define MPI_Allgatherv_init PMPI_Allgatherv_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Allgatherv_init";
+static const char FUNC_NAME[] = "MPI_Allgatherv_init";
 
 
-int MPIX_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                         void *recvbuf, const int recvcounts[], const int displs[],
-                         MPI_Datatype recvtype, MPI_Comm comm,
-                         MPI_Info info, MPI_Request *request)
+int MPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                        void *recvbuf, const int recvcounts[], const int displs[],
+                        MPI_Datatype recvtype, MPI_Comm comm,
+                        MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
 

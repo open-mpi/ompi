@@ -34,22 +34,21 @@
 #include "ompi/op/op.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Reduce_init = PMPIX_Reduce_init
+#pragma weak MPI_Reduce_init = PMPI_Reduce_init
 #endif
-#define MPIX_Reduce_init PMPIX_Reduce_init
+#define MPI_Reduce_init PMPI_Reduce_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Reduce_init";
+static const char FUNC_NAME[] = "MPI_Reduce_init";
 
 
-int MPIX_Reduce_init(const void *sendbuf, void *recvbuf, int count,
-                     MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm,
-                     MPI_Info info, MPI_Request *request)
+int MPI_Reduce_init(const void *sendbuf, void *recvbuf, int count,
+                    MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm,
+                    MPI_Info info, MPI_Request *request)
 {
     int err;
 
