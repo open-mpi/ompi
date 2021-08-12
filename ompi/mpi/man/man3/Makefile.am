@@ -98,22 +98,30 @@ TEMPLATE_FILES = \
 	MPI_Aint_diff.3in \
         MPI_Allgather.3in \
         MPI_Iallgather.3in \
+        MPI_Allgather_init.3in \
         MPI_Allgatherv.3in \
         MPI_Iallgatherv.3in \
+        MPI_Allgatherv_init.3in \
         MPI_Alloc_mem.3in \
         MPI_Allreduce.3in \
         MPI_Iallreduce.3in \
+        MPI_Allreduce_init.3in \
         MPI_Alltoall.3in \
         MPI_Ialltoall.3in \
+        MPI_Alltoall_init.3in \
         MPI_Alltoallv.3in \
         MPI_Ialltoallv.3in \
+        MPI_Alltoallv_init.3in \
         MPI_Alltoallw.3in \
         MPI_Ialltoallw.3in \
+        MPI_Alltoallw_init.3in \
         MPI_Attr_delete.3in \
         MPI_Attr_get.3in \
         MPI_Attr_put.3in \
         MPI_Ibarrier.3in \
+        MPI_Barrier_init.3in \
         MPI_Ibcast.3in \
+        MPI_Bcast_init.3in \
         MPI_Comm_c2f.3in \
         MPI_Comm_idup.3in \
         MPI_Comm_f2c.3in \
@@ -153,6 +161,7 @@ TEMPLATE_FILES = \
         MPI_Error_string.3in \
         MPI_Exscan.3in \
         MPI_Iexscan.3in \
+        MPI_Exscan_init.3in \
         MPI_Fetch_and_op.3in \
         MPI_File_c2f.3in \
         MPI_File_call_errhandler.3in \
@@ -212,7 +221,9 @@ TEMPLATE_FILES = \
         MPI_File_write_at_all_begin.3in \
         MPI_File_write_at_all_end.3in \
         MPI_Igather.3in \
+        MPI_Gather_init.3in \
         MPI_Igatherv.3in \
+        MPI_Gatherv_init.3in \
         MPI_Get_elements_x.3in \
         MPI_Graph_neighbors.3in \
         MPI_Group_c2f.3in \
@@ -258,14 +269,19 @@ TEMPLATE_FILES = \
         MPI_Mrecv.3in \
         MPI_Neighbor_allgather.3in \
         MPI_Ineighbor_allgather.3in \
+        MPI_Neighbor_allgather_init.3in \
         MPI_Neighbor_allgatherv.3in \
         MPI_Ineighbor_allgatherv.3in \
+        MPI_Neighbor_allgatherv_init.3in \
         MPI_Neighbor_alltoall.3in \
         MPI_Ineighbor_alltoall.3in \
+        MPI_Neighbor_alltoall_init.3in \
         MPI_Neighbor_alltoallv.3in \
         MPI_Ineighbor_alltoallv.3in \
+        MPI_Neighbor_alltoallv_init.3in \
         MPI_Neighbor_alltoallw.3in \
         MPI_Ineighbor_alltoallw.3in \
+        MPI_Neighbor_alltoallw_init.3in \
         MPI_Op_c2f.3in \
         MPI_Op_commutative.3in \
         MPI_Op_create.3in \
@@ -286,11 +302,14 @@ TEMPLATE_FILES = \
         MPI_Recv_init.3in \
         MPI_Reduce.3in \
         MPI_Ireduce.3in \
+        MPI_Reduce_init.3in \
         MPI_Reduce_local.3in \
         MPI_Reduce_scatter.3in \
         MPI_Ireduce_scatter.3in \
+        MPI_Reduce_scatter_init.3in \
         MPI_Reduce_scatter_block.3in \
         MPI_Ireduce_scatter_block.3in \
+        MPI_Reduce_scatter_block_init.3in \
         MPI_Register_datarep.3in \
         MPI_Request_c2f.3in \
         MPI_Request_f2c.3in \
@@ -303,10 +322,13 @@ TEMPLATE_FILES = \
         MPI_Rsend_init.3in \
         MPI_Scan.3in \
         MPI_Iscan.3in \
+        MPI_Scan_init.3in \
         MPI_Scatter.3in \
         MPI_Iscatter.3in \
+        MPI_Scatter_init.3in \
         MPI_Scatterv.3in \
         MPI_Iscatterv.3in \
+        MPI_Scatterv_init.3in \
         MPI_Send.3in \
         MPI_Send_init.3in \
         MPI_Sendrecv.3in \

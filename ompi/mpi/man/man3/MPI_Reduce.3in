@@ -7,7 +7,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Reduce 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Reduce, MPI_Ireduce\fP \- Reduces values on all processes within a group.
+\fBMPI_Reduce, MPI_Ireduce, MPI_Reduce_init\fP \- Reduces values on all processes within a group.
 
 .SH SYNTAX
 .ft R
@@ -21,6 +21,11 @@ int MPI_Reduce(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int\fI count\fP,
 int MPI_Ireduce(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int\fI count\fP,
                 MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, int\fI root\fP,
                 MPI_Comm\fI comm\fP, MPI_Request \fI*request\fP)
+
+
+int MPI_Reduce_init(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int\fI count\fP,
+                MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, int\fI root\fP,
+                MPI_Comm\fI comm\fP, MPI_Info \fIinfo\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -36,6 +41,11 @@ MPI_IREDUCE(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, ROOT, COMM,
             REQUEST, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fICOUNT, DATATYPE, OP, ROOT, COMM, REQUEST, IERROR\fP
+
+MPI_REDUCE_INIT(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, ROOT, COMM,
+            INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fICOUNT, DATATYPE, OP, ROOT, COMM, INFO, REQUEST, IERROR\fP
 
 .fi
 .SH Fortran 2008 Syntax
@@ -61,6 +71,19 @@ MPI_Ireduce(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP,
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
+
+MPI_Reduce_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIroot\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP,
+		\fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
 .fi
 .SH INPUT PARAMETERS
 .ft R
@@ -82,6 +105,9 @@ Rank of root process (integer).
 .TP 1i
 comm
 Communicator (handle).
+.TP 1i
+info
+Info (handle, persistent).
 
 .SH OUTPUT PARAMETERS
 .ft R

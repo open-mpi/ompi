@@ -7,7 +7,7 @@
 .TH MPI_Neighbor_alltoallw 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
 .SH NAME
-\fBMPI_Neighbor_alltoallw, MPI_Ineighbor_alltoallw\fP \- All processes send data of different types to, and receive data of different types from, all processes
+\fBMPI_Neighbor_alltoallw, MPI_Ineighbor_alltoallw, MPI_Neighbor_alltoallw_init\fP \- All processes send data of different types to, and receive data of different types from, all processes
 
 .SH SYNTAX
 .ft R
@@ -24,6 +24,11 @@ int MPI_Ineighbor_alltoallw(const void *\fIsendbuf\fP, const int \fIsendcounts\f
 	const MPI_Aint \fIsdispls\fP[], const MPI_Datatype \fIsendtypes\fP[],
 	void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[], const MPI_Aint \fIrdispls\fP[],
 	const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP, MPI_Request \fI*request\fP)
+
+int MPI_Neighbor_alltoallw_init(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
+	const MPI_Aint \fIsdispls\fP[], const MPI_Datatype \fIsendtypes\fP[],
+	void *\fIrecvbuf\fP, const int \fIrecvcounts\fP[], const MPI_Aint \fIrdispls\fP[],
+	const MPI_Datatype \fIrecvtypes\fP[], MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -47,6 +52,15 @@ MPI_INEIGHBOR_ALLTOALLW(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
 	INTEGER	\fIRECVCOUNTS(*), RECVTYPES(*)\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fISDISPLS(*), RDISPLS(*)\fP
 	INTEGER	\fICOMM, REQUEST, IERROR\fP
+
+MPI_NEIGHBOR_ALLTOALLW_INIT(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
+	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, INFO, REQUEST, IERROR\fP)
+
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNTS(*), SENDTYPES(*)\fP
+	INTEGER	\fIRECVCOUNTS(*), RECVTYPES(*)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fISDISPLS(*), RDISPLS(*)\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
 
 .fi
 .SH Fortran 2008 Syntax
@@ -74,6 +88,21 @@ MPI_Ineighbor_alltoallw(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendt
 	TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: \fIsendtypes(*),\fP
 	\fIrecvtypes(*)\fP
 	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Neighbor_alltoallw_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtypes\fP, \fIrecvbuf\fP,
+		\fIrecvcounts\fP, \fIrdispls\fP, \fIrecvtypes\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIrecvcounts(*)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN), ASYNCHRONOUS ::
+	\fIsdispls(*)\fP, \fIrdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: \fIsendtypes(*),\fP
+	\fIrecvtypes(*)\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
@@ -111,6 +140,9 @@ receiving data from neighbor j.
 .TP 1.2i
 comm
 Communicator over which data is to be exchanged.
+.TP 1.2i
+info
+Info (handle, persistent only).
 
 .SH OUTPUT PARAMETERS
 .ft R

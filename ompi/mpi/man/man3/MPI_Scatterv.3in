@@ -8,7 +8,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Scatterv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Scatterv, MPI_Iscatterv\fP \- Scatters a buffer in parts to all tasks in a group.
+\fBMPI_Scatterv, MPI_Iscatterv, MPI_Scatterv_init\fP \- Scatters a buffer in parts to all tasks in a group.
 
 .SH SYNTAX
 .ft R
@@ -22,6 +22,10 @@ int MPI_Scatterv(const void *\fIsendbuf\fP, const int\fI sendcounts[]\fP, const 
 int MPI_Iscatterv(const void *\fIsendbuf\fP, const int\fI sendcounts[]\fP, const int\fI displs[]\fP,
 	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	MPI_Datatype\fI recvtype\fP, int\fI root\fP, MPI_Comm\fI comm\fP, MPI_Request \fI*request\fP)
+
+int MPI_Scatterv_init(const void *\fIsendbuf\fP, const int\fI sendcounts[]\fP, const int\fI displs[]\fP,
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
+	MPI_Datatype\fI recvtype\fP, int\fI root\fP, MPI_Comm\fI comm\fP, MPI_Info\fI info\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -39,6 +43,12 @@ MPI_ISCATTERV(\fISENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fISENDCOUNTS(*), DISPLS(*), SENDTYPE\fP
 	INTEGER	\fIRECVCOUNT, RECVTYPE, ROOT, COMM, REQUEST, IERROR\fP
+
+MPI_SCATTERV_INIT(\fISENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
+		RECVCOUNT, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNTS(*), DISPLS(*), SENDTYPE\fP
+	INTEGER	\fIRECVCOUNT, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR\fP
 
 .fi
 .SH Fortran 2008 Syntax
@@ -61,6 +71,18 @@ MPI_Iscatterv(\fIsendbuf\fP, \fIsendcounts\fP, \fIdispls\fP, \fIsendtype\fP, \fI
 	INTEGER, INTENT(IN) :: \fIrecvcount\fP, \fIroot\fP
 	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
 	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_scatterv_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIdispls\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIroot\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIdispls(*)\fP
+	INTEGER, INTENT(IN) :: \fIrecvcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
@@ -93,6 +115,9 @@ Rank of sending process (integer).
 .TP 1i
 comm
 Communicator (handle).
+.TP 1i
+info
+Info (handle, persistent only).
 
 .SH OUTPUT PARAMETERS
 .ft R
