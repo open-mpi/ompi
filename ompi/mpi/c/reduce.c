@@ -99,7 +99,8 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
             free(msg);
             return ret;
         } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == sendbuf) ||
-                   (ompi_comm_rank(comm) == root && ((MPI_IN_PLACE == recvbuf) || (sendbuf == recvbuf)))) {
+                   (ompi_comm_rank(comm) == root && ((MPI_IN_PLACE == recvbuf) ||
+                   ((sendbuf == recvbuf) && (0 != count))))) {
             err = MPI_ERR_ARG;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
