@@ -67,24 +67,32 @@ libmpi_c_mpi_la_SOURCES = \
         add_error_string.c \
         allgather.c \
         iallgather.c \
+        allgather_init.c \
         allgatherv.c \
         iallgatherv.c \
+        allgatherv_init.c \
         alloc_mem.c \
         allreduce.c \
         iallreduce.c \
+        allreduce_init.c \
         alltoall.c \
         ialltoall.c \
+        alltoall_init.c \
         alltoallv.c \
         ialltoallv.c \
+        alltoallv_init.c \
         alltoallw.c \
         ialltoallw.c \
+        alltoallw_init.c \
         attr_delete.c \
         attr_get.c \
         attr_put.c \
         barrier.c \
         ibarrier.c \
+        barrier_init.c \
         bcast.c \
         ibcast.c \
+        bcast_init.c \
         bsend.c \
         bsend_init.c \
         buffer_attach.c \
@@ -148,8 +156,9 @@ libmpi_c_mpi_la_SOURCES = \
         error_class.c \
         error_string.c \
         exscan.c \
-	fetch_and_op.c \
         iexscan.c \
+        exscan_init.c \
+	fetch_and_op.c \
         file_c2f.c \
         file_call_errhandler.c \
         file_close.c \
@@ -216,8 +225,10 @@ libmpi_c_mpi_la_SOURCES = \
         free_mem.c \
         gather.c \
         igather.c \
+        gather_init.c \
         gatherv.c \
         igatherv.c \
+        gatherv_init.c \
         get_address.c \
         get_count.c \
         get_elements.c \
@@ -280,14 +291,19 @@ libmpi_c_mpi_la_SOURCES = \
         mrecv.c \
         neighbor_allgather.c \
         ineighbor_allgather.c \
+        neighbor_allgather_init.c \
         neighbor_allgatherv.c \
         ineighbor_allgatherv.c \
+        neighbor_allgatherv_init.c \
         neighbor_alltoall.c \
         ineighbor_alltoall.c \
+        neighbor_alltoall_init.c \
         neighbor_alltoallv.c \
         ineighbor_alltoallv.c \
+        neighbor_alltoallv_init.c \
         neighbor_alltoallw.c \
         ineighbor_alltoallw.c \
+        neighbor_alltoallw_init.c \
         keyval_create.c \
         keyval_free.c \
         op_c2f.c \
@@ -308,13 +324,16 @@ libmpi_c_mpi_la_SOURCES = \
         recv_init.c \
         recv.c \
         reduce.c \
-        register_datarep.c \
         ireduce.c \
+        reduce_init.c \
+        register_datarep.c \
         reduce_local.c \
         reduce_scatter.c \
         ireduce_scatter.c \
+        reduce_scatter_init.c \
         reduce_scatter_block.c \
         ireduce_scatter_block.c \
+        reduce_scatter_block_init.c \
         request_c2f.c \
         request_f2c.c \
         request_free.c \
@@ -326,10 +345,13 @@ libmpi_c_mpi_la_SOURCES = \
         rsend.c \
         scan.c \
         iscan.c \
+        scan_init.c \
         scatter.c \
         iscatter.c \
+        scatter_init.c \
         scatterv.c \
         iscatterv.c \
+        scatterv_init.c \
         send.c \
         send_init.c \
         sendrecv.c \

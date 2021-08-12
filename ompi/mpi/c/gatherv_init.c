@@ -30,24 +30,23 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Gatherv_init = PMPIX_Gatherv_init
+#pragma weak MPI_Gatherv_init = PMPI_Gatherv_init
 #endif
-#define MPIX_Gatherv_init PMPIX_Gatherv_init
+#define MPI_Gatherv_init PMPI_Gatherv_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Gatherv_init";
+static const char FUNC_NAME[] = "MPI_Gatherv_init";
 
 
-int MPIX_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                      void *recvbuf, const int recvcounts[], const int displs[],
-                      MPI_Datatype recvtype, int root, MPI_Comm comm,
-                      MPI_Info info, MPI_Request *request)
+int MPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                     void *recvbuf, const int recvcounts[], const int displs[],
+                     MPI_Datatype recvtype, int root, MPI_Comm comm,
+                     MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
 

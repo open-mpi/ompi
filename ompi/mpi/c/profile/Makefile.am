@@ -47,24 +47,32 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         padd_error_string.c \
         pallgather.c \
         piallgather.c \
+        pallgather_init.c \
         pallgatherv.c \
         piallgatherv.c \
+        pallgatherv_init.c \
         palloc_mem.c \
         pallreduce.c \
         piallreduce.c \
+        pallreduce_init.c \
         palltoall.c \
         pialltoall.c \
+        palltoall_init.c \
         palltoallv.c \
         pialltoallv.c \
+        palltoallv_init.c \
         palltoallw.c \
         pialltoallw.c \
+        palltoallw_init.c \
         pattr_delete.c \
         pattr_get.c \
         pattr_put.c \
         pbarrier.c \
         pibarrier.c \
+        pbarrier_init.c \
         pbcast.c \
         pibcast.c \
+        pbcast_init.c \
         pbsend.c \
         pbsend_init.c \
         pbuffer_attach.c \
@@ -128,8 +136,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         perror_class.c \
         perror_string.c \
         pexscan.c \
-	pfetch_and_op.c \
         piexscan.c \
+        pexscan_init.c \
+	pfetch_and_op.c \
         pfile_c2f.c \
         pfile_call_errhandler.c \
         pfile_close.c \
@@ -196,8 +205,10 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pfree_mem.c \
         pgather.c \
         pigather.c \
+        pgather_init.c \
         pgatherv.c \
         pigatherv.c \
+        pgatherv_init.c \
         pget_address.c \
         pget_count.c \
         pget_elements.c \
@@ -260,14 +271,19 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pmrecv.c \
         pneighbor_allgather.c \
         pineighbor_allgather.c \
+        pneighbor_allgather_init.c \
         pneighbor_allgatherv.c \
         pineighbor_allgatherv.c \
+        pneighbor_allgatherv_init.c \
         pneighbor_alltoall.c \
         pineighbor_alltoall.c \
+        pneighbor_alltoall_init.c \
         pneighbor_alltoallv.c \
         pineighbor_alltoallv.c \
+        pneighbor_alltoallv_init.c \
         pneighbor_alltoallw.c \
         pineighbor_alltoallw.c \
+        pneighbor_alltoallw_init.c \
         pkeyval_create.c \
         pkeyval_free.c \
         pop_c2f.c \
@@ -288,13 +304,16 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         precv_init.c \
         precv.c \
         preduce.c \
+	pireduce.c \
+        preduce_init.c \
         pregister_datarep.c \
-        pireduce.c \
         preduce_local.c \
         preduce_scatter.c \
         pireduce_scatter.c \
+        preduce_scatter_init.c \
         preduce_scatter_block.c \
         pireduce_scatter_block.c \
+        preduce_scatter_block_init.c \
         prequest_c2f.c \
         prequest_f2c.c \
         prequest_free.c \
@@ -306,10 +325,13 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         prsend.c \
         pscan.c \
         piscan.c \
+        pscan_init.c \
         pscatter.c \
         piscatter.c \
+        pscatter_init.c \
         pscatterv.c \
         piscatterv.c \
+        pscatterv_init.c \
         psend.c \
         psend_init.c \
         psendrecv.c \

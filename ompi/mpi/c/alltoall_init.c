@@ -14,7 +14,7 @@
  * Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015-2019 Research Organization for Information Science
+ * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
@@ -33,46 +33,34 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/memchecker.h"
-#include "ompi/mpiext/pcollreq/c/mpiext_pcollreq_c.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPIX_Allgather_init = PMPIX_Allgather_init
+#pragma weak MPI_Alltoall_init = PMPI_Alltoall_init
 #endif
-#define MPIX_Allgather_init PMPIX_Allgather_init
+#define MPI_Alltoall_init PMPI_Alltoall_init
 #endif
 
-static const char FUNC_NAME[] = "MPIX_Allgather_init";
+static const char FUNC_NAME[] = "MPI_Alltoall_init";
 
 
-int MPIX_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
-                   MPI_Comm comm, MPI_Info info, MPI_Request *request)
+int MPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                      void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                      MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
+    size_t sendtype_size, recvtype_size;
     int err;
 
-    SPC_RECORD(OMPI_SPC_ALLGATHER_INIT, 1);
+    SPC_RECORD(OMPI_SPC_ALLTOALL_INIT, 1);
 
     MEMCHECKER(
-        int rank;
-        ptrdiff_t ext;
-
-        rank = ompi_comm_rank(comm);
-        ompi_datatype_type_extent(recvtype, &ext);
-
-        memchecker_datatype(recvtype);
         memchecker_comm(comm);
-        /* check whether the actual send buffer is defined. */
-        if (MPI_IN_PLACE == sendbuf) {
-            memchecker_call(&opal_memchecker_base_isdefined,
-                            (char *)(recvbuf)+rank*ext,
-                            recvcount, recvtype);
-        } else {
+        if (MPI_IN_PLACE != sendbuf) {
             memchecker_datatype(sendtype);
-            memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
+            memchecker_call(&opal_memchecker_base_isdefined, (void *)sendbuf, sendcount, sendtype);
         }
-        /* check whether the receive buffer is addressable. */
+        memchecker_datatype(recvtype);
         memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, recvcount, recvtype);
     );
 
@@ -84,27 +72,36 @@ int MPIX_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-          OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
-        } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
-          err = MPI_ERR_TYPE;
-        } else if (recvcount < 0) {
-          err = MPI_ERR_COUNT;
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
+                                          FUNC_NAME);
         } else if ((MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
                    MPI_IN_PLACE == recvbuf) {
-          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        } else if (MPI_IN_PLACE != sendbuf) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                          FUNC_NAME);
+        } else {
+            if (MPI_IN_PLACE != sendbuf) {
+                OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+                OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+            }
+            OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtype, recvcount);
+            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
-        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+
+        if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
+            ompi_datatype_type_size(sendtype, &sendtype_size);
+            ompi_datatype_type_size(recvtype, &recvtype_size);
+            if ((sendtype_size*sendcount) != (recvtype_size*recvcount)) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
+            }
+        }
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_allgather_init(sendbuf, sendcount, sendtype,
-                                            recvbuf, recvcount, recvtype, comm,
-                                            info, request, comm->c_coll->coll_allgather_init_module);
+    err = comm->c_coll->coll_alltoall_init(sendbuf, sendcount, sendtype,
+                                           recvbuf, recvcount, recvtype, comm, info,
+                                           request, comm->c_coll->coll_alltoall_init_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_datatypes(*request, (MPI_IN_PLACE==sendbuf)?NULL:sendtype, recvtype);
     }
-
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
