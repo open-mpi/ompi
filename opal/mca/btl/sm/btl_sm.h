@@ -61,9 +61,6 @@
 
 #include "opal/mca/pmix/pmix-internal.h"
 
-#include "btl_sm_knem.h"
-#include "btl_sm_xpmem.h"
-
 BEGIN_C_DECLS
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -121,32 +118,12 @@ int mca_btl_sm_sendi(struct mca_btl_base_module_t *btl, struct mca_btl_base_endp
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-#if OPAL_BTL_SM_HAVE_XPMEM
-int mca_btl_sm_put_xpmem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                         void *local_address, uint64_t remote_address,
-                         mca_btl_base_registration_handle_t *local_handle,
-                         mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                         void *cbdata);
-#endif
-
-#if OPAL_BTL_SM_HAVE_CMA
-int mca_btl_sm_put_cma(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                       void *local_address, uint64_t remote_address,
-                       mca_btl_base_registration_handle_t *local_handle,
-                       mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                       int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                       void *cbdata);
-#endif
-
-#if OPAL_BTL_SM_HAVE_KNEM
-int mca_btl_sm_put_knem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                        void *local_address, uint64_t remote_address,
-                        mca_btl_base_registration_handle_t *local_handle,
-                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                        void *cbdata);
-#endif
+int mca_btl_sm_put(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                   void *local_address, uint64_t remote_address,
+                   mca_btl_base_registration_handle_t *local_handle,
+                   mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                   int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                   void *cbdata);
 
 /**
  * Initiate an synchronous get.
@@ -155,34 +132,12 @@ int mca_btl_sm_put_knem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *end
  * @param endpoint (IN)    BTL addressing information
  * @param descriptor (IN)  Description of the data to be transferred
  */
-#if OPAL_BTL_SM_HAVE_XPMEM
-int mca_btl_sm_get_xpmem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                         void *local_address, uint64_t remote_address,
-                         mca_btl_base_registration_handle_t *local_handle,
-                         mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                         int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                         void *cbdata);
-#endif
-
-#if OPAL_BTL_SM_HAVE_CMA
-int mca_btl_sm_get_cma(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                       void *local_address, uint64_t remote_address,
-                       mca_btl_base_registration_handle_t *local_handle,
-                       mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                       int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                       void *cbdata);
-#endif
-
-#if OPAL_BTL_SM_HAVE_KNEM
-int mca_btl_sm_get_knem(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
-                        void *local_address, uint64_t remote_address,
-                        mca_btl_base_registration_handle_t *local_handle,
-                        mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
-                        int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                        void *cbdata);
-#endif
-
-ino_t mca_btl_sm_get_user_ns_id(void);
+int mca_btl_sm_get(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                   void *local_address, uint64_t remote_address,
+                   mca_btl_base_registration_handle_t *local_handle,
+                   mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
+                   int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                   void *cbdata);
 
 /**
  * Allocate a segment.

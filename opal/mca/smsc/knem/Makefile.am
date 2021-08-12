@@ -21,47 +21,38 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(btl_sm_CPPFLAGS)
+EXTRA_DIST = post_configure.sh
 
-dist_opaldata_DATA = help-btl-sm.txt
+AM_CPPFLAGS = $(smsc_knem_CPPFLAGS)
 
-libmca_btl_sm_la_sources = \
-    btl_sm_module.c \
-    btl_sm.h \
-    btl_sm_component.c \
-    btl_sm_endpoint.h \
-    btl_sm_fifo.h \
-    btl_sm_frag.c \
-    btl_sm_frag.h \
-    btl_sm_send.c \
-    btl_sm_sendi.c \
-    btl_sm_fbox.h \
-    btl_sm_get.c \
-    btl_sm_put.c \
-    btl_sm_types.h \
-    btl_sm_virtual.h
+dist_opaldata_DATA = help-smsc-knem.txt
 
+libmca_smsc_knem_la_sources = \
+    smsc_knem_component.c \
+    smsc_knem_module.c \
+    smsc_knem_internal.h \
+    smsc_knem.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_opal_btl_sm_DSO
+if MCA_BUILD_opal_smsc_knem_DSO
 component_noinst =
-component_install = mca_btl_sm.la
+component_install = mca_smsc_knem.la
 else
-component_noinst = libmca_btl_sm.la
+component_noinst = libmca_smsc_knem.la
 component_install =
 endif
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
-mca_btl_sm_la_LDFLAGS = -module -avoid-version $(btl_sm_LDFLAGS)
-mca_btl_sm_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
-	$(btl_sm_LIBS)
+mca_smsc_knem_la_SOURCES = $(libmca_smsc_knem_la_sources)
+mca_smsc_knem_la_LDFLAGS = -module -avoid-version $(smsc_knem_LDFLAGS)
+mca_smsc_knem_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+	$(smsc_knem_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
-libmca_btl_sm_la_LIBADD = $(btl_sm_LIBS)
-libmca_btl_sm_la_LDFLAGS = -module -avoid-version $(btl_sm_LDFLAGS)
+libmca_smsc_knem_la_SOURCES = $(libmca_smsc_knem_la_sources)
+libmca_smsc_knem_la_LIBADD = $(smsc_knem_LIBS)
+libmca_smsc_knem_la_LDFLAGS = -module -avoid-version $(smsc_knem_LDFLAGS)
