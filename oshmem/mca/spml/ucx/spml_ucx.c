@@ -88,7 +88,7 @@ mca_spml_ucx_ctx_t mca_spml_ucx_ctx_default = {
     .synchronized_quiet = false
 };
 
-#if HAVE_DECL_UCP_ATOMIC_OP_NBX
+#ifdef HAVE_UCP_REQUEST_PARAM_T
 static ucp_request_param_t mca_spml_ucx_request_param = {0};
 #endif
 
