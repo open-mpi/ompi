@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -199,7 +199,7 @@ static int mca_btl_ofi_component_register(void)
 static int mca_btl_ofi_component_open(void)
 {
     mca_btl_ofi_component.module_count = 0;
-    return OPAL_SUCCESS;
+    return opal_common_ofi_init();
 }
 
 /*
@@ -208,6 +208,7 @@ static int mca_btl_ofi_component_open(void)
 static int mca_btl_ofi_component_close(void)
 {
     opal_common_ofi_mca_deregister();
+    opal_common_ofi_fini();
     /* If we don't sleep, sockets provider freaks out. Ummm this is a scary comment */
     sleep(1);
     return OPAL_SUCCESS;
