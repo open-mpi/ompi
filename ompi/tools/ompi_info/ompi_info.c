@@ -96,8 +96,8 @@ int main(int argc, char *argv[])
     }
 
     if (opal_cmd_line_is_taken(ompi_info_cmd_line, "version")) {
-        fprintf(stdout, "Open MPI v%s\n\n%s\n",
-                OPAL_VERSION, PACKAGE_BUGREPORT);
+        fprintf(stdout, "%s v%s\n\n%s\n",
+                PACKAGE_NAME, OPAL_VERSION, PACKAGE_BUGREPORT);
         exit(0);
     }
 
