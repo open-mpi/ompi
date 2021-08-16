@@ -5,6 +5,8 @@
  *                         reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -20,7 +22,11 @@
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/proc.h"
+#include "opal/memoryhooks/memory.h"
 #include <rdma/fabric.h>
+#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
+#include <rdma/fi_ext.h>
+#endif
 
 BEGIN_C_DECLS
 
@@ -33,6 +39,7 @@ typedef struct opal_common_ofi_module {
 } opal_common_ofi_module_t;
 
 extern opal_common_ofi_module_t opal_common_ofi;
+extern mca_base_framework_t opal_memory_base_framework;
 
 OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component);
 OPAL_DECLSPEC void opal_common_ofi_mca_register(void);
@@ -53,6 +60,34 @@ OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
  *
  */
 OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
+
+#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
+/*
+ * @param buf (IN)         Pointer to the start of the allocation
+ * @param length (IN)      Length of the allocation
+ * @param cbdata (IN)      Data passed to memory hooks when callback
+ *                         was registered
+ * @param from_alloc (IN)  True if the callback is caused by a call to the
+ *                         general allocation routines (malloc, calloc, free,
+ *                         etc.) or directly from the user (mmap, munmap, etc.)
+ *
+ * Callback function triggered when memory is about to be freed.
+ * is about to be freed.  The callback will be triggered according to
+ * the note in opal_mem_hooks_register_release().
+ *
+ */
+OPAL_DECLSPEC void opal_common_ofi_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc);
+#endif /* OPAL_OFI_IMPORT_MONITOR_SUPPORT */
+
+/*
+ * Initializes common objects for libfabric
+ */
+OPAL_DECLSPEC int opal_common_ofi_init(void);
+
+/*
+ * Cleans up common objects for libfabric
+ */
+OPAL_DECLSPEC int opal_common_ofi_fini(void);
 
 END_C_DECLS
 
