@@ -303,7 +303,7 @@ static int _intercept_madvise(void *start, size_t length, int advice)
         advice == MADV_REMOVE ||
 #    endif
         advice == POSIX_MADV_DONTNEED) {
-        opal_mem_hooks_release_hook(start, length, false);
+        opal_mem_hooks_release_hook(start, length, true);
     }
 
     if (!original_madvise) {
