@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -176,15 +176,16 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
         }
 
         /* attach to the remote segment */
-
-        ep->smsc_endpoint = MCA_SMSC_CALL(get_endpoint, proc);
+        ep->smsc_endpoint = NULL;  /* assume no one sided support */
+        if( NULL != mca_smsc ) {
+            ep->smsc_endpoint = MCA_SMSC_CALL(get_endpoint, proc);
+        }
         if (NULL == ep->smsc_endpoint) {
             /* disable RDMA */
             mca_btl_sm.super.btl_get = NULL;
             mca_btl_sm.super.btl_put = NULL;
             mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
         }
-
         if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
             ep->smsc_map_context = MCA_SMSC_CALL(map_peer_region, ep->smsc_endpoint, /*flag=*/0,
                                                  (void *) (uintptr_t) modex->segment_base,
