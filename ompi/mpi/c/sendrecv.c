@@ -93,12 +93,21 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         rc = MCA_PML_CALL(send(sendbuf, sendcount, sendtype, dest,
                                sendtag, MCA_PML_BASE_SEND_STANDARD, comm));
 #if OPAL_ENABLE_FT_MPI
-        /* If ULFM is enabled we need to wait for the posted receive to
-         * complete, hence we cannot return here */
-        rcs = rc;
-#else
+        if (OPAL_UNLIKELY(MPI_ERR_PROC_FAILED == rc)) {
+            /* If this is a recoverable error (e.g., ULFM error class),
+             * we need to wait for the posted receive to complete so that the
+             * receive buffer doesn't get updated after the completion of the call.
+             * Hence we cannot return immediately, we need to wait on the recv
+             * req first. */
+            rcs = rc;
+        }
+        else /*  else intentionally spills outside ifdef */
+#endif
+        /*  If the error semantic does not garantee the completion of the wait on
+         *  the recv-req for that error class, we just invoke the errhandler asap
+         *  to avoid hanging. Note that in this case we are returning the recv
+         *  buffer in an undefined state and the application may not recover. */
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
-#endif  /* OPAL_ENABLE_FT_MPI */
     }
 
     if (source != MPI_PROC_NULL) { /* wait for recv */
