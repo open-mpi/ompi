@@ -243,7 +243,7 @@ recheck:
             continue;
         }
 
-        if (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, &sync)) {
+        if (REQUEST_COMPLETE(request) || !OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, &sync)) {
             if( OPAL_LIKELY( REQUEST_COMPLETE(request) ) ) {
                 if( OPAL_UNLIKELY( MPI_SUCCESS != request->req_status.MPI_ERROR ) ) {
                     failed++;
