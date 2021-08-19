@@ -186,7 +186,7 @@ int ompi_mpi_register_params(void)
         ompi_mpi_param_check = true;
         if (!MPI_PARAM_CHECK) {
             opal_output(0, "WARNING: MCA parameter mpi_no_free_handles set to true, but MPI");
-            opal_output(0, "WARNING: parameter checking has been compiled out of Open MPI.");
+            opal_output(0, "WARNING: parameter checking has been compiled out of " OMPI_IDENT_STRING ".");
             opal_output(0, "WARNING: mpi_no_free_handles is therefore only partially effective!");
         }
     }
@@ -245,7 +245,8 @@ int ompi_mpi_register_params(void)
 
     /* File to use when dumping the parameters */
     (void) mca_base_var_register("ompi", "mpi", NULL, "show_mca_params_file",
-                                 "If mpi_show_mca_params is true, setting this string to a valid filename tells Open MPI to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducability of MPI jobs)",
+                                 "If mpi_show_mca_params is true, setting this string to a valid filename tells "
+                                 OMPI_IDENT_STRING " to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducability of MPI jobs)",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
@@ -271,7 +272,7 @@ int ompi_mpi_register_params(void)
 
     /* Sparse group storage support */
     (void) mca_base_var_register("ompi", "mpi", NULL, "have_sparse_group_storage",
-                                 "Whether this Open MPI installation supports storing of data in MPI groups in \"sparse\" formats (good for extremely large process count MPI jobs that create many communicators/groups)",
+                                 "Whether this " OMPI_IDENT_STRING " installation supports storing of data in MPI groups in \"sparse\" formats (good for extremely large process count MPI jobs that create many communicators/groups)",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
                                  MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                  OPAL_INFO_LVL_9,
