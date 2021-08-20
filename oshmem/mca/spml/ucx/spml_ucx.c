@@ -576,7 +576,13 @@ void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey, int pe)
     if (!mkey->spml_context) {
         return;
     }
-    segno = memheap_find_segnum(mkey->va_base);
+    segno = memheap_find_segnum(mkey->va_base, pe);
+    if (MEMHEAP_SEG_INVALID == segno) {
+        SPML_UCX_ERROR("mca_spml_ucx_rmkey_free failed because of invalid "
+            "segment number: %d\n", segno);
+        return;
+    }
+
     ucx_mkey = (spml_ucx_mkey_t *)(mkey->spml_context);
     rc = mca_spml_ucx_ctx_mkey_del(&mca_spml_ucx_ctx_default, pe, segno, ucx_mkey);
     if (OSHMEM_SUCCESS != rc) {
@@ -678,7 +684,12 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
         return NULL;
     }
 
-    segno   = memheap_find_segnum(addr);
+    segno   = memheap_find_segnum(addr, my_pe);
+    if (MEMHEAP_SEG_INVALID == segno) {
+        SPML_UCX_ERROR("mca_spml_ucx_register failed because of invalid "
+            "segment number: %d\n", segno);
+        return NULL;
+    }
     mem_seg = memheap_find_seg(segno);
 
     /* if possible use mem handle already created by ucx allocator */
@@ -752,12 +763,18 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
         return OSHMEM_SUCCESS;
 
     mem_seg  = memheap_find_va(mkeys[SPML_UCX_TRANSP_IDX].va_base);
-    ucx_mkey = (spml_ucx_mkey_t*)mkeys[SPML_UCX_TRANSP_IDX].spml_context;
-    segno = memheap_find_segnum(mkeys[SPML_UCX_TRANSP_IDX].va_base);
-
     if (OPAL_UNLIKELY(NULL == mem_seg)) {
         return OSHMEM_ERROR;
     }
+
+    segno = memheap_find_segnum(mkeys[SPML_UCX_TRANSP_IDX].va_base, my_pe);
+    if (MEMHEAP_SEG_INVALID == segno) {
+        SPML_UCX_ERROR("mca_spml_ucx_deregister failed because of invalid "
+            "segment number: %d\n", segno);
+        return OSHMEM_ERROR;
+    }
+
+    ucx_mkey = (spml_ucx_mkey_t*)mkeys[SPML_UCX_TRANSP_IDX].spml_context;
 
     if (MAP_SEGMENT_ALLOC_UCX != mem_seg->type) {
         ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);

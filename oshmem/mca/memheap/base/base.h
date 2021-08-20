@@ -176,13 +176,35 @@ static inline int memheap_is_va_in_segment(void *va, int segno)
     return map_segment_is_va_in(&memheap_find_seg(segno)->super, va);
 }
 
-static inline int memheap_find_segnum(void *va)
+static inline int memheap_find_segnum(void *va, int pe)
 {
     int i;
+    int my_pe = oshmem_my_proc_id();
 
-    for (i = 0; i < mca_memheap_base_map.n_segments; i++) {
-        if (memheap_is_va_in_segment(va, i)) {
-            return i;
+    if (pe == my_pe) {
+        /* Find segment number for local segment using va_base
+         * TODO: Merge local and remote segment information in mkeys_cache
+         */
+        for (i = 0; i < mca_memheap_base_map.n_segments; i++) {
+            if (memheap_is_va_in_segment(va, i)) {
+                return i;
+            }
+        }
+    } else {
+        /* Find segment number for remote segments using va_base */
+        for (i = 0; i < mca_memheap_base_map.n_segments; i++) {
+            map_segment_t *seg = memheap_find_seg(i);
+            if (seg) {
+                sshmem_mkey_t **mkeys_cache = seg->mkeys_cache;
+                if (mkeys_cache) {
+                    if (mkeys_cache[pe]) {
+                        if ((va >= mkeys_cache[pe]->va_base) &&
+                            (va < mkeys_cache[pe]->va_base + mkeys_cache[pe]->len)) {
+                            return i;
+                        }
+                    }
+                }
+            }
         }
     }
     return MEMHEAP_SEG_INVALID;
