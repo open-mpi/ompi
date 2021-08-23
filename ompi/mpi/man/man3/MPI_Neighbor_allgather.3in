@@ -6,7 +6,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Neighbor_allgather 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Neighbor_allgather, MPI_Ineighbor_allgather\fP \- Gathers and distributes data from and to all neighbors
+\fBMPI_Neighbor_allgather, MPI_Ineighbor_allgather, MPI_Neighbor_allgather\fP \- Gathers and distributes data from and to all neighbors
 
 .SH SYNTAX
 .ft R
@@ -20,6 +20,10 @@ int MPI_Neighbor_allgather(const void\fI *sendbuf\fP, int \fI sendcount\fP,
 int MPI_Ineighbor_allgather(const void\fI *sendbuf\fP, int \fI sendcount\fP,
 	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP, MPI_Request \fIreq\fP)
+
+int MPI_Neighbor_allgather_init(const void\fI *sendbuf\fP, int \fI sendcount\fP,
+	MPI_Datatype\fI sendtype\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
+	 MPI_Datatype\fI recvtype\fP, MPI_Comm\fI comm\fP, MPI_Info\fIinfo\fP, MPI_Request \fIreq\fP)
 
 .fi
 .SH Fortran Syntax
@@ -37,6 +41,12 @@ MPI_INEIGHBOR_ALLGATHER(\fISENDBUF\fP,\fI SENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVB
 	<type>	\fISENDBUF\fP (*), \fIRECVBUF\fP (*)
 	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVCOUNT\fP,\fI RECVTYPE\fP,\fI COMM\fP,
 	INTEGER	\fIREQUEST, IERROR\fP
+
+MPI_NEIGHBOR_ALLGATHER_INIT(\fISENDBUF\fP,\fI SENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVBUF\fP,\fI RECVCOUNT\fP,\fI
+		RECVTYPE\fP,\fI COMM\fP,\fI INFO\fP,\f IREQUEST\fP,\fI IERROR\fP)
+	<type>	\fISENDBUF\fP (*), \fIRECVBUF\fP (*)
+	INTEGER	\fISENDCOUNT\fP,\fI SENDTYPE\fP,\fI RECVCOUNT\fP,\fI RECVTYPE\fP,\fI COMM\fP,
+	INTEGER	\fIINFO, REQUEST, IERROR\fP
 
 .fi
 .SH Fortran 2008 Syntax
@@ -58,6 +68,17 @@ MPI_Ineighbor_allgather(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvb
 	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
 	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
 	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Neighbor_allgather_init(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 

@@ -136,17 +136,25 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         aint_add_f.c \
         aint_diff_f.c \
         allgather_f.c \
+	allgather_init_f.c \
         allgatherv_f.c \
+	allgatherv_init_f.c \
         alloc_mem_f.c \
         allreduce_f.c \
+	allreduce_init_f.c \
         alltoall_f.c \
+	alltoall_init_f.c \
         alltoallv_f.c \
+	alltoallv_init_f.c \
         alltoallw_f.c \
+	alltoallw_init_f.c \
         attr_delete_f.c \
         attr_get_f.c \
         attr_put_f.c \
         barrier_f.c \
+	barrier_init_f.c \
         bcast_f.c \
+	bcast_init_f.c \
         bsend_f.c \
         bsend_init_f.c \
         buffer_attach_f.c \
@@ -205,6 +213,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         error_class_f.c \
         error_string_f.c \
         exscan_f.c \
+	exscan_init_f.c \
         f_sync_reg_f.c \
         file_call_errhandler_f.c \
         file_close_f.c \
@@ -269,7 +278,9 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         finalize_f.c \
         free_mem_f.c \
         gather_f.c \
+	gather_init_f.c \
         gatherv_f.c \
+	gatherv_init_f.c \
         get_address_f.c \
         get_count_f.c \
         get_elements_f.c \
@@ -348,10 +359,15 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         mprobe_f.c \
         mrecv_f.c \
         neighbor_allgather_f.c \
+        neighbor_allgather_init_f.c \
         neighbor_allgatherv_f.c \
+        neighbor_allgatherv_init_f.c \
         neighbor_alltoall_f.c \
+        neighbor_alltoall_init_f.c \
         neighbor_alltoallv_f.c \
+        neighbor_alltoallv_init_f.c \
         neighbor_alltoallw_f.c \
+        neighbor_alltoallw_init_f.c \
         op_commutative_f.c \
         op_create_f.c \
         open_port_f.c \
@@ -373,17 +389,23 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         recv_f.c \
         recv_init_f.c \
         reduce_f.c \
+        reduce_init_f.c \
         reduce_local_f.c \
         reduce_scatter_f.c \
+        reduce_scatter_init_f.c \
         reduce_scatter_block_f.c \
+        reduce_scatter_block_init_f.c \
         register_datarep_f.c \
         request_free_f.c \
         request_get_status_f.c \
         rsend_f.c \
         rsend_init_f.c \
         scan_f.c \
+        scan_init_f.c \
         scatter_f.c \
+        scatter_init_f.c \
         scatterv_f.c \
+        scatterv_init_f.c \
         send_f.c \
         send_init_f.c \
         sendrecv_f.c \

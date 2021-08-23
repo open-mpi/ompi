@@ -1,6 +1,6 @@
 # Name
 
-`MPI_Gather`, `MPI_Igather` - Gathers values from a group of processes.
+`MPI_Gather`, `MPI_Igather`, `MPI_Gather_init` - Gathers values from a group of processes.
 
 # Synopsis
 
@@ -16,6 +16,10 @@ int MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
 	MPI_Comm comm, MPI_Request *request)
+
+int MPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+	void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+	MPI_Comm comm, MPI_Info info, MPI_Request *request)
 ```
 
 ## Fortran Syntax
@@ -35,6 +39,12 @@ MPI_IGATHER(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
     <type>	SENDBUF(*), RECVBUF(*)
     INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT
     INTEGER	COMM, REQUEST, IERROR
+
+MPI_GATHER_INIT(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
+    	RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR)
+    <type>	SENDBUF(*), RECVBUF(*)
+    INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT
+    INTEGER	COMM, INFO, REQUEST, IERROR
 ```
 
 ## Fortran 2008 Syntax
@@ -60,6 +70,17 @@ MPI_Igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
     TYPE(MPI_Comm), INTENT(IN) :: comm
     TYPE(MPI_Request), INTENT(OUT) :: request
     INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+
+MPI_Gather_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
+    	root, comm, info, request, ierror)
+    TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
+    TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
+    INTEGER, INTENT(IN) :: sendcount, recvcount, root
+    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+    TYPE(MPI_Comm), INTENT(IN) :: comm
+    TYPE(MPI_Info), INTENT(IN) :: info
+    TYPE(MPI_Request), INTENT(OUT) :: request
+    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 ```
 
 
@@ -73,6 +94,7 @@ at root).
 * `recvtype` : Datatype of recvbuffer elements (handle, significant only at root).
 * `root` : Rank of receiving process (integer).
 * `comm` : Communicator (handle).
+* `info` : Info (handle, persistent only).
 
 
 # Output Parameters

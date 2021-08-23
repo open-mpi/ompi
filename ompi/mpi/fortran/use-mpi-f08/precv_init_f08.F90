@@ -10,6 +10,8 @@
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
+#include "mpi-f08-rename.h"
+
 subroutine MPI_Precv_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    use :: ompi_mpifh_bindings, only : ompi_precv_init_f
