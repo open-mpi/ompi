@@ -186,6 +186,7 @@ int oshmem_proc_group_finalize(void)
         }
     }
 
+    OBJ_DESTRUCT(&_oshmem_local_vpids);
     OBJ_DESTRUCT(&oshmem_group_array);
 
     oshmem_group_cache_destroy();
@@ -272,8 +273,6 @@ oshmem_proc_group_destroy_internal(oshmem_group_t* group, int scoll_unselect)
         mca_scoll_base_group_unselect(group);
     }
 
-    /* Destroy proc array */
-    OBJ_DESTRUCT(&_oshmem_local_vpids);
     if (group->proc_vpids) {
         free(group->proc_vpids);
     }
