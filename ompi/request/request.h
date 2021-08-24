@@ -448,39 +448,44 @@ static inline bool ompi_request_tag_is_collective(int tag) {
 
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
-    if (opal_using_threads () && !REQUEST_COMPLETE(req)) {
-        void *_tmp_ptr;
-        ompi_wait_sync_t sync;
-#if OPAL_ENABLE_FT_MPI
-redo:
-        if(OPAL_UNLIKELY( ompi_request_is_failed(req) )) {
-            return;
-        }
-#endif /* OPAL_ENABLE_FT_MPI */
-        _tmp_ptr = REQUEST_PENDING;
+    if (opal_using_threads ()) {
+        if(!REQUEST_COMPLETE(req)) {
+            void *_tmp_ptr;
+            ompi_wait_sync_t sync;
 
-        WAIT_SYNC_INIT(&sync, 1);
-
-        if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
-            SYNC_WAIT(&sync);
-        } else {
-            /* completed before we had a chance to swap in the sync object */
-            WAIT_SYNC_SIGNALLED(&sync);
-        }
 
 #if OPAL_ENABLE_FT_MPI
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != sync.status)) {
-            OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle, "Status %d reported for sync %p rearming req %p", sync.status, (void*)&sync, (void*)req));
-            _tmp_ptr = &sync;
-            if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, REQUEST_PENDING)) {
-                opal_output_verbose(10, ompi_ftmpi_output_handle, "Status %d reported for sync %p rearmed req %p", sync.status, (void*)&sync, (void*)req);
-                WAIT_SYNC_RELEASE(&sync);
-                goto redo;
+    redo:
+            if(OPAL_UNLIKELY( ompi_request_is_failed(req) )) {
+                return;
             }
-        }
 #endif /* OPAL_ENABLE_FT_MPI */
-        assert(REQUEST_COMPLETE(req));
-        WAIT_SYNC_RELEASE(&sync);
+            _tmp_ptr = REQUEST_PENDING;
+
+            WAIT_SYNC_INIT(&sync, 1);
+
+            if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
+                SYNC_WAIT(&sync);
+            } else {
+                /* completed before we had a chance to swap in the sync object */
+                WAIT_SYNC_SIGNALLED(&sync);
+            }
+
+#if OPAL_ENABLE_FT_MPI
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != sync.status)) {
+                OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle, "Status %d reported for sync %p rearming req %p", sync.status, (void*)&sync, (void*)req));
+                _tmp_ptr = &sync;
+                if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, REQUEST_PENDING)) {
+                    opal_output_verbose(10, ompi_ftmpi_output_handle, "Status %d reported for sync %p rearmed req %p", sync.status, (void*)&sync, (void*)req);
+                    WAIT_SYNC_RELEASE(&sync);
+                    goto redo;
+                }
+            }
+#endif /* OPAL_ENABLE_FT_MPI */
+            assert(REQUEST_COMPLETE(req));
+            WAIT_SYNC_RELEASE(&sync);
+     }
+     opal_atomic_rmb();
     } else {
         while(!REQUEST_COMPLETE(req)) {
             opal_progress();
