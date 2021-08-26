@@ -53,7 +53,7 @@
 #include "oshmem/shmem/shmem_lock.h"
 #include "oshmem/runtime/oshmem_shmem_preconnect.h"
 
-extern int oshmem_shmem_globalexit_status;
+extern int oshmem_shmem_inglobalexit;
 
 static int _shmem_finalize(void);
 
@@ -79,7 +79,7 @@ int oshmem_shmem_finalize(void)
     if ((OSHMEM_SUCCESS == ret) &&
         (state >= OMPI_MPI_STATE_INIT_COMPLETED &&
          state < OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) &&
-        oshmem_shmem_globalexit_status == 0) {
+         (oshmem_shmem_inglobalexit == 0)) {
         PMPI_Comm_free(&oshmem_comm_world);
         ret = ompi_mpi_finalize();
     }
