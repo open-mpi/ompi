@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -44,6 +44,13 @@ typedef void *(*opal_thread_fn_t)(opal_object_t *);
 #define OPAL_THREAD_CANCELLED ((void *) 1);
 
 #include MCA_threads_base_include_HEADER
+
+struct opal_thread_t {
+    opal_object_t super;
+    opal_thread_fn_t t_run;
+    void *t_arg;
+    pthread_t t_handle;
+};
 
 typedef struct opal_thread_t opal_thread_t;
 
