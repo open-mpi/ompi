@@ -669,6 +669,10 @@ oshmem/tools/oshmem_info/oshmem_info.1
 oshmem/tools/wrappers/oshcc.1
 oshmem/tools/wrappers/oshfort.1
 oshmem/tools/wrappers/oshrun.1
+oshmem/tools/wrappers/oshmem-c.pc
+oshmem/tools/wrappers/oshmem-cxx.pc
+oshmem/tools/wrappers/oshmem-fort.pc
+oshmem/tools/wrappers/oshmem.pc
 oshmem/tools/wrappers/shmemcc.1
 oshmem/tools/wrappers/shmemfort.1
 oshmem/tools/wrappers/shmemrun.1
