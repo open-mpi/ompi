@@ -90,6 +90,9 @@ mca_spml_ucx_ctx_t mca_spml_ucx_ctx_default = {
 
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
 static ucp_request_param_t mca_spml_ucx_request_param = {0};
+static ucp_request_param_t mca_spml_ucx_request_param_b = {
+    .op_attr_mask = UCP_OP_ATTR_FLAG_FAST_CMPL
+};
 #endif
 
 int mca_spml_ucx_enable(bool enable)
@@ -971,7 +974,7 @@ int mca_spml_ucx_get(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_add
 
 #if HAVE_DECL_UCP_GET_NBX
     request = ucp_get_nbx(ucx_ctx->ucp_peers[src].ucp_conn, dst_addr, size,
-                          (uint64_t)rva, ucx_mkey->rkey, &mca_spml_ucx_request_param);
+                          (uint64_t)rva, ucx_mkey->rkey, &mca_spml_ucx_request_param_b);
     return opal_common_ucx_wait_request(request, ucx_ctx->ucp_worker[0], "ucp_get_nbx");
 #elif HAVE_DECL_UCP_GET_NB
     request = ucp_get_nb(ucx_ctx->ucp_peers[src].ucp_conn, dst_addr, size,
@@ -1065,7 +1068,7 @@ int mca_spml_ucx_put(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_add
 
 #if HAVE_DECL_UCP_PUT_NBX
     request = ucp_put_nbx(ucx_ctx->ucp_peers[dst].ucp_conn, src_addr, size,
-                          (uint64_t)rva, ucx_mkey->rkey, &mca_spml_ucx_request_param);
+                          (uint64_t)rva, ucx_mkey->rkey, &mca_spml_ucx_request_param_b);
     res = opal_common_ucx_wait_request(request, ucx_ctx->ucp_worker[0], "ucp_put_nbx");
 #elif HAVE_DECL_UCP_PUT_NB
     request = ucp_put_nb(ucx_ctx->ucp_peers[dst].ucp_conn, src_addr, size,
