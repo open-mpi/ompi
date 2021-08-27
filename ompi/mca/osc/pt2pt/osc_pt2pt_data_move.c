@@ -753,7 +753,9 @@ static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_os
     }
 
     /* add to the pending acc queue */
-    OPAL_THREAD_SCOPED_LOCK(&module->pending_acc_lock, opal_list_append (&module->pending_acc, &pending_acc->super));
+    ompi_osc_pt2pt_accumulate_lock(module);
+    opal_list_append (&module->pending_acc, &pending_acc->super);
+    ompi_osc_pt2pt_accumulate_unlock(module);
 
     return OMPI_SUCCESS;
 }
