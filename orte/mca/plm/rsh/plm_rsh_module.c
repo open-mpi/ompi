@@ -502,8 +502,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
              */
             (void)asprintf (&final_cmd,
                             "%s%s%s%s%s%s PATH=%s%s$PATH ; export PATH ; "
-                            "LD_LIBRARY_PATH=%s%s$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
-                            "DYLD_LIBRARY_PATH=%s%s$DYLD_LIBRARY_PATH ; export DYLD_LIBRARY_PATH ; "
+                            "LD_LIBRARY_PATH=%s%s${LD_LIBRARY_PATH:-} ; export LD_LIBRARY_PATH ; "
+                            "DYLD_LIBRARY_PATH=%s%s${DYLD_LIBRARY_PATH:-} ; export DYLD_LIBRARY_PATH ; "
                             "%s %s",
                             (NULL != mca_plm_rsh_component.chdir ? "cd " : " "),
                             (NULL != mca_plm_rsh_component.chdir ? mca_plm_rsh_component.chdir : " "),
