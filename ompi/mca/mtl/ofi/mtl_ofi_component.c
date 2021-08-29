@@ -5,7 +5,7 @@
  * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -282,8 +282,7 @@ ompi_mtl_ofi_component_open(void)
             "provider_exclude")) {
         return OMPI_ERR_NOT_AVAILABLE;
     }
-
-    return OMPI_SUCCESS;
+    return opal_common_ofi_init();
 }
 
 static int
@@ -298,6 +297,7 @@ static int
 ompi_mtl_ofi_component_close(void)
 {
     opal_common_ofi_mca_deregister();
+    opal_common_ofi_fini();
     return OMPI_SUCCESS;
 }
 

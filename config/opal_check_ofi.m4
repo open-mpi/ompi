@@ -3,6 +3,8 @@ dnl
 dnl Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -155,6 +157,18 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                  [AC_MSG_WARN([OFI libfabric support requested (via --with-ofi or --with-libfabric), but not found.])
                   AC_MSG_ERROR([Cannot continue.])])
            ])
+    opal_ofi_import_monitor=no
+    AS_IF([test $opal_ofi_happy = "yes"],
+          [OPAL_CHECK_OFI_VERSION_GE([1,14],
+                                     [opal_ofi_import_monitor=yes],
+                                     [opal_ofi_import_monitor=no])])
+
+
+if test "$opal_ofi_import_monitor" = "yes"; then
+    AC_DEFINE_UNQUOTED([OPAL_OFI_IMPORT_MONITOR_SUPPORT],1,
+                       [Whether libfabric supports monitor import])
+fi
+
 ])dnl
 
 
