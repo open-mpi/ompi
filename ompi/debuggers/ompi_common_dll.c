@@ -67,9 +67,9 @@ static int host_is_big_endian = 0;
     {                                                                   \
         out_name = mqs_field_offset((qh_type), #field_name);            \
         if (out_name < 0) {                                             \
-            fprintf(stderr, "WARNING: Open MPI is unable to find "      \
+            fprintf(stderr, "WARNING: " OMPI_IDENT_STRING " is unable to find "      \
                     "field " #field_name " in the " #struct_name        \
-                    " type.  This can happen can if Open MPI is built " \
+                    " type.  This can happen if " OMPI_IDENT_STRING " is built " \
                     "without debugging information, or is stripped "    \
                     "after building.\n");                               \
         }                                                               \
@@ -512,7 +512,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
      * did our best but here we're at our limit. Give up!
      */
     *message = missing_in_action;
-    fprintf(stderr, "WARNING: Open MPI is unable to find debugging information about the \"%s\" type.  This can happen if Open MPI was built without debugging information, or was stripped after building.\n",
+    fprintf(stderr, "WARNING: " OMPI_IDENT_STRING " is unable to find debugging information about the \"%s\" type.  This can happen if " OMPI_IDENT_STRING " was built without debugging information, or was stripped after building.\n",
            missing_in_action);
     return err_missing_type;
 }
@@ -634,7 +634,7 @@ int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr,
 
 int ompi_get_lib_version(char * buf, int size) {
     int ret;
-    ret = snprintf(buf, size-1, "Open MPI v%d.%d.%d%s%s%s%s%s%s%s%s%s",
+    ret = snprintf(buf, size-1, OMPI_IDENT_STRING " v%d.%d.%d%s%s%s%s%s%s%s%s%s",
                    OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION,
                    (strlen(OMPI_GREEK_VERSION) > 0)?OMPI_GREEK_VERSION:"",
                    (strlen(OPAL_PACKAGE_STRING) > 0)?", package: ":"",
