@@ -28,7 +28,7 @@
  */
 
 #define MB()  __asm__ __volatile__ ("sync" : : : "memory")
-#define RMB() __asm__ __volatile__ ("lwsync" : : : "memory")
+#define RMB() __asm__ __volatile__ ("isync" : : : "memory")
 #define WMB() __asm__ __volatile__ ("lwsync" : : : "memory")
 #define ISYNC() __asm__ __volatile__ ("isync" : : : "memory")
 
