@@ -14,8 +14,8 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2021 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -44,7 +44,7 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
 {
     int i, j, size, rank, err = MPI_SUCCESS, max_size;
     ompi_request_t *req;
-    char *tmp_buffer, *save_buffer = NULL;
+    char *save_buffer = NULL;
     ptrdiff_t ext, gap = 0;
 
     /* Initialize. */
@@ -65,11 +65,10 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
     }
 
     /* Allocate a temporary buffer */
-    tmp_buffer = save_buffer = calloc (max_size, 1);
-    if (NULL == tmp_buffer) {
+    save_buffer = calloc (max_size, 1);
+    if (NULL == save_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    tmp_buffer -= gap;
 
     /* in-place alltoallw slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
@@ -83,6 +82,10 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
 
             /* Initiate all send/recv to/from others. */
             if (i == rank && msg_size_j != 0) {
+                char * tmp_buffer;
+                /* Shift the temporary buffer according to the current datatype */
+                (void)opal_datatype_span(&rdtypes[j]->super, rcounts[j], &gap);
+                tmp_buffer = save_buffer - gap;
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtypes[j], rcounts[j],
                                                            tmp_buffer, (char *) rbuf + rdisps[j]);
@@ -98,6 +101,10 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
                                           comm));
                 if (MPI_SUCCESS != err) { goto error_hndl; }
             } else if (j == rank && msg_size_i != 0) {
+                char * tmp_buffer;
+                /* Shift the temporary buffer according to the current datatype */
+                (void)opal_datatype_span(&rdtypes[i]->super, rcounts[i], &gap);
+                tmp_buffer = save_buffer - gap;
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtypes[i], rcounts[i],
                                                            tmp_buffer, (char *) rbuf + rdisps[i]);
