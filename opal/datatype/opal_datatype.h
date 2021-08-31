@@ -311,6 +311,15 @@ OPAL_DECLSPEC int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t 
 
 OPAL_DECLSPEC int opal_datatype_compute_ptypes(opal_datatype_t *datatype);
 
+/*
+ * Compute the size of the datatype using a specific set of predefined type sizes.
+ * This function allows to compute the size of a packed buffer without creating
+ * a fully fledged specialized convertor for the remote peer.
+ */
+OPAL_DECLSPEC size_t
+opal_datatype_compute_remote_size(const opal_datatype_t *pData,
+                                  const size_t *sizes);
+
 /* Compute the span in memory of count datatypes. This function help with temporary
  * memory allocations for receiving already typed data (such as those used for reduce
  * operations). This span is the distance between the minimum and the maximum byte
