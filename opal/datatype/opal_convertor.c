@@ -452,31 +452,6 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
     return rc;
 }
 
-static size_t
-opal_datatype_compute_remote_size( const opal_datatype_t* pData,
-                                   const size_t* sizes )
-{
-    uint32_t typeMask = pData->bdt_used;
-    size_t length = 0;
-
-    if (opal_datatype_is_predefined(pData)) {
-        return sizes[pData->desc.desc->elem.common.type];
-    }
-
-    if( OPAL_UNLIKELY(NULL == pData->ptypes) ) {
-        /* Allocate and fill the array of types used in the datatype description */
-        opal_datatype_compute_ptypes( (opal_datatype_t*)pData );
-    }
-
-    for( int i = OPAL_DATATYPE_FIRST_TYPE; typeMask && (i < OPAL_DATATYPE_MAX_PREDEFINED); i++ ) {
-        if( typeMask & ((uint32_t)1 << i) ) {
-            length += (pData->ptypes[i] * sizes[i]);
-            typeMask ^= ((uint32_t)1 << i);
-        }
-    }
-    return length;
-}
-
 /**
  * Compute the remote size. If necessary remove the homogeneous flag
  * and redirect the convertor description toward the non-optimized
@@ -495,8 +470,9 @@ size_t opal_convertor_compute_remote_size( opal_convertor_t* pConvertor )
         }
         if( 0 == (pConvertor->flags & CONVERTOR_HAS_REMOTE_SIZE) ) {
             /* This is for a single datatype, we must update it with the count */
-            pConvertor->remote_size = opal_datatype_compute_remote_size(datatype,
-                                                                        pConvertor->master->remote_sizes);
+            pConvertor->remote_size =
+                opal_datatype_compute_remote_size(datatype,
+                                                  pConvertor->master->remote_sizes);
             pConvertor->remote_size *= pConvertor->count;
         }
     }
