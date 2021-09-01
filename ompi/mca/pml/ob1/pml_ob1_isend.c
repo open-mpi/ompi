@@ -206,7 +206,6 @@ int mca_pml_ob1_isend(const void *buf,
 
 #if OPAL_ENABLE_FT_MPI
 alloc_ft_req:
-#endif /* OPAL_ENABLE_FT_MPI */
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
     if (NULL == sendreq)
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -224,10 +223,12 @@ alloc_ft_req:
 
     /* No point in starting the request, it won't go through, mark completed
      * in error for collection in future wait */
-    sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = MPI_ERR_PROC_FAILED;
+    sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = ompi_comm_is_revoked(comm)? MPI_ERR_REVOKED: MPI_ERR_PROC_FAILED;
     MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, false);
+    OPAL_OUTPUT_VERBOSE((2, "Allocating request in error %s (peer %d, seq %d) with error code %d", sendreq, dst, sendreq->req_send.req_base.req_sequence, sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR));
     *request = (ompi_request_t *) sendreq;
     return OMPI_SUCCESS;
+#endif /* OPAL_ENABLE_FT_MPI */
 }
 
 int mca_pml_ob1_send(const void *buf,
