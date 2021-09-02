@@ -159,7 +159,7 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
            ])
     opal_ofi_import_monitor=no
     AS_IF([test $opal_ofi_happy = "yes"],
-          [OPAL_CHECK_OFI_VERSION_GE([1,13],
+          [OPAL_CHECK_OFI_VERSION_GE([1,14],
                                      [opal_ofi_import_monitor=yes],
                                      [opal_ofi_import_monitor=no])])
 
