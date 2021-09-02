@@ -1,4 +1,4 @@
-/*
+/* clang-format off
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -122,7 +122,7 @@ PN2(void, MPI_Comm_call_errhandler, mpi_comm_call_errhandler, MPI_COMM_CALL_ERRH
 PN2(void, MPI_Comm_compare, mpi_comm_compare, MPI_COMM_COMPARE, (MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr));
 PN2(void, MPI_Comm_connect, mpi_comm_connect, MPI_COMM_CONNECT, (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr, int port_name_len));
 PN2(void, MPI_Comm_create_errhandler, mpi_comm_create_errhandler, MPI_COMM_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
-PN2(void, MPI_Comm_create_keyval, mpi_comm_create_keyval, MPI_COMM_CREATE_KEYVAL, (ompi_aint_copy_attr_function* comm_copy_attr_fn, ompi_aint_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
+PN2(void, MPI_Comm_create_keyval, mpi_comm_create_keyval, MPI_COMM_CREATE_KEYVAL, (ompi_aint_copy_attr_function comm_copy_attr_fn, ompi_aint_delete_attr_function comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
 PN2(void, MPI_Comm_create, mpi_comm_create, MPI_COMM_CREATE, (MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr));
 PN2(void, MPI_Comm_create_group, mpi_comm_create_group, MPI_COMM_CREATE_GROUP, (MPI_Fint *comm, MPI_Fint *group, MPI_Fint *tag, MPI_Fint *newcomm, MPI_Fint *ierr));
 PN2(void, MPI_Comm_delete_attr, mpi_comm_delete_attr, MPI_COMM_DELETE_ATTR, (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr));
@@ -247,7 +247,7 @@ PN2(void, MPI_Graph_neighbors_count, mpi_graph_neighbors_count, MPI_GRAPH_NEIGHB
 PN2(void, MPI_Graph_neighbors, mpi_graph_neighbors, MPI_GRAPH_NEIGHBORS, (MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr));
 PN2(void, MPI_Graphdims_get, mpi_graphdims_get, MPI_GRAPHDIMS_GET, (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr));
 PN2(void, MPI_Grequest_complete, mpi_grequest_complete, MPI_GREQUEST_COMPLETE, (MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPI_Grequest_start, mpi_grequest_start, MPI_GREQUEST_START, (MPI_F_Grequest_query_function* query_fn, MPI_F_Grequest_free_function* free_fn, MPI_F_Grequest_cancel_function* cancel_fn, MPI_Aint *extra_state, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_Grequest_start, mpi_grequest_start, MPI_GREQUEST_START, (MPI_F_Grequest_query_function query_fn, MPI_F_Grequest_free_function free_fn, MPI_F_Grequest_cancel_function cancel_fn, MPI_Aint *extra_state, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Group_compare, mpi_group_compare, MPI_GROUP_COMPARE, (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *result, MPI_Fint *ierr));
 PN2(void, MPI_Group_difference, mpi_group_difference, MPI_GROUP_DIFFERENCE, (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr));
 PN2(void, MPI_Group_excl, mpi_group_excl, MPI_GROUP_EXCL, (MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr));
@@ -305,7 +305,7 @@ PN2(void, MPI_Irsend, mpi_irsend, MPI_IRSEND, (char *buf, MPI_Fint *count, MPI_F
 PN2(void, MPI_Isend, mpi_isend, MPI_ISEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Issend, mpi_issend, MPI_ISSEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Is_thread_main, mpi_is_thread_main, MPI_IS_THREAD_MAIN, (ompi_fortran_logical_t *flag, MPI_Fint *ierr));
-PN2(void, MPI_Keyval_create, mpi_keyval_create, MPI_KEYVAL_CREATE, (ompi_fint_copy_attr_function* copy_fn, ompi_fint_delete_attr_function* delete_fn, MPI_Fint *keyval, MPI_Fint *extra_state, MPI_Fint *ierr));
+PN2(void, MPI_Keyval_create, mpi_keyval_create, MPI_KEYVAL_CREATE, (ompi_fint_copy_attr_function copy_fn, ompi_fint_delete_attr_function delete_fn, MPI_Fint *keyval, MPI_Fint *extra_state, MPI_Fint *ierr));
 PN2(void, MPI_Keyval_free, mpi_keyval_free, MPI_KEYVAL_FREE, (MPI_Fint *keyval, MPI_Fint *ierr));
 PN2(void, MPI_Lookup_name, mpi_lookup_name, MPI_LOOKUP_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len));
 PN2(void, MPI_Mprobe, mpi_mprobe, MPI_MPROBE, (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *message, MPI_Fint *status, MPI_Fint *ierr));
@@ -373,7 +373,7 @@ PN2(void, MPI_Type_create_f90_integer, mpi_type_create_f90_integer, MPI_TYPE_CRE
 PN2(void, MPI_Type_create_f90_real, mpi_type_create_f90_real, MPI_TYPE_CREATE_F90_REAL, (MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_hindexed, mpi_type_create_hindexed, MPI_TYPE_CREATE_HINDEXED, (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Aint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_hvector, mpi_type_create_hvector, MPI_TYPE_CREATE_HVECTOR, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Aint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
-PN2(void, MPI_Type_create_keyval, mpi_type_create_keyval, MPI_TYPE_CREATE_KEYVAL, (ompi_aint_copy_attr_function* type_copy_attr_fn, ompi_aint_delete_attr_function* type_delete_attr_fn, MPI_Fint *type_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
+PN2(void, MPI_Type_create_keyval, mpi_type_create_keyval, MPI_TYPE_CREATE_KEYVAL, (ompi_aint_copy_attr_function type_copy_attr_fn, ompi_aint_delete_attr_function type_delete_attr_fn, MPI_Fint *type_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_indexed_block, mpi_type_create_indexed_block, MPI_TYPE_CREATE_INDEXED_BLOCK, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_hindexed_block, mpi_type_create_hindexed_block, MPI_TYPE_CREATE_HINDEXED_BLOCK, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Aint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN2(void, MPI_Type_create_struct, mpi_type_create_struct, MPI_TYPE_CREATE_STRUCT, (MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Aint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr));
@@ -421,7 +421,7 @@ PN2(void, MPI_Win_complete, mpi_win_complete, MPI_WIN_COMPLETE, (MPI_Fint *win, 
 PN2(void, MPI_Win_create, mpi_win_create, MPI_WIN_CREATE, (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_create_dynamic, mpi_win_create_dynamic, MPI_WIN_CREATE_DYNAMIC, (MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Win_create_errhandler, mpi_win_create_errhandler, MPI_WIN_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
-PN2(void, MPI_Win_create_keyval, mpi_win_create_keyval, MPI_WIN_CREATE_KEYVAL, (ompi_aint_copy_attr_function* win_copy_attr_fn, ompi_aint_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
+PN2(void, MPI_Win_create_keyval, mpi_win_create_keyval, MPI_WIN_CREATE_KEYVAL,(ompi_aint_copy_attr_function win_copy_attr_fn, ompi_aint_delete_attr_function win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr));
 PN2(void, MPI_Win_delete_attr, mpi_win_delete_attr, MPI_WIN_DELETE_ATTR, (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr));
 PN2(void, MPI_Win_detach, mpi_win_detach, MPI_WIN_DETACH, (MPI_Fint *win, char *base, MPI_Fint *ierr));
 PN2(void, MPI_Win_fence, mpi_win_fence, MPI_WIN_FENCE, (MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr));
