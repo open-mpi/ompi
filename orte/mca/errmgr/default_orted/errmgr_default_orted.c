@@ -362,6 +362,7 @@ static void proc_errors(int fd, short args, void *cbdata)
         ORTE_PROC_STATE_UNABLE_TO_SEND_MSG == state ||
         ORTE_PROC_STATE_NO_PATH_TO_TARGET == state ||
         ORTE_PROC_STATE_PEER_UNKNOWN == state ||
+        ORTE_PROC_STATE_TIMED_OUT == state ||
         ORTE_PROC_STATE_FAILED_TO_CONNECT == state) {
         OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base_framework.framework_output,
                              "%s errmgr:orted lifeline lost or unable to communicate - exiting",

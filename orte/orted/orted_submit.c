@@ -3226,7 +3226,7 @@ void orte_timeout_wakeup(int sd, short args, void *cbdata)
     }
   giveup:
     /* abort the job */
-    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
+    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_PROC_STATE_TIMED_OUT);
     /* set the global abnormal exit flag  */
     orte_abnormal_term_ordered = true;
 }

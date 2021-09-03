@@ -84,7 +84,8 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_LIFELINE_LOST           (ORTE_PROC_STATE_ERROR + 15)  /* connection to lifeline lost */
 #define ORTE_PROC_STATE_NO_PATH_TO_TARGET       (ORTE_PROC_STATE_ERROR + 16)  /* no path for communicating to target peer */
 #define ORTE_PROC_STATE_FAILED_TO_CONNECT       (ORTE_PROC_STATE_ERROR + 17)  /* unable to connect to target peer */
-#define ORTE_PROC_STATE_PEER_UNKNOWN            (ORTE_PROC_STATE_ERROR + 18)  /* unknown peer */
+#define ORTE_PROC_STATE_TIMED_OUT               (ORTE_PROC_STATE_ERROR + 18)  /* hit job timeout */
+#define ORTE_PROC_STATE_PEER_UNKNOWN            (ORTE_PROC_STATE_ERROR + 19)  /* unknown peer */
 
 /* Define a boundary so that external developers
  * have a starting point for defining their own
