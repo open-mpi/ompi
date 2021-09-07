@@ -41,6 +41,8 @@ static inline ucc_status_t mca_coll_ucc_allreduce_init(const void *sbuf, void *r
         },
         .dst.info = {
             .buffer   = rbuf,
+            .count    = count,
+            .datatype = ucc_dt,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },
         .reduce = {
