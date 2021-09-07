@@ -605,10 +605,6 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         return allocate_state_single (module, base, size);
     }
 
-    if (local_size == global_size) {
-      module->use_memory_registration = false;
-    }
-
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating shared internal state");
 
     local_rank_array_size = sizeof (ompi_osc_rdma_rank_data_t) * RANK_ARRAY_COUNT (module);
