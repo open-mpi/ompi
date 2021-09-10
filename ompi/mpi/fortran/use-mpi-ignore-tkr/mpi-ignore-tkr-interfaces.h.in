@@ -982,7 +982,8 @@ subroutine MPI_Comm_spawn(command, argv, maxprocs, info, root, &
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: intercomm
-  integer, dimension(*), intent(out) :: array_of_errcodes
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_errcodes
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_errcodes
   integer, intent(out) :: ierror
 end subroutine MPI_Comm_spawn
 
@@ -996,12 +997,15 @@ subroutine MPI_Comm_spawn_multiple(count, array_of_commands, array_of_argv, arra
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
   character(len=*), dimension(count, *), intent(in) :: array_of_argv
-  integer, dimension(*), intent(in) :: array_of_maxprocs
-  integer, dimension(*), intent(in) :: array_of_info
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_maxprocs
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_maxprocs
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_info
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_info
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: intercomm
-  integer, dimension(*), intent(out) :: array_of_errcodes
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_errcodes
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_errcodes
   integer, intent(out) :: ierror
 end subroutine MPI_Comm_spawn_multiple
 
@@ -3603,7 +3607,8 @@ interface MPI_Startall
 
 subroutine MPI_Startall(count, array_of_requests, ierror)
   integer, intent(in) :: count
-  integer, dimension(*), intent(inout) :: array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: array_of_requests
   integer, intent(out) :: ierror
 end subroutine MPI_Startall
 
@@ -3678,9 +3683,11 @@ interface MPI_Testall
 subroutine MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: array_of_requests
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_statuses
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Testall
 
@@ -3693,7 +3700,8 @@ subroutine MPI_Testany(count, array_of_requests, index, flag, status&
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: array_of_requests
   integer, intent(out) :: index
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -3709,10 +3717,13 @@ subroutine MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, 
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
-  integer, dimension(*), intent(out) :: array_of_indices
-  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_indices
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_indices
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_statuses
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Testsome
 
@@ -3813,8 +3824,10 @@ subroutine MPI_Type_create_hindexed(count, array_of_blocklengths, array_of_displ
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(*), intent(in) :: array_of_blocklengths
-  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_blocklengths
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_blocklengths
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
@@ -3830,7 +3843,8 @@ subroutine MPI_Type_create_hindexed_block(count, blocklength, array_of_displacem
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
-  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
@@ -3861,7 +3875,8 @@ subroutine MPI_Type_create_indexed_block(count, blocklength, array_of_displaceme
         , ierror)
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
-  integer, dimension(*), intent(in) :: array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
@@ -3904,9 +3919,12 @@ subroutine MPI_Type_create_struct(count, array_of_block_lengths, array_of_displa
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(*), intent(in) :: array_of_block_lengths
-  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
-  integer, dimension(*), intent(in) :: array_of_types
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_block_lengths
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_block_lengths
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_types
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_types
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
 end subroutine MPI_Type_create_struct
@@ -3996,9 +4014,10 @@ subroutine MPI_Type_get_contents(datatype, max_integers, max_addresses, max_data
   integer, intent(in) :: max_integers
   integer, intent(in) :: max_addresses
   integer, intent(in) :: max_datatypes
-  integer, dimension(*), intent(out) :: array_of_integers
-  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(out) :: array_of_addresses
-  integer, dimension(*), intent(out) :: array_of_datatypes
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_integers
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_integers
+  integer(kind=MPI_ADDRESS_KIND), dimension(*) :: array_of_addresses
+  integer, dimension(*) :: array_of_datatypes
   integer, intent(out) :: ierror
 end subroutine MPI_Type_get_contents
 
@@ -4089,8 +4108,10 @@ interface MPI_Type_indexed
 subroutine MPI_Type_indexed(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierror)
   integer, intent(in) :: count
-  integer, dimension(*), intent(in) :: array_of_blocklengths
-  integer, dimension(*), intent(in) :: array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_blocklengths
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_blocklengths
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_displacements
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: array_of_displacements
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
@@ -4241,8 +4262,10 @@ interface MPI_Waitall
 subroutine MPI_Waitall(count, array_of_requests, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
-  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_statuses
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Waitall
 
@@ -4254,7 +4277,8 @@ interface MPI_Waitany
 subroutine MPI_Waitany(count, array_of_requests, index, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: array_of_requests
   integer, intent(out) :: index
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierror
@@ -4269,10 +4293,13 @@ subroutine MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices, 
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_requests
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
-  integer, dimension(*), intent(out) :: array_of_indices
-  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_indices
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_indices
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ array_of_statuses
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Waitsome
 
