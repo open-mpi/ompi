@@ -387,13 +387,23 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
 {
     int i, j, nprocs = oshmem_num_procs();
     opal_common_ucx_del_proc_t *del_procs;
+    spml_ucx_mkey_t   *ucx_mkey;
+    int rc;
 
     del_procs = malloc(sizeof(*del_procs) * nprocs);
 
     for (i = 0; i < nprocs; ++i) {
         for (j = 0; j < memheap_map->n_segments; j++) {
-            if (ctx->ucp_peers[i].mkeys[j].key.rkey != NULL) {
-                ucp_rkey_destroy(ctx->ucp_peers[i].mkeys[j].key.rkey);
+            rc = mca_spml_ucx_ctx_mkey_by_seg(ctx, i, j, &ucx_mkey);
+            if (OSHMEM_SUCCESS != rc) {
+                SPML_UCX_ERROR("mca_spml_ucx_ctx_mkey_by_seg failed");
+            } else {
+                if (ucx_mkey->rkey != NULL) {
+                    rc = mca_spml_ucx_ctx_mkey_del(ctx, i, j, ucx_mkey);
+                    if (OSHMEM_SUCCESS != rc) {
+                        SPML_UCX_ERROR("mca_spml_ucx_ctx_mkey_del failed");
+                    }
+                }
             }
         }
 

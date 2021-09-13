@@ -150,9 +150,6 @@ static void unpack_remote_mkeys(shmem_ctx_t ctx, opal_buffer_t *msg, int remote_
     int32_t n;
     int32_t tr_id;
     int i;
-    ompi_proc_t *proc;
-
-    proc = oshmem_proc_group_find(oshmem_group_all, remote_pe);
     cnt = 1;
     opal_dss.unpack(msg, &n, &cnt, OPAL_UINT32);
     for (i = 0; i < n; i++) {
@@ -167,7 +164,7 @@ static void unpack_remote_mkeys(shmem_ctx_t ctx, opal_buffer_t *msg, int remote_
         if (0 == memheap_oob.mkeys[tr_id].va_base) {
             cnt = 1;
             opal_dss.unpack(msg, &memheap_oob.mkeys[tr_id].u.key, &cnt, OPAL_UINT64);
-            if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+            if (oshmem_proc_on_local_node(remote_pe)) {
                 memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
             }
         } else {
@@ -774,7 +771,6 @@ void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno)
 
     s = memheap_find_seg(segno);
     assert(NULL != s);
-
     seg->super.va_base = s->super.va_base;
     seg->super.va_end  = s->super.va_end;
     seg->rva_base      = mkey->va_base;

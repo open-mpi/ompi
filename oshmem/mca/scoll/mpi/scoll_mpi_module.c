@@ -145,7 +145,7 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
 
         /* Fill the map "group_rank-to-world_rank" in order to create a new proc group */
         for (i = 0; i < osh_group->proc_count; i++) {
-            ranks[i] = osh_group->proc_array[i]->super.proc_name.vpid;
+            ranks[i] = oshmem_proc_pe_vpid(osh_group, i);
         }
 
         OPAL_TIMING_ENV_NEXT(comm_query, "build_ranks");

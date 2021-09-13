@@ -45,6 +45,9 @@ BEGIN_C_DECLS
 #define SPML_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
 #define SPML_UCX_ERROR   MCA_COMMON_UCX_ERROR
 #define SPML_UCX_VERBOSE MCA_COMMON_UCX_VERBOSE
+#define SPML_UCX_TRANSP_IDX 0
+#define SPML_UCX_TRANSP_CNT 1
+#define SPML_UCX_SERVICE_SEG 0
 
 /**
  * UCX SPML module
@@ -63,7 +66,8 @@ typedef struct spml_ucx_cached_mkey spml_ucx_cached_mkey_t;
 
 struct ucp_peer {
     ucp_ep_h                 ucp_conn;
-    spml_ucx_cached_mkey_t   mkeys[MCA_MEMHEAP_MAX_SEGMENTS];
+    spml_ucx_cached_mkey_t **mkeys;
+    size_t                   mkeys_cnt;
 };
 typedef struct ucp_peer ucp_peer_t;
  
@@ -187,11 +191,11 @@ extern int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys);
 extern void mca_spml_ucx_memuse_hook(void *addr, size_t length);
 
 extern void mca_spml_ucx_rmkey_unpack(shmem_ctx_t ctx, sshmem_mkey_t *mkey, uint32_t segno, int pe, int tr_id);
-extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey);
+extern void mca_spml_ucx_rmkey_free(sshmem_mkey_t *mkey, int pe);
 extern void *mca_spml_ucx_rmkey_ptr(const void *dst_addr, sshmem_mkey_t *, int pe);
 
-extern int mca_spml_ucx_add_procs(ompi_proc_t** procs, size_t nprocs);
-extern int mca_spml_ucx_del_procs(ompi_proc_t** procs, size_t nprocs);
+extern int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs);
+extern int mca_spml_ucx_del_procs(oshmem_group_t* group, size_t nprocs);
 extern int mca_spml_ucx_fence(shmem_ctx_t ctx);
 extern int mca_spml_ucx_quiet(shmem_ctx_t ctx);
 extern int spml_ucx_default_progress(void);
@@ -201,6 +205,23 @@ void mca_spml_ucx_async_cb(int fd, short event, void *cbdata);
 
 int mca_spml_ucx_init_put_op_mask(mca_spml_ucx_ctx_t *ctx, size_t nprocs);
 int mca_spml_ucx_clear_put_op_mask(mca_spml_ucx_ctx_t *ctx);
+int mca_spml_ucx_peer_mkey_cache_add(ucp_peer_t *ucp_peer, int index);
+int mca_spml_ucx_peer_mkey_cache_del(ucp_peer_t *ucp_peer, int segno);
+void mca_spml_ucx_peer_mkey_cache_release(ucp_peer_t *ucp_peer);
+void mca_spml_ucx_peer_mkey_cache_init(mca_spml_ucx_ctx_t *ucx_ctx, int pe);
+
+static inline int
+mca_spml_ucx_peer_mkey_get(ucp_peer_t *ucp_peer, int index, spml_ucx_cached_mkey_t **out_rmkey)
+{
+    *out_rmkey = NULL;
+    if (OPAL_UNLIKELY((index >= ucp_peer->mkeys_cnt) || (MCA_MEMHEAP_MAX_SEGMENTS <= index) || (0 > index))) {
+        SPML_UCX_ERROR("Failed to get mkey for segment: bad index = %d, MAX = %d, cached mkeys count: %d",
+                        index, MCA_MEMHEAP_MAX_SEGMENTS, ucp_peer->mkeys_cnt);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+    *out_rmkey = ucp_peer->mkeys[index];
+    return OSHMEM_SUCCESS;
+}
 
 static inline void mca_spml_ucx_aux_lock(void)
 {
@@ -216,25 +237,44 @@ static inline void mca_spml_ucx_aux_unlock(void)
     }
 }
 
-static void mca_spml_ucx_cache_mkey(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe)
-{
-    ucp_peer_t *peer;
+int mca_spml_ucx_ctx_mkey_new(mca_spml_ucx_ctx_t *ucx_ctx, int pe, uint32_t segno, spml_ucx_mkey_t **mkey);
+int mca_spml_ucx_ctx_mkey_cache(mca_spml_ucx_ctx_t *ucx_ctx, sshmem_mkey_t *mkey, uint32_t segno, int dst_pe);
+int mca_spml_ucx_ctx_mkey_add(mca_spml_ucx_ctx_t *ucx_ctx, int pe, uint32_t segno, sshmem_mkey_t *mkey, spml_ucx_mkey_t **ucx_mkey);
+int mca_spml_ucx_ctx_mkey_del(mca_spml_ucx_ctx_t *ucx_ctx, int pe, uint32_t segno, spml_ucx_mkey_t *ucx_mkey);
 
-    peer = &(ucx_ctx->ucp_peers[dst_pe]);
-    mkey_segment_init(&peer->mkeys[segno].super, mkey, segno);
+static inline int
+mca_spml_ucx_ctx_mkey_by_seg(mca_spml_ucx_ctx_t *ucx_ctx, int pe, uint32_t segno, spml_ucx_mkey_t **mkey)
+{
+    ucp_peer_t *ucp_peer;
+    spml_ucx_cached_mkey_t *ucx_cached_mkey;
+    int rc;
+    ucp_peer = &(ucx_ctx->ucp_peers[pe]);
+    rc = mca_spml_ucx_peer_mkey_get(ucp_peer, segno, &ucx_cached_mkey);
+    if (OSHMEM_SUCCESS != rc) {
+        return rc;
+    }
+    *mkey = &(ucx_cached_mkey->key);
+    return OSHMEM_SUCCESS;
 }
 
 static inline spml_ucx_mkey_t * 
-mca_spml_ucx_get_mkey(shmem_ctx_t ctx, int pe, void *va, void **rva, mca_spml_ucx_t* module)
+mca_spml_ucx_ctx_mkey_by_va(shmem_ctx_t ctx, int pe, void *va, void **rva, mca_spml_ucx_t* module)
 {
-    spml_ucx_cached_mkey_t *mkey;
+    spml_ucx_cached_mkey_t **mkey;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
+    size_t i;
 
     mkey = ucx_ctx->ucp_peers[pe].mkeys;
-    mkey = (spml_ucx_cached_mkey_t *)map_segment_find_va(&mkey->super.super, sizeof(*mkey), va);
-    assert(mkey != NULL);
-    *rva = map_segment_va2rva(&mkey->super, va);
-    return &mkey->key;
+    for (i = 0; i < ucx_ctx->ucp_peers[pe].mkeys_cnt; i++) {
+        if (NULL == mkey[i]) {
+            continue;
+        }
+        if (OPAL_LIKELY(map_segment_is_va_in(&mkey[i]->super.super, va))) {
+            *rva = map_segment_va2rva(&mkey[i]->super, va);
+            return &mkey[i]->key;
+        }
+    }
+    return NULL;
 }
 
 static inline int ucx_status_to_oshmem(ucs_status_t status)
@@ -271,4 +311,3 @@ static inline void mca_spml_ucx_remote_op_posted(mca_spml_ucx_ctx_t *ctx, int ds
 END_C_DECLS
 
 #endif
-

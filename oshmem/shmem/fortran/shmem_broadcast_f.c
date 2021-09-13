@@ -85,7 +85,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         }\
         \
         /* Define actual PE using relative in active set */\
-        rel_PE_root = oshmem_proc_pe(group->proc_array[OMPI_FINT_2_INT(*PE_root)]);\
+        rel_PE_root = oshmem_proc_pe_vpid(group, OMPI_FINT_2_INT(*PE_root));\
         \
         /* Call collective broadcast operation */\
         rc = group->g_scoll.scoll_broadcast( group, \

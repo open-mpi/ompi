@@ -69,7 +69,7 @@ static void _shmem_broadcast(void *target,
         }
 
         /* Define actual PE using relative in active set */
-        PE_root = oshmem_proc_pe(group->proc_array[PE_root]);
+        PE_root = oshmem_proc_pe_vpid(group, PE_root);
 
         /* Call collective broadcast operation */
         rc = group->g_scoll.scoll_broadcast(group,
