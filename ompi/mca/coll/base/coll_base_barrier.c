@@ -109,7 +109,7 @@ int ompi_coll_base_barrier_intra_doublering(struct ompi_communicator_t *comm,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"ompi_coll_base_barrier_intra_doublering rank %d", rank));
 
-    left = ((rank-1)%size);
+    left = ((size+rank-1)%size);
     right = ((rank+1)%size);
 
     if (rank > 0) { /* receive message from the left */
