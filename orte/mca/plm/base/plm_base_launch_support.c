@@ -80,6 +80,7 @@
 #include "orte/mca/state/base/base.h"
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/mca/odls/odls_types.h"
+#include "orte/orted/orted_submit.h"
 
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/base/base.h"
@@ -700,6 +701,9 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
                              "%s plm:base:launch job %s is not a dynamic spawn",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
+        if (ORTE_PROC_IS_HNP) {
+            orte_submit_job_state_update(jdata, ORTE_JOB_STATE_RUNNING);
+        }
         goto cleanup;
     }
 
