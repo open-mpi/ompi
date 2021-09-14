@@ -5,6 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,8 @@ ORTE_DECLSPEC int orte_submit_job(char *cmd[], int *index,
 ORTE_DECLSPEC int orte_submit_halt(void);
 ORTE_DECLSPEC void orte_debugger_init_after_spawn(int fd, short event, void *arg);
 ORTE_DECLSPEC void orte_debugger_detached(int fd, short event, void *arg);
+
+ORTE_DECLSPEC int orte_submit_job_state_update(orte_job_t *jdata, orte_job_state_t state);
 
 extern int orte_debugger_attach_fd;
 extern bool orte_debugger_fifo_active;

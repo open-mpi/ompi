@@ -17,6 +17,7 @@
  * Copyright (c) 2013-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -183,6 +184,10 @@ int orterun(int argc, char *argv[])
                    (NULL == launchst.jdata) ? "UNKNOWN" : ORTE_JOBID_PRINT(launchst.jdata->jobid));
     }
     if (!orte_event_base_active || ORTE_SUCCESS != launchst.status) {
+        if (ORTE_PROC_IS_HNP) {
+            /* ensure all local procs are dead */
+            orte_odls.kill_local_procs(NULL);
+        }
         goto DONE;
     }
 
