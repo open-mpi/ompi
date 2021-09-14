@@ -231,7 +231,8 @@ static int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group)
     ctx_params.oob.req_test     = oob_allgather_test;
     ctx_params.oob.req_free     = oob_allgather_free;
     ctx_params.oob.coll_info    = (void *) oshmem_comm_world;
-    ctx_params.oob.participants = ompi_comm_size(oshmem_comm_world);
+    ctx_params.oob.n_oob_eps    = ompi_comm_size(oshmem_comm_world);
+    ctx_params.oob.oob_ep       = ompi_comm_rank(oshmem_comm_world);
 
     if (UCC_OK != ucc_context_config_read(cm->ucc_lib, NULL, &ctx_config)) {
         UCC_ERROR("UCC context config read failed");
@@ -293,7 +294,8 @@ static int mca_scoll_ucc_module_enable(mca_scoll_base_module_t *module,
             .req_test     = oob_allgather_test,
             .req_free     = oob_allgather_free,
             .coll_info    = (void *)osh_group->ompi_comm,
-            .participants = ompi_comm_size(osh_group->ompi_comm), 
+            .n_oob_eps    = ompi_comm_size(osh_group->ompi_comm),
+            .oob_ep       = ompi_comm_rank(osh_group->ompi_comm),
         },
         .ep       = ompi_comm_rank(osh_group->ompi_comm),
         .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG,
