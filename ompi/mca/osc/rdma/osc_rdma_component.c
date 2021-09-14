@@ -605,10 +605,6 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         return allocate_state_single (module, base, size);
     }
 
-    if (local_size == global_size) {
-      module->use_memory_registration = false;
-    }
-
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating shared internal state");
 
     local_rank_array_size = sizeof (ompi_osc_rdma_rank_data_t) * RANK_ARRAY_COUNT (module);
@@ -788,7 +784,10 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                     peer->state_handle = (mca_btl_base_registration_handle_t *) state_region->btl_handle_data;
                 }
                 peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
-                if (i > 0) {
+                if (i==0) {
+                    peer->state_endpoint = peer->data_endpoint;
+                    peer->state_btl_index = peer->data_btl_index;
+                } else {
                     peer->state_endpoint = local_leader->state_endpoint;
                     peer->state_btl_index = local_leader->state_btl_index;
                 }
