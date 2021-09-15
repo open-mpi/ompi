@@ -262,7 +262,8 @@ static int mca_coll_ucc_init_ctx() {
     ctx_params.oob.req_test     = oob_allgather_test;
     ctx_params.oob.req_free     = oob_allgather_free;
     ctx_params.oob.coll_info    = (void*)MPI_COMM_WORLD;
-    ctx_params.oob.participants = ompi_comm_size(&ompi_mpi_comm_world.comm);
+    ctx_params.oob.n_oob_eps    = ompi_comm_size(&ompi_mpi_comm_world.comm);
+    ctx_params.oob.oob_ep       = ompi_comm_rank(&ompi_mpi_comm_world.comm);
     if (UCC_OK != ucc_context_config_read(cm->ucc_lib, NULL, &ctx_config)) {
         UCC_ERROR("UCC context config read failed");
         goto cleanup_lib;
@@ -318,6 +319,7 @@ cleanup_lib:
     cm->libucc_initialized = false;
     return OMPI_ERROR;
 }
+
 /*
  * Initialize module on the communicator
  */
@@ -337,7 +339,8 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
             .req_test       = oob_allgather_test,
             .req_free       = oob_allgather_free,
             .coll_info      = (void*)comm,
-            .participants   = ompi_comm_size(comm)
+            .n_oob_eps      = ompi_comm_size(comm),
+            .oob_ep         = ompi_comm_rank(comm)
         },
         .ep       = ompi_comm_rank(comm),
         .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG
