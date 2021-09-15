@@ -1,5 +1,5 @@
 variables:
-  SCHEDULER_PARAMETERS: "-pgeneral -t 1:00:00 -N 1 --ntasks-per-node=16"
+  SCHEDULER_PARAMETERS: "-pgeneral -t 2:00:00 -N 1 --ntasks-per-node=16"
   GIT_STRATEGY: clone
   NPROCS: 4
 
@@ -32,7 +32,7 @@ build:ibm:
   stage: build
   tags: [darwin-slurm-shared]
   variables:
-    SCHEDULER_PARAMETERS: "-ppower9 -t 1:00:00 -N 1 --ntasks-per-node=16"
+    SCHEDULER_PARAMETERS: "-ppower9 -t 2:00:00 -N 1 --ntasks-per-node=16"
   script:
     - module load ibm
     - git submodule update --init
@@ -55,7 +55,7 @@ build:amd:
   stage: build
   tags: [darwin-slurm-shared]
   variables:
-    SCHEDULER_PARAMETERS: "-pamd-rome -t 1:00:00 -N 1 --ntasks-per-node=16"
+    SCHEDULER_PARAMETERS: "-pamd-rome -t 2:00:00 -N 1 --ntasks-per-node=16"
   script:
     - module load aocc/3.0.0
     - git submodule update --init
@@ -126,7 +126,7 @@ test:ibm:
   stage: test
   tags: [darwin-slurm-shared]
   variables:
-    SCHEDULER_PARAMETERS: "-ppower9 -t 1:00:00 -N 1 --ntasks-per-node=16"
+    SCHEDULER_PARAMETERS: "-ppower9 -t 2:00:00 -N 1 --ntasks-per-node=16"
   dependencies:
     - build:ibm
   needs: ["build:ibm"]
@@ -173,7 +173,7 @@ test:amd:
   stage: test
   tags: [darwin-slurm-shared]
   variables:
-    SCHEDULER_PARAMETERS: "-pamd-rome -t 1:00:00 -N 1 --ntasks-per-node=16"
+    SCHEDULER_PARAMETERS: "-pamd-rome -t 2:00:00 -N 1 --ntasks-per-node=16"
   dependencies:
     - build:amd
   needs: ["build:amd"]
