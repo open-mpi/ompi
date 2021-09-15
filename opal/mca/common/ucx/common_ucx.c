@@ -40,7 +40,7 @@ static void opal_common_ucx_mem_release_cb(void *buf, size_t length,
 
 OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component)
 {
-    static const char *default_tls     = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,cuda_ipc,rocm_ipc";
+    static const char *default_tls     = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,ud_mlx5,cuda_ipc,rocm_ipc";
     static const char *default_devices = "mlx*";
     static int registered = 0;
     static int hook_index;
