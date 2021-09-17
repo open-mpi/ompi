@@ -1114,7 +1114,7 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
 
         /* emulated RDMA atomics can support the full range of atomics. for
          * now only a handful are supported. */
-        btl->btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_GLOB | MCA_BTL_ATOMIC_SUPPORTS_CSWAP
+        btl->btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_CSWAP
                                 | MCA_BTL_ATOMIC_SUPPORTS_32BIT | MCA_BTL_ATOMIC_SUPPORTS_ADD
                                 | MCA_BTL_ATOMIC_SUPPORTS_AND | MCA_BTL_ATOMIC_SUPPORTS_OR
                                 | MCA_BTL_ATOMIC_SUPPORTS_XOR | MCA_BTL_ATOMIC_SUPPORTS_SWAP

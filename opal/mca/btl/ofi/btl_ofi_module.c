@@ -393,7 +393,8 @@ mca_btl_ofi_module_t *mca_btl_ofi_module_alloc(int mode)
         module->super.btl_flags |= MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS
                                    | MCA_BTL_FLAGS_RDMA;
 
-        module->super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_SWAP
+        module->super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_GLOB
+                                         | MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_SWAP
                                          | MCA_BTL_ATOMIC_SUPPORTS_CSWAP
                                          | MCA_BTL_ATOMIC_SUPPORTS_32BIT;
 
