@@ -87,8 +87,11 @@ OPAL_DECLSPEC int opal_common_ofi_init(void)
 {
     int ret;
 
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
+
     opal_common_ofi_init_ref_cnt++;
     if (opal_common_ofi_initialized) {
+        OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
         return OPAL_SUCCESS;
     }
 #if OPAL_OFI_IMPORT_MONITOR_SUPPORT
@@ -119,6 +122,7 @@ OPAL_DECLSPEC int opal_common_ofi_init(void)
     opal_mem_hooks_register_release(opal_common_ofi_mem_release_cb, NULL);
     opal_common_ofi_initialized = true;
 
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
     return OPAL_SUCCESS;
 err:
     if (opal_common_ofi_cache_fid) {
@@ -128,15 +132,18 @@ err:
         free(opal_common_ofi_monitor);
     }
 
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
     return OPAL_ERROR;
 #else
     opal_common_ofi_initialized = true;
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
     return OPAL_SUCCESS;
 #endif
 }
 
 OPAL_DECLSPEC int opal_common_ofi_fini(void)
 {
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
     if (opal_common_ofi_initialized && !--opal_common_ofi_init_ref_cnt) {
 #if OPAL_OFI_IMPORT_MONITOR_SUPPORT
         opal_mem_hooks_unregister_release(opal_common_ofi_mem_release_cb);
@@ -147,6 +154,7 @@ OPAL_DECLSPEC int opal_common_ofi_fini(void)
         opal_common_ofi_initialized = false;
     }
 
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
     return OPAL_SUCCESS;
 }
 
