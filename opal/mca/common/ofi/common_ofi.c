@@ -40,6 +40,10 @@ static int opal_common_ofi_init_ref_cnt = 0;
 
 #if OPAL_OFI_IMPORT_MONITOR_SUPPORT
 
+/*
+ * These no-op functions are necessary since libfabric does not allow null
+ * function pointers here.
+ */
 static int opal_common_ofi_monitor_start(struct fid_mem_monitor *monitor)
 {
     return 0;
@@ -83,6 +87,17 @@ OPAL_DECLSPEC void opal_common_ofi_mem_release_cb(void *buf, size_t length,
 }
 #endif /* OPAL_OFI_IMPORT_MONITOR_SUPPORT */
 
+/**
+ * This function initializes objects common to the OFI MTL and OFI BTL.
+ *
+ * Currently, it opens up an import monitor linked to the OMPI memhooks patcher
+ * that can notify libfabric when a memory event has occurred. This monitor
+ * is shared between the OFI MTL and OFI BTL and allows libfabric to utilize
+ * OMPI's memhooks patcher to invalidate memory registrations. This function
+ * uses the opal_common_ofi_mutex lock and cannot be called within this
+ * lock.
+ *
+ */
 OPAL_DECLSPEC int opal_common_ofi_init(void)
 {
     int ret;
@@ -96,6 +111,10 @@ OPAL_DECLSPEC int opal_common_ofi_init(void)
     }
 #if OPAL_OFI_IMPORT_MONITOR_SUPPORT
 
+    /*
+     * Checks for an available memory monitor. If none exist, we do not
+     * initialize the import monitor.
+     */
     mca_base_framework_open(&opal_memory_base_framework, 0);
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
         != (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
@@ -103,6 +122,12 @@ OPAL_DECLSPEC int opal_common_ofi_init(void)
         return OPAL_SUCCESS;
     }
 
+    /*
+     * This cache object doesn't do much, but is necessary for the API to work.
+     * It is required to call the fi_import_fid API. This API was introduced in
+     * libfabric version 1.13.0 and "mr_cache" is a "well known" name (documented
+     * in libfabric) to indicate the type of object that we are trying to open.
+     */
     ret = fi_open(FI_VERSION(1,13), "mr_cache", NULL, 0, 0, &opal_common_ofi_cache_fid, NULL);
     if (ret) {
         goto err;
@@ -115,6 +140,13 @@ OPAL_DECLSPEC int opal_common_ofi_init(void)
 
     opal_common_ofi_monitor->fid.fclass = FI_CLASS_MEM_MONITOR;
     opal_common_ofi_monitor->export_ops = &opal_common_ofi_export_ops;
+    /*
+     * This import_fid call must occur before the libfabric provider creates
+     * its memory registration cache. This will typically occur during domain
+     * open as it is a domain level object. We put it early in initialization
+     * to guarantee this and share the import monitor between the ofi btl
+     * and ofi mtl.
+     */
     ret = fi_import_fid(opal_common_ofi_cache_fid, &opal_common_ofi_monitor->fid, 0);
     if (ret) {
         goto err;
@@ -141,6 +173,14 @@ err:
 #endif
 }
 
+/**
+ * This function cleans up and releases resources created during
+ * opal_common_ofi_init().
+ *
+ * This function uses the opal_common_ofi_mutex lock and cannot be called
+ * within this
+ * lock.
+ */
 OPAL_DECLSPEC int opal_common_ofi_fini(void)
 {
     OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
