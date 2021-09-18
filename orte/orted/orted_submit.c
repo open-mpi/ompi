@@ -3363,3 +3363,26 @@ void orte_profile_wakeup(int sd, short args, void *cbdata)
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
 }
+
+int orte_submit_job_state_update(orte_job_t *jdata, orte_job_state_t state)
+{
+    trackr_t *trk;
+    int room, *rmptr;
+
+    if (state == ORTE_JOB_STATE_RUNNING) {
+        rmptr = &room;
+        if ( !orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&rmptr, OPAL_INT)) {
+            opal_output(0, "Error: ORTE_JOB_ROOM_NUM not a valid attribute for this job");
+            return ORTE_ERROR;
+        }
+        if (NULL == (trk = (trackr_t*)opal_pointer_array_get_item(&tool_jobs, room))) {
+            opal_output(0, "Error: Tracker ID %d returned a NULL object", room);
+            return ORTE_ERROR;
+        }
+        if (NULL != trk->launch_cb) {
+            trk->launch_cb(room, trk->jdata, ORTE_SUCCESS, trk->launch_cbdata);
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
