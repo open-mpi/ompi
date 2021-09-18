@@ -15,23 +15,30 @@
  * $HEADER$
  */
 
-#include <errno.h>
-#include <unistd.h>
 
 #include "opal_config.h"
+
+#include <errno.h>
+#include <unistd.h>
+#include <rdma/fabric.h>
+#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
+#include <rdma/fi_ext.h>
+#endif
+
 #include "common_ofi.h"
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/memory/base/base.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 
-OPAL_DECLSPEC opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
-                                                          .prov_exclude = NULL,
-                                                          .registered = 0,
-                                                          .verbose = 0};
+opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
+                                            .prov_exclude = NULL,
+                                            .registered = 0,
+                                            .verbose = 0};
 
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic";
 static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
@@ -75,15 +82,15 @@ static struct fi_ops_mem_monitor opal_common_ofi_export_ops = {
     .valid = opal_common_ofi_monitor_valid,
 };
 
-OPAL_DECLSPEC void opal_common_ofi_mem_release_cb(void *buf, size_t length,
-                                                  void *cbdata, bool from_alloc)
+static void opal_common_ofi_mem_release_cb(void *buf, size_t length,
+                                           void *cbdata, bool from_alloc)
 {
     opal_common_ofi_monitor->import_ops->notify(opal_common_ofi_monitor,
                                                 buf, length);
 }
 #endif /* OPAL_OFI_IMPORT_MONITOR_SUPPORT */
 
-OPAL_DECLSPEC int opal_common_ofi_init(void)
+int opal_common_ofi_init(void)
 {
     int ret;
 
@@ -135,7 +142,7 @@ err:
 #endif
 }
 
-OPAL_DECLSPEC int opal_common_ofi_fini(void)
+int opal_common_ofi_fini(void)
 {
     if (opal_common_ofi_initialized && !--opal_common_ofi_init_ref_cnt) {
 #if OPAL_OFI_IMPORT_MONITOR_SUPPORT
@@ -150,7 +157,7 @@ OPAL_DECLSPEC int opal_common_ofi_fini(void)
     return OPAL_SUCCESS;
 }
 
-OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item)
+int opal_common_ofi_is_in_list(char **list, char *item)
 {
     int i = 0;
 
@@ -169,7 +176,7 @@ OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item)
     return 0;
 }
 
-OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component)
+int opal_common_ofi_register_mca_variables(const mca_base_component_t *component)
 {
     static int include_index;
     static int exclude_index;
@@ -253,7 +260,7 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
     return OPAL_SUCCESS;
 }
 
-OPAL_DECLSPEC void opal_common_ofi_mca_register(void)
+void opal_common_ofi_mca_register(void)
 {
     opal_common_ofi.registered++;
     if (opal_common_ofi.registered > 1) {
@@ -265,7 +272,7 @@ OPAL_DECLSPEC void opal_common_ofi_mca_register(void)
     opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
 }
 
-OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void)
+void opal_common_ofi_mca_deregister(void)
 {
     /* unregister only on last deregister */
     opal_common_ofi.registered--;
