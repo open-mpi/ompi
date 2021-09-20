@@ -594,10 +594,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     module->single_node     = local_size == global_size;
     module->use_cpu_atomics = module->single_node;
 
-    if (!module->single_node) {
-        for (int i = 0 ; i < module->btls_in_use ; ++i) {
-            module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
-        }
+    for (int i = 0 ; i < module->btls_in_use ; ++i) {
+        module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
     }
 
     if (1 == local_size) {
