@@ -480,24 +480,59 @@ dnl #######################################################################
 # of the assignment in foo=`which <prog>`). This macro ensures that we
 # get a sane executable value.
 AC_DEFUN([OPAL_WHICH],[
-# 1 is the variable name to do "which" on
-# 2 is the variable name to assign the return value to
+    # 1 is the variable name to do "which" on
+    # 2 is the variable name to assign the return value to
 
-OPAL_VAR_SCOPE_PUSH([opal_prog opal_file opal_dir opal_sentinel])
+    OPAL_VAR_SCOPE_PUSH([opal_prog opal_file opal_dir opal_sentinel])
 
-opal_prog=$1
+    opal_prog=$1
 
-IFS_SAVE=$IFS
-IFS="$PATH_SEPARATOR"
-for opal_dir in $PATH; do
-    if test -x "$opal_dir/$opal_prog"; then
-        $2="$opal_dir/$opal_prog"
-        break
-    fi
-done
-IFS=$IFS_SAVE
+    # There are 3 cases:
 
-OPAL_VAR_SCOPE_POP
+    # 1. opal_prog is an absolute filename.  If that absolute filename
+    # exists and is executable, return $2 with that name.  Otherwise,
+    # $2 is unchanged.
+
+    # 2. opal_prog is a relative filename (i.e., it contains one or
+    # more /, but does not begin with a /).  If that file exists
+    # relative to where we are right now in the filesystem and is
+    # executable, return the absolute path of that value in $2.
+    # Otherwise, $2 is unchanged.
+
+    # 3. opal_prog contains no /.  Search the PATH for an excutable
+    # with the appropriate name.  If found, return the absolute path
+    # in $2.  Otherwise, $2 is unchanged.
+
+    # Note that these three cases are exactly what which(1) does.
+
+    # Note the double square brackets around the case expressions for
+    # m4 escaping.
+    case $opal_prog in
+        [[\\/]]* | ?:[[\\/]]* )
+            # Case 1: absolute
+            AS_IF([test -x "$opal_prog"],
+                  [$2=$opal_prog])
+            ;;
+
+        *[[\\/]]*)
+            # Case 2: relative with 1 or more /
+            AS_IF([test -x "$opal_prog"],
+                  [$2="$cwd/$opal_prog"])
+            ;;
+
+        *)
+            # Case 3: no / at all
+            IFS_SAVE=$IFS
+            IFS=$PATH_SEPARATOR
+            for opal_dir in $PATH; do
+               AS_IF([test -x "$opal_dir/$opal_prog"],
+                     [$2="$opal_dir/$opal_prog"])
+            done
+            IFS=$IFS_SAVE
+            ;;
+    esac
+
+    OPAL_VAR_SCOPE_POP
 ])dnl
 
 dnl #######################################################################
