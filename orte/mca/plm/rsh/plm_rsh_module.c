@@ -347,6 +347,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     bool found;
     char *lib_base=NULL, *bin_base=NULL;
     char *opal_prefix = getenv("OPAL_PREFIX");
+    char *opal_libdir = getenv("OPAL_LIBDIR");
     char* full_orted_cmd = NULL;
     char * rtmod;
 
@@ -501,7 +502,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
              * we have to insert the orted_prefix in the right place
              */
             (void)asprintf (&final_cmd,
-                            "%s%s%s%s%s%s PATH=%s%s$PATH ; export PATH ; "
+                            "%s%s%s%s%s%s%s%s%s PATH=%s%s$PATH ; export PATH ; "
                             "LD_LIBRARY_PATH=%s%s${LD_LIBRARY_PATH:-} ; export LD_LIBRARY_PATH ; "
                             "DYLD_LIBRARY_PATH=%s%s${DYLD_LIBRARY_PATH:-} ; export DYLD_LIBRARY_PATH ; "
                             "%s %s",
@@ -511,6 +512,9 @@ static int setup_launch(int *argcptr, char ***argvptr,
                             (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
                             (opal_prefix != NULL ? opal_prefix : " "),
                             (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : " "),
+                            (opal_libdir != NULL ? "OPAL_LIBDIR=" : " "),
+                            (opal_libdir != NULL ? opal_libdir : " "),
+                            (opal_libdir != NULL ? " ; export OPAL_LIBDIR;" : " "),
                             (NULL != bin_base ? bin_base : " "),
                             (NULL != bin_base ? ":" : " "),
                             (NULL != lib_base ? lib_base : " "),
@@ -534,7 +538,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
              * we have to insert the orted_prefix in the right place
              */
             (void)asprintf (&final_cmd,
-                            "%s%s%s%s%s%s set path = ( %s $path ) ; "
+                            "%s%s%s%s%s%s%s%s%s set path = ( %s $path ) ; "
                             "if ( $?LD_LIBRARY_PATH == 1 ) "
                             "set OMPI_have_llp ; "
                             "if ( $?LD_LIBRARY_PATH == 0 ) "
@@ -554,6 +558,9 @@ static int setup_launch(int *argcptr, char ***argvptr,
                             (opal_prefix != NULL ? "setenv OPAL_PREFIX " : " "),
                             (opal_prefix != NULL ? opal_prefix : " "),
                             (opal_prefix != NULL ? " ;" : " "),
+                            (opal_libdir != NULL ? "setenv OPAL_LIBDIR " : " "),
+                            (opal_libdir != NULL ? opal_libdir : " "),
+                            (opal_libdir != NULL ? " ;" : " "),
                             (NULL != bin_base ? bin_base : " "),
                             (NULL != lib_base ? lib_base : " "),
                             (NULL != lib_base ? lib_base : " "),
