@@ -151,9 +151,6 @@ struct ompi_osc_rdma_module_t {
     /** value of same_size info key for this window */
     bool same_size;
 
-    /** CPU atomics can be used */
-    bool use_cpu_atomics;
-
     /** passive-target synchronization will not be used in this window */
     bool no_locks;
 
@@ -261,6 +258,16 @@ struct ompi_osc_rdma_module_t {
     /** lock for peer hash table/array */
     opal_mutex_t peer_lock;
 
+    /** flag to indicate whether all selected btl support remote completion.
+     */
+    bool btl_support_remote_completion;
+
+    /** array of peer state. Used when local leader is NOT used */
+    uintptr_t *peer_state_array;
+
+    /** array of peer state header. Used when local leader is NOT used
+     * and btl requires memory registration */
+    uint8_t *peer_state_handle_array;
 
     /** BTL(s) in use. Currently this is only used to support RDMA emulation over
      * non-RDMA BTLs. The typical usage is btl/sm + btl/tcp. In the future this

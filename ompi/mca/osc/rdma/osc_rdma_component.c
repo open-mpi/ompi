@@ -448,6 +448,61 @@ static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void
     return OMPI_SUCCESS;
 }
 
+/**
+ * @brief gather module->state and module->state_handle inside the module
+ *
+ * This function is used when local leader optimization is NOT used.
+ * In which case, each process communicate with its peer directly
+ * to update peer's state counters (instead of communicating with the peer's
+ * local leader), therefore it need the pointer of peer's state counters, so
+ * it can use atomics to update the counters.
+ *
+ * If btl requires memory registration, this function will also gather
+ * state's memory registration.
+ *
+ * @param	module[in,out]	ompi osc rdma module
+ */
+static int gather_peer_state(ompi_osc_rdma_module_t *module)
+{
+    int ret, comm_size, handle_size;
+
+    comm_size = ompi_comm_size (module->comm);
+
+    module->peer_state_array = calloc(comm_size, sizeof(uintptr_t));
+    if (NULL == module->peer_state_array) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to allocate memory for module state array!");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = module->comm->c_coll->coll_allgather(&module->state, sizeof(uintptr_t), MPI_BYTE,
+                                               module->peer_state_array, sizeof(uintptr_t), MPI_BYTE,
+                                               module->comm, module->comm->c_coll->coll_allgather_module);
+    if (OMPI_SUCCESS != ret) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "module state allgather failed with ompi error code %d", ret);
+        return ret;
+    }
+
+    if (module->use_memory_registration) {
+        handle_size = module->selected_btls[0]->btl_registration_handle_size;
+	assert(handle_size > 0);
+        module->peer_state_handle_array = calloc(comm_size, handle_size);
+        if (NULL == module->peer_state_handle_array) {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to allocate memory for module state array!");
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        ret = module->comm->c_coll->coll_allgather(module->state_handle, handle_size, MPI_BYTE,
+                                                   module->peer_state_handle_array, handle_size, MPI_BYTE,
+                                                   module->comm, module->comm->c_coll->coll_allgather_module);
+        if (OMPI_SUCCESS != ret) {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "module state allgather failed with ompi error code %d", ret);
+            return ret;
+        }
+    }
+
+    return 0;
+}
+
 static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, size_t size)
 {
     size_t total_size, local_rank_array_size, leader_peer_data_size, base_data_size;
@@ -527,8 +582,10 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
     my_peer->state = (uint64_t) (uintptr_t) module->state;
 
-    if (module->use_cpu_atomics) {
-        /* all peers are local or it is safe to mix cpu and nic atomics */
+    if (module->btl_support_remote_completion) {
+        /* all peers are local and btl support remote completion,
+	 * therefore it is safe to use cpu atomics to update
+	 * peer state */
         my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
     } else {
         /* use my endpoint handle to modify the peer's state */
@@ -546,7 +603,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
             ex_peer->size = size;
         }
 
-        if (!module->use_cpu_atomics) {
+        if (!module->btl_support_remote_completion) {
             if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
                 /* base is local and cpu atomics are available */
                 ex_peer->super.base_handle = module->state_handle;
@@ -582,10 +639,9 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     ompi_communicator_t *shared_comm;
     unsigned long offset, total_size;
     unsigned long state_base, data_base;
-    int local_rank, local_size, ret;
+    int local_rank, local_size, handle_size, ret;
     size_t local_rank_array_size, leader_peer_data_size, my_base_offset = 0;
     int my_rank = ompi_comm_rank (module->comm);
-    int global_size = ompi_comm_size (module->comm);
     ompi_osc_rdma_region_t *state_region;
     struct _local_data *temp;
     char *data_file;
@@ -595,21 +651,6 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
     local_rank = ompi_comm_rank (shared_comm);
     local_size = ompi_comm_size (shared_comm);
-
-    /* CPU atomics can be used if every process is on the same node or the NIC allows mixing CPU and NIC atomics */
-    module->single_node     = local_size == global_size;
-    module->use_cpu_atomics = module->single_node;
-
-    if (!module->single_node) {
-        for (int i = 0 ; i < module->btls_in_use ; ++i) {
-            module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
-        }
-    }
-
-    if (1 == local_size) {
-        /* no point using a shared segment if there are no other processes on this node */
-        return allocate_state_single (module, base, size);
-    }
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating shared internal state");
 
@@ -781,23 +822,21 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
 
             /* set up peer state */
-            if (module->use_cpu_atomics) {
-                /* all peers are local or it is safe to mix cpu and nic atomics */
+           if (module->btl_support_remote_completion) {
+                /* all peers are local and btl support remote completion,
+                 * it is safe to use cpu atomics to update peer's state */
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
                 peer->state = (osc_rdma_counter_t) peer_state;
                 peer->state_endpoint = NULL;
             } else {
-                /* use my endpoint handle to modify the peer's state */
+                assert (NULL != module->peer_state_array);
+                peer->state = (osc_rdma_counter_t)module->peer_state_array[peer_rank];
+                peer->state_endpoint = peer->data_endpoint;
+                peer->state_btl_index = peer->data_btl_index;
                 if (module->use_memory_registration) {
-                    peer->state_handle = (mca_btl_base_registration_handle_t *) state_region->btl_handle_data;
-                }
-                peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
-                if (i==0) {
-                    peer->state_endpoint = peer->data_endpoint;
-                    peer->state_btl_index = peer->data_btl_index;
-                } else {
-                    peer->state_endpoint = local_leader->state_endpoint;
-                    peer->state_btl_index = local_leader->state_btl_index;
+                    handle_size = module->selected_btls[0]->btl_registration_handle_size;
+                    assert (NULL != module->peer_state_handle_array);
+                    memcpy(peer->state_handle, &module->peer_state_handle_array[peer_rank * handle_size], handle_size);
                 }
             }
 
@@ -806,7 +845,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             }
 
             if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor && MPI_WIN_FLAVOR_CREATE != module->flavor &&
-                !module->use_cpu_atomics && temp[i].size && i > 0) {
+                !module->btl_support_remote_completion && temp[i].size && i > 0) {
                 /* use the local leader's endpoint */
                 peer->data_endpoint = local_leader->data_endpoint;
                 peer->data_btl_index = local_leader->data_btl_index;
@@ -815,7 +854,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             ompi_osc_module_add_peer (module, peer);
 
             if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor) {
-                if (module->use_cpu_atomics && peer_rank == my_rank) {
+                if (module->btl_support_remote_completion && peer_rank == my_rank) {
                     peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
                 }
                 /* nothing more to do */
@@ -831,7 +870,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 ex_peer->size = temp[i].size;
             }
 
-            if (module->use_cpu_atomics && (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank)) {
+            if (module->btl_support_remote_completion && (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank)) {
                 /* base is local and cpu atomics are available */
                 if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
                     ex_peer->super.base = (uintptr_t) module->segment_base + offset;
@@ -854,6 +893,50 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     free (temp);
 
     return ret;
+}
+
+static int allocate_module_state(ompi_osc_rdma_module_t *module, void **base, size_t size)
+{
+    ompi_communicator_t *shared_comm;
+    int local_size, ret;
+    int global_size = ompi_comm_size (module->comm);
+
+    shared_comm = module->shared_comm;
+    local_size = ompi_comm_size (shared_comm);
+
+    module->single_node = local_size == global_size;
+    module->btl_support_remote_completion = true;
+    for (int i = 0 ; i < module->btls_in_use ; ++i) {
+        /* the usage of local leader means to use different channels to send data to peer and update peer's state.
+         * When different channels are used, active message RDMA cannot guarantee that put and atomics are completed
+         * in the same order.
+         */
+        if (!(module->selected_btls[i]->btl_flags & MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION))
+            module->btl_support_remote_completion = false;
+    }
+
+    if (1 == local_size) {
+        /* no point using a shared segment if there are no other processes on this node */
+        ret = allocate_state_single (module, base, size);
+    } else {
+        ret = allocate_state_shared (module, base, size);
+    }
+
+    if (OPAL_UNLIKELY(OMPI_SUCCESS !=ret))
+        return ret;
+
+    if (!module->btl_support_remote_completion) {
+        /* if btl does not support remote_completion, the local leader optimization
+	 * cannot be used, which means each endpoint will communicate with the peer
+	 * directly to update its state (instead of through the peer's local leader).
+	 * Therefore each endpoint need to have the state pointer of each peer.
+	 * gather_peer_state does that.
+	 */
+        ret = gather_peer_state(module);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS !=ret)) {
+            return ret;
+        }
+    }
 }
 
 static int ompi_osc_rdma_query_mtls (void)
@@ -1463,7 +1546,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     }
 
     /* fill in our part */
-    ret = allocate_state_shared (module, base, size);
+    ret = allocate_module_state (module, base, size);
 
     /* notify all others if something went wrong */
     ret = synchronize_errorcode(ret, module->comm);
