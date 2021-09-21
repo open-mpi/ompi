@@ -446,6 +446,47 @@ static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void
     return OMPI_SUCCESS;
 }
 
+/**
+ * @brief gather pointer of module->state and inside the world comm
+ *
+ * This function is used when local leader optimization is NOT used.
+ * In which case, each process communicate with its peer directly
+ * to update peer's state counters (instead of communicating with the peer's
+ * local leader), therefore it need the pointer of peer's state counters, so
+ * it can use atomics to update the counters.
+ *
+ * Note state_handle is not gathered because local leader optimization
+ * is NOT used only when active message RDMA is used, and active message
+ * RDMA does not need memory registration.
+ *
+ * @param	module[in,out]	ompi osc rdma module
+ */
+static int gather_peer_state(ompi_osc_rdma_module_t *module)
+{
+    int ret, comm_size;
+
+    comm_size = ompi_comm_size (module->comm);
+
+    module->peer_state_array = calloc(comm_size, sizeof(uintptr_t));
+    if (NULL == module->peer_state_array) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to allocate memory for module state array!");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = module->comm->c_coll->coll_allgather(&module->state, sizeof(uintptr_t), MPI_BYTE,
+                                               module->peer_state_array, sizeof(uintptr_t), MPI_BYTE,
+                                               module->comm, module->comm->c_coll->coll_allgather_module);
+    if (OMPI_SUCCESS != ret) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "module state allgather failed with ompi error code %d", ret);
+        return ret;
+    }
+
+    assert (!module->use_memory_registration);
+
+    return 0;
+}
+
+
 static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, size_t size)
 {
     size_t total_size, local_rank_array_size, leader_peer_data_size;
@@ -501,6 +542,13 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
         ret = ompi_osc_rdma_initialize_region (module, base, size);
         if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
+    }
+
+    if (!module->use_local_leader) {
+        ret = gather_peer_state(module);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS !=ret)) {
             return ret;
         }
     }
@@ -593,9 +641,14 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     /* CPU atomics can be used if every process is on the same node or the NIC allows mixing CPU and NIC atomics */
     module->single_node     = local_size == global_size;
     module->use_cpu_atomics = module->single_node;
-
+    module->use_local_leader = true;
     for (int i = 0 ; i < module->btls_in_use ; ++i) {
         module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
+	/* the usage of local leader means to use different channels to send data to peer and update peer's state.
+	 * When different channels are used, active message RDMA cannot guarantee that put and atomics are completed
+	 * in the same order.
+	 */
+	module->use_local_leader = module->use_local_leader && ! (module->selected_btls[i]->btl_flags &(MCA_BTL_FLAGS_PUT_AM | MCA_BTL_FLAGS_ATOMIC_AM_FOP));
     }
 
     if (1 == local_size) {
@@ -749,6 +802,13 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             break;
         }
 
+        if (!module->use_local_leader) {
+            ret = gather_peer_state(module);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS !=ret)) {
+                break;
+            }
+	}
+
         offset = data_base;
         ompi_osc_rdma_peer_t *local_leader;
         for (int i = 0 ; i < local_size ; ++i) {
@@ -777,17 +837,25 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 peer->state = (osc_rdma_counter_t) peer_state;
                 peer->state_endpoint = NULL;
             } else {
-                /* use my endpoint handle to modify the peer's state */
-                if (module->use_memory_registration) {
-                    peer->state_handle = (mca_btl_base_registration_handle_t *) state_region->btl_handle_data;
-                }
-                peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
-                if (i==0) {
+
+		if (module->use_local_leader) {
+                    if (module->use_memory_registration) {
+                        peer->state_handle = (mca_btl_base_registration_handle_t *) state_region->btl_handle_data;
+                    }
+                    peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
+                    if (i==0) {
+                        peer->state_endpoint = peer->data_endpoint;
+                        peer->state_btl_index = peer->data_btl_index;
+                    } else {
+                        peer->state_endpoint = local_leader->state_endpoint;
+                        peer->state_btl_index = local_leader->state_btl_index;
+                    }
+                } else {
+                    assert (!module->use_memory_registration);
+                    assert (NULL != module->peer_state_array);
+                    peer->state = (osc_rdma_counter_t)module->peer_state_array[peer_rank];
                     peer->state_endpoint = peer->data_endpoint;
                     peer->state_btl_index = peer->data_btl_index;
-                } else {
-                    peer->state_endpoint = local_leader->state_endpoint;
-                    peer->state_btl_index = local_leader->state_btl_index;
                 }
             }
 

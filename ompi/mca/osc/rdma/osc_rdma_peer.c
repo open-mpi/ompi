@@ -138,49 +138,64 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
         registration_handle_size = module->selected_btls[0]->btl_registration_handle_size;
     }
 
-    /* each node is responsible for holding a part of the rank -> node/local rank mapping array. this code
-     * calculates the node and offset the mapping can be found. once the mapping has been read the state
-     * part of the peer structure can be initialized. */
-    node_id = peer->rank / RANK_ARRAY_COUNT(module);
-    array_peer_data = (ompi_osc_rdma_region_t *) ((intptr_t) module->node_comm_info + node_id * module->region_size);
+    if (module->use_local_leader) {
+        /* each node is responsible for holding a part of the rank -> node/local rank mapping array. this code
+         * calculates the node and offset the mapping can be found. once the mapping has been read the state
+         * part of the peer structure can be initialized. */
+        node_id = peer->rank / RANK_ARRAY_COUNT(module);
+        array_peer_data = (ompi_osc_rdma_region_t *) ((intptr_t) module->node_comm_info + node_id * module->region_size);
 
-    /* the node leader rank is stored in the length field */
-    node_rank = NODE_ID_TO_RANK(module, array_peer_data, node_id);
-    array_index = peer->rank % RANK_ARRAY_COUNT(module);
+        /* the node leader rank is stored in the length field */
+        node_rank = NODE_ID_TO_RANK(module, array_peer_data, node_id);
+        array_index = peer->rank % RANK_ARRAY_COUNT(module);
 
-    array_pointer = array_peer_data->base + array_index * sizeof (rank_data);
+        array_pointer = array_peer_data->base + array_index * sizeof (rank_data);
 
-    /* lookup the btl endpoint needed to retrieve the mapping */
-    ret = ompi_osc_rdma_peer_btl_endpoint (module, node_rank, &array_btl_index, &array_endpoint);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return OMPI_ERR_UNREACH;
-    }
+        /* lookup the btl endpoint needed to retrieve the mapping */
+        ret = ompi_osc_rdma_peer_btl_endpoint (module, node_rank, &array_btl_index, &array_endpoint);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return OMPI_ERR_UNREACH;
+        }
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "reading region data for %d from rank: %d, index: %d, pointer: 0x%" PRIx64
-                     ", size: %lu", peer->rank, node_rank, array_index, array_pointer, sizeof (rank_data));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "reading region data for %d from rank: %d, index: %d, pointer: 0x%" PRIx64
+                         ", size: %lu", peer->rank, node_rank, array_index, array_pointer, sizeof (rank_data));
 
-    ret = ompi_osc_get_data_blocking (module, array_btl_index, array_endpoint, array_pointer,
-                                      (mca_btl_base_registration_handle_t *) array_peer_data->btl_handle_data,
-                                      &rank_data, sizeof (rank_data));
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return ret;
-    }
+        ret = ompi_osc_get_data_blocking (module, array_btl_index, array_endpoint, array_pointer,
+                                          (mca_btl_base_registration_handle_t *) array_peer_data->btl_handle_data,
+                                          &rank_data, sizeof (rank_data));
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return ret;
+        }
 
-    /* initialize the state part of the peer object. NTH: for now the state data is for every node is stored on
-     * every node. this gives a good balance of code complexity and memory usage at this time. we take advantage
-     * of this by re-using the endpoint and pointer stored in the node_comm_info array. */
-    node_peer_data = (ompi_osc_rdma_region_t *) ((intptr_t) module->node_comm_info + rank_data.node_id * module->region_size);
+        /* initialize the state part of the peer object. NTH: for now the state data is for every node is stored on
+         * every node. this gives a good balance of code complexity and memory usage at this time. we take advantage
+         * of this by re-using the endpoint and pointer stored in the node_comm_info array. */
+        node_peer_data = (ompi_osc_rdma_region_t *) ((intptr_t) module->node_comm_info + rank_data.node_id * module->region_size);
 
-    peer->state = node_peer_data->base + module->state_offset + module->state_size * rank_data.rank;
+        peer->state = node_peer_data->base + module->state_offset + module->state_size * rank_data.rank;
 
-    if (registration_handle_size) {
-        peer->state_handle = (mca_btl_base_registration_handle_t *) node_peer_data->btl_handle_data;
-    }
+        if (registration_handle_size) {
+            peer->state_handle = (mca_btl_base_registration_handle_t *) node_peer_data->btl_handle_data;
+        }
 
-    ret = ompi_osc_rdma_peer_btl_endpoint (module, NODE_ID_TO_RANK(module, node_peer_data, rank_data.node_id),
-                                           &peer->state_btl_index, &peer->state_endpoint);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return OPAL_ERR_UNREACH;
+        ret = ompi_osc_rdma_peer_btl_endpoint (module, NODE_ID_TO_RANK(module, node_peer_data, rank_data.node_id),
+                                               &peer->state_btl_index, &peer->state_endpoint);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return OPAL_ERR_UNREACH;
+        }
+    } else {
+        assert(NULL != module->peer_state_array);
+        peer->state = module->peer_state_array[peer->rank];
+
+	assert(!module->use_memory_registration);
+        peer->state_handle = NULL;
+
+	/* when local leader optimization is not used,
+	 * same endpoint were used to transfer data and
+	 * update state
+	 */
+        peer->state_btl_index = peer->data_btl_index;
+        peer->state_endpoint = peer->data_endpoint;
     }
 
     /* nothing more to do for dynamic memory windows */

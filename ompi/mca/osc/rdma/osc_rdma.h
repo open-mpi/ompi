@@ -255,6 +255,21 @@ struct ompi_osc_rdma_module_t {
     /** lock for peer hash table/array */
     opal_mutex_t peer_lock;
 
+    /** flag to indicate wether to use the local leader optimization,
+     * in which on each node a process was designated as local leader.
+     * local leader setup a shared memory region, and all other processes
+     * on the same node map their state to that region. When a process
+     * want to update a peer's state, the process uses atomics on the peer's
+     * local leader to update peer's state through shared memory region.
+     * BTLs that uses active message RDMA cannot support such optimization,
+     * because active message RDMA uses send/receive to emulate put and
+     * atomics, so the atomcis and RMA operation must be through the same
+     * ordered channel.
+     */
+    bool use_local_leader;
+
+    /** array of peer state. Used when local leader is NOT used */
+    uintptr_t *peer_state_array;
 
     /** BTL(s) in use. Currently this is only used to support RDMA emulation over
      * non-RDMA BTLs. The typical usage is btl/sm + btl/tcp. In the future this
