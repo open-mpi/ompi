@@ -49,24 +49,32 @@ static int opal_common_ofi_init_ref_cnt = 0;
 
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 
+/*
+ * These no-op functions are necessary since libfabric does not allow null
+ * function pointers here.
+ */
 static int opal_common_ofi_monitor_start(struct fid_mem_monitor *monitor)
 {
     return 0;
 }
+
 static void opal_common_ofi_monitor_stop(struct fid_mem_monitor *monitor)
 {
     return;
 }
+
 static int opal_common_ofi_monitor_subscribe(struct fid_mem_monitor *monitor,
                                              const void *addr, size_t len)
 {
     return 0;
 }
+
 static void opal_common_ofi_monitor_unsubscribe(struct fid_mem_monitor *monitor,
                                                 const void *addr, size_t len)
 {
     return;
 }
+
 static bool opal_common_ofi_monitor_valid(struct fid_mem_monitor *monitor,
                                      const void *addr, size_t len)
 {
@@ -90,6 +98,7 @@ static void opal_common_ofi_mem_release_cb(void *buf, size_t length,
     opal_common_ofi_monitor->import_ops->notify(opal_common_ofi_monitor,
                                                 buf, length);
 }
+
 #endif /* HAVE_STRUCT_FI_OPS_MEM_MONITOR */
 
 int opal_common_ofi_init(void)
@@ -109,6 +118,12 @@ int opal_common_ofi_init(void)
         return OPAL_SUCCESS;
     }
 
+    /*
+     * This cache object doesn't do much, but is necessary for the API to work.
+     * It is required to call the fi_import_fid API. This API was introduced in
+     * libfabric version 1.13.0 and "mr_cache" is a "well known" name (documented
+     * in libfabric) to indicate the type of object that we are trying to open.
+     */
     ret = fi_open(FI_VERSION(1,13), "mr_cache", NULL, 0, 0, &opal_common_ofi_cache_fid, NULL);
     if (ret) {
         goto err;
@@ -121,6 +136,13 @@ int opal_common_ofi_init(void)
 
     opal_common_ofi_monitor->fid.fclass = FI_CLASS_MEM_MONITOR;
     opal_common_ofi_monitor->export_ops = &opal_common_ofi_export_ops;
+    /*
+     * This import_fid call must occur before the libfabric provider creates
+     * its memory registration cache. This will typically occur during domain
+     * open as it is a domain level object. We put it early in initialization
+     * to guarantee this and share the import monitor between the ofi btl
+     * and ofi mtl.
+     */
     ret = fi_import_fid(opal_common_ofi_cache_fid, &opal_common_ofi_monitor->fid, 0);
     if (ret) {
         goto err;
@@ -498,61 +520,6 @@ static uint32_t get_package_rank(int32_t num_local_peers, uint16_t my_local_rank
     return (uint32_t)package_ranks[my_local_rank];
 }
 
-/* Selects a NIC based on hardware locality between process cpuset and device BDF.
- *
- * Initializes opal_hwloc_topology to access hardware topology if not previously
- * initialized
- *
- * There are 3 main cases that this covers:
- *
- *      1. If the first provider passed into this function is the only valid
- *      provider, this provider is returned.
- *
- *      2. If there is more than 1 provider that matches the type of the first
- *      provider in the list, and the BDF data
- *      is available then a provider is selected based on locality of device
- *      cpuset and process cpuset and tries to ensure that processes are distributed
- *      evenly across NICs. This has two separate cases:
- *
- *          i. There is one or more provider local to the process:
- *
- *              (local rank % number of providers of the same type that share the process cpuset)
- *              is used to select one of these providers.
- *
- *          ii. There is no provider that is local to the process:
- *
- *              (local rank % number of providers of the same type)
- *              is used to select one of these providers
- *
- *      3. If there is more than 1 providers of the same type in the list, and the BDF data
- *      is not available (the ofi version does not support fi_info.nic or the
- *      provider does not support BDF) then (local rank % number of providers of the same type)
- *      is used to select one of these providers
- *
- *      @param provider_list (IN)   struct fi_info* An initially selected
- *                                  provider NIC. The provider name and
- *                                  attributes are used to restrict NIC
- *                                  selection. This provider is returned if the
- *                                  NIC selection fails.
- *
- *      @param package_rank (IN)   uint32_t The rank of the process. Used to
- *                                  select one valid NIC if there is a case
- *                                  where more than one can be selected. This
- *                                  could occur when more than one provider
- *                                  shares the same cpuset as the process.
- *                                  This could either be a package_rank if one is
- *                                  successfully calculated, or the process id.
- *
- *      @param provider (OUT)       struct fi_info* object with the selected
- *                                  provider if the selection succeeds
- *                                  if the selection fails, returns the fi_info
- *                                  object that was initially provided.
- *
- * All errors should be recoverable and will return the initially provided
- * provider. However, if an error occurs we can no longer guarantee
- * that the provider returned is local to the process or that the processes will
- * balance across available NICs.
- */
 struct fi_info*
 opal_mca_common_ofi_select_provider(struct fi_info *provider_list, int32_t num_local_peers,
                                     uint16_t my_local_rank, char *cpuset, uint32_t pid)
