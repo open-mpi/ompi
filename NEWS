@@ -77,6 +77,7 @@ Master (not on release branches yet)
 
 v5.0.0rc1 -- September, 2021
 --------------------
+
 - ORTE, the underlying OMPI launcher has been removed, and replaced
   with PRTE.
 - Reworked how Open MPI integrates with 3rd party packages.
@@ -94,6 +95,8 @@ v5.0.0rc1 -- September, 2021
 - Various ROMIO v3.4.1 updates.
 - Use Pandoc to generate manpages
 - 32 bit atomics are now only supported via C11 compliant compilers.
+- Explicitly disable support for GNU gcc < v4.8.1 (note: the default
+  gcc compiler that is included in RHEL 7 is v4.8.5).
 - Do not build Open SHMEM layer when there are no SPMLs available.
   Currently, this means the Open SHMEM layer will only build if
   the UCX library is found.

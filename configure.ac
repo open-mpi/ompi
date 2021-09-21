@@ -600,6 +600,22 @@ opal_show_subtitle "Compiler characteristics"
 OPAL_CHECK_ATTRIBUTES
 OPAL_CHECK_COMPILER_VERSION_ID
 
+# Open MPI only supports GCC >=v4.8.1.  Notes:
+#
+# 1. The default compiler that comes with RHEL 7 is v4.8.5 (version ID
+#    264197).
+# 2. We regularly test with GCC v4.8.1 (version ID 264193).
+# 3. GCC 4.8.0 probably also works; we just haven't tested it.
+#
+# Since we regularly test with 4.8.1, that's what we check for.
+AS_IF([test "$opal_cv_compiler_FAMILYNAME" = "GNU" && \
+       test "$opal_cv_compiler_VERSION" -lt 264193],
+      [AC_MSG_WARN([Open MPI no longer supports versions of the GNU compiler suite])
+       AC_MSG_WARN([less than v4.8.1.])
+       AC_MSG_WARN([Please upgrade your GNU compiler suite, or use])
+       AC_MSG_WARN([a different compiler to build Open MPI.])
+       AC_MSG_ERROR([Cannot continue])
+      ])
 
 ##################################
 # Java MPI Binding request
