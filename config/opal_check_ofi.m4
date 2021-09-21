@@ -126,19 +126,26 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
     CPPFLAGS="$CPPFLAGS $opal_ofi_CPPFLAGS"
 
     AS_IF([test $opal_ofi_happy = yes],
-          [AC_CHECK_MEMBER([struct fi_info.nic],
+          [AC_CHECK_HEADERS([rdma/fi_ext.h])
+
+           AC_CHECK_MEMBER([struct fi_info.nic],
                            [opal_check_fi_info_pci=1],
                            [opal_check_fi_info_pci=0],
-                           [[#include <rdma/fabric.h>]])])
+                           [[#include <rdma/fabric.h>]])
 
-    AC_DEFINE_UNQUOTED([OPAL_OFI_PCI_DATA_AVAILABLE],
-                       [$opal_check_fi_info_pci],
-                       [check if pci data is available in ofi])
+           AC_DEFINE_UNQUOTED([OPAL_OFI_PCI_DATA_AVAILABLE],
+                              [$opal_check_fi_info_pci],
+                              [check if pci data is available in ofi])
 
-    AC_CHECK_DECLS([PMIX_PACKAGE_RANK],
-                   [],
-                   [],
-                   [#include <pmix.h>])
+           AC_CHECK_DECLS([PMIX_PACKAGE_RANK],
+                          [],
+                          [],
+                          [#include <pmix.h>])
+
+           AC_CHECK_TYPES([struct fi_ops_mem_monitor], [], [],
+                          [#ifdef HAVE_RDMA_FI_EXT_H
+#include <rdma/fi_ext.h>
+#endif])])
 
     CPPFLAGS=$opal_check_ofi_save_CPPFLAGS
     LDFLAGS=$opal_check_ofi_save_LDFLAGS
@@ -157,18 +164,6 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                  [AC_MSG_WARN([OFI libfabric support requested (via --with-ofi or --with-libfabric), but not found.])
                   AC_MSG_ERROR([Cannot continue.])])
            ])
-    opal_ofi_import_monitor=no
-    AS_IF([test $opal_ofi_happy = "yes"],
-          [OPAL_CHECK_OFI_VERSION_GE([1,14],
-                                     [opal_ofi_import_monitor=yes],
-                                     [opal_ofi_import_monitor=no])])
-
-
-if test "$opal_ofi_import_monitor" = "yes"; then
-    AC_DEFINE_UNQUOTED([OPAL_OFI_IMPORT_MONITOR_SUPPORT],1,
-                       [Whether libfabric supports monitor import])
-fi
-
 ])dnl
 
 

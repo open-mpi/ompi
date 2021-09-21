@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <rdma/fabric.h>
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
+#ifdef HAVE_RDMA_FI_EXT_H
 #include <rdma/fi_ext.h>
 #endif
 
@@ -45,7 +45,7 @@ static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
 static bool opal_common_ofi_initialized = false;
 static int opal_common_ofi_init_ref_cnt = 0;
 
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
+#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 
 static int opal_common_ofi_monitor_start(struct fid_mem_monitor *monitor)
 {
@@ -88,7 +88,7 @@ static void opal_common_ofi_mem_release_cb(void *buf, size_t length,
     opal_common_ofi_monitor->import_ops->notify(opal_common_ofi_monitor,
                                                 buf, length);
 }
-#endif /* OPAL_OFI_IMPORT_MONITOR_SUPPORT */
+#endif /* HAVE_STRUCT_FI_OPS_MEM_MONITOR */
 
 int opal_common_ofi_init(void)
 {
@@ -98,7 +98,7 @@ int opal_common_ofi_init(void)
     if (opal_common_ofi_initialized) {
         return OPAL_SUCCESS;
     }
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
+#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 
     mca_base_framework_open(&opal_memory_base_framework, 0);
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
