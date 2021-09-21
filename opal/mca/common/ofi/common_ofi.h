@@ -33,11 +33,47 @@ typedef struct opal_common_ofi_module {
 
 extern opal_common_ofi_module_t opal_common_ofi;
 
+
+/**
+ * Register component-specialized MCA variables
+ *
+ * Register MCA variables common to all OFI components on behalf of
+ * the calling component.  Expected to be called during
+ * component_register for all OFI-related components.
+ *
+ * @param component (IN) OFI component being initialized
+ *
+ * @returns OPAL_SUCCESS on success, OPAL error code on failure
+ */
 OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component);
+
+/**
+ * Common MCA registration
+ *
+ * Common MCA registration handlinge.  After calling this function,
+ * \code opal_common_ofi.output will be properly initialized.
+ *
+ * @returns OPAL_SUCCESS on success, OPAL error code on failure
+ */
 OPAL_DECLSPEC void opal_common_ofi_mca_register(void);
+
+/**
+ * Common MCA cleanup
+ *
+ * Cleanup for any resources registered during \code
+ * opal_common_ofi_mca_register().
+ *
+ * @returns OPAL_SUCCESS on success, OPAL error code on failure
+ */
 OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
 
-/*
+/**
+ * Search function for provider names
+ *
+ * This function will take a provider name string and a list of lower
+ * provider name strings as inputs. It will return true if the lower
+ * provider in the item string matches a lower provider in the list.
+ *
  * @param list (IN)    List of strings corresponding to lower providers.
  * @param item (IN)    Single string corresponding to a provider.
  *
@@ -46,23 +82,76 @@ OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
  * @return 1           The lower provider of the item string matches
  *                     a string in the item list.
  *
- * This function will take a provider name string and a list of lower
- * provider name strings as inputs. It will return true if the lower
- * provider in the item string matches a lower provider in the list.
- *
  */
 OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
 
-/*
+/**
  * Initializes common objects for libfabric
+ *
+ * @note This function is not thread safe and must be called in a
+ * serial portion of the code.
  */
 OPAL_DECLSPEC int opal_common_ofi_init(void);
 
-/*
+/**
  * Cleans up common objects for libfabric
+ *
+ * @note This function is not thread safe and must be called in a
+ * serial portion of the code.
  */
 OPAL_DECLSPEC int opal_common_ofi_fini(void);
 
+/**
+ * Selects NIC (provider) based on hardware locality
+ *
+ * In multi-nic situations, use hardware topology to pick the "best"
+ * of the selected NICs.
+ * There are 3 main cases that this covers:
+ *
+ *      1. If the first provider passed into this function is the only valid
+ *      provider, this provider is returned.
+ *
+ *      2. If there is more than 1 provider that matches the type of the first
+ *      provider in the list, and the BDF data
+ *      is available then a provider is selected based on locality of device
+ *      cpuset and process cpuset and tries to ensure that processes
+ *      are distributed evenly across NICs. This has two separate
+ *      cases:
+ *
+ *          i. There is one or more provider local to the process:
+ *
+ *              (local rank % number of providers of the same type
+ *              that share the process cpuset) is used to select one
+ *              of these providers.
+ *
+ *          ii. There is no provider that is local to the process:
+ *
+ *              (local rank % number of providers of the same type)
+ *              is used to select one of these providers
+ *
+ *      3. If there is more than 1 providers of the same type in the
+ *      list, and the BDF data is not available (the ofi version does
+ *      not support fi_info.nic or the provider does not support BDF)
+ *      then (local rank % number of providers of the same type) is
+ *      used to select one of these providers
+ *
+ * @param provider_list (IN)   struct fi_info* An initially selected
+ *                             provider NIC. The provider name and
+ *                             attributes are used to restrict NIC
+ *                             selection. This provider is returned if the
+ *                             NIC selection fails.
+ *
+ * @param provider (OUT)       struct fi_info* object with the selected
+ *                             provider if the selection succeeds
+ *                             if the selection fails, returns the fi_info
+ *                             object that was initially provided.
+ *
+ * All errors should be recoverable and will return the initially provided
+ * provider. However, if an error occurs we can no longer guarantee
+ * that the provider returned is local to the process or that the processes will
+ * balance across available NICs.
+ *
+ */
 OPAL_DECLSPEC struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
                                                                   opal_process_info_t *process_info);
 
