@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2021 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015-2019 Research Organization for Information Science
@@ -332,9 +332,9 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # see if the C compiler supports __builtin_expect
     AC_CACHE_CHECK([if $CC supports __builtin_expect],
         [opal_cv_cc_supports___builtin_expect],
-        [AC_TRY_LINK([],
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM([],
           [void *ptr = (void*) 0;
-           if (__builtin_expect (ptr != (void*) 0, 1)) return 0;],
+           if (__builtin_expect (ptr != (void*) 0, 1)) return 0;])],
           [opal_cv_cc_supports___builtin_expect="yes"],
           [opal_cv_cc_supports___builtin_expect="no"])])
     if test "$opal_cv_cc_supports___builtin_expect" = "yes" ; then
@@ -348,9 +348,9 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # see if the C compiler supports __builtin_prefetch
     AC_CACHE_CHECK([if $CC supports __builtin_prefetch],
         [opal_cv_cc_supports___builtin_prefetch],
-        [AC_TRY_LINK([],
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM([],
           [int ptr;
-           __builtin_prefetch(&ptr,0,0);],
+           __builtin_prefetch(&ptr,0,0);])],
           [opal_cv_cc_supports___builtin_prefetch="yes"],
           [opal_cv_cc_supports___builtin_prefetch="no"])])
     if test "$opal_cv_cc_supports___builtin_prefetch" = "yes" ; then
@@ -364,9 +364,9 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # see if the C compiler supports __builtin_clz
     AC_CACHE_CHECK([if $CC supports __builtin_clz],
         [opal_cv_cc_supports___builtin_clz],
-        [AC_TRY_LINK([],
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM([],
             [int value = 0xffff; /* we know we have 16 bits set */
-             if ((8*sizeof(int)-16) != __builtin_clz(value)) return 0;],
+             if ((8*sizeof(int)-16) != __builtin_clz(value)) return 0;])],
             [opal_cv_cc_supports___builtin_clz="yes"],
             [opal_cv_cc_supports___builtin_clz="no"])])
     if test "$opal_cv_cc_supports___builtin_clz" = "yes" ; then
