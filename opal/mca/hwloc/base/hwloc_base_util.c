@@ -152,8 +152,16 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
     if (NULL == opal_hwloc_base_cpu_list) {
 /* get the root available cpuset */
 #if HWLOC_API_VERSION < 0x20000
-        avail = hwloc_bitmap_alloc();
-        hwloc_bitmap_and(avail, root->online_cpuset, root->allowed_cpuset);
+        if (NULL == root->online_cpuset || NULL == root->allowed_cpuset) {
+            if (NULL == root->cpuset) {
+                /* we have a really bad topology */
+                return OPAL_ERR_NOT_SUPPORTED;
+            }
+            avail = hwloc_bitmap_dup(root->cpuset);
+        } else {
+            avail = hwloc_bitmap_alloc();
+            hwloc_bitmap_and(avail, root->online_cpuset, root->allowed_cpuset);
+        }
 #else
         avail = hwloc_bitmap_dup(root->cpuset);
 #endif
