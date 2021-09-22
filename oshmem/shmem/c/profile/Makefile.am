@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2013-2016 Mellanox Technologies, Inc.
 #                         All rights reserved
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -106,11 +106,3 @@ endif
 # These files were created by targets above
 
 MAINTAINERCLEANFILES = $(nodist_liboshmem_c_pshmem_la_SOURCES)
-
-# Don't want these targets in here
-
-tags-recursive:
-tags:
-TAGS:
-GTAGS:
-ID:
