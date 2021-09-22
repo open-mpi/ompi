@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
-dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
@@ -97,7 +97,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
     # assume that the path is not currently valid.
     wrapper_tmp="$(type -p "$with_wrapper_cc")"
     if test -z "$wrapper_tmp" ; then
-	AC_MSG_WARN([could not find \"$with_wrapper_cc\" in path])
+        AC_MSG_WARN([could not find "$with_wrapper_cc" in path])
     fi
     WRAPPER_CC=$with_wrapper_cc
 
