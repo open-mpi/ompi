@@ -1004,10 +1004,14 @@ AC_PROG_GREP
 AC_PROG_EGREP
 
 #
-# We need as and lex
+# We need as and flex
 #
 AM_PROG_AS
-AM_PROG_LEX
+
+dnl Note that prior to AC v2.70, PROG_LEX did not take any arguments.
+dnl But it is harmless to pass an argument to it ($1 will just be
+dnl ignored).
+AC_PROG_LEX([noyywrap])
 
 # If we don't have Flex and we don't have a generated .c file
 # (distribution tarballs will have the .c file included, but git
@@ -1015,18 +1019,17 @@ AM_PROG_LEX
 # Lex are not workable (all things being equal, since this is *only*
 # required for developers, we decided that it really was not worth it
 # to be portable between different versions of lex ;-).
-
-if test -z "$LEX" || \
+AS_IF([test -z "$LEX" || \
    test -n "`echo $LEX | $GREP missing`" || \
-   test "`basename $LEX`" != "flex"; then
-    if test ! -f "$srcdir/opal/util/show_help_lex.c"; then
-        AC_MSG_WARN([*** Could not find Flex on your system.])
+   test "`basename $LEX`" != "flex"],
+    [AS_IF([test ! -f "$srcdir/opal/util/show_help_lex.c"],
+       [AC_MSG_WARN([*** Could not find Flex on your system.])
         AC_MSG_WARN([*** Flex is required for developer builds of Open MPI.])
         AC_MSG_WARN([*** Other versions of Lex are not supported.])
         AC_MSG_WARN([*** NOTE: If you are building a tarball downloaded from www.open-mpi.org, you do not need Flex])
         AC_MSG_ERROR([Cannot continue])
-    fi
-fi
+       ])
+    ])
 
 #
 # Setup man page processing
