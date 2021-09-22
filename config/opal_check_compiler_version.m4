@@ -1,6 +1,7 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2021 Cisco Systems, Inc.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -31,20 +32,16 @@ AC_DEFUN([OPAL_CHECK_COMPILER], [
     [
             CPPFLAGS_orig=$CPPFLAGS
             CPPFLAGS="-I${OPAL_TOP_SRCDIR}/opal/include/opal $CPPFLAGS"
-            AC_TRY_RUN([
+            AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <stdlib.h>
 #include "opal_portable_platform.h"
-
-int main (int argc, char * argv[])
-{
+]],[[
     FILE * f;
     f=fopen("conftestval", "w");
     if (!f) exit(1);
     fprintf (f, "%d", PLATFORM_COMPILER_$1);
-    return 0;
-}
-            ], [
+            ]])], [
                 eval opal_cv_compiler_$1=`cat conftestval`;
             ], [
                 eval opal_cv_compiler_$1=0
@@ -63,20 +60,16 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRING], [
     [
             CPPFLAGS_orig=$CPPFLAGS
             CPPFLAGS="-I${OPAL_TOP_SRCDIR}/opal/include/opal $CPPFLAGS"
-            AC_TRY_RUN([
+            AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <stdlib.h>
 #include "opal_portable_platform.h"
-
-int main (int argc, char * argv[])
-{
+]],[[
     FILE * f;
     f=fopen("conftestval", "w");
     if (!f) exit(1);
     fprintf (f, "%s", PLATFORM_COMPILER_$1);
-    return 0;
-}
-            ], [
+            ]])], [
                 eval opal_cv_compiler_$1=`cat conftestval`;
             ], [
                 eval opal_cv_compiler_$1=UNKNOWN
@@ -96,20 +89,16 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRINGIFY], [
     [
             CPPFLAGS_orig=$CPPFLAGS
             CPPFLAGS="-I${OPAL_TOP_SRCDIR}/opal/include/opal $CPPFLAGS"
-            AC_TRY_RUN([
+            AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <stdlib.h>
 #include "opal_portable_platform.h"
-
-int main (int argc, char * argv[])
-{
+]],[[
     FILE * f;
     f=fopen("conftestval", "w");
     if (!f) exit(1);
     fprintf (f, "%s", _STRINGIFY(PLATFORM_COMPILER_$1));
-    return 0;
-}
-            ], [
+            ]])], [
                 eval opal_cv_compiler_$1=`cat conftestval`;
             ], [
                 eval opal_cv_compiler_$1=UNKNOWN

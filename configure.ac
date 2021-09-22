@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -872,7 +872,8 @@ AC_MSG_CHECKING([the linker for support for the -fini option])
 OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
 LDFLAGS_save=$LDFLAGS
 LDFLAGS="$LDFLAGS_save -Wl,-fini -Wl,finalize"
-AC_TRY_LINK([void finalize (void) {}], [], [AC_MSG_RESULT([yes])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([void finalize (void) {}], [])],
+               [AC_MSG_RESULT([yes])
         opal_ld_have_fini=1], [AC_MSG_RESULT([no])
         opal_ld_have_fini=0])
 LDFLAGS=$LDFLAGS_save
