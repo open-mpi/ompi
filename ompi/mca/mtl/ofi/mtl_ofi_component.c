@@ -887,6 +887,20 @@ select_prov:
         }
     }
 
+    /* this must be called during single threaded part of the code and
+     * before Libfabric configures its memory monitors.  Easiest to do
+     * that before domain open.  Silently ignore not-supported errors,
+     * as they are not critical to program correctness, but only
+     * indicate that LIbfabric will have to pick a different, possibly
+     * less optimial, monitor. */
+    ret = opal_common_ofi_export_memory_monitor();
+    if (0 != ret && -FI_ENOSYS != ret) {
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "Failed to inject Libfabric memory monitor: %s",
+                             fi_strerror(-ret));
+    }
+
+
     /**
      * Open fabric
      * The getinfo struct returns a fabric attribute struct that can be used to
