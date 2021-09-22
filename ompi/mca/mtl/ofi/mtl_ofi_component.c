@@ -251,9 +251,7 @@ ompi_mtl_ofi_component_register(void)
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &ompi_mtl_ofi.num_ofi_contexts);
 
-    opal_common_ofi_register_mca_variables(&mca_mtl_ofi_component.super.mtl_version);
-
-    return OMPI_SUCCESS;
+    return opal_common_ofi_mca_register(&mca_mtl_ofi_component.super.mtl_version);
 }
 
 
@@ -282,7 +280,7 @@ ompi_mtl_ofi_component_open(void)
             "provider_exclude")) {
         return OMPI_ERR_NOT_AVAILABLE;
     }
-    return opal_common_ofi_init();
+    return opal_common_ofi_open();
 }
 
 static int
@@ -296,9 +294,10 @@ ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
 static int
 ompi_mtl_ofi_component_close(void)
 {
-    opal_common_ofi_mca_deregister();
-    opal_common_ofi_fini();
-    return OMPI_SUCCESS;
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_fini();
+#endif
+    return opal_common_ofi_close();
 }
 
 int
@@ -578,8 +577,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     size_t namelen;
     int universe_size;
     char *univ_size_str;
-
-    opal_common_ofi_mca_register();
 
     opal_output_verbose(1, opal_common_ofi.output,
                         "%s:%d: mtl:ofi:provider_include = \"%s\"\n",

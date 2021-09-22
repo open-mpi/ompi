@@ -26,26 +26,10 @@ BEGIN_C_DECLS
 typedef struct opal_common_ofi_module {
     char **prov_include;
     char **prov_exclude;
-    int verbose;
-    int registered;
     int output;
 } opal_common_ofi_module_t;
 
 extern opal_common_ofi_module_t opal_common_ofi;
-
-
-/**
- * Register component-specialized MCA variables
- *
- * Register MCA variables common to all OFI components on behalf of
- * the calling component.  Expected to be called during
- * component_register for all OFI-related components.
- *
- * @param component (IN) OFI component being initialized
- *
- * @returns OPAL_SUCCESS on success, OPAL error code on failure
- */
-OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component);
 
 /**
  * Common MCA registration
@@ -53,19 +37,35 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
  * Common MCA registration handlinge.  After calling this function,
  * \code opal_common_ofi.output will be properly initialized.
  *
+ * @param component (IN) OFI component being initialized
+ *
  * @returns OPAL_SUCCESS on success, OPAL error code on failure
  */
-OPAL_DECLSPEC void opal_common_ofi_mca_register(void);
+OPAL_DECLSPEC int opal_common_ofi_mca_register(const mca_base_component_t *component);
 
 /**
- * Common MCA cleanup
+ * Initializes common objects for libfabric
  *
- * Cleanup for any resources registered during \code
- * opal_common_ofi_mca_register().
+ * Initialize common libfabric interface.  This should be called from
+ * any other OFI component's component_open() call.
  *
- * @returns OPAL_SUCCESS on success, OPAL error code on failure
+ * @note This function is not thread safe and must be called in a
+ * serial portion of the code.
  */
-OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
+OPAL_DECLSPEC int opal_common_ofi_open(void);
+
+/**
+ * Cleans up common objects for libfabric
+ *
+ * Clean up common libfabric interface.  This should be called from
+ * any other OFI component's component_close() call.  Resource cleanup
+ * is reference counted, so any successful call to
+ * opal_common_ofi_init().
+ *
+ * @note This function is not thread safe and must be called in a
+ * serial portion of the code.
+ */
+OPAL_DECLSPEC int opal_common_ofi_close(void);
 
 /**
  * Search function for provider names
@@ -86,25 +86,7 @@ OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
 OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
 
 /**
- * Initializes common objects for libfabric
- *
- * @note This function is not thread safe and must be called in a
- * serial portion of the code.
- */
-OPAL_DECLSPEC int opal_common_ofi_init(void);
-
-/**
- * Cleans up common objects for libfabric
- *
- * @note This function is not thread safe and must be called in a
- * serial portion of the code.
- */
-OPAL_DECLSPEC int opal_common_ofi_fini(void);
-
-/* Selects a NIC based on hardware locality between process cpuset and device BDF.
- *
- * Initializes opal_hwloc_topology to access hardware topology if not previously
- * initialized
+ * Selects NIC (provider) based on hardware locality
  *
  * There are 3 main cases that this covers:
  *
