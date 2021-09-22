@@ -37,12 +37,9 @@
 
 opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                             .prov_exclude = NULL,
-                                            .registered = 0,
-                                            .verbose = 0};
-
+                                            .output = -1};
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic";
 static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
-static bool opal_common_ofi_initialized = false;
 static int opal_common_ofi_init_ref_cnt = 0;
 
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
@@ -99,12 +96,11 @@ static void opal_common_ofi_mem_release_cb(void *buf, size_t length,
 
 #endif /* HAVE_STRUCT_FI_OPS_MEM_MONITOR */
 
-int opal_common_ofi_init(void)
+int opal_common_ofi_open(void)
 {
     int ret;
 
-    opal_common_ofi_init_ref_cnt++;
-    if (opal_common_ofi_initialized) {
+    if ((opal_common_ofi_init_ref_cnt++) > 0) {
         return OPAL_SUCCESS;
     }
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
@@ -146,7 +142,6 @@ int opal_common_ofi_init(void)
         goto err;
     }
     opal_mem_hooks_register_release(opal_common_ofi_mem_release_cb, NULL);
-    opal_common_ofi_initialized = true;
 
     return OPAL_SUCCESS;
 err:
@@ -157,23 +152,35 @@ err:
         free(opal_common_ofi_monitor);
     }
 
+    opal_common_ofi_init_ref_cnt--;
+
     return OPAL_ERROR;
 #else
-    opal_common_ofi_initialized = true;
     return OPAL_SUCCESS;
 #endif
 }
 
-int opal_common_ofi_fini(void)
+int opal_common_ofi_close(void)
 {
-    if (opal_common_ofi_initialized && !--opal_common_ofi_init_ref_cnt) {
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
-        opal_mem_hooks_unregister_release(opal_common_ofi_mem_release_cb);
-        fi_close(opal_common_ofi_cache_fid);
-        fi_close(&opal_common_ofi_monitor->fid);
-        free(opal_common_ofi_monitor);
+    int ret;
+
+    if ((--opal_common_ofi_init_ref_cnt) > 0) {
+        return OPAL_SUCCESS;
+    }
+
+#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
+    opal_mem_hooks_unregister_release(opal_common_ofi_mem_release_cb);
+    fi_close(opal_common_ofi_cache_fid);
+    fi_close(&opal_common_ofi_monitor->fid);
+    free(opal_common_ofi_monitor);
 #endif
-        opal_common_ofi_initialized = false;
+
+    if (opal_common_ofi.output != -1) {
+        opal_output_close(opal_common_ofi.output);
+        opal_common_ofi.output = -1;
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
     }
 
     return OPAL_SUCCESS;
@@ -198,11 +205,12 @@ int opal_common_ofi_is_in_list(char **list, char *item)
     return 0;
 }
 
-int opal_common_ofi_register_mca_variables(const mca_base_component_t *component)
+int opal_common_ofi_mca_register(const mca_base_component_t *component)
 {
     static int include_index;
     static int exclude_index;
     static int verbose_index;
+    int verbose;
     int param;
 
     if (fi_version() < FI_VERSION(1, 0)) {
@@ -260,7 +268,7 @@ int opal_common_ofi_register_mca_variables(const mca_base_component_t *component
                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                               MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                               MCA_BASE_VAR_SCOPE_LOCAL,
-                                              &opal_common_ofi.verbose);
+                                              &verbose);
     } else {
         verbose_index = param;
     }
@@ -277,32 +285,14 @@ int opal_common_ofi_register_mca_variables(const mca_base_component_t *component
                                       "verbose", 0);
     }
 
+    if (opal_common_ofi.output == -1) {
+        opal_common_ofi.output = opal_output_open(NULL);
+        opal_output_set_verbosity(opal_common_ofi.output, verbose);
+    }
+
     OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
 
     return OPAL_SUCCESS;
-}
-
-void opal_common_ofi_mca_register(void)
-{
-    opal_common_ofi.registered++;
-    if (opal_common_ofi.registered > 1) {
-        opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
-        return;
-    }
-
-    opal_common_ofi.output = opal_output_open(NULL);
-    opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
-}
-
-void opal_common_ofi_mca_deregister(void)
-{
-    /* unregister only on last deregister */
-    opal_common_ofi.registered--;
-    assert(opal_common_ofi.registered >= 0);
-    if (opal_common_ofi.registered) {
-        return;
-    }
-    opal_output_close(opal_common_ofi.output);
 }
 
 /* check that the tx attributes match */
