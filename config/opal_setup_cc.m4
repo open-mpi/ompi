@@ -211,10 +211,11 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_DEFINE_UNQUOTED([OPAL_C_HAVE___THREAD], [$opal_prog_cc__thread_available],
                        [Whether C compiler supports __thread])
 
-
     # Check for standard headers, needed here because needed before
-    # the types checks.
-    AC_HEADER_STDC
+    # the types checks.  This is only necessary for Autoconf < v2.70.
+    m4_version_prereq([2.70],
+                      [],
+                      [AC_HEADER_STDC])
 
     # GNU C and autotools are inconsistent about whether this is
     # defined so let's make it true everywhere for now...  However, IBM
