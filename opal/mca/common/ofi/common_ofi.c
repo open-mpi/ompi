@@ -43,12 +43,21 @@ opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                             .output = -1};
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic";
 static int opal_common_ofi_init_ref_cnt = 0;
+static bool opal_common_ofi_installed_memory_monitor = false;
 
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 
 /*
- * These no-op functions are necessary since libfabric does not allow null
- * function pointers here.
+ * Monitor object to export into Libfabric to provide memory release
+ * notifications using our own memory hooks framework.  Monitors may
+ * use the subscribe/unsubscribe notifications to reduce unnecessary
+ * notifications, but are not required to do so.  Because patcher
+ * notifies about all releases, it is cheaper for us to not filter and
+ * this monitor can safely ignore subscribe/unsubscribe notifications.
+ *
+ * Libfabric requires the object to be fully defined.  Unlike most of
+ * Open MPI, it does not have NULL function pointer checks in calling
+ * code.
  */
 static int opal_common_ofi_monitor_start(struct fid_mem_monitor *monitor)
 {
@@ -78,8 +87,8 @@ static bool opal_common_ofi_monitor_valid(struct fid_mem_monitor *monitor,
     return true;
 }
 
-static struct fid_mem_monitor *opal_common_ofi_monitor;
-static struct fid *opal_common_ofi_cache_fid;
+static struct fid_mem_monitor *opal_common_ofi_monitor = NULL;
+static struct fid *opal_common_ofi_cache_fid = NULL;
 static struct fi_ops_mem_monitor opal_common_ofi_export_ops = {
     .size = sizeof(struct fi_ops_mem_monitor),
     .start = opal_common_ofi_monitor_start,
@@ -89,6 +98,12 @@ static struct fi_ops_mem_monitor opal_common_ofi_export_ops = {
     .valid = opal_common_ofi_monitor_valid,
 };
 
+/**
+ * Callback function from Open MPI memory monitor
+ *
+ * Translation function between the callback function from Open MPI's
+ * memory notifier to the Libfabric memory monitor.
+ */
 static void opal_common_ofi_mem_release_cb(void *buf, size_t length,
                                            void *cbdata, bool from_alloc)
 {
@@ -98,68 +113,110 @@ static void opal_common_ofi_mem_release_cb(void *buf, size_t length,
 
 #endif /* HAVE_STRUCT_FI_OPS_MEM_MONITOR */
 
-int opal_common_ofi_open(void)
+int opal_common_ofi_export_memory_monitor(void)
 {
-    int ret;
+    int ret = -FI_ENOSYS;
 
-    if ((opal_common_ofi_init_ref_cnt++) > 0) {
-        return OPAL_SUCCESS;
-    }
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
 
-    mca_base_framework_open(&opal_memory_base_framework, 0);
-    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
-        != (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
-        & opal_mem_hooks_support_level())) {
-        return OPAL_SUCCESS;
+    if (NULL != opal_common_ofi_cache_fid) {
+        return 0;
     }
 
     /*
-     * This cache object doesn't do much, but is necessary for the API to work.
-     * It is required to call the fi_import_fid API. This API was introduced in
-     * libfabric version 1.13.0 and "mr_cache" is a "well known" name (documented
-     * in libfabric) to indicate the type of object that we are trying to open.
+     * While the memory import functionality was introduced in 1.13,
+     * some deadlock bugs exist in the 1.13 series.  Require version
+     * 1.14 before this code is activated.  Not activating the code
+     * should not break any functionality directly, but may lead to
+     * sub-optimal memory monitors being used in Libfabric, as Open
+     * MPI will almost certainly install a patcher first.
      */
-    ret = fi_open(FI_VERSION(1,13), "mr_cache", NULL, 0, 0, &opal_common_ofi_cache_fid, NULL);
-    if (ret) {
+    if (FI_VERSION_LT(fi_version(), FI_VERSION(1, 14))) {
+        ret = -FI_ENOSYS;
+        goto err;
+    }
+
+    ret = mca_base_framework_open(&opal_memory_base_framework, 0);
+    if (OPAL_SUCCESS != ret) {
+        ret = -FI_ENOSYS;
+        goto err;
+    }
+    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
+        != (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
+        & opal_mem_hooks_support_level())) {
+        ret = -FI_ENOSYS;
+        goto err;
+    }
+
+    /*
+     * The monitor import object has the well known name "mr_cache"
+     * and was introduced in Libfabric 1.13
+     */
+    ret = fi_open(FI_VERSION(1,13), "mr_cache", NULL, 0, 0,
+                  &opal_common_ofi_cache_fid, NULL);
+    if (0 != ret) {
         goto err;
     }
 
     opal_common_ofi_monitor = calloc(1, sizeof(*opal_common_ofi_monitor));
-    if (!opal_common_ofi_monitor) {
+    if (NULL == opal_common_ofi_monitor) {
+        ret = -FI_ENOMEM;
         goto err;
     }
 
     opal_common_ofi_monitor->fid.fclass = FI_CLASS_MEM_MONITOR;
     opal_common_ofi_monitor->export_ops = &opal_common_ofi_export_ops;
-    /*
-     * This import_fid call must occur before the libfabric provider creates
-     * its memory registration cache. This will typically occur during domain
-     * open as it is a domain level object. We put it early in initialization
-     * to guarantee this and share the import monitor between the ofi btl
-     * and ofi mtl.
-     */
-    ret = fi_import_fid(opal_common_ofi_cache_fid, &opal_common_ofi_monitor->fid, 0);
-    if (ret) {
+    ret = fi_import_fid(opal_common_ofi_cache_fid,
+                        &opal_common_ofi_monitor->fid, 0);
+    if (0 != ret) {
         goto err;
     }
     opal_mem_hooks_register_release(opal_common_ofi_mem_release_cb, NULL);
+    opal_common_ofi_installed_memory_monitor = true;
 
-    return OPAL_SUCCESS;
+    ret = 0;
+
 err:
-    if (opal_common_ofi_cache_fid) {
-        fi_close(opal_common_ofi_cache_fid);
-    }
-    if (opal_common_ofi_monitor) {
-        free(opal_common_ofi_monitor);
+    if (0 != ret) {
+        if (NULL != opal_common_ofi_cache_fid) {
+            fi_close(opal_common_ofi_cache_fid);
+        }
+        if (NULL != opal_common_ofi_monitor) {
+            free(opal_common_ofi_monitor);
+        }
     }
 
-    opal_common_ofi_init_ref_cnt--;
+    opal_common_ofi_installed_memory_monitor = false;
 
-    return OPAL_ERROR;
-#else
-    return OPAL_SUCCESS;
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
 #endif
+
+    return ret;
+}
+
+static int opal_common_ofi_remove_memory_monitor(void)
+{
+#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
+    if (opal_common_ofi_installed_memory_monitor) {
+        opal_mem_hooks_unregister_release(opal_common_ofi_mem_release_cb);
+        fi_close(opal_common_ofi_cache_fid);
+        fi_close(&opal_common_ofi_monitor->fid);
+        free(opal_common_ofi_monitor);
+        opal_common_ofi_installed_memory_monitor = false;
+    }
+#endif
+
+    return OPAL_SUCCESS;
+}
+
+int opal_common_ofi_open(void)
+{
+    if ((opal_common_ofi_init_ref_cnt++) > 0) {
+        return OPAL_SUCCESS;
+    }
+
+    return OPAL_SUCCESS;
 }
 
 int opal_common_ofi_close(void)
@@ -170,14 +227,12 @@ int opal_common_ofi_close(void)
         return OPAL_SUCCESS;
     }
 
-#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
-    opal_mem_hooks_unregister_release(opal_common_ofi_mem_release_cb);
-    fi_close(opal_common_ofi_cache_fid);
-    fi_close(&opal_common_ofi_monitor->fid);
-    free(opal_common_ofi_monitor);
-#endif
+    ret = opal_common_ofi_remove_memory_monitor();
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
 
-    if (opal_common_ofi.output != -1) {
+    if (-1 != opal_common_ofi.output) {
         opal_output_close(opal_common_ofi.output);
         opal_common_ofi.output = -1;
         if (OPAL_SUCCESS != ret) {

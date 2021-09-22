@@ -471,6 +471,19 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
      * to prevent races. */
     mca_btl_ofi_rcache_init(module);
 
+    /* for similar reasons to the rcache call, this must be called
+     * during single threaded part of the code and before Libfabric
+     * configures its memory monitors.  Easiest to do that before
+     * domain open.  Silently ignore not-supported errors, as they
+     * are not critical to program correctness, but only indicate
+     * that LIbfabric will have to pick a different, possibly less
+     * optimial, monitor. */
+    rc = opal_common_ofi_export_memory_monitor();
+    if (0 != rc && -FI_ENOSYS != rc) {
+        BTL_VERBOSE(("Failed to inject Libfabric memory monitor: %s",
+                     fi_strerror(-rc)));
+    }
+
     linux_device_name = info->domain_attr->name;
     BTL_VERBOSE(("initializing dev:%s provider:%s",
                     linux_device_name,

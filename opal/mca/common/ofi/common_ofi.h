@@ -68,6 +68,18 @@ OPAL_DECLSPEC int opal_common_ofi_open(void);
 OPAL_DECLSPEC int opal_common_ofi_close(void);
 
 /**
+ * Export our memory hooks into Libfabric monitor
+ *
+ * Use Open MPI's memory hooks to provide monitor notifications to
+ * Libfabric via the external mr_cache facility.  This must be called
+ * before any domain is initialized (ie, before any Libfabric memory
+ * monitor is configured).
+ *
+ * @returns A libfabric error code is returned on error
+ */
+OPAL_DECLSPEC int opal_common_ofi_export_memory_monitor(void);
+
+/**
  * Search function for provider names
  *
  * This function will take a provider name string and a list of lower
