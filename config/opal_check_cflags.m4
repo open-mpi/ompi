@@ -28,11 +28,12 @@ AC_MSG_CHECKING(if $CC supports ([$1]))
                    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [$3])],
                                    [
                                     opal_cv_cc_[$2]=1
-                                    _OPAL_CFLAGS_FAIL_SEARCH("ignored\|not recognized\|not supported\|not compatible\|unrecognized\|unknown", [$2])
+                                    _OPAL_CFLAGS_FAIL_SEARCH(["ignored\|not recognized\|not supported\|not compatible\|unrecognized\|unknown"], [$2])
                                    ],
+                                  [
                                     opal_cv_cc_[$2]=1
-                                    _OPAL_CFLAGS_FAIL_SEARCH("ignored\|not recognized\|not supported\|not compatible\|unrecognized\|unknown\|error", [$2])
-                                 )])
+                                    _OPAL_CFLAGS_FAIL_SEARCH(["ignored\|not recognized\|not supported\|not compatible\|unrecognized\|unknown\|error"], [$2])
+                                 ])])
             if test "$opal_cv_cc_[$2]" = "0" ; then
                 CFLAGS="$CFLAGS_orig"
                 AC_MSG_RESULT([no])
@@ -59,11 +60,12 @@ AC_MSG_CHECKING(if $CXX supports ([$1]))
                    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [$3])],
                                    [
                                     opal_cv_cxx_[$2]=1
-                                    _OPAL_CXXFLAGS_FAIL_SEARCH("ignored\|not recognized\|not supported\|not compatible\|unrecognized\|unknown", [$2])
+                                    _OPAL_CXXFLAGS_FAIL_SEARCH(["ignored\|not recognized\|not supported\|not compatible\|unrecognized\|unknown"], [$2])
                                    ],
+                                  [
                                     opal_cv_cxx_[$2]=1
-                                    _OPAL_CXXFLAGS_FAIL_SEARCH("ignored\|not recognized\|not supported\|not compatible\|unrecognized\|unknown\|error", [$2])
-                                 )])
+                                    _OPAL_CXXFLAGS_FAIL_SEARCH(["ignored\|not recognized\|not supported\|not compatible\|unrecognized\|unknown\|error"], [$2])
+                                 ])])
             if test "$opal_cv_cxx_[$2]" = "0" ; then
                 CXXFLAGS="$CXXFLAGS_orig"
                 AC_MSG_RESULT([no])
