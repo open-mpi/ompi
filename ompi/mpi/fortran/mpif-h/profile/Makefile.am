@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Inria.  All rights reserved.
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
@@ -494,11 +494,3 @@ endif
 # These files were created by targets above
 
 MAINTAINERCLEANFILES = $(nodist_libmpi_mpifh_pmpi_la_SOURCES)
-
-# Don't want these targets in here
-
-tags-recursive:
-tags:
-TAGS:
-GTAGS:
-ID:

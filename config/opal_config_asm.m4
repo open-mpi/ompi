@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2021 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
@@ -334,7 +334,7 @@ AC_DEFUN([OPAL_CHECK_GCC_ATOMIC_BUILTINS], [
   if test -z "$opal_cv_have___atomic" ; then
     AC_MSG_CHECKING([for 32-bit GCC built-in atomics])
 
-    AC_TRY_LINK([
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <stdint.h>
 uint32_t tmp, old = 0;
 uint64_t tmp64, old64 = 0;], [
@@ -342,7 +342,7 @@ __atomic_thread_fence(__ATOMIC_SEQ_CST);
 __atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
 __atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);
 __atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
-__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
+__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);])],
 		[opal_cv_have___atomic=yes],
 		[opal_cv_have___atomic=no])
 
@@ -351,11 +351,11 @@ __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
     if test $opal_cv_have___atomic = "yes" ; then
 	AC_MSG_CHECKING([for 64-bit GCC built-in atomics])
 
-	AC_TRY_LINK([
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <stdint.h>
 uint64_t tmp64, old64 = 0;], [
 __atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
-__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);],
+__atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);])],
 		    [opal_cv_have___atomic_64=yes],
 		    [opal_cv_have___atomic_64=no])
 
@@ -1194,14 +1194,14 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AS_IF([test "$opal_cv_asm_arch" = "X86_64" || test "$opal_cv_asm_arch" = "IA32"],
           [AC_MSG_CHECKING([for RDTSCP assembly support])
            AC_LANG_PUSH([C])
-           AC_TRY_RUN([[
+           AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 int main(int argc, char* argv[])
 {
   unsigned int rax, rdx;
   __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx):: "%rax", "%rdx");
   return 0;
 }
-           ]],
+           ]])],
            [result=1
             AC_MSG_RESULT([yes])],
            [AC_MSG_RESULT([no])],

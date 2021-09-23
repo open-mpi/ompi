@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
+dnl Copyright (c) 2010-2021 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2013      Mellanox Technologies, Inc.
 dnl                         All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
@@ -64,7 +64,7 @@ AC_DEFUN([_OPAL_CHECK_SPECIFIC_ATTRIBUTE], [
         #
         # Try to compile using the C compiler, then C++
         #
-        AC_TRY_COMPILE([$2],[],
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$2],[])],
                        [
                         #
                         # In case we did succeed: Fine, but was this due to the
@@ -82,10 +82,10 @@ AC_DEFUN([_OPAL_CHECK_SPECIFIC_ATTRIBUTE], [
         m4_ifdef([project_ompi],
                  [if test "$opal_cv___attribute__[$1]" = "1" ; then
                       AC_LANG_PUSH(C++)
-                      AC_TRY_COMPILE([
+                      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
                            extern "C" {
                            $2
-                           }],[],
+                           }],[])],
                            [
                             opal_cv___attribute__[$1]=1
                             _OPAL_ATTRIBUTE_FAIL_SEARCH([$1])
@@ -103,11 +103,11 @@ AC_DEFUN([_OPAL_CHECK_SPECIFIC_ATTRIBUTE], [
             CFLAGS_safe=$CFLAGS
             CFLAGS="$CFLAGS [$4]"
 
-            AC_TRY_COMPILE([$3],
+            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([$3],
                 [
                  int i=4711;
                  i=usage(&i);
-                ],
+                ])],
                 [opal_cv___attribute__[$1]=0],
                 [
                  #
@@ -161,7 +161,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
   AC_MSG_CHECKING(for __attribute__)
 
   AC_CACHE_VAL(opal_cv___attribute__, [
-    AC_TRY_COMPILE(
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
       [#include <stdlib.h>
        /* Check for the longest available __attribute__ (since gcc-2.3) */
        struct foo {
@@ -169,13 +169,13 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
            int x[2] __attribute__ ((__packed__));
         };
       ],
-      [],
+      [])],
       [opal_cv___attribute__=1],
       [opal_cv___attribute__=0],
     )
 
     if test "$opal_cv___attribute__" = "1" ; then
-        AC_TRY_COMPILE(
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
           [#include <stdlib.h>
            /* Check for the longest available __attribute__ (since gcc-2.3) */
            struct foo {
@@ -183,7 +183,7 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                int x[2] __attribute__ ((__packed__));
             };
           ],
-          [],
+          [])],
           [opal_cv___attribute__=1],
           [opal_cv___attribute__=0],
         )

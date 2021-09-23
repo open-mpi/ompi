@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -872,7 +872,8 @@ AC_MSG_CHECKING([the linker for support for the -fini option])
 OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
 LDFLAGS_save=$LDFLAGS
 LDFLAGS="$LDFLAGS_save -Wl,-fini -Wl,finalize"
-AC_TRY_LINK([void finalize (void) {}], [], [AC_MSG_RESULT([yes])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([void finalize (void) {}], [])],
+               [AC_MSG_RESULT([yes])
         opal_ld_have_fini=1], [AC_MSG_RESULT([no])
         opal_ld_have_fini=0])
 LDFLAGS=$LDFLAGS_save
@@ -1003,10 +1004,14 @@ AC_PROG_GREP
 AC_PROG_EGREP
 
 #
-# We need as and lex
+# We need as and flex
 #
 AM_PROG_AS
-AM_PROG_LEX
+
+dnl Note that prior to AC v2.70, PROG_LEX did not take any arguments.
+dnl But it is harmless to pass an argument to it ($1 will just be
+dnl ignored).
+AC_PROG_LEX([noyywrap])
 
 # If we don't have Flex and we don't have a generated .c file
 # (distribution tarballs will have the .c file included, but git
@@ -1014,18 +1019,17 @@ AM_PROG_LEX
 # Lex are not workable (all things being equal, since this is *only*
 # required for developers, we decided that it really was not worth it
 # to be portable between different versions of lex ;-).
-
-if test -z "$LEX" || \
+AS_IF([test -z "$LEX" || \
    test -n "`echo $LEX | $GREP missing`" || \
-   test "`basename $LEX`" != "flex"; then
-    if test ! -f "$srcdir/opal/util/show_help_lex.c"; then
-        AC_MSG_WARN([*** Could not find Flex on your system.])
+   test "`basename $LEX`" != "flex"],
+    [AS_IF([test ! -f "$srcdir/opal/util/show_help_lex.c"],
+       [AC_MSG_WARN([*** Could not find Flex on your system.])
         AC_MSG_WARN([*** Flex is required for developer builds of Open MPI.])
         AC_MSG_WARN([*** Other versions of Lex are not supported.])
         AC_MSG_WARN([*** NOTE: If you are building a tarball downloaded from www.open-mpi.org, you do not need Flex])
         AC_MSG_ERROR([Cannot continue])
-    fi
-fi
+       ])
+    ])
 
 #
 # Setup man page processing

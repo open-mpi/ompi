@@ -1,7 +1,7 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2021      Mellanox Technologies. All rights reserved.
-dnl Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2013-2021 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -20,7 +20,7 @@ AC_DEFUN([OMPI_CHECK_UCC],[
     OPAL_VAR_SCOPE_PUSH([ompi_check_ucc_dir ompi_check_ucc_libs ompi_check_ucc_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
 
     AC_ARG_WITH([ucc],
-                [AC_HELP_STRING([--with-ucc(=DIR)],
+                [AS_HELP_STRING([--with-ucc(=DIR)],
                                 [Build UCC (Unified Collective Communication)])])
 
     AS_IF([test "$with_ucc" != "no"],
