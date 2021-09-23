@@ -129,6 +129,14 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     AS_IF([test "$external_pmix_happy" = "0" -a "$internal_pmix_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable pmix build.])])
 
+   AS_IF([test "$external_pmix_happy" = "1"],
+         [AS_IF([test -n "$with_pmix"],
+               [OPAL_GET_LFLAGS_FROM_PC(pmix, $with_pmix/lib/pkgconfig, $libevent_core_OMPI_PC_DIR, $hwloc_OMPI_PC_DIR)],
+               [OPAL_GET_LFLAGS_FROM_PC(pmix, "", $libevent_core_OMPI_PC_DIR, $hwloc_OMPI_PC_DIR)]
+         )],
+        [OPAL_GET_LFLAGS_FROM_PC(pmix, $OMPI_TOP_SRCDIR/3rd-party/openpmix/maint, $libevent_core_OMPI_PC_DIR, $hwloc_OMPI_PC_DIR)]
+    )
+
     AC_DEFINE_UNQUOTED([OPAL_USING_INTERNAL_PMIX],
                        [$OPAL_USING_INTERNAL_PMIX],
                        [Whether or not we are using the internal PMIx])
