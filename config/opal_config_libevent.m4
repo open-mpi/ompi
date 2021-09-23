@@ -70,6 +70,31 @@ AC_DEFUN([OPAL_CONFIG_LIBEVENT], [
     AS_IF([test "$external_libevent_happy" = "0" -a "$internal_libevent_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable libevent build.])])
 
+    AS_IF([test "$opal_libevent_mode" = "external"],
+        # The libevent.pc file only returns -levent, however we want
+        # only -libevent_core and -libevent_pthreads, so ompi needs to
+        # do this twice, once for each.
+        [AS_IF([test -n "$with_libevent"],
+               [
+                 OPAL_GET_LFLAGS_FROM_PC(libevent_core, $with_libevent/lib/pkgconfig)
+                 OPAL_GET_LFLAGS_FROM_PC(libevent_pthreads, $with_libevent/lib/pkgconfig)
+               ],
+               [
+                 OPAL_GET_LFLAGS_FROM_PC(libevent_core)
+                 OPAL_GET_LFLAGS_FROM_PC(libevent_pthreads)
+               ]
+         )],
+        [
+          OPAL_GET_LFLAGS_FROM_PC(libevent_core, $OMPI_TOP_SRCDIR/3rd-party/libevent_directory)
+          OPAL_GET_LFLAGS_FROM_PC(libevent_pthreads, $OMPI_TOP_SRCDIR/3rd-party/libevent_directory)
+        ]
+    )
+
+    # Strip -levent as we don't want it. We only want -levent_core/-levent_pthreads.
+    # See https://github.com/open-mpi/ompi/pull/8792
+    OPAL_WRAPPER_EXTRA_LIBS=$(echo $OPAL_WRAPPER_EXTRA_LIBS | sed "s/\\-levent\b//g");
+    AC_MSG_NOTICE([OPAL_WRAPPER_EXTRA_LIBS stripped -levent: $OPAL_WRAPPER_EXTRA_LIBS])
+
     # this will work even if there is no libevent package included,
     # because libevent_tarball and libevent_directory will evaluate to
     # an empty string.  These are relative to the 3rd-party/
