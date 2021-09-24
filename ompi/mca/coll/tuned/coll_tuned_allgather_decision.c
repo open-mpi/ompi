@@ -40,6 +40,7 @@ static const mca_base_var_enum_value_t allgather_algorithms[] = {
     {4, "ring"},
     {5, "neighbor"},
     {6, "two_proc"},
+    {7, "sparbit"},
     {0, NULL}
 };
 
@@ -78,7 +79,7 @@ ompi_coll_tuned_allgather_intra_check_forced_init(coll_tuned_force_algorithm_mca
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "allgather_algorithm",
-                                        "Which allgather algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 bruck, 3 recursive doubling, 4 ring, 5 neighbor exchange, 6: two proc only. "
+                                        "Which allgather algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 bruck, 3 recursive doubling, 4 ring, 5 neighbor exchange, 6: two proc only, 7: sparbit. "
                                         "Only relevant if coll_tuned_use_dynamic_rules is true.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
@@ -161,6 +162,10 @@ int ompi_coll_tuned_allgather_intra_do_this(const void *sbuf, int scount,
                                                                comm, module);
     case (6):
         return ompi_coll_base_allgather_intra_two_procs(sbuf, scount, sdtype,
+                                                        rbuf, rcount, rdtype,
+                                                        comm, module);
+    case (7):
+        return ompi_coll_base_allgather_intra_sparbit(sbuf, scount, sdtype,
                                                         rbuf, rcount, rdtype,
                                                         comm, module);
     } /* switch */
