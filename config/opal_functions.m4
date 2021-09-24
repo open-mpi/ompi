@@ -14,8 +14,8 @@ dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2015-2017 Research Organization for Information Science
-dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015-2021 Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -392,6 +392,10 @@ AC_DEFUN([OPAL_FLAGS_UNIQ],[
                 opal_i=`expr $opal_count + 1`
                 ;;
         -framework)
+                opal_found=0
+                opal_i=`expr $opal_count + 1`
+                ;;
+        --include)
                 opal_found=0
                 opal_i=`expr $opal_count + 1`
                 ;;
