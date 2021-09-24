@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2021 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2018      Amazon.com, Inc. or its affiliates.
 dnl                         All Rights reserved.
@@ -59,9 +59,9 @@ AC_DEFUN([OPAL_MCA],[
         [AC_HELP_STRING([--enable-mca-no-build=LIST],
                         [Comma-separated list of <type>-<component> pairs
                          that will not be built.  Example:
-                         "--enable-mca-no-build=btl-portals,oob-ud" will
-                         disable building the "portals" btl and the "ud"
-                         oob components.])])
+                         "--enable-mca-no-build=btl-portals4,topo-treematch" will
+                         disable building the "portals4" btl and the "treematch"
+                         topo components.])])
     AC_ARG_ENABLE(mca-dso,
         AC_HELP_STRING([--enable-mca-dso=LIST],
                        [Comma-separated list of types and/or
