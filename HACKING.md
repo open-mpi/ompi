@@ -7,6 +7,24 @@ source code form, most likely through a developer's tree (i.e., a
 Git clone).
 
 
+## Obtaining Open MPI
+
+Open MPI is available from many distributions, however some users
+prefer to obtain it directly from the Open MPI community via
+prepackaged tarball (see: https://www.open-mpi.org/software/ompi/).
+The Open MPI tarball includes manpages, and openpmix and openprrte
+components, along with an auto-generated configure script.
+
+Some developers prefer to obtain Open MPI by directly cloning it
+from https://github.com/open-mpi/ompi.  It is recommended that users
+who choose to clone the source directly, use the git clone flag
+`--recurse-submodules`, to also obtain the openpmix, and openprrte.
+
+Regardless of how openpmix and openprrte are obtained, the
+configure logic in Open MPI v5.0+ prefer externally installed
+components.  Please see `configure --help` for more details.
+
+
 ## Developer Builds: Compiler Pickyness by Default
 
 If you are building Open MPI from a Git clone (i.e., there is a `.git`
