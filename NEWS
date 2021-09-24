@@ -18,7 +18,7 @@ Copyright (c) 2010-2021 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
-Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+Copyright (c) 2013-2021 NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
 Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
@@ -79,12 +79,23 @@ v5.0.0rc1 -- September, 2021
 --------------------
 - ORTE, the underlying OMPI launcher has been removed, and replaced
   with PRTE.
+- Reworked how Open MPI integrates with 3rd party packages.
+  The decision was made to stop building 3rd-party packages
+  such as Libevent, HWLOC, PMIx, and PRRTE as MCA components
+  and instead 1) start relying on external libraries whenever
+  possible and 2) Open MPI builds the 3rd party libraries (if needed)
+  as independent libraries, rather than linked into libopen-pal.
+- Update to use PMIx v4.1.1rc2
+- Update to use PRRTE v2.0.1rc2
 - Change the default component build behavior to prefer building
   components as part of libmpi.so instead of individual DSOs.
+- Remove pml/yalla, mxm, mtl/psm, and ikrit components.
 - Remove all vestiges of the C/R support.
+- Various ROMIO v3.4.1 updates.
+- 32 bit atomics are now only supported via C11 compliant compilers.
 - Do not build Open SHMEM layer when there are no SPMLs available.
   Currently, this means the Open SHMEM layer will only build if
-  a MXM or UCX library is found.
+  the UCX library is found.
 - Fix rank-by algorithms to properly rank by object and span.
 - Updated the "-mca pml" option to only accept one pml, not a list.
 - vprotocol/pessimist: Updated to support MPI_THREAD_MULLTIPLE.
@@ -98,12 +109,12 @@ v5.0.0rc1 -- September, 2021
   delaying error reporting until all infrastructure is running.
 - Atomics support removed: S390/s390x, Sparc v9, ARMv4 and ARMv5 CMA
   support.
-- 32 bit atomics are now only supported via C11.
 - autogen.pl now supports a "-j" option to run multi-threaded.
   Users can also use environment variable "AUTOMAKE_JOBS".
 - PMI support has been removed for Open MPI apps.
 - Legacy btl/sm has been removed, and replaced with btl/vader, which
   was renamed to "btl/sm".
+- Update btl/sm to not use CMA in user namespaces.
 - C++ bindings have been removed.
 - The "--am" and "--amca" options have been deprecated.
 - opal/mca/threads framework added. Currently supports
@@ -140,17 +151,11 @@ v5.0.0rc1 -- September, 2021
   MPI_Status_c2f08(), MPI_Status_f082c(), MPI_Status_f082f(),
   MPI_Status_f2f08() and the PMPI_* related subroutines.
 - patcher: Removed the Linux component.
-- Reworked how Open MPI integrates with 3rd party packages.
-  The decision was made to stop building 3rd-party packages
-  such as Libevent, HWLOC, PMIx, and PRRTE as MCA components
-  and instead 1) start relying on external libraries whenever
-  possible and 2) Open MPI builds the 3rd party libraries (if needed)
-  as independent libraries, rather than linked into libopen-pal. 
 - opal/util: Fixed typo in error string. Thanks to
   NARIBAYASHI Akira <a.naribayashi@fujitsu.com> for finding
   and fixing the bug.
 - fortran/use-mpi-f08: Generate PMPI bindings from the MPI bindings.
-- Converted man pages to markdown. 
+- Converted man pages to markdown.
   Thanks to Fangcong Yin <fyin2@nd.edu> for their contribution
   to this effort.
 - Fixed ompi_proc_world error string and some comments in pml/ob1.
@@ -188,13 +193,22 @@ v5.0.0rc1 -- September, 2021
 - Fixed .la files leaking into wrapper compilers.
 - Fixed bug where the cache line size was not set soon enough in
   MPI_Init().
-- Various ROMIO v3.4.1 updates.
 - coll/ucc and scoll/ucc components were added.
 - coll/ucc: Added support for allgather and reduce collective
   operations.
 - autogen.pl: Fixed bug where it would not ignore all
   excluded components.
-
+- Various datatype bugfixes and performance improvements
+- Various pack/unpack bugfixes and performance improvements
+- Fix mmap infinite recurse in memory patcher
+- Fix C to Fortran error code conversions.
+- osc/ucx: Fix data corruption with non-contiguous accumulates
+- Update coll/tuned selection rules
+- Fix non-blocking collective ops
+- btl/portals4: Fix flow control
+- Various oshmem:ucx bugfixes and performance improvements
+- common/ofi: Disable new monitor API until libfabric 1.14.0
+- Fix AVX detection with icc
 
 4.1.1 -- April, 2021
 --------------------
