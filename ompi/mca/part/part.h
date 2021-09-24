@@ -211,6 +211,20 @@ typedef int (*mca_part_base_module_parrived_fn_t)(
 );
 
 /**
+ * Block until reciving buffer is ready.
+ *
+ * @param request (IN/OUT) Request
+ * @return                 OMPI_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_part_base_module_pbuf_prepare_fn_t)(
+    int count,
+    struct ompi_request_t** request
+);
+
+
+
+/**
  *  PART instance.
  */
 
@@ -220,11 +234,13 @@ struct mca_part_base_module_1_0_1_t {
     mca_part_base_module_progress_fn_t    part_progress;
 
     /* downcalls from MPI to PART */
-    mca_part_base_module_precv_init_fn_t  part_precv_init;
-    mca_part_base_module_psend_init_fn_t  part_psend_init;
-    mca_part_base_module_start_fn_t       part_start; 
-    mca_part_base_module_pready_fn_t      part_pready;
-    mca_part_base_module_parrived_fn_t    part_parrived;
+    mca_part_base_module_precv_init_fn_t   part_precv_init;
+    mca_part_base_module_psend_init_fn_t   part_psend_init;
+    mca_part_base_module_start_fn_t        part_start; 
+    mca_part_base_module_pready_fn_t       part_pready;
+    mca_part_base_module_parrived_fn_t     part_parrived;
+    mca_part_base_module_pbuf_prepare_fn_t part_pbuf_prepare;
+
     /* diagnostics */
 
     /* FT Event */

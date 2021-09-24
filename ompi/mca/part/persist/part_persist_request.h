@@ -96,6 +96,7 @@ struct mca_part_persist_request_t {
   
     struct mca_part_persist_list_t* progress_elem; /**< pointer to progress list element for removal durring free. */ 
 
+    int32_t synched;                       /**< Internal flag for pbuf_prepare */
 };
 typedef struct mca_part_persist_request_t mca_part_persist_request_t;
 OBJ_CLASS_DECLARATION(mca_part_persist_request_t);
