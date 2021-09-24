@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2021      IBM Corporation.  All rights reserved.
+# Copyright (c) 2021 Cisco Systems.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -216,7 +217,7 @@ sub process_m4($)
                 # Argument separator
                 # We only care about counting arguments for the outermost
                 # function (e.g., AC_ARG_ENABLE), not the innermost
-                # function (e.g., AC_HELP_STRING) - which we take all of.
+                # function (e.g., AS_HELP_STRING) - which we take all of.
                 # We know we are in the outermost because the '(' will be
                 # only thing on the stack.
                 elsif( scalar(@the_stack) == 1 && $char eq "," ) {

@@ -2,6 +2,7 @@
 # Copyright (c) 2016-2018 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2021 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,11 +39,3 @@ $(nodist_libpmpiext_ftmpi_c_la_SOURCES):
 # These files were created by targets above
 
 MAINTAINERCLEANFILES = $(nodist_libpmpiext_ftmpi_c_la_SOURCES)
-
-# Don't want these targets in here
-
-tags-recursive:
-tags:
-:
-GTAGS:
-ID:

@@ -56,5 +56,5 @@ opal_init_finalize_LDADD = \
 	$(top_builddir)/test/support/libsupport.a
 opal_init_finalize_DEPENDENCIES = $(opal_init_finalize_LDADD)
 
-distclean:
+distclean-local:
 	rm -rf *.dSYM .deps *.log *.o *.trs $(check_PROGRAMS) Makefile

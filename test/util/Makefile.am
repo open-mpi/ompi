@@ -131,6 +131,6 @@ bipartite_graph_DEPENDENCIES = $(bipartite_graph_LDADD)
 clean-local:
 	rm -f test_session_dir_out test-file opal_path_nfs.out
 
-distclean:
+distclean-local:
 	rm -rf *.dSYM .deps .libs *.out *.log *.o *.trs $(check_PROGRAMS) Makefile
 

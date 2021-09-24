@@ -20,5 +20,5 @@ if PROJECT_OMPI
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 endif # PROJECT_OMPI
 
-distclean:
+distclean-local:
 	rm -rf *.dSYM .deps .libs *.la *.lo spc_test prof *.log *.o *.trs Makefile

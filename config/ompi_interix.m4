@@ -3,6 +3,7 @@ dnl
 dnl Copyright (c)      2008 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
+dnl Copyright (c) 2021 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -24,10 +25,10 @@ dnl
 AC_DEFUN([OMPI_INTERIX],[
 
     AC_MSG_CHECKING(for Interix environment)
-    AC_TRY_COMPILE([],
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
                    [#if !defined(__INTERIX)
                     #error Normal Unix environment
-                    #endif],
+                    #endif])],
                    is_interix=yes,
                    is_interix=no)
     AC_MSG_RESULT([$is_interix])

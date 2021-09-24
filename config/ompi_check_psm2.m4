@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      QLogic Corp. All rights reserved.
-# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Intel Corporation. All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
@@ -44,7 +44,7 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
 	OPAL_CHECK_WITHDIR([psm2-libdir], [$with_psm2_libdir], [libpsm2.*])
 
         AC_ARG_ENABLE([psm2-version-check],
-                  [AC_HELP_STRING([--disable-psm2-version-check],
+                  [AS_HELP_STRING([--disable-psm2-version-check],
                                   [Disable PSM2 version checking.  Not recommended to disable. (default: enabled)])])
 
 	ompi_check_psm2_$1_save_CPPFLAGS="$CPPFLAGS"

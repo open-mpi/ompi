@@ -3,6 +3,7 @@ dnl
 dnl Copyright (c) 2004-2007 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
+dnl Copyright (c) 2021 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -39,17 +40,17 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
 
         # The atomic functions are defined in a very unuasual manner.
         # Some of them are intrinsic defined in windows.h others are
-        # exported by kernel32.dll. If we force the usage of AC_TRY_RUN
+        # exported by kernel32.dll. If we force the usage of AC RUN_IFELSE
         # here we will check for both in same time: compilation and run.
 
         AC_MSG_CHECKING(for working InterlockedCompareExchange)
-        AC_TRY_RUN( [#include <windows.h>
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <windows.h>
                      int main() {
                      LONG dest = 1, exchange = 0, comperand = 1;
                      SetErrorMode(SEM_FAILCRITICALERRORS);
                      InterlockedCompareExchange( &dest, exchange, comperand );
                      return (int)dest;
-                    }],
+                    }])],
                     [AC_MSG_RESULT(yes)
                      ompi_windows_have_support_for_32_bits_atomic=1],
                     [AC_MSG_RESULT(no)
@@ -59,13 +60,13 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
                        [Whether we support 32 bits atomic operations on Windows])
 
         AC_MSG_CHECKING(for working InterlockedCompareExchangeAcquire)
-        AC_TRY_RUN( [#include <windows.h>
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <windows.h>
                  int main() {
                      LONG dest = 1, exchange = 0, comperand = 1;
                      SetErrorMode(SEM_FAILCRITICALERRORS);
                      InterlockedCompareExchangeAcquire( &dest, exchange, comperand );
                      return (int)dest;
-                 }],
+                 }])],
                     [AC_MSG_RESULT(yes)
                      ompi_windows_have_support_for_32_bits_atomic=1],
                     [AC_MSG_RESULT(no)
@@ -75,13 +76,13 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
                        [Whether we support 32 bits atomic operations on Windows])
 
         AC_MSG_CHECKING(for working InterlockedCompareExchangeRelease)
-        AC_TRY_RUN( [#include <windows.h>
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <windows.h>
                  int main() {
                      LONG dest = 1, exchange = 0, comperand = 1;
                      SetErrorMode(SEM_FAILCRITICALERRORS);
                      InterlockedCompareExchangeRelease( &dest, exchange, comperand );
                      return (int)dest;
-                 }],
+                 }])],
                     [AC_MSG_RESULT(yes)
                      ompi_windows_have_support_for_32_bits_atomic=1],
                     [AC_MSG_RESULT(no)
@@ -91,13 +92,13 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
                        [Whether we support 32 bits atomic operations on Windows])
 
         AC_MSG_CHECKING(for working InterlockedCompareExchange64)
-        AC_TRY_RUN( [#include <windows.h>
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <windows.h>
                  int main() {
                      LONGLONG dest = 1, exchange = 0, comperand = 1;
                      SetErrorMode(SEM_FAILCRITICALERRORS);
                      InterlockedCompareExchange64( &dest, exchange, comperand );
                      return (int)dest;
-                 }],
+                 }])],
                     [AC_MSG_RESULT(yes)
                      ompi_windows_have_support_for_64_bits_atomic=1],
                     [AC_MSG_RESULT(no)
