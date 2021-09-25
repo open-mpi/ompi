@@ -94,8 +94,6 @@ The rest of this file contains:
  frameworks](#the-modular-component-architecture-mca)
   * [MPI layer frameworks](#mpi-layer-frameworks)
   * [OpenSHMEM component frameworks](#openshmem-component-frameworks)
-  * [Run-time environment
-    frameworks](#back-end-run-time-environment-rte-component-frameworks)
   * [Miscellaneous frameworks](#miscellaneous-frameworks)
   * [Other notes about frameworks](#framework-notes)
 * [How to get more help](#questions--problems)
@@ -1229,9 +1227,6 @@ Additionally, if a search directory is specified in the form
   so that executables such as `mpicc` and `mpirun` can be found
   without needing to type long path names.
 
-* `--enable-orte-static-ports`:
-   Enable ORTE static ports for TCP OOB (default: enabled).
-
 * `--with-alps`:
   Force the building of for the Cray Alps run-time environment.  If
   Alps support cannot be found, configure will abort.
@@ -2040,16 +2035,17 @@ Open MPI:
 
 * `bml`: BTL management layer
 * `coll`: MPI collective algorithms
-* `fbtl`: file byte transfer layer: abstraction for individual
-   read: collective read and write operations for MPI I/O
-* `fs`: file system functions for MPI I/O
+* `fbtl`: file byte transfer layer: abstraction for individual blocking and non-blocking read and write operations
+* `fcoll`: Collective read and write operations for MPI I/O.
+* `fs`: File system functions for MPI I/O.
+* `hook`: Make calls at various points of MPI process life-cycle.
 * `io`: MPI I/O
 * `mtl`: Matching transport layer, used for MPI point-to-point
    messages on some types of networks
 * `op`: Back end computations for intrinsic MPI_Op operators
 * `osc`: MPI one-sided communications
 * `pml`: MPI point-to-point management layer
-* `rte`: Run-time environment operations
+* `part`: MPI Partitioned communication.
 * `sharedfp`: shared file pointer operations for MPI I/O
 * `topo`: MPI topology routines
 * `vprotocol`: Protocols for the "v" PML
@@ -2064,33 +2060,12 @@ Open MPI:
   point-to-point operations
 * `sshmem`: OpenSHMEM shared memory backing facility
 
-### Back-end run-time environment (RTE) component frameworks:
-
-* `dfs`: Distributed file system
-* `errmgr`: RTE error manager
-* `ess`: RTE environment-specific services
-* `filem`: Remote file management
-* `grpcomm`: RTE group communications
-* `iof`: I/O forwarding
-* `notifier`: System-level notification support
-* `odls`: OpenRTE daemon local launch subsystem
-* `oob`: Out of band messaging
-* `plm`: Process lifecycle management
-* `ras`: Resource allocation system
-* `rmaps`: Resource mapping system
-* `rml`: RTE message layer
-* `routed`: Routing table for the RML
-* `rtc`: Run-time control framework
-* `schizo`: OpenRTE personality framework
-* `state`: RTE state machine
-
 ### Miscellaneous frameworks:
 
 * `allocator`: Memory allocator
 * `backtrace`: Debugging call stack backtrace support
 * `btl`: Point-to-point Byte Transfer Layer
 * `dl`: Dynamic loading library interface
-* `event`: Event library (libevent) versioning support
 * `hwloc`: Hardware locality (hwloc) versioning support
 * `if`: OS IP interface support
 * `installdirs`: Installation directory relocation services
@@ -2100,11 +2075,16 @@ Open MPI:
 * `mpool`: Memory pooling
 * `patcher`: Symbol patcher hooks
 * `pmix`: Process management interface (exascale)
-* `pstat`: Process status
 * `rcache`: Memory registration cache
-* `sec`: Security framework
+* `reachable`: Reachability matrix between endpoints of a given pair of hosts
 * `shmem`: Shared memory support (NOT related to OpenSHMEM)
+* `smsc`: Shared Memory Single Copy
+* `threads`: Thread management and support.
 * `timer`: High-resolution timers
+
+### Back-end run-time environment (PRTE):
+
+See: https://github.com/openpmix/prrte
 
 ### Framework notes
 
