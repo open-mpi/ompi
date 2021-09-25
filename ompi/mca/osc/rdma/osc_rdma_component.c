@@ -701,9 +701,9 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
         if (0 == local_rank) {
             /* allocate the shared memory segment */
-            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%d",
+            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_rdma.%s.%x.%d.%d",
                             mca_osc_rdma_component.backing_directory, ompi_process_info.nodename,
-                            OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm));
+                            OMPI_PROC_MY_NAME->jobid, ompi_comm_get_cid(module->comm), getpid());
             if (0 > ret) {
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
             } else {
