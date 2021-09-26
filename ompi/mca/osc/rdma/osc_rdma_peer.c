@@ -73,7 +73,19 @@ static int ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *modul
         }
     }
 
-    /* unlikely but can happen when creating a peer for self */
+    if (peer_id == ompi_comm_rank (module->comm)) {
+        for (int btl_index = 0 ; btl_index < num_btls ; ++btl_index) {
+	    struct mca_btl_base_module_t *btl;
+
+	    btl = bml_endpoint->btl_rdma.bml_btls[btl_index].btl;
+            if (strcmp(btl->btl_component->btl_version.mca_component_name, "self")==0) {
+                *btl_out = btl;
+                *endpoint = bml_endpoint->btl_eager.bml_btls[btl_index].btl_endpoint;
+		return OMPI_SUCCESS;
+            }
+        }
+    }
+
     return OMPI_ERR_UNREACH;
 }
 
@@ -86,9 +98,7 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
 
     /* find a btl/endpoint to use for this peer */
     int ret = ompi_osc_rdma_peer_btl_endpoint (module, peer_id, &btl, &endpoint);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret &&
-                      !(module->selected_btls[0]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) &&
-                      (peer_id != ompi_comm_rank (module->comm)))) {
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
 
