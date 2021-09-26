@@ -45,11 +45,14 @@ struct ompi_osc_rdma_peer_t {
     /** peer flags */
     opal_atomic_int32_t flags;
 
-    /** index into BTL array */
-    uint8_t data_btl_index;
+    /** btl used for rdma */
+    struct mca_btl_base_module_t *data_btl;
 
-    /** index into BTL array */
-    uint8_t state_btl_index;
+    /** btl used for reading/modifying peer state.
+     * When the local leader optimization is used,
+     * peer state are read/modified through a different
+     * btl then the one used for rdma data */
+    struct mca_btl_base_module_t *state_btl;
 };
 typedef struct ompi_osc_rdma_peer_t ompi_osc_rdma_peer_t;
 

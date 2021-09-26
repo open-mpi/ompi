@@ -646,11 +646,6 @@ static inline bool ompi_osc_rdma_oor (int rc)
 }
 
 __opal_attribute_always_inline__
-static inline mca_btl_base_module_t *ompi_osc_rdma_selected_btl (ompi_osc_rdma_module_t *module, uint8_t btl_index) {
-    return module->selected_btls[btl_index];
-}
-
-__opal_attribute_always_inline__
 static inline void ompi_osc_rdma_selected_btl_insert (ompi_osc_rdma_module_t *module, struct mca_btl_base_module_t *btl, uint8_t btl_index) {
     if(btl_index == module->selected_btls_size) {
         module->selected_btls_size *= 2;

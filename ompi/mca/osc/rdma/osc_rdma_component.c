@@ -575,7 +575,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     } else {
         /* use my endpoint handle to modify the peer's state */
         my_peer->state_handle = module->state_handle;
-        my_peer->state_btl_index = my_peer->data_btl_index;
+        my_peer->state_btl = my_peer->data_btl;
         my_peer->state_endpoint = my_peer->data_endpoint;
     }
 
@@ -845,17 +845,17 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                     peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
                     if (i==0) {
                         peer->state_endpoint = peer->data_endpoint;
-                        peer->state_btl_index = peer->data_btl_index;
+                        peer->state_btl = peer->data_btl;
                     } else {
                         peer->state_endpoint = local_leader->state_endpoint;
-                        peer->state_btl_index = local_leader->state_btl_index;
+                        peer->state_btl = local_leader->state_btl;
                     }
                 } else {
                     assert (!module->use_memory_registration);
                     assert (NULL != module->peer_state_array);
                     peer->state = (osc_rdma_counter_t)module->peer_state_array[peer_rank];
                     peer->state_endpoint = peer->data_endpoint;
-                    peer->state_btl_index = peer->data_btl_index;
+                    peer->state_btl = peer->data_btl;
                 }
             }
 
@@ -867,7 +867,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 !module->use_cpu_atomics && temp[i].size && i > 0) {
                 /* use the local leader's endpoint */
                 peer->data_endpoint = local_leader->data_endpoint;
-                peer->data_btl_index = local_leader->data_btl_index;
+                peer->data_btl = local_leader->data_btl;
             }
 
             ompi_osc_module_add_peer (module, peer);

@@ -156,7 +156,7 @@ static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const 
                                               mca_btl_base_registration_handle_t *target_handle, ompi_op_t *op, ompi_osc_rdma_request_t *req)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+    mca_btl_base_module_t *selected_btl = peer->data_btl;
     int32_t atomic_flags = selected_btl->btl_atomic_flags;
     int btl_op, flags;
     int64_t origin;
@@ -176,7 +176,7 @@ static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const 
 
     origin = (8 == extent) ? ((int64_t *) origin_addr)[0] : ((int32_t *) origin_addr)[0];
 
-    return ompi_osc_rdma_btl_fop (module, peer->data_btl_index, peer->data_endpoint, target_address, target_handle, btl_op, origin, flags,
+    return ompi_osc_rdma_btl_fop (module, peer->data_btl, peer->data_endpoint, target_address, target_handle, btl_op, origin, flags,
                                  result_addr, true, NULL, NULL, NULL);
 }
 
@@ -198,7 +198,7 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating fetch-and-op using compare-and-swap");
 
-    ret = ompi_osc_get_data_blocking (module, peer->data_btl_index, peer->data_endpoint, address, target_handle, &old_value, 8);
+    ret = ompi_osc_get_data_blocking (module, peer->data_btl, peer->data_endpoint, address, target_handle, &old_value, 8);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
@@ -213,7 +213,7 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
             ompi_op_reduce (op, (void *) ((intptr_t) origin_addr + dt->super.true_lb), (void*)((intptr_t) &new_value + offset), 1, dt);
         }
 
-        ret = ompi_osc_rdma_btl_cswap (module, peer->data_btl_index, peer->data_endpoint, address, target_handle,
+        ret = ompi_osc_rdma_btl_cswap (module, peer->data_btl, peer->data_endpoint, address, target_handle,
                                        old_value, new_value, 0, (int64_t*)&new_value);
         if (OPAL_SUCCESS != ret || new_value == old_value) {
             break;
@@ -234,7 +234,7 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
                                             ompi_op_t *op, ompi_osc_rdma_request_t *req)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+    mca_btl_base_module_t *selected_btl = peer->data_btl;
     int32_t atomic_flags = selected_btl->btl_atomic_flags;
     int btl_op, flags;
     int64_t origin;
@@ -262,7 +262,7 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
                      *((int64_t *) origin_addr));
 
     /* if we locked the peer its best to wait for completion before returning */
-    return ompi_osc_rdma_btl_op (module, peer->data_btl_index, peer->data_endpoint, target_address, target_handle, btl_op, origin,
+    return ompi_osc_rdma_btl_op (module, peer->data_btl, peer->data_endpoint, target_address, target_handle, btl_op, origin,
                                 flags, true, NULL, NULL, NULL);
 }
 
@@ -375,7 +375,7 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
         /* set up the request */
         request->to_free = ptr;
 
-        ret = ompi_osc_get_data_blocking (module, peer->data_btl_index, peer->data_endpoint,
+        ret = ompi_osc_get_data_blocking (module, peer->data_btl, peer->data_endpoint,
                                           target_address, target_handle, ptr, len);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             return ret;
@@ -661,7 +661,7 @@ static inline int ompi_osc_rdma_cas_atomic (ompi_osc_rdma_sync_t *sync, const vo
                                             bool lock_acquired)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+    mca_btl_base_module_t *btl = peer->data_btl;
     int32_t atomic_flags = btl->btl_atomic_flags;
     const size_t size = datatype->super.size;
     int64_t compare, source;
@@ -679,7 +679,7 @@ static inline int ompi_osc_rdma_cas_atomic (ompi_osc_rdma_sync_t *sync, const vo
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating compare-and-swap using %d-bit btl atomics. compare: 0x%"
                      PRIx64 ", origin: 0x%" PRIx64, (int) size * 8, *((int64_t *) compare_addr), *((int64_t *) source_addr));
 
-    ret = ompi_osc_rdma_btl_cswap (module, peer->data_btl_index, peer->data_endpoint, target_address, target_handle,
+    ret = ompi_osc_rdma_btl_cswap (module, peer->data_btl, peer->data_endpoint, target_address, target_handle,
                                    compare, source, flags, result_addr);
     if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
         ompi_osc_rdma_peer_accumulate_cleanup (module, peer, lock_acquired);
@@ -715,7 +715,7 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
                             mca_btl_base_registration_handle_t *target_handle, bool lock_acquired)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+    mca_btl_base_module_t *btl = peer->data_btl;
     unsigned long len = datatype->super.size;
     mca_btl_base_registration_handle_t *local_handle = NULL;
     ompi_osc_rdma_frag_t *frag = NULL;
@@ -728,7 +728,7 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
                      ", sync %p", len, target_address, (void *) sync);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "RDMA compare-and-swap initiating blocking btl get...");
-    ret = ompi_osc_get_data_blocking (module, peer->data_btl_index, peer->data_endpoint, target_address,
+    ret = ompi_osc_get_data_blocking (module, peer->data_btl, peer->data_endpoint, target_address,
                                       target_handle, result_addr, len);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;

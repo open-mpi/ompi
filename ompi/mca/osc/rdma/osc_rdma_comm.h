@@ -103,6 +103,7 @@ int ompi_osc_rdma_rget (void *origin_addr, int origin_count, ompi_datatype_t *or
  * @brief read data from a remote memory region (blocking)
  *
  * @param[in] module          osc rdma module
+ * @param[in] btl             btl module
  * @param[in] endpoint        btl endpoint
  * @param[in] source_address  remote address to read from
  * @param[in] source_handle   btl registration handle for remote region (must be valid for the entire region)
@@ -113,7 +114,8 @@ int ompi_osc_rdma_rget (void *origin_addr, int origin_count, ompi_datatype_t *or
  * data that is stored on the remote peer. The peer object does not have to be fully initialized to
  * work. Only the btl endpoint is needed.
  */
-int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, uint8_t btl_index,
+int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module,
+                                struct mca_btl_base_module_t *btl,
                                 struct mca_btl_base_endpoint_t *endpoint, uint64_t source_address,
                                 mca_btl_base_registration_handle_t *source_handle,
                                 void *data, size_t len);

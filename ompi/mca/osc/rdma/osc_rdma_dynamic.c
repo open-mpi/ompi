@@ -392,7 +392,7 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
         osc_rdma_counter_t remote_value;
 
         source_address = (uint64_t)(intptr_t) peer->super.state + offsetof (ompi_osc_rdma_state_t, region_count);
-        ret = ompi_osc_get_data_blocking (module, peer->super.state_btl_index, peer->super.state_endpoint,
+        ret = ompi_osc_get_data_blocking (module, peer->super.state_btl, peer->super.state_endpoint,
                                           source_address, peer->super.state_handle, &remote_value,
                                           sizeof (remote_value));
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -433,7 +433,7 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
                                            OMPI_OSC_RDMA_LOCK_EXCLUSIVE);
 
         source_address = (uint64_t)(intptr_t) peer->super.state + offsetof (ompi_osc_rdma_state_t, regions);
-        ret = ompi_osc_get_data_blocking (module, peer->super.state_btl_index, peer->super.state_endpoint,
+        ret = ompi_osc_get_data_blocking (module, peer->super.state_btl, peer->super.state_endpoint,
                                           source_address, peer->super.state_handle, peer->regions, region_len);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OPAL_THREAD_UNLOCK(&module->lock);

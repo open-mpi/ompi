@@ -37,14 +37,14 @@ void ompi_osc_rdma_atomic_complete (mca_btl_base_module_t *btl, struct mca_btl_b
                                     void *context, void *data, int status);
 
 __opal_attribute_always_inline__
-static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, uint8_t btl_index,
+static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module,
+                                         struct mca_btl_base_module_t *selected_btl,
                                          struct mca_btl_base_endpoint_t *endpoint, uint64_t address,
                                          mca_btl_base_registration_handle_t *address_handle, int op,
                                          int64_t operand, int flags, int64_t *result, const bool wait_for_completion,
                                          ompi_osc_rdma_pending_op_cb_fn_t cbfunc, void *cbdata, void *cbcontext)
 {
     ompi_osc_rdma_pending_op_t *pending_op;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
     int ret = OPAL_ERROR;
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
@@ -110,23 +110,23 @@ static inline int ompi_osc_rdma_lock_btl_fop (ompi_osc_rdma_module_t *module, om
                                               int op, ompi_osc_rdma_lock_t operand, ompi_osc_rdma_lock_t *result,
                                               const bool wait_for_completion)
 {
-    return ompi_osc_rdma_btl_fop (module, peer->state_btl_index, peer->state_endpoint, address, peer->state_handle, op,
+    return ompi_osc_rdma_btl_fop (module, peer->state_btl, peer->state_endpoint, address, peer->state_handle, op,
                                   operand, 0, result, wait_for_completion, NULL, NULL, NULL);
 }
 
 __opal_attribute_always_inline__
-static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, uint8_t btl_index,
+static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module,
+                                        struct mca_btl_base_module_t *selected_btl,
                                         struct mca_btl_base_endpoint_t *endpoint, uint64_t address,
                                         mca_btl_base_registration_handle_t *address_handle,
                                         int op, int64_t operand, int flags, const bool wait_for_completion,
                                         ompi_osc_rdma_pending_op_cb_fn_t cbfunc, void *cbdata, void *cbcontext)
 {
     ompi_osc_rdma_pending_op_t *pending_op;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
     int ret;
 
     if (!(selected_btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS)) {
-        return ompi_osc_rdma_btl_fop (module, btl_index, endpoint, address, address_handle, op, operand, flags,
+        return ompi_osc_rdma_btl_fop (module, selected_btl, endpoint, address, address_handle, op, operand, flags,
                                       NULL, wait_for_completion, cbfunc, cbdata, cbcontext);
     }
 
@@ -181,18 +181,18 @@ __opal_attribute_always_inline__
 static inline int ompi_osc_rdma_lock_btl_op (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer, uint64_t address,
                                              int op, ompi_osc_rdma_lock_t operand, const bool wait_for_completion)
 {
-    return ompi_osc_rdma_btl_op (module, peer->state_btl_index, peer->state_endpoint, address, peer->state_handle, op,
+    return ompi_osc_rdma_btl_op (module, peer->state_btl, peer->state_endpoint, address, peer->state_handle, op,
                                  operand, 0, wait_for_completion, NULL, NULL, NULL);
 }
 
 __opal_attribute_always_inline__
-static inline int ompi_osc_rdma_btl_cswap (ompi_osc_rdma_module_t *module, uint8_t btl_index,
+static inline int ompi_osc_rdma_btl_cswap (ompi_osc_rdma_module_t *module,
+                                           struct mca_btl_base_module_t *selected_btl,
                                            struct mca_btl_base_endpoint_t *endpoint, uint64_t address,
                                            mca_btl_base_registration_handle_t *address_handle,
                                            int64_t compare, int64_t value, int flags, int64_t *result)
 {
     ompi_osc_rdma_pending_op_t *pending_op;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
     int ret;
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
@@ -244,7 +244,7 @@ __opal_attribute_always_inline__
 static inline int ompi_osc_rdma_lock_btl_cswap (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer, uint64_t address,
                                                 ompi_osc_rdma_lock_t compare, ompi_osc_rdma_lock_t value, ompi_osc_rdma_lock_t *result)
 {
-    return ompi_osc_rdma_btl_cswap (module, peer->state_btl_index, peer->state_endpoint, address, peer->state_handle, compare, value,
+    return ompi_osc_rdma_btl_cswap (module, peer->state_btl, peer->state_endpoint, address, peer->state_handle, compare, value,
                                     0, result);
 }
 
