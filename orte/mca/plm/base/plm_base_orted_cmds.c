@@ -73,7 +73,18 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
     opal_buffer_t *cmd;
     orte_daemon_cmd_flag_t cmmnd;
     orte_grpcomm_signature_t *sig;
+    static int previously_called = 0;
 
+    /* If this function was previously called, attempting to shut down daemons
+     * again will result in connection failure messages, so do nothing.
+     */
+    if (previously_called) {
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                             "%s plm:base:orted_cmd previously called, do nothing",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        return ORTE_SUCCESS;
+    }
+    previously_called = 1;
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending orted_exit commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
