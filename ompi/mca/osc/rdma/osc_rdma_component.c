@@ -492,6 +492,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     size_t total_size, local_rank_array_size, leader_peer_data_size;
     ompi_osc_rdma_peer_t *my_peer;
     int ret, my_rank;
+    bool use_cpu_atomics;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating private internal state");
 
@@ -569,7 +570,9 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
     my_peer->state = (uint64_t) (uintptr_t) module->state;
 
-    if (module->use_cpu_atomics) {
+    assert(NULL != my_peer->data_btl);
+    use_cpu_atomics = (my_peer->data_btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
+    if (use_cpu_atomics) {
         /* all peers are local or it is safe to mix cpu and nic atomics */
         my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
     } else {
@@ -588,7 +591,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
             ex_peer->size = size;
         }
 
-        if (!module->use_cpu_atomics) {
+        if (!use_cpu_atomics) {
             if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
                 /* base is local and cpu atomics are available */
                 ex_peer->super.base_handle = module->state_handle;
@@ -622,6 +625,7 @@ static int synchronize_errorcode(int errorcode, ompi_communicator_t *comm)
 static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, size_t size)
 {
     ompi_communicator_t *shared_comm;
+    bool use_cpu_atomics_on_peer;
     unsigned long offset, total_size;
     unsigned long state_base, data_base;
     int local_rank, local_size, ret;
@@ -640,10 +644,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
     /* CPU atomics can be used if every process is on the same node or the NIC allows mixing CPU and NIC atomics */
     module->single_node     = local_size == global_size;
-    module->use_cpu_atomics = module->single_node;
     module->use_local_leader = true;
     for (int i = 0 ; i < module->btls_in_use ; ++i) {
-        module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
 	/* the usage of local leader means to use different channels to send data to peer and update peer's state.
 	 * When different channels are used, active message RDMA cannot guarantee that put and atomics are completed
 	 * in the same order.
@@ -830,8 +832,9 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
             ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
 
+	    use_cpu_atomics_on_peer = (peer->data_btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
             /* set up peer state */
-            if (module->use_cpu_atomics) {
+            if (use_cpu_atomics_on_peer) {
                 /* all peers are local or it is safe to mix cpu and nic atomics */
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
                 peer->state = (osc_rdma_counter_t) peer_state;
@@ -864,7 +867,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             }
 
             if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor && MPI_WIN_FLAVOR_CREATE != module->flavor &&
-                !module->use_cpu_atomics && temp[i].size && i > 0) {
+                !use_cpu_atomics_on_peer && temp[i].size && i > 0) {
                 /* use the local leader's endpoint */
                 peer->data_endpoint = local_leader->data_endpoint;
                 peer->data_btl = local_leader->data_btl;
@@ -873,7 +876,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             ompi_osc_module_add_peer (module, peer);
 
             if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor) {
-                if (module->use_cpu_atomics && peer_rank == my_rank) {
+                if (use_cpu_atomics_on_peer && peer_rank == my_rank) {
                     peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
                 }
                 /* nothing more to do */
@@ -889,7 +892,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 ex_peer->size = temp[i].size;
             }
 
-            if (module->use_cpu_atomics && (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank)) {
+            if (use_cpu_atomics_on_peer && (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank)) {
                 /* base is local and cpu atomics are available */
                 if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
                     ex_peer->super.base = (uintptr_t) module->segment_base + offset;
