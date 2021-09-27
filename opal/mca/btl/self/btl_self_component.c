@@ -107,6 +107,7 @@ static int mca_btl_self_component_register(void)
     mca_btl_self.btl_rdma_pipeline_frag_size = INT_MAX;
     mca_btl_self.btl_min_rdma_pipeline_size = 0;
     mca_btl_self.btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND;
+    mca_btl_self.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_GLOB;
     mca_btl_self.btl_bandwidth = 100;
     mca_btl_self.btl_latency = 0;
     mca_btl_base_param_register(&mca_btl_self_component.super.btl_version, &mca_btl_self);
