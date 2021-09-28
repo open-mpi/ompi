@@ -61,7 +61,7 @@ BEGIN_C_DECLS
 #define MCA_COMMON_UCX_PROGRESS_LOOP(_worker)                               \
     for (unsigned iter = 0;; (++iter % opal_common_ucx.progress_iterations) \
                                  ? (void) ucp_worker_progress(_worker)      \
-                                 : opal_progress())
+                                 : (void) opal_progress())
 
 #define MCA_COMMON_UCX_WAIT_LOOP(_request, _worker, _msg, _completed)                          \
     do {                                                                                       \
