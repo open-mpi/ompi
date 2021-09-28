@@ -636,8 +636,8 @@ int mca_btl_portals4_component_progress(void)
                 recv_descriptor.cbdata = reg->cbdata;
 
                 OPAL_OUTPUT_VERBOSE((50, opal_btl_base_framework.framework_output,
-                                     "PTL_EVENT_PUT: tag=%x base_descriptor=%p cbfunc: %lx\n", tag,
-                                     (void *) &btl_base_descriptor, (uint64_t) reg->cbfunc));
+                                     "PTL_EVENT_PUT: tag=%x recv_descriptor=%p cbfunc: %lx\n", tag,
+                                     (void *) &recv_descriptor, (uint64_t) reg->cbfunc));
                 reg->cbfunc(&portals4_btl->super, &recv_descriptor);
 
                 goto done;

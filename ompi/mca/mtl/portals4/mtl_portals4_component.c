@@ -229,36 +229,6 @@ ompi_mtl_portals4_component_open(void)
         sizeof(ompi_mtl_portals4_request_t) -
         sizeof(struct mca_mtl_request_t);
 
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Flow control: "
-#if OMPI_MTL_PORTALS4_FLOW_CONTROL
-                        "yes"
-#else
-                        "no"
-#endif
-                        );
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Max message size: %lu", (unsigned long)
-                        ompi_mtl_portals4.max_msg_size_mtl);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Short limit: %d", (int)
-                        ompi_mtl_portals4.short_limit);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Eager limit: %d", (int)
-                        ompi_mtl_portals4.eager_limit);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Short receive blocks: %d",
-                        ompi_mtl_portals4.recv_short_num);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Send queue size: %d", ompi_mtl_portals4.send_queue_size);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Recv queue size: %d", ompi_mtl_portals4.recv_queue_size);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Long protocol: %s",
-                        (ompi_mtl_portals4.protocol == eager) ? "Eager" :
-                        (ompi_mtl_portals4.protocol == rndv) ? "Rendezvous" :
-                         "Other");
-
     OBJ_CONSTRUCT(&ompi_mtl_portals4.fl_message, opal_free_list_t);
     opal_free_list_init(&ompi_mtl_portals4.fl_message,
                         sizeof(ompi_mtl_portals4_message_t) +
@@ -290,6 +260,31 @@ ompi_mtl_portals4_component_open(void)
 #else
     ompi_mtl_portals4.use_flowctl=0;
 #endif
+
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Flow control: %s", 
+                        ompi_mtl_portals4.use_flowctl ? "yes" : "no");
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Max message size: %lu", (unsigned long)
+                        ompi_mtl_portals4.max_msg_size_mtl);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Short limit: %d", (int)
+                        ompi_mtl_portals4.short_limit);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Eager limit: %d", (int)
+                        ompi_mtl_portals4.eager_limit);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Short receive blocks: %d",
+                        ompi_mtl_portals4.recv_short_num);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Send queue size: %d", ompi_mtl_portals4.send_queue_size);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Recv queue size: %d", ompi_mtl_portals4.recv_queue_size);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Long protocol: %s",
+                        (ompi_mtl_portals4.protocol == eager) ? "Eager" :
+                        (ompi_mtl_portals4.protocol == rndv) ? "Rendezvous" :
+                         "Other");
 
     return OMPI_SUCCESS;
 }

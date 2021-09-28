@@ -175,7 +175,7 @@ number_of_fragments(ptl_size_t length, ptl_size_t maxlength)
 {
     ptl_size_t nb_frag = length == 0 ? 1 : (length - 1) / maxlength + 1;
     OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                         "%s,%d : %ld fragment(s)", __FUNCTION__, __LINE__, nb_frag));
+                         "%s,%d : %ld fragment(s)", __FILE__, __LINE__, nb_frag));
     return nb_frag;
 }
 
@@ -217,7 +217,7 @@ segmentedPut(opal_atomic_int64_t *opcount,
             opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlPut failed with return value %d",
-                                 __FUNCTION__, __LINE__, ret);
+                                 __FILE__, __LINE__, ret);
             return ret;
         }
         put_length -= frag_length;
@@ -261,7 +261,7 @@ segmentedGet(opal_atomic_int64_t *opcount,
             opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlGet failed with return value %d",
-                                 __FUNCTION__, __LINE__, ret);
+                                 __FILE__, __LINE__, ret);
             return ret;
         }
         get_length -= frag_length;
@@ -310,7 +310,7 @@ segmentedAtomic(opal_atomic_int64_t *opcount,
             opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlAtomic failed with return value %d",
-                                 __FUNCTION__, __LINE__, ret);
+                                 __FILE__, __LINE__, ret);
             return ret;
         }
         length -= frag_length;
@@ -362,7 +362,7 @@ segmentedFetchAtomic(opal_atomic_int64_t *opcount,
             opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlFetchAtomic failed with return value %d",
-                                 __FUNCTION__, __LINE__, ret);
+                                 __FILE__, __LINE__, ret);
             return ret;
         }
         length -= frag_length;
@@ -414,7 +414,7 @@ segmentedSwap(opal_atomic_int64_t *opcount,
             opal_atomic_add_fetch_64(opcount, -1);
             opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                  "%s:%d PtlSwap failed with return value %d",
-                                 __FUNCTION__, __LINE__, ret);
+                                 __FILE__, __LINE__, ret);
             return ret;
         }
         length -= frag_length;
@@ -543,7 +543,7 @@ get_to_iovec(ompi_osc_portals4_module_t *module,
 
     OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                  "%s,%d Get(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, size=%lu, length=%lu, offset=%lu, op_count=%ld)",
-                 __FUNCTION__, __LINE__, origin_count, origin_lb, target_count, target_lb, size, length, offset, module->opcount));
+                 __FILE__, __LINE__, origin_count, origin_lb, target_count, target_lb, size, length, offset, module->opcount));
     ret = PtlGet(module->origin_iovec_md_h,
                  (ptl_size_t) origin_lb,
                  length,
@@ -555,7 +555,7 @@ get_to_iovec(ompi_osc_portals4_module_t *module,
     if (PTL_OK != ret) {
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                      "%s,%d PtlGet() failed: ret = %d",
-                     __FUNCTION__, __LINE__, ret));
+                     __FILE__, __LINE__, ret));
         opal_atomic_add_fetch_64(&module->opcount, -1);
         return ret;
     }
@@ -628,7 +628,7 @@ atomic_get_to_iovec(ompi_osc_portals4_module_t *module,
 
     OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                  "%s,%d Get(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, size=%lu, length=%lu, offset=%lu, op_count=%ld)",
-                 __FUNCTION__, __LINE__, origin_count, origin_lb, target_count, target_lb, size, length, offset, module->opcount));
+                 __FILE__, __LINE__, origin_count, origin_lb, target_count, target_lb, size, length, offset, module->opcount));
     ret = segmentedGet(&module->opcount,
                        module->origin_iovec_md_h,
                        (ptl_size_t) origin_lb,
@@ -712,7 +712,7 @@ put_from_iovec(ompi_osc_portals4_module_t *module,
 
     OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                  "%s,%d Put(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, size=%lu, length=%lu, offset=%lu, op_count=%ld)",
-                 __FUNCTION__, __LINE__, origin_count, origin_lb, target_count, target_lb, size, length, offset, module->opcount));
+                 __FILE__, __LINE__, origin_count, origin_lb, target_count, target_lb, size, length, offset, module->opcount));
     ret = PtlPut(module->origin_iovec_md_h,
                  (ptl_size_t) origin_lb,
                  length,
@@ -726,7 +726,7 @@ put_from_iovec(ompi_osc_portals4_module_t *module,
     if (PTL_OK != ret) {
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                      "%s,%d PtlPut() failed: ret = %d",
-                     __FUNCTION__, __LINE__, ret));
+                     __FILE__, __LINE__, ret));
         opal_atomic_add_fetch_64(&module->opcount, -1);
         return ret;
     }
@@ -799,7 +799,7 @@ atomic_put_from_iovec(ompi_osc_portals4_module_t *module,
 
     OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                  "%s,%d Put(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, length=%lu, op_count=%ld)",
-                 __FUNCTION__, __LINE__, origin_count, origin_lb, target_count, target_lb, length, module->opcount));
+                 __FILE__, __LINE__, origin_count, origin_lb, target_count, target_lb, length, module->opcount));
     ret = segmentedPut(&module->opcount,
                        module->origin_iovec_md_h,
                        (ptl_size_t) origin_lb,
@@ -1479,7 +1479,7 @@ atomic_to_noncontig(ompi_osc_portals4_module_t *module,
                              (unsigned long) target_iovec[target_iov_index].iov_len));
 
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                         "%s,%d Atomic", __FUNCTION__, __LINE__));
+                         "%s,%d Atomic", __FILE__, __LINE__));
             ret = PtlAtomic(md_h,
                             (ptl_size_t)origin_iovec[origin_iov_index].iov_base,
                             atomic_len,
@@ -1835,7 +1835,7 @@ swap_from_noncontig(ompi_osc_portals4_module_t *module,
             if (PTL_OK != ret) {
                 opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                      "%s:%d PtlSwap failed with return value %d",
-                                     __FUNCTION__, __LINE__, ret);
+                                     __FILE__, __LINE__, ret);
                 opal_atomic_add_fetch_64(&module->opcount, -1);
                 return ret;
             }
@@ -1986,7 +1986,7 @@ fetch_atomic_from_noncontig(ompi_osc_portals4_module_t *module,
             if (PTL_OK != ret) {
                 opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                                      "%s:%d PtlFetchAtomic failed with return value %d",
-                                     __FUNCTION__, __LINE__, ret);
+                                     __FILE__, __LINE__, ret);
                 opal_atomic_add_fetch_64(&module->opcount, -1);
                 return ret;
             }
@@ -2057,7 +2057,7 @@ ompi_osc_portals4_rput(const void *origin_addr,
             OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                          "%s,%d put_to_noncontig() failed: ret = %d",
-                         __FUNCTION__, __LINE__, ret));
+                         __FILE__, __LINE__, ret));
             return ret;
         }
     } else if (!ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count)) {
@@ -2076,7 +2076,7 @@ ompi_osc_portals4_rput(const void *origin_addr,
             OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                          "%s,%d put_from_iovec() failed: ret = %d",
-                         __FUNCTION__, __LINE__, ret));
+                         __FILE__, __LINE__, ret));
             return ret;
         }
     } else {
@@ -2097,7 +2097,7 @@ ompi_osc_portals4_rput(const void *origin_addr,
 
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                      "%s,%d RPut(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, length=%lu, op_count=%ld)",
-                     __FUNCTION__, __LINE__, origin_count, origin_lb, target_count, target_lb, length, module->opcount));
+                     __FILE__, __LINE__, origin_count, origin_lb, target_count, target_lb, length, module->opcount));
         ret = segmentedPut(&module->opcount,
                            module->req_md_h,
                            (ptl_size_t) origin_addr + origin_lb,
@@ -2168,7 +2168,7 @@ ompi_osc_portals4_rget(void *origin_addr,
         if (PTL_OK != ret) {
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                          "%s,%d get_from_noncontig() failed: ret = %d",
-                         __FUNCTION__, __LINE__, ret));
+                         __FILE__, __LINE__, ret));
             return ret;
         }
     } else if (!ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count)) {
@@ -2186,7 +2186,7 @@ ompi_osc_portals4_rget(void *origin_addr,
         if (PTL_OK != ret) {
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                          "%s,%d get_to_iovec() failed: ret = %d",
-                         __FUNCTION__, __LINE__, ret));
+                         __FILE__, __LINE__, ret));
             return ret;
         }
     } else {
@@ -2204,7 +2204,7 @@ ompi_osc_portals4_rget(void *origin_addr,
         request->ops_expected += number_of_fragments(length, mca_osc_portals4_component.ptl_max_msg_size);
 
         OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
-                              "%s,%d RGet", __FUNCTION__, __LINE__));
+                              "%s,%d RGet", __FILE__, __LINE__));
         ret = segmentedGet(&module->opcount,
                            module->req_md_h,
                            (ptl_size_t) origin_addr + origin_lb,
@@ -2279,7 +2279,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d atomic_put_to_noncontig() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         } else {
@@ -2300,7 +2300,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d atomic_to_noncontig() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         }
@@ -2321,7 +2321,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d atomic_put_from_iovec() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         } else {
@@ -2341,7 +2341,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d atomic_from_iovec() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         }
@@ -2368,7 +2368,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
 
         if (MPI_REPLACE == op) {
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                                 "%s,%d Put", __FUNCTION__, __LINE__));
+                                 "%s,%d Put", __FILE__, __LINE__));
             ret = segmentedPut(&module->opcount,
                                module->req_md_h,
                                md_offset + origin_lb,
@@ -2406,7 +2406,7 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
                 (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                             "%s,%d Atomic", __FUNCTION__, __LINE__));
+                             "%s,%d Atomic", __FILE__, __LINE__));
                 ret = PtlAtomic(module->req_md_h,
                                 md_offset + sent + origin_lb,
                                 msg_length,
@@ -2497,7 +2497,7 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d swap_from_noncontig() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 return ret;
             }
@@ -2519,7 +2519,7 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d atomic_get_from_noncontig() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 return ret;
             }
@@ -2546,7 +2546,7 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d fetch_atomic_from_noncontig() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 return ret;
             }
@@ -2573,7 +2573,7 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d swap_to_iovec() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 return ret;
             }
@@ -2594,7 +2594,7 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d atomic_get_to_iovec() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 return ret;
             }
@@ -2619,7 +2619,7 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d fetch_atomic_to_iovec() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 return ret;
             }
@@ -2701,7 +2701,7 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
             request->ops_expected += number_of_fragments(length, module->fetch_atomic_max);
 
             OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
-                                  "%s,%d MPI_Get_accumulate", __FUNCTION__, __LINE__));
+                                  "%s,%d MPI_Get_accumulate", __FILE__, __LINE__));
             ret = segmentedGet(&module->opcount,
                                module->req_md_h,
                                (ptl_size_t) md_offset + result_lb,
@@ -2827,7 +2827,7 @@ ompi_osc_portals4_put(const void *origin_addr,
         if (PTL_OK != ret) {
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                          "%s,%d put_to_noncontig() failed: ret = %d",
-                         __FUNCTION__, __LINE__, ret));
+                         __FILE__, __LINE__, ret));
             return ret;
         }
     } else if (!ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count)) {
@@ -2845,7 +2845,7 @@ ompi_osc_portals4_put(const void *origin_addr,
         if (PTL_OK != ret) {
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                          "%s,%d put_from_iovec() failed: ret = %d",
-                         __FUNCTION__, __LINE__, ret));
+                         __FILE__, __LINE__, ret));
             return ret;
         }
     } else {
@@ -2862,7 +2862,7 @@ ompi_osc_portals4_put(const void *origin_addr,
 
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                      "%s,%d Put(origin_count=%d, origin_lb=%lu, target_count=%d, target_lb=%lu, length=%lu, op_count=%ld)",
-                     __FUNCTION__, __LINE__, origin_count, origin_lb, target_count, target_lb, length, module->opcount));
+                     __FILE__, __LINE__, origin_count, origin_lb, target_count, target_lb, length, module->opcount));
         ret = segmentedPut(&module->opcount,
                            module->md_h,
                            (ptl_size_t) origin_addr + origin_lb,
@@ -2926,7 +2926,7 @@ ompi_osc_portals4_get(void *origin_addr,
         if (PTL_OK != ret) {
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                          "%s,%d get_from_noncontig() failed: ret = %d",
-                         __FUNCTION__, __LINE__, ret));
+                         __FILE__, __LINE__, ret));
             return ret;
         }
     } else if (!ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count)) {
@@ -2944,7 +2944,7 @@ ompi_osc_portals4_get(void *origin_addr,
         if (PTL_OK != ret) {
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                          "%s,%d get_to_iovec() failed: ret = %d",
-                         __FUNCTION__, __LINE__, ret));
+                         __FILE__, __LINE__, ret));
             return ret;
         }
     } else {
@@ -2960,7 +2960,7 @@ ompi_osc_portals4_get(void *origin_addr,
         length = size * origin_count;
 
         OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
-                              "%s,%d Get", __FUNCTION__, __LINE__));
+                              "%s,%d Get", __FILE__, __LINE__));
         ret = segmentedGet(&module->opcount,
                            module->md_h,
                            (ptl_size_t) origin_addr + origin_lb,
@@ -3027,7 +3027,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d atomic_put_to_noncontig() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         } else {
@@ -3047,7 +3047,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d atomic_to_noncontig() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         }
@@ -3067,7 +3067,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d atomic_put_from_iovec() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         } else {
@@ -3086,7 +3086,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d atomic_from_iovec() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         }
@@ -3109,7 +3109,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
 
         if (MPI_REPLACE == op) {
             OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                                 "%s,%d Put", __FUNCTION__, __LINE__));
+                                 "%s,%d Put", __FILE__, __LINE__));
             ret = segmentedPut(&module->opcount,
                                module->md_h,
                                md_offset + origin_lb,
@@ -3144,7 +3144,7 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
                 (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                             "%s,%d Atomic", __FUNCTION__, __LINE__));
+                             "%s,%d Atomic", __FILE__, __LINE__));
                 ret = PtlAtomic(module->md_h,
                                 md_offset + sent + origin_lb,
                                 msg_length,
@@ -3228,7 +3228,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d swap_from_noncontig() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 return ret;
             }
         } else if (MPI_NO_OP == op) {
@@ -3249,7 +3249,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d atomic_get_from_noncontig() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 return ret;
             }
         } else {
@@ -3275,7 +3275,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                     "%s,%d fetch_atomic_from_noncontig() failed: ret = %d",
-                    __FUNCTION__, __LINE__, ret));
+                    __FILE__, __LINE__, ret));
                 return ret;
             }
         }
@@ -3301,7 +3301,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d swap_to_iovec() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 return ret;
             }
         } else if (MPI_NO_OP == op) {
@@ -3321,7 +3321,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d atomic_get_to_iovec() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 return ret;
             }
         } else {
@@ -3345,7 +3345,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             if (PTL_OK != ret) {
                 OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
                              "%s,%d fetch_atomic_to_iovec() failed: ret = %d",
-                             __FUNCTION__, __LINE__, ret));
+                             __FILE__, __LINE__, ret));
                 return ret;
             }
         }
@@ -3415,7 +3415,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             md_offset = (ptl_size_t) result_addr;
 
             OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
-                                  "%s,%d MPI_Get_accumulate", __FUNCTION__, __LINE__));
+                                  "%s,%d MPI_Get_accumulate", __FILE__, __LINE__));
             ret = segmentedGet(&module->opcount,
                                module->md_h,
                                (ptl_size_t) md_offset + result_lb,
@@ -3536,7 +3536,7 @@ ompi_osc_portals4_compare_and_swap(const void *origin_addr,
     (void)opal_atomic_add_fetch_64(&module->opcount, 1);
 
     OPAL_OUTPUT_VERBOSE((90,ompi_osc_base_framework.framework_output,
-                         "%s,%d Swap", __FUNCTION__, __LINE__));
+                         "%s,%d Swap", __FILE__, __LINE__));
     ret = PtlSwap(module->md_h,
                   result_md_offset,
                   module->md_h,
@@ -3607,7 +3607,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
 
         (void)opal_atomic_add_fetch_64(&module->opcount, 1);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                             "%s,%d Swap", __FUNCTION__, __LINE__));
+                             "%s,%d Swap", __FILE__, __LINE__));
         ret = PtlSwap(module->md_h,
                       result_md_offset,
                       module->md_h,
@@ -3629,7 +3629,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
 
         (void)opal_atomic_add_fetch_64(&module->opcount, 1);
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                             "%s,%d Get", __FUNCTION__, __LINE__));
+                             "%s,%d Get", __FILE__, __LINE__));
         ret = PtlGet(module->md_h,
                      md_offset,
                      length,
@@ -3653,7 +3653,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
         origin_md_offset = (ptl_size_t) origin_addr;
 
         OPAL_OUTPUT_VERBOSE((90, ompi_osc_base_framework.framework_output,
-                             "%s,%d FetchAtomic", __FUNCTION__, __LINE__));
+                             "%s,%d FetchAtomic", __FILE__, __LINE__));
         ret = PtlFetchAtomic(module->md_h,
                              result_md_offset,
                              module->md_h,

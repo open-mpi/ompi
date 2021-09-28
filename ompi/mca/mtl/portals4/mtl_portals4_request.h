@@ -62,7 +62,7 @@ struct ompi_mtl_portals4_isend_request_t {
 #endif
     ptl_size_t length;
     opal_atomic_int32_t pending_get;
-    opal_atomic_uint32_t event_count;
+    opal_atomic_int32_t event_count;
 };
 typedef struct ompi_mtl_portals4_isend_request_t ompi_mtl_portals4_isend_request_t;
 
