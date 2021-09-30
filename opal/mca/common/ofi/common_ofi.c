@@ -15,57 +15,78 @@
  * $HEADER$
  */
 
-#include <errno.h>
-#include <unistd.h>
 
 #include "opal_config.h"
+
+#include <errno.h>
+#include <unistd.h>
+#include <rdma/fabric.h>
+#ifdef HAVE_RDMA_FI_EXT_H
+#include <rdma/fi_ext.h>
+#endif
+
 #include "common_ofi.h"
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/memory/base/base.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 
-OPAL_DECLSPEC opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
-                                                          .prov_exclude = NULL,
-                                                          .registered = 0,
-                                                          .verbose = 0};
-
+opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
+                                            .prov_exclude = NULL,
+                                            .output = -1};
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic";
 static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
-static bool opal_common_ofi_initialized = false;
 static int opal_common_ofi_init_ref_cnt = 0;
+static bool opal_common_ofi_installed_memory_monitor = false;
 
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
+#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 
+/*
+ * Monitor object to export into Libfabric to provide memory release
+ * notifications using our own memory hooks framework.  Monitors may
+ * use the subscribe/unsubscribe notifications to reduce unnecessary
+ * notifications, but are not required to do so.  Because patcher
+ * notifies about all releases, it is cheaper for us to not filter and
+ * this monitor can safely ignore subscribe/unsubscribe notifications.
+ *
+ * Libfabric requires the object to be fully defined.  Unlike most of
+ * Open MPI, it does not have NULL function pointer checks in calling
+ * code.
+ */
 static int opal_common_ofi_monitor_start(struct fid_mem_monitor *monitor)
 {
     return 0;
 }
+
 static void opal_common_ofi_monitor_stop(struct fid_mem_monitor *monitor)
 {
     return;
 }
+
 static int opal_common_ofi_monitor_subscribe(struct fid_mem_monitor *monitor,
                                              const void *addr, size_t len)
 {
     return 0;
 }
+
 static void opal_common_ofi_monitor_unsubscribe(struct fid_mem_monitor *monitor,
                                                 const void *addr, size_t len)
 {
     return;
 }
+
 static bool opal_common_ofi_monitor_valid(struct fid_mem_monitor *monitor,
                                      const void *addr, size_t len)
 {
     return true;
 }
 
-static struct fid_mem_monitor *opal_common_ofi_monitor;
-static struct fid *opal_common_ofi_cache_fid;
+static struct fid_mem_monitor *opal_common_ofi_monitor = NULL;
+static struct fid *opal_common_ofi_cache_fid = NULL;
 static struct fi_ops_mem_monitor opal_common_ofi_export_ops = {
     .size = sizeof(struct fi_ops_mem_monitor),
     .start = opal_common_ofi_monitor_start,
@@ -75,82 +96,152 @@ static struct fi_ops_mem_monitor opal_common_ofi_export_ops = {
     .valid = opal_common_ofi_monitor_valid,
 };
 
-OPAL_DECLSPEC void opal_common_ofi_mem_release_cb(void *buf, size_t length,
-                                                  void *cbdata, bool from_alloc)
+/**
+ * Callback function from Open MPI memory monitor
+ *
+ * Translation function between the callback function from Open MPI's
+ * memory notifier to the Libfabric memory monitor.
+ */
+static void opal_common_ofi_mem_release_cb(void *buf, size_t length,
+                                           void *cbdata, bool from_alloc)
 {
     opal_common_ofi_monitor->import_ops->notify(opal_common_ofi_monitor,
                                                 buf, length);
 }
-#endif /* OPAL_OFI_IMPORT_MONITOR_SUPPORT */
 
-OPAL_DECLSPEC int opal_common_ofi_init(void)
+#endif /* HAVE_STRUCT_FI_OPS_MEM_MONITOR */
+
+int opal_common_ofi_export_memory_monitor(void)
 {
-    int ret;
+    int ret = -FI_ENOSYS;
 
-    opal_common_ofi_init_ref_cnt++;
-    if (opal_common_ofi_initialized) {
-        return OPAL_SUCCESS;
+#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
+
+    if (NULL != opal_common_ofi_cache_fid) {
+        return 0;
     }
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
 
-    mca_base_framework_open(&opal_memory_base_framework, 0);
+    /*
+     * While the memory import functionality was introduced in 1.13,
+     * some deadlock bugs exist in the 1.13 series.  Require version
+     * 1.14 before this code is activated.  Not activating the code
+     * should not break any functionality directly, but may lead to
+     * sub-optimal memory monitors being used in Libfabric, as Open
+     * MPI will almost certainly install a patcher first.
+     */
+    if (FI_VERSION_LT(fi_version(), FI_VERSION(1, 14))) {
+        ret = -FI_ENOSYS;
+        goto err;
+    }
+
+    ret = mca_base_framework_open(&opal_memory_base_framework, 0);
+    if (OPAL_SUCCESS != ret) {
+        ret = -FI_ENOSYS;
+        goto err;
+    }
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
         != (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
         & opal_mem_hooks_support_level())) {
-        return OPAL_SUCCESS;
+        ret = -FI_ENOSYS;
+        goto err;
     }
 
-    ret = fi_open(FI_VERSION(1,13), "mr_cache", NULL, 0, 0, &opal_common_ofi_cache_fid, NULL);
-    if (ret) {
+    /*
+     * The monitor import object has the well known name "mr_cache"
+     * and was introduced in Libfabric 1.13
+     */
+    ret = fi_open(FI_VERSION(1,13), "mr_cache", NULL, 0, 0,
+                  &opal_common_ofi_cache_fid, NULL);
+    if (0 != ret) {
         goto err;
     }
 
     opal_common_ofi_monitor = calloc(1, sizeof(*opal_common_ofi_monitor));
-    if (!opal_common_ofi_monitor) {
+    if (NULL == opal_common_ofi_monitor) {
+        ret = -FI_ENOMEM;
         goto err;
     }
 
     opal_common_ofi_monitor->fid.fclass = FI_CLASS_MEM_MONITOR;
     opal_common_ofi_monitor->export_ops = &opal_common_ofi_export_ops;
-    ret = fi_import_fid(opal_common_ofi_cache_fid, &opal_common_ofi_monitor->fid, 0);
-    if (ret) {
+    ret = fi_import_fid(opal_common_ofi_cache_fid,
+                        &opal_common_ofi_monitor->fid, 0);
+    if (0 != ret) {
         goto err;
     }
     opal_mem_hooks_register_release(opal_common_ofi_mem_release_cb, NULL);
-    opal_common_ofi_initialized = true;
+    opal_common_ofi_installed_memory_monitor = true;
 
-    return OPAL_SUCCESS;
+    ret = 0;
+
 err:
-    if (opal_common_ofi_cache_fid) {
-        fi_close(opal_common_ofi_cache_fid);
-    }
-    if (opal_common_ofi_monitor) {
-        free(opal_common_ofi_monitor);
+    if (0 != ret) {
+        if (NULL != opal_common_ofi_cache_fid) {
+            fi_close(opal_common_ofi_cache_fid);
+        }
+        if (NULL != opal_common_ofi_monitor) {
+            free(opal_common_ofi_monitor);
+        }
     }
 
-    return OPAL_ERROR;
-#else
-    opal_common_ofi_initialized = true;
-    return OPAL_SUCCESS;
+    opal_common_ofi_installed_memory_monitor = false;
+
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
 #endif
+
+    return ret;
 }
 
-OPAL_DECLSPEC int opal_common_ofi_fini(void)
+static int opal_common_ofi_remove_memory_monitor(void)
 {
-    if (opal_common_ofi_initialized && !--opal_common_ofi_init_ref_cnt) {
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
+#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
+    if (opal_common_ofi_installed_memory_monitor) {
         opal_mem_hooks_unregister_release(opal_common_ofi_mem_release_cb);
         fi_close(opal_common_ofi_cache_fid);
         fi_close(&opal_common_ofi_monitor->fid);
         free(opal_common_ofi_monitor);
+        opal_common_ofi_installed_memory_monitor = false;
+    }
 #endif
-        opal_common_ofi_initialized = false;
+
+    return OPAL_SUCCESS;
+}
+
+int opal_common_ofi_open(void)
+{
+    if ((opal_common_ofi_init_ref_cnt++) > 0) {
+        return OPAL_SUCCESS;
     }
 
     return OPAL_SUCCESS;
 }
 
-OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item)
+int opal_common_ofi_close(void)
+{
+    int ret;
+
+    if ((--opal_common_ofi_init_ref_cnt) > 0) {
+        return OPAL_SUCCESS;
+    }
+
+    ret = opal_common_ofi_remove_memory_monitor();
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    if (-1 != opal_common_ofi.output) {
+        opal_output_close(opal_common_ofi.output);
+        opal_common_ofi.output = -1;
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+int opal_common_ofi_is_in_list(char **list, char *item)
 {
     int i = 0;
 
@@ -169,11 +260,12 @@ OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item)
     return 0;
 }
 
-OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component)
+int opal_common_ofi_mca_register(const mca_base_component_t *component)
 {
     static int include_index;
     static int exclude_index;
     static int verbose_index;
+    int verbose;
     int param;
 
     if (fi_version() < FI_VERSION(1, 0)) {
@@ -231,7 +323,7 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                               MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                               MCA_BASE_VAR_SCOPE_LOCAL,
-                                              &opal_common_ofi.verbose);
+                                              &verbose);
     } else {
         verbose_index = param;
     }
@@ -248,32 +340,14 @@ OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_componen
                                       "verbose", 0);
     }
 
+    if (opal_common_ofi.output == -1) {
+        opal_common_ofi.output = opal_output_open(NULL);
+        opal_output_set_verbosity(opal_common_ofi.output, verbose);
+    }
+
     OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
 
     return OPAL_SUCCESS;
-}
-
-OPAL_DECLSPEC void opal_common_ofi_mca_register(void)
-{
-    opal_common_ofi.registered++;
-    if (opal_common_ofi.registered > 1) {
-        opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
-        return;
-    }
-
-    opal_common_ofi.output = opal_output_open(NULL);
-    opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi.verbose);
-}
-
-OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void)
-{
-    /* unregister only on last deregister */
-    opal_common_ofi.registered--;
-    assert(opal_common_ofi.registered >= 0);
-    if (opal_common_ofi.registered) {
-        return;
-    }
-    opal_output_close(opal_common_ofi.output);
 }
 
 /* check that the tx attributes match */
@@ -484,61 +558,6 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     return (uint32_t) package_ranks[process_info->my_local_rank];
 }
 
-/* Selects a NIC based on hardware locality between process cpuset and device BDF.
- *
- * Initializes opal_hwloc_topology to access hardware topology if not previously
- * initialized
- *
- * There are 3 main cases that this covers:
- *
- *      1. If the first provider passed into this function is the only valid
- *      provider, this provider is returned.
- *
- *      2. If there is more than 1 provider that matches the type of the first
- *      provider in the list, and the BDF data
- *      is available then a provider is selected based on locality of device
- *      cpuset and process cpuset and tries to ensure that processes are distributed
- *      evenly across NICs. This has two separate cases:
- *
- *          i. There is one or more provider local to the process:
- *
- *              (local rank % number of providers of the same type that share the process cpuset)
- *              is used to select one of these providers.
- *
- *          ii. There is no provider that is local to the process:
- *
- *              (local rank % number of providers of the same type)
- *              is used to select one of these providers
- *
- *      3. If there is more than 1 providers of the same type in the list, and the BDF data
- *      is not available (the ofi version does not support fi_info.nic or the
- *      provider does not support BDF) then (local rank % number of providers of the same type)
- *      is used to select one of these providers
- *
- *      @param provider_list (IN)   struct fi_info* An initially selected
- *                                  provider NIC. The provider name and
- *                                  attributes are used to restrict NIC
- *                                  selection. This provider is returned if the
- *                                  NIC selection fails.
- *
- *      @param package_rank (IN)   uint32_t The rank of the process. Used to
- *                                  select one valid NIC if there is a case
- *                                  where more than one can be selected. This
- *                                  could occur when more than one provider
- *                                  shares the same cpuset as the process.
- *                                  This could either be a package_rank if one is
- *                                  successfully calculated, or the process id.
- *
- *      @param provider (OUT)       struct fi_info* object with the selected
- *                                  provider if the selection succeeds
- *                                  if the selection fails, returns the fi_info
- *                                  object that was initially provided.
- *
- * All errors should be recoverable and will return the initially provided
- * provider. However, if an error occurs we can no longer guarantee
- * that the provider returned is local to the process or that the processes will
- * balance across available NICs.
- */
 struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
                                                     opal_process_info_t *process_info)
 {
