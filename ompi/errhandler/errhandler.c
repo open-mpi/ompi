@@ -397,11 +397,12 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
         pmix_info_t pmix_info[1];
         pmix_status_t prc;
 
+        assert(OPAL_ERR_PROC_ABORTED == status);
         OPAL_PMIX_CONVERT_NAME(&pmix_source, OMPI_PROC_MY_NAME);
         OPAL_PMIX_CONVERT_NAME(&pmix_proc, &ompi_proc->super.proc_name);
         PMIX_INFO_CONSTRUCT(&pmix_info[0]);
         PMIX_INFO_LOAD(&pmix_info[0], PMIX_EVENT_AFFECTED_PROC, &pmix_proc, PMIX_PROC);
-        prc = PMIx_Notify_event(status, &pmix_source, PMIX_RANGE_LOCAL,
+        prc = PMIx_Notify_event(PMIX_ERR_PROC_ABORTED, &pmix_source, PMIX_RANGE_LOCAL,
                                 pmix_info, 1, NULL, &active);
         if( PMIX_SUCCESS != prc &&
             PMIX_OPERATION_SUCCEEDED != prc ) {
@@ -450,7 +451,7 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
                 continue; /* we are not 'MPI connected' with this proc. */
             }
             assert( !ompi_proc_is_sentinel(proc) );
-            ompi_errhandler_proc_failed_internal(proc, status, false);
+            ompi_errhandler_proc_failed_internal(proc, OPAL_ERR_PROC_ABORTED, false);
         }
         opal_event_del(&event->super);
         free(event);
