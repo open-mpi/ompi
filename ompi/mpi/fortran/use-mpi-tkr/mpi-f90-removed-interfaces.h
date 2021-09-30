@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2016      Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! Copyright (c) 2018      Los Alamos National Security, LLC. All rights
@@ -22,7 +22,7 @@
 ! $HEADER$
 !
 
-interface MPI_Attr_delete
+interface
 
 subroutine MPI_Attr_delete(comm, keyval, ierror)
   integer, intent(in) :: comm
@@ -33,7 +33,7 @@ end subroutine MPI_Attr_delete
 end interface
 
 
-interface MPI_Attr_get
+interface
 
 subroutine MPI_Attr_get(comm, keyval, attribute_val, flag, ierror)
   integer, intent(in) :: comm
@@ -46,7 +46,7 @@ end subroutine MPI_Attr_get
 end interface
 
 
-interface MPI_Attr_put
+interface
 
 subroutine MPI_Attr_put(comm, keyval, attribute_val, ierror)
   integer, intent(in) :: comm
@@ -57,7 +57,7 @@ end subroutine MPI_Attr_put
 
 end interface
 
-interface MPI_Errhandler_create
+interface
 
 subroutine MPI_Errhandler_create(function, errhandler, ierror)
   external :: function
@@ -67,7 +67,7 @@ end subroutine MPI_Errhandler_create
 
 end interface
 
-interface MPI_Errhandler_get
+interface
 
 subroutine MPI_Errhandler_get(comm, errhandler, ierror)
   integer, intent(in) :: comm
@@ -78,7 +78,7 @@ end subroutine MPI_Errhandler_get
 end interface
 
 
-interface MPI_Errhandler_set
+interface
 
 subroutine MPI_Errhandler_set(comm, errhandler, ierror)
   integer, intent(in) :: comm
@@ -88,7 +88,7 @@ end subroutine MPI_Errhandler_set
 
 end interface
 
-interface MPI_Keyval_create
+interface
 
 subroutine MPI_Keyval_create(copy_fn, delete_fn, keyval, extra_state, ierror)
   external :: copy_fn
@@ -101,7 +101,7 @@ end subroutine MPI_Keyval_create
 end interface
 
 
-interface MPI_Keyval_free
+interface
 
 subroutine MPI_Keyval_free(keyval, ierror)
   integer, intent(inout) :: keyval
@@ -110,7 +110,7 @@ end subroutine MPI_Keyval_free
 
 end interface
 
-interface MPI_Type_extent
+interface
 
 subroutine MPI_Type_extent(datatype, extent, ierror)
   integer, intent(in) :: datatype
@@ -120,7 +120,7 @@ end subroutine MPI_Type_extent
 
 end interface
 
-interface MPI_Type_hindexed
+interface
 
 subroutine MPI_Type_hindexed(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierror)
@@ -135,7 +135,7 @@ end subroutine MPI_Type_hindexed
 end interface
 
 
-interface MPI_Type_hvector
+interface
 
 subroutine MPI_Type_hvector(count, blocklength, stride, oldtype, newtype&
         , ierror)
@@ -149,7 +149,7 @@ end subroutine MPI_Type_hvector
 
 end interface
 
-interface MPI_Type_lb
+interface
 
 subroutine MPI_Type_lb(datatype, lb, ierror)
   integer, intent(in) :: datatype
@@ -159,7 +159,7 @@ end subroutine MPI_Type_lb
 
 end interface
 
-interface MPI_Type_struct
+interface
 
 subroutine MPI_Type_struct(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype&
         , ierror)
@@ -174,7 +174,7 @@ end subroutine MPI_Type_struct
 end interface
 
 
-interface MPI_Type_ub
+interface
 
 subroutine MPI_Type_ub(datatype, ub, ierror)
   integer, intent(in) :: datatype

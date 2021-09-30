@@ -2,6 +2,7 @@
 !
 ! Copyright (c) 2020      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -9,7 +10,7 @@
 ! $HEADER$
 
 
-interface MPI_Status_f082f
+interface
 
 subroutine MPI_Status_f082f(f08_status, f_status, ierror)
   use mpi_types
@@ -22,7 +23,7 @@ end subroutine MPI_Status_f082f
 end interface
 
 
-interface MPI_Status_f2f08
+interface
 
 subroutine MPI_Status_f2f08(f_status, f08_status, ierror)
   use mpi_types
