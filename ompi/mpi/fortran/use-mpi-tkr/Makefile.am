@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2019 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2014-2021 Research Organization for Information Science
@@ -87,11 +87,6 @@ lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES = \
      mpi.F90 \
      mpi_aint_add_f90.f90 \
      mpi_aint_diff_f90.f90 \
-     mpi_comm_spawn_multiple_f90.f90 \
-     mpi_testall_f90.f90 \
-     mpi_testsome_f90.f90 \
-     mpi_waitall_f90.f90 \
-     mpi_waitsome_f90.f90 \
      mpi_wtick_f90.f90 \
      mpi_wtime_f90.f90
 
