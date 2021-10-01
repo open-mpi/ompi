@@ -43,7 +43,9 @@ opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                             .output = -1};
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic";
 static int opal_common_ofi_init_ref_cnt = 0;
+#ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 static bool opal_common_ofi_installed_memory_monitor = false;
+#endif
 
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 
