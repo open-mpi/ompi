@@ -10,7 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
-! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2016-2018 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
@@ -20,7 +20,7 @@
 ! $HEADER$
 !
 
-interface MPI_Wtick
+interface
 
 function MPI_Wtick()
     double precision MPI_Wtick
@@ -29,7 +29,7 @@ end function MPI_Wtick
 end interface
 
 
-interface MPI_Wtime
+interface
 
 function MPI_Wtime()
     double precision MPI_Wtime
@@ -38,7 +38,7 @@ end function MPI_Wtime
 end interface
 
 
-interface MPI_Abort
+interface
 
 subroutine MPI_Abort(comm, errorcode, ierror)
   integer, intent(in) :: comm
@@ -49,7 +49,7 @@ end subroutine MPI_Abort
 end interface
 
 
-interface MPI_Add_error_class
+interface
 
 subroutine MPI_Add_error_class(errorclass, ierror)
   integer, intent(out) :: errorclass
@@ -59,7 +59,7 @@ end subroutine MPI_Add_error_class
 end interface
 
 
-interface MPI_Add_error_code
+interface
 
 subroutine MPI_Add_error_code(errorclass, errorcode, ierror)
   integer, intent(in) :: errorclass
@@ -70,7 +70,7 @@ end subroutine MPI_Add_error_code
 end interface
 
 
-interface MPI_Add_error_string
+interface
 
 subroutine MPI_Add_error_string(errorcode, string, ierror)
   integer, intent(in) :: errorcode
@@ -80,7 +80,7 @@ end subroutine MPI_Add_error_string
 
 end interface
 
-interface MPI_Aint_add
+interface
 
 function MPI_Aint_add(base, diff)
   include 'mpif-config.h'
@@ -91,7 +91,7 @@ end function MPI_Aint_add
 
 end interface
 
-interface MPI_Aint_diff
+interface
 
 function MPI_Aint_diff(addr1, addr2)
   include 'mpif-config.h'
@@ -103,7 +103,7 @@ end function MPI_Aint_diff
 end interface
 
 
-interface MPI_Barrier
+interface
 
 subroutine MPI_Barrier(comm, ierror)
   integer, intent(in) :: comm
@@ -113,7 +113,7 @@ end subroutine MPI_Barrier
 end interface
 
 
-interface MPI_Ibarrier
+interface
 
 subroutine MPI_Ibarrier(comm, request, ierror)
   integer, intent(in) :: comm
@@ -124,7 +124,7 @@ end subroutine MPI_Ibarrier
 end interface
 
 
-interface MPI_Cancel
+interface
 
 subroutine MPI_Cancel(request, ierror)
   integer, intent(in) :: request
@@ -134,7 +134,7 @@ end subroutine MPI_Cancel
 end interface
 
 
-interface MPI_Cart_coords
+interface
 
 subroutine MPI_Cart_coords(comm, rank, maxdims, coords, ierror)
   integer, intent(in) :: comm
@@ -147,7 +147,7 @@ end subroutine MPI_Cart_coords
 end interface
 
 
-interface MPI_Cart_create
+interface
 
 subroutine MPI_Cart_create(old_comm, ndims, dims, periods, reorder, &
         comm_cart, ierror)
@@ -163,7 +163,7 @@ end subroutine MPI_Cart_create
 end interface
 
 
-interface MPI_Cart_get
+interface
 
 subroutine MPI_Cart_get(comm, maxdims, dims, periods, coords&
         , ierror)
@@ -178,7 +178,7 @@ end subroutine MPI_Cart_get
 end interface
 
 
-interface MPI_Cart_map
+interface
 
 subroutine MPI_Cart_map(comm, ndims, dims, periods, newrank&
         , ierror)
@@ -193,7 +193,7 @@ end subroutine MPI_Cart_map
 end interface
 
 
-interface MPI_Cart_rank
+interface
 
 subroutine MPI_Cart_rank(comm, coords, rank, ierror)
   integer, intent(in) :: comm
@@ -205,7 +205,7 @@ end subroutine MPI_Cart_rank
 end interface
 
 
-interface MPI_Cart_shift
+interface
 
 subroutine MPI_Cart_shift(comm, direction, disp, rank_source, rank_dest&
         , ierror)
@@ -220,7 +220,7 @@ end subroutine MPI_Cart_shift
 end interface
 
 
-interface MPI_Cart_sub
+interface
 
 subroutine MPI_Cart_sub(comm, remain_dims, new_comm, ierror)
   integer, intent(in) :: comm
@@ -232,7 +232,7 @@ end subroutine MPI_Cart_sub
 end interface
 
 
-interface MPI_Cartdim_get
+interface
 
 subroutine MPI_Cartdim_get(comm, ndims, ierror)
   integer, intent(in) :: comm
@@ -243,7 +243,7 @@ end subroutine MPI_Cartdim_get
 end interface
 
 
-interface MPI_Comm_call_errhandler
+interface
 
 subroutine MPI_Comm_call_errhandler(comm, errorcode, ierror)
   integer, intent(in) :: comm
@@ -254,7 +254,7 @@ end subroutine MPI_Comm_call_errhandler
 end interface
 
 
-interface MPI_Comm_compare
+interface
 
 subroutine MPI_Comm_compare(comm1, comm2, result, ierror)
   integer, intent(in) :: comm1
@@ -266,7 +266,7 @@ end subroutine MPI_Comm_compare
 end interface
 
 
-interface MPI_Comm_create
+interface
 
 subroutine MPI_Comm_create(comm, group, newcomm, ierror)
   integer, intent(in) :: comm
@@ -278,7 +278,7 @@ end subroutine MPI_Comm_create
 end interface
 
 
-interface MPI_Comm_create_group
+interface
 
 subroutine MPI_Comm_create_group(comm, group, tag, newcomm, ierror)
   integer, intent(in) :: comm
@@ -291,7 +291,7 @@ end subroutine MPI_Comm_create_group
 end interface
 
 
-interface MPI_Comm_create_errhandler
+interface
 
 subroutine MPI_Comm_create_errhandler(function, errhandler, ierror)
   external :: function
@@ -302,7 +302,7 @@ end subroutine MPI_Comm_create_errhandler
 end interface
 
 
-interface MPI_Comm_create_keyval
+interface
 
 subroutine MPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierror)
   include 'mpif-config.h'
@@ -316,7 +316,7 @@ end subroutine MPI_Comm_create_keyval
 end interface
 
 
-interface MPI_Comm_delete_attr
+interface
 
 subroutine MPI_Comm_delete_attr(comm, comm_keyval, ierror)
   integer, intent(in) :: comm
@@ -327,7 +327,7 @@ end subroutine MPI_Comm_delete_attr
 end interface
 
 
-interface MPI_Comm_dup
+interface
 
 subroutine MPI_Comm_dup(comm, newcomm, ierror)
   integer, intent(in) :: comm
@@ -338,7 +338,7 @@ end subroutine MPI_Comm_dup
 end interface
 
 
-interface MPI_Comm_dup_with_info
+interface
 
 subroutine MPI_Comm_dup_with_info(comm, info, newcomm, ierror)
   integer, intent(in) :: comm
@@ -350,7 +350,7 @@ end subroutine MPI_Comm_dup_with_info
 end interface
 
 
-interface MPI_Comm_idup
+interface
 
 subroutine MPI_Comm_idup(comm, newcomm, request, ierror)
   integer, intent(in) :: comm
@@ -362,7 +362,7 @@ end subroutine MPI_Comm_idup
 end interface
 
 
-interface MPI_Comm_free
+interface
 
 subroutine MPI_Comm_free(comm, ierror)
   integer, intent(inout) :: comm
@@ -372,7 +372,7 @@ end subroutine MPI_Comm_free
 end interface
 
 
-interface MPI_Comm_free_keyval
+interface
 
 subroutine MPI_Comm_free_keyval(comm_keyval, ierror)
   integer, intent(inout) :: comm_keyval
@@ -382,7 +382,7 @@ end subroutine MPI_Comm_free_keyval
 end interface
 
 
-interface MPI_Comm_get_info
+interface
 
 subroutine MPI_Comm_get_info(comm, info_used, ierror)
   include 'mpif-config.h'
@@ -394,7 +394,7 @@ end subroutine MPI_Comm_get_info
 end interface
 
 
-interface MPI_Comm_get_attr
+interface
 
 subroutine MPI_Comm_get_attr(comm, comm_keyval, attribute_val, flag, ierror)
   include 'mpif-config.h'
@@ -408,7 +408,7 @@ end subroutine MPI_Comm_get_attr
 end interface
 
 
-interface MPI_Comm_get_errhandler
+interface
 
 subroutine MPI_Comm_get_errhandler(comm, erhandler, ierror)
   integer, intent(in) :: comm
@@ -419,7 +419,7 @@ end subroutine MPI_Comm_get_errhandler
 end interface
 
 
-interface MPI_Comm_get_name
+interface
 
 subroutine MPI_Comm_get_name(comm, comm_name, resultlen, ierror)
   integer, intent(in) :: comm
@@ -431,7 +431,7 @@ end subroutine MPI_Comm_get_name
 end interface
 
 
-interface MPI_Comm_group
+interface
 
 subroutine MPI_Comm_group(comm, group, ierror)
   integer, intent(in) :: comm
@@ -442,7 +442,7 @@ end subroutine MPI_Comm_group
 end interface
 
 
-interface MPI_Comm_rank
+interface
 
 subroutine MPI_Comm_rank(comm, rank, ierror)
   integer, intent(in) :: comm
@@ -453,7 +453,7 @@ end subroutine MPI_Comm_rank
 end interface
 
 
-interface MPI_Comm_remote_group
+interface
 
 subroutine MPI_Comm_remote_group(comm, group, ierror)
   integer, intent(in) :: comm
@@ -464,7 +464,7 @@ end subroutine MPI_Comm_remote_group
 end interface
 
 
-interface MPI_Comm_remote_size
+interface
 
 subroutine MPI_Comm_remote_size(comm, size, ierror)
   integer, intent(in) :: comm
@@ -475,7 +475,7 @@ end subroutine MPI_Comm_remote_size
 end interface
 
 
-interface MPI_Comm_set_info
+interface
 
 subroutine MPI_Comm_set_info(comm, info, ierror)
   include 'mpif-config.h'
@@ -487,7 +487,7 @@ end subroutine MPI_Comm_set_info
 end interface
 
 
-interface MPI_Comm_set_attr
+interface
 
 subroutine MPI_Comm_set_attr(comm, comm_keyval, attribute_val, ierror)
   include 'mpif-config.h'
@@ -500,7 +500,7 @@ end subroutine MPI_Comm_set_attr
 end interface
 
 
-interface MPI_Comm_set_errhandler
+interface
 
 subroutine MPI_Comm_set_errhandler(comm, errhandler, ierror)
   integer, intent(in) :: comm
@@ -511,7 +511,7 @@ end subroutine MPI_Comm_set_errhandler
 end interface
 
 
-interface MPI_Comm_set_name
+interface
 
 subroutine MPI_Comm_set_name(comm, comm_name, ierror)
   integer, intent(in) :: comm
@@ -522,7 +522,7 @@ end subroutine MPI_Comm_set_name
 end interface
 
 
-interface MPI_Comm_size
+interface
 
 subroutine MPI_Comm_size(comm, size, ierror)
   integer, intent(in) :: comm
@@ -533,7 +533,7 @@ end subroutine MPI_Comm_size
 end interface
 
 
-interface MPI_Comm_split
+interface
 
 subroutine MPI_Comm_split(comm, color, key, newcomm, ierror)
   integer, intent(in) :: comm
@@ -546,7 +546,7 @@ end subroutine MPI_Comm_split
 end interface
 
 
-interface MPI_Comm_test_inter
+interface
 
 subroutine MPI_Comm_test_inter(comm, flag, ierror)
   integer, intent(in) :: comm
@@ -557,7 +557,7 @@ end subroutine MPI_Comm_test_inter
 end interface
 
 
-interface MPI_Dims_create
+interface
 
 subroutine MPI_Dims_create(nnodes, ndims, dims, ierror)
   integer, intent(in) :: nnodes
@@ -569,7 +569,7 @@ end subroutine MPI_Dims_create
 end interface
 
 
-interface MPI_Errhandler_free
+interface
 
 subroutine MPI_Errhandler_free(errhandler, ierror)
   integer, intent(inout) :: errhandler
@@ -579,7 +579,7 @@ end subroutine MPI_Errhandler_free
 end interface
 
 
-interface MPI_Error_class
+interface
 
 subroutine MPI_Error_class(errorcode, errorclass, ierror)
   integer, intent(in) :: errorcode
@@ -590,7 +590,7 @@ end subroutine MPI_Error_class
 end interface
 
 
-interface MPI_Error_string
+interface
 
 subroutine MPI_Error_string(errorcode, string, resultlen, ierror)
   integer, intent(in) :: errorcode
@@ -602,7 +602,7 @@ end subroutine MPI_Error_string
 end interface
 
 
-interface MPI_Finalize
+interface
 
 subroutine MPI_Finalize(ierror)
   integer, intent(out) :: ierror
@@ -611,7 +611,7 @@ end subroutine MPI_Finalize
 end interface
 
 
-interface MPI_Finalized
+interface
 
 subroutine MPI_Finalized(flag, ierror)
   logical, intent(out) :: flag
@@ -621,7 +621,7 @@ end subroutine MPI_Finalized
 end interface
 
 
-interface MPI_Get_count
+interface
 
 subroutine MPI_Get_count(status, datatype, count, ierror)
   include 'mpif-config.h'
@@ -634,7 +634,7 @@ end subroutine MPI_Get_count
 end interface
 
 
-interface MPI_Get_elements
+interface
 
 subroutine MPI_Get_elements(status, datatype, count, ierror)
   include 'mpif-config.h'
@@ -647,7 +647,7 @@ end subroutine MPI_Get_elements
 end interface
 
 
-interface MPI_Get_elements_x
+interface
 
 subroutine MPI_Get_elements_x(status, datatype, count, ierror)
   include 'mpif-config.h'
@@ -660,7 +660,7 @@ end subroutine MPI_Get_elements_x
 end interface
 
 
-interface MPI_Get_processor_name
+interface
 
 subroutine MPI_Get_processor_name(name, resultlen, ierror)
   character(len=*), intent(out) :: name
@@ -671,7 +671,7 @@ end subroutine MPI_Get_processor_name
 end interface
 
 
-interface MPI_Get_version
+interface
 
 subroutine MPI_Get_version(version, subversion, ierror)
   integer, intent(out) :: version
@@ -682,7 +682,7 @@ end subroutine MPI_Get_version
 end interface
 
 
-interface MPI_Graph_create
+interface
 
 subroutine MPI_Graph_create(comm_old, nnodes, index, edges, reorder, &
         comm_graph, ierror)
@@ -698,7 +698,7 @@ end subroutine MPI_Graph_create
 end interface
 
 
-interface MPI_Graph_get
+interface
 
 subroutine MPI_Graph_get(comm, maxindex, maxedges, index, edges&
         , ierror)
@@ -713,7 +713,7 @@ end subroutine MPI_Graph_get
 end interface
 
 
-interface MPI_Graph_map
+interface
 
 subroutine MPI_Graph_map(comm, nnodes, index, edges, newrank&
         , ierror)
@@ -728,7 +728,7 @@ end subroutine MPI_Graph_map
 end interface
 
 
-interface MPI_Graph_neighbors
+interface
 
 subroutine MPI_Graph_neighbors(comm, rank, maxneighbors, neighbors, ierror)
   integer, intent(in) :: comm
@@ -741,7 +741,7 @@ end subroutine MPI_Graph_neighbors
 end interface
 
 
-interface MPI_Graph_neighbors_count
+interface
 
 subroutine MPI_Graph_neighbors_count(comm, rank, nneighbors, ierror)
   integer, intent(in) :: comm
@@ -753,7 +753,7 @@ end subroutine MPI_Graph_neighbors_count
 end interface
 
 
-interface MPI_Graphdims_get
+interface
 
 subroutine MPI_Graphdims_get(comm, nnodes, nedges, ierror)
   integer, intent(in) :: comm
@@ -765,7 +765,7 @@ end subroutine MPI_Graphdims_get
 end interface
 
 
-interface MPI_Grequest_complete
+interface
 
 subroutine MPI_Grequest_complete(request, ierror)
   integer, intent(in) :: request
@@ -775,7 +775,7 @@ end subroutine MPI_Grequest_complete
 end interface
 
 
-interface MPI_Grequest_start
+interface
 
 subroutine MPI_Grequest_start(query_fn, free_fn, cancel_fn, extra_state, request&
         , ierror)
@@ -791,7 +791,7 @@ end subroutine MPI_Grequest_start
 end interface
 
 
-interface MPI_Group_compare
+interface
 
 subroutine MPI_Group_compare(group1, group2, result, ierror)
   integer, intent(in) :: group1
@@ -803,7 +803,7 @@ end subroutine MPI_Group_compare
 end interface
 
 
-interface MPI_Group_difference
+interface
 
 subroutine MPI_Group_difference(group1, group2, newgroup, ierror)
   integer, intent(in) :: group1
@@ -815,7 +815,7 @@ end subroutine MPI_Group_difference
 end interface
 
 
-interface MPI_Group_excl
+interface
 
 subroutine MPI_Group_excl(group, n, ranks, newgroup, ierror)
   integer, intent(in) :: group
@@ -828,7 +828,7 @@ end subroutine MPI_Group_excl
 end interface
 
 
-interface MPI_Group_free
+interface
 
 subroutine MPI_Group_free(group, ierror)
   integer, intent(inout) :: group
@@ -838,7 +838,7 @@ end subroutine MPI_Group_free
 end interface
 
 
-interface MPI_Group_incl
+interface
 
 subroutine MPI_Group_incl(group, n, ranks, newgroup, ierror)
   integer, intent(in) :: group
@@ -851,7 +851,7 @@ end subroutine MPI_Group_incl
 end interface
 
 
-interface MPI_Group_intersection
+interface
 
 subroutine MPI_Group_intersection(group1, group2, newgroup, ierror)
   integer, intent(in) :: group1
@@ -863,7 +863,7 @@ end subroutine MPI_Group_intersection
 end interface
 
 
-interface MPI_Group_range_excl
+interface
 
 subroutine MPI_Group_range_excl(group, n, ranges, newgroup, ierror)
   integer, intent(in) :: group
@@ -876,7 +876,7 @@ end subroutine MPI_Group_range_excl
 end interface
 
 
-interface MPI_Group_range_incl
+interface
 
 subroutine MPI_Group_range_incl(group, n, ranges, newgroup, ierror)
   integer, intent(in) :: group
@@ -889,7 +889,7 @@ end subroutine MPI_Group_range_incl
 end interface
 
 
-interface MPI_Group_rank
+interface
 
 subroutine MPI_Group_rank(group, rank, ierror)
   integer, intent(in) :: group
@@ -900,7 +900,7 @@ end subroutine MPI_Group_rank
 end interface
 
 
-interface MPI_Group_size
+interface
 
 subroutine MPI_Group_size(group, size, ierror)
   integer, intent(in) :: group
@@ -911,7 +911,7 @@ end subroutine MPI_Group_size
 end interface
 
 
-interface MPI_Group_translate_ranks
+interface
 
 subroutine MPI_Group_translate_ranks(group1, n, ranks1, group2, ranks2&
         , ierror)
@@ -926,7 +926,7 @@ end subroutine MPI_Group_translate_ranks
 end interface
 
 
-interface MPI_Group_union
+interface
 
 subroutine MPI_Group_union(group1, group2, newgroup, ierror)
   integer, intent(in) :: group1
@@ -938,7 +938,7 @@ end subroutine MPI_Group_union
 end interface
 
 
-interface MPI_Info_create
+interface
 
 subroutine MPI_Info_create(info, ierror)
   integer, intent(out) :: info
@@ -948,7 +948,7 @@ end subroutine MPI_Info_create
 end interface
 
 
-interface MPI_Info_delete
+interface
 
 subroutine MPI_Info_delete(info, key, ierror)
   integer, intent(in) :: info
@@ -959,7 +959,7 @@ end subroutine MPI_Info_delete
 end interface
 
 
-interface MPI_Info_dup
+interface
 
 subroutine MPI_Info_dup(info, newinfo, ierror)
   integer, intent(in) :: info
@@ -970,7 +970,7 @@ end subroutine MPI_Info_dup
 end interface
 
 
-interface MPI_Info_free
+interface
 
 subroutine MPI_Info_free(info, ierror)
   integer, intent(inout) :: info
@@ -980,7 +980,7 @@ end subroutine MPI_Info_free
 end interface
 
 
-interface MPI_Info_get
+interface
 
 subroutine MPI_Info_get(info, key, valuelen, value, flag&
         , ierror)
@@ -995,7 +995,7 @@ end subroutine MPI_Info_get
 end interface
 
 
-interface MPI_Info_get_nkeys
+interface
 
 subroutine MPI_Info_get_nkeys(info, nkeys, ierror)
   integer, intent(in) :: info
@@ -1006,7 +1006,7 @@ end subroutine MPI_Info_get_nkeys
 end interface
 
 
-interface MPI_Info_get_nthkey
+interface
 
 subroutine MPI_Info_get_nthkey(info, n, key, ierror)
   integer, intent(in) :: info
@@ -1018,7 +1018,7 @@ end subroutine MPI_Info_get_nthkey
 end interface
 
 
-interface MPI_Info_get_valuelen
+interface
 
 subroutine MPI_Info_get_valuelen(info, key, valuelen, flag, ierror)
   integer, intent(in) :: info
@@ -1031,7 +1031,7 @@ end subroutine MPI_Info_get_valuelen
 end interface
 
 
-interface MPI_Info_set
+interface
 
 subroutine MPI_Info_set(info, key, value, ierror)
   integer, intent(in) :: info
@@ -1043,7 +1043,7 @@ end subroutine MPI_Info_set
 end interface
 
 
-interface MPI_Init
+interface
 
 subroutine MPI_Init(ierror)
   integer, intent(out) :: ierror
@@ -1052,7 +1052,7 @@ end subroutine MPI_Init
 end interface
 
 
-interface MPI_Init_thread
+interface
 
 subroutine MPI_Init_thread(required, provided, ierror)
   integer, intent(in) :: required
@@ -1063,7 +1063,7 @@ end subroutine MPI_Init_thread
 end interface
 
 
-interface MPI_Initialized
+interface
 
 subroutine MPI_Initialized(flag, ierror)
   logical, intent(out) :: flag
@@ -1073,7 +1073,7 @@ end subroutine MPI_Initialized
 end interface
 
 
-interface MPI_Intercomm_create
+interface
 
 subroutine MPI_Intercomm_create(local_comm, local_leader, bridge_comm, remote_leader, tag, &
         newintercomm, ierror)
@@ -1089,7 +1089,7 @@ end subroutine MPI_Intercomm_create
 end interface
 
 
-interface MPI_Intercomm_merge
+interface
 
 subroutine MPI_Intercomm_merge(intercomm, high, newintercomm, ierror)
   integer, intent(in) :: intercomm
@@ -1101,7 +1101,7 @@ end subroutine MPI_Intercomm_merge
 end interface
 
 
-interface MPI_Iprobe
+interface
 
 subroutine MPI_Iprobe(source, tag, comm, flag, status&
         , ierror)
@@ -1117,7 +1117,7 @@ end subroutine MPI_Iprobe
 end interface
 
 
-interface MPI_Is_thread_main
+interface
 
 subroutine MPI_Is_thread_main(flag, ierror)
   logical, intent(out) :: flag
@@ -1127,7 +1127,7 @@ end subroutine MPI_Is_thread_main
 end interface
 
 
-interface MPI_Op_commutative
+interface
 
 subroutine MPI_Op_commutative(op, commute, ierror)
   integer, intent(in) :: op
@@ -1138,7 +1138,7 @@ end subroutine MPI_Op_commutative
 end interface
 
 
-interface MPI_Op_create
+interface
 
 subroutine MPI_Op_create(function, commute, op, ierror)
   external :: function
@@ -1150,7 +1150,7 @@ end subroutine MPI_Op_create
 end interface
 
 
-interface MPI_Op_free
+interface
 
 subroutine MPI_Op_free(op, ierror)
   integer, intent(inout) :: op
@@ -1160,7 +1160,7 @@ end subroutine MPI_Op_free
 end interface
 
 
-interface MPI_Pack_external_size
+interface
 
 subroutine MPI_Pack_external_size(datarep, incount, datatype, size, ierror)
   include 'mpif-config.h'
@@ -1174,7 +1174,7 @@ end subroutine MPI_Pack_external_size
 end interface
 
 
-interface MPI_Pack_size
+interface
 
 subroutine MPI_Pack_size(incount, datatype, comm, size, ierror)
   integer, intent(in) :: incount
@@ -1187,7 +1187,7 @@ end subroutine MPI_Pack_size
 end interface
 
 
-interface MPI_Pcontrol
+interface
 
 subroutine MPI_Pcontrol(level)
   integer, intent(in) :: level
@@ -1197,7 +1197,7 @@ end subroutine MPI_Pcontrol
 end interface
 
 
-interface MPI_Probe
+interface
 
 subroutine MPI_Probe(source, tag, comm, status, ierror)
   include 'mpif-config.h'
@@ -1211,7 +1211,7 @@ end subroutine MPI_Probe
 end interface
 
 
-interface MPI_Query_thread
+interface
 
 subroutine MPI_Query_thread(provided, ierror)
   integer, intent(out) :: provided
@@ -1221,7 +1221,7 @@ end subroutine MPI_Query_thread
 end interface
 
 
-interface MPI_Register_datarep
+interface
 
 subroutine MPI_Register_datarep(datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state&
         , ierror)
@@ -1237,7 +1237,7 @@ end subroutine MPI_Register_datarep
 end interface
 
 
-interface MPI_Request_free
+interface
 
 subroutine MPI_Request_free(request, ierror)
   integer, intent(inout) :: request
@@ -1247,7 +1247,7 @@ end subroutine MPI_Request_free
 end interface
 
 
-interface MPI_Request_get_status
+interface
 
 subroutine MPI_Request_get_status(request, flag, status, ierror)
   include 'mpif-config.h'
@@ -1260,7 +1260,7 @@ end subroutine MPI_Request_get_status
 end interface
 
 
-interface MPI_Start
+interface
 
 subroutine MPI_Start(request, ierror)
   integer, intent(inout) :: request
@@ -1270,7 +1270,7 @@ end subroutine MPI_Start
 end interface
 
 
-interface MPI_Startall
+interface
 
 subroutine MPI_Startall(count, array_of_requests, ierror)
   integer, intent(in) :: count
@@ -1281,7 +1281,7 @@ end subroutine MPI_Startall
 end interface
 
 
-interface MPI_Status_set_cancelled
+interface
 
 subroutine MPI_Status_set_cancelled(status, flag, ierror)
   include 'mpif-config.h'
@@ -1293,7 +1293,7 @@ end subroutine MPI_Status_set_cancelled
 end interface
 
 
-interface MPI_Status_set_elements
+interface
 
 subroutine MPI_Status_set_elements(status, datatype, count, ierror)
   include 'mpif-config.h'
@@ -1306,7 +1306,7 @@ end subroutine MPI_Status_set_elements
 end interface
 
 
-interface MPI_Test
+interface
 
 subroutine MPI_Test(request, flag, status, ierror)
   include 'mpif-config.h'
@@ -1319,7 +1319,7 @@ end subroutine MPI_Test
 end interface
 
 
-interface MPI_Test_cancelled
+interface
 
 subroutine MPI_Test_cancelled(status, flag, ierror)
   include 'mpif-config.h'
@@ -1331,7 +1331,7 @@ end subroutine MPI_Test_cancelled
 end interface
 
 
-interface MPI_Testall
+interface
 
 subroutine MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierror)
   include 'mpif-config.h'
@@ -1345,7 +1345,7 @@ end subroutine MPI_Testall
 end interface
 
 
-interface MPI_Testany
+interface
 
 subroutine MPI_Testany(count, array_of_requests, index, flag, status&
         , ierror)
@@ -1361,7 +1361,7 @@ end subroutine MPI_Testany
 end interface
 
 
-interface MPI_Testsome
+interface
 
 subroutine MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierror)
@@ -1377,7 +1377,7 @@ end subroutine MPI_Testsome
 end interface
 
 
-interface MPI_Topo_test
+interface
 
 subroutine MPI_Topo_test(comm, status, ierror)
   integer, intent(in) :: comm
@@ -1388,7 +1388,7 @@ end subroutine MPI_Topo_test
 end interface
 
 
-interface MPI_Type_commit
+interface
 
 subroutine MPI_Type_commit(datatype, ierror)
   integer, intent(inout) :: datatype
@@ -1398,7 +1398,7 @@ end subroutine MPI_Type_commit
 end interface
 
 
-interface MPI_Type_contiguous
+interface
 
 subroutine MPI_Type_contiguous(count, oldtype, newtype, ierror)
   integer, intent(in) :: count
@@ -1410,7 +1410,7 @@ end subroutine MPI_Type_contiguous
 end interface
 
 
-interface MPI_Type_create_darray
+interface
 
 subroutine MPI_Type_create_darray(size, rank, ndims, gsize_array, distrib_array, &
         darg_array, psize_array, order, oldtype, newtype, ierror)
@@ -1430,7 +1430,7 @@ end subroutine MPI_Type_create_darray
 end interface
 
 
-interface MPI_Type_create_f90_complex
+interface
 
 subroutine MPI_Type_create_f90_complex(p, r, newtype, ierror)
   integer, intent(in) :: p
@@ -1442,7 +1442,7 @@ end subroutine MPI_Type_create_f90_complex
 end interface
 
 
-interface MPI_Type_create_f90_integer
+interface
 
 subroutine MPI_Type_create_f90_integer(r, newtype, ierror)
   integer, intent(in) :: r
@@ -1453,7 +1453,7 @@ end subroutine MPI_Type_create_f90_integer
 end interface
 
 
-interface MPI_Type_create_f90_real
+interface
 
 subroutine MPI_Type_create_f90_real(p, r, newtype, ierror)
   integer, intent(in) :: p
@@ -1465,7 +1465,7 @@ end subroutine MPI_Type_create_f90_real
 end interface
 
 
-interface MPI_Type_create_hindexed
+interface
 
 subroutine MPI_Type_create_hindexed(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierror)
@@ -1481,7 +1481,7 @@ end subroutine MPI_Type_create_hindexed
 end interface
 
 
-interface MPI_Type_create_hvector
+interface
 
 subroutine MPI_Type_create_hvector(count, blocklength, stride, oldtype, newtype&
         , ierror)
@@ -1497,7 +1497,7 @@ end subroutine MPI_Type_create_hvector
 end interface
 
 
-interface MPI_Type_create_indexed_block
+interface
 
 subroutine MPI_Type_create_indexed_block(count, blocklength, array_of_displacements, oldtype, newtype&
         , ierror)
@@ -1512,7 +1512,7 @@ end subroutine MPI_Type_create_indexed_block
 end interface
 
 
-interface MPI_Type_create_keyval
+interface
 
 subroutine MPI_Type_create_keyval(type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierror)
   include 'mpif-config.h'
@@ -1526,7 +1526,7 @@ end subroutine MPI_Type_create_keyval
 end interface
 
 
-interface MPI_Type_create_resized
+interface
 
 subroutine MPI_Type_create_resized(oldtype, lb, extent, newtype, ierror)
   include 'mpif-config.h'
@@ -1540,7 +1540,7 @@ end subroutine MPI_Type_create_resized
 end interface
 
 
-interface MPI_Type_create_struct
+interface
 
 subroutine MPI_Type_create_struct(count, array_of_block_lengths, array_of_displacements, array_of_types, newtype&
         , ierror)
@@ -1556,7 +1556,7 @@ end subroutine MPI_Type_create_struct
 end interface
 
 
-interface MPI_Type_create_subarray
+interface
 
 subroutine MPI_Type_create_subarray(ndims, size_array, subsize_array, start_array, order, &
         oldtype, newtype, ierror)
@@ -1573,7 +1573,7 @@ end subroutine MPI_Type_create_subarray
 end interface
 
 
-interface MPI_Type_delete_attr
+interface
 
 subroutine MPI_Type_delete_attr(datatype, type_keyval, ierror)
   integer, intent(in) :: datatype
@@ -1584,7 +1584,7 @@ end subroutine MPI_Type_delete_attr
 end interface
 
 
-interface MPI_Type_dup
+interface
 
 subroutine MPI_Type_dup(oldtype, newtype, ierror)
   integer, intent(in) :: oldtype
@@ -1595,7 +1595,7 @@ end subroutine MPI_Type_dup
 end interface
 
 
-interface MPI_Type_free
+interface
 
 subroutine MPI_Type_free(datatype, ierror)
   integer, intent(inout) :: datatype
@@ -1605,7 +1605,7 @@ end subroutine MPI_Type_free
 end interface
 
 
-interface MPI_Type_free_keyval
+interface
 
 subroutine MPI_Type_free_keyval(type_keyval, ierror)
   integer, intent(inout) :: type_keyval
@@ -1615,7 +1615,7 @@ end subroutine MPI_Type_free_keyval
 end interface
 
 
-interface MPI_Type_get_attr
+interface
 
 subroutine MPI_Type_get_attr(datatype, type_keyval, attribute_val, flag, ierror)
   include 'mpif-config.h'
@@ -1629,7 +1629,7 @@ end subroutine MPI_Type_get_attr
 end interface
 
 
-interface MPI_Type_get_contents
+interface
 
 subroutine MPI_Type_get_contents(datatype, max_integers, max_addresses, max_datatypes, array_of_integers, &
         array_of_addresses, array_of_datatypes, ierror)
@@ -1647,7 +1647,7 @@ end subroutine MPI_Type_get_contents
 end interface
 
 
-interface MPI_Type_get_envelope
+interface
 
 subroutine MPI_Type_get_envelope(datatype, num_integers, num_addresses, num_datatypes, combiner&
         , ierror)
@@ -1662,7 +1662,7 @@ end subroutine MPI_Type_get_envelope
 end interface
 
 
-interface MPI_Type_get_extent
+interface
 
 subroutine MPI_Type_get_extent(datatype, lb, extent, ierror)
   include 'mpif-config.h'
@@ -1675,7 +1675,7 @@ end subroutine MPI_Type_get_extent
 end interface
 
 
-interface MPI_Type_get_extent_x
+interface
 
 subroutine MPI_Type_get_extent_x(datatype, lb, extent, ierror)
   include 'mpif-config.h'
@@ -1688,7 +1688,7 @@ end subroutine MPI_Type_get_extent_x
 end interface
 
 
-interface MPI_Type_get_name
+interface
 
 subroutine MPI_Type_get_name(datatype, type_name, resultlen, ierror)
   integer, intent(in) :: datatype
@@ -1700,7 +1700,7 @@ end subroutine MPI_Type_get_name
 end interface
 
 
-interface MPI_Type_get_true_extent
+interface
 
 subroutine MPI_Type_get_true_extent(datatype, true_lb, true_extent, ierror)
   include 'mpif-config.h'
@@ -1713,7 +1713,7 @@ end subroutine MPI_Type_get_true_extent
 end interface
 
 
-interface MPI_Type_get_true_extent_x
+interface
 
 subroutine MPI_Type_get_true_extent_x(datatype, true_lb, true_extent, ierror)
   include 'mpif-config.h'
@@ -1726,7 +1726,7 @@ end subroutine MPI_Type_get_true_extent_x
 end interface
 
 
-interface MPI_Type_indexed
+interface
 
 subroutine MPI_Type_indexed(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierror)
@@ -1739,7 +1739,7 @@ subroutine MPI_Type_indexed(count, array_of_blocklengths, array_of_displacements
 end subroutine MPI_Type_indexed
 
 end interface
-interface MPI_Type_match_size
+interface
 
 subroutine MPI_Type_match_size(typeclass, size, datatype, ierror)
   integer, intent(in) :: typeclass
@@ -1751,7 +1751,7 @@ end subroutine MPI_Type_match_size
 end interface
 
 
-interface MPI_Type_set_attr
+interface
 
 subroutine MPI_Type_set_attr(datatype, type_keyval, attr_val, ierror)
   include 'mpif-config.h'
@@ -1764,7 +1764,7 @@ end subroutine MPI_Type_set_attr
 end interface
 
 
-interface MPI_Type_set_name
+interface
 
 subroutine MPI_Type_set_name(datatype, type_name, ierror)
   integer, intent(in) :: datatype
@@ -1775,7 +1775,7 @@ end subroutine MPI_Type_set_name
 end interface
 
 
-interface MPI_Type_size
+interface
 
 subroutine MPI_Type_size(datatype, size, ierror)
   integer, intent(in) :: datatype
@@ -1786,7 +1786,7 @@ end subroutine MPI_Type_size
 end interface
 
 
-interface MPI_Type_size_x
+interface
 
 subroutine MPI_Type_size_x(datatype, size, ierror)
   include 'mpif-config.h'
@@ -1798,7 +1798,7 @@ end subroutine MPI_Type_size_x
 end interface
 
 
-interface MPI_Type_vector
+interface
 
 subroutine MPI_Type_vector(count, blocklength, stride, oldtype, newtype&
         , ierror)
@@ -1813,7 +1813,7 @@ end subroutine MPI_Type_vector
 end interface
 
 
-interface MPI_Wait
+interface
 
 subroutine MPI_Wait(request, status, ierror)
   include 'mpif-config.h'
@@ -1825,7 +1825,7 @@ end subroutine MPI_Wait
 end interface
 
 
-interface MPI_Waitall
+interface
 
 subroutine MPI_Waitall(count, array_of_requests, array_of_statuses, ierror)
   include 'mpif-config.h'
@@ -1838,7 +1838,7 @@ end subroutine MPI_Waitall
 end interface
 
 
-interface MPI_Waitany
+interface
 
 subroutine MPI_Waitany(count, array_of_requests, index, status, ierror)
   include 'mpif-config.h'
@@ -1852,7 +1852,7 @@ end subroutine MPI_Waitany
 end interface
 
 
-interface MPI_Waitsome
+interface
 
 subroutine MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierror)
@@ -1868,7 +1868,7 @@ end subroutine MPI_Waitsome
 end interface
 
 
-interface MPI_Win_call_errhandler
+interface
 
 subroutine MPI_Win_call_errhandler(win, errorcode, ierror)
   integer, intent(in) :: win
@@ -1879,7 +1879,7 @@ end subroutine MPI_Win_call_errhandler
 end interface
 
 
-interface MPI_Win_complete
+interface
 
 subroutine MPI_Win_complete(win, ierror)
   integer, intent(in) :: win
@@ -1889,7 +1889,7 @@ end subroutine MPI_Win_complete
 end interface
 
 
-interface MPI_Win_create_errhandler
+interface
 
 subroutine MPI_Win_create_errhandler(function, errhandler, ierror)
   external :: function
@@ -1900,7 +1900,7 @@ end subroutine MPI_Win_create_errhandler
 end interface
 
 
-interface MPI_Win_create_keyval
+interface
 
 subroutine MPI_Win_create_keyval(win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierror)
   include 'mpif-config.h'
@@ -1914,7 +1914,7 @@ end subroutine MPI_Win_create_keyval
 end interface
 
 
-interface MPI_Win_delete_attr
+interface
 
 subroutine MPI_Win_delete_attr(win, win_keyval, ierror)
   integer, intent(in) :: win
@@ -1925,7 +1925,7 @@ end subroutine MPI_Win_delete_attr
 end interface
 
 
-interface MPI_Win_fence
+interface
 
 subroutine MPI_Win_fence(assert, win, ierror)
   integer, intent(in) :: assert
@@ -1936,7 +1936,7 @@ end subroutine MPI_Win_fence
 end interface
 
 
-interface MPI_Win_free
+interface
 
 subroutine MPI_Win_free(win, ierror)
   integer, intent(inout) :: win
@@ -1946,7 +1946,7 @@ end subroutine MPI_Win_free
 end interface
 
 
-interface MPI_Win_free_keyval
+interface
 
 subroutine MPI_Win_free_keyval(win_keyval, ierror)
   integer, intent(inout) :: win_keyval
@@ -1956,7 +1956,7 @@ end subroutine MPI_Win_free_keyval
 end interface
 
 
-interface MPI_Win_get_attr
+interface
 
 subroutine MPI_Win_get_attr(win, win_keyval, attribute_val, flag, ierror)
   include 'mpif-config.h'
@@ -1970,7 +1970,7 @@ end subroutine MPI_Win_get_attr
 end interface
 
 
-interface MPI_Win_get_errhandler
+interface
 
 subroutine MPI_Win_get_errhandler(win, errhandler, ierror)
   integer, intent(in) :: win
@@ -1981,7 +1981,7 @@ end subroutine MPI_Win_get_errhandler
 end interface
 
 
-interface MPI_Win_get_group
+interface
 
 subroutine MPI_Win_get_group(win, group, ierror)
   integer, intent(in) :: win
@@ -1992,7 +1992,7 @@ end subroutine MPI_Win_get_group
 end interface
 
 
-interface MPI_Win_get_name
+interface
 
 subroutine MPI_Win_get_name(win, win_name, resultlen, ierror)
   integer, intent(in) :: win
@@ -2004,7 +2004,7 @@ end subroutine MPI_Win_get_name
 end interface
 
 
-interface MPI_Win_lock
+interface
 
 subroutine MPI_Win_lock(lock_type, rank, assert, win, ierror)
   integer, intent(in) :: lock_type
@@ -2017,7 +2017,7 @@ end subroutine MPI_Win_lock
 end interface
 
 
-interface MPI_Win_post
+interface
 
 subroutine MPI_Win_post(group, assert, win, ierror)
   integer, intent(in) :: group
@@ -2029,7 +2029,7 @@ end subroutine MPI_Win_post
 end interface
 
 
-interface MPI_Win_set_attr
+interface
 
 subroutine MPI_Win_set_attr(win, win_keyval, attribute_val, ierror)
   include 'mpif-config.h'
@@ -2042,7 +2042,7 @@ end subroutine MPI_Win_set_attr
 end interface
 
 
-interface MPI_Win_set_errhandler
+interface
 
 subroutine MPI_Win_set_errhandler(win, errhandler, ierror)
   integer, intent(in) :: win
@@ -2053,7 +2053,7 @@ end subroutine MPI_Win_set_errhandler
 end interface
 
 
-interface MPI_Win_set_name
+interface
 
 subroutine MPI_Win_set_name(win, win_name, ierror)
   integer, intent(in) :: win
@@ -2064,7 +2064,7 @@ end subroutine MPI_Win_set_name
 end interface
 
 
-interface MPI_Win_start
+interface
 
 subroutine MPI_Win_start(group, assert, win, ierror)
   integer, intent(in) :: group
@@ -2076,7 +2076,7 @@ end subroutine MPI_Win_start
 end interface
 
 
-interface MPI_Win_test
+interface
 
 subroutine MPI_Win_test(win, flag, ierror)
   integer, intent(in) :: win
@@ -2087,7 +2087,7 @@ end subroutine MPI_Win_test
 end interface
 
 
-interface MPI_Win_unlock
+interface
 
 subroutine MPI_Win_unlock(rank, win, ierror)
   integer, intent(in) :: rank
@@ -2098,7 +2098,7 @@ end subroutine MPI_Win_unlock
 end interface
 
 
-interface MPI_Win_wait
+interface
 
 subroutine MPI_Win_wait(win, ierror)
   integer, intent(in) :: win
@@ -2108,7 +2108,7 @@ end subroutine MPI_Win_wait
 end interface
 
 
-interface MPI_Close_port
+interface
 
 subroutine MPI_Close_port(port_name, ierror)
   character(len=*), intent(in) :: port_name
@@ -2118,7 +2118,7 @@ end subroutine MPI_Close_port
 end interface
 
 
-interface MPI_Lookup_name
+interface
 
 subroutine MPI_Lookup_name(service_name, info, port_name, ierror)
   character(len=*), intent(in) :: service_name
@@ -2130,7 +2130,7 @@ end subroutine MPI_Lookup_name
 end interface
 
 
-interface MPI_Open_port
+interface
 
 subroutine MPI_Open_port(info, port_name, ierror)
   integer, intent(in) :: info
@@ -2141,7 +2141,7 @@ end subroutine MPI_Open_port
 end interface
 
 
-interface MPI_Publish_name
+interface
 
 subroutine MPI_Publish_name(service_name, info, port_name, ierror)
   character(len=*), intent(in) :: service_name
@@ -2153,7 +2153,7 @@ end subroutine MPI_Publish_name
 end interface
 
 
-interface MPI_Unpublish_name
+interface
 
 subroutine MPI_Unpublish_name(service_name, info, port_name, ierror)
   character(len=*), intent(in) :: service_name
@@ -2165,7 +2165,7 @@ end subroutine MPI_Unpublish_name
 end interface
 
 
-interface MPI_Comm_disconnect
+interface
 
 subroutine MPI_Comm_disconnect(comm, ierror)
   integer, intent(inout) :: comm
@@ -2175,7 +2175,7 @@ end subroutine MPI_Comm_disconnect
 end interface
 
 
-interface MPI_Comm_get_parent
+interface
 
 subroutine MPI_Comm_get_parent(parent, ierror)
   integer, intent(out) :: parent
@@ -2185,7 +2185,7 @@ end subroutine MPI_Comm_get_parent
 end interface
 
 
-interface MPI_Comm_join
+interface
 
 subroutine MPI_Comm_join(fd, intercomm, ierror)
   integer, intent(in) :: fd
@@ -2196,7 +2196,7 @@ end subroutine MPI_Comm_join
 end interface
 
 
-interface MPI_Comm_accept
+interface
 
 subroutine MPI_Comm_accept(port_name, info, root, comm, newcomm&
         , ierror)
@@ -2211,7 +2211,7 @@ end subroutine MPI_Comm_accept
 end interface
 
 
-interface MPI_Comm_connect
+interface
 
 subroutine MPI_Comm_connect(port_name, info, root, comm, newcomm&
         , ierror)
@@ -2226,7 +2226,7 @@ end subroutine MPI_Comm_connect
 end interface
 
 
-interface MPI_Comm_spawn
+interface
 
 subroutine MPI_Comm_spawn(command, argv, maxprocs, info, root, &
         comm, intercomm, array_of_errcodes, ierror)
@@ -2244,7 +2244,7 @@ end subroutine MPI_Comm_spawn
 end interface
 
 
-interface MPI_Comm_spawn_multiple
+interface
 
 subroutine MPI_Comm_spawn_multiple(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierror)
@@ -2263,7 +2263,7 @@ end subroutine MPI_Comm_spawn_multiple
 end interface
 
 
-interface MPI_Mprobe
+interface
 
 subroutine MPI_Mprobe(source, tag, comm, message, status, ierror)
   include 'mpif-config.h'
@@ -2278,7 +2278,7 @@ end subroutine MPI_Mprobe
 end interface
 
 
-interface MPI_Improbe
+interface
 
 subroutine MPI_Improbe(source, tag, comm, flag, message, status, ierror)
   include 'mpif-config.h'
@@ -2294,7 +2294,7 @@ end subroutine MPI_Improbe
 end interface
 
 
-interface MPI_Get_library_version
+interface
 
 subroutine MPI_Get_library_version(version, resultlen, ierror)
   character(len=*), intent(out) :: version
@@ -2305,7 +2305,7 @@ end subroutine MPI_Get_library_version
 end interface
 
 
-interface MPI_Comm_split_type
+interface
 
 subroutine MPI_Comm_split_type(comm, split_type, key, info, newcomm, ierror)
   integer, intent(in) :: comm
@@ -2319,7 +2319,7 @@ end subroutine MPI_Comm_split_type
 end interface
 
 
-interface MPI_Type_create_hindexed_block
+interface
 
 subroutine MPI_Type_create_hindexed_block(count, blocklength, array_of_displacements, oldtype, newtype&
         , ierror)
@@ -2335,7 +2335,7 @@ end subroutine MPI_Type_create_hindexed_block
 end interface
 
 
-interface MPI_Dist_graph_create
+interface
 
 subroutine MPI_Dist_graph_create(comm_old, n, sources, degrees, destinations, &
         weights, info, reorder, comm_dist_graph, ierror)
@@ -2354,7 +2354,7 @@ end subroutine MPI_Dist_graph_create
 end interface
 
 
-interface MPI_Dist_graph_create_adjacent
+interface
 
 subroutine MPI_Dist_graph_create_adjacent(comm_old, indegree, sources, sourceweights, &
        outdegree, destinations, destweights, info, reorder, &
@@ -2375,7 +2375,7 @@ end subroutine MPI_Dist_graph_create_adjacent
 end interface
 
 
-interface MPI_Dist_graph_neighbors_count
+interface
 
 subroutine MPI_Dist_graph_neighbors_count(comm, indegree, outdegree, weighted, ierror)
   integer, intent(in) :: comm
@@ -2388,7 +2388,7 @@ end subroutine MPI_Dist_graph_neighbors_count
 end interface
 
 
-interface MPI_Dist_graph_neighbors
+interface
 
 subroutine MPI_Dist_graph_neighbors(comm, maxindegree, sources, sourceweights, &
        maxoutdegree, destinations, destweights, ierror)
@@ -2405,7 +2405,7 @@ end subroutine MPI_Dist_graph_neighbors
 end interface
 
 
-interface MPI_Win_flush
+interface
 
 subroutine MPI_Win_flush(rank, win, ierror)
   integer, intent(in) :: rank
@@ -2416,7 +2416,7 @@ end subroutine MPI_Win_flush
 end interface
 
 
-interface MPI_Win_flush_all
+interface
 
 subroutine MPI_Win_flush_all(win, ierror)
   integer, intent(in) :: win
@@ -2426,7 +2426,7 @@ end subroutine MPI_Win_flush_all
 end interface
 
 
-interface MPI_Win_flush_local
+interface
 
 subroutine MPI_Win_flush_local(rank, win, ierror)
   integer, intent(in) :: rank
@@ -2437,7 +2437,7 @@ end subroutine MPI_Win_flush_local
 end interface
 
 
-interface MPI_Win_flush_local_all
+interface
 
 subroutine MPI_Win_flush_local_all(win, ierror)
   integer, intent(in) :: win

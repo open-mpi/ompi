@@ -1,6 +1,6 @@
 ! -*- fortran -*-
 !
-! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 !                         reserved.
 ! Copyright (c) 2019-2020 Research Organization for Information Science
@@ -12,7 +12,7 @@
 ! $HEADER$
 
 
-interface MPI_File_call_errhandler
+interface
 
 subroutine MPI_File_call_errhandler(fh, errorcode, ierror)
   integer, intent(in) :: fh
@@ -22,7 +22,7 @@ end subroutine MPI_File_call_errhandler
 
 end interface
 
-interface MPI_File_close
+interface
 
 subroutine MPI_File_close(fh, ierror)
   integer, intent(inout) :: fh
@@ -31,7 +31,7 @@ end subroutine MPI_File_close
 
 end interface
 
-interface MPI_File_create_errhandler
+interface
 
 subroutine MPI_File_create_errhandler(function, errhandler, ierror)
   external :: function
@@ -41,7 +41,7 @@ end subroutine MPI_File_create_errhandler
 
 end interface
 
-interface MPI_File_delete
+interface
 
 subroutine MPI_File_delete(filename, info, ierror)
   character(len=*), intent(in) :: filename
@@ -51,7 +51,7 @@ end subroutine MPI_File_delete
 
 end interface
 
-interface MPI_File_get_amode
+interface
 
 subroutine MPI_File_get_amode(fh, amode, ierror)
   integer, intent(in) :: fh
@@ -61,7 +61,7 @@ end subroutine MPI_File_get_amode
 
 end interface
 
-interface MPI_File_get_atomicity
+interface
 
 subroutine MPI_File_get_atomicity(fh, flag, ierror)
   integer, intent(in) :: fh
@@ -71,7 +71,7 @@ end subroutine MPI_File_get_atomicity
 
 end interface
 
-interface MPI_File_get_byte_offset
+interface
 
 subroutine MPI_File_get_byte_offset(fh, offset, disp, ierror)
   include 'mpif-config.h'
@@ -83,7 +83,7 @@ end subroutine MPI_File_get_byte_offset
 
 end interface
 
-interface MPI_File_get_errhandler
+interface
 
 subroutine MPI_File_get_errhandler(file, errhandler, ierror)
   integer, intent(in) :: file
@@ -93,7 +93,7 @@ end subroutine MPI_File_get_errhandler
 
 end interface
 
-interface MPI_File_get_group
+interface
 
 subroutine MPI_File_get_group(fh, group, ierror)
   integer, intent(in) :: fh
@@ -103,7 +103,7 @@ end subroutine MPI_File_get_group
 
 end interface
 
-interface MPI_File_get_info
+interface
 
 subroutine MPI_File_get_info(fh, info_used, ierror)
   integer, intent(in) :: fh
@@ -113,7 +113,7 @@ end subroutine MPI_File_get_info
 
 end interface
 
-interface MPI_File_get_position
+interface
 
 subroutine MPI_File_get_position(fh, offset, ierror)
   include 'mpif-config.h'
@@ -124,7 +124,7 @@ end subroutine MPI_File_get_position
 
 end interface
 
-interface MPI_File_get_position_shared
+interface
 
 subroutine MPI_File_get_position_shared(fh, offset, ierror)
   include 'mpif-config.h'
@@ -135,7 +135,7 @@ end subroutine MPI_File_get_position_shared
 
 end interface
 
-interface MPI_File_get_size
+interface
 
 subroutine MPI_File_get_size(fh, size, ierror)
   include 'mpif-config.h'
@@ -146,7 +146,7 @@ end subroutine MPI_File_get_size
 
 end interface
 
-interface MPI_File_get_type_extent
+interface
 
 subroutine MPI_File_get_type_extent(fh, datatype, extent, ierror)
   include 'mpif-config.h'
@@ -158,7 +158,7 @@ end subroutine MPI_File_get_type_extent
 
 end interface
 
-interface MPI_File_get_view
+interface
 
 subroutine MPI_File_get_view(fh, disp, etype, filetype, datarep&
         , ierror)
@@ -173,7 +173,7 @@ end subroutine MPI_File_get_view
 
 end interface
 
-interface MPI_File_iread
+interface
 
 subroutine MPI_File_iread(fh, buf, count, datatype, request&
         , ierror)
@@ -188,7 +188,7 @@ end subroutine MPI_File_iread
 
 end interface
 
-interface MPI_File_iread_all
+interface
 
 subroutine MPI_File_iread_all(fh, buf, count, datatype, request&
         , ierror)
@@ -203,7 +203,7 @@ end subroutine MPI_File_iread_all
 
 end interface
 
-interface MPI_File_iread_at
+interface
 
 subroutine MPI_File_iread_at(fh, offset, buf, count, datatype, &
         request, ierror)
@@ -220,7 +220,7 @@ end subroutine MPI_File_iread_at
 
 end interface
 
-interface MPI_File_iread_at_all
+interface
 
 subroutine MPI_File_iread_at_all(fh, offset, buf, count, datatype, &
         request, ierror)
@@ -237,7 +237,7 @@ end subroutine MPI_File_iread_at_all
 
 end interface
 
-interface MPI_File_iread_shared
+interface
 
 subroutine MPI_File_iread_shared(fh, buf, count, datatype, request&
         , ierror)
@@ -252,7 +252,7 @@ end subroutine MPI_File_iread_shared
 
 end interface
 
-interface MPI_File_iwrite
+interface
 
 subroutine MPI_File_iwrite(fh, buf, count, datatype, request&
         , ierror)
@@ -267,7 +267,7 @@ end subroutine MPI_File_iwrite
 
 end interface
 
-interface MPI_File_iwrite_all
+interface
 
 subroutine MPI_File_iwrite_all(fh, buf, count, datatype, request&
         , ierror)
@@ -282,7 +282,7 @@ end subroutine MPI_File_iwrite_all
 
 end interface
 
-interface MPI_File_iwrite_at
+interface
 
 subroutine MPI_File_iwrite_at(fh, offset, buf, count, datatype, &
         request, ierror)
@@ -299,7 +299,7 @@ end subroutine MPI_File_iwrite_at
 
 end interface
 
-interface MPI_File_iwrite_at_all
+interface
 
 subroutine MPI_File_iwrite_at_all(fh, offset, buf, count, datatype, &
         request, ierror)
@@ -316,7 +316,7 @@ end subroutine MPI_File_iwrite_at_all
 
 end interface
 
-interface MPI_File_iwrite_shared
+interface
 
 subroutine MPI_File_iwrite_shared(fh, buf, count, datatype, request&
         , ierror)
@@ -331,7 +331,7 @@ end subroutine MPI_File_iwrite_shared
 
 end interface
 
-interface MPI_File_open
+interface
 
 subroutine MPI_File_open(comm, filename, amode, info, fh&
         , ierror)
@@ -345,7 +345,7 @@ end subroutine MPI_File_open
 
 end interface
 
-interface MPI_File_preallocate
+interface
 
 subroutine MPI_File_preallocate(fh, size, ierror)
   include 'mpif-config.h'
@@ -356,7 +356,7 @@ end subroutine MPI_File_preallocate
 
 end interface
 
-interface MPI_File_read
+interface
 
 subroutine MPI_File_read(fh, buf, count, datatype, status&
         , ierror)
@@ -372,7 +372,7 @@ end subroutine MPI_File_read
 
 end interface
 
-interface MPI_File_read_all
+interface
 
 subroutine MPI_File_read_all(fh, buf, count, datatype, status&
         , ierror)
@@ -388,7 +388,7 @@ end subroutine MPI_File_read_all
 
 end interface
 
-interface MPI_File_read_all_begin
+interface
 
 subroutine MPI_File_read_all_begin(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
@@ -401,7 +401,7 @@ end subroutine MPI_File_read_all_begin
 
 end interface
 
-interface MPI_File_read_all_end
+interface
 
 subroutine MPI_File_read_all_end(fh, buf, status, ierror)
   include 'mpif-config.h'
@@ -414,7 +414,7 @@ end subroutine MPI_File_read_all_end
 
 end interface
 
-interface MPI_File_read_at
+interface
 
 subroutine MPI_File_read_at(fh, offset, buf, count, datatype, &
         status, ierror)
@@ -431,7 +431,7 @@ end subroutine MPI_File_read_at
 
 end interface
 
-interface MPI_File_read_at_all
+interface
 
 subroutine MPI_File_read_at_all(fh, offset, buf, count, datatype, &
         status, ierror)
@@ -448,7 +448,7 @@ end subroutine MPI_File_read_at_all
 
 end interface
 
-interface MPI_File_read_at_all_begin
+interface
 
 subroutine MPI_File_read_at_all_begin(fh, offset, buf, count, datatype&
         , ierror)
@@ -464,7 +464,7 @@ end subroutine MPI_File_read_at_all_begin
 
 end interface
 
-interface MPI_File_read_at_all_end
+interface
 
 subroutine MPI_File_read_at_all_end(fh, buf, status, ierror)
   include 'mpif-config.h'
@@ -477,7 +477,7 @@ end subroutine MPI_File_read_at_all_end
 
 end interface
 
-interface MPI_File_read_ordered
+interface
 
 subroutine MPI_File_read_ordered(fh, buf, count, datatype, status&
         , ierror)
@@ -493,7 +493,7 @@ end subroutine MPI_File_read_ordered
 
 end interface
 
-interface MPI_File_read_ordered_begin
+interface
 
 subroutine MPI_File_read_ordered_begin(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
@@ -506,7 +506,7 @@ end subroutine MPI_File_read_ordered_begin
 
 end interface
 
-interface MPI_File_read_ordered_end
+interface
 
 subroutine MPI_File_read_ordered_end(fh, buf, status, ierror)
   include 'mpif-config.h'
@@ -519,7 +519,7 @@ end subroutine MPI_File_read_ordered_end
 
 end interface
 
-interface MPI_File_read_shared
+interface
 
 subroutine MPI_File_read_shared(fh, buf, count, datatype, status&
         , ierror)
@@ -535,7 +535,7 @@ end subroutine MPI_File_read_shared
 
 end interface
 
-interface MPI_File_seek
+interface
 
 subroutine MPI_File_seek(fh, offset, whence, ierror)
   include 'mpif-config.h'
@@ -547,7 +547,7 @@ end subroutine MPI_File_seek
 
 end interface
 
-interface MPI_File_seek_shared
+interface
 
 subroutine MPI_File_seek_shared(fh, offset, whence, ierror)
   include 'mpif-config.h'
@@ -559,7 +559,7 @@ end subroutine MPI_File_seek_shared
 
 end interface
 
-interface MPI_File_set_atomicity
+interface
 
 subroutine MPI_File_set_atomicity(fh, flag, ierror)
   integer, intent(in) :: fh
@@ -569,7 +569,7 @@ end subroutine MPI_File_set_atomicity
 
 end interface
 
-interface MPI_File_set_errhandler
+interface
 
 subroutine MPI_File_set_errhandler(file, errhandler, ierror)
   integer, intent(in) :: file
@@ -579,7 +579,7 @@ end subroutine MPI_File_set_errhandler
 
 end interface
 
-interface MPI_File_set_info
+interface
 
 subroutine MPI_File_set_info(fh, info, ierror)
   integer, intent(in) :: fh
@@ -589,7 +589,7 @@ end subroutine MPI_File_set_info
 
 end interface
 
-interface MPI_File_set_size
+interface
 
 subroutine MPI_File_set_size(fh, size, ierror)
   include 'mpif-config.h'
@@ -600,7 +600,7 @@ end subroutine MPI_File_set_size
 
 end interface
 
-interface MPI_File_set_view
+interface
 
 subroutine MPI_File_set_view(fh, disp, etype, filetype, datarep, &
         info, ierror)
@@ -616,7 +616,7 @@ end subroutine MPI_File_set_view
 
 end interface
 
-interface MPI_File_sync
+interface
 
 subroutine MPI_File_sync(fh, ierror)
   integer, intent(in) :: fh
@@ -625,7 +625,7 @@ end subroutine MPI_File_sync
 
 end interface
 
-interface MPI_File_write
+interface
 
 subroutine MPI_File_write(fh, buf, count, datatype, status&
         , ierror)
@@ -641,7 +641,7 @@ end subroutine MPI_File_write
 
 end interface
 
-interface MPI_File_write_all
+interface
 
 subroutine MPI_File_write_all(fh, buf, count, datatype, status&
         , ierror)
@@ -657,7 +657,7 @@ end subroutine MPI_File_write_all
 
 end interface
 
-interface MPI_File_write_all_begin
+interface
 
 subroutine MPI_File_write_all_begin(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
@@ -670,7 +670,7 @@ end subroutine MPI_File_write_all_begin
 
 end interface
 
-interface MPI_File_write_all_end
+interface
 
 subroutine MPI_File_write_all_end(fh, buf, status, ierror)
   include 'mpif-config.h'
@@ -683,7 +683,7 @@ end subroutine MPI_File_write_all_end
 
 end interface
 
-interface MPI_File_write_at
+interface
 
 subroutine MPI_File_write_at(fh, offset, buf, count, datatype, &
         status, ierror)
@@ -700,7 +700,7 @@ end subroutine MPI_File_write_at
 
 end interface
 
-interface MPI_File_write_at_all
+interface
 
 subroutine MPI_File_write_at_all(fh, offset, buf, count, datatype, &
         status, ierror)
@@ -717,7 +717,7 @@ end subroutine MPI_File_write_at_all
 
 end interface
 
-interface MPI_File_write_at_all_begin
+interface
 
 subroutine MPI_File_write_at_all_begin(fh, offset, buf, count, datatype&
         , ierror)
@@ -733,7 +733,7 @@ end subroutine MPI_File_write_at_all_begin
 
 end interface
 
-interface MPI_File_write_at_all_end
+interface
 
 subroutine MPI_File_write_at_all_end(fh, buf, status, ierror)
   include 'mpif-config.h'
@@ -746,7 +746,7 @@ end subroutine MPI_File_write_at_all_end
 
 end interface
 
-interface MPI_File_write_ordered
+interface
 
 subroutine MPI_File_write_ordered(fh, buf, count, datatype, status&
         , ierror)
@@ -762,7 +762,7 @@ end subroutine MPI_File_write_ordered
 
 end interface
 
-interface MPI_File_write_ordered_begin
+interface
 
 subroutine MPI_File_write_ordered_begin(fh, buf, count, datatype, ierror)
   integer, intent(in) :: fh
@@ -775,7 +775,7 @@ end subroutine MPI_File_write_ordered_begin
 
 end interface
 
-interface MPI_File_write_ordered_end
+interface
 
 subroutine MPI_File_write_ordered_end(fh, buf, status, ierror)
   include 'mpif-config.h'
@@ -788,7 +788,7 @@ end subroutine MPI_File_write_ordered_end
 
 end interface
 
-interface MPI_File_write_shared
+interface
 
 subroutine MPI_File_write_shared(fh, buf, count, datatype, status&
         , ierror)
