@@ -40,6 +40,7 @@ opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                             .output = -1};
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic";
 static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
+static int opal_common_ofi_verbose_level = 0;
 static int opal_common_ofi_init_ref_cnt = 0;
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 static bool opal_common_ofi_installed_memory_monitor = false;
@@ -264,11 +265,10 @@ int opal_common_ofi_is_in_list(char **list, char *item)
 
 int opal_common_ofi_mca_register(const mca_base_component_t *component)
 {
-    static int include_index;
-    static int exclude_index;
-    static int verbose_index;
-    int verbose;
-    int param;
+    static int include_index = -1;
+    static int exclude_index = -1;
+    static int verbose_index = -1;
+    int ret;
 
     if (fi_version() < FI_VERSION(1, 0)) {
         return OPAL_ERROR;
@@ -276,8 +276,7 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
 
     OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
 
-    param = mca_base_var_find("opal", "opal_common", "ofi", "provider_include");
-    if (0 > param) {
+    if (0 > include_index) {
         /*
          * this monkey business is needed because of the way the MCA VARs stuff tries to handle
          * pointers to strings when when destructing the MCA var database.  If you don't do
@@ -296,12 +295,13 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
             "exclusive with mtl_ofi_provider_exclude.",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_1, MCA_BASE_VAR_SCOPE_READONLY,
             opal_common_ofi.prov_include);
-    } else {
-        include_index = param;
+        if (0 > include_index) {
+            ret = include_index;
+            goto err;
+        }
     }
 
-    param = mca_base_var_find("opal", "opal_common", "ofi", "provider_exclude");
-    if (0 > param) {
+    if (0 > exclude_index) {
         if (NULL == opal_common_ofi.prov_exclude) {
             opal_common_ofi.prov_exclude = (char **) malloc(sizeof(char *));
             assert(NULL != opal_common_ofi.prov_exclude);
@@ -314,42 +314,73 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
             "exclusive with mtl_ofi_provider_include.",
             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_1, MCA_BASE_VAR_SCOPE_READONLY,
             opal_common_ofi.prov_exclude);
-    } else {
-        exclude_index = param;
+        if (0 > exclude_index) {
+            ret = exclude_index;
+            goto err;
+        }
     }
 
-    param = mca_base_var_find("opal", "opal_common", "ofi", "verbose");
-    if (0 > param) {
+    if (0 > verbose_index) {
         verbose_index = mca_base_var_register("opal", "opal_common", "ofi", "verbose",
                                               "Verbose level of the OFI components",
                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                               MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                               MCA_BASE_VAR_SCOPE_LOCAL,
-                                              &verbose);
-    } else {
-        verbose_index = param;
+                                              &opal_common_ofi_verbose_level);
+        if (0 > verbose_index) {
+            ret = verbose_index;
+            goto err;
+        }
     }
 
     if (component) {
-        mca_base_var_register_synonym(include_index, component->mca_project_name,
-                                      component->mca_type_name, component->mca_component_name,
-                                      "provider_include", 0);
-        mca_base_var_register_synonym(exclude_index, component->mca_project_name,
-                                      component->mca_type_name, component->mca_component_name,
-                                      "provider_exclude", 0);
-        mca_base_var_register_synonym(verbose_index, component->mca_project_name,
-                                      component->mca_type_name, component->mca_component_name,
-                                      "verbose", 0);
+        ret = mca_base_var_register_synonym(include_index,
+                                            component->mca_project_name,
+                                            component->mca_type_name,
+                                            component->mca_component_name,
+                                            "provider_include", 0);
+        if (0 > ret) {
+            goto err;
+        }
+        ret = mca_base_var_register_synonym(exclude_index,
+                                            component->mca_project_name,
+                                            component->mca_type_name,
+                                            component->mca_component_name,
+                                            "provider_exclude", 0);
+        if (0 > ret) {
+            goto err;
+        }
+        ret = mca_base_var_register_synonym(verbose_index,
+                                            component->mca_project_name,
+                                            component->mca_type_name,
+                                            component->mca_component_name,
+                                            "verbose", 0);
+        if (0 > ret) {
+            goto err;
+        }
     }
 
+    /* The frameworks initialize their output streams during
+     * register(), so we similarly try to initialize the output stream
+     * as early as possible.  Because we may register synonyms for
+     * each dependent component, we don't necessarily have all the
+     * data to set verbosity during the first call to
+     * common_ofi_register().  The MCA infrastructure has rules on
+     * synonym value evaluation, so our rubric is to re-set verbosity
+     * after every call to register() (which has registered a new
+     * synonym).  This is not perfect, but it's not horrible, either.
+     */
     if (opal_common_ofi.output == -1) {
         opal_common_ofi.output = opal_output_open(NULL);
-        opal_output_set_verbosity(opal_common_ofi.output, verbose);
     }
+    opal_output_set_verbosity(opal_common_ofi.output, opal_common_ofi_verbose_level);
 
+    ret = OPAL_SUCCESS;
+
+err:
     OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
 
-    return OPAL_SUCCESS;
+    return ret;
 }
 
 /* check that the tx attributes match */
