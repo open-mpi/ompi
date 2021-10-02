@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2008-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -112,12 +112,8 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
          */
         datatype->super.flags |= OMPI_DATATYPE_FLAG_PREDEFINED;
         /* Mark the datatype as a special F90 convenience type */
-        // Specifically using opal_snprintf() here (instead of
-        // snprintf()) so that over-eager compilers do not warn us
-        // that we may be truncating the output.  We *know* that the
-        // output may be truncated, and it's ok.
-        opal_snprintf(datatype->name, sizeof(datatype->name),
-                      "COMBINER %s", (*newtype)->name);
+        snprintf(datatype->name, sizeof(datatype->name),
+                 "COMBINER %s", (*newtype)->name);
 
         ompi_datatype_set_args( datatype, 2, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_REAL );
 
