@@ -371,8 +371,8 @@ linked_files = \
         pwaitany_f.c \
         pwait_f.c \
         pwaitsome_f.c \
-	pwtick_f.c \
-	pwtime_f.c \
+        pwtick_f.c \
+        pwtime_f.c \
         paccumulate_f.c \
         praccumulate_f.c \
         pregister_datarep_f.c \

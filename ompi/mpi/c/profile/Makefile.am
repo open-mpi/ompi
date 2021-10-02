@@ -1,4 +1,4 @@
-# -*- makefile.am	 -*-
+# -*- makefile.am -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -128,7 +128,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_split.c \
         pcomm_split_type.c \
         pcomm_test_inter.c \
-	pcompare_and_swap.c \
+        pcompare_and_swap.c \
         pdims_create.c \
         perrhandler_c2f.c \
         perrhandler_f2c.c \
@@ -138,7 +138,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pexscan.c \
         piexscan.c \
         pexscan_init.c \
-	pfetch_and_op.c \
+        pfetch_and_op.c \
         pfile_c2f.c \
         pfile_call_errhandler.c \
         pfile_close.c \
@@ -213,7 +213,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pget_count.c \
         pget_elements.c \
         pget_elements_x.c \
-	pget_accumulate.c \
+        pget_accumulate.c \
         pget_library_version.c \
         pget_processor_name.c \
         pget_version.c \
@@ -240,8 +240,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pgroup_translate_ranks.c \
         pgroup_union.c \
         pibsend.c \
-	pimprobe.c \
-	pimrecv.c \
+        pimprobe.c \
+        pimrecv.c \
         pinfo_c2f.c \
         pinfo_create.c \
         pinfo_delete.c \
@@ -300,11 +300,11 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pprobe.c \
         ppublish_name.c \
         pquery_thread.c \
-	praccumulate.c \
+        praccumulate.c \
         precv_init.c \
         precv.c \
         preduce.c \
-	pireduce.c \
+        pireduce.c \
         preduce_init.c \
         pregister_datarep.c \
         preduce_local.c \
@@ -318,9 +318,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         prequest_f2c.c \
         prequest_free.c \
         prequest_get_status.c \
-	prget.c \
-	prget_accumulate.c \
-	prput.c \
+        prget.c \
+        prget_accumulate.c \
+        prput.c \
         prsend_init.c \
         prsend.c \
         pscan.c \
@@ -397,29 +397,29 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwaitall.c \
         pwaitany.c \
         pwaitsome.c \
-	pwtime.c \
-	pwtick.c \
+        pwtime.c \
+        pwtick.c \
         paccumulate.c \
         pget.c \
         pput.c \
-	pwin_allocate.c \
-	pwin_allocate_shared.c \
-	pwin_attach.c \
+        pwin_allocate.c \
+        pwin_allocate_shared.c \
+        pwin_attach.c \
         pwin_c2f.c \
         pwin_call_errhandler.c \
         pwin_complete.c  \
         pwin_create_errhandler.c \
         pwin_create_keyval.c \
         pwin_create.c \
-	pwin_create_dynamic.c \
+        pwin_create_dynamic.c \
         pwin_delete_attr.c \
-	pwin_detach.c \
+        pwin_detach.c \
         pwin_f2c.c \
         pwin_fence.c \
-	pwin_flush.c \
-	pwin_flush_all.c \
-	pwin_flush_local.c \
-	pwin_flush_local_all.c \
+        pwin_flush.c \
+        pwin_flush_all.c \
+        pwin_flush_local.c \
+        pwin_flush_local_all.c \
         pwin_free_keyval.c \
         pwin_free.c \
         pwin_get_attr.c \
@@ -428,18 +428,18 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwin_get_info.c  \
         pwin_get_name.c  \
         pwin_lock.c \
-	pwin_lock_all.c \
+        pwin_lock_all.c \
         pwin_post.c \
         pwin_set_attr.c \
         pwin_set_errhandler.c \
         pwin_set_info.c \
         pwin_set_name.c \
-	pwin_shared_query.c \
+        pwin_shared_query.c \
         pwin_start.c \
-	pwin_sync.c \
+        pwin_sync.c \
         pwin_test.c \
         pwin_unlock.c \
-	pwin_unlock_all.c \
+        pwin_unlock_all.c \
         pwin_wait.c
 
 if OMPI_ENABLE_MPI1_COMPAT
