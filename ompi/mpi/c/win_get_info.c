@@ -48,19 +48,19 @@ int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
     }
 
     if (NULL == win->super.s_info) {
-/*
- * Setup any defaults if MPI_Win_set_info was never called
- */
-	opal_infosubscribe_change_info(&win->super, &MPI_INFO_NULL->super); 	
+        /*
+         * Setup any defaults if MPI_Win_set_info was never called
+         */
+        opal_infosubscribe_change_info(&win->super, &MPI_INFO_NULL->super);
     }
 
     (*info_used) = OBJ_NEW(ompi_info_t);
     if (NULL == (*info_used)) {
-       return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_NO_MEM, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_NO_MEM, FUNC_NAME);
     }
     opal_info_t *opal_info_used = &(*info_used)->super;
 
-    ret = opal_info_dup_mpistandard(win->super.s_info, &opal_info_used);
+    ret = opal_info_dup(win->super.s_info, &opal_info_used);
 
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

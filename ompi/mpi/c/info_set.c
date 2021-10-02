@@ -99,17 +99,6 @@ int MPI_Info_set(MPI_Info info, const char *key, const char *value)
         }
     }
 
-// An extra warning condition is a key that uses our reserved prefix "__IN_".
-// That one is used internally to deal with the dynamic nature the key/val
-// pairs where we have callbacks that modify the val, and the MPI standard
-// wants the get_info call to give back the original setting rather than
-// the callback-modified setting. So if a user directly used a key __IN_foo
-// it would confuse our accounting slightly.
-    if (0 == strncmp(key, OPAL_INFO_SAVE_PREFIX, strlen(OPAL_INFO_SAVE_PREFIX))) {
-        opal_show_help("help-mpi-api.txt", "info-set-with-reserved-prefix", true,
-            key, OPAL_INFO_SAVE_PREFIX);
-    }
-
     /*
      * If all is right with the arguments, then call the back-end
      * allocator.
