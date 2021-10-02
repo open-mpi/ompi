@@ -765,29 +765,39 @@ static int mca_btl_base_am_rdma_progress(void)
         return 0;
     }
 
-    OPAL_THREAD_SCOPED_LOCK(&default_module.mutex, ({
-        mca_btl_base_rdma_operation_t *operation, *next;
-        OPAL_LIST_FOREACH_SAFE (operation, next, &default_module.queued_responses,
-                                mca_btl_base_rdma_operation_t) {
-            mca_btl_base_rdma_retry_operation(operation);
-        }
-    }));
+    // It's a little cleaner, stylistically, to make the multi-line
+    // ACTION argument to OPAL_THREAD_SCOPED_LOCK be a macro itself
+    // (vs. using continuation characters in the use of
+    // OPAL_THREAD_SCOPED_LOCK).
+#define ACTION1                                                         \
+    mca_btl_base_rdma_operation_t *operation, *next;                    \
+    OPAL_LIST_FOREACH_SAFE (operation, next,                            \
+                            &default_module.queued_responses,           \
+                            mca_btl_base_rdma_operation_t) {            \
+        mca_btl_base_rdma_retry_operation(operation);                   \
+    }
 
-    OPAL_THREAD_SCOPED_LOCK(&default_module.mutex, ({
-        mca_btl_base_am_rdma_queued_descriptor_t *descriptor, *next;
-        OPAL_LIST_FOREACH_SAFE (descriptor, next, &default_module.queued_initiator_descriptors,
-                                mca_btl_base_am_rdma_queued_descriptor_t) {
-            mca_btl_base_rdma_context_t *context = (mca_btl_base_rdma_context_t *)
-                                                       descriptor->descriptor->des_context;
-            int ret = descriptor->btl->btl_send(descriptor->btl, descriptor->endpoint,
-                                                descriptor->descriptor,
-                                                mca_btl_base_rdma_tag(context->type));
-            if (OPAL_SUCCESS == ret) {
-                opal_list_remove_item(&default_module.queued_initiator_descriptors,
-                                      &descriptor->super);
-            }
-        }
-    }));
+    OPAL_THREAD_SCOPED_LOCK(&default_module.mutex, ACTION1);
+
+#define ACTION2                                                         \
+    mca_btl_base_am_rdma_queued_descriptor_t *descriptor, *next;        \
+    OPAL_LIST_FOREACH_SAFE (descriptor, next,                           \
+                            &default_module.queued_initiator_descriptors, \
+                            mca_btl_base_am_rdma_queued_descriptor_t) { \
+        mca_btl_base_rdma_context_t *context =                          \
+            (mca_btl_base_rdma_context_t *)                             \
+            descriptor->descriptor->des_context;                        \
+        int ret = descriptor->btl->btl_send(descriptor->btl,            \
+                                            descriptor->endpoint,       \
+                                            descriptor->descriptor,     \
+                                            mca_btl_base_rdma_tag(context->type)); \
+        if (OPAL_SUCCESS == ret) {                                      \
+            opal_list_remove_item(&default_module.queued_initiator_descriptors, \
+                                  &descriptor->super);                  \
+        }                                                               \
+    }
+
+    OPAL_THREAD_SCOPED_LOCK(&default_module.mutex, ACTION2);
 
     return 0;
 }
