@@ -303,6 +303,11 @@ AC_DEFUN([OPAL_SETUP_CC],[
         _OPAL_CHECK_SPECIFIC_CFLAGS(-fno-strict-aliasing, fno_strict_aliasing, int main() { long double x; })
         _OPAL_CHECK_SPECIFIC_CFLAGS(-pedantic, pedantic)
         _OPAL_CHECK_SPECIFIC_CFLAGS(-Wall, Wall)
+
+        # There are some warnings that we specifically do not care
+        # about / do not agree that gcc emits warnings about them.  So
+        # we turn them off.
+        _OPAL_CHECK_SPECIFIC_CFLAGS(-Wformat-truncation=0, format_truncation)
     fi
 
     # Note: Some versions of clang (at least >= 3.5 -- perhaps
