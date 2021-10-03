@@ -118,7 +118,7 @@ void mca_spml_ucx_peer_mkey_cache_init(mca_spml_ucx_ctx_t *ucx_ctx, int pe)
 int mca_spml_ucx_peer_mkey_cache_add(ucp_peer_t *ucp_peer, int index)
 {
     /* Allocate an array to hold the pointers to the ucx_cached_mkey */
-    if (index >= ucp_peer->mkeys_cnt){
+    if (index >= (int)ucp_peer->mkeys_cnt){
         int old_size = ucp_peer->mkeys_cnt;
         if (MCA_MEMHEAP_MAX_SEGMENTS <= (index + 1)) {
             SPML_UCX_ERROR("Failed to get new mkey for segment: max number (%d) of segment descriptor is exhausted",
@@ -153,7 +153,7 @@ int mca_spml_ucx_peer_mkey_cache_add(ucp_peer_t *ucp_peer, int index)
 /* Release individual mkeys */
 int mca_spml_ucx_peer_mkey_cache_del(ucp_peer_t *ucp_peer, int segno)
 {
-    if ((ucp_peer->mkeys_cnt <= segno) || (segno < 0)) {
+    if (((int)ucp_peer->mkeys_cnt <= segno) || (segno < 0)) {
         return OSHMEM_ERR_NOT_AVAILABLE;
     }
     if (NULL != ucp_peer->mkeys[segno]) {
@@ -166,7 +166,7 @@ int mca_spml_ucx_peer_mkey_cache_del(ucp_peer_t *ucp_peer, int segno)
 /* Release the memkey map from a ucp_peer if it has any element in memkey */
 void mca_spml_ucx_peer_mkey_cache_release(ucp_peer_t *ucp_peer)
 {
-    int i;
+    size_t i;
     if (ucp_peer->mkeys_cnt) {
         for(i = 0; i < ucp_peer->mkeys_cnt; i++) {
             assert(NULL == ucp_peer->mkeys[i]);
@@ -239,7 +239,6 @@ int mca_spml_ucx_ctx_mkey_add(mca_spml_ucx_ctx_t *ucx_ctx, int pe, uint32_t segn
 int mca_spml_ucx_ctx_mkey_del(mca_spml_ucx_ctx_t *ucx_ctx, int pe, uint32_t segno, spml_ucx_mkey_t *ucx_mkey)
 {
     ucp_peer_t *ucp_peer;
-    spml_ucx_cached_mkey_t *ucx_cached_mkey;
     int rc;
     ucp_peer = &(ucx_ctx->ucp_peers[pe]);
     ucp_rkey_destroy(ucx_mkey->rkey);
@@ -398,8 +397,6 @@ err:
 }
 
 
-static char spml_ucx_transport_ids[1] = { 0 };
-
 int mca_spml_ucx_init_put_op_mask(mca_spml_ucx_ctx_t *ctx, size_t nprocs)
 {
     int res;
@@ -442,7 +439,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
     unsigned int *wk_roffs  = NULL;
     unsigned int *wk_rsizes = NULL;
     char *wk_raddrs         = NULL;
-    size_t i, j, w, n;
+    size_t i, w, n;
     ucs_status_t err;
     ucp_address_t **wk_local_addr;
     unsigned int *wk_addr_len;
@@ -979,7 +976,7 @@ void mca_spml_ucx_ctx_destroy(shmem_ctx_t ctx)
 
 int mca_spml_ucx_get(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_addr, int src)
 {
-    void *rva;
+    void *rva = NULL;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, src, src_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
@@ -1006,7 +1003,7 @@ int mca_spml_ucx_get(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_add
 
 int mca_spml_ucx_get_nb(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_addr, int src, void **handle)
 {
-    void *rva;
+    void *rva = NULL;
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, src, src_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);
@@ -1034,7 +1031,7 @@ int mca_spml_ucx_get_nb(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_
 int mca_spml_ucx_get_nb_wprogress(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_addr, int src, void **handle)
 {
     unsigned int i;
-    void *rva;
+    void *rva = NULL;
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, src, src_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);
@@ -1072,7 +1069,7 @@ int mca_spml_ucx_get_nb_wprogress(shmem_ctx_t ctx, void *src_addr, size_t size, 
 
 int mca_spml_ucx_put(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_addr, int dst)
 {
-    void *rva;
+    void *rva = NULL;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, dst, dst_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
@@ -1106,7 +1103,7 @@ int mca_spml_ucx_put(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_add
 
 int mca_spml_ucx_put_nb(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_addr, int dst, void **handle)
 {
-    void *rva;
+    void *rva = NULL;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, dst, dst_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
@@ -1139,7 +1136,7 @@ int mca_spml_ucx_put_nb(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_
 int mca_spml_ucx_put_nb_wprogress(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_addr, int dst, void **handle)
 {
     unsigned int i;
-    void *rva;
+    void *rva = NULL;
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, dst, dst_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);

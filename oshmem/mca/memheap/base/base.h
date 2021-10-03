@@ -199,7 +199,7 @@ static inline int memheap_find_segnum(void *va, int pe)
                 if (mkeys_cache) {
                     if (mkeys_cache[pe]) {
                         if ((va >= mkeys_cache[pe]->va_base) &&
-                            (va < mkeys_cache[pe]->va_base + mkeys_cache[pe]->len)) {
+                            ((char*)va < (char*)mkeys_cache[pe]->va_base + mkeys_cache[pe]->len)) {
                             return i;
                         }
                     }
