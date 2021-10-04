@@ -40,37 +40,45 @@ static volatile int thr2_count = 0;
 
 static void *thr1_run(opal_object_t *obj)
 {
-    int i;
     clock_t c1, c2;
-    opal_mutex_lock(&mutex);
     c1 = clock();
-    for (i = 0; i < TEST_COUNT; i++) {
-        opal_condition_wait(&thr1_cond, &mutex);
-        opal_condition_signal(&thr2_cond);
+    opal_mutex_lock(&mutex);
+    while (TEST_COUNT != thr1_count) {
         thr1_count++;
+        opal_condition_signal(&thr2_cond);
+        opal_condition_wait(&thr1_cond, &mutex);
     }
-    c2 = clock();
+
+    // Whoever gets here first needs to alert the other
+    // thread for their last iteration.
+    opal_condition_signal(&thr2_cond);
     opal_mutex_unlock(&mutex);
-    fprintf(stderr, "thr1: time per iteration: %ld usec\n", (long) ((c2 - c1) / TEST_COUNT));
+    c2 = clock();
+    fprintf(stderr, "thr1: time per iteration: %ld uses\n", (long)((c2 - c1) / TEST_COUNT));
     return NULL;
 }
 
 static void *thr2_run(opal_object_t *obj)
 {
-    int i;
     clock_t c1, c2;
-    opal_mutex_lock(&mutex);
     c1 = clock();
-    for (i = 0; i < TEST_COUNT; i++) {
+    opal_mutex_lock(&mutex);
+    while(TEST_COUNT != thr2_count) {
+        thr2_count++;
         opal_condition_signal(&thr1_cond);
         opal_condition_wait(&thr2_cond, &mutex);
-        thr2_count++;
     }
-    c2 = clock();
+
+    // Whoever gets here first needs to alert the other
+    // thread for the last iteration.
+    opal_condition_signal(&thr1_cond);
     opal_mutex_unlock(&mutex);
-    fprintf(stderr, "thr2: time per iteration: %ld usec\n", (long) ((c2 - c1) / TEST_COUNT));
+
+    c2 = clock();
+    fprintf(stderr, "thr2: time per iteration: %ld usec\n", (long)((c2 - c1) / TEST_COUNT));
     return NULL;
 }
+
 
 int main(int argc, char **argv)
 {
