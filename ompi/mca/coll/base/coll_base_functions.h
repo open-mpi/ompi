@@ -189,6 +189,7 @@ BEGIN_C_DECLS
 /* All Gather */
 int ompi_coll_base_allgather_intra_bruck(ALLGATHER_ARGS);
 int ompi_coll_base_allgather_intra_recursivedoubling(ALLGATHER_ARGS);
+int ompi_coll_base_allgather_intra_sparbit(ALLGATHER_ARGS);
 int ompi_coll_base_allgather_intra_ring(ALLGATHER_ARGS);
 int ompi_coll_base_allgather_intra_neighborexchange(ALLGATHER_ARGS);
 int ompi_coll_base_allgather_intra_basic_linear(ALLGATHER_ARGS);
@@ -196,6 +197,7 @@ int ompi_coll_base_allgather_intra_two_procs(ALLGATHER_ARGS);
 
 /* All GatherV */
 int ompi_coll_base_allgatherv_intra_bruck(ALLGATHERV_ARGS);
+int ompi_coll_base_allgatherv_intra_sparbit(ALLGATHERV_ARGS);
 int ompi_coll_base_allgatherv_intra_ring(ALLGATHERV_ARGS);
 int ompi_coll_base_allgatherv_intra_neighborexchange(ALLGATHERV_ARGS);
 int ompi_coll_base_allgatherv_intra_basic_default(ALLGATHERV_ARGS);

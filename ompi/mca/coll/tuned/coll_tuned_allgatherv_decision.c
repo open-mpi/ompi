@@ -39,6 +39,7 @@ static const mca_base_var_enum_value_t allgatherv_algorithms[] = {
     {3, "ring"},
     {4, "neighbor"},
     {5, "two_proc"},
+    {6, "sparbit"},
     {0, NULL}
 };
 
@@ -77,7 +78,7 @@ ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorithm_mc
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "allgatherv_algorithm",
-                                        "Which allgatherv algorithm is used. Can be locked down to choice of: 0 ignore, 1 default (allgathervv + bcast), 2 bruck, 3 ring, 4 neighbor exchange, 5: two proc only. "
+                                        "Which allgatherv algorithm is used. Can be locked down to choice of: 0 ignore, 1 default (allgathervv + bcast), 2 bruck, 3 ring, 4 neighbor exchange, 5: two proc only, 6: sparbit. "
                                         "Only relevant if coll_tuned_use_dynamic_rules is true.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
@@ -158,6 +159,10 @@ int ompi_coll_tuned_allgatherv_intra_do_this(const void *sbuf, int scount,
                                                                 comm, module);
     case (5):
         return ompi_coll_base_allgatherv_intra_two_procs(sbuf, scount, sdtype,
+                                                         rbuf, rcounts, rdispls, rdtype,
+                                                         comm, module);
+    case (6):
+        return ompi_coll_base_allgatherv_intra_sparbit(sbuf, scount, sdtype,
                                                          rbuf, rcounts, rdispls, rdtype,
                                                          comm, module);
     } /* switch */
