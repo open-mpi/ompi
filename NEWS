@@ -210,6 +210,20 @@ v5.0.0rc1 -- September, 2021
 - Various oshmem:ucx bugfixes and performance improvements
 - common/ofi: Disable new monitor API until libfabric 1.14.0
 - Fix AVX detection with icc
+- mpirun option "--mca ompi_display_comm mpi_init/mpi_finalize"
+  has been added. Enables a communication protocol report:
+  when MPI_Init is invoked (using the 'mpi_init' value) and/or
+  when MPI_Finalize is invoked (using the 'mpi_finalize' value).
+- New algorithm for Allgather and Allgatherv added, based on the
+  paper "Sparbit: a new logarithmic-cost and data locality-aware MPI
+  Allgather algorithm". Default algorithm selection rules are
+  un-changed, to use these algorithms add:
+  "--mca coll_tuned_allgather_algorithm sparbit" and/or
+  "--mca coll_tuned_allgatherv_algorithm sparbit"
+  Thanks to: Wilton Jaciel Loch <wiltonloch wilton.loch@gmail.com>,
+  and Guilherme Koslovski for their contribution.
+- MPI-4: Persistent collectives have been moved to the MPI
+  namespace from MPIX.
 
 4.1.1 -- April, 2021
 --------------------
