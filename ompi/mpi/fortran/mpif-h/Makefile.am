@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Inria.  All rights reserved.
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
@@ -136,25 +136,25 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         aint_add_f.c \
         aint_diff_f.c \
         allgather_f.c \
-	allgather_init_f.c \
+        allgather_init_f.c \
         allgatherv_f.c \
-	allgatherv_init_f.c \
+        allgatherv_init_f.c \
         alloc_mem_f.c \
         allreduce_f.c \
-	allreduce_init_f.c \
+        allreduce_init_f.c \
         alltoall_f.c \
-	alltoall_init_f.c \
+        alltoall_init_f.c \
         alltoallv_f.c \
-	alltoallv_init_f.c \
+        alltoallv_init_f.c \
         alltoallw_f.c \
-	alltoallw_init_f.c \
+        alltoallw_init_f.c \
         attr_delete_f.c \
         attr_get_f.c \
         attr_put_f.c \
         barrier_f.c \
-	barrier_init_f.c \
+        barrier_init_f.c \
         bcast_f.c \
-	bcast_init_f.c \
+        bcast_init_f.c \
         bsend_f.c \
         bsend_init_f.c \
         buffer_attach_f.c \
@@ -213,7 +213,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         error_class_f.c \
         error_string_f.c \
         exscan_f.c \
-	exscan_init_f.c \
+        exscan_init_f.c \
         f_sync_reg_f.c \
         file_call_errhandler_f.c \
         file_close_f.c \
@@ -278,9 +278,9 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         finalize_f.c \
         free_mem_f.c \
         gather_f.c \
-	gather_init_f.c \
+        gather_init_f.c \
         gatherv_f.c \
-	gatherv_init_f.c \
+        gatherv_init_f.c \
         get_address_f.c \
         get_count_f.c \
         get_elements_f.c \

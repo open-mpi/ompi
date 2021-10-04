@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
@@ -148,7 +148,7 @@ libmpi_c_mpi_la_SOURCES = \
         comm_split.c \
         comm_split_type.c \
         comm_test_inter.c \
-	compare_and_swap.c \
+        compare_and_swap.c \
         dims_create.c \
         errhandler_c2f.c \
         errhandler_f2c.c \
@@ -158,7 +158,7 @@ libmpi_c_mpi_la_SOURCES = \
         exscan.c \
         iexscan.c \
         exscan_init.c \
-	fetch_and_op.c \
+        fetch_and_op.c \
         file_c2f.c \
         file_call_errhandler.c \
         file_close.c \
@@ -233,7 +233,7 @@ libmpi_c_mpi_la_SOURCES = \
         get_count.c \
         get_elements.c \
         get_elements_x.c \
-	get_accumulate.c \
+        get_accumulate.c \
         get_library_version.c \
         get_processor_name.c \
         get_version.c \
@@ -326,7 +326,7 @@ libmpi_c_mpi_la_SOURCES = \
         psend_init.c \
         publish_name.c \
         query_thread.c \
-	raccumulate.c \
+        raccumulate.c \
         recv_init.c \
         recv.c \
         reduce.c \
@@ -344,9 +344,9 @@ libmpi_c_mpi_la_SOURCES = \
         request_f2c.c \
         request_free.c \
         request_get_status.c \
-	rget.c \
-	rget_accumulate.c \
-	rput.c \
+        rget.c \
+        rget_accumulate.c \
+        rput.c \
         rsend_init.c \
         rsend.c \
         scan.c \
@@ -428,24 +428,24 @@ libmpi_c_mpi_la_SOURCES = \
         accumulate.c \
         get.c \
         put.c \
-	win_allocate.c \
-	win_allocate_shared.c \
-	win_attach.c \
+        win_allocate.c \
+        win_allocate_shared.c \
+        win_attach.c \
         win_c2f.c \
         win_call_errhandler.c \
         win_complete.c  \
         win_create_errhandler.c \
         win_create_keyval.c \
         win_create.c \
-	win_create_dynamic.c \
+        win_create_dynamic.c \
         win_delete_attr.c \
-	win_detach.c \
+        win_detach.c \
         win_f2c.c \
         win_fence.c \
-	win_flush.c \
-	win_flush_all.c \
-	win_flush_local.c \
-	win_flush_local_all.c \
+        win_flush.c \
+        win_flush_all.c \
+        win_flush_local.c \
+        win_flush_local_all.c \
         win_free_keyval.c \
         win_free.c \
         win_get_attr.c \
@@ -454,18 +454,18 @@ libmpi_c_mpi_la_SOURCES = \
         win_get_info.c \
         win_get_name.c  \
         win_lock.c \
-	win_lock_all.c \
+        win_lock_all.c \
         win_post.c \
         win_set_attr.c \
         win_set_errhandler.c \
         win_set_info.c \
         win_set_name.c \
-	win_shared_query.c \
-	win_sync.c \
+        win_shared_query.c \
+        win_sync.c \
         win_start.c \
         win_test.c \
         win_unlock.c \
-	win_unlock_all.c \
+        win_unlock_all.c \
         win_wait.c
 
 
