@@ -6,7 +6,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Reduce_scatter_block 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Reduce_scatter_block, MPI_Ireduce_scatter_block\fP \- Combines values and scatters the results in blocks.
+\fBMPI_Reduce_scatter_block, MPI_Ireduce_scatter_block, MPI_Reduce_scatter_block_init\fP \- Combines values and scatters the results in blocks.
 
 .SH SYNTAX
 .ft R
@@ -18,6 +18,10 @@ int MPI_Reduce_scatter_block(const void *\fIsendbuf\fP, void\fI *recvbuf\fP, int
 
 int MPI_Ireduce_scatter_block(const void *\fIsendbuf\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
 	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP, MPI_Request \fI*request\fP)
+
+
+int MPI_Reduce_scatter_block_init(const void *\fIsendbuf\fP, void\fI *recvbuf\fP, int\fI recvcount\fP,
+	MPI_Datatype\fI datatype\fP, MPI_Op\fI op\fP, MPI_Comm\fI comm\fP, MPI_Info\fI info\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -33,6 +37,12 @@ MPI_IREDUCE_SCATTER_BLOCK(\fISENDBUF, RECVBUF, RECVCOUNT, DATATYPE, OP,
 		COMM, REQUEST, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fIRECVCOUNT, DATATYPE, OP, COMM, REQUEST, IERROR \fP
+
+
+MPI_REDUCE_SCATTER_BLOCK_INOT(\fISENDBUF, RECVBUF, RECVCOUNT, DATATYPE, OP,
+		COMM, INFO, REQUEST, IERROR\fP)
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fIRECVCOUNT, DATATYPE, OP, COMM, INFO, REQUEST, IERROR \fP
 
 .fi
 .SH Fortran 2008 Syntax
@@ -59,6 +69,18 @@ MPI_Ireduce_scatter_block(\fIsendbuf\fP, \fIrecvbuf\fP, \fIrecvcount\fP, \fIdata
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
+MPI_Reduce_scatter_block_init(\fIsendbuf\fP, \fIrecvbuf\fP, \fIrecvcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP,
+		\fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIrecvcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
 .fi
 .SH INPUT PARAMETERS
 .ft R
@@ -77,6 +99,9 @@ Operation (handle).
 .TP 1i
 comm
 Communicator (handle).
+.TP 1i
+info
+Info (handle, persistent only).
 
 .SH OUTPUT PARAMETERS
 .ft R

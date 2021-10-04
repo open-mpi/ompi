@@ -17,8 +17,8 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2020 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015-2021 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -55,14 +55,21 @@ pmpi_api_files = \
         paint_add_f08.F90 \
         paint_diff_f08.F90 \
         pallgather_f08.F90 \
+        pallgather_init_f08.F90 \
         pallgatherv_f08.F90 \
+        pallgatherv_init_f08.F90 \
         palloc_mem_f08.F90 \
         pallreduce_f08.F90 \
         palltoall_f08.F90 \
+        palltoall_init_f08.F90 \
         palltoallv_f08.F90 \
+        palltoallv_init_f08.F90 \
         palltoallw_f08.F90 \
+        palltoallw_init_f08.F90 \
         pbarrier_f08.F90 \
+        pbarrier_init_f08.F90 \
         pbcast_f08.F90 \
+        pbcast_init_f08.F90 \
         pbsend_f08.F90 \
         pbsend_init_f08.F90 \
         pbuffer_attach_f08.F90 \
@@ -122,6 +129,7 @@ pmpi_api_files = \
         perror_class_f08.F90 \
         perror_string_f08.F90 \
         pexscan_f08.F90 \
+        pexscan_init_f08.F90 \
         pf_sync_reg_f08.F90 \
         pfetch_and_op_f08.F90 \
         pfile_call_errhandler_f08.F90 \
@@ -187,7 +195,9 @@ pmpi_api_files = \
         pfinalize_f08.F90 \
         pfree_mem_f08.F90 \
         pgather_f08.F90 \
+        pgather_init_f08.F90 \
         pgatherv_f08.F90 \
+        pgatherv_init_f08.F90 \
         pget_accumulate_f08.F90 \
         pget_address_f08.F90 \
         pget_count_f08.F90 \
@@ -266,10 +276,15 @@ pmpi_api_files = \
         pmprobe_f08.F90 \
         pmrecv_f08.F90 \
         pneighbor_allgather_f08.F90 \
+        pneighbor_allgather_init_f08.F90 \
         pneighbor_allgatherv_f08.F90 \
+        pneighbor_allgatherv_init_f08.F90 \
         pneighbor_alltoall_f08.F90 \
+        pneighbor_alltoall_init_f08.F90 \
         pneighbor_alltoallv_f08.F90 \
+        pneighbor_alltoallv_init_f08.F90 \
         pneighbor_alltoallw_f08.F90 \
+        pneighbor_alltoallw_init_f08.F90 \
         pop_commutative_f08.F90 \
         pop_create_f08.F90 \
         popen_port_f08.F90 \
@@ -287,9 +302,12 @@ pmpi_api_files = \
         precv_f08.F90 \
         precv_init_f08.F90 \
         preduce_f08.F90 \
+        preduce_init_f08.F90 \
         preduce_local_f08.F90 \
         preduce_scatter_f08.F90 \
+        preduce_scatter_init_f08.F90 \
         preduce_scatter_block_f08.F90 \
+        preduce_scatter_block_init_f08.F90 \
         pregister_datarep_f08.F90 \
         prequest_free_f08.F90 \
         prequest_get_status_f08.F90 \
@@ -299,8 +317,11 @@ pmpi_api_files = \
         prsend_f08.F90 \
         prsend_init_f08.F90 \
         pscan_f08.F90 \
+        pscan_init_f08.F90 \
         pscatter_f08.F90 \
+        pscatter_init_f08.F90 \
         pscatterv_f08.F90 \
+        pscatterv_init_f08.F90 \
         psend_f08.F90 \
         psend_init_f08.F90 \
         psendrecv_f08.F90 \

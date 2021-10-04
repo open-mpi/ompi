@@ -49,17 +49,25 @@ linked_files = \
         paint_add_f.c \
         paint_diff_f.c \
         pallgather_f.c \
+        pallgather_init_f.c \
         pallgatherv_f.c \
+        pallgatherv_init_f.c \
         palloc_mem_f.c \
         pallreduce_f.c \
+        pallreduce_init_f.c \
         palltoall_f.c \
+        palltoall_init_f.c \
         palltoallv_f.c \
+        palltoallv_init_f.c \
         palltoallw_f.c \
+        palltoallw_init_f.c \
         pattr_delete_f.c \
         pattr_get_f.c \
         pattr_put_f.c \
         pbarrier_f.c \
+        pbarrier_init_f.c \
         pbcast_f.c \
+        pbcast_init_f.c \
         pbsend_f.c \
         pbsend_init_f.c \
         pbuffer_attach_f.c \
@@ -118,6 +126,7 @@ linked_files = \
         perror_class_f.c \
         perror_string_f.c \
         pexscan_f.c \
+        pexscan_init_f.c \
         pf_sync_reg_f.c \
         pfile_call_errhandler_f.c \
         pfile_close_f.c \
@@ -182,7 +191,9 @@ linked_files = \
         pfinalize_f.c \
         pfree_mem_f.c \
         pgather_f.c \
+        pgather_init_f.c \
         pgatherv_f.c \
+        pgatherv_init_f.c \
         pget_address_f.c \
         pget_count_f.c \
         pget_elements_f.c \
@@ -261,10 +272,15 @@ linked_files = \
         pmprobe_f.c \
         pmrecv_f.c \
         pneighbor_allgather_f.c \
+        pneighbor_allgather_init_f.c \
         pneighbor_allgatherv_f.c \
+        pneighbor_allgatherv_init_f.c \
         pneighbor_alltoall_f.c \
+        pneighbor_alltoall_init_f.c \
         pneighbor_alltoallv_f.c \
+        pneighbor_alltoallv_init_f.c \
         pneighbor_alltoallw_f.c \
+        pneighbor_alltoallw_init_f.c \
         pop_commutative_f.c \
         pop_create_f.c \
         popen_port_f.c \
@@ -280,16 +296,22 @@ linked_files = \
         precv_f.c \
         precv_init_f.c \
         preduce_f.c \
+        preduce_init_f.c \
         preduce_local_f.c \
         preduce_scatter_f.c \
+        preduce_scatter_init_f.c \
         preduce_scatter_block_f.c \
+        preduce_scatter_block_init_f.c \
         prequest_free_f.c \
         prequest_get_status_f.c \
         prsend_f.c \
         prsend_init_f.c \
         pscan_f.c \
+        pscan_init_f.c \
         pscatter_f.c \
+        pscatter_init_f.c \
         pscatterv_f.c \
+        pscatterv_init_f.c \
         psend_f.c \
         psend_init_f.c \
         psendrecv_f.c \

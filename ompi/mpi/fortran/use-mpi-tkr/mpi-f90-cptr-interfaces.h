@@ -1,6 +1,6 @@
 ! -*- fortran -*-
 !
-! Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -17,6 +17,7 @@
 ! below.
 !
 
+! This interface requires a name because there are multiple subroutines.
 interface MPI_Win_allocate
 
 subroutine MPI_Win_allocate(size, disp_unit, info, comm, &
@@ -46,6 +47,7 @@ end subroutine MPI_Win_allocate_cptr
 end interface
 
 
+! This interface requires a name because there are multiple subroutines.
 interface MPI_Win_allocate_shared
 
 subroutine MPI_Win_allocate_shared(size, disp_unit, info, comm, &
@@ -75,6 +77,7 @@ end subroutine MPI_Win_allocate_shared_cptr
 end interface
 
 
+! This interface requires a name because there are multiple subroutines.
 interface MPI_Win_shared_query
 
 subroutine MPI_Win_shared_query(win, rank, size, disp_unit, baseptr,&

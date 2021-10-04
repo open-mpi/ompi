@@ -8,7 +8,7 @@
 .TH MPI_Alltoallv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
 .SH NAME
-\fBMPI_Alltoallv, MPI_Ialltoallv\fP \- All processes send different amount of data to, and receive different amount of data from, all processes
+\fBMPI_Alltoallv, MPI_Ialltoallv, MPI_Alltoallv_init\fP \- All processes send different amount of data to, and receive different amount of data from, all processes
 .SH SYNTAX
 .ft R
 
@@ -25,6 +25,12 @@ int MPI_Ialltoallv(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
 	void *\fIrecvbuf\fP, const int\fI recvcounts\fP[],
 	const int \fIrdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP,
 	MPI_Request \fI*request\fP)
+
+int MPI_Alltoallv_init(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
+	const int \fIsdispls\fP[], MPI_Datatype \fIsendtype\fP,
+	void *\fIrecvbuf\fP, const int\fI recvcounts\fP[],
+	const int \fIrdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP,
+	MPI_Info \fIinfo\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax
@@ -46,6 +52,14 @@ MPI_IALLTOALLV(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPE,
 	INTEGER	\fISENDCOUNTS(*), SDISPLS(*), SENDTYPE\fP
 	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPE\fP
 	INTEGER	\fICOMM, REQUEST, IERROR\fP
+
+MPI_ALLTOALLV_INIT(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPE,
+	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPE, COMM, INFO, REQUEST, IERROR\fP)
+
+	<type>	\fISENDBUF(*), RECVBUF(*)\fP
+	INTEGER	\fISENDCOUNTS(*), SDISPLS(*), SENDTYPE\fP
+	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPE\fP
+	INTEGER	\fICOMM, INFO, REQUEST, IERROR\fP
 
 .fi
 .SH Fortran 2008 Syntax
@@ -71,6 +85,19 @@ MPI_Ialltoallv(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtype\fP, \
 	\fIrecvcounts(*)\fP, \fIrdispls(*)\fP
 	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
 	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Alltoallv_init(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcounts\fP,
+			\fIrdispls\fP, \fIrecvtype\fP, \fIcomm\fP, \fIinfo\fP, \fIrequest\fP, \fIierror\fP)
+
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIsdispls(*),\fP
+	\fIrecvcounts(*)\fP, \fIrdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
 	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
 	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
@@ -107,6 +134,9 @@ Datatype of receive buffer elements.
 .TP 1.2i
 comm
 Communicator over which data is to be exchanged.
+.TP 1.2i
+info
+Info (handle, persistent only)
 
 .SH OUTPUT PARAMETERS
 .ft R
