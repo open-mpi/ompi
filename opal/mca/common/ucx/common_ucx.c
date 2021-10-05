@@ -184,13 +184,13 @@ static bool opal_common_ucx_check_device(const char *device_name, char **device_
              "/sys/class/infiniband/%s/device/driver", ib_device_name);
     free(ib_device_name);
 
-    driver_path[sizeof(driver_path) - 1] = '\0';
     ret = readlink(sysfs_driver_link, driver_path, sizeof(driver_path) - 1);
     if (ret < 0) {
         MCA_COMMON_UCX_VERBOSE(2, "readlink(%s) failed: %s", sysfs_driver_link,
                                strerror(errno));
         return false;
     }
+    driver_path[ret] = '\0'; /* readlink does not append \0 */
 
     driver_name = basename(driver_path);
     for (list_item = device_list; *list_item != NULL; ++list_item) {
