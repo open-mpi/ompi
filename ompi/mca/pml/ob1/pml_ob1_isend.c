@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -225,7 +225,11 @@ alloc_ft_req:
      * in error for collection in future wait */
     sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = ompi_comm_is_revoked(comm)? MPI_ERR_REVOKED: MPI_ERR_PROC_FAILED;
     MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, false);
-    OPAL_OUTPUT_VERBOSE((2, "Allocating request in error %s (peer %d, seq %d) with error code %d", sendreq, dst, sendreq->req_send.req_base.req_sequence, sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR));
+    OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Allocating request in error %p (peer %d, seq %" PRIu64 ") with error code %d",
+                         (void*) sendreq,
+                         dst,
+                         sendreq->req_send.req_base.req_sequence,
+                         sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR));
     *request = (ompi_request_t *) sendreq;
     return OMPI_SUCCESS;
 #endif /* OPAL_ENABLE_FT_MPI */

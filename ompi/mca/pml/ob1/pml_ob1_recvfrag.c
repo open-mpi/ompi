@@ -20,6 +20,7 @@
  * Copyright (c) 2018      Sandia National Laboratories
  *                         All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -681,7 +682,7 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
 #if OPAL_ENABLE_FT_MPI
     /* if the req_recv is NULL, the comm has been revoked at the receiver */
     if( OPAL_UNLIKELY(NULL == sendreq->req_recv.pval) ) {
-        OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvfrag: Received a NACK to the RDV/RGET match to %d for seq %d on comm %d\n", sendreq->req_send.req_base.req_peer, sendreq->req_send.req_base.req_sequence, sendreq->req_send.req_base.req_comm->c_contextid));
+        OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle, "Recvfrag: Received a NACK to the RDV/RGET match to %d for seq %" PRIu64 " on comm %d\n", sendreq->req_send.req_base.req_peer, sendreq->req_send.req_base.req_sequence, sendreq->req_send.req_base.req_comm->c_contextid));
         if (NULL != sendreq->rdma_frag) {
             MCA_PML_OB1_RDMA_FRAG_RETURN(sendreq->rdma_frag);
             sendreq->rdma_frag = NULL;
