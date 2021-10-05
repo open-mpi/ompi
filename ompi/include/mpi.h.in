@@ -22,6 +22,8 @@
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,6 +79,9 @@
 
 /* The size of a `int', as computed by sizeof. */
 #undef OPAL_SIZEOF_INT
+
+/* The size of a `void*', as computed by sizeof. */
+#undef OPAL_SIZEOF_VOID_P
 
 /* Maximum length of datarep string (default is 128) */
 #undef OPAL_MAX_DATAREP_STRING
@@ -249,9 +254,28 @@
 #if !OMPI_BUILDING
      /*
       * Figure out which compiler is being invoked (in order to compare if
-      * it was different than what OMPI was built with).
+      * it was different than what OMPI was built with).  Do some preprocessor
+      * hacks to eliminate warnings in the portable_platform.h file.
       */
+#    ifndef SIZEOF_VOID_P
+#    define CLEANUP_SIZEOF_VOID_P 1
+#    define SIZEOF_VOID_P OPAL_SIZEOF_VOID_P
+#    else
+#    define CLEANUP_SIZEOF_VOID_P 0
+#    endif
+
+#    ifndef _PORTABLE_PLATFORM_H
+#    define _PORTABLE_PLATFORM_H 0
+#    endif
+#    ifndef PLATFORM_HEADER_VERSION
+#    define PLATFORM_HEADER_VERSION 0
+#    endif
+
 #    include "mpi_portable_platform.h"
+
+#if CLEANUP_SIZEOF_VOID_P
+#undef SIZEOF_VOID_P
+#endif
 
      /*
       * If we're currently using the same compiler that was used to

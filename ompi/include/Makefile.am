@@ -127,6 +127,6 @@ distclean-local:
 	    mpif-sizeof.h \
 	    mpif-c-constants-decl.h mpif-c-constants.h mpif-f08-types.h
 
-mpi_portable_platform.h: $(top_srcdir)/opal/include/opal/opal_portable_platform.h
+mpi_portable_platform.h: $(top_srcdir)/opal/include/opal/opal_portable_platform_real.h
 	-@rm -f mpi_portable_platform.h
-	$(OMPI_V_LN_S) $(LN_S) $(top_srcdir)/opal/include/opal/opal_portable_platform.h mpi_portable_platform.h
+	$(OMPI_V_LN_S) $(LN_S) $(top_srcdir)/opal/include/opal/opal_portable_platform_real.h mpi_portable_platform.h
