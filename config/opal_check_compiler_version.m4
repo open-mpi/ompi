@@ -105,7 +105,7 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRINGIFY], [
     FILE * f;
     f=fopen("conftestval", "w");
     if (!f) exit(1);
-    fprintf (f, "%s", _STRINGIFY(PLATFORM_COMPILER_$1));
+    fprintf (f, "%s", PLATFORM_STRINGIFY(PLATFORM_COMPILER_$1));
             ]])], [
                 opal_cv_compiler_$1=`cat conftestval`
             ], [
