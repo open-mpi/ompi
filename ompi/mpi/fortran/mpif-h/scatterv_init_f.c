@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -23,6 +23,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -77,7 +78,7 @@ void ompi_scatterv_init_f(char *sendbuf, MPI_Fint *sendcounts,
     MPI_Datatype c_sendtype, c_recvtype;
     MPI_Info c_info;
     MPI_Request c_request;
-    int size, c_ierr;
+    int size, idx = 0, c_ierr;
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(displs);
 
@@ -102,8 +103,16 @@ void ompi_scatterv_init_f(char *sendbuf, MPI_Fint *sendcounts,
                                 c_recvtype,
                                 OMPI_FINT_2_INT(*root), c_comm, c_info, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
-
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);
+    if (MPI_SUCCESS == c_ierr) {
+        *request = PMPI_Request_c2f(c_request);
+        ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)c_request;
+        if (sendcounts != OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
+            nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(sendcounts);
+            nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(displs);
+        }
+        nb_request->data.release_arrays[idx]   = NULL;
+     } else {
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);
+     }
 }
