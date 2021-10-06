@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -24,6 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -77,7 +78,7 @@ void ompi_ialltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     MPI_Comm c_comm;
     MPI_Datatype *c_sendtypes = NULL, *c_recvtypes;
     MPI_Request c_request;
-    int size, c_ierr;
+    int size, idx = 0, c_ierr;
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(sdispls);
     OMPI_ARRAY_NAME_DECL(recvcounts);
@@ -107,22 +108,37 @@ void ompi_ialltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = PMPI_Ialltoallw(sendbuf,
-                            OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                            OMPI_ARRAY_NAME_CONVERT(sdispls),
-                            c_sendtypes,
-                            recvbuf,
-                            OMPI_ARRAY_NAME_CONVERT(recvcounts),
-                            OMPI_ARRAY_NAME_CONVERT(rdispls),
-                            c_recvtypes, c_comm, &c_request);
+                             OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                             OMPI_ARRAY_NAME_CONVERT(sdispls),
+                             c_sendtypes,
+                             recvbuf,
+                             OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                             OMPI_ARRAY_NAME_CONVERT(rdispls),
+                             c_recvtypes, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
-    if (NULL != c_sendtypes) {
-        free(c_sendtypes);
+    if ( REQUEST_COMPLETE(c_request)) {
+        if (NULL != c_sendtypes) {
+            free(c_sendtypes);
+        }
+        free(c_recvtypes);
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
+    } else {
+        ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)c_request;
+        if (sendcounts != OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
+            nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(sendcounts);
+            nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(recvcounts);
+        }
+        if (sdispls != OMPI_ARRAY_NAME_CONVERT(sdispls)) {
+            nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(sdispls);
+            nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(rdispls);
+        }
+        nb_request->data.release_arrays[idx++] = c_recvtypes;
+        nb_request->data.release_arrays[idx++] = c_sendtypes;
+        nb_request->data.release_arrays[idx]   = NULL;
     }
-    free(c_recvtypes);
 }
