@@ -416,10 +416,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
 AC_DEFUN([_OPAL_START_SETUP_CC],[
     opal_show_subtitle "C compiler and preprocessor"
-
-	# $%@#!@#% AIX!!  This has to be called before anything invokes the C
-    # compiler.
-    dnl AC_AIX
 ])
 
 
