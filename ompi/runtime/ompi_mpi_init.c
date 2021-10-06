@@ -995,7 +995,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
        CPU utilization for the remainder of MPI_INIT when we are
        blocking on RTE-level events, but may greatly reduce non-TCP
        latency. */
-    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
+    int old_event_flags = opal_progress_set_event_flag(0);
+    opal_progress_set_event_flag(old_event_flags | OPAL_EVLOOP_NONBLOCK);
 #endif
 
     /* wire up the mpi interface, if requested.  Do this after the
