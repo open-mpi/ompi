@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -127,14 +127,28 @@ int ompi_rounddown(int num, int factor)
     return num * factor;    /* floor(num / factor) * factor */
 }
 
-static void release_objs_callback(struct ompi_coll_base_nbc_request_t *request) {
-    if (NULL != request->data.objs.objs[0]) {
-        OBJ_RELEASE(request->data.objs.objs[0]);
-        request->data.objs.objs[0] = NULL;
+/**
+ * Release all objects and arrays stored into the nbc_request.
+ * The release_arrays are temporary memory to stored the values
+ * converted from Fortran, and should dissapear in same time as the
+ * request itself.
+ */
+static void
+release_objs_callback(struct ompi_coll_base_nbc_request_t *request)
+{
+    if (NULL != request->data.refcounted.objs.objs[0]) {
+        OBJ_RELEASE(request->data.refcounted.objs.objs[0]);
+        request->data.refcounted.objs.objs[0] = NULL;
     }
-    if (NULL != request->data.objs.objs[1]) {
-        OBJ_RELEASE(request->data.objs.objs[1]);
-        request->data.objs.objs[1] = NULL;
+    if (NULL != request->data.refcounted.objs.objs[1]) {
+        OBJ_RELEASE(request->data.refcounted.objs.objs[1]);
+        request->data.refcounted.objs.objs[1] = NULL;
+    }
+    for(int i = 0; i < OMPI_REQ_NB_RELEASE_ARRAYS; i++ ) {
+        if (NULL == request->data.release_arrays[i])
+            break;
+        free(request->data.release_arrays[i]);
+        request->data.release_arrays[i] = NULL;
     }
 }
 
@@ -168,12 +182,12 @@ int ompi_coll_base_retain_op( ompi_request_t *req, ompi_op_t *op,
     }
     if (!ompi_op_is_intrinsic(op)) {
         OBJ_RETAIN(op);
-        request->data.op.op = op;
+        request->data.refcounted.op.op = op;
         retain = true;
     }
     if (!ompi_datatype_is_predefined(type)) {
         OBJ_RETAIN(type);
-        request->data.op.datatype = type;
+        request->data.refcounted.op.datatype = type;
         retain = true;
     }
     if (OPAL_UNLIKELY(retain)) {
@@ -207,12 +221,12 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *req, ompi_datatype_t *stype
     }
     if (NULL != stype && !ompi_datatype_is_predefined(stype)) {
         OBJ_RETAIN(stype);
-        request->data.types.stype = stype;
+        request->data.refcounted.types.stype = stype;
         retain = true;
     }
     if (NULL != rtype && !ompi_datatype_is_predefined(rtype)) {
         OBJ_RETAIN(rtype);
-        request->data.types.rtype = rtype;
+        request->data.refcounted.types.rtype = rtype;
         retain = true;
     }
     if (OPAL_UNLIKELY(retain)) {
@@ -237,21 +251,21 @@ static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
     } else {
         scount = rcount = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
     }
-    if (NULL != request->data.vecs.stypes) {
+    if (NULL != request->data.refcounted.vecs.stypes) {
         for (int i=0; i<scount; i++) {
-            if (NULL != request->data.vecs.stypes[i]) {
-                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.vecs.stypes[i]);
+            if (NULL != request->data.refcounted.vecs.stypes[i]) {
+                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.refcounted.vecs.stypes[i]);
             }
         }
-        request->data.vecs.stypes = NULL;
+        request->data.refcounted.vecs.stypes = NULL;
     }
-    if (NULL != request->data.vecs.rtypes) {
+    if (NULL != request->data.refcounted.vecs.rtypes) {
         for (int i=0; i<rcount; i++) {
-            if (NULL != request->data.vecs.rtypes[i]) {
-                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.vecs.rtypes[i]);
+            if (NULL != request->data.refcounted.vecs.rtypes[i]) {
+                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.refcounted.vecs.rtypes[i]);
             }
         }
-        request->data.vecs.rtypes = NULL;
+        request->data.refcounted.vecs.rtypes = NULL;
     }
 }
 
@@ -304,8 +318,8 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
         }
     }
     if (OPAL_UNLIKELY(retain)) {
-        request->data.vecs.stypes = (ompi_datatype_t **) stypes;
-        request->data.vecs.rtypes = (ompi_datatype_t **) rtypes;
+        request->data.refcounted.vecs.stypes = (ompi_datatype_t **) stypes;
+        request->data.refcounted.vecs.rtypes = (ompi_datatype_t **) rtypes;
         if (req->req_persistent) {
             request->cb.req_free = req->req_free;
             req->req_free = free_vecs_callback;
@@ -319,15 +333,16 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
     return OMPI_SUCCESS;
 }
 
-static void nbc_req_cons(ompi_coll_base_nbc_request_t *req)
+static void nbc_req_constructor(ompi_coll_base_nbc_request_t *req)
 {
     req->cb.req_complete_cb = NULL;
     req->req_complete_cb_data = NULL;
-    req->data.objs.objs[0] = NULL;
-    req->data.objs.objs[1] = NULL;
+    req->data.refcounted.objs.objs[0] = NULL;
+    req->data.refcounted.objs.objs[1] = NULL;
+    req->data.release_arrays[0] = NULL;
 }
 
-OBJ_CLASS_INSTANCE(ompi_coll_base_nbc_request_t, ompi_request_t, nbc_req_cons, NULL);
+OBJ_CLASS_INSTANCE(ompi_coll_base_nbc_request_t, ompi_request_t, nbc_req_constructor, NULL);
 
 /* File reading functions */
 static void skiptonewline (FILE *fptr, int *fileline)
