@@ -66,11 +66,19 @@ OPAL_DECLSPEC int opal_progress(void);
  * Control how the event library is called
  *
  * Adjust the flags argument used to call opal_event_loop() from
- * opal_progress().  The default argument is OPAL_EVLOOP_ONELOOP,
- * meaning that the call to opal_event_loop() will block pending
- * events, but may block for a period of time.
+ * opal_progress().  The default argument is
  *
- * @param flags     One of the valid vlags argument to
+ *               OPAL_EVLOOP_NONBLOCK | OPAL_EVLOOP_ONCE
+ *
+ * OPAL_EVLOOP_NONBLOCK means that if there is no active events,
+ * opal_event_loop() should return immediately (instead of
+ * waiting for active events).
+ *
+ * OPAL_EVLOOP_ONCE means opal_event_loop() should onlyrun one
+ * iteration, which includes poll the event queue and process
+ * the active events.
+ *
+ * @param flags     One of the valid flags argument to
  *                  opal_event_loop().
  * @return          Previous value of flags used to call
  *                  opal_event_loop().
