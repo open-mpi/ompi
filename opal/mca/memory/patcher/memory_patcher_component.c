@@ -589,28 +589,28 @@ static int patcher_open (void)
 #if defined (SYS_mmap)
     rc = opal_patcher->patch_symbol ("mmap", (uintptr_t) intercept_mmap, (uintptr_t *) &original_mmap);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif
 
 #if defined (SYS_munmap)
     rc = opal_patcher->patch_symbol ("munmap", (uintptr_t)intercept_munmap, (uintptr_t *) &original_munmap);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif
 
 #if defined (SYS_mremap)
     rc = opal_patcher->patch_symbol ("mremap",(uintptr_t)intercept_mremap, (uintptr_t *) &original_mremap);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif
 
 #if defined (SYS_madvise)
     rc = opal_patcher->patch_symbol ("madvise", (uintptr_t)intercept_madvise, (uintptr_t *) &original_madvise);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif
 
@@ -618,21 +618,32 @@ static int patcher_open (void)
 #if HAS_SHMAT
     rc = opal_patcher->patch_symbol ("shmat", (uintptr_t) intercept_shmat, (uintptr_t *) &original_shmat);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif // HAS_SHMAT
 
 #if HAS_SHMDT
     rc = opal_patcher->patch_symbol ("shmdt", (uintptr_t) intercept_shmdt, (uintptr_t *) &original_shmdt);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif // HAS_SHMDT
 #endif // defined(__linux__)
 
 #if defined (SYS_brk)
     rc = opal_patcher->patch_symbol ("brk", (uintptr_t)intercept_brk, (uintptr_t *) &original_brk);
+    if (OPAL_SUCCESS != rc) {
+        goto err_patching;
+    }
 #endif
+
+    return OPAL_SUCCESS;
+
+err_patching:
+
+    was_executed_already=0;
+    if (opal_patcher->patch_restore_all)
+        opal_patcher->patch_restore_all();
 
     return rc;
 }

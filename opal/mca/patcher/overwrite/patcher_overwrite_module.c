@@ -310,6 +310,175 @@ static int mca_patcher_overwrite_apply_patch (mca_patcher_base_patch_t *patch)
 
 #endif
 
+static void mca_patcher_unapply_all_patches(void)
+{
+    mca_patcher_base_patch_t *patch, *patch_next;
+
+    opal_mutex_lock (&mca_patcher_overwrite_module.patch_list_mutex);
+    
+    OPAL_LIST_FOREACH_SAFE(patch, patch_next, &opal_patcher->patch_list, mca_patcher_base_patch_t) {
+        patch->patch_restore (patch);
+        opal_list_remove_item(&opal_patcher->patch_list, patch);
+        OBJ_RELEASE(patch);
+    }
+
+    opal_mutex_unlock (&mca_patcher_overwrite_module.patch_list_mutex);
+}
+
+/*
+ * The logic in this function for each platform is based on code from
+ * mca_patcher_overwrite_apply_patch(). There are 2 general approaches:
+ * 1: Directly check constant instructions (ignoring addresses as parameters)
+ * 2: Generate a bit mask by passing min and max values to underlying helper
+ *    functions and negate the XOR'ed results. These results can be used to
+ *    mask off transient values (like addresess) and non-instruction values
+ *    (like register contents). Once the masks are applied, the results are
+ *    compared against the min values directly to check for equality. If equal,
+ *    we consider the memory to be previously patched.
+ */
+static bool mca_patcher_is_function_patched(unsigned char *target)
+{
+
+#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32)
+    return (*(unsigned char *)target == 0xe9);
+#elif (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
+	return (
+		(*(unsigned short*)(target + 0) == 0xbb49) &&
+		(*(unsigned char* )(target +10) == 0x41  ) &&
+		(*(unsigned char* )(target +11) == 0xff  ) &&
+		(*(unsigned char* )(target +12) == 0xe3  )
+	);
+#elif (OPAL_ASSEMBLY_ARCH == OPAL_IA64)
+    unsigned char buf_zeros[16], buf_ones[16];
+    unsigned char patch_mask[32], instr_mask[32];
+    bool all_masked;
+    int i;
+    /*
+     * Set the imm64 and glb_ptr variables to 0 in this testing case, since we can't compare
+     * against specific values (we'll just have to use this as a mask value)
+     */
+    unsigned long long imm64_zeros = 0;
+    unsigned long long imm64_ones = 0xFFFFFFFFFFFFFFFF;
+    unsigned long long glb_ptr_zeros = 0;
+    unsigned long long glb_ptr_ones = 0xFFFFFFFFFFFFFFFF;
+    unsigned long long nop =
+        (0x0ULL<<37) | /* O     */
+        (0x0ULL<<36) | /* i     */
+        (0x0ULL<<33) | /* x3    */
+        (0x1ULL<<27) | /* x6    */
+        (0x0ULL<< 6) | /* imm20 */
+        (0x0ULL<< 0);  /* qp    */
+    unsigned long long brl_zeros =
+        (0xcULL                         << 37) |
+        (((imm64_zeros>>63)&0x1ULL)     << 36) |
+        (0x0ULL                         << 35) |
+        (0x0ULL                         << 33) |
+        (((imm64_zeros>>4)&0xFFFFFULL)  << 13) |
+        (0x0ULL                         <<  6) |
+        (0x0ULL                         <<  0);
+    unsigned long long brl_ones =
+        (0xcULL                        << 37) |
+        (((imm64_ones>>63)&0x1ULL)     << 36) |
+        (0x0ULL                        << 35) |
+        (0x0ULL                        << 33) |
+        (((imm64_ones>>4)&0xFFFFFULL)  << 13) |
+        (0x0ULL                        <<  6) |
+        (0x0ULL                        <<  0);
+    unsigned long long movl_zeros =
+        (0x6ULL                          << 37) |
+        (((glb_ptr_zeros>>63)&0x1ULL)    << 36) |
+        (((glb_ptr_zeros>> 7)&0x1FFULL)  << 27) |
+        (((glb_ptr_zeros>>16)&0x1FULL)   << 22) |
+        (((glb_ptr_zeros>>21)&0x1ULL)    << 21) |
+        (0ULL                            << 20) |
+        (((glb_ptr_zeros>> 0)&0x7FULL)   << 13) |
+        (1ULL                            <<  6) |
+        (0x0ULL                          <<  0);
+    unsigned long long movl_ones =
+        (0x6ULL                         << 37) |
+        (((glb_ptr_ones>>63)&0x1ULL)    << 36) |
+        (((glb_ptr_ones>> 7)&0x1FFULL)  << 27) |
+        (((glb_ptr_ones>>16)&0x1FULL)   << 22) |
+        (((glb_ptr_ones>>21)&0x1ULL)    << 21) |
+        (0ULL                           << 20) |
+        (((glb_ptr_ones>> 0)&0x7FULL)   << 13) |
+        (1ULL                           <<  6) |
+        (0x0ULL                         <<  0);
+    make_ia64_bundle(buf_zeros, movl_zeros,
+        (glb_ptr_zeros >> 22)&0x1FFFFFFFFFFULL, nop, 5);
+    make_ia64_bundle(buf_ones,  movl_ones,
+        (glb_ptr_ones  >> 22)&0x1FFFFFFFFFFULL, nop, 5);
+    for (int i = 0 ; i < 16 ; ++i) {
+        patch_mask[16-i-1] = ~(buf_zeros[i] ^ buf_ones[i]);
+        instr_mask[16-i-1] = buf_zeros[i];
+    }
+
+    make_ia64_bundle(buf_zeros, brl_zeros,
+        ((imm64_zeros >> 24)&0x7FFFFFFFFFULL)<<2, nop, 5);
+    make_ia64_bundle(buf_ones,  brl_ones,
+        ((imm64_ones  >> 24)&0x7FFFFFFFFFULL)<<2, nop, 5);
+    for (int i = 0 ; i < 16 ; ++i) {
+        patch_mask[32-i-1] = ~(buf_zeros[i] ^ buf_ones[i]);
+        instr_mask[32-i-1] = buf_zeros[i];
+    }
+
+    i=0;
+    all_masked=true;
+    while (all_masked && i<32) {
+        if ((target[i] & patch_mask[i]) != instr_mask[i])
+            all_masked=false;
+        i++;
+    }
+    return all_masked;
+#elif (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32 ) || (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
+    const unsigned int gr_max = 0xF; //11 is used in our patching code, but is the max 4 or 5 bits?
+    const unsigned int addr_max = 0xFFFF;
+    unsigned int  addis_base = addis ( 0, 0, 0);
+    unsigned int  addis_mask = ~(addis_base  ^  addis ( gr_max,      0,  addr_max));
+    unsigned int    ori_base =   ori ( 0, 0, 0);
+    unsigned int    ori_mask = ~(  ori_base  ^    ori ( gr_max, gr_max,  addr_max));
+    unsigned int  mtspr_base = mtspr ( 9, 0);    // 9 = CTR
+    unsigned int  mtspr_mask = ~(mtspr_base  ^  mtspr ( 9,      gr_max));
+    unsigned int  bcctr_base = bcctr (20, 0, 0); // 20 = always
+    unsigned int  bcctr_mask = ~(bcctr_base  ^  bcctr (20,           0,         0));
+#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32)
+
+    return (
+        ((*(unsigned int *) (target + 0 )) &  addis_mask) ==  addis_base &&
+        ((*(unsigned int *) (target + 4 )) &    ori_mask) ==    ori_base &&
+        ((*(unsigned int *) (target + 8 )) &  mtspr_mask) ==  mtspr_base &&
+        ((*(unsigned int *) (target + 12)) &  bcctr_mask) ==  bcctr_base
+    );
+#else
+    unsigned int rldicr_base = rldicr ( 0, 0, 32, 31);
+    unsigned int rldicr_mask = ~(rldicr_base ^ rldicr ( gr_max, gr_max, 32, 31));
+    unsigned int   oris_base = oris ( 0, 0, 0);
+    unsigned int   oris_mask = ~(oris_base ^     oris ( gr_max, gr_max,  addr_max));
+
+    return (
+        ((*(unsigned int *) (target + 0 )) &  addis_mask) ==  addis_base &&
+        ((*(unsigned int *) (target + 4 )) &    ori_mask) ==    ori_base &&
+        ((*(unsigned int *) (target + 8 )) & rldicr_mask) == rldicr_base &&
+        ((*(unsigned int *) (target + 12)) &   oris_mask) ==   oris_base &&
+        ((*(unsigned int *) (target + 16)) &    ori_mask) ==    ori_base &&
+        ((*(unsigned int *) (target + 20)) &  mtspr_mask) ==  mtspr_base &&
+        ((*(unsigned int *) (target + 24)) &  bcctr_mask) ==  bcctr_base
+    );
+#endif
+#elif defined(__aarch64__)
+    uint32_t mov_mask=~((0xFFFF << 5) | 0x1F);
+    uint32_t br_mask=~(0x1F << 5);
+
+    return (
+        ((*(uint32_t *) (target +  0)) & mov_mask) == mov(0, 3, 0) &&
+        ((*(uint32_t *) (target +  4)) & mov_mask) == movk(0, 2, 0) &&
+        ((*(uint32_t *) (target +  8)) & mov_mask) == movk(0, 1, 0) &&
+        ((*(uint32_t *) (target + 12)) & mov_mask) == movk(0, 0, 0) &&
+        ((*(uint32_t *) (target + 16)) & br_mask) == br(0)
+    );
+#endif
+}
+
 static int mca_patcher_overwrite_patch_address (uintptr_t sys_addr, uintptr_t hook_addr)
 {
     mca_patcher_base_patch_t *patch;
@@ -371,10 +540,17 @@ static int mca_patcher_overwrite_patch_symbol (const char *func_symbol_name, uin
         *func_old_addr = 0;
     }
 
-    return mca_patcher_overwrite_patch_address (old_addr, func_new_addr);
+    if (mca_patcher_is_function_patched ((unsigned char*)old_addr)) {
+        opal_output(0, "function %s is already patched; stopping further patching\n",
+                func_symbol_name);
+        return OPAL_ERR_RESOURCE_BUSY;
+	} else {
+        return mca_patcher_overwrite_patch_address (old_addr, func_new_addr);
+	}
 }
 
 mca_patcher_base_module_t mca_patcher_overwrite_module = {
     .patch_symbol = mca_patcher_overwrite_patch_symbol,
     .patch_address = mca_patcher_overwrite_patch_address,
+    .patch_restore_all = mca_patcher_unapply_all_patches,
 };

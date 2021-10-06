@@ -77,6 +77,11 @@ typedef int (*mca_patcher_base_init_fn_t) (void);
 typedef int (*mca_patcher_base_fini_fn_t) (void);
 
 /**
+ * Restore all symbols
+ */
+typedef void (*mca_patcher_base_restore_all_fn_t) (void);
+
+/**
  * Structure for patcher modules.
  */
 typedef struct mca_patcher_base_module_t {
@@ -95,6 +100,8 @@ typedef struct mca_patcher_base_module_t {
     mca_patcher_base_patch_symbol_fn_t  patch_symbol;
     /** hook a function pointer. may be NULL */
     mca_patcher_base_patch_address_fn_t patch_address;
+    /** hook a function to restore all symbols. may be NULL */
+    mca_patcher_base_restore_all_fn_t   patch_restore_all;
 } mca_patcher_base_module_t;
 
 
