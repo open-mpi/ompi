@@ -93,15 +93,6 @@ AS_IF([test "$host" != "$target"],
        AC_MSG_WARN([Cross-compiling is only partially supported])
        AC_MSG_WARN([Proceed at your own risk!])])
 
-# AC_USE_SYSTEM_EXTENSIONS alters CFLAGS (e.g., adds -g -O2)
-OPAL_VAR_SCOPE_PUSH([CFLAGS_save])
-CFLAGS_save=$CFLAGS
-AC_USE_SYSTEM_EXTENSIONS
-# AC_USE_SYSTEM_EXTENSIONS will modify CFLAGS if nothing was in there
-# beforehand.  We don't want that.  So if there was nothing in
-# CFLAGS, put nothing back in there.
-AS_IF([test -z "$CFLAGS_save"], [CFLAGS=])
-OPAL_VAR_SCOPE_POP
 
 #
 # Init automake
@@ -290,8 +281,6 @@ m4_ifdef([project_oshmem],
 ############################################################################
 
 OPAL_CONFIGURE_OPTIONS
-OPAL_CHECK_OS_FLAVORS
-OPAL_CHECK_CUDA
 
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
@@ -345,10 +334,6 @@ m4_ifdef([project_ompi],
 
 AC_ENABLE_SHARED
 AC_DISABLE_STATIC
-
-# Must be called before OPAL_SETUP_CC to get the value of CC
-# before it is modified by the C99/C11 checks.
-OPAL_SETUP_WRAPPER_INIT
 
 ##################################
 # Check for known incompatibility
@@ -550,6 +535,29 @@ OPAL_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
 
 OPAL_CHECK_ALT_SHORT_FLOAT
 
+# Check system alignment requirements
+if test "$opal_want_heterogeneous" = 1; then
+    ompi_cv_c_word_size_align=yes
+else
+    AC_CACHE_CHECK([if word-sized integers must be word-size aligned],
+        [ompi_cv_c_word_size_align],
+        [AC_LANG_PUSH(C)
+         AC_RUN_IFELSE([AC_LANG_PROGRAM([dnl
+#include <stdlib.h>], [[    long data[2] = {0, 0};
+    long *lp;
+    int *ip;
+    ip = (int*) data;
+    ip++;
+    lp = (long*) ip;
+    return lp[0]; ]])],
+            [ompi_cv_c_word_size_align=no],
+            [ompi_cv_c_word_size_align=yes],
+            [ompi_cv_c_word_size_align=yes])])
+fi
+AS_IF([test $ompi_cv_c_word_size_align = yes], [results=1], [results=0])
+AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
+    [set to 1 if word-size integers must be aligned to word-size padding to prevent bus errors])
+
 #
 # Check for other compiler characteristics
 #
@@ -665,6 +673,14 @@ AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
 
 # checkpoint results
 AC_CACHE_SAVE
+
+
+##################################
+# Wrapper compilers.
+#
+# Must be called before MCA system
+##################################
+OPAL_SETUP_WRAPPER_INIT
 
 
 ##################################
@@ -920,7 +936,7 @@ OPAL_SEARCH_LIBS_CORE([ceil], [m])
 # -lrt might be needed for clock_gettime
 OPAL_SEARCH_LIBS_CORE([clock_gettime], [rt])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv __malloc_initialize_hook __clear_cache])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty getpwuid fork waitpid execve pipe ptsname setsid mmap tcgetpgrp posix_memalign strsignal sysconf syslog vsyslog regcmp regexec regfree _NSGetEnviron socketpair usleep mkfifo dbopen dbm_open statfs statvfs setpgid setenv __malloc_initialize_hook __clear_cache on_exit])
 
 # Sanity check: ensure that we got at least one of statfs or statvfs.
 if test $ac_cv_func_statfs = no && test $ac_cv_func_statvfs = no; then
@@ -978,6 +994,9 @@ AC_CACHE_SAVE
 ##################################
 
 opal_show_title "System-specific tests"
+
+OPAL_CHECK_CUDA
+OPAL_CHECK_OS_FLAVORS
 
 # Do we have _SC_NPROCESSORS_ONLN? (only going to pass if we also have
 # <unistd.h> and sysconf(), which is ok) OS X 10.4 has <unistd.h> and

@@ -79,13 +79,16 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
 #     <flag>_prefix, configure is not.  There's no known use case for
 #     doing so, and we'd like to force the issue.
 AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
+    dnl for OPAL_CC
+    AC_REQUIRE([OPAL_SETUP_CC])
+
+    opal_show_subtitle "Wrapper compiler setup"
+
     OPAL_VAR_SCOPE_PUSH([wrapper_cc_tmp])
-    # AC_PROG_CC_C99 changes CC (instead of CFLAGS) so this method
-    # must be called before OPAL_SETUP_CC.
     AC_ARG_WITH([wrapper_cc],
 		[AS_HELP_STRING([--with-wrapper-cc=path],
 				[Set a different wrapper C compiler than the one used to build Open MPI])],
-		[], [with_wrapper_cc="$CC"])
+		[], [with_wrapper_cc="$OPAL_CC"])
 
     AC_MSG_CHECKING([for wrapper C compiler])
 
