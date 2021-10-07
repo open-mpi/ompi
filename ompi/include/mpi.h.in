@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
  * Copyright (c) 2015      University of Houston. All rights reserved.
- * Copyright (c) 2015-2020 Research Organization for Information Science
+ * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -1109,6 +1109,9 @@ OMPI_DECLSPEC extern struct ompi_predefined_info_t ompi_mpi_info_env;
 
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUS_IGNORE;
 OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
+
+OMPI_DECLSPEC extern MPI_Fint *MPI_F08_STATUS_IGNORE;
+OMPI_DECLSPEC extern MPI_Fint *MPI_F08_STATUSES_IGNORE;
 
 /*
  * Removed datatypes.  These datatypes are only available if Open MPI
