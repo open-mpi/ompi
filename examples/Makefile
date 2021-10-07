@@ -72,7 +72,7 @@ EXAMPLES = \
 # others if we have the appropriate Open MPI / OpenSHMEM language
 # bindings.
 
-all: hello_c ring_c connectivity_c spc_example
+all: hello_c ring_c connectivity_c
 	@ if which ompi_info >/dev/null 2>&1 ; then \
 	    $(MAKE) mpi; \
 	fi
@@ -94,6 +94,9 @@ mpi:
 	fi
 	@ if ompi_info --parsable | grep -q bindings:java:yes >/dev/null; then \
 	    $(MAKE) Hello.class Ring.class; \
+	fi
+	@ if ompi_info --parsable | grep -q enable-spc >/dev/null; then \
+	    $(MAKE) spc_example; \
 	fi
 
 # OpenSHMEM examples
