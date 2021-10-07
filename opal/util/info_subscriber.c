@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -156,6 +156,7 @@ static int ntesting_callbacks = 0;
 static opal_key_interest_callback_t *testing_callbacks[5];
 static char *testing_keys[5];
 static char *testing_initialvals[5];
+
 // User-level call, user adds their own callback function to be subscribed
 // to every object:
 int opal_infosubscribe_testcallback(opal_key_interest_callback_t *callback, char *key, char *val);
@@ -244,47 +245,8 @@ int opal_infosubscribe_testregister(opal_infosubscriber_t *object)
     return OPAL_SUCCESS;
 }
 
-// This routine is to be used after making a callback for a
-// key/val pair. The callback would have ggiven a new value to associate
-// with <key>, and this function saves the previous value under
-// __IN_<key>.
-//
-// The last argument indicates whether to overwrite a previous
-// __IN_<key> or not.
-static int save_original_key_val(opal_info_t *info, const char *key, opal_cstring_t *val,
-                                 int overwrite)
-{
-    char modkey[OPAL_MAX_INFO_KEY];
-    int flag, err;
-
-    // Checking strlen, even though it should be unnecessary.
-    // This should only happen on predefined keys with short lengths.
-    if (strlen(key) + strlen(OPAL_INFO_SAVE_PREFIX) < OPAL_MAX_INFO_KEY) {
-        snprintf(modkey, OPAL_MAX_INFO_KEY, OPAL_INFO_SAVE_PREFIX "%s", key);
-        // (the prefix macro is a string, so the unreadable part above is a string concatenation)
-        flag = 0;
-        opal_info_get(info, modkey, 0, &flag);
-        if (!flag || overwrite) {
-            err = opal_info_set_cstring(info, modkey, val);
-            if (OPAL_SUCCESS != err) {
-                return err;
-            }
-        }
-// FIXME: use whatever the Open MPI convention is for DEBUG options like this
-// Even though I don't expect this codepath to happen, if it somehow DID happen
-// in a real run with user-keys, I'd rather it be silent at that point rather
-// being noisy and/or aborting.
-#ifdef OMPI_DEBUG
-    } else {
-        printf("WARNING: Unexpected key length [%s]\n", key);
-#endif
-    }
-    return OPAL_SUCCESS;
-}
-
 int opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *new_info)
 {
-    int err;
     opal_info_entry_t *iterator;
     const char *updated_value;
 
@@ -297,6 +259,7 @@ int opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *n
 
     if (NULL != new_info) {
         OPAL_LIST_FOREACH (iterator, &new_info->super, opal_info_entry_t) {
+            int err = OPAL_SUCCESS;
             opal_cstring_t *value_str, *key_str;
             value_str = iterator->ie_value;
             OBJ_RETAIN(value_str);
@@ -306,28 +269,15 @@ int opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *n
             updated_value = opal_infosubscribe_inform_subscribers(object, iterator->ie_key->string,
                                                                   iterator->ie_value->string,
                                                                   &found_callback);
-            if (updated_value) {
+            if (NULL != updated_value
+                && 0 != strncmp(updated_value, value_str->string, value_str->length)) {
                 err = opal_info_set(object->s_info, iterator->ie_key->string, updated_value);
-            } else {
-                // This path would happen if there was no callback for this key,
-                // or if there was a callback and it returned null. One way the
-                // setting was unrecognized the other way it was recognized and ignored,
-                // either way it shouldn't be set, which we'll ensure with an unset
-                // in case a previous value exists.
-                err = opal_info_delete(object->s_info, iterator->ie_key->string);
-                err = OPAL_SUCCESS; // we don't care if the key was found or not
             }
-            if (OPAL_SUCCESS != err) {
-                OBJ_RELEASE(value_str);
-                OBJ_RELEASE(key_str);
-                return err;
-            }
-            // Save the original at "__IN_<key>":"original"
-            // And if multiple set-info calls happen, the last would be the most relevant
-            // to save, so overwrite a previously saved value if there is one.
-            save_original_key_val(object->s_info, key_str->string, value_str, 1);
             OBJ_RELEASE(value_str);
             OBJ_RELEASE(key_str);
+            if (OPAL_SUCCESS != err) {
+                return err;
+            }
         }
     }
 
@@ -358,25 +308,6 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, const char *key,
     opal_list_t *list = NULL;
     opal_hash_table_t *table = &object->s_subscriber_table;
     opal_callback_list_item_t *callback_list_item;
-    size_t max_len = OPAL_MAX_INFO_KEY - strlen(OPAL_INFO_SAVE_PREFIX);
-
-    if (strlen(key) > max_len) {
-        opal_output(0,
-                    "DEVELOPER WARNING: Unexpected MPI info key length [%s]: "
-                    "OMPI internal callback keys are limited to %" PRIsize_t " chars.",
-                    key, max_len);
-#if OPAL_ENABLE_DEBUG
-        opal_output(0,
-                    "Aborting because this is a developer / debugging build.  Go fix this error.");
-        // Do not assert() / dump core.  Just exit un-gracefully.
-        exit(1);
-#else
-        opal_output(0,
-                    "The \"%s\" MPI info key almost certainly will not work properly.  You should "
-                    "inform an Open MPI developer about this.",
-                    key);
-#endif
-    }
 
     if (table) {
         opal_hash_table_get_value_ptr(table, key, strlen(key), (void **) &list);
@@ -422,20 +353,11 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, const char *key,
             err = opal_info_delete(object->s_info, key);
             err = OPAL_SUCCESS; // we don't care if the key was found or not
         }
+        OBJ_RELEASE(val);
+
         if (OPAL_SUCCESS != err) {
-            OBJ_RELEASE(val);
             return err;
         }
-        // - save the previous val under key __IN_*
-        //   This function might be called separately for the same key multiple
-        //   times (multiple modules might register an interest in the same key),
-        //   so we only save __IN_<key> for the first.
-        //   Note we're saving the first k/v regardless of whether it was the default
-        //   or whether it came from info. This means system settings will show
-        //   up if the user queries later with get_info.
-        save_original_key_val(object->s_info, key, val, 0);
-
-        OBJ_RELEASE(val);
     } else {
         /*
          * TODO: This should not happen
@@ -444,9 +366,3 @@ int opal_infosubscribe_subscribe(opal_infosubscriber_t *object, const char *key,
 
     return OPAL_SUCCESS;
 }
-
-/*
-    OBJ_DESTRUCT(&opal_comm_info_hashtable);
-    OBJ_DESTRUCT(&opal_win_info_hashtable);
-    OBJ_DESTRUCT(&opal_file_info_hashtable);
-*/
