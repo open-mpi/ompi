@@ -123,6 +123,7 @@ static int validate_info(struct fi_info *info, uint64_t required_caps, char **in
 /* Register the MCA parameters */
 static int mca_btl_ofi_component_register(void)
 {
+    int ret;
     char *msg;
     mca_btl_ofi_module_t *module = &mca_btl_ofi_module_template;
 
@@ -191,7 +192,10 @@ static int mca_btl_ofi_component_register(void)
     /* for now we want this component to lose to the MTL. */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
 
-    opal_common_ofi_register_mca_variables(&mca_btl_ofi_component.super.btl_version);
+    ret = opal_common_ofi_mca_register(&mca_btl_ofi_component.super.btl_version);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
 
     return mca_btl_base_param_register(&mca_btl_ofi_component.super.btl_version, &module->super);
 }
@@ -199,7 +203,7 @@ static int mca_btl_ofi_component_register(void)
 static int mca_btl_ofi_component_open(void)
 {
     mca_btl_ofi_component.module_count = 0;
-    return opal_common_ofi_init();
+    return opal_common_ofi_open();
 }
 
 /*
@@ -207,11 +211,11 @@ static int mca_btl_ofi_component_open(void)
  */
 static int mca_btl_ofi_component_close(void)
 {
-    opal_common_ofi_mca_deregister();
-    opal_common_ofi_fini();
+    int ret;
+    ret = opal_common_ofi_close();
     /* If we don't sleep, sockets provider freaks out. Ummm this is a scary comment */
     sleep(1);
-    return OPAL_SUCCESS;
+    return ret;
 }
 
 void mca_btl_ofi_exit(void)
@@ -258,8 +262,6 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     struct fi_fabric_attr fabric_attr = {0};
     struct fi_domain_attr domain_attr = {0};
     uint64_t required_caps;
-
-    opal_common_ofi_mca_register();
 
     switch (mca_btl_ofi_component.mode) {
 
@@ -443,6 +445,19 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
      * spawn threads, so initialize the rcache before creating OFI objects
      * to prevent races. */
     mca_btl_ofi_rcache_init(module);
+
+    /* for similar reasons to the rcache call, this must be called
+     * during single threaded part of the code and before Libfabric
+     * configures its memory monitors.  Easiest to do that before
+     * domain open.  Silently ignore not-supported errors, as they
+     * are not critical to program correctness, but only indicate
+     * that LIbfabric will have to pick a different, possibly less
+     * optimial, monitor. */
+    rc = opal_common_ofi_export_memory_monitor();
+    if (0 != rc && -FI_ENOSYS != rc) {
+        BTL_VERBOSE(("Failed to inject Libfabric memory monitor: %s",
+                     fi_strerror(-rc)));
+    }
 
     linux_device_name = info->domain_attr->name;
     BTL_VERBOSE(

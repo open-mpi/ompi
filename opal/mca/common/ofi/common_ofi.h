@@ -18,34 +18,74 @@
 #ifndef OPAL_MCA_COMMON_OFI_H
 #define OPAL_MCA_COMMON_OFI_H
 
-#include "opal_config.h"
-#include "opal/mca/base/mca_base_framework.h"
-#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/proc.h"
 #include "opal/memoryhooks/memory.h"
-#include <rdma/fabric.h>
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
-#include <rdma/fi_ext.h>
-#endif
 
 BEGIN_C_DECLS
 
 typedef struct opal_common_ofi_module {
     char **prov_include;
     char **prov_exclude;
-    int verbose;
-    int registered;
     int output;
 } opal_common_ofi_module_t;
 
 extern opal_common_ofi_module_t opal_common_ofi;
-extern mca_base_framework_t opal_memory_base_framework;
 
-OPAL_DECLSPEC int opal_common_ofi_register_mca_variables(const mca_base_component_t *component);
-OPAL_DECLSPEC void opal_common_ofi_mca_register(void);
-OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
+/**
+ * Common MCA registration
+ *
+ * Common MCA registration handlinge.  After calling this function,
+ * \code opal_common_ofi.output will be properly initialized.
+ *
+ * @param component (IN) OFI component being initialized
+ *
+ * @returns OPAL_SUCCESS on success, OPAL error code on failure
+ */
+OPAL_DECLSPEC int opal_common_ofi_mca_register(const mca_base_component_t *component);
 
-/*
+/**
+ * Initializes common objects for libfabric
+ *
+ * Initialize common libfabric interface.  This should be called from
+ * any other OFI component's component_open() call.
+ *
+ * @note This function is not thread safe and must be called in a
+ * serial portion of the code.
+ */
+OPAL_DECLSPEC int opal_common_ofi_open(void);
+
+/**
+ * Cleans up common objects for libfabric
+ *
+ * Clean up common libfabric interface.  This should be called from
+ * any other OFI component's component_close() call.  Resource cleanup
+ * is reference counted, so any successful call to
+ * opal_common_ofi_init().
+ *
+ * @note This function is not thread safe and must be called in a
+ * serial portion of the code.
+ */
+OPAL_DECLSPEC int opal_common_ofi_close(void);
+
+/**
+ * Export our memory hooks into Libfabric monitor
+ *
+ * Use Open MPI's memory hooks to provide monitor notifications to
+ * Libfabric via the external mr_cache facility.  This must be called
+ * before any domain is initialized (ie, before any Libfabric memory
+ * monitor is configured).
+ *
+ * @returns A libfabric error code is returned on error
+ */
+OPAL_DECLSPEC int opal_common_ofi_export_memory_monitor(void);
+
+/**
+ * Search function for provider names
+ *
+ * This function will take a provider name string and a list of lower
+ * provider name strings as inputs. It will return true if the lower
+ * provider in the item string matches a lower provider in the list.
+ *
  * @param list (IN)    List of strings corresponding to lower providers.
  * @param item (IN)    Single string corresponding to a provider.
  *
@@ -54,44 +94,63 @@ OPAL_DECLSPEC void opal_common_ofi_mca_deregister(void);
  * @return 1           The lower provider of the item string matches
  *                     a string in the item list.
  *
- * This function will take a provider name string and a list of lower
- * provider name strings as inputs. It will return true if the lower
- * provider in the item string matches a lower provider in the list.
- *
  */
 OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
 
-#if OPAL_OFI_IMPORT_MONITOR_SUPPORT
-/*
- * @param buf (IN)         Pointer to the start of the allocation
- * @param length (IN)      Length of the allocation
- * @param cbdata (IN)      Data passed to memory hooks when callback
- *                         was registered
- * @param from_alloc (IN)  True if the callback is caused by a call to the
- *                         general allocation routines (malloc, calloc, free,
- *                         etc.) or directly from the user (mmap, munmap, etc.)
+/**
+ * Selects NIC (provider) based on hardware locality
  *
- * Callback function triggered when memory is about to be freed.
- * is about to be freed.  The callback will be triggered according to
- * the note in opal_mem_hooks_register_release().
+ * In multi-nic situations, use hardware topology to pick the "best"
+ * of the selected NICs.
+ * There are 3 main cases that this covers:
+ *
+ *      1. If the first provider passed into this function is the only valid
+ *      provider, this provider is returned.
+ *
+ *      2. If there is more than 1 provider that matches the type of the first
+ *      provider in the list, and the BDF data
+ *      is available then a provider is selected based on locality of device
+ *      cpuset and process cpuset and tries to ensure that processes
+ *      are distributed evenly across NICs. This has two separate
+ *      cases:
+ *
+ *          i. There is one or more provider local to the process:
+ *
+ *              (local rank % number of providers of the same type
+ *              that share the process cpuset) is used to select one
+ *              of these providers.
+ *
+ *          ii. There is no provider that is local to the process:
+ *
+ *              (local rank % number of providers of the same type)
+ *              is used to select one of these providers
+ *
+ *      3. If there is more than 1 providers of the same type in the
+ *      list, and the BDF data is not available (the ofi version does
+ *      not support fi_info.nic or the provider does not support BDF)
+ *      then (local rank % number of providers of the same type) is
+ *      used to select one of these providers
+ *
+ * @param provider_list (IN)   struct fi_info* An initially selected
+ *                             provider NIC. The provider name and
+ *                             attributes are used to restrict NIC
+ *                             selection. This provider is returned if the
+ *                             NIC selection fails.
+ *
+ * @param provider (OUT)       struct fi_info* object with the selected
+ *                             provider if the selection succeeds
+ *                             if the selection fails, returns the fi_info
+ *                             object that was initially provided.
+ *
+ * All errors should be recoverable and will return the initially provided
+ * provider. However, if an error occurs we can no longer guarantee
+ * that the provider returned is local to the process or that the processes will
+ * balance across available NICs.
  *
  */
-OPAL_DECLSPEC void opal_common_ofi_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc);
-#endif /* OPAL_OFI_IMPORT_MONITOR_SUPPORT */
-
-/*
- * Initializes common objects for libfabric
- */
-OPAL_DECLSPEC int opal_common_ofi_init(void);
-
-/*
- * Cleans up common objects for libfabric
- */
-OPAL_DECLSPEC int opal_common_ofi_fini(void);
+OPAL_DECLSPEC struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
+                                                                  opal_process_info_t *process_info);
 
 END_C_DECLS
-
-struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
-                                                    opal_process_info_t *process_info);
 
 #endif /* OPAL_MCA_COMMON_OFI_H */
