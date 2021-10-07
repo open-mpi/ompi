@@ -46,7 +46,8 @@ static const char FUNC_NAME[] = "MPI_Pready_list";
 int MPI_Pready_list(int length, int* partitions, MPI_Request request)
 {
     int rc = OMPI_SUCCESS;
-    SPC_RECORD(OMPI_SPC_PREADY, 1);
+
+    SPC_RECORD(OMPI_SPC_PREADY_LIST, 1);
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
