@@ -14,7 +14,7 @@
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -287,7 +287,7 @@ void ompi_info_do_config(bool want_all)
 
     if (OMPI_FORTRAN_HAVE_IGNORE_TKR) {
         /* OMPI_FORTRAN_IGNORE_TKR_PREDECL is already in quotes; it
-           didn't work consistently to put it in _STRINGIFY because
+           didn't work consistently to put it in PLATFORM_STRINGIFY because
            sometimes the compiler would actually interpret the pragma
            in there before stringify-ing it. */
         (void)opal_asprintf(&fortran_have_ignore_tkr, "yes (%s)",
@@ -336,9 +336,9 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("C compiler absolute", "compiler:c:absolute",
                   OPAL_CC_ABSOLUTE);
     opal_info_out("C compiler family name", "compiler:c:familyname",
-                  _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
+                  PLATFORM_STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
     opal_info_out("C compiler version", "compiler:c:version",
-                  _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
+                  PLATFORM_STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
 
     if (want_all) {
         opal_info_out_int("C char size", "compiler:c:sizeof:char", sizeof(char));
