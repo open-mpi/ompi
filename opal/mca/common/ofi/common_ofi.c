@@ -187,9 +187,9 @@ err:
         if (NULL != opal_common_ofi_monitor) {
             free(opal_common_ofi_monitor);
         }
-    }
 
-    opal_common_ofi_installed_memory_monitor = false;
+        opal_common_ofi_installed_memory_monitor = false;
+    }
 
     OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
 #endif
