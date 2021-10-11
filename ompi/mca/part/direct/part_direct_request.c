@@ -19,20 +19,20 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mca/part/persist/part_persist.h"
-#include "ompi/mca/part/persist/part_persist_request.h"
+#include "ompi/mca/part/direct/part_direct.h"
+#include "ompi/mca/part/direct/part_direct_request.h"
 
 
-static void mca_part_persist_request_construct( mca_part_persist_request_t* req) {
+static void mca_part_direct_request_construct( mca_part_direct_request_t* req) {
     OBJ_CONSTRUCT(&req->req_convertor, opal_convertor_t);
     req->req_ompi.req_type = OMPI_REQUEST_PART;
 }
 
-static void mca_part_persist_request_destruct( mca_part_persist_request_t* req) {
+static void mca_part_direct_request_destruct( mca_part_direct_request_t* req) {
     OBJ_DESTRUCT(&req->req_convertor);
 }
 
-OBJ_CLASS_INSTANCE(mca_part_persist_request_t,
+OBJ_CLASS_INSTANCE(mca_part_direct_request_t,
                    ompi_request_t,
-                   mca_part_persist_request_construct,
-                   mca_part_persist_request_destruct);
+                   mca_part_direct_request_construct,
+                   mca_part_direct_request_destruct);

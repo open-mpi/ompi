@@ -24,23 +24,23 @@
 #include "ompi/mca/part/base/part_base_prequest.h"
 #include "ompi/mca/part/base/base.h"
 
-#include "ompi/mca/part/persist/part_persist.h"
-#include "ompi/mca/part/persist/part_persist_sendreq.h"
-#include "ompi/mca/part/persist/part_persist_recvreq.h"
+#include "ompi/mca/part/direct/part_direct.h"
+#include "ompi/mca/part/direct/part_direct_sendreq.h"
+#include "ompi/mca/part/direct/part_direct_recvreq.h"
 
-ompi_part_persist_t ompi_part_persist = {
+ompi_part_direct_t ompi_part_direct = {
     .super = {
-        .part_progress = mca_part_persist_progress,
-        .part_precv_init = mca_part_persist_precv_init,
-        .part_psend_init = mca_part_persist_psend_init,
-        .part_start = mca_part_persist_start,
-        .part_pready = mca_part_persist_pready,
-        .part_parrived = mca_part_persist_parrived, 
+        .part_progress = mca_part_direct_progress,
+        .part_precv_init = mca_part_direct_precv_init,
+        .part_psend_init = mca_part_direct_psend_init,
+        .part_start = mca_part_direct_start,
+        .part_pready = mca_part_direct_pready,
+        .part_parrived = mca_part_direct_parrived, 
     }
 };
 
 
-OBJ_CLASS_INSTANCE(mca_part_persist_list_t,
+OBJ_CLASS_INSTANCE(mca_part_direct_list_t,
                    opal_list_item_t,
                    NULL,
                    NULL);

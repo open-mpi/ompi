@@ -18,15 +18,15 @@
  *  @file
  */
 
-#ifndef MCA_PART_RMA_COMPONENT_H
-#define MCA_PART_RMA_COMPONENT_H
+#ifndef MCA_PART_DIRECT_COMPONENT_H
+#define MCA_PART_DIRECT_COMPONENT_H
 
 BEGIN_C_DECLS
 
 /*
  * PART module functions.
  */
-OMPI_MODULE_DECLSPEC extern mca_part_base_component_4_0_0_t mca_part_rma_component;
+OMPI_MODULE_DECLSPEC extern mca_part_base_component_4_0_0_t mca_part_direct_component;
 
 END_C_DECLS
 

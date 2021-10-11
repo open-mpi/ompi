@@ -18,8 +18,8 @@
  * $HEADER$
  */
 
-#ifndef PART_PERSIST_REQUEST_H
-#define PART_PERSIST_REQUEST_H
+#ifndef PART_DIRECT_REQUEST_H
+#define PART_DIRECT_REQUEST_H
 
 #include "ompi/mca/part/base/part_base_psendreq.h"
 #include "ompi/mca/part/part.h"
@@ -28,14 +28,14 @@
  * Type of request.
  */
 typedef enum {
-    MCA_PART_PERSIST_REQUEST_PSEND,
-    MCA_PART_PERSIST_REQUEST_PRECV,
-    MCA_PART_PERSIST_REQUEST_NULL
-} mca_part_persist_request_type_t;
+    MCA_PART_DIRECT_REQUEST_PSEND,
+    MCA_PART_DIRECT_REQUEST_PRECV,
+    MCA_PART_DIRECT_REQUEST_NULL
+} mca_part_direct_request_type_t;
 
-struct mca_part_persist_list_t;
+struct mca_part_direct_list_t;
 
-struct ompi_mca_persist_setup_t {
+struct ompi_mca_direct_setup_t {
    int world_rank;
    int start_tag;
    int setup_tag;
@@ -45,15 +45,15 @@ struct ompi_mca_persist_setup_t {
 
 
 /**
- *  Base type for PART PERSIST requests
+ *  Base type for PART DIRECT requests
  */
-struct mca_part_persist_request_t {
+struct mca_part_direct_request_t {
 
-/* START: These fields have to match the definition of the mca_part_persist_request_t */
+/* START: These fields have to match the definition of the mca_part_direct_request_t */
     ompi_request_t req_ompi;              /**< base request */
     volatile int32_t req_part_complete;   /**< flag indicating if the pt-2-pt layer is done with this request */
     volatile int32_t req_free_called;     /**< flag indicating if the user has freed this request */
-    mca_part_persist_request_type_t req_type; /**< MPI request type - used for test */
+    mca_part_direct_request_type_t req_type; /**< MPI request type - used for test */
     struct ompi_communicator_t *req_comm; /**< communicator pointer */
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     opal_convertor_t req_convertor;       /**< always need the convertor */
@@ -65,7 +65,7 @@ struct mca_part_persist_request_t {
     int32_t req_tag;                      /**< user defined tag */
     struct ompi_proc_t* req_proc;         /**< peer process */
 
-/* END: These fields have to match the definition of the mca_part_persist_request_t */
+/* END: These fields have to match the definition of the mca_part_direct_request_t */
 
     size_t  req_bytes;                    /**< bytes for completion status */
 
@@ -73,7 +73,7 @@ struct mca_part_persist_request_t {
     size_t real_count;
     size_t part_size; 
 
-    ompi_request_t** persist_reqs;            /**< requests for persistant sends/recvs */
+    ompi_request_t** direct_reqs;            /**< requests for directant sends/recvs */
     ompi_request_t* setup_req [2];                /**< Request structure for setup messages */
 
 
@@ -92,12 +92,12 @@ struct mca_part_persist_request_t {
 
     int32_t *flags;               /**< array of flags to determine whether a partition has arrived */
 
-    struct ompi_mca_persist_setup_t setup_info[2]; /**< Setup info to send durring initialization. */
+    struct ompi_mca_direct_setup_t setup_info[2]; /**< Setup info to send durring initialization. */
   
-    struct mca_part_persist_list_t* progress_elem; /**< pointer to progress list element for removal durring free. */ 
+    struct mca_part_direct_list_t* progress_elem; /**< pointer to progress list element for removal durring free. */ 
 
 };
-typedef struct mca_part_persist_request_t mca_part_persist_request_t;
-OBJ_CLASS_DECLARATION(mca_part_persist_request_t);
+typedef struct mca_part_direct_request_t mca_part_direct_request_t;
+OBJ_CLASS_DECLARATION(mca_part_direct_request_t);
 
 #endif
