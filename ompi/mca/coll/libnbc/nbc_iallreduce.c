@@ -452,35 +452,31 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
 static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datatype, const void *sendbuf, void *recvbuf, MPI_Op op,
                                      int size, int ext, NBC_Schedule *schedule, void *tmpbuf) {
   int segsize, *segsizes, *segoffsets; /* segment sizes and offsets per segment (number of segments == number of nodes */
-  int speer, rpeer; /* send and recvpeer */
+  int speer, rpeer; /* send and recv peers */
   int res = OMPI_SUCCESS;
 
-  if (count == 0) {
+  if (0 == count) {
     return OMPI_SUCCESS;
   }
 
-  segsizes = (int *) malloc (sizeof (int) * p);
-  segoffsets = (int *) malloc (sizeof (int) * p);
-  if (NULL == segsizes || NULL == segoffsets) {
-    free (segsizes);
-    free (segoffsets);
+  segsizes = (int *) malloc((2 * p + 1 ) *sizeof (int));
+  if (NULL == segsizes) {
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
+  segoffsets = segsizes + p;
 
-  segsize = (count + p - 1) / p; /* size of the segments */
+  segsize = count / p; /* size of the segments across the last ranks.
+                          The remainder will be evenly distributed across the smaller ranks */
 
   segoffsets[0] = 0;
-  for (int i = 0, mycount = count ; i < p ; ++i) {
-    mycount -= segsize;
+  for (int i = 0, mycount = count % p; i < p ; ++i) {
     segsizes[i] = segsize;
-    if (mycount < 0) {
-      segsizes[i] = segsize + mycount;
-      mycount = 0;
+    if( mycount > 0 ) {  /* We have extra segments to distribute */
+        segsizes[i]++;
+        mycount--;
     }
 
-    if (i) {
-      segoffsets[i] = segoffsets[i-1] + segsizes[i-1];
-    }
+    segoffsets[i+1] = segoffsets[i] + segsizes[i];
   }
 
   /* reduce peers */
@@ -602,28 +598,29 @@ static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datat
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      break;
+      goto free_and_return;
     }
-
-    res = NBC_Sched_recv ((char *) recvbuf + roffset, false, segsizes[relement], datatype, rpeer,
-                          schedule, true);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      break;
+    if( recvbuf != sendbuf ) {  /* check for MPI_IN_PLACE */
+        res = NBC_Sched_recv ((char *) recvbuf + roffset, false, segsizes[relement], datatype, rpeer,
+                              schedule, true);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+          goto free_and_return;
+        }
+        res = NBC_Sched_op ((char *) sendbuf + roffset, false, (char *) recvbuf + roffset, false,
+                             segsizes[relement], datatype, op, schedule, true);
+    } else {
+        res = NBC_Sched_recv ((char *) tmpbuf, false, segsizes[relement], datatype, rpeer,
+                              schedule, true);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+          goto free_and_return;
+        }
+        res = NBC_Sched_op ((char *) tmpbuf, false, (char *) recvbuf + roffset, false,
+                             segsizes[relement], datatype, op, schedule, true);
     }
-
-    res = NBC_Sched_op ((char *) sendbuf + roffset, false, (char *) recvbuf + roffset, false,
-                         segsizes[relement], datatype, op, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      break;
+      goto free_and_return;
     }
   }
-
-  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-    free (segsizes);
-    free (segoffsets);
-    return res;
-  }
-
   for (int round = p - 1 ; round < 2 * p - 2 ; ++round) {
     int selement = (r+1-round + 2*p /*2*p avoids negative mod*/)%p; /* the element I am sending */
     int soffset = segoffsets[selement]*ext;
@@ -635,16 +632,14 @@ static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datat
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       break;
     }
-
     res = NBC_Sched_recv ((char *) recvbuf + roffset, false, segsizes[relement], datatype, rpeer,
                           schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       break;
     }
   }
-
+free_and_return:
   free (segsizes);
-  free (segoffsets);
 
   return res;
 }
