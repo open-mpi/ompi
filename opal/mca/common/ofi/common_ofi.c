@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <rdma/fabric.h>
+#include <rdma/fi_errno.h>
 #ifdef HAVE_RDMA_FI_EXT_H
 #include <rdma/fi_ext.h>
 #endif
