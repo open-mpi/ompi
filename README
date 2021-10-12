@@ -492,6 +492,10 @@ Compiler Notes
 
   shell$ ompi_info | grep -i fort
 
+- Issue #8919: NVIDIA 'nvfortran' cannot link libmpi_usempif08.la
+  Unable to build 4.0.x or 4.1.x with the NVIDIA nvfortran compiler
+  To be addressed with nvfortran compiler v21.11 due
+  end of November, 2021.
 
 General Run-Time Support Notes
 ------------------------------
