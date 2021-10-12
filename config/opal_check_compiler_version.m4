@@ -4,6 +4,7 @@ dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2021 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
+dnl Copyright (c) 2021      FUJITSU LIMITED.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -84,7 +85,8 @@ AC_DEFUN([OPAL_CHECK_COMPILER_STRING], [
             ])
             CPPFLAGS=$CPPFLAGS_orig
     ])
-    AC_DEFINE_UNQUOTED([OPAL_BUILD_PLATFORM_COMPILER_$1], [$opal_cv_compiler_$1],
+    opal_cv_compiler_$1_escaped=`echo "$opal_cv_compiler_$1" | sed -e 's/\\\\/\\\\\\\\/g' -e 's/"/\\\\"/g'`
+    AC_DEFINE_UNQUOTED([OPAL_BUILD_PLATFORM_COMPILER_$1], ["$opal_cv_compiler_$1_escaped"],
                        [The compiler $lower which OMPI was built with])
 ])dnl
 
