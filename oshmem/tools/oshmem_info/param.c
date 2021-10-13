@@ -147,9 +147,9 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("C compiler absolute", "compiler:c:absolute",
                   OPAL_CC_ABSOLUTE);
     opal_info_out("C compiler family name", "compiler:c:familyname",
-                  PLATFORM_STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
+                  PLATFORM_STRINGIFY(PLATFORM_COMPILER_FAMILYNAME));
     opal_info_out("C compiler version", "compiler:c:version",
-                  PLATFORM_STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
+                  PLATFORM_COMPILER_VERSION_STR);
 
     if (want_all) {
         opal_info_out_int("C char size", "compiler:c:sizeof:char", sizeof(char));
