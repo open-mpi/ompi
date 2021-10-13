@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -122,7 +122,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  */
 static void ompi_grequest_destruct(ompi_grequest_t* greq)
 {
-    int rc;
+    int rc = 0;
     MPI_Fint ierr;
 
     if (greq->greq_free.c_free != NULL) {
