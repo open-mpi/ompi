@@ -426,6 +426,7 @@ static int check_provider_attr(struct fi_info *provider_info, struct fi_info *pr
 {
     /* make sure both info are the same provider and provide the same attributes */
     if (0 == strcmp(provider_info->fabric_attr->prov_name, provider->fabric_attr->prov_name)
+        && 0 == strcmp(provider_info->fabric_attr->name, provider->fabric_attr->name)
         && !check_tx_attr(provider_info->tx_attr, provider->tx_attr)
         && !check_rx_attr(provider_info->rx_attr, provider->rx_attr)
         && !check_ep_attr(provider_info->ep_attr, provider->ep_attr)
@@ -631,7 +632,9 @@ struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_lis
         if (!check_provider_attr(provider, current_provider)) {
             cpusets_match = false;
 #if OPAL_OFI_PCI_DATA_AVAILABLE
-            if (NULL != current_provider->nic) {
+            if (NULL != current_provider->nic
+                && NULL != current_provider->nic->bus_attr
+                && current_provider->nic->bus_attr->bus_type == FI_BUS_PCI) {
                 pci = current_provider->nic->bus_attr->attr.pci;
                 cpusets_match = compare_cpusets(opal_hwloc_topology, pci);
             }
@@ -666,7 +669,9 @@ struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_lis
     }
 
 #if OPAL_OFI_PCI_DATA_AVAILABLE
-    if (NULL != provider->nic) {
+    if (NULL != provider->nic
+        && NULL != current_provider->nic->bus_attr
+        && current_provider->nic->bus_attr->bus_type == FI_BUS_PCI) {
         pci = provider->nic->bus_attr->attr.pci;
         cpusets_match = compare_cpusets(opal_hwloc_topology, pci);
     }
