@@ -12,6 +12,9 @@ build:intel:
   tags: [darwin-slurm-shared]
   script:
     - module load intel
+    - rm .gitmodules
+    - cp $GITSUBMODULEPATCH .gitmodules
+    - git submodule update --init
     - ./autogen.pl
     - ./configure CC=icc FC=ifort CXX=icpc --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
@@ -34,6 +37,9 @@ build:ibm:
     SCHEDULER_PARAMETERS: "-ppower9 -t 2:00:00 -N 1 --ntasks-per-node=16"
   script:
     - module load ibm
+    - rm .gitmodules
+    - cp $GITSUBMODULEPATCH .gitmodules
+    - git submodule update --init
     - ./autogen.pl
     - ./configure CC=xlc FC=xlf CXX=xlc++ --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
@@ -56,6 +62,9 @@ build:amd:
     SCHEDULER_PARAMETERS: "-pamd-rome -t 2:00:00 -N 1 --ntasks-per-node=16"
   script:
     - module load aocc/3.0.0
+    - rm .gitmodules
+    - cp $GITSUBMODULEPATCH .gitmodules
+    - git submodule update --init
     - ./autogen.pl
     - ./configure CC=clang FC=flang CXX=clang++ --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
@@ -76,6 +85,9 @@ build:gnu:
   tags: [darwin-slurm-shared]
   script:
     - module load gcc
+    - rm .gitmodules
+    - cp $GITSUBMODULEPATCH .gitmodules
+    - git submodule update --init
     - ./autogen.pl
     - ./configure --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
