@@ -28,7 +28,7 @@ static void mca_part_direct_psend_request_construct(mca_part_direct_psend_reques
     /* no need to reinit for every send -- never changes */
     sendreq->req_base.req_ompi.req_start = mca_part_direct_start;
     sendreq->req_base.req_ompi.req_free = mca_part_direct_free;
-    sendreq->req_base.req_ompi.req_directent = true;
+    sendreq->req_base.req_ompi.req_persistent = true;
     sendreq->req_base.req_ompi.req_cancel = NULL;
 }
 

@@ -29,7 +29,7 @@ mca_part_direct_precv_request_construct(mca_part_direct_precv_request_t* recvreq
     recvreq->req_base.req_ompi.req_start = mca_part_direct_start;
     recvreq->req_base.req_ompi.req_free = mca_part_direct_free;
     recvreq->req_base.req_ompi.req_cancel = NULL; 
-    recvreq->req_base.req_ompi.req_directent = true; 
+    recvreq->req_base.req_ompi.req_persistent = true; 
     OBJ_CONSTRUCT( &(recvreq->req_base.req_convertor), opal_convertor_t );
 }
 

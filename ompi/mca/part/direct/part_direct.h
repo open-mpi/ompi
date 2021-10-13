@@ -372,7 +372,7 @@ mca_part_direct_precv_init(void *buf,
 
 
     /* Set ompi request initial values */
-    req->req_ompi.req_directent = true;
+    req->req_ompi.req_persistent = true;
     req->req_part_complete = true;
     req->req_ompi.req_complete = REQUEST_COMPLETED;
     req->req_ompi.req_state = OMPI_REQUEST_INACTIVE;
@@ -459,7 +459,7 @@ mca_part_direct_psend_init(const void* buf,
     }
 
     /* Initilaize completion variables */
-    sendreq->req_base.req_ompi.req_directent = true;
+    sendreq->req_base.req_ompi.req_persistent = true;
     req->req_part_complete = true;
     req->req_ompi.req_complete = REQUEST_COMPLETED;
     req->req_ompi.req_state = OMPI_REQUEST_INACTIVE;
