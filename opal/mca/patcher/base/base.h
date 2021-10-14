@@ -63,6 +63,7 @@ OBJ_CLASS_DECLARATION(mca_patcher_base_patch_t);
  */
 OPAL_DECLSPEC extern mca_base_framework_t opal_patcher_base_framework;
 OPAL_DECLSPEC int opal_patcher_base_select(void);
+OPAL_DECLSPEC int opal_patcher_base_restore_all(void);
 OPAL_DECLSPEC int mca_patcher_base_patch_hook(mca_patcher_base_module_t *module, uintptr_t hook);
 OPAL_DECLSPEC void mca_base_patcher_patch_apply_binary(mca_patcher_base_patch_t *patch);
 
