@@ -122,23 +122,22 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  */
 static void ompi_grequest_destruct(ompi_grequest_t* greq)
 {
-    int rc = 0;
-    MPI_Fint ierr;
-
     if (greq->greq_free.c_free != NULL) {
+        /* We were already putting query_fn()'s return value into
+         * status.MPI_ERROR but for MPI_{Wait,Test}*.  If there's a
+         * free callback to invoke, the standard says to use the
+         * return value from free_fn() callback, too.
+         */
         if (greq->greq_funcs_are_c) {
-            rc = greq->greq_free.c_free(greq->greq_state);
+            greq->greq_base.req_status.MPI_ERROR =
+                greq->greq_free.c_free(greq->greq_state);
         } else {
+            MPI_Fint ierr;
             greq->greq_free.f_free((MPI_Aint*)greq->greq_state, &ierr);
-            rc = OMPI_FINT_2_INT(ierr);
+            greq->greq_base.req_status.MPI_ERROR =
+                OMPI_FINT_2_INT(ierr);
         }
     }
-
-    /* We were already putting query_fn()'s return value into
-     * status.MPI_ERROR but for MPI_{Wait,Test}* the standard
-     * says use the free_fn() callback too.
-     */
-    greq->greq_base.req_status.MPI_ERROR = rc;
 
     OMPI_REQUEST_FINI(&greq->greq_base);
 }
