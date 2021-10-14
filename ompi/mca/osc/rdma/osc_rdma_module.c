@@ -4,7 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -21,6 +21,8 @@
  *
  * $HEADER$
  */
+
+#include "opal/mca/mpool/base/base.h"
 
 #include "osc_rdma.h"
 #include "osc_rdma_lock.h"
@@ -140,7 +142,8 @@ int ompi_osc_rdma_free(ompi_win_t *win)
 
     free (module->peer_array);
     free (module->outstanding_lock_array);
-    free (module->free_after);
+    mca_mpool_base_default_module->mpool_free(mca_mpool_base_default_module,
+                                              module->free_after);
     free (module->selected_btls);
     free (module);
 
