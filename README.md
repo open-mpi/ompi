@@ -488,7 +488,10 @@ base as of this writing (April 2020):
   ```
   shell$ ompi_info | grep -i fort
   ```
-
+* As of October 2021, the NVIDIA 'nvfortran' compiler version 21.1
+  fails to link `libmpi_usempif08.la` (see
+  https://github.com/open-mpi/ompi/issues/8919). One can work-around
+  this issue by explicitely setting `FCFLAGS=-fPIC` during configure.
 
 ### General Run-Time Support Notes
 
