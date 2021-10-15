@@ -75,7 +75,7 @@ Master (not on release branches yet)
 * launcher.
 **********************************************************************
 
-v5.0.0rc1 -- September, 2021
+v5.0.0rc2 -- October, 2021
 --------------------
 
 - ORTE, the underlying OMPI launcher has been removed, and replaced
@@ -227,6 +227,36 @@ v5.0.0rc1 -- September, 2021
   and Guilherme Koslovski for their contribution.
 - MPI-4: Persistent collectives have been moved to the MPI
   namespace from MPIX.
+- OFI: Delay patcher initialization until needed. It will now
+  be initialized only after the component is officially selected.
+- MPI-4: Make MPI_Comm_get_info, MPI_File_get_info, and
+  MPI_Win_get_info compliant to the standard.
+- Portable_platform file has been updated from GASNet.
+- GCC versions < 4.8.1 are no longer supported.
+- coll: Fix a bug with the libnbc MPI_AllReduce ring algorithm
+  when using MPI_IN_PLACE.
+- Updated the usage of .gitmodules to use relative paths from
+  absolute paths. This allows the submodule cloning to use the same
+  protocol as OMPI cloning. Thanks to Felix Uhl
+  <Felix.Uhl@emea.nec.com> for the contribution.
+- osc/rdma: Add local leader pid in shm file name to make it unique.
+- ofi: Fix memory handler unregistration. This change fixes a
+  segfault during shutdown if the common/ofi component was built
+  as a dynamic object.
+- osc/rdma: Add support for MPI minimum alignment key.
+- memory_patcher: Add ability to detect patched memory. Thanks
+  to Rich Welch <rlwelch@amazon.com> for the contribution.
+- build: Improve handling of compiler version string. This
+  fixes a compiler error with clang and armclang.
+- Fix bug where the relocation of OMPI packages caused
+  the launch to fail.
+- Various improvements to MPI_AlltoAll algorithms for both
+  performance and memory usage.
+- coll/basic: Fix segmentation fault in MPI_Alltoallw with
+  MPI_IN_PLACE.
+  NOTE: This patch either caused or exposed a regression
+  in MPI_AlltoAllv() using MPI_IN_PLACE. See github issue #9501.
+  This will be fixed prior to v5.0.0 release.
 
 4.1.1 -- April, 2021
 --------------------
