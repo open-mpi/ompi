@@ -118,6 +118,12 @@ ltoptions.m4
 3rd-party/romio341/mpl/include/mpl_timer.h
 3rd-party/romio341/mpl/localdefs
 3rd-party/romio341/test/runtests
+3rd-party/romio341/test/fcoll_test.f
+3rd-party/romio341/test/fmisc.f
+3rd-party/romio341/test/fperf.f
+3rd-party/romio341/test/large_file.c
+3rd-party/romio341/test/misc.c
+3rd-party/romio341/test/pfcoll_test.f
 3rd-party/romio341/util/romioinstall
 
 config/project_list.m4
