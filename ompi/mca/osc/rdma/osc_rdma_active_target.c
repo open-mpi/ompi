@@ -456,6 +456,11 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "complete: %s", win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
+    if (0 == sync->num_peers) {
+        OPAL_THREAD_UNLOCK(&module->lock);
+        return OMPI_SUCCESS;
+    }
+
     if (OMPI_OSC_RDMA_SYNC_TYPE_PSCW != sync->type) {
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
