@@ -17,7 +17,9 @@
 #include "opal/class/opal_fifo.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/sys/atomic.h"
+#include "opal/util/show_help.h"
 #include "ompi/mpiext/continue/c/continuation.h"
+#include "ompi/request/request.h"
 
 
 static opal_free_list_t ompi_continuation_freelist;
@@ -457,7 +459,7 @@ static int request_completion_cb(ompi_request_t *request)
 
     /* set the status object */
     if (NULL != req_cont_data->cont_status) {
-        *req_cont_data->cont_status = request->req_status;
+        OMPI_COPY_STATUS(req_cont_data->cont_status, request->req_status, true);
         req_cont_data->cont_status = NULL;
     }
 
@@ -507,16 +509,23 @@ int ompi_continue_attach(
     ompi_continuation_t *cont = ompi_continue_cont_create(count, cont_req, cont_cb,
                                                           cont_data, statuses);
 
+    /* memory barrier to make sure a thread completing a request see
+     * a correct continuation object */
     opal_atomic_wmb();
 
     int32_t num_registered = 0;
     for (int i = 0; i < count; ++i) {
         ompi_request_t *request = requests[i];
-        if (MPI_REQUEST_NULL != request) {
+        if (MPI_REQUEST_NULL == request) {
+            /* set the status for null-request */
+            if (statuses != MPI_STATUSES_IGNORE) {
+                OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, true);
+            }
+        } else {
             if (&ompi_request_empty == request) {
                 /* empty request: do not modify, just copy out the status */
                 if (statuses != MPI_STATUSES_IGNORE) {
-                    statuses[i] = request->req_status;
+                    OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
                 }
                 requests[i] = MPI_REQUEST_NULL;
             } else {
