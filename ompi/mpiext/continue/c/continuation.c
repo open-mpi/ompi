@@ -355,7 +355,8 @@ int ompi_continuation_fini(void)
     }
 
     if (!opal_list_is_empty(&continuation_list)) {
-        fprintf(stderr, "WARN: Incomplete continuations found in during shutdown, go fix your application!\n");
+        opal_show_help("help-mpi-continue.txt", "continue:incomplete_shutdown",
+                       (int)opal_list_get_size(&continuation_list));
     }
     OBJ_DESTRUCT(&continuation_list);
 
