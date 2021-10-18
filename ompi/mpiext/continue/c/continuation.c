@@ -23,18 +23,24 @@
 static opal_free_list_t ompi_continuation_freelist;
 static opal_free_list_t ompi_request_cont_data_freelist;
 
+/* Forward-decl */
+typedef struct ompi_cont_request_t ompi_cont_request_t;
+
+static int ompi_continue_request_free(ompi_request_t** cont_req);
+
 /**
- * Continuation class
+ * Continuation class containing the callback, callback data, status,
+ * and number of outstanding operation requests.
  */
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_continuation_t);
 
 struct ompi_continuation_t {
-    opal_free_list_item_t super;        /**< Base type */
-    struct ompi_request_t *cont_req;    /**< The continuation request this continuation is registered with */
-    MPIX_Continue_cb_function *cont_cb; /**< The callback function to invoke */
-    void *cont_data;                    /**< Continuation state provided by the user */
-    MPI_Status *cont_status;            /**< user-provided pointers to status objects */
-    opal_atomic_int32_t num_active;     /**< The number of active operation requests on this callback */
+    opal_free_list_item_t       super;       /**< Base type */
+    struct ompi_cont_request_t *cont_req;    /**< The continuation request this continuation is registered with */
+    MPIX_Continue_cb_function  *cont_cb;     /**< The callback function to invoke */
+    void                       *cont_data;   /**< Continuation state provided by the user */
+    MPI_Status                 *cont_status; /**< user-provided pointers to status objects */
+    opal_atomic_int32_t         num_active;  /**< The number of active operation requests on this callback */
 };
 
 /* Convenience typedef */
@@ -62,6 +68,56 @@ OBJ_CLASS_INSTANCE(
     ompi_continuation_construct,
     ompi_continuation_destruct);
 
+
+/**
+ * Continuation request, derived from an OMPI request. Continuation request
+ * keep track of registered continuations and complete once no active
+ * continuations are registered.
+ */
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_cont_request_t);
+struct ompi_cont_request_t {
+    ompi_request_t        super;
+    opal_atomic_lock_t    cont_lock;             /**< Lock used completing/restarting the cont request */
+    bool                  cont_global_progress;
+    bool                  cont_enqueue_complete; /**< Whether to enqueue immediately complete requests */
+    opal_atomic_int32_t   cont_num_active;       /**< The number of active continuations registered with a continuation request */
+    uint32_t              continue_max_poll;     /**< max number of local continuations to execute at once */
+    opal_list_t          *cont_complete_list;    /**< List of complete continuations to be invoked during test */
+};
+
+static void ompi_cont_request_construct(ompi_cont_request_t* cont_req)
+{
+    OMPI_REQUEST_INIT(&cont_req->super, true);
+    cont_req->super.req_type = OMPI_REQUEST_CONT;
+    cont_req->super.req_complete = REQUEST_COMPLETED;
+    cont_req->super.req_state = OMPI_REQUEST_INACTIVE;
+    cont_req->super.req_persistent = true;
+    cont_req->super.req_free = &ompi_continue_request_free;
+    cont_req->super.req_status = ompi_status_empty; /* always returns MPI_SUCCESS */
+    opal_atomic_lock_init(&cont_req->cont_lock, false);
+    cont_req->cont_enqueue_complete = false;
+    cont_req->cont_global_progress = false;
+    cont_req->cont_num_active = 0;
+    cont_req->continue_max_poll = UINT32_MAX;
+    cont_req->cont_complete_list = NULL;
+}
+
+static void ompi_cont_request_destruct(ompi_cont_request_t* cont_req)
+{
+    OMPI_REQUEST_FINI(&cont_req->super);
+    assert(cont_req->cont_num_active == 0);
+    if (NULL != cont_req->cont_complete_list) {
+        OPAL_LIST_RELEASE(cont_req->cont_complete_list);
+        cont_req->cont_complete_list = NULL;
+    }
+}
+
+OBJ_CLASS_INSTANCE(
+    ompi_cont_request_t,
+    ompi_request_t,
+    ompi_cont_request_construct,
+    ompi_cont_request_destruct);
+
 /**
  * Data block associated with requests
  * The same structure is used for continuation requests and operation
@@ -73,12 +129,6 @@ struct ompi_request_cont_data_t {
     opal_free_list_item_t super;
     ompi_continuation_t  *cont_obj;             /**< User-defined continuation state */
     ompi_status_public_t *cont_status;          /**< The status object to set before invoking continuation */
-    opal_list_t          *cont_complete_list;   /**< List of complete continuations to be invoked during test */
-    opal_atomic_int32_t   cont_num_active;      /**< The number of active continuations registered with a continuation request */
-    opal_atomic_lock_t    cont_lock;            /**< Lock used for continuation requests */
-    bool                  cont_global_progress;
-    bool                  cont_enqueue_complete; /**< Whether to enqueue immediately complete requests */
-    uint32_t              continue_max_poll;    /**< max number of local continuations to execute at once */
 };
 
 /* Convenience typedef */
@@ -102,31 +152,26 @@ static opal_mutex_t request_cont_lock;
  */
 static bool progress_callback_registered = false;
 
-
-static int ompi_continue_request_free(ompi_request_t** cont_req);
-
 static inline
 void ompi_continue_cont_destroy(ompi_continuation_t *cont, ompi_request_t *cont_req)
 {
-    ompi_request_cont_data_t *req_cont_data;
-    req_cont_data = (ompi_request_cont_data_t *)cont_req->req_complete_cb_data;
-    assert(NULL != req_cont_data);
-    assert(OMPI_REQUEST_CONT == cont_req->req_type);
+    ompi_cont_request_t *cont_req = cont->cont_req;
+    assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
 
     const bool using_threads = opal_using_threads();
     if (using_threads) {
-        opal_atomic_lock(&req_cont_data->cont_lock);
+        opal_atomic_lock(&cont_req->cont_lock);
     }
-    int num_active = --req_cont_data->cont_num_active;
+    int num_active = --cont_req->cont_num_active;
     assert(num_active >= 0);
     if (0 == num_active) {
-        assert(!REQUEST_COMPLETE(cont_req));
+        assert(!REQUEST_COMPLETE(&cont_req->super));
         opal_atomic_wmb();
         /* signal that all continuations were found complete */
-        ompi_request_complete(cont_req, true);
+        ompi_request_complete(&cont_req->super, true);
     }
     if (using_threads) {
-        opal_atomic_unlock(&req_cont_data->cont_lock);
+        opal_atomic_unlock(&cont_req->cont_lock);
     }
     OBJ_RELEASE(cont_req);
 
@@ -144,9 +189,9 @@ void ompi_continue_cont_destroy(ompi_continuation_t *cont, ompi_request_t *cont_
 static inline
 void ompi_continue_cont_invoke(ompi_continuation_t *cont)
 {
-    ompi_request_t *cont_req = cont->cont_req;
+    ompi_cont_request_t *cont_req = cont->cont_req;
     assert(NULL != cont_req);
-    assert(OMPI_REQUEST_CONT == cont_req->req_type);
+    assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
 
     MPIX_Continue_cb_function *fn = cont->cont_cb;
     void *cont_data = cont->cont_data;
@@ -155,10 +200,10 @@ void ompi_continue_cont_invoke(ompi_continuation_t *cont)
     ompi_continue_cont_destroy(cont, cont_req);
 }
 
-/*
-  * Allow multiple threads to progress callbacks concurrently
-  * but protect from recursive progressing
-  */
+/**
+ * Allow multiple threads to progress callbacks concurrently
+ * but protect from recursive progressing
+ */
 static opal_thread_local int in_progress = 0;
 
 static
@@ -189,33 +234,32 @@ static int ompi_continue_progress_callback()
     return ompi_continue_progress_some(1);
 }
 
-int ompi_continue_progress_request(ompi_request_t *cont_req)
+int ompi_continue_progress_request(ompi_request_t *req)
 {
-    ompi_request_cont_data_t *req_cont_data;
     if (in_progress) return 0;
-    req_cont_data = (ompi_request_cont_data_t *)cont_req->req_complete_cb_data;
-    if (NULL == req_cont_data->cont_complete_list) {
+    ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
+    if (NULL == cont_req->cont_complete_list) {
         /* progress as many as possible */
         return ompi_continue_progress_some(req_cont_data->continue_max_poll);
     }
-    if (opal_list_is_empty(req_cont_data->cont_complete_list)) {
+    if (opal_list_is_empty(cont_req->cont_complete_list)) {
         return 0;
     }
 
     in_progress = 1;
 
-    uint32_t max_poll = req_cont_data->continue_max_poll;
+    const uint32_t max_poll = cont_req->continue_max_poll;
 
     uint32_t completed = 0;
     const bool using_threads = opal_using_threads();
-    while (max_poll > completed && !opal_list_is_empty(req_cont_data->cont_complete_list)) {
+    while (max_poll > completed && !opal_list_is_empty(cont_req->cont_complete_list)) {
         ompi_continuation_t *cb;
         if (using_threads) {
-            opal_atomic_lock(&req_cont_data->cont_lock);
-            cb = (ompi_continuation_t *) opal_list_remove_first(req_cont_data->cont_complete_list);
-            opal_atomic_unlock(&req_cont_data->cont_lock);
+            opal_atomic_lock(&cont_req->cont_lock);
+            cb = (ompi_continuation_t *) opal_list_remove_first(cont_req->cont_complete_list);
+            opal_atomic_unlock(&cont_req->cont_lock);
         } else {
-            cb = (ompi_continuation_t *) opal_list_remove_first(req_cont_data->cont_complete_list);
+            cb = (ompi_continuation_t *) opal_list_remove_first(cont_req->cont_complete_list);
         }
         if (NULL == cb) break;
 
@@ -229,46 +273,53 @@ int ompi_continue_progress_request(ompi_request_t *cont_req)
 }
 
 
-int ompi_continue_register_request_progress(ompi_request_t *cont_req)
+/**
+ * Register the provided continuation request to be included in the
+ * global progress loop (used while a thread is waiting for the contnuation
+ * request to complete).
+ */
+int ompi_continue_register_request_progress(ompi_request_t *req)
 {
-    ompi_request_cont_data_t *req_cont_data;
-    req_cont_data = (ompi_request_cont_data_t *)cont_req->req_complete_cb_data;
+    ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
 
-    if (NULL == req_cont_data->cont_complete_list) return OMPI_SUCCESS;
+    if (NULL == cont_req->cont_complete_list) return OMPI_SUCCESS;
 
     const bool using_threads = opal_using_threads();
     if (using_threads) {
         OPAL_THREAD_LOCK(&request_cont_lock);
         /* lock needed to sync with ompi_request_cont_enqueue_complete */
-        opal_atomic_lock(&req_cont_data->cont_lock);
+        opal_atomic_lock(&cont_req->cont_lock);
     }
 
     /* signal that from now on all continuations should go into the global queue */
-    req_cont_data->cont_global_progress = true;
+    cont_req->cont_global_progress = true;
 
     /* move all complete local continuations into the global queue */
     opal_list_join(&continuation_list, opal_list_get_begin(&continuation_list),
-                   req_cont_data->cont_complete_list);
+                   cont_req->cont_complete_list);
 
     if (using_threads) {
-        opal_atomic_unlock(&req_cont_data->cont_lock);
+        opal_atomic_unlock(&cont_req->cont_lock);
         OPAL_THREAD_UNLOCK(&request_cont_lock);
     }
 
     return OMPI_SUCCESS;
 }
 
-int ompi_continue_deregister_request_progress(ompi_request_t *cont_req)
+/**
+ * Remove the continuation request from being progressed by the global progress
+ * loop (after a wait completes).
+ */
+int ompi_continue_deregister_request_progress(ompi_request_t *req)
 {
-    ompi_request_cont_data_t *req_cont_data;
-    req_cont_data = (ompi_request_cont_data_t *)cont_req->req_complete_cb_data;
+    ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
     if (opal_using_threads()) {
         /* lock needed to sync with ompi_request_cont_enqueue_complete */
-        opal_atomic_lock(&req_cont_data->cont_lock);
-        req_cont_data->cont_global_progress = false;
-        opal_atomic_unlock(&req_cont_data->cont_lock);
+        opal_atomic_lock(&cont_req->cont_lock);
+        cont_req->cont_global_progress = false;
+        opal_atomic_unlock(&cont_req->cont_lock);
     } else {
-        req_cont_data->cont_global_progress = false;
+        cont_req->cont_global_progress = false;
     }
 
     return OMPI_SUCCESS;
@@ -321,22 +372,21 @@ int ompi_continuation_fini(void)
 static void
 ompi_continue_enqueue_runnable(ompi_continuation_t *cont)
 {
-    ompi_request_cont_data_t *req_cont_data;
-    req_cont_data = (ompi_request_cont_data_t *)cont->cont_req->req_complete_cb_data;
+    ompi_cont_request_t *cont_req = cont->cont_req;
     int retry;
     do {
         retry = 0;
-        if (NULL != req_cont_data->cont_complete_list
-            && !req_cont_data->cont_global_progress) {
-            opal_atomic_lock(&req_cont_data->cont_lock);
-            if (OPAL_UNLIKELY(req_cont_data->cont_global_progress)) {
-                opal_atomic_unlock(&req_cont_data->cont_lock);
+        if (NULL != cont_req->cont_complete_list
+            && !cont_req->cont_global_progress) {
+            opal_atomic_lock(&cont_req->cont_lock);
+            if (OPAL_UNLIKELY(cont_req->cont_global_progress)) {
+                opal_atomic_unlock(&cont_req->cont_lock);
                 /* try again, this time target the global list */
                 retry = 1;
                 continue;
             }
-            opal_list_append(req_cont_data->cont_complete_list, &cont->super.super);
-            opal_atomic_unlock(&req_cont_data->cont_lock);
+            opal_list_append(cont_req->cont_complete_list, &cont->super.super);
+            opal_atomic_unlock(&cont_req->cont_lock);
         } else {
             OPAL_THREAD_LOCK(&request_cont_lock);
             opal_list_append(&continuation_list, &cont->super.super);
@@ -360,7 +410,7 @@ ompi_continue_enqueue_runnable(ompi_continuation_t *cont)
 static inline
 ompi_continuation_t *ompi_continue_cont_create(
   int                         count,
-  ompi_request_t             *cont_req,
+  ompi_cont_request_t        *cont_req,
   MPIX_Continue_cb_function  *cont_cb,
   void                       *cont_data,
   MPI_Status                 *cont_status)
@@ -373,25 +423,22 @@ ompi_continuation_t *ompi_continue_cont_create(
     cont->num_active = count;
     cont->cont_status = cont_status;
 
-    ompi_request_cont_data_t *req_cont_data;
-    req_cont_data = (ompi_request_cont_data_t *)cont_req->req_complete_cb_data;
     /* signal that the continuation request has a new continuation */
     OBJ_RETAIN(cont_req);
 
     const bool using_threads = opal_using_threads();
     if (using_threads) {
-        opal_atomic_lock(&req_cont_data->cont_lock);
+        opal_atomic_lock(&cont_req->cont_lock);
     }
-    int32_t num_active = req_cont_data->cont_num_active++;
+    int32_t num_active = cont_req->cont_num_active++;
     if (num_active == 0) {
         /* (re)activate the continuation request upon first registration */
-        assert(REQUEST_COMPLETE(cont_req));
-        req_cont_data->cont_obj = NULL;
-        cont_req->req_complete = REQUEST_PENDING;
-        cont_req->req_state = OMPI_REQUEST_ACTIVE;
+        assert(REQUEST_COMPLETE(&cont_req->super));
+        cont_req->super.req_complete = REQUEST_PENDING;
+        cont_req->super.req_state = OMPI_REQUEST_ACTIVE;
     }
     if (using_threads) {
-        opal_atomic_unlock(&req_cont_data->cont_lock);
+        opal_atomic_unlock(&cont_req->cont_lock);
     }
 
     return cont;
@@ -424,11 +471,12 @@ static int request_completion_cb(ompi_request_t *request)
     if (request->req_persistent) {
         if (OMPI_REQUEST_CONT == request->req_type && opal_using_threads()) {
             /* handle with care: another thread may register a new continuation already */
-            opal_atomic_lock(&req_cont_data->cont_lock);
-            if (req_cont_data->cont_num_active == 0) {
-                request->req_state = OMPI_REQUEST_INACTIVE;
+            ompi_cont_request_t *cont_req = cont->cont_req;
+            opal_atomic_lock(&cont_req->cont_lock);
+            if (cont_req->cont_num_active == 0) {
+                cont_req->super.req_state = OMPI_REQUEST_INACTIVE;
             }
-            opal_atomic_unlock(&req_cont_data->cont_lock);
+            opal_atomic_unlock(&cont_req->cont_lock);
         } else {
             request->req_state = OMPI_REQUEST_INACTIVE;
         }
@@ -438,25 +486,23 @@ static int request_completion_cb(ompi_request_t *request)
         rc = 1;
     }
 
-    /* continuation requests keep their request_cont_data */
-    if (OMPI_REQUEST_CONT != request->req_type) {
-        request->req_complete_cb_data = NULL;
-        opal_free_list_return(&ompi_request_cont_data_freelist, &req_cont_data->super);
-    }
+    request->req_complete_cb_data = NULL;
+    opal_free_list_return(&ompi_request_cont_data_freelist, &req_cont_data->super);
 
     return rc;
 }
 
 int ompi_continue_attach(
-  ompi_request_t             *cont_req,
+  ompi_request_t             *continuation_request,
   const int                   count,
   ompi_request_t             *requests[],
   MPIX_Continue_cb_function  *cont_cb,
   void                       *cont_data,
   ompi_status_public_t        statuses[])
 {
-    assert(OMPI_REQUEST_CONT == cont_req->req_type);
+    assert(OMPI_REQUEST_CONT == continuation_request->req_type);
 
+    ompi_cont_request_t *cont_req = (ompi_cont_request_t *)continuation_request;
     ompi_continuation_t *cont = ompi_continue_cont_create(count, cont_req, cont_cb,
                                                           cont_data, statuses);
 
@@ -507,9 +553,7 @@ int ompi_continue_attach(
     int32_t last_num_active = OPAL_THREAD_ADD_FETCH32(&cont->num_active,
                                                       -num_complete);
     if (0 == last_num_active && 0 < num_complete) {
-        ompi_request_cont_data_t *req_cont_data;
-        req_cont_data = (ompi_request_cont_data_t *)cont_req->req_complete_cb_data;
-        if (req_cont_data->cont_enqueue_complete) {
+        if (cont_req->cont_enqueue_complete) {
             /* enqueue for later processing */
             ompi_continue_enqueue_runnable(cont);
         } else {
@@ -526,49 +570,33 @@ int ompi_continue_attach(
 /**
  * Continuation request management
  */
-int ompi_continue_allocate_request(ompi_request_t **cont_req, ompi_info_t *info)
+int ompi_continue_allocate_request(ompi_request_t **cont_req_ptr, ompi_info_t *info)
 {
-    ompi_request_t *res = OBJ_NEW(ompi_request_t);
+    ompi_cont_request_t *cont_req = OBJ_NEW(ompi_cont_request_t);
 
     if (OPAL_LIKELY(NULL != cont_req)) {
-        res->req_type = OMPI_REQUEST_CONT;
-        res->req_complete = REQUEST_COMPLETED;
-        res->req_state = OMPI_REQUEST_INACTIVE;
-        res->req_persistent = true;
-        res->req_free = &ompi_continue_request_free;
-        res->req_status = ompi_status_empty; /* always returns MPI_SUCCESS */
-
-        /* Continuation requests have a request_cont_data object that persists throughout their lifetime */
-        ompi_request_cont_data_t *req_cont_data;
-        req_cont_data = (ompi_request_cont_data_t *)opal_free_list_get(&ompi_request_cont_data_freelist);
-        res->req_complete_cb_data = req_cont_data;
-        opal_atomic_lock_init(&req_cont_data->cont_lock, 0);
-
         int flag;
         bool test_poll = false;
         ompi_info_get_bool(info, "mpi_continue_poll_only", &test_poll, &flag);
 
         if (flag && test_poll) {
-            req_cont_data->cont_complete_list = OBJ_NEW(opal_list_t);
-        } else {
-            req_cont_data->cont_complete_list = NULL;
+            cont_req->cont_complete_list = OBJ_NEW(opal_list_t);
         }
 
         bool enqueue_complete = false;
         ompi_info_get_bool(info, "mpi_continue_enqueue_complete", &enqueue_complete, &flag);
-        req_cont_data->cont_enqueue_complete = (flag && enqueue_complete);
+        cont_req->cont_enqueue_complete = (flag && enqueue_complete);
 
-        req_cont_data->continue_max_poll = INT32_MAX;
         opal_cstring_t *value_str;
         ompi_info_get(info, "mpi_continue_max_poll", &value_str, &flag);
         if (flag) {
             int max_poll = atoi(value_str->string);
             OBJ_RELEASE(value_str);
             if (max_poll > 0) {
-                req_cont_data->continue_max_poll = max_poll;
+                cont_req->continue_max_poll = max_poll;
             }
         }
-        *cont_req = res;
+        *cont_req_ptr = &cont_req->super;
 
         return MPI_SUCCESS;
     }
@@ -576,21 +604,11 @@ int ompi_continue_allocate_request(ompi_request_t **cont_req, ompi_info_t *info)
     return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
-static int ompi_continue_request_free(ompi_request_t** cont_req)
+static int ompi_continue_request_free(ompi_request_t** cont_req_ptr)
 {
-    assert(OMPI_REQUEST_CONT == (*cont_req)->req_type);
-    assert(NULL != (*cont_req)->req_complete_cb_data);
-    ompi_request_cont_data_t *req_cont_data;
-    req_cont_data = (ompi_request_cont_data_t *)(*cont_req)->req_complete_cb_data;
-    OMPI_REQUEST_FINI(*cont_req);
-    (*cont_req)->req_state = OMPI_REQUEST_INVALID;
-    (*cont_req)->req_complete_cb_data = NULL;
-    opal_free_list_return(&ompi_request_cont_data_freelist, &req_cont_data->super);
-    if (NULL != req_cont_data->cont_complete_list) {
-        OBJ_RELEASE(req_cont_data->cont_complete_list);
-        req_cont_data->cont_complete_list = NULL;
-    }
-    OBJ_RELEASE(*cont_req);
-    *cont_req = &ompi_request_null.request;
+    ompi_cont_request_t *cont_req = (ompi_cont_request_t *)*cont_req_ptr;
+    assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
+    OBJ_RELEASE(cont_req);
+    *cont_req_ptr = &ompi_request_null.request;
     return OMPI_SUCCESS;
 }
