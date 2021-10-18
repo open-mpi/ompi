@@ -153,7 +153,7 @@ static opal_mutex_t request_cont_lock;
 static bool progress_callback_registered = false;
 
 static inline
-void ompi_continue_cont_destroy(ompi_continuation_t *cont, ompi_request_t *cont_req)
+void ompi_continue_cont_release(ompi_continuation_t *cont)
 {
     ompi_cont_request_t *cont_req = cont->cont_req;
     assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
@@ -197,7 +197,7 @@ void ompi_continue_cont_invoke(ompi_continuation_t *cont)
     void *cont_data = cont->cont_data;
     MPI_Status *statuses = cont->cont_status;
     fn(statuses, cont_data);
-    ompi_continue_cont_destroy(cont, cont_req);
+    ompi_continue_cont_release(cont);
 }
 
 /**
@@ -207,7 +207,7 @@ void ompi_continue_cont_invoke(ompi_continuation_t *cont)
 static opal_thread_local int in_progress = 0;
 
 static
-int ompi_continue_progress_some(const uint32_t max)
+int ompi_continue_progress_n(const uint32_t max)
 {
 
     if (in_progress || opal_list_is_empty(&continuation_list)) return 0;
@@ -231,7 +231,7 @@ int ompi_continue_progress_some(const uint32_t max)
 
 static int ompi_continue_progress_callback()
 {
-    return ompi_continue_progress_some(1);
+    return ompi_continue_progress_n(1);
 }
 
 int ompi_continue_progress_request(ompi_request_t *req)
@@ -240,7 +240,7 @@ int ompi_continue_progress_request(ompi_request_t *req)
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
     if (NULL == cont_req->cont_complete_list) {
         /* progress as many as possible */
-        return ompi_continue_progress_some(req_cont_data->continue_max_poll);
+        return ompi_continue_progress_n(cont_req->continue_max_poll);
     }
     if (opal_list_is_empty(cont_req->cont_complete_list)) {
         return 0;
