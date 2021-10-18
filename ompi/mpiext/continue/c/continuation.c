@@ -241,7 +241,7 @@ int ompi_continue_progress_request(ompi_request_t *req)
     if (in_progress) return 0;
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
     if (NULL == cont_req->cont_complete_list) {
-        /* progress as many as possible */
+        /* progress as many as allowed */
         return ompi_continue_progress_n(cont_req->continue_max_poll);
     }
     if (opal_list_is_empty(cont_req->cont_complete_list)) {
@@ -279,6 +279,11 @@ int ompi_continue_progress_request(ompi_request_t *req)
  * Register the provided continuation request to be included in the
  * global progress loop (used while a thread is waiting for the contnuation
  * request to complete).
+ * We move all local continuations into the global continuation list
+ * and mark the continuation request such that future continuations
+ * are directly put into the global continuations list.
+ * Once the wait completed (i.e., all continuations registered with the
+ * continuation request) we unmark it (see ompi_continue_deregister_request_progress).
  */
 int ompi_continue_register_request_progress(ompi_request_t *req)
 {
