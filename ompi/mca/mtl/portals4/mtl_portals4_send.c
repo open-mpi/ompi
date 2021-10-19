@@ -40,7 +40,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
                            ompi_mtl_portals4_base_request_t* ptl_base_request,
                            bool *complete)
 {
-    int retval = OMPI_SUCCESS, ret, val, add = 1;
+    int retval = OMPI_SUCCESS, ret = 0, val = 0, add = 1;
     ompi_mtl_portals4_isend_request_t* ptl_request =
         (ompi_mtl_portals4_isend_request_t*) ptl_base_request;
 

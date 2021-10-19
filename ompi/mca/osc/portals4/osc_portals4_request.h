@@ -19,6 +19,7 @@ struct ompi_osc_portals4_request_t {
     ompi_request_t super;
     int32_t ops_expected;
     volatile int32_t ops_committed;
+    volatile int32_t bytes_committed;
 };
 typedef struct ompi_osc_portals4_request_t ompi_osc_portals4_request_t;
 
@@ -31,11 +32,11 @@ OBJ_CLASS_DECLARATION(ompi_osc_portals4_request_t);
         req = (ompi_osc_portals4_request_t*) item;                      \
         OMPI_REQUEST_INIT(&req->super, false);                          \
         req->super.req_mpi_object.win = win;                            \
-        req->super.req_complete = false;                                \
         req->super.req_state = OMPI_REQUEST_ACTIVE;                     \
         req->super.req_status.MPI_ERROR = MPI_SUCCESS;                  \
         req->ops_expected = 0;                                          \
         req->ops_committed = 0;                                         \
+        req->bytes_committed = 0;                                       \
     } while (0)
 
 #define OMPI_OSC_PORTALS4_REQUEST_RETURN(req)                           \
