@@ -71,6 +71,10 @@ base as of this writing (May 2020):
 General notes
 -------------
 
+- With Open MPI v4.0.7 and older v4.0.x releases, there is a known issue
+  with the --cpu-set mpirun option not working correctly.  For
+  more details see https://github.com/open-mpi/ompi/issues/9397.
+
 - Open MPI v4.0.4 fixed an issue with the memory patcher's ability to
   intercept shmat and shmdt that could cause wrong answers.  This was
   observed on RHEL8.1 running on ppc64le, but it may affect other systems.
