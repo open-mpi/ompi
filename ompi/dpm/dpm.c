@@ -784,9 +784,9 @@ static int dpm_convert(opal_list_t *infos,
      **** current list - add it
      ****/
 
-    if (NULL == directive) {
+    if (NULL == directive && NULL != modifier) {
         opal_asprintf(&ptr, ":%s", modifier);
-    } else if (NULL == modifier) {
+    } else if (NULL != directive && NULL == modifier) {
         ptr = strdup(directive);
     } else {
         opal_asprintf(&ptr, "%s:%s", directive, modifier);

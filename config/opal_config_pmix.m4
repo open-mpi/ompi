@@ -144,6 +144,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     AC_SUBST(opal_pmix_CPPFLAGS)
     AC_SUBST(opal_pmix_LDFLAGS)
     AC_SUBST(opal_pmix_LIBS)
+    AC_SUBST(OPAL_PMIX_PATH)
 
     OPAL_SUMMARY_ADD([[Miscellaneous]], [[pmix]], [pmix], [$opal_pmix_mode])
 
@@ -202,9 +203,13 @@ AC_DEFUN([_OPAL_CONFIG_PMIX_EXTERNAL], [
            LIBS="$opal_pmix_LIBS_save"
 
            AS_IF([test "$opal_pmix_external_support" = "yes"],
-                 [$1],
+                 [$1
+                  AS_IF([test -n "$with_pmix"],
+                        [OPAL_PMIX_PATH="${with_pmix}"],
+                        [OPAL_PMIX_PATH=""])],
                  [CPPFLAGS="$opal_pmix_CPPFLAGS_save"
-                  $2])])
+                  $2
+                  OPAL_PMIX_PATH=""])])
 
     OPAL_VAR_SCOPE_POP
 ])
@@ -223,5 +228,6 @@ AC_DEFUN([_OPAL_CONFIG_PMIX_INTERNAL_POST], [
 
     opal_pmix_header="$OMPI_TOP_SRCDIR/opal/mca/pmix/pmix-3rdparty.h"
 
+    OPAL_PMIX_PATH="$prefix"
     OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS openpmix"
 ])

@@ -26,7 +26,7 @@
 
 int main(int argc, char *argv[])
 {
-    char *evar, *pvar;
+    char *evar;
     char **pargs = NULL;
     char *pfx = NULL;
     int m, param_len;
@@ -35,16 +35,14 @@ int main(int argc, char *argv[])
     if (NULL != (evar = getenv("OPAL_PREFIX"))) {
 
 #if OMPI_USING_INTERNAL_PRRTE
-        (void)asprintf(&pvar, "PRTE_PREFIX=%s", evar);
-        putenv(pvar);
+        setenv("PRTE_PREFIX", evar, true);
 #endif
 
 #if OPAL_USING_INTERNAL_PMIX
-        (void)asprintf(&pvar, "PMIX_PREFIX=%s", evar);
-        putenv(pvar);
+        setenv("PMIX_PREFIX", evar, true);
 #endif
     }
-    putenv("PRTE_MCA_schizo_proxy=ompi");
+    setenv("PRTE_MCA_schizo_proxy", "ompi", true);
 
     opal_argv_append_nosize(&pargs, "prterun");
     for (m=1; NULL != argv[m]; m++) {
@@ -78,6 +76,32 @@ int main(int argc, char *argv[])
         if (NULL != opal_install_dirs.bindir) {
             pfx = strdup(opal_install_dirs.bindir);
         }
+#else
+    } else {
+        char *tmp, *t2;
+        /* for external PRRTE, use the full path to prterun and set the lib */
+        if (NULL != PRTE_PATH) {
+            tmp = opal_basename(PRTE_PATH);
+            if (NULL != tmp && 0 != strcmp(tmp, "prterun")) {
+                /* this is a pure path */
+                asprintf(&pfx, "%s/bin", PRTE_PATH);
+                free(tmp);
+                tmp = opal_dirname(PRTE_PATH);
+            } else {
+                pfx = opal_dirname(PRTE_PATH);
+                /* we need to move up one more level to get to the lib directory */
+                t2 = opal_dirname(pfx);
+                asprintf(&tmp, "%s/lib", t2);
+                free(t2);
+            }
+        }
+        if (NULL != (evar = getenv("LD_LIBRARY_PATH"))) {
+            asprintf(&t2, "%s:%s", tmp, evar);
+            free(tmp);
+            tmp = t2;
+        }
+        setenv("LD_LIBRARY_PATH", tmp, true);
+        free(tmp);
 #endif
     }
 
@@ -93,6 +117,55 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    /* handle any external PMIx library path */
+#if !OPAL_USING_INTERNAL_PMIX
+    if (NULL != OPAL_PMIX_PATH) {
+        char *tmp;
+        asprintf(&tmp, "%s/lib", OPAL_PMIX_PATH);
+        if (NULL != (evar = getenv("LD_LIBRARY_PATH"))) {
+            char *t2;
+            asprintf(&t2, "%s:%s", tmp, evar);
+            free(tmp);
+            tmp = t2;
+        }
+        setenv("LD_LIBRARY_PATH", tmp, true);
+        free(tmp);
+    }
+#endif
+
+    /* handle any opal_output directives */
+    if (NULL != (evar = getenv("OPAL_OUTPUT_STDERR_FD"))) {
+        setenv("PRTE_OUTPUT_STDERR_FD", evar, true);
+        setenv("PMIX_OUTPUT_STDERR_FD", evar, true);
+
+    }
+    if (NULL != (evar = getenv("OPAL_OUTPUT_REDIRECT"))) {
+        setenv("PRTE_OUTPUT_REDIRECT", evar, true);
+        setenv("PMIX_OUTPUT_REDIRECT", evar, true);
+
+    }
+    if (NULL != (evar = getenv("OPAL_OUTPUT_SYSLOG_PRI"))) {
+        setenv("PRTE_OUTPUT_SYSLOG_PRI", evar, true);
+        setenv("PMIX_OUTPUT_SYSLOG_PRI", evar, true);
+
+    }
+    if (NULL != (evar = getenv("OPAL_OUTPUT_SYSLOG_IDENT"))) {
+        setenv("PRTE_OUTPUT_SYSLOG_IDENT", evar, true);
+        setenv("PMIX_OUTPUT_SYSLOG_IDENT", evar, true);
+
+    }
+    if (NULL != (evar = getenv("OPAL_OUTPUT_INTERNAL_TO_STDOUT"))) {
+        setenv("PRTE_OUTPUT_INTERNAL_TO_STDOUT", evar, true);
+        setenv("PMIX_OUTPUT_INTERNAL_TO_STDOUT", evar, true);
+
+    }
+    if (NULL != (evar = getenv("OPAL_OUTPUT_SUFFIX"))) {
+        setenv("PRTE_OUTPUT_SUFFIX", evar, true);
+        setenv("PMIX_OUTPUT_SUFFIX", evar, true);
+
+    }
+
+    /* exec prterun */
     execve(truepath, pargs, environ);
     fprintf(stderr, "The mpirun (\"%s\") cmd failed to exec its actual executable - your application will NOT execute. Error: %s\n",
                      truepath ? truepath : "NULL", strerror(errno));

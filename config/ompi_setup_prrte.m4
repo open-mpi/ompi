@@ -33,8 +33,8 @@ dnl external PRRTE and the internal one fails to configure, abort.
 dnl
 dnl This macro wil change the environment in the following way:
 dnl
-dnl * PRTE_PATH will be AC_SUBST'ed to the full path (minus the EXE
-dnl   extension) of the prte binary.
+dnl * PRTE_PATH will be AC_SUBST'ed to the full path where PRRTE
+dnl   is installed (i.e., the PRRTE prefix)
 dnl
 dnl A Makefile conditional OMPI_WANT_PRRTE will be defined based on the
 dnl results of the build.
@@ -252,7 +252,7 @@ dnl succeeded.
 AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL_POST], [
     OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS prrte"
 
-    PRTE_PATH="prte"
+    PRTE_PATH="$prefix"
 ])
 
 
@@ -288,12 +288,12 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
 
     AS_IF([test "$setup_prrte_external_happy" = "yes"],
           [AS_IF([test -n "$with_prrte"],
-                 [PRTE_PATH="${with_prrte}/bin/prte"
-                  AS_IF([test ! -r ${PRTE_PATH}], [AC_MSG_ERROR([Could not find prte binary at $PRTE_PATH])])],
-		 [PRTE_PATH=""
-                  OPAL_WHICH([prte], [PRTE_PATH])
-                  AS_IF([tets -z "$PRTE_PATH"],
-                        [AC_MSG_WARN([Could not find prte in PATH])
+                 [PRTE_PATH="${with_prrte}"
+                  AS_IF([test ! -r ${PRTE_PATH}/bin/prterun], [AC_MSG_ERROR([Could not find prterun binary at $PRTE_PATH/bin])])],
+                 [PRTE_PATH=""
+                  OPAL_WHICH([prterun], [PRTE_PATH])
+                  AS_IF([test -z "$PRTE_PATH"],
+                        [AC_MSG_WARN([Could not find prterun in PATH])
                          setup_prrte_external_happy=no])])])
 
     AS_IF([test "$setup_prrte_external_happy" = "yes"],

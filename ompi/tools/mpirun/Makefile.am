@@ -13,6 +13,10 @@
 
 if OMPI_WANT_PRRTE
 
+AM_CFLAGS = \
+            -DPRTE_PATH="\"@PRTE_PATH@\"" \
+            -DOPAL_PMIX_PATH="\"@OPAL_PMIX_PATH@\""
+
 bin_PROGRAMS = mpirun
 
 mpirun_SOURCES = \
