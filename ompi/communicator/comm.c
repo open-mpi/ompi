@@ -619,6 +619,11 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
 
+    /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
+    if (NULL != newcomp->super.s_info) {
+        opal_info_remove_unreferenced(newcomp->super.s_info);
+    }
+
  exit:
     free ( results );
     free ( sorted );
@@ -950,6 +955,10 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         }
 
         if (!need_split) {
+
+            /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
+            opal_info_remove_unreferenced(newcomp->super.s_info);
+
             /* common case. no reordering and no MPI_UNDEFINED */
             *newcomm = newcomp;
 
@@ -1039,6 +1048,9 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
         OBJ_RELEASE(newcomp);
         return rc;
     }
+
+    /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
+    opal_info_remove_unreferenced(newcomp->super.s_info);
 
     *newcomm = newcomp;
     return MPI_SUCCESS;
@@ -1194,6 +1206,11 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
 {
+    ompi_comm_idup_with_info_context_t *context =
+        (ompi_comm_idup_with_info_context_t *) request->context;
+    /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
+    opal_info_remove_unreferenced(context->newcomp->super.s_info);
+
     /* done */
     return MPI_SUCCESS;
 }
