@@ -24,6 +24,7 @@
  * Copyright (c) 2021      Google, LLC. All rights reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2021      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1776,11 +1777,11 @@ OMPI_DECLSPEC  int MPI_Pready_range(int partition_low, int partition_high,
 OMPI_DECLSPEC  int MPI_Pready_list(int length, int partition_list[], MPI_Request request);
 OMPI_DECLSPEC  int MPI_Precv_init(void* buf, int partitions, MPI_Count count,
                                   MPI_Datatype datatype, int source, int tag, MPI_Comm comm,
-                                  MPI_Request *request);
+                                  MPI_Info info, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Psend_init(const void* buf, int partitions, MPI_Count count,
                                   MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
-                                  MPI_Request *request);
+                                  MPI_Info info, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Publish_name(const char *service_name, MPI_Info info,
                                     const char *port_name);
 OMPI_DECLSPEC  int MPI_Put(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
@@ -2433,10 +2434,10 @@ OMPI_DECLSPEC  int PMPI_Issend(const void *buf, int count, MPI_Datatype datatype
                                int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Precv_init(void* buf, int partitions, MPI_Count count,
                                   MPI_Datatype datatype, int source, int tag, MPI_Comm comm,
-                                  MPI_Request *request);
+                                  MPI_Info info, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Psend_init(const void* buf, int partitions, MPI_Count count,
                                   MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
-                                  MPI_Request *request);
+                                  MPI_Info info, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Pready(int partitions, MPI_Request request);
 OMPI_DECLSPEC  int PMPI_Pready_range(int partition_low, int partition_high,
                                     MPI_Request request);

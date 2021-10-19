@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2021      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +44,7 @@
 static const char FUNC_NAME[] = "MPI_Psend_init";
 
 
-int MPI_Psend_init(const void* buf, int partitions, MPI_Count count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request)
+int MPI_Psend_init(const void* buf, int partitions, MPI_Count count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int rc;
 
@@ -59,6 +60,6 @@ int MPI_Psend_init(const void* buf, int partitions, MPI_Count count, MPI_Datatyp
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    rc = mca_part.part_psend_init(buf, partitions, count, datatype, dest, tag, comm, request);
+    rc = mca_part.part_psend_init(buf, partitions, count, datatype, dest, tag, comm, info, request);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
