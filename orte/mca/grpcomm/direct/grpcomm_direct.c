@@ -8,6 +8,7 @@
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 #include "orte/util/compress.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 #include "grpcomm_direct.h"
@@ -342,7 +344,16 @@ static void xcast_recv(int status, orte_process_name_t* sender,
             opal_dss.load(&datbuf, cmpdata, cmplen);
             data = &datbuf;
         } else {
-            data = buffer;
+            /* we were supposed to decompress this block - if we didn't, then
+             * that's an unrecoverable error */
+            orte_show_help("help-orte-runtime.txt", "failed-to-uncompress",
+                           true, orte_process_info.nodename);
+            free(packed_data);
+            ORTE_FORCED_TERMINATE(ret);
+            OBJ_DESTRUCT(&datbuf);
+            OBJ_DESTRUCT(&coll);
+            OBJ_RELEASE(rly);
+            return;
         }
         free(packed_data);
     } else {

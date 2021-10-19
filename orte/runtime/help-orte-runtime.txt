@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -61,3 +62,26 @@ as the mapping.
 Open MPI was unable to determine the number of nodes in your allocation. We
 are therefore assuming a very large number to ensure you receive proper error
 messages.
+#
+[failed-to-uncompress]
+A compressed message was received by the Open MPI run time system
+(PMIx) that could not be decompressed.  This means that Open MPI has
+compression support enabled on one node and not enabled on another.
+This is an unsupported configuration.
+
+Compression support is enabled when both of the following conditions
+are met:
+
+1. The Open MPI run time system (PMIx) is built with compression
+   support.
+2. The necessary compression libraries (e.g., libz) can be found at
+   run time.
+
+You should check that both of these conditions are true on both the
+node where mpirun is invoked and all the nodes where MPI processes
+will be launched.  The node listed below does not have both conditions
+met:
+
+  node without compression support:  %s
+
+NOTE: There may also be other nodes without compression support.
