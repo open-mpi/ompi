@@ -137,6 +137,9 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
         return ret;
     }
 
+    /* MPI-4 §14.2.8 requires us to remove all unknown keys from the info object */
+    opal_info_remove_unreferenced(file->super.s_info);
+
     /* All done */
 
     *fh = file;

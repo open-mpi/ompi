@@ -36,7 +36,6 @@ ompi_osc_base_select(ompi_win_t *win,
                      size_t size,
                      int disp_unit,
                      ompi_communicator_t *comm,
-                     opal_info_t *info,
                      int flavor,
                      int *model)
 {
@@ -55,7 +54,8 @@ ompi_osc_base_select(ompi_win_t *win,
         ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
             ((mca_base_component_list_item_t*) item)->cli_component;
 
-        priority = component->osc_query(win, base, size, disp_unit, comm, info, flavor);
+        priority = component->osc_query(win, base, size, disp_unit, comm,
+                                        win->super.s_info, flavor);
         if (priority < 0) {
             if (MPI_WIN_FLAVOR_SHARED == flavor && OMPI_ERR_RMA_SHARED == priority) {
                 /* NTH: quick fix to return OMPI_ERR_RMA_SHARED */
@@ -86,5 +86,6 @@ ompi_osc_base_select(ompi_win_t *win,
                          "select: component %s selected",
                          best_component->osc_version.mca_component_name );
 
-    return best_component->osc_select(win, base, size, disp_unit, comm, info, flavor, model);
+    return best_component->osc_select(win, base, size, disp_unit, comm,
+                                      win->super.s_info, flavor, model);
 }
