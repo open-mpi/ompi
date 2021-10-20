@@ -693,6 +693,10 @@ static int dpm_convert(opal_list_t *infos,
     dpm_conflicts_t *modifiers;
     const char *attr;
 
+    if (NULL == directive && NULL == modifier) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     /* pick the modifiers to be checked */
     if (NULL != modifier) {
         if (0 == strcmp(option, PMIX_MAPBY)) {
@@ -784,9 +788,9 @@ static int dpm_convert(opal_list_t *infos,
      **** current list - add it
      ****/
 
-    if (NULL == directive && NULL != modifier) {
+    if (NULL == directive) {
         opal_asprintf(&ptr, ":%s", modifier);
-    } else if (NULL != directive && NULL == modifier) {
+    } else if (NULL == modifier) {
         ptr = strdup(directive);
     } else {
         opal_asprintf(&ptr, "%s:%s", directive, modifier);
