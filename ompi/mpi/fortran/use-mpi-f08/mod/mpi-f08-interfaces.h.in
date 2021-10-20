@@ -2969,6 +2969,19 @@ subroutine MPI_Info_set_f08(info,key,value,ierror)
 end subroutine MPI_Info_set_f08
 end interface  MPI_Info_set
 
+interface  MPI_Info_get_string
+subroutine MPI_Info_get_string_f08(info,key,buflen,value,flag,ierror)
+   use :: mpi_f08_types, only : MPI_Info
+   implicit none
+   TYPE(MPI_Info), INTENT(IN) :: info
+   CHARACTER(LEN=*), INTENT(IN) :: key
+   INTEGER, INTENT(INOUT) :: buflen
+   CHARACTER(LEN=*), INTENT(OUT) :: value
+   LOGICAL, INTENT(OUT) :: flag
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Info_get_string_f08
+end interface  MPI_Info_get_string
+
 interface  MPI_Close_port
 subroutine MPI_Close_port_f08(port_name,ierror)
    implicit none
