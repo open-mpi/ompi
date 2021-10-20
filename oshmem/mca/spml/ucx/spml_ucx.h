@@ -86,6 +86,8 @@ struct mca_spml_ucx_ctx {
     unsigned int             ucp_workers;
     int                     *put_proc_indexes;
     unsigned                 put_proc_count;
+    bool                     synchronized_quiet;
+    int                      strong_sync;
 };
 typedef struct mca_spml_ucx_ctx mca_spml_ucx_ctx_t;
 
@@ -120,8 +122,6 @@ struct mca_spml_ucx {
     mca_spml_ucx_ctx_t       *aux_ctx;
     pthread_spinlock_t       async_lock;
     int                      aux_refcnt;
-    bool                     synchronized_quiet;
-    int                      strong_sync;
     unsigned long            nb_progress_thresh_global;
     unsigned long            nb_put_progress_thresh;
     unsigned long            nb_get_progress_thresh;
@@ -302,15 +302,15 @@ static inline int ucx_status_to_oshmem_nb(ucs_status_t status)
 #endif
 }
 
-static inline int mca_spml_ucx_is_strong_ordering(void)
+static inline int mca_spml_ucx_is_strong_ordering(mca_spml_ucx_ctx_t *ctx)
 {
-    return (mca_spml_ucx.strong_sync != SPML_UCX_STRONG_ORDERING_NONE) ||
-           mca_spml_ucx.synchronized_quiet;
+    return (ctx->strong_sync != SPML_UCX_STRONG_ORDERING_NONE) ||
+           ctx->synchronized_quiet;
 }
 
 static inline void mca_spml_ucx_remote_op_posted(mca_spml_ucx_ctx_t *ctx, int dst)
 {
-    if (OPAL_UNLIKELY(mca_spml_ucx_is_strong_ordering())) {
+    if (OPAL_UNLIKELY(mca_spml_ucx_is_strong_ordering(ctx))) {
         if (!opal_bitmap_is_set_bit(&ctx->put_op_bitmap, dst)) {
             ctx->put_proc_indexes[ctx->put_proc_count++] = dst;
             opal_bitmap_set_bit(&ctx->put_op_bitmap, dst);
