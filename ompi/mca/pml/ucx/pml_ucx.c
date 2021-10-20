@@ -568,7 +568,6 @@ int mca_pml_ucx_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
     pml_ucx_datatype_t *op_data = mca_pml_ucx_get_op_data(datatype);
     ucp_request_param_t *param  = &op_data->op_param.recv;
 #endif
-
     ucp_tag_t ucp_tag, ucp_tag_mask;
     ompi_request_t *req;
 
@@ -589,6 +588,9 @@ int mca_pml_ucx_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
     if (UCS_PTR_IS_ERR(req)) {
         PML_UCX_ERROR("ucx recv failed: %s", ucs_status_string(UCS_PTR_STATUS(req)));
         return OMPI_ERROR;
+    }
+    if (!REQUEST_COMPLETE(req)) {
+        ucp_worker_progress(ompi_pml_ucx.ucp_worker);
     }
 
     PML_UCX_VERBOSE(8, "got request %p", (void*)req);
@@ -857,6 +859,7 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
         PML_UCX_VERBOSE(8, "got request %p", (void*)req);
         req->req_mpi_object.comm = comm;
         *request                 = req;
+        ucp_worker_progress(ompi_pml_ucx.ucp_worker);
         return OMPI_SUCCESS;
     } else {
         PML_UCX_ERROR("ucx send failed: %s", ucs_status_string(UCS_PTR_STATUS(req)));
