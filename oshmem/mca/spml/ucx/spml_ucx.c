@@ -78,15 +78,15 @@ mca_spml_ucx_t mca_spml_ucx = {
     .num_disconnect         = 1,
     .heap_reg_nb            = 0,
     .enabled                = 0,
-    .get_mkey_slow          = NULL,
-    .synchronized_quiet     = false,
-    .strong_sync            = SPML_UCX_STRONG_ORDERING_NONE
+    .get_mkey_slow          = NULL
 };
 
 mca_spml_ucx_ctx_t mca_spml_ucx_ctx_default = {
     .ucp_worker         = NULL,
     .ucp_peers          = NULL,
-    .options            = 0
+    .options            = 0,
+    .synchronized_quiet = false,
+    .strong_sync        = SPML_UCX_STRONG_ORDERING_NONE
 };
 
 #ifdef HAVE_UCP_REQUEST_PARAM_T
@@ -402,7 +402,7 @@ int mca_spml_ucx_init_put_op_mask(mca_spml_ucx_ctx_t *ctx, size_t nprocs)
 {
     int res;
 
-    if (mca_spml_ucx_is_strong_ordering()) {
+    if (mca_spml_ucx_is_strong_ordering(ctx)) {
         ctx->put_proc_indexes = malloc(nprocs * sizeof(*ctx->put_proc_indexes));
         if (NULL == ctx->put_proc_indexes) {
             return OSHMEM_ERR_OUT_OF_RESOURCE;
@@ -424,7 +424,7 @@ int mca_spml_ucx_init_put_op_mask(mca_spml_ucx_ctx_t *ctx, size_t nprocs)
 
 int mca_spml_ucx_clear_put_op_mask(mca_spml_ucx_ctx_t *ctx)
 {
-    if (mca_spml_ucx_is_strong_ordering() && ctx->put_proc_indexes) {
+    if (mca_spml_ucx_is_strong_ordering(ctx) && ctx->put_proc_indexes) {
         OBJ_DESTRUCT(&ctx->put_op_bitmap);
         free(ctx->put_proc_indexes);
     }
@@ -841,6 +841,8 @@ static int mca_spml_ucx_ctx_create_common(long options, mca_spml_ucx_ctx_t **ucx
     ucx_ctx->options = options;
     ucx_ctx->ucp_worker = calloc(1, sizeof(ucp_worker_h));
     ucx_ctx->ucp_workers = 1;
+    ucx_ctx->synchronized_quiet = mca_spml_ucx_ctx_default.synchronized_quiet;
+    ucx_ctx->strong_sync = mca_spml_ucx_ctx_default.strong_sync;      
 
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (oshmem_mpi_thread_provided == SHMEM_THREAD_SINGLE || options & SHMEM_CTX_PRIVATE || options & SHMEM_CTX_SERIALIZED) {
@@ -1190,7 +1192,7 @@ static int mca_spml_ucx_strong_sync(shmem_ctx_t ctx)
     for (i = 0; i < ucx_ctx->put_proc_count; i++) {
         idx = ucx_ctx->put_proc_indexes[i];
 
-        switch (mca_spml_ucx.strong_sync) {
+        switch (ucx_ctx->strong_sync) {
         case SPML_UCX_STRONG_ORDERING_NONE:
         case SPML_UCX_STRONG_ORDERING_GETNB:
             ret = mca_spml_ucx_get_nb(ctx,
@@ -1242,7 +1244,7 @@ int mca_spml_ucx_fence(shmem_ctx_t ctx)
 
     opal_atomic_wmb();
 
-    if (mca_spml_ucx.strong_sync != SPML_UCX_STRONG_ORDERING_NONE) {
+    if (ucx_ctx->strong_sync != SPML_UCX_STRONG_ORDERING_NONE) {
         ret = mca_spml_ucx_strong_sync(ctx);
         if (ret != OSHMEM_SUCCESS) {
             oshmem_shmem_abort(-1);
@@ -1269,7 +1271,7 @@ int mca_spml_ucx_quiet(shmem_ctx_t ctx)
     unsigned i;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 
-    if (mca_spml_ucx.synchronized_quiet) {
+    if (ucx_ctx->synchronized_quiet) {
         ret = mca_spml_ucx_strong_sync(ctx);
         if (ret != OSHMEM_SUCCESS) {
             oshmem_shmem_abort(-1);
