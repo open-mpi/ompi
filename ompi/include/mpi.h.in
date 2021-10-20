@@ -1679,6 +1679,8 @@ OMPI_DECLSPEC  int MPI_Info_get_nkeys(MPI_Info info, int *nkeys);
 OMPI_DECLSPEC  int MPI_Info_get_nthkey(MPI_Info info, int n, char *key);
 OMPI_DECLSPEC  int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
                                          int *flag);
+OMPI_DECLSPEC  int MPI_Info_get_string(MPI_Info info, const char *key, int *buflen,
+                                       char *value, int *flag);
 OMPI_DECLSPEC  int MPI_Info_set(MPI_Info info, const char *key, const char *value);
 OMPI_DECLSPEC  int MPI_Init(int *argc, char ***argv);
 OMPI_DECLSPEC  int MPI_Initialized(int *flag);
@@ -2409,6 +2411,8 @@ OMPI_DECLSPEC  int PMPI_Info_get(MPI_Info info, const char *key, int valuelen,
                                  char *value, int *flag);
 OMPI_DECLSPEC  int PMPI_Info_get_nkeys(MPI_Info info, int *nkeys);
 OMPI_DECLSPEC  int PMPI_Info_get_nthkey(MPI_Info info, int n, char *key);
+OMPI_DECLSPEC  int PMPI_Info_get_string(MPI_Info info, const char *key, int *buflen,
+                                        char *value, int *flag);
 OMPI_DECLSPEC  int PMPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
                                           int *flag);
 OMPI_DECLSPEC  int PMPI_Info_set(MPI_Info info, const char *key, const char *value);

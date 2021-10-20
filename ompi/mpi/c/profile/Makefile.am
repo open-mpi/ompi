@@ -251,6 +251,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pinfo_get.c \
         pinfo_get_nkeys.c \
         pinfo_get_nthkey.c \
+        pinfo_get_string.c \
         pinfo_get_valuelen.c \
         pinfo_set.c \
         pinit.c \

@@ -318,6 +318,7 @@ mpi_api_files = \
         info_get_nkeys_f08.F90 \
         info_get_nthkey_f08.F90 \
         info_get_valuelen_f08.F90 \
+        info_get_string_f08.F90 \
         info_set_f08.F90 \
         init_f08.F90 \
         initialized_f08.F90 \

@@ -303,6 +303,7 @@ PN2(void, MPI_Info_free, mpi_info_free, MPI_INFO_FREE, (MPI_Fint *info, MPI_Fint
 PN2(void, MPI_Info_get, mpi_info_get, MPI_INFO_GET, (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len, int value_len));
 PN2(void, MPI_Info_get_nkeys, mpi_info_get_nkeys, MPI_INFO_GET_NKEYS, (MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr));
 PN2(void, MPI_Info_get_nthkey, mpi_info_get_nthkey, MPI_INFO_GET_NTHKEY, (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len));
+PN2(void, MPI_Info_get_string, mpi_info_get_string, MPI_INFO_GET_STRING, (MPI_Fint *info, char *key, MPI_Fint *buflen, char *value, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len, int value_len));
 PN2(void, MPI_Info_get_valuelen, mpi_info_get_valuelen, MPI_INFO_GET_VALUELEN, (MPI_Fint *info, char *key, MPI_Fint *valuelen, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len));
 PN2(void, MPI_Info_set, mpi_info_set, MPI_INFO_SET, (MPI_Fint *info, char *key, char *value, MPI_Fint *ierr, int key_len, int value_len));
 PN2(void, MPI_Init, mpi_init, MPI_INIT, (MPI_Fint *ierr));

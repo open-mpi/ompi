@@ -271,6 +271,7 @@ libmpi_c_mpi_la_SOURCES = \
         info_get.c \
         info_get_nkeys.c \
         info_get_nthkey.c \
+        info_get_string.c \
         info_get_valuelen.c \
         info_set.c \
         init.c \
