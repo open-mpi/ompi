@@ -6,6 +6,7 @@ dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2021      Nanook Consulting  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -65,7 +66,7 @@ AC_DEFUN([OPAL_CONFIG_HWLOC], [
     m4_ifdef([package_hwloc],
         [AS_IF([test "$external_hwloc_happy" = "0"],
              [_OPAL_CONFIG_HWLOC_INTERNAL([internal_hwloc_happy=1
-                                              opal_hwloc_mode="internal"])])])
+                                           opal_hwloc_mode="internal"])])])
 
     AS_IF([test "$external_hwloc_happy" = "0" -a "$internal_hwloc_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable hwloc build.])])
@@ -175,9 +176,6 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
          # only need to add a -I to the builddir.
          opal_hwloc_CPPFLAGS="-I$OMPI_TOP_BUILDDIR/$internal_hwloc_location/include -I$OMPI_TOP_SRCDIR/$internal_hwloc_location/include"
          CPPFLAGS="$CPPFLAGS $opal_hwloc_CPPFLAGS"
-         # No need to update LDFLAGS, because they will install into
-         # our tree and in the mean time are referenced by their .la
-         # files.
          opal_hwloc_LIBS="$OMPI_TOP_BUILDDIR/$internal_hwloc_location/hwloc/libhwloc.la"
 
          opal_hwloc_header="$OMPI_TOP_BUILDDIR/$internal_hwloc_location/include/hwloc.h"

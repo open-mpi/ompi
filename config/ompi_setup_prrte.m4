@@ -131,7 +131,7 @@ dnl _OMPI_SETUP_PRRTE_INTERNAL([action-if-success], [action-if-not-success])
 dnl
 dnl Attempt to configure the built-in PRRTE.
 AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([internal_prrte_args internal_prrte_extra_libs internal_prrte_happy deprecated_prefix_by_default print_prrte_warning internal_prrte_CPPFLAGS])
+    OPAL_VAR_SCOPE_PUSH([internal_prrte_args internal_prrte_extra_libs internal_prrte_happy deprecated_prefix_by_default print_prrte_warning internal_prrte_CPPFLAGS internal_prrte_LDFLAGS])
 
     # This is really a PRTE option that should not be in Open MPI, but
     # there is not a great way to support the orterun/mpirun checks
@@ -164,6 +164,7 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
           [AC_MSG_ERROR([--enable-prte-prefix-by-default cannot be used with --enable-mpirun-prefix-by-default or --enable-orterun-prefix-by-default.  Please only specify --enable-prte-prefix-by-default.])])
 
     internal_prrte_CPPFLAGS=
+    internal_prrte_LDFLAGS=
     internal_prrte_args="--with-proxy-version-string=$OPAL_VERSION --with-proxy-package-name=\"Open MPI\" --with-proxy-bugreport=\"https://www.open-mpi.org/community/help/\""
     internal_prrte_libs=
 
@@ -177,36 +178,39 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
               [internal_prrte_args="$internal_prrte_args --enable-prte-prefix-by-default"])
 
     AS_IF([test "$opal_libevent_mode" = "internal"],
-          [internal_prrte_args="$internal_prrte_args --with-libevent-header=$opal_libevent_header"
-           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_libevent_CPPFLAGS"
+          [internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_libevent_CPPFLAGS"
            internal_prrte_libs="$internal_prrte_libs $opal_libevent_LIBS"])
 
     AS_IF([test "$opal_hwloc_mode" = "internal"],
-          [internal_prrte_args="$internal_prrte_args --with-hwloc-header=$opal_hwloc_header"
-           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_hwloc_CPPFLAGS"
+          [internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_hwloc_CPPFLAGS"
            internal_prrte_libs="$internal_prrte_libs $opal_hwloc_LIBS"])
 
     AS_IF([test "$opal_pmix_mode" = "internal"],
-          [internal_prrte_args="$internal_prrte_args --with-pmix-header=$opal_pmix_header"
-           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_pmix_CPPFLAGS"
-           internal_prrte_libs="$internal_prrte_libs $opal_pmix_LIBS"])
+          [internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_pmix_CPPFLAGS"
+           internal_prrte_libs="$internal_prrte_libs $opal_pmix_LIBS"],
+          [AC_MSG_CHECKING([if PMIx version is 4.0.0 or greater])
+           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>]],
+                   [[
+       #if PMIX_VERSION_MAJOR < 4L
+       #error "pmix API version is less than 4.0.0"
+       #endif
+                    ]])],
+                   [AC_MSG_RESULT([yes])],
+                   [AC_MSG_RESULT([no])
+                    AC_MSG_WARN([OMPI's internal runtime environment "PRRTE" does not support])
+                    AC_MSG_WARN([PMIx versions less than v4.x as they lack adequate tool])
+                    AC_MSG_WARN([support. You can, if desired, build OMPI against an earlier])
+                    AC_MSG_WARN([version of PMIx for strictly direct-launch purposes - e.g., using])
+                    AC_MSG_WARN([Slurm's srun to launch the job - by configuring with the])
+                    AC_MSG_WARN([--without-prrte option.])
+                    AC_MSG_ERROR([Cannot continue])])])
 
-    AC_MSG_CHECKING([if PMIx version is 4.0.0 or greater])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>]],
-            [[
-#if PMIX_VERSION_MAJOR < 4L
-#error "pmix API version is less than 4.0.0"
-#endif
-             ]])],
-            [AC_MSG_RESULT([yes])],
-            [AC_MSG_RESULT([no])
-             AC_MSG_WARN([OMPI's internal runtime environment "PRRTE" does not support])
-             AC_MSG_WARN([PMIx versions less than v4.x as they lack adequate tool])
-             AC_MSG_WARN([support. You can, if desired, build OMPI against an earlier])
-             AC_MSG_WARN([version of PMIx for strictly direct-launch purposes - e.g., using])
-             AC_MSG_WARN([Slurm's srun to launch the job - by configuring with the])
-             AC_MSG_WARN([--without-prrte option.])
-             AC_MSG_ERROR([Cannot continue])])
+    # check for disable package checks
+    if test "$opal_libevent_mode" = "internal" || \
+       test "$opal_hwloc_mode" = "internal" || \
+       test "$opal_pmix_mode" = "internal"; then
+        internal_prrte_args="$internal_prrte_args --disable-package-checks"
+    fi
 
     # add the extra libs
     internal_prrte_args="$internal_prrte_args --with-prte-extra-lib=\"$internal_prrte_libs\" --with-prte-extra-ltlib=\"$internal_prrte_libs\""
@@ -225,10 +229,15 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
     OPAL_SUBDIR_ENV_CLEAN([opal_prrte_configure])
     AS_IF([test -n "$internal_prrte_CPPFLAGS"],
           [OPAL_SUBDIR_ENV_APPEND([CPPFLAGS], [$internal_prrte_CPPFLAGS])])
+    AS_IF([test -n "$internal_prrte_LDFLAGS"],
+          [OPAL_SUBDIR_ENV_APPEND([LDFLAGS], [$internal_prrte_LDFLAGS])])
+     AS_IF([test -n "$internal_prrte_LIBS"],
+           [OPAL_SUBDIR_ENV_APPEND([LIBS], [$internal_prrte_LIBS])])
     PAC_CONFIG_SUBDIR_ARGS([3rd-party/prrte], [$internal_prrte_args],
-            [[--with-libevent=internal], [--with-hwloc=internal],
-             [--with-libevent=external], [--with-hwloc=external],
-             [--with-pmix=internal], [--with-pmix=external],
+            [[--with-libevent=[[^ 	]]*],
+             [--with-hwloc=[[^ 	]]*],
+             [--with-pmix=[[^ 	]]*],
+             [--with-prrte=[[^ 	]]*],
              [--with-platform=[[^ 	]]*]],
             [internal_prrte_happy="yes"], [internal_prrte_happy="no"])
     OPAL_SUBDIR_ENV_RESTORE([opal_prrte_configure])

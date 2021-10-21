@@ -58,7 +58,7 @@ dnl         LD_LIBRARY_PATH.
 dnl   * CPPFLAGS, LDFLAGS - Updated opal_pmix_CPPFLAGS and
 dnl         opal_pmix_LDFLAGS.
 AC_DEFUN([OPAL_CONFIG_PMIX], [
-    OPAL_VAR_SCOPE_PUSH([external_pmix_happy internal_pmix_happy internal_pmix_args internal_pmix_libs internal_pmix_CPPFLAGS])
+    OPAL_VAR_SCOPE_PUSH([external_pmix_happy internal_pmix_happy internal_pmix_args internal_pmix_libs internal_pmix_CPPFLAGS internal_pmix_LDFLAGS])
 
     opal_show_subtitle "Configuring PMIx"
 
@@ -70,24 +70,23 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     m4_ifdef([package_pmix],
         [# always configure the internal pmix, so that
          # make dist always works.
-	 internal_pmix_args="--without-tests-examples --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
+         internal_pmix_args="--without-tests-examples --disable-pmix-binaries --disable-visibility --disable-package-checks"
          internal_pmix_libs=
          internal_pmix_CPPFLAGS=
+         internal_pmix_LDFLAGS=
 
          OMPI_PMIX_ADD_ARGS
 
          AS_IF([test "$opal_libevent_mode" = "internal"],
-               [internal_pmix_args="$internal_pmix_args --with-libevent=cobuild"
-                internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_libevent_CPPFLAGS"
+               [internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_libevent_CPPFLAGS"
                 internal_pmix_libs="$internal_pmix_libs $opal_libevent_LIBS"])
 
          AS_IF([test "$opal_hwloc_mode" = "internal"],
-               [internal_pmix_args="$internal_pmix_args --with-hwloc=cobuild"
-                internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_hwloc_CPPFLAGS"
+               [internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_hwloc_CPPFLAGS"
                 internal_pmix_libs="$internal_pmix_libs $opal_hwloc_LIBS"])
 
          AS_IF([test ! -z "$internal_pmix_libs"],
-               [internal_pmix_args="$internal_pmix_args --with-prte-extra-lib=\"$internal_pmix_libs\""])
+               [internal_pmix_args="$internal_pmix_args --with-pmix-extra-lib=\"$internal_pmix_libs\""])
 
          if test "$WANT_DEBUG" = "1"; then
              internal_pmix_args="$internal_pmix_args --enable-debug"
@@ -100,13 +99,25 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
          OPAL_SUBDIR_ENV_CLEAN([opal_pmix_configure])
          AS_IF([test -n "$internal_pmix_CPPFLAGS"],
                [OPAL_SUBDIR_ENV_APPEND([CPPFLAGS], [$internal_pmix_CPPFLAGS])])
+         AS_IF([test -n "$internal_pmix_LDFLAGS"],
+               [OPAL_SUBDIR_ENV_APPEND([LDFLAGS], [$internal_pmix_LDFLAGS])])
+         AS_IF([test -n "$internal_pmix_LIBS"],
+               [OPAL_SUBDIR_ENV_APPEND([LIBS], [$internal_pmix_LIBS])])
          PAC_CONFIG_SUBDIR_ARGS([3rd-party/openpmix], [$internal_pmix_args],
-                           [[--with-libevent=internal], [--with-hwloc=internal],
-                            [--with-libevent=external], [--with-hwloc=external],
-                            [--with-pmix=[[^ 	]]*], [--with-platform=[[^ 	]]*]],
+                           [[--with-libevent=[[^ 	]]*],
+                            [--with-hwloc=[[^ 	]]*],
+                            [--with-pmix=[[^ 	]]*],
+                            [--with-prrte=[[^ 	]]*],
+                            [--with-platform=[[^ 	]]*]],
                            [internal_pmix_happy=1])
          OPAL_SUBDIR_ENV_RESTORE([opal_pmix_configure])
          OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS openpmix"])
+
+    # check for disable package checks
+    if test "$opal_libevent_mode" = "internal" || \
+       test "$opal_hwloc_mode" = "internal"; then
+        internal_pmix_args="$internal_pmix_args --disable-package-checks"
+    fi
 
     # unless internal specifically requested by the user, try to find
     # an external that works.

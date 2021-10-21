@@ -6,6 +6,7 @@ dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
+dnl Copyright (c) 2021      Nanook Consulting  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -221,12 +222,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
          # only need to add a -I to the builddir.
          opal_libevent_CPPFLAGS="-I$OMPI_TOP_BUILDDIR/$internal_libevent_location -I$OMPI_TOP_BUILDDIR/$internal_libevent_location/include"
          CPPFLAGS="$CPPFLAGS $opal_libevent_CPPFLAGS"
-         # No need to update LDFLAGS, because they will install into
-         # our tree and in the mean time are referenced by their .la
-         # files.
          opal_libevent_LIBS="$OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_core.la $OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_pthreads.la"
-
-         opal_libevent_header="$OMPI_TOP_BUILDDIR/$internal_libevent_location/event.h"
 
          # no need to add to DIST_SUBDIRS, because we only ship the
          # tarball.  This is relative to the 3rd-party/ directory.
