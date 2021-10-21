@@ -670,8 +670,8 @@ struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_lis
 
 #if OPAL_OFI_PCI_DATA_AVAILABLE
     if (NULL != provider->nic
-        && NULL != current_provider->nic->bus_attr
-        && current_provider->nic->bus_attr->bus_type == FI_BUS_PCI) {
+        && NULL != provider->nic->bus_attr
+        && provider->nic->bus_attr->bus_type == FI_BUS_PCI) {
         pci = provider->nic->bus_attr->attr.pci;
         cpusets_match = compare_cpusets(opal_hwloc_topology, pci);
     }
