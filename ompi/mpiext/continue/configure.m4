@@ -17,15 +17,13 @@ AC_DEFUN([OMPI_MPIEXT_continue_CONFIG],[
     AC_CONFIG_FILES([ompi/mpiext/continue/c/Makefile])
     AC_CONFIG_FILES([ompi/mpiext/continue/c/profile/Makefile])
 
-    # This example can always build, so we just execute $1 if it was
-    # requested.
-    AS_IF([test "$ENABLE_continue" = "1" || \
-           test "$ENABLE_EXT_ALL" = "1"],
+    # This module is not stable yet so it should only be built
+    # if explicitly requested
+    AS_IF([test "$ENABLE_continue" = "1"],
           [$1],
           [$2])
 
-    AS_IF([test "$ENABLE_continue" = "1" || \
-           test "$ENABLE_EXT_ALL" = "1"],
+    AS_IF([test "$ENABLE_continue" = "1"],
           [AC_DEFINE_UNQUOTED([OMPI_HAVE_MPI_EXT_CONTINUE], [1],
                               [Whether MPI Continuations are enabled])],
           [])
