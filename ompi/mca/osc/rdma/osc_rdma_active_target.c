@@ -357,6 +357,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int mpi_assert, ompi_win_t *
     return ret;
 }
 
+
 int ompi_osc_rdma_start_atomic (ompi_group_t *group, int mpi_assert, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
@@ -590,6 +591,82 @@ int ompi_osc_rdma_test_atomic (ompi_win_t *win, int *flag)
     return OMPI_SUCCESS;
 }
 
+/**
+ * This function implements a different barrier mechanism for Fence,
+ * when any of the selected btl does not support remote completion.
+ * This barrier is based on imposing the MCA_BTL_ORDER_RDMA_ATOMCS
+ * ordering requirement on seleted btls.
+ */
+static
+int ompi_osc_rdma_fence_barrier_by_ordered_channel (ompi_win_t *win)
+{
+    ompi_osc_rdma_module_t *module = GET_MODULE(win);
+    ompi_osc_rdma_state_t *state = module->state;
+    ompi_osc_rdma_sync_t *sync = &module->all_sync;
+    ompi_osc_rdma_peer_t **peers;
+    ompi_group_t *group;
+    int num_peers;
+    int ret;
+
+    assert(module->btl_order == MCA_BTL_IN_ORDER_RDMA_ATOMICS);
+    OPAL_THREAD_LOCK(&module->lock);
+
+    if (ompi_comm_size(module->comm) == 1) {
+        OPAL_THREAD_UNLOCK(&(module->lock));
+        return OMPI_SUCCESS;
+    }
+
+    ret = ompi_comm_group(module->comm, &group);
+    if (OMPI_SUCCESS != ret) {
+        OPAL_THREAD_UNLOCK(&(module->lock));
+	return ret;
+    }
+
+    num_peers = sync->num_peers;
+    assert(ompi_group_size(group) == num_peers);
+    peers = ompi_osc_rdma_get_peers(module, group);
+    if (NULL == peers) {
+        OPAL_THREAD_UNLOCK(&(module->lock));
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    module->state->num_fenced_peers = 0;
+    OPAL_THREAD_UNLOCK(&(module->lock));
+    ret = module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
+    if (ret) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "barrier failed!");
+        return ret;
+    }
+
+    /* for each process in the group increment their number of fenced peers */
+    for (int i = 0 ; i < num_peers; ++i) {
+        ompi_osc_rdma_peer_t *peer = peers[i];
+        intptr_t target = (intptr_t) peer->state + offsetof (ompi_osc_rdma_state_t, num_fenced_peers);
+
+	/* the usage of peer local state requires selected btls to support remote completion,
+	 * if that is the case, this function will not have been called
+	 */
+        assert (!ompi_osc_rdma_peer_local_state (peer));
+        ret = ompi_osc_rdma_lock_btl_op (module, peer, target, MCA_BTL_ATOMIC_ADD, 1, true);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
+    }
+
+    ompi_osc_rdma_release_peers (peers, num_peers);
+    ompi_group_free (&group);
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "increased fenced_peer counter of all peers");
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "waiting for all peers to increase my counter");
+    while (num_peers != state->num_fenced_peers) {
+        ompi_osc_rdma_progress (module);
+        opal_atomic_mb ();
+    }
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "received fence message from all peers");
+    return OMPI_SUCCESS;
+}
+
 int ompi_osc_rdma_fence_atomic (int mpi_assert, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
@@ -627,7 +704,18 @@ int ompi_osc_rdma_fence_atomic (int mpi_assert, ompi_win_t *win)
     ompi_osc_rdma_sync_rdma_complete (&module->all_sync);
 
     /* ensure all writes to my memory are complete (both local stores, and RMA operations) */
-    ret = module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
+    if (module->btl_support_remote_completion) {
+        /* if all selected btls support remote completion, then all RMA operations have finished
+	 * on remote side. A barrier is enough to complete the fence.
+	 */
+        ret = module->comm->c_coll->coll_barrier(module->comm, module->comm->c_coll->coll_barrier_module);
+    } else {
+        /*
+	 * if any selected btl does not support remote completion, we will have to send a completion
+	 * message (through the same endpoint of data transfer) to every peer, then wait for a message from every peer.
+	 */
+        ret = ompi_osc_rdma_fence_barrier_by_ordered_channel(win);
+    }
 
     if (mpi_assert & MPI_MODE_NOSUCCEED) {
         /* as specified in MPI-3 p 438 3-5 the fence can end an epoch. it isn't explicitly

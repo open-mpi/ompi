@@ -97,7 +97,7 @@ int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, uint8_t btl_inde
 
     do {
         ret = btl->btl_get (btl, endpoint, ptr, aligned_addr,
-                            local_handle, source_handle, aligned_len, 0, MCA_BTL_NO_ORDER,
+                            local_handle, source_handle, aligned_len, 0, module->btl_order,
                             ompi_osc_get_data_complete, (void *) &read_complete, NULL);
         if (!ompi_osc_rdma_oor (ret)) {
             break;
@@ -455,7 +455,7 @@ static int ompi_osc_rdma_put_real (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_pee
 
     do {
         ret = btl->btl_put (btl, peer->data_endpoint, ptr, target_address,
-                            local_handle, target_handle, size, 0, MCA_BTL_NO_ORDER,
+                            local_handle, target_handle, size, 0, module->btl_order,
                             cb, context, cbdata);
         if (OPAL_UNLIKELY(OMPI_SUCCESS == ret)) {
             return OMPI_SUCCESS;
@@ -705,7 +705,7 @@ static int ompi_osc_rdma_get_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_p
     do {
         ret = btl->btl_get (btl, peer->data_endpoint, ptr,
                             aligned_source_base, local_handle, source_handle,
-                            aligned_len, 0, MCA_BTL_NO_ORDER, ompi_osc_rdma_get_complete,
+                            aligned_len, 0, module->btl_order, ompi_osc_rdma_get_complete,
                             request, frag);
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
             return OMPI_SUCCESS;

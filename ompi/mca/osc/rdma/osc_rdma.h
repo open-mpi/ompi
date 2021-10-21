@@ -262,6 +262,12 @@ struct ompi_osc_rdma_module_t {
      */
     bool btl_support_remote_completion;
 
+    /** ordering requirement on selected btls.
+     * If all btls support remote completion, btl_order is MCA_BTL_NO_ORDER;
+     * otherwise, it will be MCA_BTL_IN_ORDER_RDMA_ATOMICS;
+     */
+    int btl_order;
+
     /** array of peer state. Used when local leader is NOT used */
     uintptr_t *peer_state_array;
 

@@ -136,6 +136,12 @@ struct ompi_osc_rdma_state_t {
     osc_rdma_atomic_counter_t num_post_msgs;
     /** counter for number of complete messages received */
     osc_rdma_counter_t num_complete_msgs;
+    /** counter for number of fenced peers. This counter is used
+     * when any seleted btl does NOT support remote complete.
+     * In which case, a process will increase this counter on
+     * all its peers, then wait for all its peer to increase
+     * its counter. */
+    osc_rdma_counter_t num_fenced_peers;
     /** lock for the region state to ensure consistency */
     ompi_osc_rdma_lock_t regions_lock;
     /** displacement unit for this process */

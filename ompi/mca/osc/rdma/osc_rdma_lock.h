@@ -74,7 +74,7 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, uint8_t
         if (NULL != pending_op->op_frag) {
             ret = selected_btl->btl_atomic_fop (selected_btl, endpoint, pending_op->op_buffer,
                                                 (intptr_t) address, pending_op->op_frag->handle, address_handle,
-                                                op, operand, flags, MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete,
+                                                op, operand, flags, module->btl_order, ompi_osc_rdma_atomic_complete,
                                                 (void *) pending_op, NULL);
         }
 
@@ -148,7 +148,7 @@ static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, uint8_t 
     /* spin until the btl has accepted the operation */
     do {
         ret = selected_btl->btl_atomic_op (selected_btl, endpoint, (intptr_t) address, address_handle,
-                                           op, operand, flags, MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete,
+                                           op, operand, flags, module->btl_order, ompi_osc_rdma_atomic_complete,
                                            (void *) pending_op, NULL);
 
         if (OPAL_LIKELY(!ompi_osc_rdma_oor(ret))) {

@@ -926,7 +926,7 @@ static int allocate_module_state(ompi_osc_rdma_module_t *module, void **base, si
         return ret;
 
     if (!module->btl_support_remote_completion) {
-        /* if btl does not support remote_completion, the local leader optimization
+        /* if any selected btl does not support remote_completion, the local leader optimization
 	 * cannot be used, which means each endpoint will communicate with the peer
 	 * directly to update its state (instead of through the peer's local leader).
 	 * Therefore each endpoint need to have the state pointer of each peer.
@@ -936,6 +936,15 @@ static int allocate_module_state(ompi_osc_rdma_module_t *module, void **base, si
         if (OPAL_UNLIKELY(OMPI_SUCCESS !=ret)) {
             return ret;
         }
+
+	/* If any selected btl does not support remote completeion, fence cannot use
+	 * the MPI_barrier based implementation, but have to use an implementation that
+	 * is based on orderedd RDMA and ATOMICS operation, for that we have to impose
+	 * the ordering requirement for each RDMA and ATOMIC operation
+	 */
+	module->btl_order = MCA_BTL_IN_ORDER_RDMA_ATOMICS;
+    } else {
+        module->btl_order = MCA_BTL_NO_ORDER;
     }
 }
 
