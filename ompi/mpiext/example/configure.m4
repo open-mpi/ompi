@@ -55,3 +55,12 @@ AC_DEFUN([OMPI_MPIEXT_example_NEED_INIT], [1])
 # libraries for any of the bindings.  If finer-grained control is needed
 # someday, we may need to split this into multiple macros.
 #AC_DEFUN([OMPI_MPIEXT_example_HAVE_OBJECT], [0])
+
+# This is a hook that runs after the CONFIG macro and after the
+# configure system decides if this extension will be built (such
+# as if it was disabled by configure option).  This is a great
+# place to put any globally-visible AC_DEFINE or AM_CONDITIONAL
+# macros that are based on this component building.
+AC_DEFUN([OMPI_MPIEXT_example_POST_CONFIG], [
+  opal_show_verbose "example component build result: $1"
+])

@@ -390,6 +390,9 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
     AS_IF([test $should_build -eq 1],
           [EXT_PROCESS_COMPONENT([$1], [$2], [$3], [$4], [$5], [$6], [$7])],
           [EXT_PROCESS_DEAD_COMPONENT([$1], [$2])])
+
+    m4_ifdef([OMPI_MPIEXT_$1_POST_CONFIG],
+             [OMPI_MPIEXT_$1_POST_CONFIG($should_build)])
 ])
 
 ######################################################################
