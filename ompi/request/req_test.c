@@ -177,9 +177,6 @@ int ompi_request_default_test_any(
             /* continuations may elect to not participate in global progress
              * so progress them separately. */
             ompi_continue_progress_request(request);
-            /* requery the request */
-            --i;
-            --rptr;
         }
 #endif // OMPI_HAVE_MPI_EXT_CONTINUE
     }
