@@ -13,6 +13,7 @@
 ! Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2016-2018 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2021      Sandia National Laboratories. All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -1207,6 +1208,53 @@ subroutine MPI_Probe(source, tag, comm, status, ierror)
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierror
 end subroutine MPI_Probe
+
+end interface
+
+
+interface
+
+subroutine MPI_Parrived(request, partition, flag, ierror)
+  integer, intent(in) :: request
+  integer, intent(in) :: partition
+  logical, intent(out) :: flag
+  integer, intent(out) :: ierror
+end subroutine MPI_Parrived
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready(partition, request, ierror)
+  integer, intent(in) :: partition
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready_list(length, array_of_partitions, request, ierror)
+  integer, intent(in) :: length
+  integer, dimension(*), intent(in) :: array_of_partitions
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready_list
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready_range(partition_low, partition_high, request, ierror)
+  integer, intent(in) :: partition_low
+  integer, intent(in) :: partition_high
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready_range
 
 end interface
 
