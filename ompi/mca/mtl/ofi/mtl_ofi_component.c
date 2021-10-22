@@ -514,6 +514,37 @@ static int ompi_mtl_ofi_init_regular_ep(struct fi_info * prov, int universe_size
         return ret;
     }
 
+#if OPAL_CUDA_SUPPORT && HAVE_DECL_FI_OPT_FI_HMEM_P2P
+    /*
+     * Set the FI_HMEM peer to peer option to ENABLED. This notifies Libfabric
+     * that the provider can decide whether to use device peer to peer support
+     * for network transfers, and allows copies if p2p is not supported.
+     *
+     * Note that this option may not be supported by the provider, so continue
+     * if FI_HMEM is supported by the provider but it does not support this
+     * setopt option. This setopt parameter was introduced in Libfabric 1.14.
+     *
+     * The version check is needed as one of the Libfabric setopt handlers
+     * incorrectly assumed all option values are size_t, which was also fixed
+     * in 1.14.
+     */
+    int setopt_val = FI_HMEM_P2P_ENABLED;
+
+    if (FI_VERSION_GE(fi_version(), FI_VERSION(1, 14))) {
+            ret = fi_setopt(&ompi_mtl_ofi.sep->fid,
+                            FI_OPT_ENDPOINT, FI_OPT_FI_HMEM_P2P,
+                            &setopt_val, sizeof(setopt_val));
+
+            if (!(0 == ret || -FI_ENOPROTOOPT == ret)) {
+                opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
+                               "fi_setopt",
+                               ompi_process_info.nodename, __FILE__, __LINE__,
+                               fi_strerror(-ret), -ret);
+                return ret;
+            }
+    }
+#endif /* OPAL_CUDA_SUPPORT && FI_OPT_FI_HMEM_P2P */
+
     /**
      * Create the objects that will be bound to the endpoint.
      * The objects include:
