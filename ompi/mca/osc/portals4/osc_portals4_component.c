@@ -401,7 +401,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         opal_info_get(info, "mpi_minimum_memory_alignment",
                       &align_info_str, &flag);
         if (flag) {
-            ssize_t tmp_align = atoll(infoval);
+            size_t tmp_align = atoll(align_info_str->string);
             OBJ_RELEASE(align_info_str);
             if (OPAL_ALIGN_MIN < tmp_align) {
                 memory_alignment = tmp_align;
