@@ -34,7 +34,7 @@ struct ompi_mtl_ofi_request_t {
     ompi_mtl_ofi_request_type_t type;
 
     /** OFI context */
-    struct fi_context ctx;
+    struct fi_context2 ctx;
 
     /** Completion count used by blocking and/or synchronous operations */
     volatile int completion_count;

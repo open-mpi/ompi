@@ -462,7 +462,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__);
         goto error;
     }
-    hints->mode               = FI_CONTEXT;
+    hints->mode               = FI_CONTEXT | FI_CONTEXT2;
     hints->ep_attr->type      = FI_EP_RDM;      /* Reliable datagram         */
     hints->caps               = FI_TAGGED;      /* Tag matching interface    */
     hints->tx_attr->msg_order = FI_ORDER_SAS;
