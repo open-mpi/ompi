@@ -84,8 +84,8 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
 
     /* find a btl/endpoint to use for this peer */
     int ret = ompi_osc_rdma_peer_btl_endpoint (module, peer_id, &module_btl_index, &endpoint);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret && !((module->selected_btls[0]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) &&
-                                               peer_id == ompi_comm_rank (module->comm)))) {
+    if (OMPI_SUCCESS != ret) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "cannot find an endpoint for rank %d\n", peer->rank);
         return ret;
     }
 
