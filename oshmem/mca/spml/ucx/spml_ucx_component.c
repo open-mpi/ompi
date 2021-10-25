@@ -161,6 +161,11 @@ static int mca_spml_ucx_component_register(void)
                                      "Use synchronized quiet on shmem_quiet or shmem_barrier_all operations",
                                      &mca_spml_ucx_ctx_default.synchronized_quiet);
 
+    mca_spml_ucx_param_register_int("strong_sync", 0,
+                                    "Use strong synchronization on shmem_quiet, shmem_fence or shmem_barrier_all operations: "
+                                    "0 - don't do strong synchronization, 1 - use non blocking get, 2 - use blocking get, 3 - use flush operation",
+                                    &mca_spml_ucx_ctx_default.strong_sync);
+
     mca_spml_ucx_param_register_ulong("nb_progress_thresh_global", 0,
                                     "Number of nb_put or nb_get operations before ucx progress is triggered. Disabled by default (0). Setting this value will override nb_put/get_progress_thresh.",
                                     &mca_spml_ucx.nb_progress_thresh_global);
@@ -383,7 +388,14 @@ mca_spml_ucx_component_init(int* priority,
     if (OSHMEM_SUCCESS != spml_ucx_init())
         return NULL ;
 
+    if ((mca_spml_ucx_ctx_default.strong_sync < SPML_UCX_STRONG_ORDERING_NONE) ||
+        (mca_spml_ucx_ctx_default.strong_sync > SPML_UCX_STRONG_ORDERING_FLUSH)) {
+        SPML_UCX_ERROR("incorrect value of strong_sync parameter: %d",
+                       mca_spml_ucx_ctx_default.strong_sync);
+    }
+
     SPML_UCX_VERBOSE(50, "*** ucx initialized ****");
+
     return &mca_spml_ucx.super;
 }
 
