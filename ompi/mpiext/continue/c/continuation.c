@@ -92,7 +92,7 @@ static void ompi_cont_request_construct(ompi_cont_request_t* cont_req)
     OMPI_REQUEST_INIT(&cont_req->super, true);
     cont_req->super.req_type = OMPI_REQUEST_CONT;
     cont_req->super.req_complete = REQUEST_COMPLETED;
-    cont_req->super.req_state = OMPI_REQUEST_INACTIVE;
+    cont_req->super.req_state = OMPI_REQUEST_ACTIVE;
     cont_req->super.req_persistent = true;
     cont_req->super.req_free = &ompi_continue_request_free;
     cont_req->super.req_status = ompi_status_empty; /* always returns MPI_SUCCESS */
@@ -160,20 +160,22 @@ void ompi_continue_cont_release(ompi_continuation_t *cont)
     ompi_cont_request_t *cont_req = cont->cont_req;
     assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
 
-    const bool using_threads = opal_using_threads();
-    if (using_threads) {
-        opal_atomic_lock(&cont_req->cont_lock);
-    }
-    int num_active = --cont_req->cont_num_active;
+    int num_active = opal_atomic_add_fetch_32(&cont_req->cont_num_active, -1);
     assert(num_active >= 0);
     if (0 == num_active) {
-        assert(!REQUEST_COMPLETE(&cont_req->super));
-        opal_atomic_wmb();
-        /* signal that all continuations were found complete */
-        ompi_request_complete(&cont_req->super, true);
-    }
-    if (using_threads) {
-        opal_atomic_unlock(&cont_req->cont_lock);
+        const bool using_threads = opal_using_threads();
+        if (using_threads) {
+            opal_atomic_lock(&cont_req->cont_lock);
+        }
+        /* double check that no other thread has completed or restarted the request already */
+        if (0 == cont_req->cont_num_active && !REQUEST_COMPLETE(&cont_req->super)) {
+            opal_atomic_wmb();
+            /* signal that all continuations were found complete */
+            ompi_request_complete(&cont_req->super, true);
+        }
+        if (using_threads) {
+            opal_atomic_unlock(&cont_req->cont_lock);
+        }
     }
     OBJ_RELEASE(cont_req);
 
@@ -434,19 +436,19 @@ ompi_continuation_t *ompi_continue_cont_create(
     /* signal that the continuation request has a new continuation */
     OBJ_RETAIN(cont_req);
 
-    const bool using_threads = opal_using_threads();
-    if (using_threads) {
-        opal_atomic_lock(&cont_req->cont_lock);
-    }
-    int32_t num_active = cont_req->cont_num_active++;
+    int32_t num_active = opal_atomic_add_fetch_32(&cont_req->cont_num_active, 1);
     if (num_active == 0) {
-        /* (re)activate the continuation request upon first registration */
-        assert(REQUEST_COMPLETE(&cont_req->super));
-        cont_req->super.req_complete = REQUEST_PENDING;
-        cont_req->super.req_state = OMPI_REQUEST_ACTIVE;
-    }
-    if (using_threads) {
-        opal_atomic_unlock(&cont_req->cont_lock);
+        const bool using_threads = opal_using_threads();
+        if (using_threads) {
+            opal_atomic_lock(&cont_req->cont_lock);
+        }
+        if (0 != cont_req->cont_num_active && REQUEST_COMPLETE(&cont_req->super)) {
+            /* (re)activate the continuation request upon first registration */
+            cont_req->super.req_complete = REQUEST_PENDING;
+        }
+        if (using_threads) {
+            opal_atomic_unlock(&cont_req->cont_lock);
+        }
     }
 
     return cont;
@@ -477,15 +479,7 @@ static int request_completion_cb(ompi_request_t *request)
 
     /* inactivate / free the request */
     if (request->req_persistent) {
-        if (OMPI_REQUEST_CONT == request->req_type && opal_using_threads()) {
-            /* handle with care: another thread may register a new continuation already */
-            ompi_cont_request_t *cont_req = cont->cont_req;
-            opal_atomic_lock(&cont_req->cont_lock);
-            if (cont_req->cont_num_active == 0) {
-                cont_req->super.req_state = OMPI_REQUEST_INACTIVE;
-            }
-            opal_atomic_unlock(&cont_req->cont_lock);
-        } else {
+        if (OMPI_REQUEST_CONT != request->req_type) {
             request->req_state = OMPI_REQUEST_INACTIVE;
         }
     } else {
@@ -548,8 +542,6 @@ int ompi_continue_attach(
                 }
 
                 req_cont_data->cont_obj = cont;
-
-                assert(request->req_state == OMPI_REQUEST_ACTIVE || request->req_state == OMPI_REQUEST_INACTIVE);
 
                 ompi_request_set_callback(request, &request_completion_cb, req_cont_data);
                 ++num_registered;
