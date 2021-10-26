@@ -14,6 +14,7 @@
 ! Copyright (c) 2016-2018 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2021      Sandia National Laboratories. All rights reserved.
+! Copyright (c) 2021      IBM Corporation.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -1384,9 +1385,9 @@ interface
 subroutine MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE, count), intent(out) :: array_of_statuses
+  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Testall
 
@@ -1399,7 +1400,7 @@ subroutine MPI_Testany(count, array_of_requests, index, flag, status&
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -1415,7 +1416,7 @@ subroutine MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, 
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
@@ -1878,7 +1879,7 @@ interface
 subroutine MPI_Waitall(count, array_of_requests, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Waitall
@@ -1891,7 +1892,7 @@ interface
 subroutine MPI_Waitany(count, array_of_requests, index, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierror
@@ -1906,7 +1907,7 @@ subroutine MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices, 
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
