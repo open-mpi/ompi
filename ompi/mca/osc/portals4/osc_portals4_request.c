@@ -29,7 +29,7 @@ request_free(struct ompi_request_t **ompi_req)
     ompi_osc_portals4_request_t *request =
         (ompi_osc_portals4_request_t*) *ompi_req;
 
-    if (true != request->super.req_complete) {
+    if (!REQUEST_COMPLETE(&request->super)) {
         return MPI_ERR_REQUEST;
     }
 

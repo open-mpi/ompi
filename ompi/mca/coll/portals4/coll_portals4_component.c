@@ -655,7 +655,11 @@ portals4_module_enable(mca_coll_base_module_t *module,
     return OMPI_SUCCESS;
 }
 
-
+#if OPAL_ENABLE_DEBUG
+/* These string maps are only used for debugging output.
+ * They will be compiled-out when OPAL is configured
+ * without --enable-debug.
+ */
 static char *failtype[] = {
         "PTL_NI_OK",
         "PTL_NI_PERM_VIOLATION",
@@ -689,6 +693,7 @@ static char *evname[] = {
         "PTL_EVENT_SEARCH",
         "PTL_EVENT_LINK"
 };
+#endif
 
 /* Target EQ */
 static int
