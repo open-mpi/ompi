@@ -283,6 +283,8 @@ interface_profile_sources = \
         irsend.c \
         is_thread_main.c \
         isend.c \
+        isendrecv.c \
+        isendrecv_replace.c \
         issend.c \
         lookup_name.c \
         message_f2c.c \

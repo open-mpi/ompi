@@ -2491,6 +2491,50 @@ end subroutine MPI_Isend
 
 end interface
 
+interface
+
+subroutine MPI_Isendrecv(sendbuf, sendcount, sendtype, dest, sendtag, &
+        recvbuf, recvcount, recvtype, source, recvtag, comm, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  integer, intent(in) :: dest
+  integer, intent(in) :: sendtag
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: source
+  integer, intent(in) :: recvtag
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Isendrecv
+
+end interface
+
+interface
+
+subroutine MPI_Isendrecv_replace(buf, count, datatype, dest, sendtag, &
+        source, recvtag, comm, request, ierror)
+  include 'mpif-config.h'
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: sendtag
+  integer, intent(in) :: source
+  integer, intent(in) :: recvtag
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Isendrecv_replace
+
+end interface
+
 
 interface
 
