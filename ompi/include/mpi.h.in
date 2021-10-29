@@ -1700,6 +1700,13 @@ OMPI_DECLSPEC  int MPI_Irsend(const void *buf, int count, MPI_Datatype datatype,
                               int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
                              int tag, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                 int dest, int sendtag, void *recvbuf, int recvcount,
+                                 MPI_Datatype recvtype, int source, int recvtag,
+                                 MPI_Comm comm,  MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Isendrecv_replace(void * buf, int count, MPI_Datatype datatype,
+                                         int dest, int sendtag, int source, int recvtag,
+                                         MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Issend(const void *buf, int count, MPI_Datatype datatype, int dest,
                               int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Is_thread_main(int *flag);
@@ -2434,6 +2441,13 @@ OMPI_DECLSPEC  int PMPI_Irsend(const void *buf, int count, MPI_Datatype datatype
                                int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
                               int tag, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                                  int dest, int sendtag, void *recvbuf, int recvcount,
+                                  MPI_Datatype recvtype, int source, int recvtag,
+                                  MPI_Comm comm,  MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Isendrecv_replace(void * buf, int count, MPI_Datatype datatype,
+                                          int dest, int sendtag, int source, int recvtag,
+                                          MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Issend(const void *buf, int count, MPI_Datatype datatype, int dest,
                                int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Precv_init(void* buf, int partitions, MPI_Count count,
