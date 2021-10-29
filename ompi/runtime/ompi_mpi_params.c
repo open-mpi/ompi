@@ -406,10 +406,10 @@ int ompi_mpi_register_params(void)
 
 #if OPAL_ENABLE_FT_MPI
     /* Before loading any other part of the MPI library, we need to load
- *      * the ft-mpi tune file to override default component selection when
- *           * FT is desired ON; this does override openmpi-params.conf, but not
- *                * command line or env.
- *                     */
+     * the ft-mpi tune file to override default component selection when
+     * FT is desired ON; this does override openmpi-params.conf, but not
+     * command line or env.
+     */
     if( ompi_ftmpi_enabled ) {
         mca_base_var_load_extra_files("ft-mpi", false);
     }
