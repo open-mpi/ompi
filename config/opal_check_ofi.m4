@@ -142,6 +142,10 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                           [],
                           [#include <pmix.h>])
 
+           AC_CHECK_DECLS([FI_OPT_FI_HMEM_P2P],
+                          [], [],
+                          [#include <rdma/fi_endpoint.h>])
+
            AC_CHECK_TYPES([struct fi_ops_mem_monitor], [], [],
                           [#ifdef HAVE_RDMA_FI_EXT_H
 #include <rdma/fi_ext.h>
