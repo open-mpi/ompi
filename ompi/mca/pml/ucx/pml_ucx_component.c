@@ -49,6 +49,8 @@ mca_pml_base_component_2_0_0_t mca_pml_ucx_component = {
 
 static int mca_pml_ucx_component_register(void)
 {
+    int multi_send_op_attr_enable;
+
     ompi_pml_ucx.priority = 51;
     (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "priority",
                                            "Priority of the UCX component",
@@ -77,6 +79,20 @@ static int mca_pml_ucx_component_register(void)
 #else
     /* If UCX does not support ignoring leak check, then it's always enabled */
     ompi_pml_ucx.request_leak_check = true;
+#endif
+
+    ompi_pml_ucx.op_attr_nonblocking = 0;
+#if HAVE_DECL_UCP_OP_ATTR_FLAG_MULTI_SEND
+    multi_send_op_attr_enable        = 0;
+    (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "multi_send_nb",
+                                           "Enable passing multi-send optimization flag for nonblocking operations",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &multi_send_op_attr_enable);
+    if (multi_send_op_attr_enable) {
+        ompi_pml_ucx.op_attr_nonblocking = UCP_OP_ATTR_FLAG_MULTI_SEND;
+    }
 #endif
 
     opal_common_ucx_mca_var_register(&mca_pml_ucx_component.pmlm_version);
