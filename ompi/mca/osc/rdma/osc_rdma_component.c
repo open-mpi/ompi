@@ -491,6 +491,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     if (OPAL_UNLIKELY(NULL == module->rank_array)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    memset(module->rank_array, 0, total_size);
 
     /* Note, the extra module->region_size space added after local_rank_array_size
      * is unused but is there to match what happens in allocte_state_shared()
