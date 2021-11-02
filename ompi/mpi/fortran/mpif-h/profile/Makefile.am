@@ -289,8 +289,14 @@ linked_files = \
         ppack_external_size_f.c \
         ppack_f.c \
         ppack_size_f.c \
+        pparrived_f.c \
         ppcontrol_f.c \
+        ppready_f.c \
+        ppready_list_f.c \
+        ppready_range_f.c \
+        pprecv_init_f.c \
         pprobe_f.c \
+        ppsend_init_f.c \
         ppublish_name_f.c \
         pquery_thread_f.c \
         precv_f.c \

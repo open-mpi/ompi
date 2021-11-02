@@ -11,6 +11,7 @@
 !                         reserved.
 ! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2021      Bull S.A.S. All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -2493,6 +2494,94 @@ subroutine MPI_Issend(buf, count, datatype, dest, tag, &
 end subroutine MPI_Issend
 
 end interface
+
+
+interface
+
+subroutine MPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
+        comm, info, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: partitions 
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Psend_init
+
+end interface
+
+
+interface
+
+subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
+        comm, info, request, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: partitions
+  integer, intent(in) :: count 
+  integer, intent(in) :: datatype
+  integer, intent(in) :: dest
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Precv_init
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready(partition, request, ierror)
+  integer, intent(in) :: partition
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready_list(length, partitions, request, ierror)
+  integer, intent(in) :: length
+  integer, dimension(*), intent(in) :: partitions
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready_list
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready_range(partition_low, partition_high, request, ierror)
+  integer, intent(in) :: partition_low
+  integer, intent(in) :: partition_high
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready_range
+
+end interface
+
+
+interface
+
+subroutine MPI_Parrived(request, partition, flag, ierror)
+  integer, intent(in) :: request
+  integer, intent(in) :: partition
+  logical, intent(in) :: flag
+  integer, intent(out) :: ierror
+end subroutine MPI_Parrived
+
+end interface
+
 
 interface
 
