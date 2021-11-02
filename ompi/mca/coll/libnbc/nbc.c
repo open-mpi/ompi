@@ -522,30 +522,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
           buf2=opargs.buf2;
         }
 
-        /* If the count is > INT_MAX then we need to call ompi_op_reduce()
-         * in iterations of counts <= INT_MAX since it has an `int count`
-         * parameter.
-         */
-        if( OPAL_UNLIKELY(opargs.count > INT_MAX) ) {
-          size_t done_count = 0, shift;
-          int iter_count;
-          ptrdiff_t ext, lb;
-
-          ompi_datatype_get_extent (opargs.datatype, &lb, &ext);
-
-          while(done_count < opargs.count) {
-            if( done_count + INT_MAX > opargs.count ) {
-              iter_count = opargs.count - done_count;
-            } else {
-              iter_count = INT_MAX;
-            }
-            shift = done_count * ext;
-            ompi_op_reduce(opargs.op, buf1 + shift, buf2 + shift, iter_count, opargs.datatype);
-            done_count += iter_count;
-          }
-        } else {
-          ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
-        }
+        ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
         break;
       case COPY:
         NBC_DEBUG(5, "  COPY   (offset %li) ", offset);
