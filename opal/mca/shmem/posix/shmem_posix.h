@@ -33,7 +33,7 @@
 #define OPAL_SHMEM_POSIX_MAX_ATTEMPTS 128
 
 /* need the '/' for Solaris 10 and others, i'm sure */
-#define OPAL_SHMEM_POSIX_FILE_NAME_PREFIX "/open_mpi."
+#define OPAL_SHMEM_POSIX_FILE_NAME_PREFIX "/ompi"
 
 /* posix sm file name length max.  on some systems shm_open's file name limit
  * is pretty low (32 chars, for instance).  16 is plenty for our needs, but
