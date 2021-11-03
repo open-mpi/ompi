@@ -35,7 +35,9 @@ BEGIN_C_DECLS
 #include "opal_config.h"
 
 /**
- * this routine searches for an available shm_open file name.
+ * this routine searches for an available shm_open file name. size is the
+ * maximum number of bytes that can be written to posix_file_name_buff,
+ * including the NULL terminator
  *
  * @return if successful, a non-negative file descriptor is returned and
  * posix_file_name_buff will contain the file name associated with the

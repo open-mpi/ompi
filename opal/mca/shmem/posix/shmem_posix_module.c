@@ -165,7 +165,7 @@ static int segment_create(opal_shmem_ds_t *ds_buf, const char *file_name, size_t
      */
     if (-1
         == (ds_buf->seg_id = shmem_posix_shm_open(ds_buf->seg_name,
-                                                  OPAL_SHMEM_POSIX_FILE_LEN_MAX - 1))) {
+                                                  OPAL_SHMEM_POSIX_FILE_LEN_MAX))) {
         /* snaps!  something happened in posix_shm_open.  don't report anything
          * here because posix_shm_open will display all the necessary info.
          */
