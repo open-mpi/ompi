@@ -57,9 +57,13 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.0.7 -- October, 2021
+4.0.7 -- November, 2021
 ----------------------
 
+- Fix an issue with MPI_IALLREDUCE_SCATTER when using large count
+  arguments.
+- Fixed an issue with POST/START/COMPLETE/WAIT when using subsets
+  of processes.  Thanks to Thomas Gilles for reporting.
 - Numerous fixes from vendor partners.
 - Fix a problem with a couple of MPI_IALLREDUCE algorithms.  Thanks to 
   John Donners for reporting.
