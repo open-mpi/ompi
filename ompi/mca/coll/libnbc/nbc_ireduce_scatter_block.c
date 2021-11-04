@@ -43,7 +43,8 @@
 static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                          MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
-  int peer, rank, maxr, p, res, count;
+  int peer, rank, maxr, p, res;
+  size_t count;
   MPI_Aint ext;
   ptrdiff_t gap, span;
   char *redbuf, *sbuf, inplace;
@@ -228,7 +229,8 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
 static int nbc_reduce_scatter_block_inter_init(const void *sendbuf, void *recvbuf, int rcount, struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t **request,
                                                struct mca_coll_base_module_2_3_0_t *module, bool persistent) {
-  int rank, res, count, lsize, rsize;
+  int rank, res, lsize, rsize;
+  size_t count;
   MPI_Aint ext;
   ptrdiff_t gap, span, span_align;
   NBC_Schedule *schedule;
