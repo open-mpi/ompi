@@ -10,7 +10,7 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -167,7 +167,8 @@ static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int
         return res;
       }
     } else {
-      for (int r = 1, offset = 0 ; r < p ; ++r) {
+      size_t offset = 0;
+      for (int r = 1 ; r < p ; ++r) {
         offset += recvcount;
         sbuf = lbuf + (offset*ext);
         /* root sends the right buffer to the right receiver */
