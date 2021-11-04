@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -541,10 +542,41 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
  * is not defined to have that operation, it is likely to seg fault.
  */
 static inline void ompi_op_reduce(ompi_op_t * op, void *source,
-                                  void *target, int count,
+                                  void *target, size_t full_count,
                                   ompi_datatype_t * dtype)
 {
     MPI_Fint f_dtype, f_count;
+    int count = full_count;
+
+    /*
+     * If the full_count is > INT_MAX then we need to call the reduction op
+     * in iterations of counts <= INT_MAX since it has an `int *len`
+     * parameter.
+     *
+     * Note: When we add BigCount support then we can distinguish between
+     * a reduction operation with `int *len` and `MPI_Count *len`. At which
+     * point we can avoid this loop.
+     */
+    if( OPAL_UNLIKELY(full_count > INT_MAX) ) {
+        size_t done_count = 0, shift;
+        int iter_count;
+        ptrdiff_t ext, lb;
+
+        ompi_datatype_get_extent(dtype, &lb, &ext);
+
+        while(done_count < full_count) {
+            if(done_count + INT_MAX > full_count) {
+                iter_count = full_count - done_count;
+            } else {
+                iter_count = INT_MAX;
+            }
+            shift = done_count * ext;
+            // Recurse one level in iterations of 'int'
+            ompi_op_reduce(op, (char*)source + shift, (char*)target + shift, iter_count, dtype);
+            done_count += iter_count;
+        }
+        return;
+    }
 
     /*
      * Call the reduction function.  Two dimensions: a) if both the op
