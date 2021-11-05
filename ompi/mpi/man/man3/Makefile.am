@@ -247,6 +247,7 @@ TEMPLATE_FILES = \
         MPI_Info_get.3in \
         MPI_Info_get_nkeys.3in \
         MPI_Info_get_nthkey.3in \
+        MPI_Info_get_string.3in \
         MPI_Info_get_valuelen.3in \
         MPI_Info_set.3in \
         MPI_Init.3in \
