@@ -28,9 +28,7 @@ check_PROGRAMS = \
 	opal_condition \
 	opal_atomic_thread_bench
 
-# JMS possibly to be re-added when #1232 is fixed
-#TESTS = $(check_PROGRAMS)
-TESTS =
+TESTS = $(check_PROGRAMS)
 
 opal_thread_SOURCES = opal_thread.c
 opal_thread_LDADD = \
