@@ -566,7 +566,7 @@ int mca_pml_ucx_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
 {
 #if HAVE_DECL_UCP_TAG_RECV_NBX
     pml_ucx_datatype_t *op_data = mca_pml_ucx_get_op_data(datatype);
-    ucp_request_param_t *param  = &op_data->op_param.recv;
+    ucp_request_param_t *param  = &op_data->op_param.irecv;
 #endif
 
     ucp_tag_t ucp_tag, ucp_tag_mask;
@@ -834,7 +834,7 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
 #if HAVE_DECL_UCP_TAG_SEND_NBX
     req = (ompi_request_t*)mca_pml_ucx_common_send_nbx(ep, buf, count, datatype,
                                                        PML_UCX_MAKE_SEND_TAG(tag, comm), mode,
-                                                       &mca_pml_ucx_get_op_data(datatype)->op_param.send);
+                                                       &mca_pml_ucx_get_op_data(datatype)->op_param.isend);
 #else
     req = (ompi_request_t*)mca_pml_ucx_common_send(ep, buf, count, datatype,
                                                    mca_pml_ucx_get_datatype(datatype),
