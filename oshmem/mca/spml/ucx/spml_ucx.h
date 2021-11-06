@@ -216,6 +216,71 @@ int mca_spml_ucx_peer_mkey_cache_del(ucp_peer_t *ucp_peer, int segno);
 void mca_spml_ucx_peer_mkey_cache_release(ucp_peer_t *ucp_peer);
 void mca_spml_ucx_peer_mkey_cache_init(mca_spml_ucx_ctx_t *ucx_ctx, int pe);
 
+extern int mca_spml_ucx_put_signal(shmem_ctx_t ctx, void* dst_addr, size_t size, void*
+        src_addr, uint64_t *sig_addr, uint64_t signal, int sig_op, int dst);
+
+extern int mca_spml_ucx_put_signal_nb(shmem_ctx_t ctx, void* dst_addr, size_t size,
+        void* src_addr, uint64_t *sig_addr, uint64_t signal, int sig_op, int
+        dst);
+extern int mca_spml_ucx_wait_until_all(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, const int *status, int datatype);
+extern int mca_spml_ucx_wait_until_any(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, const int *status, int datatype);
+extern int mca_spml_ucx_wait_until_some(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, size_t *indices, const int *status, int
+        datatype);
+extern int mca_spml_ucx_wait_until_all_vector(void *ivars, int cmp, void
+        *cmp_values, size_t nelems, const int *status, int datatype);
+extern int mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, const int *status, int datatype);
+extern int mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, size_t *indices, const int *status, int
+        datatype);
+extern int mca_spml_ucx_test_all(void *ivars, int cmp, void *cmp_value,
+        size_t nelems, const int *status, int datatype);
+extern int mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value,
+        size_t nelems, const int *status, int datatype);
+extern int mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value,
+        size_t nelems, size_t *indices, const int *status, int datatype);
+extern int mca_spml_ucx_test_all_vector(void *ivars, int cmp, void
+        *cmp_values, size_t nelems, const int *status, int datatype);
+extern int mca_spml_ucx_test_any_vector(void *ivars, int cmp, void
+        *cmp_values, size_t nelems, const int *status, int datatype);
+extern int mca_spml_ucx_test_some_vector(void *ivars, int cmp, void
+        *cmp_values, size_t nelems, size_t *indices, const int *status, int
+        datatype);
+extern int mca_spml_ucx_team_sync(shmem_team_t team);
+extern int mca_spml_ucx_team_my_pe(shmem_team_t team);
+extern int mca_spml_ucx_team_n_pes(shmem_team_t team);
+extern int mca_spml_ucx_team_get_config(shmem_team_t team, long config_mask,
+        shmem_team_config_t *config);
+extern int mca_spml_ucx_team_translate_pe(shmem_team_t src_team, int src_pe,
+        shmem_team_t dest_team);
+extern int mca_spml_ucx_team_split_strided(shmem_team_t parent_team, int start, int
+        stride, int size, const shmem_team_config_t *config, long config_mask,
+        shmem_team_t *new_team);
+extern int mca_spml_ucx_team_split_2d(shmem_team_t parent_team, int xrange, const
+        shmem_team_config_t *xaxis_config, long xaxis_mask, shmem_team_t
+        *xaxis_team, const shmem_team_config_t *yaxis_config, long yaxis_mask,
+        shmem_team_t *yaxis_team);
+extern int mca_spml_ucx_team_destroy(shmem_team_t team);
+extern int mca_spml_ucx_team_get(shmem_ctx_t ctx, shmem_team_t *team);
+extern int mca_spml_ucx_team_create_ctx(shmem_team_t team, long options, shmem_ctx_t *ctx);
+extern int mca_spml_ucx_team_alltoall(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype);
+extern int mca_spml_ucx_team_alltoalls(shmem_team_t team, void
+        *dest, const void *source, ptrdiff_t dst, ptrdiff_t sst, size_t nelems,
+        int datatype);
+extern int mca_spml_ucx_team_broadcast(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int PE_root, int datatype);
+extern int mca_spml_ucx_team_collect(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype);
+extern int mca_spml_ucx_team_fcollect(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype);
+extern int mca_spml_ucx_team_reduce(shmem_team_t team, void
+        *dest, const void *source, size_t nreduce, int operation, int datatype);
+
+
 static inline int
 mca_spml_ucx_peer_mkey_get(ucp_peer_t *ucp_peer, int index, spml_ucx_cached_mkey_t **out_rmkey)
 {

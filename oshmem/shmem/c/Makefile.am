@@ -70,6 +70,20 @@ OSHMEM_API_SOURCES = \
 	shmem_set_lock.c \
 	shmem_test_lock.c \
 	shmem_global_exit.c \
+	shmem_cswap_nb.c  \
+	shmem_fadd_nb.c \
+	shmem_fand_nb.c \
+	shmem_fetch_nb.c \
+	shmem_finc_nb.c \
+	shmem_for_nb.c \
+	shmem_fxor_nb.c \
+	shmem_pcontrol.c \
+	shmem_put_signal.c \
+	shmem_put_signal_nb.c \
+	shmem_swap_nb.c \
+	shmem_team.c \
+	shmem_wait_ivars.c \
+	shmem_test_ivars.c \
 	shmem_info.c
 
 AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
