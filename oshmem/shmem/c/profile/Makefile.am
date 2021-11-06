@@ -82,6 +82,20 @@ OSHMEM_API_SOURCES = \
 	pshmem_set_lock.c \
 	pshmem_test_lock.c \
 	pshmem_global_exit.c \
+	pshmem_cswap_nb.c  \
+	pshmem_fadd_nb.c \
+	pshmem_fand_nb.c \
+	pshmem_fetch_nb.c \
+	pshmem_finc_nb.c \
+	pshmem_for_nb.c \
+	pshmem_fxor_nb.c \
+	pshmem_pcontrol.c \
+	pshmem_put_signal.c \
+	pshmem_put_signal_nb.c \
+	pshmem_swap_nb.c \
+	pshmem_team.c \
+	pshmem_wait_ivars.c \
+	pshmem_test_ivars.c \
 	pshmem_info.c
 
 nodist_liboshmem_c_pshmem_la_SOURCES = \

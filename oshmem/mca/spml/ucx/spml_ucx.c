@@ -57,13 +57,12 @@ mca_spml_ucx_t mca_spml_ucx = {
         .spml_ctx_destroy   = mca_spml_ucx_ctx_destroy,
         .spml_put           = mca_spml_ucx_put,
         .spml_put_nb        = mca_spml_ucx_put_nb,
+        .spml_put_signal    = mca_spml_ucx_put_signal,
+        .spml_put_signal_nb = mca_spml_ucx_put_signal_nb,
         .spml_get           = mca_spml_ucx_get,
         .spml_get_nb        = mca_spml_ucx_get_nb,
         .spml_recv          = mca_spml_ucx_recv,
         .spml_send          = mca_spml_ucx_send,
-        .spml_wait          = mca_spml_base_wait,
-        .spml_wait_nb       = mca_spml_base_wait_nb,
-        .spml_test          = mca_spml_base_test,
         .spml_fence         = mca_spml_ucx_fence,
         .spml_quiet         = mca_spml_ucx_quiet,
         .spml_rmkey_unpack  = mca_spml_ucx_rmkey_unpack,
@@ -71,7 +70,38 @@ mca_spml_ucx_t mca_spml_ucx = {
         .spml_rmkey_ptr     = mca_spml_ucx_rmkey_ptr,
         .spml_memuse_hook   = mca_spml_ucx_memuse_hook,
         .spml_put_all_nb    = mca_spml_ucx_put_all_nb,
-        .self               = (void*)&mca_spml_ucx
+        .spml_wait                      = mca_spml_base_wait,
+        .spml_wait_nb                   = mca_spml_base_wait_nb,
+        .spml_wait_until_all            = mca_spml_ucx_wait_until_all,
+        .spml_wait_until_any            = mca_spml_ucx_wait_until_any,
+        .spml_wait_until_some           = mca_spml_ucx_wait_until_some,
+        .spml_wait_until_all_vector     = mca_spml_ucx_wait_until_all_vector,
+        .spml_wait_until_any_vector     = mca_spml_ucx_wait_until_any_vector,
+        .spml_wait_until_some_vector    = mca_spml_ucx_wait_until_some_vector,
+        .spml_test                      = mca_spml_base_test,
+        .spml_test_all          	= mca_spml_ucx_test_all,
+        .spml_test_any          	= mca_spml_ucx_test_any,
+        .spml_test_some         	= mca_spml_ucx_test_some,
+        .spml_test_all_vector   	= mca_spml_ucx_test_all_vector,
+        .spml_test_any_vector   	= mca_spml_ucx_test_any_vector,
+        .spml_test_some_vector  	= mca_spml_ucx_test_some_vector,
+        .spml_team_sync                 = mca_spml_ucx_team_sync,
+        .spml_team_my_pe                = mca_spml_ucx_team_my_pe,
+        .spml_team_n_pes                = mca_spml_ucx_team_n_pes,
+        .spml_team_get_config           = mca_spml_ucx_team_get_config,
+        .spml_team_translate_pe         = mca_spml_ucx_team_translate_pe,
+        .spml_team_split_strided        = mca_spml_ucx_team_split_strided,
+        .spml_team_split_2d             = mca_spml_ucx_team_split_2d,
+        .spml_team_destroy              = mca_spml_ucx_team_destroy,
+        .spml_team_get                  = mca_spml_ucx_team_get,
+        .spml_team_create_ctx           = mca_spml_ucx_team_create_ctx,
+        .spml_team_alltoall             = mca_spml_ucx_team_alltoall,
+        .spml_team_alltoalls            = mca_spml_ucx_team_alltoalls,
+        .spml_team_broadcast            = mca_spml_ucx_team_broadcast,
+        .spml_team_collect              = mca_spml_ucx_team_collect,
+        .spml_team_fcollect             = mca_spml_ucx_team_fcollect,
+        .spml_team_reduce               = mca_spml_ucx_team_reduce,
+        .self                           = (void*)&mca_spml_ucx
     },
 
     .ucp_context            = NULL,
@@ -1439,3 +1469,217 @@ int mca_spml_ucx_put_all_nb(void *dest, const void *source, size_t size, long *c
 
     return OSHMEM_SUCCESS;
 }
+
+/* This routine is not implemented */
+int mca_spml_ucx_put_signal(shmem_ctx_t ctx, void* dst_addr, size_t size, void*
+        src_addr, uint64_t *sig_addr, uint64_t signal, int sig_op, int dst)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_put_signal_nb(shmem_ctx_t ctx, void* dst_addr, size_t size,
+        void* src_addr, uint64_t *sig_addr, uint64_t signal, int sig_op, int
+        dst)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_wait_until_all(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_wait_until_any(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_wait_until_some(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, size_t *indices, const int *status, int
+        datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_wait_until_all_vector(void *ivars, int cmp, void
+        *cmp_values, size_t nelems, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, size_t *indices, const int *status, int
+        datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_test_all(void *ivars, int cmp, void *cmp_value,
+        size_t nelems, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value,
+        size_t nelems, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value,
+        size_t nelems, size_t *indices, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_test_all_vector(void *ivars, int cmp, void
+        *cmp_values, size_t nelems, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_test_any_vector(void *ivars, int cmp, void
+        *cmp_values, size_t nelems, const int *status, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_test_some_vector(void *ivars, int cmp, void
+        *cmp_values, size_t nelems, size_t *indices, const int *status, int
+        datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_sync(shmem_team_t team)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_my_pe(shmem_team_t team)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_n_pes(shmem_team_t team)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_get_config(shmem_team_t team, long config_mask,
+        shmem_team_config_t *config)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_translate_pe(shmem_team_t src_team, int src_pe,
+        shmem_team_t dest_team)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_split_strided(shmem_team_t parent_team, int start, int
+        stride, int size, const shmem_team_config_t *config, long config_mask,
+        shmem_team_t *new_team)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_split_2d(shmem_team_t parent_team, int xrange, const
+        shmem_team_config_t *xaxis_config, long xaxis_mask, shmem_team_t
+        *xaxis_team, const shmem_team_config_t *yaxis_config, long yaxis_mask,
+        shmem_team_t *yaxis_team)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_destroy(shmem_team_t team)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_get(shmem_ctx_t ctx, shmem_team_t *team)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_create_ctx(shmem_team_t team, long options, shmem_ctx_t *ctx)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_alltoall(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_alltoalls(shmem_team_t team, void
+        *dest, const void *source, ptrdiff_t dst, ptrdiff_t sst, size_t nelems,
+        int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_broadcast(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int PE_root, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_collect(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_fcollect(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* This routine is not implemented */
+int mca_spml_ucx_team_reduce(shmem_team_t team, void
+        *dest, const void *source, size_t nreduce, int operation, int datatype)
+{
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+

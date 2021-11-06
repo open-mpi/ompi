@@ -68,20 +68,22 @@
 #pragma weak shmemx_int32_wait_until = pshmemx_int32_wait_until
 #pragma weak shmemx_int64_wait_until = pshmemx_int64_wait_until
 
-#pragma weak shmem_short_test = pshmem_short_test
-#pragma weak shmem_int_test = pshmem_int_test
-#pragma weak shmem_long_test = pshmem_long_test
-#pragma weak shmem_longlong_test = pshmem_longlong_test
-#pragma weak shmem_ushort_test = pshmem_ushort_test
-#pragma weak shmem_uint_test = pshmem_uint_test
-#pragma weak shmem_ulong_test = pshmem_ulong_test
-#pragma weak shmem_ulonglong_test = pshmem_ulonglong_test
-#pragma weak shmem_int32_test = pshmem_int32_test
-#pragma weak shmem_int64_test = pshmem_int64_test
-#pragma weak shmem_uint32_test = pshmem_uint32_test
-#pragma weak shmem_uint64_test = pshmem_uint64_test
-#pragma weak shmem_size_test = pshmem_size_test
-#pragma weak shmem_ptrdiff_test = pshmem_ptrdiff_test
+#pragma weak shmem_short_test             = pshmem_short_test
+#pragma weak shmem_int_test               = pshmem_int_test
+#pragma weak shmem_long_test              = pshmem_long_test
+#pragma weak shmem_longlong_test          = pshmem_longlong_test
+#pragma weak shmem_ushort_test            = pshmem_ushort_test
+#pragma weak shmem_uint_test              = pshmem_uint_test
+#pragma weak shmem_ulong_test             = pshmem_ulong_test
+#pragma weak shmem_ulonglong_test         = pshmem_ulonglong_test
+#pragma weak shmem_int32_test             = pshmem_int32_test
+#pragma weak shmem_int64_test             = pshmem_int64_test
+#pragma weak shmem_uint32_test            = pshmem_uint32_test
+#pragma weak shmem_uint64_test            = pshmem_uint64_test
+#pragma weak shmem_size_test              = pshmem_size_test
+#pragma weak shmem_ptrdiff_test           = pshmem_ptrdiff_test
+
+
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
