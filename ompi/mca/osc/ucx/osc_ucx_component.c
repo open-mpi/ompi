@@ -451,22 +451,24 @@ select_unlock:
 
         ret = opal_common_ucx_wpmem_create(module->ctx, base, size,
                                          mem_type, &exchange_len_info,
+                                         OPAL_COMMON_UCX_WPMEM_ADDR_EXCHANGE_FULL,
                                          (void *)module->comm,
                                            &my_mem_addr, &my_mem_addr_size,
                                            &module->mem);
         if (ret != OMPI_SUCCESS) {
             goto error;
         }
-
     }
 
     state_base = (void *)&(module->state);
     ret = opal_common_ucx_wpmem_create(module->ctx, &state_base,
                                      sizeof(ompi_osc_ucx_state_t),
-                                     OPAL_COMMON_UCX_MEM_MAP, &exchange_len_info,
+                                     OPAL_COMMON_UCX_MEM_MAP,
+                                     &exchange_len_info,
+                                     OPAL_COMMON_UCX_WPMEM_ADDR_EXCHANGE_FULL,
                                      (void *)module->comm,
-                                       &my_mem_addr, &my_mem_addr_size,
-                                       &module->state_mem);
+                                     &my_mem_addr, &my_mem_addr_size,
+                                     &module->state_mem);
     if (ret != OMPI_SUCCESS) {
         goto error;
     }
@@ -567,6 +569,10 @@ int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_
                                            uint64_t base, size_t len, int *insert) {
     int mid_index = (max_index + min_index) >> 1;
 
+    if (dynamic_wins[mid_index].size == 1) {
+        len = 0;
+    }
+
     if (min_index > max_index) {
         (*insert) = min_index;
         return -1;
@@ -615,6 +621,7 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
 
     ret = opal_common_ucx_wpmem_create(module->ctx, &base, len,
                                        OPAL_COMMON_UCX_MEM_MAP, &exchange_len_info,
+                                       OPAL_COMMON_UCX_WPMEM_ADDR_EXCHANGE_DIRECT,
                                        (void *)module->comm,
                                        &(module->local_dynamic_win_info[insert_index].my_mem_addr),
                                        &(module->local_dynamic_win_info[insert_index].my_mem_addr_size),
@@ -680,7 +687,9 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     }
     OBJ_DESTRUCT(&module->pending_posts);
 
-    opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+    if (NULL != module->mem) {
+        opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+    }
 
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
@@ -699,7 +708,9 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     free(module->state_addrs);
 
     opal_common_ucx_wpmem_free(module->state_mem);
-    opal_common_ucx_wpmem_free(module->mem);
+    if (NULL != module->mem) {
+        opal_common_ucx_wpmem_free(module->mem);
+    }
 
     opal_common_ucx_wpctx_release(module->ctx);
 
