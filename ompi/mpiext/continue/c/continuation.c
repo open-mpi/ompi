@@ -436,7 +436,7 @@ ompi_continuation_t *ompi_continue_cont_create(
     /* signal that the continuation request has a new continuation */
     OBJ_RETAIN(cont_req);
 
-    int32_t num_active = opal_atomic_add_fetch_32(&cont_req->cont_num_active, 1);
+    int32_t num_active = opal_atomic_fetch_add_32(&cont_req->cont_num_active, 1);
     if (num_active == 0) {
         const bool using_threads = opal_using_threads();
         if (using_threads) {
