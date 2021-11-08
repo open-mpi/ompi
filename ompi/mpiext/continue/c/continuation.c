@@ -556,10 +556,11 @@ int ompi_continue_attach(
         }
     }
 
+    assert(count >= num_registered);
     int num_complete = count - num_registered;
     int32_t last_num_active = OPAL_THREAD_ADD_FETCH32(&cont->num_active,
                                                       -num_complete);
-    if (0 == last_num_active && 0 < num_complete) {
+    if (0 == last_num_active && 0 == num_registered) {
         if (cont_req->cont_enqueue_complete) {
             /* enqueue for later processing */
             ompi_continue_enqueue_runnable(cont);
