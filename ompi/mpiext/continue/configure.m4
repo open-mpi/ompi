@@ -22,12 +22,14 @@ AC_DEFUN([OMPI_MPIEXT_continue_CONFIG],[
     AS_IF([test "$ENABLE_continue" = "1"],
           [$1],
           [$2])
-
-    AS_IF([test "$ENABLE_continue" = "1"],
-          [AC_DEFINE_UNQUOTED([OMPI_HAVE_MPI_EXT_CONTINUE], [1],
-                              [Whether MPI Continuations are enabled])],
-          [])
 ])dnl
 
 # we need init/finalize
 AC_DEFUN([OMPI_MPIEXT_continue_NEED_INIT], [1])
+
+AC_DEFUN([OMPI_MPIEXT_continue_POST_CONFIG], [
+    AS_IF([test "$ENABLE_continue" = "1"],
+          [AC_DEFINE_UNQUOTED([OMPI_HAVE_MPI_EXT_CONTINUE], [1],
+                              [Whether MPI Continuations are enabled])],
+          [])
+])
