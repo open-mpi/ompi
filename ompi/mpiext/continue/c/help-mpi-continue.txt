@@ -12,5 +12,5 @@
 # This is the US/English general help file for the OMPI Continuations extension.
 #
 [continue:incomplete_shutdown]
-WARNING: Found %d incomplete continuations found in during shutdown!
+WARNING: Found %zu incomplete continuations during shutdown!
 #

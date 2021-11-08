@@ -33,7 +33,9 @@ libmpiext_continue_c_la_SOURCES = \
     continue_init.c \
     mpiext_continue_module.c
 
-libmpiext_continue_c_la_LDFLAGS = -module -avoid-version
+#libmpiext_continue_c_la_LDFLAGS = -module -avoid-version
+
+dist_ompidata_DATA = help-mpi-continue.txt
 
 ompi_HEADERS = $(headers)
 
