@@ -1647,13 +1647,52 @@ if (list_contains("pmix", @disabled_3rdparty_packages)) {
     if (! -f "3rd-party/openpmix/configure.ac") {
         my_die("Could not find pmix files\n");
     }
-    push(@subdirs, "3rd-party/openpmix/");
     $m4 .= "m4_define([package_pmix], [1])\n";
 
     # Grab the unique configure options from each of the 3rd party packages
     safe_system("./config/extract-3rd-party-configure.pl -p \"3rd-party/openpmix/\" -n \"PMIx\" -e config/auto-generated-ompi-exclude.ini > config/auto-extracted-pmix-configure-args.m4");
     # Add the additional configure options from PMIx
     safe_system("./config/extract-3rd-party-configure.pl -p \"3rd-party/openpmix/\" -n \"PMIx\" -l >> config/auto-generated-ompi-exclude.ini");
+
+    my $start = Cwd::cwd();
+    my $check = chdir("3rd-party/openpmix");
+    if (0 == $check) {
+        my_die "Could not change to 3rd-party/openpmix\n";
+    }
+
+    my $aclocal = "aclocal";
+    my $autoconf = "autoconf";
+
+    my $aclocal_env = $ENV{"ACLOCAL"};
+    my $autoconf_env = $ENV{"AUTOCONF"};
+
+    if (defined($aclocal_env)) {
+	$aclocal = $aclocal_env;
+    }
+    if (defined($autoconf_env)) {
+	$autoconf = $autoconf_env;
+    }
+
+    $ENV{"ACLOCAL"} = "$aclocal -I ../../config/3rd-party/openpmix";
+    $ENV{"AUTOCONF"} = "$autoconf -I ../../config/3rd-party/openpmix";
+
+    # Run an action depending on what we find in that subdir
+    if (-x "autogen.pl") {
+        print "--- Found autogen.pl; running...\n";
+        safe_system("./autogen.pl");
+    } else {
+        my_die "Did not find PMIx's autogenpl";
+    }
+
+    $ENV{"ACLOCAL"} = $aclocal_env;
+    $ENV{"AUTOCONF"} = $autoconf_env;
+
+    # Ensure that we got a good configure executable.
+    my_die "Did not generate a \"configure\" executable in 3rd-party/openpmix.\n"
+        if (! -x "configure");
+
+    # Chdir back to where we came from
+    chdir($start);
 
     verbose "--- PMIx enabled\n";
 }
@@ -1666,11 +1705,51 @@ if (list_contains("prrte", @disabled_3rdparty_packages)) {
     if (! -f "3rd-party/prrte/configure.ac") {
         my_die("Could not find pmix files\n");
     }
-    push(@subdirs, "3rd-party/prrte/");
     $m4 .= "m4_define([package_prrte], [1])\n";
 
     # Grab the unique configure options from each of the 3rd party packages
     safe_system("./config/extract-3rd-party-configure.pl -p \"3rd-party/prrte/\" -n \"PRRTE\" -e config/auto-generated-ompi-exclude.ini > config/auto-extracted-prrte-configure-args.m4");
+
+
+    my $start = Cwd::cwd();
+    my $check = chdir("3rd-party/prrte");
+    if (0 == $check) {
+        my_die "Could not change to 3rd-party/prrte\n";
+    }
+
+    my $aclocal = "aclocal";
+    my $autoconf = "autoconf";
+
+    my $aclocal_env = $ENV{"ACLOCAL"};
+    my $autoconf_env = $ENV{"AUTOCONF"};
+
+    if (defined($aclocal_env)) {
+	$aclocal = $aclocal_env;
+    }
+    if (defined($autoconf_env)) {
+	$autoconf = $autoconf_env;
+    }
+
+    $ENV{"ACLOCAL"} = "$aclocal -I ../../config/3rd-party/prrte";
+    $ENV{"AUTOCONF"} = "$autoconf -I ../../config/3rd-party/prrte";
+
+    # Run an action depending on what we find in that subdir
+    if (-x "autogen.pl") {
+        print "--- Found autogen.pl; running...\n";
+        safe_system("./autogen.pl");
+    } else {
+        my_die "Did not find PRRTE's autogenpl";
+    }
+
+    $ENV{"ACLOCAL"} = $aclocal_env;
+    $ENV{"AUTOCONF"} = $autoconf_env;
+
+    # Ensure that we got a good configure executable.
+    my_die "Did not generate a \"configure\" executable in 3rd-party/prrte.\n"
+        if (! -x "configure");
+
+    # Chdir back to where we came from
+    chdir($start);
 
     verbose "--- PRRTE enabled\n";
 }
