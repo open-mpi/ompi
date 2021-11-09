@@ -87,7 +87,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
                 internal_pmix_libs="$internal_pmix_libs $opal_hwloc_LIBS"])
 
          AS_IF([test ! -z "$internal_pmix_libs"],
-               [internal_pmix_args="$internal_pmix_args --with-prte-extra-lib=\"$internal_pmix_libs\""])
+               [internal_pmix_args="$internal_pmix_args --with-pmix-extra-lib=\"$internal_pmix_libs\""])
 
          if test "$WANT_DEBUG" = "1"; then
              internal_pmix_args="$internal_pmix_args --enable-debug"
