@@ -147,7 +147,6 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
 
     internal_prrte_CPPFLAGS=
     internal_prrte_args="--with-proxy-version-string=$OPAL_VERSION --with-proxy-package-name=\"Open MPI\" --with-proxy-bugreport=\"https://www.open-mpi.org/community/help/\""
-    internal_prrte_libs=
 
     # Set --enable-prte-prefix-by-default to the deprecated options,
     # if they were specified.  Otherwise, set it to enabled if the
@@ -159,19 +158,19 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
               [internal_prrte_args="$internal_prrte_args --enable-prte-prefix-by-default"])
 
     AS_IF([test "$opal_libevent_mode" = "internal"],
-          [internal_prrte_args="$internal_prrte_args --with-libevent-header=$opal_libevent_header"
-           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_libevent_CPPFLAGS"
-           internal_prrte_libs="$internal_prrte_libs $opal_libevent_LIBS"])
+          [internal_prrte_args="$internal_prrte_args --with-libevent --disable-libevent-lib-checks"
+           internal_prrte_args="$internal_prrte_args --with-libevent-extra-libs=\"$opal_libevent_LIBS\""
+           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_libevent_CPPFLAGS"])
 
     AS_IF([test "$opal_hwloc_mode" = "internal"],
-          [internal_prrte_args="$internal_prrte_args --with-hwloc-header=$opal_hwloc_header"
-           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_hwloc_CPPFLAGS"
-           internal_prrte_libs="$internal_prrte_libs $opal_hwloc_LIBS"])
+          [internal_prrte_args="$internal_prrte_args --disable-hwloc-lib-checks"
+           internal_prrte_args="$internal_prrte_args --with-hwloc-extra-libs=\"$opal_hwloc_LIBS\""
+           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_hwloc_CPPFLAGS"])
 
     AS_IF([test "$opal_pmix_mode" = "internal"],
-          [internal_prrte_args="$internal_prrte_args --with-pmix-header=$opal_pmix_header"
-           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_pmix_CPPFLAGS"
-           internal_prrte_libs="$internal_prrte_libs $opal_pmix_LIBS"])
+          [internal_prrte_args="$internal_prrte_args --disable-pmix-lib-checks"
+           internal_prrte_args="$internal_prrte_args --with-pmix-extra-libs=\"$opal_pmix_LIBS\""
+           internal_prrte_CPPFLAGS="$internal_prrte_CPPFLAGS $opal_pmix_CPPFLAGS"])
 
     AC_MSG_CHECKING([if PMIx version is 4.0.0 or greater])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>]],
@@ -190,8 +189,6 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
              AC_MSG_WARN([--without-prrte option.])
              AC_MSG_ERROR([Cannot continue])])
 
-    # add the extra libs
-    internal_prrte_args="$internal_prrte_args --with-prte-extra-lib=\"$internal_prrte_libs\" --with-prte-extra-ltlib=\"$internal_prrte_libs\""
     AS_IF([test "$with_ft" != "no"],
           [internal_prrte_args="--enable-prte-ft $internal_prrte_args"],
           [])
