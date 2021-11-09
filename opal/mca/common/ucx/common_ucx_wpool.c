@@ -419,6 +419,7 @@ OPAL_DECLSPEC
 int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx, void **mem_base, size_t mem_size,
                                  opal_common_ucx_mem_type_t mem_type,
                                  opal_common_ucx_exchange_func_t exchange_func,
+                                 opal_common_ucx_exchange_mode_t exchange_mode,
                                  void *exchange_metadata, char **my_mem_addr, int *my_mem_addr_size,
                                  opal_common_ucx_wpmem_t **mem_ptr)
 {
@@ -447,12 +448,13 @@ int opal_common_ucx_wpmem_create(opal_common_ucx_ctx_t *ctx, void **mem_base, si
         goto error_rkey_pack;
     }
 
-    ret = exchange_func(rkey_addr, rkey_addr_len, &mem->mem_addrs, &mem->mem_displs,
-                        exchange_metadata);
-    if (ret != OPAL_SUCCESS) {
-        goto error_rkey_pack;
+    if (exchange_mode == OPAL_COMMON_UCX_WPMEM_ADDR_EXCHANGE_FULL) {
+        ret = exchange_func(rkey_addr, rkey_addr_len, &mem->mem_addrs, &mem->mem_displs,
+                            exchange_metadata);
+        if (ret != OPAL_SUCCESS) {
+            goto error_rkey_pack;
+        }
     }
-
     OBJ_CONSTRUCT(&mem->tls_key, opal_tsd_tracked_key_t);
     opal_tsd_tracked_key_set_destructor(&mem->tls_key, _mem_rec_destructor);
 
@@ -624,7 +626,7 @@ static int _tlocal_ctx_connect(_ctx_record_t *ctx_rec, int target)
     opal_common_ucx_winfo_t *winfo = ctx_rec->winfo;
     opal_common_ucx_ctx_t *gctx = ctx_rec->gctx;
     ucs_status_t status;
-    int displ;
+    int displ, progress = 1;
 
     memset(&ep_params, 0, sizeof(ucp_ep_params_t));
     ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
@@ -634,7 +636,6 @@ static int _tlocal_ctx_connect(_ctx_record_t *ctx_rec, int target)
     ep_params.address = (ucp_address_t *) &(gctx->recv_worker_addrs[displ]);
     status = ucp_ep_create(winfo->worker, &ep_params, &winfo->endpoints[target]);
     if (status != UCS_OK) {
-        opal_mutex_unlock(&winfo->mutex);
         MCA_COMMON_UCX_VERBOSE(1, "ucp_ep_create failed: %d", status);
         opal_mutex_unlock(&winfo->mutex);
         return OPAL_ERROR;
