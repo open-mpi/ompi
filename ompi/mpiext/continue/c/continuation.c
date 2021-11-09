@@ -156,6 +156,11 @@ static opal_mutex_t request_cont_lock;
  */
 static bool progress_callback_registered = false;
 
+/**
+ * Thread-local list of continuation requests that should be progressed.
+ */
+static opal_thread_local opal_list_t *thread_progress_list = NULL;
+
 static inline
 void ompi_continue_cont_req_release(ompi_cont_request_t *cont_req,
                                     int32_t num_release,
@@ -234,16 +239,44 @@ int ompi_continue_progress_n(const uint32_t max)
     uint32_t completed = 0;
     in_progress = 1;
 
+    const bool using_threads = opal_using_threads();
+    if (NULL != thread_progress_list) {
+        ompi_cont_request_t *cont_req;
+        OPAL_LIST_FOREACH(cont_req, thread_progress_list, ompi_cont_request_t) {
+            ompi_continuation_t *cb;
+            if (opal_list_is_empty(cont_req->cont_complete_list)) continue;
+            while (max > completed) {
+                if (using_threads) {
+                    opal_atomic_lock(&cont_req->cont_lock);
+                    cb = (ompi_continuation_t *) opal_list_remove_first(cont_req->cont_complete_list);
+                    opal_atomic_unlock(&cont_req->cont_lock);
+                } else {
+                    cb = (ompi_continuation_t *) opal_list_remove_first(cont_req->cont_complete_list);
+                }
+                if (NULL == cb) break;
+
+                ompi_continue_cont_invoke(cb);
+                ++completed;
+            }
+            if (max <= completed) break;
+        }
+    }
+
     if (!opal_list_is_empty(&continuation_list)) {
         /* global progress */
-        do {
+        while (max > completed) {
             ompi_continuation_t *cb;
-            OPAL_THREAD_LOCK(&request_cont_lock);
-            cb = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
-            OPAL_THREAD_UNLOCK(&request_cont_lock);
+            if (using_threads) {
+                opal_mutex_lock(&request_cont_lock);
+                cb = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
+                opal_mutex_unlock(&request_cont_lock);
+            } else {
+                cb = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
+            }
             if (NULL == cb) break;
             ompi_continue_cont_invoke(cb);
-        } while (max > ++completed);
+            ++completed;
+        }
     }
 
     in_progress = 0;
@@ -319,6 +352,13 @@ int ompi_continue_register_request_progress(ompi_request_t *req)
 
     opal_atomic_unlock(&cont_req->cont_lock);
 
+    if (NULL == thread_progress_list) {
+        thread_progress_list = OBJ_NEW(opal_list_t);
+    }
+
+    /* enqueue the continuation request to allow for progress by this thread */
+    opal_list_append(thread_progress_list, &req->super.super);
+
     return OMPI_SUCCESS;
 }
 
@@ -330,6 +370,8 @@ int ompi_continue_deregister_request_progress(ompi_request_t *req)
 {
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
 
+    if (NULL == cont_req->cont_complete_list) return OMPI_SUCCESS;
+
     /* make sure we execute all outstanding continuations */
     uint32_t tmp_max_poll = cont_req->continue_max_poll;
     cont_req->continue_max_poll = UINT32_MAX;
@@ -337,6 +379,11 @@ int ompi_continue_deregister_request_progress(ompi_request_t *req)
     cont_req->continue_max_poll = tmp_max_poll;
 
     cont_req->cont_in_wait = false;
+
+
+    /* remove the continuation request from the thread-local progress list */
+    opal_list_remove_item(thread_progress_list, &req->super.super);
+
     return OMPI_SUCCESS;
 }
 
