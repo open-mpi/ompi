@@ -52,7 +52,7 @@ dnl
     fi
 
     max_allowed_uct_major=1
-    max_allowed_uct_minor=9
+    max_allowed_uct_minor=11
     if test "$btl_uct_happy" = "yes" && test "$enable_uct_version_check" != "no"; then
         AC_MSG_CHECKING([UCT version compatibility])
         OPAL_VAR_SCOPE_PUSH([CPPFLAGS_save])
