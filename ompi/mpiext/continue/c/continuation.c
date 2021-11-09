@@ -80,8 +80,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_cont_request_t);
 struct ompi_cont_request_t {
     ompi_request_t        super;
     opal_atomic_lock_t    cont_lock;             /**< Lock used completing/restarting the cont request */
-    bool                  cont_global_progress;
     bool                  cont_enqueue_complete; /**< Whether to enqueue immediately complete requests */
+    bool                  cont_in_wait;          /**< Whether the continuation request is currently waited on */
     opal_atomic_int32_t   cont_num_active;       /**< The number of active continuations registered with a continuation request */
     uint32_t              continue_max_poll;     /**< max number of local continuations to execute at once */
     opal_list_t          *cont_complete_list;    /**< List of complete continuations to be invoked during test */
@@ -98,7 +98,7 @@ static void ompi_cont_request_construct(ompi_cont_request_t* cont_req)
     cont_req->super.req_status = ompi_status_empty; /* always returns MPI_SUCCESS */
     opal_atomic_lock_init(&cont_req->cont_lock, false);
     cont_req->cont_enqueue_complete = false;
-    cont_req->cont_global_progress = false;
+    cont_req->cont_in_wait = false;
     cont_req->cont_num_active = 0;
     cont_req->continue_max_poll = UINT32_MAX;
     cont_req->cont_complete_list = NULL;
@@ -142,11 +142,13 @@ OBJ_CLASS_INSTANCE(
     NULL, NULL);
 
 /**
- * List of completed requests that need the user-defined completion callback
- * invoked.
+ * List of continuations eligible for execution
  */
 static opal_list_t continuation_list;
 
+/**
+ * Mutex to protect the continuation_list
+ */
 static opal_mutex_t request_cont_lock;
 
 /**
@@ -155,16 +157,15 @@ static opal_mutex_t request_cont_lock;
 static bool progress_callback_registered = false;
 
 static inline
-void ompi_continue_cont_release(ompi_continuation_t *cont)
+void ompi_continue_cont_req_release(ompi_cont_request_t *cont_req,
+                                    int32_t num_release,
+                                    bool take_lock)
 {
-    ompi_cont_request_t *cont_req = cont->cont_req;
-    assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
-
-    int num_active = opal_atomic_add_fetch_32(&cont_req->cont_num_active, -1);
+    int num_active = opal_atomic_add_fetch_32(&cont_req->cont_num_active, -num_release);
     assert(num_active >= 0);
     if (0 == num_active) {
         const bool using_threads = opal_using_threads();
-        if (using_threads) {
+        if (take_lock && using_threads) {
             opal_atomic_lock(&cont_req->cont_lock);
         }
         /* double check that no other thread has completed or restarted the request already */
@@ -173,9 +174,23 @@ void ompi_continue_cont_release(ompi_continuation_t *cont)
             /* signal that all continuations were found complete */
             ompi_request_complete(&cont_req->super, true);
         }
-        if (using_threads) {
+        if (take_lock && using_threads) {
             opal_atomic_unlock(&cont_req->cont_lock);
         }
+    }
+}
+
+static inline
+void ompi_continue_cont_release(ompi_continuation_t *cont)
+{
+    ompi_cont_request_t *cont_req = cont->cont_req;
+    assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
+
+    /* if a thread is waiting on the request, we got here when
+     * the thread started executing the continuations, so the continuation
+     * request is complete already */
+    if (!cont_req->cont_in_wait) {
+        ompi_continue_cont_req_release(cont_req, 1, true);
     }
     OBJ_RELEASE(cont_req);
 
@@ -214,19 +229,22 @@ static
 int ompi_continue_progress_n(const uint32_t max)
 {
 
-    if (in_progress || opal_list_is_empty(&continuation_list)) return 0;
+    if (in_progress) return 0;
 
     uint32_t completed = 0;
     in_progress = 1;
 
-    do {
-        ompi_continuation_t *cb;
-        OPAL_THREAD_LOCK(&request_cont_lock);
-        cb = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
-        OPAL_THREAD_UNLOCK(&request_cont_lock);
-        if (NULL == cb) break;
-        ompi_continue_cont_invoke(cb);
-    } while (max > ++completed);
+    if (!opal_list_is_empty(&continuation_list)) {
+        /* global progress */
+        do {
+            ompi_continuation_t *cb;
+            OPAL_THREAD_LOCK(&request_cont_lock);
+            cb = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
+            OPAL_THREAD_UNLOCK(&request_cont_lock);
+            if (NULL == cb) break;
+            ompi_continue_cont_invoke(cb);
+        } while (max > ++completed);
+    }
 
     in_progress = 0;
 
@@ -293,24 +311,13 @@ int ompi_continue_register_request_progress(ompi_request_t *req)
 
     if (NULL == cont_req->cont_complete_list) return OMPI_SUCCESS;
 
-    const bool using_threads = opal_using_threads();
-    if (using_threads) {
-        OPAL_THREAD_LOCK(&request_cont_lock);
-        /* lock needed to sync with ompi_request_cont_enqueue_complete */
-        opal_atomic_lock(&cont_req->cont_lock);
-    }
+    opal_atomic_lock(&cont_req->cont_lock);
 
-    /* signal that from now on all continuations should go into the global queue */
-    cont_req->cont_global_progress = true;
+    cont_req->cont_in_wait = true;
 
-    /* move all complete local continuations into the global queue */
-    opal_list_join(&continuation_list, opal_list_get_begin(&continuation_list),
-                   cont_req->cont_complete_list);
+    ompi_continue_cont_req_release(cont_req, opal_list_get_size(cont_req->cont_complete_list), false);
 
-    if (using_threads) {
-        opal_atomic_unlock(&cont_req->cont_lock);
-        OPAL_THREAD_UNLOCK(&request_cont_lock);
-    }
+    opal_atomic_unlock(&cont_req->cont_lock);
 
     return OMPI_SUCCESS;
 }
@@ -322,15 +329,14 @@ int ompi_continue_register_request_progress(ompi_request_t *req)
 int ompi_continue_deregister_request_progress(ompi_request_t *req)
 {
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
-    if (opal_using_threads()) {
-        /* lock needed to sync with ompi_request_cont_enqueue_complete */
-        opal_atomic_lock(&cont_req->cont_lock);
-        cont_req->cont_global_progress = false;
-        opal_atomic_unlock(&cont_req->cont_lock);
-    } else {
-        cont_req->cont_global_progress = false;
-    }
 
+    /* make sure we execute all outstanding continuations */
+    uint32_t tmp_max_poll = cont_req->continue_max_poll;
+    cont_req->continue_max_poll = UINT32_MAX;
+    ompi_continue_progress_request(req);
+    cont_req->continue_max_poll = tmp_max_poll;
+
+    cont_req->cont_in_wait = false;
     return OMPI_SUCCESS;
 }
 
@@ -383,35 +389,31 @@ static void
 ompi_continue_enqueue_runnable(ompi_continuation_t *cont)
 {
     ompi_cont_request_t *cont_req = cont->cont_req;
-    int retry;
-    do {
-        retry = 0;
-        if (NULL != cont_req->cont_complete_list
-            && !cont_req->cont_global_progress) {
-            opal_atomic_lock(&cont_req->cont_lock);
-            if (OPAL_UNLIKELY(cont_req->cont_global_progress)) {
-                opal_atomic_unlock(&cont_req->cont_lock);
-                /* try again, this time target the global list */
-                retry = 1;
-                continue;
-            }
-            opal_list_append(cont_req->cont_complete_list, &cont->super.super);
-            opal_atomic_unlock(&cont_req->cont_lock);
-        } else {
-            OPAL_THREAD_LOCK(&request_cont_lock);
-            opal_list_append(&continuation_list, &cont->super.super);
-            if (OPAL_UNLIKELY(!progress_callback_registered)) {
-                /* TODO: Ideally, we want to ensure that the callback is called *after*
-                 *       all the other progress callbacks are done so that any
-                 *       completions have happened before we attempt to execute
-                 *       callbacks. There doesn't seem to exist the infrastructure though.
-                 */
-                opal_progress_register(&ompi_continue_progress_callback);
-                progress_callback_registered = true;
-            }
-            OPAL_THREAD_UNLOCK(&request_cont_lock);
+    if (NULL != cont_req->cont_complete_list) {
+        opal_atomic_lock(&cont_req->cont_lock);
+        opal_list_append(cont_req->cont_complete_list, &cont->super.super);
+        if (cont_req->cont_in_wait) {
+            /* if a thread is waiting for this request to complete, signal completions
+             * the continuations will be executed at the end of the wait
+             * but we need to ensure that the request is marked complete first
+             */
+            ompi_continue_cont_req_release(cont_req, 1, false);
         }
-    } while (retry);
+        opal_atomic_unlock(&cont_req->cont_lock);
+    } else {
+        OPAL_THREAD_LOCK(&request_cont_lock);
+        opal_list_append(&continuation_list, &cont->super.super);
+        if (OPAL_UNLIKELY(!progress_callback_registered)) {
+            /* TODO: Ideally, we want to ensure that the callback is called *after*
+             *       all the other progress callbacks are done so that any
+             *       completions have happened before we attempt to execute
+             *       callbacks. There doesn't seem to exist the infrastructure though.
+             */
+            opal_progress_register(&ompi_continue_progress_callback);
+            progress_callback_registered = true;
+        }
+        OPAL_THREAD_UNLOCK(&request_cont_lock);
+    }
 }
 
 /**
