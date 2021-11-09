@@ -64,7 +64,7 @@ dnl         application when opal is built as a static library.
 dnl   * CPPFLAGS, LDFLAGS - Updated opal_pmix_CPPFLAGS and
 dnl         opal_pmix_LDFLAGS.
 AC_DEFUN([OPAL_CONFIG_PMIX], [
-    OPAL_VAR_SCOPE_PUSH([external_pmix_happy internal_pmix_happy internal_pmix_args internal_pmix_libs internal_pmix_CPPFLAGS])
+    OPAL_VAR_SCOPE_PUSH([external_pmix_happy internal_pmix_happy internal_pmix_args internal_pmix_CPPFLAGS])
 
     opal_show_subtitle "Configuring PMIx"
 
@@ -92,16 +92,15 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
 
                 AS_IF([test "$opal_libevent_mode" = "internal"],
                       [internal_pmix_args="$internal_pmix_args --with-libevent=cobuild"
-                       internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_libevent_CPPFLAGS"
-                       internal_pmix_libs="$internal_pmix_libs $opal_libevent_LIBS"])
+                       internal_pmix_args="$internal_pmix_args --with-libevent-cobuild-libs=\"$opal_libevent_LIBS\""
+                       internal_pmix_args="$internal_pmix_args --with-libevent-cobuild-wrapper-libs=\"$opal_libevent_WRAPPER_LIBS\""
+                       internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_libevent_CPPFLAGS"])
 
                 AS_IF([test "$opal_hwloc_mode" = "internal"],
                       [internal_pmix_args="$internal_pmix_args --with-hwloc=cobuild"
-                      internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_hwloc_CPPFLAGS"
-                      internal_pmix_libs="$internal_pmix_libs $opal_hwloc_LIBS"])
-
-                AS_IF([test ! -z "$internal_pmix_libs"],
-                      [internal_pmix_args="$internal_pmix_args --with-pmix-extra-lib=\"$internal_pmix_libs\""])
+                       internal_pmix_args="$internal_pmix_args --with-hwloc-cobuild-libs=\"$opal_hwloc_LIBS\""
+                       internal_pmix_args="$internal_pmix_args --with-hwloc-cobuild-wrapper-libs=\"$opal_hwloc_WRAPPER_LIBS\""
+                       internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_hwloc_CPPFLAGS"])
 
                 if test "$WANT_DEBUG" = "1"; then
                      internal_pmix_args="$internal_pmix_args --enable-debug"
