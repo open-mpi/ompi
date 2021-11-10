@@ -18,6 +18,8 @@
 # $HEADER$
 #
 
+dist_opaldata_DATA = help-mca-allocator-bucket.txt
+
 sources = \
         allocator_bucket.c \
         allocator_bucket_alloc.c \
