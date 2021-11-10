@@ -222,19 +222,19 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
 
     opal_cstring_t *stripe_str;
     /* Check the info object set during File_open */
-    opal_info_get (fh->f_info, "cb_nodes", &stripe_str, &flag);
+    opal_info_get (info, "cb_nodes", &stripe_str, &flag);
     if ( flag ) {
         sscanf ( stripe_str->string, "%d", &num_cb_nodes );
         OMPIO_MCA_PRINT_INFO(fh, "cb_nodes", stripe_str->string, "");
+        /* add the key/value to the file's info object */
+        opal_info_set_cstring(fh->f_info, "cb_nodes", stripe_str);
         OBJ_RELEASE(stripe_str);
     }
     else {
         /* Check the info object set during file_set_view */
-        opal_info_get (info, "cb_nodes", &stripe_str, &flag);
+        opal_info_get (fh->f_info, "cb_nodes", &stripe_str, &flag);
         if ( flag ) {
             sscanf ( stripe_str->string, "%d", &num_cb_nodes );
-            /* add the key/value to the file's info object */
-            opal_info_set_cstring(fh->f_info, "cb_nodes", stripe_str);
             OMPIO_MCA_PRINT_INFO(fh, "cb_nodes", stripe_str->string, "");
             OBJ_RELEASE(stripe_str);
         }
@@ -327,7 +327,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     }
 
     bool info_is_set=false;
-    opal_info_get (fh->f_info, "collective_buffering", &stripe_str, &flag);
+    opal_info_get (info, "collective_buffering", &stripe_str, &flag);
     if ( flag ) {
         if ( strncmp ( stripe_str->string, "false", sizeof("true") )){
             info_is_set = true;
@@ -335,9 +335,11 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         } else {
             OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", stripe_str->string, "");
         }
+        /* add the key/value to the file's info object */
+        opal_info_set_cstring(fh->f_info, "collective_buffering", stripe_str);
         OBJ_RELEASE(stripe_str);
     } else {
-        opal_info_get (info, "collective_buffering", &stripe_str, &flag);
+        opal_info_get (fh->f_info, "collective_buffering", &stripe_str, &flag);
         if ( flag ) {
             if ( strncmp ( stripe_str->string, "false", sizeof("true") )){
                 info_is_set = true;
@@ -345,8 +347,6 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
             } else {
                 OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", stripe_str->string, "");
             }
-            /* add the key/value to the file's info object */
-            opal_info_set_cstring(fh->f_info, "collective_buffering", stripe_str);
             OBJ_RELEASE(stripe_str);
         }
     }
