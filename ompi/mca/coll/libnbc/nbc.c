@@ -16,7 +16,7 @@
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
  *                         rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -119,7 +119,7 @@ static int nbc_schedule_round_append (NBC_Schedule *schedule, void *data, int da
 }
 
 /* this function puts a send into the schedule */
-static int NBC_Sched_send_internal (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, bool local, NBC_Schedule *schedule, bool barrier) {
+static int NBC_Sched_send_internal (const void* buf, char tmpbuf, size_t count, MPI_Datatype datatype, int dest, bool local, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_send send_args;
   int ret;
 
@@ -143,16 +143,16 @@ static int NBC_Sched_send_internal (const void* buf, char tmpbuf, int count, MPI
   return OMPI_SUCCESS;
 }
 
-int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
+int NBC_Sched_send (const void* buf, char tmpbuf, size_t count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
   return NBC_Sched_send_internal (buf, tmpbuf, count, datatype, dest, false, schedule, barrier);
 }
 
-int NBC_Sched_local_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
+int NBC_Sched_local_send (const void* buf, char tmpbuf, size_t count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
   return NBC_Sched_send_internal (buf, tmpbuf, count, datatype, dest, true, schedule, barrier);
 }
 
 /* this function puts a receive into the schedule */
-static int NBC_Sched_recv_internal (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, bool local, NBC_Schedule *schedule, bool barrier) {
+static int NBC_Sched_recv_internal (void* buf, char tmpbuf, size_t count, MPI_Datatype datatype, int source, bool local, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_recv recv_args;
   int ret;
 
@@ -176,16 +176,16 @@ static int NBC_Sched_recv_internal (void* buf, char tmpbuf, int count, MPI_Datat
   return OMPI_SUCCESS;
 }
 
-int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier) {
+int NBC_Sched_recv (void* buf, char tmpbuf, size_t count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier) {
   return NBC_Sched_recv_internal(buf, tmpbuf, count, datatype, source, false, schedule, barrier);
 }
 
-int NBC_Sched_local_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier) {
+int NBC_Sched_local_recv (void* buf, char tmpbuf, size_t count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier) {
   return NBC_Sched_recv_internal(buf, tmpbuf, count, datatype, source, true, schedule, barrier);
 }
 
 /* this function puts an operation into the schedule */
-int NBC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+int NBC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, size_t count, MPI_Datatype datatype,
                   MPI_Op op, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_op op_args;
   int ret;
@@ -212,7 +212,8 @@ int NBC_Sched_op (const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int 
 }
 
 /* this function puts a copy into the schedule */
-int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount,
+int NBC_Sched_copy (void *src, char tmpsrc, size_t srccount, MPI_Datatype srctype,
+                    void *tgt, char tmptgt, size_t tgtcount,
                     MPI_Datatype tgttype, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_copy copy_args;
   int ret;
@@ -240,7 +241,7 @@ int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, 
 }
 
 /* this function puts a unpack into the schedule */
-int NBC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf,
+int NBC_Sched_unpack (void *inbuf, char tmpinbuf, size_t count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf,
                       NBC_Schedule *schedule, bool barrier) {
   NBC_Args_unpack unpack_args;
   int ret;
@@ -534,6 +535,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         } else {
           buf2=opargs.buf2;
         }
+
         ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
         break;
       case COPY:
