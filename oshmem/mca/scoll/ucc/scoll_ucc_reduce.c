@@ -33,7 +33,7 @@ static inline ucc_status_t mca_scoll_ucc_reduce_init(const void *sbuf, void *rbu
     }
 
     ucc_coll_args_t coll = {
-        .mask = UCC_COLL_ARGS_FIELD_PREDEFINED_REDUCTIONS,
+        .mask = 0,
         .coll_type = UCC_COLL_TYPE_ALLREDUCE,
         .src.info = {
             .buffer = (void *)sbuf,
@@ -47,9 +47,7 @@ static inline ucc_status_t mca_scoll_ucc_reduce_init(const void *sbuf, void *rbu
             .datatype = ucc_dt,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },
-        .reduce = {
-            .predefined_op = ucc_op,
-        },
+        .op = ucc_op,
     };
 
     if (sbuf == rbuf) {
