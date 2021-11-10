@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2021 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -47,6 +47,7 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
     int i, rank, size, err;
     char *ptmp;
     ptrdiff_t lb, extent;
+    size_t rdsize;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -58,7 +59,9 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
        0) */
 
     if (rank != root) {
-        if (scount > 0) {
+        size_t sdsize;
+        ompi_datatype_type_size(sdtype, &sdsize);
+        if (scount > 0 && sdsize > 0) {
             return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
                                      MCA_COLL_BASE_TAG_GATHERV,
                                      MCA_PML_BASE_SEND_STANDARD, comm));
@@ -67,6 +70,12 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
     }
 
     /* I am the root, loop receiving data. */
+
+    ompi_datatype_type_size(rdtype, &rdsize);
+    if (OPAL_UNLIKELY(0 == rdsize)) {
+        /* bozzo case */
+        return MPI_SUCCESS;
+    }
 
     err = ompi_datatype_get_extent(rdtype, &lb, &extent);
     if (OMPI_SUCCESS != err) {
