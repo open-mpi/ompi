@@ -1,0 +1,19 @@
+# -*- text -*-
+#
+# Copyright (c) 2021      IBM Corporation.  All rights reserved
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's allocator bucket support
+#
+[buffer too large]
+ERROR: Requested buffer size %zu exceeds limit of %zu
+Consider setting "%s" to %d
+#
+[aligned buffer too large]
+ERROR: Requested aligned buffer size %zu exceeds limit of %zu
+Consider setting "%s" to %d
+#
