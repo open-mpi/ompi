@@ -114,7 +114,12 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
                                         [--with-pmix=[[^ 	]]*], [--with-platform=[[^ 	]]*]],
                                        [internal_pmix_happy=1])
                 OPAL_SUBDIR_ENV_RESTORE([opal_pmix_configure])
-                OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS openpmix"])])
+                OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS openpmix"])
+
+         # if we have a pmix package and configure did not complete
+         # successfullly (or wasn't started), then disable make dist.
+         AS_IF([test $internal_pmix_happy != 1],
+               [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE PMIX"])])
 
     # unless internal specifically requested by the user, try to find
     # an external that works.

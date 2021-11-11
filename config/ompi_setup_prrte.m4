@@ -59,7 +59,12 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
 		# failing to configure in a situation where it isn't
 		# desired.
                 _OMPI_SETUP_PRRTE_INTERNAL([prrte_setup_internal_happy=1],
-                                           [prrte_setup_internal_happy=0])])])
+                                           [prrte_setup_internal_happy=0])])
+
+         # if we have a pmix package and configure did not complete
+         # successfullly (or wasn't started), then disable make dist.
+         AS_IF([test $prrte_setup_internal_happy != 1],
+               [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE PRRTE"])])
 
     # unless internal specifically requested by the user, try to find
     # an external that works.

@@ -23,13 +23,11 @@
 # Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
-# Copyright (c) 2018      Amazon.com, Inc. or its affiliates.
+# Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
-#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -67,6 +65,9 @@ OPAL_CAPTURE_CONFIGURE_CLI([OPAL_CONFIGURE_CLI])
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
 OPAL_LOAD_PLATFORM
+
+# Start a list of packages / modules / etc. that want to disable "make dist".
+OPAL_MAKEDIST_DISABLE=""
 
 #
 # Start it up
@@ -1537,6 +1538,10 @@ AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
                 [chmod +x contrib/dist/mofed/debian/rules])
 AC_CONFIG_FILES([contrib/dist/mofed/compile_debian_mlnx_example],
                 [chmod +x contrib/dist/mofed/compile_debian_mlnx_example])
+
+AS_IF([test -n "$OPAL_MAKEDIST_DISABLE"],
+      [AC_MSG_WARN(["make dist" will be disabled due to: $OPAL_MAKEDIST_DISABLE])])
+AC_SUBST([OPAL_MAKEDIST_DISABLE])
 
 OPAL_CONFIG_FILES
 m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])

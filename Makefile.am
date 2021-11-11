@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
-# Copyright (c) 2017-2020 Amazon.com, Inc. or its affiliates.
+# Copyright (c) 2017-2021 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2020      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -32,6 +32,14 @@ dist-hook:
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(OMPI_REPO_REV)"
 	@if test ! -s $(distdir)/AUTHORS ; then \
 		echo "AUTHORS file is empty; aborting distribution"; \
+		exit 1; \
+	fi
+	@if test -n "$(OPAL_MAKEDIST_DISABLE)" ; then \
+		echo "#########################################################################"; \
+		echo "#"; \
+		echo "# make dist is disabled due to the following packages: $(OPAL_MAKEDIST_DISABLE)"; \
+		echo "#"; \
+		echo "#########################################################################"; \
 		exit 1; \
 	fi
 
