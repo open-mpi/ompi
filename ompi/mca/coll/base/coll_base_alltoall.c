@@ -101,19 +101,19 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
         ompi_proc_t *right_proc = ompi_comm_peer_lookup(comm, right);
         opal_convertor_clone(right_proc->super.proc_convertor, &convertor, 0);
         opal_convertor_prepare_for_send(&convertor, &rdtype->super, rcount,
-                                        (char *) rbuf + right * extent);
+                                        (char *) rbuf + right * rcount * extent);
         packed_size = max_size;
         err = opal_convertor_pack(&convertor, &iov, &iov_count, &packed_size);
         if (1 != err) { goto error_hndl; }
 
         /* Receive data from the right */
-        err = MCA_PML_CALL(irecv ((char *) rbuf + right * extent, rcount, rdtype,
+        err = MCA_PML_CALL(irecv ((char *) rbuf + right * rcount * extent, rcount, rdtype,
                                   right, MCA_COLL_BASE_TAG_ALLTOALLW, comm, &req));
         if (MPI_SUCCESS != err) { goto error_hndl; }
 
         if( left != right ) {
             /* Send data to the left */
-            err = MCA_PML_CALL(send ((char *) rbuf + left * extent, rcount, rdtype,
+            err = MCA_PML_CALL(send ((char *) rbuf + left * rcount * extent, rcount, rdtype,
                                      left, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
             if (MPI_SUCCESS != err) { goto error_hndl; }
@@ -122,7 +122,7 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
             if (MPI_SUCCESS != err) { goto error_hndl; }
 
             /* Receive data from the left */
-            err = MCA_PML_CALL(irecv ((char *) rbuf + left * extent, rcount, rdtype,
+            err = MCA_PML_CALL(irecv ((char *) rbuf + left * rcount * extent, rcount, rdtype,
                                       left, MCA_COLL_BASE_TAG_ALLTOALLW, comm, &req));
             if (MPI_SUCCESS != err) { goto error_hndl; }
         }
