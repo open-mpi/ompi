@@ -19,7 +19,7 @@ dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+dnl Copyright (c) 2020-2021 Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl $COPYRIGHT$
@@ -68,45 +68,53 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
 
     internal_pmix_happy=0
     m4_ifdef([package_pmix],
-        [# always configure the internal pmix, so that
-         # make dist always works.
-	 internal_pmix_args="--without-tests-examples --enable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
-         internal_pmix_libs=
-         internal_pmix_CPPFLAGS=
+        [OMPI_PMIX_ADD_ARGS
+         AS_IF([test "$opal_pmix_mode" = "unspecified" -o "$opal_pmix_mode" = "internal"],
+               [# Run PMIx's configure script unless the user
+		# explicitly asked us to use an external PMIX, so that
+		# "make dist" includes PMIx in the dist tarball.  This
+		# does mean that "make dist" will not work if Open MPI
+		# was configured to use an external PMIx library, but
+		# we decided this was a reasonable tradeoff for not
+		# having to deal with PMIx (or PRRTE) potentially
+		# failing to configure in a situation where it isn't
+		# desired.
 
-         OMPI_PMIX_ADD_ARGS
+                internal_pmix_args="--without-tests-examples --enable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
+                internal_pmix_libs=
+                internal_pmix_CPPFLAGS=
 
-         AS_IF([test "$opal_libevent_mode" = "internal"],
-               [internal_pmix_args="$internal_pmix_args --with-libevent=cobuild"
-                internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_libevent_CPPFLAGS"
-                internal_pmix_libs="$internal_pmix_libs $opal_libevent_LIBS"])
+                AS_IF([test "$opal_libevent_mode" = "internal"],
+                      [internal_pmix_args="$internal_pmix_args --with-libevent=cobuild"
+                       internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_libevent_CPPFLAGS"
+                       internal_pmix_libs="$internal_pmix_libs $opal_libevent_LIBS"])
 
-         AS_IF([test "$opal_hwloc_mode" = "internal"],
-               [internal_pmix_args="$internal_pmix_args --with-hwloc=cobuild"
-                internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_hwloc_CPPFLAGS"
-                internal_pmix_libs="$internal_pmix_libs $opal_hwloc_LIBS"])
+                AS_IF([test "$opal_hwloc_mode" = "internal"],
+                      [internal_pmix_args="$internal_pmix_args --with-hwloc=cobuild"
+                      internal_pmix_CPPFLAGS="$internal_pmix_CPPFLAGS $opal_hwloc_CPPFLAGS"
+                      internal_pmix_libs="$internal_pmix_libs $opal_hwloc_LIBS"])
 
-         AS_IF([test ! -z "$internal_pmix_libs"],
-               [internal_pmix_args="$internal_pmix_args --with-pmix-extra-lib=\"$internal_pmix_libs\""])
+                AS_IF([test ! -z "$internal_pmix_libs"],
+                      [internal_pmix_args="$internal_pmix_args --with-pmix-extra-lib=\"$internal_pmix_libs\""])
 
-         if test "$WANT_DEBUG" = "1"; then
-             internal_pmix_args="$internal_pmix_args --enable-debug"
-         fi
+                if test "$WANT_DEBUG" = "1"; then
+                     internal_pmix_args="$internal_pmix_args --enable-debug"
+                fi
 
-         # Pass all our compiler/linker flags to PMIx, so that it
-         # picks up how to build an internal HWLOC and libevent, plus
-         # picks up any user-specified compiler flags from the master
-         # configure run.
-         OPAL_SUBDIR_ENV_CLEAN([opal_pmix_configure])
-         AS_IF([test -n "$internal_pmix_CPPFLAGS"],
-               [OPAL_SUBDIR_ENV_APPEND([CPPFLAGS], [$internal_pmix_CPPFLAGS])])
-         PAC_CONFIG_SUBDIR_ARGS([3rd-party/openpmix], [$internal_pmix_args],
-                           [[--with-libevent=internal], [--with-hwloc=internal],
-                            [--with-libevent=external], [--with-hwloc=external],
-                            [--with-pmix=[[^ 	]]*], [--with-platform=[[^ 	]]*]],
-                           [internal_pmix_happy=1])
-         OPAL_SUBDIR_ENV_RESTORE([opal_pmix_configure])
-         OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS openpmix"])
+                # Pass all our compiler/linker flags to PMIx, so that it
+                # picks up how to build an internal HWLOC and libevent, plus
+                # picks up any user-specified compiler flags from the master
+                # configure run.
+                OPAL_SUBDIR_ENV_CLEAN([opal_pmix_configure])
+                AS_IF([test -n "$internal_pmix_CPPFLAGS"],
+                      [OPAL_SUBDIR_ENV_APPEND([CPPFLAGS], [$internal_pmix_CPPFLAGS])])
+                PAC_CONFIG_SUBDIR_ARGS([3rd-party/openpmix], [$internal_pmix_args],
+                                       [[--with-libevent=internal], [--with-hwloc=internal],
+                                        [--with-libevent=external], [--with-hwloc=external],
+                                        [--with-pmix=[[^ 	]]*], [--with-platform=[[^ 	]]*]],
+                                       [internal_pmix_happy=1])
+                OPAL_SUBDIR_ENV_RESTORE([opal_pmix_configure])
+                OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS openpmix"])])
 
     # unless internal specifically requested by the user, try to find
     # an external that works.

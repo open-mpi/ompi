@@ -45,15 +45,21 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
 
     OPAL_3RDPARTY_WITH([prrte], [prrte], [package_prrte], [1])
 
-    m4_ifdef([package_prrte],
-         [OMPI_PRRTE_ADD_ARGS])
-
     prrte_setup_internal_happy=0
-    m4_ifdef([package_prrte], [
-         # always configure the internal prrte, so that
-         # make dist always works.
-         AS_IF([test "$opal_prrte_mode" = "disabled"], [prrte_setup_success_var=0], [prrte_setup_success_var=1])
-         _OMPI_SETUP_PRRTE_INTERNAL([prrte_setup_internal_happy=$prrte_setup_success_var])])
+    m4_ifdef([package_prrte],
+        [OMPI_PRRTE_ADD_ARGS
+         AS_IF([test "$opal_prrte_mode" = "unspecified" -o "$opal_prrte_mode" = "internal"],
+               [# Run PRRTE's configure script unless the user
+		# explicitly asked us to use an external PMIX, so that
+		# "make dist" includes PRRTE in the dist tarball.  This
+		# does mean that "make dist" will not work if Open MPI
+		# was configured to use an external PRRTE library, but
+		# we decided this was a reasonable tradeoff for not
+		# having to deal with PRRTE (or PMIx) potentially
+		# failing to configure in a situation where it isn't
+		# desired.
+                _OMPI_SETUP_PRRTE_INTERNAL([prrte_setup_internal_happy=1],
+                                           [prrte_setup_internal_happy=0])])])
 
     # unless internal specifically requested by the user, try to find
     # an external that works.
