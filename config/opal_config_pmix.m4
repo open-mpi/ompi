@@ -70,7 +70,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     m4_ifdef([package_pmix],
         [# always configure the internal pmix, so that
          # make dist always works.
-	 internal_pmix_args="--without-tests-examples --disable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
+	 internal_pmix_args="--without-tests-examples --enable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
          internal_pmix_libs=
          internal_pmix_CPPFLAGS=
 
@@ -87,7 +87,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
                 internal_pmix_libs="$internal_pmix_libs $opal_hwloc_LIBS"])
 
          AS_IF([test ! -z "$internal_pmix_libs"],
-               [internal_pmix_args="$internal_pmix_args --with-prte-extra-lib=\"$internal_pmix_libs\""])
+               [internal_pmix_args="$internal_pmix_args --with-pmix-extra-lib=\"$internal_pmix_libs\""])
 
          if test "$WANT_DEBUG" = "1"; then
              internal_pmix_args="$internal_pmix_args --enable-debug"
