@@ -72,3 +72,4 @@ int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
                                         "ucp_atomic_fetch_nb");
 #endif
 }
+

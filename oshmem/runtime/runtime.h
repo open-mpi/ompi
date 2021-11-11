@@ -151,6 +151,12 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 
 #if OSHMEM_PARAM_CHECK == 1
 
+#define RUNTIME_TEAM_MANAGMENT_CHECK_RC(x)                                  \
+    if (x <= -1)                                                            \
+    {                                                                       \
+        RUNTIME_CHECK_ERROR("Internal error is appeared rc = %d\n", (x));   \
+    }
+
 #define RUNTIME_CHECK_ERROR(...)                                    \
     do {                                                            \
         fprintf(stderr, "[%s]%s[%s:%d:%s] ",                        \
@@ -222,6 +228,7 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 #define RUNTIME_CHECK_ADDR(x)
 #define RUNTIME_CHECK_ADDR_SIZE(x,s)
 #define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)
+#define RUNTIME_TEAM_MANAGMENT_CHECK_RC(x)
 
 #endif  /* OSHMEM_PARAM_CHECK */
 

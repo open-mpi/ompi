@@ -53,6 +53,7 @@
 #pragma weak shmemx_int64_atomic_fetch_and    = pshmemx_int64_atomic_fetch_and
 #pragma weak shmemx_uint32_atomic_fetch_and   = pshmemx_uint32_atomic_fetch_and
 #pragma weak shmemx_uint64_atomic_fetch_and   = pshmemx_uint64_atomic_fetch_and
+
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
