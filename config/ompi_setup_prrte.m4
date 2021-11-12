@@ -16,7 +16,7 @@ dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+dnl Copyright (c) 2020-2021 Amazon.com, Inc. or its affiliates.
 dnl                         All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
@@ -43,46 +43,28 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
 
     opal_show_subtitle "Configuring PRRTE"
 
-    # Don't use OPAL_3RDPARTY_WITH because it will not allow packages
-    # to be disabled
-    m4_ifdef([package_prrte],
-        [AC_ARG_WITH([prrte],
-            [AS_HELP_STRING([--with-prrte(=DIR)],
-                           [Build PRTE support.  DIR can take one of four values: "internal", "external", "no", or a valid directory name.  "internal" forces Open MPI to use its internal copy of PRRTE.  "external" forces Open MPI to use an external installation of PRRTE.  Supplying a valid directory name also forces Open MPI to use an external installation of PRRTE, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. If no argument is specified, Open MPI will search default locations for PRRTE and fall back to an internal version if one is not found.])])],
-        [AC_ARG_WITH([prrte],
-            [AS_HELP_STRING([--with-prrte(=DIR)],
-                           [Build PRRTE support.  DIR can take one of three values:  "external", "no", or a valid directory name.  "external" forces Open MPI to use an external installation of PRRTE.  Supplying a valid directory name also forces Open MPI to use an external installation of PRRTE, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. If no argument is specified, Open MPI will search default locations for PRRTE and disable creating mpirun symlinks if one is not found.])])])
-
-    m4_ifdef([package_prrte],
-         [OMPI_PRRTE_ADD_ARGS])
-
-    # clean up $with_prrte so that it contains only a path or empty
-    # string.  To determine internal or external preferences, use
-    # $opal_prrte_mode.
-    AS_IF([test "$with_prrte" = "yes"], [with_prrte=])
-    AS_CASE([$with_prrte],
-            ["internal"], [with_prrte=""
-                           opal_prrte_mode="internal"],
-            ["external"], [with_prrte=""
-                           opal_prrte_mode="external"],
-            [""], [opal_prrte_mode="unspecified"],
-            ["no"], [opal_prrte_mode="disabled"],
-            [opal_prrte_mode="external"])
-
-    echo "with_prrte: $with_prrte"
-    echo "opal_prrte_mode: $opal_prrte_mode"
-
-    m4_ifdef([package_prrte], [],
-             [AS_IF([test "$opal_prrte_mode" = "internal"],
-                    [AC_MSG_WARN([Invalid argument to --with-prrte: internal.])
-                     AC_MSG_ERROR([Cannot continue])])])
+    OPAL_3RDPARTY_WITH([prrte], [prrte], [package_prrte], [1])
 
     prrte_setup_internal_happy=0
-    m4_ifdef([package_prrte], [
-         # always configure the internal prrte, so that
-         # make dist always works.
-         AS_IF([test "$opal_prrte_mode" = "disabled"], [prrte_setup_success_var=0], [prrte_setup_success_var=1])
-         _OMPI_SETUP_PRRTE_INTERNAL([prrte_setup_internal_happy=$prrte_setup_success_var])])
+    m4_ifdef([package_prrte],
+        [OMPI_PRRTE_ADD_ARGS
+         AS_IF([test "$opal_prrte_mode" = "unspecified" -o "$opal_prrte_mode" = "internal"],
+               [# Run PRRTE's configure script unless the user
+		# explicitly asked us to use an external PMIX, so that
+		# "make dist" includes PRRTE in the dist tarball.  This
+		# does mean that "make dist" will not work if Open MPI
+		# was configured to use an external PRRTE library, but
+		# we decided this was a reasonable tradeoff for not
+		# having to deal with PRRTE (or PMIx) potentially
+		# failing to configure in a situation where it isn't
+		# desired.
+                _OMPI_SETUP_PRRTE_INTERNAL([prrte_setup_internal_happy=1],
+                                           [prrte_setup_internal_happy=0])])
+
+         # if we have a pmix package and configure did not complete
+         # successfullly (or wasn't started), then disable make dist.
+         AS_IF([test $prrte_setup_internal_happy != 1],
+               [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE PRRTE"])])
 
     # unless internal specifically requested by the user, try to find
     # an external that works.
