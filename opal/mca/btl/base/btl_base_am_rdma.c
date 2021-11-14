@@ -141,7 +141,9 @@ static OBJ_CLASS_INSTANCE(mca_btl_base_am_rdma_queued_descriptor_t, opal_list_it
 struct mca_btl_base_rdma_hdr_t {
     /** type of operation requested. */
     uint8_t type;
-    uint8_t padding[3];
+    /** whether ordering is required for the operation, 0 for ordered, 1 for no order */
+    uint8_t ordered;
+    uint8_t padding[2];
 
     union {
         struct {
@@ -475,6 +477,9 @@ mca_btl_base_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
         packet_size += size;
     }
 
+    if (!use_rdma && order == MCA_BTL_IN_ORDER_RDMA_ATOMICS)
+        order = MCA_BTL_IN_ORDER_SEND;
+
     if (use_rdma && btl->btl_register_mem) {
         packet_size += 2 * btl->btl_registration_handle_size;
     }
@@ -502,6 +507,7 @@ mca_btl_base_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
 
     hdr = (mca_btl_base_rdma_hdr_t *) descriptor->des_segments[0].seg_addr.pval;
     hdr->type = type;
+    hdr->ordered = (order != MCA_BTL_NO_ORDER);
 
     if (!mca_btl_base_rdma_is_atomic(type)) {
         hdr->data.rdma.use_rdma = use_rdma;
@@ -586,7 +592,8 @@ static int mca_btl_base_am_rdma_respond(mca_btl_base_module_t *btl,
         size_t data_size = mca_btl_base_rdma_is_atomic(hdr->type) ? hdr->data.atomic.size
                                                                   : hdr->data.rdma.size;
         size_t packet_size = sizeof(*resp_hdr) + (addr ? data_size : 0);
-        send_descriptor = btl->btl_alloc(btl, endpoint, MCA_BTL_NO_ORDER, packet_size,
+        uint32_t order = hdr->ordered ? MCA_BTL_IN_ORDER_SEND : MCA_BTL_NO_ORDER;
+        send_descriptor = btl->btl_alloc(btl, endpoint, order, packet_size,
                                          MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if (NULL == send_descriptor) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -662,11 +669,12 @@ static int mca_btl_base_am_rdma_target_get(mca_btl_base_module_t *btl,
 
         /* btl supports put but not get. emulating get with put */
         OBJ_RETAIN(*operation);
+        int order = hdr->ordered ? MCA_BTL_IN_ORDER_RDMA_ATOMICS : MCA_BTL_NO_ORDER;
         int ret = btl->btl_put(
             btl, endpoint, target_address, hdr->data.rdma.initiator_address,
             (struct mca_btl_base_registration_handle_t *) (*operation)->local_handle_data,
             (struct mca_btl_base_registration_handle_t *) (*operation)->remote_handle_data,
-            hdr->data.rdma.size, /*flags=*/0, MCA_BTL_NO_ORDER, mca_btl_base_am_rmda_rdma_complete,
+            hdr->data.rdma.size, /*flags=*/0, order, mca_btl_base_am_rmda_rdma_complete,
             *operation, NULL);
         if (OPAL_SUCCESS != ret) {
             OBJ_RELEASE(*operation);
@@ -697,11 +705,12 @@ static int mca_btl_base_am_rdma_target_put(mca_btl_base_module_t *btl,
 
         /* btl supports put but not get. emulating get with put */
         OBJ_RETAIN(*operation);
+        int order = hdr->ordered ? MCA_BTL_IN_ORDER_RDMA_ATOMICS : MCA_BTL_NO_ORDER;
         int ret = btl->btl_get(
             btl, endpoint, target_address, hdr->data.rdma.initiator_address,
             (struct mca_btl_base_registration_handle_t *) (*operation)->local_handle_data,
             (struct mca_btl_base_registration_handle_t *) (*operation)->remote_handle_data,
-            hdr->data.rdma.size, /*flags=*/0, MCA_BTL_NO_ORDER, mca_btl_base_am_rmda_rdma_complete,
+            hdr->data.rdma.size, /*flags=*/0, order, mca_btl_base_am_rmda_rdma_complete,
             operation, NULL);
         if (OPAL_SUCCESS != ret) {
             OBJ_RELEASE(*operation);
