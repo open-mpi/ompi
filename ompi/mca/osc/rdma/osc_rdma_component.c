@@ -957,7 +957,9 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
     }
 
     if (btls_to_use) {
-        /* rdma and atomics are only supported with BTLs at the moment */
+        /* rdma and atomics are only supported with BTLs at the moment
+         * If a btl does not support remote completion, it cannot be used as the primary btl.
+         * It can still be selected as an alternate btl */
         OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
             for (int i = 0 ; btls_to_use[i] ; ++i) {
                 if (0 != strcmp (btls_to_use[i], item->btl_module->btl_component->btl_version.mca_component_name)) {
@@ -965,7 +967,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
                 }
 
                 if ((item->btl_module->btl_flags & (MCA_BTL_FLAGS_RDMA)) == MCA_BTL_FLAGS_RDMA &&
-                    (item->btl_module->btl_flags & (MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS))) {
+                    (item->btl_module->btl_flags & (MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION))) {
                     if (!selected_btl || item->btl_module->btl_latency < selected_btl->btl_latency) {
                         selected_btl = item->btl_module;
                     }
@@ -1034,10 +1036,14 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
         btl_counts = tmp;
 
         for (int i_btl = 0 ; i_btl < num_btls ; ++i_btl) {
-            /* for this implementation we need only compare-and-swap and fetch-and-add */
-            if ((endpoint->btl_rdma.bml_btls[i_btl].btl->btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) ==
-                (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS) && (endpoint->btl_rdma.bml_btls[i_btl].btl->btl_atomic_flags &
-                                                                     MCA_BTL_ATOMIC_SUPPORTS_ADD)) {
+            /* for this implementation we need only compare-and-swap and fetch-and-add
+             *
+             * If a btl does not support remote completion, it cannot be used as the primary btl.
+             * It can still be selected as an alternate btl */
+            if (((endpoint->btl_rdma.bml_btls[i_btl].btl->btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) ==
+                 (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) &&
+                (endpoint->btl_rdma.bml_btls[i_btl].btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_ADD) &&
+                (endpoint->btl_rdma.bml_btls[i_btl].btl->btl_flags & MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION)) {
                 for (int j = 0 ; j < max_btls ; ++j) {
                     if (endpoint->btl_rdma.bml_btls[i_btl].btl == possible_btls[j]) {
                         ++btl_counts[j];
