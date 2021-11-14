@@ -85,7 +85,6 @@ static const char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, co
 
 static char *ompi_osc_rdma_btl_names;
 static char *ompi_osc_rdma_mtl_names;
-static char *ompi_osc_rdma_btl_alternate_names;
 
 static const mca_base_var_enum_value_t ompi_osc_rdma_locking_modes[] = {
     {.value = OMPI_OSC_RDMA_LOCKING_TWO_LEVEL, .string = "two_level"},
@@ -264,14 +263,6 @@ static int ompi_osc_rdma_component_register (void)
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "btls", description_str,
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_names);
-    free(description_str);
-
-    ompi_osc_rdma_btl_alternate_names = "sm,tcp";
-    opal_asprintf(&description_str, "Comma-delimited list of alternate BTL component names to allow without verifying "
-                  "connectivity (default: %s)", ompi_osc_rdma_btl_alternate_names);
-    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "alternate_btls", description_str,
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                            MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_alternate_names);
     free(description_str);
 
     ompi_osc_rdma_mtl_names = "psm2";
@@ -919,56 +910,38 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
  * @return OMPI_SUCCESS if BTLs can be found
  * @return OMPI_ERR_UNREACH if no BTLs can be found that match
  *
- * In this case an "alternate" BTL is a BTL that does not provide true RDMA but
- * can use active messages using the BTL base AM RDMA/atomics. Since more than
- * one BTL may be needed for this support the OSC component will disable the
- * use of registration-based RDMA (these BTLs will not be used) and will use
- * any remaining BTL. By default the BTLs used will be tcp and sm but any single
- * (or pair) of BTLs may be used.
+ * This function is used when there ompi_osc_rdm_query_btls() failed to find
+ * a single btl that can communicate with all peers and supports remote completion.
+ * In this case, osc/rdma will use mulitple btls for communications. One process
+ * can use different btl to communicate with different peer. Such btls are called
+ * "alternate btls".
+ * This function call ompi_osc_rdma_selected_btl_insert() to insert the alterate
+ * btl into selected_btls.
  */
 static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
     mca_btl_base_selected_module_t *item;
-    char **btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
     int btls_found = 0;
-
-    btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
-    if (NULL == btls_to_use) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no alternate BTLs requested: %s", ompi_osc_rdma_btl_alternate_names);
-        return OMPI_ERR_UNREACH;
-    }
 
     if (module) {
         module->btls_in_use = 0;
     }
 
     /* rdma and atomics are only supported with BTLs at the moment */
-    for (int i = 0 ; btls_to_use[i] ; ++i) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "checking for btl %s", btls_to_use[i]);
-        OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
-            if (NULL != item->btl_module->btl_register_mem) { 
-                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "skipping RDMA btl when searching for alternate BTL");
-                continue;
-            }
+    OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "found alternate btl %s",
+                         item->btl_module->btl_component->btl_version.mca_component_name);
 
-            if (0 != strcmp (btls_to_use[i], item->btl_module->btl_component->btl_version.mca_component_name)) {
-                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "skipping btl %s",
-                                 item->btl_module->btl_component->btl_version.mca_component_name);
-                continue;
-            }
-
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "found alternate btl %s", btls_to_use[i]);
-
-            ++btls_found;
-            if (module) {
-                mca_btl_base_am_rdma_init(item->btl_module);
-                ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++, OMPI_OSC_RDMA_BTL_ALTERNATE);
-            }
-            
+        ++btls_found;
+        if (module) {
+            ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++, OMPI_OSC_RDMA_BTL_ALTERNATE);
         }
     }
 
-    opal_argv_free (btls_to_use);
+    /* osc/rdma always use active message RDMA/atomics on alternate btls, whic does not require explicit memory registration */
+    if (NULL != module) {
+        module->use_memory_registration = false;
+    }
 
     return btls_found > 0 ? OMPI_SUCCESS : OMPI_ERR_UNREACH;
 }
@@ -1003,7 +976,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
                 }
 
                 if ((item->btl_module->btl_flags & (MCA_BTL_FLAGS_RDMA)) == MCA_BTL_FLAGS_RDMA &&
-                    (item->btl_module->btl_flags & (MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS))) {
+                    (item->btl_module->btl_flags & (MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION))) {
                     if (!selected_btl || item->btl_module->btl_latency < selected_btl->btl_latency) {
                         selected_btl = item->btl_module;
                     }
@@ -1072,10 +1045,14 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
         btl_counts = tmp;
 
         for (int i_btl = 0 ; i_btl < num_btls ; ++i_btl) {
-            /* for this implementation we need only compare-and-swap and fetch-and-add */
+            /* for this implementation we need only compare-and-swap and fetch-and-add
+             *
+             * If a btl does not support remote completion, it cannot be used as the primary btl.
+             * It can still be selected as an alternate btl */
             if ((endpoint->btl_rdma.bml_btls[i_btl].btl->btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) ==
                 (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS) && (endpoint->btl_rdma.bml_btls[i_btl].btl->btl_atomic_flags &
-                                                                     MCA_BTL_ATOMIC_SUPPORTS_ADD)) {
+                                                                     MCA_BTL_ATOMIC_SUPPORTS_ADD) &&
+                (endpoint->btl_rdma.bml_btls[i_btl].btl->btl_flags & MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION)) {
                 for (int j = 0 ; j < max_btls ; ++j) {
                     if (endpoint->btl_rdma.bml_btls[i_btl].btl == possible_btls[j]) {
                         ++btl_counts[j];
