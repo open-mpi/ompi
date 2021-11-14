@@ -161,6 +161,28 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_NO_ORDER 255
 
 /*
+ * All RDMA and atomic operations are in an ordered channel, and
+ * processed by remote side in order. When one RDMA/atomic operation
+ * completed remotely, all previous RDMA/atomic operations have completed
+ * remotely.
+ */
+#define MCA_BTL_IN_ORDER_RDMA_ATOMICS 1
+
+/*
+ * All send operations are in an ordered channel, and processed by remote side
+ * in order. When one send operation completed remotely, all previous send
+ * operations have completed remotely.
+ */
+#define MCA_BTL_IN_ORDER_SEND 2
+
+/*
+ * All send/RDMA/atomics operations are in an ordered channel, and processed by remote side
+ * in order. When one send operation completed remotely, all previous send
+ * operations have completed remotely.
+ */
+#define MCA_BTL_IN_ORDER_ALL 3
+
+/*
  * Communication specific defines. There are a number of active message ID
  * that can be shred between all frameworks that need to communicate (i.e.
  * use the PML or the BTL directly). These ID are exchanged between the
