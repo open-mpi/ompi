@@ -86,7 +86,6 @@ static const char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, co
 
 static char *ompi_osc_rdma_btl_names;
 static char *ompi_osc_rdma_mtl_names;
-static char *ompi_osc_rdma_btl_alternate_names;
 
 static const mca_base_var_enum_value_t ompi_osc_rdma_locking_modes[] = {
     {.value = OMPI_OSC_RDMA_LOCKING_TWO_LEVEL, .string = "two_level"},
@@ -265,14 +264,6 @@ static int ompi_osc_rdma_component_register (void)
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "btls", description_str,
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_names);
-    free(description_str);
-
-    ompi_osc_rdma_btl_alternate_names = "sm,tcp";
-    opal_asprintf(&description_str, "Comma-delimited list of alternate BTL component names to allow without verifying "
-                  "connectivity (default: %s)", ompi_osc_rdma_btl_alternate_names);
-    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "alternate_btls", description_str,
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                            MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_alternate_names);
     free(description_str);
 
     ompi_osc_rdma_mtl_names = "psm2";
@@ -920,57 +911,57 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
  * @return OMPI_SUCCESS if BTLs can be found
  * @return OMPI_ERR_UNREACH if no BTLs can be found that match
  *
- * In this case an "alternate" BTL is a BTL that does not provide true RDMA but
- * can use active messages using the BTL base AM RDMA/atomics. Since more than
- * one BTL may be needed for this support the OSC component will disable the
- * use of registration-based RDMA (these BTLs will not be used) and will use
- * any remaining BTL. By default the BTLs used will be tcp and sm but any single
- * (or pair) of BTLs may be used.
+ * This function is used when there ompi_osc_rdm_query_btls() failed to find
+ * a btl that can be used for all communication. In this case, osc/rdma will
+ * use mulitple btls for communications, e.g. different peer will use different btl.
+ * Such btls are called "alternate btls".
+ *
+ * When multiple alternate btls are being used, osc/rdma cannot use each btl's
+ * own atomics because atomicity across btl is not guaranteed. Therefore, this
+ * function had to disabled each btl's own atomic, and use active message atomic.
+ *
+ * For an alternate btl, this function also disabled the btl's own RDMA and
+ * used active message RDMA. This choice simplied the implemenation in two
+ * areas:
+ *
+ * First, active message RDMA does not use memory registration, thus using it
+ * eliminates the need to store and exchange multiple memory registrations.
+ *
+ * Second, because active message atomic does not support remote completion,
+ * osc/rdma will require the ordering between RDMA operations and atomic operations.
+ * This ordering requirement is easier to achieve when both active message
+ * RDMA and active message atomics are used, in which case the btl need to support
+ * ordered send (because both RDMA and atomics are implemented using send).
+ * If osc/rdma mix use btl's own RDMA and its active message atomics, then it
+ * will have to require btl to support ORDERED_RDMA_SEND, which is hard to met
+ * for most btls.
  */
 static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
     mca_btl_base_selected_module_t *item;
-    char **btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
     int btls_found = 0;
-
-    btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
-    if (NULL == btls_to_use) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no alternate BTLs requested: %s", ompi_osc_rdma_btl_alternate_names);
-        return OMPI_ERR_UNREACH;
-    }
 
     if (module) {
         module->btls_in_use = 0;
     }
 
     /* rdma and atomics are only supported with BTLs at the moment */
-    for (int i = 0 ; btls_to_use[i] ; ++i) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "checking for btl %s", btls_to_use[i]);
-        OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
-            if (NULL != item->btl_module->btl_register_mem) { 
-                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "skipping RDMA btl when searching for alternate BTL");
-                continue;
-            }
+    OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "found alternate btl %s",
+                         item->btl_module->btl_component->btl_version.mca_component_name);
 
-            if (0 != strcmp (btls_to_use[i], item->btl_module->btl_component->btl_version.mca_component_name)) {
-                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "skipping btl %s",
-                                 item->btl_module->btl_component->btl_version.mca_component_name);
-                continue;
-            }
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "disabing btl's native support of RDMA and ATOMIC");
+        item->btl_module->btl_flags &= ~(MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_ATOMIC_FOPS );
 
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "found alternate btl %s", btls_to_use[i]);
-
-            ++btls_found;
-            if (module) {
-                mca_btl_base_am_rdma_init(item->btl_module);
-                ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++);
-            }
-            
+        ++btls_found;
+        if (module) {
+            mca_btl_base_am_rdma_init(item->btl_module);
+            ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++);
         }
     }
 
-    opal_argv_free (btls_to_use);
-
+    /* active message RDMA/atomics should not require memory registration */
+    module->use_memory_registration = false;
     return btls_found > 0 ? OMPI_SUCCESS : OMPI_ERR_UNREACH;
 }
 
