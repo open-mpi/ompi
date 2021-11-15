@@ -138,7 +138,8 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                          UCP_ATOMIC_FETCH_OP_FOR,
                                          UCP_ATOMIC_FETCH_OP_FXOR,
                                          UCP_PARAM_FIELD_ESTIMATED_NUM_PPN,
-                                         UCP_WORKER_FLAG_IGNORE_REQUEST_LEAK],
+                                         UCP_WORKER_FLAG_IGNORE_REQUEST_LEAK,
+                                         UCP_OP_ATTR_FLAG_MULTI_SEND],
                                         [], [],
                                         [#include <ucp/api/ucp.h>])
                          AC_CHECK_DECLS([UCP_WORKER_ATTR_FIELD_ADDRESS_FLAGS],

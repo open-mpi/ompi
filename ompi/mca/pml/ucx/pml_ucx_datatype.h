@@ -21,8 +21,9 @@ typedef struct {
     int                     size_shift;
     struct {
         ucp_request_param_t send;
-        ucp_request_param_t bsend;
+        ucp_request_param_t isend;
         ucp_request_param_t recv;
+        ucp_request_param_t irecv;
     } op_param;
 } pml_ucx_datatype_t;
 #endif
