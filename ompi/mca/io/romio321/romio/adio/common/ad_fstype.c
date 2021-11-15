@@ -343,7 +343,7 @@ static void ADIO_FileSysType_fncall(const char *filename, int *fstype, int *erro
 	*fstype = ADIO_NFS;
 	return;
     }
-# endif
+# else
 
 
 #ifdef ROMIO_GPFS
@@ -423,6 +423,7 @@ static void ADIO_FileSysType_fncall(const char *filename, int *fstype, int *erro
 				       myname, __LINE__, MPI_ERR_NO_SUCH_FILE,
 				       "**filename", "**filename %s", filename);
     /* --END ERROR HANDLING-- */
+# endif /* no fstypename */
 #endif /* STATFS APPROACH */
 
 #ifdef ROMIO_HAVE_STRUCT_STAT_WITH_ST_FSTYPE
