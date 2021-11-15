@@ -253,6 +253,7 @@ pmpi_api_files = \
         pinfo_get_f08.F90 \
         pinfo_get_nkeys_f08.F90 \
         pinfo_get_nthkey_f08.F90 \
+        pinfo_get_string_f08.F90 \
         pinfo_get_valuelen_f08.F90 \
         pinfo_set_f08.F90 \
         pinit_f08.F90 \
