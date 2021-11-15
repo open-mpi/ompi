@@ -156,12 +156,19 @@ int mca_coll_hcoll_gather(const void *sbuf, int scount,
                           struct ompi_datatype_t *rdtype,
                           int root,
                           struct ompi_communicator_t *comm,
-                          mca_coll_base_module_t *module){
+                          mca_coll_base_module_t *module)
+{
+    mca_coll_hcoll_module_t  *hcoll_module = (mca_coll_hcoll_module_t*)module;
     dte_data_representation_t stype;
     dte_data_representation_t rtype;
     int rc;
+
     HCOL_VERBOSE(20,"RUNNING HCOL GATHER");
-    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+
+    if (root != comm->c_my_rank) {
+        rdtype = sdtype;
+    }
+
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
     if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
@@ -368,13 +375,19 @@ int mca_coll_hcoll_gatherv(const void* sbuf, int scount,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module)
 {
+    mca_coll_hcoll_module_t  *hcoll_module = (mca_coll_hcoll_module_t*)module;
     dte_data_representation_t stype;
     dte_data_representation_t rtype;
     int rc;
     HCOL_VERBOSE(20,"RUNNING HCOL GATHERV");
-    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+
+    if (root != comm->c_my_rank) {
+        rdtype = sdtype;
+    }
+
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
+
     if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
@@ -387,7 +400,9 @@ int mca_coll_hcoll_gatherv(const void* sbuf, int scount,
                                            comm, hcoll_module->previous_gatherv_module);
         return rc;
     }
-    rc = hcoll_collectives.coll_gatherv((void *)sbuf, scount, stype, rbuf, (int *)rcounts, (int *)displs, rtype, root, hcoll_module->hcoll_context);
+    rc = hcoll_collectives.coll_gatherv((void *)sbuf, scount, stype, rbuf,
+                                        (int *)rcounts, (int *)displs, rtype,
+                                        root, hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK GATHERV");
         rc = hcoll_module->previous_gatherv(sbuf,scount,sdtype,
@@ -406,13 +421,20 @@ int mca_coll_hcoll_scatterv(const void* sbuf, const int *scounts, const int *dis
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module)
 {
+    mca_coll_hcoll_module_t  *hcoll_module = (mca_coll_hcoll_module_t*)module;
     dte_data_representation_t stype;
     dte_data_representation_t rtype;
     int rc;
+
     HCOL_VERBOSE(20,"RUNNING HCOL SCATTERV");
-    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+
+    if (root != comm->c_my_rank) {
+        sdtype = rdtype;
+    }
+
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
+
     if (rbuf == MPI_IN_PLACE) {
         assert(root == comm->c_my_rank);
         rtype = stype;
@@ -693,13 +715,20 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
                             ompi_request_t ** request,
                             mca_coll_base_module_t *module)
 {
+    mca_coll_hcoll_module_t  *hcoll_module = (mca_coll_hcoll_module_t*)module;
     dte_data_representation_t stype;
     dte_data_representation_t rtype;
     int rc;
     void** rt_handle;
+
     HCOL_VERBOSE(20,"RUNNING HCOL IGATHERV");
-    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+
     rt_handle = (void**) request;
+
+    if (root != comm->c_my_rank) {
+        rdtype = sdtype;
+    }
+
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
     if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
