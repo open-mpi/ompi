@@ -124,16 +124,14 @@
 #define SHMEM_TYPE_WAIT_UNTIL_ALL(type_name, type, code, prefix)    \
     void prefix##type_name##_wait_until_all(volatile type *ivars, size_t nelems, const int *status, int cmp, type value)   \
     {                                                               \
-        int rc = OSHMEM_SUCCESS;                                    \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(wait_until_all(                          \
+        MCA_SPML_CALL(wait_until_all(                               \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_RC(rc);                                       \
                                                                     \
         return ;                                                    \
     }
@@ -151,7 +149,7 @@
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -169,7 +167,7 @@
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, indices, status, code));                        \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -186,7 +184,7 @@
             cmp,                                                    \
             (void*)values,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -203,7 +201,7 @@
             cmp,                                                    \
             (void*)values,                                          \
             nelems, indices, status, code));                        \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -214,14 +212,12 @@
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
                                                                     \
-        RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(wait_until_all_vector(                   \
+        MCA_SPML_CALL(wait_until_all_vector(                        \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)values,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_RC(rc);                                       \
                                                                     \
         return ;                                                    \
     }
