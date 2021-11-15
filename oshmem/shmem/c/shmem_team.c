@@ -44,7 +44,7 @@ void shmem_team_sync(shmem_team_t team)
     RUNTIME_CHECK_INIT();
 
     rc = MCA_SPML_CALL(team_sync(team));
-    RUNTIME_TEAM_MANAGMENT_CHECK_RC(rc);
+    RUNTIME_CHECK_IMPL_RC(rc);
 
     return ;
 }
@@ -56,7 +56,7 @@ int shmem_team_my_pe(shmem_team_t team)
     RUNTIME_CHECK_INIT();
 
     rc = MCA_SPML_CALL(team_my_pe(team));
-    RUNTIME_TEAM_MANAGMENT_CHECK_RC(rc);
+    RUNTIME_CHECK_IMPL_RC(rc);
 
     return rc;
 }
@@ -68,7 +68,7 @@ int shmem_team_n_pes(shmem_team_t team)
     RUNTIME_CHECK_INIT();
 
     rc = MCA_SPML_CALL(team_n_pes(team));
-    RUNTIME_TEAM_MANAGMENT_CHECK_RC(rc);
+    RUNTIME_CHECK_IMPL_RC(rc);
 
     return rc;
 }
@@ -90,7 +90,7 @@ int shmem_team_translate_pe(shmem_team_t src_team, int src_pe, shmem_team_t dest
     RUNTIME_CHECK_INIT();
 
     rc = MCA_SPML_CALL(team_translate_pe(src_team, src_pe, dest_team));
-    RUNTIME_TEAM_MANAGMENT_CHECK_RC(rc);
+    RUNTIME_CHECK_IMPL_RC(rc);
 
     return rc;
 }

@@ -1486,43 +1486,43 @@ int mca_spml_ucx_put_signal_nb(shmem_ctx_t ctx, void* dst_addr, size_t size,
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_wait_until_all(void *ivars, int cmp, void
+void mca_spml_ucx_wait_until_all(void *ivars, int cmp, void
+        *cmp_value, size_t nelems, const int *status, int datatype)
+{
+    return ;
+}
+
+/* This routine is not implemented */
+size_t mca_spml_ucx_wait_until_any(void *ivars, int cmp, void
         *cmp_value, size_t nelems, const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_wait_until_any(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, const int *status, int datatype)
-{
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
-}
-
-/* This routine is not implemented */
-int mca_spml_ucx_wait_until_some(void *ivars, int cmp, void
+size_t mca_spml_ucx_wait_until_some(void *ivars, int cmp, void
         *cmp_value, size_t nelems, size_t *indices, const int *status, int
         datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
-/* This routine is not implemented */
-int mca_spml_ucx_wait_until_all_vector(void *ivars, int cmp, void
+/* This routine is not implemented */ 
+void mca_spml_ucx_wait_until_all_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, const int *status, int datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    return ;
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void
+size_t mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void
         *cmp_value, size_t nelems, const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void
+size_t mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void
         *cmp_value, size_t nelems, size_t *indices, const int *status, int
         datatype)
 {
@@ -1537,14 +1537,14 @@ int mca_spml_ucx_test_all(void *ivars, int cmp, void *cmp_value,
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value,
+size_t mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value,
         size_t nelems, const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value,
+size_t mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value,
         size_t nelems, size_t *indices, const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
@@ -1558,14 +1558,14 @@ int mca_spml_ucx_test_all_vector(void *ivars, int cmp, void
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_test_any_vector(void *ivars, int cmp, void
+size_t mca_spml_ucx_test_any_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_test_some_vector(void *ivars, int cmp, void
+size_t mca_spml_ucx_test_some_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, size_t *indices, const int *status, int
         datatype)
 {
