@@ -139,10 +139,10 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
                                      right, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
             if (MPI_SUCCESS != err) { goto error_hndl; }
-
-            err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
-            if (MPI_SUCCESS != err) { goto error_hndl; }
         }
+
+        err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) { goto error_hndl; }
     }
 
  error_hndl:

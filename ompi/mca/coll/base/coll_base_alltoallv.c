@@ -55,7 +55,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
 {
     int i, size, rank, left, right, err = MPI_SUCCESS, line;
     ptrdiff_t extent;
-    ompi_request_t *req;
+    ompi_request_t *req = MPI_REQUEST_NULL;
     char *tmp_buffer;
     size_t packed_size = 0, max_size;
     opal_convertor_t convertor;
@@ -140,10 +140,10 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
                                      right, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
             if (MPI_SUCCESS != err) { goto error_hndl; }
-
-            err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
-            if (MPI_SUCCESS != err) { goto error_hndl; }
         }
+
+        err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) { goto error_hndl; }
     }
 
  error_hndl:
