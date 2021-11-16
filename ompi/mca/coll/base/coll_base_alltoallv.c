@@ -17,6 +17,8 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,14 +111,14 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
 
             /* Receive data from the right */
             err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[right], rcounts[right], rdtype,
-                                      right, MCA_COLL_BASE_TAG_ALLTOALLW, comm, &req));
+                                      right, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
             if (MPI_SUCCESS != err) { goto error_hndl; }
         }
 
         if( (left != right) && (0 != rcounts[left]) ) {
             /* Send data to the left */
             err = MCA_PML_CALL(send ((char *) rbuf + rdisps[left], rcounts[left], rdtype,
-                                     left, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
+                                     left, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
             if (MPI_SUCCESS != err) { goto error_hndl; }
 
@@ -125,14 +127,14 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
 
             /* Receive data from the left */
             err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[left], rcounts[left], rdtype,
-                                      left, MCA_COLL_BASE_TAG_ALLTOALLW, comm, &req));
+                                      left, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
             if (MPI_SUCCESS != err) { goto error_hndl; }
         }
 
         if( 0 != rcounts[right] ) {  /* nothing to exchange with the peer on the right */
             /* Send data to the right */
             err = MCA_PML_CALL(send ((char *) tmp_buffer,  packed_size, MPI_PACKED,
-                                     right, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
+                                     right, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
             if (MPI_SUCCESS != err) { goto error_hndl; }
 
