@@ -54,6 +54,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
                                             mca_coll_base_module_t *module)
 {
     int i, size, rank, left, right, err = MPI_SUCCESS, line;
+    ptrdiff_t extent;
     ompi_request_t *req;
     char *tmp_buffer;
     size_t packed_size = 0, max_size;
@@ -89,6 +90,8 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     }
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
 
+    ompi_datatype_type_extent(rdtype, &extent);
+
     /* Allocate a temporary buffer */
     tmp_buffer = calloc (max_size, 1);
     if( NULL == tmp_buffer) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto error_hndl; }
@@ -104,20 +107,20 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             ompi_proc_t *right_proc = ompi_comm_peer_lookup(comm, right);
             opal_convertor_clone(right_proc->super.proc_convertor, &convertor, 0);
             opal_convertor_prepare_for_send(&convertor, &rdtype->super, rcounts[right],
-                                            (char *) rbuf + rdisps[right]);
+                                            (char *) rbuf + rdisps[right] * extent);
             packed_size = max_size;
             err = opal_convertor_pack(&convertor, &iov, &iov_count, &packed_size);
             if (1 != err) { goto error_hndl; }
 
             /* Receive data from the right */
-            err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[right], rcounts[right], rdtype,
+            err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[right] * extent, rcounts[right], rdtype,
                                       right, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
             if (MPI_SUCCESS != err) { goto error_hndl; }
         }
 
         if( (left != right) && (0 != rcounts[left]) ) {
             /* Send data to the left */
-            err = MCA_PML_CALL(send ((char *) rbuf + rdisps[left], rcounts[left], rdtype,
+            err = MCA_PML_CALL(send ((char *) rbuf + rdisps[left] * extent, rcounts[left], rdtype,
                                      left, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
             if (MPI_SUCCESS != err) { goto error_hndl; }
@@ -126,7 +129,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             if (MPI_SUCCESS != err) { goto error_hndl; }
 
             /* Receive data from the left */
-            err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[left], rcounts[left], rdtype,
+            err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[left] * extent, rcounts[left], rdtype,
                                       left, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
             if (MPI_SUCCESS != err) { goto error_hndl; }
         }
