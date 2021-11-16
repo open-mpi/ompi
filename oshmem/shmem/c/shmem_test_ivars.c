@@ -133,7 +133,7 @@
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -151,7 +151,7 @@
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -169,7 +169,7 @@
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, indices, status, code));                        \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -186,7 +186,7 @@
             cmp,                                                    \
             (void*)values,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -203,7 +203,7 @@
             cmp,                                                    \
             (void*)values,                                          \
             nelems, indices, status, code));                        \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }
@@ -221,7 +221,7 @@
             cmp,                                                    \
             (void*)values,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_RC(rc);                                       \
+        RUNTIME_CHECK_IMPL_RC(rc);                                  \
                                                                     \
         return rc;                                                  \
     }

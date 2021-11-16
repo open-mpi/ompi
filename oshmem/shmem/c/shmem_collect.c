@@ -84,7 +84,7 @@ static void _shmem_collect(void *target,
 /* Teams collect */
 #pragma weak shmem_char_collect          		= pshmem_char_collect
 #pragma weak shmem_short_collect         		= pshmem_short_collect
-#pragma weak shmem_int_collect         	    	= pshmem_int_collect
+#pragma weak shmem_int_collect         	    	        = pshmem_int_collect
 #pragma weak shmem_long_collect          		= pshmem_long_collect
 #pragma weak shmem_float_collect         		= pshmem_float_collect
 #pragma weak shmem_double_collect         		= pshmem_double_collect
@@ -149,10 +149,10 @@ SHMEM_TYPE_COLLECT(_fcollect32, sizeof(uint32_t), true)
 SHMEM_TYPE_COLLECT(_fcollect64, sizeof(uint64_t), true)
 
 
-#define SHMEM_TYPE_TEAM_COLLECT(type_name, type, code, postfix)    \
+#define SHMEM_TYPE_TEAM_COLLECT(type_name, type, code, postfix)     \
     int  shmem##type_name##postfix(shmem_team_t team, type *dest, const type *source, size_t nelems)   \
     {                                                               \
-        size_t rc = 0;                                              \
+        int rc = 0;                                                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
@@ -198,7 +198,7 @@ SHMEM_TYPE_TEAM_COLLECT(, void, SHMEM_BYTE, _collectmem)
 #define SHMEM_TYPE_TEAM_FCOLLECT(type_name, type, code, postfix)    \
     int  shmem##type_name##postfix(shmem_team_t team, type *dest, const type *source,  size_t nelems)   \
     {                                                               \
-        size_t rc = 0;                                              \
+        int rc = 0;                                                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \

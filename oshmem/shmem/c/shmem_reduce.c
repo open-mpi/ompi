@@ -396,6 +396,8 @@ SHMEM_TYPE_REDUCE_OP(prod, _int64, int64_t, shmemx)
                                                                                             \
     }                                                                                       \
     RUNTIME_CHECK_RC(rc);                                                                   \
+                                                                                            \
+    return rc;                                                                              \
 }
 
 SHMEM_TYPE_TEAM_REDUCE_OP(and, _uchar, unsigned char, OSHMEM_OP_AND, SHMEM_UCHAR)
