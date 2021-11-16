@@ -61,6 +61,9 @@ included in the vX.Y.Z section and be denoted as:
 4.1.2 -- November, 2021
 -----------------------
 
+- ROMIO portability fix for OpenBSD
+- Fix handling of MPI_IN_PLACE with MPI_ALLTOALLW and improve performance
+  of MPI_ALLTOALL and MPI_ALLTOALLV for MPI_IN_PLACE.
 - Fix one-sided issue with empty groups in Post-Start-Wait-Complete
   synchronization mode.
 - Fix Fortran status returns in certain use cases involving
@@ -78,7 +81,7 @@ included in the vX.Y.Z section and be denoted as:
 - Fix a potential hang in the memory hook handling.
 - Slight performance improvement in MPI_WAITALL when running in
   MPI_THREAD_MULTIPLE.
-- Fix hcoll datatype mapping.
+- Fix hcoll datatype mapping and rooted operation behavior.
 - Correct some operations modifying MPI_Status.MPI_ERROR when it is
   disallowed by the MPI standard.
 - UCX updates:
