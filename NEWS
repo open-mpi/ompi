@@ -61,6 +61,9 @@ included in the vX.Y.Z section and be denoted as:
 4.1.2 -- November, 2021
 -----------------------
 
+- ROMIO portability fix for OpenBSD
+- Fix handling of MPI_IN_PLACE with MPI_ALLTOALLW and improve performance
+  of MPI_ALLTOALL and MPI_ALLTOALLV for MPI_IN_PLACE.
 - Fix one-sided issue with empty groups in Post-Start-Wait-Complete
   synchronization mode.
 - Fix Fortran status returns in certain use cases involving
@@ -78,7 +81,7 @@ included in the vX.Y.Z section and be denoted as:
 - Fix a potential hang in the memory hook handling.
 - Slight performance improvement in MPI_WAITALL when running in
   MPI_THREAD_MULTIPLE.
-- Fix hcoll datatype mapping.
+- Fix hcoll datatype mapping and rooted operation behavior.
 - Correct some operations modifying MPI_Status.MPI_ERROR when it is
   disallowed by the MPI standard.
 - UCX updates:
@@ -252,10 +255,43 @@ included in the vX.Y.Z section and be denoted as:
 - OFI/libfabric: Multiple small bugfixes
 - libnbc: Adding numerous performance-improving algorithms
 
-4.0.6 -- March, 2021
+4.0.7 -- November, 2021
 -----------------------
-- Update embedded PMIx to 3.2.2.  This update addresses several
+
+- Fix an issue with MPI_IALLREDUCE_SCATTER when using large count
+  arguments.
+- Fixed an issue with POST/START/COMPLETE/WAIT when using subsets
+  of processes.  Thanks to Thomas Gilles for reporting.
+- Numerous fixes from vendor partners.
+- Fix a problem with a couple of MPI_IALLREDUCE algorithms.  Thanks to
+  John Donners for reporting.
+- Fix an edge case where MPI_Reduce is invoked with zero count and NULL
+  source and destination buffers.
+- Use the mfence instruction in opal_atomic_rmb on x86_64 cpus.  Thanks
+  to George Katevenis for proposing a fix.
+- Fix an issue with the Open MPI build system using the SLURM provided
+  PMIx when not requested by the user.  Thanks to Alexander Grund for
+  reporting.
+- Fix a problem compiling Open MPI with clang on case-insensitive
+  file systems.  Thanks to @srpgilles for reporting.
+- Fix some OFI usNIC/OFI MTL interaction problems.  Thanks to
+  @roguephysicist reporting this issue.
+- Fix a problem with the Posix fbtl component failing to load.
+  Thanks to Honggang Li for reporting.
+
+4.0.6 -- June, 2021
+-------------------
+
+- Update embedded PMIx to 3.2.3.  This update addresses several
   MPI_COMM_SPAWN problems.
+- Fix an issue with MPI_FILE_GET_BYTE_OFFSET when supplying a
+  zero size file view.  Thanks to @shanedsnyder for reporting.
+- Fix an issue with MPI_COMM_SPLIT_TYPE not observing key correctly.
+  Thanks to Wolfgang Bangerth for reporting.
+- Fix a derived datatype issue that could lead to potential data
+  corruption when using UCX.  Thanks to @jayeshkrishna for reporting.
+- Fix a problem with shared memory transport file name collisions.
+  Thanks to Moritz Kreutzer for reporting.
 - Fix a problem when using Flux PMI and UCX.  Thanks to Sami Ilvonen
   for reporting and supplying a fix.
 - Fix a problem with MPIR breakpoint being compiled out using PGI
