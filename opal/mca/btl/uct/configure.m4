@@ -51,22 +51,23 @@ dnl
         AC_MSG_RESULT([no])
     fi
 
-    max_allowed_uct_major=1
-    max_allowed_uct_minor=9
+    min_allowed_uct_major=1
+    min_allowed_uct_minor=9
     if test "$btl_uct_happy" = "yes" && test "$enable_uct_version_check" != "no"; then
         AC_MSG_CHECKING([UCT version compatibility])
         OPAL_VAR_SCOPE_PUSH([CPPFLAGS_save])
         CPPFLAGS_save="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS $btl_uct_CPPFLAGS"
         AC_PREPROC_IFELSE([AC_LANG_PROGRAM([#include <uct/api/version.h>
-                                            #if (UCT_VERNO_MAJOR > $max_allowed_uct_major)
-                                            #error "UCT MAJOR VERNO > $max_allowed_uct_major"
+                                            #if (UCT_VERNO_MAJOR < $min_allowed_uct_major)
+                                            #error "UCT MAJOR VERNO < $min_allowed_uct_major"
                                             #endif
-                                            #if (UCT_VERNO_MINOR > $max_allowed_uct_minor)
-                                            #error "UCT MINOR VERNO > $max_allowed_uct_minor"
+                                            #if (UCT_VERNO_MAJOR == $min_allowed_uct_major) &&\
+                                                (UCT_VERNO_MINOR <  $min_allowed_uct_minor)
+                                            #error "UCT MINOR VERNO < $min_allowed_uct_minor"
                                             #endif], [])],
                            [AC_MSG_RESULT([UCT version compatible])],
-                           [AC_MSG_RESULT([UCT version not compatible - need UCX $max_allowed_uct_major.$max_allowed_uct_minor or older])
+                           [AC_MSG_RESULT([UCT version not compatible - need UCX $min_allowed_uct_major.$min_allowed_uct_minor or newer])
                             btl_uct_happy="no"])
         CPPFLAGS="$CPPFLAGS_save"
         OPAL_VAR_SCOPE_POP
