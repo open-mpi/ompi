@@ -48,7 +48,6 @@
 #include "opal/util/arch.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
-#include "opal/align.h"
 #include "opal/util/sys_limits.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
@@ -1321,8 +1320,6 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     int world_size = ompi_comm_size (comm);
     int init_limit = 256;
     int ret;
-    int flag;
-    char infoval[32];
     char *name;
 
     /* the osc/sm component is the exclusive provider for support for shared
@@ -1363,15 +1360,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     module->size = size;
     module->memory_alignment = mca_osc_rdma_component.memory_alignment;
     if (NULL != info) {
-        opal_cstring_t *align_info_str;
-        opal_info_get(info, "mpi_minimum_memory_alignment", &align_info_str, &flag);
-        if (flag) {
-            ssize_t tmp_align = atoll(align_info_str->string);
-            OBJ_RELEASE(align_info_str);
-            if (OPAL_ALIGN_MIN < tmp_align) {
-                module->memory_alignment = tmp_align;
-            }
-        }
+        ompi_osc_base_set_memory_alignment(info, &module->memory_alignment);
     }
 
     /* set the module so we properly cleanup */

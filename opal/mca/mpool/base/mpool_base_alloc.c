@@ -63,7 +63,7 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info, const char *hints)
     mca_mpool_base_module_t *mpool;
     void *mem = NULL;
     opal_cstring_t *align_info_str;
-    size_t memory_alignment = OPAL_ALIGN_MIN;
+    long long memory_alignment = OPAL_ALIGN_MIN;
 
     mpool_tree_item = mca_mpool_base_tree_item_get();
     if (!mpool_tree_item) {
@@ -76,7 +76,7 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info, const char *hints)
                       &align_info_str, &flag);
 
         if (flag) {
-            ssize_t tmp_align = atoll(align_info_str->string);
+            long long tmp_align = atoll(align_info_str->string);
             OBJ_RELEASE(align_info_str);
             if (tmp_align > memory_alignment) {
                 memory_alignment = tmp_align;
