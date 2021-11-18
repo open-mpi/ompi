@@ -825,20 +825,16 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # variable is not set, then it is assumed that the component
     # wishes all LDFLAGS and LIBS to be provided as wrapper flags.
     AS_IF([test "$8" = "static"],
-          [m4_foreach(flags, [LDFLAGS, LIBS],
-                      [m4_if(flags, [LIBS],
-                             [OPAL_MCA_STRIP_LAFILES([tmp_]flags, [$$2_$3_]flags)],
-                             [tmp_]flags[=$$2_$3_]flags)
-                       AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_]flags,
-                                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_WRAPPER_EXTRA_]flags)],
-                                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$tmp_]flags)])
-                       dnl yes, this is weird indenting, but the
-                       dnl combination of m4_foreach and AS_VAR_SET_IF
-                       dnl will result in the closing of one if and the
-                       dnl start of the next on the same line, resulting
-		       dnl in parse errors, if this is not here.
-		       ])])
+          [AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_LDFLAGS],
+              [AS_VAR_COPY([tmp_flags], [$2_$3_WRAPPER_EXTRA_LDFLAGS])],
+              [AS_VAR_COPY([tmp_flags], [$2_$3_LDFLAGS])])
+           OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_ldflags], [$tmp_flags])
 
+           AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_LIBS],
+              [AS_VAR_COPY([tmp_flags], [$2_$3_WRAPPER_EXTRA_LIBS])],
+              [AS_VAR_COPY([tmp_all_flags], [$2_$3_LIBS])
+               OPAL_MCA_STRIP_LAFILES([tmp_flags], [$tmp_all_flags])])
+           OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_libs], [$tmp_flags])])
 
     # WRAPPER_EXTRA_CPPFLAGS are only needed for STOP_AT_FIRST
     # components, as all other components are not allowed to leak
