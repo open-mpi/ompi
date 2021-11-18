@@ -43,7 +43,7 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
           [$1], [CXXFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_cxxflags], [$2])],
           [$1], [FCFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_fcflags], [$2])],
           [$1], [LDFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_ldflags], [$2])],
-          [$1], [LIBS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_libs], [$2])],
+          [$1], [LIBS], [OPAL_FLAGS_APPEND_MOVE([wrapper_extra_libs], [$2])],
           [m4_fatal([Unknown wrapper flag type $1])])
 ])
 
@@ -383,9 +383,9 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        # asked for, as they know better than us.
        AC_MSG_CHECKING([for OPAL LIBS])
        OPAL_WRAPPER_EXTRA_LIBS="$opal_mca_wrapper_extra_libs"
-       OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
-       OPAL_WRAPPER_EXTRA_LIBS="$OPAL_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
-       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_EXTRA_LIBS], [$LIBS])
+       OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
+       OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_EXTRA_LIBS], [$with_wrapper_libs])
+       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_EXTRA_LIBS], [$LIBS])
        AC_SUBST([OPAL_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LIBS])
     ])
@@ -448,9 +448,9 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
 
        AC_MSG_CHECKING([for OMPI LIBS])
        OMPI_WRAPPER_EXTRA_LIBS="$ompi_mca_wrapper_extra_libs"
-       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
-       OMPI_WRAPPER_EXTRA_LIBS="$OMPI_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
-       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_EXTRA_LIBS], [$LIBS])
+       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
+       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_EXTRA_LIBS], [$with_wrapper_libs])
+       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_EXTRA_LIBS], [$LIBS])
        AC_SUBST([OMPI_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LIBS])
 
