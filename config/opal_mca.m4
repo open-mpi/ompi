@@ -836,9 +836,10 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # provide them for the final link of the application.  Components
     # can explicitly set <framework>_<component>_WRAPPER_EXTRA_<flag>
     # for either LDFLAGS or LIBS, for cases where the component wants
-    # to explicitly manage that behavior.  If the full variable is not
-    # defined, this macro will copy <framework>_<component>_<flag>
-    # into the wrapper flags.
+    # to explicitly manage which flags are passed to the wrapper
+    # compiler.  If the <framework>_<component>_WRAPPER_EXTRA_<flag>
+    # variable is not set, then it is assumed that the component
+    # wishes all LDFLAGS and LIBS to be provided as wrapper flags.
     AS_IF([test "$8" = "static"],
           [m4_foreach(flags, [LDFLAGS, LIBS],
                       [m4_if(flags, [LIBS],
@@ -855,9 +856,13 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
 		       ])])
 
 
-    # if needed, copy over WRAPPER_EXTRA_CPPFLAGS.  Since a configure script
-    # component can never be used in a STOP_AT_FIRST framework, we
-    # don't have to implement the else clause in the literal check...
+    # WRAPPER_EXTRA_CPPFLAGS are only needed for STOP_AT_FIRST
+    # components, as all other components are not allowed to leak
+    # headers or compile-time flags into the top-level library or
+    # wrapper compilers.  If needed, copy over WRAPPER_EXTRA_CPPFLAGS.
+    # Since a configure script component can never be used in a
+    # STOP_AT_FIRST framework, we don't have to implement the else
+    # clause in the literal check.
     AS_LITERAL_IF([$3],
         [AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""],
            [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
