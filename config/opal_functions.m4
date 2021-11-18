@@ -16,6 +16,8 @@ dnl Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+dnl                         reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -317,6 +319,18 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
+# OPAL_APPEND(variable, new_argument)
+# ----------------------------------------
+# Append new_argument to variable, assuming a space separated list.
+#
+AC_DEFUN([OPAL_APPEND], [
+  AS_IF([test -z "$$1"], [$1="$2"], [$1="$$1 $2"])
+])
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
 # OPAL_APPEND_UNIQ(variable, new_argument)
 # ----------------------------------------
 # Append new_argument to variable if not already in variable.  This assumes a
@@ -333,11 +347,7 @@ for arg in $2; do
         fi
     done
     if test "$opal_found" = "0" ; then
-        if test -z "$$1"; then
-            $1="$arg"
-        else
-            $1="$$1 $arg"
-        fi
+        OPAL_APPEND([$1], [$arg])
     fi
 done
 unset opal_found
@@ -463,7 +473,50 @@ AC_DEFUN([OPAL_FLAGS_APPEND_UNIQ], [
                    AS_IF([test "x$val" = "x$arg"], [opal_append=0])
                done])
         AS_IF([test "$opal_append" = "1"],
-              [AS_IF([test -z "$$1"], [$1=$arg], [$1="$$1 $arg"])])
+              [OPAL_APPEND([$1], [$arg])])
+    done
+
+    OPAL_VAR_SCOPE_POP
+])
+
+dnl #######################################################################
+dnl #######################################################################
+dnl #######################################################################
+
+# OPAL_FLAGS_APPEND_MOVE(variable, new_argument)
+# ----------------------------------------------
+# add new_arguments to the end of variable.
+#
+# If an argument in new_arguments does not begin with -I, -L, or -l OR
+# the argument begins with -I, -L, or -l and it is not already in
+# variable, it is appended to variable.
+#
+# If an argument in new_argument begins with a -l and is already in
+# variable, the existing occurances of the argument are removed from
+# variable and the argument is appended to variable.  This behavior
+# is most useful in LIBS, where ordering matters and being rightmost
+# is usually the right behavior.
+#
+# This macro assumes a space separated list.
+AC_DEFUN([OPAL_FLAGS_APPEND_MOVE], [
+    OPAL_VAR_SCOPE_PUSH([opal_tmp_variable opal_tmp opal_append])
+
+    for arg in $2; do
+        AS_CASE([$arg],
+                [-I*|-L*],
+                [opal_append=1
+                 for val in ${$1} ; do
+                     AS_IF([test "x$val" = "x$arg"], [opal_append=0])
+                 done
+                 AS_IF([test $opal_append -eq 1], [OPAL_APPEND([$1], [$arg])])],
+                [-l*],
+                [opal_tmp_variable=
+                 for val in ${$1}; do
+                     AS_IF([test "x$val" != "x$arg"],
+                           [OPAL_APPEND([opal_tmp_variable], [$val])])
+                 done
+                 OPAL_APPEND([opal_tmp_variable], [$arg])])
+                 $1="$opal_tmp_variable"
     done
 
     OPAL_VAR_SCOPE_POP

@@ -850,7 +850,7 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
               [AS_VAR_COPY([tmp_flags], [$2_$3_WRAPPER_EXTRA_LIBS])],
               [AS_VAR_COPY([tmp_all_flags], [$2_$3_LIBS])
                OPAL_MCA_STRIP_LAFILES([tmp_flags], [$tmp_all_flags])])
-           OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_libs], [$tmp_flags])])
+           OPAL_FLAGS_APPEND_MOVE([mca_wrapper_extra_libs], [$tmp_flags])])
 
     # WRAPPER_EXTRA_CPPFLAGS are only needed for STOP_AT_FIRST
     # components, as all other components are not allowed to leak

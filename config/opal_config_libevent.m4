@@ -101,7 +101,7 @@ AC_DEFUN([OPAL_CONFIG_LIBEVENT], [
            opal_libevent_WRAPPER_LDFLAGS="$pkg_config_core_ldflags"
            OPAL_FLAGS_APPEND_UNIQ([opal_libevent_WRAPPER_LDFLAGS], [$pkg_config_pthreads_ldflags])
            opal_libevent_WRAPPER_LIBS="$pkg_config_pthreads_libs"
-           OPAL_FLAGS_APPEND_UNIQ([opal_libevent_WRAPPER_LIBS], [$pkg_config_core_libs])],
+           OPAL_FLAGS_APPEND_MOVE([opal_libevent_WRAPPER_LIBS], [$pkg_config_core_libs])],
           [# guess that what we have from compiling OMPI is good enough
            opal_libevent_WRAPPER_LDFLAGS="$opal_libevent_LDFLAGS"
            opal_libevent_WRAPPER_LIBS="$opal_libevent_LIBS"])
