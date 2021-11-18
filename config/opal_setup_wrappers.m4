@@ -382,9 +382,10 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        # and this cleans the duplication up a bunch.  Always add everything the user
        # asked for, as they know better than us.
        AC_MSG_CHECKING([for OPAL LIBS])
-       OPAL_WRAPPER_EXTRA_LIBS="$opal_mca_wrapper_extra_libs $OPAL_WRAPPER_EXTRA_LIBS"
+       OPAL_WRAPPER_EXTRA_LIBS="$opal_mca_wrapper_extra_libs"
        OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
        OPAL_WRAPPER_EXTRA_LIBS="$OPAL_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
+       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_EXTRA_LIBS], [$LIBS])
        AC_SUBST([OPAL_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LIBS])
     ])
