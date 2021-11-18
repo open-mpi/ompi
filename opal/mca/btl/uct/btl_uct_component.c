@@ -17,7 +17,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019-2020 Google, LLC. All rights reserved.
+ * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -47,13 +47,13 @@ static int mca_btl_uct_component_register(void)
 {
     mca_btl_uct_module_t *module = &mca_btl_uct_module_template;
 
-    mca_btl_uct_component.memory_domains = "none";
+    mca_btl_uct_component.memory_domains = "mlx5_0,mlx4_0";
     (void) mca_base_component_var_register(
         &mca_btl_uct_component.super.btl_version, "memory_domains",
         "Comma-delimited list of memory domains of the form "
         "to use for communication. Memory domains MUST provide transports that "
         "support put, get, and amos. Special values: all (all available), none."
-        " (default: none)",
+        " (default: mlx5_0,mlx4_0)",
         MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
         MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.memory_domains);
 
