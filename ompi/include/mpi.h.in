@@ -1392,7 +1392,6 @@ OMPI_DECLSPEC  int MPI_Bsend_init(const void *buf, int count, MPI_Datatype datat
                                   int dest, int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Buffer_attach(void *buffer, int size);
 OMPI_DECLSPEC  int MPI_Buffer_detach(void *buffer, int *size);
-OMPI_DECLSPEC  int MPI_Cancel(MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int coords[]);
 OMPI_DECLSPEC  int MPI_Cart_create(MPI_Comm old_comm, int ndims, const int dims[],
                                    const int periods[], int reorder, MPI_Comm *comm_cart);
@@ -2145,7 +2144,6 @@ OMPI_DECLSPEC  int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype data
                                    int dest, int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Buffer_attach(void *buffer, int size);
 OMPI_DECLSPEC  int PMPI_Buffer_detach(void *buffer, int *size);
-OMPI_DECLSPEC  int PMPI_Cancel(MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int coords[]);
 OMPI_DECLSPEC  int PMPI_Cart_create(MPI_Comm old_comm, int ndims, const int dims[],
                                     const int periods[], int reorder, MPI_Comm *comm_cart);
@@ -2879,6 +2877,10 @@ OMPI_DECLSPEC  int MPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *valu
  * Deprecated prototypes.  Usage is discouraged, as these may be
  * deleted in future versions of the MPI Standard.
  */
+OMPI_DECLSPEC  int MPI_Cancel(MPI_Request *request)
+            __mpi_interface_deprecated__("MPI_Cancel was deprecated in MPI-4.0, and may be removed in future MPI specifications");
+OMPI_DECLSPEC  int PMPI_Cancel(MPI_Request *request)
+            __mpi_interface_deprecated__("PMPI_Cancel was deprecated in MPI-4.0, and may be removed in future MPI specifications");
 OMPI_DECLSPEC  int MPI_Attr_delete(MPI_Comm comm, int keyval)
             __mpi_interface_deprecated__("MPI_Attr_delete was deprecated in MPI-2.0; use MPI_Comm_delete_attr instead");
 OMPI_DECLSPEC  int PMPI_Attr_delete(MPI_Comm comm, int keyval)
