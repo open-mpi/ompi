@@ -343,6 +343,8 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_MSG_CHECKING([for OPAL CPPFLAGS])
        if test "$WANT_INSTALL_HEADERS" = "1" ; then
            OPAL_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi'
+       else
+           OPAL_WRAPPER_EXTRA_CPPFLAGS=
        fi
        OPAL_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS $opal_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
        AC_SUBST([OPAL_WRAPPER_EXTRA_CPPFLAGS])
@@ -394,6 +396,8 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_MSG_CHECKING([for OMPI CPPFLAGS])
        if test "$WANT_INSTALL_HEADERS" = "1" ; then
            OMPI_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi'
+       else
+           OPAL_WRAPPER_EXTRA_CPPFLAGS=
        fi
        OMPI_WRAPPER_EXTRA_CPPFLAGS="$OMPI_WRAPPER_EXTRA_CPPFLAGS $ompi_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
        AC_SUBST([OMPI_WRAPPER_EXTRA_CPPFLAGS])
