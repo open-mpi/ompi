@@ -1047,7 +1047,7 @@ static char *bitmap2rangestr(int bitmap)
                 } else {
                     snprintf(tmp, stmp, "%d-%d", range_start, range_end);
                 }
-                strncat(ret, tmp, sizeof(ret) - strlen(ret) - 1);
+		snprintf(ret + strlen(ret), BUFSIZ, "%s", tmp);
 
                 range_start = -999;
             }
@@ -1074,7 +1074,7 @@ static char *bitmap2rangestr(int bitmap)
         } else {
             snprintf(tmp, stmp, "%d-%d", range_start, range_end);
         }
-        strncat(ret, tmp, sizeof(ret) - strlen(ret) - 1);
+        snprintf(ret + strlen(ret), BUFSIZ, "%s",  tmp);
     }
 
     return ret;
