@@ -2195,6 +2195,19 @@ end subroutine MPI_Info_get_nthkey
 
 end interface
 
+interface
+
+subroutine MPI_Info_get_string(info, key, buflen, value, flag, ierror)
+  integer, intent(in) :: info
+  character(len=*), intent(in) :: key
+  integer, intent(inout) :: buflen
+  character(len=*), intent(out) :: value
+  logical, intent(out) :: flag
+  integer, intent(out) :: ierror
+end subroutine MPI_Info_get_string
+
+end interface
+
 
 interface
 

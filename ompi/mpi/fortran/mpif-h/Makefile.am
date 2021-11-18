@@ -334,6 +334,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         info_get_f.c \
         info_get_nkeys_f.c \
         info_get_nthkey_f.c \
+        info_get_string_f.c \
         info_get_valuelen_f.c \
         info_set_f.c \
         init_f.c \

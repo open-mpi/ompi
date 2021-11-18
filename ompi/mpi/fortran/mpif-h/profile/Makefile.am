@@ -247,6 +247,7 @@ linked_files = \
         pinfo_get_f.c \
         pinfo_get_nkeys_f.c \
         pinfo_get_nthkey_f.c \
+        pinfo_get_string_f.c \
         pinfo_get_valuelen_f.c \
         pinfo_set_f.c \
         pinit_f.c \

@@ -157,6 +157,7 @@
 #define MPI_Info_get PMPI_Info_get
 #define MPI_Info_get_nkeys PMPI_Info_get_nkeys
 #define MPI_Info_get_nthkey PMPI_Info_get_nthkey
+#define MPI_Info_get_string PMPI_Info_get_string
 #define MPI_Info_get_valuelen PMPI_Info_get_valuelen
 #define MPI_Info_set PMPI_Info_set
 #define MPI_Init PMPI_Init
