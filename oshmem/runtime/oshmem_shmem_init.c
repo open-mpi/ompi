@@ -101,6 +101,9 @@ shmem_internal_mutex_t shmem_internal_mutex_alloc = {{0}};
 
 shmem_ctx_t oshmem_ctx_default = NULL;
 
+shmem_team_t oshmem_team_shared = NULL;
+shmem_team_t oshmem_team_world  = NULL;
+
 static int _shmem_init(int argc, char **argv, int requested, int *provided);
 
 #if OSHMEM_OPAL_THREAD_ENABLE

@@ -253,6 +253,648 @@ typedef int (*mca_spml_base_module_put_nb_fn_t)(shmem_ctx_t ctx,
                                                 int dst,
                                                 void **handle);
 
+
+
+/**
+ * The put-with-signal routines provide a method for copying data from a
+ * contiguous local data object to a data object on a specified PE and
+ * subsequently updating a remote flag to signal completion.
+ *
+ * @param ctx      A context handle specifying the context on which to perform the
+ *                 operation. When this argument is not provided, the operation is
+ *                 performed on the default context.
+ * @param dst_addr The address in the remote PE of the object being written.
+ * @param size     The number of bytes to be written.
+ * @param src_addr An address on the local PE holdng the value to be written.
+ * @param sig_addr Symmetric address of the signal data object to be updated on the
+ *                 remote PE as a signal.
+ * @param signal   Unsigned 64-bit value that is used for updating the remote sig_addr
+ *                 signal data object.
+ * @param sig_op   Signal operator that represents the type of update to be performed
+ *                 on the remote sig_addr signal data object.
+ * @param pe       PE number of the remote PE.
+ *
+ * @return         OSHMEM_SUCCESS or failure status.
+ */
+
+typedef int (*mca_spml_base_module_put_signal_fn_t)(shmem_ctx_t ctx,
+                                                    void* dst_addr,
+                                                    size_t size,
+                                                    void* src_addr,
+                                                    uint64_t *sig_addr,
+                                                    uint64_t signal,
+                                                    int sig_op,
+                                                    int dst);
+
+
+/**
+ * The nonblocking put-with-signal routines provide a method for copying data
+ * from a contiguous local data object to a data object on a specified PE and
+ * subsequently updating a remote flag to signal completion.
+ *
+ * @param ctx      A context handle specifying the context on which to perform the
+ *                 operation. When this argument is not provided, the operation is
+ *                 performed on the default context.
+ * @param dst_addr The address in the remote PE of the object being written.
+ * @param size     The number of bytes to be written.
+ * @param src_addr An address on the local PE holdng the value to be written.
+ * @param sig_addr Symmetric address of the signal data object to be updated on the
+ *                 remote PE as a signal.
+ * @param signal   Unsigned 64-bit value that is used for updating the remote sig_addr
+ *                 signal data object.
+ * @param sig_op   Signal operator that represents the type of update to be performed
+ *                 on the remote sig_addr signal data object.
+ * @param pe       PE number of the remote PE.
+ *
+ * @return         OSHMEM_SUCCESS or failure status.
+ */
+typedef int (*mca_spml_base_module_put_signal_nb_fn_t) (shmem_ctx_t ctx,
+                                            void* dst_addr,
+                                            size_t size,
+                                            void* src_addr,
+                                            uint64_t *sig_addr,
+                                            uint64_t signal,
+                                            int sig_op,
+                                            int dst);
+
+/*
+ *  Wait on an array of variables on the local PE until all variables
+ *  meet the specified wait condition.
+ *
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with cmp_value.
+ *  @param  cmp_value   The value to be compared with the objects pointed to by ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the wait set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             None
+ */
+typedef void(*mca_spml_base_module_wait_until_all_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_value,
+                                                    size_t nelems,
+                                                    const int *status,
+                                                    int datatype);
+
+/*
+ *  Wait on an array of variables on the local PE until any one variable
+ *  meets the specified wait condition.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with cmp_value.
+ *  @param  cmp_value   The value to be compared with the objects pointed to by ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the wait set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             Returns the index of an element in the ivars array that satisfies the 
+ *                      wait condition. If the wait set is empty, this routine returns SIZE_MAX.
+ */
+typedef size_t (*mca_spml_base_module_wait_until_any_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_value,
+                                                    size_t nelems,
+                                                    const int *status,
+                                                    int datatype);
+
+
+/*
+ *  Wait on an array of variables on the local PE until at least one variable
+ *  meets the specified wait condition.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with cmp_value.
+ *  @param  cmp_value   The value to be compared with the objects pointed to by ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  indices     Local address of an array of indices of length at least nelems into
+ *                      ivars that satisfied the wait condition.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the wait set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             Returns the number of indices returned in the indices array. If the wait 
+ *                      set is empty, this routine returns 0.
+ */
+typedef size_t (*mca_spml_base_module_wait_until_some_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_value,
+                                                    size_t nelems,
+                                                    size_t *indices,
+                                                    const int *status,
+                                                    int datatype);
+
+
+/*
+ *  Wait on an array of variables on the local PE until all variables meet the
+ *  specified wait conditions.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with elements
+ *                      of cmp_values.
+ *  @param  cmp_values  Local address of an array of length nelems containing values to be
+ *                      compared with the respective objects in ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the wait set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             None
+ *                      
+ */
+typedef void (*mca_spml_base_module_wait_until_all_vector_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_values,
+                                                    size_t nelems,
+                                                    const int *status,
+                                                    int datatype);
+
+/*
+ *  Wait on an array of variables on the local PE until any one variable
+ *  meets the specified wait condition.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with cmp_value.
+ *  @param  cmp_value   The value to be compared with the objects pointed to by ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the wait set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             Returns the index of an element in the ivars array that satisfies the 
+ *                      test condition. If the test set is empty or no conditions in the test 
+ *                      set are satisfied, this routine returns SIZE_MAX.
+ */
+typedef size_t (*mca_spml_base_module_wait_until_any_vector_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_value,
+                                                    size_t nelems,
+                                                    const int *status,
+                                                    int datatype);
+
+/*
+ *  Wait on an array of variables on the local PE until at least one variable meets the
+ *  its specified wait condition.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with elements
+ *                      of cmp_values.
+ *  @param  cmp_values  Local address of an array of length nelems containing values to be
+ *                      compared with the respective objects in ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  indices     Local address of an array of indices of length at least nelems into ivars
+ *                      that satisfied the wait condition.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the wait set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             Returns the number of indices returned in the indices array. If the test 
+ *                      set is empty, this routine returns 0.
+ */
+typedef size_t (*mca_spml_base_module_wait_until_some_vector_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_value,
+                                                    size_t nelems,
+                                                    size_t *indices,
+                                                    const int *status,
+                                                    int datatype);
+
+
+/*
+ *  Indicate whether all variables within an array of variables on the local PE meet
+ *  a specified test condition.
+ *
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with cmp_value.
+ *  @param  cmp_value   The value to be compared with the objects pointed to by ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the test set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             Returns 1 if all variables in ivars satisfy the test condition or if 
+ *                      nelems is 0, otherwise this routine returns 0.
+ */
+typedef int (*mca_spml_base_module_test_all_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_value,
+                                                    size_t nelems,
+                                                    const int *status,
+                                                    int datatype);
+
+/*
+ *  Indicate whether any one variable within an array of variables on the local PE meets
+ *  a specified test condition.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with cmp_value.
+ *  @param  cmp_value   The value to be compared with the objects pointed to by ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the test set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             Returns the index of an element in the ivars array that satisfies the 
+ *                      test condition. If the test set is empty or no conditions in the test
+ *                      set are satisfied, this routine returns SIZE_MAX..
+ */
+typedef size_t (*mca_spml_base_module_test_any_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_value,
+                                                    size_t nelems,
+                                                    const int *status,
+                                                    int datatype);
+
+
+/*
+ *  Indicate whether at least one variable within an array of variables on the local PE meets
+ *  a specified test condition.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with cmp_value.
+ *  @param  cmp_value   The value to be compared with the objects pointed to by ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  indices     Local address of an array of indices of length at least nelems into
+ *                      ivars that satisfied the wait condition.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the test set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             Returns the number of indices returned in the indices array. If the test 
+ *                      set is empty, this routine returns 0.
+ */
+typedef size_t (*mca_spml_base_module_test_some_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_value,
+                                                    size_t nelems,
+                                                    size_t *indices,
+                                                    const int *status,
+                                                    int datatype);
+
+
+/*
+ *  Indicate whether all variables within an array of variables on the local PE meet the
+ *  specified test conditions.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with elements
+ *                      of cmp_values.
+ *  @param  cmp_values  Local address of an array of length nelems containing values to be
+ *                      compared with the respective objects in ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the test set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             Returns 1 if all variables in ivars satisfy the test conditions or if 
+ *                      nelems is 0, otherwise this routine returns 0.
+ */
+typedef int (*mca_spml_base_module_test_all_vector_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_values,
+                                                    size_t nelems,
+                                                    const int *status,
+                                                    int datatype);
+
+/*
+ *  Indicate whether any one variable within an array of variables on the local PE meets
+ *  its specified test condition.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with cmp_value.
+ *  @param  cmp_values  Local address of an array of length nelems containing values to be
+ *                      compared with the respective objects in ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the test set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             OSHMEM_SUCCESS or failure status.
+ */
+typedef int (*mca_spml_base_module_test_any_vector_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_values,
+                                                    size_t nelems,
+                                                    const int *status,
+                                                    int datatype);
+
+/*
+ *  Indicate whether at least one variable within an array of variables on the local PE meets
+ *  its specified test condition.
+ *
+ *  @param  ivars       Symmetric address of an array of remotely accessible
+ *                      data objects. The type of ivars should match that
+ *                      implied in the SYNOPSIS section.
+ *  @param  cmp         A comparison operator that compares elements of ivars with elements
+ *                      of cmp_values.
+ *  @param  cmp_values  Local address of an array of length nelems containing values to be
+ *                      compared with the respective objects in ivars.
+ *  @param  nelems      The number of elements in the ivars array.
+ *  @param  indices     Local address of an array of indices of length at least nelems into ivars
+ *                      that satisfied the wait condition.
+ *  @param  status      Local address of an optional mask array of length nelems that indicates
+ *                      which elements in ivars are excluded from the test set.
+ *  @param  datatype    Type of the objects
+ *
+ *  @return             OSHMEM_SUCCESS or failure status.
+ */
+typedef int (*mca_spml_base_module_test_some_vector_fn_t)(void *ivars,
+                                                    int cmp,
+                                                    void *cmp_values,
+                                                    size_t nelems,
+                                                    size_t *indices,
+                                                    const int *status,
+                                                    int datatype);
+
+/*
+ *  Registers the arrival of a PE at a synchronization point.
+ *  This routine does not return until all other PEs in a given
+ *  OpenSHMEM team or active set arrive at this synchronization point.
+ *
+ *
+ *  @param  team       An OpenSHMEM team handle.
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ *                     Zero on successful local completion. Nonzero otherwise.
+ */
+typedef int (*mca_spml_base_module_team_sync_fn_t)(shmem_team_t team);
+
+
+/*
+ *  Returns the number of the calling PE within a specified team.
+ *
+ *  @param  team       An OpenSHMEM team handle.
+ *
+ *  @return            The number of the calling PE within the specified
+ *                     team, or the value -1 if the team handle compares
+ *                     equal to SHMEM_TEAM_INVALID
+ */
+typedef int (*mca_spml_base_module_team_my_pe_fn_t)(shmem_team_t team);
+
+
+/*
+ *  Returns the number of PEs in a specified team.
+ *
+ *  @param  team       An OpenSHMEM team handle.
+ *
+ *  @return            The number of PEs in the specified team, or the
+ *                     value -1 if the team handle compares equal to
+ *                     SHMEM_TEAM_INVALID.
+ */
+typedef int (*mca_spml_base_module_team_n_pes_fn_t)(shmem_team_t team);
+
+
+
+/*
+ *  Return the configuration parameters of a given team
+ *
+ *  @param  team            An OpenSHMEM team handle.
+ *
+ *  @param  config_mask     The bitwise mask representing the set of
+ *                          configuration parameters to fetch from the
+ *                          given team.
+ *
+ *  @param  config          A pointer to the configuration parameters for the
+ *                          given team.
+ *
+ *
+ *  @return                 OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_get_config_fn_t)(shmem_team_t team, long
+        config_mask, shmem_team_config_t *config);
+
+/*
+ *  Translate a given PE number from one team to the corresponding PE number in
+ *  another team.
+ *
+ *  @param  src_team    An OpenSHMEM team handle.
+ *  @param  src_pe      A PE number in src_team.
+ *  @param  dest_team   An OpenSHMEM team handle.
+ *
+ *
+ *  @return             The specified PE’s number in the dest_team, or a value
+ *                      of -1 if any team handle arguments are invalid or the
+ *                      src_pe is not in both the source and destination teams.
+ */
+typedef int (*mca_spml_base_module_team_translate_pe_fn_t)(shmem_team_t src_team,
+        int src_pe, shmem_team_t dest_team);
+
+
+
+/*
+ *  Create a new OpenSHMEM team from a subset of the existing parent team PEs,
+ *  where the subset is defined by the PE triplet (start, stride, and size)
+ *  supplied to the routine.
+ *
+ *  @param  parent_team    An OpenSHMEM team handle.
+ *  @param  start          The lowest PE number of the subset of PEs from the parent team
+ *                         that will form the new team.
+ *  @param  stride         The stride between team PE numbers in the parent team that comprise the subset
+ *                         of PEs that will form the new team.
+ *  @param  size           The number of PEs from the parent team in the subset of PEs that
+ *                         will form the new team. size must be a positive integer.
+ *  @param  config         A pointer to the configuration parameters for the new team.
+ *  @param  config_mask    The bitwise mask representing the set of configuration parameters
+ *                         to use from config.
+ *  @param  new_team       An OpenSHMEM team handle. Upon successful creation, it references an OpenSHMEM
+ *                         team that contains the subset of all PEs in the parent team
+ *                         specified by the PE triplet provided.m
+ *
+ *
+ *  @return                OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_split_strided_fn_t)(shmem_team_t
+        parent_team, int start, int stride, int size, const shmem_team_config_t
+        *config, long config_mask, shmem_team_t *new_team);
+
+
+/*
+ *  Create two new teams by splitting an existing parent team into two subsets
+ *  based on a 2D Cartesian space defined by the xrange argument and a y
+ *  dimension that is derived from xrange and the parent team size.
+ *
+ *  @param  parent_team    An OpenSHMEM team handle.
+ *  @param  xrange         A positive integer representing the number of elements in the first dimension.
+ *  @param  xaxis_config   A pointer to the configuration parameters for the new x-axis team.
+ *  @param  xaxis_mask     The bitwise mask representing the set of configuration parameters to
+ *                         use from xaxis_config.
+ *  @param  xaxis_team     A new PE team handle representing a PE subset consisting of all the
+ *                         PEs that have the same coordinate along the y-axis as the calling PE..
+ *  @param  yaxis_config   A pointer to the configuration parameters for the new y-axis team.
+ *  @param  yaxis_mask     The bitwise mask representing the set of configuration parameters to use
+ *                         from yaxis_config.
+ *  @param  yaxis_team     A new PE team handle representing a PE subset consisting of all the PEs
+ *                         that have the same coordinate along the x-axis as the calling PE.
+ *
+ *  @return                OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_split_2d_fn_t)(shmem_team_t parent_team,
+        int xrange, const shmem_team_config_t *xaxis_config, long xaxis_mask,
+        shmem_team_t *xaxis_team, const shmem_team_config_t *yaxis_config, long
+        yaxis_mask, shmem_team_t *yaxis_team);
+
+
+/*
+ *  Destroy an existing team.
+ *
+ *  @param  team           An OpenSHMEM team handle.
+ *
+ *  @return                OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_destroy_fn_t)(shmem_team_t team);
+
+/*
+ *  Retrieve the team associated with the communication context.
+ *
+ *  @param  ctx            A handle to a communication context.
+ *  @param  team           A pointer to a handle to the associated PE team.
+ *
+ *  @return                OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_get_fn_t)(shmem_ctx_t ctx, shmem_team_t *team);
+
+/*
+ *  Create a communication context from a team.
+ *
+ *  @param  team           An OpenSHMEM team handle.
+ *  @param  options        The set of options requested for the given context.
+ *  @param  ctx            A handle to the newly created context.
+ *
+ *  @return                OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_create_ctx_fn_t)(shmem_team_t team, long options, shmem_ctx_t *ctx);
+
+/*
+ *  Exchanges a fixed amount of contiguous data blocks between all pairs of
+ *  PEs participating in the collective routine..
+ *
+ *  @param  team       An OpenSHMEM team handle.
+ *  @param  dest       Symmetric address of a data object large enough to
+ *                     receive the combined total of nelems elements from each PE in the active set.
+ *  @param  source     Symmetric address of a data object that contains nelems elements of data
+ *                     for each PE in the active set, ordered according to destination PE.
+ *  @param  nelems     The number of elements to exchange for each PE.
+ *  @param  datatype   Datatype of the elements
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_alltoall_fn_t)(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype);
+
+/*
+ *  Exchanges a fixed amount of strided data blocks between all pairs of PEs
+ *  participating in the collective routine.
+ *
+ *  @param  team       An OpenSHMEM team handle.
+ *  @param  dest       Symmetric address of a data object large enough to
+ *                     receive the combined total of nelems elements from each PE in the active set.
+ *  @param  source     Symmetric address of a data object that contains nelems elements of data
+ *                     for each PE in the active set, ordered according to destination PE.
+ *  @param  dst        The stride between consecutive elements of the dest data object. The stride
+ *                     is scaled by the element size. A value of 1 indicates contiguous data.
+ *  @param  sst        The stride between consecutive elements of the source data object. The stride
+ *                     is scaled by the element size. A value of 1 indicates contiguous data
+ *  @param  nelems     The number of elements to exchange for each PE.
+ *  @param  datatype   Datatype of the elements
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_alltoalls_fn_t)(shmem_team_t team, void
+        *dest, const void *source, ptrdiff_t dst, ptrdiff_t sst, size_t nelems,
+        int datatype);
+
+
+/*
+ *  Broadcasts a block of data from one PE to one or more destination PEs.
+ *
+ *  @param  team       An OpenSHMEM team handle.
+ *  @param  dest       Symmetric address of destination data object.
+ *  @param  source     Symmetric address of the source data object.
+ *  @param  nelems     The number of elements in source and dest arrays
+ *  @param  PE_root    Zero-based ordinal of the PE, with respect to the team or
+ *                     active set, from which the data is copied..
+ *  @param  datatype   Datatype of the elements
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_broadcast_fn_t)(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int PE_root, int datatype);
+
+
+
+/*
+ *  Concatenates blocks of data from multiple PEs to an array in every PE participating in
+ *  the collective routine.
+ *
+ *  @param  team       An OpenSHMEM team handle.
+ *  @param  dest       Symmetric address of an array large enough to accept the
+ *                     concatenation of the source arrays on all participating PEs.
+ *  @param  source     Symmetric address of the source data object.
+ *  @param  nelems     The number of elements in source array.
+ *  @param  datatype   Datatype of the elements
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_collect_fn_t)(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype);
+typedef int (*mca_spml_base_module_team_fcollect_fn_t)(shmem_team_t team, void
+        *dest, const void *source, size_t nelems, int datatype);
+
+/*
+ *  Performs a math reduction across a set of PEs.
+ *
+ *  @param  team       An OpenSHMEM team handle.
+ *  @param  dest       Symmetric address of an array, of length nreduce elements,
+ *                     to receive the result of the reduction routines.
+ *  @param  source     Symmetric address of an array, of length nreduce elements, that
+ *                     contains one element for each separate reduction routine.
+ *  @param  nreduce    The number of elements in the dest and source arrays.
+ *  @param  operation  Operations from list of supported oshmem ops
+ *  @param  datatype   Datatype of the elements
+ *
+ *  @return            OSHMEM_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_spml_base_module_team_reduce_fn_t)(shmem_team_t team, void
+        *dest, const void *source, size_t nreduce, int operation, int datatype);
+
+
 /**
  * Blocking data transfer from remote PE.
  * Read data from remote PE.
@@ -393,15 +1035,50 @@ struct mca_spml_base_module_1_0_0_t {
 
     mca_spml_base_module_put_fn_t spml_put;
     mca_spml_base_module_put_nb_fn_t spml_put_nb;
+    mca_spml_base_module_put_signal_fn_t spml_put_signal;
+    mca_spml_base_module_put_signal_nb_fn_t spml_put_signal_nb;
+
     mca_spml_base_module_get_fn_t spml_get;
     mca_spml_base_module_get_nb_fn_t spml_get_nb;
 
     mca_spml_base_module_recv_fn_t spml_recv;
     mca_spml_base_module_send_fn_t spml_send;
 
-    mca_spml_base_module_wait_fn_t spml_wait;
-    mca_spml_base_module_wait_nb_fn_t spml_wait_nb;
-    mca_spml_base_module_test_fn_t spml_test;
+    mca_spml_base_module_wait_fn_t                   spml_wait;
+    mca_spml_base_module_wait_nb_fn_t                spml_wait_nb;
+    mca_spml_base_module_wait_until_all_fn_t         spml_wait_until_all;
+    mca_spml_base_module_wait_until_any_fn_t         spml_wait_until_any;
+    mca_spml_base_module_wait_until_some_fn_t        spml_wait_until_some;
+    mca_spml_base_module_wait_until_all_vector_fn_t  spml_wait_until_all_vector;
+    mca_spml_base_module_wait_until_any_vector_fn_t  spml_wait_until_any_vector;
+    mca_spml_base_module_wait_until_some_vector_fn_t spml_wait_until_some_vector;
+
+    mca_spml_base_module_test_fn_t                   spml_test;
+    mca_spml_base_module_test_all_fn_t               spml_test_all;
+    mca_spml_base_module_test_any_fn_t               spml_test_any;
+    mca_spml_base_module_test_some_fn_t              spml_test_some;
+    mca_spml_base_module_test_all_vector_fn_t        spml_test_all_vector;
+    mca_spml_base_module_test_any_vector_fn_t        spml_test_any_vector;
+    mca_spml_base_module_test_some_vector_fn_t       spml_test_some_vector;
+
+    mca_spml_base_module_team_sync_fn_t              spml_team_sync;
+    mca_spml_base_module_team_my_pe_fn_t             spml_team_my_pe;
+    mca_spml_base_module_team_n_pes_fn_t             spml_team_n_pes;
+    mca_spml_base_module_team_get_config_fn_t        spml_team_get_config;
+    mca_spml_base_module_team_translate_pe_fn_t      spml_team_translate_pe;
+    mca_spml_base_module_team_split_strided_fn_t     spml_team_split_strided;
+    mca_spml_base_module_team_split_2d_fn_t          spml_team_split_2d;
+    mca_spml_base_module_team_destroy_fn_t           spml_team_destroy;
+    mca_spml_base_module_team_get_fn_t               spml_team_get;
+    mca_spml_base_module_team_create_ctx_fn_t        spml_team_create_ctx;
+
+    mca_spml_base_module_team_alltoall_fn_t          spml_team_alltoall;
+    mca_spml_base_module_team_alltoalls_fn_t         spml_team_alltoalls;
+    mca_spml_base_module_team_broadcast_fn_t         spml_team_broadcast;
+    mca_spml_base_module_team_collect_fn_t           spml_team_collect;
+    mca_spml_base_module_team_fcollect_fn_t          spml_team_fcollect;
+    mca_spml_base_module_team_reduce_fn_t            spml_team_reduce;
+
     mca_spml_base_module_fence_fn_t spml_fence;
     mca_spml_base_module_quiet_fn_t spml_quiet;
 

@@ -151,6 +151,8 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 
 #if OSHMEM_PARAM_CHECK == 1
 
+
+
 #define RUNTIME_CHECK_ERROR(...)                                    \
     do {                                                            \
         fprintf(stderr, "[%s]%s[%s:%d:%s] ",                        \
@@ -159,6 +161,15 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
                 __FILE__, __LINE__, __func__);                      \
         fprintf(stderr, __VA_ARGS__);                               \
     } while(0);
+
+/* check if this routine is implemented. Can be used for routines that do
+ * not return error code. */
+#define RUNTIME_CHECK_IMPL_RC(x)                                            \
+    if (x <= -1)                                                            \
+    {                                                                       \
+        int _rc = x;                                                        \
+        RUNTIME_CHECK_ERROR("Internal error is appeared rc = %d\n", (_rc)); \
+    }
 
 /**
  * Check if SHMEM API generates internal error return code
@@ -222,6 +233,7 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 #define RUNTIME_CHECK_ADDR(x)
 #define RUNTIME_CHECK_ADDR_SIZE(x,s)
 #define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)
+#define RUNTIME_CHECK_IMPL_RC(x)
 
 #endif  /* OSHMEM_PARAM_CHECK */
 
