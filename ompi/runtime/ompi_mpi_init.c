@@ -117,11 +117,6 @@ OPAL_DECLSPEC void (*__malloc_initialize_hook) (void) =
  */
 #include <float.h>
 
-#if OPAL_CC_USE_PRAGMA_IDENT
-#pragma ident OMPI_IDENT_STRING
-#elif OPAL_CC_USE_IDENT
-#ident OMPI_IDENT_STRING
-#endif
 const char ompi_version_string[] = OMPI_IDENT_STRING;
 
 /*

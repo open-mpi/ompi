@@ -499,7 +499,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     int argc;
     size_t j;
     char **argv;
-    char *ret, temp[MAX_WIDTH * 2], line[MAX_WIDTH * 2];
+    char *ret, temp[(MAX_WIDTH * 2) - 1], line[MAX_WIDTH * 2];
     char *start, *desc, *ptr;
     opal_list_item_t *item;
     ompi_cmd_line_option_t *option, **sorted;

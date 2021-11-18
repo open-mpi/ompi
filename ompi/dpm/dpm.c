@@ -690,7 +690,7 @@ static int dpm_convert(opal_list_t *infos,
     char *ck, *ptr, *help_str = NULL;
     int rc;
     char **tmp;
-    dpm_conflicts_t *modifiers;
+    dpm_conflicts_t *modifiers = NULL;
     const char *attr;
 
     /* pick the modifiers to be checked */

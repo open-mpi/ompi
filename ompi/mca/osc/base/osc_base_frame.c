@@ -22,7 +22,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-
+#include "opal/include/opal/align.h"
 
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
@@ -35,6 +35,24 @@
  */
 
 #include "ompi/mca/osc/base/static-components.h"
+
+void
+ompi_osc_base_set_memory_alignment(struct opal_info_t *info,
+                                   size_t *memory_alignment)
+{
+    int flag;
+    opal_cstring_t *align_info_str;
+
+    opal_info_get(info, "mpi_minimum_memory_alignment", &align_info_str, &flag);
+    if (flag) {
+        long long tmp_align = atoll(align_info_str->string);
+        OBJ_RELEASE(align_info_str);
+        if ((long long) OPAL_ALIGN_MIN < tmp_align) {
+            *memory_alignment = tmp_align;
+        }
+    }
+}
+
 
 int
 ompi_osc_base_find_available(bool enable_progress_threads,

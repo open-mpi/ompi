@@ -182,7 +182,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
 {
     bool first = true;
     int i, num_cores, num_pus;
-    char tmp[BUFSIZ];
+    char tmp[OMPI_AFFINITY_STRING_MAX];
     const int stmp = sizeof(tmp) - 1;
     hwloc_obj_t socket, core, c2;
 
