@@ -55,6 +55,12 @@ dnl         uses PMIx.  Cannot be added to LIBS yet, because then
 dnl         other execution tests later in configure (there are sadly
 dnl         some) would fail if the path in LDFLAGS was not added to
 dnl         LD_LIBRARY_PATH.
+dnl   * opal_pmix_WRAPPER_LDFLAGS - the linker flags necessary to
+dnl         add to the wrapper compilers in order to link an opal
+dnl         application when opal is built as a static library.
+dnl   * opal_pmix_WRAPPER_LIBS - the linker flags necessary to
+dnl         add to the wrapper compilers in order to link an opal
+dnl         application when opal is built as a static library.
 dnl   * CPPFLAGS, LDFLAGS - Updated opal_pmix_CPPFLAGS and
 dnl         opal_pmix_LDFLAGS.
 AC_DEFUN([OPAL_CONFIG_PMIX], [
@@ -142,13 +148,27 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     AS_IF([test "$external_pmix_happy" = "0" -a "$internal_pmix_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable pmix build.])])
 
-   AS_IF([test "$external_pmix_happy" = "1"],
-         [AS_IF([test -n "$with_pmix"],
-               [OPAL_GET_LFLAGS_FROM_PC(pmix, $with_pmix/lib/pkgconfig, $libevent_core_OMPI_PC_DIR, $hwloc_OMPI_PC_DIR)],
-               [OPAL_GET_LFLAGS_FROM_PC(pmix, "", $libevent_core_OMPI_PC_DIR, $hwloc_OMPI_PC_DIR)]
-         )],
-        [OPAL_GET_LFLAGS_FROM_PC(pmix, $OMPI_TOP_SRCDIR/3rd-party/openpmix/maint, $libevent_core_OMPI_PC_DIR, $hwloc_OMPI_PC_DIR)]
-    )
+    AS_IF([test "$opal_pmix_mode" = "internal"],
+          [pkg_config_file="${OMPI_TOP_BUILDDIR}/3rd-party/openpmix/maint/pmix.pc"
+           PKG_CONFIG_PATH="${OMPI_TOP_BUILDDIR}/3rd-party/openpmix/maint:${PKG_CONFIG_PATH}"],
+          [test -n "$with_hwloc"],
+          [pkg_config_file="${with_pmix}/lib/pkgconfig/pmix.pc"
+           PKG_CONFIG_PATH="${with_pmix}/lib/pkgconfig:${PKG_CONFIG_PATH}"],
+          [pkg_config_file="pmix"])
+
+    pkg_config_happy=1
+    OPAL_GET_LDFLAGS_FROM_PC([$pkg_config_file], [pkg_config_ldflags], [pkg_config_happy=0])
+    OPAL_GET_LIBS_FROM_PC([$pkg_config_file], [pkg_config_libs], [pkg_config_happy=0])
+
+    AS_IF([test $pkg_config_happy -ne 0],
+          [opal_pmix_WRAPPER_LDFLAGS="$pkg_config_ldflags"
+           opal_pmix_WRAPPER_LIBS="$pkg_config_libs"],
+          [# guess that what we have from compiling OMPI is good enough
+           opal_pmix_WRAPPER_LDFLAGS="$opal_hwloc_LDFLAGS"
+           opal_pmix_WRAPPER_LIBS="$opal_hwloc_LIBS"])
+
+    OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$opal_pmix_WRAPPER_LDFLAGS])
+    OPAL_WRAPPER_FLAGS_ADD([LIBS], [$opal_pmix_WRAPPER_LIBS])
 
     AC_DEFINE_UNQUOTED([OPAL_USING_INTERNAL_PMIX],
                        [$OPAL_USING_INTERNAL_PMIX],

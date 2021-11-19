@@ -4,7 +4,7 @@ dnl Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
 dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+dnl Copyright (c) 2020-2021 Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
@@ -39,10 +39,16 @@ dnl         uses Libevent.  Cannot be added to LIBS yet, because then
 dnl         other execution tests later in configure (there are sadly
 dnl         some) would fail if the path in LDFLAGS was not added to
 dnl         LD_LIBRARY_PATH.
+dnl   * opal_libevent_WRAPPER_LDFLAGS - the linker flags necessary to
+dnl         add to the wrapper compilers in order to link an opal
+dnl         application when opal is built as a static library.
+dnl   * opal_libevent_WRAPPER_LIBS - the linker flags necessary to
+dnl         add to the wrapper compilers in order to link an opal
+dnl         application when opal is built as a static library.
 dnl   * CPPFLAGS, LDFLAGS - Updated opal_libevent_CPPFLAGS and
 dnl         opal_libevent_LDFLAGS.
 AC_DEFUN([OPAL_CONFIG_LIBEVENT], [
-    OPAL_VAR_SCOPE_PUSH([internal_libevent_happy external_libevent_happy])
+    OPAL_VAR_SCOPE_PUSH([internal_libevent_happy external_libevent_happy pkg_config_core pkg_config_pthreads pkg_config_core_ldflags pkg_config_pthreads_ldflags pkg_config_core_libs pkg_config_pthreads_libs pkg_config_happy])
 
     opal_show_subtitle "Configuring Libevent"
 
@@ -70,30 +76,38 @@ AC_DEFUN([OPAL_CONFIG_LIBEVENT], [
     AS_IF([test "$external_libevent_happy" = "0" -a "$internal_libevent_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable libevent build.])])
 
-    AS_IF([test "$opal_libevent_mode" = "external"],
-        # The libevent.pc file only returns -levent, however we want
-        # only -libevent_core and -libevent_pthreads, so ompi needs to
-        # do this twice, once for each.
-        [AS_IF([test -n "$with_libevent"],
-               [
-                 OPAL_GET_LFLAGS_FROM_PC(libevent_core, $with_libevent/lib/pkgconfig)
-                 OPAL_GET_LFLAGS_FROM_PC(libevent_pthreads, $with_libevent/lib/pkgconfig)
-               ],
-               [
-                 OPAL_GET_LFLAGS_FROM_PC(libevent_core)
-                 OPAL_GET_LFLAGS_FROM_PC(libevent_pthreads)
-               ]
-         )],
-        [
-          OPAL_GET_LFLAGS_FROM_PC(libevent_core, $OMPI_TOP_SRCDIR/3rd-party/libevent_directory)
-          OPAL_GET_LFLAGS_FROM_PC(libevent_pthreads, $OMPI_TOP_SRCDIR/3rd-party/libevent_directory)
-        ]
-    )
+    AS_IF([test "$opal_libevent_mode" = "internal"],
+          [pkg_config_core="${OMPI_TOP_BUILDDIR}/3rd-party/libevent_directory/libevent_core.pc"
+           pkg_config_pthreads="${OMPI_TOP_BUILDDIR}/3rd-party/libevent_directory/libevent_pthreads.pc"
+           PKG_CONFIG_PATH="${OMPI_TOP_BUILDDIR}/3rd-party/libevent_directory:${PKG_CONFIG_PATH}"],
+          [test -n "$with_libevent"],
+          [pkg_config_core="${with_libevent}/lib/pkgconfig/libevent_core.pc"
+           pkg_config_pthreads="${with_libevent}/lib/pkgconfig/libevent_pthreads.pc"
+           PKG_CONFIG_PATH="${with_libevent}/lib/pkgconfig:${PKG_CONFIG_PATH}"],
+          [pkg_config_core="libevent_core"
+           pkg_config_pthreads="libevent_pthreads"])
 
-    # Strip -levent as we don't want it. We only want -levent_core/-levent_pthreads.
-    # See https://github.com/open-mpi/ompi/pull/8792
-    OPAL_WRAPPER_EXTRA_LIBS=$(echo $OPAL_WRAPPER_EXTRA_LIBS | sed "s/\\-levent\b//g");
-    AC_MSG_NOTICE([OPAL_WRAPPER_EXTRA_LIBS stripped -levent: $OPAL_WRAPPER_EXTRA_LIBS])
+    pkg_config_happy=1
+    OPAL_GET_LDFLAGS_FROM_PC([$pkg_config_core], [pkg_config_core_ldflags], [pkg_config_happy=0])
+    OPAL_GET_LDFLAGS_FROM_PC([$pkg_config_pthreads], [pkg_config_pthreads_ldflags], [pkg_config_happy=0])
+    OPAL_GET_LIBS_FROM_PC([$pkg_config_core], [pkg_config_core_libs], [pkg_config_happy=0])
+    OPAL_GET_LIBS_FROM_PC([$pkg_config_pthreads], [pkg_config_pthreads_libs], [pkg_config_happy=0])
+
+    AS_IF([test $pkg_config_happy -ne 0],
+          [# Strip -levent from pkg_config_pthreads_libs, since we
+           # only want to link against libevent_core.  We'll pick up
+           # the core library from pkg_config_core_libs.
+           pkg_config_pthreads_libs=`echo $pkg_config_pthreads_libs | sed "s/\\-levent\b//g"`
+           opal_libevent_WRAPPER_LDFLAGS="$pkg_config_core_ldflags"
+           OPAL_FLAGS_APPEND_UNIQ([opal_libevent_WRAPPER_LDFLAGS], [$pkg_config_pthreads_ldflags])
+           opal_libevent_WRAPPER_LIBS="$pkg_config_pthreads_libs"
+           OPAL_FLAGS_APPEND_UNIQ([opal_libevent_WRAPPER_LIBS], [$pkg_config_core_libs])],
+          [# guess that what we have from compiling OMPI is good enough
+           opal_libevent_WRAPPER_LDFLAGS="$opal_libevent_LDFLAGS"
+           opal_libevent_WRAPPER_LIBS="$opal_libevent_LIBS"])
+
+    OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$opal_libevent_WRAPPER_LDFLAGS])
+    OPAL_WRAPPER_FLAGS_ADD([LIBS], [$opal_libevent_WRAPPER_LIBS])
 
     # this will work even if there is no libevent package included,
     # because libevent_tarball and libevent_directory will evaluate to
