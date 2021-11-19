@@ -372,6 +372,7 @@ static inline int mca_btl_base_am_rdma_advance(mca_btl_base_module_t *btl,
                                                mca_btl_base_rdma_context_t *context,
                                                bool send_descriptor)
 {
+    int ret;
     const size_t remaining = context->total_size - context->sent;
 
     if (0 == remaining) {
@@ -409,7 +410,12 @@ static inline int mca_btl_base_am_rdma_advance(mca_btl_base_module_t *btl,
     }
 
     if (send_descriptor) {
-        return btl->btl_send(btl, endpoint, descriptor, mca_btl_base_rdma_tag(hdr->type));
+        assert(0 != (descriptor->des_flags && MCA_BTL_DES_SEND_ALWAYS_CALLBACK));
+        ret = btl->btl_send(btl, endpoint, descriptor, mca_btl_base_rdma_tag(hdr->type));
+        if (ret == 1) {
+            ret = OPAL_SUCCESS;
+        }
+        return ret;
     }
 
     /* queue for later to avoid btl_send in callback */
@@ -614,7 +620,14 @@ static int mca_btl_base_am_rdma_respond(mca_btl_base_module_t *btl,
 
     send_descriptor->des_cbfunc = NULL;
 
+    /* There is no callback for the response descriptor, therefore it is
+     * safe to treat 0 and 1 return codes the same
+     */
     int ret = btl->btl_send(btl, endpoint, send_descriptor, mca_btl_base_rdma_resp_tag());
+    if (ret == 1) {
+        ret = OPAL_SUCCESS;
+    }
+
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         *descriptor = send_descriptor;
     }
@@ -787,11 +800,12 @@ static int mca_btl_base_am_rdma_progress(void)
         mca_btl_base_rdma_context_t *context =                          \
             (mca_btl_base_rdma_context_t *)                             \
             descriptor->descriptor->des_context;                        \
+        assert(0 != (descriptor->descriptor->des_flags && MCA_BTL_DES_SEND_ALWAYS_CALLBACK)); \
         int ret = descriptor->btl->btl_send(descriptor->btl,            \
                                             descriptor->endpoint,       \
                                             descriptor->descriptor,     \
                                             mca_btl_base_rdma_tag(context->type)); \
-        if (OPAL_SUCCESS == ret) {                                      \
+        if (OPAL_SUCCESS == ret || 1 == ret) {                                      \
             opal_list_remove_item(&default_module.queued_initiator_descriptors, \
                                   &descriptor->super);                  \
         }                                                               \
