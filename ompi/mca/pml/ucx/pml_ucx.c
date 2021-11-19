@@ -865,19 +865,19 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
 static inline __opal_attribute_always_inline__ int
 mca_pml_ucx_send_nb(ucp_ep_h ep, const void *buf, size_t count,
                     ompi_datatype_t *datatype, ucp_datatype_t ucx_datatype,
-                    ucp_tag_t tag, mca_pml_base_send_mode_t mode,
-                    ucp_send_callback_t cb)
+                    ucp_tag_t tag, mca_pml_base_send_mode_t mode)
 {
     ompi_request_t *req;
 
     req = (ompi_request_t*)mca_pml_ucx_common_send(ep, buf, count, datatype,
                                                    mca_pml_ucx_get_datatype(datatype),
-                                                   tag, mode, cb);
+                                                   tag, mode,
+                                                   mca_pml_ucx_send_completion_empty);
     if (OPAL_LIKELY(req == NULL)) {
         return OMPI_SUCCESS;
     } else if (!UCS_PTR_IS_ERR(req)) {
         PML_UCX_VERBOSE(8, "got request %p", (void*)req);
-        MCA_COMMON_UCX_WAIT_LOOP(req, ompi_pml_ucx.ucp_worker, "ucx send", ompi_request_free(&req));
+        MCA_COMMON_UCX_WAIT_LOOP(req, ompi_pml_ucx.ucp_worker, "ucx send", ucp_request_free(req));
     } else {
         PML_UCX_ERROR("ucx send failed: %s", ucs_status_string(UCS_PTR_STATUS(req)));
         return OMPI_ERROR;
@@ -948,8 +948,7 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
 
     return mca_pml_ucx_send_nb(ep, buf, count, datatype,
                                mca_pml_ucx_get_datatype(datatype),
-                               PML_UCX_MAKE_SEND_TAG(tag, comm), mode,
-                               mca_pml_ucx_send_completion);
+                               PML_UCX_MAKE_SEND_TAG(tag, comm), mode);
 }
 
 int mca_pml_ucx_iprobe(int src, int tag, struct ompi_communicator_t* comm,
