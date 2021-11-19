@@ -117,6 +117,8 @@ void mca_pml_ucx_send_completion(void *request, ucs_status_t status);
 void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
                                  ucp_tag_recv_info_t *info);
 
+void mca_pml_ucx_send_completion_empty(void *request, ucs_status_t status);
+
 void mca_pml_ucx_psend_completion(void *request, ucs_status_t status);
 
 void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status);
