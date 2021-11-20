@@ -1636,7 +1636,7 @@ if (list_contains("hwloc", @disabled_3rdparty_packages)) {
     $m4 .= "m4_define([package_hwloc], [1])\n";
     $m4 .= "m4_define([hwloc_tarball], [" . $hwloc_tarball . "])\n";
     $m4 .= "m4_define([hwloc_directory], [" . $hwloc_directory . "])\n";
-    verbose "--- hwloc enabled\n";
+    verbose "--- hwloc enabled (" . $hwloc_version . ")\n";
 }
 
 verbose "=== PMIx\n";
