@@ -17,6 +17,11 @@
 #include "opal/mca/hwloc/hwloc-internal.h"
 
 /**
+ * Global reflecting the BFA (set by MCA param).
+ */
+extern opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa;
+
+/**
  * Report a bind failure using the normal mechanisms if a component
  * fails to bind memory -- according to the value of the
  * hwloc_base_bind_failure_action MCA parameter.

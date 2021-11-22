@@ -39,6 +39,8 @@ hwloc_topology_t opal_hwloc_topology = NULL;
 hwloc_cpuset_t opal_hwloc_my_cpuset = NULL;
 opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_WARN;
 
+extern bool opal_hwloc_topo_in_shmem;
+
 static mca_base_var_enum_value_t hwloc_failure_action[] = {{OPAL_HWLOC_BASE_MBFA_SILENT, "silent"},
                                                            {OPAL_HWLOC_BASE_MBFA_WARN, "warn"},
                                                            {OPAL_HWLOC_BASE_MBFA_ERROR, "error"},
@@ -95,6 +97,48 @@ static int opal_hwloc_base_open(mca_base_open_flag_t flags)
     return OPAL_SUCCESS;
 }
 
+static void free_object(hwloc_obj_t obj)
+{
+    opal_hwloc_obj_data_t *data;
+    unsigned k;
+
+    /* free any data hanging on this object */
+    if (NULL != obj->userdata) {
+        data = (opal_hwloc_obj_data_t *) obj->userdata;
+        OBJ_RELEASE(data);
+        obj->userdata = NULL;
+    }
+
+    /* loop thru our children */
+    for (k = 0; k < obj->arity; k++) {
+        free_object(obj->children[k]);
+    }
+}
+
+static void free_topology(hwloc_topology_t topo)
+{
+    hwloc_obj_t obj;
+    opal_hwloc_topo_data_t *rdata;
+    unsigned k;
+
+    if (!opal_hwloc_topo_in_shmem) {
+        obj = hwloc_get_root_obj(topo);
+        /* release the root-level userdata */
+        if (NULL != obj->userdata) {
+            rdata = (opal_hwloc_topo_data_t *) obj->userdata;
+            OBJ_RELEASE(rdata);
+            obj->userdata = NULL;
+        }
+        /* now recursively descend and release userdata
+         * in the rest of the objects
+         */
+        for (k = 0; k < obj->arity; k++) {
+            free_object(obj->children[k]);
+        }
+    }
+    hwloc_topology_destroy(topo);
+}
+
 static int opal_hwloc_base_close(void)
 {
     int ret;
@@ -118,7 +162,7 @@ static int opal_hwloc_base_close(void)
 
     /* destroy the topology */
     if (NULL != opal_hwloc_topology) {
-        opal_hwloc_base_free_topology(opal_hwloc_topology);
+        free_topology(opal_hwloc_topology);
         opal_hwloc_topology = NULL;
     }
 
@@ -171,5 +215,3 @@ static void topo_data_dest(opal_hwloc_topo_data_t *ptr)
     ptr->userdata = NULL;
 }
 OBJ_CLASS_INSTANCE(opal_hwloc_topo_data_t, opal_object_t, topo_data_const, topo_data_dest);
-
-OBJ_CLASS_INSTANCE(opal_rmaps_numa_node_t, opal_list_item_t, NULL, NULL);
