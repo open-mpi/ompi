@@ -85,6 +85,11 @@ void mca_pml_ucx_send_completion(void *request, ucs_status_t status)
     mca_pml_ucx_send_completion_internal(request, status);
 }
 
+void mca_pml_ucx_send_completion_empty(void *request, ucs_status_t status)
+{
+    /* empty */
+}
+
 void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status)
 {
     mca_pml_ucx_bsend_completion_internal(request, status);
