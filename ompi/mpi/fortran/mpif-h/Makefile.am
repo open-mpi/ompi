@@ -185,6 +185,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         comm_dup_f.c \
         comm_dup_with_info_f.c \
         comm_idup_f.c \
+        comm_idup_with_info_f.c \
         comm_free_f.c \
         comm_free_keyval_f.c \
         comm_get_attr_f.c \

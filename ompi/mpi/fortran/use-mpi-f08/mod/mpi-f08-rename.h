@@ -281,6 +281,8 @@
 #define MPI_Comm_dup_with_info_f08 PMPI_Comm_dup_with_info_f08
 #define MPI_Comm_idup PMPI_Comm_idup
 #define MPI_Comm_idup_f08 PMPI_Comm_idup_f08
+#define MPI_Comm_idup_with_info PMPI_Comm_idup_with_info
+#define MPI_Comm_idup_with_info_f08 PMPI_Comm_idup_with_info_f08
 #define MPI_Comm_free PMPI_Comm_free
 #define MPI_Comm_free_f08 PMPI_Comm_free_f08
 #define MPI_Comm_free_keyval PMPI_Comm_free_keyval
