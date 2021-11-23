@@ -395,10 +395,6 @@ AM_CONDITIONAL(OMPI_NEED_WINDOWS_REPLACEMENTS,
 # Do all Interix detections if necessary
 OMPI_INTERIX
 
-# Does the compiler support "ident"-like constructs?
-
-OPAL_CHECK_IDENT([CC], [CFLAGS], [c], [C])
-
 #
 # Check for some types
 #
