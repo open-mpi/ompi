@@ -95,6 +95,7 @@ linked_files = \
         pcomm_dup_f.c \
         pcomm_dup_with_info_f.c \
         pcomm_idup_f.c \
+        pcomm_idup_with_info_f.c \
         pcomm_free_f.c \
         pcomm_free_keyval_f.c \
         pcomm_get_attr_f.c \
