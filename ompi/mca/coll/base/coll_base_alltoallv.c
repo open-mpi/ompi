@@ -31,6 +31,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor_internal.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
