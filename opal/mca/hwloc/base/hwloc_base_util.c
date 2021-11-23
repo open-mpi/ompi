@@ -62,7 +62,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
 
-static bool topo_in_shmem = false;
+bool opal_hwloc_topo_in_shmem = false;
 
 static void fill_cache_line_size(void)
 {
@@ -249,7 +249,7 @@ int opal_hwloc_base_get_topology(void)
         } else {
             opal_output_verbose(2, opal_hwloc_base_framework.framework_output,
                                 "hwloc:base: topology in shared memory");
-            topo_in_shmem = true;
+            opal_hwloc_topo_in_shmem = true;
             goto done;
         }
     }
@@ -332,48 +332,6 @@ done:
     return OPAL_SUCCESS;
 }
 
-static void free_object(hwloc_obj_t obj)
-{
-    opal_hwloc_obj_data_t *data;
-    unsigned k;
-
-    /* free any data hanging on this object */
-    if (NULL != obj->userdata) {
-        data = (opal_hwloc_obj_data_t *) obj->userdata;
-        OBJ_RELEASE(data);
-        obj->userdata = NULL;
-    }
-
-    /* loop thru our children */
-    for (k = 0; k < obj->arity; k++) {
-        free_object(obj->children[k]);
-    }
-}
-
-void opal_hwloc_base_free_topology(hwloc_topology_t topo)
-{
-    hwloc_obj_t obj;
-    opal_hwloc_topo_data_t *rdata;
-    unsigned k;
-
-    if (!topo_in_shmem) {
-        obj = hwloc_get_root_obj(topo);
-        /* release the root-level userdata */
-        if (NULL != obj->userdata) {
-            rdata = (opal_hwloc_topo_data_t *) obj->userdata;
-            OBJ_RELEASE(rdata);
-            obj->userdata = NULL;
-        }
-        /* now recursively descend and release userdata
-         * in the rest of the objects
-         */
-        for (k = 0; k < obj->arity; k++) {
-            free_object(obj->children[k]);
-        }
-    }
-    hwloc_topology_destroy(topo);
-}
-
 /* hwloc treats cache objects as special
  * cases. Instead of having a unique type for each cache level,
  * there is a single cache object type, and the level is encoded
@@ -442,7 +400,7 @@ static hwloc_obj_t df_search(hwloc_topology_t topo, hwloc_obj_t start, hwloc_obj
         hwloc_obj_t root;
         opal_hwloc_topo_data_t *rdata = NULL;
         root = hwloc_get_root_obj(topo);
-        if (false == topo_in_shmem) {
+        if (false == opal_hwloc_topo_in_shmem) {
             rdata = (opal_hwloc_topo_data_t *) root->userdata;
         }
         hwloc_cpuset_t constrained_cpuset;
@@ -514,12 +472,12 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo, hwloc_obj
     obj = hwloc_get_root_obj(topo);
 
     /* first see if the topology already has this summary */
-    if (false == topo_in_shmem) {
+    if (false == opal_hwloc_topo_in_shmem) {
         data = (opal_hwloc_topo_data_t *) obj->userdata;
     }
     if (NULL == data) {
         data = OBJ_NEW(opal_hwloc_topo_data_t);
-        if (false == topo_in_shmem) {
+        if (false == opal_hwloc_topo_in_shmem) {
             // Can't touch userdata if in read-only shmem!
             // We have to protect here for the case where obj->userdata
             // is in shmem and it is NULL.
@@ -555,7 +513,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo, hwloc_obj
     return num_objs;
 }
 
-/* as above, only return the Nth instance of the specified object
+/* Return the Nth instance of the specified object
  * type from inside the topology
  */
 hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo, hwloc_obj_type_t target,
@@ -708,4 +666,3 @@ opal_hwloc_locality_t opal_hwloc_compute_relative_locality(char *loc1, char *loc
     hwloc_bitmap_free(bit2);
     return locality;
 }
-
