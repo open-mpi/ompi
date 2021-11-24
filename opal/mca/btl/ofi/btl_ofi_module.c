@@ -390,8 +390,10 @@ mca_btl_ofi_module_t *mca_btl_ofi_module_alloc(int mode)
         module->super.btl_register_mem = mca_btl_ofi_register_mem;
         module->super.btl_deregister_mem = mca_btl_ofi_deregister_mem;
 
+        /* btl/ofi support remote completion because it required FI_DELIVERY_COMPLETE capability
+         */
         module->super.btl_flags |= MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS
-                                   | MCA_BTL_FLAGS_RDMA;
+                                   | MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
 
         module->super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_SWAP
                                          | MCA_BTL_ATOMIC_SUPPORTS_CSWAP

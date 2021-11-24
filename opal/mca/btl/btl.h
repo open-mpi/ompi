@@ -263,6 +263,16 @@ typedef uint8_t mca_btl_base_tag_t;
 /* The BTL has active-message based atomics */
 #define MCA_BTL_FLAGS_ATOMIC_AM_FOP 0x400000
 
+/** Ths BTL's RDMA/atomics operation supports remote completion.
+ * When the BTL reported the completion of a RDMA/atomic operation
+ * on the initator side, the operation also finished on the target side.
+ *
+ * Note, this flag is for put and atomic write operations. Operations
+ * like get, atomic fetch and atomic swap support remote
+ * completion by nature.
+ */
+#define MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION 0x800000
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH    (64 * 1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT 1024 /* GM/IB/etc. */

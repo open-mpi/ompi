@@ -1138,5 +1138,28 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
         OBJ_CONSTRUCT(&default_module, mca_btl_base_am_rdma_module_t);
     }
 
+    /* This section check whether we can claim support of remote completion.
+     *
+     * In terms of remote completion, we are mainly interested in put and atomic ops,
+     * because get, atomics fops and atomic cswap support remote completion by their nature.
+     *
+     * For active message put (AM put), the target side will send a response, and the initiator
+     * side will wait for the response to complete the put operation. Thus if AM put is based on send,
+     * it support remote completion. (If AM put is based on get, it does not support remote
+     * completion because the target side does not wait for get's completion to send response).
+     *
+     * active message RDMA/atomics does not implement atomic ops. User was suppose to
+     * use atomic fops (unless the btl support atomic ops natively).
+     *
+     * In all, the conditions for AM rdma to claim support of remote completion are:
+     *    1. AM put is enabled (which means the btl does not support put)
+     *    2. AM put does not use get (so it must use send)
+     *    3. btl does not have native atomics ops support.
+     */
+    if ((btl->btl_flags & MCA_BTL_FLAGS_PUT_AM) && !mca_btl_base_rdma_use_rdma_get(btl) &&
+        !(btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS)) {
+        btl->btl_flags |= MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
+    }
+
     return OPAL_SUCCESS;
 }
