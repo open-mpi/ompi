@@ -22,8 +22,6 @@
 
 #include "ompi_config.h"
 
-const char ident[] = OMPI_IDENT_STRING;
-
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING

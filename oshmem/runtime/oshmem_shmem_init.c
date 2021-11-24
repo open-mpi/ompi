@@ -65,12 +65,6 @@
 #include <sys/mman.h>
 #endif
 
-#if OPAL_CC_USE_PRAGMA_IDENT
-#pragma ident OMPI_IDENT_STRING
-#elif OPAL_CC_USE_IDENT
-#ident OSHMEM_IDENT_STRING
-#endif
-
 /*
  * WHAT: add thread for invoking opal_progress() function
  * WHY:  SHMEM based on current ompi/trunk (by the time of integrating into Open MPI)
