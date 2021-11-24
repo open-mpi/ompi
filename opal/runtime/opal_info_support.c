@@ -51,7 +51,6 @@
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
-#include "opal/dss/dss.h"
 #include "opal/mca/base/mca_base_pvar.h"
 #include "opal/mca/base/mca_base_event.h"
 
