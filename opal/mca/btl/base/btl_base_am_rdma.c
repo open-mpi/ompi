@@ -410,7 +410,7 @@ static inline int mca_btl_base_am_rdma_advance(mca_btl_base_module_t *btl,
     }
 
     if (send_descriptor) {
-        assert(0 != (descriptor->des_flags && MCA_BTL_DES_SEND_ALWAYS_CALLBACK));
+        assert(0 != (descriptor->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK));
         ret = btl->btl_send(btl, endpoint, descriptor, mca_btl_base_rdma_tag(hdr->type));
         if (ret == 1) {
             ret = OPAL_SUCCESS;
@@ -800,7 +800,7 @@ static int mca_btl_base_am_rdma_progress(void)
         mca_btl_base_rdma_context_t *context =                          \
             (mca_btl_base_rdma_context_t *)                             \
             descriptor->descriptor->des_context;                        \
-        assert(0 != (descriptor->descriptor->des_flags && MCA_BTL_DES_SEND_ALWAYS_CALLBACK)); \
+        assert(0 != (descriptor->descriptor->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)); \
         int ret = descriptor->btl->btl_send(descriptor->btl,            \
                                             descriptor->endpoint,       \
                                             descriptor->descriptor,     \
