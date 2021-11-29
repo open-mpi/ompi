@@ -579,7 +579,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
 {
     int i, n, ret, if_index, match_count, interface_count;
     char **argv, **interfaces, *str, *tmp;
-    char if_name[OPAL_IF_NAMESIZE];
+    char if_name[IF_NAMESIZE];
     struct sockaddr_storage argv_inaddr, if_inaddr;
     uint32_t argv_prefix;
 
@@ -606,7 +606,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
                 opal_output_verbose(20,
                                     opal_btl_base_framework.framework_output,
                                     "btl: tcp: Using interface: %s ", argv[i]);
-                opal_argv_append(&interface_count, &interfaces, strdup(argv[i]));
+                opal_argv_append(&interface_count, &interfaces, argv[i]);
             }
             continue;
         }
@@ -671,7 +671,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
                                         "btl: tcp: Found match: %s (%s)",
                                         opal_net_get_hostname((struct sockaddr*) &if_inaddr),
                                         if_name);
-                    opal_argv_append(&interface_count, &interfaces, strdup(if_name));
+                    opal_argv_append(&interface_count, &interfaces, if_name);
                 }
             }
         }
@@ -691,7 +691,9 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
     }
 
     /* Mark the end of the interface name array with NULL */
-    interfaces[interface_count] = NULL;
+    if (NULL != interfaces) {
+        interfaces[interface_count] = NULL;
+    }
     free(argv);
     free(*orig_str);
     *orig_str = opal_argv_join(interfaces, ',');
