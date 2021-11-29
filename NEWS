@@ -63,7 +63,7 @@ included in the vX.Y.Z section and be denoted as:
 - Fix an issue with MPI_IALLREDUCE_SCATTER when using large count
   arguments.
 - Fixed an issue with POST/START/COMPLETE/WAIT when using subsets
-  of processes.  Thanks to Thomas Gilles for reporting.
+  of processes.  Thanks to Thomas Gillis for reporting.
 - Numerous fixes from vendor partners.
 - Fix a problem with a couple of MPI_IALLREDUCE algorithms.  Thanks to 
   John Donners for reporting.
