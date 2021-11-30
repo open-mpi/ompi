@@ -1,4 +1,3 @@
-
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
@@ -32,7 +31,7 @@ static inline ucc_status_t mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf
         goto fallback;
     }
     ucc_coll_args_t coll = {
-        .mask = UCC_COLL_ARGS_FIELD_PREDEFINED_REDUCTIONS,
+        .mask = 0,
         .coll_type = UCC_COLL_TYPE_REDUCE,
         .root = root,
         .src.info = {
@@ -47,9 +46,7 @@ static inline ucc_status_t mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf
             .datatype = ucc_dt,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },
-        .reduce = {
-            .predefined_op = ucc_op,
-        },
+        .op = ucc_op,
     };
     if (MPI_IN_PLACE == sbuf) {
         coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
