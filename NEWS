@@ -258,6 +258,88 @@ v5.0.0rc2 -- October, 2021
   in MPI_AlltoAllv() using MPI_IN_PLACE. See github issue #9501.
   This will be fixed prior to v5.0.0 release.
 
+4.1.2 -- November, 2021
+-----------------------
+
+- ROMIO portability fix for OpenBSD
+- Fix handling of MPI_IN_PLACE with MPI_ALLTOALLW and improve performance
+  of MPI_ALLTOALL and MPI_ALLTOALLV for MPI_IN_PLACE.
+- Fix one-sided issue with empty groups in Post-Start-Wait-Complete
+  synchronization mode.
+- Fix Fortran status returns in certain use cases involving
+  Generalized Requests
+- Romio datatype bug fixes.
+- Fix oshmem_shmem_finalize() when main() returns non-zero value.
+- Fix wrong affinity under LSF with the membind option.
+- Fix count==0 cases in MPI_REDUCE and MPI_IREDUCE.
+- Fix ssh launching on Bourne-flavored shells when the user has "set
+  -u" set in their shell startup files.
+- Correctly process 0 slots with the mpirun --host option.
+- Ensure to unlink and rebind socket when the Open MPI session
+  directory already exists.
+- Fix a segv in mpirun --disable-dissable-map.
+- Fix a potential hang in the memory hook handling.
+- Slight performance improvement in MPI_WAITALL when running in
+  MPI_THREAD_MULTIPLE.
+- Fix hcoll datatype mapping and rooted operation behavior.
+- Correct some operations modifying MPI_Status.MPI_ERROR when it is
+  disallowed by the MPI standard.
+- UCX updates:
+  - Fix datatype reference count issues.
+  - Detach dynamic window memory when freeing a window.
+  - Fix memory leak in datatype handling.
+- Fix various atomic operations issues.
+- mpirun: try to set the curses winsize to the pty of the spawned
+  task.  Thanks to Stack Overflow user @Seriously for reporting the
+  issue.
+- PMIx updates:
+  - Fix compatibility with external PMIx v4.x installations.
+  - Fix handling of PMIx v3.x compiler/linker flags.  Thanks to Erik
+    Schnetter for reporting the issue.
+  - Skip SLURM-provided PMIx detection when appropriate.  Thanks to
+    Alexander Grund for reporting the issue.
+- Fix handling by C++ compilers when they #include the STL "<version>"
+  header file, which ends up including Open MPI's text VERSION file
+  (which is not C code).  Thanks to @srpgilles for reporting the
+  issue.
+- Fix MPI_Op support for MPI_LONG.
+- Make the MPI C++ bindings library (libmpi_cxx) explicitly depend on
+  the OPAL internal library (libopen-pal).  Thanks to Ye Luo for
+  reporting the issue.
+- Fix configure handling of "--with-libevent=/usr".
+- Fix memory leak when opening Lustre files.  Thanks to Bert Wesarg
+  for submitting the fix.
+- Fix MPI_SENDRECV_REPLACE to correctly process datatype errors.
+  Thanks to Lisandro Dalcin for reporting the issue.
+- Fix MPI_SENDRECV_REPLACE to correctly handle large data.  Thanks
+  Jakub Benda for reporting this issue and suggesting a fix.
+- Add workaround for TCP "dropped connection" errors to drastically
+  reduce the possibility of this happening.
+- OMPIO updates:
+  - Fix handling when AMODE is not set.  Thanks to Rainer Keller for
+    reporting the issue and supplying the fix.
+  - Fix FBTL "posix" component linking issue.  Thanks for Honggang Li
+    for reporting the issue.
+  - Fixed segv with MPI_FILE_GET_BYTE_OFFSET on 0-sized file view.
+  - Thanks to GitHub user @shanedsnyder for submitting the issue.
+- OFI updates:
+  - Multi-plane / Multi-Nic nic selection cleanups
+  - Add support for exporting Open MPI memory monitors into
+    Libfabric.
+  - Ensure that Cisco usNIC devices are never selected by the OFI
+    MTL.
+  - Fix buffer overflow in OFI networking setup.  Thanks to Alexander
+    Grund for reporting the issue and supplying the fix.
+- Fix SSEND on tag matching networks.
+- Fix error handling in several MPI collectives.
+- Fix the ordering of MPI_COMM_SPLIT_TYPE.  Thanks to Wolfgang
+  Bangerth for raising the issue.
+- No longer install the orted-mpir library (it's an internal / Libtool
+  convenience library).  Thanks to Andrew Hesford for the fix.
+- PSM2 updates:
+  - Allow advanced users to disable PSM2 version checking.
+  - Fix to allow non-default installation locations of psm2.h.
+
 4.1.1 -- April, 2021
 --------------------
 
