@@ -18,7 +18,7 @@
 #include "oshmem/op/op.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#include "oshmem/shmem/fortran/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_COLLECT4, shmem_collect4)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_COLLECT8, shmem_collect8)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_COLLECT32, shmem_collect32)
@@ -27,7 +27,7 @@ SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_FCOLLECT4, shmem_fcollect4)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_FCOLLECT8, shmem_fcollect8)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_FCOLLECT32, shmem_fcollect32)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_FCOLLECT64, shmem_fcollect64)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#include "oshmem/shmem/fortran/profile-defines.h"
 #endif
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,

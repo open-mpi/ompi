@@ -51,7 +51,7 @@
 #pragma weak shmemx_int64_atomic_and    = pshmemx_int64_atomic_and
 #pragma weak shmemx_uint32_atomic_and   = pshmemx_uint32_atomic_and
 #pragma weak shmemx_uint64_atomic_and   = pshmemx_uint64_atomic_and
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 OSHMEM_TYPE_OP(int, int, shmem, and)

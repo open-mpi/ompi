@@ -104,7 +104,7 @@
 #pragma weak shmemx_int32_fetch = pshmemx_int32_fetch
 #pragma weak shmemx_int64_fetch = pshmemx_int64_fetch
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 
 
 

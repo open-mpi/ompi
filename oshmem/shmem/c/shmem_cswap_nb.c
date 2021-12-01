@@ -95,7 +95,7 @@
 #pragma weak shmem_ptrdiff_atomic_compare_swap_nbi    			 = pshmem_ptrdiff_atomic_compare_swap_nbi
 
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP_NBI(_int, int, shmem)

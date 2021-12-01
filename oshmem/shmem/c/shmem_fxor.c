@@ -54,7 +54,7 @@
 #pragma weak shmemx_uint32_atomic_fetch_xor   = pshmemx_uint32_atomic_fetch_xor
 #pragma weak shmemx_uint64_atomic_fetch_xor   = pshmemx_uint64_atomic_fetch_xor
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 OSHMEM_TYPE_FOP(int, int, shmem, xor)

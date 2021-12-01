@@ -18,7 +18,7 @@
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_quiet = pshmem_quiet
 #pragma weak shmem_ctx_quiet = pshmem_ctx_quiet
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 void shmem_quiet(void)

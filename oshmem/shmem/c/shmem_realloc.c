@@ -24,7 +24,7 @@
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_realloc = pshmem_realloc
 #pragma weak shrealloc = pshrealloc
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 static inline void* _shrealloc(void *ptr, size_t size);

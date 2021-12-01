@@ -27,7 +27,7 @@
 #pragma weak shmem_init = pshmem_init
 #pragma weak shmem_init_thread = pshmem_init_thread
 #pragma weak start_pes = pstart_pes
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 extern int oshmem_shmem_globalexit_status;

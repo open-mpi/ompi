@@ -17,11 +17,11 @@
 #include "oshmem/shmem/shmem_lock.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#include "oshmem/shmem/fortran/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_SET_LOCK, shmem_set_lock)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_CLEAR_LOCK, shmem_clear_lock)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_TEST_LOCK, shmem_test_lock)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#include "oshmem/shmem/fortran/profile-defines.h"
 #endif
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,

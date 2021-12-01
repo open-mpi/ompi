@@ -15,21 +15,40 @@
 # $HEADER$
 #
 
-SUBDIRS = profile
+# The purpose of the profiling layer is to allow intercept libraries
+# which override the MPI_ namespace symbols.  We potentially compile
+# every MPI function twice.  We always build the profiling layer,
+# because the symbols that are always implemented as functions are the
+# PMPI_ namespace symbols.  We sometimes also build the non-profiling
+# layer, if weak symbols can't be used to alias the MPI_ namespace
+# into the PMPI_ namespace.
 
-AM_CPPFLAGS = -DOMPI_PROFILING_DEFINES=0
-
-noinst_LTLIBRARIES = libmpi_mpit_common.la
-
+noinst_LTLIBRARIES = libmpi_mpit.la libmpi_mpit_profile.la
 if BUILD_MPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_mpit.la
+noinst_LTLIBRARIES += libmpi_mpit_noprofile.la
 endif
 
 headers = mpit-internal.h
 
-libmpi_mpit_common_la_SOURCES = mpit_common.c
-
+# mpit_common.c is not public functions, which does not have profiling
+# implications, so they are always built.
 libmpi_mpit_la_SOURCES = \
+	mpit_common.c
+libmpi_mpit_la_LIBADD = libmpi_mpit_profile.la
+if BUILD_MPI_BINDINGS_LAYER
+libmpi_mpit_la_LIBADD += libmpi_mpit_noprofile.la
+endif
+
+# Conditionally install the header files
+if WANT_INSTALL_HEADERS
+ompidir = $(ompiincludedir)/$(subdir)
+ompi_HEADERS = $(headers)
+endif
+
+#
+# List of all C files that have profile versions
+#
+interface_profile_sources = \
 	category_changed.c \
 	category_get_categories.c \
 	category_get_cvars.c \
@@ -62,9 +81,8 @@ libmpi_mpit_la_SOURCES = \
 	pvar_stop.c \
 	pvar_write.c
 
-# Conditionally install the header files
+libmpi_mpit_profile_la_SOURCES = $(interface_profile_sources)
+libmpi_mpit_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
-if WANT_INSTALL_HEADERS
-ompidir = $(ompiincludedir)/$(subdir)
-ompi_HEADERS = $(headers)
-endif
+libmpi_mpit_noprofile_la_SOURCES = $(interface_profile_sources)
+libmpi_mpit_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0

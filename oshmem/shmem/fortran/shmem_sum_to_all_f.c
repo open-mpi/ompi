@@ -18,7 +18,7 @@
 #include "oshmem/op/op.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#include "oshmem/shmem/fortran/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT2_SUM_TO_ALL, shmem_int2_sum_to_all)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT4_SUM_TO_ALL, shmem_int4_sum_to_all)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT8_SUM_TO_ALL, shmem_int8_sum_to_all)
@@ -27,7 +27,7 @@ SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_COMP8_SUM_TO_ALL, shmem_comp8_sum_to_all)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_REAL4_SUM_TO_ALL, shmem_real4_sum_to_all)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_REAL8_SUM_TO_ALL, shmem_real8_sum_to_all)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_REAL16_SUM_TO_ALL, shmem_real16_sum_to_all)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#include "oshmem/shmem/fortran/profile-defines.h"
 #endif
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,

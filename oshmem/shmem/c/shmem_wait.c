@@ -84,7 +84,7 @@
 #pragma weak shmem_ptrdiff_test           = pshmem_ptrdiff_test
 
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_TYPE_WAIT(, volatile long, SHMEM_LONG, shmem)

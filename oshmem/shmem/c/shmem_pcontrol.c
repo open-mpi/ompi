@@ -25,7 +25,7 @@
 #include "oshmem/include/pshmem.h"
 
 #pragma weak shmem_pcontrol    = pshmem_pcontrol
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 

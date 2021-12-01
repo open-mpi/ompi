@@ -6,6 +6,8 @@
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -13,24 +15,11 @@
 # $HEADER$
 #
 
-# Do we have profiling?
-if OSHMEM_PROFILING
-c_pshmem_lib = shmem/c/profile/liboshmem_c_pshmem.la
-else
-c_pshmem_lib =
-endif
-
 # Do we have the Fortran bindings?
 if OSHMEM_BUILD_FORTRAN_BINDINGS
 fortran_oshmem_lib = shmem/fortran/liboshmem_fortran.la
-
-if OSHMEM_PROFILING
-fortran_pshmem_lib = shmem/fortran/profile/liboshmem_fortran_pshmem.la
-endif
-
 else
 fortran_oshmem_lib =
-fortran_pshmem_lib =
 endif
 
 SUBDIRS = \
@@ -63,9 +52,7 @@ endif
 liboshmem_la_SOURCES =
 liboshmem_la_LIBADD = \
 	shmem/c/liboshmem_c.la \
-	$(c_pshmem_lib) \
 	$(fortran_oshmem_lib) \
-	$(fortran_pshmem_lib) \
 	$(MCA_oshmem_FRAMEWORK_LIBS) \
 	$(OSHMEM_TOP_BUILDDIR)/ompi/lib@OMPI_LIBMPI_NAME@.la
 liboshmem_la_DEPENDENCIES = $(liboshmem_la_LIBADD)
