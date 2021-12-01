@@ -94,7 +94,7 @@
 #pragma weak shmem_size_atomic_fetch_inc_nbi       			  = pshmem_size_atomic_fetch_inc_nbi
 #pragma weak shmem_ptrdiff_atomic_fetch_inc_nbi    			  = pshmem_ptrdiff_atomic_fetch_inc_nbi
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_FETCH_INC_NBI(_int, int, shmem)

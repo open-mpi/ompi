@@ -123,7 +123,7 @@
 #pragma weak shmem_iget32 = pshmem_iget32
 #pragma weak shmem_iget64 = pshmem_iget64
 #pragma weak shmem_iget128 = pshmem_iget128
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_IGET(_char, char)

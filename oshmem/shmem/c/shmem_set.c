@@ -98,7 +98,7 @@
 
 #pragma weak shmemx_int32_set = pshmemx_int32_set
 #pragma weak shmemx_int64_set = pshmemx_int64_set
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_SET(_int, int, shmem)

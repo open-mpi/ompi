@@ -19,9 +19,9 @@
 #include "stdio.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#include "oshmem/shmem/fortran/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_IGET4, shmem_iget4)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#include "oshmem/shmem/fortran/profile-defines.h"
 #endif
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,

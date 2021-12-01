@@ -92,7 +92,7 @@
 
 #pragma weak shmemx_int32_inc = pshmemx_int32_inc
 #pragma weak shmemx_int64_inc = pshmemx_int64_inc
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_INC(_int, int, shmem)

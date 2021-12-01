@@ -124,7 +124,7 @@
 #pragma weak shmem_iput32 = pshmem_iput32
 #pragma weak shmem_iput64 = pshmem_iput64
 #pragma weak shmem_iput128 = pshmem_iput128
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_IPUT(_char, char)
