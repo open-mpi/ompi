@@ -6,6 +6,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,18 +29,38 @@ headers = mpit-internal.h
 
 libmpi_mpit_common_la_SOURCES = mpit_common.c
 
-libmpi_mpit_la_SOURCES = init_thread.c finalize.c cvar_get_num.c \
-		     cvar_get_info.c cvar_read.c cvar_write.c \
-                     cvar_handle_alloc.c cvar_handle_free.c \
-                     category_get_num.c category_get_info.c \
-                     category_get_cvars.c category_get_pvars.c \
-                     category_get_categories.c category_changed.c \
-                     pvar_get_info.c pvar_get_num.c pvar_handle_alloc.c \
-                     pvar_handle_free.c pvar_read.c pvar_readreset.c \
-                     pvar_reset.c pvar_session_create.c pvar_session_free.c \
-                     pvar_start.c pvar_stop.c pvar_write.c \
-                     enum_get_info.c enum_get_item.c cvar_get_index.c \
-                     pvar_get_index.c category_get_index.c
+libmpi_mpit_la_SOURCES = \
+	category_changed.c \
+	category_get_categories.c \
+	category_get_cvars.c \
+	category_get_info.c \
+	category_get_index.c \
+	category_get_num.c \
+	category_get_pvars.c \
+	cvar_get_info.c \
+	cvar_get_index.c \
+	cvar_get_num.c \
+	cvar_handle_alloc.c \
+	cvar_handle_free.c \
+	cvar_read.c \
+	cvar_write.c \
+	enum_get_info.c \
+	enum_get_item.c \
+	finalize.c \
+	init_thread.c \
+	pvar_get_info.c \
+	pvar_get_index.c \
+	pvar_get_num.c \
+	pvar_handle_alloc.c \
+	pvar_handle_free.c \
+	pvar_read.c \
+	pvar_readreset.c \
+	pvar_reset.c \
+	pvar_session_create.c \
+	pvar_session_free.c \
+	pvar_start.c \
+	pvar_stop.c \
+	pvar_write.c
 
 # Conditionally install the header files
 
