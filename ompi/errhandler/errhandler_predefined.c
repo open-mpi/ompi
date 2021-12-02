@@ -403,11 +403,11 @@ static void backend_abort_no_aggregate(int fatal, char *type,
 
             len -= strlen(type);
             if (len > 0) {
-                strncat(str, " ", len);
+                strncat(str, " ", len - 1);
 
                 --len;
                 if (len > 0) {
-                    strncat(str, name, len);
+                    strncat(str, name, len - 1);
                 }
             }
             out("*** on %s", str);

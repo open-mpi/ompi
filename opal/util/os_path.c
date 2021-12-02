@@ -88,15 +88,15 @@ char *opal_os_path(int relative, ...)
     va_start(ap, relative);
     if (NULL != (element = va_arg(ap, char *))) {
         if (path_sep[0] != element[0]) {
-            strncat(path, path_sep, total_length);
+            strncat(path, path_sep, total_length - strlen(path) - 1);
         }
-        strcat(path, element);
+        strncat(path, element, total_length - strlen(path) - 1);
     }
     while (NULL != (element = va_arg(ap, char *))) {
         if (path_sep[0] != element[0]) {
-            strncat(path, path_sep, total_length);
+            strncat(path, path_sep, total_length - strlen(path) - 1);
         }
-        strncat(path, element, total_length);
+        strncat(path, element, total_length - strlen(path) - 1);
     }
 
     va_end(ap);

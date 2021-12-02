@@ -177,11 +177,9 @@ static char *bitmap2rangestr(int bitmap)
     size_t i;
     int range_start, range_end;
     bool first, isset;
-    char tmp[BUFSIZ];
+    char tmp[OMPI_AFFINITY_STRING_MAX - 1] = {0};
     const int stmp = sizeof(tmp) - 1;
-    static char ret[BUFSIZ];
-
-    memset(ret, 0, sizeof(ret));
+    static char ret[OMPI_AFFINITY_STRING_MAX] = {0};
 
     first = true;
     range_start = -999;
@@ -207,7 +205,7 @@ static char *bitmap2rangestr(int bitmap)
                     snprintf(tmp, stmp, "%d-%d", range_start, range_end);
                 }
                 size_t ret_len = strlen(ret);
-                snprintf(ret + ret_len, BUFSIZ - ret_len, "%s", tmp);
+                snprintf(ret + ret_len, sizeof(ret) - ret_len, "%s", tmp);
 
                 range_start = -999;
             }
@@ -235,7 +233,7 @@ static char *bitmap2rangestr(int bitmap)
             snprintf(tmp, stmp, "%d-%d", range_start, range_end);
         }
         size_t ret_len = strlen(ret);
-        snprintf(ret + ret_len, BUFSIZ - ret_len, "%s",  tmp);
+        snprintf(ret + ret_len, sizeof(ret) - ret_len, "%s",  tmp);
     }
 
     return ret;
@@ -249,7 +247,7 @@ static int cset2str(char *str, int len, hwloc_topology_t topo, hwloc_cpuset_t cp
     bool first;
     int num_sockets, num_cores;
     int ret, socket_index, core_index;
-    char tmp[BUFSIZ];
+    char tmp[OMPI_AFFINITY_STRING_MAX - 1] = {0};
     const int stmp = sizeof(tmp) - 1;
     int **map = NULL;
 
@@ -350,7 +348,7 @@ static bool is_single_cpu(hwloc_cpuset_t cpuset)
  */
 static int cset2mapstr(char *str, int len, hwloc_topology_t topo, hwloc_cpuset_t cpuset)
 {
-    char tmp[BUFSIZ];
+    char tmp[OMPI_AFFINITY_STRING_MAX - 1] = {0};
     int core_index, pu_index;
     const int stmp = sizeof(tmp) - 1;
     hwloc_obj_t socket, core, pu;
@@ -432,7 +430,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are not bound, indicate that */
     if (!bound) {
-        strncat(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
+        strncat(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
         ret = OMPI_SUCCESS;
     }
 
@@ -461,7 +459,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
 {
     bool first = true;
     int i, num_cores, num_pus;
-    char tmp[OMPI_AFFINITY_STRING_MAX];
+    char tmp[OMPI_AFFINITY_STRING_MAX - 1] = {0};
     const int stmp = sizeof(tmp) - 1;
     hwloc_obj_t socket, core, c2;
 
@@ -471,12 +469,12 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
          NULL != socket; socket = socket->next_cousin) {
         /* If this isn't the first socket, add a delimiter */
         if (!first) {
-            strncat(str, "; ", OMPI_AFFINITY_STRING_MAX - strlen(str));
+            strncat(str, "; ", OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
         }
         first = false;
 
         snprintf(tmp, stmp, "socket %d has ", socket->os_index);
-        strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str));
+        strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
 
         /* Find out how many cores are inside this socket, and get an
            object pointing to the first core.  Also count how many PUs
@@ -496,13 +494,13 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
             /* Only 1 core */
             if (1 == num_cores) {
                 strncat(str, "1 core with ",
-                        OMPI_AFFINITY_STRING_MAX - strlen(str));
+                        OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                 if (1 == num_pus) {
                     strncat(str, "1 hwt",
-                            OMPI_AFFINITY_STRING_MAX - strlen(str));
+                            OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                 } else {
                     snprintf(tmp, stmp, "%d hwts", num_pus);
-                    strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str));
+                    strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                 }
             }
 
@@ -511,7 +509,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                 bool same = true;
 
                 snprintf(tmp, stmp, "%d cores", num_cores);
-                strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str));
+                strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
 
                 /* Do all the cores have the same number of PUs? */
                 for (c2 = core; NULL != c2; c2 = c2->next_cousin) {
@@ -527,9 +525,9 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                 /* Yes, they all have the same number of PUs */
                 if (same) {
                     snprintf(tmp, stmp, ", each with %d hwt", num_pus);
-                    strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str));
+                    strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                     if (num_pus != 1) {
-                        strncat(str, "s", OMPI_AFFINITY_STRING_MAX - strlen(str));
+                        strncat(str, "s", OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                     }
                 }
 
@@ -537,11 +535,11 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                 else {
                     bool first_iter = true;
 
-                    strncat(str, "with (", OMPI_AFFINITY_STRING_MAX - strlen(str));
+                    strncat(str, "with (", OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                     for (c2 = core; NULL != c2; c2 = c2->next_cousin) {
                         if (!first_iter) {
                             strncat(str, ", ",
-                                    OMPI_AFFINITY_STRING_MAX - strlen(str));
+                                    OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                         }
                         first_iter = false;
 
@@ -549,10 +547,10 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                                                                    core->cpuset,
                                                                    HWLOC_OBJ_PU);
                         snprintf(tmp, stmp, "%d", i);
-                        strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str));
+                        strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                     }
                     strncat(str, ") hwts",
-                            OMPI_AFFINITY_STRING_MAX - strlen(str));
+                            OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
                 }
             }
         }
@@ -620,7 +618,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are not bound, indicate that */
     if (!bound) {
-        strncat(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - 1);
+        strncat(str, not_bound_str, OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
         ret = OMPI_SUCCESS;
     }
 
@@ -652,7 +650,6 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
 {
     int core_index, pu_index;
-    int len = OMPI_AFFINITY_STRING_MAX;
     hwloc_obj_t socket, core, pu;
 
     str[0] = '\0';
@@ -662,7 +659,7 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
                                         HWLOC_OBJ_SOCKET, 0);
          NULL != socket;
          socket = socket->next_cousin) {
-        strncat(str, "[", len - strlen(str));
+        strncat(str, "[", OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
 
         /* Iterate over all existing cores in this socket */
         core_index = 0;
@@ -674,7 +671,7 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
                                                         socket->cpuset,
                                                         HWLOC_OBJ_CORE, ++core_index)) {
             if (core_index > 0) {
-                strncat(str, "/", len - strlen(str));
+                strncat(str, "/", OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
             }
 
             /* Iterate over all existing PUs in this core */
@@ -686,10 +683,10 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
                  pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
                                                           core->cpuset,
                                                           HWLOC_OBJ_PU, ++pu_index)) {
-                strncat(str, ".", len - strlen(str));
+                strncat(str, ".", OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
             }
         }
-        strncat(str, "]", len - strlen(str));
+        strncat(str, "]", OMPI_AFFINITY_STRING_MAX - strlen(str) - 1);
     }
 
     return OMPI_SUCCESS;
