@@ -45,7 +45,7 @@
       int i;                                                             \
       type *a = (type *) in;                                             \
       type *b = (type *) out;                                            \
-      for (i = 0; i < *count; ++i) {                                     \
+      for (i = *count; i > 0; i--) {                                     \
           *(b++) op *(a++);                                              \
       }                                                                  \
   }
@@ -65,7 +65,7 @@
       int i;                                                             \
       type *a = (type *) in;                                             \
       type *b = (type *) out;                                            \
-      for (i = 0; i < *count; ++i) {                                     \
+      for (i = *count; i > 0; i--) {                                     \
           *(b) = current_func(*(b), *(a));                               \
           ++b;                                                           \
           ++a;                                                           \
@@ -93,7 +93,7 @@
         int i;                                                          \
         ompi_op_predefined_##type_name##_t *a = (ompi_op_predefined_##type_name##_t*) in; \
         ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
-        for (i = 0; i < *count; ++i, ++a, ++b) {                        \
+        for (i = *count; i > 0; i--, ++a, ++b) {                        \
             if (a->v op b->v) {                                         \
                 b->v = a->v;                                            \
                 b->k = a->k;                                            \
@@ -117,7 +117,7 @@
       int i;                                                             \
       type (*a)[2] = (type (*)[2]) in;                                   \
       type (*b)[2] = (type (*)[2]) out;                                  \
-      for (i = 0; i < *count; ++i, ++a, ++b) {                           \
+      for (i = *count; i > 0; i--, ++a, ++b) {                           \
           (*b)[0] += (*a)[0];                                            \
           (*b)[1] += (*a)[1];                                            \
       }                                                                  \
@@ -138,7 +138,7 @@
       type (*a)[2] = (type (*)[2]) in;                                   \
       type (*b)[2] = (type (*)[2]) out;                                  \
       type c[2];                                                         \
-      for (i = 0; i < *count; ++i, ++a, ++b) {                           \
+      for (i = *count; i > 0; i--, ++a, ++b) {                           \
           c[0] = (*a)[0] * (*b)[0] - (*a)[1] * (*b)[1];                  \
           c[1] = (*a)[0] * (*b)[1] + (*a)[1] * (*b)[0];                  \
           (*b)[0] = c[0];                                                \
@@ -693,7 +693,7 @@ LOC_FUNC(minloc, long_double_int, <)
         type *a1 = (type *) in1;                                        \
         type *a2 = (type *) in2;                                        \
         type *b = (type *) out;                                         \
-        for (i = 0; i < *count; ++i) {                                  \
+        for (i = *count; i > 0; i--) {                                  \
             *(b++) =  *(a1++) op *(a2++);                               \
         }                                                               \
     }
@@ -715,7 +715,7 @@ LOC_FUNC(minloc, long_double_int, <)
         type *a1 = (type *) in1;                                        \
         type *a2 = (type *) in2;                                        \
         type *b = (type *) out;                                         \
-        for (i = 0; i < *count; ++i) {                                  \
+        for (i = *count; i > 0; i--) {                                  \
             *(b) = current_func(*(a1), *(a2));                          \
             ++b;                                                        \
             ++a1;                                                       \
@@ -748,7 +748,7 @@ LOC_FUNC(minloc, long_double_int, <)
       ompi_op_predefined_##type_name##_t *a1 = (ompi_op_predefined_##type_name##_t*) in1; \
       ompi_op_predefined_##type_name##_t *a2 = (ompi_op_predefined_##type_name##_t*) in2; \
       ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
-      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b ) {                  \
+      for (i = *count; i > 0; i--, ++a1, ++a2, ++b ) {                  \
           if (a1->v op a2->v) {                                         \
               b->v = a1->v;                                             \
               b->k = a1->k;                                             \
@@ -778,7 +778,7 @@ LOC_FUNC(minloc, long_double_int, <)
       type (*a1)[2] = (type (*)[2]) in1;                                 \
       type (*a2)[2] = (type (*)[2]) in2;                                 \
       type (*b)[2] = (type (*)[2]) out;                                  \
-      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b) {                    \
+      for (i = *count; i > 0; i--, ++a1, ++a2, ++b) {                    \
           (*b)[0] = (*a1)[0] + (*a2)[0];                                 \
           (*b)[1] = (*a1)[1] + (*a2)[1];                                 \
       }                                                                  \
@@ -800,7 +800,7 @@ LOC_FUNC(minloc, long_double_int, <)
       type (*a1)[2] = (type (*)[2]) in1;                                 \
       type (*a2)[2] = (type (*)[2]) in2;                                 \
       type (*b)[2] = (type (*)[2]) out;                                  \
-      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b) {                    \
+      for (i = *count; i > 0; i--, ++a1, ++a2, ++b) {                    \
           (*b)[0] = (*a1)[0] * (*a2)[0] - (*a1)[1] * (*a2)[1];           \
           (*b)[1] = (*a1)[0] * (*a2)[1] + (*a1)[1] * (*a2)[0];           \
       }                                                                  \
