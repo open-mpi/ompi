@@ -134,6 +134,18 @@ sub debug_dump {
 
 ##############################################################################
 
+sub list_contains {
+    my $searched_string = shift;
+    foreach my $str (@_) {
+	if ($searched_string eq $str) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+##############################################################################
+
 sub read_config_params {
     my ($filename, $dir_prefix) = @_;
 
@@ -1571,7 +1583,8 @@ $dnl_line
 dnl 3rd-party package information\n";
 
 # Extract the OMPI options to exclude them when processing PMIx and PRRTE
-if ( ! ("pmix" ~~ @disabled_3rdparty_packages && "prrte" ~~ @disabled_3rdparty_packages) ) {
+if ( ! (list_contains("pmix", @disabled_3rdparty_packages) &&
+	list_contains("prrte", @disabled_3rdparty_packages))) {
     safe_system("./config/extract-3rd-party-configure.pl -p . -n \"OMPI\" -l > config/auto-generated-ompi-exclude.ini");
 }
 
@@ -1579,7 +1592,7 @@ if ( ! ("pmix" ~~ @disabled_3rdparty_packages && "prrte" ~~ @disabled_3rdparty_p
 # generic. Sorry :).
 
 verbose "=== Libevent\n";
-if ("libevent" ~~ @disabled_3rdparty_packages) {
+if (list_contains("libevent", @disabled_3rdparty_packages)) {
     verbose "--- Libevent disabled\n";
 } else {
     my $libevent_directory = "libevent-" . $libevent_version;
@@ -1594,7 +1607,7 @@ if ("libevent" ~~ @disabled_3rdparty_packages) {
 }
 
 verbose "=== hwloc\n";
-if ("hwloc" ~~ @disabled_3rdparty_packages) {
+if (list_contains("hwloc", @disabled_3rdparty_packages)) {
     verbose "--- hwloc disabled\n";
 } else {
     my $hwloc_directory = "hwloc-" . $hwloc_version;
@@ -1605,11 +1618,11 @@ if ("hwloc" ~~ @disabled_3rdparty_packages) {
     $m4 .= "m4_define([package_hwloc], [1])\n";
     $m4 .= "m4_define([hwloc_tarball], [" . $hwloc_tarball . "])\n";
     $m4 .= "m4_define([hwloc_directory], [" . $hwloc_directory . "])\n";
-    verbose "--- hwloc enabled\n";
+    verbose "--- hwloc enabled (" . $hwloc_version . ")\n";
 }
 
 verbose "=== PMIx\n";
-if ("pmix" ~~ @disabled_3rdparty_packages) {
+if (list_contains("pmix", @disabled_3rdparty_packages)) {
     verbose "--- PMIx disabled\n";
 } else {
     # sanity check pmix files exist
@@ -1628,7 +1641,7 @@ if ("pmix" ~~ @disabled_3rdparty_packages) {
 }
 
 verbose "=== PRRTE\n";
-if ("prrte" ~~ @disabled_3rdparty_packages) {
+if (list_contains("prrte", @disabled_3rdparty_packages)) {
     verbose "--- PRRTE disabled\n";
 } else {
     # sanity check prrte files exist
