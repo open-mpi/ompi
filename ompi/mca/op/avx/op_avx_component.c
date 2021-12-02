@@ -237,15 +237,12 @@ avx_component_init_query(bool enable_progress_threads,
 
 #if OMPI_MCA_OP_HAVE_AVX512
  extern ompi_op_base_handler_fn_t ompi_op_avx_functions_avx512[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
- extern ompi_op_base_3buff_handler_fn_t ompi_op_avx_3buff_functions_avx512[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 #endif
 #if OMPI_MCA_OP_HAVE_AVX2
  extern ompi_op_base_handler_fn_t ompi_op_avx_functions_avx2[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
- extern ompi_op_base_3buff_handler_fn_t ompi_op_avx_3buff_functions_avx2[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 #endif
 #if OMPI_MCA_OP_HAVE_AVX
  extern ompi_op_base_handler_fn_t ompi_op_avx_functions_avx[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
- extern ompi_op_base_3buff_handler_fn_t ompi_op_avx_3buff_functions_avx[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 #endif
 /*
  * Query whether this component can be used for a specific op
@@ -274,16 +271,12 @@ avx_component_op_query(struct ompi_op_t *op, int *priority)
 #if OMPI_MCA_OP_HAVE_AVX512
             if( mca_op_avx_component.flags & OMPI_OP_AVX_HAS_AVX512F_FLAG ) {
                 module->opm_fns[i] = ompi_op_avx_functions_avx512[op->o_f_to_c_index][i];
-                module->opm_3buff_fns[i] = ompi_op_avx_3buff_functions_avx512[op->o_f_to_c_index][i];
             }
 #endif
 #if OMPI_MCA_OP_HAVE_AVX2
             if( mca_op_avx_component.flags & OMPI_OP_AVX_HAS_AVX2_FLAG ) {
                 if( NULL == module->opm_fns[i] ) {
                     module->opm_fns[i] = ompi_op_avx_functions_avx2[op->o_f_to_c_index][i];
-                }
-                if( NULL == module->opm_3buff_fns[i] ) {
-                    module->opm_3buff_fns[i] = ompi_op_avx_3buff_functions_avx2[op->o_f_to_c_index][i];
                 }
             }
 #endif
@@ -292,15 +285,9 @@ avx_component_op_query(struct ompi_op_t *op, int *priority)
                 if( NULL == module->opm_fns[i] ) {
                     module->opm_fns[i] = ompi_op_avx_functions_avx[op->o_f_to_c_index][i];
                 }
-                if( NULL == module->opm_3buff_fns[i] ) {
-                    module->opm_3buff_fns[i] = ompi_op_avx_3buff_functions_avx[op->o_f_to_c_index][i];
-                }
             }
 #endif
             if( NULL != module->opm_fns[i] ) {
-                OBJ_RETAIN(module);
-            }
-            if( NULL != module->opm_3buff_fns[i] ) {
                 OBJ_RETAIN(module);
             }
         }
