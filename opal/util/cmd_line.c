@@ -499,7 +499,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     int argc;
     size_t j;
     char **argv;
-    char *ret, temp[(MAX_WIDTH * 2) - 1], line[MAX_WIDTH * 2];
+    char *ret, line[(MAX_WIDTH * 2) + 1];
     char *start, *desc, *ptr;
     opal_list_item_t *item;
     ompi_cmd_line_option_t *option, **sorted;
@@ -559,27 +559,27 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                 }
                 if (NULL != option->clo_single_dash_name) {
                     line[2] = (filled) ? '|' : ' ';
-                    strncat(line, "-", sizeof(line) - 1);
-                    strncat(line, option->clo_single_dash_name, sizeof(line) - 1);
+                    strncat(line, "-", sizeof(line) - strlen(line) - 1);
+                    strncat(line, option->clo_single_dash_name, sizeof(line) - strlen(line) - 1);
                     filled = true;
                 }
                 if (NULL != option->clo_long_name) {
                     if (filled) {
-                        strncat(line, "|", sizeof(line) - 1);
+                        strncat(line, "|", sizeof(line) - strlen(line) - 1);
                     } else {
-                        strncat(line, " ", sizeof(line) - 1);
+                        strncat(line, " ", sizeof(line) - strlen(line) - 1);
                     }
-                    strncat(line, "--", sizeof(line) - 1);
-                    strncat(line, option->clo_long_name, sizeof(line) - 1);
+                    strncat(line, "--", sizeof(line) - strlen(line) - 1);
+                    strncat(line, option->clo_long_name, sizeof(line) - strlen(line) - 1);
                 }
-                strncat(line, " ", sizeof(line) - 1);
+                strncat(line, " ", sizeof(line) - strlen(line) - 1);
                 for (i = 0; (int) i < option->clo_num_params; ++i) {
-                    len = sizeof(temp);
-                    snprintf(temp, len, "<arg%d> ", (int) i);
-                    strncat(line, temp, sizeof(line) - 1);
+                    char temp[MAX_WIDTH * 2];
+                    snprintf(temp, MAX_WIDTH * 2, "<arg%d> ", (int) i);
+                    strncat(line, temp, sizeof(line) - strlen(line) - 1);
                 }
                 if (option->clo_num_params > 0) {
-                    strncat(line, " ", sizeof(line) - 1);
+                    strncat(line, " ", sizeof(line) - strlen(line) - 1);
                 }
 
                 /* If we're less than param width, then start adding the
@@ -635,7 +635,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                     /* Last line */
 
                     if (strlen(start) < (MAX_WIDTH - PARAM_WIDTH)) {
-                        strncat(line, start, sizeof(line) - 1);
+                        strncat(line, start, sizeof(line) - strlen(line) - 1);
                         opal_argv_append(&argc, &argv, line);
                         break;
                     }
@@ -647,7 +647,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                     for (ptr = start + (MAX_WIDTH - PARAM_WIDTH); ptr > start; --ptr) {
                         if (isspace(*ptr)) {
                             *ptr = '\0';
-                            strncat(line, start, sizeof(line) - 1);
+                            strncat(line, start, sizeof(line) - strlen(line) - 1);
                             opal_argv_append(&argc, &argv, line);
 
                             start = ptr + 1;
@@ -666,7 +666,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                             if (isspace(*ptr)) {
                                 *ptr = '\0';
 
-                                strncat(line, start, sizeof(line) - 1);
+                                strncat(line, start, sizeof(line) - strlen(line) - 1);
                                 opal_argv_append(&argc, &argv, line);
 
                                 start = ptr + 1;
@@ -680,7 +680,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                            whitespace, then just add it on and be done */
 
                         if (ptr >= start + len) {
-                            strncat(line, start, sizeof(line) - 1);
+                            strncat(line, start, sizeof(line) - strlen(line) - 1);
                             opal_argv_append(&argc, &argv, line);
                             start = desc + len + 1;
                         }
