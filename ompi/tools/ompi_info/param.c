@@ -62,10 +62,10 @@ static void append(char *dest, size_t max, int *first, char *src)
 
     len = max - strlen(dest);
     if (!(*first)) {
-        strncat(dest, ", ", len);
+        strncat(dest, ", ", len - 1);
         len = max - strlen(dest);
     }
-    strncat(dest, src, len);
+    strncat(dest, src, len - 1);
     *first = 0;
 }
 
