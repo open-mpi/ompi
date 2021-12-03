@@ -47,7 +47,7 @@ int MPI_Pready_range(int partition_low, int partition_high, MPI_Request request)
 {
     int rc;
 
-    SPC_RECORD(OMPI_SPC_PREADY, 1);
+    SPC_RECORD(OMPI_SPC_PREADY_RANGE, 1);
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
