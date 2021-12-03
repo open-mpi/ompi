@@ -22,15 +22,9 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/mtl/base/base.h"
 
-// In regular strncpy up to n bytes are copied, so if the 'to' buffer
-// was char string[16] and you called strncpy(string, , 16) you could
-// get 16 bytes of chars without a null.  My preferred API is to let
-// n be the size of the buffer, and to let n-1 chars be copied, and
-// to guarantee null termination.
 static void
 mystrncpy(char *to, const char *from, int n) {
-    strncpy(to, from, n-1);
-    to[n-1] = 0;
+    snprintf(to, n, "%s", from);
 }
 
 // For converting comm_method strings to comm_method id# and back.

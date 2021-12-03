@@ -22,17 +22,6 @@
 
 #include "ompi_config.h"
 
-#if (OPAL_HAVE_WEAK_SYMBOLS || ! OMPI_BUILD_MPI_PROFILING)
-#if OPAL_CC_USE_PRAGMA_IDENT
-#pragma ident OMPI_IDENT_STRING
-#elif OPAL_CC_USE_IDENT
-#ident OMPI_IDENT_STRING
-#else
-const char ident[] = OMPI_IDENT_STRING;
-#endif
-#endif
-
-
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING

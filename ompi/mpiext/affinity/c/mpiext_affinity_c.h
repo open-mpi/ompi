@@ -11,7 +11,7 @@
  *
  */
 
-#define OMPI_AFFINITY_STRING_MAX 1024
+#define OMPI_AFFINITY_STRING_MAX BUFSIZ
 
 typedef enum ompi_affinity_fmt {
     OMPI_AFFINITY_RSRC_STRING_FMT,

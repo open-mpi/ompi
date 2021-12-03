@@ -29,7 +29,7 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/request/request.h"
 #include "opal/util/sys_limits.h"
-#include "opal/include/opal/align.h"
+#include "opal/align.h"
 #include "opal/util/info_subscriber.h"
 #include "opal/util/printf.h"
 #include "opal/mca/mpool/base/base.h"
@@ -196,7 +196,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     int comm_size = ompi_comm_size (comm);
     bool unlink_needed = false;
     int ret = OMPI_ERROR;
-    int flag;
     size_t memory_alignment = OPAL_ALIGN_MIN;
 
     if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
@@ -216,15 +215,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     if (OPAL_SUCCESS != ret) goto error;
 
     if (NULL != info) {
-        opal_cstring_t *align_info_str;
-        ret = opal_info_get(info, "mpi_minimum_memory_alignment", &align_info_str, &flag);
-        if (flag) {
-            ssize_t tmp_align = atoll(align_info_str->string);
-            OBJ_RELEASE(align_info_str);
-            if (OPAL_ALIGN_MIN < tmp_align) {
-                memory_alignment = tmp_align;
-            }
-        }
+        ompi_osc_base_set_memory_alignment(info, &memory_alignment);
     }
 
     /* fill in the function pointer part */

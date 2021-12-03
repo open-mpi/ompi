@@ -79,11 +79,6 @@
 #include "opal/util/sys_limits.h"
 #include "opal/util/timings.h"
 
-#if OPAL_CC_USE_PRAGMA_IDENT
-#    pragma ident OPAL_IDENT_STRING
-#elif OPAL_CC_USE_IDENT
-#    ident OPAL_IDENT_STRING
-#endif
 const char opal_version_string[] = OPAL_IDENT_STRING;
 
 int opal_initialized = 0;
