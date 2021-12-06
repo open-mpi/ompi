@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2014-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+dnl Copyright (c) 2020-2021 Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
@@ -39,10 +39,16 @@ dnl         uses Hwloc.  Cannot be added to LIBS yet, because then
 dnl         other execution tests later in configure (there are sadly
 dnl         some) would fail if the path in LDFLAGS was not added to
 dnl         LD_LIBRARY_PATH.
+dnl   * opal_hwloc_WRAPPER_LDFLAGS - the linker flags necessary to
+dnl         add to the wrapper compilers in order to link an opal
+dnl         application when opal is built as a static library.
+dnl   * opal_hwloc_WRAPPER_LIBS - the linker flags necessary to
+dnl         add to the wrapper compilers in order to link an opal
+dnl         application when opal is built as a static library.
 dnl   * CPPFLAGS, LDFLAGS - Updated opal_hwloc_CPPFLAGS and
 dnl         opal_hwloc_LDFLAGS.
 AC_DEFUN([OPAL_CONFIG_HWLOC], [
-    OPAL_VAR_SCOPE_PUSH([external_hwloc_happy internal_hwloc_happy])
+    OPAL_VAR_SCOPE_PUSH([external_hwloc_happy internal_hwloc_happy pkg_config_file pkg_config_happy pkg_config_ldflags pkg_config_libs])
 
     opal_show_subtitle "Configuring hwloc"
 
@@ -70,13 +76,27 @@ AC_DEFUN([OPAL_CONFIG_HWLOC], [
     AS_IF([test "$external_hwloc_happy" = "0" -a "$internal_hwloc_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable hwloc build.])])
 
-    AS_IF([test "$opal_hwloc_mode" = "external"],
-        [AS_IF([test -n "$with_hwloc"],
-               [OPAL_GET_LFLAGS_FROM_PC(hwloc, $with_hwloc/lib/pkgconfig)],
-               [OPAL_GET_LFLAGS_FROM_PC(hwloc)]
-         )],
-        [OPAL_GET_LFLAGS_FROM_PC(hwloc, $OMPI_TOP_SRCDIR/3rd-party/hwloc_directory)]
-    )
+    AS_IF([test "$opal_hwloc_mode" = "internal"],
+          [pkg_config_file="${OMPI_TOP_BUILDDIR}/3rd-party/hwloc_directory/hwloc.pc"
+           PKG_CONFIG_PATH="${OMPI_TOP_BUILDDIR}/3rd-party/hwloc_directory:${PKG_CONFIG_PATH}"],
+          [test -n "$with_hwloc"],
+          [pkg_config_file="${with_hwloc}/lib/pkgconfig/hwloc.pc"
+           PKG_CONFIG_PATH="${with_hwloc}/lib/pkgconfig:${PKG_CONFIG_PATH}"],
+          [pkg_config_file="hwloc"])
+
+    pkg_config_happy=1
+    OPAL_GET_LDFLAGS_FROM_PC([$pkg_config_file], [pkg_config_ldflags], [pkg_config_happy=0])
+    OPAL_GET_LIBS_FROM_PC([$pkg_config_file], [pkg_config_libs], [pkg_config_happy=0])
+
+    AS_IF([test $pkg_config_happy -ne 0],
+          [opal_hwloc_WRAPPER_LDFLAGS="$pkg_config_ldflags"
+           opal_hwloc_WRAPPER_LIBS="$pkg_config_libs"],
+          [# guess that what we have from compiling OMPI is good enough
+           opal_hwloc_WRAPPER_LDFLAGS="$opal_hwloc_LDFLAGS"
+           opal_hwloc_WRAPPER_LIBS="$opal_hwloc_LIBS"])
+
+    OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$opal_hwloc_WRAPPER_LDFLAGS])
+    OPAL_WRAPPER_FLAGS_ADD([LIBS], [$opal_hwloc_WRAPPER_LIBS])
 
     # this will work even if there is no hwloc package included,
     # because hwloc_tarball and hwloc_directory will evaluate to an
