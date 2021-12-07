@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015-2018 Research Organization for Information Science
+ * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -565,7 +565,7 @@ static inline void NBC_SchedCache_dictwipe(hb_tree *dict_in, int *size) {
 #define NBC_IN_PLACE(sendbuf, recvbuf, inplace) \
 { \
   inplace = 0; \
-  if(recvbuf == sendbuf) { \
+  if(recvbuf == sendbuf && MPI_BOTTOM != sendbuf) { \
     inplace = 1; \
   } else \
   if(sendbuf == MPI_IN_PLACE) { \
