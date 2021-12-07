@@ -465,10 +465,8 @@ mca_btl_base_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
         if (sizeof(*hdr) + size <= btl->btl_eager_limit) {
             /* just go ahead and send the data */
             packet_size += size;
-        } else if (!mca_btl_base_rdma_use_rdma_get (btl)) {
-            packet_size += size_t_min (size, btl->btl_max_send_size - sizeof (*hdr));
         } else {
-            use_rdma = true;
+            packet_size += size_t_min (size, btl->btl_max_send_size - sizeof (*hdr));
         }
     } else if (MCA_BTL_BASE_AM_GET == type) {
         if (!mca_btl_base_rdma_use_rdma_put(btl)) {
