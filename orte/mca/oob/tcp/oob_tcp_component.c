@@ -1237,8 +1237,8 @@ void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata)
  */
 static char **split_and_resolve(char **orig_str, char *name)
 {
-    int i, ret, save, if_index;
-    char **argv, *str, *tmp;
+    int i, n, ret, if_index, match_count, interface_count;
+    char **argv, **interfaces, *str, *tmp;
     char if_name[IF_NAMESIZE];
     struct sockaddr_storage argv_inaddr, if_inaddr;
     uint32_t argv_prefix;
@@ -1252,9 +1252,22 @@ static char **split_and_resolve(char **orig_str, char *name)
     if (NULL == argv) {
         return NULL;
     }
-    for (save = i = 0; NULL != argv[i]; ++i) {
+    interface_count = 0;
+    interfaces = NULL;
+    for (i = 0; NULL != argv[i]; ++i) {
         if (isalpha(argv[i][0])) {
-            argv[save++] = argv[i];
+            /* This is an interface name. If not already in the interfaces array, add it */
+            for (n = 0; n < interface_count; n++) {
+                if (0 == strcmp(argv[i], interfaces[n])) {
+                    break;
+                }
+            }
+            if (n == interface_count) {
+                opal_output_verbose(20,
+                                    orte_oob_base_framework.framework_output,
+                                    "oob:tcp: Using interface: %s ", argv[i]);
+                opal_argv_append(&interface_count, &interfaces, argv[i]);
+            }
             continue;
         }
 
@@ -1295,6 +1308,7 @@ static char **split_and_resolve(char **orig_str, char *name)
                             argv_prefix);
 
         /* Go through all interfaces and see if we can find a match */
+        match_count = 0;
         for (if_index = opal_ifbegin(); if_index >= 0;
                            if_index = opal_ifnext(if_index)) {
             opal_ifindextoaddr(if_index,
@@ -1303,11 +1317,27 @@ static char **split_and_resolve(char **orig_str, char *name)
             if (opal_net_samenetwork((struct sockaddr*) &argv_inaddr,
                                      (struct sockaddr*) &if_inaddr,
                                      argv_prefix)) {
-                break;
+                /* We found a match. If it's not already in the interfaces array,
+                   add it. If it's already in the array, treat it as a match */
+                match_count = match_count + 1;
+                opal_ifindextoname(if_index, if_name, sizeof(if_name));
+                for (n = 0; n < interface_count; n++) {
+                    if (0 == strcmp(if_name, interfaces[n])) {
+                        break;
+                    }
+                }
+                if (n == interface_count) {
+                    opal_output_verbose(20,
+                                        orte_oob_base_framework.framework_output,
+                                        "oob:tcp: Found match: %s (%s)",
+                                        opal_net_get_hostname((struct sockaddr*) &if_inaddr),
+                                        if_name);
+                    opal_argv_append(&interface_count, &interfaces, if_name);
+                }
             }
         }
         /* If we didn't find a match, keep trying */
-        if (if_index < 0) {
+        if (0 == match_count) {
             orte_show_help("help-oob-tcp.txt", "invalid if_inexclude",
                            true, name, orte_process_info.nodename, tmp,
                            "Did not find interface matching this subnet");
@@ -1315,24 +1345,17 @@ static char **split_and_resolve(char **orig_str, char *name)
             continue;
         }
 
-        /* We found a match; get the name and replace it in the
-           argv */
-        opal_ifindextoname(if_index, if_name, sizeof(if_name));
-        opal_output_verbose(20, orte_oob_base_framework.framework_output,
-                            "%s oob:tcp: Found match: %s (%s)",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            opal_net_get_hostname((struct sockaddr*) &if_inaddr),
-                            if_name);
-        argv[save++] = strdup(if_name);
         free(tmp);
     }
 
-    /* The list may have been compressed if there were invalid
-       entries, so ensure we end it with a NULL entry */
-    argv[save] = NULL;
+    /* Mark the end of the interface name array with NULL */
+    if (NULL != interfaces) {
+        interfaces[interface_count] = NULL;
+    }
+    free(argv);
     free(*orig_str);
-    *orig_str = opal_argv_join(argv, ',');
-    return argv;
+    *orig_str = opal_argv_join(interfaces, ',');
+    return interfaces;
 }
 
 /* OOB TCP Class instances */
