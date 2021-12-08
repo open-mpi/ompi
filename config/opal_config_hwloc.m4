@@ -92,8 +92,10 @@ AC_DEFUN([OPAL_CONFIG_HWLOC], [
           [opal_hwloc_WRAPPER_LDFLAGS="$pkg_config_ldflags"
            opal_hwloc_WRAPPER_LIBS="$pkg_config_libs"],
           [# guess that what we have from compiling OMPI is good enough
-           opal_hwloc_WRAPPER_LDFLAGS="$opal_hwloc_LDFLAGS"
-           opal_hwloc_WRAPPER_LIBS="$opal_hwloc_LIBS"])
+           AS_IF([test -z "$opal_hwloc_WRAPPER_LDFLAGS"],
+                 [opal_hwloc_WRAPPER_LDFLAGS="$opal_hwloc_LDFLAGS"])
+           AS_IF([test -z "$opal_hwloc_WRAPPER_LIBS"],
+                 [opal_hwloc_WRAPPER_LIBS="$opal_hwloc_LIBS"])])
 
     OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$opal_hwloc_WRAPPER_LDFLAGS])
     OPAL_WRAPPER_FLAGS_ADD([LIBS], [$opal_hwloc_WRAPPER_LIBS])
@@ -199,6 +201,7 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
          # our tree and in the mean time are referenced by their .la
          # files.
          opal_hwloc_LIBS="$OMPI_TOP_BUILDDIR/$internal_hwloc_location/hwloc/libhwloc.la"
+         opal_hwloc_WRAPPER_LIBS="-lhwloc"
 
          opal_hwloc_header="$OMPI_TOP_BUILDDIR/$internal_hwloc_location/include/hwloc.h"
 
