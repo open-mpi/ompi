@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
- *                         All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2020      Mellanox Technologies, Inc.
+ *                              All rights reserved.
+ * Copyright (c) 2015           Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,5 +38,10 @@ OSHMEM_DECLSPEC extern int shmem_api_logger_output;
 #define SHMEM_API_ERROR(...) \
     oshmem_output(shmem_api_logger_output, \
         "Error: %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
+
+#define SHMEM_API_WARNING(...) \
+    oshmem_output(shmem_api_logger_output, \
+        "Warning: %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
+
 
 #endif /*SHMEM_API_LOGGER_H*/
