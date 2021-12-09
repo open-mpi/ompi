@@ -98,7 +98,7 @@ void *mca_allocator_bucket_alloc(mca_allocator_base_module_t *mem, size_t size)
 
     if( bucket_num > max_bucket_idx ) {
         size_t sz_bucket = MCA_ALLOCATOR_BUCKET_1_SIZE;
-        opal_show_help ("help-mca-allocator-bucket.txt", "buffer too large", size, sz_bucket << max_bucket_idx,
+        opal_show_help ("help-mca-allocator-bucket.txt", "buffer too large", 1, size, sz_bucket << max_bucket_idx,
                         "allocator_bucket_num_buckets", bucket_num + 1);
         return (NULL);
     }
@@ -208,7 +208,7 @@ void *mca_allocator_bucket_alloc_align(mca_allocator_base_module_t *mem, size_t 
 
     if( bucket_num > max_bucket_idx ) {
         size_t sz_bucket = MCA_ALLOCATOR_BUCKET_1_SIZE;
-        opal_show_help ("help-mca-allocator-bucket.txt", "aligned buffer too large", allocated_size, sz_bucket << max_bucket_idx,
+        opal_show_help ("help-mca-allocator-bucket.txt", "aligned buffer too large", 1, allocated_size, sz_bucket << max_bucket_idx,
                         "allocator_bucket_num_buckets", bucket_num + 1);
         return (NULL);
     }
