@@ -86,6 +86,7 @@ bool ompi_mpi_compat_mpi3 = false;
 
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
+uint32_t ompi_pmix_connect_timeout = 0;
 
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
@@ -381,6 +382,13 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_spc_dump_enabled);
 #endif // SPC_ENABLE
+
+    ompi_pmix_connect_timeout = 0; /* infinite timeout - see PMIx standard */
+    (void) mca_base_var_register ("ompi", "mpi", NULL, "pmix_connect_timeout",
+                                  "Timeout(secs) for calls to PMIx_Connect. Default is no timeout.",
+                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL,
+                                  0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
+                                  &ompi_pmix_connect_timeout);
 
     return OMPI_SUCCESS;
 }

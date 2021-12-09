@@ -21,6 +21,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,7 +106,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     bool dense, isnew;
     opal_process_name_t pname;
     opal_list_t ilist, mlist, rlist;
-    pmix_info_t info;
+    pmix_info_t info, tinfo;
     pmix_value_t pval;
     pmix_pdata_t pdat;
     pmix_proc_t *procs, pxproc;
@@ -374,7 +376,10 @@ bcast_rportlen:
     /* tell the host RTE to connect us - this will download
      * all known data for the nspace's of participating procs
      * so that add_procs will not result in a slew of lookups */
-    pret = PMIx_Connect(procs, nprocs, NULL, 0);
+    PMIX_INFO_CONSTRUCT(&tinfo);
+    PMIX_INFO_LOAD(&tinfo, PMIX_TIMEOUT, &ompi_pmix_connect_timeout, PMIX_UINT32);
+    pret = PMIx_Connect(procs, nprocs, &tinfo, 1);
+    PMIX_INFO_DESTRUCT(&tinfo);
     PMIX_PROC_FREE(procs, nprocs);
     rc = opal_pmix_convert_status(pret);
     if (OPAL_SUCCESS != rc) {
