@@ -28,22 +28,30 @@ AC_MSG_CHECKING([if want oshmem])
 AC_ARG_ENABLE([oshmem],
               [AS_HELP_STRING([--enable-oshmem],
                               [Enable building the OpenSHMEM interface (available on Linux only, where it is enabled by default)])])
+
 if test "$enable_oshmem" = "no"; then
     AC_MSG_RESULT([no])
 elif test "$enable_oshmem" = ""; then
-    if test "$opal_found_linux" = "yes"; then
+    case $host_os in
+    linux*)
         AC_MSG_RESULT([yes])
-    else
+        ;;
+    *)
         enable_oshmem=no
         AC_MSG_RESULT([not supported on this platform])
-    fi
+        ;;
+    esac
 else
     AC_MSG_RESULT([yes])
-    if test "$opal_found_linux" != "yes"; then
+    case $host_os in
+    linux*)
+	;;
+    *)
         AC_MSG_WARN([OpenSHMEM support was requested, but currently])
         AC_MSG_WARN([only supports Linux.])
         AC_MSG_ERROR([Cannot continue])
-    fi
+        ;;
+    esac
 fi
 
 #
@@ -90,11 +98,6 @@ else
 fi
 AC_DEFINE_UNQUOTED(OSHMEM_PARAM_CHECK, $shmem_param_check,
     [Whether we want to check OSHMEM parameters always or never])
-
-#
-# check for on_exit
-#
-AC_CHECK_FUNCS([on_exit])
 
 #
 #  OSHMEM profiling support

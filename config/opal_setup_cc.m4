@@ -420,18 +420,34 @@ AC_DEFUN([_OPAL_START_SETUP_CC],[
 
 
 AC_DEFUN([_OPAL_PROG_CC],[
+    dnl It is really easy to accidently call AC_PROG_CC implicitly through
+    dnl some other test run before OPAL_SETUP_CC.  Try to make that harder.
+    m4_provide_if([AC_PROG_CC],
+                  [m4_fatal([AC_PROG_CC called before OPAL_SETUP_CC])])
+
     #
     # Check for the compiler
     #
     OPAL_VAR_SCOPE_PUSH([opal_cflags_save dummy opal_cc_arvgv0])
+
+    # AC_USE_SYSTEM_EXTENSIONS alters CFLAGS (e.g., adds -g -O2)
+    opal_cflags_save="$CFLAGS"
+    AC_USE_SYSTEM_EXTENSIONS
+    # AC_USE_SYSTEM_EXTENSIONS will modify CFLAGS if nothing was in there
+    # beforehand.  We don't want that.  So if there was nothing in
+    # CFLAGS, put nothing back in there.
+    AS_IF([test -z "$opal_cflags_save"], [CFLAGS=])
+
     opal_cflags_save="$CFLAGS"
     AC_PROG_CC
     BASECC="`basename $CC`"
     CFLAGS="$opal_cflags_save"
-    AC_DEFINE_UNQUOTED(OPAL_CC, "$CC", [OMPI underlying C compiler])
+    OPAL_CC="$CC"
+    AC_DEFINE_UNQUOTED(OPAL_CC, "$OPAL_CC", [OMPI underlying C compiler])
     set dummy $CC
     opal_cc_argv0=[$]2
     OPAL_WHICH([$opal_cc_argv0], [OPAL_CC_ABSOLUTE])
     AC_SUBST(OPAL_CC_ABSOLUTE)
+
     OPAL_VAR_SCOPE_POP
 ])
