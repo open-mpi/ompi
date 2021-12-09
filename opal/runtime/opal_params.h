@@ -49,6 +49,11 @@ OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
 OPAL_DECLSPEC extern bool opal_cuda_support;
 
 /**
+ * Whether cuda runtime support is initialized or not.
+ */
+OPAL_DECLSPEC extern bool opal_cuda_runtime_initialized;
+
+/**
  *  * Whether we want to warn the user when libcuda is missing.
  *   */
 OPAL_DECLSPEC extern bool opal_warn_on_missing_libcuda;
