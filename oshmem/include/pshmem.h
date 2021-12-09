@@ -2450,7 +2450,7 @@ OSHMEM_DECLSPEC void pshmem_ctx_ulong_atomic_compare_swap_nbi(shmem_ctx_t ctx, u
 OSHMEM_DECLSPEC void pshmem_ctx_ulonglong_atomic_compare_swap_nbi(shmem_ctx_t ctx, unsigned long long *fetch, unsigned long long *target, unsigned long long cond, unsigned long long value, int pe);
 OSHMEM_DECLSPEC void pshmem_ctx_int32_atomic_compare_swap_nbi(shmem_ctx_t ctx, int32_t *fetch, int32_t *target, int32_t cond, int32_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_ctx_int64_atomic_compare_swap_nbi(shmem_ctx_t ctx, int64_t *fetch, int64_t *target, int64_t cond, int64_t value, int pe);
-OSHMEM_DECLSPEC void pshmem_ctx_uint32_atomic_compare_swap_nbi(shmem_ctx_t ctx, uint32_t *fetch, uint32_t *target, uint32_t cond, uint32_t value, int pe);;
+OSHMEM_DECLSPEC void pshmem_ctx_uint32_atomic_compare_swap_nbi(shmem_ctx_t ctx, uint32_t *fetch, uint32_t *target, uint32_t cond, uint32_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_ctx_uint64_atomic_compare_swap_nbi(shmem_ctx_t ctx, uint64_t *fetch, uint64_t *target, uint64_t cond, uint64_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_ctx_size_atomic_compare_swap_nbi(shmem_ctx_t ctx, size_t *fetch, size_t *target, size_t cond, size_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_ctx_ptrdiff_atomic_compare_swap_nbi(shmem_ctx_t ctx, ptrdiff_t *fetch, ptrdiff_t *target, ptrdiff_t cond, ptrdiff_t value, int pe);
@@ -2463,7 +2463,7 @@ OSHMEM_DECLSPEC void pshmem_ulong_atomic_compare_swap_nbi(unsigned long *fetch, 
 OSHMEM_DECLSPEC void pshmem_ulonglong_atomic_compare_swap_nbi(unsigned long long *fetch, unsigned long long *target, unsigned long long cond, unsigned long long value, int pe);
 OSHMEM_DECLSPEC void pshmem_int32_atomic_compare_swap_nbi(int32_t *fetch, int32_t *target, int32_t cond, int32_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_int64_atomic_compare_swap_nbi(int64_t *fetch, int64_t *target, int64_t cond, int64_t value, int pe);
-OSHMEM_DECLSPEC void pshmem_uint32_atomic_compare_swap_nbi(uint32_t *fetch, uint32_t *target, uint32_t cond, uint32_t value, int pe);;
+OSHMEM_DECLSPEC void pshmem_uint32_atomic_compare_swap_nbi(uint32_t *fetch, uint32_t *target, uint32_t cond, uint32_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_uint64_atomic_compare_swap_nbi(uint64_t *fetch, uint64_t *target, uint64_t cond, uint64_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_size_atomic_compare_swap_nbi(size_t *fetch, size_t *target, size_t cond, size_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_ptrdiff_atomic_compare_swap_nbi(ptrdiff_t *fetch, ptrdiff_t *target, ptrdiff_t cond, ptrdiff_t value, int pe);
@@ -2513,7 +2513,7 @@ OSHMEM_DECLSPEC void pshmem_float_atomic_swap_nbi(float *fetch, float *target, f
 OSHMEM_DECLSPEC void pshmem_double_atomic_swap_nbi(double *fetch, double *target, double value, int pe);
 OSHMEM_DECLSPEC void pshmem_int32_atomic_swap_nbi(int32_t *fetch, int32_t *target, int32_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_int64_atomic_swap_nbi(int64_t *fetch, int64_t *target, int64_t value, int pe);
-OSHMEM_DECLSPEC void pshmem_uint32_atomic_swap_nbi(uint32_t *fetch, uint32_t *target, uint32_t value, int pe);;
+OSHMEM_DECLSPEC void pshmem_uint32_atomic_swap_nbi(uint32_t *fetch, uint32_t *target, uint32_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_uint64_atomic_swap_nbi(uint64_t *fetch, uint64_t *target, uint64_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_size_atomic_swap_nbi(size_t *fetch, size_t *target, size_t value, int pe);
 OSHMEM_DECLSPEC void pshmem_ptrdiff_atomic_swap_nbi(ptrdiff_t *fetch, ptrdiff_t *target, ptrdiff_t value, int pe);
