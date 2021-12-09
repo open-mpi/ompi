@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,6 +91,7 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
 
     sendcounts = recvcounts;
     sdispls = rdispls;
+    sndext = rcvext;
   } else {
     res = ompi_datatype_type_extent (sendtype, &sndext);
     if (MPI_SUCCESS != res) {
