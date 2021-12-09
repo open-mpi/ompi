@@ -35,49 +35,19 @@
 #include "opal_config.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/mca/btl/btl.h"
-
-#if OPAL_BTL_SM_HAVE_XPMEM
-
-#    if defined(HAVE_XPMEM_H)
-#        include <xpmem.h>
-
-typedef struct xpmem_addr xpmem_addr_t;
-#    elif defined(HAVE_SN_XPMEM_H)
-#        include <sn/xpmem.h>
-
-typedef int64_t xpmem_segid_t;
-typedef int64_t xpmem_apid_t;
-#    endif
-#endif
+#include "opal/mca/smsc/smsc.h"
 
 /*
  * Modex data
  */
-union sm_modex_t {
-#if OPAL_BTL_SM_HAVE_XPMEM
-    struct sm_modex_xpmem_t {
-        xpmem_segid_t seg_id;
-        void *segment_base;
-        uintptr_t address_max;
-    } xpmem;
-#endif
-    struct sm_modex_other_t {
-        ino_t user_ns_id;
-        int seg_ds_size;
-        /* seg_ds needs to be the last element */
-        opal_shmem_ds_t seg_ds;
-    } other;
+struct mca_btl_sm_modex_t {
+    uint64_t segment_base;
+    int seg_ds_size;
+    /* seg_ds needs to be the last element */
+    opal_shmem_ds_t seg_ds;
 };
 
-/**
- * Single copy mechanisms
- */
-enum {
-    MCA_BTL_SM_XPMEM = 0,
-    MCA_BTL_SM_CMA = 1,
-    MCA_BTL_SM_KNEM = 2,
-    MCA_BTL_SM_NONE = 3,
-};
+typedef struct mca_btl_sm_modex_t mca_btl_sm_modex_t;
 
 typedef struct mca_btl_base_endpoint_t {
     opal_list_item_t super;
@@ -109,18 +79,9 @@ typedef struct mca_btl_base_endpoint_t {
     opal_mutex_t lock; /**< lock to protect endpoint structures from concurrent
                         *   access */
 
-    union {
-#if OPAL_BTL_SM_HAVE_XPMEM
-        struct {
-            xpmem_apid_t apid;     /**< xpmem apid for remote peer */
-            uintptr_t address_max; /**< largest address that can be attached */
-        } xpmem;
-#endif
-        struct {
-            pid_t pid;               /**< pid of remote peer (used for CMA) */
-            opal_shmem_ds_t *seg_ds; /**< stored segment information for detach */
-        } other;
-    } segment_data;
+    mca_smsc_endpoint_t *smsc_endpoint;
+    void *smsc_map_context;
+    opal_shmem_ds_t *seg_ds; /**< stored segment information for detach */
 
     opal_mutex_t pending_frags_lock; /**< protect pending_frags */
     opal_list_t pending_frags;       /**< fragments pending fast box space */
@@ -139,11 +100,6 @@ struct mca_btl_sm_component_t {
     int sm_free_list_num;                 /**< initial size of free lists */
     int sm_free_list_max;                 /**< maximum size of free lists */
     int sm_free_list_inc; /**< number of elements to alloc when growing free lists */
-#if OPAL_BTL_SM_HAVE_XPMEM
-    xpmem_segid_t my_seg_id;                  /**< this rank's xpmem segment id */
-    uintptr_t my_address_max;                 /**< largest address */
-    mca_rcache_base_vma_module_t *vma_module; /**< registration cache for xpmem segments */
-#endif
     opal_shmem_ds_t seg_ds; /**< this rank's shared memory segment (when not using xpmem) */
 
     opal_mutex_t lock;     /**< lock to protect concurrent updates to this structure's members */
@@ -163,7 +119,6 @@ struct mca_btl_sm_component_t {
     int single_copy_mechanism; /**< single copy mechanism to use */
 
     int memcpy_limit;             /**< Limit where we switch from memmove to memcpy */
-    int log_attach_align;         /**< Log of the alignment for xpmem segments */
     unsigned int max_inline_send; /**< Limit for copy-in-copy-out fragments */
 
     mca_btl_base_endpoint_t
@@ -177,10 +132,6 @@ struct mca_btl_sm_component_t {
 
     char *backing_directory; /**< directory to place shared memory backing files */
 
-    /* knem stuff */
-#if OPAL_BTL_SM_HAVE_KNEM
-    unsigned int knem_dma_min; /**< minimum size to enable DMA for knem transfers (0 disables) */
-#endif
     mca_mpool_base_module_t *mpool;
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
@@ -192,12 +143,6 @@ struct mca_btl_sm_t {
     mca_btl_base_module_t super; /**< base BTL interface */
     bool btl_inited;             /**< flag indicating if btl has been inited */
     mca_btl_base_module_error_cb_fn_t error_cb;
-#if OPAL_BTL_SM_HAVE_KNEM
-    int knem_fd;
-
-    /* registration cache */
-    mca_rcache_base_module_t *knem_rcache;
-#endif
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;
 
@@ -277,18 +222,6 @@ struct mca_btl_sm_frag_t {
 typedef struct mca_btl_sm_frag_t mca_btl_sm_frag_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag_t);
-
-/* At this time only knem requires a registration of "RDMA" buffers */
-struct mca_btl_base_registration_handle_t {
-    uint64_t cookie;
-    intptr_t base_addr;
-};
-
-struct mca_btl_sm_registration_handle_t {
-    mca_rcache_base_registration_t base;
-    mca_btl_base_registration_handle_t btl_handle;
-};
-typedef struct mca_btl_sm_registration_handle_t mca_btl_sm_registration_handle_t;
 
 /** FIFO types **/
 typedef opal_atomic_intptr_t atomic_fifo_value_t;

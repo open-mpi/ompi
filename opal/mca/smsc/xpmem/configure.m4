@@ -8,6 +8,7 @@
 #                         reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2021      Google, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -15,20 +16,16 @@
 # $HEADER$
 #
 
-# MCA_btl_sm_CONFIG([action-if-can-compile],
+# MCA_smsc_xpmem_CONFIG([action-if-can-compile],
 #                      [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_opal_btl_sm_CONFIG],[
-    AC_CONFIG_FILES([opal/mca/btl/sm/Makefile])
+AC_DEFUN([MCA_opal_smsc_xpmem_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/smsc/xpmem/Makefile])
 
-    # always happy
-    [$1]
+    OPAL_CHECK_XPMEM([smsc_xpmem], [$1], [$2])
 
-    OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/copy in+copy out]],[$1],[yes])
-
-    # substitute in the things needed to build with XPMEM support
-    AC_SUBST([btl_sm_CFLAGS])
-    AC_SUBST([btl_sm_CPPFLAGS])
-    AC_SUBST([btl_sm_LDFLAGS])
-    AC_SUBST([btl_sm_LIBS])
+    AC_SUBST([smsc_xpmem_CFLAGS])
+    AC_SUBST([smsc_xpmem_CPPFLAGS])
+    AC_SUBST([smsc_xpmem_LDFLAGS])
+    AC_SUBST([smsc_xpmem_LIBS])
 ])dnl

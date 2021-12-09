@@ -21,47 +21,36 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(btl_sm_CPPFLAGS)
+EXTRA_DIST = post_configure.sh
 
-dist_opaldata_DATA = help-btl-sm.txt
+AM_CPPFLAGS = $(smsc_xpmem_CPPFLAGS)
 
-libmca_btl_sm_la_sources = \
-    btl_sm_module.c \
-    btl_sm.h \
-    btl_sm_component.c \
-    btl_sm_endpoint.h \
-    btl_sm_fifo.h \
-    btl_sm_frag.c \
-    btl_sm_frag.h \
-    btl_sm_send.c \
-    btl_sm_sendi.c \
-    btl_sm_fbox.h \
-    btl_sm_get.c \
-    btl_sm_put.c \
-    btl_sm_types.h \
-    btl_sm_virtual.h
-
+libmca_smsc_xpmem_la_sources = \
+    smsc_xpmem_component.c \
+    smsc_xpmem_module.c \
+    smsc_xpmem_internal.h \
+    smsc_xpmem.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_opal_btl_sm_DSO
+if MCA_BUILD_opal_smsc_xpmem_DSO
 component_noinst =
-component_install = mca_btl_sm.la
+component_install = mca_smsc_xpmem.la
 else
-component_noinst = libmca_btl_sm.la
+component_noinst = libmca_smsc_xpmem.la
 component_install =
 endif
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
-mca_btl_sm_la_LDFLAGS = -module -avoid-version $(btl_sm_LDFLAGS)
-mca_btl_sm_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
-	$(btl_sm_LIBS)
+mca_smsc_xpmem_la_SOURCES = $(libmca_smsc_xpmem_la_sources)
+mca_smsc_xpmem_la_LDFLAGS = -module -avoid-version $(smsc_xpmem_LDFLAGS)
+mca_smsc_xpmem_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+	$(smsc_xpmem_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
-libmca_btl_sm_la_LIBADD = $(btl_sm_LIBS)
-libmca_btl_sm_la_LDFLAGS = -module -avoid-version $(btl_sm_LDFLAGS)
+libmca_smsc_xpmem_la_SOURCES = $(libmca_smsc_xpmem_la_sources)
+libmca_smsc_xpmem_la_LIBADD = $(smsc_xpmem_LIBS)
+libmca_smsc_xpmem_la_LDFLAGS = -module -avoid-version $(smsc_xpmem_LDFLAGS)

@@ -21,7 +21,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019-2020 Google, Inc. All rights reserved.
+ * Copyright (c) 2019-2021 Google, Inc. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -41,7 +41,8 @@
 #include "opal/mca/btl/sm/btl_sm_fbox.h"
 #include "opal/mca/btl/sm/btl_sm_fifo.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
-#include "opal/mca/btl/sm/btl_sm_xpmem.h"
+#include "opal/mca/smsc/base/base.h"
+#include "opal/mca/smsc/smsc.h"
 
 #ifdef HAVE_SYS_STAT_H
 #    include <sys/stat.h>
@@ -65,20 +66,6 @@ static int mca_btl_sm_component_close(void);
 static int mca_btl_sm_component_register(void);
 static mca_btl_base_module_t **
 mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enable_mpi_threads);
-
-/* This enumeration is in order of preference */
-static mca_base_var_enum_value_t single_copy_mechanisms[] = {
-#if OPAL_BTL_SM_HAVE_XPMEM
-    {.value = MCA_BTL_SM_XPMEM, .string = "xpmem"},
-#endif
-#if OPAL_BTL_SM_HAVE_CMA
-    {.value = MCA_BTL_SM_CMA, .string = "cma"},
-#endif
-#if OPAL_BTL_SM_HAVE_KNEM
-    {.value = MCA_BTL_SM_KNEM, .string = "knem"},
-#endif
-    {.value = MCA_BTL_SM_NONE, .string = "none"},
-    {.value = 0, .string = NULL}};
 
 /*
  * Shared Memory (SM) component instance.
@@ -106,8 +93,6 @@ mca_btl_sm_component_t mca_btl_sm_component = {
 
 static int mca_btl_sm_component_register(void)
 {
-    mca_base_var_enum_t *new_enum;
-
     (void) mca_base_var_group_component_register(&mca_btl_sm_component.super.btl_version,
                                                  "Enhanced shared memory byte transport later");
 
@@ -146,25 +131,15 @@ static int mca_btl_sm_component_register(void)
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_sm_component.memcpy_limit);
-#if OPAL_BTL_SM_HAVE_XPMEM
-    mca_btl_sm_component.log_attach_align = 21;
-    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version, "log_align",
-                                           "Log base 2 of the alignment to use for xpmem "
-                                           "segments (default: 21, minimum: 12, maximum: 25)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
-                                           MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &mca_btl_sm_component.log_attach_align);
-#endif
 
-#if OPAL_BTL_SM_HAVE_XPMEM && 64 == MCA_BTL_SM_BITNESS
+#if 64 == MCA_BTL_SM_BITNESS
     mca_btl_sm_component.segment_size = 1 << 24;
 #else
     mca_btl_sm_component.segment_size = 1 << 22;
 #endif
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version, "segment_size",
                                            "Maximum size of all shared "
-#if OPAL_BTL_SM_HAVE_XPMEM && 64 == MCA_BTL_SM_BITNESS
+#if 64 == MCA_BTL_SM_BITNESS
                                            "memory buffers (default: 16M)",
 #else
                                            "memory buffers (default: 4M)",
@@ -212,21 +187,6 @@ static int mca_btl_sm_component_register(void)
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_sm_component.fbox_size);
 
-    (void) mca_base_var_enum_create("btl_sm_single_copy_mechanisms", single_copy_mechanisms,
-                                    &new_enum);
-
-    /* Default to the best available mechanism (see the enumerator for ordering) */
-    mca_btl_sm_component.single_copy_mechanism = single_copy_mechanisms[0].value;
-    (void)
-        mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
-                                        "single_copy_mechanism",
-                                        "Single copy mechanism to use (defaults to best available)",
-                                        MCA_BASE_VAR_TYPE_INT, new_enum, 0,
-                                        MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                                        MCA_BASE_VAR_SCOPE_GROUP,
-                                        &mca_btl_sm_component.single_copy_mechanism);
-    OBJ_RELEASE(new_enum);
-
     if (0 == access("/dev/shm", W_OK)) {
         mca_btl_sm_component.backing_directory = "/dev/shm";
     } else {
@@ -240,45 +200,19 @@ static int mca_btl_sm_component_register(void)
         MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_btl_sm_component.backing_directory);
 
-#if OPAL_BTL_SM_HAVE_KNEM
-    /* Currently disabling DMA mode by default; it's not clear that this is useful in all
-     * applications and architectures. */
-    mca_btl_sm_component.knem_dma_min = 0;
-    (void) mca_base_component_var_register(
-        &mca_btl_sm_component.super.btl_version, "knem_dma_min",
-        "Minimum message size (in bytes) to use the knem DMA mode; "
-        "ignored if knem does not support DMA mode (0 = do not use the "
-        "knem DMA mode, default: 0)",
-        MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-        &mca_btl_sm_component.knem_dma_min);
-#endif
-
     mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
 
-    if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism) {
-        mca_btl_sm.super.btl_eager_limit = 32 * 1024;
-        mca_btl_sm.super.btl_rndv_eager_limit = mca_btl_sm.super.btl_eager_limit;
-        mca_btl_sm.super.btl_max_send_size = mca_btl_sm.super.btl_eager_limit;
-        mca_btl_sm.super.btl_min_rdma_pipeline_size = INT_MAX;
-    } else {
-        mca_btl_sm.super.btl_eager_limit = 4 * 1024;
-        mca_btl_sm.super.btl_rndv_eager_limit = 32 * 1024;
-        mca_btl_sm.super.btl_max_send_size = 32 * 1024;
-        mca_btl_sm.super.btl_min_rdma_pipeline_size = INT_MAX;
-    }
+    mca_btl_sm.super.btl_eager_limit = 4 * 1024;
+    mca_btl_sm.super.btl_rndv_eager_limit = 32 * 1024;
+    mca_btl_sm.super.btl_max_send_size = 32 * 1024;
+    mca_btl_sm.super.btl_min_rdma_pipeline_size = INT_MAX;
 
     mca_btl_sm.super.btl_rdma_pipeline_send_length = mca_btl_sm.super.btl_eager_limit;
     mca_btl_sm.super.btl_rdma_pipeline_frag_size = mca_btl_sm.super.btl_eager_limit;
 
     mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_SEND;
 
-    if (MCA_BTL_SM_NONE != mca_btl_sm_component.single_copy_mechanism) {
-        /* True single copy mechanisms should provide better bandwidth */
-        mca_btl_sm.super.btl_bandwidth = 40000; /* Mbs */
-    } else {
-        mca_btl_sm.super.btl_bandwidth = 10000; /* Mbs */
-    }
-
+    mca_btl_sm.super.btl_bandwidth = 20000; /* Mbs */
     mca_btl_sm.super.btl_latency = 1; /* Microsecs */
 
     /* Call the BTL based to register its MCA params */
@@ -302,9 +236,6 @@ static int mca_btl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_sm_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.pending_endpoints, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.pending_fragments, opal_list_t);
-#if OPAL_BTL_SM_HAVE_KNEM
-    mca_btl_sm.knem_fd = -1;
-#endif
 
     return OPAL_SUCCESS;
 }
@@ -323,16 +254,12 @@ static int mca_btl_sm_component_close(void)
     OBJ_DESTRUCT(&mca_btl_sm_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_sm_component.pending_fragments);
 
-    if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism
+    if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)
         && NULL != mca_btl_sm_component.my_segment) {
         munmap(mca_btl_sm_component.my_segment, mca_btl_sm_component.segment_size);
     }
 
     mca_btl_sm_component.my_segment = NULL;
-
-#if OPAL_BTL_SM_HAVE_KNEM
-    mca_btl_sm_knem_fini();
-#endif
 
     if (mca_btl_sm_component.mpool) {
         mca_btl_sm_component.mpool->mpool_finalize(mca_btl_sm_component.mpool);
@@ -342,157 +269,40 @@ static int mca_btl_sm_component_close(void)
     return OPAL_SUCCESS;
 }
 
-/*
- * mca_btl_sm_parse_proc_ns_user() tries to get the user namespace ID
- * of the current process.
- * Returns the ID of the user namespace. In the case of an error '0' is returned.
- */
-ino_t mca_btl_sm_get_user_ns_id(void)
-{
-    struct stat buf;
-
-    if (0 > stat("/proc/self/ns/user", &buf)) {
-        /*
-         * Something went wrong, probably an old kernel that does not support namespaces
-         * simply assume all processes are in the same user namespace and return 0
-         */
-        return 0;
-    }
-
-    return buf.st_ino;
-}
 static int mca_btl_base_sm_modex_send(void)
 {
-    union sm_modex_t modex;
-    int modex_size, rc;
+    mca_btl_sm_modex_t modex;
+    int modex_size;
 
-#if OPAL_BTL_SM_HAVE_XPMEM
-    if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism) {
-        modex.xpmem.seg_id = mca_btl_sm_component.my_seg_id;
-        modex.xpmem.segment_base = mca_btl_sm_component.my_segment;
-        modex.xpmem.address_max = mca_btl_sm_component.my_address_max;
+    modex_size = sizeof(modex) - sizeof(modex.seg_ds);
 
-        modex_size = sizeof(modex.xpmem);
+    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
+        modex.seg_ds_size = opal_shmem_sizeof_shmem_ds(&mca_btl_sm_component.seg_ds);
+        memmove(&modex.seg_ds, &mca_btl_sm_component.seg_ds, modex.seg_ds_size);
+        modex_size += modex.seg_ds_size;
     } else {
-#endif
-        modex.other.seg_ds_size = opal_shmem_sizeof_shmem_ds(&mca_btl_sm_component.seg_ds);
-        memmove(&modex.other.seg_ds, &mca_btl_sm_component.seg_ds, modex.other.seg_ds_size);
-        modex.other.user_ns_id = mca_btl_sm_get_user_ns_id();
-        /*
-         * If modex.other.user_ns_id is '0' something did not work out
-         * during user namespace detection. Assuming there are no
-         * namespaces available it will return '0' for all processes and
-         * the check later will see '0' everywhere and not disable CMA.
-         */
-        modex_size = sizeof(modex.other);
-
-#if OPAL_BTL_SM_HAVE_XPMEM
+        modex.segment_base = (uintptr_t) mca_btl_sm_component.my_segment;
+        modex.seg_ds_size = 0;
     }
-#endif
 
+    int rc;
     OPAL_MODEX_SEND(rc, PMIX_LOCAL, &mca_btl_sm_component.super.btl_version, &modex, modex_size);
 
     return rc;
 }
 
-#if OPAL_BTL_SM_HAVE_XPMEM || OPAL_BTL_SM_HAVE_CMA || OPAL_BTL_SM_HAVE_KNEM
-static void mca_btl_sm_select_next_single_copy_mechanism(void)
+static mca_btl_base_registration_handle_t *
+mca_btl_sm_register_mem(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
+                        void *base, size_t size, uint32_t flags)
 {
-    for (int i = 0; single_copy_mechanisms[i].value != MCA_BTL_SM_NONE; ++i) {
-        if (single_copy_mechanisms[i].value == mca_btl_sm_component.single_copy_mechanism) {
-            mca_btl_sm_component.single_copy_mechanism = single_copy_mechanisms[i + 1].value;
-            return;
-        }
-    }
+    return (mca_btl_base_registration_handle_t *) MCA_SMSC_CALL(register_region, base, size);
 }
-#endif
 
-static void mca_btl_sm_check_single_copy(void)
+static int mca_btl_sm_deregister_mem_knem(struct mca_btl_base_module_t *btl,
+                                          struct mca_btl_base_registration_handle_t *handle)
 {
-#if OPAL_BTL_SM_HAVE_XPMEM || OPAL_BTL_SM_HAVE_CMA || OPAL_BTL_SM_HAVE_KNEM
-    int initial_mechanism = mca_btl_sm_component.single_copy_mechanism;
-#endif
-
-#if OPAL_BTL_SM_HAVE_XPMEM
-    if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism) {
-        /* try to create an xpmem segment for the entire address space */
-        int rc = mca_btl_sm_xpmem_init();
-        if (OPAL_SUCCESS != rc) {
-            if (MCA_BTL_SM_XPMEM == initial_mechanism) {
-                opal_show_help("help-btl-sm.txt", "xpmem-make-failed", true,
-                               opal_process_info.nodename, errno, strerror(errno));
-            }
-
-            mca_btl_sm_select_next_single_copy_mechanism();
-        }
-    }
-#endif
-
-#if OPAL_BTL_SM_HAVE_CMA
-    if (MCA_BTL_SM_CMA == mca_btl_sm_component.single_copy_mechanism) {
-        /* Check if we have the proper permissions for CMA */
-        char buffer = '0';
-        bool cma_happy = false;
-        int fd;
-
-        /* check system setting for current ptrace scope */
-        fd = open("/proc/sys/kernel/yama/ptrace_scope", O_RDONLY);
-        if (0 <= fd) {
-            read(fd, &buffer, 1);
-            close(fd);
-        }
-
-        /* ptrace scope 0 will allow an attach from any of the process owner's
-         * processes. ptrace scope 1 limits attachers to the process tree
-         * starting at the parent of this process. */
-        if ('0' != buffer) {
-#    if defined PR_SET_PTRACER
-            /* try setting the ptrace scope to allow attach */
-            int ret = prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
-            if (0 == ret) {
-                cma_happy = true;
-            }
-#    endif
-        } else {
-            cma_happy = true;
-        }
-
-        if (!cma_happy) {
-            mca_btl_sm_select_next_single_copy_mechanism();
-
-            if (MCA_BTL_SM_CMA == initial_mechanism) {
-                opal_show_help("help-btl-sm.txt", "cma-permission-denied", true,
-                               opal_process_info.nodename);
-            }
-        } else {
-            /* ptrace_scope will allow CMA */
-            mca_btl_sm.super.btl_get = mca_btl_sm_get_cma;
-            mca_btl_sm.super.btl_put = mca_btl_sm_put_cma;
-        }
-    }
-#endif
-
-#if OPAL_BTL_SM_HAVE_KNEM
-    if (MCA_BTL_SM_KNEM == mca_btl_sm_component.single_copy_mechanism) {
-        /* mca_btl_sm_knem_init will set the appropriate get/put functions */
-        int rc = mca_btl_sm_knem_init();
-        if (OPAL_SUCCESS != rc) {
-            if (MCA_BTL_SM_KNEM == initial_mechanism) {
-                opal_show_help("help-btl-sm.txt", "knem requested but not available", true,
-                               opal_process_info.nodename);
-            }
-
-            /* disable single copy */
-            mca_btl_sm_select_next_single_copy_mechanism();
-        }
-    }
-#endif
-
-    if (MCA_BTL_SM_NONE == mca_btl_sm_component.single_copy_mechanism) {
-        mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
-        mca_btl_sm.super.btl_get = NULL;
-        mca_btl_sm.super.btl_put = NULL;
-    }
+    MCA_SMSC_CALL(deregister_region, (void *) handle);
+    return OPAL_SUCCESS;
 }
 
 /*
@@ -512,15 +322,6 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
         BTL_VERBOSE(("No peers to communicate with. Disabling sm."));
         return NULL;
     }
-
-#if OPAL_BTL_SM_HAVE_XPMEM
-    /* limit segment alignment to be between 4k and 16M */
-    if (component->log_attach_align < 12) {
-        component->log_attach_align = 12;
-    } else if (component->log_attach_align > 25) {
-        component->log_attach_align = 25;
-    }
-#endif
 
     btls = (mca_btl_base_module_t **) calloc(1, sizeof(mca_btl_base_module_t *));
     if (NULL == btls) {
@@ -542,9 +343,40 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
     /* no fast boxes allocated initially */
     component->num_fbox_in_endpoints = 0;
 
-    mca_btl_sm_check_single_copy();
+    rc = mca_smsc_base_select();
+    if (OPAL_SUCCESS == rc) {
+        mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_RDMA;
+        mca_btl_sm.super.btl_get = mca_btl_sm_get;
+        mca_btl_sm.super.btl_put = mca_btl_sm_put;
 
-    if (MCA_BTL_SM_XPMEM != mca_btl_sm_component.single_copy_mechanism) {
+        mca_btl_sm.super.btl_bandwidth = 40000; /* Mbs */
+
+        if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
+            mca_btl_sm.super.btl_eager_limit = 32 * 1024;
+            mca_btl_sm.super.btl_rndv_eager_limit = mca_btl_sm.super.btl_eager_limit;
+            mca_btl_sm.super.btl_max_send_size = mca_btl_sm.super.btl_eager_limit;
+            mca_btl_sm.super.btl_min_rdma_pipeline_size = INT_MAX;
+        }
+        if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_REQUIRE_REGISTATION)) {
+            ssize_t handle_size = mca_smsc_base_registration_data_size();
+            if (handle_size > 0) {
+                mca_btl_sm.super.btl_registration_handle_size = (size_t) handle_size;
+                mca_btl_sm.super.btl_register_mem = mca_btl_sm_register_mem;
+                mca_btl_sm.super.btl_deregister_mem = mca_btl_sm_deregister_mem_knem;
+            } else {
+                BTL_ERROR(("single-copy component requires registration but could not provide the "
+                           "registration handle size"));
+                rc = (int) handle_size;
+            }
+        }
+    }
+    if (OPAL_SUCCESS != rc) {
+        mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
+        mca_btl_sm.super.btl_get = NULL;
+        mca_btl_sm.super.btl_put = NULL;
+    }
+
+    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
         char *sm_file;
 
         rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%u.%x.%d",
@@ -570,7 +402,8 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
             goto failed;
         }
     } else {
-        /* when using xpmem it is safe to use an anonymous segment */
+        /* if the shared-memory single-copy component can map memory (XPMEM) an anonymous segment
+         * can be used instead */
         component->my_segment = mmap(NULL, component->segment_size, PROT_READ | PROT_WRITE,
                                      MAP_ANONYMOUS | MAP_SHARED, -1, 0);
         if ((void *) -1 == component->my_segment) {
@@ -599,12 +432,11 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
 
     return btls;
 failed:
-#if OPAL_BTL_SM_HAVE_XPMEM
-    if (MCA_BTL_SM_XPMEM == mca_btl_sm_component.single_copy_mechanism) {
+    if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
         munmap(component->my_segment, component->segment_size);
-    } else
-#endif
+    } else {
         opal_shmem_unlink(&component->seg_ds);
+    }
 
     if (btls) {
         free(btls);
@@ -630,23 +462,17 @@ void mca_btl_sm_poll_handle_frag(mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endp
                                               .cbdata = reg->cbdata};
 
     if (hdr->flags & MCA_BTL_SM_FLAG_SINGLE_COPY) {
-#if OPAL_BTL_SM_HAVE_XPMEM
-        mca_rcache_base_registration_t *xpmem_reg;
-
-        xpmem_reg = sm_get_registation(endpoint, hdr->sc_iov.iov_base, hdr->sc_iov.iov_len, 0,
-                                       &segments[1].seg_addr.pval);
-        assert(NULL != xpmem_reg);
+        void *ctx = MCA_SMSC_CALL(map_peer_region, endpoint->smsc_endpoint, /*flags=*/0,
+                                  hdr->sc_iov.iov_base, hdr->sc_iov.iov_len,
+                                  &segments[1].seg_addr.pval);
+        assert(NULL != ctx);
 
         segments[1].seg_len = hdr->sc_iov.iov_len;
         frag.des_segment_count = 2;
 
         /* recv upcall */
         reg->cbfunc(&mca_btl_sm.super, &frag);
-        sm_return_registration(xpmem_reg, endpoint);
-#else
-        BTL_ERROR(("illegal flag set in incoming fragment"));
-        _exit(EXIT_FAILURE);
-#endif
+        MCA_SMSC_CALL(unmap_peer_region, ctx);
     } else {
         reg->cbfunc(&mca_btl_sm.super, &frag);
     }
