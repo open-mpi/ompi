@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
+# Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -26,12 +27,9 @@ sources = \
     threads_qthreads_component.c \
     threads_qthreads_condition.c \
     threads_qthreads_module.c \
-    threads_qthreads_mutex.c \
-    threads_qthreads_wait_sync.c \
     threads_qthreads_mutex.h \
     threads_qthreads_threads.h \
-    threads_qthreads_tsd.h \
-    threads_qthreads_wait_sync.h
+    threads_qthreads_tsd.h
 
 lib_sources = $(sources)
 

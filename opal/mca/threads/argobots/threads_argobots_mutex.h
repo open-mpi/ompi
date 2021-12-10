@@ -31,108 +31,71 @@
 
 #include "opal_config.h"
 
-#include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "opal/class/opal_object.h"
+#include "opal/constants.h"
 #include "opal/mca/threads/argobots/threads_argobots.h"
 #include "opal/mca/threads/mutex.h"
-#include "opal/sys/atomic.h"
 #include "opal/util/output.h"
 
 BEGIN_C_DECLS
 
-struct opal_mutex_t {
-    opal_object_t super;
+typedef ABT_mutex_memory opal_thread_internal_mutex_t;
 
-    ABT_mutex_memory m_lock_argobots;
-    int m_recursive;
+#define OPAL_THREAD_INTERNAL_MUTEX_INITIALIZER           ABT_MUTEX_INITIALIZER
+#define OPAL_THREAD_INTERNAL_RECURSIVE_MUTEX_INITIALIZER ABT_RECURSIVE_MUTEX_INITIALIZER
 
-#if OPAL_ENABLE_DEBUG
-    int m_lock_debug;
-    const char *m_lock_file;
-    int m_lock_line;
-#endif
-
-    opal_atomic_lock_t m_lock_atomic;
-};
-
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
-
-#if OPAL_ENABLE_DEBUG
-#    define OPAL_MUTEX_STATIC_INIT                                                                 \
-        {                                                                                          \
-            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t), .m_lock_argobots = ABT_MUTEX_INITIALIZER, \
-            .m_recursive = 0, .m_lock_debug = 0, .m_lock_file = NULL, .m_lock_line = 0,            \
-            .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                                                \
-        }
-#else
-#    define OPAL_MUTEX_STATIC_INIT                                                                 \
-        {                                                                                          \
-            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t), .m_lock_argobots = ABT_MUTEX_INITIALIZER, \
-            .m_recursive = 0, .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                              \
-        }
-#endif
-
-#if OPAL_ENABLE_DEBUG
-#    define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                      \
-        {                                                                         \
-            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                          \
-            .m_lock_argobots = ABT_RECURSIVE_MUTEX_INITIALIZER, .m_recursive = 1, \
-            .m_lock_debug = 0, .m_lock_file = NULL, .m_lock_line = 0,             \
-            .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                               \
-        }
-#else
-#    define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                      \
-        {                                                                         \
-            .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                          \
-            .m_lock_argobots = ABT_RECURSIVE_MUTEX_INITIALIZER, .m_recursive = 1, \
-            .m_lock_atomic = OPAL_ATOMIC_LOCK_INIT,                               \
-        }
-#endif
-
-/************************************************************************
- *
- * mutex operations (non-atomic versions)
- *
- ************************************************************************/
-
-static inline int opal_mutex_trylock(opal_mutex_t *m)
+static inline int opal_thread_internal_mutex_init(opal_thread_internal_mutex_t *p_mutex,
+                                                  bool recursive)
 {
-    ABT_mutex mutex = ABT_MUTEX_MEMORY_GET_HANDLE(&m->m_lock_argobots);
-    int ret = ABT_mutex_trylock(mutex);
-    if (ABT_ERR_MUTEX_LOCKED == ret) {
-        return 1;
-    } else if (ABT_SUCCESS != ret) {
-#if OPAL_ENABLE_DEBUG
-        opal_output(0, "opal_mutex_trylock()");
-#endif
-        return 1;
+    if (recursive) {
+        const ABT_mutex_memory init_mutex = ABT_RECURSIVE_MUTEX_INITIALIZER;
+        memcpy(p_mutex, &init_mutex, sizeof(ABT_mutex_memory));
+    } else {
+        const ABT_mutex_memory init_mutex = ABT_MUTEX_INITIALIZER;
+        memcpy(p_mutex, &init_mutex, sizeof(ABT_mutex_memory));
     }
-    return 0;
+    return OPAL_SUCCESS;
 }
 
-static inline void opal_mutex_lock(opal_mutex_t *m)
+static inline void opal_thread_internal_mutex_lock(opal_thread_internal_mutex_t *p_mutex)
 {
-    ABT_mutex mutex = ABT_MUTEX_MEMORY_GET_HANDLE(&m->m_lock_argobots);
+    ABT_mutex mutex = ABT_MUTEX_MEMORY_GET_HANDLE(p_mutex);
 #if OPAL_ENABLE_DEBUG
     int ret = ABT_mutex_lock(mutex);
     if (ABT_SUCCESS != ret) {
-        opal_output(0, "opal_mutex_lock()");
+        opal_output(0, "opal_thread_internal_mutex_lock()");
     }
 #else
     ABT_mutex_lock(mutex);
 #endif
 }
 
-static inline void opal_mutex_unlock(opal_mutex_t *m)
+static inline int opal_thread_internal_mutex_trylock(opal_thread_internal_mutex_t *p_mutex)
 {
-    ABT_mutex mutex = ABT_MUTEX_MEMORY_GET_HANDLE(&m->m_lock_argobots);
+    ABT_mutex mutex = ABT_MUTEX_MEMORY_GET_HANDLE(p_mutex);
+    int ret = ABT_mutex_trylock(mutex);
+    if (ABT_ERR_MUTEX_LOCKED == ret) {
+        return 1;
+    } else if (ABT_SUCCESS != ret) {
+#if OPAL_ENABLE_DEBUG
+        opal_output(0, "opal_thread_internal_mutex_trylock()");
+#endif
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static inline void opal_thread_internal_mutex_unlock(opal_thread_internal_mutex_t *p_mutex)
+{
+    ABT_mutex mutex = ABT_MUTEX_MEMORY_GET_HANDLE(p_mutex);
 #if OPAL_ENABLE_DEBUG
     int ret = ABT_mutex_unlock(mutex);
     if (ABT_SUCCESS != ret) {
-        opal_output(0, "opal_mutex_unlock()");
+        opal_output(0, "opal_thread_internal_mutex_unlock()");
     }
 #else
     ABT_mutex_unlock(mutex);
@@ -141,64 +104,61 @@ static inline void opal_mutex_unlock(opal_mutex_t *m)
     ABT_thread_yield();
 }
 
-/************************************************************************
- *
- * mutex operations (atomic versions)
- *
- ************************************************************************/
-
-#if OPAL_HAVE_ATOMIC_SPINLOCKS
-
-/************************************************************************
- * Spin Locks
- ************************************************************************/
-
-static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
+static inline void opal_thread_internal_mutex_destroy(opal_thread_internal_mutex_t *p_mutex)
 {
-    return opal_atomic_trylock(&m->m_lock_atomic);
+    /* No specific operation is needed to destroy opal_thread_internal_mutex_t. */
 }
 
-static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
+typedef ABT_cond_memory opal_thread_internal_cond_t;
+
+#define OPAL_THREAD_INTERNAL_COND_INITIALIZER ABT_COND_INITIALIZER
+
+static inline int opal_thread_internal_cond_init(opal_thread_internal_cond_t *p_cond)
 {
-    opal_atomic_lock(&m->m_lock_atomic);
+    const ABT_cond_memory init_cond = ABT_COND_INITIALIZER;
+    memcpy(p_cond, &init_cond, sizeof(ABT_cond_memory));
+    return OPAL_SUCCESS;
 }
 
-static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
+static inline void opal_thread_internal_cond_wait(opal_thread_internal_cond_t *p_cond,
+                                                  opal_thread_internal_mutex_t *p_mutex)
 {
-    opal_atomic_unlock(&m->m_lock_atomic);
-}
-
+    ABT_mutex mutex = ABT_MUTEX_MEMORY_GET_HANDLE(p_mutex);
+    ABT_cond cond = ABT_COND_MEMORY_GET_HANDLE(p_cond);
+#if OPAL_ENABLE_DEBUG
+    int ret = ABT_cond_wait(cond, mutex);
+    assert(ABT_SUCCESS == ret);
 #else
-
-/************************************************************************
- * Standard locking
- ************************************************************************/
-
-static inline int opal_mutex_atomic_trylock(opal_mutex_t *m)
-{
-    return opal_mutex_trylock(m);
-}
-
-static inline void opal_mutex_atomic_lock(opal_mutex_t *m)
-{
-    opal_mutex_lock(m);
-}
-
-static inline void opal_mutex_atomic_unlock(opal_mutex_t *m)
-{
-    opal_mutex_unlock(m);
-}
-
+    ABT_cond_wait(cond, mutex);
 #endif
+}
 
-typedef ABT_cond_memory opal_cond_t;
-#define OPAL_CONDITION_STATIC_INIT ABT_COND_INITIALIZER
+static inline void opal_thread_internal_cond_broadcast(opal_thread_internal_cond_t *p_cond)
+{
+    ABT_cond cond = ABT_COND_MEMORY_GET_HANDLE(p_cond);
+#if OPAL_ENABLE_DEBUG
+    int ret = ABT_cond_broadcast(cond);
+    assert(ABT_SUCCESS == ret);
+#else
+    ABT_cond_broadcast(cond);
+#endif
+}
 
-int opal_cond_init(opal_cond_t *cond);
-int opal_cond_wait(opal_cond_t *cond, opal_mutex_t *lock);
-int opal_cond_broadcast(opal_cond_t *cond);
-int opal_cond_signal(opal_cond_t *cond);
-int opal_cond_destroy(opal_cond_t *cond);
+static inline void opal_thread_internal_cond_signal(opal_thread_internal_cond_t *p_cond)
+{
+    ABT_cond cond = ABT_COND_MEMORY_GET_HANDLE(p_cond);
+#if OPAL_ENABLE_DEBUG
+    int ret = ABT_cond_signal(cond);
+    assert(ABT_SUCCESS == ret);
+#else
+    ABT_cond_signal(cond);
+#endif
+}
+
+static inline void opal_thread_internal_cond_destroy(opal_thread_internal_cond_t *p_cond)
+{
+    /* No destructor is needed. */
+}
 
 END_C_DECLS
 
