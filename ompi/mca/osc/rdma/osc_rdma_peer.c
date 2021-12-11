@@ -50,7 +50,7 @@ static int ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *modul
 
     for (int module_btl_index = 0 ; module_btl_index < module->btls_in_use ; ++module_btl_index) {
         for (int btl_index = 0 ; btl_index < num_btls ; ++btl_index) {
-            if (bml_endpoint->btl_rdma.bml_btls[btl_index].btl == module->selected_btls[module_btl_index]) {
+            if (bml_endpoint->btl_rdma.bml_btls[btl_index].btl == module->selected_btls[module_btl_index]->btl_module) {
                 *btl_index_out = module_btl_index;
                 *endpoint = bml_endpoint->btl_rdma.bml_btls[btl_index].btl_endpoint;
                 return OMPI_SUCCESS;
@@ -63,7 +63,7 @@ static int ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *modul
 
     for (int module_btl_index = 0 ; module_btl_index < module->btls_in_use ; ++module_btl_index) {
         for (int btl_index = 0 ; btl_index < num_btls ; ++btl_index) {
-            if (bml_endpoint->btl_eager.bml_btls[btl_index].btl == module->selected_btls[module_btl_index]) {
+            if (bml_endpoint->btl_eager.bml_btls[btl_index].btl == module->selected_btls[module_btl_index]->btl_module) {
                 *btl_index_out = module_btl_index;
                 *endpoint = bml_endpoint->btl_eager.bml_btls[btl_index].btl_endpoint;
                 return OMPI_SUCCESS;

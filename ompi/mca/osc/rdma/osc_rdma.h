@@ -41,14 +41,13 @@
 #include "ompi/request/request.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
-#include "opal/mca/btl/btl.h"
 #include "ompi/memchecker.h"
 #include "ompi/op/op.h"
 #include "opal/align.h"
 
+#include "osc_rdma_btl_wrapper.h"
 #include "osc_rdma_types.h"
 #include "osc_rdma_sync.h"
-
 #include "osc_rdma_peer.h"
 
 #include "opal_stdint.h"
@@ -266,7 +265,7 @@ struct ompi_osc_rdma_module_t {
      * non-RDMA BTLs. The typical usage is btl/sm + btl/tcp. In the future this
      * could be used to support multiple RDMA-capable BTLs but the memory registration
      * paths will need to be updated to pack/unpack multiple registration handles. */
-    struct mca_btl_base_module_t **selected_btls;
+    struct ompi_osc_rdma_btl_wrapper_t **selected_btls;
     uint8_t selected_btls_size;
     uint8_t btls_in_use;
 
@@ -387,7 +386,7 @@ static inline int _ompi_osc_rdma_register (ompi_osc_rdma_module_t *module, struc
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "registering segment with btl. range: %p - %p (%lu bytes)",
                          ptr, (void*)((char *) ptr + size), size);
 
-        *handle = module->selected_btls[0]->btl_register_mem (module->selected_btls[0], endpoint, ptr, size, flags);
+        *handle = module->selected_btls[0]->btl_register_mem (module->selected_btls[0]->btl_module, endpoint, ptr, size, flags);
         if (OPAL_UNLIKELY(NULL == *handle)) {
             OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "failed to register pointer with selected BTL. base: %p, "
                              "size: %lu. file: %s, line: %d", ptr, (unsigned long) size, file, line);
@@ -405,7 +404,7 @@ static inline int _ompi_osc_rdma_register (ompi_osc_rdma_module_t *module, struc
 static inline void _ompi_osc_rdma_deregister (ompi_osc_rdma_module_t *module, mca_btl_base_registration_handle_t *handle, int line, const char *file)
 {
     if (handle) {
-        module->selected_btls[0]->btl_deregister_mem (module->selected_btls[0], handle);
+        module->selected_btls[0]->btl_deregister_mem (module->selected_btls[0]->btl_module, handle);
     }
 }
 
@@ -602,7 +601,7 @@ static inline void ompi_osc_rdma_sync_rdma_complete (ompi_osc_rdma_sync_t *sync)
         opal_progress ();
     }  while (ompi_osc_rdma_sync_get_count (sync));
 #else
-    mca_btl_base_module_t *btl_module = sync->module->selected_btls[0];
+    mca_btl_base_module_t *btl_module = sync->module->selected_btls[0]->btl_module;
 
     do {
         if (!ompi_osc_rdma_use_btl_flush (sync->module)) {
@@ -637,18 +636,19 @@ static inline bool ompi_osc_rdma_oor (int rc)
 }
 
 __opal_attribute_always_inline__
-static inline mca_btl_base_module_t *ompi_osc_rdma_selected_btl (ompi_osc_rdma_module_t *module, uint8_t btl_index) {
+static inline ompi_osc_rdma_btl_wrapper_t *ompi_osc_rdma_selected_btl (ompi_osc_rdma_module_t *module, uint8_t btl_index) {
     return module->selected_btls[btl_index];
 }
 
 __opal_attribute_always_inline__
-static inline void ompi_osc_rdma_selected_btl_insert (ompi_osc_rdma_module_t *module, struct mca_btl_base_module_t *btl, uint8_t btl_index) {
+static inline void ompi_osc_rdma_selected_btl_insert (ompi_osc_rdma_module_t *module, struct mca_btl_base_module_t *btl, uint8_t btl_index,
+                                                      enum ompi_osc_rdma_btl_type_t btl_type) {
     if(btl_index == module->selected_btls_size) {
         module->selected_btls_size *= 2;
         module->selected_btls = realloc(module->selected_btls, module->selected_btls_size * sizeof(struct mca_btl_base_module_t *));
         assert(NULL != module->selected_btls);
     }
-    module->selected_btls[btl_index] = btl;
+    module->selected_btls[btl_index] = ompi_osc_rdma_btl_wrapper_alloc(btl, btl_type);
 }
 
 #endif /* OMPI_OSC_RDMA_H */

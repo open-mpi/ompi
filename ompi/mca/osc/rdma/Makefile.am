@@ -41,7 +41,9 @@ rdma_sources = \
 	osc_rdma_dynamic.c \
 	osc_rdma_sync.h \
 	osc_rdma_sync.c \
-	osc_rdma_types.h
+	osc_rdma_types.h \
+	osc_rdma_btl_wrapper.c \
+	osc_rdma_btl_wrapper.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

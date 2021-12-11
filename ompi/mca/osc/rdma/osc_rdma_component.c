@@ -610,7 +610,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
     if (!module->single_node) {
         for (int i = 0 ; i < module->btls_in_use ; ++i) {
-            module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
+            module->use_cpu_atomics = module->use_cpu_atomics && !!(module->selected_btls[i]->btl_atomic_support_glob);
         }
     }
 
@@ -962,7 +962,7 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
             ++btls_found;
             if (module) {
                 mca_btl_base_am_rdma_init(item->btl_module);
-                ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++);
+                ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++, OMPI_OSC_RDMA_BTL_ALTERNATE);
             }
             
         }
@@ -989,7 +989,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
     btls_to_use = opal_argv_split (ompi_osc_rdma_btl_names, ',');
 
     if (module) {
-        ompi_osc_rdma_selected_btl_insert(module, NULL, 0);
+        ompi_osc_rdma_selected_btl_insert(module, NULL, 0, OMPI_OSC_RDMA_BTL_PRIMARY);
         module->btls_in_use = 0;
         module->use_memory_registration = false;
     }
@@ -1016,7 +1016,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
 
     if (NULL != selected_btl) {
         if (module) {
-            ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0);
+            ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0, OMPI_OSC_RDMA_BTL_PRIMARY);
             module->btls_in_use = 1;
             module->use_memory_registration = selected_btl->btl_register_mem != NULL;
         }
@@ -1133,7 +1133,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
     }
 
     if (module) {
-        ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0);
+        ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0, OMPI_OSC_RDMA_BTL_PRIMARY);
         module->btls_in_use = 1;
         module->use_memory_registration = selected_btl->btl_register_mem != NULL;
     }

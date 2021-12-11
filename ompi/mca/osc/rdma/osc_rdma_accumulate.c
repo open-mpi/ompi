@@ -156,7 +156,7 @@ static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const 
                                               mca_btl_base_registration_handle_t *target_handle, ompi_op_t *op, ompi_osc_rdma_request_t *req)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+    ompi_osc_rdma_btl_wrapper_t *selected_btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
     int32_t atomic_flags = selected_btl->btl_atomic_flags;
     int btl_op, flags;
     int64_t origin;
@@ -234,12 +234,12 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
                                             ompi_op_t *op, ompi_osc_rdma_request_t *req)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+    ompi_osc_rdma_btl_wrapper_t *selected_btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
     int32_t atomic_flags = selected_btl->btl_atomic_flags;
     int btl_op, flags;
     int64_t origin;
 
-    if (!(selected_btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS)) {
+    if (!selected_btl->btl_atomic_ops) {
         /* btl put atomics not supported or disabled. fall back on fetch-and-op */
         return ompi_osc_rdma_fetch_and_op_atomic (sync, origin_addr, NULL, dt, extent, peer, target_address, target_handle,
                                                   op, req);
@@ -661,7 +661,7 @@ static inline int ompi_osc_rdma_cas_atomic (ompi_osc_rdma_sync_t *sync, const vo
                                             bool lock_acquired)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+    ompi_osc_rdma_btl_wrapper_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
     int32_t atomic_flags = btl->btl_atomic_flags;
     const size_t size = datatype->super.size;
     int64_t compare, source;
@@ -715,7 +715,7 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
                             mca_btl_base_registration_handle_t *target_handle, bool lock_acquired)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+    ompi_osc_rdma_btl_wrapper_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
     unsigned long len = datatype->super.size;
     mca_btl_base_registration_handle_t *local_handle = NULL;
     ompi_osc_rdma_frag_t *frag = NULL;
@@ -757,7 +757,7 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "RDMA compare-and-swap initiating blocking btl put...");
 
     do {
-        ret = btl->btl_put (btl, peer->data_endpoint, ptr, target_address,
+        ret = btl->btl_put (btl->btl_module, peer->data_endpoint, ptr, target_address,
                             local_handle, target_handle, len, 0, MCA_BTL_NO_ORDER,
                             ompi_osc_rdma_cas_put_complete, (void *) &complete, NULL);
         if (OPAL_SUCCESS == ret || (OPAL_ERR_OUT_OF_RESOURCE != ret && OPAL_ERR_TEMP_OUT_OF_RESOURCE != ret)) {

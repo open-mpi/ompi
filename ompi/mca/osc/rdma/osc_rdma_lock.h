@@ -44,7 +44,7 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, uint8_t
                                          ompi_osc_rdma_pending_op_cb_fn_t cbfunc, void *cbdata, void *cbcontext)
 {
     ompi_osc_rdma_pending_op_t *pending_op;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
+    ompi_osc_rdma_btl_wrapper_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
     int ret = OPAL_ERROR;
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
@@ -72,7 +72,7 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, uint8_t
         }
 
         if (NULL != pending_op->op_frag) {
-            ret = selected_btl->btl_atomic_fop (selected_btl, endpoint, pending_op->op_buffer,
+            ret = selected_btl->btl_atomic_fop (selected_btl->btl_module, endpoint, pending_op->op_buffer,
                                                 (intptr_t) address, pending_op->op_frag->handle, address_handle,
                                                 op, operand, flags, MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete,
                                                 (void *) pending_op, NULL);
@@ -88,7 +88,7 @@ static inline int ompi_osc_rdma_btl_fop (ompi_osc_rdma_module_t *module, uint8_t
         if (OPAL_LIKELY(1 == ret)) {
             *result = ((int64_t *) pending_op->op_buffer)[0];
             ret = OMPI_SUCCESS;
-            ompi_osc_rdma_atomic_complete (selected_btl, endpoint, pending_op->op_buffer,
+            ompi_osc_rdma_atomic_complete (selected_btl->btl_module, endpoint, pending_op->op_buffer,
                                            pending_op->op_frag->handle, (void *) pending_op, NULL, OPAL_SUCCESS);
         } else {
             /* need to release here because ompi_osc_rdma_atomic_complete was not called */
@@ -122,10 +122,10 @@ static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, uint8_t 
                                         ompi_osc_rdma_pending_op_cb_fn_t cbfunc, void *cbdata, void *cbcontext)
 {
     ompi_osc_rdma_pending_op_t *pending_op;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
+    ompi_osc_rdma_btl_wrapper_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
     int ret;
 
-    if (!(selected_btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS)) {
+    if (!selected_btl->btl_atomic_ops) {
         return ompi_osc_rdma_btl_fop (module, btl_index, endpoint, address, address_handle, op, operand, flags,
                                       NULL, wait_for_completion, cbfunc, cbdata, cbcontext);
     }
@@ -147,7 +147,7 @@ static inline int ompi_osc_rdma_btl_op (ompi_osc_rdma_module_t *module, uint8_t 
 
     /* spin until the btl has accepted the operation */
     do {
-        ret = selected_btl->btl_atomic_op (selected_btl, endpoint, (intptr_t) address, address_handle,
+        ret = selected_btl->btl_atomic_op (selected_btl->btl_module, endpoint, (intptr_t) address, address_handle,
                                            op, operand, flags, MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete,
                                            (void *) pending_op, NULL);
 
@@ -192,7 +192,7 @@ static inline int ompi_osc_rdma_btl_cswap (ompi_osc_rdma_module_t *module, uint8
                                            int64_t compare, int64_t value, int flags, int64_t *result)
 {
     ompi_osc_rdma_pending_op_t *pending_op;
-    mca_btl_base_module_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
+    ompi_osc_rdma_btl_wrapper_t *selected_btl = ompi_osc_rdma_selected_btl (module, btl_index);
     int ret;
 
     pending_op = OBJ_NEW(ompi_osc_rdma_pending_op_t);
@@ -209,7 +209,7 @@ static inline int ompi_osc_rdma_btl_cswap (ompi_osc_rdma_module_t *module, uint8
             ret = ompi_osc_rdma_frag_alloc (module, 8, &pending_op->op_frag, (char **) &pending_op->op_buffer);
         }
         if (NULL != pending_op->op_frag) {
-            ret = selected_btl->btl_atomic_cswap (selected_btl, endpoint, pending_op->op_buffer,
+            ret = selected_btl->btl_atomic_cswap (selected_btl->btl_module, endpoint, pending_op->op_buffer,
                                                   address, pending_op->op_frag->handle, address_handle, compare,
                                                   value, flags, 0, ompi_osc_rdma_atomic_complete, (void *) pending_op,
                                                   NULL);
