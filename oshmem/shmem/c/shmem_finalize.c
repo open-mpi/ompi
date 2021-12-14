@@ -17,7 +17,7 @@
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_finalize = pshmem_finalize
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 void shmem_finalize(void)

@@ -7,6 +7,8 @@
  * Copyright (c) 2020      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,18 +16,19 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #include "ompi/runtime/ompi_info_support.h"
 #include "opal/include/opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_init_thread = PMPI_T_init_thread
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#define MPI_T_init_thread PMPI_T_init_thread
 #endif
 
 extern opal_mutex_t ompi_mpit_big_lock;

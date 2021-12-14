@@ -2,6 +2,8 @@
 # Copyright (c) 2013-2016 Mellanox Technologies, Inc.
 #                         All rights reserved
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -9,10 +11,6 @@
 # $HEADER$
 #
 
-
-if OSHMEM_PROFILING
-    SUBDIRS = profile
-endif
 
 OSHMEM_AUX_SOURCES = \
 	shmem_lock.c
@@ -86,21 +84,22 @@ OSHMEM_API_SOURCES = \
 	shmem_test_ivars.c \
 	shmem_info.c
 
-AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
-
 noinst_LTLIBRARIES =
 if PROJECT_OSHMEM
 # Only build if we're building OSHMEM
 noinst_LTLIBRARIES += liboshmem_c.la
 endif
 
-headers =
+headers = profile-defines.h
 
 # In case when OSHMEM_PROFILING enabled
 # We build api from c/profile folder
-liboshmem_c_la_SOURCES = $(OSHMEM_AUX_SOURCES)
-if ! OSHMEM_PROFILING
-liboshmem_c_la_SOURCES += $(OSHMEM_API_SOURCES)
+liboshmem_c_la_SOURCES = $(OSHMEM_AUX_SOURCES) \
+	$(OSHMEM_API_SOURCES)
+if OSHMEM_PROFILING
+liboshmem_c_la_CPPFLAGS = -DOSHMEM_PROFILING=1
+else
+liboshmem_c_la_CPPFLAGS = -DOSHMEM_PROFILING=0
 endif
 
 if PROJECT_OSHMEM

@@ -23,7 +23,7 @@
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_test_lock = pshmem_test_lock
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 int shmem_test_lock(volatile long *lock)

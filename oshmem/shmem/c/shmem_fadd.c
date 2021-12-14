@@ -98,7 +98,7 @@
 #pragma weak shmemx_int64_fadd = pshmemx_int64_fadd
 
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_FETCH_ADD(_int, int, shmem)

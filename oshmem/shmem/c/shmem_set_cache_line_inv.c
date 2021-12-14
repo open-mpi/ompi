@@ -23,7 +23,7 @@
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_set_cache_line_inv = pshmem_set_cache_line_inv
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 void shmem_set_cache_line_inv(void *target)

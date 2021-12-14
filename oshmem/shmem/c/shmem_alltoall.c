@@ -159,7 +159,7 @@ static void _shmem_alltoall(void *target,
 
 #pragma weak shmem_alltoallsmem              		= pshmem_alltoallsmem
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_TYPE_ALLTOALL(_alltoall32, sizeof(uint32_t))

@@ -118,7 +118,7 @@
 #pragma weak shmem_ptrdiff_test_some_vector     = pshmem_ptrdiff_test_some_vector
 
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 #define SHMEM_TYPE_TEST_ALL(type_name, type, code, prefix)          \

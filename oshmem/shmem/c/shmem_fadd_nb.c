@@ -93,7 +93,7 @@
 #pragma weak shmem_size_atomic_fetch_add_nbi       			  = pshmem_size_atomic_fetch_add_nbi
 #pragma weak shmem_ptrdiff_atomic_fetch_add_nbi    			  = pshmem_ptrdiff_atomic_fetch_add_nbi
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_FETCH_ADD_NBI(_int, int, shmem)

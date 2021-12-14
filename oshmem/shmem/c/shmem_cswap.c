@@ -98,7 +98,7 @@
 #pragma weak shmemx_int32_cswap = pshmemx_int32_cswap
 #pragma weak shmemx_int64_cswap = pshmemx_int64_cswap
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_int, int, shmem)
