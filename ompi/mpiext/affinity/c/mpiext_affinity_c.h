@@ -3,6 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2021      The University of Tennessee and the University
+ *                         of Tennessee research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,7 +14,7 @@
  *
  */
 
-#define OMPI_AFFINITY_STRING_MAX BUFSIZ
+#define OMPI_AFFINITY_STRING_MAX 1024
 
 typedef enum ompi_affinity_fmt {
     OMPI_AFFINITY_RSRC_STRING_FMT,
