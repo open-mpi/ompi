@@ -515,8 +515,9 @@ AC_DEFUN([OPAL_FLAGS_APPEND_MOVE], [
                      AS_IF([test "x$val" != "x$arg"],
                            [OPAL_APPEND([opal_tmp_variable], [$val])])
                  done
-                 OPAL_APPEND([opal_tmp_variable], [$arg])])
-                 $1="$opal_tmp_variable"
+                 OPAL_APPEND([opal_tmp_variable], [$arg])
+                 $1="$opal_tmp_variable"],
+                [OPAL_APPEND([$1], [$arg])])
     done
 
     OPAL_VAR_SCOPE_POP

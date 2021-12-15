@@ -103,8 +103,10 @@ AC_DEFUN([OPAL_CONFIG_LIBEVENT], [
            opal_libevent_WRAPPER_LIBS="$pkg_config_pthreads_libs"
            OPAL_FLAGS_APPEND_MOVE([opal_libevent_WRAPPER_LIBS], [$pkg_config_core_libs])],
           [# guess that what we have from compiling OMPI is good enough
-           opal_libevent_WRAPPER_LDFLAGS="$opal_libevent_LDFLAGS"
-           opal_libevent_WRAPPER_LIBS="$opal_libevent_LIBS"])
+           AS_IF([test -z "$opal_libevent_WRAPPER_LDFLAGS"],
+                 [opal_libevent_WRAPPER_LDFLAGS="$opal_libevent_LDFLAGS"])
+           AS_IF([test -z "$opal_libevent_WRAPPER_LIBS"],
+                 [opal_libevent_WRAPPER_LIBS="$opal_libevent_LIBS"])])
 
     OPAL_WRAPPER_FLAGS_ADD([LDFLAGS], [$opal_libevent_WRAPPER_LDFLAGS])
     OPAL_WRAPPER_FLAGS_ADD([LIBS], [$opal_libevent_WRAPPER_LIBS])
@@ -239,6 +241,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
          # our tree and in the mean time are referenced by their .la
          # files.
          opal_libevent_LIBS="$OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_core.la $OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_pthreads.la"
+	 opal_libevent_WRAPPER_LIBS="-levent_core -levent_pthreads"
 
          opal_libevent_header="$OMPI_TOP_BUILDDIR/$internal_libevent_location/event.h"
 
