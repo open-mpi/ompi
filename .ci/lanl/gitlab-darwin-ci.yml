@@ -16,7 +16,7 @@ build:intel:
     - cp $GITSUBMODULEPATCH .gitmodules
     - git submodule update --init
     - ./autogen.pl
-    - ./configure CC=icc FC=ifort CXX=icpc --prefix=$PWD/install_test --with-libevent=internal
+    - ./configure CC=icx FC=ifx CXX=icpx --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
     - make check
     - export PATH=$PWD/install_test/bin:$PATH
