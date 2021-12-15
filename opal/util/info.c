@@ -102,6 +102,7 @@ static void opal_info_get_nolock(opal_info_t *info, const char *key, opal_cstrin
         if (NULL != value) {
             OBJ_RETAIN(search->ie_value);
             *value = search->ie_value;
+            search->ie_referenced++;
         }
     }
 }
@@ -118,6 +119,7 @@ static int opal_info_set_cstring_nolock(opal_info_t *info, const char *key, opal
         OBJ_RELEASE(old_info->ie_value);
         OBJ_RETAIN(value);
         old_info->ie_value = value;
+        old_info->ie_referenced++;
     } else {
         opal_info_entry_t *new_info;
         new_info = OBJ_NEW(opal_info_entry_t);
@@ -128,6 +130,7 @@ static int opal_info_set_cstring_nolock(opal_info_t *info, const char *key, opal
         new_info->ie_key = key_str;
         OBJ_RETAIN(value);
         new_info->ie_value = value;
+        new_info->ie_referenced++;
         opal_list_append(&(info->super), (opal_list_item_t *) new_info);
     }
     return OPAL_SUCCESS;
@@ -143,6 +146,7 @@ static int opal_info_set_nolock(opal_info_t *info, const char *key, const char *
          * key already exists, check whether it is the same
          */
         size_t value_len = strlen(value);
+        old_info->ie_referenced++;
         if (old_info->ie_value->length == value_len
             && 0 == strcmp(old_info->ie_value->string, value)) {
             return OPAL_SUCCESS;
@@ -166,6 +170,7 @@ static int opal_info_set_nolock(opal_info_t *info, const char *key, const char *
             OBJ_RELEASE(new_info);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
+        new_info->ie_referenced++;
         opal_list_append(&(info->super), (opal_list_item_t *) new_info);
     }
     return OPAL_SUCCESS;
@@ -366,6 +371,7 @@ static void info_entry_constructor(opal_info_entry_t *entry)
 {
     entry->ie_key = NULL;
     entry->ie_value = NULL;
+    entry->ie_referenced = 0;
 }
 
 static void info_entry_destructor(opal_info_entry_t *entry)
@@ -403,4 +409,53 @@ static opal_info_entry_t *info_find_key(opal_info_t *info, const char *key)
         }
     }
     return NULL;
+}
+
+/**
+ * Mark the entry \c key as referenced.
+ */
+int opal_info_mark_referenced(opal_info_t *info, const char *key)
+{
+    opal_info_entry_t *entry;
+
+    OPAL_THREAD_LOCK(info->i_lock);
+    entry = info_find_key(info, key);
+    entry->ie_referenced++;
+    OPAL_THREAD_UNLOCK(info->i_lock);
+
+    return OPAL_SUCCESS;
+}
+
+/**
+ * Remove a reference from the entry \c key.
+ */
+int opal_info_unmark_referenced(opal_info_t *info, const char *key)
+{
+    opal_info_entry_t *entry;
+
+    OPAL_THREAD_LOCK(info->i_lock);
+    entry = info_find_key(info, key);
+    entry->ie_referenced--;
+    OPAL_THREAD_UNLOCK(info->i_lock);
+
+    return OPAL_SUCCESS;
+}
+
+/**
+ * Remove any entries that are not marked as referenced
+ */
+int opal_info_remove_unreferenced(opal_info_t *info)
+{
+    opal_info_entry_t *iterator, *next;
+    /* iterate over all entries and remove the ones that are not referenced */
+    OPAL_THREAD_LOCK(info->i_lock);
+    OPAL_LIST_FOREACH_SAFE (iterator, next, &info->super, opal_info_entry_t) {
+        if (!iterator->ie_referenced) {
+            opal_list_remove_item(&info->super, &iterator->super);
+        }
+    }
+    OPAL_THREAD_UNLOCK(info->i_lock);
+
+
+    return OPAL_SUCCESS;
 }
