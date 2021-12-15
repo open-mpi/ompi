@@ -602,7 +602,6 @@ struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_lis
     struct fi_pci_attr pci;
 #endif
     int ret;
-    uint32_t package_rank;
     unsigned int num_provider = 0, provider_limit = 0;
     bool provider_found = false, cpusets_match = false;
 
@@ -660,9 +659,9 @@ struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_lis
     }
 
     /* Select provider from local rank % number of providers */
+    uint32_t package_rank = get_package_rank(process_info);
     if (num_provider >= 2) {
         // If there are multiple NICs "close" to the process, try to calculate package_rank
-        package_rank = get_package_rank(process_info);
         provider = provider_table[package_rank % num_provider];
     } else if (num_provider == 1) {
         provider = provider_table[num_provider - 1];
