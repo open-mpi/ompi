@@ -80,12 +80,10 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
                                            int flavor, int *model);
 static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module);
 static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module);
-static int ompi_osc_rdma_query_mtls (void);
 
 static const char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, const char *value);
 
 static char *ompi_osc_rdma_full_connectivity_btls;
-static char *ompi_osc_rdma_mtl_names;
 static char *ompi_osc_rdma_btl_alternate_names;
 
 static const mca_base_var_enum_value_t ompi_osc_rdma_locking_modes[] = {
@@ -275,14 +273,6 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_alternate_names);
     free(description_str);
 
-    ompi_osc_rdma_mtl_names = "psm2";
-    opal_asprintf(&description_str, "Comma-delimited list of MTL component names to lower the priority of rdma "
-             "osc component (default: %s)", ompi_osc_rdma_mtl_names);
-    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "mtls", description_str,
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                            MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_mtl_names);
-    free(description_str);
-
     if (0 == access ("/dev/shm", W_OK)) {
         mca_osc_rdma_component.backing_directory = "/dev/shm";
     } else {
@@ -412,10 +402,6 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
         }
     }
 #endif /* OPAL_CUDA_SUPPORT */
-
-    if (OMPI_SUCCESS == ompi_osc_rdma_query_mtls ()) {
-        return 5;
-    }
 
     if (OMPI_SUCCESS == ompi_osc_rdma_query_btls (comm, NULL)) {
         return mca_osc_rdma_component.priority;
@@ -863,23 +849,6 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     free (temp);
 
     return ret;
-}
-
-static int ompi_osc_rdma_query_mtls (void)
-{
-    char **mtls_to_use;
-
-    mtls_to_use = opal_argv_split (ompi_osc_rdma_mtl_names, ',');
-    if (mtls_to_use && ompi_mtl_base_selected_component) {
-        for (int i = 0 ; mtls_to_use[i] ; ++i) {
-            if (0 == strcmp (mtls_to_use[i], ompi_mtl_base_selected_component->mtl_version.mca_component_name)) {
-                      opal_argv_free(mtls_to_use);
-                return OMPI_SUCCESS;
-            }
-        }
-    }
-    opal_argv_free(mtls_to_use);
-    return -1;
 }
 
 /**
