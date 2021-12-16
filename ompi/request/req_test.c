@@ -35,7 +35,7 @@ int ompi_request_default_test(ompi_request_t ** rptr,
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
 
- recheck_request_status:
+recheck_request_status:
 #endif
     opal_atomic_mb();
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
@@ -86,9 +86,10 @@ int ompi_request_default_test(ompi_request_t ** rptr,
          * If we run the opal_progress then check the status of the request before
          * leaving. We will call the opal_progress only once per call.
          */
-        opal_progress();
-        do_it_once++;
-        goto recheck_request_status;
+        ++do_it_once;
+        if (0 != opal_progress()) {
+            goto recheck_request_status;
+        }
     }
 #endif
     *completed = false;
@@ -183,15 +184,15 @@ int ompi_request_default_test_all(
     ompi_request_t **rptr;
     size_t num_completed = 0;
     ompi_request_t *request;
+    int do_it_once = 0;
 
     opal_atomic_mb();
-    rptr = requests;
-    for (i = 0; i < count; i++, rptr++) {
-        request = *rptr;
+    for (i = 0; i < count; i++) {
+        request = requests[i];
 
-        if( request->req_state == OMPI_REQUEST_INACTIVE ||
-            REQUEST_COMPLETE(request) ) {
+        if( request->req_state == OMPI_REQUEST_INACTIVE || REQUEST_COMPLETE(request) ) {
             num_completed++;
+            continue;
         }
 #if OPAL_ENABLE_FT_MPI
         /* Check for dead requests due to process failure */
@@ -206,13 +207,22 @@ int ompi_request_default_test_all(
             return MPI_ERR_PROC_FAILED_PENDING;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
+#if OPAL_ENABLE_PROGRESS_THREADS == 0
+        if (0 == do_it_once) {
+            ++do_it_once;
+            if (0 != opal_progress()) {
+                /* continue walking the list, retest the current request */
+                --i;
+                continue;
+            }
+        }
+#endif /* OPAL_ENABLE_PROGRESS_THREADS */
+        /* short-circuit */
+        break;
     }
 
     if (num_completed != count) {
         *completed = false;
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
-        opal_progress();
-#endif
         return OMPI_SUCCESS;
     }
 
@@ -318,6 +328,7 @@ int ompi_request_default_test_some(
         }
         if( REQUEST_COMPLETE(request) ) {
             indices[num_requests_done++] = i;
+            continue;
         }
 #if OPAL_ENABLE_FT_MPI
         /* Check for dead requests due to process failure */
