@@ -45,6 +45,7 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
           [$1], [LDFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_ldflags], [$2])],
           [$1], [LIBS], [OPAL_FLAGS_APPEND_MOVE([wrapper_extra_libs], [$2])],
           [m4_fatal([Unknown wrapper flag type $1])])
+    opal_show_verbose "Adding \"$2\" to \"$1\""
 ])
 
 
