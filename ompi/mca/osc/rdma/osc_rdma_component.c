@@ -881,12 +881,14 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
  * @return OMPI_SUCCESS if BTLs can be found
  * @return OMPI_ERR_UNREACH if no BTLs can be found that match
  *
- * In this case an "alternate" BTL is a BTL that does not provide true RDMA but
- * can use active messages using the BTL base AM RDMA/atomics. Since more than
- * one BTL may be needed for this support the OSC component will disable the
- * use of registration-based RDMA (these BTLs will not be used) and will use
- * any remaining BTL. By default the BTLs used will be tcp and sm but any single
- * (or pair) of BTLs may be used.
+ * In this case an "alternate" BTL is a BTL does not meet the
+ * requirements of a BTL outlined in ompi_osc_rdma_query_btls().
+ * Either it does not provide connectivity to all peers, provide
+ * remote completion, or natively support put/get/atomic.. Since more
+ * than one BTL may be needed for this support the OSC component will
+ * disable the use of registration-based RDMA (these BTLs will not be
+ * used) and will use any remaining BTL. By default the BTLs used will
+ * be tcp and sm but any single (or pair) of BTLs may be used.
  */
 static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
@@ -935,6 +937,26 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
     return btls_found > 0 ? OMPI_SUCCESS : OMPI_ERR_UNREACH;
 }
 
+/*
+ * Attempt to find a BTL that can be used for native RDMA
+ *
+ * Attempt to find an "accelerated" BTL that can be used directly, as
+ * opposed to emulated rdma semantics with the alternate BTLs.  To be
+ * an accelerated BTL, four conditions must be true:
+ *
+ *  1) The BTL must be able to communicate with all peers in the
+ *     Window
+ *  2) The BTL must provide remote completion
+ *  3) The BTL must be able to register the entire target window
+ *  4) The BTL must natively support put/get/atomic operations
+ *
+ * Testing (1) is expensive, so as an optimization, the
+ * ompi_osc_rdma_full_connectivity_btls list contains the list of BTL
+ * components we know can achieve (1) in almost all usage scenarios.
+ *
+ * If module is NULL, the code acts as a query mechanism to find any
+ * potential BTLs, and is used to implement osc_rdma_query().
+ */
 static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
     struct mca_btl_base_module_t **possible_btls = NULL;
@@ -948,14 +970,15 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
     char **btls_to_use;
     void *tmp;
 
-    btls_to_use = opal_argv_split (ompi_osc_rdma_full_connectivity_btls, ',');
-
     if (module) {
         ompi_osc_rdma_selected_btl_insert(module, NULL, 0);
         module->btls_in_use = 0;
         module->use_memory_registration = false;
     }
 
+    /* Check for BTLs in the list of BTLs we know can reach all peers
+       in general usage. */
+    btls_to_use = opal_argv_split (ompi_osc_rdma_full_connectivity_btls, ',');
     if (btls_to_use) {
         /* rdma and atomics are only supported with BTLs at the moment
          * If a btl does not support remote completion, it cannot be used as the primary btl.
@@ -992,7 +1015,14 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
 
     /* if osc/rdma gets selected we need to ensure that all local procs have been added */
     ompi_osc_rdma_ensure_local_add_procs ();
-    
+
+    /*
+     * A BTL in the list of known can reach all peers that met our
+     * other requirements was not found.  Look for BTLs that may be
+     * able to talk to all peers.  This is obviously more expensive
+     * than the check above.
+     */
+
     for (int rank = 0 ; rank < comm_size ; ++rank) {
         ompi_proc_t *proc = ompi_comm_peer_lookup (comm, rank);
         mca_bml_base_endpoint_t *endpoint;
@@ -1036,10 +1066,16 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
         btl_counts = tmp;
 
         for (int i_btl = 0 ; i_btl < num_btls ; ++i_btl) {
-            /* for this implementation we need only compare-and-swap and fetch-and-add
+            /* Check for BTL requirements:
+             *  1) RDMA (put/get) and ATOMIC operations.  We only
+             *     require cswap and fetch and add and will emulate
+             *     other opterations with those two as necessary.
+             *  2) Remote Completion
              *
-             * If a btl does not support remote completion, it cannot be used as the primary btl.
-             * It can still be selected as an alternate btl */
+             * If the BTL meets all those requirements, increment the
+             * btl_counts to indicate that this btl can talk to the
+             * current peer proc.
+             */
             if (((endpoint->btl_rdma.bml_btls[i_btl].btl->btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) ==
                  (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) &&
                 (endpoint->btl_rdma.bml_btls[i_btl].btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_ADD) &&
@@ -1081,7 +1117,9 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
         }
 
         if (possible_btls[i]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) {
-            /* do not need to use the btl for self communication */
+            /* The onesided component can, if BTL atomics are atomic
+               relative to CPU atomics, handle atomics to self, so
+               increment the counter once to cover that case. */
             btl_count++;
         }
 
