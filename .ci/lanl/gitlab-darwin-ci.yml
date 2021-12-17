@@ -11,7 +11,7 @@ build:intel:
   stage: build
   tags: [darwin-slurm-shared]
   script:
-    - module load intel
+    - module load intel/2021.3.0
     - rm .gitmodules
     - cp $GITSUBMODULEPATCH .gitmodules
     - git submodule update --init
@@ -112,7 +112,7 @@ test:intel:
   script:
     - pwd
     - ls
-    - module load intel
+    - module load intel/2021.3.0
     - export PATH=$PWD/install_test/bin:$PATH
     - which mpirun
     - cd examples
