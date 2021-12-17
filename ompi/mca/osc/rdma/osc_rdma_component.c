@@ -238,14 +238,6 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.priority);
     free(description_str);
 
-    mca_osc_rdma_component.alternate_priority = 37;
-    opal_asprintf(&description_str, "Priority of the osc/rdma component when using non-RDMA btls (default: %d)",
-             mca_osc_rdma_component.alternate_priority);
-    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "alternate_priority", description_str,
-                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.alternate_priority);
-    free(description_str);
-
     (void) mca_base_var_enum_create ("osc_rdma_locking_mode", ompi_osc_rdma_locking_modes, &new_enum);
 
     mca_osc_rdma_component.locking_mode = OMPI_OSC_RDMA_LOCKING_TWO_LEVEL;
@@ -408,10 +400,10 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
     }
 
     if (OMPI_SUCCESS == ompi_osc_rdma_query_alternate_btls (comm, NULL)) {
-        return mca_osc_rdma_component.alternate_priority;
+        return mca_osc_rdma_component.priority;
     }
 
-    return mca_osc_rdma_component.priority;
+    return OMPI_ERROR;
 }
 
 static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void **base, size_t size) {
