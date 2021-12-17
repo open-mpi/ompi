@@ -78,7 +78,7 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
 static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                                            struct ompi_communicator_t *comm, struct opal_info_t *info,
                                            int flavor, int *model);
-static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module);
+static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module);
 static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module);
 
 static const char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, const char *value);
@@ -395,7 +395,7 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
     }
 #endif /* OPAL_CUDA_SUPPORT */
 
-    if (OMPI_SUCCESS == ompi_osc_rdma_query_btls (comm, NULL)) {
+    if (OMPI_SUCCESS == ompi_osc_rdma_query_accelerated_btls (comm, NULL)) {
         return mca_osc_rdma_component.priority;
     }
 
@@ -882,7 +882,7 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
  * @return OMPI_ERR_UNREACH if no BTLs can be found that match
  *
  * In this case an "alternate" BTL is a BTL does not meet the
- * requirements of a BTL outlined in ompi_osc_rdma_query_btls().
+ * requirements of a BTL outlined in ompi_osc_rdma_query_accelerated_btls().
  * Either it does not provide connectivity to all peers, provide
  * remote completion, or natively support put/get/atomic.. Since more
  * than one BTL may be needed for this support the OSC component will
@@ -937,6 +937,20 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
     return btls_found > 0 ? OMPI_SUCCESS : OMPI_ERR_UNREACH;
 }
 
+/* Check for BTL requirements:
+ *  1) RDMA (put/get) and ATOMIC operations.  We only require cswap
+ *     and fetch and add and will emulate other opterations with those
+ *     two as necessary.
+ *  2) Remote Completion
+ */
+static bool ompi_osc_rdma_check_accelerated_btl(struct mca_btl_base_module_t *btl)
+{
+    return ((btl->btl_flags & MCA_BTL_FLAGS_RDMA) &&
+            (btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_FOPS) &&
+            (btl->btl_flags & MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION) &&
+            (btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_ADD));
+}
+
 /*
  * Attempt to find a BTL that can be used for native RDMA
  *
@@ -957,18 +971,12 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
  * If module is NULL, the code acts as a query mechanism to find any
  * potential BTLs, and is used to implement osc_rdma_query().
  */
-static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
+static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
-    struct mca_btl_base_module_t **possible_btls = NULL;
     int comm_size = ompi_comm_size (comm);
-    int comm_rank = ompi_comm_rank (comm);
-    int rc = OMPI_SUCCESS, max_btls = 0;
-    unsigned int selected_latency = INT_MAX;
-    struct mca_btl_base_module_t *selected_btl = NULL;
-    mca_btl_base_selected_module_t *item;
-    int *btl_counts = NULL;
+    struct mca_btl_base_module_t *selected_btl;
+    mca_bml_base_endpoint_t *base_endpoint;
     char **btls_to_use;
-    void *tmp;
 
     if (module) {
         ompi_osc_rdma_selected_btl_insert(module, NULL, 0);
@@ -980,18 +988,19 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
        in general usage. */
     btls_to_use = opal_argv_split (ompi_osc_rdma_full_connectivity_btls, ',');
     if (btls_to_use) {
-        /* rdma and atomics are only supported with BTLs at the moment
-         * If a btl does not support remote completion, it cannot be used as the primary btl.
-         * It can still be selected as an alternate btl */
+        mca_btl_base_selected_module_t *item;
+
+        selected_btl = NULL;
+
+        /* rdma and atomics are only supported with BTLs at the moment */
         OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
             for (int i = 0 ; btls_to_use[i] ; ++i) {
                 if (0 != strcmp (btls_to_use[i], item->btl_module->btl_component->btl_version.mca_component_name)) {
                     continue;
                 }
 
-                if ((item->btl_module->btl_flags & (MCA_BTL_FLAGS_RDMA)) == MCA_BTL_FLAGS_RDMA &&
-                    (item->btl_module->btl_flags & (MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION))) {
-                    if (!selected_btl || item->btl_module->btl_latency < selected_btl->btl_latency) {
+                if (ompi_osc_rdma_check_accelerated_btl(item->btl_module)) {
+                    if (NULL == selected_btl || item->btl_module->btl_latency < selected_btl->btl_latency) {
                         selected_btl = item->btl_module;
                     }
                 }
@@ -999,18 +1008,10 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
         }
 
         opal_argv_free (btls_to_use);
-    }
 
-    if (NULL != selected_btl) {
-        if (module) {
-            ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0);
-            module->btls_in_use = 1;
-            module->use_memory_registration = selected_btl->btl_register_mem != NULL;
+        if (NULL != selected_btl) {
+            goto btl_selection_complete;
         }
-
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "selected btl: %s",
-                         selected_btl->btl_component->btl_version.mca_component_name);
-        return OMPI_SUCCESS;
     }
 
     /* if osc/rdma gets selected we need to ensure that all local procs have been added */
@@ -1021,123 +1022,78 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
      * other requirements was not found.  Look for BTLs that may be
      * able to talk to all peers.  This is obviously more expensive
      * than the check above.
+     *
+     * This algorithm skips a potential use case: it requires
+     * reachability to self, which is not strictly needed if BTL and
+     * CPU atomics are atomic with each other.  However, the set of
+     * BTLs which can not send to self, which have RDMA semantics, an
+     * which have the rquired atomicity is currently the null set and
+     * almost certain to remain the null set, so we keep it simple.
+     *
+     * We only want BTLs that can reach all peers, so use rank 0's BTL
+     * list as the list of all available BTLs.  Any BTL that cannot
+     * be used to communicate with rank 0 necessarily is not in the
+     * list of all available BTLs for this algorithm.
      */
+    base_endpoint = mca_bml_base_get_endpoint(ompi_comm_peer_lookup(comm, 0));
+    if (NULL == base_endpoint) {
+        return OMPI_ERR_UNREACH;
+    }
 
-    for (int rank = 0 ; rank < comm_size ; ++rank) {
-        ompi_proc_t *proc = ompi_comm_peer_lookup (comm, rank);
-        mca_bml_base_endpoint_t *endpoint;
-        int num_btls, prev_max;
-        bool found_btl = false;
+    selected_btl = NULL;
+    for (size_t i_btl = 0 ;
+         i_btl < mca_bml_base_btl_array_get_size(&base_endpoint->btl_rdma);
+         ++i_btl) {
+        bool have_connectivity = true;
+        struct mca_bml_base_btl_t *examine_bml_btl;
+        struct mca_btl_base_module_t *examine_btl;
 
-        endpoint = mca_bml_base_get_endpoint (proc);
-        if (NULL == endpoint) {
-            /* can't continue if some peer is unreachable */
-            rc = OMPI_ERR_UNREACH;
-            break;
+        examine_bml_btl = mca_bml_base_btl_array_get_index(&base_endpoint->btl_rdma, i_btl);
+        if (NULL == examine_bml_btl) {
+            return OMPI_ERR_NOT_FOUND;
+        }
+        examine_btl = examine_bml_btl->btl;
+
+        /* skip any BTL which doesn't meet our requirements */
+        if (!ompi_osc_rdma_check_accelerated_btl(examine_btl)) {
+            continue;
         }
 
-        num_btls = mca_bml_base_btl_array_get_size (&endpoint->btl_rdma);
-        if (0 == num_btls) {
-            rc = OMPI_ERR_NOT_AVAILABLE;
-            /* at least one rank doesn't have an RDMA capable btl */
-            break;
-        }
+        /* check connectivity across all ranks */
+        for (int rank = 0 ; rank < comm_size ; ++rank) {
+            ompi_proc_t *proc = ompi_comm_peer_lookup(comm, rank);
+            mca_bml_base_endpoint_t *endpoint;
 
-        prev_max = max_btls;
+            endpoint = mca_bml_base_get_endpoint(proc);
+            if (NULL == endpoint) {
+                have_connectivity = false;
+                break;
+            }
 
-        max_btls = (max_btls > num_btls) ? max_btls : num_btls;
-
-        tmp = realloc (possible_btls, sizeof (void *) * max_btls);
-        if (NULL == tmp) {
-            rc = OMPI_ERR_OUT_OF_RESOURCE;
-            break;
-        }
-        possible_btls = tmp;
-
-        for (int j = prev_max ; j < max_btls ; ++j) {
-            possible_btls[j] = NULL;
-        }
-
-        tmp = realloc (btl_counts, sizeof (int) * max_btls);
-        if (NULL == tmp) {
-            rc = OMPI_ERR_OUT_OF_RESOURCE;
-            break;
-        }
-        btl_counts = tmp;
-
-        for (int i_btl = 0 ; i_btl < num_btls ; ++i_btl) {
-            /* Check for BTL requirements:
-             *  1) RDMA (put/get) and ATOMIC operations.  We only
-             *     require cswap and fetch and add and will emulate
-             *     other opterations with those two as necessary.
-             *  2) Remote Completion
-             *
-             * If the BTL meets all those requirements, increment the
-             * btl_counts to indicate that this btl can talk to the
-             * current peer proc.
-             */
-            if (((endpoint->btl_rdma.bml_btls[i_btl].btl->btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) ==
-                 (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) &&
-                (endpoint->btl_rdma.bml_btls[i_btl].btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_ADD) &&
-                (endpoint->btl_rdma.bml_btls[i_btl].btl->btl_flags & MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION)) {
-                for (int j = 0 ; j < max_btls ; ++j) {
-                    if (endpoint->btl_rdma.bml_btls[i_btl].btl == possible_btls[j]) {
-                        ++btl_counts[j];
-                        found_btl = true;
-                        break;
-                    } else if (NULL == possible_btls[j]) {
-                        possible_btls[j] = endpoint->btl_rdma.bml_btls[i_btl].btl;
-                        btl_counts[j] = 1;
-                        found_btl = true;
-                        break;
-                    }
-                }
+            if (NULL == mca_bml_base_btl_array_find(&endpoint->btl_rdma,
+                                                    examine_btl)) {
+                have_connectivity = false;
+                break;
             }
         }
 
-        /* any non-local rank must have a usable btl */
-        if (!found_btl && comm_rank != rank) {
-            /* no btl = no rdma/atomics */
-            rc = OMPI_ERR_UNREACH;
-            break;
+        /* if we have connectivity, displace currently selected btl if
+         * this one has lower latency; we prioritize latency over all
+         * other parameters
+         */
+        if (have_connectivity) {
+            if (NULL == selected_btl || examine_btl->btl_latency < selected_btl->btl_latency) {
+                selected_btl = examine_btl;
+            }
         }
     }
-
-    if (OMPI_SUCCESS != rc) {
-        free (possible_btls);
-        free (btl_counts);
-        return rc;
-    }
-
-    for (int i = 0 ; i < max_btls ; ++i) {
-        int btl_count = btl_counts[i];
-
-        if (NULL == possible_btls[i]) {
-            break;
-        }
-
-        if (possible_btls[i]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) {
-            /* The onesided component can, if BTL atomics are atomic
-               relative to CPU atomics, handle atomics to self, so
-               increment the counter once to cover that case. */
-            btl_count++;
-        }
-
-        if (btl_count >= comm_size && possible_btls[i]->btl_latency < selected_latency) {
-            selected_btl = possible_btls[i];
-            selected_latency = possible_btls[i]->btl_latency;
-        }
-    }
-
-    free (possible_btls);
-    free (btl_counts);
 
     if (NULL == selected_btl) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no suitable btls found");
-        /* no btl = no rdma/atomics */
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
+btl_selection_complete:
     if (module) {
         ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0);
         module->btls_in_use = 1;
@@ -1414,7 +1370,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     }
 
     /* find rdma capable endpoints */
-    ret = ompi_osc_rdma_query_btls (module->comm, module);
+    ret = ompi_osc_rdma_query_accelerated_btls (module->comm, module);
     if (OMPI_SUCCESS != ret) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_WARN, "could not find a suitable btl. falling back on "
                          "active-message BTLs");
