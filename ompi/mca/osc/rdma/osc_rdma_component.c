@@ -18,7 +18,8 @@
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
@@ -83,7 +84,7 @@ static int ompi_osc_rdma_query_mtls (void);
 
 static const char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, const char *value);
 
-static char *ompi_osc_rdma_btl_names;
+static char *ompi_osc_rdma_full_connectivity_btls;
 static char *ompi_osc_rdma_mtl_names;
 static char *ompi_osc_rdma_btl_alternate_names;
 
@@ -256,14 +257,14 @@ static int ompi_osc_rdma_component_register (void)
                                             MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.locking_mode);
     OBJ_RELEASE(new_enum);
 
-    ompi_osc_rdma_btl_names = "ugni,uct";
+    ompi_osc_rdma_full_connectivity_btls = "ugni,uct,ofi";
     opal_asprintf(&description_str, "Comma-delimited list of BTL component names to allow without verifying "
              "connectivity. Do not add a BTL to to this list unless it can reach all "
              "processes in any communicator used with an MPI window (default: %s)",
-             ompi_osc_rdma_btl_names);
+             ompi_osc_rdma_full_connectivity_btls);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "btls", description_str,
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                            MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_names);
+                                            MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_full_connectivity_btls);
     free(description_str);
 
     ompi_osc_rdma_btl_alternate_names = "sm,tcp";
@@ -986,7 +987,7 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, ompi_osc_rdma_mo
     char **btls_to_use;
     void *tmp;
 
-    btls_to_use = opal_argv_split (ompi_osc_rdma_btl_names, ',');
+    btls_to_use = opal_argv_split (ompi_osc_rdma_full_connectivity_btls, ',');
 
     if (module) {
         ompi_osc_rdma_selected_btl_insert(module, NULL, 0);
