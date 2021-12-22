@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2013  University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -94,6 +94,29 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(o
             return NULL;
         }
     }
+
+
+    /* Check that we can actually open the required file */
+    char *filename_basename = basename((char*)fh->f_filename);
+    char *sm_filename;
+    int comm_cid = -1;
+    int pid = ompi_comm_rank (comm);
+    
+    asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
+             filename_basename, comm_cid, pid);
+
+    int sm_fd = open(sm_filename, O_RDWR | O_CREAT,
+                     S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if ( sm_fd == -1){
+        /*error opening file*/
+        opal_output(0,"mca_sharedfp_sm_component_file_query: Error, unable to open file for mmap: %s\n",sm_filename);
+        free(sm_filename);
+        return NULL;
+    }
+    close (sm_fd);
+    unlink(sm_filename);
+    free (sm_filename);
+    
     /* This module can run */
     *priority = mca_sharedfp_sm_priority;
     return &sm;
