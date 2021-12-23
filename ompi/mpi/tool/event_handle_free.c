@@ -25,6 +25,7 @@
 
 
 int MPI_T_event_handle_free (MPI_T_event_registration event_registration,
+                             void *user_data,
                              MPI_T_event_free_cb_function free_cb_function)
 {
     int ret = MPI_SUCCESS;
