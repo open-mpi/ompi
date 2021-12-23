@@ -30,7 +30,7 @@
 int MPI_T_event_get_info (int event_index, char *name, int *name_len,
                           int *verbosity, MPI_Datatype *array_of_datatypes,
                           MPI_Aint *array_of_displacements, int *num_elements,
-                          MPI_Aint *extent, MPI_T_enum *enumtype, MPI_Info *info,
+                          MPI_T_enum *enumtype, MPI_Info *info,
                           char *desc, int *desc_len, int *bind)
 {
     mca_base_event_t * const event;
@@ -123,10 +123,6 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
 
         if (NULL != bind) {
             *bind = event->event_bind;
-        }
-
-        if (NULL != extent) {
-            *extent = event->event_extent;
         }
 
         if (NULL != info) {
