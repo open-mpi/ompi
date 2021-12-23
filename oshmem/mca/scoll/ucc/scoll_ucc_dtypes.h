@@ -22,10 +22,10 @@ static ucc_datatype_t shmem_datatype_to_ucc_dt[OSHMEM_OP_TYPE_NUMBER + 1] = {
     UCC_DT_INT16,                 /* OSHMEM_OP_TYPE_SHORT             0 */
     UCC_DT_INT32,                 /* OSHMEM_OP_TYPE_INT               1 */
     UCC_DT_INT64,                 /* OSHMEM_OP_TYPE_LONG              2 */
-    UCC_DT_INT128,                /* OSHMEM_OP_TYPE_LLONG             3 */
+    UCC_DT_INT64,                 /* OSHMEM_OP_TYPE_LLONG             3 */
     UCC_DT_INT16,                 /* OSHMEM_OP_TYPE_INT16_T           4 */
     UCC_DT_INT32,                 /* OSHMEM_OP_TYPE_INT32_T           5 */
-    UCC_DT_INT64,                 /* OSHMEM_OP_TYPE_INT64_t           6 */
+    UCC_DT_INT64,                 /* OSHMEM_OP_TYPE_INT64_T           6 */
     UCC_DT_FLOAT32,               /* OSHMEM_OP_TYPE_FLOAT             7 */
     UCC_DT_FLOAT64,               /* OSHMEM_OP_TYPE_DOUBLE            8 */
     SCOLL_UCC_DT_UNSUPPORTED,     /* OSHMEM_OP_TYPE_LDOUBLE           9 */
