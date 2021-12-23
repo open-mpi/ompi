@@ -96,10 +96,6 @@ typedef struct mca_base_event_t {
     /** Size of the event_datatypes array */
     size_t event_datatype_count;
 
-    /** size of the event data */
-    size_t event_extent;
-
-
     /** Enumerator for integer values */
     mca_base_var_enum_t *event_enumerator;
 
@@ -135,7 +131,6 @@ typedef struct mca_base_event_list_item_t {
     unsigned long *offsets;
     size_t num_datatypes;
     char **elements;
-    int extent;
     int bind;
     int source;
     uint32_t flags;
@@ -177,12 +172,12 @@ OPAL_DECLSPEC int mca_base_event_dump(int index, char ***out, mca_base_var_dump_
 
 OPAL_DECLSPEC int mca_base_event_register (const char *project, const char *framework, const char *component, const char *name,
                                            const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
-                                           unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int extent, int bind,
+                                           unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int bind,
                                            int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out);
 
 OPAL_DECLSPEC int mca_base_component_event_register (const mca_base_component_t *component, const char *name,
                                                      const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
-                                                     unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int extent, int bind,
+                                                     unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int bind,
                                                      int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out);
 
 OPAL_DECLSPEC int mca_base_component_event_register_list (const mca_base_component_t *component, mca_base_event_list_item_t *list, int count);
