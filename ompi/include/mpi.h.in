@@ -2994,7 +2994,7 @@ OMPI_DECLSPEC  int PMPI_T_event_get_num (int *num_events);
 OMPI_DECLSPEC  int PMPI_T_event_get_info (int event_index, char *name, int *name_len,
                                           int *verbosity, MPI_Datatype *array_of_datatypes,
                                           MPI_Aint *array_of_displacements, int *num_elements,
-                                          MPI_Aint *extent, MPI_T_enum *enumtype, MPI_Info *info,
+                                          MPI_T_enum *enumtype, MPI_Info *info,
                                           char *desc, int *desc_len, int *bind);
 OMPI_DECLSPEC  int PMPI_T_event_get_index (const char *name, int *event_index);
 OMPI_DECLSPEC  int PMPI_T_event_handle_alloc (int event_index, void *obj_handle,
@@ -3107,7 +3107,7 @@ OMPI_DECLSPEC  int MPI_T_event_get_num (int *num_events);
 OMPI_DECLSPEC  int MPI_T_event_get_info (int event_index, char *name, int *name_len,
                                          int *verbosity, MPI_Datatype *array_of_datatypes,
                                          MPI_Aint *array_of_displacements, int *num_elements,
-                                         MPI_Aint *extent, MPI_T_enum *enumtype, MPI_Info *info,
+                                         MPI_T_enum *enumtype, MPI_Info *info,
                                          char *desc, int *desc_len, int *bind);
 OMPI_DECLSPEC  int MPI_T_event_get_index (const char *name, int *event_index);
 OMPI_DECLSPEC  int MPI_T_event_handle_alloc (int event_index, void *obj_handle,

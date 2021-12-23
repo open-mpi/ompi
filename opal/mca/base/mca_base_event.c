@@ -180,7 +180,7 @@ int mca_base_event_get_count (int *count)
 
 int mca_base_event_register (const char *project, const char *framework, const char *component, const char *name,
                              const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
-                             unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int extent, int bind,
+                             unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int bind,
                              int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out)
 {
     int ret, group_index;
@@ -257,7 +257,6 @@ int mca_base_event_register (const char *project, const char *framework, const c
 
     event->event_verbosity = verbosity;
     event->event_source = mca_base_source_get (source);
-    event->event_extent = extent;
 
     if (event->event_enumerator) {
         OBJ_RELEASE(event->event_enumerator);
@@ -292,12 +291,12 @@ int mca_base_event_register (const char *project, const char *framework, const c
 
 int mca_base_component_event_register (const mca_base_component_t *component, const char *name,
                                        const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
-                                       unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int extent, int bind,
+                                       unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int bind,
                                        int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out)
 {
     /* invalidate this variable if the component's group is deregistered */
     return mca_base_event_register (component->mca_project_name, component->mca_type_name, component->mca_component_name,
-                                    name, description, verbosity, datatypes, offsets, num_datatypes, enumerator, extent, bind,
+                                    name, description, verbosity, datatypes, offsets, num_datatypes, enumerator, bind,
                                     source, flags | MCA_BASE_EVENT_FLAG_IWG, notify, ctx, event_out);
 }
 
@@ -321,7 +320,7 @@ int mca_base_component_event_register_list (const mca_base_component_t *componen
 
         ret =  mca_base_event_register (component->mca_project_name, component->mca_type_name, component->mca_component_name,
                                         item->name, item->desc, item->verbosity, item->datatypes, item->offsets, item->num_datatypes,
-                                        new_enum, item->extent, item->bind, item->source, item->flags | MCA_BASE_EVENT_FLAG_IWG,
+                                        new_enum, item->bind, item->source, item->flags | MCA_BASE_EVENT_FLAG_IWG,
                                         item->notify, item->ctx, &item->event);
 
         if (new_enum) {
@@ -460,7 +459,6 @@ int mca_base_event_dump(int index, char ***out, mca_base_var_dump_type_t output_
         /* build the message*/
         (void)asprintf(&tmp, "mca:%s:%s:event:%s:", framework, component, full_name);
 
-        (void)asprintf(out[0] + line++, "%sextent:%lu", tmp, (unsigned long) event->event_extent);
         (void)asprintf(out[0] + line++, "%snum_datatypes:%lu", tmp, (unsigned long) event->event_datatype_count);
         for (size_t i = 0 ; i < event->event_datatype_count ; ++i) {
             (void)asprintf(out[0] + line++, "%sdatatypes:%lu:%s", tmp, (unsigned long) i, event->event_datatypes[i]->name);
@@ -494,8 +492,8 @@ int mca_base_event_dump(int index, char ***out, mca_base_var_dump_type_t output_
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        (void)asprintf (out[0] + line++, "event \"%s\" (extent: %lu, datatype count: %ld)", full_name,
-                        (unsigned long) event->event_extent, (long) event->event_datatype_count);
+        (void)asprintf (out[0] + line++, "event \"%s\" (datatype count: %ld)", full_name,
+                        (long) event->event_datatype_count);
 
         if (event->event_description) {
             (void)asprintf(out[0] + line++, "%s", event->event_description);
