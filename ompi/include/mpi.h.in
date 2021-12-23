@@ -3809,6 +3809,7 @@ OMPI_DECLSPEC  int PMPI_T_event_callback_set_info (MPI_T_event_registration even
 OMPI_DECLSPEC  int PMPI_T_event_callback_get_info (MPI_T_event_registration event_registration,
                                                    MPI_T_cb_safety cb_safety, MPI_Info *info_used);
 OMPI_DECLSPEC  int PMPI_T_event_handle_free (MPI_T_event_registration event_registration,
+                                             void *user_data,
                                              MPI_T_event_free_cb_function free_cb_function);
 OMPI_DECLSPEC  int PMPI_T_event_set_dropped_handler (MPI_T_event_registration handle,
                                                      MPI_T_event_dropped_cb_function dropped_cb_function);
@@ -3917,6 +3918,7 @@ OMPI_DECLSPEC  int MPI_T_event_handle_set_info (MPI_T_event_registration event_r
 OMPI_DECLSPEC  int MPI_T_event_handle_get_info (MPI_T_event_registration event_registration,
                                                 MPI_Info *info_used);
 OMPI_DECLSPEC  int MPI_T_event_handle_free (MPI_T_event_registration event_registration,
+                                             void *user_data,
                                             MPI_T_event_free_cb_function free_cb_function);
 OMPI_DECLSPEC  int MPI_T_event_register_callback (MPI_T_event_registration event_registration,
                                                   MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,
