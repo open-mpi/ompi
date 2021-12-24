@@ -946,8 +946,9 @@ typedef enum ompi_mpi_t_source_order_t MPI_T_source_order;
 typedef void (*MPI_T_event_free_cb_function) (MPI_T_event_registration handle,
                                               MPI_T_cb_safety cb_safety,
                                               void *user_data);
-typedef void (*MPI_T_event_dropped_cb_function) (int count,
+typedef void (*MPI_T_event_dropped_cb_function) (MPI_Count count,
                                                  MPI_T_event_registration handle,
+                                                 int source_index,
                                                  MPI_T_cb_safety cb_safety,
                                                  void *user_data);
 typedef void (*MPI_T_event_cb_function) (MPI_T_event_instance event,
