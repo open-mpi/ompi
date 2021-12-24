@@ -106,7 +106,8 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
 
             if (array_of_displacements) {
                 for (int i = 0 ; i < max_datatypes ; i++) {
-                    array_of_displacements[i] = (MPI_Aint) event->event_offsets[i];
+                    array_of_displacements[i] = (MPI_Aint) current_displacement;
+                    current_displacement += event->event_datatypes[i]->size;
                 }
             }
 

@@ -612,8 +612,14 @@ int mca_base_event_read (mca_base_raised_event_t *revent, unsigned int element_i
 void mca_base_event_copy (mca_base_raised_event_t *revent, void *buffer)
 {
     mca_base_event_t *event = revent->re_event;
+    void *buffer_ptr = buffer;
 
-    memcpy (buffer, revent->re_data, event->event_extent);
+    for (size_t i = 0 ; i < event->event_datatype_count ; ++i) {
+        if (buffer) {
+            memcpy (buffer_ptr, revent->re_data + event->event_offsets[i], event->event_datatypes[i]->size);
+            buffer_ptr += event->event_datatypes[i]->size;
+        }
+    }
 }
 
 int mca_base_event_read_some (mca_base_raised_event_t *revent, void *array_of_buffers[])
