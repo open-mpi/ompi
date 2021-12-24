@@ -34,7 +34,7 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
                           char *desc, int *desc_len, int *bind)
 {
     mca_base_event_t * const event;
-    int ret, max_datatypes = 0;
+    int ret, max_datatypes = 0, current_displacement = 0;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
@@ -114,7 +114,7 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
             *num_elements = max_datatypes;
         }
 
-        if (verbosity) {
+        if (NULL != verbosity) {
             *verbosity = event->event_verbosity;
         }
 
