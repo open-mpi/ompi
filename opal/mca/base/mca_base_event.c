@@ -148,7 +148,7 @@ int mca_base_registration_get_event (mca_base_event_registration_t *registration
 
 static int mca_base_event_get_by_index_internal (int index, mca_base_event_t **event, bool invalidok)
 {
-    if (index >= event_count) {
+    if (0 > index || index >= event_count) {
         return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
     }
 
