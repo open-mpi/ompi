@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,8 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/sharedfp/sm/sharedfp_sm.h"
+
+#include "opal/util/basename.h"
 
 /*
  * *******************************************************************
@@ -97,7 +100,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(o
 
 
     /* Check that we can actually open the required file */
-    char *filename_basename = basename((char*)fh->f_filename);
+    char *filename_basename = opal_basename((char*)fh->f_filename);
     char *sm_filename;
     int comm_cid = -1;
     int pid = ompi_comm_rank (comm);

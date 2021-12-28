@@ -13,7 +13,7 @@
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2021 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
@@ -40,6 +40,8 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
+
+#include "opal/util/basename.h"
 
 #include <semaphore.h>
 #include <sys/mman.h>
@@ -101,7 +103,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     ** and then mapping it to memory
     ** For sharedfp we also want to put the file backed shared memory into the tmp directory
     */
-    filename_basename = basename((char*)filename);
+    filename_basename = opal_basename((char*)filename);
     /* format is "%s/%s_cid-%d-%d.sm", see below */
     sm_filename_length = strlen(ompi_process_info.job_session_dir) + 1 + strlen(filename_basename) + 5 + (3*sizeof(uint32_t)+1) + 4;
     sm_filename = (char*) malloc( sizeof(char) * sm_filename_length);
