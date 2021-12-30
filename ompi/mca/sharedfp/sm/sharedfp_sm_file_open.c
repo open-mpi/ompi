@@ -109,6 +109,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     sm_filename = (char*) malloc( sizeof(char) * sm_filename_length);
     if (NULL == sm_filename) {
         opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc sm_filename\n");
+        free(filename_basename);
         free(sm_data);
         free(sh);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -122,6 +123,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     err = comm->c_coll->coll_bcast (&int_pid, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module );
     if ( OMPI_SUCCESS != err ) {
         opal_output(0,"mca_sharedfp_sm_file_open: Error in bcast operation \n");
+        free(filename_basename);
         free(sm_filename);
         free(sm_data);
         free(sh);
@@ -136,6 +138,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     if ( sm_fd == -1){
         /*error opening file*/
         opal_output(0,"mca_sharedfp_sm_file_open: Error, unable to open file for mmap: %s\n",sm_filename);
+        free(filename_basename);
         free(sm_filename);
         free(sm_data);
         free(sh);
@@ -152,6 +155,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     err = comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
     if ( OMPI_SUCCESS != err ) {
         opal_output(0,"mca_sharedfp_sm_file_open: Error in barrier operation \n");
+        free(filename_basename);
         free(sm_filename);
         free(sm_data);
         free(sh);
@@ -169,6 +173,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         err = OMPI_ERROR;
         opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to mmap file: %s\n",sm_filename);
         opal_output(0, "%s\n", strerror(errno));
+        free(filename_basename);
         free(sm_filename);
         free(sm_data);
         free(sh);
@@ -187,6 +192,10 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     sm_data->sem_name = (char*) malloc( sizeof(char) * 253);
     snprintf(sm_data->sem_name,252,"OMPIO_%s",filename_basename);
 #endif
+    // We're now done with filename_basename.  Free it here so that we
+    // don't have to keep freeing it in the error/return cases.
+    free(filename_basename);
+    filename_basename = NULL;
 
     if( (sm_data->mutex = sem_open(sm_data->sem_name, O_CREAT, 0644, 1)) != SEM_FAILED ) {
 #elif defined(HAVE_SEM_INIT)
