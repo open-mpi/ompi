@@ -328,6 +328,22 @@ Compiler Notes
   version of the Intel 12.1 Linux compiler suite, the problem will go
   away.
 
+- Users have reported (see
+  https://github.com/open-mpi/ompi/issues/7615) that the Intel Fortran
+  compiler will fail to link Fortran-based MPI applications on macOS
+  with linker errors similar to this:
+
+      Undefined symbols for architecture x86_64:
+        "_ompi_buffer_detach_f08", referenced from:
+            import-atom in libmpi_usempif08.dylib
+      ld: symbol(s) not found for architecture x86_64
+
+  It appears that setting the environment variable
+  lt_cx_ld_force_load=no before invoking Open MPI's configure script
+  works around the issue.  For example:
+
+      shell$ lt_cv_ld_force_load=no ./configure ...
+
 - Early versions of the Portland Group 6.0 compiler have problems
   creating the C++ MPI bindings as a shared library (e.g., v6.0-1).
   Tests with later versions show that this has been fixed (e.g.,
