@@ -1068,22 +1068,22 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         fi
     fi
 
-        OPAL_CHECK_ASM_PROC
-        OPAL_CHECK_ASM_TEXT
-        OPAL_CHECK_ASM_GLOBAL
-        OPAL_CHECK_ASM_GNU_STACKEXEC
-        OPAL_CHECK_ASM_LABEL_SUFFIX
-        OPAL_CHECK_ASM_GSYM
-        OPAL_CHECK_ASM_LSYM
-        OPAL_CHECK_ASM_TYPE
-        OPAL_CHECK_ASM_SIZE
-        OPAL_CHECK_ASM_ALIGN_LOG
+    OPAL_CHECK_ASM_PROC
+    OPAL_CHECK_ASM_TEXT
+    OPAL_CHECK_ASM_GLOBAL
+    OPAL_CHECK_ASM_GNU_STACKEXEC
+    OPAL_CHECK_ASM_LABEL_SUFFIX
+    OPAL_CHECK_ASM_GSYM
+    OPAL_CHECK_ASM_LSYM
+    OPAL_CHECK_ASM_TYPE
+    OPAL_CHECK_ASM_SIZE
+    OPAL_CHECK_ASM_ALIGN_LOG
 
-        # find our architecture for purposes of assembly stuff
-        opal_cv_asm_arch="UNSUPPORTED"
-        OPAL_GCC_INLINE_ASSIGN=""
+    # find our architecture for purposes of assembly stuff
+    opal_cv_asm_arch="UNSUPPORTED"
+    OPAL_GCC_INLINE_ASSIGN=""
 
-        case "${host}" in
+    case "${host}" in
         x86_64-*x32|i?86-*|x86_64*|amd64*)
             if test "$ac_cv_sizeof_long" = "4" ; then
                 if test $opal_cv_asm_builtin = BUILTIN_NO ; then
@@ -1144,12 +1144,12 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
                 AC_MSG_ERROR([No atomic primitives available for $host])
             fi
             ;;
-        esac
+    esac
 
-        if test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
+    if test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
          AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
                    [Whether C compiler supports GCC style inline assembly])
-        else
+    else
          opal_cv_asm_inline_supported="no"
          # now that we know our architecture, try to inline assemble
          OPAL_CHECK_INLINE_C_GCC([$OPAL_GCC_INLINE_ASSIGN])
