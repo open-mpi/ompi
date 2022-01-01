@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -694,7 +694,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/fcntl.h sys/ipc.h sys/shm.h \
     sys/ioctl.h sys/mman.h sys/param.h sys/queue.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
-    sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/tree.h \
+    sys/stat.h sys/statfs.h sys/statvfs.h time.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h sys/un.h net/uio.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h \
     termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
     ifaddrs.h crt_externs.h regex.h mntent.h paths.h \
@@ -882,6 +882,15 @@ AC_INCLUDES_DEFAULT
 #include <sys/statvfs.h>
 #endif
 ])
+
+AC_CHECK_MEMBERS([struct timespec.tv_nsec],
+               [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif])
 
 #
 # Find corresponding types for MPI_Aint, MPI_Count, and MPI_Offset.
