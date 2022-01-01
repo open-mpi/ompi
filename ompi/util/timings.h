@@ -169,14 +169,14 @@ typedef struct ompi_timing_t {
             int i;                                                                \
             int size = ompi_comm_size(MPI_COMM_WORLD);                            \
             int rank = ompi_comm_rank(MPI_COMM_WORLD);                            \
-            int error = 0;                                                        \
+            int timing_error = 0;                                                 \
             int imported = 0;                                                     \
                                                                                   \
-            MPI_COMM_WORLD->c_coll->coll_reduce(&OMPI_TIMING.error, &error, 1,    \
+            MPI_COMM_WORLD->c_coll->coll_reduce(&OMPI_TIMING.error, &timing_error, 1, \
                                                 MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, \
                                                 MPI_COMM_WORLD->c_coll->coll_reduce_module); \
                                                                                   \
-            if (error) {                                                          \
+            if (timing_error) {                                                   \
                 if (0 == rank) {                                                  \
                     printf("==OMPI_TIMING== error: something went wrong, timings doesn't work\n"); \
                 }                                                                 \
