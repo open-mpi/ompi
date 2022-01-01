@@ -350,6 +350,22 @@ base as of this writing (April 2020):
   version of the Intel 12.1 Linux compiler suite, the problem will go
   away.
 
+* [Users have reported](https://github.com/open-mpi/ompi/issues/7615)
+  that the Intel Fortran compiler will fail to link Fortran-based MPI
+  applications on macOS with linker errors similar to this:
+  ```
+  Undefined symbols for architecture x86_64:
+    "_ompi_buffer_detach_f08", referenced from:
+        import-atom in libmpi_usempif08.dylib
+  ld: symbol(s) not found for architecture x86_64
+  ```
+  It appears that setting the environment variable
+  `lt_cx_ld_force_load=no` before invoking Open MPI's `configure`
+  script works around the issue.  For example:
+  ```
+  shell$ lt_cv_ld_force_load=no ./configure ...
+  ```
+
 * The Portland Group compilers prior to version 7.0 require the
   `-Msignextend` compiler flag to extend the sign bit when converting
   from a shorter to longer integer.  This is is different than other
