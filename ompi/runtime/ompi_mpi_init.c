@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
@@ -728,7 +728,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
             opal_pmix_collect_all_data && !ompi_singleton) {
         if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
-            ret - opal_pmix_convert_status(rc);
+            ret = opal_pmix_convert_status(rc);
             error = "timing: pmix-barrier-1 failed";
             goto error;
         }
