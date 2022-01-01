@@ -1219,7 +1219,7 @@ int main(int argc, char* argv[])
         [Whether to use builtin atomics])
     AC_SUBST([OPAL_ASSEMBLY_BUILTIN])
 
-    OPAL_SUMMARY_ADD([[Atomics]],[[OMPI]],[],[$opal_cv_asm_builtin])
+    OPAL_SUMMARY_ADD([[Miscellaneous]],[[Atomics]],[],[$opal_cv_asm_builtin])
 
     OPAL_ASM_FIND_FILE
 
