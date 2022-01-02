@@ -3,6 +3,7 @@ dnl
 dnl Copyright (c) 2021 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 dnl                         reserved.
+dnl Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -36,7 +37,14 @@ AC_DEFUN([OPAL_GET_LDFLAGS_FROM_PC], [
   AS_IF([test "$PKG_CONFIG" = ""],
         [happy=0],
         [OPAL_LOG_COMMAND([pkg_config_results=`$PKG_CONFIG --static --libs-only-L --libs-only-other $1`],
-             [AS_VAR_COPY([$2], [pkg_config_results])],
+             [ # pkg-config will escape shell meta characters in the
+               # output.  If we get output that includes a token like
+               # "@{libdir}" (which we can/will from PMIx), pkg-config
+               # will emit it as "@\{libdir\}", which is not what we
+               # want.  Run the output through echo/eval to get rid of
+               # the escaping.
+              pkg_config_results=`eval echo $pkg_config_results`
+              AS_VAR_COPY([$2], [pkg_config_results])],
              [happy=0])])
   AS_IF([test $happy -eq 0],
         [pkg_config_results="none"
