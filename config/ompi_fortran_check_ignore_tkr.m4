@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -72,7 +72,7 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
 
     # Vendor-neutral, TYPE(*) syntax
     OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
-         [!], [type(*)],
+         [!], [type(*), dimension(*)],
          [TYPE(*), DIMENSION(*)],
          [happy=1], [happy=0])
 
@@ -185,7 +185,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
 
   subroutine force_assumed_shape(a, count)
     integer :: count
-    real, dimension(:,:) :: a
+    complex, dimension(:,:) :: a
     call foo(a, count)
   end subroutine force_assumed_shape
 

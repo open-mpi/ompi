@@ -42,14 +42,19 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_USE_ONLY],[
        [AC_LANG_PUSH([Fortran])
         cat > aaa.f90 << EOF
 MODULE aaa
-INTEGER :: CMON(1)
-COMMON/CMMON/CMON
+! These 2 have the same names as variables in bbb
+! but they should not clash if we only import global_aaa
+INTEGER :: local1
+REAL :: local2
 INTEGER :: global_aaa
 END MODULE aaa
 EOF
         cat > bbb.f90 << EOF
 MODULE bbb
-integer, bind(C, name="cmmon_") :: CMON
+! These 2 have the same names as variables in aaa
+! but they should not clash if we only import global_bbb
+INTEGER :: local1
+COMPLEX :: local2
 INTEGER :: global_bbb
 END MODULE bbb
 EOF
