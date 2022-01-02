@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
@@ -640,7 +640,6 @@ int opal_util_register_stackhandlers(void)
         set_stacktrace_filename();
         opal_stacktrace_output_fileno = -1;
     } else if (0 == strncasecmp(opal_stacktrace_output_filename, "file:", 5)) {
-        char *filename_cpy = NULL;
         next = strchr(opal_stacktrace_output_filename, ':');
         next++; // move past the ':' to the filename specified
 
@@ -654,8 +653,6 @@ int opal_util_register_stackhandlers(void)
             sizeof(char) * opal_stacktrace_output_filename_max_len);
         set_stacktrace_filename();
         opal_stacktrace_output_fileno = -1;
-
-        free(filename_cpy);
     } else {
         opal_stacktrace_output_fileno = fileno(stderr);
     }
