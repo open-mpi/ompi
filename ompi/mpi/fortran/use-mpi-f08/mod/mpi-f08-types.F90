@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2015-2020 Research Organization for Information Science
@@ -26,50 +26,6 @@ module mpi_f08_types
    include "mpif-config.h"
    include "mpif-constants.h"
    include "mpif-io-constants.h"
-
-   !
-   ! derived types
-   !
-
-   type, BIND(C) :: MPI_Comm
-      integer :: MPI_VAL
-   end type MPI_Comm
-
-   type, BIND(C) :: MPI_Datatype
-      integer :: MPI_VAL
-   end type MPI_Datatype
-
-   type, BIND(C) :: MPI_Errhandler
-      integer :: MPI_VAL
-   end type MPI_Errhandler
-
-   type, BIND(C) :: MPI_File
-      integer :: MPI_VAL
-   end type MPI_File
-
-   type, BIND(C) :: MPI_Group
-      integer :: MPI_VAL
-   end type MPI_Group
-
-   type, BIND(C) :: MPI_Info
-      integer :: MPI_VAL
-   end type MPI_Info
-
-   type, BIND(C) :: MPI_Message
-      integer :: MPI_VAL
-   end type MPI_Message
-
-   type, BIND(C) :: MPI_Op
-      integer :: MPI_VAL
-   end type MPI_Op
-
-   type, BIND(C) :: MPI_Request
-      integer :: MPI_VAL
-   end type MPI_Request
-
-   type, BIND(C) :: MPI_Win
-      integer :: MPI_VAL
-   end type MPI_Win
 
   !
   ! Pre-defined handles
@@ -205,139 +161,5 @@ module mpi_f08_types
 !... Special sentinel constants
 !------------------------------
 #include "mpif-f08-types.h"
-
-!... Interfaces for operators with handles
-!-----------------------------------------
-interface operator (.EQ.)
-  module procedure ompi_comm_op_eq
-  module procedure ompi_datatype_op_eq
-  module procedure ompi_errhandler_op_eq
-  module procedure ompi_file_op_eq
-  module procedure ompi_group_op_eq
-  module procedure ompi_info_op_eq
-  module procedure ompi_message_op_eq
-  module procedure ompi_op_op_eq
-  module procedure ompi_request_op_eq
-  module procedure ompi_win_op_eq
-end interface
-
-interface operator (.NE.)
-  module procedure ompi_comm_op_ne
-  module procedure ompi_datatype_op_ne
-  module procedure ompi_errhandler_op_ne
-  module procedure ompi_file_op_ne
-  module procedure ompi_group_op_ne
-  module procedure ompi_info_op_ne
-  module procedure ompi_message_op_ne
-  module procedure ompi_op_op_ne
-  module procedure ompi_request_op_ne
-  module procedure ompi_win_op_ne
-end interface
-
-contains
-
-!... .EQ. operator
-!-----------------
-  logical function ompi_comm_op_eq(a, b)
-    type(MPI_Comm), intent(in) :: a, b
-    ompi_comm_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_comm_op_eq
-
-  logical function ompi_datatype_op_eq(a, b)
-    type(MPI_Datatype), intent(in) :: a, b
-    ompi_datatype_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_datatype_op_eq
-
-  logical function ompi_errhandler_op_eq(a, b)
-    type(MPI_Errhandler), intent(in) :: a, b
-    ompi_errhandler_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_errhandler_op_eq
-
-  logical function ompi_file_op_eq(a, b)
-    type(MPI_File), intent(in) :: a, b
-    ompi_file_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_file_op_eq
-
-  logical function ompi_group_op_eq(a, b)
-    type(MPI_Group), intent(in) :: a, b
-    ompi_group_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_group_op_eq
-
-  logical function ompi_info_op_eq(a, b)
-    type(MPI_Info), intent(in) :: a, b
-    ompi_info_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_info_op_eq
-
-  logical function ompi_message_op_eq(a, b)
-    type(MPI_Message), intent(in) :: a, b
-    ompi_message_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_message_op_eq
-
-  logical function ompi_op_op_eq(a, b)
-    type(MPI_Op), intent(in) :: a, b
-    ompi_op_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_op_op_eq
-
-  logical function ompi_request_op_eq(a, b)
-    type(MPI_Request), intent(in) :: a, b
-    ompi_request_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_request_op_eq
-
-  logical function ompi_win_op_eq(a, b)
-    type(MPI_Win), intent(in) :: a, b
-    ompi_win_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
-  end function ompi_win_op_eq
-
-!... .NE. operator
-!-----------------
-  logical function ompi_comm_op_ne(a, b)
-    type(MPI_Comm), intent(in) :: a, b
-    ompi_comm_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_comm_op_ne
-
-  logical function ompi_datatype_op_ne(a, b)
-    type(MPI_Datatype), intent(in) :: a, b
-    ompi_datatype_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_datatype_op_ne
-
-  logical function ompi_errhandler_op_ne(a, b)
-    type(MPI_Errhandler), intent(in) :: a, b
-    ompi_errhandler_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_errhandler_op_ne
-
-  logical function ompi_file_op_ne(a, b)
-    type(MPI_File), intent(in) :: a, b
-    ompi_file_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_file_op_ne
-
-  logical function ompi_group_op_ne(a, b)
-    type(MPI_Group), intent(in) :: a, b
-    ompi_group_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_group_op_ne
-
-  logical function ompi_info_op_ne(a, b)
-    type(MPI_Info), intent(in) :: a, b
-    ompi_info_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_info_op_ne
-
-  logical function ompi_message_op_ne(a, b)
-    type(MPI_Message), intent(in) :: a, b
-    ompi_message_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_message_op_ne
-
-  logical function ompi_op_op_ne(a, b)
-    type(MPI_Op), intent(in) :: a, b
-    ompi_op_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_op_op_ne
-
-  logical function ompi_request_op_ne(a, b)
-    type(MPI_Request), intent(in) :: a, b
-    ompi_request_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_request_op_ne
-
-  logical function ompi_win_op_ne(a, b)
-    type(MPI_Win), intent(in) :: a, b
-    ompi_win_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
-  end function ompi_win_op_ne
 
 end module mpi_f08_types
