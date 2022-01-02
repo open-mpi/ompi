@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2006-2015 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -1868,7 +1868,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                        "eager RDMA and progress threads", true);
     }
 
-    asprintf (&rcache_resources.cache_name, "verbs.%" PRIu64, device->ib_dev_attr.node_guid);
+    asprintf (&rcache_resources.cache_name, "verbs.%" PRIu64, (uint64_t) device->ib_dev_attr.node_guid);
     rcache_resources.reg_data = (void*)device;
     rcache_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
     rcache_resources.register_mem = openib_reg_mr;
