@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
- * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2021-2022 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -976,15 +976,16 @@ static void mca_btl_base_am_process_atomic(mca_btl_base_module_t *btl,
     switch (hdr->type) {
     case MCA_BTL_BASE_AM_ATOMIC:
         if (4 == hdr->data.atomic.size) {
-            uint32_t tmp = (uint32_t) atomic_response;
-            mca_btl_base_am_atomic_32(&tmp, (opal_atomic_int32_t *) (uintptr_t) hdr->target_address,
+            int32_t tmp = (int32_t) atomic_response;
+            mca_btl_base_am_atomic_32(&tmp, (opal_atomic_int32_t *) hdr->target_address,
                                       hdr->data.atomic.op);
             atomic_response = tmp;
-        }
-        if (8 == hdr->data.atomic.size) {
-            mca_btl_base_am_atomic_64(&atomic_response,
-                                      (opal_atomic_int64_t *) (uintptr_t) hdr->target_address,
+        } else if (8 == hdr->data.atomic.size) {
+            int64_t tmp = (int64_t) atomic_response;
+            mca_btl_base_am_atomic_64(&tmp,
+                                      (opal_atomic_int64_t *) hdr->target_address,
                                       hdr->data.atomic.op);
+            atomic_response = tmp;
         }
         break;
     case MCA_BTL_BASE_AM_CAS:
@@ -993,8 +994,7 @@ static void mca_btl_base_am_process_atomic(mca_btl_base_module_t *btl,
             opal_atomic_compare_exchange_strong_32((opal_atomic_int32_t *) hdr->target_address,
                                                    &tmp, (int32_t) hdr->data.atomic.operand[1]);
             atomic_response = tmp;
-        }
-        if (8 == hdr->data.atomic.size) {
+        } else if (8 == hdr->data.atomic.size) {
             opal_atomic_compare_exchange_strong_64((opal_atomic_int64_t *) hdr->target_address,
                                                    &atomic_response, hdr->data.atomic.operand[1]);
         }
