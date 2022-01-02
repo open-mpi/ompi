@@ -3,7 +3,7 @@
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2022 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -682,7 +682,6 @@ static int flux_fencenb(opal_list_t *procs, int collect_data,
                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
-    int status;
     if (PMI_SUCCESS != (rc = PMI_Barrier())) {
         OPAL_PMI_ERROR(rc, "PMI_Barrier");
         return OPAL_ERROR;
@@ -690,7 +689,7 @@ static int flux_fencenb(opal_list_t *procs, int collect_data,
     if (NULL == cbfunc) {
         return OPAL_ERROR;
     } else {
-        cbfunc(status, cbdata);
+        cbfunc(rc, cbdata);
     }
     return OPAL_SUCCESS;
 }
