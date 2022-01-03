@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
-# Copyright (c) 2012-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2022 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,12 +24,6 @@
 [no-language-support]
 Unfortunately, this installation of Open MPI was not compiled with
 %s support.  As such, the %s compiler is non-functional.
-#
-[no-profiling-support]
-Warning: the "-lpmpi" flag was included on the command line,
-indicating use of MPI profiling layer.  However, Open MPI was not
-compiled with support for the MPI profiling layer.  This flag has
-therefore been ignored.
 #
 [no-compiler-specified]
 No underlying compiler was specified in the wrapper compiler data file
@@ -65,10 +59,6 @@ This may indicate an incomplete install and linking will likely fail.
 [spawn-failed]
 Unable to call the compiler (%s). The failure return the error
 %s.
-The failed command was [%s].
-#
-[compiler-failed]
-The child process (%s) exit with error %d.
 The failed command was [%s].
 #
 [no-options-support]
