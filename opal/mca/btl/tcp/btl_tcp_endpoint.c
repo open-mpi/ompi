@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2013-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -630,7 +630,6 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t *btl_endpoint
 static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t *btl_endpoint)
 {
     size_t retval, len = strlen(mca_btl_tcp_magic_id_string);
-    ;
     mca_btl_tcp_proc_t *btl_proc = btl_endpoint->endpoint_proc;
     opal_process_name_t guid;
 
