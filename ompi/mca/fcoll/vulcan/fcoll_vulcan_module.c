@@ -37,7 +37,7 @@
 static mca_fcoll_base_module_1_0_0_t vulcan =  {
     mca_fcoll_vulcan_module_init,
     mca_fcoll_vulcan_module_finalize,
-    mca_fcoll_vulcan_file_read_all,
+    mca_fcoll_base_file_read_all,
     NULL, /* iread_all */
     mca_fcoll_vulcan_file_write_all,
     NULL, /*iwrite_all */
