@@ -1,6 +1,7 @@
 # -*- text -*-
 #
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
+# Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -44,3 +45,20 @@ the number of procs for each resource and the type of resource to be used.
   Specified value:  %s
 
 We are not able to proceed. Please correct your application.
+#
+[execv-error]
+
+The singleton application was not able to find an executabe in your
+PATH or in the directory where PRTE was initially installed, and
+therefore cannot continue.
+
+For reference, we tried the following command:
+
+  %s
+
+and got the error %s.
+
+This could mean that your PATH or executable name is wrong, or that
+you do not have the necessary permissions.  Please ensure that the
+executable is able to be found and executed as it is required for
+singleton operations.
