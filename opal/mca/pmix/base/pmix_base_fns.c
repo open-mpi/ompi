@@ -7,7 +7,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,7 +32,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
-#include "opal/util/show_help.h"
 #include "opal_stdint.h"
 
 #include "opal/mca/pmix/base/base.h"
