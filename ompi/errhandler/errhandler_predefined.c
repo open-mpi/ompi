@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
- * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
@@ -283,6 +283,9 @@ static void backend_abort_aggregate(int fatal, char *type,
     usable_err_msg = (NULL == err_msg) ? unknown_error  : err_msg;
 
     if (NULL != name) {
+        // For the show_help topic checker script
+        // SHOW_HELP:"help-mpi-errors.txt","mpi_errors_are_fatal"
+        // SHOW_HELP:"help-mpi-errors.txt","mpi_errors_abort"
         opal_show_help("help-mpi-errors.txt",
                        fatal? "mpi_errors_are_fatal": "mpi_errors_abort",
                        false,
