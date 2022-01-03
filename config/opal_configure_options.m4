@@ -329,7 +329,7 @@ AC_MSG_CHECKING([if want heterogeneous support])
 AC_ARG_ENABLE([heterogeneous],
     [AC_HELP_STRING([--enable-heterogeneous],
                     [Enable features required for heterogeneous
-                     platform support (default: disabled)])])
+                     platform support (default: disabled). Experimental in 4.1.x!])])
 if test "$enable_heterogeneous" = "yes" ; then
      AC_MSG_RESULT([yes])
      opal_want_heterogeneous=1
