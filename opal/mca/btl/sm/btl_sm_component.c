@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2018 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
@@ -35,7 +35,6 @@
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "opal/util/show_help.h"
 
 #include "opal/mca/btl/sm/btl_sm.h"
 #include "opal/mca/btl/sm/btl_sm_fbox.h"

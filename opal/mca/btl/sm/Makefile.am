@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -22,8 +22,6 @@
 #
 
 AM_CPPFLAGS = $(btl_sm_CPPFLAGS)
-
-dist_opaldata_DATA = help-btl-sm.txt
 
 libmca_btl_sm_la_sources = \
     btl_sm_module.c \
