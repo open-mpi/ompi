@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2020 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
@@ -2069,7 +2069,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
         execv(cmd, args);
 
         /* if I get here, the execv failed! */
-        opal_show_help("help-ess-base.txt", "ess-base:execv-error",
+        opal_show_help("help-dpm.txt", "execv-error",
                        true, cmd, strerror(errno));
         exit(1);
 
