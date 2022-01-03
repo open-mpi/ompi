@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -156,3 +156,15 @@ continue properly.
 
   Local host: %s
   PID:        %d
+#
+[server did not receive magic string]
+WARNING: Open MPI accepted a TCP connection but did not receive the
+expected network identification indicating that the peer is an Open
+MPI process.
+
+This attempted connection will be closed and ignored.
+
+  Local host: %s
+  PID:        %d
+  Peer:       %s
+  Identifier: %s (%s)
