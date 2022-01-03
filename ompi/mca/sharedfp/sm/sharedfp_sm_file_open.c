@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2021 University of Houston. All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -59,7 +59,6 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     struct mca_sharedfp_sm_data * sm_data = NULL;
     char * filename_basename;
     char * sm_filename;
-    int sm_filename_length;
     struct mca_sharedfp_sm_offset * sm_offset_ptr;
     struct mca_sharedfp_sm_offset sm_offset;
     int sm_fd;
@@ -105,15 +104,6 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     */
     filename_basename = opal_basename((char*)filename);
     /* format is "%s/%s_cid-%d-%d.sm", see below */
-    sm_filename_length = strlen(ompi_process_info.job_session_dir) + 1 + strlen(filename_basename) + 5 + (3*sizeof(uint32_t)+1) + 4;
-    sm_filename = (char*) malloc( sizeof(char) * sm_filename_length);
-    if (NULL == sm_filename) {
-        opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc sm_filename\n");
-        free(filename_basename);
-        free(sm_data);
-        free(sh);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     comm_cid = ompi_comm_get_cid(comm);
     if ( 0 == fh->f_rank ) {
@@ -130,7 +120,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         return err;
     }
 
-    snprintf(sm_filename, sm_filename_length, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
+    asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
              filename_basename, comm_cid, int_pid);
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
