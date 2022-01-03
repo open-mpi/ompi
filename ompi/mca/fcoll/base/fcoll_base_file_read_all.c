@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2021 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2022 University of Houston. All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -20,12 +20,12 @@
  */
 
 #include "ompi_config.h"
-#include "fcoll_vulcan.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
+#include "ompi/mca/fcoll/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
 #include "ompi/mca/io/io.h"
 #include "math.h"
@@ -33,6 +33,8 @@
 #include <unistd.h>
 
 #define DEBUG_ON 0
+#define FCOLL_BASE_SHUFFLE_TAG 123
+#define INIT_LEN 10
 
 /*Used for loading file-offsets per aggregator*/
 typedef struct mca_io_ompio_local_io_array{
@@ -49,7 +51,7 @@ static int read_heap_sort (mca_io_ompio_local_io_array *io_array,
 
 
 int
-mca_fcoll_vulcan_file_read_all (ompio_file_t *fh,
+mca_fcoll_base_file_read_all (ompio_file_t *fh,
                                  void *buf,
                                  int count,
                                  struct ompi_datatype_t *datatype,
@@ -89,7 +91,7 @@ mca_fcoll_vulcan_file_read_all (ompio_file_t *fh,
     /* array that contains the sorted indices of the global_iov */
     int *sorted = NULL;
     int *displs = NULL;
-    int vulcan_num_io_procs;
+    int base_num_io_procs;
     size_t max_data = 0;
     MPI_Aint *total_bytes_per_process = NULL;
     ompi_datatype_t **sendtype = NULL;
@@ -126,14 +128,14 @@ mca_fcoll_vulcan_file_read_all (ompio_file_t *fh,
         status->_ucount = max_data;
     }
 
-    vulcan_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
-    if ( OMPI_ERR_MAX == vulcan_num_io_procs ) {
+    base_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
+    if ( OMPI_ERR_MAX == base_num_io_procs ) {
         ret = OMPI_ERROR;
         goto exit;
     }
 
     ret = mca_common_ompio_set_aggregator_props ((struct ompio_file_t *) fh,
-                                                 vulcan_num_io_procs,
+                                                 base_num_io_procs,
                                                  max_data);
     if (OMPI_SUCCESS != ret){
         goto exit;
@@ -741,7 +743,7 @@ mca_fcoll_vulcan_file_read_all (ompio_file_t *fh,
                                                   1,
                                                   sendtype[i],
                                                   fh->f_procs_in_group[i],
-                                                  FCOLL_VULCAN_SHUFFLE_TAG,
+                                                  FCOLL_BASE_SHUFFLE_TAG,
                                                   MCA_PML_BASE_SEND_STANDARD,
                                                   fh->f_comm,
                                                   &send_req[i]));
@@ -822,7 +824,7 @@ mca_fcoll_vulcan_file_read_all (ompio_file_t *fh,
                                      1,
                                      newType,
                                      my_aggregator,
-                                     FCOLL_VULCAN_SHUFFLE_TAG,
+                                     FCOLL_BASE_SHUFFLE_TAG,
                                      fh->f_comm,
                                      &recv_req));
 
@@ -867,7 +869,7 @@ mca_fcoll_vulcan_file_read_all (ompio_file_t *fh,
         nentry.aggregator = 1;
     else
         nentry.aggregator = 0;
-    nentry.nprocs_for_coll = vulcan_num_io_procs;
+    nentry.nprocs_for_coll = base_num_io_procs;
     if (!mca_common_ompio_full_print_queue(fh->f_coll_read_time)){
         mca_common_ompio_register_print_entry(fh->f_coll_read_time,
                                               nentry);
