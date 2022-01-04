@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -1165,7 +1165,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             // data_name in res->extra_text[2] (vs. extra_text[1]),
             // where it is guaranteed to fit.
             data_name[4] = '\0';
-            snprintf( (char*)res->extra_text[1], 64, "Data: %d",
+            snprintf( (char*)res->extra_text[1], 64, "Data: %d instances of MPI datatype",
                       (int)res->desired_length);
             snprintf( (char*)res->extra_text[2], 64, "%s",
                       data_name );
