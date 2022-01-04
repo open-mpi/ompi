@@ -10,6 +10,8 @@
  * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +22,8 @@
 #include "osc_rdma_accumulate.h"
 #include "osc_rdma_request.h"
 #include "osc_rdma_comm.h"
+#include "osc_rdma_lock.h"
+#include "osc_rdma_btl_comm.h"
 
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
