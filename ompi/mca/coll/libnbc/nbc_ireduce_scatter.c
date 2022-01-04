@@ -83,7 +83,7 @@ static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int
     return nbc_get_noop_request(persistent, request);
   }
 
-  maxr = (int) ceil ((log((double) p) / LOG2));
+  maxr = ceil_of_log2(p);
 
   span = opal_datatype_span(&datatype->super, count, &gap);
   span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);

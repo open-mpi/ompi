@@ -51,8 +51,15 @@
 extern "C" {
 #endif
 
-/* log(2) */
-#define LOG2 0.69314718055994530941
+/* Dividing very close floats may lead to unexpected roundings */
+static inline int
+ceil_of_log2 (int val) {
+    int ret = 0;
+    while (1 << ret < val) {
+        ret ++;
+    }
+    return ret;
+}
 
 /* true/false */
 #define true 1

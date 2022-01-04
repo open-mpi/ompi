@@ -367,7 +367,7 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
     vroot = 0;
   }
   RANK2VRANK(rank, vrank, vroot);
-  maxr = (int)ceil((log((double)p)/LOG2));
+  maxr = ceil_of_log2(p);
 
   if (rank != root) {
     inplace = 0;
