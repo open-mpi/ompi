@@ -762,9 +762,10 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "RDMA compare-and-swap initiating blocking btl put...");
 
     do {
-        ret = btl->btl_put (btl, peer->data_endpoint, ptr, target_address,
-                            local_handle, target_handle, len, 0, MCA_BTL_NO_ORDER,
-                            ompi_osc_rdma_cas_put_complete, (void *) &complete, NULL);
+        ret = ompi_osc_rdma_btl_put(module, peer->data_btl_index, peer->data_endpoint,
+                                    ptr, target_address, local_handle, target_handle,
+                                    len, 0, MCA_BTL_NO_ORDER,
+                                    ompi_osc_rdma_cas_put_complete, (void *) &complete, NULL);
         if (OPAL_SUCCESS == ret || (OPAL_ERR_OUT_OF_RESOURCE != ret && OPAL_ERR_TEMP_OUT_OF_RESOURCE != ret)) {
             break;
         }
