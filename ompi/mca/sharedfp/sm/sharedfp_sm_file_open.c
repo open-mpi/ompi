@@ -114,7 +114,6 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     if ( OMPI_SUCCESS != err ) {
         opal_output(0,"mca_sharedfp_sm_file_open: Error in bcast operation \n");
         free(filename_basename);
-        free(sm_filename);
         free(sm_data);
         free(sh);
         return err;
