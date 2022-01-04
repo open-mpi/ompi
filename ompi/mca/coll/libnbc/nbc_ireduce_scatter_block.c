@@ -68,7 +68,7 @@ static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  maxr = (int)ceil((log((double)p)/LOG2));
+  maxr = ceil_of_log2(p);
 
   count = p * recvcount;
 
