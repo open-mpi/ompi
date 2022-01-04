@@ -6,6 +6,8 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +16,7 @@
  */
 
 #include "osc_rdma_comm.h"
+#include "osc_rdma_frag.h"
 #include "osc_rdma_sync.h"
 #include "osc_rdma_request.h"
 #include "osc_rdma_dynamic.h"
