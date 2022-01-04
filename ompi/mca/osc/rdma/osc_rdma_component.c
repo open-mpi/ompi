@@ -35,6 +35,7 @@
 #include "ompi_config.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "osc_rdma.h"
 #include "osc_rdma_frag.h"
@@ -84,7 +85,6 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
 static const char* ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, const char *value);
 
 static char *ompi_osc_rdma_full_connectivity_btls;
-static char *ompi_osc_rdma_btl_alternate_names;
 
 static const mca_base_var_enum_value_t ompi_osc_rdma_locking_modes[] = {
     {.value = OMPI_OSC_RDMA_LOCKING_TWO_LEVEL, .string = "two_level"},
@@ -255,14 +255,6 @@ static int ompi_osc_rdma_component_register (void)
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "btls", description_str,
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_full_connectivity_btls);
-    free(description_str);
-
-    ompi_osc_rdma_btl_alternate_names = "sm,tcp";
-    opal_asprintf(&description_str, "Comma-delimited list of alternate BTL component names to allow without verifying "
-                  "connectivity (default: %s)", ompi_osc_rdma_btl_alternate_names);
-    (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "alternate_btls", description_str,
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
-                                            MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_rdma_btl_alternate_names);
     free(description_str);
 
     if (0 == access ("/dev/shm", W_OK)) {
@@ -875,76 +867,96 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
     free(procs);
 }
 
+
+/*
+ * qsort() sorting function for ompi_osc_rdma_query_alternate_btls(),
+ * using latency as the sorting metric.
+ */
+static int btl_latency_sort_fn(const void *a, const void *b)
+{
+    const struct mca_btl_base_module_t *btl_a = a;
+    const struct mca_btl_base_module_t *btl_b = b;
+
+    if (btl_a->btl_latency < btl_b->btl_latency) {
+        return -1;
+    } else if (btl_a->btl_latency == btl_b->btl_latency) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+
 /**
  * @brief query for alternate BTLs
  *
  * @in  comm   Communicator to query
- * @out module OSC module to store BTLs/count to (optional)
- * @out 
+ * @inout module OSC module to store BTLs/count to (optional)
  *
  * @return OMPI_SUCCESS if BTLs can be found
  * @return OMPI_ERR_UNREACH if no BTLs can be found that match
  *
- * In this case an "alternate" BTL is a BTL does not meet the
- * requirements of a BTL outlined in ompi_osc_rdma_query_accelerated_btls().
- * Either it does not provide connectivity to all peers, provide
- * remote completion, or natively support put/get/atomic.. Since more
- * than one BTL may be needed for this support the OSC component will
- * disable the use of registration-based RDMA (these BTLs will not be
- * used) and will use any remaining BTL. By default the BTLs used will
- * be tcp and sm but any single (or pair) of BTLs may be used.
+ * We directly use the active message rdma wrappers for alternate
+ * BTLs, in all cases.  This greatly simplifies the alternate BTL
+ * impementation, at the expense of some performance.  With the
+ * AM wrappers, we can always enforce remote completion and the lack
+ * of memory registration, at some performance cost.  But we can use
+ * as many BTLs as we like.  The module's btl list is sorted by
+ * latency, so that ompi_osc_rdma_peer_btl_endpoint() picks the lowest
+ * available latency btl to communicate with the peer.  Unlike the OB1
+ * PML, we only use one BTL per peer.
+ *
+ * Like the OB1 PML, there is no verification that there is at least
+ * one BTL that can communicate with every other peer in the window.
  */
 static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
     mca_btl_base_selected_module_t *item;
-    char **btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
-    int btls_found = 0;
+    int ret;
 
-    btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
-    if (NULL == btls_to_use) {
-        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                            "no alternate BTLs requested: %s", ompi_osc_rdma_btl_alternate_names);
-        return OMPI_ERR_UNREACH;
-    }
-
-    if (module) {
-        module->btls_in_use = 0;
-    }
-
-    /* rdma and atomics are only supported with BTLs at the moment */
-    for (int i = 0 ; btls_to_use[i] ; ++i) {
-        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                            "checking for btl %s", btls_to_use[i]);
-        OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
-            if (NULL != item->btl_module->btl_register_mem) { 
-                opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                                    "skipping RDMA btl when searching for alternate BTL");
-                continue;
-            }
-
-            if (0 != strcmp (btls_to_use[i], item->btl_module->btl_component->btl_version.mca_component_name)) {
-                opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                                    "skipping btl %s",
-                                    item->btl_module->btl_component->btl_version.mca_component_name);
-                continue;
-            }
-
-            opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                                "found alternate btl %s", btls_to_use[i]);
-
-            ++btls_found;
-            if (module) {
-                mca_btl_base_am_rdma_init(item->btl_module);
-                ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++);
-            }
-            
+    /* shortcut the trivial query case */
+    if (NULL == module) {
+        if (opal_list_is_empty(&mca_btl_base_modules_initialized)) {
+            return OMPI_ERR_UNREACH;
         }
+        return OMPI_SUCCESS;
     }
 
-    opal_argv_free (btls_to_use);
+    module->btls_in_use = 0;
 
-    return btls_found > 0 ? OMPI_SUCCESS : OMPI_ERR_UNREACH;
+    /* add all alternate btls to the selected_btls list, not worrying
+       about ordering yet.  We have to add all btls unless we want to
+       iterate over all endpoints to build the minimum set of btls
+       needed to communicate with all peers.  An MCA parameter just
+       for osc rdma also wouldn't work, as the BML can decide not to
+       add an endpoint for a btl given the priority of another btl.
+       For example, it is not uncommon that the only endpoint created
+       to a peer on the same host is the sm btl's endpoint.  If we
+       had an osc rdma specific parameter list, and the user
+       specified a combination not including sm, that would result in
+       an eventual failure, as no btl would be found to talk to ranks
+       on the same host.*/
+    OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
+        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                            "found alternate btl %s",
+                            item->btl_module->btl_component->btl_version.mca_component_name);
+        ret = mca_btl_base_am_rdma_init(item->btl_module);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
+        ompi_osc_rdma_selected_btl_insert(module, item->btl_module, module->btls_in_use++);
+    }
+
+    /* sort based on latency, lowest first */
+    qsort(module->selected_btls, module->btls_in_use,
+          sizeof(struct mca_btl_base_module_t*), btl_latency_sort_fn);
+
+    /* osc/rdma always use active message RDMA/atomics on alternate btls, whic does not require explicit memory registration */
+    module->use_memory_registration = false;
+
+    return module->btls_in_use > 0 ? OMPI_SUCCESS : OMPI_ERR_UNREACH;
 }
+
 
 /* Check for BTL requirements:
  *  1) RDMA (put/get) and ATOMIC operations.  We only require cswap
