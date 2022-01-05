@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2018-2020 Research Organization for Information Science
@@ -17,10 +17,10 @@ subroutine MPI_Ialltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    use :: ompi_mpifh_bindings, only : ompi_ialltoallw_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: sendtypes(*), recvtypes(*)
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   TYPE(MPI_Datatype), INTENT(IN) OMPI_ASYNCHRONOUS :: sendtypes(*), recvtypes(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror

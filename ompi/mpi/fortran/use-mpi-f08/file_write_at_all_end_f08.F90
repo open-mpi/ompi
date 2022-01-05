@@ -16,7 +16,7 @@ subroutine MPI_File_write_at_all_end_f08(fh,buf,status,ierror)
    use :: ompi_mpifh_bindings, only : ompi_file_write_at_all_end_f
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS, INTENT(IN) :: buf
    TYPE(MPI_Status), INTENT(OUT) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror

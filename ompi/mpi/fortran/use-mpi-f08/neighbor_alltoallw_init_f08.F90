@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2018-2021 Research Organization for Information Science
@@ -16,12 +16,12 @@ subroutine MPI_Neighbor_alltoallw_init_f08(sendbuf,sendcounts,sdispls,sendtypes,
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_neighbor_alltoallw_init_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), recvcounts(*)
-   INTEGER(MPI_ADDRESS_KIND), INTENT(IN), ASYNCHRONOUS :: sdispls(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: sendtypes(*)
-   TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: recvtypes(*)
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), recvcounts(*)
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) OMPI_ASYNCHRONOUS :: sdispls(*), rdispls(*)
+   TYPE(MPI_Datatype), INTENT(IN) OMPI_ASYNCHRONOUS :: sendtypes(*)
+   TYPE(MPI_Datatype), INTENT(IN) OMPI_ASYNCHRONOUS :: recvtypes(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Request), INTENT(OUT) :: request
