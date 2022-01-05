@@ -9,6 +9,7 @@
  *                         reserved.
  * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -208,9 +209,9 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
         new_value = old_value;
 
         if (&ompi_mpi_op_replace.op == op) {
-            memcpy ((void *)((intptr_t) &new_value + offset), (void *)((intptr_t) origin_addr + dt->super.true_lb), extent);
+            memcpy ((void *)((ptrdiff_t) &new_value + offset), (void *)((ptrdiff_t) origin_addr + dt->super.true_lb), extent);
         } else if (&ompi_mpi_op_no_op.op != op) {
-            ompi_op_reduce (op, (void *) ((intptr_t) origin_addr + dt->super.true_lb), (void*)((intptr_t) &new_value + offset), 1, dt);
+            ompi_op_reduce (op, (void *) ((ptrdiff_t) origin_addr + dt->super.true_lb), (void*)((ptrdiff_t) &new_value + offset), 1, dt);
         }
 
         ret = ompi_osc_rdma_btl_cswap (module, peer->data_btl_index, peer->data_endpoint, address, target_handle,
