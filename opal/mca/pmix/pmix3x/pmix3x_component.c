@@ -2,7 +2,7 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2016-2022 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -141,7 +141,7 @@ static int external_close(void)
 
 static int external_component_query(mca_base_module_t **module, int *priority)
 {
-    char *t, *id;
+    char *t;
 
     /* see if a PMIx server is present */
     if (NULL != (t = getenv("PMIX_NAMESPACE"))) {

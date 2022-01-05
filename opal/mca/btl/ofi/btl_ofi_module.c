@@ -62,7 +62,7 @@ static int mca_btl_ofi_add_procs (mca_btl_base_module_t *btl,
         } else {
             /* We don't have this endpoint yet, create one */
             peers[i] = mca_btl_ofi_endpoint_create (proc, ofi_btl->ofi_endpoint);
-            BTL_VERBOSE(("creating peer %p", peers[i]));
+            BTL_VERBOSE(("creating peer %p", (void*) peers[i]));
 
             if (OPAL_UNLIKELY(NULL == peers[i])) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
