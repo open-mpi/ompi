@@ -562,10 +562,6 @@ AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
 OPAL_C_WEAK_SYMBOLS
 OPAL_C_MACRO_WEAK_SYMBOLS
 
-if test "x$CC" = "xicc"; then
-    OPAL_CHECK_ICC_VARARGS
-fi
-
 # If we want the profiling layer:
 # - If the C compiler has weak symbols, use those.
 # - If not, then set to compile the code again with #define's in a
