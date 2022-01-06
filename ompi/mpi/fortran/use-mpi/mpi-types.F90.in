@@ -2,6 +2,7 @@
 !
 ! Copyright (c) 2020      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -16,9 +17,12 @@
 #define OMPI_PRIVATE
 #endif
 
+! These types appear in both the "mpi" module and the "mpi_f08" module
+! (yes, the MPI spec requires that the TYPE(MPI_Blah) types all show
+! up in both modules).
 module mpi_types
 
-type, BIND(C) :: MPI_Status
+  type, BIND(C) :: MPI_Status
       integer :: MPI_SOURCE
       integer :: MPI_TAG
       integer :: MPI_ERROR
@@ -35,5 +39,181 @@ type, BIND(C) :: MPI_Status
       ! overwrite memory.
       integer OMPI_PRIVATE :: internal(@OMPI_FORTRAN_STATUS_SIZE@ - 3)
    end type MPI_Status
+
+   type, BIND(C) :: MPI_Comm
+      integer :: MPI_VAL
+   end type MPI_Comm
+
+   type, BIND(C) :: MPI_Datatype
+      integer :: MPI_VAL
+   end type MPI_Datatype
+
+   type, BIND(C) :: MPI_Errhandler
+      integer :: MPI_VAL
+   end type MPI_Errhandler
+
+   type, BIND(C) :: MPI_File
+      integer :: MPI_VAL
+   end type MPI_File
+
+   type, BIND(C) :: MPI_Group
+      integer :: MPI_VAL
+   end type MPI_Group
+
+   type, BIND(C) :: MPI_Info
+      integer :: MPI_VAL
+   end type MPI_Info
+
+   type, BIND(C) :: MPI_Message
+      integer :: MPI_VAL
+   end type MPI_Message
+
+   type, BIND(C) :: MPI_Op
+      integer :: MPI_VAL
+   end type MPI_Op
+
+   type, BIND(C) :: MPI_Request
+      integer :: MPI_VAL
+   end type MPI_Request
+
+   type, BIND(C) :: MPI_Win
+      integer :: MPI_VAL
+   end type MPI_Win
+
+   ! Interfaces for operators with handles.
+   ! There are no comparisons for MPI_Status because it is not a handle.
+   ! This covers both .EQ. and ==
+   interface operator (.EQ.)
+      module procedure ompi_comm_op_eq
+      module procedure ompi_datatype_op_eq
+      module procedure ompi_errhandler_op_eq
+      module procedure ompi_file_op_eq
+      module procedure ompi_group_op_eq
+      module procedure ompi_info_op_eq
+      module procedure ompi_message_op_eq
+      module procedure ompi_op_op_eq
+      module procedure ompi_request_op_eq
+      module procedure ompi_win_op_eq
+   end interface operator (.EQ.)
+
+   ! This covers both .NE. and /=
+   interface operator (.NE.)
+      module procedure ompi_comm_op_ne
+      module procedure ompi_datatype_op_ne
+      module procedure ompi_errhandler_op_ne
+      module procedure ompi_file_op_ne
+      module procedure ompi_group_op_ne
+      module procedure ompi_info_op_ne
+      module procedure ompi_message_op_ne
+      module procedure ompi_op_op_ne
+      module procedure ompi_request_op_ne
+      module procedure ompi_win_op_ne
+   end interface operator (.NE.)
+
+contains
+
+  ! .EQ. operator
+  !-----------------
+  logical function ompi_comm_op_eq(a, b)
+    type(MPI_Comm), intent(in) :: a, b
+    ompi_comm_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_comm_op_eq
+
+  logical function ompi_datatype_op_eq(a, b)
+    type(MPI_Datatype), intent(in) :: a, b
+    ompi_datatype_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_datatype_op_eq
+
+  logical function ompi_errhandler_op_eq(a, b)
+    type(MPI_Errhandler), intent(in) :: a, b
+    ompi_errhandler_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_errhandler_op_eq
+
+  logical function ompi_file_op_eq(a, b)
+    type(MPI_File), intent(in) :: a, b
+    ompi_file_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_file_op_eq
+
+  logical function ompi_group_op_eq(a, b)
+    type(MPI_Group), intent(in) :: a, b
+    ompi_group_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_group_op_eq
+
+  logical function ompi_info_op_eq(a, b)
+    type(MPI_Info), intent(in) :: a, b
+    ompi_info_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_info_op_eq
+
+  logical function ompi_message_op_eq(a, b)
+    type(MPI_Message), intent(in) :: a, b
+    ompi_message_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_message_op_eq
+
+  logical function ompi_op_op_eq(a, b)
+    type(MPI_Op), intent(in) :: a, b
+    ompi_op_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_op_op_eq
+
+  logical function ompi_request_op_eq(a, b)
+    type(MPI_Request), intent(in) :: a, b
+    ompi_request_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_request_op_eq
+
+  logical function ompi_win_op_eq(a, b)
+    type(MPI_Win), intent(in) :: a, b
+    ompi_win_op_eq = (a%MPI_VAL .EQ. b%MPI_VAL)
+  end function ompi_win_op_eq
+
+  ! .NE. operator
+  !-----------------
+  logical function ompi_comm_op_ne(a, b)
+    type(MPI_Comm), intent(in) :: a, b
+    ompi_comm_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_comm_op_ne
+
+  logical function ompi_datatype_op_ne(a, b)
+    type(MPI_Datatype), intent(in) :: a, b
+    ompi_datatype_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_datatype_op_ne
+
+  logical function ompi_errhandler_op_ne(a, b)
+    type(MPI_Errhandler), intent(in) :: a, b
+    ompi_errhandler_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_errhandler_op_ne
+
+  logical function ompi_file_op_ne(a, b)
+    type(MPI_File), intent(in) :: a, b
+    ompi_file_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_file_op_ne
+
+  logical function ompi_group_op_ne(a, b)
+    type(MPI_Group), intent(in) :: a, b
+    ompi_group_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_group_op_ne
+
+  logical function ompi_info_op_ne(a, b)
+    type(MPI_Info), intent(in) :: a, b
+    ompi_info_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_info_op_ne
+
+  logical function ompi_message_op_ne(a, b)
+    type(MPI_Message), intent(in) :: a, b
+    ompi_message_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_message_op_ne
+
+  logical function ompi_op_op_ne(a, b)
+    type(MPI_Op), intent(in) :: a, b
+    ompi_op_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_op_op_ne
+
+  logical function ompi_request_op_ne(a, b)
+    type(MPI_Request), intent(in) :: a, b
+    ompi_request_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_request_op_ne
+
+  logical function ompi_win_op_ne(a, b)
+    type(MPI_Win), intent(in) :: a, b
+    ompi_win_op_ne = (a%MPI_VAL .NE. b%MPI_VAL)
+  end function ompi_win_op_ne
 
 end module
