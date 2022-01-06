@@ -10,7 +10,7 @@
 #include "mpi-f08-rename.h"
 
 subroutine MPI_Topo_test_f08(comm,status,ierror)
-   use :: mpi_f08_types, only : MPI_Comm, MPI_Status
+   use :: mpi_f08_types, only : MPI_Comm
    use :: ompi_mpifh_bindings, only : ompi_topo_test_f
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm

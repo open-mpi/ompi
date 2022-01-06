@@ -10,7 +10,7 @@
 #include "mpi-f08-rename.h"
 
 subroutine MPI_Type_size_f08(datatype,size,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype
    use :: ompi_mpifh_bindings, only : ompi_type_size_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
