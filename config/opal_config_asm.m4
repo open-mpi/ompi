@@ -1195,12 +1195,8 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
           [AC_MSG_CHECKING([for RDTSCP assembly support])
            AC_LANG_PUSH([C])
            AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-int main(int argc, char* argv[])
-{
   unsigned int rax, rdx;
   __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx):: "%rax", "%rdx");
-  return 0;
-}
            ]])],
            [result=1
             AC_MSG_RESULT([yes])],
