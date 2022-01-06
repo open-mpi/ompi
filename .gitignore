@@ -190,7 +190,6 @@ ompi/include/mpif-c-constants.h
 ompi/include/mpif-common.h
 ompi/include/mpi-ext.h
 ompi/include/mpif-ext.h
-ompi/include/mpif-f08-types.h
 ompi/include/mpif-handles.h
 ompi/include/mpif-io-constants.h
 ompi/include/mpif-constants.h
