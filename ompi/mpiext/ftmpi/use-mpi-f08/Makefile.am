@@ -26,6 +26,7 @@ AM_CPPFLAGS =
 # We must set these #defines and include paths so that the inner OMPI
 # MPI prototype header files do the Right Thing.
 AM_FCFLAGS = $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi \
+             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
              -I$(top_builddir) -I$(top_srcdir) $(FCFLAGS_f90)
 
