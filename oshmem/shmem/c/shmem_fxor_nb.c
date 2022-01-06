@@ -45,7 +45,7 @@
 #pragma weak shmem_uint32_atomic_fetch_xor_nbi     			  = pshmem_uint32_atomic_fetch_xor_nbi
 #pragma weak shmem_uint64_atomic_fetch_xor_nbi     			  = pshmem_uint64_atomic_fetch_xor_nbi
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 OSHMEM_TYPE_FOP_NBI(uint, unsigned int, shmem, xor)

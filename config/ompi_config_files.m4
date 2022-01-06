@@ -6,6 +6,8 @@
 # Copyright (c) 2018      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +27,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/debuggers/Makefile
 
         ompi/mpi/c/Makefile
-        ompi/mpi/c/profile/Makefile
         ompi/mpi/fortran/base/Makefile
         ompi/mpi/fortran/mpif-h/Makefile
         ompi/mpi/fortran/mpif-h/profile/Makefile
@@ -47,7 +48,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/mpiext-use-mpi/Makefile
         ompi/mpi/fortran/mpiext-use-mpi-f08/Makefile
         ompi/mpi/tool/Makefile
-        ompi/mpi/tool/profile/Makefile
 
         ompi/mpi/man/man3/Makefile
         ompi/mpi/man/man5/Makefile

@@ -34,7 +34,7 @@
 #pragma weak shmem_ctx_get_team           		= pshmem_ctx_get_team
 #pragma weak shmem_team_create_ctx                      = pshmem_team_create_ctx
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 void shmem_team_sync(shmem_team_t team)

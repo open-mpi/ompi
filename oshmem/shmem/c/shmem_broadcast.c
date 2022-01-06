@@ -119,7 +119,7 @@ out:
 
 #pragma weak shmem_broadcastmem              		= pshmem_broadcastmem
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_TYPE_BROADCAST(_broadcast32, sizeof(uint32_t))

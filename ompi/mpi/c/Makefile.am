@@ -17,6 +17,8 @@
 #                         reserved.
 # Copyright (c) 2015-2020 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,43 +26,40 @@
 # $HEADER$
 #
 
-SUBDIRS = profile
+# The purpose of the profiling layer is to allow intercept libraries
+# which override the MPI_ namespace symbols.  We potentially compile
+# every MPI function twice.  We always build the profiling layer,
+# because the symbols that are always implemented as functions are the
+# PMPI_ namespace symbols.  We sometimes also build the non-profiling
+# layer, if weak symbols can't be used to alias the MPI_ namespace
+# into the PMPI_ namespace.
 
-# OMPI_BUILD_MPI_PROFILING is enabled when we want our generated MPI_* symbols
-# to be replaced by PMPI_*.
-# In this directory, we need it to be 0
-
-AM_CPPFLAGS     = -DOMPI_BUILD_MPI_PROFILING=0
-
-#
-# The top directory always builds MPI_* bindings. The bottom directory
-# always builds PMPI_* bindings. The cases where the top directory
-# needs to be built are:
-#
-# 1. When profiling is disabled.
-# 2. When profiling is enabled but weak symbol support is absent.
-#
-
-noinst_LTLIBRARIES = libmpi_c.la
+noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_c_mpi.la
+noinst_LTLIBRARIES += libmpi_c_noprofile.la
 endif
 
 headers = bindings.h
 
-#
-# libmpi_c.la is always build because it contains some non-profilied
-# functions.
-#
-
+# attr_fn.c contains attribute manipulation functions which do not
+# profiling implications, and so are always built.
 libmpi_c_la_SOURCES = \
         attr_fn.c
+libmpi_c_la_LIBADD = libmpi_c_profile.la
+if BUILD_MPI_BINDINGS_LAYER
+libmpi_c_la_LIBADD += libmpi_c_noprofile.la
+endif
+
+# Conditionally install the header files
+if WANT_INSTALL_HEADERS
+ompidir = $(ompiincludedir)/$(subdir)
+ompi_HEADERS = $(headers)
+endif
 
 #
-# libmpi_c_mpi.la is only built in some cases (see above)
+# List of all C files that have profile versions
 #
-
-libmpi_c_mpi_la_SOURCES = \
+interface_profile_sources = \
         abort.c \
         add_error_class.c \
         add_error_code.c \
@@ -469,9 +468,8 @@ libmpi_c_mpi_la_SOURCES = \
         win_unlock_all.c \
         win_wait.c
 
-
 if OMPI_ENABLE_MPI1_COMPAT
-libmpi_c_mpi_la_SOURCES += \
+interface_profile_sources += \
         address.c \
         errhandler_create.c \
         errhandler_get.c \
@@ -484,9 +482,8 @@ libmpi_c_mpi_la_SOURCES += \
         type_ub.c
 endif
 
-# Conditionally install the header files
+libmpi_c_profile_la_SOURCES = $(interface_profile_sources)
+libmpi_c_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
-if WANT_INSTALL_HEADERS
-ompidir = $(ompiincludedir)/$(subdir)
-ompi_HEADERS = $(headers)
-endif
+libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources)
+libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0

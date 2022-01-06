@@ -140,7 +140,7 @@ static void _shmem_collect(void *target,
 
 
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_TYPE_COLLECT(_collect32, sizeof(uint32_t), false)

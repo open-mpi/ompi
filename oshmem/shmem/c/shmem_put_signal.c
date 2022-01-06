@@ -122,7 +122,7 @@
 
 
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_PUT_SIGNAL(_char, char)

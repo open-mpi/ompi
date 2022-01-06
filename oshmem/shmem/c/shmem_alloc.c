@@ -26,7 +26,7 @@
 #pragma weak shmalloc                = pshmalloc
 #pragma weak shmem_malloc_with_hints = pshmem_malloc_with_hints
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 static inline void* _shmalloc(size_t size);

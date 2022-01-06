@@ -118,7 +118,7 @@
 #pragma weak shmem_ctx_putmem_signal_nbi              = pshmem_ctx_putmem_signal_nbi
 
 
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_PUT_SIGNAL_NBI(_char, char)

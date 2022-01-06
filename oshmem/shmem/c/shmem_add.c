@@ -92,7 +92,7 @@
 
 #pragma weak shmemx_int32_add = pshmemx_int32_add
 #pragma weak shmemx_int64_add = pshmemx_int64_add
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_ADD(_uint, unsigned int, shmem)

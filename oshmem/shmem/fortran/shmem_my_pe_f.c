@@ -14,11 +14,11 @@
 #include "oshmem/include/shmem.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#include "oshmem/shmem/fortran/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_MY_PE, shmem_my_pe)
 SHMEM_GENERATE_WEAK_BINDINGS(MY_PE, my_pe)
 #pragma weak _my_pe_ = p_my_pe_
-#include "oshmem/shmem/fortran/profile/defines.h"
+#include "oshmem/shmem/fortran/profile-defines.h"
 #endif
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,

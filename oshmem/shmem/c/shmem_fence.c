@@ -18,7 +18,7 @@
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_fence = pshmem_fence
 #pragma weak shmem_ctx_fence = pshmem_ctx_fence
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 void shmem_fence(void)

@@ -24,7 +24,7 @@
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_sync_all = pshmem_sync_all
 #pragma weak shmem_sync_deprecated = pshmem_sync_deprecated
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 void shmem_sync_deprecated(int PE_start, int logPE_stride, int PE_size, long *pSync)
