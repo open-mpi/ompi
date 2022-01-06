@@ -72,9 +72,11 @@ die "Must specify real2, iso_real16, real16, complex4, and complex32"
 
 #############################################################################
 
+my $optional_name_modifier;
 my $optional_ierror_param;
 my $optional_ierror_statement;
 if (lc($ierror_arg) eq "optional") {
+    $optional_name_modifier = "_opt";
     $optional_ierror_param = ", OPTIONAL";
     $optional_ierror_statement = "IF (present(ierror)) ";
 }
@@ -89,7 +91,7 @@ sub queue_sub {
     my ($f_type, $suffix, $import_type) = @_;
 
     # Leave off the MPI/PMI prefix; we'll add that when outputting
-    my $sub_name = "Sizeof_$suffix";
+    my $sub_name = "Sizeof_$suffix$optional_name_modifier";
 
     # Make a hash for this subroutine
     my $subr;
