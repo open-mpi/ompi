@@ -19,6 +19,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -556,28 +558,25 @@ typedef struct mca_btl_base_header_t mca_btl_base_header_t;
  * MCA->BTL Initializes the BTL component and creates specific BTL
  * module(s).
  *
- * @param num_btls (OUT) Returns the number of btl modules created, or 0
- *                       if the transport is not available.
- *
- * @param enable_progress_threads (IN) Whether this component is
- * allowed to run a hidden/progress thread or not.
- *
- * @param enable_mpi_threads (IN) Whether support for multiple MPI
- * threads is enabled or not (i.e., MPI_THREAD_MULTIPLE), which
- * indicates whether multiple threads may invoke this component
- * simultaneously or not.
- *
- * @return Array of pointers to BTL modules, or NULL if the transport
- *         is not available.
- *
  * During component initialization, the BTL component should discover
  * the physical devices that are available for the given transport,
  * and create a BTL module to represent each device. Any addressing
  * information required by peers to reach the device should be published
  * during this function via the modex_send() interface.
  *
+ * @param[OUT] num_btls Returns the number of btl modules created, or 0
+ *                      if the transport is not available.
+ * @param[IN] enable_progress_threads Whether this component is
+ *                      allowed to run a hidden/progress thread or not.
+ * @param[IN] enable_mpi_threads Whether support for multiple MPI
+ *                      threads is enabled or not (i.e.,
+ *                      MPI_THREAD_MULTIPLE), which indicates whether
+ *                      multiple threads may invoke this component
+ *                      simultaneously or not.
+ *
+ * @return Array of pointers to BTL modules, or NULL if the transport
+ *         is not available.
  */
-
 typedef struct mca_btl_base_module_t **(*mca_btl_base_component_init_fn_t)(
     int *num_btls, bool enable_progress_threads, bool enable_mpi_threads);
 
@@ -589,7 +588,6 @@ typedef struct mca_btl_base_module_t **(*mca_btl_base_component_init_fn_t)(
  *                   how many items where completed in the call
  *                   to progress.
  */
-
 typedef int (*mca_btl_base_component_progress_fn_t)(void);
 
 /**
@@ -647,27 +645,19 @@ typedef struct mca_btl_base_component_3_0_0_t mca_btl_base_component_2_0_0_t;
  * MCA->BTL Clean up any resources held by BTL module
  * before the module is unloaded.
  *
- * @param btl (IN)   BTL module.
- * @return           OPAL_SUCCESS or error status on failure.
- *
  * Prior to unloading a BTL module, the MCA framework will call
  * the BTL finalize method of the module. Any resources held by
  * the BTL should be released and if required the memory corresponding
  * to the BTL module freed.
  *
+ * @param[IN] btl    BTL module.
+ *
+ * @return           OPAL_SUCCESS or error status on failure.
  */
 typedef int (*mca_btl_base_module_finalize_fn_t)(struct mca_btl_base_module_t *btl);
 
 /**
  * BML->BTL notification of change in the process list.
- *
- * @param btl (IN)            BTL module
- * @param nprocs (IN)         Number of processes
- * @param procs (IN)          Array of processes
- * @param endpoint (OUT)      Array of mca_btl_base_endpoint_t structures by BTL.
- * @param reachable (OUT)     Bitmask indicating set of peer processes that are reachable by this
- * BTL.
- * @return                    OPAL_SUCCESS or error status on failure.
  *
  * The mca_btl_base_module_add_procs_fn_t() is called by the BML to
  * determine the set of BTLs that should be used to reach each process.
@@ -685,6 +675,14 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(struct mca_btl_base_module_t *b
  * functions (e.g btl_send). This may be used by the BTL to cache any
  * addressing or connection information (e.g. TCP socket, IB queue
  * pair).
+ *
+ * @param[IN] btl             BTL module
+ * @param[IN] nprocs          Number of processes
+ * @param[IN] procs           Array of processes
+ * @param[OUT] endpoint       Array of mca_btl_base_endpoint_t structures by BTL.
+ * @param[OUT] reachable      Bitmask indicating set of peer processes that
+ *                            are reachable by this BTL.
+ * @return                    OPAL_SUCCESS or error status on failure.
  */
 typedef int (*mca_btl_base_module_add_procs_fn_t)(struct mca_btl_base_module_t *btl, size_t nprocs,
                                                   struct opal_proc_t **procs,
@@ -694,15 +692,16 @@ typedef int (*mca_btl_base_module_add_procs_fn_t)(struct mca_btl_base_module_t *
 /**
  * Notification of change to the process list.
  *
- * @param btl (IN)     BTL module
- * @param nprocs (IN)  Number of processes
- * @param proc (IN)    Set of processes
- * @param peer (IN)    Set of peer addressing information.
- * @return             Status indicating if cleanup was successful
- *
  * When the process list changes, the BML notifies the BTL of the
  * change, to provide the opportunity to cleanup or release any
  * resources associated with the peer.
+ *
+ * @param[IN] btl     BTL module
+ * @param[IN] nprocs  Number of processes
+ * @param[IN] proc    Set of processes
+ * @param[IN] peer    Set of peer addressing information.
+ *
+ * @return             Status indicating if cleanup was successful
  */
 typedef int (*mca_btl_base_module_del_procs_fn_t)(struct mca_btl_base_module_t *btl, size_t nprocs,
                                                   struct opal_proc_t **procs,
@@ -718,8 +717,8 @@ typedef int (*mca_btl_base_module_del_procs_fn_t)(struct mca_btl_base_module_t *
  * @param[IN] cbfunc   The callback function
  * @param[IN] cbdata   Opaque callback data
  *
- * @return OPAL_SUCCESS The callback was registered successfully
- * @return OPAL_ERROR   The callback was NOT registered successfully
+ * @retval OPAL_SUCCESS The callback was registered successfully
+ * @retval OPAL_ERROR   The callback was NOT registered successfully
  *
  */
 typedef int (*mca_btl_base_module_register_fn_t)(struct mca_btl_base_module_t *btl,
@@ -736,7 +735,6 @@ typedef int (*mca_btl_base_module_register_fn_t)(struct mca_btl_base_module_t *b
  * @param[IN] errproc process that had an error
  * @param[IN] btlinfo descriptive string from the BTL
  */
-
 typedef void (*mca_btl_base_module_error_cb_fn_t)(struct mca_btl_base_module_t *btl, int32_t flags,
                                                   struct opal_proc_t *errproc, char *btlinfo);
 
@@ -747,8 +745,8 @@ typedef void (*mca_btl_base_module_error_cb_fn_t)(struct mca_btl_base_module_t *
  * @param[IN] btl       BTL module
  * @param[IN] cbfunc    The callback function
  *
- * @return OPAL_SUCCESS The callback was registered successfully
- * @return OPAL_ERROR   The callback was NOT registered successfully
+ * @retval OPAL_SUCCESS The callback was registered successfully
+ * @retval OPAL_ERROR   The callback was NOT registered successfully
  *
  */
 typedef int (*mca_btl_base_module_register_error_fn_t)(struct mca_btl_base_module_t *btl,
@@ -764,10 +762,9 @@ typedef int (*mca_btl_base_module_register_error_fn_t)(struct mca_btl_base_modul
  * local completion callback function called and the order tag of
  * that descriptor is only valid upon the local completion callback function.
  *
- *
- * @param btl (IN)      BTL module
- * @param size (IN)     Request segment size.
- * @param order (IN)    The ordering tag (may be MCA_BTL_NO_ORDER)
+ * @param[IN] btl       BTL module
+ * @param[IN] size      Request segment size.
+ * @param[IN] order     The ordering tag (may be MCA_BTL_NO_ORDER)
  */
 
 typedef mca_btl_base_descriptor_t *(*mca_btl_base_module_alloc_fn_t)(
@@ -779,8 +776,8 @@ typedef mca_btl_base_descriptor_t *(*mca_btl_base_module_alloc_fn_t)(
  * A descriptor can only be deallocated after its local completion
  * callback function has called for all send/put/get operations.
  *
- * @param btl (IN)      BTL module
- * @param segment (IN)  Descriptor allocated from the BTL
+ * @param[IN] btl       BTL module
+ * @param[IN] segment   Descriptor allocated from the BTL
  */
 typedef int (*mca_btl_base_module_free_fn_t)(struct mca_btl_base_module_t *btl,
                                              mca_btl_base_descriptor_t *descriptor);
@@ -798,15 +795,14 @@ typedef int (*mca_btl_base_module_free_fn_t)(struct mca_btl_base_module_t *btl,
  * called and the order tag of that descriptor is only valid upon the local
  * completion callback function.
  *
- * @param btl (IN)          BTL module
- * @param endpoint (IN)     BTL peer addressing
- * @param registration (IN) Memory registration
- * @param convertor (IN)    Data type convertor
- * @param order (IN)        The ordering tag (may be MCA_BTL_NO_ORDER)
- * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
- * @param size (IN/OUT)     Number of bytes to prepare (IN),
+ * @param[IN] btl           BTL module
+ * @param[IN] endpoint      BTL peer addressing
+ * @param[IN] registration  Memory registration
+ * @param[IN] convertor     Data type convertor
+ * @param[IN] order         The ordering tag (may be MCA_BTL_NO_ORDER)
+ * @param[IN] reserve       Additional bytes requested by upper layer to precede user data
+ * @param[IN,OUT] size      Number of bytes to prepare (IN),
  *                          number of bytes actually prepared (OUT)
- *
  */
 typedef struct mca_btl_base_descriptor_t *(*mca_btl_base_module_prepare_fn_t)(
     struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
@@ -815,15 +811,6 @@ typedef struct mca_btl_base_descriptor_t *(*mca_btl_base_module_prepare_fn_t)(
 
 /**
  * @brief Register a memory region for put/get/atomic operations.
- *
- * @param btl (IN)         BTL module
- * @param endpoint(IN)     BTL addressing information (or NULL for all endpoints)
- * @param base (IN)        Pointer to start of region
- * @param size (IN)        Size of region
- * @param flags (IN)       Flags including access permissions
- *
- * @returns a memory registration handle valid for both local and remote operations
- * @returns NULL if the region could not be registered
  *
  * This function registers the specified region with the hardware for use with
  * the btl_put, btl_get, btl_atomic_cas, btl_atomic_op, and btl_atomic_fop
@@ -834,6 +821,15 @@ typedef struct mca_btl_base_descriptor_t *(*mca_btl_base_module_prepare_fn_t)(
  * mca_btl_base_registration_handle_t*) is passed to the caller.  The
  * BTL module cannot free or reuse the handle until it is returned via
  * the mca_btl_base_module_deregister_mem_fn_t function.
+ *
+ * @param[IN] btl          BTL module
+ * @param[IN] endpoint     BTL addressing information (or NULL for all endpoints)
+ * @param[IN] base         Pointer to start of region
+ * @param[IN] size         Size of region
+ * @param[IN] flags        Flags including access permissions
+ *
+ * @returns a memory registration handle valid for both local and
+ * remote operations or NULL if the region could not be registered.
  */
 typedef struct mca_btl_base_registration_handle_t *(*mca_btl_base_module_register_mem_fn_t)(
     struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *base,
@@ -841,9 +837,6 @@ typedef struct mca_btl_base_registration_handle_t *(*mca_btl_base_module_registe
 
 /**
  * @brief Deregister a memory region
- *
- * @param btl (IN)         BTL module region was registered with
- * @param handle (IN)      BTL registration handle to deregister
  *
  * This function deregisters the memory region associated with the specified handle. Care
  * should be taken to not perform any RDMA or atomic operation on this memory region
@@ -854,23 +847,33 @@ typedef struct mca_btl_base_registration_handle_t *(*mca_btl_base_module_registe
  * mca_btl_base_module_register_mem_fn_t function.  Ownership of the
  * memory pointed to by handle passes to the BTL module; this function
  * is now is allowed to free the memory, return it to a freelist, etc.
+ *
+ * @param[IN] btl         BTL module region was registered with
+ * @param[IN] handle      BTL registration handle to deregister
  */
 typedef int (*mca_btl_base_module_deregister_mem_fn_t)(
     struct mca_btl_base_module_t *btl, struct mca_btl_base_registration_handle_t *handle);
 
 /**
  * Initiate an asynchronous send.
- * Completion Semantics: the descriptor has been queued for a send operation
- *                       the BTL now controls the descriptor until local
- *                       completion callback is made on the descriptor
  *
  * All BTLs allow multiple concurrent asynchronous send operations on a descriptor
  *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transfered
- * @param tag (IN)         The tag value used to notify the peer.
+ * Completion Semantics: If OPAL_SUCCESS is returned, the descriptor
+ * has been queued for a send operation the BTL now controls the
+ * descriptor until local completion callback is made on the
+ * descriptor.  If 1 is returned, the descriptor has been sent and the
+ * operation is complete.  The local completion callback will not be
+ * made unless the MCA_BTL_DES_SEND_ALWAYS_CALLBACK flag was set on
+ * the descriptor.
  *
+ * @param[IN] btl          BTL module
+ * @param[IN] endpoint     BTL addressing information
+ * @param[IN] descriptor   Description of the data to be transfered
+ * @param[IN] tag          The tag value used to notify the peer.
+ *
+ * @retval 1               The descriptor was successfully sent (see
+ *                         completion semantics above).
  * @retval OPAL_SUCCESS    The descriptor was successfully queued for a send
  * @retval OPAL_ERROR      The descriptor was NOT successfully queued for a send
  * @retval OPAL_ERR_UNREACH The endpoint is not reachable
@@ -882,23 +885,24 @@ typedef int (*mca_btl_base_module_send_fn_t)(struct mca_btl_base_module_t *btl,
 
 /**
  * Initiate an immediate blocking send.
- * Completion Semantics: the BTL will make a best effort
- *  to send the header and "size" bytes from the datatype using the convertor.
- *  The header is guaranteed to be delivered entirely in the first segment.
- *  Should the BTL be unable to deliver the data due to resource constraints
- *  the BTL will return a descriptor (via the OUT param)
- *  of size "payload_size + header_size".
  *
- * @param btl (IN)             BTL module
- * @param endpoint (IN)        BTL addressing information
- * @param convertor (IN)       Data type convertor
- * @param header (IN)          Pointer to header.
- * @param header_size (IN)     Size of header.
- * @param payload_size (IN)    Size of payload (from convertor).
- * @param order (IN)           The ordering tag (may be MCA_BTL_NO_ORDER)
- * @param flags (IN)           Flags.
- * @param tag (IN)             The tag value used to notify the peer.
- * @param descriptor (OUT)     The descriptor to be returned unable to be sent immediately
+ * Completion Semantics: the BTL will make a best effort to send the
+ * header and "size" bytes from the datatype using the convertor.  The
+ * header is guaranteed to be delivered entirely in the first segment.
+ * Should the BTL be unable to deliver the data due to resource
+ * constraints the BTL will return a descriptor (via the OUT param) of
+ * size "payload_size + header_size".
+ *
+ * @param[IN] btl              BTL module
+ * @param[IN] endpoint         BTL addressing information
+ * @param[IN] convertor        Data type convertor
+ * @param[IN] header           Pointer to header.
+ * @param[IN] header_size      Size of header.
+ * @param[IN] payload_size     Size of payload (from convertor).
+ * @param[IN] order            The ordering tag (may be MCA_BTL_NO_ORDER)
+ * @param[IN] flags            Flags.
+ * @param[IN] tag              The tag value used to notify the peer.
+ * @param[OUT] descriptor      The descriptor to be returned unable to be sent immediately
  *                             (may be NULL).
  *
  * @retval OPAL_SUCCESS           The send was successfully queued
@@ -907,7 +911,6 @@ typedef int (*mca_btl_base_module_send_fn_t)(struct mca_btl_base_module_t *btl,
  * @retval OPAL_ERR_RESOURCE_BUSY The BTL is busy a descriptor will be returned
  *                                (via the OUT param) if descriptors are available
  */
-
 typedef int (*mca_btl_base_module_sendi_fn_t)(struct mca_btl_base_module_t *btl,
                                               struct mca_btl_base_endpoint_t *endpoint,
                                               struct opal_convertor_t *convertor, void *header,
@@ -917,6 +920,7 @@ typedef int (*mca_btl_base_module_sendi_fn_t)(struct mca_btl_base_module_t *btl,
 
 /**
  * Initiate an asynchronous put.
+ *
  * Completion Semantics: if this function returns a 1 then the operation
  *                       is complete. a return of OPAL_SUCCESS indicates
  *                       the put operation has been queued with the
@@ -924,20 +928,20 @@ typedef int (*mca_btl_base_module_sendi_fn_t)(struct mca_btl_base_module_t *btl,
  *                       until all outstanding operations on that handle
  *                       have been completed.
  *
- * @param btl (IN)            BTL module
- * @param endpoint (IN)       BTL addressing information
- * @param local_address (IN)  Local address to put from (registered)
- * @param remote_address (IN) Remote address to put to (registered remotely)
- * @param local_handle (IN)   Registration handle for region containing
+ * @param[IN] btl             BTL module
+ * @param[IN] endpoint        BTL addressing information
+ * @param[IN] local_address   Local address to put from (registered)
+ * @param[IN] remote_address  Remote address to put to (registered remotely)
+ * @param[IN] local_handle    Registration handle for region containing
  *                            (local_address, local_address + size)
- * @param remote_handle (IN)  Remote registration handle for region containing
+ * @param[IN] remote_handle   Remote registration handle for region containing
  *                            (remote_address, remote_address + size)
- * @param size (IN)           Number of bytes to put
- * @param flags (IN)          Flags for this put operation
- * @param order (IN)          Ordering
- * @param cbfunc (IN)         Function to call on completion (if queued)
- * @param cbcontext (IN)      Context for the callback
- * @param cbdata (IN)         Data for callback
+ * @param[IN] size            Number of bytes to put
+ * @param[IN] flags           Flags for this put operation
+ * @param[IN] order           Ordering
+ * @param[IN] cbfunc          Function to call on completion (if queued)
+ * @param[IN] cbcontext       Context for the callback
+ * @param[IN] cbdata          Data for callback
  *
  * @retval OPAL_SUCCESS    The descriptor was successfully queued for a put
  * @retval OPAL_ERROR      The descriptor was NOT successfully queued for a put
@@ -962,20 +966,20 @@ typedef int (*mca_btl_base_module_put_fn_t)(
  *                       until all outstanding operations on that handle
  *                       have been completed.
  *
- * @param btl (IN)            BTL module
- * @param endpoint (IN)       BTL addressing information
- * @param local_address (IN)  Local address to put from (registered)
- * @param remote_address (IN) Remote address to put to (registered remotely)
- * @param local_handle (IN)   Registration handle for region containing
+ * @param[IN] btl             BTL module
+ * @param[IN] endpoint        BTL addressing information
+ * @param[IN] local_address   Local address to put from (registered)
+ * @param[IN] remote_address  Remote address to put to (registered remotely)
+ * @param[IN] local_handle    Registration handle for region containing
  *                            (local_address, local_address + size)
- * @param remote_handle (IN)  Remote registration handle for region containing
+ * @param[IN] remote_handle   Remote registration handle for region containing
  *                            (remote_address, remote_address + size)
- * @param size (IN)           Number of bytes to put
- * @param flags (IN)          Flags for this put operation
- * @param order (IN)          Ordering
- * @param cbfunc (IN)         Function to call on completion (if queued)
- * @param cbcontext (IN)      Context for the callback
- * @param cbdata (IN)         Data for callback
+ * @param[IN] size            Number of bytes to put
+ * @param[IN] flags           Flags for this put operation
+ * @param[IN] order           Ordering
+ * @param[IN] cbfunc          Function to call on completion (if queued)
+ * @param[IN] cbcontext       Context for the callback
+ * @param[IN] cbdata          Data for callback
  *
  * @retval OPAL_SUCCESS    The descriptor was successfully queued for a put
  * @retval OPAL_ERROR      The descriptor was NOT successfully queued for a put
@@ -998,18 +1002,24 @@ typedef int (*mca_btl_base_module_get_fn_t)(
  *                       the atomic operation has been queued with the
  *                       network.
  *
- * @param btl (IN)            BTL module
- * @param endpoint (IN)       BTL addressing information
- * @param remote_address (IN) Remote address to put to (registered remotely)
- * @param remote_handle (IN)  Remote registration handle for region containing
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with (*remote_address) = (*remote_address) op operand.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu or other btl atomics.
+ *
+ * @param[IN] btl             BTL module
+ * @param[IN] endpoint        BTL addressing information
+ * @param[IN] remote_address  Remote address to put to (registered remotely)
+ * @param[IN] remote_handle   Remote registration handle for region containing
  *                            (remote_address, remote_address + 8)
- * @param op (IN)             Operation to perform
- * @param operand (IN)        Operand for the operation
- * @param flags (IN)          Flags for this atomic operation
- * @param order (IN)          Ordering
- * @param cbfunc (IN)         Function to call on completion (if queued)
- * @param cbcontext (IN)      Context for the callback
- * @param cbdata (IN)         Data for callback
+ * @param[IN] op              Operation to perform
+ * @param[IN] operand         Operand for the operation
+ * @param[IN] flags           Flags for this atomic operation
+ * @param[IN] order           Ordering
+ * @param[IN] cbfunc          Function to call on completion (if queued)
+ * @param[IN] cbcontext       Context for the callback
+ * @param[IN] cbdata          Data for callback
  *
  * @retval OPAL_SUCCESS    The operation was successfully queued
  * @retval 1               The operation is complete
@@ -1019,12 +1029,6 @@ typedef int (*mca_btl_base_module_get_fn_t)(
  * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
  *                         alignment restrictions or the operation {op} is not supported
  *                         by the hardware.
- *
- * After the operation is complete the remote address specified by {remote_address} and
- * {remote_handle} will be updated with (*remote_address) = (*remote_address) op operand.
- * The btl will guarantee consistency of atomic operations performed via the btl. Note,
- * however, that not all btls will provide consistency between btl atomic operations and
- * cpu or other btl atomics.
  */
 typedef int (*mca_btl_base_module_atomic_op64_fn_t)(
     struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
@@ -1039,21 +1043,28 @@ typedef int (*mca_btl_base_module_atomic_op64_fn_t)(
  *                       the atomic operation has been queued with the
  *                       network.
  *
- * @param btl (IN)            BTL module
- * @param endpoint (IN)       BTL addressing information
- * @param local_address (OUT) Local address to store the result in
- * @param remote_address (IN) Remote address perfom operation on to (registered remotely)
- * @param local_handle (IN)   Local registration handle for region containing
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with (*remote_address) = (*remote_address) op operand.
+ * {local_address} will be updated with the previous value stored in {remote_address}.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu or other btl atomics.
+ *
+ * @param[IN] btl             BTL module
+ * @param[IN] endpoint        BTL addressing information
+ * @param[IN] local_address (OUT) Local address to store the result in
+ * @param[IN] remote_address  Remote address perfom operation on to (registered remotely)
+ * @param[IN] local_handle    Local registration handle for region containing
  *                            (local_address, local_address + 8)
- * @param remote_handle (IN)  Remote registration handle for region containing
+ * @param[IN] remote_handle   Remote registration handle for region containing
  *                            (remote_address, remote_address + 8)
- * @param op (IN)             Operation to perform
- * @param operand (IN)        Operand for the operation
- * @param flags (IN)          Flags for this atomic operation
- * @param order (IN)          Ordering
- * @param cbfunc (IN)         Function to call on completion (if queued)
- * @param cbcontext (IN)      Context for the callback
- * @param cbdata (IN)         Data for callback
+ * @param[IN] op              Operation to perform
+ * @param[IN] operand         Operand for the operation
+ * @param[IN] flags           Flags for this atomic operation
+ * @param[IN] order           Ordering
+ * @param[IN] cbfunc          Function to call on completion (if queued)
+ * @param[IN] cbcontext       Context for the callback
+ * @param[IN] cbdata          Data for callback
  *
  * @retval OPAL_SUCCESS    The operation was successfully queued
  * @retval 1               The operation is complete
@@ -1063,13 +1074,6 @@ typedef int (*mca_btl_base_module_atomic_op64_fn_t)(
  * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
  *                         alignment restrictions or the operation {op} is not supported
  *                         by the hardware.
- *
- * After the operation is complete the remote address specified by {remote_address} and
- * {remote_handle} will be updated with (*remote_address) = (*remote_address) op operand.
- * {local_address} will be updated with the previous value stored in {remote_address}.
- * The btl will guarantee consistency of atomic operations performed via the btl. Note,
- * however, that not all btls will provide consistency between btl atomic operations and
- * cpu or other btl atomics.
  */
 typedef int (*mca_btl_base_module_atomic_fop64_fn_t)(
     struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
@@ -1086,21 +1090,28 @@ typedef int (*mca_btl_base_module_atomic_fop64_fn_t)(
  *                       the atomic operation has been queued with the
  *                       network.
  *
- * @param btl (IN)            BTL module
- * @param endpoint (IN)       BTL addressing information
- * @param local_address (OUT) Local address to store the result in
- * @param remote_address (IN) Remote address perfom operation on to (registered remotely)
- * @param local_handle (IN)   Local registration handle for region containing
+ * After the operation is complete the remote address specified by {remote_address} and
+ * {remote_handle} will be updated with {value} if *remote_address == compare.
+ * {local_address} will be updated with the previous value stored in {remote_address}.
+ * The btl will guarantee consistency of atomic operations performed via the btl. Note,
+ * however, that not all btls will provide consistency between btl atomic operations and
+ * cpu atomics.
+ *
+ * @param[IN] btl             BTL module
+ * @param[IN] endpoint        BTL addressing information
+ * @param[OUT] local_address  Local address to store the result in
+ * @param[IN] remote_address  Remote address perfom operation on to (registered remotely)
+ * @param[IN] local_handle    Local registration handle for region containing
  *                            (local_address, local_address + 8)
- * @param remote_handle (IN)  Remote registration handle for region containing
+ * @param[IN] remote_handle   Remote registration handle for region containing
  *                            (remote_address, remote_address + 8)
- * @param compare (IN)        Operand for the operation
- * @param value (IN)          Value to store on success
- * @param flags (IN)          Flags for this atomic operation
- * @param order (IN)          Ordering
- * @param cbfunc (IN)         Function to call on completion (if queued)
- * @param cbcontext (IN)      Context for the callback
- * @param cbdata (IN)         Data for callback
+ * @param[IN] compare         Operand for the operation
+ * @param[IN] value           Value to store on success
+ * @param[IN] flags           Flags for this atomic operation
+ * @param[IN] order           Ordering
+ * @param[IN] cbfunc          Function to call on completion (if queued)
+ * @param[IN] cbcontext       Context for the callback
+ * @param[IN] cbdata          Data for callback
  *
  * @retval OPAL_SUCCESS    The operation was successfully queued
  * @retval 1               The operation is complete
@@ -1110,13 +1121,6 @@ typedef int (*mca_btl_base_module_atomic_fop64_fn_t)(
  * @retval OPAL_ERR_NOT_AVAILABLE  Atomic operation can not be performed due to
  *                         alignment restrictions or the operation {op} is not supported
  *                         by the hardware.
- *
- * After the operation is complete the remote address specified by {remote_address} and
- * {remote_handle} will be updated with {value} if *remote_address == compare.
- * {local_address} will be updated with the previous value stored in {remote_address}.
- * The btl will guarantee consistency of atomic operations performed via the btl. Note,
- * however, that not all btls will provide consistency between btl atomic operations and
- * cpu atomics.
  */
 typedef int (*mca_btl_base_module_atomic_cswap64_fn_t)(
     struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
@@ -1128,9 +1132,9 @@ typedef int (*mca_btl_base_module_atomic_cswap64_fn_t)(
 /**
  * Diagnostic dump of btl state.
  *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL endpoint
- * @param verbose (IN)     Verbosity level
+ * @param[IN] btl          BTL module
+ * @param[IN] endpoint     BTL endpoint
+ * @param[IN] verbose      Verbosity level
  */
 
 typedef void (*mca_btl_base_module_dump_fn_t)(struct mca_btl_base_module_t *btl,
@@ -1140,8 +1144,8 @@ typedef void (*mca_btl_base_module_dump_fn_t)(struct mca_btl_base_module_t *btl,
 /**
  * Flush all outstanding RDMA operations on an endpoint or all endpoints.
  *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    Endpoint to flush (NULL == all)
+ * @param[IN] btl          BTL module
+ * @param[IN] endpoint     Endpoint to flush (NULL == all)
  *
  * This function returns when all outstanding RDMA (put, get, atomic) operations
  * that were started prior to the flush call have completed. This call does
