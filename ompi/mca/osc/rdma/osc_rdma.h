@@ -16,6 +16,8 @@
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -107,9 +109,6 @@ struct ompi_osc_rdma_component_t {
 
     /** Priority of the osc/rdma component */
     unsigned int priority;
-
-    /** Priority of the osc/rdma component when using non-RDMA BTLs */
-    unsigned int alternate_priority;
 
     /** directory where to place backing files */
     char *backing_directory;
