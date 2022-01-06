@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -48,6 +48,7 @@ headers = \
 	bipartite_graph.h \
 	bipartite_graph_internal.h \
         bit_ops.h \
+        clock_gettime.h \
         cmd_line.h \
         crc.h \
         daemon_init.h \
