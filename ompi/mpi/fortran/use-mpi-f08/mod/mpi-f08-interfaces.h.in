@@ -812,7 +812,7 @@ end interface  MPI_Type_get_extent
 
 interface  MPI_Type_get_extent_x
 subroutine MPI_Type_get_extent_x_f08(datatype,lb,extent,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_COUNT_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: lb, extent
@@ -832,7 +832,7 @@ end interface  MPI_Type_get_true_extent
 
 interface  MPI_Type_get_true_extent_x
 subroutine MPI_Type_get_true_extent_x_f08(datatype,true_lb,true_extent,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_COUNT_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_COUNT_KIND), INTENT(OUT) :: true_lb, true_extent
@@ -2587,7 +2587,7 @@ end interface  MPI_Graph_neighbors_count
 
 interface  MPI_Topo_test
 subroutine MPI_Topo_test_f08(comm,status,ierror)
-   use :: mpi_f08_types, only : MPI_Comm, MPI_Status
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: status
@@ -3294,7 +3294,7 @@ end interface  MPI_Compare_and_swap
 
 interface  MPI_Win_complete
 subroutine MPI_Win_complete_f08(win,ierror)
-   use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3341,7 +3341,7 @@ end interface  MPI_Win_attach
 
 interface  MPI_Win_detach
 subroutine MPI_Win_detach_f08(win,base,ierror)
-   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
    @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: base
@@ -3437,7 +3437,7 @@ end interface  MPI_Win_start
 
 interface  MPI_Win_sync
 subroutine MPI_Win_sync_f08(win,ierror)
-   use :: mpi_f08_types, only : MPI_Group, MPI_Win
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
