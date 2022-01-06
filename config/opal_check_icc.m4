@@ -25,7 +25,7 @@ dnl On EM64T, icc-8.1 before version 8.1.027 segfaulted, since
 dnl va_start was miscompiled...
 dnl
 AC_MSG_CHECKING([whether icc-8.1 for EM64T works with variable arguments])
-AC_RUN_IFELSE([AC_LANG_PROGRAM([
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,18 +36,12 @@ void func (int c, char * f, ...)
   va_start (arglist, f);
   /* vprintf (f, arglist); */
   va_end (arglist);
-}
-
-int main ()
-{
+}]],[[
   FILE *f;
   func (4711, "Help %d [%s]\n", 10, "ten");
   f=fopen ("conftestval", "w");
   if (!f) exit (1);
-  return 0;
-}
-
-])],[opal_ac_icc_varargs=`test -f conftestval`],[opal_ac_icc_varargs=1],[opal_ac_icc_varargs=1])
+]])],[opal_ac_icc_varargs=`test -f conftestval`],[opal_ac_icc_varargs=1],[opal_ac_icc_varargs=1])
 
 if test "$opal_ac_icc_varargs" = "1"; then
     AC_MSG_WARN([*** Problem running configure test!])
