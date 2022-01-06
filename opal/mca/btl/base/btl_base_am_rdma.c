@@ -15,19 +15,25 @@
 
 #include "opal_config.h"
 
+#include <assert.h>
+
 #include "opal/mca/btl/base/btl_base_am_rdma.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/minmax.h"
 
+
 /**
- * @brief data for active-message atomics
+ * @brief global data for active message wrapper
  *
- * There is currently only one module but it is defined to allow
- * moving the data pointer into the associated BTL module.
+ * While individual entries in queued_responses and
+ * queued_initiator_descriptors are module-specific (ie, per BTL
+ * module), they are progressed in a common progress function.  It is
+ * much more efficient to have one list of work to do, rather than
+ * having to poll through all active btls to find the work to do.
  */
-struct am_rdma_module_t {
+struct am_rdma_component_t {
     opal_object_t super;
     /** provides protection for multi-threaded access to module members */
     opal_mutex_t mutex;
@@ -36,26 +42,79 @@ struct am_rdma_module_t {
     /** queued initiator descriptors */
     opal_list_t queued_initiator_descriptors;
 };
-typedef struct am_rdma_module_t am_rdma_module_t;
+typedef struct am_rdma_component_t am_rdma_component_t;
 
-static void am_rdma_module_init(am_rdma_module_t *module)
+static am_rdma_component_t default_component;
+
+static void am_rdma_component_init(am_rdma_component_t *component)
 {
-    OBJ_CONSTRUCT(&module->mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&module->queued_responses, opal_list_t);
-    OBJ_CONSTRUCT(&module->queued_initiator_descriptors, opal_list_t);
+    OBJ_CONSTRUCT(&component->mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&component->queued_responses, opal_list_t);
+    OBJ_CONSTRUCT(&component->queued_initiator_descriptors, opal_list_t);
 }
 
-static void am_rdma_module_fini(am_rdma_module_t *module)
+static void am_rdma_component_fini(am_rdma_component_t *component)
 {
-    OBJ_DESTRUCT(&module->mutex);
-    OBJ_DESTRUCT(&module->queued_responses);
-    OBJ_DESTRUCT(&module->queued_initiator_descriptors);
+    OBJ_DESTRUCT(&component->mutex);
+    OBJ_DESTRUCT(&component->queued_responses);
+    OBJ_DESTRUCT(&component->queued_initiator_descriptors);
 }
 
-static OBJ_CLASS_INSTANCE(am_rdma_module_t, opal_object_t,
-                          am_rdma_module_init, am_rdma_module_fini);
+static OBJ_CLASS_INSTANCE(am_rdma_component_t, opal_object_t,
+                          am_rdma_component_init, am_rdma_component_fini);
 
-static am_rdma_module_t default_module;
+
+struct mca_btl_base_am_rdma_module_t;
+
+typedef int (*mca_btl_base_am_rdma_module_put_fn_t)(
+    struct mca_btl_base_am_rdma_module_t *am_btl, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags, int order,
+    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+typedef int (*mca_btl_base_am_rdma_module_get_fn_t)(
+    struct mca_btl_base_am_rdma_module_t *am_btl, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags, int order,
+    mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+typedef int (*mca_btl_base_am_rdma_module_atomic_fop64_fn_t)(
+    struct mca_btl_base_am_rdma_module_t *am_btl, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, mca_btl_base_atomic_op_t op,
+    uint64_t operand, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+    void *cbcontext, void *cbdata);
+
+typedef int (*mca_btl_base_am_rdma_module_atomic_cswap64_fn_t)(
+    struct mca_btl_base_am_rdma_module_t *am_btl, struct mca_btl_base_endpoint_t *endpoint,
+    void *local_address, uint64_t remote_address,
+    struct mca_btl_base_registration_handle_t *local_handle,
+    struct mca_btl_base_registration_handle_t *remote_handle, uint64_t compare, uint64_t value,
+    int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata);
+
+struct mca_btl_base_am_rdma_module_t {
+    opal_object_t super;
+    mca_btl_base_module_t *btl;
+    bool use_rdma_put;
+    bool use_rdma_get;
+
+    size_t am_btl_put_limit;
+    size_t am_btl_put_alignment;
+    size_t am_btl_get_limit;
+    size_t am_btl_get_alignment;
+
+    mca_btl_base_am_rdma_module_put_fn_t am_btl_put;
+    mca_btl_base_am_rdma_module_get_fn_t am_btl_get;
+    mca_btl_base_am_rdma_module_atomic_fop64_fn_t am_btl_atomic_fop;
+    mca_btl_base_am_rdma_module_atomic_cswap64_fn_t am_btl_atomic_cswap;
+};
+typedef struct mca_btl_base_am_rdma_module_t mca_btl_base_am_rdma_module_t;
+
+static OBJ_CLASS_INSTANCE(mca_btl_base_am_rdma_module_t, opal_object_t,
+                          NULL, NULL);
 
 
 /**
@@ -138,7 +197,7 @@ static OBJ_CLASS_INSTANCE(am_rdma_context_t, opal_object_t,
  */
 struct am_rdma_queued_descriptor_t {
     opal_list_item_t super;
-    mca_btl_base_module_t *btl;
+    mca_btl_base_am_rdma_module_t *am_module;
     struct mca_btl_base_endpoint_t *endpoint;
     mca_btl_base_descriptor_t *descriptor;
 };
@@ -223,36 +282,26 @@ typedef struct am_rdma_operation_t am_rdma_operation_t;
 static OBJ_CLASS_INSTANCE(am_rdma_operation_t, opal_list_item_t, NULL, NULL);
 
 
-static inline bool am_rdma_use_rdma_get(mca_btl_base_module_t *btl)
-{
-    return !!(btl->btl_flags & MCA_BTL_FLAGS_GET);
-}
-
-
-static inline bool am_rdma_use_rdma_put(mca_btl_base_module_t *btl)
-{
-    return !!(btl->btl_flags & MCA_BTL_FLAGS_PUT);
-}
-
-
 static inline bool am_rdma_is_atomic(am_rdma_type_t type)
 {
     return (MCA_BTL_BASE_AM_PUT != type && MCA_BTL_BASE_AM_GET != type);
 }
 
 
-static inline size_t am_rdma_operation_size(mca_btl_base_module_t *btl,
+static inline size_t am_rdma_operation_size(mca_btl_base_am_rdma_module_t *am_module,
                                             am_rdma_type_t type,
                                             size_t remaining)
 {
+    mca_btl_base_module_t *btl = am_module->btl;
+
     switch (type) {
     case MCA_BTL_BASE_AM_PUT:
-        if (am_rdma_use_rdma_get(btl)) {
+        if (am_module->use_rdma_get) {
             return opal_min(remaining, btl->btl_get_limit);
         }
         break;
     case MCA_BTL_BASE_AM_GET:
-        if (am_rdma_use_rdma_put(btl)) {
+        if (am_module->use_rdma_put) {
             return opal_min(remaining, btl->btl_put_limit);
         }
         break;
@@ -357,28 +406,28 @@ static void am_rdma_copy_to_segments(uint64_t addr, size_t max_len, size_t skip_
 }
 
 
-static void am_rdma_queue_initiator_descriptor(mca_btl_base_module_t *btl,
+static void am_rdma_queue_initiator_descriptor(mca_btl_base_am_rdma_module_t *am_module,
                                                struct mca_btl_base_endpoint_t *endpoint,
                                                mca_btl_base_descriptor_t *descriptor)
 {
-    am_rdma_queued_descriptor_t *queued_descriptor = OBJ_NEW(
-        am_rdma_queued_descriptor_t);
+    am_rdma_queued_descriptor_t *queued_descriptor = OBJ_NEW(am_rdma_queued_descriptor_t);
 
-    queued_descriptor->btl = btl;
+    queued_descriptor->am_module = am_module;
     queued_descriptor->endpoint = endpoint;
     queued_descriptor->descriptor = descriptor;
 
-    OPAL_THREAD_SCOPED_LOCK(&default_module.mutex,
-                            opal_list_append(&default_module.queued_initiator_descriptors,
+    OPAL_THREAD_SCOPED_LOCK(&default_component.mutex,
+                            opal_list_append(&default_component.queued_initiator_descriptors,
                                              &queued_descriptor->super));
 }
 
 
-static inline int am_rdma_advance(mca_btl_base_module_t *btl,
+static inline int am_rdma_advance(mca_btl_base_am_rdma_module_t *am_module,
                                   struct mca_btl_base_endpoint_t *endpoint,
                                   am_rdma_context_t *context,
                                   bool send_descriptor)
 {
+    mca_btl_base_module_t *btl = am_module->btl;
     int ret;
     const size_t remaining = context->total_size - context->sent;
 
@@ -397,7 +446,7 @@ static inline int am_rdma_advance(mca_btl_base_module_t *btl,
     mca_btl_base_descriptor_t *descriptor = context->descriptor;
     am_rdma_hdr_t *hdr = (am_rdma_hdr_t *) descriptor->des_segments[0]
                                        .seg_addr.pval;
-    const size_t packet_size = am_rdma_operation_size(btl, hdr->type, remaining);
+    const size_t packet_size = am_rdma_operation_size(am_module, hdr->type, remaining);
 
     if (!am_rdma_is_atomic(hdr->type)) {
         hdr->data.rdma.size = packet_size;
@@ -426,7 +475,7 @@ static inline int am_rdma_advance(mca_btl_base_module_t *btl,
     }
 
     /* queue for later to avoid btl_send in callback */
-    am_rdma_queue_initiator_descriptor(btl, endpoint, descriptor);
+    am_rdma_queue_initiator_descriptor(am_module, endpoint, descriptor);
 
     return OPAL_SUCCESS;
 }
@@ -436,19 +485,22 @@ static void am_rdma_descriptor_complete(mca_btl_base_module_t *btl,
                                         struct mca_btl_base_endpoint_t *endpoint,
                                         mca_btl_base_descriptor_t *descriptor, int status)
 {
-    (void) am_rdma_advance(btl, endpoint,
+    mca_btl_base_am_rdma_module_t *am_module = (mca_btl_base_am_rdma_module_t *)descriptor->des_cbdata;
+
+    (void) am_rdma_advance(am_module, endpoint,
                            (am_rdma_context_t *) descriptor->des_context,
                            /*send_descriptor=*/false);
 }
 
-static inline int
-am_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                        int type, uint64_t operand1, uint64_t operand2, mca_btl_base_atomic_op_t op,
-                        int order, int flags, size_t size, void *local_address,
-                        mca_btl_base_registration_handle_t *local_handle, int64_t remote_address,
-                        mca_btl_base_registration_handle_t *remote_handle,
-                        mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
+
+static inline int am_rdma_start(mca_btl_base_am_rdma_module_t *am_module, struct mca_btl_base_endpoint_t *endpoint,
+                                int type, uint64_t operand1, uint64_t operand2, mca_btl_base_atomic_op_t op,
+                                int order, int flags, size_t size, void *local_address,
+                                mca_btl_base_registration_handle_t *local_handle, int64_t remote_address,
+                                mca_btl_base_registration_handle_t *remote_handle,
+                                mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
 {
+    mca_btl_base_module_t *btl = am_module->btl;
     am_rdma_hdr_t *hdr;
     size_t packet_size = sizeof(*hdr);
     mca_btl_base_descriptor_t *descriptor;
@@ -473,13 +525,13 @@ am_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoi
         if (sizeof(*hdr) + size <= btl->btl_eager_limit) {
             /* just go ahead and send the data */
             packet_size += size;
-        } else if (!am_rdma_use_rdma_get (btl)) {
+        } else if (!am_module->use_rdma_get) {
             packet_size += opal_min (size, btl->btl_max_send_size - sizeof (*hdr));
         } else {
             use_rdma = true;
         }
     } else if (MCA_BTL_BASE_AM_GET == type) {
-        if (!am_rdma_use_rdma_put(btl)) {
+        if (!am_module->use_rdma_put) {
             packet_size += opal_min(size, btl->btl_max_send_size - sizeof(*hdr));
         } else {
             use_rdma = true;
@@ -511,7 +563,7 @@ am_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoi
     OBJ_RETAIN(context);
 
     descriptor->des_cbfunc = am_rdma_descriptor_complete;
-    descriptor->des_cbdata = local_handle;
+    descriptor->des_cbdata = am_module;
     descriptor->des_context = context;
 
     hdr = (am_rdma_hdr_t *) descriptor->des_segments[0].seg_addr.pval;
@@ -534,7 +586,7 @@ am_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoi
         memcpy(handle_buffer, remote_handle, btl->btl_registration_handle_size);
     }
 
-    return am_rdma_advance(btl, endpoint, context, /*send_descriptor=*/true);
+    return am_rdma_advance(am_module, endpoint, context, /*send_descriptor=*/true);
 }
 
 
@@ -586,8 +638,8 @@ static void am_rdma_queue_operation(mca_btl_base_module_t *btl,
 
     operation->is_queued = true;
     operation->atomic_response = atomic_response;
-    OPAL_THREAD_SCOPED_LOCK(&default_module.mutex,
-                            opal_list_append(&default_module.queued_responses, &operation->super));
+    OPAL_THREAD_SCOPED_LOCK(&default_component.mutex,
+                            opal_list_append(&default_component.queued_responses, &operation->super));
 }
 
 
@@ -780,7 +832,7 @@ static void am_rdma_retry_operation(am_rdma_operation_t *operation)
 
     if (OPAL_SUCCESS == ret) {
         if (operation->is_queued) {
-            opal_list_remove_item(&default_module.queued_responses, &operation->super);
+            opal_list_remove_item(&default_component.queued_responses, &operation->super);
         }
 
         OBJ_RELEASE(operation);
@@ -790,8 +842,8 @@ static void am_rdma_retry_operation(am_rdma_operation_t *operation)
 
 static int am_rdma_progress(void)
 {
-    if (0 == opal_list_get_size(&default_module.queued_responses)
-        && 0 == opal_list_get_size(&default_module.queued_initiator_descriptors)) {
+    if (0 == opal_list_get_size(&default_component.queued_responses)
+        && 0 == opal_list_get_size(&default_component.queued_initiator_descriptors)) {
         return 0;
     }
 
@@ -802,33 +854,33 @@ static int am_rdma_progress(void)
 #define ACTION1                                                         \
     am_rdma_operation_t *operation, *next;                              \
     OPAL_LIST_FOREACH_SAFE(operation, next,                             \
-                           &default_module.queued_responses,            \
+                           &default_component.queued_responses,         \
                            am_rdma_operation_t) {                       \
         am_rdma_retry_operation(operation);                             \
     }
 
-    OPAL_THREAD_SCOPED_LOCK(&default_module.mutex, ACTION1);
+    OPAL_THREAD_SCOPED_LOCK(&default_component.mutex, ACTION1);
 
 #define ACTION2                                                         \
     am_rdma_queued_descriptor_t *descriptor, *next;                     \
     OPAL_LIST_FOREACH_SAFE(descriptor, next,                            \
-                           &default_module.queued_initiator_descriptors, \
+                           &default_component.queued_initiator_descriptors, \
                            am_rdma_queued_descriptor_t) {               \
         am_rdma_context_t *context =                                    \
-            (am_rdma_context_t *)                                       \
-            descriptor->descriptor->des_context;                        \
+            (am_rdma_context_t *) descriptor->descriptor->des_context;  \
+        mca_btl_base_module_t *btl = descriptor->am_module->btl;        \
         assert(0 != (descriptor->descriptor->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)); \
-        int ret = descriptor->btl->btl_send(descriptor->btl,            \
-                                            descriptor->endpoint,       \
-                                            descriptor->descriptor,     \
-                                            am_rdma_tag(context->type)); \
+        int ret = btl->btl_send(btl,                                    \
+                                descriptor->endpoint,                   \
+                                descriptor->descriptor,                 \
+                                am_rdma_tag(context->type));            \
         if (OPAL_SUCCESS == ret || 1 == ret) {                          \
-            opal_list_remove_item(&default_module.queued_initiator_descriptors, \
+            opal_list_remove_item(&default_component.queued_initiator_descriptors, \
                                   &descriptor->super);                  \
         }                                                               \
     }
 
-    OPAL_THREAD_SCOPED_LOCK(&default_module.mutex, ACTION2);
+    OPAL_THREAD_SCOPED_LOCK(&default_component.mutex, ACTION2);
 
     return 0;
 }
@@ -1051,6 +1103,147 @@ static void am_rdma_process_atomic(mca_btl_base_module_t *btl,
 }
 
 
+static int am_rdma_put(mca_btl_base_am_rdma_module_t *am_module,
+                       struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                       uint64_t remote_address,
+                       struct mca_btl_base_registration_handle_t *local_handle,
+                       struct mca_btl_base_registration_handle_t *remote_handle,
+                       size_t size, int flags, int order,
+                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                       void *cbdata)
+{
+    return am_rdma_start(am_module, endpoint, MCA_BTL_BASE_AM_PUT, 0, 0, 0, order, flags, size,
+                         local_address, local_handle, remote_address, remote_handle,
+                         cbfunc, cbcontext, cbdata);
+}
+
+
+static int am_rdma_get(mca_btl_base_am_rdma_module_t *am_module,
+                       struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                       uint64_t remote_address,
+                       struct mca_btl_base_registration_handle_t *local_handle,
+                       struct mca_btl_base_registration_handle_t *remote_handle,
+                       size_t size, int flags, int order,
+                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                       void *cbdata)
+{
+    return am_rdma_start(am_module, endpoint, MCA_BTL_BASE_AM_GET, 0, 0, 0, order, flags, size,
+                         local_address, local_handle, remote_address, remote_handle,
+                         cbfunc, cbcontext, cbdata);
+}
+
+
+static int am_rdma_fop(mca_btl_base_am_rdma_module_t *am_module,
+                       struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                       uint64_t remote_address,
+                       mca_btl_base_registration_handle_t *local_handle,
+                       mca_btl_base_registration_handle_t *remote_handle,
+                       mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                       void *cbdata)
+{
+    size_t size = (flags & MCA_BTL_ATOMIC_FLAG_32BIT) ? 4 : 8;
+
+    return am_rdma_start(am_module, endpoint, MCA_BTL_BASE_AM_ATOMIC, operand, 0, op, order,
+                         flags, size, local_address, local_handle, remote_address,
+                         remote_handle, cbfunc, cbcontext, cbdata);
+}
+
+
+static int am_rdma_cswap(mca_btl_base_am_rdma_module_t *am_module,
+                         struct mca_btl_base_endpoint_t *endpoint,
+                         void *local_address, uint64_t remote_address,
+                         mca_btl_base_registration_handle_t *local_handle,
+                         mca_btl_base_registration_handle_t *remote_handle,
+                         uint64_t compare, uint64_t value, int flags, int order,
+                         mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                         void *cbdata)
+{
+    size_t size = (flags & MCA_BTL_ATOMIC_FLAG_32BIT) ? 4 : 8;
+
+    return am_rdma_start(am_module, endpoint, MCA_BTL_BASE_AM_CAS, compare, value, 0, order,
+                         flags, size, local_address, local_handle, remote_address,
+                         remote_handle, cbfunc, cbcontext, cbdata);
+}
+
+
+static mca_btl_base_am_rdma_module_t *am_rdma_get_module(struct mca_btl_base_module_t *btl)
+{
+    assert(NULL != btl->btl_am_data);
+    return (mca_btl_base_am_rdma_module_t *)btl->btl_am_data;
+}
+
+
+static int am_rdma_put_wrapper(struct mca_btl_base_module_t *btl,
+                               struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                               uint64_t remote_address,
+                               struct mca_btl_base_registration_handle_t *local_handle,
+                               struct mca_btl_base_registration_handle_t *remote_handle,
+                               size_t size, int flags, int order,
+                               mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                               void *cbdata)
+{
+    mca_btl_base_am_rdma_module_t *am_module = am_rdma_get_module(btl);
+
+    return am_rdma_start(am_module, endpoint, MCA_BTL_BASE_AM_PUT, 0, 0, 0, order, flags, size,
+                         local_address, local_handle, remote_address, remote_handle,
+                         cbfunc, cbcontext, cbdata);
+}
+
+
+static int am_rdma_get_wrapper(struct mca_btl_base_module_t *btl,
+                               struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                               uint64_t remote_address,
+                               struct mca_btl_base_registration_handle_t *local_handle,
+                               struct mca_btl_base_registration_handle_t *remote_handle,
+                               size_t size, int flags, int order,
+                               mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                               void *cbdata)
+{
+    mca_btl_base_am_rdma_module_t *am_module = am_rdma_get_module(btl);
+
+    return am_rdma_start(am_module, endpoint, MCA_BTL_BASE_AM_GET, 0, 0, 0, order, flags, size,
+                         local_address, local_handle, remote_address, remote_handle,
+                         cbfunc, cbcontext, cbdata);
+}
+
+
+static int am_rdma_fop_wrapper(struct mca_btl_base_module_t *btl,
+                               struct mca_btl_base_endpoint_t *endpoint, void *local_address,
+                               uint64_t remote_address,
+                               mca_btl_base_registration_handle_t *local_handle,
+                               mca_btl_base_registration_handle_t *remote_handle,
+                               mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
+                               mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                               void *cbdata)
+{
+    mca_btl_base_am_rdma_module_t *am_module = am_rdma_get_module(btl);
+    size_t size = (flags & MCA_BTL_ATOMIC_FLAG_32BIT) ? 4 : 8;
+
+    return am_rdma_start(am_module, endpoint, MCA_BTL_BASE_AM_ATOMIC, operand, 0, op, order,
+                         flags, size, local_address, local_handle, remote_address,
+                         remote_handle, cbfunc, cbcontext, cbdata);
+}
+
+
+static int am_rdma_cswap_wrapper(struct mca_btl_base_module_t *btl,
+                                 struct mca_btl_base_endpoint_t *endpoint,
+                                 void *local_address, uint64_t remote_address,
+                                 mca_btl_base_registration_handle_t *local_handle,
+                                 mca_btl_base_registration_handle_t *remote_handle,
+                                 uint64_t compare, uint64_t value, int flags, int order,
+                                 mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
+                                 void *cbdata)
+{
+    mca_btl_base_am_rdma_module_t *am_module = am_rdma_get_module(btl);
+    size_t size = (flags & MCA_BTL_ATOMIC_FLAG_32BIT) ? 4 : 8;
+
+    return am_rdma_start(am_module, endpoint, MCA_BTL_BASE_AM_CAS, compare, value, 0, order,
+                         flags, size, local_address, local_handle, remote_address,
+                         remote_handle, cbfunc, cbcontext, cbdata);
+}
+
+
 static void am_rdma_register_callbacks(void)
 {
     mca_btl_base_active_message_trigger[MCA_BTL_BASE_TAG_RDMA].cbfunc
@@ -1062,88 +1255,119 @@ static void am_rdma_register_callbacks(void)
 }
 
 
-static int am_rdma_put(struct mca_btl_base_module_t *btl,
-                       struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-                       uint64_t remote_address,
-                       struct mca_btl_base_registration_handle_t *local_handle,
-                       struct mca_btl_base_registration_handle_t *remote_handle,
-                       size_t size, int flags, int order,
-                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                       void *cbdata)
+static int am_rdma_internal_init(mca_btl_base_module_t *btl,
+                                 mca_btl_base_am_rdma_module_t **new_module)
 {
-    return am_rdma_start(btl, endpoint, MCA_BTL_BASE_AM_PUT, 0, 0, 0, order, flags, size,
-                         local_address, local_handle, remote_address, remote_handle,
-                         cbfunc, cbcontext, cbdata);
+    static bool initialized = false;
+    static opal_mutex_t initialized_mutex = OPAL_MUTEX_STATIC_INIT;
+    mca_btl_base_am_rdma_module_t *module;
+    size_t max_operation_size;
+    size_t operation_alignment;
+
+    opal_mutex_lock(&initialized_mutex);
+    if (!initialized) {
+        initialized = true;
+        OBJ_CONSTRUCT(&default_component, am_rdma_component_t);
+        opal_progress_register(am_rdma_progress);
+        am_rdma_register_callbacks();
+    }
+    opal_mutex_unlock(&initialized_mutex);
+
+    module = OBJ_NEW(mca_btl_base_am_rdma_module_t);
+    if (NULL == module) {
+        return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+    module->btl = btl;
+    module->use_rdma_put = !!(btl->btl_flags & MCA_BTL_FLAGS_PUT);
+    module->use_rdma_get = !!(btl->btl_flags & MCA_BTL_FLAGS_GET);
+
+    if (module->use_rdma_get) {
+        /* implement operations over get. */
+        max_operation_size = btl->btl_get_limit;
+        operation_alignment = btl->btl_get_alignment;
+        BTL_VERBOSE(("am_rdma_init: btl %p using get.  operation size %zu, alignment %zu",
+                     (void *)btl, max_operation_size, operation_alignment));
+    } else if (module->use_rdma_put) {
+        /* implement operations over put. */
+        max_operation_size = btl->btl_put_limit;
+        operation_alignment = btl->btl_put_alignment;
+        BTL_VERBOSE(("am_rdma_init: btl %p using put.  operation size %zu, alignment %zu",
+                     (void *)btl, max_operation_size, operation_alignment));
+    } else {
+        /* implement operations over send. */
+        max_operation_size = btl->btl_max_send_size;
+        operation_alignment = 1;
+        BTL_VERBOSE(("am_rdma_init: btl %p using send.  operation size %zu, alignment %zu",
+                     (void *)btl, max_operation_size, operation_alignment));
+    }
+
+    module->am_btl_put_limit = max_operation_size - sizeof(am_rdma_hdr_t);
+    module->am_btl_put_alignment = operation_alignment;
+    module->am_btl_get_limit = max_operation_size - sizeof(am_rdma_response_hdr_t);
+    module->am_btl_get_alignment = operation_alignment;
+
+    module->am_btl_put = am_rdma_put;
+    module->am_btl_get = am_rdma_get;
+    module->am_btl_atomic_fop = am_rdma_fop;
+    module->am_btl_atomic_cswap = am_rdma_cswap;
+
+    *new_module = module;
+
+    return OPAL_SUCCESS;
 }
 
 
-static int am_rdma_get(struct mca_btl_base_module_t *btl,
-                       struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-                       uint64_t remote_address,
-                       struct mca_btl_base_registration_handle_t *local_handle,
-                       struct mca_btl_base_registration_handle_t *remote_handle,
-                       size_t size, int flags, int order,
-                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                       void *cbdata)
+static int am_rdma_internal_fini(mca_btl_base_am_rdma_module_t *am_rdma_module)
 {
-    return am_rdma_start(btl, endpoint, MCA_BTL_BASE_AM_GET, 0, 0, 0, order, flags, size,
-                         local_address, local_handle, remote_address, remote_handle,
-                         cbfunc, cbcontext, cbdata);
-}
+    OBJ_RELEASE(am_rdma_module);
 
-
-static int am_rdma_fop(struct mca_btl_base_module_t *btl,
-                       struct mca_btl_base_endpoint_t *endpoint, void *local_address,
-                       uint64_t remote_address,
-                       mca_btl_base_registration_handle_t *local_handle,
-                       mca_btl_base_registration_handle_t *remote_handle,
-                       mca_btl_base_atomic_op_t op, uint64_t operand, int flags, int order,
-                       mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
-                       void *cbdata)
-{
-    size_t size = (flags & MCA_BTL_ATOMIC_FLAG_32BIT) ? 4 : 8;
-    return am_rdma_start(btl, endpoint, MCA_BTL_BASE_AM_ATOMIC, operand, 0, op, order,
-                         flags, size, local_address, local_handle, remote_address,
-                         remote_handle, cbfunc, cbcontext, cbdata);
-}
-
-
-static int am_rdma_cswap(struct mca_btl_base_module_t *btl,
-                         struct mca_btl_base_endpoint_t *endpoint,
-                         void *local_address, uint64_t remote_address,
-                         mca_btl_base_registration_handle_t *local_handle,
-                         mca_btl_base_registration_handle_t *remote_handle,
-                         uint64_t compare, uint64_t value, int flags, int order,
-                         mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext, void *cbdata)
-{
-    size_t size = (flags & MCA_BTL_ATOMIC_FLAG_32BIT) ? 4 : 8;
-    return am_rdma_start(btl, endpoint, MCA_BTL_BASE_AM_CAS, compare, value, 0, order,
-                                   flags, size, local_address, local_handle, remote_address,
-                                   remote_handle, cbfunc, cbcontext, cbdata);
+    return OPAL_SUCCESS;
 }
 
 
 int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
 {
-    static bool progress_registered = false;
+    mca_btl_base_am_rdma_module_t *am_module;
+    int ret;
+
+    BTL_VERBOSE(("am_rdma_init: called for btl %s (%p)",
+                 btl->btl_component->btl_version.mca_component_name, (void *)btl));
 
     if ((btl->btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS))
         == (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) {
-        /* nothing to do */
+        BTL_VERBOSE(("am_rdma_init: btl %p already supports rdma", (void *)btl));
         return OPAL_SUCCESS;
     }
 
-    size_t max_operation_size = btl->btl_max_send_size;
-    size_t operation_alignment = 1;
-    if (am_rdma_use_rdma_get(btl)) {
-        /* implement put over get. */
-        max_operation_size = btl->btl_get_limit;
-        operation_alignment = btl->btl_get_alignment;
-    } else if (am_rdma_use_rdma_put(btl)) {
-        /* implement get over put. */
-        max_operation_size = btl->btl_put_limit;
-        operation_alignment = btl->btl_put_alignment;
+    /*
+     * note that it is not safe to access any am rdma functionality
+     * (even default_component global data) until internal_init returns
+     * successfully.
+     */
+    ret = am_rdma_internal_init(btl, &am_module);
+    if (OPAL_SUCCESS != ret) {
+        BTL_VERBOSE(("am_rdma_init: btl %p internal_init failure %d",
+                     (void *)btl, ret));
+        return ret;
     }
+
+    /*
+     * we can't lock any field on the BTL structure (because it's not
+     * ours to poke at), so take the global am rdma lock.  I suppose we
+     * could do a cswap of the btl_am_data pointer to the same result,
+     * but that seems too cute for something that should be a relatively
+     * rare event.
+     */
+    opal_mutex_lock(&default_component.mutex);
+    if (NULL != btl->btl_am_data) {
+        BTL_VERBOSE(("am_rdma_init: btl %p already initialized", (void *)btl));
+        am_rdma_internal_fini(am_module);
+        return OPAL_SUCCESS;
+    }
+    opal_mutex_unlock(&default_component.mutex);
+
+    btl->btl_am_data = am_module;
 
     /* TODO: Ideally, we would swap the BTL's flush for our own
      * implementation which completed all outstanding transactions on
@@ -1154,26 +1378,25 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_PUT)) {
         btl->btl_flags |= MCA_BTL_FLAGS_PUT_AM;
-        btl->btl_put_limit = max_operation_size - sizeof(am_rdma_hdr_t);
-        btl->btl_put_alignment = operation_alignment;
-        btl->btl_put = am_rdma_put;
-        BTL_VERBOSE(("Enabling AM-based RDMA put for BTL %p. max put = %zu", (void*) btl, btl->btl_put_limit));
+        btl->btl_put_limit = am_module->am_btl_put_limit;
+        btl->btl_put_alignment = am_module->am_btl_put_alignment;
+        btl->btl_put = am_rdma_put_wrapper;
+        BTL_VERBOSE(("am_rdma_init: Enabling AM-based RDMA put for BTL %p. max put = %zu", (void*)btl, btl->btl_put_limit));
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_GET)) {
         btl->btl_flags |= MCA_BTL_FLAGS_GET_AM;
-        btl->btl_get_limit = max_operation_size - sizeof(am_rdma_response_hdr_t);
-        btl->btl_get_alignment = operation_alignment;
-        btl->btl_get = am_rdma_get;
-        BTL_VERBOSE(("Enabling AM-based RDMA get for BTL %p. max get = %zu", (void*) btl, btl->btl_get_limit));
+        btl->btl_get_limit = am_module->am_btl_get_limit;
+        btl->btl_get_alignment = am_module->am_btl_get_alignment;
+        btl->btl_get = am_rdma_get_wrapper;
+        BTL_VERBOSE(("Enabling AM-based RDMA get for BTL %p. max get = %zu", (void*)btl, btl->btl_get_limit));
     }
 
     if (!(btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_FOPS)) {
-        BTL_VERBOSE(("Enabling AM-based FOPs get for BTL %p", (void*) btl));
         btl->btl_flags |= MCA_BTL_FLAGS_ATOMIC_AM_FOP;
 
-        btl->btl_atomic_fop = am_rdma_fop;
-        btl->btl_atomic_cswap = am_rdma_cswap;
+        btl->btl_atomic_fop = am_rdma_fop_wrapper;
+        btl->btl_atomic_cswap = am_rdma_cswap_wrapper;
 
         /* emulated RDMA atomics can support the full range of atomics. for
          * now only a handful are supported. */
@@ -1182,36 +1405,7 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
                                 | MCA_BTL_ATOMIC_SUPPORTS_AND | MCA_BTL_ATOMIC_SUPPORTS_OR
                                 | MCA_BTL_ATOMIC_SUPPORTS_XOR | MCA_BTL_ATOMIC_SUPPORTS_SWAP
                                 | MCA_BTL_ATOMIC_SUPPORTS_MIN | MCA_BTL_ATOMIC_SUPPORTS_MAX;
-    }
-
-    if (!progress_registered) {
-        progress_registered = true;
-        opal_progress_register(am_rdma_progress);
-        am_rdma_register_callbacks();
-        OBJ_CONSTRUCT(&default_module, am_rdma_module_t);
-    }
-
-    /* This section check whether we can claim support of remote completion.
-     *
-     * In terms of remote completion, we are mainly interested in put and atomic ops,
-     * because get, atomics fops and atomic cswap support remote completion by their nature.
-     *
-     * For active message put (AM put), the target side will send a response, and the initiator
-     * side will wait for the response to complete the put operation. Thus if AM put is based on send,
-     * it support remote completion. (If AM put is based on get, it does not support remote
-     * completion because the target side does not wait for get's completion to send response).
-     *
-     * active message RDMA/atomics does not implement atomic ops. User was suppose to
-     * use atomic fops (unless the btl support atomic ops natively).
-     *
-     * In all, the conditions for AM rdma to claim support of remote completion are:
-     *    1. AM put is enabled (which means the btl does not support put)
-     *    2. AM put does not use get (so it must use send)
-     *    3. btl does not have native atomics ops support.
-     */
-    if ((btl->btl_flags & MCA_BTL_FLAGS_PUT_AM) && !am_rdma_use_rdma_get(btl) &&
-        !(btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS)) {
-        btl->btl_flags |= MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
+        BTL_VERBOSE(("Enabling AM-based FOPs get for BTL %p", (void*)btl));
     }
 
     return OPAL_SUCCESS;
