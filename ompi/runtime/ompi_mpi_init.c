@@ -209,29 +209,10 @@ struct ompi_status_public_t *ompi_mpi_statuses_ignore_addr =
  * complain.
  */
 #if OMPI_BUILD_FORTRAN_BINDINGS
-#  if OMPI_FORTRAN_CAPS
-MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUS_IGNORE;
-MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUSES_IGNORE;
-MPI_Fint *MPI_F08_STATUS_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUS_IGNORE;
-MPI_Fint *MPI_F08_STATUSES_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUSES_IGNORE;
-#  elif OMPI_FORTRAN_PLAIN
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore;
 MPI_Fint *MPI_F08_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore;
 MPI_Fint *MPI_F08_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore;
-#  elif OMPI_FORTRAN_SINGLE_UNDERSCORE
-MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore_;
-MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore_;
-MPI_Fint *MPI_F08_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore_;
-MPI_Fint *MPI_F08_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore_;
-#  elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
-MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore__;
-MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore__;
-MPI_Fint *MPI_F08_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore__;
-MPI_Fint *MPI_F08_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore__;
-#  else
-#    error Unrecognized Fortran name mangling scheme
-#  endif
 #else
 MPI_Fint *MPI_F_STATUS_IGNORE = NULL;
 MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;

@@ -20,6 +20,11 @@
 
 module mpi_f08_types
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Do NOT "use mpi" in here!  You will get conflicts for things that
+  ! are different types (e.g., MPI_STATUS[ES]_IGNORE).
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
    use, intrinsic :: ISO_C_BINDING
    use mpi_types
 

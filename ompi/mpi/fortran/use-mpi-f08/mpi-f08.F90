@@ -27,6 +27,7 @@
 module mpi_f08
 
   use mpi_f08_types
+  use mpi_f08_sentinels
   use mpi_f08_interfaces  ! this module contains the  mpi_f08 interface declarations
   use pmpi_f08_interfaces ! this module contains the pmpi_f08 interface declarations
   use mpi_f08_callbacks   ! this module contains the mpi_f08 attribute callback subroutines

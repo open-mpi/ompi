@@ -33,14 +33,26 @@
 !     that we already have overloaded F90 bindings for all available
 !     types), so any type is fine.
       integer MPI_BOTTOM
+      common/mpi_fortran_bottom/MPI_BOTTOM
+      bind(C, name="mpi_fortran_bottom")/mpi_fortran_bottom/
+
 !     MPI_IN_PLACE has the same rationale as MPI_BOTTOM.
       integer MPI_IN_PLACE
+      common/mpi_fortran_in_place/MPI_IN_PLACE
+      bind(C, name="mpi_fortran_in_place")/mpi_fortran_in_place/
+
 !     Making MPI_ARGV_NULL be the same type as the parameter that is
 !     exepected in the F90 binding for MPI_COMM_SPAWN means that we
 !     don't need another interface for MPI_COMM_SPAWN.
       character MPI_ARGV_NULL(1)
+      common/mpi_fortran_argv_null/MPI_ARGV_NULL
+      bind(C, name="mpi_fortran_argv_null")/mpi_fortran_argv_null/
+
 !     Ditto for MPI_ARGVS_NULL / MPI_COMM_SPAWN_MULTIPLE.
       character MPI_ARGVS_NULL(1, 1)
+      common/mpi_fortran_argvs_null/MPI_ARGVS_NULL
+      bind(C, name="mpi_fortran_argvs_null")/mpi_fortran_argvs_null/
+
 !     MPI_ERRCODES_IGNORE has similar rationale to MPI_ARGV_NULL.  The
 !     F77 functions are all smart enough to check that the errcodes
 !     parameter is not ERRCODES_IGNORE before assigning values into it
@@ -48,21 +60,15 @@
 !     matter -- we'll never overrun it because we never assign values
 !     into it).
       integer MPI_ERRCODES_IGNORE(1)
-!     MPI_STATUS_IGNORE has similar rationale to MPI_ERRCODES_IGNORE.
-      integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
-!     Ditto for MPI_STATUSES_IGNORE
-      integer MPI_STATUSES_IGNORE(MPI_STATUS_SIZE, 1)
+      common/mpi_fortran_errc_ign/MPI_ERRCODES_IGNORE
+      bind(C, name="mpi_fortran_errcodes_ignore")/mpi_fortran_errc_ign/
+
 !     Ditto for MPI_UNWEIGHTED
       integer MPI_UNWEIGHTED(1)
+      common/mpi_fortran_unwghtd/MPI_UNWEIGHTED
+      bind(C, name="mpi_fortran_unweighted")/mpi_fortran_unwghtd/
+
 !     Ditto for MPI_WEIGHTS_EMPTY
       integer MPI_WEIGHTS_EMPTY(1)
-
-      common/mpi_fortran_bottom/MPI_BOTTOM
-      common/mpi_fortran_in_place/MPI_IN_PLACE
-      common/mpi_fortran_argv_null/MPI_ARGV_NULL
-      common/mpi_fortran_argvs_null/MPI_ARGVS_NULL
-      common/mpi_fortran_errcodes_ignore/MPI_ERRCODES_IGNORE
-      common/mpi_fortran_status_ignore/MPI_STATUS_IGNORE
-      common/mpi_fortran_statuses_ignore/MPI_STATUSES_IGNORE
-      common/mpi_fortran_unweighted/MPI_UNWEIGHTED
-      common/mpi_fortran_weights_empty/MPI_WEIGHTS_EMPTY
+      common/mpi_fortran_wghts_empty/MPI_WEIGHTS_EMPTY
+      bind(C, name="mpi_fortran_weights_empty")/mpi_fortran_wghts_empty/

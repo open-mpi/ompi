@@ -27,12 +27,18 @@ module mpi
 #if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
   use mpi_types
 #endif
+
+  ! Sentinel values such as MPI_BOTTOM (that are the same types as in
+  ! mpi_f08 -- not including MPI_STATUS[ES]_IGNORE, which are
+  ! different types in mpi_f08).
+  use mpi_sentinels
+
   include "mpif-config.h"
   include "mpif-constants.h"
   include "mpif-handles.h"
   include "mpif-io-constants.h"
   include "mpif-io-handles.h"
-  include "mpif-sentinels.h"
+  include "mpif-status.h"
 
 ! The MPI attribute callback functions
 

@@ -32,14 +32,12 @@ if ($help_arg || !$ok) {
 
 my $file_c_constants_decl = "mpif-c-constants-decl.h";
 my $file_c_constants = "mpif-c-constants.h";
-my $file_f08_types = "mpif-f08-types.h";
 
 # If we are not building fortran, then just make empty files
 if ($caps_arg + $plain_arg + $single_underscore_arg +
     $double_underscore_arg == 0) {
     system("touch $file_c_constants_decl");
     system("touch $file_c_constants");
-    system("touch $file_f08_types");
     exit(0);
 }
 
@@ -108,22 +106,6 @@ $fortran->{statuses_ignore} = {
 
 ###############################################################
 
-sub mangle {
-    my $name = shift;
-
-    if ($plain_arg) {
-        return $name;
-    } elsif ($caps_arg) {
-        return uc($name);
-    } elsif ($single_underscore_arg) {
-        return $name . "_";
-    } elsif ($double_underscore_arg) {
-        return $name . "__";
-    } else {
-        die "Unknown name mangling type";
-    }
-}
-
 sub gen_c_constants_decl {
     open(OUT, ">$file_c_constants_decl") ||
         die "Can't write to $file_c_constants_decl";
@@ -139,13 +121,13 @@ sub gen_c_constants_decl {
  */
 
 /* Note that the rationale for the types of each of these variables is
-   discussed in ompi/include/mpif-common.h.  Do not change the types
+   discussed in ompi/include/mpif-sentinels.h.  Do not change the types
    without also changing ompi/runtime/ompi_mpi_init.c and
-   ompi/include/mpif-common.h. */\n\n";
+   ompi/include/mpif-sentinels.h. */\n\n";
 
     foreach my $key (sort(keys(%{$fortran}))) {
         my $f = $fortran->{$key};
-        my $m = mangle($f->{c_name});
+        my $m = $f->{c_name};
         print OUT "extern $f->{c_type} $m;
 #define OMPI_IS_FORTRAN_" . uc($key) . "(addr) \\
         (addr == (void*) &$m)\n\n";
@@ -170,8 +152,8 @@ sub gen_c_constants {
 
     foreach my $key (sort(keys(%{$fortran}))) {
         my $f = $fortran->{$key};
-        my $m = mangle($f->{c_name});
-        print OUT "$f->{c_type} $m;\n";
+        my $m = $f->{c_name};
+        print OUT "$f->{c_type} $m = {0};\n";
     }
 
     close (OUT);

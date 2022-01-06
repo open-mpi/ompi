@@ -41,7 +41,8 @@ include_HEADERS += \
         mpif-handles.h \
         mpif-io-constants.h \
         mpif-io-handles.h \
-        mpif-sentinels.h
+        mpif-sentinels.h \
+        mpif-status.h
 
 endif
 
@@ -125,7 +126,7 @@ CLEANFILES = mpif-sizeof.f90
 distclean-local:
 	rm -f mpi-ext.h mpif-ext.h mpi_portable_platform.h \
 	    mpif-sizeof.h \
-	    mpif-c-constants-decl.h mpif-c-constants.h mpif-f08-types.h
+	    mpif-c-constants-decl.h mpif-c-constants.h
 
 mpi_portable_platform.h: $(top_srcdir)/opal/include/opal/opal_portable_platform_real.h
 	-@rm -f mpi_portable_platform.h
