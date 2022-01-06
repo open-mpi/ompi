@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2017-2018 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,7 +13,6 @@
 #define OMPI_UTIL_TIMING_H
 
 #include "opal/util/timings.h"
-/* TODO: we need access to MPI_* functions */
 
 #if (OPAL_ENABLE_TIMING)
 
@@ -166,16 +166,17 @@ typedef struct ompi_timing_t {
 #define OMPI_TIMING_OUT                                                           \
     do {                                                                          \
         if (OMPI_TIMING.enabled) {                                                \
-            int i, size, rank;                                                    \
-            MPI_Comm_size(MPI_COMM_WORLD, &size);                                 \
-            MPI_Comm_rank(MPI_COMM_WORLD, &rank);                                 \
-            int error = 0;                                                        \
+            int i;                                                                \
+            int size = ompi_comm_size(MPI_COMM_WORLD);                            \
+            int rank = ompi_comm_rank(MPI_COMM_WORLD);                            \
+            int timing_error = 0;                                                 \
             int imported = 0;                                                     \
                                                                                   \
-            MPI_Reduce(&OMPI_TIMING.error, &error, 1,                             \
-                MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);                             \
+            MPI_COMM_WORLD->c_coll->coll_reduce(&OMPI_TIMING.error, &timing_error, 1, \
+                                                MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, \
+                                                MPI_COMM_WORLD->c_coll->coll_reduce_module); \
                                                                                   \
-            if (error) {                                                          \
+            if (timing_error) {                                                   \
                 if (0 == rank) {                                                  \
                     printf("==OMPI_TIMING== error: something went wrong, timings doesn't work\n"); \
                 }                                                                 \
@@ -196,12 +197,15 @@ typedef struct ompi_timing_t {
                     do {                                                          \
                         int use;                                                  \
                         for (use = 0; use < timing->use; use++) {                 \
-                            MPI_Reduce(&timing->val[use].ts, avg + i, 1,          \
-                                MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);          \
-                            MPI_Reduce(&timing->val[use].ts, min + i, 1,          \
-                                MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);          \
-                            MPI_Reduce(&timing->val[use].ts, max + i, 1,          \
-                                MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);          \
+                            MPI_COMM_WORLD->c_coll->coll_reduce(&timing->val[use].ts, avg + i, 1,         \
+                                                                MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD, \
+                                                                MPI_COMM_WORLD->c_coll->coll_reduce_module); \
+                            MPI_COMM_WORLD->c_coll->coll_reduce(&timing->val[use].ts, min + i, 1, \
+                                                                MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD, \
+                                                                MPI_COMM_WORLD->c_coll->coll_reduce_module); \
+                            MPI_COMM_WORLD->c_coll->coll_reduce(&timing->val[use].ts, max + i, 1, \
+                                                                MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD, \
+                                                                MPI_COMM_WORLD->c_coll->coll_reduce_module); \
                             desc[i] = timing->val[use].desc;                      \
                             prefix[i] = timing->val[use].prefix;                  \
                             file[i] = timing->val[use].file;                      \
