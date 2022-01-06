@@ -343,34 +343,34 @@ __atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED
 __atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);
 __atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
 __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);])],
-		[opal_cv_have___atomic=yes],
-		[opal_cv_have___atomic=no])
+                [opal_cv_have___atomic=yes],
+                [opal_cv_have___atomic=no])
 
     AC_MSG_RESULT([$opal_cv_have___atomic])
 
     if test $opal_cv_have___atomic = "yes" ; then
-	AC_MSG_CHECKING([for 64-bit GCC built-in atomics])
+        AC_MSG_CHECKING([for 64-bit GCC built-in atomics])
 
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <stdint.h>
 uint64_t tmp64, old64 = 0;], [
 __atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
 __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);])],
-		    [opal_cv_have___atomic_64=yes],
-		    [opal_cv_have___atomic_64=no])
+                    [opal_cv_have___atomic_64=yes],
+                    [opal_cv_have___atomic_64=no])
 
-	AC_MSG_RESULT([$opal_cv_have___atomic_64])
+        AC_MSG_RESULT([$opal_cv_have___atomic_64])
 
-	if test $opal_cv_have___atomic_64 = "yes" ; then
-	    AC_MSG_CHECKING([if 64-bit GCC built-in atomics are lock-free])
-	    AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_is_lock_free (8, 0)) { return 1; }])],
-			  [AC_MSG_RESULT([yes])],
-			  [AC_MSG_RESULT([no])
-			   opal_cv_have___atomic_64=no],
-			  [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
-	fi
+        if test $opal_cv_have___atomic_64 = "yes" ; then
+            AC_MSG_CHECKING([if 64-bit GCC built-in atomics are lock-free])
+            AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_is_lock_free (8, 0)) { return 1; }])],
+                          [AC_MSG_RESULT([yes])],
+                          [AC_MSG_RESULT([no])
+                           opal_cv_have___atomic_64=no],
+                          [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+        fi
     else
-	opal_cv_have___atomic_64=no
+        opal_cv_have___atomic_64=no
     fi
 
     # Check for 128-bit support
@@ -1060,40 +1060,40 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         AC_MSG_WARN([C11 atomics were requested but are not supported])
         AC_MSG_ERROR([Cannot continue])
     elif test "$enable_builtin_atomics" = "yes" ; then
-	if test $opal_cv_have___atomic = "yes" ; then
-	    opal_cv_asm_builtin="BUILTIN_GCC"
-	else
-	    AC_MSG_WARN([GCC built-in atomics requested but not found.])
-	    AC_MSG_ERROR([Cannot continue])
-	fi
+        if test $opal_cv_have___atomic = "yes" ; then
+            opal_cv_asm_builtin="BUILTIN_GCC"
+        else
+            AC_MSG_WARN([GCC built-in atomics requested but not found.])
+            AC_MSG_ERROR([Cannot continue])
+        fi
     fi
 
-        OPAL_CHECK_ASM_PROC
-        OPAL_CHECK_ASM_TEXT
-        OPAL_CHECK_ASM_GLOBAL
-        OPAL_CHECK_ASM_GNU_STACKEXEC
-        OPAL_CHECK_ASM_LABEL_SUFFIX
-        OPAL_CHECK_ASM_GSYM
-        OPAL_CHECK_ASM_LSYM
-        OPAL_CHECK_ASM_TYPE
-        OPAL_CHECK_ASM_SIZE
-        OPAL_CHECK_ASM_ALIGN_LOG
+    OPAL_CHECK_ASM_PROC
+    OPAL_CHECK_ASM_TEXT
+    OPAL_CHECK_ASM_GLOBAL
+    OPAL_CHECK_ASM_GNU_STACKEXEC
+    OPAL_CHECK_ASM_LABEL_SUFFIX
+    OPAL_CHECK_ASM_GSYM
+    OPAL_CHECK_ASM_LSYM
+    OPAL_CHECK_ASM_TYPE
+    OPAL_CHECK_ASM_SIZE
+    OPAL_CHECK_ASM_ALIGN_LOG
 
-        # find our architecture for purposes of assembly stuff
-        opal_cv_asm_arch="UNSUPPORTED"
-        OPAL_GCC_INLINE_ASSIGN=""
+    # find our architecture for purposes of assembly stuff
+    opal_cv_asm_arch="UNSUPPORTED"
+    OPAL_GCC_INLINE_ASSIGN=""
 
-        case "${host}" in
+    case "${host}" in
         x86_64-*x32|i?86-*|x86_64*|amd64*)
             if test "$ac_cv_sizeof_long" = "4" ; then
-		if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-		    AC_MSG_ERROR([IA32 atomics are no longer supported. Use a C11 compiler])
-		fi
-		opal_cv_asm_arch="IA32"
-	    else
-		opal_cv_asm_arch="X86_64"
-		OPAL_CHECK_CMPXCHG16B
-	    fi
+                if test $opal_cv_asm_builtin = BUILTIN_NO ; then
+                    AC_MSG_ERROR([IA32 atomics are no longer supported. Use a C11 compiler])
+                fi
+                opal_cv_asm_arch="IA32"
+            else
+                opal_cv_asm_arch="X86_64"
+                OPAL_CHECK_CMPXCHG16B
+            fi
             OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
             ;;
 
@@ -1104,8 +1104,8 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
         armv7*|arm-*-linux-gnueabihf|armv6*)
             if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-		AC_MSG_ERROR([32-bit ARM atomics are no longer supported. Use a C11 compiler])
-	    fi
+                AC_MSG_ERROR([32-bit ARM atomics are no longer supported. Use a C11 compiler])
+            fi
 
             opal_cv_asm_arch="ARM"
             OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
@@ -1114,11 +1114,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
             OPAL_CHECK_POWERPC_REG
             if test "$ac_cv_sizeof_long" = "4" ; then
-		if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-		    AC_MSG_ERROR([PowerPC 32-bit atomics are no longer supported. Use a C11 compiler])
-		fi
-		opal_cv_asm_arch="POWERPC32"
-	    elif test "$ac_cv_sizeof_long" = "8" ; then
+                if test $opal_cv_asm_builtin = BUILTIN_NO ; then
+                    AC_MSG_ERROR([PowerPC 32-bit atomics are no longer supported. Use a C11 compiler])
+                fi
+                opal_cv_asm_arch="POWERPC32"
+            elif test "$ac_cv_sizeof_long" = "8" ; then
                 opal_cv_asm_arch="POWERPC64"
             else
                 AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
@@ -1138,18 +1138,18 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
             ;;
         *)
-	    if test $opal_cv_have___atomic = "yes" ; then
-		opal_cv_asm_builtin="BUILTIN_GCC"
-	    else
-		AC_MSG_ERROR([No atomic primitives available for $host])
-	    fi
-	    ;;
-        esac
+            if test $opal_cv_have___atomic = "yes" ; then
+                opal_cv_asm_builtin="BUILTIN_GCC"
+            else
+                AC_MSG_ERROR([No atomic primitives available for $host])
+            fi
+            ;;
+    esac
 
-	if test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
+    if test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
          AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
-		   [Whether C compiler supports GCC style inline assembly])
-	else
+                   [Whether C compiler supports GCC style inline assembly])
+    else
          opal_cv_asm_inline_supported="no"
          # now that we know our architecture, try to inline assemble
          OPAL_CHECK_INLINE_C_GCC([$OPAL_GCC_INLINE_ASSIGN])
@@ -1219,7 +1219,7 @@ int main(int argc, char* argv[])
         [Whether to use builtin atomics])
     AC_SUBST([OPAL_ASSEMBLY_BUILTIN])
 
-    OPAL_SUMMARY_ADD([[Atomics]],[[OMPI]],[],[$opal_cv_asm_builtin])
+    OPAL_SUMMARY_ADD([[Miscellaneous]],[[Atomics]],[],[$opal_cv_asm_builtin])
 
     OPAL_ASM_FIND_FILE
 
