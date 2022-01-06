@@ -12,6 +12,13 @@
 # This file builds the use_mpi_f08-based bindings for MPI extensions.  It
 # is optional in MPI extensions.
 
+# Note that Automake's Fortran-buidling rules uses CPPFLAGS and
+# AM_CPPFLAGS.  This can cause weirdness (e.g.,
+# https://github.com/open-mpi/ompi/issues/7253).  Let's just zero
+# those out and rely on AM_FCFLAGS.
+CPPFLAGS =
+AM_CPPFLAGS =
+
 # We must set these #defines and include paths so that the inner OMPI
 # MPI prototype header files do the Right Thing.
 AM_FCFLAGS = $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
