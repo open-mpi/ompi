@@ -18,7 +18,6 @@
 #include "opal_config.h"
 
 #include "opal/mca/btl/sm/btl_sm.h"
-#include "opal/mca/btl/sm/btl_sm_endpoint.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
 #include "opal/mca/smsc/smsc.h"
 

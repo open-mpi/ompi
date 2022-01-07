@@ -32,7 +32,6 @@
 #include "opal/util/show_help.h"
 
 #include "opal/mca/btl/sm/btl_sm.h"
-#include "opal/mca/btl/sm/btl_sm_endpoint.h"
 #include "opal/mca/btl/sm/btl_sm_fbox.h"
 #include "opal/mca/btl/sm/btl_sm_fifo.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
