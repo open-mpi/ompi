@@ -1145,6 +1145,13 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
         operation_alignment = btl->btl_put_alignment;
     }
 
+    /* TODO: Ideally, we would swap the BTL's flush for our own
+     * implementation which completed all outstanding transactions on
+     * that BTL and then called the underlying flush().  Given the
+     * work and the lack of use case today, we instead just remove
+     * flush support from the underlying BTL. */
+    btl->btl_flush = NULL;
+
     if (!(btl->btl_flags & MCA_BTL_FLAGS_PUT)) {
         btl->btl_flags |= MCA_BTL_FLAGS_PUT_AM;
         btl->btl_put_limit = max_operation_size - sizeof(am_rdma_hdr_t);
