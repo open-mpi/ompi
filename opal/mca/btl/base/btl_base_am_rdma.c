@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2021-2022 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,10 +13,13 @@
  * $HEADER$
  */
 
+#include "opal_config.h"
+
 #include "opal/mca/btl/base/btl_base_am_rdma.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/threads/mutex.h"
+#include "opal/util/minmax.h"
 
 /**
  * @brief data for active-message atomics
@@ -210,11 +215,6 @@ typedef struct mca_btl_base_rdma_operation_t mca_btl_base_rdma_operation_t;
 
 static OBJ_CLASS_INSTANCE(mca_btl_base_rdma_operation_t, opal_list_item_t, NULL, NULL);
 
-static inline size_t size_t_min(size_t a, size_t b)
-{
-    return (a < b) ? a : b;
-}
-
 static mca_btl_base_am_rdma_module_t default_module;
 
 static inline bool mca_btl_base_rdma_use_rdma_get(mca_btl_base_module_t *btl)
@@ -239,12 +239,12 @@ static inline size_t mca_btl_base_rdma_operation_size(mca_btl_base_module_t *btl
     switch (type) {
     case MCA_BTL_BASE_AM_PUT:
         if (mca_btl_base_rdma_use_rdma_get(btl)) {
-            return size_t_min(remaining, btl->btl_get_limit);
+            return opal_min(remaining, btl->btl_get_limit);
         }
         break;
     case MCA_BTL_BASE_AM_GET:
         if (mca_btl_base_rdma_use_rdma_put(btl)) {
-            return size_t_min(remaining, btl->btl_put_limit);
+            return opal_min(remaining, btl->btl_put_limit);
         }
         break;
     case MCA_BTL_BASE_AM_ATOMIC:
@@ -253,7 +253,7 @@ static inline size_t mca_btl_base_rdma_operation_size(mca_btl_base_module_t *btl
         return remaining;
     }
 
-    return size_t_min(remaining, btl->btl_max_send_size - sizeof(mca_btl_base_rdma_hdr_t));
+    return opal_min(remaining, btl->btl_max_send_size - sizeof(mca_btl_base_rdma_hdr_t));
 }
 
 static inline int mca_btl_base_rdma_tag(mca_btl_base_rdma_type_t type)
@@ -318,7 +318,7 @@ static void mca_btl_base_copy_to_segments(uint64_t addr, size_t max_len, size_t 
                                           mca_btl_base_segment_t *segments, size_t segment_count)
 {
     void *seg0_data = (void *) ((uintptr_t) segments[0].seg_addr.pval + skip_bytes);
-    size_t seg0_len = size_t_min(max_len, segments[0].seg_len - skip_bytes);
+    size_t seg0_len = opal_min(max_len, segments[0].seg_len - skip_bytes);
 
     if (seg0_len > 0) {
         BTL_VERBOSE(
@@ -330,7 +330,7 @@ static void mca_btl_base_copy_to_segments(uint64_t addr, size_t max_len, size_t 
     }
 
     for (size_t i = 1; i < segment_count && max_len; ++i) {
-        size_t seg_len = size_t_min(segments[i].seg_len, max_len);
+        size_t seg_len = opal_min(segments[i].seg_len, max_len);
 
         BTL_VERBOSE(("packing %" PRIsize_t " bytes from 0x%" PRIx64 " to segment %" PRIsize_t,
                      seg_len, addr, i));
@@ -458,13 +458,13 @@ mca_btl_base_rdma_start(mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
             /* just go ahead and send the data */
             packet_size += size;
         } else if (!mca_btl_base_rdma_use_rdma_get (btl)) {
-            packet_size += size_t_min (size, btl->btl_max_send_size - sizeof (*hdr));
+            packet_size += opal_min (size, btl->btl_max_send_size - sizeof (*hdr));
         } else {
             use_rdma = true;
         }
     } else if (MCA_BTL_BASE_AM_GET == type) {
         if (!mca_btl_base_rdma_use_rdma_put(btl)) {
-            packet_size += size_t_min(size, btl->btl_max_send_size - sizeof(*hdr));
+            packet_size += opal_min(size, btl->btl_max_send_size - sizeof(*hdr));
         } else {
             use_rdma = true;
         }
