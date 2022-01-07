@@ -21,7 +21,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2021-2022 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
@@ -624,6 +624,7 @@ enum {
 
     /* MPI-4 */
     MPI_FT, /* used by OPAL_ENABLE_FT_MPI */
+    MPI_ATTR_PREDEFINED_KEY_MAX,
 };
 
 /*
