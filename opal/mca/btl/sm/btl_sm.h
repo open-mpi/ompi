@@ -157,6 +157,10 @@ mca_btl_base_descriptor_t *mca_btl_sm_alloc(struct mca_btl_base_module_t *btl,
  */
 int mca_btl_sm_free(struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des);
 
+static inline bool mca_btl_is_self_endpoint(mca_btl_base_endpoint_t *endpoint) {
+    return endpoint->peer_smp_rank == MCA_BTL_SM_LOCAL_RANK;
+}
+
 END_C_DECLS
 
 #endif

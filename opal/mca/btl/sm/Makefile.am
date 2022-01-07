@@ -29,7 +29,6 @@ libmca_btl_sm_la_sources = \
     btl_sm_module.c \
     btl_sm.h \
     btl_sm_component.c \
-    btl_sm_endpoint.h \
     btl_sm_fifo.h \
     btl_sm_frag.c \
     btl_sm_frag.h \
