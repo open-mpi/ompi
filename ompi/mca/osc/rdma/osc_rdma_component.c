@@ -442,7 +442,8 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     int ret, my_rank;
     size_t memory_alignment = module->memory_alignment;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating private internal state");
+    opal_output_verbose(MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output,
+                        "allocating private internal state");
 
     my_rank = ompi_comm_rank (module->comm);
 
@@ -598,7 +599,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         return allocate_state_single (module, base, size);
     }
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating shared internal state");
+    opal_output_verbose(MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output,
+                        "allocating shared internal state");
 
     local_rank_array_size = sizeof (ompi_osc_rdma_rank_data_t) * RANK_ARRAY_COUNT (module);
     leader_peer_data_size = module->region_size * module->node_count;
@@ -654,7 +656,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 ret = opal_shmem_segment_create (&module->seg_ds, data_file, total_size);
                 free (data_file);
                 if (OPAL_SUCCESS != ret) {
-                    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create shared memory segment");
+                    opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                                        "failed to create shared memory segment");
                 }
             }
         }
@@ -672,7 +675,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
         module->segment_base = opal_shmem_segment_attach (&module->seg_ds);
         if (NULL == module->segment_base) {
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to attach to the shared memory segment");
+            opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                                "failed to attach to the shared memory segment");
             ret = OPAL_ERROR;
         }
 
@@ -898,7 +902,8 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
 
     btls_to_use = opal_argv_split (ompi_osc_rdma_btl_alternate_names, ',');
     if (NULL == btls_to_use) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no alternate BTLs requested: %s", ompi_osc_rdma_btl_alternate_names);
+        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                            "no alternate BTLs requested: %s", ompi_osc_rdma_btl_alternate_names);
         return OMPI_ERR_UNREACH;
     }
 
@@ -908,20 +913,23 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
 
     /* rdma and atomics are only supported with BTLs at the moment */
     for (int i = 0 ; btls_to_use[i] ; ++i) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "checking for btl %s", btls_to_use[i]);
+        opal_output_verbose(MCA_BASE_VERBOSE_INFO, "checking for btl %s", btls_to_use[i]);
         OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
             if (NULL != item->btl_module->btl_register_mem) { 
-                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "skipping RDMA btl when searching for alternate BTL");
+                opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                                    "skipping RDMA btl when searching for alternate BTL");
                 continue;
             }
 
             if (0 != strcmp (btls_to_use[i], item->btl_module->btl_component->btl_version.mca_component_name)) {
-                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "skipping btl %s",
-                                 item->btl_module->btl_component->btl_version.mca_component_name);
+                opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                                    "skipping btl %s",
+                                    item->btl_module->btl_component->btl_version.mca_component_name);
                 continue;
             }
 
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "found alternate btl %s", btls_to_use[i]);
+            opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                                "found alternate btl %s", btls_to_use[i]);
 
             ++btls_found;
             if (module) {
@@ -1089,7 +1097,8 @@ static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi
     }
 
     if (NULL == selected_btl) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no suitable btls found");
+        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                            "accelerated_query: no suitable btls found");
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
@@ -1100,8 +1109,9 @@ btl_selection_complete:
         module->use_memory_registration = selected_btl->btl_register_mem != NULL;
     }
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "selected btl: %s",
-                     selected_btl->btl_component->btl_version.mca_component_name);
+    opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                        "accelerated_query: selected btl: %s",
+                        selected_btl->btl_component->btl_version.mca_component_name);
 
     return OMPI_SUCCESS;
 }
@@ -1150,7 +1160,8 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
                                                                     module->region_size, MPI_BYTE, module->local_leaders,
                                                                     module->local_leaders->c_coll->coll_allgather_module);
                 if (OMPI_SUCCESS != ret) {
-                    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "leader allgather failed with ompi error code %d", ret);
+                    opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                                        "leader allgather failed with ompi error code %d", ret);
                     break;
                 }
             }
@@ -1193,7 +1204,8 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
     /* create a shared communicator to handle communication about the local segment */
     ret = ompi_comm_split_type (module->comm, MPI_COMM_TYPE_SHARED, 0, NULL, &module->shared_comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create a shared memory communicator. error code %d", ret);
+        opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                            "failed to create a shared memory communicator. error code %d", ret);
         return ret;
     }
 
@@ -1204,7 +1216,8 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
     ret = ompi_comm_split (module->comm, (0 == local_rank) ? 0 : MPI_UNDEFINED, comm_rank, &module->local_leaders,
                            false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create local leaders communicator. error code %d", ret);
+        opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                            "failed to create local leaders communicator. error code %d", ret);
         return ret;
     }
 
@@ -1217,7 +1230,8 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
         ret = module->shared_comm->c_coll->coll_bcast (values, 2, MPI_INT, 0, module->shared_comm,
                                                       module->shared_comm->c_coll->coll_bcast_module);
         if (OMPI_SUCCESS != ret) {
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to broadcast local data. error code %d", ret);
+            opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                                "failed to broadcast local data. error code %d", ret);
             return ret;
         }
     }
@@ -1350,8 +1364,9 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
         return ret;
     }
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "creating osc/rdma window of flavor %d with id %s",
-                     flavor, ompi_comm_print_cid (module->comm));
+    opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                        "creating osc/rdma window of flavor %d with id %s",
+                        flavor, ompi_comm_print_cid (module->comm));
 
     /* peer data */
     if (world_size > init_limit) {
@@ -1372,11 +1387,13 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     /* find rdma capable endpoints */
     ret = ompi_osc_rdma_query_accelerated_btls (module->comm, module);
     if (OMPI_SUCCESS != ret) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_WARN, "could not find a suitable btl. falling back on "
-                         "active-message BTLs");
+        opal_output_verbose(MCA_BASE_VERBOSE_WARN, ompi_osc_base_framework.framework_output,
+                            "could not find an accelerated btl. falling back on "
+                            "active-message BTLs");
         ret = ompi_osc_rdma_query_alternate_btls (module->comm, module);
         if (OMPI_SUCCESS != ret) {
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_WARN, "no BTL available for RMA window");
+            opal_output_verbose(MCA_BASE_VERBOSE_WARN, ompi_osc_base_framework.framework_output,
+                                "no BTL available for RMA window");
             ompi_osc_rdma_free (win);
             return ret;
         }
@@ -1428,7 +1445,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     /* notify all others if something went wrong */
     ret = synchronize_errorcode(ret, module->comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to allocate internal state");
+        opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                            "failed to allocate internal state");
         ompi_osc_rdma_free (win);
         return ret;
     }
@@ -1479,14 +1497,16 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 
     ret = ompi_osc_rdma_share_data (module);
     if (OMPI_SUCCESS != ret) {
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to share window data with peers");
+        opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                            "failed to share window data with peers");
         ompi_osc_rdma_free (win);
     } else {
         /* for now the leader is always rank 0 in the communicator */
         module->leader = ompi_osc_rdma_module_peer (module, 0);
 
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "finished creating osc/rdma window with id %s",
-                         ompi_comm_print_cid(module->comm));
+        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                            "finished creating osc/rdma window with id %s",
+                            ompi_comm_print_cid(module->comm));
     }
 
     return ret;
