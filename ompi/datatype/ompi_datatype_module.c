@@ -34,6 +34,7 @@
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
 #include "opal/class/opal_pointer_array.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 
@@ -669,6 +670,13 @@ int32_t ompi_datatype_init( void )
             datatype->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
         }
     }
+
+    /* get a reference to the attributes subsys */
+    int ret = ompi_attr_get_ref();
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
     ompi_datatype_default_convertors_init();
     return OMPI_SUCCESS;
 }
@@ -697,7 +705,8 @@ int32_t ompi_datatype_finalize( void )
     /* don't call opal_datatype_finalize () as it no longer exists. the function will be called
      * opal_finalize_util (). */
 
-    return OMPI_SUCCESS;
+    /* release a reference to the attributes subsys */
+    return ompi_attr_put_ref();
 }
 
 

@@ -386,11 +386,6 @@ int ompi_mpi_finalize(void)
 
     /* Free secondary resources */
 
-    /* free attr resources */
-    if (OMPI_SUCCESS != (ret = ompi_attr_finalize())) {
-        goto done;
-    }
-
     /* free group resources */
     if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
         goto done;
