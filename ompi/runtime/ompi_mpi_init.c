@@ -878,12 +878,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         goto error;
     }
 
-    /* initialize attribute meta-data structure for comm/win/dtype */
-    if (OMPI_SUCCESS != (ret = ompi_attr_init())) {
-        error = "ompi_attr_init() failed";
-        goto error;
-    }
-
     /* identify the architectures of remote procs and setup
      * their datatype convertors, if required
      */
