@@ -26,8 +26,6 @@
 #include <stdio.h>
 #include <ucm/api/ucm.h>
 
-static int use_safety_valve = 0;
-
 /***********************************************************************/
 
 extern mca_base_framework_t opal_memory_base_framework;
@@ -181,7 +179,6 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
             MCA_COMMON_UCX_VERBOSE(1, "%s", "using OPAL memory hooks as external events");
             ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
             opal_mem_hooks_register_release(opal_common_ucx_mem_release_cb, NULL);
-            use_safety_valve = 1;
         }
     }
 }
@@ -505,7 +502,5 @@ OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, s
 
 static void safety_valve(void) __attribute__((destructor));
 void safety_valve(void) {
-    if (use_safety_valve) {
-        opal_mem_hooks_unregister_release(opal_common_ucx_mem_release_cb);
-    }
+    opal_mem_hooks_unregister_release(opal_common_ucx_mem_release_cb);
 }
