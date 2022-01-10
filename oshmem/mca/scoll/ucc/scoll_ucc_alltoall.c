@@ -28,7 +28,7 @@ static inline ucc_status_t mca_scoll_ucc_alltoall_init(const void *sbuf, void *r
     }
 
     ucc_coll_args_t coll = {
-        .mask = 0,
+        .mask = UCC_COLL_ARGS_FIELD_FLAGS | UCC_COLL_ARGS_FIELD_GLOBAL_WORK_BUFFER,
         .coll_type = UCC_COLL_TYPE_ALLTOALL,
         .src.info = {
             .buffer = (void *)sbuf,
@@ -42,8 +42,15 @@ static inline ucc_status_t mca_scoll_ucc_alltoall_init(const void *sbuf, void *r
             .datatype = dt,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },
+        .flags = UCC_COLL_ARGS_FLAG_MEM_MAPPED_BUFFERS,
+        .global_work_buffer = ucc_module->pSync,
     };
 
+    if (NULL == ucc_module->ucc_team) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_team_create(ucc_module, ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
     SCOLL_UCC_REQ_INIT(req, coll, ucc_module);
     return UCC_OK;
 fallback:
