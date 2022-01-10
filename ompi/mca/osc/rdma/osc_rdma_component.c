@@ -387,15 +387,14 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
     }
 #endif /* OPAL_CUDA_SUPPORT */
 
-    if (OMPI_SUCCESS == ompi_osc_rdma_query_accelerated_btls (comm, NULL)) {
-        return mca_osc_rdma_component.priority;
+    /* verify if we have any btls available.  Since we do not verify
+     * connectivity across all btls in the alternate case, this is as
+     * good a test as we are going to have for success. */
+    if (opal_list_is_empty(&mca_btl_base_modules_initialized)) {
+        return -1;
     }
 
-    if (OMPI_SUCCESS == ompi_osc_rdma_query_alternate_btls (comm, NULL)) {
-        return mca_osc_rdma_component.priority;
-    }
-
-    return OMPI_ERROR;
+    return OMPI_SUCCESS;;
 }
 
 static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void **base, size_t size) {
@@ -914,13 +913,7 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
     mca_btl_base_selected_module_t *item;
     int ret;
 
-    /* shortcut the trivial query case */
-    if (NULL == module) {
-        if (opal_list_is_empty(&mca_btl_base_modules_initialized)) {
-            return OMPI_ERR_UNREACH;
-        }
-        return OMPI_SUCCESS;
-    }
+    assert(NULL != module);
 
     module->btls_in_use = 0;
 
@@ -988,9 +981,6 @@ static bool ompi_osc_rdma_check_accelerated_btl(struct mca_btl_base_module_t *bt
  * Testing (1) is expensive, so as an optimization, the
  * ompi_osc_rdma_full_connectivity_btls list contains the list of BTL
  * components we know can achieve (1) in almost all usage scenarios.
- *
- * If module is NULL, the code acts as a query mechanism to find any
- * potential BTLs, and is used to implement osc_rdma_query().
  */
 static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
@@ -999,11 +989,11 @@ static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi
     mca_bml_base_endpoint_t *base_endpoint;
     char **btls_to_use;
 
-    if (module) {
-        ompi_osc_rdma_selected_btl_insert(module, NULL, 0);
-        module->btls_in_use = 0;
-        module->use_memory_registration = false;
-    }
+    assert(NULL != module);
+
+    ompi_osc_rdma_selected_btl_insert(module, NULL, 0);
+    module->btls_in_use = 0;
+    module->use_memory_registration = false;
 
     /* Check for BTLs in the list of BTLs we know can reach all peers
        in general usage. */
@@ -1116,11 +1106,9 @@ static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi
     }
 
 btl_selection_complete:
-    if (module) {
-        ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0);
-        module->btls_in_use = 1;
-        module->use_memory_registration = selected_btl->btl_register_mem != NULL;
-    }
+    ompi_osc_rdma_selected_btl_insert(module, selected_btl, 0);
+    module->btls_in_use = 1;
+    module->use_memory_registration = selected_btl->btl_register_mem != NULL;
 
     opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
                         "accelerated_query: selected btl: %s",
