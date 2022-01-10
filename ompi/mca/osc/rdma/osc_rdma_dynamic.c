@@ -252,7 +252,8 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
             return OMPI_ERR_RMA_ATTACH;
         }
 
-        memcpy (region->btl_handle_data, handle, module->selected_btls[0]->btl_registration_handle_size);
+        assert(module->use_accelerated_btl);
+        memcpy(region->btl_handle_data, handle, module->accelerated_btl->btl_registration_handle_size);
         rdma_region_handle->btl_handle = handle;
     } else {
         rdma_region_handle->btl_handle = NULL;

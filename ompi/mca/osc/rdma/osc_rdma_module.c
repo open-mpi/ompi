@@ -144,7 +144,9 @@ int ompi_osc_rdma_free(ompi_win_t *win)
     free (module->outstanding_lock_array);
     mca_mpool_base_default_module->mpool_free(mca_mpool_base_default_module,
                                               module->free_after);
-    free (module->selected_btls);
+    if (!module->use_accelerated_btl) {
+        free(module->alternate_btls);
+    }
     free (module);
 
     return OMPI_SUCCESS;
