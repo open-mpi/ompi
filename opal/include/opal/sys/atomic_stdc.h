@@ -241,7 +241,7 @@ typedef atomic_flag opal_atomic_lock_t;
  */
 static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, bool value)
 {
-    atomic_flag_clear(lock);
+    atomic_flag_clear_explicit(lock, memory_order_relaxed);
 }
 
 static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
