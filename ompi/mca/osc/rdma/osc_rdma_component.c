@@ -51,6 +51,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
 #include "opal/util/sys_limits.h"
+#include "opal/util/minmax.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
@@ -887,12 +888,14 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
  */
 static int btl_latency_sort_fn(const void *a, const void *b)
 {
-    const struct mca_btl_base_module_t *btl_a = a;
-    const struct mca_btl_base_module_t *btl_b = b;
+    const mca_btl_base_am_rdma_module_t * const *am_rdma_a_p = a;
+    const mca_btl_base_am_rdma_module_t * const *am_rdma_b_p = b;
+    const mca_btl_base_am_rdma_module_t *am_rdma_a = *am_rdma_a_p;
+    const mca_btl_base_am_rdma_module_t *am_rdma_b = *am_rdma_b_p;
 
-    if (btl_a->btl_latency < btl_b->btl_latency) {
+    if (am_rdma_a->btl->btl_latency < am_rdma_b->btl->btl_latency) {
         return -1;
-    } else if (btl_a->btl_latency == btl_b->btl_latency) {
+    } else if (am_rdma_a->btl->btl_latency == am_rdma_b->btl->btl_latency) {
         return 0;
     } else {
         return 1;
@@ -931,14 +934,19 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
 
     assert(NULL != module);
 
+    module->put_alignment = 1;
+    module->get_alignment = 1;
+    module->put_limit = SIZE_MAX;
+    module->get_limit = SIZE_MAX;
+
     btl_count = opal_list_get_size(&mca_btl_base_modules_initialized);
     if (btl_count > UINT8_MAX) {
         return OMPI_ERROR;
     }
 
     module->alternate_btl_count = btl_count;
-    module->alternate_btls = malloc(sizeof(struct mca_btl_base_module_t *) * btl_count);
-    if (NULL == module->alternate_btls) {
+    module->alternate_am_rdmas = malloc(sizeof(struct mca_btl_base_am_rdma_module_t *) * module->alternate_btl_count);
+    if (NULL == module->alternate_am_rdmas) {
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
@@ -958,19 +966,43 @@ static int ompi_osc_rdma_query_alternate_btls (ompi_communicator_t *comm, ompi_o
         opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
                             "found alternate btl %s",
                             item->btl_module->btl_component->btl_version.mca_component_name);
-        ret = mca_btl_base_am_rdma_init(item->btl_module);
+
+        ret = opal_btl_base_am_rdma_create(item->btl_module,
+                                           MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION,
+                                           true /* no_memory_registration */,
+                                           &(module->alternate_am_rdmas[index]));
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
-        module->alternate_btls[index++] = item->btl_module;
+
+        module->put_alignment = opal_max(module->put_alignment,
+                                         module->alternate_am_rdmas[index]->am_btl_put_alignment);
+        module->get_alignment = opal_max(module->get_alignment,
+                                         module->alternate_am_rdmas[index]->am_btl_get_alignment);
+        module->put_limit = opal_min(module->put_limit,
+                                     module->alternate_am_rdmas[index]->am_btl_put_limit);
+        module->get_limit = opal_min(module->get_limit,
+                                     module->alternate_am_rdmas[index]->am_btl_get_limit);
+
+        index++;
     }
-    assert(index == btl_count);
+    assert(index == module->alternate_btl_count);
 
     /* sort based on latency, lowest first */
-    qsort(module->alternate_btls, module->alternate_btl_count,
-          sizeof(struct mca_btl_base_module_t*), btl_latency_sort_fn);
+    qsort(module->alternate_am_rdmas, module->alternate_btl_count,
+          sizeof(module->alternate_am_rdmas[0]), btl_latency_sort_fn);
 
     module->use_memory_registration = false;
+    module->atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD |
+            MCA_BTL_ATOMIC_SUPPORTS_AND |
+            MCA_BTL_ATOMIC_SUPPORTS_OR |
+            MCA_BTL_ATOMIC_SUPPORTS_XOR |
+            MCA_BTL_ATOMIC_SUPPORTS_SWAP |
+            MCA_BTL_ATOMIC_SUPPORTS_MIN |
+            MCA_BTL_ATOMIC_SUPPORTS_MAX |
+            MCA_BTL_ATOMIC_SUPPORTS_32BIT |
+            MCA_BTL_ATOMIC_SUPPORTS_CSWAP |
+            MCA_BTL_ATOMIC_SUPPORTS_GLOB;
 
     return OMPI_SUCCESS;
 }
@@ -1132,7 +1164,12 @@ static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi
 btl_selection_complete:
     module->use_accelerated_btl = true;
     module->accelerated_btl = selected_btl;
-    module->use_memory_registration = selected_btl->btl_register_mem != NULL;
+    module->use_memory_registration = (selected_btl->btl_register_mem != NULL);
+    module->put_alignment = selected_btl->btl_put_alignment;
+    module->get_alignment = selected_btl->btl_get_alignment;
+    module->put_limit = selected_btl->btl_put_limit;
+    module->get_limit = selected_btl->btl_get_limit;
+    module->atomic_flags = selected_btl->btl_atomic_flags;
 
     opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
                         "accelerated_query: selected btl: %s",

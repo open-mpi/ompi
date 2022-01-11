@@ -44,6 +44,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/btl_base_am_rdma.h"
 #include "ompi/memchecker.h"
 #include "ompi/op/op.h"
 #include "opal/align.h"
@@ -255,6 +256,8 @@ struct ompi_osc_rdma_module_t {
     /** lock for peer hash table/array */
     opal_mutex_t peer_lock;
 
+    /* ******************* communication *********************** */
+
     /* we currently support two modes of operation, a single
      * accelerated btl (which can use memory registration and can use
      * btl_flush() and one or more alternate btls, which cannot use
@@ -265,17 +268,26 @@ struct ompi_osc_rdma_module_t {
 
     union {
         struct {
-            struct mca_btl_base_module_t *accelerated_btl;
+            mca_btl_base_module_t *accelerated_btl;
         };
         struct {
-            struct mca_btl_base_module_t **alternate_btls;
+            mca_btl_base_am_rdma_module_t **alternate_am_rdmas;
             uint8_t alternate_btl_count;
         };
     };
 
-    /** Only true if one BTL is in use. Memory registration is only supported when
-     * using a single BTL. */
+    /** Does the selected BTL require memory registration?  This field
+        will be false when alternate BTLs are used, and the value
+        when an accelerated BTL is used depends on the registration
+        requirements of the underlying BTL. */
     bool use_memory_registration;
+
+    size_t put_alignment;
+    size_t get_alignment;
+    size_t put_limit;
+    size_t get_limit;
+
+    uint32_t atomic_flags;
 
     /** registered fragment used for locally buffered RDMA transfers */
     struct ompi_osc_rdma_frag_t *rdma_frag;
@@ -650,8 +662,15 @@ static inline mca_btl_base_module_t *ompi_osc_rdma_selected_btl (ompi_osc_rdma_m
         return module->accelerated_btl;
     } else {
         assert(btl_index < module->alternate_btl_count);
-        return module->alternate_btls[btl_index];
+        return module->alternate_am_rdmas[btl_index]->btl;
     }
+}
+
+
+static inline mca_btl_base_am_rdma_module_t *ompi_osc_rdma_selected_am_rdma(ompi_osc_rdma_module_t *module, uint8_t btl_index) {
+    assert(!module->use_accelerated_btl);
+    assert(btl_index < module->alternate_btl_count);
+    return module->alternate_am_rdmas[btl_index];
 }
 
 #endif /* OMPI_OSC_RDMA_H */
