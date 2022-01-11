@@ -7,6 +7,8 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +24,8 @@ typedef uint64_t opal_timer_t;
 #else
 typedef uint32_t opal_timer_t;
 #endif
+
+#if OPAL_C_GCC_INLINE_ASSEMBLY
 
 static inline opal_timer_t opal_sys_timer_get_cycles(void)
 {
@@ -50,5 +54,7 @@ static inline opal_timer_t opal_sys_timer_get_freq(void)
 
 #define OPAL_HAVE_SYS_TIMER_GET_CYCLES 1
 #define OPAL_HAVE_SYS_TIMER_GET_FREQ   1
+
+#endif /* OPAL_C_GCC_INLINE_ASSEMBLY */
 
 #endif /* ! OPAL_SYS_ARCH_TIMER_H */

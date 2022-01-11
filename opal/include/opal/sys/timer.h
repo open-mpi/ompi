@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,21 +41,6 @@
 #    include <sys/types.h>
 #endif
 
-/* do some quick #define cleanup in cases where we are doing
-   testing... */
-#ifdef OPAL_DISABLE_INLINE_ASM
-#    undef OPAL_C_GCC_INLINE_ASSEMBLY
-#    define OPAL_C_GCC_INLINE_ASSEMBLY 0
-#endif
-
-/* define OPAL_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
-   OPAL_{C,CXX}_{GCC,DEC,XLC}_INLINE_ASSEMBLY defines and whether we
-   are in C or C++ */
-#if defined(c_plusplus) || defined(__cplusplus)
-#    define OPAL_GCC_INLINE_ASSEMBLY OPAL_CXX_GCC_INLINE_ASSEMBLY
-#else
-#    define OPAL_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
-#endif
 
 /**********************************************************************
  *

@@ -16,6 +16,8 @@
  *                         reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,6 +79,6 @@
                 ret = (_ret == 0);                                   \
             } while (0)
 
-#    endif /* OPAL_GCC_INLINE_ASSEMBLY */
+#    endif /* OPAL_C_GCC_INLINE_ASSEMBLY */
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_LLSC_H */
