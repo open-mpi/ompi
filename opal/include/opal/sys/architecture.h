@@ -16,6 +16,8 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +43,5 @@
 #define OPAL_BUILTIN_GCC 0202
 #define OPAL_BUILTIN_NO  0203
 #define OPAL_BUILTIN_C11 0204
-
-/* Formats */
-#define OPAL_DEFAULT 1000 /* standard for given architecture */
 
 #endif /* #ifndef OPAL_SYS_ARCHITECTURE_H */

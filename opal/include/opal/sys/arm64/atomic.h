@@ -16,6 +16,8 @@
  *                         reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,31 +27,28 @@
 
 #include "atomic_llsc.h"
 
-#if !defined(OPAL_SYS_ARCH_ATOMIC_H)
+#ifndef OPAL_SYS_ARCH_ATOMIC_H
+#define OPAL_SYS_ARCH_ATOMIC_H 1
 
-#    define OPAL_SYS_ARCH_ATOMIC_H 1
+#define OPAL_HAVE_ATOMIC_MEM_BARRIER         1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
+#define OPAL_HAVE_ATOMIC_SWAP_32             1
+#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
+#define OPAL_HAVE_ATOMIC_SWAP_64             1
+#define OPAL_HAVE_ATOMIC_ADD_32              1
+#define OPAL_HAVE_ATOMIC_AND_32              1
+#define OPAL_HAVE_ATOMIC_OR_32               1
+#define OPAL_HAVE_ATOMIC_XOR_32              1
+#define OPAL_HAVE_ATOMIC_SUB_32              1
+#define OPAL_HAVE_ATOMIC_ADD_64              1
+#define OPAL_HAVE_ATOMIC_AND_64              1
+#define OPAL_HAVE_ATOMIC_OR_64               1
+#define OPAL_HAVE_ATOMIC_XOR_64              1
+#define OPAL_HAVE_ATOMIC_SUB_64              1
 
-#    if OPAL_GCC_INLINE_ASSEMBLY
-
-#        define OPAL_HAVE_ATOMIC_MEM_BARRIER         1
-#        define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
-#        define OPAL_HAVE_ATOMIC_SWAP_32             1
-#        define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
-#        define OPAL_HAVE_ATOMIC_SWAP_64             1
-#        define OPAL_HAVE_ATOMIC_ADD_32              1
-#        define OPAL_HAVE_ATOMIC_AND_32              1
-#        define OPAL_HAVE_ATOMIC_OR_32               1
-#        define OPAL_HAVE_ATOMIC_XOR_32              1
-#        define OPAL_HAVE_ATOMIC_SUB_32              1
-#        define OPAL_HAVE_ATOMIC_ADD_64              1
-#        define OPAL_HAVE_ATOMIC_AND_64              1
-#        define OPAL_HAVE_ATOMIC_OR_64               1
-#        define OPAL_HAVE_ATOMIC_XOR_64              1
-#        define OPAL_HAVE_ATOMIC_SUB_64              1
-
-#        define MB()  __asm__ __volatile__("dmb sy" : : : "memory")
-#        define RMB() __asm__ __volatile__("dmb ld" : : : "memory")
-#        define WMB() __asm__ __volatile__("dmb st" : : : "memory")
+#define MB()  __asm__ __volatile__("dmb sy" : : : "memory")
+#define RMB() __asm__ __volatile__("dmb ld" : : : "memory")
+#define WMB() __asm__ __volatile__("dmb st" : : : "memory")
 
 /**********************************************************************
  *
@@ -251,23 +250,23 @@ static inline bool opal_atomic_compare_exchange_strong_rel_64(opal_atomic_int64_
     return ret;
 }
 
-#        define OPAL_ASM_MAKE_ATOMIC(type, bits, name, inst, reg)                          \
-            static inline type opal_atomic_fetch_##name##_##bits(opal_atomic_##type *addr, \
-                                                                 type value)               \
-            {                                                                              \
-                type newval, old;                                                          \
-                int32_t tmp;                                                               \
-                                                                                           \
-                __asm__ __volatile__("1:  ldxr   %" reg "1, [%3]        \n"                \
-                                     "    " inst "   %" reg "0, %" reg "1, %" reg "4 \n"   \
-                                     "    stxr   %w2, %" reg "0, [%3]   \n"                \
-                                     "    cbnz   %w2, 1b         \n"                       \
-                                     : "=&r"(newval), "=&r"(old), "=&r"(tmp)               \
-                                     : "r"(addr), "r"(value)                               \
-                                     : "cc", "memory");                                    \
-                                                                                           \
-                return old;                                                                \
-            }
+#define OPAL_ASM_MAKE_ATOMIC(type, bits, name, inst, reg)                          \
+    static inline type opal_atomic_fetch_##name##_##bits(opal_atomic_##type *addr, \
+                                                         type value)               \
+    {                                                                              \
+        type newval, old;                                                          \
+        int32_t tmp;                                                               \
+                                                                                   \
+        __asm__ __volatile__("1:  ldxr   %" reg "1, [%3]        \n"                \
+                             "    " inst "   %" reg "0, %" reg "1, %" reg "4 \n"   \
+                             "    stxr   %w2, %" reg "0, [%3]   \n"                \
+                             "    cbnz   %w2, 1b         \n"                       \
+                             : "=&r"(newval), "=&r"(old), "=&r"(tmp)               \
+                             : "r"(addr), "r"(value)                               \
+                             : "cc", "memory");                                    \
+                                                                                   \
+        return old;                                                                \
+    }
 
 OPAL_ASM_MAKE_ATOMIC(int32_t, 32, add, "add", "w")
 OPAL_ASM_MAKE_ATOMIC(int32_t, 32, and, "and", "w")
@@ -279,7 +278,5 @@ OPAL_ASM_MAKE_ATOMIC(int64_t, 64, and, "and", "")
 OPAL_ASM_MAKE_ATOMIC(int64_t, 64, or, "orr", "")
 OPAL_ASM_MAKE_ATOMIC(int64_t, 64, xor, "eor", "")
 OPAL_ASM_MAKE_ATOMIC(int64_t, 64, sub, "sub", "")
-
-#    endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

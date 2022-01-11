@@ -48,7 +48,6 @@
  * Memory Barriers
  *
  *********************************************************************/
-#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline void opal_atomic_mb(void)
 {
@@ -69,15 +68,11 @@ static inline void opal_atomic_isync(void)
 {
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
 /**********************************************************************
  *
  * Atomic math operations
  *
  *********************************************************************/
-#if OPAL_GCC_INLINE_ASSEMBLY
-
 static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *addr,
                                                           int32_t *oldval, int32_t newval)
 {
@@ -91,12 +86,8 @@ static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *a
     return (bool) ret;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
 #define opal_atomic_compare_exchange_strong_acq_32 opal_atomic_compare_exchange_strong_32
 #define opal_atomic_compare_exchange_strong_rel_32 opal_atomic_compare_exchange_strong_32
-
-#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *addr,
                                                           int64_t *oldval, int64_t newval)
@@ -111,12 +102,10 @@ static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *a
     return (bool) ret;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
 #define opal_atomic_compare_exchange_strong_acq_64 opal_atomic_compare_exchange_strong_64
 #define opal_atomic_compare_exchange_strong_rel_64 opal_atomic_compare_exchange_strong_64
 
-#if OPAL_GCC_INLINE_ASSEMBLY && OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
+#if OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
 
 static inline bool opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t *addr,
                                                            opal_int128_t *oldval,
@@ -138,10 +127,6 @@ static inline bool opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t 
 
 #    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 1
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
-#if OPAL_GCC_INLINE_ASSEMBLY
-
 #    define OPAL_HAVE_ATOMIC_SWAP_32 1
 
 #    define OPAL_HAVE_ATOMIC_SWAP_64 1
@@ -154,10 +139,6 @@ static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t new
     return oldval;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
-#if OPAL_GCC_INLINE_ASSEMBLY
-
 static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t newval)
 {
     int64_t oldval;
@@ -165,10 +146,6 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
     __asm__ __volatile__("xchgq %1, %0" : "=r"(oldval), "+m"(*addr) : "0"(newval) : "memory");
     return oldval;
 }
-
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
-#if OPAL_GCC_INLINE_ASSEMBLY
 
 #    define OPAL_HAVE_ATOMIC_ADD_32 1
 
@@ -233,7 +210,5 @@ static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i
     __asm__ __volatile__(SMPLOCK "xaddq %1,%0" : "+m"(*v), "+r"(ret) : : "memory", "cc");
     return ret;
 }
-
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

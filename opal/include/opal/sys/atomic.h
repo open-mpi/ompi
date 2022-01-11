@@ -17,6 +17,8 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,28 +59,12 @@
 #include "opal/sys/architecture.h"
 #include "opal_stdatomic.h"
 
-/* do some quick #define cleanup in cases where we are doing
-   testing... */
-#ifdef OPAL_DISABLE_INLINE_ASM
-#    undef OPAL_C_GCC_INLINE_ASSEMBLY
-#    define OPAL_C_GCC_INLINE_ASSEMBLY 0
-#endif
-
 #if OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11 && !defined(__INTEL_COMPILER)
 
 #    include "atomic_stdc.h"
 
 #else /* !OPAL_C_HAVE__ATOMIC */
 
-/* define OPAL_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
-   OPAL_C_{GCC,DEC,XLC}_INLINE_ASSEMBLY defines and whether we
-   are in C or C++ */
-#    if defined(c_plusplus) || defined(__cplusplus)
-/* We no longer support inline assembly for C++ as OPAL is a C-only interface */
-#        define OPAL_GCC_INLINE_ASSEMBLY 0
-#    else
-#        define OPAL_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
-#    endif
 
 BEGIN_C_DECLS
 /**********************************************************************
@@ -109,39 +95,21 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  * files if we need to specify them as inline or non-inline
  *
  *********************************************************************/
-#    if !OPAL_GCC_INLINE_ASSEMBLY
-#        define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER         0
-#        define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32 0
-#        define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64 0
-#        define OPAL_HAVE_INLINE_ATOMIC_ADD_32              0
-#        define OPAL_HAVE_INLINE_ATOMIC_AND_32              0
-#        define OPAL_HAVE_INLINE_ATOMIC_OR_32               0
-#        define OPAL_HAVE_INLINE_ATOMIC_XOR_32              0
-#        define OPAL_HAVE_INLINE_ATOMIC_SUB_32              0
-#        define OPAL_HAVE_INLINE_ATOMIC_ADD_64              0
-#        define OPAL_HAVE_INLINE_ATOMIC_AND_64              0
-#        define OPAL_HAVE_INLINE_ATOMIC_OR_64               0
-#        define OPAL_HAVE_INLINE_ATOMIC_XOR_64              0
-#        define OPAL_HAVE_INLINE_ATOMIC_SUB_64              0
-#        define OPAL_HAVE_INLINE_ATOMIC_SWAP_32             0
-#        define OPAL_HAVE_INLINE_ATOMIC_SWAP_64             0
-#    else
-#        define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER         1
-#        define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32 1
-#        define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64 1
-#        define OPAL_HAVE_INLINE_ATOMIC_ADD_32              1
-#        define OPAL_HAVE_INLINE_ATOMIC_AND_32              1
-#        define OPAL_HAVE_INLINE_ATOMIC_OR_32               1
-#        define OPAL_HAVE_INLINE_ATOMIC_XOR_32              1
-#        define OPAL_HAVE_INLINE_ATOMIC_SUB_32              1
-#        define OPAL_HAVE_INLINE_ATOMIC_ADD_64              1
-#        define OPAL_HAVE_INLINE_ATOMIC_AND_64              1
-#        define OPAL_HAVE_INLINE_ATOMIC_OR_64               1
-#        define OPAL_HAVE_INLINE_ATOMIC_XOR_64              1
-#        define OPAL_HAVE_INLINE_ATOMIC_SUB_64              1
-#        define OPAL_HAVE_INLINE_ATOMIC_SWAP_32             1
-#        define OPAL_HAVE_INLINE_ATOMIC_SWAP_64             1
-#    endif
+#define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER         1
+#define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32 1
+#define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64 1
+#define OPAL_HAVE_INLINE_ATOMIC_ADD_32              1
+#define OPAL_HAVE_INLINE_ATOMIC_AND_32              1
+#define OPAL_HAVE_INLINE_ATOMIC_OR_32               1
+#define OPAL_HAVE_INLINE_ATOMIC_XOR_32              1
+#define OPAL_HAVE_INLINE_ATOMIC_SUB_32              1
+#define OPAL_HAVE_INLINE_ATOMIC_ADD_64              1
+#define OPAL_HAVE_INLINE_ATOMIC_AND_64              1
+#define OPAL_HAVE_INLINE_ATOMIC_OR_64               1
+#define OPAL_HAVE_INLINE_ATOMIC_XOR_64              1
+#define OPAL_HAVE_INLINE_ATOMIC_SUB_64              1
+#define OPAL_HAVE_INLINE_ATOMIC_SWAP_32             1
+#define OPAL_HAVE_INLINE_ATOMIC_SWAP_64             1
 
 /**
  * Enumeration of lock states
