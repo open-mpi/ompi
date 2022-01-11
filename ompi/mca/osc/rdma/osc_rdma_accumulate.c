@@ -244,12 +244,6 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
     int btl_op, flags;
     int64_t origin;
 
-    if (!(selected_btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS)) {
-        /* btl put atomics not supported or disabled. fall back on fetch-and-op */
-        return ompi_osc_rdma_fetch_and_op_atomic (sync, origin_addr, NULL, dt, extent, peer, target_address, target_handle,
-                                                  op, req);
-    }
-
     if ((8 != extent && !((MCA_BTL_ATOMIC_SUPPORTS_32BIT & atomic_flags) && 4 == extent)) ||
         (!(OMPI_DATATYPE_FLAG_DATA_INT & dt->super.flags) && !(MCA_BTL_ATOMIC_SUPPORTS_FLOAT & atomic_flags)) ||
         !ompi_op_is_intrinsic (op) || (0 == ompi_osc_rdma_op_mapping[op->op_type])) {
