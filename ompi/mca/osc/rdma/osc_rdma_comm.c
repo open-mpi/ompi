@@ -15,6 +15,8 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "osc_rdma_comm.h"
 #include "osc_rdma_frag.h"
 #include "osc_rdma_sync.h"
@@ -22,8 +24,9 @@
 #include "osc_rdma_dynamic.h"
 #include "osc_rdma_btl_comm.h"
 
-#include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "opal/align.h"
+#include "opal/util/minmax.h"
+#include "ompi/mca/osc/base/osc_base_obj_convert.h"
 
 /* helper functions */
 static inline void ompi_osc_rdma_cleanup_rdma (ompi_osc_rdma_sync_t *sync, bool dec_always, ompi_osc_rdma_frag_t *frag,
@@ -246,7 +249,7 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
             assert (0 != local_iov_count);
 
             /* determine how much to transfer in this operation */
-            rdma_len = min(min(local_iovec[local_iov_index].iov_len, remote_iovec[remote_iov_index].iov_len), max_rdma_len);
+            rdma_len = opal_min(opal_min(local_iovec[local_iov_index].iov_len, remote_iovec[remote_iov_index].iov_len), max_rdma_len);
 
             /* execute the get */
             if (!subreq && alloc_reqs) {

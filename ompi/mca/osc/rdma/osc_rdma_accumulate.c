@@ -19,12 +19,15 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "osc_rdma_accumulate.h"
 #include "osc_rdma_request.h"
 #include "osc_rdma_comm.h"
 #include "osc_rdma_lock.h"
 #include "osc_rdma_btl_comm.h"
 
+#include "opal/util/minmax.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 
@@ -583,9 +586,9 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
 
             /* determine how much to put in this operation */
             if (source_count) {
-                acc_len = min(min(target_iovec[target_iov_index].iov_len, source_iovec[source_iov_index].iov_len), acc_limit);
+                acc_len = opal_min(opal_min(target_iovec[target_iov_index].iov_len, source_iovec[source_iov_index].iov_len), acc_limit);
             } else {
-                acc_len = min(target_iovec[target_iov_index].iov_len, acc_limit);
+                acc_len = opal_min(target_iovec[target_iov_index].iov_len, acc_limit);
             }
 
             if (0 != acc_len) {

@@ -22,7 +22,6 @@
 
 #define OMPI_OSC_RDMA_DECODE_MAX 64
 
-#define min(a,b) ((a) < (b) ? (a) : (b))
 #define ALIGNMENT_MASK(x) ((x) ? (x) - 1 : 0)
 
 /**
