@@ -147,6 +147,9 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_NAMEISSET;
     ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_INTRINSIC;
 
+    /* get a reference on the attributes subsys */
+    ompi_attr_get_ref();
+
     /* We have to create a hash (although it is legal to leave this
        filed NULL -- the attribute accessor functions will intepret
        this as "there are no attributes cached on this object")
@@ -237,6 +240,11 @@ int ompi_comm_init(void)
 
     /* initialize communicator requests (for ompi_comm_idup) */
     ompi_comm_request_init ();
+
+    /*
+     * finally here we set the predefined attribute keyvals
+     */
+    ompi_attr_create_predefined();
 
     return OMPI_SUCCESS;
 }
@@ -360,7 +368,7 @@ int ompi_comm_finalize(void)
     /* finalize communicator requests */
     ompi_comm_request_fini ();
 
-    return OMPI_SUCCESS;
+    return ompi_attr_put_ref();
 }
 
 /********************************************************************************/

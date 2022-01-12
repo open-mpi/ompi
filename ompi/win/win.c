@@ -106,6 +106,11 @@ ompi_win_init(void)
         return ret;
     }
 
+    ret = ompi_attr_get_ref();
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -137,7 +142,7 @@ int ompi_win_finalize(void)
     OBJ_RELEASE(ompi_win_accumulate_ops);
     OBJ_RELEASE(ompi_win_accumulate_order);
 
-    return OMPI_SUCCESS;
+    return ompi_attr_put_ref();
 }
 
 static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int flavor, ompi_win_t **win_out)
