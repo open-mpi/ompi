@@ -5,6 +5,8 @@
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +36,7 @@ void recv_completion(nt status, struct ompi_process_name_t* peer, struct iovec* 
                      int count, ompi_rml_tag_t tag, void* cbdata)
 {
     /* set receive completion flag */
-    MB();
+    opal_atomic_mb();
     *(int *)cbdata=1;
 }
 
@@ -232,7 +234,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
             send_buffer^=1;
         }
 
-        MB();
+        opal_atomic_mb();
         /*
          * Signal parent that data is ready
          */
@@ -255,7 +257,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
 
             *recv_done=0;
             *send_done=0;
-            MB();
+            opal_atomic_mb();
 
             /* post non-blocking receive */
             recv_iov.iov_base=scratch_bufers[send_buffer];
