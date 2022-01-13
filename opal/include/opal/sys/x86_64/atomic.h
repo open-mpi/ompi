@@ -16,6 +16,8 @@
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +32,6 @@
  */
 
 #define SMPLOCK "lock; "
-#define MB()    __asm__ __volatile__("" : : : "memory")
 
 /**********************************************************************
  *
@@ -56,12 +57,12 @@ static inline void opal_atomic_mb(void)
 
 static inline void opal_atomic_rmb(void)
 {
-    MB();
+    __asm__ __volatile__("" : : : "memory");
 }
 
 static inline void opal_atomic_wmb(void)
 {
-    MB();
+    __asm__ __volatile__("" : : : "memory");
 }
 
 static inline void opal_atomic_isync(void)

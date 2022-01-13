@@ -77,7 +77,6 @@ static inline void opal_atomic_wmb(void)
     __atomic_thread_fence(__ATOMIC_RELEASE);
 }
 
-#define MB() opal_atomic_mb()
 
 /**********************************************************************
  *

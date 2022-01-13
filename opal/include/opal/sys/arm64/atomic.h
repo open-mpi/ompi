@@ -46,10 +46,6 @@
 #define OPAL_HAVE_ATOMIC_XOR_64              1
 #define OPAL_HAVE_ATOMIC_SUB_64              1
 
-#define MB()  __asm__ __volatile__("dmb sy" : : : "memory")
-#define RMB() __asm__ __volatile__("dmb ld" : : : "memory")
-#define WMB() __asm__ __volatile__("dmb st" : : : "memory")
-
 /**********************************************************************
  *
  * Memory Barriers
@@ -58,17 +54,17 @@
 
 static inline void opal_atomic_mb(void)
 {
-    MB();
+    __asm__ __volatile__("dmb sy" : : : "memory");
 }
 
 static inline void opal_atomic_rmb(void)
 {
-    RMB();
+    __asm__ __volatile__("dmb ld" : : : "memory");
 }
 
 static inline void opal_atomic_wmb(void)
 {
-    WMB();
+    __asm__ __volatile__("dmb st" : : : "memory");
 }
 
 static inline void opal_atomic_isync(void)

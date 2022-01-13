@@ -30,11 +30,6 @@
  * On powerpc ...
  */
 
-#define MB()    __asm__ __volatile__("sync" : : : "memory")
-#define RMB()   __asm__ __volatile__("isync" : : : "memory")
-#define WMB()   __asm__ __volatile__("lwsync" : : : "memory")
-#define ISYNC() __asm__ __volatile__("isync" : : : "memory")
-
 /**********************************************************************
  *
  * Define constants for PowerPC 64
@@ -68,22 +63,22 @@
 
 static inline void opal_atomic_mb(void)
 {
-    MB();
+    __asm__ __volatile__("sync" : : : "memory");
 }
 
 static inline void opal_atomic_rmb(void)
 {
-    RMB();
+    __asm__ __volatile__ ("isync" : : : "memory");
 }
 
 static inline void opal_atomic_wmb(void)
 {
-    WMB();
+    __asm__ __volatile__("lwsync" : : : "memory");
 }
 
 static inline void opal_atomic_isync(void)
 {
-    ISYNC();
+    __asm__ __volatile__("isync" : : : "memory");
 }
 
 
