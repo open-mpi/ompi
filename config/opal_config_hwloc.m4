@@ -144,16 +144,16 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_EXTERNAL], [
     LIBS="$opal_hwloc_LIBS_save $opal_hwloc_LIBS"
 
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
-          [AC_MSG_CHECKING([if external hwloc version is 1.6 or greater])
+          [AC_MSG_CHECKING([if external hwloc version is 1.11.0 or greater])
            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <hwloc.h>]],
                                [[
 #if HWLOC_API_VERSION < 0x00010500
-#error "hwloc API version is less than 0x00010500"
+#error "hwloc API version is less than 0x00011100"
 #endif
                                ]])],
                    [AC_MSG_RESULT([yes])],
                    [AC_MSG_RESULT([no])
-                    AC_MSG_WARN([external hwloc version is too old (1.5 or later required)])
+                    AC_MSG_WARN([external hwloc version is too old (1.11.0 or later required)])
                     opal_hwloc_external_support="no"])])
 
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
