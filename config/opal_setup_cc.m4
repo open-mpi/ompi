@@ -276,15 +276,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
         OPAL_FLAGS_UNIQ(LDFLAGS)
         WANT_DEBUG=1
    fi
-    
-
-    # Do we want debugging?
-    if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
-        CFLAGS="$CFLAGS -g"
-
-        OPAL_FLAGS_UNIQ(CFLAGS)
-        AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
-    fi
 
     # These flags are generally gcc-specific; even the
     # gcc-impersonating compilers won't accept them.
@@ -428,20 +419,12 @@ AC_DEFUN([_OPAL_PROG_CC],[
     #
     # Check for the compiler
     #
-    OPAL_VAR_SCOPE_PUSH([opal_cflags_save dummy opal_cc_arvgv0])
+    OPAL_VAR_SCOPE_PUSH([dummy opal_cc_arvgv0])
 
-    # AC_USE_SYSTEM_EXTENSIONS alters CFLAGS (e.g., adds -g -O2)
-    opal_cflags_save="$CFLAGS"
     AC_USE_SYSTEM_EXTENSIONS
-    # AC_USE_SYSTEM_EXTENSIONS will modify CFLAGS if nothing was in there
-    # beforehand.  We don't want that.  So if there was nothing in
-    # CFLAGS, put nothing back in there.
-    AS_IF([test -z "$opal_cflags_save"], [CFLAGS=])
 
-    opal_cflags_save="$CFLAGS"
     AC_PROG_CC
     BASECC="`basename $CC`"
-    CFLAGS="$opal_cflags_save"
     OPAL_CC="$CC"
     AC_DEFINE_UNQUOTED(OPAL_CC, "$OPAL_CC", [OMPI underlying C compiler])
     set dummy $CC
