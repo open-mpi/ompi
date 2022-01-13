@@ -187,10 +187,47 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_TIMING, $WANT_TIMING,
 AM_CONDITIONAL([OPAL_COMPILE_TIMING], [test "$WANT_TIMING" = "1"])
 AM_CONDITIONAL([OPAL_INSTALL_TIMING_BINARIES], [test "$WANT_TIMING" = "1" && test "$enable_binaries" != "no"])
 
+# Later calls to AC_PROG_CC/CXX/FC can
+# inject things like -O2 into compile flags if they are
+# not defined, which we don't want. Make sure these flags
+# are at least set to an empty string now.
+#
+# Complicating matters is that autogen can re-order
+# these calls toward the top of configure. This block should
+# be at/near the top, so do it now.
+#
 if test "$WANT_DEBUG" = "0"; then
     CFLAGS="-DNDEBUG $CFLAGS"
     CXXFLAGS="-DNDEBUG $CXXFLAGS"
+
+    # NDEBUG doesn't exist in fortran, so just make sure it's defined.
+    if [ test -z "$FCFLAGS" ]; then
+      FCFLAGS=""
+    fi
+else
+    # Do we want debugging symbols?
+    if test "$enable_debug_symbols" != "no" ; then
+        CFLAGS="$CFLAGS -g"
+        CXXFLAGS="$CXXFLAGS -g"
+        FCFLAGS="$FCFLAGS -g"
+        AC_MSG_WARN([-g has been added to compiler (--enable-debug)])
+    else
+        # If not set, define compile flags to an empty string
+        # to prevent AC_PROG_CC/FC/CXX from modifying compiler flags.
+        # See: https://www.gnu.org/software/autoconf/manual/autoconf-2.69/html_node/C-Compiler.html
+        # for more info.
+        if [ test -z "$CFLAGS" ]; then
+            CFLAGS=""
+        fi
+        if [ test -z "$CXXFLAGS" ]; then
+            CXXFLAGS=""
+        fi
+        if [ test -z "$FCFLAGS" ]; then
+            FCFLAGS=""
+        fi
+    fi
 fi
+
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
