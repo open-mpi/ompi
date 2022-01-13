@@ -68,7 +68,7 @@ lookup_mtl_name(void)
 // Find the send btl's module:component:name for the incoming comm,rank
 static char*
 lookup_btl_name_for_send(ompi_communicator_t* comm, int rank) {
-    ompi_proc_t *dst_proc = ompi_group_peer_lookup_existing(comm->c_remote_group, rank);
+    ompi_proc_t *dst_proc = ompi_group_peer_lookup(comm->c_remote_group, rank);
 
     mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(dst_proc);
     if (endpoint &&
@@ -123,9 +123,9 @@ static void
 init_string_to_conversion_struct(comm_method_string_conversion_t *data)
 {
     data->n = 0;
-    strcpy(data->str[data->n], "n/a");
+    mystrncpy(data->str[data->n], "n/a", COMM_METHOD_STRING_SIZE);
     ++(data->n);
-    strcpy(data->str[data->n], "self");
+    mystrncpy(data->str[data->n], "self", COMM_METHOD_STRING_SIZE);
     ++(data->n);
 }
 
@@ -275,17 +275,28 @@ abbreviate_list_into_string(char *str, int max, int *list, int nlist)
  *  In general we can tell if we're allowed to write more into the string
  *  based on whether the previous iteration wrote ".." onto the end.
  */
+/*
+ *  Note about string size: 'max' is the number of chars that
+ *  can be printed inside str which was allocated as max+1 total space
+ *  to allow 'max' chars plus a null termination.  So for snprintf()
+ *  that translates to size of max+1.  Or when writing on the end
+ *  of str, eg snprintfing into &str[strlen(str)] that would be
+ *  max - strlen(str) space for printable chars so
+ *  max - strlen(str) + 1 as the size argument in snprintf().
+ */
         if (list[i] == hi+1) {
             hi = list[i];
         } else if (list[i] > hi) {
             if (strlen(str)==0 || str[strlen(str)-1] != '.') {
                 if (strlen(str) != 0) {
-                    strcpy(&str[strlen(str)], ", ");
+                    mystrncpy(&str[strlen(str)], ", ", max - strlen(str) + 1);
                 }
                 if (lo != hi) {
-                    sprintf(&str[strlen(str)], "%d - %d", lo, hi);
+                    snprintf(&str[strlen(str)], max - strlen(str) + 1,
+                        "%d - %d", lo, hi);
                 } else {
-                    sprintf(&str[strlen(str)], "%d", lo);
+                    snprintf(&str[strlen(str)], max - strlen(str) + 1,
+                        "%d", lo);
                 }
             }
 /*
@@ -299,7 +310,7 @@ abbreviate_list_into_string(char *str, int max, int *list, int nlist)
                 &&
                 (strlen(str) == 0 || str[strlen(str)-1] != '.'))
             {
-                strcpy(&str[strlen(str)], ", ..");
+                mystrncpy(&str[strlen(str)], ", ..", max - strlen(str) + 1);
                 break;
             }
             hi = lo = list[i];
@@ -307,12 +318,14 @@ abbreviate_list_into_string(char *str, int max, int *list, int nlist)
     }
     if (strlen(str)==0 || str[strlen(str)-1] != '.') {
         if (strlen(str)!=0) {
-            strcpy(&str[strlen(str)], ", ");
+            mystrncpy(&str[strlen(str)], ", ", max - strlen(str) + 1);
         }
         if (lo != hi) {
-            sprintf(&str[strlen(str)], "%d - %d", lo, hi);
+            snprintf(&str[strlen(str)], max - strlen(str) + 1,
+                "%d - %d", lo, hi);
         } else {
-            sprintf(&str[strlen(str)], "%d", lo);
+            snprintf(&str[strlen(str)], max - strlen(str) + 1,
+                "%d", lo);
         }
     }
 }
@@ -325,7 +338,7 @@ abbreviate_list_into_string(char *str, int max, int *list, int nlist)
 static void
 ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from finalize
 {
-    int numhosts, i, j, k;
+    int i, j, k;
     int max2Dprottable = 12;
     int max2D1Cprottable = 36;
     int hpmp_myrank;
@@ -375,7 +388,7 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
     prefix_string[0] = 0;
     if (mylocalrank == 0) {
         myleaderrank = ompi_comm_rank(leader_comm);
-        sprintf(prefix_string, "H%d: ", myleaderrank);
+        snprintf(prefix_string, 64, "H%d: ", myleaderrank);
     }
     int indentation = strlen(prefix_string);
     /* reject really small aff_columns settings*/
@@ -385,8 +398,9 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
     host_local_get_affstring(&unprefixed_affstring, indentation,
         mylocalrank, nlocalranks, local_comm);
     if (mylocalrank == 0) {
-        affstring = malloc(strlen(prefix_string) + strlen(unprefixed_affstring) + 16);
-        sprintf(affstring, "%s%s", prefix_string, unprefixed_affstring);
+        int affstring_sz = strlen(prefix_string) + strlen(unprefixed_affstring) + 16;
+        affstring = malloc(affstring_sz);
+        snprintf(affstring, affstring_sz, "%s%s", prefix_string, unprefixed_affstring);
         free(unprefixed_affstring);
     }
 
@@ -399,16 +413,16 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 // Only host-leaders exist from this point on.
 // -------------------------------------------------
     myleaderrank = ompi_comm_rank(leader_comm);
-    nleaderranks = numhosts = ompi_comm_size(leader_comm);
+    nleaderranks = ompi_comm_size(leader_comm);
 
 /*
  *  Allocate space for each rank to store its communication method
  *  on a per-host basis.  But rank 0 gets enough space to store the
  *  data for all pairs of hosts.
  */
-    mymethod = method = malloc(numhosts * sizeof(int));
+    mymethod = method = malloc(nleaderranks * sizeof(int));
     if (hpmp_myrank == 0) {
-        method = malloc(numhosts * sizeof(int) * numhosts);
+        method = malloc(nleaderranks * sizeof(int) * nleaderranks);
     }
     if (!method || !mymethod) {
         ompi_comm_free(&local_comm);
@@ -441,7 +455,7 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 
         len = strlen(opal_process_info.nodename) + 100;
         hoststring  = malloc(len + 1);
-        sprintf(hoststring, "Host %d [%s] ranks ",
+        snprintf(hoststring, len + 1, "Host %d [%s] ranks ",
             myleaderrank, opal_process_info.nodename);
 
         abbreviate_list_into_string(&hoststring[strlen(hoststring)],
@@ -499,7 +513,7 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
     MPI_Op_free(&myop);
     MPI_Type_free(&mydt);
 
-// Each host leader fills in a "numhosts" sized array method[] of
+// Each host leader fills in a "nleaderranks" sized array method[] of
 // how it communicates with each peer.
     for (i=0; i<nleaderranks; ++i) {
         mymethod[i] = comm_method(leader_comm, i);
@@ -594,10 +608,11 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
                 }
             }
 
-            str = malloc(nleaderranks * per + 1);
+            int str_sz = nleaderranks * per + 1;
+            str = malloc(str_sz);
             p = str;
             for (i=0; i<nleaderranks; ++i) {
-                sprintf(p, "%d", i);
+                snprintf(p, str_sz - (p - str), "%d", i);
                 for (j=(int)strlen(p); j<per; ++j) {
                     p[j] = ' ';
                 }
@@ -675,12 +690,13 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
                 }
             }
 
-            str = malloc(per + 32 + nleaderranks * 2 + 1);
+            int str_sz = per + 32 + nleaderranks * 2 + 1;
+            str = malloc(str_sz);
             p = str;
-            sprintf(p, "0 1 2 3 ");
+            snprintf(p, str_sz, "0 1 2 3 ");
             p += 8;
             for (i=4; i<nleaderranks; i+=4) {
-                sprintf(p, "%d", i);
+                snprintf(p, str_sz - (p - str), "%d", i);
                 for (j=(int)strlen(p); j<8; ++j) {
                     p[j] = ' ';
                 }
@@ -851,13 +867,14 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
                     if (is_nonconformist) {
                         char *str = malloc(1024);
 //                      int first = 1;
-                        sprintf(str, "  host %d:", i);
+                        snprintf(str, 1024, "  host %d:", i);
                         for (k=0; k<NUM_COMM_METHODS; ++k) {
                             if (method_count[k] > 0) {
 //                              if (!first) {
 //                                  strcat(str, " /");
 //                              }
-                                sprintf(&str[strlen(str)],
+                                snprintf(&str[strlen(str)],
+                                    1024 - strlen(str),
                                     " [%dx %s]",
                                     method_count[k],
                                     comm_method_to_string(k));
@@ -980,7 +997,6 @@ host_leader_printstring(
 
     if (myleaderrank == 0) {
         for (i=0; i<nleaderranks; ++i) {
-            //printf("%s\n", allhoststrings[i]);
             multiline_print(allhoststrings[i], cols, indentation);
         }
         free(allhoststrings);
@@ -1023,7 +1039,7 @@ sprint_bitmaps(char **affstring, int *affstring_cursz,
     int *position)
 {
     int i, r;
-    int nchildren_done[32], depth, some_cores_printed_under_containing_obj;
+    int nchildren_done[32], depth, some_cores_printed_under_containing_obj = 0;
     int nextchar;
     hwloc_obj_t obj;
     hwloc_bitmap_t cpus;
@@ -1093,11 +1109,13 @@ sprint_bitmaps(char **affstring, int *affstring_cursz,
          * them.  Without that check my PPC machines at least look like
          * "[<../..>][<../..>]<><><><><><>"
          */
+#if HWLOC_API_VERSION >= 0x20000
         if (obj->memory_arity > 0 && !hwloc_bitmap_iszero(obj->memory_first_child->cpuset)) {
             (*affstring)[nextchar++] = '<';
             (*affstring)[nextchar] = 0;
             some_cores_printed_under_containing_obj = 0;
         }
+#endif
 
         if (obj->type == HWLOC_OBJ_PU) {
             char c = '.';
@@ -1119,11 +1137,13 @@ sprint_bitmaps(char **affstring, int *affstring_cursz,
         i = nchildren_done[depth];
         while (depth >= 0 && i >= (int)obj->arity) {
             LENGTHEN(affstring, nextchar, affstring_cursz, 2);
+#if HWLOC_API_VERSION >= 0x20000
             if (obj->memory_arity > 0 && !hwloc_bitmap_iszero(obj->memory_first_child->cpuset)) {
                 (*affstring)[nextchar++] = '>';
                 (*affstring)[nextchar] = 0;
                 some_cores_printed_under_containing_obj = 0;
             }
+#endif
             if (obj->type == HWLOC_OBJ_PACKAGE) {
                 (*affstring)[nextchar++] = ']';
                 (*affstring)[nextchar] = 0;
@@ -1158,6 +1178,11 @@ host_local_get_affstring(
     hwloc_cpuset_t *cpus_forrank;
     char *mybitmap_string;
     char **bitmap_strings;
+
+    /* ensure we have the topology */
+    if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+        return;
+    }
 
     mycpus = hwloc_bitmap_alloc();
     hwloc_get_cpubind(opal_hwloc_topology, mycpus, HWLOC_CPUBIND_PROCESS);
@@ -1232,9 +1257,13 @@ host_local_get_affstring(
             int nextchar = strlen(*affstring);
             LENGTHEN(affstring, nextchar, &affstring_cursz, 32);
             if (a != b) {
-                sprintf(&(*affstring)[strlen(*affstring)], " Lranks %d-%d", a, b);
+                snprintf(&(*affstring)[strlen(*affstring)],
+                    affstring_cursz - strlen(*affstring),
+                    " Lranks %d-%d", a, b);
             } else {
-                sprintf(&(*affstring)[strlen(*affstring)], " Lrank %d", a);
+                snprintf(&(*affstring)[strlen(*affstring)],
+                    affstring_cursz - strlen(*affstring),
+                    " Lrank %d", a);
             }
         }
     }
