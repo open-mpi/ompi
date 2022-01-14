@@ -34,6 +34,7 @@ headers += \
 	opal/sys/atomic_impl.h \
 	opal/sys/atomic_impl_ptr_cswap.h \
 	opal/sys/atomic_impl_ptr_swap.h \
+	opal/sys/atomic_impl_spinlock.h \
 	opal/sys/timer.h \
         opal/sys/cma.h
 

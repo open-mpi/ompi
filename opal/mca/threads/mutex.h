@@ -18,6 +18,8 @@
  * Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2020      Triad National Security, LLC.  All rights reserved.
  * Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -138,11 +140,7 @@ static inline void opal_mutex_unlock(opal_mutex_t *mutex)
  */
 static inline int opal_mutex_atomic_trylock(opal_mutex_t *mutex)
 {
-#if OPAL_HAVE_ATOMIC_SPINLOCKS
     return opal_atomic_trylock(&mutex->m_lock_atomic);
-#else
-    return opal_mutex_trylock(mutex);
-#endif
 }
 
 /**
@@ -152,11 +150,7 @@ static inline int opal_mutex_atomic_trylock(opal_mutex_t *mutex)
  */
 static inline void opal_mutex_atomic_lock(opal_mutex_t *mutex)
 {
-#if OPAL_HAVE_ATOMIC_SPINLOCKS
     opal_atomic_lock(&mutex->m_lock_atomic);
-#else
-    opal_mutex_lock(mutex);
-#endif
 }
 
 /**
@@ -166,11 +160,7 @@ static inline void opal_mutex_atomic_lock(opal_mutex_t *mutex)
  */
 static inline void opal_mutex_atomic_unlock(opal_mutex_t *mutex)
 {
-#if OPAL_HAVE_ATOMIC_SPINLOCKS
     opal_atomic_unlock(&mutex->m_lock_atomic);
-#else
-    opal_mutex_unlock(mutex);
-#endif
 }
 
 /**

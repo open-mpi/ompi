@@ -50,8 +50,6 @@
 #    define OPAL_HAVE_ATOMIC_MIN_64 1
 #    define OPAL_HAVE_ATOMIC_MAX_64 1
 
-#    define OPAL_HAVE_ATOMIC_SPINLOCKS 1
-
 
 /**********************************************************************
  *
@@ -162,6 +160,36 @@ opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t *addr, opal_int128_
         atomic_exchange_explicit((_Atomic unsigned long *) addr, value, memory_order_relaxed)
 
 
+/**********************************************************************
+ *
+ * Atomic spinlocks
+ *
+ *********************************************************************/
+/*
+ * Lock initialization function. It set the lock to UNLOCKED.
+ */
+static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, bool value)
+{
+    atomic_flag_clear_explicit(lock, memory_order_relaxed);
+}
+
+static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
+{
+    return (int) atomic_flag_test_and_set(lock);
+}
+
+static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
+{
+    while (opal_atomic_trylock(lock)) {
+    }
+}
+
+static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
+{
+    atomic_flag_clear(lock);
+}
+
+
 #    define OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(op, bits, type, operator)                             \
         static inline type opal_atomic_fetch_##op##_##bits(opal_atomic_##type *addr, type value)   \
         {                                                                                          \
@@ -172,6 +200,7 @@ opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t *addr, opal_int128_
         {                                                                                          \
             return atomic_fetch_##op##_explicit(addr, value, memory_order_relaxed) operator value; \
         }
+
 
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 32, int32_t, +)
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 64, int64_t, +)
@@ -263,37 +292,6 @@ static inline int64_t opal_atomic_max_fetch_64(opal_atomic_int64_t *addr, int64_
 {
     int64_t old = opal_atomic_fetch_max_64(addr, value);
     return old >= value ? old : value;
-}
-
-#    define OPAL_ATOMIC_LOCK_UNLOCKED false
-#    define OPAL_ATOMIC_LOCK_LOCKED   true
-
-#    define OPAL_ATOMIC_LOCK_INIT ATOMIC_FLAG_INIT
-
-typedef atomic_flag opal_atomic_lock_t;
-
-/*
- * Lock initialization function. It set the lock to UNLOCKED.
- */
-static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, bool value)
-{
-    atomic_flag_clear_explicit(lock, memory_order_relaxed);
-}
-
-static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
-{
-    return (int) atomic_flag_test_and_set(lock);
-}
-
-static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
-{
-    while (opal_atomic_trylock(lock)) {
-    }
-}
-
-static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
-{
-    atomic_flag_clear(lock);
 }
 
 #endif /* !defined(OPAL_ATOMIC_STDC_H) */
