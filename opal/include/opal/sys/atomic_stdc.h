@@ -149,7 +149,7 @@ opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t *addr, opal_int128_
 /*
  * Lock initialization function. It set the lock to UNLOCKED.
  */
-static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, bool value)
+static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, int32_t value)
 {
     atomic_flag_clear_explicit(lock, memory_order_relaxed);
 }
