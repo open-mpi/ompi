@@ -56,54 +56,7 @@
 #include "opal/sys/architecture.h"
 #include "opal_stdatomic.h"
 
-#if OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11 && !defined(__INTEL_COMPILER)
-
-#    include "atomic_stdc.h"
-
-#else /* !OPAL_C_HAVE__ATOMIC */
-
-
 BEGIN_C_DECLS
-
-/**********************************************************************
- *
- * Load the appropriate architecture files and set some reasonable
- * default values for our support
- *
- *********************************************************************/
-#    if defined(DOXYGEN)
-/* don't include system-level gorp when generating doxygen files */
-#    elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_GCC
-#        include "opal/sys/gcc_builtin/atomic.h"
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
-#        include "opal/sys/x86_64/atomic.h"
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
-#        include "opal/sys/arm/atomic.h"
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
-#        include "opal/sys/arm64/atomic.h"
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
-#        include "opal/sys/ia32/atomic.h"
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
-#        include "opal/sys/powerpc/atomic.h"
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
-#        include "opal/sys/powerpc/atomic.h"
-#    endif
-
-#    ifndef DOXYGEN
-/* compare and set operations can't really be emulated from software,
-   so if these defines aren't already set, they should be set to 0
-   now */
-#        ifndef OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
-#            define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 0
-#        endif
-#        ifndef OPAL_HAVE_ATOMIC_LLSC_32
-#            define OPAL_HAVE_ATOMIC_LLSC_32 0
-#        endif
-#        ifndef OPAL_HAVE_ATOMIC_LLSC_64
-#            define OPAL_HAVE_ATOMIC_LLSC_64 0
-#        endif
-#    endif /* DOXYGEN */
-
 
 /**********************************************************************
  *
@@ -158,6 +111,18 @@ static inline void opal_atomic_wmb(void);
  * over the 32 and 64 bit implementations).
  *
  *********************************************************************/
+
+/*
+ * The stdc implementation is implemetned as macros around the C11
+ * atomic interface (which is a type-independent interface).  While it
+ * would be better to have type checking so developers using the C11
+ * interface didn't accidently munge something that broke on other
+ * implementations, there are a ton of warnings due to volatile casing
+ * in the opal_lifo code. Don't enforce the types of the function
+ * calls on C11 until we can sort that out.
+ */
+#if !(OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11 && !defined(__INTEL_COMPILER))
+
 /**
  * Atomic compare and set of 32 bit intergers with acquire and release semantics.
  *
@@ -284,7 +249,6 @@ static inline bool opal_atomic_compare_exchange_strong_acq_ptr(opal_atomic_intpt
 static inline bool opal_atomic_compare_exchange_strong_rel_ptr(opal_atomic_intptr_t *addr,
                                                                intptr_t *oldval, intptr_t newval);
 
-
 /**********************************************************************
  *
  * Swap
@@ -320,6 +284,8 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
  * @returns Value in addr before swap
  */
 static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t newval);
+
+#endif /* #if !(OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11 && !defined(__INTEL_COMPILER)) */
 
 
 /**********************************************************************
@@ -410,8 +376,6 @@ static inline size_t opal_atomic_fetch_add_size_t(opal_atomic_size_t *addr, size
 static inline void opal_atomic_add(type *addr, type delta);
 #endif
 
-#endif /* !OPAL_C_HAVE__ATOMIC */
-
 
 /**********************************************************************
  *
@@ -444,20 +408,56 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
 
 #endif
 
+
+/**********************************************************************
+ *
+ * Load the appropriate architecture files and set some reasonable
+ * default values for our support
+ *
+ *********************************************************************/
+
+#if defined(DOXYGEN)
+/* don't include system-level gorp when generating doxygen files */
+#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11 && !defined(__INTEL_COMPILER)
+#    include "opal/sys/atomic_stdc.h"
+#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_GCC
+#    include "opal/sys/gcc_builtin/atomic.h"
+#elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#    include "opal/sys/x86_64/atomic.h"
+#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+#    include "opal/sys/arm64/atomic.h"
+#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
+#    include "opal/sys/powerpc/atomic.h"
+#endif
+
 #if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
 #    include "opal/sys/arm64/atomic_llsc.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
 #    include "opal/sys/powerpc/atomic_llsc.h"
 #endif
 
-#if !defined(OPAL_HAVE_ATOMIC_LLSC_32)
+
+/**********************************************************************
+ *
+ * Ensure defines for the few optional features are always defined
+ *
+ *********************************************************************/
+
+#ifndef OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
+#    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 0
+#endif
+
+#ifndef OPAL_HAVE_ATOMIC_LLSC_32
 #    define OPAL_HAVE_ATOMIC_LLSC_32 0
 #endif
 
-#if !defined(OPAL_HAVE_ATOMIC_LLSC_64)
+#ifndef OPAL_HAVE_ATOMIC_LLSC_64
 #    define OPAL_HAVE_ATOMIC_LLSC_64 0
 #endif
 
+#ifndef OPAL_HAVE_ATOMIC_LLSC_PTR
+#    define OPAL_HAVE_ATOMIC_LLSC_PTR 0
+#endif
 
 END_C_DECLS
 
