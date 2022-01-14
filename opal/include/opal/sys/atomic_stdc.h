@@ -50,7 +50,7 @@ static inline void opal_atomic_wmb(void)
 
 static inline void opal_atomic_rmb(void)
 {
-#    if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#    if defined(PLATFORM_ARCH_X86_64)
     /* work around a bug in older gcc versions (observed in gcc 6.x)
      * where acquire seems to get treated as a no-op instead of being
      * equivalent to __asm__ __volatile__("": : :"memory") on x86_64 */

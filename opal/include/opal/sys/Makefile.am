@@ -28,7 +28,6 @@
 # This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 headers += \
-	opal/sys/architecture.h \
 	opal/sys/atomic.h \
 	opal/sys/atomic_stdc.h \
 	opal/sys/atomic_impl_minmax_math.h \

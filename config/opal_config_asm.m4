@@ -597,7 +597,7 @@ dnl #################################################################
 AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
 
-    OPAL_VAR_SCOPE_PUSH([atomics_found want_c11_atomics want_gcc_builtin_atomics want_asm_atomics opal_cv_asm_arch result])
+    OPAL_VAR_SCOPE_PUSH([atomics_found want_c11_atomics want_gcc_builtin_atomics want_asm_atomics])
 
     # only assembly style we support today is gcc-style inline
     # assembly, find out if it works.  We need this even for C11/GCC
@@ -672,19 +672,16 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
            x86_64-*x32|i?86-*|x86_64*|amd64*)
                AS_IF([test "$ac_cv_sizeof_long" = "8"],
                      [OPAL_CHECK_CMPXCHG16B
-                      opal_cv_asm_arch="X86_64"
                       atomics_found="x86_64 assembly"])
             ;;
 
             aarch64*)
-                opal_cv_asm_arch="ARM64"
                 atomics_found="aarch64 assembly"
             ;;
 
             powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
                 AS_IF([test "$ac_cv_sizeof_long" = "8"],
-                      [opal_cv_asm_arch="POWERPC64"
-                       atomics_found="PowerPC asssembly"])
+                      [atomics_found="PowerPC asssembly"])
             ;;
             esac
 
@@ -695,10 +692,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     AS_IF([test "$aomics_found" = "no"],
           [AC_MSG_ERROR([No usable atomics implementation found.  Cannot continue.])])
-
-    result="OPAL_$opal_cv_asm_arch"
-    AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_ARCH], [$result],
-        [Architecture type of assembly to use for atomic operations and CMA])
 
     AC_DEFINE_UNQUOTED([OPAL_USE_C11_ATOMICS],
         [$want_c11_atomics],
