@@ -49,11 +49,9 @@
 #ifndef OPAL_SYS_ATOMIC_H
 #define OPAL_SYS_ATOMIC_H 1
 
-#include "opal_config.h"
-
 #include <stdbool.h>
 
-#include "opal/sys/architecture.h"
+#include "opal/opal_portable_platform.h"
 #include "opal_stdatomic.h"
 
 BEGIN_C_DECLS
@@ -436,9 +434,9 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
 #error "No atomics support found."
 #endif
 
-#if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+#if defined(PLATFORM_ARCH_AARCH64)
 #    include "opal/sys/arm64/atomic_llsc.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
+#elif defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
 #    include "opal/sys/powerpc/atomic_llsc.h"
 #endif
 

@@ -32,7 +32,7 @@ typedef uint64_t opal_timer_t;
 
 #if OPAL_C_GCC_INLINE_ASSEMBLY
 
-#    if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#    if defined(PLATFORM_ARCH_X86_64)
 
 /* TODO: add AMD mfence version and dispatch at init */
 static inline opal_timer_t opal_sys_timer_get_cycles(void)

@@ -33,9 +33,7 @@
 #ifndef OPAL_SYS_TIMER_H
 #define OPAL_SYS_TIMER_H 1
 
-#include "opal_config.h"
-
-#include "opal/sys/architecture.h"
+#include "opal/opal_portable_platform.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #    include <sys/types.h>
@@ -59,11 +57,11 @@ BEGIN_C_DECLS
 
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */
-#elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64 || OPAL_ASSEMBLY_ARCH == OPAL_IA32
+#elif defined(PLATFORM_ARCH_X86_64) || defined(PLATFORM_ARCH_X86)
 #    include "opal/sys/x86_64/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64 || OPAL_ASSEMBLY_ARCH == OPAL_ARM
+#elif defined(PLATFORM_ARCH_ARM) || defined(PLATFORM_ARCH_AARCH64)
 #    include "opal/sys/arm64/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64 || OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
+#elif defined(PLATFORM_ARCH_POWERPC)
 #    include "opal/sys/powerpc/timer.h"
 #endif
 
