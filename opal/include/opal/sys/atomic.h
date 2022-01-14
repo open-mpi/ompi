@@ -41,7 +41,6 @@
  * The following #defines will be true / false based on
  * assembly support:
  *
- *  - \c OPAL_HAVE_ATOMIC_MEM_BARRIER atomic memory barriers
  *  - \c OPAL_HAVE_ATOMIC_SPINLOCKS atomic spinlocks
  *
  * Note that for the Atomic math, atomic add/sub may be implemented as
@@ -95,7 +94,6 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  * files if we need to specify them as inline or non-inline
  *
  *********************************************************************/
-#define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER         1
 #define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32 1
 #define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64 1
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_32              1
@@ -166,18 +164,12 @@ enum { OPAL_ATOMIC_LOCK_UNLOCKED = 0, OPAL_ATOMIC_LOCK_LOCKED = 1 };
 #        endif
 #    endif /* DOXYGEN */
 
+
 /**********************************************************************
  *
- * Memory Barriers - defined here if running doxygen or have barriers
- *                   but can't inline
+ * Memory Barriers
  *
  *********************************************************************/
-#    if !defined(OPAL_HAVE_ATOMIC_MEM_BARRIER) && !defined(DOXYGEN)
-/* no way to emulate in C code */
-#        define OPAL_HAVE_ATOMIC_MEM_BARRIER 0
-#    endif
-
-#    if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MEM_BARRIER
 /**
  * Memory barrier
  *
@@ -191,12 +183,7 @@ enum { OPAL_ATOMIC_LOCK_UNLOCKED = 0, OPAL_ATOMIC_LOCK_LOCKED = 1 };
  * generally grinding the memory controller's performance.  Use only
  * if you need *both* read and write barriers.
  */
-
-#        if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
-static inline
-#        endif
-    void
-    opal_atomic_mb(void);
+static inline void opal_atomic_mb(void);
 
 /**
  * Read memory barrier
@@ -207,12 +194,7 @@ static inline
  * next read.  Nothing is said about the ordering of writes when using
  * \c opal_atomic_rmb().
  */
-
-#        if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
-static inline
-#        endif
-    void
-    opal_atomic_rmb(void);
+static inline void opal_atomic_rmb(void);
 
 /**
  * Write memory barrier.
@@ -223,14 +205,8 @@ static inline
  * next write.  Nothing is said about the ordering of reads when using
  * \c opal_atomic_wmb().
  */
+static inline void opal_atomic_wmb(void);
 
-#        if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
-static inline
-#        endif
-    void
-    opal_atomic_wmb(void);
-
-#    endif /* defined(DOXYGEN) || OPAL_HAVE_ATOMIC_MEM_BARRIER */
 
 /**********************************************************************
  *

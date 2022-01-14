@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,8 +27,6 @@
 int
 main(int argc, char *argv[])
 {
-#if OPAL_HAVE_ATOMIC_MEM_BARRIER
-
     /* there really isn't a great way to test that the barriers
        actually barrier, but at least make sure they don't kill the
        machine.*/
@@ -36,8 +36,5 @@ main(int argc, char *argv[])
     opal_atomic_wmb();
 
     return 0;
-#else
-    return 77;
-#endif
 }
 

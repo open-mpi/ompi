@@ -38,11 +38,11 @@
  * Define constants for AMD64 / x86_64 / EM64T / ...
  *
  *********************************************************************/
-#define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
+
 
 /**********************************************************************
  *
