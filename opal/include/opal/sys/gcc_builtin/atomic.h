@@ -18,6 +18,8 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +35,6 @@
  * Memory Barriers
  *
  *********************************************************************/
-#define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #define OPAL_HAVE_ATOMIC_ADD_32              1
@@ -50,6 +51,12 @@
 #define OPAL_HAVE_ATOMIC_SUB_64              1
 #define OPAL_HAVE_ATOMIC_SWAP_64             1
 
+
+/**********************************************************************
+ *
+ * Memory Barriers
+ *
+ *********************************************************************/
 #if (OPAL_ASSEMBLY_ARCH == OPAL_X86_64) && defined (__GNUC__) && !defined(__llvm) && (__GNUC__ < 6)
     /* work around a bug in older gcc versions where ACQUIRE seems to get
      * treated as a no-op instead */

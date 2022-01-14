@@ -7,6 +7,8 @@
  * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,8 +31,6 @@
 #    include "opal_stdint.h"
 #    include <stdatomic.h>
 #    include <stdint.h>
-
-#    define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
 
 #    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #    define OPAL_HAVE_ATOMIC_SWAP_32             1
@@ -57,6 +57,13 @@
 #    define OPAL_HAVE_ATOMIC_MAX_64 1
 
 #    define OPAL_HAVE_ATOMIC_SPINLOCKS 1
+
+
+/**********************************************************************
+ *
+ * Memory Barriers
+ *
+ *********************************************************************/
 
 static inline void opal_atomic_mb(void)
 {

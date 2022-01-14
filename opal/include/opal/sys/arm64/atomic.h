@@ -30,7 +30,6 @@
 #ifndef OPAL_SYS_ARCH_ATOMIC_H
 #define OPAL_SYS_ARCH_ATOMIC_H 1
 
-#define OPAL_HAVE_ATOMIC_MEM_BARRIER         1
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
 #define OPAL_HAVE_ATOMIC_SWAP_32             1
 #define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
@@ -45,6 +44,7 @@
 #define OPAL_HAVE_ATOMIC_OR_64               1
 #define OPAL_HAVE_ATOMIC_XOR_64              1
 #define OPAL_HAVE_ATOMIC_SUB_64              1
+
 
 /**********************************************************************
  *
