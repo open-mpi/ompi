@@ -198,20 +198,24 @@ static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t
 }
 
 
+/**********************************************************************
+ *
+ * Atomic spinlocks
+ *
+ *********************************************************************/
+
 #if defined(__HLE__)
 
 #    include <immintrin.h>
 
-#    define OPAL_HAVE_ATOMIC_SPINLOCKS 1
-
 static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, int32_t value)
 {
-    lock->u.lock = value;
+    lock = value;
 }
 
 static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
-    int ret = __atomic_exchange_n(&lock->u.lock, OPAL_ATOMIC_LOCK_LOCKED,
+    int ret = __atomic_exchange_n(&lock, OPAL_ATOMIC_LOCK_LOCKED,
                                   __ATOMIC_ACQUIRE | __ATOMIC_HLE_ACQUIRE);
     if (OPAL_ATOMIC_LOCK_LOCKED == ret) {
         /* abort the transaction */
@@ -225,7 +229,7 @@ static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
 static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
 {
     while (OPAL_ATOMIC_LOCK_LOCKED
-           == __atomic_exchange_n(&lock->u.lock, OPAL_ATOMIC_LOCK_LOCKED,
+           == __atomic_exchange_n(&lock, OPAL_ATOMIC_LOCK_LOCKED,
                                   __ATOMIC_ACQUIRE | __ATOMIC_HLE_ACQUIRE)) {
         /* abort the transaction */
         _mm_pause();
@@ -234,9 +238,13 @@ static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
 
 static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
 {
-    __atomic_store_n(&lock->u.lock, OPAL_ATOMIC_LOCK_UNLOCKED,
+    __atomic_store_n(&lock, OPAL_ATOMIC_LOCK_UNLOCKED,
                      __ATOMIC_RELEASE | __ATOMIC_HLE_RELEASE);
 }
+
+#else  /* #if defined(__HLE__) */
+
+#include "opal/sys/atomic_impl_spinlock.h"
 
 #endif
 

@@ -41,8 +41,6 @@
  * The following #defines will be true / false based on
  * assembly support:
  *
- *  - \c OPAL_HAVE_ATOMIC_SPINLOCKS atomic spinlocks
- *
  * Note that for the Atomic math, atomic add/sub may be implemented as
  * C code using opal_atomic_compare_exchange.  The appearance of atomic
  * operation will be upheld in these cases.
@@ -66,27 +64,6 @@
 
 
 BEGIN_C_DECLS
-/**********************************************************************
- *
- * Data structures for atomic ops
- *
- *********************************************************************/
-/**
- * Volatile lock object (with optional padding).
- *
- * \note The internals of the lock are included here, but should be
- * considered private.  The implementation currently in use may choose
- * to use an int or unsigned char as the lock value - the user is not
- * informed either way.
- */
-struct opal_atomic_lock_t {
-    union {
-        opal_atomic_int32_t lock;          /**< The lock address (an integer) */
-        volatile unsigned char sparc_lock; /**< The lock address on sparc */
-        char padding[sizeof(int)];         /**< Array for optional padding */
-    } u;
-};
-typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 
 /**********************************************************************
  *
@@ -104,16 +81,6 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #define OPAL_HAVE_INLINE_ATOMIC_OR_64               1
 #define OPAL_HAVE_INLINE_ATOMIC_XOR_64              1
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_64              1
-
-/**
- * Enumeration of lock states
- */
-enum { OPAL_ATOMIC_LOCK_UNLOCKED = 0, OPAL_ATOMIC_LOCK_LOCKED = 1 };
-
-#    define OPAL_ATOMIC_LOCK_INIT                     \
-        {                                             \
-            .u = {.lock = OPAL_ATOMIC_LOCK_UNLOCKED } \
-        }
 
 /**********************************************************************
  *
@@ -374,30 +341,16 @@ static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t
 
 /**********************************************************************
  *
- * Atomic spinlocks - always inlined, if have atomic compare-and-swap
+ * Atomic spinlocks
  *
  *********************************************************************/
-
-#    if !defined(OPAL_HAVE_ATOMIC_SPINLOCKS) && !defined(DOXYGEN)
-/* 0 is more like "pending" - we'll fix up at the end after all
-   the static inline functions are declared */
-#        define OPAL_HAVE_ATOMIC_SPINLOCKS 0
-#    endif
-
-#    if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_SPINLOCKS \
-        || (OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64)
-
 /**
  * Initialize a lock to value
  *
  * @param lock         Address of the lock
  * @param value        Initial value to set lock to
  */
-#        if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
-static inline
-#        endif
-    void
-    opal_atomic_lock_init(opal_atomic_lock_t *lock, int32_t value);
+static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, int32_t value);
 
 /**
  * Try to acquire a lock.
@@ -405,42 +358,22 @@ static inline
  * @param lock          Address of the lock.
  * @return              0 if the lock was acquired, 1 otherwise.
  */
-#        if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
-static inline
-#        endif
-    int
-    opal_atomic_trylock(opal_atomic_lock_t *lock);
+static inline int opal_atomic_trylock(opal_atomic_lock_t *lock);
 
 /**
  * Acquire a lock by spinning.
  *
  * @param lock          Address of the lock.
  */
-#        if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
-static inline
-#        endif
-    void
-    opal_atomic_lock(opal_atomic_lock_t *lock);
+static inline void opal_atomic_lock(opal_atomic_lock_t *lock);
 
 /**
  * Release a lock.
  *
  * @param lock          Address of the lock.
  */
-#        if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
-static inline
-#        endif
-    void
-    opal_atomic_unlock(opal_atomic_lock_t *lock);
+static inline void opal_atomic_unlock(opal_atomic_lock_t *lock);
 
-#        if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
-#            undef OPAL_HAVE_ATOMIC_SPINLOCKS
-#            define OPAL_HAVE_ATOMIC_SPINLOCKS \
-                (OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64)
-#            define OPAL_NEED_INLINE_ATOMIC_SPINLOCKS 1
-#        endif
-
-#    endif /* OPAL_HAVE_ATOMIC_SPINLOCKS */
 
 /**********************************************************************
  *

@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +31,13 @@ typedef volatile ssize_t opal_atomic_ssize_t;
 typedef volatile intptr_t opal_atomic_intptr_t;
 typedef volatile uintptr_t opal_atomic_uintptr_t;
 
+typedef opal_atomic_int32_t opal_atomic_lock_t;
+
+enum { OPAL_ATOMIC_LOCK_UNLOCKED = 0,
+       OPAL_ATOMIC_LOCK_LOCKED = 1 };
+
+#    define OPAL_ATOMIC_LOCK_INIT OPAL_ATOMIC_LOCK_UNLOCKED
+
 #    else /* OPAL_HAVE_C__ATOMIC */
 
 #        include <stdatomic.h>
@@ -51,6 +60,13 @@ typedef _Atomic size_t opal_atomic_size_t;
 typedef _Atomic ssize_t opal_atomic_ssize_t;
 typedef _Atomic intptr_t opal_atomic_intptr_t;
 typedef _Atomic uintptr_t opal_atomic_uintptr_t;
+
+typedef atomic_flag opal_atomic_lock_t;
+
+#    define OPAL_ATOMIC_LOCK_UNLOCKED false
+#    define OPAL_ATOMIC_LOCK_LOCKED   true
+
+#    define OPAL_ATOMIC_LOCK_INIT ATOMIC_FLAG_INIT
 
 #    endif /* OPAL_HAVE_C__ATOMIC */
 
