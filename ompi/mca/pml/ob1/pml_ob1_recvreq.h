@@ -124,7 +124,7 @@ do {                                                                \
  */
 #define MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE( recvreq )                              \
     do {                                                                              \
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_COMPLETE].event, \
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_COMPLETE].event, \
                               MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,             \
                               (recvreq)->req_recv.req_base.req_comm, NULL, &(recvreq)); \
         ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi), true );        \
@@ -163,7 +163,7 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
     if(false == recvreq->req_recv.req_base.req_pml_complete){
 
         if(recvreq->req_recv.req_bytes_packed > 0) {
-            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_END].event,
+            MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_END].event,
                                   MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                                   recvreq->req_recv.req_base.req_comm, NULL, &recvreq);
         }
@@ -260,7 +260,7 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
             prepare_recv_req_converter(req);
         }
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
                               MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                               req->req_recv.req_base.req_comm, NULL, &req);
     }
@@ -300,7 +300,7 @@ do {                                                                            
         }                                                                         \
         OPAL_THREAD_LOCK(&(req)->lock);                                           \
                                                                                   \
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event, \
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event, \
                               MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,              \
                               (req)->req_recv.req_base.req_comm, NULL,            \
             &((mca_pml_ob1_transfer_event_t){.request = req, .length = max_data})); \

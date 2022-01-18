@@ -99,7 +99,7 @@ typedef struct mca_base_event_t {
     /** Enumerator for integer values */
     mca_base_var_enum_t *event_enumerator;
 
-    /** Type of object to which this variable must be bound or MCA_BASE_VAR_BIND_NULL */
+    /** Type of object to which this variable must be bound or MCA_BASE_VAR_BIND_NO_OBJECT */
     int event_bind;
 
     /** event source (may be NULL) */
@@ -182,14 +182,14 @@ OPAL_DECLSPEC int mca_base_component_event_register (const mca_base_component_t 
 
 OPAL_DECLSPEC int mca_base_component_event_register_list (const mca_base_component_t *component, mca_base_event_list_item_t *list, int count);
 
-OPAL_DECLSPEC void mca_base_event_raise_internal (mca_base_event_t *event, mca_base_cb_safety_t cb_safety, void *obj, mca_base_source_t *source,
+OPAL_DECLSPEC void MCA_BASE_EVENT_RAISE_internal (mca_base_event_t *event, mca_base_cb_safety_t cb_safety, void *obj, mca_base_source_t *source,
                                                   void *data);
 
-#define mca_base_event_raise(eventp, cb_safety, obj, source, data)             \
+#define MCA_BASE_EVENT_RAISE(eventp, cb_safety, obj, source, data)             \
     do {                                                                \
         if (OPAL_UNLIKELY(0 != opal_list_get_size (&(eventp)->event_bound_registrations))) { \
             /* at least one registration is bound to this event. raise the event with the user code */ \
-            mca_base_event_raise_internal (eventp, cb_safety, obj, source, data); \
+            MCA_BASE_EVENT_RAISE_internal (eventp, cb_safety, obj, source, data); \
         }                                                               \
     } while (0);
 
