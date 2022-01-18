@@ -13,16 +13,16 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_event_handle_free = PMPI_T_event_handle_free
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#define MPI_T_event_handle_free PMPI_T_event_handle_free
 #endif
-
 
 int MPI_T_event_handle_free (MPI_T_event_registration event_registration,
                              void *user_data,

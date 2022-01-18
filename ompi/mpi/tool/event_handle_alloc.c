@@ -13,16 +13,16 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_event_handle_alloc = PMPI_T_event_handle_alloc
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#define MPI_T_event_handle_alloc PMPI_T_event_handle_alloc
 #endif
-
 
 int MPI_T_event_handle_alloc (int event_index, void *obj_handle, MPI_Info info,
                               MPI_T_event_registration *event_registration)

@@ -13,18 +13,18 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "ompi/mpi/tool/mpit-internal.h"
 
 /* needed to convert between opal and ompi datatypes until a function is provided */
 #include "ompi/datatype/ompi_datatype_internal.h"
 
-#if OMPI_PROFILING_DEFINES
-
+#if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_event_get_info = PMPI_T_event_get_info
 #endif
-
-#include "ompi/mpi/tool/profile/defines.h"
+#define MPI_T_event_get_info PMPI_T_event_get_info
 #endif
 
 int MPI_T_event_get_info (int event_index, char *name, int *name_len,
