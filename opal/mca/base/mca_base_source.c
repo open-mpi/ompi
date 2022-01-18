@@ -24,6 +24,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/clock_gettime.h"
 
 static opal_pointer_array_t registered_sources;
 static bool mca_base_source_initialized = false;
@@ -36,29 +37,23 @@ int mca_base_source_default_source = -1;
 static uint64_t mca_base_source_default_time_source (void)
 {
     uint64_t time_value;
-
-#if OPAL_HAVE_CLOCK_GETTIME
     struct timespec current;
 
-    clock_gettime (CLOCK_MONOTONIC, &current);
+    (void)opal_clock_gettime(&current);
     time_value = 1000000000ul * current.tv_sec + current.tv_nsec;
-#else
-    struct timeval current;
-
-    gettimeofday (&current, NULL);
-    time_value = 1000000ul * current.tv_sec + current.tv_usec;
-#endif
 
     return time_value;
 }
 
 static uint64_t mca_base_source_default_time_source_ticks (void)
 {
-#if OPAL_HAVE_CLOCK_GETTIME
-    return 1000000000;
-#else
-    return 1000000;
-#endif
+    struct timespec spec;
+    if (0 == opal_clock_getres(&spec)){
+        return (uint64_t)(spec.tv_sec + spec.tv_nsec);
+    } else {
+        /* guess */
+        return 1000000;
+    }
 }
 
 /***************************************************************************************************/
