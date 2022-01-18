@@ -13,16 +13,16 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_event_register_callback = PMPI_T_event_register_callback
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#define MPI_T_event_register_callback PMPI_T_event_register_callback
 #endif
-
 
 int MPI_T_event_register_callback (MPI_T_event_registration event_registration,
                                    MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,
