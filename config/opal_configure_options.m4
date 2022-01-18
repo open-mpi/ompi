@@ -86,13 +86,6 @@ else
     WANT_BRANCH_PROBABILITIES=0
 fi
 
-AC_ARG_ENABLE([builtin-atomics-for-ppc],[AS_HELP_STRING([--enable-builtin-atomics-for-ppc],
-                  [POWER architectures only: Force use of builtin atomics if available. This could either be gcc builtins or C11 atomics, depending on what is available on your system. Enabling this is known to cause poor performance in atomic operations on Power machines. (default: disabled)])])
-if test "x$enable_builtin_atomics_for_ppc" = "xyes" ; then
-force_gcc_atomics_ppc=1
-else
-force_gcc_atomics_ppc=0
-fi
 
 #
 # Memory debugging

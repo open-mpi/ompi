@@ -16,7 +16,7 @@
 
 #    include "opal_stdint.h"
 
-#    if (OPAL_ASSEMBLY_BUILTIN != OPAL_BUILTIN_C11) || defined(__INTEL_COMPILER)
+#if OPAL_USE_C11_ATOMICS == 0
 
 typedef volatile int opal_atomic_int_t;
 typedef volatile long opal_atomic_long_t;
@@ -38,15 +38,9 @@ enum { OPAL_ATOMIC_LOCK_UNLOCKED = 0,
 
 #    define OPAL_ATOMIC_LOCK_INIT OPAL_ATOMIC_LOCK_UNLOCKED
 
-#    else /* OPAL_HAVE_C__ATOMIC */
+#else /* OPAL_USE_C11_ATOMICS == 0 */
 
-#        include <stdatomic.h>
-
-#        ifdef __INTEL_COMPILER
-#            if __INTEL_COMPILER_BUILD_DATE <= 20200310
-#warning C11 _Atomic type not fully supported. The C11 atomic support should have been disabled.
-#            endif
-#        endif
+#    include <stdatomic.h>
 
 typedef atomic_int opal_atomic_int_t;
 typedef atomic_long opal_atomic_long_t;
@@ -68,12 +62,11 @@ typedef atomic_flag opal_atomic_lock_t;
 
 #    define OPAL_ATOMIC_LOCK_INIT ATOMIC_FLAG_INIT
 
-#    endif /* OPAL_HAVE_C__ATOMIC */
+#    endif /* OPAL_USE_C11_ATOMICS == 0 */
 
 #    if HAVE_OPAL_INT128_T
 
-/* do not use C11 atomics for __int128 if they are not lock free */
-#        if OPAL_HAVE_C11_CSWAP_INT128 && !defined(__INTEL_COMPILER)
+#        if OPAL_USE_C11_ATOMICS && OPAL_HAVE_C11_CSWAP_INT128
 
 typedef _Atomic opal_int128_t opal_atomic_int128_t;
 
