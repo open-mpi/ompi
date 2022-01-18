@@ -121,7 +121,7 @@ static inline void opal_atomic_wmb(void);
  * in the opal_lifo code. Don't enforce the types of the function
  * calls on C11 until we can sort that out.
  */
-#if !(OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11 && !defined(__INTEL_COMPILER))
+#if OPAL_USE_C11_ATOMICS == 0
 
 /**
  * Atomic compare and set of 32 bit intergers with acquire and release semantics.
@@ -418,16 +418,22 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
 
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */
-#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_C11 && !defined(__INTEL_COMPILER)
+#elif OPAL_USE_C11_ATOMICS == 1
 #    include "opal/sys/atomic_stdc.h"
-#elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_GCC
+#elif OPAL_USE_GCC_BUILTIN_ATOMICS == 1
 #    include "opal/sys/gcc_builtin/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
-#    include "opal/sys/x86_64/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
-#    include "opal/sys/arm64/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
-#    include "opal/sys/powerpc/atomic.h"
+#elif OPAL_USE_ASM_ATOMICS == 1
+#    if defined(PLATFORM_ARCH_X86_64)
+#        include "opal/sys/x86_64/atomic.h"
+#    elif defined(PLATFORM_ARCH_AARCH64)
+#        include "opal/sys/arm64/atomic.h"
+#    elif defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
+#        include "opal/sys/powerpc/atomic.h"
+#    else
+#        error "No asm support found."
+#    endif
+#else
+#error "No atomics support found."
 #endif
 
 #if OPAL_ASSEMBLY_ARCH == OPAL_ARM64

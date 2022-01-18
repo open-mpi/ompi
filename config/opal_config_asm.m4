@@ -380,6 +380,7 @@ __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);])],
   fi
 ])
 
+
 AC_DEFUN([OPAL_CHECK_C11_CSWAP_INT128], [
   OPAL_VAR_SCOPE_PUSH([atomic_compare_exchange_result atomic_compare_exchange_CFLAGS_save atomic_compare_exchange_LIBS_save])
 
@@ -500,20 +501,16 @@ AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
     OPAL_VAR_SCOPE_POP
 ])dnl
 
+
 dnl #################################################################
 dnl
-dnl OPAL_CHECK_INLINE_GCC
+dnl OPAL_CHECK_INLINE_GCC([action-if-found], [action-if-not-found])
 dnl
 dnl Check if the compiler is capable of doing GCC-style inline
 dnl assembly.  Some compilers emit a warning and ignore the inline
 dnl assembly (xlc on OS X) and compile without error.  Therefore,
 dnl the test attempts to run the emitted code to check that the
-dnl assembly is actually run.  To run this test, one argument to
-dnl the macro must be an assembly instruction in gcc format to move
-dnl the value 0 into the register containing the variable ret.
-dnl For PowerPC, this would be:
-dnl
-dnl   "li %0,0" : "=&r"(ret)
+dnl assembly is actually run.
 dnl
 dnl For testing ia32 assembly, the assembly instruction xaddl is
 dnl tested.  The xaddl instruction is used by some of the atomic
@@ -527,181 +524,193 @@ dnl                support
 dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CHECK_INLINE_C_GCC],[
-    assembly="$1"
-    asm_result="unknown"
+    AC_CACHE_CHECK([if $CC supports GCC inline assembly],
+       [opal_cv_asm_gcc_inline_assembly],
+       [OPAL_VAR_SCOPE_PUSH([asm_result opal_gcc_inline_assign OPAL_C_GCC_INLINE_ASSEMBLY])
 
-    AC_MSG_CHECKING([if $CC supports GCC inline assembly])
+        asm_result="unknown"
 
-    if test ! "$assembly" = "" ; then
-        AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
+        opal_gcc_inline_assign=""
+        case "${host}" in
+            x86_64-*x32|i?86-*|x86_64*|amd64*)
+                opal_gcc_inline_assign='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
+                ;;
+            aarch64*)
+                opal_gcc_inline_assign='"mov %0, #0" : "=&r"(ret)'
+                ;;
+            powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
+                opal_gcc_inline_assign='"1: li %0,0" : "=&r"(ret)'
+                ;;
+        esac
+
+        AS_IF([test  "$opal_gcc_inline_assign" != ""],
+            [AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
 int ret = 1;
 int negone = -1;
-__asm__ __volatile__ ($assembly);
+__asm__ __volatile__ ($opal_gcc_inline_assign);
 return ret;
-                                                             ]])],
-                      [asm_result="yes"], [asm_result="no"],
-                      [asm_result="unknown"])
-    else
-        assembly="test skipped - assuming no"
-    fi
+                ]])],
+               [asm_result="yes"], [asm_result="no"],
+               [asm_result="unknown"])],
+            [asm_result="no - architecture not supported"])
 
-    # if we're cross compiling, just try to compile and figure good enough
-    if test "$asm_result" = "unknown" ; then
-        AC_LINK_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
+        # if we're cross compiling, just try to compile and figure good enough
+        AS_IF([test "$asm_result" = "unknown"],
+            [AC_LINK_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
 int ret = 1;
 int negone = -1;
-__asm__ __volatile__ ($assembly);
+__asm__ __volatile__ ($opal_gcc_inline_assign);
 return ret;
-                                                              ]])],
-                       [asm_result="yes"], [asm_result="no"])
-    fi
+                ]])],
+            [asm_result="yes"], [asm_result="no"])])
+    opal_cv_asm_gcc_inline_assembly="$asm_result"
+    OPAL_VAR_SCOPE_POP])
 
-    AC_MSG_RESULT([$asm_result])
-
-    if test "$asm_result" = "yes" ; then
-        OPAL_C_GCC_INLINE_ASSEMBLY=1
-        opal_cv_asm_inline_supported="yes"
-    else
-        OPAL_C_GCC_INLINE_ASSEMBLY=0
-    fi
+    AS_IF([test "$opal_cv_asm_gcc_inline_assembly" = "yes"],
+          [OPAL_C_GCC_INLINE_ASSEMBLY=1
+           $1],
+          [OPAL_C_GCC_INLINE_ASSEMBLY=0
+           $2])
 
     AC_DEFINE_UNQUOTED([OPAL_C_GCC_INLINE_ASSEMBLY],
                        [$OPAL_C_GCC_INLINE_ASSEMBLY],
                        [Whether C compiler supports GCC style inline assembly])
-
-    unset OPAL_C_GCC_INLINE_ASSEMBLY assembly asm_result
 ])dnl
+
 
 dnl #################################################################
 dnl
 dnl OPAL_CONFIG_ASM
 dnl
-dnl DEFINE OPAL_ASSEMBLY_ARCH to something in sys/architecture.h
-dnl DEFINE OPAL_ASSEMBLY_FORMAT to string containing correct
-dnl                             format for assembly (not user friendly)
-dnl SUBST OPAL_ASSEMBLY_FORMAT to string containing correct
-dnl                             format for assembly (not user friendly)
+dnl Configure assembly support.  AC_DEFINES the following:
+dnl   - OPAL_C_GCC_INLINE_ASSEMBLY - 1 if C compiler supports
+dnl         GCC-style inline assembly
+dnl   - OPAL_USE_C11_ATOMICS - 1 if atomics implementation should
+dnl         use C11-style atomics
+dnl   - OPAL_USE_GCC_BUILTIN_ATOMICS - 1 if atomics implementation
+dnl         should use GCC built-in style atomics
+dnl   - OPAL_USE_ASM_ATOMICS - 1 if atomics implementation should
+dnl         use inline assembly (using GCC-style inline assembly)
+dnl        for atomics implementaiton
 dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
 
-    AC_ARG_ENABLE([c11-atomics],[AS_HELP_STRING([--enable-c11-atomics],
-                  [Enable use of C11 atomics if available (default: enabled)])])
+    OPAL_VAR_SCOPE_PUSH([atomics_found want_c11_atomics want_gcc_builtin_atomics want_asm_atomics opal_cv_asm_arch result])
+
+    # only assembly style we support today is gcc-style inline
+    # assembly, find out if it works.  We need this even for C11/GCC
+    # builtin atomics cases, because we use inline assembly for
+    # timers, LLSC, and 16 byte compare and swap routines.
+    OPAL_CHECK_INLINE_C_GCC([gcc_inline=1], [gcc_inline=0])
+
+    atomics_found=no
+    want_c11_atomics=0
+    want_gcc_builtin_atomics=0
+    want_asm_atomics=0
+
+    AC_ARG_ENABLE([c11-atomics],
+        [AS_HELP_STRING([--enable-c11-atomics],
+             [Enable use of C11 atomics if available (default: use if available, disabled by default on 64-bit PowerPC)])])
 
     AC_ARG_ENABLE([builtin-atomics],
-      [AS_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of GCC built-in atomics (default: autodetect)])])
+        [AS_HELP_STRING([--enable-builtin-atomics],
+             [Enable use of GCC built-in atomics.  Note that C11 atomics are preferred over built-in atomics.   (default: use if available, disabled by default on 64-bit PowerPC)])])
 
-    OPAL_CHECK_C11_CSWAP_INT128
-    opal_cv_asm_builtin="BUILTIN_NO"
-    OPAL_CHECK_GCC_ATOMIC_BUILTINS
+    AC_ARG_ENABLE([builtin-atomics-for-ppc],
+        [AS_HELP_STRING([--enable-builtin-atomics-for-ppc],
+             [For performance reasons, 64-bit POWER architectures will not use C11 or GCC built-in atomics, even if --enable-c11-atomics is passed to configure.  Enabling this option will re-enable support for both C11 and GCC built-in atomics.])])
 
-    if test "x$enable_c11_atomics" != "xno" && test "$opal_cv_c11_supported" = "yes" ; then
-        opal_cv_asm_builtin="BUILTIN_C11"
-        OPAL_CHECK_C11_CSWAP_INT128
-    elif test "x$enable_c11_atomics" = "xyes"; then
-        AC_MSG_WARN([C11 atomics were requested but are not supported])
-        AC_MSG_ERROR([Cannot continue])
-    elif test "$enable_builtin_atomics" = "yes" ; then
-        if test $opal_cv_have___atomic = "yes" ; then
-            opal_cv_asm_builtin="BUILTIN_GCC"
-        else
-            AC_MSG_WARN([GCC built-in atomics requested but not found.])
-            AC_MSG_ERROR([Cannot continue])
-        fi
-    fi
-
-    # find our architecture for purposes of assembly stuff
-    opal_cv_asm_arch="UNSUPPORTED"
-    OPAL_GCC_INLINE_ASSIGN=""
-
+    # See the following github PR and some performance numbers/discussion:
+    # https://github.com/open-mpi/ompi/pull/8649
+    #
+    # This logic is a bit convoluted, but matches existing logic in v4.x.
     case "${host}" in
-        x86_64-*x32|i?86-*|x86_64*|amd64*)
-            if test "$ac_cv_sizeof_long" = "4" ; then
-                if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-                    AC_MSG_ERROR([IA32 atomics are no longer supported. Use a C11 compiler])
-                fi
-                opal_cv_asm_arch="IA32"
-            else
-                opal_cv_asm_arch="X86_64"
-                OPAL_CHECK_CMPXCHG16B
-            fi
-            OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
-            ;;
-
-        aarch64*)
-            opal_cv_asm_arch="ARM64"
-            OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
-            ;;
-
-        armv7*|arm-*-linux-gnueabihf|armv6*)
-            if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-                AC_MSG_ERROR([32-bit ARM atomics are no longer supported. Use a C11 compiler])
-            fi
-
-            opal_cv_asm_arch="ARM"
-            OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
-            ;;
-
-        powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
-            if test "$ac_cv_sizeof_long" = "4" ; then
-                if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-                    AC_MSG_ERROR([PowerPC 32-bit atomics are no longer supported. Use a C11 compiler])
-                fi
-                opal_cv_asm_arch="POWERPC32"
-            elif test "$ac_cv_sizeof_long" = "8" ; then
-                opal_cv_asm_arch="POWERPC64"
-            else
-                AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
-            fi
-            OPAL_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
-
-            # See the following github PR and some performance numbers/discussion:
-            # https://github.com/open-mpi/ompi/pull/8649
-            AC_MSG_CHECKING([$opal_cv_asm_arch: Checking if force gcc atomics requested])
-            if test $force_gcc_atomics_ppc = 0 ; then
-                AC_MSG_RESULT([no])
-                opal_cv_asm_builtin="BUILTIN_NO"
-            else
-                AC_MSG_RESULT([Yes])
-                AC_MSG_WARN([$opal_cv_asm_arch: gcc atomics have been known to perform poorly on powerpc.])
-            fi
-
-            ;;
-        *)
-            if test $opal_cv_have___atomic = "yes" ; then
-                opal_cv_asm_builtin="BUILTIN_GCC"
-            else
-                AC_MSG_ERROR([No atomic primitives available for $host])
-            fi
-            ;;
+    powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
+          AS_IF([test "$ac_cv_sizeof_long" = "8" -a "$enable_builtin_atomics_for_ppc" != "yes"],
+                [AS_IF([test "$enable_c11_atomics" != "no" -a "$enable_builtin_atomics" != "no"],
+                       [AC_MSG_NOTICE([Disabling built-in and C11 atomics due to known performance issues on Powerpc])])
+                 AS_IF([test "$enable_c11_atomics" = "yes" -o "$enable_builtin_atomics" = "yes"],
+                       [AC_MSG_WARN([Ignoring --enable-c11-atomics and --enable-builtin-atomics options on POWER.  Set
+--enable-builtin-atomics-for-ppc to re-enable.])])
+                 enable_c11_atomics="no"
+                 enable_builtin_atomics="no"])
+    ;;
     esac
 
-    if test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
-         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
-                   [Whether C compiler supports GCC style inline assembly])
-    else
-         opal_cv_asm_inline_supported="no"
-         # now that we know our architecture, try to inline assemble
-         OPAL_CHECK_INLINE_C_GCC([$OPAL_GCC_INLINE_ASSIGN])
-    fi # if opal_cv_asm_builtin = BUILTIN_GCC
+    # Option 1 for atomics: C11
+    #
+    # We currently always disable C11 atomics with the Intel compilers.
+    # We know builds older than 20200310 are broken with respect to
+    # C11 atomics, but have not apparently found a build we are happy
+    # with.  In the future, this should be changed to a check for a
+    # particular Intel version.
+    AS_IF([test "$enable_c11_atomics" != "no" -a "$opal_cv_c11_supported" = "yes" -a "$opal_cv_c_compiler_vendor" != "intel"],
+          [AC_MSG_NOTICE([Using C11 atomics])
+           OPAL_CHECK_C11_CSWAP_INT128
+           want_c11_atomics=1
+           atomics_found="C11 atomics"],
+          [test "$enable_c11_atomics" = "yes"],
+          [AC_MSG_WARN([C11 atomics were requested but are not supported])
+           AC_MSG_ERROR([Cannot continue])])
+
+    # Option 2 for atomics: GCC-style Builtin
+    AS_IF([test "$atomics_found" = "no" -a "$enable_builtin_atomics" != "no"],
+          [OPAL_CHECK_GCC_ATOMIC_BUILTINS
+           AS_IF([test $opal_cv_have___atomic = "yes"],
+	         [AC_MSG_NOTICE([Using GCC built-in style atomics])
+                  atomics_found="GCC built-in style atomics"
+                  want_gcc_builtin_atomics=1],
+                 [test "$enable_builtin_atomics" = "yes"],
+                 [AC_MSG_WARN([GCC built-in atomics requested but not found.])
+		  AC_MSG_ERROR([Cannot continue])])])
+
+    # Option 3 for atomics: inline assembly
+    AS_IF([test "$atomics_found" = "no" -a "$gcc_inline" = "1"],
+          [case "${host}" in
+           x86_64-*x32|i?86-*|x86_64*|amd64*)
+               AS_IF([test "$ac_cv_sizeof_long" = "8"],
+                     [OPAL_CHECK_CMPXCHG16B
+                      opal_cv_asm_arch="X86_64"
+                      atomics_found="x86_64 assembly"])
+            ;;
+
+            aarch64*)
+                opal_cv_asm_arch="ARM64"
+                atomics_found="aarch64 assembly"
+            ;;
+
+            powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
+                AS_IF([test "$ac_cv_sizeof_long" = "8"],
+                      [opal_cv_asm_arch="POWERPC64"
+                       atomics_found="PowerPC asssembly"])
+            ;;
+            esac
+
+            AS_IF([test "$atomics_found" != "no"],
+                  [want_asm_atomics=1])
+            AC_MSG_CHECKING([for inline assembly atomics])
+            AC_MSG_RESULT([$atomics_found])])
+
+    AS_IF([test "$aomics_found" = "no"],
+          [AC_MSG_ERROR([No usable atomics implementation found.  Cannot continue.])])
 
     result="OPAL_$opal_cv_asm_arch"
-    AC_MSG_CHECKING([for assembly architecture])
-    AC_MSG_RESULT([$opal_cv_asm_arch])
     AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_ARCH], [$result],
         [Architecture type of assembly to use for atomic operations and CMA])
 
-    result="OPAL_$opal_cv_asm_builtin"
-    OPAL_ASSEMBLY_BUILTIN="$opal_cv_asm_builtin"
-    AC_MSG_CHECKING([for builtin atomics])
-    AC_MSG_RESULT([$opal_cv_asm_builtin])
-    AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_BUILTIN], [$result],
-        [Whether to use builtin atomics])
-    AC_SUBST([OPAL_ASSEMBLY_BUILTIN])
+    AC_DEFINE_UNQUOTED([OPAL_USE_C11_ATOMICS],
+        [$want_c11_atomics],
+        [Whether to use C11 atomics for atomics implementation])
+    AC_DEFINE_UNQUOTED([OPAL_USE_GCC_BUILTIN_ATOMICS],
+        [$want_gcc_builtin_atomics],
+        [Whether to use GCC-style built-in atomics for atomics implementation])
+    AC_DEFINE_UNQUOTED([OPAL_USE_ASM_ATOMICS],
+        [$want_asm_atomics],
+        [Whether to use assembly-coded atomics for atomics implementation])
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]],[[Atomics]],[],[$opal_cv_asm_builtin])
+    OPAL_SUMMARY_ADD([[Miscellaneous]],[[Atomics]],[],[$atomics_found])
 
-    unset result
+    OPAL_VAR_SCOPE_POP
 ])dnl
