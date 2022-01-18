@@ -60,7 +60,7 @@ int mca_pml_ob1_irecv_init(void *addr,
                                    addr,
                                    count, datatype, src, tag, comm, true);
 
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
                           MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, comm, NULL, &recvreq);
 
     /* Work around a leak in start by marking this request as complete. The
@@ -91,7 +91,7 @@ int mca_pml_ob1_irecv(void *addr,
                                    addr,
                                    count, datatype, src, tag, comm, false);
 
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
                           MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, comm, NULL, &recvreq);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
@@ -126,7 +126,7 @@ int mca_pml_ob1_recv(void *addr,
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
                                   src, tag, comm, false);
 
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
                           MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, comm, NULL, &recvreq);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
@@ -218,7 +218,7 @@ mca_pml_ob1_imrecv( void *buf,
                                   src, tag, comm, false);
     OBJ_RELEASE(comm);
 
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
                           MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, comm, NULL, &recvreq);
 
     /* init/re-init the request */
@@ -310,7 +310,7 @@ mca_pml_ob1_mrecv( void *buf,
                                   src, tag, comm, false);
     OBJ_RELEASE(comm);
 
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_ACTIVATE].event,
                           MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, comm, NULL, &recvreq);
 
     /* init/re-init the request */

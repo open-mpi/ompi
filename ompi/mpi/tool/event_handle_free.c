@@ -36,16 +36,13 @@ int MPI_T_event_handle_free (MPI_T_event_registration event_registration,
 
     ompi_mpit_lock ();
 
-    do {
-        /* Check that this is a valid handle */
-        if (MPI_T_EVENT_REGISTRATION_NULL == event_registration) {
-            ret = MPI_T_ERR_INVALID_HANDLE;
-            break;
-        }
-
-        mca_base_event_registration_free (event_registration, (mca_base_event_registration_free_cb_fn_t) free_cb_function);
-        /* *event_registration = MPI_T_EVENT_REGISTRATION_NULL; */
-    } while (0);
+    /* Check that this is a valid handle */
+    if (MPI_T_EVENT_REGISTRATION_NULL == event_registration) {
+        ret = MPI_T_ERR_INVALID_HANDLE;
+    } else {
+        mca_base_event_registration_free (event_registration, 
+                                          (mca_base_event_registration_free_cb_fn_t) free_cb_function);
+    }
 
     ompi_mpit_unlock ();
 

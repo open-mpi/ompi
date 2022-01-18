@@ -74,7 +74,7 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
     assert (false == recvreq->req_recv.req_base.req_free_called);
 
     recvreq->req_recv.req_base.req_free_called = true;
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
                           MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                           recvreq->req_recv.req_base.req_comm, NULL, &recvreq);
 
@@ -151,7 +151,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     }
 
     void *req = &(request->req_recv.req_base);
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_RECEIVE_CANCELED].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_RECEIVE_CANCELED].event,
                           MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
     /**
      * As now the PML is done with this request we have to force the pml_complete
@@ -494,7 +494,7 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 
     recvreq->req_ack_sent = true;
 
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
                           MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL,
                           &((mca_pml_ob1_transfer_event_t) {.request = recvreq, .length = frag->rdma_length}));
 
@@ -536,7 +536,7 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
         local_handle = recvreq->local_handle;
     }
 
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
                           MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, recvreq->req_recv.req_base.req_comm, NULL,
                           &((mca_pml_ob1_transfer_event_t){.request = frag->rdma_req, .length = frag->rdma_length}));
 
@@ -1126,7 +1126,7 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
     if (req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE &&
         req->req_recv.req_base.req_type != MCA_PML_REQUEST_MPROBE) {
         ompi_communicator_t *comm = req->req_recv.req_base.req_comm;
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_POSTED_INSERT].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_POSTED_INSERT].event,
                               MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
     }
 }
@@ -1291,7 +1291,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
      * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
      * the cost of the request lock.
      */
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN].event,
                           MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
 
     /* assign sequence number */
@@ -1351,7 +1351,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     }
 
     if(OPAL_UNLIKELY(NULL == frag)) {
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_END].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_END].event,
                               MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
         /* We didn't find any matches.  Record this irecv so we can match
            it when the message comes in. */
@@ -1370,10 +1370,10 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
             hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
 
-            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_REMOVE].event,
+            MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_REMOVE].event,
                                   MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &hdr->hdr_match);
 
-            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_END].event,
+            MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_SEARCH_UNEX_END].event,
                                   MCA_BASE_CB_REQUIRE_MPI_RESTRICTED, comm, NULL, &req);
 
 #if MCA_PML_OB1_CUSTOM_MATCH
