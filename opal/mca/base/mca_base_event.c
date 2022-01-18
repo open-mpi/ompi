@@ -189,7 +189,7 @@ int mca_base_event_register (const char *project, const char *framework, const c
     mca_base_event_t *event;
 
     /* ensure the caller did not set an invalid flag */
-    assert (!(flags & 0x3f));
+    assert (!(flags & (MCA_BASE_EVENT_FLAG_IWG-1)));
 
     /* update this assert if more MPIT verbosity levels are added */
     assert (verbosity >= OPAL_INFO_LVL_1 && verbosity <= OPAL_INFO_LVL_9);
@@ -613,7 +613,7 @@ int mca_base_event_read (mca_base_raised_event_t *revent, unsigned int element_i
 void mca_base_event_copy (mca_base_raised_event_t *revent, void *buffer)
 {
     mca_base_event_t *event = revent->re_event;
-    void *buffer_ptr = buffer;
+    uint8_t *buffer_ptr = (uint8_t *)buffer;
 
     for (size_t i = 0 ; i < event->event_datatype_count ; ++i) {
         if (buffer) {
