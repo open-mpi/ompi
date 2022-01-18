@@ -12,14 +12,15 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_source_get_info = PMPI_T_source_get_info
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#define MPI_T_source_get_info PMPI_T_source_get_info
 #endif
 
 int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc, int *desc_len, MPI_T_source_order *ordering,
