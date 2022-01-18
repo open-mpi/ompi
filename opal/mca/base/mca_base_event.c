@@ -32,9 +32,7 @@ static opal_hash_table_t mca_base_event_index_hash;
 static opal_pointer_array_t registered_events;
 static bool mca_base_event_initialized = false;
 static int event_count = 0;
-
-#define min(a,b) ((a) < (b) ? (a) : (b))
-#define max(a,b) ((a) > (b) ? (a) : (b))
+static opal_mutex_t mca_base_event_lock = OPAL_MUTEX_STATIC_INIT;
 
 static int mca_base_event_get_by_index_internal (int index, mca_base_event_t **event, bool invalidok);
 static int mca_base_event_get_by_fullname_internal (const char *full_name, mca_base_event_t **event, bool invalidok);
@@ -47,7 +45,8 @@ int mca_base_event_init (void)
 {
     int ret = OPAL_SUCCESS;
 
-    if (!mca_base_event_initialized) {
+    OPAL_THREAD_LOCK(&mca_base_event_lock);
+    if (false == mca_base_event_initialized) {
         mca_base_event_initialized = true;
 
         OBJ_CONSTRUCT(&registered_events, opal_pointer_array_t);
@@ -61,6 +60,7 @@ int mca_base_event_init (void)
             OBJ_DESTRUCT(&mca_base_event_index_hash);
         }
     }
+    OPAL_THREAD_UNLOCK(&mca_base_event_lock);
 
     return ret;
 }
@@ -69,7 +69,8 @@ int mca_base_event_finalize (void)
 {
     int i;
 
-    if (mca_base_event_initialized)  {
+    OPAL_THREAD_LOCK(&mca_base_event_lock);
+    if (true == mca_base_event_initialized)  {
         mca_base_event_initialized = false;
 
         for (i = 0 ; i < event_count ; ++i) {
@@ -84,6 +85,7 @@ int mca_base_event_finalize (void)
         OBJ_DESTRUCT(&registered_events);
         OBJ_DESTRUCT(&mca_base_event_index_hash);
     }
+    OPAL_THREAD_UNLOCK(&mca_base_event_lock);
 
     return OPAL_SUCCESS;
 }
@@ -191,7 +193,6 @@ int mca_base_event_register (const char *project, const char *framework, const c
 
     /* update this assert if more MPIT verbosity levels are added */
     assert (verbosity >= OPAL_INFO_LVL_1 && verbosity <= OPAL_INFO_LVL_9);
-
 
     flags &= ~MCA_BASE_EVENT_FLAG_INVALID;
 
@@ -513,7 +514,7 @@ int mca_base_event_dump(int index, char ***out, mca_base_var_dump_type_t output_
     return OPAL_SUCCESS;
 }
 
-void mca_base_event_raise_internal (mca_base_event_t *event, mca_base_cb_safety_t cb_safety, void *obj, mca_base_source_t *source, void *data)
+void MCA_BASE_EVENT_RAISE_internal (mca_base_event_t *event, mca_base_cb_safety_t cb_safety, void *obj, mca_base_source_t *source, void *data)
 {
     mca_base_raised_event_t revent = {.re_timestamp = source ? source->source_time () : event->event_source->source_time (),
                                       .re_source = source ? source->source_index  : event->event_source->source_index,

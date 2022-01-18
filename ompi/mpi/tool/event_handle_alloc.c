@@ -36,24 +36,23 @@ int MPI_T_event_handle_alloc (int event_index, void *obj_handle, MPI_Info info,
 
     ompi_mpit_lock ();
 
-    do {
-        /* Find the performance variable. mca_base_event_get() handles the
-           bounds checking. */
-        ret = mca_base_event_get_by_index (event_index, (mca_base_event_t **) &event);
-        if (OMPI_SUCCESS != ret) {
-            break;
-        }
+    /* Find the performance variable. mca_base_event_get() handles the
+       bounds checking. */
+    ret = mca_base_event_get_by_index (event_index, (mca_base_event_t **) &event);
+    if (OMPI_SUCCESS != ret) {
+        goto fn_fail;
+    }
 
-        /* Check the variable binding is something sane */
-        if (event->event_bind > MPI_T_BIND_MPI_INFO || event->event_bind < MPI_T_BIND_NO_OBJECT) {
-            /* This variable specified an invalid binding (not an MPI object). */
-            ret = MPI_T_ERR_INVALID_INDEX;
-            break;
-        }
+    /* Check the variable binding is something sane */
+    if (event->event_bind > MPI_T_BIND_MPI_INFO || event->event_bind < MPI_T_BIND_NO_OBJECT) {
+        /* This variable specified an invalid binding (not an MPI object). */
+        ret = MPI_T_ERR_INVALID_INDEX;
+        goto fn_fail;
+    }
 
-        ret = mca_base_event_registration_alloc (event, obj_handle, &info->super, event_registration);
-    } while (0);
+    ret = mca_base_event_registration_alloc (event, obj_handle, &info->super, event_registration);
 
+fn_fail:
     ompi_mpit_unlock ();
 
     return ompit_opal_to_mpit_error(ret);

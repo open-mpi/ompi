@@ -107,7 +107,7 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     if(false == sendreq->req_send.req_base.req_free_called) {
 
         sendreq->req_send.req_base.req_free_called = true;
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_FREE].event,
                               MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                               sendreq->req_send.req_base.req_comm, NULL, &sendreq);
 
@@ -210,7 +210,7 @@ mca_pml_ob1_match_completion_free_request( mca_bml_base_btl_t* bml_btl,
 {
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         void *req = &(sendreq->req_send.req_base);
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
                               MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                               sendreq->req_send.req_base.req_comm, NULL, &req);
     }
@@ -257,7 +257,7 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
 {
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         void *req = &(sendreq->req_send.req_base);
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
                               MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                               sendreq->req_send.req_base.req_comm, NULL, &req);
     }
@@ -914,7 +914,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
      */
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         void *req = &(sendreq->req_send.req_base);
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_BEGIN].event,
                               MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                               sendreq->req_send.req_base.req_comm, NULL, &req);
     }
@@ -1224,7 +1224,7 @@ cannot_pack:
                 sendreq->req_send.req_base.req_proc);
 
         void *req = &(sendreq->req_send.req_base);
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
                               MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                               sendreq->req_send.req_base.req_comm, NULL, &req);
 
@@ -1384,7 +1384,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
     }
 
     void *req = &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base);
-    mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
+    MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER].event,
                           MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
                           sendreq->req_send.req_base.req_comm, NULL, &req);
 

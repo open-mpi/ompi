@@ -28,7 +28,6 @@ int MPI_T_event_register_callback (MPI_T_event_registration event_registration,
                                    MPI_T_cb_safety cb_safety, MPI_Info info, void *user_data,
                                    MPI_T_event_cb_function event_cb_function)
 {
-    mca_base_event_t * const event;
     int ret;
     
     if (!mpit_is_initialized ()) {
