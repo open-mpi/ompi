@@ -12,14 +12,15 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_source_get_timestamp = PMPI_T_source_get_timestamp
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#define MPI_T_source_get_timestamp PMPI_T_source_get_timestamp
 #endif
 
 int MPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp)
