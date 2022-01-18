@@ -305,7 +305,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * figure out if the messages are not received in the correct
          * order (if multiple network interfaces).
          */
-        mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_MESSAGE_ARRIVED].event,
+        MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_MESSAGE_ARRIVED].event,
                               MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, comm, NULL, hdr);
 
         /* There is no matching to be done, and no lock to be held on the communicator as
@@ -322,7 +322,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #else
             custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
 #endif
-            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_INSERT].event,
+            MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_INSERT].event,
                                   MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, comm, NULL, hdr);
             continue;
         }
@@ -337,7 +337,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #else
             custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
 #endif
-            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_INSERT].event,
+            MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_UNEX_INSERT].event,
                                   MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE, comm, NULL, hdr);
 
             /* And now the ugly part. As some fragments can be inserted in the cant_match list,

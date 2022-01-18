@@ -56,13 +56,13 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
     }
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_STARTED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_EVENT_RAISE(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_STARTED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, &target);
 
     /* finish all outstanding fragments */
     ompi_osc_rdma_sync_rdma_complete (lock);
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_COMPLETE].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_EVENT_RAISE(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_COMPLETE].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, &target);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush on target %d complete", target);
@@ -91,7 +91,7 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win)
         ompi_osc_rdma_sync_rdma_complete (&module->all_sync);
     }
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_STARTED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_EVENT_RAISE(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_STARTED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, &(int) {-1});
 
     /* flush all locks */
@@ -103,7 +103,7 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win)
                                                    node, &node);
     }
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_COMPLETE].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_EVENT_RAISE(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_FLUSH_COMPLETE].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, &(int) {-1});
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush_all complete");
@@ -171,7 +171,7 @@ static inline int ompi_osc_rdma_lock_atomic_internal (ompi_osc_rdma_module_t *mo
         } while (1);
     }
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_ACQUIRED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_EVENT_RAISE(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_ACQUIRED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, &peer->rank);
 
     return OMPI_SUCCESS;
@@ -198,7 +198,7 @@ static inline int ompi_osc_rdma_unlock_atomic_internal (ompi_osc_rdma_module_t *
         peer->flags &= ~OMPI_OSC_RDMA_PEER_DEMAND_LOCKED;
     }
 
-    mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_RELEASED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_EVENT_RAISE(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_RELEASED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                          module->win, NULL, &peer->rank);
 
 
@@ -375,7 +375,7 @@ int ompi_osc_rdma_lock_all_atomic (int mpi_assert, struct ompi_win_t *win)
                                                      offsetof(ompi_osc_rdma_state_t, global_lock),
                                                      0x00000000ffffffffUL);
 
-            mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_ACQUIRED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+            MCA_BASE_EVENT_RAISE(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_ACQUIRED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                                  module->win, NULL, &(int) {-1});
         } else {
             /* always lock myself */
@@ -433,7 +433,7 @@ int ompi_osc_rdma_unlock_all_atomic (struct ompi_win_t *win)
             (void) ompi_osc_rdma_lock_release_shared (module, module->leader, -0x0000000100000000UL,
                                                       offsetof (ompi_osc_rdma_state_t, global_lock));
 
-            mca_base_event_raise(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_RELEASED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+            MCA_BASE_EVENT_RAISE(mca_osc_rdma_events[OMPI_OSC_RDMA_EVENT_LOCK_RELEASED].event, MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                                  module->win, NULL, &(int) {-1});
         }
     }

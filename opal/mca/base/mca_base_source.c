@@ -26,8 +26,10 @@
 #include "opal/class/opal_hash_table.h"
 
 static opal_pointer_array_t registered_sources;
-static int mca_base_source_initialized;
+static bool mca_base_source_initialized = false;
 static int source_count;
+
+static opal_mutex_t mca_base_source_lock = OPAL_MUTEX_STATIC_INIT;
 
 int mca_base_source_default_source = -1;
 
@@ -65,7 +67,8 @@ int mca_base_source_init (void)
 {
     int ret = OPAL_SUCCESS;
 
-    if (!mca_base_source_initialized++) {
+    OPAL_THREAD_LOCK(&mca_base_source_lock);
+    if (false == mca_base_source_initialized) {
         mca_base_source_initialized = true;
 
         OBJ_CONSTRUCT(&registered_sources, opal_pointer_array_t);
@@ -77,6 +80,7 @@ int mca_base_source_init (void)
                                                                    mca_base_source_default_time_source_ticks ());
 
     }
+    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
 
     return ret;
 }
@@ -85,7 +89,8 @@ int mca_base_source_finalize (void)
 {
     int i;
 
-    if (0 == --mca_base_source_initialized)  {
+    OPAL_THREAD_LOCK(&mca_base_source_lock);
+    if (true == mca_base_source_initialized)  {
         for (i = 0 ; i < source_count ; ++i) {
             mca_base_source_t *source = opal_pointer_array_get_item (&registered_sources, i);
             if (source) {
@@ -96,7 +101,9 @@ int mca_base_source_finalize (void)
         source_count = 0;
 
         OBJ_DESTRUCT(&registered_sources);
+        mca_base_source_initialized = false;
     }
+    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
 
     return OPAL_SUCCESS;
 }
@@ -224,7 +231,7 @@ int mca_base_component_source_register (const mca_base_component_t *component, c
 }
 
 /* mca_base_source_t class */
-static void mca_base_source_contructor (mca_base_source_t *source)
+static void mca_base_source_constructor (mca_base_source_t *source)
 {
     memset ((char *) source + sizeof (source->super), 0, sizeof (*source) - sizeof (source->super));
 }
@@ -232,7 +239,9 @@ static void mca_base_source_contructor (mca_base_source_t *source)
 static void mca_base_source_destructor (mca_base_source_t *source)
 {
     free (source->source_name);
+    source->source_name = NULL;
     free (source->source_description);
+    source->source_description = NULL;
 }
 
-OBJ_CLASS_INSTANCE(mca_base_source_t, opal_object_t, mca_base_source_contructor, mca_base_source_destructor);
+OBJ_CLASS_INSTANCE(mca_base_source_t, opal_object_t, mca_base_source_constructor, mca_base_source_destructor);

@@ -211,7 +211,7 @@ do {                                                                            
         (sendreq)->req_send.req_base.req_tag;                                        \
    (sendreq)->req_send.req_base.req_ompi.req_status._ucount =                        \
         (sendreq)->req_send.req_bytes_packed;                                        \
-   mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_COMPLETE].event, \
+   MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_REQUEST_COMPLETE].event, \
                          MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,                 \
                          (sendreq)->req_send.req_base.req_comm, NULL, &(sendreq));   \
                                                                                      \
@@ -261,7 +261,7 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 {
     if(false == sendreq->req_send.req_base.req_pml_complete) {
         if(sendreq->req_send.req_bytes_packed > 0) {
-            mca_base_event_raise (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_END].event,
+            MCA_BASE_EVENT_RAISE (mca_pml_ob1_events[MCA_PML_OB1_EVENT_TRANSFER_END].event,
                                   MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
                                   sendreq->req_send.req_base.req_comm, NULL, &sendreq);
         }

@@ -36,16 +36,18 @@ int MPI_T_source_get_info (int source_id, char *name, int *name_len, char *desc,
         return MPI_T_ERR_INVALID_INDEX;
     }
 
-    if (NULL == name && name_len)
-      *name_len = strlen(source->source_name);
+    if (NULL == name && name_len) {
+        *name_len = strlen(source->source_name);
+    }
 
     if (name && name_len) {
         strncpy (name, source->source_name, *name_len);
         *name_len = strlen (name);
     }
 
-    if (NULL == desc && desc_len)
-      *desc_len = strlen(source->source_description);
+    if (NULL == desc && desc_len) {
+        *desc_len = strlen(source->source_description);
+    }
 
     if (desc && desc_len) {
         strncpy (desc, source->source_description, *desc_len);

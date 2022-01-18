@@ -45,7 +45,6 @@ headers = \
         mca_base_event.h \
         mca_base_source.h
 
-
 # Library
 
 libmca_base_la_SOURCES = \

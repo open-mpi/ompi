@@ -39,7 +39,7 @@ int MPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp)
         return MPI_T_ERR_INVALID_INDEX;
     }
 
-    *timestamp = source->source_time ();
+    *timestamp = (MPI_Count)source->source_time ();
 
     return MPI_SUCCESS;
 }
