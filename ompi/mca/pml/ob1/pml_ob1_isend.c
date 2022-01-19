@@ -86,7 +86,7 @@ static inline int mca_pml_ob1_send_inline (const void *buf, size_t count,
     int rc;
 
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
-    if( NULL == bml_btl->btl->btl_sendi)
+    if( NULL == bml_btl || NULL == bml_btl->btl->btl_sendi)
         return OMPI_ERR_NOT_AVAILABLE;
 
     ompi_datatype_type_size (datatype, &size);
