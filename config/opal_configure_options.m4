@@ -420,6 +420,7 @@ AM_CONDITIONAL([OPAL_WANT_SCRIPT_WRAPPER_COMPILERS], [test "$enable_script_wrapp
 #
 # Support per-user config files?
 #
+OPAL_VAR_SCOPE_PUSH([result])
 AC_ARG_ENABLE([per-user-config-files],
    [AS_HELP_STRING([--enable-per-user-config-files],
       [Disable per-user configuration files, to save disk accesses during job start-up.  This is likely desirable for large jobs.  Note that this can also be achieved by environment variables at run-time.  (default: enabled)])])
@@ -430,6 +431,7 @@ else
 fi
 AC_DEFINE_UNQUOTED([OPAL_WANT_HOME_CONFIG_FILES], [$result],
      [Enable per-user config files])
+OPAL_VAR_SCOPE_POP
 
 #
 # Do we want to enable IPv6 support?
