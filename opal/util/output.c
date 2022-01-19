@@ -782,9 +782,13 @@ static int open_file(int i)
             free(filename); /* release the filename in all cases */
             return OPAL_ERR_IN_ERRNO;
         }
-
+#if 0
+        /*
+         * GB: I do question the need to declare our output files with pmix ?!?!
+         */
         /* register it to be ignored */
         opal_pmix_register_cleanup(filename, false, true, false);
+#endif
         free(filename); /* release the filename in all cases */
     }
 

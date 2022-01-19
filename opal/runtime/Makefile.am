@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2020 The University of Tennessee and The University
+# Copyright (c) 2004-2021 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -37,10 +37,14 @@ headers += \
         runtime/opal_params.h \
         runtime/opal_progress_threads.h
 
-lib@OPAL_LIB_NAME@_la_SOURCES += \
+lib@OPAL_LIB_NAME@_core_la_SOURCES += \
         runtime/opal_progress.c \
-        runtime/opal_finalize.c \
-        runtime/opal_init.c \
         runtime/opal_params.c \
+        runtime/opal_util_finalize.c \
+        runtime/opal_util_init.c \
         runtime/opal_info_support.c \
         runtime/opal_progress_threads.c
+
+lib@OPAL_LIB_NAME@_la_SOURCES += \
+        runtime/opal_finalize.c \
+        runtime/opal_init.c

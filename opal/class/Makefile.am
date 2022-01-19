@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2007 The University of Tennessee and The University
+# Copyright (c) 2004-2021 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -42,7 +42,7 @@ headers += \
         class/opal_rb_tree.h \
         class/opal_interval_tree.h
 
-lib@OPAL_LIB_NAME@_la_SOURCES += \
+lib@OPAL_LIB_NAME@_core_la_SOURCES += \
         class/opal_bitmap.c \
         class/opal_cstring.c \
         class/opal_free_list.c \
