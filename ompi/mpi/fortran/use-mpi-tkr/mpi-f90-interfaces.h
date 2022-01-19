@@ -363,6 +363,17 @@ end subroutine MPI_Comm_idup
 
 end interface
 
+interface
+
+subroutine MPI_Comm_idup_with_info(comm, info, newcomm, request, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_idup_with_info
+
+end interface
 
 interface
 
