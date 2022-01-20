@@ -38,11 +38,8 @@
 #        define opal_atomic_ll_32(addr, ret)                                                       \
             do {                                                                                   \
                 opal_atomic_int32_t *_addr = (addr);                                               \
-                int32_t _ret;                                                                      \
                                                                                                    \
-                __asm__ __volatile__("ldaxr    %w0, [%1]          \n" : "=&r"(_ret) : "r"(_addr)); \
-                                                                                                   \
-                ret = (typeof(ret)) _ret;                                                          \
+                __asm__ __volatile__("ldaxr    %w0, [%1]          \n" : "=&r"(ret) : "r"(_addr));  \
             } while (0)
 
 #        define opal_atomic_sc_32(addr, newval, ret)                  \
@@ -62,11 +59,8 @@
 #        define opal_atomic_ll_64(addr, ret)                                                      \
             do {                                                                                  \
                 opal_atomic_int64_t *_addr = (addr);                                              \
-                int64_t _ret;                                                                     \
                                                                                                   \
-                __asm__ __volatile__("ldaxr    %0, [%1]          \n" : "=&r"(_ret) : "r"(_addr)); \
-                                                                                                  \
-                ret = (typeof(ret)) _ret;                                                         \
+                __asm__ __volatile__("ldaxr    %0, [%1]          \n" : "=&r"(ret) : "r"(_addr)); \
             } while (0)
 
 #        define opal_atomic_sc_64(addr, newval, ret)                 \
