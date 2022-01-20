@@ -139,9 +139,7 @@ static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *a
 #    define opal_atomic_ll_32(addr, ret)                                                \
         do {                                                                            \
             opal_atomic_int32_t *_addr = (addr);                                        \
-            int32_t _ret;                                                               \
-            __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(_ret) : "r"(_addr)); \
-            ret = (typeof(ret)) _ret;                                                   \
+            __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
         } while (0)
 
 #    define opal_atomic_sc_32(addr, value, ret)                         \
@@ -248,9 +246,7 @@ static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *a
 #        define opal_atomic_ll_64(addr, ret)                                                \
             do {                                                                            \
                 opal_atomic_int64_t *_addr = (addr);                                        \
-                int64_t _ret;                                                               \
-                __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(_ret) : "r"(_addr)); \
-                ret = (typeof(ret)) _ret;                                                   \
+                __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
             } while (0)
 
 #        define opal_atomic_sc_64(addr, value, ret)                               \
