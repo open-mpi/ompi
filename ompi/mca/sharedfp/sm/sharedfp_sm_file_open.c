@@ -35,6 +35,7 @@
 #include "sharedfp_sm.h"
 
 #include "mpi.h"
+#include "opal/util/output.h"
 #include "ompi/constants.h"
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
@@ -139,7 +140,10 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     /* TODO: is it necessary to write to the file first? */
     if( 0 == fh->f_rank ){
         memset ( &sm_offset, 0, sizeof (struct mca_sharedfp_sm_offset ));
-        write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
+        err = opal_best_effort_write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
+        if (OPAL_SUCCESS != err) {
+            return err;
+        }
     }
     err = comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
     if ( OMPI_SUCCESS != err ) {

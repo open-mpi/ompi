@@ -35,6 +35,7 @@
 #include "opal/constants.h"
 #include "opal/runtime/opal_params.h"
 #include "opal/util/error.h"
+#include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/util/proc.h"
 #include "opal/util/string_copy.h"
@@ -217,14 +218,18 @@ void opal_delay_abort(void)
                      "[%s:%05d] Looping forever "
                      "(MCA parameter opal_abort_delay is < 0)\n",
                      opal_process_info.nodename, (int) pid);
-            write(STDERR_FILENO, msg, strlen(msg));
+        } else {
+            snprintf(msg, sizeof(msg), "[%s:%05d] Delaying for %d seconds before aborting\n",
+                     opal_process_info.nodename, (int) pid, delay);
+        }
+
+        opal_best_effort_write(STDERR_FILENO, msg, strlen(msg));
+
+        if (delay < 0) {
             while (1) {
                 sleep(5);
             }
         } else {
-            snprintf(msg, sizeof(msg), "[%s:%05d] Delaying for %d seconds before aborting\n",
-                     opal_process_info.nodename, (int) pid, delay);
-            write(STDERR_FILENO, msg, strlen(msg));
             do {
                 sleep(1);
             } while (--delay > 0);
