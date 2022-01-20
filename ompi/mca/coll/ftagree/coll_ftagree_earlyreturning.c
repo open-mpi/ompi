@@ -1623,11 +1623,12 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
     ompi_communicator_t *comm;
     era_rank_item_t *rl;
     int r, s, dead_size;
-    void *value;
 
     assert( 0 != ci->agreement_id.ERAID_FIELDS.agreementid );
 
 #if OPAL_ENABLE_DEBUG
+    void *value;
+
     r = era_parent(ci);
     if( opal_hash_table_get_value_uint64(&era_passed_agreements,
                                          ci->agreement_id.ERAID_KEY, &value) == OMPI_SUCCESS ) {
@@ -2636,7 +2637,6 @@ static void era_cb_fn(struct mca_btl_base_module_t* btl,
                       const mca_btl_base_receive_descriptor_t* descriptor)
 {
     era_incomplete_msg_t *incomplete_msg = NULL;
-    mca_btl_base_tag_t tag = descriptor->tag;
     era_msg_header_t *msg_header;
     era_frag_t *frag;
     uint64_t src_hash;
@@ -2646,7 +2646,7 @@ static void era_cb_fn(struct mca_btl_base_module_t* btl,
     int *new_dead;
     int *ack_failed;
 
-    assert(MCA_BTL_TAG_FT_AGREE == tag);
+    assert(MCA_BTL_TAG_FT_AGREE == descriptor->tag);
     assert(1 == descriptor->des_segment_count);
 
     frag = (era_frag_t*)descriptor->des_segments->seg_addr.pval;
