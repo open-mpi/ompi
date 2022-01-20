@@ -393,9 +393,14 @@ char *opal_find_absolute_path(char *app_name)
 
     if (NULL != abs_app_name) {
         char *resolved_path = (char *) malloc(OPAL_PATH_MAX);
-        realpath(abs_app_name, resolved_path);
+        char *ret;
+        ret = realpath(abs_app_name, resolved_path);
         if (abs_app_name != app_name) {
             free(abs_app_name);
+        }
+        if (NULL == ret) {
+            free(resolved_path);
+            resolved_path = NULL;
         }
         return resolved_path;
     }
