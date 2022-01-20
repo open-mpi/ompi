@@ -213,6 +213,9 @@ static inline opal_list_item_t *opal_lifo_push_atomic(opal_lifo_t *lifo, opal_li
 
 #    if OPAL_HAVE_ATOMIC_LLSC_PTR
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlanguage-extension-token"
+
 /* Retrieve one element from the LIFO. If we reach the ghost element then the LIFO
  * is empty so we return NULL.
  */
@@ -243,6 +246,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
     item->opal_list_next = NULL;
     return item;
 }
+
+#pragma GCC diagnostic pop
 
 #    else
 

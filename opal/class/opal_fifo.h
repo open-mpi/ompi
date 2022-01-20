@@ -216,6 +216,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
     const opal_list_item_t *const ghost = &fifo->opal_fifo_ghost;
 
 #    if OPAL_HAVE_ATOMIC_LLSC_PTR
+
     register opal_list_item_t *item, *next;
     int attempt = 0, ret = 0;
 
@@ -228,7 +229,10 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
             attempt = 0;
         }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlanguage-extension-token"
         opal_atomic_ll_ptr(&fifo->opal_fifo_head.data.item, item);
+#pragma GCC diagnostic pop
         if (ghost == item) {
             if ((intptr_t) ghost == fifo->opal_fifo_tail.data.item) {
                 return NULL;
