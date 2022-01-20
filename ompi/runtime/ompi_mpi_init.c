@@ -402,7 +402,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
+#if OPAL_USING_INTERNAL_PMIX
     char *evar;
+#endif
     volatile bool active;
     bool background_fence = false;
     pmix_info_t info[2];
