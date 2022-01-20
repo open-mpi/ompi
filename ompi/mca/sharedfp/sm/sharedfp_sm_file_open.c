@@ -35,6 +35,7 @@
 #include "sharedfp_sm.h"
 
 #include "mpi.h"
+#include "opal/util/printf.h"
 #include "opal/util/output.h"
 #include "ompi/constants.h"
 #include "ompi/group/group.h"
@@ -120,8 +121,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         return err;
     }
 
-    asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
-             filename_basename, comm_cid, int_pid);
+    opal_asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
+                  filename_basename, comm_cid, int_pid);
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
