@@ -25,14 +25,15 @@
  * $HEADER$
  */
 
-#if !defined(OPAL_SYS_ARCH_ATOMIC_LLSC_H)
+#ifndef OPAL_SYS_ARCH_ATOMIC_LLSC_H
+#define OPAL_SYS_ARCH_ATOMIC_LLSC_H 1
 
-#    define OPAL_SYS_ARCH_ATOMIC_LLSC_H
+/*
+ * this file is included even when C11 or GCC built-in atomics are
+ * used, which is why we must check for gcc inline assembly support.
+ */
 
 #    if OPAL_C_GCC_INLINE_ASSEMBLY
-
-#        undef OPAL_HAVE_ATOMIC_LLSC_32
-#        undef OPAL_HAVE_ATOMIC_LLSC_64
 
 #        define OPAL_HAVE_ATOMIC_LLSC_32 1
 #        define OPAL_HAVE_ATOMIC_LLSC_64 1
@@ -78,6 +79,8 @@
                                                                      \
                 ret = (_ret == 0);                                   \
             } while (0)
+
+#include "opal/sys/atomic_impl_ptr_llsc.h"
 
 #    endif /* OPAL_C_GCC_INLINE_ASSEMBLY */
 

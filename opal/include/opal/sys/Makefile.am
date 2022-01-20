@@ -33,6 +33,7 @@ headers += \
 	opal/sys/atomic_stdc.h \
 	opal/sys/atomic_impl_minmax_math.h \
 	opal/sys/atomic_impl_ptr_cswap.h \
+	opal/sys/atomic_impl_ptr_llsc.h \
 	opal/sys/atomic_impl_ptr_swap.h \
 	opal/sys/atomic_impl_size_t_math.h \
 	opal/sys/atomic_impl_spinlock.h \
