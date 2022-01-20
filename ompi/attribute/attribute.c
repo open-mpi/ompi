@@ -594,7 +594,9 @@ static void attr_subsys_construct(attr_subsys_t *subsys)
     opal_bitmap_set_max_size (subsys->key_bitmap, 
                               OMPI_FORTRAN_HANDLE_MAX);
     ret = opal_bitmap_init(subsys->key_bitmap, 32);
-    assert(OPAL_SUCCESS == ret);
+    if (OPAL_SUCCESS != ret) {
+        abort();
+    }
 
     for (int i = 0; i < MPI_ATTR_PREDEFINED_KEY_MAX; i++) {
         opal_bitmap_set_bit(subsys->key_bitmap, i);
@@ -615,9 +617,11 @@ static void attr_subsys_construct(attr_subsys_t *subsys)
     }
 
     ret = opal_hash_table_init(subsys->keyval_hash, ATTR_TABLE_SIZE);
-    assert (OPAL_SUCCESS == ret);
+    if (OPAL_SUCCESS != ret) {
+        abort();
+    }
 
-    attr_sequence = 0;    
+    attr_sequence = 0;
 }
 
 
