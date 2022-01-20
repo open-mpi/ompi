@@ -412,14 +412,42 @@ static inline void opal_atomic_add(type *addr, type delta);
 
 #endif /* !OPAL_C_HAVE__ATOMIC */
 
-/****** load-linked, store-conditional atomic implementations ******/
 
-/* C11 atomics do not expose the low-level load-linked, store-conditional
- * instructions. Open MPI can use these instructions to implement a more
- * efficient version of the lock-free lifo and fifo. On Apple Silicon the
- * LL/SC fifo and lifo are ~ 2-20x faster than the CAS128 implementation. */
+/**********************************************************************
+ *
+ * Load-linked, Store Conditional
+ *
+ * Optional.  Check OPAL_HAVE_ATOMIC_LLSC_32,
+ * OPAL_HAVE_ATOMIC_LLSC_64, or OPAL_HAVE_ATOMIC_LLSC_PTR before
+ * using.  Implemented as macros due to function call behaviors;
+ * prototyped here as C++-style fuctions for readability.
+ *
+ * C11 and GCC built-in atomics don't provide native LL/SC support, so
+ * if there is an architectual implementation, we use it even if
+ * we are using the C11 or GCC built-in atomics.
+ *
+ *********************************************************************/
+
+#ifdef DOXYGEN
+
+static inline void opal_atomic_ll_32(opal_atomic_int32_t *addr, int32_t &ret);
+
+static inline void opal_atomic_sc_32(opal_atomic_int32_t *addr, int32_t newval, int &ret);
+
+static inline void opal_atomic_ll_64(opal_atomic_int64_t *addr, int64_t &ret);
+
+static inline void opal_atomic_sc_64(opal_atomic_int64_t *addr, int64_t newval, int &ret);
+
+static inline void opal_atomic_ll_ptr(opal_atomic_intptr_t *addr, intptr_t &ret);
+
+static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newval, int &ret);
+
+#endif
+
 #if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
 #    include "opal/sys/arm64/atomic_llsc.h"
+#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
+#    include "opal/sys/powerpc/atomic_llsc.h"
 #endif
 
 #if !defined(OPAL_HAVE_ATOMIC_LLSC_32)
@@ -430,31 +458,6 @@ static inline void opal_atomic_add(type *addr, type delta);
 #    define OPAL_HAVE_ATOMIC_LLSC_64 0
 #endif
 
-#if (OPAL_HAVE_ATOMIC_LLSC_32 || OPAL_HAVE_ATOMIC_LLSC_64)
-
-#    if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_LLSC_32
-
-#        define opal_atomic_ll_ptr(addr, ret) opal_atomic_ll_32((opal_atomic_int32_t *) (addr), ret)
-#        define opal_atomic_sc_ptr(addr, value, ret) \
-            opal_atomic_sc_32((opal_atomic_int32_t *) (addr), (intptr_t)(value), ret)
-
-#        define OPAL_HAVE_ATOMIC_LLSC_PTR 1
-
-#    elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_LLSC_64
-
-#        define opal_atomic_ll_ptr(addr, ret) opal_atomic_ll_64((opal_atomic_int64_t *) (addr), ret)
-#        define opal_atomic_sc_ptr(addr, value, ret) \
-            opal_atomic_sc_64((opal_atomic_int64_t *) (addr), (intptr_t)(value), ret)
-
-#        define OPAL_HAVE_ATOMIC_LLSC_PTR 1
-
-#    endif
-
-#else
-
-#    define OPAL_HAVE_ATOMIC_LLSC_PTR 0
-
-#endif /* (OPAL_HAVE_ATOMIC_LLSC_32 || OPAL_HAVE_ATOMIC_LLSC_64)*/
 
 END_C_DECLS
 

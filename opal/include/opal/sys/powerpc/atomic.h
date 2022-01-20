@@ -30,23 +30,7 @@
  * On powerpc ...
  */
 
-#if defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__)
-/* work-around bizzare xlc bug in which it sign-extends
-   a pointer to a 32-bit signed integer */
-#    define OPAL_ASM_ADDR(a) ((uintptr_t) a)
-#else
-#    define OPAL_ASM_ADDR(a) (a)
-#endif
-
-#if defined(__PGI)
-/* work-around for bug in PGI 16.5-16.7 where the compiler fails to
- * correctly emit load instructions for 64-bit operands. without this
- * it will emit lwz instead of ld to load the 64-bit operand. */
-#    define OPAL_ASM_VALUE64(x) (void *) (intptr_t)(x)
-#else
-#    define OPAL_ASM_VALUE64(x) x
-#endif
-
+#include "opal/sys/powerpc/atomic_helper.h"
 
 /**********************************************************************
  *
@@ -290,54 +274,5 @@ OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(sub, subf)
 
 #include "opal/sys/atomic_impl_minmax_math.h"
 #include "opal/sys/atomic_impl_size_t_math.h"
-
-/* NTH: the LL/SC support is done through macros due to issues with non-optimized builds. The reason
- * is that even with an always_inline attribute the compiler may still emit instructions to store
- * then load the arguments to/from the stack. This sequence may cause the ll reservation to be
- * cancelled. */
-#define opal_atomic_ll_32(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int32_t *_addr = (addr);                                        \
-        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
-    } while (0)
-
-#define opal_atomic_sc_32(addr, value, ret)                         \
-    do {                                                            \
-        opal_atomic_int32_t *_addr = (addr);                        \
-        int32_t _ret, _foo, _newval = (int32_t) value;              \
-                                                                    \
-        __asm__ __volatile__("   stwcx.  %4, 0, %3  \n\t"           \
-                             "   li      %0,0       \n\t"           \
-                             "   bne-    1f         \n\t"           \
-                             "   ori     %0,%0,1    \n\t"           \
-                             "1:"                                   \
-                             : "=r"(_ret), "=m"(*_addr), "=r"(_foo) \
-                             : "r"(_addr), "r"(_newval)             \
-                             : "cc", "memory");                     \
-        ret = _ret;                                                 \
-   } while (0)
-
-#define opal_atomic_ll_64(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int64_t *_addr = (addr);                                        \
-        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
-    } while (0)
-
-#define opal_atomic_sc_64(addr, value, ret)                               \
-    do {                                                                  \
-        opal_atomic_int64_t *_addr = (addr);                              \
-        int64_t _newval = (int64_t) value;                                \
-        int32_t _ret;                                                     \
-                                                                          \
-        __asm__ __volatile__("   stdcx.  %2, 0, %1  \n\t"                 \
-                             "   li      %0,0       \n\t"                 \
-                             "   bne-    1f         \n\t"                 \
-                             "   ori     %0,%0,1    \n\t"                 \
-                             "1:"                                         \
-                             : "=r"(_ret)                                 \
-                             : "r"(_addr), "r"(OPAL_ASM_VALUE64(_newval)) \
-                             : "cc", "memory");                           \
-        ret = _ret;                                                       \
-    } while (0)
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */
