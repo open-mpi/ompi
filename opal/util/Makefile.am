@@ -51,7 +51,6 @@ headers = \
         clock_gettime.h \
         cmd_line.h \
         crc.h \
-        daemon_init.h \
 	ethtool.h \
         error.h \
 	event.h \
@@ -92,7 +91,6 @@ libopalutil_la_SOURCES = \
 	bipartite_graph.c \
         cmd_line.c \
         crc.c \
-        daemon_init.c \
 	ethtool.c \
         error.c \
 	event.c \
