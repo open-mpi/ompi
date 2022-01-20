@@ -948,14 +948,20 @@ static int output(int output_id, const char *format, va_list arglist)
 
         /* stdout output */
         if (ldi->ldi_stdout) {
-            write(fileno(stdout), out, (int) strlen(out));
+            int tmp = opal_best_effort_write(fileno(stdout), out, strlen(out));
+            if (OPAL_SUCCESS != tmp) {
+                rc = tmp;
+            }
             fflush(stdout);
         }
 
         /* stderr output */
         if (ldi->ldi_stderr) {
-            write((-1 == default_stderr_fd) ? fileno(stderr) : default_stderr_fd, out,
-                  (int) strlen(out));
+            int tmp = opal_best_effort_write((-1 == default_stderr_fd) ? fileno(stderr) : default_stderr_fd,
+                                             out, strlen(out));
+            if (OPAL_SUCCESS != tmp) {
+                rc = tmp;
+            }
             fflush(stderr);
         }
 
@@ -970,17 +976,24 @@ static int output(int output_id, const char *format, va_list arglist)
                     ++ldi->ldi_file_num_lines_lost;
                 } else if (ldi->ldi_file_num_lines_lost > 0) {
                     char buffer[BUFSIZ];
+                    int tmp;
                     memset(buffer, 0, BUFSIZ);
                     snprintf(buffer, BUFSIZ - 1,
                              "[WARNING: %d lines lost because the Open MPI process session "
                              "directory did\n not exist when opal_output() was invoked]\n",
                              ldi->ldi_file_num_lines_lost);
-                    write(ldi->ldi_fd, buffer, (int) strlen(buffer));
+                    tmp = opal_best_effort_write(ldi->ldi_fd, buffer, strlen(buffer));
+                    if (OPAL_SUCCESS != tmp) {
+                        rc = tmp;
+                    }
                     ldi->ldi_file_num_lines_lost = 0;
                 }
             }
             if (ldi->ldi_fd != -1) {
-                write(ldi->ldi_fd, out, (int) strlen(out));
+                int tmp = opal_best_effort_write(ldi->ldi_fd, out, strlen(out));
+                if (OPAL_SUCCESS != tmp) {
+                    rc = tmp;
+                }
             }
         }
         OPAL_THREAD_UNLOCK(&mutex);

@@ -71,7 +71,10 @@
 #include "opal_config.h"
 
 #include <stdarg.h>
+#include <unistd.h>
+#include <errno.h>
 
+#include "opal/constants.h"
 #include "opal/class/opal_object.h"
 
 BEGIN_C_DECLS
@@ -551,6 +554,30 @@ OPAL_DECLSPEC void opal_output_set_output_file_info(const char *dir, const char 
  * the output fields that you want.
  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_output_stream_t);
+
+/**
+ * Best effort write for blocking file descriptors
+ *
+ * A wrapper around write() that will spin trying to write the entire
+ * buffer until either an error occurs or a write is not able to write
+ * any data.  Useful for situations where opal_output cannot be used
+ * for signal reasons.  Do not use with non-blocking file descriptors.
+ */
+static inline int opal_best_effort_write(int fd, const void *buf, size_t count)
+{
+    size_t written = 0;
+
+    while (written != count) {
+        ssize_t tmp = write(fd, (char *)buf + written, count - written);
+        /* we explicitly do not recover from errors in this wrapper */
+        if ((tmp < 0 && errno != EINTR) || (tmp == 0)) {
+            return OPAL_ERROR;
+        }
+        written += tmp;
+    }
+
+    return OPAL_SUCCESS;
+}
 
 END_C_DECLS
 
