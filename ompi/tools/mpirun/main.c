@@ -27,7 +27,10 @@
 
 int main(int argc, char *argv[])
 {
-    char *evar, *pvar;
+    char *evar;
+#if OPAL_USING_INTERNAL_PMIX || OMPI_USING_INTERNAL_PRRTE
+    char *pvar;
+#endif
     char **pargs = NULL;
     char *pfx = NULL;
     int m, param_len;
