@@ -545,13 +545,17 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
             fp = fopen(mca_hook_comm_method_fakefile, "r");
             for (i=0; i<nleaderranks; ++i) {
                 for (k=0; k<nleaderranks; ++k) {
-                    fscanf(fp, "%d", &setting);
+                    if (fscanf(fp, "%d", &setting) != 1) {
+                        break;
+                    }
                     // let -1 mean "use existing (real) setting"
                     if (setting != -1) {
                         method[i * nleaderranks + k] = setting;
                     }
                 }
-                fscanf(fp, "\n");
+                if (fscanf(fp, "\n") != 0) {
+                    break;
+                }
             }
             fclose(fp);
         }
