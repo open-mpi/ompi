@@ -165,13 +165,6 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
  *
  *********************************************************************/
 
-/**
- * atomic_add - add integer to atomic variable
- * @i: integer value to add
- * @v: pointer of type int
- *
- * Atomically adds @i to @v.
- */
 static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t *v, int i)
 {
     int ret = i;
@@ -179,15 +172,11 @@ static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t *v, int i)
     return ret;
 }
 
-#    define OPAL_HAVE_ATOMIC_ADD_64 1
+static inline int32_t opal_atomic_add_fetch_32(opal_atomic_int32_t *v, int i)
+{
+    return opal_atomic_fetch_add_32(v, i) + i;
+}
 
-/**
- * atomic_add - add integer to atomic variable
- * @i: integer value to add
- * @v: pointer of type int
- *
- * Atomically adds @i to @v.
- */
 static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *v, int64_t i)
 {
     int64_t ret = i;
@@ -195,15 +184,11 @@ static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *v, int64_t i
     return ret;
 }
 
-#    define OPAL_HAVE_ATOMIC_SUB_32 1
+static inline int64_t opal_atomic_add_fetch_64(opal_atomic_int64_t *v, int64_t i)
+{
+    return opal_atomic_fetch_add_64(v, i) + i;
+}
 
-/**
- * atomic_sub - subtract the atomic variable
- * @i: integer value to subtract
- * @v: pointer of type int
- *
- * Atomically subtracts @i from @v.
- */
 static inline int32_t opal_atomic_fetch_sub_32(opal_atomic_int32_t *v, int i)
 {
     int ret = -i;
@@ -211,20 +196,55 @@ static inline int32_t opal_atomic_fetch_sub_32(opal_atomic_int32_t *v, int i)
     return ret;
 }
 
-#    define OPAL_HAVE_ATOMIC_SUB_64 1
+static inline int32_t opal_atomic_sub_fetch_32(opal_atomic_int32_t *v, int i)
+{
+    return opal_atomic_fetch_sub_32(v, i) - i;
+}
 
-/**
- * atomic_sub - subtract the atomic variable
- * @i: integer value to subtract
- * @v: pointer of type int
- *
- * Atomically subtracts @i from @v.
- */
 static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i)
 {
     int64_t ret = -i;
     __asm__ __volatile__(SMPLOCK "xaddq %1,%0" : "+m"(*v), "+r"(ret) : : "memory", "cc");
     return ret;
 }
+
+static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i)
+{
+    return opal_atomic_sub_fetch_64(v, i) - i;
+}
+
+#define OPAL_ATOMIC_DEFINE_OP(type, bits, operation, name)                                         \
+        static inline type opal_atomic_fetch_##name##_##bits(opal_atomic_##type *addr, type value) \
+        {                                                                                          \
+            type oldval;                                                                           \
+            do {                                                                                   \
+                oldval = *addr;                                                                    \
+            } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval,                    \
+                                                                 oldval operation value));         \
+                                                                                                   \
+            return oldval;                                                                         \
+        }                                                                                          \
+                                                                                                   \
+        static inline type opal_atomic_##name##_fetch_##bits(opal_atomic_##type *addr, type value) \
+        {                                                                                          \
+            type oldval, newval;                                                                   \
+            do {                                                                                   \
+                oldval = *addr;                                                                    \
+                newval = oldval operation value;                                                   \
+            } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval, newval);           \
+                                                                                                   \
+            return newval;                                                                         \
+        }
+
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, &, and)
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, |, or)
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, ^, xor)
+
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, &, and)
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, |, or)
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, ^, xor)
+
+#include "opal/sys/atomic_math_minmax_impl.h"
+#include "opal/sys/atomic_math_size_t_impl.h"
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

@@ -30,26 +30,6 @@
  * On powerpc ...
  */
 
-/**********************************************************************
- *
- * Define constants for PowerPC 64
- *
- *********************************************************************/
-
-#define OPAL_HAVE_ATOMIC_LLSC_32             1
-
-#define OPAL_HAVE_ATOMIC_ADD_32  1
-#define OPAL_HAVE_ATOMIC_AND_32  1
-#define OPAL_HAVE_ATOMIC_OR_32   1
-#define OPAL_HAVE_ATOMIC_XOR_32  1
-#define OPAL_HAVE_ATOMIC_SUB_32  1
-#define OPAL_HAVE_ATOMIC_LLSC_64             1
-#define OPAL_HAVE_ATOMIC_ADD_64              1
-#define OPAL_HAVE_ATOMIC_AND_64              1
-#define OPAL_HAVE_ATOMIC_OR_64               1
-#define OPAL_HAVE_ATOMIC_XOR_64              1
-#define OPAL_HAVE_ATOMIC_SUB_64              1
-
 #if defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__)
 /* work-around bizzare xlc bug in which it sign-extends
    a pointer to a 32-bit signed integer */
@@ -236,6 +216,80 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
  *
  *********************************************************************/
 
+#define OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(type, instr)                                \
+    static inline int32_t opal_atomic_fetch_##type##_32(opal_atomic_int32_t *v, int val) \
+    {                                                                                    \
+        int32_t newval, old;                                                             \
+                                                                                         \
+        __asm__ __volatile__("1:   lwarx   %1, 0, %4    \n\t"                            \
+                             "     " #instr "     %0, %3, %1   \n\t"                     \
+                             "     stwcx.  %0, 0, %4    \n\t"                            \
+                             "     bne-    1b           \n\t"                            \
+                             : "=&r"(newval), "=&r"(old), "=m"(*v)                       \
+                             : "r"(val), "r" OPAL_ASM_ADDR(v), "m"(*v)                   \
+                             : "cc");                                                    \
+                                                                                         \
+        return old;                                                                      \
+    }                                                                                    \
+    static inline int32_t opal_atomic_##type##_fetch_32(opal_atomic_int32_t *v, int val) \
+    {                                                                                    \
+        int32_t newval, old;                                                             \
+                                                                                         \
+        __asm__ __volatile__("1:   lwarx   %1, 0, %4    \n\t"                            \
+                             "     " #instr "     %0, %3, %1   \n\t"                     \
+                             "     stwcx.  %0, 0, %4    \n\t"                            \
+                             "     bne-    1b           \n\t"                            \
+                             : "=&r"(newval), "=&r"(old), "=m"(*v)                       \
+                             : "r"(val), "r" OPAL_ASM_ADDR(v), "m"(*v)                   \
+                             : "cc");                                                    \
+                                                                                         \
+        return newval;                                                                   \
+    }
+
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(add, add)
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(and, and)
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(or, or)
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(xor, xor)
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(sub, subf)
+
+#define OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(type, instr)                                    \
+    static inline int64_t opal_atomic_fetch_##type##_64(opal_atomic_int64_t *v, int64_t val) \
+    {                                                                                        \
+        int64_t newval, old;                                                                 \
+                                                                                             \
+        __asm__ __volatile__("1:   ldarx   %1, 0, %4    \n\t"                                \
+                             "     " #instr "     %0, %3, %1   \n\t"                         \
+                             "     stdcx.  %0, 0, %4    \n\t"                                \
+                             "     bne-    1b           \n\t"                                \
+                             : "=&r"(newval), "=&r"(old), "=m"(*v)                           \
+                             : "r"(OPAL_ASM_VALUE64(val)), "r" OPAL_ASM_ADDR(v), "m"(*v)     \
+                             : "cc");                                                        \
+                                                                                             \
+        return old;                                                                          \
+    }                                                                                        \
+    static inline int64_t opal_atomic_##type##_fetch_64(opal_atomic_int64_t *v, int64_t val) \
+    {                                                                                        \
+        int64_t newval, old;                                                                 \
+                                                                                             \
+        __asm__ __volatile__("1:   ldarx   %1, 0, %4    \n\t"                                \
+                             "     " #instr "     %0, %3, %1   \n\t"                         \
+                             "     stdcx.  %0, 0, %4    \n\t"                                \
+                             "     bne-    1b           \n\t"                                \
+                             : "=&r"(newval), "=&r"(old), "=m"(*v)                           \
+                             : "r"(OPAL_ASM_VALUE64(val)), "r" OPAL_ASM_ADDR(v), "m"(*v)     \
+                             : "cc");                                                        \
+                                                                                             \
+        return newval;                                                                       \
+    }
+
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(add, add)
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(and, and)
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(or, or)
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(xor, xor)
+OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(sub, subf)
+
+#include "opal/sys/atomic_impl_minmax_math.h"
+#include "opal/sys/atomic_impl_size_t_math.h"
 
 /* NTH: the LL/SC support is done through macros due to issues with non-optimized builds. The reason
  * is that even with an always_inline attribute the compiler may still emit instructions to store
@@ -263,29 +317,6 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
         ret = _ret;                                                 \
    } while (0)
 
-
-#define OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(type, instr)                                    \
-    static inline int64_t opal_atomic_fetch_##type##_64(opal_atomic_int64_t *v, int64_t val) \
-    {                                                                                        \
-        int64_t t, old;                                                                      \
-                                                                                             \
-        __asm__ __volatile__("1:   ldarx   %1, 0, %4    \n\t"                                \
-                             "     " #instr "     %0, %3, %1   \n\t"                         \
-                             "     stdcx.  %0, 0, %4    \n\t"                                \
-                             "     bne-    1b           \n\t"                                \
-                             : "=&r"(t), "=&r"(old), "=m"(*v)                                \
-                             : "r"(OPAL_ASM_VALUE64(val)), "r" OPAL_ASM_ADDR(v), "m"(*v)     \
-                             : "cc");                                                        \
-                                                                                             \
-        return old;                                                                          \
-    }
-
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(add, add)
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(and, and)
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(or, or)
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(xor, xor)
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(sub, subf)
-
 #define opal_atomic_ll_64(addr, ret)                                                \
     do {                                                                            \
         opal_atomic_int64_t *_addr = (addr);                                        \
@@ -308,28 +339,5 @@ OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_64(sub, subf)
                              : "cc", "memory");                           \
         ret = _ret;                                                       \
     } while (0)
-
-
-#define OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(type, instr)                                \
-    static inline int32_t opal_atomic_fetch_##type##_32(opal_atomic_int32_t *v, int val) \
-    {                                                                                    \
-        int32_t t, old;                                                                  \
-                                                                                         \
-        __asm__ __volatile__("1:   lwarx   %1, 0, %4    \n\t"                            \
-                             "     " #instr "     %0, %3, %1   \n\t"                     \
-                             "     stwcx.  %0, 0, %4    \n\t"                            \
-                             "     bne-    1b           \n\t"                            \
-                             : "=&r"(t), "=&r"(old), "=m"(*v)                            \
-                             : "r"(val), "r" OPAL_ASM_ADDR(v), "m"(*v)                   \
-                             : "cc");                                                    \
-                                                                                         \
-        return old;                                                                      \
-    }
-
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(add, add)
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(and, and)
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(or, or)
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(xor, xor)
-OPAL_ATOMIC_POWERPC_DEFINE_ATOMIC_32(sub, subf)
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

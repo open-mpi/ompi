@@ -35,24 +35,6 @@
  * Memory Barriers
  *
  *********************************************************************/
-
-#define OPAL_HAVE_ATOMIC_ADD_32              1
-#define OPAL_HAVE_ATOMIC_AND_32              1
-#define OPAL_HAVE_ATOMIC_OR_32               1
-#define OPAL_HAVE_ATOMIC_XOR_32              1
-#define OPAL_HAVE_ATOMIC_SUB_32              1
-#define OPAL_HAVE_ATOMIC_ADD_64              1
-#define OPAL_HAVE_ATOMIC_AND_64              1
-#define OPAL_HAVE_ATOMIC_OR_64               1
-#define OPAL_HAVE_ATOMIC_XOR_64              1
-#define OPAL_HAVE_ATOMIC_SUB_64              1
-
-
-/**********************************************************************
- *
- * Memory Barriers
- *
- *********************************************************************/
 #if (OPAL_ASSEMBLY_ARCH == OPAL_X86_64) && defined (__GNUC__) && !defined(__llvm) && (__GNUC__ < 6)
     /* work around a bug in older gcc versions where ACQUIRE seems to get
      * treated as a no-op instead */
@@ -255,57 +237,36 @@ static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
  *
  *********************************************************************/
 
+#define OPAL_ATOMIC_DEFINE_OP(type, bits, operator, name)                                          \
+        static inline type opal_atomic_fetch_##name##_##bits(opal_atomic_##type *addr, type value) \
+        {                                                                                          \
+            return __atomic_fetch_##name(addr, value, __ATOMIC_RELAXED);                           \
+        }                                                                                          \
+                                                                                                   \
+        static inline type opal_atomic_##name##_fetch_##bits(opal_atomic_##type *addr, type value) \
+        {                                                                                          \
+            return __atomic_##name##_fetch(addr, value, __ATOMIC_RELAXED);                         \
+        }
 
-static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t *addr, int32_t delta)
-{
-    return __atomic_fetch_add(addr, delta, __ATOMIC_RELAXED);
-}
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, +, add)
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, &, and)
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, |, or)
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, ^, xor)
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, -, sub)
 
-static inline int32_t opal_atomic_fetch_and_32(opal_atomic_int32_t *addr, int32_t value)
-{
-    return __atomic_fetch_and(addr, value, __ATOMIC_RELAXED);
-}
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, +, add)
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, &, and)
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, |, or)
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, ^, xor)
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, -, sub)
 
-static inline int32_t opal_atomic_fetch_or_32(opal_atomic_int32_t *addr, int32_t value)
-{
-    return __atomic_fetch_or(addr, value, __ATOMIC_RELAXED);
-}
+OPAL_ATOMIC_DEFINE_OP(size_t, size_t, +, add)
+OPAL_ATOMIC_DEFINE_OP(size_t, size_t, -, sub)
 
-static inline int32_t opal_atomic_fetch_xor_32(opal_atomic_int32_t *addr, int32_t value)
-{
-    return __atomic_fetch_xor(addr, value, __ATOMIC_RELAXED);
-}
+#define opal_atomic_add(ADDR, VALUE) \
+     (void) __atomic_fetch_add(ADDR, VALUE, __ATOMIC_RELAXED)
 
-static inline int32_t opal_atomic_fetch_sub_32(opal_atomic_int32_t *addr, int32_t delta)
-{
-    return __atomic_fetch_sub(addr, delta, __ATOMIC_RELAXED);
-}
-
-static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *addr, int64_t delta)
-{
-    return __atomic_fetch_add(addr, delta, __ATOMIC_RELAXED);
-}
-
-static inline int64_t opal_atomic_fetch_and_64(opal_atomic_int64_t *addr, int64_t value)
-{
-    return __atomic_fetch_and(addr, value, __ATOMIC_RELAXED);
-}
-
-static inline int64_t opal_atomic_fetch_or_64(opal_atomic_int64_t *addr, int64_t value)
-{
-    return __atomic_fetch_or(addr, value, __ATOMIC_RELAXED);
-}
-
-static inline int64_t opal_atomic_fetch_xor_64(opal_atomic_int64_t *addr, int64_t value)
-{
-    return __atomic_fetch_xor(addr, value, __ATOMIC_RELAXED);
-}
-
-static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *addr, int64_t delta)
-{
-    return __atomic_fetch_sub(addr, delta, __ATOMIC_RELAXED);
-}
-
+#include "opal/sys/atomic_impl_minmax_math.h"
 
 #if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #    pragma error_messages(default, E_ARG_INCOMPATIBLE_WITH_ARG_L)

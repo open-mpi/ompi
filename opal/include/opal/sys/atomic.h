@@ -67,23 +67,6 @@ BEGIN_C_DECLS
 
 /**********************************************************************
  *
- * Set or unset these macros in the architecture-specific atomic.h
- * files if we need to specify them as inline or non-inline
- *
- *********************************************************************/
-#define OPAL_HAVE_INLINE_ATOMIC_ADD_32              1
-#define OPAL_HAVE_INLINE_ATOMIC_AND_32              1
-#define OPAL_HAVE_INLINE_ATOMIC_OR_32               1
-#define OPAL_HAVE_INLINE_ATOMIC_XOR_32              1
-#define OPAL_HAVE_INLINE_ATOMIC_SUB_32              1
-#define OPAL_HAVE_INLINE_ATOMIC_ADD_64              1
-#define OPAL_HAVE_INLINE_ATOMIC_AND_64              1
-#define OPAL_HAVE_INLINE_ATOMIC_OR_64               1
-#define OPAL_HAVE_INLINE_ATOMIC_XOR_64              1
-#define OPAL_HAVE_INLINE_ATOMIC_SUB_64              1
-
-/**********************************************************************
- *
  * Load the appropriate architecture files and set some reasonable
  * default values for our support
  *
@@ -396,7 +379,6 @@ static inline int32_t opal_atomic_fetch_min_32(opal_atomic_int32_t *addr, int32_
 static inline int32_t opal_atomic_max_fetch_32(opal_atomic_int32_t *addr, int32_t value);
 static inline int32_t opal_atomic_fetch_max_32(opal_atomic_int32_t *addr, int32_t value);
 
-
 static inline int64_t opal_atomic_add_fetch_64(opal_atomic_int64_t *addr, int64_t delta);
 static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *addr, int64_t delta);
 static inline int64_t opal_atomic_and_fetch_64(opal_atomic_int64_t *addr, int64_t value);
@@ -411,122 +393,22 @@ static inline int64_t opal_atomic_fetch_min_64(opal_atomic_int64_t *addr, int64_
 static inline int64_t opal_atomic_max_fetch_64(opal_atomic_int64_t *addr, int64_t value);
 static inline int64_t opal_atomic_fetch_max_64(opal_atomic_int64_t *addr, int64_t value);
 
+static inline size_t opal_atomic_add_fetch_size_t(opal_atomic_size_t *addr, size_t delta);
+static inline size_t opal_atomic_fetch_add_size_t(opal_atomic_size_t *addr, size_t delta);
 
-/* provide a size_t add/subtract.  When in debug mode, make it an
- * inline function so that we don't have any casts in the
- *  interface and can catch type errors.  When not in debug mode,
- * just make it a macro, so that there's no performance penalty
- */
-#    if defined(DOXYGEN) || OPAL_ENABLE_DEBUG
-static inline size_t opal_atomic_add_fetch_size_t(opal_atomic_size_t *addr, size_t delta)
-{
-#        if SIZEOF_SIZE_T == 4
-    return (size_t) opal_atomic_add_fetch_32((int32_t *) addr, delta);
-#        elif SIZEOF_SIZE_T == 8
-    return (size_t) opal_atomic_add_fetch_64((int64_t *) addr, delta);
-#        else
-#            error "Unknown size_t size"
-#        endif
-}
-
-static inline size_t opal_atomic_fetch_add_size_t(opal_atomic_size_t *addr, size_t delta)
-{
-#        if SIZEOF_SIZE_T == 4
-    return (size_t) opal_atomic_fetch_add_32((int32_t *) addr, delta);
-#        elif SIZEOF_SIZE_T == 8
-    return (size_t) opal_atomic_fetch_add_64((int64_t *) addr, delta);
-#        else
-#            error "Unknown size_t size"
-#        endif
-}
-
-static inline size_t opal_atomic_sub_fetch_size_t(opal_atomic_size_t *addr, size_t delta)
-{
-#        if SIZEOF_SIZE_T == 4
-    return (size_t) opal_atomic_sub_fetch_32((int32_t *) addr, delta);
-#        elif SIZEOF_SIZE_T == 8
-    return (size_t) opal_atomic_sub_fetch_64((int64_t *) addr, delta);
-#        else
-#            error "Unknown size_t size"
-#        endif
-}
-
-static inline size_t opal_atomic_fetch_sub_size_t(opal_atomic_size_t *addr, size_t delta)
-{
-#        if SIZEOF_SIZE_T == 4
-    return (size_t) opal_atomic_fetch_sub_32((int32_t *) addr, delta);
-#        elif SIZEOF_SIZE_T == 8
-    return (size_t) opal_atomic_fetch_sub_64((int64_t *) addr, delta);
-#        else
-#            error "Unknown size_t size"
-#        endif
-}
-
-#    else
-#        if SIZEOF_SIZE_T == 4
-#            define opal_atomic_add_fetch_size_t(addr, delta) \
-                ((size_t) opal_atomic_add_fetch_32((opal_atomic_int32_t *) addr, delta))
-#            define opal_atomic_fetch_add_size_t(addr, delta) \
-                ((size_t) opal_atomic_fetch_add_32((opal_atomic_int32_t *) addr, delta))
-#            define opal_atomic_sub_fetch_size_t(addr, delta) \
-                ((size_t) opal_atomic_sub_fetch_32((opal_atomic_int32_t *) addr, delta))
-#            define opal_atomic_fetch_sub_size_t(addr, delta) \
-                ((size_t) opal_atomic_fetch_sub_32((opal_atomic_int32_t *) addr, delta))
-#        elif SIZEOF_SIZE_T == 8
-#            define opal_atomic_add_fetch_size_t(addr, delta) \
-                ((size_t) opal_atomic_add_fetch_64((opal_atomic_int64_t *) addr, delta))
-#            define opal_atomic_fetch_add_size_t(addr, delta) \
-                ((size_t) opal_atomic_fetch_add_64((opal_atomic_int64_t *) addr, delta))
-#            define opal_atomic_sub_fetch_size_t(addr, delta) \
-                ((size_t) opal_atomic_sub_fetch_64((opal_atomic_int64_t *) addr, delta))
-#            define opal_atomic_fetch_sub_size_t(addr, delta) \
-                ((size_t) opal_atomic_fetch_sub_64((opal_atomic_int64_t *) addr, delta))
-#        else
-#            error "Unknown size_t size"
-#        endif
-#    endif
-
-
-static inline void opal_atomic_add_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length);
-static inline void opal_atomic_sub_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length);
-
-static inline intptr_t opal_atomic_add_fetch_ptr(opal_atomic_intptr_t *addr, void *delta);
-static inline intptr_t opal_atomic_fetch_add_ptr(opal_atomic_intptr_t *addr, void *delta);
-static inline intptr_t opal_atomic_sub_fetch_ptr(opal_atomic_intptr_t *addr, void *delta);
-static inline intptr_t opal_atomic_fetch_sub_ptr(opal_atomic_intptr_t *addr, void *delta);
-
+#ifdef DOXYGEN /* because this isn't a proper C prototype */
 /**
- * Atomically increment the content depending on the type. This
- * macro detect at compile time the type of the first argument
- * and choose the correct function to be called.
+ * Atomically add delta to addr, type independent
  *
- * \note This macro should only be used for integer types.
+ * @param addr   Address of value to update
+ * @param delta  Value by which to change the value in addr
  *
- * @param addr          Address of <TYPE>
- * @param delta         Value to add (converted to <TYPE>).
+ * Generally implemented as a macro (except for when implemented as a
+ * compiler built-in), this function provides a type-independent math
+ * operator.
  */
-#        define opal_atomic_add(ADDR, VALUE) \
-            opal_atomic_add_xx((opal_atomic_intptr_t *) (ADDR), (int32_t)(VALUE), sizeof(*(ADDR)))
-
-/**
- * Atomically decrement the content depending on the type. This
- * macro detect at compile time the type of the first argument
- * and choose the correct function to be called.
- *
- * \note This macro should only be used for integer types.
- *
- * @param addr          Address of <TYPE>
- * @param delta         Value to substract (converted to <TYPE>).
- */
-#        define opal_atomic_sub(ADDR, VALUE) \
-            opal_atomic_sub_xx((opal_atomic_intptr_t *) (ADDR), (int32_t)(VALUE), sizeof(*(ADDR)))
-
-
-/*
- * Include inline implementations of everything not defined directly
- * in assembly
- */
-#    include "opal/sys/atomic_impl.h"
+static inline void opal_atomic_add(type *addr, type delta);
+#endif
 
 #endif /* !OPAL_C_HAVE__ATOMIC */
 

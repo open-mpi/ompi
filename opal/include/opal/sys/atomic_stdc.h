@@ -32,25 +32,6 @@
 #    include <stdatomic.h>
 #    include <stdint.h>
 
-#    define OPAL_HAVE_ATOMIC_ADD_32  1
-#    define OPAL_HAVE_ATOMIC_AND_32  1
-#    define OPAL_HAVE_ATOMIC_OR_32   1
-#    define OPAL_HAVE_ATOMIC_XOR_32  1
-#    define OPAL_HAVE_ATOMIC_SUB_32  1
-
-#    define OPAL_HAVE_ATOMIC_ADD_64  1
-#    define OPAL_HAVE_ATOMIC_AND_64  1
-#    define OPAL_HAVE_ATOMIC_OR_64   1
-#    define OPAL_HAVE_ATOMIC_XOR_64  1
-#    define OPAL_HAVE_ATOMIC_SUB_64  1
-
-#    define OPAL_HAVE_ATOMIC_MIN_32 1
-#    define OPAL_HAVE_ATOMIC_MAX_32 1
-
-#    define OPAL_HAVE_ATOMIC_MIN_64 1
-#    define OPAL_HAVE_ATOMIC_MAX_64 1
-
-
 /**********************************************************************
  *
  * Memory Barriers
@@ -190,6 +171,12 @@ static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
 }
 
 
+/**********************************************************************
+ *
+ * Atomic math operations
+ *
+ *********************************************************************/
+
 #    define OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(op, bits, type, operator)                             \
         static inline type opal_atomic_fetch_##op##_##bits(opal_atomic_##type *addr, type value)   \
         {                                                                                          \
@@ -201,97 +188,24 @@ static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
             return atomic_fetch_##op##_explicit(addr, value, memory_order_relaxed) operator value; \
         }
 
-
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 32, int32_t, +)
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 64, int64_t, +)
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, size_t, size_t, +)
-
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(sub, 32, int32_t, -)
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(sub, 64, int64_t, -)
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(sub, size_t, size_t, -)
-
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(or, 32, int32_t, |)
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(or, 64, int64_t, |)
-
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(xor, 32, int32_t, ^)
-OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(xor, 64, int64_t, ^)
-
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(and, 32, int32_t, &)
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(or, 32, int32_t, |)
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(xor, 32, int32_t, ^)
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(sub, 32, int32_t, -)
+
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 64, int64_t, +)
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(and, 64, int64_t, &)
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(or, 64, int64_t, |)
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(xor, 64, int64_t, ^)
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(sub, 64, int64_t, -)
+
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, size_t, size_t, +)
+OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(sub, size_t, size_t, -)
 
 #    define opal_atomic_add(addr, value) \
         (void) atomic_fetch_add_explicit(addr, value, memory_order_relaxed)
 
-static inline int32_t opal_atomic_fetch_min_32(opal_atomic_int32_t *addr, int32_t value)
-{
-    int32_t old = *addr;
-    do {
-        if (old <= value) {
-            break;
-        }
-    } while (!opal_atomic_compare_exchange_strong_32(addr, &old, value));
-
-    return old;
-}
-
-static inline int32_t opal_atomic_fetch_max_32(opal_atomic_int32_t *addr, int32_t value)
-{
-    int32_t old = *addr;
-    do {
-        if (old >= value) {
-            break;
-        }
-    } while (!opal_atomic_compare_exchange_strong_32(addr, &old, value));
-
-    return old;
-}
-
-static inline int64_t opal_atomic_fetch_min_64(opal_atomic_int64_t *addr, int64_t value)
-{
-    int64_t old = *addr;
-    do {
-        if (old <= value) {
-            break;
-        }
-    } while (!opal_atomic_compare_exchange_strong_64(addr, &old, value));
-
-    return old;
-}
-
-static inline int64_t opal_atomic_fetch_max_64(opal_atomic_int64_t *addr, int64_t value)
-{
-    int64_t old = *addr;
-    do {
-        if (old >= value) {
-            break;
-        }
-    } while (!opal_atomic_compare_exchange_strong_64(addr, &old, value));
-
-    return old;
-}
-
-static inline int32_t opal_atomic_min_fetch_32(opal_atomic_int32_t *addr, int32_t value)
-{
-    int32_t old = opal_atomic_fetch_min_32(addr, value);
-    return old <= value ? old : value;
-}
-
-static inline int32_t opal_atomic_max_fetch_32(opal_atomic_int32_t *addr, int32_t value)
-{
-    int32_t old = opal_atomic_fetch_max_32(addr, value);
-    return old >= value ? old : value;
-}
-
-static inline int64_t opal_atomic_min_fetch_64(opal_atomic_int64_t *addr, int64_t value)
-{
-    int64_t old = opal_atomic_fetch_min_64(addr, value);
-    return old <= value ? old : value;
-}
-
-static inline int64_t opal_atomic_max_fetch_64(opal_atomic_int64_t *addr, int64_t value)
-{
-    int64_t old = opal_atomic_fetch_max_64(addr, value);
-    return old >= value ? old : value;
-}
+#include "opal/sys/atomic_impl_minmax_math.h"
 
 #endif /* !defined(OPAL_ATOMIC_STDC_H) */
