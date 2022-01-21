@@ -595,6 +595,13 @@ static int ompi_mpi_instance_init_common (void)
         return ompi_instance_print_error ("ompi_comm_init() failed", ret);
     }
 
+    /* Construct predefined keyvals */
+
+    if (OMPI_SUCCESS != (ret = ompi_attr_create_predefined_keyvals())) {
+        opal_mutex_unlock (&instance_lock);
+        return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
+    }
+
     if (mca_pml_base_requires_world ()) {
         /* need to set up comm world for this instance -- XXX -- FIXME -- probably won't always
          * be the case. */
