@@ -98,7 +98,15 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
      */
 check_status:
     if (sync != opal_threads_base_wait_sync_list && num_thread_in_progress >= opal_max_thread_in_progress) {
-        opal_thread_internal_cond_wait(&sync->condition, &sync->lock);
+        if (0 < sync->num_req_need_progress) {
+            /* release the lock so that we can be signaled */
+            opal_thread_internal_mutex_unlock(&sync->lock);
+            sync->progress_cb();
+            /* retake the lock */
+            opal_thread_internal_mutex_lock(&sync->lock);
+        } else {
+            opal_thread_internal_cond_wait(&sync->condition, &sync->lock);
+        }
 
         /**
          * At this point either the sync was completed in which case

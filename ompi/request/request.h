@@ -43,6 +43,10 @@
 #include "ompi/constants.h"
 #include "ompi/runtime/params.h"
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+#include "ompi/mpiext/continue/c/continuation.h"
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
 BEGIN_C_DECLS
 
 /**
@@ -466,7 +470,20 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
             WAIT_SYNC_INIT(&sync, 1);
 
             if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+                if (OMPI_REQUEST_CONT == req->req_type) {
+                    /* let the continuations be processed as part of the global progress loop
+                    * while we're waiting for their completion */
+                    ompi_continue_register_request_progress(req, &sync);
+                }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
                 SYNC_WAIT(&sync);
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+                if (OMPI_REQUEST_CONT == req->req_type) {
+                    ompi_continue_deregister_request_progress(req);
+                }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
             } else {
                 /* completed before we had a chance to swap in the sync object */
                 WAIT_SYNC_SIGNALLED(&sync);
@@ -488,6 +505,13 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
      }
      opal_atomic_rmb();
     } else {
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == req->req_type) {
+            /* let the continuations be processed as part of the global progress loop
+            * while we're waiting for their completion */
+            ompi_continue_register_request_progress(req, NULL);
+        }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
         while(!REQUEST_COMPLETE(req)) {
             opal_progress();
 #if OPAL_ENABLE_FT_MPI
@@ -498,6 +522,12 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
             }
 #endif /* OPAL_ENABLE_FT_MPI */
         }
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == req->req_type) {
+            ompi_continue_deregister_request_progress(req);
+        }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
     }
 }
 

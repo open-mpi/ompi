@@ -22,6 +22,8 @@
 #include "ompi/mpiext/continue/c/mpiext_continue_c.h"
 
 
+struct ompi_request_t;
+
 BEGIN_C_DECLS
 
 /**
@@ -38,18 +40,18 @@ int ompi_continuation_fini(void);
  * Register a request with local completion list for progressing through
  * the progress engine.
  */
-int ompi_continue_register_request_progress(ompi_request_t *cont_req);
+int ompi_continue_register_request_progress(struct ompi_request_t *cont_req, ompi_wait_sync_t *sync);
 
 /**
  * Deregister a request with local completion list from progressing through
  * the progress engine.
  */
-int ompi_continue_deregister_request_progress(ompi_request_t *cont_req);
+int ompi_continue_deregister_request_progress(struct ompi_request_t *cont_req);
 
 /**
  * Progress a continuation request that has local completions.
  */
-int ompi_continue_progress_request(ompi_request_t *cont_req);
+int ompi_continue_progress_request(struct ompi_request_t *cont_req);
 
 /**
  * Attach a continuation to a set of operations represented by \c requests.
@@ -60,9 +62,9 @@ int ompi_continue_progress_request(ompi_request_t *cont_req);
  * can be used to query for and progress outstanding continuations.
  */
 int ompi_continue_attach(
-  ompi_request_t             *cont_req,
+  struct ompi_request_t      *cont_req,
   int                         count,
-  ompi_request_t             *requests[],
+  struct ompi_request_t      *requests[],
   MPIX_Continue_cb_function  *cont_cb,
   void                       *cont_data,
   ompi_status_public_t        statuses[]);
@@ -71,7 +73,7 @@ int ompi_continue_attach(
 /**
  * Allocate a new continuation request.
  */
-int ompi_continue_allocate_request(ompi_request_t **cont_req, ompi_info_t *info);
+int ompi_continue_allocate_request(struct ompi_request_t **cont_req, ompi_info_t *info);
 
 END_C_DECLS
 
