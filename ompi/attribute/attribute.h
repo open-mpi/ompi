@@ -515,11 +515,22 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
 /**
  * \internal
  *
- * Create all the predefined attributes
+ * Create all the predefined attribute keys
+ * @note This routine is invoked when creating a session 
+ *       so must be thread safe.
  *
  * @returns OMPI_SUCCESS
  */
-int ompi_attr_create_predefined(void);
+int ompi_attr_create_predefined_keyvals(void);
+
+/**
+ * \internal
+ *
+ * Cache predefined attribute keys used in the World Model
+ *
+ * @returns OMPI_SUCCESS
+ */
+int ompi_attr_set_predefined_keyvals_for_wm(void);
 
 /**
  * \internal
