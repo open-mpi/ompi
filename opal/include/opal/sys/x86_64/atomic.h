@@ -33,16 +33,6 @@
 
 #define SMPLOCK "lock; "
 
-/**********************************************************************
- *
- * Define constants for AMD64 / x86_64 / EM64T / ...
- *
- *********************************************************************/
-
-#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
-
-#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
-
 
 /**********************************************************************
  *
@@ -69,11 +59,13 @@ static inline void opal_atomic_isync(void)
 {
 }
 
+
 /**********************************************************************
  *
- * Atomic math operations
+ * Compare and Swap
  *
  *********************************************************************/
+
 static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *addr,
                                                           int32_t *oldval, int32_t newval)
 {
@@ -106,6 +98,8 @@ static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *a
 #define opal_atomic_compare_exchange_strong_acq_64 opal_atomic_compare_exchange_strong_64
 #define opal_atomic_compare_exchange_strong_rel_64 opal_atomic_compare_exchange_strong_64
 
+#include "opal/sys/atomic_impl_ptr_cswap.h"
+
 #if OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
 
 static inline bool opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t *addr,
@@ -128,9 +122,14 @@ static inline bool opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t 
 
 #    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 1
 
-#    define OPAL_HAVE_ATOMIC_SWAP_32 1
+#endif
 
-#    define OPAL_HAVE_ATOMIC_SWAP_64 1
+
+/**********************************************************************
+ *
+ * Swap
+ *
+ *********************************************************************/
 
 static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t newval)
 {
@@ -148,7 +147,14 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
     return oldval;
 }
 
-#    define OPAL_HAVE_ATOMIC_ADD_32 1
+#include "opal/sys/atomic_impl_ptr_swap.h"
+
+
+/**********************************************************************
+ *
+ * Atomic math operations
+ *
+ *********************************************************************/
 
 /**
  * atomic_add - add integer to atomic variable

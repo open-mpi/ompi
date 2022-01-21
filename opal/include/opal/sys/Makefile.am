@@ -16,6 +16,8 @@
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,6 +32,8 @@ headers += \
 	opal/sys/atomic.h \
 	opal/sys/atomic_stdc.h \
 	opal/sys/atomic_impl.h \
+	opal/sys/atomic_impl_ptr_cswap.h \
+	opal/sys/atomic_impl_ptr_swap.h \
 	opal/sys/timer.h \
         opal/sys/cma.h
 
