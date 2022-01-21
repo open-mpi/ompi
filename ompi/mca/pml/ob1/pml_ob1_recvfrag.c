@@ -637,6 +637,38 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
     }
 }
 
+/**
+ * Merge all out of sequence fragments into the matching queue, as if they were received now.
+ */
+int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm )
+{
+    mca_pml_ob1_comm_t * pml_comm = (mca_pml_ob1_comm_t *)ompi_comm->c_pml_comm;
+    mca_pml_ob1_recv_frag_t *frag, *frags_cant_match;
+    mca_pml_ob1_comm_proc_t* proc;
+    int cnt = 0;
+
+    for (uint32_t i = 0; i < pml_comm->num_procs; i++) {
+        if ((NULL == (proc = pml_comm->procs[i])) || (NULL != proc->frags_cant_match)) {
+            continue;
+        }
+
+        OB1_MATCHING_LOCK(&pml_comm->matching_lock);
+        /* Acquire all cant_match frags from the peer */
+        frags_cant_match = proc->frags_cant_match;
+        proc->frags_cant_match = NULL;
+        while(NULL != (frag = remove_head_from_ordered_list(&frags_cant_match))) {
+            /* mca_pml_ob1_recv_frag_match_proc() will release the lock. */
+            mca_pml_ob1_recv_frag_match_proc(frag->btl, ompi_comm, proc,
+                                             &frag->hdr.hdr_match,
+                                             frag->segments, frag->num_segments,
+                                             frag->hdr.hdr_match.hdr_common.hdr_type, frag);
+            OB1_MATCHING_LOCK(&pml_comm->matching_lock);
+            cnt++;
+        }
+    }
+    OB1_MATCHING_UNLOCK(&pml_comm->matching_lock);
+    return cnt;
+}
 
 void mca_pml_ob1_recv_frag_callback_rndv (mca_btl_base_module_t *btl,
                                           const mca_btl_base_receive_descriptor_t *descriptor)
