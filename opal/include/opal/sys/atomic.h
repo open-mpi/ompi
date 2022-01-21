@@ -94,8 +94,6 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  * files if we need to specify them as inline or non-inline
  *
  *********************************************************************/
-#define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32 1
-#define OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64 1
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_32              1
 #define OPAL_HAVE_INLINE_ATOMIC_AND_32              1
 #define OPAL_HAVE_INLINE_ATOMIC_OR_32               1
@@ -106,8 +104,6 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #define OPAL_HAVE_INLINE_ATOMIC_OR_64               1
 #define OPAL_HAVE_INLINE_ATOMIC_XOR_64              1
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_64              1
-#define OPAL_HAVE_INLINE_ATOMIC_SWAP_32             1
-#define OPAL_HAVE_INLINE_ATOMIC_SWAP_64             1
 
 /**
  * Enumeration of lock states
@@ -147,12 +143,6 @@ enum { OPAL_ATOMIC_LOCK_UNLOCKED = 0, OPAL_ATOMIC_LOCK_LOCKED = 1 };
 /* compare and set operations can't really be emulated from software,
    so if these defines aren't already set, they should be set to 0
    now */
-#        ifndef OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32
-#            define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 0
-#        endif
-#        ifndef OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
-#            define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 0
-#        endif
 #        ifndef OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128
 #            define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 0
 #        endif
@@ -206,6 +196,180 @@ static inline void opal_atomic_rmb(void);
  * \c opal_atomic_wmb().
  */
 static inline void opal_atomic_wmb(void);
+
+
+/**********************************************************************
+ *
+ * Compare and Swap
+ *
+ * Implementations must provide 32 and 64 bit compare-and-swap
+ * operations, but may provide the ptr implementation by including
+ * atomic_cmpx_ptr_impl.h (which implements the ptr implementation
+ * over the 32 and 64 bit implementations).
+ *
+ *********************************************************************/
+/**
+ * Atomic compare and set of 32 bit intergers with acquire and release semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *addr, int32_t *oldval,
+                                                          int32_t newval);
+
+/**
+ * Atomic compare and set of 32 bit intergers with acquire semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_acq_32(opal_atomic_int32_t *addr, int32_t *oldval,
+                                                              int32_t newval);
+
+/**
+ * Atomic compare and set of 32 bit intergers with release semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_rel_32(opal_atomic_int32_t *addr, int32_t *oldval,
+                                                              int32_t newval);
+
+/**
+ * Atomic compare and set of 64 bit intergers with acquire and release semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *addr, int64_t *oldval,
+                                                          int64_t newval);
+
+/**
+ * Atomic compare and set of 64 bit intergers with acquire semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_acq_64(opal_atomic_int64_t *addr, int64_t *oldval,
+                                                              int64_t newval);
+
+/**
+ * Atomic compare and set of 64 bit intergers with release semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_rel_64(opal_atomic_int64_t *addr, int64_t *oldval,
+                                                              int64_t newval);
+
+/**
+ * Atomic compare and set of pointer-sized intergers with acquire and release semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_ptr(opal_atomic_intptr_t *addr,
+                                                           intptr_t *oldval, intptr_t newval);
+
+/**
+ * Atomic compare and set of pointer-sized intergers with acquire semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_acq_ptr(opal_atomic_intptr_t *addr,
+                                                               intptr_t *oldval, intptr_t newval);
+
+/**
+ * Atomic compare and set of pointer-sized intergers with release semantics.
+ *
+ * @param addr          Address of value to be swapped
+ * @param oldval        Comparison value
+ * @param newval        New value to set if comparision is true
+ *
+ * @returns If newval was written into addr, the function returns
+ * true.  Otherwise, the function returns false and the value of addr
+ * at the time of the comparison is returned in oldval.
+ */
+static inline bool opal_atomic_compare_exchange_strong_rel_ptr(opal_atomic_intptr_t *addr,
+                                                               intptr_t *oldval, intptr_t newval);
+
+
+/**********************************************************************
+ *
+ * Swap
+ *
+ * Implementations may provide a native implementation of these
+ * operations or include atomic_swap_impl.h, which provides
+ * implementations over compare-and-swap.
+ *
+ *********************************************************************/
+/**
+ * Atomic swap of 32 bit value
+ * @param addr           Address of value to be swapped
+ * @param newval         New value to set in addr
+ *
+ * @returns Value in addr before swap
+ */
+static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t newval);
+
+/**
+ * Atomic swap of 32 bit value
+ * @param addr           Address of value to be swapped
+ * @param newval         New value to set in addr
+ *
+ * @returns Value in addr before swap
+ */
+static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t newval);
+
+/**
+ * Atomic swap of 32 bit value
+ * @param addr           Address of value to be swapped
+ * @param newval         New value to set in addr
+ *
+ * @returns Value in addr before swap
+ */
+static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t newval);
 
 
 /**********************************************************************
@@ -283,60 +447,6 @@ static inline
  * Atomic math operations
  *
  *********************************************************************/
-#    if !defined(OPAL_HAVE_ATOMIC_CMPSET_32) && !defined(DOXYGEN)
-#        define OPAL_HAVE_ATOMIC_CMPSET_32 0
-#    endif
-#    if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_32
-
-#        if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
-static inline
-#        endif
-    bool
-    opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *addr, int32_t *oldval,
-                                           int32_t newval);
-
-#        if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
-static inline
-#        endif
-    bool
-    opal_atomic_compare_exchange_strong_acq_32(opal_atomic_int32_t *addr, int32_t *oldval,
-                                               int32_t newval);
-
-#        if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_32
-static inline
-#        endif
-    bool
-    opal_atomic_compare_exchange_strong_rel_32(opal_atomic_int32_t *addr, int32_t *oldval,
-                                               int32_t newval);
-#    endif
-
-#    if !defined(OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64) && !defined(DOXYGEN)
-#        define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 0
-#    endif
-#    if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64
-
-#        if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
-static inline
-#        endif
-    bool
-    opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *addr, int64_t *oldval,
-                                           int64_t newval);
-
-#        if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
-static inline
-#        endif
-    bool
-    opal_atomic_compare_exchange_strong_acq_64(opal_atomic_int64_t *addr, int64_t *oldval,
-                                               int64_t newval);
-
-#        if OPAL_HAVE_INLINE_ATOMIC_COMPARE_EXCHANGE_64
-static inline
-#        endif
-    bool
-    opal_atomic_compare_exchange_strong_rel_64(opal_atomic_int64_t *addr, int64_t *oldval,
-                                               int64_t newval);
-
-#    endif
 
 static inline int32_t opal_atomic_add_fetch_32(opal_atomic_int32_t *addr, int delta);
 static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t *addr, int delta);
@@ -443,83 +553,6 @@ static inline size_t opal_atomic_fetch_sub_size_t(opal_atomic_size_t *addr, size
 #        endif
 #    endif
 
-#    if defined(DOXYGEN) \
-        || (OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64)
-/* these are always done with inline functions, so always mark as
-   static inline */
-
-static inline bool opal_atomic_compare_exchange_strong_xx(opal_atomic_intptr_t *addr,
-                                                          intptr_t *oldval, int64_t newval,
-                                                          size_t length);
-static inline bool opal_atomic_compare_exchange_strong_acq_xx(opal_atomic_intptr_t *addr,
-                                                              intptr_t *oldval, int64_t newval,
-                                                              size_t length);
-static inline bool opal_atomic_compare_exchange_strong_rel_xx(opal_atomic_intptr_t *addr,
-                                                              intptr_t *oldval, int64_t newval,
-                                                              size_t length);
-
-static inline bool opal_atomic_compare_exchange_strong_ptr(opal_atomic_intptr_t *addr,
-                                                           intptr_t *oldval, intptr_t newval);
-static inline bool opal_atomic_compare_exchange_strong_acq_ptr(opal_atomic_intptr_t *addr,
-                                                               intptr_t *oldval, intptr_t newval);
-static inline bool opal_atomic_compare_exchange_strong_rel_ptr(opal_atomic_intptr_t *addr,
-                                                               intptr_t *oldval, intptr_t newval);
-
-/**
- * Atomic compare and set of generic type with relaxed semantics. This
- * macro detect at compile time the type of the first argument and
- * choose the correct function to be called.
- *
- * \note This macro should only be used for integer types.
- *
- * @param addr          Address of <TYPE>.
- * @param oldval        Comparison value address of <TYPE>.
- * @param newval        New value to set if comparision is true <TYPE>.
- *
- * See opal_atomic_compare_exchange_* for pseudo-code.
- */
-#        define opal_atomic_compare_exchange_strong(ADDR, OLDVAL, NEWVAL)                     \
-            opal_atomic_compare_exchange_strong_xx((opal_atomic_intptr_t *) (ADDR),           \
-                                                   (intptr_t *) (OLDVAL), (intptr_t)(NEWVAL), \
-                                                   sizeof(*(ADDR)))
-
-/**
- * Atomic compare and set of generic type with acquire semantics. This
- * macro detect at compile time the type of the first argument and
- * choose the correct function to be called.
- *
- * \note This macro should only be used for integer types.
- *
- * @param addr          Address of <TYPE>.
- * @param oldval        Comparison value address of <TYPE>.
- * @param newval        New value to set if comparision is true <TYPE>.
- *
- * See opal_atomic_compare_exchange_acq_* for pseudo-code.
- */
-#        define opal_atomic_compare_exchange_strong_acq(ADDR, OLDVAL, NEWVAL)                     \
-            opal_atomic_compare_exchange_strong_acq_xx((opal_atomic_intptr_t *) (ADDR),           \
-                                                       (intptr_t *) (OLDVAL), (intptr_t)(NEWVAL), \
-                                                       sizeof(*(ADDR)))
-
-/**
- * Atomic compare and set of generic type with release semantics. This
- * macro detect at compile time the type of the first argument and
- * choose the correct function to be called.
- *
- * \note This macro should only be used for integer types.
- *
- * @param addr          Address of <TYPE>.
- * @param oldval        Comparison value address of <TYPE>.
- * @param newval        New value to set if comparision is true <TYPE>.
- *
- * See opal_atomic_compare_exchange_rel_* for pseudo-code.
- */
-#        define opal_atomic_compare_exchange_strong_rel(ADDR, OLDVAL, NEWVAL)                     \
-            opal_atomic_compare_exchange_strong_rel_xx((opal_atomic_intptr_t *) (ADDR),           \
-                                                       (intptr_t *) (OLDVAL), (intptr_t)(NEWVAL), \
-                                                       sizeof(*(ADDR)))
-
-#    endif /* (OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 || OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64) */
 
 static inline void opal_atomic_add_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length);
 static inline void opal_atomic_sub_xx(opal_atomic_intptr_t *addr, int32_t value, size_t length);

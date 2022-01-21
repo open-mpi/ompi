@@ -30,10 +30,6 @@
 #ifndef OPAL_SYS_ARCH_ATOMIC_H
 #define OPAL_SYS_ARCH_ATOMIC_H 1
 
-#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
-#define OPAL_HAVE_ATOMIC_SWAP_32             1
-#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
-#define OPAL_HAVE_ATOMIC_SWAP_64             1
 #define OPAL_HAVE_ATOMIC_ADD_32              1
 #define OPAL_HAVE_ATOMIC_AND_32              1
 #define OPAL_HAVE_ATOMIC_OR_32               1
@@ -72,9 +68,10 @@ static inline void opal_atomic_isync(void)
     __asm__ __volatile__("isb");
 }
 
+
 /**********************************************************************
  *
- * Atomic math operations
+ * Compare and Swap
  *
  *********************************************************************/
 
@@ -96,20 +93,6 @@ static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *a
 
     ret = (prev == *oldval);
     *oldval = prev;
-    return ret;
-}
-
-static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t newval)
-{
-    int32_t ret, tmp;
-
-    __asm__ __volatile__("1:  ldaxr   %w0, [%2]       \n"
-                         "    stlxr   %w1, %w3, [%2]  \n"
-                         "    cbnz    %w1, 1b         \n"
-                         : "=&r"(ret), "=&r"(tmp)
-                         : "r"(addr), "r"(newval)
-                         : "cc", "memory");
-
     return ret;
 }
 
@@ -182,21 +165,6 @@ static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *a
     return ret;
 }
 
-static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t newval)
-{
-    int64_t ret;
-    int tmp;
-
-    __asm__ __volatile__("1:  ldaxr   %0, [%2]        \n"
-                         "    stlxr   %w1, %3, [%2]   \n"
-                         "    cbnz    %w1, 1b         \n"
-                         : "=&r"(ret), "=&r"(tmp)
-                         : "r"(addr), "r"(newval)
-                         : "cc", "memory");
-
-    return ret;
-}
-
 /* these two functions aren't inlined in the non-gcc case because then
    there would be two function calls (since neither cmpset_64 nor
    atomic_?mb can be inlined).  Instead, we "inline" them by hand in
@@ -245,6 +213,53 @@ static inline bool opal_atomic_compare_exchange_strong_rel_64(opal_atomic_int64_
     *oldval = prev;
     return ret;
 }
+
+#include "opal/sys/atomic_impl_ptr_cswap.h"
+
+
+/**********************************************************************
+ *
+ * Swap
+ *
+ *********************************************************************/
+
+static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t newval)
+{
+    int32_t ret, tmp;
+
+    __asm__ __volatile__("1:  ldaxr   %w0, [%2]       \n"
+                         "    stlxr   %w1, %w3, [%2]  \n"
+                         "    cbnz    %w1, 1b         \n"
+                         : "=&r"(ret), "=&r"(tmp)
+                         : "r"(addr), "r"(newval)
+                         : "cc", "memory");
+
+    return ret;
+}
+
+static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t newval)
+{
+    int64_t ret;
+    int tmp;
+
+    __asm__ __volatile__("1:  ldaxr   %0, [%2]        \n"
+                         "    stlxr   %w1, %3, [%2]   \n"
+                         "    cbnz    %w1, 1b         \n"
+                         : "=&r"(ret), "=&r"(tmp)
+                         : "r"(addr), "r"(newval)
+                         : "cc", "memory");
+
+    return ret;
+}
+
+#include "opal/sys/atomic_impl_ptr_swap.h"
+
+
+/**********************************************************************
+ *
+ * Atomic math operations
+ *
+ *********************************************************************/
 
 #define OPAL_ASM_MAKE_ATOMIC(type, bits, name, inst, reg)                          \
     static inline type opal_atomic_fetch_##name##_##bits(opal_atomic_##type *addr, \
