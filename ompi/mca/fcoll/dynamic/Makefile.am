@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2015 University of Houston. All rights reserved.
+# Copyright (c) 2008-2022 University of Houston. All rights reserved.
 # Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
@@ -25,7 +25,6 @@ sources = \
         fcoll_dynamic.h \
         fcoll_dynamic_module.c \
         fcoll_dynamic_component.c \
-        fcoll_dynamic_file_read_all.c \
         fcoll_dynamic_file_write_all.c
 
 # Make the output library in this directory, and name it either

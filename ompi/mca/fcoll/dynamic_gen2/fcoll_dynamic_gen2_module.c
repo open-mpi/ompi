@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2022 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -37,7 +37,7 @@
 static mca_fcoll_base_module_1_0_0_t dynamic_gen2 =  {
     mca_fcoll_dynamic_gen2_module_init,
     mca_fcoll_dynamic_gen2_module_finalize,
-    mca_fcoll_dynamic_gen2_file_read_all,
+    mca_fcoll_base_file_read_all,
     NULL, /* iread_all */
     mca_fcoll_dynamic_gen2_file_write_all,
     NULL, /*iwrite_all */

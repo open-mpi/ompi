@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2022 University of Houston. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -54,6 +54,10 @@ OMPI_DECLSPEC int mca_fcoll_base_get_param (struct ompio_file_t *file, int keyva
 OMPI_DECLSPEC int ompi_fcoll_base_sort_iovec (struct iovec *iov, int num_entries, int *sorted);
 
 OMPI_DECLSPEC mca_fcoll_base_component_t* mca_fcoll_base_component_lookup(const char* name);
+
+OMPI_DECLSPEC int mca_fcoll_base_file_read_all (ompio_file_t *fh, void *buf, int count,
+                                                struct ompi_datatype_t *datatype,
+                                                ompi_status_public_t *status);
 
 /*
  * Globals
