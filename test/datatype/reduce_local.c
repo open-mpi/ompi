@@ -161,7 +161,7 @@ do { \
         for(int _r = repeats; _r > 0; _r--) { \
             memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
             tstart = MPI_Wtime(); \
-            MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT), (MPITYPE), (MPIOP)); \
+            MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT)-_k, (MPITYPE), (MPIOP)); \
             tend = MPI_Wtime(); \
             duration[_k] += (tend - tstart); \
             if( check ) { \
@@ -281,6 +281,7 @@ int main(int argc, char **argv)
                     " -1 <number> : (mis)alignment in elements for the first op\n"
                     " -2 <number> : (mis)alignment in elements for the result\n"
                     " -v: increase the verbosity level\n"
+                    " -f: turn off correctness checks\n"
                     " -h: this help message\n",
                     argv[0]);
             exit(0);
