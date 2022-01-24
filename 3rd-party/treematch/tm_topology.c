@@ -68,7 +68,13 @@ tm_topology_t * tgt_to_tm(char *filename)
     printf("Reading TGT file: %s\n",filename);
 
 
-  fgets(line,1024,pf);
+  if (NULL == fgets(line,1024,pf)) {
+      /* either an error has occurred (and is in an unknown state) or
+         we hit EOF and line is empty.  Either way, make line the
+         empty string to avoid errors later */
+      line[0] = '\0';
+  }
+
   fclose(pf);
 
   s = strstr(line,"tleaf");
@@ -159,7 +165,13 @@ double ** topology_to_arch(hwloc_topology_t topology)
   double **arch = NULL;
 
   nb_proc = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-  arch = (double**)MALLOC(sizeof(double*)*nb_proc);
+  if (nb_proc < 0) {
+    return NULL;
+  }
+  arch = (double**)malloc(sizeof(double*)*nb_proc);
+  if (NULL == arch) {
+    return NULL;
+  }
   for( i = 0 ; i < nb_proc ; i++ ){
     obj_proc1 = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU,i);
     arch[obj_proc1->os_index] = (double*)MALLOC(sizeof(double)*nb_proc);
@@ -534,7 +546,9 @@ int  tm_topology_add_binding_constraints(char *constraints_filename, tm_topology
 
   /* compute the size of the array to store the constraints*/
   n = 0;
-  fgets(line, LINE_SIZE, pf);
+  if (NULL == fgets(line, LINE_SIZE, pf)) {
+    line[0] = '\0';
+  }
   l = line;
   while((ptr=strtok(l," \t"))){
     l = NULL;
@@ -545,7 +559,9 @@ int  tm_topology_add_binding_constraints(char *constraints_filename, tm_topology
   tab = (int*)MALLOC(n*sizeof(int));
 
   rewind(pf);
-  fgets(line, LINE_SIZE, pf);
+  if (NULL == fgets(line, LINE_SIZE, pf)) {
+    line[0] = '\0';
+  }
   fclose(pf);
   l = line;
   i = 0;
