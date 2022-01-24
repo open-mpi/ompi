@@ -205,7 +205,7 @@ static int segment_create(opal_shmem_ds_t *ds_buf, const char *file_name, size_t
          * already set for us :-)
          */
 
-        /* set "valid" bit because setment creation was successful */
+        /* set "valid" bit because segment creation was successful */
         OPAL_SHMEM_DS_SET_VALID(ds_buf);
 
         OPAL_OUTPUT_VERBOSE((70, opal_shmem_base_framework.framework_output,
