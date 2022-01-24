@@ -30,6 +30,7 @@
 #endif
 
 #include "opal/constants.h"
+#include "opal/util/output.h"
 #include "opal/mca/backtrace/backtrace.h"
 
 int opal_backtrace_print(FILE *file, char *prefix, int strip)
@@ -52,10 +53,10 @@ int opal_backtrace_print(FILE *file, char *prefix, int strip)
 
     for (i = strip; i < trace_size; i++) {
         if (NULL != prefix) {
-            write(fd, prefix, strlen(prefix));
+            opal_best_effort_write(fd, prefix, strlen(prefix));
         }
         len = snprintf(buf, sizeof(buf), "[%2d] ", i - strip);
-        write(fd, buf, len);
+        opal_best_effort_write(fd, buf, len);
         backtrace_symbols_fd(&trace[i], 1, fd);
     }
 

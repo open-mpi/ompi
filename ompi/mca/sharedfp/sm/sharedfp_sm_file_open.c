@@ -35,6 +35,8 @@
 #include "sharedfp_sm.h"
 
 #include "mpi.h"
+#include "opal/util/printf.h"
+#include "opal/util/output.h"
 #include "ompi/constants.h"
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
@@ -119,8 +121,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         return err;
     }
 
-    asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
-             filename_basename, comm_cid, int_pid);
+    opal_asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
+                  filename_basename, comm_cid, int_pid);
     /* open shared memory file, initialize to 0, map into memory */
     sm_fd = open(sm_filename, O_RDWR | O_CREAT,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -139,7 +141,10 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     /* TODO: is it necessary to write to the file first? */
     if( 0 == fh->f_rank ){
         memset ( &sm_offset, 0, sizeof (struct mca_sharedfp_sm_offset ));
-        write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
+        err = opal_best_effort_write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
+        if (OPAL_SUCCESS != err) {
+            return err;
+        }
     }
     err = comm->c_coll->coll_barrier (comm, comm->c_coll->coll_barrier_module );
     if ( OMPI_SUCCESS != err ) {
