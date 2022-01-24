@@ -124,6 +124,7 @@ TEMPLATE_FILES = \
         MPI_Bcast_init.3in \
         MPI_Comm_c2f.3in \
         MPI_Comm_idup.3in \
+        MPI_Comm_idup_with_info.3in \
         MPI_Comm_f2c.3in \
         MPI_Comm_free.3in \
         MPI_Comm_free_keyval.3in \

@@ -104,6 +104,7 @@ pmpi_api_files = \
         pcomm_dup_f08.F90 \
         pcomm_dup_with_info_f08.F90 \
         pcomm_idup_f08.F90 \
+        pcomm_idup_with_info_f08.F90 \
         pcomm_free_f08.F90 \
         pcomm_free_keyval_f08.F90 \
         pcomm_get_attr_f08.F90 \

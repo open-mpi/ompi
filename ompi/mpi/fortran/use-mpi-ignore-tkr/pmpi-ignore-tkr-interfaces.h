@@ -68,6 +68,7 @@
 #define MPI_Comm_get_parent PMPI_Comm_get_parent
 #define MPI_Comm_group PMPI_Comm_group
 #define MPI_Comm_idup PMPI_Comm_idup
+#define MPI_Comm_idup_with_info PMPI_Comm_idup_with_info
 #define MPI_Comm_join PMPI_Comm_join
 #define MPI_Comm_rank PMPI_Comm_rank
 #define MPI_Comm_remote_group PMPI_Comm_remote_group

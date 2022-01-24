@@ -37,6 +37,7 @@
 #define MPI_Comm_dup PMPI_Comm_dup
 #define MPI_Comm_dup_with_info PMPI_Comm_dup_with_info
 #define MPI_Comm_idup PMPI_Comm_idup
+#define MPI_Comm_idup_with_info PMPI_Comm_idup_with_info
 #define MPI_Comm_free PMPI_Comm_free
 #define MPI_Comm_free_keyval PMPI_Comm_free_keyval
 #define MPI_Comm_get_info PMPI_Comm_get_info

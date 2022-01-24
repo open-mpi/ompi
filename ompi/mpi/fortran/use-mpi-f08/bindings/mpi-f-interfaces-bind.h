@@ -10,6 +10,8 @@
 ! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2021      Bull S.A.S. All rights reserved.
+! Copyright (c) 2021      Triad National Security, LLC. All rights
+!                         reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -1617,6 +1619,16 @@ subroutine ompi_comm_dup_with_info_f(comm, info, newcomm, ierror) &
   integer, intent(out) :: newcomm
   integer, intent(out) :: ierror
 end subroutine ompi_comm_dup_with_info_f
+
+subroutine ompi_comm_idup_with_info_f(comm, info, newcomm, request, ierror) &
+   BIND(C, name="ompi_comm_idup_with_info_f")
+   implicit none
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine ompi_comm_idup_with_info_f
 
 subroutine ompi_comm_free_f(comm,ierror) &
    BIND(C, name="ompi_comm_free_f")
