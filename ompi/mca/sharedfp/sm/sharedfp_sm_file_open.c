@@ -143,6 +143,11 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         memset ( &sm_offset, 0, sizeof (struct mca_sharedfp_sm_offset ));
         err = opal_best_effort_write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
         if (OPAL_SUCCESS != err) {
+            free(filename_basename);
+            free(sm_filename);
+            free(sm_data);
+            free(sh);
+            close (sm_fd);
             return err;
         }
     }
