@@ -279,6 +279,8 @@ pmpi_api_files = \
         piscatter_f08.F90 \
         piscatterv_f08.F90 \
         pisend_f08.F90 \
+        pisendrecv_f08.F90 \
+        pisendrecv_replace_f08.F90 \
         pissend_f08.F90 \
         pis_thread_main_f08.F90 \
         plookup_name_f08.F90 \

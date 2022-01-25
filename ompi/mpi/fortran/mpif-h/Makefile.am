@@ -18,6 +18,9 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2021      Triad National Security, LLC. All rights
+#                         reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -350,6 +353,8 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         ireduce_scatter_block_f.c \
         irsend_f.c \
         isend_f.c \
+        isendrecv_f.c \
+        isendrecv_replace_f.c \
         iscan_f.c \
         iscatter_f.c \
         iscatterv_f.c \

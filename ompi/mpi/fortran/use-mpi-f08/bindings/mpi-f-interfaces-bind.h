@@ -269,6 +269,32 @@ subroutine ompi_isend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_isend_f
 
+subroutine ompi_isendrecv_f(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
+                           recvcount,recvtype,source,recvtag,comm,request,ierror) &
+   BIND(C, name="ompi_isendrecv_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, dest, sendtag, recvcount, source, recvtag
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request 
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_isendrecv_f
+
+subroutine ompi_isendrecv_replace_f(buf,count,datatype,dest,sendtag,source, &
+                                   recvtag,comm,request,ierror) &
+   BIND(C, name="ompi_isendrecv_replace_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   INTEGER, INTENT(IN) :: count, dest, sendtag, source, recvtag
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_isendrecv_replace_f
+
 subroutine ompi_issend_f(buf,count,datatype,dest,tag,comm,request,ierror) &
    BIND(C, name="ompi_issend_f")
    implicit none

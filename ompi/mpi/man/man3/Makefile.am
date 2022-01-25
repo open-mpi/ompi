@@ -260,6 +260,8 @@ TEMPLATE_FILES = \
         MPI_Irecv.3in \
         MPI_Irsend.3in \
         MPI_Isend.3in \
+        MPI_Isendrecv.3in \
+        MPI_Isendrecv_replace.3in \
         MPI_Issend.3in \
         MPI_Is_thread_main.3in \
         MPI_Keyval_create.3in \
