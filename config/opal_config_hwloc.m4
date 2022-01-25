@@ -178,15 +178,39 @@ dnl external hwloc is not going to be used.  Assumes that if
 dnl this function is called, that success means the internal package
 dnl will be used.
 AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
-    OPAL_VAR_SCOPE_PUSH(subconfig_happy subconfig_prefix internal_hwloc_location)
+    OPAL_VAR_SCOPE_PUSH([subconfig_happy internal_hwloc_location extra_configure_args found_enable_plugins hwloc_config_arg])
 
-    AS_IF([test ! -z $prefix], [subconfig_prefix="--prefix=$prefix"])
+    extra_configure_args=
+
+    # look for a --{enable/disable}-plugins option in the top level
+    # configure arguments, so that we can add --enable-plugins if
+    # appropriate.
+    found_enable_plugins=0
+    eval "set x $ac_configure_args"
+    shift
+    for hwloc_config_arg
+    do
+	case $hwloc_config_arg in
+        --enable-plugins|--enable-plugins=*|--disable-plugins)
+            found_enable_plugins=1
+	    ;;
+	esac
+    done
+
+    # while the plugins in hwloc are not explicitly using Open MPI's dlopen
+    # interface, it seems rude to enable plugins in hwloc if the builder asked
+    # us not to use plugins in Open MPI.  So only enable plugins in hwloc if there's
+    # a chance we're going to do so.  We enable plugins by default so that libhwloc
+    # does not end up with a dependency on libcuda, which would mean everything else
+    # would end up with a dependency on libcuda (and similar).
+    AS_IF([test $found_enable_plugins -eq 0 -a "$enable_dlopen" != "no"],
+          [extra_configure_args="--enable-plugins"])
 
     # Note: To update the version of hwloc shipped, update the
     # constant in autogen.pl.
     OPAL_EXPAND_TARBALL([3rd-party/hwloc_tarball], [3rd-party/hwloc_directory], [configure])
     OPAL_SUBDIR_ENV_CLEAN([opal_hwloc_configure])
-    PAC_CONFIG_SUBDIR_ARGS([3rd-party/hwloc_directory], [], [[--enable-debug]],
+    PAC_CONFIG_SUBDIR_ARGS([3rd-party/hwloc_directory], [$extra_configure_args], [[--enable-debug]],
         [subconfig_happy=1], [subconfig_happy=0])
     OPAL_SUBDIR_ENV_RESTORE([opal_hwloc_configure])
 
