@@ -403,6 +403,8 @@ static inline int am_rdma_advance(mca_btl_base_am_rdma_module_t *am_module,
         hdr->data.rdma.size = packet_size;
         hdr->data.rdma.initiator_address = (uint64_t) context->local_address + context->sent;
     } else {
+        /* atomics today are single datatype entries */
+        assert(packet_size < UINT8_MAX);
         hdr->data.atomic.size = packet_size;
     }
 
