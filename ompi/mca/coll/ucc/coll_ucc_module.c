@@ -378,9 +378,10 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
     ucc_status_t              status;
     int rc;
     ucc_team_params_t team_params = {
-        .mask   = UCC_TEAM_PARAM_FIELD_EP_MAP |
-                  UCC_TEAM_PARAM_FIELD_EP     |
-                  UCC_TEAM_PARAM_FIELD_EP_RANGE,
+        .mask   = UCC_TEAM_PARAM_FIELD_EP_MAP   |
+                  UCC_TEAM_PARAM_FIELD_EP       |
+                  UCC_TEAM_PARAM_FIELD_EP_RANGE |
+                  UCC_TEAM_PARAM_FIELD_ID,
         .ep_map = {
             .type      = (comm == &ompi_mpi_comm_world.comm) ?
                           UCC_EP_MAP_FULL : UCC_EP_MAP_CB,
@@ -389,7 +390,8 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
             .cb.cb_ctx = (void*)comm
         },
         .ep       = ompi_comm_rank(comm),
-        .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG
+        .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG,
+        .id       = comm->c_contextid
     };
     UCC_VERBOSE(2,"creating ucc_team for comm %p, comm_id %d, comm_size %d",
                  (void*)comm,comm->c_contextid,ompi_comm_size(comm));
