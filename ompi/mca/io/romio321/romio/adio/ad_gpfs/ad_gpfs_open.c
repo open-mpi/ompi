@@ -115,9 +115,9 @@ void ADIOI_GPFS_Open(ADIO_File fd, int *error_code)
 
 	MPI_Comm_rank(fd->comm, &rank);
 	if ((rank == fd->hints->ranklist[0]) || (fd->comm == MPI_COMM_SELF)) {
-	    struct stat64 gpfs_statbuf;
+	    struct stat gpfs_statbuf;
 	    /* Get the (real) underlying file system block size */
-	    rc = stat64(fd->filename, &gpfs_statbuf);
+	    rc = stat(fd->filename, &gpfs_statbuf);
 	    if (rc >= 0)
 	    {
 		fd->blksize = gpfs_statbuf.st_blksize;
