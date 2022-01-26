@@ -231,9 +231,18 @@ AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
 AC_DEFINE_UNQUOTED(OMPI_PARAM_CHECK, $ompi_param_check,
     [Whether we want to check MPI parameters never or possible (an integer constant)])
 
+AC_MSG_CHECKING([if want ompio support])
 AC_ARG_ENABLE([io-ompio],
     [AS_HELP_STRING([--disable-io-ompio],
         [Disable the ompio MPI-IO component])])
+if test "$enable_io_ompio" = "no" ; then
+   AC_MSG_RESULT([no])
+   ompi_want_ompio=0
+else
+   AC_MSG_RESULT([yes])
+   ompi_want_ompio=1
+fi
+AM_CONDITIONAL(OMPI_OMPIO_SUPPORT, test "$ompi_want_ompio" = "1")
 
 ])dnl
 

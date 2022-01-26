@@ -22,6 +22,10 @@ headers += \
 
 libmca_fbtl_la_SOURCES += \
         base/fbtl_base_frame.c \
-        base/fbtl_base_file_select.c \
-        base/fbtl_base_file_unselect.c \
         base/fbtl_base_find_available.c
+
+if OMPI_OMPIO_SUPPORT
+libmca_fbtl_la_SOURCES += \
+        base/fbtl_base_file_select.c \
+        base/fbtl_base_file_unselect.c
+endif
