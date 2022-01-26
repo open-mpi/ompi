@@ -86,13 +86,6 @@ else
     WANT_BRANCH_PROBABILITIES=0
 fi
 
-AC_ARG_ENABLE([builtin-atomics-for-ppc],[AS_HELP_STRING([--enable-builtin-atomics-for-ppc],
-                  [POWER architectures only: Force use of builtin atomics if available. This could either be gcc builtins or C11 atomics, depending on what is available on your system. Enabling this is known to cause poor performance in atomic operations on Power machines. (default: disabled)])])
-if test "x$enable_builtin_atomics_for_ppc" = "xyes" ; then
-force_gcc_atomics_ppc=1
-else
-force_gcc_atomics_ppc=0
-fi
 
 #
 # Memory debugging
@@ -420,6 +413,7 @@ AM_CONDITIONAL([OPAL_WANT_SCRIPT_WRAPPER_COMPILERS], [test "$enable_script_wrapp
 #
 # Support per-user config files?
 #
+OPAL_VAR_SCOPE_PUSH([result])
 AC_ARG_ENABLE([per-user-config-files],
    [AS_HELP_STRING([--enable-per-user-config-files],
       [Disable per-user configuration files, to save disk accesses during job start-up.  This is likely desirable for large jobs.  Note that this can also be achieved by environment variables at run-time.  (default: enabled)])])
@@ -430,6 +424,7 @@ else
 fi
 AC_DEFINE_UNQUOTED([OPAL_WANT_HOME_CONFIG_FILES], [$result],
      [Enable per-user config files])
+OPAL_VAR_SCOPE_POP
 
 #
 # Do we want to enable IPv6 support?

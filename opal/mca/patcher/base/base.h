@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +26,7 @@
 #define OPAL_PATCHER_BASE_H
 
 #include "opal_config.h"
+#include "opal/opal_portable_platform.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/patcher/patcher.h"
 
@@ -69,7 +72,7 @@ OPAL_DECLSPEC void mca_base_patcher_patch_apply_binary(mca_patcher_base_patch_t 
 
 static inline uintptr_t mca_patcher_base_addr_text(uintptr_t addr)
 {
-#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64) && (!defined(_CALL_ELF) || (_CALL_ELF != 2))
+#if defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)  && (!defined(_CALL_ELF) || (_CALL_ELF != 2))
     struct odp_t {
         uintptr_t text;
         uintptr_t toc;

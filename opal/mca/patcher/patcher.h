@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,11 +19,12 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/mca.h"
+#include "opal/opal_portable_platform.h"
 
 /* Any function being patched in as a hook must use SYMBOLPATCH_BEGIN at the top,
  * and SYMBOLPATCH_END before it returns (this is just for PPC). */
 
-#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
+#if defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
 
 /* special processing for ppc64 to save and restore TOC (r2)
  * Reference: "64-bit PowerPC ELF Application Binary Interface Supplement 1.9" */

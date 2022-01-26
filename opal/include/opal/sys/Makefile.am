@@ -16,6 +16,8 @@
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,10 +28,14 @@
 # This makefile.am does not stand on its own - it is included from opal/Makefile.am
 
 headers += \
-	opal/sys/architecture.h \
 	opal/sys/atomic.h \
 	opal/sys/atomic_stdc.h \
-	opal/sys/atomic_impl.h \
+	opal/sys/atomic_impl_minmax_math.h \
+	opal/sys/atomic_impl_ptr_cswap.h \
+	opal/sys/atomic_impl_ptr_llsc.h \
+	opal/sys/atomic_impl_ptr_swap.h \
+	opal/sys/atomic_impl_size_t_math.h \
+	opal/sys/atomic_impl_spinlock.h \
 	opal/sys/timer.h \
         opal/sys/cma.h
 

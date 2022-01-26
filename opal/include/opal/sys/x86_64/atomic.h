@@ -16,6 +16,8 @@
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,25 +32,13 @@
  */
 
 #define SMPLOCK "lock; "
-#define MB()    __asm__ __volatile__("" : : : "memory")
 
-/**********************************************************************
- *
- * Define constants for AMD64 / x86_64 / EM64T / ...
- *
- *********************************************************************/
-#define OPAL_HAVE_ATOMIC_MEM_BARRIER 1
-
-#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_32 1
-
-#define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_64 1
 
 /**********************************************************************
  *
  * Memory Barriers
  *
  *********************************************************************/
-#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline void opal_atomic_mb(void)
 {
@@ -57,26 +47,24 @@ static inline void opal_atomic_mb(void)
 
 static inline void opal_atomic_rmb(void)
 {
-    MB();
+    __asm__ __volatile__("" : : : "memory");
 }
 
 static inline void opal_atomic_wmb(void)
 {
-    MB();
+    __asm__ __volatile__("" : : : "memory");
 }
 
 static inline void opal_atomic_isync(void)
 {
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 /**********************************************************************
  *
- * Atomic math operations
+ * Compare and Swap
  *
  *********************************************************************/
-#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *addr,
                                                           int32_t *oldval, int32_t newval)
@@ -91,12 +79,8 @@ static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *a
     return (bool) ret;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
 #define opal_atomic_compare_exchange_strong_acq_32 opal_atomic_compare_exchange_strong_32
 #define opal_atomic_compare_exchange_strong_rel_32 opal_atomic_compare_exchange_strong_32
-
-#if OPAL_GCC_INLINE_ASSEMBLY
 
 static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *addr,
                                                           int64_t *oldval, int64_t newval)
@@ -111,12 +95,12 @@ static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *a
     return (bool) ret;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
 #define opal_atomic_compare_exchange_strong_acq_64 opal_atomic_compare_exchange_strong_64
 #define opal_atomic_compare_exchange_strong_rel_64 opal_atomic_compare_exchange_strong_64
 
-#if OPAL_GCC_INLINE_ASSEMBLY && OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
+#include "opal/sys/atomic_impl_ptr_cswap.h"
+
+#if OPAL_HAVE_CMPXCHG16B && HAVE_OPAL_INT128_T
 
 static inline bool opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t *addr,
                                                            opal_int128_t *oldval,
@@ -138,13 +122,14 @@ static inline bool opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t 
 
 #    define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 1
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
+#endif
 
-#if OPAL_GCC_INLINE_ASSEMBLY
 
-#    define OPAL_HAVE_ATOMIC_SWAP_32 1
-
-#    define OPAL_HAVE_ATOMIC_SWAP_64 1
+/**********************************************************************
+ *
+ * Swap
+ *
+ *********************************************************************/
 
 static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t newval)
 {
@@ -154,10 +139,6 @@ static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t new
     return oldval;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
-
-#if OPAL_GCC_INLINE_ASSEMBLY
-
 static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t newval)
 {
     int64_t oldval;
@@ -166,19 +147,24 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
     return oldval;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
+#include "opal/sys/atomic_impl_ptr_swap.h"
 
-#if OPAL_GCC_INLINE_ASSEMBLY
 
-#    define OPAL_HAVE_ATOMIC_ADD_32 1
-
-/**
- * atomic_add - add integer to atomic variable
- * @i: integer value to add
- * @v: pointer of type int
+/**********************************************************************
  *
- * Atomically adds @i to @v.
- */
+ * Atomic spinlocks
+ *
+ *********************************************************************/
+
+#include "opal/sys/atomic_impl_spinlock.h"
+
+
+/**********************************************************************
+ *
+ * Atomic math operations
+ *
+ *********************************************************************/
+
 static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t *v, int i)
 {
     int ret = i;
@@ -186,15 +172,11 @@ static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t *v, int i)
     return ret;
 }
 
-#    define OPAL_HAVE_ATOMIC_ADD_64 1
+static inline int32_t opal_atomic_add_fetch_32(opal_atomic_int32_t *v, int i)
+{
+    return opal_atomic_fetch_add_32(v, i) + i;
+}
 
-/**
- * atomic_add - add integer to atomic variable
- * @i: integer value to add
- * @v: pointer of type int
- *
- * Atomically adds @i to @v.
- */
 static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *v, int64_t i)
 {
     int64_t ret = i;
@@ -202,15 +184,11 @@ static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *v, int64_t i
     return ret;
 }
 
-#    define OPAL_HAVE_ATOMIC_SUB_32 1
+static inline int64_t opal_atomic_add_fetch_64(opal_atomic_int64_t *v, int64_t i)
+{
+    return opal_atomic_fetch_add_64(v, i) + i;
+}
 
-/**
- * atomic_sub - subtract the atomic variable
- * @i: integer value to subtract
- * @v: pointer of type int
- *
- * Atomically subtracts @i from @v.
- */
 static inline int32_t opal_atomic_fetch_sub_32(opal_atomic_int32_t *v, int i)
 {
     int ret = -i;
@@ -218,15 +196,11 @@ static inline int32_t opal_atomic_fetch_sub_32(opal_atomic_int32_t *v, int i)
     return ret;
 }
 
-#    define OPAL_HAVE_ATOMIC_SUB_64 1
+static inline int32_t opal_atomic_sub_fetch_32(opal_atomic_int32_t *v, int i)
+{
+    return opal_atomic_fetch_sub_32(v, i) - i;
+}
 
-/**
- * atomic_sub - subtract the atomic variable
- * @i: integer value to subtract
- * @v: pointer of type int
- *
- * Atomically subtracts @i from @v.
- */
 static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i)
 {
     int64_t ret = -i;
@@ -234,6 +208,43 @@ static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i
     return ret;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
+static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i)
+{
+    return opal_atomic_sub_fetch_64(v, i) - i;
+}
+
+#define OPAL_ATOMIC_DEFINE_OP(type, bits, operation, name)                                         \
+        static inline type opal_atomic_fetch_##name##_##bits(opal_atomic_##type *addr, type value) \
+        {                                                                                          \
+            type oldval;                                                                           \
+            do {                                                                                   \
+                oldval = *addr;                                                                    \
+            } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval,                    \
+                                                                 oldval operation value));         \
+                                                                                                   \
+            return oldval;                                                                         \
+        }                                                                                          \
+                                                                                                   \
+        static inline type opal_atomic_##name##_fetch_##bits(opal_atomic_##type *addr, type value) \
+        {                                                                                          \
+            type oldval, newval;                                                                   \
+            do {                                                                                   \
+                oldval = *addr;                                                                    \
+                newval = oldval operation value;                                                   \
+            } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval, newval);           \
+                                                                                                   \
+            return newval;                                                                         \
+        }
+
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, &, and)
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, |, or)
+OPAL_ATOMIC_DEFINE_OP(int32_t, 32, ^, xor)
+
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, &, and)
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, |, or)
+OPAL_ATOMIC_DEFINE_OP(int64_t, 64, ^, xor)
+
+#include "opal/sys/atomic_math_minmax_impl.h"
+#include "opal/sys/atomic_math_size_t_impl.h"
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */

@@ -5,6 +5,8 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +22,7 @@
 #include "opal/prefetch.h"
 #include "opal/util/output.h"
 #include "opal/util/sys_limits.h"
+#include "opal/opal_portable_platform.h"
 
 #include <assert.h>
 #include <dlfcn.h>
@@ -30,19 +33,19 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
+#if defined(PLATFORM_ARCH_X86) || defined(PLATFORM_ARCH_X86_64)
 
 static int mca_patcher_overwrite_apply_patch(mca_patcher_base_patch_t *patch)
 {
     uintptr_t func_new_addr = patch->patch_value;
 
     {
-#    if (OPAL_ASSEMBLY_ARCH == OPAL_IA32)
+#    if defined(PLATFORM_ARCH_32)
         patch->patch_data_size = 5;
         *(unsigned char *) (patch->patch_data + 0) = 0xe9;
         *(unsigned int *) (patch->patch_data + 1) = (unsigned int) (func_new_addr
                                                                     - patch->patch_orig - 5);
-#    elif (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
+#    elif defined(PLATFORM_ARCH_64)
         patch->patch_data_size = 13;
         *(unsigned short *) (patch->patch_data + 0) = 0xbb49;
         *(unsigned long *) (patch->patch_data + 2) = (unsigned long) func_new_addr;
@@ -59,7 +62,7 @@ static int mca_patcher_overwrite_apply_patch(mca_patcher_base_patch_t *patch)
 
 /* end of #if defined(__i386__) || defined(__x86_64__) */
 // ------------------------------------------------- PPC equivalent:
-#elif (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32) || (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
+#elif defined(PLATFORM_ARCH_POWERPC)
 
 // PowerPC instructions used in patching
 // Reference: "PowerPC User Instruction Set Architecture"
@@ -91,7 +94,7 @@ static unsigned int rldicr(unsigned int RT, unsigned int RS, unsigned int SH, un
 
 static int PatchLoadImm(uintptr_t addr, unsigned int reg, size_t value)
 {
-#    if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
+#    if defined(PLATFORM_ARCH_64)
     *(unsigned int *) (addr + 0) = addis(reg, 0, (value >> 48));
     *(unsigned int *) (addr + 4) = ori(reg, reg, (value >> 32));
     *(unsigned int *) (addr + 8) = rldicr(reg, reg, 32, 31);
@@ -115,7 +118,7 @@ static int mca_patcher_overwrite_apply_patch(mca_patcher_base_patch_t *patch)
     hook_addr = mca_patcher_base_addr_text(patch->patch_value);
 
 // Patch for hook function:
-#    if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
+#    if defined(PLATFORM_ARCH_64)
     rc = mca_patcher_base_patch_hook(&mca_patcher_overwrite_module, hook_addr);
     if (OPAL_SUCCESS != rc) {
         return rc;
@@ -142,7 +145,7 @@ static int mca_patcher_overwrite_apply_patch(mca_patcher_base_patch_t *patch)
     return OPAL_SUCCESS;
 }
 
-#elif defined(__aarch64__)
+#elif defined(PLATFORM_ARCH_AARCH64)
 
 /**
  * @brief Generate a mov immediate instruction
@@ -228,16 +231,16 @@ static int mca_patcher_overwrite_apply_patch(mca_patcher_base_patch_t *patch)
 static bool mca_patcher_is_function_patched(unsigned char *target)
 {
 
-#if (OPAL_ASSEMBLY_ARCH == OPAL_IA32)
+#if defined(PLATFORM_ARCH_X86)
     return (*(unsigned char *)target == 0xe9);
-#elif (OPAL_ASSEMBLY_ARCH == OPAL_X86_64)
+#elif defined(PLATFORM_ARCH_X86_64)
 	return (
 		(*(unsigned short*)(target + 0) == 0xbb49) &&
 		(*(unsigned char* )(target +10) == 0x41  ) &&
 		(*(unsigned char* )(target +11) == 0xff  ) &&
 		(*(unsigned char* )(target +12) == 0xe3  )
 	);
-#elif (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32 ) || (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
+#elif defined(PLATFORM_ARCH_POWERPC)
     const unsigned int gr_max = 0xF; //11 is used in our patching code, but is the max 4 or 5 bits?
     const unsigned int addr_max = 0xFFFF;
     unsigned int  addis_base = addis( 0, 0, 0);
@@ -248,7 +251,7 @@ static bool mca_patcher_is_function_patched(unsigned char *target)
     unsigned int  mtspr_mask = ~(mtspr_base  ^  mtspr( 9,      gr_max));
     unsigned int  bcctr_base = bcctr(20, 0, 0); // 20 = always
     unsigned int  bcctr_mask = ~(bcctr_base  ^  bcctr(20,           0,         0));
-#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32)
+#if defined(PLATFORM_ARCH_32)
 
     return (
         ((*(unsigned int *) (target + 0 )) &  addis_mask) ==  addis_base &&
@@ -272,7 +275,7 @@ static bool mca_patcher_is_function_patched(unsigned char *target)
         ((*(unsigned int *) (target + 24)) &  bcctr_mask) ==  bcctr_base
     );
 #endif
-#elif defined(__aarch64__)
+#elif defined(PLATFORM_ARCH_AARCH64)
     uint32_t mov_mask=~((0xFFFF << 5) | 0x1F);
     uint32_t br_mask=~(0x1F << 5);
 
