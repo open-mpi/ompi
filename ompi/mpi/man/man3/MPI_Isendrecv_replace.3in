@@ -22,7 +22,7 @@ int MPI_Isendrecv_replace(void *\fIbuf\fP, int\fI count\fP, MPI_Datatype\fI data
 .nf
 USE MPI
 ! or the older form: INCLUDE 'mpif.h'
-MPI_SENDRECV_REPLACE(\fIBUF, COUNT, DATATYPE, DEST, SENDTAG, SOURCE,
+MPI_ISENDRECV_REPLACE(\fIBUF, COUNT, DATATYPE, DEST, SENDTAG, SOURCE,
 		RECVTAG, COMM, REQUEST, IERROR\fP)
 	<type>	\fIBUF\fP(*)
 	INTEGER	\fICOUNT, DATATYPE, DEST, SENDTAG\fP
