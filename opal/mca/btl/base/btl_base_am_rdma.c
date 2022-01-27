@@ -1333,6 +1333,7 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
     if (NULL != btl->btl_am_data) {
         BTL_VERBOSE(("am_rdma_init: btl %p already initialized", (void *)btl));
         am_rdma_internal_fini(am_module);
+        opal_mutex_unlock(&default_component.mutex);
         return OPAL_SUCCESS;
     }
     opal_mutex_unlock(&default_component.mutex);
