@@ -176,6 +176,8 @@
 #define MPI_Iscatter PMPI_Iscatter
 #define MPI_Iscatterv PMPI_Iscatterv
 #define MPI_Isend PMPI_Isend
+#define MPI_Isendrecv PMPI_Isendrecv
+#define MPI_Isendrecv_replace PMPI_Isendrecv_replace
 #define MPI_Issend PMPI_Issend
 #define MPI_Lookup_name PMPI_Lookup_name
 #define MPI_Mprobe PMPI_Mprobe

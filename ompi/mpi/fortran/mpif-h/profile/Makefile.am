@@ -265,6 +265,8 @@ linked_files = \
         piscatter_f.c \
         piscatterv_f.c \
         pisend_f.c \
+        pisendrecv_f.c \
+        pisendrecv_replace_f.c \
         pissend_f.c \
         pis_thread_main_f.c \
         pkeyval_create_f.c \

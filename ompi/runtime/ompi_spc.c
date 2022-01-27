@@ -63,6 +63,8 @@ static const ompi_spc_event_t ompi_spc_events_desc[OMPI_SPC_NUM_COUNTERS] = {
     SET_COUNTER_ARRAY(OMPI_SPC_RECV, "The number of times MPI_Recv was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_MRECV, "The number of times MPI_Mrecv was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_ISEND, "The number of times MPI_Isend was called.", false, false),
+    SET_COUNTER_ARRAY(OMPI_SPC_ISENDRECV, "The number of times MPI_Isendrecv was called.", false, false),
+    SET_COUNTER_ARRAY(OMPI_SPC_ISENDRECV_REPLACE, "The number of times MPI_Isendrecv_replace was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_IBSEND, "The number of times MPI_Ibsend was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_IRSEND, "The number of times MPI_Irsend was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_ISSEND, "The number of times MPI_Issend was called.", false, false),
