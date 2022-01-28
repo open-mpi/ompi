@@ -77,10 +77,12 @@ AC_DEFUN([ORTE_CHECK_LSF],[
           # on AIX it should be in libbsd
           # on HP-UX it should be in libBSD
           # on IRIX < 6 it should be in libsun (IRIX 6 and later it is in libc)
+          # on RHEL: libnsl, libnsl2 AND libnsl2-devel are required to link libnsl to get yp_all.
           AS_IF([test "$orte_check_lsf_happy" = "yes"],
                 [OPAL_SEARCH_LIBS_COMPONENT([yp_all_nsl], [yp_all], [nsl bsd BSD sun],
                               [orte_check_lsf_happy="yes"],
-                              [orte_check_lsf_happy="no"])])
+                              [AC_MSG_WARN([[Could not find yp_all. Please see https://www.open-mpi.org/faq/?category=building#build-rte-lsf for more details.]])
+                               orte_check_lsf_happy="no"])])
 
           # liblsf requires shm_open, shm_unlink, which are in librt
           AS_IF([test "$orte_check_lsf_happy" = "yes"],
@@ -154,18 +156,18 @@ AC_DEFUN([ORTE_CHECK_LSF],[
                         # (3) Check to see if the -levent is from Libevent (check for a symbol it has)
                         AC_CHECK_LIB([event], [evthread_set_condition_callbacks],
                                      [AC_MSG_CHECKING([for libevent conflict])
-                                      AC_MSG_RESULT([No. The correct libevent.so was linked.])
+                                      AC_MSG_RESULT([No conflict found. The correct libevent.so was linked.])
                                       orte_check_lsf_event_conflict=no],
                                      [# (4) The libevent.so is not from Libevent. Warn the user.
                                       AC_MSG_CHECKING([for libevent conflict])
-                                      AC_MSG_RESULT([Yes. Detected a libevent.so that is not from Libevent.])
+                                      AC_MSG_RESULT([Conflict found. Detected a libevent.so that is not from Libevent.])
                                       orte_check_lsf_event_conflict=yes])
                        ],
                        [AC_MSG_CHECKING([for libevent conflict])
-                        AC_MSG_RESULT([No. Internal Libevent or libevent_core is being used.])
+                        AC_MSG_RESULT([No conflict found. Internal Libevent or libevent_core is being used.])
                         orte_check_lsf_event_conflict=na])],
                 [AC_MSG_CHECKING([for libevent conflict])
-                 AC_MSG_RESULT([No. LSF checks passed.])
+                 AC_MSG_RESULT([No conflict found. LSF checks passed.])
                  orte_check_lsf_event_conflict=na])
 
           AS_IF([test "$orte_check_lsf_event_conflict" = "yes"],
