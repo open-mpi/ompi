@@ -291,7 +291,8 @@ static int mca_coll_ucc_init_ctx() {
     }
     ucc_context_config_release(ctx_config);
 
-    copy_fn.attr_communicator_copy_fn  = (MPI_Comm_internal_copy_attr_function*) MPI_COMM_NULL_COPY_FN;
+    copy_fn.attr_communicator_copy_fn  = (MPI_Comm_internal_copy_attr_function)
+        MPI_COMM_NULL_COPY_FN;
     del_fn.attr_communicator_delete_fn = ucc_comm_attr_del_fn;
     if (OMPI_SUCCESS != ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
                                                 &ucc_comm_attr_keyval, NULL ,0, NULL)) {
@@ -320,6 +321,52 @@ cleanup_lib:
     return OMPI_ERROR;
 }
 
+uint64_t rank_map_cb(uint64_t ep, void *cb_ctx)
+{
+    struct ompi_communicator_t *comm = cb_ctx;
+
+    return ((ompi_process_name_t*)&ompi_comm_peer_lookup(comm, ep)->super.
+            proc_name)->vpid;
+}
+
+static inline ucc_ep_map_t get_rank_map(struct ompi_communicator_t *comm)
+{
+    ucc_ep_map_t map;
+    int64_t      r1, r2, stride, i;
+    int          is_strided;
+
+    map.ep_num = ompi_comm_size(comm);
+    if (comm == &ompi_mpi_comm_world.comm) {
+        map.type = UCC_EP_MAP_FULL;
+        return map;
+    }
+
+    /* try to detect strided pattern */
+    is_strided = 1;
+    r1         = rank_map_cb(0, comm);
+    r2         = rank_map_cb(1, comm);
+    stride     = r2 - r1;
+    for (i = 2; i < map.ep_num; i++) {
+        r1 = r2;
+        r2 = rank_map_cb(i, comm);
+        if (r2 - r1 != stride) {
+            is_strided = 0;
+            break;
+        }
+    }
+
+    if (is_strided) {
+        map.type           = UCC_EP_MAP_STRIDED;
+        map.strided.start  = r1;
+        map.strided.stride = stride;
+    } else {
+        map.type      = UCC_EP_MAP_CB;
+        map.cb.cb     = rank_map_cb;
+        map.cb.cb_ctx = (void*)comm;
+    }
+
+    return map;
+}
 /*
  * Initialize module on the communicator
  */
@@ -331,19 +378,20 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
     ucc_status_t              status;
     int rc;
     ucc_team_params_t team_params = {
-        .mask               = UCC_TEAM_PARAM_FIELD_EP |
-                              UCC_TEAM_PARAM_FIELD_EP_RANGE |
-                              UCC_TEAM_PARAM_FIELD_OOB,
-        .oob   = {
-            .allgather      = oob_allgather,
-            .req_test       = oob_allgather_test,
-            .req_free       = oob_allgather_free,
-            .coll_info      = (void*)comm,
-            .n_oob_eps      = ompi_comm_size(comm),
-            .oob_ep         = ompi_comm_rank(comm)
+        .mask   = UCC_TEAM_PARAM_FIELD_EP_MAP   |
+                  UCC_TEAM_PARAM_FIELD_EP       |
+                  UCC_TEAM_PARAM_FIELD_EP_RANGE |
+                  UCC_TEAM_PARAM_FIELD_ID,
+        .ep_map = {
+            .type      = (comm == &ompi_mpi_comm_world.comm) ?
+                          UCC_EP_MAP_FULL : UCC_EP_MAP_CB,
+            .ep_num    = ompi_comm_size(comm),
+            .cb.cb     = rank_map_cb,
+            .cb.cb_ctx = (void*)comm
         },
         .ep       = ompi_comm_rank(comm),
-        .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG
+        .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG,
+        .id       = comm->c_contextid
     };
     UCC_VERBOSE(2,"creating ucc_team for comm %p, comm_id %d, comm_size %d",
                  (void*)comm,comm->c_contextid,ompi_comm_size(comm));
