@@ -35,7 +35,7 @@ AC_DEFUN([OPAL_GET_LDFLAGS_FROM_PC], [
   happy=1
   AS_IF([test "$PKG_CONFIG" = ""],
         [happy=0],
-        [OPAL_LOG_COMMAND([pkg_config_results=`$PKG_CONFIG --static --libs-only-L --libs-only-other $1`],
+        [OPAL_LOG_COMMAND([pkg_config_results=`PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig $PKG_CONFIG --static --libs-only-L --libs-only-other $1`],
              [AS_VAR_COPY([$2], [pkg_config_results])],
              [happy=0])])
   AS_IF([test $happy -eq 0],
@@ -59,7 +59,7 @@ AC_DEFUN([OPAL_GET_LIBS_FROM_PC], [
   happy=1
   AS_IF([test "$PKG_CONFIG" = ""],
         [happy=0],
-        [OPAL_LOG_COMMAND([pkg_config_results=`$PKG_CONFIG --libs-only-l $1`],
+        [OPAL_LOG_COMMAND([pkg_config_results=`PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig $PKG_CONFIG --libs-only-l $1`],
              [AS_VAR_COPY([$2], [pkg_config_results])],
              [happy=0])])
   AS_IF([test $happy -eq 0],
