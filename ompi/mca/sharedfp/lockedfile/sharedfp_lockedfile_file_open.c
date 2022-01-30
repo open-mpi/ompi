@@ -115,8 +115,26 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     snprintf(lockedfilename, filenamelen, "%s-%u-%d%s",filename,masterjobid,int_pid,".lock");
-    module_data->filename = lockedfilename;
-    
+    if (opal_path_is_absolute(lockedfilename) ) {
+        module_data->filename = lockedfilename;
+    } else {
+        char path[OPAL_PATH_MAX];
+        err = opal_getcwd(path, OPAL_PATH_MAX);
+        if (OPAL_SUCCESS != err) {
+            free (sh);
+            free (module_data);
+            free (lockedfilename);
+            return err;
+        }
+        module_data->filename = opal_os_path(0, path, lockedfilename, NULL);
+        if (NULL == module_data->filename){
+            free (sh);
+            free (module_data);
+            free (lockedfilename);
+            return OMPI_ERROR;
+        }
+    }
+
     /*-------------------------------------------------*/
     /*Open the lockedfile without shared file pointer  */
     /*-------------------------------------------------*/
