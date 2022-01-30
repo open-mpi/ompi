@@ -25,6 +25,9 @@
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
+#include "opal/util/output.h"
+#include "opal/util/fd.h"
+
 
 /*Use fcntl to lock the hidden file which stores the current position*/
 #include <fcntl.h>
@@ -76,7 +79,10 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
 
     /* read from the file */
     lseek ( fd, 0, SEEK_SET );
-    read ( fd, &buf, sizeof(OMPI_MPI_OFFSET_TYPE));
+    ret = opal_fd_read ( fd,  sizeof(OMPI_MPI_OFFSET_TYPE), &buf);
+    if (OPAL_SUCCESS != ret ) {
+        goto exit;
+    }
     if ( mca_sharedfp_lockedfile_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
                     "sharedfp_lockedfile_request_position: Read last_offset=%lld! ret=%d\n",buf, ret);
@@ -92,8 +98,11 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
 
     /* write to the file  */
     lseek ( fd, 0, SEEK_SET );
-    write ( fd, &position, sizeof(OMPI_MPI_OFFSET_TYPE));
-
+    ret = opal_best_effort_write ( fd, &position, sizeof(OMPI_MPI_OFFSET_TYPE));
+    /* No need to handle error case here, the subsequent steps are identical
+       in case of ret != OPAL_SUCCESS, namely release lock and return ret */
+    
+exit:
     /* unlock the file */
     if ( mca_sharedfp_lockedfile_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
@@ -115,7 +124,10 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
     if (fcntl(fd, F_SETLK, &fl) == -1) {
         opal_output(0,"sharedfp_lockedfile_request_position:failed to release lock for fd: %d\n",fd);
         opal_output(0,"error(%i): %s", errno, strerror(errno));
-        return OMPI_ERROR;
+        /* Only overwrite error code if it was OPAL_SUCCESS previously */
+        if (OPAL_SUCCESS == ret ) {
+            ret = OMPI_ERROR;
+        }
     }
     else {
 	if ( mca_sharedfp_lockedfile_verbose ) {
