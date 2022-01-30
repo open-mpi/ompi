@@ -155,6 +155,7 @@ struct ompio_file_t {
     int                    f_perm;
     ompi_communicator_t   *f_comm;
     const char            *f_filename;
+    char                  *f_fullfilename;
     char                  *f_datarep;
     opal_convertor_t      *f_convertor;
     opal_info_t           *f_info;
