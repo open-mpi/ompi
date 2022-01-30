@@ -37,6 +37,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+
+#include "opal/util/fd.h"
+#include "opal/util/opal_getcwd.h"
+#include "opal/util/path.h"
+#include "opal/util/os_path.h"
+
 int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 				       const char* filename,
 				       int amode,
@@ -125,12 +131,19 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
             opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", 
                         fh->f_rank);
             free (sh);
-            free(module_data);
+            free (module_data);
             free (lockedfilename);
             return OMPI_ERROR;
         }
-	write ( handle, &position, sizeof(OMPI_MPI_OFFSET_TYPE) );
-	close ( handle );
+	err = opal_fd_write (handle, sizeof(OMPI_MPI_OFFSET_TYPE), &position);
+        if (OPAL_SUCCESS != err)  {
+            free (sh);
+            free (module_data);
+            free (lockedfilename);
+            close (handle);
+            return err;
+        }
+	close (handle);
     }
     err = comm->c_coll->coll_barrier ( comm, comm->c_coll->coll_barrier_module );
     if ( OMPI_SUCCESS != err ) {
