@@ -33,7 +33,7 @@
 #include <unistd.h>
 
 #define DEBUG_ON 0
-#define FCOLL_BASE_SHUFFLE_TAG 123
+#define COMMON_OMPIO_SHUFFLE_TAG 123
 #define INIT_LEN 10
 
 /*Used for loading file-offsets per aggregator*/
@@ -51,11 +51,11 @@ static int read_heap_sort (mca_io_ompio_local_io_array *io_array,
 
 
 int
-mca_fcoll_base_file_read_all (ompio_file_t *fh,
-                                 void *buf,
-                                 int count,
-                                 struct ompi_datatype_t *datatype,
-                                 ompi_status_public_t *status)
+mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
+                                     void *buf,
+                                     int count,
+                                     struct ompi_datatype_t *datatype,
+                                     ompi_status_public_t *status)
 {
     MPI_Aint total_bytes = 0;          /* total bytes to be read */
     MPI_Aint bytes_to_read_in_cycle = 0; /* left to be read in a cycle*/
@@ -743,7 +743,7 @@ mca_fcoll_base_file_read_all (ompio_file_t *fh,
                                                   1,
                                                   sendtype[i],
                                                   fh->f_procs_in_group[i],
-                                                  FCOLL_BASE_SHUFFLE_TAG,
+                                                  COMMON_OMPIO_SHUFFLE_TAG,
                                                   MCA_PML_BASE_SEND_STANDARD,
                                                   fh->f_comm,
                                                   &send_req[i]));
@@ -824,7 +824,7 @@ mca_fcoll_base_file_read_all (ompio_file_t *fh,
                                      1,
                                      newType,
                                      my_aggregator,
-                                     FCOLL_BASE_SHUFFLE_TAG,
+                                     COMMON_OMPIO_SHUFFLE_TAG,
                                      fh->f_comm,
                                      &recv_req));
 

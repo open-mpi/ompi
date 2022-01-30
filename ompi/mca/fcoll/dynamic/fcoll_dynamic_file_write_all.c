@@ -51,7 +51,7 @@ static int local_heap_sort (mca_io_ompio_local_io_array *io_array,
 
 
 int
-mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
+mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                   const void *buf,
                                   int count,
                                   struct ompi_datatype_t *datatype,

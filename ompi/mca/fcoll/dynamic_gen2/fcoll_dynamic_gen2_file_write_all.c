@@ -112,7 +112,7 @@ int mca_fcoll_dynamic_gen2_split_iov_array ( ompio_file_t *fh, mca_common_ompio_
                                              int num_entries, int *last_array_pos, int *last_pos_in_field );
 
 
-int mca_fcoll_dynamic_gen2_file_write_all (ompio_file_t *fh,
+int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
                                       const void *buf,
                                       int count,
                                       struct ompi_datatype_t *datatype,

@@ -323,6 +323,9 @@ OMPI_DECLSPEC int mca_common_ompio_set_file_defaults (ompio_file_t *fh);
 OMPI_DECLSPEC int mca_common_ompio_set_view (ompio_file_t *fh,  OMPI_MPI_OFFSET_TYPE disp,
                                              ompi_datatype_t *etype,  ompi_datatype_t *filetype, const char *datarep,
                                              opal_info_t *info);
+OMPI_DECLSPEC int mca_common_ompio_base_file_read_all (struct ompio_file_t *fh, void *buf, int count,
+                                                       struct ompi_datatype_t *datatype, ompi_status_public_t *status);
+
  
 
 /*

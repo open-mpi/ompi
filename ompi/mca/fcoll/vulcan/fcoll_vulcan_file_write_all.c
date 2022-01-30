@@ -116,7 +116,7 @@ static int mca_fcoll_vulcan_minmax ( ompio_file_t *fh, struct iovec *iov, int io
                                      long *new_stripe_size);
 
 
-int mca_fcoll_vulcan_file_write_all (ompio_file_t *fh,
+int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
                                       const void *buf,
                                       int count,
                                       struct ompi_datatype_t *datatype,

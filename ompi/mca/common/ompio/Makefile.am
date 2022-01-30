@@ -35,6 +35,7 @@ sources = \
 	common_ompio_file_open.c   \
 	common_ompio_file_view.c   \
 	common_ompio_file_read.c   \
+	common_ompio_file_read_all.c \
 	common_ompio_buffer.c      \
 	common_ompio_file_write.c
 
