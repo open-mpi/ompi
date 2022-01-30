@@ -41,6 +41,9 @@
 #include <math.h>
 #include "common_ompio.h"
 #include "ompi/mca/topo/topo.h"
+#include "opal/util/opal_getcwd.h"
+#include "opal/util/path.h"
+#include "opal/util/os_path.h"
 
 static mca_common_ompio_generate_current_file_view_fn_t generate_current_file_view_fn;
 static mca_common_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value_fn;
@@ -100,6 +103,22 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_get_mca_parameter_value=get_mca_parameter_value_fn;
 
     ompio_fh->f_filename = filename;
+    if (opal_path_is_absolute(filename) ) {
+        ompio_fh->f_fullfilename = strdup(filename);
+    }
+    else {
+        char path[OPAL_PATH_MAX];
+        ret = opal_getcwd(path, OPAL_PATH_MAX);
+        if (OPAL_SUCCESS != ret) {
+            goto fn_fail;
+        }
+        ompio_fh->f_fullfilename = opal_os_path(0, path, filename, NULL);
+        if (NULL == ompio_fh->f_fullfilename){
+            ret = OMPI_ERROR;
+            goto fn_fail;
+        }
+    }
+    
     mca_common_ompio_set_file_defaults (ompio_fh);
 
     ompio_fh->f_split_coll_req    = NULL;
@@ -285,7 +304,7 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
 	ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
     }
     if ( delete_flag ) {
-        ret = mca_common_ompio_file_delete ( ompio_fh->f_filename, &(MPI_INFO_NULL->super) );
+        ret = mca_common_ompio_file_delete ( ompio_fh->f_fullfilename, &(MPI_INFO_NULL->super) );
     }
 
     if ( NULL != ompio_fh->f_fs ) {
@@ -350,7 +369,8 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
         free ( ompio_fh->f_coll_write_time );
         ompio_fh->f_coll_write_time = NULL;
     }
-
+    free (ompio_fh->f_fullfilename);
+    
     if ( NULL != ompio_fh->f_coll_read_time ) {
         free ( ompio_fh->f_coll_read_time );
         ompio_fh->f_coll_read_time = NULL;
@@ -371,8 +391,7 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
     if ( MPI_DATATYPE_NULL != ompio_fh->f_orig_filetype ){
 	ompi_datatype_destroy (&ompio_fh->f_orig_filetype);
     }
-
-
+    
     if (MPI_COMM_NULL != ompio_fh->f_comm && !(ompio_fh->f_flags & OMPIO_SHAREDFP_IS_SET) )  {
         ompi_comm_free (&ompio_fh->f_comm);
     }
