@@ -22,7 +22,11 @@ headers += \
         base/base.h
 
 libmca_sharedfp_la_SOURCES += \
+        base/sharedfp_base_frame.c \
+        base/sharedfp_base_find_available.c
+
+if OMPI_OMPIO_SUPPORT
+libmca_sharedfp_la_SOURCES += \
         base/sharedfp_base_file_select.c \
-        base/sharedfp_base_file_unselect.c \
-        base/sharedfp_base_find_available.c \
-        base/sharedfp_base_frame.c
+        base/sharedfp_base_file_unselect.c
+endif

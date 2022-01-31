@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2022 University of Houston. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -23,8 +23,13 @@ headers += \
 
 libmca_fcoll_la_SOURCES += \
         base/fcoll_base_frame.c \
+        base/fcoll_base_find_available.c
+
+if OMPI_OMPIO_SUPPORT
+libmca_fcoll_la_SOURCES += \
         base/fcoll_base_file_select.c \
         base/fcoll_base_file_unselect.c \
-        base/fcoll_base_find_available.c \
         base/fcoll_base_sort.c \
+        base/fcoll_base_file_read_all.c \
         base/fcoll_base_coll_array.c
+endif
