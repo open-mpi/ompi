@@ -185,12 +185,6 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
             mca_btl_sm.super.btl_put = NULL;
             mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
         }
-        if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
-            ep->smsc_map_context = MCA_SMSC_CALL(map_peer_region, ep->smsc_endpoint, /*flag=*/0,
-                                                 (void *) (uintptr_t) modex->segment_base,
-                                                 mca_btl_sm_component.segment_size,
-                                                 (void **) &ep->segment_base);
-        } else {
             /* store a copy of the segment information for detach */
             ep->seg_ds = malloc(modex->seg_ds_size);
             if (NULL == ep->seg_ds) {
@@ -203,7 +197,6 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
             if (NULL == ep->segment_base) {
                 return OPAL_ERROR;
             }
-        }
 
         OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
 
@@ -353,10 +346,8 @@ static int sm_finalize(struct mca_btl_base_module_t *btl)
     free(component->fbox_in_endpoints);
     component->fbox_in_endpoints = NULL;
 
-    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
-        opal_shmem_unlink(&mca_btl_sm_component.seg_ds);
-        opal_shmem_segment_detach(&mca_btl_sm_component.seg_ds);
-    }
+    opal_shmem_unlink(&mca_btl_sm_component.seg_ds);
+    opal_shmem_segment_detach(&mca_btl_sm_component.seg_ds);
 
     return OPAL_SUCCESS;
 }
@@ -521,22 +512,18 @@ static void mca_btl_sm_endpoint_destructor(mca_btl_sm_endpoint_t *ep)
     OBJ_DESTRUCT(&ep->pending_frags);
     OBJ_DESTRUCT(&ep->pending_frags_lock);
 
-    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
-        if (ep->seg_ds) {
-            opal_shmem_ds_t seg_ds;
+    if (ep->seg_ds) {
+        opal_shmem_ds_t seg_ds;
 
-            /* opal_shmem_segment_detach expects a opal_shmem_ds_t and will
-             * stomp past the end of the seg_ds if it is too small (which
-             * ep->seg_ds probably is) */
-            memcpy(&seg_ds, ep->seg_ds, opal_shmem_sizeof_shmem_ds(ep->seg_ds));
-            free(ep->seg_ds);
-            ep->seg_ds = NULL;
+        /* opal_shmem_segment_detach expects a opal_shmem_ds_t and will
+         * stomp past the end of the seg_ds if it is too small (which
+         * ep->seg_ds probably is) */
+        memcpy(&seg_ds, ep->seg_ds, opal_shmem_sizeof_shmem_ds(ep->seg_ds));
+        free(ep->seg_ds);
+        ep->seg_ds = NULL;
 
-            /* disconnect from the peer's segment */
-            opal_shmem_segment_detach(&seg_ds);
-        }
-    } else if (NULL != ep->smsc_map_context) {
-        MCA_SMSC_CALL(unmap_peer_region, ep->smsc_map_context);
+        /* disconnect from the peer's segment */
+        opal_shmem_segment_detach(&seg_ds);
     }
 
     if (ep->fbox_out.fbox) {

@@ -254,11 +254,6 @@ static int mca_btl_sm_component_close(void)
     OBJ_DESTRUCT(&mca_btl_sm_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_sm_component.pending_fragments);
 
-    if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)
-        && NULL != mca_btl_sm_component.my_segment) {
-        munmap(mca_btl_sm_component.my_segment, mca_btl_sm_component.segment_size);
-    }
-
     mca_btl_sm_component.my_segment = NULL;
 
     if (mca_btl_sm_component.mpool) {
@@ -276,14 +271,9 @@ static int mca_btl_base_sm_modex_send(void)
 
     modex_size = sizeof(modex) - sizeof(modex.seg_ds);
 
-    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
         modex.seg_ds_size = opal_shmem_sizeof_shmem_ds(&mca_btl_sm_component.seg_ds);
         memmove(&modex.seg_ds, &mca_btl_sm_component.seg_ds, modex.seg_ds_size);
         modex_size += modex.seg_ds_size;
-    } else {
-        modex.segment_base = (uintptr_t) mca_btl_sm_component.my_segment;
-        modex.seg_ds_size = 0;
-    }
 
     int rc;
     OPAL_MODEX_SEND(rc, PMIX_LOCAL, &mca_btl_sm_component.super.btl_version, &modex, modex_size);
@@ -376,41 +366,29 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
         mca_btl_sm.super.btl_put = NULL;
     }
 
-    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
-        char *sm_file;
+    char *sm_file;
 
-        rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%u.%x.%d",
-                           mca_btl_sm_component.backing_directory, opal_process_info.nodename,
+    rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%u.%x.%d",
+                       mca_btl_sm_component.backing_directory, opal_process_info.nodename,
                            geteuid(), OPAL_PROC_MY_NAME.jobid, MCA_BTL_SM_LOCAL_RANK);
-        if (0 > rc) {
-            free(btls);
-            return NULL;
-        }
-        opal_pmix_register_cleanup(sm_file, false, false, false);
+    if (0 > rc) {
+        free(btls);
+        return NULL;
+    }
+    opal_pmix_register_cleanup(sm_file, false, false, false);
 
-        rc = opal_shmem_segment_create(&component->seg_ds, sm_file, component->segment_size);
-        free(sm_file);
-        if (OPAL_SUCCESS != rc) {
-            BTL_VERBOSE(("Could not create shared memory segment"));
-            free(btls);
-            return NULL;
-        }
+    rc = opal_shmem_segment_create(&component->seg_ds, sm_file, component->segment_size);
+    free(sm_file);
+    if (OPAL_SUCCESS != rc) {
+        BTL_VERBOSE(("Could not create shared memory segment"));
+        free(btls);
+        return NULL;
+    }
 
-        component->my_segment = opal_shmem_segment_attach(&component->seg_ds);
-        if (NULL == component->my_segment) {
-            BTL_VERBOSE(("Could not attach to just created shared memory segment"));
-            goto failed;
-        }
-    } else {
-        /* if the shared-memory single-copy component can map memory (XPMEM) an anonymous segment
-         * can be used instead */
-        component->my_segment = mmap(NULL, component->segment_size, PROT_READ | PROT_WRITE,
-                                     MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-        if ((void *) -1 == component->my_segment) {
-            BTL_VERBOSE(("Could not create anonymous memory segment"));
-            free(btls);
-            return NULL;
-        }
+    component->my_segment = opal_shmem_segment_attach(&component->seg_ds);
+    if (NULL == component->my_segment) {
+        BTL_VERBOSE(("Could not attach to just created shared memory segment"));
+        goto failed;
     }
 
     /* initialize my fifo */
@@ -432,11 +410,7 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
 
     return btls;
 failed:
-    if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
-        munmap(component->my_segment, component->segment_size);
-    } else {
-        opal_shmem_unlink(&component->seg_ds);
-    }
+    opal_shmem_unlink(&component->seg_ds);
 
     if (btls) {
         free(btls);
