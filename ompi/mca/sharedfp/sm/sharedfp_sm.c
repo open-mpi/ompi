@@ -28,6 +28,7 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
+#include "opal/util/printf.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/sharedfp/sm/sharedfp_sm.h"
@@ -105,7 +106,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(o
     int comm_cid = -1;
     int pid = ompi_comm_rank (comm);
     
-    asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
+    opal_asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
              filename_basename, comm_cid, pid);
     free(filename_basename);
 

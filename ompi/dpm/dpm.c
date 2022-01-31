@@ -783,8 +783,9 @@ static int dpm_convert(opal_list_t *infos,
     /**** Get here if the specified option is not found in the
      **** current list - add it
      ****/
-
-    if (NULL == directive) {
+    if (NULL == directive && NULL == modifier) {
+        return OMPI_ERR_BAD_PARAM;
+    } else if (NULL == directive) {
         opal_asprintf(&ptr, ":%s", modifier);
     } else if (NULL == modifier) {
         ptr = strdup(directive);

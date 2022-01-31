@@ -197,6 +197,7 @@ static int create_comm(int target_keyval, bool want_inherit)
     copy.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function)(
         want_inherit ? MPI_COMM_DUP_FN : MPI_COMM_NULL_COPY_FN);
     del.attr_communicator_delete_fn = MPI_COMM_NULL_DELETE_FN;
+    keyval = target_keyval;
     err = ompi_attr_create_keyval(COMM_ATTR, copy, del,
                                   &keyval, NULL, OMPI_KEYVAL_PREDEFINED, NULL);
     if (MPI_SUCCESS != err) {
@@ -226,6 +227,7 @@ static int create_win(int target_keyval)
     keyval = -1;
     copy.attr_win_copy_fn = (MPI_Win_internal_copy_attr_function) MPI_WIN_NULL_COPY_FN;
     del.attr_win_delete_fn = MPI_WIN_NULL_DELETE_FN;
+    keyval = target_keyval;
     err = ompi_attr_create_keyval(WIN_ATTR, copy, del,
                                   &keyval, NULL, OMPI_KEYVAL_PREDEFINED, NULL);
     if (MPI_SUCCESS != err) {

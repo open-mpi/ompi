@@ -176,9 +176,6 @@ struct mca_btl_base_rdma_hdr_t {
     /* the following fields are not used on the target and are only relevant
      * to the initiator */
     uint64_t context;
-
-    /* registration handles (if required) */
-    uint8_t handle_data[];
 };
 typedef struct mca_btl_base_rdma_hdr_t mca_btl_base_rdma_hdr_t;
 
@@ -216,11 +213,6 @@ static OBJ_CLASS_INSTANCE(mca_btl_base_rdma_operation_t, opal_list_item_t, NULL,
 static inline size_t size_t_min(size_t a, size_t b)
 {
     return (a < b) ? a : b;
-}
-
-static inline size_t size_t_max(size_t a, size_t b)
-{
-    return (a > b) ? a : b;
 }
 
 static mca_btl_base_am_rdma_module_t default_module;
@@ -995,8 +987,10 @@ static void mca_btl_base_am_process_atomic(mca_btl_base_module_t *btl,
                                                    &tmp, (int32_t) hdr->data.atomic.operand[1]);
             atomic_response = tmp;
         } else if (8 == hdr->data.atomic.size) {
+            int64_t tmp = (int64_t) atomic_response;
             opal_atomic_compare_exchange_strong_64((opal_atomic_int64_t *) hdr->target_address,
-                                                   &atomic_response, hdr->data.atomic.operand[1]);
+                                                   &tmp, hdr->data.atomic.operand[1]);
+            atomic_response = tmp;
         }
         break;
     default:

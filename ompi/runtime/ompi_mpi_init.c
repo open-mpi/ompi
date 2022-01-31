@@ -402,7 +402,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
+#if OPAL_USING_INTERNAL_PMIX
     char *evar;
+#endif
     volatile bool active;
     bool background_fence = false;
     pmix_info_t info[2];
@@ -875,12 +877,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* initialize windows */
     if (OMPI_SUCCESS != (ret = ompi_win_init())) {
         error = "ompi_win_init() failed";
-        goto error;
-    }
-
-    /* initialize attribute meta-data structure for comm/win/dtype */
-    if (OMPI_SUCCESS != (ret = ompi_attr_init())) {
-        error = "ompi_attr_init() failed";
         goto error;
     }
 

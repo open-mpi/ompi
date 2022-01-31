@@ -34,7 +34,12 @@ static void *mca_mpool_default_alloc(mca_mpool_base_module_t *mpool, size_t size
     if (align <= sizeof(void *)) {
         addr = malloc(size);
     } else {
-        (void) posix_memalign(&addr, align, size);
+        int ret = posix_memalign(&addr, align, size);
+        if (ret < 0) {
+            /* old systems may not guarantee that addr wasn't modified
+               on failure */
+            addr = NULL;
+        }
     }
     return addr;
 #else

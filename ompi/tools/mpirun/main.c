@@ -23,10 +23,14 @@
 #include "opal/util/os_dirpath.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
+#include "opal/util/printf.h"
 
 int main(int argc, char *argv[])
 {
-    char *evar, *pvar;
+    char *evar;
+#if OPAL_USING_INTERNAL_PMIX || OMPI_USING_INTERNAL_PRRTE
+    char *pvar;
+#endif
     char **pargs = NULL;
     char *pfx = NULL;
     int m, param_len;
@@ -35,12 +39,12 @@ int main(int argc, char *argv[])
     if (NULL != (evar = getenv("OPAL_PREFIX"))) {
 
 #if OMPI_USING_INTERNAL_PRRTE
-        (void)asprintf(&pvar, "PRTE_PREFIX=%s", evar);
+        opal_asprintf(&pvar, "PRTE_PREFIX=%s", evar);
         putenv(pvar);
 #endif
 
 #if OPAL_USING_INTERNAL_PMIX
-        (void)asprintf(&pvar, "PMIX_PREFIX=%s", evar);
+        opal_asprintf(&pvar, "PMIX_PREFIX=%s", evar);
         putenv(pvar);
 #endif
     }
@@ -51,7 +55,7 @@ int main(int argc, char *argv[])
         opal_argv_append_nosize(&pargs, argv[m]);
         /* Did the user specify a prefix, or want prefix by default? */
         if (0 == strcmp(argv[m], "--prefix")) {
-            asprintf(&pfx, "%s%s", argv[m+1], "/bin");
+            opal_asprintf(&pfx, "%s%s", argv[m+1], "/bin");
         }
     }
 
