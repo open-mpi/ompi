@@ -120,6 +120,7 @@ interface_profile_sources = \
         comm_dup.c \
         comm_dup_with_info.c \
         comm_idup.c \
+        comm_idup_with_info.c \
         comm_f2c.c \
         comm_free.c \
         comm_free_keyval.c \

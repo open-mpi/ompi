@@ -161,6 +161,7 @@ mpi_api_files = \
         comm_dup_f08.F90 \
         comm_dup_with_info_f08.F90 \
         comm_idup_f08.F90 \
+        comm_idup_with_info_f08.F90 \
         comm_free_f08.F90 \
         comm_free_keyval_f08.F90 \
         comm_get_attr_f08.F90 \
