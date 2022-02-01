@@ -364,6 +364,7 @@ static inline int mca_btl_base_am_rdma_advance(mca_btl_base_module_t *btl,
                                                mca_btl_base_rdma_context_t *context,
                                                bool send_descriptor)
 {
+    int ret;
     const size_t remaining = context->total_size - context->sent;
 
     if (0 == remaining) {
@@ -401,7 +402,12 @@ static inline int mca_btl_base_am_rdma_advance(mca_btl_base_module_t *btl,
     }
 
     if (send_descriptor) {
-        return btl->btl_send(btl, endpoint, descriptor, mca_btl_base_rdma_tag(hdr->type));
+        assert(0 != (descriptor->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK));
+        ret = btl->btl_send(btl, endpoint, descriptor, mca_btl_base_rdma_tag(hdr->type));
+        if (ret == 1) {
+            ret = OPAL_SUCCESS;
+        }
+        return ret;
     }
 
     /* queue for later to avoid btl_send in callback */
@@ -606,7 +612,14 @@ static int mca_btl_base_am_rdma_respond(mca_btl_base_module_t *btl,
 
     send_descriptor->des_cbfunc = NULL;
 
+    /* There is no callback for the response descriptor, therefore it is
+     * safe to treat 0 and 1 return codes the same
+     */
     int ret = btl->btl_send(btl, endpoint, send_descriptor, mca_btl_base_rdma_resp_tag());
+    if (ret == 1) {
+        ret = OPAL_SUCCESS;
+    }
+
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         *descriptor = send_descriptor;
     }
@@ -779,11 +792,12 @@ static int mca_btl_base_am_rdma_progress(void)
         mca_btl_base_rdma_context_t *context =                          \
             (mca_btl_base_rdma_context_t *)                             \
             descriptor->descriptor->des_context;                        \
+        assert(0 != (descriptor->descriptor->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)); \
         int ret = descriptor->btl->btl_send(descriptor->btl,            \
                                             descriptor->endpoint,       \
                                             descriptor->descriptor,     \
                                             mca_btl_base_rdma_tag(context->type)); \
-        if (OPAL_SUCCESS == ret) {                                      \
+        if (OPAL_SUCCESS == ret || 1 == ret) {                                      \
             opal_list_remove_item(&default_module.queued_initiator_descriptors, \
                                   &descriptor->super);                  \
         }                                                               \
@@ -1130,6 +1144,29 @@ int mca_btl_base_am_rdma_init(mca_btl_base_module_t *btl)
         opal_progress_register(mca_btl_base_am_rdma_progress);
         mca_btl_sm_sc_emu_init();
         OBJ_CONSTRUCT(&default_module, mca_btl_base_am_rdma_module_t);
+    }
+
+    /* This section check whether we can claim support of remote completion.
+     *
+     * In terms of remote completion, we are mainly interested in put and atomic ops,
+     * because get, atomics fops and atomic cswap support remote completion by their nature.
+     *
+     * For active message put (AM put), the target side will send a response, and the initiator
+     * side will wait for the response to complete the put operation. Thus if AM put is based on send,
+     * it support remote completion. (If AM put is based on get, it does not support remote
+     * completion because the target side does not wait for get's completion to send response).
+     *
+     * active message RDMA/atomics does not implement atomic ops. User was suppose to
+     * use atomic fops (unless the btl support atomic ops natively).
+     *
+     * In all, the conditions for AM rdma to claim support of remote completion are:
+     *    1. AM put is enabled (which means the btl does not support put)
+     *    2. AM put does not use get (so it must use send)
+     *    3. btl does not have native atomics ops support.
+     */
+    if ((btl->btl_flags & MCA_BTL_FLAGS_PUT_AM) && !mca_btl_base_rdma_use_rdma_get(btl) &&
+        !(btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS)) {
+        btl->btl_flags |= MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
     }
 
     return OPAL_SUCCESS;
