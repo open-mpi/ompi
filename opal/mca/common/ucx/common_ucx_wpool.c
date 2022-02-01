@@ -521,8 +521,6 @@ error:
 
 void opal_common_ucx_wpmem_free(opal_common_ucx_wpmem_t *mem)
 {
-    _mem_record_t *mem_rec = NULL, *next;
-
     if (NULL == mem) {
         return;
     }
@@ -626,7 +624,7 @@ static int _tlocal_ctx_connect(_ctx_record_t *ctx_rec, int target)
     opal_common_ucx_winfo_t *winfo = ctx_rec->winfo;
     opal_common_ucx_ctx_t *gctx = ctx_rec->gctx;
     ucs_status_t status;
-    int displ, progress = 1;
+    int displ;
 
     memset(&ep_params, 0, sizeof(ucp_ep_params_t));
     ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
