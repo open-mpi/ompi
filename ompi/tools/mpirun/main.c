@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     char **pargs = NULL;
     char *pfx = NULL;
     int m, param_len;
-    char *truepath;
+    char *truepath = NULL;
 
     if (NULL != (evar = getenv("OPAL_PREFIX"))) {
 
@@ -87,6 +87,14 @@ int main(int argc, char *argv[])
 
     if (NULL == pfx) {
         truepath = opal_path_findv("prterun", X_OK, environ, NULL);
+#if !OMPI_USING_INTERNAL_PRRTE
+        // if OMPI_PRTERUN_PATH is available, try that
+        // for external builds if the user didn't explictly
+        // add a prefix and it isn't in the users path.
+        if((NULL == truepath) && (0 != strlen(OMPI_PRTERUN_PATH))) {
+            truepath = opal_os_path(0, OMPI_PRTERUN_PATH, "prterun", NULL);
+        }
+#endif
     } else {
         truepath = opal_os_path(0, pfx, "prterun", NULL);
         free(pfx);
