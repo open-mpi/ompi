@@ -686,12 +686,6 @@ int32_t ompi_datatype_init( void )
 
     ompi_datatype_default_convertors_init();
 
-    /* get a reference to the attributes subsys */
-    ret = ompi_attr_get_ref();
-    if (OMPI_SUCCESS != ret) {
-        return ret;
-    }
-
     ompi_mpi_instance_append_finalize (ompi_datatype_finalize);
     return OMPI_SUCCESS;
 }
