@@ -85,6 +85,18 @@ int main(int argc, char *argv[])
 #endif
     }
 
+#if !OMPI_USING_INTERNAL_PRRTE
+    if(NULL == pfx) {
+        // In the external PRRTE case, a symlink
+        // should have been created placing prterun
+        // in bindir.
+        mca_base_framework_open(&opal_installdirs_base_framework, 0);  // fill in the installdirs
+        if (NULL != opal_install_dirs.bindir) {
+            pfx = strdup(opal_install_dirs.bindir);
+        }
+    }
+#endif
+
     if (NULL == pfx) {
         truepath = opal_path_findv("prterun", X_OK, environ, NULL);
     } else {

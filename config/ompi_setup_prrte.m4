@@ -95,6 +95,9 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     AM_CONDITIONAL([OMPI_WANT_PRRTE],
            [test "$prrte_setup_internal_happy" = "1" -o "$prrte_setup_external_happy" = "1"])
 
+    AM_CONDITIONAL([OMPI_EXTERNAL_PRRTE],
+           [test "$opal_prrte_mode" = "external"])
+
     AC_DEFINE_UNQUOTED([OMPI_HAVE_PRRTE],
                        [$OMPI_HAVE_PRRTE],
                        [Whether or not PRRTE is available])
@@ -268,13 +271,15 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
     AS_IF([test "$setup_prrte_external_happy" = "yes"],
           [AS_IF([test -n "$with_prrte"],
                  [PRTE_PATH="${with_prrte}/bin/prte"
-                  AS_IF([test ! -r ${PRTE_PATH}], [AC_MSG_ERROR([Could not find prte binary at $PRTE_PATH])])],
+                  AS_IF([test ! -r ${PRTE_PATH}],
+                        [AC_MSG_ERROR([Could not find prte binary at $PRTE_PATH])],
+                        [PRTE_PATH="${with_prrte}/bin"])],
 		 [PRTE_PATH=""
                   OPAL_WHICH([prte], [PRTE_PATH])
                   AS_IF([tets -z "$PRTE_PATH"],
                         [AC_MSG_WARN([Could not find prte in PATH])
-                         setup_prrte_external_happy=no])])])
-
+                         setup_prrte_external_happy=no],
+                        [PRTE_PATH="`echo $PRTE_PATH | sed -e 's/\/prte//'`"])])])
     AS_IF([test "$setup_prrte_external_happy" = "yes"],
           [$1], [$2])
 

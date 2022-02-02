@@ -24,9 +24,15 @@ mpirun_LDADD = \
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpiexec$(EXEEXT); $(LN_S) mpirun$(EXEEXT) mpiexec$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f oshrun$(EXEEXT); $(LN_S) mpirun$(EXEEXT) oshrun$(EXEEXT))
+if OMPI_EXTERNAL_PRRTE
+	(cd $(DESTDIR)$(bindir); rm -f prterun$(EXEEXT); $(LN_S) $(PRTE_PATH)/prterun prterun$(EXEEXT))
+endif
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/mpirun$(EXEEXT) \
 		$(DESTDIR)$(bindir)/mpiexec$(EXEEXT)  \
 		$(DESTDIR)$(bindir)/oshrun$(EXEEXT)
+if OMPI_EXTERNAL_PRRTE
+	\     $(DESTDIR)$(bindir)/prterun$(EXEEXT)
+endif
 endif
