@@ -23,6 +23,8 @@
  * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reseved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -196,6 +198,7 @@ int mca_pml_ob1_enable(bool enable)
                           NULL, 0, NULL, NULL, NULL);
 
     mca_pml_ob1.enabled = true;
+
     return OMPI_SUCCESS;
 }
 
@@ -212,7 +215,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
     }
 
     /* should never happen, but it was, so check */
-    if (comm->c_contextid > mca_pml_ob1.super.pml_max_contextid) {
+    if (comm->c_index > mca_pml_ob1.super.pml_max_contextid) {
         OBJ_RELEASE(pml_comm);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -227,9 +230,25 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
     OPAL_LIST_FOREACH_SAFE(frag, next_frag, &mca_pml_ob1.non_existing_communicator_pending, mca_pml_ob1_recv_frag_t) {
         hdr = &frag->hdr.hdr_match;
 
+        if (MCA_PML_OB1_HDR_TYPE_CID == frag->hdr.hdr_common.hdr_type) {
+            if (!ompi_comm_cid_compare (comm, frag->hdr.hdr_cid.hdr_cid)) {
+                continue;
+            }
+
+            /* handle this CID*/
+            mca_pml_ob1_handle_cid (comm, frag->hdr.hdr_ext_match.hdr_match.hdr_src, &frag->hdr.hdr_cid);
+
+            hdr = &frag->hdr.hdr_ext_match.hdr_match;
+            hdr->hdr_ctx = comm->c_index;
+
+            /* NTH: this is ok because the pointer that will be freed is stored in frag->addr[] */
+            frag->segments[0].seg_addr.pval = (void *)((uintptr_t) frag->segments[0].seg_addr.pval + sizeof (frag->hdr.hdr_cid));
+        }
+
         /* Is this fragment for the current communicator ? */
-        if( frag->hdr.hdr_match.hdr_ctx != comm->c_contextid )
+        if (hdr->hdr_ctx != comm->c_index) {
             continue;
+        }
 
         /* As we now know we work on a fragment for this communicator
          * we should remove it from the
@@ -333,11 +352,17 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         return rc;
     }
 
-    rc = mca_bml.bml_add_procs( nprocs,
-                                procs,
-                                &reachable );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
+    OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
+    rc = opal_bitmap_init(&reachable, (int)nprocs);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_add_procs (nprocs, procs, &reachable);
+    OBJ_DESTRUCT(&reachable);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     /* Check that values supplied by all initialized btls will work
        for us.  Note that this is the list of all initialized BTLs,
@@ -361,8 +386,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                            sm->btl_component->btl_version.mca_component_name,
                            sizeof(mca_pml_ob1_hdr_t),
                            sm->btl_component->btl_version.mca_component_name);
-            rc = OMPI_ERR_BAD_PARAM;
-            goto cleanup_and_return;
+            return OMPI_ERR_BAD_PARAM;
         }
 #if OPAL_CUDA_GDR_SUPPORT
         /* If size is SIZE_MAX, then we know we want to set this to the minimum possible
@@ -383,8 +407,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                                sm->btl_component->btl_version.mca_component_name,
                                sizeof(mca_pml_ob1_hdr_t),
                                sm->btl_component->btl_version.mca_component_name);
-                rc = OMPI_ERR_BAD_PARAM;
-                goto cleanup_and_return;
+                return OMPI_ERR_BAD_PARAM;
             }
         }
         if (0 == sm->btl_module->btl_cuda_rdma_limit) {
@@ -401,8 +424,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                                sm->btl_component->btl_version.mca_component_name,
                                sm->btl_module->btl_cuda_eager_limit,
                                sm->btl_component->btl_version.mca_component_name);
-                rc = OMPI_ERR_BAD_PARAM;
-                goto cleanup_and_return;
+                return OMPI_ERR_BAD_PARAM;
             }
         }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
@@ -413,54 +435,61 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_MATCH,
                                mca_pml_ob1_recv_frag_callback_match,
                                NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_RNDV,
                                mca_pml_ob1_recv_frag_callback_rndv,
                                NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_RGET,
                                mca_pml_ob1_recv_frag_callback_rget,
                                NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_ACK,
                                mca_pml_ob1_recv_frag_callback_ack,
                                NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_FRAG,
                                mca_pml_ob1_recv_frag_callback_frag,
                                NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_PUT,
                                mca_pml_ob1_recv_frag_callback_put,
                                NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_FIN,
                                mca_pml_ob1_recv_frag_callback_fin,
                                NULL );
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_register (MCA_PML_OB1_HDR_TYPE_CID,
+                               mca_pml_ob1_recv_frag_callback_cid,
+                               NULL);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
 
     /* register error handlers */
-    rc = mca_bml.bml_register_error(mca_pml_ob1_error_handler);
-    if(OMPI_SUCCESS != rc)
-        goto cleanup_and_return;
-
-  cleanup_and_return:
-    OBJ_DESTRUCT(&reachable);
-
-    return rc;
+    return  mca_bml.bml_register_error(mca_pml_ob1_error_handler);
 }
 
 /*
@@ -597,8 +626,8 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
 
     /* TODO: don't forget to dump mca_pml_ob1.non_existing_communicator_pending */
 
-    opal_output(0, "Communicator %s [%p](%d) rank %d recv_seq %d num_procs %lu last_probed %lu\n",
-                comm->c_name, (void*) comm, comm->c_contextid, comm->c_my_rank,
+    opal_output(0, "Communicator %s [%p](%s) rank %d recv_seq %d num_procs %lu last_probed %lu\n",
+                comm->c_name, (void*) comm, ompi_comm_print_cid (comm), comm->c_my_rank,
                 pml_comm->recv_sequence, pml_comm->num_procs, pml_comm->last_probed);
 
 #if !MCA_PML_OB1_CUSTOM_MATCH
@@ -656,10 +685,8 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
     return OMPI_SUCCESS;
 }
 
-static void mca_pml_ob1_fin_completion( mca_btl_base_module_t* btl,
-                                        struct mca_btl_base_endpoint_t* ep,
-                                        struct mca_btl_base_descriptor_t* des,
-                                        int status )
+static void mca_pml_ob1_control_completion (mca_btl_base_module_t* btl, struct mca_btl_base_endpoint_t *endpoint,
+                                            mca_btl_base_descriptor_t *des, int status)
 {
 
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context;
@@ -668,40 +695,36 @@ static void mca_pml_ob1_fin_completion( mca_btl_base_module_t* btl,
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
-/**
- * Send an FIN to the peer. If we fail to send this ack (no more available
- * fragments or the send failed) this function automatically add the FIN
- * to the list of pending FIN, Which guarantee that the FIN will be sent
- * later.
- */
-int mca_pml_ob1_send_fin( ompi_proc_t* proc,
-                          mca_bml_base_btl_t* bml_btl,
-                          opal_ptr_t hdr_frag,
-                          uint64_t rdma_size,
-                          uint8_t order,
-                          int status )
+
+int mca_pml_ob1_send_control_btl (mca_bml_base_btl_t *bml_btl, int order, mca_pml_ob1_hdr_t *hdr, size_t hdr_size,
+                                  bool add_to_pending)
 {
-    mca_btl_base_descriptor_t* fin;
+    int des_flags = MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_FLAGS_SIGNAL;
+    mca_btl_base_descriptor_t *des;
     int rc;
 
-    mca_bml_base_alloc(bml_btl, &fin, order, sizeof(mca_pml_ob1_fin_hdr_t),
-                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_FLAGS_SIGNAL);
+    if (NULL != bml_btl->btl->btl_sendi) {
+        rc = mca_bml_base_sendi (bml_btl, NULL, hdr, hdr_size, 0, order, des_flags, hdr->hdr_common.hdr_type, &des);
+        if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
+            return rc;
+        }
+    } else {
+        (void) mca_bml_base_alloc (bml_btl, &des, order, hdr_size, des_flags);
+    }
 
-    if(NULL == fin) {
-        MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_frag, rdma_size, bml_btl, order, status);
+    if (OPAL_UNLIKELY(NULL == des)) {
+        if (add_to_pending) {
+            mca_pml_ob1_add_to_pending (NULL, bml_btl, order, hdr, hdr_size);
+        }
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    fin->des_cbfunc = mca_pml_ob1_fin_completion;
-    fin->des_cbdata = NULL;
 
-    /* fill in header */
-    mca_pml_ob1_fin_hdr_prepare ((mca_pml_ob1_fin_hdr_t *) fin->des_segments->seg_addr.pval,
-                                 0, hdr_frag.lval, status ? status : (int64_t) rdma_size);
+    des->des_cbfunc = mca_pml_ob1_control_completion;
 
-    ob1_hdr_hton((mca_pml_ob1_hdr_t *) fin->des_segments->seg_addr.pval, MCA_PML_OB1_HDR_TYPE_FIN, proc);
+    memcpy (des->des_segments->seg_addr.pval, hdr, hdr_size);
 
     /* queue request */
-    rc = mca_bml_base_send( bml_btl, fin, MCA_PML_OB1_HDR_TYPE_FIN );
+    rc = mca_bml_base_send (bml_btl, des, hdr->hdr_common.hdr_type);
     if( OPAL_LIKELY( rc >= 0 ) ) {
         if( OPAL_LIKELY( 1 == rc ) ) {
             MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
@@ -709,76 +732,98 @@ int mca_pml_ob1_send_fin( ompi_proc_t* proc,
         SPC_RECORD(OMPI_SPC_BYTES_SENT_MPI, (ompi_spc_value_t)sizeof(mca_pml_ob1_fin_hdr_t));
         return OMPI_SUCCESS;
     }
-    mca_bml_base_free(bml_btl, fin);
-    MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_frag, rdma_size, bml_btl, order, status);
+
+    mca_bml_base_free(bml_btl, des);
+    if (add_to_pending) {
+        mca_pml_ob1_add_to_pending (NULL, bml_btl, order, hdr, hdr_size);
+    }
+
     return OMPI_ERR_OUT_OF_RESOURCE;
+}
+
+int mca_pml_ob1_send_control_any (ompi_proc_t *proc, int order, mca_pml_ob1_hdr_t *hdr, size_t hdr_size,
+                                  bool add_to_pending)
+{
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc);
+    int rc;
+
+    assert (NULL != endpoint);
+
+    for (size_t i = 0 ; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager) ; ++i) {
+        mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_next (&endpoint->btl_eager);
+
+        rc = mca_pml_ob1_send_control_btl (bml_btl, order, hdr, hdr_size, false);
+        if (OMPI_SUCCESS == rc) {
+            return OMPI_SUCCESS;
+        }
+    }
+
+    if (add_to_pending) {
+        mca_pml_ob1_add_to_pending (proc, NULL, order, hdr, hdr_size);
+    }
+
+    return OMPI_ERR_OUT_OF_RESOURCE;
+}
+
+/**
+ * Send an FIN to the peer. If we fail to send this ack (no more available
+ * fragments or the send failed) this function automatically add the FIN
+ * to the list of pending FIN, Which guarantee that the FIN will be sent
+ * later.
+ */
+int mca_pml_ob1_send_fin (ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, opal_ptr_t hdr_frag, uint64_t rdma_size,
+                          uint8_t order, int status)
+{
+    mca_pml_ob1_fin_hdr_t fin;
+
+    /* fill in header */
+    mca_pml_ob1_fin_hdr_prepare (&fin, 0, hdr_frag.lval, status ? status : (int64_t) rdma_size);
+
+    ob1_hdr_hton((mca_pml_ob1_hdr_t *) &fin, MCA_PML_OB1_HDR_TYPE_FIN, proc);
+
+    return mca_pml_ob1_send_control_btl (bml_btl, order, (mca_pml_ob1_hdr_t *) &fin, sizeof (fin), true);
+}
+
+int mca_pml_ob1_send_cid (ompi_proc_t *proc, ompi_communicator_t *comm)
+{
+    mca_pml_ob1_cid_hdr_t cid;
+
+    mca_pml_ob1_cid_hdr_prepare (&cid, comm);
+    ob1_hdr_hton ((mca_pml_ob1_hdr_t *) &cid, cid->hdr_common.hdr_type, proc);
+
+    return mca_pml_ob1_send_control_any (proc, MCA_BTL_NO_ORDER, (mca_pml_ob1_hdr_t *) &cid, sizeof (cid), true);
 }
 
 void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
 {
     mca_pml_ob1_pckt_pending_t *pckt;
-    int32_t i, rc, s = (int32_t)opal_list_get_size(&mca_pml_ob1.pckt_pending);
+    int32_t rc, max = (int32_t) opal_list_get_size (&mca_pml_ob1.pckt_pending);
 
-    for(i = 0; i < s; i++) {
-        mca_bml_base_btl_t *send_dst = NULL;
-        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-        pckt = (mca_pml_ob1_pckt_pending_t*)
-            opal_list_remove_first(&mca_pml_ob1.pckt_pending);
-        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-        if(NULL == pckt)
+    for (int32_t i = 0; i < max ; ++i) {
+        OPAL_THREAD_SCOPED_LOCK(&mca_pml_ob1.lock, {
+                pckt = (mca_pml_ob1_pckt_pending_t*)
+                    opal_list_remove_first(&mca_pml_ob1.pckt_pending);
+            });
+        if (NULL == pckt) {
             break;
-        if(pckt->bml_btl != NULL &&
-                pckt->bml_btl->btl == bml_btl->btl) {
-            send_dst = pckt->bml_btl;
-        } else {
-            mca_bml_base_endpoint_t* endpoint =
-                (mca_bml_base_endpoint_t*) pckt->proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-            send_dst = mca_bml_base_btl_array_find(
-                    &endpoint->btl_eager, bml_btl->btl);
-        }
-        if(NULL == send_dst) {
-            OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-            opal_list_append(&mca_pml_ob1.pckt_pending,
-                             (opal_list_item_t*)pckt);
-            OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-            continue;
         }
 
-        switch(pckt->hdr.hdr_common.hdr_type) {
-            case MCA_PML_OB1_HDR_TYPE_ACK:
-                rc = mca_pml_ob1_recv_request_ack_send_btl(pckt->proc,
-                        send_dst,
-                        pckt->hdr.hdr_ack.hdr_src_req.lval,
-                        pckt->hdr.hdr_ack.hdr_dst_req.pval,
-                        pckt->hdr.hdr_ack.hdr_send_offset,
-                        pckt->hdr.hdr_ack.hdr_send_size,
-                        pckt->hdr.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA);
-                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
-                    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+        if (pckt->bml_btl) {
+            rc = mca_pml_ob1_send_control_btl (pckt->bml_btl, pckt->order, &pckt->hdr, pckt->hdr_size, false);
+        } else {
+            rc = mca_pml_ob1_send_control_any (pckt->proc, pckt->order, &pckt->hdr, pckt->hdr_size, false);
+        }
+
+        if (OPAL_SUCCESS != rc) {
+            /* could not send the packet. readd it to the pending list */
+            OPAL_THREAD_SCOPED_LOCK(&mca_pml_ob1.lock, {
                     opal_list_append(&mca_pml_ob1.pckt_pending,
                                      (opal_list_item_t*)pckt);
-                    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-                    return;
-                }
-                break;
-            case MCA_PML_OB1_HDR_TYPE_FIN:
-                rc = mca_pml_ob1_send_fin(pckt->proc, send_dst,
-                                          pckt->hdr.hdr_fin.hdr_frag,
-                                          pckt->hdr.hdr_fin.hdr_size,
-                                          pckt->order,
-                                          pckt->status);
-                if( OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc) ) {
-                    MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
-                    return;
-                }
-                break;
-            default:
-                opal_output(0, "[%s:%d] wrong header type\n",
-                            __FILE__, __LINE__);
-                break;
+                });
+        } else {
+            /* We're done with this packet, return it back to the free list */
+            MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
         }
-        /* We're done with this packet, return it back to the free list */
-        MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
     }
 }
 

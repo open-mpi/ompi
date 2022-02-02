@@ -19,7 +19,7 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2019      Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -197,5 +197,6 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
        kill the entire job.  Wah wah. */
     ompi_rte_abort(errcode, NULL);
 
-    /* Does not return */
+    /* Does not return - but we add a return to keep compiler warnings at bay*/
+    return 0;
 }

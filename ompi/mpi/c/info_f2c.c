@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,15 +50,24 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
 {
     int info_index = OMPI_FINT_2_INT(info);
 
-    /* check the arguments */
+    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
+       invalid fortran handle.  If we get an invalid fortran handle,
+       return an invalid C handle. */
+    /*
+     * Deal with special pre-defined cases for MPI 4.0
+     */
+
+    if (info_index == 0) {
+        return MPI_INFO_NULL;
+    }
+
+    if (info_index == 1) {
+        return MPI_INFO_ENV;
+    }
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
-
-    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
-       invalid fortran handle.  If we get an invalid fortran handle,
-       return an invalid C handle. */
 
     if (info_index < 0 ||
         info_index >=

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights

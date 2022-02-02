@@ -320,7 +320,7 @@ static uint32_t jobid(void){
 }
 
 static int group_id(rte_grp_handle_t group){
-    return ((ompi_communicator_t *)group)->c_contextid;
+    return ((ompi_communicator_t *)group)->c_index;
 }
 
 static int

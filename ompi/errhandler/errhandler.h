@@ -17,6 +17,8 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,7 +85,8 @@ enum ompi_errhandler_type_t {
     OMPI_ERRHANDLER_TYPE_PREDEFINED,
     OMPI_ERRHANDLER_TYPE_COMM,
     OMPI_ERRHANDLER_TYPE_WIN,
-    OMPI_ERRHANDLER_TYPE_FILE
+    OMPI_ERRHANDLER_TYPE_FILE,
+    OMPI_ERRHANDLER_TYPE_INSTANCE,
 };
 typedef enum ompi_errhandler_type_t ompi_errhandler_type_t;
 
@@ -109,6 +112,7 @@ struct ompi_errhandler_t {
     MPI_Comm_errhandler_function *eh_comm_fn;
     ompi_file_errhandler_function *eh_file_fn;
     MPI_Win_errhandler_function *eh_win_fn;
+    MPI_Session_errhandler_function *eh_instance_fn;
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
 
     /* index in Fortran <-> C translation array */
@@ -188,6 +192,10 @@ OMPI_DECLSPEC extern void (*ompi_initial_error_handler)(struct ompi_communicator
 struct ompi_request_t;
 
 
+/* declared here because we can't include instance.h from this header
+ * because it would create a circular dependency */
+extern opal_atomic_int32_t ompi_instance_count;
+
 /**
  * This is the macro to check the state of MPI and determine whether
  * it was properly initialized and not yet finalized.
@@ -203,15 +211,13 @@ struct ompi_request_t;
  * potentially-performance-critical code paths) before reading the
  * variable.
  */
-#define OMPI_ERR_INIT_FINALIZE(name)                                    \
-    {                                                                   \
-        int32_t state = ompi_mpi_state;                                 \
-        if (OPAL_UNLIKELY(state < OMPI_MPI_STATE_INIT_COMPLETED ||      \
-                          state > OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT)) { \
-            ompi_errhandler_invoke(NULL, NULL, -1,                       \
+#define OMPI_ERR_INIT_FINALIZE(name)                                       \
+    {                                                                      \
+        if (OPAL_UNLIKELY(0 == ompi_instance_count)) {                     \
+            ompi_errhandler_invoke(NULL, NULL, -1,                         \
                                    ompi_errcode_get_mpi_code(MPI_ERR_ARG), \
-                                   name);                               \
-        }                                                               \
+                                   name);                                  \
+        }                                                                  \
     }
 
 /**
@@ -328,16 +334,6 @@ struct ompi_request_t;
   int ompi_errhandler_init(void);
 
   /**
-   * Finalize the error handler interface.
-   *
-   * @returns OMPI_SUCCESS Always
-   *
-   * Invokes from ompi_mpi_finalize(); tears down the error handler
-   * interface, and destroys the F2C translation table.
-   */
-  int ompi_errhandler_finalize(void);
-
-  /**
    * \internal
    *
    * This function should not be invoked directly; it should only be
@@ -382,8 +378,9 @@ struct ompi_request_t;
   /**
    * Create a ompi_errhandler_t
    *
-   * @param object_type Enum of the type of MPI object
-   * @param func Function pointer of the error handler
+   * @param[in]  object_type    Enum of the type of MPI object
+   * @param[in]  func           Function pointer of the error handler
+   * @param[in]  language       Calling language
    *
    * @returns errhandler Pointer to the ompi_errorhandler_t that will be
    *   created and returned
@@ -402,8 +399,10 @@ struct ompi_request_t;
    * same as sizeof(void(*)).
    */
   OMPI_DECLSPEC ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
-					    ompi_errhandler_generic_handler_fn_t *func,
+                                            ompi_errhandler_generic_handler_fn_t *func,
                                             ompi_errhandler_lang_t language);
+
+  OMPI_DECLSPEC void ompi_errhandler_free (ompi_errhandler_t *errhandler);
 
 /**
  * Callback function to alert the MPI layer of an error or notification

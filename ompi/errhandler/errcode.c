@@ -17,6 +17,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +37,7 @@
 
 #include "ompi/errhandler/errcode.h"
 #include "ompi/constants.h"
+#include "ompi/instance/instance.h"
 
 /* Table holding all error codes */
 opal_pointer_array_t ompi_mpi_errcodes = {{0}};
@@ -243,11 +246,22 @@ int ompi_mpi_errcode_init (void)
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
     ompi_mpi_errcode_lastused = MPI_ERR_LASTCODE;
     ompi_mpi_errcode_lastpredefined = MPI_ERR_LASTCODE;
+
     opal_mutex_unlock(&errcode_init_lock);
+
+    ompi_mpi_instance_append_finalize (ompi_mpi_errcode_finalize);
+
     return OMPI_SUCCESS;
 }
 
-int ompi_mpi_errcode_finalize(void)
+/**
+ * Finalize the error codes.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invoked from instance teardown if ompi_mpi_errcode_init() was called; tears down the error code array.
+ */
+int ompi_mpi_errcode_finalize (void)
 {
     int i;
     ompi_mpi_errcode_t *errc;

@@ -17,7 +17,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2019      Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -54,6 +54,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/ompi_rte.h"
+#include "ompi/instance/instance.h"
 
 /*
  * Global variables
@@ -86,9 +87,9 @@ opal_pointer_array_t ompi_info_f_to_c_table = {{0}};
  * fortran to C translation table. It also fills in the values
  * for the MPI_INFO_GET_ENV object
  */
+
 int ompi_mpiinfo_init(void)
 {
-    char *cptr, **tmp;
 
     /* initialize table */
 
@@ -102,9 +103,25 @@ int ompi_mpiinfo_init(void)
     OBJ_CONSTRUCT(&ompi_mpi_info_null.info, ompi_info_t);
     assert(ompi_mpi_info_null.info.i_f_to_c_index == 0);
 
-    /* Create MPI_INFO_ENV */
+    /* Create MPI_INFO_ENV  - we create here for the f_to_c.  Can't fill in 
+       here because most info needed is only available after a call to
+       ompi_rte_init. */
     OBJ_CONSTRUCT(&ompi_mpi_info_env.info, ompi_info_t);
     assert(ompi_mpi_info_env.info.i_f_to_c_index == 1);
+
+    ompi_mpi_instance_append_finalize (ompi_mpiinfo_finalize);
+
+    /* All done */
+
+    return OMPI_SUCCESS;
+}
+
+/*
+ * Fill in the MPI_INFO_ENV if using MPI3 initialization
+ */
+int ompi_mpiinfo_init_mpi3(void)
+{
+    char *cptr, **tmp;
 
     /* fill the env info object */
 
@@ -365,6 +382,31 @@ static void info_destructor(ompi_info_t *info)
 
 }
 
+ompi_info_t *ompi_info_allocate (void)
+{
+    ompi_info_t *new_info;
+    int rc;
+
+    rc = ompi_mpi_instance_retain ();
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        /* NTH: seriously, what can we do other than abort () or return? we failed to
+         * set up the most basic infrastructure! */
+        return NULL;
+    }
+
+    /*
+     * Call the object create function. This function not only
+     * allocates the space for MPI_Info, but also calls all the
+     * relevant init functions. Should I check if the fortran
+     * handle is valid
+     */
+    new_info = OBJ_NEW(ompi_info_t);
+    if (NULL == new_info) {
+        return NULL;
+    }
+
+    return new_info;
+}
 
 /*
  * Free an info handle and all of its keys and values.
@@ -374,5 +416,9 @@ int ompi_info_free (ompi_info_t **info)
     (*info)->i_freed = true;
     OBJ_RELEASE(*info);
     *info = MPI_INFO_NULL;
+
+    /* release the retain() from info create/dup */
+    ompi_mpi_instance_release ();
+
     return MPI_SUCCESS;
 }

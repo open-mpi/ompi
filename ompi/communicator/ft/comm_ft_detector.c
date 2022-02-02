@@ -2,8 +2,10 @@
  * Copyright (c) 2016-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- *
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -337,8 +339,8 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
         /* if everybody else is dead, I don't need to monitor myself. */
         if( rank == comm->c_my_rank ) {
             OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
-                             "%s %s: Every other node is dead on communicator %3d:%d",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, comm->c_contextid, comm->c_epoch));
+                             "%s %s: Every other node is dead on communicator %s:%d",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch));
             detector->hb_observer = detector->hb_observing = MPI_PROC_NULL;
             detector->hb_rstamp = INFINITY;
             detector->hb_period = INFINITY;
@@ -354,8 +356,8 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
 #endif
 
         OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
-                             "%s %s: Sending observe request to %d on communicator %3d:%d stamp %g",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, rank, comm->c_contextid, comm->c_epoch, detector->hb_rstamp-startdate ));
+                             "%s %s: Sending observe request to %d on communicator %s:%d stamp %g",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, rank, ompi_comm_print_cid(comm), comm->c_epoch, detector->hb_rstamp-startdate ));
 
         if( comm_detector_use_rdma_hb ) {
             mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc);
@@ -380,7 +382,7 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
         detector->hb_observing = rank;
 
         ompi_comm_heartbeat_req_t* msg = calloc(sizeof(*msg)+regsize, 1);
-        msg->super.cid = comm->c_contextid;
+        msg->super.cid = ompi_comm_get_local_cid(comm);
         msg->super.epoch = comm->c_epoch;
         msg->super.type = comm_heartbeat_request_cb_type;
         msg->from = comm->c_my_rank;
@@ -407,13 +409,13 @@ static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbea
     ro = (np-comm->c_my_rank+detector->hb_observer) % np; /* same for the observer rank */
     if( rr < ro ) {
         opal_output_verbose(1, ompi_ftmpi_output_handle,
-                             "%s %s: Received heartbeat request from %d on communicator %3d:%d but I am monitored by %d -- this is stall information, ignoring.",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, comm->c_contextid, comm->c_epoch, detector->hb_observer );
+                             "%s %s: Received heartbeat request from %d on communicator %s:%d but I am monitored by %d -- this is stall information, ignoring.",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, ompi_comm_print_cid(comm), comm->c_epoch, detector->hb_observer );
         return false; /* never forward on the rbcast */
     }
     OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
-                         "%s %s: Recveived heartbeat request from %d on communicator %3d:%d",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, comm->c_contextid, comm->c_epoch));
+                         "%s %s: Recveived heartbeat request from %d on communicator %s:%d",
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, ompi_comm_print_cid(comm), comm->c_epoch));
     detector->hb_observer = msg->from;
     detector->hb_sstamp = 0.;
 
@@ -667,14 +669,14 @@ static int fd_heartbeat_send(comm_detector_t* detector) {
     }
     detector->hb_sstamp = now;
     OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                         "%s %s: Sending heartbeat to %d on communicator %3d:%d stamp %g",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, detector->hb_observer, comm->c_contextid, comm->c_epoch, detector->hb_sstamp-startdate ));
+                         "%s %s: Sending heartbeat to %d on communicator %s:%d stamp %g",
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, detector->hb_observer, ompi_comm_print_cid(comm), comm->c_epoch, detector->hb_sstamp-startdate ));
 
     if( comm_detector_use_rdma_hb ) return fd_heartbeat_rdma_put(detector);
 
     /* send the heartbeat with eager send */
     ompi_comm_heartbeat_message_t msg;
-    msg.super.cid = comm->c_contextid;
+    msg.super.cid = ompi_comm_get_local_cid(comm);
     msg.super.epoch = comm->c_epoch;
     msg.super.type = comm_heartbeat_recv_cb_type;
     msg.from = detector->hb_rdma_rank; /* comm->c_my_rank; except during finalize when it is equal to detector->hb_observer */
@@ -701,15 +703,15 @@ static int fd_heartbeat_recv_cb(ompi_communicator_t* comm, ompi_comm_heartbeat_m
 
     if( msg->from != detector->hb_observing ) {
         OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
-                             "%s %s: Received heartbeat from %d on communicator %3d:%d but I am now monitoring %d -- ignored.",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, comm->c_contextid, comm->c_epoch, detector->hb_observing ));
+                             "%s %s: Received heartbeat from %d on communicator %s:%d but I am now monitoring %d -- ignored.",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, ompi_comm_print_cid(comm), comm->c_epoch, detector->hb_observing ));
     }
     else {
         double stamp = PMPI_Wtime();
         double grace = detector->hb_timeout - (stamp - detector->hb_rstamp);
         OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                             "%s %s: Received heartbeat from %d on communicator %3d:%d at timestamp %g (remained %.1e of %.1e before suspecting)",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, comm->c_contextid, comm->c_epoch, stamp-startdate, grace, detector->hb_timeout ));
+                             "%s %s: Received heartbeat from %d on communicator %s:%d at timestamp %g (remained %.1e of %.1e before suspecting)",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, ompi_comm_print_cid(comm), comm->c_epoch, stamp-startdate, grace, detector->hb_timeout ));
         detector->hb_rstamp = stamp;
         if( grace < 0.0 ) {
             opal_output_verbose(1, ompi_ftmpi_output_handle,

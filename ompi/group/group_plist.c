@@ -61,38 +61,6 @@ static int ompi_group_dense_overlap (ompi_group_t *group1, ompi_group_t *group2,
     return overlap_count;
 }
 
-static struct ompi_proc_t *ompi_group_dense_lookup_raw (ompi_group_t *group, const int peer_id)
-{
-    if (OPAL_UNLIKELY(ompi_proc_is_sentinel (group->grp_proc_pointers[peer_id]))) {
-        ompi_proc_t *proc =
-            (ompi_proc_t *) ompi_proc_lookup (ompi_proc_sentinel_to_name ((uintptr_t) group->grp_proc_pointers[peer_id]));
-        if (NULL != proc) {
-            /* replace sentinel value with an actual ompi_proc_t */
-            group->grp_proc_pointers[peer_id] = proc;
-            /* retain the proc */
-            OBJ_RETAIN(group->grp_proc_pointers[peer_id]);
-        }
-    }
-
-    return group->grp_proc_pointers[peer_id];
-}
-
-ompi_proc_t *ompi_group_get_proc_ptr_raw (ompi_group_t *group, int rank)
-{
-#if OMPI_GROUP_SPARSE
-    do {
-        if (OMPI_GROUP_IS_DENSE(group)) {
-            return ompi_group_dense_lookup_raw (group, rank);
-        }
-        int ranks1 = rank;
-        ompi_group_translate_ranks (group, 1, &ranks1, group->grp_parent_group_ptr, &rank);
-        group = group->grp_parent_group_ptr;
-    } while (1);
-#else
-    return ompi_group_dense_lookup_raw (group, rank);
-#endif
-}
-
 int ompi_group_calc_plist ( int n , const int *ranks ) {
     return sizeof(char *) * n ;
 }

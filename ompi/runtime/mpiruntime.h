@@ -242,12 +242,6 @@ void ompi_mpi_dynamics_disable(const char *msg);
  */
 bool ompi_mpi_dynamics_is_enabled(const char *function);
 
-/**
- * Clean up memory / resources by the MPI dynamics process
- * functionality checker
- */
-void ompi_mpi_dynamics_finalize(void);
-
 END_C_DECLS
 
 #endif /* OMPI_MPI_MPIRUNTIME_H */

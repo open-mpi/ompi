@@ -2,6 +2,9 @@
  * Copyright (c) 2014-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,8 +94,8 @@ OBJ_CLASS_INSTANCE(mca_coll_adapt_module_t,
         adapt_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module; \
         if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) { \
             opal_output_verbose(1, ompi_coll_base_framework.framework_output, \
-                                "(%d/%s): no underlying " # __api"; disqualifying myself", \
-                                comm->c_contextid, comm->c_name); \
+                                "(%s/%s): no underlying " # __api"; disqualifying myself", \
+                                ompi_comm_print_cid(comm), comm->c_name); \
             return OMPI_ERROR;                                  \
         }                                                       \
         OBJ_RETAIN(adapt_module->previous_ ## __api ## _module);  \
@@ -137,9 +140,9 @@ mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t * 
     /* If we're intercomm, or if there's only one process in the communicator */
     if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm)) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:adapt:comm_query (%d/%s): intercomm, "
+                            "coll:adapt:comm_query (%s/%s): intercomm, "
                             "comm is too small; disqualifying myself",
-                            comm->c_contextid, comm->c_name);
+                            ompi_comm_print_cid(comm), comm->c_name);
         return NULL;
     }
 
@@ -148,9 +151,9 @@ mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t * 
     *priority = mca_coll_adapt_component.adapt_priority;
     if (mca_coll_adapt_component.adapt_priority < 0) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:adapt:comm_query (%d/%s): priority too low; "
+                            "coll:adapt:comm_query (%s/%s): priority too low; "
                             "disqualifying myself",
-                            comm->c_contextid, comm->c_name);
+                            ompi_comm_print_cid(comm), comm->c_name);
         return NULL;
     }
 
@@ -181,8 +184,8 @@ mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t * 
     adapt_module->super.coll_iallreduce = NULL;
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                        "coll:adapt:comm_query (%d/%s): pick me! pick me!",
-                        comm->c_contextid, comm->c_name);
+                        "coll:adapt:comm_query (%s/%s): pick me! pick me!",
+                        ompi_comm_print_cid(comm), comm->c_name);
     return &(adapt_module->super);
 }
 

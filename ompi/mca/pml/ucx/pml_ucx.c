@@ -35,18 +35,18 @@
     PML_UCX_VERBOSE(8, _msg " buf %p count %zu type '%s' dst %d tag %d mode %s comm %d '%s'", \
                     __VA_ARGS__, \
                     (_buf), (_count), (_datatype)->name, (_dst), (_tag), \
-                    mca_pml_ucx_send_mode_name(_mode), (_comm)->c_contextid, \
+                    mca_pml_ucx_send_mode_name(_mode), (_comm)->c_index, \
                     (_comm)->c_name);
 
 #define PML_UCX_TRACE_RECV(_msg, _buf, _count, _datatype, _src, _tag, _comm, ...) \
     PML_UCX_VERBOSE(8, _msg " buf %p count %zu type '%s' src %d tag %d comm %d '%s'", \
                     __VA_ARGS__, \
                     (_buf), (_count), (_datatype)->name, (_src), (_tag), \
-                    (_comm)->c_contextid, (_comm)->c_name);
+                    (_comm)->c_index, (_comm)->c_name);
 
 #define PML_UCX_TRACE_PROBE(_msg, _src, _tag, _comm) \
     PML_UCX_VERBOSE(8, _msg " src %d tag %d comm %d '%s'", \
-                    _src, (_tag), (_comm)->c_contextid, (_comm)->c_name);
+                    _src, (_tag), (_comm)->c_index, (_comm)->c_name);
 
 #define PML_UCX_TRACE_MRECV(_msg, _buf, _count, _datatype, _message) \
     PML_UCX_VERBOSE(8, _msg " buf %p count %zu type '%s' msg *%p=%p (%p)", \

@@ -16,6 +16,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +36,7 @@
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "opal/mca/mpool/mpool.h"
+#include "ompi/runtime/mpiruntime.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -56,6 +59,8 @@ static opal_atomic_int32_t          mca_pml_bsend_init = 0;
 /* defined in pml_base_open.c */
 extern char *ompi_pml_base_bsend_allocator_name;
 
+static int mca_pml_base_bsend_fini (void);
+
 /*
  * Routine to return pages to sub-allocator as needed
  */
@@ -77,7 +82,7 @@ static void* mca_pml_bsend_alloc_segment(void *ctx, size_t *size_inout)
 /*
  * One time initialization at startup
  */
-int mca_pml_base_bsend_init(bool thread_safe)
+int mca_pml_base_bsend_init (void)
 {
     size_t tmp;
 
@@ -100,6 +105,9 @@ int mca_pml_base_bsend_init(bool thread_safe)
         tmp >>= 1;
         mca_pml_bsend_pagebits++;
     }
+
+    ompi_mpi_instance_append_finalize (mca_pml_base_bsend_fini);
+
     return OMPI_SUCCESS;
 }
 
@@ -107,7 +115,7 @@ int mca_pml_base_bsend_init(bool thread_safe)
 /*
  * One-time cleanup at shutdown - release any resources.
  */
-int mca_pml_base_bsend_fini(void)
+static int mca_pml_base_bsend_fini (void)
 {
     if(OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init,-1) > 0)
         return OMPI_SUCCESS;

@@ -4,6 +4,8 @@
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2020      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2021      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -45,6 +47,7 @@ MD_FILES = \
         MPI_Comm_connect.3.md \
         MPI_Comm_create.3.md \
         MPI_Comm_create_errhandler.3.md \
+        MPI_Comm_create_from_group.3.md \
         MPI_Comm_create_group.3.md \
         MPI_Comm_create_keyval.3.md \
         MPI_Comm_delete_attr.3.md \
@@ -84,8 +87,19 @@ MD_FILES = \
         MPI_Group_difference.3.md \
         MPI_Group_excl.3.md \
         MPI_Group_free.3.md \
+        MPI_Group_from_session_pset.3.md \
         MPI_Group_incl.3.md \
-        MPI_Group_intersection.3.md
+        MPI_Group_intersection.3.md \
+        MPI_Intercomm_create_from_groups.3.md \
+        MPI_Session_create_errhandler.3.md \
+        MPI_Session_f2c.3.md \
+        MPI_Session_finalize.3.md \
+        MPI_Session_get_info.3.md \
+        MPI_Session_get_num_psets.3.md \
+        MPI_Session_get_nth_pset.3.md \
+        MPI_Session_get_pset_info.3.md \
+        MPI_Session_init.3.md 
+
 
 TEMPLATE_FILES = \
         MPI_Abort.3in \

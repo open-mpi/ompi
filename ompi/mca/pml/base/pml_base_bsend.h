@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,8 +28,7 @@
 
 BEGIN_C_DECLS
 
-OMPI_DECLSPEC int mca_pml_base_bsend_init(bool enable_mpi_threads);
-OMPI_DECLSPEC int mca_pml_base_bsend_fini(void);
+OMPI_DECLSPEC int mca_pml_base_bsend_init (void);
 
 int mca_pml_base_bsend_attach(void* addr, int size);
 int mca_pml_base_bsend_detach(void* addr, int* size);

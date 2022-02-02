@@ -169,8 +169,8 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
      */
     /* --------------------------------------------------------- */
     OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
-                         "%s ompi: comm_shrink: Determine ranking for new communicator",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) ));
+                         "%s ompi: comm_shrink: Determine ranking for new communicator intra %d",
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), OMPI_COMM_IS_INTRA(comm)));
     start = PMPI_Wtime();
 
     /* Create 'alive' groups */
@@ -198,9 +198,9 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
                          NULL,                     /* remote_ranks */
                          comm->c_keyhash,          /* attrs */
                          comm->error_handler,      /* error handler */
-                         NULL,                     /* topo component */
                          alive_group,              /* local group */
-                         alive_rgroup              /* remote group */
+                         alive_rgroup,             /* remote group */
+                         0                         /* flags */
                        );
     if( OMPI_SUCCESS != ret ) {
         exit_status = ret;
@@ -246,7 +246,8 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
     /* --------------------------------------------------------- */
     /* Set name for debugging purposes */
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SHRUNK FROM %d",
-             newcomp->c_contextid, comm->c_contextid );
+             ompi_comm_get_local_cid(newcomp),
+             ompi_comm_get_local_cid(comm));
     start = PMPI_Wtime();
     /* activate communicator and init coll-module */
     ret = ompi_comm_activate( &newcomp, /* new communicator */

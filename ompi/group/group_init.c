@@ -16,6 +16,8 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +33,8 @@
 /* define class information */
 static void ompi_group_construct(ompi_group_t *);
 static void ompi_group_destruct(ompi_group_t *);
+
+static int ompi_group_finalize (void);
 
 OBJ_CLASS_INSTANCE(ompi_group_t,
                    opal_object_t,
@@ -227,6 +231,71 @@ ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
     return new_group;
 }
 
+/**
+ * @brief Allocate a dense group from a group
+ *
+ * @param[in] group   group
+ *
+ * @returns new group pointer on success
+ * @returns NULL on error
+ *
+ * This function duplicates a group. The new group will have a dense process
+ * table.
+ */
+ompi_group_t *ompi_group_flatten (ompi_group_t *group, int max_procs)
+{
+    int proc_count = (max_procs > group->grp_proc_count) ? group->grp_proc_count : max_procs;
+    size_t proc_pointer_array_size = proc_count * sizeof (group->grp_proc_pointers[0]);
+    ompi_group_t *new_group = OBJ_NEW(ompi_group_t);;
+    if (NULL == new_group) {
+        return NULL;
+    }
+
+    if (0 > new_group->grp_f_to_c_index) {
+        OBJ_RELEASE (new_group);
+        return NULL;
+    }
+
+    if (0 != proc_count) {
+        new_group->grp_proc_pointers = malloc (proc_pointer_array_size);
+        if (OPAL_UNLIKELY(NULL == new_group->grp_proc_pointers)) {
+            OBJ_RELEASE(new_group);
+            return NULL;
+        }
+
+        /*
+         * Allocate array of (ompi_proc_t *)'s, one for each
+         * process in the group.
+         */
+        if (!OMPI_GROUP_IS_DENSE(group)) {
+            for (int i = 0 ; i < proc_count ; i++) {
+                new_group->grp_proc_pointers[i] = ompi_group_peer_lookup (group, i);
+            }
+        } else {
+            memcpy (new_group->grp_proc_pointers, group->grp_proc_pointers, proc_pointer_array_size);
+        }
+    }
+
+    /* set the group size */
+    new_group->grp_proc_count = proc_count;
+
+    if (group->grp_my_rank >= max_procs) {
+        /* initialize our rank to MPI_UNDEFINED */
+        new_group->grp_my_rank = MPI_UNDEFINED;
+    } else {
+        /* rank is the same as in the old group */
+        new_group->grp_my_rank = group->grp_my_rank;
+    }
+
+    new_group->grp_instance = group->grp_instance;
+
+    OMPI_GROUP_SET_DENSE(new_group);
+
+    ompi_group_increment_proc_count (new_group);
+
+    return new_group;
+}
+
 /*
  * increment the reference count of the proc structures
  */
@@ -363,6 +432,8 @@ int ompi_group_init(void)
     ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_DENSE;
     ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_INTRINSIC;
 
+    ompi_mpi_instance_append_finalize (ompi_group_finalize);
+
     return OMPI_SUCCESS;
 }
 
@@ -370,7 +441,7 @@ int ompi_group_init(void)
 /*
  * Clean up group infrastructure
  */
-int ompi_group_finalize(void)
+static int ompi_group_finalize (void)
 {
     ompi_mpi_group_null.group.grp_flags = 0;
     OBJ_DESTRUCT(&ompi_mpi_group_null);

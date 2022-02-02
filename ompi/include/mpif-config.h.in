@@ -13,6 +13,8 @@
 ! Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 !                         reserved.
+! Copyright (c) 2019      Triad National Security, LLC. All rights
+!                         reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -60,6 +62,8 @@
       integer MPI_MAX_INFO_VAL
       integer MPI_MAX_PORT_NAME
       integer MPI_MAX_DATAREP_STRING
+      integer MPI_MAX_PSET_NAME_LEN
+      integer MPI_MAX_STRINGTAG_LEN
       parameter (MPI_MAX_PROCESSOR_NAME=@OPAL_MAX_PROCESSOR_NAME@-1)
       parameter (MPI_MAX_ERROR_STRING=@OPAL_MAX_ERROR_STRING@-1)
       parameter (MPI_MAX_OBJECT_NAME=@OPAL_MAX_OBJECT_NAME@-1)
@@ -68,6 +72,8 @@
       parameter (MPI_MAX_INFO_VAL=@OPAL_MAX_INFO_VAL@-1)
       parameter (MPI_MAX_PORT_NAME=@OPAL_MAX_PORT_NAME@-1)
       parameter (MPI_MAX_DATAREP_STRING=@OPAL_MAX_DATAREP_STRING@-1)
+      parameter (MPI_MAX_PSET_NAME_LEN=@OPAL_MAX_PSET_NAME_LEN@-1)
+      parameter (MPI_MAX_STRINGTAG_LEN=@OPAL_MAX_STRINGTAG_LEN@-1)
 
 !
 ! MPI F08 conformance
