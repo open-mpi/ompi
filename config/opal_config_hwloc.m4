@@ -106,7 +106,9 @@ AC_DEFUN([OPAL_CONFIG_HWLOC], [
     OPAL_3RDPARTY_EXTRA_DIST="$OPAL_3RDPARTY_EXTRA_DIST hwloc_tarball"
     OPAL_3RDPARTY_DISTCLEAN_DIRS="$OPAL_3RDPARTY_DISTCLEAN_DIRS hwloc_directory"
 
+    AC_SUBST(opal_hwloc_CPPFLAGS)
     AC_SUBST(opal_hwloc_LIBS)
+    AC_SUBST(opal_hwloc_LDFLAGS)
 
     OPAL_SUMMARY_ADD([[Miscellaneous]], [[hwloc]], [hwloc], [$opal_hwloc_mode])
 
