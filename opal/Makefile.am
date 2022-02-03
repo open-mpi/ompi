@@ -25,23 +25,23 @@
 if OPAL_cuda_support
 SUBDIRS = \
 	include \
-        mca/common/cuda \
-        datatype \
-        etc \
-        util \
+	mca/common/cuda \
+	datatype \
+	etc \
+	util \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
-        . \
+	. \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 # libltdl is included by variable because if --disable-dlopen was
 # used, there will be no generated Makefile in that directory (and
 # therefore make distclean will fail).
 DIST_SUBDIRS = \
 	include \
-        mca/common/cuda \
-        datatype \
-        etc \
+	mca/common/cuda \
+	datatype \
+	etc \
 	util \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
@@ -49,21 +49,21 @@ DIST_SUBDIRS = \
 else
 SUBDIRS = \
 	include \
-        datatype \
-        etc \
-        util \
+	datatype \
+	etc \
+	util \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
-        . \
+	. \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 # libltdl is included by variable because if --disable-dlopen was
 # used, there will be no generated Makefile in that directory (and
 # therefore make distclean will fail).
 DIST_SUBDIRS = \
 	include \
-        datatype \
-        etc \
+	datatype \
+	etc \
 	util \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
@@ -74,18 +74,18 @@ endif
 lib_LTLIBRARIES = lib@OPAL_LIB_NAME@.la
 lib@OPAL_LIB_NAME@_la_SOURCES =
 lib@OPAL_LIB_NAME@_la_LIBADD = \
-        datatype/libdatatype.la \
-        mca/base/libmca_base.la \
-        util/libopalutil.la \
+	datatype/libdatatype.la \
+	mca/base/libmca_base.la \
+	util/libopalutil.la \
 	$(MCA_opal_FRAMEWORK_LIBS) \
 	$(opal_libevent_LIBS) \
 	$(opal_hwloc_LIBS) \
 	$(opal_pmix_LIBS)
 lib@OPAL_LIB_NAME@_la_DEPENDENCIES = \
-        datatype/libdatatype.la \
-        mca/base/libmca_base.la \
-        util/libopalutil.la \
-        $(MCA_opal_FRAMEWORK_LIBS)
+	datatype/libdatatype.la \
+	mca/base/libmca_base.la \
+	util/libopalutil.la \
+	$(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@ \
 	$(opal_libevent_LDFLAGS) \
 	$(opal_hwloc_LDFLAGS) \
