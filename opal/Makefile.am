@@ -91,6 +91,14 @@ lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@ \
 	$(opal_hwloc_LDFLAGS) \
 	$(opal_pmix_LDFLAGS)
 
+if OPAL_cuda_support
+if MCA_BUILD_opal_DSO
+lib@OPAL_LIB_NAME@_la_LIBADD += \
+	mca/common/cuda/lib@OPAL_LIB_NAME@mca_common_cuda.la
+lib@OPAL_LIB_NAME@_la_DEPENDENCIES += \
+	mca/common/cuda/lib@OPAL_LIB_NAME@mca_common_cuda.la
+endif
+endif
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
