@@ -1239,7 +1239,14 @@ struct mca_btl_base_module_t {
 
     mca_btl_base_module_flush_fn_t btl_flush; /**< flush all previous operations on an endpoint */
 
-    unsigned char padding[256]; /**< padding to future-proof the btl module */
+
+    union {
+        struct {
+            void *btl_am_data;
+        };
+        unsigned char padding[256]; /**< padding to future-proof the
+                                       btl module */
+    };
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
