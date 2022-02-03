@@ -34,6 +34,11 @@ static inline ucc_status_t mca_scoll_ucc_collect_init(const void * sbuf, void * 
         },
     };
 
+    if (NULL == ucc_module->ucc_team) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_team_create(ucc_module, ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
     SCOLL_UCC_REQ_INIT(req, coll, ucc_module);
     return UCC_OK;
 fallback:
