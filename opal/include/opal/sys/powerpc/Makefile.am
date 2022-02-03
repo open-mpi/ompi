@@ -20,4 +20,6 @@
 
 headers += \
 	opal/sys/powerpc/atomic.h \
+	opal/sys/powerpc/atomic_helper.h \
+	opal/sys/powerpc/atomic_llsc.h \
 	opal/sys/powerpc/timer.h

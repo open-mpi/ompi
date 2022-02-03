@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +17,7 @@
 
 #include "opal/mca/patcher/base/base.h"
 #include "opal/mca/patcher/patcher.h"
+#include "opal/opal_portable_platform.h"
 #include "opal/prefetch.h"
 #include "opal/util/sys_limits.h"
 #include <sys/mman.h>
@@ -33,7 +36,7 @@ static void mca_patcher_base_patch_destruct(mca_patcher_base_patch_t *patch)
 OBJ_CLASS_INSTANCE(mca_patcher_base_patch_t, opal_list_item_t, mca_patcher_base_patch_construct,
                    mca_patcher_base_patch_destruct);
 
-#if defined(__PPC__)
+#if defined(PLATFORM_ARCH_POWERPC)
 
 // PowerPC instructions used in patching
 // Reference: "PowerPC User Instruction Set Architecture"
@@ -65,7 +68,7 @@ static unsigned int rldicr(unsigned int RT, unsigned int RS, unsigned int SH, un
 
 static int PatchLoadImm(uintptr_t addr, unsigned int reg, size_t value)
 {
-#    if defined(__PPC64__)
+#    if defined(PLATFORM_ARCH_64)
     *(unsigned int *) (addr + 0) = addis(reg, 0, (value >> 48));
     *(unsigned int *) (addr + 4) = ori(reg, reg, (value >> 32));
     *(unsigned int *) (addr + 8) = rldicr(reg, reg, 32, 31);
@@ -84,7 +87,7 @@ static int PatchLoadImm(uintptr_t addr, unsigned int reg, size_t value)
 #if !HAVE___CLEAR_CACHE
 static void flush_and_invalidate_cache(unsigned long a)
 {
-#    if OPAL_ASSEMBLY_ARCH == OPAL_IA32
+#    if defined(PLATFORM_ARCH_X86)
     static int have_clflush = -1;
 
     if (OPAL_UNLIKELY(-1 == have_clflush)) {
@@ -107,9 +110,9 @@ static void flush_and_invalidate_cache(unsigned long a)
         /* does not work with AMD processors */
         __asm__ volatile("mfence;clflush %0;mfence" : : "m"(*(char *) a));
     }
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#    elif defined(PLATFORM_ARCH_X86_64)
     __asm__ volatile("mfence;clflush %0;mfence" : : "m"(*(char *) a));
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+#    elif defined(PLATFORM_ARCH_AARCH64)
     __asm__ volatile("dc cvau, %0\n\t"
                      "dsb ish\n\t"
                      "ic ivau, %0\n\t"
@@ -128,7 +131,7 @@ static void ModifyMemoryProtection(uintptr_t addr, size_t length, int prot)
 
     length = bound - base;
 
-#if defined(__PPC__)
+#if defined(PLATFORM_ARCH_POWERPC)
     /* NTH: is a loop necessary here? */
     do {
         if (mprotect((void *) base, page_size, prot))
@@ -154,7 +157,7 @@ static inline void apply_patch(unsigned char *patch_data, uintptr_t address, siz
 #else
     size_t offset_jump = 16;
 
-#    if OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+#    if defined(PLATFORM_ARCH_AARCH64)
     offset_jump = 32;
 #    endif
 
@@ -184,7 +187,7 @@ void mca_base_patcher_patch_apply_binary(mca_patcher_base_patch_t *patch)
 
 int mca_patcher_base_patch_hook(mca_patcher_base_module_t *module, uintptr_t hook_addr)
 {
-#if (OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64)
+#if defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
     mca_patcher_base_patch_t *hook_patch;
     const unsigned int nop = 0x60000000;
 

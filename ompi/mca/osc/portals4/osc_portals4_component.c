@@ -9,7 +9,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
@@ -24,6 +24,7 @@
 #include "opal/util/printf.h"
 #include "opal/include/opal/align.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/opal_portable_platform.h"
 
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
@@ -589,7 +590,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     module->passive_target_access_epoch = false;
 
-#if OPAL_ASSEMBLY_ARCH == OPAL_X86_64 || OPAL_ASSEMBLY_ARCH == OPAL_IA32
+#if defined(PLATFORM_ARCH_X86) || defined(PLATFORM_ARCH_X86_64)
     *model = MPI_WIN_UNIFIED;
 #else
     *model = MPI_WIN_SEPARATE;

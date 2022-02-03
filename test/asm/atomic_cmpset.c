@@ -190,43 +190,6 @@ int main(int argc, char *argv[])
     assert(old128 == 42);
 #endif
 
-    /* -- cmpset int tests -- */
-
-    volint = 42, oldint = 42, newint = 50;
-    assert(opal_atomic_compare_exchange_strong (&volint, &oldint, newint) == true);
-    opal_atomic_rmb();
-    assert(volint == newint);
-    assert(oldint == 42);
-
-    volint = 42, oldint = 420, newint = 50;
-    assert(opal_atomic_compare_exchange_strong (&volint, &oldint, newint) == false);
-    opal_atomic_rmb();
-    assert(volint == 42);
-    assert(oldint == 42);
-
-    volint = 42, oldint = 42, newint = 50;
-    assert(opal_atomic_compare_exchange_strong_acq (&volint, &oldint, newint) == true);
-    assert(volint == newint);
-    assert(oldint == 42);
-
-    volint = 42, oldint = 420, newint = 50;
-    assert(opal_atomic_compare_exchange_strong_acq (&volint, &oldint, newint) == false);
-    assert(volint == 42);
-    assert(oldint == 42);
-
-    volint = 42, oldint = 42, newint = 50;
-    assert(opal_atomic_compare_exchange_strong_rel (&volint, &oldint, newint) == true);
-    opal_atomic_rmb();
-    assert(volint == newint);
-    assert(oldint == 42);
-
-    volint = 42, oldint = 420, newint = 50;
-    assert(opal_atomic_compare_exchange_strong_rel (&volint, &oldint, newint) == false);
-    opal_atomic_rmb();
-    assert(volint == 42);
-    assert(oldint == 42);
-
-
     /* -- cmpset ptr tests -- */
 
     volptr = 42, oldptr = 42, newptr = 50;
