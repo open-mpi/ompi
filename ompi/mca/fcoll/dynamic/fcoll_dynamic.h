@@ -50,11 +50,17 @@ int mca_fcoll_dynamic_component_file_unquery (ompio_file_t *file);
 int mca_fcoll_dynamic_module_init (ompio_file_t *file);
 int mca_fcoll_dynamic_module_finalize (ompio_file_t *file);
 
-int mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
+int mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                       const void *buf,
                                       int count,
                                       struct ompi_datatype_t *datatype,
                                       ompi_status_public_t * status);
+int mca_fcoll_dynamic_file_read_all (struct ompio_file_t *fh,
+                                     void *buf,
+                                     int count,
+                                     struct ompi_datatype_t *datatype,
+                                     ompi_status_public_t * status);
+
 
 
 END_C_DECLS

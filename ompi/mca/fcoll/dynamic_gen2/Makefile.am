@@ -25,6 +25,7 @@ sources = \
         fcoll_dynamic_gen2.h \
         fcoll_dynamic_gen2_module.c \
         fcoll_dynamic_gen2_component.c \
+        fcoll_dynamic_gen2_file_read_all.c \
         fcoll_dynamic_gen2_file_write_all.c
 
 # Make the output library in this directory, and name it either
