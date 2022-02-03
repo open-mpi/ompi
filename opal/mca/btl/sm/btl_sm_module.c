@@ -19,7 +19,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2022 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -32,7 +32,6 @@
 #include "opal/util/show_help.h"
 
 #include "opal/mca/btl/sm/btl_sm.h"
-#include "opal/mca/btl/sm/btl_sm_endpoint.h"
 #include "opal/mca/btl/sm/btl_sm_fbox.h"
 #include "opal/mca/btl/sm/btl_sm_fifo.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
@@ -168,7 +167,7 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
 
     ep->peer_smp_rank = peer_local_rank;
 
-    if (peer_local_rank != MCA_BTL_SM_LOCAL_RANK) {
+    if (!mca_btl_is_self_endpoint(ep)) {
         OPAL_MODEX_RECV_IMMEDIATE(rc, &component->super.btl_version, &proc->proc_name,
                                   (void **) &modex, &msg_size);
         if (OPAL_SUCCESS != rc) {

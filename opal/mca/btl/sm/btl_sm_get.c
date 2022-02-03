@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2019-2021 Google, Inc. All rights reserved.
+ * Copyright (c) 2019-2022 Google, Inc. All rights reserved.
  * Copyright (c) 2020      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -18,7 +18,6 @@
 #include "opal_config.h"
 
 #include "opal/mca/btl/sm/btl_sm.h"
-#include "opal/mca/btl/sm/btl_sm_endpoint.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
 #include "opal/mca/smsc/smsc.h"
 
@@ -37,10 +36,14 @@ int mca_btl_sm_get(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint
                    int order, mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
                    void *cbdata)
 {
-    int ret = MCA_SMSC_CALL(copy_from, endpoint->smsc_endpoint, local_address,
-                            (void *) (intptr_t) remote_address, size, remote_handle);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
-        return ret;
+    if (!mca_btl_is_self_endpoint(endpoint)) {
+        int ret = MCA_SMSC_CALL(copy_from, endpoint->smsc_endpoint, local_address,
+                                (void *) (intptr_t) remote_address, size, remote_handle);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+            return ret;
+        }
+    } else {
+        memcpy(local_address, (void *)(uintptr_t) remote_address, size);
     }
 
     /* always call the callback function */
