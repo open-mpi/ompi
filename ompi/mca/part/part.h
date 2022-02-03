@@ -238,6 +238,7 @@ struct mca_part_base_module_1_0_1_t {
     mca_part_base_module_psend_init_fn_t   part_psend_init;
     mca_part_base_module_start_fn_t        part_start; 
     mca_part_base_module_pready_fn_t       part_pready;
+    mca_part_base_module_pready_fn_t       part_pready_fast; /* pready_fast is a varient of pready with the same function signature */
     mca_part_base_module_parrived_fn_t     part_parrived;
     mca_part_base_module_pbuf_prepare_fn_t part_pbuf_prepare;
 

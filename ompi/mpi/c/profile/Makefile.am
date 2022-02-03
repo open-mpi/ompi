@@ -285,8 +285,11 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ppbuf_prepareall.c \
         ppcontrol.c \
         ppready.c \
+        ppready_fast.c \
         ppready_list.c \
+        ppready_list_fast.c \
         ppready_range.c \
+        ppready_range_fast.c \
         pprecv_init.c \
         pprobe.c \
         ppsend_init.c \

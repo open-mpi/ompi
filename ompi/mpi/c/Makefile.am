@@ -305,8 +305,11 @@ libmpi_c_mpi_la_SOURCES = \
         pbuf_prepareall.c \
         pcontrol.c \
         pready.c \
+        pready_fast.c \
         pready_list.c \
+        pready_list_fast.c \
         pready_range.c \
+        pready_range_fast.c \
         precv_init.c \
         probe.c \
         psend_init.c \

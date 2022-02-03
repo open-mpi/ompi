@@ -1704,9 +1704,13 @@ OMPI_DECLSPEC  int MPIX_Pbuf_prepare(MPI_Request request);
 OMPI_DECLSPEC  int MPIX_Pbuf_prepareall(int count, MPI_Request* requests);
 OMPI_DECLSPEC  int MPI_Pcontrol(const int level, ...);
 OMPI_DECLSPEC  int MPI_Pready(int partitions, MPI_Request request);
+OMPI_DECLSPEC  int MPIX_Pready_fast(int partitions, MPI_Request request);
 OMPI_DECLSPEC  int MPI_Pready_range(int partition_low, int partition_high,
                                     MPI_Request request);
+OMPI_DECLSPEC  int MPIX_Pready_range_fast(int partition_low, int partition_high,
+                                    MPI_Request request);
 OMPI_DECLSPEC  int MPI_Pready_list(int length, int partition_list[], MPI_Request request);
+OMPI_DECLSPEC  int MPIX_Pready_list_fast(int length, int partition_list[], MPI_Request request);
 OMPI_DECLSPEC  int MPI_Precv_init(void* buf, int partitions, MPI_Count count,
                                   MPI_Datatype datatype, int source, int tag, MPI_Comm comm,
                                   MPI_Request *request);
@@ -2332,9 +2336,13 @@ OMPI_DECLSPEC  int PMPI_Psend_init(const void* buf, int partitions, MPI_Count co
                                   MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
                                   MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Pready(int partitions, MPI_Request request);
+OMPI_DECLSPEC  int PMPIX_Pready_fast(int partitions, MPI_Request request);
 OMPI_DECLSPEC  int PMPI_Pready_range(int partition_low, int partition_high,
                                     MPI_Request request);
+OMPI_DECLSPEC  int PMPIX_Pready_range_fast(int partition_low, int partition_high,
+                                    MPI_Request request);
 OMPI_DECLSPEC  int PMPI_Pready_list(int length, int partition_list[], MPI_Request request);
+OMPI_DECLSPEC  int PMPIX_Pready_list_fast(int length, int partition_list[], MPI_Request request);
 OMPI_DECLSPEC  int PMPI_Parrived(MPI_Request request, MPI_Count partition, int *flag);
 OMPI_DECLSPEC  int PMPI_Is_thread_main(int *flag);
 OMPI_DECLSPEC  int PMPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name);

@@ -546,6 +546,29 @@ mca_part_persist_pready(size_t min_part,
 }
 
 __opal_attribute_always_inline__ static inline int
+mca_part_persist_pready_fast(size_t min_part,
+                    size_t max_part,
+                    ompi_request_t* request)
+{   
+    int err = OMPI_SUCCESS;
+    size_t i;
+    
+    mca_part_persist_request_t *req = (mca_part_persist_request_t *)(request);
+    if(true == req->initialized)
+    {   
+        err = req->persist_reqs[min_part]->req_start(max_part-min_part+1, (&(req->persist_reqs[min_part])));
+        for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
+            req->flags[i] = 0; /* Mark partion as ready for testing */
+        }
+    }
+    else
+    {   
+        return OMPI_ERROR; /* This codepath is erronious for pready_fast */
+    }
+    return err;
+}
+
+__opal_attribute_always_inline__ static inline int
 mca_part_persist_parrived(size_t min_part,
                       size_t max_part,
                       int* flag, 
