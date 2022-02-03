@@ -152,7 +152,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     AS_IF([test "$opal_pmix_mode" = "internal"],
           [pkg_config_file="${OMPI_TOP_BUILDDIR}/3rd-party/openpmix/maint/pmix.pc"
            PKG_CONFIG_PATH="${OMPI_TOP_BUILDDIR}/3rd-party/openpmix/maint:${PKG_CONFIG_PATH}"],
-          [test -n "$with_hwloc"],
+          [test -n "$with_pmix"],
           [pkg_config_file="${with_pmix}/lib/pkgconfig/pmix.pc"
            PKG_CONFIG_PATH="${with_pmix}/lib/pkgconfig:${PKG_CONFIG_PATH}"],
           [pkg_config_file="pmix"])

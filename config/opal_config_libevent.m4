@@ -118,7 +118,9 @@ AC_DEFUN([OPAL_CONFIG_LIBEVENT], [
     OPAL_3RDPARTY_EXTRA_DIST="$OPAL_3RDPARTY_EXTRA_DIST libevent_tarball"
     OPAL_3RDPARTY_DISTCLEAN_DIRS="$OPAL_3RDPARTY_DISTCLEAN_DIRS libevent_directory"
 
+    AC_SUBST(opal_libevent_CPPFLAGS)
     AC_SUBST(opal_libevent_LIBS)
+    AC_SUBST(opal_libevent_LDFLAGS)
 
     OPAL_SUMMARY_ADD([[Miscellaneous]],[[libevent]],[libevent], [$opal_libevent_mode])
 

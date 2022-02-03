@@ -1391,6 +1391,13 @@ $step. Checking tool versions\n\n";
 ++$step;
 verbose "\n$step. Checking for git submodules\n\n";
 
+my @enabled_3rdparty_packages = ();
+my @disabled_3rdparty_packages = split(/,/, $no_3rdparty_arg);
+if ($no_prrte_arg) {
+    push(@disabled_3rdparty_packages, "prrte");
+}
+
+
 # Make sure we got a submodule-full clone.  If not, abort and let a
 # human figure it out.
 if (-f ".gitmodules") {
@@ -1405,6 +1412,14 @@ if (-f ".gitmodules") {
         my $extra      = $4;
 
         print("=== Submodule: $path\n");
+        if (index($path, "pmix") != -1 and list_contains("pmix", @disabled_3rdparty_packages)) {
+          print("Disabled - skipping openpmix");
+          next;
+        }
+        if (index($path, "prrte") != -1 and list_contains("prrte", @disabled_3rdparty_packages)) {
+          print("Disabled - skipping prrte");
+          next;
+        }
 
         # Make sure the submodule is there
         if ($status eq "-") {
@@ -1569,12 +1584,6 @@ mca_run_global($projects);
 # Handle 3rd-party packages
 ++$step;
 verbose "\n$step. Setup for 3rd-party packages\n";
-
-my @enabled_3rdparty_packages = ();
-my @disabled_3rdparty_packages = split(/,/, $no_3rdparty_arg);
-if ($no_prrte_arg) {
-    push(@disabled_3rdparty_packages, "prrte");
-}
 
 $m4 .= "\n$dnl_line
 $dnl_line
