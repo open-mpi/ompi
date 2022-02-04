@@ -370,6 +370,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         goto error;
     }
 
+    /* Bozo argument check */
+    if (NULL == argv && argc > 1) {
+        ret = OMPI_ERR_BAD_PARAM;
+        error = "argc > 1, but argv == NULL";
+        goto error;
+    }
+
     /* if we were not externally started, then we need to setup
      * some envars so the MPI_INFO_ENV can get the cmd name
      * and argv (but only if the user supplied a non-NULL argv!), and
@@ -395,6 +402,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         }
         OMPI_TIMING_NEXT("pmix-barrier-1");
         if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
+            ret = opal_pmix_convert_status(rc);
             error = "timing: pmix-barrier-2 failed";
             goto error;
         }
