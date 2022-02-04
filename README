@@ -1533,10 +1533,10 @@ MISCELLANEOUS FUNCTIONALITY
   with different endian representations).  Heterogeneous support is
   disabled by default because it imposes a minor performance penalty.
 
+  *** THE HETEROGENEOUS FUNCTIONALITY IS CURRENTLY BROKEN - DO NOT USE ***
+
  --enable-spc
   Enable software-based performance counters capability.
-
-  *** THIS FUNCTIONALITY IS CURRENTLY BROKEN - DO NOT USE ***
 
 --with-wrapper-cflags=<cflags>
 --with-wrapper-cxxflags=<cxxflags>
