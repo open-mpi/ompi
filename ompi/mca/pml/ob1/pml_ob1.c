@@ -829,7 +829,7 @@ int mca_pml_ob1_send_cid (ompi_proc_t *proc, ompi_communicator_t *comm)
     mca_pml_ob1_cid_hdr_t cid;
 
     mca_pml_ob1_cid_hdr_prepare (&cid, comm);
-    ob1_hdr_hton ((mca_pml_ob1_hdr_t *) &cid, cid->hdr_common.hdr_type, proc);
+    ob1_hdr_hton ((mca_pml_ob1_hdr_t *) &cid, cid.hdr_common.hdr_type, proc);
 
     return mca_pml_ob1_send_control_any (proc, MCA_BTL_NO_ORDER, (mca_pml_ob1_hdr_t *) &cid, sizeof (cid), true);
 }
