@@ -32,11 +32,16 @@ int MPI_Group_from_session_pset (MPI_Session session, const char *pset_name, MPI
 
     if ( MPI_PARAM_CHECK ) {
         if (NULL == session || NULL == pset_name || NULL == newgroup) {
-            return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG, FUNC_NAME);
+            if (NULL != session) {
+                return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG, FUNC_NAME);
+            } else {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+            }
         }
     }
 
     rc = ompi_group_from_pset (session, pset_name, newgroup);
-    /* if an error occured raise it on the null session */
-    OMPI_ERRHANDLER_RETURN (rc, session, rc, FUNC_NAME);
+
+    OMPI_ERRHANDLER_RETURN (rc, (NULL == session) ? MPI_SESSION_NULL : session,
+                            rc, FUNC_NAME);
 }

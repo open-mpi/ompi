@@ -97,7 +97,8 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
 
     first = ompi_comm_determine_first ( intercomm, thigh );
     if ( MPI_UNDEFINED == first ) {
-        return OMPI_ERRHANDLER_INVOKE(intercomm, MPI_ERR_INTERN, FUNC_NAME);
+        rc = MPI_ERR_INTERN;
+        goto exit;
     }
 
     if ( first ) {

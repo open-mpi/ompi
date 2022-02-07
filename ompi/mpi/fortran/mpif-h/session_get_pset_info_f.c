@@ -78,7 +78,7 @@ void ompi_session_get_pset_info_f(MPI_Fint *session,char *pset_name, MPI_Fint *i
 {
     int c_ierr, ret;
     MPI_Session c_session;
-    char *c_name;
+    char *c_name = NULL;
     MPI_Info c_info;
 
     c_session = PMPI_Session_f2c(*session);
@@ -95,6 +95,10 @@ void ompi_session_get_pset_info_f(MPI_Fint *session,char *pset_name, MPI_Fint *i
 
     c_ierr = PMPI_Session_get_pset_info(c_session, c_name, &c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    if (NULL != c_name) {
+        free (c_name);
+    }
 
     if (MPI_SUCCESS == c_ierr) {
         *info = PMPI_Info_c2f(c_info);
