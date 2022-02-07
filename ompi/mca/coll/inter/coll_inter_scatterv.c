@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,8 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
 {
-    int i, rank, size, err, total=0, size_local;
+    int i, rank, size, err, size_local;
+    size_t total = 0;
     int *counts=NULL,*displace=NULL;
     char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype;
