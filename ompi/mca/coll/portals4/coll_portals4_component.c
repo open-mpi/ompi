@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2013-2022 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
@@ -135,7 +135,7 @@ ptl_datatype_t ompi_coll_portals4_atomic_datatype [OMPI_DATATYPE_MPI_MAX_PREDEFI
         if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) {      \
             opal_output_verbose(1, ompi_coll_base_framework.framework_output,               \
                     "(%d/%s): no underlying " # __api"; disqualifying myself",              \
-                    __comm->c_contextid, __comm->c_name);                                   \
+                    ompi_comm_get_local_cid(__comm), __comm->c_name);                          \
                     return OMPI_ERROR;                                                      \
         }                                                                                   \
         OBJ_RETAIN(__module->previous_ ## __api ## _module);                                \
