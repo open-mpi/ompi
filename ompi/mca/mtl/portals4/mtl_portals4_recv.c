@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2010-2022 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -457,7 +457,8 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
         remote_proc = *((ptl_process_t*) ompi_mtl_portals4_get_endpoint (mtl, ompi_proc));
     }
 
-    MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,
+    MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits,
+                               ompi_comm_get_local_cid(comm),
                                src, tag);
 
     ret = ompi_mtl_datatype_recv_buf(convertor, &start, &length, &free_after);
