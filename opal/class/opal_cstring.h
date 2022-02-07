@@ -43,7 +43,6 @@
 #ifndef OPAL_STRING_H
 #define OPAL_STRING_H
 
-#include "opal_config.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/base/mca_base_var_enum.h"
 
