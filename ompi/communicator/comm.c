@@ -1510,6 +1510,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
             asprintf (&sub_tag, "%s-OMPIi-LC", tag);
             if (OPAL_UNLIKELY(NULL == sub_tag)) {
                 ompi_comm_free (&local_comm);
+                free(leader_procs);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -1517,6 +1518,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
             ompi_set_group_rank (leader_group, my_proc);
             if (OPAL_UNLIKELY(NULL == leader_group)) {
                 free (sub_tag);
+                free(leader_procs);
                 ompi_comm_free (&local_comm);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -1528,6 +1530,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
             OBJ_RELEASE(leader_group);
             free (sub_tag);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                free(leader_procs);
                 ompi_comm_free (&local_comm);
                 return rc;
             }

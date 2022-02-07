@@ -275,6 +275,7 @@ int ompi_mpi_instance_retain (void)
 
     /* initialize info */
     if (OMPI_SUCCESS != (ret = ompi_mpiinfo_init ())) {
+        opal_mutex_unlock (&instance_lock);
         return ompi_instance_print_error ("ompi_info_init() failed", ret);
     }
 
@@ -919,9 +920,6 @@ int ompi_mpi_instance_finalize (ompi_instance_t **instance)
     opal_mutex_lock (&instance_lock);
     if (0 == opal_atomic_add_fetch_32 (&ompi_instance_count, -1)) {
         ret = ompi_mpi_instance_finalize_common ();
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
-            opal_mutex_unlock (&instance_lock);
-        }
     }
     opal_mutex_unlock (&instance_lock);
 
