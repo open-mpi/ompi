@@ -500,7 +500,7 @@ union mca_pml_ob1_hdr_t {
 typedef union mca_pml_ob1_hdr_t mca_pml_ob1_hdr_t;
 
 #if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-static inline __opal_attribute_always_inline__ void
+static inline void
 ob1_hdr_ntoh(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type)
 {
     if(!(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO))
@@ -549,7 +549,7 @@ ob1_hdr_ntoh(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type)
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define ob1_hdr_hton(h, t, p) \
     ob1_hdr_hton_intr((mca_pml_ob1_hdr_t*)h, t, p)
-static inline __opal_attribute_always_inline__ void
+static inline  void
 ob1_hdr_hton_intr(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type,
         const ompi_proc_t *proc)
 {
