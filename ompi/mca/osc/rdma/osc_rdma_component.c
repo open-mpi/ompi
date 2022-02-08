@@ -231,7 +231,7 @@ static int ompi_osc_rdma_component_register (void)
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_rdma_component.max_attach);
     free(description_str);
 
-    mca_osc_rdma_component.priority = 101;
+    mca_osc_rdma_component.priority = 20;
     opal_asprintf(&description_str, "Priority of the osc/rdma component (default: %d)",
              mca_osc_rdma_component.priority);
     (void) mca_base_component_var_register (&mca_osc_rdma_component.super.osc_version, "priority", description_str,
