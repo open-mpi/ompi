@@ -13,6 +13,7 @@
 #include "opal/util/timings.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/runtime/runtime.h"
+#include "oshmem/mca/memheap/base/base.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
 #include "scoll_ucc.h"
@@ -51,10 +52,11 @@ static void mca_scoll_ucc_module_destruct(mca_scoll_ucc_module_t *ucc_module)
 {
     if (ucc_module->ucc_team) {
         ucc_team_destroy(ucc_module->ucc_team);
+        MCA_MEMHEAP_CALL(private_free(ucc_module->pSync));
         --mca_scoll_ucc_component.nr_modules;
     }
 
-    if (1 == mca_scoll_ucc_component.nr_modules) {
+    if (0 == mca_scoll_ucc_component.nr_modules) {
        if (mca_scoll_ucc_component.libucc_initialized) {
             UCC_VERBOSE(1, "finalizing ucc library");
             opal_progress_unregister(mca_scoll_ucc_progress);
@@ -102,6 +104,7 @@ typedef struct oob_allgather_req
     void           *oob_coll_ctx;
     size_t          msglen;
     int             iter;
+    int             index;
     ompi_request_t *reqs[2];
 } oob_allgather_req_t;
 
@@ -120,6 +123,7 @@ static ucc_status_t oob_allgather(void *sbuf, void *rbuf, size_t msglen,
     oob_req->msglen              = msglen;
     oob_req->oob_coll_ctx        = oob_coll_ctx;
     oob_req->iter                = 0;
+    oob_req->index               = -1;
     *req                         = oob_req;
     return UCC_OK;
 }
@@ -141,26 +145,41 @@ static inline ucc_status_t oob_probe_test(oob_allgather_req_t *oob_req)
     return UCC_OK;
 }
 
+static int index_cmpfunc(const void * a, const void * b)
+{
+    return (*(int *)a - *(int *)b);
+}
+
 static ucc_status_t oob_allgather_test(void *req)
 {
-    oob_allgather_req_t *oob_req   = (oob_allgather_req_t*) req;
-    ompi_communicator_t *comm      = (ompi_communicator_t *) oob_req->oob_coll_ctx;  
-    char                *tmpsend   = NULL;
-    char                *tmprecv   = NULL;
-    size_t                msglen   = oob_req->msglen;
-    int rank, size, sendto, recvfrom, recvdatafrom, senddatafrom;
+    oob_allgather_req_t *oob_req = (oob_allgather_req_t *)req;
+    oshmem_group_t      *group   = (oshmem_group_t *)oob_req->oob_coll_ctx;
+    char                *tmpsend = NULL;
+    char                *tmprecv = NULL;
+    int                 *index   = &oob_req->index;
+    size_t               msglen  = oob_req->msglen;
+    int                 *tmp;
+    unsigned int         rank;
+    int size, sendto, recvfrom, recvdatafrom, senddatafrom;
 
-    rank = ompi_comm_rank(comm);
-    size = ompi_comm_size(comm);
+    rank = group->my_pe;
+    size = group->proc_count;
+    if (-1 == *index) {
+        tmp =
+            bsearch(&rank, group->proc_vpids, size, sizeof(int), index_cmpfunc);
+        *index = ((ptrdiff_t)tmp - (ptrdiff_t)group->proc_vpids) /
+                 sizeof(group->proc_vpids[0]);
+    }
 
     if (0 == oob_req->iter) {
-        tmprecv = (char *)oob_req->rbuf + (ptrdiff_t)rank * (ptrdiff_t)msglen;
+        tmprecv = (char *)oob_req->rbuf + (ptrdiff_t)*index * (ptrdiff_t)msglen;
         memcpy(tmprecv, oob_req->sbuf, msglen);
     }
 
-    sendto   = (rank + 1) % size;
-    recvfrom = (rank - 1 + size) % size;
-
+    sendto   = (*index + 1) % size;
+    sendto   = group->proc_vpids[sendto];
+    recvfrom = (*index - 1 + size) % size;
+    recvfrom = group->proc_vpids[recvfrom];
     for (; oob_req->iter < size - 1; oob_req->iter++) {
         if (oob_req->iter > 0) {
             if (UCC_INPROGRESS == oob_probe_test(oob_req)) {
@@ -168,27 +187,29 @@ static ucc_status_t oob_allgather_test(void *req)
             }
         }
 
-        recvdatafrom = (rank - oob_req->iter - 1 + size) % size;
-        senddatafrom = (rank - oob_req->iter + size) % size;
+        recvdatafrom = (*index - oob_req->iter - 1 + size) % size;
+        senddatafrom = (*index - oob_req->iter + size) % size;
         tmprecv = (char *) oob_req->rbuf + (ptrdiff_t) recvdatafrom * (ptrdiff_t) msglen;
         tmpsend = (char *) oob_req->rbuf + (ptrdiff_t) senddatafrom * (ptrdiff_t) msglen;
         MCA_PML_CALL(isend(tmpsend, msglen, MPI_BYTE, sendto, MCA_COLL_BASE_TAG_UCC,
-                     MCA_PML_BASE_SEND_STANDARD, comm, &oob_req->reqs[0]));
+                     MCA_PML_BASE_SEND_STANDARD, oshmem_comm_world, &oob_req->reqs[0]));
         MCA_PML_CALL(irecv(tmprecv, msglen, MPI_BYTE, recvfrom, 
-                     MCA_COLL_BASE_TAG_UCC, comm, &oob_req->reqs[1]));
+                     MCA_COLL_BASE_TAG_UCC, oshmem_comm_world, &oob_req->reqs[1]));
     }
     return oob_probe_test(oob_req);
 }
 
 static int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group) 
 {
-    mca_scoll_ucc_component_t     *cm = &mca_scoll_ucc_component;
-    char                           str_buf[256];
-    ucc_lib_config_h               lib_config;
-    ucc_context_config_h           ctx_config;
-    ucc_thread_mode_t              tm_requested;
-    ucc_lib_params_t               lib_params;
-    ucc_context_params_t           ctx_params;
+    mca_scoll_ucc_component_t *cm   = &mca_scoll_ucc_component;
+    ucc_mem_map_t             *maps = NULL;
+    char                       str_buf[256];
+    ucc_lib_config_h           lib_config;
+    ucc_context_config_h       ctx_config;
+    ucc_thread_mode_t          tm_requested;
+    ucc_lib_params_t           lib_params;
+    ucc_context_params_t       ctx_params;
+    int                        segment;
 
     tm_requested           = oshmem_mpi_thread_multiple ? UCC_THREAD_MULTIPLE :
                                                           UCC_THREAD_SINGLE;
@@ -226,13 +247,27 @@ static int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group)
         goto cleanup_lib;
     }
 
-    ctx_params.mask             = UCC_CONTEXT_PARAM_FIELD_OOB;
-    ctx_params.oob.allgather    = oob_allgather;
-    ctx_params.oob.req_test     = oob_allgather_test;
-    ctx_params.oob.req_free     = oob_allgather_free;
-    ctx_params.oob.coll_info    = (void *) oshmem_comm_world;
-    ctx_params.oob.n_oob_eps    = ompi_comm_size(oshmem_comm_world);
-    ctx_params.oob.oob_ep       = ompi_comm_rank(oshmem_comm_world);
+    maps = (ucc_mem_map_t *)malloc(sizeof(ucc_mem_map_t) *
+                                   memheap_map->n_segments);
+    if (NULL == maps) {
+        UCC_ERROR("failed to allocate space for UCC memory params");
+    }
+    for (segment = 0; segment < memheap_map->n_segments; segment++) {
+        maps[segment].address = memheap_map->mem_segs[segment].mkeys[0].va_base;
+        maps[segment].len =
+            (ptrdiff_t)memheap_map->mem_segs[segment].super.va_end -
+            (ptrdiff_t)memheap_map->mem_segs[segment].super.va_base;
+    }
+    ctx_params.mask =
+        UCC_CONTEXT_PARAM_FIELD_OOB | UCC_CONTEXT_PARAM_FIELD_MEM_PARAMS;
+    ctx_params.oob.allgather         = oob_allgather;
+    ctx_params.oob.req_test          = oob_allgather_test;
+    ctx_params.oob.req_free          = oob_allgather_free;
+    ctx_params.oob.coll_info         = (void *)oshmem_group_all;
+    ctx_params.oob.n_oob_eps         = oshmem_group_all->proc_count;
+    ctx_params.oob.oob_ep            = oshmem_group_all->my_pe;
+    ctx_params.mem_params.segments   = maps;
+    ctx_params.mem_params.n_segments = memheap_map->n_segments;
 
     if (UCC_OK != ucc_context_config_read(cm->ucc_lib, NULL, &ctx_config)) {
         UCC_ERROR("UCC context config read failed");
@@ -240,36 +275,110 @@ static int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group)
     }
 
     sprintf(str_buf, "%u", osh_group->proc_count);
-    if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "ESTIMATED_NUM_EPS",
-                                            str_buf)) {
+    if (UCC_OK != ucc_context_config_modify(ctx_config, NULL,
+                                            "ESTIMATED_NUM_EPS", str_buf)) {
         UCC_ERROR("UCC context config modify failed for estimated_num_eps");
         goto cleanup_lib;
     }
 
     sprintf(str_buf, "%u", opal_process_info.num_local_peers + 1);
-    if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "ESTIMATED_NUM_PPN",
-                                            str_buf)) {
+    if (UCC_OK != ucc_context_config_modify(ctx_config, NULL,
+                                            "ESTIMATED_NUM_PPN", str_buf)) {
         UCC_ERROR("UCC context config modify failed for estimated_num_eps");
         goto cleanup_lib;
     }
 
-    if (UCC_OK != ucc_context_create(cm->ucc_lib, &ctx_params,
-                                     ctx_config, &cm->ucc_context)) {
+    if (UCC_OK != ucc_context_create(cm->ucc_lib, &ctx_params, ctx_config,
+                                     &cm->ucc_context)) {
         UCC_ERROR("UCC context create failed");
         ucc_context_config_release(ctx_config);
         goto cleanup_lib;
     }
     ucc_context_config_release(ctx_config);
 
+    free(maps);
     opal_progress_register(mca_scoll_ucc_progress);
     UCC_VERBOSE(1, "initialized ucc context");
     cm->libucc_initialized = true;
     return OSHMEM_SUCCESS;
 
 cleanup_lib:
+    if (NULL != maps) {
+        free(maps);
+    }
     ucc_finalize(cm->ucc_lib);
     cm->ucc_enable         = 0;
     cm->libucc_initialized = false;
+    return OSHMEM_ERROR;
+}
+
+int mca_scoll_ucc_team_create(mca_scoll_ucc_module_t *ucc_module,
+                              oshmem_group_t         *osh_group)
+{
+    mca_scoll_ucc_component_t *cm       = &mca_scoll_ucc_component;
+    ucc_status_t               status   = UCC_OK;
+    long                      *pSync    = NULL;
+    int                       *tmp;
+    ucc_ep_map_t               map;
+    int                        index;
+    size_t                     size;
+    ucc_context_attr_t         attr;
+
+    attr.mask = UCC_CONTEXT_ATTR_FIELD_WORK_BUFFER_SIZE;
+    ucc_context_get_attr(cm->ucc_context, &attr);
+    size = attr.global_work_buffer_size;
+    if (size & 0x7) {
+        size += 8 - (size & 0x7);
+    }
+    MCA_MEMHEAP_CALL(private_alloc(size * sizeof(long), (void **)&pSync));
+    memset(pSync, 0, size * sizeof(long));
+
+    map.type            = UCC_EP_MAP_ARRAY;
+    map.ep_num          = osh_group->proc_count;
+    map.array.elem_size = 4;
+    tmp                 = bsearch(&osh_group->my_pe, osh_group->proc_vpids,
+                                  osh_group->proc_count, sizeof(int), index_cmpfunc);
+    index               = ((ptrdiff_t)tmp - (ptrdiff_t)osh_group->proc_vpids) /
+            sizeof(osh_group->proc_vpids[0]);
+    map.array.map                 = (void *)osh_group->proc_vpids;
+    ucc_team_params_t team_params = {
+        .mask = UCC_TEAM_PARAM_FIELD_EP | UCC_TEAM_PARAM_FIELD_EP_RANGE |
+                UCC_TEAM_PARAM_FIELD_OOB | UCC_TEAM_PARAM_FIELD_FLAGS,
+        .oob =
+            {
+                .allgather = oob_allgather,
+                .req_test  = oob_allgather_test,
+                .req_free  = oob_allgather_free,
+                .coll_info = (void *)osh_group,
+                .n_oob_eps = osh_group->proc_count,
+                .oob_ep    = index,
+            },
+        .ep     = index,
+        .ep_map = map,
+        .flags  = UCC_TEAM_FLAG_COLL_WORK_BUFFER,
+    };
+
+    if (UCC_OK != ucc_team_create_post(&cm->ucc_context, 1, &team_params,
+                                       &ucc_module->ucc_team)) {
+        UCC_ERROR("ucc_team_create_post failed");
+        goto err;
+    }
+
+    while (UCC_INPROGRESS ==
+           (status = ucc_team_create_test(ucc_module->ucc_team))) {
+        opal_progress();
+    }
+    if (UCC_OK != status) {
+        UCC_ERROR("ucc_team_create_test failed (%d)", status);
+        goto err;
+    }
+    ucc_module->pSync = pSync;
+    ++cm->nr_modules;
+    return OSHMEM_SUCCESS;
+err:
+    ucc_module->ucc_team = NULL;
+    cm->ucc_enable       = 0;
+    opal_progress_unregister(mca_scoll_ucc_progress);
     return OSHMEM_ERROR;
 }
 
@@ -281,26 +390,8 @@ static int mca_scoll_ucc_module_enable(mca_scoll_base_module_t *module,
 {
     mca_scoll_ucc_component_t *cm         = &mca_scoll_ucc_component;
     mca_scoll_ucc_module_t    *ucc_module = (mca_scoll_ucc_module_t *) module;
-    ucc_status_t               status     = UCC_OK;
 
     ucc_module->ucc_team = NULL;
-
-    ucc_team_params_t team_params = {
-        .mask             = UCC_TEAM_PARAM_FIELD_EP | 
-                            UCC_TEAM_PARAM_FIELD_EP_RANGE |
-                            UCC_TEAM_PARAM_FIELD_OOB, 
-        .oob = {
-            .allgather    = oob_allgather,
-            .req_test     = oob_allgather_test,
-            .req_free     = oob_allgather_free,
-            .coll_info    = (void *)osh_group->ompi_comm,
-            .n_oob_eps    = ompi_comm_size(osh_group->ompi_comm),
-            .oob_ep       = ompi_comm_rank(osh_group->ompi_comm),
-        },
-        .ep       = ompi_comm_rank(osh_group->ompi_comm),
-        .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG,
-    };
-
     if (OSHMEM_SUCCESS != mca_scoll_ucc_save_coll_handlers(module, osh_group)) {
         UCC_ERROR("UCC module enable failed");
         /* There are no modules available */
@@ -308,30 +399,11 @@ static int mca_scoll_ucc_module_enable(mca_scoll_base_module_t *module,
                        "module_enable:fatal", true,
     	       		   "UCC module enable failed - aborting to prevent inconsistent application state");
 
-        return OSHMEM_ERROR;
-    }
-    
-    ++cm->nr_modules;
-    if (cm->ucc_context) {
-        if (UCC_OK != ucc_team_create_post(&cm->ucc_context, 1, 
-                                           &team_params, &ucc_module->ucc_team)) {
-            UCC_ERROR("ucc_team_create_post failed");
-        }
-
-        while (UCC_INPROGRESS == (status = ucc_team_create_test(ucc_module->ucc_team))) {
-            opal_progress();
-        }
-    } 
-
-    if (UCC_OK != status) {
-        UCC_ERROR("ucc_team_create_test failed");
         goto err;
     }
-
+    UCC_VERBOSE(1, "ucc enabled");
     return OSHMEM_SUCCESS;
-
 err:
-    ucc_module->ucc_team = NULL;
     cm->ucc_enable = 0;
     opal_progress_unregister(mca_scoll_ucc_progress);
     return OSHMEM_ERROR;
@@ -373,7 +445,7 @@ mca_scoll_ucc_comm_query(oshmem_group_t *osh_group, int *priority)
     OPAL_TIMING_ENV_INIT(comm_query);
 
     if (!cm->libucc_initialized) {
-        if (0 < cm->nr_modules) {
+        if (memheap_map && memheap_map->n_segments > 0) {
             if (OSHMEM_SUCCESS != mca_scoll_ucc_init_ctx(osh_group)) {
                 cm->ucc_enable = 0;
                 return NULL;
