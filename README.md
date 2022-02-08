@@ -1502,11 +1502,27 @@ Additionally, if a search directory is specified in the form
   Enable the PERUSE MPI data analysis interface.
 
 * `--enable-heterogeneous`:
-  Enable support for running on heterogeneous clusters (e.g., machines
-  with different endian representations).  Heterogeneous support is
-  disabled by default because it imposes a minor performance penalty.
+  Enable support for running on heterogeneous clusters where data
+  types are equivalent sizes across nodes, but may have differing
+  endian representations.  Heterogeneous support is disabled by
+  default because it imposes a minor performance penalty.
 
-  ***THIS FUNCTIONALITY IS CURRENTLY BROKEN - DO NOT USE***
+  Note that the MPI standard *does not guarantee that all
+  heterogeneous communication will function properly*, **especially
+  when the conversion between the different representations leads to
+  loss of accuracy or range.**  For example, if a message with a
+  16-bit integer datatype is sent with value 0x10000 to a receiver
+  where the same integer datatype is only 8 bits, the value will be
+  truncated at the receiver.  Similarly, problems can occur if a
+  floating point datatype in one MPI process uses X1 bits for its
+  mantissa and Y1 bits for its exponent, but the same floating point
+  datatype in another MPI process uses X2 and Y2 bits, respectively
+  (where X1 != X2 and/or Y1 != Y2).  Type size differences like this
+  can lead to unexpected behavior.
+
+  Open MPI's heterogeneous support correctly handles endian
+  differences between datatype representations that are otherwise
+  compatible.
 
 * `--with-wrapper-cflags=CFLAGS`
 * `--with-wrapper-cxxflags=CXXFLAGS`
