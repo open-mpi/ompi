@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2021 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -53,7 +53,11 @@ struct ompi_isendrecv_context_t {
 };
 
 typedef struct ompi_isendrecv_context_t ompi_isendrecv_context_t;
+#if OMPI_BUILD_MPI_PROFILING
 OBJ_CLASS_INSTANCE(ompi_isendrecv_context_t, opal_object_t, NULL, NULL);
+#else
+OBJ_CLASS_DECLARATION(ompi_isendrecv_context_t);
+#endif  /* OMPI_BUILD_MPI_PROFILING */
 
 static int ompi_isendrecv_complete_func (ompi_comm_request_t *request)
 {
@@ -66,7 +70,7 @@ static int ompi_isendrecv_complete_func (ompi_comm_request_t *request)
      *
      * Probably need to bring up in the MPI forum.  
      */
-    
+
     if (MPI_PROC_NULL != context->source) {
         OMPI_COPY_STATUS(&request->super.req_status, 
                          context->subreq[0]->req_status, false);
@@ -129,12 +133,12 @@ int MPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
-    
+
     crequest = ompi_comm_request_get ();
     if (NULL == crequest) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     context = OBJ_NEW(ompi_isendrecv_context_t);
     if (NULL == context) {
         ompi_comm_request_return (crequest);
@@ -142,8 +146,8 @@ int MPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
     crequest->context = &context->super;
-    context->subreq[0] = NULL;
-    context->subreq[1] = NULL;
+    context->subreq[0] = MPI_REQUEST_NULL;
+    context->subreq[1] = MPI_REQUEST_NULL;
     context->source = source;
 
     if (source != MPI_PROC_NULL) { /* post recv */
@@ -158,7 +162,7 @@ int MPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     if (dest != MPI_PROC_NULL) { /* send */
         rc = MCA_PML_CALL(isend(sendbuf, sendcount, sendtype, dest,
-                               sendtag, MCA_PML_BASE_SEND_STANDARD, comm, &context->subreq[nreqs++]));
+                                sendtag, MCA_PML_BASE_SEND_STANDARD, comm, &context->subreq[nreqs++]));
         if (MPI_SUCCESS != rc) {
             OBJ_RELEASE(context);
             ompi_comm_request_return (crequest);
