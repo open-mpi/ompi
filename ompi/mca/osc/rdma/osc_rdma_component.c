@@ -376,7 +376,7 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
 {
 
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
-        return OMPI_ERR_RMA_SHARED;
+        return -1;
     }
 
 #if OPAL_CUDA_SUPPORT

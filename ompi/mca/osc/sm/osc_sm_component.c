@@ -167,32 +167,28 @@ component_finalize(void)
 
 
 static int
-check_win_ok(ompi_communicator_t *comm, int flavor)
-{
-    if (! (MPI_WIN_FLAVOR_SHARED == flavor
-           || MPI_WIN_FLAVOR_ALLOCATE == flavor) ) {
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
-
-    if (ompi_group_have_remote_peers (comm->c_local_group)) {
-        return OMPI_ERR_RMA_SHARED;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-static int
 component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 struct ompi_communicator_t *comm, struct opal_info_t *info,
                 int flavor)
 {
     int ret;
-    if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
-        if (OMPI_ERR_NOT_SUPPORTED == ret) {
+
+    /* component only supports shared or allocate flavors */
+    if (! (MPI_WIN_FLAVOR_SHARED == flavor ||
+           MPI_WIN_FLAVOR_ALLOCATE == flavor)) {
+        return -1;
+    }
+
+    /* If flavor is win_allocate, we can't run if there are remote
+     * peers in the group.  The same check for flavor_shared happens
+     * in select(), so that we can return an error to the user (since
+     * we should be able to run for all flavor_shared use cases.
+     * There's no way to return an error from component_query to the
+     * user, hence the delayed check.  */
+    if (MPI_WIN_FLAVOR_ALLOCATE == flavor) {
+        if (ompi_group_have_remote_peers(comm->c_local_group)) {
             return -1;
         }
-        return ret;
     }
 
     return mca_osc_sm_component.priority;
@@ -210,8 +206,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     int ret = OMPI_ERROR;
     size_t memory_alignment = OPAL_ALIGN_MIN;
 
-    if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
-        return ret;
+    assert(MPI_WIN_FLAVOR_SHARED == flavor || MPI_WIN_FLAVOR_ALLOCATE == flavor);
+
+    if (ompi_group_have_remote_peers(comm->c_local_group)) {
+        return OMPI_ERR_RMA_SHARED;
     }
 
     /* create module structure */
