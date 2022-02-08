@@ -115,6 +115,8 @@ ompi_osc_sm_module_t ompi_osc_sm_module_template = {
 
 static int component_register (void)
 {
+    char *description_str;
+
     if (0 == access ("/dev/shm", W_OK)) {
         mca_osc_sm_component.backing_directory = "/dev/shm";
     } else {
@@ -127,6 +129,16 @@ static int component_register (void)
                                             "/dev/shm (default: (linux) /dev/shm, (others) session directory)",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_sm_component.backing_directory);
+
+    mca_osc_sm_component.priority = 100;
+    opal_asprintf(&description_str, "Priority of the osc/sm component (default: %d)",
+                  mca_osc_sm_component.priority);
+    (void)mca_base_component_var_register(&mca_osc_sm_component.super.osc_version,
+                                          "priority", description_str,
+                                          MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_GROUP,
+                                          &mca_osc_sm_component.priority);
+    free(description_str);
 
     return OPAL_SUCCESS;
 }
@@ -155,35 +167,31 @@ component_finalize(void)
 
 
 static int
-check_win_ok(ompi_communicator_t *comm, int flavor)
-{
-    if (! (MPI_WIN_FLAVOR_SHARED == flavor
-           || MPI_WIN_FLAVOR_ALLOCATE == flavor) ) {
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
-
-    if (ompi_group_have_remote_peers (comm->c_local_group)) {
-        return OMPI_ERR_RMA_SHARED;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-static int
 component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 struct ompi_communicator_t *comm, struct opal_info_t *info,
                 int flavor)
 {
     int ret;
-    if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
-        if (OMPI_ERR_NOT_SUPPORTED == ret) {
-            return -1;
-        }
-        return ret;
+
+    /* component only supports shared or allocate flavors */
+    if (! (MPI_WIN_FLAVOR_SHARED == flavor ||
+           MPI_WIN_FLAVOR_ALLOCATE == flavor)) {
+        return -1;
     }
 
-    return 100;
+    /* If flavor is win_allocate, we can't run if there are remote
+     * peers in the group.  The same check for flavor_shared happens
+     * in select(), so that we can return an error to the user (since
+     * we should be able to run for all flavor_shared use cases.
+     * There's no way to return an error from component_query to the
+     * user, hence the delayed check.  */
+    if (MPI_WIN_FLAVOR_ALLOCATE == flavor) {
+        if (ompi_group_have_remote_peers(comm->c_local_group)) {
+            return -1;
+        }
+    }
+
+    return mca_osc_sm_component.priority;
 }
 
 
@@ -198,8 +206,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     int ret = OMPI_ERROR;
     size_t memory_alignment = OPAL_ALIGN_MIN;
 
-    if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
-        return ret;
+    assert(MPI_WIN_FLAVOR_SHARED == flavor || MPI_WIN_FLAVOR_ALLOCATE == flavor);
+
+    if (ompi_group_have_remote_peers(comm->c_local_group)) {
+        return OMPI_ERR_RMA_SHARED;
     }
 
     /* create module structure */

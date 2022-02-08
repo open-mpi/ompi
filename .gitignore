@@ -633,6 +633,7 @@ test/class/ompi_rb_tree
 test/class/ompi_bitmap
 test/class/opal_bitmap
 test/class/opal_fifo
+test/class/opal_cstring
 test/class/opal_hash_table
 test/class/opal_lifo
 test/class/opal_list
