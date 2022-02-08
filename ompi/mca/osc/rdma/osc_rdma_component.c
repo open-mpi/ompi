@@ -383,7 +383,7 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
 {
 
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
-        return OMPI_ERR_RMA_SHARED;
+        return -1;
     }
 
 #if OPAL_CUDA_SUPPORT
@@ -403,7 +403,7 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
         return mca_osc_rdma_component.priority;
     }
 
-    return OMPI_ERROR;
+    return -1;
 }
 
 static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void **base, size_t size) {
