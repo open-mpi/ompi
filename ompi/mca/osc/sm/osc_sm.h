@@ -53,6 +53,9 @@ typedef struct ompi_osc_sm_node_state_t ompi_osc_sm_node_state_t;
 struct ompi_osc_sm_component_t {
     ompi_osc_base_component_t super;
 
+    /** Priority of the osc/sm component */
+    unsigned int priority;
+
     char *backing_directory;
 };
 typedef struct ompi_osc_sm_component_t ompi_osc_sm_component_t;

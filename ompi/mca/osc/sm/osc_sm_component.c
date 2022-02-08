@@ -115,6 +115,8 @@ ompi_osc_sm_module_t ompi_osc_sm_module_template = {
 
 static int component_register (void)
 {
+    char *description_str;
+
     if (0 == access ("/dev/shm", W_OK)) {
         mca_osc_sm_component.backing_directory = "/dev/shm";
     } else {
@@ -127,6 +129,16 @@ static int component_register (void)
                                             "/dev/shm (default: (linux) /dev/shm, (others) session directory)",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_sm_component.backing_directory);
+
+    mca_osc_sm_component.priority = 100;
+    opal_asprintf(&description_str, "Priority of the osc/sm component (default: %d)",
+                  mca_osc_sm_component.priority);
+    (void)mca_base_component_var_register(&mca_osc_sm_component.super.osc_version,
+                                          "priority", description_str,
+                                          MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_GROUP,
+                                          &mca_osc_sm_component.priority);
+    free(description_str);
 
     return OPAL_SUCCESS;
 }
@@ -183,7 +195,7 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
         return ret;
     }
 
-    return 100;
+    return mca_osc_sm_component.priority;
 }
 
 
