@@ -15,6 +15,7 @@
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,7 +72,7 @@ static void ompi_isendrecv_context_destructor(ompi_isendrecv_replace_context_t *
     OBJ_DESTRUCT(&context->convertor);
 }
 
-OBJ_CLASS_INSTANCE(ompi_isendrecv_replace_context_t, 
+static OBJ_CLASS_INSTANCE(ompi_isendrecv_replace_context_t, 
                    opal_object_t, 
                    ompi_isendrecv_context_constructor,
                    ompi_isendrecv_context_destructor);
