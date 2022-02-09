@@ -300,7 +300,9 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
             }
         }
 
-        new_errhandler->eh_fort_fn = (ompi_errhandler_fortran_handler_fn_t *)func;
+        if (NULL != new_errhandler) {
+            new_errhandler->eh_fort_fn = (ompi_errhandler_fortran_handler_fn_t *)func;
+        }
 
     }
 

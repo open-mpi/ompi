@@ -32,12 +32,16 @@ int MPI_Session_get_nth_pset (MPI_Session session, MPI_Info info, int n, int *le
 
     if ( MPI_PARAM_CHECK ) {
         if (NULL == session || (NULL == pset_name && *len > 0) || n < 0) {
-            return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG, FUNC_NAME);
+            if (NULL != session) {
+                return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG, FUNC_NAME);
+            } else {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+            }
         }
     }
 
     rc = ompi_instance_get_nth_pset (session, n, len, pset_name);
 
-    /* if an error occured raise it on the null session */
-    OMPI_ERRHANDLER_RETURN (rc, MPI_SESSION_NULL, rc, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN (rc, (NULL == session) ? MPI_SESSION_NULL : session, 
+                            rc, FUNC_NAME);
 }
