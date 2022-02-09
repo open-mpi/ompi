@@ -398,7 +398,7 @@ static void ompi_osc_rdma_put_complete (struct mca_btl_base_module_t *btl, struc
 
     /* the lowest bit is used as a flag indicating this put operation has a request */
     if ((intptr_t) context & 0x1) {
-        ompi_osc_rdma_request_t *request = request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
+        ompi_osc_rdma_request_t *request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
         sync = request->sync;
 
         if (0 == OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1)) {
@@ -429,7 +429,7 @@ static void ompi_osc_rdma_put_complete_flush (struct mca_btl_base_module_t *btl,
 
     /* the lowest bit is used as a flag indicating this put operation has a request */
     if ((intptr_t) context & 0x1) {
-        ompi_osc_rdma_request_t *request = request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
+        ompi_osc_rdma_request_t *request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
         module = request->module;
 
         if (0 == OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1)) {
