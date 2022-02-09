@@ -46,6 +46,7 @@
 
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/util/opal_cuda_copy.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
 #if OPAL_CUDA_SUPPORT

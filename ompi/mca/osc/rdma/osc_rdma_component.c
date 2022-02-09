@@ -51,7 +51,7 @@
 #include "opal/util/printf.h"
 #include "opal/util/sys_limits.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/util/opal_cuda_copy.h"
 #endif /* OPAL_CUDA_SUPPORT */
 #include "opal/util/info_subscriber.h"
 #include "opal/mca/mpool/base/base.h"
