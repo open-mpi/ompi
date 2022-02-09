@@ -497,7 +497,7 @@ int mca_pml_ucx_enable(bool enable)
 
     /* Create a key for adding custom attributes to datatypes */
     copy_fn.attr_datatype_copy_fn  =
-                    (MPI_Type_internal_copy_attr_function*)MPI_TYPE_NULL_COPY_FN;
+                    (MPI_Type_internal_copy_attr_function)MPI_TYPE_NULL_COPY_FN;
     del_fn.attr_datatype_delete_fn = mca_pml_ucx_datatype_attr_del_fn;
     ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
                                   &ompi_pml_ucx.datatype_attr_keyval, NULL, 0,
@@ -700,7 +700,7 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
     OMPI_DATATYPE_RETAIN(datatype);
 
     if (MCA_PML_BASE_SEND_BUFFERED == mode) {
-        req->datatype = NULL;
+        req->datatype = (ucp_datatype_t)NULL;
     } else {
         req->datatype = mca_pml_ucx_get_datatype(datatype);
     }
@@ -979,7 +979,7 @@ int mca_pml_ucx_iprobe(int src, int tag, struct ompi_communicator_t* comm,
         mca_pml_ucx_set_recv_status_public(mpi_status, UCS_OK, &info);
     } else  {
         (++progress_count % opal_common_ucx.progress_iterations) ?
-            (void)ucp_worker_progress(ompi_pml_ucx.ucp_worker) : opal_progress();
+            (int)ucp_worker_progress(ompi_pml_ucx.ucp_worker) : opal_progress();
         *matched = 0;
     }
     return OMPI_SUCCESS;
@@ -1028,7 +1028,7 @@ int mca_pml_ucx_improbe(int src, int tag, struct ompi_communicator_t* comm,
         mca_pml_ucx_set_recv_status_public(mpi_status, UCS_OK, &info);
     } else  {
         (++progress_count % opal_common_ucx.progress_iterations) ?
-            (void)ucp_worker_progress(ompi_pml_ucx.ucp_worker) : opal_progress();
+            (int)ucp_worker_progress(ompi_pml_ucx.ucp_worker) : opal_progress();
         *matched = 0;
     }
     return OMPI_SUCCESS;
