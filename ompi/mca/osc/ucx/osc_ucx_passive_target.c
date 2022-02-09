@@ -216,8 +216,7 @@ int ompi_osc_ucx_lock_all(int mpi_assert, struct ompi_win_t *win) {
 
 int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*)win->w_osc_module;
-    int comm_size = ompi_comm_size(module->comm),
-        i = 0, ret = OMPI_SUCCESS;
+    int comm_size = ompi_comm_size(module->comm), ret = OMPI_SUCCESS;
 
     if (module->epoch_type.access != PASSIVE_ALL_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
@@ -226,7 +225,7 @@ int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
     assert(module->lock_count == 0);
 
     if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
-        for (i = 0; i < module->state.dynamic_win_count; i++) {
+        for (uint64_t i = 0; i < module->state.dynamic_win_count; i++) {
             ret = opal_common_ucx_wpmem_flush(module->local_dynamic_win_info[i].mem , OPAL_COMMON_UCX_SCOPE_WORKER, 0);
             if (ret != OMPI_SUCCESS) {
                 return ret;

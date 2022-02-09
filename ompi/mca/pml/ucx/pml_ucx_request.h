@@ -180,10 +180,9 @@ static inline int mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,
                                                ucs_status_t ucp_status,
                                                const ucp_tag_recv_info_t *info)
 {
-    int64_t tag;
+    int64_t tag = info->sender_tag;
 
     if (OPAL_LIKELY(ucp_status == UCS_OK)) {
-        tag = info->sender_tag;
         mpi_status->MPI_ERROR  = MPI_SUCCESS;
         mpi_status->MPI_SOURCE = PML_UCX_TAG_GET_SOURCE(tag);
         mpi_status->MPI_TAG    = PML_UCX_TAG_GET_MPI_TAG(tag);
