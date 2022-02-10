@@ -120,9 +120,11 @@ static int mca_btl_uct_component_open(void)
         int core_count = 36;
 
         (void) opal_hwloc_base_get_topology();
-        core_count = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE);
+        if (0 > (core_count = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE))) {
+            return OPAL_ERROR;
+        }
 
-        if (core_count <= opal_process_info.num_local_peers || !opal_using_threads()) {
+        if ((uint32_t)core_count <= opal_process_info.num_local_peers || !opal_using_threads()) {
             /* there is probably no benefit to using multiple device contexts when not
              * using threads or oversubscribing the node with mpi processes. */
             mca_btl_uct_component.num_contexts_per_module = 1;
@@ -453,7 +455,7 @@ static int mca_btl_uct_component_process_uct_component(uct_component_h component
         return OPAL_ERROR;
     }
 
-    for (int i = 0; i < attr.md_resource_count; ++i) {
+    for (unsigned i = 0; i < attr.md_resource_count; ++i) {
         rc = mca_btl_uct_component_process_uct_md(component, attr.md_resources + i, allowed_ifaces);
         if (OPAL_SUCCESS != rc) {
             break;
@@ -481,8 +483,6 @@ static mca_btl_base_module_t **mca_btl_uct_component_init(int *num_btl_modules,
     /* for this BTL to be useful the interface needs to support RDMA and certain atomic operations
      */
     struct mca_btl_base_module_t **base_modules;
-    uct_md_resource_desc_t *resources;
-    unsigned resource_count;
     ucs_status_t ucs_status;
     char **allowed_ifaces;
     int rc;
@@ -524,6 +524,8 @@ static mca_btl_base_module_t **mca_btl_uct_component_init(int *num_btl_modules,
     uct_release_component_list(components);
 
 #else /* UCT 1.6 and older */
+    uct_md_resource_desc_t *resources;
+    unsigned resource_count;
 
     uct_query_md_resources(&resources, &resource_count);
 
