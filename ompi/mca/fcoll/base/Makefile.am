@@ -30,6 +30,5 @@ libmca_fcoll_la_SOURCES += \
         base/fcoll_base_file_select.c \
         base/fcoll_base_file_unselect.c \
         base/fcoll_base_sort.c \
-        base/fcoll_base_file_read_all.c \
         base/fcoll_base_coll_array.c
 endif

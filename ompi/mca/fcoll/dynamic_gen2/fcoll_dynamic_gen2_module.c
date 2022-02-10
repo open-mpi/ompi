@@ -37,7 +37,7 @@
 static mca_fcoll_base_module_1_0_0_t dynamic_gen2 =  {
     mca_fcoll_dynamic_gen2_module_init,
     mca_fcoll_dynamic_gen2_module_finalize,
-    mca_fcoll_base_file_read_all,
+    mca_fcoll_dynamic_gen2_file_read_all,
     NULL, /* iread_all */
     mca_fcoll_dynamic_gen2_file_write_all,
     NULL, /*iwrite_all */

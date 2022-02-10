@@ -24,6 +24,7 @@ sources = \
         fcoll_vulcan.h \
         fcoll_vulcan_module.c \
         fcoll_vulcan_component.c \
+        fcoll_vulcan_file_read_all.c \
         fcoll_vulcan_file_write_all.c
 
 # Make the output library in this directory, and name it either
