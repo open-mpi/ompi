@@ -392,7 +392,7 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
         },
         .ep       = ompi_comm_rank(comm),
         .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG,
-        .id       = comm->c_contextid
+        .id       = ompi_comm_get_local_cid(comm)
     };
     UCC_VERBOSE(2,"creating ucc_team for comm %p, comm_id %d, comm_size %d",
                  (void*)comm,comm->c_contextid,ompi_comm_size(comm));
