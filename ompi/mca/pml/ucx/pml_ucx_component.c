@@ -49,7 +49,9 @@ mca_pml_base_component_2_1_0_t mca_pml_ucx_component = {
 
 static int mca_pml_ucx_component_register(void)
 {
+#if HAVE_DECL_UCP_OP_ATTR_FLAG_MULTI_SEND
     int multi_send_op_attr_enable;
+#endif
 
     ompi_pml_ucx.priority = 51;
     (void) mca_base_component_var_register(&mca_pml_ucx_component.pmlm_version, "priority",

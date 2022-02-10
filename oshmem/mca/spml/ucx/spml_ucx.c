@@ -1555,14 +1555,14 @@ int mca_spml_ucx_test_all_vector(void *ivars, int cmp, void
 }
 
 /* This routine is not implemented */
-size_t mca_spml_ucx_test_any_vector(void *ivars, int cmp, void
+int mca_spml_ucx_test_any_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-size_t mca_spml_ucx_test_some_vector(void *ivars, int cmp, void
+int mca_spml_ucx_test_some_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, size_t *indices, const int *status, int
         datatype)
 {
