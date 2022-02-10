@@ -24,7 +24,7 @@
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2020-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -368,6 +368,13 @@ static int ompi_comm_nextcid_ext_nb (ompi_communicator_t *newcomm, ompi_communic
     ompi_comm_extended_cid_block_t *block;
     bool is_new_block = false;
     int rc;
+
+    /*
+     * sanity check and coverity pacifier
+     */
+    if (!(OMPI_COMM_CID_GROUP == mode || OMPI_COMM_CID_GROUP_NEW == mode) && (NULL == comm)) {
+        return OMPI_ERROR;
+    }
 
     if (OMPI_COMM_CID_GROUP == mode || OMPI_COMM_CID_GROUP_NEW == mode) {
         /* new block belongs to the new communicator */

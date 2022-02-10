@@ -24,7 +24,7 @@
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -1546,8 +1546,6 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
         } else {
             free (leader_procs);
         }
-
-        rsize = remote_group->grp_proc_count;
     }
 
     /* bcast size and list of remote processes to all processes in local_comm */
