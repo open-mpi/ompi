@@ -145,6 +145,10 @@ mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
     *priority = (support_level == OPAL_COMMON_UCX_SUPPORT_DEVICE) ?
                 ompi_pml_ucx.priority : 19;
     PML_UCX_VERBOSE(2, "returning priority %d", *priority);
+
+    /** this pml supports the extended CID space */
+    ompi_pml_ucx.super.pml_flags |= MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID;
+
     return &ompi_pml_ucx.super;
 }
 

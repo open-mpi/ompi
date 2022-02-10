@@ -23,7 +23,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
@@ -69,6 +69,8 @@ ompi_predefined_communicator_t  ompi_mpi_comm_self = {{{{0}}}};
 ompi_predefined_communicator_t  ompi_mpi_comm_null = {{{{0}}}};
 ompi_communicator_t  *ompi_mpi_comm_parent = NULL;
 
+int ompi_comm_output = -1;
+
 static bool ompi_comm_intrinsic_init;
 
 ompi_predefined_communicator_t *ompi_mpi_comm_world_addr =
@@ -97,6 +99,14 @@ static int ompi_comm_finalize (void);
  */
 int ompi_comm_init(void)
 {
+
+    /* create output stream */
+
+    if (ompi_comm_output == -1) {
+        ompi_comm_output = opal_output_open(NULL);
+        opal_output_set_verbosity(ompi_comm_output, ompi_comm_verbose_level);
+    }
+
     /* Setup communicator array */
     OBJ_CONSTRUCT(&ompi_mpi_communicators, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_communicators, 16,
@@ -392,6 +402,11 @@ static int ompi_comm_finalize (void)
     /* finalize communicator requests */
     ompi_comm_request_fini ();
 
+    /* close output stream */
+
+    opal_output_close(ompi_comm_output);
+    ompi_comm_output = -1;
+
     /* release a reference to the attributes subsys */
     return ompi_attr_put_ref();
 }
@@ -417,6 +432,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_coll         = NULL;
     comm->c_nbc_tag      = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
     comm->instance       = NULL;
+    comm->c_index_vec    = NULL;
 
     /*
      * magic numerology - see TOPDIR/ompi/include/mpif-values.pl
@@ -516,6 +532,11 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     if (NULL != comm->c_name) {
         free (comm->c_name);
         comm->c_name = NULL;
+    }
+
+    if (NULL != comm->c_index_vec) {
+        free (comm->c_index_vec);
+        comm->c_index_vec = NULL;
     }
 
 #if OPAL_ENABLE_FT_MPI
