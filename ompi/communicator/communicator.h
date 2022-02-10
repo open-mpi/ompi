@@ -153,6 +153,8 @@ OMPI_DECLSPEC extern opal_hash_table_t ompi_comm_hash;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_comm_f_to_c_table;
 
+OMPI_DECLSPEC extern int ompi_comm_output;
+
 struct ompi_comm_extended_cid_t {
     uint64_t  cid_base;
     union {
@@ -613,6 +615,13 @@ static inline struct ompi_proc_t* ompi_comm_peer_lookup (const ompi_communicator
     /*return comm->c_remote_group->grp_proc_pointers[peer_id];*/
     return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
 }
+
+static inline bool ompi_comm_instances_same(const ompi_communicator_t *comm1, const ompi_communicator_t *comm2)
+{
+    return comm1->instance == comm2->instance;
+}
+
+int ompi_comm_get_remote_cid (ompi_communicator_t *comm, int dest, uint32_t *remote_cid);
 
 #if OPAL_ENABLE_FT_MPI
 /*

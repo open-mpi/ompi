@@ -1509,9 +1509,6 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
 {
-    ompi_comm_idup_with_info_context_t *context =
-        (ompi_comm_idup_with_info_context_t *) request->context;
-
     /* done */
     return MPI_SUCCESS;
 }
@@ -1741,7 +1738,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
                                        ompi_communicator_t **newintercomm)
 {
     ompi_communicator_t *newcomp = NULL, *local_comm, *leader_comm = MPI_COMM_NULL;
-    ompi_comm_extended_cid_block_t new_block;
+    ompi_comm_extended_cid_block_t new_block = {{0}};
     bool i_am_leader = local_leader == local_group->grp_my_rank;
     ompi_proc_t **rprocs;
     uint64_t data[4];
@@ -1867,14 +1864,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
         return rc;
     }
 
-    /* will be using a communicator ID derived from the bridge communicator to save some time */
-    new_block.block_cid.cid_base = data[1];
-    new_block.block_cid.cid_sub.u64 = data[2];
-    new_block.block_nextsub = 0;
-    new_block.block_nexttag = 0;
-    new_block.block_level = (int8_t) data[3];
-
-    rc = ompi_comm_nextcid (newcomp, NULL, NULL, (void *) tag, &new_block, false, OMPI_COMM_CID_GROUP_NEW);
+    rc = ompi_comm_nextcid (newcomp, NULL, NULL, (void *) tag, NULL, false, OMPI_COMM_CID_GROUP_NEW);
     if ( OMPI_SUCCESS != rc ) {
         OBJ_RELEASE(newcomp);
         return rc;

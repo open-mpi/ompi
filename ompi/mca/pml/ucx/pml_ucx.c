@@ -92,6 +92,8 @@ mca_pml_ucx_module_t ompi_pml_ucx = {
     .ucp_worker            = NULL
 };
 
+OBJ_CLASS_INSTANCE(mca_pml_comm_t, opal_object_t, NULL, NULL);
+
 #define PML_UCX_REQ_ALLOCA() \
     ((char *)alloca(ompi_pml_ucx.request_size) + ompi_pml_ucx.request_size);
 
@@ -193,6 +195,7 @@ static int mca_pml_ucx_recv_worker_address(ompi_proc_t *proc,
                     proc->super.proc_name.vpid, *addrlen_p);
     return ret;
 }
+
 
 int mca_pml_ucx_open(void)
 {
@@ -590,11 +593,51 @@ int mca_pml_ucx_progress(void)
 
 int mca_pml_ucx_add_comm(struct ompi_communicator_t* comm)
 {
-    return OMPI_SUCCESS;
+    int ret = OMPI_SUCCESS;
+    uint32_t comm_size;
+    mca_pml_comm_t* pml_comm;
+
+    if (!OMPI_COMM_IS_GLOBAL_INDEX(comm)) {
+        pml_comm = OBJ_NEW(mca_pml_comm_t);
+
+        if (OMPI_COMM_IS_INTER(comm)) {
+            comm_size = ompi_comm_remote_size(comm);
+        } else {
+            comm_size = ompi_comm_size(comm);
+        }
+
+        /* 
+         *  This code takes advantage of the fact that c_index is 0 for MPI_COMM_WORLD
+         */    
+
+        pml_comm->c_index_vec = (uint32_t *)calloc(comm_size, sizeof(uint32_t));
+        if (NULL == pml_comm->c_index_vec) {
+            OBJ_RELEASE(pml_comm);
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto error;
+        }
+        if (OMPI_COMM_IS_INTRA(comm)) {
+            pml_comm->c_index_vec[comm->c_my_rank] = comm->c_index;
+        }
+        comm->c_pml_comm = pml_comm;
+    } else {
+        comm->c_pml_comm = NULL;
+    }
+
+error:
+    return ret;
 }
 
 int mca_pml_ucx_del_comm(struct ompi_communicator_t* comm)
 {
+    if(NULL != comm->c_pml_comm) {
+        if (NULL != comm->c_pml_comm->c_index_vec) {
+            free(comm->c_pml_comm->c_index_vec);
+        }
+        OBJ_RELEASE(comm->c_pml_comm);
+        comm->c_pml_comm = NULL;
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -739,7 +782,10 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
                            struct ompi_communicator_t* comm,
                            struct ompi_request_t **request)
 {
+    int rc;
+    uint32_t cid;
     mca_pml_ucx_persistent_request_t *req;
+    mca_pml_comm_t *pml_comm;
     ucp_ep_h ep;
 
     req = (mca_pml_ucx_persistent_request_t *)PML_UCX_FREELIST_GET(&ompi_pml_ucx.persistent_reqs);
@@ -755,12 +801,27 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
         return OMPI_ERROR;
     }
 
+    if (OPAL_LIKELY(OMPI_COMM_IS_GLOBAL_INDEX(comm))) {
+        cid = comm->c_index;
+    } else {
+        pml_comm = comm->c_pml_comm;
+        if (pml_comm->c_index_vec[dst] == 0) {
+            rc = ompi_comm_get_remote_cid(comm, dst, &cid);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                return rc;
+            }
+            pml_comm->c_index_vec[dst] = cid;
+        } else {
+            cid = pml_comm->c_index_vec[dst];
+        }
+    }
+
     req->ompi.req_state           = OMPI_REQUEST_INACTIVE;
     req->ompi.req_mpi_object.comm = comm;
     req->flags                    = MCA_PML_UCX_REQUEST_FLAG_SEND;
     req->buffer                   = (void *)buf;
     req->count                    = count;
-    req->tag                      = PML_UCX_MAKE_SEND_TAG(tag, comm);
+    req->tag                      = PML_UCX_MAKE_SEND_TAG(tag, comm, cid);
     req->send.mode                = mode;
     req->send.ep                  = ep;
     req->ompi_datatype            = datatype;
@@ -885,8 +946,11 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
                       struct ompi_communicator_t* comm,
                       struct ompi_request_t **request)
 {
+    int rc;
     ompi_request_t *req;
+    uint32_t cid;
     ucp_ep_h ep;
+    mca_pml_comm_t *pml_comm;
 
     PML_UCX_TRACE_SEND("i%ssend request *%p",
                        buf, count, datatype, dst, tag, mode, comm,
@@ -898,14 +962,28 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
         return OMPI_ERROR;
     }
 
+    if (OPAL_LIKELY(OMPI_COMM_IS_GLOBAL_INDEX(comm))) {
+        cid = comm->c_index;
+    } else {
+        pml_comm = comm->c_pml_comm;
+        if (pml_comm->c_index_vec[dst] == 0) {
+            rc = ompi_comm_get_remote_cid(comm, dst, &cid);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                return rc;
+            }
+            pml_comm->c_index_vec[dst] = cid;
+        } else {
+            cid = pml_comm->c_index_vec[dst];
+        }
+    }
 #if HAVE_DECL_UCP_TAG_SEND_NBX
     req = (ompi_request_t*)mca_pml_ucx_common_send_nbx(ep, buf, count, datatype,
-                                                       PML_UCX_MAKE_SEND_TAG(tag, comm), mode,
+                                                       PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode,
                                                        &mca_pml_ucx_get_op_data(datatype)->op_param.isend);
 #else
     req = (ompi_request_t*)mca_pml_ucx_common_send(ep, buf, count, datatype,
                                                    mca_pml_ucx_get_datatype(datatype),
-                                                   PML_UCX_MAKE_SEND_TAG(tag, comm), mode,
+                                                   PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode,
                                                    mca_pml_ucx_send_completion);
 #endif
 
@@ -1002,7 +1080,10 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
                      int tag, mca_pml_base_send_mode_t mode,
                      struct ompi_communicator_t* comm)
 {
+    int rc;
     ucp_ep_h ep;
+    uint32_t cid;
+    mca_pml_comm_t *pml_comm;
 
     PML_UCX_TRACE_SEND("%s", buf, count, datatype, dst, tag, mode, comm,
                        mode == MCA_PML_BASE_SEND_BUFFERED ? "bsend" : "send");
@@ -1019,17 +1100,32 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
                     OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
 #endif
 
+    if (OPAL_LIKELY(OMPI_COMM_IS_GLOBAL_INDEX(comm))) {
+        cid = comm->c_index;
+    } else {           
+        pml_comm = comm->c_pml_comm;
+        if (pml_comm->c_index_vec[dst] == 0) {
+            rc = ompi_comm_get_remote_cid(comm, dst, &cid);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                return rc;
+            }
+            pml_comm->c_index_vec[dst] = cid;
+        } else {
+            cid = pml_comm->c_index_vec[dst];
+        }
+    }
+
 #if HAVE_DECL_UCP_TAG_SEND_NBR
     if (OPAL_LIKELY((MCA_PML_BASE_SEND_BUFFERED != mode) &&
                     (MCA_PML_BASE_SEND_SYNCHRONOUS != mode))) {
         return mca_pml_ucx_send_nbr(ep, buf, count, datatype,
-                                    PML_UCX_MAKE_SEND_TAG(tag, comm));
+                                    PML_UCX_MAKE_SEND_TAG(tag, comm, cid));
     }
 #endif
 
     return mca_pml_ucx_send_nb(ep, buf, count, datatype,
                                mca_pml_ucx_get_datatype(datatype),
-                               PML_UCX_MAKE_SEND_TAG(tag, comm), mode);
+                               PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode);
 }
 
 int mca_pml_ucx_iprobe(int src, int tag, struct ompi_communicator_t* comm,

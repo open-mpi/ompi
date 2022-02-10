@@ -360,19 +360,14 @@ int ompi_mtl_ofi_add_comm(struct mca_mtl_base_module_t *mtl,
         } else {
             comm_size = ompi_comm_size(comm);
         }
-        mtl_comm->c_index_vec = (c_index_vec_t *)malloc(sizeof(c_index_vec_t) * comm_size);
+        mtl_comm->c_index_vec = (c_index_vec_t *)calloc(comm_size, sizeof(c_index_vec_t));
         if (NULL == mtl_comm->c_index_vec) {
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             OBJ_RELEASE(mtl_comm);
             goto error;
-        } else {
-            for (uint32_t i=0; i < comm_size; i++) {
-                mtl_comm->c_index_vec[i].c_index_state = MCA_MTL_OFI_CID_NOT_EXCHANGED;
-            }
         }
         if (OMPI_COMM_IS_INTRA(comm)) {
             mtl_comm->c_index_vec[comm->c_my_rank].c_index = comm->c_index;
-            mtl_comm->c_index_vec[comm->c_my_rank].c_index_state = MCA_MTL_OFI_CID_EXCHANGED;
         }
 
         comm->c_mtl_comm = mtl_comm;
