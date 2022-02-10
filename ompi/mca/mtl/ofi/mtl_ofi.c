@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2024 Triad National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -13,8 +13,6 @@
 #include "mtl_ofi.h"
 
 OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
-
-OBJ_CLASS_INSTANCE(mca_mtl_comm_t, opal_object_t, NULL, NULL);
 
 mca_mtl_ofi_module_t ompi_mtl_ofi = {
     {
@@ -346,42 +344,9 @@ int ompi_mtl_ofi_add_comm(struct mca_mtl_base_module_t *mtl,
                       struct ompi_communicator_t *comm)
 {
     int ret = OMPI_SUCCESS;
-    uint32_t comm_size;
-    mca_mtl_comm_t* mtl_comm;
 
     mca_mtl_ofi_ep_type ep_type = (0 == ompi_mtl_ofi.enable_sep) ?
                                   OFI_REGULAR_EP : OFI_SCALABLE_EP;
-
-    if (!OMPI_COMM_IS_GLOBAL_INDEX(comm)) {
-        mtl_comm = OBJ_NEW(mca_mtl_comm_t);
-
-        if (OMPI_COMM_IS_INTER(comm)) {
-            comm_size = ompi_comm_remote_size(comm);
-        } else {
-            comm_size = ompi_comm_size(comm);
-        }
-        mtl_comm->c_index_vec = (c_index_vec_t *)malloc(sizeof(c_index_vec_t) * comm_size);
-        if (NULL == mtl_comm->c_index_vec) {
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
-            OBJ_RELEASE(mtl_comm);
-            goto error;
-        } else {
-            for (uint32_t i=0; i < comm_size; i++) {
-                mtl_comm->c_index_vec[i].c_index_state = MCA_MTL_OFI_CID_NOT_EXCHANGED;
-            }
-        }
-        if (OMPI_COMM_IS_INTRA(comm)) {
-            mtl_comm->c_index_vec[comm->c_my_rank].c_index = comm->c_index;
-            mtl_comm->c_index_vec[comm->c_my_rank].c_index_state = MCA_MTL_OFI_CID_EXCHANGED;
-        }
-
-        comm->c_mtl_comm = mtl_comm;
-
-    } else  {
-
-        comm->c_mtl_comm = NULL;
-
-    }
 
     /*
      * If thread grouping enabled, add new OFI context for each communicator
@@ -411,12 +376,6 @@ int ompi_mtl_ofi_del_comm(struct mca_mtl_base_module_t *mtl,
     int ret = OMPI_SUCCESS;
     mca_mtl_ofi_ep_type ep_type = (0 == ompi_mtl_ofi.enable_sep) ?
                                   OFI_REGULAR_EP : OFI_SCALABLE_EP;
-
-    if(NULL != comm->c_mtl_comm) {
-        free(comm->c_mtl_comm->c_index_vec);
-        OBJ_RELEASE(comm->c_mtl_comm);
-        comm->c_mtl_comm = NULL;
-    }
 
     /*
      * Clean up OFI contexts information.

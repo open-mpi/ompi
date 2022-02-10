@@ -43,10 +43,10 @@ enum {
 #define PML_UCX_TAG_MASK                       0x7fffff0000000000ul
 
 
-#define PML_UCX_MAKE_SEND_TAG(_tag, _comm) \
+#define PML_UCX_MAKE_SEND_TAG(_tag, _comm, _c_index) \
     ((((uint64_t) (_tag)            ) << (PML_UCX_RANK_BITS + PML_UCX_CONTEXT_BITS)) | \
      (((uint64_t)(_comm)->c_my_rank ) << PML_UCX_CONTEXT_BITS) | \
-     ((uint64_t)(_comm)->c_index))
+     ((uint64_t)(_c_index)))
 
 
 #define PML_UCX_MAKE_RECV_TAG(_ucp_tag, _ucp_tag_mask, _tag, _src, _comm) \
