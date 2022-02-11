@@ -38,6 +38,7 @@
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/smsc/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/coll/base/base.h"
@@ -91,7 +92,7 @@ OBJ_CLASS_INSTANCE(ompi_instance_t, opal_infosubscriber_t, ompi_instance_constru
 /* NTH: frameworks needed by MPI */
 static mca_base_framework_t *ompi_framework_dependencies[] = {
     &ompi_hook_base_framework, &ompi_op_base_framework,
-    &opal_allocator_base_framework, &opal_rcache_base_framework, &opal_mpool_base_framework,
+    &opal_allocator_base_framework, &opal_rcache_base_framework, &opal_mpool_base_framework, &opal_smsc_base_framework,
     &ompi_bml_base_framework, &ompi_pml_base_framework, &ompi_coll_base_framework,
     &ompi_osc_base_framework, NULL,
 };
