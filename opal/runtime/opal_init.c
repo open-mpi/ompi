@@ -622,7 +622,7 @@ static mca_base_framework_t *opal_init_frameworks[] = {
     &opal_memcpy_base_framework, &opal_memchecker_base_framework,
     &opal_backtrace_base_framework, &opal_timer_base_framework,
     &opal_shmem_base_framework, &opal_reachable_base_framework,
-    &opal_pmix_base_framework, &opal_smsc_base_framework,
+    &opal_pmix_base_framework,
     NULL,
 };
 
