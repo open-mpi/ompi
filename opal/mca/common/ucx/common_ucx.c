@@ -235,8 +235,7 @@ opal_common_ucx_support_level(ucp_context_h context)
 
     /* Check for special value "any" */
     if (is_any_tl && is_any_device) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucx is enabled on any transport or device",
-                               *opal_common_ucx.tls);
+        MCA_COMMON_UCX_VERBOSE(1, "ucx is enabled on any transport or device");
         support_level = OPAL_COMMON_UCX_SUPPORT_DEVICE;
         goto out;
     }

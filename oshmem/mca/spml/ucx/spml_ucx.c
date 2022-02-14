@@ -259,7 +259,7 @@ int mca_spml_ucx_del_procs(oshmem_group_t* group, size_t nprocs)
     opal_common_ucx_del_proc_t *del_procs;
     size_t i, w, n;
     int ret;
-    int ucp_workers = mca_spml_ucx.ucp_workers;
+    size_t ucp_workers = mca_spml_ucx.ucp_workers;
 
     oshmem_shmem_barrier();
 
@@ -439,7 +439,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
     size_t i, w, n;
     int rc = OSHMEM_ERROR;
     int my_rank = oshmem_my_proc_id();
-    int ucp_workers = mca_spml_ucx.ucp_workers;
+    size_t ucp_workers = mca_spml_ucx.ucp_workers;
     ucs_status_t err;
     ucp_address_t **wk_local_addr;
     unsigned int *wk_addr_len;
@@ -922,8 +922,7 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
 {
     mca_spml_ucx_ctx_t *ucx_ctx = NULL;
     mca_spml_ucx_ctx_array_t *idle_array = &mca_spml_ucx.idle_array;
-    mca_spml_ucx_ctx_array_t *active_array = &mca_spml_ucx.active_array;
-    int i, rc;
+    int i, rc = OSHMEM_SUCCESS;
 
     /* Take a lock controlling context creation. AUX context may set specific
      * UCX parameters affecting worker creation, which are not needed for
