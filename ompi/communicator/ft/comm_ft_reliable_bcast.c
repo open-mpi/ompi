@@ -161,11 +161,10 @@ static void ompi_comm_rbcast_bml_recv_cb(
         const mca_btl_base_receive_descriptor_t* descriptor)
 {
     ompi_comm_rbcast_message_t* msg;
-    mca_btl_base_tag_t tag = descriptor->tag;
     ompi_communicator_t* comm;
 
     /* Parse the rbcast fragment */
-    assert( MCA_BTL_TAG_FT_RBCAST == tag );
+    assert( MCA_BTL_TAG_FT_RBCAST == descriptor->tag );
     assert( 1 == descriptor->des_segment_count );
     assert( sizeof(ompi_comm_rbcast_message_t) <= descriptor->des_segments->seg_len );
     msg = (ompi_comm_rbcast_message_t*) descriptor->des_segments->seg_addr.pval;

@@ -171,8 +171,6 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 struct ompi_communicator_t *comm, struct opal_info_t *info,
                 int flavor)
 {
-    int ret;
-
     /* component only supports shared or allocate flavors */
     if (! (MPI_WIN_FLAVOR_SHARED == flavor ||
            MPI_WIN_FLAVOR_ALLOCATE == flavor)) {
