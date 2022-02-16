@@ -693,8 +693,6 @@ int32_t ompi_datatype_init( void )
 
 static int ompi_datatype_finalize (void)
 {
-    int ret = OMPI_SUCCESS;
-
     /* As the synonyms are just copies of the internal data we should not free them.
      * Anyway they are over the limit of OMPI_DATATYPE_MPI_MAX_PREDEFINED so they will never get freed.
      */
