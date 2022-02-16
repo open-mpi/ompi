@@ -1470,7 +1470,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
     *newintercomm = MPI_COMM_NULL;
 
     /* create a local communicator first. create a unique tag for this communicator */
-    asprintf (&sub_tag, "%s-OMPIi-%s", tag, OPAL_NAME_PRINT(ompi_group_get_proc_name (local_group, local_leader)));
+    opal_asprintf (&sub_tag, "%s-OMPIi-%s", tag, OPAL_NAME_PRINT(ompi_group_get_proc_name (local_group, local_leader)));
     if (OPAL_UNLIKELY(NULL == sub_tag)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -1507,7 +1507,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
             /* create a unique tag for allocating the leader communicator. we can eliminate this step
              * if we take a CID from the newly allocated block belonging to local_comm. this is
              * a note to make this change at a later time. */
-            asprintf (&sub_tag, "%s-OMPIi-LC", tag);
+            opal_asprintf (&sub_tag, "%s-OMPIi-LC", tag);
             if (OPAL_UNLIKELY(NULL == sub_tag)) {
                 ompi_comm_free (&local_comm);
                 free(leader_procs);
