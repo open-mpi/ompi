@@ -34,7 +34,8 @@ int MPI_Session_create_errhandler (MPI_Session_errhandler_function *session_errh
 
     if ( MPI_PARAM_CHECK ) {
         if (NULL == errhandler || NULL == session_errhandler_fn) {
-            return MPI_ERR_ARG;
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                          FUNC_NAME);
         }
     }
 
@@ -47,5 +48,5 @@ int MPI_Session_create_errhandler (MPI_Session_errhandler_function *session_errh
         err = MPI_ERR_INTERN;
     }
 
-    return err;
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, MPI_ERR_INTERN, FUNC_NAME);
 }
