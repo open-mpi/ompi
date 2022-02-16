@@ -42,6 +42,7 @@
 #include "opal/include/opal_config.h"
 
 #include "opal/datatype/opal_datatype.h"
+#include "opal/mca/accelerator/base/base.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -199,6 +200,15 @@ int opal_init(int *pargc, char ***pargv)
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         return opal_init_error("opal_init framework open", ret);
     }
+
+    /* Intitialize Accelerator framework
+     * The datatype convertor code has a dependency on the accelerator framework
+     * being initialized. */
+    ret = mca_base_framework_open(&opal_accelerator_base_framework, 0);
+    if (OPAL_SUCCESS == ret && OPAL_SUCCESS != (ret = opal_accelerator_base_select())) {
+        return opal_init_error("opal_accelerator_base_select", ret);
+    }
+    opal_finalize_register_cleanup(accelerator_base_selected_component.accelerator_finalize);
 
     /* initialize the datatype engine */
     if (OPAL_SUCCESS != (ret = opal_datatype_init())) {
