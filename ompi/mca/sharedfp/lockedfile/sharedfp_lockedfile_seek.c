@@ -28,6 +28,8 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
+#include "opal/util/fd.h"
+
 /*Use fcntl to lock the file which stores the current position*/
 #include <fcntl.h>
 
@@ -119,7 +121,7 @@ mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
 	 *--------------------
 	 */
 	lseek ( fd_lockedfilehandle, 0, SEEK_SET);
-        write ( fd_lockedfilehandle, &offset, sizeof(OMPI_MPI_OFFSET_TYPE));
+        opal_fd_write ( fd_lockedfilehandle, sizeof(OMPI_MPI_OFFSET_TYPE), &offset);
 
         /*-------------------
 	 * unlock the file
