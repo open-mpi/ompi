@@ -77,33 +77,6 @@ OBJ_CLASS_INSTANCE(ompi_osc_rdma_pending_op_t, opal_list_item_t,
                    ompi_osc_rdma_pending_op_construct,
                    ompi_osc_rdma_pending_op_destruct);
 
-/**
- * Dummy completion function for atomic operations
- */
-void ompi_osc_rdma_atomic_complete (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                                    void *local_address, mca_btl_base_registration_handle_t *local_handle,
-                                    void *context, void *data, int status)
-{
-    ompi_osc_rdma_pending_op_t *pending_op = (ompi_osc_rdma_pending_op_t *) context;
-
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "pending atomic %p complete with status %d", (void*)pending_op, status);
-
-    if (pending_op->op_result) {
-        memmove (pending_op->op_result, pending_op->op_buffer, pending_op->op_size);
-    }
-
-    if (NULL != pending_op->cbfunc) {
-        pending_op->cbfunc (pending_op->cbdata, pending_op->cbcontext, status);
-    }
-
-    if (NULL != pending_op->op_frag) {
-        ompi_osc_rdma_frag_complete (pending_op->op_frag);
-        pending_op->op_frag = NULL;
-    }
-
-    pending_op->op_complete = true;
-    OBJ_RELEASE(pending_op);
-}
 
 /**
  * compare_ranks:

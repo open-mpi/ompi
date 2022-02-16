@@ -11,6 +11,8 @@
 # Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,6 +23,8 @@
 rdma_sources = \
 	osc_rdma.h \
 	osc_rdma_module.c \
+	osc_rdma_btl_comm.h \
+	osc_rdma_btl_comm.c \
 	osc_rdma_comm.h \
 	osc_rdma_comm.c \
 	osc_rdma_accumulate.c \

@@ -40,43 +40,74 @@ static int ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *modul
                                             struct mca_btl_base_endpoint_t **endpoint)
 {
     ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, peer_id);
-    mca_bml_base_endpoint_t *bml_endpoint;
-    int num_btls;
+    mca_bml_base_endpoint_t *bml_endpoint = mca_bml_base_get_endpoint(proc);
 
-    /* for now just use the bml to get the btl endpoint */
-    bml_endpoint = mca_bml_base_get_endpoint (proc);
+    if (module->use_accelerated_btl) {
+        opal_output_verbose(MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output,
+                            "rank %d: accelerated btl search for peer %d",
+                            ompi_comm_rank(module->comm), peer_id);
+        mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma,
+                                                                  module->accelerated_btl);
+        if (NULL != bml_btl) {
+            *btl_index_out = 0;
+            *endpoint = bml_btl->btl_endpoint;
 
-    num_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_rdma);
+            return OMPI_SUCCESS;
+        }
+    } else {
+        mca_bml_base_btl_t *bml_btl;
+        opal_output_verbose(MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output,
+                            "rank %d: alternate btl search for peer %d",
+                            ompi_comm_rank(module->comm), peer_id);
 
-    for (int module_btl_index = 0 ; module_btl_index < module->btls_in_use ; ++module_btl_index) {
-        for (int btl_index = 0 ; btl_index < num_btls ; ++btl_index) {
-            if (bml_endpoint->btl_rdma.bml_btls[btl_index].btl == module->selected_btls[module_btl_index]) {
-                *btl_index_out = module_btl_index;
-                *endpoint = bml_endpoint->btl_rdma.bml_btls[btl_index].btl_endpoint;
+        /* the non accelerated case is a bit difficult compared to the
+         * accelerated case.  The right BTL could be in either the
+         * rdma or eager endpoint list, because we're using the am
+         * rdma interface to provide RDMA semantics.  The important
+         * part is that we search the alternate_btls list in order,
+         * since it is sorted by latency.
+         */
+        for (int osc_btl_idx = 0 ; osc_btl_idx < module->alternate_btl_count ; ++osc_btl_idx) {
+            mca_btl_base_module_t *search_btl = ompi_osc_rdma_selected_btl(module, osc_btl_idx);
+            const char *source = NULL;
+
+            opal_output_verbose(MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output,
+                                "rank %d comparing with btl %s, %d",
+                                ompi_comm_rank(module->comm),
+                                search_btl->btl_component->btl_version.mca_component_name,
+                                osc_btl_idx);
+
+            source = "rdma";
+            bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, search_btl);
+            if (NULL == bml_btl) {
+                source = "eager";
+                bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_eager, search_btl);
+            }
+            if (NULL != bml_btl) {
+                *btl_index_out = osc_btl_idx;
+                *endpoint = bml_btl->btl_endpoint;
+
+                opal_output_verbose(MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output,
+                                    "rank %d found btl for peer %d (%s, %d, %s)",
+                                    ompi_comm_rank(module->comm), peer_id,
+                                    bml_btl->btl->btl_component->btl_version.mca_component_name,
+                                    osc_btl_idx, source);
+
                 return OMPI_SUCCESS;
             }
         }
     }
 
-    /* if this is a non-RDMA btl then the endpoint may be listed under eager */
-    num_btls = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_eager);
-
-    for (int module_btl_index = 0 ; module_btl_index < module->btls_in_use ; ++module_btl_index) {
-        for (int btl_index = 0 ; btl_index < num_btls ; ++btl_index) {
-            if (bml_endpoint->btl_eager.bml_btls[btl_index].btl == module->selected_btls[module_btl_index]) {
-                *btl_index_out = module_btl_index;
-                *endpoint = bml_endpoint->btl_eager.bml_btls[btl_index].btl_endpoint;
-                return OMPI_SUCCESS;
-            }
-        }
-    }
+    opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                        "rank %d: failed peer search for peer %d",
+                        ompi_comm_rank(module->comm), peer_id);
 
     /* unlikely but can happen when creating a peer for self */
     return OMPI_ERR_UNREACH;
 }
 
 int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, ompi_osc_rdma_peer_t **peer_out) {
-    struct mca_btl_base_endpoint_t *endpoint;
+    struct mca_btl_base_endpoint_t *endpoint = NULL;
     ompi_osc_rdma_peer_t *peer;
     uint8_t module_btl_index = UINT8_MAX;
 
@@ -84,8 +115,7 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
 
     /* find a btl/endpoint to use for this peer */
     int ret = ompi_osc_rdma_peer_btl_endpoint (module, peer_id, &module_btl_index, &endpoint);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret && !((module->selected_btls[0]->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) &&
-                                               peer_id == ompi_comm_rank (module->comm)))) {
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
 
@@ -134,7 +164,8 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "configuring peer for rank %d", peer->rank);
 
     if (module->use_memory_registration) {
-        registration_handle_size = module->selected_btls[0]->btl_registration_handle_size;
+        assert(module->use_accelerated_btl);
+        registration_handle_size = module->accelerated_btl->btl_registration_handle_size;
     }
 
     /* each node is responsible for holding a part of the rank -> node/local rank mapping array. this code

@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,11 +19,9 @@
 #include "osc_rdma_dynamic.h"
 #include "osc_rdma_request.h"
 #include "osc_rdma_sync.h"
-#include "osc_rdma_lock.h"
 
 #define OMPI_OSC_RDMA_DECODE_MAX 64
 
-#define min(a,b) ((a) < (b) ? (a) : (b))
 #define ALIGNMENT_MASK(x) ((x) ? (x) - 1 : 0)
 
 /**
