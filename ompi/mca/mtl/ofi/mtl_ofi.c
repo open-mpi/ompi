@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -362,14 +362,16 @@ ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
 int ompi_mtl_ofi_add_comm(struct mca_mtl_base_module_t *mtl,
                       struct ompi_communicator_t *comm)
 {
-    int ret;
+    int ret = OMPI_SUCCESS;
     uint32_t comm_size;
-    mca_mtl_comm_t* mtl_comm = OBJ_NEW(mca_mtl_comm_t);
+    mca_mtl_comm_t* mtl_comm;
 
     mca_mtl_ofi_ep_type ep_type = (0 == ompi_mtl_ofi.enable_sep) ?
                                   OFI_REGULAR_EP : OFI_SCALABLE_EP;
 
     if (!OMPI_COMM_IS_GLOBAL_INDEX(comm)) {
+        mtl_comm = OBJ_NEW(mca_mtl_comm_t);
+
         if (OMPI_COMM_IS_INTER(comm)) {
             comm_size = ompi_comm_remote_size(comm);
         } else {
@@ -377,16 +379,17 @@ int ompi_mtl_ofi_add_comm(struct mca_mtl_base_module_t *mtl,
         }
         mtl_comm->c_index_vec = (c_index_vec_t *)malloc(sizeof(c_index_vec_t) * comm_size);
         if (NULL == mtl_comm->c_index_vec) {
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
             OBJ_RELEASE(mtl_comm);
             goto error;
         } else {
             for (uint32_t i=0; i < comm_size; i++) {
-                mtl_comm->c_index_vec[i].c_index_state = 2;
+                mtl_comm->c_index_vec[i].c_index_state = MCA_MTL_OFI_CID_NOT_EXCHANGED;
             }
         }
         if (OMPI_COMM_IS_INTRA(comm)) {
             mtl_comm->c_index_vec[comm->c_my_rank].c_index = comm->c_index;
-            mtl_comm->c_index_vec[comm->c_my_rank].c_index_state = 0;
+            mtl_comm->c_index_vec[comm->c_my_rank].c_index_state = MCA_MTL_OFI_CID_EXCHANGED;
         }
 
         comm->c_mtl_comm = mtl_comm;
@@ -415,10 +418,8 @@ int ompi_mtl_ofi_add_comm(struct mca_mtl_base_module_t *mtl,
         }
     }
 
-    return OMPI_SUCCESS;
-
 error:
-    return OMPI_ERROR;
+    return ret;
 }
 
 int ompi_mtl_ofi_del_comm(struct mca_mtl_base_module_t *mtl,
