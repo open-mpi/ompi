@@ -301,7 +301,7 @@ def check_github_pr_description(config):
     pr_num = int(match.group(1))
     pr     = repo.get_pull(pr_num)
 
-    if NACP in pr.body:
+    if pr.body and NACP in pr.body:
         config['cherry pick required'] = False
 
 #----------------------------------------------------------------------------
