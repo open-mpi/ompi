@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -124,7 +124,6 @@ int ompi_win_init (void)
 
     /* Setup MPI_WIN_NULL */
     OBJ_CONSTRUCT(&ompi_mpi_win_null.win, ompi_win_t);
-    ompi_mpi_win_null.win.w_flags = OMPI_WIN_INVALID;
     ompi_mpi_win_null.win.w_group = &ompi_mpi_group_null.group;
     OBJ_RETAIN(&ompi_mpi_group_null);
     ompi_win_set_name(&ompi_mpi_win_null.win, "MPI_WIN_NULL");

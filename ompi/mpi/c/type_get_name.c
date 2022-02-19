@@ -51,7 +51,7 @@ int MPI_Type_get_name(MPI_Datatype type, char *type_name, int *resultlen)
 
    if ( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == type || MPI_DATATYPE_NULL == type) {
+      if (NULL == type) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                       FUNC_NAME );
       } else if (NULL == type_name || NULL == resultlen) {
