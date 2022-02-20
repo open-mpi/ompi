@@ -119,6 +119,6 @@ I/O function errors. The error handler may be changed with
 may be used to cause error values to be returned. Note that MPI does not
 guarantee that an MPI program can continue past an error.
 See the MPI man page for a full list of MPI error codes.
-SEE ALSO
 
 # See Also
+MPI(5)

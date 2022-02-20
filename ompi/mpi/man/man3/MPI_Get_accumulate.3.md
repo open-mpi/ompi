@@ -1,6 +1,6 @@
 # Name
 
-`MPI_Get_accumulate`, `MPI_Rget_accumulate` - Combines the contents
+MPI_Get_accumulate, MPI_Rget_accumulate - Combines the contents
 of the origin buffer with that of a target buffer and returns the target
 buffer value.
 
@@ -25,6 +25,7 @@ int MPI_Rget_accumulate(const void *origin_addr, int origin_count,
     MPI_Request *request)
 ```
 
+
 ## Fortran Syntax (See Fortran 77 Notes)
 
 ```fortran
@@ -47,6 +48,7 @@ MPI_RGET_ACCUMULATE(ORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, RESULT_ADDR,
     INTEGER ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_COUNT, TARGET_DATATYPE,
         TARGET_RANK, TARGET_COUNT, TARGET_DATATYPE, OP, WIN, REQUEST, IERROR
 ```
+
 
 ## Fortran 2008 Syntax
 
@@ -80,64 +82,65 @@ MPI_Rget_accumulate(origin_addr, origin_count, origin_datatype,
     INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 ```
 
+
 # Input Parameters
 
-* `origin_addr` : Initial address of buffer (choice).
-* `origin_count` : Number of entries in buffer (nonnegative integer).
-* `origin_datatype` : Data type of each buffer entry (handle).
-* `result_addr` : Initial address of result buffer (choice).
-* `result_count` : Number of entries in result buffer (nonnegative integer).
-* `result_datatype` : Data type of each result buffer entry (handle).
-* `target_rank` : Rank of target (nonnegative integer).
-* `target_disp` : Displacement from start of window to beginning of target buffer
+* origin_addr : Initial address of buffer (choice).
+* origin_count : Number of entries in buffer (nonnegative integer).
+* origin_datatype : Data type of each buffer entry (handle).
+* result_addr : Initial address of result buffer (choice).
+* result_count : Number of entries in result buffer (nonnegative integer).
+* result_datatype : Data type of each result buffer entry (handle).
+* target_rank : Rank of target (nonnegative integer).
+* target_disp : Displacement from start of window to beginning of target buffer
 (nonnegative integer).
-* `target_count` : Number of entries in target buffer (nonnegative integer).
-* `target_datatype` : Data type of each entry in target buffer (handle).
-* `op` : Reduce operation (handle).
-* `win` : Window object (handle).
+* target_count : Number of entries in target buffer (nonnegative integer).
+* target_datatype : Data type of each entry in target buffer (handle).
+* op : Reduce operation (handle).
+* win : Window object (handle).
 
 # Output Parameter
 
-* `MPI_Rget_accumulate`: RMA request
-* `IERROR` : Fortran only: Error status (integer).
+* MPI_Rget_accumulate: RMA request
+* IERROR : Fortran only: Error status (integer).
 
 # Description
 
-`MPI_Get_accumulate` is a function used for one-sided MPI
+MPI_Get_accumulate is a function used for one-sided MPI
 communication that adds the contents of the origin buffer (as defined by
-`origin_addr`, `origin_count`, and `origin_datatype`) to the buffer
-specified by the arguments `target_count` and `target_datatype`, at
-offset `target_disp`, in the target window specified by `target_rank`
-and `win`, using the operation `op`. `MPI_Get_accumulate` returns in
-the result buffer `result_addr` the contents of the target buffer before
+origin_addr, origin_count, and origin_datatype) to the buffer
+specified by the arguments target_count and target_datatype, at
+offset target_disp, in the target window specified by target_rank
+and win, using the operation op. MPI_Get_accumulate returns in
+the result buffer result_addr the contents of the target buffer before
 the accumulation.
 
-Any of the predefined operations for `MPI_Reduce`, as well as `MPI_NO_OP,`
-can be used. User-defined functions cannot be used. For example, if `op`
-is `MPI_SUM`, each element of the origin buffer is added to the
+Any of the predefined operations for MPI_Reduce, as well as MPI_NO_OP,
+can be used. User-defined functions cannot be used. For example, if op
+is MPI_SUM, each element of the origin buffer is added to the
 corresponding element in the target, replacing the former value in the
 target.
 
 Each datatype argument must be a predefined data type or a derived data
 type, where all basic components are of the same predefined data type.
 Both datatype arguments must be constructed from the same predefined
-data type. The operation `op` applies to elements of that predefined
-type. The `target_datatype` argument must not specify overlapping
+data type. The operation op applies to elements of that predefined
+type. The target_datatype argument must not specify overlapping
 entries, and the target buffer must fit in the target window.
 
-A new predefined operation, `MPI_REPLACE`, is defined. It corresponds to
+A new predefined operation, MPI_REPLACE, is defined. It corresponds to
 the associative function f(a, b) =b; that is, the current value in the
 target memory is replaced by the value supplied by the origin.
 
-A new predefined operation, `MPI_NO_OP`, is defined. It corresponds to the
+A new predefined operation, MPI_NO_OP, is defined. It corresponds to the
 assiciative function f(a, b) = a; that is the current value in the
 target memory is returned in the result buffer at the origin and no
 operation is performed on the target buffer.
 
-`MPI_Rget_accumulate` is similar to `MPI_Get_accumulate`, except
+MPI_Rget_accumulate is similar to MPI_Get_accumulate, except
 that it allocates a communication request object and associates it with
 the request handle (the argument request) that can be used to wait or
-test for completion. The completion of an `MPI_Rget_accumulate`
+test for completion. The completion of an MPI_Rget_accumulate
 operation indicates that the data is available in the result buffer and
 the origin buffer is free to be updated. It does not indicate that the
 operation has been completed at the target window.
@@ -145,32 +148,32 @@ operation has been completed at the target window.
 # Fortran 77 Notes
 
 The MPI standard prescribes portable Fortran syntax for the
-`TARGET_DISP` argument only for Fortran 90. FORTRAN 77 users may use the
+TARGET_DISP argument only for Fortran 90. FORTRAN 77 users may use the
 non-portable syntax
 
-```fortran
+fortran
 INTEGER*MPI_ADDRESS_KIND TARGET_DISP
-```
+
 
 where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
 length of the declared integer in bytes.
 
 # Notes
 
-The generic functionality of `MPI_Get_accumulate` might limit the
+The generic functionality of MPI_Get_accumulate might limit the
 performance of fetch-and-increment or fetch-and-add calls that might be
-supported by special hardware operations. `MPI_Fetch_and_op` thus allows
+supported by special hardware operations. MPI_Fetch_and_op thus allows
 for a fast implementation of a commonly used subset of the functionality
-of `MPI_Get_accumulate`.
+of MPI_Get_accumulate.
 
-`MPI_Get` is a special case of `MPI_Get_accumulate`, with the operation
-`MPI_NO_OP`. Note, however, that `MPI_Get` and `MPI_Get_accumulate` have
+MPI_Get is a special case of MPI_Get_accumulate, with the operation
+MPI_NO_OP. Note, however, that MPI_Get and MPI_Get_accumulate have
 different constraints on concurrent updates.
 
 It is the user's responsibility to guarantee that, when using the
 accumulate functions, the target displacement argument is such that
 accesses to the window are properly aligned according to the data type
-arguments in the call to the `MPI_Get_accumulate` function.
+arguments in the call to the MPI_Get_accumulate function.
 
 # Errors
 
@@ -180,14 +183,14 @@ of the function and Fortran routines in the last argument.
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
-`MPI_Comm_set_errhandler`; the predefined error handler `MPI_ERRORS_RETURN`
+MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
 guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Put`(3)](MPI_Put.html)
-[`MPI_Get`(3)](MPI_Get.html)
-[`MPI_Accumulate`(3)](MPI_Accumulate.html)
-[`MPI_Fetch_and_op`(3)](MPI_Fetch_and_op.html)
-[`MPI_Reduce`(3)](MPI_Reduce.html)
+MPI_Put(3)
+MPI_Get(3)
+MPI_Accumulate(3)
+MPI_Fetch_and_op(3)
+MPI_Reduce(3)

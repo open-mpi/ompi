@@ -1,6 +1,6 @@
 # Name
 
-`MPI_Get_elements`, `MPI_Get_elements_x` - Returns the number of basic
+MPI_Get_elements, MPI_Get_elements_x - Returns the number of basic
 elements in a data type.
 
 # Syntax
@@ -17,6 +17,7 @@ int MPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype,
     MPI_Count *count)
 ```
 
+
 ## Fortran Syntax
 
 ```fortran
@@ -31,6 +32,7 @@ MPI_GET_ELEMENTS_X(STATUS, DATATYPE, COUNT, IERROR)
         INTEGER(KIND=MPI_COUNT_KIND) COUNT
         INTEGER IERROR
 ```
+
 
 ## Fortran 2008 Syntax
 
@@ -50,34 +52,35 @@ MPI_Get_elements_x(status, datatype, count, ierror)
     INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 ```
 
+
 # Input Parameters
 
-* `status` : Return status of receive operation (status).
-* `datatype` : Datatype used by receive operation (handle).
+* status : Return status of receive operation (status).
+* datatype : Datatype used by receive operation (handle).
 
 # Output Parameters
 
-* `IERROR` : Fortran only: Error status (integer).
+* IERROR : Fortran only: Error status (integer).
 
 # Description
 
-`MPI_Get_elements` and `MPI_Get_elements_x` behave different from
-`MPI_Get_count`, which returns the number of "top-level entries"
-received, i.e., the number of "copies" of type `datatype`. `MPI_Get_count`
+MPI_Get_elements and MPI_Get_elements_x behave different from
+MPI_Get_count, which returns the number of "top-level entries"
+received, i.e., the number of "copies" of type datatype. MPI_Get_count
 may return any integer value k, where 0 =< k =< count. If
-`MPI_Get_count` returns k, then the number of basic elements received (and
-the value returned by `MPI_Get_elements` and `MPI_Get_elements_x`) is n
-k, where n is the number of basic elements in the type map of `datatype`.
+MPI_Get_count returns k, then the number of basic elements received (and
+the value returned by MPI_Get_elements and MPI_Get_elements_x) is n
+k, where n is the number of basic elements in the type map of datatype.
 If the number of basic elements received is not a multiple of n, that
 is, if the receive operation has not received an integral number of
-`datatype` "copies," then `MPI_Get_count` returns the value `MPI_UNDEFINED.`
+datatype "copies," then MPI_Get_count returns the value MPI_UNDEFINED.
 For both functions, if the count parameter cannot express the value to
 be returned (e.g., if the parameter is too small to hold the output
-value), it is set to `MPI_UNDEFINED`.
+value), it is set to MPI_UNDEFINED.
 
-Example: Usage of `MPI_Get_count` and `MPI_Get_element`:
+Example: Usage of MPI_Get_count and MPI_Get_element:
 
-```fortran
+fortran
 //...
 MPI_TYPE_CONTIGUOUS(2, MPI_REAL, Type2, ierr)
 MPI_TYPE_COMMIT(Type2, ierr)
@@ -95,11 +98,11 @@ ELSE
 
     CALL MPI_GET_ELEMENTS(stat, Type2, i, ierr)  ! returns i=3
 END IF
-```
 
-The function `MPI_Get_elements` can also be used after a probe to find the
+
+The function MPI_Get_elements can also be used after a probe to find the
 number of elements in the probed message. Note that the two functions
-`MPI_Get_count` and `MPI_Get_elements` return the same values when they are
+MPI_Get_count and MPI_Get_elements return the same values when they are
 used with primitive data types.
 
 # Errors
@@ -110,23 +113,23 @@ of the function and Fortran routines in the last argument.
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
-`MPI_Comm_set_errhandler`; the predefined error handler `MPI_ERRORS_RETURN`
+MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
 guarantee that an MPI program can continue past an error.
 
 # Fortran 77 Notes
 
 The MPI standard prescribes portable Fortran syntax for the COUNT
-argument of `MPI_Get_elements_x` only for Fortran 90. FORTRAN 77 users may
+argument of MPI_Get_elements_x only for Fortran 90. FORTRAN 77 users may
 use the non-portable syntax
 
-```Fortran
+Fortran
 INTEGER*MPI_COUNT_KIND COUNT
-```
 
-where `MPI_COUNT_KIND` is a constant defined in mpif.h and gives the
+
+where MPI_COUNT_KIND is a constant defined in mpif.h and gives the
 length of the declared integer in bytes.
 
 # See Also
 
-[`MPI_Get_count`(3)](MPI_Get_count.html)
+MPI_Get_count(3)

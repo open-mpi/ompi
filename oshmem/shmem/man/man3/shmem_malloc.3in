@@ -48,7 +48,7 @@ extern long malloc_error;
 The \fBshmem_malloc\fP
 function returns a pointer to a block of at least size bytes
 suitably aligned for any use. This space is allocated from the symmetric heap (in contrast
-to \fImalloc\fP(3C),
+to \fImalloc\fP(3),
 which allocates from the private heap).
 .PP
 The \fBshmem_align\fP
@@ -109,5 +109,5 @@ may have moved); otherwise, it returns a null pointer (with malloc_error set).
 .SH SEE ALSO
 
 \fIintro_shmem\fP(3),
-\fIshmem_my_pe\fP(3I),
+\fIshmem_my_pe\fP(3),
 \fIshmem_init\fP(3)

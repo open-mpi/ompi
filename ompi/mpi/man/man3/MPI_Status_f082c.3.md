@@ -13,30 +13,31 @@ int MPI_Status_f082c(const MPI_F08_status *f08_status, MPI_Status *c_status)
 int MPI_Status_c2f08(const MPI_Status *c_status, MPI_F08_status *f08_status)
 ```
 
+
 # PARAMETERS
 
-* `f08_status`: `mpi_f08`-style MPI status object
-* `c_status`: C-style MPI status object
+* f08_status: mpi_f08-style MPI status object
+* c_status: C-style MPI status object
 
 # DESCRIPTION
 
 These two procedures are provided in C to convert from a Fortran 2008
 status (which is a derived type made of integers) to a C status (which
 is a structure), and vice versa. The conversion occurs on all the
-information in `status`, including that which is hidden. That is,
+information in status, including that which is hidden. That is,
 no status information is lost in the conversion.
 
-When using `MPI_Status_f082c()`, if `f08_status` is a valid Fortran
-status, but not the Fortran value of `MPI_F08_STATUS_IGNORE` or
-`MPI_F08_STATUSES_IGNORE`, then `MPI_Status_f082c()` returns in
-`c_status` a valid C status with the same content. If `f08_status` is
-the Fortran value of `MPI_STATUS_IGNORE` or `MPI_STATUSES_IGNORE`, or
-if `f08_status` is not a valid Fortran status, then the call is
+When using MPI_Status_f082c(), if f08_status is a valid Fortran
+status, but not the Fortran value of MPI_F08_STATUS_IGNORE or
+MPI_F08_STATUSES_IGNORE, then MPI_Status_f082c() returns in
+c_status a valid C status with the same content. If f08_status is
+the Fortran value of MPI_STATUS_IGNORE or MPI_STATUSES_IGNORE, or
+if f08_status is not a valid Fortran status, then the call is
 erroneous.
 
-When using `MPI_Status_c2f08()`, the opposite conversion is applied. If
-`c_status` is `MPI_STATUS_IGNORE` or `MPI_STATUSES_IGNORE`, or if
-`c_status` is not a valid C status, then the call is erroneous.
+When using MPI_Status_c2f08(), the opposite conversion is applied. If
+c_status is MPI_STATUS_IGNORE or MPI_STATUSES_IGNORE, or if
+c_status is not a valid C status, then the call is erroneous.
 
 The input status has the same source, tag and error code values as the
 output status, and returns the same answers when queried for count,
@@ -52,7 +53,7 @@ of the Fortran MPI interfaces.
 
 # SEE ALSO
 
-[`MPI_Status_c2f`(3)](MPI_Status_c2f.html),
-[`MPI_Status_f2c`(3)](MPI_Status_f2c.html),
-[`MPI_Status_f082f`(3)](MPI_Status_f082f.html),
-[`MPI_Status_f2f08`(3)](MPI_Status_f2f08.html)
+MPI_Status_c2f(3)
+MPI_Status_f2c(3)
+MPI_Status_f082f(3)
+MPI_Status_f2f08(3)

@@ -1,6 +1,6 @@
 # Name
 
-`MPI_Gather`, `MPI_Igather`, `MPI_Gather_init` - Gathers values from a group of processes.
+MPI_Gather, MPI_Igather, MPI_Gather_init - Gathers values from a group of processes.
 
 # Synopsis
 
@@ -21,6 +21,7 @@ int MPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
 	MPI_Comm comm, MPI_Info info, MPI_Request *request)
 ```
+
 
 ## Fortran Syntax
 
@@ -46,6 +47,7 @@ MPI_GATHER_INIT(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
     INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT
     INTEGER	COMM, INFO, REQUEST, IERROR
 ```
+
 
 ## Fortran 2008 Syntax
 
@@ -84,24 +86,25 @@ MPI_Gather_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
 ```
 
 
+
 # Input Parameters
 
-* `sendbuf` : Starting address of send buffer (choice).
-* `sendcount` : Number of elements in send buffer (integer).
-* `sendtype` : Datatype of send buffer elements (handle).
-* `recvcount` : Number of elements for any single receive (integer, significant only
+* sendbuf : Starting address of send buffer (choice).
+* sendcount : Number of elements in send buffer (integer).
+* sendtype : Datatype of send buffer elements (handle).
+* recvcount : Number of elements for any single receive (integer, significant only
 at root).
-* `recvtype` : Datatype of recvbuffer elements (handle, significant only at root).
-* `root` : Rank of receiving process (integer).
-* `comm` : Communicator (handle).
-* `info` : Info (handle, persistent only).
+* recvtype : Datatype of recvbuffer elements (handle, significant only at root).
+* root : Rank of receiving process (integer).
+* comm : Communicator (handle).
+* info : Info (handle, persistent only).
 
 
 # Output Parameters
 
-* `recvbuf` : Address of receive buffer (choice, significant only at root).
-* `request` : Request (handle, non-blocking only).
-* `IERROR` : Fortran only: Error status (integer).
+* recvbuf : Address of receive buffer (choice, significant only at root).
+* request : Request (handle, non-blocking only).
+* IERROR : Fortran only: Error status (integer).
 
 # Description
 
@@ -110,47 +113,47 @@ buffer to the root process. The root process receives the messages and
 stores them in rank order. The outcome is as if each of the n processes
 in the group (including the root process) had executed a call to
 
-```c
+c
 MPI_Send(sendbuf, sendcount, sendtype, root, ...)
-```
+
 
 and the root had executed n calls to
 
-```c
+c
 MPI_Recv(recfbuf + i * recvcount * extent(recvtype), recvcount, recvtype, i, ...)
-```
+
 
 where extent(recvtype) is the type extent obtained from a call to
-`MPI_Type_extent()`.
+MPI_Type_extent().
 
 An alternative description is that the n messages sent by the processes
 in the group are concatenated in rank order, and the resulting message
-is received by the root as if by a call to `MPI_RECV(recvbuf, recvcount*
-n, recvtype, ... )`.
+is received by the root as if by a call to MPI_RECV(recvbuf, recvcount*
+n, recvtype, ... ).
 
 The receive buffer is ignored for all nonroot processes.
 
 General, derived datatypes are allowed for both sendtype and recvtype.
-The type signature of `sendcount`, `sendtype` on process i must be equal to
-the type signature of `recvcount`, `recvtype` at the root. This implies that
+The type signature of sendcount, sendtype on process i must be equal to
+the type signature of recvcount, recvtype at the root. This implies that
 the amount of data sent must be equal to the amount of data received,
 pairwise between each process and the root. Distinct type maps between
 sender and receiver are still allowed.
 
 All arguments to the function are significant on process root, while on
-other processes, only arguments `sendbuf`, `sendcount`, `sendtype`, `root`, `comm`
-are significant. The arguments `root` and `comm` must have identical values
+other processes, only arguments sendbuf, sendcount, sendtype, root, comm
+are significant. The arguments root and comm must have identical values
 on all processes.
 
 The specification of counts and types should not cause any location on
 the root to be written more than once. Such a call is erroneous.
-Note that the `recvcount` argument at the root indicates the number of
+Note that the recvcount argument at the root indicates the number of
 items it receives from each process, not the total number of items it
 receives.
 
 Example 1: Gather 100 ints from every process in group to root.
 
-```c
+c
 MPI_Comm comm;
 int gsize,sendarray[100];
 int root, *rbuf;
@@ -160,12 +163,12 @@ MPI_Comm_size( comm, &gsize);
 rbuf = (int *)malloc(gsize*100*sizeof(int));
 
 MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
-```
+
 
 Example 2: Previous example modified -- only the root allocates
 memory for the receive buffer.
 
-```c
+c
 MPI_Comm comm;
 int gsize,sendarray[100];
 int root, myrank, *rbuf;
@@ -177,14 +180,14 @@ if ( myrank == root) {
     rbuf = (int *)malloc(gsize*100*sizeof(int));
 }
 MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
-```
+
 
 Example 3: Do the same as the previous example, but use a derived
 datatype. Note that the type cannot be the entire set of gsize * 100
 ints since type matching is defined pairwise between the root and each
 process in the gather.
 
-```c
+c
 MPI_Comm comm;
 int gsize,sendarray[100];
 int root, *rbuf;
@@ -196,17 +199,17 @@ MPI_Type_contiguous( 100, MPI_INT, &rtype );
 MPI_Type_commit( &rtype );
 rbuf = (int *)malloc(gsize*100*sizeof(int));
 MPI_Gather( sendarray, 100, MPI_INT, rbuf, 1, rtype, root, comm);
-```
+
 
 # Use Of In-Place Option
 
-When the communicator is an intracommunicator, you can perform a gather operation in-place (the output buffer is used as the input buffer).  Use the variable `MPI_IN_PLACE` as the value of the root process `sendbuf`.  In this case, `sendcount` and `sendtype` are ignored, and the contribution of the root process to the gathered vector is assumed to already be in the correct place in the receive buffer.
-Note that `MPI_IN_PLACE` is a special kind of value; it has the same restrictions on its use as MPI_BOTTOM.
-Because the in-place option converts the receive buffer into a send-and-receive buffer, a Fortran binding that includes `INTENT` must mark these as `INOUT`, not `OUT`.
+When the communicator is an intracommunicator, you can perform a gather operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of the root process sendbuf.  In this case, sendcount and sendtype are ignored, and the contribution of the root process to the gathered vector is assumed to already be in the correct place in the receive buffer.
+Note that MPI_IN_PLACE is a special kind of value; it has the same restrictions on its use as MPI_BOTTOM.
+Because the in-place option converts the receive buffer into a send-and-receive buffer, a Fortran binding that includes INTENT must mark these as INOUT, not OUT.
 
 # When Communicator Is An Inter-Communicator
 
-When the communicator is an inter-communicator, the root process in the first group gathers data from all the processes in the second group.  The first group defines the root process.  That process uses MPI_ROOT as the value of its `root` argument.  The remaining processes use `MPI_PROC_NULL` as the value of their `root` argument.  All processes in the second group use the rank of that root process in the first group as the value of their `root` argument.   The send buffer argument of the processes in the first group must be consistent with the receive buffer argument of the root process in the second group.
+When the communicator is an inter-communicator, the root process in the first group gathers data from all the processes in the second group.  The first group defines the root process.  That process uses MPI_ROOT as the value of its root argument.  The remaining processes use MPI_PROC_NULL as the value of their root argument.  All processes in the second group use the rank of that root process in the first group as the value of their root argument.   The send buffer argument of the processes in the first group must be consistent with the receive buffer argument of the root process in the second group.
 
 # Errors
 
@@ -215,13 +218,13 @@ of the function and Fortran routines in the last argument.
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
-`MPI_Comm_set_errhandler`; the predefined error handler `MPI_ERRORS_RETURN`
+MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
 guarantee that an MPI program can continue past an error.
 See the MPI man page for a full list of MPI error codes.
 
 # See Also
 
-[`MPI_Gatherv`(3)](MPI_Gatherv.html)
-[`MPI_Scatter`(3)](MPI_Scatter.html)
-[`MPI_Scatterv`(3)](MPI_Scatterv.html)
+MPI_Gatherv(3)
+MPI_Scatter(3)
+MPI_Scatterv(3)

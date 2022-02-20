@@ -1,20 +1,21 @@
 # Name
 
-`MPI_Buffer_attach` - Attaches a user-defined buffer for sending.
+MPI_Buffer_attach - Attaches a user-defined buffer for sending.
 
 # Syntax
 
 ## C Syntax
 
-```c
+```C
 #include <mpi.h>
 
 int MPI_Buffer_attach(void *buf, int size)
 ```
 
+
 ## Fortran Syntax
 
-```fortran
+```Fortran
 USE MPI
 ! or the older form: INCLUDE 'mpif.h'
 
@@ -23,9 +24,10 @@ MPI_BUFFER_ATTACH(BUF, SIZE, IERROR)
 	INTEGER	SIZE, IERROR
 ```
 
-## Fortran 2008 Syntax
 
-```fortran
+## Fortran 2008 Syntax
+ 
+```Fortran
 USE mpi_f08
 
 MPI_Buffer_attach(buffer, size, ierror)
@@ -34,14 +36,15 @@ MPI_Buffer_attach(buffer, size, ierror)
 	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 ```
 
+
 # Input Parameters
 
-* `buf` : Initial buffer address (choice).
-* `size` : Buffer size, in bytes (integer).
+* buf : Initial buffer address (choice).
+* size : Buffer size, in bytes (integer).
 
 # Output Parameter
 
-* `IERROR` : Fortran only: Error status (integer).
+* IERROR : Fortran only: Error status (integer).
 
 # Description
 
@@ -52,25 +55,25 @@ mode. Only one buffer can be attached to a process at a time.
 # Notes
 
 The size given should be the sum of the sizes of all outstanding Bsends
-that you intend to have, plus `MPI_BSEND_OVERHEAD` bytes for each Bsend
+that you intend to have, plus MPI_BSEND_OVERHEAD bytes for each Bsend
 that you do. For the purposes of calculating size, you should use
-`MPI_Pack_size`. In other words, in the code
+MPI_Pack_size. In other words, in the code
 
-```c
+c
 MPI_Buffer_attach( buf, size );
 MPI_Bsend( ..., count=20, datatype=type1, ... );
 //...
 MPI_Bsend( ..., count=40, datatype=type2, ... );
-```
-the value of size in the `MPI_Buffer_attach` call should be greater than the value computed by
 
-```c
+the value of size in the MPI_Buffer_attach call should be greater than the value computed by
+
+c
 MPI_Pack_size( 20, type1, comm, &s1 );
 MPI_Pack_size( 40, type2, comm, &s2 );
 size = s1 + s2 + 2 * MPI_BSEND_OVERHEAD;
-```
 
-`MPI_BSEND_OVERHEAD` gives the maximum amount of buffer space that may be
+
+MPI_BSEND_OVERHEAD gives the maximum amount of buffer space that may be
 used by the  Bsend  routines.  This value is in mpi.h for C and mpif.h
 for Fortran.
 
@@ -82,7 +85,7 @@ of the function and Fortran routines in the last argument.
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
-`MPI_Comm_set_errhandler`; the predefined error handler `MPI_ERRORS_RETURN`
+MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
 guarantee that an MPI program can continue past an error.
 

@@ -1,12 +1,12 @@
 # Name
 
-`MPI_Comm_call_errhandler` - Passes the supplied error code to the
+MPI_Comm_call_errhandler - Passes the supplied error code to the
 error handler assigned to a communicator
 
 # Syntax
 
 ## C Syntax
-
+ 
 ```c
 #include <mpi.h>
 
@@ -15,7 +15,7 @@ int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode)
 
 ## Fortran Syntax
 
-```fortran
+```Fortran
 USE MPI
 ! or the older form: INCLUDE 'mpif.h'
 
@@ -23,9 +23,10 @@ MPI_COMM_CALL_ERRHANDLER(COMM, ERRORCODE, IERROR)
     INTEGER	COMM, ERRORCODE, IERROR
 ```
 
+
 ## Fortran 2008 Syntax
 
-```fortran
+```Fortran
 USE mpi_f08
 
 MPI_Comm_call_errhandler(comm, errorcode, ierror)
@@ -35,27 +36,28 @@ MPI_Comm_call_errhandler(comm, errorcode, ierror)
 ```
 
 
+
 # Input Parameter
 
-* `comm` : communicator with error handler (handle).
-* `errorcode` : error code (integer).
+* comm : communicator with error handler (handle).
+* errorcode : error code (integer).
 
 # Output Parameters
 
-* `IERROR` : Fortran only: Error status (integer).
+* IERROR : Fortran only: Error status (integer).
 
 # Description
 
-This function invokes the error handler assigned to the `comm`unicator
-`comm` with the supplied error code `errorcode`. If the error handler
+This function invokes the error handler assigned to the communicator
+comm with the supplied error code errorcode. If the error handler
 was successfully called, the process is not aborted, and the error
-handler returns, this function returns `MPI_SUCCESS.`
+handler returns, this function returns MPI_SUCCESS.
 
 # Notes
 
 Users should note that the default error handler is
-`MPI_ERRORS_ARE_FATAL`. Thus, calling this function will abort the
-processes in `comm` if the default error handler has not been changed.
+MPI_ERRORS_ARE_FATAL. Thus, calling this function will abort the
+processes in comm if the default error handler has not been changed.
 
 # Errors
 
@@ -65,5 +67,5 @@ See the MPI man page for a full list of MPI error codes.
 
 # See Also
 
-[`MPI_Comm_create_errhandler`(3)](MPI_Comm_create_errhandler.html)
-[`MPI_Comm_set_errhandler`(3)](MPI_Comm_set_errhandler.html)
+[MPI_Comm_create_errhandler(3)](MPI_Comm_create_errhandler.html)
+[MPI_Comm_set_errhandler(3)](MPI_Comm_set_errhandler.html)

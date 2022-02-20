@@ -40,7 +40,7 @@ extern long malloc_error;
 The \fBshmalloc\fP
 function returns a pointer to a block of at least size bytes
 suitably aligned for any use. This space is allocated from the symmetric heap (in contrast
-to \fImalloc\fP(3C),
+to \fImalloc\fP(3),
 which allocates from the private heap).
 .PP
 The \fBshmemalign\fP
@@ -101,5 +101,5 @@ may have moved); otherwise, it returns a null pointer (with malloc_error set).
 .SH SEE ALSO
 
 \fIintro_shmem\fP(3),
-\fImy_pe\fP(3I),
+\fImy_pe\fP(3),
 \fIstart_pes\fP(3)

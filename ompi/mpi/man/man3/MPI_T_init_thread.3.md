@@ -60,6 +60,6 @@ as it may be less than what was requested in `required`.
 
 # SEE ALSO
 
-[`MPI_T`(5)](MPI_T.html),
-[`MPI_Init_thread`(3)](MPI_Init_thread.html),
-[`MPI_T_finalize`(3)](MPI_T_finalize.html)
+MPI_T(5)
+MPI_Init_thread(3)
+MPI_T_finalize(3)

@@ -1,6 +1,6 @@
 # Name
 
-`MPI_Get`, `MPI_Rget` - Copies data from the target memory to the
+MPI_Get, MPI_Rget - Copies data from the target memory to the
 origin.
 
 # Syntax
@@ -19,6 +19,7 @@ MPI_Rget(void *origin_addr, int origin_count, MPI_Datatype
      int target_count, MPI_Datatype target_datatype, MPI_Win win,
          MPI_Request *request)
 ```
+
 
 ## Fortran Syntax (See Fortran 77 Notes)
 
@@ -40,6 +41,7 @@ MPI_RGET(ORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
      INTEGER ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
      TARGET_COUNT, TARGET_DATATYPE, WIN, REQUEST, IERROR
 ```
+
 
 ## Fortran 2008 Syntax
 
@@ -67,51 +69,52 @@ MPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
     INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 ```
 
+
 # Input Parameters
 
-* `origin_addr` : Initial address of origin buffer (choice).
-* `origin_count` : Number of entries in origin buffer (nonnegative integer).
-* `origin_datatype` : Data type of each entry in origin buffer (handle).
-* `target_rank` : Rank of target (nonnegative integer).
-* `target_disp` : Displacement from window start to the beginning of the target buffer
+* origin_addr : Initial address of origin buffer (choice).
+* origin_count : Number of entries in origin buffer (nonnegative integer).
+* origin_datatype : Data type of each entry in origin buffer (handle).
+* target_rank : Rank of target (nonnegative integer).
+* target_disp : Displacement from window start to the beginning of the target buffer
 (nonnegative integer).
-* `target_count` : Number of entries in target buffer (nonnegative integer).
-* `target datatype` : datatype of each entry in target buffer (handle)
-* `win` : window object used for communication (handle)
+* target_count : Number of entries in target buffer (nonnegative integer).
+* target datatype : datatype of each entry in target buffer (handle)
+* win : window object used for communication (handle)
 
 # Output Parameter
 
-* `request` : MPI_Rget: RMA request
-* `IERROR` : Fortran only: Error status (integer).
+* request : MPI_Rget: RMA request
+* IERROR : Fortran only: Error status (integer).
 
 # Description
 
-`MPI_Get` copies data from the target memory to the origin, similar to
-`MPI_Put`, except that the direction of data transfer is reversed. The
-`origin_datatype` may not specify overlapping entries in the origin
+MPI_Get copies data from the target memory to the origin, similar to
+MPI_Put, except that the direction of data transfer is reversed. The
+origin_datatype may not specify overlapping entries in the origin
 buffer. The target buffer must be contained within the target window,
 and the copied data must fit, without truncation, in the origin buffer.
 Only processes within the same node can access the target window.
 
-`MPI_Rget` is similar to `MPI_Get`, except that it allocates a
-communication `request` object and associates it with the `request` handle
-(the argument `request`) that can be used to wait or test for
-completion. The completion of an `MPI_Rget` operation indicates that the
-data is available in the origin buffer. If `origin_addr` points to
+MPI_Rget is similar to MPI_Get, except that it allocates a
+communication request object and associates it with the request handle
+(the argument request) that can be used to wait or test for
+completion. The completion of an MPI_Rget operation indicates that the
+data is available in the origin buffer. If origin_addr points to
 memory attached to a window, then the data becomes available in the
 private copy of this window.
 
 # Fortran 77 Notes
 
 The MPI standard prescribes portable Fortran syntax for the
-`TARGET_DISP` argument only for Fortran 90. FORTRAN 77 users may use the
+TARGET_DISP argument only for Fortran 90. FORTRAN 77 users may use the
 non-portable syntax
 
-```fortran
+fortran
 INTEGER*MPI_ADDRESS_KIND TARGET_DISP
-```
 
-where `MPI_ADDRESS_KIND` is a constant defined in mpif.h and gives the
+
+where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
 length of the declared integer in bytes.
 
 # Errors
@@ -122,10 +125,10 @@ of the function and Fortran routines in the last argument.
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
-`MPI_Comm_set_errhandler`; the predefined error handler `MPI_ERRORS_RETURN`
+MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
 guarantee that an MPI program can continue past an error.
 
 # See Also
 
-[`MPI_Put`(3)](MPI_Put.html)
+MPI_Put(3)
