@@ -38,6 +38,7 @@
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/smsc/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/coll/base/base.h"
@@ -91,7 +92,7 @@ OBJ_CLASS_INSTANCE(ompi_instance_t, opal_infosubscriber_t, ompi_instance_constru
 /* NTH: frameworks needed by MPI */
 static mca_base_framework_t *ompi_framework_dependencies[] = {
     &ompi_hook_base_framework, &ompi_op_base_framework,
-    &opal_allocator_base_framework, &opal_rcache_base_framework, &opal_mpool_base_framework,
+    &opal_allocator_base_framework, &opal_rcache_base_framework, &opal_mpool_base_framework, &opal_smsc_base_framework,
     &ompi_bml_base_framework, &ompi_pml_base_framework, &ompi_coll_base_framework,
     &ompi_osc_base_framework, NULL,
 };
@@ -949,6 +950,11 @@ static void ompi_instance_get_num_psets_complete (pmix_status_t status,
                               &info[n].value,
                               (void **)&num_pmix_psets,
                               &sz);
+            if (rc != PMIX_SUCCESS) {
+                opal_argv_free (ompi_mpi_instance_pmix_psets);
+                ompi_mpi_instance_pmix_psets = NULL;
+                goto done;
+            }
             if (num_pmix_psets != ompi_mpi_instance_num_pmix_psets) {
                 opal_argv_free (ompi_mpi_instance_pmix_psets);
                 ompi_mpi_instance_pmix_psets = NULL;
@@ -962,12 +968,18 @@ static void ompi_instance_get_num_psets_complete (pmix_status_t status,
                               &info[n].value,
                               (void **)&pset_names,
                               &sz);
+            if (rc != PMIX_SUCCESS) {
+                opal_argv_free (ompi_mpi_instance_pmix_psets);
+                ompi_mpi_instance_pmix_psets = NULL;
+                goto done;
+            }
             ompi_mpi_instance_pmix_psets = opal_argv_split (pset_names, ',');
             ompi_mpi_instance_num_pmix_psets = opal_argv_count (ompi_mpi_instance_pmix_psets);
             free(pset_names);
         }
     }
 
+done:
     if (NULL != release_fn) {
         release_fn(release_cbdata);
     }
@@ -1258,7 +1270,10 @@ static int ompi_instance_get_pmix_pset_size (ompi_instance_t *instance, const ch
 
 int ompi_group_from_pset (ompi_instance_t *instance, const char *pset_name, ompi_group_t **group_out)
 {
-    if (group_out == MPI_GROUP_NULL) {
+    if (NULL == group_out) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+    if (*group_out == MPI_GROUP_NULL) {
         return OMPI_ERR_BAD_PARAM;
     }
     

@@ -144,7 +144,12 @@ int ompi_osc_rdma_free(ompi_win_t *win)
     free (module->outstanding_lock_array);
     mca_mpool_base_default_module->mpool_free(mca_mpool_base_default_module,
                                               module->free_after);
-    free (module->selected_btls);
+    if (!module->use_accelerated_btl) {
+        for (int i = 0 ; i < module->alternate_btl_count ; ++i) {
+            OBJ_RELEASE(module->alternate_am_rdmas[i]);
+        }
+        free(module->alternate_am_rdmas);
+    }
     free (module);
 
     return OMPI_SUCCESS;

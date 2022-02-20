@@ -142,6 +142,21 @@ AC_DEFUN([OPAL_CHECK_CC_IQUOTE],[
     AC_MSG_RESULT([$opal_cc_iquote])
 ])
 
+
+# OPAL_SETUP_CC_WERROR_HANDLER()
+# ------------------------------
+# Runs right before config.status, to possibly
+# add -Werror to CFLAGS.  Can't do this earlier
+# in configure, as many built-in tests generate
+# harmless warnings which would cause the wrong
+# answer.
+AC_DEFUN([OPAL_SETUP_CC_WERROR_HANDLER], [
+    AS_IF([test "$enable_werror" = "yes"],
+          [AC_MSG_NOTICE([Adding -Werror to CFLAGS])
+           CFLAGS="$CFLAGS -Werror"])
+])
+
+
 # OPAL_SETUP_CC()
 # ---------------
 # Do everything required to setup the C compiler.  Safe to AC_REQUIRE
@@ -311,6 +326,11 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # the xlc warning looks like this:
     # warning: "-qinline" is not compatible with "-g". "-qnoinline" is being set.
     _OPAL_CHECK_SPECIFIC_CFLAGS(-finline-functions, finline_functions)
+
+    AC_ARG_ENABLE([werror],
+         [AS_HELP_STRING([--enable-werror],
+                         [Enable -Werror to convert warnings to errors.  Note that 3rd-party packages will not be built with -Werror (unless they also support the --enable-werror configure option)])])
+    AC_CONFIG_COMMANDS_PRE([OPAL_SETUP_CC_WERROR_HANDLER])
 
     # Try to enable restrict keyword
     RESTRICT_CFLAGS=

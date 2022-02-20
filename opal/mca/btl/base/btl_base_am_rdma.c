@@ -701,7 +701,7 @@ static int am_rdma_target_put(mca_btl_base_module_t *btl,
             (struct mca_btl_base_registration_handle_t *) (*operation)->local_handle_data,
             (struct mca_btl_base_registration_handle_t *) (*operation)->remote_handle_data,
             hdr->data.rdma.size, /*flags=*/0, MCA_BTL_NO_ORDER, am_rdma_rdma_complete,
-            operation, NULL);
+            *operation, NULL);
         if (OPAL_SUCCESS != ret) {
             OBJ_RELEASE(*operation);
         }
