@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +33,11 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
     int rank;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    PMPI_Type_get_name(type, typename, &len);
+    if (type != MPI_DATATYPE_NULL) {
+        PMPI_Type_get_name(type, typename, &len);
+    } else {
+        strncpy(typename, "MPI_DATATYPE_NULL", sizeof(typename));
+    }
     PMPI_Comm_get_name(comm, commname, &len);
 
     fprintf(stderr, "MPI_RECV[%d]: buf %0" PRIxPTR " count %d datatype %s source %d tag %d comm %s\n",
