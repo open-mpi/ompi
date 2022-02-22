@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +34,11 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
     int rank;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    PMPI_Type_get_name(datatype, typename, &len);
+    if (datatype != MPI_DATATYPE_NULL) {
+        PMPI_Type_get_name(datatype, typename, &len);
+    } else {
+        strncpy(typename, "MPI_DATATYPE_NULL", sizeof(typename));
+    }
     PMPI_Comm_get_name(comm, commname, &len);
 
     fprintf(stderr, "MPI_BCAST[%d]: buffer %0" PRIxPTR " count %d datatype %s root %d comm %s\n",
