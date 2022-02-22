@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -41,8 +41,18 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int size;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    PMPI_Type_get_name(sendtype, sendtypename, &len);
-    PMPI_Type_get_name(sendtype, recvtypename, &len);
+    if (sendtype != MPI_DATATYPE_NULL) {
+        PMPI_Type_get_name(sendtype, sendtypename, &len);
+    } else {
+        strncpy(sendtypename, "MPI_DATATYPE_NULL",
+                sizeof(sendtypename));
+    }
+    if (recvtype != MPI_DATATYPE_NULL) {
+        PMPI_Type_get_name(recvtype, recvtypename, &len);
+    } else {
+        strncpy(recvtypename, "MPI_DATATYPE_NULL",
+                sizeof(recvtypename));
+    }
     PMPI_Comm_get_name(comm, commname, &len);
     PMPI_Type_size(recvtype, &size);
 
