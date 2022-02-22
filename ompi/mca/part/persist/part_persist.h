@@ -236,8 +236,6 @@ mca_part_persist_progress(void)
                 size_t dt_size_;
                 int32_t dt_size;
 
-                req->initialized = true;
-                
                 if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
                     /* parse message */
                     req->world_peer  = req->setup_info[1].world_rank; 
@@ -279,7 +277,9 @@ mca_part_persist_progress(void)
                     req->setup_info[0].world_rank = ompi_part_persist.my_world_rank;
                     err = MCA_PML_CALL(isend(&(req->setup_info[0]), sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, req->world_peer, req->my_recv_tag, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist.part_comm_setup, &req->setup_req[0]));
                     if(OMPI_SUCCESS != err) return OMPI_ERROR;
-                } 
+                }
+
+                req->initialized = true; 
             }
         } else {
             if(false == req->req_part_complete && REQUEST_COMPLETED != req->req_ompi.req_complete && OMPI_REQUEST_ACTIVE == req->req_ompi.req_state) {
@@ -572,6 +572,10 @@ mca_part_persist_parrived(size_t min_part,
                 _flag = _flag && req->flags[i];
             }
         }
+    }
+
+    if(!_flag) {
+        opal_progress();
     } 
     *flag = _flag;
     return err;
