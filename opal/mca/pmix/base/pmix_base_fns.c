@@ -492,8 +492,13 @@ int opal_pmix_register_cleanup(char *path, bool directory, bool ignore, bool job
         rc = PMIx_Job_control_nb(NULL, 0, pinfo, ninfo, cleanup_cbfunc, (void *) &lk);
     } else {
         /* only applies to us */
-        (void) snprintf(proc.nspace, PMIX_MAX_NSLEN, "%s",
-                        OPAL_JOBID_PRINT(OPAL_PROC_MY_NAME.jobid));
+        pmix_nspace_t nspace;
+        if(OPAL_SUCCESS == opal_pmix_convert_jobid(nspace, OPAL_PROC_MY_NAME.jobid)) {
+          (void) snprintf(proc.nspace, PMIX_MAX_NSLEN, "%s", nspace);
+        }
+        else {
+          (void) snprintf(proc.nspace, PMIX_MAX_NSLEN, "%s", OPAL_JOBID_PRINT(OPAL_PROC_MY_NAME.jobid));
+        }
         proc.rank = OPAL_PROC_MY_NAME.vpid;
         rc = PMIx_Job_control_nb(&proc, 1, pinfo, ninfo, cleanup_cbfunc, (void *) &lk);
     }
