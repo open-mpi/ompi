@@ -46,9 +46,9 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_FROM_SESSION_PSET,
                             pmpi_group_from_session_pset,
                             pmpi_group_from_session_pset_,
                             pmpi_group_from_session_pset__,
-                            pmpi_group_from_session_pset_f,
-                            (MPI_Fint *session, char *pset_name, MPI_Fint *newgroup, MPI_Fint *ierr),
-                            (session, pset_name, newgroup, ierr) )
+                            pompi_group_from_session_pset_f,
+                            (MPI_Fint *session, char *pset_name, MPI_Fint *newgroup, MPI_Fint *ierr, int name_len),
+                            (session, pset_name, newgroup, ierr, name_len) )
 #endif
 #endif
 
@@ -67,8 +67,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_FROM_SESSION_PSET,
                             mpi_group_from_session_pset_,
                             mpi_group_from_session_pset__,
                             ompi_group_from_session_pset_f,
-                            (MPI_Fint *session, char *pset_name, MPI_Fint *newgroup, MPI_Fint *ierr),
-                            (session, pset_name, newgroup, ierr) )
+                            (MPI_Fint *session, char *pset_name, MPI_Fint *newgroup, MPI_Fint *ierr, int name_len),
+                            (session, pset_name, newgroup, ierr, name_len) )
 #else
 #define ompi_group_from_session_pset_f pompi_group_from_session_pset_f
 #endif

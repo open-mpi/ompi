@@ -180,7 +180,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         comm_create_f.c \
         comm_create_from_group_f.c \
         comm_create_group_f.c \
-        comm_create_from_group_f.c \
         comm_create_keyval_f.c \
         comm_delete_attr_f.c \
         comm_disconnect_f.c \

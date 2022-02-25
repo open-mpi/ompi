@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_INFO,
                             pmpi_session_get_info,
                             pmpi_session_get_info_,
                             pmpi_session_get_info__,
-                            pmpi_session_get_info_f,
+                            pompi_session_get_info_f,
                             (MPI_Fint *session, MPI_Fint *npset_names, MPI_Fint *ierr),
                             (session, npset_names, ierr) )
 #endif
