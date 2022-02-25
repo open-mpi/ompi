@@ -47,10 +47,10 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_CREATE_FROM_GROUPS,
                             pmpi_intercomm_create_from_groups,
                             pmpi_intercomm_create_from_groups_,
                             pmpi_intercomm_create_from_groups__,
-                            pmpi_intercomm_create_from_groups_f,
+                            pompi_intercomm_create_from_groups_f,
                             (MPI_Fint *local_group, MPI_Fint *local_leader, MPI_Fint *remote_group,
                              MPI_Fint *remote_leader, char *stringtag, MPI_Fint *info, MPI_Fint *errhandler,
-                             MPI_Fint *internewcom, MPI_Fint *ierr, int name_len),
+                             MPI_Fint *internewcomm, MPI_Fint *ierr, int name_len),
                             (local_group, local_leader, remote_group,
                              remote_leader, stringtag, info, errhandler, internewcomm, ierr, name_len) )
 
@@ -74,7 +74,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_CREATE_FROM_GROUPS,
                             ompi_intercomm_create_from_groups_f,
                             (MPI_Fint *local_group, MPI_Fint *local_leader, MPI_Fint *remote_group,
                              MPI_Fint *remote_leader, char *stringtag, MPI_Fint *info, MPI_Fint *errhandler,
-                             MPI_Fint *internewcom, MPI_Fint *ierr, int name_len),
+                             MPI_Fint *internewcomm, MPI_Fint *ierr, int name_len),
                             (local_group, local_leader, remote_group,
                              remote_leader, stringtag, info, errhandler, internewcomm, ierr, name_len) )
 #else
