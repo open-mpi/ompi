@@ -47,8 +47,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_FROM_GROUP,
                             pmpi_comm_create_from_group,
                             pmpi_comm_create_from_group_,
                             pmpi_comm_create_from_group__,
-                            pmpi_comm_create_from_group_f,
-                            (MPI_Fint *goup, char *stringtag, MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *newcomm, MPI_Fint *ierr, int name_len),
+                            pompi_comm_create_from_group_f,
+                            (MPI_Fint *group, char *stringtag, MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *newcomm, MPI_Fint *ierr, int name_len),
                             (group, stringtag, info, errhandler, newcomm, ierr, name_len) )
 #endif
 #endif
@@ -68,7 +68,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_FROM_GROUP,
                             mpi_comm_create_from_group_,
                             mpi_comm_create_from_group__,
                             ompi_comm_create_from_group_f,
-                            (MPI_Fint *goup, char *stringtag, MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *newcomm, MPI_Fint *ierr, int name_len),
+                            (MPI_Fint *group, char *stringtag, MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *newcomm, MPI_Fint *ierr, int name_len),
                             (group, stringtag, info, errhandler, newcomm, ierr, name_len) )
 #else
 #define ompi_comm_create_from_group_f pompi_comm_create_from_group_f

@@ -42,9 +42,9 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_NUM_PSETS,
                             pmpi_session_get_num_psets,
                             pmpi_session_get_num_psets_,
                             pmpi_session_get_num_psets__,
-                            pmpi_session_get_num_psets_f,
+                            pompi_session_get_num_psets_f,
                             (MPI_Fint *session, MPI_Fint *info, MPI_Fint *npset_names, MPI_Fint *ierr),
-                            (session, npset_names, ierr) )
+                            (session, info, npset_names, ierr) )
 #endif
 #endif
 
@@ -64,7 +64,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SESSION_GET_NUM_PSETS,
                             mpi_session_get_num_psets__,
                             ompi_session_get_num_psets_f,
                             (MPI_Fint *session, MPI_Fint *info, MPI_Fint *npset_names, MPI_Fint *ierr),
-                            (session, npset_names, ierr) )
+                            (session, info, npset_names, ierr) )
 #else
 #define ompi_session_get_num_psets_f pompi_session_get_num_psets_f
 #endif
