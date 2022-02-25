@@ -63,7 +63,8 @@ mca_scoll_ucc_component_t mca_scoll_ucc_component = {
     "basic",            /* cls */
     SCOLL_UCC_CTS_STR,  /* cts */
     0,                  /* nr_modules */
-    false               /* libucc_initialized */
+    false,              /* libucc_initialized */
+    NULL                /* ucc_context */
 };
 
 static int ucc_register(void)
