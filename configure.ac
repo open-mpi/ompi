@@ -1256,15 +1256,6 @@ m4_ifdef([project_ompi], [OMPI_SETUP_MPI_EXT])
 AC_CACHE_SAVE
 
 ##################################
-# Contributed software
-##################################
-
-m4_ifdef([project_ompi], [OMPI_SETUP_CONTRIB])
-
-# checkpoint results
-AC_CACHE_SAVE
-
-##################################
 # Visibility
 ##################################
 
