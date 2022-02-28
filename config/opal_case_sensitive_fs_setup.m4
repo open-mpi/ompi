@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -86,26 +87,6 @@ AM_CONDITIONAL(CASE_SENSITIVE_FS, test "$OPAL_WANT_CS_FS" = "1")
 # join together AM CONDITIONALs in a Makefile.am, effectively make a
 # combo CONDITIONAL here.
 AM_CONDITIONAL([CASE_SENSITIVE_FS_AND_HAVE_CXX_COMPILER], [test "$OPAL_WANT_CS_FS" = "1" && test "$CXX" != "no"])
-
-if test "$OPAL_WANT_CS_FS" = "0"; then
-	cat <<EOF
-
-*******************************************************************************
-NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
-*******************************************************************************
-
-Because OPAL is being installed on a non-case sensitive file
-system, the C++ wrapper compiler will be named opalc++ instead of the
-traditional opalCC.
-
-Please update any makefiles appropriately.
-
-*******************************************************************************
-NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
-*******************************************************************************
-
-EOF
-fi
 
 # Clean up
 unset have_cs_fs])dnl
