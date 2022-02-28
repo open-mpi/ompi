@@ -56,7 +56,7 @@ int mca_atomic_ucx_op(shmem_ctx_t ctx,
 #endif
 {
     spml_ucx_mkey_t *ucx_mkey;
-    uint64_t rva;
+    void *rva = NULL;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     ucs_status_ptr_t status_ptr;
@@ -67,17 +67,17 @@ int mca_atomic_ucx_op(shmem_ctx_t ctx,
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, pe, target, (void *)&rva, mca_spml_self);
+    ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, pe, target, &rva, mca_spml_self);
     assert(NULL != ucx_mkey);
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn,
-                                   op, &value, 1, rva, ucx_mkey->rkey,
+                                   op, &value, 1, (uint64_t)rva, ucx_mkey->rkey,
                                    &mca_spml_ucp_request_params[size >> 3]);
     res = opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
                                        "ucp_atomic_op_nbx post");
 #else
     status = ucp_atomic_post(ucx_ctx->ucp_peers[pe].ucp_conn,
-                             op, value, size, rva,
+                             op, value, size, (uint64_t)rva,
                              ucx_mkey->rkey);
     res = ucx_status_to_oshmem(status);
 #endif
@@ -104,7 +104,7 @@ int mca_atomic_ucx_fop(shmem_ctx_t ctx,
 {
     ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
-    uint64_t rva;
+    void *rva = NULL;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     ucp_request_param_t param = {
@@ -117,17 +117,17 @@ int mca_atomic_ucx_fop(shmem_ctx_t ctx,
 
     assert((8 == size) || (4 == size));
 
-    ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, pe, target, (void *)&rva, mca_spml_self);
+    ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, pe, target, &rva, mca_spml_self);
     assert(NULL != ucx_mkey);
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn, op, &value, 1,
-                                   rva, ucx_mkey->rkey, &param);
+                                   (uint64_t)rva, ucx_mkey->rkey, &param);
     return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
                                         "ucp_atomic_op_nbx");
 #else
     status_ptr = ucp_atomic_fetch_nb(ucx_ctx->ucp_peers[pe].ucp_conn,
                                      op, value, prev, size,
-                                     rva, ucx_mkey->rkey,
+                                     (uint64_t)rva, ucx_mkey->rkey,
                                      opal_common_ucx_empty_complete_cb);
     return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
                                         "ucp_atomic_fetch_nb");

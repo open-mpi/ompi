@@ -221,8 +221,9 @@ static inline int
 mca_spml_ucx_peer_mkey_get(ucp_peer_t *ucp_peer, int index, spml_ucx_cached_mkey_t **out_rmkey)
 {
     *out_rmkey = NULL;
-    if (OPAL_UNLIKELY((index >= ucp_peer->mkeys_cnt) || (MCA_MEMHEAP_MAX_SEGMENTS <= index) || (0 > index))) {
-        SPML_UCX_ERROR("Failed to get mkey for segment: bad index = %d, MAX = %d, cached mkeys count: %d",
+    if (OPAL_UNLIKELY((index >= (int)ucp_peer->mkeys_cnt) ||
+                      (MCA_MEMHEAP_MAX_SEGMENTS <= index) || (0 > index))) {
+        SPML_UCX_ERROR("Failed to get mkey for segment: bad index = %d, MAX = %d, cached mkeys count: %zu",
                         index, MCA_MEMHEAP_MAX_SEGMENTS, ucp_peer->mkeys_cnt);
         return OSHMEM_ERR_BAD_PARAM;
     }

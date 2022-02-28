@@ -15,6 +15,7 @@
 #include "opal/mca/pmix/pmix.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/argv.h"
+#include "opal/util/printf.h"
 
 #include <ucm/api/ucm.h>
 #include <fnmatch.h>
@@ -168,13 +169,16 @@ static bool opal_common_ucx_check_device(const char *device_name, char **device_
 {
     char sysfs_driver_link[PATH_MAX];
     char driver_path[PATH_MAX];
-    char *ib_device_name;
+    char ib_device_name[NAME_MAX];
     char *driver_name;
     char **list_item;
     ssize_t ret;
+    char ib_device_name_fmt[NAME_MAX];
 
     /* mlx5_0:1 */
-    ret = sscanf(device_name, "%m[^:]%*d", &ib_device_name);
+    opal_snprintf(ib_device_name_fmt, sizeof(ib_device_name_fmt),
+                  "%%%u[^:]%%*d", NAME_MAX - 1);
+    ret = sscanf(device_name, ib_device_name_fmt, &ib_device_name);
     if (ret != 1) {
         return false;
     }
@@ -182,7 +186,6 @@ static bool opal_common_ucx_check_device(const char *device_name, char **device_
     sysfs_driver_link[sizeof(sysfs_driver_link) - 1] = '\0';
     snprintf(sysfs_driver_link, sizeof(sysfs_driver_link) - 1,
              "/sys/class/infiniband/%s/device/driver", ib_device_name);
-    free(ib_device_name);
 
     ret = readlink(sysfs_driver_link, driver_path, sizeof(driver_path) - 1);
     if (ret < 0) {
@@ -215,7 +218,8 @@ opal_common_ucx_support_level(ucp_context_h context)
         [OPAL_COMMON_UCX_SUPPORT_DEVICE]    = "transports and devices"
     };
 #if HAVE_DECL_OPEN_MEMSTREAM
-    char *rsc_tl_name, *rsc_device_name;
+    char rsc_tl_name[NAME_MAX], rsc_device_name[NAME_MAX];
+    char rsc_name_fmt[NAME_MAX];
     char **tl_list, **device_list, **list_item;
     bool is_any_tl, is_any_device;
     bool found_tl, negate;
@@ -231,8 +235,7 @@ opal_common_ucx_support_level(ucp_context_h context)
 
     /* Check for special value "any" */
     if (is_any_tl && is_any_device) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucx is enabled on any transport or device",
-                               *opal_common_ucx.tls);
+        MCA_COMMON_UCX_VERBOSE(1, "ucx is enabled on any transport or device");
         support_level = OPAL_COMMON_UCX_SUPPORT_DEVICE;
         goto out;
     }
@@ -266,17 +269,17 @@ opal_common_ucx_support_level(ucp_context_h context)
     /* Print ucx transports information to the memory stream */
     ucp_context_print_info(context, stream);
 
+    /* "# resource 6  :  md 5  dev 4  flags -- rc_verbs/mlx5_0:1" */
+    opal_snprintf(rsc_name_fmt, sizeof(rsc_name_fmt),
+        "# resource %%*d : md %%*d dev %%*d flags -- %%%u[^/ \n\r]/%%%u[^/ \n\r]",
+        NAME_MAX - 1, NAME_MAX - 1);
+
     /* Rewind and read transports/devices list from the stream */
     fseek(stream, 0, SEEK_SET);
     while ((support_level != OPAL_COMMON_UCX_SUPPORT_DEVICE) &&
            (fgets(line, sizeof(line), stream) != NULL)) {
-        rsc_tl_name = NULL;
-        ret = sscanf(line,
-                     /* "# resource 6  :  md 5  dev 4  flags -- rc_verbs/mlx5_0:1" */
-                     "# resource %*d : md %*d dev %*d flags -- %m[^/ \n\r]/%m[^/ \n\r]",
-                     &rsc_tl_name, &rsc_device_name);
+        ret = sscanf(line, rsc_name_fmt, rsc_tl_name, rsc_device_name);
         if (ret != 2) {
-            free(rsc_tl_name);
             continue;
         }
 
@@ -303,9 +306,6 @@ opal_common_ucx_support_level(ucp_context_h context)
             MCA_COMMON_UCX_VERBOSE(2, "%s/%s: did not match transport list",
                                    rsc_tl_name, rsc_device_name);
         }
-
-        free(rsc_device_name);
-        free(rsc_tl_name);
     }
 
     MCA_COMMON_UCX_VERBOSE(2, "support level is %s", support_level_names[support_level]);

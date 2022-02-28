@@ -223,7 +223,6 @@ segment_create(map_segment_t *ds_buf,
 {
     mca_spml_ucx_t *spml = (mca_spml_ucx_t*)mca_spml.self;
     unsigned flags;
-    int ret;
 
 #if HAVE_UCX_DEVICE_MEM
     int ret = OSHMEM_ERROR;
