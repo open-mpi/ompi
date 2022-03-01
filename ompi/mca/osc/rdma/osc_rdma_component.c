@@ -374,7 +374,6 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
                                           struct ompi_communicator_t *comm, struct opal_info_t *info,
                                           int flavor)
 {
-
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
         return -1;
     }
@@ -395,7 +394,7 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
         return -1;
     }
 
-    return OMPI_SUCCESS;;
+    return mca_osc_rdma_component.priority;
 }
 
 static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void **base, size_t size) {
