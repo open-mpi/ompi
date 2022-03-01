@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -43,7 +43,6 @@ my $dnl_line = "dnl ------------------------------------------------------------
 # Data structures to fill up with all the stuff we find
 my $mca_found;
 my $mpiext_found;
-my $mpicontrib_found;
 my @subdirs;
 
 # Command line parameters
@@ -243,7 +242,7 @@ sub process_autogen_subdirs {
                 # Note: there's no real technical reason to defer
                 # processing the subdirs.  It's more of an aesthetic
                 # reason -- don't interrupt the current flow of
-                # finding mca / ext / contribs (which is a nice, fast
+                # finding mca / ext (which is a nice, fast
                 # process).  Then process the subdirs (which is a slow
                 # process) all at once.
                 push(@subdirs, "$dir/$_");
@@ -708,93 +707,6 @@ $dnl_line\n\n";
     # List the M4 and no configure exts
     $m4 .= "dnl List of all MPI extensions
 m4_define([ompi_mpiext_list], [$m4_config_ext_list])\n";
-    # List out all the m4_include
-    $m4 .= "\ndnl List of configure.m4 files to include\n";
-    foreach my $i (@includes) {
-        $m4 .= "m4_include([$i])\n";
-    }
-}
-
-##############################################################################
-
-sub mpicontrib_process {
-    my ($topdir, $contrib_prefix, $contribdir) = @_;
-
-    my $cdir = "$topdir/$contrib_prefix/$contribdir";
-    return
-        if (! -d $cdir);
-
-    # Process this directory (pretty much the same treatment as for
-    # MCA components, so it's in a sub).
-    my $found_contrib;
-
-    $found_contrib->{"name"} = $contribdir;
-
-    # Push the results onto the hash array
-    push(@{$mpicontrib_found}, $found_contrib);
-
-    # Is there an autogen.subdirs in here?
-    process_autogen_subdirs($cdir);
-}
-
-##############################################################################
-
-sub mpicontrib_run_global {
-    my ($contrib_prefix) = @_;
-
-    my $topdir = Cwd::cwd();
-
-    my $dir = "$topdir/$contrib_prefix";
-    opendir(DIR, $dir) ||
-        my_die "Can't open $dir directory";
-    foreach my $d (sort(readdir(DIR))) {
-        # Skip any non-directory, "base", or any dir that begins with "."
-        next
-            if (! -d "$dir/$d" || $d eq "base" || substr($d, 0, 1) eq ".");
-
-        # If this directory has a configure.m4, then it's an
-        # contrib.
-        if (-f "$dir/$d/configure.m4") {
-            verbose "=== Found $d MPI contrib";
-
-            # Check ignore status
-            if (ignored("$dir/$d")) {
-                verbose " (ignored)\n";
-            } else {
-                verbose "\n";
-                mpicontrib_process($topdir, $contrib_prefix, $d);
-            }
-        }
-    }
-    closedir(DIR);
-    debug_dump($mpicontrib_found);
-
-    #-----------------------------------------------------------------------
-
-    $m4 .= "\n$dnl_line
-$dnl_line
-$dnl_line
-
-dnl Open MPI contrib information
-$dnl_line\n\n";
-
-    # Array for all the m4_includes that we'll need to pick up the
-    # configure.m4's.
-    my @includes;
-    my $m4_config_contrib_list;
-
-    # Troll through each of the found contribs
-    foreach my $contrib (@{$mpicontrib_found}) {
-        my $c = $contrib->{name};
-        push(@includes, "$contrib_prefix/$c/configure.m4");
-        $m4_config_contrib_list .= ", $c";
-    }
-
-    $m4_config_contrib_list =~ s/^, //;
-
-    # List the M4 and no configure contribs
-    $m4 .= "dnl List of all MPI contribs
-m4_define([ompi_mpicontrib_list], [$m4_config_contrib_list])\n";
     # List out all the m4_include
     $m4 .= "\ndnl List of configure.m4 files to include\n";
     foreach my $i (@includes) {
@@ -1672,15 +1584,11 @@ process_autogen_subdirs("3rd-party");
 
 #---------------------------------------------------------------------------
 
-# Find MPI extensions and contribs
+# Find MPI extensions
 if (!$no_ompi_arg) {
     ++$step;
     verbose "\n$step. Searching for Open MPI extensions\n\n";
     mpiext_run_global("ompi/mpiext");
-
-    ++$step;
-    verbose "\n$step. Searching for Open MPI contribs\n\n";
-    mpicontrib_run_global("ompi/contrib");
 }
 
 #---------------------------------------------------------------------------
