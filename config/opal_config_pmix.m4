@@ -250,7 +250,7 @@ dnl Expectation is that this is called only if external fails, the
 dnl caller configured libpmix configure, and the configure script
 dnl succeeded.
 AC_DEFUN([_OPAL_CONFIG_PMIX_INTERNAL_POST], [
-    opal_pmix_CPPFLAGS="-I$OMPI_TOP_BUILDDIR/3rd-party/openpmix/include -I$OMPI_TOP_SRCDIR/3rd-party/openpmix/include"
+    opal_pmix_CPPFLAGS="-I$OMPI_TOP_BUILDDIR/3rd-party/openpmix/include -I$OMPI_TOP_SRCDIR/3rd-party/openpmix/include -I$OMPI_TOP_BUILDDIR/3rd-party/openpmix/ -I$OMPI_TOP_SRCDIR/3rd-party/openpmix/"
     opal_pmix_LDFLAGS=""
     opal_pmix_LIBS="$OMPI_TOP_BUILDDIR/3rd-party/openpmix/src/libpmix.la"
     opal_pmix_WRAPPER_LIBS="-lpmix $opal_hwloc_WRAPPER_LIBS $opal_libevent_WRAPPER_LIBS"
