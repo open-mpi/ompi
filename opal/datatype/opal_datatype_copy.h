@@ -17,6 +17,10 @@
 #    include <alloca.h>
 #endif
 
+#if OPAL_CUDA_SUPPORT
+#include "opal/mca/common/cuda/common_cuda.h"
+#endif
+
 #if !defined(MEM_OP_NAME)
 #    error
 #endif /* !defined((MEM_OP_NAME) */
@@ -118,6 +122,11 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
     size_t iov_len_local;
     unsigned char *source = (unsigned char *) source_base,
                   *destination = (unsigned char *) destination_base;
+    bool cuda_device_bufs = false;
+
+#if OPAL_CUDA_SUPPORT
+    cuda_device_bufs = opal_cuda_check_bufs(destination_base, source_base);
+#endif
 
     DO_DEBUG(opal_output(0, "_copy_content_same_ddt( %p, %d, dst %p, src %p )\n", (void *) datatype,
                          count, (void *) destination_base, (void *) source_base););
@@ -136,7 +145,7 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
         source += datatype->true_lb;
         if ((ptrdiff_t) datatype->size == extent) { /* all contiguous == no gaps around */
             size_t total_length = iov_len_local;
-            size_t memop_chunk = opal_datatype_memop_block_size;
+            size_t memop_chunk = (cuda_device_bufs) ? total_length : opal_datatype_memop_block_size;
             OPAL_DATATYPE_SAFEGUARD_POINTER(source, iov_len_local, (unsigned char *) source_base,
                                             datatype, count);
             while (total_length > 0) {
