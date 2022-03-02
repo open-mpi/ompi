@@ -23,7 +23,7 @@ AC_DEFUN([_OPAL_CFLAGS_FAIL_SEARCH],[
 AC_DEFUN([_OPAL_CHECK_SPECIFIC_CFLAGS], [
 AC_MSG_CHECKING(if $CC supports ([$1]))
             CFLAGS_orig=$CFLAGS
-            CFLAGS="$CFLAGS $1"
+            OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["$1"])
             AC_CACHE_VAL(opal_cv_cc_[$2], [
                    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [$3])],
                                    [
@@ -55,7 +55,7 @@ AC_DEFUN([_OPAL_CXXFLAGS_FAIL_SEARCH],[
 AC_DEFUN([_OPAL_CHECK_SPECIFIC_CXXFLAGS], [
 AC_MSG_CHECKING(if $CXX supports ([$1]))
             CXXFLAGS_orig=$CXXFLAGS
-            CXXFLAGS="$CXXFLAGS $1"
+            OPAL_FLAGS_APPEND_UNIQ([CXXFLAGS], ["$1"])
             AC_CACHE_VAL(opal_cv_cxx_[$2], [
                    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [$3])],
                                    [

@@ -48,8 +48,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                        AS_IF([test "$opal_cv_c_compiler_vendor" = "intel"],
                              [AC_MSG_CHECKING([if intel compiler _Quad == REAL*16])
                               CFLAGS_save="$CFLAGS"
-                              CFLAGS="$CFLAGS -Qoption,cpp,--extended_float_types"
-                              OPAL_FLAGS_UNIQ([CFLAGS])
+                              OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["-Qoption,cpp,--extended_float_types"])
                               OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([_Quad], [q])
                               AS_IF([test "$happy" = "yes"],
                                     [OMPI_FORTRAN_REAL16_C_TYPE="_Quad"
@@ -59,7 +58,6 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                              ])
                        AS_IF([test "$opal_cv_c_compiler_vendor" = "gnu" && test "$ac_cv_type___float128" = "yes"],
                              [AC_MSG_CHECKING([if gnu compiler __float128 == REAL*16])
-                              OPAL_FLAGS_UNIQ([CFLAGS])
                               OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([__float128], [q])
                               AS_IF([test "$happy" = "yes"],
                                     [OMPI_FORTRAN_REAL16_C_TYPE="__float128"

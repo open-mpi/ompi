@@ -106,7 +106,7 @@ AC_DEFUN([OPAL_PROG_CC_C11],[
             for flag in $(echo $opal_prog_cc_c11_flags | tr ' ' '\n') ; do
                 OPAL_PROG_CC_C11_HELPER([$flag],[opal_cv_c11_flag=$flag],[])
                 if test "x$opal_cv_c11_flag" != "x" ; then
-                    CFLAGS="$CFLAGS $opal_cv_c11_flag"
+                    OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["$opal_cv_c11_flag"])
                     AC_MSG_NOTICE([using $flag to enable C11 support])
                     opal_cv_c11_supported=yes
                     break
@@ -268,7 +268,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         # compiling and linking to circumvent trouble with
         # libgcov.
         LDFLAGS_orig="$LDFLAGS"
-        LDFLAGS="$LDFLAGS_orig --coverage"
+        OPAL_FLAGS_APPEND_UNIQ([LDFLAGS], ["--coverage"])
         OPAL_COVERAGE_FLAGS=
 
         _OPAL_CHECK_SPECIFIC_CFLAGS(--coverage, coverage)
@@ -287,8 +287,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
             CLEANFILES="*.bb *.bbg ${CLEANFILES}"
             OPAL_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
         fi
-        OPAL_FLAGS_UNIQ(CFLAGS)
-        OPAL_FLAGS_UNIQ(LDFLAGS)
         WANT_DEBUG=1
    fi
 
@@ -419,7 +417,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
     OPAL_ENSURE_CONTAINS_OPTFLAGS(["$CFLAGS"])
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
-    OPAL_FLAGS_UNIQ([CFLAGS])
     AC_MSG_RESULT(CFLAGS result: $CFLAGS)
     OPAL_VAR_SCOPE_POP
 ])
