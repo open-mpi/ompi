@@ -39,11 +39,12 @@
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_base_topo.h"
 #include "coll_base_util.h"
+#include "opal/util/minmax.h"
 
 /*
  * We want to minimize the amount of temporary memory needed while allowing as many ranks
  * to exchange data simultaneously. We use a variation of the ring algorithm, where in a
- * single step a process echange the data with both neighbors at distance k (on the left
+ * single step a process exchange the data with both neighbors at distance k (on the left
  * and the right on a logical ring topology). With this approach we need to pack the data
  * for a single of the two neighbors, as we can then use the original buffer (and datatype
  * and count) to send the data to the other.
@@ -58,16 +59,22 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     ptrdiff_t extent;
     ompi_request_t *req = MPI_REQUEST_NULL;
     char *tmp_buffer;
-    size_t packed_size = 0, max_size;
+    size_t packed_size = 0, max_size, type_size;
     opal_convertor_t convertor;
 
     /* Initialize. */
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
+    ompi_datatype_type_size(rdtype, &type_size);
 
-    ompi_datatype_type_size(rdtype, &max_size);
-    max_size *= rcounts[rank];
+    for (i = 0, max_size = 0 ; i < size ; ++i) {
+        if (i == rank) {
+            continue;
+        }
+        packed_size = rcounts[i] * type_size;
+        max_size = opal_max(packed_size, max_size);
+    }
 
     /* Easy way out */
     if ((1 == size) || (0 == max_size) ) {
