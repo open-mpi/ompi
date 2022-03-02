@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+ * Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights
  * Copyright (c) 2018-2020 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -70,7 +70,7 @@ static int mca_pml_base_finalize (void) {
 int mca_pml_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
-    int i, priority = 0, best_priority = 0, num_pml = 0, ret = 0;
+    int i, priority = 0, best_priority = -1, ret = 0;
     opal_list_item_t *item = NULL;
     mca_base_component_list_item_t *cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
@@ -82,9 +82,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* Traverse the list of available components; call their init
        functions. */
 
-    best_priority = -1;
-    best_component = NULL;
-    module = NULL;
     OBJ_CONSTRUCT(&opened, opal_list_t);
     OPAL_LIST_FOREACH(cli, &ompi_pml_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (mca_pml_base_component_t *) cli->cli_component;
@@ -120,9 +117,6 @@ int mca_pml_base_select(bool enable_progress_threads,
                                  component->pmlm_version.mca_component_name );
             continue;
         }
-
-        /* this is a pml that could be considered */
-        num_pml++;
 
         /* Init component to get its priority */
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
