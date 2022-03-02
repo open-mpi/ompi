@@ -23,6 +23,9 @@
 #if !defined(MEM_OP)
 #    error
 #endif /* !defined(MEM_OP) */
+#if !defined(MEM_OP_BLOCK_SIZE)
+#    error
+#endif  /* !defined(MEM_OP_BLOCK_SIZE) */
 
 #ifndef STRINGIFY
 #    define STRINGIFY_(arg) #    arg
@@ -136,7 +139,7 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
         source += datatype->true_lb;
         if ((ptrdiff_t) datatype->size == extent) { /* all contiguous == no gaps around */
             size_t total_length = iov_len_local;
-            size_t memop_chunk = opal_datatype_memop_block_size;
+            size_t memop_chunk = MEM_OP_BLOCK_SIZE;
             OPAL_DATATYPE_SAFEGUARD_POINTER(source, iov_len_local, (unsigned char *) source_base,
                                             datatype, count);
             while (total_length > 0) {
