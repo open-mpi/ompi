@@ -1,5 +1,7 @@
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -291,8 +293,7 @@ static int mca_coll_ucc_init_ctx() {
     }
     ucc_context_config_release(ctx_config);
 
-    copy_fn.attr_communicator_copy_fn  = (MPI_Comm_internal_copy_attr_function)
-        MPI_COMM_NULL_COPY_FN;
+    copy_fn.attr_communicator_copy_fn  = MPI_COMM_NULL_COPY_FN;
     del_fn.attr_communicator_delete_fn = ucc_comm_attr_del_fn;
     if (OMPI_SUCCESS != ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
                                                 &ucc_comm_attr_keyval, NULL ,0, NULL)) {

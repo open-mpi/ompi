@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 #
 #
 # Some grep/sed mojo may be of interest to others...
@@ -175,7 +177,7 @@ SEARCH_HEADER[29]=""
 delete_unnessary_header .
 
 ####################################
-SEARCH_HEADER[0]="ompi/attribute/attribute.h ATTR_HASH_SIZE OMPI_KEYVAL_PREDEFINED OMPI_KEYVAL_F77 ompi_attribute_type_t ompi_mpi1_fortran_copy_attr_function ompi_mpi1_fortran_delete_attr_function ompi_mpi2_fortran_copy_attr_function ompi_mpi2_fortran_delete_attr_function MPI_Comm_internal_copy_attr_function MPI_Type_internal_copy_attr_function MPI_Win_internal_copy_attr_function ompi_attribute_keyval_destructor_fn_t ompi_attribute_fn_ptr_union_t ompi_attribute_fortran_ptr_t ompi_attribute_keyval_t ompi_attr_hash_init ompi_attr_init ompi_attr_finalize ompi_attr_create_keyval ompi_attr_free_keyval ompi_attr_set_c ompi_attr_set_fortran_mpi1 ompi_attr_set_fortran_mpi2 ompi_attr_get_c ompi_attr_get_fortran_mpi1 ompi_attr_get_fortran_mpi2 ompi_attr_delete ompi_attr_copy_all ompi_attr_delete_all ompi_attr_create_predefined ompi_attr_free_predefined"
+SEARCH_HEADER[0]="ompi/attribute/attribute.h ATTR_HASH_SIZE OMPI_KEYVAL_PREDEFINED OMPI_KEYVAL_F77 ompi_attribute_type_t ompi_mpi1_fortran_copy_attr_function ompi_mpi1_fortran_delete_attr_function ompi_mpi2_fortran_copy_attr_function ompi_mpi2_fortran_delete_attr_function  ompi_attribute_keyval_destructor_fn_t ompi_attribute_fn_ptr_union_t ompi_attribute_fortran_ptr_t ompi_attribute_keyval_t ompi_attr_hash_init ompi_attr_init ompi_attr_finalize ompi_attr_create_keyval ompi_attr_free_keyval ompi_attr_set_c ompi_attr_set_fortran_mpi1 ompi_attr_set_fortran_mpi2 ompi_attr_get_c ompi_attr_get_fortran_mpi1 ompi_attr_get_fortran_mpi2 ompi_attr_delete ompi_attr_copy_all ompi_attr_delete_all ompi_attr_create_predefined ompi_attr_free_predefined"
 SEARCH_HEADER[1]="ompi/class/ompi_free_list.h ompi_free_list_item_init_fn_t ompi_free_list_t ompi_free_list_item_t ompi_free_list_init_ex ompi_free_list_init ompi_free_list_init_ex_new ompi_free_list_init_new ompi_free_list_grow ompi_free_list_resize ompi_free_list_pos_t OMPI_FREE_LIST_POS_BEGINNING ompi_free_list_parse OMPI_FREE_LIST_GET OMPI_FREE_LIST_WAIT __ompi_free_list_wait OMPI_FREE_LIST_RETURN"
 SEARCH_HEADER[2]="ompi/class/ompi_rb_tree.h ompi_rb_tree_nodecolor_t ompi_rb_tree_node_t ompi_rb_tree_comp_fn_t ompi_rb_tree_t ompi_rb_tree_condition_fn_t ompi_rb_tree_action_fn_t ompi_rb_tree_construct ompi_rb_tree_destruct ompi_rb_tree_init ompi_rb_tree_insert ompi_rb_tree_find_with ompi_rb_tree_find ompi_rb_tree_delete ompi_rb_tree_destroy ompi_rb_tree_traverse ompi_rb_tree_size"
 SEARCH_HEADER[3]="ompi/class/ompi_seq_tracker.h ompi_seq_tracker_range_t ompi_seq_tracker_t ompi_seq_tracker_check_duplicate ompi_seq_tracker_insert ompi_seq_tracker_copy"
