@@ -7,6 +7,8 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -496,8 +498,7 @@ int mca_pml_ucx_enable(bool enable)
     int ret;
 
     /* Create a key for adding custom attributes to datatypes */
-    copy_fn.attr_datatype_copy_fn  =
-                    (MPI_Type_internal_copy_attr_function)MPI_TYPE_NULL_COPY_FN;
+    copy_fn.attr_datatype_copy_fn  = MPI_TYPE_NULL_COPY_FN;
     del_fn.attr_datatype_delete_fn = mca_pml_ucx_datatype_attr_del_fn;
     ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
                                   &ompi_pml_ucx.datatype_attr_keyval, NULL, 0,
