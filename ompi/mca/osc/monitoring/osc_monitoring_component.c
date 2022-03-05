@@ -90,10 +90,6 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
         
         priority = component->osc_query(win, base, size, disp_unit, comm, info, flavor);
         if (priority < 0) {
-            if (MPI_WIN_FLAVOR_SHARED == flavor && OMPI_ERR_RMA_SHARED == priority) {
-                /* NTH: quick fix to return OMPI_ERR_RMA_SHARED */
-                return OMPI_ERR_RMA_SHARED;
-            }
             continue;
         }
 

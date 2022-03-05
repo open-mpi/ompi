@@ -35,7 +35,8 @@ check_PROGRAMS = \
 	opal_value_array \
 	opal_pointer_array \
 	opal_lifo \
-	opal_fifo
+	opal_fifo \
+	opal_cstring
 
 TESTS = $(check_PROGRAMS)
 
@@ -93,6 +94,12 @@ opal_fifo_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(top_builddir)/test/support/libsupport.a
 opal_fifo_DEPENDENCIES = $(opal_fifo_LDADD)
+
+opal_cstring_SOURCES = opal_cstring.c
+opal_cstring_LDADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+	$(top_builddir)/test/support/libsupport.a
+opal_cstring_DEPENDENCIES = $(opal_cstring_LDADD)
 
 clean-local:
 	rm -f opal_bitmap_test_out.txt opal_hash_table_test_out.txt opal_proc_table_test_out.txt

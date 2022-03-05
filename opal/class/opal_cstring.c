@@ -33,7 +33,7 @@ static void opal_cstring_ctor(opal_cstring_t *obj)
 {
     *(size_t *) &(obj->length) = 0;
     /* make sure the string is null-terminated */
-    ((char *) obj->string)[0] = '\n';
+    ((char *) obj->string)[0] = '\0';
 }
 
 static inline size_t opal_cstring_alloc_size(size_t len)
@@ -90,8 +90,16 @@ int opal_cstring_to_int(opal_cstring_t *string, int *interp)
     if (*endp != '\0') {
         return OPAL_ERR_BAD_PARAM;
     }
-    /* underflow */
+    /* base errors */
     if (tmp == 0 && errno == EINVAL) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    /* overflow/underflow of long int (return of strtol) */
+    if (errno == ERANGE && (tmp == LONG_MIN || tmp == LONG_MAX)) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    /* overflow/underflow of int (for cases where long int is larger) */
+    if (tmp < INT_MIN || tmp > INT_MAX) {
         return OPAL_ERR_BAD_PARAM;
     }
 
@@ -104,24 +112,28 @@ static int opal_str_to_bool_impl(const char *string, bool *interp)
 {
     const char *ptr = string;
 
-    /* Trim leading whitespace */
-    while (isspace(*ptr)) {
-        ++ptr;
-    }
+    if (NULL != string) {
+        /* Trim leading whitespace */
+        while (isspace(*ptr)) {
+            ++ptr;
+        }
 
-    if ('\0' != *ptr) {
-        if (isdigit(*ptr)) {
-            *interp = (bool) atoi(ptr);
-        } else if (0 == strncasecmp(ptr, "yes", 3) || 0 == strncasecmp(ptr, "true", 4)) {
-            *interp = true;
-        } else if (0 == strncasecmp(ptr, "no", 2) && 0 == strncasecmp(ptr, "false", 5)) {
-            *interp = false;
-        } else {
-            *interp = false;
-            return OPAL_ERR_BAD_PARAM;
+        if ('\0' != *ptr) {
+            if (isdigit(*ptr)) {
+                *interp = (bool) atoi(ptr);
+                return OPAL_SUCCESS;
+            } else if (0 == strncasecmp(ptr, "yes", 3) || 0 == strncasecmp(ptr, "true", 4)) {
+                *interp = true;
+                return OPAL_SUCCESS;
+            } else if (0 == strncasecmp(ptr, "no", 2) || 0 == strncasecmp(ptr, "false", 5)) {
+                *interp = false;
+                return OPAL_SUCCESS;
+            }
         }
     }
-    return OPAL_SUCCESS;
+
+    *interp = false;
+    return OPAL_ERR_BAD_PARAM;
 }
 
 int opal_cstring_to_bool(opal_cstring_t *string, bool *interp)

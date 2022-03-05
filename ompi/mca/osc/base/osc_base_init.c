@@ -57,10 +57,6 @@ ompi_osc_base_select(ompi_win_t *win,
         priority = component->osc_query(win, base, size, disp_unit, comm,
                                         win->super.s_info, flavor);
         if (priority < 0) {
-            if (MPI_WIN_FLAVOR_SHARED == flavor && OMPI_ERR_RMA_SHARED == priority) {
-                /* NTH: quick fix to return OMPI_ERR_RMA_SHARED */
-                return OMPI_ERR_RMA_SHARED;
-            }
             continue;
         }
 

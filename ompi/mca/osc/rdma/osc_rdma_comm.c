@@ -6,6 +6,8 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,13 +15,18 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "osc_rdma_comm.h"
+#include "osc_rdma_frag.h"
 #include "osc_rdma_sync.h"
 #include "osc_rdma_request.h"
 #include "osc_rdma_dynamic.h"
+#include "osc_rdma_btl_comm.h"
 
-#include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "opal/align.h"
+#include "opal/util/minmax.h"
+#include "ompi/mca/osc/base/osc_base_obj_convert.h"
 
 /* helper functions */
 static inline void ompi_osc_rdma_cleanup_rdma (ompi_osc_rdma_sync_t *sync, bool dec_always, ompi_osc_rdma_frag_t *frag,
@@ -58,8 +65,7 @@ int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, uint8_t btl_inde
                                 struct mca_btl_base_endpoint_t *endpoint, uint64_t source_address,
                                 mca_btl_base_registration_handle_t *source_handle, void *data, size_t len)
 {
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, btl_index);
-    const size_t btl_alignment_mask = ALIGNMENT_MASK(btl->btl_get_alignment);
+    const size_t btl_alignment_mask = ALIGNMENT_MASK(module->get_alignment);
     mca_btl_base_registration_handle_t *local_handle = NULL;
     ompi_osc_rdma_frag_t *frag = NULL;
     volatile bool read_complete = false;
@@ -75,30 +81,33 @@ int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, uint8_t btl_inde
                      "), len: %lu (aligned: %lu)", (void *) endpoint, source_address, aligned_addr, (unsigned long) len,
                      (unsigned long) aligned_len);
 
-    if (btl->btl_register_mem && len >= btl->btl_get_local_registration_threshold) {
-        do {
-            ret = ompi_osc_rdma_frag_alloc (module, aligned_len, &frag, &ptr);
-            if (OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == ret)) {
-                ompi_osc_rdma_progress (module);
+    if (module->use_memory_registration) {
+        mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl(module, btl_index);
+        if (len >= btl->btl_get_local_registration_threshold) {
+            do {
+                ret = ompi_osc_rdma_frag_alloc(module, aligned_len, &frag, &ptr);
+                if (OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == ret)) {
+                    ompi_osc_rdma_progress(module);
+                }
+            } while (OMPI_ERR_OUT_OF_RESOURCE == ret);
+
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "error allocating temporary buffer");
+                return ret;
             }
-        } while (OMPI_ERR_OUT_OF_RESOURCE == ret);
 
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "error allocating temporary buffer");
-            return ret;
+            local_handle = frag->handle;
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocated temporary buffer %p in fragment %p", (void*)ptr,
+                             (void *) frag);
         }
-
-        local_handle = frag->handle;
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocated temporary buffer %p in fragment %p", (void*)ptr,
-                         (void *) frag);
     }
 
-    assert (!(source_address & ALIGNMENT_MASK(btl->btl_get_alignment)));
+    assert (!(source_address & ALIGNMENT_MASK(module->get_alignment)));
 
     do {
-        ret = btl->btl_get (btl, endpoint, ptr, aligned_addr,
-                            local_handle, source_handle, aligned_len, 0, MCA_BTL_NO_ORDER,
-                            ompi_osc_get_data_complete, (void *) &read_complete, NULL);
+        ret = ompi_osc_rdma_btl_get(module, btl_index, endpoint, ptr, aligned_addr,
+                                    local_handle, source_handle, aligned_len, 0, MCA_BTL_NO_ORDER,
+                                    ompi_osc_get_data_complete, (void *) &read_complete, NULL);
         if (!ompi_osc_rdma_oor (ret)) {
             break;
         }
@@ -242,7 +251,7 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
             assert (0 != local_iov_count);
 
             /* determine how much to transfer in this operation */
-            rdma_len = min(min(local_iovec[local_iov_index].iov_len, remote_iovec[remote_iov_index].iov_len), max_rdma_len);
+            rdma_len = opal_min(opal_min(local_iovec[local_iov_index].iov_len, remote_iovec[remote_iov_index].iov_len), max_rdma_len);
 
             /* execute the get */
             if (!subreq && alloc_reqs) {
@@ -389,7 +398,7 @@ static void ompi_osc_rdma_put_complete (struct mca_btl_base_module_t *btl, struc
 
     /* the lowest bit is used as a flag indicating this put operation has a request */
     if ((intptr_t) context & 0x1) {
-        ompi_osc_rdma_request_t *request = request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
+        ompi_osc_rdma_request_t *request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
         sync = request->sync;
 
         if (0 == OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1)) {
@@ -420,7 +429,7 @@ static void ompi_osc_rdma_put_complete_flush (struct mca_btl_base_module_t *btl,
 
     /* the lowest bit is used as a flag indicating this put operation has a request */
     if ((intptr_t) context & 0x1) {
-        ompi_osc_rdma_request_t *request = request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
+        ompi_osc_rdma_request_t *request = (ompi_osc_rdma_request_t *) ((intptr_t) context & ~1);
         module = request->module;
 
         if (0 == OPAL_THREAD_ADD_FETCH32 (&request->outstanding_requests, -1)) {
@@ -444,7 +453,6 @@ static int ompi_osc_rdma_put_real (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_pee
                                    mca_btl_base_registration_handle_t *local_handle, size_t size,
                                    mca_btl_base_rdma_completion_fn_t cb, void *context, void *cbdata) {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating btl put of %lu bytes to remote address %" PRIx64 ", sync "
@@ -454,9 +462,9 @@ static int ompi_osc_rdma_put_real (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_pee
     ompi_osc_rdma_sync_rdma_inc (sync);
 
     do {
-        ret = btl->btl_put (btl, peer->data_endpoint, ptr, target_address,
-                            local_handle, target_handle, size, 0, MCA_BTL_NO_ORDER,
-                            cb, context, cbdata);
+        ret = ompi_osc_rdma_btl_put(module, peer->data_btl_index, peer->data_endpoint,
+                                    ptr, target_address, local_handle, target_handle,
+                                    size, 0, MCA_BTL_NO_ORDER, cb, context, cbdata);
         if (OPAL_UNLIKELY(OMPI_SUCCESS == ret)) {
             return OMPI_SUCCESS;
         }
@@ -481,7 +489,6 @@ int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *
                               ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
     mca_btl_base_registration_handle_t *local_handle = NULL;
     mca_btl_base_rdma_completion_fn_t cbfunc = NULL;
     ompi_osc_rdma_frag_t *frag = NULL;
@@ -489,16 +496,19 @@ int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *
     void *cbcontext;
     int ret;
 
-    if (btl->btl_register_mem && size > btl->btl_put_local_registration_threshold) {
-        ret = ompi_osc_rdma_frag_alloc (module, size, &frag, &ptr);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            ret = ompi_osc_rdma_register (module, peer->data_endpoint, source_buffer, size, 0, &local_handle);
+    if (module->use_memory_registration) {
+        mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl(module, peer->data_btl_index);
+        if (size > btl->btl_put_local_registration_threshold) {
+            ret = ompi_osc_rdma_frag_alloc(module, size, &frag, &ptr);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                return ret;
+                ret = ompi_osc_rdma_register(module, peer->data_endpoint, source_buffer, size, 0, &local_handle);
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                    return ret;
+                }
+            } else {
+                memcpy(ptr, source_buffer, size);
+                local_handle = frag->handle;
             }
-        } else {
-            memcpy (ptr, source_buffer, size);
-            local_handle = frag->handle;
         }
     }
 
@@ -600,8 +610,7 @@ static int ompi_osc_rdma_get_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_p
                                      ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
-    const size_t btl_alignment_mask = ALIGNMENT_MASK(btl->btl_get_alignment);
+    const size_t btl_alignment_mask = ALIGNMENT_MASK(module->get_alignment);
     mca_btl_base_registration_handle_t *local_handle = NULL;
     ompi_osc_rdma_frag_t *frag = NULL;
     osc_rdma_size_t aligned_len;
@@ -617,70 +626,73 @@ static int ompi_osc_rdma_get_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_p
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "initiating get of %lu bytes from remote ptr %" PRIx64 " to local ptr %p",
                      size, source_address, target_buffer);
 
-    if ((btl->btl_register_mem && size > btl->btl_get_local_registration_threshold) ||
-        (((uint64_t) target_buffer | size | source_address) & btl_alignment_mask)) {
+    if (module->use_memory_registration) {
+        mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl(module, peer->data_btl_index);
+        if (size > btl->btl_get_local_registration_threshold ||
+            (((uint64_t) target_buffer | size | source_address) & btl_alignment_mask)) {
 
-        ret = ompi_osc_rdma_frag_alloc (module, aligned_len, &frag, &ptr);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            if (OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret) {
-                /* region is too large for a buffered read */
-                size_t subsize;
+            ret = ompi_osc_rdma_frag_alloc(module, aligned_len, &frag, &ptr);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                if (OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret) {
+                    /* region is too large for a buffered read */
+                    size_t subsize;
 
-                if ((source_address & btl_alignment_mask) && (source_address & btl_alignment_mask) == ((intptr_t) target_buffer & btl_alignment_mask)) {
-                    /* remote region has the same alignment but the base is not aligned. perform a small
-                     * buffered get of the beginning of the remote region */
-                    aligned_source_base = OPAL_ALIGN(source_address, btl->btl_get_alignment, osc_rdma_base_t);
-                    subsize = (size_t) (aligned_source_base - source_address);
+                    if ((source_address & btl_alignment_mask) && (source_address & btl_alignment_mask) == ((intptr_t) target_buffer & btl_alignment_mask)) {
+                        /* remote region has the same alignment but the base is not aligned. perform a small
+                         * buffered get of the beginning of the remote region */
+                        aligned_source_base = OPAL_ALIGN(source_address, btl->btl_get_alignment, osc_rdma_base_t);
+                        subsize = (size_t) (aligned_source_base - source_address);
 
-                    ret = ompi_osc_rdma_get_partial (sync, peer, source_address, source_handle, target_buffer, subsize, request);
-                    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                        return ret;
+                        ret = ompi_osc_rdma_get_partial(sync, peer, source_address, source_handle, target_buffer, subsize, request);
+                        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                            return ret;
+                        }
+
+                        source_address += subsize;
+                        target_buffer = (void *) ((intptr_t) target_buffer + subsize);
+                        size -= subsize;
+
+                        aligned_len = aligned_source_bound - aligned_source_base;
                     }
 
-                    source_address += subsize;
-                    target_buffer = (void *) ((intptr_t) target_buffer + subsize);
-                    size -= subsize;
-
-                    aligned_len = aligned_source_bound - aligned_source_base;
-                }
-
-                if (!(((uint64_t) target_buffer | source_address) & btl_alignment_mask) &&
-                    (size & btl_alignment_mask)) {
-                    /* remote region bases are aligned but the bounds are not. perform a
-                     * small buffered get of the end of the remote region */
-                    aligned_len = size & ~btl_alignment_mask;
-                    subsize = size - aligned_len;
-                    size = aligned_len;
-                    ret = ompi_osc_rdma_get_partial (sync, peer, source_address + aligned_len, source_handle,
-                                                     (void *) ((intptr_t) target_buffer + aligned_len), subsize, request);
-                    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                        return ret;
+                    if (!(((uint64_t) target_buffer | source_address) & btl_alignment_mask) &&
+                        (size & btl_alignment_mask)) {
+                        /* remote region bases are aligned but the bounds are not. perform a
+                         * small buffered get of the end of the remote region */
+                        aligned_len = size & ~btl_alignment_mask;
+                        subsize = size - aligned_len;
+                        size = aligned_len;
+                        ret = ompi_osc_rdma_get_partial(sync, peer, source_address + aligned_len, source_handle,
+                                                        (void *) ((intptr_t) target_buffer + aligned_len), subsize, request);
+                        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                            return ret;
+                        }
                     }
+                    /* (remaining) user request is now correctly aligned */
                 }
-                /* (remaining) user request is now correctly aligned */
-            }
 
-            if ((((uint64_t) target_buffer | size | source_address) & btl_alignment_mask)) {
-                /* local and remote alignments differ */
-                request->buffer = ptr = malloc (aligned_len);
+                if ((((uint64_t) target_buffer | size | source_address) & btl_alignment_mask)) {
+                    /* local and remote alignments differ */
+                    request->buffer = ptr = malloc(aligned_len);
+                } else {
+                    ptr = target_buffer;
+                }
+
+                if (NULL != ptr) {
+                    (void)ompi_osc_rdma_register(module, peer->data_endpoint, ptr, aligned_len, MCA_BTL_REG_FLAG_LOCAL_WRITE,
+                                                 &local_handle);
+                }
+
+                if (OPAL_UNLIKELY(NULL == local_handle)) {
+                    free(request->buffer);
+                    request->buffer = NULL;
+                    return ret;
+                }
             } else {
-                ptr = target_buffer;
+                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using internal buffer %p in fragment %p for get of size %lu bytes, source address 0x%lx",
+                                 (void*)ptr, (void *) frag, (unsigned long) aligned_len, (unsigned long) aligned_source_base);
+                local_handle = frag->handle;
             }
-
-            if (NULL != ptr) {
-                (void) ompi_osc_rdma_register (module, peer->data_endpoint, ptr, aligned_len, MCA_BTL_REG_FLAG_LOCAL_WRITE,
-                                               &local_handle);
-            }
-
-            if (OPAL_UNLIKELY(NULL == local_handle)) {
-                free (request->buffer);
-                request->buffer = NULL;
-                return ret;
-            }
-        } else {
-            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using internal buffer %p in fragment %p for get of size %lu bytes, source address 0x%lx",
-                             (void*)ptr, (void *) frag, (unsigned long) aligned_len, (unsigned long) aligned_source_base);
-            local_handle = frag->handle;
         }
     }
 
@@ -703,10 +715,10 @@ static int ompi_osc_rdma_get_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_p
     }
 
     do {
-        ret = btl->btl_get (btl, peer->data_endpoint, ptr,
-                            aligned_source_base, local_handle, source_handle,
-                            aligned_len, 0, MCA_BTL_NO_ORDER, ompi_osc_rdma_get_complete,
-                            request, frag);
+        ret = ompi_osc_rdma_btl_get(module, peer->data_btl_index, peer->data_endpoint,
+                                    ptr, aligned_source_base, local_handle, source_handle,
+                                    aligned_len, 0, MCA_BTL_NO_ORDER,
+                                    ompi_osc_rdma_get_complete, request, frag);
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
             return OMPI_SUCCESS;
         }
@@ -736,7 +748,6 @@ static inline int ompi_osc_rdma_put_w_req (ompi_osc_rdma_sync_t *sync, const voi
                                            ompi_datatype_t *target_datatype, ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
     mca_btl_base_registration_handle_t *target_handle;
     uint64_t target_address;
     int ret;
@@ -771,7 +782,7 @@ static inline int ompi_osc_rdma_put_w_req (ompi_osc_rdma_sync_t *sync, const voi
 
     return ompi_osc_rdma_master (sync, (void *) origin_addr, origin_count, origin_datatype, peer,
                                  target_address, target_handle, target_count, target_datatype, request,
-                                 btl->btl_put_limit, ompi_osc_rdma_put_contig, false);
+                                 module->put_limit, ompi_osc_rdma_put_contig, false);
 }
 
 static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
@@ -779,7 +790,6 @@ static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *ori
                                            ompi_datatype_t *source_datatype, ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
-    mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
     mca_btl_base_registration_handle_t *source_handle;
     uint64_t source_address;
     ptrdiff_t source_span, source_lb;
@@ -812,7 +822,7 @@ static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *ori
 
     return ompi_osc_rdma_master (sync, origin_addr, origin_count, origin_datatype, peer, source_address,
                                  source_handle, source_count, source_datatype, request,
-                                 btl->btl_get_limit, ompi_osc_rdma_get_contig, true);
+                                 module->get_limit, ompi_osc_rdma_get_contig, true);
 }
 int ompi_osc_rdma_put (const void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
                        int target_rank, ptrdiff_t target_disp, int target_count,
