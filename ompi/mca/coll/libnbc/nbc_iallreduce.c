@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -768,9 +768,9 @@ allred_sched_ring(int r, int p,
   /* first p-1 rounds are reductions */
   for (int round = 0 ; round < p - 1 ; ++round) {
     int selement = (r+1-round + 2*p /*2*p avoids negative mod*/)%p; /* the element I am sending */
-    int soffset = segoffsets[selement]*ext;
+    size_t soffset = segoffsets[selement]*(size_t)ext;
     int relement = (r-round + 2*p /*2*p avoids negative mod*/)%p; /* the element that I receive from my neighbor */
-    int roffset = segoffsets[relement]*ext;
+    size_t roffset = segoffsets[relement]*(size_t)ext;
 
     /* first message come out of sendbuf */
     if (round == 0) {
@@ -807,9 +807,9 @@ allred_sched_ring(int r, int p,
   }
   for (int round = p - 1 ; round < 2 * p - 2 ; ++round) {
     int selement = (r+1-round + 2*p /*2*p avoids negative mod*/)%p; /* the element I am sending */
-    int soffset = segoffsets[selement]*ext;
+    size_t soffset = segoffsets[selement]*(size_t)ext;
     int relement = (r-round + 2*p /*2*p avoids negative mod*/)%p; /* the element that I receive from my neighbor */
-    int roffset = segoffsets[relement]*ext;
+    size_t roffset = segoffsets[relement]*(size_t)ext;
 
     res = NBC_Sched_send ((char *) recvbuf + soffset, false, segsizes[selement], datatype, speer,
                           schedule, false);
