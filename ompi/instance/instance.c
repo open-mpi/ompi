@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -236,6 +236,7 @@ int ompi_mpi_instance_retain (void)
     OBJ_CONSTRUCT(&ompi_instance_f_to_c_table, opal_pointer_array_t);
     if (OPAL_SUCCESS != opal_pointer_array_init (&ompi_instance_f_to_c_table, 8,
                                                  OMPI_FORTRAN_HANDLE_MAX, 32)) {
+        opal_mutex_unlock (&instance_lock);
         return OMPI_ERROR;
     }
 
@@ -964,6 +965,10 @@ static void ompi_instance_get_num_psets_complete (pmix_status_t status,
             if (ompi_mpi_instance_pmix_psets) {
                 opal_argv_free (ompi_mpi_instance_pmix_psets);
             }
+            if (NULL != pset_names) {
+                free(pset_names);
+                pset_names = NULL;
+            }
             PMIX_VALUE_UNLOAD(rc,
                               &info[n].value,
                               (void **)&pset_names,
@@ -975,11 +980,14 @@ static void ompi_instance_get_num_psets_complete (pmix_status_t status,
             }
             ompi_mpi_instance_pmix_psets = opal_argv_split (pset_names, ',');
             ompi_mpi_instance_num_pmix_psets = opal_argv_count (ompi_mpi_instance_pmix_psets);
-            free(pset_names);
         }
     }
 
 done:
+    if (NULL != pset_names) {
+        free(pset_names);
+    }
+
     if (NULL != release_fn) {
         release_fn(release_cbdata);
     }
