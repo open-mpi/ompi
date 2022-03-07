@@ -14,7 +14,7 @@ Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
 Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
                         reserved.
-Copyright (c) 2010-2021 IBM Corporation.  All rights reserved.
+Copyright (c) 2010-2022 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
@@ -75,19 +75,37 @@ Master (not on release branches yet)
 * launcher.
 **********************************************************************
 
-v5.0.0rc2 -- October, 2021
+v5.0.0rc3 -- March, 2021
 --------------------
 
 - ORTE, the underlying OMPI launcher has been removed, and replaced
   with PRTE.
+- New MPI-4.0 features:
+  - Added ERRORS_ABORT infrastructure.
+  - Added support for 'initial error handler'.
+  - Added error handling for 'unbound' errors to MPI_COMM_SELF.
+  - Persistent collectives have been moved to the MPI
+    namespace from MPIX.
+  - Make MPI_Comm_get_info, MPI_File_get_info, and
+    MPI_Win_get_info compliant to the standard.
+  - Initial partitioned communication using persistent sends and
+    persistent receives added.
+  - Added support for MPI_Info_get_string.
+  - Droped unknown/ignored info keys on communicators, files,
+    and windows.
+  - Implemented MPI_Isendrecv() and its variants.
+  - Added Support for MPI_Comm_idup_with_info().
 - Reworked how Open MPI integrates with 3rd party packages.
   The decision was made to stop building 3rd-party packages
   such as Libevent, HWLOC, PMIx, and PRRTE as MCA components
   and instead 1) start relying on external libraries whenever
   possible and 2) Open MPI builds the 3rd party libraries (if needed)
   as independent libraries, rather than linked into libopen-pal.
-- Update to use PMIx v4.1.1rc2
-- Update to use PRRTE v2.0.1rc2
+- Updated to use PMIx v4.2 branch - current hash: b59e49f
+- Updated to use PRRTE v2.1 branch - current hash: 8c09625
+- osc/rdma and various btls: Many fixes to better support btl/tcp.
+  - This patch series fixs many issues when running with
+    "--mca osc rdma --mca btl tcp", IE - TCP support for one sided MPI calls.
 - Change the default component build behavior to prefer building
   components as part of libmpi.so instead of individual DSOs.
 - Remove pml/yalla, mxm, mtl/psm, and ikrit components.
@@ -97,6 +115,15 @@ v5.0.0rc2 -- October, 2021
 - 32 bit atomics are now only supported via C11 compliant compilers.
 - Explicitly disable support for GNU gcc < v4.8.1 (note: the default
   gcc compiler that is included in RHEL 7 is v4.8.5).
+- HWLOC: Require v1.11.0 or later.
+- HWLOC: Updated internal hwloc to v2.7.0.
+- HWLOC: enable --enable-plugins when appropriate
+  When running configure on the internal hwloc, enable plugins via
+  the --enable-plugins option when 1) --disable-dlopen was not
+  specified and 2) the user didn't add some variant of
+  --enable-plugins on the configure line already.  The motivation
+  for this change is to not pull in hwloc dependencies like libcuda
+  in the general case.
 - Do not build Open SHMEM layer when there are no SPMLs available.
   Currently, this means the Open SHMEM layer will only build if
   the UCX library is found.
@@ -137,7 +164,6 @@ v5.0.0rc2 -- October, 2021
 - osc/pt2pt: Removed. Users can use osc/rdma + btl/tcp
   for OSC support using TCP, or other providers.
 - Open MPI now links -levent_core instead of -levent.
-- MPI-4: Added ERRORS_ABORT infrastructure.
 - common/cuda docs: Various fixes. Thanks to
   Simon Byrne <simonbyrne@gmail.com> for finding and fixing.
 - osc/ucx: Add support for acc_single_intrinsic.
@@ -148,9 +174,7 @@ v5.0.0rc2 -- October, 2021
   Adds new option "--with-wrapper-cc=" .
 - mpi_f08: Fixed Fortran-8-byte-INTEGER vs. C-4-byte-int issue.
   Thanks to @ahaichen for reporting the bug.
-- MPI-4: Added support for 'initial error handler'.
 - opal/thread/tsd: Added thread-specific-data (tsd) api.
-- MPI-4: Added error handling for 'unbound' errors to MPI_COMM_SELF.
 - Add missing MPI_Status conversion subroutines:
   MPI_Status_c2f08(), MPI_Status_f082c(), MPI_Status_f082f(),
   MPI_Status_f2f08() and the PMPI_* related subroutines.
@@ -158,7 +182,7 @@ v5.0.0rc2 -- October, 2021
 - opal/util: Fixed typo in error string. Thanks to
   NARIBAYASHI Akira <a.naribayashi@fujitsu.com> for finding
   and fixing the bug.
-- fortran/use-mpi-f08: Generate PMPI bindings from the MPI bindings.
+- Fortran/use-mpi-f08: Generate PMPI bindings from the MPI bindings.
 - Converted man pages to markdown.
   Thanks to Fangcong Yin <fyin2@nd.edu> for their contribution
   to this effort.
@@ -180,7 +204,7 @@ v5.0.0rc2 -- October, 2021
   for the contribution.
 - fcoll/two_phase: Removed the component. All scenerios it was
   used for has been replaced.
-- btl/uct: Bumped UCX allowed version to v1.9.x.
+- btl/uct: Bumped highest supported UCX version to v1.10.x.
 - ULFM Fault Tolerance has been added. See README.FT.ULFM.md.
 - Fixed a crash during CUDA initialization.
   Thanks to Yaz Saito <yasushi.saito@gmail.com> for finding
@@ -189,7 +213,7 @@ v5.0.0rc2 -- October, 2021
 - ompio: Added atomicity support.
 - Singleton comm spawn support has been fixed.
 - Autoconf v2.7 support has been updated.
-- fortran: Added check for ISO_FORTRAN_ENV:REAL16. Thanks to
+- Fortran: Added check for ISO_FORTRAN_ENV:REAL16. Thanks to
   Jeff Hammond <jeff_hammond@acm.org> for reporting this issue.
 - Changed the MCA component build style default to static.
 - PowerPC atomics: Force usage of opal/ppc assembly.
@@ -225,12 +249,8 @@ v5.0.0rc2 -- October, 2021
   "--mca coll_tuned_allgatherv_algorithm sparbit"
   Thanks to: Wilton Jaciel Loch <wiltonloch wilton.loch@gmail.com>,
   and Guilherme Koslovski for their contribution.
-- MPI-4: Persistent collectives have been moved to the MPI
-  namespace from MPIX.
 - OFI: Delay patcher initialization until needed. It will now
   be initialized only after the component is officially selected.
-- MPI-4: Make MPI_Comm_get_info, MPI_File_get_info, and
-  MPI_Win_get_info compliant to the standard.
 - Portable_platform file has been updated from GASNet.
 - GCC versions < 4.8.1 are no longer supported.
 - coll: Fix a bug with the libnbc MPI_AllReduce ring algorithm
@@ -254,9 +274,52 @@ v5.0.0rc2 -- October, 2021
   performance and memory usage.
 - coll/basic: Fix segmentation fault in MPI_Alltoallw with
   MPI_IN_PLACE.
-  NOTE: This patch either caused or exposed a regression
-  in MPI_AlltoAllv() using MPI_IN_PLACE. See github issue #9501.
-  This will be fixed prior to v5.0.0 release.
+- Added OpenPMIx binaries to build, including pmix_info.
+- Added new OSHMEM APIs for v1.5.
+  Thanks to Mamzi Bayatpour <mbayatpour@nvidia.com> for the contribution.
+- OSC/UCX - Various fixes for dynamic windows.
+- allocator/bucket: Add check for overflow.
+- Fortran: Fixes for grequest return values and status.
+- mtl/ofi: Call fi_setopt to state MPI p2p requirements for CUDA
+- Fortran: Changed MPI_Waitall/array_of_requests/etc bindings from dimension(count) to dimension(*).
+- coll/base/alltoall: Fixed send/recv offsets in rbuf for the case of MPI_IN_PLACE 
+- btl/uct: Updated the defaults to allow Mellanox HCAs (mlx4_0, and mlx5_0) for
+  osc/rdma to work out-of-the-box.
+- build: Fix bug where internal PMIx/PRRTE configure was running
+  even if external requested.
+- Fixed a segv when older HWLOCs are used.
+- Various fixes for static builds.
+- ofi/mtl: Fix component selection debug output
+  Thanks fo Samuel K. Gutierrez <samuel@lanl.gov> for the contribution.
+- opal/mca/threads/pthreads: removed opal_pthread_mutex_t - cleans
+  up logic and code duplication.
+  Thanks to Shintaro Iwasaki <siwasaki@anl.gov> for the contribution.
+- opal/mca/threads/qhtreads: Added opal_recursive_mutex_t support.
+  Thanks to Jan Ciesko <jciesko@sandia.gov> for the contribution.
+- Various improvements to MPI_Test, MPI_Testall, and MPI_Testsome.
+- MPI module: added the mpi_f08 TYPE(MPI_*) types.
+- MPI_Op: Various performance improvements, and removed all ops with three buffers.
+  Thanks to George Katevenis <gkatev@ics.forth.gr> for the report
+  and their contribution to the patch.
+- Fixed Fortran preprocessor issue with CPPFLAGS.
+  Thanks to Jeff Hammond for reporting this issue.
+- opal/atomics: Cleaned up and refactored these interfaces.
+- btl/sm: Fixed crash on put/get to self.
+- btl/base_am_rdma: fix handling of btl_send returning 1
+- Fixed bus error with btl/sm + XPMEM.
+  Thanks to George Katevenis for reporting this issue.
+- scoll/ucc: fix long long reduction dtype.
+  Thanks to ferrol aderholdt <faderholdt@nvidia.com> for the
+  contribution.
+- scoll/ucc: add onesided ucc support 
+  Thanks to ferrol aderholdt <faderholdt@nvidia.com> for the
+  contribution.
+- opal/common/ucx: enable OPAL memory hooks by default
+  This will provide compatibility to other transports.
+- Fixed leak of sm_segment files in /dev/shm.
+- ompi/contrib: Removed libompitrace.
+  This library was incomplete and unmaintained. If needed, it
+  is available in the v4/v4.1 series.
 
 4.1.2 -- November, 2021
 -----------------------
