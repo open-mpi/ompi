@@ -30,9 +30,9 @@ Need to update these docs to reflect:
 Other random to-do items
 ------------------------
 
-* Create for-ompi-develpopers-to-write-RST-docs file:
-  * Document == -- ^^ progression of headers
-  * Document ... lots of other things.
+* Add a note somewhere about "These HTML docs are available at
+  docs.open-mpi.org and in distribution tarballs in
+  ``docs/_build/html/index.html``.
 
 * Add a section about debugging and removal of MPIR, yadda yadda yadda
   (at least some of this can come from the "parallel debugging" FAQ
