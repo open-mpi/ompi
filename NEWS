@@ -75,7 +75,7 @@ Master (not on release branches yet)
 * launcher.
 **********************************************************************
 
-v5.0.0rc3 -- March, 2021
+v5.0.0rc3 -- March, 2022
 --------------------
 
 - ORTE, the underlying OMPI launcher has been removed, and replaced
