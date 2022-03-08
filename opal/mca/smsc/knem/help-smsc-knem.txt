@@ -64,28 +64,3 @@ is available.  This may result in lower performance.
   Local host:              %s
   Open MPI's knem version: 0x%x
   /dev/knem's version:     0x%x
-#
-[knem mmap fail]
-Open MPI failed to map support from the knem Linux kernel module; this
-shouldn't happen. Please check with your system administrator, or set
-the smsc MCA variable to "^knem" to silence this warning and run
-without knem support.
-
-Open MPI will try to fall back on another single-copy mechanism if one
-is available.  This may result in lower performance.
-
-  Local host:  %s
-  System call: mmap()
-  Errno:       %d (%s)
-#
-[knem init error]
-Open MPI encountered an error during the knem initialization. Please
-check with your system administrator, or set the smsc MCA variable to
-"^knem" to silence this warning and run without knem support.
-
-Open MPI will try to fall back on another single-copy mechanism if one
-is available.  This may result in lower performance.
-
-  Local host:  %s
-  System call: %s
-  Errno:       %d (%s)

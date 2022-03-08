@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2012-2020 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2022 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -103,16 +103,6 @@ value will be ignored.
   Local host: %s
   Value:      %s
   Message:    %s
-#
-[device present but not up]
-Open MPI has found a usNIC device that is present / listed in Linux,
-but in a "down" state.  It will not be used by this MPI job.
-
-You may wish to check this device, especially if it is unexpectedly
-down.
-
-  Local server: %s
-  Device name:  %s
 #
 [MTU mismatch]
 The MTU does not match on local and remote hosts.  All interfaces on
@@ -224,22 +214,6 @@ Check the resulting "mymap*" files to see the exact pairing of IP
 interfaces.  Inconsistent results may be indicative of underlying
 network misconfigurations.
 #
-[fi_av_insert timeout]
-The usnic BTL failed to create addresses for remote peers within the
-specified timeout.  This usually means that ARP requests failed to
-resolve in time.  You may be able to solve the problem by increasing
-the usnic BTL's ARP timeout.  If that doesn't work, you should
-diagnose why ARP replies are apparently not being delivered in a
-timely manner.
-
-The usNIC interface listed below will be ignored.  Your MPI
-application will likely either run with degraded performance and/or
-abort.
-
-  Server:              %s
-  usNIC interface:     %s
-  Current ARP timeout: %d (btl_usnic_arp_timeout MCA param)
-#
 [fi_av_eq too small]
 The usnic BTL was told to create an address resolution queue that was
 too small via the mca_btl_usnic_av_eq_num MCA parameter.  This
@@ -282,56 +256,6 @@ connectivity map file will not be written.
   Output map file:   %s
   Working directory: %s
   Error:             %s (%d)
-#
-[received too many short packets]
-WARNING: The usnic BTL received a significant number of abnormally
-short packets on a single network interface.  This may be due to
-corruption or congestion in the network fabric.  It may be useful to
-run a physical/layer 0 diagnostic.
-
-Your job will continue, but if this poor network behavior continues,
-you may experience lower-than-expected performance due to overheads
-caused by higher-than-usual retransmission rates (to compensate for
-the corrupted received packets).
-
-  Local server:       %s
-  usNIC interface:    %s
-  # of short packets
-     received so far: %d
-
-You will only receive this warning once per MPI process per job.
-
-If you know that your network environment is lossy/heavily congested
-such that short/corrupted packets are expected, you can disable this
-warning by setting the btl_usnic_max_short_packets MCA parameter to 0.
-#
-[non-receive completion error]
-WARNING: The usnic BTL has detected an error in the completion of a
-non-receive event.  This is highly unusual, and may indicate an error
-in the usNIC subsystem on this server.
-
-Your MPI job will continue, but you should monitor the job and ensure
-that it behaves correctly.
-
-  Local server:       %s
-  usNIC interface:    %s
-  Channel index:      %d
-  Completion status:  %s (%d)
-  Work request ID:    %p
-  Opcode:             %s (%d)
-
-If this error keeps happening, you should contact Cisco technical
-support.
-#
-[device present but not up]
-Open MPI has found a usNIC device that is present / listed in Linux,
-but in a "down" state.  It will not be used by this MPI job.
-
-You may wish to check this device, especially if it is unexpectedly
-down.
-
-  Local server: %s
-  Device name:  %s
 #
 [transport mismatch]
 Open MPI has found two servers with different underlying usNIC
