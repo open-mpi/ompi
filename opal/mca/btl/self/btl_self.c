@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -248,7 +248,9 @@ static int mca_btl_self_sendi(struct mca_btl_base_module_t *btl,
     frag = mca_btl_self_prepare_src(btl, endpoint, convertor, order, header_size, &payload_size,
                                     flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if (NULL == frag) {
-        *descriptor = NULL;
+        if( NULL != descriptor ) {
+            *descriptor = NULL;
+        }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
