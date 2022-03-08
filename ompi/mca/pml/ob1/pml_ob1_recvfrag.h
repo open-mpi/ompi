@@ -172,6 +172,12 @@ extern void mca_pml_ob1_recv_frag_callback_cid( mca_btl_base_module_t *btl,
 extern mca_pml_ob1_recv_frag_t*
 check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
 
+/**
+ * Move for all peers all pending cant_match fragments into the matching queues. This
+ * function is necessary when allow_overtake info key is transition to set.
+ */
+int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm );
+
 void append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
                                  mca_pml_ob1_recv_frag_t* frag,
                                  uint16_t seq);

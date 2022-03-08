@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -170,7 +170,7 @@ int mca_pml_ob1_isend(const void *buf,
         return OMPI_ERR_UNREACH;
     }
 
-    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) || 0 > tag) {
         seqn = (uint16_t) OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
     }
 
@@ -274,7 +274,7 @@ int mca_pml_ob1_send(const void *buf,
         return OMPI_SUCCESS;
     }
 
-    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) || 0 > tag) {
         seqn = (uint16_t) OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
     }
 

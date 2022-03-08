@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2019 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -370,7 +370,7 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
         /* note this is not an ompi_proc, but a ob1_comm_proc, thus we don't
          * use ompi_proc_is_sentinel to verify if initialized. */
         if( NULL == proc ) continue;
-        /* remove the frag from the unexpected list, add to the nack list 
+        /* remove the frag from the unexpected list, add to the nack list
          * so that we can send the nack as needed to remote cancel the send
          * from outside the match lock.
          */
@@ -385,7 +385,7 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
             }
         }
         /* same for the cantmatch queue/heap; this list is more complicated
-         * Keep it simple: we pop all of the complex list, put the bad items 
+         * Keep it simple: we pop all of the complex list, put the bad items
          * in the nack_list, and keep the good items in the keep_list;
          * then we reinsert the good items in the cantmatch heaplist */
         mca_pml_ob1_recv_frag_t* frag;
@@ -519,7 +519,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
     }
 #endif
 
-    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm_ptr)) {
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm_ptr) || 0 > hdr->hdr_tag) {
         /* get sequence number of next message that can be processed.
          * If this frag is out of sequence, queue it up in the list
          * now as we still have the lock.
@@ -637,6 +637,38 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
     }
 }
 
+/**
+ * Merge all out of sequence fragments into the matching queue, as if they were received now.
+ */
+int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm )
+{
+    mca_pml_ob1_comm_t * pml_comm = (mca_pml_ob1_comm_t *)ompi_comm->c_pml_comm;
+    mca_pml_ob1_recv_frag_t *frag, *frags_cant_match;
+    mca_pml_ob1_comm_proc_t* proc;
+    int cnt = 0;
+
+    for (uint32_t i = 0; i < pml_comm->num_procs; i++) {
+        if ((NULL == (proc = pml_comm->procs[i])) || (NULL != proc->frags_cant_match)) {
+            continue;
+        }
+
+        OB1_MATCHING_LOCK(&pml_comm->matching_lock);
+        /* Acquire all cant_match frags from the peer */
+        frags_cant_match = proc->frags_cant_match;
+        proc->frags_cant_match = NULL;
+        while(NULL != (frag = remove_head_from_ordered_list(&frags_cant_match))) {
+            /* mca_pml_ob1_recv_frag_match_proc() will release the lock. */
+            mca_pml_ob1_recv_frag_match_proc(frag->btl, ompi_comm, proc,
+                                             &frag->hdr.hdr_match,
+                                             frag->segments, frag->num_segments,
+                                             frag->hdr.hdr_match.hdr_common.hdr_type, frag);
+            OB1_MATCHING_LOCK(&pml_comm->matching_lock);
+            cnt++;
+        }
+    }
+    OB1_MATCHING_UNLOCK(&pml_comm->matching_lock);
+    return cnt;
+}
 
 void mca_pml_ob1_recv_frag_callback_rndv (mca_btl_base_module_t *btl,
                                           const mca_btl_base_receive_descriptor_t *descriptor)
@@ -1092,7 +1124,7 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
     frag_msg_seq = hdr->hdr_seq;
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
 
-    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm_ptr)) {
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm_ptr) || 0 > hdr->hdr_tag) {
         /* If the sequence number is wrong, queue it up for later. */
         if(OPAL_UNLIKELY(frag_msg_seq != next_msg_seq_expected)) {
             mca_pml_ob1_recv_frag_t* frag;
