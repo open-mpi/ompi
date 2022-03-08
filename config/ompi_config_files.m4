@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017-2020 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      Los Alamos National Security, LLC. All rights
@@ -48,9 +48,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/mpiext-use-mpi/Makefile
         ompi/mpi/fortran/mpiext-use-mpi-f08/Makefile
         ompi/mpi/tool/Makefile
-
-        ompi/mpi/man/man3/Makefile
-        ompi/mpi/man/man5/Makefile
 
         ompi/tools/ompi_info/Makefile
         ompi/tools/wrappers/Makefile

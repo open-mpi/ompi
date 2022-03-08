@@ -1069,10 +1069,10 @@ AS_IF([test -z "$LEX" || \
     ])
 
 #
-# Setup man page processing
+# Setup HTML and man page processing
 #
 
-OPAL_SETUP_MAN_PAGES
+OPAL_SETUP_SPHINX
 
 #
 # File system case sensitivity
@@ -1502,6 +1502,8 @@ AC_MSG_RESULT([$LIBS])
 
 AC_CONFIG_FILES([
     Makefile
+
+    docs/Makefile
 
     config/Makefile
 

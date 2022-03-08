@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
@@ -91,9 +91,7 @@ SUBDIRS = \
         $(OMPI_MPIEXT_USEMPIF08_DIRS) \
         mpi/fortran/use-mpi-f08 \
         mpi/fortran/mpiext-use-mpi-f08 \
-        $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
-        mpi/man/man3 \
-        mpi/man/man5
+        $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
 if OMPI_WANT_JAVA_BINDINGS
 SUBDIRS += \
@@ -126,9 +124,7 @@ DIST_SUBDIRS = \
         mpi/java \
         $(OMPI_MPIEXT_ALL_SUBDIRS) \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
-        $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
-        mpi/man/man3 \
-        mpi/man/man5
+        $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
 # Build the main MPI library
 
