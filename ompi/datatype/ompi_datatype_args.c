@@ -831,9 +831,7 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
                 return NULL;
             }
         }
-#if OMPI_ENABLE_MPI1_COMPAT
         if (current_predef != MPI_LB && current_predef != MPI_UB) {
-#endif
             if( NULL == predef ) {  /* This is the first iteration */
                 predef = current_predef;
             } else {
@@ -847,9 +845,7 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
                     return NULL;
                 }
             }
-#if OMPI_ENABLE_MPI1_COMPAT
         }
-#endif
     }
     return predef;
 }
