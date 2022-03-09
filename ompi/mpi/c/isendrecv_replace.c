@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -57,6 +57,7 @@ struct ompi_isendrecv_replace_context_t {
 
 typedef struct ompi_isendrecv_replace_context_t ompi_isendrecv_replace_context_t;
 
+#if OMPI_BUILD_MPI_PROFILING
 static void ompi_isendrecv_context_constructor(ompi_isendrecv_replace_context_t *context)
 {
     context->packed_size = 0;
@@ -75,6 +76,9 @@ OBJ_CLASS_INSTANCE(ompi_isendrecv_replace_context_t,
                    opal_object_t, 
                    ompi_isendrecv_context_constructor,
                    ompi_isendrecv_context_destructor);
+#else
+OBJ_CLASS_DECLARATION(ompi_isendrecv_replace_context_t);
+#endif /* OMPI_BUILD_MPI_PROFILING */
 
 static int ompi_isendrecv_replace_complete_func (ompi_comm_request_t *request)
 {
@@ -87,7 +91,7 @@ static int ompi_isendrecv_replace_complete_func (ompi_comm_request_t *request)
      *
      * Probably need to bring up in the MPI forum.  
      */
-    
+
     if (MPI_PROC_NULL != context->source) {
         OMPI_COPY_STATUS(&request->super.req_status,
                          context->subreq[0]->req_status, false);
@@ -165,7 +169,7 @@ int MPI_Isendrecv_replace(void * buf, int count, MPI_Datatype datatype,
     if (NULL == crequest) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     context = OBJ_NEW(ompi_isendrecv_replace_context_t);
     if (NULL == context) {
         ompi_comm_request_return (crequest);
@@ -205,7 +209,7 @@ int MPI_Isendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         rc = MPI_ERR_UNKNOWN;
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
-    
+
     if (source != MPI_PROC_NULL) { /* post recv */
         rc = MCA_PML_CALL(irecv(buf, count, datatype,
                                 source, recvtag, comm, &context->subreq[nreqs++]));
