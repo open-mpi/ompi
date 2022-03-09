@@ -323,7 +323,7 @@
           */
 #        if defined(OMPI_OMIT_MPI1_COMPAT_DECLS)
              /* The user set OMPI_OMIT_MPI1_COMPAT_DECLS, do what he commands */
-#        elif (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#        elif OMPI_ENABLE_MPI1_COMPAT
 #            define OMPI_OMIT_MPI1_COMPAT_DECLS 0
 #            define OMPI_REMOVED_USE_STATIC_ASSERT 0
 #            define __mpi_interface_removed__(func, newfunc) __mpi_interface_deprecated__(#func " was removed in MPI-3.0.  Use " #newfunc " instead.  continuing...")
@@ -385,7 +385,7 @@
 #endif
 
 #if !defined(OMPI_OMIT_MPI1_COMPAT_DECLS)
-#    define OMPI_OMIT_MPI1_COMPAT_DECLS !OMPI_ENABLE_MPI1_COMPAT
+#    define OMPI_OMIT_MPI1_COMPAT_DECLS (!(OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING))
 #endif
 
 /*
@@ -753,21 +753,21 @@ enum {
   MPI_COMBINER_DUP,
   MPI_COMBINER_CONTIGUOUS,
   MPI_COMBINER_VECTOR,
-#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#if (!OMPI_OMIT_MPI1_COMPAT_DECLS)
   MPI_COMBINER_HVECTOR_INTEGER,
 #else
   OMPI_WAS_MPI_COMBINER_HVECTOR_INTEGER, /* preserve ABI compatibility */
 #endif
   MPI_COMBINER_HVECTOR,
   MPI_COMBINER_INDEXED,
-#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#if (!OMPI_OMIT_MPI1_COMPAT_DECLS)
   MPI_COMBINER_HINDEXED_INTEGER,
 #else
   OMPI_WAS_MPI_COMBINER_HINDEXED_INTEGER, /* preserve ABI compatibility */
 #endif
   MPI_COMBINER_HINDEXED,
   MPI_COMBINER_INDEXED_BLOCK,
-#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#if (!OMPI_OMIT_MPI1_COMPAT_DECLS)
   MPI_COMBINER_STRUCT_INTEGER,
 #else
   OMPI_WAS_MPI_COMBINER_STRUCT_INTEGER, /* preserve ABI compatibility */
@@ -782,8 +782,7 @@ enum {
   MPI_COMBINER_HINDEXED_BLOCK
 };
 
-#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
-#else
+#if (OMPI_OMIT_MPI1_COMPAT_DECLS)
 /* If not building or configured --enable-mpi1-compatibility, then
  * we don't want these datatypes, instead we define MPI_COMBINER_*_INTEGER
  * to our Static Assert message if the compiler supports
@@ -1150,7 +1149,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F08_STATUSES_IGNORE;
  * These datatypes were formally removed from the MPI specification
  * and should no longer be used in MPI applications.
  */
-#if (OMPI_ENABLE_MPI1_COMPAT || OMPI_BUILDING)
+#if (!OMPI_OMIT_MPI1_COMPAT_DECLS)
 #    define MPI_UB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_ub)
 #    define MPI_LB OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_lb)
 
@@ -2985,7 +2984,7 @@ OMPI_DECLSPEC int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
                                              void* extra_state )
             __mpi_interface_deprecated__("MPI_NULL_DELETE_FN was deprecated in MPI-2.0; use MPI_COMM_NULL_DELETE_FN instead.");
 
-#if (!OMPI_OMIT_MPI1_COMPAT_DECLS || OMPI_BUILDING)
+#if (!OMPI_OMIT_MPI1_COMPAT_DECLS)
 /*
  * Removed typedefs.  These typedefs are only available if Open MPI
  * was configured with --enable-mpi1-compatibility.
