@@ -4,6 +4,40 @@ Open MPI v4.1.x series
 This file contains all the NEWS updates for the Open MPI v4.1.x
 series, in reverse chronological order.
 
+Open MPI version 4.1.3
+----------------------
+:Date: March, 2022
+
+- Minor datatype performance improvements in the CUDA-based code paths.
+- Fix ``MPI_ALLTOALLV`` when used with ``MPI_IN_PLACE``.
+- Fix ``MPI_BOTTOM`` handling for non-blocking collectives.  Thanks to
+  Lisandro Dalcin for reporting the problem.
+- Enable OPAL memory hooks by default for UCX.
+- Many compiler warnings fixes, particularly for newer versions of
+  GCC.
+- Fix intercommunicator overflow with large payload collectives.  Also
+  fixed ``MPI_REDUCE_SCATTER_BLOCK`` for similar issues with large
+  payload collectives.
+- Back-port ROMIO 3.3 fix to use stat64() instead of stat() on GPFS.
+- Fixed several non-blocking MPI collectives to not round fractions
+  based on float precision.
+- Fix compile failure for ``--enable-heterogeneous``.  Also updated
+  the README to clarify that ``--enable-heterogeneous`` is functional,
+  but still not recomended for most environments.
+- Minor fixes to OMPIO, including:
+
+  - Fixing the open behavior of shared memory shared file pointers.
+    Thanks to Axel Huebl for reporting the issue
+  - Fixes to clean up lockfiles when closing files.  Thanks to Eric
+    Chamberland for reporting the issue.
+
+- Update LSF configure failure output to be more clear (e.g., on RHEL
+  platforms).
+- Update ``if_[in|ex]clude`` behavior in ``btl_tcp`` and ``oob_tcp``
+  to select *all* interfaces that fall within the specified subnet
+  range.
+
+
 Open MPI version 4.1.2
 ----------------------
 :Date: November, 2021
