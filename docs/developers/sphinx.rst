@@ -48,8 +48,7 @@ environment.  You can run ``deactivate`` to leave the virtual
 environment.
 
 .. important:: You will need to source the ``activate`` script to put
-               Sphinx in your ``PATH`` (e.g., *before* running Open
-               MPI's ``configure`` and build steps).
+               Sphinx in your ``PATH`` *before* running ``configure``.
 
 Install Sphinx globally
 -----------------------
@@ -69,8 +68,10 @@ the Open MPI documentation in a system-wide location.
 
 This will likely install the ``sphinx-build`` executable in a location
 that is already in your ``PATH``.  If the location is not already in
-your ``PATH``, then you need to add it to your ``PATH`` *before*
-running Open MPI's `configure` and build steps.
+your ``PATH``, then you need to add it to your ``PATH``.
+
+.. important:: You will need to ensure that Sphinx is in your ``PATH``
+               *before* running ``configure``.
 
 
 Install Sphinx locally
@@ -96,4 +97,8 @@ installed and add it to your ``PATH``.
 
 .. note:: On MacOS, look for ``sphinx-build`` under
           ``$HOME/Library/Python/VERSION/bin`` (where ``VERSION`` is
-          the version number of Python).
+          the version number of Python).  Or it may have installed to
+          ``/usr/local/bin/sphinx-build``.  YMMV.
+
+.. important:: You will need to ensure that Sphinx is in your ``PATH``
+               *before* running ``configure``.

@@ -12,14 +12,11 @@ You can think of RST as "Markdown, but much better".  Meaning:
 The full Sphinx / RST documentation is available here:
 https://www.sphinx-doc.org/en/master/index.html
 
-Translating Markdown to RST
----------------------------
-
-If you're familiar with Markdown, here's some tips to get you started
-in RST:
+If you're familiar with Markdown, the following sections contain some
+tips to get you started in RST.
 
 Whitespace and indenting
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 * MD: Whitespace and indenting generally doesn't matter in most
   cases.  It does matter with bullets and sub bullets, but the rules
@@ -44,7 +41,7 @@ item.  For example, this paragraph is not part of the MD/RST
 bulleted list.
 
 Fixed width font
-^^^^^^^^^^^^^^^^
+----------------
 
 * MD: Use single quotes:
 
@@ -59,19 +56,19 @@ Fixed width font
      ``hello world``
 
 Italics
-^^^^^^^
+-------
 
 * MD: ``*hello world*`` or ``_hello world_``
 * RST: ``*hello world*``
 
 Boldface
-^^^^^^^^
+--------
 
 * MD: ``**hello world**``
 * RST: Same as MD
 
 Chapter and section delimiters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
 
 * MD: Either use one or more pound signs (#, ##, ###) to the left of
   the line of text, or underline the line of text with pound signs
@@ -101,20 +98,19 @@ Chapter and section delimiters
     .. code-block:: rst
 
        Subsection 1: hello world
-       ^^^^^^^^^^^^^^^^^^^^^^^^^
+       -------------------------
 
     .. code-block:: rst
 
        Subsubsection 1: hello world
-       ````````````````````````````
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Meaning: underlines made of ``=`` denotes chapters, underlines
-    made of ``-`` denotes sections, underlines made of ``^`` denotes
-    subsections, and underlines made of single quotes denote
-    subsubsections.
+    made of ``-`` denotes sections, underlines made of ``-`` denotes
+    subsections, and underlines made of ``^`` denote subsubsections.
 
 Multi-line code/fixed-width font
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 * MD: Use three single quotes to delimit blocks of text.  Optionally
   include a token keyword to denote the syntax highlighting to use
@@ -171,7 +167,7 @@ The code-block is terminated by a blank line and then outdent back
 to the same level as the first ``.`` in ``.. code-block::``.
 
 Un-numbered bullets
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
 * MD: Start lines with ``*`` or ``-``
 * RST: Start lines with ``*``.  You can wrap lines at the same
@@ -198,7 +194,7 @@ Un-numbered bullets
   * You **MUST** put blank lines between bullets!
 
 Numbered bullets:
-^^^^^^^^^^^^^^^^^
+-----------------
 
 * MD: Start lines with ``#``
 * RST: Start lines with ``#.``
@@ -216,7 +212,7 @@ Numbered bullets:
   All the same rules for indentation apply as described above.
 
 Comments
-^^^^^^^^
+--------
 
 * MD: Enclose content in ``<!--`` and ``-->`` (i.e., HTML comments,
   but they are included in the output)
@@ -239,7 +235,7 @@ Comments
      This line is no longer part of the comment.
 
 Including files
-^^^^^^^^^^^^^^^
+---------------
 
 * MD: You cannot include files in Markdown.
 * RST: Use the ``.. include:: FILENAME`` directive.  For example:
@@ -256,7 +252,7 @@ Including files
                  file.
 
 Hyperlinks to URLs
-^^^^^^^^^^^^^^^^^^
+------------------
 
 * MD:
 
@@ -274,7 +270,7 @@ Hyperlinks to URLs
                  It's a little weird, but you'll cope.
 
 Hyperlinks to anchors
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 * MD: I forget offhand how to make anchors and links to them in MD.
 * RST: Use the ``:ref:`` directive.
@@ -303,7 +299,7 @@ Hyperlinks to anchors
      <building-and-installing-section-label>`.
 
 Hyperlinks to other (RST) pages
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
 
 * MD:
 
@@ -328,7 +324,7 @@ Hyperlinks to other (RST) pages
   The page path is relative to the ``docs`` dir in the OMPI git tree.
 
 Macros
-^^^^^^
+------
 
 * MD: There are no macros in Markdown.
 * RST: We have defined a few OMPI-specific macros in RST.  You can
@@ -354,7 +350,7 @@ Macros
     or ``-->``.
 
 Brightly-colored boxes
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 * MD: There are no brightly-colored boxes in MD.
 
