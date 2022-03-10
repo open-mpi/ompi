@@ -19,6 +19,8 @@ dnl Copyright (c) 2014-2021 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+dnl Copyright (c) 2022      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -586,6 +588,15 @@ end type test_mpi_handle],
                          AC_MSG_RESULT(["bad" compiler, no array subsections])
                      ])
           ])
+
+    OMPI_FORTRAN_HAVE_ELEMENTAL=0
+    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
+           test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+          [ # Does the compiler support "elemental"
+           OMPI_FORTRAN_CHECK_ELEMENTAL(
+               [OMPI_FORTRAN_ELEMENTAL_TYPE="ELEMENTAL"],
+               [OMPI_FORTRAN_ELEMENTAL_TYPE=])])
+    AC_SUBST(OMPI_FORTRAN_ELEMENTAL_TYPE)
 
     # Note: the current implementation *only* has wrappers;
     # there is no optimized implementation for a "good"
