@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2016 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
@@ -113,17 +113,6 @@ aborting your job.
   Flag:       %s
   Error:      %s (%d)
 #
-[server did not get guid]
-WARNING: Open MPI accepted a TCP connection from what appears to be a
-another Open MPI process but the peer process did not complete the
-initial handshake properly.  This should not happen.
-
-This attempted connection will be ignored; your MPI job may or may not
-continue properly.
-
-  Local host: %s
-  PID:        %d
-#
 [server accept cannot find guid]
 WARNING: Open MPI accepted a TCP connection from what appears to be a
 another Open MPI process but cannot find a corresponding process
@@ -146,13 +135,14 @@ continue properly.
   PID:        %d
   Error:      %s (%d)
 #
-[server cannot find endpoint]
-WARNING: Open MPI accepted a TCP connection from what appears to be a
-valid peer Open MPI process but cannot find a corresponding endpoint
-entry for that peer.  This should not happen.
+[server did not receive magic string]
+WARNING: Open MPI accepted a TCP connection but did not receive the
+expected network identification indicating that the peer is an Open
+MPI process.
 
-This attempted connection will be ignored; your MPI job may or may not
-continue properly.
+This attempted connection will be closed and ignored.
 
   Local host: %s
   PID:        %d
+  Peer:       %s
+  Identifier: %s (%s)

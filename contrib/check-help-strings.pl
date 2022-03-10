@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2022 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Simple script to check all the opal_show_help (and orte_show_help)
@@ -242,13 +242,13 @@ sub check_name {
     my $sep = shift;
     my $src = shift;
 
-    while ($src =~ m/$name\s*$sep\s*"(.+?)"\s*,\s*"(.+?)"/) {
+    while ($src =~ m/$name\s*$sep\s*"(.+?)"\s*,.*?"(.+?)"/) {
         my $file = $1;
         my $topic = $2;
         check_file_topic($info, $file, $topic);
 
         # Don't find this one again
-        $src =~ s/$name\s*$sep\s*"(.+?)"\s*,\s*"(.+?)"/SHOW_HELP_REPLACED/;
+        $src =~ s/$name\s*$sep\s*"(.+?)"\s*,.*?"(.+?)"/SHOW_HELP_REPLACED/;
     }
 
     return $src;

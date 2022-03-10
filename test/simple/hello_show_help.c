@@ -12,7 +12,7 @@
 #include "mpi.h"
 #include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 
 int main(int argc, char* argv[])
 {
@@ -24,21 +24,26 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     if (0 == rank) {
-        opal_output(0, "============================================================================");
-        opal_output(0, "This test ensures that the aggregation functionality of the orte_show_help\nsystem is working properly.  It outputs a bogus warning about orte_init(),\nand contains sleep statements to ensure that the timer is firiing properly\nin the HNP and aggregates messages properly.  The total sleep time is\n(3 * num_procs).  You should see:\n\n - aggregation messages from the HNP every five seconds or so\n - a total of (2 * num_procs) messages");
-        opal_output(0, "============================================================================");
+        opal_output(0,
+                    "============================================================================");
+        opal_output(
+            0, "This test ensures that the aggregation functionality of the opal_show_help\nsystem "
+               "is working properly.  It outputs a bogus warning about opal_init(),\nand contains "
+               "sleep statements to ensure that the timer is firiing properly\nin the HNP and "
+               "aggregates messages properly.  The total sleep time is\n(3 * num_procs).  You "
+               "should see:\n\n - aggregation messages from the HNP every five seconds or so\n - a "
+               "total of (2 * num_procs) messages");
+        opal_output(0,
+                    "============================================================================");
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    orte_show_help("help-orte-runtime.txt",
-                   "orte_init:startup:internal-failure", true,
-                   "Nothing", "ORTE_EVERYTHING_IS_PEACHY", "42");
+    opal_show_help("help-opal-runtime.txt", "opal_init:startup:internal-failure",
+                   true, "Nothing", 42);
     sleep(rank * 3);
 
-    orte_show_help("help-orte-runtime.txt",
-                   "orte_init:startup:internal-failure", true,
-                   "Duplicate orte_show_help detection",
-                   "ORTE_SHOW_HELP_DUPLICATE_FAILED", "99999");
+    opal_show_help("help-opal-runtime.txt", "opal_init:startup:internal-failure", true,
+                   true, "Duplicate opal_show_help detection", 42);
 
     MPI_Barrier(MPI_COMM_WORLD);
 

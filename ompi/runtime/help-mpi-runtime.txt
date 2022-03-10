@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -94,16 +94,6 @@ Open MPI with --enable-heterogeneous.
 [no cuda support]
 The user requested CUDA support with the --mca mpi_cuda_support 1 flag
 but the library was not compiled with any support.
-#
-[noconxcpt]
-The user has called an operation involving MPI_Connect and/or MPI_Accept,
-but this environment lacks the necessary infrastructure support for
-that operation. Open MPI relies on the PMIx_Publish/Lookup (or one of
-its predecessors) APIs for this operation.
-
-This typically happens when launching outside of mpirun where the underlying
-resource manager does not provide publish/lookup support. One way of solving
-the problem is to simply use mpirun to start the application.
 #
 [lib-call-fail]
 A library call unexpectedly failed.  This is a terminal error; please
