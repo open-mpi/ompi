@@ -70,7 +70,7 @@ release=3
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -128,7 +128,7 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=70:2:30
+libmpi_so_version=70:3:30
 libmpi_cxx_so_version=70:1:30
 libmpi_mpifh_so_version=70:0:30
 libmpi_usempi_tkr_so_version=70:0:30
@@ -137,8 +137,8 @@ libmpi_usempif08_so_version=70:0:30
 libopen_rte_so_version=70:2:30
 libopen_pal_so_version=70:2:30
 libmpi_java_so_version=70:0:30
-liboshmem_so_version=70:1:30
-libompitrace_so_version=70:0:30
+liboshmem_so_version=70:2:30
+libompitrace_so_version=70:1:30
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
@@ -146,7 +146,7 @@ libompitrace_so_version=70:0:30
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=70:2:29
+libmca_ompi_common_ompio_so_version=70:3:29
 libmca_ompi_common_monitoring_so_version=70:0:20
 
 # ORTE layer
@@ -156,7 +156,7 @@ libmca_orte_common_alps_so_version=70:0:30
 libmca_opal_common_cuda_so_version=70:0:30
 libmca_opal_common_ofi_so_version=10:2:0
 libmca_opal_common_sm_so_version=70:0:30
-libmca_opal_common_ucx_so_version=70:1:30
+libmca_opal_common_ucx_so_version=70:2:30
 libmca_opal_common_ugni_so_version=70:0:30
 libmca_opal_common_verbs_so_version=70:0:30
 
