@@ -443,7 +443,10 @@ linked_files = \
         pwin_flush_local_f.c \
         pwin_flush_local_all_f.c
 
-if OMPI_ENABLE_MPI1_COMPAT
+# The following functions were removed from the MPI standard, but are
+# retained for ABI compliance reasons.  They are listed independently
+# of the other MPI functions in case we one day change behavior around
+# ABI compliance.
 linked_files += \
         paddress_f.c \
         perrhandler_create_f.c \
@@ -455,7 +458,6 @@ linked_files += \
         ptype_lb_f.c \
         ptype_struct_f.c \
         ptype_ub_f.c
-endif
 
 #
 # Sym link in the sources from the real MPI directory
