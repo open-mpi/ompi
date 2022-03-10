@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -58,8 +58,35 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.3 -- TBD
-------------
+4.1.3 -- March, 2022
+--------------------
+
+- Minor datatype performance improvements in the CUDA-based code paths.q
+- Fix MPI_ALLTOALLV when used with MPI_IN_PLACE.
+- Fix MPI_BOTTOM handling for non-blocking collectives.  Thanks to
+  Lisandro Dalcin for reporting the problem.
+- Enable OPAL memory hooks by default for UCX.
+- Many compiler warnings fixes, particularly for newer versions of
+  GCC.
+- Fix intercommunicator overflow with large payload collectives.  Also
+  fixed MPI_REDUCE_SCATTER_BLOCK for similar issues with large payload
+  collectives.
+- Back-port ROMIO 3.3 fix to use stat64() instead of stat() on GPFS.
+- Fixed several non-blocking MPI collectives to not round fractions
+  based on float precision.
+- Fix compile failure for --enable-heterogeneous.  Also updated the
+  README to clarify that --enable-heterogeneous is functional, but
+  still not recomended for most environments.
+- Minor fixes to OMPIO, including:
+  - Fixing the open behavior of shared memory shared file pointers.
+    Thanks to Axel Huebl for reporting the issue
+  - Fixes to clean up lockfiles when closing files.  Thanks to Eric
+    Chamberland for reporting the issue.
+- Update LSF configure failure output to be more clear (e.g., on RHEL
+  platforms).
+- Update if_[in|ex]clude behavior in btl_tcp and oob_tcp to select
+  *all* interfaces that fall within the specified subnet range.
+
 
 4.1.2 -- November, 2021
 -----------------------
