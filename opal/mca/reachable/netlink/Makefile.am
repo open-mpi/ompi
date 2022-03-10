@@ -31,7 +31,7 @@ component_install =
 endif
 
 AM_CPPFLAGS = \
-        $(opal_reachable_netlink_CPPFLAGS) \
+        $(reachable_netlink_CPPFLAGS) \
         -DOPAL_HAVE_LIBNL3=$(OPAL_HAVE_LIBNL3)
 
 mcacomponentdir = $(opallibdir)
@@ -39,9 +39,9 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_reachable_netlink_la_SOURCES = $(sources)
 mca_reachable_netlink_la_LDFLAGS = -module -avoid-version
 mca_reachable_netlink_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la \
-	$(opal_reachable_netlink_LIBS)
+	$(reachable_netlink_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_reachable_netlink_la_SOURCES =$(sources)
 libmca_reachable_netlink_la_LDFLAGS = -module -avoid-version
-libmca_reachable_netlink_la_LIBADD = $(opal_reachable_netlink_LIBS)
+libmca_reachable_netlink_la_LIBADD = $(reachable_netlink_LIBS)
