@@ -22,7 +22,7 @@
 #                                [action-if-cant-compile])
 # -------------------------------------------
 AC_DEFUN([MCA_ompi_topo_treematch_CONFIG], [
-    OPAL_CONFIG_TREEMATCH([topo_treematch], [$1], [$2])
+    OPAL_CONFIG_TREEMATCH([$1], [$2])
     AC_CONFIG_FILES([ompi/mca/topo/treematch/Makefile])
 
     AC_SUBST([topo_treematch_CFLAGS])

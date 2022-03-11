@@ -165,10 +165,10 @@ double ** topology_to_arch(hwloc_topology_t topology)
   double **arch = NULL;
 
   nb_proc = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-  if (nb_proc < 0) {
+  if( nb_proc < 1 ) {
     return NULL;
   }
-  arch = (double**)malloc(sizeof(double*)*nb_proc);
+  arch = (double**)MALLOC(sizeof(double*)*nb_proc);
   if (NULL == arch) {
     return NULL;
   }

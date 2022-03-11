@@ -80,6 +80,11 @@ AC_DEFUN([OPAL_CONFIG_TREEMATCH], [
 	    else
 		opal_config_treematch_happy=1
 	    fi
+            if test $opal_config_treematch_happy -eq 1 ; then
+                AC_CHECK_FUNC([hwloc_topology_ignore_all_keep_structure],
+                              [opal_config_treematch_happy=1],
+                              [opal_config_treematch_happy=0])
+            fi
 	fi
 
 	if test $opal_config_treematch_happy -eq 1 && test $treematch_files_local = yes ; then
@@ -112,9 +117,8 @@ EOF
 
     OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS treematch"
     OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS treematch"
-    
-    AS_IF([test $opal_config_treematch_happy -eq 1], [$2], [$3])
+
+    AS_IF([test $opal_config_treematch_happy -eq 1], [$1], [$2])
     OPAL_VAR_SCOPE_POP
 ])
 
-    
