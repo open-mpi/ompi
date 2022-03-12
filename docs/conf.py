@@ -31,7 +31,8 @@ with open("../VERSION") as fp:
 ompi_data = dict()
 for ompi_line in ompi_lines:
     if '#' in ompi_line:
-        ompi_line, _ = ompi_line.split("#")
+        parts = ompi_line.split("#")
+        ompi_line = parts[0]
     ompi_line = ompi_line.strip()
 
     if '=' not in ompi_line:
