@@ -32,7 +32,7 @@ can be used with ``configure``:
   memory copies (optionally using hardware offload), potentially
   increasing bandwidth for large messages sent between messages on the
   same server.  See `the Knem web site
-  <https://knem.gforge.inria.fr/>`_ for details.
+  <https://knem.gitlabpages.inria.fr/>`_ for details.
 
 * ``--with-libfabric=DIR``:
   Specify the directory where the OpenFabrics Interfaces ``libfabric``

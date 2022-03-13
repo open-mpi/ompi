@@ -19,7 +19,7 @@ supported via the UCX (``ucx``) PML.
 What is UCX?
 ------------
 
-`UCX <https://www.openucx.org/>`_ is an open-source optimized
+`UCX <https://openucx.org/>`_ is an open-source optimized
 communication library which supports multiple networks, including
 RoCE, InfiniBand, uGNI, TCP, shared memory, and others. UCX
 mixes-and-matches transports and protocols which are available on the
@@ -98,7 +98,7 @@ any Open MPI component.  For example:
                mainly uses environment variables for run-time tuning
                |mdash| not Open MPI MCA parameters.  Consult `the UCX
                documentation
-               <https://www.openucx.org/documentation/>`_ for details
+               <https://openucx.org/documentation/>`_ for details
                about what environment variables are available.
 
 /////////////////////////////////////////////////////////////////////////
