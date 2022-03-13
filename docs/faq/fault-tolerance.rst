@@ -1,18 +1,14 @@
 Fault Tolerance
 ===============
 
-.. TODO Hello world
-
-/////////////////////////////////////////////////////////////////////////
-
 What is "fault tolerance"?
 --------------------------
 
 The phrase "fault tolerance" means many things to many
-people.  Typical definitions range from user processes dumping vital
-state to disk periodically to checkpoint/restart of running processes
-to elaborate recreate-process-state-from-incremental-pieces schemes to
-... (you get the idea).
+people.  Typical definitions include user processes dumping vital
+state to disk periodically, checkpoint/restart of running processes,
+elaborate recreate-process-state-from-incremental-pieces schemes,
+and many others.
 
 In the scope of Open MPI, we typically define "fault tolerance" to
 mean the ability to recover from one or more component failures in a
@@ -99,7 +95,7 @@ links below:
 * `MPI Forum's Fault Tolerance Working Group <https://github.com/mpiwg-ft/ft-issues/wiki>`_
 * Fault Tolerant MPI Prototype:
     * `Development / code <https://bitbucket.org/icldistcomp/ulfm2>`_
-    * `Information and support <http://fault-tolerance.org/>`_
+    * `Information and support <https://fault-tolerance.org/>`_
 
 Support for other types of resilience (e.g., :ref:`data reliability <faq-ft-data-reliability-label>`,
 checkpoint) has been deprecated over the years

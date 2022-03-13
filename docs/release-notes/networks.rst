@@ -113,7 +113,7 @@ Miscellaneous network notes
   ``knem`` Linux kernel module is not loaded, the ``knem`` support is (by
   default) silently deactivated during Open MPI jobs.
 
-  See https://knem.gforge.inria.fr/ for details on Knem.
+  See https://knem.gitlabpages.inria.fr/ for details on Knem.
 
 * Linux Cross-Memory Attach (CMA) or XPMEM is used by the ``sm`` shared
   memory BTL when the CMA/XPMEM libraries are installed,

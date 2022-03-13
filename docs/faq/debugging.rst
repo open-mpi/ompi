@@ -538,7 +538,7 @@ There are two cases:
    <https://valgrind.org/docs/valgrind2007.pdf>`_.
    For an evaluation of various internal implementation alternatives of Shadow Memory, please see
    `Building Workload Characterization Tools with Valgrind
-   <https://www.valgrind.org/njn/pubs/shadow-memory2007-talk.ppt>`_.
+   <https://valgrind.org/docs/iiswc2006.pdf>`_.
 
 
 Further information and performance data with the NAS Parallel

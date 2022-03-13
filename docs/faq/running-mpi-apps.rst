@@ -762,9 +762,12 @@ Several notable options are:
 How do I use the ``--hostfile`` option to ``mpirun``?
 -----------------------------------------------------
 
-.. error:: TODO For cross reference, this is the PRRTE man page section
-           about ``--hostfile``:
-           https://github.com/openpmix/prrte/blame/master/src/tools/prte/prte-map.1.md#L236
+.. error:: TODO For cross reference, this is the PRRTE man page
+           section about ``--hostfile``:
+           https://github.com/openpmix/prrte/blob/b70a6f1a8d424e396c40c999a656b04e76cc0f91/src/tools/prte/prte-map.1.md?plain=1#L236
+           A subsequent commit removed this markdown file; the commit
+           message refers to moving the markdown file to another git
+           repo, but I didn't chase down where it went.
 
 The ``--hostfile`` option to ``mpirun`` takes a filename that lists
 hosts on which to launch MPI processes.

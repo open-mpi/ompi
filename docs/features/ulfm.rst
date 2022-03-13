@@ -23,7 +23,7 @@ execution environment up and running.
 This implementation produces the three supplementary error codes and
 five supplementary interfaces defined in the communicator section of
 the `ULFM chapter
-<http://fault-tolerance.org/wp-content/uploads/2012/10/20170221-ft.pdf>`_
+<https://fault-tolerance.org/wp-content/uploads/2012/10/20170221-ft.pdf>`_
 standard draft document.
 
 * ``MPIX_ERR_PROC_FAILED`` when a process failure prevents the
@@ -95,7 +95,7 @@ please use:
     J. Dongarra: Post-failure recovery of MPI communication
     capability: Design and rationale. IJHPCA 27(3): 244-254 (2013).*
 
-Available from: http://journals.sagepub.com/doi/10.1177/1094342013488238.
+Available from: https://journals.sagepub.com/doi/10.1177/1094342013488238.
 
 Building ULFM support in Open MPI
 ---------------------------------
@@ -522,9 +522,8 @@ joe@mycomputer.example.com!).  Visit these pages to subscribe to the
 lists: https://groups.google.com/forum/#!forum/ulfm
 
 When submitting questions and problems, be sure to include as much
-extra information as possible.  This web page details all the
-information that we request in order to provide assistance:
-http://www.open-mpi.org/community/help/
+extra information as possible.  See the :doc:`Getting help
+</getting-help>` section for more details.
 
 Thanks for your time.
 

@@ -11,7 +11,7 @@ you use the latest version of Open MPI for best support.
 
 Open MPI offers two flavors of CUDA support:
 
-#. Via `UCX <https://www.openucx.org/>`_.
+#. Via `UCX <https://openucx.org/>`_.
 
    This is the preferred mechanism.  Since UCX will be providing the
    CUDA support, it is important to ensure that UCX itself is built

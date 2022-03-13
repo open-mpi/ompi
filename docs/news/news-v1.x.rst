@@ -1634,7 +1634,7 @@ Open MPI version 1.5.0
 :Date: 10 Oct 2010
 
 - Added "knem" support: direct process-to-process copying for shared
-  memory message passing.  See https://runtime.bordeaux.inria.fr/knem/
+  memory message passing.  See https://knem.gitlabpages.inria.fr/
   and the README file for more details.
 - Updated shared library versioning scheme and linking style of MPI
   applications.  The MPI application ABI has been broken from the

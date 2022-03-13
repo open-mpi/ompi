@@ -134,6 +134,9 @@ hosts are established successfully or not.
    emailed Dave Love on 31 Dec 2021 to ask if this is still the
    correct URL.
 
+   Update March 2022: it doesn't look like this web site is good any
+   more.  Perhaps use https://github.com/grisu48/gridengine instead...?
+
 Various Grid Engine documentation with pointers to more is available
 at `the Son of GridEngine site <http://arc.liv.ac.uk/sge/>`_, and
 configuration instructions can be found at `the Son of GridEngine
