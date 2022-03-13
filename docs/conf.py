@@ -41,11 +41,63 @@ for ompi_line in ompi_lines:
     ompi_key, ompi_val = ompi_line.split("=")
     ompi_data[ompi_key.strip()] = ompi_val.strip()
 
-# "release" is a sphinx config variable -- assign it to the computed
-# Open MPI version number.
-series = f"{ompi_data['major']}.{ompi_data['minor']}.x"
-release = f"{ompi_data['major']}.{ompi_data['minor']}.{ompi_data['release']}{ompi_data['greek']}"
+ompi_series = f"v{ompi_data['major']}.{ompi_data['minor']}.x"
+ompi_ver = f"v{ompi_data['major']}.{ompi_data['minor']}.{ompi_data['release']}{ompi_data['greek']}"
 
+# "release" is a sphinx config variable: assign it to the computed
+# Open MPI version number.  The ompi_ver string begins with a "v"; the
+# Sphinx release variable should not include this prefix "v".
+release = ompi_ver[1:]
+
+# If we are building in a ReadTheDocs.io environment, there will be a
+# READTHEDOCS environment variables that tell us what version to use.
+# Relevant RTD env variables (documented
+# https://docs.readthedocs.io/en/stable/builds.html#build-environment):
+#
+# - READTHEDOCS: will be "True"
+# - READTHEDOCS_VERSION: The RTD slug of the version which is being
+#   built (e.g., "latest")
+# - READTHEDOCS_VERSION_NAME: Corresponding version name as displayed
+#   in RTD's version switch menu (e.g., "stable")
+# - READTHEDOCS_VERSION_TYPE: Type of the event triggering the build
+#   (e.g., "branch", "tag", "external" (for PRs), or "unknown").
+#
+# If we're building in an RTD environment for a tag or external (i.e.,
+# PR), use the RTD version -- not what we just read from the VERSIONS
+# file.
+import os
+key = 'READTHEDOCS'
+if key in os.environ and os.environ[key] == 'True':
+    print("OMPI: found ReadTheDocs build environment")
+
+    rtd_v = os.environ['READTHEDOCS_VERSION']
+    if os.environ['READTHEDOCS_VERSION_TYPE'] == 'external':
+        # Make "release" be shorter than the full "ompi_ver" value.
+        release = f'PR #{rtd_v}'
+        ompi_ver += f' (Github PR #{rtd_v})'
+    else:
+        ompi_ver = rtd_v
+
+        # The "release" Sphinx variable is supposed to be expressed as
+        # a simple value, such as "A.B.C[rcX]" (without a leading
+        # "v").  The ompi_ver value will be one of two things:
+        #
+        # - a git branch name (of the form "vA.B.x")
+        # - a git tag (of the form "A.B.C[rcX]")
+        #
+        # If there's a leading "v", we need to strip it.
+        release = ompi_ver
+        if ompi_ver[0] == 'v':
+            release = ompi_ver[1:]
+
+    # Override the branch names "master" and "main" (that would have
+    # come from the ReadTheDocs version slug) to be "head of
+    # development".
+    if release == 'main' or release == 'master':
+        ompi_ver = 'head of development'
+
+    print(f"OMPI: release = {release}")
+    print(f"OMPI: ompi_ver = {ompi_ver}")
 
 # -- General configuration ---------------------------------------------------
 
@@ -125,6 +177,6 @@ rst_prolog = f"""
 .. |rarrow| unicode:: U+02192 .. Right arrow
 
 .. |year| replace:: {year}
-.. |ompi_ver| replace:: v{release}
-.. |ompi_series| replace:: v{series}
+.. |ompi_ver| replace:: {ompi_ver}
+.. |ompi_series| replace:: {ompi_series}
 """

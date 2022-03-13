@@ -1,8 +1,8 @@
 .. image:: openmpi_logo.png
    :align: right
 
-Open MPI
-========
+Open MPI |ompi_ver|
+===================
 
 `The Open MPI Project <https://www.open-mpi.org/>`_ is an open source
 implementation of the `Message Passing Interface (MPI) specification
