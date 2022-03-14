@@ -15,7 +15,7 @@
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
  * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2020      Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -44,7 +44,7 @@
 #define MCA_BTL_OFI_ONE_SIDED_REQUIRED_CAPS (FI_RMA | FI_ATOMIC)
 #define MCA_BTL_OFI_TWO_SIDED_REQUIRED_CAPS (FI_MSG)
 
-#define MCA_BTL_OFI_REQUESTED_MR_MODE (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR)
+#define MCA_BTL_OFI_REQUESTED_MR_MODE (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR | FI_MR_ENDPOINT)
 
 static char *ofi_progress_mode;
 static bool disable_sep;
@@ -106,7 +106,7 @@ static int validate_info(struct fi_info *info, uint64_t required_caps, char **in
     mr_mode = info->domain_attr->mr_mode;
 
     if (!(mr_mode == FI_MR_BASIC || mr_mode == FI_MR_SCALABLE
-          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY)) == 0)) {
+          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_ENDPOINT)) == 0)) {
         BTL_VERBOSE(("unsupported MR mode"));
         return OPAL_ERROR;
     }
@@ -562,10 +562,15 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->linux_device_name = linux_device_name;
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
+    module->use_fi_mr_bind = false;
 
     if (ofi_info->domain_attr->mr_mode == FI_MR_BASIC
         || ofi_info->domain_attr->mr_mode & FI_MR_VIRT_ADDR) {
         module->use_virt_addr = true;
+    }
+
+    if (ofi_info->domain_attr->mr_mode & FI_MR_ENDPOINT) {
+        module->use_fi_mr_bind = true;
     }
 
     /* create endpoint list */
