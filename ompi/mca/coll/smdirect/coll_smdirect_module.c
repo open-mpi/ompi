@@ -105,6 +105,8 @@ static void mca_coll_smdirect_module_destruct(mca_coll_smdirect_module_t *module
             mca_common_sm_fini(c->sm_bootstrap_meta);
             OBJ_RELEASE(c->sm_bootstrap_meta);
         }
+        mca_smsc->return_endpoint(c->mcb_endpoint);
+        c->mcb_endpoint = NULL;
         free(c);
     }
 
@@ -441,6 +443,7 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
     }
     mca_smsc_endpoint_t* endpoint = mca_smsc->get_endpoint(my_proc);
     memcpy(&data->procdata->mcsp_endpoint, endpoint, mca_smsc->get_endpoint_size());
+    data->mcb_endpoint = endpoint;
 
     /* Save previous component's reduce information */
     sm_module->previous_reduce = comm->c_coll->coll_reduce;

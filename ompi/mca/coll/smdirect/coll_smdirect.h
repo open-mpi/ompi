@@ -224,6 +224,9 @@ BEGIN_C_DECLS
             communications */
         mca_coll_smdirect_tree_node_t *mcb_tree;
 
+        /** my SMSC endpoint, a copy is stored in the shared memory segment */
+        mca_smsc_endpoint_t *mcb_endpoint;
+
     } mca_coll_smdirect_comm_t;
 
     /** Coll sm module */
