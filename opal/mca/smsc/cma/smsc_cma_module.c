@@ -67,6 +67,10 @@ void mca_smsc_cma_return_endpoint(mca_smsc_endpoint_t *endpoint)
     OBJ_RELEASE(endpoint);
 }
 
+size_t mca_smsc_cma_get_endpoint_size() {
+    return sizeof(mca_smsc_cma_endpoint_t);
+}
+
 static inline void mca_smsc_cma_iov_advance(struct iovec *iov, ssize_t length)
 {
     iov->iov_base = (void *) ((uintptr_t) iov->iov_base + length);
@@ -208,6 +212,7 @@ void mca_smsc_cma_deregister_region(void *reg_data)
 mca_smsc_module_t mca_smsc_cma_module = {
     .get_endpoint = mca_smsc_cma_get_endpoint,
     .return_endpoint = mca_smsc_cma_return_endpoint,
+    .get_endpoint_size = mca_smsc_cma_get_endpoint_size,
     .copy_to = mca_smsc_cma_copy_to,
     .copy_from = mca_smsc_cma_copy_from,
 };

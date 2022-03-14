@@ -152,6 +152,14 @@ BEGIN_C_DECLS
 
         /** flag used to wait for sync with children across segments */
         mca_coll_smdirect_in_use_flag_t mcsp_segment_flag;
+
+        /* endpoint used with with SMSC component
+         * NOTE: this is the base endpoint type, the actual endpoint might be
+         *       larger than this (see mca_smsc.get_endpoint_size()) so
+         *       keep this entry last in this struct! We should have enough memory
+         *       since we allocate constrol_size bytes.
+         */
+        mca_smsc_endpoint_t mcsp_endpoint;
     } mca_coll_smdirect_procdata_t;
 
     typedef struct mca_coll_smdirect_peerdata_t {

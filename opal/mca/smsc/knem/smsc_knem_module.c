@@ -42,6 +42,10 @@ void mca_smsc_knem_return_endpoint(mca_smsc_endpoint_t *endpoint)
     OBJ_RELEASE(endpoint);
 }
 
+size_t mca_smsc_knem_get_endpoint_size() {
+    return sizeof(mca_smsc_knem_endpoint_t);
+}
+
 void *mca_smsc_knem_register_region(void *local_address, size_t size)
 {
     mca_smsc_knem_module_t *knem_module = &mca_smsc_knem_module;
@@ -150,9 +154,10 @@ mca_smsc_knem_module_t mca_smsc_knem_module = {
         .registration_data_size = sizeof(mca_smsc_knem_registration_data_t),
         .get_endpoint = mca_smsc_knem_get_endpoint,
         .return_endpoint = mca_smsc_knem_return_endpoint,
+        .get_endpoint_size = mca_smsc_knem_get_endpoint_size,
         .copy_to = mca_smsc_knem_copy_to,
         .copy_from = mca_smsc_knem_copy_from,
         .register_region = mca_smsc_knem_register_region,
         .deregister_region = mca_smsc_knem_deregister_region,
-    }, 
+    },
 };

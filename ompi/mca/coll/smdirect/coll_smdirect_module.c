@@ -433,6 +433,15 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
     data->procdata->mcsp_segment_flag.mcsiuf_num_procs_using = 0;
     data->mcb_operation_count = -1;
 
+    /* get and store our endpoint */
+    opal_proc_t *my_proc;
+    if (NULL == (my_proc = opal_proc_local_get())) {
+        /* TODO: cleanup */
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    mca_smsc_endpoint_t* endpoint = mca_smsc->get_endpoint(my_proc);
+    memcpy(&data->procdata->mcsp_endpoint, endpoint, mca_smsc->get_endpoint_size());
+
     /* Save previous component's reduce information */
     sm_module->previous_reduce = comm->c_coll->coll_reduce;
     sm_module->previous_reduce_module = comm->c_coll->coll_reduce_module;

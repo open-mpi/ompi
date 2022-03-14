@@ -59,6 +59,16 @@ typedef mca_smsc_endpoint_t *(*mca_smsc_module_get_endpoint_fn_t)(opal_proc_t *p
  */
 typedef void (*mca_smsc_module_return_endpoint_fn_t)(mca_smsc_endpoint_t *endpoint);
 
+
+/**
+ * @brief Return the size of an endpoint.
+ *
+ * @param(in) module   shared-memory single-copy module
+ *
+ * This method returns the size of an endpoint created by get_endpoint.
+ */
+typedef size_t (*mca_smsc_module_endpoint_size_fn_t)(void);
+
 /**
  * @brief Copy to/from a peer process.
  *
@@ -150,6 +160,8 @@ struct mca_smsc_module_t {
     mca_smsc_module_get_endpoint_fn_t get_endpoint;
     /** Delete an endpoint and clean up all resources associated with it. */
     mca_smsc_module_return_endpoint_fn_t return_endpoint;
+    /** Query the size of an endpoint */
+    mca_smsc_module_endpoint_size_fn_t get_endpoint_size;
 
     /* All components must provide an implementation of the copy functions. */
     /** Copy data into a peer's memory space. */

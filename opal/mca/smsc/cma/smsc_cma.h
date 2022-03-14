@@ -17,6 +17,7 @@
 
 mca_smsc_endpoint_t *mca_smsc_cma_get_endpoint(opal_proc_t *peer_proc);
 void mca_smsc_cma_return_endpoint(mca_smsc_endpoint_t *endpoint);
+size_t mca_smsc_cma_get_endpoint_size();
 
 int mca_smsc_cma_copy_to(mca_smsc_endpoint_t *endpoint, void *local_address, void *remote_address,
                          size_t size, void *reg_handle);
