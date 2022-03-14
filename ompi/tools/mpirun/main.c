@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
 #endif
     }
     setenv("PRTE_MCA_schizo_proxy", "ompi", 1);
+    setenv("OMPI_VERSION", OMPI_VERSION, 1);
 
     opal_argv_append_nosize(&pargs, "prterun");
     for (m=1; NULL != argv[m]; m++) {

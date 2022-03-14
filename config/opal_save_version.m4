@@ -55,7 +55,7 @@ AC_DEFUN([OPAL_SAVE_VERSION], [
         [The repository version ]$2)
     AC_DEFINE_UNQUOTED($1[_TARBALL_VERSION], ["$]$1[_TARBALL_VERSION"],
         [Tarball filename version string of ]$2)
-    AC_DEFINE_UNQUOTED($1[_VERSION], ["$]$1[_RELEASE_VERSION"],
+    AC_DEFINE_UNQUOTED($1[_VERSION], ["$]$1[_VERSION"],
         [Complete release number of ]$2)
     AC_DEFINE_UNQUOTED($1[_RELEASE_DATE], ["$]$1[_RELEASE_DATE"],
         [Release date of ]$2)
