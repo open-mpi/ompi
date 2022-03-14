@@ -163,7 +163,7 @@ BEGIN_C_DECLS
     } mca_coll_smdirect_procdata_t;
 
     typedef struct mca_coll_smdirect_peerdata_t {
-      mca_smsc_endpoint_t *endpoint;
+      //mca_smsc_endpoint_t *endpoint;
       void *mapping_ctx; // the context used to unmap
       void *mapping_ptr; // the local pointer to access the peer's memory
       uint32_t num_children; // number of children this peer has

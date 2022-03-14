@@ -255,14 +255,15 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
     for (int i = 0; i < num_children; ++i) {
         mca_coll_smdirect_peerdata_t *peer = &peerdata[i];
         /* TODO: assuming the mcstn_id is an actual rank, correct? */
-        peer->endpoint = mca_smsc->get_endpoint(&ompi_comm_peer_lookup(comm, children[i]->mcstn_id)->super);
+        //peer->endpoint = mca_smsc->get_endpoint(&ompi_comm_peer_lookup(comm, children[i]->mcstn_id)->super);
         peer->procdata = (mca_coll_smdirect_procdata_t *)(data->sm_bootstrap_meta->module_data_addr
                                                           + mca_coll_smdirect_component.sm_control_size * children[i]->mcstn_id);
         /* make sure we're all on the same op */
         FLAG_WAIT_FOR_OP(&peer->procdata->mcsp_op_flag, op_count);
         opal_atomic_rmb();
         /* map the children's memory region */
-        peer->mapping_ctx = mca_smsc->map_peer_region(peer->endpoint, 0,
+        peer->mapping_ctx = mca_smsc->map_peer_region(&peer->procdata->mcsp_endpoint,
+                                                      0,
                                                       peer->procdata->mcsp_indata,
                                                       peer->procdata->mcsp_insize,
                                                       &peer->mapping_ptr);
@@ -332,7 +333,6 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
     for (int i = 0; i < num_children; ++i) {
         /* we're done with this peer */
         FLAG_RELEASE(&peerdata[i].procdata->mcsp_op_flag);
-        mca_smsc->return_endpoint(peerdata[i].endpoint);
         mca_smsc->unmap_peer_region(peerdata[i].mapping_ctx);
     }
     free(peerdata);
