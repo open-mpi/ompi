@@ -656,6 +656,7 @@ int accumulate_req(const void *origin_addr, int origin_count,
             if (ret != OMPI_SUCCESS) {
                 return ret;
             }
+            temp_count *= target_count;
         }
         ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
         temp_addr = free_ptr = malloc(temp_extent * temp_count);
