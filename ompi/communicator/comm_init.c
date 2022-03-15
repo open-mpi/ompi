@@ -157,6 +157,18 @@ int ompi_comm_init(void)
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal.eh );
     opal_pointer_array_set_item (&ompi_mpi_communicators, 2, &ompi_mpi_comm_null);
 
+    /*
+     * first three places in ompi_mpi_communicators are reserved for
+     * MPI world model communicators MPI_COMM_WORLD, MPI_COMM_SELF, in addition to
+     * MPI_COMM_NULL which is needed both for world and sessions models.
+     * We conditionally insert ompi_mpi_comm_null into slots 0 and 1.  If MPI_Init was
+     * already called then these two slots are already occupied.  If
+     * MPI_Init is called after one or more MPI_Session_init, then
+     * slots 0 and 1 will be filled in with MPI_COMM_WORLD and MPI_COMM_SELF.
+     */
+    (void)opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 0, &ompi_mpi_comm_null);
+    (void)opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 1, &ompi_mpi_comm_null);
+
     opal_string_copy(ompi_mpi_comm_null.comm.c_name, "MPI_COMM_NULL",
                      sizeof(ompi_mpi_comm_null.comm.c_name));
     ompi_mpi_comm_null.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
