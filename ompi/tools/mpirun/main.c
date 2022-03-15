@@ -45,6 +45,10 @@ int main(int argc, char *argv[])
     }
     setenv("PRTE_MCA_schizo_proxy", "ompi", 1);
     setenv("OMPI_VERSION", OMPI_VERSION, 1);
+    char *base_tool_name = opal_basename(argv[0]);
+    setenv("OMPI_TOOL_NAME", base_tool_name, 1);
+    free(base_tool_name);
+
 
     opal_argv_append_nosize(&pargs, "prterun");
     for (m=1; NULL != argv[m]; m++) {
