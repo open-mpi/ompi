@@ -12,9 +12,11 @@ Open MPI timing tools
 SYNTAX
 ------
 
-| **mpisync** [*options*]
-| **mpirun_prof** [*options*]
-| **ompi_timing_post** [*<timing-file>*] [*<processed-file>*]
+``mpisync [options]``
+
+``mpirun_prof [options]``
+
+``ompi_timing_post [<timing-file>] [<processed-file>]``
 
 
 DESCRIPTION

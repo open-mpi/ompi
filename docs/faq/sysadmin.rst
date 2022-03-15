@@ -220,7 +220,7 @@ to tweak are:
      parameters in *levels*, as defined by the MPI_T interface from
      the MPI standard.  You will need to specify ``--level 9`` (or
      ``--all``) to show *all* MCA parameters.  `See this blog entry
-     <http://blogs.cisco.com/performance/open-mpi-and-the-mpi-3-mpi_t-interface>`_
+     <https://blogs.cisco.com/performance/open-mpi-and-the-mpi-3-mpi_t-interface>`_
      for further information.
 
   .. code-block:: sh

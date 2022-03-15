@@ -14,27 +14,27 @@ mpicc, mpic++, mpicxx, mpifort, mpijavac  -- Open MPI wrapper compilers
 SYNTAX
 ------
 
-``mpicc [-showme|-showme:compile|-showme:link] ...``
+``mpicc [--showme | --showme:compile | --showme:link] ...``
 
-``mpic++ [-showme|-showme:compile|-showme:link] ...``
+``mpic++ [--showme | --showme:compile | --showme:link] ...``
 
-``mpicxx [-showme|-showme:compile|-showme:link] ...``
+``mpicxx [--showme | --showme:compile | --showme:link] ...``
 
-``mpifort [-showme|-showme:compile|-showme:link] ...``
+``mpifort [--showme | --showme:compile | --showme:link] ...``
 
-``mpijavac [-showme|-showme:compile|-showme:link] ...``
+``mpijavac [--showme | --showme:compile | --showme:link] ...``
 
 The following deprecated commands are also available |mdash| but
 ``mpifort`` should be used instead:
 
-``mpif77 [-showme|-showme:compile|-showme:link] ...``
+``mpif77 [--showme | --showme:compile | --showme:link] ...``
 
-``mpif90 [-showme|-showme:compile|-showme:link] ...``
+``mpif90 [--showme | --showme:compile | --showme:link] ...``
 
 On case-sensitive filesystems, the following command will also be
 available:
 
-``mpiCC [-showme|-showme:compile|-showme:link] ...``
+``mpiCC [--showme | --showme:compile | --showme:link] ...``
 
 
 OPTIONS
@@ -50,7 +50,7 @@ The options below apply to all of the wrapper compilers:
   the program.
 
   .. note:: If a non-filename argument is passed on the command line,
-            the *-showme* option will *not* display any additional
+            the ``--showme`` option will *not* display any additional
             flags. For example, both ``"mpicc --showme`` and
             ``mpicc --showme my_source.c`` will show all the
             wrapper-supplied flags. But ``mpicc
@@ -174,17 +174,17 @@ between different installations of the same version of Open MPI.
 Indeed, since the wrappers are simply thin shells on top of an
 underlying compiler, there are very, very few compelling reasons *not*
 to use Open MPI's wrapper compilers. When it is not possible to use
-the wrappers directly, the ``-showme:compile`` and ``-showme:link``
+the wrappers directly, the ``--showme:compile`` and ``--showme:link``
 options should be used to determine what flags the wrappers would have
 used. For example:
 
 .. code:: sh
 
-   shell$ cc -c file1.c `mpicc -showme:compile`
+   shell$ cc -c file1.c `mpicc --showme:compile`
 
-   shell$ cc -c file2.c `mpicc -showme:compile`
+   shell$ cc -c file2.c `mpicc --showme:compile`
 
-   shell$ cc file1.o file2.o `mpicc -showme:link` -o my_mpi_program
+   shell$ cc file1.o file2.o `mpicc --showme:link` -o my_mpi_program
 
 
 NOTES

@@ -1,8 +1,8 @@
 .. image:: openmpi_logo.png
    :align: right
 
-Open MPI
-========
+Open MPI |ompi_ver|
+===================
 
 `The Open MPI Project <https://www.open-mpi.org/>`_ is an open source
 implementation of the `Message Passing Interface (MPI) specification
@@ -14,11 +14,10 @@ order to build the best MPI library available.  Open MPI offers
 advantages for system and software vendors, application developers and
 computer science researchers.
 
-Other documentation
-===================
+Documentation locations
+=======================
 
-Documentation for other versions of Open can be found in the following
-locations:
+Documentation for Open can be found in the following locations:
 
 .. list-table::
    :header-rows: 1
@@ -28,7 +27,8 @@ locations:
 
    * - v5.0.0 and later
      - Open MPI documentation has consolidated and moved to
-       ReadTheDocs.io.
+
+       https://docs.open-mpi.org/.
 
        This particular documentation is for |ompi_ver|; use the
        selector in the

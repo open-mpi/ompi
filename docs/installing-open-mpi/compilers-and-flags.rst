@@ -4,15 +4,18 @@ Specifying compilers and flags
 ==============================
 
 Changing the compilers that Open MPI uses to build itself uses the
-standard Autoconf mechanism of setting special environment variables
+standard GNU Autoconf mechanism of setting special environment variables
 either before invoking ``configure`` or on the ``configure`` command
-line itself The following environment variables are recognized by
-``configure``:
+line itself.
+
+The following environment variables are recognized by ``configure``:
 
 * ``CC``: C compiler to use
 * ``CFLAGS``: Compile flags to pass to the C compiler
 * ``CPPFLAGS``: Preprocessor flags to pass to the C compiler
 * ``CXX``: C++ compiler to use
+* ``CXXCFLAGS``: Compile flags to pass to the C++ compiler
+* ``CXXCPPFLAGS``: Preprocessor flags to pass to the C++ compiler
 * ``FC``: Fortran compiler to use
 * ``FCFLAGS``: Compile flags to pass to the Fortran compiler
 * ``LDFLAGS``: Linker flags to pass to all compilers
@@ -20,12 +23,18 @@ line itself The following environment variables are recognized by
   necessary for users to need to specify additional ``LIBS``)
 * ``PKG_CONFIG``: Path to the ``pkg-config`` utility
 
-.. note:: Open MPI |ompi_ver| does not contain any C++ code.  Hence,
-   specifying ``CXXFLAGS`` or ``CXXCPPFLAGS`` is useless (but
-   harmless).  The value of ``CC`` is used as the compiler for the
-   ``mpic++`` wrapper compiler, however.
+.. note:: Open MPI |ompi_ver| does not contain any C++ code.  The only
+          tests that ``configure`` runs with the C++ compiler is for
+          the purposes of determining an appropriate value for ``CXX``
+          to use in the ``mpic++`` :ref:`wrapper compiler
+          <label-quickstart-building-apps>`.  The ``CXXCFLAGS`` and
+          ``CXXCPPFLAGS`` values are *only* used in these
+          ``configure`` checks to ensure that the C++ compiler works.
 
-For example, to build with a specific instance of GCC::
+For example, to build with a specific instance of ``gcc``, ``g++``,
+and ``gfortran``:
+
+.. code-block:: sh
 
    shell$ ./configure \
        CC=/opt/gcc-a.b.c/bin/gcc \
@@ -33,15 +42,20 @@ For example, to build with a specific instance of GCC::
        FC=/opt/gcc-a.b.c/bin/gfortran ...
 
 Here's another example, this time showing building with the Intel
-compiler suite::
+compiler suite:
 
-   shell$ ./configure CC=icc CXX=icpc FC=ifort ...
+.. code-block:: sh
 
-.. note:: We generally suggest using the above command line form for
-   setting different compilers (vs. setting environment variables and
-   then invoking ``./configure``).  The above form will save all
-   variables and values in the ``config.log`` file, which makes
-   post-mortem analysis easier if problems occur.
+   shell$ ./configure \
+       CC=icc \
+       CXX=icpc \
+       FC=ifort ...
+
+.. note:: The Open MPI community generally suggests using the above
+   command line form for setting different compilers (vs. setting
+   environment variables and then invoking ``./configure``).  The
+   above form will save all variables and values in the ``config.log``
+   file, which makes post-mortem analysis easier if problems occur.
 
 Note that the flags you specify must be compatible across all the
 compilers.  In particular, flags specified to one language compiler
@@ -68,19 +82,24 @@ The above command line will pass ``-m64`` to all the compilers, and
 therefore will produce 64 bit objects for all languages.
 
 .. warning:: Note that setting ``CFLAGS`` (etc.) does *not* affect the
-   flags used by the wrapper compilers.  In the above, example, you
-   may also need to add ``-m64`` to various ``--with-wrapper-FOO``
-   options:
+             flags used by the :ref:`wrapper compilers
+             <label-quickstart-building-apps>`.  In the above, example, you may
+             also need to add ``-m64`` to various ``--with-wrapper-FOO``
+             options:
 
-   .. code-block::
+             .. code-block::
 
-      shell$ ./configure CFLAGS=-m64 FCFLAGS=-m64 \
-           --with-wrapper-cflags=-m64 \
-           --with-wrapper-cxxflags=-m64 \
-           --with-wrapper-fcflags=-m64 ...
+                shell$ ./configure CFLAGS=-m64 FCFLAGS=-m64 \
+                     --with-wrapper-cflags=-m64 \
+                     --with-wrapper-cxxflags=-m64 \
+                     --with-wrapper-fcflags=-m64 ...
 
-    Failure to do this will result in MPI applications failing to
-    compile / link properly.
+             Failure to do this will result in MPI applications
+             failing to compile / link properly.
+
+             See the :ref:`Customizing wrapper compiler behavior
+             <label-customizing-wrapper-compiler>` section for more
+             details.
 
 Note that if you intend to compile Open MPI with a ``make`` other than
 the default one in your ``PATH``, then you must either set the ``$MAKE``
