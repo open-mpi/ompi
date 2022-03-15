@@ -19,21 +19,21 @@ oshcc, oshcxx, oshc++, oshfort, shmemcc, shmemcxx, shmemc++, shmemfort -- OpenSH
 SYNTAX
 ------
 
-``oshcc [-showme|-showme:compile|-showme:link] ...``
+``oshcc [--showme | --showme:compile | --showme:link] ...``
 
-``oshcxx [-showme|-showme:compile|-showme:link] ...``
+``oshcxx [--showme | --showme:compile | --showme:link] ...``
 
-``oshc++ [-showme|-showme:compile|-showme:link] ...``
+``oshc++ [--showme | --showme:compile | --showme:link] ...``
 
-``oshfort [-showme|-showme:compile|-showme:link] ...``
+``oshfort [--showme | --showme:compile | --showme:link] ...``
 
-``shmemcc [-showme|-showme:compile|-showme:link] ...``
+``shmemcc [--showme | --showme:compile | --showme:link] ...``
 
-``shmemcxx [-showme|-showme:compile|-showme:link] ...``
+``shmemcxx [--showme | --showme:compile | --showme:link] ...``
 
-``shmemc++ [-showme|-showme:compile|-showme:link] ...``
+``shmemc++ [--showme | --showme:compile | --showme:link] ...``
 
-``shmemfort [-showme|-showme:compile|-showme:link] ...``
+``shmemfort [--showme | --showme:compile | --showme:link] ...``
 
 
 OPTIONS
@@ -49,7 +49,7 @@ The options below apply to all of the wrapper compilers:
   the program.
 
   .. note:: If a non-filename argument is passed on the command line,
-            the *-showme* option will *not* display any additional
+            the ``--showme`` option will *not* display any additional
             flags. For example, both ``"oshcc --showme`` and
             ``oshcc --showme my_source.c`` will show all the
             wrapper-supplied flags. But ``oshcc
@@ -161,16 +161,16 @@ between different installations of the same version of OpenSHMEM.
 Indeed, since the wrappers are simply thin shells on top of an
 underlying compiler, there are very, very few compelling reasons *not*
 to use ``oshcc``. When it is not possible to use the wrappers
-directly, the ``-showme:compile`` and ``-showme:link`` options should be
+directly, the ``--showme:compile`` and ``--showme:link`` options should be
 used to determine what flags the wrappers would have used. For example:
 
 .. code:: sh
 
-   shell$ cc -c file1.c `shmemcc -showme:compile`
+   shell$ cc -c file1.c `shmemcc --showme:compile`
 
-   shell$ cc -c file2.c `shmemcc -showme:compile`
+   shell$ cc -c file2.c `shmemcc --showme:compile`
 
-   shell$ cc file1.o file2.o `shmemcc -showme:link` -o my_oshmem_program
+   shell$ cc file1.o file2.o `shmemcc --showme:link` -o my_oshmem_program
 
 
 NOTES
