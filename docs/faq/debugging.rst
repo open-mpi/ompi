@@ -209,7 +209,7 @@ be to assume that the following would immediately work:
 
 .. code-block:: sh
 
-    shell$ mpirun -np 4 xterm -e gdb my_mpi_application
+    shell$ mpirun -n 4 xterm -e gdb my_mpi_application
 
 If running on a personal computer, this will probably work.  You can
 also use `tmpi <https://github.com/Azrael3000/tmpi>`_ to launch the
@@ -281,7 +281,7 @@ following:
 
       shell$ hostname
       arcade.example.come
-      shell$ mpirun -np 4 --hostfile my_hostfile \
+      shell$ mpirun -n 4 --hostfile my_hostfile \
           -x DISPLAY=arcade.example.com:0 xterm -e gdb my_mpi_application
 
    .. warning:: X traffic is fairly "heavy" |mdash| if you are
@@ -466,7 +466,7 @@ enabled. Then simply run your application with Valgrind, e.g.:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 valgrind ./my_app
+   shell$ mpirun -n 2 valgrind ./my_app
 
 Or if you enabled Memchecker, but you don't want to check the
 application at this time, then just run your application as
@@ -474,7 +474,7 @@ usual. E.g.:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 ./my_app
+   shell$ mpirun -n 2 ./my_app
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -572,7 +572,7 @@ line:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 valgrind --suppressions=$PREFIX/share/openmpi/openmpi-valgrind.supp
+   shell$ mpirun -n 2 valgrind --suppressions=$PREFIX/share/openmpi/openmpi-valgrind.supp
 
 More information on suppression-files and how to generate them can be
 found in `Valgrind's documentation

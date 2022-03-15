@@ -447,7 +447,7 @@ using Open MPI and UCX CUDA support:
 
 .. code-block::
 
-   shell$ mpirun -np 2 --mca pml ucx \
+   shell$ mpirun -n 2 --mca pml ucx \
        -x UCX_TLS=rc,sm,cuda_copy,gdr_copy,cuda_ipc ./osu_latency D D
 
 /////////////////////////////////////////////////////////////////////////

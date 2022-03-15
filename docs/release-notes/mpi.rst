@@ -145,7 +145,7 @@ Other MPI features
 
      shell$ cd examples/
      shell$ mpicc hello_c.c -o hello_c -lompitrace
-     shell$ mpirun -np 1 hello_c
+     shell$ mpirun -n 1 hello_c
      MPI_INIT: argc 1
      Hello, world, I am 0 of 1
      MPI_BARRIER[0]: comm MPI_COMM_WORLD

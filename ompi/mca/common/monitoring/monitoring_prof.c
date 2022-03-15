@@ -27,7 +27,7 @@ Contact the authors for questions.
 
 To be run as:
 
-mpirun -np 4 \
+mpirun -n 4 \
     --mca pml_monitoring_enable 1 \
     -x LD_PRELOAD=ompi_install_dir/lib/ompi_monitoring_prof.so \
     ./my_app

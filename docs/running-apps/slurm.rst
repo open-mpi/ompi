@@ -21,7 +21,7 @@ When ``mpirun`` is launched in a Slurm job, ``mpirun`` will
 automatically utilize the Slurm infrastructure for launching and
 controlling the individual MPI processes.
 Hence, it is unnecessary to specify the ``--hostfile``,
-``--host``, or ``-np`` options to ``mpirun``.
+``--host``, or ``-n`` options to ``mpirun``.
 
 .. note:: Using ``mpirun`` is the recomended method for launching Open
    MPI jobs in Slurm jobs.

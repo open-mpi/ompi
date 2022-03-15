@@ -35,7 +35,7 @@ Launching
 
 When properly configured, Open MPI obtains both the list of hosts and
 how many processes to start on each host from LSF directly.  Hence, it
-is unnecessary to specify the ``--hostfile``, ``--host``, or ``-np``
+is unnecessary to specify the ``--hostfile``, ``--host``, or ``-n``
 options to ``mpirun``.  Open MPI will use PBS/Torque-native mechanisms
 to launch and kill processes (``ssh`` is not required).
 

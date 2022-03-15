@@ -671,7 +671,7 @@ purpose (named **oshrun** for this example):
 
 ::
 
-   oshrun -np 32 ./a.out
+   oshrun -n 32 ./a.out
 
 
 EXAMPLES
