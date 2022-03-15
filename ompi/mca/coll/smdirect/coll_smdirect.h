@@ -153,17 +153,10 @@ BEGIN_C_DECLS
         /** flag used to wait for sync with children across segments */
         mca_coll_smdirect_in_use_flag_t mcsp_segment_flag;
 
-        /* endpoint used with with SMSC component
-         * NOTE: this is the base endpoint type, the actual endpoint might be
-         *       larger than this (see mca_smsc.get_endpoint_size()) so
-         *       keep this entry last in this struct! We should have enough memory
-         *       since we allocate constrol_size bytes.
-         */
-        mca_smsc_endpoint_t mcsp_endpoint;
     } mca_coll_smdirect_procdata_t;
 
     typedef struct mca_coll_smdirect_peerdata_t {
-      //mca_smsc_endpoint_t *endpoint;
+      mca_smsc_endpoint_t *endpoint;
       void *mapping_ctx; // the context used to unmap
       void *mapping_ptr; // the local pointer to access the peer's memory
       uint32_t num_children; // number of children this peer has
@@ -224,9 +217,14 @@ BEGIN_C_DECLS
             communications */
         mca_coll_smdirect_tree_node_t *mcb_tree;
 
-        /** my SMSC endpoint, a copy is stored in the shared memory segment */
-        mca_smsc_endpoint_t *mcb_endpoint;
+        /** Array of peers to use in operations */
+        mca_coll_smdirect_peerdata_t *peerdata;
 
+        /* communicator size */
+        int comm_size;
+
+        /** endpoint cache */
+        mca_smsc_endpoint_t **endpoints;
     } mca_coll_smdirect_comm_t;
 
     /** Coll sm module */

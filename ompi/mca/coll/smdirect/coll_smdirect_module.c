@@ -105,8 +105,11 @@ static void mca_coll_smdirect_module_destruct(mca_coll_smdirect_module_t *module
             mca_common_sm_fini(c->sm_bootstrap_meta);
             OBJ_RELEASE(c->sm_bootstrap_meta);
         }
-        mca_smsc->return_endpoint(c->mcb_endpoint);
-        c->mcb_endpoint = NULL;
+        for (int i = 0; i < module->sm_comm_data->comm_size; ++i) {
+            if (NULL != module->sm_comm_data->endpoints[i]) {
+                MCA_SMSC_CALL(return_endpoint, module->sm_comm_data->endpoints[i]);
+            }
+        }
         free(c);
     }
 
@@ -234,6 +237,10 @@ mca_coll_smdirect_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_scan       = NULL;
     sm_module->super.coll_scatter    = NULL;
     sm_module->super.coll_scatterv   = NULL;
+
+    int comm_size = ompi_comm_size(comm);
+    sm_module->sm_comm_data->comm_size = comm_size;
+    sm_module->sm_comm_data->endpoints = calloc(comm_size, sizeof(mca_smsc_endpoint_t *));
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:comm_query (%d/%s): pick me! pick me!",
@@ -404,6 +411,8 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
         }
     }
 
+    /* allocate space for the maximum number of children we expect */
+    data->peerdata = malloc(sizeof(data->peerdata[0])*mca_coll_smdirect_component.sm_tree_degree);
 
     /* Attach to this communicator's shmem data segment */
     if (OMPI_SUCCESS != (ret = bootstrap_comm(comm, sm_module))) {
@@ -434,16 +443,6 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
     data->procdata->mcsp_segment_flag.mcsiuf_operation_count = 1;
     data->procdata->mcsp_segment_flag.mcsiuf_num_procs_using = 0;
     data->mcb_operation_count = -1;
-
-    /* get and store our endpoint */
-    opal_proc_t *my_proc;
-    if (NULL == (my_proc = opal_proc_local_get())) {
-        /* TODO: cleanup */
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    mca_smsc_endpoint_t* endpoint = mca_smsc->get_endpoint(my_proc);
-    memcpy(&data->procdata->mcsp_endpoint, endpoint, mca_smsc->get_endpoint_size());
-    data->mcb_endpoint = endpoint;
 
     /* Save previous component's reduce information */
     sm_module->previous_reduce = comm->c_coll->coll_reduce;
