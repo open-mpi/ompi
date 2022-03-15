@@ -82,7 +82,7 @@ mechanism available in Open MPI to influence a parameter value, e.g.:
 
 .. code-block:: sh
 
-   shell$ mpirun --mca fcoll dynamic -np 64 ./a.out
+   shell$ mpirun --mca fcoll dynamic -n 64 ./a.out
 
 ``fs`` and ``fbtl`` components are typically chosen based on the file
 system type utilized (e.g. the ``pvfs2`` component is chosen when the
@@ -222,7 +222,7 @@ IMB:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 1 ./IMB-IO S_write_indv
+   shell$ mpirun -n 1 ./IMB-IO S_write_indv
 
 For IMB, use the values obtained for AGGREGATE test cases. Plot the
 bandwidth over the message length. The recommended value for

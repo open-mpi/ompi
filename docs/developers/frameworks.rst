@@ -166,7 +166,7 @@ values of parameters:
 
    .. code-block:: sh
 
-      shell$ mpirun --mca btl_tcp_frag_size 65536 -np 2 hello_world_mpi
+      shell$ mpirun --mca btl_tcp_frag_size 65536 -n 2 hello_world_mpi
 
    .. error:: TODO Do we need content here about PMIx and PRTE MCA vars
               and corresponding command line switches?

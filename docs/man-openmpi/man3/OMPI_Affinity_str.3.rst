@@ -111,7 +111,7 @@ Examples
               rank, ompi_bound, current_binding, exists);
        ...
 
-Output of mpirun -np 2 -bind-to-core a.out:
+Output of mpirun -n 2 -bind-to-core a.out:
 
 ::
 
@@ -124,7 +124,7 @@ Output of mpirun -np 2 -bind-to-core a.out:
      current_binding: socket 0[core 1]
               exists: socket 0 has 4 cores
 
-Output of mpirun -np 2 -bind-to-socket a.out:
+Output of mpirun -n 2 -bind-to-socket a.out:
 
 ::
 
@@ -159,7 +159,7 @@ Output of mpirun -np 2 -bind-to-socket a.out:
               rank, ompi_bound, current_binding, exists);
        ...
 
-Output of mpirun -np 2 -bind-to-core a.out:
+Output of mpirun -n 2 -bind-to-core a.out:
 
 ::
 
@@ -172,7 +172,7 @@ Output of mpirun -np 2 -bind-to-core a.out:
      current_binding: [. B . .]
               exists: [. . . .]
 
-Output of mpirun -np 2 -bind-to-socket a.out:
+Output of mpirun -n 2 -bind-to-socket a.out:
 
 ::
 

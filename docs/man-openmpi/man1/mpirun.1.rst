@@ -54,7 +54,7 @@ probably want to use a command line of the following form:
 
 .. code:: sh
 
-   shell$ mpirun [ -np X ] [ --hostfile <filename> ]  <program>
+   shell$ mpirun [ -n X ] [ --hostfile <filename> ]  <program>
 
 This will run X copies of <program> in your current run-time
 environment (if running under a supported resource manager, Open MPI's
@@ -250,16 +250,21 @@ that none of the options imply a particular binding policy |mdash| e.g.,
 requesting N processes for each socket does not imply that the
 processes will be bound to the socket.
 
-* ``-c``, ``-n``, ``--n``, ``-np <#>``: Run this many copies of the
+* ``-n``, ``--n``, ``-c``, ``-np <#>``: Run this many copies of the
   program on the given nodes.  This option indicates that the
   specified file is an executable program and not an application
   context. If no value is provided for the number of copies to execute
-  (i.e., neither the ``-np`` nor its synonyms are provided on the
+  (i.e., neither the ``-n`` nor its synonyms are provided on the
   command line), Open MPI will automatically execute a copy of the
   program on each process slot (see below for description of a
   "process slot"). This feature, however, can only be used in the SPMD
   model and will return an error (without beginning execution of the
   application) otherwise.
+
+  .. note:: The ``-n`` option is the preferred option to be used to specify the
+            number of copies of the program to be executed, but the alternate
+            options are also accepted.
+
 
 * ``--map-by ppr:N:<object>``: Launch N times the number of objects of
   the specified type on each node.
@@ -653,7 +658,7 @@ Extended command line arguments allow for the description of the
 application layout on the command line using colons (``:``) to
 separate the specification of programs and arguments. Some options are
 globally set across all specified programs (e.g., ``--hostfile``),
-while others are specific to a single program (e.g., ``-np``).
+while others are specific to a single program (e.g., ``-n``).
 
 Specifying Host Nodes
 ^^^^^^^^^^^^^^^^^^^^^
@@ -740,7 +745,7 @@ launches one process per host node.
 
 is the same as ``--npernode 1``.
 
-Another alternative is to specify the number of processes with the ``-np``
+Another alternative is to specify the number of processes with the ``-n``
 option.  Consider now the hostfile:
 
 .. code:: sh
@@ -754,11 +759,11 @@ Now run with ``myhostfile``:
 
 .. code:: sh
 
-   shell$ mpirun --hostfile myhostfile -np 6 ./a.out
+   shell$ mpirun --hostfile myhostfile -n 6 ./a.out
 
 will launch processes 0-3 on node ``aa`` and processes 4-5 on node
 ``bb``.  The remaining slots in the hostfile will not be used since
-the ``-np`` option indicated that only 6 processes should be launched.
+the ``-n`` option indicated that only 6 processes should be launched.
 
 Mapping Processes to Nodes: Using Policies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -767,7 +772,7 @@ The examples above illustrate the default mapping of process processes
 to nodes.  This mapping can also be controlled with various ``mpirun``
 options that describe mapping policies.
 
-Consider the same hostfile as above, again with ``-np 6``.  The table
+Consider the same hostfile as above, again with ``-n 6``.  The table
 below lists a few ``mpirun`` variations, and shows which
 MPI_COMM_WORLD ranks end up on which node:
 
@@ -803,13 +808,13 @@ consumes few system resources, ``--nolocal`` can be helpful for
 launching very large jobs where mpirun may actually need to use
 noticeable amounts of memory and/or processing time.
 
-Just as ``-np`` can specify fewer processes than there are slots, it
+Just as ``-n`` can specify fewer processes than there are slots, it
 can also oversubscribe the slots.  For example, with the same
 hostfile:
 
 .. code:: sh
 
-   shell$ mpirun --hostfile myhostfile -np 14 ./a.out
+   shell$ mpirun --hostfile myhostfile -n 14 ./a.out
 
 will launch processes 0-3 on node ``aa``, 4-7 on ``bb``, and 8-11 on
 ``cc``.  It will then add the remaining two processes to whichever
@@ -820,7 +825,7 @@ same hostfile:
 
 .. code:: sh
 
-   shell$ mpirun --hostfile myhostfile -np 14 --nooversubscribe ./a.out
+   shell$ mpirun --hostfile myhostfile -n 14 --nooversubscribe ./a.out
 
 will produce an error since ``--nooversubscribe`` prevents
 oversubscription.
@@ -840,7 +845,7 @@ value defaults to the limit.  Now:
 
 .. code:: sh
 
-   shell$ mpirun --hostfile myhostfile -np 14 ./a.out
+   shell$ mpirun --hostfile myhostfile -n 14 ./a.out
 
 causes the first 12 processes to be launched as before, but the
 remaining two processes will be forced onto node ``cc``.  The other
@@ -850,12 +855,12 @@ this job.
 Using the ``--nooversubscribe`` option can be helpful since Open MPI
 currently does not get ``max_slots`` values from the resource manager.
 
-Of course, ``-np`` can also be used with the ``-H`` or ``-host``
+Of course, ``-n`` can also be used with the ``-H`` or ``-host``
 option.  For example:
 
 .. code:: sh
 
-   shell$ mpirun -H aa,bb -np 8 ./a.out
+   shell$ mpirun -H aa,bb -n 8 ./a.out
 
 launches 8 processes.  Since only two hosts are specified, after the
 first two processes are mapped, one to ``aa`` and one to ``bb``, the
@@ -865,7 +870,7 @@ And here is a MIMD example:
 
 .. code:: sh
 
-   shell$ mpirun -H aa -np 1 hostname : -H bb,cc -np 2 uptime
+   shell$ mpirun -H aa -n 1 hostname : -H bb,cc -n 2 uptime
 
 will launch process 0 running hostname on node ``aa`` and processes 1
 and 2 each running uptime on nodes ``bb`` and ``cc``, respectively.
@@ -990,7 +995,7 @@ Finally, ``--report-bindings`` can be used to report bindings.
 
 As an example, consider a node with two processor sockets, each
 comprised of four cores, and each of those cores contains one hardware
-thread.  We run mpirun with ``-np 4 --report-bindings`` and the
+thread.  We run mpirun with ``-n 4 --report-bindings`` and the
 following additional options:
 
 .. code::
@@ -1236,7 +1241,7 @@ example:
 
 .. code:: sh
 
-   shell$ mpirun -np 2 my_app < my_input > my_output
+   shell$ mpirun -n 2 my_app < my_input > my_output
 
 Note that in this example only the MPI_COMM_WORLD rank 0 process will
 receive the stream from ``my_input`` on stdin.  The stdin on all the other
@@ -1399,14 +1404,14 @@ select which BTL to be used for transporting MPI messages.  The
 
 .. code:: sh
 
-   shell$ mpirun --mca btl tcp,self -np 1 my_mpi_app
+   shell$ mpirun --mca btl tcp,self -n 1 my_mpi_app
 
 This tells Open MPI to use the ``tcp`` and ``self`` BTLs, and to run a
 single copy of ``my_mpi_app`` an allocated node.
 
 .. code:: sh
 
-   shell$ mpirun --mca btl self -np 1 my_mpi_app
+   shell$ mpirun --mca btl self -n 1 my_mpi_app
 
 Tells Open MPI to use the ``self`` BTL, and to run a single copy of
 ``my_mpi_app`` an allocated node.
@@ -1543,7 +1548,7 @@ Be sure also to see the examples throughout the sections above.
 
 .. code:: sh
 
-   shell$ mpirun -np 4 --mca btl tcp,sm,self prog1
+   shell$ mpirun -n 4 --mca btl tcp,sm,self prog1
 
 Run 4 copies of ``prog1`` using the ``tcp``, ``sm`` (shared memory),
 and ``self`` (process loopback) BTL's for the transport of MPI

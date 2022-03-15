@@ -222,7 +222,7 @@ listed below, and are resolved in the following priority order:
 
    .. code-block:: sh
 
-      shell$ mpirun --mca mpi_show_handle_leaks 1 -np 4 a.out
+      shell$ mpirun --mca mpi_show_handle_leaks 1 -n 4 a.out
 
    This sets the MCA parameter ``mpi_show_handle_leaks`` to the value
    of 1 before running ``a.out`` with four processes.  In general, the
@@ -245,7 +245,7 @@ listed below, and are resolved in the following priority order:
 
       shell$ OMPI_MCA_mpi_show_handle_leaks=1
       shell$ export OMPI_MCA_mpi_show_handle_leaks
-      shell$ mpirun -np 4 a.out
+      shell$ mpirun -n 4 a.out
 
    Note that setting environment variables to values with multiple words
    requires quoting, such as:
@@ -347,21 +347,21 @@ will typically run the application as:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 a.out
+   shell$ mpirun -n 2 a.out
 
 To use the ``foo.conf`` AMCA parameter file, this command line
 changes to:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 --am foo.conf a.out
+   shell$ mpirun -n 2 --am foo.conf a.out
 
 If the user wants to override a parameter set in ``foo.conf`` they
 can add it to the command line:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 --am foo.conf --mca btl tcp,self a.out
+   shell$ mpirun -n 2 --am foo.conf --mca btl tcp,self a.out
 
 AMCA parameter files can be coupled if more than one file is to be
 used. If we have another AMCA parameter file called ``bar.conf``
@@ -369,7 +369,7 @@ that we want to use, we add it to the command line as follows:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 --am foo.conf:bar.conf a.out
+   shell$ mpirun -n 2 --am foo.conf:bar.conf a.out
 
 AMCA parameter files are loaded in priority order. This means that
 ``foo.conf`` AMCA file has priority over the ``bar.conf`` file. So
@@ -423,14 +423,14 @@ will typically run the application as:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 a.out
+   shell$ mpirun -n 2 a.out
 
 To use the ``foo.conf`` tuned parameter file, this command line
 changes to:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 --tune foo.conf a.out
+   shell$ mpirun -n 2 --tune foo.conf a.out
 
 Tuned parameter files can be coupled if more than one file is to be
 used. If we have another tuuned parameter file called ``bar.conf``
@@ -438,7 +438,7 @@ that we want to use, we add it to the command line as follows:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 --tune foo.conf,bar.conf a.out
+   shell$ mpirun -n 2 --tune foo.conf,bar.conf a.out
 
 
 The contents of tuned files consist of one or more lines, each of

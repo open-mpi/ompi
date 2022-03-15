@@ -37,7 +37,7 @@ Launching
 When properly configured, Open MPI obtains both the list of hosts and
 how many processes to start on each host from Torque / PBS Pro
 directly.  Hence, it is unnecessary to specify the ``--hostfile``,
-``--host``, or ``-np`` options to ``mpirun``.  Open MPI will use
+``--host``, or ``-n`` options to ``mpirun``.  Open MPI will use
 PBS/Torque-native mechanisms to launch and kill processes (``ssh`` is
 not required).
 

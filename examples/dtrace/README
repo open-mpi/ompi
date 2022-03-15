@@ -61,7 +61,7 @@ perform the following steps:
   2.  Type the following command but replace the hostnames in the example with the
       names of the hosts in your cluster.
 
-	% mpirun -np 2 --host burl-ct-v440-4,burl-ct-v440-5 myppriv.sh
+	% mpirun -n 2 --host burl-ct-v440-4,burl-ct-v440-5 myppriv.sh
 
 
 If the output of ppriv shows that the E privilege set has the dtrace
@@ -109,7 +109,7 @@ There are two ways to use Dynamic Tracing with MPI programs:
 For illustration purposes, assume you have a program named mpiapp. To trace
 the program mpiapp using the mpitrace.d script, type the following command:
 
-% mpirun -np 4 dtrace -s mpitrace.d -c mpiapp
+% mpirun -n 4 dtrace -s mpitrace.d -c mpiapp
 
 The advantage of tracing an MPI program in this way is that all the processes
 in the job will be traced from the beginning.  This method is probably most
@@ -131,7 +131,7 @@ dtrace -s $1 -c $2 -o $2.$OMPI_COMM_WORLD_RANK.trace
 
 Type the following command to run the partrace.sh shell script:
 
-% mpirun -np 4 partrace.sh mpitrace.d mpiapp
+% mpirun -n 4 partrace.sh mpitrace.d mpiapp
 
 This will run mpiapp under dtrace using the mpitrace.d script.  The script
 saves the trace output for each process in a job under a separate file name,

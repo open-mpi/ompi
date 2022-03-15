@@ -435,7 +435,7 @@ be the library trying to make connections to unreachable hosts.
 
    # Here is an example with some of the output deleted for clarity.
    # One can see the connections that are attempted.
-   shell$ mpirun --mca btl self,sm,tcp --mca btl_base_verbose 30 -np 2 -host NodeA,NodeB a.out
+   shell$ mpirun --mca btl self,sm,tcp --mca btl_base_verbose 30 -n 2 -host NodeA,NodeB a.out
    [...snip...]
    [NodeA:18003] btl: tcp: attempting to connect() to address 10.8.47.2 on port 59822
    [NodeA:18003] btl: tcp: attempting to connect() to address 192.168.1.2 on port 59822
