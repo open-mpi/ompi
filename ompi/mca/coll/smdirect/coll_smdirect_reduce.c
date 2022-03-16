@@ -213,10 +213,6 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
     const size_t total_extent = count * extent;
     const size_t control_size = mca_coll_smdirect_component.sm_control_size;
 
-    if (root != rank) {
-        tmpbuf = malloc(segment_ddt_count*extent);
-    }
-
     /* get the current operation */
     int op_count = ++data->mcb_operation_count;
 
@@ -225,6 +221,10 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
     children = me->mcstn_children;
     parent = me->mcstn_parent;
     const int num_children = me->mcstn_num_children;
+
+    if (root != rank && num_children > 0) {
+        tmpbuf = malloc(segment_ddt_count*extent);
+    }
 
     /* wait for processes from the previous op to finish */
     FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_op_flag);
@@ -296,44 +296,48 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
         for (segment_id = 0, count_left = count;
              segment_id < num_segments;
              segment_id++, count_left -= segment_ddt_count) {
-            /* figure out into which buffer to reduce */
+            /* figure out the buffers to use */
             void *reduce_target;
+            void *reduce_source1 = ((char *) sbuf) + segment_id * segment_ddt_bytes;
             size_t segcount = opal_min(count_left, segment_ddt_count);
             if (rank != root) {
-                reduce_target = tmpbuf;
+                reduce_target  = tmpbuf;
+                reduce_source1 = ((char *) sbuf) + segment_id * segment_ddt_bytes;
                 /* wait for our parent to complete reading the previous segment */
                 FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_flag);
-                /* copy our input data into the output buffer
-                 * TODO: 3buff versions would be handy here but they just copy the data
-                 */
-                ompi_datatype_copy_content_same_ddt (dtype, segcount,
-                                                     reduce_target,
-                                                     ((char *) sbuf) + segment_id * segment_ddt_bytes);
             } else {
                 /* root reduces directly into the receive buffer */
                 reduce_target = ((char*)rbuf) + (segment_id * segment_ddt_bytes);
-                if (MPI_IN_PLACE != sbuf) {
-                    /* root without in-place copies data from input to output buffer */
-                    ompi_datatype_copy_content_same_ddt(dtype, segcount,
-                                                        reduce_target,
-                                                        ((char *) sbuf) + segment_id * segment_ddt_bytes);
+                if (MPI_IN_PLACE == sbuf) {
+                    /* root with in-place takes data from the receive buffer */
+                    reduce_source1 = reduce_target;
                 }
             }
             for (int i = 0; i < num_children; ++i) {
                 mca_coll_smdirect_peerdata_t *peer = &peerdata[i];
                 /* wait for this peer to make their data available */
                 FLAG_WAIT_FOR_OP(&peer->procdata->mcsp_segment_flag, segment_id);
+                opal_atomic_rmb();
                 /* handle segment data from this peer */
                 void *peer_ptr = peer->mapping_ptr;
                 if (peer->num_children == 0) {
                     /* peers without children expose their full send buffer */
                     peer_ptr = ((char*)peer->mapping_ptr) + segment_id * extent * segment_ddt_count;
                 }
-                ompi_op_reduce(op, peer_ptr, reduce_target, segcount, dtype);
+                if (reduce_target == reduce_source1) {
+                    ompi_op_reduce(op, peer_ptr, reduce_target, segcount, dtype);
+                } else {
+                    /* with the first child, we can use the 3buff variant */
+                    ompi_3buff_op_reduce(op, reduce_source1, peer_ptr, reduce_target, segcount, dtype);
+                    /* after the first child we continue only with the reduce_target */
+                    reduce_source1 = reduce_target;
+                }
                 /* tell peer that we're done reading this segment */
+                opal_atomic_wmb();
                 FLAG_RELEASE(&peer->procdata->mcsp_segment_flag);
             }
             /* signal that this segment is available */
+            opal_atomic_wmb();
             FLAG_RETAIN(&data->procdata->mcsp_segment_flag, 1, segment_id);
         }
     } else {
