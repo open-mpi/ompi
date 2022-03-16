@@ -38,14 +38,16 @@ BEGIN_C_DECLS
    in an sm collective for a long time: call opal_progress once in a
    great while.  Use a "goto" label for expdiency to exit loops. */
 #define SPIN_CONDITION_MAX 100000
-#define SPIN_CONDITION(cond) \
-  do { \
-       if (cond) break; \
-       for (int spin_cond_i = 0; spin_cond_i < SPIN_CONDITION_MAX; ++spin_cond_i) { \
-           if (cond) { break; } \
-       } \
-       opal_progress(); \
-  } while (1);
+#define SPIN_CONDITION(cond)                          \
+  do {                                                \
+      int spin_cond_i = 0;                            \
+      while (!(cond)) {                               \
+          if (OPAL_UNLIKELY(++spin_cond_i == SPIN_CONDITION_MAX)) {  \
+              opal_progress();                        \
+              spin_cond_i = 0;                        \
+          }                                           \
+      }                                               \
+  } while (0)
 
     /**
      * Structure to hold the sm coll component.  First it holds the
