@@ -116,7 +116,7 @@ void *mca_smsc_xpmem_map_peer_region(mca_smsc_endpoint_t *endpoint, uint64_t fla
     int rc;
 
     base = OPAL_DOWN_ALIGN((uintptr_t) remote_ptr, attach_align, uintptr_t);
-    bound = OPAL_ALIGN((uintptr_t) remote_ptr + size - 1, attach_align, uintptr_t) + 1;
+    bound = OPAL_ALIGN((uintptr_t) remote_ptr + size, attach_align, uintptr_t);
     if (OPAL_UNLIKELY(bound > xpmem_endpoint->address_max)) {
         bound = xpmem_endpoint->address_max;
     }
