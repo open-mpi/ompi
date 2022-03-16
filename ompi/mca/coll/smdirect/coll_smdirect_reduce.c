@@ -193,7 +193,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
     mca_coll_smdirect_comm_t *data = sm_module->sm_comm_data;
     size_t ddt_size;
     ptrdiff_t extent;
-    void *tmpbuf = NULL;
+    char *tmpbuf = NULL;
 
     mca_coll_smdirect_tree_node_t *me, **children, *parent;
 
@@ -223,7 +223,9 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
     const int num_children = me->mcstn_num_children;
 
     if (root != rank && num_children > 0) {
-        tmpbuf = malloc(segment_ddt_count*extent);
+        /* double buffering: while our parent reads a segment we
+         * can compute the next one */
+        tmpbuf = malloc(segment_ddt_bytes*2);
     }
 
     /* wait for processes from the previous op to finish */
@@ -237,7 +239,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
     } else {
         /* inner nodes provide the temporary buffer spanning one segment */
         data->procdata->mcsp_indata = tmpbuf;
-        data->procdata->mcsp_insize = segment_ddt_count*extent;
+        data->procdata->mcsp_insize = segment_ddt_bytes*2;
     }
 
     /* initialize the segment flag so that our parent blocks until
@@ -292,10 +294,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
             void *reduce_source1 = ((char *) sbuf) + segment_id * segment_ddt_bytes;
             size_t segcount = opal_min(count_left, segment_ddt_count);
             if (rank != root) {
-                reduce_target  = tmpbuf;
-                reduce_source1 = ((char *) sbuf) + segment_id * segment_ddt_bytes;
-                /* wait for our parent to complete reading the previous segment */
-                FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_flag);
+                reduce_target  = tmpbuf + (segment_id % 2)*(segment_ddt_bytes);
             } else {
                 /* root reduces directly into the receive buffer */
                 reduce_target = ((char*)rbuf) + (segment_id * segment_ddt_bytes);
@@ -310,10 +309,10 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
                 FLAG_WAIT_FOR_OP(&peer->procdata->mcsp_segment_flag, segment_id);
                 opal_atomic_rmb();
                 /* handle segment data from this peer */
-                void *peer_ptr = peer->mapping_ptr;
+                void *peer_ptr = ((char*)peer->mapping_ptr) + (segment_id % 2)*(segment_ddt_bytes);
                 if (peer->num_children == 0) {
                     /* peers without children expose their full send buffer */
-                    peer_ptr = ((char*)peer->mapping_ptr) + segment_id * extent * segment_ddt_count;
+                    peer_ptr = ((char*)peer->mapping_ptr) + segment_id * segment_ddt_bytes;
                 }
                 if (reduce_target == reduce_source1) {
                     ompi_op_reduce(op, peer_ptr, reduce_target, segcount, dtype);
@@ -327,9 +326,13 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
                 opal_atomic_wmb();
                 FLAG_RELEASE(&peer->procdata->mcsp_segment_flag);
             }
-            /* signal that this segment is available */
             opal_atomic_wmb();
-            FLAG_RETAIN(&data->procdata->mcsp_segment_flag, 1, segment_id);
+            if (rank != root) {
+                /* wait for our parent to complete reading the previous segment */
+                FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_flag);
+                /* signal that the new segment is available */
+                FLAG_RETAIN(&data->procdata->mcsp_segment_flag, 1, segment_id);
+            }
         }
         if (rank != root) {
             /* wait for the last segment to be consumed */
