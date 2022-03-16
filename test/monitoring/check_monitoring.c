@@ -15,7 +15,7 @@
 
   To be run as:
 
-  mpirun -np 4 --mca pml_monitoring_enable 2 ./check_monitoring
+  mpirun -n 4 --mca pml_monitoring_enable 2 ./check_monitoring
 */
 
 #include <mpi.h>

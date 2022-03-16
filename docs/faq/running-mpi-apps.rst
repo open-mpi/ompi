@@ -255,7 +255,7 @@ thusly:
 
 .. code-block::
 
-   shell$ mpirun --prefix /opt/openmpi-$ver_current -np 4 a.out
+   shell$ mpirun --prefix /opt/openmpi-$ver_current -n 4 a.out
 
 This will prefix the ``PATH`` and ``LD_LIBRARY_PATH`` on both the
 local and remote hosts with ``/opt/openmpi-$ver_current/bin`` and
@@ -282,7 +282,7 @@ following is equivalent to the above command line that uses
 
 .. code-block::
 
-   shell$ /opt/openmpi-$ver_current/bin/mpirun -np 4 a.out
+   shell$ /opt/openmpi-$ver_current/bin/mpirun -n 4 a.out
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -318,7 +318,7 @@ parallel is:
 
 .. code-block::
 
-   shell$ mpirun -np 4 my_parallel_application
+   shell$ mpirun -n 4 my_parallel_application
 
 This starts a four-process parallel application, running four copies
 of the executable named ``my_parallel_application``.
@@ -332,7 +332,7 @@ to start the processes:
    shell$ cat my_hostfile
    host01.example.com
    host02.example.com
-   shell$ mpirun --hostfile my_hostfile -np 4 my_parallel_application
+   shell$ mpirun --hostfile my_hostfile -n 4 my_parallel_application
 
 This command will launch one copy of ``my_parallel_application`` on
 each of ``host01.example.com`` and ``host02.example.com``.
@@ -360,7 +360,7 @@ from a file.  For example:
 
 .. code-block::
 
-   shell$ mpirun -np 2 a.out : -np 2 b.out
+   shell$ mpirun -n 2 a.out : -n 2 b.out
 
 This will launch a single parallel application, but the first two
 processes will be instances of the ``a.out`` executable, and the
@@ -384,9 +384,9 @@ where the file ``my_appfile`` contains the following:
    # Application context files specify each sub-application in the
    # parallel job, one per line.  The first sub-application is the 2
    # a.out processes:
-   -np 2 a.out
+   -n 2 a.out
    # The second sub-application is the 2 b.out processes:
-   -np 2 b.out
+   -n 2 b.out
 
 This will result in the same behavior as running ``a.out`` and ``b.out``
 from the command line.
@@ -581,7 +581,7 @@ For example, you may see warnings similar to the following:
 .. code-block:: sh
 
    # With the Intel compiler suite
-   shell$ mpirun -np 1 --host node1.example.com mpi_hello
+   shell$ mpirun -n 1 --host node1.example.com mpi_hello
    prted: error while loading shared libraries: libimf.so: cannot open shared object file: No such file or directory
    --------------------------------------------------------------------------
    A daemon (pid 11893) died unexpectedly with status 127 while
@@ -589,12 +589,12 @@ For example, you may see warnings similar to the following:
    ...more error messages...
 
    # With the PGI compiler suite
-   shell$ mpirun -np 1 --host node1.example.com mpi_hello
+   shell$ mpirun -n 1 --host node1.example.com mpi_hello
    prted: error while loading shared libraries: libpgcc.so: cannot open shared object file: No such file or directory
    ...more error messages...
 
    # With the PathScale compiler suite
-   shell$ mpirun -np 1 --host node1.example.com mpi_hello
+   shell$ mpirun -n 1 --host node1.example.com mpi_hello
    prted: error while loading shared libraries: libmv.so: cannot open shared object file: No such file or directory
    ...more error messages...
 
@@ -653,7 +653,7 @@ For example:
 
 .. code-block::
 
-   shell$ mpirun -np 2 --host a,b uptime
+   shell$ mpirun -n 2 --host a,b uptime
 
 This will launch a copy of the Unix command ``uptime`` on the hosts ``a``
 and ``b``.
@@ -682,7 +682,7 @@ the target display, perhaps something like this:
    shell$ hostname
    my_desktop.secure-cluster.example.com
    shell$ xhost +
-   shell$ mpirun -np 4 -x DISPLAY=my_desktop.secure-cluster.example.com a.out
+   shell$ mpirun -n 4 -x DISPLAY=my_desktop.secure-cluster.example.com a.out
 
 However, this technique is not generally suitable for unsecure
 environments (because it allows anyone to read and write to your
@@ -698,7 +698,7 @@ from the nodes where your application will be running:
    compute2 being added to access control list
    compute3 being added to access control list
    compute4 being added to access control list
-   shell$ mpirun -np 4 -x DISPLAY=my_desktop.secure-cluster.example.com a.out
+   shell$ mpirun -n 4 -x DISPLAY=my_desktop.secure-cluster.example.com a.out
 
 (assuming that the four nodes you are running on are ``compute1``
 through ``compute4``).
@@ -742,8 +742,7 @@ Several notable options are:
 * ``--host``: Specify a host or list of hosts to run on (see
   :ref:`this FAQ entry for more details
   <faq-running-mpi-apps-mpirun-host-label>`).
-* ``--np`` (or ``-np``): Indicate the number of processes to
-  start.
+* ``-n``: Indicate the number of processes to start.
 * ``--mca``: Set MCA parameters (see the :doc:`Run-Time Tuning FAQ
   category </faq/tuning/>` for more details).
 * ``--wdir DIRECTORY``: Set the working directory of the started
@@ -818,7 +817,7 @@ Hostfiles works in two different ways:
 
       shell$ cat my_hosts
       node03
-      shell$ mpirun -np 1 --hostfile my_hosts hostname
+      shell$ mpirun -n 1 --hostfile my_hosts hostname
 
    This will run a single copy of ``hostname`` on the host ``node03``.
 
@@ -829,7 +828,7 @@ Hostfiles works in two different ways:
 
       shell$ cat my_hosts
       node17
-      shell$ mpirun -np 1 --hostfile my_hosts hostname
+      shell$ mpirun -n 1 --hostfile my_hosts hostname
 
    This is an error (because ``node17`` is not allocated to your job),
    and ``mpirun`` will abort.
@@ -853,7 +852,7 @@ Hostfiles works in two different ways:
       node01.example.com slots=1
       node02.example.com slots=1
       node03.example.com slots=1
-      shell$ mpirun -np 3 --hostfile my_hosts hostname
+      shell$ mpirun -n 3 --hostfile my_hosts hostname
 
    This will launch a single copy of ``hostname`` on the hosts
    ``node01.example.com``, ``node02.example.com``, and
@@ -869,7 +868,7 @@ Hence, if you specify multiple applications (as in an MPMD job),
    node01.example.com
    shell$ cat hostfile_2
    node02.example.com
-   shell$ mpirun -np 1 --hostfile hostfile_1 hostname : -np 1 --hostfile hostfile_2 uptime
+   shell$ mpirun -n 1 --hostfile hostfile_1 hostname : -n 1 --hostfile hostfile_2 uptime
    node01.example.com
     06:11:45 up 1 day,  2:32,  0 users,  load average: 21.65, 20.85, 19.84
 
@@ -888,7 +887,7 @@ hosts on which to run.  For example:
 
 .. code-block::
 
-   shell$ mpirun -np 3 --host a,b,c hostname
+   shell$ mpirun -n 3 --host a,b,c hostname
 
 Will launch *one* copy of ``hostname`` on each of hosts ``a``, ``b``,
 and ``c``.  Specifically: each host defaults to 1 slot, unless
@@ -928,14 +927,14 @@ Slots are discussed in much more detail :ref:`in this FAQ entry
 
    .. code-block::
 
-      shell$ mpirun -np 1 --hostfile my_hosts --host node3 hostname
+      shell$ mpirun -n 1 --hostfile my_hosts --host node3 hostname
 
    This will run a single copy of ``hostname`` on the host ``node3``.
    However, if you run:
 
    .. code-block::
 
-      shell$ mpirun -np 1 --hostfile my_hosts --host node17 hostname
+      shell$ mpirun -n 1 --hostfile my_hosts --host node17 hostname
 
    This is an error (because ``node17`` is not listed in
    ``my_hosts``); ``mpirun`` will abort.
@@ -956,7 +955,7 @@ Slots are discussed in much more detail :ref:`in this FAQ entry
 
    .. code-block::
 
-      shell$ mpirun -np 3 --host a,b,c hostname
+      shell$ mpirun -n 3 --host a,b,c hostname
 
    This will launch a single copy of ``hostname`` on the hosts ``a``,
    ``b``, and ``c``.
@@ -967,7 +966,7 @@ Hence, if you specify multiple applications (as in an MPMD job),
 
 .. code-block::
 
-   shell$ mpirun -np 1 --host a hostname : -np 1 --host b uptime
+   shell$ mpirun -n 1 --host a hostname : -n 1 --host b uptime
 
 This will launch ``hostname`` on host ``a`` and ``uptime`` on host ``b``.
 
@@ -1134,8 +1133,8 @@ line:
 #. *How many* processes should be launched?
 #. *Where* should those processes be launched?
 
-The "how many" question is directly answered with the ``-np`` switch
-to ``mpirun``.  If ``-np`` is not specified on the ``mpirun`` command
+The "how many" question is directly answered with the ``-n`` switch
+to ``mpirun``.  If ``-n`` is not specified on the ``mpirun`` command
 line, its value is the sum of the slots on all the nodes.
 
 The "where" question is a little more complicated, and depends on
@@ -1172,7 +1171,7 @@ node:
       shell$ cat my-hosts
       node0 slots=2 max_slots=20
       node1 slots=2 max_slots=20
-      shell$ mpirun --hostfile my-hosts -np 8 --map-by slot hello | sort
+      shell$ mpirun --hostfile my-hosts -n 8 --map-by slot hello | sort
       Hello World I am rank 0 of 8 running on node0
       Hello World I am rank 1 of 8 running on node0
       Hello World I am rank 2 of 8 running on node1
@@ -1198,7 +1197,7 @@ node:
       shell$ cat my-hosts
       node0 slots=2 max_slots=20
       node1 slots=2 max_slots=20
-      shell$ mpirun --hostname my-hosts -np 8 --map-by node hello | sort
+      shell$ mpirun --hostname my-hosts -n 8 --map-by node hello | sort
       Hello World I am rank 0 of 8 running on node0
       Hello World I am rank 1 of 8 running on node1
       Hello World I am rank 2 of 8 running on node0
@@ -1252,7 +1251,7 @@ processes.  For example:
    # processor cores on the host
    shell$ cat my-hostfile
    localhost
-   shell$ mpirun -np 4 --hostfile my-hostfile a.out
+   shell$ mpirun -n 4 --hostfile my-hostfile a.out
 
 Specifically: we strongly suggest that you do **NOT** have a hostfile
 that contains ``slots=4`` (because there are only two available
@@ -1269,7 +1268,7 @@ specifically tell Open MPI that it is ok to oversubscribe via
    # For the purposes of this example, explicitly tell Open MPI
    # that we have 2 slots on the host.
    localhost slots=2
-   shell$ mpirun -np 4 --hostfile my-hostfile --map-by :OVERSUBSCRIBE a.out
+   shell$ mpirun -n 4 --hostfile my-hostfile --map-by :OVERSUBSCRIBE a.out
 
 The reason you should tell Open MPI whether you're oversubscribing or
 not (i.e., never specify a ``slots`` value more than the number of
@@ -1304,7 +1303,7 @@ For example, on a node with a two processor cores:
 
    shell$ cat my-hostfile
    localhost slots=4
-   shell$ mpirun -np 4 --hostfile my-hostfile a.out
+   shell$ mpirun -n 4 --hostfile my-hostfile a.out
 
 This would cause all 4 MPI processes to run in *aggressive* mode
 because Open MPI thinks that there are 4 available processor cores to

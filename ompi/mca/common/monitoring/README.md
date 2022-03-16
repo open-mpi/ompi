@@ -144,7 +144,7 @@ Two perl scripts are provided in test/monitoring:
 For instance, the provided examples store phases output in `./prof`:
 
 ```
-shell$ mpirun -np 4 --mca pml_monitoring_enable 2 ./monitoring_test
+shell$ mpirun -n 4 --mca pml_monitoring_enable 2 ./monitoring_test
 ```
 
 Should provide the following output:

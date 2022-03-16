@@ -37,7 +37,7 @@ communications.  For example:
 
 .. code-block:: sh
 
-   shell$ mpirun --mca btl self,sm,tcp -np 16 ./a.out
+   shell$ mpirun --mca btl self,sm,tcp -n 16 ./a.out
 
 /////////////////////////////////////////////////////////////////////////
 

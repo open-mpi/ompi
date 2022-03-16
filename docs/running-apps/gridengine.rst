@@ -59,7 +59,7 @@ that were allocated by Grid Engine:
    # Allocate an Grid Engine interactive job with 4 slots from a
    # parallel environment (PE) named 'ompi' and run a 4-process Open
    # MPI job
-   shell$ qrsh -pe ompi 4 -b y mpirun -np 4 mpi-hello-world
+   shell$ qrsh -pe ompi 4 -b y mpirun -n 4 mpi-hello-world
 
 There are also other ways to submit jobs under Grid Engine:
 
@@ -106,7 +106,7 @@ You may want to alter other parameters, but the important one is
 ``control_slaves``, specifying that the environment has "tight
 integration".  Note also the lack of a start or stop procedure.  The
 tight integration means that mpirun automatically picks up the slot
-count to use as a default in place of the ``-np`` argument, picks up a
+count to use as a default in place of the ``-n`` argument, picks up a
 host file, spawns remote processes via ``qrsh`` so that Grid Engine
 can control and monitor them, and creates and destroys a per-job
 temporary directory (``$TMPDIR``), in which Open MPI's directory will
@@ -177,7 +177,7 @@ like this batch script can be used:
    #$ -pe ompi 16
    #$ -j y
    #$ -l h_rt=00:20:00
-   mpirun -np 16 -mca orte_forward_job_control 1 mpi-hello-world
+   mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
 
 .. error:: Ralph: Does ``orte_forward_job_control`` still exist?
 
@@ -196,7 +196,7 @@ to handle it:
    #$ -pe ompi 16
    #$ -j y
    #$ -l h_rt=00:20:00
-   exec mpirun -np 16 -mca orte_forward_job_control 1 mpi-hello-world
+   exec mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
 
 Alternatively, one can catch the signals in the script instead of doing
 an exec on the mpirun:
@@ -225,7 +225,7 @@ an exec on the mpirun:
    trap sigusr1handler SIGUSR1
    trap sigusr2handler SIGUSR2
 
-   mpirun -np 16 -mca orte_forward_job_control 1 mpi-hello-world
+   mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
 
 Grid Engine job suspend / resume support
 ----------------------------------------
@@ -245,7 +245,7 @@ orte_forward_job_control 1``.  Here is an example on Solaris:
 
 .. code-block:: sh
 
-   shell$ mpirun -mca orte_forward_job_control 1 -np 2 mpi-hello-world
+   shell$ mpirun -mca orte_forward_job_control 1 -n 2 mpi-hello-world
 
 In another window, we suspend and continue the job:
 

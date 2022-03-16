@@ -28,6 +28,6 @@ Please describe, in detail, the problem that you are having, including the behav
 
 **Note**: If you include verbatim output (or a code block), please use a [GitHub Markdown](https://help.github.com/articles/creating-and-highlighting-code-blocks/) code block like below:
 ```shell
-shell$ mpirun -np 2 ./hello_world
+shell$ mpirun -n 2 ./hello_world
 ```
 

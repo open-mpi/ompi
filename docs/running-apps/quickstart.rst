@@ -19,11 +19,11 @@ equivalent) to launch MPI applications.  For example:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 2 mpi-hello-world
+   shell$ mpirun -n 2 mpi-hello-world
    # or
-   shell$ mpiexec -np 2 mpi-hello-world
+   shell$ mpiexec -n 2 mpi-hello-world
    # or
-   shell$ mpiexec -np 1 mpi-hello-world : -np 1 mpi-hello-world
+   shell$ mpiexec -n 1 mpi-hello-world : -n 1 mpi-hello-world
 
 are all equivalent.  For simplicity, the rest of this documentation
 will simply refer to ``mpirun``.
@@ -38,17 +38,17 @@ Launching on a single host
 
 It is common to develop MPI applications on a single laptop or
 workstation.  In such cases, use ``mpirun`` and specify how many MPI
-processes you want to launch via the ``-np`` option:
+processes you want to launch via the ``-n`` option:
 
 .. code-block:: sh
 
-   shell$ mpirun -np 6 mpi-hello-world
+   shell$ mpirun -n 6 mpi-hello-world
    Hello world, I am 0 of 6 (running on my-laptop))
    Hello world, I am 1 of 6 (running on my-laptop)
    ...
    Hello world, I am 5 of 6 (running on my-laptop)
 
-If you do not specify the ``-np`` option, ``mpirun`` will default to
+If you do not specify the ``-n`` option, ``mpirun`` will default to
 launching as many MPI processes as there are processor cores (not
 hyperthreads) on the machine.
 
@@ -144,7 +144,7 @@ in the scheduled allocation), you can simply:
    # Write a script that runs your MPI application
    shell$ cat my-slurm-script.sh
    #!/bin/sh
-   # There is no need to specify -np or --hostfile because that
+   # There is no need to specify -n or --hostfile because that
    # information will automatically be provided by Slurm.
    mpirun mpi-hello-world
 
@@ -182,7 +182,7 @@ the number of processes to run and hosts to use from the scheduler.
 
 ``mpirun`` has many more features not described in this Quick Start
 section.  For example, while uncommon in scheduled environments, you
-can use ``-np`` and/or ``--hostfile`` to launch in subsets of the
+can use ``-n`` and/or ``--hostfile`` to launch in subsets of the
 overall scheduler allocation.  See the mpirun man page for more
 details.
 

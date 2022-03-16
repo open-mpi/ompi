@@ -18,7 +18,7 @@ in the environment. For example:
 
 .. code-block::
 
-   shell$ mpirun -mca mtl [psm2|ofi] -x PSM2_MULTIRAIL=1 -np 2 -H host1,host2 ./a.out
+   shell$ mpirun -mca mtl [psm2|ofi] -x PSM2_MULTIRAIL=1 -n 2 -H host1,host2 ./a.out
 
 .. note:: When using the OFI MTL, please ensure that the PSM2 OFI provider is used for
           communication with OPA devices.
