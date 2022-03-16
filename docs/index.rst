@@ -33,7 +33,7 @@ Documentation for Open can be found in the following locations:
        This particular documentation is for |ompi_ver|; use the
        selector in the
 
-       top-left of the navigation column to select
+       bottom-left of the navigation column to select
        documentation for different version.
 
    * - v4.1.x and earlier
