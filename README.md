@@ -14,7 +14,7 @@ computer science researchers.
 
 The Open MPI documentation can be viewed in the following ways:
 
-1. Online at https://ompi.readthedocs.io/en/latest/
+1. Online at https://docs.open-mpi.org/
 1. In self-contained (i.e., suitable for local viewing, without an
    internet connection) in official distribution tarballs under
    `docs/_build/html/index.html`.
@@ -28,4 +28,4 @@ Developers who clone the Open MPI Git repository will not have the
 HTML documentation and man pages by default; it must be built.
 Instructions for how to build the Open MPI documentation can be found
 here:
-https://ompi.readthedocs.io/en/latest/developers/prerequisites.html#sphinx.
+https://docs.open-mpi.org/en/master/developers/prerequisites.html#sphinx.
