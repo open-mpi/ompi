@@ -246,24 +246,19 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
 
     /* signal that our procdata for this op is ready */
     opal_atomic_wmb();
-    /* if we don't have any children we'll wait for our parent to signal completion */
-    int procs_to_wait = num_children;
-    procs_to_wait += NULL != parent ? 1 : 0;
-    FLAG_RETAIN(&data->procdata->mcsp_op_flag, procs_to_wait, op_count);
+    /* we will wait for our parent to signal completion */
+    FLAG_RETAIN(&data->procdata->mcsp_op_flag, (NULL != parent ? 1 : 0), op_count);
 
     /**
      * Get our children's SMSC endpoint and procdata
      */
-
-    /* TODO: move this allocation into the module */
-    //mca_coll_smdirect_peerdata_t *peerdata = malloc(sizeof(*peerdata)*num_children);
     mca_coll_smdirect_peerdata_t *peerdata = data->peerdata;
-    mca_coll_smdirect_procdata_t *parent_procdata = NULL;
     for (int i = 0; i < num_children; ++i) {
         mca_coll_smdirect_peerdata_t *peer = &peerdata[i];
         int peerid = children[i]->mcstn_id;
         if (NULL == (peer->endpoint = data->endpoints[peerid])) {
             peer->endpoint = MCA_SMSC_CALL(get_endpoint, (&ompi_comm_peer_lookup(comm, peerid)->super));
+            data->endpoints[peerid] = peer->endpoint;
         }
         peer->procdata = (mca_coll_smdirect_procdata_t *)(data->sm_bootstrap_meta->module_data_addr
                                                           + control_size * peerid);
@@ -280,10 +275,6 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
         assert(peer->mapping_ptr != NULL);
         assert(peer->mapping_ctx != NULL);
         peer->num_children = children[i]->mcstn_num_children;
-    }
-    if (parent) {
-        parent_procdata = (mca_coll_smdirect_procdata_t *)(data->sm_bootstrap_meta->module_data_addr
-                                                              + control_size * parent->mcstn_id);
     }
 
     /**
@@ -340,6 +331,10 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
             opal_atomic_wmb();
             FLAG_RETAIN(&data->procdata->mcsp_segment_flag, 1, segment_id);
         }
+        if (rank != root) {
+            /* wait for the last segment to be consumed */
+            FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_flag);
+        }
     } else {
         /* progressively signal that our data is available and wait for them to be consumed */
         for (int32_t segment_id = 0; segment_id < num_segments; ++segment_id) {
@@ -348,18 +343,15 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
         }
     }
 
-    /* release endpoints */
+    /* tell children that we're done and unmap their regions */
     for (int i = 0; i < num_children; ++i) {
         /* we're done with this peer */
         FLAG_RELEASE(&peerdata[i].procdata->mcsp_op_flag);
         MCA_SMSC_CALL(unmap_peer_region, peerdata[i].mapping_ctx);
     }
-    /* tell our parent that we're done */
-    if (parent_procdata) {
-        FLAG_RELEASE(&parent_procdata->mcsp_op_flag);
-    }
-    //free(peerdata);
     free(tmpbuf);
+
+    return OMPI_SUCCESS;
 }
 
 #if 0
