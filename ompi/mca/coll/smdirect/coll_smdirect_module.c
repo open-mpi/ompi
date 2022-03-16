@@ -238,10 +238,6 @@ mca_coll_smdirect_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_scatter    = NULL;
     sm_module->super.coll_scatterv   = NULL;
 
-    int comm_size = ompi_comm_size(comm);
-    sm_module->sm_comm_data->comm_size = comm_size;
-    sm_module->sm_comm_data->endpoints = calloc(comm_size, sizeof(mca_smsc_endpoint_t *));
-
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:comm_query (%d/%s): pick me! pick me!",
                         comm->c_contextid, comm->c_name);
@@ -311,6 +307,9 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
                             comm->c_contextid, comm->c_name);
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
+
+    data->comm_size = size;
+    data->endpoints = calloc(size, sizeof(mca_smsc_endpoint_t *));
 
     /* Setup array of pointers for #2 */
     data->mcb_tree = (mca_coll_smdirect_tree_node_t*) (data + 1);

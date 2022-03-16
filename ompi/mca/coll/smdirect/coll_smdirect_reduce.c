@@ -278,6 +278,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
                                           peer->procdata->mcsp_insize,
                                           &peer->mapping_ptr);
         assert(peer->mapping_ptr != NULL);
+        assert(peer->mapping_ctx != NULL);
         peer->num_children = children[i]->mcstn_num_children;
     }
     if (parent) {
@@ -297,6 +298,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
              segment_id++, count_left -= segment_ddt_count) {
             /* figure out into which buffer to reduce */
             void *reduce_target;
+            size_t segcount = opal_min(count_left, segment_ddt_count);
             if (rank != root) {
                 reduce_target = tmpbuf;
                 /* wait for our parent to complete reading the previous segment */
@@ -304,7 +306,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
                 /* copy our input data into the output buffer
                  * TODO: 3buff versions would be handy here but they just copy the data
                  */
-                ompi_datatype_copy_content_same_ddt (dtype, count,
+                ompi_datatype_copy_content_same_ddt (dtype, segcount,
                                                      reduce_target,
                                                      ((char *) sbuf) + segment_id * segment_ddt_bytes);
             } else {
@@ -312,7 +314,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
                 reduce_target = ((char*)rbuf) + (segment_id * segment_ddt_bytes);
                 if (MPI_IN_PLACE != sbuf) {
                     /* root without in-place copies data from input to output buffer */
-                    ompi_datatype_copy_content_same_ddt(dtype, count,
+                    ompi_datatype_copy_content_same_ddt(dtype, segcount,
                                                         reduce_target,
                                                         ((char *) sbuf) + segment_id * segment_ddt_bytes);
                 }
@@ -327,11 +329,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
                     /* peers without children expose their full send buffer */
                     peer_ptr = ((char*)peer->mapping_ptr) + segment_id * extent * segment_ddt_count;
                 }
-                ompi_op_reduce(op,
-                               peer_ptr,
-                               reduce_target,
-                               opal_min(count_left, segment_ddt_count),
-                               dtype);
+                ompi_op_reduce(op, peer_ptr, reduce_target, segcount, dtype);
                 /* tell peer that we're done reading this segment */
                 FLAG_RELEASE(&peer->procdata->mcsp_segment_flag);
             }
