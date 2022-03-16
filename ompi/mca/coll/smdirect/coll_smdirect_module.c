@@ -500,12 +500,12 @@ static int bootstrap_comm(ompi_communicator_t *comm,
             lowest_name = OMPI_CAST_RTE_NAME(&proc->super.proc_name);
         }
     }
-    opal_asprintf(&shortpath, "coll-sm-cid-%d-name-%s.mmap", comm->c_contextid,
+    opal_asprintf(&shortpath, "coll-sm-cid-%s-name-%s.mmap", ompi_comm_print_cid (comm),
              OMPI_NAME_PRINT(lowest_name));
     if (NULL == shortpath) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:sm:enable:bootstrap comm (%d/%s): asprintf failed",
-                            comm->c_contextid, comm->c_name);
+                            "coll:sm:enable:bootstrap comm (%s/%s): asprintf failed",
+                            ompi_comm_print_cid (comm), comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     fullpath = opal_os_path(false, ompi_process_info.job_session_dir,
@@ -513,8 +513,8 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     free(shortpath);
     if (NULL == fullpath) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:sm:enable:bootstrap comm (%d/%s): opal_os_path failed",
-                            comm->c_contextid, comm->c_name);
+                            "coll:sm:enable:bootstrap comm (%s/%s): opal_os_path failed",
+                            ompi_comm_print_cid (comm), comm->c_name);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -523,14 +523,14 @@ static int bootstrap_comm(ompi_communicator_t *comm,
      */
     size = comm_size*control_size;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                        "coll:sm:enable:bootstrap comm (%d/%s): attaching to %" PRIsize_t " byte mmap: %s",
-                        comm->c_contextid, comm->c_name, size, fullpath);
+                        "coll:sm:enable:bootstrap comm (%s/%s): attaching to %" PRIsize_t " byte mmap: %s",
+                        ompi_comm_print_cid (comm), comm->c_name, size, fullpath);
     if (0 == ompi_comm_rank (comm)) {
         data->sm_bootstrap_meta = mca_common_sm_module_create_and_attach (size, fullpath, sizeof(mca_common_sm_seg_header_t), 8);
         if (NULL == data->sm_bootstrap_meta) {
             opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                "coll:sm:enable:bootstrap comm (%d/%s): mca_common_sm_init_group failed",
-                comm->c_contextid, comm->c_name);
+                "coll:sm:enable:bootstrap comm (%s/%s): mca_common_sm_init_group failed",
+                ompi_comm_print_cid (comm), comm->c_name);
             free(fullpath);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
