@@ -584,7 +584,7 @@ int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_
     if (dynamic_wins[mid_index].base > base) {
         return ompi_osc_find_attached_region_position(dynamic_wins, min_index, mid_index-1,
                                                       base, len, insert);
-    } else if (base + len < dynamic_wins[mid_index].base + dynamic_wins[mid_index].size) {
+    } else if (base + len <= dynamic_wins[mid_index].base + dynamic_wins[mid_index].size) {
         return mid_index;
     } else {
         return ompi_osc_find_attached_region_position(dynamic_wins, mid_index+1, max_index,
