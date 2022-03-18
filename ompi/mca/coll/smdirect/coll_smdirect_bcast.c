@@ -28,6 +28,100 @@
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
 #include "coll_smdirect.h"
+#include "opal/datatype/opal_datatype_internal.h"
+
+
+int mca_coll_smdirect_bcast_intra(void *buff, int count,
+                            struct ompi_datatype_t *datatype, int root,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module)
+{
+    mca_coll_smdirect_module_t *sm_module = (mca_coll_smdirect_module_t*) module;
+    mca_coll_smdirect_comm_t *data = sm_module->sm_comm_data;
+    ptrdiff_t extent;
+
+    /* Setup some identities */
+
+    const int rank = ompi_comm_rank(comm);
+    const int size = ompi_comm_size(comm);
+
+    /* extent is from lb to ub (e.g., MPI_SHORT_INT is 8) */
+    ompi_datatype_type_extent(datatype, &extent);
+    const size_t total_extent = count * extent;
+    const size_t control_size = mca_coll_smdirect_component.sm_control_size;
+
+    /* get the current operation */
+    int op_count = ++data->mcb_operation_count;
+
+    /* wait for processes from the previous op to finish */
+    FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_op_flag);
+
+    unsigned char *dtype_store = (data->sm_bootstrap_meta->module_data_addr + control_size * root + sizeof(mca_coll_smdirect_procdata_t));
+    /* set our input buffer information */
+    if (root == rank) {
+        /* leafs provide the full input buffer */
+        data->procdata->mcsp_indata = (void*)buff;
+        data->procdata->mcsp_insize = total_extent;
+        /* TODO: make our datatype available */
+        /* put the OPAL datatype right after our procdata */
+        memcpy(dtype_store, &datatype->super, sizeof(opal_datatype_t));
+        /* put the datatype description elements after it */
+        dtype_store += sizeof(opal_datatype_t);
+        opal_datatype_t *dtype_copy = (opal_datatype_t*)dtype_store;
+        memcpy(dtype_store, datatype->super.desc.desc, datatype->super.desc.used*sizeof(dt_elem_desc_t));
+        dtype_copy->desc.desc = (dt_elem_desc_t*)dtype_store;
+        dtype_store += datatype->super.desc.used*sizeof(dt_elem_desc_t);
+        memcpy(dtype_store, datatype->super.opt_desc.desc, datatype->super.opt_desc.used*sizeof(dt_elem_desc_t));
+
+        /* signal that our procdata for this op is ready */
+        opal_atomic_wmb();
+        /* we will wait for our parent to signal completion */
+        FLAG_RETAIN(&data->procdata->mcsp_op_flag, size-1, op_count);
+
+        FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_op_flag);
+    } else {
+
+        /* get the endpoint and map the memory region */
+
+        mca_coll_smdirect_peerdata_t *peerdata = data->peerdata;
+        mca_coll_smdirect_peerdata_t *peer = &peerdata[0];
+
+        /* get the endpoint */
+        if (NULL == (peer->endpoint = data->endpoints[root])) {
+            peer->endpoint = MCA_SMSC_CALL(get_endpoint, (&ompi_comm_peer_lookup(comm, root)->super));
+            data->endpoints[root] = peer->endpoint;
+        }
+
+        peer->procdata = (mca_coll_smdirect_procdata_t *)(data->sm_bootstrap_meta->module_data_addr
+                                                          + control_size * root);
+
+        /* make sure we're all on the same op */
+        FLAG_WAIT_FOR_OP(&peer->procdata->mcsp_op_flag, op_count);
+
+        opal_atomic_rmb();
+        /* map the children's memory region */
+        peer->mapping_ctx = MCA_SMSC_CALL(map_peer_region,
+                                          peer->endpoint,
+                                          0,
+                                          peer->procdata->mcsp_indata,
+                                          peer->procdata->mcsp_insize,
+                                          &peer->mapping_ptr);
+        assert(peer->mapping_ptr != NULL);
+        assert(peer->mapping_ctx != NULL);
+
+        /* TODO: copy the data here */
+
+        /* let the root know that we're done */
+        opal_atomic_wmb();
+        FLAG_RELEASE(&peer->procdata->mcsp_op_flag);
+
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+#if 0
 
 /**
  * Shared memory broadcast.
@@ -258,3 +352,4 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
 
     return OMPI_SUCCESS;
 }
+#endif // 0

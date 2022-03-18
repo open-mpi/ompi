@@ -82,17 +82,7 @@ BEGIN_C_DECLS
         /** MCA parameter: Degree of tree for tree-based collectives */
         int sm_tree_degree;
 
-        /** MCA parameter: Number of processes to use in the
-            calculation of the "info" MCA parameter */
-        int sm_info_comm_size;
-
         /******* end of MCA params ********/
-
-        /** How many fragment segments are protected by a single
-            in-use flags.  This is solely so that we can only perform
-            the division once and then just use the value without
-            having to re-calculate. */
-        int sm_segs_per_inuse_flag;
     } mca_coll_smdirect_component_t;
 
     /**
@@ -152,8 +142,11 @@ BEGIN_C_DECLS
         /** flag used to wait for sync with children across operations */
         mca_coll_smdirect_in_use_flag_t mcsp_op_flag;
 
-        /** flag used to wait for sync with children across segments */
-        mca_coll_smdirect_in_use_flag_t mcsp_segment_flag;
+        /** flag used to sync with children across segments */
+        mca_coll_smdirect_in_use_flag_t mcsp_segment_down_flag;
+
+        /** flag used to sync with parent across segments */
+        mca_coll_smdirect_in_use_flag_t mcsp_segment_up_flag;
 
     } mca_coll_smdirect_procdata_t;
 

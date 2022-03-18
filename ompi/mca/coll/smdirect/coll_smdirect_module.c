@@ -439,8 +439,8 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
     /* initialize the flags to something that blocks peers on first call */
     data->procdata->mcsp_op_flag.mcsiuf_operation_count = 1;
     data->procdata->mcsp_op_flag.mcsiuf_num_procs_using = 0;
-    data->procdata->mcsp_segment_flag.mcsiuf_operation_count = 1;
-    data->procdata->mcsp_segment_flag.mcsiuf_num_procs_using = 0;
+    data->procdata->mcsp_segment_up_flag.mcsiuf_operation_count = 1;
+    data->procdata->mcsp_segment_up_flag.mcsiuf_num_procs_using = 0;
     data->mcb_operation_count = -1;
 
     /* Save previous component's reduce information */

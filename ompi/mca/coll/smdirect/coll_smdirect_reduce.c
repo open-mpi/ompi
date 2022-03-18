@@ -218,7 +218,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
 
     /* initialize the segment flag so that our parent blocks until
      * we completed the first segment */
-    FLAG_RETAIN(&data->procdata->mcsp_segment_flag, 0, -1);
+    FLAG_RETAIN(&data->procdata->mcsp_segment_up_flag, 0, -1);
 
     /* signal that our procdata for this op is ready */
     opal_atomic_wmb();
@@ -280,7 +280,7 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
             for (int i = 0; i < num_children; ++i) {
                 mca_coll_smdirect_peerdata_t *peer = &peerdata[i];
                 /* wait for this peer to make their data available */
-                FLAG_WAIT_FOR_OP(&peer->procdata->mcsp_segment_flag, segment_id);
+                FLAG_WAIT_FOR_OP(&peer->procdata->mcsp_segment_up_flag, segment_id);
                 opal_atomic_rmb();
                 /* handle segment data from this peer */
                 void *peer_ptr = ((char*)peer->mapping_ptr) + (segment_id % 2)*(segment_ddt_bytes);
@@ -299,25 +299,25 @@ static int reduce_inorder_map(const void *sbuf, void* rbuf, int count,
                 }
                 /* tell peer that we're done reading this segment */
                 opal_atomic_wmb();
-                FLAG_RELEASE(&peer->procdata->mcsp_segment_flag);
+                FLAG_RELEASE(&peer->procdata->mcsp_segment_up_flag);
             }
             opal_atomic_wmb();
             if (rank != root) {
                 /* wait for our parent to complete reading the previous segment */
-                FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_flag);
+                FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_up_flag);
                 /* signal that the new segment is available */
-                FLAG_RETAIN(&data->procdata->mcsp_segment_flag, 1, segment_id);
+                FLAG_RETAIN(&data->procdata->mcsp_segment_up_flag, 1, segment_id);
             }
         }
         if (rank != root) {
             /* wait for the last segment to be consumed */
-            FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_flag);
+            FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_up_flag);
         }
     } else {
         /* progressively signal that our data is available and wait for them to be consumed */
         for (int32_t segment_id = 0; segment_id < num_segments; ++segment_id) {
-            FLAG_RETAIN(&data->procdata->mcsp_segment_flag, 1, segment_id);
-            FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_flag);
+            FLAG_RETAIN(&data->procdata->mcsp_segment_up_flag, 1, segment_id);
+            FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_up_flag);
         }
     }
 
