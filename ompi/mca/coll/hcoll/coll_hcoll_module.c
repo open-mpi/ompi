@@ -5,6 +5,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -332,7 +334,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         } else {
             cm->using_mem_hooks = 0;
         }
-        copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*) MPI_COMM_NULL_COPY_FN;
+        copy_fn.attr_communicator_copy_fn = MPI_COMM_NULL_COPY_FN;
         del_fn.attr_communicator_delete_fn = hcoll_comm_attr_del_fn;
         err = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn, &hcoll_comm_attr_keyval, NULL ,0, NULL);
         if (OMPI_SUCCESS != err) {
@@ -345,7 +347,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
         if (mca_coll_hcoll_component.derived_types_support_enabled) {
             zero_dte_mapping.type = DTE_ZERO;
-            copy_fn.attr_datatype_copy_fn = (MPI_Type_internal_copy_attr_function *) MPI_TYPE_NULL_COPY_FN;
+            copy_fn.attr_datatype_copy_fn = MPI_TYPE_NULL_COPY_FN;
             del_fn.attr_datatype_delete_fn = hcoll_type_attr_del_fn;
             err = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn, &hcoll_type_attr_keyval, NULL ,0, NULL);
             if (OMPI_SUCCESS != err) {

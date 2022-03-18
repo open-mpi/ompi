@@ -17,6 +17,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -330,7 +332,7 @@ do { \
 /* See the big, long comment above from DELETE_ATTR_CALLBACKS -- most of
    that text applies here, too. */
 
-#define COPY_ATTR_CALLBACKS(type, old_object, keyval_obj, in_attr, new_object, out_attr, err) \
+#define COPY_ATTR_CALLBACKS(type, old_object, keyval_obj, in_attr, out_attr, err) \
 do { \
     OPAL_THREAD_UNLOCK(&attribute_lock); \
     if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
@@ -379,7 +381,7 @@ do { \
         in = translate_to_c(in_attr); \
         if ((err = (*((keyval_obj->copy_attr_fn).attr_##type##_copy_fn)) \
               ((ompi_##type##_t *)old_object, key, keyval_obj->extra_state.c_ptr, \
-               in, &out, &flag, (ompi_##type##_t *)(new_object))) == MPI_SUCCESS) { \
+               in, &out, &flag)) == MPI_SUCCESS) { \
             out_attr->av_value = out;                                   \
         }                                                               \
     } \
@@ -1045,19 +1047,19 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         case COMM_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_CALLBACKS(communicator, old_object, hash_value,
-                                old_attr, new_object, new_attr, err);
+                                old_attr, new_attr, err);
             break;
 
         case TYPE_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_CALLBACKS(datatype, old_object, hash_value,
-                                old_attr, new_object, new_attr, err);
+                                old_attr, new_attr, err);
             break;
 
         case WIN_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_CALLBACKS(win, old_object, hash_value,
-                                old_attr, new_object, new_attr, err);
+                                old_attr, new_attr, err);
             break;
 
         default:

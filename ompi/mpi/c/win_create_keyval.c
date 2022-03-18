@@ -12,6 +12,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +56,7 @@ int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
         }
     }
 
-    copy_fn.attr_win_copy_fn = (MPI_Win_internal_copy_attr_function) win_copy_attr_fn;
+    copy_fn.attr_win_copy_fn = win_copy_attr_fn;
     del_fn.attr_win_delete_fn = win_delete_attr_fn;
 
     ret = ompi_attr_create_keyval(WIN_ATTR, copy_fn, del_fn,
