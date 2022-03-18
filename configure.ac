@@ -77,6 +77,11 @@ OPAL_CONFIGURE_SETUP
 opal_show_title "Configuring project_name_long"
 opal_show_subtitle "Prerequisites"
 
+# compatability for oac_check_package
+m4_copy([OPAL_LOG_COMMAND], [OAC_LOG_COMMAND])
+m4_copy([OPAL_LOG_MSG], [OAC_LOG_MSG])
+m4_copy([OPAL_APPEND], [OAC_APPEND])
+
 AC_CHECK_PROG([PERL],[perl],[perl],[no])
 AS_IF([test "X$PERL" = "Xno"],
       [AC_MSG_ERROR(["Open MPI requires perl. Aborting"])])
