@@ -8,6 +8,8 @@ Open MPI version 4.1.3
 ----------------------
 :Date: March, 2022
 
+- Fixed a seg fault in the ``smcuda`` BTL.  Thanks to Moritz Kreutzer
+  and @Stadik for reporting the issue.
 - Added support for ``ELEMENTAL`` to the MPI handle comparison
   functions in the ``mpi_f08`` module.  Thanks to Salvatore Filippone
   for raising the issue.
