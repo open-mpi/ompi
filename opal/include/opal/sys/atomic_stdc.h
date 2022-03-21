@@ -50,10 +50,13 @@ static inline void opal_atomic_wmb(void)
 
 static inline void opal_atomic_rmb(void)
 {
-#    if defined(PLATFORM_ARCH_X86_64)
+#    if defined(PLATFORM_ARCH_X86_64) && PLATFORM_COMPILER_GNU && __GNUC__ < 8
     /* work around a bug in older gcc versions (observed in gcc 6.x)
      * where acquire seems to get treated as a no-op instead of being
-     * equivalent to __asm__ __volatile__("": : :"memory") on x86_64 */
+     * equivalent to __asm__ __volatile__("": : :"memory") on x86_64.
+     * The issue has been fixed in the GCC 8 release series:
+     * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80640
+     */
     opal_atomic_mb();
 #    else
     atomic_thread_fence(memory_order_acquire);
