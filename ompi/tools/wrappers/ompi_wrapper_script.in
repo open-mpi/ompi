@@ -10,6 +10,7 @@
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,58 +37,48 @@ if (exists($ENV{'OPAL_DESTDIR'})
 my $CC = "@WRAPPER_CC@";
 my $CXX = "@CXX@";
 my $FC = "@FC@";
-my $extra_cppflags = "@OMPI_WRAPPER_EXTRA_CPPFLAGS@";
-my $extra_cflags = "@OMPI_WRAPPER_EXTRA_CFLAGS@";
-my $extra_cflags_prefix = "@OMPI_WRAPPER_EXTRA_CFLAGS_PREFIX@";
-my $extra_cxxflags = "@OMPI_WRAPPER_EXTRA_CXXFLAGS@";
-my $extra_cxxflags_prefix = "@OMPI_WRAPPER_EXTRA_CXXFLAGS_PREFIX@";
-my $extra_fcflags = "@OMPI_WRAPPER_EXTRA_FCFLAGS@";
-my $extra_fcflags_prefix = "@OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX@";
-my $extra_ldflags = "@OMPI_PKG_CONFIG_LDFLAGS@";
-my $extra_libs = "@OMPI_WRAPPER_EXTRA_LIBS@";
-my $cxx_lib = "@OMPI_WRAPPER_CXX_LIB@";
-my $fc_module_flag = "@OMPI_FC_MODULE_FLAG@";
-my $dynamic_lib_suffix = "@OPAL_DYN_LIB_SUFFIX@";
-my $fortran_libs = "@OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@";
-my $ompi_libmpi_name = "@OMPI_LIBMPI_NAME@";
-my $opal_libopal_name = "@OPAL_LIB_NAME@";
-
-# Someone might want to fix for windows
-my $include_flag = "-I";
-my $libdir_flag = "-L";
+my $wrapper_cppflags = "@OMPI_WRAPPER_CPPFLAGS@";
+my $wrapper_cflags = "@OMPI_WRAPPER_CFLAGS@";
+my $wrapper_wrapper_cflags_prefix = "@OMPI_WRAPPER_CFLAGS_PREFIX@";
+my $wrapper_cxxflags = "@OMPI_WRAPPER_CXXFLAGS@";
+my $wrapper_cxxflags_prefix = "@OMPI_WRAPPER_CXXFLAGS_PREFIX@";
+my $wrapper_fcflags = "@OMPI_WRAPPER_FCFLAGS@";
+my $wrapper_fcflags_prefix = "@OMPI_WRAPPER_FCFLAGS_PREFIX@";
+my $wrapper_ldflags = "@OMPI_WRAPPER_LDFLAGS@";
+my $wrapper_ldflags_static = "@OMPI_WRAPPER_LDFLAGS_STATIC@";
+my $wrapper_libs = "@OMPI_WRAPPER_LIBS@";
+my $wrapper_libs_static = "@OMPI_WRAPPER_LIBS_STATIC@";
+my $wrapper_fc_ldflags = "@OMPI_WRAPPER_FC_LDFLAGS@";
+my $wrapper_fc_ldflags_static = "@OMPI_WRAPPER_FC_LDFLAGS_STATIC@";
+my $wrapper_fc_libs = "@OMPI_WRAPPER_FC_LIBS@";
+my $wrapper_fc_libs_static = "@OMPI_WRAPPER_FC_LIBS_STATIC@";
 
 my $lang = "none";
 my $comp = ""; # this is a sentinal from configure
-my $preproc_flags = $include_flag . $includedir;
+my $preproc_flags = "";
 my $comp_flags = "";
 my $comp_flags_prefix = "";
-my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
-# Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
-# intentionally only link in the MPI libraries (OPAL, etc. are
-# pulled in implicitly) because we intend MPI applications to only use
-# the MPI API.
-my $libs = "-l".$ompi_libmpi_name." " . $extra_libs;
-my $libs_static = "-l".$ompi_libmpi_name. "-l".$opal_libopal_name. $extra_libs;
-
-my $have_dynamic = 0;
-if (-e $libdir . "/lib".$ompi_libmpi_name."." . $dynamic_lib_suffix) {
-    $have_dynamic = 1;
-}
-my $have_static = 0;
-if (-e $libdir . "/lib".$ompi_libmpi_name.".a") {
-    $have_static = 1;
-}
+my $linker_flags = "";
+my $linker_flags_static = "";
+my $libs = "";
+my $libs_static = "";
 
 # run flags through regex to fix directories...
-$extra_cppflags =~ s/\$\{includedir\}/$includedir/g;
-$extra_cflags =~ s/\$\{includedir\}/$includedir/g;
-$extra_cflags_prefix =~ s/\$\{includedir\}/$includedir/g;
-$extra_cxxflags =~ s/\$\{includedir\}/$includedir/g;
-$extra_cxxflags_prefix =~ s/\$\{includedir\}/$includedir/g;
-$extra_fcflags =~ s/\$\{includedir\}/$includedir/g;
-$extra_fcflags_prefix =~ s/\$\{includedir\}/$includedir/g;
-$extra_ldflags =~ s/\$\{libdir\}/$libdir/g;
-$extra_libs =~ s/\$\{libdir\}/$libdir/g;
+$cppflags =~ s/\$\{includedir\}/$includedir/g;
+$cflags =~ s/\$\{includedir\}/$includedir/g;
+$cflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$cxxflags =~ s/\$\{includedir\}/$includedir/g;
+$cxxflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$fcflags =~ s/\$\{includedir\}/$includedir/g;
+$fcflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$ldflags =~ s/\$\{libdir\}/$libdir/g;
+$ldflags_static =~ s/\$\{libdir\}/$libdir/g;
+$libs =~ s/\$\{libdir\}/$libdir/g;
+$libs_static =~ s/\$\{libdir\}/$libdir/g;
+$fc_ldflags =~ s/\$\{libdir\}/$libdir/g;
+$fc_ldflags_static =~ s/\$\{libdir\}/$libdir/g;
+$fc_libs =~ s/\$\{libdir\}/$libdir/g;
+$fc_libs_static =~ s/\$\{libdir\}/$libdir/g;
 
 sub check_env {
     my $envvar = shift;
@@ -108,27 +99,36 @@ sub check_env {
 if (basename($0) eq "mpicc") {
     $lang = "C";
     $comp = check_env("CC", $CC);
-    $preproc_flags .= " " . $extra_cppflags;
-    $comp_flags = $extra_cflags;
-    $comp_flags_prefix = $extra_cflags_prefix;
-    # no special libs for C
+    $preproc_flags = $wrapper_cppflags;
+    $comp_flags = $wrapper_cflags;
+    $comp_flags_prefix = $wrapper_cflags_prefix;
+    $linker_flags = $wrapper_ldflags;
+    $linker_flags_static = $wrapper_ldflags_static
+    $libs = $wrapper_libs;
+    $libs_static = $wrapper_libs_static;
 } elsif (basename($0) eq "mpic++" || basename($0) eq "mpiCC" || basename($0) eq "mpicxx") {
     $lang = "C++";
     $comp = check_env("CXX", $CXX);
-    $preproc_flags .= " " . $extra_cppflags;
-    $comp_flags = $extra_cxxflags;
-    $comp_flags_prefix = $extra_cxxflags_prefix;
-    $libs = $cxx_lib . " " . $libs;
+    $preproc_flags = $wrapper_cppflags;
+    $comp_flags = $wrapper_cxxflags
+    $comp_flags_prefix = $wrapper_cxxflags_prefix;
+    $linker_flags = $wrapper_ldflags;
+    $linker_flags_static = $wrapper_ldflags_static
+    $libs = $wrapper_libs;
+    $libs_static = $wrapper_libs_static;
 }
 # mpifort is now preferred; mpif77/mpif90 are legacy names
 elsif (basename($0) eq "mpifort" ||
          basename($0) eq "mpif77" || basename($0) eq "mpif90") {
     $lang = "Fortran";
     $comp = check_env("FC", $FC);
-    # no extra includes for Fortran.
-    $comp_flags = $extra_fcflags;
-    $comp_flags_prefix = $extra_fcflags_prefix;
-    $libs = $fortran_libs . " -l".$ompi_libmpi_name."_mpifh " . $libs;
+    $preproc_flags = $wrapper_cppflags;
+    $comp_flags = $wrapper_fcflags
+    $comp_flags_prefix = $wrapper_fcflags_prefix;
+    $linker_flags = $wrapper_fc_ldflags;
+    $linker_flags_static = $wrapper_fc_ldflags_static
+    $libs = $wrapper_fc_libs;
+    $libs_static = $wrapper_fc_libs_static;
 }
 
 if ($lang eq "none") {
@@ -205,6 +205,7 @@ if ($disable_flags == 1 && !($dry_run == 1 && $real_flag == 0)) {
 
 if ($want_static == 1 || $have_dynamic == 0) {
     $libs = $libs_static;
+    $linker_flags = $linker_flags_static;
 }
 
 my @exec_argv = ();
