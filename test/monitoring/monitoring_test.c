@@ -24,7 +24,7 @@ To disable the RMA operations testing, add "--without-rma" as an application par
 
 To be run as (without using MPI_Tool):
 
-mpirun -np 4 --mca pml_monitoring_enable 2 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename prof/output ./monitoring_test
+mpirun -n 4 --mca pml_monitoring_enable 2 --mca pml_monitoring_enable_output 3 --mca pml_monitoring_filename prof/output ./monitoring_test
 
 with the results being, as an example:
 output.1.prof

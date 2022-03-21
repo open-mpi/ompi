@@ -10,10 +10,9 @@
  */
 /*
  * To compile test:
- * mpicc -I$src_dir -I$src_dir/opal/include -I$src_dir/orte/include -I$src_dir/ompi/include -DOMPI_BUILDING=1 pmix.c -o pmix
- * To run test:
- * mpirun -np 2 <any mca params> ./pmix
- * Test should print "Passed" in case of success and print pmix time intervals at process with rank 0.
+ * mpicc -I$src_dir -I$src_dir/opal/include -I$src_dir/orte/include -I$src_dir/ompi/include
+ * -DOMPI_BUILDING=1 pmix.c -o pmix To run test: mpirun -n 2 <any mca params> ./pmix Test should
+ * print "Passed" in case of success and print pmix time intervals at process with rank 0.
  * */
 #include <stdio.h>
 #include <unistd.h>

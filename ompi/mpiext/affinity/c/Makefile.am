@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
@@ -25,8 +25,6 @@ CLEANFILES = example
 # header files do the Right Thing.
 AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 
-include $(top_srcdir)/Makefile.ompi-rules
-
 # Convenience libtool library that will be slurped up into libmpi.la.
 noinst_LTLIBRARIES = libmpiext_affinity_c.la
 
@@ -45,11 +43,4 @@ libmpiext_affinity_c_la_SOURCES = \
         mpiext_affinity_str.c
 libmpiext_affinity_c_la_LDFLAGS = -module -avoid-version
 
-# Man page installation
-nodist_man_MANS = OMPI_Affinity_str.3
-
-# Man page sources
-EXTRA_DIST = $(nodist_man_MANS:.3=.3in) example.c
-
-distclean-local:
-	rm -f $(nodist_man_MANS)
+EXTRA_DIST = example.c

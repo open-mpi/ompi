@@ -39,8 +39,9 @@ int main(int argc, char **argv)
 {
     int num_messages, message_size, rc;
 
-    if(argc < 3) {
-        printf("Usage: mpirun -np 2 --mca mpi_spc_attach all --mca mpi_spc_dump_enabled true ./spc_example [num_messages] [message_size]\n");
+    if (argc < 3) {
+        printf("Usage: mpirun -n 2 --mca mpi_spc_attach all --mca mpi_spc_dump_enabled true "
+               "./spc_example [num_messages] [message_size]\n");
         return -1;
     } else {
         num_messages = atoi(argv[1]);
