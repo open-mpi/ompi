@@ -471,7 +471,10 @@ interface_profile_sources = \
         win_unlock_all.c \
         win_wait.c
 
-if OMPI_ENABLE_MPI1_COMPAT
+# The following functions were removed from the MPI standard, but are
+# retained for ABI compliance reasons.  They are listed independently
+# of the other MPI functions in case we one day change behavior around
+# ABI compliance.
 interface_profile_sources += \
         address.c \
         errhandler_create.c \
@@ -483,7 +486,6 @@ interface_profile_sources += \
         type_lb.c \
         type_struct.c \
         type_ub.c
-endif
 
 libmpi_c_profile_la_SOURCES = $(interface_profile_sources)
 libmpi_c_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
