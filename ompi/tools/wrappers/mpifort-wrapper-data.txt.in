@@ -13,15 +13,12 @@ compiler_env=FC
 compiler_flags_env=FCFLAGS
 compiler=@FC@
 preprocessor_flags=
-compiler_flags_prefix=@OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX@
-compiler_flags=@OMPI_WRAPPER_EXTRA_FCFLAGS@
-linker_flags=@OMPI_WRAPPER_EXTRA_FC_LDFLAGS@
-# Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
-# intentionally only link in the MPI libraries (OPAL, etc. are
-# pulled in implicitly) because we intend MPI applications to only use
-# the MPI API.
-libs=@OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@ @OMPI_FORTRAN_MPIFH_LINK@ -l@OMPI_LIBMPI_NAME@
-libs_static=@OMPI_FORTRAN_USEMPIF08_LIB@ @OMPI_FORTRAN_USEMPI_LIB@ @OMPI_FORTRAN_MPIFH_LINK@ -l@OMPI_LIBMPI_NAME@ -l@OPAL_LIB_NAME@ @OMPI_WRAPPER_EXTRA_LIBS@
+compiler_flags_prefix=@OMPI_WRAPPER_FCFLAGS_PREFIX@
+compiler_flags=@OMPI_WRAPPER_FCFLAGS@
+linker_flags=@OMPI_WRAPPER_FC_LDFLAGS@
+linker_flags_static=@OMPI_WRAPPER_FC_LDFLAGS_STATIC@
+libs=@OMPI_WRAPPER_FC_LIBS@
+libs_static=@OMPI_WRAPPER_FC_LIBS_STATIC@
 dyn_lib_file=lib@OMPI_LIBMPI_NAME@.@OPAL_DYN_LIB_SUFFIX@
 static_lib_file=lib@OMPI_LIBMPI_NAME@.a
 required_file=@OMPI_WRAPPER_FORTRAN_REQUIRED_FILE@

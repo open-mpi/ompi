@@ -13,11 +13,9 @@ exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
 pkgincludedir=@opalincludedir@
-#
-# Note that -l@OPAL_LIB_NAME@ and all the EXTRA_LIBS are only necessary when
-# static linking, so only list these in Libs.private.
-#
-Libs: -L${libdir} @OMPI_PKG_CONFIG_LDFLAGS@ -loshmem -l@OMPI_LIBMPI_NAME@
-Libs.private: -l@OPAL_LIB_NAME@ @OMPI_WRAPPER_EXTRA_LIBS@
-#
-Cflags: -I${includedir} @OMPI_WRAPPER_EXTRA_CPPFLAGS@ @OMPI_WRAPPER_EXTRA_CFLAGS@
+
+Libs: @OSHMEM_PC_LIBS@
+Libs.private: @OSHMEM_PC_LIBS_PRIVATE@
+Cflags: @OSHMEM_PC_CFLAGS@
+Requires: @OSHMEM_PC_MODULES@
+Requires.private: @OSHMEM_PC_MODULES_PRIVATE@

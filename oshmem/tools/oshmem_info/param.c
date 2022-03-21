@@ -334,16 +334,16 @@ void oshmem_info_do_config(bool want_all)
         opal_info_out("Build LDFLAGS", "option:build:ldflags", OMPI_BUILD_LDFLAGS);
         opal_info_out("Build LIBS", "option:build:libs", OMPI_BUILD_LIBS);
 
-        opal_info_out("Wrapper extra CFLAGS", "option:wrapper:extra_cflags",
-                      WRAPPER_EXTRA_CFLAGS);
-        opal_info_out("Wrapper extra CXXFLAGS", "option:wrapper:extra_cxxflags",
-                      WRAPPER_EXTRA_CXXFLAGS);
-        opal_info_out("Wrapper extra FCFLAGS", "option:wrapper:extra_fcflags",
-                      WRAPPER_EXTRA_FCFLAGS);
-        opal_info_out("Wrapper extra LDFLAGS", "option:wrapper:extra_ldflags",
-                      WRAPPER_EXTRA_LDFLAGS);
-        opal_info_out("Wrapper extra LIBS", "option:wrapper:extra_libs",
-                      WRAPPER_EXTRA_LIBS);
+        opal_info_out("Wrapper CFLAGS", "option:wrapper:cflags",
+                      OSHMEM_WRAPPER_CFLAGS);
+        opal_info_out("Wrapper CXXFLAGS", "option:wrapper:cxxflags",
+                      OSHMEM_WRAPPER_CXXFLAGS);
+        opal_info_out("Wrapper FCFLAGS", "option:wrapper:fcflags",
+                      OSHMEM_WRAPPER_FCFLAGS);
+        opal_info_out("Wrapper LDFLAGS", "option:wrapper:ldflags",
+                      OSHMEM_WRAPPER_LDFLAGS);
+        opal_info_out("Wrapper LIBS", "option:wrapper:libs",
+                      OSHMEM_WRAPPER_LIBS);
     }
 
     opal_info_out("Internal debug support", "option:debug", debug);
