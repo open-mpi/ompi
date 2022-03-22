@@ -196,9 +196,18 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module)
 {
-    mca_coll_smdirect_module_t *sm_module = (mca_coll_smdirect_module_t*) module;
-    mca_coll_smdirect_comm_t *data = sm_module->sm_comm_data;
     int ret = OMPI_SUCCESS;
+    mca_coll_smdirect_module_t *sm_module = (mca_coll_smdirect_module_t*) module;
+
+    /* Lazily enable the module the first time we invoke a collective
+       on it */
+    if (!sm_module->enabled) {
+        if (OMPI_SUCCESS != (ret = ompi_coll_smdirect_lazy_enable(module, comm))) {
+            return ret;
+        }
+    }
+
+    mca_coll_smdirect_comm_t *data = sm_module->sm_comm_data;
 
     /* Setup some identities */
 
