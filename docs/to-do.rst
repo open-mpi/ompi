@@ -19,13 +19,23 @@ Need to update these docs to reflect:
 * Document this new breakpoint functionality:
   https://github.com/open-mpi/ompi/commit/f97d081cf9b540c5a79e00aecee17b25e8c123ad
 
-* Document v5.0.x's ABI relationship with v4.x.  It will likely be:
+* Add that we *do* support "single dash" ``mpirun`` options, but we
+  don't want people to do that.
+
+* Document v5.0.x's backwards-compatibility relationship with v4.x
+  (including ABI and ``mpirun`` command line options).  It will likely
+  be:
 
   * C bindings are ABI compatible
+  * Fortran ``mpif.h`` *should* be ok (but probably bears checking).
+  * Fortran module ABIs may have changed.  These definitely need
+    checking (e.g., w.r.t. ``MPI_Status`` and friends...?).
   * MPI-1 deleted functions are always included in the library
 
-    * Need to check to see what the current behavior is w.r.t. the
-      prototypes in ``mpi.h``.
+    * Per Brian: the behavior is the same as Open MPI 4.x. The deleted
+      functions are not declared in mpi.h unless Open MPI was compiled
+      with ``--enable-mpi1-compatibility``.
+
 
 Other random to-do items
 ------------------------
