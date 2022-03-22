@@ -27,59 +27,10 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
+#include "opal/util/minmax.h"
 #include "coll_smdirect.h"
 
 #define IOVEC_MAX 128
-
-static inline int create_iov_list(const void *addr, int count, opal_datatype_t *datatype,
-                                  struct iovec **iov_out, uint32_t *iov_count) {
-    int ret = OMPI_SUCCESS;
-    size_t size;
-    bool done = false;
-    opal_convertor_t convertor;
-    uint32_t iov_idx;
-
-    OBJ_CONSTRUCT(&convertor, opal_convertor_t);
-    ret = opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
-                                                   datatype, count,
-                                                   addr, 0, &convertor);
-    if (ret != OMPI_SUCCESS) {
-        return ret;
-    }
-
-    (*iov_count) = 0;
-    iov_idx = 0;
-    *iov_out = NULL;
-
-    do {
-        struct iovec iov[IOVEC_MAX];
-        uint32_t count = IOVEC_MAX;
-        uint32_t idx = 0;
-
-        done = opal_convertor_raw(&convertor, iov, &count, &size);
-
-        (*iov_count) += count;
-        (*iov_out) = (struct iovec *)realloc((*iov_out), (*iov_count) * sizeof(struct iovec));
-        if (*iov_out == NULL) {
-            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        }
-
-        while (iov_idx != count) {
-            (*iov_out)[iov_idx].iov_base = iov[idx].iov_base;
-            (*iov_out)[iov_idx].iov_len = iov[idx].iov_len;
-            idx++;
-            iov_idx++;
-        }
-
-        assert((*iov_count) == iov_idx);
-
-    } while (!done);
-
-    opal_convertor_cleanup(&convertor);
-    OBJ_DESTRUCT(&convertor);
-
-    return ret;
-}
 
 static inline int ddt_copy(const void *from_addr, int from_count,
                            struct opal_datatype_t *from_dt,
@@ -87,78 +38,156 @@ static inline int ddt_copy(const void *from_addr, int from_count,
                            void * to_addr,
                            int to_count, struct opal_datatype_t *to_dt,
                            bool is_to_contig, ptrdiff_t to_lb) {
-    struct iovec *from_iov = NULL, *to_iov = NULL;
-    uint32_t from_iov_count = 0, to_iov_count = 0;
     int ret = OMPI_SUCCESS;
+    size_t size; // temporary, ignored
+    size_t copied = 0;
+    size_t to_copy;
 
-    /* TODO: can we avoid creating the iovs and instead work with the convertors? */
-    if (!is_from_contig) {
-        ret = create_iov_list(from_addr, from_count, from_dt,
-                              &from_iov, &from_iov_count);
-        if (ret != OMPI_SUCCESS) {
-            goto cleanup;
-        }
-    }
-
-    if (!is_to_contig) {
-        ret = create_iov_list(to_addr, to_count, to_dt,
-                              &to_iov, &to_iov_count);
-        if (ret != OMPI_SUCCESS) {
-            goto cleanup;
-        }
-    }
+    /* from and to must have the same number of bytes so just use one */
+    opal_datatype_type_size(to_dt, &to_copy);
+    to_copy *= to_count;
 
     if (!is_from_contig && !is_to_contig) {
+
         size_t curr_len = 0;
-        uint32_t from_iov_idx = 0, to_iov_idx = 0;
-        while (from_iov_idx < from_iov_count) {
-            curr_len = MIN(from_iov[from_iov_idx].iov_len,
-                           to_iov[to_iov_idx].iov_len);
-            memcpy(to_iov[to_iov_idx].iov_base, from_iov[from_iov_idx].iov_base, curr_len);
+        bool from_done = false, to_done = false;
+        struct iovec from_iov[IOVEC_MAX];
+        uint32_t from_iov_count = 0;
+        uint32_t from_iov_idx = 0;
+        opal_convertor_t from_convertor;
 
-            from_iov[from_iov_idx].iov_base = (void *)((intptr_t)from_iov[from_iov_idx].iov_base + curr_len);
-            to_iov[to_iov_idx].iov_base = (void *)((intptr_t)to_iov[to_iov_idx].iov_base + curr_len);
+        struct iovec to_iov[IOVEC_MAX];
+        uint32_t to_iov_count = 0;
+        uint32_t to_iov_idx = 0;
+        opal_convertor_t to_convertor;
 
-            from_iov[from_iov_idx].iov_len -= curr_len;
-            if (from_iov[from_iov_idx].iov_len == 0) {
-                from_iov_idx++;
+
+        ret = opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
+                                                       from_dt, from_count,
+                                                       from_addr, 0, &from_convertor);
+        if (ret != OPAL_SUCCESS) {
+            return ret;
+        }
+
+        ret = opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
+                                                       to_dt, to_count,
+                                                       to_addr, 0, &to_convertor);
+        if (ret != OPAL_SUCCESS) {
+            return ret;
+        }
+
+        while (copied != to_copy) {
+            /* get new iovecs */
+            if (from_iov_idx == from_iov_count) {
+                from_iov_count = IOVEC_MAX;
+                assert(!from_done);
+                from_done      = opal_convertor_raw(&from_convertor, from_iov, &from_iov_count, &size);
+                from_iov_idx   = 0;
             }
-            to_iov[to_iov_idx].iov_len -= curr_len;
-            if (to_iov[to_iov_idx].iov_len == 0) {
-                to_iov_idx++;
+            if (to_iov_idx == to_iov_count) {
+                to_iov_count = IOVEC_MAX;
+                assert(!to_done);
+                to_done      = opal_convertor_raw(&to_convertor, to_iov, &to_iov_count, &size);
+                to_iov_idx   = 0;
+            }
+
+            /* iterate until we've covered all elements */
+            while (from_iov_idx < from_iov_count &&
+                   to_iov_idx < to_iov_count) {
+                curr_len = opal_min(from_iov[from_iov_idx].iov_len,
+                                    to_iov[to_iov_idx].iov_len);
+                memcpy(to_iov[to_iov_idx].iov_base, from_iov[from_iov_idx].iov_base, curr_len);
+                copied += curr_len;
+
+                from_iov[from_iov_idx].iov_len -= curr_len;
+                if (from_iov[from_iov_idx].iov_len == 0) {
+                    from_iov_idx++;
+                }
+                to_iov[to_iov_idx].iov_len -= curr_len;
+                if (to_iov[to_iov_idx].iov_len == 0) {
+                    to_iov_idx++;
+                }
             }
         }
+
+        opal_convertor_cleanup(&from_convertor);
+        OBJ_DESTRUCT(&from_convertor);
+        opal_convertor_cleanup(&to_convertor);
+        OBJ_DESTRUCT(&to_convertor);
 
         assert(from_iov_idx == from_iov_count &&
                to_iov_idx == to_iov_count);
 
     } else if (!is_from_contig) {
-        size_t prev_len = 0;
-        uint32_t from_iov_idx = 0;
         uintptr_t to_intptr = (uintptr_t)to_addr;
         to_intptr += to_lb;
-        while (from_iov_idx < from_iov_count) {
-            memcpy((void*)to_intptr+prev_len, from_iov[from_iov_idx].iov_base, from_iov[from_iov_idx].iov_len);
-            prev_len += from_iov[from_iov_idx].iov_len;
-            from_iov_idx++;
+        bool from_done = false;
+        struct iovec from_iov[IOVEC_MAX];
+        uint32_t from_iov_count = 0;
+        uint32_t from_iov_idx = 0;
+        opal_convertor_t from_convertor;
+
+        ret = opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
+                                                       from_dt, from_count,
+                                                       from_addr, 0, &from_convertor);
+        if (ret != OPAL_SUCCESS) {
+            return ret;
         }
+
+        while (copied != to_copy) {
+            /* get new iovecs */
+            if (from_iov_idx == from_iov_count) {
+                from_iov_count = IOVEC_MAX;
+                assert(!from_done);
+                from_done      = opal_convertor_raw(&from_convertor, from_iov, &from_iov_count, &size);
+                from_iov_idx   = 0;
+            }
+            while (from_iov_idx < from_iov_count) {
+                memcpy((void*)to_intptr+copied, from_iov[from_iov_idx].iov_base, from_iov[from_iov_idx].iov_len);
+                copied += from_iov[from_iov_idx].iov_len;
+                from_iov_idx++;
+            }
+        }
+
+        opal_convertor_cleanup(&from_convertor);
+        OBJ_DESTRUCT(&from_convertor);
+
     } else {
-        size_t prev_len = 0;
-        uint32_t to_iov_idx = 0;
         uintptr_t from_intptr = (uintptr_t)from_addr;
         from_intptr += from_lb;
-        while (to_iov_idx < to_iov_count) {
-            memcpy(to_iov[to_iov_idx].iov_base, (void*)from_intptr+prev_len, to_iov[to_iov_idx].iov_len);
-            prev_len += to_iov[to_iov_idx].iov_len;
-            to_iov_idx++;
+        bool to_done = false;
+        struct iovec to_iov[IOVEC_MAX];
+        uint32_t to_iov_count = 0;
+        uint32_t to_iov_idx = 0;
+        opal_convertor_t to_convertor;
+
+        ret = opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
+                                                       to_dt, to_count,
+                                                       to_addr, 0, &to_convertor);
+        if (ret != OPAL_SUCCESS) {
+            return ret;
         }
+
+        while (copied != to_copy) {
+            /* get new iovecs */
+            if (to_iov_idx == to_iov_count) {
+                to_iov_count = IOVEC_MAX;
+                assert(!to_done);
+                to_done      = opal_convertor_raw(&to_convertor, to_iov, &to_iov_count, &size);
+                to_iov_idx   = 0;
+            }
+            while (to_iov_idx < to_iov_count) {
+                memcpy(to_iov[to_iov_idx].iov_base, (void*)from_intptr+copied, to_iov[to_iov_idx].iov_len);
+                copied += to_iov[to_iov_idx].iov_len;
+                to_iov_idx++;
+            }
+        }
+
+        opal_convertor_cleanup(&to_convertor);
+        OBJ_DESTRUCT(&to_convertor);
     }
 
-cleanup:
-
-    free(from_iov);
-    free(to_iov);
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 
@@ -255,6 +284,8 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
         /* let the root know that we're done */
         opal_atomic_wmb();
         FLAG_RELEASE(&peer->procdata->mcsp_op_flag);
+
+        MCA_SMSC_CALL(unmap_peer_region, peer->mapping_ctx);
 
     }
 
