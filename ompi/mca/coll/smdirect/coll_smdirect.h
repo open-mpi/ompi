@@ -31,6 +31,7 @@
 #include "opal/mca/common/sm/common_sm.h"
 #include "ompi/mca/coll/coll.h"
 #include "opal/mca/smsc/smsc.h"
+#include "opal/datatype/opal_datatype_internal.h"
 
 BEGIN_C_DECLS
 
@@ -248,7 +249,7 @@ BEGIN_C_DECLS
      * coll module functions
      */
     int mca_coll_smdirect_init_query(bool enable_progress_threads,
-			       bool enable_mpi_threads);
+              bool enable_mpi_threads);
 
     mca_coll_base_module_t *
     mca_coll_smdirect_comm_query(struct ompi_communicator_t *comm, int *priority);
@@ -256,107 +257,132 @@ BEGIN_C_DECLS
     /* Lazily enable a module (since it involves expensive/slow mmap
        allocation, etc.) */
     int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
-                                 struct ompi_communicator_t *comm);
+                                  struct ompi_communicator_t *comm);
 
     int mca_coll_smdirect_allgather_intra(const void *sbuf, int scount,
-				    struct ompi_datatype_t *sdtype,
-				    void *rbuf, int rcount,
-				    struct ompi_datatype_t *rdtype,
-				    struct ompi_communicator_t *comm,
-				    mca_coll_base_module_t *module);
+            struct ompi_datatype_t *sdtype,
+            void *rbuf, int rcount,
+            struct ompi_datatype_t *rdtype,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
 
     int mca_coll_smdirect_allgatherv_intra(const void *sbuf, int scount,
-				     struct ompi_datatype_t *sdtype,
-				     void * rbuf, const int *rcounts, const int *disps,
-				     struct ompi_datatype_t *rdtype,
-				     struct ompi_communicator_t *comm,
-				     mca_coll_base_module_t *module);
+            struct ompi_datatype_t *sdtype,
+            void * rbuf, const int *rcounts, const int *disps,
+            struct ompi_datatype_t *rdtype,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_allreduce_intra(const void *sbuf, void *rbuf, int count,
-				    struct ompi_datatype_t *dtype,
-				    struct ompi_op_t *op,
-				    struct ompi_communicator_t *comm,
-				    mca_coll_base_module_t *module);
+            struct ompi_datatype_t *dtype,
+            struct ompi_op_t *op,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_alltoall_intra(const void *sbuf, int scount,
-				   struct ompi_datatype_t *sdtype,
-				   void* rbuf, int rcount,
-				   struct ompi_datatype_t *rdtype,
-				   struct ompi_communicator_t *comm,
-				   mca_coll_base_module_t *module);
+            struct ompi_datatype_t *sdtype,
+            void* rbuf, int rcount,
+            struct ompi_datatype_t *rdtype,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_alltoallv_intra(const void *sbuf, const int *scounts, const int *sdisps,
-				    struct ompi_datatype_t *sdtype,
-				    void *rbuf, const int *rcounts, const int *rdisps,
-				    struct ompi_datatype_t *rdtype,
-				    struct ompi_communicator_t *comm,
-				    mca_coll_base_module_t *module);
+            struct ompi_datatype_t *sdtype,
+            void *rbuf, const int *rcounts, const int *rdisps,
+            struct ompi_datatype_t *rdtype,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_alltoallw_intra(const void *sbuf, const int *scounts, const int *sdisps,
-				    struct ompi_datatype_t * const *sdtypes,
-				    void *rbuf, const int *rcounts, const int *rdisps,
-				    struct ompi_datatype_t * const *rdtypes,
-				    struct ompi_communicator_t *comm,
-				    mca_coll_base_module_t *module);
+            struct ompi_datatype_t * const *sdtypes,
+            void *rbuf, const int *rcounts, const int *rdisps,
+            struct ompi_datatype_t * const *rdtypes,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_barrier_intra(struct ompi_communicator_t *comm,
-				  mca_coll_base_module_t *module);
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_bcast_intra(void *buff, int count,
-				struct ompi_datatype_t *datatype,
-				int root,
-				struct ompi_communicator_t *comm,
-				mca_coll_base_module_t *module);
+            struct ompi_datatype_t *datatype,
+            int root,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_bcast_log_intra(void *buff, int count,
-				    struct ompi_datatype_t *datatype,
-				    int root,
-				    struct ompi_communicator_t *comm,
-				    mca_coll_base_module_t *module);
+            struct ompi_datatype_t *datatype,
+            int root,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_exscan_intra(const void *sbuf, void *rbuf, int count,
-				 struct ompi_datatype_t *dtype,
-				 struct ompi_op_t *op,
-				 struct ompi_communicator_t *comm,
-				 mca_coll_base_module_t *module);
+            struct ompi_datatype_t *dtype,
+            struct ompi_op_t *op,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_gather_intra(void *sbuf, int scount,
-				 struct ompi_datatype_t *sdtype, void *rbuf,
-				 int rcount, struct ompi_datatype_t *rdtype,
-				 int root, struct ompi_communicator_t *comm,
-				 mca_coll_base_module_t *module);
+            struct ompi_datatype_t *sdtype, void *rbuf,
+            int rcount, struct ompi_datatype_t *rdtype,
+            int root, struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_gatherv_intra(void *sbuf, int scount,
-				  struct ompi_datatype_t *sdtype, void *rbuf,
-				  int *rcounts, int *disps,
-				  struct ompi_datatype_t *rdtype, int root,
-				  struct ompi_communicator_t *comm,
-				  mca_coll_base_module_t *module);
+            struct ompi_datatype_t *sdtype, void *rbuf,
+            int *rcounts, int *disps,
+            struct ompi_datatype_t *rdtype, int root,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_reduce_intra(const void *sbuf, void* rbuf, int count,
-				 struct ompi_datatype_t *dtype,
-				 struct ompi_op_t *op,
-				 int root,
-				 struct ompi_communicator_t *comm,
-				 mca_coll_base_module_t *module);
+            struct ompi_datatype_t *dtype,
+            struct ompi_op_t *op,
+            int root,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_reduce_log_intra(const void *sbuf, void* rbuf, int count,
-				     struct ompi_datatype_t *dtype,
-				     struct ompi_op_t *op,
-				     int root,
-				     struct ompi_communicator_t *comm,
-				     mca_coll_base_module_t *module);
+            struct ompi_datatype_t *dtype,
+            struct ompi_op_t *op,
+            int root,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_reduce_scatter_intra(const void *sbuf, void *rbuf,
-					 int *rcounts,
-					 struct ompi_datatype_t *dtype,
-					 struct ompi_op_t *op,
-					 struct ompi_communicator_t *comm,
-					 mca_coll_base_module_t *module);
+            int *rcounts,
+            struct ompi_datatype_t *dtype,
+            struct ompi_op_t *op,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_scan_intra(const void *sbuf, void *rbuf, int count,
-			       struct ompi_datatype_t *dtype,
-			       struct ompi_op_t *op,
-			       struct ompi_communicator_t *comm,
-			       mca_coll_base_module_t *module);
+            struct ompi_datatype_t *dtype,
+            struct ompi_op_t *op,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_scatter_intra(const void *sbuf, int scount,
-				  struct ompi_datatype_t *sdtype, void *rbuf,
-				  int rcount, struct ompi_datatype_t *rdtype,
-				  int root, struct ompi_communicator_t *comm,
-				  mca_coll_base_module_t *module);
+            struct ompi_datatype_t *sdtype, void *rbuf,
+            int rcount, struct ompi_datatype_t *rdtype,
+            int root, struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
     int mca_coll_smdirect_scatterv_intra(const void *sbuf, const int *scounts, const int *disps,
-				   struct ompi_datatype_t *sdtype,
-				   void* rbuf, int rcount,
-				   struct ompi_datatype_t *rdtype, int root,
-				   struct ompi_communicator_t *comm,
-				   mca_coll_base_module_t *module);
+            struct ompi_datatype_t *sdtype,
+            void* rbuf, int rcount,
+            struct ompi_datatype_t *rdtype, int root,
+            struct ompi_communicator_t *comm,
+            mca_coll_base_module_t *module);
 
+    /**
+     * Returns the size required to serialize the given datatype into a (shared)
+     * memory region.
+     */
+    size_t mca_coll_smdirect_serialize_ddt_size(opal_datatype_t *datatype) {
+        return sizeof(*datatype) + datatype->opt_desc.used*sizeof(dt_elem_desc_t);
+    }
+
+    /* Serialize a datatype description into a provided (shared) memory region.
+     * All internal pointers will point into the provided memory region.
+     */
+    static inline
+    void mca_coll_smdirect_serialize_ddt(void* buf, opal_datatype_t *datatype) {
+        unsigned char *dtype_store = (unsigned char*)buf;
+        /* put the OPAL datatype right after our procdata */
+        memcpy(dtype_store, &datatype->super, sizeof(opal_datatype_t));
+        /* put the datatype description elements after it */
+        dtype_store += sizeof(opal_datatype_t);
+        opal_datatype_t *dtype_copy = (opal_datatype_t*)dtype_store;
+        memcpy(dtype_store, datatype->desc.desc, datatype->desc.used*sizeof(dt_elem_desc_t));
+        /* adjust datatype pointers to use the opt_desc */
+        dtype_copy->desc = datatype->desc;
+        dtype_copy->desc.desc = (dt_elem_desc_t*)dtype_store;
+        dtype_copy->opt_desc = dtype_copy->desc;
+    }
 
 #if 0
 /**

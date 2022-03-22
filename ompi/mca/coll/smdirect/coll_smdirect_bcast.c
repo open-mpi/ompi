@@ -28,7 +28,138 @@
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
 #include "coll_smdirect.h"
-#include "opal/datatype/opal_datatype_internal.h"
+
+#define IOVEC_MAX 128
+
+static inline int create_iov_list(const void *addr, int count, opal_datatype_t *datatype,
+                                  struct iovec **iov_out, uint32_t *iov_count) {
+    int ret = OMPI_SUCCESS;
+    size_t size;
+    bool done = false;
+    opal_convertor_t convertor;
+    uint32_t iov_idx;
+
+    OBJ_CONSTRUCT(&convertor, opal_convertor_t);
+    ret = opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor,
+                                                   datatype, count,
+                                                   addr, 0, &convertor);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
+    }
+
+    (*iov_count) = 0;
+    iov_idx = 0;
+    *iov_out = NULL;
+
+    do {
+        struct iovec iov[IOVEC_MAX];
+        uint32_t count = IOVEC_MAX;
+        uint32_t idx = 0;
+
+        done = opal_convertor_raw(&convertor, iov, &count, &size);
+
+        (*iov_count) += count;
+        (*iov_out) = (struct iovec *)realloc((*iov_out), (*iov_count) * sizeof(struct iovec));
+        if (*iov_out == NULL) {
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        }
+
+        while (iov_idx != count) {
+            (*iov_out)[iov_idx].iov_base = iov[idx].iov_base;
+            (*iov_out)[iov_idx].iov_len = iov[idx].iov_len;
+            idx++;
+            iov_idx++;
+        }
+
+        assert((*iov_count) == iov_idx);
+
+    } while (!done);
+
+    opal_convertor_cleanup(&convertor);
+    OBJ_DESTRUCT(&convertor);
+
+    return ret;
+}
+
+static inline int ddt_copy(const void *from_addr, int from_count,
+                           struct opal_datatype_t *from_dt,
+                           bool is_from_contig, ptrdiff_t from_lb,
+                           void * to_addr,
+                           int to_count, struct opal_datatype_t *to_dt,
+                           bool is_to_contig, ptrdiff_t to_lb) {
+    struct iovec *from_iov = NULL, *to_iov = NULL;
+    uint32_t from_iov_count = 0, to_iov_count = 0;
+    int ret = OMPI_SUCCESS;
+
+    /* TODO: can we avoid creating the iovs and instead work with the convertors? */
+    if (!is_from_contig) {
+        ret = create_iov_list(from_addr, from_count, from_dt,
+                              &from_iov, &from_iov_count);
+        if (ret != OMPI_SUCCESS) {
+            goto cleanup;
+        }
+    }
+
+    if (!is_to_contig) {
+        ret = create_iov_list(to_addr, to_count, to_dt,
+                              &to_iov, &to_iov_count);
+        if (ret != OMPI_SUCCESS) {
+            goto cleanup;
+        }
+    }
+
+    if (!is_from_contig && !is_to_contig) {
+        size_t curr_len = 0;
+        uint32_t from_iov_idx = 0, to_iov_idx = 0;
+        while (from_iov_idx < from_iov_count) {
+            curr_len = MIN(from_iov[from_iov_idx].iov_len,
+                           to_iov[to_iov_idx].iov_len);
+            memcpy(to_iov[to_iov_idx].iov_base, from_iov[from_iov_idx].iov_base, curr_len);
+
+            from_iov[from_iov_idx].iov_base = (void *)((intptr_t)from_iov[from_iov_idx].iov_base + curr_len);
+            to_iov[to_iov_idx].iov_base = (void *)((intptr_t)to_iov[to_iov_idx].iov_base + curr_len);
+
+            from_iov[from_iov_idx].iov_len -= curr_len;
+            if (from_iov[from_iov_idx].iov_len == 0) {
+                from_iov_idx++;
+            }
+            to_iov[to_iov_idx].iov_len -= curr_len;
+            if (to_iov[to_iov_idx].iov_len == 0) {
+                to_iov_idx++;
+            }
+        }
+
+        assert(from_iov_idx == from_iov_count &&
+               to_iov_idx == to_iov_count);
+
+    } else if (!is_from_contig) {
+        size_t prev_len = 0;
+        uint32_t from_iov_idx = 0;
+        uintptr_t to_intptr = (uintptr_t)to_addr;
+        to_intptr += to_lb;
+        while (from_iov_idx < from_iov_count) {
+            memcpy((void*)to_intptr+prev_len, from_iov[from_iov_idx].iov_base, from_iov[from_iov_idx].iov_len);
+            prev_len += from_iov[from_iov_idx].iov_len;
+            from_iov_idx++;
+        }
+    } else {
+        size_t prev_len = 0;
+        uint32_t to_iov_idx = 0;
+        uintptr_t from_intptr = (uintptr_t)from_addr;
+        from_intptr += from_lb;
+        while (to_iov_idx < to_iov_count) {
+            memcpy(to_iov[to_iov_idx].iov_base, (void*)from_intptr+prev_len, to_iov[to_iov_idx].iov_len);
+            prev_len += to_iov[to_iov_idx].iov_len;
+            to_iov_idx++;
+        }
+    }
+
+cleanup:
+
+    free(from_iov);
+    free(to_iov);
+    return ret;
+}
 
 
 int mca_coll_smdirect_bcast_intra(void *buff, int count,
@@ -38,7 +169,7 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
 {
     mca_coll_smdirect_module_t *sm_module = (mca_coll_smdirect_module_t*) module;
     mca_coll_smdirect_comm_t *data = sm_module->sm_comm_data;
-    ptrdiff_t extent;
+    int ret = OMPI_SUCCESS;
 
     /* Setup some identities */
 
@@ -46,8 +177,6 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
     const int size = ompi_comm_size(comm);
 
     /* extent is from lb to ub (e.g., MPI_SHORT_INT is 8) */
-    ompi_datatype_type_extent(datatype, &extent);
-    const size_t total_extent = count * extent;
     const size_t control_size = mca_coll_smdirect_component.sm_control_size;
 
     /* get the current operation */
@@ -56,23 +185,21 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
     /* wait for processes from the previous op to finish */
     FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_op_flag);
 
-    unsigned char *dtype_store = (data->sm_bootstrap_meta->module_data_addr + control_size * root + sizeof(mca_coll_smdirect_procdata_t));
+    opal_datatype_t *root_dtype = (opal_datatype_t*)(data->sm_bootstrap_meta->module_data_addr
+                                                        + control_size * root
+                                                        + sizeof(mca_coll_smdirect_procdata_t));
+    int *root_count = (int*)((char*)root_dtype + mca_coll_smdirect_serialize_ddt_size(&datatype->super));
     /* set our input buffer information */
     if (root == rank) {
+        ptrdiff_t extent;
+        ompi_datatype_type_extent(datatype, &extent);
+        const size_t total_extent = count * extent;
         /* leafs provide the full input buffer */
         data->procdata->mcsp_indata = (void*)buff;
         data->procdata->mcsp_insize = total_extent;
-        /* TODO: make our datatype available */
-        /* put the OPAL datatype right after our procdata */
-        memcpy(dtype_store, &datatype->super, sizeof(opal_datatype_t));
-        /* put the datatype description elements after it */
-        dtype_store += sizeof(opal_datatype_t);
-        opal_datatype_t *dtype_copy = (opal_datatype_t*)dtype_store;
-        memcpy(dtype_store, datatype->super.desc.desc, datatype->super.desc.used*sizeof(dt_elem_desc_t));
-        dtype_copy->desc.desc = (dt_elem_desc_t*)dtype_store;
-        dtype_store += datatype->super.desc.used*sizeof(dt_elem_desc_t);
-        memcpy(dtype_store, datatype->super.opt_desc.desc, datatype->super.opt_desc.used*sizeof(dt_elem_desc_t));
-
+        /* make our datatype available */
+        mca_coll_smdirect_serialize_ddt(root_dtype, &datatype->super);
+        *root_count = count;
         /* signal that our procdata for this op is ready */
         opal_atomic_wmb();
         /* we will wait for our parent to signal completion */
@@ -109,7 +236,21 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
         assert(peer->mapping_ptr != NULL);
         assert(peer->mapping_ctx != NULL);
 
-        /* TODO: copy the data here */
+        bool is_from_contig = opal_datatype_is_contiguous_memory_layout(root_dtype, *root_count);
+        bool is_to_contig = ompi_datatype_is_contiguous_memory_layout(datatype, count);
+
+        ptrdiff_t from_lb, from_extent, to_lb, to_extent;
+        opal_datatype_get_true_extent(root_dtype, &from_lb, &from_extent);
+        ompi_datatype_get_true_extent(datatype, &to_lb, &to_extent);
+
+        /* copy the data */
+        if (is_from_contig && is_to_contig) {
+            /* fast path: simple memcpy */
+            memcpy(buff, peer->mapping_ptr, to_extent*count);
+        } else {
+            ret = ddt_copy(peer->mapping_ptr, *root_count, root_dtype, is_from_contig,
+                           from_lb, buff, count, &datatype->super, is_to_contig, to_lb);
+        }
 
         /* let the root know that we're done */
         opal_atomic_wmb();
@@ -117,7 +258,7 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
 
     }
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 
