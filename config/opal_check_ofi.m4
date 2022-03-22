@@ -136,11 +136,6 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                               [$opal_check_fi_info_pci],
                               [check if pci data is available in ofi])
 
-           AC_CHECK_DECLS([PMIX_PACKAGE_RANK],
-                          [],
-                          [],
-                          [#include <pmix.h>])
-
            AC_CHECK_DECLS([FI_OPT_FI_HMEM_P2P],
                           [], [],
                           [#include <rdma/fi_endpoint.h>])
@@ -148,7 +143,15 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
            AC_CHECK_TYPES([struct fi_ops_mem_monitor], [], [],
                           [#ifdef HAVE_RDMA_FI_EXT_H
 #include <rdma/fi_ext.h>
-#endif])])
+#endif
+                           ])
+
+           OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${opal_pmix_CPPFLAGS}])
+
+           AC_CHECK_DECLS([PMIX_PACKAGE_RANK],
+                          [],
+                          [],
+                          [#include <pmix.h>])])
 
     CPPFLAGS=$opal_check_ofi_save_CPPFLAGS
     LDFLAGS=$opal_check_ofi_save_LDFLAGS
