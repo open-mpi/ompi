@@ -206,6 +206,98 @@ AC_DEFUN([OAC_CHECK_PACKAGE],[
 ])
 
 
+dnl Retrieve arguments from pkg-config file
+dnl
+dnl 1 -> package name
+dnl 2 -> prefix
+dnl 3 -> pcfile name (may be full path)
+dnl 4 -> action if found
+dnl 5 -> action if not found
+dnl
+dnl Read pkgconfig module $3 and set build variables based on return
+dnl value.  Results are cached based on the value in $1, even if the
+dnl pkgconfig module name ($3) changes and that this macro is expanded
+dnl inside OAC_CHECK_PACKAGE, which can pollute the results cache.
+dnl
+dnl On return, <action if found> will be evaluated if it appears that
+dnl the pkg-config data is available.  <action if not found> will be
+dnl evaluated if it appears that the package is not available.  If it
+dnl appears the package is available, the following SHELL environment
+dnl variables will be set:
+dnl
+dnl   <prefix>_CPPFLAGS - CPPFLAGS to add when compiling sources depending on the package
+dnl   <prefix>_LDFLAGS - LDFLAGS to add when linking against the package
+dnl   <prefix>_STATIC_LDFLAGS - LDFLAGS to add when linking against the package when
+dnl                          building a statically linked executable.
+dnl   <prefix>_LIBS - Libraries to link to access the package
+dnl   <prefix>_STATIC_LIBS - Libraries to link to access the package when building a
+dnl                          statically linked executable.
+dnl   <prefix>_PC_MODULES - Module name of the pkgconfig module used to generate
+dnl                          the build information.  Will be unset by OAC_CHECK_PACKAGE
+dnl                          if pkg-config was not used to configure the package.  Note
+dnl                          that there is no need for a STATIC_PC_MODULES option,
+dnl                          as that functionality is built into pkgconfig modules
+dnl                          directly.
+AC_DEFUN([OAC_CHECK_PACKAGE_PARSE_PKGCONFIG], [
+    AC_REQUIRE([_OAC_CHECK_PACKAGE_PKGCONFIG_INIT])
+
+    AC_CACHE_CHECK([if $1 pkg-config module exists],
+         [check_package_cv_$1_pkg_config_exists],
+         [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--exists], [check_package_pkgconfig_internal_result],
+                    [$2_PC_MODULES=$3
+                     check_package_cv_$1_pkg_config_exists=yes],
+                    [check_package_cv_$1_pkg_config_exists=no])])
+
+    # if pkg-config --exists works, but getting one of the standard flags fails, we consider
+    # that a hard failure.  It should not happen, outside of a weird system configuration
+    # issue where we're probably not going to like the results anyway.
+    AS_IF([test "${check_package_cv_$1_pkg_config_exists}" = "yes"],
+          [AC_CACHE_CHECK([for $1 pkg-config cflags],
+                [check_package_cv_$1_pkg_config_cppflags],
+                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--cflags],
+                      [check_package_cv_$1_pkg_config_cppflags], [],
+                      [AC_MSG_RESULT([error])
+                       AC_MSG_ERROR([An error occurred retrieving $1 cppflags from pkg-config])])])
+           $2_CPPFLAGS="${check_package_cv_$1_pkg_config_cppflags}"
+
+           AC_CACHE_CHECK([for $1 pkg-config ldflags],
+                [check_package_cv_$1_pkg_config_ldflags],
+                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--libs-only-L --libs-only-other],
+                      [check_package_cv_$1_pkg_config_ldflags], [],
+                      [AC_MSG_RESULT([error])
+                       AC_MSG_ERROR([An error occurred retrieving $1 ldflags from pkg-config])])])
+           $2_LDFLAGS="${check_package_cv_$1_pkg_config_ldflags}"
+
+           AC_CACHE_CHECK([for $1 pkg-config static ldflags],
+                [check_package_cv_$1_pkg_config_static_ldflags],
+                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--static --libs-only-L --libs-only-other],
+                      [check_package_cv_$1_pkg_config_static_ldflags], [],
+                      [AC_MSG_RESULT([error])
+                       AC_MSG_ERROR([An error occurred retrieving $1 static ldflags from pkg-config])])])
+           $2_STATIC_LDFLAGS="${check_package_cv_$1_pkg_config_static_ldflags}"
+
+           AC_CACHE_CHECK([for $1 pkg-config libs],
+                [check_package_cv_$1_pkg_config_libs],
+                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--libs-only-l],
+                      [check_package_cv_$1_pkg_config_libs], [],
+                      [AC_MSG_RESULT([error])
+                       AC_MSG_ERROR([An error occurred retrieving $1 libs from pkg-config])])])
+           $2_LIBS="${check_package_cv_$1_pkg_config_libs}"
+
+           AC_CACHE_CHECK([for $1 pkg-config static libs],
+                [check_package_cv_$1_pkg_config_static_libs],
+                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--static --libs-only-l],
+                      [check_package_cv_$1_pkg_config_static_libs], [],
+                      [AC_MSG_RESULT([error])
+                       AC_MSG_ERROR([An error occurred retrieving $1 libs from pkg-config])])])
+           $2_STATIC_LIBS="${check_package_cv_$1_pkg_config_static_libs}"
+
+           $4])
+
+    AS_UNSET([check_package_pkgconfig_internal_result])
+])
+
+
 AC_DEFUN([OAC_CHECK_PACKAGE_STATIC_CHECK], [
     AC_CACHE_CHECK([for static linker flag],
         [check_package_cv_static_linker_flag],
@@ -321,71 +413,7 @@ to configure to help disambiguate.])],
                       [test -r "${check_package_prefix}/lib64/pkgconfig/pcname.pc"],
                       [check_package_cv_$1_pcfilename="${check_package_prefix}/lib64/pkgconfig/pcname.pc"],
                       [check_package_cv_$1_pcfilename="${check_package_prefix}/lib/pkgconfig/pcname.pc"])])
-         _OAC_CHECK_PACKAGE_PKGCONFIG_INTERNAL([$1], [$2], [${check_package_cv_$1_pcfilename}], [$3])])
-])
-
-
-dnl 1 -> package name
-dnl 2 -> prefix
-dnl 3 -> pcfile name (may be full path)
-dnl 4 -> action if found flag
-AC_DEFUN([_OAC_CHECK_PACKAGE_PKGCONFIG_INTERNAL], [
-    AC_REQUIRE([_OAC_CHECK_PACKAGE_PKGCONFIG_INIT])
-
-    AC_CACHE_CHECK([if $1 pkg-config module exists],
-         [check_package_cv_$1_pkg_config_exists],
-         [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--exists], [check_package_pkgconfig_internal_result],
-                    [$2_PC_MODULES=$3
-                     check_package_cv_$1_pkg_config_exists=yes],
-                    [check_package_cv_$1_pkg_config_exists=no])])
-
-    # if pkg-config --exists works, but getting one of the standard flags fails, we consider
-    # that a hard failure.  It should not happen, outside of a weird system configuration
-    # issue where we're probably not going to like the results anyway.
-    AS_IF([test "${check_package_cv_$1_pkg_config_exists}" = "yes"],
-          [AC_CACHE_CHECK([for $1 pkg-config cflags],
-                [check_package_cv_$1_pkg_config_cppflags],
-                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--cflags],
-                      [check_package_cv_$1_pkg_config_cppflags], [],
-                      [AC_MSG_RESULT([error])
-                       AC_MSG_ERROR([An error occurred retrieving $1 cppflags from pkg-config])])])
-           $2_CPPFLAGS="${check_package_cv_$1_pkg_config_cppflags}"
-
-           AC_CACHE_CHECK([for $1 pkg-config ldflags],
-                [check_package_cv_$1_pkg_config_ldflags],
-                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--libs-only-L --libs-only-other],
-                      [check_package_cv_$1_pkg_config_ldflags], [],
-                      [AC_MSG_RESULT([error])
-                       AC_MSG_ERROR([An error occurred retrieving $1 ldflags from pkg-config])])])
-           $2_LDFLAGS="${check_package_cv_$1_pkg_config_ldflags}"
-
-           AC_CACHE_CHECK([for $1 pkg-config static ldflags],
-                [check_package_cv_$1_pkg_config_static_ldflags],
-                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--static --libs-only-L --libs-only-other],
-                      [check_package_cv_$1_pkg_config_static_ldflags], [],
-                      [AC_MSG_RESULT([error])
-                       AC_MSG_ERROR([An error occurred retrieving $1 static ldflags from pkg-config])])])
-           $2_STATIC_LDFLAGS="${check_package_cv_$1_pkg_config_static_ldflags}"
-
-           AC_CACHE_CHECK([for $1 pkg-config libs],
-                [check_package_cv_$1_pkg_config_libs],
-                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--libs-only-l],
-                      [check_package_cv_$1_pkg_config_libs], [],
-                      [AC_MSG_RESULT([error])
-                       AC_MSG_ERROR([An error occurred retrieving $1 libs from pkg-config])])])
-           $2_LIBS="${check_package_cv_$1_pkg_config_libs}"
-
-           AC_CACHE_CHECK([for $1 pkg-config static libs],
-                [check_package_cv_$1_pkg_config_static_libs],
-                [_OAC_CHECK_PACKAGE_PKGCONFIG_RUN([$3], [--static --libs-only-l],
-                      [check_package_cv_$1_pkg_config_static_libs], [],
-                      [AC_MSG_RESULT([error])
-                       AC_MSG_ERROR([An error occurred retrieving $1 libs from pkg-config])])])
-           $2_STATIC_LIBS="${check_package_cv_$1_pkg_config_static_libs}"
-
-           $4])
-
-    AS_UNSET([check_package_pkgconfig_internal_result])
+         OAC_CHECK_PACKAGE_PARSE_PKGCONFIG([$1], [$2], [${check_package_cv_$1_pcfilename}], [$3])])
 ])
 
 
