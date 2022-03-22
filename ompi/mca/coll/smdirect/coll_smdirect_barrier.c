@@ -24,7 +24,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "opal/sys/atomic.h"
-#include "coll_sm.h"
+#include "coll_smdirect.h"
 
 /**
  * Shared memory barrier.
@@ -53,12 +53,12 @@
 int mca_coll_smdirect_barrier_intra(struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
 {
-    int rank, buffer_set;
+    int rank, op_count;
     mca_coll_smdirect_comm_t *data;
-    uint32_t i, num_children;
-    volatile uint32_t *me_in, *me_out, *children = NULL;
-    opal_atomic_uint32_t *parent;
-    int uint_control_size;
+    uint32_t num_children;
+    size_t control_size;
+    struct mca_coll_smdirect_tree_node_t *parent, *me;
+    mca_coll_smdirect_procdata_t *parent_data;
     mca_coll_smdirect_module_t *sm_module = (mca_coll_smdirect_module_t*) module;
 
     /* Lazily enable the module the first time we invoke a collective
@@ -70,55 +70,54 @@ int mca_coll_smdirect_barrier_intra(struct ompi_communicator_t *comm,
         }
     }
 
-    uint_control_size =
-        mca_coll_smdirect_component.sm_control_size / sizeof(uint32_t);
+
+    control_size = mca_coll_smdirect_component.sm_control_size;
     data = sm_module->sm_comm_data;
     rank = ompi_comm_rank(comm);
-    num_children = data->mcb_tree[rank].mcstn_num_children;
-    buffer_set = ((data->mcb_barrier_count++) % 2) * 2;
-    me_in = &data->mcb_barrier_control_me[buffer_set];
-    me_out = (uint32_t*)
-        (((char*) me_in) + mca_coll_smdirect_component.sm_control_size);
+    me = &data->mcb_tree[rank];
+    parent = me->mcstn_parent;
+    num_children = me->mcstn_num_children;
+    op_count = ++data->mcb_operation_count;
 
-    /* Wait for my children to write to my *in* buffer */
+    /* wait for processes from the previous op to finish */
+    FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_op_flag);
 
-    if (0 != num_children) {
-        /* Get children *out* buffer */
-        children = data->mcb_barrier_control_children + buffer_set +
-            uint_control_size;
-        SPIN_CONDITION(*me_in == num_children, exit_label1);
-        *me_in = 0;
+    FLAG_RETAIN(&data->procdata->mcsp_op_flag, num_children, op_count);
+
+    /* we will receive signals from our children, pass that info on, and wait
+     * for our parent to do the same in reverse */
+    FLAG_RETAIN(&data->procdata->mcsp_segment_down_flag, 1, op_count);
+
+    FLAG_RETAIN(&data->procdata->mcsp_segment_up_flag, num_children, op_count);
+
+    /* wait for my children to signal */
+    if (num_children > 0) {
+        FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_up_flag);
     }
 
-    /* Send to my parent and wait for a response (don't poll on
-       parent's out buffer -- that would cause a lot of network
-       traffic / contention / faults / etc.  Instead, children poll on
-       local memory and therefore only num_children messages are sent
-       across the network [vs. num_children *each* time all the
-       children poll] -- i.e., the memory is only being polled by one
-       process, and it is only changed *once* by an external
-       process) */
-
-    if (0 != rank) {
-        /* Get parent *in* buffer */
-        parent = &data->mcb_barrier_control_parent[buffer_set];
-        opal_atomic_add (parent, 1);
-
-        SPIN_CONDITION(0 != *me_out, exit_label2);
-        *me_out = 0;
+    if (NULL != parent) {
+        parent_data = (mca_coll_smdirect_procdata_t *)(data->sm_bootstrap_meta->module_data_addr
+                                                          + control_size * parent->mcstn_id);
+        /* make sure my parent is on the same op */
+        FLAG_WAIT_FOR_OP(&parent_data->mcsp_segment_up_flag, op_count);
+        /* signal up */
+        FLAG_RELEASE(&parent_data->mcsp_segment_up_flag);
+        /* wait for parent to signal back down */
+        FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_segment_down_flag);
     }
 
-    /* Send to my children */
-
-    for (i = 0; i < num_children; ++i) {
-        children[i * uint_control_size * 4] = 1;
+    /* signal back down to our children */
+    for (int i = 0; i < num_children; ++i) {
+        mca_coll_smdirect_procdata_t *child_data = (mca_coll_smdirect_procdata_t *)(data->sm_bootstrap_meta->module_data_addr
+                                                          + control_size * me->mcstn_children[i]->mcstn_id);
+        /* non-atomic reset is fine, there is only one parent */
+        FLAG_RESET(&child_data->mcsp_segment_down_flag);
     }
 
-    /* All done!  End state of the control segment:
-
-       me_in: 0
-       me_out: 0
-    */
+    /* finally, signal my parent that we're done (to sync between ops) */
+    if (NULL != parent) {
+        FLAG_RELEASE(&parent_data->mcsp_op_flag);
+    }
 
     return OMPI_SUCCESS;
 }

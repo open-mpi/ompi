@@ -227,7 +227,7 @@ mca_coll_smdirect_comm_query(struct ompi_communicator_t *comm, int *priority)
     sm_module->super.coll_alltoall   = NULL;
     sm_module->super.coll_alltoallv  = NULL;
     sm_module->super.coll_alltoallw  = NULL;
-    sm_module->super.coll_barrier    = NULL;
+    sm_module->super.coll_barrier    = mca_coll_smdirect_barrier_intra;
     sm_module->super.coll_bcast      = NULL;
     sm_module->super.coll_exscan     = NULL;
     sm_module->super.coll_gather     = NULL;

@@ -362,6 +362,7 @@ BEGIN_C_DECLS
      * Returns the size required to serialize the given datatype into a (shared)
      * memory region.
      */
+    static inline
     size_t mca_coll_smdirect_serialize_ddt_size(opal_datatype_t *datatype) {
         return sizeof(*datatype) + datatype->opt_desc.used*sizeof(dt_elem_desc_t);
     }
@@ -419,6 +420,12 @@ BEGIN_C_DECLS
  */
 #define FLAG_RELEASE(flag) \
     opal_atomic_add(&(flag)->mcsiuf_num_procs_using, -1)
+
+/**
+ * Macro to non-atomically reset an in-use flag from this process
+ */
+#define FLAG_RESET(flag) \
+    (flag)->mcsiuf_num_procs_using = 0
 
 /**
  * Macro to memcpy a fragment between one shared segment and another
