@@ -29,7 +29,9 @@ libmca_btl_smcuda_la_sources = \
     btl_smcuda_endpoint.h \
     btl_smcuda_fifo.h \
     btl_smcuda_frag.c \
-    btl_smcuda_frag.h
+    btl_smcuda_frag.h \
+    btl_smcuda_accelerator.c \
+    btl_smcuda_accelerator.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

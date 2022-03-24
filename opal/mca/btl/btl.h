@@ -225,11 +225,11 @@ typedef uint8_t mca_btl_base_tag_t;
 /* btl can support failover if enabled */
 #define MCA_BTL_FLAGS_FAILOVER_SUPPORT 0x0200
 
-#define MCA_BTL_FLAGS_CUDA_PUT             0x0400
-#define MCA_BTL_FLAGS_CUDA_GET             0x0800
-#define MCA_BTL_FLAGS_CUDA_RDMA            (MCA_BTL_FLAGS_CUDA_GET | MCA_BTL_FLAGS_CUDA_PUT)
-#define MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND 0x1000
-#define MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV 0x2000
+#define MCA_BTL_FLAGS_ACCELERATOR_PUT             0x0400
+#define MCA_BTL_FLAGS_ACCELERATOR_GET             0x0800
+#define MCA_BTL_FLAGS_ACCELERATOR_RDMA            (MCA_BTL_FLAGS_ACCELERATOR_GET | MCA_BTL_FLAGS_ACCELERATOR_PUT)
+#define MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_SEND 0x1000
+#define MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_RECV 0x2000
 
 /* btl can support signaled operations. BTLs that support this flag are
  * expected to provide a mechanism for asynchronous progress on descriptors
@@ -281,7 +281,7 @@ typedef uint8_t mca_btl_base_tag_t;
 /* error callback flags */
 #define MCA_BTL_ERROR_FLAGS_FATAL        0x1
 #define MCA_BTL_ERROR_FLAGS_NONFATAL     0x2
-#define MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC 0x4
+#define MCA_BTL_ERROR_FLAGS_ADD_ACCELERATOR_IPC 0x4
 
 /** registration flags. the access flags are a 1-1 mapping with the mpool
  * access flags. */
@@ -504,7 +504,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
 
 /* Tell the PML that the copy is being done asynchronously
  */
-#define MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC 0x0008
+#define MCA_BTL_DES_FLAGS_ACCELERATOR_COPY_ASYNC 0x0008
 
 /* Ask the BTL to wake the remote process (send/sendi) or local process
  * (put/get) to handle this message. The BTL may ignore this flag if
@@ -1229,13 +1229,11 @@ struct mca_btl_base_module_t {
     /** register a default error handler */
     mca_btl_base_module_register_error_fn_t btl_register_error;
 #if OPAL_CUDA_GDR_SUPPORT
-    size_t btl_cuda_eager_limit; /**< switch from eager to RDMA */
-    size_t btl_cuda_rdma_limit;  /**< switch from RDMA to rndv pipeline */
+    size_t btl_accelerator_eager_limit; /**< switch from eager to RDMA */
+    size_t btl_accelerator_rdma_limit;  /**< switch from RDMA to rndv pipeline */
 #endif /* OPAL_CUDA_GDR_SUPPORT */
-#if OPAL_CUDA_SUPPORT
-    size_t btl_cuda_max_send_size; /**< set if CUDA max send_size is different from host max send
+    size_t btl_accelerator_max_send_size; /**< set if CUDA max send_size is different from host max send
                                       size */
-#endif /* OPAL_CUDA_SUPPORT */
 
     mca_btl_base_module_flush_fn_t btl_flush; /**< flush all previous operations on an endpoint */
 

@@ -43,17 +43,13 @@
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/message/message.h"
 #include "opal/mca/common/ofi/common_ofi.h"
+#include "opal/mca/accelerator/base/base.h"
 
 #include "mtl_ofi_opt.h"
 #include "mtl_ofi_types.h"
 #include "mtl_ofi_request.h"
 #include "mtl_ofi_endpoint.h"
 #include "mtl_ofi_compat.h"
-
-#if OPAL_CUDA_SUPPORT
-#include "opal/cuda/common_cuda.h"
-#include "opal/datatype/opal_convertor.h"
-#endif
 
 BEGIN_C_DECLS
 
@@ -298,7 +294,7 @@ ompi_mtl_ofi_set_mr_null(ompi_mtl_ofi_request_t *ofi_req) {
 
 /**
  * Registers user buffer with Libfabric domain if
- * buffer is cuda and provider has fi_mr_hmem
+ * buffer is a device buffer and provider has fi_mr_hmem
  */
 static
 int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
@@ -309,8 +305,7 @@ int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
         return OMPI_SUCCESS;
     }
 
-#if OPAL_CUDA_SUPPORT
-    if (convertor->flags & CONVERTOR_CUDA) {
+    if (convertor->flags & CONVERTOR_ACCELERATOR) {
         /* Register buffer */
         int ret;
         struct fi_mr_attr attr = {0};
@@ -323,22 +318,27 @@ int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
         attr.access = FI_SEND | FI_RECV;
         attr.offset = 0;
         attr.context = NULL;
-
-        attr.iface = FI_HMEM_CUDA;
-        mca_common_cuda_get_device(&attr.device.cuda);
-
+        if (false == ompi_mtl_base_selected_component->accelerator_support) {
+            goto reg;
+        } else if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
+            attr.iface = FI_HMEM_CUDA;
+            opal_accelerator.get_device(&attr.device.cuda);
+        } else {
+            return OPAL_ERROR;
+        }
+reg:
         ret = fi_mr_regattr(ompi_mtl_ofi.domain, &attr, 0, &ofi_req->mr);
 
         if (ret) {
             opal_show_help("help-mtl-ofi.txt", "Buffer Memory Registration Failed", true,
-                           "CUDA",
+                           accelerator_base_selected_component.base_version.mca_component_name,
                            buffer, ofi_req->length,
                            fi_strerror(-ret), ret);
             ofi_req->mr = NULL;
             return OMPI_ERROR;
         }
     }
-#endif /* OPAL_CUDA_SUPPORT */
+
     return OMPI_SUCCESS;
 }
 
@@ -369,11 +369,18 @@ int ompi_mtl_ofi_deregister_and_free_buffer(ompi_mtl_ofi_request_t *ofi_req) {
         return ret;
     }
     if (OPAL_UNLIKELY(NULL != ofi_req->buffer)) {
-#if OPAL_CUDA_SUPPORT
-        opal_cuda_free(ofi_req->buffer, ofi_req->convertor);
-#else
-        free(ofi_req->buffer);
-#endif
+        /* If no convertor has been provided, assume it's a host buffer */
+        if (NULL == ofi_req->convertor) {
+            free(ofi_req->buffer);
+        /* If the convertor is not an accelerator buffer, or we do not have
+           accelerator_support, it must be a host buffer. */
+        } else if (!(ofi_req->convertor->flags & CONVERTOR_ACCELERATOR) ||
+            false == ompi_mtl_base_selected_component->accelerator_support) {
+            free(ofi_req->buffer);
+        /* The buffer must be an accelerator buffer */
+        } else {
+            ret = opal_accelerator.free(MCA_ACCELERATOR_NO_DEVICE_ID, ofi_req->buffer);
+        }
     }
     ofi_req->buffer = NULL;
     return ret;
@@ -835,6 +842,7 @@ ompi_mtl_ofi_send_generic(struct mca_mtl_base_module_t *mtl,
     ofi_req.length = length;
     ofi_req.status.MPI_ERROR = OMPI_SUCCESS;
     ofi_req.completion_count = 0;
+    ofi_req.convertor = convertor;
 
     if (OPAL_UNLIKELY(length > endpoint->mtl_ofi_module->max_msg_size)) {
         opal_show_help("help-mtl-ofi.txt",
@@ -863,12 +871,8 @@ ompi_mtl_ofi_send_generic(struct mca_mtl_base_module_t *mtl,
     /** Inject does not currently support device memory
      *  https://github.com/ofiwg/libfabric/issues/5861
      */
-#if OPAL_CUDA_SUPPORT
-    if (!(convertor->flags & CONVERTOR_CUDA)
+    if (!(convertor->flags & CONVERTOR_ACCELERATOR)
         && (ompi_mtl_ofi.max_inject_size >= length)) {
-#else /* !(OPAL_CUDA_SUPPORT)*/
-    if (ompi_mtl_ofi.max_inject_size >= length) {
-#endif /* OPAL_CUDA_SUPPORT */
         if (ofi_cq_data) {
             MTL_OFI_RETRY_UNTIL_DONE(fi_tinjectdata(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
                                             start,

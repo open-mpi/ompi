@@ -1716,7 +1716,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
      * be either host or device so we need to set this flag prior to that check. */
     if (1 == isManaged) {
         if (NULL != convertor) {
-            convertor->flags |= CONVERTOR_CUDA_UNIFIED;
+            convertor->flags |= CONVERTOR_ACCELERATOR_UNIFIED;
         }
     }
     if (res != CUDA_SUCCESS) {
@@ -2095,7 +2095,7 @@ void mca_cuda_convertor_init(opal_convertor_t *convertor, const void *pUserBuf)
     }
 
     if (ftable.gpu_is_gpu_buffer(pUserBuf, convertor)) {
-        convertor->flags |= CONVERTOR_CUDA;
+        convertor->flags |= CONVERTOR_ACCELERATOR;
     }
 }
 
@@ -2163,7 +2163,7 @@ void *opal_cuda_malloc(size_t size, opal_convertor_t *convertor)
 {
     int res;
     void *buffer;
-    if (!(convertor->flags & CONVERTOR_CUDA)) {
+    if (!(convertor->flags & CONVERTOR_ACCELERATOR)) {
         return malloc(size);
     }
     res = ftable.gpu_malloc(buffer, size);
@@ -2187,7 +2187,7 @@ void *opal_cuda_malloc(size_t size, opal_convertor_t *convertor)
 void opal_cuda_free(void *buffer, opal_convertor_t *convertor)
 {
     int res;
-    if (!(convertor->flags & CONVERTOR_CUDA)) {
+    if (!(convertor->flags & CONVERTOR_ACCELERATOR)) {
         free(buffer);
         return;
     }
@@ -2210,11 +2210,11 @@ void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_
 {
     int res;
 
-    if (!(convertor->flags & CONVERTOR_CUDA)) {
+    if (!(convertor->flags & CONVERTOR_ACCELERATOR)) {
         return memcpy(dest, src, size);
     }
 
-    if (convertor->flags & CONVERTOR_CUDA_ASYNC) {
+    if (convertor->flags & CONVERTOR_ACCELERATOR_ASYNC) {
         res = ftable.gpu_cu_memcpy_async(dest, (void *) src, size, convertor);
     } else {
         res = ftable.gpu_cu_memcpy(dest, (void *) src, size);
@@ -2303,7 +2303,7 @@ static void opal_cuda_support_init(void)
  */
 void opal_cuda_set_copy_function_async(opal_convertor_t *convertor, void *stream)
 {
-    convertor->flags |= CONVERTOR_CUDA_ASYNC;
+    convertor->flags |= CONVERTOR_ACCELERATOR_ASYNC;
     convertor->stream = stream;
 }
 #endif /* OPAL_CUDA_GDR_SUPPORT */

@@ -31,9 +31,7 @@
 #include "opal_config.h"
 #include "btl_smcuda.h"
 
-#if OPAL_CUDA_SUPPORT
-#    include "opal/cuda/common_cuda.h"
-#endif
+#include "opal/cuda/common_cuda.h"
 
 #define MCA_BTL_SMCUDA_FRAG_TYPE_MASK ((uintptr_t) 0x3)
 #define MCA_BTL_SMCUDA_FRAG_SEND      ((uintptr_t) 0x0)
@@ -53,21 +51,17 @@ struct mca_btl_smcuda_hdr_t {
 };
 typedef struct mca_btl_smcuda_hdr_t mca_btl_smcuda_hdr_t;
 
-#if OPAL_CUDA_SUPPORT
 struct mca_btl_base_registration_handle_t {
     mca_rcache_common_cuda_reg_data_t reg_data;
 };
-#endif
 
 struct mca_btl_smcuda_segment_t {
     mca_btl_base_segment_t base;
-#if OPAL_CUDA_SUPPORT
     uint8_t key[128]; /* 64 bytes for CUDA mem handle, 64 bytes for CUDA event handle */
     /** Address of the entire memory handle */
     opal_ptr_t memh_seg_addr;
     /** Length in bytes of entire memory handle */
     uint32_t memh_seg_len;
-#endif /* OPAL_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_segment_t mca_btl_smcuda_segment_t;
 
@@ -78,10 +72,8 @@ struct mca_btl_smcuda_frag_t {
     mca_btl_base_descriptor_t base;
     mca_btl_base_segment_t segment;
     struct mca_btl_base_endpoint_t *endpoint;
-#if OPAL_CUDA_SUPPORT
     struct mca_rcache_base_registration_t *registration;
     struct mca_btl_base_registration_handle_t *local_handle;
-#endif /* OPAL_CUDA_SUPPORT */
     size_t size;
     /* pointer written to the FIFO, this is the base of the shared memory region */
     mca_btl_smcuda_hdr_t *hdr;
