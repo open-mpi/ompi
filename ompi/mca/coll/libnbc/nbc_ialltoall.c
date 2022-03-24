@@ -71,6 +71,10 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
   void *tmpbuf = NULL;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
   ptrdiff_t span, gap = 0;
+  uint64_t flags;
+  int is_accel_buf1;
+  int is_accel_buf2;
+  int dev_id;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
@@ -145,11 +149,15 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
     }
 
     /* phase 1 - rotate n data blocks upwards into the tmpbuffer */
-#if OPAL_CUDA_SUPPORT
-    if (NBC_Type_intrinsic(sendtype) && !(opal_cuda_check_bufs((char *)sendbuf, (char *)recvbuf))) {
-#else
-    if (NBC_Type_intrinsic(sendtype)) {
-#endif /* OPAL_CUDA_SUPPORT */
+    is_accel_buf1 = opal_accelerator.check_addr(sendbuf, &dev_id, &flags);
+    is_accel_buf2 = opal_accelerator.check_addr(recvbuf, &dev_id, &flags);
+    if (is_accel_buf1 < 0) {
+        return is_accel_buf1;
+    } else if (is_accel_buf2 < 0) {
+        return is_accel_buf2;
+    }
+    if (NBC_Type_intrinsic(sendtype) &&
+        is_accel_buf1 == 0 && is_accel_buf2 == 0) {
       /* contiguous - just copy (1st copy) */
       memcpy (tmpbuf, (char *) sendbuf + datasize * rank, datasize * (p - rank));
       if (rank != 0) {

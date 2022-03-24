@@ -52,9 +52,7 @@
 #include "opal/util/printf.h"
 #include "opal/util/sys_limits.h"
 #include "opal/util/minmax.h"
-#if OPAL_CUDA_SUPPORT
-#include "opal/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_SUPPORT */
+#include "opal/mca/accelerator/accelerator.h"
 #include "opal/util/info_subscriber.h"
 #include "opal/mca/mpool/base/base.h"
 
@@ -378,14 +376,14 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
         return -1;
     }
 
-#if OPAL_CUDA_SUPPORT
     /* GPU buffers are not supported by the rdma component */
     if (MPI_WIN_FLAVOR_CREATE == flavor) {
-        if (opal_cuda_check_bufs(*base, NULL)) {
+        uint64_t flags;
+        int dev_id;
+        if (opal_accelerator.check_addr(*base, &dev_id, &flags)) {
             return -1;
         }
     }
-#endif /* OPAL_CUDA_SUPPORT */
 
     /* verify if we have any btls available.  Since we do not verify
      * connectivity across all btls in the alternate case, this is as

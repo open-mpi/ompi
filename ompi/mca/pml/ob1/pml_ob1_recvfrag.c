@@ -54,9 +54,7 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_hdr.h"
-#if OPAL_CUDA_SUPPORT
-#include "opal/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_SUPPORT */
+#include "pml_ob1_accelerator.h"
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_buffer_t,
                     opal_free_list_item_t,
@@ -760,16 +758,15 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
         OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
     }
 
-#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
-    if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
-        (btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND)) {
+    if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) &&
+        (btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_SEND)) {
         /* The user's buffer is GPU and this BTL can support asynchronous copies,
          * so adjust the convertor accordingly.  All the subsequent fragments will
          * use the asynchronous copy. */
-        void *strm = mca_common_cuda_get_dtoh_stream();
-        opal_cuda_set_copy_function_async(&sendreq->req_send.req_base.req_convertor, strm);
+        opal_accelerator_stream_t *stream = mca_pml_ob1_get_dtoh_stream();
+        sendreq->req_send.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
+        sendreq->req_send.req_base.req_convertor.stream = stream;
     }
-#endif /* OPAL_CUDA_SUPPORT */
 
     if (send_request_pml_complete_check(sendreq) == false)
         mca_pml_ob1_send_request_schedule(sendreq);
@@ -788,12 +785,11 @@ void mca_pml_ob1_recv_frag_callback_frag (mca_btl_base_module_t *btl,
 
     ob1_hdr_ntoh((mca_pml_ob1_hdr_t*)hdr, MCA_PML_OB1_HDR_TYPE_FRAG);
     recvreq = (mca_pml_ob1_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
-#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
     /* If data is destined for GPU buffer and convertor was set up for asynchronous
      * copies, then start the copy and return.  The copy completion will trigger
      * the next phase. */
-    if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA_ASYNC) {
-        assert(btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV);
+    if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR_ASYNC) {
+        assert(btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_RECV);
 
         /* This will trigger the opal_convertor_pack to start asynchronous copy. */
         mca_pml_ob1_recv_request_frag_copy_start(recvreq, btl, segments, descriptor->des_segment_count, NULL);
@@ -803,7 +799,6 @@ void mca_pml_ob1_recv_frag_callback_frag (mca_btl_base_module_t *btl,
 
         return;
     }
-#endif /* OPAL_CUDA_SUPPORT */
 
     mca_pml_ob1_recv_request_progress_frag(recvreq,btl,segments,descriptor->des_segment_count);
 }
@@ -1287,7 +1282,7 @@ void mca_pml_ob1_recv_frag_callback_cid (mca_btl_base_module_t* btl,
              * moved to the right communicator.
              */
             append_frag_to_list (&mca_pml_ob1.non_existing_communicator_pending,
-                                 btl, (const mca_pml_ob1_match_hdr_t *)hdr, des->des_segments, 
+                                 btl, (const mca_pml_ob1_match_hdr_t *)hdr, des->des_segments,
                                  num_segments, NULL);
         }
 

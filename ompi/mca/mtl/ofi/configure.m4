@@ -39,16 +39,6 @@ AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
                                      [mtl_ofi_happy=0])])
 
     AS_IF([test ${mtl_ofi_happy} -eq 1],
-          [OPAL_CHECK_CUDA
-
-           dnl Check for cuda support. If so, we require a minimum libfabric version
-           dnl of 1.9. FI_HMEM capabilities are only available starting from v1.9
-           AS_IF([test "${opal_check_cuda_happy}" = "yes"],
-                 [OPAL_CHECK_OFI_VERSION_GE([1,9],
-                                            [],
-                                            [mtl_ofi_happy=0])])])
-
-    AS_IF([test ${mtl_ofi_happy} -eq 1],
           [OPAL_MCA_CHECK_DEPENDENCY([opal], [btl], [ofi], [opal], [common], [ofi])])
 
     AS_IF([test ${mtl_ofi_happy} -eq 1],

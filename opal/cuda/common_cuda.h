@@ -105,8 +105,8 @@ OPAL_DECLSPEC void mca_common_cuda_get_buffer_id(mca_rcache_base_registration_t 
 static inline int32_t opal_convertor_cuda_need_buffers(opal_convertor_t *pConvertor)
 {
     int32_t retval;
-    uint32_t cudaflag = pConvertor->flags & CONVERTOR_CUDA; /* Save CUDA flag */
-    pConvertor->flags &= ~CONVERTOR_CUDA;                   /* Clear CUDA flag if it exists */
+    uint32_t cudaflag = pConvertor->flags & CONVERTOR_ACCELERATOR; /* Save CUDA flag */
+    pConvertor->flags &= ~CONVERTOR_ACCELERATOR;                   /* Clear CUDA flag if it exists */
     retval = opal_convertor_need_buffers(pConvertor);
     pConvertor->flags |= cudaflag; /* Restore CUDA flag */
     return retval;
