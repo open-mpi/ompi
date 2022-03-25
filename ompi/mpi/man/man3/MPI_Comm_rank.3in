@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2022 Cisco Systems, Inc.  All rights reserved
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" $COPYRIGHT$
@@ -60,7 +60,7 @@ This function gives the rank of the process in the
 particular communicator's group. It is equivalent to accessing the
 communicator's group with MPI_Comm_group, computing the rank using MPI_Group_rank, and then freeing the temporary group via MPI_Group_free.
 .sp
-Many programs will be written with the master-slave model, where one process (such as the rank-zero process) will play a supervisory role, and the other processes will serve as compute nodes. In this framework, MPI_Comm_size and MPI_Comm_rank are useful for determining the roles of the various processes of a communicator.
+Many programs will be written with the manager-worker model, where one process (such as the rank-zero process) will play a supervisory role, and the other processes will serve as compute nodes. In this framework, MPI_Comm_size and MPI_Comm_rank are useful for determining the roles of the various processes of a communicator.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.

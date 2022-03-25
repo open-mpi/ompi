@@ -102,7 +102,7 @@ date="Unreleased developer copy"
 # release managers (not individual developers).  Notes:
 
 # 1. Since these version numbers are associated with *releases*, the
-# version numbers maintained on the Open MPI GIT master (and developer
+# version numbers maintained on the Open MPI GIT main (and developer
 # branches) is always 0:0:0 for all libraries.
 
 # 2. The version number of libmpi refers to the public MPI interfaces.
