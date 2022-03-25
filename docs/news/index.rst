@@ -39,6 +39,7 @@ version 1.0.
    :maxdepth: 1
 
    news-main
+   news-v5.0.x
    news-v4.1.x
    news-v4.0.x
    news-v3.1.x
