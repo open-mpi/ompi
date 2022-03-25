@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC. All rights
@@ -88,7 +88,7 @@ static inline bool opal_set_using_threads(bool have)
 }
 
 
-// Back-ported from master (2019-05-04) as part of
+// Back-ported from main (2019-05-04) as part of
 // a16cf0e4dd6df4dea820fecedd5920df632935b8
 typedef volatile size_t opal_atomic_size_t;
 

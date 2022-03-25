@@ -1,6 +1,6 @@
 trigger: none
 pr:
-  - master
+  - main
   - v*.*.x
 
 pool:

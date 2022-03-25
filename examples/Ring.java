@@ -29,7 +29,7 @@ class Ring {
 	next = (myrank + 1) % size;
 	prev = (myrank + size - 1) % size;
 
-	/* If we are the "master" process (i.e., MPI_COMM_WORLD rank 0),
+	/* If we are the "manager" process (i.e., MPI_COMM_WORLD rank 0),
 	   put the number of times to go around the ring in the
 	   message. */
 

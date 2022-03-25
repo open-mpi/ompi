@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2017 Cisco Systems, Inc.  All rights reserved
+dnl Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
@@ -375,7 +375,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     # The mpi_f08 module in this version of Open MPI does not properly
     # handle if sizeof(INTEGER) != sizeof(int) with the mpi_f08
-    # bindings.  As of July 2020, this issue is fixed on master / what
+    # bindings.  As of July 2020, this issue is fixed on main / what
     # will eventually become Open MPI v5.0.x, but the fix causes an
     # ABI break.  Hence, we're not going to fix it here on this
     # release branch.
