@@ -370,9 +370,9 @@ ULFM Standalone Release 2.1
 
 This release is a bugfix and upstream parity upgrade. It improves
 stability, performance and is based on the most current Open MPI
-master (November 2018).
+main (November 2018).
 
-* ULFM is now based upon Open MPI master branch (#37954b5f).
+* ULFM is now based upon Open MPI main branch (#37954b5f).
 * ULFM tuning MCA parameters are exposed by ``ompi_info``.
 * Fortran 90 bindings have been updated
 * Bugfixes:
@@ -389,10 +389,10 @@ master (November 2018).
 ULFM Standalone Release 2.0
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Focus has been toward integration with current Open MPI master
+Focus has been toward integration with current Open MPI main
 (November 2017), performance, and stability.
 
-* ULFM is now based upon Open MPI master branch (#689f1be9). It will
+* ULFM is now based upon Open MPI main branch (#689f1be9). It will
   be regularly updated until it will eventually be merged.
 * Fault Tolerance is enabled by default and is controlled with MCA variables.
 * Added support for multithreaded modes (MPI_THREAD_MULTIPLE, etc.)
@@ -495,7 +495,7 @@ Binary Compatibility
 ^^^^^^^^^^^^^^^^^^^^
 
 ULFM Open MPI is binary compatible with any version of Open MPI
-compatible with the underlying Open MPI master branch or release (see
+compatible with the underlying Open MPI main branch or release (see
 the binary compatibility and version number section in the upstream
 Open MPI README). That is, applications compiled with a compatible
 Open MPI can run with the ULFM Open MPI ``mpirun`` and MPI

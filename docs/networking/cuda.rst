@@ -28,7 +28,7 @@ Open MPI offers two flavors of CUDA support:
       # configured with: --build=powerpc64le-redhat-linux-gnu --host=powerpc64le-redhat-linux-gnu --program-prefix= --disable-dependency-tracking --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --sysconfdir=/etc --datadir=/usr/share --includedir=/usr/include --libdir=/usr/lib64 --libexecdir=/usr/libexec --localstatedir=/var --sharedstatedir=/var/lib --mandir=/usr/share/man --infodir=/usr/share/info --disable-optimizations --disable-logging --disable-debug --disable-assertions --enable-mt --disable-params-check --enable-cma --without-cuda --without-gdrcopy --with-verbs --with-cm --with-knem --with-rdmacm --without-rocm --without-xpmem --without-ugni --without-java
 
    If you need to build ucx yourself to include CUDA support, please
-   see the UCX documentation for `building ucx with Open MPI: <https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx>`_
+   see the UCX documentation for `building ucx with Open MPI: <https://openucx.readthedocs.io/en/main/running.html#openmpi-with-ucx>`_
 
    It should look something like:
 
