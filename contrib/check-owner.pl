@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2015 Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -55,7 +55,7 @@ sub DebugDump {
 sub isTopDir {
     my ($d) = @_;
 
-    # master
+    # main
     if (-f "$d/Makefile.ompi-rules") {
         return 1;
     }

@@ -3,7 +3,7 @@ From Dave:
 For fun, here's the Git version of the "AUTHORS with commits in the past year" part of your script:
 
 ----8<----
-savbu-usnic-a ~/g/ompi-svn-mirror git:master ❮❮❮ git log --all --since='1 year ago' --pretty=tformat:'%ae' | sort | uniq -c
+savbu-usnic-a ~/g/ompi-svn-mirror git:main ❮❮❮ git log --all --since='1 year ago' --pretty=tformat:'%ae' | sort | uniq -c
     39 adrian@open-mpi-git-mirror.example.com
      3 alex@open-mpi-git-mirror.example.com
      5 alinas@open-mpi-git-mirror.example.com
@@ -40,7 +40,7 @@ savbu-usnic-a ~/g/ompi-svn-mirror git:master ❮❮❮ git log --all --since='1 
 
 And the "NO commits":
 ----8<----
-savbu-usnic-a ~/g/ompi-svn-mirror git:master ❯❯❯ git log --all --since='1 year ago' --pretty=tformat:'%ae' | sort | uniq > /tmp/active ; git log --pretty=tformat:'%ae' --all | sort | uniq > /tmp/all ; diff -u
+savbu-usnic-a ~/g/ompi-svn-mirror git:main ❯❯❯ git log --all --since='1 year ago' --pretty=tformat:'%ae' | sort | uniq > /tmp/active ; git log --pretty=tformat:'%ae' --all | sort | uniq > /tmp/all ; diff -u
 /tmp/all /tmp/active | grep '^-[^-]'
 -abbyz@open-mpi-git-mirror.example.com
 -adi@open-mpi-git-mirror.example.com

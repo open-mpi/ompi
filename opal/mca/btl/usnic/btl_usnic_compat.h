@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2013-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Intel, Inc. All rights reserved.
@@ -234,7 +234,7 @@ usnic_compat_opal_hotel_init(opal_hotel_t *hotel, int num_rooms,
 
 
 /*
- * Replicate functions that exist on master
+ * Replicate functions that exist on main
  */
 char* opal_get_proc_hostname(opal_proc_t *proc);
 

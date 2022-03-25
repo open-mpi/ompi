@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2015      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -201,11 +202,11 @@ function do_checksync_mpisync() {
   if [ ! -e ${tooldir} ]; then
     mkdir -p ${tooldir}
     cd ${tooldir}
-    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/master/ompi/tools/mpisync/mpigclock.c >> $logfile 2>&1
-    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/master/ompi/tools/mpisync/mpigclock.h >> $logfile 2>&1
-    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/master/ompi/tools/mpisync/hpctimer.c >> $logfile 2>&1
-    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/master/ompi/tools/mpisync/hpctimer.h >> $logfile 2>&1
-    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/master/ompi/tools/mpisync/sync.c >> $logfile 2>&1
+    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/main/ompi/tools/mpisync/mpigclock.c >> $logfile 2>&1
+    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/main/ompi/tools/mpisync/mpigclock.h >> $logfile 2>&1
+    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/main/ompi/tools/mpisync/hpctimer.c >> $logfile 2>&1
+    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/main/ompi/tools/mpisync/hpctimer.h >> $logfile 2>&1
+    wget --no-check-certificate https://github.com/open-mpi/ompi/raw/main/ompi/tools/mpisync/sync.c >> $logfile 2>&1
     mpicc hpctimer.c mpigclock.c sync.c -o mpisync >> $logfile 2>&1
   fi
   if [ ! -e "$tooldir" ] || [ ! -f "$tooldir/mpisync" ]; then
