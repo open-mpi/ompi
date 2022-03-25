@@ -186,7 +186,7 @@ to at least the versions listed below.
      - 2.4.6
      - 2.5.35
      - 4.2.0
-   * - Git master
+   * - Git main
      - 1.4.17
      - 2.69
      - 1.15
