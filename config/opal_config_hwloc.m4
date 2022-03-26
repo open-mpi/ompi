@@ -166,11 +166,11 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
     shift
     for hwloc_config_arg
     do
-	case $hwloc_config_arg in
+        case $hwloc_config_arg in
         --enable-plugins|--enable-plugins=*|--disable-plugins)
             found_enable_plugins=1
-	    ;;
-	esac
+            ;;
+        esac
     done
 
     # while the plugins in hwloc are not explicitly using Open MPI's dlopen

@@ -135,8 +135,8 @@ AC_DEFUN([OPAL_CHECK_CC_IQUOTE],[
     CFLAGS="${CFLAGS} -iquote ."
     AC_MSG_CHECKING([for $CC option to add a directory only to the search path for the quote form of include])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],[])],
-		      [opal_cc_iquote="-iquote"],
-		      [opal_cc_iquote="-I"])
+                      [opal_cc_iquote="-iquote"],
+                      [opal_cc_iquote="-I"])
     CFLAGS=${opal_check_cc_iquote_CFLAGS_save}
     OPAL_VAR_SCOPE_POP
     AC_MSG_RESULT([$opal_cc_iquote])
