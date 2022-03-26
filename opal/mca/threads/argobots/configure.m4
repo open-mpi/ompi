@@ -40,31 +40,14 @@ AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
 
     opal_argo_happy=yes
     opal_argo11_happy=yes
-    AS_IF([test "$with_argo" = "no"],
-          [opal_argo_happy=no])
 
-    AS_IF([test $opal_argo_happy = yes],
-          [AC_MSG_CHECKING([looking for argobots in])
-           AS_IF([test "$with_argobots" != "yes"],
-                 [opal_argo_dir=$with_argobots
-                  AC_MSG_RESULT([($opal_argo_dir)])],
-                 [AC_MSG_RESULT([(default search paths)])])
-           AS_IF([test ! -z "$with_argobots_libdir" && \
-                         test "$with_argobots_libdir" != "yes"],
-                 [opal_argo_libdir=$with_argobots_libdir])
-          ])
-
-    AS_IF([test $opal_argo_happy = yes],
-          [OPAL_CHECK_PACKAGE([opal_argo],
-                              [abt.h],
-                              [abt],
-                              [ABT_init],
-                              [],
-                              [$opal_argo_dir],
-                              [$opal_argo_libdir],
-                              [],
-                              [opal_argo_happy=no])])
-
+    OAC_CHECK_PACKAGE([argobots],
+                      [opal_argo],
+                      [abt.h],
+                      [abt],
+                      [ABT_init],
+                      [opal_argo_happy=yes],
+                      [opal_argo_happy=no])
 
     # ABT_unit_get_thread() is a new Argobots 1.1 API.
     # It was introduced after static mutex/cond initializers.
