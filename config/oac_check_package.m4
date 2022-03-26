@@ -680,7 +680,7 @@ AC_DEFUN([_OAC_CHECK_PACKAGE_VERIFY],[
     AS_IF([test ${check_package_verify_happy} -eq 1],
           [AC_CHECK_FUNC([$4],  [check_package_verify_happy=1], [check_package_verify_happy=0])])
 
-    m4_ifdef([OAC_CHEC_PACKAGE_VERIFY_COMMAND_LIST],
+    m4_ifdef([OAC_CHECK_PACKAGE_VERIFY_COMMAND_LIST],
         [m4_foreach([list_item], [OAC_CHECK_PACKAGE_VERIFY_COMMAND_LIST],
                [AS_IF([test ${check_package_verify_happy} -eq 1],
                       [m4_apply(m4_unquote([list_item]), [[$1], [$2], [$3], [$4],
