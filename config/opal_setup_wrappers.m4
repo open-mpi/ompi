@@ -89,14 +89,14 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
 
     OPAL_VAR_SCOPE_PUSH([wrapper_cc_tmp])
     AC_ARG_WITH([wrapper_cc],
-		[AS_HELP_STRING([--with-wrapper-cc=path],
-				[Set a different wrapper C compiler than the one used to build Open MPI])],
-		[], [with_wrapper_cc="$OPAL_CC"])
+                [AS_HELP_STRING([--with-wrapper-cc=path],
+                                [Set a different wrapper C compiler than the one used to build Open MPI])],
+                [], [with_wrapper_cc="$OPAL_CC"])
 
     AC_MSG_CHECKING([for wrapper C compiler])
 
     if test "$with_wrapper_cc" = "yes" || test "$with_wrapper_cc" = "no" ; then
-	AC_MSG_ERROR([--with-wrapper-cc must have an argument.])
+        AC_MSG_ERROR([--with-wrapper-cc must have an argument.])
     fi
 
     # Get the full path to the wrapper compiler. If it doesn't exist

@@ -34,45 +34,45 @@
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_PSM2],[
     if test -z "$ompi_check_psm2_happy" ; then
-	AC_ARG_WITH([psm2],
-		    [AS_HELP_STRING([--with-psm2(=DIR)],
-				    [Build PSM2 (Intel PSM2) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-	OPAL_CHECK_WITHDIR([psm2], [$with_psm2], [include/psm2.h])
-	AC_ARG_WITH([psm2-libdir],
-		    [AS_HELP_STRING([--with-psm2-libdir=DIR],
-				    [Search for PSM (Intel PSM2) libraries in DIR])])
-	OPAL_CHECK_WITHDIR([psm2-libdir], [$with_psm2_libdir], [libpsm2.*])
+        AC_ARG_WITH([psm2],
+                    [AS_HELP_STRING([--with-psm2(=DIR)],
+                                    [Build PSM2 (Intel PSM2) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
+        OPAL_CHECK_WITHDIR([psm2], [$with_psm2], [include/psm2.h])
+        AC_ARG_WITH([psm2-libdir],
+                    [AS_HELP_STRING([--with-psm2-libdir=DIR],
+                                    [Search for PSM (Intel PSM2) libraries in DIR])])
+        OPAL_CHECK_WITHDIR([psm2-libdir], [$with_psm2_libdir], [libpsm2.*])
 
         AC_ARG_ENABLE([psm2-version-check],
                   [AS_HELP_STRING([--disable-psm2-version-check],
                                   [Disable PSM2 version checking.  Not recommended to disable. (default: enabled)])])
 
-	ompi_check_psm2_$1_save_CPPFLAGS="$CPPFLAGS"
-	ompi_check_psm2_$1_save_LDFLAGS="$LDFLAGS"
-	ompi_check_psm2_$1_save_LIBS="$LIBS"
+        ompi_check_psm2_$1_save_CPPFLAGS="$CPPFLAGS"
+        ompi_check_psm2_$1_save_LDFLAGS="$LDFLAGS"
+        ompi_check_psm2_$1_save_LIBS="$LIBS"
 
-	AS_IF([test "$with_psm2" != "no"],
+        AS_IF([test "$with_psm2" != "no"],
               [AS_IF([test ! -z "$with_psm2" && test "$with_psm2" != "yes"],
                      [ompi_check_psm2_dir="$with_psm2"])
                AS_IF([test ! -z "$with_psm2_libdir" && test "$with_psm2_libdir" != "yes"],
                      [ompi_check_psm2_libdir="$with_psm2_libdir"])
 
                OPAL_CHECK_PACKAGE([ompi_check_psm2],
-				  [psm2.h],
-				  [psm2],
-				  [psm2_mq_irecv2],
-				  [],
-				  [$ompi_check_psm2_dir],
-				  [$ompi_check_psm2_libdir],
-				  [ompi_check_psm2_happy="yes"],
-				  [ompi_check_psm2_happy="no"])],
+                                  [psm2.h],
+                                  [psm2],
+                                  [psm2_mq_irecv2],
+                                  [],
+                                  [$ompi_check_psm2_dir],
+                                  [$ompi_check_psm2_libdir],
+                                  [ompi_check_psm2_happy="yes"],
+                                  [ompi_check_psm2_happy="no"])],
               [ompi_check_psm2_happy="no"])
 
-	AS_IF([test "$ompi_check_psm2_happy" = "yes" && test "$enable_progress_threads" = "yes"],
+        AS_IF([test "$ompi_check_psm2_happy" = "yes" && test "$enable_progress_threads" = "yes"],
               [AC_MSG_WARN([PSM2 driver does not currently support progress threads.  Disabling MTL.])
                ompi_check_psm2_happy="no"])
 
-    	AS_IF([test "$ompi_check_psm2_happy" = "yes"],
+        AS_IF([test "$ompi_check_psm2_happy" = "yes"],
               [AC_CHECK_HEADERS(
                glob.h,
                [],
@@ -92,18 +92,18 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
                              [#include <psm2.h>])]
               )
 
-	CPPFLAGS="$ompi_check_psm2_$1_save_CPPFLAGS"
-	LDFLAGS="$ompi_check_psm2_$1_save_LDFLAGS"
-	LIBS="$ompi_check_psm2_$1_save_LIBS"
+        CPPFLAGS="$ompi_check_psm2_$1_save_CPPFLAGS"
+        LDFLAGS="$ompi_check_psm2_$1_save_LDFLAGS"
+        LIBS="$ompi_check_psm2_$1_save_LIBS"
 
         OPAL_SUMMARY_ADD([Transports], [Intel Omnipath (PSM2)], [], [$ompi_check_psm2_happy])
     fi
 
     AS_IF([test "$ompi_check_psm2_happy" = "yes"],
           [$1_LDFLAGS="[$]$1_LDFLAGS $ompi_check_psm2_LDFLAGS"
-	   $1_CPPFLAGS="[$]$1_CPPFLAGS $ompi_check_psm2_CPPFLAGS"
-	   $1_LIBS="[$]$1_LIBS $ompi_check_psm2_LIBS"
-	   $2],
+           $1_CPPFLAGS="[$]$1_CPPFLAGS $ompi_check_psm2_CPPFLAGS"
+           $1_LIBS="[$]$1_LIBS $ompi_check_psm2_LIBS"
+           $2],
           [AS_IF([test ! -z "$with_psm2" && test "$with_psm2" != "no"],
                  [AC_MSG_ERROR([PSM2 support requested but not found.  Aborting])])
            $3])

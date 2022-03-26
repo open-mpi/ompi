@@ -102,15 +102,15 @@ EOF
 
     dnl Print out the bindings if we are building OMPI
     if test "$project_ompi_amc" = "true" ; then
-	if test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_MPIFH_BINDINGS ; then
+        if test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_MPIFH_BINDINGS ; then
             echo "Build MPI Fortran bindings: mpif.h"
-	elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPI_BINDINGS ; then
+        elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPI_BINDINGS ; then
             echo "Build MPI Fortran bindings: mpif.h, use mpi"
-	elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPIF08_BINDINGS ; then
-	    echo "Build MPI Fortran bindings: mpif.h, use mpi, use mpi_f08"
-	else
-	    echo "Build MPI Fortran bindings: no"
-	fi
+        elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPIF08_BINDINGS ; then
+            echo "Build MPI Fortran bindings: mpif.h, use mpi, use mpi_f08"
+        else
+            echo "Build MPI Fortran bindings: no"
+        fi
 
         if test $WANT_MPI_JAVA_BINDINGS -eq 1 ; then
             echo "Build MPI Java bindings (experimental): yes"
@@ -124,7 +124,7 @@ EOF
     elif test -z "$project_oshmem_amc" ; then
         echo "Build Open SHMEM support: no"
     else
-	echo "Build Open SHMEM support: $project_oshmem_amc"
+        echo "Build Open SHMEM support: $project_oshmem_amc"
     fi
 
     if test $WANT_DEBUG = 0 ; then

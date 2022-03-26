@@ -656,12 +656,12 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AS_IF([test "$atomics_found" = "no" -a "$enable_builtin_atomics" != "no"],
           [OPAL_CHECK_GCC_ATOMIC_BUILTINS
            AS_IF([test $opal_cv_have___atomic = "yes"],
-	         [AC_MSG_NOTICE([Using GCC built-in style atomics])
+                 [AC_MSG_NOTICE([Using GCC built-in style atomics])
                   atomics_found="GCC built-in style atomics"
                   want_gcc_builtin_atomics=1],
                  [test "$enable_builtin_atomics" = "yes"],
                  [AC_MSG_WARN([GCC built-in atomics requested but not found.])
-		  AC_MSG_ERROR([Cannot continue])])])
+                  AC_MSG_ERROR([Cannot continue])])])
 
     # Option 3 for atomics: inline assembly
     AS_IF([test "$atomics_found" = "no" -a "$gcc_inline" = "1"],

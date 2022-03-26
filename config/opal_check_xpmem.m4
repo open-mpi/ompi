@@ -70,44 +70,44 @@ AC_DEFUN([OPAL_CHECK_CRAY_XPMEM],[
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OPAL_CHECK_XPMEM], [
     if test -z "$opal_check_xpmem_happy" ; then
-	# check for a cray installed xpmem first
-	OPAL_CHECK_CRAY_XPMEM([opal_check_xpmem],[opal_check_xpmem_happy=yes],[opal_check_xpmem_happy=no])
+        # check for a cray installed xpmem first
+        OPAL_CHECK_CRAY_XPMEM([opal_check_xpmem],[opal_check_xpmem_happy=yes],[opal_check_xpmem_happy=no])
 
-	if test "$opal_check_xpmem_happy" = no ; then
-	    AC_ARG_WITH([xpmem],
-			[AS_HELP_STRING([--with-xpmem(=DIR)],
-					[Build with XPMEM kernel module support, searching for headers in DIR])])
-	    OPAL_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
+        if test "$opal_check_xpmem_happy" = no ; then
+            AC_ARG_WITH([xpmem],
+                        [AS_HELP_STRING([--with-xpmem(=DIR)],
+                                        [Build with XPMEM kernel module support, searching for headers in DIR])])
+            OPAL_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
 
-	    AC_ARG_WITH([xpmem-libdir],
-			[AS_HELP_STRING([--with-xpmem-libdir=DIR],
-					[Search for XPMEM library in DIR])])
-	    OPAL_CHECK_WITHDIR([xpmem-libdir], [$with_xpmem_libdir], [libxpmem.*])
+            AC_ARG_WITH([xpmem-libdir],
+                        [AS_HELP_STRING([--with-xpmem-libdir=DIR],
+                                        [Search for XPMEM library in DIR])])
+            OPAL_CHECK_WITHDIR([xpmem-libdir], [$with_xpmem_libdir], [libxpmem.*])
 
-	    if test ! "$with_xpmem" = "no" ; then
-		if test ! -z "$with_xpmem" && test "$with_xpmem" != "yes" ; then
-		    opal_check_xpmem_dir="$with_xpmem"
-		fi
+            if test ! "$with_xpmem" = "no" ; then
+                if test ! -z "$with_xpmem" && test "$with_xpmem" != "yes" ; then
+                    opal_check_xpmem_dir="$with_xpmem"
+                fi
 
-		if test ! -z "$with_xpmem_libdir" && test "$with_xpmem_libdir" != "yes" ; then
-		    opal_check_xpmem_libdir="$with_xpmem_libdir"
-		fi
+                if test ! -z "$with_xpmem_libdir" && test "$with_xpmem_libdir" != "yes" ; then
+                    opal_check_xpmem_libdir="$with_xpmem_libdir"
+                fi
 
-		OPAL_CHECK_PACKAGE([opal_check_xpmem],[xpmem.h],[xpmem],[xpmem_make],[],
-				   [$opal_check_xpmem_dir],[$opal_check_xpmem_libdir], [opal_check_xpmem_happy="yes"], [])
+                OPAL_CHECK_PACKAGE([opal_check_xpmem],[xpmem.h],[xpmem],[xpmem_make],[],
+                                   [$opal_check_xpmem_dir],[$opal_check_xpmem_libdir], [opal_check_xpmem_happy="yes"], [])
 
-		if test "$opal_check_xpmem_happy" = "no" && test -n "$with_xpmem" && test "$with_xpmem" != "yes" ; then
-		    AC_MSG_ERROR([XPMEM support requested but not found.  Aborting])
-		fi
-	    fi
-	fi
+                if test "$opal_check_xpmem_happy" = "no" && test -n "$with_xpmem" && test "$with_xpmem" != "yes" ; then
+                    AC_MSG_ERROR([XPMEM support requested but not found.  Aborting])
+                fi
+            fi
+        fi
 
 	OPAL_SUMMARY_ADD([Transports], [Shared memory/XPMEM], [], [$opal_check_xpmem_happy])
     fi
 
     AS_IF([test "$opal_check_xpmem_happy" = "yes"], [
-	      $1_CPPFLAGS="[$]$1_CPPFLAGS $opal_check_xpmem_CPPFLAGS"
-	      $1_LDFLAGS="[$]$1_LDFLAGS $opal_check_xpmem_LDFLAGS"
-	      $1_LIBS="[$]$1_LIBS $opal_check_xpmem_LIBS"
-	      $2], [$3])
+              $1_CPPFLAGS="[$]$1_CPPFLAGS $opal_check_xpmem_CPPFLAGS"
+              $1_LDFLAGS="[$]$1_LDFLAGS $opal_check_xpmem_LDFLAGS"
+              $1_LIBS="[$]$1_LIBS $opal_check_xpmem_LIBS"
+              $2], [$3])
 ])dnl
