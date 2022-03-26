@@ -3,6 +3,7 @@ dnl
 dnl Copyright (c) 2015-2017 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -66,6 +67,8 @@ AC_DEFUN([OPAL_LIBNL_SANITY_INIT], [
             opal_libnl_location=$with_libnl
             ;;
     esac
+
+    OAC_CHECK_PACKAGE_VERIFY_COMMANDS([[OPAL_LIBNL_CHECK_PACKAGE_CALLBACK]])
 ])
 
 dnl OPAL_LIBNL_SANITY_FAIL_MSG(lib)
@@ -77,6 +80,28 @@ AC_DEFUN([OPAL_LIBNL_SANITY_FAIL_MSG], [
     AC_MSG_WARN([This is a configuration that is *known* to cause run-time crashes.])
     AC_MSG_WARN([This is an error in lib$1 (not Open MPI).])
     AC_MSG_WARN([Open MPI will therefore skip using lib$1.])
+])
+
+dnl OPAL_LIBNL_CHECK_PACKAGE_CALLBACK(package name, prefix,
+dnl                   headers, function name,
+dnl                   action if happy, action if not happy)
+dnl
+dnl Callback from OAC_CHECK_PACKAGE to verify that there is
+dnl not a conflict.  Note that CPPFLAGS, LDFLAGS, and LIBS
+dnl are setup to compile/link package.
+AC_DEFUN([OPAL_LIBNL_CHECK_PACKAGE_CALLBACK], [
+    OPAL_VAR_SCOPE_PUSH([opal_libnl_sane])
+    opal_libnl_sane=1
+    case $host in
+        *linux*)
+            OPAL_LIBNL_SANITY_CHECK_LINUX([$1], [$4], [], [opal_libnl_sane])
+            ;;
+    esac
+
+    AS_IF([test ${opal_libnl_sane} -eq 1],
+          [$5], [$6])
+
+    OPAL_VAR_SCOPE_POP([opal_libnl_sane])
 ])
 
 dnl OPAL_LIBNL_SANITY_CHECK(lib, function, LIBS, libnl_check_ok)
@@ -101,7 +126,7 @@ AC_DEFUN([OPAL_LIBNL_SANITY_CHECK], [
     opal_libnl_sane=1
     case $host in
         *linux*)
-            OPAL_LIBNL_SANITY_CHECK_LINUX($1, $2, $3, opal_libnl_sane)
+            OPAL_LIBNL_SANITY_CHECK_LINUX([$1], [$2], [-l$1 $3], [opal_libnl_sane])
             ;;
     esac
 
@@ -111,7 +136,7 @@ AC_DEFUN([OPAL_LIBNL_SANITY_CHECK], [
 
 dnl
 dnl Simple helper for OPAL_LIBNL_SANITY_CHECK
-dnl $1: library name
+dnl $1: package name
 dnl $2: function
 dnl $3: LIBS
 dnl $4: output variable (1=ok, 0=not ok)
@@ -121,7 +146,7 @@ AC_DEFUN([OPAL_LIBNL_SANITY_CHECK_LINUX], [
 
     AC_LANG_PUSH(C)
 
-    AC_MSG_CHECKING([if lib$1 requires libnl v1 or v3])
+    AC_MSG_CHECKING([if $1 requires libnl v1 or v3])
     cat > conftest_c.$ac_ext << EOF
 extern void $2 (void);
 int main(int argc, char *argv[[]]) {
@@ -133,7 +158,7 @@ EOF
     this_requires_v1=0
     this_requires_v3=0
     result_msg=
-    OPAL_LOG_COMMAND([$CC -o conftest $CFLAGS $CPPFLAGS conftest_c.$ac_ext $LDFLAGS -l$1 $LIBS $3],
+    OPAL_LOG_COMMAND([$CC -o conftest $CFLAGS $CPPFLAGS conftest_c.$ac_ext $LDFLAGS $LIBS $3],
         [ldd_output=`ldd conftest`
          AS_IF([echo $ldd_output | grep -q libnl-3.so],
                [this_requires_v3=1
@@ -141,6 +166,7 @@ EOF
          AS_IF([echo $ldd_output | grep -q libnl.so],
                [this_requires_v1=1
                 result_msg="v1 $result_msg"])
+         AS_IF([test -z "${result_msg}"], [result_msg="none"])
          AC_MSG_RESULT([$result_msg])
          ],
         [AC_MSG_WARN([Could not link a simple program with lib $1])
@@ -156,7 +182,7 @@ EOF
 
     # Does this library require both v1 and v3?  If so, fail.
     AS_IF([test $this_requires_v1 -eq 1 && test $this_requires_v3 -eq 1],
-          [AC_MSG_WARN([Unfortunately, lib$1 links to both libnl and libnl-3.])
+          [AC_MSG_WARN([Unfortunately, $1 links to both libnl and libnl-3.])
            OPAL_LIBNL_SANITY_FAIL_MSG($1)
            libnl_sane=0])
 
@@ -176,7 +202,7 @@ EOF
     # v1?  If so, fail.
     AS_IF([test $libnl_sane -eq 1 && test $this_requires_v3 -eq 1],
           [AS_IF([test $opal_libnl_version -eq 1],
-                 [AC_MSG_WARN([libnl version conflict: $opal_libnlv1_libs requires libnl whereas lib$1 requires libnl-3])
+                 [AC_MSG_WARN([libnl version conflict: $opal_libnlv1_libs requires libnl whereas 1 requires libnl-3])
                   OPAL_LIBNL_SANITY_FAIL_MSG($1)
                   libnl_sane=0],
                  [opal_libnlv3_libs="$opal_libnlv3_libs $1"
