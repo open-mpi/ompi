@@ -753,7 +753,7 @@ AC_DEFUN([OPAL_MCA_STRIP_LAFILES], [
     OPAL_VAR_SCOPE_PUSH([opal_tmp])
 
     for arg in $2; do
-	opal_tmp=`echo $arg | awk '{print substr([$][1], length([$][1])-2) }'`
+        opal_tmp=`echo $arg | awk '{print substr([$][1], length([$][1])-2) }'`
         AS_IF([test "$opal_tmp" != ".la"],
               [AS_IF([test -z "$$1"], [$1=$arg], [$1="$$1 $arg"])])
     done

@@ -55,7 +55,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
                  [$1_CPPFLAGS="$$1_CPPFLAGS -I$dir_prefix/include"
                   CPPFLAGS="$CPPFLAGS -I$dir_prefix/include"])
           AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
-	  AS_IF([test "$opal_check_package_header_happy" = "yes"], [$4], [$5])],
+          AS_IF([test "$opal_check_package_header_happy" = "yes"], [$4], [$5])],
           [$4])
     unset opal_check_package_header_happy
 

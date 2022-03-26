@@ -233,7 +233,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
          # versions wrong).
          opal_libevent_LDFLAGS=
          opal_libevent_STATIC_LDFLAGS=
-	 opal_libevent_LIBS="-levent_core -levent_pthreads"
+         opal_libevent_LIBS="-levent_core -levent_pthreads"
          opal_libevent_STATIC_LIBS=
 
          AC_MSG_CHECKING([for internal libevent LIBS])
@@ -249,7 +249,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
          # our tree and in the mean time are referenced by their .la
          # files.
          opal_libevent_BUILD_LIBS="$OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_core.la $OMPI_TOP_BUILDDIR/$internal_libevent_location/libevent_pthreads.la"
-	 opal_libevent_WRAPPER_LIBS="${opal_libevent_LIBS}"
+         opal_libevent_WRAPPER_LIBS="${opal_libevent_LIBS}"
 
          # no need to add to DIST_SUBDIRS, because we only ship the
          # tarball.  This is relative to the 3rd-party/ directory.

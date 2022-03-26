@@ -49,14 +49,14 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
         [OMPI_PRRTE_ADD_ARGS
          AS_IF([test "$opal_prrte_mode" = "unspecified" -o "$opal_prrte_mode" = "internal"],
                [# Run PRRTE's configure script unless the user
-		# explicitly asked us to use an external PMIX, so that
-		# "make dist" includes PRRTE in the dist tarball.  This
-		# does mean that "make dist" will not work if Open MPI
-		# was configured to use an external PRRTE library, but
-		# we decided this was a reasonable tradeoff for not
-		# having to deal with PRRTE (or PMIx) potentially
-		# failing to configure in a situation where it isn't
-		# desired.
+                # explicitly asked us to use an external PMIX, so that
+                # "make dist" includes PRRTE in the dist tarball.  This
+                # does mean that "make dist" will not work if Open MPI
+                # was configured to use an external PRRTE library, but
+                # we decided this was a reasonable tradeoff for not
+                # having to deal with PRRTE (or PMIx) potentially
+                # failing to configure in a situation where it isn't
+                # desired.
                 _OMPI_SETUP_PRRTE_INTERNAL([prrte_setup_internal_happy=1],
                                            [prrte_setup_internal_happy=0])])
 
@@ -282,7 +282,7 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
                   AS_IF([test ! -r ${PRTE_PATH}],
                         [AC_MSG_ERROR([Could not find prte binary at $PRTE_PATH])],
                         [PRTE_PATH="${with_prrte}/bin"])],
-		 [PRTE_PATH=""
+                 [PRTE_PATH=""
                   OPAL_WHICH([prte], [PRTE_PATH])
                   AS_IF([tets -z "$PRTE_PATH"],
                         [AC_MSG_WARN([Could not find prte in PATH])
