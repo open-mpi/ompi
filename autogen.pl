@@ -1275,7 +1275,7 @@ $dnl_line\n\n";
 # Verify that we're in the OMPI root directorty by checking for a token file.
 
 my_die "Not at the root directory of an OMPI source tree"
-    if (! -f "config/opal_try_assemble.m4");
+    if (! -f "config/opal_mca.m4");
 
 my_die "autogen.pl has been invoked in the source tree of an Open MPI distribution tarball; aborting...
 You likely do not need to invoke \"autogen.pl\" -- you can probably run \"configure\" directly.
