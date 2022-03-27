@@ -38,35 +38,23 @@ AC_DEFUN([OPAL_LIBNL_SANITY_INIT], [
     opal_libnl_version=0
     opal_libnlv1_libs=
     opal_libnlv3_libs=
+
     AC_ARG_WITH([libnl],
                 [AS_HELP_STRING([--with-libnl(=DIR)],
-                                [Directory prefix for libnl (typically only necessary if libnl is installed in a location that the compiler/linker will not search by default)])])
+                                [Directory prefix for libnlv3 (typically only necessary if libnl is installed in a location that the compiler/linker will not search by default)])])
+    AC_ARG_WITH([libn-libdirl],
+                [AS_HELP_STRING([--with-libnl-libdir=DIR],
+                                [Directory prefix for libnlv3 libs(typically only necessary if libnl is installed in a location that the compiler/linker will not search by default)])])
 
-    # The --with options carry two pieces of information: 1) do
-    # you want a specific version of libnl, and 2) where that
-    # version of libnl lives.  For simplicity, let's separate
-    # those two pieces of information.
-    case "$with_libnl" in
-        no)
-            # Nope, don't want it
-            opal_want_libnl=no
-            ;;
-        "")
-            # Just try to build with libnl
-            opal_want_libnl=try
-            opal_libnl_location=
-            ;;
-        yes)
-            # Yes, definitely want it
-            opal_want_libnl=yes
-            opal_libnl_location=
-            ;;
-        *)
-            # Yes, definitely want it -- at a specific location
-            opal_want_libnl=yes
-            opal_libnl_location=$with_libnl
-            ;;
-    esac
+    # ugly hack to deal with potentially alternate locations for
+    # libnl3 headers.  Note that if the pkg-config file is found,
+    # this ugly hack won't be used.
+    AS_IF([test -n "$with_libnl_incdir"],
+          [# skip check if someone above set incdir],
+          [test -d "/usr/include/libnl3"],
+          [with_libnl_incdir="/usr/include/libnl3"],
+          [test -d "/usr/local/include/libnl3"],
+          [with_libnl_incdir="/usr/local/include/libnl3"])
 
     OAC_CHECK_PACKAGE_VERIFY_COMMANDS([[OPAL_LIBNL_CHECK_PACKAGE_CALLBACK]])
 ])
@@ -106,10 +94,10 @@ AC_DEFUN([OPAL_LIBNL_CHECK_PACKAGE_CALLBACK], [
 
 dnl OPAL_LIBNL_SANITY_CHECK(lib, function, LIBS, libnl_check_ok)
 dnl
-dnl This macro is invoked from OPAL_CHECK_PACKAGE to make sure that
+dnl This macro is invoked from CHECK_PACKAGE to make sure that
 dnl new libraries that are added to LIBS do not pull in conflicting
 dnl versions of libnl.  E.g., if we already have a library in LIBS
-dnl that pulls in libnl v3, if OPAL_CHECK_PACKAGE is later called that
+dnl that pulls in libnl v3, if CHECK_PACKAGE is later called that
 dnl pulls in a library that pulls in libnl v1, this macro will detect
 dnl the conflict and will abort configure.
 dnl
@@ -218,159 +206,6 @@ EOF
     $4=$libnl_sane
 
     OPAL_VAR_SCOPE_POP([ldd_output libnl_sane this_requires_v1 this_requires_v3 result_msg])
-])
-
-dnl
-dnl Check for libnl-3.
-dnl
-dnl Inputs:
-dnl
-dnl $1: prefix where to look for libnl-3
-dnl $2: var name prefix of _CPPFLAGS and _LDFLAGS and _LIBS
-dnl
-dnl Outputs:
-dnl
-dnl - Set $2_CPPFLAGS necessary to compile with libnl-3
-dnl - Set $2_LDFLAGS necessary to link with libnl-3
-dnl - Set $2_LIBS necessary to link with libnl-3
-dnl - Set OPAL_HAVE_LIBNL3 1 if libnl-3 will be used
-dnl
-AC_DEFUN([OPAL_CHECK_LIBNL_V3],[
-    OPAL_VAR_SCOPE_PUSH([CPPFLAGS_save opal_tmp_CPPFLAGS LIBS_save LDFLAGS_save])
-    AC_MSG_NOTICE([checking for libnl v3])
-
-    AS_IF([test "$opal_want_libnl" != "no"],
-          [AS_IF([test -z "$opal_libnl_location"],
-                 [AC_MSG_CHECKING([for /usr/include/libnl3])
-                  AS_IF([test -d "/usr/include/libnl3"],
-                        [opal_tmp_CPPFLAGS=-I/usr/include/libnl3
-                         opal_libnlv3_happy=1
-                         AC_MSG_RESULT([found])],
-                        [AC_MSG_RESULT([not found])
-                         AC_MSG_CHECKING([for /usr/local/include/libnl3])
-                         AS_IF([test -d "/usr/local/include/libnl3"],
-                               [opal_tmp_CPPFLAGS=-I/usr/local/include/netlink3
-                                opal_libnlv3_happy=1
-                                AC_MSG_RESULT([found])],
-                               [opal_libnlv3_happy=0
-                                AC_MSG_RESULT([not found])])])],
-                 [AC_MSG_CHECKING([for $1/include/libnl3])
-                  AS_IF([test -d "$1/include/libnl3"],
-                        [opal_tmp_CPPFLAGS="-I$1/include/libnl3"
-                         opal_libnlv3_happy=1
-                         AC_MSG_RESULT([found])],
-                        [opal_libnlv3_happy=0
-                         AC_MSG_RESULT([not found])])])
-           CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_tmp_CPPFLAGS $CPPFLAGS"
-
-           # Random note: netlink/version.h is only in libnl v3 - it is not in libnl v1.
-           # Also, nl_recvmsgs_report is only in libnl v3.
-           AS_IF([test $opal_libnlv3_happy -eq 1],
-                 [OPAL_CHECK_PACKAGE([$2],
-                                     [netlink/version.h],
-                                     [nl-3],
-                                     [nl_recvmsgs_report],
-                                     [],
-                                     [$1],
-                                     [],
-                                     [],
-                                     [opal_libnlv3_happy=0])
-
-                  # Note that OPAL_CHECK_PACKAGE is going to add
-                  # -I$dir/include into $2_CPPFLAGS.  But because libnl v3
-                  # puts the headers in $dir/include/libnl3, we need to
-                  # overwrite $2_CPPFLAGS with -I$dir/include/libnl3.  We can do
-                  # this unconditionally; we don't have to check for
-                  # success (checking for success occurs below).
-                  $2_CPPFLAGS=$opal_tmp_CPPFLAGS])
-
-           # If we found libnl-3, we *also* need libnl-route-3
-           LIBS_save=$LIBS
-           LDFLAGS_save=$LDFLAGS
-           AS_IF([test -n "$$2_LDFLAGS"],
-                 [LDFLAGS="$$2_LDFLAGS $LDFLAGS"])
-           AS_IF([test $opal_libnlv3_happy -eq 1],
-                 [AC_SEARCH_LIBS([nl_rtgen_request],
-                                 [nl-route-3],
-                                 [],
-                                 [opal_libnlv3_happy=0])])
-           LIBS=$LIBS_save
-           LDFLAGS=$LDFLAGS_save
-
-           # Just because libnl* is evil, double check that the
-           # netlink/version.h we found was for libnl v3.  As far as we
-           # know, netlink/version.h only first appeared in version
-           # 3... but let's really be sure.
-           AS_IF([test $opal_libnlv3_happy -eq 1],
-                 [AC_MSG_CHECKING([to ensure these really are libnl v3 headers])
-                  AS_IF([test -n "$$2_CPPFLAGS"],
-                        [CPPFLAGS="$$2_CPPFLAGS $CPPFLAGS"])
-                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <netlink/netlink.h>
-#include <netlink/version.h>
-#ifndef LIBNL_VER_MAJ
-#error "LIBNL_VER_MAJ not defined!"
-#endif
-/* to the best of our knowledge, version.h only exists in libnl v3 */
-#if LIBNL_VER_MAJ != 3
-#error "LIBNL_VER_MAJ != 3, I am sad"
-#endif
-                                     ]])],
-                                    [AC_MSG_RESULT([yes])],
-                                    [AC_MSG_RESULT([no])
-                                     opal_libnlv3_happy=0])])
-
-           CPPFLAGS=$CPPFLAGS_save],
-
-          [opal_libnlv3_happy=0])
-
-    # If we found everything
-    AS_IF([test $opal_libnlv3_happy -eq 1],
-          [$2_LIBS="-lnl-3 -lnl-route-3"
-           OPAL_HAVE_LIBNL3=1],
-          [# OPAL_CHECK_PACKAGE(...,nl_recvmsgs_report,...) might have set the variables below
-           # so reset them if libnl v3 cannot be used
-           $2_CPPFLAGS=""
-           $2_LDFLAGS=""
-           $2_LIBS=""])
-
-   OPAL_VAR_SCOPE_POP
-])
-
-dnl
-dnl Check for libnl.
-dnl
-dnl Inputs:
-dnl
-dnl $1: prefix where to look for libnl
-dnl $2: var name prefix of _CPPFLAGS and _LDFLAGS and _LIBS
-dnl
-dnl Outputs:
-dnl
-dnl - Set $2_CPPFLAGS necessary to compile with libnl
-dnl - Set $2_LDFLAGS necessary to link with libnl
-dnl - Set $2_LIBS necessary to link with libnl
-dnl - Set OPAL_HAVE_LIBNL3 0 if libnl will be used
-dnl
-AC_DEFUN([OPAL_CHECK_LIBNL_V1],[
-    AC_MSG_NOTICE([checking for libnl v1])
-
-    AS_IF([test "$opal_want_libnl" != "no"],
-          [OPAL_CHECK_PACKAGE([$2],
-                              [netlink/netlink.h],
-                              [nl],
-                              [nl_connect],
-                              [-lm],
-                              [$1],
-                              [],
-                              [opal_libnlv1_happy=1],
-                              [opal_libnlv1_happy=0])],
-          [opal_libnlv1_happy=0])
-
-    AS_IF([test $opal_libnlv1_happy -eq 1],
-          [$2_LIBS="-lnl -lm"
-           OPAL_HAVE_LIBNL3=0])
 ])
 
 dnl
