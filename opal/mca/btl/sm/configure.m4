@@ -8,6 +8,7 @@
 #                         reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,7 +25,7 @@ AC_DEFUN([MCA_opal_btl_sm_CONFIG],[
     # always happy
     [$1]
 
-    OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/copy in+copy out]],[$1],[yes])
+    OPAL_SUMMARY_ADD([Transports], [Shared memory/copy in+copy out], [], [yes])
 
     # substitute in the things needed to build with XPMEM support
     AC_SUBST([btl_sm_CFLAGS])

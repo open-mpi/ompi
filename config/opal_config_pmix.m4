@@ -19,8 +19,7 @@ dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2020-2021 Amazon.com, Inc. or its affiliates.  All Rights
-dnl                         reserved.
+dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -181,7 +180,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     AC_SUBST(opal_pmix_LDFLAGS)
     AC_SUBST(opal_pmix_LIBS)
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]], [[pmix]], [pmix], [$opal_pmix_mode])
+    OPAL_SUMMARY_ADD([Miscellaneous], [pmix], [], [$opal_pmix_mode])
 
     OPAL_VAR_SCOPE_POP
 ])

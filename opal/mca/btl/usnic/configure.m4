@@ -15,6 +15,7 @@
 # Copyright (c) 2010-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -125,6 +126,6 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
                  [$2])
           ])
 
-    OPAL_SUMMARY_ADD([[Transports]],[[Cisco usNIC]],[[btl_usnic]],[$opal_btl_usnic_happy])
+    OPAL_SUMMARY_ADD([Transports], [Cisco usNIC], [], [$opal_btl_usnic_happy])
     OPAL_VAR_SCOPE_POP
 ])dnl

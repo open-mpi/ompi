@@ -3,8 +3,7 @@ dnl
 dnl Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
-dnl                         reserved.
+dnl Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -159,7 +158,7 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
     AC_SUBST([opal_ofi_LDFLAGS])
     AC_SUBST([opal_ofi_LIBS])
 
-    OPAL_SUMMARY_ADD([[Transports]],[[OpenFabrics OFI Libfabric]],[],[$opal_ofi_happy])
+    OPAL_SUMMARY_ADD([Transports], [OpenFabrics OFI Libfabric], [], [$opal_ofi_happy])
 
     OPAL_VAR_SCOPE_POP
 
