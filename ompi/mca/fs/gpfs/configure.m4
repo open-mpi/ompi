@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008-2012 University of Houston. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -36,7 +37,7 @@ AC_DEFUN([MCA_ompi_fs_gpfs_CONFIG],[
            $1],
           [$2])
 
-    OPAL_SUMMARY_ADD([[OMPIO File Systems]],[[IBM Spectrum Scale/GPFS]],[$1],[$fs_gpfs_happy])
+    OPAL_SUMMARY_ADD([OMPIO File Systems], [IBM Spectrum Scale/GPFS], [], [$fs_gpfs_happy])
 
     # substitute in the things needed to build gpfs
     AC_SUBST([fs_gpfs_CPPFLAGS])

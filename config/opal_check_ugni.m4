@@ -17,6 +17,7 @@ dnl                         reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -68,7 +69,7 @@ AC_DEFUN([OPAL_CHECK_UGNI], [
               [AC_MSG_WARN([GNI driver does not currently support progress threads.  Disabling.])
                opal_check_ugni_happy="no"])
 
-	OPAL_SUMMARY_ADD([[Transports]],[[Cray uGNI (Gemini/Aries)]],[$1],[$opal_check_ugni_happy])
+	OPAL_SUMMARY_ADD([Transports], [Cray uGNI (Gemini/Aries)], [], [$opal_check_ugni_happy])
     fi
 
     AS_IF([test "$opal_check_ugni_happy" = "yes"],
