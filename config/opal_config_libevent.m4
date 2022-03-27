@@ -4,8 +4,7 @@ dnl Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
 dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2020-2021 Amazon.com, Inc. or its affiliates.  All Rights
-dnl                         reserved.
+dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -122,7 +121,7 @@ AC_DEFUN([OPAL_CONFIG_LIBEVENT], [
     AC_SUBST(opal_libevent_LIBS)
     AC_SUBST(opal_libevent_LDFLAGS)
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]],[[libevent]],[libevent], [$opal_libevent_mode])
+    OPAL_SUMMARY_ADD([Miscellaneous], [libevent], [], [$opal_libevent_mode])
 
     OPAL_VAR_SCOPE_POP
 ])

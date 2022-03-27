@@ -6,6 +6,7 @@ dnl Copyright (c) 2009-2012 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -138,5 +139,5 @@ AC_DEFUN([OPAL_SETUP_FT],[
         fi
     fi
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]],[[Fault Tolerance support]],[unnecessary], [$opal_want_ft_type])
+    OPAL_SUMMARY_ADD([Miscellaneous], [Fault Tolerance support], [], [$opal_want_ft_type])
 ])

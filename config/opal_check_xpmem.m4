@@ -16,6 +16,7 @@
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
 # Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -101,7 +102,7 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
 	    fi
 	fi
 
-	OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/XPMEM]],[$1],[$opal_check_xpmem_happy])
+	OPAL_SUMMARY_ADD([Transports], [Shared memory/XPMEM], [], [$opal_check_xpmem_happy])
     fi
 
     AS_IF([test "$opal_check_xpmem_happy" = "yes"], [

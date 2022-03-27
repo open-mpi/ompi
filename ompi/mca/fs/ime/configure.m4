@@ -1,6 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2018      DataDirect Networks. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,7 +19,7 @@ AC_DEFUN([MCA_ompi_fs_ime_CONFIG],[
                     [fs_ime_happy="yes"],
                     [fs_ime_happy="no"])
 
-    OPAL_SUMMARY_ADD([[OMPIO File Systems]],[[DDN Infinite Memory Engine]],[$1],[$fs_ime_happy])
+    OPAL_SUMMARY_ADD([OMPIO File Systems], [DDN Infinite Memory Engine], [], [$fs_ime_happy])
     AS_IF([test "$fs_ime_happy" = "yes"],
           [$1],
           [$2])

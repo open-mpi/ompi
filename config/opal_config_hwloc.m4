@@ -3,8 +3,7 @@ dnl
 dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2014-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
-dnl Copyright (c) 2020-2021 Amazon.com, Inc. or its affiliates.  All Rights
-dnl                         reserved.
+dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -110,7 +109,7 @@ AC_DEFUN([OPAL_CONFIG_HWLOC], [
     AC_SUBST(opal_hwloc_LIBS)
     AC_SUBST(opal_hwloc_LDFLAGS)
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]], [[hwloc]], [hwloc], [$opal_hwloc_mode])
+    OPAL_SUMMARY_ADD([Miscellaneous], [hwloc], [], [$opal_hwloc_mode])
 
     OPAL_VAR_SCOPE_POP
 ])

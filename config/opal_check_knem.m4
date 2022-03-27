@@ -9,6 +9,7 @@ dnl Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -61,7 +62,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
 
 	CPPFLAGS="$opal_check_knem_$1_save_CPPFLAGS"
 
-        OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/Linux KNEM]],[$1],[$opal_check_knem_happy])
+        OPAL_SUMMARY_ADD([Transports], [Shared memory/Linux KNEM], [], [$opal_check_knem_happy])
 	OPAL_VAR_SCOPE_POP
     fi
 

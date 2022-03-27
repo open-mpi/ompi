@@ -7,6 +7,7 @@
 # Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 # Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -132,5 +133,5 @@ static void do_check (pid_t pid, int *in, int *out)
     AS_IF([test $opal_check_cma_happy -eq 1],
           [opal_check_cma_msg=yes],
           [opal_check_cma_msg=no])
-    OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/Linux CMA]],[$1],[$opal_check_cma_msg])
+    OPAL_SUMMARY_ADD([Transports], [Shared memory/Linux CMA], [], [$opal_check_cma_msg])
 ])
