@@ -9,12 +9,12 @@
 # $HEADER$
 #
 
-# MCA_opal_common_sm_CONFIG([action-if-can-compile],
+# MCA_opal_common_ucx_CONFIG([action-if-can-compile],
 #                           [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_common_ucx_CONFIG],[
     AC_CONFIG_FILES([opal/mca/common/ucx/Makefile])
-    common_ucx_happy="no"
+
     OMPI_CHECK_UCX([common_ucx],
                [common_ucx_happy="yes"],
                [common_ucx_happy="no"])
