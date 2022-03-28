@@ -1,4 +1,4 @@
-# -*- shell-script -*-
+# -*- autoconf -*-
 #
 # Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      The University of Tennessee and The University
@@ -9,6 +9,7 @@
 # Copyright (c) 2017       Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2019      Hewlett Packard Enterprise. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,19 +18,19 @@
 #
 
 AC_DEFUN([MCA_opal_common_ofi_CONFIG],[
+    OPAL_VAR_SCOPE_PUSH([common_ofi_happy])
+
     AC_CONFIG_FILES([opal/mca/common/ofi/Makefile])
 
-    OPAL_CHECK_OFI
+    OPAL_CHECK_OFI([common_ofi], [common_ofi_happy=1], [common_ofi_happy=0])
 
-    # Note that $opal_common_ofi_happy is
-    # used in other configure.m4's to know if ofi configured
-    # successfully.
-    AS_IF([test "$opal_ofi_happy" = "yes"],
-          [opal_common_ofi_happy=yes
-           common_ofi_WRAPPER_EXTRA_LDFLAGS=$opal_ofi_LDFLAGS
-           common_ofi_WRAPPER_EXTRA_LIBS=$opal_ofi_LIBS
-           $1],
-          [opal_common_ofi_happy=no
-           $2])
+    AS_IF([test ${common_ofi_happy} -eq 1],
+          [$1],
+          [$2])
 
+    AC_SUBST([common_ofi_CPPFLAGS])
+    AC_SUBST([common_ofi_LDFLAGS])
+    AC_SUBST([common_ofi_LIBS])
+
+    OPAL_VAR_SCOPE_POP
 ])dnl
