@@ -7,6 +7,7 @@
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -161,7 +162,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                         ])
                   CPPFLAGS=$old_CPPFLAGS
 
-                  OPAL_SUMMARY_ADD([[Transports]],[[Open UCX]],[$1],[$ompi_check_ucx_happy])])])
+                  OPAL_SUMMARY_ADD([Transports], [Open UCX], [], [$ompi_check_ucx_happy])])])
 
     AS_IF([test "$ompi_check_ucx_happy" = "yes"],
           [$1_CPPFLAGS="[$]$1_CPPFLAGS $ompi_check_ucx_CPPFLAGS"

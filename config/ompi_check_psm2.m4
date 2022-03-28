@@ -19,7 +19,7 @@
 #                         reserved.
 #  Copyright (c) 2021     Triad National Security, LLC. All rights
 #                         reserved.
-#
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -96,7 +96,7 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
 	LDFLAGS="$ompi_check_psm2_$1_save_LDFLAGS"
 	LIBS="$ompi_check_psm2_$1_save_LIBS"
 
-        OPAL_SUMMARY_ADD([[Transports]],[[Intel Omnipath (PSM2)]],[$1],[$ompi_check_psm2_happy])
+        OPAL_SUMMARY_ADD([Transports], [Intel Omnipath (PSM2)], [], [$ompi_check_psm2_happy])
     fi
 
     AS_IF([test "$ompi_check_psm2_happy" = "yes"],

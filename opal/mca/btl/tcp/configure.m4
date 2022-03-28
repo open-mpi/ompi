@@ -13,6 +13,7 @@
 # Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,5 +37,5 @@ AC_DEFUN([MCA_opal_btl_tcp_CONFIG],[
 #include <netinet/in.h>
 #endif
 		   ])
-    OPAL_SUMMARY_ADD([[Transports]],[[TCP]],[[btl_tcp]],[$opal_btl_tcp_happy])
+    OPAL_SUMMARY_ADD([Transports], [TCP], [], [$opal_btl_tcp_happy])
 ])dnl

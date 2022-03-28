@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2008-2012 University of Houston. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,7 +35,7 @@ AC_DEFUN([MCA_ompi_fs_lustre_CONFIG],[
           [$1],
           [$2])
 
-    OPAL_SUMMARY_ADD([[OMPIO File Systems]],[[Lustre]],[$1],[$fs_lustre_happy])
+    OPAL_SUMMARY_ADD([OMPIO File Systems], [Lustre], [], [$fs_lustre_happy])
 
     # substitute in the things needed to build lustre
     AC_SUBST([fs_lustre_CPPFLAGS])

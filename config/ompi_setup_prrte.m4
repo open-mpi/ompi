@@ -16,8 +16,7 @@ dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
-dnl Copyright (c) 2020-2021 Amazon.com, Inc. or its affiliates.
-dnl                         All Rights reserved.
+dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
@@ -108,7 +107,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
                        [$OMPI_USING_INTERNAL_PRRTE],
                        [Whether or not we are using the internal PRRTE])
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]], [[prrte]], [prrte], [$opal_prrte_mode])
+    OPAL_SUMMARY_ADD([Miscellaneous], [prrte], [], [$opal_prrte_mode])
 
     OPAL_VAR_SCOPE_POP
 ])
