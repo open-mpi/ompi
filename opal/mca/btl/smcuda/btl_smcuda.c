@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
@@ -887,7 +887,9 @@ int mca_btl_smcuda_sendi(struct mca_btl_base_module_t *btl,
         /* note that frag==NULL is equivalent to rc returning an error code */
         MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
         if (OPAL_UNLIKELY(NULL == frag)) {
-            *descriptor = NULL;
+            if (NULL != descriptor) {
+                *descriptor = NULL;
+            }
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
