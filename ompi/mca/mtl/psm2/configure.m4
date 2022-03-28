@@ -13,6 +13,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
 # Copyright (c) 2014      Intel Corporation. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -42,7 +43,6 @@ AC_DEFUN([MCA_ompi_mtl_psm2_CONFIG],[
           [$2])
 
     # substitute in the things needed to build psm2
-    AC_SUBST([mtl_psm2_CFLAGS])
     AC_SUBST([mtl_psm2_CPPFLAGS])
     AC_SUBST([mtl_psm2_LDFLAGS])
     AC_SUBST([mtl_psm2_LIBS])

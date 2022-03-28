@@ -1,6 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2018      Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,9 +25,7 @@ AC_DEFUN([MCA_opal_common_ucx_CONFIG],[
           [$1],
           [$2])
 
-
     # substitute in the things needed to build common_ucx
-    AC_SUBST([common_ucx_CFLAGS])
     AC_SUBST([common_ucx_CPPFLAGS])
     AC_SUBST([common_ucx_LDFLAGS])
     AC_SUBST([common_ucx_LIBS])
