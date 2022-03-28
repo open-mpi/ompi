@@ -935,9 +935,8 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         /* allocate a fragment, giving up if we can't get one */
         /* note that frag==NULL is equivalent to rc returning an error code */
         MCA_BTL_SMCUDA_FRAG_ALLOC_EAGER(frag);
-        if( OPAL_UNLIKELY(NULL == frag) ) {
-            *descriptor = NULL;
-            return OPAL_ERR_OUT_OF_RESOURCE;
+        if (OPAL_UNLIKELY(NULL == frag)) {
+            goto return_resource_busy;
         }
 
         /* fill in fragment fields */
@@ -986,7 +985,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
 
   return_resource_busy:
     if (NULL != descriptor) {
-        *descriptor = mca_btl_smcuda_alloc(btl, endpoint, order, payload_size + header_size, flags);
+        *descriptor = mca_btl_smcuda_alloc(btl, endpoint, order, length, flags);
     }
     return OPAL_ERR_RESOURCE_BUSY;
 }
