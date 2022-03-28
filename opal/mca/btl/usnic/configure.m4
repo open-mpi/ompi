@@ -98,7 +98,7 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
 
     AS_IF([test "$opal_btl_usnic_happy" = "yes"],
           [ # The usnic BTL requires OFI libfabric support
-           OPAL_CHECK_OFI
+           OPAL_CHECK_OFI([btl_usnic])
            opal_btl_usnic_happy=$opal_ofi_happy])
 
     # The usnic BTL requires at least OFI libfabric v1.3.

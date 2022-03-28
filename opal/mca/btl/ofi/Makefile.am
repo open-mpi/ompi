@@ -15,6 +15,7 @@
 # Copyright (c) 2018      Intel, inc. All rights reserved
 # Copyright (c) 2020      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,7 +25,7 @@
 
 #dist_opaldata_DATA = help-mpi-btl-ofi.txt
 
-AM_CPPFLAGS = $(opal_ofi_CPPFLAGS)
+AM_CPPFLAGS = $(btl_ofi_CPPFLAGS)
 sources = \
     btl_ofi.h \
     btl_ofi_component.c \
@@ -58,12 +59,12 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_ofi_la_SOURCES = $(component_sources)
 mca_btl_ofi_la_LDFLAGS = -module -avoid-version \
-                         $(opal_ofi_LDFLAGS)
+                         $(btl_ofi_LDFLAGS)
 mca_btl_ofi_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
     $(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_NAME@mca_common_ofi.la \
-    $(opal_ofi_LIBS)
+    $(btl_ofi_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_ofi_la_SOURCES = $(lib_sources)
-libmca_btl_ofi_la_LDFLAGS = -module -avoid-version $(opal_ofi_LDFLAGS)
-libmca_btl_ofi_la_LIBS = $(opal_ofi_LIBS)
+libmca_btl_ofi_la_LDFLAGS = -module -avoid-version $(btl_ofi_LDFLAGS)
+libmca_btl_ofi_la_LIBS = $(btl_ofi_LIBS)
