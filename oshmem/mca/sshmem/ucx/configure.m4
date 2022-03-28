@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2017      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +62,6 @@ AC_DEFUN([MCA_oshmem_sshmem_ucx_CONFIG],[
     LIBS="$save_LIBS"
 
     # substitute in the things needed to build ucx 
-    AC_SUBST([sshmem_ucx_CFLAGS])
     AC_SUBST([sshmem_ucx_CPPFLAGS])
     AC_SUBST([sshmem_ucx_LDFLAGS])
     AC_SUBST([sshmem_ucx_LIBS])
