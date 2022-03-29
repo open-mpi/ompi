@@ -10,6 +10,7 @@
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
  *  Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ *  Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -20,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "opal/datatype/opal_convertor.h"
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #include "opal/util/sys_limits.h"
 
 #include "opal/mca/allocator/allocator.h"
