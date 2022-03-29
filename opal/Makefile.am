@@ -37,9 +37,6 @@ SUBDIRS = \
 	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
-# libltdl is included by variable because if --disable-dlopen was
-# used, there will be no generated Makefile in that directory (and
-# therefore make distclean will fail).
 DIST_SUBDIRS = \
 	include \
 	cuda \
