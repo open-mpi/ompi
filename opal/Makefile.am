@@ -22,31 +22,6 @@
 # $HEADER$
 #
 
-if OPAL_cuda_support
-SUBDIRS = \
-	include \
-        mca/common/cuda \
-        datatype \
-        etc \
-        util \
-	mca/base \
-	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
-	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
-        . \
-	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
-# libltdl is included by variable because if --disable-dlopen was
-# used, there will be no generated Makefile in that directory (and
-# therefore make distclean will fail).
-DIST_SUBDIRS = \
-	include \
-        mca/common/cuda \
-        datatype \
-        etc \
-	util \
-	mca/base \
-	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
-	$(MCA_opal_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
-else
 SUBDIRS = \
 	include \
         datatype \
@@ -68,7 +43,6 @@ DIST_SUBDIRS = \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
-endif
 
 # Build the main OPAL library
 lib_LTLIBRARIES = lib@OPAL_LIB_NAME@.la

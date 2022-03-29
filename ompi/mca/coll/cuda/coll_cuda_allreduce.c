@@ -17,7 +17,7 @@
 
 #include "ompi/op/op.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/util/opal_cuda_copy.h"
 
 /*
  *	allreduce_intra

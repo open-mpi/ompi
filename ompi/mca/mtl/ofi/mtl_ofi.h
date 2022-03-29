@@ -53,6 +53,7 @@
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/util/opal_cuda_copy.h"
 #endif
 
 BEGIN_C_DECLS

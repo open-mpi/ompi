@@ -124,6 +124,12 @@ if OPAL_COMPILE_TIMING
 libopalutil_la_SOURCES += timings.c
 endif
 
+# If we have cuda support, modify file list and flags
+if OPAL_cuda_support
+libopalutil_la_SOURCES += opal_cuda_copy.c
+headers += opal_cuda_copy.h
+endif
+
 libopalutil_la_LIBADD = \
         keyval/libopalutilkeyval.la
 libopalutil_la_DEPENDENCIES = \

@@ -75,7 +75,7 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
 #include "opal_datatype_copy.h"
 
 #if OPAL_CUDA_SUPPORT
-#    include "opal/mca/common/cuda/common_cuda.h"
+#    include "opal/util/opal_cuda_copy.h"
 
 #    undef MEM_OP_BLOCK_SIZE
 #    define MEM_OP_BLOCK_SIZE total_length
