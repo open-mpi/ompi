@@ -241,13 +241,13 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    if (true == btl->use_fi_mr_bind) {
+    if (btl->use_fi_mr_bind) {
         BTL_VERBOSE(("binding mr to endpoint"));
         rc = fi_mr_bind(ur->ur_mr, &btl->ofi_endpoint->fid, 0ULL);
         if (FI_SUCCESS != rc) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-	rc = fi_mr_enable(ur->ur_mr);
+        rc = fi_mr_enable(ur->ur_mr);
         if (FI_SUCCESS != rc) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
