@@ -21,6 +21,7 @@
  *                         All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +52,7 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_hdr.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_buffer_t,

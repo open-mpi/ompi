@@ -5,7 +5,7 @@
  * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -21,7 +21,7 @@
 #include "opal/util/printf.h"
 #include "opal/mca/common/ofi/common_ofi.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
 static int ompi_mtl_ofi_component_open(void);
