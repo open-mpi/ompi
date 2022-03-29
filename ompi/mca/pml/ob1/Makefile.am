@@ -13,6 +13,7 @@
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -75,10 +76,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_ob1_la_SOURCES = $(ob1_sources)
 mca_pml_ob1_la_LDFLAGS = -module -avoid-version
 
-if OPAL_cuda_support
-mca_pml_ob1_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_NAME@mca_common_cuda.la
-endif
+mca_pml_ob1_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_ob1_la_SOURCES = $(ob1_sources)

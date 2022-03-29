@@ -19,8 +19,7 @@
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights
- *                         reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,7 +89,7 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/btl.h"
 #if OPAL_CUDA_SUPPORT
-#    include "opal/mca/common/cuda/common_cuda.h"
+#    include "opal/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
 #define MCA_BTL_TCP_BTL_BANDWIDTH 100

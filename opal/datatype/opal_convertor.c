@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +40,7 @@
 #include "opal/datatype/opal_datatype_internal.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
 #if OPAL_CUDA_SUPPORT
-#    include "opal/mca/common/cuda/common_cuda.h"
+#    include "opal/cuda/common_cuda.h"
 #    define MEMCPY_CUDA(DST, SRC, BLENGTH, CONVERTOR) \
         CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
 #endif

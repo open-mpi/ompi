@@ -53,7 +53,7 @@
 #include "opal/util/sys_limits.h"
 #include "opal/util/minmax.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 #include "opal/util/info_subscriber.h"
 #include "opal/mca/mpool/base/base.h"
