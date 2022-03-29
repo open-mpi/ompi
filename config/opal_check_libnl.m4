@@ -144,10 +144,12 @@ dnl
 AC_DEFUN([OPAL_LIBNL_SANITY_CHECK_LINUX], [
     OPAL_VAR_SCOPE_PUSH([this_requires_v1 libnl_sane this_requires_v3 ldd_output result_msg])
 
-    AC_LANG_PUSH(C)
+    AS_VAR_PUSHDEF([libnl_check_lib], [opal_libnl_sanity_check_cv_$1])
 
-    AC_MSG_CHECKING([if $1 requires libnl v1 or v3])
-    cat > conftest_c.$ac_ext << EOF
+    AC_CACHE_CHECK([if $1 requires libnl v1 or v3],
+        [libnl_check_lib],
+        [AC_LANG_PUSH([C])
+         cat > conftest_c.$ac_ext << EOF
 extern void $2 (void);
 int main(int argc, char *argv[[]]) {
     $2 ();
@@ -155,22 +157,25 @@ int main(int argc, char *argv[[]]) {
 }
 EOF
 
+         result_msg=
+         OPAL_LOG_COMMAND([$CC -o conftest $CFLAGS $CPPFLAGS conftest_c.$ac_ext $LDFLAGS $LIBS $3],
+             [ldd_output=`ldd conftest`
+              AS_IF([echo $ldd_output | grep -q libnl-3.so],
+                    [result_msg="v3"])
+              AS_IF([echo $ldd_output | grep -q libnl.so],
+                    [OPAL_APPEND([result_msg], ["v1"])])
+              AS_IF([test -z "${result_msg}"], [result_msg="none"])],
+             [AC_MSG_WARN([Could not link a simple program with lib $1])])
+         AC_LANG_POP([C])
+         AS_VAR_SET([libnl_check_lib], [${result_msg}])
+         rm -f conftest conftest_c.$ac_ext])
+    AS_VAR_COPY([result_msg], [libnl_check_lib])
     this_requires_v1=0
     this_requires_v3=0
-    result_msg=
-    OPAL_LOG_COMMAND([$CC -o conftest $CFLAGS $CPPFLAGS conftest_c.$ac_ext $LDFLAGS $LIBS $3],
-        [ldd_output=`ldd conftest`
-         AS_IF([echo $ldd_output | grep -q libnl-3.so],
-               [this_requires_v3=1
-                result_msg="v3"])
-         AS_IF([echo $ldd_output | grep -q libnl.so],
-               [this_requires_v1=1
-                result_msg="v1 $result_msg"])
-         AS_IF([test -z "${result_msg}"], [result_msg="none"])
-         AC_MSG_RESULT([$result_msg])
-         ],
-        [AC_MSG_WARN([Could not link a simple program with lib $1])
-        ])
+    AS_IF([echo "${result_msg}" | grep -q v1], [this_requires_v1=1])
+    AS_IF([echo "${result_msg}" | grep -q v3], [this_requires_v3=1])
+
+    AS_VAR_POPDEF([libnl_check_lib])
 
     # Assume that our configuration is sane; this may get reset below
     libnl_sane=1
@@ -202,16 +207,13 @@ EOF
     # v1?  If so, fail.
     AS_IF([test $libnl_sane -eq 1 && test $this_requires_v3 -eq 1],
           [AS_IF([test $opal_libnl_version -eq 1],
-                 [AC_MSG_WARN([libnl version conflict: $opal_libnlv1_libs requires libnl whereas 1 requires libnl-3])
+                 [AC_MSG_WARN([libnl version conflict: $opal_libnlv1_libs requires libnl whereas $1 requires libnl-3])
                   OPAL_LIBNL_SANITY_FAIL_MSG($1)
                   libnl_sane=0],
                  [opal_libnlv3_libs="$opal_libnlv3_libs $1"
                   OPAL_UNIQ([opal_libnlv3_libs])
                   opal_libnl_version=3])
           ])
-
-    AC_LANG_POP(C)
-    rm -f conftest conftest_c.$ac_ext
 
     $4=$libnl_sane
 
