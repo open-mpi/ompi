@@ -10,6 +10,7 @@
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
  *  Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ *  Copyright (c) 2021      IBM Corporation. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -39,8 +40,9 @@ static void* mca_common_ompio_buffer_alloc_seg ( void *ctx, size_t *size );
 static void mca_common_ompio_buffer_free_seg ( void *ctx, void *buf );
 
 #if OPAL_CUDA_SUPPORT
-void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, int *is_gpu, 
-				      int *is_managed)
+void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf,
+                                      struct ompi_datatype_t *datatype,
+                                      int *is_gpu, int *is_managed)
 {
     opal_convertor_t    convertor;  
     
@@ -48,6 +50,7 @@ void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, int *is
     *is_managed=0;
     
     convertor.flags=0;
+    convertor.pDesc = &datatype->super;
     if ( opal_cuda_check_one_buf ( (char *)buf, &convertor ) ) {
         *is_gpu = 1;
         if ( convertor.flags & CONVERTOR_CUDA_UNIFIED ){

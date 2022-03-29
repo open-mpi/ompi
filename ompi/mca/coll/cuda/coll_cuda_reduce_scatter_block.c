@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +48,7 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
 
     sbufsize = rbufsize * ompi_comm_size(comm);
 
-    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *)sbuf, NULL))) {
+    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs(BUF_START((char *)sbuf, dtype), NULL))) {
         sbuf1 = (char*)malloc(sbufsize);
         if (NULL == sbuf1) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -56,7 +57,7 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
         sbuf = sbuf1 - gap;
     }
 
-    if (opal_cuda_check_bufs(rbuf, NULL)) {
+    if (opal_cuda_check_bufs(BUF_START(rbuf, dtype), NULL)) {
         rbuf1 = (char*)malloc(rbufsize);
         if (NULL == rbuf1) {
             if (NULL != sbuf1) free(sbuf1);

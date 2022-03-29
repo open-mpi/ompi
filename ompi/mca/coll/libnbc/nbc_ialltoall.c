@@ -10,7 +10,7 @@
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2021 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -146,7 +146,7 @@ static int nbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype se
 
     /* phase 1 - rotate n data blocks upwards into the tmpbuffer */
 #if OPAL_CUDA_SUPPORT
-    if (NBC_Type_intrinsic(sendtype) && !(opal_cuda_check_bufs((char *)sendbuf, (char *)recvbuf))) {
+    if (NBC_Type_intrinsic(sendtype) && !(opal_cuda_check_bufs(BUF_START((char *)sendbuf, sendtype), BUF_START((char *)recvbuf, recvtype)))) {
 #else
     if (NBC_Type_intrinsic(sendtype)) {
 #endif /* OPAL_CUDA_SUPPORT */

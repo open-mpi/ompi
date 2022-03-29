@@ -14,6 +14,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1698,6 +1699,25 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
     CUmemorytype memType = 0;
     CUdeviceptr dbuf = (CUdeviceptr) pUserBuf;
     CUcontext ctx = NULL, memCtx = NULL;
+
+    /*
+     * If a convertor is provided, it needs to have a .pDesc set
+     * and then we'll offset to the true_lb to find the address of the
+     * actual data, as pUserBuf by itself isn't a meaningfull address
+     * when used with MPI datatypes.  But if convertor is null we'll just
+     * use pUserBuf directly.
+     */
+    if (NULL != convertor) {
+        dbuf = (CUdeviceptr)((char*)pUserBuf + convertor->pDesc.true_lb);
+        /* I'm not doing anything with count and true_ub to locate
+         * the top byte or any interior bytes mainly because I don't
+         * even know what I'd want this function to do if the MPI
+         * datatype spanned multiple types of memory.  You can easily
+         * construct MPI datatypes to do that, so I'd lean toward
+         * documenting that that's not allowed.
+         */
+    }
+
 #if OPAL_CUDA_GET_ATTRIBUTES
     uint32_t isManaged = 0;
     /* With CUDA 7.0, we can get multiple attributes with a single call */
@@ -2102,6 +2122,10 @@ void mca_cuda_convertor_init(opal_convertor_t *convertor, const void *pUserBuf)
 /* Checks the type of pointer
  *
  * @param dest   One pointer to check
+ *               the buffers are the real address to check, eg if there
+ *               was a userbuf and an MPI datatype involved, the argument
+ *               passed in here should already be offset from userbuf to
+ *               where the data is
  * @param source Another pointer to check
  */
 bool opal_cuda_check_bufs(char *dest, char *src)
@@ -2132,6 +2156,9 @@ bool opal_cuda_check_bufs(char *dest, char *src)
 /* Checks the type of pointer
  *
  * @param buf   check one pointer providing a convertor.
+ *              when a convertor is provided, the buf should be a userbuf
+ *              so the convertor's datatype is used to locate the offset
+ *              where data actually begins
  *  Provides aditional information, e.g. managed vs. unmanaged GPU buffer
  */
 bool opal_cuda_check_one_buf(char *buf, opal_convertor_t *convertor)
