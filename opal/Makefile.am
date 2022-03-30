@@ -85,7 +85,8 @@ lib@OPAL_LIB_NAME@_la_DEPENDENCIES = \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
-        $(MCA_opal_FRAMEWORK_LIBS)
+        $(MCA_opal_FRAMEWORK_LIBS) \
+        $(LIBOPAL_CUDA_LA)
 lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@ \
 	$(opal_libevent_LDFLAGS) \
 	$(opal_hwloc_LDFLAGS) \
