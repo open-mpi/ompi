@@ -16,6 +16,8 @@
  *
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -237,6 +239,18 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
     rc = fi_mr_reg(btl->domain, base, size, access_flags, 0, (uint64_t) reg, 0, &ur->ur_mr, NULL);
     if (0 != rc) {
         return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (btl->use_fi_mr_bind) {
+        BTL_VERBOSE(("binding mr to endpoint"));
+        rc = fi_mr_bind(ur->ur_mr, &btl->ofi_endpoint->fid, 0ULL);
+        if (FI_SUCCESS != rc) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        rc = fi_mr_enable(ur->ur_mr);
+        if (FI_SUCCESS != rc) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     ur->handle.rkey = fi_mr_key(ur->ur_mr);

@@ -15,6 +15,8 @@
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -124,6 +126,7 @@ struct mca_btl_ofi_module_t {
     bool initialized;
     bool use_virt_addr;
     bool is_scalable_ep;
+    bool use_fi_mr_bind;
 
     opal_atomic_int64_t outstanding_rdma;
     opal_atomic_int64_t outstanding_send;
