@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +26,7 @@
 #include "pml_ob1_sendreq.h"
 #include "ompi/mca/bml/base/base.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #include "pml_ob1_recvreq.h"
 #include "opal/runtime/opal_params.h"
 

@@ -17,7 +17,7 @@
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- *
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +86,7 @@
 #ifdef HAVE_MALLOC_H
 #    include <malloc.h>
 #endif
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/util/proc.h"

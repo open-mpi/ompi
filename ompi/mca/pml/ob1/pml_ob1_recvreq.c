@@ -23,6 +23,7 @@
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,7 @@
 #include "ompi/mca/bml/base/base.h"
 
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
 #if OPAL_CUDA_SUPPORT
