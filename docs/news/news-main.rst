@@ -8,7 +8,6 @@ considered definitive.
 
 Open MPI version main
 ---------------------
-:Date: 30 March 2022
 
 .. admonition:: MPIR API has been removed
    :class: warning
