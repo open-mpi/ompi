@@ -30,8 +30,8 @@ Open MPI version 5.0.0rc4
    regardless of whether you are using an externally-installed PMIx or
    the PMIx that is installed with Open MPI.
 
-- Updated to use PMIx ``v4.2`` branch - current hash: ``1b86a35``.
-- Updated to use PRRTE ``v2.1`` branch - current hash: ``91f791e``.
+- Updated to use PMIx ``v4.2`` branch - current hash: ``d3445c8``.
+- Updated to use PRRTE ``v2.1`` branch - current hash: ``5378b09``.
 
 .. caution::
    Open MPI no longer builds 3rd-party packages
