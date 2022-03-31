@@ -1,5 +1,5 @@
-Master updates (not on release branches yet)
-============================================
+Main updates (not on release branches yet)
+==========================================
 
 This file generally contains all the updates for Open MPI that have
 not yet appeared on a release branch.  It reflects active development,
