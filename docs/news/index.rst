@@ -38,7 +38,8 @@ version 1.0.
 .. toctree::
    :maxdepth: 1
 
-   news-master
+   news-main
+   news-v5.0.x
    news-v4.1.x
    news-v4.0.x
    news-v3.1.x
