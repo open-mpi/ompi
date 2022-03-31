@@ -650,11 +650,13 @@ static int rebuild_communicator_list (mqs_process *proc)
         if( 0 == comm_ptr ) continue;
         commcount++;
         /* Now let's grab the data we want from inside */
+        /* NTH:  XXXXXXXXXXXXX FIXME!!!!!!!!!!!!!! c_index is local but MSGQ needs a global identifier
+         * that is sizeof (void *) or smaller. */
         DEBUG(VERBOSE_GENERAL, ("Retrieve context_id from 0x%llx and local_rank from 0x%llx\n",
-                                (long long)(comm_ptr + i_info->ompi_communicator_t.offset.c_contextid),
+                                (long long)(comm_ptr + i_info->ompi_communicator_t.offset.c_index),
                                 (long long)(comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank)));
         context_id = ompi_fetch_int( proc,
-                                     comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
+                                     comm_ptr + i_info->ompi_communicator_t.offset.c_index,
                                      p_info );
         /* Do we already have this communicator ? */
         old = find_communicator(p_info, context_id);

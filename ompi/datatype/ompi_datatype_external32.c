@@ -90,8 +90,12 @@ int32_t ompi_datatype_default_convertors_init( void )
 
 int32_t ompi_datatype_default_convertors_fini( void )
 {
-    OBJ_RELEASE( ompi_mpi_external32_convertor );
-    OBJ_RELEASE( ompi_mpi_local_convertor );
+    if (NULL != ompi_mpi_external32_convertor) {
+        OBJ_RELEASE( ompi_mpi_external32_convertor );
+    }
+    if (NULL != ompi_mpi_local_convertor) {
+        OBJ_RELEASE( ompi_mpi_local_convertor );
+    }
 
     return OMPI_SUCCESS;
 }

@@ -127,5 +127,11 @@ static int mca_bml_base_close( void )
         return ret;
     }
 
-    return mca_base_framework_close(&opal_btl_base_framework);
+    ret = mca_base_framework_close(&opal_btl_base_framework);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    mca_bml_component_init_called = false;
+    return OMPI_SUCCESS;
 }

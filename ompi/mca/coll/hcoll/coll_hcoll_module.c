@@ -378,7 +378,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     hcoll_module->comm = comm;
 
     HCOL_VERBOSE(10,"Creating hcoll_context for comm %p, comm_id %d, comm_size %d",
-                 (void*)comm,comm->c_contextid,ompi_comm_size(comm));
+                 (void*)comm,comm->c_index,ompi_comm_size(comm));
 
     hcoll_module->hcoll_context =
         hcoll_create_context((rte_grp_handle_t)comm);

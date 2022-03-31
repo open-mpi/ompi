@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2008      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  */
 
 #include "ompi_config.h"
@@ -289,19 +292,9 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
 {
     int err;
 
-    if( OMPI_SUCCESS != (err = ompi_comm_create(comm_old,
-                                                comm_old->c_local_group,
-                                                newcomm)) ) {
+    if (OMPI_SUCCESS != (err = ompi_comm_dup_with_info (comm_old, info, newcomm))) {
         OBJ_RELEASE(module);
         return err;
-    }
-    // But if there is an info object, the above call didn't make use
-    // of it, so we'll do a dup-with-info to get the final comm and
-    // free the above intermediate newcomm:
-    if (info && info != &(MPI_INFO_NULL->super)) {
-        ompi_communicator_t *intermediate_comm = *newcomm;
-        ompi_comm_dup_with_info (intermediate_comm, info, newcomm);
-        ompi_comm_free(&intermediate_comm);
     }
 
     assert(NULL == (*newcomm)->c_topo);
@@ -332,18 +325,10 @@ static void mca_topo_base_comm_dist_graph_2_2_0_construct(mca_topo_base_comm_dis
 }
 
 static void mca_topo_base_comm_dist_graph_2_2_0_destruct(mca_topo_base_comm_dist_graph_2_2_0_t * dist_graph) {
-    if (NULL != dist_graph->in) {
-        free(dist_graph->in);
-    }
-    if (NULL != dist_graph->inw) {
-        free(dist_graph->inw);
-    }
-    if (NULL != dist_graph->out) {
-        free(dist_graph->out);
-    }
-    if (NULL != dist_graph->outw) {
-        free(dist_graph->outw);
-    }
+    free(dist_graph->in);
+    free(dist_graph->inw);
+    free(dist_graph->out);
+    free(dist_graph->outw);
 }
 
 OBJ_CLASS_INSTANCE(mca_topo_base_comm_dist_graph_2_2_0_t, opal_object_t,

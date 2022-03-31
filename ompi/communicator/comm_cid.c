@@ -24,6 +24,8 @@
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,10 +33,13 @@
  * $HEADER$
  */
 
+
 #include "ompi_config.h"
 
 #include "opal/mca/pmix/base/base.h"
+#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
@@ -44,9 +49,19 @@
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/ompi_rte.h"
+#include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_rte.h"
+
+#include "pmix.h"
+
+/* for use when we don't have a PMIx that supports CID generation */
+opal_atomic_int64_t ompi_comm_next_base_cid = 1;
+
+/* A macro comparing two CIDs */
+#define OMPI_COMM_CID_IS_LOWER(comm1,comm2) ( ((comm1)->c_index < (comm2)->c_index)? 1:0)
 
 struct ompi_comm_cid_context_t;
 
@@ -216,6 +231,7 @@ static ompi_comm_cid_context_t *mca_comm_cid_context_alloc (ompi_communicator_t 
         context->allreduce_fn = ompi_comm_allreduce_inter_nb;
         break;
     case OMPI_COMM_CID_GROUP:
+    case OMPI_COMM_CID_GROUP_NEW:
         context->allreduce_fn = ompi_comm_allreduce_group_nb;
         context->pml_tag = ((int *) arg0)[0];
         break;
@@ -287,12 +303,154 @@ static volatile int64_t ompi_comm_cid_lowest_id = INT64_MAX;
 static int ompi_comm_cid_epoch = INT_MAX;
 #endif /* OPAL_ENABLE_FT_MPI */
 
+static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
+                                        ompi_comm_extended_cid_block_t *new_block,
+                                        const void *arg0, const void *arg1, bool send_first, int mode,
+                                        ompi_request_t **req)
+{
+    pmix_info_t pinfo, *results = NULL;
+    size_t nresults;
+    opal_process_name_t *name_array;
+    char *tag = NULL;
+    size_t proc_count, cid_base = 0UL;
+    int rc, leader_rank;
+    pmix_proc_t *procs;
+
+    rc = ompi_group_to_proc_name_array (newcomm->c_local_group, &name_array, &proc_count);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        return rc;
+    }
+
+    switch (mode) {
+    case OMPI_COMM_CID_GROUP_NEW:
+        tag = (char *) arg0;
+        break;
+    case OMPI_COMM_CID_GROUP:
+        ompi_group_translate_ranks (newcomm->c_local_group, 1, &(int){0},
+                                    comm->c_local_group, &leader_rank);
+
+        tag = ompi_comm_extended_cid_get_unique_tag (&comm->c_contextidb, *((int *) arg0), leader_rank);
+        break;
+    case OMPI_COMM_CID_INTRA:
+        tag = ompi_comm_extended_cid_get_unique_tag (&comm->c_contextidb, -1, 0);
+        break;
+    }
+
+    PMIX_INFO_LOAD(&pinfo, PMIX_GROUP_ASSIGN_CONTEXT_ID, NULL, PMIX_BOOL);
+
+    PMIX_PROC_CREATE(procs, proc_count);
+    for (size_t i = 0 ; i < proc_count; ++i) {
+        OPAL_PMIX_CONVERT_NAME(&procs[i],&name_array[i]);
+    }
+
+    rc = PMIx_Group_construct(tag, procs, proc_count, &pinfo, 1, &results, &nresults);
+    PMIX_INFO_DESTRUCT(&pinfo);
+
+    if (NULL != results) {
+        PMIX_VALUE_GET_NUMBER(rc, &results[0].value, cid_base, size_t);
+        PMIX_INFO_FREE(results, nresults);
+    }
+
+    PMIX_PROC_FREE(procs, proc_count);
+    free (name_array);
+
+    rc = PMIx_Group_destruct (tag, NULL, 0);
+
+    ompi_comm_extended_cid_block_initialize (new_block, cid_base, 0, 0);
+
+    return OMPI_SUCCESS;
+}
+
+static int ompi_comm_nextcid_ext_nb (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
+                                     ompi_communicator_t *bridgecomm, const void *arg0, const void *arg1,
+                                     bool send_first, int mode, ompi_request_t **req)
+{
+    ompi_comm_extended_cid_block_t *block;
+    bool is_new_block = false;
+    int rc;
+
+    /*
+     * sanity check and coverity pacifier
+     */
+    if (!(OMPI_COMM_CID_GROUP == mode || OMPI_COMM_CID_GROUP_NEW == mode) && (NULL == comm)) {
+        return OMPI_ERROR;
+    }
+
+    if (OMPI_COMM_CID_GROUP == mode || OMPI_COMM_CID_GROUP_NEW == mode) {
+        /* new block belongs to the new communicator */
+        block = &newcomm->c_contextidb;
+    } else {
+        block = &comm->c_contextidb;
+    }
+
+    if (NULL == arg1) {
+        if (OMPI_COMM_CID_GROUP == mode || OMPI_COMM_CID_GROUP_NEW == mode ||
+            !ompi_comm_extended_cid_block_available (&comm->c_contextidb)) {
+            /* need a new block. it will be either assigned the the new communicator (MPI_Comm_create*_group)
+             * or the parent (which has no more CIDs in its block) */
+            rc = ompi_comm_ext_cid_new_block (newcomm, comm, block, arg0, arg1, send_first, mode, req);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                return rc;
+            }
+
+            is_new_block = true;
+        }
+    } else {
+        /* got a block already */
+        *block = *((ompi_comm_extended_cid_block_t *) arg1);
+        is_new_block = true;
+    }
+
+    if (block != &newcomm->c_contextidb) {
+        (void) ompi_comm_extended_cid_block_new (block, &newcomm->c_contextidb, is_new_block);
+    }
+
+    for (unsigned int i = ompi_mpi_communicators.lowest_free ; i < mca_pml.pml_max_contextid ; ++i) {
+        bool flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i, newcomm);
+        if (true == flag) {
+            newcomm->c_index = i;
+            break;
+        }
+    }
+
+    newcomm->c_contextid = newcomm->c_contextidb.block_cid;
+
+    opal_hash_table_set_value_ptr (&ompi_comm_hash, &newcomm->c_contextid,
+                                   sizeof (newcomm->c_contextid), (void *) newcomm);
+    *req = &ompi_request_empty;
+    /* nothing more to do here */
+    return OMPI_SUCCESS;
+}
+
 int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
                           ompi_communicator_t *bridgecomm, const void *arg0, const void *arg1,
                           bool send_first, int mode, ompi_request_t **req)
 {
     ompi_comm_cid_context_t *context;
     ompi_comm_request_t *request;
+
+    if (mca_pml_base_supports_extended_cid() && NULL == comm) {
+        return ompi_comm_nextcid_ext_nb (newcomm, comm, bridgecomm, arg0, arg1, send_first, mode, req);
+    }
+
+    /* old CID algorighm */
+
+    /* if we got here and comm is NULL then that means the app is  invoking MPI-4 Sessions or later
+       functions but the pml does not support these functions so return not supported */
+    if (NULL == comm) {
+       char msg_string[1024];
+       sprintf(msg_string,"The PML being used - %s - does not support MPI sessions related features", 
+               mca_pml_base_selected_component.pmlm_version.mca_component_name);
+       opal_show_help("help-comm.txt",
+                      "MPI function not supported",
+                      true,
+                      "MPI_Comm_from_group/MPI_Intercomm_from_groups",
+                      msg_string);
+
+        return MPI_ERR_UNSUPPORTED_OPERATION;
+    }
+
+    newcomm->c_flags |= OMPI_COMM_GLOBAL_INDEX;
 
     context = mca_comm_cid_context_alloc (newcomm, comm, bridgecomm, arg0, arg1,
                                           "nextcid", send_first, mode);
@@ -332,9 +490,11 @@ int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
         return rc;
     }
 
-    ompi_request_wait_completion (req);
-    rc = req->req_status.MPI_ERROR;
-    ompi_comm_request_return ((ompi_comm_request_t *) req);
+    if (&ompi_request_empty != req) {
+        ompi_request_wait_completion (req);
+        rc = req->req_status.MPI_ERROR;
+        ompi_comm_request_return ((ompi_comm_request_t *) req);
+    }
 
     return rc;
 }
@@ -342,7 +502,7 @@ int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
 static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
 {
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
-    int64_t my_id = ((int64_t) ompi_comm_get_cid (context->comm) << 32 | context->pml_tag);
+    int64_t my_id = ((int64_t) ompi_comm_get_local_cid (context->comm) << 32 | context->pml_tag);
     ompi_request_t *subreq;
     bool flag = false;
     int ret = OMPI_SUCCESS;
@@ -503,11 +663,16 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
         }
 
         /* set the according values to the newcomm */
-        context->newcomm->c_contextid = context->nextcid;
 #if OPAL_ENABLE_FT_MPI
         context->newcomm->c_epoch = INT_MAX - context->rflag; /* reorder for simpler debugging */
         ompi_comm_cid_epoch -= 1; /* protected by the cid_lock */
 #endif /* OPAL_ENABLE_FT_MPI */
+        context->newcomm->c_index = context->nextcid;
+
+        /* to simplify coding always set the global CID even if it isn't used by the
+         * active PML */
+        context->newcomm->c_contextid.cid_base = 0;
+        context->newcomm->c_contextid.cid_sub.u64 = context->nextcid;
         opal_pointer_array_set_item (&ompi_mpi_communicators, context->nextcid, context->newcomm);
 
         /* unlock the cid generator */
@@ -553,6 +718,74 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
 /* Non-blocking version of ompi_comm_activate */
 static int ompi_comm_activate_nb_complete (ompi_comm_request_t *request);
 
+static int ompi_comm_activate_complete (ompi_communicator_t **newcomm, ompi_communicator_t *comm)
+{
+    int ret;
+
+    /**
+     * Check to see if this process is in the new communicator.
+     *
+     * Specifically, this function is invoked by all proceses in the
+     * old communicator, regardless of whether they are in the new
+     * communicator or not.  This is because it is far simpler to use
+     * MPI collective functions on the old communicator to determine
+     * some data for the new communicator (e.g., remote_leader) than
+     * to kludge up our own pseudo-collective routines over just the
+     * processes in the new communicator.  Hence, *all* processes in
+     * the old communicator need to invoke this function.
+     *
+     * That being said, only processes in the new communicator need to
+     * select a coll module for the new communicator.  More
+     * specifically, proceses who are not in the new communicator
+     * should *not* select a coll module -- for example,
+     * ompi_comm_rank(newcomm) returns MPI_UNDEFINED for processes who
+     * are not in the new communicator.  This can cause errors in the
+     * selection / initialization of a coll module.  Plus, it's
+     * wasteful -- processes in the new communicator will end up
+     * freeing the new communicator anyway, so we might as well leave
+     * the coll selection as NULL (the coll base comm unselect code
+     * handles that case properly).
+     */
+    if (MPI_UNDEFINED == (*newcomm)->c_local_group->grp_my_rank) {
+        return OMPI_SUCCESS;
+    }
+
+    /* Let the collectives components fight over who will do
+       collective on this new comm.  */
+    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
+        OBJ_RELEASE(*newcomm);
+        *newcomm = MPI_COMM_NULL;
+        return ret;
+    }
+
+    /* For an inter communicator, we have to deal with the potential
+     * problem of what is happening if the local_comm that we created
+     * has a lower CID than the parent comm. This is not a problem
+     * as long as the user calls MPI_Comm_free on the inter communicator.
+     * However, if the communicators are not freed by the user but released
+     * by Open MPI in MPI_Finalize, we walk through the list of still available
+     * communicators and free them one by one. Thus, local_comm is freed before
+     * the actual inter-communicator. However, the local_comm pointer in the
+     * inter communicator will still contain the 'previous' address of the local_comm
+     * and thus this will lead to a segmentation violation. In order to prevent
+     * that from happening, we increase the reference counter local_comm
+     * by one if its CID is lower than the parent. We cannot increase however
+     *  its reference counter if the CID of local_comm is larger than
+     * the CID of the inter communicators, since a regular MPI_Comm_free would
+     * leave in that the case the local_comm hanging around and thus we would not
+     * recycle CID's properly, which was the reason and the cause for this trouble.
+     */
+    if (OMPI_COMM_IS_INTER(*newcomm)) {
+        if (OMPI_COMM_CID_IS_LOWER(*newcomm, comm)) {
+            OMPI_COMM_SET_EXTRA_RETAIN (*newcomm);
+            OBJ_RETAIN (*newcomm);
+        }
+    }
+
+    /* done */
+    return OMPI_SUCCESS;
+}
+
 int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
                            ompi_communicator_t *bridgecomm, const void *arg0,
                            const void *arg1, bool send_first, int mode, ompi_request_t **req)
@@ -562,6 +795,8 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     ompi_request_t *subreq;
     int ret = 0;
 
+    /* the caller should not pass NULL for comm (it may be the same as *newcomm) */
+    assert (NULL != comm);
     context = mca_comm_cid_context_alloc (*newcomm, comm, bridgecomm, arg0, arg1, "activate",
                                           send_first, mode);
     if (NULL == context) {
@@ -605,7 +840,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
 
     *req = &request->super;
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
@@ -620,9 +855,11 @@ int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm
         return rc;
     }
 
-    ompi_request_wait_completion (req);
-    rc = req->req_status.MPI_ERROR;
-    ompi_comm_request_return ((ompi_comm_request_t *) req);
+    if (&ompi_request_empty != req) {
+        ompi_request_wait_completion (req);
+        rc = req->req_status.MPI_ERROR;
+        ompi_comm_request_return ((ompi_comm_request_t *) req);
+    }
 
     return rc;
 }
@@ -630,70 +867,7 @@ int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm
 static int ompi_comm_activate_nb_complete (ompi_comm_request_t *request)
 {
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
-    int ret;
-
-    /**
-     * Check to see if this process is in the new communicator.
-     *
-     * Specifically, this function is invoked by all proceses in the
-     * old communicator, regardless of whether they are in the new
-     * communicator or not.  This is because it is far simpler to use
-     * MPI collective functions on the old communicator to determine
-     * some data for the new communicator (e.g., remote_leader) than
-     * to kludge up our own pseudo-collective routines over just the
-     * processes in the new communicator.  Hence, *all* processes in
-     * the old communicator need to invoke this function.
-     *
-     * That being said, only processes in the new communicator need to
-     * select a coll module for the new communicator.  More
-     * specifically, proceses who are not in the new communicator
-     * should *not* select a coll module -- for example,
-     * ompi_comm_rank(newcomm) returns MPI_UNDEFINED for processes who
-     * are not in the new communicator.  This can cause errors in the
-     * selection / initialization of a coll module.  Plus, it's
-     * wasteful -- processes in the new communicator will end up
-     * freeing the new communicator anyway, so we might as well leave
-     * the coll selection as NULL (the coll base comm unselect code
-     * handles that case properly).
-     */
-    if (MPI_UNDEFINED == (context->newcomm)->c_local_group->grp_my_rank) {
-        return OMPI_SUCCESS;
-    }
-
-    /* Let the collectives components fight over who will do
-       collective on this new comm.  */
-    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(context->newcomm))) {
-        OBJ_RELEASE(context->newcomm);
-        *context->newcommp = MPI_COMM_NULL;
-        return ret;
-    }
-
-    /* For an inter communicator, we have to deal with the potential
-     * problem of what is happening if the local_comm that we created
-     * has a lower CID than the parent comm. This is not a problem
-     * as long as the user calls MPI_Comm_free on the inter communicator.
-     * However, if the communicators are not freed by the user but released
-     * by Open MPI in MPI_Finalize, we walk through the list of still available
-     * communicators and free them one by one. Thus, local_comm is freed before
-     * the actual inter-communicator. However, the local_comm pointer in the
-     * inter communicator will still contain the 'previous' address of the local_comm
-     * and thus this will lead to a segmentation violation. In order to prevent
-     * that from happening, we increase the reference counter local_comm
-     * by one if its CID is lower than the parent. We cannot increase however
-     *  its reference counter if the CID of local_comm is larger than
-     * the CID of the inter communicators, since a regular MPI_Comm_free would
-     * leave in that the case the local_comm hanging around and thus we would not
-     * recycle CID's properly, which was the reason and the cause for this trouble.
-     */
-    if (OMPI_COMM_IS_INTER(context->newcomm)) {
-        if (OMPI_COMM_CID_IS_LOWER(context->newcomm, context->comm)) {
-            OMPI_COMM_SET_EXTRA_RETAIN (context->newcomm);
-            OBJ_RETAIN (context->newcomm);
-        }
-    }
-
-    /* done */
-    return OMPI_SUCCESS;
+    return ompi_comm_activate_complete (context->newcommp, context->comm);
 }
 
 /**************************************************************************/

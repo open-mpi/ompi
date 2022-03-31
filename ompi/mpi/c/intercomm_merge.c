@@ -18,6 +18,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,13 +50,12 @@ static const char FUNC_NAME[] = "MPI_Intercomm_merge";
 int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                         MPI_Comm *newcomm)
 {
-    ompi_communicator_t *newcomp=MPI_COMM_NULL;
+    ompi_communicator_t *newcomp = MPI_COMM_NULL;
     ompi_proc_t **procs=NULL;
+    int first, thigh = high;
     int local_size, remote_size;
-    int first;
     int total_size;
     int rc=MPI_SUCCESS;
-    int thigh = high;
     ompi_group_t *new_group_pointer;
 
     MEMCHECKER(
@@ -115,10 +116,9 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                          NULL,                     /* remote_procs */
                          NULL,                     /* attrs */
                          intercomm->error_handler, /* error handler*/
-                         false,                    /* don't copy the topo */
                          new_group_pointer,        /* local group */
-                         NULL                      /* remote group */
-                         );
+                         NULL,                     /* remote group */
+                         0);
     if ( MPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -141,6 +141,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
  exit:
+
     if ( NULL != procs ) {
         free ( procs );
     }
@@ -155,4 +156,3 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     *newcomm = newcomp;
     return MPI_SUCCESS;
 }
-

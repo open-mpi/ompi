@@ -17,6 +17,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +38,7 @@
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
 #include "opal/mca/backtrace/backtrace.h"
-
+#include "ompi/runtime/mpiruntime.h"
 
 /*
  * Table for Fortran <-> C errhandler handle conversion
@@ -137,56 +139,60 @@ int ompi_initial_errhandler_init(void) {
     return OMPI_SUCCESS;
 }
 
+static int ompi_errhandler_finalize (void);
+
 /*
  * Initialize OMPI errhandler infrastructure
  */
 int ompi_errhandler_init(void)
 {
-  /* initialize ompi_errhandler_f_to_c_table */
+    OBJ_CONSTRUCT( &ompi_errhandler_f_to_c_table, opal_pointer_array_t);
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_errhandler_f_to_c_table, 8,
+                                                OMPI_FORTRAN_HANDLE_MAX, 16) ) {
+        return OMPI_ERROR;
+    }
 
-  OBJ_CONSTRUCT( &ompi_errhandler_f_to_c_table, opal_pointer_array_t);
-  if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_errhandler_f_to_c_table, 8,
-                                              OMPI_FORTRAN_HANDLE_MAX, 16) ) {
-    return OMPI_ERROR;
-  }
+    /* Initialize the predefined error handlers */
+    OBJ_CONSTRUCT( &ompi_mpi_errhandler_null.eh, ompi_errhandler_t );
+    if( ompi_mpi_errhandler_null.eh.eh_f_to_c_index != OMPI_ERRHANDLER_NULL_FORTRAN ) {
+        return OMPI_ERROR;
+    }
 
-  /* Initialize the predefined error handlers */
-  OBJ_CONSTRUCT( &ompi_mpi_errhandler_null.eh, ompi_errhandler_t );
-  if( ompi_mpi_errhandler_null.eh.eh_f_to_c_index != OMPI_ERRHANDLER_NULL_FORTRAN )
-      return OMPI_ERROR;
-  ompi_mpi_errhandler_null.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errhandler_null.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errhandler_null.eh.eh_comm_fn = NULL;
-  ompi_mpi_errhandler_null.eh.eh_file_fn = NULL;
-  ompi_mpi_errhandler_null.eh.eh_win_fn  = NULL ;
-  ompi_mpi_errhandler_null.eh.eh_fort_fn = NULL;
-  opal_string_copy(ompi_mpi_errhandler_null.eh.eh_name, "MPI_ERRHANDLER_NULL",
-                   sizeof(ompi_mpi_errhandler_null.eh.eh_name));
+    ompi_mpi_errhandler_null.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+    ompi_mpi_errhandler_null.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
+    ompi_mpi_errhandler_null.eh.eh_comm_fn = NULL;
+    ompi_mpi_errhandler_null.eh.eh_file_fn = NULL;
+    ompi_mpi_errhandler_null.eh.eh_win_fn  = NULL ;
+    ompi_mpi_errhandler_null.eh.eh_fort_fn = NULL;
+    opal_string_copy (ompi_mpi_errhandler_null.eh.eh_name, "MPI_ERRHANDLER_NULL",
+                      sizeof(ompi_mpi_errhandler_null.eh.eh_name));
 
-  OBJ_CONSTRUCT( &ompi_mpi_errors_are_fatal.eh, ompi_errhandler_t );
-  if( ompi_mpi_errors_are_fatal.eh.eh_f_to_c_index != OMPI_ERRORS_ARE_FATAL_FORTRAN )
-      return OMPI_ERROR;
-  ompi_mpi_errors_are_fatal.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_are_fatal.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errors_are_fatal.eh.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
-  ompi_mpi_errors_are_fatal.eh.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
-  ompi_mpi_errors_are_fatal.eh.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
-  ompi_mpi_errors_are_fatal.eh.eh_fort_fn = NULL;
-  opal_string_copy(ompi_mpi_errors_are_fatal.eh.eh_name,
-                   "MPI_ERRORS_ARE_FATAL",
-                   sizeof(ompi_mpi_errors_are_fatal.eh.eh_name));
+    OBJ_CONSTRUCT( &ompi_mpi_errors_are_fatal.eh, ompi_errhandler_t );
+    if( ompi_mpi_errors_are_fatal.eh.eh_f_to_c_index != OMPI_ERRORS_ARE_FATAL_FORTRAN )
+        return OMPI_ERROR;
+    ompi_mpi_errors_are_fatal.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+    ompi_mpi_errors_are_fatal.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
+    ompi_mpi_errors_are_fatal.eh.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
+    ompi_mpi_errors_are_fatal.eh.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
+    ompi_mpi_errors_are_fatal.eh.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler;
+    ompi_mpi_errors_are_fatal.eh.eh_instance_fn = ompi_mpi_errors_are_fatal_instance_handler;
+    ompi_mpi_errors_are_fatal.eh.eh_fort_fn = NULL;
+    opal_string_copy(ompi_mpi_errors_are_fatal.eh.eh_name,
+                     "MPI_ERRORS_ARE_FATAL",
+                     sizeof(ompi_mpi_errors_are_fatal.eh.eh_name));
 
-  OBJ_CONSTRUCT( &ompi_mpi_errors_return.eh, ompi_errhandler_t );
-  if( ompi_mpi_errors_return.eh.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN )
-      return OMPI_ERROR;
-  ompi_mpi_errors_return.eh.eh_mpi_object_type  = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_return.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errors_return.eh.eh_comm_fn = ompi_mpi_errors_return_comm_handler;
-  ompi_mpi_errors_return.eh.eh_file_fn = ompi_mpi_errors_return_file_handler;
-  ompi_mpi_errors_return.eh.eh_win_fn  = ompi_mpi_errors_return_win_handler;
-  ompi_mpi_errors_return.eh.eh_fort_fn = NULL;
-  opal_string_copy(ompi_mpi_errors_return.eh.eh_name, "MPI_ERRORS_RETURN",
-                   sizeof(ompi_mpi_errors_return.eh.eh_name));
+    OBJ_CONSTRUCT( &ompi_mpi_errors_return.eh, ompi_errhandler_t );
+    if( ompi_mpi_errors_return.eh.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN )
+        return OMPI_ERROR;
+    ompi_mpi_errors_return.eh.eh_mpi_object_type  = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+    ompi_mpi_errors_return.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
+    ompi_mpi_errors_return.eh.eh_comm_fn = ompi_mpi_errors_return_comm_handler;
+    ompi_mpi_errors_return.eh.eh_file_fn = ompi_mpi_errors_return_file_handler;
+    ompi_mpi_errors_return.eh.eh_win_fn  = ompi_mpi_errors_return_win_handler;
+    ompi_mpi_errors_return.eh.eh_instance_fn = ompi_mpi_errors_return_instance_handler;
+    ompi_mpi_errors_return.eh.eh_fort_fn = NULL;
+    opal_string_copy(ompi_mpi_errors_return.eh.eh_name, "MPI_ERRORS_RETURN",
+                     sizeof(ompi_mpi_errors_return.eh.eh_name));
 
   OBJ_CONSTRUCT( &ompi_mpi_errors_abort.eh, ompi_errhandler_t );
   if( ompi_mpi_errors_abort.eh.eh_f_to_c_index != OMPI_ERRORS_ABORT_FORTRAN )
@@ -206,14 +212,23 @@ int ompi_errhandler_init(void)
   if( NULL != env ) {
     ompi_process_info.initial_errhandler = strndup(env, MPI_MAX_INFO_VAL);
   }
-  return ompi_initial_errhandler_init();
+
+  ompi_initial_errhandler_init();
+  ompi_mpi_instance_append_finalize (ompi_errhandler_finalize);
+
+  return OMPI_SUCCESS;
 }
 
 
-/*
- * Clean up the errorhandler resources
+/**
+ * Finalize the error handler interface.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invoked on instance teardown if ompi_errhandler_init() was called; tears down the error handler
+ * interface, and destroys the F2C translation table.
  */
-int ompi_errhandler_finalize(void)
+static int ompi_errhandler_finalize (void)
 {
     OBJ_DESTRUCT(&ompi_mpi_errhandler_null.eh);
     OBJ_DESTRUCT(&ompi_mpi_errors_return.eh);
@@ -232,46 +247,64 @@ int ompi_errhandler_finalize(void)
     return OMPI_SUCCESS;
 }
 
+void ompi_errhandler_free (ompi_errhandler_t *errhandler)
+{
+    OBJ_RELEASE(errhandler);
+    ompi_mpi_instance_release ();
+}
 
 ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
-					                      ompi_errhandler_generic_handler_fn_t *func,
+                                          ompi_errhandler_generic_handler_fn_t *func,
                                           ompi_errhandler_lang_t lang)
 {
-  ompi_errhandler_t *new_errhandler;
+    ompi_errhandler_t *new_errhandler;
+    int ret;
 
-  /* Create a new object and ensure that it's valid */
-
-  new_errhandler = OBJ_NEW(ompi_errhandler_t);
-  if (NULL != new_errhandler) {
-    if (0 > new_errhandler->eh_f_to_c_index) {
-      OBJ_RELEASE(new_errhandler);
-      new_errhandler = NULL;
-    } else {
-
-      /* We cast the user's callback function to any one of the
-         function pointer types in the union; it doesn't matter which.
-         It only matters that we dereference/use the right member when
-         invoking the callback. */
-
-      new_errhandler->eh_mpi_object_type = object_type;
-      new_errhandler->eh_lang = lang;
-      switch (object_type ) {
-	  case (OMPI_ERRHANDLER_TYPE_COMM):
-	      new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_function *)func;
-	      break;
-	  case (OMPI_ERRHANDLER_TYPE_FILE):
-	      new_errhandler->eh_file_fn = (ompi_file_errhandler_function *)func;
-	      break;
-	  case (OMPI_ERRHANDLER_TYPE_WIN):
-	      new_errhandler->eh_win_fn = (MPI_Win_errhandler_function *)func;
-	      break;
-	  default:
-	      break;
-      }
-
-      new_errhandler->eh_fort_fn = (ompi_errhandler_fortran_handler_fn_t *)func;
+    /* make sure the infrastructure is initialized */
+    ret = ompi_mpi_instance_retain ();
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return NULL;
     }
-  }
+
+    /* Create a new object and ensure that it's valid */
+
+    new_errhandler = OBJ_NEW(ompi_errhandler_t);
+    if (NULL != new_errhandler) {
+        if (0 > new_errhandler->eh_f_to_c_index) {
+            OBJ_RELEASE(new_errhandler);
+            new_errhandler = NULL;
+        } else {
+
+        /* We cast the user's callback function to any one of the
+           function pointer types in the union; it doesn't matter which.
+           It only matters that we dereference/use the right member when
+           invoking the callback. */
+
+            new_errhandler->eh_mpi_object_type = object_type;
+            new_errhandler->eh_lang = lang;
+            switch (object_type ) {
+            case OMPI_ERRHANDLER_TYPE_COMM:
+                new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_function *)func;
+                break;
+            case OMPI_ERRHANDLER_TYPE_FILE:
+                new_errhandler->eh_file_fn = (ompi_file_errhandler_function *)func;
+                break;
+            case OMPI_ERRHANDLER_TYPE_WIN:
+                new_errhandler->eh_win_fn = (MPI_Win_errhandler_function *)func;
+                break;
+            case OMPI_ERRHANDLER_TYPE_INSTANCE:
+                new_errhandler->eh_instance_fn = (MPI_Session_errhandler_function *)func;
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (NULL != new_errhandler) {
+            new_errhandler->eh_fort_fn = (ompi_errhandler_fortran_handler_fn_t *)func;
+        }
+
+    }
 
   /* All done */
 
@@ -350,10 +383,10 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
             if(OPAL_UNLIKELY( OMPI_SUCCESS != rc )) goto cleanup;
         }
         OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
-                             "%s ompi: Process %s is in comm (%d) with rank %d. [%s]",
+                             "%s ompi: Process %s is in comm (%s) with rank %d. [%s]",
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                              OMPI_NAME_PRINT(&ompi_proc->super.proc_name),
-                             comm->c_contextid,
+                             ompi_comm_print_cid(comm),
                              proc_rank,
                              (OMPI_ERRHANDLER_TYPE_PREDEFINED == comm->errhandler_type ? "P" :
                               (OMPI_ERRHANDLER_TYPE_COMM == comm->errhandler_type ? "C" :

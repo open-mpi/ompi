@@ -280,7 +280,6 @@ int main( int argc, char* argv[] )
     }
     free(segments);
 
-    ompi_datatype_finalize();
     opal_finalize_util ();
 
     return (0 == errors ? 0 : -1);

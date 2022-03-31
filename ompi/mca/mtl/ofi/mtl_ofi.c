@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -11,6 +13,8 @@
 #include "mtl_ofi.h"
 
 OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
+
+OBJ_CLASS_INSTANCE(mca_mtl_comm_t, opal_object_t, NULL, NULL);
 
 mca_mtl_ofi_module_t ompi_mtl_ofi = {
     {
@@ -39,6 +43,178 @@ mca_mtl_ofi_module_t ompi_mtl_ofi = {
     NULL,
     NULL
 };
+
+
+static int ompi_mtl_ofi_init_contexts(struct mca_mtl_base_module_t *mtl,
+                                      struct ompi_communicator_t *comm,
+                                      mca_mtl_ofi_ep_type ep_type)
+{
+    int ret;
+    int ctxt_id = ompi_mtl_ofi.total_ctxts_used;
+    struct fi_cq_attr cq_attr = {0};
+    cq_attr.format = FI_CQ_FORMAT_TAGGED;
+    cq_attr.size = ompi_mtl_ofi.ofi_progress_event_count;
+
+    if (OFI_REGULAR_EP == ep_type) {
+        /*
+         * For regular endpoints, just create the Lock object and register
+         * progress function.
+         */
+        goto init_regular_ep;
+    }
+
+    /*
+     * We only create upto Max number of contexts asked for by the user.
+     * If user enables thread grouping feature and creates more number of
+     * communicators than available contexts, then we set the threshold
+     * context_id so that new communicators created beyond the threshold
+     * will be assigned to contexts in a round-robin fashion.
+     */
+    if (ompi_mtl_ofi.num_ofi_contexts <= ompi_mtl_ofi.total_ctxts_used) {
+        ompi_mtl_ofi.comm_to_context[comm->c_index] = comm->c_index %
+                                                          ompi_mtl_ofi.total_ctxts_used;
+        if (!ompi_mtl_ofi.threshold_comm_context_id) {
+            ompi_mtl_ofi.threshold_comm_context_id = comm->c_index;
+
+            opal_show_help("help-mtl-ofi.txt", "SEP thread grouping ctxt limit", true, ctxt_id,
+                           ompi_process_info.nodename, __FILE__, __LINE__);
+        }
+
+        return OMPI_SUCCESS;
+    }
+
+    /* Init context info for Scalable EPs */
+    ret = fi_tx_context(ompi_mtl_ofi.sep, ctxt_id, NULL, &ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep, NULL);
+    if (ret) {
+        MTL_OFI_LOG_FI_ERR(ret, "fi_tx_context failed");
+        goto init_error;
+    }
+
+    ret = fi_rx_context(ompi_mtl_ofi.sep, ctxt_id, NULL, &ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep, NULL);
+    if (ret) {
+        MTL_OFI_LOG_FI_ERR(ret, "fi_rx_context failed");
+        goto init_error;
+    }
+
+    ret = fi_cq_open(ompi_mtl_ofi.domain, &cq_attr, &ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq, NULL);
+    if (ret) {
+        MTL_OFI_LOG_FI_ERR(ret, "fi_cq_open failed");
+        goto init_error;
+    }
+
+    /* Bind CQ to TX/RX context object */
+    ret = fi_ep_bind(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep, (fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq,
+                     FI_TRANSMIT | FI_SELECTIVE_COMPLETION);
+    if (0 != ret) {
+        MTL_OFI_LOG_FI_ERR(ret, "fi_bind CQ-EP (FI_TRANSMIT) failed");
+        goto init_error;
+    }
+
+    ret = fi_ep_bind(ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep, (fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq,
+                     FI_RECV | FI_SELECTIVE_COMPLETION);
+    if (0 != ret) {
+        MTL_OFI_LOG_FI_ERR(ret, "fi_bind CQ-EP (FI_RECV) failed");
+        goto init_error;
+    }
+
+    /* Enable Endpoint for communication. This commits the bind operations */
+    ret = fi_enable(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep);
+    if (0 != ret) {
+        MTL_OFI_LOG_FI_ERR(ret, "fi_enable (send context) failed");
+        goto init_error;
+    }
+
+    ret = fi_enable(ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep);
+    if (0 != ret) {
+        MTL_OFI_LOG_FI_ERR(ret, "fi_enable (recv context) failed");
+        goto init_error;
+    }
+
+init_regular_ep:
+    /* Initialize per-context lock */
+    OBJ_CONSTRUCT(&ompi_mtl_ofi.ofi_ctxt[ctxt_id].context_lock, opal_mutex_t);
+
+    if (!ompi_mtl_ofi.is_initialized) {
+        ret = opal_progress_register(ompi_mtl_ofi_progress_no_inline);
+        if (OMPI_SUCCESS != ret) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "%s:%d: opal_progress_register failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            goto init_error;
+        }
+    }
+
+    ompi_mtl_ofi.comm_to_context[comm->c_index] = ompi_mtl_ofi.total_ctxts_used;
+    ompi_mtl_ofi.total_ctxts_used++;
+
+    return OMPI_SUCCESS;
+
+init_error:
+    if (ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep) {
+        (void) fi_close((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep);
+    }
+
+    if (ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep) {
+        (void) fi_close((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep);
+    }
+
+    if (ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq) {
+        (void) fi_close((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq);
+    }
+
+    return ret;
+}
+
+static int ompi_mtl_ofi_finalize_contexts(struct mca_mtl_base_module_t *mtl,
+                                          struct ompi_communicator_t *comm,
+                                          mca_mtl_ofi_ep_type ep_type)
+{
+    int ret = OMPI_SUCCESS, ctxt_id = 0;
+
+    if (OFI_REGULAR_EP == ep_type) {
+        /* For regular EPs, simply destruct Lock object and exit */
+        goto finalize_regular_ep;
+    }
+
+    if (ompi_mtl_ofi.thread_grouping &&
+        ompi_mtl_ofi.threshold_comm_context_id &&
+        ((uint32_t) ompi_mtl_ofi.threshold_comm_context_id <= comm->c_index)) {
+        return OMPI_SUCCESS;
+    }
+
+    ctxt_id = ompi_mtl_ofi.thread_grouping ?
+           ompi_mtl_ofi.comm_to_context[comm->c_index] : 0;
+
+    /*
+     * For regular EPs, TX/RX contexts are aliased to SEP object which is
+     * closed in ompi_mtl_ofi_finalize(). So, skip handling those here.
+     */
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep))) {
+        goto finalize_err;
+    }
+
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep))) {
+        goto finalize_err;
+    }
+
+    if ((ret = fi_close((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq))) {
+        goto finalize_err;
+    }
+
+finalize_regular_ep:
+    /* Destroy context lock */
+    OBJ_DESTRUCT(&ompi_mtl_ofi.ofi_ctxt[ctxt_id].context_lock);
+
+    return OMPI_SUCCESS;
+
+finalize_err:
+    opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
+                   "fi_close",
+                   ompi_process_info.nodename, __FILE__, __LINE__,
+                   fi_strerror(-ret), ret);
+
+    return OMPI_ERROR;
+}
 
 int
 ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
@@ -182,3 +358,92 @@ ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
 
     return OMPI_SUCCESS;
 }
+
+int ompi_mtl_ofi_add_comm(struct mca_mtl_base_module_t *mtl,
+                      struct ompi_communicator_t *comm)
+{
+    int ret = OMPI_SUCCESS;
+    uint32_t comm_size;
+    mca_mtl_comm_t* mtl_comm;
+
+    mca_mtl_ofi_ep_type ep_type = (0 == ompi_mtl_ofi.enable_sep) ?
+                                  OFI_REGULAR_EP : OFI_SCALABLE_EP;
+
+    if (!OMPI_COMM_IS_GLOBAL_INDEX(comm)) {
+        mtl_comm = OBJ_NEW(mca_mtl_comm_t);
+
+        if (OMPI_COMM_IS_INTER(comm)) {
+            comm_size = ompi_comm_remote_size(comm);
+        } else {
+            comm_size = ompi_comm_size(comm);
+        }
+        mtl_comm->c_index_vec = (c_index_vec_t *)malloc(sizeof(c_index_vec_t) * comm_size);
+        if (NULL == mtl_comm->c_index_vec) {
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            OBJ_RELEASE(mtl_comm);
+            goto error;
+        } else {
+            for (uint32_t i=0; i < comm_size; i++) {
+                mtl_comm->c_index_vec[i].c_index_state = MCA_MTL_OFI_CID_NOT_EXCHANGED;
+            }
+        }
+        if (OMPI_COMM_IS_INTRA(comm)) {
+            mtl_comm->c_index_vec[comm->c_my_rank].c_index = comm->c_index;
+            mtl_comm->c_index_vec[comm->c_my_rank].c_index_state = MCA_MTL_OFI_CID_EXCHANGED;
+        }
+
+        comm->c_mtl_comm = mtl_comm;
+
+    } else  {
+
+        comm->c_mtl_comm = NULL;
+
+    }
+
+    /*
+     * If thread grouping enabled, add new OFI context for each communicator
+     * other than MPI_COMM_SELF.
+     */
+    if ((ompi_mtl_ofi.thread_grouping && (MPI_COMM_SELF != comm)) ||
+        /* If no thread grouping, add new OFI context only
+         * for MPI_COMM_WORLD.
+         */
+        (!ompi_mtl_ofi.thread_grouping && (!ompi_mtl_ofi.is_initialized))) {
+
+        ret = ompi_mtl_ofi_init_contexts(mtl, comm, ep_type);
+        ompi_mtl_ofi.is_initialized = true;
+
+        if (OMPI_SUCCESS != ret) {
+            goto error;
+        }
+    }
+
+error:
+    return ret;
+}
+
+int ompi_mtl_ofi_del_comm(struct mca_mtl_base_module_t *mtl,
+                          struct ompi_communicator_t *comm)
+{
+    int ret = OMPI_SUCCESS;
+    mca_mtl_ofi_ep_type ep_type = (0 == ompi_mtl_ofi.enable_sep) ?
+                                  OFI_REGULAR_EP : OFI_SCALABLE_EP;
+
+    if(NULL != comm->c_mtl_comm) {
+        free(comm->c_mtl_comm->c_index_vec);
+        OBJ_RELEASE(comm->c_mtl_comm);
+        comm->c_mtl_comm = NULL;
+    }
+
+    /*
+     * Clean up OFI contexts information.
+     */
+    if ((ompi_mtl_ofi.thread_grouping && (MPI_COMM_SELF != comm)) ||
+        (!ompi_mtl_ofi.thread_grouping && (MPI_COMM_WORLD == comm))) {
+
+        ret = ompi_mtl_ofi_finalize_contexts(mtl, comm, ep_type);
+    }
+
+    return ret;
+}
+

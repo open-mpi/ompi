@@ -164,7 +164,6 @@ next_iteration:
     free(packed);
 
     /* clean-ups all data allocations */
-    ompi_datatype_finalize();
     opal_finalize_util ();
 
     return 0;

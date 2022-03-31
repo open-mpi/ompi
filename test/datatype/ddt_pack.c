@@ -448,7 +448,6 @@ main(int argc, char* argv[])
     ompi_datatype_destroy(&dup_type);
 
  cleanup:
-    ompi_datatype_finalize();
     opal_finalize_util ();
 
     return ret;

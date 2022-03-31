@@ -16,6 +16,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +56,7 @@ ompi_predefined_file_t  *ompi_mpi_file_null_addr = &ompi_mpi_file_null;
  */
 static void file_constructor(ompi_file_t *obj);
 static void file_destructor(ompi_file_t *obj);
+static int ompi_file_finalize (void);
 
 
 /*
@@ -89,6 +92,7 @@ int ompi_file_init(void)
                                 &ompi_mpi_file_null.file);
 
     /* All done */
+    ompi_mpi_instance_append_finalize (ompi_file_finalize);
 
     return OMPI_SUCCESS;
 }
@@ -163,10 +167,14 @@ int ompi_file_close(ompi_file_t **file)
 }
 
 
-/*
- * Shut down the MPI_File bookkeeping
+/**
+ * Tear down MPI_File handling.
+ *
+ * @retval OMPI_SUCCESS Always.
+ *
+ * Invoked during instance teardown if ompi_file_init() is called.
  */
-int ompi_file_finalize(void)
+static int ompi_file_finalize (void)
 {
     int i, max;
     size_t num_unnamed;

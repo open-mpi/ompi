@@ -160,6 +160,12 @@ extern void mca_pml_ob1_recv_frag_callback_fin (mca_btl_base_module_t *btl,
                                                 const mca_btl_base_receive_descriptor_t *descriptor);
 
 /**
+ * Callback from BTL on receipt of an extended CID header
+ */
+extern void mca_pml_ob1_recv_frag_callback_cid( mca_btl_base_module_t *btl,
+                                                const mca_btl_base_receive_descriptor_t* descriptor);
+
+/**
  * Extract the next fragment from the cant_match ordered list. This fragment
  * will be the next in sequence.
  */
@@ -175,6 +181,8 @@ int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm );
 void append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
                                  mca_pml_ob1_recv_frag_t* frag,
                                  uint16_t seq);
+
+void mca_pml_ob1_handle_cid (ompi_communicator_t *comm, int src, mca_pml_ob1_cid_hdr_t *hdr_cid);
 
 extern void mca_pml_ob1_dump_cant_match(mca_pml_ob1_recv_frag_t* queue);
 END_C_DECLS

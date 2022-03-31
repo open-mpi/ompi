@@ -539,7 +539,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
 
     /* clean-ups all data allocations */
-    ompi_datatype_finalize();
+    opal_finalize_util();
 
     return OMPI_SUCCESS;
 }

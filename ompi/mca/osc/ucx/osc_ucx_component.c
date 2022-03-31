@@ -1,6 +1,9 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2017. ALL RIGHTS RESERVED.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -392,7 +395,7 @@ select_unlock:
     }
 
     *model = MPI_WIN_UNIFIED;
-    opal_asprintf(&name, "ucx window %d", ompi_comm_get_cid(module->comm));
+    opal_asprintf(&name, "ucx window %s", ompi_comm_print_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
 

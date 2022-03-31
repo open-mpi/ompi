@@ -133,7 +133,7 @@ setup_scatter_handles(struct ompi_communicator_t   *comm,
     /**********************************/
     /* Setup Scatter Handles           */
     /**********************************/
-    COLL_PORTALS4_SET_BITS(request->u.scatter.scatter_match_bits, ompi_comm_get_cid(comm),
+    COLL_PORTALS4_SET_BITS(request->u.scatter.scatter_match_bits, ompi_comm_get_local_cid(comm),
             0, 0, COLL_PORTALS4_SCATTER, 0, request->u.scatter.coll_count);
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
@@ -194,7 +194,7 @@ setup_sync_handles(struct ompi_communicator_t   *comm,
     /**********************************/
     /* Setup Sync Handles             */
     /**********************************/
-    COLL_PORTALS4_SET_BITS(request->u.scatter.sync_match_bits, ompi_comm_get_cid(comm),
+    COLL_PORTALS4_SET_BITS(request->u.scatter.sync_match_bits, ompi_comm_get_local_cid(comm),
             0, 1, COLL_PORTALS4_SCATTER, 0, request->u.scatter.coll_count);
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,

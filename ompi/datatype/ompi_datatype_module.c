@@ -18,6 +18,8 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,8 +39,12 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
+#include "ompi/instance/instance.h"
+#include "ompi/attribute/attribute.h"
 
 #include "mpi.h"
+
+static int ompi_datatype_finalize (void);
 
 /**
  * This is the number of predefined datatypes. It is different than the MAX_PREDEFINED
@@ -473,6 +479,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
 int32_t ompi_datatype_init( void )
 {
     int32_t i;
+    int ret = OMPI_SUCCESS;
 
     opal_datatype_init();
 
@@ -672,29 +679,24 @@ int32_t ompi_datatype_init( void )
     }
 
     /* get a reference to the attributes subsys */
-    int ret = ompi_attr_get_ref();
+    ret = ompi_attr_get_ref();
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
 
     ompi_datatype_default_convertors_init();
+
+    ompi_mpi_instance_append_finalize (ompi_datatype_finalize);
     return OMPI_SUCCESS;
 }
 
 
-int32_t ompi_datatype_finalize( void )
+static int ompi_datatype_finalize (void)
 {
     /* As the synonyms are just copies of the internal data we should not free them.
      * Anyway they are over the limit of OMPI_DATATYPE_MPI_MAX_PREDEFINED so they will never get freed.
      */
 
-    /* As they are statically allocated they cannot be released.
-     * But we can call OBJ_DESTRUCT, just to free all internally allocated ressources.
-     */
-    for( int i = 0; i < ompi_datatype_number_of_predefined_data; i++ ) {
-        opal_datatype_t* datatype = (opal_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
-        OBJ_DESTRUCT(datatype);
-    }
 
     /* Get rid of the Fortran2C translation table */
     OBJ_DESTRUCT(&ompi_datatype_f_to_c_table);

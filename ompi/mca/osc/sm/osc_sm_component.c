@@ -167,8 +167,6 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                 struct ompi_communicator_t *comm, struct opal_info_t *info,
                 int flavor)
 {
-    int ret;
-
     /* component only supports shared or allocate flavors */
     if (! (MPI_WIN_FLAVOR_SHARED == flavor ||
            MPI_WIN_FLAVOR_ALLOCATE == flavor)) {
@@ -309,9 +307,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         data_base_size += OPAL_ALIGN_PAD_AMOUNT(data_base_size, pagesize);
         if (0 == ompi_comm_rank (module->comm)) {
             char *data_file;
-            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d.%d",
-                            mca_osc_sm_component.backing_directory, ompi_process_info.nodename,
-                            OMPI_PROC_MY_NAME->jobid, (int) OMPI_PROC_MY_NAME->vpid, ompi_comm_get_cid(module->comm));
+            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d.%s",
+                                 mca_osc_sm_component.backing_directory, ompi_process_info.nodename,
+                                 OMPI_PROC_MY_NAME->jobid, (int) OMPI_PROC_MY_NAME->vpid,
+                                 ompi_comm_print_cid(module->comm));
             if (ret < 0) {
                 free(rbuf);
                 return OMPI_ERR_OUT_OF_RESOURCE;

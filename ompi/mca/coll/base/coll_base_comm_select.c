@@ -102,8 +102,8 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
 
     /* Announce */
     opal_output_verbose(9, ompi_coll_base_framework.framework_output,
-                        "coll:base:comm_select: new communicator: %s (cid %d)",
-                        comm->c_name, comm->c_contextid);
+                        "coll:base:comm_select: new communicator: %s (cid %s)",
+                        comm->c_name, ompi_comm_print_cid (comm));
 
     /* Initialize all the relevant pointers, since they're used as
      * sentinel values */

@@ -281,6 +281,10 @@ ompi_comm_request_t *ompi_comm_request_get (void)
 
 void ompi_comm_request_return (ompi_comm_request_t *request)
 {
+    if ((void *) &ompi_request_empty == (void *) request) {
+        return;
+    }
+
     if (request->context) {
         OBJ_RELEASE (request->context);
         request->context = NULL;

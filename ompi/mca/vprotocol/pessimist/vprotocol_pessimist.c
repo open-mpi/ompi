@@ -50,6 +50,6 @@ mca_vprotocol_pessimist_module_t mca_vprotocol_pessimist =
 
 int mca_vprotocol_pessimist_dump(struct ompi_communicator_t* comm, int verbose)
 {
-  V_OUTPUT_VERBOSE(verbose, "vprotocol_pessimist: dump for comm %d", comm->c_contextid);
+  V_OUTPUT_VERBOSE(verbose, "vprotocol_pessimist: dump for comm %s", ompi_comm_print_cid (comm));
   return mca_pml_v.host_pml.pml_dump(comm, verbose);
 }

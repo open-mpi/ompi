@@ -13,8 +13,11 @@
 ! Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2016-2018 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2019      Triad National Security, LLC. All rights
+!                         reserved.
 ! Copyright (c) 2021      Sandia National Laboratories. All rights reserved.
 ! Copyright (c) 2021      IBM Corporation.  All rights reserved.
+!
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -279,6 +282,19 @@ end subroutine MPI_Comm_create
 
 end interface
 
+interface  MPI_Comm_create_from_group
+
+subroutine MPI_Comm_create_from_group(group, stringtag, info, errhandler, newcomm, ierror)
+   implicit none
+   integer, intent(in) :: group
+   character(len=*), intent(in) :: stringtag
+   integer, intent(in) :: info
+   integer, intent(in) :: errhandler
+   integer, intent(out) :: newcomm
+   integer, intent(out) :: ierror
+end subroutine MPI_Comm_create_from_group
+
+end interface
 
 interface
 
@@ -850,6 +866,16 @@ end subroutine MPI_Group_free
 
 end interface
 
+interface MPI_Group_from_session_pset
+subroutine MPI_Group_from_session_pset(session, pset_name, newgroup, ierror)
+   implicit none
+   integer, intent(in) :: session
+   character(len=*), intent(in) :: pset_name
+   integer, intent(out) :: newgroup
+   integer, intent(out) :: ierror
+end subroutine MPI_Group_from_session_pset
+end interface
+
 
 interface
 
@@ -1114,6 +1140,22 @@ end subroutine MPI_Intercomm_create
 
 end interface
 
+interface MPI_Intercomm_create_from_groups
+
+subroutine MPI_Intercomm_create_from_groups(local_group, local_leader, remote_group, remote_leader, &
+                                          stringtag, info, errhandler, newintercomm, ierror)
+   implicit none
+   integer, intent(in) :: local_group, remote_group
+   integer, intent(in):: local_leader, remote_leader
+   character(len=*), intent(in) :: stringtag
+   integer, intent(in) :: info
+   integer, intent(in) :: errhandler
+   integer, intent(out) :: newintercomm
+   integer, intent(out) :: ierror
+end subroutine MPI_Intercomm_create_from_groups
+
+end interface
+
 
 interface
 
@@ -1332,6 +1374,70 @@ end subroutine MPI_Request_get_status
 
 end interface
 
+interface MPI_Session_get_info
+subroutine MPI_Session_get_info(session, info, ierror)
+   implicit none
+   integer, intent(in) :: session
+   integer, intent(out) :: info
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_get_info
+end interface
+
+interface 
+subroutine MPI_Session_get_nth_pset(session, info, n, pset_len, pset_name, ierror)
+   implicit none
+   integer, intent(in) :: session
+   integer, intent(in) :: info
+   integer, intent(in) :: n
+   integer, intent(inout) :: pset_len
+   character(len=*), intent(out) :: pset_name
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_get_nth_pset
+end interface
+
+
+interface
+subroutine MPI_Session_get_num_psets(session, info, npset_names, ierror)
+   implicit none
+   integer, intent(in) :: session
+   integer, intent(in) :: info
+   integer, intent(out) :: npset_names
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_get_num_psets
+end interface
+
+interface
+subroutine MPI_Session_get_pset_info(session, pset_name, info, ierror)
+   implicit none
+   integer, intent(in) :: session
+   character(len=*), intent(in) :: pset_name
+   integer, intent(out) :: info
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_get_pset_info
+end interface
+
+
+interface  MPI_Session_init
+
+subroutine MPI_Session_init(info,errhandler,session,ierror)
+   implicit none
+   integer, intent(in) :: info
+   integer, intent(in) :: errhandler
+   integer, intent(out) :: session
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_init
+
+end interface  MPI_Session_init
+
+interface  MPI_Session_finalize
+
+subroutine MPI_Session_finalize(session,ierror)
+   implicit none
+   integer, intent(inout) :: session
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_finalize
+
+end interface  MPI_Session_finalize
 
 interface
 

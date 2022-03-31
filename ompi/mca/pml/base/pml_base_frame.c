@@ -126,14 +126,6 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_base_finalize(void) {
-  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
-    return mca_pml_base_selected_component.pmlm_finalize();
-  }
-  return OMPI_SUCCESS;
-}
-
-
 static int mca_pml_base_close(void)
 {
     int i, j;

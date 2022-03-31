@@ -53,6 +53,7 @@
 #define MPI_Comm_connect PMPI_Comm_connect
 #define MPI_Comm_create PMPI_Comm_create
 #define MPI_Comm_create_errhandler PMPI_Comm_create_errhandler
+#define MPI_Comm_create_from_group PMPI_Comm_create_from_group
 #define MPI_Comm_create_group PMPI_Comm_create_group
 #define MPI_Comm_create_keyval PMPI_Comm_create_keyval
 #define MPI_Comm_delete_attr PMPI_Comm_delete_attr
@@ -123,6 +124,7 @@
 #define MPI_Group_compare PMPI_Group_compare
 #define MPI_Group_difference PMPI_Group_difference
 #define MPI_Group_excl PMPI_Group_excl
+#define MPI_Group_from_session_pset PMPI_Group_from_session_pset
 #define MPI_Group_free PMPI_Group_free
 #define MPI_Group_incl PMPI_Group_incl
 #define MPI_Group_intersection PMPI_Group_intersection
@@ -165,6 +167,7 @@
 #define MPI_Init_thread PMPI_Init_thread
 #define MPI_Initialized PMPI_Initialized
 #define MPI_Intercomm_create PMPI_Intercomm_create
+#define MPI_Intercomm_create_from_groups PMPI_Intercomm_create_from_groups
 #define MPI_Intercomm_merge PMPI_Intercomm_merge
 #define MPI_Iprobe PMPI_Iprobe
 #define MPI_Irecv PMPI_Irecv
@@ -240,6 +243,12 @@
 #define MPI_Send_init PMPI_Send_init
 #define MPI_Sendrecv PMPI_Sendrecv
 #define MPI_Sendrecv_replace PMPI_Sendrecv_replace
+#define MPI_Session_get_info PMPI_Session_get_info
+#define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
+#define MPI_Session_get_nth_psetlen PMPI_Session_get_nth_psetlen
+#define MPI_Session_get_pset_info PMPI_Session_get_pset_info
+#define MPI_Session_init PMPI_Session_init
+#define MPI_Session_finalize PMPI_Session_finalize
 #define MPI_Ssend PMPI_Ssend
 #define MPI_Ssend_init PMPI_Ssend_init
 #define MPI_Start PMPI_Start

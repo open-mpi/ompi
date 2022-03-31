@@ -152,8 +152,7 @@ int main( int argc, char* argv[] )
     free(packed);
 
     /* clean-ups all data allocations */
-    ompi_datatype_finalize();
-    opal_finalize_util ();
+    opal_finalize_util();
 
     return 0;
 }

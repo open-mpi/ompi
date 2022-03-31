@@ -13,10 +13,12 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +37,7 @@
 
 #include "ompi/errhandler/errcode.h"
 #include "ompi/constants.h"
+#include "ompi/instance/instance.h"
 
 /* Table holding all error codes */
 opal_pointer_array_t ompi_mpi_errcodes = {{0}};
@@ -137,14 +140,14 @@ do {                                                                      \
     opal_pointer_array_set_item(&ompi_mpi_errcodes, (ERRCODE), &(VAR));   \
 } while (0)
 
-static opal_mutex_t errcode_init_lock = OPAL_MUTEX_STATIC_INIT;
+static opal_mutex_t errcode_lock = OPAL_MUTEX_STATIC_INIT;
 
 int ompi_mpi_errcode_init (void)
 {
-    opal_mutex_lock(&errcode_init_lock);
+    opal_mutex_lock(&errcode_lock);
     if ( 0 != ompi_mpi_errcode_lastpredefined ) {
         /* Already initialized (presumably by an API call before MPI_init */
-        opal_mutex_unlock(&errcode_init_lock);
+        opal_mutex_unlock(&errcode_lock);
         return OMPI_SUCCESS;
     }
 
@@ -243,16 +246,27 @@ int ompi_mpi_errcode_init (void)
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
     ompi_mpi_errcode_lastused = MPI_ERR_LASTCODE;
     ompi_mpi_errcode_lastpredefined = MPI_ERR_LASTCODE;
-    opal_mutex_unlock(&errcode_init_lock);
+
+    opal_mutex_unlock(&errcode_lock);
+
+    ompi_mpi_instance_append_finalize (ompi_mpi_errcode_finalize);
+
     return OMPI_SUCCESS;
 }
 
-int ompi_mpi_errcode_finalize(void)
+/**
+ * Finalize the error codes.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invoked from instance teardown if ompi_mpi_errcode_init() was called; tears down the error code array.
+ */
+int ompi_mpi_errcode_finalize (void)
 {
     int i;
     ompi_mpi_errcode_t *errc;
 
-    opal_mutex_lock(&errcode_init_lock);
+    opal_mutex_lock(&errcode_lock);
     for (i=ompi_mpi_errcode_lastpredefined+1; i<=ompi_mpi_errcode_lastused; i++) {
         /*
          * there are some user defined error-codes, which
@@ -345,7 +359,7 @@ int ompi_mpi_errcode_finalize(void)
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     ompi_mpi_errcode_lastpredefined = 0;
-    opal_mutex_unlock(&errcode_init_lock);
+    opal_mutex_unlock(&errcode_lock);
     return OMPI_SUCCESS;
 }
 
@@ -354,11 +368,14 @@ int ompi_mpi_errcode_add(int errclass )
     ompi_mpi_errcode_t *newerrcode;
 
     newerrcode = OBJ_NEW(ompi_mpi_errcode_t);
+
+    opal_mutex_lock(&errcode_lock);
     newerrcode->code = (ompi_mpi_errcode_lastused+1);
     newerrcode->cls = errclass;
     opal_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->code, newerrcode);
-
     ompi_mpi_errcode_lastused++;
+    opal_mutex_unlock(&errcode_lock);
+
     return newerrcode->code;
 }
 
@@ -367,10 +384,13 @@ int ompi_mpi_errclass_add(void)
     ompi_mpi_errcode_t *newerrcode;
 
     newerrcode = OBJ_NEW(ompi_mpi_errcode_t);
+
+    opal_mutex_lock(&errcode_lock);
     newerrcode->cls = ( ompi_mpi_errcode_lastused+1);
     opal_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->cls, newerrcode);
-
     ompi_mpi_errcode_lastused++;
+    opal_mutex_unlock(&errcode_lock);
+
     return newerrcode->cls;
 }
 

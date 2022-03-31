@@ -11,6 +11,8 @@
 !                         reserved.
 ! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2019      Triad National Security, LLC. All rights
+!                         reserved.
 ! Copyright (c) 2021      Bull S.A.S. All rights reserved.
 ! Copyright (c) 2021      IBM Corporation.  All rights reserved.
 ! $COPYRIGHT$
@@ -699,6 +701,18 @@ end subroutine MPI_Comm_create_errhandler
 
 end interface
 
+interface  MPI_Comm_create_from_group
+
+subroutine MPI_Comm_create_from_group(group, stringtag, info, errhandler, newcomm, ierror)
+   integer, INTENT(IN) :: group
+   CHARACTER(LEN=*), INTENT(IN) :: stringtag
+   integer, INTENT(IN) :: info
+   integer, INTENT(IN) :: errhandler
+   integer, INTENT(OUT) :: newcomm
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine MPI_Comm_create_from_group
+
+end interface
 
 interface
 
@@ -1657,6 +1671,18 @@ end subroutine MPI_Group_free
 
 end interface
 
+interface MPI_Group_from_session_pset
+
+subroutine MPI_Group_from_session_pset(session, pset_name, newgroup, ierror)
+   implicit none
+   integer, INTENT(IN) :: session
+   CHARACTER(LEN=*), INTENT(IN) :: pset_name
+   integer, INTENT(OUT) :: newgroup
+   INTEGER, INTENT(OUT) :: ierror
+   integer :: c_ierror
+end subroutine MPI_Group_from_session_pset
+
+end interface
 
 interface
 
@@ -2290,6 +2316,22 @@ end subroutine MPI_Intercomm_create
 
 end interface
 
+interface MPI_Intercomm_create_from_groups
+
+subroutine MPI_Intercomm_create_from_groups(local_group, local_leader, remote_group, &
+                                            remote_leader, stringtag, info, errhandler, &
+                                            newintercomm, ierror)
+   implicit none
+   integer, INTENT(IN) :: local_group, remote_group
+   integer, INTENT(IN):: local_leader, remote_leader
+   CHARACTER(LEN=*), INTENT(IN) :: stringtag
+   integer, INTENT(IN) :: info
+   integer, INTENT(IN) :: errhandler
+   integer, INTENT(OUT) :: newintercomm
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine MPI_Intercomm_create_from_groups
+
+end interface
 
 interface
 
@@ -3625,6 +3667,61 @@ end subroutine MPI_Sendrecv_replace
 
 end interface
 
+interface MPI_Session_get_info
+subroutine MPI_Session_get_info(session, info, ierror)
+   integer, INTENT(IN) :: session
+   integer, INTENT(OUT) :: info
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_info
+end interface
+
+interface MPI_Session_get_nth_pset
+subroutine MPI_Session_get_nth_pset(session, info, n, pset_len, pset_name, ierror)
+   integer, INTENT(IN) :: session
+   integer, INTENT(IN) :: info
+   INTEGER, INTENT(IN) :: n
+   INTEGER, INTENT(INOUT) :: pset_len
+   CHARACTER(LEN=*), INTENT(OUT) :: pset_name
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_nth_pset
+end interface
+
+interface MPI_Session_get_nth_psetlen
+subroutine MPI_Session_get_nth_psetlen(session, n, pset_len, ierror)
+   implicit none
+   integer, INTENT(IN) :: session
+   INTEGER, INTENT(IN) :: n
+   INTEGER, INTENT(OUT) :: pset_len
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_nth_psetlen
+end interface 
+
+interface MPI_Session_get_pset_info
+subroutine MPI_Session_get_pset_info(session, pset_name, info, ierror)
+   integer, INTENT(IN) :: session
+   CHARACTER(LEN=*), INTENT(IN) :: pset_name
+   integer, INTENT(OUT) :: info
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_pset_info
+end interface
+
+interface  MPI_Session_init
+subroutine MPI_Session_init(info,errhandler,session,ierror)
+   integer, intent(IN) :: info
+   integer, intent(IN) :: errhandler
+   integer, intent(OUT) :: session
+   integer, intent(OUT) :: ierror
+end subroutine MPI_Session_init
+end interface
+
+interface
+
+subroutine MPI_Session_finalize(session,ierror)
+   integer, intent(inout) :: session
+   integer, intent(OUT) :: ierror
+end subroutine MPI_Session_finalize
+
+end interface
 
 interface
 

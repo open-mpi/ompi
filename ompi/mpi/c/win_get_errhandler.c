@@ -15,6 +15,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +31,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
+#include "ompi/instance/instance.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -42,6 +45,8 @@ static const char FUNC_NAME[] = "MPI_Win_get_errhandler";
 
 int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
 {
+    int ret = MPI_SUCCESS;
+
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_win_invalid(win)) {
@@ -60,6 +65,10 @@ int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
     *errhandler = win->error_handler;
     OPAL_THREAD_UNLOCK(&win->w_lock);
 
+   /* make sure the infrastructure is initialized */
+    ret = ompi_mpi_instance_retain ();
+
+
     /* All done */
-    return MPI_SUCCESS;
+    return ret;
 }

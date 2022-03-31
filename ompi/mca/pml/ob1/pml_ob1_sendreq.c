@@ -19,6 +19,8 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -487,18 +489,23 @@ int mca_pml_ob1_send_request_start_buffered(
     mca_bml_base_btl_t* bml_btl,
     size_t size)
 {
+    const bool need_ext_match = MCA_PML_OB1_SEND_REQUEST_REQUIRES_EXT_MATCH(sendreq);
+    size_t hdr_size = sizeof (mca_pml_ob1_rendezvous_hdr_t);
     mca_btl_base_descriptor_t* des;
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
+    mca_pml_ob1_rendezvous_hdr_t *hdr_rndv;
     struct iovec iov;
     unsigned int iov_count;
     size_t max_data, req_bytes_delivered;
     int rc;
 
+    if (OPAL_UNLIKELY(need_ext_match)) {
+        hdr_size = sizeof (hdr->hdr_ext_rndv);
+    }
+
     /* allocate descriptor */
-    mca_bml_base_alloc(bml_btl, &des,
-                       MCA_BTL_NO_ORDER,
-                       sizeof(mca_pml_ob1_rendezvous_hdr_t) + size,
+    mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER, hdr_size + size,
                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
                        MCA_BTL_DES_FLAGS_SIGNAL);
     if( OPAL_UNLIKELY(NULL == des) ) {
@@ -507,8 +514,7 @@ int mca_pml_ob1_send_request_start_buffered(
     segment = des->des_segments;
 
     /* pack the data into the BTL supplied buffer */
-    iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval +
-                                    sizeof(mca_pml_ob1_rendezvous_hdr_t));
+    iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + hdr_size);
     iov.iov_len = size;
     iov_count = 1;
     max_data = size;
@@ -523,17 +529,24 @@ int mca_pml_ob1_send_request_start_buffered(
 
     /* build rendezvous header */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-    mca_pml_ob1_rendezvous_hdr_prepare (&hdr->hdr_rndv, MCA_PML_OB1_HDR_TYPE_RNDV, 0,
-                                        sendreq->req_send.req_base.req_comm->c_contextid,
+    if (OPAL_UNLIKELY(need_ext_match)) {
+        hdr_rndv = &hdr->hdr_ext_rndv.hdr_rndv;
+        mca_pml_ob1_cid_hdr_prepare (&hdr->hdr_cid, sendreq->req_send.req_base.req_comm);
+    } else {
+        hdr_rndv = &hdr->hdr_rndv;
+    }
+
+    mca_pml_ob1_rendezvous_hdr_prepare (hdr_rndv, MCA_PML_OB1_HDR_TYPE_RNDV, 0,
+                                        sendreq->ob1_proc->comm_index,
                                         sendreq->req_send.req_base.req_comm->c_my_rank,
                                         sendreq->req_send.req_base.req_tag,
                                         (uint16_t)sendreq->req_send.req_base.req_sequence,
                                         sendreq->req_send.req_bytes_packed, sendreq);
 
-    ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_RNDV, sendreq->req_send.req_base.req_proc);
+    ob1_hdr_hton(hdr, hdr->hdr_common.hdr_type, sendreq->req_send.req_base.req_proc);
 
     /* update lengths */
-    segment->seg_len = sizeof(mca_pml_ob1_rendezvous_hdr_t) + max_data;
+    segment->seg_len = hdr_size + max_data;
 
     des->des_cbfunc = mca_pml_ob1_rndv_completion;
     des->des_cbdata = sendreq;
@@ -571,7 +584,7 @@ int mca_pml_ob1_send_request_start_buffered(
     MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_RNDV);
+    rc = mca_bml_base_send (bml_btl, des, hdr->hdr_common.hdr_type);
     if( OPAL_LIKELY( rc >= 0 ) ) {
         if( OPAL_LIKELY( 1 == rc ) ) {
             mca_pml_ob1_rndv_completion_request( bml_btl, sendreq, req_bytes_delivered);
@@ -593,18 +606,22 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
                                          mca_bml_base_btl_t* bml_btl,
                                          size_t size )
 {
+    const bool need_ext_match = MCA_PML_OB1_SEND_REQUEST_REQUIRES_EXT_MATCH(sendreq);
+    size_t hdr_size = OMPI_PML_OB1_MATCH_HDR_LEN;
     mca_btl_base_descriptor_t* des = NULL;
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
+    mca_pml_ob1_match_hdr_t *hdr_match;
     struct iovec iov;
     unsigned int iov_count;
     size_t max_data = size;
     int rc;
 
-    if(NULL != bml_btl->btl->btl_sendi) {
+    if(NULL != bml_btl->btl->btl_sendi && !need_ext_match) {
         mca_pml_ob1_match_hdr_t match;
+
         mca_pml_ob1_match_hdr_prepare (&match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
-                                       sendreq->req_send.req_base.req_comm->c_contextid,
+                                       sendreq->ob1_proc->comm_index,
                                        sendreq->req_send.req_base.req_comm->c_my_rank,
                                        sendreq->req_send.req_base.req_tag,
                                        (uint16_t)sendreq->req_send.req_base.req_sequence);
@@ -632,9 +649,11 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         }
     } else {
         /* allocate descriptor */
-        mca_bml_base_alloc( bml_btl, &des,
-                            MCA_BTL_NO_ORDER,
-                            OMPI_PML_OB1_MATCH_HDR_LEN + size,
+        if (OPAL_UNLIKELY(need_ext_match)) {
+            hdr_size += sizeof (hdr->hdr_cid);
+        }
+
+        mca_bml_base_alloc (bml_btl, &des, MCA_BTL_NO_ORDER, hdr_size + size,
                             MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     }
     if( OPAL_UNLIKELY(NULL == des) ) {
@@ -645,8 +664,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
 
     if(size > 0) {
         /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval +
-                                       OMPI_PML_OB1_MATCH_HDR_LEN);
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + hdr_size);
         iov.iov_len  = size;
         iov_count    = 1;
         /*
@@ -672,26 +690,32 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         );
     }
 
-
     /* build match header */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-    mca_pml_ob1_match_hdr_prepare (&hdr->hdr_match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
-                                   sendreq->req_send.req_base.req_comm->c_contextid,
+    if (OPAL_UNLIKELY(need_ext_match)) {
+        hdr_match = &hdr->hdr_ext_match.hdr_match;
+        mca_pml_ob1_cid_hdr_prepare (&hdr->hdr_cid, sendreq->req_send.req_base.req_comm);
+    } else {
+        hdr_match = &hdr->hdr_match;
+    }
+
+    mca_pml_ob1_match_hdr_prepare (hdr_match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
+                                   sendreq->ob1_proc->comm_index,
                                    sendreq->req_send.req_base.req_comm->c_my_rank,
                                    sendreq->req_send.req_base.req_tag,
                                    (uint16_t)sendreq->req_send.req_base.req_sequence);
 
-    ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_MATCH, sendreq->req_send.req_base.req_proc);
+    ob1_hdr_hton(hdr, hdr->hdr_common.hdr_type, sendreq->req_send.req_base.req_proc);
 
     /* update lengths */
-    segment->seg_len = OMPI_PML_OB1_MATCH_HDR_LEN + max_data;
+    segment->seg_len = hdr_size + max_data;
 
     /* short message */
     des->des_cbdata = sendreq;
     des->des_cbfunc = mca_pml_ob1_match_completion_free;
 
     /* send */
-    rc = mca_bml_base_send_status(bml_btl, des, MCA_PML_OB1_HDR_TYPE_MATCH);
+    rc = mca_bml_base_send_status(bml_btl, des, hdr->hdr_common.hdr_type);
     SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)size,
                     OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
     if( OPAL_LIKELY( rc >= OPAL_SUCCESS ) ) {
@@ -720,19 +744,23 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
                                             mca_bml_base_btl_t* bml_btl,
                                             size_t size )
 {
+    const bool need_ext_match = MCA_PML_OB1_SEND_REQUEST_REQUIRES_EXT_MATCH(sendreq);
+    size_t hdr_size = OMPI_PML_OB1_MATCH_HDR_LEN;
     mca_btl_base_descriptor_t* des;
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
+    mca_pml_ob1_match_hdr_t *hdr_match;
     int rc;
 
+    if (OPAL_UNLIKELY(need_ext_match)) {
+        hdr_size += sizeof (hdr->hdr_cid);
+    }
+
     /* prepare descriptor */
-    mca_bml_base_prepare_src( bml_btl,
-                              &sendreq->req_send.req_base.req_convertor,
-                              MCA_BTL_NO_ORDER,
-                              OMPI_PML_OB1_MATCH_HDR_LEN,
-                              &size,
+    mca_bml_base_prepare_src (bml_btl, &sendreq->req_send.req_base.req_convertor,
+                              MCA_BTL_NO_ORDER, hdr_size, &size,
                               MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
-                              &des );
+                              &des);
     if( OPAL_UNLIKELY(NULL == des) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -740,20 +768,27 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
 
     /* build match header */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-    mca_pml_ob1_match_hdr_prepare (&hdr->hdr_match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
-                                   sendreq->req_send.req_base.req_comm->c_contextid,
+    if (OPAL_UNLIKELY(need_ext_match)) {
+        hdr_match = &hdr->hdr_ext_match.hdr_match;
+        mca_pml_ob1_cid_hdr_prepare (&hdr->hdr_cid, sendreq->req_send.req_base.req_comm);
+    } else {
+        hdr_match = &hdr->hdr_match;
+    }
+
+    mca_pml_ob1_match_hdr_prepare (hdr_match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
+                                   sendreq->ob1_proc->comm_index,
                                    sendreq->req_send.req_base.req_comm->c_my_rank,
                                    sendreq->req_send.req_base.req_tag,
                                    (uint16_t)sendreq->req_send.req_base.req_sequence);
 
-    ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_MATCH, sendreq->req_send.req_base.req_proc);
+    ob1_hdr_hton(hdr, hdr->hdr_common.hdr_type, sendreq->req_send.req_base.req_proc);
 
     /* short message */
     des->des_cbfunc = mca_pml_ob1_match_completion_free;
     des->des_cbdata = sendreq;
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_MATCH);
+    rc = mca_bml_base_send(bml_btl, des, hdr->hdr_common.hdr_type);
     SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)size,
                     OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
     if( OPAL_LIKELY( rc >= OPAL_SUCCESS ) ) {
@@ -782,11 +817,13 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
      * one RDMA capable BTLs). This way round robin distribution of RDMA
      * operation is achieved.
      */
+    const bool need_ext_match = MCA_PML_OB1_SEND_REQUEST_REQUIRES_EXT_MATCH(sendreq);
+    size_t reg_size, hdr_size = sizeof (mca_pml_ob1_rget_hdr_t);
     mca_btl_base_registration_handle_t *local_handle;
     mca_btl_base_descriptor_t *des;
     mca_pml_ob1_rdma_frag_t *frag;
-    mca_pml_ob1_rget_hdr_t *hdr;
-    size_t reg_size;
+    mca_pml_ob1_hdr_t *hdr;
+    mca_pml_ob1_rget_hdr_t *hdr_rget;
     void *data_ptr;
     int rc;
 
@@ -818,10 +855,15 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     frag->cbfunc = mca_pml_ob1_rget_completion;
     /* do not store the local handle in the fragment. it will be released by mca_pml_ob1_free_rdma_resources */
 
+    if (OPAL_UNLIKELY(need_ext_match)) {
+        hdr_size = sizeof (hdr->hdr_ext_rget);
+    }
+
     reg_size = bml_btl->btl->btl_registration_handle_size;
+    hdr_size += reg_size;
 
     /* allocate space for get hdr + segment list */
-    mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER, sizeof (*hdr) + reg_size,
+    mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER, hdr_size,
                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
                        MCA_BTL_DES_FLAGS_SIGNAL);
     if( OPAL_UNLIKELY(NULL == des) ) {
@@ -834,17 +876,24 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     sendreq->rdma_frag = frag;
 
     /* build match header */
-    hdr = (mca_pml_ob1_rget_hdr_t *) des->des_segments->seg_addr.pval;
+    hdr = (mca_pml_ob1_hdr_t *) des->des_segments->seg_addr.pval;
+    if (need_ext_match) {
+        hdr_rget = &hdr->hdr_ext_rget.hdr_rget;
+        mca_pml_ob1_cid_hdr_prepare (&hdr->hdr_cid, sendreq->req_send.req_base.req_comm);
+    } else {
+        hdr_rget = &hdr->hdr_rget;
+    }
+
     /* TODO -- Add support for multiple segments for get */
-    mca_pml_ob1_rget_hdr_prepare (hdr, MCA_PML_OB1_HDR_FLAGS_CONTIG | MCA_PML_OB1_HDR_FLAGS_PIN,
-                                  sendreq->req_send.req_base.req_comm->c_contextid,
+    mca_pml_ob1_rget_hdr_prepare (hdr_rget, MCA_PML_OB1_HDR_FLAGS_CONTIG | MCA_PML_OB1_HDR_FLAGS_PIN,
+                                  sendreq->ob1_proc->comm_index,
                                   sendreq->req_send.req_base.req_comm->c_my_rank,
                                   sendreq->req_send.req_base.req_tag,
                                   (uint16_t)sendreq->req_send.req_base.req_sequence,
                                   sendreq->req_send.req_bytes_packed, sendreq,
                                   frag, data_ptr, local_handle, reg_size);
 
-    ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_RGET, sendreq->req_send.req_base.req_proc);
+    ob1_hdr_hton(hdr, hdr->hdr_common.hdr_type, sendreq->req_send.req_base.req_proc);
 
     des->des_cbfunc = mca_pml_ob1_send_ctl_completion;
     des->des_cbdata = sendreq;
@@ -860,7 +909,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     }
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_RGET);
+    rc = mca_bml_base_send(bml_btl, des, hdr->hdr_common.hdr_type);
     if (OPAL_UNLIKELY(rc < 0)) {
         MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
         sendreq->rdma_frag = NULL;
@@ -882,18 +931,22 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                                          size_t size,
                                          int flags )
 {
+    const bool need_ext_match = MCA_PML_OB1_SEND_REQUEST_REQUIRES_EXT_MATCH(sendreq);
+    size_t hdr_size = sizeof (mca_pml_ob1_rendezvous_hdr_t);
     mca_btl_base_descriptor_t* des;
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
+    mca_pml_ob1_rendezvous_hdr_t *hdr_rndv;
     int rc;
+
+    if (OPAL_UNLIKELY(need_ext_match)) {
+        hdr_size = sizeof (hdr->hdr_ext_rndv);
+    }
 
     /* prepare descriptor */
     if(size == 0) {
-        mca_bml_base_alloc( bml_btl,
-                            &des,
-                            MCA_BTL_NO_ORDER,
-                            sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                            MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP );
+        mca_bml_base_alloc (bml_btl, &des, MCA_BTL_NO_ORDER, hdr_size, MCA_BTL_DES_FLAGS_PRIORITY |
+                            MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     } else {
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_defined,
@@ -901,14 +954,10 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_datatype);
         );
-        mca_bml_base_prepare_src( bml_btl,
-                                  &sendreq->req_send.req_base.req_convertor,
-                                  MCA_BTL_NO_ORDER,
-                                  sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                                  &size,
+        mca_bml_base_prepare_src (bml_btl, &sendreq->req_send.req_base.req_convertor,
+                                  MCA_BTL_NO_ORDER, hdr_size, &size,
                                   MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
-                                  MCA_BTL_DES_FLAGS_SIGNAL,
-                                  &des );
+                                  MCA_BTL_DES_FLAGS_SIGNAL, &des);
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_noaccess,
                             sendreq->req_send.req_base.req_addr,
@@ -924,15 +973,23 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
 
     /* build hdr */
     hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-    mca_pml_ob1_rendezvous_hdr_prepare (&hdr->hdr_rndv, MCA_PML_OB1_HDR_TYPE_RNDV, flags |
+
+    if (OPAL_UNLIKELY(need_ext_match)) {
+        hdr_rndv = &hdr->hdr_ext_rndv.hdr_rndv;
+        mca_pml_ob1_cid_hdr_prepare (&hdr->hdr_cid, sendreq->req_send.req_base.req_comm);
+    } else {
+        hdr_rndv = &hdr->hdr_rndv;
+    }
+
+    mca_pml_ob1_rendezvous_hdr_prepare (hdr_rndv, MCA_PML_OB1_HDR_TYPE_RNDV, flags |
                                         MCA_PML_OB1_HDR_FLAGS_SIGNAL,
-                                        sendreq->req_send.req_base.req_comm->c_contextid,
+                                        sendreq->ob1_proc->comm_index,
                                         sendreq->req_send.req_base.req_comm->c_my_rank,
                                         sendreq->req_send.req_base.req_tag,
                                         (uint16_t)sendreq->req_send.req_base.req_sequence,
                                         sendreq->req_send.req_bytes_packed, sendreq);
 
-    ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_RNDV, sendreq->req_send.req_base.req_proc);
+    ob1_hdr_hton(hdr, hdr->hdr_common.hdr_type, sendreq->req_send.req_base.req_proc);
 
     /* first fragment of a long message */
     des->des_cbdata = sendreq;
@@ -942,7 +999,7 @@ int mca_pml_ob1_send_request_start_rndv( mca_pml_ob1_send_request_t* sendreq,
     sendreq->req_state = 2;
 
     /* send */
-    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_RNDV);
+    rc = mca_bml_base_send(bml_btl, des, hdr->hdr_common.hdr_type);
     if( OPAL_LIKELY( rc >= 0 ) ) {
         if( OPAL_LIKELY( 1 == rc ) ) {
             mca_pml_ob1_rndv_completion_request( bml_btl, sendreq, size );

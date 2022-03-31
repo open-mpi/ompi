@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2011-2022 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -434,9 +434,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                         "portals4 component creating window with id %d",
-                        ompi_comm_get_cid(module->comm));
+                        ompi_comm_get_local_cid(module->comm));
 
-    opal_asprintf(&name, "portals4 window %d", ompi_comm_get_cid(module->comm));
+    opal_asprintf(&name, "portals4 window %d", ompi_comm_get_local_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
 
@@ -523,7 +523,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     me.options = PTL_ME_OP_PUT | PTL_ME_OP_GET | PTL_ME_NO_TRUNCATE | PTL_ME_EVENT_SUCCESS_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
-    me.match_bits = module->comm->c_contextid;
+    me.match_bits = ompi_comm_get_local_cid(module->comm);
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(module->ni_h,
@@ -546,7 +546,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     me.options = PTL_ME_OP_PUT | PTL_ME_OP_GET | PTL_ME_NO_TRUNCATE | PTL_ME_EVENT_SUCCESS_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
-    me.match_bits = module->comm->c_contextid | OSC_PORTALS4_MB_CONTROL;
+    me.match_bits = ompi_comm_get_local_cid(module->comm) | OSC_PORTALS4_MB_CONTROL;
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(module->ni_h,
@@ -563,7 +563,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     }
 
     module->opcount = 0;
-    module->match_bits = module->comm->c_contextid;
+    module->match_bits = ompi_comm_get_local_cid(module->comm);
     module->atomic_max = (check_config_value_equal("accumulate_ordering", info, "none")) ?
         mca_osc_portals4_component.matching_atomic_max :
         MIN(mca_osc_portals4_component.matching_atomic_max,
