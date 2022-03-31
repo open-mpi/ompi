@@ -76,7 +76,7 @@ my $ompi_libtoolize_search = "libtoolize;glibtoolize";
 
 # version of packages we ship as tarballs
 my $libevent_version="2.1.12-stable";
-my $hwloc_version="2.7.0";
+my $hwloc_version="2.7.1";
 
 # One-time setup
 my $username;
