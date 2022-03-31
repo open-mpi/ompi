@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2019-2020 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates. All rights
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *                         reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      The University of Tennessee and The University
@@ -51,7 +51,7 @@
 #include "mtl_ofi_compat.h"
 
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #include "opal/datatype/opal_convertor.h"
 #endif
 

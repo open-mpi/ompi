@@ -2,6 +2,7 @@
  * Copyright (c) 2020-2021 IBM Corporation. All rights reserved.
  * Copyright (c) 2002      University of Chicago
  * Copyright (c) 2001      Argonne National Laboratory
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +55,7 @@
 #define OPAL_DATATYPE_PACK_UNPACK_PREDEFINED_H_HAS_BEEN_INCLUDED
 
 #include "opal_config.h"
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #include <stdint.h>
 
 /*  Improve predefined pack/unpack performance using mpich methods.

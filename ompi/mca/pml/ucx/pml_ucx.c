@@ -26,7 +26,7 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 #if OPAL_CUDA_SUPPORT
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 #include "pml_ucx_request.h"
 

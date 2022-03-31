@@ -21,6 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +40,7 @@
 
 #include "opal/util/proc.h"
 #if OPAL_CUDA_GDR_SUPPORT
-#    include "opal/mca/common/cuda/common_cuda.h"
+#    include "opal/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
