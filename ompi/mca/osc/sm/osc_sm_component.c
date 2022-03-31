@@ -11,7 +11,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
@@ -30,7 +30,6 @@
 #include "ompi/request/request.h"
 #include "opal/util/sys_limits.h"
 #include "opal/align.h"
-#include "opal/util/info_subscriber.h"
 #include "opal/util/printf.h"
 #include "opal/mca/mpool/base/base.h"
 
@@ -46,9 +45,6 @@ static int component_register (void);
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
-static const char* component_set_blocking_fence_info(opal_infosubscriber_t *obj, const char *key, const char *val);
-static const char* component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, const char *key, const char *val);
-
 
 ompi_osc_sm_component_t mca_osc_sm_component = {
     { /* ompi_osc_base_component_t */
@@ -221,9 +217,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
 
-    ret = opal_infosubscribe_subscribe(&(win->super), "alloc_shared_noncontig", "false", component_set_alloc_shared_noncontig_info);
-    if (OPAL_SUCCESS != ret) goto error;
-
     if (NULL != info) {
         ompi_osc_base_set_memory_alignment(info, &memory_alignment);
     }
@@ -266,8 +259,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         size_t posts_size, post_size = (comm_size + OSC_SM_POST_MASK) / (OSC_SM_POST_MASK + 1);
         size_t data_base_size;
 
-        OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
-                             "allocating shared memory region of size %ld\n", (long) size));
+        opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                            "allocating shared memory region of size %ld\n", (long) size);
 
         /* get the pagesize */
         pagesize = opal_getpagesize();
@@ -275,6 +268,12 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         rbuf = malloc(sizeof(unsigned long) * comm_size);
         if (NULL == rbuf) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
+        /* Note that the alloc_shared_noncontig info key only has
+         * meaning during window creation.  Once the window is
+         * created, we can't move memory around without making
+         * everything miserable.  So we intentionally do not subcribe
+         * to updates on the info key, because there's no useful
+         * update to occur. */
         module->noncontig = false;
         if (OMPI_SUCCESS != opal_info_get_bool(info, "alloc_shared_noncontig",
                                                &module->noncontig, &flag)) {
@@ -282,8 +281,12 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         }
 
         if (module->noncontig) {
+            opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                                "allocating window using non-contiguous strategy");
             total = ((size - 1) / pagesize + 1) * pagesize;
         } else {
+            opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                                "allocating window using contiguous strategy");
             total = size;
         }
         ret = module->comm->c_coll->coll_allgather(&total, 1, MPI_UNSIGNED_LONG,
@@ -447,11 +450,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 #endif
     }
 
-    ret = opal_infosubscribe_subscribe(&(win->super), "blocking_fence", module->global_state->use_barrier_for_fence ? "true" : "false",
-        component_set_blocking_fence_info);
-
-    if (OPAL_SUCCESS != ret) goto error;
-
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                             module->comm->c_coll->coll_barrier_module);
     if (OMPI_SUCCESS != ret) goto error;
@@ -580,29 +578,6 @@ ompi_osc_sm_set_info(struct ompi_win_t *win, struct opal_info_t *info)
     /* enforce collectiveness... */
     return module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
-}
-
-
-static const char*
-component_set_blocking_fence_info(opal_infosubscriber_t *obj, const char *key, const char *val)
-{
-    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
-    /*
-    * Assuming that you can't change the default.
-    */
-    return module->global_state->use_barrier_for_fence ? "true" : "false";
-}
-
-
-static const char*
-component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, const char *key, const char *val)
-{
-
-    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
-    /*
-    * Assuming that you can't change the default.
-    */
-    return module->noncontig ? "true" : "false";
 }
 
 
