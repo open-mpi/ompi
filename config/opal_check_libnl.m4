@@ -24,7 +24,7 @@ dnl cannot assume is always present) or we need to look in a
 dnl particular directory for the right libnl3 include files.  For
 dnl now, just hard code the special path into this logic.
 dnl
-dnl _OPAL_CHECK_PACKAGE_LIB() invokes OPAL_LIBNL_SANITY_CHECK() in order
+dnl OAC_CHEC_PACKAGE() invokes OPAL_LIBNL_CHECK_PACKAGE_CALLBACK() in order
 dnl to keep track of which libraries depend on libnl and which libraries
 dnl depend on libnl3.
 dnl Open MPI will not be able to build a component vs a given version of libnl
@@ -89,36 +89,6 @@ AC_DEFUN([OPAL_LIBNL_CHECK_PACKAGE_CALLBACK], [
     AS_IF([test ${opal_libnl_sane} -eq 1],
           [$5], [$6])
 
-    OPAL_VAR_SCOPE_POP([opal_libnl_sane])
-])
-
-dnl OPAL_LIBNL_SANITY_CHECK(lib, function, LIBS, libnl_check_ok)
-dnl
-dnl This macro is invoked from CHECK_PACKAGE to make sure that
-dnl new libraries that are added to LIBS do not pull in conflicting
-dnl versions of libnl.  E.g., if we already have a library in LIBS
-dnl that pulls in libnl v3, if CHECK_PACKAGE is later called that
-dnl pulls in a library that pulls in libnl v1, this macro will detect
-dnl the conflict and will abort configure.
-dnl
-dnl We abort rather than silently ignore this library simply because
-dnl we are now multiple levels deep in the M4 "call stack", and this
-dnl layer does not know the intent of the user.  Hence, all we can do
-dnl is abort with a hopefully helpful error message (that we aborted
-dnl because Open MPI would have been built in a configuration that is
-dnl known to crash).
-dnl
-dnl --------------------------------------------------------------------
-AC_DEFUN([OPAL_LIBNL_SANITY_CHECK], [
-    OPAL_VAR_SCOPE_PUSH([opal_libnl_sane])
-    opal_libnl_sane=1
-    case $host in
-        *linux*)
-            OPAL_LIBNL_SANITY_CHECK_LINUX([$1], [$2], [-l$1 $3], [opal_libnl_sane])
-            ;;
-    esac
-
-    $4=$opal_libnl_sane
     OPAL_VAR_SCOPE_POP([opal_libnl_sane])
 ])
 
