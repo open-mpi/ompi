@@ -13,38 +13,43 @@
 #include "ompi/mca/op/op.h"
 #include <ucc/api/ucc.h>
 
-#define COLL_UCC_DT_UNSUPPORTED -1
-#define COLL_UCC_OP_UNSUPPORTED -1
+#define COLL_UCC_DT_UNSUPPORTED ((ucc_datatype_t)-1)
+#define COLL_UCC_OP_UNSUPPORTED ((ucc_reduction_op_t)-1)
 
 static ucc_datatype_t ompi_datatype_2_ucc_dt[OPAL_DATATYPE_MAX_PREDEFINED] = {
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_LOOP                0 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_END_LOOP            1 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_LB                  2 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_UB                  3 */
-    UCC_DT_INT8,                  /*OPAL_DATATYPE_INT1                4 */
-    UCC_DT_INT16,                 /*OPAL_DATATYPE_INT2                5 */
-    UCC_DT_INT32,                 /*OPAL_DATATYPE_INT4                6 */
-    UCC_DT_INT64,                 /*OPAL_DATATYPE_INT8                7 */
-    UCC_DT_INT128,                /*OPAL_DATATYPE_INT16               8 */
-    UCC_DT_UINT8,                 /*OPAL_DATATYPE_UINT1               9 */
-    UCC_DT_UINT16,                /*OPAL_DATATYPE_UINT2               10 */
-    UCC_DT_UINT32,                /*OPAL_DATATYPE_UINT4               11 */
-    UCC_DT_UINT64,                /*OPAL_DATATYPE_UINT8               12 */
-    UCC_DT_UINT128,               /*OPAL_DATATYPE_UINT16              13 */
-    UCC_DT_FLOAT16,               /*OPAL_DATATYPE_FLOAT2              14 */
-    UCC_DT_FLOAT32,               /*OPAL_DATATYPE_FLOAT4              15 */
-    UCC_DT_FLOAT64,               /*OPAL_DATATYPE_FLOAT8              16 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_FLOAT12             17 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_FLOAT16             18 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_SHORT_FLOAT_COMPLEX 19 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_FLOAT_COMPLEX       20 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_DOUBLE_COMPLEX      21 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_LONG_DOUBLE_COMPLEX 22 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_BOOL                23 */
-    COLL_UCC_DT_UNSUPPORTED,      /*OPAL_DATATYPE_WCHAR               24 */
-    UCC_DT_INT64,                 /*OPAL_DATATYPE_LONG                25 */
-    UCC_DT_UINT64,                /*OPAL_DATATYPE_UNSIGNED_LONG       26 */
-    COLL_UCC_DT_UNSUPPORTED       /*OPAL_DATATYPE_UNAVAILABLE         27 */
+    [OPAL_DATATYPE_LOOP]                = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_END_LOOP]            = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_LB]                  = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_UB]                  = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_INT1]                = UCC_DT_INT8,
+    [OPAL_DATATYPE_INT2]                = UCC_DT_INT16,
+    [OPAL_DATATYPE_INT4]                = UCC_DT_INT32,
+    [OPAL_DATATYPE_INT8]                = UCC_DT_INT64,
+    [OPAL_DATATYPE_INT16]               = UCC_DT_INT128,
+    [OPAL_DATATYPE_UINT1]               = UCC_DT_UINT8,
+    [OPAL_DATATYPE_UINT2]               = UCC_DT_UINT16,
+    [OPAL_DATATYPE_UINT4]               = UCC_DT_UINT32,
+    [OPAL_DATATYPE_UINT8]               = UCC_DT_UINT64,
+    [OPAL_DATATYPE_UINT16]              = UCC_DT_UINT128,
+    [OPAL_DATATYPE_FLOAT2]              = UCC_DT_FLOAT16,
+    [OPAL_DATATYPE_FLOAT4]              = UCC_DT_FLOAT32,
+    [OPAL_DATATYPE_FLOAT8]              = UCC_DT_FLOAT64,
+    [OPAL_DATATYPE_FLOAT12]             = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_FLOAT16]             = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_FLOAT_COMPLEX]       = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_DOUBLE_COMPLEX]      = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_LONG_DOUBLE_COMPLEX] = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_BOOL]                = COLL_UCC_DT_UNSUPPORTED,
+    [OPAL_DATATYPE_WCHAR]               = COLL_UCC_DT_UNSUPPORTED,
+#if SIZEOF_LONG == 4
+    [OPAL_DATATYPE_LONG]                = UCC_DT_INT32,
+    [OPAL_DATATYPE_UNSIGNED_LONG]       = UCC_DT_UINT32,
+#elif SIZEOF_LONG == 8
+    [OPAL_DATATYPE_LONG]                = UCC_DT_INT64,
+    [OPAL_DATATYPE_UNSIGNED_LONG]       = UCC_DT_UINT64,
+#endif
+    [OPAL_DATATYPE_UNAVAILABLE]         = COLL_UCC_DT_UNSUPPORTED
 };
 
 static inline ucc_datatype_t ompi_dtype_to_ucc_dtype(ompi_datatype_t *dtype)

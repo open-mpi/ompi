@@ -333,7 +333,8 @@ uint64_t rank_map_cb(uint64_t ep, void *cb_ctx)
 static inline ucc_ep_map_t get_rank_map(struct ompi_communicator_t *comm)
 {
     ucc_ep_map_t map;
-    int64_t      r1, r2, stride, i;
+    int64_t      r1, r2, stride;
+    uint64_t     i;
     int          is_strided;
 
     map.ep_num = ompi_comm_size(comm);
@@ -392,10 +393,11 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
         },
         .ep       = ompi_comm_rank(comm),
         .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG,
-        .id       = comm->c_contextid
+        .id       = ompi_comm_get_local_cid(comm)
     };
-    UCC_VERBOSE(2,"creating ucc_team for comm %p, comm_id %d, comm_size %d",
-                 (void*)comm,comm->c_contextid,ompi_comm_size(comm));
+    UCC_VERBOSE(2, "creating ucc_team for comm %p, comm_id %llu, comm_size %d",
+                (void*)comm, (long long unsigned)team_params.id,
+                ompi_comm_size(comm));
 
     if (OMPI_SUCCESS != mca_coll_ucc_save_coll_handlers(ucc_module)){
         UCC_ERROR("mca_coll_ucc_save_coll_handlers failed");
