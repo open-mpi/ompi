@@ -14,7 +14,7 @@
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -608,16 +608,16 @@ void ompi_info_do_config(bool want_all)
         opal_info_out("Build LDFLAGS", "option:build:ldflags", OMPI_BUILD_LDFLAGS);
         opal_info_out("Build LIBS", "option:build:libs", OMPI_BUILD_LIBS);
 
-        opal_info_out("Wrapper extra CFLAGS", "option:wrapper:extra_cflags",
-                      WRAPPER_EXTRA_CFLAGS);
-        opal_info_out("Wrapper extra CXXFLAGS", "option:wrapper:extra_cxxflags",
-                      WRAPPER_EXTRA_CXXFLAGS);
-        opal_info_out("Wrapper extra FCFLAGS", "option:wrapper:extra_fcflags",
-                      WRAPPER_EXTRA_FCFLAGS);
-        opal_info_out("Wrapper extra LDFLAGS", "option:wrapper:extra_ldflags",
-                      WRAPPER_EXTRA_LDFLAGS);
-        opal_info_out("Wrapper extra LIBS", "option:wrapper:extra_libs",
-                      WRAPPER_EXTRA_LIBS);
+        opal_info_out("Wrapper CFLAGS", "option:wrapper:cflags",
+                      OMPI_WRAPPER_CFLAGS);
+        opal_info_out("Wrapper CXXFLAGS", "option:wrapper:cxxflags",
+                      OMPI_WRAPPER_CXXFLAGS);
+        opal_info_out("Wrapper FCFLAGS", "option:wrapper:fcflags",
+                      OMPI_WRAPPER_FCFLAGS);
+        opal_info_out("Wrapper LDFLAGS", "option:wrapper:ldflags",
+                      OMPI_WRAPPER_LDFLAGS);
+        opal_info_out("Wrapper LIBS", "option:wrapper:libs",
+                      OMPI_WRAPPER_LIBS);
     }
 
     opal_info_out("Internal debug support", "option:debug", debug);

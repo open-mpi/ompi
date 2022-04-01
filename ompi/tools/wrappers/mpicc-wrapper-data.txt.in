@@ -12,16 +12,13 @@ language=C
 compiler_env=CC
 compiler_flags_env=CFLAGS
 compiler=@WRAPPER_CC@
-preprocessor_flags=@OMPI_WRAPPER_EXTRA_CPPFLAGS@
-compiler_flags_prefix=@OMPI_WRAPPER_EXTRA_CFLAGS_PREFIX@
-compiler_flags=@OMPI_WRAPPER_EXTRA_CFLAGS@
-linker_flags=@OMPI_WRAPPER_EXTRA_LDFLAGS@
-# Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
-# intentionally only link in the MPI libraries (OPAL, etc. are
-# pulled in implicitly) because we intend MPI applications to only use
-# the MPI API.
-libs=-l@OMPI_LIBMPI_NAME@
-libs_static=-l@OMPI_LIBMPI_NAME@ -l@OPAL_LIB_NAME@ @OMPI_WRAPPER_EXTRA_LIBS@
+preprocessor_flags=@OMPI_WRAPPER_CPPFLAGS@
+compiler_flags_prefix=@OMPI_WRAPPER_CFLAGS_PREFIX@
+compiler_flags=@OMPI_WRAPPER_CFLAGS@
+linker_flags=@OMPI_WRAPPER_LDFLAGS@
+linker_flags_static=@OMPI_WRAPPER_LDFLAGS_STATIC@
+libs=@OMPI_WRAPPER_LIBS@
+libs_static=@OMPI_WRAPPER_LIBS_STATIC@
 dyn_lib_file=lib@OMPI_LIBMPI_NAME@.@OPAL_DYN_LIB_SUFFIX@
 static_lib_file=lib@OMPI_LIBMPI_NAME@.a
 required_file=
