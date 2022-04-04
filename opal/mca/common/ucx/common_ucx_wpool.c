@@ -564,6 +564,16 @@ static void _tlocal_ctx_rec_cleanup(_ctx_record_t *ctx_rec)
     opal_common_ucx_winfo_t *winfo = ctx_rec->winfo;
     opal_common_ucx_wpool_t *wpool = ctx_rec->gctx->wpool;
 
+    opal_mutex_lock(&winfo->mutex);
+    int rc = opal_common_ucx_winfo_flush(winfo, 0, OPAL_COMMON_UCX_FLUSH_B, OPAL_COMMON_UCX_SCOPE_WORKER, NULL);
+    winfo->global_inflight_ops = 0;
+    memset(winfo->inflight_ops, 0, winfo->comm_size * sizeof(short));
+    opal_mutex_unlock(&winfo->mutex);
+    if (rc != OPAL_SUCCESS) {
+        MCA_COMMON_UCX_ERROR("opal_common_ucx_flush failed: %d", rc);
+        return;
+    }
+
     /* Remove worker from active and return to idle list. */
     _wpool_put_winfo(wpool, winfo);
 
