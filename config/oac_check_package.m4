@@ -59,6 +59,13 @@ dnl All three are optional, nothing will break if the caller doesn't specify the
 dnl (and indeed, if the package being searched for isn't libnl3, it's likely the
 dnl with-<package name>-incdir is a complete waste of energe).
 dnl
+dnl If libraries is not an empty macro, function must also be set.  If function is
+dnl not set, no link tests will be performed.  If a pkg-config module module or
+dnl wrapper compiler is found for the package, <prefix>_{static,}_{LDFLAGS, LIBS}
+dnl may still be set.  If libraries was not set and neither a pkg-config module nor
+dnl a wrapper compiler was found, then <prefix>_{STATIC,}_{LDFLAGS,LIBS} will be
+dnl  set to an empty string.
+dnl
 dnl By default, OAC_CHECK_PACKAGE will use <package name> for the module name to specify
 dnl to pkg-config, meaning there is a <package name>.pc in the filesystem.  If a
 dnl different module name should be used, add a macro to the M4 environment named
@@ -109,6 +116,11 @@ dnl added to LIBS.
 AC_DEFUN([OAC_CHECK_PACKAGE],[
 # ****************************** START CHECK PACKAGE FOR $1 ******************************
     AC_REQUIRE([OAC_CHECK_PACKAGE_STATIC_CHECK])
+
+    dnl enforce that function must be set unless libs is empty
+    OAC_IFBLANK([$4],
+        [OAC_IFNBLANK([$5],
+             [AC_MSG_ERROR([OAC_CHECK_PACKAGE($1) called with empty check function])])])
 
     check_package_$2_save_CPPFLAGS="${CPPFLAGS}"
     check_package_$2_save_LDFLAGS="${LDFLAGS}"
@@ -600,7 +612,6 @@ dnl 4 -> libraries (space separated list)
 dnl 5 -> action if found flags
 AC_DEFUN([_OAC_CHECK_PACKAGE_GENERIC_PREFIX], [
     check_package_generic_search_header=`echo "$3" | cut -f1 -d' '`
-    check_package_generic_search_lib=`echo "$4" | cut -f1 -d' ' | sed -e 's/^-l//'`
 
     check_package_generic_prefix_happy=0
     AS_IF([test -n "${check_package_incdir}"],
@@ -613,38 +624,40 @@ AC_DEFUN([_OAC_CHECK_PACKAGE_GENERIC_PREFIX], [
            AC_MSG_RESULT([found])],
           [AC_MSG_RESULT([not found])])
 
-    AS_IF([test ${check_package_generic_prefix_happy} -eq 1],
-          [check_package_generic_prefix_happy=0
-           AS_IF([test -n "${check_package_libdir}"],
-                 [AC_MSG_CHECKING([for $1 library (${check_package_generic_search_lib}) in ${check_package_libdir}])
-                  ls ${check_package_libdir}/lib${check_package_generic_search_lib}.*  1>&/dev/null 2>&1
-                  AS_IF([test $? -eq 0],
-                        [check_package_generic_prefix_happy=1
-                         $2_LDFLAGS="-L${check_package_libdir}"
-                         AC_MSG_RESULT([foound])],
-                        [AC_MSG_RESULT([not found])])],
-                 [check_package_generic_prefix_lib=0
-                  check_package_generic_prefix_lib64=0
+    OAC_IFNBLANK([$4],
+        [check_package_generic_search_lib=`echo "$4" | cut -f1 -d' ' | sed -e 's/^-l//'`
+         AS_IF([test ${check_package_generic_prefix_happy} -eq 1],
+              [check_package_generic_prefix_happy=0
+               AS_IF([test -n "${check_package_libdir}"],
+                     [AC_MSG_CHECKING([for $1 library (${check_package_generic_search_lib}) in ${check_package_libdir}])
+                      ls ${check_package_libdir}/lib${check_package_generic_search_lib}.*  1>&/dev/null 2>&1
+                      AS_IF([test $? -eq 0],
+                            [check_package_generic_prefix_happy=1
+                             $2_LDFLAGS="-L${check_package_libdir}"
+                             AC_MSG_RESULT([foound])],
+                            [AC_MSG_RESULT([not found])])],
+                     [check_package_generic_prefix_lib=0
+                      check_package_generic_prefix_lib64=0
 
-                  ls ${check_package_prefix}/lib/lib${check_package_generic_search_lib}.*  1>&/dev/null 2>&1
-                  AS_IF([test $? -eq 0], [check_package_generic_prefix_lib=1])
-                  ls ${check_package_prefix}/lib64/lib${check_package_generic_search_lib}.*  1>&/dev/null 2>&1
-                  AS_IF([test $? -eq 0], [check_package_generic_prefix_lib64=1])
+                      ls ${check_package_prefix}/lib/lib${check_package_generic_search_lib}.*  1>&/dev/null 2>&1
+                      AS_IF([test $? -eq 0], [check_package_generic_prefix_lib=1])
+                      ls ${check_package_prefix}/lib64/lib${check_package_generic_search_lib}.*  1>&/dev/null 2>&1
+                      AS_IF([test $? -eq 0], [check_package_generic_prefix_lib64=1])
 
-                  AC_MSG_CHECKING([for $1 library (${check_package_generic_search_lib}) in ${check_package_prefix}])
-                  AS_IF([test ${check_package_generic_prefix_lib} -eq 1 -a ${check_package_generic_prefix_lib64} -eq 1],
-                        [AC_MSG_ERROR([Found library $check_package_generic_search_lib in both ${check_package_prefix}/lib and
+                      AC_MSG_CHECKING([for $1 library (${check_package_generic_search_lib}) in ${check_package_prefix}])
+                      AS_IF([test ${check_package_generic_prefix_lib} -eq 1 -a ${check_package_generic_prefix_lib64} -eq 1],
+                            [AC_MSG_ERROR([Found library $check_package_generic_search_lib in both ${check_package_prefix}/lib and
 ${check_package_prefix}/lib64.  This has confused configure.  Please add --with-$1-libdir=PATH to configure to help
 disambiguate.])],
-                        [test ${check_package_generic_prefix_lib} -eq 1],
-                        [check_package_generic_prefix_happy=1
-                         $2_LDFLAGS=-L${check_package_prefix}/lib
-                         AC_MSG_RESULT([found -- lib])],
-                        [test $check_package_generic_prefix_lib64 -eq 1],
-                        [check_package_generic_prefix_happy=1
-                         libdir_prefix=${check_package_prefix}/lib64
-                         AC_MSG_RESULT([found -- lib64])],
-                        [AC_MSG_RESULT([not found])])])])
+                            [test ${check_package_generic_prefix_lib} -eq 1],
+                            [check_package_generic_prefix_happy=1
+                             $2_LDFLAGS=-L${check_package_prefix}/lib
+                             AC_MSG_RESULT([found -- lib])],
+                            [test $check_package_generic_prefix_lib64 -eq 1],
+                            [check_package_generic_prefix_happy=1
+                             libdir_prefix=${check_package_prefix}/lib64
+                             AC_MSG_RESULT([found -- lib64])],
+                            [AC_MSG_RESULT([not found])])])])])
 
     AS_IF([test ${check_package_generic_prefix_happy} -eq 1], [$5])
 
@@ -679,15 +692,16 @@ AC_DEFUN([_OAC_CHECK_PACKAGE_VERIFY],[
     dnl Note that we use AC_CHEC_FUNC here instead of AC_CHECK_LIB, because we're pretty sure we've
     dnl found the library already (and have added it to LIBS).  Now we're just trying to verify
     dnl that the library we found contains the bits we need.
-    AS_IF([test ${check_package_verify_happy} -eq 1],
-          [AC_CHECK_FUNC([$4],  [check_package_verify_happy=1], [check_package_verify_happy=0])])
+    m4_ifnblank([$4],
+        [AS_IF([test ${check_package_verify_happy} -eq 1 -a -n "$4"],
+              [AC_CHECK_FUNC([$4],  [check_package_verify_happy=1], [check_package_verify_happy=0])])
 
-    m4_ifdef([OAC_CHECK_PACKAGE_VERIFY_COMMAND_LIST],
-        [m4_foreach([list_item], [OAC_CHECK_PACKAGE_VERIFY_COMMAND_LIST],
-               [AS_IF([test ${check_package_verify_happy} -eq 1],
-                      [m4_apply(m4_unquote([list_item]), [[$1], [$2], [$3], [$4],
-                                                          [check_package_verify_happy=1],
-                                                          [check_package_verify_happy=0]])])])])
+         m4_ifdef([OAC_CHECK_PACKAGE_VERIFY_COMMAND_LIST],
+             [m4_foreach([list_item], [OAC_CHECK_PACKAGE_VERIFY_COMMAND_LIST],
+                    [AS_IF([test ${check_package_verify_happy} -eq 1],
+                           [m4_apply(m4_unquote([list_item]), [[$1], [$2], [$3], [$4],
+                                                               [check_package_verify_happy=1],
+                                                               [check_package_verify_happy=0]])])])])])
 
     AS_IF([test ${check_package_verify_happy} -eq 1],
           [$5], [$6])
