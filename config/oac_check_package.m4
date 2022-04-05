@@ -423,13 +423,15 @@ dnl 3 -> result assignment string
 dnl 4 -> action if found
 dnl 5 -> action if not found
 AC_DEFUN([_OAC_CHECK_PACKAGE_PKGCONFIG_RUN], [
+  check_package_pkgconfig_run_happy=no
   AS_IF([test -n "${PKG_CONFIG}"],
         [OAC_LOG_COMMAND([check_package_pkgconfig_run_results=`${PKG_CONFIG} $2 $1 2>&1`],
              [AS_VAR_COPY([$3], [check_package_pkgconfig_run_results])
-              $4],
-             [$5])
+              check_package_pkgconfig_run_happy=yes])
          OAC_LOG_MSG([pkg-config output: ${check_package_pkgconfig_run_results}], [1])])
+  AS_IF([test "${check_package_pkgconfig_run_happy}" = "yes"], [$4], [$5])
   AS_UNSET([check_package_pkgconfig_run_results])
+  AS_UNSET([check_package_pkgconfig_run_happy])
 ])
 
 
