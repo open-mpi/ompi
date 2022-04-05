@@ -143,19 +143,18 @@ AC_DEFUN([_OMPI_SETUP_JAVA],[
           [ompi_java_found=1])
 
     if test "$ompi_java_found" = "1"; then
-        OPAL_CHECK_WITHDIR([jdk-bindir], [$with_jdk_bindir], [javac])
-        OPAL_CHECK_WITHDIR([jdk-headers], [$with_jdk_headers], [jni.h])
+        OMPI_SETUP_JAVA_CHECK_DIR([jdk-headers], [$with_jdk_headers], [jni.h])
 
         # Look for various Java-related programs
         ompi_java_happy=no
         ompi_java_PATH_save=$PATH
         AS_IF([test -n "$with_jdk_bindir" && test "$with_jdk_bindir" != "yes" && test "$with_jdk_bindir" != "no"],
-              [PATH="$with_jdk_bindir:$PATH"])
-        AC_PATH_PROG(JAVAC, javac)
-        AC_PATH_PROG(JAR, jar)
-        AC_PATH_PROG(JAVADOC, javadoc)
-        AC_PATH_PROG(JAVAH, javah)
-        PATH=$ompi_java_PATH_save
+              [ompi_java_check_path="${with_jdk_bindir}"],
+              [ompi_java_check_path="${PATH}"])
+        AC_PATH_PROG(JAVAC, javac, [], [${ompi_java_check_path}])
+        AC_PATH_PROG(JAR, jar, [], [${ompi_java_check_path}]))
+        AC_PATH_PROG(JAVADOC, javadoc, [], [${ompi_java_check_path}]))
+        AC_PATH_PROG(JAVAH, javah, [], [${ompi_java_check_path}]))
 
         # Check to see if we have all 3 programs.
         AS_IF([test -z "$JAVAC" || test -z "$JAR" || test -z "$JAVADOC"],
@@ -247,3 +246,29 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
 
     OPAL_VAR_SCOPE_POP
 ])
+
+# OMPI_SETUP_JAVA_CHECK_DIR(with_option_name, dir_value, file_in_dir)
+# ----------------------------------------------------
+AC_DEFUN([OMPI_SETUP_JAVA_CHECK_DIR],[
+    AC_MSG_CHECKING([--with-$1 value])
+    AS_IF([test "$2" = "no" ],
+          [AC_MSG_RESULT([simple no (specified --without-$1)])],
+          [AS_IF([test "$2" = "yes" || test "x$2" = "x"],
+                 [AC_MSG_RESULT([simple ok (unspecified value)])],
+                 [AS_IF([test ! -d "$2"],
+                        [AC_MSG_RESULT([not found])
+                         AC_MSG_WARN([Directory $2 not found])
+                         AC_MSG_ERROR([Cannot continue])],
+                        [AS_IF([test "x`ls $2/$3 2> /dev/null`" = "x"],
+                               [AC_MSG_RESULT([not found])
+                                AC_MSG_WARN([Expected file $2/$3 not found])
+                                AC_MSG_ERROR([Cannot continue])],
+                               [AC_MSG_RESULT([sanity check ok ($2)])]
+                              )
+                        ]
+                       )
+                 ]
+                )
+          ]
+         )
+])dnl
