@@ -9,8 +9,8 @@ Git clone).
 ## This file has moved
 
 Please see the content of this file in its new location:
-https://ompi.readthedocs.io/en/latest/developers/
+https://docs.open-mpi.org/en/main/developers/
 
 Additionally, see
-https://ompi.readthedocs.io/en/latest/developers/prerequisites.html#sphinx
+https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx
 if you want to edit and build the documentation locally.
