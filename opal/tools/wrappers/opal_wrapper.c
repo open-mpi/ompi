@@ -402,7 +402,7 @@ static void data_callback(const char *key, const char *value)
         opal_argv_insert(&options_data[parse_options_idx].comp_flags,
                          opal_argv_count(options_data[parse_options_idx].comp_flags), values);
         expand_flags(options_data[parse_options_idx].comp_flags);
-        filter_flags(&options_data[parse_options_idx].preproc_flags);
+        filter_flags(&options_data[parse_options_idx].comp_flags);
         opal_argv_free(values);
     } else if (0 == strcmp(key, "compiler_flags_prefix")) {
         char **values = opal_argv_split(value, ' ');
