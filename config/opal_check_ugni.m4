@@ -42,7 +42,7 @@ AC_DEFUN([OPAL_CHECK_UGNI], [
         AS_IF([test "$with_ugni" = "no"],
               [opal_check_ugni_happy="no"],
               [PKG_CHECK_MODULES([CRAY_UGNI], [cray-ugni],
-			  [opal_check_ugni_happy="yes"],
+                          [opal_check_ugni_happy="yes"],
                           [opal_check_ugni_happy="no"])])
 
         opal_check_ugni_$1_save_CPPFLAGS="$CPPFLAGS"
@@ -74,8 +74,8 @@ AC_DEFUN([OPAL_CHECK_UGNI], [
 
     AS_IF([test "$opal_check_ugni_happy" = "yes"],
           [$1_CPPFLAGS="[$]$1_CPPFLAGS $CRAY_UGNI_CFLAGS"
-	   $1_LIBS="[$]$1_LIBS $CRAY_UGNI_LIBS"
-	   $2],
+           $1_LIBS="[$]$1_LIBS $CRAY_UGNI_LIBS"
+           $2],
           [AS_IF([test ! -z "$with_ugni" && test "$with_ugni" != "no"],
                  [AC_MSG_ERROR([GNI support requested but not found.  Cannot continue.])])
            $3])

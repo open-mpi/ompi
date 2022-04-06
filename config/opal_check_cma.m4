@@ -115,17 +115,17 @@ static void do_check (pid_t pid, int *in, int *out)
     /* all good */
     return 0;
 ]])],
-		      [AC_MSG_RESULT([yes])
-		       opal_check_cma_happy=1],
-		      [AC_MSG_RESULT([no])
-		       opal_check_cma_happy=0],
-		      [AC_MSG_RESULT([no (cross-compiling)])
-		       opal_check_cma_happy=0])
-	CFLAGS=$opal_check_cma_CFLAGS
+                      [AC_MSG_RESULT([yes])
+                       opal_check_cma_happy=1],
+                      [AC_MSG_RESULT([no])
+                       opal_check_cma_happy=0],
+                      [AC_MSG_RESULT([no (cross-compiling)])
+                       opal_check_cma_happy=0])
+        CFLAGS=$opal_check_cma_CFLAGS
     else
         # If we didn't need the defs, then we have process_vm_readv(),
         # and CMA is happy.
-	opal_check_cma_happy=1
+        opal_check_cma_happy=1
     fi
 
     OPAL_VAR_SCOPE_POP

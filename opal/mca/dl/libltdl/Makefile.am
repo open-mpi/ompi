@@ -19,8 +19,8 @@ sources = \
 noinst_LTLIBRARIES = libmca_dl_libltdl.la
 
 libmca_dl_libltdl_la_SOURCES = $(sources)
-libmca_dl_libltdl_la_CPPFLAGS = $(opal_dl_libltdl_CPPFLAGS)
+libmca_dl_libltdl_la_CPPFLAGS = $(dl_libltdl_CPPFLAGS)
 libmca_dl_libltdl_la_LDFLAGS = \
-        $(opal_dl_libltdl_LDFLAGS) \
+        $(dl_libltdl_LDFLAGS) \
         -module -avoid-version
-libmca_dl_libltdl_la_LIBADD = $(opal_dl_libltdl_LIBS)
+libmca_dl_libltdl_la_LIBADD = $(dl_libltdl_LIBS)

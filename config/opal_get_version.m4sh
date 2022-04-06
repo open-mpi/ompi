@@ -33,29 +33,29 @@ else
     OPAL_GET_VERSION([$srcfile],[OPAL])
 
     if test "$option" = ""; then
-	option="--full"
+        option="--full"
     fi
 fi
 
 case "$option" in
     --full|-v|--version)
-	echo $OPAL_VERSION
-	;;
+        echo $OPAL_VERSION
+        ;;
     --major)
-	echo $OPAL_MAJOR_VERSION
-	;;
+        echo $OPAL_MAJOR_VERSION
+        ;;
     --minor)
-	echo $OPAL_MINOR_VERSION
-	;;
+        echo $OPAL_MINOR_VERSION
+        ;;
     --release)
-	echo $OPAL_RELEASE_VERSION
-	;;
+        echo $OPAL_RELEASE_VERSION
+        ;;
     --greek)
-	echo $OPAL_GREEK_VERSION
-	;;
+        echo $OPAL_GREEK_VERSION
+        ;;
     --repo-rev)
-	echo $OPAL_REPO_REV
-	;;
+        echo $OPAL_REPO_REV
+        ;;
     --tarball)
         echo $OPAL_TARBALL_VERSION
         ;;
@@ -66,7 +66,7 @@ case "$option" in
         echo ${OPAL_VERSION} : ${OPAL_MAJOR_VERSION} : ${OPAL_MINOR_VERSION} : ${OPAL_RELEASE_VERSION} : ${OPAL_GREEK_VERSION} : ${OPAL_REPO_REV} : ${OPAL_TARBALL_VERSION}
         ;;
     -h|--help)
-	cat <<EOF
+        cat <<EOF
 $0 <srcfile> [<option>]
 
 <srcfile> - Text version file

@@ -23,13 +23,7 @@ AC_DEFUN([MCA_opal_btl_sm_CONFIG],[
     AC_CONFIG_FILES([opal/mca/btl/sm/Makefile])
 
     # always happy
-    [$1]
+    $1
 
-    OPAL_SUMMARY_ADD([Transports], [Shared memory/copy in+copy out], [], [yes])
-
-    # substitute in the things needed to build with XPMEM support
-    AC_SUBST([btl_sm_CFLAGS])
-    AC_SUBST([btl_sm_CPPFLAGS])
-    AC_SUBST([btl_sm_LDFLAGS])
-    AC_SUBST([btl_sm_LIBS])
+    OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/copy in+copy out]],[$1],[yes])
 ])dnl

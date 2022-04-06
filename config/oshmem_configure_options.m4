@@ -45,7 +45,7 @@ else
     AC_MSG_RESULT([yes])
     case $host_os in
     linux*)
-	;;
+        ;;
     *)
         AC_MSG_WARN([OpenSHMEM support was requested, but currently])
         AC_MSG_WARN([only supports Linux.])
@@ -81,7 +81,7 @@ AC_ARG_WITH([oshmem-param-check],
     [AS_HELP_STRING([--with-oshmem-param-check(=VALUE)],
                    [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).])])
 if test "$with_oshmem_param_check" = "no" || \
-	test "$with_oshmem_param_check" = "never"; then
+        test "$with_oshmem_param_check" = "never"; then
     shmem_param_check=0
     AC_MSG_RESULT([never])
 elif test "$with_oshmem_param_check" = "yes" || \

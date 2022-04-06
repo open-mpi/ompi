@@ -68,14 +68,14 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
         [OMPI_PMIX_ADD_ARGS
          AS_IF([test "$opal_pmix_mode" = "unspecified" -o "$opal_pmix_mode" = "internal"],
                [# Run PMIx's configure script unless the user
-		# explicitly asked us to use an external PMIX, so that
-		# "make dist" includes PMIx in the dist tarball.  This
-		# does mean that "make dist" will not work if Open MPI
-		# was configured to use an external PMIx library, but
-		# we decided this was a reasonable tradeoff for not
-		# having to deal with PMIx (or PRRTE) potentially
-		# failing to configure in a situation where it isn't
-		# desired.
+                # explicitly asked us to use an external PMIX, so that
+                # "make dist" includes PMIx in the dist tarball.  This
+                # does mean that "make dist" will not work if Open MPI
+                # was configured to use an external PMIx library, but
+                # we decided this was a reasonable tradeoff for not
+                # having to deal with PMIx (or PRRTE) potentially
+                # failing to configure in a situation where it isn't
+                # desired.
 
                 internal_pmix_args="--without-tests-examples --enable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
                 internal_pmix_wrapper_libs=

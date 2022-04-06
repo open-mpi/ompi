@@ -33,7 +33,6 @@ AC_DEFUN([MCA_ompi_coll_ucc_CONFIG],[
     OPAL_SUMMARY_ADD([Miscellaneous], [Open UCC], [], [$coll_ucc_happy])
 
     # substitute in the things needed to build ucc
-    AC_SUBST([coll_ucc_CFLAGS])
     AC_SUBST([coll_ucc_CPPFLAGS])
     AC_SUBST([coll_ucc_LDFLAGS])
     AC_SUBST([coll_ucc_LIBS])

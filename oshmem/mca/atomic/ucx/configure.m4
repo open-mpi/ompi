@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +25,6 @@ AC_DEFUN([MCA_oshmem_atomic_ucx_CONFIG],[
 
 
     # substitute in the things needed to build ucx 
-    AC_SUBST([atomic_ucx_CFLAGS])
     AC_SUBST([atomic_ucx_CPPFLAGS])
     AC_SUBST([atomic_ucx_LDFLAGS])
     AC_SUBST([atomic_ucx_LIBS])

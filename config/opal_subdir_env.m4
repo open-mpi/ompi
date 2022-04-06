@@ -36,8 +36,8 @@ AC_DEFUN([OPAL_SUBDIR_ENV_CLEAN], [
         fi
         unset tmp_var_set
 
-	# restore the variables that were set at the start of
-	# configure and unset the ones that were not.
+        # restore the variables that were set at the start of
+        # configure and unset the ones that were not.
         eval temp_var_orig_set=\$ac_env_${temp_var}_set
         if test "$temp_var_set" = "set" ; then
              eval ${temp_var}=\$ac_env_${temp_var}_value
