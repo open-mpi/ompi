@@ -61,6 +61,13 @@ Please, do NOT set the same settings with parameters and config vars.
 * `-c parameter`:
    Add custom configure parameter.
 
+   **NOTE:** As of Open MPI v5.0.x, there are default configure
+   options for `--with-FOO=external` for all the 3rd party packages
+   (libevent, hwloc, pmix, prrte).  This makes a pure Open MPI RPM,
+   not an RPM that includes those 3rd party packages.  If you specify
+   `-c`, if you want to preserve the default options, you will need to
+   include those in the parameter value.
+
 * `-r parameter`:
    Add custom RPM build parameter.
 

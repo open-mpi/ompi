@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
@@ -43,11 +43,6 @@
 #
 # shell$ rpmbuild ... --define 'install_in_opt 1' ...
 #
-# Or (a multi-token example):
-#
-# shell$ rpmbuild ... \
-#    --define 'configure_options CFLAGS=-g --with-openib=/usr/local/ofed' ...
-#
 #############################################################################
 
 # Define this if you want to make this SRPM build in
@@ -57,6 +52,19 @@
 # modulefile_path, below.
 # type: bool (0/1)
 %{!?install_in_opt: %define install_in_opt 0}
+
+# This specfile expects to find all required 3rd party packages
+# (Libevent, Hwloc, PMIx, PRRTE) externally, and will not use the
+# internal/embedded copies of these packages.  This behavior is
+# strongly recomended for packagers.  However, if you want to override
+# this behavior, change the definition below to 0.
+#
+# NOTE: This option will cause "--with-libevent=external
+# --with-hwloc=external --with-pmix=external --with-prrte=external" to
+# be added to the arguments to configure. If you wish to use different
+# CLI options, set this value to 0 and set configure_options to the
+# CLI options you want.
+%{!?all_external_3rd_party: %define all_external_3rd_party 1}
 
 # Define this if you want this RPM to install environment setup
 # shell scripts.
@@ -138,7 +146,7 @@
 
 # On some platforms, Open MPI/SHMEM just flat-out doesn't work with
 # -D_FORTIFY_SOURCE (e.g., some users have reported that there are
-# problems on ioa64 platforms).  In this case, just turn it off
+# problems on ia64 platforms).  In this case, just turn it off
 # (meaning: this specfile will strip out that flag from the
 # OS-provided compiler flags).  We already strip out _FORTIFY_SOURCE
 # for non-GCC compilers; setting this option to 0 will *always* strip
@@ -146,7 +154,8 @@
 # type: bool (0/1)
 %{!?allow_fortify_source: %define allow_fortify_source 1}
 
-# Select md5 packing algorithm, that src.rpm created on one distro can be read on another.
+# Select md5 packing algorithm, that src.rpm created on one distro can
+# be read on another.
 %global _binary_filedigest_algorithm 1
 %global _source_filedigest_algorithm 1
 
@@ -154,6 +163,7 @@
 # Default is 0 (remove *.la files)
 # type: bool (0/1)
 %{!?install_libtool_archive: %define install_libtool_archive 0}
+
 #############################################################################
 #
 # Configuration Logic
@@ -177,13 +187,20 @@
 # Per advice from Doug Ledford at Red Hat, docdir is supposed to be in
 # a fixed location.  But if you're installing a package in /opt, all
 # bets are off.  So feel free to install it anywhere in your tree.  He
-# suggests $prefix/doc.
-%define _defaultdocdir /opt/%{name}/%{version}/doc
+# suggests $prefix/doc, but the GNU Autotools these days default to
+# $prefix/share/doc.
+%define _defaultdocdir /opt/%{name}/%{version}/share/doc
 
 # Also put the modulefile in /opt (unless the user already specified
 # where they want it to go -- the modulefile is a bit different in
 # that the user may want it outside of /opt).
 %{!?modulefile_path: %define modulefile_path /opt/%{name}/%{version}/share/openmpi/modulefiles}
+%endif
+
+%if %{all_external_3rd_party}
+%define _configure_3rd_party --with-libevent=external --with-hwloc=external --with-pmix=external --with-prrte=external
+%else
+%define _configure_3rd_party %{nil}
 %endif
 
 # Now that we have processed install_in_opt, we can see if
@@ -212,6 +229,7 @@
 %define __check_files %{nil}
 %endif
 
+# Set this to any options you want to pass in to configure.
 %{!?configure_options: %define configure_options %{nil}}
 
 %if !%{use_default_rpm_opt_flags}
@@ -244,6 +262,12 @@ Provides: openmpi = %{version}
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 %if %{disable_auto_requires}
 AutoReq: no
+%endif
+%if %{all_external_3rd_party}
+# If we require all external 3rd party packages, then assume the use
+# of the OS Libevent and Hwloc packages.
+BuildRequires: libevent-devel hwloc-devel
+Requires: libevent hwloc
 %endif
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
@@ -283,6 +307,12 @@ Provides: openmpi = %{version}
 Provides: openmpi-runtime = %{version}
 %if %{disable_auto_requires}
 AutoReq: no
+%endif
+%if %{all_external_3rd_party}
+# If we require all external 3rd party packages, then assume the use
+# of the OS Libevent and Hwloc packages.
+BuildRequires: libevent-devel hwloc-devel
+Requires: libevent hwloc
 %endif
 %if %{install_modulefile}
 Requires: %{modules_rpm_name}
@@ -465,7 +495,7 @@ CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cxxflags:$RPM_OPT_FLAGS}"
 FCFLAGS="%{?fcflags:%{fcflags}}%{!?fcflags:$RPM_OPT_FLAGS}"
 export CFLAGS CXXFLAGS FCFLAGS
 
-%configure %{configure_options}
+%configure %{configure_options} %{_configure_3rd_party}
 %{__make} %{?mflags}
 
 
@@ -595,7 +625,7 @@ EOF
 # always gives a 0 exit status.
 
 # First, find all the files
-rm -f all.files runtime.files remaining.files devel.files docs.files
+rm -f all.files runtime.files remaining.files devel.files
 find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" \
    > all.files | /bin/true
@@ -603,55 +633,26 @@ find $RPM_BUILD_ROOT -type f -o -type l | \
 # Runtime files.  This should generally be library files and some
 # executables (no man pages, no doc files, no header files).  Do *not*
 # include wrapper compilers.
-cat all.files | egrep '/lib/|/lib64/|/lib32/|/bin/|/etc/|/help-' > tmp.files | /bin/true
+cat all.files | \
+    egrep '/lib/|/lib64/|/lib32/|/bin/|/etc/|/help-' \
+    > tmp.files | /bin/true
 # Snip out a bunch of executables (e.g., wrapper compilers, pkgconfig
-# files, .la and .a files)
-egrep -vi 'mpic|mpif|ortec|f77|f90|pkgconfig|\.la$|\.a$' tmp.files > runtime.files | /bin/true
+# files, .la and .a files) and docs
+egrep -vi 'bin/mpic|bin/mpif|bin/mpif77|bin/mpif90|pkgconfig|wrapper|\.mod$|\.la$|\.a$' tmp.files > runtime.files | /bin/true
+
 rm -f tmp.files
 
 # Now take the runtime files out of all.files so that we don't get
 # duplicates.
 grep -v -f runtime.files all.files > remaining.files
 
-# Devel files, potentially including VT files.  Basically -- just
-# exclude the man pages and doc files.
+# Devel files.  Basically -- just exclude the man pages and doc files.
 cat remaining.files | \
    egrep -v '/man/|/doc/' \
    > devel.files | /bin/true
 
-# Now take those files out of reaming.files so that we don't get
-# duplicates.
-grep -v -f devel.files remaining.files > docs.files
-
-#################################################
-
-# Now that we have a final list of files for each of the runtime,
-# devel, and docs RPMs, snip even a few more files out of those lists
-# because for directories that are wholly in only one RPM, we just
-# list that directory in the file lists below, and RPM will pick up
-# all files in that tree.  We therefore don't want to list any files
-# in those trees in our *.files file lists.  Additionally, the man
-# pages may get compressed by rpmbuild after this "install" step, so we
-# might not even have their final filenames, anyway.
-
-# runtime sub package
-%if !%{sysconfdir_in_prefix}
-grep -v %{_sysconfdir} runtime.files > tmp.files | /bin/true
-mv tmp.files runtime.files
 %endif
-grep -v %{_pkgdatadir} runtime.files > tmp.files | /bin/true
-mv tmp.files runtime.files
-
-# devel sub package
-grep -v %{_includedir} devel.files > tmp.files | /bin/true
-mv tmp.files devel.files
-
-# docs sub package
-grep -v %{_mandir} docs.files > tmp.files | /bin/true
-mv tmp.files docs.files
-
-%endif
-# End of build_all_in_one_rpm
+# End of !build_all_in_one_rpm
 
 #############################################################################
 #
@@ -713,7 +714,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{_bindir}/*
 %{_includedir}/*
 %{_libdir}/*
-%{_datadir}
+%{_datadir}/*
 %else
 %{_prefix}
 %endif
@@ -721,7 +722,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if !%{sysconfdir_in_prefix}
 %{_sysconfdir}
 %endif
-# If %{install_in_opt}, then we're instaling OMPI to
+# If install_in_opt, then we're instaling OMPI to
 # /opt/openmpi/<version>.  But be sure to also explicitly mention
 # /opt/openmpi so that it can be removed by RPM when everything under
 # there is also removed.
@@ -737,33 +738,30 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{shell_scripts_path}/%{shell_scripts_basename}.sh
 %{shell_scripts_path}/%{shell_scripts_basename}.csh
 %endif
-%doc README.md INSTALL LICENSE
+%doc README.md LICENSE
 
 %else
 
 #
 # Sub-package RPMs
 #
-# Harder than all-in-one.  We list the directories specifically so
-# that if the RPM creates directories when it is installed, we will
-# remove them when the RPM is uninstalled.  We also have to use
-# specific file lists.
-#
+# Harder than all-in-one.  Explicitly list all the files we want by
+# the various *.files we generated above.  Only list directories if
+# they are not /usr (or assumedly any other location that does not
+# already exist).
 
 %files runtime -f runtime.files
 %defattr(-, root, root, -)
-%if %(test "%{_prefix}" = "/usr" && echo 1 || echo 0)
-%{_bindir}/*
-%{_libdir}/*
-%{_datadir}
-%else
-%{_prefix}
-%endif
+%if %(test "%{_prefix}" != "/usr" && echo 1 || echo 0)
+%dir %{_prefix}
+%dir %{_pkgdatadir}
 # If the sysconfdir is not under the prefix, then list it explicitly.
 %if !%{sysconfdir_in_prefix}
-%{_sysconfdir}
+%dir %{_sysconfdir}
 %endif
-# If %{install_in_opt}, then we're instaling OMPI to
+%endif
+
+# If install_in_opt, then we're instaling OMPI to
 # /opt/openmpi/<version>.  But be sure to also explicitly mention
 # /opt/openmpi so that it can be removed by RPM when everything under
 # there is also removed.  Also list /opt/openmpi/<version>/share so
@@ -781,20 +779,22 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{shell_scripts_path}/%{shell_scripts_basename}.sh
 %{shell_scripts_path}/%{shell_scripts_basename}.csh
 %endif
-%doc README.md INSTALL LICENSE
-%{_pkgdatadir}
+%doc README.md LICENSE
 
 %files devel -f devel.files
 %defattr(-, root, root, -)
-%{_includedir}
 
+%files docs
+%defattr(-, root, root, -)
 # Note that we list the mandir specifically here, because we want all
 # files found in that tree, because rpmbuild may have compressed them
-# (e.g., foo.1.gz or foo.1.bz2) -- and we therefore don't know the
-# exact filenames.
-%files docs -f docs.files
-%defattr(-, root, root, -)
+# after we installed them (e.g., foo.1.gz or foo.1.bz2), and we
+# therefore don't know the exact filenames.
 %{_mandir}
+
+# Explicitly list the pkgdocdir so that it will be removed when the
+# RPM is removed.
+%{_pkgdocdir}
 
 %endif
 
@@ -805,6 +805,15 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Mon Apr 04 2022 Jeff Squyres <jsquyres@cisco.com>
+- Updates for v5.0.0:
+  - Default all 3rd-party packages to be "external".
+  - Remove no-longer-existing INSTALL file.
+  - Tighten up files listings for the individual RPMs.
+  - Convert -docs sub-package to exclusively use mandir and pkgdocdir
+    (instead of docs.files).
+  - Remove some stale F77 and VT references.
+
 * Tue Mar 28 2017 Jeff Squyres <jsquyres@cisco.com>
 - Reverting a decision from a prior changelog entry: if
   install_in_opt==1, then even put the modulefile under /opt.
@@ -959,4 +968,3 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
 * Wed Mar 23 2005 Mezzanine <mezzanine@kainx.org>
 - Specfile auto-generated by Mezzanine
-
