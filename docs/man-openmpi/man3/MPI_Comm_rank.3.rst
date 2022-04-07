@@ -64,7 +64,7 @@ communicator's group. It is equivalent to accessing the communicator's
 group with :ref:`MPI_Comm_group`, computing the rank using :ref:`MPI_Group_rank`, and
 then freeing the temporary group via :ref:`MPI_Group_free`.
 
-Many programs will be written with the master-slave model, where one
+Many programs will be written with the manager-worker model, where one
 process (such as the rank-zero process) will play a supervisory role,
 and the other processes will serve as compute nodes. In this framework,
 :ref:`MPI_Comm_size` and :ref:`MPI_Comm_rank` are useful for determining the roles of
