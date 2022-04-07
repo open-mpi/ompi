@@ -996,7 +996,23 @@ AC_CACHE_SAVE
 opal_show_title "System-specific tests"
 
 OPAL_CHECK_CUDA
+##################################
+# ROCm support
+##################################
+OPAL_CHECK_ROCM([opal_rocm],
+	        [opal_rocm_happy="yes"],
+	        [opal_rocm_happy="no"])
+OPAL_SUMMARY_ADD([Miscellaneous], [ROCm suport], [], [$opal_rocm_happy])
+
+AS_IF([test "$OPAL_CUDA_SUPPORT" = "1" && test "$OPAL_ROCM_SUPPORT" = "1"],
+          [AC_MSG_WARN([Cannot support both CUDA and ROCm.])
+           AC_MSG_WARN([You must reconfigure Open MPI choosing either CUDA or ROCm .])
+           AC_MSG_ERROR([Cannot continue.])])
+
+##################################
 OPAL_CHECK_OS_FLAVORS
+
+
 
 # Do we have _SC_NPROCESSORS_ONLN? (only going to pass if we also have
 # <unistd.h> and sysconf(), which is ok) OS X 10.4 has <unistd.h> and
@@ -1239,6 +1255,8 @@ AC_CACHE_SAVE
 # all other MCA checks" hook...?
 
 OPAL_CHECK_CUDA_AFTER_OPAL_DL
+
+OPAL_CHECK_ROCM_AFTER_OPAL_DL
 
 ##################################
 # MPI Extended Interfaces

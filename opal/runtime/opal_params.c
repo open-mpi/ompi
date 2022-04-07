@@ -24,6 +24,7 @@
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,6 +65,10 @@ bool opal_built_with_cuda_support = OPAL_INT_TO_BOOL(OPAL_CUDA_SUPPORT);
 bool opal_cuda_runtime_initialized = false;
 bool opal_cuda_support = false;
 bool opal_warn_on_missing_libcuda = true;
+
+bool opal_built_with_rocm_support = OPAL_INT_TO_BOOL(OPAL_ROCM_SUPPORT);
+bool opal_rocm_runtime_initialized = false;
+
 
 /**
  * Globals imported from the OMPI layer.

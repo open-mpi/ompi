@@ -79,6 +79,9 @@
 #include "opal/util/stacktrace.h"
 #include "opal/util/sys_limits.h"
 #include "opal/util/timings.h"
+#if OPAL_ROCM_SUPPORT
+#include "opal/rocm/common_rocm_prototypes.h"
+#endif
 
 const char opal_version_string[] = OPAL_IDENT_STRING;
 
@@ -554,6 +557,11 @@ int opal_init_util(int *pargc, char ***pargv)
         return opal_init_error("opal_register_params", ret);
     }
 
+#if OPAL_ROCM_SUPPORT
+    /* register params for opal/rocm. This is temporarily done here. */
+    mca_common_rocm_register_mca_variables();
+#endif
+    
     if (OPAL_SUCCESS != (ret = opal_net_init())) {
         return opal_init_error("opal_net_init", ret);
     }

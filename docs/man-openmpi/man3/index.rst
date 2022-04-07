@@ -469,4 +469,5 @@ MPI API manual pages (section 3)
    MPI_Wtick.3.rst
    MPI_Wtime.3.rst
    MPIX_Query_cuda_support.3.rst
+   MPIX_Query_rocm_support.3.rst
    OMPI_Affinity_str.3.rst
