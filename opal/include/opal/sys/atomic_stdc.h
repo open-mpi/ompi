@@ -29,6 +29,7 @@
 #    define OPAL_ATOMIC_STDC_H
 
 #    include "opal_stdint.h"
+#    include "opal/opal_portable_platform.h"
 #    include <stdatomic.h>
 #    include <stdint.h>
 
@@ -50,7 +51,7 @@ static inline void opal_atomic_wmb(void)
 
 static inline void opal_atomic_rmb(void)
 {
-#    if defined(PLATFORM_ARCH_X86_64) && PLATFORM_COMPILER_GNU && __GNUC__ < 8
+#    if defined(PLATFORM_ARCH_X86_64) && defined(PLATFORM_COMPILER_GNU) && __GNUC__ < 8
     /* work around a bug in older gcc versions (observed in gcc 6.x)
      * where acquire seems to get treated as a no-op instead of being
      * equivalent to __asm__ __volatile__("": : :"memory") on x86_64.
