@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc4
+Open MPI version 5.0.0rc5
 -------------------------
-:Date: 31 March 2022
+:Date: 07 April 2022
 
 .. admonition:: MPIR API has been removed
    :class: warning
@@ -30,9 +30,6 @@ Open MPI version 5.0.0rc4
    regardless of whether you are using an externally-installed PMIx or
    the PMIx that is installed with Open MPI.
 
-- Updated to use PMIx ``v4.2`` branch - current hash: ``d3445c8``.
-- Updated to use PRRTE ``v2.1`` branch - current hash: ``5378b09``.
-
 .. caution::
    Open MPI no longer builds 3rd-party packages
    such as Libevent, HWLOC, PMIx, and PRRTE as MCA components
@@ -41,6 +38,26 @@ Open MPI version 5.0.0rc4
    #. Relies on external libraries whenever possible, and
    #. Builds the 3rd party libraries only if needed, and as independent
       libraries, rather than linked into the Open MPI core libraries.
+
+
+Changes since rc4:
+
+  - Various changes and cleanup to fix, and better support the static building of Open MPI.
+  - The PRRTE submodule pointer has been updated to bring in the following fixes:
+
+    - Added silent single-dash to double-dash conversion to the mpirun/mpiexec command
+      line. This promotes backwards compatibility with the v4.x series.
+    - Fixed a bug where launch-failure messages from PRRTE would be printed twice.
+  - Changes to the BTL ``OFI`` component to better support the HPE SS11 network.
+  - Fixed a compile failure when building with ``UCC`` (``configure --with-ucc=...``).
+  - Fixed several memory leaks in the ``UCX`` component.
+  - Fixed a bug where ``autogen.pl --force`` would fail. 
+  - Fixed a large number of warnings when compiling on macOS.
+  - Fixed two dead links in ``HACKING.md``. Thanks to Lachlan Bell for finding and fixing.
+  - Updated various documentation to rename ``master`` to ``main`` where relevant.
+
+- Updated PMIx to ``v4.2`` branch - current hash: ``d3445c8``.
+- Updated PRRTE to ``v2.1`` branch - current hash: ``f3828e8``.
 
 - New Features:
 
@@ -131,7 +148,7 @@ Open MPI version 5.0.0rc4
 - HWLOC updates:
 
   - Open MPI now requires HWLOC v1.11.0 or later.
-  - The internal HWLOC shipped with OMPI has been updated to v2.7.0.
+  - The internal HWLOC shipped with OMPI has been updated to v2.7.1.
   - Enable --enable-plugins when appropriate.
 - Documentation updates and improvements:
 
