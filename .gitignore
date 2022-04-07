@@ -290,6 +290,8 @@ ompi/mpiext/cuda/c/MPIX_Query_cuda_support.3
 ompi/mpiext/cuda/c/mpiext_cuda_c.h
 ompi/mpiext/cuda/c/cuda_c.h
 
+ompi/mpiext/rocm/c/mpiext_rocm_c.h
+
 ompi/mpiext/pcollreq/c/MPIX_*.3
 ompi/mpiext/pcollreq/c/profile/pallgather_init.c
 ompi/mpiext/pcollreq/c/profile/pallgatherv_init.c

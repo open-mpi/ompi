@@ -14,6 +14,7 @@
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,9 +23,15 @@
 #
 
 if OPAL_cuda_support
-LIBOPAL_CUDA_SUBDIR = cuda
-LIBOPAL_CUDA_LA = cuda/libopalcuda.la
+LIBOPAL_GPU_SUBDIR = cuda
+LIBOPAL_GPU_LA = cuda/libopalcuda.la
+else
+if OPAL_rocm_support
+LIBOPAL_GPU_SUBDIR = rocm
+LIBOPAL_GPU_LA = rocm/libopalrocm.la
 endif
+endif
+
 
 SUBDIRS = \
 	include \
@@ -32,7 +39,7 @@ SUBDIRS = \
         etc \
         util \
 	mca/base \
-	$(LIBOPAL_CUDA_SUBDIR) \
+	$(LIBOPAL_GPU_SUBDIR) \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
@@ -40,6 +47,7 @@ SUBDIRS = \
 DIST_SUBDIRS = \
 	include \
 	cuda \
+	rocm \
         datatype \
         etc \
 	util \
@@ -54,14 +62,14 @@ lib@OPAL_LIB_NAME@_la_LIBADD = \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
-	$(LIBOPAL_CUDA_LA) \
+	$(LIBOPAL_GPU_LA) \
 	$(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_NAME@_la_DEPENDENCIES = \
         datatype/libdatatype.la \
         mca/base/libmca_base.la \
         util/libopalutil.la \
-        $(MCA_opal_FRAMEWORK_LIBS) \
-        $(LIBOPAL_CUDA_LA)
+        $(LIBOPAL_GPU_LA)  \
+        $(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@
 
 # included subdirectory Makefile.am's and appended-to variables
