@@ -698,6 +698,9 @@ MPI Collectives
   collectives, copies the data to staging buffers if GPU buffers, then
   calls underlying collectives to do the work.
 
+- The "ucc" coll component serves as integration layer for Unified
+  Collective Communication (UCC) library: https://github.com/openucx/ucc.
+
 OpenSHMEM Collectives
 ---------------------
 
@@ -1108,6 +1111,12 @@ NETWORKING SUPPORT / OPTIONS
 
   hcoll is the support library for MPI collective operation offload on
   Mellanox ConnectX-3 HCAs (and later).
+
+--with-ucc=<directory>
+  Specify the directory where the Unified Collective Communication
+  library and header files are located. This option is generally only
+  necessary if the ucc headers and libraries are not in default
+  compiler/linker search paths.
 
 --with-knem=<directory>
   Specify the directory where the knem libraries and header files are
