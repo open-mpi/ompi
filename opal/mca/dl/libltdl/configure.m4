@@ -21,19 +21,6 @@ AC_DEFUN([MCA_opal_dl_libltdl_COMPILE_MODE], [
     AC_MSG_RESULT([$$4])
 ])
 
-# MCA_opal_dl_libltdl_POST_CONFIG()
-# ---------------------------------
-AC_DEFUN([MCA_opal_dl_libltdl_POST_CONFIG],[
-    # If we won, then do all the rest of the setup
-    AS_IF([test "$1" = "1"],
-          [
-           # Add some stuff to CPPFLAGS so that the rest of the source
-           # tree can be built
-           LDFLAGS="$LDFLAGS $opal_dl_libltdl_ADD_LDFLAGS"
-           LIBS="$LIBS $opal_dl_libltdl_ADD_LIBS"
-          ])
-])dnl
-
 # MCA_dl_libltdl_CONFIG([action-if-can-compile],
 #                       [action-if-cant-compile])
 # ------------------------------------------------
@@ -49,41 +36,13 @@ AC_DEFUN([MCA_opal_dl_libltdl_CONFIG],[
        [AS_HELP_STRING([--with-libltdl-libdir=DIR],
              [Search for libltdl libraries in DIR])])
 
-    # Sanity check the --with values
-    OPAL_CHECK_WITHDIR([libltdl], [$with_libltdl],
-                       [include/ltdl.h])
-    OPAL_CHECK_WITHDIR([libltdl-libdir], [$with_libltdl_libdir],
-                       [libltdl.*])
-
-    # Defaults
-    opal_check_libltdl_dir_msg="compiler default"
-    opal_check_libltdl_libdir_msg="linker default"
-
-    # Save directory names if supplied
-    AS_IF([test ! -z "$with_libltdl" && test "$with_libltdl" != "yes"],
-          [opal_check_libltdl_dir=$with_libltdl
-           opal_check_libltdl_dir_msg="$opal_check_libltdl_dir (from --with-libltdl)"])
-    AS_IF([test ! -z "$with_libltdl_libdir" && test "$with_libltdl_libdir" != "yes"],
-          [opal_check_libltdl_libdir=$with_libltdl_libdir
-           opal_check_libltdl_libdir_msg="$opal_check_libltdl_libdir (from --with-libltdl-libdir)"])
-
-    opal_dl_libltdl_happy=no
-    AS_IF([test "$with_libltdl" != "no"],
-          [AC_MSG_CHECKING([for libltdl dir])
-           AC_MSG_RESULT([$opal_check_libltdl_dir_msg])
-           AC_MSG_CHECKING([for libltdl library dir])
-           AC_MSG_RESULT([$opal_check_libltdl_libdir_msg])
-
-           OPAL_CHECK_PACKAGE([opal_dl_libltdl],
-                  [ltdl.h],
-                  [ltdl],
-                  [lt_dlopen],
-                  [],
-                  [$opal_check_libltdl_dir],
-                  [$opal_check_libltdl_libdir],
-                  [opal_dl_libltdl_happy=yes],
-                  [opal_dl_libltdl_happy=no])
-              ])
+    OAC_CHECK_PACKAGE([libltdl],
+                      [dl_libltdl],
+                      [ltdl.h],
+                      [ltdl],
+                      [lt_dlopen],
+                      [opal_dl_libltdl_happy=yes],
+                      [opal_dl_libltdl_happy=no])
 
     # If we have libltdl, do we have lt_dladvise?
     opal_dl_libltdl_have_lt_dladvise=0
@@ -92,9 +51,9 @@ AC_DEFUN([MCA_opal_dl_libltdl_CONFIG],[
            LDFLAGS_save=$LDFLAGS
            LIBS_save=$LIBS
 
-           CPPFLAGS="$opal_dl_libltdl_CPPFLAGS $CPPFLAGS"
-           LDFLAGS="$opal_dl_libltdl_LDFLAGS $LDFLAGS"
-           LIBS="$opal_dl_libltdl_LIBS $LIBS"
+           CPPFLAGS="$dl_libltdl_CPPFLAGS $CPPFLAGS"
+           LDFLAGS="$dl_libltdl_LDFLAGS $LDFLAGS"
+           LIBS="$dl_libltdl_LIBS $LIBS"
            AC_CHECK_FUNC([lt_dladvise_init],
                          [opal_dl_libltdl_have_lt_dladvise=1])
            CPPFLAGS=$CPPFLAGS_save
@@ -106,19 +65,16 @@ AC_DEFUN([MCA_opal_dl_libltdl_CONFIG],[
         [Whether we have lt_dladvise or not])
 
     AS_IF([test "$opal_dl_libltdl_happy" = "yes"],
-          [opal_dl_libltdl_ADD_CPPFLAGS=$opal_dl_libltdl_CPPFLAGS
-           opal_dl_libltdl_ADD_LDFLAGS=$opal_dl_libltdl_LDFLAGS
-           opal_dl_libltdl_ADD_LIBS=$opal_dl_libltdl_LIBS
-           $1],
+          [$1],
           [AS_IF([test ! -z "$with_libltdl" && \
                   test "$with_libltdl" != "no"],
                  [AC_MSG_WARN([Libltdl support requested (via --with-libltdl) but not found.])
                   AC_MSG_ERROR([Cannot continue.])])
            $2])
 
-    AC_SUBST(opal_dl_libltdl_CPPFLAGS)
-    AC_SUBST(opal_dl_libltdl_LDFLAGS)
-    AC_SUBST(opal_dl_libltdl_LIBS)
+    AC_SUBST(dl_libltdl_CPPFLAGS)
+    AC_SUBST(dl_libltdl_LDFLAGS)
+    AC_SUBST(dl_libltdl_LIBS)
 
     OPAL_VAR_SCOPE_POP
 ])

@@ -52,30 +52,30 @@ if test "$subdir_dir" != ":" && test -d $srcdir/$subdir_dir; then
 
     case $srcdir in
     .)
-	;;
+        ;;
     *)
-	{ case $subdir_dir in
-	[[\\/]]* | ?:[[\\/]]* ) total_dir=;;
-	*)                      total_dir=.;;
-	esac
-	temp=$subdir_dir
-	for dir_part in `IFS='/\\'; set X $temp; shift; echo "$[@]"`; do
-	    case $dir_part in
-	    # Skip DOS drivespec
-	    ?:) total_dir=$dir_part ;;
-	    *)  total_dir=$total_dir/$dir_part
-		test -d "$total_dir" ||
-		mkdir "$total_dir" ||
-		AC_MSG_ERROR([cannot create $subdir_dir])
-		;;
-	    esac
-	done; }
+        { case $subdir_dir in
+        [[\\/]]* | ?:[[\\/]]* ) total_dir=;;
+        *)                      total_dir=.;;
+        esac
+        temp=$subdir_dir
+        for dir_part in `IFS='/\\'; set X $temp; shift; echo "$[@]"`; do
+            case $dir_part in
+            # Skip DOS drivespec
+            ?:) total_dir=$dir_part ;;
+            *)  total_dir=$total_dir/$dir_part
+                test -d "$total_dir" ||
+                mkdir "$total_dir" ||
+                AC_MSG_ERROR([cannot create $subdir_dir])
+                ;;
+            esac
+        done; }
 
-	if test -d ./$subdir_dir; then :;
-	else
-	    AC_MSG_ERROR([cannot create `pwd`/$subdir_dir])
-	fi
-	;;
+        if test -d ./$subdir_dir; then :;
+        else
+            AC_MSG_ERROR([cannot create `pwd`/$subdir_dir])
+        fi
+        ;;
     esac
 
     #
@@ -96,17 +96,17 @@ if test "$subdir_dir" != ":" && test -d $srcdir/$subdir_dir; then
 
     case $srcdir in
     .)
-	# In place
-	subdir_srcdir="$srcdir"
-	;;
+        # In place
+        subdir_srcdir="$srcdir"
+        ;;
     [[\\/]* | ?:[\\/]*] )
-	# Absolute path
-	subdir_srcdir="$srcdir/$subdir_dir"
-	;;
+        # Absolute path
+        subdir_srcdir="$srcdir/$subdir_dir"
+        ;;
     *)
-	# Relative path
-	subdir_srcdir="$subdir_dots$srcdir/$subdir_dir"
-	;;
+        # Relative path
+        subdir_srcdir="$subdir_dots$srcdir/$subdir_dir"
+        ;;
     esac
 
     #
@@ -124,13 +124,13 @@ if test "$subdir_dir" != ":" && test -d $srcdir/$subdir_dir; then
     sub_configure="$SHELL '$subdir_srcdir/configure'"
     AC_MSG_NOTICE([running $sub_configure $subdir_args --cache-file=$subdir_cache_file --srcdir=$subdir_srcdir --disable-option-checking])
     eval "$sub_configure $subdir_args \
-	--cache-file=\"\$subdir_cache_file\" --srcdir=\"$subdir_srcdir\" --disable-option-checking"
+        --cache-file=\"\$subdir_cache_file\" --srcdir=\"$subdir_srcdir\" --disable-option-checking"
     if test "$?" = "0"; then
-	eval $subdir_success
-	AC_MSG_NOTICE([$sub_configure succeeded for $subdir_dir])
+        eval $subdir_success
+        AC_MSG_NOTICE([$sub_configure succeeded for $subdir_dir])
     else
-	eval $subdir_failure
-	AC_MSG_NOTICE([$sub_configure *failed* for $subdir_dir])
+        eval $subdir_failure
+        AC_MSG_NOTICE([$sub_configure *failed* for $subdir_dir])
     fi
 
     #

@@ -15,13 +15,10 @@ dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
-dnl                         reserved.
+dnl Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2020      Google, LLC. All rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
-dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
-dnl                         All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -659,12 +656,12 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AS_IF([test "$atomics_found" = "no" -a "$enable_builtin_atomics" != "no"],
           [OPAL_CHECK_GCC_ATOMIC_BUILTINS
            AS_IF([test $opal_cv_have___atomic = "yes"],
-	         [AC_MSG_NOTICE([Using GCC built-in style atomics])
+                 [AC_MSG_NOTICE([Using GCC built-in style atomics])
                   atomics_found="GCC built-in style atomics"
                   want_gcc_builtin_atomics=1],
                  [test "$enable_builtin_atomics" = "yes"],
                  [AC_MSG_WARN([GCC built-in atomics requested but not found.])
-		  AC_MSG_ERROR([Cannot continue])])])
+                  AC_MSG_ERROR([Cannot continue])])])
 
     # Option 3 for atomics: inline assembly
     AS_IF([test "$atomics_found" = "no" -a "$gcc_inline" = "1"],
@@ -703,7 +700,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         [$want_asm_atomics],
         [Whether to use assembly-coded atomics for atomics implementation])
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]],[[Atomics]],[],[$atomics_found])
+    OPAL_SUMMARY_ADD([Miscellaneous], [Atomics], [], [$atomics_found])
 
     OPAL_VAR_SCOPE_POP
 ])dnl

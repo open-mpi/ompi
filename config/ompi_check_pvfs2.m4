@@ -27,24 +27,20 @@ dnl
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_PVFS2],[
-
-    OPAL_VAR_SCOPE_PUSH([ompi_check_pvfs2_happy ompi_check_pvfs2_dir])
+    OPAL_VAR_SCOPE_PUSH([ompi_check_pvfs2_happy])
 
     # Get some configuration information
     AC_ARG_WITH([pvfs2],
         [AS_HELP_STRING([--with-pvfs2(=DIR)],
              [Build Pvfs2 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OPAL_CHECK_WITHDIR([pvfs2], [$with_pvfs2], [include/pvfs2.h])
 
-    AS_IF([test "$with_pvfs2" = "no"],
-          [ompi_check_pvfs2_happy="no"],
-          [AS_IF([test -n "$with_pvfs2" && test "$with_pvfs2" != "yes"],
-                 [ompi_check_pvfs2_dir=$with_pvfs2])
-           OPAL_CHECK_PACKAGE([$1], [pvfs2.h], [pvfs2], [PVFS_util_resolve],
-                              [], [$ompi_check_pvfs2_dir], [],
-                              [ompi_check_pvfs2_happy="yes"],
-                              [ompi_check_pvfs2_happy="no"])
-            ])
+    OAC_CHECK_PACKAGE([pvfs2],
+                      [$1],
+                      [pvfs2.h],
+                      [pvfs2],
+                      [PVFS_util_resolve],
+                      [ompi_check_pvfs2_happy="yes"],
+                      [ompi_check_pvfs2_happy="no"])
 
     AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
           [$2],

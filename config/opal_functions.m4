@@ -262,29 +262,29 @@ for val in ${$1}; do
     opal_done="`expr $opal_i \> $opal_count`"
     while test "$opal_found" = "0" && test "$opal_done" = "0"; do
 
-	# Have we seen this token already?  Prefix the comparison with
-	# "x" so that "-Lfoo" values won't be cause an error.
+        # Have we seen this token already?  Prefix the comparison with
+        # "x" so that "-Lfoo" values won't be cause an error.
 
-	opal_eval="expr x$val = x\$opal_array_$opal_i"
-	opal_found=`eval $opal_eval`
+        opal_eval="expr x$val = x\$opal_array_$opal_i"
+        opal_found=`eval $opal_eval`
 
-	# Check the ending condition
+        # Check the ending condition
 
-	opal_done="`expr $opal_i \>= $opal_count`"
+        opal_done="`expr $opal_i \>= $opal_count`"
 
-	# Increment the counter
+        # Increment the counter
 
-	opal_i="`expr $opal_i + 1`"
+        opal_i="`expr $opal_i + 1`"
     done
 
     # If we didn't find the token, add it to the "array"
 
     if test "$opal_found" = "0"; then
-	opal_eval="opal_array_$opal_i=$val"
-	eval $opal_eval
-	opal_count="`expr $opal_count + 1`"
+        opal_eval="opal_array_$opal_i=$val"
+        eval $opal_eval
+        opal_count="`expr $opal_count + 1`"
     else
-	opal_i="`expr $opal_i - 1`"
+        opal_i="`expr $opal_i - 1`"
     fi
 done
 

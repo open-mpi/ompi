@@ -1,10 +1,9 @@
-dnl -*- shell-script -*-
+dnl -*- autoconf -*-
 dnl
 dnl Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
-dnl                         reserved.
+dnl Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -25,42 +24,55 @@ dnl $3: action if OFI API version is < $1
 AC_DEFUN([OPAL_CHECK_OFI_VERSION_GE],[
     OPAL_VAR_SCOPE_PUSH([opal_ofi_ver_ge_save_CPPFLAGS opal_ofi_ver_ge_happy])
 
-    AC_MSG_CHECKING([if OFI API version number is >= $1])
-    opal_ofi_ver_ge_save_CPPFLAGS=$CPPFLAGS
-    CPPFLAGS=$opal_ofi_CPPFLAGS
+    AS_LITERAL_WORD_IF([$1], [], [m4_fatal([OPAL_CHECK_OFI_VERSION_GE called with non-literal first argument])])dnl
+    AS_VAR_PUSHDEF([version_cache_var], [opal_ofi_ver_ge_cv_$1])dnl
+    m4_pushdef([version_pretty_print], [m4_translit([$1], [,], [.])])dnl
 
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <rdma/fabric.h>]],
-[[
+    AC_CACHE_CHECK([if OFI API version number is >= version_pretty_print],
+        [version_cache_var],
+        [opal_ofi_ver_ge_save_CPPFLAGS=$CPPFLAGS
+         CPPFLAGS=$opal_ofi_CPPFLAGS
+
+         AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+                [[#include <rdma/fabric.h>
+]], [[
 #if !defined(FI_MAJOR_VERSION)
 #error "we cannot check the version -- sad panda"
 #elif FI_VERSION_LT(FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION), FI_VERSION($1))
 #error "version is too low -- nopes"
 #endif
 ]])],
-                      [opal_ofi_ver_ge_happy=1],
-                      [opal_ofi_ver_ge_happy=0])
+                      [version_cache_var=yes],
+                      [version_cache_var=no])])
 
-    AS_IF([test $opal_ofi_ver_ge_happy -eq 1],
-          [AC_MSG_RESULT([yes])
-           $2],
-          [AC_MSG_RESULT([no])
-           $3])
+    AS_IF([test "${version_cache_var}" = "yes"],
+          [$2],
+          [$3])
 
     CPPFLAGS=$opal_ofi_ver_ge_save_CPPFLAGS
 
+    m4_popdef([version_pretty_print])
+    AS_VAR_POPDEF([version_cache_var])
     OPAL_VAR_SCOPE_POP
 ])dnl
 
-dnl
-dnl _OPAL_CHECK_OFI
+
+dnl OPAL_CHECK_OFI(prefix, [action if found], [action if not found])
 dnl --------------------------------------------------------
 dnl Do the real work of checking for OFI libfabric.
 dnl Upon return:
 dnl
-dnl - opal_ofi_happy: will be "yes" or "no"
-dnl - opal_ofi_{CPPFLAGS|LDFLAGS|LIBS} will be loaded (if relevant)
+dnl opal_ofi_{CPPFLAGS, LDFLAGS, LIBS} and prefix_{CPPFLAGS, LDFLAGS,
+dnl LIBS} will be set as needed.
 dnl
-AC_DEFUN([_OPAL_CHECK_OFI],[
+dnl This macro intentionally leaks opal_ofi_happy = yes/no as well as
+dnl evaluating the action if found / action if not found
+dnl
+AC_DEFUN([OPAL_CHECK_OFI],[
+    OPAL_VAR_SCOPE_PUSH([opal_check_ofi_save_CPPFLAGS opal_check_ofi_save_LDFLAGS opal_check_ofi_save_LIBS opal_check_fi_info_pci])
+
+    m4_ifblank([$1], [m4_fatal([First argument must be set for call to OPAL_CHECK_OFI])])
+
     # Add --with options
     AC_ARG_WITH([libfabric],
                 [AS_HELP_STRING([--with-libfabric=DIR],
@@ -72,58 +84,32 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
     AC_ARG_WITH([ofi],
                 [AS_HELP_STRING([--with-ofi=DIR],
                                 [Specify location of OFI libfabric installation, adding DIR/include to the default search location for libfabric headers, and DIR/lib or DIR/lib64 to the default search location for libfabric libraries.  Error if libfabric support cannot be found.])])
-
     AC_ARG_WITH([ofi-libdir],
                 [AS_HELP_STRING([--with-ofi-libdir=DIR],
                                 [Search for OFI libfabric libraries in DIR])])
 
-    if test "$with_ofi" = ""; then
-         with_ofi=$with_libfabric
-    fi
+    AS_IF([test -z "${with_ofi}"], [with_ofi=${with_libfabric}])
+    AS_IF([test -z "${with_ofi_libdir}"], [with_ofi_libdir=${with_libfabric_libdir}])
 
-    if test "$with_ofi_libdir" = ""; then
-         with_ofi_libdir=$with_libfabric_libdir
-    fi
+    opal_check_ofi_save_CPPFLAGS=${CPPFLAGS}
+    opal_check_ofi_save_LDFLAGS=${LDFLAGS}
+    opal_check_ofi_save_LIBS=${LIBS}
 
-    # Sanity check the --with values
-    OPAL_CHECK_WITHDIR([ofi], [$with_ofi],
-                       [include/rdma/fabric.h])
-    OPAL_CHECK_WITHDIR([ofi-libdir], [$with_ofi_libdir],
-                       [libfabric.*])
-
-    OPAL_VAR_SCOPE_PUSH([opal_check_ofi_save_CPPFLAGS opal_check_ofi_save_LDFLAGS opal_check_ofi_save_LIBS opal_check_fi_info_pci])
-    opal_check_ofi_save_CPPFLAGS=$CPPFLAGS
-    opal_check_ofi_save_LDFLAGS=$LDFLAGS
-    opal_check_ofi_save_LIBS=$LIBS
     opal_check_fi_info_pci=0
 
-    opal_ofi_happy=yes
-    AS_IF([test "$with_ofi" = "no"],
-          [opal_ofi_happy=no])
+    dnl OMPI has used ofi everywhere for some time, but the pkg-config
+    dnl module name is libfabric.  Easier to set the pkg-config module
+    dnl name explicitly than change everything in OMPI.
+    m4_define([ofi_pkgconfig_module], [libfabric])
+    OAC_CHECK_PACKAGE([ofi],
+                      [$1],
+                      [rdma/fabric.h],
+                      [fabric],
+                      [fi_getinfo],
+                      [opal_ofi_happy=yes],
+                      [opal_ofi_happy=no])
 
-    AS_IF([test $opal_ofi_happy = yes],
-          [AC_MSG_CHECKING([looking for OFI libfabric in])
-           AS_IF([test "$with_ofi" != "yes"],
-                 [opal_ofi_dir=$with_ofi
-                  AC_MSG_RESULT([($opal_ofi_dir)])],
-                 [AC_MSG_RESULT([(default search paths)])])
-           AS_IF([test ! -z "$with_ofi_libdir" && \
-                         test "$with_ofi_libdir" != "yes"],
-                 [opal_ofi_libdir=$with_ofi_libdir])
-          ])
-
-    AS_IF([test $opal_ofi_happy = yes],
-          [OPAL_CHECK_PACKAGE([opal_ofi],
-                              [rdma/fabric.h],
-                              [fabric],
-                              [fi_getinfo],
-                              [],
-                              [$opal_ofi_dir],
-                              [$opal_ofi_libdir],
-                              [],
-                              [opal_ofi_happy=no])])
-
-    CPPFLAGS="$CPPFLAGS $opal_ofi_CPPFLAGS"
+    OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${$1_CPPFLAGS}])
 
     AS_IF([test $opal_ofi_happy = yes],
           [AC_CHECK_HEADERS([rdma/fi_ext.h])
@@ -134,13 +120,8 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
                            [[#include <rdma/fabric.h>]])
 
            AC_DEFINE_UNQUOTED([OPAL_OFI_PCI_DATA_AVAILABLE],
-                              [$opal_check_fi_info_pci],
+                              [${opal_check_fi_info_pci}],
                               [check if pci data is available in ofi])
-
-           AC_CHECK_DECLS([PMIX_PACKAGE_RANK],
-                          [],
-                          [],
-                          [#include <pmix.h>])
 
            AC_CHECK_DECLS([FI_OPT_FI_HMEM_P2P],
                           [], [],
@@ -149,47 +130,32 @@ AC_DEFUN([_OPAL_CHECK_OFI],[
            AC_CHECK_TYPES([struct fi_ops_mem_monitor], [], [],
                           [#ifdef HAVE_RDMA_FI_EXT_H
 #include <rdma/fi_ext.h>
-#endif])])
+#endif
+                           ])
 
-    CPPFLAGS=$opal_check_ofi_save_CPPFLAGS
-    LDFLAGS=$opal_check_ofi_save_LDFLAGS
-    LIBS=$opal_check_ofi_save_LIBS
+           OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${opal_pmix_CPPFLAGS}])
+           AC_CHECK_DECLS([PMIX_PACKAGE_RANK],
+                          [],
+                          [],
+                          [#include <pmix.h>])])
 
-    AC_SUBST([opal_ofi_CPPFLAGS])
-    AC_SUBST([opal_ofi_LDFLAGS])
-    AC_SUBST([opal_ofi_LIBS])
+    CPPFLAGS=${opal_check_ofi_save_CPPFLAGS}
+    LDFLAGS=${opal_check_ofi_save_LDFLAGS}
+    LIBS=${opal_check_ofi_save_LIBS}
 
-    OPAL_SUMMARY_ADD([[Transports]],[[OpenFabrics OFI Libfabric]],[],[$opal_ofi_happy])
+    dnl for backwards compatibility reasons
+    opal_ofi_CPPFLAGS="${$1_CPPFLAGS}"
+    opal_ofi_LDFLAGS="${$1_LDFLAGS}"
+    opal_ofi_LIBS="${$1_LIBS}"
 
-    OPAL_VAR_SCOPE_POP
+    OPAL_SUMMARY_ADD([Transports], [OpenFabrics OFI Libfabric], [], [${$1_SUMMARY}])
 
-    AS_IF([test $opal_ofi_happy = no],
-          [AS_IF([test -n "$with_ofi" && test "$with_ofi" != "no"],
+    AS_IF([test "${opal_ofi_happy}" = "yes"],
+          [$2],
+          [AS_IF([test -n "${with_ofi}" && test "${with_ofi}" != "no"],
                  [AC_MSG_WARN([OFI libfabric support requested (via --with-ofi or --with-libfabric), but not found.])
                   AC_MSG_ERROR([Cannot continue.])])
-           ])
+           $3])
+
+    OPAL_VAR_SCOPE_POP
 ])dnl
-
-
-dnl
-dnl OPAL_CHECK_OFI
-dnl --------------------------------------------------------
-dnl Check to see if OFI libfabric is available.
-dnl
-dnl This is a simple wrapper around _OPAL_CHECK_OFI that just
-dnl ensures to only run the checks once.  We do not use AC_REQUIRE
-dnl because that re-orders the texts and makes ordering in stdout
-dnl quite confusing / difficult to grok.
-dnl
-AC_DEFUN([OPAL_CHECK_OFI],[
-    # Check for OFI libfabric.  Note that $opal_ofi_happy is used in
-    # other configure.m4's to know if OFI/libfabric configured
-    # successfully.  We only need to run the back-end checks once, but
-    # at least emit a "checking..." statement each subsequent time
-    # this macro is invoked so that configure's stdout has
-    # sensible/logical output.
-    AS_IF([test -z "$opal_ofi_happy"],
-        [_OPAL_CHECK_OFI],
-        [AC_MSG_CHECKING([if OFI libfabric is available])
-         AC_MSG_RESULT([$opal_ofi_happy])])
-])

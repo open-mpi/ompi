@@ -44,20 +44,20 @@ m4_define([OPAL_GET_VERSION],[
     if test -f "$1"; then
         srcdir=`dirname $1`
         opal_vers=`sed -n "
-	t clear
-	: clear
-	s/^major/$2_MAJOR_VERSION/
-	s/^minor/$2_MINOR_VERSION/
-	s/^release/$2_RELEASE_VERSION/
-	s/^greek/$2_GREEK_VERSION/
-	s/^repo_rev/$2_REPO_REV/
-	s/^tarball_version/$2_TARBALL_VERSION/
-	s/^date/$2_RELEASE_DATE/
-	t print
-	b
-	: print
-	p" < "$1"`
-	[eval] "$opal_vers"
+        t clear
+        : clear
+        s/^major/$2_MAJOR_VERSION/
+        s/^minor/$2_MINOR_VERSION/
+        s/^release/$2_RELEASE_VERSION/
+        s/^greek/$2_GREEK_VERSION/
+        s/^repo_rev/$2_REPO_REV/
+        s/^tarball_version/$2_TARBALL_VERSION/
+        s/^date/$2_RELEASE_DATE/
+        t print
+        b
+        : print
+        p" < "$1"`
+        [eval] "$opal_vers"
 
         $2_VERSION="$$2_MAJOR_VERSION.$$2_MINOR_VERSION.$$2_RELEASE_VERSION"
         $2_VERSION="${$2_VERSION}${$2_GREEK_VERSION}"

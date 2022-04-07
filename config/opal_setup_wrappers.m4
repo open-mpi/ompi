@@ -1,4 +1,4 @@
-dnl -*- shell-script -*-
+dnl -*- autoconf -*-
 dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
@@ -17,8 +17,7 @@ dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
-dnl                         All Rights reserved.
+dnl Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -43,7 +42,10 @@ AC_DEFUN([OPAL_WRAPPER_FLAGS_ADD], [
           [$1], [CXXFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_cxxflags], [$2])],
           [$1], [FCFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_fcflags], [$2])],
           [$1], [LDFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_ldflags], [$2])],
+          [$1], [STATIC_LDFLAGS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_static_ldflags], [$2])],
           [$1], [LIBS], [OPAL_FLAGS_APPEND_MOVE([wrapper_extra_libs], [$2])],
+          [$1], [STATIC_LIBS], [OPAL_FLAGS_APPEND_UNIQ([wrapper_extra_static_libs], [$2])],
+          [$1], [PC_MODULES], [OPAL_APPEND_UNIQ([wrapper_extra_pkgconfig_modules], [$2])],
           [m4_fatal([Unknown wrapper flag type $1])])
     opal_show_verbose "Adding \"$2\" to \"$1\""
 ])
@@ -87,14 +89,14 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_INIT],[
 
     OPAL_VAR_SCOPE_PUSH([wrapper_cc_tmp])
     AC_ARG_WITH([wrapper_cc],
-		[AS_HELP_STRING([--with-wrapper-cc=path],
-				[Set a different wrapper C compiler than the one used to build Open MPI])],
-		[], [with_wrapper_cc="$OPAL_CC"])
+                [AS_HELP_STRING([--with-wrapper-cc=path],
+                                [Set a different wrapper C compiler than the one used to build Open MPI])],
+                [], [with_wrapper_cc="$OPAL_CC"])
 
     AC_MSG_CHECKING([for wrapper C compiler])
 
     if test "$with_wrapper_cc" = "yes" || test "$with_wrapper_cc" = "no" ; then
-	AC_MSG_ERROR([--with-wrapper-cc must have an argument.])
+        AC_MSG_ERROR([--with-wrapper-cc must have an argument.])
     fi
 
     # Get the full path to the wrapper compiler. If it doesn't exist
@@ -267,6 +269,7 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
                      [OPAL_LIBTOOL_CONFIG([wl],[wl_fc],[--tag=FC],[])
                       LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
                       AC_LANG_PUSH([Fortran])
+                      AC_MSG_CHECKING([if Fortran linker supports RUNPATH])
                       AC_LINK_IFELSE([AC_LANG_SOURCE([[program test 
 end program]])],
                                      [runpath_fc_args="${wl_fc}--enable-new-dtags"
@@ -297,33 +300,91 @@ AC_DEFUN([RPATHIFY_LDFLAGS_INTERNAL],[
                esac
            done
 
-           # add in the RPATH args for @{libdir}, and the RUNPATH
-           # args.  The install libdir goes first, so that we prefer
-           # our libmpi over any imposter libmpi we might find.
-           rpath_tmp=`echo ${$2} | sed -e s/LIBDIR/@{libdir}/`
-           $1="${$1} $rpath_tmp $rpath_out ${$3}"
+           $1="${$1} $rpath_out"
           ])
     OPAL_VAR_SCOPE_POP
 ])
 
-AC_DEFUN([RPATHIFY_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_args], [runpath_args])])
+AC_DEFUN([RPATHIFY_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_args])])
 
-AC_DEFUN([RPATHIFY_FC_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_fc_args], [runpath_fc_args])])
-
-dnl
-dnl Avoid some repetitive code below
-dnl
-AC_DEFUN([_OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG],[
-    AC_MSG_CHECKING([for $1 pkg-config LDFLAGS])
-    $1_PKG_CONFIG_LDFLAGS=`echo "$$1_WRAPPER_EXTRA_LDFLAGS" | sed -e 's/@{libdir}/\${libdir}/g'`
-    AC_SUBST([$1_PKG_CONFIG_LDFLAGS])
-    AC_MSG_RESULT([$$1_PKG_CONFIG_LDFLAGS])
-])
+AC_DEFUN([RPATHIFY_FC_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_fc_args])])
 
 
 # OPAL_SETUP_WRAPPER_FINAL()
 # ---------------------------
+#
+# Here are the situations that we need to cover with wrapper compilers
+# and pkg-config files:
+#
+# 1) --enable-shared --disable-static (today's default): Any
+#    application linking against libmpi will be a dynamicly linked
+#    application
+# 2) --enable-shared --enable-static: An application linking against
+#    libmpi will dynamically link against libmpi unless -static (or
+#    similar) is passed, in which case it will static link against
+#    libmpi (and the static versions of all of libmpi's dependencies).
+# 3) --disable-shared --enable-static: Any application linking against
+#    libmpi will link against libmpi.a.  That application will link
+#    against the dynamic versions of libmpi's dependencies, unless
+#    -static is passed.
+#
+# There is one situation we should explicitly handle in terms of
+# wrapper compilers (someone could parse out all the right pkg-config
+# or wrapper compiler options to get the right dependent libraries, of
+# course):
+#
+# 1) --enable-shared --enable-static: An application links via
+#    /usr/lib/libmpi.a instead of -lmpi.  We'll make no attempts to
+#    recognize this case with the wrapper compiler
+#
+# So, we essentially have 5 cases above to cover with the wrapper
+# compiler and pkg-config.  For the wrapper compiler, this means:
+#
+# 1) --enable-shared --disable-static: Regardless of the -static flag,
+#    we only add the -L${libdir} -lmpi
+# 2) --enable-shared --enable-static / no -static flag: we add
+#    -L${libdir} -lmpi
+# 3) --enable-shared --enable-static / -static flag: we add
+#    -L${libdir} -lmpi plus the LDFLAGS and LIBS for our dependencies
+#    AND their reported dependencies (ie the results of pkg-config --libs
+#    --static for all our dependencies).
+# 4) --disable-shared --enable-static / no -static flag: We add
+#    -L${libdir} -lmpi plus the LDFLAGS and LIBS for our dependencies,
+#    but not their dependencies (ie, the results of pkg-config --libs for
+#    all our dependencies)
+# 5) --disable-shared --enable-static / -static flag: We add
+#    -L${libdir} -lmpi plus the LDFLAGS and LIBs for our dependencies
+#    AND their reported dependencies (ie, the results of pkg-config
+#    --libs --static for all our dependencies)
+#
+# For the pkg-config modules, this means:
+#
+# 1) --enable-shared --disable-static: We add -L${libdir} -lmpi to
+#    Libs and Libs.private, Modules, and Modules.private are empty
+# 2/3) --enable-shared --enable-static: We add -L${libdir} -lmpi to
+#    Libs, Libs.private contains all the -L/-ls from our dependencies
+#    that don't have pkg-config modules, Modules is empty, and
+#    Modules.private contains all the modules for our dependencies.
+# 4/5) --disable-shared --enable-static: We add -L${libdir} -lmpi to
+#    Libs, Libs.private contains all the -L/-ls from our dependencies that
+#    don't have pkg-config modules, Modules contains all the modules for
+#    our dependencies, and Modules.private is empty.
+#
+# 2/3 means that `pkg-config --libs mpi` would return -L${libdir}
+#  -lmpi and `pkg-config --libs --static mpi` would return
+# -L${libdir} -lmpi -Lnon-pkg-config-dependency
+# -lnon-pkg-config-dependency ...., plus all the `pkg-config --libs
+# --static` results for all our pkg-config dependencies.
+#
+# 4/5 means that `pkg-config --libs mpi` would return -L${libdir}
+# -lmpi -Lnon-pkg-config-dependency -lnon-pkg-config-dependency ....,
+# plus all the `pkg-config --libs` results for all our pkg-config
+# dependencies AND that `pkg-config --libs --static mpi` would return
+# -L${libdir} -lmpi -Lnon-pkg-config-dependency
+# -lnon-pkg-config-dependency ...., plus all the `pkg-config --libs
+# --static` results for all our pkg-config dependencies.
 AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
+    OPAL_VAR_SCOPE_PUSH([wrapper_tmp_arg wrapper_finalize_opal_libs wrapper_finalize_ompi_libs])
 
     # Setup RPATH support, if desired
     WRAPPER_RPATH_SUPPORT=disabled
@@ -333,146 +394,270 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
           [AC_MSG_WARN([RPATH support requested but not available])
            AC_MSG_ERROR([Cannot continue])])
 
-    # Note that we have to setup <package>_PKG_CONFIG_LDFLAGS for the
-    # pkg-config files to parallel the
-    # <package>_WRAPPER_EXTRA_LDFLAGS.  This is because pkg-config
-    # will not understand the @{libdir} notation in
-    # *_WRAPPER_EXTRA_LDFLAGS; we have to translate it to ${libdir}.
+    AC_DEFINE_UNQUOTED(WRAPPER_RPATH_SUPPORT, "$WRAPPER_RPATH_SUPPORT",
+        [Whether the wrapper compilers add rpath flags by default])
 
     # We now have all relevant flags.  Substitute them in everywhere.
+
+    dnl Add LIBS into the extra wrapper libs, since this is as last
+    dnl minute as we can get.  We do the temp variable bit because of
+    dnl libevent and hwloc dependencies.  LIBS is going to contain
+    dnl libevent/libev/hwloc libraries, but their dependencies are
+    dnl already in wrapper_extra_libs.  We do not want to move -lhwloc
+    dnl (for example) to the far right, right of its dependencies.  So
+    dnl we start with our base libs, and add all the wrapper extra
+    dnl bits to that.
+    wapper_tmp_arg="${LIBS}"
+    OPAL_FLAGS_APPEND_MOVE([wrapper_tmp_arg], [${wrapper_extra_libs}])
+    wrapper_extra_libs="${wrapper_tmp_arg}"
+
+    dnl We do not want ${includedir} to be expanded, as we want that
+    dnl expansion to happen in the wrapper or pkg-config.
     m4_ifdef([project_opal], [
-       AC_MSG_CHECKING([for OPAL CPPFLAGS])
-       if test "$WANT_INSTALL_HEADERS" = "1" ; then
-           OPAL_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi'
-       else
-           OPAL_WRAPPER_EXTRA_CPPFLAGS=
-       fi
-       OPAL_WRAPPER_EXTRA_CPPFLAGS="$OPAL_WRAPPER_EXTRA_CPPFLAGS $opal_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
-       AC_SUBST([OPAL_WRAPPER_EXTRA_CPPFLAGS])
-       AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CPPFLAGS])
+       AC_MSG_CHECKING([for OPAL wrapper CPPFLAGS])
+       AS_IF([test "$WANT_INSTALL_HEADERS" = "1"],
+             [OPAL_WRAPPER_CPPFLAGS='-I${includedir} -I${includedir}/openmpi'],
+             [OPAL_WRAPPER_CPPFLAGS='-I${includedir}'])
+       OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_CPPFLAGS], [$opal_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags])
+       AC_SUBST([OPAL_WRAPPER_CPPFLAGS])
+       AC_MSG_RESULT([$OPAL_WRAPPER_CPPFLAGS])
 
-       AC_MSG_CHECKING([for OPAL CFLAGS])
-       OPAL_WRAPPER_EXTRA_CFLAGS="$wrapper_extra_cflags $with_wrapper_cflags"
-       AC_SUBST([OPAL_WRAPPER_EXTRA_CFLAGS])
-       AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CFLAGS])
+       AC_MSG_CHECKING([for OPAL wrapper CFLAGS])
+       OPAL_WRAPPER_CFLAGS="$wrapper_extra_cflags $with_wrapper_cflags"
+       AC_SUBST([OPAL_WRAPPER_CFLAGS])
+       AC_MSG_RESULT([$OPAL_WRAPPER_CFLAGS])
 
-       AC_MSG_CHECKING([for OPAL CFLAGS_PREFIX])
-       OPAL_WRAPPER_EXTRA_CFLAGS_PREFIX="$with_wrapper_cflags_prefix"
-       AC_SUBST([OPAL_WRAPPER_EXTRA_CFLAGS_PREFIX])
-       AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CFLAGS_PREFIX])
+       AC_MSG_CHECKING([for OPAL wrapper CFLAGS_PREFIX])
+       OPAL_WRAPPER_CFLAGS_PREFIX="$with_wrapper_cflags_prefix"
+       AC_SUBST([OPAL_WRAPPER_CFLAGS_PREFIX])
+       AC_MSG_RESULT([$OPAL_WRAPPER_CFLAGS_PREFIX])
 
-       AC_MSG_CHECKING([for OPAL CXXFLAGS])
-       OPAL_WRAPPER_EXTRA_CXXFLAGS="$wrapper_extra_cxxflags $with_wrapper_cxxflags"
-       AC_SUBST([OPAL_WRAPPER_EXTRA_CXXFLAGS])
-       AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CXXFLAGS])
+       AC_MSG_CHECKING([for OPAL wrapper CXXFLAGS])
+       OPAL_WRAPPER_CXXFLAGS="$wrapper_extra_cxxflags $with_wrapper_cxxflags"
+       AC_SUBST([OPAL_WRAPPER_CXXFLAGS])
+       AC_MSG_RESULT([$OPAL_WRAPPER_CXXFLAGS])
 
-       AC_MSG_CHECKING([for OPAL CXXFLAGS_PREFIX])
-       OPAL_WRAPPER_EXTRA_CXXFLAGS_PREFIX="$with_wrapper_cxxflags_prefix"
-       AC_SUBST([OPAL_WRAPPER_EXTRA_CXXFLAGS_PREFIX])
-       AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_CXXFLAGS_PREFIX])
+       AC_MSG_CHECKING([for OPAL wrapper CXXFLAGS_PREFIX])
+       OPAL_WRAPPER_CXXFLAGS_PREFIX="$with_wrapper_cxxflags_prefix"
+       AC_SUBST([OPAL_WRAPPER_CXXFLAGS_PREFIX])
+       AC_MSG_RESULT([$OPAL_WRAPPER_CXXFLAGS_PREFIX])
 
-       AC_MSG_CHECKING([for OPAL LDFLAGS])
-       OPAL_WRAPPER_EXTRA_LDFLAGS="$opal_mca_wrapper_extra_ldflags $wrapper_extra_ldflags $with_wrapper_ldflags"
-       RPATHIFY_LDFLAGS([OPAL_WRAPPER_EXTRA_LDFLAGS])
-       AC_SUBST([OPAL_WRAPPER_EXTRA_LDFLAGS])
-       AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LDFLAGS])
+       wrapper_finalize_opal_libs="-l${OPAL_LIB_NAME}"
 
-       # Convert @{libdir} to ${libdir} for pkg-config
-       _OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG([OPAL])
+       dnl No matter the configuration (see the 5 cases above), the base
+       dnl flags should contain a -L${libdir} and -lopen-pal, so that those
+       dnl are found.
+       OPAL_WRAPPER_LDFLAGS='-L${libdir}'
+       OPAL_WRAPPER_LIBS="${wrapper_finalize_opal_libs}"
+       OPAL_WRAPPER_LIBS_STATIC=
+       OPAL_WRAPPER_LDFLAGS_STATIC=
 
-       # wrapper_extra_libs doesn't really get populated until after the mca system runs
-       # since most of the libs come from libtool.  So this is the first time we can
-       # uniq them.  ROMIO in particular adds lots of things already in wrapper_extra_libs,
-       # and this cleans the duplication up a bunch.  Always add everything the user
-       # asked for, as they know better than us.
-       AC_MSG_CHECKING([for OPAL LIBS])
-       OPAL_WRAPPER_EXTRA_LIBS="$opal_mca_wrapper_extra_libs"
-       OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
-       OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_EXTRA_LIBS], [$with_wrapper_libs])
-       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_EXTRA_LIBS], [$LIBS])
-       AC_SUBST([OPAL_WRAPPER_EXTRA_LIBS])
-       AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_LIBS])
+       AS_IF(dnl shared only case.  We add no flags beyond the base -L/-l
+             [test "${enable_shared}" != "no" -a "${enable_static}" != "yes"],
+             [],
+             dnl building both shared and static libraries.  The base
+             dnl case remains the same as the shared-only case (because
+             dnl the app will link against the shared library, but the
+             dnl static case is the full dependency tree.  Our full
+             dnl dependency tree is both the wrapper_extra_libs and
+             dnl wrapper_extra_static_libs, because wrapper_extra_libs
+             dnl was not added to the normal case.
+             [test "${enable_shared}" != "no" -a "${enable_static}" = "yes"],
+             [OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_LDFLAGS_STATIC], [${opal_mca_wrapper_extra_ldflags} ${wrapper_extra_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_LIBS_STATIC], [${opal_mca_wrapper_extra_libs} ${wrapper_extra_libs}])
+              OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_LDFLAGS_STATIC], [${opal_mca_wrapper_extra_static_ldflags} ${wrapper_extra_static_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_LIBS_STATIC], [${opal_mca_wrapper_extra_static_libs} ${wrapper_extra_static_libs}])],
+             dnl building static only.  The base case is that we need to
+             dnl list our dependencies, but not the full treee, because
+             dnl we assume that our dependencies will be shared libraries
+             dnl (unless they too were built static only, in which case
+             dnl their dependencies will be our direct dependencies if
+             dnl their modules are setup correctly).  The static case is
+             dnl our full dependency tree, but we only need to list the
+             dnl second leve explicitly, because the wrapper compiler
+             dnl and/or pkg-config merge use the normal case data in the
+             dnl static case.
+             [OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_LDFLAGS], [${opal_mca_wrapper_extra_ldflags} ${wrapper_extra_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_LIBS], [${opal_mca_wrapper_extra_libs} ${wrapper_extra_libs}])
+              OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_LDFLAGS_STATIC], [${opal_mca_wrapper_extra_static_ldflags} ${wrapper_extra_static_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_LIBS_STATIC], [${opal_mca_wrapper_extra_static_libs} ${wrapper_extra_static_libs}])])
+
+       dnl Add the user-provided flags
+       OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_LDFLAGS], [${with_wrapper_ldflags}])
+       OPAL_FLAGS_APPEND_MOVE([OPAL_WRAPPER_LIBS], [${with_wrapper_libs}])
+
+       RPATHIFY_LDFLAGS([OPAL_WRAPPER_LDFLAGS])
+       RPATHIFY_LDFLAGS([OPAL_WRAPPER_LDFLAGS_STATIC])
+
+       OPAL_FLAGS_APPEND_UNIQ([OPAL_WRAPPER_LDFLAGS], [${runpath_args}])
+
+       AC_MSG_CHECKING([for OPAL wrapper LDFLAGS])
+       AC_SUBST([OPAL_WRAPPER_LDFLAGS])
+       AC_MSG_RESULT([$OPAL_WRAPPER_LDFLAGS])
+
+       AC_MSG_CHECKING([for OPAL wrapper static LDFLAGS])
+       AC_SUBST([OPAL_WRAPPER_LDFLAGS_STATIC])
+       AC_MSG_RESULT([$OPAL_WRAPPER_LDFLAGS_STATIC])
+
+       AC_MSG_CHECKING([for OPAL wrapper LIBS])
+       AC_SUBST([OPAL_WRAPPER_LIBS])
+       AC_MSG_RESULT([$OPAL_WRAPPER_LIBS])
+
+       AC_MSG_CHECKING([for OPAL wrapper static LIBS])
+       AC_SUBST([OPAL_WRAPPER_LIBS_STATIC])
+       AC_MSG_RESULT([$OPAL_WRAPPER_LIBS_STATIC])
     ])
 
     m4_ifdef([project_ompi], [
-       AC_MSG_CHECKING([for OMPI CPPFLAGS])
-       if test "$WANT_INSTALL_HEADERS" = "1" ; then
-           OMPI_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi'
-       else
-           OPAL_WRAPPER_EXTRA_CPPFLAGS=
-       fi
-       OMPI_WRAPPER_EXTRA_CPPFLAGS="$OMPI_WRAPPER_EXTRA_CPPFLAGS $ompi_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags"
-       AC_SUBST([OMPI_WRAPPER_EXTRA_CPPFLAGS])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CPPFLAGS])
+       AC_MSG_CHECKING([for OMPI wrapper CPPFLAGS])
+       AS_IF([test "$WANT_INSTALL_HEADERS" = "1"],
+             [OMPI_WRAPPER_CPPFLAGS='-I${includedir} -I${includedir}/openmpi'],
+             [OMPI_WRAPPER_CPPFLAGS='-I${includedir}'])
+       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_CPPFLAGS], [$ompi_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags])
+       AC_SUBST([OMPI_WRAPPER_CPPFLAGS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_CPPFLAGS])
 
-       AC_MSG_CHECKING([for OMPI CFLAGS])
-       OMPI_WRAPPER_EXTRA_CFLAGS="$wrapper_extra_cflags $with_wrapper_cflags"
-       AC_SUBST([OMPI_WRAPPER_EXTRA_CFLAGS])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CFLAGS])
+       AC_MSG_CHECKING([for OMPI wrapper CFLAGS])
+       OMPI_WRAPPER_CFLAGS="$wrapper_extra_cflags $with_wrapper_cflags"
+       AC_SUBST([OMPI_WRAPPER_CFLAGS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_CFLAGS])
 
-       AC_MSG_CHECKING([for OMPI CFLAGS_PREFIX])
-       OMPI_WRAPPER_EXTRA_CFLAGS_PREFIX="$with_wrapper_cflags_prefix"
-       AC_SUBST([OMPI_WRAPPER_EXTRA_CFLAGS_PREFIX])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CFLAGS_PREFIX])
+       AC_MSG_CHECKING([for OMPI wrapper CFLAGS_PREFIX])
+       OMPI_WRAPPER_CFLAGS_PREFIX="$with_wrapper_cflags_prefix"
+       AC_SUBST([OMPI_WRAPPER_CFLAGS_PREFIX])
+       AC_MSG_RESULT([$OMPI_WRAPPER_CFLAGS_PREFIX])
 
-       AC_MSG_CHECKING([for OMPI CXXFLAGS])
-       OMPI_WRAPPER_EXTRA_CXXFLAGS="$wrapper_extra_cxxflags $with_wrapper_cxxflags"
-       AC_SUBST([OMPI_WRAPPER_EXTRA_CXXFLAGS])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CXXFLAGS])
+       AC_MSG_CHECKING([for OMPI wrapper CXXFLAGS])
+       OMPI_WRAPPER_CXXFLAGS="$wrapper_extra_cxxflags $with_wrapper_cxxflags"
+       AC_SUBST([OMPI_WRAPPER_CXXFLAGS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_CXXFLAGS])
 
-       AC_MSG_CHECKING([for OMPI CXXFLAGS_PREFIX])
-       OMPI_WRAPPER_EXTRA_CXXFLAGS_PREFIX="$with_wrapper_cxxflags_prefix"
-       AC_SUBST([OMPI_WRAPPER_EXTRA_CXXFLAGS_PREFIX])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_CXXFLAGS_PREFIX])
+       AC_MSG_CHECKING([for OMPI wrapper CXXFLAGS_PREFIX])
+       OMPI_WRAPPER_CXXFLAGS_PREFIX="$with_wrapper_cxxflags_prefix"
+       AC_SUBST([OMPI_WRAPPER_CXXFLAGS_PREFIX])
+       AC_MSG_RESULT([$OMPI_WRAPPER_CXXFLAGS_PREFIX])
 
-       AC_MSG_CHECKING([for OMPI FCFLAGS])
-       OMPI_WRAPPER_EXTRA_FCFLAGS="$wrapper_extra_fcflags $with_wrapper_fcflags"
-       if test "$OMPI_FC_MODULE_FLAG" != "" ; then
-           OMPI_WRAPPER_EXTRA_FCFLAGS="$OMPI_WRAPPER_EXTRA_FCFLAGS $OMPI_FC_MODULE_FLAG"'${libdir}'
-       fi
-       AC_SUBST([OMPI_WRAPPER_EXTRA_FCFLAGS])
+       AC_MSG_CHECKING([for OMPI wrapper FCFLAGS])
+       OMPI_WRAPPER_FCFLAGS='-I${includedir}'" ${wrapper_extra_fcflags} ${with_wrapper_fcflags}"
+       AS_IF([test -n "${OMPI_FC_MODULE_FLAG}"],
+             [dnl deal with some interesting expansion behavior in OPAL_APPEND
+              wrapper_tmp_arg="${OMPI_FC_MODULE_FLAG}"'${libdir}'
+              OPAL_APPEND([OMPI_WRAPPER_FCFLAGS], [${wrapper_tmp_arg}])])
+       AC_SUBST([OMPI_WRAPPER_FCFLAGS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_FCFLAGS])
 
-       AC_MSG_CHECKING([for OMPI FCFLAGS_PREFIX])
-       OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX="$with_wrapper_fcflags_prefix"
-       AC_SUBST([OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX])
+       AC_MSG_CHECKING([for OMPI wrapper FCFLAGS_PREFIX])
+       OMPI_WRAPPER_FCFLAGS_PREFIX="$with_wrapper_fcflags_prefix"
+       AC_SUBST([OMPI_WRAPPER_FCFLAGS_PREFIX])
+       AC_MSG_RESULT([$OMPI_WRAPPER_FCFLAGS_PREFIX])
 
-       AC_MSG_CHECKING([for OMPI LDFLAGS])
-       OMPI_WRAPPER_EXTRA_LDFLAGS="$ompi_mca_wrapper_extra_ldflags $wrapper_extra_ldflags $with_wrapper_ldflags"
-       OMPI_WRAPPER_EXTRA_FC_LDFLAGS=$OMPI_WRAPPER_EXTRA_LDFLAGS
-       RPATHIFY_LDFLAGS([OMPI_WRAPPER_EXTRA_LDFLAGS])
-       AC_SUBST([OMPI_WRAPPER_EXTRA_LDFLAGS])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LDFLAGS])
-       RPATHIFY_FC_LDFLAGS([OMPI_WRAPPER_EXTRA_FC_LDFLAGS])
-       AC_SUBST([OMPI_WRAPPER_EXTRA_FC_LDFLAGS])
+       wrapper_finalize_ompi_libs="-l${OMPI_LIBMPI_NAME}"
 
-       # Convert @{libdir} to ${libdir} for pkg-config
-       _OPAL_SETUP_WRAPPER_FINAL_PKGCONFIG([OMPI])
+       dnl No matter the configuration (see the 5 cases above), the base
+       dnl flags should contain a -L${libdir} and -lmpi, so that those
+       dnl are found.
+       OMPI_WRAPPER_LDFLAGS='-L${libdir}'
+       OMPI_WRAPPER_LIBS="${wrapper_finalize_ompi_libs}"
+       OMPI_WRAPPER_LIBS_STATIC=
+       OMPI_WRAPPER_LDFLAGS_STATIC=
 
-       AC_MSG_CHECKING([for OMPI LIBS])
-       OMPI_WRAPPER_EXTRA_LIBS="$ompi_mca_wrapper_extra_libs"
-       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
-       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_EXTRA_LIBS], [$with_wrapper_libs])
-       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_EXTRA_LIBS], [$LIBS])
-       AC_SUBST([OMPI_WRAPPER_EXTRA_LIBS])
-       AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LIBS])
+       AS_IF(dnl shared only case.  We add no flags beyond the base -L/-l
+             [test "${enable_shared}" != "no" -a "${enable_static}" != "yes"],
+             [],
+             dnl building both shared and static libraries.  The base
+             dnl case remains the same as the shared-only case (because
+             dnl the app will link against the shared library, but the
+             dnl static case is the full dependency tree.  Our full
+             dnl dependency tree is both the wrapper_extra_libs and
+             dnl wrapper_extra_static_libs, because wrapper_extra_libs
+             dnl was not added to the normal case.
+             [test "${enable_shared}" != "no" -a "${enable_static}" = "yes"],
+             [OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_LDFLAGS_STATIC], [${ompi_mca_wrapper_extra_ldflags} ${wrapper_extra_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_LIBS_STATIC], [${wrapper_finalize_opal_libs} ${ompi_mca_wrapper_extra_libs} ${wrapper_extra_libs}])
+              OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_LDFLAGS_STATIC], [${ompi_mca_wrapper_extra_static_ldflags} ${wrapper_extra_static_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_LIBS_STATIC], [${ompi_mca_wrapper_extra_static_libs} ${wrapper_extra_static_libs}])],
+             dnl building static only.  The base case is that we need to
+             dnl list our dependencies, but not the full treee, because
+             dnl we assume that our dependencies will be shared libraries
+             dnl (unless they too were built static only, in which case
+             dnl their dependencies will be our direct dependencies if
+             dnl their modules are setup correctly).  The static case is
+             dnl our full dependency tree, but we only need to list the
+             dnl second leve explicitly, because the wrapper compiler
+             dnl and/or pkg-config merge use the normal case data in the
+             dnl static case.
+             [OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_LDFLAGS], [${ompi_mca_wrapper_extra_ldflags} ${wrapper_extra_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_LIBS], [${wrapper_finalize_opal_libs} ${ompi_mca_wrapper_extra_libs} ${wrapper_extra_libs}])
+              OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_LDFLAGS_STATIC], [${ompi_mca_wrapper_extra_static_ldflags} ${wrapper_extra_static_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_LIBS_STATIC], [${ompi_mca_wrapper_extra_static_libs} ${wrapper_extra_static_libs}])])
 
-      # language binding support.  C++ is a bit different, as the
-      # compiler should work even if there is no MPI C++ bindings
-      # support.  However, we do want it to fail if there is no C++
-      # compiler.
-       if test "$WANT_MPI_CXX_SUPPORT" = "1" ; then
-          OMPI_WRAPPER_CXX_LIB="-l${with_libmpi_name}_cxx"
-          OMPI_WRAPPER_CXX_REQUIRED_FILE=""
-       elif test "$CXX" = "none"; then
-          OMPI_WRAPPER_CXX_LIB=""
+       dnl Add the user-provided flags
+       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_LDFLAGS], [${with_wrapper_ldflags}])
+       OPAL_FLAGS_APPEND_MOVE([OMPI_WRAPPER_LIBS], [${with_wrapper_libs}])
+
+       dnl fortran FTW!
+       OMPI_WRAPPER_FC_LIBS="${OMPI_FORTRAN_USEMPIF08_LIB} ${OMPI_FORTRAN_USEMPI_LIB} ${OMPI_FORTRAN_MPIFH_LINK} ${OMPI_WRAPPER_LIBS}"
+       OMPI_WRAPPER_FC_LIBS_STATIC=${OMPI_WRAPPER_LIBS_STATIC}
+       OMPI_WRAPPER_FC_LDFLAGS=$OMPI_WRAPPER_LDFLAGS
+       OMPI_WRAPPER_FC_LDFLAGS_STATIC=$OMPI_WRAPPER_LDFLAGS
+
+       RPATHIFY_LDFLAGS([OMPI_WRAPPER_LDFLAGS])
+       RPATHIFY_LDFLAGS([OMPI_WRAPPER_LDFLAGS_STATIC])
+       RPATHIFY_FC_LDFLAGS([OMPI_WRAPPER_FC_LDFLAGS])
+       RPATHIFY_FC_LDFLAGS([OMPI_WRAPPER_FC_LDFLAGS_STATIC])
+
+       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_LDFLAGS], [${runpath_args}])
+       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_FC_LDFLAGS], [${runpath_fc_args}])
+
+       AC_MSG_CHECKING([for OMPI wrapper LDFLAGS])
+       AC_SUBST([OMPI_WRAPPER_LDFLAGS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_LDFLAGS])
+
+       AC_MSG_CHECKING([for OMPI wrapper static LDFLAGS])
+       AC_SUBST([OMPI_WRAPPER_LDFLAGS_STATIC])
+       AC_MSG_RESULT([$OMPI_WRAPPER_LDFLAGS_STATIC])
+
+       AC_MSG_CHECKING([for OMPI wrapper Fortran LDFLAGS])
+       AC_SUBST([OMPI_WRAPPER_LDFLAGS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_LDFLAGS])
+
+       AC_MSG_CHECKING([for OMPI wrapper Fortran static LDFLAGS])
+       AC_SUBST([OMPI_WRAPPER_LDFLAGS_STATIC])
+       AC_MSG_RESULT([$OMPI_WRAPPER_LDFLAGS_STATIC])
+
+       AC_MSG_CHECKING([for OMPI wrapper LIBS])
+       AC_SUBST([OMPI_WRAPPER_LIBS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_LIBS])
+
+       AC_MSG_CHECKING([for OMPI wrapper static LIBS])
+       AC_SUBST([OMPI_WRAPPER_LIBS_STATIC])
+       AC_MSG_RESULT([$OMPI_WRAPPER_LIBS_STATIC])
+
+       AC_MSG_CHECKING([for OMPI wrapper Fortran LDFLAGS])
+       AC_SUBST([OMPI_WRAPPER_FC_LDFLAGS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_FC_LDFLAGS])
+
+       AC_MSG_CHECKING([for OMPI wrapper Fortran static LDFLAGS])
+       AC_SUBST([OMPI_WRAPPER_FC_LDFLAGS_STATIC])
+       AC_MSG_RESULT([$OMPI_WRAPPER_LDFLAGS_STATIC])
+
+       AC_MSG_CHECKING([for OMPI wrapper Fortran LIBS])
+       AC_SUBST([OMPI_WRAPPER_FC_LIBS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_FC_LIBS])
+
+       AC_MSG_CHECKING([for OMPI wrapper Fortran static LIBS])
+       AC_SUBST([OMPI_WRAPPER_FC_LIBS_STATIC])
+       AC_MSG_RESULT([$OMPI_WRAPPER_FC_LIBS_STATIC])
+
+       # language binding support.  C++ is a bit different, as the
+       # compiler should work even if there is no MPI C++ bindings
+       # support.  However, we do want it to fail if there is no C++
+       # compiler.
+       if test "$CXX" = "none"; then
           OMPI_WRAPPER_CXX_REQUIRED_FILE="not supported"
        else
-          OMPI_WRAPPER_CXX_LIB=""
           OMPI_WRAPPER_CXX_REQUIRED_FILE=""
        fi
-       AC_SUBST([OMPI_WRAPPER_CXX_LIB])
        AC_SUBST([OMPI_WRAPPER_CXX_REQUIRED_FILE])
 
        if test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" ; then
@@ -498,24 +683,299 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
                          [chmod +x ompi/tools/wrappers/ompi_wrapper_script])
        fi
 
-       AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$OMPI_WRAPPER_EXTRA_CFLAGS",
-           [Additional CFLAGS to pass through the wrapper compilers])
-       AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS_PREFIX, "$OMPI_WRAPPER_EXTRA_CFLAGS_PREFIX",
-           [Additional CFLAGS_PREFIX to pass through the wrapper compilers])
-       AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$OMPI_WRAPPER_EXTRA_CXXFLAGS",
-           [Additional CXXFLAGS to pass through the wrapper compilers])
-       AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS_PREFIX, "$OMPI_WRAPPER_EXTRA_CXXFLAGS_PREFIX",
-           [Additional CXXFLAGS_PREFIX to pass through the wrapper compilers])
-       AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FCFLAGS, "$OMPI_WRAPPER_EXTRA_FCFLAGS",
-           [Additional FCFLAGS to pass through the wrapper compilers])
-       AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FCFLAGS_PREFIX, "$OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX",
-           [Additional FCFLAGS to pass through the wrapper compilers])
-       AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$OMPI_WRAPPER_EXTRA_LDFLAGS",
-           [Additional LDFLAGS to pass through the wrapper compilers])
-       AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$OMPI_WRAPPER_EXTRA_LIBS",
-           [Additional LIBS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OMPI_WRAPPER_CFLAGS, "$OMPI_WRAPPER_CFLAGS",
+           [CFLAGS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OMPI_WRAPPER_CXXFLAGS, "$OMPI_WRAPPER_CXXFLAGS",
+           [CXXFLAGS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OMPI_WRAPPER_FCFLAGS, "$OMPI_WRAPPER__FCFLAGS",
+           [FCFLAGS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OMPI_WRAPPER_LDFLAGS, "$OMPI_WRAPPER_LDFLAGS",
+           [LDFLAGS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OMPI_WRAPPER_LIBS, "$OMPI_WRAPPER_LIBS",
+           [LIBS to pass through the wrapper compilers])
+
+       dnl ####################################################################
+       dnl  Setup variables for pkg-config files
+       dnl
+       dnl Add all our dependent libraries to libs.Private for users that want
+       dnl to static build, unless we're only building static libraries, in
+       dnl which case, add the dependent libraries to libs itself, since any
+       dnl linking will require the full set of libraries.
+       dnl ####################################################################
+       AC_MSG_CHECKING([for OMPI pkg-config Cflags])
+       OMPI_PC_CFLAGS="${OMPI_WRAPPER_CPPFLAGS} ${OMPI_WRAPPER_CFLAGS} ${OMPI_WRAPPER_CFLAGS_PREFIX}"
+       OMPI_PC_CFLAGS=`echo ${OMPI_PC_CFLAGS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_PC_CFLAGS])
+       AC_MSG_RESULT([${OMPI_PC_CFLAGS}])
+
+       AC_MSG_CHECKING([for OMPI pkg-config Libs])
+       OMPI_PC_LIBS="${OMPI_WRAPPER_LDFLAGS} ${OMPI_WRAPPER_LIBS}"
+       OMPI_PC_LIBS=`echo ${OMPI_PC_LIBS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_PC_LIBS])
+       AC_MSG_RESULT([${OMPI_PC_LIBS}])
+
+       AC_MSG_CHECKING([for OMPI pkg-config Libs.private])
+       OMPI_PC_LIBS_PRIVATE="${OMPI_WRAPPER_LDFLAGS_STATIC} ${OMPI_WRAPPER_LIBS_STATIC}"
+       OMPI_PC_LIBS_PRIVATE=`echo ${OMPI_PC_LIBS_PRIVATE} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_PC_LIBS_PRIVATE])
+       AC_MSG_RESULT([${OMPI_PC_LIBS_PRIVATE}])
+
+       AC_MSG_CHECKING([for OMPI pkg-config Fortran Cflags])
+       OMPI_PC_FC_CFLAGS="${OMPI_WRAPPER_FCFLAGS} ${OMPI_WRAPPER_FCFLAGS_PREFIX}"
+       OMPI_PC_FC_CFLAGS=`echo ${OMPI_PC_FC_CFLAGS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_PC_FC_CFLAGS])
+       AC_MSG_RESULT([${OMPI_PC_FC_CFLAGS}])
+
+       AC_MSG_CHECKING([for OMPI pkg-config Fortran Libs])
+       OMPI_PC_FC_LIBS="${OMPI_WRAPPER_FC_LDFLAGS} ${OMPI_WRAPPER_FC_LIBS}"
+       OMPI_PC_FC_LIBS=`echo ${OMPI_PC_FC_LIBS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_PC_FC_LIBS])
+       AC_MSG_RESULT([${OMPI_PC_FC_LIBS}])
+
+       AC_MSG_CHECKING([for OMPI pkg-config Fortran Libs.private])
+       OMPI_PC_FC_LIBS_PRIVATE="${OMPI_WRAPPER_FC_LDFLAGS_STATIC} ${OMPI_WRAPPER_FC_LIBS_STATIC}"
+       OMPI_PC_FC_LIBS_PRIVATE=`echo ${OMPI_PC_FC_LIBS_PRIVATE} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_PC_FC_LIBS_PRIVATE])
+       AC_MSG_RESULT([${OMPI_PC_FC_LIBS_PRIVATE}])
+
+       OMPI_PC_MODULES=
+       OMPI_PC_MODULES_PRIVATE=
+       AS_IF([test "${enable_shared}" != "no" -a "${enable_static}" != "yes"],
+             [],
+             [test "${enable_shared}" != "no" -a "${enable_static}" = "yes"],
+             [OMPI_PC_MODULES_PRIVATE="${wrapper_extra_pkgconfig_modules} ${ompi_mca_wrapper_extra_pc_modules}"],
+             [OMPI_PC_MODULES="${wrapper_extra_pkgconfig_modules} ${ompi_mca_wrapper_extra_pc_modules}"])
+
+       AC_MSG_CHECKING([for OMPI pkg-config Modules])
+       AC_SUBST([OMPI_PC_MODULES])
+       AC_MSG_RESULT([${OMPI_PC_MODULES}])
+
+       AC_MSG_CHECKING([for OMPI pkg-config Modules.private])
+       AC_SUBST([OMPI_PC_MODULES_PRIVATE])
+       AC_MSG_RESULT([${OMPI_PC_MODULES_PRIVATE}])
     ])
 
-    AC_DEFINE_UNQUOTED(WRAPPER_RPATH_SUPPORT, "$WRAPPER_RPATH_SUPPORT",
-        [Whether the wrapper compilers add rpath flags by default])
+    m4_ifdef([project_oshmem], [
+       AC_MSG_CHECKING([for OSHMEM wrapper CPPFLAGS])
+       AS_IF([test "$WANT_INSTALL_HEADERS" = "1"],
+             [OSHMEM_WRAPPER_CPPFLAGS='-I${includedir} -I${includedir}/openmpi'],
+             [OSHMEM_WRAPPER_CPPFLAGS='-I${includedir}'])
+       OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_CPPFLAGS], [$oshmem_mca_wrapper_extra_cppflags $wrapper_extra_cppflags $with_wrapper_cppflags])
+       AC_SUBST([OSHMEM_WRAPPER_CPPFLAGS])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_CPPFLAGS])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper CFLAGS])
+       OSHMEM_WRAPPER_CFLAGS="$wrapper_extra_cflags $with_wrapper_cflags"
+       AC_SUBST([OSHMEM_WRAPPER_CFLAGS])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_CFLAGS])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper CFLAGS_PREFIX])
+       OSHMEM_WRAPPER_CFLAGS_PREFIX="$with_wrapper_cflags_prefix"
+       AC_SUBST([OSHMEM_WRAPPER_CFLAGS_PREFIX])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_CFLAGS_PREFIX])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper CXXFLAGS])
+       OSHMEM_WRAPPER_CXXFLAGS="$wrapper_extra_cxxflags $with_wrapper_cxxflags"
+       AC_SUBST([OSHMEM_WRAPPER_CXXFLAGS])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_CXXFLAGS])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper CXXFLAGS_PREFIX])
+       OSHMEM_WRAPPER_CXXFLAGS_PREFIX="$with_wrapper_cxxflags_prefix"
+       AC_SUBST([OSHMEM_WRAPPER_CXXFLAGS_PREFIX])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_CXXFLAGS_PREFIX])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper FCFLAGS])
+       OSHMEM_WRAPPER_FCFLAGS='-I${includedir}'" ${wrapper_extra_fcflags} ${with_wrapper_fcflags}"
+       AS_IF([test -n "${OMPI_FC_MODULE_FLAG}"],
+             [dnl deal with some interesting expansion behavior in OPAL_APPEND
+              wrapper_tmp_arg="${OMPI_FC_MODULE_FLAG}"'${libdir}'
+              OPAL_APPEND([OSHMEM_WRAPPER_FCFLAGS], [${wrapper_tmp_arg}])])
+       AC_SUBST([OSHMEM_WRAPPER_EXTRA_FCFLAGS])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_EXTRA_FCFLAGS])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper FCFLAGS_PREFIX])
+       OSHMEM_WRAPPER_FCFLAGS_PREFIX="$with_wrapper_fcflags_prefix"
+       AC_SUBST([OSHMEM_WRAPPER_FCFLAGS_PREFIX])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_FCFLAGS_PREFIX])
+
+       dnl No matter the configuration (see the 5 cases above), the
+       dnl base flags should contain a -L${libdir} and -loshmem -lmpi,
+       dnl so that those are found.
+       OSHMEM_WRAPPER_LDFLAGS='-L${libdir}'
+       OSHMEM_WRAPPER_LIBS="-loshmem ${wrapper_finalize_ompi_libs}"
+       OSHMEM_WRAPPER_LIBS_STATIC=
+       OSHMEM_WRAPPER_LDFLAGS_STATIC=
+
+       AS_IF(dnl shared only case.  We add no flags beyond the base -L/-l
+             [test "${enable_shared}" != "no" -a "${enable_static}" != "yes"],
+             [],
+             dnl building both shared and static libraries.  The base
+             dnl case remains the same as the shared-only case (because
+             dnl the app will link against the shared library, but the
+             dnl static case is the full dependency tree.  Our full
+             dnl dependency tree is both the wrapper_extra_libs and
+             dnl wrapper_extra_static_libs, because wrapper_extra_libs
+             dnl was not added to the normal case.
+             [test "${enable_shared}" != "no" -a "${enable_static}" = "yes"],
+             [OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_LDFLAGS_STATIC], [${oshmem_mca_wrapper_extra_ldflags} ${wrapper_extra_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OSHMEM_WRAPPER_LIBS_STATIC], [${wrapper_finalize_opal_libs} ${oshmem_mca_wrapper_extra_libs} ${wrapper_extra_libs}])
+              OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_LDFLAGS_STATIC], [${oshmem_mca_wrapper_extra_static_ldflags} ${wrapper_extra_static_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OSHMEM_WRAPPER_LIBS_STATIC], [${oshmem_mca_wrapper_extra_static_libs} ${wrapper_extra_static_libs}])],
+             dnl building static only.  The base case is that we need to
+             dnl list our dependencies, but not the full treee, because
+             dnl we assume that our dependencies will be shared libraries
+             dnl (unless they too were built static only, in which case
+             dnl their dependencies will be our direct dependencies if
+             dnl their modules are setup correctly).  The static case is
+             dnl our full dependency tree, but we only need to list the
+             dnl second leve explicitly, because the wrapper coshmemler
+             dnl and/or pkg-config merge use the normal case data in the
+             dnl static case.
+             [OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_LDFLAGS], [${oshmem_mca_wrapper_extra_ldflags} ${wrapper_extra_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OSHMEM_WRAPPER_LIBS], [${wrapper_finalize_opal_libs} ${oshmem_mca_wrapper_extra_libs} ${wrapper_extra_libs}])
+              OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_LDFLAGS_STATIC], [${oshmem_mca_wrapper_extra_static_ldflags} ${wrapper_extra_static_ldflags}])
+              OPAL_FLAGS_APPEND_MOVE([OSHMEM_WRAPPER_LIBS_STATIC], [${oshmem_mca_wrapper_extra_static_libs} ${wrapper_extra_static_libs}])])
+
+       dnl Add the user-provided flags
+       OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_LDFLAGS], [${with_wrapper_ldflags}])
+       OPAL_FLAGS_APPEND_MOVE([OSHMEM_WRAPPER_LIBS], [${with_wrapper_libs}])
+
+       dnl fortran FTW!
+       OSHMEM_WRAPPER_FC_LIBS="-loshmem ${OMPI_FORTRAN_MPIFH_LINK}"
+       OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_FC_LIBS], [${OSHMEM_WRAPPER_LIBS}])
+       OSHMEM_WRAPPER_FC_LIBS_STATIC=${OSHMEM_WRAPPER_LIBS_STATIC}
+       OSHMEM_WRAPPER_FC_LDFLAGS=$OSHMEM_WRAPPER_LDFLAGS
+       OSHMEM_WRAPPER_FC_LDFLAGS_STATIC=$OSHMEM_WRAPPER_LDFLAGS
+
+       RPATHIFY_LDFLAGS([OSHMEM_WRAPPER_LDFLAGS])
+       RPATHIFY_LDFLAGS([OSHMEM_WRAPPER_LDFLAGS_STATIC])
+       RPATHIFY_FC_LDFLAGS([OSHMEM_WRAPPER_FC_LDFLAGS])
+       RPATHIFY_FC_LDFLAGS([OSHMEM_WRAPPER_FC_LDFLAGS_STATIC])
+
+       OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_LDFLAGS], [${runpath_args}])
+       OPAL_FLAGS_APPEND_UNIQ([OSHMEM_WRAPPER_FC_LDFLAGS], [${runpath_fc_args}])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper LDFLAGS])
+       AC_SUBST([OSHMEM_WRAPPER_LDFLAGS])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_LDFLAGS])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper static LDFLAGS])
+       AC_SUBST([OSHMEM_WRAPPER_LDFLAGS_STATIC])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_LDFLAGS_STATIC])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper Fortran LDFLAGS])
+       AC_SUBST([OSHMEM_WRAPPER_LDFLAGS])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_LDFLAGS])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper Fortran static LDFLAGS])
+       AC_SUBST([OSHMEM_WRAPPER_LDFLAGS_STATIC])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_LDFLAGS_STATIC])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper LIBS])
+       AC_SUBST([OSHMEM_WRAPPER_LIBS])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_LIBS])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper static LIBS])
+       AC_SUBST([OSHMEM_WRAPPER_LIBS_STATIC])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_LIBS_STATIC])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper Fortran LIBS])
+       AC_SUBST([OSHMEM_WRAPPER_FC_LIBS])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_FC_LIBS])
+
+       AC_MSG_CHECKING([for OSHMEM wrapper Fortran static LIBS])
+       AC_SUBST([OSHMEM_WRAPPER_FC_LIBS_STATIC])
+       AC_MSG_RESULT([$OSHMEM_WRAPPER_FC_LIBS_STATIC])
+
+       # language binding support.  C++ is a bit different, as the
+       # coshmemler should work even if there is no MPI C++ bindings
+       # support.  However, we do want it to fail if there is no C++
+       # coshmemler.
+       if test "$CXX" = "none"; then
+          OSHMEM_WRAPPER_CXX_REQUIRED_FILE="not supported"
+       else
+          OSHMEM_WRAPPER_CXX_REQUIRED_FILE=""
+       fi
+       AC_SUBST([OSHMEM_WRAPPER_CXX_REQUIRED_FILE])
+
+       if test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" ; then
+          OSHMEM_WRAPPER_FORTRAN_REQUIRED_FILE=""
+       else
+          OSHMEM_WRAPPER_FORTRAN_REQUIRED_FILE="not supported"
+       fi
+       AC_SUBST([OSHMEM_WRAPPER_FORTRAN_REQUIRED_FILE])
+
+       AC_DEFINE_UNQUOTED(OSHMEM_WRAPPER_CFLAGS, "$OSHMEM_WRAPPER_CFLAGS",
+           [CFLAGS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OSHMEM_WRAPPER_CXXFLAGS, "$OSHMEM_WRAPPER_CXXFLAGS",
+           [CXXFLAGS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OSHMEM_WRAPPER_FCFLAGS, "$OSHMEM_WRAPPER__FCFLAGS",
+           [FCFLAGS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OSHMEM_WRAPPER_LDFLAGS, "$OSHMEM_WRAPPER_LDFLAGS",
+           [LDFLAGS to pass through the wrapper compilers])
+       AC_DEFINE_UNQUOTED(OSHMEM_WRAPPER_LIBS, "$OSHMEM_WRAPPER_LIBS",
+           [LIBS to pass through the wrapper compilers])
+
+       dnl ####################################################################
+       dnl  Setup variables for pkg-config files
+       dnl
+       dnl Add all our dependent libraries to libs.Private for users that want
+       dnl to static build, unless we're only building static libraries, in
+       dnl which case, add the dependent libraries to libs itself, since any
+       dnl linking will require the full set of libraries.
+       dnl ####################################################################
+       AC_MSG_CHECKING([for OSHMEM pkg-config Cflags])
+       OSHMEM_PC_CFLAGS="${OSHMEM_WRAPPER_CPPFLAGS} ${OSHMEM_WRAPPER_CFLAGS} ${OSHMEM_WRAPPER_CFLAGS_PREFIX}"
+       OSHMEM_PC_CFLAGS=`echo ${OSHMEM_PC_CFLAGS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OSHMEM_PC_CFLAGS])
+       AC_MSG_RESULT([${OSHMEM_PC_CFLAGS}])
+
+       AC_MSG_CHECKING([for OSHMEM pkg-config Libs])
+       OSHMEM_PC_LIBS="${OSHMEM_WRAPPER_LDFLAGS} ${OSHMEM_WRAPPER_LIBS}"
+       OSHMEM_PC_LIBS=`echo ${OSHMEM_PC_LIBS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OSHMEM_PC_LIBS])
+       AC_MSG_RESULT([${OSHMEM_PC_LIBS}])
+
+       AC_MSG_CHECKING([for OSHMEM pkg-config Libs.private])
+       OSHMEM_PC_LIBS_PRIVATE="${OSHMEM_WRAPPER_LDFLAGS_STATIC} ${OSHMEM_WRAPPER_LIBS_STATIC}"
+       OSHMEM_PC_LIBS_PRIVATE=`echo ${OSHMEM_PC_LIBS_PRIVATE} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OSHMEM_PC_LIBS_PRIVATE])
+       AC_MSG_RESULT([${OSHMEM_PC_LIBS_PRIVATE}])
+
+       AC_MSG_CHECKING([for OSHMEM pkg-config Fortran Cflags])
+       OSHMEM_PC_CFLAGS="${OSHMEM_WRAPPER_FCFLAGS} ${OSHMEM_WRAPPER_FCFLAGS_PREFIX}"
+       OSHMEM_PC_CFLAGS=`echo ${OSHMEM_PC_CFLAGS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OSHMEM_PC_FC_CFLAGS])
+       AC_MSG_RESULT([${OSHMEM_PC_FC_CFLAGS}])
+
+       AC_MSG_CHECKING([for OSHMEM pkg-config Fortran Libs])
+       OSHMEM_PC_FC_LIBS="${OSHMEM_WRAPPER_FC_LDFLAGS} ${OSHMEM_WRAPPER_FC_LIBS}"
+       OSHMEM_PC_FC_LIBS=`echo ${OSHMEM_PC_FC_LIBS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OSHMEM_PC_FC_LIBS])
+       AC_MSG_RESULT([${OSHMEM_PC_FC_LIBS}])
+
+       AC_MSG_CHECKING([for OSHMEM pkg-config Fortran Libs.private])
+       OSHMEM_PC_FC_LIBS_PRIVATE="${OSHMEM_WRAPPER_FC_LDFLAGS_STATIC} ${OSHMEM_WRAPPER_FC_LIBS_STATIC}"
+       OSHMEM_PC_FC_LIBS_PRIVATE=`echo ${OSHMEM_PC_FC_LIBS_PRIVATE} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OSHMEM_PC_FC_LIBS_PRIVATE])
+       AC_MSG_RESULT([${OSHMEM_PC_FC_LIBS_PRIVATE}])
+
+       OSHMEM_PC_MODULES=
+       OSHMEM_PC_MODULES_PRIVATE=
+       AS_IF([test "${enable_shared}" != "no" -a "${enable_static}" != "yes"],
+             [],
+             [test "${enable_shared}" != "no" -a "${enable_static}" = "yes"],
+             [OSHMEM_PC_MODULES_PRIVATE="${wrapper_extra_pkgconfig_modules} ${oshmem_mca_wrapper_extra_pc_modules}"],
+             [OSHMEM_PC_MODULES="${wrapper_extra_pkgconfig_modules} ${oshmem_mca_wrapper_extra_pc_modules}"])
+
+       AC_MSG_CHECKING([for OSHMEM pkg-config Modules])
+       AC_SUBST([OSHMEM_PC_MODULES])
+       AC_MSG_RESULT([${OSHMEM_PC_MODULES}])
+
+       AC_MSG_CHECKING([for OSHMEM pkg-config Modules.private])
+       AC_SUBST([OSHMEM_PC_MODULES_PRIVATE])
+       AC_MSG_RESULT([${OSHMEM_PC_MODULES_PRIVATE}])
+    ])
+
+    OPAL_VAR_SCOPE_POP
 ])

@@ -117,7 +117,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
 
             AC_MSG_CHECKING([for corresponding KIND value of $1])
             case "$ofc_c_type" in
-            char)     	          ofc_type_kind=C_SIGNED_CHAR         ;;
+            char)                 ofc_type_kind=C_SIGNED_CHAR         ;;
             double)               ofc_type_kind=C_DOUBLE              ;;
             float)                ofc_type_kind=C_FLOAT               ;;
             int)                  ofc_type_kind=C_INT                 ;;

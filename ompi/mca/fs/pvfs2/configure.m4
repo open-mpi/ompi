@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008-2012 University of Houston. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,7 +31,7 @@ AC_DEFUN([MCA_ompi_fs_pvfs2_CONFIG],[
                      [fs_pvfs2_happy="yes"],
                      [fs_pvfs2_happy="no"])
 
-    OPAL_SUMMARY_ADD([[OMPIO File Systems]],[[PVFS2/OrangeFS]],[$1],[$fs_pvfs2_happy])
+    OPAL_SUMMARY_ADD([OMPIO File Systems], [PVFS2/OrangeFS], [], [$fs_pvfs2_happy])
     AS_IF([test "$fs_pvfs2_happy" = "yes"],
           [$1],
           [$2])

@@ -43,34 +43,34 @@ shift
 for subdirs_arg
 do
     if test "$subdirs_skip" = "yes"; then
-	subdirs_skip=no
+        subdirs_skip=no
     else
-	case $subdirs_arg in
-	-cache-file | --cache-file | -cache | --cache)
-	    subdirs_skip=yes
-	    ;;
-	--config-cache | -C)
-	    ;;
-	-cache-file=* | --cache-file=*)
-	    ;;
-	-srcdir | --srcdir)
-	    subdirs_skip=yes
-	    ;;
-	-srcdir=* | --srcdir=*)
-	    ;;
-	-with-platform=* | --with-platform=*)
-	    ;;
+        case $subdirs_arg in
+        -cache-file | --cache-file | -cache | --cache)
+            subdirs_skip=yes
+            ;;
+        --config-cache | -C)
+            ;;
+        -cache-file=* | --cache-file=*)
+            ;;
+        -srcdir | --srcdir)
+            subdirs_skip=yes
+            ;;
+        -srcdir=* | --srcdir=*)
+            ;;
+        -with-platform=* | --with-platform=*)
+            ;;
         --with*=internal)
             ;;
         --with*=external)
             ;;
-	*)
-	    case $subdir_arg in
-	    *\'*) subdir_arg=`echo "$subdir_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
-	    esac
-	    subdirs_args="$subdirs_args '$subdirs_arg'"
-	    ;;
-	esac
+        *)
+            case $subdir_arg in
+            *\'*) subdir_arg=`echo "$subdir_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
+            esac
+            subdirs_args="$subdirs_args '$subdirs_arg'"
+            ;;
+        esac
     fi
 done
 

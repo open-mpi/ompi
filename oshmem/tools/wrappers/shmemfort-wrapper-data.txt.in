@@ -24,14 +24,11 @@ compiler_env=FC
 compiler_flags_env=FCFLAGS
 compiler=@FC@
 preprocessor_flags=
-compiler_flags=@OMPI_WRAPPER_EXTRA_FCFLAGS@
-linker_flags=@OMPI_WRAPPER_EXTRA_FC_LDFLAGS@
-# Note that per https://svn.open-mpi.org/trac/ompi/ticket/3422, we
-# intentionally only link in the SHMEM and MPI libraries (OPAL,
-# etc. are pulled in implicitly) because we intend SHMEM/MPI
-# applications to only use the SHMEM and MPI APIs.
-libs=-loshmem -l@OMPI_LIBMPI_NAME@_mpifh -l@OMPI_LIBMPI_NAME@
-libs_static=-loshmem -l@OMPI_LIBMPI_NAME@_mpifh -l@OMPI_LIBMPI_NAME@ -l@OPAL_LIB_NAME@ @OMPI_WRAPPER_EXTRA_LIBS@
+compiler_flags=@OSHMEM_WRAPPER_FCFLAGS@
+linker_flags=@OSHMEM_WRAPPER_FC_LDFLAGS@
+linker_flags_static=@OSHMEM_WRAPPER_FC_LDFLAGS_STATIC@
+libs=@OSHMEM_WRAPPER_LIBS@
+libs_static=@OSHMEM_WRAPPER_LIBS_STATIC@
 dyn_lib_file=liboshmem.@OPAL_DYN_LIB_SUFFIX@
 static_lib_file=liboshmem.a
 required_file=@OMPI_WRAPPER_FORTRAN_REQUIRED_FILE@

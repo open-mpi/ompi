@@ -7,6 +7,7 @@
 # Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 # Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -114,17 +115,17 @@ static void do_check (pid_t pid, int *in, int *out)
     /* all good */
     return 0;
 ]])],
-		      [AC_MSG_RESULT([yes])
-		       opal_check_cma_happy=1],
-		      [AC_MSG_RESULT([no])
-		       opal_check_cma_happy=0],
-		      [AC_MSG_RESULT([no (cross-compiling)])
-		       opal_check_cma_happy=0])
-	CFLAGS=$opal_check_cma_CFLAGS
+                      [AC_MSG_RESULT([yes])
+                       opal_check_cma_happy=1],
+                      [AC_MSG_RESULT([no])
+                       opal_check_cma_happy=0],
+                      [AC_MSG_RESULT([no (cross-compiling)])
+                       opal_check_cma_happy=0])
+        CFLAGS=$opal_check_cma_CFLAGS
     else
         # If we didn't need the defs, then we have process_vm_readv(),
         # and CMA is happy.
-	opal_check_cma_happy=1
+        opal_check_cma_happy=1
     fi
 
     OPAL_VAR_SCOPE_POP
@@ -132,5 +133,5 @@ static void do_check (pid_t pid, int *in, int *out)
     AS_IF([test $opal_check_cma_happy -eq 1],
           [opal_check_cma_msg=yes],
           [opal_check_cma_msg=no])
-    OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/Linux CMA]],[$1],[$opal_check_cma_msg])
+    OPAL_SUMMARY_ADD([Transports], [Shared memory/Linux CMA], [], [$opal_check_cma_msg])
 ])
