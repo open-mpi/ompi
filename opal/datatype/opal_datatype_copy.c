@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,14 +93,40 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
 #    define MEM_OP opal_cuda_memmove
 #    include "opal_datatype_copy.h"
 
-#    define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function) \
+#    define non_overlap_gpu_copy_function non_overlap_cuda_copy_content_same_ddt
+#    define overlap_gpu_copy_function     overlap_cuda_copy_content_same_ddt
+#    define gpu_check_bufs                opal_cuda_check_bufs
+#elif OPAL_ROCM_SUPPORT
+#    include "opal/rocm/common_rocm_prototypes.h"
+
+#    undef MEM_OP_BLOCK_SIZE
+#    define MEM_OP_BLOCK_SIZE total_length
+#    undef MEM_OP_NAME
+#    define MEM_OP_NAME non_overlap_rocm
+#    undef MEM_OP
+#    define MEM_OP mca_common_rocm_memcpy_sync
+#    include "opal_datatype_copy.h"
+
+#    undef MEM_OP_NAME
+#    define MEM_OP_NAME overlap_rocm
+#    undef MEM_OP
+#    define MEM_OP mca_common_rocm_memmove
+#    include "opal_datatype_copy.h"
+
+#    define non_overlap_gpu_copy_function non_overlap_rocm_copy_content_same_ddt
+#    define overlap_gpu_copy_function     overlap_rocm_copy_content_same_ddt
+#    define gpu_check_bufs                mca_common_rocm_check_bufs
+#endif
+
+#if defined (OPAL_CUDA_SUPPORT) || defined (OPAL_ROCM_SUPPORT)
+#    define SET_GPU_COPY_FCT(device_bufs, fct, copy_function)       \
         do {                                                        \
-            if (true == cuda_device_bufs) {                         \
+            if (true == device_bufs) {                              \
                 fct = copy_function;                                \
             }                                                       \
         } while (0)
 #else
-#    define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function)
+#    define SET_GPU_COPY_FCT(device_bufs, fct, copy_function)
 #endif
 
 int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int32_t count,
@@ -108,8 +135,8 @@ int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int
     ptrdiff_t extent;
     int32_t (*fct)(const opal_datatype_t *, int32_t, char *, char *);
 
-#if OPAL_CUDA_SUPPORT
-    bool cuda_device_bufs = opal_cuda_check_bufs(destination_base, source_base);
+#if defined (OPAL_CUDA_SUPPORT) || defined (OPAL_ROCM_SUPPORT)
+    bool device_bufs = gpu_check_bufs(destination_base, source_base);
 #endif
 
     DO_DEBUG(opal_output(0, "opal_datatype_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
@@ -131,18 +158,18 @@ int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int
     extent = (datatype->true_ub - datatype->true_lb) + (count - 1) * (datatype->ub - datatype->lb);
 
     fct = non_overlap_copy_content_same_ddt;
-    SET_CUDA_COPY_FCT(cuda_device_bufs, fct, non_overlap_cuda_copy_content_same_ddt);
+    SET_GPU_COPY_FCT(device_bufs, fct, non_overlap_gpu_copy_function);
     if (destination_base < source_base) {
         if ((destination_base + extent) > source_base) {
             /* memmove */
             fct = overlap_copy_content_same_ddt;
-            SET_CUDA_COPY_FCT(cuda_device_bufs, fct, overlap_cuda_copy_content_same_ddt);
+            SET_GPU_COPY_FCT(device_bufs, fct, overlap_gpu_copy_function);
         }
     } else {
         if ((source_base + extent) > destination_base) {
             /* memmove */
             fct = overlap_copy_content_same_ddt;
-            SET_CUDA_COPY_FCT(cuda_device_bufs, fct, overlap_cuda_copy_content_same_ddt);
+            SET_GPU_COPY_FCT(device_bufs, fct, overlap_gpu_copy_function);
         }
     }
     return fct(datatype, count, destination_base, source_base);

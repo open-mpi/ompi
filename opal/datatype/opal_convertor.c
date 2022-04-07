@@ -16,6 +16,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,9 +42,16 @@
 #include "opal/datatype/opal_datatype_prototypes.h"
 #if OPAL_CUDA_SUPPORT
 #    include "opal/cuda/common_cuda.h"
-#    define MEMCPY_CUDA(DST, SRC, BLENGTH, CONVERTOR) \
+#    define MEMCPY_GPU(DST, SRC, BLENGTH, CONVERTOR) \
         CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
 #endif
+#if OPAL_ROCM_SUPPORT
+#    include "opal/rocm/common_rocm_prototypes.h"
+#    define MEMCPY_GPU(DST, SRC, BLENGTH, CONVERTOR) \
+        CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
+#endif
+
+
 
 static void opal_convertor_construct(opal_convertor_t *convertor)
 {
@@ -54,6 +62,9 @@ static void opal_convertor_construct(opal_convertor_t *convertor)
     convertor->flags = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
 #if OPAL_CUDA_SUPPORT
     convertor->cbmemcpy = &opal_cuda_memcpy;
+#endif
+#if OPAL_ROCM_SUPPORT
+    convertor->cbmemcpy = &mca_common_rocm_memcpy;
 #endif
 }
 
@@ -252,8 +263,8 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
             if (OPAL_LIKELY(NULL == iov[i].iov_base)) {
                 iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
             } else {
-#if OPAL_CUDA_SUPPORT
-                MEMCPY_CUDA(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
+#if defined (OPAL_CUDA_SUPPORT) || defined (OPAL_ROCM_SUPPORT)
+                MEMCPY_GPU(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
 #else
                 MEMCPY(iov[i].iov_base, base_pointer, iov[i].iov_len);
 #endif
@@ -270,8 +281,8 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
         if (OPAL_LIKELY(NULL == iov[i].iov_base)) {
             iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
         } else {
-#if OPAL_CUDA_SUPPORT
-            MEMCPY_CUDA(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
+#if defined (OPAL_CUDA_SUPPORT) || defined (OPAL_ROCM_SUPPORT)
+            MEMCPY_GPU(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
 #else
             MEMCPY(iov[i].iov_base, base_pointer, iov[i].iov_len);
 #endif
@@ -307,8 +318,8 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
             if (iov[i].iov_len >= pending_length) {
                 goto complete_contiguous_data_unpack;
             }
-#if OPAL_CUDA_SUPPORT
-            MEMCPY_CUDA(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
+#if defined (OPAL_CUDA_SUPPORT) || defined (OPAL_ROCM_SUPPORT)
+            MEMCPY_GPU(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
 #else
             MEMCPY(base_pointer, iov[i].iov_base, iov[i].iov_len);
 #endif
@@ -321,8 +332,8 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
 
     complete_contiguous_data_unpack:
         iov[i].iov_len = pending_length;
-#if OPAL_CUDA_SUPPORT
-        MEMCPY_CUDA(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
+#if defined (OPAL_CUDA_SUPPORT) || defined (OPAL_ROCM_SUPPORT)
+        MEMCPY_GPU(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
 #else
         MEMCPY(base_pointer, iov[i].iov_base, iov[i].iov_len);
 #endif
@@ -560,6 +571,10 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
     if (!(convertor->flags & CONVERTOR_SKIP_CUDA_INIT)) {
         mca_cuda_convertor_init(convertor, pUserBuf);
     }
+#elif OPAL_ROCM_SUPPORT
+    if (!(convertor->flags & CONVERTOR_SKIP_GPU_INIT)) {
+        mca_common_rocm_convertor_init(convertor, pUserBuf);
+    }
 #endif
 
     assert(!(convertor->flags & CONVERTOR_SEND));
@@ -601,6 +616,10 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
 #if OPAL_CUDA_SUPPORT
     if (!(convertor->flags & CONVERTOR_SKIP_CUDA_INIT)) {
         mca_cuda_convertor_init(convertor, pUserBuf);
+    }
+#elif OPAL_ROCM_SUPPORT
+    if (!(convertor->flags & CONVERTOR_SKIP_GPU_INIT)) {
+        mca_common_rocm_convertor_init(convertor, pUserBuf);
     }
 #endif
 
@@ -686,7 +705,7 @@ int opal_convertor_clone(const opal_convertor_t *source, opal_convertor_t *desti
         destination->bConverted = source->bConverted;
         destination->stack_pos = source->stack_pos;
     }
-#if OPAL_CUDA_SUPPORT
+#if defined (OPAL_CUDA_SUPPORT) || defined (OPAL_ROCM_SUPPORT)
     destination->cbmemcpy = source->cbmemcpy;
 #endif
     return OPAL_SUCCESS;

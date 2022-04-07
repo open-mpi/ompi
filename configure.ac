@@ -46,6 +46,7 @@ m4_include([config/autogen_found_items.m4])
 m4_include([config/opal_get_version.m4])
 AC_LANG([C])
 
+
 # Init autoconf
 
 # We don't have the version number to put in here yet, and we can't
@@ -189,6 +190,7 @@ AC_SUBST(libopen_pal_so_version)
 # right now.
 AC_SUBST(libmca_opal_common_ofi_so_version)
 AC_SUBST(libmca_opal_common_cuda_so_version)
+AC_SUBST(libmca_opal_common_rocm_so_version)
 AC_SUBST(libmca_opal_common_sm_so_version)
 AC_SUBST(libmca_opal_common_ugni_so_version)
 AC_SUBST(libmca_ompi_common_ompio_so_version)
@@ -1246,6 +1248,19 @@ AC_CACHE_SAVE
 # all other MCA checks" hook...?
 
 OPAL_CHECK_CUDA_AFTER_OPAL_DL
+
+##################################
+# ROCm support
+##################################
+OPAL_CHECK_ROCM([common_rocm],
+                [common_rocm_happy="yes"],
+                [common_rocm_happy="no"])
+
+AC_SUBST([common_rocm_CPPFLAGS])
+AC_SUBST([common_rocm_LDFLAGS])
+AC_SUBST([common_rocm_LIBS])
+
+OPAL_SUMMARY_ADD([[Miscellaneous]],[[ROCm suport]],[$1], [$common_rocm_happy])
 
 ##################################
 # MPI Extended Interfaces
