@@ -28,7 +28,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OMPI_CONFIGURE_OPTIONS],[
-opal_show_subtitle "OMPI Configuration options"
+opal_show_subtitle "MPI layer configuration options"
 
 #
 # Disable MPI layer?
@@ -231,7 +231,7 @@ AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
 AC_DEFINE_UNQUOTED(OMPI_PARAM_CHECK, $ompi_param_check,
     [Whether we want to check MPI parameters never or possible (an integer constant)])
 
-AC_MSG_CHECKING([if want ompio support])
+AC_MSG_CHECKING([if want OMPIO support])
 AC_ARG_ENABLE([io-ompio],
     [AS_HELP_STRING([--disable-io-ompio],
         [Disable the ompio MPI-IO component])])
