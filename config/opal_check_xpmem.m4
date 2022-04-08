@@ -59,7 +59,7 @@ AC_DEFUN([OPAL_CHECK_CRAY_XPMEM],[
           [$1_LDFLAGS="[$]$1_LDFLAGS $CRAY_XPMEM_LIBS"
            $1_CPPFLAGS="[$]$1_CPPFLAGS $CRAY_XPMEM_CFLAGS"
            $1_LIBS="[$]$1_LIBS $CRAY_XPMEM_LIBS"
-           AC_DEFINE_UNQUOTED([HAVE_XPMEM_H], [1],[is xpmem.h available])
+           AC_DEFINE_UNQUOTED([HAVE_XPMEM_H], [1], [is xpmem.h available])
            $2], [$3])
 ])
 
@@ -103,7 +103,8 @@ AC_DEFUN([OPAL_CHECK_BASE_XPMEM], [
                       [opal_check_xpmem_base_happy="no"])
 
      AS_IF([test "${opal_check_xpmem_base_happy}" = "yes"],
-           [$2],
+           [AC_DEFINE_UNQUOTED([HAVE_XPMEM_H], [1], [is xpmem.h available])
+            $2],
            [AS_IF([test -n "${with_xpmem}" -a "${with_xpmem}" != "no"],
                   [AC_MSG_ERROR([XPMEM support requested but not found.  Aborting])])
             $3])
