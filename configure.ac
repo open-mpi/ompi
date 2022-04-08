@@ -269,17 +269,12 @@ m4_ifdef([project_oshmem],
 
 OPAL_CONFIGURE_OPTIONS
 
+###########################
+# Open MPI options
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
-m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
-
-# Set up project specific AM_CONDITIONALs
-AS_IF([test "$enable_ompi" != "no"], [project_ompi_amc=true], [project_ompi_amc=false])
-m4_ifndef([project_ompi], [project_ompi_amc=false])
-
-AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshmem_amc="no (disabled)"])
-m4_ifndef([project_oshmem], [project_oshmem_amc="no (not available)"])
 
 # Enable/Disable Software-Based Performance Counters Capability
+AC_MSG_CHECKING([if want software-based performance counters (SPC)])
 AC_ARG_ENABLE([spc],
     [AS_HELP_STRING([--enable-spc],
                    [Enable software-based performance counters capability (default: disabled)])])
@@ -305,10 +300,21 @@ fi
 # The library prefixes must be set before we call OPAL MCA.  Here is
 # as good a place as any.
 m4_ifdef([project_opal],
-[OPAL_SET_LIB_NAME([open-pal])])
+         [OPAL_SET_LIB_NAME([open-pal])])
 
 m4_ifdef([project_ompi],
-          [OMPI_SET_LIB_NAME([])])
+         [OMPI_SET_LIB_NAME([])])
+
+###########################
+# OSHMEM options
+m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
+
+# Set up project specific AM_CONDITIONALs
+AS_IF([test "$enable_ompi" != "no"], [project_ompi_amc=true], [project_ompi_amc=false])
+m4_ifndef([project_ompi], [project_ompi_amc=false])
+
+AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshmem_amc="no (disabled)"])
+m4_ifndef([project_oshmem], [project_oshmem_amc="no (not available)"])
 
 ############################################################################
 # Libtool: part one
