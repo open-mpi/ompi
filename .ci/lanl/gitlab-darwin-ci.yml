@@ -66,7 +66,7 @@ build:amd:
     - cp $GITSUBMODULEPATCH .gitmodules
     - git submodule update --init
     - ./autogen.pl
-    - ./configure CC=clang FC=flang CXX=clang++ --prefix=$PWD/install_test --with-libevent=internal
+    - ./configure CC=clang FC=flang CXX=clang++ --prefix=$PWD/install_test --with-libevent=internal LIBS="-lucm -lucs"
     - make -j 8 install
     - make check
     - export PATH=$PWD/install_test/bin:$PATH
