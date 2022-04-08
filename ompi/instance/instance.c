@@ -331,7 +331,7 @@ static void evhandler_dereg_callbk(pmix_status_t status,
 /**
  * @brief Function that starts up the common components needed by all instances
  */
-static int ompi_mpi_instance_init_common (void)
+static int ompi_mpi_instance_init_common (int argc, char **argv)
 {
     int ret;
     ompi_proc_t **procs;
@@ -385,7 +385,7 @@ static int ompi_mpi_instance_init_common (void)
     OMPI_TIMING_NEXT("initialization");
 
     /* Setup RTE */
-    if (OMPI_SUCCESS != (ret = ompi_rte_init (NULL, NULL))) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_init (&argc, &argv))) {
         return ompi_instance_print_error ("ompi_mpi_init: ompi_rte_init failed", ret);
     }
 
@@ -794,7 +794,7 @@ static int ompi_mpi_instance_init_common (void)
     return OMPI_SUCCESS;
 }
 
-int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t *errhandler, ompi_instance_t **instance)
+int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t *errhandler, ompi_instance_t **instance, int argc, char **argv)
 {
     ompi_instance_t *new_instance;
     int ret;
@@ -809,7 +809,7 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
 
     opal_mutex_lock (&instance_lock);
     if (0 == opal_atomic_fetch_add_32 (&ompi_instance_count, 1)) {
-        ret = ompi_mpi_instance_init_common ();
+        ret = ompi_mpi_instance_init_common (argc, argv);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
             opal_mutex_unlock (&instance_lock);
             return ret;
