@@ -889,4 +889,13 @@ man1_MANS += \
 man3_MANS += $(OSHMEM_MAN3_BUILT)
 endif
 
+install-data-hook:
+	$(MKDIR_P) $(DESTDIR)$(docdir)
+	cp -r $(srcdir)/_build/html $(DESTDIR)$(docdir)
+	find $(DESTDIR)$(docdir) -type d -exec chmod 0755 {} \;
+	find $(DESTDIR)$(docdir) -type f -exec chmod 0644 {} \;
+
+uninstall-hook:
+	rm -rf $(DESTDIR)$(docdir)
+
 endif OPAL_INSTALL_DOCS
