@@ -36,6 +36,11 @@ Need to update these docs to reflect:
       functions are not declared in mpi.h unless Open MPI was compiled
       with ``--enable-mpi1-compatibility``.
 
+* This is not really a change in v5.0, but it probably has changed
+  (because of PRTE) since v4.x, so: we need to document how to use
+  ``MPI_Comm_join`` and ``MPI_Publish_name`` + ``MPI_Comm_accept`` /
+  ``MPI_Lookup_name`` + ``MPI_Comm_connect``.  See
+  https://github.com/open-mpi/ompi/issues/10222
 
 Other random to-do items
 ------------------------
