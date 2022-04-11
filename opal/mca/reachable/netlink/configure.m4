@@ -36,7 +36,7 @@ AC_DEFUN([MCA_opal_reachable_netlink_CONFIG],[
     AS_IF([test $opal_libnl_version -eq 1],
 	  [opal_reachable_netlink_happy=0],
           [OPAL_CHECK_LIBNL_V3([$opal_libnl_location],
-			       [opal_reachable_netlink])
+			       [reachable_netlink])
 	   AS_IF([test "$OPAL_HAVE_LIBNL3" != "1"],
 		 [opal_reachable_netlink_happy=0])])
 
@@ -44,9 +44,9 @@ AC_DEFUN([MCA_opal_reachable_netlink_CONFIG],[
           [$1],
           [$2])
 
-    AC_SUBST([opal_reachable_netlink_CPPFLAGS])
-    AC_SUBST([opal_reachable_netlink_LDFLAGS])
-    AC_SUBST([opal_reachable_netlink_LIBS])
+    AC_SUBST([reachable_netlink_CPPFLAGS])
+    AC_SUBST([reachable_netlink_LDFLAGS])
+    AC_SUBST([reachable_netlink_LIBS])
 
     OPAL_VAR_SCOPE_POP()
 ])
