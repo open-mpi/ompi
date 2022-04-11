@@ -15,12 +15,26 @@
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
+
+# This is a weird place for this, but config/ is the first directory that
+# is entered, and the dist-hook runs at the end of the current directory,
+# so this is the earliest we can run this test.
+dist-hook:
+	@if test -n "$(OPAL_MAKEDIST_DISABLE)" ; then \
+		echo "#########################################################################"; \
+		echo "#"; \
+		echo "# make dist is disabled due to the following packages: $(OPAL_MAKEDIST_DISABLE)"; \
+		echo "#"; \
+		echo "#########################################################################"; \
+		exit 1; \
+	fi
 
 EXTRA_DIST = \
         distscript.sh \
