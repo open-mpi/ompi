@@ -7,7 +7,7 @@
 # Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2015-2021 IBM Corporation.  All rights reserved.
+# Copyright (c) 2015-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 #
@@ -1326,7 +1326,10 @@ my @disabled_3rdparty_packages = split(/,/, $no_3rdparty_arg);
 if ($no_prrte_arg) {
     push(@disabled_3rdparty_packages, "prrte");
 }
-
+# Alias: 'openpmix' -> 'pmix'
+if (list_contains("openpmix", @disabled_3rdparty_packages)) {
+    push(@disabled_3rdparty_packages, "pmix");
+}
 
 # Make sure we got a submodule-full clone.  If not, abort and let a
 # human figure it out.
