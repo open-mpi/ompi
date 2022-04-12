@@ -248,8 +248,7 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
 
         /* get the endpoint and map the memory region */
 
-        mca_coll_smdirect_peerdata_t *peerdata = data->peerdata;
-        mca_coll_smdirect_peerdata_t *peer = &peerdata[0];
+        mca_coll_smdirect_peerdata_t *peer = &data->peerdata[0];
 
         /* get the endpoint */
         if (NULL == (peer->endpoint = data->endpoints[root])) {

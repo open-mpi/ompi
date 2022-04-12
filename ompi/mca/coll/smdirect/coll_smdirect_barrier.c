@@ -82,13 +82,14 @@ int mca_coll_smdirect_barrier_intra(struct ompi_communicator_t *comm,
     /* wait for processes from the previous op to finish */
     FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_op_flag);
 
-    FLAG_RETAIN(&data->procdata->mcsp_op_flag, num_children, op_count);
-
     /* we will receive signals from our children, pass that info on, and wait
      * for our parent to do the same in reverse */
-    FLAG_RETAIN(&data->procdata->mcsp_segment_down_flag, 1, op_count);
+    FLAG_RETAIN(&data->procdata->mcsp_segment_down_flag, 1, 0);
 
-    FLAG_RETAIN(&data->procdata->mcsp_segment_up_flag, num_children, op_count);
+    FLAG_RETAIN(&data->procdata->mcsp_segment_up_flag, num_children, 0);
+
+    opal_atomic_wmb();
+    FLAG_RETAIN(&data->procdata->mcsp_op_flag, num_children, op_count);
 
     /* wait for my children to signal */
     if (num_children > 0) {
@@ -99,7 +100,8 @@ int mca_coll_smdirect_barrier_intra(struct ompi_communicator_t *comm,
         parent_data = (mca_coll_smdirect_procdata_t *)(data->sm_bootstrap_meta->module_data_addr
                                                           + control_size * parent->mcstn_id);
         /* make sure my parent is on the same op */
-        FLAG_WAIT_FOR_OP(&parent_data->mcsp_segment_up_flag, op_count);
+        FLAG_WAIT_FOR_OP(&parent_data->mcsp_op_flag, op_count);
+        //FLAG_WAIT_FOR_OP(&parent_data->mcsp_segment_up_flag, op_count);
         /* signal up */
         FLAG_RELEASE(&parent_data->mcsp_segment_up_flag);
         /* wait for parent to signal back down */
@@ -110,6 +112,8 @@ int mca_coll_smdirect_barrier_intra(struct ompi_communicator_t *comm,
     for (int i = 0; i < num_children; ++i) {
         mca_coll_smdirect_procdata_t *child_data = (mca_coll_smdirect_procdata_t *)(data->sm_bootstrap_meta->module_data_addr
                                                           + control_size * me->mcstn_children[i]->mcstn_id);
+        /* make sure the child is on the same op */
+        FLAG_WAIT_FOR_OP(&child_data->mcsp_op_flag, op_count);
         /* non-atomic reset is fine, there is only one parent */
         FLAG_RESET(&child_data->mcsp_segment_down_flag);
     }
