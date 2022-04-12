@@ -110,12 +110,16 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
     # Make sure we can find the OFI libfabric usnic extensions header
     AS_IF([test "$opal_btl_usnic_happy" = "yes" ],
           [opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_ofi_CPPFLAGS $CPPFLAGS"
+           CPPFLAGS="$btl_usnic_CPPFLAGS $CPPFLAGS"
            AC_CHECK_HEADER([rdma/fi_ext_usnic.h],
                             [],
                             [opal_btl_usnic_happy=no])
            CPPFLAGS=$opal_btl_usnic_CPPFLAGS_save
           ])
+
+    AC_SUBST([btl_usnic_CPPFLAGS])
+    AC_SUBST([btl_usnic_LDFLAGS])
+    AC_SUBST([btl_usnic_LIBS])
 
     # All done
     AS_IF([test "$opal_btl_usnic_happy" = "yes"],
