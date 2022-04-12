@@ -31,7 +31,7 @@ AC_DEFUN([OPAL_CHECK_OFI_VERSION_GE],[
     AC_CACHE_CHECK([if OFI API version number is >= version_pretty_print],
         [version_cache_var],
         [opal_ofi_ver_ge_save_CPPFLAGS=$CPPFLAGS
-         CPPFLAGS=$opal_ofi_CPPFLAGS
+         CPPFLAGS=$opal_ofi_internal_CPPFLAGS
 
          AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
                 [[#include <rdma/fabric.h>
@@ -143,10 +143,8 @@ AC_DEFUN([OPAL_CHECK_OFI],[
     LDFLAGS=${opal_check_ofi_save_LDFLAGS}
     LIBS=${opal_check_ofi_save_LIBS}
 
-    dnl for backwards compatibility reasons
-    opal_ofi_CPPFLAGS="${$1_CPPFLAGS}"
-    opal_ofi_LDFLAGS="${$1_LDFLAGS}"
-    opal_ofi_LIBS="${$1_LIBS}"
+    dnl for version compare tests
+    opal_ofi_internal_CPPFLAGS="${$1_CPPFLAGS}"
 
     OPAL_SUMMARY_ADD([Transports], [OpenFabrics OFI Libfabric], [], [${$1_SUMMARY}])
 
