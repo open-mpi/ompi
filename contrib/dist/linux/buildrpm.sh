@@ -441,8 +441,6 @@ fi
 if test "$build_multiple" = "yes"; then
     echo "--> Building the multiple Open MPI RPM"
     cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 0'"
-    # JMS
-    cmd="$cmd --define 'mflags -j12'"
     if test "$configure_options" != ""; then
         cmd="$cmd --define 'configure_options $configure_options'"
     fi
