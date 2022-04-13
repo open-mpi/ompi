@@ -85,7 +85,6 @@ unpack_spec=0
 # "normal" names.
 #export CC=gcc
 #export CXX=g++
-#export F77=f77
 #export FC=
 
 # Note that this script can build one or all of the following RPMs:
@@ -353,7 +352,6 @@ cat <<EOF
 --> Hard-wired for compilers:
     CC = $CC
     CXX = $CXX
-    F77 = $F77
     FC = $FC
 EOF
 
@@ -390,9 +388,6 @@ if test "$CC" != ""; then
 fi
 if test "$CXX" != ""; then
     configure_options="$configure_options CXX=$CXX"
-fi
-if test "$F77" != ""; then
-    configure_options="$configure_options F77=$F77"
 fi
 if test "$FC" != ""; then
     configure_options="$configure_options FC=$FC"
@@ -446,6 +441,8 @@ fi
 if test "$build_multiple" = "yes"; then
     echo "--> Building the multiple Open MPI RPM"
     cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 0'"
+    # JMS
+    cmd="$cmd --define 'mflags -j12'"
     if test "$configure_options" != ""; then
         cmd="$cmd --define 'configure_options $configure_options'"
     fi
@@ -471,7 +468,7 @@ cat <<EOF
 ====                FINISHED BUILDING Open MPI RPM                        ====
 ------------------------------------------------------------------------------
 A copy of the tarball is located in: $rpmtopdir/SOURCES/
-The completed rpms are located in:   $rpmtopdir/RPMS/i<something>86/
+The completed rpms are located in:   $rpmtopdir/RPMS/
 The sources rpms are located in:     $rpmtopdir/SRPMS/
 The spec files are located in:       $rpmtopdir/SPECS/
 ------------------------------------------------------------------------------
