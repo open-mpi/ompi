@@ -20,7 +20,7 @@ C Syntax
 
    #include <mpi.h>
 
-   int MPI_Info_set(MPI_Info info, char *key, char *value)
+   int MPI_Info_set(MPI_Info info, const char *key, const char *value)
 
 
 Fortran Syntax
