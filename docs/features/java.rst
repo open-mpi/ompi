@@ -23,7 +23,7 @@ layer on top of the C implementation. This is the same approach as in
 mpiJava [#mpijava]_; in fact, mpiJava was taken as a starting point
 for Open MPI Java bindings, but they were later totally rewritten.
 
-Building the Java Bindings
+Building the Java bindings
 --------------------------
 
 Java support requires that Open MPI be built at least with shared
@@ -37,13 +37,12 @@ specify the location. For example, this is required on the Mac
 platform as the JDK headers are located in a non-typical location. Two
 options are available for this purpose:
 
-1. ``--with-jdk-bindir=<foo>``: the location of ``javac`` and ``javah``
-1. ``--with-jdk-headers=<bar>``: the directory containing ``jni.h``
+#. ``--with-jdk-bindir=<foo>``: the location of ``javac`` and ``javah``
+#. ``--with-jdk-headers=<bar>``: the directory containing ``jni.h``
 
-For simplicity, typical configurations are provided in platform files
-under ``contrib/platform/hadoop``. These will meet the needs of most
-users, or at least provide a starting point for your own custom
-configuration.
+Some example configurations are provided in Open MPI configuration
+platform files under ``contrib/platform/hadoop``. These examples can
+provide a starting point for your own custom configuration.
 
 In summary, therefore, you can configure the system using the
 following Java-related options::
@@ -58,15 +57,50 @@ or simply::
 
   $ ./configure --enable-mpi-java ...
 
-if JDK is in a "standard" place that we automatically find.
+if JDK is in a "standard" place that ``configure`` can automatically
+find.
 
-Running Java MPI Applications
------------------------------
+Building Java MPI applications
+------------------------------
 
 The ``mpijavac`` wrapper compiler is available for compiling
 Java-based MPI applications. It ensures that all required Open MPI
-libraries and class paths are defined. You can see the actual command
-line using the ``--showme`` option, if you are interested.
+libraries and classpaths are defined.  For example:
+
+.. code-block::
+
+   $ mpijavac Hello.java
+
+You can use the ``--showme`` option to see the full command line of
+the Java compiler that is invoked:
+
+.. code-block::
+
+   $ mpijavac Hello.java --showme
+   /usr/bin/javac -cp /opt/openmpi/lib/mpi.jar Hello.java
+
+Note that if you are specifying a ``-cp`` argument on the command line
+to pass your application-specific classpaths, Open MPI will *extend*
+that argument to include the ``mpi.jar``:
+
+.. code-block::
+
+   $ mpijavac -cp /path/to/my/app.jar Hello.java --showme
+   /usr/bin/javac -cp /path/to/my/app.jar:/opt/openmpi/lib/mpi.jar Hello.java
+
+Similarly, if you have a ``CLASSPATH`` environment variable defined,
+``mpijavac`` will convert that into a ``-cp`` argument and extend it
+to include the ``mpi.jar``:
+
+.. code-block::
+
+   $ export CLASSPATH=/path/to/my/app.jar
+   $ mpijavac Hello.java --showme
+   /usr/bin/javac -cp /path/to/my/app.jar:/opt/openmpi/lib/mpi.jar Hello.java
+
+
+Running Java MPI applications
+-----------------------------
 
 Once your application has been compiled, you can run it with the
 standard ``mpirun`` command line::
@@ -76,10 +110,10 @@ standard ``mpirun`` command line::
 ``mpirun`` will detect the ``java`` token and ensure that the required
 MPI libraries and class paths are defined to support execution. You
 therefore do **not** need to specify the Java library path to the MPI
-installation, nor the MPI classpath. Any class path definitions
+installation, nor the MPI classpath. Any classpath definitions
 required for your application should be specified either on the
 command line or via the ``CLASSPATH`` environment variable. Note that
-the local directory will be added to the class path if nothing is
+the local directory will be added to the classpath if nothing is
 specified.
 
 .. note:: The ``java`` executable, all required libraries, and your
@@ -90,7 +124,7 @@ Basic usage of the Java bindings
 
 There is an MPI package that contains all classes of the MPI Java
 bindings: ``Comm``, ``Datatype``, ``Request``, etc. These classes have a
-direct correspondence with classes defined by the MPI standard. MPI
+direct correspondence with handle types defined by the MPI standard. MPI
 primitives are just methods included in these classes. The convention
 used for naming Java methods and classes is the usual camel-case
 convention, e.g., the equivalent of ``MPI_File_set_info(fh,info)`` is
@@ -98,7 +132,7 @@ convention, e.g., the equivalent of ``MPI_File_set_info(fh,info)`` is
 
 Apart from classes, the MPI package contains predefined public
 attributes under a convenience class ``MPI``. Examples are the
-predefined communicator ``MPI.COMM_WORLD`` or predefined datatypes such
+predefined communicator ``MPI.COMM_WORLD`` and predefined datatypes such
 as ``MPI.DOUBLE``. Also, MPI initialization and finalization are methods
 of the ``MPI`` class and must be invoked by all MPI Java
 applications. The following example illustrates these concepts:
@@ -128,7 +162,9 @@ applications. The following example illustrates these concepts:
 
           MPI.COMM_WORLD.reduce(sBuf, rBuf, 1, MPI.DOUBLE, MPI.SUM, 0);
 
-          if (rank == 0) System.out.println("PI: " + rBuf[0]);
+          if (rank == 0) {
+              System.out.println("PI: " + rBuf[0]);
+          }
           MPI.Finalize();
       }
    }
@@ -183,18 +219,22 @@ be necessary to allocate the buffer and free it later.
 The default capacity of pool buffers can be modified with an Open MPI
 MCA parameter::
 
-  shell$ mpirun --mca mpi_java_eager SIZE ...
+  $ mpirun --mca ompi_mpi_java_eager SIZE ...
 
-Where ``SIZE`` is the number of bytes, or kilobytes if it ends with 'k',
-or megabytes if it ends with 'm'.
+The value of ``SIZE`` can be:
+
+* ``N``: An integer number of bytes
+* ``Nk``: An integer number (suffixed with ``k``) of kilobytes
+* ``Nm``: An integer number (suffixed with ``m``) of megabytes
 
 An alternative is to use "direct buffers" provided by standard classes
-available in the Java SDK such as ``ByteBuffer``. For convenience we
-provide a few static methods ``new[Type]Buffer`` in the ``MPI`` class to
-create direct buffers for a number of basic datatypes. Elements of the
-direct buffer can be accessed with methods ``put()`` and ``get()``, and
-the number of elements in the buffer can be obtained with the method
-``capacity()``. This example illustrates its use:
+available in the Java SDK such as ``ByteBuffer``. For convenience,
+Open MPI provides a few static methods ``new[Type]Buffer`` in the
+``MPI`` class to create direct buffers for a number of basic
+datatypes. Elements of the direct buffer can be accessed with methods
+``put()`` and ``get()``, and the number of elements in the buffer can
+be obtained with the method ``capacity()``. This example illustrates
+its use:
 
 .. code-block:: java
 
@@ -220,20 +260,22 @@ the number of elements in the buffer can be obtained with the method
    }
 
 Direct buffers are available for: ``BYTE``, ``CHAR``, ``SHORT``,
-``INT``, ``LONG``, ``FLOAT``, and ``DOUBLE``. There is no direct
-buffer for booleans.
+``INT``, ``LONG``, ``FLOAT``, and ``DOUBLE``.
+
+.. note:: There is no direct buffer for booleans.
 
 Direct buffers are not a replacement for arrays, because they have
 higher allocation and deallocation costs than arrays. In some cases
 arrays will be a better choice. You can easily convert a buffer into
 an array and vice versa.
 
-All non-blocking methods must use direct buffers and only
-blocking methods can choose between arrays and direct buffers.
+.. important:: All non-blocking methods *must* use direct buffers.
+               Only blocking methods can choose between arrays and
+               direct buffers.
 
 The above example also illustrates that it is necessary to call the
 ``free()`` method on objects whose class implements the ``Freeable``
-interface. Otherwise, a memory leak is produced.
+interface. Otherwise, a memory leak will occur.
 
 Specifying offsets in buffers
 -----------------------------
