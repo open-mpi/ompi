@@ -889,4 +889,34 @@ man1_MANS += \
 man3_MANS += $(OSHMEM_MAN3_BUILT)
 endif
 
+# We do not know the names of all the generated HTML files: we only
+# know that the generated tree will of files be in _build/html/.
+# Unfortunately, Automake's installation process only handles
+# individual files -- not entire trees of files.  Hence, we use a
+# "find ..." to copy the entire generated tree to the target
+# directory.
+#
+# Note: we do not use "cp -r ..." because if the source directory is
+# write-protected (e.g., during "make distcheck"), then the cp -r will
+# also write-protect the target directory.  Instead, use the
+# Automake-provided install macros to set desirable permissions on the
+# target directories and files.
+#
+# Since this might be a VPATH build, first check to see if _build/html
+# exists in the source tree.  If not, do the find+install from the
+# build tree.
+install-data-hook:
+	$(MKDIR_P) $(DESTDIR)$(docdir)
+	if test -d $(srcdir)/_build/html; then \
+	    topdir=$(srcdir)/_build; \
+	else \
+	    topdir=_build; \
+	fi; \
+	cd $$topdir; \
+	find html -type d -exec $(mkinstalldirs) $(DESTDIR)$(docdir)/{} \; ; \
+	find html -type f -exec $(INSTALL_DATA) {} $(DESTDIR)$(docdir)/{} \;
+
+uninstall-hook:
+	rm -rf $(DESTDIR)$(docdir)
+
 endif OPAL_INSTALL_DOCS
