@@ -361,7 +361,7 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
     [OMPI_DATATYPE_MPI_UB] = &ompi_mpi_ub.dt,
 
     [OMPI_DATATYPE_MPI_LONG] = &ompi_mpi_long.dt,
-    [OMPI_DATATYPE_MPI_UNSIGNED_LONG] = &ompi_mpi_long.dt,
+    [OMPI_DATATYPE_MPI_UNSIGNED_LONG] = &ompi_mpi_unsigned_long.dt,
     /* MPI 3.0 types */
     [OMPI_DATATYPE_MPI_COUNT] = &ompi_mpi_count.dt,
 
