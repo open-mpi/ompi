@@ -352,8 +352,8 @@ static void* get_coll_handle(void)
     ompi_req->super.req_state            = OMPI_REQUEST_ACTIVE;
     ompi_req->super.req_free             = request_free;
     ompi_req->super.req_type             = OMPI_REQUEST_COLL;
-    ompi_req->data.objs.objs[0]          = NULL;
-    ompi_req->data.objs.objs[1]          = NULL;
+    ompi_req->data.refcounted.objs.objs[0]          = NULL;
+    ompi_req->data.refcounted.objs.objs[1]          = NULL;
     return (void *)ompi_req;
 }
 
