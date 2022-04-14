@@ -21,7 +21,7 @@ C Syntax
 
    #include <mpi.h>
 
-   int MPI_Pack_external_size(char *datarep, int incount,
+   int MPI_Pack_external_size(const char *datarep, int incount,
    	MPI_Datatype datatype, MPI_Aint *size)
 
 
