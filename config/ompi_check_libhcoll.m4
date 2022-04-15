@@ -24,7 +24,7 @@ AC_DEFUN([OMPI_CHECK_HCOLL],[
              [Build hcoll (Mellanox Hierarchical Collectives) support, optionally adding
               DIR/include and DIR/lib or DIR/lib64 to the search path for headers and libraries])])
 
-    OAC_CHECK_PACKAGE([libhcoll],
+    OAC_CHECK_PACKAGE([hcoll],
                       [$1],
                       [hcoll/api/hcoll_api.h],
                       [hcoll],
