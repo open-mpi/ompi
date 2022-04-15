@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc5
+Open MPI version 5.0.0rc6
 -------------------------
-:Date: 07 April 2022
+:Date: 15 April 2022
 
 .. admonition:: MPIR API has been removed
    :class: warning
@@ -40,24 +40,36 @@ Open MPI version 5.0.0rc5
       libraries, rather than linked into the Open MPI core libraries.
 
 
-Changes since rc4:
+Changes since rc5:
 
-  - Various changes and cleanup to fix, and better support the static building of Open MPI.
   - The PRRTE submodule pointer has been updated to bring in the following fixes:
 
-    - Added silent single-dash to double-dash conversion to the mpirun/mpiexec command
-      line. This promotes backwards compatibility with the v4.x series.
-    - Fixed a bug where launch-failure messages from PRRTE would be printed twice.
-  - Changes to the BTL ``OFI`` component to better support the HPE SS11 network.
-  - Fixed a compile failure when building with ``UCC`` (``configure --with-ucc=...``).
-  - Fixed several memory leaks in the ``UCX`` component.
-  - Fixed a bug where ``autogen.pl --force`` would fail. 
-  - Fixed a large number of warnings when compiling on macOS.
-  - Fixed two dead links in ``HACKING.md``. Thanks to Lachlan Bell for finding and fixing.
-  - Updated various documentation to rename ``master`` to ``main`` where relevant.
+    - Fixed a bug where the deprecated option ``--oversubscribe`` for ``mpirun``
+      was not translated correctly to its new equivalent (``--map-by :oversubscribe``).
+    - Fixed a case where ``--map-by ppr:x:oversubscribe`` would not work correctly.
+      In this case, ``:oversubscribe`` was effectively ignored.
 
-- Updated PMIx to ``v4.2`` branch - current hash: ``d3445c8``.
-- Updated PRRTE to ``v2.1`` branch - current hash: ``f3828e8``.
+  - Fixed incorrect behavior with ``MPI_Allreduce()`` when using ``MPI_MAX`` with
+    the ``MPI_UNSIGNED_LONG`` type. Thanks to Kendra Long for the report and their
+    contrubution to the fix.
+
+  - Various fixes to the ``openmpi.spec`` file to fix issues with rpm generation.
+
+  - Fixed a bug in one-sided ``UCX`` calls where not all in-flight messages
+    would be flushed before cleanup.
+
+  - Build fixes - the following builds options with Open MPI were fixed:
+
+    - ``usNIC`` - (``configure --with-usnic=..``)
+    - ``HCOLL`` - (``configure --with-hcoll=..``)
+    - ``XPMEM`` - (``configure --with-xpmem=..``).
+
+      - Thanks to Alex Margol for the fix.
+
+  - Various documentation improvements and updates.
+
+- Updated PMIx to the ``v4.2`` branch - current hash: ``7ddb00e``.
+- Updated PRRTE to the ``v2.1`` branch - current hash: ``407e8d5``.
 
 - New Features:
 
@@ -116,16 +128,19 @@ Changes since rc4:
     interface matching between peers in order to improve ``MPI_Init()`` wireup
     performance.
 
+  - Changes to the BTL ``OFI`` component to better support the HPE SS11 network.
+
   - Shared Memory:
 
-  - The legacy ``sm`` (shared memory) BTL has been removed.
-    The next-generation shared memory BTL ``vader`` replaces it,
-    and has been renamed to be ``sm`` (``vader`` will still work as an alias).
-  - Update the new ``sm`` BTL to not use Linux Cross Memory Attach (CMA) in user namespaces.
-  - Fixed a crash when using the new ``sm`` BTL when compiled with Linux Cross Memory Attach (``XPMEM``).
-    Thanks to George Katevenis for reporting this issue.
+    - The legacy ``sm`` (shared memory) BTL has been removed.
+      The next-generation shared memory BTL ``vader`` replaces it,
+      and has been renamed to be ``sm`` (``vader`` will still work as an alias).
+    - Update the new ``sm`` BTL to not use Linux Cross Memory Attach (CMA) in user namespaces.
+    - Fixed a crash when using the new ``sm`` BTL when compiled with Linux Cross Memory Attach (``XPMEM``).
+      Thanks to George Katevenis for reporting this issue.
 
   - Updated the ``-mca pml`` option to only accept one pml, not a list.
+
 - Deprecations and removals:
 
   - ORTE, the underlying OMPI launcher has been removed, and replaced
@@ -145,23 +160,27 @@ Changes since rc4:
   - ompi/contrib: Removed ``libompitrace``.
     This library was incomplete and unmaintained. If needed, it
     is available in the v4/v4.1 series.
+
 - HWLOC updates:
 
   - Open MPI now requires HWLOC v1.11.0 or later.
   - The internal HWLOC shipped with OMPI has been updated to v2.7.1.
   - Enable --enable-plugins when appropriate.
+
 - Documentation updates and improvements:
 
   - Open MPI now uses readthedocs.io for all documentation.
   - Converted man pages to markdown. Thanks to Fangcong Yin for their contribution
     to this effort.
-  - Various ``README.md`` fixes - thanks to: Yixin Zhang, Samuel Cho,
-    Robert Langfield, Alex Ross, Sophia Fang, mitchelltopaloglu, Evstrife,
-    and Hao Tong for their contributions.
+  - Various ``README.md`` and ``HACKING.md`` fixes - thanks to: Yixin Zhang, Samuel Cho,
+    Robert Langfield, Alex Ross, Sophia Fang, mitchelltopaloglu, Evstrife, Hao Tong
+    and Lachlan Bell for their contributions.
   - Various CUDA documentation fixes. Thanks to Simon Byrne for finding
     and fixing these typos.
+
 - Build updates and fixes:
 
+  - Various changes and cleanup to fix, and better support the static building of Open MPI.
   - Change the default component build behavior to prefer building
     components as part of the core Open MPI library instead of individual DSOs.
     Currently, this means the Open SHMEM layer will only build if
@@ -187,6 +206,7 @@ Changes since rc4:
     due to a missing header inclusion. Thanks to Sylvain Didelot for finding
     and fixing this issue.
   - Add support for GNU Autoconf v2.7.x.
+
 - Other updates and bug fixes:
 
   - Updated Open MPI to use ``ROMIO`` v3.4.1.
