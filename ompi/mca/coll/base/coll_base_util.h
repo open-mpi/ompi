@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -35,6 +35,13 @@
 BEGIN_C_DECLS
 
 /**
+ * The largest array we need to track collective temporary memory. Right now
+ * the record is for ialltoallw, for the array of send and receive types,
+ * count and displacements.
+ */
+#define OMPI_REQ_NB_RELEASE_ARRAYS 7
+
+/**
  * Request structure to be returned by non-blocking
  * collective operations.
  */
@@ -45,22 +52,25 @@ struct ompi_coll_base_nbc_request_t {
         ompi_request_free_fn_t req_free;
     } cb;
     void *req_complete_cb_data;
-    union {
-        struct {
-            ompi_op_t *op;
-            ompi_datatype_t *datatype;
-        } op;
-        struct {
-            ompi_datatype_t *stype;
-            ompi_datatype_t *rtype;
-        } types;
-        struct {
-            opal_object_t *objs[2];
-        } objs;
-        struct {
-            ompi_datatype_t * const *stypes;
-            ompi_datatype_t * const *rtypes;
-        } vecs;
+    struct {
+        union {
+            struct {
+                ompi_op_t *op;
+                ompi_datatype_t *datatype;
+            } op;
+            struct {
+                ompi_datatype_t *stype;
+                ompi_datatype_t *rtype;
+            } types;
+            struct {
+                opal_object_t *objs[2];
+            } objs;
+            struct {
+                ompi_datatype_t * const *stypes;
+                ompi_datatype_t * const *rtypes;
+            } vecs;
+        } refcounted;
+        void* release_arrays[OMPI_REQ_NB_RELEASE_ARRAYS];
     } data;
 };
 
