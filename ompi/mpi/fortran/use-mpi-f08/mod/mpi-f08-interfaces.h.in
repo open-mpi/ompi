@@ -203,11 +203,6 @@ interface  MPI_Precv_init
 subroutine MPI_Precv_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !$PRAGMA IGNORE_TKR buf
-   !DIR$ IGNORE_TKR buf
-   !IBM* IGNORE_TKR buf
    OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: partitions, count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -221,11 +216,6 @@ interface  MPI_Psend_init
 subroutine MPI_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !$PRAGMA IGNORE_TKR buf
-   !DIR$ IGNORE_TKR buf
-   !IBM* IGNORE_TKR buf
    OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: partitions, count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -412,7 +402,7 @@ subroutine MPI_Send_init_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(buf,count,datatype,des
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_F08_IGNORE_TKR_PREDECL@ buf
-   @OMPI_F08_IGNORE_TKR_TYPE@ INTENT(IN) OMPI_ASYNCHRONOUS :: buf
+   @OMPI_F08_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
