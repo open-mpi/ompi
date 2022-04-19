@@ -70,14 +70,12 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
                                      FUNC_NAME);
       }
 
-      /* Errors for all involved ranks */
+      /* Errors for all ranks */
 
-      if (OMPI_COMM_IS_INTRA(comm) || MPI_PROC_NULL != root) {
-        OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
-        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-        if (MPI_IN_PLACE == buffer) {
+      OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
+      OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+      if (MPI_IN_PLACE == buffer) {
           return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        }
       }
 
       /* Errors for intracommunicators */
