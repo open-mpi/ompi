@@ -52,6 +52,7 @@ int mca_scoll_ucc_broadcast(struct oshmem_group_t *group,
     mca_scoll_ucc_module_t * ucc_module;
     void * buf;
     ucc_coll_req_h req;
+    int rc;
 
     UCC_VERBOSE(3, "running ucc bcast");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_broadcast_module;
@@ -72,6 +73,7 @@ int mca_scoll_ucc_broadcast(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback bcast");
-    return ucc_module->previous_broadcast(group, PE_root, target, source, 
-                                          nlong, pSync, nlong_type, alg);
+    PREVIOUS_SCOLL_FN(ucc_module, broadcast, group, PE_root, target, source,
+                      nlong, pSync, nlong_type, alg);
+    return rc;
 }

@@ -55,6 +55,7 @@ int mca_scoll_ucc_collect(struct oshmem_group_t *group,
 {
     mca_scoll_ucc_module_t *ucc_module;
     ucc_coll_req_h req;
+    int rc;
 
     UCC_VERBOSE(3, "running ucc collect");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_collect_module;
@@ -69,6 +70,7 @@ int mca_scoll_ucc_collect(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback collect");
-    return ucc_module->previous_collect(group, target, source, nlong,
-                                        pSync, nlong_type, alg);
+    PREVIOUS_SCOLL_FN(ucc_module, collect, group, target, source,
+                      nlong, pSync, nlong_type, alg);
+    return rc;
 }
