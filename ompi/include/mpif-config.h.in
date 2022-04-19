@@ -76,13 +76,3 @@
       parameter (MPI_MAX_DATAREP_STRING=@OPAL_MAX_DATAREP_STRING@-1)
       parameter (MPI_MAX_PSET_NAME_LEN=@OPAL_MAX_PSET_NAME_LEN@-1)
       parameter (MPI_MAX_STRINGTAG_LEN=@OPAL_MAX_STRINGTAG_LEN@-1)
-
-!
-! MPI F08 conformance
-!
-      logical MPI_SUBARRAYS_SUPPORTED
-      logical MPI_ASYNC_PROTECTS_NONBLOCKING
-      ! Hard-coded for .false. for now
-      parameter (MPI_SUBARRAYS_SUPPORTED= .false.)
-      ! Hard-coded for .false. for now
-      parameter (MPI_ASYNC_PROTECTS_NONBLOCKING = .false.)
