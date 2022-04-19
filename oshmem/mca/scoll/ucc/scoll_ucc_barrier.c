@@ -34,6 +34,7 @@ int mca_scoll_ucc_barrier(struct oshmem_group_t *group, long *pSync, int alg)
 {
     mca_scoll_ucc_module_t *ucc_module;
     ucc_coll_req_h req;
+    int            rc;
 
     UCC_VERBOSE(3, "running ucc barrier");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_barrier_module;
@@ -44,6 +45,8 @@ int mca_scoll_ucc_barrier(struct oshmem_group_t *group, long *pSync, int alg)
     return OSHMEM_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback barrier");
-    return ucc_module->previous_barrier(group, pSync, alg);
+    PREVIOUS_SCOLL_FN(ucc_module, barrier, group,
+                      pSync, alg);
+    return rc;
 }
 
