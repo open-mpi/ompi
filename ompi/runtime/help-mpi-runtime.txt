@@ -118,3 +118,7 @@ PMIx_Init failed for the following reason:
 Open MPI requires access to a local PMIx server to execute. Please ensure
 that either you are operating in a PMIx-enabled environment, or use "mpirun"
 to execute the job.
+#
+[no-pmix-but]
+No PMIx server was reachable, but a PMI1/2 or SLURM environment was detected.
+Open MPI will start %d singletons
