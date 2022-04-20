@@ -77,6 +77,7 @@ int mca_scoll_ucc_reduce(struct oshmem_group_t *group,
     mca_scoll_ucc_module_t *ucc_module;
     size_t count;
     ucc_coll_req_h req;
+    int rc;
 
     UCC_VERBOSE(3, "running ucc reduce");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_reduce_module;
@@ -93,6 +94,7 @@ int mca_scoll_ucc_reduce(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback reduction");
-    return ucc_module->previous_reduce(group, op, target, source, nlong, pSync,
-                                       pWrk, alg);
+    PREVIOUS_SCOLL_FN(ucc_module, reduce, group, op, target,
+                      source, nlong, pSync, pWrk, alg);
+    return rc;
 }

@@ -70,6 +70,7 @@ int mca_scoll_ucc_alltoall(struct oshmem_group_t *group,
     mca_scoll_ucc_module_t *ucc_module;
     size_t count;
     ucc_coll_req_h req;
+    int rc;
 
     UCC_VERBOSE(3, "running ucc alltoall");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_alltoall_module;
@@ -87,7 +88,7 @@ int mca_scoll_ucc_alltoall(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback alltoall");
-    return ucc_module->previous_alltoall(group, target, source, dst, sst, nelems, 
-                                         element_size, pSync, alg);
+    PREVIOUS_SCOLL_FN(ucc_module, alltoall, group, target, source,
+                      dst, sst, nelems, element_size, pSync, alg);
+    return rc;
 }
-
