@@ -44,23 +44,25 @@ OBJ_CLASS_DECLARATION(mca_pml_ucx_convertor_t);
 
 
 __opal_attribute_always_inline__
-static inline ucp_datatype_t mca_pml_ucx_get_datatype(ompi_datatype_t *datatype)
+static inline ucp_datatype_t
+mca_pml_ucx_from_ompi_datatype(ompi_datatype_t *datatype)
 {
 #ifdef HAVE_UCP_REQUEST_PARAM_T
-    pml_ucx_datatype_t *ucp_type = (pml_ucx_datatype_t*)datatype->pml_data;
-
-    if (OPAL_LIKELY(ucp_type != PML_UCX_DATATYPE_INVALID)) {
-        return ucp_type->datatype;
-    }
+    return ((pml_ucx_datatype_t*)datatype->pml_data)->datatype;
 #else
-    ucp_datatype_t ucp_type = datatype->pml_data;
-
-    if (OPAL_LIKELY(ucp_type != PML_UCX_DATATYPE_INVALID)) {
-        return ucp_type;
-    }
+    return (ucp_datatype_t)datatype->pml_data;
 #endif
+}
 
-    return mca_pml_ucx_init_datatype(datatype);
+
+__opal_attribute_always_inline__
+static inline ucp_datatype_t mca_pml_ucx_get_datatype(ompi_datatype_t *datatype)
+{
+    if (OPAL_UNLIKELY(datatype->pml_data == PML_UCX_DATATYPE_INVALID)) {
+        return mca_pml_ucx_init_datatype(datatype);
+    }
+
+    return mca_pml_ucx_from_ompi_datatype(datatype);
 }
 
 #ifdef HAVE_UCP_REQUEST_PARAM_T
