@@ -192,8 +192,8 @@ int ompi_comm_init(void)
 
 int ompi_comm_init_mpi3 (void)
 {
-    ompi_group_t *group;
     int ret;
+    ompi_group_t *group = NULL;
 
     /* the intrinsic communicators have been initialized */
     ompi_comm_intrinsic_init = true;
