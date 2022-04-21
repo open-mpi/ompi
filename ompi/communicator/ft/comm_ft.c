@@ -244,11 +244,9 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
     opal_mutex_unlock(&ompi_group_afp_mutex);
 #if OPAL_ENABLE_DEBUG
     stop = PMPI_Wtime();
-#endif
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_shrink: group_inter: %g seconds",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-start));
-#if OPAL_ENABLE_DEBUG
     start = PMPI_Wtime();
 #endif
     do {
@@ -266,10 +264,10 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
     } while( MPI_ERR_PROC_FAILED == rc );
 #if OPAL_ENABLE_DEBUG
     stop = PMPI_Wtime();
-#endif
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_shrink: AGREE: %g seconds",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-start));
+#endif
     if(OMPI_SUCCESS != rc) {
         opal_output(0, "%s:%d Agreement failure: %d\n", __FILE__, __LINE__, rc);
         exit_status = rc;
@@ -313,7 +311,7 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
                         comm->c_keyhash,          /* attrs */
                         comm->error_handler,      /* error handler */
                         alive_group,              /* local group */
-                        alive_rgroup              /* remote group */
+                        alive_rgroup,             /* remote group */
                         0                         /* flags */
                       );
     if( OMPI_SUCCESS != rc ) {
@@ -326,10 +324,10 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
     }
 #if OPAL_ENABLE_DEBUG
     stop = PMPI_Wtime();
-#endif
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_shrink: GRP COMPUTATION: %g seconds\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-start));
+#endif
     /*
      * Step 3: Determine context id
      */
@@ -356,10 +354,10 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
     }
 #if OPAL_ENABLE_DEBUG
     stop = PMPI_Wtime();
-#endif
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_shrink: NEXT CID: %g seconds\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-start));
+#endif
     /*
      * Step 4: Activate the communicator
      */
@@ -426,15 +424,14 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request);
 static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request);
 static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request);
 static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request);
-static int ompi_comm_ishrink_check_finished(ompi_comm_request_t *request) {
-    return OMPI_SUCCESS;
-}
 
 int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** newcomm, ompi_request_t** req)
 {
     int rc;
     int flag = 1;
+#if OPAL_ENABLE_DEBUG
     double stop;
+#endif
     ompi_comm_request_t *request;
     ompi_comm_ishrink_context_t *context;
     ompi_request_t *subreq[1];
@@ -466,13 +463,17 @@ int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** 
     OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: Agreement on failed processes",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) ));
-    context->start = MPI_Wtime();
+#if OPAL_ENABLE_DEBUG
+    context->start = PMPI_Wtime();
+#endif
     ompi_group_intersection(comm->c_remote_group, ompi_group_all_failed_procs, &context->failed_group);
-    stop = MPI_Wtime();
+#if OPAL_ENABLE_DEBUG
+    stop = PMPI_Wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: group_inter: %g seconds",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-context->start));
-    context->start = MPI_Wtime();
+    context->start = PMPI_Wtime();
+#endif
     /* We need to create the list of alive processes. Thus, we don't care about
      * the value of flag, instead we are only using the globally consistent
      * return value.
@@ -505,15 +506,19 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
         (ompi_comm_ishrink_context_t *)request->context;
     ompi_communicator_t *comm = context->comm;
     ompi_request_t *subreq[1];
-    int rc, mode, flag = 1;
-    double stop;
     ompi_group_t *comm_group = NULL;
+    int rc, flag = 1;
+#if OPAL_ENABLE_DEBUG
+    double stop;
+#endif
 
-    stop = MPI_Wtime();
-    rc = request->super.req_status.MPI_ERROR;
+#if OPAL_ENABLE_DEBUG
+    stop = PMPI_Wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: AGREE: %g seconds",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-context->start));
+#endif
+    rc = request->super.req_status.MPI_ERROR;
     if( (OMPI_SUCCESS != rc) && (MPI_ERR_PROC_FAILED != rc) ) {
         opal_output(0, "%s:%d Agreement failure: %d\n", __FILE__, __LINE__, rc);
         return rc;
@@ -546,10 +551,11 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
     OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: Determine ranking for new communicator",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) ));
-    context->start = MPI_Wtime();
+#if OPAL_ENABLE_DEBUG
+    context->start = PMPI_Wtime();
+#endif
 
     /* Create 'alive' groups */
-    mode = OMPI_COMM_CID_INTRA_FT;
     comm_group = comm->c_local_group;
     rc = ompi_group_difference(comm_group, context->failed_group, &context->alive_group);
     if( OMPI_SUCCESS != rc ) {
@@ -558,7 +564,6 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
         return rc;
     }
     if( OMPI_COMM_IS_INTER(comm) ) {
-        mode = OMPI_COMM_CID_INTER_FT;
         comm_group = comm->c_remote_group;
         rc = ompi_group_difference(comm_group, context->failed_group, &context->alive_rgroup);
         if( OMPI_SUCCESS != rc ) {
@@ -579,9 +584,9 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
                            NULL,                     /* remote_ranks */
                            comm->c_keyhash,          /* attrs */
                            comm->error_handler,      /* error handler */
-                           false,                    /* topo component */
                            context->alive_group,     /* local group */
                            context->alive_rgroup,    /* remote group */
+                           0,                        /* flags */
                            subreq
                          );
     if( OMPI_SUCCESS != rc ) {
@@ -602,7 +607,9 @@ static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request) {
         (ompi_comm_ishrink_context_t *)request->context;
     ompi_request_t *subreq[1];
     int rc, mode;
+#if OPAL_ENABLE_DEBUG
     double stop;
+#endif
 
     /* cleanup temporary groups */
     OBJ_RELEASE(context->alive_group);
@@ -620,10 +627,12 @@ static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request) {
         return rc;
     }
 
-    stop = MPI_Wtime();
+#if OPAL_ENABLE_DEBUG
+    stop = PMPI_Wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: GRP COMPUTATION: %g seconds\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-context->start));
+#endif
 
     /*
      * Step 3: Determine context id
@@ -636,7 +645,9 @@ static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request) {
     OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: Determine context id",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) ));
-    context->start = MPI_Wtime();
+#if OPAL_ENABLE_DEBUG
+    context->start = PMPI_Wtime();
+#endif
     rc = ompi_comm_nextcid_nb( *context->newcomm, /* new communicator */
                                context->comm,     /* old comm */
                                NULL,              /* bridge comm */
@@ -661,7 +672,9 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
         (ompi_comm_ishrink_context_t *)request->context;
     ompi_request_t *subreq[1];
     int rc, mode;
+#if OPAL_ENABLE_DEBUG
     double stop;
+#endif
 
     rc = request->super.req_status.MPI_ERROR;
     if( OMPI_SUCCESS != rc ) {
@@ -672,10 +685,13 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
         OBJ_RELEASE(*context->newcomm);
         return rc;
     }
-    stop = MPI_Wtime();
+#if OPAL_ENABLE_DEBUG
+    stop = PMPI_Wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: NEXT CID: %g seconds\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-context->start));
+#endif
+
     /*
      * Step 4: Activate the communicator
      */
@@ -687,8 +703,11 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
     /* Set name for debugging purposes */
     ompi_communicator_t *newcomp = *context->newcomm;
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SHRUNK FROM %d",
-             newcomp->c_contextid, context->comm->c_contextid );
-    context->start = MPI_Wtime();
+             ompi_comm_get_local_cid(newcomp),
+             ompi_comm_get_local_cid(context->comm));
+#if OPAL_ENABLE_DEBUG
+    context->start = PMPI_Wtime();
+#endif
     /* activate communicator and init coll-module */
     rc = ompi_comm_activate_nb( context->newcomm, /* new communicator */
                                 context->comm,
@@ -711,18 +730,21 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
 static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request) {
     ompi_comm_ishrink_context_t *context =
         (ompi_comm_ishrink_context_t *)request->context;
-    double stop;
     int rc;
+#if OPAL_ENABLE_DEBUG
+    double stop;
+#endif
 
     rc = request->super.req_status.MPI_ERROR;
     if( OMPI_SUCCESS != rc ) {
         return rc;
     }
-
+#if OPAL_ENABLE_DEBUG
     stop = MPI_Wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: COLL SELECT: %g seconds\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-context->start));
+#endif
 
     return OMPI_SUCCESS;
 }
