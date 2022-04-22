@@ -127,7 +127,10 @@ size_t mca_pml_ob1_rdma_cuda_btls(
             if( NULL != bml_btl->btl->btl_register_mem ) {
                 /* register the memory */
                 handle = bml_btl->btl->btl_register_mem (bml_btl->btl, bml_btl->btl_endpoint,
-                                                         base, size, MCA_BTL_REG_FLAG_CUDA_GPU_MEM |
+                                                         base, size,
+#if OPAL_CUDA_GDR_SUPPORT
+                                                         MCA_BTL_REG_FLAG_CUDA_GPU_MEM |
+#endif
                                                          MCA_BTL_REG_FLAG_REMOTE_READ);
             }
 
