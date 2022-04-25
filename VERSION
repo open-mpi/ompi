@@ -70,7 +70,7 @@ release=4
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -128,7 +128,7 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=70:3:30
+libmpi_so_version=70:4:30
 libmpi_cxx_so_version=70:1:30
 libmpi_mpifh_so_version=70:0:30
 libmpi_usempi_tkr_so_version=70:0:30
@@ -146,7 +146,7 @@ libompitrace_so_version=70:1:30
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=70:3:29
+libmca_ompi_common_ompio_so_version=70:4:29
 libmca_ompi_common_monitoring_so_version=70:0:20
 
 # ORTE layer
