@@ -569,6 +569,23 @@ int ompi_rte_init(int *pargc, char ***pargv)
         /* if we get PMIX_ERR_UNREACH indicating that we cannot reach the
          * server, then we assume we are operating as a singleton */
         if (PMIX_ERR_UNREACH == ret) {
+            /* if we are in a PMI or SLURM environment with two tasks or more,
+             * we probably do not want to start singletons */
+            char *size_str = getenv("PMI_SIZE");
+            if (NULL == size_str) {
+                size_str = getenv("SLURM_NPROCS");
+            }
+            int size = (NULL != size_str)?atoi(size_str):1;
+            if (1 < size) {
+                char *rank_str = getenv("PMI_RANK");
+                if (NULL == rank_str) {
+                    rank_str = getenv("SLURM_PROCID");
+                }
+                int rank = (NULL != rank_str)?atoi(rank_str):0;
+                if (0 == rank) {
+                    opal_show_help("help-mpi-runtime.txt", "no-pmix-but", false, size);
+                }
+            }
             ompi_singleton = true;
         } else {
             /* we cannot run - this could be due to being direct launched
