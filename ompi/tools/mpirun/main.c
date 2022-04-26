@@ -14,9 +14,11 @@
 #if HAVE_SYS_STAT_H
 #    include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
+#include <string.h>
 
 #include "opal/mca/base/base.h"
 #include "opal/mca/installdirs/base/base.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
@@ -24,90 +26,109 @@
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
+#include "ompi/constants.h"
+
+static char *find_prterun(void)
+{
+    char *filename = NULL;
+    char *prrte_prefix = NULL;
+
+    /* 1) Did the user tell us exactly where to find prterun? */
+    filename = getenv("OMPI_PRTERUN");
+    if (NULL != filename) {
+        return filename;
+    }
+
+#if OMPI_USING_INTERNAL_PRRTE
+    /* 2) If using internal PRRTE, use our bindir.  Note that this
+     * will obey OPAL_PREFIX and OPAL_DESTDIR */
+    opal_asprintf(&filename, "%s%sprterun", opal_install_dirs.bindir, OPAL_PATH_SEP);
+    return filename;
+#else
+
+    /* 3) Look in ${PRTE_PREFIX}/bin */
+    prrte_prefix = getenv("PRTE_PREFIX");
+    if (NULL != prrte_prefix) {
+        opal_asprintf(&filename, "%s%sbin%sprterun", prrte_prefix, OPAL_PATH_SEP, OPAL_PATH_SEP);
+        return filename;
+    }
+
+    /* 4) See if configure told us where to look, if set */
+#if defined(OMPI_PRTERUN_PATH)
+    return strdup(OMPI_PRTERUN_PATH);
+#else
+
+    /* 5) Use path search */
+    filename = opal_find_absolute_path("prterun");
+
+    return filename;
+#endif
+#endif
+}
+
 
 int main(int argc, char *argv[])
 {
-    char *evar;
-    char **pargs = NULL;
-    char *pfx = NULL;
-    int m, param_len;
-    char *truepath = NULL;
+    char *opal_prefix = getenv("OPAL_PREFIX");
+    char *full_prterun_path = NULL;
+    char **prterun_args = NULL;
+    int ret;
+    size_t i;
 
-    if (NULL != (evar = getenv("OPAL_PREFIX"))) {
-
-#if OMPI_USING_INTERNAL_PRRTE
-        setenv("PRTE_PREFIX", evar, 1);
-#endif
-
-#if OPAL_USING_INTERNAL_PMIX
-        setenv("PMIX_PREFIX", evar, 1);
-#endif
+    ret = opal_init_util(&argc, &argv);
+    if (OMPI_SUCCESS != ret) {
+        fprintf(stderr, "Failed initializing opal: %d\n", ret);
+        exit(1);
     }
+
+    /* note that we just modify our environment rather than create a
+     * child environment because it is easier and we're not going to
+     * be around long enough for it to matter (since we exec prterun
+     * asap */
     setenv("PRTE_MCA_schizo_proxy", "ompi", 1);
     setenv("OMPI_VERSION", OMPI_VERSION, 1);
     char *base_tool_name = opal_basename(argv[0]);
     setenv("OMPI_TOOL_NAME", base_tool_name, 1);
     free(base_tool_name);
 
+    /* TODO: look for --prefix and compare with OPAL_PREFIX and pick
+     * one */
 
-    opal_argv_append_nosize(&pargs, "prterun");
-    for (m=1; NULL != argv[m]; m++) {
-        opal_argv_append_nosize(&pargs, argv[m]);
-        /* Did the user specify a prefix, or want prefix by default? */
-        if (0 == strcmp(argv[m], "--prefix")) {
-            opal_asprintf(&pfx, "%s%s", argv[m+1], "/bin");
-        }
-    }
-
-    if (NULL != pfx) {
-        /* "Parse" the param, aka remove superfluous path_sep. */
-        param_len = strlen(pfx);
-        while (0 == strcmp(OPAL_PATH_SEP, &(pfx[param_len - 1]))) {
-            pfx[param_len - 1] = '\0';
-            param_len--;
-            if (0 == param_len) {
-                fprintf(stderr, "A prefix was supplied to mpirun that only contained slashes.\n"
-                        "This is a fatal error; mpirun will now abort.\nNo processes were launched.\n");
-                exit(1);
-            }
-        }
-    } else if (opal_path_is_absolute(argv[0])) {
-        /* Check if called with fully-qualified path to mpirun.
-         * (Note: Put this second so can override with --prefix (above). */
-        pfx = opal_dirname(argv[0]);
+    /* as a special case, if OPAL_PREFIX was set and either PRRTE or
+     * PMIx are internal builds, set their prefix variables as well */
+    if (NULL != opal_prefix) {
 #if OMPI_USING_INTERNAL_PRRTE
-    } else {
-        /* in case --enable-prefix-by-default was given */
-        mca_base_framework_open(&opal_installdirs_base_framework, 0);  // fill in the installdirs
-        if (NULL != opal_install_dirs.bindir) {
-            pfx = strdup(opal_install_dirs.bindir);
-        }
+        setenv("PRTE_PREFIX", opal_prefix, 1);
+#endif
+#if OPAL_USING_INTERNAL_PMIX
+        setenv("PMIX_PREFIX", opal_prefix, 1);
 #endif
     }
 
-    if (NULL == pfx) {
-        truepath = opal_path_findv("prterun", X_OK, environ, NULL);
-#if !OMPI_USING_INTERNAL_PRRTE
-        // if OMPI_PRTERUN_PATH is available, try that
-        // for external builds if the user didn't explictly
-        // add a prefix and it isn't in the users path.
-        if((NULL == truepath) && (0 != strlen(OMPI_PRTERUN_PATH))) {
-            truepath = opal_os_path(0, OMPI_PRTERUN_PATH, "prterun", NULL);
-        }
-#endif
-    } else {
-        truepath = opal_os_path(0, pfx, "prterun", NULL);
-        free(pfx);
-    }
-
-    if (NULL == truepath) {
-        fprintf(stderr, "prterun executable could not be found - unable to run\n");
+    full_prterun_path = find_prterun();
+    if (NULL == full_prterun_path) {
+        opal_show_help("help-mpirun.txt", "no-prterun-found", 1);
         exit(1);
     }
 
-    execve(truepath, pargs, environ);
-    fprintf(stderr, "The mpirun (\"%s\") cmd failed to exec its actual executable - your application will NOT execute. Error: %s\n",
-                     truepath ? truepath : "NULL", strerror(errno));
+    /* calling mpirun (and now prterun) with a full path has a special
+     * meaning in terms of -prefix behavior, so copy that behavior
+     * into prterun */
+    if (opal_path_is_absolute(argv[0])) {
+        opal_argv_append_nosize(&prterun_args, full_prterun_path);
+    } else {
+        opal_argv_append_nosize(&prterun_args, "prterun");
+    }
+
+    /* Copy all the mpirun arguments to prterun.
+     * TODO: Need to handle --prefix rationally here. */
+    for (i = 1; NULL != argv[i]; i++) {
+        opal_argv_append_nosize(&prterun_args, argv[i]);
+    }
+    ret = execv(full_prterun_path, prterun_args);
+    opal_show_help("help-mpirun.txt", "prterun-exec-failed",
+                   1, full_prterun_path, strerror(errno));
     exit(1);
 }
 
@@ -125,6 +146,7 @@ int main(int argc, char *argv[])
  * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
