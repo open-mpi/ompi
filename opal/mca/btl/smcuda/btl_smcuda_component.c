@@ -212,11 +212,13 @@ static int smcuda_register(void)
     if (0 == mca_btl_smcuda.super.btl_cuda_max_send_size) {
         mca_btl_smcuda.super.btl_cuda_max_send_size = 128 * 1024;
     }
+#if OPAL_CUDA_GDR_SUPPORT
     /* If user has not set the value, then set to magic number which will be converted to the
      * minimum size needed to fit the PML header (see pml_ob1.c) */
     if (0 == mca_btl_smcuda.super.btl_cuda_eager_limit) {
         mca_btl_smcuda.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number */
     }
+#endif
     mca_common_cuda_register_mca_variables();
 #endif /* OPAL_CUDA_SUPPORT */
     return mca_btl_smcuda_component_verify();
