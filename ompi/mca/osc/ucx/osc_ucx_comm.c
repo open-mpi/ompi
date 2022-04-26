@@ -1066,7 +1066,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
                       struct ompi_win_t *win, struct ompi_request_t **request) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     opal_common_ucx_wpmem_t *mem = module->mem;
-    uint64_t remote_addr = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
+    uint64_t remote_addr = (module->state_addrs[target]) + OSC_UCX_STATE_REQ_FLAG_OFFSET;
     ompi_osc_ucx_request_t *ucx_req = NULL;
     int ret = OMPI_SUCCESS, win_idx = -1;
 
@@ -1100,7 +1100,7 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
 
     mca_osc_ucx_component.num_incomplete_req_ops++;
     /* TODO: investigate whether ucp_worker_flush_nb is a better choice here */
-    ret = opal_common_ucx_wpmem_fetch_nb(mem, UCP_ATOMIC_FETCH_OP_FADD,
+    ret = opal_common_ucx_wpmem_fetch_nb(module->state_mem, UCP_ATOMIC_FETCH_OP_FADD,
                                          0, target, &(module->req_result),
                                          sizeof(uint64_t), remote_addr & (~0x7),
                                          req_completion, ucx_req);
@@ -1121,7 +1121,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
                       struct ompi_request_t **request) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     opal_common_ucx_wpmem_t *mem = module->mem;
-    uint64_t remote_addr = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
+    uint64_t remote_addr = (module->state_addrs[target]) + OSC_UCX_STATE_REQ_FLAG_OFFSET;
     ompi_osc_ucx_request_t *ucx_req = NULL;
     int ret = OMPI_SUCCESS, win_idx = -1;
 
@@ -1155,7 +1155,7 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
 
     mca_osc_ucx_component.num_incomplete_req_ops++;
     /* TODO: investigate whether ucp_worker_flush_nb is a better choice here */
-    ret = opal_common_ucx_wpmem_fetch_nb(mem, UCP_ATOMIC_FETCH_OP_FADD,
+    ret = opal_common_ucx_wpmem_fetch_nb(module->state_mem, UCP_ATOMIC_FETCH_OP_FADD,
                                          0, target, &(module->req_result),
                                          sizeof(uint64_t), remote_addr & (~0x7),
                                          req_completion, ucx_req);
