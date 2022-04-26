@@ -1,0 +1,23 @@
+# -*- text -*-
+#
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open MPI wrapper compiler error
+# messages.
+#
+[no-prterun-found]
+Open MPI's mpirun command was unable to find an underlying prterun
+command to execute.  Consider setting the OMPI_PRTERUN environment
+variable to help mpirun find the correct underlying prterun.
+[prterun-exec-failed]
+Open MPI's mpirun command could not execute the underlying prterun
+command.  The prterun command we tried to execute and the error
+message from exec() are below:
+
+  Command: %s
+  Error Message: %s

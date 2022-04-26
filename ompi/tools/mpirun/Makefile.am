@@ -1,8 +1,7 @@
 #
 # Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2020      IBM Corporation.  All rights reserved.
-# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
-#                         All Rights reserved.
+# Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -14,6 +13,8 @@
 if OMPI_WANT_PRRTE
 
 bin_PROGRAMS = mpirun
+
+dist_ompidata_DATA = help-mpirun.txt
 
 mpirun_SOURCES = \
     main.c
