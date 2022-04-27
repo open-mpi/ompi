@@ -284,7 +284,7 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
                         [PRTE_PATH="${with_prrte}/bin"])],
                  [PRTE_PATH=""
                   OPAL_WHICH([prte], [PRTE_PATH])
-                  AS_IF([tets -z "$PRTE_PATH"],
+                  AS_IF([test -z "$PRTE_PATH"],
                         [AC_MSG_WARN([Could not find prte in PATH])
                          setup_prrte_external_happy=no],
                         [PRTE_PATH="`echo $PRTE_PATH | sed -e 's/\/prte//'`"])])])
