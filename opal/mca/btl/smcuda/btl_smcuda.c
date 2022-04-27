@@ -1050,9 +1050,11 @@ static struct mca_btl_base_registration_handle_t *mca_btl_smcuda_register_mem (
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rcache_flags = 0;
 
+#if OPAL_CUDA_GDR_SUPPORT
     if (MCA_BTL_REG_FLAG_CUDA_GPU_MEM & flags) {
         rcache_flags |= MCA_RCACHE_FLAGS_CUDA_GPU_MEM;
     }
+#endif
 
     smcuda_module->rcache->rcache_register (smcuda_module->rcache, base, size, rcache_flags,
                                             access_flags, (mca_rcache_base_registration_t **) &reg);
