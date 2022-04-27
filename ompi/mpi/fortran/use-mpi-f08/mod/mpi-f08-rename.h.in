@@ -35,9 +35,11 @@
 #define MPI_Isend_f08 PMPI_Isend_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 #define MPI_Isend_f08ts PMPI_Isend_f08ts
 #define MPI_Isendrecv PMPI_Isendrecv
-#define MPI_Isendrecv_f08 PMPI_Isendrecv_f08
+#define MPI_Isendrecv_f08 PMPI_Isendrecv_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
+#define MPI_Isendrecv_f08ts PMPI_Isendrecv_f08ts
 #define MPI_Isendrecv_replace PMPI_Isendrecv_replace
-#define MPI_Isendrecv_replace_f08 PMPI_Isendrecv_replace_f08
+#define MPI_Isendrecv_replace_f08 PMPI_Isendrecv_replace_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
+#define MPI_Isendrecv_replace_f08ts PMPI_Isendrecv_replace_f08ts
 #define MPI_Issend PMPI_Issend
 #define MPI_Issend_f08 PMPI_Issend_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 #define MPI_Issend_f08ts PMPI_Issend_f08ts
@@ -926,6 +928,8 @@
 #define MPI_Irecv_f08 MPI_Irecv_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 #define MPI_Irsend_f08 MPI_Irsend_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 #define MPI_Isend_f08 MPI_Isend_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
+#define MPI_Isendrecv_f08 MPI_Isendrecv_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
+#define MPI_Isendrecv_replace_f08 MPI_Isendrecv_replace_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 #define MPI_Issend_f08 MPI_Issend_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 #define MPI_Recv_f08 MPI_Recv_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 #define MPI_Recv_init_f08 MPI_Recv_init_f08@OMPI_F08_BINDINGS_TS_SUFFIX@

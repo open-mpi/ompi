@@ -115,6 +115,8 @@ libusempif08_ts_la_SOURCES = \
         iscatter_ts.c \
         iscatterv_ts.c \
         isend_ts.c \
+        isendrecv_ts.c \
+        isendrecv_replace_ts.c \
         issend_ts.c \
         mrecv_ts.c \
         neighbor_allgather_ts.c \

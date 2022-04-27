@@ -43,6 +43,17 @@ void ompi_isend_ts(CFI_cdesc_t *x, MPI_Fint *count, MPI_Fint *datatype,
                    MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm,
                    MPI_Fint *request, MPI_Fint *ierr);
 
+void ompi_isendrecv_ts(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
+                       MPI_Fint *dest, MPI_Fint *sendtag, CFI_cdesc_t* x2,
+                       MPI_Fint *recvcount, MPI_Fint *recvtype,
+                       MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm,
+                       MPI_Fint *request, MPI_Fint *ierr);
+
+void ompi_isendrecv_replace_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
+                               MPI_Fint *dest, MPI_Fint *sendtag,
+                               MPI_Fint *source, MPI_Fint *recvtag,
+                               MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
+
 void ompi_issend_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
                     MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm,
                     MPI_Fint *request, MPI_Fint *ierr);

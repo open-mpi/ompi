@@ -155,7 +155,7 @@ end subroutine MPI_Isend_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Isend
 
 interface  MPI_Isendrecv
-subroutine MPI_Isendrecv_f08(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
+subroutine MPI_Isendrecv_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
                             recvcount,recvtype,source,recvtag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
@@ -167,11 +167,11 @@ subroutine MPI_Isendrecv_f08(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Isendrecv_f08
+end subroutine MPI_Isendrecv_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Isendrecv
 
 interface  MPI_Isendrecv_replace
-subroutine MPI_Isendrecv_replace_f08(buf,count,datatype,dest,sendtag,source,recvtag, &
+subroutine MPI_Isendrecv_replace_f08@OMPI_F08_BINDINGS_TS_SUFFIX@(buf,count,datatype,dest,sendtag,source,recvtag, &
                                     comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
@@ -182,7 +182,7 @@ subroutine MPI_Isendrecv_replace_f08(buf,count,datatype,dest,sendtag,source,recv
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Isendrecv_replace_f08
+end subroutine MPI_Isendrecv_replace_f08@OMPI_F08_BINDINGS_TS_SUFFIX@
 end interface  MPI_Isendrecv_replace
 
 interface  MPI_Issend

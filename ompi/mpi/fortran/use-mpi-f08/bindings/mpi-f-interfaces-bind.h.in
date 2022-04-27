@@ -273,7 +273,7 @@ end subroutine ompi_isend_f
 
 subroutine ompi_isendrecv_f(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
                            recvcount,recvtype,source,recvtag,comm,request,ierror) &
-   BIND(C, name="ompi_isendrecv_f")
+   BIND(C, name="ompi_isendrecv_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
    OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_F08_IGNORE_TKR_TYPE :: recvbuf
@@ -287,7 +287,7 @@ end subroutine ompi_isendrecv_f
 
 subroutine ompi_isendrecv_replace_f(buf,count,datatype,dest,sendtag,source, &
                                    recvtag,comm,request,ierror) &
-   BIND(C, name="ompi_isendrecv_replace_f")
+   BIND(C, name="ompi_isendrecv_replace_@OMPI_F08_BINDINGS_EXTENSION@")
    implicit none
    OMPI_F08_IGNORE_TKR_TYPE :: buf
    INTEGER, INTENT(IN) :: count, dest, sendtag, source, recvtag
