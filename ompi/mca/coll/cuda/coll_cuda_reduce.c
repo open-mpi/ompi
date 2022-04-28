@@ -55,7 +55,7 @@ mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
         sbuf = sbuf1 - gap;
     }
 
-    if (rank == root) {
+    if ((rank == root) && (opal_cuda_check_bufs((char *)rbuf, NULL))) {
         rbuf1 = (char*)malloc(bufsize);
         if (NULL == rbuf1) {
             if (NULL != sbuf1) free(sbuf1);
