@@ -44,10 +44,10 @@ struct mca_scoll_ucc_component_t {
     char * cts;
     int nr_modules;
     bool libucc_initialized;
+    ucc_context_h ucc_context;
     ucc_lib_h ucc_lib;
     ucc_lib_attr_t ucc_lib_attr;
     ucc_coll_type_t cts_requested;
-    ucc_context_h ucc_context;
 };
 typedef struct mca_scoll_ucc_component_t mca_scoll_ucc_component_t;
 
@@ -84,6 +84,8 @@ int mca_scoll_ucc_init_query(bool enable_progress_threads, bool enable_mpi_threa
 
 int mca_scoll_ucc_team_create(mca_scoll_ucc_module_t *ucc_module, 
                               oshmem_group_t *osh_group);
+
+int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group);
 
 mca_scoll_base_module_t* mca_scoll_ucc_comm_query(oshmem_group_t *osh_group, int *priority);
 

@@ -28,6 +28,13 @@ static inline ucc_status_t mca_scoll_ucc_broadcast_init(void * buf, int count,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         }
     };
+
+    if (NULL == mca_scoll_ucc_component.ucc_context) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_init_ctx(ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
+
     if (NULL == ucc_module->ucc_team) {
         if (OSHMEM_ERROR == mca_scoll_ucc_team_create(ucc_module, ucc_module->group)) {
             return OSHMEM_ERROR;

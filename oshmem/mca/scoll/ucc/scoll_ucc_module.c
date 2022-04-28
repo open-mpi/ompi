@@ -57,10 +57,12 @@ static void mca_scoll_ucc_module_destruct(mca_scoll_ucc_module_t *ucc_module)
     }
 
     if (0 == mca_scoll_ucc_component.nr_modules) {
-       if (mca_scoll_ucc_component.libucc_initialized) {
+        if (mca_scoll_ucc_component.libucc_initialized) {
+            if (mca_scoll_ucc_component.ucc_context) {
+                opal_progress_unregister(mca_scoll_ucc_progress);
+                ucc_context_destroy(mca_scoll_ucc_component.ucc_context);
+            }
             UCC_VERBOSE(1, "finalizing ucc library");
-            opal_progress_unregister(mca_scoll_ucc_progress);
-            ucc_context_destroy(mca_scoll_ucc_component.ucc_context);
             ucc_finalize(mca_scoll_ucc_component.ucc_lib);
             mca_scoll_ucc_component.libucc_initialized = false;
         }
@@ -199,17 +201,12 @@ static ucc_status_t oob_allgather_test(void *req)
     return oob_probe_test(oob_req);
 }
 
-static int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group) 
+static int mca_scoll_ucc_init(oshmem_group_t *osh_group)
 {
     mca_scoll_ucc_component_t *cm   = &mca_scoll_ucc_component;
-    ucc_mem_map_t             *maps = NULL;
-    char                       str_buf[256];
     ucc_lib_config_h           lib_config;
-    ucc_context_config_h       ctx_config;
     ucc_thread_mode_t          tm_requested;
     ucc_lib_params_t           lib_params;
-    ucc_context_params_t       ctx_params;
-    int                        segment;
 
     tm_requested           = oshmem_mpi_thread_multiple ? UCC_THREAD_MULTIPLE :
                                                           UCC_THREAD_SINGLE;
@@ -246,6 +243,25 @@ static int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group)
         UCC_ERROR("UCC library doesn't support SHMEM_THREAD_MULTIPLE");
         goto cleanup_lib;
     }
+
+    cm->libucc_initialized = true;
+    return OSHMEM_SUCCESS;
+
+cleanup_lib:
+    ucc_finalize(cm->ucc_lib);
+    cm->ucc_enable         = 0;
+    cm->libucc_initialized = false;
+    return OSHMEM_ERROR;
+}
+
+int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group) 
+{
+    mca_scoll_ucc_component_t *cm   = &mca_scoll_ucc_component;
+    ucc_mem_map_t             *maps = NULL;
+    char                       str_buf[256];
+    ucc_context_config_h       ctx_config;
+    ucc_context_params_t       ctx_params;
+    int                        segment;
 
     maps = (ucc_mem_map_t *)malloc(sizeof(ucc_mem_map_t) *
                                    memheap_map->n_segments);
@@ -398,7 +414,6 @@ static int mca_scoll_ucc_module_enable(mca_scoll_base_module_t *module,
         opal_show_help("help-oshmem-scoll-ucc.txt",
                        "module_enable:fatal", true,
     	       		   "UCC module enable failed - aborting to prevent inconsistent application state");
-
         goto err;
     }
     UCC_VERBOSE(1, "ucc enabled");
@@ -446,7 +461,7 @@ mca_scoll_ucc_comm_query(oshmem_group_t *osh_group, int *priority)
 
     if (!cm->libucc_initialized) {
         if (memheap_map && memheap_map->n_segments > 0) {
-            if (OSHMEM_SUCCESS != mca_scoll_ucc_init_ctx(osh_group)) {
+            if (OSHMEM_SUCCESS != mca_scoll_ucc_init(osh_group)) {
                 cm->ucc_enable = 0;
                 return NULL;
             }
