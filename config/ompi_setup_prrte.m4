@@ -32,9 +32,6 @@ dnl external PRRTE and the internal one fails to configure, abort.
 dnl
 dnl This macro wil change the environment in the following way:
 dnl
-dnl * PRTE_PATH will be AC_SUBST'ed to the full path (minus the EXE
-dnl   extension) of the prte binary.
-dnl
 dnl A Makefile conditional OMPI_WANT_PRRTE will be defined based on the
 dnl results of the build.
 AC_DEFUN([OMPI_SETUP_PRRTE],[
@@ -43,6 +40,10 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     opal_show_subtitle "Configuring PRRTE"
 
     OPAL_3RDPARTY_WITH([prrte], [prrte], [package_prrte], [1])
+
+    AC_ARG_WITH([prrte-bindir],
+       [AC_HELP_STRING([--with-prrte-bindir=DIR],
+           [Search for PRRTE binaries in DIR.  Defaults to PRRTE_DIR/bin if not specified])])
 
     prrte_setup_internal_happy=0
     m4_ifdef([package_prrte],
@@ -89,19 +90,12 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
            OMPI_HAVE_PRRTE=1],
           [OMPI_HAVE_PRRTE=0])
 
-    AC_SUBST([PRTE_PATH])
-
     AM_CONDITIONAL([OMPI_WANT_PRRTE],
            [test "$prrte_setup_internal_happy" = "1" -o "$prrte_setup_external_happy" = "1"])
 
     AC_DEFINE_UNQUOTED([OMPI_HAVE_PRRTE],
                        [$OMPI_HAVE_PRRTE],
                        [Whether or not PRRTE is available])
-
-    AS_IF([test "$opal_prrte_mode" = "external"],
-          [AC_DEFINE_UNQUOTED([OMPI_PRTERUN_PATH],
-                      ["$PRTE_PATH"],
-                      [Path to prterun])])
 
     AC_DEFINE_UNQUOTED([OMPI_USING_INTERNAL_PRRTE],
                        [$OMPI_USING_INTERNAL_PRRTE],
@@ -239,16 +233,12 @@ dnl caller configured libprrte configure, and the configure script
 dnl succeeded.
 AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL_POST], [
     OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS prrte"
-
-    PRTE_PATH="prte"
 ])
 
 
 dnl _OMPI_SETUP_PRRTE_EXTERNAL([action if success], [action if not success])
 dnl
-dnl Try to find an external prrte with sufficient version.  Since we
-dnl don't link against prrte, only output environment variable is
-dnl PRTE_PATH.
+dnl Try to find an external prrte with sufficient version.
 AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
     OPAL_VAR_SCOPE_PUSH([setup_prrte_external_happy opal_prrte_CPPFLAGS_save])
 
@@ -276,18 +266,21 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
 
     CPPFLAGS="$opal_prrte_CPPFLAGS_save"
 
+    # If an external build and the user told us where to find PRRTE,
+    # find prterun and save that path.
+    prterun_path=
     AS_IF([test "$setup_prrte_external_happy" = "yes"],
-          [AS_IF([test -n "$with_prrte"],
-                 [PRTE_PATH="${with_prrte}/bin/prte"
-                  AS_IF([test ! -r ${PRTE_PATH}],
-                        [AC_MSG_ERROR([Could not find prte binary at $PRTE_PATH])],
-                        [PRTE_PATH="${with_prrte}/bin"])],
-                 [PRTE_PATH=""
-                  OPAL_WHICH([prte], [PRTE_PATH])
-                  AS_IF([tets -z "$PRTE_PATH"],
-                        [AC_MSG_WARN([Could not find prte in PATH])
-                         setup_prrte_external_happy=no],
-                        [PRTE_PATH="`echo $PRTE_PATH | sed -e 's/\/prte//'`"])])])
+          [AS_IF([test "${with_prrte_bindir}" = "yes" -o "${with_prrte_bindir}" = "no"],
+                 [AC_MSG_ERROR(["yes" and "no" are not valid arguments for --with-prrte-bindir])])
+           AS_IF([test -z "${with_prrte_bindir}" -a -n "${with_prrte}"],
+                 [with_prrte_bindir="${with_prrte}/bin"])
+           AS_IF([test -n "${with_prrte_bindir}"],
+                 [AS_IF([test -x ${with_prrte_bindir}/prterun],
+                        [prterun_path="${with_prrte_bindir}/prterun"],
+                        [AC_MSG_ERROR([Could not find executable prterun: ${with_prrte_bindir}/prterun])])])])
+    AS_IF([test -n "${prterun_path}"],
+          [AC_DEFINE_UNQUOTED([OMPI_PRTERUN_PATH], ["${prterun_path}"], [Path to prterun])])
+
     AS_IF([test "$setup_prrte_external_happy" = "yes"],
           [$1], [$2])
 
