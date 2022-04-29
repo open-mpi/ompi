@@ -35,6 +35,7 @@ mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
                      mca_coll_base_module_t *module)
 {
     mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
+    int rank = ompi_comm_rank(comm);
     ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     const char *sbuf2;
@@ -54,7 +55,7 @@ mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
         sbuf = sbuf1 - gap;
     }
 
-    if (opal_cuda_check_bufs(rbuf, NULL)) {
+    if ((rank == root) && (opal_cuda_check_bufs((char *)rbuf, NULL))) {
         rbuf1 = (char*)malloc(bufsize);
         if (NULL == rbuf1) {
             if (NULL != sbuf1) free(sbuf1);
