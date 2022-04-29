@@ -476,6 +476,8 @@ static attr_subsys_t *attr_subsys = NULL;
 static unsigned int int_pos = 12345;
 static unsigned int integer_pos = 12345;
 static int attr_sequence;
+static void *dummy = (void*)1;
+static int *p = (void*)&dummy;
 
 /*
  * MPI attributes are *not* high performance, so just use a One Big Lock
@@ -574,8 +576,6 @@ int ompi_attr_put_ref(void)
 static void attr_subsys_construct(attr_subsys_t *subsys)
 {
     int ret;
-    void *bogus = (void*) 1;
-    int *p = (int *) &bogus;
 
     subsys->keyval_hash = OBJ_NEW(opal_hash_table_t);
 
