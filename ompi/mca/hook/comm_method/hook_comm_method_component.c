@@ -71,20 +71,25 @@ enum mca_hook_comm_method_mode_flags_t {
     OMPI_HOOK_COMM_METHOD_INIT = 0x01,
     /* Display on MPI_FINALIZE */
     OMPI_HOOK_COMM_METHOD_FINALIZE = 0x02,
+    /* show affinity by default, allow noaff to skip it */
+    OMPI_HOOK_COMM_METHOD_SKIP_AFFINITY = 0x04,
 };
 
 int mca_hook_comm_method_verbose = 0;
 int mca_hook_comm_method_output  = -1;
 bool mca_hook_comm_method_enable_mpi_init = false;
 bool mca_hook_comm_method_enable_mpi_finalize = false;
+bool mca_hook_comm_method_enable_show_aff = true;
 uint32_t mca_hook_comm_method_enabled_flags = 0x00;
 int mca_hook_comm_method_max = 12;
+int mca_hook_comm_method_aff_columns = 80;
 int mca_hook_comm_method_brief = 0;
 char *mca_hook_comm_method_fakefile = NULL;
 
 static mca_base_var_enum_value_flag_t mca_hook_comm_method_modes[] = {
     {.flag = OMPI_HOOK_COMM_METHOD_INIT, .string = "mpi_init"},
     {.flag = OMPI_HOOK_COMM_METHOD_FINALIZE, .string = "mpi_finalize"},
+    {.flag = OMPI_HOOK_COMM_METHOD_SKIP_AFFINITY, .string = "noaff"},
     {0, NULL, 0}
 };
 
@@ -137,6 +142,7 @@ static int ompi_hook_comm_method_component_register(void)
      */
     mca_hook_comm_method_enable_mpi_init = false;
     mca_hook_comm_method_enable_mpi_finalize = false;
+    mca_hook_comm_method_enable_show_aff = true;
     mca_base_var_enum_create_flag("ompi_comm_method", mca_hook_comm_method_modes, &mca_hook_comm_method_flags);
     
     ret = mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "display",
@@ -161,6 +167,9 @@ static int ompi_hook_comm_method_component_register(void)
         if( mca_hook_comm_method_enabled_flags & OMPI_HOOK_COMM_METHOD_FINALIZE ) {
             mca_hook_comm_method_enable_mpi_finalize = true;
         }
+        if( mca_hook_comm_method_enabled_flags & OMPI_HOOK_COMM_METHOD_SKIP_AFFINITY ) {
+            mca_hook_comm_method_enable_show_aff = false;
+        }
     }
 
     // hook_comm_method_max
@@ -171,6 +180,17 @@ static int ompi_hook_comm_method_component_register(void)
                                  OPAL_INFO_LVL_3,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_comm_method_max);
+    // hook_comm_method_aff_columns
+    ret = mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "aff_columns",
+                                 "Number of hosts for which to print unabbreviated 2d table of comm methods.",
+                                 MCA_BASE_VAR_TYPE_INT, NULL,
+                                 0, 0,
+                                 OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_hook_comm_method_aff_columns);
+
+    (void) mca_base_var_register_synonym(ret, "ompi", "ompi", NULL, "display_comm_aff_columns", MCA_BASE_VAR_SYN_FLAG_INTERNAL);
+
     // hook_comm_method_brief
     (void) mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "brief",
                                  "Only print the comm method summary, skip the 2d table.",
