@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2022 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,11 +22,6 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/mtl/base/base.h"
 
-static void
-mystrncpy(char *to, const char *from, int n) {
-    snprintf(to, n, "%s", from);
-}
-
 // For converting comm_method strings to comm_method id# and back.
 // This starts as our local set of strings, but gets Allreduced into
 // a global mapping so all the strings at all the ranks are represented.
@@ -43,6 +38,9 @@ static comm_method_string_conversion_t comm_method_string_conversion;
 #define MODE_IS_PML 1
 #define MODE_IS_MTL 2
 #define MODE_IS_BTL 3
+
+#define CALLED_FROM_MPI_INIT 1
+#define CALLED_FROM_MPI_FINALIZE 2
 
 // ----------------------------------------------------------------------------
 
@@ -64,6 +62,10 @@ static char*
 lookup_btl_name_for_send(ompi_communicator_t* comm, int rank) {
     ompi_proc_t *dst_proc = ompi_group_peer_lookup_existing(comm->c_remote_group, rank);
 
+    if (NULL == dst_proc) {
+        return NULL;
+    }
+
     mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(dst_proc);
     if (endpoint &&
         endpoint->btl_send.bml_btls &&
@@ -84,7 +86,7 @@ lookup_btl_name_for_send(ompi_communicator_t* comm, int rank) {
 // that the caller has to free.
 static char *
 comm_method_string(MPI_Comm comm, int rank, int *comm_mode) {
-    char *p;
+    char *p, *btl;
     char *string = malloc(COMM_METHOD_STRING_SIZE);
 
     if (!string) { return NULL; }
@@ -92,14 +94,19 @@ comm_method_string(MPI_Comm comm, int rank, int *comm_mode) {
     p = lookup_pml_name();
     if (p && 0==strncmp("ob1", p, 4)) {      // BTL
         if (comm_mode) { *comm_mode = MODE_IS_BTL; }
-        mystrncpy(string, lookup_btl_name_for_send(comm, rank), COMM_METHOD_STRING_SIZE);
+        btl = lookup_btl_name_for_send(comm, rank);
+        if (NULL == btl) {
+            strncpy(string, "n/a", COMM_METHOD_STRING_SIZE);
+        } else {
+            strncpy(string, btl, COMM_METHOD_STRING_SIZE);
+        }
     }
     else if (p && 0==strncmp("cm", p, 3)) {  // MTL
         if (comm_mode) { *comm_mode = MODE_IS_MTL; }
-        mystrncpy(string, lookup_mtl_name(), COMM_METHOD_STRING_SIZE);
+        strncpy(string, lookup_mtl_name(), COMM_METHOD_STRING_SIZE);
     } else {                        // PML
         if (comm_mode) { *comm_mode = MODE_IS_PML; }
-        mystrncpy(string, p, COMM_METHOD_STRING_SIZE);
+        strncpy(string, p, COMM_METHOD_STRING_SIZE);
     }
     return string;
 }
@@ -144,12 +151,12 @@ static void
 add_string_to_conversion_struct(comm_method_string_conversion_t *data, char *string)
 {
     int i;
-    if (0 == strcmp(string, "n/a")) { return; }
+    if (NULL == string || 0 == strcmp(string, "n/a")) { return; }
 
     i = lookup_string_in_conversion_struct(data, string);
     if (i == 0) { // didn't find string in list, so add it
         if (data->n < MAX_COMM_METHODS) {
-            mystrncpy(data->str[data->n], string, COMM_METHOD_STRING_SIZE);
+            strncpy(data->str[data->n], string, COMM_METHOD_STRING_SIZE);
             ++(data->n);
         }
     }
@@ -214,14 +221,14 @@ static void ompi_report_comm_methods(int called_from_location);
 void ompi_hook_comm_method_mpi_init_bottom(int argc, char **argv, int requested, int *provided)
 {
     if( mca_hook_comm_method_enable_mpi_init ) {
-        ompi_report_comm_methods( 1 );
+        ompi_report_comm_methods( CALLED_FROM_MPI_INIT );
     }
 }
 
 void ompi_hook_comm_method_mpi_finalize_top(void)
 {
     if( mca_hook_comm_method_enable_mpi_finalize ) {
-        ompi_report_comm_methods( 2 );
+        ompi_report_comm_methods( CALLED_FROM_MPI_FINALIZE );
     }
 }
 
@@ -312,7 +319,7 @@ abbreviate_list_into_string(char *str, int max, int *list, int nlist)
 // When activated from init: we establish connections before printing.
 // When activated from finalize: we just print whatever info is available.
 static void
-ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from finalize
+ompi_report_comm_methods(int called_from_location)
 {
     int numhosts, i, j, k;
     int max2Dprottable = 12;
@@ -416,7 +423,7 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 
 // If we're running during init, establish connections between all peers
 // (in leader_comm, which is all the ranks that are here at this point)
-    if (called_from_location == 1) {
+    if (CALLED_FROM_MPI_INIT == called_from_location) {
         for (i=0; i<=nleaderranks/2; ++i) {
 // (Examples to show why the loop is i<=nleaderranks/2)
 // np4 : 0 1 2 3    i=0 0c0  i=1 0c0&1&3  i=2 0c0&1&3&2
