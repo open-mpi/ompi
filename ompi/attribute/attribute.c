@@ -129,15 +129,15 @@
  *          ompi_set_attr_int(..., foo, ...)
  *
  * 4. C reads the attribute value.  The value returned is a pointer
- *    that points to an int that has a value
- *    of 7.
+ *    that points to an int that has a value of 7.
  *
  * Example: int *ret;
  *          MPI_Attr_get(..., &ret);
  *          -> *ret will equal 7.
  *
- * 5. Fortran MPI-1 reads the attribute value.  This is the unity
- *    case; the same value is returned.
+ * 5. Fortran MPI-1 reads the attribute value.  The C int value is
+ *    cast to a fortran INTEGER (i.e., MPI_Fint) -- potentially being
+ *    truncated if sizeof(int) > sizeof(INTEGER).
  *
  * Example: INTEGER ret
  *          CALL MPI_ATTR_GET(..., ret, ierr)
@@ -163,7 +163,7 @@
  *    that points to an INTEGER (i.e., an MPI_Fint) that has a value
  *    of 7.
  *    --> NOTE: The external MPI interface does not distinguish between
- *        this case and case 7.  It is the programer's responsibility
+ *        this case and case 10.  It is the programer's responsibility
  *        to code accordingly.
  *
  * Example: MPI_Fint *ret;
@@ -202,7 +202,7 @@
  *    that points to an INTEGER(KIND=MPI_ADDRESS_KIND) (i.e., a void*)
  *    that has a value of 12.
  *    --> NOTE: The external MPI interface does not distinguish between
- *        this case and case 4.  It is the programer's responsibility
+ *        this case and case 7.  It is the programer's responsibility
  *        to code accordingly.
  *
  * Example A: MPI_Aint *ret;
