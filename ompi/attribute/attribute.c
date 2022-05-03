@@ -692,17 +692,22 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
 {
     ompi_attribute_fortran_ptr_t es_tmp;
     int rc;
+    bool is_predefined = flags & OMPI_KEYVAL_PREDEFINED;
 
-    rc = ompi_mpi_instance_retain ();
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        return rc;
+    /* Predefined attributes are created as part of the instance creation,
+     * so do not retain the instance to avoid a circular dependency */
+    if (!is_predefined) {
+        rc = ompi_mpi_instance_retain ();
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            return rc;
+        }
     }
 
     es_tmp.c_ptr = extra_state;
     rc = ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
                                       key, &es_tmp, flags,
                                       bindings_extra_state);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc) && !is_predefined) {
         ompi_mpi_instance_release ();
     }
 
@@ -786,8 +791,12 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
     opal_atomic_wmb();
     OPAL_THREAD_UNLOCK(&attribute_lock);
 
-    /* balance out retain in keyval_create */
-    ompi_mpi_instance_release ();
+    /* balance out retain in keyval_create
+     * predefined attributes do not retain the instance so do not release it either
+     */
+    if (!predefined) {
+        ompi_mpi_instance_release ();
+    }
 
     return MPI_SUCCESS;
 }
