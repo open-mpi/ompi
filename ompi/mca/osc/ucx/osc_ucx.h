@@ -16,6 +16,8 @@
 #include "ompi/communicator/communicator.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 #include "opal/mca/common/ucx/common_ucx_wpool.h"
+#include "opal/mca/shmem/shmem.h"
+#include "opal/mca/shmem/base/base.h"
 
 #define OSC_UCX_ASSERT  MCA_COMMON_UCX_ASSERT
 #define OSC_UCX_ERROR   MCA_COMMON_UCX_ERROR
@@ -36,6 +38,8 @@ typedef struct ompi_osc_ucx_component {
     bool no_locks; /* Default value of the no_locks info key for new windows */
     bool acc_single_intrinsic;
     unsigned int priority;
+    /* directory where to place backing files */
+    char *backing_directory;
 } ompi_osc_ucx_component_t;
 
 OMPI_DECLSPEC extern ompi_osc_ucx_component_t mca_osc_ucx_component;
@@ -120,6 +124,15 @@ typedef struct ompi_osc_ucx_module {
     opal_common_ucx_ctx_t *ctx;
     opal_common_ucx_wpmem_t *mem;
     opal_common_ucx_wpmem_t *state_mem;
+
+    bool noncontig_shared_win;
+    size_t *sizes;
+    /* in shared windows, shmem_addrs can be used for direct load store to
+     * remote windows */
+    uint64_t *shmem_addrs;
+    void *segment_base;
+    /** opal shared memory structure for the shared memory segment */
+    opal_shmem_ds_t seg_ds;
 } ompi_osc_ucx_module_t;
 
 typedef enum locktype {
@@ -137,6 +150,8 @@ typedef struct ompi_osc_ucx_lock {
 #define OSC_UCX_GET_EP(comm_, rank_) (ompi_comm_peer_lookup(comm_, rank_)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_UCX])
 #define OSC_UCX_GET_DISP(module_, rank_) ((module_->disp_unit < 0) ? module_->disp_units[rank_] : module_->disp_unit)
 
+int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
+        int *disp_unit, void * baseptr);
 int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len);
 int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base);
 int ompi_osc_ucx_free(struct ompi_win_t *win);
