@@ -41,19 +41,18 @@ mca_io_romio341_file_open (ompi_communicator_t *comm,
 // An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
 // below with an MPI_Info, we need to create an equivalent MPI_Info. This
 // isn't ideal but it only happens a few places.
-    ompi_info_t *ompi_info;
-    ompi_info = OBJ_NEW(ompi_info_t);
-    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
-    opal_info_t *opal_info = &(ompi_info->super);
+    ompi_info_t ompi_info;
+    OBJ_CONSTRUCT(&ompi_info, ompi_info_t);
+    opal_info_t *opal_info = &(ompi_info.super);
     opal_info_dup (info, &opal_info);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
 //    OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
-    ret = ROMIO_PREFIX(MPI_File_open)(comm, filename, amode, ompi_info,
+    ret = ROMIO_PREFIX(MPI_File_open)(comm, filename, amode, &ompi_info,
                                       &data->romio_fh);
 //    OPAL_THREAD_UNLOCK (&mca_io_romio341_mutex);
 
-    ompi_info_free(&ompi_info);
+    OBJ_DESTRUCT(&ompi_info);
     return ret;
 }
 
@@ -206,20 +205,19 @@ mca_io_romio341_file_set_view (ompi_file_t *fh,
 // An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
 // below with an MPI_Info, we need to create an equivalent MPI_Info. This
 // isn't ideal but it only happens a few places.
-    ompi_info_t *ompi_info;
-    ompi_info = OBJ_NEW(ompi_info_t);
-    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
-    opal_info_t *opal_info = &(ompi_info->super);
+    ompi_info_t ompi_info;
+    OBJ_CONSTRUCT(&ompi_info, ompi_info_t);
+    opal_info_t *opal_info = &(ompi_info.super);
     opal_info_dup (info, &opal_info);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
     ret =
         ROMIO_PREFIX(MPI_File_set_view) (data->romio_fh, disp, etype, filetype,
-                                        datarep, ompi_info);
+                                        datarep, &ompi_info);
     OPAL_THREAD_UNLOCK (&mca_io_romio341_mutex);
 
-    ompi_info_free(&ompi_info);
+    OBJ_DESTRUCT(&ompi_info);
     return ret;
 }
 
