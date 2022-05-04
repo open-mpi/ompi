@@ -20,7 +20,7 @@ mpirun_SOURCES = \
     main.c
 
 mpirun_LDADD = \
-	$(top_builddir)/opal/libopen-pal.la
+	$(top_builddir)/opal/libopen-pal_core.la
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpiexec$(EXEEXT); $(LN_S) mpirun$(EXEEXT) mpiexec$(EXEEXT))

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -47,7 +47,6 @@
 #endif
 
 #include "opal/constants.h"
-#include "opal/mca/pmix/pmix-internal.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/opal_environ.h"
@@ -62,6 +61,8 @@ static int verbose_stream = -1;
 static opal_output_stream_t verbose;
 static char *output_dir = NULL;
 static char *output_prefix = NULL;
+
+static opal_output_pmix_cleanup_fn_t output_pmix_cleanup_fn = NULL;
 
 /*
  * Internal data structures and helpers for the generalized output
@@ -90,6 +91,7 @@ typedef struct {
     char *ldi_file_suffix;
     int ldi_fd;
     int ldi_file_num_lines_lost;
+    char *ldi_filename;
 } output_desc_t;
 
 /*
@@ -205,6 +207,7 @@ bool opal_output_init(void)
         info[i].ldi_file_suffix = NULL;
         info[i].ldi_file_want_append = false;
         info[i].ldi_fd = -1;
+        info[i].ldi_filename = NULL;
         info[i].ldi_file_num_lines_lost = 0;
     }
 
@@ -474,6 +477,22 @@ void opal_output_set_output_file_info(const char *dir, const char *prefix, char 
     }
 }
 
+void opal_output_register_pmix_cleanup_fn(opal_output_pmix_cleanup_fn_t cleanup_fn)
+{
+    int n;
+
+    OPAL_THREAD_LOCK(&mutex);
+    /* Register any filenames setup prior to this call */
+    for (n = 0; n < OPAL_OUTPUT_MAX_STREAMS; n++) {
+        if (NULL != info[n].ldi_filename) {
+            output_pmix_cleanup_fn(info[n].ldi_filename, false, true, false);
+        }
+    }
+    /* Save the function pointer for later calls */
+    output_pmix_cleanup_fn = cleanup_fn;
+    OPAL_THREAD_UNLOCK(&mutex);
+}
+
 /*
  * Shut down the output stream system
  */
@@ -710,7 +729,6 @@ static int do_open(int output_id, opal_output_stream_t *lds)
 static int open_file(int i)
 {
     int flags;
-    char *filename;
     int n;
 
     /* first check to see if this file is already open
@@ -748,20 +766,23 @@ static int open_file(int i)
     /* Setup the filename and open flags */
 
     if (NULL != output_dir) {
-        filename = (char *) malloc(OPAL_PATH_MAX);
-        if (NULL == filename) {
+        if (NULL != info[i].ldi_filename) {
+            free(info[i].ldi_filename);
+        }
+        info[i].ldi_filename = (char *) malloc(OPAL_PATH_MAX);
+        if (NULL == info[i].ldi_filename) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        opal_string_copy(filename, output_dir, OPAL_PATH_MAX);
-        strcat(filename, "/");
+        opal_string_copy(info[i].ldi_filename, output_dir, OPAL_PATH_MAX);
+        strcat(info[i].ldi_filename, "/");
         if (NULL != output_prefix) {
-            strcat(filename, output_prefix);
+            strcat(info[i].ldi_filename, output_prefix);
         }
         if (info[i].ldi_file_suffix != NULL) {
-            strcat(filename, info[i].ldi_file_suffix);
+            strcat(info[i].ldi_filename, info[i].ldi_file_suffix);
         } else {
             info[i].ldi_file_suffix = NULL;
-            strcat(filename, "output.txt");
+            strcat(info[i].ldi_filename, "output.txt");
         }
         flags = O_CREAT | O_RDWR;
         if (!info[i].ldi_file_want_append) {
@@ -769,23 +790,28 @@ static int open_file(int i)
         }
 
         /* Actually open the file */
-        info[i].ldi_fd = open(filename, flags, 0644);
+        info[i].ldi_fd = open(info[i].ldi_filename, flags, 0644);
         if (-1 == info[i].ldi_fd) {
             info[i].ldi_used = false;
-            free(filename); /* release the filename in all cases */
+            /* release the filename in all error cases */
+            free(info[i].ldi_filename);
+            info[i].ldi_filename = NULL;
             return OPAL_ERR_IN_ERRNO;
         }
 
         /* Make the file be close-on-exec to prevent child inheritance
          * problems */
         if (-1 == fcntl(info[i].ldi_fd, F_SETFD, 1)) {
-            free(filename); /* release the filename in all cases */
+            /* release the filename in all error cases */
+            free(info[i].ldi_filename);
+            info[i].ldi_filename = NULL;
             return OPAL_ERR_IN_ERRNO;
         }
 
         /* register it to be ignored */
-        opal_pmix_register_cleanup(filename, false, true, false);
-        free(filename); /* release the filename in all cases */
+        if (NULL != output_pmix_cleanup_fn) {
+            output_pmix_cleanup_fn(info[i].ldi_filename, false, true, false);
+        }
     }
 
     /* Return successfully even if the session dir did not exist yet;
@@ -807,6 +833,10 @@ static void free_descriptor(int output_id)
 
         if (-1 != ldi->ldi_fd) {
             close(ldi->ldi_fd);
+        }
+        if (NULL != ldi->ldi_filename) {
+            free(ldi->ldi_filename);
+            ldi->ldi_filename = NULL;
         }
         ldi->ldi_used = false;
 

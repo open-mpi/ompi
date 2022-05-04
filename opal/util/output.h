@@ -579,6 +579,14 @@ static inline int opal_best_effort_write(int fd, const void *buf, size_t count)
     return OPAL_SUCCESS;
 }
 
+/**
+ * Cleanup output files function:
+ * Signature: opal_pmix_register_cleanup
+ */
+typedef int (*opal_output_pmix_cleanup_fn_t)(char *path, bool directory, bool ignore,
+                                             bool jobscope);
+void opal_output_register_pmix_cleanup_fn(opal_output_pmix_cleanup_fn_t cleanup_fn);
+
 END_C_DECLS
 
 #endif /* OPAL_OUTPUT_H_ */

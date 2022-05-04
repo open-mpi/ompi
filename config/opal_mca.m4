@@ -265,6 +265,9 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     # can't use a variable rename here because these need to be evaled
     # at auto* time.
 
+    AS_LITERAL_IF([$1], [],
+                  [m4_fatal([MCA_CONFIGURE_PROJECT argument must be a literal])])
+
     opal_show_subtitle "Configuring MCA for $1"
 
     AC_MSG_CHECKING([for frameworks for $1])
@@ -291,6 +294,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS=
     MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS=
     MCA_$1_FRAMEWORK_LIBS=
+    MCA_$1_FRAMEWORK_CORE_LIBS=
 
     m4_foreach(mca_framework, [mca_$1_framework_list],
                [m4_ifval(mca_framework,
@@ -301,14 +305,17 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
                                  MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_ALL_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS"
                                  MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_DSO_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS"
                                  MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_STATIC_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS"
+                                 mca_$1_framework_base_lib=
                                 ], [
                                  MCA_$1_FRAMEWORKS="$MCA_$1_FRAMEWORKS mca_framework"
                                  MCA_$1_FRAMEWORKS_SUBDIRS="$MCA_$1_FRAMEWORKS_SUBDIRS [mca/]mca_framework"
                                  MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS [\$(MCA_]$1[_]mca_framework[_ALL_SUBDIRS)]"
                                  MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS [\$(MCA_]$1[_]mca_framework[_DSO_SUBDIRS)]"
                                  MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS [\$(MCA_]$1[_]mca_framework[_STATIC_SUBDIRS)]"
-                                 MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/libmca_]mca_framework[.la]"])
-                          MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [\$(MCA_]$1[_]mca_framework[_STATIC_LTLIBS)]"
+                                 mca_$1_framework_base_lib="[mca/]mca_framework[/libmca_]mca_framework[.la]"])
+                          m4_ifdef([MCA_]$1[_]mca_framework[_CORE_LIB],
+                                   [MCA_$1_FRAMEWORK_CORE_LIBS="$MCA_$1_FRAMEWORK_CORE_LIBS ${mca_$1_framework_base_lib} [\$(MCA_]$1[_]mca_framework[_STATIC_LTLIBS)]"],
+                                   [MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS ${mca_$1_framework_base_lib} [\$(MCA_]$1[_]mca_framework[_STATIC_LTLIBS)]"])
                           m4_ifdef([MCA_]$1[_]mca_framework[_CONFIG],
                                    [MCA_]$1[_]mca_framework[_CONFIG]($1, mca_framework),
                                    [MCA_CONFIGURE_FRAMEWORK($1, mca_framework, 1)])])])
@@ -324,6 +331,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     AC_SUBST(MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
     AC_SUBST(MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS)
     AC_SUBST(MCA_$1_FRAMEWORK_LIBS)
+    AC_SUBST(MCA_$1_FRAMEWORK_CORE_LIBS)
 ])
 
 # MCA_ORDER_COMPONENT_LIST(project_name, framework_name)

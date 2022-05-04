@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2022      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,6 +19,7 @@
 #include "opal/mca/threads/thread_usage.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/proc.h"
 
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
@@ -59,6 +63,32 @@ static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
     return OPAL_SUCCESS;
 }
 
+static char*
+opal_get_proc_hostname_using_pmix(const opal_proc_t *proc)
+{
+    int ret;
+    char *hostname;
+
+    /* if the proc is NULL, then we can't know */
+    if (NULL == proc) {
+        return strdup("unknown");
+    }
+
+    /* if it is my own hostname we are after, then just hand back
+     * the value in opal_process_info */
+    if (proc == opal_proc_local_get()) {
+        return strdup(opal_process_info.nodename);
+    }
+    /* if we don't already have it, then try to get it */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc->proc_name, (char **) &hostname,
+                                   PMIX_STRING);
+    if (OPAL_SUCCESS != ret) {
+        return strdup("unknown"); // return something so the caller doesn't segfault
+    }
+    /* user is not allowed to release the data */
+    return hostname;
+}
+
 static int opal_pmix_base_frame_close(void)
 {
     int rc;
@@ -77,6 +107,8 @@ static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
     opal_pmix_base.evbase = opal_sync_event_base;
     /* pass across the verbosity */
     opal_pmix_verbose_output = opal_pmix_base_framework.framework_output;
+    /* Set the distributed name service via PMIx */
+    opal_get_proc_hostname = opal_get_proc_hostname_using_pmix;
     return rc;
 }
 

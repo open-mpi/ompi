@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2006 The University of Tennessee and The University
+# Copyright (c) 2004-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
@@ -13,6 +13,7 @@
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -44,4 +45,4 @@ endif # OPAL_INSTALL_BINARIES
 endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 opal_wrapper_SOURCES = opal_wrapper.c
-opal_wrapper_LDADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+opal_wrapper_LDADD = $(top_builddir)/opal/libopen-pal_core.la
