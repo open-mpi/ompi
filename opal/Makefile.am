@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2009 The University of Tennessee and The University
+# Copyright (c) 2004-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
@@ -55,18 +55,29 @@ DIST_SUBDIRS = \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
-# Build the main OPAL library
+noinst_LTLIBRARIES = libopen-pal_core.la
 lib_LTLIBRARIES = lib@OPAL_LIB_NAME@.la
+
+libopen_pal_core_la_SOURCES =
+libopen_pal_core_la_LIBADD = \
+        mca/base/libmca_base.la \
+        util/libopalutil_core.la \
+	$(MCA_opal_FRAMEWORK_CORE_LIBS)
+libopen_pal_core_la_DEPENDENCIES = \
+        mca/base/libmca_base.la \
+        util/libopalutil_core.la \
+	$(MCA_opal_FRAMEWORK_CORE_LIBS)
+
 lib@OPAL_LIB_NAME@_la_SOURCES =
 lib@OPAL_LIB_NAME@_la_LIBADD = \
+	libopen-pal_core.la \
         datatype/libdatatype.la \
-        mca/base/libmca_base.la \
         util/libopalutil.la \
 	$(LIBOPAL_GPU_LA) \
 	$(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_NAME@_la_DEPENDENCIES = \
+	libopen-pal_core.la \
         datatype/libdatatype.la \
-        mca/base/libmca_base.la \
         util/libopalutil.la \
         $(LIBOPAL_GPU_LA)  \
         $(MCA_opal_FRAMEWORK_LIBS)
@@ -74,7 +85,6 @@ lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
-noinst_LTLIBRARIES =
 dist_opaldata_DATA =
 lib@OPAL_LIB_NAME@_la_SOURCES += $(headers)
 

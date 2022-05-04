@@ -22,6 +22,9 @@ dnl
 dnl $HEADER$
 dnl
 
+dnl need in the core library
+AC_DEFUN([MCA_opal_threads_CORE_LIB], [1])
+
 dnl we only want one :)
 m4_define(MCA_opal_threads_CONFIGURE_MODE, STOP_AT_FIRST)
 
