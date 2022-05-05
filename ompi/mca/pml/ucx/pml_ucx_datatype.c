@@ -15,6 +15,7 @@
 
 #include <inttypes.h>
 #include <math.h>
+#include <pthread.h>
 
 #ifdef HAVE_UCP_REQUEST_PARAM_T
 #define PML_UCX_DATATYPE_SET_VALUE(_datatype, _val) \
@@ -205,10 +206,18 @@ pml_ucx_datatype_t *mca_pml_ucx_init_nbx_datatype(ompi_datatype_t *datatype,
 
 ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
 {
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
     size_t size = 0; /* init to suppress compiler warning */
     ucp_datatype_t ucp_datatype;
     ucs_status_t status;
     int ret;
+
+    pthread_mutex_lock(&lock);
+
+    if (datatype->pml_data != PML_UCX_DATATYPE_INVALID) {
+        /* datatype is already initialized in concurrent thread */
+        goto out;
+    }
 
     if (mca_pml_ucx_datatype_is_contig(datatype)) {
         ompi_datatype_type_size(datatype, &size);
@@ -259,7 +268,10 @@ ucp_datatype_t mca_pml_ucx_init_datatype(ompi_datatype_t *datatype)
     datatype->pml_data = ucp_datatype;
 #endif
 
-    return ucp_datatype;
+out:
+    pthread_mutex_unlock(&lock);
+
+    return mca_pml_ucx_from_ompi_datatype(datatype);
 }
 
 static void mca_pml_ucx_convertor_construct(mca_pml_ucx_convertor_t *convertor)
