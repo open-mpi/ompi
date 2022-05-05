@@ -38,6 +38,7 @@ void* shmem_malloc(size_t size)
 void* shmem_calloc(size_t count, size_t size)
 {
     size_t req_sz = count * size;
+    if (!req_sz) return NULL;
     void *ptr = _shmalloc(req_sz);
     if (ptr) {
         memset(ptr, 0, req_sz);
