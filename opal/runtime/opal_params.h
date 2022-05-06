@@ -19,6 +19,7 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,7 @@ extern bool opal_timing_overhead;
 
 OPAL_DECLSPEC extern int opal_initialized;
 OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
+OPAL_DECLSPEC extern bool opal_built_with_rocm_support;
 
 /**
  *  * Whether we want to enable CUDA GPU buffer send and receive support.
@@ -52,6 +54,11 @@ OPAL_DECLSPEC extern bool opal_cuda_support;
  * Whether cuda runtime support is initialized or not.
  */
 OPAL_DECLSPEC extern bool opal_cuda_runtime_initialized;
+
+/**
+ * Whether rocm runtime support is initialized or not.
+ */
+OPAL_DECLSPEC extern bool opal_rocm_runtime_initialized;
 
 /**
  *  * Whether we want to warn the user when libcuda is missing.

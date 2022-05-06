@@ -15,6 +15,7 @@
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +49,7 @@ BEGIN_C_DECLS
 #define CONVERTOR_NO_OP           0x00100000
 #define CONVERTOR_WITH_CHECKSUM   0x00200000
 #define CONVERTOR_CUDA            0x00400000
+#define CONVERTOR_ROCM            0x00400000 //same as CUDA on purpose
 #define CONVERTOR_CUDA_ASYNC      0x00800000
 #define CONVERTOR_TYPE_MASK       0x10FF0000
 #define CONVERTOR_STATE_START     0x01000000
@@ -57,6 +59,7 @@ BEGIN_C_DECLS
 #define CONVERTOR_CUDA_UNIFIED    0x10000000
 #define CONVERTOR_HAS_REMOTE_SIZE 0x20000000
 #define CONVERTOR_SKIP_CUDA_INIT  0x40000000
+#define CONVERTOR_SKIP_GPU_INIT   0x40000000 // same as CUDA on purpose
 
 union dt_elem_desc;
 typedef struct opal_convertor_t opal_convertor_t;
@@ -115,9 +118,9 @@ struct opal_convertor_t {
     /* --- fields are no more aligned on cacheline --- */
     dt_stack_t static_stack[DT_STATIC_STACK_SIZE]; /**< local stack for small datatypes */
 
-#if OPAL_CUDA_SUPPORT
-    memcpy_fct_t cbmemcpy; /**< memcpy or cuMemcpy */
-    void *stream;          /**< CUstream for async copy */
+#if OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
+    memcpy_fct_t cbmemcpy; /**< memcpy, cuMemcpy, or hipMemcpy */
+    void *stream;          /**< CUstream/hipStream for async copy */
 #endif
 };
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_convertor_t);
@@ -180,8 +183,8 @@ static inline int32_t opal_convertor_need_buffers(const opal_convertor_t *pConve
 {
     if (OPAL_UNLIKELY(0 == (pConvertor->flags & CONVERTOR_HOMOGENEOUS)))
         return 1;
-#if OPAL_CUDA_SUPPORT
-    if (pConvertor->flags & (CONVERTOR_CUDA | CONVERTOR_CUDA_UNIFIED))
+#if OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
+    if (pConvertor->flags & (CONVERTOR_CUDA | CONVERTOR_CUDA_UNIFIED | CONVERTOR_ROCM))
         return 1;
 #endif
     if (pConvertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)
