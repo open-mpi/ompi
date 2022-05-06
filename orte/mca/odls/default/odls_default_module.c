@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2008-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -337,7 +337,6 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
 {
     int i;
     sigset_t sigs;
-    long fd, fdmax = sysconf(_SC_OPEN_MAX);
     char dir[MAXPATHLEN];
 
 #if HAVE_SETPGID
@@ -400,8 +399,27 @@ static int do_child(orte_odls_spawn_caddy_t *cd, int write_fd)
        the pipe used for the IOF INTERNAL messages, and the pipe up to
        the parent. */
     if (ORTE_SUCCESS != close_open_file_descriptors(write_fd, cd->opts)) {
+        /* On some versions of MacOS (e.g., 12.3.1), we have seen
+           sysconf(_SC_OPEN_MAX) -- and "ulimit -n" -- return very
+           large numbers, and sometime return -1 (which means
+           "unlimited").  This can result in an unreasonably large
+           loop over closing all FDs (especially if -1 gets
+           interpreted as LONG_MAX).
+           https://github.com/open-mpi/ompi/issues/10358 has some
+           links to others who have seen this kind of behavior.
+
+           Protect against -1 and arbitrarily large values being
+           returned from sysconf(_SC_OPEN_MAX): use an MCA param to
+           cap the max value that we'll use, just in case there's an
+           actual reason for a user to change the built-in default
+           value that we're (somewhat arbitrarily) picking. */
+        long fd, fdmax = sysconf(_SC_OPEN_MAX);
+        if (-1 == fdmax || orte_odls_default_maxfd < fdmax) {
+            fdmax = orte_odls_default_maxfd;
+        }
+
         // close *all* file descriptors -- slow
-        for(fd=3; fd<fdmax; fd++) {
+        for (fd = 3; fd < fdmax; fd++) {
             if (
 #if OPAL_PMIX_V1
                 fd != cd->opts.p_internal[1] &&
