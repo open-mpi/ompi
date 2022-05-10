@@ -63,7 +63,7 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
     CPPFLAGS="${$1_CPPFLAGS} ${CPPFLAGS}"
 
     AS_IF([test "$ompi_check_psm2_happy" = "yes"],
-          [AC_CHECK_HEADERS([glob.h], []
+          [AC_CHECK_HEADERS([glob.h], [],
                [AC_MSG_WARN([glob.h not found.  Can not build component.])
                 $1_SUMMARY="no (glob.h not found))"
                 ompi_check_psm2_happy="no"])])
