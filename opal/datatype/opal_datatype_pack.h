@@ -23,7 +23,7 @@
 #include "opal_config.h"
 #include "opal/datatype/opal_datatype_pack_unpack_predefined.h"
 
-#if !defined(CHECKSUM) && (OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT)
+#if defined(OPAL_DATATYPE_PACK_UNPACK_GPU)
 /* Make use of existing macro to do CUDA style memcpy */
 #    undef MEMCPY_CSUM
 #    define MEMCPY_CSUM(DST, SRC, BLENGTH, CONVERTOR) \
@@ -105,16 +105,16 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
     /* premptively update the number of COUNT we will return. */
     *(COUNT) -= cando_count;
 
+#if !defined(OPAL_DATATYPE_PACK_UNPACK_GPU)
     if (_elem->blocklen < 9) {
-        if ( !(CONVERTOR->flags & CONVERTOR_CUDA) &&
-             !(CONVERTOR->flags & CONVERTOR_ROCM)
-            && OPAL_LIKELY(
+        if (OPAL_LIKELY(
                 OPAL_SUCCESS
                 == opal_datatype_pack_predefined_element(&_memory, &_packed, cando_count, _elem))) {
             goto update_and_return;
         }
         /* else unrecognized _elem->common.type, use the memcpy path */
     }
+#endif
 
     if (_elem->blocklen == 1) {
         for (; cando_count > 0; cando_count--) {

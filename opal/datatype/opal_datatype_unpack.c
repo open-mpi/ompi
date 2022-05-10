@@ -49,6 +49,10 @@
 #    define opal_unpack_general_function            opal_unpack_general_checksum
 #    define opal_unpack_homogeneous_contig_function opal_unpack_homogeneous_contig_checksum
 #    define opal_generic_simple_unpack_function     opal_generic_simple_unpack_checksum
+#elif defined(OPAL_DATATYPE_PACK_UNPACK_GPU)
+#    define opal_unpack_general_function            opal_unpack_general_gpu
+#    define opal_unpack_homogeneous_contig_function opal_unpack_homogeneous_contig_gpu
+#    define opal_generic_simple_unpack_function     opal_generic_simple_unpack_gpu
 #else
 #    define opal_unpack_general_function            opal_unpack_general
 #    define opal_unpack_homogeneous_contig_function opal_unpack_homogeneous_contig
@@ -217,7 +221,7 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
     MEMCPY( temporary + start_position, partial_data, length );
 
     /* Save the original content of the user memory */
-#if OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
+#if defined(OPAL_DATATYPE_PACK_UNPACK_GPU)
     /* In the case where the data is being unpacked from device memory, need to
      * use the special host to device memory copy. */
     pConvertor->cbmemcpy(saved_data, user_data, data_length, pConvertor );
@@ -235,7 +239,7 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
 
     /* Rebuild the data by pulling back the unmodified bytes from the original
      * content in the user memory. */
-#if OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
+#if defined(OPAL_DATATYPE_PACK_UNPACK_GPU)
     /* Need to copy the modified user_data again so we can see which
      * bytes need to be converted back to their original values. */
     {

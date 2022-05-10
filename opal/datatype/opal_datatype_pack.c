@@ -49,6 +49,12 @@
         opal_pack_homogeneous_contig_with_gaps_checksum
 #    define opal_generic_simple_pack_function opal_generic_simple_pack_checksum
 #    define opal_pack_general_function        opal_pack_general_checksum
+#elif defined(OPAL_DATATYPE_PACK_UNPACK_GPU)
+#    define opal_pack_homogeneous_contig_function opal_pack_homogeneous_contig_gpu
+#    define opal_pack_homogeneous_contig_with_gaps_function \
+        opal_pack_homogeneous_contig_with_gaps_gpu
+#    define opal_generic_simple_pack_function opal_generic_simple_pack_gpu
+#    define opal_pack_general_function        opal_pack_general_gpu
 #else
 #    define opal_pack_homogeneous_contig_function           opal_pack_homogeneous_contig
 #    define opal_pack_homogeneous_contig_with_gaps_function opal_pack_homogeneous_contig_with_gaps

@@ -46,6 +46,16 @@ noinst_LTLIBRARIES = \
 # these sources will be compiled with the special -D
 libdatatype_reliable_la_SOURCES = opal_datatype_pack.c opal_datatype_unpack.c
 libdatatype_reliable_la_CFLAGS = -DCHECKSUM $(AM_CFLAGS)
+if OPAL_cuda_support
+libdatatype_gpu_la_SOURCES = opal_datatype_pack.c opal_datatype_unpack.c
+libdatatype_gpu_la_CFLAGS = -DOPAL_DATATYPE_PACK_UNPACK_GPU $(AM_CFLAGS)
+noinst_LTLIBRARIES += libdatatype_gpu.la
+endif
+if OPAL_rocm_support
+libdatatype_gpu_la_SOURCES = opal_datatype_pack.c opal_datatype_unpack.c
+libdatatype_gpu_la_CFLAGS = -DOPAL_DATATYPE_PACK_UNPACK_GPU $(AM_CFLAGS)
+noinst_LTLIBRARIES += libdatatype_gpu.la
+endif
 
 # these sources will be compiled with the normal CFLAGS only
 libdatatype_la_SOURCES = \
@@ -71,6 +81,12 @@ libdatatype_la_SOURCES = \
         opal_datatype_unpack.c
 
 libdatatype_la_LIBADD = libdatatype_reliable.la
+if OPAL_cuda_support
+libdatatype_la_LIBADD += libdatatype_gpu.la
+endif
+if OPAL_rocm_support
+libdatatype_la_LIBADD += libdatatype_gpu.la
+endif
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS

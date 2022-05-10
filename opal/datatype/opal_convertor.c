@@ -592,7 +592,19 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
             }
         }
     } else {
-#endif /* defined(CHECKSUM) */
+#elif OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
+    if (OPAL_UNLIKELY(convertor->flags & (CONVERTOR_CUDA | CONVERTOR_ROCM))) {
+        if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
+            convertor->fAdvance = opal_unpack_general_gpu;
+        } else {
+            if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
+                convertor->fAdvance = opal_unpack_homogeneous_contig_gpu;
+            } else {
+                convertor->fAdvance = opal_generic_simple_unpack_gpu;
+            }
+        }
+    } else {
+#endif /* defined(CHECKSUM) || OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT */
         if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
             convertor->fAdvance = opal_unpack_general;
         } else {
@@ -602,7 +614,7 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
                 convertor->fAdvance = opal_generic_simple_unpack;
             }
         }
-#if defined(CHECKSUM)
+#if defined(CHECKSUM) || OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
     }
 #endif
     return OPAL_SUCCESS;
@@ -643,7 +655,25 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
             }
         }
     } else {
-#endif /* defined(CHECKSUM) */
+#elif OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
+    if (convertor->flags & (CONVERTOR_CUDA | CONVERTOR_ROCM)) {
+        if (CONVERTOR_SEND_CONVERSION
+            == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
+            convertor->fAdvance = opal_pack_general_gpu;
+        } else {
+            if (datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
+                if (((datatype->ub - datatype->lb) == (ptrdiff_t) datatype->size)
+                    || (1 >= convertor->count)) {
+                    convertor->fAdvance = opal_pack_homogeneous_contig_gpu;
+                } else {
+                    convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps_gpu;
+                }
+            } else {
+                convertor->fAdvance = opal_generic_simple_pack_gpu;
+            }
+        }
+    } else {
+#endif /* defined(CHECKSUM) || OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT */
         if (CONVERTOR_SEND_CONVERSION
             == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
             convertor->fAdvance = opal_pack_general;
@@ -659,7 +689,7 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
                 convertor->fAdvance = opal_generic_simple_pack;
             }
         }
-#if defined(CHECKSUM)
+#if defined(CHECKSUM) || OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
     }
 #endif
     return OPAL_SUCCESS;
