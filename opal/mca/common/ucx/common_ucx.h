@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018      Mellanox Technologies.  All rights reserved.
  *                         All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,8 +89,8 @@ typedef struct opal_common_ucx_module {
     int  progress_iterations;
     int  registered;
     bool opal_mem_hooks;
-    char *tls;
-    char *devices;
+    char **tls;
+    char **devices;
 } opal_common_ucx_module_t;
 
 typedef struct opal_common_ucx_del_proc {
