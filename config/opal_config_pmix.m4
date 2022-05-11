@@ -16,7 +16,7 @@ dnl                         reserved.
 dnl Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2014-2021 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
-dnl Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -163,7 +163,7 @@ dnl
 dnl only safe to call from OPAL_CONFIG_PMIX, assumes variables from
 dnl there are set.
 AC_DEFUN([_OPAL_CONFIG_PMIX_EXTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([opal_pmix_CPPFLAGS_save opal_pmix_LDFLAGS_save opal_pmix_LIBS_save opal_pmix_external_support])
+    OPAL_VAR_SCOPE_PUSH([opal_pmix_min_version opal_pmix_min_num_version opal_pmix_CPPFLAGS_save opal_pmix_LDFLAGS_save opal_pmix_LIBS_save opal_pmix_external_support])
 
     opal_pmix_external_support="yes"
 
@@ -191,12 +191,14 @@ AC_DEFUN([_OPAL_CONFIG_PMIX_EXTERNAL], [
            LDFLAGS="$opal_pmix_LDFLAGS_save $opal_pmix_LDFLAGS"
            LIBS="$opal_pmix_LIBS_save $opal_pmix_LIBS"
 
+           opal_pmix_min_num_version=OMPI_PMIX_NUMERIC_MIN_VERSION
+           opal_pmix_min_version=OMPI_PMIX_MIN_VERSION
            AS_IF([test "$opal_pmix_external_support" = "yes"],
-                 [AC_MSG_CHECKING([if external PMIx version is 3.1.5 or greater])
+                 [AC_MSG_CHECKING([if external PMIx version is OMPI_PMIX_MIN_VERSION or greater])
                     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>
                           ]], [[
-#if PMIX_NUMERIC_VERSION < 0x00030105
-#error "pmix API version is less than 3.1.5"
+#if PMIX_NUMERIC_VERSION < $opal_pmix_min_num_version
+#error "pmix API version is less than $opal_pmix_min_version"
 #endif
                           ]])],
                           [AC_MSG_RESULT([yes])],
