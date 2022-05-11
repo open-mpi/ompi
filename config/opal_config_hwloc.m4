@@ -5,6 +5,7 @@ dnl Copyright (c) 2014-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
+dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -95,7 +96,7 @@ dnl
 dnl only safe to call from OPAL_CONFIG_HWLOC, assumes variables from
 dnl there are set.
 AC_DEFUN([_OPAL_CONFIG_HWLOC_EXTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([opal_hwloc_CPPFLAGS_save opal_hwloc_LDFLAGS_save opal_hwloc_LIBS_save opal_hwloc_external_support])
+    OPAL_VAR_SCOPE_PUSH([opal_hwloc_min_num_version opal_hwloc_min_version opal_hwloc_CPPFLAGS_save opal_hwloc_LDFLAGS_save opal_hwloc_LIBS_save opal_hwloc_external_support])
 
     OAC_CHECK_PACKAGE([hwloc],
                       [opal_hwloc],
@@ -114,17 +115,19 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_EXTERNAL], [
     OPAL_FLAGS_APPEND_UNIQ([LDFLAGS], [$opal_hwloc_LDFLAGS])
     OPAL_FLAGS_APPEND_UNIQ([LIBS], [$opal_hwloc_LIBS])
 
+    opal_hwloc_min_num_version=OMPI_HWLOC_NUMERIC_MIN_VERSION
+    opal_hwloc_min_version=OMPI_HWLOC_NUMERIC_MIN_VERSION
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
-          [AC_MSG_CHECKING([if external hwloc version is 1.11.0 or greater])
+          [AC_MSG_CHECKING([if external hwloc version is OMPI_HWLOC_MIN_VERSION or greater])
            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <hwloc.h>
                               ]], [[
-#if HWLOC_API_VERSION < 0x00010500
-#error "hwloc API version is less than 0x00011100"
+#if HWLOC_API_VERSION < $opal_hwloc_min_num_version
+#error "hwloc API version is less than $opal_hwloc_min_version"
 #endif
                                ]])],
                    [AC_MSG_RESULT([yes])],
                    [AC_MSG_RESULT([no])
-                    AC_MSG_WARN([external hwloc version is too old (1.11.0 or later required)])
+                    AC_MSG_WARN([external hwloc version is too old (OMPI_HWLOC_MIN_VERSION or later required)])
                     opal_hwloc_external_support="no"])])
 
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
