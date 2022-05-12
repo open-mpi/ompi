@@ -99,7 +99,7 @@ static int nbc_scatter_init (const void* sendbuf, int sendcount, MPI_Datatype se
       }
     } else {
       for (int i = 0 ; i < p ; ++i) {
-        sbuf = (char *) sendbuf + i * sendcount * sndext;
+        sbuf = (char *) sendbuf + (MPI_Aint) sndext * i * sendcount;
         if (i == root) {
           if (!inplace) {
             /* if I am the root - just copy the message */
@@ -222,7 +222,7 @@ static int nbc_scatter_inter_init (const void* sendbuf, int sendcount, MPI_Datat
         }
     } else if (MPI_ROOT == root) {
         for (int i = 0 ; i < rsize ; ++i) {
-            sbuf = ((char *)sendbuf) + (i * sendcount * sndext);
+            sbuf = ((char *)sendbuf) + ((MPI_Aint) sndext * i * sendcount);
             /* root sends the right buffer to the right receiver */
             res = NBC_Sched_send(sbuf, false, sendcount, sendtype, i, schedule, false);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

@@ -331,14 +331,14 @@ static int nbc_alltoall_inter_init (const void* sendbuf, int sendcount, MPI_Data
 
   for (int i = 0; i < rsize; i++) {
     /* post all sends */
-    sbuf = (char *) sendbuf + i * sendcount * sndext;
+    sbuf = (char *) sendbuf + (MPI_Aint) sndext * i * sendcount;
     res = NBC_Sched_send (sbuf, false, sendcount, sendtype, i, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       break;
     }
 
     /* post all receives */
-    rbuf = (char *) recvbuf + i * recvcount * rcvext;
+    rbuf = (char *) recvbuf + (MPI_Aint) rcvext * i * recvcount;
     res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, i, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       break;
@@ -397,13 +397,13 @@ static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint 
     int sndpeer = (rank + r) % p;
     int rcvpeer = (rank - r + p) % p;
 
-    char *rbuf = (char *) recvbuf + rcvpeer * recvcount * rcvext;
+    char *rbuf = (char *) recvbuf + (MPI_Aint) rcvext * rcvpeer * recvcount;
     res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, rcvpeer, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
     }
 
-    char *sbuf = (char *) sendbuf + sndpeer * sendcount * sndext;
+    char *sbuf = (char *) sendbuf + (MPI_Aint) sndext * sndpeer * sendcount;
     res = NBC_Sched_send (sbuf, false, sendcount, sendtype, sndpeer, schedule, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
@@ -523,7 +523,7 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
 
   /* phase 3 - reorder - data is now in wrong order in tmpbuf - reorder it into recvbuf */
   for (int i = 0 ; i < p; ++i) {
-    rbuf = (char *) recvbuf + ((rank - i + p) % p) * recvcount * rcvext;
+    rbuf = (char *) recvbuf + (MPI_Aint) rcvext * ((rank - i + p) % p) * recvcount;
     res = NBC_Sched_unpack ((void *)(intptr_t) (i * datasize), true, recvcount, recvtype, rbuf, false, schedule,
                             false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
