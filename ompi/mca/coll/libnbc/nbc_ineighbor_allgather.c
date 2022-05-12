@@ -9,7 +9,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -86,7 +86,7 @@ static int nbc_neighbor_allgather_init(const void *sbuf, int scount, MPI_Datatyp
 
     for (int i = 0 ; i < indegree ; ++i) {
       if (MPI_PROC_NULL != srcs[i]) {
-        res = NBC_Sched_recv ((char *) rbuf + i * rcount * rcvext, true, rcount, rtype, srcs[i], schedule, false);
+        res = NBC_Sched_recv ((char *) rbuf + (MPI_Aint) rcvext * i * rcount, true, rcount, rtype, srcs[i], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }
