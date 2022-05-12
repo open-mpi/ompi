@@ -858,8 +858,34 @@ OPAL_DECLSPEC int opal_common_ucx_wpmem_flush(opal_common_ucx_wpmem_t *mem,
 
 OPAL_DECLSPEC int opal_common_ucx_wpmem_fence(opal_common_ucx_wpmem_t *mem)
 {
-    /* TODO */
-    return OPAL_SUCCESS;
+    ucs_status_t status = UCS_OK;
+    _ctx_record_t *ctx_rec;
+    opal_common_ucx_winfo_t *winfo;
+    opal_common_ucx_ctx_t *ctx;
+    int rc = OPAL_SUCCESS;
+
+    if (NULL == mem) {
+        return OPAL_SUCCESS;
+    }
+
+    ctx = mem->ctx;
+    opal_mutex_lock(&ctx->mutex);
+
+    OPAL_LIST_FOREACH (ctx_rec, &ctx->ctx_records, _ctx_record_t) {
+        winfo = ctx_rec->winfo;
+        opal_mutex_lock(&winfo->mutex);
+        status = ucp_worker_fence(winfo->worker);
+        opal_mutex_unlock(&winfo->mutex);
+        if (status != UCS_OK) {
+            MCA_COMMON_UCX_ERROR("opal_common_ucx_fence failed: %d", rc);
+            rc = OPAL_ERROR;
+            break;
+        }
+    }
+
+    opal_mutex_unlock(&ctx->mutex);
+
+    return rc;
 }
 
 OPAL_DECLSPEC void opal_common_ucx_req_init(void *request)
