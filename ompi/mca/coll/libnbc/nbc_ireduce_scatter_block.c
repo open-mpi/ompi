@@ -10,7 +10,7 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -70,7 +70,7 @@ static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int
 
   maxr = (int)ceil((log((double)p)/LOG2));
 
-  count = p * recvcount;
+  count = (size_t) p * recvcount;
 
   if (0 < count) {
     char *rbuf, *lbuf, *buf;
@@ -248,7 +248,7 @@ static int nbc_reduce_scatter_block_inter_init(const void *sendbuf, void *recvbu
     return res;
   }
 
-  count = rcount * lsize;
+  count = (size_t)rcount * lsize;
 
   span = opal_datatype_span(&dtype->super, count, &gap);
   span_align = OPAL_ALIGN(span, dtype->super.align, ptrdiff_t);
