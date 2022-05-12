@@ -8,6 +8,7 @@
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/proc.h"
+#include "opal/util/sys_limits.h"
 
 #include <ucm/api/ucm.h>
 
@@ -508,7 +509,10 @@ static int _comm_ucx_wpmem_map(opal_common_ucx_wpool_t *wpool, void **base, size
 
     assert(mem_attrs.length >= size);
     if (mem_type != OPAL_COMMON_UCX_MEM_ALLOCATE_MAP) {
-        assert(mem_attrs.address == (*base));
+        /* Returned mapped address is aligned to ucs rcache->params.alignment.
+         * Alignment is less than page size */
+        assert(((mem_attrs.address <= (*base)) && ((*base) - opal_getpagesize()
+                < mem_attrs.address)) || (size == 0 && mem_attrs.address == NULL));
     } else {
         (*base) = mem_attrs.address;
     }
