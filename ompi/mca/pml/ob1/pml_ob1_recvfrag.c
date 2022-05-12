@@ -647,12 +647,12 @@ int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm )
     mca_pml_ob1_comm_proc_t* proc;
     int cnt = 0;
 
+    OB1_MATCHING_LOCK(&pml_comm->matching_lock);
     for (uint32_t i = 0; i < pml_comm->num_procs; i++) {
         if ((NULL == (proc = pml_comm->procs[i])) || (NULL != proc->frags_cant_match)) {
             continue;
         }
 
-        OB1_MATCHING_LOCK(&pml_comm->matching_lock);
         /* Acquire all cant_match frags from the peer */
         frags_cant_match = proc->frags_cant_match;
         proc->frags_cant_match = NULL;
