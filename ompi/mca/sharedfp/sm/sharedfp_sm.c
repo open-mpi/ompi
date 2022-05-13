@@ -27,6 +27,11 @@
  */
 
 #include "ompi_config.h"
+
+#if HAVE_SYS_STAT_H
+#    include <sys/stat.h>
+#endif /* HAVE_SYS_STAT_H */
+
 #include "mpi.h"
 #include "opal/util/printf.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
