@@ -58,9 +58,19 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.4 -- April, 2022
---------------------
+4.1.4 -- May, 2022
+------------------
 
+- Fix OMPIO issue with long double etypes.
+- Update treematch topology component to fix numerous correctness issues.
+- Fix memory leak in UCX MCA parameter registration.
+- Fix long operation closing file descriptors on non-Linux systems that
+  can appear as a hang to users.
+- Fix for attribute handling on GCC 11 due to pointer aliasing.
+- Fix multithreaded race in UCX PML's datatype handling.
+- Fix a correctness issue in CUDA Reduce algorithm.
+- Fix compilation issue with CUDA GPUDirect RDMA support.
+- Fix to make shmem_calloc(..., 0) conform to the OpenSHMEM specification.
 - Add UCC collectives component.
 - Fix divide by zero issue in OMPI IO component.
 - Fix compile issue with libnl when not in standard search locations.
