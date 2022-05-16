@@ -90,7 +90,7 @@ AS_IF([test "$opal_check_cuda_happy" = "yes"],
 
 # If we have CUDA support, check to see if we have support for SYNC_MEMOPS
 # which was first introduced in CUDA 6.0.
-AS_IF([test "$opal_check_cuda_happy"="yes"],
+AS_IF([test "$opal_check_cuda_happy" = "yes"],
     [AC_CHECK_DECL([CU_POINTER_ATTRIBUTE_SYNC_MEMOPS], [CUDA_SYNC_MEMOPS=1], [CUDA_SYNC_MEMOPS=0],
         [#include <$opal_cuda_incdir/cuda.h>])],
     [])
@@ -108,9 +108,9 @@ AC_COMPILE_IFELSE(
 
 # If we have CUDA support, check to see if we have support for cuPointerGetAttributes
 # which was first introduced in CUDA 7.0.
-AS_IF([test "$opal_check_cuda_happy"="yes"],
-    AC_CHECK_DECL([cuPointerGetAttributes], [CUDA_GET_ATTRIBUTES=1], [CUDA_GET_ATTRIBUTES=0],
-        [#include <$opal_cuda_incdir/cuda.h>]),
+AS_IF([test "$opal_check_cuda_happy" = "yes"],
+    [AC_CHECK_DECL([cuPointerGetAttributes], [CUDA_GET_ATTRIBUTES=1], [CUDA_GET_ATTRIBUTES=0],
+        [#include <$opal_cuda_incdir/cuda.h>])],
     [])
 
 AC_MSG_CHECKING([if have cuda support])
