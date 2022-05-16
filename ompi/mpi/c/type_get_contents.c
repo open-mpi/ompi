@@ -69,7 +69,7 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
                             &max_addresses, array_of_addresses,
                             &max_datatypes, array_of_datatypes, NULL );
     if( rc != MPI_SUCCESS ) {
-        OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN,
                                 MPI_ERR_INTERN, FUNC_NAME );
     }
 
@@ -80,7 +80,7 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
         if( !(ompi_datatype_is_predefined(array_of_datatypes[i])) ) {
             if( (rc = ompi_datatype_duplicate( array_of_datatypes[i], &newtype )) != MPI_SUCCESS ) {
                 ompi_datatype_destroy( &newtype );
-                OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
+                OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN,
                                         MPI_ERR_INTERN, FUNC_NAME );
             }
             ompi_datatype_copy_args( array_of_datatypes[i], newtype );

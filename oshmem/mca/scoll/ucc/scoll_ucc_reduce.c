@@ -24,11 +24,11 @@ static inline ucc_status_t mca_scoll_ucc_reduce_init(const void *sbuf, void *rbu
     ucc_op = shmem_op_to_ucc_op(op->op);
 
     if (OPAL_UNLIKELY((ucc_datatype_t) SCOLL_UCC_DT_UNSUPPORTED == ucc_dt)) {
-        UCC_VERBOSE(5, "shmem datatype is not supported: dtype # = %d", 
+        UCC_VERBOSE(5, "shmem datatype is not supported: dtype # = %d",
             op->dt);
     }
     if (OPAL_UNLIKELY((ucc_reduction_op_t) SCOLL_UCC_OP_UNSUPPORTED == ucc_op)) {
-        UCC_VERBOSE(5, "shmem reduction op is not supported: op # = %d", 
+        UCC_VERBOSE(5, "shmem reduction op is not supported: op # = %d",
             op->op);
     }
 

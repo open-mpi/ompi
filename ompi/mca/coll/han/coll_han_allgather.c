@@ -159,14 +159,14 @@ int mca_coll_han_allgather_lg_task(void *task_args)
     /* Lower level (shared memory or intra-node) gather */
     if (MPI_IN_PLACE == t->sbuf) {
         if (!t->noop) {
-            t->low_comm->c_coll->coll_gather(MPI_IN_PLACE, t->scount, t->sdtype, 
-                                             tmp_rbuf, t->rcount, t->rdtype, t->root_low_rank, 
+            t->low_comm->c_coll->coll_gather(MPI_IN_PLACE, t->scount, t->sdtype,
+                                             tmp_rbuf, t->rcount, t->rdtype, t->root_low_rank,
                                              t->low_comm, t->low_comm->c_coll->coll_gather_module);
         }
         else {
             tmp_send = ((char*)t->rbuf) + (ptrdiff_t)t->w_rank * (ptrdiff_t)t->rcount * rext;
-            t->low_comm->c_coll->coll_gather(tmp_send, t->rcount, t->rdtype, 
-                                             NULL, t->rcount, t->rdtype, t->root_low_rank, 
+            t->low_comm->c_coll->coll_gather(tmp_send, t->rcount, t->rdtype,
+                                             NULL, t->rcount, t->rdtype, t->root_low_rank,
                                              t->low_comm, t->low_comm->c_coll->coll_gather_module);
         }
     }

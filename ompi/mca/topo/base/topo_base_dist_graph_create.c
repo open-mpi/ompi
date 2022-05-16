@@ -303,7 +303,7 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
     (*newcomm)->c_flags           |= OMPI_COMM_DIST_GRAPH;
 
     err = mca_topo_base_dist_graph_distribute(module,
-                                              *newcomm, 
+                                              *newcomm,
                                               n, nodes,
                                               degrees, targets,
                                               weights,

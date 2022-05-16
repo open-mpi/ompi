@@ -13,7 +13,7 @@
 #include <ucc/api/ucc.h>
 
 static inline ucc_status_t mca_scoll_ucc_broadcast_init(void * buf, int count,
-                                                        int root, 
+                                                        int root,
                                                         mca_scoll_ucc_module_t * ucc_module,
                                                         ucc_coll_req_h * req)
 {

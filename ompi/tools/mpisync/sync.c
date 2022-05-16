@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     double offs = 0, rtt = 0;
     char hname[OPAL_MAXHOSTNAMELEN];
     const char *local_hname;
- 
+
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &commsize);
 

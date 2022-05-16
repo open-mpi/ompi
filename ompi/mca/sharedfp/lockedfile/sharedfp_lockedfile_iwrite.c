@@ -123,13 +123,13 @@ int mca_sharedfp_lockedfile_write_ordered_begin(ompio_file_t *fh,
 	}
     }
 
-    ret = fh->f_comm->c_coll->coll_gather ( &sendBuff, 
-                                            sendcnt, 
-                                            OMPI_OFFSET_DATATYPE, 
-                                            buff, 
+    ret = fh->f_comm->c_coll->coll_gather ( &sendBuff,
+                                            sendcnt,
+                                            OMPI_OFFSET_DATATYPE,
+                                            buff,
                                             recvcnt,
-                                            OMPI_OFFSET_DATATYPE, 
-                                            0, 
+                                            OMPI_OFFSET_DATATYPE,
+                                            0,
                                             fh->f_comm,
                                             fh->f_comm->c_coll->coll_gather_module );
     if ( OMPI_SUCCESS != ret ) {
@@ -169,14 +169,14 @@ int mca_sharedfp_lockedfile_write_ordered_begin(ompio_file_t *fh,
     }
 
     /* Scatter the results to the other processes*/
-    ret = fh->f_comm->c_coll->coll_scatter ( buff, 
-                                             sendcnt, 
+    ret = fh->f_comm->c_coll->coll_scatter ( buff,
+                                             sendcnt,
                                              OMPI_OFFSET_DATATYPE,
-                                             &offsetBuff, 
-                                             recvcnt, 
-                                             OMPI_OFFSET_DATATYPE, 
+                                             &offsetBuff,
+                                             recvcnt,
+                                             OMPI_OFFSET_DATATYPE,
                                              0,
-                                             fh->f_comm, 
+                                             fh->f_comm,
                                              fh->f_comm->c_coll->coll_scatter_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;

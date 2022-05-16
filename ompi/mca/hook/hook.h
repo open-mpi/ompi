@@ -54,7 +54,7 @@ BEGIN_C_DECLS
  * *** Everyone (Inside MPI) ***
  *  Everyone registered will see this callback triggered. It is only triggered
  *  between ompi_mpi_init and ompi_mpi_finalize.
- * 
+ *
  */
 /* ******************************************************************** */
 
@@ -200,7 +200,7 @@ struct ompi_hook_base_component_1_0_0_t {
 };
 typedef struct ompi_hook_base_component_1_0_0_t ompi_hook_base_component_1_0_0_t;
 typedef ompi_hook_base_component_1_0_0_t ompi_hook_base_component_t;
-/* 
+/*
  * Note: We do -not- expose a component object for this framework.
  * All interation with the component should go through the base/base.h interfaces.
  * See that header for more information on calling functions.

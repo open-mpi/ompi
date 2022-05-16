@@ -1,5 +1,5 @@
 .. _mpi_exscan_init:
- 
+
 MPI_Exscan_init
 ===============
     .. include_body

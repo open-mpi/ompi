@@ -41,10 +41,10 @@ In this framework, the following components are tested to operate under
 failure scenarios: {%s}
 #
 [module:event:selectbug]
-WARNING: The selected 'libevent' uses the 'select' method, which has 
-a known bug in post-failure operation, yet you have requested support 
+WARNING: The selected 'libevent' uses the 'select' method, which has
+a known bug in post-failure operation, yet you have requested support
 for fault tolerance. When using this component, normal failure free
-operation is expected; However, failures may cause the application to 
+operation is expected; However, failures may cause the application to
 deadlock.
 
 You may select a different polling method by setting the MCA parameter

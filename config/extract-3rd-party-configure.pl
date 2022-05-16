@@ -141,7 +141,7 @@ sub process_m4($)
                     $option_name = $1;
 
                     # Skip anything excluded
-                    if( exists($skip_options{$option_name}) && 
+                    if( exists($skip_options{$option_name}) &&
                         ($skip_options{$option_name} eq $OPTION_ALL_MARKER || lc($skip_options{$option_name}) eq $project_name_lc) ) {
                         if( !$list_only && !$quiet_arg) {
                             print "# Warning: Excluded: $option_name\n";

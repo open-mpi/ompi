@@ -23,7 +23,7 @@ noinst_LTLIBRARIES = libmca_part.la
 libmca_part_la_SOURCES =
 
 # local files
-headers = part.h 
+headers = part.h
 libmca_part_la_SOURCES += $(headers) $(nodist_headers)
 
 # Conditionally install the header files

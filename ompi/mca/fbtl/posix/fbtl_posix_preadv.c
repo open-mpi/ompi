@@ -39,12 +39,12 @@ ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
 {
     ssize_t bytes_read=0;
     struct flock lock;
-    int lock_counter=0;    
+    int lock_counter=0;
 
     if (NULL == fh->f_io_array) {
         return OMPI_ERROR;
     }
-    
+
     if ( fh->f_atomicity ) {
         OMPIO_SET_ATOMICITY_LOCK(fh, lock, lock_counter, F_RDLCK);
     }
@@ -86,8 +86,8 @@ ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
     if ( fh->f_atomicity ) {
         mca_fbtl_posix_unlock ( &lock, fh, &lock_counter );
     }
-    
-        
+
+
     return bytes_read;
 }
 
@@ -96,10 +96,10 @@ ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int 
     ssize_t bytes_read=0, ret_code;
     size_t total_bytes = 0;
     int ret;
-    
+
     ret = mca_fbtl_posix_lock ( lock, fh, F_RDLCK, (off_t)fh->f_io_array[0].offset,
                                 (off_t)fh->f_io_array[0].length, OMPIO_LOCK_ENTIRE_REGION,
-                                lock_counter ); 
+                                lock_counter );
     if ( 0 < ret ) {
         opal_output(1, "mca_fbtl_posix_preadv_single: error in mca_fbtl_posix_lock() ret=%d: %s",
                     ret, strerror(errno));
@@ -107,7 +107,7 @@ ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int 
         mca_fbtl_posix_unlock ( lock, fh, lock_counter);
         return OMPI_ERROR;
     }
-    
+
     int retries = 0;
     size_t len = fh->f_io_array[0].length;
     while ( total_bytes < len ) {
@@ -130,7 +130,7 @@ ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int 
             }
         }
         total_bytes += ret_code;
-    }   
+    }
     bytes_read = total_bytes;
     mca_fbtl_posix_unlock ( lock, fh, lock_counter );
 
@@ -144,11 +144,11 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
     int ret, i, j;
     ssize_t bytes_read=0, ret_code=0;
     char *temp_buf = NULL;
-    
+
     int startindex = 0;
     int endindex   = 0;
     bool done = false;
-    
+
     while (!done) {
         // Break the io_array into chunks such that the size of the temporary
         // buffer does not exceed mca_fbtl_posix_max_tmpbuf_size bytes.
@@ -158,13 +158,13 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             done = true;
             break;
         }
-        
+
         size_t sstart = (size_t)fh->f_io_array[startindex].offset;
         size_t slen=0;
 
         for ( j = startindex; j < fh->f_num_of_io_entries; j++ ) {
             endindex = j;
-            slen = ((size_t)fh->f_io_array[j].offset + fh->f_io_array[j].length) - sstart;            
+            slen = ((size_t)fh->f_io_array[j].offset + fh->f_io_array[j].length) - sstart;
             if (slen > mca_fbtl_posix_max_tmpbuf_size ) {
                 endindex = j-1;
                 break;
@@ -173,11 +173,11 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
         // Need to increment the value of endindex
         // by one for the loop syntax to work correctly.
         endindex++;
-        
+
         start = (size_t)fh->f_io_array[startindex].offset;
         end   = (size_t)fh->f_io_array[endindex-1].offset + fh->f_io_array[endindex-1].length;
         len   = end - start;
-        
+
         if ( len > bufsize ) {
             if ( NULL != temp_buf ) {
                 free ( temp_buf);
@@ -189,9 +189,9 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             }
             bufsize = len;
         }
-        
+
         // Read the entire block.
-        ret = mca_fbtl_posix_lock ( lock, fh, F_RDLCK, start, len, OMPIO_LOCK_ENTIRE_REGION, lock_counter ); 
+        ret = mca_fbtl_posix_lock ( lock, fh, F_RDLCK, start, len, OMPIO_LOCK_ENTIRE_REGION, lock_counter );
         if ( 0 < ret ) {
             opal_output(1, "mca_fbtl_posix_preadv_datasieving: error in mca_fbtl_posix_lock() ret=%d: %s",
                         ret, strerror(errno));
@@ -202,7 +202,7 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
         }
         size_t total_bytes = 0;
         int retries = 0;
-        
+
         while ( total_bytes < len ) {
             ret_code = pread (fh->fd, temp_buf+total_bytes, len-total_bytes, start+total_bytes);
             if ( ret_code == -1 ) {
@@ -224,7 +224,7 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             total_bytes += ret_code;
         }
         mca_fbtl_posix_unlock ( lock, fh, lock_counter);
-        
+
         // Copy out the elements that were requested.
         size_t pos = 0;
         size_t num_bytes;
@@ -238,12 +238,12 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             if ( ((ssize_t) pos + (ssize_t)num_bytes) > ret_code ) {
                 num_bytes = ret_code - (ssize_t)pos;
             }
-            
+
             memcpy (fh->f_io_array[i].memory_address, temp_buf + pos, num_bytes);
-            bytes_read += num_bytes;            
+            bytes_read += num_bytes;
         }
     }
-    
+
     free ( temp_buf);
     return bytes_read;
 }
@@ -258,13 +258,13 @@ ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int
     int iov_count = 0;
     OMPI_MPI_OFFSET_TYPE iov_offset = 0;
     off_t total_length, end_offset=0;
-    
+
     iov = (struct iovec *) malloc (OMPIO_IOVEC_INITIAL_SIZE * sizeof (struct iovec));
     if (NULL == iov) {
         opal_output(1, "OUT OF MEMORY\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
         if (0 == iov_count) {
             iov[iov_count].iov_base = fh->f_io_array[i].memory_address;
@@ -273,7 +273,7 @@ ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int
             end_offset = (off_t)fh->f_io_array[i].offset + (off_t)fh->f_io_array[i].length;
             iov_count ++;
         }
-        
+
         if (OMPIO_IOVEC_INITIAL_SIZE*block <= iov_count) {
             block ++;
             iov = (struct iovec *)realloc
@@ -284,7 +284,7 @@ ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
         }
-        
+
         if (fh->f_num_of_io_entries != i+1) {
             if (((((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset +
                    (ptrdiff_t)fh->f_io_array[i].length) ==
@@ -298,10 +298,10 @@ ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int
                 continue;
             }
         }
-        
+
         total_length = (end_offset - (off_t)iov_offset );
-        
-        ret = mca_fbtl_posix_lock ( lock, fh, F_RDLCK, iov_offset, total_length, OMPIO_LOCK_SELECTIVE, lock_counter ); 
+
+        ret = mca_fbtl_posix_lock ( lock, fh, F_RDLCK, iov_offset, total_length, OMPIO_LOCK_SELECTIVE, lock_counter );
         if ( 0 < ret ) {
             opal_output(1, "mca_fbtl_posix_preadv_generic: error in mca_fbtl_posix_lock() ret=%d: %s", ret, strerror(errno));
             free (iov);
@@ -334,7 +334,7 @@ ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int
             break;
         }
         iov_count = 0;
-    }   
+    }
 
     free (iov);
     return bytes_read;

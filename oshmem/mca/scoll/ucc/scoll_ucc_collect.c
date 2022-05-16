@@ -13,7 +13,7 @@
 #include <ucc/api/ucc.h>
 
 static inline ucc_status_t mca_scoll_ucc_collect_init(const void * sbuf, void * rbuf,
-                                                      int count, 
+                                                      int count,
                                                       mca_scoll_ucc_module_t * ucc_module,
                                                       ucc_coll_req_h * req)
 {
@@ -25,7 +25,7 @@ static inline ucc_status_t mca_scoll_ucc_collect_init(const void * sbuf, void * 
             .count = count,
             .datatype = UCC_DT_INT8,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
-        }, 
+        },
         .dst.info = {
             .buffer = rbuf,
             .count = count,

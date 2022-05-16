@@ -24,7 +24,7 @@ scoll_ucc_sources =           \
 		scoll_ucc_broadcast.c \
 		scoll_ucc_reduce.c    \
 		scoll_ucc_collect.c   \
-		scoll_ucc_alltoall.c 
+		scoll_ucc_alltoall.c
 if MCA_BUILD_oshmem_scoll_ucc_DSO
 component_noinst =
 component_install = mca_scoll_ucc.la

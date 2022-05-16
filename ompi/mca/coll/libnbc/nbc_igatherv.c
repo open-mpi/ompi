@@ -114,7 +114,7 @@ int ompi_coll_libnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype s
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
-  
+
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
@@ -194,7 +194,7 @@ int ompi_coll_libnbc_igatherv_inter(const void* sendbuf, int sendcount, MPI_Data
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
-  
+
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);

@@ -470,7 +470,7 @@ static void fd_event_cb(int fd, short flags, void* pdetector)
                          "%s %s: evtime triggered at stamp %g; observing %d (recv grace %g); observer %d (send grace %g); drift %g",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, stamp-startdate,
                          detector->hb_observing, stamp-detector->hb_rstamp-detector->hb_timeout,
-                         detector->hb_observer, stamp-detector->hb_sstamp-detector->hb_period, 
+                         detector->hb_observer, stamp-detector->hb_sstamp-detector->hb_period,
                          stamp-lastpeek-detector->hb_period*10.));
 
     if( (stamp - detector->hb_sstamp) > (detector->hb_period*.9) ) {

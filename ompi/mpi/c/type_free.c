@@ -57,7 +57,7 @@ int MPI_Type_free(MPI_Datatype *type)
 
    rc = ompi_datatype_destroy( type );
    if( rc != MPI_SUCCESS ) {
-      OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
+      OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN,
                              MPI_ERR_INTERN, FUNC_NAME );
    }
    *type = MPI_DATATYPE_NULL;

@@ -178,7 +178,7 @@ recheck:
     if( *index == (int)completed ) {
         /* Only one request has triggered. There was no in-flight
          * completions. Drop the signalled flag so we won't block
-         * in WAIT_SYNC_RELEASE 
+         * in WAIT_SYNC_RELEASE
          */
         WAIT_SYNC_SIGNALLED(&sync);
     }
@@ -530,14 +530,14 @@ int ompi_request_default_wait_some(size_t count,
          * a) request was found completed in the first loop
          *    => ( indices[i] == 0 )
          * b) request was completed between first loop and this check
-         *    => ( indices[i] == 1 ) and we can NOT atomically mark the 
+         *    => ( indices[i] == 1 ) and we can NOT atomically mark the
          *    request as pending.
          * c) request wasn't finished yet
-         *    => ( indices[i] == 1 ) and we CAN  atomically mark the 
+         *    => ( indices[i] == 1 ) and we CAN  atomically mark the
          *    request as pending.
          * NOTE that in any case (i >= num_requests_done) as latter grows
          * either slowly (in case of partial completion)
-         * OR in parallel with `i` (in case of full set completion)  
+         * OR in parallel with `i` (in case of full set completion)
          */
         if( !indices[num_active_reqs] ) {
             indices[num_requests_done++] = i;

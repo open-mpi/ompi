@@ -87,7 +87,7 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
 
         if( component == (ompi_osc_base_component_t*)(&mca_osc_monitoring_component) )
             continue; /* skip self */
-        
+
         priority = component->osc_query(win, base, size, disp_unit, comm, info, flavor);
         if (priority < 0) {
             continue;

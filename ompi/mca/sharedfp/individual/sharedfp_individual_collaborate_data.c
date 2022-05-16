@@ -86,12 +86,12 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 	goto exit;
     }
 
-    ret = ompio_fh->f_comm->c_coll->coll_allgather ( &nodesoneachprocess, 
-                                                     1, 
+    ret = ompio_fh->f_comm->c_coll->coll_allgather ( &nodesoneachprocess,
+                                                     1,
                                                      MPI_INT,
-                                                     countbuff, 
-                                                     1, 
-                                                     MPI_INT, 
+                                                     countbuff,
+                                                     1,
+                                                     MPI_INT,
                                                      ompio_fh->f_comm,
                                                      ompio_fh->f_comm->c_coll->coll_allgather_module );
 
@@ -142,27 +142,27 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 	goto exit;
     }
 
-    ret = ompio_fh->f_comm->c_coll->coll_allgatherv ( ind_ts, 
-                                                      countbuff[ompio_fh->f_rank], 
+    ret = ompio_fh->f_comm->c_coll->coll_allgatherv ( ind_ts,
+                                                      countbuff[ompio_fh->f_rank],
                                                       MPI_DOUBLE,
-                                                      timestampbuff, 
-                                                      countbuff, 
-                                                      displ, 
+                                                      timestampbuff,
+                                                      countbuff,
+                                                      displ,
                                                       MPI_DOUBLE,
-                                                      ompio_fh->f_comm, 
+                                                      ompio_fh->f_comm,
                                                       ompio_fh->f_comm->c_coll->coll_allgatherv_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
     }
 
-    ret = ompio_fh->f_comm->c_coll->coll_allgatherv ( ind_recordlength, 
-                                                      countbuff[ompio_fh->f_rank], 
+    ret = ompio_fh->f_comm->c_coll->coll_allgatherv ( ind_recordlength,
+                                                      countbuff[ompio_fh->f_rank],
                                                       OMPI_OFFSET_DATATYPE,
-                                                      offsetbuff, 
-                                                      countbuff, 
-                                                      displ, 
+                                                      offsetbuff,
+                                                      countbuff,
+                                                      displ,
                                                       OMPI_OFFSET_DATATYPE,
-                                                      ompio_fh->f_comm, 
+                                                      ompio_fh->f_comm,
                                                       ompio_fh->f_comm->c_coll->coll_allgatherv_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;
@@ -251,7 +251,7 @@ exit:
 }
 
 /* Count the number of nodes and create and array of the timestamps*/
-int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long **rec_length, 
+int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long **rec_length,
                                                              MPI_Offset **offbuff,struct mca_sharedfp_base_data_t *sh)
 {
     int num = 0, i= 0, ctr = 0;
@@ -300,7 +300,7 @@ int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long
         ctr = 0;
         for (i = 0; i < headnode->numofrecordsonfile ; i++)  {
 
-            ret = mca_common_ompio_file_read_at(headnode->metadatafilehandle,metaoffset, 
+            ret = mca_common_ompio_file_read_at(headnode->metadatafilehandle,metaoffset,
                                                 &rec, 32, MPI_BYTE,&status);
             if ( OMPI_SUCCESS != ret ) {
                 goto exit;

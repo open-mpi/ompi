@@ -79,7 +79,7 @@ struct ompi_proc_t {
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
 
-    /* for future extensions 
+    /* for future extensions
      * Note that OSHMEM also uses this area, and requires it be pointer
      * aligned; thus, the preceding field in the structure must be a pointer.
      */

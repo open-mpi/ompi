@@ -46,4 +46,4 @@ sources = \
         fs_ufs.h \
         fs_ufs.c \
         fs_ufs_component.c \
-        fs_ufs_file_open.c 
+        fs_ufs_file_open.c

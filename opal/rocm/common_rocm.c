@@ -213,7 +213,7 @@ bool mca_common_rocm_check_bufs(char *dst, char *src)
     if (srcFlag || dstFlag) {
         return true;
     }
-    
+
     return false;
 }
 

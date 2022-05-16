@@ -55,7 +55,7 @@ int mca_io_ompio_file_open (ompi_communicator_t *comm,
 
     /* No locking required for file_open according to my understanding
        There is virtually no way on how to reach this point from multiple
-       threads simultaniously 
+       threads simultaniously
     */
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     if ( NULL == data ) {
@@ -138,7 +138,7 @@ int mca_io_ompio_file_preallocate (ompi_file_t *fh,
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_ERROR;
     }
-    
+
     if ( current_size > diskspace ) {
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_SUCCESS;
@@ -209,11 +209,11 @@ int mca_io_ompio_file_preallocate (ompi_file_t *fh,
         mca_common_ompio_set_explicit_offset ( &data->ompio_fh, prev_offset);
     }
 
-exit:     
+exit:
     free ( buf );
     fh->f_comm->c_coll->coll_bcast ( &ret, 1, MPI_INT, OMPIO_ROOT, fh->f_comm,
                                    fh->f_comm->c_coll->coll_bcast_module);
-    
+
     if ( diskspace > current_size ) {
         data->ompio_fh.f_fs->fs_file_set_size (&data->ompio_fh, diskspace);
     }
@@ -244,7 +244,7 @@ int mca_io_ompio_file_set_size (ompi_file_t *fh,
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return ret;
     }
-    
+
 
     if (tmp != size) {
         OPAL_THREAD_UNLOCK(&fh->f_lock);
@@ -257,7 +257,7 @@ int mca_io_ompio_file_set_size (ompi_file_t *fh,
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return ret;
     }
-    
+
     ret = data->ompio_fh.f_comm->c_coll->coll_barrier (data->ompio_fh.f_comm,
                                                       data->ompio_fh.f_comm->c_coll->coll_barrier_module);
     if ( OMPI_SUCCESS != ret ) {
@@ -291,7 +291,7 @@ int mca_io_ompio_file_get_amode (ompi_file_t *fh,
     mca_common_ompio_data_t *data;
 
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
-    /* No lock necessary in this case, amode is set in file_open, and 
+    /* No lock necessary in this case, amode is set in file_open, and
        not modified later on*/
     *amode = data->ompio_fh.f_amode;
 
@@ -344,7 +344,7 @@ int mca_io_ompio_file_set_atomicity (ompi_file_t *fh,
         else {
             ret = MPI_ERR_IO;
         }
-    }        
+    }
     else {
         data->ompio_fh.f_atomicity = flag;
     }
@@ -383,7 +383,7 @@ int mca_io_ompio_file_sync (ompi_file_t *fh)
     if ( data->ompio_fh.f_amode & MPI_MODE_RDONLY ) {
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return MPI_ERR_ACCESS;
-    }        
+    }
     // Make sure all processes reach this point before syncing the file.
     ret = data->ompio_fh.f_comm->c_coll->coll_barrier (data->ompio_fh.f_comm,
                                                        data->ompio_fh.f_comm->c_coll->coll_barrier_module);
@@ -401,11 +401,11 @@ static void mca_io_ompio_file_get_eof_offset (ompio_file_t *fh,
                                               OMPI_MPI_OFFSET_TYPE in_offset,
                                               OMPI_MPI_OFFSET_TYPE *out_offset)
 {
-    /* a file_seek with SEEK_END might require an actual offset that is 
+    /* a file_seek with SEEK_END might require an actual offset that is
        not lined up with the end of the file, depending on the file view.
-       This routine determines the closest (smaller or equal) offset to 
-       the provided in_offset value, avoiding gaps in the file view and avoiding to 
-       break up an etype. 
+       This routine determines the closest (smaller or equal) offset to
+       the provided in_offset value, avoiding gaps in the file view and avoiding to
+       break up an etype.
     */
     OMPI_MPI_OFFSET_TYPE offset=0, prev_offset=0, start_offset=0;
     size_t k=0, blocklen=0;
@@ -415,7 +415,7 @@ static void mca_io_ompio_file_get_eof_offset (ompio_file_t *fh,
     if ( fh->f_view_size  > 0 ) {
         /* starting offset of the current copy of the filew view */
         start_offset = in_offset / fh->f_view_extent;
-        
+
         index_in_file_view = 0;
         /* determine block id that the offset is located in and
            the starting offset of that block */
@@ -423,7 +423,7 @@ static void mca_io_ompio_file_get_eof_offset (ompio_file_t *fh,
             prev_offset = offset;
             offset = start_offset + (OMPI_MPI_OFFSET_TYPE)(intptr_t) fh->f_decoded_iov[index_in_file_view++].iov_base;
         }
-        
+
         offset = prev_offset;
         blocklen = fh->f_decoded_iov[index_in_file_view-1].iov_len;
         while (  offset <= in_offset && k <= blocklen )  {
@@ -433,7 +433,7 @@ static void mca_io_ompio_file_get_eof_offset (ompio_file_t *fh,
         }
 
         *out_offset = prev_offset;
-    } 
+    }
     return;
 }
 
@@ -530,7 +530,7 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return MPI_ERR_ARG;
     }
-    
+
     i = (offset*data->ompio_fh.f_etype_size) % data->ompio_fh.f_view_size;
     index = 0;
     k = 0;

@@ -93,14 +93,14 @@ void mca_common_ompio_request_destruct(mca_ompio_request_t* req)
     return;
 }
 
-void mca_common_ompio_request_init ( void ) 
+void mca_common_ompio_request_init ( void )
 {
     /* Create the list of pending requests */
     OBJ_CONSTRUCT(&mca_common_ompio_pending_requests, opal_list_t);
     return;
 }
 
-void mca_common_ompio_request_fini ( void ) 
+void mca_common_ompio_request_fini ( void )
 {
     /* Destroy the list of pending requests */
     /* JMS: Good opprotunity here to list out all the IO requests that
@@ -123,7 +123,7 @@ void mca_common_ompio_request_alloc ( mca_ompio_request_t **req, mca_ompio_reque
     return;
 }
 
-void mca_common_ompio_register_progress ( void ) 
+void mca_common_ompio_register_progress ( void )
 {
     if ( false == mca_common_ompio_progress_is_registered) {
         opal_progress_register (mca_common_ompio_progress);

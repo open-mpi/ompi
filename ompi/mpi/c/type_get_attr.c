@@ -70,6 +70,6 @@ int MPI_Type_get_attr (MPI_Datatype type,
 
     ret = ompi_attr_get_c(type->d_keyhash, type_keyval,
                           (void**)attribute_val, flag);
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, 
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret,
                            MPI_ERR_OTHER, FUNC_NAME);
 }

@@ -36,4 +36,4 @@ static inline ucc_status_t scoll_ucc_req_wait(ucc_coll_req_h req)
 }
 
 #endif
- 
+

@@ -24,7 +24,7 @@ AC_DEFUN([MCA_oshmem_spml_ucx_CONFIG],[
           [$2])
 
 
-    # substitute in the things needed to build ucx 
+    # substitute in the things needed to build ucx
     AC_SUBST([spml_ucx_CPPFLAGS])
     AC_SUBST([spml_ucx_LDFLAGS])
     AC_SUBST([spml_ucx_LIBS])

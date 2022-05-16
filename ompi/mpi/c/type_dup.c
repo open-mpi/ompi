@@ -74,7 +74,7 @@ int MPI_Type_dup (MPI_Datatype type,
                                               type->d_keyhash,
                                               (*newtype)->d_keyhash)) {
            ompi_datatype_destroy(newtype);
-           OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
+           OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN,
                                    MPI_ERR_INTERN, FUNC_NAME );
        }
    }

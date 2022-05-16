@@ -1,27 +1,27 @@
 /*   $Source: bitbucket.org:berkeleylab/gasnet.git/other/portable_platform.h $
  * Description: Portable platform detection header
- * Copyright 2006, Dan Bonachea 
+ * Copyright 2006, Dan Bonachea
  * Copyright 2018, The Regents of the University of California
- * Terms of Use: In ADDITION to the license information in license.txt, 
+ * Terms of Use: In ADDITION to the license information in license.txt,
  *  anyone redistributing this header agrees not to change any part of this notice, or
- *  the version handshake in the header versioning section below. 
+ *  the version handshake in the header versioning section below.
  *  Furthermore, redistributed copies of any portion of this header must
  *  not appear within files named "portable_platform.h" or "gasnet_portable_platform.h",
  *  unless it is embedded within a complete copy of the GASNet distribution.
- *  These restrictions are designed to prevent conflicts for end users 
+ *  These restrictions are designed to prevent conflicts for end users
  *  who compose multiple projects using the PLATFORM_ namespace.
  *
  * The canonical version of this header is hosted in the GASNet project at:
- *   https://bitbucket.org/berkeleylab/gasnet   
+ *   https://bitbucket.org/berkeleylab/gasnet
  *
- * Developers who clone this header into their own project are HIGHLY encouraged to  
- * contribute any improvements (especially addition of new platforms) back to the 
- * canonical version, for the benefit of the community. 
+ * Developers who clone this header into their own project are HIGHLY encouraged to
+ * contribute any improvements (especially addition of new platforms) back to the
+ * canonical version, for the benefit of the community.
  * Contributions and bug reports should be directed to:
  *   https://gasnet-bugs.lbl.gov or gasnet-staff@lbl.gov
  */
 /* ------------------------------------------------------------------------------------ */
-/* Header versioning: DO NOT CHANGE ANYTHING IN THIS SECTION 
+/* Header versioning: DO NOT CHANGE ANYTHING IN THIS SECTION
  * The license terms for this header prohibit modifying this section in ANY way.
    Clones should continue to advertise a PLATFORM_HEADER_VERSION equal to the canonical version they cloned,
    and should not modify the handshake logic which ensures the highest canonical header version is used.
@@ -30,7 +30,7 @@
 /* YOU ARE NOT PERMITTED TO CHANGE THIS SECTION WITHOUT DIRECT APPROVAL FROM DAN BONACHEA */
 #if _PORTABLE_PLATFORM_H != PLATFORM_HEADER_VERSION \
      || PLATFORM_HEADER_VERSION < 16
-#undef  PLATFORM_HEADER_VERSION 
+#undef  PLATFORM_HEADER_VERSION
 #define PLATFORM_HEADER_VERSION 16
 #undef  _PORTABLE_PLATFORM_H
 #define _PORTABLE_PLATFORM_H PLATFORM_HEADER_VERSION
@@ -177,7 +177,7 @@
 
 /* ------------------------------------------------------------------------------------ */
 /* most of this file was written based on information in vendor documents, system headers,
-   and inspecting verbose compiler output. 
+   and inspecting verbose compiler output.
    Another useful source of information: http://predef.sourceforge.net/
 */
 
@@ -191,7 +191,7 @@
 
 /* ------------------------------------------------------------------------------------ */
 /* Compiler detection */
-/* 
+/*
   PLATFORM_COMPILER_<family>:
      defined to 1 if compiler is a given family, undef otherwise
   PLATFORM_COMPILER_<family>_C
@@ -205,7 +205,7 @@
   PLATFORM_COMPILER_ID:
      same as PLATFORM_COMPILER_FAMILYID, except C and C++ compilers are differentiated
   PLATFORM_COMPILER_VERSION:
-     defined to an integral expression which is guaranteed to be monotonically non-decreasing 
+     defined to an integral expression which is guaranteed to be monotonically non-decreasing
      with increasing compiler versions. Will be zero for unrecognized compilers.
      The exact encoding of compiler version tuples into this constant may occasionally
      change when this header is upgraded, so code should use the (in)equality macros below
@@ -213,13 +213,13 @@
   PLATFORM_COMPILER_VERSION_STR:
      A string representation of the compiler version, which may contain additional info
   PLATFORM_COMPILER_VERSION_[GT,GE,EQ,LE,LT](maj,min,pat):
-     evaluate to non-zero iff the compiler version in use is respectively 
-     greater-than, greater-or-equal, equal, less-or-equal, less-than 
+     evaluate to non-zero iff the compiler version in use is respectively
+     greater-than, greater-or-equal, equal, less-or-equal, less-than
      the provided version components
   PLATFORM_COMPILER_IDSTR:
      a string which uniquely identifies recognized compilers
   PLATFORM_COMPILER_C_LANGLVL and PLATFORM_COMPILER_CXX_LANGLVL: (in PLATFORM_HEADER_VERSION >= 5)
-     defined to a positive integral value corresponding to the C or C++ (respectively) 
+     defined to a positive integral value corresponding to the C or C++ (respectively)
      language standard to which the current compiler advertises conformance.
      Otherwise undef (in particular at most one of these is defined in a given compilation).
 */
@@ -237,14 +237,14 @@
    * -------------------------------------
    * Intel compiler versioning is unfortunately complicated by behavioral changes.
    * Versions prior to Intel 14.0.0 (Sept 2013) lacked a preprocessor symbol to supply the "update" number.
-   * Version 14.0.0 and later supply a __INTEL_COMPILER_UPDATE symbol, but sadly several releases of Version 19 
+   * Version 14.0.0 and later supply a __INTEL_COMPILER_UPDATE symbol, but sadly several releases of Version 19
    * report the wrong value in this field (bug 3876).
    * For now, the "patch" field of the PLATFORM_COMPILER_VERSION for Intel is the release package BUILD DATE,
    * in the same decimal YYYYMMDD format as __INTEL_COMPILER_BUILD_DATE, as this is the only indicator that has
-   * remained reliably stable/correct across versions. 
+   * remained reliably stable/correct across versions.
    * So for example to check for icc --version "19.0.1.144 20181018" or later, pass:
    *   PLATFORM_COMPILER_VERSION_GE(19, 0, 20181018)
-   * NOTE 1: this build-date is unfortunately OS-DEPENDENT, sometimes differing by several days or weeks 
+   * NOTE 1: this build-date is unfortunately OS-DEPENDENT, sometimes differing by several days or weeks
    * between the Linux and OSX releases. For a complete mapping, see:
    * https://software.intel.com/en-us/articles/intel-compiler-and-composer-update-version-numbers-to-compiler-version-number-mapping
    * NOTE 2: some of the build-date entries in the table linked above have been observed to be incorrect,
@@ -314,7 +314,7 @@
   #else
     #define PLATFORM_COMPILER_PGI_C  1
   #endif
-  #if __PGIC__ == 99 
+  #if __PGIC__ == 99
     /* bug 2230: PGI versioning was broken for some platforms in 7.0
                  no way to know exact version, but provide something slightly more accurate */
     #define PLATFORM_COMPILER_VERSION 0x070000
@@ -329,7 +329,7 @@
     #ifdef PLATFORM_PGI_IS_ANCIENT
       /* Include below might fail for ancient versions lacking this header, but testing shows it
          works back to at least 5.1-3 (Nov 2003), and based on docs probably back to 3.2 (Sep 2000) */
-        #define PLATFORM_COMPILER_VERSION 0       
+        #define PLATFORM_COMPILER_VERSION 0
     #elif defined(__x86_64__) /* bug 1753 - 64-bit omp.h upgrade happenned in <6.0-8,6.1-1] */
       #include "omp.h"
       #if defined(_PGOMP_H)
@@ -461,7 +461,7 @@
   #define PLATFORM_COMPILER_VERSION_INT(maj,min,pat) \
         ( ((maj) << 8) | ((min) << 4) | (pat) )
 
-#elif defined(_CRAYC) 
+#elif defined(_CRAYC)
   #define PLATFORM_COMPILER_CRAY  1
   #define PLATFORM_COMPILER_FAMILYNAME CRAY
   #define PLATFORM_COMPILER_FAMILYID 10
@@ -596,8 +596,8 @@
   #define PLATFORM_COMPILER_UNKNOWN  1
 #endif
 
-/* this stanza comes last, because many vendor compilers lie and claim 
-   to be GNU C for compatibility reasons and/or because they share a frontend */ 
+/* this stanza comes last, because many vendor compilers lie and claim
+   to be GNU C for compatibility reasons and/or because they share a frontend */
 #undef _PLATFORM_COMPILER_GNU_VERSION_STR
 #undef __PLATFORM_COMPILER_GNU_VERSION_STR
 #if defined(__GNUC__)
@@ -638,7 +638,7 @@
   #endif
 #elif defined(PLATFORM_COMPILER_UNKNOWN) /* unknown compiler */
   #define PLATFORM_COMPILER_FAMILYNAME UNKNOWN
-  #define PLATFORM_COMPILER_FAMILYID 0 
+  #define PLATFORM_COMPILER_FAMILYID 0
 #endif
 
 /* defaulting */
@@ -685,7 +685,7 @@
     #define PLATFORM_COMPILER_C_LANGLVL  __STDC_VERSION__
   #elif defined(__STDC__) && !defined(__cplusplus) && !defined(__STDC_VERSION__) /* C89/C90 */
     #define PLATFORM_COMPILER_C_LANGLVL  199000L
-  #else 
+  #else
     /* unknown - leave both undef */
   #endif
 #endif
@@ -706,13 +706,13 @@
 #ifdef __STDC_EXT__
   #define _PLATFORM_COMPILER_STD_STDC_EXT ",__STDC_EXT__=" PLATFORM_STRINGIFY(__STDC_EXT__)
 #else
-  #define _PLATFORM_COMPILER_STD_STDC_EXT 
+  #define _PLATFORM_COMPILER_STD_STDC_EXT
 #endif
 #undef _PLATFORM_COMPILER_STD_CPLUSPLUS
 #ifdef __cplusplus
   #define _PLATFORM_COMPILER_STD_CPLUSPLUS ",__cplusplus=" PLATFORM_STRINGIFY(__cplusplus)
 #else
-  #define _PLATFORM_COMPILER_STD_CPLUSPLUS 
+  #define _PLATFORM_COMPILER_STD_CPLUSPLUS
 #endif
 
 #undef _PLATFORM_COMPILER_MISC_VERSION_STR
@@ -746,7 +746,7 @@
 
 /* ------------------------------------------------------------------------------------ */
 /* OS detection */
-/* 
+/*
    PLATFORM_OS_<family>:
      defined to a positive value if OS belongs to a given family, undef otherwise
    PLATFORM_OS_FAMILYNAME:
@@ -853,7 +853,7 @@
 
 /* ------------------------------------------------------------------------------------ */
 /* Architecture detection */
-/* 
+/*
    PLATFORM_ARCH_<family>:
      defined to positive value if CPU belongs to a given family, undef otherwise
    PLATFORM_ARCH_FAMILYNAME:
@@ -868,7 +868,7 @@
 
 #if defined(__ppc64) || defined(__ppc64__) || \
     defined(__PPC64) || defined(__PPC64__) || \
-    defined(__powerpc64) || defined(__powerpc64__) 
+    defined(__powerpc64) || defined(__powerpc64__)
   #define PLATFORM_ARCH_POWERPC 1
   #define PLATFORM_ARCH_FAMILYNAME POWERPC
   #define _PLATFORM_ARCH_64 1
@@ -1065,7 +1065,7 @@
   #error conflicting endianness information
 #endif
 
-/* PLATFORM_ARCH_{32,64}: 
+/* PLATFORM_ARCH_{32,64}:
     first trust SIZEOF_VOID_P, which is most likely to be accurate
     next, detect common 32/64 preprocessor defines
     finally default to any arch-specific value provided

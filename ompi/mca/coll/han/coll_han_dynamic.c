@@ -14,8 +14,8 @@
 
 /*
  * @file
- * This files contains all functions to dynamically select for each collective 
- * the coll module based on given MCA parameters, configuration file and 
+ * This files contains all functions to dynamically select for each collective
+ * the coll module based on given MCA parameters, configuration file and
  * messages characteristics
 */
 

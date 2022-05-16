@@ -42,6 +42,6 @@ int MPI_Session_get_nth_pset (MPI_Session session, MPI_Info info, int n, int *le
 
     rc = ompi_instance_get_nth_pset (session, n, len, pset_name);
 
-    OMPI_ERRHANDLER_RETURN (rc, (NULL == session) ? MPI_SESSION_NULL : session, 
+    OMPI_ERRHANDLER_RETURN (rc, (NULL == session) ? MPI_SESSION_NULL : session,
                             rc, FUNC_NAME);
 }

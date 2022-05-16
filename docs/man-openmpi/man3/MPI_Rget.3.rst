@@ -1,5 +1,5 @@
 .. _mpi_rget:
- 
+
 MPI_Rget
 ========
     .. include_body

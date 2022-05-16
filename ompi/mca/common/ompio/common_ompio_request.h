@@ -65,10 +65,10 @@ OBJ_CLASS_DECLARATION(mca_ompio_request_t);
 
 
 OMPI_DECLSPEC void mca_common_ompio_request_init ( void);
-OMPI_DECLSPEC void mca_common_ompio_request_fini ( void ); 
+OMPI_DECLSPEC void mca_common_ompio_request_fini ( void );
 OMPI_DECLSPEC void mca_common_ompio_request_alloc ( mca_ompio_request_t **req, mca_ompio_request_type_t type);
 OMPI_DECLSPEC int mca_common_ompio_progress ( void);
-OMPI_DECLSPEC void mca_common_ompio_register_progress ( void ); 
+OMPI_DECLSPEC void mca_common_ompio_register_progress ( void );
 
 END_C_DECLS
 

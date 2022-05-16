@@ -38,7 +38,7 @@ struct ompi_mtl_psm2_name_descs
 
 const struct ompi_mtl_psm2_name_descs name_descs[PSM2_MQ_NUM_STATS] =
 {
-    { "rx_user_bytes", "Bytes received into a matched user buffer", 
+    { "rx_user_bytes", "Bytes received into a matched user buffer",
       offsetof(struct psm2_mq_stats, rx_user_bytes) },
     { "rx_user_num", "Messages received into a matched user buffer",
       offsetof(struct psm2_mq_stats, rx_user_num) },
@@ -65,7 +65,7 @@ const struct ompi_mtl_psm2_name_descs name_descs[PSM2_MQ_NUM_STATS] =
     { "rx_sysbuf_bytes", "Bytes allocated for system buffers",
       offsetof(struct psm2_mq_stats, rx_sysbuf_bytes) },
 };
- 
+
 static int mca_mtl_psm2_get_stats(const mca_base_pvar_t *pvar, void *value, void *obj)
 {
     psm2_mq_stats_t stats;
@@ -73,7 +73,7 @@ static int mca_mtl_psm2_get_stats(const mca_base_pvar_t *pvar, void *value, void
 
     psm2_mq_get_stats(ompi_mtl_psm2.mq, &stats);
 
-    *(uint64_t *)value = *(uint64_t *)((uint8_t *)&stats + name_descs[index].offset); 
+    *(uint64_t *)value = *(uint64_t *)((uint8_t *)&stats + name_descs[index].offset);
 
     return OMPI_SUCCESS;
 }
@@ -85,7 +85,7 @@ int ompi_mtl_psm2_register_pvars(void)
 
     /* PSM2 MQ performance variables */
     for (i = 0 ; i < PSM2_MQ_NUM_STATS; ++i) {
-        (void) mca_base_component_pvar_register (&mca_mtl_psm2_component.super.mtl_version, 
+        (void) mca_base_component_pvar_register (&mca_mtl_psm2_component.super.mtl_version,
                                                  name_descs[i].name, name_descs[i].desc,
                                                  OPAL_INFO_LVL_4, MCA_BASE_PVAR_CLASS_COUNTER,
                                                  MCA_BASE_VAR_TYPE_UNSIGNED_LONG,

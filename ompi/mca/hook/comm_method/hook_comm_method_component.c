@@ -138,7 +138,7 @@ static int ompi_hook_comm_method_component_register(void)
     mca_hook_comm_method_enable_mpi_init = false;
     mca_hook_comm_method_enable_mpi_finalize = false;
     mca_base_var_enum_create_flag("ompi_comm_method", mca_hook_comm_method_modes, &mca_hook_comm_method_flags);
-    
+
     ret = mca_base_component_var_register(&mca_hook_comm_method_component.hookm_version, "display",
                                 "Enable the communication protocol report: when MPI_INIT is invoked (using the 'mpi_init' value) and/or when MPI_FINALIZE is invoked (using the 'mpi_finalize' value).",
                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT,

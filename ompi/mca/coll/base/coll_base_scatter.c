@@ -120,7 +120,7 @@ ompi_coll_base_scatter_intra_binomial(
             iov[0].iov_base = ptmp + (ptrdiff_t)(size - root) * packed_sizet;
             iov[0].iov_len = max_data = packed_sizet * (ptrdiff_t)root;
             opal_convertor_pack(&convertor, iov, &iov_size, &max_data);
-            
+
             iov[0].iov_base = ptmp;
             iov[0].iov_len = max_data = packed_sizet * (ptrdiff_t)(size - root);
             opal_convertor_pack(&convertor, iov, &iov_size, &max_data);

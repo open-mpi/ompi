@@ -41,7 +41,7 @@ struct mca_coll_monitoring_module_t {
 typedef struct mca_coll_monitoring_module_t mca_coll_monitoring_module_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_monitoring_module_t);
 
-/* 
+/*
  * Coll interface functions
  */
 

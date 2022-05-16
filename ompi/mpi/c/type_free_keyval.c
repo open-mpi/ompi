@@ -53,6 +53,6 @@ int MPI_Type_free_keyval(int *type_keyval)
 
     ret = ompi_attr_free_keyval(TYPE_ATTR, type_keyval, 0);
 
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, 
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret,
 			  MPI_ERR_OTHER, FUNC_NAME);
 }

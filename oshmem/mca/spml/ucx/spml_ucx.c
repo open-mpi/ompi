@@ -10,7 +10,7 @@
  *
  * $HEADER$
  */
- 
+
 #define _GNU_SOURCE
 #include <stdio.h>
 
@@ -344,7 +344,7 @@ static int oshmem_shmem_xchng(
     unsigned int *rcv_sizes   = NULL;
     int *_rcv_sizes = NULL;
     unsigned int *rcv_offsets = NULL;
-    int *_rcv_offsets = NULL; 
+    int *_rcv_offsets = NULL;
     void *rcv_buf       = NULL;
     int rc;
     int i,j,k;
@@ -360,7 +360,7 @@ static int oshmem_shmem_xchng(
     if (NULL == rcv_sizes) {
         goto err;
     }
-   
+
     rc = oshmem_shmem_allgather(local_size, rcv_sizes, ucp_workers * sizeof(*rcv_sizes));
     if (MPI_SUCCESS != rc) {
         goto err;
@@ -377,7 +377,7 @@ static int oshmem_shmem_xchng(
     if (NULL == rcv_buf) {
         goto err;
     }
-   
+
     int _local_size = 0;
     for (i = 0; i < ucp_workers; i++) {
         _local_size += local_size[i];
@@ -418,7 +418,7 @@ static int oshmem_shmem_xchng(
     return OSHMEM_SUCCESS;
 
 err:
-    if (rcv_buf) 
+    if (rcv_buf)
         free(rcv_buf);
     if (rcv_offsets)
         free(rcv_offsets);
@@ -872,7 +872,7 @@ static int mca_spml_ucx_ctx_create_common(long options, mca_spml_ucx_ctx_t **ucx
     ucx_ctx->ucp_worker = calloc(1, sizeof(ucp_worker_h));
     ucx_ctx->ucp_workers = 1;
     ucx_ctx->synchronized_quiet = mca_spml_ucx_ctx_default.synchronized_quiet;
-    ucx_ctx->strong_sync = mca_spml_ucx_ctx_default.strong_sync;      
+    ucx_ctx->strong_sync = mca_spml_ucx_ctx_default.strong_sync;
 
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (oshmem_mpi_thread_provided == SHMEM_THREAD_SINGLE || options & SHMEM_CTX_PRIVATE || options & SHMEM_CTX_SERIALIZED) {
@@ -977,7 +977,7 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
             return rc;
         }
     }
-    
+
     if (!(options & SHMEM_CTX_PRIVATE)) {
         SHMEM_MUTEX_LOCK(mca_spml_ucx.internal_mutex);
         _ctx_add(active_array, ucx_ctx);
@@ -1504,7 +1504,7 @@ size_t mca_spml_ucx_wait_until_some(void *ivars, int cmp, void
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
-/* This routine is not implemented */ 
+/* This routine is not implemented */
 void mca_spml_ucx_wait_until_all_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, const int *status, int datatype)
 {

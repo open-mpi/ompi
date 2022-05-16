@@ -875,7 +875,7 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
             /* this will cause add_proc to get called if it has not already been called */
             (void) mca_bml_base_get_endpoint (proc);
         }
-    } 
+    }
 
     free(procs);
 }

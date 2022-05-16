@@ -1286,7 +1286,7 @@ void mca_pml_ob1_recv_frag_callback_cid (mca_btl_base_module_t* btl,
              * moved to the right communicator.
              */
             append_frag_to_list (&mca_pml_ob1.non_existing_communicator_pending,
-                                 btl, (const mca_pml_ob1_match_hdr_t *)hdr, des->des_segments, 
+                                 btl, (const mca_pml_ob1_match_hdr_t *)hdr, des->des_segments,
                                  num_segments, NULL);
         }
 

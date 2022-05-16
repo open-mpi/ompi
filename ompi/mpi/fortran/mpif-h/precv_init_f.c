@@ -80,7 +80,7 @@ void ompi_precv_init_f(char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fin
    c_info = PMPI_Info_f2c(*info);
    c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = PMPI_Precv_init(OMPI_F2C_BOTTOM(buf), 
+   c_ierr = PMPI_Precv_init(OMPI_F2C_BOTTOM(buf),
                       OMPI_FINT_2_INT(*partitions),
                       OMPI_FINT_2_INT(*count),
                       c_type, OMPI_FINT_2_INT(*dest),

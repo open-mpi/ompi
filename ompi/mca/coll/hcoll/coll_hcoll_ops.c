@@ -130,7 +130,7 @@ int mca_coll_hcoll_allgatherv(const void *sbuf, int scount,
                      rdtype->super.name);
         rc = hcoll_module->previous_allgatherv(sbuf,scount,sdtype,
                                              rbuf,rcount,
-                                             displs, 
+                                             displs,
                                              rdtype,
                                              comm,
                                              hcoll_module->previous_allgatherv_module);
@@ -142,7 +142,7 @@ int mca_coll_hcoll_allgatherv(const void *sbuf, int scount,
         HCOL_VERBOSE(20,"RUNNING FALLBACK ALLGATHERV");
         rc = hcoll_module->previous_allgatherv(sbuf,scount,sdtype,
                                              rbuf,rcount,
-                                             displs, 
+                                             displs,
                                              rdtype,
                                              comm,
                                              hcoll_module->previous_allgatherv_module);
@@ -578,7 +578,7 @@ int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
                      rdtype->super.name);
         rc = hcoll_module->previous_iallgatherv(sbuf,scount,sdtype,
                                              rbuf,rcount,
-                                             displs, 
+                                             displs,
                                              rdtype,
                                              comm,
                                              request,
@@ -591,7 +591,7 @@ int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
        HCOL_VERBOSE(20,"RUNNING FALLBACK NON-BLOCKING ALLGATHER");
         rc = hcoll_module->previous_iallgatherv(sbuf,scount,sdtype,
                                              rbuf,rcount,
-                                             displs, 
+                                             displs,
                                              rdtype,
                                              comm,
                                              request,
@@ -673,7 +673,7 @@ int mca_coll_hcoll_ireduce(const void *sbuf, void *rbuf, int count,
                      dtype->super.name);
         rc = hcoll_module->previous_ireduce(sbuf,rbuf,count,dtype,op,
                                              root,
-                                             comm, request, 
+                                             comm, request,
                                              hcoll_module->previous_ireduce_module);
         return rc;
     }
@@ -699,7 +699,7 @@ int mca_coll_hcoll_ireduce(const void *sbuf, void *rbuf, int count,
         rc = hcoll_module->previous_ireduce(sbuf,rbuf,
                                              count,dtype,op,
                                              root,
-                                             comm, 
+                                             comm,
                                              request,
                                              hcoll_module->previous_ireduce_module);
     }
@@ -828,7 +828,7 @@ int mca_coll_hcoll_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount
 
     rc = hcoll_collectives.coll_reduce_scatter_block((void *)sbuf,rbuf,rcount,Dtype,Op,hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
-    fallback:        
+    fallback:
         HCOL_VERBOSE(20,"RUNNING FALLBACK ALLREDUCE");
         rc = hcoll_module->previous_reduce_scatter_block(sbuf,rbuf,
                                              rcount,dtype,op,
@@ -870,7 +870,7 @@ int mca_coll_hcoll_reduce_scatter(const void *sbuf, void *rbuf, const int* rcoun
     rc = hcoll_collectives.coll_reduce_scatter((void*)sbuf, rbuf, (int*)rcounts,
                                                Dtype, Op, hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
-    fallback:        
+    fallback:
         HCOL_VERBOSE(20,"RUNNING FALLBACK ALLREDUCE");
         rc = hcoll_module->previous_reduce_scatter(sbuf,rbuf,
                                              rcounts,dtype,op,

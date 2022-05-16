@@ -101,7 +101,7 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
     ret = opal_best_effort_write ( fd, &position, sizeof(OMPI_MPI_OFFSET_TYPE));
     /* No need to handle error case here, the subsequent steps are identical
        in case of ret != OPAL_SUCCESS, namely release lock and return ret */
-    
+
 exit:
     /* unlock the file */
     if ( mca_sharedfp_lockedfile_verbose ) {

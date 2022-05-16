@@ -110,7 +110,7 @@ static int register_component(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fbtl_posix_max_tmpbuf_size );
-    
+
     mca_fbtl_posix_read_datasieving  = true;
     (void) mca_base_component_var_register(&mca_fbtl_posix_component.fbtlm_version,
                                            "read_datasieving", "Parameter indicating whether to perform data sieving for read operations. "
@@ -129,6 +129,6 @@ static int register_component(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fbtl_posix_write_datasieving );
 
-    
+
     return OMPI_SUCCESS;
 }

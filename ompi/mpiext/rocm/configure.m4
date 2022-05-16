@@ -24,12 +24,12 @@ AC_DEFUN([OMPI_MPIEXT_rocm_CONFIG],[
     AC_DEFINE_UNQUOTED([MPIX_ROCM_AWARE_SUPPORT], [$ROCM_SUPPORT],
                        [Macro that is set to 1 when ROCM-aware support is configured in and 0 when it is not])
 
-    
+
     # We compile this whether ROCm support was requested or not. It allows
     # us to to detect if we have ROCm support.
     AS_IF([test "$ENABLE_rocm" = "1" || \
            test "$ENABLE_EXT_ALL" = "1"],
           [$1],
           [$2])
-    
+
 ])

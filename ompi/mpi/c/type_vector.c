@@ -58,10 +58,10 @@ int MPI_Type_vector(int count,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                           FUNC_NAME );
         } else  if( count < 0 ) {
-            OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_COUNT, 
+            OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_COUNT,
                                     MPI_ERR_COUNT, FUNC_NAME );
         } else if( blocklength < 0) {
-            OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_ARG, 
+            OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_ARG,
                                     MPI_ERR_ARG, FUNC_NAME );
         }
     }

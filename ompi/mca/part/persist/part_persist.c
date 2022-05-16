@@ -35,7 +35,7 @@ ompi_part_persist_t ompi_part_persist = {
         .part_psend_init = mca_part_persist_psend_init,
         .part_start = mca_part_persist_start,
         .part_pready = mca_part_persist_pready,
-        .part_parrived = mca_part_persist_parrived, 
+        .part_parrived = mca_part_persist_parrived,
     }
 };
 

@@ -1,5 +1,5 @@
 .. _mpi_iscatter:
- 
+
 MPI_Iscatter
 ============
     .. include_body

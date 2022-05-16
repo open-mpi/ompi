@@ -20,7 +20,7 @@
      opal_free_list_get (_freelist)
 
 #define PML_UCX_FREELIST_RETURN(_freelist, _item) \
-        opal_free_list_return(_freelist, _item) 
+        opal_free_list_return(_freelist, _item)
 
 #define PML_UCX_FREELIST_INIT(_fl, _type, _initial, _max, _batch) \
     opal_free_list_init(_fl, sizeof(_type), 8, OBJ_CLASS(_type), \

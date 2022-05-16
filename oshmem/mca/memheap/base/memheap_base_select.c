@@ -94,7 +94,7 @@ int mca_memheap_base_select()
 
     MEMHEAP_VERBOSE(10,
                     "SELECTED %s component %s",
-                    best_component->memheap_version.mca_type_name, 
+                    best_component->memheap_version.mca_type_name,
                     best_component->memheap_version.mca_component_name);
 
     OPAL_TIMING_ENV_NEXT(timing, "DONE");

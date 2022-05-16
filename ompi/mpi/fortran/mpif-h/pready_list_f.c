@@ -79,7 +79,7 @@ void ompi_pready_list_f(MPI_Fint *length, MPI_Fint *partitions, MPI_Fint *reques
    }
 
    c_ierr = PMPI_Pready_list(OMPI_FINT_2_INT(*length), c_partitions, c_req);
-  
+
    free(c_partitions);
 
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

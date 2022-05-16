@@ -30,7 +30,7 @@
 /*use a semaphore to lock the shared memory*/
 #include <semaphore.h>
 
-int mca_sharedfp_sm_request_position(ompio_file_t *fh, 
+int mca_sharedfp_sm_request_position(ompio_file_t *fh,
                                      int bytes_requested,
                                      OMPI_MPI_OFFSET_TYPE *offset)
 {

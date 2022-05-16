@@ -94,9 +94,9 @@ mca_part_persist_component_open(void)
     OBJ_CONSTRUCT(&ompi_part_persist.lock, opal_mutex_t);
 
     ompi_part_persist.next_send_tag = 0;                /**< This is a counter for send tags for the actual data transfer. */
-    ompi_part_persist.next_recv_tag = 0; 
+    ompi_part_persist.next_recv_tag = 0;
 
-    mca_part_persist_init_lists(); 
+    mca_part_persist_init_lists();
 
     ompi_part_persist.init_comms = 0;
     ompi_part_persist.init_world = -1;
@@ -113,7 +113,7 @@ static int
 mca_part_persist_component_close(void)
 {
     OBJ_DESTRUCT(&ompi_part_persist.lock);
-    return OMPI_SUCCESS; 
+    return OMPI_SUCCESS;
 }
 
 

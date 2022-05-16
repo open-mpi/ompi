@@ -705,7 +705,7 @@ AC_DEFUN([MCA_opal_threads_pthreads_COMPILE_MODE], [
 
 # If component was selected, $1 will be 1 and we should set the base header
 AC_DEFUN([MCA_opal_threads_pthreads_POST_CONFIG],[
-    AS_IF([test "$1" = "1"], 
+    AS_IF([test "$1" = "1"],
           [opal_thread_type_found="pthreads"
            AC_DEFINE_UNQUOTED([MCA_threads_base_include_HEADER],
                               ["opal/mca/threads/pthreads/threads_pthreads_threads.h"],

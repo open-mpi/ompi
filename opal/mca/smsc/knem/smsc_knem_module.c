@@ -154,5 +154,5 @@ mca_smsc_knem_module_t mca_smsc_knem_module = {
         .copy_from = mca_smsc_knem_copy_from,
         .register_region = mca_smsc_knem_register_region,
         .deregister_region = mca_smsc_knem_deregister_region,
-    }, 
+    },
 };

@@ -1,5 +1,5 @@
 .. _mpi_igather:
- 
+
 MPI_Igather
 ===========
     .. include_body

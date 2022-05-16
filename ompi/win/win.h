@@ -82,7 +82,7 @@ struct ompi_win_t {
     opal_mutex_t  w_lock;
 
     char w_name[MPI_MAX_OBJECT_NAME];
-  
+
     /* Group associated with this window. */
     ompi_group_t *w_group;
 

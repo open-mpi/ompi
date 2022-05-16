@@ -61,7 +61,7 @@ int mca_sharedfp_individual_write (ompio_file_t *fh,
 
     /*Insert metadata record into a queue*/
     mca_sharedfp_individual_insert_metadata(OMPI_FILE_WRITE_SHARED, totalbytes, sh);
-    
+
     /*Write the data into individual file*/
     ret = mca_common_ompio_file_write_at ( headnode->datafilehandle,
                                            headnode->datafile_offset,
@@ -130,14 +130,14 @@ int mca_sharedfp_individual_write_ordered (ompio_file_t *fh,
     }
 
     /*collect the total bytes to be written*/
-    ret = fh->f_comm->c_coll->coll_gather ( &totalbytes, 
-                                            1, 
+    ret = fh->f_comm->c_coll->coll_gather ( &totalbytes,
+                                            1,
                                             OMPI_OFFSET_DATATYPE,
-                                            offbuff, 
-                                            1, 
-                                            OMPI_OFFSET_DATATYPE, 
+                                            offbuff,
+                                            1,
+                                            OMPI_OFFSET_DATATYPE,
                                             0,
-                                            fh->f_comm, 
+                                            fh->f_comm,
                                             fh->f_comm->c_coll->coll_gather_module );
 
     if ( OMPI_SUCCESS != ret ) {
@@ -162,25 +162,25 @@ int mca_sharedfp_individual_write_ordered (ompio_file_t *fh,
 
 
     /* Scatter the results to the other processes */
-    ret = fh->f_comm->c_coll->coll_scatter ( offbuff, 
-                                             1, 
+    ret = fh->f_comm->c_coll->coll_scatter ( offbuff,
+                                             1,
                                              OMPI_OFFSET_DATATYPE,
-                                             &offset, 
-                                             1, 
-                                             OMPI_OFFSET_DATATYPE, 
+                                             &offset,
+                                             1,
+                                             OMPI_OFFSET_DATATYPE,
                                              0,
-                                             fh->f_comm, 
+                                             fh->f_comm,
                                              fh->f_comm->c_coll->coll_scatter_module );
     if ( OMPI_SUCCESS != ret )  {
 	opal_output(0,"sharedfp_individual_write_ordered: Error in scattering offsets \n");
 	goto exit;
     }
 
-    ret = fh->f_comm->c_coll->coll_bcast ( &global_offset, 
-                                           1, 
+    ret = fh->f_comm->c_coll->coll_bcast ( &global_offset,
+                                           1,
                                            OMPI_OFFSET_DATATYPE,
-                                           0, 
-                                           fh->f_comm, 
+                                           0,
+                                           fh->f_comm,
                                            fh->f_comm->c_coll->coll_bcast_module );
     if ( OMPI_SUCCESS != ret )  {
 	opal_output(0,"sharedfp_individual_write_ordered: Error while bcasting global offset \n");

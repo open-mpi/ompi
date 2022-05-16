@@ -21,7 +21,7 @@
 /*
  * These routines perform an atomic fetch operation.
  * The fetch routines retrieve the value at address target on PE pe.
- * The operation must be completed without the possibility of another process 
+ * The operation must be completed without the possibility of another process
  * updating target during the fetch.
  */
 #define DO_SHMEM_TYPE_ATOMIC_FETCH(ctx, type_name, type, target, pe, out_value) do { \

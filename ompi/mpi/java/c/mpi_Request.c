@@ -147,10 +147,10 @@ JNIEXPORT jlong JNICALL Java_mpi_Request_waitStatus(
     MPI_Request req = (MPI_Request)handle;
     MPI_Status status;
     int rc = MPI_Wait(&req, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         ompi_java_status_set(env, stat, &status);
-    
+
     return (jlong)req;
 }
 
@@ -170,10 +170,10 @@ JNIEXPORT jobject JNICALL Java_mpi_Request_testStatus(
     int flag;
     MPI_Status status;
     int rc = MPI_Test(&req, &flag, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
-    
+
     return flag ? ompi_java_status_new(env, &status) : NULL;
 }
 
@@ -184,10 +184,10 @@ JNIEXPORT jobject JNICALL Java_mpi_Request_getStatus(
     int flag;
     MPI_Status status;
     int rc = MPI_Request_get_status(req, &flag, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
-    
+
     return flag ? ompi_java_status_new(env, &status) : NULL;
 }
 
@@ -197,10 +197,10 @@ JNIEXPORT jboolean JNICALL Java_mpi_Request_test(
     MPI_Request req = (MPI_Request)handle;
     int flag;
     int rc = MPI_Test(&req, &flag, MPI_STATUS_IGNORE);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
-    
+
     return flag ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -217,7 +217,7 @@ JNIEXPORT void JNICALL Java_mpi_Request_waitAnyStatus(
     int rc = MPI_Waitany(count, cReq, &index, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
-    
+
     if(!exception)
         ompi_java_status_setIndex(env, stat, &status, index);
 }
@@ -356,7 +356,7 @@ JNIEXPORT jintArray JNICALL Java_mpi_Request_waitSome(
     int rc = MPI_Waitsome(incount, cReq, &outcount, indices, MPI_STATUSES_IGNORE);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
-    
+
     if(exception) {
         free(indices);
         return NULL;
@@ -406,12 +406,12 @@ JNIEXPORT jintArray JNICALL Java_mpi_Request_testSome(
     int rc = MPI_Testsome(incount, cReq, &outcount, indices, MPI_STATUSES_IGNORE);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releasePtrArray(env, requests, jReq, (void**)cReq);
-    
+
     if(exception) {
         free(indices);
         return NULL;
     }
-    
+
     jintArray jindices = NULL;
 
     if(outcount != MPI_UNDEFINED)

@@ -60,7 +60,7 @@ static ssize_t mca_fbtl_ime_blocking_op(ompio_file_t *fh, int io_op)
         /* Allocate more memory for the iovecs if necessary */
         if (iov_count == OMPIO_IOVEC_INITIAL_SIZE * block) {
             block++;
-            struct iovec *new_iov = (struct iovec *) realloc(iov, 
+            struct iovec *new_iov = (struct iovec *) realloc(iov,
                     OMPIO_IOVEC_INITIAL_SIZE * block * sizeof(struct iovec));
             if (new_iov == NULL) {
                 free(iov);

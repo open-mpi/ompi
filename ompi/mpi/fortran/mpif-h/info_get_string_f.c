@@ -106,13 +106,13 @@ void ompi_info_get_string_f(MPI_Fint *info, char *key, MPI_Fint *buflen,
             OMPI_SINGLE_INT_2_FINT(buflen);
             OMPI_SINGLE_INT_2_LOGICAL(flag);
         }
-    } else { 
+    } else {
         c_ierr = ompi_info_get(c_info, c_key, &info_str,
                                OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
         if (NULL != ierr) {
             *ierr = OMPI_INT_2_FINT(c_ierr);
         }
-        
+
 
         if (MPI_SUCCESS == c_ierr) {
             OMPI_SINGLE_INT_2_LOGICAL(flag);
@@ -121,7 +121,7 @@ void ompi_info_get_string_f(MPI_Fint *info, char *key, MPI_Fint *buflen,
                Fortran string (note: all Fortran compilers have FALSE ==
                0, so just check for any nonzero value, because not all
                Fortran compilers have TRUE == 1).  Note: use the full
-               length of the Fortran string, which means adding one to the 3rd arg 
+               length of the Fortran string, which means adding one to the 3rd arg
                to ompi_fortran_string_c2f */
             if (*flag) {
                 if (OMPI_SUCCESS !=

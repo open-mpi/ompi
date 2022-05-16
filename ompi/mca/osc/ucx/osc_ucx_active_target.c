@@ -75,7 +75,7 @@ int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win) {
 
     if (!(mpi_assert & MPI_MODE_NOPRECEDE)) {
         if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
-            int i; 
+            int i;
             for (i = 0; i < OMPI_OSC_UCX_ATTACH_MAX; i++) {
                 ret = opal_common_ucx_wpmem_flush(module->local_dynamic_win_info[i].mem,
                             OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);

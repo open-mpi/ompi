@@ -229,7 +229,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
-  
+
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
@@ -312,7 +312,7 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
-  
+
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);
@@ -526,7 +526,7 @@ static inline int allred_sched_recursivedoubling(int rank, int p, const void *se
   tmprecv = (char*) recvbuf;
 
   if (inplace) {
-    res = NBC_Sched_copy(recvbuf, false, count, datatype, 
+    res = NBC_Sched_copy(recvbuf, false, count, datatype,
                          tmpsend, false, count, datatype, schedule, true);
   } else {
     res = NBC_Sched_copy((void *)sendbuf, false, count, datatype,
@@ -593,7 +593,7 @@ static inline int allred_sched_recursivedoubling(int rank, int p, const void *se
         res = NBC_Sched_op(tmpsend, false, tmprecv, false,
                            count, datatype, op, schedule, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { return res; }
-        
+
         /* Swap tmpsend and tmprecv buffers */
         tmpswap = tmprecv; tmprecv = tmpsend; tmpsend = tmpswap;
       } else {

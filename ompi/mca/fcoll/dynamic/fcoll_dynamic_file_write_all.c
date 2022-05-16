@@ -132,7 +132,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                                   count,
                                                   buf,
                                                   &max_data,
-                                                  fh->f_mem_convertor, 
+                                                  fh->f_mem_convertor,
                                                   &decoded_iov,
                                                   &iov_count);
         if (OMPI_SUCCESS != ret ){
@@ -184,7 +184,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                            fh->f_procs_in_group,
                                            fh->f_procs_per_group,
                                            fh->f_comm);
-    
+
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }
@@ -247,7 +247,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                            fh->f_procs_in_group,
                                            fh->f_procs_per_group,
                                            fh->f_comm);
-    
+
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }

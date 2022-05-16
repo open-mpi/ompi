@@ -81,7 +81,7 @@ extern opal_thread_local struct fi_cq_tagged_entry ompi_mtl_ofi_wc[MTL_OFI_MAX_P
 #endif
 
 #define MCA_MTL_OFI_CID_NOT_EXCHANGED 2
-#define MCA_MTL_OFI_CID_EXCHANGING    1 
+#define MCA_MTL_OFI_CID_EXCHANGING    1
 #define MCA_MTL_OFI_CID_EXCHANGED     0
 
 typedef struct {
@@ -567,7 +567,7 @@ ompi_mtl_ofi_post_recv_excid_buffer(bool blocking, struct ompi_communicator_t *c
     mca_mtl_ofi_cid_hdr_t *start = malloc(sizeof(mca_mtl_ofi_cid_hdr_t));
     size_t length = sizeof(mca_mtl_ofi_cid_hdr_t);
     mca_mtl_comm_t *mtl_comm;
-    
+
     mtl_comm = comm->c_mtl_comm;
 
     set_thread_context(ctxt_id);
@@ -673,7 +673,7 @@ ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     fi_addr_t sep_peer_fiaddr = 0;
     mca_mtl_comm_t *mtl_comm;
-    
+
     mtl_comm = comm->c_mtl_comm;
 
     ctxt_id = 0;
@@ -1607,7 +1607,7 @@ ompi_mtl_ofi_improbe_generic(struct mca_mtl_base_module_t *mtl,
 
     if (!OMPI_COMM_IS_GLOBAL_INDEX(comm)) {
         mtl_comm = comm->c_mtl_comm;
-        if ((src == MPI_ANY_SOURCE || mtl_comm->c_index_vec[src].c_index_state > MCA_MTL_OFI_CID_EXCHANGED) 
+        if ((src == MPI_ANY_SOURCE || mtl_comm->c_index_vec[src].c_index_state > MCA_MTL_OFI_CID_EXCHANGED)
              && !ompi_mtl_ofi.has_posted_initial_buffer) {
             ompi_mtl_ofi.has_posted_initial_buffer = true;
             ret = ompi_mtl_ofi_post_recv_excid_buffer(false, comm, -1);

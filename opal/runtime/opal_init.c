@@ -561,7 +561,7 @@ int opal_init_util(int *pargc, char ***pargv)
     /* register params for opal/rocm. This is temporarily done here. */
     mca_common_rocm_register_mca_variables();
 #endif
-    
+
     if (OPAL_SUCCESS != (ret = opal_net_init())) {
         return opal_init_error("opal_net_init", ret);
     }

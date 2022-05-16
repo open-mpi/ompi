@@ -351,8 +351,8 @@ ompi_coll_base_allgather_intra_recursivedoubling(const void *sbuf, int scount,
  *              and non-decreasing exchanged data sizes. Described in "Sparbit: a new
  *              logarithmic-cost and data locality-aware MPI Allgather algorithm".
  *
- * Memory requirements:  
- *              Additional memory for N requests. 
+ * Memory requirements:
+ *              Additional memory for N requests.
  *
  * Example on 6 nodes, with l representing the highest power of two smaller than N, in this case l =
  * 4 (more details can be found on the paper):
@@ -373,7 +373,7 @@ ompi_coll_base_allgather_intra_recursivedoubling(const void *sbuf, int scount,
  *         [ ]    [ ]    [4]    [ ]    [4]    [ ]
  *         [ ]    [ ]    [ ]    [5]    [ ]    [5]
  *   Step 1: Each process sends its own block to process r + l/2 and receives another from r - l/2.
- *   The block received on the previous step is ignored to avoid a future double-write.  
+ *   The block received on the previous step is ignored to avoid a future double-write.
  *    #     0      1      2      3      4      5
  *         [0]    [ ]    [0]    [ ]    [0]    [ ]
  *         [ ]    [1]    [ ]    [1]    [ ]    [1]
@@ -382,7 +382,7 @@ ompi_coll_base_allgather_intra_recursivedoubling(const void *sbuf, int scount,
  *         [4]    [ ]    [4]    [ ]    [4]    [ ]
  *         [ ]    [5]    [ ]    [5]    [ ]    [5]
  *   Step 1: Each process sends all the data it has (3 blocks) to process r + l/4 and similarly
- *   receives all the data from process r - l/4. 
+ *   receives all the data from process r - l/4.
  *    #     0      1      2      3      4      5
  *         [0]    [0]    [0]    [0]    [0]    [0]
  *         [1]    [1]    [1]    [1]    [1]    [1]
@@ -416,7 +416,7 @@ int ompi_coll_base_allgather_intra_sparbit(const void *sbuf, int scount,
     MPI_Request *requests = NULL;
 
     /* algorithm choice information printing */
-    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, 
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allgather_intra_sparbit rank %d", rank));
 
     comm_size = ompi_comm_size(comm);
@@ -429,14 +429,14 @@ int ompi_coll_base_allgather_intra_sparbit(const void *sbuf, int scount,
     /* tmprecv and tmpsend are used as abstract pointers to simplify send and receive buffer choice */
     tmprecv = (char *) rbuf;
     if(MPI_IN_PLACE != sbuf){
-        tmpsend = (char *) sbuf; 
+        tmpsend = (char *) sbuf;
         err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, tmprecv + (ptrdiff_t) rank * rcount * rext, rcount, rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
     }
     tmpsend = tmprecv;
 
     requests = (MPI_Request *) malloc(comm_size * sizeof(MPI_Request));
-    
+
     /* ################# ALGORITHM LOGIC ######################## */
 
     /* calculate log2 of the total process count */
@@ -448,8 +448,8 @@ int ompi_coll_base_allgather_intra_sparbit(const void *sbuf, int scount,
 
     /* perform the parallel binomial tree distribution steps */
     for (int i = 0; i < comm_log; ++i) {
-       sendto = (rank + distance) % comm_size;  
-       recvfrom = (rank - distance + comm_size) % comm_size;  
+       sendto = (rank + distance) % comm_size;
+       recvfrom = (rank - distance + comm_size) % comm_size;
        exclusion = (distance & ignore_steps) == distance;
 
        for (transfer_count = 0; transfer_count < data_expected - exclusion; transfer_count++) {
@@ -463,12 +463,12 @@ int ompi_coll_base_allgather_intra_sparbit(const void *sbuf, int scount,
        }
        ompi_request_wait_all(transfer_count * 2, requests, MPI_STATUSES_IGNORE);
 
-       distance >>= 1; 
+       distance >>= 1;
        /* calculates the data expected for the next step, based on the current number of blocks and eventual exclusions */
        data_expected = (data_expected << 1) - exclusion;
        exclusion = 0;
     }
-    
+
     free(requests);
 
     return OMPI_SUCCESS;

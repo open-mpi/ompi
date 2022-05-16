@@ -83,7 +83,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_CREATE_FROM_GROUPS,
 #endif
 
 void ompi_intercomm_create_from_groups_f(MPI_Fint *local_group, MPI_Fint *local_leader, MPI_Fint *remote_group,
-                                         MPI_Fint *remote_leader, char *stringtag, MPI_Fint *info, MPI_Fint *errhandler, 
+                                         MPI_Fint *remote_leader, char *stringtag, MPI_Fint *info, MPI_Fint *errhandler,
                                          MPI_Fint *internewcomm, MPI_Fint *ierr, int name_len)
 {
     int c_ierr, ret;
@@ -108,8 +108,8 @@ void ompi_intercomm_create_from_groups_f(MPI_Fint *local_group, MPI_Fint *local_
         return;
     }
 
-    c_ierr = PMPI_Intercomm_create_from_groups(c_lgroup,  OMPI_FINT_2_INT(*local_leader), 
-                                               c_rgroup,  OMPI_FINT_2_INT(*remote_leader), 
+    c_ierr = PMPI_Intercomm_create_from_groups(c_lgroup,  OMPI_FINT_2_INT(*local_leader),
+                                               c_rgroup,  OMPI_FINT_2_INT(*remote_leader),
                                                c_tag, c_info, c_err, &c_intercomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

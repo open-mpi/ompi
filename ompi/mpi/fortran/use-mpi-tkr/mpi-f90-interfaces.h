@@ -1383,7 +1383,7 @@ subroutine MPI_Session_get_info(session, info, ierror)
 end subroutine MPI_Session_get_info
 end interface
 
-interface 
+interface
 subroutine MPI_Session_get_nth_pset(session, info, n, pset_len, pset_name, ierror)
    implicit none
    integer, intent(in) :: session

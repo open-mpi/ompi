@@ -208,10 +208,10 @@ JNIEXPORT jlongArray JNICALL Java_mpi_Comm_iDup(
     MPI_Comm newcomm;
     MPI_Request request;
     int rc = MPI_Comm_idup((MPI_Comm)comm, &newcomm, &request);
-    
+
     if(ompi_java_exceptionCheck(env, rc))
         return NULL;
-    
+
     jlongArray jcr = (*env)->NewLongArray(env, 2);
     jlong *cr = (jlong*)(*env)->GetPrimitiveArrayCritical(env, jcr, NULL);
     cr[0] = (jlong)newcomm;
@@ -351,7 +351,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_recv(
     exception = ompi_java_exceptionCheck(env, rc);
 
     ompi_java_releaseWritePtr(ptr,item,env,buf,db,offset,count,type,bType);
-    
+
     if(!exception)
         ompi_java_status_set(env, jStatus, &status);
 }
@@ -382,7 +382,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_sendRecv(
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
     ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,rCount,rType,rBType);
-    
+
     if(!exception)
         ompi_java_status_set(env, jStatus, &status);
 }
@@ -675,7 +675,7 @@ JNIEXPORT void JNICALL Java_mpi_Comm_probe(
 {
     MPI_Status status;
     int rc = MPI_Probe(source, tag, (MPI_Comm)comm, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         ompi_java_status_set(env, jStatus, &status);
 }

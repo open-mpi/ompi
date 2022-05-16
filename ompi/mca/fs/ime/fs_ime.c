@@ -79,7 +79,7 @@ mca_fs_ime_component_file_query (ompio_file_t *fh, int *priority)
         }
     }
     else {
-        if (!strncmp(fh->f_filename, DEFAULT_IME_PREFIX_NO_FWD_SLASH, 
+        if (!strncmp(fh->f_filename, DEFAULT_IME_PREFIX_NO_FWD_SLASH,
                      IME_FILE_PREFIX_LEN_NO_FWD_SLASH)){
             fh->f_fstype = IME;
         }
@@ -129,7 +129,7 @@ int mca_fs_ime_module_finalize (ompio_file_t *file)
      * still be using it. Instead, IME is finalized when
      * the OMPIO component is closed.
      */
-    
+
     return OMPI_SUCCESS;
 }
 
@@ -150,6 +150,6 @@ int mca_fs_ime_native_fini()
     if (ret != 0) {
         return OMPI_ERROR;
     }
-    
+
     return OMPI_SUCCESS;
 }

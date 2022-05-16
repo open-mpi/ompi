@@ -171,7 +171,7 @@ static inline map_segment_t *memheap_find_seg(int segno)
     return &mca_memheap_base_map.mem_segs[segno];
 }
 
-static inline int memheap_is_va_in_segment(void *va, int segno) 
+static inline int memheap_is_va_in_segment(void *va, int segno)
 {
     return map_segment_is_va_in(&memheap_find_seg(segno)->super, va);
 }
@@ -268,7 +268,7 @@ static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(shmem_ctx_t ctx,
 
     if (OPAL_UNLIKELY(pe == oshmem_my_proc_id())) {
         *rva = va;
-        MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (local) %lx %p", pe, va, 
+        MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (local) %lx %p", pe, va,
                 s->mkeys[btl_id].u.key, *rva);
         return &s->mkeys[btl_id];
     }
@@ -283,7 +283,7 @@ static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(shmem_ctx_t ctx,
     return mca_memheap_base_get_cached_mkey_slow(ctx, s, pe, va, btl_id, rva);
 }
 
-static inline int mca_memheap_base_num_transports(void) 
+static inline int mca_memheap_base_num_transports(void)
 {
     return memheap_map->num_transports;
 }

@@ -28,10 +28,10 @@
  * Partitioned Communication (PART)
  *
  * An MCA component type that provides the partitioned interface functionality
- * required by the MPI-4 specification. Part is designed to act as intermediary 
- * between the MPI layer and another transfer layer. This differs from other 
- * components, such as PML, by allowing the component to leverage the underlying 
- * transfer mechanism to be another MPI layer, such as the osc component/the 
+ * required by the MPI-4 specification. Part is designed to act as intermediary
+ * between the MPI layer and another transfer layer. This differs from other
+ * components, such as PML, by allowing the component to leverage the underlying
+ * transfer mechanism to be another MPI layer, such as the osc component/the
  * RMA interface.
  *
  *   ------------------------------------
@@ -41,17 +41,17 @@
  *   ------------------------------------
  *   |             OSC (RDMA)           |
  *   ------------------------------------
- * 
- * The initial implementation is currently leveraging the RMA interface, 
- * with the intent to remove the MPI layer and directly call the osc component.
- * Other transport mechanisms could be used in future implementation (such as 
- * the MTL and BTL components). 
  *
- * This component and it's initial module are under development and have 
- * extra restrictions on use than described in the MPI-4 specification. 
- * Currently, MPI_Psend_init and MPI_Precv_init are both blocking in the RMA 
- * component which requires careful use to avoid deadlocks. This will 
- * be addressed in future updates. 
+ * The initial implementation is currently leveraging the RMA interface,
+ * with the intent to remove the MPI layer and directly call the osc component.
+ * Other transport mechanisms could be used in future implementation (such as
+ * the MTL and BTL components).
+ *
+ * This component and it's initial module are under development and have
+ * extra restrictions on use than described in the MPI-4 specification.
+ * Currently, MPI_Psend_init and MPI_Precv_init are both blocking in the RMA
+ * component which requires careful use to avoid deadlocks. This will
+ * be addressed in future updates.
  */
 
 #ifndef MCA_PART_H
@@ -162,7 +162,7 @@ typedef int (*mca_part_base_module_precv_init_fn_t)(
  */
 typedef int (*mca_part_base_module_psend_init_fn_t)(
     const void *buf,
-    size_t parts, 
+    size_t parts,
     size_t count,
     struct ompi_datatype_t *datatype,
     int dst,
@@ -184,7 +184,7 @@ typedef ompi_request_start_fn_t mca_part_base_module_start_fn_t;
 /**
  * Mark a range of partitions ready in a partitioned send request.
  *
- * @param min_part         Minimum partition to mark ready for transfer. 
+ * @param min_part         Minimum partition to mark ready for transfer.
  * @param max_part         Maximum partition to mark ready for transfer.
  * @param request (IN/OUT) Request
  * @return                 OMPI_SUCCESS or failure status.
@@ -199,9 +199,9 @@ typedef int (*mca_part_base_module_pready_fn_t)(
 /**
  * Check a range of partitions in a partitioned receive request.
  *
- * @param min_part         Minimum partition to check. 
+ * @param min_part         Minimum partition to check.
  * @param max_part         Maximum partition to check.
- * @param flag             Flag for completion of entire range. 
+ * @param flag             Flag for completion of entire range.
  * @param request (IN/OUT) Request
  * @return                 OMPI_SUCCESS or failure status.
  *
@@ -225,7 +225,7 @@ struct mca_part_base_module_1_0_1_t {
     /* downcalls from MPI to PART */
     mca_part_base_module_precv_init_fn_t  part_precv_init;
     mca_part_base_module_psend_init_fn_t  part_psend_init;
-    mca_part_base_module_start_fn_t       part_start; 
+    mca_part_base_module_start_fn_t       part_start;
     mca_part_base_module_pready_fn_t      part_pready;
     mca_part_base_module_parrived_fn_t    part_parrived;
     /* diagnostics */

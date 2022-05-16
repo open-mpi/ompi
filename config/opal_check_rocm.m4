@@ -24,7 +24,7 @@ AC_DEFUN([OPAL_CHECK_ROCM],[
 
      rocm_save_CPPFLAGS="$CPPFLAGS"
      rocm_save_LDFLAGS="$LDFLAGS"
-     
+
      # Get some configuration information
      AC_ARG_WITH([rocm],
         [AS_HELP_STRING([--with-rocm(=DIR)],
@@ -51,7 +51,7 @@ AC_DEFUN([OPAL_CHECK_ROCM],[
 
      LDFLAGS="$rocm_save_LDFLAGS"
      OPAL_APPEND([CPPFLAGS], [${$1_CPPFLAGS}] )
-     
+
      AS_IF([ test "$opal_check_rocm_happy" = "no" ],
            [ CPPFLAGS="$rocm_save_CPPFLAGS"])
 

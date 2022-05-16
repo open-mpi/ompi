@@ -128,7 +128,7 @@ mca_coll_monitoring_module_enable(mca_coll_base_module_t*module, struct ompi_com
     if( 1 == opal_atomic_add_fetch_32(&monitoring_module->is_initialized, 1) ) {
         MONITORING_SAVE_FULL_PREV_COLL_API(monitoring_module, comm);
         monitoring_module->data = mca_common_monitoring_coll_new(comm);
-        OPAL_MONITORING_PRINT_INFO("coll_module_enabled");    
+        OPAL_MONITORING_PRINT_INFO("coll_module_enabled");
     }
     return OMPI_SUCCESS;
 }
@@ -141,7 +141,7 @@ mca_coll_monitoring_module_disable(mca_coll_base_module_t*module, struct ompi_co
         MONITORING_RELEASE_FULL_PREV_COLL_API(monitoring_module, comm);
         mca_common_monitoring_coll_release(monitoring_module->data);
         monitoring_module->data = NULL;
-        OPAL_MONITORING_PRINT_INFO("coll_module_disabled");    
+        OPAL_MONITORING_PRINT_INFO("coll_module_disabled");
     }
     return OMPI_SUCCESS;
 }
@@ -152,7 +152,7 @@ mca_coll_monitoring_component_query(struct ompi_communicator_t*comm, int*priorit
     OPAL_MONITORING_PRINT_INFO("coll_module_query");
     mca_coll_monitoring_module_t*monitoring_module = OBJ_NEW(mca_coll_monitoring_module_t);
     if( NULL == monitoring_module ) return (*priority = -1, NULL);
-    
+
     /* Initialize module functions */
     monitoring_module->super.coll_module_enable  = mca_coll_monitoring_module_enable;
     monitoring_module->super.coll_module_disable = mca_coll_monitoring_module_disable;
@@ -176,7 +176,7 @@ mca_coll_monitoring_component_query(struct ompi_communicator_t*comm, int*priorit
     monitoring_module->super.coll_scan       = mca_coll_monitoring_scan;
     monitoring_module->super.coll_scatter    = mca_coll_monitoring_scatter;
     monitoring_module->super.coll_scatterv   = mca_coll_monitoring_scatterv;
-    
+
     /* Nonblocking functions */
     monitoring_module->super.coll_iallgather  = mca_coll_monitoring_iallgather;
     monitoring_module->super.coll_iallgatherv = mca_coll_monitoring_iallgatherv;

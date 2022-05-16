@@ -77,7 +77,7 @@ void ompi_pready_f(MPI_Fint *partition, MPI_Fint *request, MPI_Fint *ierr)
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
 
-   if (MPI_SUCCESS == c_ierr) 
+   if (MPI_SUCCESS == c_ierr)
    {
        *request = PMPI_Request_c2f(c_req);
    }

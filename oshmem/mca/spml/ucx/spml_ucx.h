@@ -5,13 +5,13 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      ARM, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
- *  @file 
+ *  @file
  */
 
 #ifndef MCA_SPML_UCX_H
@@ -61,7 +61,7 @@ enum {
 struct spml_ucx_mkey {
     ucp_rkey_h rkey;
     ucp_mem_h  mem_h;
-}; 
+};
 typedef struct spml_ucx_mkey spml_ucx_mkey_t;
 
 struct spml_ucx_cached_mkey {
@@ -76,7 +76,7 @@ struct ucp_peer {
     size_t                   mkeys_cnt;
 };
 typedef struct ucp_peer ucp_peer_t;
- 
+
 struct mca_spml_ucx_ctx {
     ucp_worker_h            *ucp_worker;
     ucp_peer_t              *ucp_peers;
@@ -329,7 +329,7 @@ mca_spml_ucx_ctx_mkey_by_seg(mca_spml_ucx_ctx_t *ucx_ctx, int pe, uint32_t segno
     return OSHMEM_SUCCESS;
 }
 
-static inline spml_ucx_mkey_t * 
+static inline spml_ucx_mkey_t *
 mca_spml_ucx_ctx_mkey_by_va(shmem_ctx_t ctx, int pe, void *va, void **rva, mca_spml_ucx_t* module)
 {
     spml_ucx_cached_mkey_t **mkey;

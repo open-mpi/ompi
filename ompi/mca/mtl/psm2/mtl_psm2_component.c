@@ -328,18 +328,18 @@ ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority)
 
 #if HAVE_PSM2_LIB_REFCOUNT_CAP
     /*
-     * Mixing the PSM2 MTL with the OFI BTL (using PSM2) 
+     * Mixing the PSM2 MTL with the OFI BTL (using PSM2)
      * can cause an issue when they both call psm2_finalize
      * in older versions of libpsm2.
-     * 
+     *
      * An installer may know what they are doing and disabled
      * checking psm2 version, hence making this code conditional.
      */
     if (!psm2_get_capability_mask(PSM2_LIB_REFCOUNT_CAP)) {
-        opal_output_verbose(2, ompi_mtl_base_framework.framework_output, 
+        opal_output_verbose(2, ompi_mtl_base_framework.framework_output,
             "This version of the PSM2 MTL needs version 11.2.173 or later of the libpsm2 library for correct operation.\n");
         return OMPI_ERR_FATAL;
-    }   
+    }
 #endif
 
     /*

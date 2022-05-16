@@ -281,7 +281,7 @@ subroutine ompi_isendrecv_f(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
    INTEGER, INTENT(IN) :: sendtype
    INTEGER, INTENT(IN) :: recvtype
    INTEGER, INTENT(IN) :: comm
-   INTEGER, INTENT(OUT) :: request 
+   INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_isendrecv_f
 

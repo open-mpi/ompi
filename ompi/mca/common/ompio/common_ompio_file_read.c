@@ -88,7 +88,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
         return ret;
     }
 
-    bool need_to_copy = false;    
+    bool need_to_copy = false;
     opal_convertor_t convertor;
 #if OPAL_CUDA_SUPPORT
     int is_gpu, is_managed;
@@ -108,12 +108,12 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
               work to be done e.g. for external32.
         */
         need_to_copy = true;
-    }         
-    
+    }
+
     if ( need_to_copy ) {
         char *tbuf=NULL;
 
-        OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);        
+        OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);
     }
     else {
         mca_common_ompio_decode_datatype (fh,
@@ -144,7 +144,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
 	bytes_per_cycle = OMPIO_MCA_GET(fh, cycle_buffer_size);
     }
     cycles = ceil((double)max_data/bytes_per_cycle);
-    
+
 #if 0
 	printf ("Bytes per Cycle: %d   Cycles: %d max_data:%d \n",bytes_per_cycle, cycles, max_data);
 #endif
@@ -162,7 +162,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
                                           decoded_iov,
                                           &i,
                                           &j,
-                                          &total_bytes_read, 
+                                          &total_bytes_read,
                                           &spc,
                                           &fh->f_io_array,
                                           &fh->f_num_of_io_entries);
@@ -252,7 +252,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
         ompio_req->req_ompi.req_status._ucount = 0;
         ompi_request_complete (&ompio_req->req_ompi, false);
         *request = (ompi_request_t *) ompio_req;
-        
+
         return OMPI_SUCCESS;
     }
 
@@ -262,13 +262,13 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
         size_t total_bytes_read = 0;       /* total bytes that have been read*/
         uint32_t iov_count = 0;
         struct iovec *decoded_iov = NULL;
-        
+
         size_t max_data = 0;
         int i = 0; /* index into the decoded iovec of the buffer */
         int j = 0; /* index into the file vie iovec */
-        
-        bool need_to_copy = false;    
-    
+
+        bool need_to_copy = false;
+
 #if OPAL_CUDA_SUPPORT
         int is_gpu, is_managed;
         mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
@@ -287,13 +287,13 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                work to be done e.g. for external32.
             */
             need_to_copy = true;
-        }         
-        
+        }
+
         if ( need_to_copy ) {
             char *tbuf=NULL;
-            
-            OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&ompio_req->req_convertor,max_data,decoded_iov,iov_count); 
-            
+
+            OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&ompio_req->req_convertor,max_data,decoded_iov,iov_count);
+
             ompio_req->req_tbuf = tbuf;
             ompio_req->req_size = max_data;
         }
@@ -307,7 +307,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                               &decoded_iov,
                                               &iov_count);
         }
-    
+
         if ( 0 < max_data && 0 == fh->f_iov_count  ) {
             ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
             ompio_req->req_ompi.req_status._ucount = 0;
@@ -323,7 +323,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
 
         // Non-blocking operations have to occur in a single cycle
         j = fh->f_index_in_file_view;
-        
+
         mca_common_ompio_build_io_array ( fh,
                                           0,         // index
                                           1,         // no. of cyces
@@ -333,7 +333,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                           decoded_iov,
                                           &i,
                                           &j,
-                                          &total_bytes_read, 
+                                          &total_bytes_read,
                                           &spc,
                                           &fh->f_io_array,
                                           &fh->f_num_of_io_entries);
@@ -418,9 +418,9 @@ int mca_common_ompio_file_read_all (ompio_file_t *fh,
         /* No need to check for GPU buffer for collective I/O.
            Most algorithms copy data from aggregators, and send/recv
            to/from GPU buffers works if ompi was compiled was GPU support.
-           
-           If the individual fcoll component is used: there are no aggregators 
-           in that concept. However, since they call common_ompio_file_write, 
+
+           If the individual fcoll component is used: there are no aggregators
+           in that concept. However, since they call common_ompio_file_write,
            CUDA buffers are handled by that routine.
 
            Thus, we only check for
@@ -434,7 +434,7 @@ int mca_common_ompio_file_read_all (ompio_file_t *fh,
         struct iovec *decoded_iov = NULL;
         uint32_t iov_count = 0;
 
-        OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);   
+        OMPIO_PREPARE_READ_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);
         ret = fh->f_fcoll->fcoll_file_read_all (fh,
                                                 decoded_iov->iov_base,
                                                 decoded_iov->iov_len,
@@ -476,7 +476,7 @@ int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
                                           count,
                                           datatype,
                                           status);
-    
+
     mca_common_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
@@ -524,7 +524,7 @@ int mca_common_ompio_file_iread_at_all (ompio_file_t *fp,
                                            count,
                                            datatype,
                                            request);
-    
+
     mca_common_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
 }

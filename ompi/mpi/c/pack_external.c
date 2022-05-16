@@ -69,7 +69,7 @@ int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
     }
 
     rc = ompi_datatype_pack_external(datarep, inbuf, incount,
-                                     datatype, outbuf, 
+                                     datatype, outbuf,
                                      outsize, position);
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);

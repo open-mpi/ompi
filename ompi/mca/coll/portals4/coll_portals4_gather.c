@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2015      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 

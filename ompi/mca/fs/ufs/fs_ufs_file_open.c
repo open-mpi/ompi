@@ -80,28 +80,28 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
     fh->f_stripe_count=1;
 
     /* Need to check for NFS here. If the file system is not NFS but a regular UFS file system,
-       we do not need to enforce locking. A regular XFS or EXT4 file system can only be used 
+       we do not need to enforce locking. A regular XFS or EXT4 file system can only be used
        within a single node, local environment, and in this case the OS will already ensure correct
        handling of file system blocks;
     */
 
-    if ( FS_UFS_LOCK_AUTO == mca_fs_ufs_lock_algorithm ) {       
+    if ( FS_UFS_LOCK_AUTO == mca_fs_ufs_lock_algorithm ) {
         char *fstype=NULL;
         bool bret = opal_path_nfs ( (char *)filename, &fstype );
-        
+
         if ( false == bret ) {
             char *dir;
             mca_fs_base_get_parent_dir ( (char *)filename, &dir );
             bret = opal_path_nfs (dir, &fstype);
             free(dir);
         }
-        
+
         if ( true == bret ) {
             if ( 0 == strncasecmp(fstype, "nfs", sizeof("nfs")) ) {
                 /* Based on my tests, only locking the entire file for all operations
                    guarantueed for the entire teststuite to pass correctly. I would not
                    be surprised, if depending on the NFS configuration that might not always
-                   be necessary, and the user can change that with an MCA parameter of this 
+                   be necessary, and the user can change that with an MCA parameter of this
                    component. */
                 fh->f_flags |= OMPIO_LOCK_ENTIRE_FILE;
             }

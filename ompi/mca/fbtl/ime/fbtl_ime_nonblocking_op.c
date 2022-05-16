@@ -90,7 +90,7 @@ static ssize_t mca_fbtl_ime_nonblocking_op (ompio_file_t *fh,
 
         /* Here we check if the next iovec will be appended to
            the current ime_aiocb request.
-           ie: if data is contiguous 
+           ie: if data is contiguous
                AND we don't exceed the advised number of iovecs for IME
            In that case, the next iovec will be appended to the IME req. */
         if (i+1 != fh->f_num_of_io_entries &&

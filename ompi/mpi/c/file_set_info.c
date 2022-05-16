@@ -42,7 +42,7 @@ static const char FUNC_NAME[] = "MPI_File_set_info";
 
 int MPI_File_set_info(MPI_File fh, MPI_Info info)
 {
-    int ret; 
+    int ret;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

@@ -194,7 +194,7 @@ static char mqs_version_str[OMPI_MAX_VER_SIZE];
 char *mqs_version_string (void)
 {
     int offset;
-    offset = snprintf(mqs_version_str, OMPI_MAX_VER_SIZE-1,  
+    offset = snprintf(mqs_version_str, OMPI_MAX_VER_SIZE-1,
                       "Open MPI message queue support for parallel debuggers ");
     ompi_get_lib_version(mqs_version_str+offset, OMPI_MAX_VER_SIZE-offset);
     return mqs_version_str;

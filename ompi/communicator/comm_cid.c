@@ -439,7 +439,7 @@ int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *com
        functions but the pml does not support these functions so return not supported */
     if (NULL == comm) {
        char msg_string[1024];
-       sprintf(msg_string,"The PML being used - %s - does not support MPI sessions related features", 
+       sprintf(msg_string,"The PML being used - %s - does not support MPI sessions related features",
                mca_pml_base_selected_component.pmlm_version.mca_component_name);
        opal_show_help("help-comm.txt",
                       "MPI function not supported",

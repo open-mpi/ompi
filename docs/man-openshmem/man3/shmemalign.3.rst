@@ -1,5 +1,5 @@
 .. _shmemalign:
- 
+
 shmemalign
 ==========
     .. include_body

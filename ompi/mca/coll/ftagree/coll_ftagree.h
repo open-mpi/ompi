@@ -47,7 +47,7 @@ extern mca_coll_ftagree_algorithm_t mca_coll_ftagree_algorithm;
 extern int mca_coll_ftagree_era_rebuild;
 
 /* Define this to enable testing random failures in various
- * places in Agree. This can be used to harden the agreement 
+ * places in Agree. This can be used to harden the agreement
  * against failures that happen at various places between
  * message events.
  */

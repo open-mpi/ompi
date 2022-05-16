@@ -68,7 +68,7 @@ int MPI_Testall(int count, MPI_Request requests[], int *flag,
                     rc = MPI_ERR_REQUEST;
                     break;
                 }
-                if (&ompi_request_empty == requests[i]) { 
+                if (&ompi_request_empty == requests[i]) {
                     continue;
                 } else if (NULL == requests[i]->req_mpi_object.comm) {
                     continue;

@@ -24,7 +24,7 @@ AC_DEFUN([MCA_oshmem_atomic_ucx_CONFIG],[
           [$2])
 
 
-    # substitute in the things needed to build ucx 
+    # substitute in the things needed to build ucx
     AC_SUBST([atomic_ucx_CPPFLAGS])
     AC_SUBST([atomic_ucx_LDFLAGS])
     AC_SUBST([atomic_ucx_LIBS])

@@ -262,7 +262,7 @@ ompi_mtl_portals4_component_open(void)
 #endif
 
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Flow control: %s", 
+                        "Flow control: %s",
                         ompi_mtl_portals4.use_flowctl ? "yes" : "no");
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Max message size: %lu", (unsigned long)

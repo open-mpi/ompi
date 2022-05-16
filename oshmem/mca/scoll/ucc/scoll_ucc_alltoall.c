@@ -12,7 +12,7 @@
 
 #include <ucc/api/ucc.h>
 
-static inline ucc_status_t mca_scoll_ucc_alltoall_init(const void *sbuf, void *rbuf, 
+static inline ucc_status_t mca_scoll_ucc_alltoall_init(const void *sbuf, void *rbuf,
                                                        int count, size_t elem_size,
                                                        mca_scoll_ucc_module_t *ucc_module,
                                                        ucc_coll_req_h *req)
@@ -87,7 +87,7 @@ int mca_scoll_ucc_alltoall(struct oshmem_group_t *group,
         return OSHMEM_SUCCESS;
     }
 
-    SCOLL_UCC_CHECK(mca_scoll_ucc_alltoall_init(source, target, count, 
+    SCOLL_UCC_CHECK(mca_scoll_ucc_alltoall_init(source, target, count,
                                                 element_size, ucc_module, &req));
     SCOLL_UCC_CHECK(ucc_collective_post(req));
     SCOLL_UCC_CHECK(scoll_ucc_req_wait(req));

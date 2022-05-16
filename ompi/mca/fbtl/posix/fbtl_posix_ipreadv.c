@@ -76,7 +76,7 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
     if ( fh->f_atomicity ) {
         OMPIO_SET_ATOMICITY_LOCK(fh, data->aio_lock, data->aio_lock_counter, F_RDLCK);
     }
-    
+
     for ( i=0; i<fh->f_num_of_io_entries; i++ ) {
         data->aio_reqs[i].aio_offset  = (OMPI_MPI_OFFSET_TYPE)(intptr_t)
             fh->f_io_array[i].offset;
@@ -103,7 +103,7 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
                                OMPIO_LOCK_ENTIRE_REGION, &data->aio_lock_counter );
     if ( 0 < ret ) {
         opal_output(1, "mca_fbtl_posix_ipreadv: error in mca_fbtl_posix_lock() error ret=%d  %s", ret, strerror(errno));
-        mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );            
+        mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
         free(data->aio_reqs);
         free(data->aio_req_status);
         free(data);
@@ -112,7 +112,7 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
 
     for (i=0; i < data->aio_last_active_req; i++) {
         int counter=0;
-        while ( MAX_ATTEMPTS > counter ) { 
+        while ( MAX_ATTEMPTS > counter ) {
 	    if  ( -1 != aio_read(&data->aio_reqs[i]) ) {
 	        break;
 	    }
@@ -121,7 +121,7 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
 	}
 	if ( MAX_ATTEMPTS == counter ) {
            opal_output(1, "mca_fbtl_posix_ipreadv: error in aio_read(): errno %d %s", errno, strerror(errno));
-	   mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );            
+	   mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
 	   free(data->aio_reqs);
 	   free(data->aio_req_status);
 	   free(data);

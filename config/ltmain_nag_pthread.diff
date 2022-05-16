@@ -27,7 +27,7 @@
 @@ -9493,6 +9501,13 @@ EOF
  	  ;;
        esac
- 
+
 +      # Time to revert the changes made for nagfor.
 +      func_cc_basename $CC
 +      case $func_cc_basename_result in

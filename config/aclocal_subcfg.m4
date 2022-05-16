@@ -9,7 +9,7 @@ dnl to subconfigure as "precious" appropriately.  The precious variable
 dnl can be created in the following ways:
 dnl 1) implicit declaration through use of autoconf macros, like
 dnl    AC_PROG_CC (declares CC/CFLAGS/CPPFLAGS/LIBS/LDFLAGS), or
-dnl    AC_PROG_F77 (declares F77/FFLAGS/FLIBS) ... 
+dnl    AC_PROG_F77 (declares F77/FFLAGS/FLIBS) ...
 dnl    which are in turns invoked by other subconfigure.
 dnl    When in doubt, check "ac_precious_var" in the calling configure.
 dnl 2) explicit "precious" declaration through AC_ARG_VAR.
@@ -93,7 +93,7 @@ AC_DEFUN([PAC_CONFIG_SUBDIR_ARGS],[
               case $pac_arg in
               *\'*) pac_arg=`AS_ECHO(["$pac_arg"]) | sed "s/'/'\\\\\\\\''/g"` ;;
               esac
-              AS_VAR_APPEND([pac_sub_configure_args], [" '$pac_arg'"]) 
+              AS_VAR_APPEND([pac_sub_configure_args], [" '$pac_arg'"])
             fi ;;
           esac
         done

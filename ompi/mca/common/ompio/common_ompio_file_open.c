@@ -118,7 +118,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
             goto fn_fail;
         }
     }
-    
+
     mca_common_ompio_set_file_defaults (ompio_fh);
 
     ompio_fh->f_split_coll_req    = NULL;
@@ -185,9 +185,9 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     }
 
     if ( true == use_sharedfp ) {
-	/* open the file once more for the shared file pointer if required.           
+	/* open the file once more for the shared file pointer if required.
         ** Can be disabled by the user if no shared file pointer operations
-        ** are used by his application.	
+        ** are used by his application.
         */
 	if ( NULL != ompio_fh->f_sharedfp ) {
 	    ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
@@ -210,7 +210,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
                               "native",
                               info);
 
-    
+
 
     /* If file has been opened in the append mode, move the internal
        file pointer of OMPIO to the very end of the file. */
@@ -359,7 +359,7 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
         free (ompio_fh->f_file_convertor);
         ompio_fh->f_file_convertor = NULL;
     }
-    
+
     if (NULL != ompio_fh->f_datarep) {
         free (ompio_fh->f_datarep);
         ompio_fh->f_datarep = NULL;
@@ -370,7 +370,7 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
         ompio_fh->f_coll_write_time = NULL;
     }
     free (ompio_fh->f_fullfilename);
-    
+
     if ( NULL != ompio_fh->f_coll_read_time ) {
         free ( ompio_fh->f_coll_read_time );
         ompio_fh->f_coll_read_time = NULL;
@@ -391,7 +391,7 @@ int mca_common_ompio_file_close (ompio_file_t *ompio_fh)
     if ( MPI_DATATYPE_NULL != ompio_fh->f_orig_filetype ){
 	ompi_datatype_destroy (&ompio_fh->f_orig_filetype);
     }
-    
+
     if (MPI_COMM_NULL != ompio_fh->f_comm && !(ompio_fh->f_flags & OMPIO_SHAREDFP_IS_SET) )  {
         ompi_comm_free (&ompio_fh->f_comm);
     }
@@ -444,11 +444,11 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
        int blocklen[2] = {1, 1};
        ptrdiff_t d[2], base;
        int i, flag;
-       
+
        fh->f_io_array = NULL;
        fh->f_perm = OMPIO_PERM_NULL;
        fh->f_flags = 0;
-       
+
        fh->f_bytes_per_agg = OMPIO_MCA_GET(fh, bytes_per_agg);
        opal_info_get (fh->f_info, "cb_buffer_size", &stripe_str, &flag);
        if ( flag ) {
@@ -460,25 +460,25 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
 
        fh->f_atomicity = 0;
        fh->f_fs_block_size = 4096;
-       
+
        fh->f_offset = 0;
        fh->f_disp = 0;
        fh->f_position_in_file_view = 0;
        fh->f_index_in_file_view = 0;
        fh->f_total_bytes = 0;
-       
+
        fh->f_init_procs_per_group = -1;
        fh->f_init_procs_in_group = NULL;
-       
+
        fh->f_procs_per_group = -1;
        fh->f_procs_in_group = NULL;
-       
+
        fh->f_init_num_aggrs = -1;
        fh->f_init_aggr_list = NULL;
-       
+
        fh->f_num_aggrs = -1;
        fh->f_aggr_list = NULL;
-       
+
        /* Default file View */
        fh->f_iov_type = MPI_DATATYPE_NULL;
        fh->f_stripe_size = 0;
@@ -488,26 +488,26 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
        fh->f_filetype = MPI_DATATYPE_NULL;
        fh->f_orig_filetype = MPI_DATATYPE_NULL;
        fh->f_datarep = NULL;
-       
+
        /*Create a derived datatype for the created iovec */
        types[0] = &ompi_mpi_long.dt;
        types[1] = &ompi_mpi_long.dt;
-       
+
        d[0] = (ptrdiff_t) fh->f_decoded_iov;
        d[1] = (ptrdiff_t) &fh->f_decoded_iov[0].iov_len;
-       
+
        base = d[0];
        for (i=0 ; i<2 ; i++) {
            d[i] -= base;
        }
-       
+
        ompi_datatype_create_struct (2,
                                     blocklen,
                                     d,
                                     types,
                                     &fh->f_iov_type);
        ompi_datatype_commit (&fh->f_iov_type);
-       
+
        return OMPI_SUCCESS;
    }
    else {
@@ -523,14 +523,14 @@ int mca_common_ompio_file_delete (const char *filename,
     ompio_file_t *fh = NULL;
 
     /* No locking required for file_delete according to my understanding.
-       One thread will succeed, the other ones silently ignore the 
+       One thread will succeed, the other ones silently ignore the
        error that the file is already deleted.
     */
 
     /* Create an incomplete file handle, it will basically only
        contain the filename. It is needed to select the correct
        component in the fs framework and call the file_remove
-       function corresponding to the file type. 
+       function corresponding to the file type.
     */
     ret = mca_common_ompio_create_incomplete_file_handle(filename, &fh);
     if (OMPI_SUCCESS != ret) {
@@ -708,7 +708,7 @@ int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
 
     free (temp_iov);
     opal_convertor_cleanup (&convertor);
-    
+
     return OMPI_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 .. _shmem_double_sum_to_all:
- 
+
 shmem_double_sum_to_all
 =======================
     .. include_body

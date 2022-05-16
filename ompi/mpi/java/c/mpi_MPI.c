@@ -262,7 +262,7 @@ JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
     }
 
     int rc = MPI_Init(&len, &sargs);
-    
+
     if(ompi_java_exceptionCheck(env, rc)) {
         for(i = 0; i < len; i++)
             free (sargs[i]);
@@ -313,7 +313,7 @@ JNIEXPORT jint JNICALL Java_mpi_MPI_InitThread_1jni(
 
     int provided;
     int rc = MPI_Init_thread(&len, &sargs, required, &provided);
-    
+
     if(ompi_java_exceptionCheck(env, rc)) {
         for(i = 0; i < len; i++)
             free (sargs[i]);

@@ -9,7 +9,7 @@
 # $HEADER$
 #
 # An Aggregate MCA Parameter Set to setup an environment that can support
-# User-Level Failure Mitigation (ULFM) fault tolerance (must also be 
+# User-Level Failure Mitigation (ULFM) fault tolerance (must also be
 # compiled in with --with-ft=mpi).
 #
 # Usage:

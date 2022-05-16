@@ -2567,7 +2567,7 @@ static void msg_down(era_msg_header_t *msg_header, uint8_t *bytes, int *new_dead
          */
         return;
     }
-    /** if I receive a down message on an agreement I know about, I already participated. 
+    /** if I receive a down message on an agreement I know about, I already participated.
      * There is a non-erroneous code; erroneous execution that may also trigger this assert:
      * consider the following case with false detection:
      *   1. some ancestor A has detected the current process C as failed

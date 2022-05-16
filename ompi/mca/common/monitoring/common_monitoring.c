@@ -716,7 +716,7 @@ static void mca_common_monitoring_output( FILE *pf, int my_rank, int nbprocs )
                 fprintf(pf, "I\t%" PRId32 "\t%" PRId32 "\t%zu bytes\t%zu msgs sent%s",
                         my_rank, i, filtered_pml_data[i], filtered_pml_count[i],
                         0 == pml_count[i] ? "\t" : "\n");
-                /* 
+                /*
                  * In the case there was no external messages
                  * exchanged between the two processes, the histogram
                  * has not yet been dumpped. Then we need to add it at

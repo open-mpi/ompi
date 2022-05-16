@@ -525,7 +525,7 @@ static int _algorithm_basic(struct oshmem_group_t *group, long *pSync)
         for (i = 0; (i < group->proc_count) && (rc == OSHMEM_SUCCESS); i++) {
             pe_cur = oshmem_proc_pe_vpid(group, i);
             if (pe_cur != PE_root) {
-                rc = MCA_SPML_CALL(recv(NULL, 0, pe_cur)); 
+                rc = MCA_SPML_CALL(recv(NULL, 0, pe_cur));
             }
             if (OSHMEM_SUCCESS != rc) {
                 return rc;

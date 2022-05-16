@@ -68,14 +68,14 @@ static int ompi_isendrecv_complete_func (ompi_comm_request_t *request)
      * Copy the status from the receive side of the sendrecv request?
      * But what if the send failed?
      *
-     * Probably need to bring up in the MPI forum.  
+     * Probably need to bring up in the MPI forum.
      */
 
     if (MPI_PROC_NULL != context->source) {
-        OMPI_COPY_STATUS(&request->super.req_status, 
+        OMPI_COPY_STATUS(&request->super.req_status,
                          context->subreq[0]->req_status, false);
     } else {
-        OMPI_COPY_STATUS(&request->super.req_status, 
+        OMPI_COPY_STATUS(&request->super.req_status,
                          ompi_request_empty.req_status, false);
     }
 
@@ -179,7 +179,7 @@ int MPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     flags = OMPI_COMM_REQ_FLAG_RETAIN_SUBREQ;
 
-    rc = ompi_comm_request_schedule_append_w_flags(crequest, ompi_isendrecv_complete_func, 
+    rc = ompi_comm_request_schedule_append_w_flags(crequest, ompi_isendrecv_complete_func,
                                                    context->subreq, nreqs, flags);
     if (MPI_SUCCESS != rc) {
         OBJ_RELEASE(context);

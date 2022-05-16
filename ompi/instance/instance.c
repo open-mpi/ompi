@@ -312,11 +312,11 @@ static void evhandler_dereg_callbk(pmix_status_t status,
                                  void *cbdata)
 {
     opal_pmix_lock_t *lock = (opal_pmix_lock_t*)cbdata;
-    
+
     lock->status = status;
 
     OPAL_PMIX_WAKEUP_THREAD(lock);
-}       
+}
 
 
 
@@ -937,10 +937,10 @@ int ompi_mpi_instance_finalize (ompi_instance_t **instance)
     return ret;
 }
 
-static void ompi_instance_get_num_psets_complete (pmix_status_t status, 
+static void ompi_instance_get_num_psets_complete (pmix_status_t status,
 		                                  pmix_info_t *info,
 		                                  size_t ninfo,
-                                                  void *cbdata, 
+                                                  void *cbdata,
                                                   pmix_release_cbfunc_t release_fn,
                                                   void *release_cbdata)
 {
@@ -1021,7 +1021,7 @@ static void ompi_instance_refresh_pmix_psets (const char *key)
     /*
      * TODO: need to handle this better
      */
-    if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(&query, 1, 
+    if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(&query, 1,
                                                  ompi_instance_get_num_psets_complete,
                                                  (void*)&lock))) {
        opal_mutex_unlock (&instance_lock);
@@ -1291,7 +1291,7 @@ int ompi_group_from_pset (ompi_instance_t *instance, const char *pset_name, ompi
     if (*group_out == MPI_GROUP_NULL) {
         return OMPI_ERR_BAD_PARAM;
     }
-    
+
     if (0 == strncmp (pset_name, "mpi://", 6)) {
         pset_name += 6;
         if (0 == strcasecmp (pset_name, "WORLD")) {

@@ -307,5 +307,5 @@ mca_smsc_xpmem_module_t mca_smsc_xpmem_module = {
         .copy_from = mca_smsc_xpmem_copy_from,
         .map_peer_region = mca_smsc_xpmem_map_peer_region,
         .unmap_peer_region = mca_smsc_xpmem_unmap_peer_region,
-    }, 
+    },
 };

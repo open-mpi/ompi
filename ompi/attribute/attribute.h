@@ -516,7 +516,7 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
  * \internal
  *
  * Create all the predefined attribute keys
- * @note This routine is invoked when creating a session 
+ * @note This routine is invoked when creating a session
  *       so must be thread safe.
  *
  * @returns OMPI_SUCCESS

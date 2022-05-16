@@ -1,5 +1,5 @@
 .. _shrealloc:
- 
+
 shrealloc
 =========
     .. include_body

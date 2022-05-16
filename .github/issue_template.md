@@ -16,9 +16,9 @@ Thank you for taking the time to submit an issue!
 
 ### Please describe the system on which you are running
 
-* Operating system/version: 
-* Computer hardware: 
-* Network type: 
+* Operating system/version:
+* Computer hardware:
+* Network type:
 
 -----------------------------
 

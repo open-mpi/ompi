@@ -1,5 +1,5 @@
 .. _mpi_neighbor_alltoallv_init:
- 
+
 MPI_Neighbor_alltoallv_init
 ===========================
     .. include_body

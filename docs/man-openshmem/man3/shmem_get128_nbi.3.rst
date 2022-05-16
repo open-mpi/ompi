@@ -1,5 +1,5 @@
 .. _shmem_get128_nbi:
- 
+
 shmem_get128_nbi
 ================
     .. include_body

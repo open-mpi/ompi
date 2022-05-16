@@ -66,7 +66,7 @@ static void mca_scoll_ucc_module_destruct(mca_scoll_ucc_module_t *ucc_module)
             ucc_finalize(mca_scoll_ucc_component.ucc_lib);
             mca_scoll_ucc_component.libucc_initialized = false;
         }
-    }         
+    }
 
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_alltoall_module);
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_collect_module);
@@ -87,7 +87,7 @@ static void mca_scoll_ucc_module_destruct(mca_scoll_ucc_module_t *ucc_module)
     OBJ_RETAIN(ucc_module->previous_ ## __api ## _module);\
 } while(0)
 
-static int mca_scoll_ucc_save_coll_handlers(mca_scoll_base_module_t *module, 
+static int mca_scoll_ucc_save_coll_handlers(mca_scoll_base_module_t *module,
                                             oshmem_group_t *osh_group)
 {
     mca_scoll_ucc_module_t* ucc_module = (mca_scoll_ucc_module_t*) module;
@@ -99,7 +99,7 @@ static int mca_scoll_ucc_save_coll_handlers(mca_scoll_base_module_t *module,
     return OSHMEM_SUCCESS;
 }
 
-typedef struct oob_allgather_req 
+typedef struct oob_allgather_req
 {
     void           *sbuf;
     void           *rbuf;
@@ -130,7 +130,7 @@ static ucc_status_t oob_allgather(void *sbuf, void *rbuf, size_t msglen,
     return UCC_OK;
 }
 
-static inline ucc_status_t oob_probe_test(oob_allgather_req_t *oob_req) 
+static inline ucc_status_t oob_probe_test(oob_allgather_req_t *oob_req)
 {
     int probe       = 0;
     int probe_count = 5;
@@ -195,7 +195,7 @@ static ucc_status_t oob_allgather_test(void *req)
         tmpsend = (char *) oob_req->rbuf + (ptrdiff_t) senddatafrom * (ptrdiff_t) msglen;
         MCA_PML_CALL(isend(tmpsend, msglen, MPI_BYTE, sendto, MCA_COLL_BASE_TAG_UCC,
                      MCA_PML_BASE_SEND_STANDARD, oshmem_comm_world, &oob_req->reqs[0]));
-        MCA_PML_CALL(irecv(tmprecv, msglen, MPI_BYTE, recvfrom, 
+        MCA_PML_CALL(irecv(tmprecv, msglen, MPI_BYTE, recvfrom,
                      MCA_COLL_BASE_TAG_UCC, oshmem_comm_world, &oob_req->reqs[1]));
     }
     return oob_probe_test(oob_req);
@@ -254,7 +254,7 @@ cleanup_lib:
     return OSHMEM_ERROR;
 }
 
-int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group) 
+int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group)
 {
     mca_scoll_ucc_component_t *cm   = &mca_scoll_ucc_component;
     ucc_mem_map_t             *maps = NULL;
@@ -446,7 +446,7 @@ mca_scoll_ucc_comm_query(oshmem_group_t *osh_group, int *priority)
     mca_scoll_base_module_t   *module;
     mca_scoll_ucc_module_t    *ucc_module;
     mca_scoll_ucc_component_t *cm;
-    
+
     *priority = 0;
     cm = &mca_scoll_ucc_component;
 

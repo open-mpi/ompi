@@ -61,7 +61,7 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
       return ret;
     }
 
-    
+
     if ( 0 == count ) {
         if ( MPI_STATUS_IGNORE != status ) {
             status->_ucount = 0;
@@ -89,14 +89,14 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
               work to be done e.g. for external32.
         */
         need_to_copy = true;
-    }         
-    
+    }
+
     if ( need_to_copy ) {
         size_t pos=0;
         char *tbuf=NULL;
         opal_convertor_t convertor;
-        
-        OMPIO_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);     
+
+        OMPIO_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);
         opal_convertor_pack (&convertor, decoded_iov, &iov_count, &pos );
         opal_convertor_cleanup ( &convertor);
     }
@@ -145,7 +145,7 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
                                           decoded_iov,
                                           &i,
                                           &j,
-                                          &total_bytes_written, 
+                                          &total_bytes_written,
                                           &spc,
                                           &fh->f_io_array,
                                           &fh->f_num_of_io_entries);
@@ -220,7 +220,7 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
         ret = MPI_ERR_READ_ONLY;
       return ret;
     }
-    
+
     mca_common_ompio_request_alloc ( &ompio_req, MCA_OMPIO_REQUEST_WRITE);
 
     if ( 0 == count ) {
@@ -228,13 +228,13 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
         ompio_req->req_ompi.req_status._ucount = 0;
         ompi_request_complete (&ompio_req->req_ompi, false);
         *request = (ompi_request_t *) ompio_req;
-        
+
         return OMPI_SUCCESS;
     }
 
     if ( NULL != fh->f_fbtl->fbtl_ipwritev ) {
         /* This fbtl has support for non-blocking operations */
-        
+
         uint32_t iov_count = 0;
         struct iovec *decoded_iov = NULL;
         size_t max_data = 0;
@@ -262,14 +262,14 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
                work to be done e.g. for external32.
             */
             need_to_copy = true;
-        }         
-        
+        }
+
         if ( need_to_copy ) {
             size_t pos=0;
             char *tbuf=NULL;
             opal_convertor_t convertor;
-            
-            OMPIO_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);                    
+
+            OMPIO_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);
             opal_convertor_pack (&convertor, decoded_iov, &iov_count, &pos );
             opal_convertor_cleanup (&convertor);
 
@@ -312,15 +312,15 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
                                           decoded_iov,
                                           &i,
                                           &j,
-                                          &total_bytes_written, 
+                                          &total_bytes_written,
                                           &spc,
                                           &fh->f_io_array,
                                           &fh->f_num_of_io_entries);
-        
+
         if (fh->f_num_of_io_entries) {
             fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
         }
-        
+
         mca_common_ompio_register_progress ();
 
         fh->f_num_of_io_entries = 0;
@@ -337,7 +337,7 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
         // This fbtl does not support non-blocking write operations
         ompi_status_public_t status;
         ret = mca_common_ompio_file_write(fh,buf,count,datatype, &status);
-        
+
         ompio_req->req_ompi.req_status.MPI_ERROR = ret;
         ompio_req->req_ompi.req_status._ucount = status._ucount;
         ompi_request_complete (&ompio_req->req_ompi, false);
@@ -387,16 +387,16 @@ int mca_common_ompio_file_write_all (ompio_file_t *fh,
                                      ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
-    
+
     if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
          !(datatype == &ompi_mpi_byte.dt  ||
            datatype == &ompi_mpi_char.dt   )) {
         /* No need to check for GPU buffer for collective I/O.
            Most algorithms first copy data to aggregators, and send/recv
            to/from GPU buffers works if ompi was compiled was GPU support.
-           
-           If the individual fcoll component is used: there are no aggregators 
-           in that concept. However, since they call common_ompio_file_write, 
+
+           If the individual fcoll component is used: there are no aggregators
+           in that concept. However, since they call common_ompio_file_write,
            CUDA buffers are handled by that routine.
 
            Thus, we only check for
@@ -409,8 +409,8 @@ int mca_common_ompio_file_write_all (ompio_file_t *fh,
         opal_convertor_t convertor;
         struct iovec *decoded_iov = NULL;
         uint32_t iov_count = 0;
-        
-        OMPIO_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);     
+
+        OMPIO_PREPARE_BUF(fh,buf,count,datatype,tbuf,&convertor,max_data,decoded_iov,iov_count);
         opal_convertor_pack (&convertor, decoded_iov, &iov_count, &pos );
         opal_convertor_cleanup ( &convertor);
 
@@ -454,7 +454,7 @@ int mca_common_ompio_file_write_at_all (ompio_file_t *fh,
                                            count,
                                            datatype,
                                            status);
-    
+
     mca_common_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
@@ -498,7 +498,7 @@ int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
 
     mca_common_ompio_file_get_position (fp, &prev_offset );
     mca_common_ompio_set_explicit_offset (fp, offset);
-    
+
     ret = mca_common_ompio_file_iwrite_all ( fp, buf, count, datatype, request );
 
     mca_common_ompio_set_explicit_offset (fp, prev_offset);
@@ -512,7 +512,7 @@ int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
 
 int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
                                       size_t bytes_per_cycle, size_t  max_data, uint32_t iov_count,
-                                      struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw, 
+                                      struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw,
                                       size_t *spc, mca_common_ompio_io_array_t **io_array,
                                       int *num_io_entries)
 {
@@ -529,7 +529,7 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
     int j = *jj;
     mca_common_ompio_io_array_t *f_io_array=NULL;
     int f_num_io_entries=0;
-    
+
     sum_previous_length = fh->f_position_in_file_view;
 
     if ((index == cycles-1) && (max_data % bytes_per_cycle)) {
@@ -626,7 +626,7 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
 	    printf(" ADDRESS: %p  OFFSET: %p   LENGTH: %d prev_count=%ld prev_length=%ld\n",
 		   f_io_array[d].memory_address,
 		   f_io_array[d].offset,
-		   f_io_array[d].length, 
+		   f_io_array[d].length,
                    sum_previous_counts, sum_previous_length);
 	}
     }
@@ -637,7 +637,7 @@ int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
     *spc = sum_previous_counts;
     *io_array = f_io_array;
     *num_io_entries = f_num_io_entries;
-    
+
     return OMPI_SUCCESS;
 }
 

@@ -100,7 +100,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
       }
-    } 
+    }
 
 #if OPAL_ENABLE_FT_MPI
     /*

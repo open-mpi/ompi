@@ -137,7 +137,7 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
         }
     }
 
-    
+
     if (fs_pvfs2_stripe_size < 0) {
         fs_pvfs2_stripe_size = mca_fs_pvfs2_stripe_size;
     }

@@ -510,8 +510,8 @@ int main(int argc, char* argv[])
   if (MPIT_result != MPI_SUCCESS)
     MPI_Abort(MPI_COMM_WORLD, MPIT_result);
 
-  MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, 
-                                     MPI_T_PVAR_CLASS_GENERIC, 
+  MPIT_result = MPI_T_pvar_get_index(flush_pvar_name,
+                                     MPI_T_PVAR_CLASS_GENERIC,
                                      &flush_pvar_idx);
   if (MPIT_result != MPI_SUCCESS) {
     printf("cannot find monitoring MPI_T \"%s\" pvar, "
@@ -522,7 +522,7 @@ int main(int argc, char* argv[])
 
   MPIT_result = MPI_T_pvar_session_create(&session);
   if (MPIT_result != MPI_SUCCESS) {
-    printf("cannot create a session for \"%s\" pvar\n", 
+    printf("cannot create a session for \"%s\" pvar\n",
            flush_pvar_name);
     MPI_Abort(MPI_COMM_WORLD, MPIT_result);
   }
@@ -530,8 +530,8 @@ int main(int argc, char* argv[])
   /* Allocating a new PVAR in a session will reset the counters */
 
   MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx,
-                                        &comm, 
-                                        &flush_handle, 
+                                        &comm,
+                                        &flush_handle,
                                         &count);
   if (MPIT_result != MPI_SUCCESS) {
     printf("failed to allocate handle on \"%s\" pvar, "
@@ -565,7 +565,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  /* 
+  /*
    * Build one file per processes
    * Every thing that has been monitored by each
    * process since the last flush will be output in filename
@@ -577,11 +577,11 @@ int main(int argc, char* argv[])
    */
 
   sprintf(filename,"prof/phase_1");
-  if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, 
-                                      filename) ) 
+  if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle,
+                                      filename) )
   {
-    fprintf(stderr, 
-            "Process %d cannot save monitoring in %s.%d.prof\n", 
+    fprintf(stderr,
+            "Process %d cannot save monitoring in %s.%d.prof\n",
             rank, filename, rank);
   }
 
@@ -595,7 +595,7 @@ int main(int argc, char* argv[])
     MPI_Abort(MPI_COMM_WORLD, MPIT_result);
   }
 
-  /* 
+  /*
    * Don't set a filename. If we stop the session before setting
    * it, then no output will be generated.
    */
@@ -603,15 +603,15 @@ int main(int argc, char* argv[])
   if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle,
                                       &nullbuff) )
   {
-    fprintf(stderr, 
-            "Process %d cannot save monitoring in %s\n", 
+    fprintf(stderr,
+            "Process %d cannot save monitoring in %s\n",
             rank, filename);
   }
 
   (void)MPI_T_finalize();
 
   MPI_Finalize();
-  
+
   return EXIT_SUCCESS;
 }
 \end{verbatim}
@@ -768,45 +768,45 @@ the partial directory tree presented in Figure~\ref{fig:tree}.
 
 \begin{figure}
   \dirtree{%
-    .1 ompi/mca/. 
-    .2 common. 
+    .1 ompi/mca/.
+    .2 common.
     .3 monitoring.
-    .4 common\_monitoring.h. 
+    .4 common\_monitoring.h.
     .4 common\_monitoring.c.
-    .4 common\_monitoring\_coll.h. 
-    .4 common\_monitoring\_coll.c.   
-    .4 HowTo\_pml\_monitoring.tex. 
+    .4 common\_monitoring\_coll.h.
+    .4 common\_monitoring\_coll.c.
+    .4 HowTo\_pml\_monitoring.tex.
     .4 Makefile.am.
-    .2 pml. 
-    .3 monitoring. 
+    .2 pml.
+    .3 monitoring.
     .4 pml\_monitoring.h.
     .4 pml\_monitoring\_component.c.
-    .4 pml\_monitoring\_comm.c. 
-    .4 pml\_monitoring\_irecv.c. 
-    .4 pml\_monitoring\_isend.c. 
-    .4 pml\_monitoring\_start.c. 
+    .4 pml\_monitoring\_comm.c.
+    .4 pml\_monitoring\_irecv.c.
+    .4 pml\_monitoring\_isend.c.
+    .4 pml\_monitoring\_start.c.
     .4 pml\_monitoring\_iprobe.c.
     .4 Makefile.am.
-    .2 osc. 
+    .2 osc.
     .3 monitoring.
-    .4 osc\_monitoring.h. 
+    .4 osc\_monitoring.h.
     .4 osc\_monitoring\_component.c.
-    .4 osc\_monitoring\_comm.h. 
+    .4 osc\_monitoring\_comm.h.
     .4 osc\_monitoring\_module.h.
-    .4 osc\_monitoring\_dynamic.h. 
+    .4 osc\_monitoring\_dynamic.h.
     .4 osc\_monitoring\_template.h.
-    .4 osc\_monitoring\_accumulate.h. 
+    .4 osc\_monitoring\_accumulate.h.
     .4 osc\_monitoring\_active\_target.h.
     .4 osc\_monitoring\_passive\_target.h.
     .4 configure.m4.
     .4 Makefile.am.
-    .2 coll. 
+    .2 coll.
     .3 monitoring.
-    .4 coll\_monitoring.h. 
+    .4 coll\_monitoring.h.
     .4 coll\_monitoring\_component.c.
-    .4 coll\_monitoring\_bcast.c. 
+    .4 coll\_monitoring\_bcast.c.
     .4 coll\_monitoring\_reduce.c.
-    .4 coll\_monitoring\_barrier.c. 
+    .4 coll\_monitoring\_barrier.c.
     .4 coll\_monitoring\_alltoall.c.
     .4 {...} .
     .4 Makefile.am.

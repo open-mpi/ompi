@@ -1,5 +1,5 @@
 .. _mpi_gatherv_init:
- 
+
 MPI_Gatherv_init
 ================
     .. include_body

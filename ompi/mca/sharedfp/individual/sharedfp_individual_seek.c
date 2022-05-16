@@ -36,9 +36,9 @@ int mca_sharedfp_individual_seek (ompio_file_t *fh,
         /* As long as nobody using this module 'inapproprialy', its is ok.
         ** to call this function, since it might come out of File_set_view.
         ** however, we have to return an error as soon as people are calling
-        ** this function on this component and expect it to work. 
+        ** this function on this component and expect it to work.
         */
-        
+
         return OMPI_SUCCESS;
     }
 

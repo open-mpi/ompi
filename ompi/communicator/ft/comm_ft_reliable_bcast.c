@@ -204,7 +204,7 @@ static void ompi_comm_rbcast_bml_recv_cb(
         }
     }
     else {
-        /* During finalize, we loosly synchronize so it may happen 
+        /* During finalize, we loosly synchronize so it may happen
          * that we keep receiving messages after we deregistered the type.
          * Any other time, this is indicative of a problem.
          */

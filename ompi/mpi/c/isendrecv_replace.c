@@ -72,8 +72,8 @@ static void ompi_isendrecv_context_destructor(ompi_isendrecv_replace_context_t *
     OBJ_DESTRUCT(&context->convertor);
 }
 
-OBJ_CLASS_INSTANCE(ompi_isendrecv_replace_context_t, 
-                   opal_object_t, 
+OBJ_CLASS_INSTANCE(ompi_isendrecv_replace_context_t,
+                   opal_object_t,
                    ompi_isendrecv_context_constructor,
                    ompi_isendrecv_context_destructor);
 #else
@@ -89,14 +89,14 @@ static int ompi_isendrecv_replace_complete_func (ompi_comm_request_t *request)
      * Copy the status from the receive side of the sendrecv request?
      * But what if the send failed?
      *
-     * Probably need to bring up in the MPI forum.  
+     * Probably need to bring up in the MPI forum.
      */
 
     if (MPI_PROC_NULL != context->source) {
         OMPI_COPY_STATUS(&request->super.req_status,
                          context->subreq[0]->req_status, false);
     } else {
-        OMPI_COPY_STATUS(&request->super.req_status, 
+        OMPI_COPY_STATUS(&request->super.req_status,
                          ompi_request_empty.req_status, false);
     }
 
@@ -222,7 +222,7 @@ int MPI_Isendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
     if (dest != MPI_PROC_NULL) { /* send */
         rc = MCA_PML_CALL(isend(context->iov.iov_base, context->packed_size, MPI_PACKED, dest,
-                               sendtag, MCA_PML_BASE_SEND_STANDARD, comm, 
+                               sendtag, MCA_PML_BASE_SEND_STANDARD, comm,
                                 &context->subreq[nreqs++]));
         if (MPI_SUCCESS != rc) {
             OBJ_RELEASE(context);
@@ -240,9 +240,9 @@ int MPI_Isendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
     flags = OMPI_COMM_REQ_FLAG_RETAIN_SUBREQ;
 
-    rc = ompi_comm_request_schedule_append_w_flags(crequest, 
-                                                   ompi_isendrecv_replace_complete_func, 
-                                                   context->subreq, 
+    rc = ompi_comm_request_schedule_append_w_flags(crequest,
+                                                   ompi_isendrecv_replace_complete_func,
+                                                   context->subreq,
                                                    nreqs,
                                                    flags);
     if (MPI_SUCCESS != rc) {

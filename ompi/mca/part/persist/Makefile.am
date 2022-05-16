@@ -37,7 +37,7 @@ local_sources = \
 	part_persist_request.h \
 	part_persist_request.c \
 	part_persist_sendreq.h \
-	part_persist_sendreq.c 
+	part_persist_sendreq.c
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)

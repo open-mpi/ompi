@@ -4,9 +4,9 @@
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #define _GNU_SOURCE
@@ -321,7 +321,7 @@ static int spml_ucx_init(void)
     } else {
         wkr_params.thread_mode = UCS_THREAD_MODE_SINGLE;
     }
-    
+
     mca_spml_ucx_ctx_default.ucp_worker = calloc(mca_spml_ucx.ucp_workers, sizeof(ucp_worker_h));
     for (i = 0; i < mca_spml_ucx.ucp_workers; i++) {
         err = ucp_worker_create(mca_spml_ucx.ucp_context, &wkr_params,
@@ -482,7 +482,7 @@ static int mca_spml_ucx_component_fini(void)
         for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
             ucp_worker_progress(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker[0]);
         }
-        
+
         for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
             ucp_worker_progress(mca_spml_ucx_ctx_default.ucp_worker[i]);
         }

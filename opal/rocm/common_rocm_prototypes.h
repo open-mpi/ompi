@@ -15,15 +15,15 @@
 
 /* These five routines represent at the moment the functionality required to support a device/GPU
  * in the Open MPI datatype engine. The interface are kept on purpose independent of the library
- * supporting the GPU/device, since it avoids compile problems in cases where the library is not 
+ * supporting the GPU/device, since it avoids compile problems in cases where the library is not
  * available.
  */
 
 /* Function invoked by the datatype engine to initialize support for the GPU device. */
 OPAL_DECLSPEC void mca_common_rocm_convertor_init(opal_convertor_t *convertor, const void *pUserBuf);
 
-/* Function verifying the buffer types provided as input argument. Returns true if either 
- * one of the two functions is located in the GPU device memory, indicating the necessity 
+/* Function verifying the buffer types provided as input argument. Returns true if either
+ * one of the two functions is located in the GPU device memory, indicating the necessity
  * to utilize GPU specific data movement functions.
  */
 OPAL_DECLSPEC bool mca_common_rocm_check_bufs(char *destination_base, char *source_base);
@@ -40,7 +40,7 @@ OPAL_DECLSPEC int mca_common_rocm_memcpy_sync(void *dst, void *src, size_t nByte
 OPAL_DECLSPEC int mca_common_rocm_memmove(void *dst, void *src, size_t nBytes);
 
 
-/* Function performing a copy from the src to the dst buffer if either one 
+/* Function performing a copy from the src to the dst buffer if either one
  * are GPU buffers. Buffers must be non-overlapping. The additional convertor argument
  * is at the moment only used to verify that the appropriate flags for device buffers
  * has been set.

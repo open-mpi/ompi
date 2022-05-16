@@ -95,7 +95,7 @@ enum {
  * Constants and definitions
  */
 #define SHMEM_MAJOR_VERSION             1
-#define SHMEM_MINOR_VERSION             4 
+#define SHMEM_MINOR_VERSION             4
 #define SHMEM_VENDOR_STRING             "https://www.open-mpi.org/"
 #define SHMEM_MAX_NAME_LEN              256
 

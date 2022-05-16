@@ -96,8 +96,8 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 #if OPAL_ENABLE_FT_MPI
             /* If this is a PROC_FAILED error, we still need to proceed with
              * the receive, so that we do not propagate errors to the sender in
-             * the case src != dst, and only dst is dead. In this case the 
-             * recv is garanteed to complete (either in error if the source is 
+             * the case src != dst, and only dst is dead. In this case the
+             * recv is garanteed to complete (either in error if the source is
              * dead, or successfully if the source is live). */
             if (OPAL_UNLIKELY(MPI_ERR_PROC_FAILED != rc))
             /* if intentionally spills outside ifdef */

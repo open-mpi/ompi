@@ -61,7 +61,7 @@ AC_DEFUN([MCA_oshmem_sshmem_ucx_CONFIG],[
     LDFLAGS="$save_LDFLAGS"
     LIBS="$save_LIBS"
 
-    # substitute in the things needed to build ucx 
+    # substitute in the things needed to build ucx
     AC_SUBST([sshmem_ucx_CPPFLAGS])
     AC_SUBST([sshmem_ucx_LDFLAGS])
     AC_SUBST([sshmem_ucx_LIBS])

@@ -104,7 +104,7 @@ int ompi_fcoll_base_coll_allgatherv_array (void *sbuf,
     if(MPI_SUCCESS != err) {
         return err;
     }
-    
+
     ompi_fcoll_base_coll_bcast_array (rbuf,
                                  1,
                                  newtype,
@@ -112,7 +112,7 @@ int ompi_fcoll_base_coll_allgatherv_array (void *sbuf,
                                  procs_in_group,
                                  procs_per_group,
                                  comm);
-    
+
     ompi_datatype_destroy (&newtype);
 
     return OMPI_SUCCESS;
@@ -335,7 +335,7 @@ int ompi_fcoll_base_coll_allgather_array (void *sbuf,
                                         procs_in_group,
                                         procs_per_group,
                                         comm);
-    
+
     if (OMPI_SUCCESS == err) {
         err = ompi_fcoll_base_coll_bcast_array (rbuf,
                                            rcount * procs_per_group,

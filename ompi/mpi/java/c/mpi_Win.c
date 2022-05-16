@@ -456,7 +456,7 @@ JNIEXPORT void JNICALL Java_mpi_Win_compareAndSwap (JNIEnv *env, jobject jthis, 
     void *compPtr = (*env)->GetDirectBufferAddress(env, compareAddr);
     void *resultPtr = (*env)->GetDirectBufferAddress(env, resultAddr);
 
-    int rc = MPI_Compare_and_swap(orgPtr, compPtr, resultPtr, (MPI_Datatype)dataType, 
+    int rc = MPI_Compare_and_swap(orgPtr, compPtr, resultPtr, (MPI_Datatype)dataType,
 	targetRank, targetDisp, (MPI_Win)win);
     ompi_java_exceptionCheck(env, rc);
 }
@@ -468,7 +468,7 @@ JNIEXPORT void JNICALL Java_mpi_Win_fetchAndOp(JNIEnv *env, jobject jthis, jlong
     void *resultPtr = (*env)->GetDirectBufferAddress(env, resultAddr);
     MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
 
-    int rc = MPI_Fetch_and_op(orgPtr, resultPtr, (MPI_Datatype)dataType, targetRank, 
+    int rc = MPI_Fetch_and_op(orgPtr, resultPtr, (MPI_Datatype)dataType, targetRank,
 	targetDisp, op, (MPI_Win)win);
     ompi_java_exceptionCheck(env, rc);
 }

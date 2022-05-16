@@ -4,13 +4,13 @@
 #
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
-dist_ompidata_DATA = 
+dist_ompidata_DATA =
 
 AM_CPPFLAGS = $(spml_ucx_CPPFLAGS)
 
@@ -18,13 +18,13 @@ ucx_sources  = \
  spml_ucx_component.h \
  spml_ucx_component.c \
  spml_ucx.h \
- spml_ucx.c 
+ spml_ucx.c
 
 
- 
+
 if MCA_BUILD_oshmem_spml_ucx_DSO
 component_noinst =
-component_install = mca_spml_ucx.la 
+component_install = mca_spml_ucx.la
 else
 component_noinst = libmca_spml_ucx.la
 component_install =

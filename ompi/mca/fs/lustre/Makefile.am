@@ -36,7 +36,7 @@ fs_lustre_sources = \
         fs_lustre.h \
         fs_lustre.c \
         fs_lustre_component.c \
-        fs_lustre_file_open.c 
+        fs_lustre_file_open.c
 
 AM_CPPFLAGS = $(fs_lustre_CPPFLAGS)
 

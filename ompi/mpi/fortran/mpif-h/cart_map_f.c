@@ -90,6 +90,6 @@ void ompi_cart_map_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *dims,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(dims);
-    OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(periods); 
+    OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(periods);
     OMPI_SINGLE_INT_2_FINT(newrank);
 }

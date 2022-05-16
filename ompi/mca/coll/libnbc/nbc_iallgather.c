@@ -199,7 +199,7 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
     }
-  
+
     res = NBC_Start(*(ompi_coll_libnbc_request_t **)request);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         NBC_Return_handle (*(ompi_coll_libnbc_request_t **)request);

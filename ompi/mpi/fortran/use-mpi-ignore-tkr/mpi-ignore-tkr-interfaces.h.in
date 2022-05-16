@@ -2613,7 +2613,7 @@ subroutine MPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
         comm, info, request, ierror)
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
-  integer, intent(in) :: partitions 
+  integer, intent(in) :: partitions
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
@@ -2634,7 +2634,7 @@ subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
   integer, intent(in) :: partitions
-  integer, intent(in) :: count 
+  integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
@@ -3695,7 +3695,7 @@ subroutine MPI_Session_get_nth_psetlen(session, n, pset_len, ierror)
    INTEGER, INTENT(OUT) :: pset_len
    INTEGER, INTENT(OUT) :: ierror
 end subroutine MPI_Session_get_nth_psetlen
-end interface 
+end interface
 
 interface MPI_Session_get_pset_info
 subroutine MPI_Session_get_pset_info(session, pset_name, info, ierror)

@@ -126,7 +126,7 @@ do
     filter_output $output_nomon $output_mon
     # insert into database
     echo -e "\n-- Import each CSV file in its corresponding table" >> $dbscript
-    for op in ${ops[*]} 
+    for op in ${ops[*]}
     do
         echo -e ".import $(sed "s|$resdir/|$tmpdir/|" <<<$base_mon).${op}.${nbprocs}.csv ${op}_mon\n.import $(sed "s|$resdir/|$tmpdir/|" <<<$base_nomon).${op}.${nbprocs}.csv ${op}_nomon" >> $dbscript
     done
@@ -195,15 +195,15 @@ set cblabel "Monitoring overhead (overhead ratio)"
 set cbtics format '%.1f'
 
 set ytics ( "4 B" 4, "16 B" 16, "128 B" 128, "1 KB" 1024, "8 KB" 8*1024, "128 KB" 128*1024, "1 MB" 1024*1024 )
-set xtics ( 2, 4, 8, 12, 16, 20, 24 ) 
+set xtics ( 2, 4, 8, 12, 16, 20, 24 )
 set xrange [2:24]
 #set cbrange [0:1]
 set nologscale x
 set logscale y 2
 
 $(
-for op in ${ops[*]} 
-do 
+for op in ${ops[*]}
+do
     # finish to prepare the data files
     sed -i -e "s/,/ /g" $tmpdir/${op}.dat
     awk -F ' ' -v val=0 '{ if (val<$1) { val=$1 ; print " " > out ; print $0 > out } else { print $0 > out } }' out=$tmpdir/${op}.dat $tmpdir/${op}.dat

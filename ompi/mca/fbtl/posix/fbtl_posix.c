@@ -147,7 +147,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
                     total_length = data->aio_reqs[i].aio_nbytes;
                     /* release previous lock */
                     mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-                    
+
                     if ( data->aio_req_type == FBTL_POSIX_WRITE ) {
                         ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_WRLCK, start_offset, total_length,
                                                         OMPIO_LOCK_ENTIRE_REGION, &data->aio_lock_counter );
@@ -161,7 +161,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
                             opal_output(1, "mca_fbtl_posix_progress: error in aio_write()");
                             mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
                             return OMPI_ERROR;
-                        }                        
+                        }
                     }
                     else if (  data->aio_req_type == FBTL_POSIX_READ ) {
                         ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_RDLCK, start_offset, total_length,
@@ -207,7 +207,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
     if ( (lcount == data->aio_req_chunks) && (0 != data->aio_open_reqs )) {
         /* release the lock of the previous operations */
         mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-        
+
 	/* post the next batch of operations */
 	data->aio_first_active_req = data->aio_last_active_req;
 	if ( (data->aio_req_count-data->aio_last_active_req) > data->aio_req_chunks ) {
@@ -235,7 +235,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
             mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
             return OMPI_ERROR;
         }
-        
+
 	for ( i=data->aio_first_active_req; i< data->aio_last_active_req; i++ ) {
 	    if ( FBTL_POSIX_READ == data->aio_req_type ) {
 		if (-1 == aio_read(&data->aio_reqs[i])) {
@@ -279,7 +279,7 @@ void mca_fbtl_posix_request_free ( mca_ompio_request_t *req)
     /* Free the fbtl specific data structures */
     mca_fbtl_posix_request_data_t *data=(mca_fbtl_posix_request_data_t *)req->req_data;
     if (NULL != data ) {
-            
+
         if ( NULL != data->aio_reqs ) {
 	    free ( data->aio_reqs);
 	}
@@ -294,15 +294,15 @@ void mca_fbtl_posix_request_free ( mca_ompio_request_t *req)
 }
 
 bool mca_fbtl_posix_check_atomicity ( ompio_file_t *file)
-{    
+{
     struct flock lock;
-    
+
     lock.l_type   = F_WRLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start  = 0;
     lock.l_len    = 0;
     lock.l_pid    = 0;
-    
+
     if (fcntl(file->fd, F_GETLK, &lock) < 0)
     {
 #ifdef VERBOSE

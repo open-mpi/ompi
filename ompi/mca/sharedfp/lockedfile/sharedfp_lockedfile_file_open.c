@@ -55,7 +55,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     struct mca_sharedfp_base_data_t* sh;
     pid_t my_pid;
     int int_pid;
-    
+
     /*Memory is allocated here for the sh structure*/
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh){
@@ -86,7 +86,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
         ompi_proc_t *masterproc = ompi_group_peer_lookup(comm->c_local_group, 0 );
         masterjobid = OMPI_CAST_RTE_NAME(&masterproc->super.proc_name)->jobid;
     }
-    err = comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm, 
+    err = comm->c_coll->coll_bcast ( &masterjobid, 1, MPI_UNSIGNED, 0, comm,
                                      comm->c_coll->coll_bcast_module );
     if ( OMPI_SUCCESS != err ) {
         opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error in bcast operation\n", fh->f_rank);
@@ -145,7 +145,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 	 */
 	handle = open ( lockedfilename, O_RDWR | O_CREAT, 0644 );
         if ( -1 == handle ){
-            opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", 
+            opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n",
                         fh->f_rank);
             free (sh);
             free (module_data);
@@ -173,7 +173,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 
     handle = open ( lockedfilename, O_RDWR, 0644  );
     if ( -1 == handle ) {
-        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", 
+        opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n",
                     fh->f_rank);
 	free (sh);
 	free(module_data);

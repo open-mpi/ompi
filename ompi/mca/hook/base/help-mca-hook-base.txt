@@ -14,6 +14,6 @@
 Error: A request was made to exclude a hook component from consideration that
 is required to be included. This component (noted below) can -not- be excluded
 from consideration. The program will fail at this time.
- 
+
 Framework: %s
 Component: %s

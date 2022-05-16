@@ -173,7 +173,7 @@ static inline void mca_pml_ucx_set_send_status(ompi_status_public_t* mpi_status,
 
 /* Use when setting a request's status field.
  * Note that the next function 'mca_mpl_ucx_set_recv_status_public' shall
- * be used instead when updating a  publicly visible status (i.e., the 
+ * be used instead when updating a  publicly visible status (i.e., the
  * status argument in an user-visible procedure).
  */
 static inline int mca_pml_ucx_set_recv_status(ompi_status_public_t* mpi_status,

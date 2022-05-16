@@ -164,7 +164,7 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
         }
     }
 
-    
+
     /* Finally -- delete the file with the selected component */
     if (OMPI_SUCCESS != (err = delete_file(&selected, filename, info))) {
         return err;

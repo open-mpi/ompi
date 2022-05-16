@@ -39,15 +39,15 @@
 /*
   op:    can be F_WRLCK or F_RDLCK
   flags: can be OMPIO_LOCK_ENTIRE_REGION or OMPIO_LOCK_SELECTIVE. This is typically set by the operation, not the fs component.
-         e.g. a collective and an individual component might require different level of protection through locking, 
+         e.g. a collective and an individual component might require different level of protection through locking,
          also one might need to do different things for blocking (pwritev,preadv) operations and non-blocking (aio) operations.
 
   fh->f_flags can contain similar sounding flags, those were set by the fs component and/or user requests.
-  
+
   Support for MPI atomicity operations are envisioned, but not yet tested.
 */
 
-int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op, 
+int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op,
                           OMPI_MPI_OFFSET_TYPE offset, off_t len, int flags,
                           int *lock_counter)
 {
@@ -56,7 +56,7 @@ int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op,
 
     *lock_counter = *lock_counter + 1;
     if ( (*lock_counter) > 1 ) {
-        /* 
+        /*
         ** This lock was already initialized, most likely through an atomicity operation.
         ** No need to do anything except increment the lock_counter;
         */
@@ -68,15 +68,15 @@ int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op,
     lock->l_start  =-1;
     lock->l_len    =-1;
     lock->l_pid    = 0;
-    
+
     if ( 0 == len ) {
         return 0;
-    } 
+    }
 
     if ( fh->f_flags & OMPIO_LOCK_ENTIRE_FILE ) {
         lock->l_start = (off_t) 0;
         lock->l_len   = 0;
-    }  
+    }
     else {
         if ( (fh->f_flags & OMPIO_LOCK_NEVER) ||
              (fh->f_flags & OMPIO_LOCK_NOT_THIS_OP )){
@@ -96,17 +96,17 @@ int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op,
         }
         if ( flags == OMPIO_LOCK_ENTIRE_REGION ) {
             lock->l_start = (off_t) offset;
-            lock->l_len   = len;            
+            lock->l_len   = len;
         }
         else {
             /* We only try to lock the first block in the data range if
-               the starting offset is not the starting offset of a file system 
+               the starting offset is not the starting offset of a file system
                block. And the last block in the data range if the offset+len
                is not equal to the end of a file system block.
-               If we need to lock both beginning + end, we combine 
+               If we need to lock both beginning + end, we combine
                the two into a single lock.
             */
-            bmod = offset % fh->f_fs_block_size; 
+            bmod = offset % fh->f_fs_block_size;
             if ( bmod  ) {
                 lock->l_start = (off_t) offset;
                 lock->l_len   = bmod;
@@ -130,7 +130,7 @@ int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op,
 
 
 #ifdef OMPIO_DEBUG
-    printf("%d: acquiring lock for offset %ld length %ld requested offset %ld request len %ld \n", 
+    printf("%d: acquiring lock for offset %ld length %ld requested offset %ld request len %ld \n",
            fh->f_rank, lock->l_start, lock->l_len, offset, len);
 #endif
     err_count=0;
@@ -159,12 +159,12 @@ void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh, int *lock_co
     if ( -1 == lock->l_start && -1 == lock->l_len ) {
         return;
     }
-    
+
     lock->l_type = F_UNLCK;
 #ifdef OMPIO_DEBUG
     printf("%d: releasing lock for offset %ld length %ld\n", fh->f_rank, lock->l_start, lock->l_len);
 #endif
-    fcntl ( fh->fd, F_SETLK, lock);     
+    fcntl ( fh->fd, F_SETLK, lock);
     lock->l_start = -1;
     lock->l_len   = -1;
 

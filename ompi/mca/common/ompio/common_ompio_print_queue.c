@@ -42,7 +42,7 @@ int mca_common_ompio_initialize_print_queue( struct mca_common_ompio_print_queue
     q->first = 0;
     q->last = MCA_COMMON_OMPIO_QUEUESIZE - 1;
     q->count = 0;
-    
+
     *r = q;
     return ret;
 }
@@ -83,7 +83,7 @@ int mca_common_ompio_empty_print_queue( struct mca_common_ompio_print_queue *q)
     if (q->count == 0) {
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -167,7 +167,7 @@ int mca_common_ompio_print_time_info( struct mca_common_ompio_print_queue *q,
                                          0,
                                          fh->f_comm,
                                          fh->f_comm->c_coll->coll_gather_module);
-    
+
     if ( OMPI_SUCCESS != ret ) {
     }
 

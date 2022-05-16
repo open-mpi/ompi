@@ -282,7 +282,7 @@ static uint64_t shmem_lock_cswap(void *target,
     return prev_value;
 }
 
-/* function is used to busy wait for the value. 
+/* function is used to busy wait for the value.
  * Call opal_progress() so that ompi will no deadlock
  * (for example may need to respond to rkey requests)
  */

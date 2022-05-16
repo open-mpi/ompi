@@ -270,7 +270,7 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
                       LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
                       AC_LANG_PUSH([Fortran])
                       AC_MSG_CHECKING([if Fortran linker supports RUNPATH])
-                      AC_LINK_IFELSE([AC_LANG_SOURCE([[program test 
+                      AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
 end program]])],
                                      [runpath_fc_args="${wl_fc}--enable-new-dtags"
                                       AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],

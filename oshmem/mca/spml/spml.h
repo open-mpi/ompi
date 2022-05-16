@@ -355,7 +355,7 @@ typedef void(*mca_spml_base_module_wait_until_all_fn_t)(void *ivars,
  *                      which elements in ivars are excluded from the wait set.
  *  @param  datatype    Type of the objects
  *
- *  @return             Returns the index of an element in the ivars array that satisfies the 
+ *  @return             Returns the index of an element in the ivars array that satisfies the
  *                      wait condition. If the wait set is empty, this routine returns SIZE_MAX.
  */
 typedef size_t (*mca_spml_base_module_wait_until_any_fn_t)(void *ivars,
@@ -382,7 +382,7 @@ typedef size_t (*mca_spml_base_module_wait_until_any_fn_t)(void *ivars,
  *                      which elements in ivars are excluded from the wait set.
  *  @param  datatype    Type of the objects
  *
- *  @return             Returns the number of indices returned in the indices array. If the wait 
+ *  @return             Returns the number of indices returned in the indices array. If the wait
  *                      set is empty, this routine returns 0.
  */
 typedef size_t (*mca_spml_base_module_wait_until_some_fn_t)(void *ivars,
@@ -411,7 +411,7 @@ typedef size_t (*mca_spml_base_module_wait_until_some_fn_t)(void *ivars,
  *  @param  datatype    Type of the objects
  *
  *  @return             None
- *                      
+ *
  */
 typedef void (*mca_spml_base_module_wait_until_all_vector_fn_t)(void *ivars,
                                                     int cmp,
@@ -434,8 +434,8 @@ typedef void (*mca_spml_base_module_wait_until_all_vector_fn_t)(void *ivars,
  *                      which elements in ivars are excluded from the wait set.
  *  @param  datatype    Type of the objects
  *
- *  @return             Returns the index of an element in the ivars array that satisfies the 
- *                      test condition. If the test set is empty or no conditions in the test 
+ *  @return             Returns the index of an element in the ivars array that satisfies the
+ *                      test condition. If the test set is empty or no conditions in the test
  *                      set are satisfied, this routine returns SIZE_MAX.
  */
 typedef size_t (*mca_spml_base_module_wait_until_any_vector_fn_t)(void *ivars,
@@ -463,7 +463,7 @@ typedef size_t (*mca_spml_base_module_wait_until_any_vector_fn_t)(void *ivars,
  *                      which elements in ivars are excluded from the wait set.
  *  @param  datatype    Type of the objects
  *
- *  @return             Returns the number of indices returned in the indices array. If the test 
+ *  @return             Returns the number of indices returned in the indices array. If the test
  *                      set is empty, this routine returns 0.
  */
 typedef size_t (*mca_spml_base_module_wait_until_some_vector_fn_t)(void *ivars,
@@ -490,7 +490,7 @@ typedef size_t (*mca_spml_base_module_wait_until_some_vector_fn_t)(void *ivars,
  *                      which elements in ivars are excluded from the test set.
  *  @param  datatype    Type of the objects
  *
- *  @return             Returns 1 if all variables in ivars satisfy the test condition or if 
+ *  @return             Returns 1 if all variables in ivars satisfy the test condition or if
  *                      nelems is 0, otherwise this routine returns 0.
  */
 typedef int (*mca_spml_base_module_test_all_fn_t)(void *ivars,
@@ -514,7 +514,7 @@ typedef int (*mca_spml_base_module_test_all_fn_t)(void *ivars,
  *                      which elements in ivars are excluded from the test set.
  *  @param  datatype    Type of the objects
  *
- *  @return             Returns the index of an element in the ivars array that satisfies the 
+ *  @return             Returns the index of an element in the ivars array that satisfies the
  *                      test condition. If the test set is empty or no conditions in the test
  *                      set are satisfied, this routine returns SIZE_MAX..
  */
@@ -542,7 +542,7 @@ typedef size_t (*mca_spml_base_module_test_any_fn_t)(void *ivars,
  *                      which elements in ivars are excluded from the test set.
  *  @param  datatype    Type of the objects
  *
- *  @return             Returns the number of indices returned in the indices array. If the test 
+ *  @return             Returns the number of indices returned in the indices array. If the test
  *                      set is empty, this routine returns 0.
  */
 typedef size_t (*mca_spml_base_module_test_some_fn_t)(void *ivars,
@@ -570,7 +570,7 @@ typedef size_t (*mca_spml_base_module_test_some_fn_t)(void *ivars,
  *                      which elements in ivars are excluded from the test set.
  *  @param  datatype    Type of the objects
  *
- *  @return             Returns 1 if all variables in ivars satisfy the test conditions or if 
+ *  @return             Returns 1 if all variables in ivars satisfy the test conditions or if
  *                      nelems is 0, otherwise this routine returns 0.
  */
 typedef int (*mca_spml_base_module_test_all_vector_fn_t)(void *ivars,

@@ -62,7 +62,7 @@ struct mca_scoll_ucc_module_t {
     oshmem_group_t             *group;
     ucc_team_h                  ucc_team;
     long                       *pSync;
-    
+
     /* Saved handlers - for fallback */
     mca_scoll_base_module_reduce_fn_t previous_reduce;
     mca_scoll_base_module_t *previous_reduce_module;
@@ -82,7 +82,7 @@ OBJ_CLASS_DECLARATION(mca_scoll_ucc_module_t);
 /* API functions */
 int mca_scoll_ucc_init_query(bool enable_progress_threads, bool enable_mpi_threads);
 
-int mca_scoll_ucc_team_create(mca_scoll_ucc_module_t *ucc_module, 
+int mca_scoll_ucc_team_create(mca_scoll_ucc_module_t *ucc_module,
                               oshmem_group_t *osh_group);
 
 int mca_scoll_ucc_init_ctx(oshmem_group_t *osh_group);

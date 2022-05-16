@@ -216,7 +216,7 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
 						fh->f_procs_in_group,
 						fh->f_procs_per_group,
 						fh->f_comm);
-    
+
     if (OMPI_SUCCESS != ret){
         goto exit;
     }
@@ -275,7 +275,7 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
 						  fh->f_procs_in_group,
 						  fh->f_procs_per_group,
 						  fh->f_comm);
-    
+
     if (OMPI_SUCCESS != ret){
         goto exit;
     }

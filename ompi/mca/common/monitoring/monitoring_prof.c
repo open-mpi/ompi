@@ -130,7 +130,7 @@ int MPI_Init(int* argc, char*** argv)
     init_monitoring_result("osc_monitoring_messages_recv_size", &osc_rsizes);
     init_monitoring_result("coll_monitoring_messages_count", &coll_counts);
     init_monitoring_result("coll_monitoring_messages_size", &coll_sizes);
-    
+
     start_monitoring_result(&pml_counts);
     start_monitoring_result(&pml_sizes);
     start_monitoring_result(&osc_scounts);

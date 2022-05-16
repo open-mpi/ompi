@@ -36,7 +36,7 @@
 BEGIN_C_DECLS
 
 /**
- * External list for the partitioned requests. 
+ * External list for the partitioned requests.
  */
 OMPI_DECLSPEC extern opal_free_list_t mca_part_base_psend_requests;
 OMPI_DECLSPEC extern opal_free_list_t mca_part_base_precv_requests;

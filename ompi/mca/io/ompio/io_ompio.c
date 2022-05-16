@@ -552,9 +552,9 @@ int mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_le
         opal_output (1, "Error in mca_io_ompio_get_mca_parameter_value: unknown parameter name");
     }
 
-    /* Using here OMPI_ERROR_MAX instead of OMPI_ERROR, since -1 (which is OMPI_ERROR) 
-    ** is a valid value for some mca parameters, indicating that the user did not set 
-    ** that parameter value 
+    /* Using here OMPI_ERROR_MAX instead of OMPI_ERROR, since -1 (which is OMPI_ERROR)
+    ** is a valid value for some mca parameters, indicating that the user did not set
+    ** that parameter value
     */
     return OMPI_ERR_MAX;
 }

@@ -72,39 +72,39 @@ static int ucc_register(void)
     mca_scoll_ucc_component_t * cm = &mca_scoll_ucc_component;
     mca_base_component_t * c       = &cm->super.scoll_version;
 
-    mca_base_component_var_register(c, "priority", 
+    mca_base_component_var_register(c, "priority",
                                     "Priority of the UCC scoll component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, 
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                     OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->ucc_priority);
 
-    mca_base_component_var_register(c, "verbose", 
+    mca_base_component_var_register(c, "verbose",
                                     "Verbose level of the UCC scoll component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, 
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                     OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->ucc_verbose);
 
-    mca_base_component_var_register(c, "enable", 
+    mca_base_component_var_register(c, "enable",
                                     "[1|0|] Enable/Disable UCC scoll component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, 
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                     OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->ucc_enable);
 
-    mca_base_component_var_register(c, "np", 
+    mca_base_component_var_register(c, "np",
                                     "Minimal Active Set / Team size for UCC scoll component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, 
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                     OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->ucc_np);
 
-    mca_base_component_var_register(c, "cls", 
+    mca_base_component_var_register(c, "cls",
                                     "Comma separated list of UCC CLS to be used for team creation",
-                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, 
+                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                     OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->cls);
 
-    mca_base_component_var_register(c, "cts", 
+    mca_base_component_var_register(c, "cts",
                                     "Comma separated list of UCC coll types to be enabled",
-                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, 
+                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                     OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->cts);
     return OSHMEM_SUCCESS;
@@ -144,7 +144,7 @@ static void mca_scoll_ucc_init_default_cts(void)
     for (i = 0; i < n_cts; i++) {
         str = cts[i];
         ct  = &cm->cts_requested;
-        
+
         c = mca_scoll_ucc_str_to_type(str);
         if (UCC_COLL_TYPE_LAST == c) {
             *ct = SCOLL_UCC_CTS;

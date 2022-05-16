@@ -84,7 +84,7 @@ int MPI_Type_create_struct(int count,
                                       array_of_types, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_datatype_destroy( newtype );
-        OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, 
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( rc,
                                 rc, FUNC_NAME );
     }
 

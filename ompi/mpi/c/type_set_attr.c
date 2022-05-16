@@ -58,7 +58,7 @@ int MPI_Type_set_attr (MPI_Datatype type,
     ret = ompi_attr_set_c(TYPE_ATTR, type, &type->d_keyhash,
                           type_keyval, attribute_val, false);
 
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, 
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret,
 			  MPI_ERR_OTHER, FUNC_NAME);
 
 }

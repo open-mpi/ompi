@@ -110,7 +110,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(o
     char *sm_filename;
     int comm_cid = -1;
     int pid = ompi_comm_rank (comm);
-    
+
     opal_asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
              filename_basename, comm_cid, pid);
     free(filename_basename);
@@ -126,7 +126,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(o
     close (sm_fd);
     unlink(sm_filename);
     free (sm_filename);
-    
+
     /* This module can run */
     *priority = mca_sharedfp_sm_priority;
     return &sm;

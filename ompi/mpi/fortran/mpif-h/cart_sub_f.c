@@ -102,5 +102,5 @@ void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
         *new_comm = PMPI_Comm_c2f(c_new_comm);
     }
 
-    OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(remain_dims); 
+    OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(remain_dims);
 }

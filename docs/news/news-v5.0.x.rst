@@ -34,7 +34,7 @@ Open MPI version 5.0.0rc7
    Open MPI no longer builds 3rd-party packages
    such as Libevent, HWLOC, PMIx, and PRRTE as MCA components
    and instead:
-      
+
    #. Relies on external libraries whenever possible, and
    #. Builds the 3rd party libraries only if needed, and as independent
       libraries, rather than linked into the Open MPI core libraries.

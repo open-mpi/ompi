@@ -1,5 +1,5 @@
 .. _shmem_longdouble_min_to_all:
- 
+
 shmem_longdouble_min_to_all
 ===========================
     .. include_body

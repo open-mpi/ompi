@@ -111,7 +111,7 @@ static int free_win(int keyval);
 static int set_f(int keyval, MPI_Fint value);
 
 /*
- * We do not need a lock here as this function is invoked when the 
+ * We do not need a lock here as this function is invoked when the
  * instance_lock mutex is held.
  */
 int ompi_attr_create_predefined_keyvals(void)
@@ -146,7 +146,7 @@ int ompi_attr_create_predefined_keyvals(void)
         }
 
     }
- 
+
     return ret;
 }
 
@@ -166,7 +166,7 @@ int ompi_attr_set_predefined_keyvals_for_wm(void)
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
 #if OPAL_ENABLE_FT_MPI
         /* Although we always define the key to ease fortran integration,
-         * lets not set a default value to the attribute if we do not 
+         * lets not set a default value to the attribute if we do not
          * have fault tolerance built in. */
         OMPI_SUCCESS != (ret = set_f(MPI_FT, ompi_ftmpi_enabled)) ||
 #else
@@ -190,7 +190,7 @@ int ompi_attr_set_predefined_keyvals_for_wm(void)
 
 
 /*
- * We do not need a lock here as this function is invoked when the 
+ * We do not need a lock here as this function is invoked when the
  * destructor for attr_subsys is invoked.
  */
 

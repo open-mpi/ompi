@@ -1,5 +1,5 @@
 .. _shmem_longlong_finc:
- 
+
 shmem_longlong_finc
 ===================
     .. include_body

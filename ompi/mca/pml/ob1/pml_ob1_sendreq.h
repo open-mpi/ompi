@@ -481,7 +481,7 @@ mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         rc = mca_pml_ob1_send_request_start_btl(sendreq, bml_btl);
 #if OPAL_ENABLE_FT_MPI
-        /* this first condition to keep the optimized path with as 
+        /* this first condition to keep the optimized path with as
          * little tests as possible */
         if( OPAL_LIKELY(MPI_SUCCESS == rc) ) {
             return rc;

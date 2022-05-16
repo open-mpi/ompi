@@ -37,7 +37,7 @@ int oshmem_proc_init_set_local_vpids()
     opal_process_name_t wildcard_rank;
     int ret = OMPI_SUCCESS;
     char *val = NULL;
-    
+
     ret = opal_bitmap_init(&_oshmem_local_vpids, ompi_comm_size(oshmem_comm_world));
     if (OSHMEM_SUCCESS != ret) {
         return ret;

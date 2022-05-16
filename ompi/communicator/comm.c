@@ -1332,7 +1332,7 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     newcomp->instance = group->grp_instance;
 
     /*
-     * setup predefined keyvals - see MPI Standard for predefined keyvals cached on 
+     * setup predefined keyvals - see MPI Standard for predefined keyvals cached on
      * communicators created via MPI_Comm_from_group or MPI_Intercomm_create_from_groups
      */
     ompi_attr_hash_init(&newcomp->c_keyhash);

@@ -103,7 +103,7 @@ int ompi_mpiinfo_init(void)
     OBJ_CONSTRUCT(&ompi_mpi_info_null.info, ompi_info_t);
     assert(ompi_mpi_info_null.info.i_f_to_c_index == 0);
 
-    /* Create MPI_INFO_ENV  - we create here for the f_to_c.  Can't fill in 
+    /* Create MPI_INFO_ENV  - we create here for the f_to_c.  Can't fill in
        here because most info needed is only available after a call to
        ompi_rte_init. */
     OBJ_CONSTRUCT(&ompi_mpi_info_env.info, ompi_info_t);

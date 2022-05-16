@@ -143,7 +143,7 @@ static int a2as_alg_simple(struct oshmem_group_t *group,
 
         dst_pe = get_dst_pe(group, src_blk_idx, dst_blk_idx, &dst_pe_idx);
         for (elem_idx = 0; elem_idx < nelems; elem_idx++) {
-            rc = MCA_SPML_CALL(put(oshmem_ctx_default, 
+            rc = MCA_SPML_CALL(put(oshmem_ctx_default,
                         get_stride_elem(target, tst, nelems, element_size,
                                         dst_blk_idx, elem_idx),
                         element_size,

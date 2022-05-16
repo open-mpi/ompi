@@ -18,7 +18,7 @@
 #include "memheap_ptmalloc_component.h"
 
 static int mca_memheap_ptmalloc_component_close(void);
-static int mca_memheap_ptmalloc_component_query(mca_base_module_t **module, 
+static int mca_memheap_ptmalloc_component_query(mca_base_module_t **module,
                                                 int *priority);
 
 static int _basic_open(void);

@@ -5,7 +5,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
-# 
+#
 # Trivial helper script to git clean a tree and all of its submodules.
 
 set -euo pipefail

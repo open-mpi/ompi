@@ -152,7 +152,7 @@ JNIEXPORT void JNICALL Java_mpi_File_readAt(
 
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseWritePtr(ptr, item, env, buf, db, off, count, type, bType);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -174,7 +174,7 @@ JNIEXPORT void JNICALL Java_mpi_File_readAtAll(
 
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseWritePtr(ptr, item, env, buf, db, off, count, type, bType);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -196,7 +196,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAt(
 
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadPtr(ptr, item, buf, db);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -218,7 +218,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAtAll(
 
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadPtr(ptr, item, buf, db);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -292,7 +292,7 @@ JNIEXPORT void JNICALL Java_mpi_File_read(
     int rc = MPI_File_read((MPI_File)fh, ptr, count, type, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseWritePtr(ptr, item, env, buf, db, off, count, type, bType);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -310,7 +310,7 @@ JNIEXPORT void JNICALL Java_mpi_File_readAll(
     int rc = MPI_File_read_all((MPI_File)fh, ptr, count, type, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseWritePtr(ptr, item, env, buf, db, off, count, type, bType);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -328,7 +328,7 @@ JNIEXPORT void JNICALL Java_mpi_File_write(
     int rc = MPI_File_write((MPI_File)fh, ptr, count, type, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadPtr(ptr, item, buf, db);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -346,7 +346,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAll(
     int rc = MPI_File_write_all((MPI_File)fh, ptr, count, type, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadPtr(ptr, item, buf, db);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -445,7 +445,7 @@ JNIEXPORT void JNICALL Java_mpi_File_readShared(
     int rc = MPI_File_read_shared((MPI_File)fh, ptr, count, type, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseWritePtr(ptr, item, env, buf, db, off, count, type, bType);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -463,7 +463,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeShared(
     int rc = MPI_File_write_shared((MPI_File)fh, ptr, count, type, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadPtr(ptr, item, buf, db);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -509,7 +509,7 @@ JNIEXPORT void JNICALL Java_mpi_File_readOrdered(
     int rc = MPI_File_read_ordered((MPI_File)fh, ptr, count, type, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseWritePtr(ptr, item, env, buf, db, off, count, type, bType);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -527,7 +527,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeOrdered(
     int rc = MPI_File_write_ordered((MPI_File)fh, ptr, count, type, &status);
     exception = ompi_java_exceptionCheck(env, rc);
     ompi_java_releaseReadPtr(ptr, item, buf, db);
-    
+
     if(!exception)
         ompi_java_status_set(env, stat, &status);
 }
@@ -565,7 +565,7 @@ JNIEXPORT void JNICALL Java_mpi_File_readAtAllEnd(
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_read_at_all_end((MPI_File)fh, ptr, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         ompi_java_status_set(env, stat, &status);
 }
@@ -587,7 +587,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAtAllEnd(
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_write_at_all_end((MPI_File)fh, ptr, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         ompi_java_status_set(env, stat, &status);
 }
@@ -610,7 +610,7 @@ JNIEXPORT void JNICALL Java_mpi_File_readAllEnd(
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_read_all_end((MPI_File)fh, ptr, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         ompi_java_status_set(env, stat, &status);
 }
@@ -633,7 +633,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeAllEnd(
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_write_all_end((MPI_File)fh, ptr, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         ompi_java_status_set(env, stat, &status);
 }
@@ -656,7 +656,7 @@ JNIEXPORT void JNICALL Java_mpi_File_readOrderedEnd(
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_read_ordered_end((MPI_File)fh, ptr, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         ompi_java_status_set(env, stat, &status);
 }
@@ -679,7 +679,7 @@ JNIEXPORT void JNICALL Java_mpi_File_writeOrderedEnd(
     MPI_Status status;
     void *ptr = (*env)->GetDirectBufferAddress(env, buf);
     int rc = MPI_File_write_ordered_end((MPI_File)fh, ptr, &status);
-    
+
     if(!ompi_java_exceptionCheck(env, rc))
         ompi_java_status_set(env, stat, &status);
 }

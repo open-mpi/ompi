@@ -671,8 +671,8 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
      * care what the error was -- just that there *was* an error.  The
      * PML will finish all requests, even if one or more of them fail.
      * i.e., by the end of this call, all the requests are free-able.
-     * So free them anyway -- even if there was an error. 
-     * Note we still need to get the actual error, as collective 
+     * So free them anyway -- even if there was an error.
+     * Note we still need to get the actual error, as collective
      * operations cannot return MPI_ERR_IN_STATUS.
      */
 

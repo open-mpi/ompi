@@ -89,42 +89,42 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
             OBJ_RELEASE(stripe_str);
         }
     }
-    
+
     opal_info_get (info, "striping_unit", &stripe_str, &flag);
     if ( flag ) {
         sscanf ( stripe_str->string, "%d", &fs_lustre_stripe_width );
         OBJ_RELEASE(stripe_str);
     }
     else {
-        //internal info object name used earlier. Kept for backwards compatibility.        
+        //internal info object name used earlier. Kept for backwards compatibility.
         opal_info_get (info, "stripe_width", &stripe_str, &flag);
         if ( flag ) {
             sscanf ( stripe_str->string, "%d", &fs_lustre_stripe_width );
             OBJ_RELEASE(stripe_str);
         }
     }
-    
+
     if (fs_lustre_stripe_size < 0) {
         fs_lustre_stripe_size = mca_fs_lustre_stripe_size;
-    }   
+    }
 
     if (fs_lustre_stripe_width < 0) {
         fs_lustre_stripe_width = mca_fs_lustre_stripe_width;
     }
 
-    
+
     /* Reset errno */
     errno = 0;
     if (OMPIO_ROOT == fh->f_rank) {
         if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
-             ( amode&O_CREAT)                                      && 
+             ( amode&O_CREAT)                                      &&
              ( (amode&O_RDWR)|| amode&O_WRONLY) ) {
             llapi_file_create(filename,
                               fs_lustre_stripe_size,
                               -1, /* MSC need to change that */
                               fs_lustre_stripe_width,
                               0); /* MSC need to change that */
-            
+
             fh->fd = open(filename, amode | O_LOV_DELAY_CREATE, perm);
         }
         else {

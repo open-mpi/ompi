@@ -1,5 +1,5 @@
 .. _mpi_message_f2c:
- 
+
 MPI_Message_f2c
 ===============
     .. include_body

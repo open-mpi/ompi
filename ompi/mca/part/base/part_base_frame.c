@@ -122,7 +122,7 @@ static int mca_part_base_open(mca_base_open_flag_t flags)
 {
     OBJ_CONSTRUCT(&mca_part_base_part, opal_pointer_array_t);
 
-    
+
     OBJ_CONSTRUCT(&mca_part_base_psend_requests, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_part_base_precv_requests, opal_free_list_t);
     /* Open up all available components */
