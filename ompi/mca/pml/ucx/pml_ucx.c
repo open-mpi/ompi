@@ -32,6 +32,10 @@
 
 #include <inttypes.h>
 
+/*
+ * Maximum number of transport entries that we can expect from UCX
+ */
+#define PML_UCX_MAX_TRANSPORT_ENTRIES 100
 
 #define PML_UCX_TRACE_SEND(_msg, _buf, _count, _datatype, _dst, _tag, _mode, _comm, ...) \
     PML_UCX_VERBOSE(8, _msg " buf %p count %zu type '%s' dst %d tag %d mode %s comm %d '%s'", \
@@ -55,33 +59,37 @@
                     (_buf), (_count), (_datatype)->name, (void*)(_message), \
                     (void*)*(_message), (*(_message))->req_ptr);
 
+mca_pml_transports_t *mca_pml_ucx_get_transports(ompi_communicator_t *comm,
+                                                 int rank);
+
 #define MODEX_KEY "pml-ucx"
 
 mca_pml_ucx_module_t ompi_pml_ucx = {
     .super = {
-        .pml_add_procs     = mca_pml_ucx_add_procs,
-        .pml_del_procs     = mca_pml_ucx_del_procs,
-        .pml_enable        = mca_pml_ucx_enable,
-        .pml_progress      = NULL,
-        .pml_add_comm      = mca_pml_ucx_add_comm,
-        .pml_del_comm      = mca_pml_ucx_del_comm,
-        .pml_irecv_init    = mca_pml_ucx_irecv_init,
-        .pml_irecv         = mca_pml_ucx_irecv,
-        .pml_recv          = mca_pml_ucx_recv,
-        .pml_isend_init    = mca_pml_ucx_isend_init,
-        .pml_isend         = mca_pml_ucx_isend,
-        .pml_send          = mca_pml_ucx_send,
-        .pml_iprobe        = mca_pml_ucx_iprobe,
-        .pml_probe         = mca_pml_ucx_probe,
-        .pml_start         = mca_pml_ucx_start,
-        .pml_improbe       = mca_pml_ucx_improbe,
-        .pml_mprobe        = mca_pml_ucx_mprobe,
-        .pml_imrecv        = mca_pml_ucx_imrecv,
-        .pml_mrecv         = mca_pml_ucx_mrecv,
-        .pml_dump          = mca_pml_ucx_dump,
-        .pml_max_contextid = (1ul << (PML_UCX_CONTEXT_BITS)) - 1,
-        .pml_max_tag       = (1ul << (PML_UCX_TAG_BITS - 1)) - 1,
-        .pml_flags         = 0 /* flags */
+        .pml_add_procs      = mca_pml_ucx_add_procs,
+        .pml_del_procs      = mca_pml_ucx_del_procs,
+        .pml_enable         = mca_pml_ucx_enable,
+        .pml_progress       = NULL,
+        .pml_add_comm       = mca_pml_ucx_add_comm,
+        .pml_del_comm       = mca_pml_ucx_del_comm,
+        .pml_irecv_init     = mca_pml_ucx_irecv_init,
+        .pml_irecv          = mca_pml_ucx_irecv,
+        .pml_recv           = mca_pml_ucx_recv,
+        .pml_isend_init     = mca_pml_ucx_isend_init,
+        .pml_isend          = mca_pml_ucx_isend,
+        .pml_send           = mca_pml_ucx_send,
+        .pml_iprobe         = mca_pml_ucx_iprobe,
+        .pml_probe          = mca_pml_ucx_probe,
+        .pml_start          = mca_pml_ucx_start,
+        .pml_improbe        = mca_pml_ucx_improbe,
+        .pml_mprobe         = mca_pml_ucx_mprobe,
+        .pml_imrecv         = mca_pml_ucx_imrecv,
+        .pml_mrecv          = mca_pml_ucx_mrecv,
+        .pml_dump           = mca_pml_ucx_dump,
+        .pml_max_contextid  = (1ul << (PML_UCX_CONTEXT_BITS)) - 1,
+        .pml_max_tag        = (1ul << (PML_UCX_TAG_BITS - 1)) - 1,
+        .pml_flags          = 0, /* flags */
+        .pml_get_transports = mca_pml_ucx_get_transports
     },
     .ucp_context           = NULL,
     .ucp_worker            = NULL
@@ -447,6 +455,65 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 
     opal_common_ucx_mca_proc_added();
     return OMPI_SUCCESS;
+}
+
+mca_pml_transports_t *mca_pml_ucx_get_transports(struct ompi_communicator_t *comm,
+                                                 int rank)
+{
+#if HAVE_DECL_UCP_EP_ATTR_FIELD_TRANSPORTS
+    mca_pml_transports_t *transports;
+    unsigned i;
+    ucs_status_t status;
+    ucp_ep_attr_t ep_attrs;
+    ompi_proc_t *proc = ompi_comm_peer_lookup(comm, rank);
+
+    if (NULL == proc) {
+        return NULL;
+    }
+    if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML]) {
+        return NULL;
+    }
+
+    ep_attrs.field_mask = UCP_EP_ATTR_FIELD_TRANSPORTS;
+    ep_attrs.transports.num_entries = PML_UCX_MAX_TRANSPORT_ENTRIES;
+    ep_attrs.transports.entry_size = sizeof(ucp_transport_entry_t);
+    ep_attrs.transports.entries = (ucp_transport_entry_t *) malloc(
+             sizeof(ucp_transport_entry_t) * ep_attrs.transports.num_entries);
+    if (NULL == ep_attrs.transports.entries) {
+        return NULL;
+    }
+
+    status = ucp_ep_query(proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML],
+                          &ep_attrs);
+    if (UCS_OK != status) {
+        return NULL;
+    }
+
+    transports = (mca_pml_transports_t *) malloc(sizeof(mca_pml_transports_t));
+    if (NULL == transports) {
+        return NULL;
+    }
+
+    transports->entries = (mca_pml_transport_entry_t *) malloc(
+        ep_attrs.transports.num_entries * sizeof(mca_pml_transport_entry_t));
+    if (NULL == transports->entries) {
+        free(transports);
+        return NULL;
+    }
+
+    for (i = 0; i < ep_attrs.transports.num_entries; i++) {
+        transports->entries[i].transport_name =
+                ep_attrs.transports.entries[i].transport_name;
+        transports->entries[i].device_name = 
+                ep_attrs.transports.entries[i].device_name;
+    }
+    transports->count = ep_attrs.transports.num_entries;
+
+    free(ep_attrs.transports.entries);
+    return transports;
+#else
+    return NULL;
+#endif
 }
 
 __opal_attribute_always_inline__
