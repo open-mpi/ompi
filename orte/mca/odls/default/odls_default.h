@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,7 @@ BEGIN_C_DECLS
  */
 int orte_odls_default_component_open(void);
 int orte_odls_default_component_close(void);
+int orte_odls_default_component_register(void);
 int orte_odls_default_component_query(mca_base_module_t **module, int *priority);
 
 /*
@@ -42,6 +44,11 @@ int orte_odls_default_component_query(mca_base_module_t **module, int *priority)
  */
 extern orte_odls_base_module_t orte_odls_default_module;
 ORTE_MODULE_DECLSPEC extern orte_odls_base_component_t mca_odls_default_component;
+
+/* In non-Linux environments where we can't just see which fd's are
+   open (e.g., MacOS), use this value as the maximum number of FDs
+   to close when forking a new child process. */
+extern int orte_odls_default_maxfd;
 
 END_C_DECLS
 

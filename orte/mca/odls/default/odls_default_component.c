@@ -13,6 +13,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +61,7 @@ orte_odls_base_component_t mca_odls_default_component = {
         /* Component open and close functions */
         .mca_open_component = orte_odls_default_component_open,
         .mca_close_component = orte_odls_default_component_close,
+        .mca_register_component_params = orte_odls_default_component_register,
         .mca_query_component = orte_odls_default_component_query,
     },
     .base_data = {
@@ -68,10 +70,25 @@ orte_odls_base_component_t mca_odls_default_component = {
     },
 };
 
+int orte_odls_default_maxfd = 1024;
 
 
 int orte_odls_default_component_open(void)
 {
+    return ORTE_SUCCESS;
+}
+
+int orte_odls_default_component_register(void)
+{
+    mca_base_component_var_register(&mca_odls_default_component.version, "maxfd",
+                                    "In non-Linux environments, use this value as a maximum number of file descriptors to close when forking a new child process",
+                                    MCA_BASE_VAR_TYPE_INT,
+                                    NULL,
+                                    0,
+                                    0,
+                                    OPAL_INFO_LVL_6,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &orte_odls_default_maxfd);
     return ORTE_SUCCESS;
 }
 
