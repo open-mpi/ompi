@@ -141,11 +141,18 @@ static void local_delivery(const char *file, const char *topic, char *msg) {
 
     opal_log_info_t *cbdata = calloc(1, sizeof(opal_log_info_t));
     if(opal_help_want_aggregate) {
+// Not available in PMIx releases of v4.1.2 and earlier.
+// This should be available in future v4.1 and v4.2 releases,
+// as well as future major releases.
+// Disabling the aggregate behavior here, but stil log it, as
+// seeing duplicate messages is better than not seeing anything at all.
+#ifdef PMIX_LOG_AGG
         PMIX_INFO_CREATE(dirs, 3);
         PMIX_INFO_LOAD(&dirs[ndirs++], PMIX_LOG_AGG, &opal_help_want_aggregate, PMIX_BOOL);
         PMIX_INFO_LOAD(&dirs[ndirs++], PMIX_LOG_KEY, file, PMIX_STRING);
         PMIX_INFO_LOAD(&dirs[ndirs++], PMIX_LOG_VAL, topic, PMIX_STRING);
         cbdata->dirs = dirs;
+#endif
     }
 
     cbdata->info = info;
