@@ -1,5 +1,13 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2018. ALL RIGHTS RESERVED.
+ * Copyright (c) 2019      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2019      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2022      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,13 +33,15 @@
 
 extern mca_base_framework_t opal_memory_base_framework;
 
-opal_common_ucx_module_t opal_common_ucx = {
-    .verbose             = 0,
+opal_common_ucx_module_t opal_common_ucx =
+{
     .progress_iterations = 100,
-    .registered          = 0,
-    .opal_mem_hooks      = 1,
-    .tls                 = NULL
+    .opal_mem_hooks = 1,
+    .tls = NULL,
+    .devices = NULL,
 };
+
+static opal_mutex_t opal_common_ucx_mutex = OPAL_MUTEX_STATIC_INIT;
 
 static void opal_common_ucx_mem_release_cb(void *buf, size_t length,
                                            void *cbdata, bool from_alloc)
@@ -41,60 +51,70 @@ static void opal_common_ucx_mem_release_cb(void *buf, size_t length,
 
 OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component)
 {
-    static const char *default_tls     = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,ud_mlx5,cuda_ipc,rocm_ipc";
-    static const char *default_devices = "mlx*";
-    static int registered = 0;
-    static int hook_index;
-    static int verbose_index;
-    static int progress_index;
-    static int tls_index;
-    static int devices_index;
+    char *default_tls = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,ud_mlx5,cuda_ipc,rocm_ipc";
+    char *default_devices = "mlx*";
+    int hook_index;
+    int verbose_index;
+    int progress_index;
+    int tls_index;
+    int devices_index;
 
-    if (!registered) {
-        verbose_index = mca_base_var_register("opal", "opal_common", "ucx", "verbose",
-                                              "Verbose level of the UCX components",
-                                              MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                              MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                                              MCA_BASE_VAR_SCOPE_LOCAL,
-                                              &opal_common_ucx.verbose);
-        progress_index = mca_base_var_register("opal", "opal_common", "ucx", "progress_iterations",
-                                               "Set number of calls of internal UCX progress "
-                                               "calls per opal_progress call",
-                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                               MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                                               MCA_BASE_VAR_SCOPE_LOCAL,
-                                               &opal_common_ucx.progress_iterations);
-        hook_index = mca_base_var_register("opal", "opal_common", "ucx", "opal_mem_hooks",
-                                           "Use OPAL memory hooks, instead of UCX internal "
-                                           "memory hooks", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                           OPAL_INFO_LVL_3,
+    OPAL_THREAD_LOCK(&opal_common_ucx_mutex);
+
+    /* It is harmless to re-register variables so go ahead an re-register. */
+    verbose_index = mca_base_var_register("opal", "opal_common", "ucx", "verbose",
+                                          "Verbose level of the UCX components",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                          MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                          MCA_BASE_VAR_SCOPE_LOCAL, &opal_common_ucx.verbose);
+    progress_index = mca_base_var_register("opal", "opal_common", "ucx", "progress_iterations",
+                                           "Set number of calls of internal UCX progress "
+                                           "calls per opal_progress call",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
-                                           &opal_common_ucx.opal_mem_hooks);
+                                           &opal_common_ucx.progress_iterations);
+    hook_index = mca_base_var_register("opal", "opal_common", "ucx", "opal_mem_hooks",
+                                       "Use OPAL memory hooks, instead of UCX internal "
+                                       "memory hooks",
+                                       MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                       MCA_BASE_VAR_SCOPE_LOCAL,
+                                       &opal_common_ucx.opal_mem_hooks);
 
-        opal_common_ucx.tls  = malloc(sizeof(*opal_common_ucx.tls));
+    if (NULL == opal_common_ucx.tls) {
+        // Extra level of string indirection needed to make ompi_info
+        // happy since it will unload this library before the MCA base
+        // cleans up the MCA vars. This will cause the string to go
+        // out of scope unless we place the pointer to it on the heap.
+        opal_common_ucx.tls = (char **) malloc(sizeof(char *));
         *opal_common_ucx.tls = strdup(default_tls);
-        tls_index = mca_base_var_register("opal", "opal_common", "ucx", "tls",
-                                          "List of UCX transports which should be supported on the system, to enable "
-                                          "selecting the UCX component. Special values: any (any available). "
-                                          "A '^' prefix negates the list. "
-                                          "For example, in order to exclude on shared memory and TCP transports, "
-                                          "please set to '^posix,sysv,self,tcp,cma,knem,xpmem'.",
-                                          MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                          OPAL_INFO_LVL_3,
-                                          MCA_BASE_VAR_SCOPE_LOCAL,
-                                          opal_common_ucx.tls);
-
-        opal_common_ucx.devices  = malloc(sizeof(*opal_common_ucx.devices));
-        *opal_common_ucx.devices = strdup(default_devices);
-        devices_index = mca_base_var_register("opal", "opal_common", "ucx", "devices",
-                                              "List of device driver pattern names, which, if supported by UCX, will "
-                                              "bump its priority above ob1. Special values: any (any available)",
-                                              MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                              OPAL_INFO_LVL_3,
-                                              MCA_BASE_VAR_SCOPE_LOCAL,
-                                              opal_common_ucx.devices);
-        registered = 1;
     }
+
+    tls_index = mca_base_var_register(
+        "opal", "opal_common", "ucx", "tls",
+        "List of UCX transports which should be supported on the system, to enable "
+        "selecting the UCX component. Special values: any (any available). "
+        "A '^' prefix negates the list. "
+        "For example, in order to exclude on shared memory and TCP transports, "
+        "please set to '^posix,sysv,self,tcp,cma,knem,xpmem'.",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+        MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_LOCAL,
+        opal_common_ucx.tls);
+
+    if (NULL == opal_common_ucx.devices) {
+        opal_common_ucx.devices = (char **) malloc(sizeof(char *));
+        *opal_common_ucx.devices = strdup(default_devices);
+    }
+    devices_index = mca_base_var_register(
+        "opal", "opal_common", "ucx", "devices",
+        "List of device driver pattern names, which, if supported by UCX, will "
+        "bump its priority above ob1. Special values: any (any available)",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+        MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_LOCAL,
+        opal_common_ucx.devices);
+
     if (component) {
         mca_base_var_register_synonym(verbose_index, component->mca_project_name,
                                       component->mca_type_name,
@@ -230,7 +250,7 @@ opal_common_ucx_support_level(ucp_context_h context)
     int ret;
 #endif
 
-    is_any_tl     = !strcmp(*opal_common_ucx.tls, "any");
+    is_any_tl = !strcmp(*opal_common_ucx.tls, "any");
     is_any_device = !strcmp(*opal_common_ucx.devices, "any");
 
     /* Check for special value "any" */
@@ -242,7 +262,7 @@ opal_common_ucx_support_level(ucp_context_h context)
 
 #if HAVE_DECL_OPEN_MEMSTREAM
     /* Split transports list */
-    negate  = ('^' == (*opal_common_ucx.tls)[0]);
+    negate = ('^' == (*opal_common_ucx.tls)[0]);
     tl_list = opal_argv_split(*opal_common_ucx.tls + (negate ? 1 : 0), ',');
     if (tl_list == NULL) {
         MCA_COMMON_UCX_VERBOSE(1, "failed to split tl list '%s', ucx is disabled",
