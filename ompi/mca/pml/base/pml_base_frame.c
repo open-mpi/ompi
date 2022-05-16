@@ -88,7 +88,8 @@ mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_dump */
     0,                       /* pml_max_contextid */
     0,                       /* pml_max_tag */
-    0                        /* pml_flags */
+    0,                       /* pml_flags */
+    NULL                     /* pml_get_transports */
 };
 
 mca_pml_base_component_t mca_pml_base_selected_component = {{0}};
