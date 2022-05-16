@@ -23,7 +23,6 @@ static thread_pool_t *create_threads(void);
 
 static void f1 (int nb_args, void **args, int thread_id);
 static void f2 (int nb_args, void **args, int thread_id);
-static void destroy_work(work_t *work);
 
 #define MIN(a, b) ((a)<(b)?(a):(b))
 #define MAX(a, b) ((a)>(b)?(a):(b))
@@ -88,7 +87,7 @@ int bind_myself_to_core(hwloc_topology_t topology, int id){
 	hwloc_bitmap_asprintf(&str, obj->cpuset);
 	if(verbose_level>=WARNING)
 	  printf("Thread %d couldn't bind to cpuset %s: %s.\n This thread is not bound to any core...\n", my_core, str, strerror(error));
-	free(str); /* str is allocated by hlwoc, free it normally*/
+	free(str); /* str is allocated by hwloc, free it normally*/
 	return 0;
       }
       /* FREE our cpuset copy */

@@ -101,13 +101,13 @@ typedef struct FiboTree_ {
    the algorithms have been de-recursived
    and written as macros.                 */
 
-#define fiboTreeLinkAfter(o,n)      do {                              \
-                                      FiboNode *        nextptr;      \
-                                      nextptr = (o)->linkdat.nextptr; \
-                                      (n)->linkdat.nextptr = nextptr; \
-                                      (n)->linkdat.prevptr = (o);     \
-                                      nextptr->linkdat.prevptr = (n); \
-                                      (o)->linkdat.nextptr = (n);     \
+#define fiboTreeLinkAfter(o,n)      do {                                  \
+                                      FiboNode *        nextptr_loc;      \
+                                      nextptr_loc = (o)->linkdat.nextptr; \
+                                      (n)->linkdat.nextptr = nextptr_loc; \
+                                      (n)->linkdat.prevptr = (o);         \
+                                      nextptr_loc->linkdat.prevptr = (n); \
+                                      (o)->linkdat.nextptr = (n);         \
                                     } while (0)
 
 #define fiboTreeUnlink(n)           do {                                                            \

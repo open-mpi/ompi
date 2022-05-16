@@ -19,4 +19,5 @@ void topology_constraints(tm_topology_t *topology,int **constraints,int *nb_cons
 void topology_cost(tm_topology_t *topology,double **cost);
 void topology_numbering(tm_topology_t *topology,int **numbering,int *nb_nodes);
 double ** topology_to_arch(hwloc_topology_t topology);
+int nb_processing_units(tm_topology_t *topology);
 
