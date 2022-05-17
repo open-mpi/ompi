@@ -42,7 +42,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
     OPAL_3RDPARTY_WITH([prrte], [prrte], [package_prrte], [1])
 
     AC_ARG_WITH([prrte-bindir],
-       [AC_HELP_STRING([--with-prrte-bindir=DIR],
+       [AS_HELP_STRING([--with-prrte-bindir=DIR],
            [Search for PRRTE binaries in DIR.  Defaults to PRRTE_DIR/bin if not specified])])
 
     prrte_setup_internal_happy=0
