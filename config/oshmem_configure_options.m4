@@ -16,7 +16,7 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OSHMEM_CONFIGURE_OPTIONS],[
-opal_show_subtitle "OSHMEM Configuration options"
+opal_show_subtitle "OpenSHMEM Configuration options"
 
 AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LIBS)
 AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
@@ -24,7 +24,7 @@ AC_SUBST(OSHMEM_LIBSHMEM_EXTRA_LDFLAGS)
 #
 # Disable Open SHMEM?
 #
-AC_MSG_CHECKING([if want oshmem])
+AC_MSG_CHECKING([if want OpenSHMEM])
 AC_ARG_ENABLE([oshmem],
               [AS_HELP_STRING([--enable-oshmem],
                               [Enable building the OpenSHMEM interface (available on Linux only, where it is enabled by default)])])
@@ -76,7 +76,7 @@ AC_DEFINE_UNQUOTED([OSHMEM_SPEC_COMPAT], [$OSHMEM_SPEC_COMPAT],
 #
 # Do we want to disable OSHMEM parameter checking at run-time?
 #
-AC_MSG_CHECKING([if want OSHMEM API parameter checking])
+AC_MSG_CHECKING([if want OpenSHMEM API parameter checking])
 AC_ARG_WITH([oshmem-param-check],
     [AS_HELP_STRING([--with-oshmem-param-check(=VALUE)],
                    [behavior of OSHMEM API function parameter checking.  Valid values are: always, never.  If --with-oshmem-param-check is specified with no VALUE argument, it is equivalent to a VALUE of "always"; --without-oshmem-param-check is equivalent to "never" (default: always).])])
@@ -104,7 +104,7 @@ AC_DEFINE_UNQUOTED(OSHMEM_PARAM_CHECK, $shmem_param_check,
 #
 AC_ARG_ENABLE([oshmem-profile],
     [AS_HELP_STRING([--enable-oshmem-profile],
-                   [enable OSHMEM profiling (default: enabled)])])
+                   [enable OpenSHMEM profiling (default: enabled)])])
 AC_MSG_CHECKING([if want pshmem])
 AS_IF([test "$enable_oshmem_profile" != "no"],
       [AC_MSG_RESULT([yes])],
@@ -123,17 +123,17 @@ AS_IF([test "$enable_oshmem" = "no" && \
 #
 # Fortran bindings
 #
-AC_MSG_CHECKING([if want to build OSHMEM fortran bindings])
+AC_MSG_CHECKING([if want to build OpenSHMEM fortran bindings])
 AC_ARG_ENABLE([oshmem-fortran],
 AS_HELP_STRING([--enable-oshmem-fortran],
-               [enable OSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
+               [enable OpenSHMEM Fortran bindings (default: enabled if Fortran compiler found)]))
 if test "$enable_oshmem_fortran" != "no"; then
 # If no OMPI FORTRAN, bail
    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -eq $OMPI_FORTRAN_NO_BINDINGS && \
           test "$enable_oshmem_fortran" = "yes"],
                [AC_MSG_RESULT([bad value OMPI_TRY_FORTRAN_BINDINGS: ($OMPI_TRY_FORTRAN_BINDINGS)])
                 AC_MSG_WARN([Your request to --enable-oshmem-fortran can only be satisfied if fortran support is enabled in OMPI.
-You see this message because OMPI fortran support has been explicitly disabled via --disable-mpi-fortran and OSHMEM fortran support was explicitly enabled with --enable-oshmem-fortran.
+You see this message because MPI fortran support has been explicitly disabled via --disable-mpi-fortran and OpenSHMEM fortran support was explicitly enabled with --enable-oshmem-fortran.
 Configure will abort because you, a human, have asked for something that cannot be provided.])
                 AC_MSG_ERROR([Cannot continue])])
     if test $OMPI_TRY_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS; then
