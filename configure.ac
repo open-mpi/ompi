@@ -128,29 +128,10 @@ AC_DEFUN([OMPI_CHECK_DIR_FOR_SPACES],[
            AC_MSG_ERROR([Cannot continue.])])
 ])
 
-AC_DEFUN([OMPI_CANONICALIZE_PATH],[
-    case $host_os in
-    darwin*)
-        # MacOS does not have "readlink -f" or realpath (at least as
-        # of MacOS Cataline / 10.15).  Instead, use Python, because we
-        # know MacOS comes with a /usr/bin/python that has
-        # os.path.realpath.
-        $2=`/usr/bin/python -c 'import os; print os.path.realpath("'$1'")'`
-        ;;
-    *)
-        $2=`readlink -f $1`
-        ;;
-    esac
-])
-
-OMPI_CHECK_DIR_FOR_SPACES([$srcdir], [a], [source tree])
-OMPI_CANONICALIZE_PATH([$srcdir], [ompi_dir])
-OMPI_CHECK_DIR_FOR_SPACES([$ompi_dir], [an], [absolute source tree])
-OMPI_CANONICALIZE_PATH([.], [ompi_dir])
+ompi_dir=`pwd`
 OMPI_CHECK_DIR_FOR_SPACES([$ompi_dir], [a], [build tree])
+OMPI_CHECK_DIR_FOR_SPACES([$srcdir], [a], [source tree])
 OMPI_CHECK_DIR_FOR_SPACES([$prefix], [a], [prefix])
-OMPI_CANONICALIZE_PATH([$prefix], [ompi_dir])
-OMPI_CHECK_DIR_FOR_SPACES([$ompi_dir], [an], [absolute prefix])
 
 opal_show_subtitle "Checking versions"
 
@@ -288,17 +269,12 @@ m4_ifdef([project_oshmem],
 
 OPAL_CONFIGURE_OPTIONS
 
+###########################
+# Open MPI options
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
-m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
-
-# Set up project specific AM_CONDITIONALs
-AS_IF([test "$enable_ompi" != "no"], [project_ompi_amc=true], [project_ompi_amc=false])
-m4_ifndef([project_ompi], [project_ompi_amc=false])
-
-AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshmem_amc="no (disabled)"])
-m4_ifndef([project_oshmem], [project_oshmem_amc="no (not available)"])
 
 # Enable/Disable Software-Based Performance Counters Capability
+AC_MSG_CHECKING([if want software-based performance counters (SPC)])
 AC_ARG_ENABLE([spc],
     [AS_HELP_STRING([--enable-spc],
                    [Enable software-based performance counters capability (default: disabled)])])
@@ -324,10 +300,21 @@ fi
 # The library prefixes must be set before we call OPAL MCA.  Here is
 # as good a place as any.
 m4_ifdef([project_opal],
-[OPAL_SET_LIB_NAME([open-pal])])
+         [OPAL_SET_LIB_NAME([open-pal])])
 
 m4_ifdef([project_ompi],
-          [OMPI_SET_LIB_NAME([])])
+         [OMPI_SET_LIB_NAME([])])
+
+###########################
+# OSHMEM options
+m4_ifdef([project_oshmem], [OSHMEM_CONFIGURE_OPTIONS])
+
+# Set up project specific AM_CONDITIONALs
+AS_IF([test "$enable_ompi" != "no"], [project_ompi_amc=true], [project_ompi_amc=false])
+m4_ifndef([project_ompi], [project_ompi_amc=false])
+
+AS_IF([test "$enable_oshmem" != "no"], [project_oshmem_amc=true], [project_oshmem_amc="no (disabled)"])
+m4_ifndef([project_oshmem], [project_oshmem_amc="no (not available)"])
 
 ############################################################################
 # Libtool: part one

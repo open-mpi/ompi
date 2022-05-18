@@ -45,17 +45,20 @@ JNIEXPORT jlong JNICALL Java_mpi_Info_getNull(JNIEnv *env, jclass clazz)
     return (jlong)MPI_INFO_NULL;
 }
 
+// At least some versions of jni.h have a global named "jvalue", and
+// we get a compiler warning if we have a parameter or variable of the
+// same name.  So use "ljvalue" instead.
 JNIEXPORT void JNICALL Java_mpi_Info_set(
-        JNIEnv *env, jobject jthis, jlong handle, jstring jkey, jstring jvalue)
+        JNIEnv *env, jobject jthis, jlong handle, jstring jkey, jstring ljvalue)
 {
-    const char *key   = (*env)->GetStringUTFChars(env, jkey,   NULL),
-               *value = (*env)->GetStringUTFChars(env, jvalue, NULL);
+    const char *key   = (*env)->GetStringUTFChars(env, jkey,    NULL),
+               *value = (*env)->GetStringUTFChars(env, ljvalue, NULL);
 
     int rc = MPI_Info_set((MPI_Info)handle, (char*)key, (char*)value);
     ompi_java_exceptionCheck(env, rc);
 
-    (*env)->ReleaseStringUTFChars(env, jkey,   key);
-    (*env)->ReleaseStringUTFChars(env, jvalue, value);
+    (*env)->ReleaseStringUTFChars(env, jkey,    key);
+    (*env)->ReleaseStringUTFChars(env, ljvalue, value);
 }
 
 JNIEXPORT jstring JNICALL Java_mpi_Info_get(
@@ -83,9 +86,12 @@ JNIEXPORT jstring JNICALL Java_mpi_Info_get(
         return NULL;
     }
 
-    jstring jvalue = (*env)->NewStringUTF(env, value);
+    // At least some versions of jni.h have a global named "jvalue",
+    // and we get a compiler warning if we have a parameter or
+    // variable of the same name.  So use "ljvalue" instead.
+    jstring ljvalue = (*env)->NewStringUTF(env, value);
     free(value);
-    return jvalue;
+    return ljvalue;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Info_delete(
