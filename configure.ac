@@ -20,8 +20,8 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014-2017 Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2014-2022 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
@@ -81,6 +81,8 @@ opal_show_subtitle "Prerequisites"
 m4_copy([OPAL_LOG_COMMAND], [OAC_LOG_COMMAND])
 m4_copy([OPAL_LOG_MSG], [OAC_LOG_MSG])
 m4_copy([OPAL_APPEND], [OAC_APPEND])
+
+AC_PROG_SED
 
 AC_CHECK_PROG([PERL],[perl],[perl],[no])
 AS_IF([test "X$PERL" = "Xno"],
