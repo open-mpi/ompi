@@ -81,12 +81,14 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                        MCA_BASE_VAR_SCOPE_LOCAL,
                                        &opal_common_ucx.opal_mem_hooks);
 
-    if (NULL == opal_common_ucx.tls) {
+    if (NULL == opal_common_ucx.tls || NULL == *opal_common_ucx.tls) {
         // Extra level of string indirection needed to make ompi_info
         // happy since it will unload this library before the MCA base
         // cleans up the MCA vars. This will cause the string to go
         // out of scope unless we place the pointer to it on the heap.
-        opal_common_ucx.tls = (char **) malloc(sizeof(char *));
+        if( NULL == opal_common_ucx.tls ) {
+            opal_common_ucx.tls = (char **) malloc(sizeof(char *));
+        }
         *opal_common_ucx.tls = strdup(default_tls);
     }
 
@@ -102,8 +104,10 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
         MCA_BASE_VAR_SCOPE_LOCAL,
         opal_common_ucx.tls);
 
-    if (NULL == opal_common_ucx.devices) {
-        opal_common_ucx.devices = (char **) malloc(sizeof(char *));
+    if (NULL == opal_common_ucx.devices || NULL == *opal_common_ucx.devices) {
+        if( NULL == opal_common_ucx.devices ) {
+            opal_common_ucx.devices = (char **) malloc(sizeof(char *));
+        }
         *opal_common_ucx.devices = strdup(default_devices);
     }
     devices_index = mca_base_var_register(
@@ -137,6 +141,8 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                       component->mca_component_name,
                                       "devices", 0);
     }
+
+    OPAL_THREAD_UNLOCK(&opal_common_ucx_mutex);
 }
 
 OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
