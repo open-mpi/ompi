@@ -467,11 +467,9 @@ int ompi_osc_rdma_find_dynamic_region (ompi_osc_rdma_module_t *module, ompi_osc_
 
     OPAL_THREAD_LOCK(&module->lock);
     // Make sure region isn't being touched.
-    ompi_osc_rdma_lock_acquire_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
     if (!ompi_osc_rdma_peer_local_state (peer)) {
         ret = ompi_osc_rdma_refresh_dynamic_region (module, dy_peer);
         if (OMPI_SUCCESS != ret) {
-            ompi_osc_rdma_lock_release_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
             return ret;
         }
 
@@ -488,7 +486,6 @@ int ompi_osc_rdma_find_dynamic_region (ompi_osc_rdma_module_t *module, ompi_osc_
         ret = OMPI_ERR_RMA_RANGE;
     }
     OPAL_THREAD_UNLOCK(&module->lock);
-    ompi_osc_rdma_lock_release_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
 
     /* round a matching region */
     return ret;
