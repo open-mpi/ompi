@@ -334,11 +334,27 @@ bool ompi_comm_is_proc_active(ompi_communicator_t *comm, int peer_id, bool remot
     /* If the proc is not known yet (get_proc_ptr returns NULL for a valid
      * peer_id), then we assume that the proc is alive. When it is dead, the
      * proc will exist. */
+#if OPAL_ENABLE_DEBUG
+    if(NULL == ompi_proc) {
+        /* this debug has side effects on behavior/performance: it loads up the
+         * proc for every query and may end-up being equivalent to the 'preconnect
+         * all' option in the worse case. */
+        ompi_proc = ompi_group_get_proc_ptr((remote ? comm->c_remote_group : comm->c_local_group),
+                                             peer_id, true);
+        assert(NULL != ompi_proc);
+        assert(ompi_proc_is_active(ompi_proc));
+    }
+#endif
     return (NULL == ompi_proc) ? true : ompi_proc_is_active(ompi_proc);
 }
 
 int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remote)
 {
+    /* populate the proc in the comm's group array so that it is not a sentinel and can be read as failed */
+    ompi_proc_t *ompi_proc = ompi_group_get_proc_ptr((remote ? comm->c_remote_group : comm->c_local_group),
+                                                     peer_id, true);
+    assert(NULL != ompi_proc);
+
     /* Disable ANY_SOURCE */
     comm->any_source_enabled = false;
     opal_atomic_wmb(); /* non-locked update needs a memory barrier to propagate */
