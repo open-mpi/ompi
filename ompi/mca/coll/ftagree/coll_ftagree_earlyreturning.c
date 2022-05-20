@@ -808,12 +808,12 @@ static void era_update_new_dead_list(ompi_coll_ftagree_era_agreement_info_t *ci)
     }
 
     OPAL_OUTPUT_VERBOSE((30, ompi_ftmpi_output_handle,
-                         "%s ftagree:agreement (ERA) agreement (%d.%d).%d -- adding %d procs to the list of newly dead processes",
+                         "%s ftagree:agreement (ERA) agreement (%d.%d).%d -- adding %d procs to the list of newly dead processes (%d currently; AFR size is %d)",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          ci->agreement_id.ERAID_FIELDS.contextid,
                          ci->agreement_id.ERAID_FIELDS.epoch,
                          ci->agreement_id.ERAID_FIELDS.agreementid,
-                         r));
+                         r, ci->current_value->new_dead_array, ags->afr_size));
 
 #if OPAL_ENABLE_DEBUG
     {
@@ -1372,16 +1372,14 @@ static void era_build_tree_structure(ompi_coll_ftagree_era_agreement_info_t *ci)
 
     era_call_tree_fn(ci);
 
-    if( ompi_comm_rank(ci->comm) == 0 ) {
-        OPAL_OUTPUT_VERBOSE((4, ompi_ftmpi_output_handle,
-                             "%s ftagree:agreement (ERA) Agreement (%d.%d).%d: re-built the tree structure with size %d: %s\n",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                             ci->agreement_id.ERAID_FIELDS.contextid,
-                             ci->agreement_id.ERAID_FIELDS.epoch,
-                             ci->agreement_id.ERAID_FIELDS.agreementid,
-                             AGS(ci->comm)->tree_size,
-                             era_debug_tree(ci->ags->tree, ci->ags->tree_size)));
-    }
+    OPAL_OUTPUT_VERBOSE(((ompi_comm_rank(ci->comm) == 0)? 4: 50, ompi_ftmpi_output_handle,
+                        "%s ftagree:agreement (ERA) Agreement (%d.%d).%d: re-built the tree structure with size %d: %s\n",
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        ci->agreement_id.ERAID_FIELDS.contextid,
+                        ci->agreement_id.ERAID_FIELDS.epoch,
+                        ci->agreement_id.ERAID_FIELDS.agreementid,
+                        AGS(ci->comm)->tree_size,
+                        era_debug_tree(ci->ags->tree, ci->ags->tree_size)));
 
 #if OPAL_ENABLE_DEBUG
     era_tree_check(ci->ags->tree, ci->ags->tree_size, 0);
