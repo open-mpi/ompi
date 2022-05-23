@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -226,7 +226,11 @@ int orte_odls_pspawn_kill_local_procs(opal_pointer_array_t *procs)
    and the pipe up to the parent. */
 static int close_open_file_descriptors(posix_spawn_file_actions_t *factions)
 {
+#if defined(__OSX__)
+    DIR *dir = opendir("/dev/fd");
+#else  /* Linux */
     DIR *dir = opendir("/proc/self/fd");
+#endif  /* defined(__OSX__) */
     if (NULL == dir) {
         return ORTE_ERR_FILE_OPEN_FAILURE;
     }
