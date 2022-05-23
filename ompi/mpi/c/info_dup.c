@@ -75,7 +75,7 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
         }
     }
 
-    *newinfo = OBJ_NEW(ompi_info_t);
+    *newinfo = ompi_info_allocate();
     if (NULL == *newinfo) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                       FUNC_NAME);

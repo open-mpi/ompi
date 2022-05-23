@@ -243,17 +243,16 @@ static int delete_select(const char *filename, struct opal_info_t *info,
 // An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
 // below with an MPI_Info, we need to create an equivalent MPI_Info. This
 // isn't ideal but it only happens a few places.
-    ompi_info_t *ompi_info;
-    ompi_info = OBJ_NEW(ompi_info_t);
-    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
-    opal_info_t *opal_info = &(ompi_info->super);
+    ompi_info_t ompi_info;
+    OBJ_CONSTRUCT(&ompi_info, ompi_info_t);
+    opal_info_t *opal_info = &(ompi_info.super);
     opal_info_dup (info, &opal_info);
 
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
-    ret = ROMIO_PREFIX(MPI_File_delete)(filename, ompi_info);
+    ret = ROMIO_PREFIX(MPI_File_delete)(filename, &ompi_info);
     OPAL_THREAD_UNLOCK (&mca_io_romio341_mutex);
 
-    ompi_info_free(&ompi_info);
+    OBJ_DESTRUCT(&ompi_info);
     return ret;
 }
 
