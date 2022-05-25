@@ -3230,6 +3230,12 @@ int mca_coll_ftagree_era_inter(void *contrib,
         contriblh[1] = *(int*)contrib;
     }
 
+    /* The 'shadowcomm' is used to perform the agreement on the union of the
+     * local and remote groups. We create a 'fake' new communicator that shares
+     * the cid/c_index with the original. This is possible because ERA does not
+     * use normal MPI messages, but only uses c_index to match agreements
+     * from its own BML callbacks.
+     */
     ompi_comm_set(&shadowcomm,                     /* new comm */
                   comm,                            /* old comm */
                   ompi_group_size(uniongrp),       /* local_size */
@@ -3238,13 +3244,14 @@ int mca_coll_ftagree_era_inter(void *contrib,
                   NULL,                            /* remote procs */
                   NULL,                            /* attrs */
                   comm->error_handler,             /* error handler */
-                  NULL,                            /* local group */
-                  uniongrp,                        /* remote group */
+                  uniongrp,                        /* local group */
+                  NULL,                            /* remote group */
                   0);                              /* flags */
 
     ompi_group_free(&uniongrp);
     shadowcomm->c_contextid = comm->c_contextid;
     shadowcomm->c_epoch = comm->c_epoch;
+    shadowcomm->c_index = comm->c_index;
     snprintf(shadowcomm->c_name, MPI_MAX_OBJECT_NAME, "SHADOW OF %s", &comm->c_name[0]);
     shadowcomm->any_source_offset = comm->any_source_offset;
     shadowcomm->agreement_specific = comm->agreement_specific;
