@@ -43,6 +43,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/osc/base/base.h"
+#include "ompi/mca/part/base/base.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/topo/base/base.h"
 #include "opal/mca/pmix/base/base.h"
@@ -610,6 +611,15 @@ static int ompi_mpi_instance_init_common (void)
     /* initialize windows */
     if (OMPI_SUCCESS != (ret = ompi_win_init ())) {
         return ompi_instance_print_error ("ompi_win_init() failed", ret);
+    }
+
+    /* initialize partcomm */
+    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_part_base_framework, 0))) {
+        return ompi_instance_print_error ("mca_part_base_select() failed", ret);
+    }
+
+    if (OMPI_SUCCESS != (ret = mca_part_base_select (true, true))) {
+        return ompi_instance_print_error ("mca_part_base_select() failed", ret);
     }
 
     /* Setup the dynamic process management (DPM) subsystem */
