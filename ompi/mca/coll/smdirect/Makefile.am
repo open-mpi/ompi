@@ -33,11 +33,11 @@ not_used_yet = \
         coll_smdirect_exscan.c \
         coll_smdirect_scatter.c \
         coll_smdirect_allreduce.c \
-        coll_smdirect_barrier.c \
         coll_smdirect_scatterv.c
 
 sources = \
         coll_smdirect.h \
+        coll_smdirect_barrier.c \
         coll_smdirect_bcast.c \
         coll_smdirect_component.c \
         coll_smdirect_module.c \
