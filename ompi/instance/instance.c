@@ -398,6 +398,12 @@ static int ompi_mpi_instance_init_common (void)
     OMPI_TIMING_IMPORT_OPAL("rte_init");
 
     ompi_rte_initialized = true;
+    /* if we are oversubscribed, then set yield_when_idle
+     * accordingly */
+    if (ompi_mpi_oversubscribed) {
+        ompi_mpi_yield_when_idle = true;
+    }
+
 
     /* Register the default errhandler callback  */
     /* give it a name so we can distinguish it */
