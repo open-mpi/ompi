@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -29,7 +29,7 @@
 static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, char tmpredbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, char inplace, NBC_Schedule *schedule, void *tmpbuf);
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                                   MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, void *tmpbuf, int fragsize);
+                                   MPI_Op op, MPI_Aint ext, size_t size, NBC_Schedule *schedule, void *tmpbuf, int fragsize);
 
 static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, void *tmpbuf, int count, MPI_Datatype datatype,
                                     MPI_Op op, NBC_Schedule *schedule);
@@ -459,7 +459,7 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
 
 /* chain send ... */
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                                   MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, void *tmpbuf, int fragsize) {
+                                   MPI_Op op, MPI_Aint ext, size_t size, NBC_Schedule *schedule, void *tmpbuf, int fragsize) {
   int res, vrank, rpeer, speer, numfrag, fragcount, thiscount;
   long offset;
 
@@ -479,11 +479,11 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
   fragcount = count / numfrag;
 
   for (int fragnum = 0 ; fragnum < numfrag ; ++fragnum) {
-    offset = fragnum * fragcount * ext;
+    offset = (MPI_Aint) ext * fragnum * fragcount;
     thiscount = fragcount;
     if(fragnum == numfrag - 1) {
       /* last fragment may not be full */
-      thiscount = count - fragcount * fragnum;
+      thiscount = count - (size_t)fragcount * fragnum;
     }
 
     /* last node does not recv */
