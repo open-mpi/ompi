@@ -348,7 +348,7 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
 
         /* Save the values */
         data->mcb_tree[root].mcstn_id = root;
-        if (root == 0 && parent == 0) {
+        if (root == 0 && parent <= 0) {
             data->mcb_tree[root].mcstn_parent = NULL;
         } else {
             data->mcb_tree[root].mcstn_parent = &data->mcb_tree[parent];
@@ -371,6 +371,7 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
             data->mcb_tree[i - 1].mcstn_children + c->sm_tree_degree;
     }
 
+#if 0
     /* Pre-compute a tree for a given number of processes and degree.
        We'll re-use this tree for all possible values of root (i.e.,
        shift everyone's process to be the "0"/root in this tree. */
@@ -409,6 +410,7 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
                 &data->mcb_tree[min_child + i] : NULL;
         }
     }
+#endif // 0
 
     /* allocate space for the maximum number of children we expect */
     data->peerdata = malloc(sizeof(data->peerdata[0])*mca_coll_smdirect_component.sm_tree_degree);
@@ -437,10 +439,12 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
     data->procdata->mcsp_indata = NULL;
     data->procdata->mcsp_insize = 0;
     /* initialize the flags to something that blocks peers on first call */
-    data->procdata->mcsp_op_flag.mcsiuf_operation_count = 1;
+    data->procdata->mcsp_op_flag.mcsiuf_operation_count = -1;
     data->procdata->mcsp_op_flag.mcsiuf_num_procs_using = 0;
-    data->procdata->mcsp_segment_up_flag.mcsiuf_operation_count = 1;
+    data->procdata->mcsp_segment_up_flag.mcsiuf_operation_count = -1;
     data->procdata->mcsp_segment_up_flag.mcsiuf_num_procs_using = 0;
+    data->procdata->mcsp_segment_down_flag.mcsiuf_operation_count = -1;
+    data->procdata->mcsp_segment_down_flag.mcsiuf_num_procs_using = 0;
     data->mcb_operation_count = -1;
 
     /* Save previous component's reduce information */

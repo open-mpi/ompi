@@ -413,6 +413,7 @@ BEGIN_C_DECLS
  */
 #define FLAG_RETAIN(flag, num_procs, op_count) \
     (flag)->mcsiuf_num_procs_using = (num_procs); \
+    opal_atomic_wmb(); \
     (flag)->mcsiuf_operation_count = (op_count)
 
 /**

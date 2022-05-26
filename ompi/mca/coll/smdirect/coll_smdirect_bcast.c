@@ -228,6 +228,7 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
                                                         + sizeof(mca_coll_smdirect_procdata_t));
     int *root_count = (int*)((char*)root_dtype + mca_coll_smdirect_serialize_ddt_size(&datatype->super));
     /* set our input buffer information */
+    int op_retain_cnt = 0;
     if (root == rank) {
         ptrdiff_t extent;
         ompi_datatype_type_extent(datatype, &extent);
@@ -238,17 +239,15 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
         /* make our datatype available */
         mca_coll_smdirect_serialize_ddt(root_dtype, &datatype->super);
         *root_count = count;
-        /* signal that our procdata for this op is ready */
+        op_retain_cnt = size-1;
+        /* make sure all writes are visible before we signal that our procdata for this op is ready */
         opal_atomic_wmb();
-        /* we will wait for our parent to signal completion */
-        FLAG_RETAIN(&data->procdata->mcsp_op_flag, size-1, op_count);
-
-        FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_op_flag);
     } else {
 
         /* get the endpoint and map the memory region */
 
-        mca_coll_smdirect_peerdata_t *peer = &data->peerdata[0];
+        mca_coll_smdirect_peerdata_t *peerdata = data->peerdata;
+        mca_coll_smdirect_peerdata_t *peer = &peerdata[root];
 
         /* get the endpoint */
         if (NULL == (peer->endpoint = data->endpoints[root])) {
@@ -296,6 +295,10 @@ int mca_coll_smdirect_bcast_intra(void *buff, int count,
         MCA_SMSC_CALL(unmap_peer_region, peer->mapping_ctx);
 
     }
+    /* only root waits for its children but we need to keep the op_count in sync */
+    FLAG_RETAIN(&data->procdata->mcsp_op_flag, op_retain_cnt, op_count);
+
+    FLAG_WAIT_FOR_IDLE(&data->procdata->mcsp_op_flag);
 
     return ret;
 }

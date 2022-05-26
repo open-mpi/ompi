@@ -116,7 +116,7 @@ mca_coll_smdirect_component_t mca_coll_smdirect_component = {
 
     /* (default) number of processes in coll_smdirect_shared_mem_size
        information variable */
-    4,
+    //4,
 
     /* default values for non-MCA parameters */
     /* Not specifying values here gives us all 0's */
