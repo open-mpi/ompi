@@ -13,7 +13,8 @@
 
 
 OSHMEM_AUX_SOURCES = \
-	shmem_lock.c
+	shmem_lock.c \
+	shmem_mcs_lock.c
 
 OSHMEM_API_SOURCES = \
 	shmem_init.c \
