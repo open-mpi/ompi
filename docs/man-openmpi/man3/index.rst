@@ -320,14 +320,17 @@ MPI API manual pages (section 3)
    MPI_Send_init.3.rst
    MPI_Sendrecv.3.rst
    MPI_Sendrecv_replace.3.rst
+   MPI_Session_call_errhandler.3.rst
    MPI_Session_create_errhandler.3.rst
    MPI_Session_f2c.3.rst
    MPI_Session_finalize.3.rst
+   MPI_Session_get_errhandler.3.rst
    MPI_Session_get_info.3.rst
    MPI_Session_get_nth_pset.3.rst
    MPI_Session_get_num_psets.3.rst
    MPI_Session_get_pset_info.3.rst
    MPI_Session_init.3.rst
+   MPI_Session_set_errhandler.3.rst
    MPI_Sizeof.3.rst
    MPI_Ssend.3.rst
    MPI_Ssend_init.3.rst

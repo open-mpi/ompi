@@ -1374,13 +1374,46 @@ end subroutine MPI_Request_get_status
 
 end interface
 
-interface MPI_Session_get_info
+interface
+
+subroutine MPI_Session_call_errhandler(session, errorcode, ierror)
+  integer, intent(in) :: session
+  integer, intent(in) :: errorcode
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_call_errhandler
+
+end interface
+
+interface
+
+subroutine MPI_Session_create_errhandler(function, errhandler, ierror)
+  external :: function
+  integer, intent(out) :: errhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_create_errhandler
+
+end interface
+
+
+interface 
+
+subroutine MPI_Session_get_errhandler(session, erhandler, ierror)
+  integer, intent(in) :: session
+  integer, intent(out) :: erhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_get_errhandler
+
+end interface
+
+interface 
+
 subroutine MPI_Session_get_info(session, info, ierror)
    implicit none
    integer, intent(in) :: session
    integer, intent(out) :: info
    integer, intent(out) :: ierror
 end subroutine MPI_Session_get_info
+
 end interface
 
 interface 
@@ -1438,6 +1471,16 @@ subroutine MPI_Session_finalize(session,ierror)
 end subroutine MPI_Session_finalize
 
 end interface  MPI_Session_finalize
+
+interface
+
+subroutine MPI_Session_set_errhandler(session, errhandler, ierror)
+  integer, intent(in) :: session
+  integer, intent(in) :: errhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_set_errhandler
+
+end interface
 
 interface
 

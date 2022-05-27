@@ -331,12 +331,16 @@ linked_files = \
         psend_init_f.c \
         psendrecv_f.c \
         psendrecv_replace_f.c \
+        psession_call_errhandler_f.c \
+        psession_create_errhandler_f.c \
+        psession_get_errhandler_f.c \
         psession_get_info_f.c \
         psession_get_nth_pset_f.c \
         psession_get_num_psets_f.c \
         psession_get_pset_info_f.c \
         psession_init_f.c \
         psession_finalize_f.c \
+        psession_set_errhandler_f.c \
         pssend_f.c \
         pssend_init_f.c \
         pstartall_f.c \
