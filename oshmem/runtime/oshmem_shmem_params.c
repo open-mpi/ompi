@@ -17,9 +17,10 @@
 #include "oshmem/constants.h"
 
 
-int oshmem_shmem_lock_recursive = 0;
-int oshmem_shmem_api_verbose = 0;
-int oshmem_preconnect_all = 0;
+int oshmem_shmem_lock_recursive   = 0;
+int oshmem_shmem_api_verbose      = 0;
+int oshmem_shmem_enable_mcs_locks = 1;
+int oshmem_preconnect_all         = 0;
 
 int oshmem_shmem_register_params(void)
 {
@@ -37,6 +38,19 @@ int oshmem_shmem_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &oshmem_shmem_lock_recursive);
+
+    (void) mca_base_var_register("oshmem",
+                                 "oshmem",
+                                 NULL,
+                                 "enable_mcs_lock",
+                                 "enable mcs locks",
+                                 MCA_BASE_VAR_TYPE_INT,
+                                 NULL,
+                                 1,
+                                 MCA_BASE_VAR_FLAG_SETTABLE,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &oshmem_shmem_enable_mcs_locks);
 
     (void) mca_base_var_register("oshmem",
                                  "oshmem",
