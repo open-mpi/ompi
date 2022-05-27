@@ -3667,6 +3667,38 @@ end subroutine MPI_Sendrecv_replace
 
 end interface
 
+interface
+
+subroutine MPI_Session_call_errhandler(session, errorcode, ierror)
+  integer, intent(in) :: session
+  integer, intent(in) :: errorcode
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_call_errhandler
+
+end interface
+
+
+interface
+
+subroutine MPI_Session_create_errhandler(function, errhandler, ierror)
+  external :: function
+  integer, intent(out) :: errhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_create_errhandler
+
+end interface
+
+interface
+
+subroutine MPI_Session_get_errhandler(session, erhandler, ierror)
+  integer, intent(in) :: session
+  integer, intent(out) :: erhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_get_errhandler
+
+end interface
+
+
 interface MPI_Session_get_info
 subroutine MPI_Session_get_info(session, info, ierror)
    integer, INTENT(IN) :: session
@@ -3720,6 +3752,16 @@ subroutine MPI_Session_finalize(session,ierror)
    integer, intent(inout) :: session
    integer, intent(OUT) :: ierror
 end subroutine MPI_Session_finalize
+
+end interface
+
+interface
+
+subroutine MPI_Session_set_errhandler(session, erhandler, ierror)
+  integer, intent(in) :: session
+  integer, intent(out) :: erhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_set_errhandler
 
 end interface
 

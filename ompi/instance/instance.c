@@ -85,10 +85,16 @@ static void ompi_instance_construct (ompi_instance_t *instance)
     instance->i_name[0] = '\0';
     instance->i_flags = 0;
     instance->i_keyhash = NULL;
+    OBJ_CONSTRUCT(&instance->s_lock, opal_mutex_t);
     instance->errhandler_type = OMPI_ERRHANDLER_TYPE_INSTANCE;
 }
 
-OBJ_CLASS_INSTANCE(ompi_instance_t, opal_infosubscriber_t, ompi_instance_construct, NULL);
+static void ompi_instance_destruct(ompi_instance_t *instance)
+{
+    OBJ_DESTRUCT(&instance->s_lock);
+}
+
+OBJ_CLASS_INSTANCE(ompi_instance_t, opal_infosubscriber_t, ompi_instance_construct, ompi_instance_destruct);
 
 /* NTH: frameworks needed by MPI */
 static mca_base_framework_t *ompi_framework_dependencies[] = {

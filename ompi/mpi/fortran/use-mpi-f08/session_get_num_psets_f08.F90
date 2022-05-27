@@ -5,9 +5,11 @@
 !                         All rights reserved.
 ! Copyright (c) 2018      Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
-! Copyright (c) 2019      Triad National Security, LLC. All rights
+! Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 !                         reserved.
 ! $COPYRIGHT$
+
+#include "mpi-f08-rename.h"
 
 subroutine MPI_Session_get_num_psets_f08(session, info, npset_names, ierror)
    use :: mpi_f08_types, only : MPI_Session, MPI_Info, MPI_INFO_NULL

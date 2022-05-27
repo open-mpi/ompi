@@ -27,6 +27,7 @@ struct ompi_group_t;
 
 struct ompi_instance_t {
     opal_infosubscriber_t  super;
+    opal_mutex_t           s_lock;
     int                    i_thread_level;
     char                   i_name[MPI_MAX_OBJECT_NAME];
     uint32_t               i_flags;

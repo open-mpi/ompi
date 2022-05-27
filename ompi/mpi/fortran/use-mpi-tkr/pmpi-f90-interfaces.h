@@ -123,12 +123,16 @@
 #define MPI_Register_datarep PMPI_Register_datarep
 #define MPI_Request_free PMPI_Request_free
 #define MPI_Request_get_status PMPI_Request_get_status
+#define MPI_Session_call_errhandler PMPI_Session_call_errhandler
+#define MPI_Session_create_errhandler PMPI_Session_create_errhandler
+#define MPI_Session_get_errhandler PMPI_Session_get_errhandler
 #define MPI_Session_get_info PMPI_Session_get_info
 #define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
 #define MPI_Session_get_num_psets PMPI_Session_get_num_psets
 #define MPI_Session_get_pset_info PMPI_Session_get_pset_info
 #define MPI_Session_init PMPI_Session_init
 #define MPI_Session_finalize PMPI_Session_finalize
+#define MPI_Session_set_errhandler PMPI_Session_set_errhandler
 #define MPI_Start PMPI_Start
 #define MPI_Startall PMPI_Startall
 #define MPI_Status_f2f08 PMPI_Status_f2f08
