@@ -144,13 +144,13 @@ comm_method_string(MPI_Comm comm, int rank, int *comm_mode) {
             strcat(string, ";");
             strcat(string, transports->entries[i].device_name);
         }
+        free(transports->entries);
+        free(transports);
     }
     if (comm_mode) {
         // UCX is used for PML mode only
         *comm_mode = MODE_IS_PML;
     }
-    free(transports->entries);
-    free(transports);
     return string;
 }
 
