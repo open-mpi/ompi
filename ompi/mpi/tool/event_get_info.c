@@ -98,8 +98,6 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
                     }
                 }
 
-                assert (NULL != ompi_datatype);
-
                 array_of_datatypes[i] = ompi_datatype;
             }
         }
