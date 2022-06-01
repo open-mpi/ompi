@@ -36,16 +36,16 @@ int MPI_T_event_handle_alloc (int event_index, void *obj_handle, MPI_Info info,
 
     ompi_mpit_lock ();
 
-    /* Find the performance variable. mca_base_event_get() handles the
+    /* Find the event. mca_base_event_get_by_index() handles the
        bounds checking. */
     ret = mca_base_event_get_by_index (event_index, (mca_base_event_t **) &event);
     if (OMPI_SUCCESS != ret) {
         goto fn_fail;
     }
 
-    /* Check the variable binding is something sane */
+    /* Check the event binding is something sane */
     if (event->event_bind > MPI_T_BIND_MPI_INFO || event->event_bind < MPI_T_BIND_NO_OBJECT) {
-        /* This variable specified an invalid binding (not an MPI object). */
+        /* This event specified an invalid binding (not an MPI object). */
         ret = MPI_T_ERR_INVALID_INDEX;
         goto fn_fail;
     }
