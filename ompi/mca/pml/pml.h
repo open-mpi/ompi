@@ -99,6 +99,29 @@ typedef struct mca_pml_base_module_2_1_0_t * (*mca_pml_base_component_init_fn_t)
     bool enable_progress_threads,
     bool enable_mpi_threads);
 
+/**
+ * @brief A transport name and device name pair used by an endpoint.
+ * @ref mca_pml.pml_get_transports
+ */
+typedef struct mca_pml_transport_entry_t {
+    // The name of a transport layer used by this endpoint.
+    const char *transport_name;
+    // The name of the device used with this transport by this endpoint.
+    const char *device_name;
+} mca_pml_transport_entry_t;
+
+/**
+ * @brief  Structure containing an array of transport layers and device names
+ * used by a PML.
+ * @ref mca_pml.pml_get_transports
+ */
+typedef struct mca_pml_transports_t {
+    // Number of transport/device name pairs.
+    unsigned int count;
+    // Pointer to array of transport/device name pairs used by this endpoint.
+    mca_pml_transport_entry_t *entries;
+} mca_pml_transports_t;
+
 typedef int (*mca_pml_base_component_finalize_fn_t)(void);
 
 /**
@@ -167,6 +190,16 @@ typedef int (*mca_pml_base_module_enable_fn_t)(
  *                   to progress.
 */
 typedef int (*mca_pml_base_module_progress_fn_t)(void);
+
+/**
+ * Get the set of transports and devices used to communicate with specified rank
+ *
+ * @param comm Communicator
+ * @param rank Task rank of other task
+ * @return Pointer to structure containing set of transports and device names or NULL
+ */
+typedef mca_pml_transports_t *(*mca_pml_base_module_get_transports_t)(struct ompi_communicator_t *comm,
+                                                                      int rank);
 
 /**
  * MPI Interface Functions
@@ -533,6 +566,8 @@ struct mca_pml_base_module_2_1_0_t {
     uint32_t                              pml_max_contextid;
     int                                   pml_max_tag;
     int                                   pml_flags;
+
+    mca_pml_base_module_get_transports_t pml_get_transports;
 };
 typedef struct mca_pml_base_module_2_1_0_t mca_pml_base_module_2_1_0_t;
 typedef mca_pml_base_module_2_1_0_t mca_pml_base_module_t;
