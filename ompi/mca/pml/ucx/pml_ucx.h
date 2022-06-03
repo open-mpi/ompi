@@ -57,7 +57,6 @@ struct mca_pml_ucx_module {
     mca_pml_ucx_freelist_t    convs;
 
     int                       priority;
-    bool                      cuda_initialized;
     bool                      request_leak_check;
     uint32_t                  op_attr_nonblocking;
 };
