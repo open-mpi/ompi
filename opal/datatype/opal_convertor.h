@@ -50,7 +50,6 @@ BEGIN_C_DECLS
 #define CONVERTOR_NO_OP                  0x00100000
 #define CONVERTOR_WITH_CHECKSUM          0x00200000
 #define CONVERTOR_ACCELERATOR            0x00400000
-#define CONVERTOR_ROCM                   0x00400000 //same as CUDA on purpose
 #define CONVERTOR_ACCELERATOR_ASYNC      0x00800000
 #define CONVERTOR_TYPE_MASK              0x10FF0000
 #define CONVERTOR_STATE_START            0x01000000

@@ -25,11 +25,6 @@
 if OPAL_cuda_support
 LIBOPAL_GPU_SUBDIR = cuda
 LIBOPAL_GPU_LA = cuda/libopalcuda.la
-else
-if OPAL_rocm_support
-LIBOPAL_GPU_SUBDIR = rocm
-LIBOPAL_GPU_LA = rocm/libopalrocm.la
-endif
 endif
 
 
@@ -47,7 +42,6 @@ SUBDIRS = \
 DIST_SUBDIRS = \
 	include \
 	cuda \
-	rocm \
         datatype \
         etc \
 	util \

@@ -103,8 +103,7 @@ static inline void unpack_predefined_data(opal_convertor_t *CONVERTOR, const dt_
     *(COUNT) -= cando_count;
 
     if (_elem->blocklen < 9) {
-        if (!(CONVERTOR->flags & CONVERTOR_ACCELERATOR) &&
-            !(CONVERTOR->flags & CONVERTOR_ROCM)
+        if (!(CONVERTOR->flags & CONVERTOR_ACCELERATOR)
             && OPAL_LIKELY(OPAL_SUCCESS
                            == opal_datatype_unpack_predefined_element(&_packed, &_memory,
                                                                       cando_count, _elem))) {

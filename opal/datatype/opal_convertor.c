@@ -70,9 +70,6 @@ static void opal_convertor_construct(opal_convertor_t *convertor)
     convertor->remoteArch = opal_local_arch;
     convertor->flags = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
     convertor->cbmemcpy = &opal_convertor_accelerator_memcpy;
-#if OPAL_ROCM_SUPPORT
-    convertor->cbmemcpy = &mca_common_rocm_memcpy;
-#endif
 }
 
 static void opal_convertor_destruct(opal_convertor_t *convertor)
@@ -579,11 +576,6 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
     if (!(convertor->flags & CONVERTOR_SKIP_ACCELERATOR_INIT)) {
         opal_convertor_accelerator_init(convertor, pUserBuf);
     }
-#if OPAL_ROCM_SUPPORT
-    if (!(convertor->flags & CONVERTOR_SKIP_ACCELERATOR_INIT)) {
-        mca_common_rocm_convertor_init(convertor, pUserBuf);
-    }
-#endif
 
     assert(!(convertor->flags & CONVERTOR_SEND));
     OPAL_CONVERTOR_PREPARE(convertor, datatype, count, pUserBuf);
@@ -624,11 +616,6 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
     if (!(convertor->flags & CONVERTOR_SKIP_ACCELERATOR_INIT)) {
         opal_convertor_accelerator_init(convertor, pUserBuf);
     }
-#if OPAL_ROCM_SUPPORT
-    if (!(convertor->flags & CONVERTOR_SKIP_ACCELERATOR_INIT)) {
-        mca_common_rocm_convertor_init(convertor, pUserBuf);
-    }
-#endif
 
     OPAL_CONVERTOR_PREPARE(convertor, datatype, count, pUserBuf);
 
