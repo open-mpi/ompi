@@ -989,19 +989,6 @@ opal_show_title "System-specific tests"
 
 OPAL_CHECK_CUDA
 ##################################
-# ROCm support
-##################################
-OPAL_CHECK_ROCM([opal_rocm],
-	        [opal_rocm_happy="yes"],
-	        [opal_rocm_happy="no"])
-OPAL_SUMMARY_ADD([Miscellaneous], [ROCm support], [], [$opal_rocm_happy])
-
-AS_IF([test "$OPAL_CUDA_SUPPORT" = "1" && test "$OPAL_ROCM_SUPPORT" = "1"],
-          [AC_MSG_WARN([Cannot support both CUDA and ROCm.])
-           AC_MSG_WARN([You must reconfigure Open MPI choosing either CUDA or ROCm .])
-           AC_MSG_ERROR([Cannot continue.])])
-
-##################################
 OPAL_CHECK_OS_FLAVORS
 
 

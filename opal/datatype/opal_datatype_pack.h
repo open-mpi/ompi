@@ -106,8 +106,7 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
     *(COUNT) -= cando_count;
 
     if (_elem->blocklen < 9) {
-        if (!(CONVERTOR->flags & CONVERTOR_ACCELERATOR) &&
-            !(CONVERTOR->flags & CONVERTOR_ROCM)
+        if (!(CONVERTOR->flags & CONVERTOR_ACCELERATOR)
             && OPAL_LIKELY(
                 OPAL_SUCCESS
                 == opal_datatype_pack_predefined_element(&_memory, &_packed, cando_count, _elem))) {
