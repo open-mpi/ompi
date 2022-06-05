@@ -11,6 +11,7 @@ categories of Open MPI-specific features.
 .. toctree::
    :maxdepth: 1
 
+   profiling
    extensions
    ulfm
    java
