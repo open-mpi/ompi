@@ -9,7 +9,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -72,7 +72,7 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
     sendcount = recvcount;
   } else if (!persistent) { /* for persistent, the copy must be scheduled */
     /* copy my data to receive buffer */
-    rbuf = (char *) recvbuf + rank * recvcount * rcvext;
+    rbuf = (char *) recvbuf + (MPI_Aint)rcvext * rank * recvcount;
     res = NBC_Copy (sendbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
@@ -98,7 +98,7 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    sbuf = (char *)recvbuf + rank * recvcount * rcvext;
+    sbuf = (char *)recvbuf + (MPI_Aint) rcvext * rank * recvcount;
 
     if (persistent && !inplace) { /* for nonblocking, data has been copied already */
       /* copy my data to receive buffer (= send buffer of NBC_Sched_send) */
@@ -114,7 +114,7 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
     for(int r = 0 ; r < p ; ++r) {
       if(r != rank) {
         /* recv from rank r */
-        rbuf = (char *)recvbuf + r * recvcount * rcvext;
+        rbuf = (char *)recvbuf + (MPI_Aint) rcvext * r * recvcount;
         res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, r, schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           OBJ_RELEASE(schedule);
@@ -221,7 +221,7 @@ static int nbc_allgather_inter_init(const void* sendbuf, int sendcount, MPI_Data
   /* do rsize - 1 rounds */
   for (int r = 0 ; r < rsize ; ++r) {
     /* recv from rank r */
-    rbuf = (char *) recvbuf + r * recvcount * rcvext;
+    rbuf = (char *) recvbuf + (MPI_Aint) rcvext * r * recvcount;
     res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, r, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       OBJ_RELEASE(schedule);
