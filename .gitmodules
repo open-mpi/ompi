@@ -1,8 +1,8 @@
 [submodule "prrte"]
 	path = 3rd-party/prrte
 	url = ../../openpmix/prrte
-	branch = v2.0
+	branch = v2.1
 [submodule "openpmix"]
 	path = 3rd-party/openpmix
 	url = ../../openpmix/openpmix.git
-	branch = v4.1
+	branch = v4.2
