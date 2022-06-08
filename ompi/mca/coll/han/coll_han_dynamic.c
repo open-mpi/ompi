@@ -632,7 +632,7 @@ mca_coll_han_allreduce_intra_dynamic(const void *sbuf,
          * They points to the collective to use, according to the dynamic rules
          * Selector's job is done, call the collective
          */
-        allreduce = mca_coll_han_allreduce_intra;
+        allreduce = sub_module->coll_allreduce;
     }
     return allreduce(sbuf, rbuf, count, dtype,
                      op, comm, sub_module);

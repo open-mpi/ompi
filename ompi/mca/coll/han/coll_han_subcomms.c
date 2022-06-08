@@ -116,7 +116,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     /*
      * This sub-communicator contains the ranks that share my node.
      */
-    opal_info_set(&comm_info, "ompi_comm_coll_preference", "^han");
+    opal_info_set(&comm_info, "ompi_comm_coll_preference", "han");
     opal_info_set(&comm_info, "ompi_comm_coll_han_topo_level", "INTRA_NODE");
     ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
                          &comm_info, low_comm);
