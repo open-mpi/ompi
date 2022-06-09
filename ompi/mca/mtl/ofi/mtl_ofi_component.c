@@ -653,7 +653,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     /** If Open MPI is built with CUDA, request device transfer
      *  capabilities */
     hints->caps |= FI_HMEM;
-    hints->domain_attr->mr_mode |= FI_MR_HMEM;
+    hints->domain_attr->mr_mode |= FI_MR_HMEM | FI_MR_ALLOCATED;
     /**
      * Note: API version 1.9 is the first version that supports FI_HMEM
      */
