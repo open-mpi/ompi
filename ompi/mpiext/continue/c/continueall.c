@@ -38,6 +38,7 @@ int MPIX_Continueall(
     MPI_Request        requests[],
     MPIX_Continue_cb_function *cont_cb,
     void              *cont_data,
+    int                flags,
     MPI_Status         statuses[],
     MPI_Request        cont_req)
 {
@@ -70,7 +71,7 @@ int MPIX_Continueall(
     }
 
     rc = ompi_continue_attach(cont_req, count, requests, cont_cb,
-                              cont_data, statuses);
+                              cont_data, flags, statuses);
 
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

@@ -37,6 +37,7 @@ int MPIX_Continue(
     MPI_Request       *request,
     MPIX_Continue_cb_function *cont_cb,
     void              *cb_data,
+    int                flags,
     MPI_Status        *status,
     MPI_Request        cont_req)
 {
@@ -58,7 +59,7 @@ int MPIX_Continue(
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    rc = ompi_continue_attach(cont_req, 1, request, cont_cb, cb_data,
+    rc = ompi_continue_attach(cont_req, 1, request, cont_cb, cb_data, flags,
                               MPI_STATUS_IGNORE == status ? MPI_STATUSES_IGNORE : status);
 
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
