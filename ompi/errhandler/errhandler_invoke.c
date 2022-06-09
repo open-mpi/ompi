@@ -200,9 +200,9 @@ int ompi_errhandler_request_invoke(int count,
         break;
     default:
         /* Covers REQUEST_GEN, REQUEST_NULL, REQUEST_MAX */
-        return ompi_errhandler_invoke(MPI_COMM_WORLD->error_handler,
-                                      MPI_COMM_WORLD,
-                                      MPI_COMM_WORLD->errhandler_type,
+        return ompi_errhandler_invoke(NULL,
+                                      NULL,
+                                      0,
                                       ec, message);
         break;
     }
