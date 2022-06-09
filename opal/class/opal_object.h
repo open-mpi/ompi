@@ -468,7 +468,7 @@ static inline void opal_obj_run_destructors(opal_object_t *object)
     assert(NULL != object->obj_class);
 
     cls_destruct = object->obj_class->cls_destruct_array;
-    while (NULL != *cls_destruct) {
+    while (NULL != cls_destruct) {
         (*cls_destruct)(object);
         cls_destruct++;
     }
