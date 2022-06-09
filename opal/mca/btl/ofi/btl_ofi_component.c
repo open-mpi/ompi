@@ -675,8 +675,10 @@ fail:
 
     /* if the contexts have not been initiated, num_contexts should
      * be zero and we skip this. */
-    for (int i=0; i < module->num_contexts; i++) {
-        mca_btl_ofi_context_finalize(&module->contexts[i], module->is_scalable_ep);
+    if (NULL != module->contexts) {
+        for (int i = 0; i < module->num_contexts; i++) {
+            mca_btl_ofi_context_finalize(&module->contexts[i], module->is_scalable_ep);
+        }
     }
     free(module->contexts);
 
