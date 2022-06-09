@@ -54,6 +54,24 @@ int ompi_continue_deregister_request_progress(struct ompi_request_t *cont_req);
 int ompi_continue_progress_request(struct ompi_request_t *cont_req);
 
 /**
+ * Wakeup all outstanding continuations and check for errors in the requests.
+ * Only supported if ULFM is enabled.
+ */
+int ompi_continue_global_wakeup(int status);
+
+/**
+ * Get the callback data for failed continuations. Count specifies the number of
+ * elements in `cb_data`. If `*count` is smaller than the actual number then
+ * count is updated to the actual number and the content of cb_data is not modified.
+ * Otherwise the callback data of failed continuations is put into cb_data
+ * and the count is updated to reflect the actual number of elements.
+ */
+int ompi_continue_get_failed(
+    MPI_Request cont_req,
+    int *count,
+    void **cb_data);
+
+/**
  * Attach a continuation to a set of operations represented by \c requests.
  * The \c statuses will be set before the \c cont_cb callback is invoked and
  * passed together with \c cont_data to the callback. Passing \c MPI_STATUSES_IGNORE
@@ -67,13 +85,14 @@ int ompi_continue_attach(
   struct ompi_request_t      *requests[],
   MPIX_Continue_cb_function  *cont_cb,
   void                       *cont_data,
+  int                         flags,
   ompi_status_public_t        statuses[]);
 
 
 /**
  * Allocate a new continuation request.
  */
-int ompi_continue_allocate_request(struct ompi_request_t **cont_req, ompi_info_t *info);
+int ompi_continue_allocate_request(struct ompi_request_t **cont_req, int max_poll, int flags, ompi_info_t *info);
 
 END_C_DECLS
 

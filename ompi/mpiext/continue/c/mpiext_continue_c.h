@@ -14,9 +14,15 @@
 
 #include <mpi.h>
 
-typedef void (MPIX_Continue_cb_function)(MPI_Status *statuses, void *user_data);
-OMPI_DECLSPEC int MPIX_Continue_init(MPI_Request *cont_req, MPI_Info info);
+#define MPIX_CONT_REQBUF_VOLATILE 1<<0
+/* the continuation is persistent (only valid with persistent requests) */
+#define MPIX_CONT_PERSISTENT    1<<1
+#define MPIX_CONT_POLL_ONLY     1<<2
+
+typedef void (MPIX_Continue_cb_function)(int rc, void *user_data);
+OMPI_DECLSPEC int MPIX_Continue_init(int max_poll, int flags, MPI_Request *cont_req, MPI_Info info);
 OMPI_DECLSPEC int MPIX_Continue(MPI_Request *request, MPIX_Continue_cb_function *cb, void *cb_data,
-                                MPI_Status *status, MPI_Request cont_req);
+                                int flags, MPI_Status *status, MPI_Request cont_req);
 OMPI_DECLSPEC int MPIX_Continueall(int count, MPI_Request request[], MPIX_Continue_cb_function *cb, void *cb_data,
-                                   MPI_Status status[], MPI_Request cont_req);
+                                   int flags, MPI_Status status[], MPI_Request cont_req);
+OMPI_DECLSPEC int MPIX_Continue_get_failed( MPI_Request cont_req, int *count, void **cb_data);
