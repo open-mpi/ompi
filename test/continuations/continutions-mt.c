@@ -30,7 +30,7 @@
 #include "mpi-ext.h"
 //#include "ompi/mpiext/continue/c/mpiext_continue_c.h"
 
-#define OMPI_HAVE_MPI_EXT_CONTINUE
+//#define OMPI_HAVE_MPI_EXT_CONTINUE
 
 #ifdef OMPI_HAVE_MPI_EXT_CONTINUE
 
@@ -45,15 +45,17 @@ static void* thread_recv(void* data) {
   return NULL;
 }
 
-static void complete_cnt_cb(MPI_Status *status, void *user_data) {
+static int complete_cnt_cb(int status, void *user_data) {
   assert(user_data != NULL);
+  assert(MPI_SUCCESS == status);
   _Atomic int *cb_cnt = (_Atomic int*)user_data;
   ++(*cb_cnt);
+  return MPI_SUCCESS;
 }
 
 int main(int argc, char *argv[])
 {
-  MPI_Request cont_req, op_req, reqs[2];
+  MPI_Request cont_req, reqs[2];
   _Atomic int cb_cnt;
   int val;
   int rank, size;
@@ -74,7 +76,7 @@ int main(int argc, char *argv[])
   sleep(2);
 
   /* initialize the continuation request */
-  MPIX_Continue_init(&cont_req, MPI_INFO_NULL);
+  MPIX_Continue_init(0, 0, &cont_req, MPI_INFO_NULL);
 
   /**
    * One send, one recv, one continuation
@@ -83,25 +85,24 @@ int main(int argc, char *argv[])
   MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[1]);
 
   cb_cnt = 0;
-  MPIX_Continueall(2, reqs, &complete_cnt_cb, &cb_cnt, MPI_STATUSES_IGNORE, cont_req);
-  assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
+  MPIX_Continueall(2, reqs, &complete_cnt_cb, &cb_cnt, 0, MPI_STATUSES_IGNORE, cont_req);
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
+  assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
   assert(cb_cnt == 1);
 
   /**
    * One send, one recv, two continuations
    */
   cb_cnt = 0;
-  MPI_Irecv(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &op_req);
-  MPIX_Continue(&op_req, &complete_cnt_cb, &cb_cnt, MPI_STATUS_IGNORE, cont_req);
-  assert(op_req == MPI_REQUEST_NULL);
+  MPI_Irecv(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[0]);
+  MPIX_Continue(&reqs[0], &complete_cnt_cb, &cb_cnt, 0, MPI_STATUS_IGNORE, cont_req);
 
-  MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &op_req);
-  MPIX_Continue(&op_req, &complete_cnt_cb, &cb_cnt, MPI_STATUS_IGNORE, cont_req);
-  assert(op_req == MPI_REQUEST_NULL);
+  MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[1]);
+  MPIX_Continue(&reqs[1], &complete_cnt_cb, &cb_cnt, 0, MPI_STATUS_IGNORE, cont_req);
 
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
   assert(cb_cnt == 2);
+  assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
 
   MPI_Request_free(&cont_req);
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
   MPI_Info_set(info, "mpi_continue_enqueue_complete", "true");
 
   /* initialize the continuation request */
-  MPIX_Continue_init(&cont_req, info);
+  MPIX_Continue_init(0, 0, &cont_req, info);
 
   MPI_Info_free(&info);
 
@@ -126,24 +127,23 @@ int main(int argc, char *argv[])
   MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[1]);
 
   cb_cnt = 0;
-  MPIX_Continueall(2, reqs, &complete_cnt_cb, &cb_cnt, MPI_STATUSES_IGNORE, cont_req);
-  assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
+  MPIX_Continueall(2, reqs, &complete_cnt_cb, &cb_cnt, 0, MPI_STATUSES_IGNORE, cont_req);
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
+  assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
   assert(cb_cnt == 1);
 
   /**
    * One send, one recv, two continuations
    */
   cb_cnt = 0;
-  MPI_Irecv(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &op_req);
-  MPIX_Continue(&op_req, &complete_cnt_cb, &cb_cnt, MPI_STATUS_IGNORE, cont_req);
-  assert(op_req == MPI_REQUEST_NULL);
+  MPI_Irecv(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[0]);
+  MPIX_Continue(&reqs[0], &complete_cnt_cb, &cb_cnt, 0, MPI_STATUS_IGNORE, cont_req);
 
-  MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &op_req);
-  MPIX_Continue(&op_req, &complete_cnt_cb, &cb_cnt, MPI_STATUS_IGNORE, cont_req);
-  assert(op_req == MPI_REQUEST_NULL);
+  MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[1]);
+  MPIX_Continue(&reqs[1], &complete_cnt_cb, &cb_cnt, 0, MPI_STATUS_IGNORE, cont_req);
 
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
+  assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
   assert(cb_cnt == 2);
 
   MPI_Request_free(&cont_req);
