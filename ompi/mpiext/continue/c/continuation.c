@@ -231,7 +231,7 @@ void ompi_continue_cont_release(ompi_continuation_t *cont)
  * Process a callback. Returns the callback object to the freelist.
  */
 static inline
-void ompi_continue_cont_invoke(ompi_continuation_t *cont)
+int ompi_continue_cont_invoke(ompi_continuation_t *cont)
 {
     ompi_cont_request_t *cont_req = cont->cont_req;
     assert(NULL != cont_req);
@@ -239,8 +239,11 @@ void ompi_continue_cont_invoke(ompi_continuation_t *cont)
 
     MPIX_Continue_cb_function *fn = cont->cont_cb;
     void *cont_data = cont->cont_data;
-    fn(MPI_SUCCESS, cont_data);
-    ompi_continue_cont_release(cont);
+    int rc = fn(MPI_SUCCESS, cont_data);
+    if (MPI_SUCCESS == rc) {
+        ompi_continue_cont_release(cont);
+    }
+    return rc;
 }
 
 /**
@@ -266,19 +269,33 @@ int ompi_continue_progress_n(const uint32_t max)
     if (tl_list->is_initialized) {
         ompi_cont_request_t *cont_req;
         OPAL_LIST_FOREACH(cont_req, &tl_list->list, ompi_cont_request_t) {
-            ompi_continuation_t *cb;
+            ompi_continuation_t *cont;
             if (opal_list_is_empty(cont_req->cont_complete_list)) continue;
             while (max > completed) {
                 if (using_threads) {
                     opal_atomic_lock(&cont_req->cont_lock);
-                    cb = (ompi_continuation_t *) opal_list_remove_first(cont_req->cont_complete_list);
+                    cont = (ompi_continuation_t *) opal_list_remove_first(cont_req->cont_complete_list);
                     opal_atomic_unlock(&cont_req->cont_lock);
                 } else {
-                    cb = (ompi_continuation_t *) opal_list_remove_first(cont_req->cont_complete_list);
+                    cont = (ompi_continuation_t *) opal_list_remove_first(cont_req->cont_complete_list);
                 }
-                if (NULL == cb) break;
+                if (NULL == cont) break;
 
-                ompi_continue_cont_invoke(cb);
+                int rc = ompi_continue_cont_invoke(cont);
+                if (MPI_SUCCESS != rc) {
+                    /* the continuation has failed, move it to the failed list and set the error
+                     * on the continuation request */
+                    if (using_threads) {
+                        opal_atomic_lock(&cont_req->cont_lock);
+                        opal_list_append(&cont_req->cont_failed_list, &cont->super.super);
+                        opal_atomic_unlock(&cont_req->cont_lock);
+                    } else {
+                        opal_list_append(&cont_req->cont_failed_list, &cont->super.super);
+                    }
+                    cont_req->super.req_status.MPI_ERROR = rc;
+                    ompi_request_complete(&cont_req->super, true);
+                    break; // stop processing here?
+                }
                 ++completed;
             }
             if (max <= completed) break;
@@ -288,16 +305,32 @@ int ompi_continue_progress_n(const uint32_t max)
     if (!opal_list_is_empty(&continuation_list)) {
         /* global progress */
         while (max > completed) {
-            ompi_continuation_t *cb;
+            ompi_continuation_t *cont;
             if (using_threads) {
                 opal_mutex_lock(&request_cont_lock);
-                cb = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
+                cont = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
                 opal_mutex_unlock(&request_cont_lock);
             } else {
-                cb = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
+                cont = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
             }
-            if (NULL == cb) break;
-            ompi_continue_cont_invoke(cb);
+            if (NULL == cont) break;
+            int rc = ompi_continue_cont_invoke(cont);
+
+            if (MPI_SUCCESS != rc) {
+                /* the continuation has failed, move it to the failed list and set the error
+                  * on the continuation request */
+                ompi_cont_request_t *cont_req = cont->cont_req;
+                if (using_threads) {
+                    opal_atomic_lock(&cont_req->cont_lock);
+                    opal_list_append(&cont_req->cont_failed_list, &cont->super.super);
+                    opal_atomic_unlock(&cont_req->cont_lock);
+                } else {
+                    opal_list_append(&cont_req->cont_failed_list, &cont->super.super);
+                }
+                cont_req->super.req_status.MPI_ERROR = rc;
+                ompi_request_complete(&cont_req->super, true);
+                break; // stop processing here?
+            }
             ++completed;
         }
     }
@@ -528,7 +561,7 @@ ompi_continuation_t *ompi_continue_cont_create(
     return cont;
 }
 
-static void handle_failed_cont(ompi_continuation_t *cont, bool have_cont_req_lock)
+static void handle_failed_cont(ompi_continuation_t *cont, int status, bool have_cont_req_lock)
 {
     ompi_cont_request_t *cont_req = cont->cont_req;
     if (!have_cont_req_lock) {
@@ -571,10 +604,15 @@ static void handle_failed_cont(ompi_continuation_t *cont, bool have_cont_req_loc
     opal_list_remove_item(&cont_req->cont_incomplete_list, &cont->super.super);
     opal_list_append(&cont_req->cont_failed_list, &cont->super.super);
     --cont_req->cont_num_active;
-    cont_req->super.req_status.MPI_ERROR = MPI_ERR_CONT;
+    cont_req->super.req_status.MPI_ERROR = status;
+
+    if (0 == cont_req->cont_num_active) {
+        opal_atomic_wmb();
+        ompi_request_complete(&cont_req->super, true);
+    }
 
     if (!have_cont_req_lock) {
-        opal_atomic_unlock(&cont->cont_req->cont_lock);
+        opal_atomic_unlock(&cont_req->cont_lock);
     }
 }
 
@@ -615,7 +653,7 @@ static int request_completion_cb(ompi_request_t *request)
         } else {
             /* wait for any thread in the failure handler to complete handling the requests */
             while (cont->cont_request_check) {}
-            /* release the request object and let the caller know */
+            /* we own the request so release it and let the caller know */
             ompi_request_free(&request);
             rc = 1;
         }
@@ -629,7 +667,7 @@ static int request_completion_cb(ompi_request_t *request)
 
     } else if (opal_atomic_compare_exchange_strong_32(&cont->cont_failed, &failed_tmp, 1)) {
         /* We're the first, go ahead and handle fault */
-        handle_failed_cont(cont, false);
+        handle_failed_cont(cont, request->req_status.MPI_ERROR, false);
     } else {
         /* someone else handles the fault, so just signal that we're done with the continuation object */
         OPAL_THREAD_ADD_FETCH32(&cont->cont_num_active, -1);
@@ -660,19 +698,14 @@ int ompi_continue_global_wakeup(int status) {
                     ompi_request_cont_data_t *req_cont_data;
                     req_cont_data = (ompi_request_cont_data_t *)request->req_complete_cb_data;
                     if (ompi_request_is_failed(request) && opal_atomic_compare_exchange_strong_32(&cont->cont_failed, &failed_tmp, 1)) {
-                        handle_failed_cont(cont, true);
+                        handle_failed_cont(cont, status, true);
                         break;
                     }
                 }
             } else if (opal_atomic_compare_exchange_strong_32(&cont->cont_failed, &failed_tmp, 1)) {
-                /* we don't have the requests but still need to move the failed continuation */
-                handle_failed_cont(cont, true);
+                /* we don't have the requests but still need to let the continuation request know */
+                handle_failed_cont(cont, status, true);
             }
-        }
-        if (cont_req->cont_num_active == 0) {
-            opal_atomic_wmb();
-            /* all continuations have failed or are complete so release the request */
-            ompi_request_complete(&cont_req->super, true);
         }
         opal_atomic_unlock(&cont_req->cont_lock);
     }
