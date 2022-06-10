@@ -42,6 +42,7 @@
 #include "opal/mca/threads/wait_sync.h"
 #include "ompi/constants.h"
 #include "ompi/runtime/params.h"
+#include "ompi/request/mpi_object.h"
 
 #if OMPI_HAVE_MPI_EXT_CONTINUE
 #include "ompi/mpiext/continue/c/continuation.h"
@@ -102,30 +103,6 @@ typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag
  * on the request it *MUST* return 1. It should return 0 otherwise.
  */
 typedef int (*ompi_request_complete_fn_t)(struct ompi_request_t* request);
-
-/**
- * Forward declaration
- */
-struct ompi_communicator_t;
-
-/**
- * Forward declaration
- */
-struct ompi_win_t;
-
-/**
- * Forward declaration
- */
-struct ompi_file_t;
-
-/**
- * Union for holding several different MPI pointer types on the request
- */
-typedef union ompi_mpi_object_t {
-    struct ompi_communicator_t *comm;
-    struct ompi_file_t *file;
-    struct ompi_win_t *win;
-} ompi_mpi_object_t;
 
 /**
  * Main top-level request struct definition
