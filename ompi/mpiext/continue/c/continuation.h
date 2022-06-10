@@ -18,6 +18,7 @@
 #include "ompi_config.h"
 #include "ompi/info/info.h"
 #include "ompi/request/request.h"
+#include "ompi/request/mpi_object.h"
 #include "mpi.h"
 #include "ompi/mpiext/continue/c/mpiext_continue_c.h"
 
@@ -93,6 +94,11 @@ int ompi_continue_attach(
  * Allocate a new continuation request.
  */
 int ompi_continue_allocate_request(struct ompi_request_t **cont_req, int max_poll, int flags, ompi_info_t *info);
+
+/**
+ * Query the object and object type attached to a failed continuation request.
+ */
+void ompi_continue_get_error_info(struct ompi_request_t *cont_req, ompi_mpi_object_t *mpi_object, int *mpi_object_type);
 
 END_C_DECLS
 
