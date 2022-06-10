@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -97,26 +97,12 @@ mca_coll_smdirect_component_t mca_coll_smdirect_component = {
     /* (default) control size (bytes) */
     4096,
 
-#if 0
-    /* (default) number of "in use" flags for each communicator's area
-       in the per-communicator shmem segment */
-    2,
-
-    /* (default) number of segments for each communicator in the
-       per-communicator shmem segment */
-    8,
-#endif // 0
-
     /* (default) fragment size */
     8192,
 
     /* (default) degree of tree for tree-based operations (must be <=
        control unit size) */
     4,
-
-    /* (default) number of processes in coll_smdirect_shared_mem_size
-       information variable */
-    //4,
 
     /* default values for non-MCA parameters */
     /* Not specifying values here gives us all 0's */

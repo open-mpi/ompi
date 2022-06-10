@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -65,17 +65,6 @@ BEGIN_C_DECLS
 
         /** MCA parameter: Length of a cache line or page (in bytes) */
         int sm_control_size;
-
-#if 0
-        /** MCA parameter: Number of "in use" flags in each
-            communicator's area in the data mpool */
-        int sm_comm_num_in_use_flags;
-
-        /** MCA parameter: Number of segments for each communicator in
-            the data mpool */
-        int sm_comm_num_segments;
-
-#endif // 0
 
         /** MCA parameter: Fragment size for data */
         int sm_fragment_size;
@@ -176,39 +165,6 @@ BEGIN_C_DECLS
         /* Operation count, i.e., which operation to execute */
         uint32_t mcb_operation_count;
 
-        // below is commented out, remove once we're sure we don't need it
-# if 0
-        /** Pointer to my barrier control pages (odd index pages are
-            "in", even index pages are "out") */
-        uint32_t *mcb_barrier_control_me;
-
-        /** Pointer to my parent's barrier control pages (will be NULL
-            for communicator rank 0; odd index pages are "in", even
-            index pages are "out") */
-        opal_atomic_uint32_t *mcb_barrier_control_parent;
-
-        /** Pointers to my childrens' barrier control pages (they're
-            contiguous in memory, so we only point to the base -- the
-            number of children is in my entry in the mcb_tree); will
-            be NULL if this process has no children (odd index pages
-            are "in", even index pages are "out") */
-        uint32_t *mcb_barrier_control_children;
-
-        /** Number of barriers that we have executed (i.e., which set
-            of barrier buffers to use). */
-        int mcb_barrier_count;
-
-        /** "In use" flags indicating which segments are available */
-        mca_coll_smdirect_in_use_flag_t *mcb_in_use_flags;
-
-        /** Array of indexes into the per-communicator shmem data
-            segment for control and data fragment passing (containing
-            pointers to each segments control and data areas). */
-        mca_coll_smdirect_data_index_t *mcb_data_index;
-
-        /** Operation number (i.e., which segment number to use) */
-        uint32_t mcb_operation_count;
-#endif // 0
         /** Array of graph nodes representing the tree used for
             communications */
         mca_coll_smdirect_tree_node_t *mcb_tree;
@@ -385,15 +341,6 @@ BEGIN_C_DECLS
         dtype_copy->opt_desc = dtype_copy->desc;
     }
 
-#if 0
-/**
- * Macro to setup flag usage
- */
-#define FLAG_SETUP(flag_num, flag, data) \
-    (flag) = (mca_coll_smdirect_in_use_flag_t*) \
-        (((char *) (data)->mcb_in_use_flags) + \
-        ((flag_num) * mca_coll_smdirect_component.sm_control_size))
-#endif // 0
 /**
  * Macro to wait for the in-use flag to become idle (used by the root)
  */

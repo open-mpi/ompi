@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -370,47 +370,6 @@ int ompi_coll_smdirect_lazy_enable(mca_coll_base_module_t *module,
         data->mcb_tree[i].mcstn_children =
             data->mcb_tree[i - 1].mcstn_children + c->sm_tree_degree;
     }
-
-#if 0
-    /* Pre-compute a tree for a given number of processes and degree.
-       We'll re-use this tree for all possible values of root (i.e.,
-       shift everyone's process to be the "0"/root in this tree. */
-    for (root = 0; root < size; ++root) {
-        parent = (root - 1) / mca_coll_smdirect_component.sm_tree_degree;
-        num_children = mca_coll_smdirect_component.sm_tree_degree;
-
-        /* Do we have children?  If so, how many? */
-
-        if ((root * num_children) + 1 >= size) {
-            /* Leaves */
-            min_child = -1;
-            num_children = 0;
-        } else {
-            /* Interior nodes */
-            int max_child;
-            min_child = root * num_children + 1;
-            max_child = root * num_children + num_children;
-            if (max_child >= size) {
-                max_child = size - 1;
-            }
-            num_children = max_child - min_child + 1;
-        }
-
-        /* Save the values */
-        data->mcb_tree[root].mcstn_id = root;
-        if (root == 0 && parent == 0) {
-            data->mcb_tree[root].mcstn_parent = NULL;
-        } else {
-            data->mcb_tree[root].mcstn_parent = &data->mcb_tree[parent];
-        }
-        data->mcb_tree[root].mcstn_num_children = num_children;
-        for (i = 0; i < c->sm_tree_degree; ++i) {
-            data->mcb_tree[root].mcstn_children[i] =
-                (i < num_children) ?
-                &data->mcb_tree[min_child + i] : NULL;
-        }
-    }
-#endif // 0
 
     /* allocate space for the maximum number of children we expect */
     data->peerdata = malloc(sizeof(data->peerdata[0])*mca_coll_smdirect_component.sm_tree_degree);

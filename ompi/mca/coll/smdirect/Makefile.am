@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
@@ -32,11 +32,11 @@ not_used_yet = \
         coll_smdirect_scan.c \
         coll_smdirect_exscan.c \
         coll_smdirect_scatter.c \
-        coll_smdirect_allreduce.c \
         coll_smdirect_scatterv.c
 
 sources = \
         coll_smdirect.h \
+        coll_smdirect_allreduce.c \
         coll_smdirect_barrier.c \
         coll_smdirect_bcast.c \
         coll_smdirect_component.c \
