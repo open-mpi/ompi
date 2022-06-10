@@ -714,12 +714,13 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         if (0 == local_rank) {
             /* unlink the shared memory backing file */
             opal_shmem_unlink (&module->seg_ds);
+
+            state_region->base = (intptr_t) module->segment_base;
             if (module->use_accelerated_btl) {
                 /* just go ahead and register the whole segment */
                 ret = ompi_osc_rdma_register(module, MCA_BTL_ENDPOINT_ANY, module->segment_base, total_size,
                                              MCA_BTL_REG_FLAG_ACCESS_ANY, &module->state_handle);
                 if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
-                    state_region->base = (intptr_t) module->segment_base;
                     if (module->state_handle) {
                         memcpy(state_region->btl_handle_data, module->state_handle,
                                module->accelerated_btl->btl_registration_handle_size);
