@@ -34,6 +34,9 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+#include "ompi/mpiext/continue/c/continuation.h"
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
 
 int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
                            int object_type, int err_code, const char *message)
@@ -173,6 +176,13 @@ int ompi_errhandler_request_invoke(int count,
     ec = ompi_errcode_get_mpi_code(requests[i]->req_status.MPI_ERROR);
     mpi_object = requests[i]->req_mpi_object;
     type = requests[i]->req_type;
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+    if (OMPI_REQUEST_CONT == type) {
+        /* take the mpi object stored in the continuation request */
+        ompi_continue_get_error_info(requests[i], &mpi_object, &type);
+    }
+#endif // OMPI_HAVE_MPI_EXT_CONTINUE
 
     /* Since errors on requests cause them to not be freed (until we
        can examine them here), go through and free all requests with
