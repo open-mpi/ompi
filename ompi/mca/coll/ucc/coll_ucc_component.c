@@ -49,7 +49,7 @@ mca_coll_ucc_component_t mca_coll_ucc_component = {
     0,                 /* ucc_verbose                 */
     0,                 /* ucc_enable                  */
     2,                 /* ucc_np                      */
-    "basic",           /* cls                         */
+    "",                /* cls                         */
     COLL_UCC_CTS_STR,  /* requested coll_types string */
     UCC_VERSION_STRING /* ucc version                 */
 };

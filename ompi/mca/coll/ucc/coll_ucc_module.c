@@ -234,10 +234,12 @@ static int mca_coll_ucc_init_ctx() {
         UCC_ERROR("UCC lib config read failed");
         return OMPI_ERROR;
     }
-    if (UCC_OK != ucc_lib_config_modify(lib_config, "CLS", cm->cls)) {
-        ucc_lib_config_release(lib_config);
-        UCC_ERROR("failed to modify UCC lib config to set CLS");
-        return OMPI_ERROR;
+    if (strlen(cm->cls) > 0) {
+        if (UCC_OK != ucc_lib_config_modify(lib_config, "CLS", cm->cls)) {
+            ucc_lib_config_release(lib_config);
+            UCC_ERROR("failed to modify UCC lib config to set CLS");
+            return OMPI_ERROR;
+        }
     }
 
     if (UCC_OK != ucc_init(&lib_params, lib_config, &cm->ucc_lib)) {
