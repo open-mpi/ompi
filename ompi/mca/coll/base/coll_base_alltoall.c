@@ -17,6 +17,7 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2022      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -222,8 +223,8 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    int i, k, line = -1, rank, size, err = 0;
-    int sendto, recvfrom, distance, *displs = NULL, *blen = NULL;
+    int i, line = -1, rank, size, err = 0;
+    int sendto, recvfrom, distance, *displs = NULL;
     char *tmpbuf = NULL, *tmpbuf_free = NULL;
     ptrdiff_t sext, rext, span, gap = 0;
     struct ompi_datatype_t *new_ddt;
@@ -245,12 +246,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     err = ompi_datatype_type_extent (rdtype, &rext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
-    span = opal_datatype_span(&sdtype->super, (int64_t)size * scount, &gap);
-
-    displs = (int *) malloc(size * sizeof(int));
-    if (displs == NULL) { line = __LINE__; err = -1; goto err_hndl; }
-    blen = (int *) malloc(size * sizeof(int));
-    if (blen == NULL) { line = __LINE__; err = -1; goto err_hndl; }
+    span = opal_datatype_span(&rdtype->super, (int64_t)size * rcount, &gap);
 
     /* tmp buffer allocation for message data */
     tmpbuf_free = (char *)malloc(span);
@@ -258,18 +254,23 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     tmpbuf = tmpbuf_free - gap;
 
     /* Step 1 - local rotation - shift up by rank */
-    err = ompi_datatype_copy_content_same_ddt (sdtype,
-                                               (int32_t) ((ptrdiff_t)(size - rank) * (ptrdiff_t)scount),
-                                               tmpbuf,
-                                               ((char*) sbuf) + (ptrdiff_t)rank * (ptrdiff_t)scount * sext);
+    err = ompi_datatype_sndrcv (sbuf + ((ptrdiff_t) rank * scount * sext),
+                                (int32_t) (size - rank) * scount,
+                                sdtype,
+                                tmpbuf,
+                                (int32_t) (size - rank) * rcount,
+                                rdtype);
     if (err<0) {
         line = __LINE__; err = -1; goto err_hndl;
     }
 
     if (rank != 0) {
-        err = ompi_datatype_copy_content_same_ddt (sdtype, (ptrdiff_t)rank * (ptrdiff_t)scount,
-                                                   tmpbuf + (ptrdiff_t)(size - rank) * (ptrdiff_t)scount* sext,
-                                                   (char*) sbuf);
+        err = ompi_datatype_sndrcv (sbuf,
+                                    (int32_t) rank * scount,
+                                    sdtype,
+                                    tmpbuf + ((ptrdiff_t) (size - rank) * rcount * rext),
+                                    (int32_t) rank * rcount,
+                                    rdtype);
         if (err<0) {
             line = __LINE__; err = -1; goto err_hndl;
         }
@@ -280,19 +281,19 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
 
         sendto = (rank + distance) % size;
         recvfrom = (rank - distance + size) % size;
-        k = 0;
 
-        /* create indexed datatype */
-        for (i = 1; i < size; i++) {
-            if (( i & distance) == distance) {
-                displs[k] = (ptrdiff_t)i * (ptrdiff_t)scount;
-                blen[k] = scount;
-                k++;
+        new_ddt = ompi_datatype_create((1 + size/distance) * (2 + rdtype->super.desc.used));
+
+        /* Create datatype describing data sent/received */
+        for (i = distance; i < size; i += 2*distance) {
+            int nblocks = distance;
+            if (i + distance >= size) {
+                nblocks = size - i;
             }
+            ompi_datatype_add(new_ddt, rdtype, rcount * nblocks,
+                              i * rcount * rext, rext);
         }
-        /* Set indexes and displacements */
-        err = ompi_datatype_create_indexed(k, blen, displs, sdtype, &new_ddt);
-        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+
         /* Commit the new datatype */
         err = ompi_datatype_commit(&new_ddt);
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
@@ -324,9 +325,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     }
 
     /* Step 4 - clean up */
-    if (tmpbuf != NULL) free(tmpbuf_free);
-    if (displs != NULL) free(displs);
-    if (blen != NULL) free(blen);
+    if (tmpbuf_free != NULL) free(tmpbuf_free);
     return OMPI_SUCCESS;
 
  err_hndl:
@@ -334,9 +333,8 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
                  rank));
     (void)line;  // silence compiler warning
-    if (tmpbuf != NULL) free(tmpbuf_free);
+    if (tmpbuf_free != NULL) free(tmpbuf_free);
     if (displs != NULL) free(displs);
-    if (blen != NULL) free(blen);
     return err;
 }
 
