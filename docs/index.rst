@@ -64,7 +64,6 @@ Table of contents
    :maxdepth: 2
    :numbered:
 
-   to-do
    quickstart
    getting-help
    release-notes/index
