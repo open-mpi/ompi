@@ -15,13 +15,22 @@
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/util/oshmem_util.h"
+#include "opal/util/minmax.h"
 
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <pthread.h>
 
-struct map_segment_desc {
+static int _check_perms(const char *perm);
+static int _check_address(void *start, void **end);
+static int _check_pathname(uint64_t inode, const char *pathname);
+
+int mca_memheap_base_static_init(mca_memheap_map_t *map)
+{
+    /* read and parse segments from /proc/self/maps */
+    int ret = OSHMEM_SUCCESS;
+    uint64_t total_mem = 0;
     void* start;
     void* end;
     char perms[8];
@@ -29,56 +38,80 @@ struct map_segment_desc {
     char dev[8];
     uint64_t inode;
     char pathname[MAXPATHLEN];
-};
-
-typedef struct memheap_static_context {
-    struct {
-        void* start;
-        void* end;
-    } mem_segs[MCA_MEMHEAP_MAX_SEGMENTS];
-    int n_segments;
-} memheap_static_context_t;
-
-static memheap_static_context_t memheap_context;
-
-static int _load_segments(void);
-static int _check_perms(struct map_segment_desc *seg);
-static int _check_address(struct map_segment_desc *seg);
-static int _check_pathname(struct map_segment_desc *seg);
-
-int mca_memheap_base_static_init(mca_memheap_map_t *map)
-{
-    /* read and parse segments from /proc/self/maps */
-    int ret = OSHMEM_SUCCESS;
+    FILE *fp;
+    char line[1024];
+    map_segment_t *s;
 
     assert(map);
     assert(HEAP_SEG_INDEX < map->n_segments);
 
-    ret = _load_segments();
-
-    if (OSHMEM_SUCCESS == ret) {
-        int i;
-        size_t total_mem;
-
-        for (i = 0, total_mem = 0; i < memheap_context.n_segments; i++) {
-            map_segment_t *s = &map->mem_segs[map->n_segments];
-
-            memset(s, 0, sizeof(*s));
-            MAP_SEGMENT_RESET_FLAGS(s);
-            s->seg_id = MAP_SEGMENT_SHM_INVALID;
-            s->super.va_base = memheap_context.mem_segs[i].start;
-            s->super.va_end  = memheap_context.mem_segs[i].end;
-            s->seg_size = ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
-            s->type = MAP_SEGMENT_STATIC;
-            map->n_segments++;
-
-            total_mem += ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
-        }
-        MEMHEAP_VERBOSE(1,
-                        "Memheap static memory: %llu byte(s), %d segments",
-                        (unsigned long long)total_mem, map->n_segments);
+    /* FIXME!!! Linux specific code */
+    fp = fopen("/proc/self/maps", "r");
+    if (NULL == fp) {
+        MEMHEAP_ERROR("Failed to open /proc/self/maps");
+        return OSHMEM_ERROR;
     }
 
+    while (NULL != fgets(line, sizeof(line), fp)) {
+        if (3 > sscanf(line,
+               "%llx-%llx %s %llx %s %llx %s",
+               (unsigned long long *) &start,
+               (unsigned long long *) &end,
+               perms,
+               (unsigned long long *) &offset,
+               dev,
+               (unsigned long long *) &inode,
+               pathname)) {
+            MEMHEAP_ERROR("Failed to sscanf /proc/self/maps output %s", line);
+            ret = OSHMEM_ERROR;
+            goto out;
+        }
+
+        if (OSHMEM_ERROR == _check_address(start, &end))
+            continue;
+
+        if (OSHMEM_ERROR == _check_pathname(inode, pathname))
+            continue;
+
+        if (OSHMEM_ERROR == _check_perms(perms))
+            continue;
+
+        MEMHEAP_VERBOSE(5, "add: %s", line);
+
+        if ((map->n_segments > 0) &&
+            (start == map->mem_segs[map->n_segments - 1].super.va_end)) {
+            s = &map->mem_segs[map->n_segments - 1];
+            MEMHEAP_VERBOSE(5, "Coalescing segment");
+            s->super.va_end = end;
+            s->seg_size = ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
+            continue;
+        }
+
+        s = mca_memheap_base_allocate_segment(map);
+        if (NULL == s) {
+            MEMHEAP_ERROR("failed to allocate segment");
+            ret = OSHMEM_ERR_OUT_OF_RESOURCE;
+            goto out;
+        }
+
+        memset(s, 0, sizeof(*s));
+        MAP_SEGMENT_RESET_FLAGS(s);
+        s->seg_id        = MAP_SEGMENT_SHM_INVALID;
+        s->super.va_base = start;
+        s->super.va_end  = end;
+        s->seg_size      = ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
+        s->type          = MAP_SEGMENT_STATIC;
+        map->n_segments++;
+
+        total_mem += ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
+    }
+
+    MEMHEAP_VERBOSE(1,
+                    "Memheap static memory: %llu byte(s), %d segments",
+                    total_mem, map->n_segments);
+
+out:
+    fclose(fp);
     return ret;
 }
 
@@ -87,20 +120,20 @@ void mca_memheap_base_static_exit(mca_memheap_map_t *map)
     assert(map);
 }
 
-static int _check_perms(struct map_segment_desc *seg)
+static int _check_perms(const char *perms)
 {
-    if (!strcmp(seg->perms, "rw-p") || !strcmp(seg->perms, "rwxp"))
+    if (!strcmp(perms, "rw-p") || !strcmp(perms, "rwxp"))
         return OSHMEM_SUCCESS;
 
     return OSHMEM_ERROR;
 }
 
-static int _check_address(struct map_segment_desc *seg)
+static int _check_address(void *start, void **end)
 {
     /* FIXME Linux specific code */
 #ifdef __linux__
     extern unsigned _end;
-    void* data_end = &_end;
+    uintptr_t data_end = (uintptr_t)&_end;
 
     /**
      * SGI shmem only supports globals&static in main program.
@@ -111,24 +144,24 @@ static int _check_address(struct map_segment_desc *seg)
      * FIXME: make sure we do not register symmetric heap twice
      * if we decide to allow shared objects
      */
-    if ((uintptr_t)seg->start > (uintptr_t)data_end) {
+    if ((uintptr_t)start > data_end) {
         MEMHEAP_VERBOSE(100,
                         "skip segment: data _end < segment start (%p < %p)",
-                        data_end, seg->start);
+                        data_end, start);
         return OSHMEM_ERROR;
     }
 
-    if ((uintptr_t)seg->end > (uintptr_t)data_end) {
+    if ((uintptr_t)*end > data_end) {
         MEMHEAP_VERBOSE(100,
                         "adjust segment: data _end < segment end (%p < %p",
-                        data_end, seg->end);
-         seg->end = data_end;
+                        data_end, *end);
+         *end = (void*)data_end;
     }
 #endif
     return OSHMEM_SUCCESS;
 }
 
-static int _check_pathname(struct map_segment_desc *seg)
+static int _check_pathname(uint64_t inode, const char *pathname)
 {
     static const char *proc_self_exe = "/proc/self/exe";
     static int warned = 0;
@@ -136,7 +169,7 @@ static int _check_pathname(struct map_segment_desc *seg)
     char module_path[PATH_MAX];
     char *path;
 
-    if (0 == seg->inode) {
+    if (0 == inode) {
         /* segment is not mapped to file, allow sharing it */
         return OSHMEM_SUCCESS;
     }
@@ -153,7 +186,7 @@ static int _check_pathname(struct map_segment_desc *seg)
     }
 
     /* for file-mapped segments allow segments from start process only */
-    path = realpath(seg->pathname, module_path);
+    path = realpath(pathname, module_path);
     if (NULL == path) {
         return OSHMEM_ERROR;
     }
@@ -205,66 +238,3 @@ static int _check_pathname(struct map_segment_desc *seg)
     return OSHMEM_SUCCESS;
 }
 
-static int _load_segments(void)
-{
-    FILE *fp;
-    char line[1024];
-    struct map_segment_desc seg;
-
-    memheap_context.n_segments = 0;
-    /* FIXME!!! Linux specific code */
-    fp = fopen("/proc/self/maps", "r");
-    if (NULL == fp) {
-        MEMHEAP_ERROR("Failed to open /proc/self/maps");
-        return OSHMEM_ERROR;
-    }
-
-    while (NULL != fgets(line, sizeof(line), fp)) {
-        memset(&seg, 0, sizeof(seg));
-        if (3 > sscanf(line,
-               "%llx-%llx %s %llx %s %llx %s",
-               (unsigned long long *) &seg.start,
-               (unsigned long long *) &seg.end,
-               seg.perms,
-               (unsigned long long *) &seg.offset,
-               seg.dev,
-               (unsigned long long *) &seg.inode,
-               seg.pathname)) {
-            MEMHEAP_ERROR("Failed to sscanf /proc/self/maps output %s", line);
-            fclose(fp);
-            return OSHMEM_ERROR;
-        }
-
-        if (OSHMEM_ERROR == _check_address(&seg))
-            continue;
-
-        if (OSHMEM_ERROR == _check_pathname(&seg))
-            continue;
-
-        if (OSHMEM_ERROR == _check_perms(&seg))
-            continue;
-
-        MEMHEAP_VERBOSE(5, "add: %s", line);
-        if (MCA_MEMHEAP_MAX_SEGMENTS <= memheap_context.n_segments) {
-            MEMHEAP_ERROR("too many segments (max = %d): skip %s",
-                          MCA_MEMHEAP_MAX_SEGMENTS, line);
-            continue;
-        }
-        if (memheap_context.n_segments > 0
-                && seg.start
-                        == memheap_context.mem_segs[memheap_context.n_segments
-                                - 1].end) {
-            MEMHEAP_VERBOSE(5, "Coalescing segment");
-            memheap_context.mem_segs[memheap_context.n_segments - 1].end =
-                    seg.end;
-        } else {
-            memheap_context.mem_segs[memheap_context.n_segments].start =
-                    seg.start;
-            memheap_context.mem_segs[memheap_context.n_segments].end = seg.end;
-            memheap_context.n_segments++;
-        }
-    }
-
-    fclose(fp);
-    return OSHMEM_SUCCESS;
-}
