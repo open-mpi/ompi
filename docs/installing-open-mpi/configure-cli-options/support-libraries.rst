@@ -20,7 +20,7 @@ are used by Open MPI that can be used with ``configure``:
   * ``external``: Use an external installation (rely on default
     compiler and linker paths to find it).  ``configure`` will abort
     if it cannot find suitable header files and libraries.
-  * ``internal``: Use Open MPI's internal/bundled copy..
+  * ``internal``: Use Open MPI's internal/bundled copy.
   * No value specified: Try the ``external`` behavior.  If that fails,
     fall back to ``internal`` behavior.  *This is the default behavior.*
   * ``DIR``: Specify the location of a specific installation to use.
