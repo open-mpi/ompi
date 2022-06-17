@@ -766,10 +766,6 @@ void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno)
 {
     map_segment_t *s;
 
-    if (segno >= MCA_MEMHEAP_MAX_SEGMENTS) {
-        return;
-    }
-
     s = memheap_find_seg(segno);
     assert(NULL != s);
     seg->super.va_base = s->super.va_base;
