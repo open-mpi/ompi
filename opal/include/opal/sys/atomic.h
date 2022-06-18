@@ -463,6 +463,12 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
 #    define OPAL_HAVE_ATOMIC_LLSC_PTR 0
 #endif
 
+/****** Relaxed load and store ********/
+
+#if !defined(OPAL_ATOMIC_HAVE_RELAXED_LOAD_STORE)
+#define OPAL_ATOMIC_RELAXED_LOAD(a) (a)
+#define OPAL_ATOMIC_RELAXED_STORE(a, v) (a) = (v);
+#endif // !OPAL_ATOMIC_HAVE_RELAXED_LOAD_STORE
 END_C_DECLS
 
 #endif /* OPAL_SYS_ATOMIC_H */
