@@ -295,15 +295,15 @@ static inline opal_list_item_t *opal_lifo_push_st(opal_lifo_t *lifo, opal_list_i
 {
     item->opal_list_next = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
     item->item_free = 0;
-    lifo->opal_lifo_head.data.item = (intptr_t) item;
+    OPAL_ATOMIC_RELAXED_STORE(&lifo->opal_lifo_head.data.item, (intptr_t) item);
     return (opal_list_item_t *) item->opal_list_next;
 }
 
 static inline opal_list_item_t *opal_lifo_pop_st(opal_lifo_t *lifo)
 {
     opal_list_item_t *item;
-    item = (opal_list_item_t *) lifo->opal_lifo_head.data.item;
-    lifo->opal_lifo_head.data.item = (intptr_t) item->opal_list_next;
+    item = (opal_list_item_t *) OPAL_ATOMIC_RELAXED_LOAD(&lifo->opal_lifo_head.data.item);
+    OPAL_ATOMIC_RELAXED_STORE(&lifo->opal_lifo_head.data.item, (intptr_t) item->opal_list_next);
     if (item == &lifo->opal_lifo_ghost) {
         return NULL;
     }
