@@ -377,7 +377,7 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t *type, const char *
             opal_class_initialize((type));                        \
         }                                                         \
         ((opal_object_t *) (object))->obj_class = (type);         \
-        ((opal_object_t *) (object))->obj_reference_count = 1;    \
+        OPAL_ATOMIC_RELAXED_STORE(&((opal_object_t *) (object))->obj_reference_count, 1); \
         opal_obj_run_constructors((opal_object_t *) (object));    \
         OBJ_REMEMBER_FILE_AND_LINENO(object, __FILE__, __LINE__); \
     } while (0)

@@ -593,7 +593,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
                                    iov,
                                    &iov_count,
                                    &bytes_received );
-            match->req_bytes_received = bytes_received;
+            OPAL_ATOMIC_RELAXED_STORE(&match->req_bytes_received, bytes_received);
             SPC_USER_OR_MPI(match->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                             OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
             /*
