@@ -15,6 +15,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_fifo.h"
+#include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/sys/atomic.h"
 #include "opal/util/show_help.h"
@@ -96,7 +97,7 @@ struct ompi_cont_request_t {
     opal_list_item_t      cont_list_item;        /**< List item to store the continuation request in the list of requests */
     opal_atomic_lock_t    cont_lock;             /**< Lock used completing/restarting the cont request */
     bool                  cont_enqueue_complete; /**< Whether to enqueue immediately complete requests */
-    opal_atomic_int32_t   cont_num_active;       /**< The number of active continuations registered with a continuation request */
+    int32_t               cont_num_active;       /**< The number of active continuations registered with a continuation request */
     uint32_t              continue_max_poll;     /**< max number of local continuations to execute at once */
     opal_list_t          *cont_complete_list;    /**< List of complete continuations to be invoked during test */
     ompi_wait_sync_t     *sync;                  /**< Sync object this continuation request is attached to */
@@ -410,7 +411,11 @@ int ompi_continue_register_request_progress(ompi_request_t *req, ompi_wait_sync_
 {
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
 
-    if (NULL == cont_req->cont_complete_list) return OMPI_SUCCESS;
+    if (NULL == cont_req->cont_complete_list) {
+      /* progress requests to see if we can complete it already */
+      ompi_continue_wait_progress_callback();
+      return OMPI_SUCCESS;
+    }
 
     lazy_list_t *cont_req_list = &thread_progress_list;
 
@@ -422,6 +427,11 @@ int ompi_continue_register_request_progress(ompi_request_t *req, ompi_wait_sync_
 
     /* add the continuation request to the thread-local list */
     opal_list_append(&cont_req_list->list, &cont_req->super.super.super);
+
+    /* progress request to see if we can complete it already */
+    ompi_continue_progress_request(req);
+
+    if (REQUEST_COMPLETE(req)) return OMPI_SUCCESS;
 
     /* register with the sync object */
     if (NULL != sync) {
@@ -662,7 +672,7 @@ static int request_completion_cb(ompi_request_t *request)
     ompi_request_cont_data_t *req_cont_data;
 
     /* atomically swap the pointer here to avoid race with ompi_continue_global_wakeup */
-    req_cont_data = (ompi_request_cont_data_t *)opal_atomic_swap_ptr(&request->req_complete_cb_data, 0x0);
+    req_cont_data = (ompi_request_cont_data_t *)OPAL_THREAD_SWAP_PTR(&request->req_complete_cb_data, 0x0);
 
     if (NULL == req_cont_data) {
         /* the wakeup call took away our callback data */

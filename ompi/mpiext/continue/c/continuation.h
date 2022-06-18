@@ -17,13 +17,13 @@
 
 #include "ompi_config.h"
 #include "ompi/info/info.h"
-#include "ompi/request/request.h"
 #include "ompi/request/mpi_object.h"
 #include "mpi.h"
 #include "ompi/mpiext/continue/c/mpiext_continue_c.h"
 
 
 struct ompi_request_t;
+struct ompi_wait_sync_t;
 
 BEGIN_C_DECLS
 
@@ -41,7 +41,7 @@ int ompi_continuation_fini(void);
  * Register a request with local completion list for progressing through
  * the progress engine.
  */
-int ompi_continue_register_request_progress(struct ompi_request_t *cont_req, ompi_wait_sync_t *sync);
+int ompi_continue_register_request_progress(struct ompi_request_t *cont_req, struct ompi_wait_sync_t *sync);
 
 /**
  * Deregister a request with local completion list from progressing through
