@@ -60,7 +60,7 @@ mca_scoll_ucc_component_t mca_scoll_ucc_component = {
     0,                  /* verbose level */
     0,                  /* ucc_enable */
     2,                  /* ucc_np */
-    "basic",            /* cls */
+    "",                 /* cls */
     SCOLL_UCC_CTS_STR,  /* cts */
     0,                  /* nr_modules */
     false,              /* libucc_initialized */

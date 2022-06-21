@@ -217,13 +217,13 @@ static int mca_scoll_ucc_init(oshmem_group_t *osh_group)
         UCC_ERROR("UCC lib config read failed");
         return OSHMEM_ERROR;
     }
-
-    if (UCC_OK != ucc_lib_config_modify(lib_config, "CLS", cm->cls)) {
-        ucc_lib_config_release(lib_config);
-        UCC_ERROR("failed to modify UCC lib config to set CLS");
-        return OSHMEM_ERROR;
+    if (strlen(cm->cls) > 0) {
+        if (UCC_OK != ucc_lib_config_modify(lib_config, "CLS", cm->cls)) {
+            ucc_lib_config_release(lib_config);
+            UCC_ERROR("failed to modify UCC lib config to set CLS");
+            return OSHMEM_ERROR;
+        }
     }
-
     if (UCC_OK != ucc_init(&lib_params, lib_config, &cm->ucc_lib)) {
         UCC_ERROR("UCC lib init failed");
         ucc_lib_config_release(lib_config);
