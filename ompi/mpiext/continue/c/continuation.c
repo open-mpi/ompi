@@ -31,6 +31,8 @@ typedef struct ompi_cont_request_t ompi_cont_request_t;
 
 static int ompi_continue_request_free(ompi_request_t** cont_req);
 
+static int ompi_continue_request_start(size_t count, ompi_request_t** cont_req_ptr);
+
 /**
  * Continuation class containing the callback, callback data, status,
  * and number of outstanding operation requests.
@@ -101,6 +103,7 @@ struct ompi_cont_request_t {
     uint32_t              continue_max_poll;     /**< max number of local continuations to execute at once */
     opal_list_t          *cont_complete_list;    /**< List of complete continuations to be invoked during test */
     ompi_wait_sync_t     *sync;                  /**< Sync object this continuation request is attached to */
+    opal_list_t           cont_complete_defer_list; /**< List of complete continuations deferred on inactive requests */
     opal_list_t           cont_incomplete_list;  /**< List of incomplete continuations, used if error checking is enabled */
     opal_list_t           cont_failed_list;      /**< List of failed continuations */
     int                   cont_flags;            /**< flags provided by user */
@@ -116,14 +119,17 @@ static void ompi_cont_request_construct(ompi_cont_request_t* cont_req)
     cont_req->super.req_state = OMPI_REQUEST_ACTIVE;
     cont_req->super.req_persistent = true;
     cont_req->super.req_free = &ompi_continue_request_free;
+    cont_req->super.req_start = &ompi_continue_request_start;
     cont_req->super.req_status = ompi_status_empty; /* always returns MPI_SUCCESS */
     opal_atomic_lock_init(&cont_req->cont_lock, false);
     cont_req->cont_enqueue_complete = false;
+    opal_atomic_lock_init(&cont_req->cont_lock, false);
     cont_req->cont_num_active = 0;
     cont_req->continue_max_poll = UINT32_MAX;
     cont_req->cont_complete_list = NULL;
     cont_req->sync = NULL;
     cont_req->cont_flags = 0;
+    OBJ_CONSTRUCT(&cont_req->cont_complete_defer_list, opal_list_t);
     OBJ_CONSTRUCT(&cont_req->cont_incomplete_list, opal_list_t);
     OBJ_CONSTRUCT(&cont_req->cont_failed_list, opal_list_t);
 }
@@ -136,6 +142,7 @@ static void ompi_cont_request_destruct(ompi_cont_request_t* cont_req)
         OPAL_LIST_RELEASE(cont_req->cont_complete_list);
         cont_req->cont_complete_list = NULL;
     }
+    OBJ_DESTRUCT(&cont_req->cont_complete_defer_list);
     OBJ_DESTRUCT(&cont_req->cont_incomplete_list);
     OBJ_DESTRUCT(&cont_req->cont_failed_list);
 }
@@ -317,9 +324,9 @@ int ompi_continue_progress_n(const uint32_t max)
         while (max > completed) {
             ompi_continuation_t *cont;
             if (using_threads) {
-                opal_mutex_lock(&request_cont_lock);
+                OPAL_THREAD_LOCK(&request_cont_lock);
                 cont = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
-                opal_mutex_unlock(&request_cont_lock);
+                OPAL_THREAD_UNLOCK(&request_cont_lock);
             } else {
                 cont = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
             }
@@ -525,6 +532,10 @@ ompi_continue_enqueue_runnable(ompi_continuation_t *cont)
         opal_list_remove_item(&cont_req->cont_incomplete_list, &cont->super.super);
         opal_list_append(cont_req->cont_complete_list, &cont->super.super);
         opal_atomic_unlock(&cont_req->cont_lock);
+    } else if (cont_req->super.req_state == OMPI_REQUEST_INACTIVE) {
+        opal_atomic_lock(&cont_req->cont_lock);
+        opal_list_append(&cont_req->cont_complete_defer_list, &cont->super.super);
+        opal_atomic_unlock(&cont_req->cont_lock);
     } else {
         OPAL_THREAD_LOCK(&request_cont_lock);
         opal_list_remove_item(&cont_req->cont_incomplete_list, &cont->super.super);
@@ -696,9 +707,7 @@ static int request_completion_cb(ompi_request_t *request)
 
         /* inactivate / free the request */
         if (request->req_persistent) {
-            if (OMPI_REQUEST_CONT != request->req_type) {
-                request->req_state = OMPI_REQUEST_INACTIVE;
-            }
+            request->req_state = OMPI_REQUEST_INACTIVE;
         } else {
             /* wait for any thread in the failure handler to complete handling the requests */
             while (cont->cont_request_check) {}
@@ -908,6 +917,7 @@ int ompi_continue_allocate_request(
                 cont_req->continue_max_poll = max_poll;
             }
         }
+        //cont_req->super.req_start =
         *cont_req_ptr = &cont_req->super;
 
         opal_mutex_lock(&cont_req_list_mtx);
@@ -920,14 +930,51 @@ int ompi_continue_allocate_request(
     return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
+static int ompi_continue_request_start(size_t count, ompi_request_t** cont_req_ptr)
+{
+    for (size_t i = 0; i < count; ++i) {
+        ompi_cont_request_t *cont_req = (ompi_cont_request_t*)cont_req_ptr[i];
+        if (cont_req->super.req_state != OMPI_REQUEST_INACTIVE) {
+            return OMPI_ERR_REQUEST;
+        }
+
+        if (NULL != cont_req->cont_complete_list) {
+            const bool using_threads = opal_using_threads();
+            if (using_threads) {
+                opal_atomic_lock(&cont_req->cont_lock);
+            }
+            opal_list_join(cont_req->cont_complete_list,
+                          opal_list_get_begin(cont_req->cont_complete_list),
+                          &cont_req->cont_complete_defer_list);
+            cont_req->super.req_state = OMPI_REQUEST_ACTIVE;
+            if (using_threads) {
+                opal_mutex_unlock(&cont_req_list_mtx);
+            }
+        } else {
+            OPAL_THREAD_LOCK(&request_cont_lock);
+            opal_list_join(&continuation_list,
+                          opal_list_get_begin(&continuation_list),
+                          &cont_req->cont_complete_defer_list);
+            cont_req->super.req_state = OMPI_REQUEST_ACTIVE;
+            OPAL_THREAD_UNLOCK(&request_cont_lock);
+        }
+    }
+    return OMPI_SUCCESS;
+}
+
 static int ompi_continue_request_free(ompi_request_t** cont_req_ptr)
 {
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)*cont_req_ptr;
     assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
 
-    opal_mutex_lock(&cont_req_list_mtx);
+    const bool using_threads = opal_using_threads();
+    if (using_threads) {
+        opal_atomic_lock(&cont_req->cont_lock);
+    }
     opal_list_remove_item(&cont_req_list, &cont_req->cont_list_item);
-    opal_mutex_unlock(&cont_req_list_mtx);
+    if (using_threads) {
+        opal_mutex_unlock(&cont_req_list_mtx);
+    }
 
     OBJ_RELEASE(cont_req);
     *cont_req_ptr = &ompi_request_null.request;
