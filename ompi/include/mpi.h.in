@@ -513,7 +513,6 @@ typedef int (MPI_Type_delete_attr_function)(MPI_Datatype, int,
 typedef int (MPI_Win_copy_attr_function)(MPI_Win, int, void *,
                                            void *, void *, int *);
 typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
-typedef int (MPI_Session_delete_attr_function)(MPI_Session, int, void *, void *);
 typedef int (MPI_Grequest_query_function)(void *, MPI_Status *);
 typedef int (MPI_Grequest_free_function)(void *);
 typedef int (MPI_Grequest_cancel_function)(void *, int);
