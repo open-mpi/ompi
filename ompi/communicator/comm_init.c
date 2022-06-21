@@ -225,6 +225,7 @@ int ompi_comm_init_mpi3 (void)
                      sizeof(ompi_mpi_comm_world.comm.c_name));
     ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
         OMPI_COMM_GLOBAL_INDEX;
+    ompi_mpi_comm_world.comm.instance = group->grp_instance;
 
     /* get a reference on the attributes subsys */
     ompi_attr_get_ref();
@@ -283,6 +284,7 @@ int ompi_comm_init_mpi3 (void)
                      sizeof(ompi_mpi_comm_self.comm.c_name));
     ompi_mpi_comm_self.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
         OMPI_COMM_GLOBAL_INDEX;
+    ompi_mpi_comm_self.comm.instance = group->grp_instance;
 
     /* We can set MPI_COMM_SELF's keyhash to NULL because it has no
        predefined attributes.  If a user defines an attribute on
