@@ -451,6 +451,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
 #if OPAL_ENABLE_FT_MPI
     comm->any_source_enabled  = true;
     comm->any_source_offset   = 0;
+    comm->num_acked           = 0;
     comm->comm_revoked        = false;
     comm->coll_revoked        = false;
     comm->c_epoch             = 0;
