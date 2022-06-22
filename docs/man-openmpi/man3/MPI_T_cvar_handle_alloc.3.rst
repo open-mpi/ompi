@@ -7,7 +7,7 @@ MPI_T_cvar_handle_alloc
 .. include_body
 
 :ref:`MPI_T_cvar_handle_alloc`, :ref:`MPI_T_cvar_handle_free` - Allocate/free
-contol variable handles
+control variable handles
 
 
 SYNTAX

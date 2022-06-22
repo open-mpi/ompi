@@ -1312,8 +1312,8 @@ not 4), and can cause extremely bad performance.
 
 /////////////////////////////////////////////////////////////////////////
 
-Can I force Agressive or Degraded performance modes?
-----------------------------------------------------
+Can I force Aggressive or Degraded performance modes?
+-----------------------------------------------------
 
 Yes.
 

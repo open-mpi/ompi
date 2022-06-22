@@ -111,7 +111,7 @@ receive operation. The receive operation may specify a wildcard value
 for source and/or tag, indicating that any source and/or tag are
 acceptable. The wildcard value for source is source = MPI_ANY_SOURCE.
 The wildcard value for tag is tag = MPI_ANY_TAG. There is no wildcard
-value for comm. The scope of these wildcards is limited to the proceses
+value for comm. The scope of these wildcards is limited to the processes
 in the group of the specified communicator.
 
 The message tag is specified by the tag argument of the receive

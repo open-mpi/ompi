@@ -144,7 +144,7 @@ mailing list:
 
 #. **Connection reset by peer:** These types of errors *usually* occur
    after ``MPI_INIT`` has completed, and typically indicate that an
-   MPI process has died unexpectedly (e.g., due to a catastrphic error
+   MPI process has died unexpectedly (e.g., due to a catastrophic error
    such as a segmentation fault).  The specific error message
    indicates that a peer MPI process tried to write to the now-dead
    MPI process and failed.

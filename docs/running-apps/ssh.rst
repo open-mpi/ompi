@@ -30,7 +30,7 @@ Consult instructions and tutorials from around the internet to learn
 how to setup SSH keys.  Try Google search terms like "passwordless
 SSH" or "SSH key authentication".
 
-For simplicity, it may be desireable to configure your SSH keys
+For simplicity, it may be desirable to configure your SSH keys
 without passphrases.  This adds some risk, however (e.g., if your SSH
 keys are compromised).  But it simplifies your SSH setup because you
 will not need to use ``ssh-agent``.  Evaluate the risk level you are
@@ -63,7 +63,7 @@ If, however, Open MPI is installed into a path that is not searched by
 default, you will need to provide assistance so that Open MPI can find
 its executables and libraries.
 
-.. important:: For simplicitly, it is *strongly* recomended that you
+.. important:: For simplicity, it is *strongly* recommended that you
    install Open MPI in the same location on all nodes in your job.
    See the :doc:`Installation location section
    </installing-open-mpi/installation-location>` for more details.

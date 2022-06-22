@@ -166,7 +166,7 @@ files.  If you need a component to be available to all nodes where you
 run MPI jobs, then you need to ensure that it is visible on all nodes
 (typically either by installing it on all nodes for non-networked
 filesystem installs, or by installing them in a directory that is
-visibile to all nodes via a networked filesystem).  Open MPI does not
+visible to all nodes via a networked filesystem).  Open MPI does not
 automatically send components to remote nodes when MPI jobs are run.
 
 /////////////////////////////////////////////////////////////////////////
@@ -588,7 +588,7 @@ allocated.
 How do I tell Open MPI to use processor and/or memory affinity?
 ---------------------------------------------------------------
 
-Open MPI will, by default, enable processor and memory affinty when
+Open MPI will, by default, enable processor and memory affinity when
 not running in an oversubscribed environment (i.e., when the number of
 MPI processes are less than or equal two the number of processors
 available).

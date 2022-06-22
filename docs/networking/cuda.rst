@@ -43,7 +43,7 @@ Open MPI offers two flavors of CUDA support:
 #. Via internal Open MPI CUDA support
 
 Regardless of which flavor of CUDA support (or both) you plan to use,
-Open MPI should be conigured using the ``--with-cuda=<path-to-cuda>``
+Open MPI should be configured using the ``--with-cuda=<path-to-cuda>``
 configure option to build CUDA support into Open MPI.
 
 This affects the smcuda shared memory btl, as well as the uct btl.
