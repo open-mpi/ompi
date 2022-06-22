@@ -64,7 +64,7 @@ Output Parameters
 Description
 -----------
 
-:ref:`MPI_Cart_coords` provies a mapping of ``rank``\ s to Cartesian
+:ref:`MPI_Cart_coords` provides a mapping of ``rank``\ s to Cartesian
 coordinates.
 
 Errors

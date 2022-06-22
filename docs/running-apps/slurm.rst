@@ -23,7 +23,7 @@ controlling the individual MPI processes.
 Hence, it is unnecessary to specify the ``--hostfile``,
 ``--host``, or ``-n`` options to ``mpirun``.
 
-.. note:: Using ``mpirun`` is the recomended method for launching Open
+.. note:: Using ``mpirun`` is the recommended method for launching Open
    MPI jobs in Slurm jobs.
 
    ``mpirun``'s Slurm support should always be available, regardless
@@ -54,7 +54,7 @@ Or, if submitting a script:
    srun: jobid 1235 submitted
    shell$
 
-Similar to the ``salloc`` case, no command line options specifing
+Similar to the ``salloc`` case, no command line options specifying
 number of MPI processes were necessary, since Open MPI will obtain
 that information directly from Slurm at run time.
 
@@ -101,7 +101,7 @@ Or you can use ``sbatch`` with a script:
    shell$
 
 Similar using ``mpirun`` inside of an ``sbatch`` batch script, no
-``srun`` command line options specifing number of processes were
+``srun`` command line options specifying number of processes were
 necessary, because ``sbatch`` set all the relevant Slurm-level
 parameters about number of processes, cores, partition, etc.
 

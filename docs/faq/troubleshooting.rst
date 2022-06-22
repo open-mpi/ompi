@@ -61,7 +61,7 @@ why this can happen.
     linker is smart enough to not load ``libmpi`` twice |mdash| but it
     does keeps ``libmpi`` in a public scope.
   * Use the ``--disable-dlopen`` or ``--disable-mca-dso`` options to
-    Open MPI's ``configure`` script (see this TODO NONEXISTANT FAQ entry
+    Open MPI's ``configure`` script (see this TODO NONEXISTENT FAQ entry
     for more details on these
     options).  These options slurp all of Open MPI's plugins up in to
     ``libmpi`` |mdash| meaning that the plugins physically reside in

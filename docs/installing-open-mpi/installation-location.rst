@@ -158,7 +158,7 @@ upgrading your Open MPI installation:
 Relocating an Open MPI installation
 -----------------------------------
 
-It can be desireable to initially install Open MPI to one location
+It can be desirable to initially install Open MPI to one location
 (e.g., ``/path/to/openmpi``) and then later move it to another
 location (e.g., ``/opt/myproduct/bundled-openmpi-a.b.c``).
 

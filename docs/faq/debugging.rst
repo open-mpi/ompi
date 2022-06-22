@@ -509,7 +509,7 @@ There are two cases:
    .. We do not make the code block below as "c" because the Sphinx C
       syntax highlighter fails to parse it as C and emits a warning.
       So we might as well just leave it as a plan verbatim block
-      (i.e., not syntax hilighted).
+      (i.e., not syntax highlighted).
 
    .. code-block::
 

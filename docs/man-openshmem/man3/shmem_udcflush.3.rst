@@ -76,7 +76,7 @@ with the address specified by target.
 NOTES
 -----
 
-These routines have been retained for improved backward compatability
+These routines have been retained for improved backward compatibility
 with legacy architectures.
 
 

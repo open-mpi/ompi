@@ -48,7 +48,7 @@ The ``sm`` BTL supports two modes of shared memory communication:
 
    This mechanism is always available.
 
-#. **Sinlge copy:** In this mode, the sender or receiver makes a
+#. **Single copy:** In this mode, the sender or receiver makes a
    single copy of the message data from the source buffer in one
    process to the destination buffer in another process.  Open MPI
    supports three flavors of shared memory single-copy transfers:

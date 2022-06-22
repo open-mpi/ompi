@@ -11,7 +11,7 @@ Compiler Notes
 
 * 32-bit platforms are only supported with a recent compiler that
   supports C11 atomics. This includes GCC 4.9.x+ (although GCC 6.x or
-  newer is recommened), the Intel compiler suite 16, and clang 3.1.
+  newer is recommended), the Intel compiler suite 16, and clang 3.1.
 
 * Mixing compilers from different vendors when building Open MPI
   (e.g., using the C/C++ compiler from one vendor and the Fortran

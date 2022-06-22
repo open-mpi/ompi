@@ -66,7 +66,7 @@ DESCRIPTION
 -----------
 
 This function partitions the group associated with *comm* into disjoint
-subgroups, based on the type specied by *split_type*. Each subgroup
+subgroups, based on the type specified by *split_type*. Each subgroup
 contains all processes of the same type. Within each subgroup, the
 processes are ranked in the order defined by the value of the argument
 *key*, with ties broken according to their rank in the old group. A new

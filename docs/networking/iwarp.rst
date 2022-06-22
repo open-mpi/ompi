@@ -16,7 +16,7 @@ supported via the OFI (``ofi``) MTL via the CM (``cm``) PML.
 Specifically, iWARP support is provides through the ``rxm`` provider
 of the OpenFabrics Interfaces library ``libfabric``.  There is
 software emulation involved in the MPI support of iWARP devices (and
-therefore at least some level of performance degredation), but the
+therefore at least some level of performance degradation), but the
 current iWARP vendors have chosen not to provide a higher-performance
 option.
 

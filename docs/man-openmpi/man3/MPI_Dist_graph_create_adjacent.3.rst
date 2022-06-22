@@ -78,8 +78,8 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
-:ref:`MPI_Dist_graph_create_adjacent` creats a new communicator
-*comm_dist_graph* with distrubuted graph topology and returns a handle
+:ref:`MPI_Dist_graph_create_adjacent` creates a new communicator
+*comm_dist_graph* with distributed graph topology and returns a handle
 to the new communicator. The number of processes in *comm_dist_graph* is
 identical to the number of processes in *comm_old*. Each process passes
 all information about its incoming and outgoing edges in the virtual
@@ -91,24 +91,24 @@ not matter. The complete communication topology is the combination of
 all edges shown in the *sources* arrays of all processes in comm_old,
 which must be identical to the combination of all edges shown in the
 *destinations* arrays. Source and destination ranks must be process
-ranks of comm_old. This allows a fully distributed specication of the
+ranks of comm_old. This allows a fully distributed specification of the
 communication graph. Isolated processes (i.e., processes with no
-outgoing or incoming edges, that is, processes that have specied
+outgoing or incoming edges, that is, processes that have specified
 indegree and outdegree as zero and thus do not occur as source or
-destination rank in the graph specication) are allowed. The call to
+destination rank in the graph specification) are allowed. The call to
 :ref:`MPI_Dist_graph_create_adjacent` is collective.
 
 
 WEIGHTS
 -------
 
-Weights are specied as non-negative integers and can be used to
+Weights are specified as non-negative integers and can be used to
 influence the process remapping strategy and other internal MPI
 optimizations. For instance, approximate count arguments of later
-communication calls along specic edges could be used as their edge
+communication calls along specific edges could be used as their edge
 weights. Multiplicity of edges can likewise indicate more intense
 communication between pairs of processes. However, the exact meaning of
-edge weights is not specied by the MPI standard and is left to the
+edge weights is not specified by the MPI standard and is left to the
 implementation. An application can supply the special value
 MPI_UNWEIGHTED for the weight array to indicate that all edges have the
 same (effectively no) weight. It is erroneous to supply MPI_UNWEIGHTED

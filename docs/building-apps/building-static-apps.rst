@@ -74,7 +74,7 @@ sub-optimal:
 
    For example, if you launch N copies of your fully-statically-linked
    MPI application on a node, it will consume (N *
-   size_of_the_application) bytes of RAM.  Alternatiely, launching N
+   size_of_the_application) bytes of RAM.  Alternately, launching N
    copies of a dynamically-linked MPI application |mdash| where each
    of the copies have the same dependent libraries |mdash| will only
    load each shared dependent library into RAM once.
@@ -157,7 +157,7 @@ libraries that require additional steps to produce working
 fully-static MPI applications.  For example, any library that has its
 own run-time plugin system (i.e., that opens dynamically shared
 objects ("DSOs") at run time) will have additional complications in
-producting fully-static builds.
+producing fully-static builds.
 
 In such cases, you generally want to run ``mpicc ... --showme`` to see
 the compiler / linker commands that Open MPI's wrapper commands will

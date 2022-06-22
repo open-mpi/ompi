@@ -64,7 +64,7 @@ DESCRIPTION
 :ref:`MPI_Request_get_status` sets *flag*\ =\ *true* if the operation is
 complete or sets *flag*\ =\ *false* if it is not complete. If the
 operation is complete, it returns in *status* the request status. It
-does not deallocate or inactivate the request; a subsequent call to
+does not deallocate or deactivate the request; a subsequent call to
 test, wait, or free should be executed with that request.
 
 If your application does not need to examine the *status* field, you can
