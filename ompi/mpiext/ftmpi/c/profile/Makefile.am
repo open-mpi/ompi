@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016-2018 The University of Tennessee and The University
+# Copyright (c) 2016-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2021 Cisco Systems, Inc.  All rights reserved.
@@ -21,6 +21,8 @@ nodist_libpmpiext_ftmpi_c_la_SOURCES = \
     pcomm_revoke.c \
     pcomm_is_revoked.c \
     pcomm_shrink.c \
+    pcomm_get_failed.c \
+    pcomm_ack_failed.c \
     pcomm_failure_ack.c \
     pcomm_failure_get_acked.c \
     pcomm_agree.c \
