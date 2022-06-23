@@ -85,7 +85,7 @@ initial value, valid types, and behavior. The class returned in the
   MPI_DOUBLE. The starting value is the current size of the resource.
 
 * ``MPI_T_PVAR_CLASS_PERCENTAGE``: Variable represents the current
-  precentage utilization level of a resource. Variables of this class
+  percentage utilization level of a resource. Variables of this class
   are represented by an MPI_DOUBLE.  The starting value is the current
   percentage utilization of the resource.
 

@@ -61,7 +61,7 @@ At run time, it is critical that the run-time linker loads *exactly
 one copy* of each of these libraries.
 
 .. note:: The required support libraries can have other dependencies,
-          but for simplicitly and relevance to building Open MPI,
+          but for simplicity and relevance to building Open MPI,
           those other dependencies are not discussed here.
 
 Potential problems
@@ -218,7 +218,7 @@ versions of the required libraries.
    default search behavior for these libraries.  Remember the critical
    requirement: that Open MPI infrastructure and applications load
    *exactly one copy* of each support library.  For simplicity, it may
-   be desireable to ensure to use exactly the support libraries that
+   be desirable to ensure to use exactly the support libraries that
    Open MPI was compiled and built against.
 
    For example, using the Open MPI installed from the sample

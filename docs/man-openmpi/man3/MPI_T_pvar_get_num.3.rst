@@ -32,7 +32,7 @@ DESCRIPTION
 
 :ref:`MPI_T_pvar_get_num` can be used to query the current number of
 performance variables. The number of performance variables may increase
-throughout the exection of the process but will never decrease.
+throughout the execution of the process but will never decrease.
 
 
 ERRORS

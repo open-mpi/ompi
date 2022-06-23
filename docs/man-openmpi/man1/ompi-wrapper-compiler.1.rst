@@ -110,7 +110,7 @@ Open MPI provides wrapper compilers for several languages:
 
 * ``mpicc``: C
 
-* ``mpic++``, ``mpicxx`` (and on systems with case-senstive file
+* ``mpic++``, ``mpicxx`` (and on systems with case-sensitive file
   systems, ``mpiCC``): C++
 
   .. note:: ``mpic++``, ``mpicxx``, and ``mpiCC`` all invoke the same
@@ -123,7 +123,7 @@ Open MPI provides wrapper compilers for several languages:
 * ``mpijavac``: Java
 
 The wrapper compilers for each of the languages are identical; they
-can be use interchangably.  The different names are provided solely
+can be use interchangeably.  The different names are provided solely
 for backwards compatibility.
 
 
