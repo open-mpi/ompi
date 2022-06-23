@@ -3,7 +3,7 @@
 # Copyright (c) 2017-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2018      The University of Tennessee and The University
+# Copyright (c) 2018-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -58,6 +58,8 @@ mpi_api_files = \
     comm_is_revoked_f08.F90 \
     comm_failure_ack_f08.F90 \
     comm_failure_get_acked_f08.F90 \
+    comm_get_failed_f08.F90 \
+    comm_ack_failed_f08.F90 \
     comm_agree_f08.F90 \
     comm_iagree_f08.F90 \
     comm_shrink_f08.F90
@@ -67,6 +69,8 @@ pmpi_api_files = \
     profile/pcomm_is_revoked_f08.F90 \
     profile/pcomm_failure_ack_f08.F90 \
     profile/pcomm_failure_get_acked_f08.F90 \
+    profile/pcomm_get_failed_f08.F90 \
+    profile/pcomm_ack_failed_f08.F90 \
     profile/pcomm_agree_f08.F90 \
     profile/pcomm_iagree_f08.F90 \
     profile/pcomm_shrink_f08.F90
