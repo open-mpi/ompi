@@ -20,6 +20,19 @@ must be installed (i.e., `GNU Autoconf
 <https://www.gnu.org/software/automake/>`_, and `GNU Libtool
 <https://www.gnu.org/software/libtool/>`_).
 
+.. list-table::
+   :header-rows: 1
+   :widths: 10 10
+
+   * - Tool
+     - Minimum version
+   * - Autoconf
+     - |autoconf_min_version|
+   * - Automake
+     - |automake_min_version|
+   * - Libtool
+     - |libtool_min_version|
+
 .. note:: The GNU Autotools are *not* required when building Open MPI
           from distribution tarballs.  Open MPI distribution tarballs
           are bootstrapped such that end-users do not need to have the
@@ -38,6 +51,8 @@ more detail.
 Flex
 ----
 
+Minimum supported version: |flex_min_version|.
+
 `Flex <https://github.com/westes/flex>`_ is used during the
 compilation of a developer's checkout (it is not used to build
 official distribution tarballs).  Other flavors of lex are *not*
@@ -49,7 +64,7 @@ Note that no testing has been performed to see what the minimum
 version of Flex is required by Open MPI.  We suggest that you use
 v2.5.35 at the earliest.
 
-For now, Open MPI will allow developer builds with Flex 2.5.4.  This
+For now, Open MPI will allow developer builds with Flex |flex_min_version|.  This
 is primarily motivated by the fact that RedHat/CentOS 5 ships with
 Flex 2.5.4.  It is likely that someday Open MPI developer builds will
 require Flex version >=2.5.35.

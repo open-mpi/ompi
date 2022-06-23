@@ -5,6 +5,7 @@ dnl Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reser
 dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -98,7 +99,7 @@ dnl
 dnl only safe to call from OPAL_CONFIG_LIBEVENT, assumes variables
 dnl from there are set.
 AC_DEFUN([_OPAL_CONFIG_LIBEVENT_EXTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([opal_libevent_CPPFLAGS_save opal_libevent_LDFLAGS_save opal_libevent_LIBS_save opal_libevent_external_support])
+    OPAL_VAR_SCOPE_PUSH([opal_event_min_version opal_event_min_num_version opal_libevent_CPPFLAGS_save opal_libevent_LDFLAGS_save opal_libevent_LIBS_save opal_libevent_external_support])
 
     dnl Look at libevent_core, not libevent_pthread, because
     dnl trying to avoid picking up libevent.so.  The wrappers and
@@ -160,22 +161,24 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_EXTERNAL], [
     # isn't what we want, because we really want to prefer external
     # versions.  Pin the "oldest supported" external version to
     # 2.0.21, which we know works from testing on RHEL7.
+    opal_event_min_num_version=OMPI_EVENT_NUMERIC_MIN_VERSION
+    opal_event_min_version=OMPI_EVENT_MIN_VERSION
     AS_IF([test "$opal_libevent_external_support" = "yes"],
-          [AC_CACHE_CHECK([if external libevent version is 2.0.21 or greater],
+          [AC_CACHE_CHECK([if external libevent version is OMPI_EVENT_MIN_VERSION or greater],
               [opal_libevent_cv_version_check],
               [AC_COMPILE_IFELSE(
                   [AC_LANG_PROGRAM([[#include <event2/event.h>]],
                                    [[
-#if defined(_EVENT_NUMERIC_VERSION) && _EVENT_NUMERIC_VERSION < 0x02001500
-#error "libevent API version is less than 0x02001500"
-#elif defined(EVENT__NUMERIC_VERSION) && EVENT__NUMERIC_VERSION < 0x02001500
-#error "libevent API version is less than 0x02001500"
+#if defined(_EVENT_NUMERIC_VERSION) && _EVENT_NUMERIC_VERSION < $opal_event_min_num_version
+#error "libevent API version is less than $opal_event_min_version"
+#elif defined(EVENT__NUMERIC_VERSION) && EVENT__NUMERIC_VERSION < $opal_event_min_num_version
+#error "libevent API version is less than $opal_event_min_version"
 #endif
                                     ]])],
                   [opal_libevent_cv_version_check="yes"],
                   [opal_libevent_cv_version_check="no"])])
           AS_IF([test "${opal_libevent_cv_version_check}" = "no"],
-                [AC_MSG_WARN([external libevent version is too old (2.0.21 or later required)])
+                [AC_MSG_WARN([external libevent version is too old (OMPI_EVENT_MIN_VERSION or later required)])
                  opal_libevent_external_support=no])])
 
     CPPFLAGS="$opal_libevent_CPPFLAGS_save"

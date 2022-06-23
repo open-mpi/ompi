@@ -44,6 +44,15 @@ for ompi_line in ompi_lines:
 ompi_series = f"v{ompi_data['major']}.{ompi_data['minor']}.x"
 ompi_ver = f"v{ompi_data['major']}.{ompi_data['minor']}.{ompi_data['release']}{ompi_data['greek']}"
 
+pmix_min_version = f"{ompi_data['pmix_min_version']}"
+prte_min_version = f"{ompi_data['prte_min_version']}"
+hwloc_min_version = f"{ompi_data['hwloc_min_version']}"
+event_min_version = f"{ompi_data['event_min_version']}"
+automake_min_version = f"{ompi_data['automake_min_version']}"
+autoconf_min_version = f"{ompi_data['autoconf_min_version']}"
+libtool_min_version = f"{ompi_data['libtool_min_version']}"
+flex_min_version = f"{ompi_data['flex_min_version']}"
+
 # "release" is a sphinx config variable: assign it to the computed
 # Open MPI version number.  The ompi_ver string begins with a "v"; the
 # Sphinx release variable should not include this prefix "v".
@@ -179,4 +188,12 @@ rst_prolog = f"""
 .. |year| replace:: {year}
 .. |ompi_ver| replace:: {ompi_ver}
 .. |ompi_series| replace:: {ompi_series}
+.. |pmix_min_version| replace:: {pmix_min_version}
+.. |prte_min_version| replace:: {prte_min_version}
+.. |hwloc_min_version| replace:: {hwloc_min_version}
+.. |event_min_version| replace:: {event_min_version}
+.. |automake_min_version| replace:: {automake_min_version}
+.. |autoconf_min_version| replace:: {autoconf_min_version}
+.. |libtool_min_version| replace:: {libtool_min_version}
+.. |flex_min_version| replace:: {flex_min_version}
 """

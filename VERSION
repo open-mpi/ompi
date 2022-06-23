@@ -3,7 +3,7 @@
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
-# Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
+# Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 
@@ -18,6 +18,17 @@
 major=5
 minor=1
 release=0
+
+# OMPI required dependency versions.
+# List in x.y.z format.
+pmix_min_version=4.1.2
+prte_min_version=2.0.2
+hwloc_min_version=1.11.0
+event_min_version=2.0.21
+automake_min_version=1.13.4
+autoconf_min_version=2.69.0
+libtool_min_version=2.4.2
+flex_min_version=2.5.4
 
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
