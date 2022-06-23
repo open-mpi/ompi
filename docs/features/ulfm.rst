@@ -110,7 +110,7 @@ is definitely built.
 Support notes
 ^^^^^^^^^^^^^
 
-* ULFM Fault Tolerance does not apply to OpenSHMEM.  It is recomended
+* ULFM Fault Tolerance does not apply to OpenSHMEM.  It is recommended
   that if you are going to use ULFM, you should disable building
   OpenSHMEM with ``--disable-oshmem``.
 
@@ -139,7 +139,7 @@ All runtime disabled components are listed in the ``ft-mpi`` aggregate
 MCA param file
 ``$installdir/share/openmpi/amca-param-sets/ft-mpi``. You can tune the
 runtime behavior with ULFM by either setting or unsetting variables in
-this file (or by overiding the variable on the command line (e.g.,
+this file (or by overriding the variable on the command line (e.g.,
 ``--mca btl ofi,self``). Note that if fault tolerance is disabled at
 runtime, these components will load normally (this may change observed
 performance when comparing with and without fault tolerance).
@@ -305,7 +305,7 @@ Known Limitations in ULFM
 * InfiniBand support is provided through the UCT BTL; fault tolerant
   operation over the UCX PML is not yet supported for production runs.
 * TOPO, FILE, RMA are not fault tolerant. They are expected to work
-  properly before the occurence of the first failure.
+  properly before the occurrence of the first failure.
 
 Changelog
 ---------
@@ -460,7 +460,7 @@ ULFM Standalone Release 1.0
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Focus has been toward improving performance, both before and after the
-occurence of failures.  The list of new features includes:
+occurrence of failures.  The list of new features includes:
 
 * Support for the non-blocking version of the agreement, MPI_COMM_IAGREE.
 * Compliance with the latest ULFM specification draft. In particular,

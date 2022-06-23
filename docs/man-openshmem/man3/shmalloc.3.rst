@@ -80,7 +80,7 @@ NOTES
 
 The total size of the symmetric heap is determined at job startup. One
 can adjust the size of the heap using the SHMEM_SYMMETRIC_HEAP_SIZE
-environment variable. See the *intro_shmem*\ (3) man page for futher
+environment variable. See the *intro_shmem*\ (3) man page for further
 details. The shmalloc, shfree, and shrealloc functions differ from the
 private heap allocation functions in that all PEs in an application must
 call them (a barrier is used to ensure this).

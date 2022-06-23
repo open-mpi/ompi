@@ -100,7 +100,7 @@ LEVELS
 ------
 
 Open MPI has many, many run-time tunable parameters (called "MCA
-parameters"), and usually only a handfull of them are useful to a given
+parameters"), and usually only a handful of them are useful to a given
 user.
 
 As such, Open MPI has divided these parameters up into nine distinct

@@ -230,7 +230,7 @@ behavior in prior releases where daemons were only launched after
 mapping was complete, and thus only occurred on nodes where
 application processes would actually be executing.
 
-* ``-H``, ``--host <host1,host2,...,hostN>``: ist of hosts on which to
+* ``-H``, ``--host <host1,host2,...,hostN>``: list of hosts on which to
   invoke processes.
 
 * ``--hostfile <hostfile>``: Provide a hostfile to use.
@@ -707,7 +707,7 @@ the specified host ``dd`` is not in the specified hostfile.
 
 When running under resource managers (e.g., SLURM, Torque, etc.), Open
 MPI will obtain both the hostnames and the number of slots directly
-from the resource manger.
+from the resource manager.
 
 Specifying Number of Processes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1494,7 +1494,7 @@ desire to be able to enable root execution of ``mpirun`` via an
 environmental control (vs. the existing ``--allow-run-as-root``
 command line parameter).  The compromise of using two environment
 variables was reached: it allows root execution via an environmental
-control, but it conveys the Open MPI team's strong recomendation
+control, but it conveys the Open MPI team's strong recommendation
 against this behavior.
 
 Exit status
@@ -1535,7 +1535,7 @@ non-zero status. The MCA parameter ``orte_abort_on_non_zero_status``
 can be set to "false" (or "0") to cause Open MPI to not abort a job if
 one or more processes return a non-zero status. In that situation the
 Open MPI records and notes that processes exited with non-zero
-termination status to report the approprate exit status of ``mpirun`` (per
+termination status to report the appropriate exit status of ``mpirun`` (per
 bullet points above).
 
 .. error:: TODO The ``orte_abort...`` name above is definitely wrong for

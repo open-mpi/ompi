@@ -55,5 +55,5 @@ The above patterns can be used in many environments.
 
 Note that there are many, many configuration options available in the
 ``./configure`` step.  Some of them may be needed for your particular
-HPC network interconnect type and/or computing environmnet; see the
-rest of this chapter for desciptions of the available options.
+HPC network interconnect type and/or computing environment; see the
+rest of this chapter for descriptions of the available options.

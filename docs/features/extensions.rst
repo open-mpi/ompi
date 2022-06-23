@@ -15,8 +15,8 @@ to MPI applications.
    provide new functionality to users, typically before it becomes
    standardized by the MPI Forum.
 
-Available extenions
--------------------
+Available extensions
+--------------------
 
 The following extensions are included in this version of Open MPI:
 

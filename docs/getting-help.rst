@@ -58,7 +58,7 @@ places.  If you have:
    .. important:: Please **use a descriptive "subject" line in your
       email!** Some Open MPI question-answering people decide whether
       to read a mail based on its subject line (e.g., to see if it's a
-      question that they can answer).  So please plese please use a
+      question that they can answer).  So please please please use a
       good subject line that succinctly describes your problem.
 
 #. **A bug report:** you should probably post it to `Open MPI's Github
@@ -89,7 +89,7 @@ Please provide *all* of the following information:
    are not helpful; we need to know as much information about your
    environment as possible in order to provide meaningful assistance.
 
-   **The best way to get help** is to provide a "recipie" for
+   **The best way to get help** is to provide a "recipe" for
    reproducing the problem.  This will allow the Open MPI developers
    to see the error for themselves, and therefore be able to fix it.
 
@@ -191,8 +191,8 @@ Please provide *all* of the following information:
    are not helpful; we need to know as much information about your
    environment as possible in order to provide meaningful assistance.
 
-   **The best way to get help** is to provide a "recipie" for
-   reproducing the problaem.  This will allow the Open MPI developers
+   **The best way to get help** is to provide a "recipe" for
+   reproducing the problem.  This will allow the Open MPI developers
    to see the error for themselves, and therefore be able to fix it.
 
 #. The version of Open MPI that you're using.

@@ -62,7 +62,7 @@ Description
 
 :ref:`MPI_Session_get_pset_info` is used to query properties of a specific
 process set. The returned info object can be queried with existing MPI
-info object query functions. One key/value pair must be de ned,
+info object query functions. One key/value pair must be defined,
 "mpi_size". The value of the "mpi_size" key specifies the number of MPI
 processes in the process set.
 
