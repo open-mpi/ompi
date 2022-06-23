@@ -124,6 +124,11 @@ int ompi_osc_ucx_lock(int lock_type, int target, int mpi_assert, struct ompi_win
         }
     } else {
         lock->is_nocheck = true;
+        if (lock_type == MPI_LOCK_EXCLUSIVE) {
+            lock->type = LOCK_EXCLUSIVE;
+        } else {
+            lock->type = LOCK_SHARED;
+        }
     }
 
     if (ret == OMPI_SUCCESS) {
