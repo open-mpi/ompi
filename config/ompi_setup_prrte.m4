@@ -18,7 +18,7 @@ dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
-dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -240,7 +240,7 @@ dnl _OMPI_SETUP_PRRTE_EXTERNAL([action if success], [action if not success])
 dnl
 dnl Try to find an external prrte with sufficient version.
 AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([setup_prrte_external_happy opal_prrte_CPPFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_prte_min_version ompi_prte_min_num_version setup_prrte_external_happy opal_prrte_CPPFLAGS_save])
 
     opal_prrte_CPPFLAGS_save=$CPPFLAGS
 
@@ -250,13 +250,15 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
     AC_CHECK_HEADER([prte.h], [setup_prrte_external_happy=yes],
                     [setup_prrte_external_happy=no])
 
+    ompi_prte_min_version=OMPI_PRTE_MIN_VERSION
+    ompi_prte_min_num_version=OMPI_PRTE_NUMERIC_MIN_VERSION
     AS_IF([test "${setup_prrte_external_happy}" = "yes"],
-          [AC_CACHE_CHECK([if external PRRTE version is 2.0.0 or greater],
+          [AC_CACHE_CHECK([if external PRRTE version is OMPI_PRTE_MIN_VERSION or greater],
               [ompi_setup_prrte_cv_version_happy],
               [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <prte_version.h>
                  ]], [[
-#if PRTE_NUMERIC_VERSION < 0x00020000
-#error "prrte API version is less than 2.0.0"
+#if PRTE_NUMERIC_VERSION < $ompi_prte_min_num_version
+#error "prrte API version is less than $ompi_prte_min_version"
 #endif
                  ]])],
                  [ompi_setup_prrte_cv_version_happy="yes"],

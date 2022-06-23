@@ -3,30 +3,41 @@
 Required support libraries
 ==========================
 
-Open MPI uses the following support libraries:
+Open MPI requires the following support libraries with the minimum listed versions:
 
-#. `Hardware Locality (hwloc)
-   <https://www.open-mpi.org/projects/hwloc/>`_: This library is
-   required; Open MPI will not build without it.
+.. list-table::
+   :header-rows: 1
+   :widths: 10 10 25
 
-#. `Libevent <https://libevent.org/>`_: This library is required; Open
-   MPI will not build without it.
+   * - Library
+     - Minimum version
+     - Notes
+   * - `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_
+     - |hwloc_min_version|
+     - | This library is required; Open MPI will not build without it.
+   * - `Libevent <https://libevent.org/>`_
+     - |event_min_version|
+     - | This library is required; Open MPI will not build without it.
+   * - `PMIx <https://pmix.org/>`_
+     - |pmix_min_version|
+     - | This library is required; Open MPI will not build without it.
+   * - `PRRTE <https://github.com/openpmix/prrte>`_
+     - |prte_min_version|
+     - | This library is optional in some environments. PRRTE provides
+       | Open MPI's full-featured ``mpirun`` / ``mpiexec`` MPI
+       | application launchers (the two are identical; they are symbolic
+       | links to the same executable).
 
-#. `PMIx <https://pmix.org/>`_: This library is required; Open MPI
-   will not build without it.
-
-#. `PRRTE <https://github.com/openpmix/prrte>`_: This library is
-   optional in some environments.  PRRTE provides Open MPI's
-   full-featured ``mpirun`` / ``mpiexec`` MPI application launchers
-   (the two are identical; they are symbolic links to the same executable).
-
-   * If your environment uses another MPI application launcher
-     (e.g., Slurm users can use the ``srun`` launcher to "direct
-     launch" Open MPI applications), then the use of PRRTE is
-     optional.
-   * If your environment has no other MPI application launcher, then
-     you need to install PRRTE and build Open MPI with PRRTE
-     support.
+       * | If your environment uses another MPI application launcher
+         | (e.g., Slurm users can use the ``srun`` launcher to "direct
+         | launch" Open MPI applications), then the use of PRRTE is
+         | optional.
+       * | If your environment has no other MPI application launcher, then
+         | you need to install PRRTE and build Open MPI with PRRTE
+         | support.
+       * | Open MPI can use the copy of PRRTE embedded in its source code
+         | tree, or compile/link against an external PRRTE installation.
+         | :ref:`See this section for details about how to specify each method <label-building-ompi-cli-options-support-libraries>`.
 
 Since these support libraries are fundamental to Open MPI's operation,
 they are directly incorporated into Open MPI's configure, build, and
