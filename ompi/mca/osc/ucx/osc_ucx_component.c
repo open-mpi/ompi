@@ -177,8 +177,10 @@ static int ucp_context_init(void) {
     return ret;
 }
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads) {
-    int ret = OMPI_SUCCESS;
-    opal_common_ucx_support_level_t support_level;
+    opal_common_ucx_support_level_t support_level = OPAL_COMMON_UCX_SUPPORT_NONE;
+    mca_base_var_source_t param_source = MCA_BASE_VAR_SOURCE_DEFAULT;
+    int ret = OMPI_SUCCESS,
+        param = -1;
 
     mca_osc_ucx_component.enable_mpi_threads = enable_mpi_threads;
 
@@ -196,13 +198,20 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
+    param = mca_base_var_find("ompi","osc","ucx","priority");
+    if (0 <= param) {
+        (void) mca_base_var_get_value(param, NULL, &param_source, NULL);
+    }
+
     /*
      * Retain priority if we have supported devices and transports.
      * Lower priority if we have supported transports, but not supported devices.
      */
-    mca_osc_ucx_component.priority = (support_level == OPAL_COMMON_UCX_SUPPORT_DEVICE) ?
-                mca_osc_ucx_component.priority : 19;
-    OSC_UCX_VERBOSE(2, "returning priority %d", mca_osc_ucx_component.priority);
+    if (MCA_BASE_VAR_SOURCE_DEFAULT == param_source) {
+        mca_osc_ucx_component.priority = (support_level == OPAL_COMMON_UCX_SUPPORT_DEVICE) ?
+                    mca_osc_ucx_component.priority : 9;
+        OSC_UCX_VERBOSE(2, "returning priority %d", mca_osc_ucx_component.priority);
+    }
 
     return ret;
 }
