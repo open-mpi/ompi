@@ -101,13 +101,43 @@ static int han_open(void)
     return mca_coll_han_init_dynamic_rules();
 }
 
-
 /*
  * Shut down the component
  */
 static int han_close(void)
 {
     mca_coll_han_free_dynamic_rules();
+
+    free(mca_coll_han_component.han_op_module_name.bcast.han_op_up_module_name);
+    mca_coll_han_component.han_op_module_name.bcast.han_op_up_module_name = NULL;
+    free(mca_coll_han_component.han_op_module_name.bcast.han_op_low_module_name);
+    mca_coll_han_component.han_op_module_name.bcast.han_op_low_module_name = NULL;
+
+    free(mca_coll_han_component.han_op_module_name.reduce.han_op_up_module_name);
+    mca_coll_han_component.han_op_module_name.reduce.han_op_up_module_name = NULL;
+    free(mca_coll_han_component.han_op_module_name.reduce.han_op_low_module_name);
+    mca_coll_han_component.han_op_module_name.reduce.han_op_low_module_name = NULL;
+
+    free(mca_coll_han_component.han_op_module_name.allreduce.han_op_up_module_name);
+    mca_coll_han_component.han_op_module_name.allreduce.han_op_up_module_name = NULL;
+    free(mca_coll_han_component.han_op_module_name.allreduce.han_op_low_module_name);
+    mca_coll_han_component.han_op_module_name.allreduce.han_op_low_module_name = NULL;
+
+    free(mca_coll_han_component.han_op_module_name.allgather.han_op_up_module_name);
+    mca_coll_han_component.han_op_module_name.allgather.han_op_up_module_name = NULL;
+    free(mca_coll_han_component.han_op_module_name.allgather.han_op_low_module_name);
+    mca_coll_han_component.han_op_module_name.allgather.han_op_low_module_name = NULL;
+
+    free(mca_coll_han_component.han_op_module_name.gather.han_op_up_module_name);
+    mca_coll_han_component.han_op_module_name.gather.han_op_up_module_name = NULL;
+    free(mca_coll_han_component.han_op_module_name.gather.han_op_low_module_name);
+    mca_coll_han_component.han_op_module_name.gather.han_op_low_module_name = NULL;
+
+    free(mca_coll_han_component.han_op_module_name.scatter.han_op_up_module_name);
+    mca_coll_han_component.han_op_module_name.scatter.han_op_up_module_name = NULL;
+    free(mca_coll_han_component.han_op_module_name.scatter.han_op_low_module_name);
+    mca_coll_han_component.han_op_module_name.scatter.han_op_low_module_name = NULL;
+
     return OMPI_SUCCESS;
 }
 
@@ -147,6 +177,37 @@ const char* mca_coll_han_topo_lvl_to_str(TOPO_LVL_T topo_lvl)
     }
 }
 
+static int
+mca_coll_han_query_module_from_mca(mca_base_component_t* c,
+                                   const char* param_name,
+                                   const char* param_doc,
+                                   int info_level,
+                                   uint32_t* module_id,
+                                   char** storage)
+{
+    char *module_name, *endptr = NULL;
+
+    int mod_id = COMPONENTS_COUNT;
+    mod_id = (*module_id > (uint32_t)mod_id) ? mod_id : (int)*module_id; /* stay in range */
+    mod_id = (mod_id < 0) ? 0 : mod_id;  /* in range */
+
+    *storage = available_components[mod_id].component_name;
+
+    (void) mca_base_component_var_register(c, param_name, param_doc,
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           info_level,
+                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+    module_name = *storage;
+    mod_id = strtol(module_name, &endptr, 10);
+    if( module_name == endptr ) {  /* no conversion, maybe we got a module name instead */
+        /* Convert module name to id */
+        mod_id = mca_coll_han_component_name_to_id(module_name);
+    }
+    /* Keep the module in the range */
+    *module_id = (mod_id < 0) ? 0 : mod_id;
+
+    return OMPI_SUCCESS;
+}
 
 /*
  * Register MCA params
@@ -177,18 +238,17 @@ static int han_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_bcast_segsize);
 
     cs->han_bcast_up_module = 0;
-    (void) mca_base_component_var_register(c, "bcast_up_module",
-                                           "up level module for bcast, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_bcast_up_module);
+    (void) mca_coll_han_query_module_from_mca(c, "bcast_up_module",
+                                              "up level module for bcast, 0 libnbc, 1 adapt",
+                                              OPAL_INFO_LVL_9, &cs->han_bcast_up_module,
+                                              &cs->han_op_module_name.bcast.han_op_up_module_name);
 
     cs->han_bcast_low_module = 0;
-    (void) mca_base_component_var_register(c, "bcast_low_module",
-                                           "low level module for bcast, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_bcast_low_module);
+    (void) mca_coll_han_query_module_from_mca(c, "bcast_low_module",
+                                              "low level module for bcast, 0 tuned, 1 sm",
+                                              OPAL_INFO_LVL_9,
+                                              &cs->han_bcast_low_module,
+                                              &cs->han_op_module_name.bcast.han_op_low_module_name);
 
     cs->han_reduce_segsize = 65536;
     (void) mca_base_component_var_register(c, "reduce_segsize",
@@ -198,18 +258,17 @@ static int han_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reduce_segsize);
 
     cs->han_reduce_up_module = 0;
-    (void) mca_base_component_var_register(c, "reduce_up_module",
-                                           "up level module for allreduce, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reduce_up_module);
+    (void) mca_coll_han_query_module_from_mca(c, "reduce_up_module",
+                                              "up level module for allreduce, 0 libnbc, 1 adapt",
+                                              OPAL_INFO_LVL_9, &cs->han_reduce_up_module,
+                                              &cs->han_op_module_name.reduce.han_op_up_module_name);
 
     cs->han_reduce_low_module = 0;
-    (void) mca_base_component_var_register(c, "reduce_low_module",
-                                           "low level module for allreduce, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reduce_low_module);
+    (void) mca_coll_han_query_module_from_mca(c, "reduce_low_module",
+                                              "low level module for allreduce, 0 tuned, 1 sm",
+                                              OPAL_INFO_LVL_9, &cs->han_reduce_low_module,
+                                              &cs->han_op_module_name.reduce.han_op_low_module_name);
+
     cs->han_allreduce_segsize = 65536;
     (void) mca_base_component_var_register(c, "allreduce_segsize",
                                            "segment size for allreduce",
@@ -218,60 +277,52 @@ static int han_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allreduce_segsize);
 
     cs->han_allreduce_up_module = 0;
-    (void) mca_base_component_var_register(c, "allreduce_up_module",
-                                           "up level module for allreduce, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allreduce_up_module);
+    (void) mca_coll_han_query_module_from_mca(c, "allreduce_up_module",
+                                              "up level module for allreduce, 0 libnbc, 1 adapt",
+                                              OPAL_INFO_LVL_9, &cs->han_allreduce_up_module,
+                                              &cs->han_op_module_name.allreduce.han_op_up_module_name);
 
     cs->han_allreduce_low_module = 0;
-    (void) mca_base_component_var_register(c, "allreduce_low_module",
-                                           "low level module for allreduce, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allreduce_low_module);
+    (void) mca_coll_han_query_module_from_mca(c, "allreduce_low_module",
+                                              "low level module for allreduce, 0 tuned, 1 sm",
+                                              OPAL_INFO_LVL_9, &cs->han_allreduce_low_module,
+                                              &cs->han_op_module_name.allreduce.han_op_low_module_name);
 
     cs->han_allgather_up_module = 0;
-    (void) mca_base_component_var_register(c, "allgather_up_module",
-                                           "up level module for allgather, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allgather_up_module);
+    (void) mca_coll_han_query_module_from_mca(c, "allgather_up_module",
+                                              "up level module for allgather, 0 libnbc, 1 adapt",
+                                              OPAL_INFO_LVL_9, &cs->han_allgather_up_module,
+                                              &cs->han_op_module_name.allgather.han_op_up_module_name);
 
     cs->han_allgather_low_module = 0;
-    (void) mca_base_component_var_register(c, "allgather_low_module",
-                                           "low level module for allgather, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allgather_low_module);
+    (void) mca_coll_han_query_module_from_mca(c, "allgather_low_module",
+                                              "low level module for allgather, 0 tuned, 1 sm",
+                                              OPAL_INFO_LVL_9, &cs->han_allgather_low_module,
+                                              &cs->han_op_module_name.allgather.han_op_low_module_name);
 
     cs->han_gather_up_module = 0;
-    (void) mca_base_component_var_register(c, "gather_up_module",
-                                           "up level module for gather, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_gather_up_module);
+    (void) mca_coll_han_query_module_from_mca(c, "gather_up_module",
+                                              "up level module for gather, 0 libnbc, 1 adapt",
+                                              OPAL_INFO_LVL_9, &cs->han_gather_up_module,
+                                              &cs->han_op_module_name.gather.han_op_up_module_name);
 
     cs->han_gather_low_module = 0;
-    (void) mca_base_component_var_register(c, "gather_low_module",
-                                           "low level module for gather, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_gather_low_module);
+    (void) mca_coll_han_query_module_from_mca(c, "gather_low_module",
+                                              "low level module for gather, 0 tuned, 1 sm",
+                                              OPAL_INFO_LVL_9, &cs->han_gather_low_module,
+                                              &cs->han_op_module_name.gather.han_op_low_module_name);
 
     cs->han_scatter_up_module = 0;
-    (void) mca_base_component_var_register(c, "scatter_up_module",
-                                           "up level module for scatter, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_scatter_up_module);
+    (void) mca_coll_han_query_module_from_mca(c, "scatter_up_module",
+                                              "up level module for scatter, 0 libnbc, 1 adapt",
+                                              OPAL_INFO_LVL_9, &cs->han_scatter_up_module,
+                                              &cs->han_op_module_name.scatter.han_op_up_module_name);
 
     cs->han_scatter_low_module = 0;
-    (void) mca_base_component_var_register(c, "scatter_low_module",
-                                           "low level module for scatter, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_scatter_low_module);
+    (void) mca_coll_han_query_module_from_mca(c, "scatter_low_module",
+                                              "low level module for scatter, 0 tuned, 1 sm",
+                                              OPAL_INFO_LVL_9, &cs->han_scatter_low_module,
+                                              &cs->han_op_module_name.scatter.han_op_low_module_name);
 
     cs->han_reproducible = 0;
     (void) mca_base_component_var_register(c, "reproducible",
