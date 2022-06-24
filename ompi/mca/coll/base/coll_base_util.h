@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2021 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -68,6 +68,8 @@ struct ompi_coll_base_nbc_request_t {
             struct {
                 ompi_datatype_t * const *stypes;
                 ompi_datatype_t * const *rtypes;
+                int scount;
+                int rcount;
             } vecs;
         } refcounted;
         void* release_arrays[OMPI_REQ_NB_RELEASE_ARRAYS];
@@ -175,7 +177,7 @@ int ompi_coll_base_retain_op( ompi_request_t *request,
  * (will be cast internally).
  */
 int ompi_coll_base_retain_datatypes( ompi_request_t *request,
-                                      ompi_datatype_t *stype,
+                                     ompi_datatype_t *stype,
                                      ompi_datatype_t *rtype);
 
 /**
@@ -185,7 +187,8 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *request,
  */
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
                                        ompi_datatype_t * const stypes[],
-                                       ompi_datatype_t * const rtypes[]);
+                                       ompi_datatype_t * const rtypes[],
+                                       bool use_topo);
 
 /* File reading function */
 int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val);
