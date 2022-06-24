@@ -169,6 +169,27 @@ struct mca_coll_han_allgather_s {
 };
 typedef struct mca_coll_han_allgather_s mca_coll_han_allgather_t;
 
+typedef struct mca_coll_han_op_up_low_module_name_t {
+    char* han_op_up_module_name;
+    char* han_op_low_module_name;
+} mca_coll_han_op_up_low_module_name_t;
+
+/**
+ * The only reason we need to keep these around is because our MCA system does
+ * not support MCA variables that do not point to existing variables (aka. where
+ * mbv_storage does not exists until the completion of the application). Thus,
+ * we need to keep track of the storage for all variables, even the ones we
+ * only use to translated into a string.
+ */
+typedef struct mca_coll_han_op_module_name_t {
+    mca_coll_han_op_up_low_module_name_t bcast;
+    mca_coll_han_op_up_low_module_name_t reduce;
+    mca_coll_han_op_up_low_module_name_t allreduce;
+    mca_coll_han_op_up_low_module_name_t allgather;
+    mca_coll_han_op_up_low_module_name_t gather;
+    mca_coll_han_op_up_low_module_name_t scatter;
+} mca_coll_han_op_module_name_t;
+
 /**
  * Structure to hold the han coll component.  First it holds the
  * base coll component, and then holds a bunch of
@@ -213,6 +234,8 @@ typedef struct mca_coll_han_component_t {
     uint32_t han_scatter_up_module;
     /* low level module for scatter */
     uint32_t han_scatter_low_module;
+    /* name of the modules */
+    mca_coll_han_op_module_name_t han_op_module_name;
     /* whether we need reproducible results
      * (but disables topological optimisations)
      */
