@@ -371,6 +371,15 @@ OPAL_DECLSPEC opal_datatype_t*
 opal_datatype_create_from_packed_description( void** packed_buffer,
                                               struct opal_proc_t* remote_processor );
 
+/*
+ * Compute the size of the datatype using a specific set of predefined type sizes.
+ * This function allows to compute the size of a packed buffer without creating
+ * a fully fledged specialized convertor for the remote peer.
+ */
+OPAL_DECLSPEC size_t
+opal_datatype_compute_remote_size(const opal_datatype_t *pData,
+                                  const size_t *sizes);
+
 /* Compute the span in memory of count datatypes. This function help with temporary
  * memory allocations for receiving already typed data (such as those used for reduce
  * operations). This span is the distance between the minimum and the maximum byte
