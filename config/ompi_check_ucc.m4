@@ -41,6 +41,15 @@ AC_DEFUN([OMPI_CHECK_UCC],[
            LIBS="${$1_LIBS} ${LIBS}"
            AC_CHECK_FUNCS(ucc_comm_free, [], [])
 
+           AC_MSG_CHECKING([if UCC supports float128 and float32(64,128)_complex datatypes])
+           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <ucc/api/ucc.h>]],
+                                         [[ucc_datatype_t dt = UCC_DT_FLOAT32_COMPLEX;]])],
+                       [flag=1
+                       AC_MSG_RESULT([yes])],
+                       [flag=0
+                       AC_MSG_RESULT([no])])
+           AC_DEFINE_UNQUOTED(UCC_HAVE_COMPLEX_AND_FLOAT128_DT, $flag, [Check if float128 and float32(64,128)_complex dt are available in ucc.])
+
            CPPFLAGS=$CPPFLAGS_save
            LDFLAGS=$LDFLAGS_save
            LIBS=$LIBS_save])
