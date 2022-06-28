@@ -571,6 +571,14 @@ typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
 #define MPI_MAX_STRINGTAG_LEN    OPAL_MAX_STRINGTAG_LEN /* max length of string arg to comm from group funcs*/
 
 /*
+ * Constants for C code to access elements in Fortran MPI status array.
+ */
+#define MPI_F_STATUS_SIZE OMPI_FORTRAN_STATUS_SIZE    /* Size of Fortran MPI status array */
+#define MPI_F_SOURCE      0                           /* Index for MPI_SOURCE */       
+#define MPI_F_TAG         1                           /* Index for MPI_TAG */
+#define MPI_F_ERROR       2                           /* Index for MPI_ERROR */
+
+/*
  * Since these values are arbitrary to Open MPI, we might as well make
  * them the same as ROMIO for ease of mapping.  These values taken
  * from ROMIO's mpio.h file.
