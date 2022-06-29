@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2020 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Oak Rigde National Laboratory.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
@@ -493,6 +493,11 @@ typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
 
 /*
  * Miscellaneous constants
+ *
+ * NOTE: Many of the integer constants below *also* appear in
+ * ompi/include/mpif-values.pl.  If you change any of these integer
+ * values below, make sure to also change the corresponding values in
+ * mpif-values.pl.
  */
 #define MPI_ANY_SOURCE         -1                      /* match any source rank */
 #define MPI_PROC_NULL          -2                      /* rank of null process */
@@ -531,9 +536,13 @@ typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
 
 /*
  * Constants for C code to access elements in Fortran MPI status array.
+ *
+ * NOTE: The MPI_F_SOURCE, MPI_F_TAG, MPI_F_ERROR are intentionally 1
+ * smaller than their Fortran equivalents in mpif-values.pl (because C
+ * is 0-indexed and Fortran is 1-indexed).
  */
 #define MPI_F_STATUS_SIZE OMPI_FORTRAN_STATUS_SIZE    /* Size of Fortran MPI status array */
-#define MPI_F_SOURCE      0                           /* Index for MPI_SOURCE */       
+#define MPI_F_SOURCE      0                           /* Index for MPI_SOURCE */
 #define MPI_F_TAG         1                           /* Index for MPI_TAG */
 #define MPI_F_ERROR       2                           /* Index for MPI_ERROR */
 
@@ -585,7 +594,8 @@ typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
  * Predefined attribute keyvals
  *
  * DO NOT CHANGE THE ORDER WITHOUT ALSO CHANGING THE ORDER IN
- * src/attribute/attribute_predefined.c and mpif.h.in.
+ * ompi/attribute/attribute_predefined.c and mpif-constants.h (which
+ * is included by mpif.h.in).
  */
 enum {
     /* MPI-1 */
@@ -699,7 +709,8 @@ enum {
 /*
  * Comparison results.  Don't change the order of these, the group
  * comparison functions rely on it.
- * Do not change the order of these without also modifying mpif.h.in.
+ * Do not change the order of these without also modifying
+ * mpif-values.pl.
  */
 enum {
   MPI_IDENT,
@@ -710,7 +721,8 @@ enum {
 
 /*
  * MPI_Init_thread constants
- * Do not change the order of these without also modifying mpif.h.in.
+ * Do not change the order of these without also modifying
+ * mpif-values.pl.
  */
 enum {
   MPI_THREAD_SINGLE,
@@ -721,8 +733,8 @@ enum {
 
 /*
  * Datatype combiners.
- * Do not change the order of these without also modifying mpif.h.in.
- * (see also mpif-common.h.fin).
+ * Do not change the order of these without also modifying
+ * mpif-values.pl.
  */
 enum {
   MPI_COMBINER_NAMED,
@@ -774,8 +786,8 @@ enum {
 
 /*
  * Communicator split type constants.
- * Do not change the order of these without also modifying mpif.h.in
- * (see also mpif-common.h.fin).
+ * Do not change the order of these without also modifying
+ * mpif-values.pl.
  */
 enum {
   MPI_COMM_TYPE_SHARED,
