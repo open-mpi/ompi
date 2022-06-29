@@ -63,19 +63,24 @@ int mca_base_source_init (void)
     int ret = OPAL_SUCCESS;
 
     OPAL_THREAD_LOCK(&mca_base_source_lock);
+
     if (false == mca_base_source_initialized) {
         mca_base_source_initialized = true;
 
         OBJ_CONSTRUCT(&registered_sources, opal_pointer_array_t);
         opal_pointer_array_init(&registered_sources, 16, 512, 16);
 
+        OPAL_THREAD_UNLOCK(&mca_base_source_lock);
+
+        /* mca_base_source_register will use lock */
         mca_base_source_default_source = mca_base_source_register ("opal", "mca", "base", "default_source",
                                                                    "Default source for MCA events", true,
                                                                    mca_base_source_default_time_source,
                                                                    mca_base_source_default_time_source_ticks ());
 
     }
-    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
+    else
+        OPAL_THREAD_UNLOCK(&mca_base_source_lock);
 
     return ret;
 }
@@ -107,16 +112,27 @@ int mca_base_source_finalize (void)
 
 mca_base_source_t *mca_base_source_get (int source_index)
 {
-    return opal_pointer_array_get_item (&registered_sources, source_index);
+    mca_base_source_t *ret;
+
+    OPAL_THREAD_LOCK(&mca_base_source_lock);
+
+    ret = opal_pointer_array_get_item (&registered_sources, source_index);
+
+    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
+
+    return ret;
 }
 
 int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t time_source, uint64_t time_ticks)
 {
+    /* Uses source lock/unlock */
     mca_base_source_t *source = mca_base_source_get (source_index);
 
     if (NULL == source) {
         return OPAL_ERR_NOT_FOUND;
     }
+
+    OPAL_THREAD_LOCK(&mca_base_source_lock);
 
     if (!time_source) {
         time_source = mca_base_source_default_time_source;
@@ -126,6 +142,8 @@ int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t
     source->source_time = time_source;
     source->source_ticks = time_ticks;
 
+    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
+
     return OPAL_SUCCESS;
 }
 
@@ -133,12 +151,19 @@ int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t
 
 int mca_base_source_get_count (int *count)
 {
+    OPAL_THREAD_LOCK(&mca_base_source_lock);
+
     *count = source_count;
+
+    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
+
     return OPAL_SUCCESS;
 }
 
 static inline int mca_base_source_get_by_name (const char *name, mca_base_source_t **source_out)
 {
+    OPAL_THREAD_LOCK(&mca_base_source_lock);
+
     /* there are expected to be a relatively small number of sources so a linear search should be fine */
     for (int i = 0 ; i < source_count ; ++i) {
         mca_base_source_t *source = opal_pointer_array_get_item (&registered_sources, i);
@@ -147,10 +172,12 @@ static inline int mca_base_source_get_by_name (const char *name, mca_base_source
                 *source_out = source;
             }
 
+            OPAL_THREAD_UNLOCK(&mca_base_source_lock);
             return OPAL_SUCCESS;
         }
     }
 
+    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
     return OPAL_ERR_NOT_FOUND;
 }
 
@@ -161,9 +188,12 @@ int mca_base_source_register (const char *project, const char *framework, const 
     char *source_name;
     int ret;
 
+    OPAL_THREAD_LOCK(&mca_base_source_lock);
+
     /* generate the variable's full name */
     ret = mca_base_var_generate_full_name4 (NULL, framework, component, name, &source_name);
     if (OPAL_SUCCESS != ret) {
+        OPAL_THREAD_UNLOCK(&mca_base_source_lock);
         return ret;
     }
 
@@ -174,6 +204,7 @@ int mca_base_source_register (const char *project, const char *framework, const 
         /* create a new parameter entry */
         source = OBJ_NEW(mca_base_source_t);
         if (NULL == source) {
+            OPAL_THREAD_UNLOCK(&mca_base_source_lock);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
@@ -200,6 +231,7 @@ int mca_base_source_register (const char *project, const char *framework, const 
 
         if (OPAL_SUCCESS != ret) {
             OBJ_RELEASE(source);
+            OPAL_THREAD_UNLOCK(&mca_base_source_lock);
             return ret;
         }
     } else {
@@ -214,6 +246,8 @@ int mca_base_source_register (const char *project, const char *framework, const 
 
     source->source_time = source_time;
     source->source_ticks = source_ticks;
+
+    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
 
     return OPAL_SUCCESS;
 }
