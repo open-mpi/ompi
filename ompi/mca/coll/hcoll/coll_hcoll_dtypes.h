@@ -93,9 +93,9 @@ static dte_data_representation_t* ompi_datatype_2_dte_data_rep[OPAL_DATATYPE_MAX
     &DTE_ZERO,
 #endif
 #if SIZEOF_LONG == 4
-    &DTE_UINT32,
+    &DTE_INT32,
 #else
-    &DTE_UINT64,                /*OPAL_DATATYPE_LONG           25 */
+    &DTE_INT64,                /*OPAL_DATATYPE_LONG           25 */
 #endif
 #if SIZEOF_UNSIGNED_LONG == 4
     &DTE_UINT32,
