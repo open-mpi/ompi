@@ -48,7 +48,7 @@ static uint64_t mca_base_source_default_time_source (void)
 static uint64_t mca_base_source_default_time_source_ticks (void)
 {
     struct timespec spec;
-    if (0 == opal_clock_getres(&spec)){
+    if (OPAL_LIKELY(0 == opal_clock_getres(&spec))){
         return (uint64_t)(spec.tv_sec + spec.tv_nsec);
     } else {
         /* guess */
