@@ -1071,21 +1071,25 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
         return ret;
     }
 
-    ret = opal_common_ucx_wpmem_fence(mem);
-    if (ret != OMPI_SUCCESS) {
-        OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
-        return OMPI_ERROR;
-    }
-
     mca_osc_ucx_component.num_incomplete_req_ops++;
-    /* TODO: investigate whether ucp_worker_flush_nb is a better choice here */
-    ret = opal_common_ucx_wpmem_fetch_nb(module->state_mem, UCP_ATOMIC_FETCH_OP_FADD,
-                                         0, target, &(module->req_result),
-                                         sizeof(uint64_t), remote_addr & (~0x7),
-                                         req_completion, ucx_req);
+    ret = opal_common_ucx_wpmem_flush_ep_nb(mem, target, req_completion, ucx_req);
+
     if (ret != OMPI_SUCCESS) {
-        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
-        return ret;
+        /* fallback to using an atomic op to acquire a request handle */
+        ret = opal_common_ucx_wpmem_fence(mem);
+        if (ret != OMPI_SUCCESS) {
+            OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
+            return OMPI_ERROR;
+        }
+
+        ret = opal_common_ucx_wpmem_fetch_nb(mem, UCP_ATOMIC_FETCH_OP_FADD,
+                                            0, target, &(module->req_result),
+                                            sizeof(uint64_t), remote_addr & (~0x7),
+                                            req_completion, ucx_req);
+        if (ret != OMPI_SUCCESS) {
+            OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
+            return ret;
+        }
     }
 
     *request = &ucx_req->super;
@@ -1120,21 +1124,25 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
         return ret;
     }
 
-    ret = opal_common_ucx_wpmem_fence(mem);
-    if (ret != OMPI_SUCCESS) {
-        OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
-        return OMPI_ERROR;
-    }
-
     mca_osc_ucx_component.num_incomplete_req_ops++;
-    /* TODO: investigate whether ucp_worker_flush_nb is a better choice here */
-    ret = opal_common_ucx_wpmem_fetch_nb(module->state_mem, UCP_ATOMIC_FETCH_OP_FADD,
-                                         0, target, &(module->req_result),
-                                         sizeof(uint64_t), remote_addr & (~0x7),
-                                         req_completion, ucx_req);
+    ret = opal_common_ucx_wpmem_flush_ep_nb(mem, target, req_completion, ucx_req);
+
     if (ret != OMPI_SUCCESS) {
-        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
-        return ret;
+        /* fallback to using an atomic op to acquire a request handle */
+        ret = opal_common_ucx_wpmem_fence(mem);
+        if (ret != OMPI_SUCCESS) {
+            OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
+            return OMPI_ERROR;
+        }
+
+        ret = opal_common_ucx_wpmem_fetch_nb(mem, UCP_ATOMIC_FETCH_OP_FADD,
+                                            0, target, &(module->req_result),
+                                            sizeof(uint64_t), remote_addr & (~0x7),
+                                            req_completion, ucx_req);
+        if (ret != OMPI_SUCCESS) {
+            OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
+            return ret;
+        }
     }
 
     *request = &ucx_req->super;
