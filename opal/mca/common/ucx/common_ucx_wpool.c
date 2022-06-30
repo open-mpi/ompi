@@ -127,11 +127,8 @@ OPAL_DECLSPEC void opal_common_ucx_wpool_free(opal_common_ucx_wpool_t *wpool)
 static int _wpool_list_put(opal_common_ucx_wpool_t *wpool, opal_list_t *list,
                            opal_common_ucx_winfo_t *winfo);
 
-OPAL_DECLSPEC int opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool, int proc_world_size,
-                                             bool enable_mt)
+OPAL_DECLSPEC int opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool)
 {
-    ucp_config_t *config = NULL;
-    ucp_params_t context_params;
     opal_common_ucx_winfo_t *winfo;
     ucs_status_t status;
     int rc = OPAL_SUCCESS;
@@ -143,36 +140,6 @@ OPAL_DECLSPEC int opal_common_ucx_wpool_init(opal_common_ucx_wpool_t *wpool, int
     }
 
     OBJ_CONSTRUCT(&wpool->mutex, opal_mutex_t);
-
-    status = ucp_config_read("MPI", NULL, &config);
-    if (UCS_OK != status) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_config_read failed: %d", status);
-        return OPAL_ERROR;
-    }
-
-    /* initialize UCP context */
-    memset(&context_params, 0, sizeof(context_params));
-    context_params.field_mask = UCP_PARAM_FIELD_FEATURES | UCP_PARAM_FIELD_MT_WORKERS_SHARED
-                                | UCP_PARAM_FIELD_ESTIMATED_NUM_EPS | UCP_PARAM_FIELD_REQUEST_INIT
-                                | UCP_PARAM_FIELD_REQUEST_SIZE;
-    context_params.features = UCP_FEATURE_RMA | UCP_FEATURE_AMO32 | UCP_FEATURE_AMO64;
-    context_params.mt_workers_shared = (enable_mt ? 1 : 0);
-    context_params.estimated_num_eps = proc_world_size;
-    context_params.request_init = opal_common_ucx_req_init;
-    context_params.request_size = sizeof(opal_common_ucx_request_t);
-
-#if HAVE_DECL_UCP_PARAM_FIELD_ESTIMATED_NUM_PPN
-    context_params.estimated_num_ppn = opal_process_info.num_local_peers + 1;
-    context_params.field_mask |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
-#endif
-
-    status = ucp_init(&context_params, config, &wpool->ucp_ctx);
-    ucp_config_release(config);
-    if (UCS_OK != status) {
-        MCA_COMMON_UCX_VERBOSE(1, "ucp_init failed: %d", status);
-        rc = OPAL_ERROR;
-        goto err_ucp_init;
-    }
 
     /* create recv worker and add to idle pool */
     OBJ_CONSTRUCT(&wpool->idle_workers, opal_list_t);
@@ -253,7 +220,11 @@ void opal_common_ucx_wpool_finalize(opal_common_ucx_wpool_t *wpool)
     wpool->dflt_winfo = NULL;
 
     OBJ_DESTRUCT(&wpool->mutex);
-    ucp_cleanup(wpool->ucp_ctx);
+    if (NULL != wpool->ucp_ctx) {
+        ucp_cleanup(wpool->ucp_ctx);
+        wpool->ucp_ctx = NULL;
+    }
+
     return;
 }
 

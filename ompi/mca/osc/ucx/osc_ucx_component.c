@@ -207,10 +207,81 @@ static int progress_callback(void) {
     return 0;
 }
 
+static int ucp_context_init(bool enable_mt, int proc_world_size) {
+    int ret = OMPI_SUCCESS;
+    ucs_status_t status;
+    ucp_config_t *config = NULL;
+    ucp_params_t context_params;
+
+    status = ucp_config_read("MPI", NULL, &config);
+    if (UCS_OK != status) {
+        OSC_UCX_VERBOSE(1, "ucp_config_read failed: %d", status);
+        return OMPI_ERROR;
+    }
+
+    /* initialize UCP context */
+    memset(&context_params, 0, sizeof(context_params));
+    context_params.field_mask = UCP_PARAM_FIELD_FEATURES | UCP_PARAM_FIELD_MT_WORKERS_SHARED
+                                | UCP_PARAM_FIELD_ESTIMATED_NUM_EPS | UCP_PARAM_FIELD_REQUEST_INIT
+                                | UCP_PARAM_FIELD_REQUEST_SIZE;
+    context_params.features = UCP_FEATURE_RMA | UCP_FEATURE_AMO32 | UCP_FEATURE_AMO64;
+    context_params.mt_workers_shared = (enable_mt ? 1 : 0);
+    context_params.estimated_num_eps = proc_world_size;
+    context_params.request_init = opal_common_ucx_req_init;
+    context_params.request_size = sizeof(opal_common_ucx_request_t);
+
+#if HAVE_DECL_UCP_PARAM_FIELD_ESTIMATED_NUM_PPN
+    context_params.estimated_num_ppn = opal_process_info.num_local_peers + 1;
+    context_params.field_mask |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
+#endif
+
+    status = ucp_init(&context_params, config, &mca_osc_ucx_component.wpool->ucp_ctx);
+    if (UCS_OK != status) {
+        OSC_UCX_VERBOSE(1, "ucp_init failed: %d", status);
+        ret = OMPI_ERROR;
+    }
+    ucp_config_release(config);
+
+    return ret;
+}
+
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads) {
+    opal_common_ucx_support_level_t support_level = OPAL_COMMON_UCX_SUPPORT_NONE;
+    mca_base_var_source_t param_source = MCA_BASE_VAR_SOURCE_DEFAULT;
+    int ret = OMPI_SUCCESS,
+        param = -1;
+
     mca_osc_ucx_component.enable_mpi_threads = enable_mpi_threads;
     mca_osc_ucx_component.wpool = opal_common_ucx_wpool_allocate();
     opal_common_ucx_mca_register();
+
+    ret = ucp_context_init(enable_mpi_threads,  ompi_proc_world_size());
+    if (OMPI_ERROR == ret) {
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+
+    support_level = opal_common_ucx_support_level(mca_osc_ucx_component.wpool->ucp_ctx);
+    if (OPAL_COMMON_UCX_SUPPORT_NONE == support_level) {
+        ucp_cleanup(mca_osc_ucx_component.wpool->ucp_ctx);
+        mca_osc_ucx_component.wpool->ucp_ctx = NULL;
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+
+    param = mca_base_var_find("ompi","osc","ucx","priority");
+    if (0 <= param) {
+        (void) mca_base_var_get_value(param, NULL, &param_source, NULL);
+    }
+
+    /*
+     * Retain priority if we have supported devices and transports.
+     * Lower priority if we have supported transports, but not supported devices.
+     */
+    if(MCA_BASE_VAR_SOURCE_DEFAULT == param_source) {
+        mca_osc_ucx_component.priority = (support_level == OPAL_COMMON_UCX_SUPPORT_DEVICE) ?
+                    mca_osc_ucx_component.priority : 9;
+    }
+    OSC_UCX_VERBOSE(2, "returning priority %d", mca_osc_ucx_component.priority);
+
     return OMPI_SUCCESS;
 }
 
@@ -395,9 +466,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
             goto select_unlock;
         }
 
-        ret = opal_common_ucx_wpool_init(mca_osc_ucx_component.wpool,
-                                         ompi_proc_world_size(),
-                                         mca_osc_ucx_component.enable_mpi_threads);
+        ret = opal_common_ucx_wpool_init(mca_osc_ucx_component.wpool);
         if (OMPI_SUCCESS != ret) {
             OSC_UCX_VERBOSE(1, "opal_common_ucx_wpool_init failed: %d", ret);
             goto select_unlock;
