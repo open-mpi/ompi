@@ -42,13 +42,13 @@ typedef enum {
 /**
  * @basic Callback safety levels
  *
- * If these are modified then similar modifications will be needed in mpi.h.in.
+ * Values are set in configure.ac for consistency with mpi.h
  */
 typedef enum {
-    MCA_BASE_CB_REQUIRE_NONE,
-    MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
-    MCA_BASE_CB_REQUIRE_THREAD_SAFE,
-    MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
+    MCA_BASE_CB_REQUIRE_NONE = OPAL_MCA_BASE_CB_REQUIRE_NONE,
+    MCA_BASE_CB_REQUIRE_MPI_RESTRICTED = OPAL_MCA_BASE_CB_REQUIRE_MPI_RESTRICTED,
+    MCA_BASE_CB_REQUIRE_THREAD_SAFE = OPAL_MCA_BASE_CB_REQUIRE_THREAD_SAFE,
+    MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE = OPAL_MCA_BASE_CB_REQUIRE_ASYNC_SIGNAL_SAFE,
     MCA_BASE_CB_SAFETY_MAX,
 } mca_base_cb_safety_t;
 
