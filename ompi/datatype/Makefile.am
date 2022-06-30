@@ -41,6 +41,7 @@ libdatatype_la_SOURCES = \
         ompi_datatype_create_subarray.c \
         ompi_datatype_external.c \
         ompi_datatype_external32.c \
+        ompi_datatype_lookup_by_opal_id.c \
         ompi_datatype_match_size.c \
         ompi_datatype_module.c \
         ompi_datatype_sndrcv.c \

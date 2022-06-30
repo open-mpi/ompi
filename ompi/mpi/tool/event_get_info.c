@@ -17,9 +17,6 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-/* needed to convert between opal and ompi datatypes until a function is provided */
-#include "ompi/datatype/ompi_datatype_internal.h"
-
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_event_get_info = PMPI_T_event_get_info
@@ -89,16 +86,8 @@ int MPI_T_event_get_info (int event_index, char *name, int *name_len,
     if (max_datatypes) {
         if (array_of_datatypes) {
             for (int i = 0 ; i < max_datatypes ; i++) {
-                ompi_datatype_t *ompi_datatype = NULL;
 
-                for (int j = 0 ; j < OMPI_DATATYPE_MPI_MAX_PREDEFINED ; ++j) {
-                    if (ompi_datatype_basicDatatypes[j]->super.id == event->event_datatypes[i]->id) {
-                        ompi_datatype = (ompi_datatype_t *) ompi_datatype_basicDatatypes[j];
-                        break;
-                    }
-                }
-
-                array_of_datatypes[i] = ompi_datatype;
+                array_of_datatypes[i] = ompi_datatype_lookup_by_opal_id(event->event_datatypes[i]->id);
             }
         }
 

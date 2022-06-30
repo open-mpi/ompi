@@ -296,6 +296,8 @@ ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
     return 0;
 }
 
+OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_lookup_by_opal_id( uint16_t opal_id );
+
 OMPI_DECLSPEC const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_t datakind, uint16_t datalang );
 
 /*
