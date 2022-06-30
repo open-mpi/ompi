@@ -605,6 +605,7 @@ static int am_rdma_respond(mca_btl_base_module_t *btl,
     *descriptor = NULL;
 
     if (NULL == send_descriptor) {
+        assert(NULL != hdr);
         am_rdma_response_hdr_t *resp_hdr;
         size_t data_size = am_rdma_is_atomic(hdr->type) ? hdr->data.atomic.size
                                                                   : hdr->data.rdma.size;
@@ -780,7 +781,7 @@ static void am_rdma_retry_operation(am_rdma_operation_t *operation)
     } else {
         ret = am_rdma_respond(operation->btl, operation->endpoint,
                               &operation->descriptor,
-                              /*addr=*/NULL, /*hdr=*/NULL);
+                              /*addr=*/NULL, &operation->hdr);
     }
 
     if (OPAL_SUCCESS == ret) {
