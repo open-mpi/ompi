@@ -68,7 +68,8 @@ int MPI_Start(MPI_Request *request)
     switch((*request)->req_type) {
     case OMPI_REQUEST_PML:
     case OMPI_REQUEST_COLL:
-        if ( MPI_PARAM_CHECK && !(*request)->req_persistent) {
+        if ( MPI_PARAM_CHECK && !((*request)->req_persistent &&
+                                  OMPI_REQUEST_INACTIVE == (*request)->req_state)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
         }
         OPAL_CR_ENTER_LIBRARY();
