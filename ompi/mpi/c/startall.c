@@ -69,6 +69,7 @@ int MPI_Startall(int count, MPI_Request requests[])
                     ! requests[i]->req_persistent ||
                     (OMPI_REQUEST_PML  != requests[i]->req_type &&
                      OMPI_REQUEST_COLL != requests[i]->req_type &&
+                     OMPI_REQUEST_PART != requests[i]->req_type &&
                      OMPI_REQUEST_NOOP != requests[i]->req_type)) {
                     rc = MPI_ERR_REQUEST;
                     break;
