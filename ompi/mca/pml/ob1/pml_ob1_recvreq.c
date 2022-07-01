@@ -1271,9 +1271,9 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 #endif
 
     /* init/re-init the request */
-    OPAL_ATOMIC_RELAXED_STORE(&req->req_lock, 0);
-    OPAL_ATOMIC_RELAXED_STORE(&req->req_pipeline_depth, 0);
-    OPAL_ATOMIC_RELAXED_STORE(&req->req_bytes_received, 0);
+    req->req_lock = 0;
+    req->req_pipeline_depth = 0;
+    req->req_bytes_received = 0;
     req->req_bytes_expected = 0;
     /* What about req_rdma_cnt ? */
     req->req_rdma_idx = 0;

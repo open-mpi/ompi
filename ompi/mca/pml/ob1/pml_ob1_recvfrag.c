@@ -369,7 +369,7 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
         /* note this is not an ompi_proc, but a ob1_comm_proc, thus we don't
          * use ompi_proc_is_sentinel to verify if initialized. */
         if( NULL == proc ) continue;
-        /* remove the frag from the unexpected list, add to the nack list
+        /* remove the frag from the unexpected list, add to the nack list 
          * so that we can send the nack as needed to remote cancel the send
          * from outside the match lock.
          */
@@ -384,7 +384,7 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
             }
         }
         /* same for the cantmatch queue/heap; this list is more complicated
-         * Keep it simple: we pop all of the complex list, put the bad items
+         * Keep it simple: we pop all of the complex list, put the bad items 
          * in the nack_list, and keep the good items in the keep_list;
          * then we reinsert the good items in the cantmatch heaplist */
         mca_pml_ob1_recv_frag_t* frag;
@@ -593,7 +593,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
                                    iov,
                                    &iov_count,
                                    &bytes_received );
-            OPAL_ATOMIC_RELAXED_STORE(&match->req_bytes_received, bytes_received);
+            match->req_bytes_received = bytes_received;
             SPC_USER_OR_MPI(match->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                             OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
             /*
