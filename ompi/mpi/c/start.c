@@ -84,7 +84,7 @@ int MPI_Start(MPI_Request *request)
 
         ret = (*request)->req_start(1, request);
 
-        return ret;
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
 
     case OMPI_REQUEST_NOOP:
         /**
