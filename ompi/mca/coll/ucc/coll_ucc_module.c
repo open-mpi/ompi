@@ -29,23 +29,39 @@ int mca_coll_ucc_init_query(bool enable_progress_threads, bool enable_mpi_thread
 
 static void mca_coll_ucc_module_clear(mca_coll_ucc_module_t *ucc_module)
 {
-    ucc_module->ucc_team             = NULL;
-    ucc_module->previous_allreduce   = NULL;
-    ucc_module->previous_iallreduce  = NULL;
-    ucc_module->previous_barrier     = NULL;
-    ucc_module->previous_ibarrier    = NULL;
-    ucc_module->previous_bcast       = NULL;
-    ucc_module->previous_ibcast      = NULL;
-    ucc_module->previous_alltoall    = NULL;
-    ucc_module->previous_ialltoall   = NULL;
-    ucc_module->previous_alltoallv   = NULL;
-    ucc_module->previous_ialltoallv  = NULL;
-    ucc_module->previous_allgather   = NULL;
-    ucc_module->previous_iallgather  = NULL;
-    ucc_module->previous_allgatherv  = NULL;
-    ucc_module->previous_iallgatherv = NULL;
-    ucc_module->previous_reduce      = NULL;
-    ucc_module->previous_ireduce     = NULL;
+    ucc_module->ucc_team                    = NULL;
+    ucc_module->previous_allreduce          = NULL;
+    ucc_module->previous_allreduce_module   = NULL;
+    ucc_module->previous_iallreduce         = NULL;
+    ucc_module->previous_iallreduce_module  = NULL;
+    ucc_module->previous_barrier            = NULL;
+    ucc_module->previous_barrier_module     = NULL;
+    ucc_module->previous_ibarrier           = NULL;
+    ucc_module->previous_ibarrier_module    = NULL;
+    ucc_module->previous_bcast              = NULL;
+    ucc_module->previous_bcast_module       = NULL;
+    ucc_module->previous_ibcast             = NULL;
+    ucc_module->previous_ibcast_module      = NULL;
+    ucc_module->previous_alltoall           = NULL;
+    ucc_module->previous_alltoall_module    = NULL;
+    ucc_module->previous_ialltoall          = NULL;
+    ucc_module->previous_ialltoall_module   = NULL;
+    ucc_module->previous_alltoallv          = NULL;
+    ucc_module->previous_alltoallv_module   = NULL;
+    ucc_module->previous_ialltoallv         = NULL;
+    ucc_module->previous_ialltoallv_module  = NULL;
+    ucc_module->previous_allgather          = NULL;
+    ucc_module->previous_allgather_module   = NULL;
+    ucc_module->previous_iallgather         = NULL;
+    ucc_module->previous_iallgather_module  = NULL;
+    ucc_module->previous_allgatherv         = NULL;
+    ucc_module->previous_allgatherv_module  = NULL;
+    ucc_module->previous_iallgatherv        = NULL;
+    ucc_module->previous_iallgatherv_module = NULL;
+    ucc_module->previous_reduce             = NULL;
+    ucc_module->previous_reduce_module      = NULL;
+    ucc_module->previous_ireduce            = NULL;
+    ucc_module->previous_ireduce_module     = NULL;
 }
 
 static void mca_coll_ucc_module_construct(mca_coll_ucc_module_t *ucc_module)
