@@ -631,6 +631,10 @@ int accumulate_req(const void *origin_addr, int origin_count,
 
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
+    int win_idx = -1;
+    uint64_t remote_addr = (module->addrs[target]) + target_disp *
+        OSC_UCX_GET_DISP(module, target);
+    opal_common_ucx_wpmem_t *mem = module->mem;
     void *free_ptr = NULL;
     bool lock_acquired = false;
 
@@ -648,6 +652,14 @@ int accumulate_req(const void *origin_addr, int origin_count,
         return do_atomic_op_intrinsic(module, op, target,
                                       origin_addr, origin_count, origin_dt,
                                       target_disp, NULL, ucx_req);
+    }
+
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        ret = get_dynamic_win_info(remote_addr, module, target, &win_idx);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
+        }
+        mem = module->local_dynamic_win_info[win_idx].mem;
     }
 
     ret = start_atomicity(module, target, &lock_acquired);
@@ -691,7 +703,7 @@ int accumulate_req(const void *origin_addr, int origin_count,
             return ret;
         }
 
-        ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+        ret = opal_common_ucx_wpmem_flush(mem, OPAL_COMMON_UCX_SCOPE_EP, target);
         if (ret != OMPI_SUCCESS) {
             free(temp_addr);
             return ret;
@@ -936,6 +948,10 @@ int get_accumulate_req(const void *origin_addr, int origin_count,
                        ompi_osc_ucx_request_t *ucx_req) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
+    int win_idx = -1;
+    uint64_t remote_addr = (module->addrs[target]) + target_disp *
+        OSC_UCX_GET_DISP(module, target);
+    opal_common_ucx_wpmem_t *mem = module->mem;
     void *free_addr = NULL;
     bool lock_acquired = false;
 
@@ -951,6 +967,14 @@ int get_accumulate_req(const void *origin_addr, int origin_count,
                                       target_disp, result_addr, ucx_req);
     }
 
+    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
+        ret = get_dynamic_win_info(remote_addr, module, target, &win_idx);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
+        }
+        mem = module->local_dynamic_win_info[win_idx].mem;
+    }
+
     ret = start_atomicity(module, target, &lock_acquired);
     if (ret != OMPI_SUCCESS) {
         return ret;
@@ -962,7 +986,7 @@ int get_accumulate_req(const void *origin_addr, int origin_count,
         return ret;
     }
 
-    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+    ret = opal_common_ucx_wpmem_flush(mem, OPAL_COMMON_UCX_SCOPE_EP, target);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
@@ -1004,7 +1028,7 @@ int get_accumulate_req(const void *origin_addr, int origin_count,
                 return ret;
             }
 
-            ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+            ret = opal_common_ucx_wpmem_flush(mem, OPAL_COMMON_UCX_SCOPE_EP, target);
             if (ret != OMPI_SUCCESS) {
                 return ret;
             }
