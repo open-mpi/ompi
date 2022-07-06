@@ -67,6 +67,13 @@
 #define MPI_Sendrecv_replace_f08 PMPI_Sendrecv_replace_f08
 #define MPI_Send_init PMPI_Send_init
 #define MPI_Send_init_f08 PMPI_Send_init_f08
+#define MPI_Session_call_errhandler PMPI_Session_call_errhandler
+#define MPI_Session_call_errhandler_f08 PMPI_Session_call_errhandler_f08
+#define MPI_Session_create_errhandler PMPI_Session_create_errhandler
+#define MPI_Session_create_errhandler_f08 PMPI_Session_create_errhandler_f08
+#define MPI_Session_get_errhandler PMPI_Session_get_errhandler
+#define MPI_Session_get_errhandler_f08 PMPI_Session_get_errhandler_f08
+#define MPI_Session_get_info PMPI_Session_get_info
 #define MPI_Session_get_info PMPI_Session_get_info
 #define MPI_Session_get_info_f08 PMPI_Session_get_info_f08
 #define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
@@ -81,6 +88,8 @@
 #define MPI_Session_init_f08 PMPI_Session_init_f08
 #define MPI_Session_finalize PMPI_Session_finalize
 #define MPI_Session_finalize_f08 PMPI_Session_finalize_f08
+#define MPI_Session_set_errhandler PMPI_Session_set_errhandler
+#define MPI_Session_set_errhandler_f08 PMPI_Session_set_errhandler_f08
 #define MPI_Ssend PMPI_Ssend
 #define MPI_Ssend_f08 PMPI_Ssend_f08
 #define MPI_Ssend_init PMPI_Ssend_init
