@@ -292,7 +292,9 @@ static inline int opal_common_ucx_wait_request_mt(ucs_status_ptr_t request, cons
             ctr--;
         } while (ctr > 0 && ret > 0 && status == UCS_INPROGRESS);
         opal_mutex_unlock(&winfo->mutex);
-        opal_progress();
+        if (!ctr) {
+            opal_progress();
+        }
     } while (status == UCS_INPROGRESS);
 
     return OPAL_SUCCESS;
