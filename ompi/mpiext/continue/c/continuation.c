@@ -202,12 +202,20 @@ struct thread_local_data_t {
 };
 typedef struct thread_local_data_t thread_local_data_t;
 
-static opal_thread_local thread_local_data_t tl_data = { .in_progress = false, .is_initialized = false };
-
 static __opal_attribute_always_inline__ inline
 thread_local_data_t* get_tl_data()
 {
-    thread_local_data_t* tld = &tl_data;
+    static opal_thread_local thread_local_data_t tl_data = { .in_progress = false, .is_initialized = false };
+    /* process global tl_data if threads are disabled */
+    static thread_local_data_t gl_data = { .in_progress = false, .is_initialized = false };
+
+    thread_local_data_t* tld;
+    if (opal_using_threads()) {
+        tld = &tl_data;
+    } else {
+        tld = &gl_data;
+    }
+
     if (OPAL_UNLIKELY(!tld->is_initialized)) {
         OBJ_CONSTRUCT(&tld->thread_progress_list, opal_list_t);
         OBJ_CONSTRUCT(&tld->tmplist, opal_list_t);
@@ -298,7 +306,7 @@ int ompi_continue_progress_n(const uint32_t max, thread_local_data_t *tld)
 
     /* execute thread-local continuations first
      * (e.g., from continuation requests the current thread is waiting on) */
-    if (tld->is_initialized) {
+    if (!opal_list_is_empty(&tld->thread_progress_list)) {
         ompi_cont_request_t *cont_req;
         OPAL_LIST_FOREACH(cont_req, &tld->thread_progress_list, ompi_cont_request_t) {
             completed += ompi_continue_progress_request_n(cont_req, max - completed, tld);
