@@ -575,7 +575,7 @@ ompi_continuation_t *ompi_continue_cont_create(
     cont->cont_req  = cont_req;
     cont->cont_cb   = cont_cb;
     cont->cont_data = cont_data;
-    OPAL_ATOMIC_RELAXED_STORE(&cont->cont_num_active, count);
+    cont->cont_num_active = count;
     cont->cont_status = cont_status;
 
     /* signal that the continuation request has a new continuation */
