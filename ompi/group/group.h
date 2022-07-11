@@ -18,7 +18,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -163,15 +163,16 @@ OMPI_DECLSPEC extern struct opal_mutex_t ompi_group_afp_mutex;
 /**
  * Allocate a new group structure.
  *
+ * @param orig_group Original group 
  * @param group_size Number of MPI processes in the group
  *
  * @return Pointer to new group structure
  */
-OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(int group_size);
-ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_size);
-ompi_group_t *ompi_group_allocate_sporadic(int group_size);
-ompi_group_t *ompi_group_allocate_strided(void);
-ompi_group_t *ompi_group_allocate_bmap(int orig_group_size, int group_size);
+OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(ompi_group_t *orig_group, int group_size);
+ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_group_t *orig_group, ompi_proc_t **procs, int group_size);
+ompi_group_t *ompi_group_allocate_sporadic(ompi_group_t *orig_group, int group_size);
+ompi_group_t *ompi_group_allocate_strided(ompi_group_t *orig_group);
+ompi_group_t *ompi_group_allocate_bmap(ompi_group_t *orig_group, int group_size);
 
 /**
  * @brief Allocate a dense group from a group

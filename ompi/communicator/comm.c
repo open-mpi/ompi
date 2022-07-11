@@ -1411,7 +1411,7 @@ int ompi_intercomm_create (ompi_communicator_t *local_comm, int local_leader, om
     }
 
     /* put group elements in the list */
-    new_group_pointer = ompi_group_allocate_plist_w_procs (rprocs, rsize);
+    new_group_pointer = ompi_group_allocate_plist_w_procs (local_comm->c_local_group, rprocs, rsize);
     if (OPAL_UNLIKELY(NULL == new_group_pointer)) {
         free (rprocs);
         return MPI_ERR_GROUP;
@@ -1525,7 +1525,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            leader_group = ompi_group_allocate_plist_w_procs (leader_procs, 2);
+            leader_group = ompi_group_allocate_plist_w_procs (NULL, leader_procs, 2);
             ompi_set_group_rank (leader_group, my_proc);
             if (OPAL_UNLIKELY(NULL == leader_group)) {
                 free (sub_tag);
@@ -1577,7 +1577,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
 
     if (!i_am_leader) {
         /* create a new group containing the remote processes for non-leader ranks */
-        remote_group = ompi_group_allocate_plist_w_procs (rprocs, rsize);
+        remote_group = ompi_group_allocate_plist_w_procs (local_group, rprocs, rsize);
         if (OPAL_UNLIKELY(NULL == remote_group)) {
             free (rprocs);
             ompi_comm_free (&local_comm);
@@ -2341,6 +2341,10 @@ static int ompi_comm_fill_rest(ompi_communicator_t *comm,
                                int my_rank,
                                ompi_errhandler_t *errh)
 {
+    ompi_group_t *new_group;
+
+    new_group = ompi_group_allocate_plist_w_procs(comm->c_local_group, proc_pointers, num_procs);
+
     /* properly decrement the ref counts on the groups.
        We are doing this because this function is sort of a redo
        of what is done in comm.c. No need to decrement the ref
@@ -2356,7 +2360,7 @@ static int ompi_comm_fill_rest(ompi_communicator_t *comm,
     }
 
     /* allocate a group structure for the new communicator */
-    comm->c_local_group = ompi_group_allocate_plist_w_procs (proc_pointers, num_procs);
+    comm->c_local_group = new_group;
 
     /* set the remote group to be the same as local group */
     comm->c_remote_group = comm->c_local_group;

@@ -1093,7 +1093,7 @@ static int ompi_instance_group_world (ompi_instance_t *instance, ompi_group_t **
 
     size = ompi_process_info.num_procs;
 
-    group = ompi_group_allocate (size);
+    group = ompi_group_allocate (NULL,size);
     if (OPAL_UNLIKELY(NULL == group)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -1144,7 +1144,7 @@ static int ompi_instance_group_shared (ompi_instance_t *instance, ompi_group_t *
 
     size = opal_argv_count (peers);
 
-    group = ompi_group_allocate (size);
+    group = ompi_group_allocate (NULL,size);
     if (OPAL_UNLIKELY(NULL == group)) {
         opal_argv_free (peers);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -1206,7 +1206,7 @@ static int ompi_instance_group_pmix_pset (ompi_instance_t *instance, const char 
     size_t size = 0;
 
     /* make the group large enough to hold world */
-    group = ompi_group_allocate (ompi_process_info.num_procs);
+    group = ompi_group_allocate (NULL, ompi_process_info.num_procs);
     if (OPAL_UNLIKELY(NULL == group)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
