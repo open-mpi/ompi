@@ -97,6 +97,18 @@ int ompi_dpm_init(void)
     return OMPI_SUCCESS;
 }
 
+static int compare_pmix_proc(const void *a, const void *b)
+{
+    const pmix_proc_t *proc_a = (pmix_proc_t *)a;
+    const pmix_proc_t *proc_b = (pmix_proc_t *)b;
+
+    int nspace_dif = strncmp(proc_a->nspace, proc_b->nspace, PMIX_MAX_NSLEN);
+    if (nspace_dif != 0)
+        return nspace_dif;
+
+    return proc_a->rank - proc_b->rank;
+}
+
 int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                             const char *port_string, bool send_first,
                             ompi_communicator_t **newcomm)
@@ -378,6 +390,11 @@ bcast_rportlen:
      * so that add_procs will not result in a slew of lookups */
     PMIX_INFO_CONSTRUCT(&tinfo);
     PMIX_INFO_LOAD(&tinfo, PMIX_TIMEOUT, &ompi_pmix_connect_timeout, PMIX_UINT32);
+
+    /*
+     * sort procs so that all ranks call PMIx_Connect() with the processes in same order
+     */
+    qsort(procs, nprocs, sizeof(pmix_proc_t), compare_pmix_proc);
     pret = PMIx_Connect(procs, nprocs, &tinfo, 1);
     PMIX_INFO_DESTRUCT(&tinfo);
     PMIX_PROC_FREE(procs, nprocs);
