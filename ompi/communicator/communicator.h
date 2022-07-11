@@ -22,7 +22,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -934,19 +934,6 @@ int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, in
  * free a communicator
  */
 OMPI_DECLSPEC int ompi_comm_free (ompi_communicator_t **comm);
-
-/**
- * allocate a new communicator structure
- * @param local_group_size
- * @param remote_group_size
- *
- * This routine allocates the structure, the according local and
- * remote groups, the proc-arrays in the local and remote group.
- * It furthermore sets the fortran index correctly,
- * and sets all other elements to zero.
- */
-ompi_communicator_t* ompi_comm_allocate (int local_group_size,
-                                         int remote_group_size);
 
 /**
  * allocate new communicator ID
