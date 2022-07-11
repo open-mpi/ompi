@@ -337,6 +337,15 @@ pmpi_api_files = \
         psend_init_f08.F90 \
         psendrecv_f08.F90 \
         psendrecv_replace_f08.F90 \
+        psession_create_errhandler_f08.F90\
+        psession_get_errhandler_f08.F90\
+        psession_get_info_f08.F90 \
+        psession_get_nth_pset_f08.F90 \
+        psession_get_num_psets_f08.F90 \
+        psession_get_pset_info_f08.F90 \
+        psession_init_f08.F90 \
+        psession_finalize_f08.F90 \
+        psession_set_errhandler_f08.F90\
         pssend_f08.F90 \
         pssend_init_f08.F90 \
         pstartall_f08.F90 \

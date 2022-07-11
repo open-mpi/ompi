@@ -243,12 +243,16 @@
 #define MPI_Send_init PMPI_Send_init
 #define MPI_Sendrecv PMPI_Sendrecv
 #define MPI_Sendrecv_replace PMPI_Sendrecv_replace
+#define MPI_Session_call_errhandler PMPI_Session_call_errhandler
+#define MPI_Session_create_errhandler PMPI_Session_create_errhandler
+#define MPI_Session_get_errhandler PMPI_Session_get_errhandler
 #define MPI_Session_get_info PMPI_Session_get_info
 #define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
 #define MPI_Session_get_nth_psetlen PMPI_Session_get_nth_psetlen
 #define MPI_Session_get_pset_info PMPI_Session_get_pset_info
 #define MPI_Session_init PMPI_Session_init
 #define MPI_Session_finalize PMPI_Session_finalize
+#define MPI_Session_set_errhandler PMPI_Session_set_errhandler
 #define MPI_Ssend PMPI_Ssend
 #define MPI_Ssend_init PMPI_Ssend_init
 #define MPI_Start PMPI_Start

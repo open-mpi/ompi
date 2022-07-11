@@ -421,6 +421,37 @@ subroutine MPI_Send_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
 end subroutine MPI_Send_init_f08
 end interface  MPI_Send_init
 
+interface MPI_Session_call_errhandler
+subroutine MPI_Session_call_errhandler_f08(session,errorcode,ierror)
+   use :: mpi_f08_types, only : MPI_Session
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   INTEGER, INTENT(IN) :: errorcode
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_call_errhandler_f08
+end interface MPI_Session_call_errhandler
+
+interface  MPI_Session_create_errhandler
+subroutine MPI_Session_create_errhandler_f08(session_errhandler_fn,errhandler,ierror)
+   use :: mpi_f08_types, only : MPI_Errhandler
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Session_errhandler_function
+   implicit none
+   PROCEDURE(MPI_Session_errhandler_function) :: session_errhandler_fn
+   TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_create_errhandler_f08
+end interface  MPI_Session_create_errhandler
+
+interface MPI_Session_get_errhandler
+subroutine MPI_Session_get_errhandler_f08(session,errhandler,ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Errhandler
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_errhandler_f08
+end interface MPI_Session_get_errhandler
+
 interface MPI_Session_get_info
 subroutine MPI_Session_get_info_f08(session, info, ierror)
    use :: mpi_f08_types, only : MPI_Session, MPI_Info
@@ -485,6 +516,16 @@ subroutine MPI_Session_finalize_f08(session,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Session_finalize_f08
 end interface  MPI_Session_finalize
+
+interface MPI_Session_set_errhandler
+subroutine MPI_Session_set_errhandler_f08(session,errhandler,ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Errhandler
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_set_errhandler_f08
+end interface MPI_Session_set_errhandler
 
 interface  MPI_Ssend
 subroutine MPI_Ssend_f08(buf,count,datatype,dest,tag,comm,ierror)

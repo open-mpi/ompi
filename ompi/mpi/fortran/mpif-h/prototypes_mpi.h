@@ -388,12 +388,16 @@ PN2(void, MPI_Send_init, mpi_send_init, MPI_SEND_INIT, (char *buf, MPI_Fint *cou
 PN2(void, MPI_Send, mpi_send, MPI_SEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Sendrecv, mpi_sendrecv, MPI_SENDRECV, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, MPI_Fint *dest, MPI_Fint *sendtag, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_Sendrecv_replace, mpi_sendrecv_replace, MPI_SENDRECV_REPLACE, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *sendtag, MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr));
+PN2(void, MPI_Session_call_errhandler, mpi_session_call_errhandler, MPI_SESSION_CALL_ERRHANDLER, (MPI_Fint *session, MPI_Fint *errorcode, MPI_Fint *ierr));
+PN2(void, MPI_Session_create_errhandler, mpi_session_create_errhandler, MPI_SESSION_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
+PN2(void, MPI_Session_get_errhandler, mpi_session_get_errhandler, MPI_SESSION_GET_ERRHANDLER, (MPI_Fint *session, MPI_Fint *erhandler, MPI_Fint *ierr));
 PN2(void, MPI_Session_get_info, mpi_session_get_info, MPI_SESSION_GET_INFO, (MPI_Fint *session, MPI_Fint *info, MPI_Fint *ierr));
 PN2(void, MPI_Session_get_nth_pset, mpi_session_get_nth_pset, MPI_SESSION_GET_NTH_PSET, (MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name, MPI_Fint *ierr));
 PN2(void, MPI_Session_get_num_psets, mpi_session_get_num_psets, MPI_SESSION_GET_NUM_PSETS, (MPI_Fint *session, MPI_Fint *info, MPI_Fint *npset_names, MPI_Fint *ierr));
 PN2(void, MPI_Session_get_pset_info, mpi_session_get_pset_info, MPI_SESSION_GET_PSET_INFO, (MPI_Fint *session, char *pset_name, MPI_Fint *info, MPI_Fint *ierr, int name_len));
 PN2(void, MPI_Session_init, mpi_session_init, MPI_SESSION_INIT, (MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *session, MPI_Fint *ierr));
 PN2(void, MPI_Session_finalize, mpi_session_finalize, MPI_SESSION_FINALIZE, (MPI_Fint *session, MPI_Fint *ierr));
+PN2(void, MPI_Session_set_errhandler, mpi_session_set_errhandler, MPI_SESSION_SET_ERRHANDLER, (MPI_Fint *session, MPI_Fint *erhandler, MPI_Fint *ierr));
 PN2(void, MPI_Ssend_init, mpi_ssend_init, MPI_SSEND_INIT, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Ssend, mpi_ssend, MPI_SSEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Start, mpi_start, MPI_START, (MPI_Fint *request, MPI_Fint *ierr));

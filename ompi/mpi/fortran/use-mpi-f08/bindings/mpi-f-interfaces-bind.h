@@ -4039,4 +4039,39 @@ subroutine ompi_session_finalize_f(session, ierror) &
   integer, intent(out) :: ierror
 end subroutine ompi_session_finalize_f
 
+subroutine ompi_session_call_errhandler_f(session,errorcode,ierror) &
+   BIND(C, name="ompi_session_call_errhandler_f")
+   implicit none
+   INTEGER, INTENT(IN) :: session
+   INTEGER, INTENT(IN) :: errorcode
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_session_call_errhandler_f
+
+
+subroutine ompi_session_create_errhandler_f(session_errhandler_fn,errhandler,ierror) &
+   BIND(C, name="ompi_session_create_errhandler_f")
+   use, intrinsic :: iso_c_binding, only: c_funptr
+   implicit none
+   type(c_funptr), value :: session_errhandler_fn
+   INTEGER, INTENT(OUT) :: errhandler
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_session_create_errhandler_f
+
+subroutine ompi_session_get_errhandler_f(session,errhandler,ierror) &
+   BIND(C, name="ompi_session_get_errhandler_f")
+   implicit none
+   INTEGER, INTENT(IN) :: session
+   INTEGER, INTENT(OUT) :: errhandler
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_session_get_errhandler_f
+
+subroutine ompi_session_set_errhandler_f(session,errhandler,ierror) &
+   BIND(C, name="ompi_session_set_errhandler_f")
+   implicit none
+   INTEGER, INTENT(IN) :: session
+   INTEGER, INTENT(IN) :: errhandler
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_session_set_errhandler_f
+
+
 end interface
