@@ -863,7 +863,7 @@ int ompi_continue_attach(
         last_num_active = OPAL_THREAD_ADD_FETCH32(&cont->cont_num_active, -num_complete);
     }
     if (0 == last_num_active) {
-        if (cont_req->cont_enqueue_complete) {
+        if (cont_req->cont_enqueue_complete || OMPI_REQUEST_INACTIVE == cont_req->super.req_state) {
             /* enqueue for later processing */
             ompi_continue_enqueue_runnable(cont);
         } else {
