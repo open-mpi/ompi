@@ -551,7 +551,7 @@ recheck:
             opal_list_remove_item(&cont_req->cont_incomplete_list, &cont->super.super);
             if (using_threads) { opal_atomic_unlock(&cont_req->cont_lock); }
         }
-        if (using_threads) { opal_mutex_lock(&request_cont_lock); }
+        if (using_threads) { opal_mutex_atomic_lock(&request_cont_lock); }
         opal_list_append(&continuation_list, &cont->super.super);
         if (OPAL_UNLIKELY(!progress_callback_registered)) {
             /* TODO: Ideally, we want to ensure that the callback is called *after*
@@ -562,7 +562,7 @@ recheck:
             opal_progress_register(&ompi_continue_progress_callback);
             progress_callback_registered = true;
         }
-        if (using_threads) { opal_mutex_unlock(&request_cont_lock); }
+        if (using_threads) { opal_mutex_atomic_unlock(&request_cont_lock); }
     }
 }
 
@@ -753,7 +753,7 @@ static int request_completion_cb(ompi_request_t *request)
 /* release all continuations, either by checking the requests for failure or just marking
  * the continuation as failed if the requests are not available */
 int ompi_continue_global_wakeup(int status) {
-    opal_mutex_lock(&cont_req_list_mtx);
+    opal_mutex_atomic_lock(&cont_req_list_mtx);
     opal_list_item_t *item;
     while (NULL != (item = opal_list_remove_first(&cont_req_list))) {
 
@@ -782,7 +782,7 @@ int ompi_continue_global_wakeup(int status) {
         opal_atomic_unlock(&cont_req->cont_lock);
     }
 
-    opal_mutex_unlock(&cont_req_list_mtx);
+    opal_mutex_atomic_unlock(&cont_req_list_mtx);
 }
 
 int ompi_continue_attach(
@@ -938,9 +938,9 @@ int ompi_continue_allocate_request(
         }
         *cont_req_ptr = &cont_req->super;
 
-        opal_mutex_lock(&cont_req_list_mtx);
+        opal_mutex_atomic_lock(&cont_req_list_mtx);
         opal_list_append(&cont_req_list, &cont_req->cont_list_item);
-        opal_mutex_unlock(&cont_req_list_mtx);
+        opal_mutex_atomic_unlock(&cont_req_list_mtx);
 
         return MPI_SUCCESS;
     }
@@ -962,7 +962,7 @@ static int ompi_continue_request_start(size_t count, ompi_request_t** cont_req_p
             }
         }
         if (lock_continuation_list) {
-            opal_mutex_lock(&request_cont_lock);
+            opal_mutex_atomic_lock(&request_cont_lock);
         }
     }
 
@@ -970,7 +970,7 @@ static int ompi_continue_request_start(size_t count, ompi_request_t** cont_req_p
         ompi_cont_request_t *cont_req = (ompi_cont_request_t*)cont_req_ptr[i];
         if (cont_req->super.req_state != OMPI_REQUEST_INACTIVE) {
             if (lock_continuation_list) {
-                opal_mutex_unlock(&request_cont_lock);
+                opal_mutex_atomic_unlock(&request_cont_lock);
             }
             return OMPI_ERR_REQUEST;
         }
@@ -992,7 +992,7 @@ static int ompi_continue_request_start(size_t count, ompi_request_t** cont_req_p
     }
 
     if (lock_continuation_list) {
-        opal_mutex_unlock(&request_cont_lock);
+        opal_mutex_atomic_unlock(&request_cont_lock);
     }
     return OMPI_SUCCESS;
 }
