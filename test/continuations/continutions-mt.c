@@ -78,6 +78,8 @@ int main(int argc, char *argv[])
   /* initialize the continuation request */
   MPIX_Continue_init(0, 0, &cont_req, MPI_INFO_NULL);
 
+  MPI_Start(&cont_req);
+
   /**
    * One send, one recv, one continuation
    */
@@ -89,6 +91,8 @@ int main(int argc, char *argv[])
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
   assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
   assert(cb_cnt == 1);
+
+  MPI_Start(&cont_req);
 
   /**
    * One send, one recv, two continuations
@@ -120,6 +124,8 @@ int main(int argc, char *argv[])
 
   MPI_Info_free(&info);
 
+  MPI_Start(&cont_req);
+
   /**
    * One send, one recv, one continuation
    */
@@ -131,6 +137,8 @@ int main(int argc, char *argv[])
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
   assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
   assert(cb_cnt == 1);
+
+  MPI_Start(&cont_req);
 
   /**
    * One send, one recv, two continuations
