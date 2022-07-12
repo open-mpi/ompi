@@ -317,12 +317,12 @@ int ompi_continue_progress_n(const uint32_t max, thread_local_data_t *tld)
     if (!opal_list_is_empty(&continuation_list)) {
         /* global progress */
         //TODO: steal some requests and process them in chunks to reduce locking?
-        while (max > completed) {
+        while (max > completed && !opal_list_is_empty(&continuation_list)) {
             ompi_continuation_t *cont;
             if (using_threads) {
-                OPAL_THREAD_LOCK(&request_cont_lock);
+                opal_mutex_atomic_lock(&request_cont_lock);
                 cont = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
-                OPAL_THREAD_UNLOCK(&request_cont_lock);
+                opal_mutex_atomic_unlock(&request_cont_lock);
             } else {
                 cont = (ompi_continuation_t*)opal_list_remove_first(&continuation_list);
             }
@@ -733,13 +733,13 @@ static int request_completion_cb(ompi_request_t *request)
             while (cont->cont_request_check) {}
             /* we own the request so release it and let the caller know */
             ompi_request_free(&request);
-            rc = 1;
         }
         opal_atomic_wmb();
-        int32_t num_active = OPAL_THREAD_ADD_FETCH32(&cont->cont_num_active, -1);
+        //int32_t num_active = OPAL_THREAD_ADD_FETCH32(&cont->cont_num_active, -1);
 
-        if (0 == num_active) {
+        if (1 == cont->cont_num_active || 0 == OPAL_THREAD_ADD_FETCH32(&cont->cont_num_active, -1)) {
             /* the continuation is ready for execution */
+            cont->cont_num_active = 0;
             ompi_continue_enqueue_runnable(cont);
         }
 
