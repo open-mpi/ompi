@@ -82,6 +82,9 @@ int mca_scoll_ucc_alltoall(struct oshmem_group_t *group,
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_alltoall_module;
     count = nelems;
 
+    if ((sst != 1) || (dst != 1)) {
+        goto fallback;
+    }
     /* Do nothing on zero-length request */
     if (OPAL_UNLIKELY(!nelems)) {
         return OSHMEM_SUCCESS;

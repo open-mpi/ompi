@@ -13,22 +13,23 @@
 #include <ucc/api/ucc.h>
 
 static inline ucc_status_t mca_scoll_ucc_collect_init(const void * sbuf, void * rbuf,
-                                                      int count, 
+                                                      size_t count,
                                                       mca_scoll_ucc_module_t * ucc_module,
                                                       ucc_coll_req_h * req)
 {
-    ucc_coll_args_t coll = {
+    size_t          gsize = ucc_module->group->proc_count;
+    ucc_coll_args_t coll  = {
         .mask = 0,
         .coll_type = UCC_COLL_TYPE_ALLGATHER,
         .src.info = {
-            .buffer = (void *) sbuf,
-            .count = count,
+            .buffer   = (void *) sbuf,
+            .count    = count,
             .datatype = UCC_DT_INT8,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         }, 
         .dst.info = {
-            .buffer = rbuf,
-            .count = count,
+            .buffer   = rbuf,
+            .count    = count * gsize,
             .datatype = UCC_DT_INT8,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },
@@ -65,6 +66,11 @@ int mca_scoll_ucc_collect(struct oshmem_group_t *group,
 
     UCC_VERBOSE(3, "running ucc collect");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_collect_module;
+
+    if (false == nlong_type) {
+        /* vector type of collect */
+        goto fallback;
+    }
 
     if (OPAL_UNLIKELY(!nlong)) {
         return OSHMEM_SUCCESS;
