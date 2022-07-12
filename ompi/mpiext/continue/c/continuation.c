@@ -261,7 +261,6 @@ void ompi_continue_cont_release(ompi_continuation_t *cont, int rc)
         opal_atomic_wmb();
         /* signal that all continuations were found complete */
         ompi_request_complete(&cont_req->super, true);
-        cont_req->super.req_state = OMPI_REQUEST_INACTIVE;
     }
 
     OBJ_RELEASE(cont_req);
@@ -300,7 +299,7 @@ int ompi_continue_progress_n(const uint32_t max, thread_local_data_t *tld)
     if (tld->in_progress) return 0;
 
     uint32_t completed = 0;
-    tld->in_progress = 1;
+
 
     const bool using_threads = opal_using_threads();
 
@@ -314,6 +313,7 @@ int ompi_continue_progress_n(const uint32_t max, thread_local_data_t *tld)
         }
     }
 
+    tld->in_progress = 1;
     if (!opal_list_is_empty(&continuation_list)) {
         /* global progress */
         //TODO: steal some requests and process them in chunks to reduce locking?
@@ -353,6 +353,7 @@ static int ompi_continue_wait_progress_callback()
 static inline
 int ompi_continue_progress_request_n(ompi_cont_request_t *cont_req, uint32_t max_poll, thread_local_data_t *tld)
 {
+    if (tld->in_progress) return 0;
     if (NULL == cont_req->cont_complete_list) {
         /* progress as many as allowed */
         return ompi_continue_progress_n(cont_req->continue_max_poll, tld);
@@ -363,6 +364,8 @@ int ompi_continue_progress_request_n(ompi_cont_request_t *cont_req, uint32_t max
 
     uint32_t completed = 0;
     const bool using_threads = opal_using_threads();
+
+    tld->in_progress = 1;
 
     /* take the continuations from the local list */
     if (using_threads) {
@@ -392,17 +395,16 @@ int ompi_continue_progress_request_n(ompi_cont_request_t *cont_req, uint32_t max
         }
     }
 
+    tld->in_progress = 0;
+
     return completed;
 }
 
 int ompi_continue_progress_request(ompi_request_t *req)
 {
     thread_local_data_t *tld = get_tl_data();
-    if (tld->in_progress) return 0;
-    tld->in_progress = 1;
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
     int rc = ompi_continue_progress_request_n(cont_req, cont_req->continue_max_poll, tld);
-    tld->in_progress = 0;
     return rc;
 }
 
