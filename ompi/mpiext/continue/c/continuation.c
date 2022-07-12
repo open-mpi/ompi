@@ -546,9 +546,7 @@ recheck:
         if (!req_volatile) {
             opal_list_remove_item(&cont_req->cont_incomplete_list, &cont->super.super);
         }
-        if (cont_req->super.req_state == OMPI_REQUEST_INACTIVE) {
-            opal_list_append(&cont_req->cont_complete_defer_list, &cont->super.super);
-        } else if (NULL != cont_req->cont_complete_list) {
+        if (NULL != cont_req->cont_complete_list) {
             opal_list_append(cont_req->cont_complete_list, &cont->super.super);
         } else {
             /* someone started the request before we took the lock, go back and check again
@@ -700,7 +698,6 @@ static void handle_failed_cont(ompi_continuation_t *cont, int status, bool have_
     if (0 == num_active) {
         opal_atomic_wmb();
         ompi_request_complete(&cont_req->super, true);
-        cont_req->super.req_state = OMPI_REQUEST_INACTIVE;
     }
 
     if (!have_cont_req_lock) {

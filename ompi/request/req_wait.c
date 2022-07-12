@@ -66,13 +66,6 @@ int ompi_request_default_wait(
         OMPI_COPY_STATUS(status, req->req_status, false);
     }
 
-#if OMPI_HAVE_MPI_EXT_CONTINUE
-    if (OMPI_REQUEST_CONT == req->req_type) {
-        /* continuation requests are alwys active, don't modify the state */
-        return req->req_status.MPI_ERROR;
-    }
-#endif // OMPI_HAVE_MPI_EXT_CONTINUE
-
     if( req->req_persistent ) {
         if( req->req_state == OMPI_REQUEST_INACTIVE ) {
             if (MPI_STATUS_IGNORE != status) {
@@ -80,13 +73,6 @@ int ompi_request_default_wait(
             }
             return OMPI_SUCCESS;
         }
-
-#if OMPI_HAVE_MPI_EXT_CONTINUE
-        if (OMPI_REQUEST_CONT == req->req_type) {
-            /* continuation requests are alwys active, don't modify the state */
-            return req->req_status.MPI_ERROR;
-        }
-#endif // OMPI_HAVE_MPI_EXT_CONTINUE
 
         req->req_state = OMPI_REQUEST_INACTIVE;
         return req->req_status.MPI_ERROR;
@@ -250,14 +236,7 @@ recheck:
     }
     rc = request->req_status.MPI_ERROR;
     if( request->req_persistent ) {
-#if OMPI_HAVE_MPI_EXT_CONTINUE
-        if (OMPI_REQUEST_CONT != request->req_type) {
-            request->req_state = OMPI_REQUEST_INACTIVE;
-        }
-#else  // OMPI_HAVE_MPI_EXT_CONTINUE
         request->req_state = OMPI_REQUEST_INACTIVE;
-#endif // OMPI_HAVE_MPI_EXT_CONTINUE
-
     } else if (MPI_SUCCESS == rc) {
         /* Only free the request if there is no error on it */
         /* If there's an error while freeing the request,
@@ -416,14 +395,6 @@ recheck:
 
             OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
 
-
-#if OMPI_HAVE_MPI_EXT_CONTINUE
-            if (OMPI_REQUEST_CONT == request->req_type) {
-                /* continuation requests are alwys active, don't modify the state */
-                continue;
-            }
-#endif // OMPI_HAVE_MPI_EXT_CONTINUE
-
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 continue;
@@ -494,13 +465,6 @@ recheck:
             }
 
             rc = request->req_status.MPI_ERROR;
-
-#if OMPI_HAVE_MPI_EXT_CONTINUE
-            if (OMPI_REQUEST_CONT == request->req_type) {
-                /* continuation requests are alwys active, don't modify the state */
-                continue;
-            }
-#endif // OMPI_HAVE_MPI_EXT_CONTINUE
 
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -712,13 +676,6 @@ int ompi_request_default_wait_some(size_t count,
         if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
             rc = MPI_ERR_IN_STATUS;
         }
-
-#if OMPI_HAVE_MPI_EXT_CONTINUE
-        if (OMPI_REQUEST_CONT == request->req_type) {
-            /* continuation requests are alwys active, don't modify the state */
-            continue;
-        }
-#endif // OMPI_HAVE_MPI_EXT_CONTINUE
 
         if( request->req_persistent ) {
             request->req_state = OMPI_REQUEST_INACTIVE;
