@@ -553,12 +553,17 @@ recheck:
         }
         if (using_threads) { opal_mutex_atomic_lock(&request_cont_lock); }
         opal_list_append(&continuation_list, &cont->super.super);
-        if (OPAL_UNLIKELY(!progress_callback_registered)) {
-            /* TODO: Ideally, we want to ensure that the callback is called *after*
-             *       all the other progress callbacks are done so that any
-             *       completions have happened before we attempt to execute
-             *       callbacks. There doesn't seem to exist the infrastructure though.
-             */
+        if (using_threads) { opal_mutex_atomic_unlock(&request_cont_lock); }
+    }
+
+    if (OPAL_UNLIKELY(!progress_callback_registered)) {
+        /* TODO: Ideally, we want to ensure that the callback is called *after*
+          *       all the other progress callbacks are done so that any
+          *       completions have happened before we attempt to execute
+          *       callbacks. There doesn't seem to exist the infrastructure though.
+          */
+        if (using_threads) { opal_mutex_atomic_lock(&request_cont_lock); }
+        if (!progress_callback_registered) {
             opal_progress_register(&ompi_continue_progress_callback);
             progress_callback_registered = true;
         }
