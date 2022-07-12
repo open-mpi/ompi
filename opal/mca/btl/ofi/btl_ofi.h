@@ -162,6 +162,10 @@ struct mca_btl_ofi_component_t {
 
     size_t namelen;
 
+    /** Maximum inject size */
+    size_t max_inject_size;
+    bool disable_inject;
+
     /** All BTL OFI modules (1 per tl) */
     mca_btl_ofi_module_t *modules[MCA_BTL_OFI_MAX_MODULES];
 };
