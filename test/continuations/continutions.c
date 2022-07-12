@@ -70,8 +70,6 @@ int main(int argc, char *argv[])
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
   assert(cb_cnt == 1);
 
-  MPI_Start(&cont_req);
-
   /**
    * One send, one recv, two continuations
    */
@@ -81,6 +79,9 @@ int main(int argc, char *argv[])
 
   MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[1]);
   MPIX_Continue(&reqs[1], &complete_cnt_cb, &cb_cnt, 0, MPI_STATUS_IGNORE, cont_req);
+
+  /* deferred start */
+  MPI_Start(&cont_req);
 
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
   assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
