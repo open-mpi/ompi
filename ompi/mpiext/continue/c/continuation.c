@@ -803,7 +803,7 @@ int ompi_continue_attach(
         return OMPI_ERR_REQUEST;
     }
 
-    bool req_volatile = (flags | MPIX_CONT_REQBUF_VOLATILE);
+    bool req_volatile = (flags & MPIX_CONT_REQBUF_VOLATILE);
 
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)continuation_request;
     ompi_continuation_t *cont = ompi_continue_cont_create(count, cont_req, cont_cb,
@@ -921,8 +921,11 @@ int ompi_continue_allocate_request(
         ompi_info_get_bool(info, "mpi_continue_poll_only", &test_poll, &flag);
 
         if ((flag && test_poll)) {
-            cont_req->cont_complete_list = OBJ_NEW(opal_list_t);
             cont_req->cont_flags |= MPIX_CONT_POLL_ONLY;
+        }
+
+        if (cont_req->cont_flags & MPIX_CONT_POLL_ONLY) {
+            cont_req->cont_complete_list = OBJ_NEW(opal_list_t);
         }
 
         /* TODO: remove this flags, it should be part of attach */
@@ -940,6 +943,9 @@ int ompi_continue_allocate_request(
             if (max_poll > 0) {
                 cont_req->continue_max_poll = max_poll;
             }
+        }
+        if (0 == cont_req->continue_max_poll) {
+            cont_req->continue_max_poll = UINT32_MAX;
         }
         *cont_req_ptr = &cont_req->super;
 
