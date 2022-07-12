@@ -355,8 +355,8 @@ int ompi_continue_progress_request_n(ompi_cont_request_t *cont_req, uint32_t max
 {
     if (tld->in_progress) return 0;
     if (NULL == cont_req->cont_complete_list) {
-        /* progress as many as allowed */
-        return ompi_continue_progress_n(cont_req->continue_max_poll, tld);
+        /* nothing to progress in this request */
+        return 0;
     }
     if (opal_list_is_empty(cont_req->cont_complete_list)) {
         return 0;
@@ -405,6 +405,10 @@ int ompi_continue_progress_request(ompi_request_t *req)
     thread_local_data_t *tld = get_tl_data();
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
     int rc = ompi_continue_progress_request_n(cont_req, cont_req->continue_max_poll, tld);
+    /* global progress, if the request isn't complete yet */
+    if (!REQUEST_COMPLETE(req)) {
+        rc += ompi_continue_progress_n(cont_req->continue_max_poll - rc, tld);
+    }
     return rc;
 }
 
@@ -418,22 +422,29 @@ int ompi_continue_register_request_progress(ompi_request_t *req, ompi_wait_sync_
 
     thread_local_data_t *tld = get_tl_data();
 
-    if (REQUEST_COMPLETE(&cont_req->super)) {
-        return OMPI_SUCCESS;
-    }
-
     if (NULL == cont_req->cont_complete_list) {
-      /* progress requests to see if we can complete it already */
-      ompi_continue_progress_n(UINT32_MAX, tld);
-      return OMPI_SUCCESS;
+        if (!REQUEST_COMPLETE(&cont_req->super)) {
+            /* progress requests to see if we can complete it already */
+            ompi_continue_progress_n(UINT32_MAX, tld);
+        }
+
+        return OMPI_SUCCESS;
     }
 
     /* add the continuation request to the thread-local list,
      * will be removed in ompi_continue_deregister_request_progress */
     opal_list_append(&tld->thread_progress_list, &cont_req->super.super.super);
 
+    if (REQUEST_COMPLETE(&cont_req->super)) {
+        return OMPI_SUCCESS;
+    }
+
     /* progress request to see if we can complete it already */
-    ompi_continue_progress_request_n(cont_req, cont_req->continue_max_poll, tld);
+    ompi_continue_progress_request_n(cont_req, UINT32_MAX, tld);
+
+    if (!REQUEST_COMPLETE(req)) {
+        ompi_continue_progress_n(UINT32_MAX, tld);
+    }
 
     if (REQUEST_COMPLETE(req)) return OMPI_SUCCESS;
 
