@@ -157,8 +157,7 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
 
     opal_hash_table_remove_value_uint32(&module->outstanding_locks,
                                         (uint32_t)target);
-
-    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
@@ -228,20 +227,10 @@ int ompi_osc_ucx_unlock_all(struct ompi_win_t *win) {
     }
 
     assert(module->lock_count == 0);
-
-    if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
-        for (uint64_t i = 0; i < module->state.dynamic_win_count; i++) {
-            ret = opal_common_ucx_wpmem_flush(module->local_dynamic_win_info[i].mem , OPAL_COMMON_UCX_SCOPE_WORKER, 0);
-            if (ret != OMPI_SUCCESS) {
-                return ret;
-            }
-        }
-    }
-    else {
-        ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
-        if (ret != OMPI_SUCCESS) {
-            return ret;
-        }
+ 
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
 
     if (!module->lock_all_is_nocheck) {
@@ -284,7 +273,7 @@ int ompi_osc_ucx_flush(int target, struct ompi_win_t *win) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP, target);
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
@@ -301,7 +290,7 @@ int ompi_osc_ucx_flush_all(struct ompi_win_t *win) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }

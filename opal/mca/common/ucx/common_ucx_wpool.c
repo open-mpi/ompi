@@ -786,18 +786,16 @@ OPAL_DECLSPEC int opal_common_ucx_winfo_flush(opal_common_ucx_winfo_t *winfo, in
     return rc;
 }
 
-OPAL_DECLSPEC int opal_common_ucx_wpmem_flush(opal_common_ucx_wpmem_t *mem,
+OPAL_DECLSPEC int opal_common_ucx_ctx_flush(opal_common_ucx_ctx_t *ctx,
                                               opal_common_ucx_flush_scope_t scope, int target)
 {
     _ctx_record_t *ctx_rec;
-    opal_common_ucx_ctx_t *ctx;
     int rc = OPAL_SUCCESS;
 
-    if (NULL == mem) {
+    if (NULL == ctx) {
         return OPAL_SUCCESS;
     }
 
-    ctx = mem->ctx;
     opal_mutex_lock(&ctx->mutex);
 
     OPAL_LIST_FOREACH (ctx_rec, &ctx->ctx_records, _ctx_record_t) {

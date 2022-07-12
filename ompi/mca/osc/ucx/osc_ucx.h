@@ -24,7 +24,7 @@
 #define OSC_UCX_VERBOSE MCA_COMMON_UCX_VERBOSE
 
 #define OMPI_OSC_UCX_POST_PEER_MAX 32
-#define OMPI_OSC_UCX_ATTACH_MAX    32
+#define OMPI_OSC_UCX_ATTACH_MAX    48
 #define OMPI_OSC_UCX_MEM_ADDR_MAX_LEN  1024
 
 typedef struct ompi_osc_ucx_component {
