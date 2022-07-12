@@ -22,6 +22,10 @@
 #include "ompi/mpiext/continue/c/continuation.h"
 #include "ompi/request/request.h"
 
+#include "ompi/communicator/communicator.h"
+#include "ompi/file/file.h"
+#include "ompi/win/win.h"
+
 
 static opal_free_list_t ompi_continuation_freelist;
 static opal_free_list_t ompi_request_cont_data_freelist;
@@ -234,6 +238,9 @@ static inline
 int ompi_continue_progress_request_n(ompi_cont_request_t *cont_req,
                                      uint32_t max_poll,
                                      thread_local_data_t *tld);
+
+static inline
+int ompi_continue_check_request_error_abort(ompi_request_t *req);
 
 static inline
 void ompi_continue_cont_release(ompi_continuation_t *cont, int rc)
@@ -1087,4 +1094,40 @@ void ompi_continue_get_error_info(
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)req;
     *mpi_object = cont_req->cont_errorinfo.mpi_object;
     *mpi_object_type = cont_req->cont_errorinfo.type;
+}
+
+
+static inline __opal_attribute_always_inline__
+int ompi_continue_check_errhandler_abort(ompi_errhandler_t* errhandler)
+{
+    /* it's safe to use binary OR here, safes a jmp */
+    return (errhandler == &ompi_mpi_errors_are_fatal.eh | errhandler == &ompi_mpi_errors_abort.eh);
+}
+
+static inline
+int ompi_continue_check_request_error_abort(ompi_request_t *req)
+{
+    ompi_mpi_object_t obj = req->req_mpi_object;
+    switch (req->req_type) {
+        case OMPI_REQUEST_PART:
+        case OMPI_REQUEST_COLL:
+        case OMPI_REQUEST_PML:
+        case OMPI_REQUEST_COMM: // partitioned, coll, p2p, and comm duplication requests have a communicator set
+            return ompi_continue_check_errhandler_abort(obj.comm->error_handler);
+        case OMPI_REQUEST_IO:   // file IO requests have a file set
+            return ompi_continue_check_errhandler_abort(obj.file->error_handler);
+        case OMPI_REQUEST_WIN:  // RMA requests have a window set
+            return ompi_continue_check_errhandler_abort(obj.win->error_handler);
+        case OMPI_REQUEST_GEN:
+        case OMPI_REQUEST_CONT: // continuation and generalized requests fail on MPI_COMM_SELF
+            return ompi_continue_check_errhandler_abort(ompi_mpi_comm_self.comm.error_handler);
+        case OMPI_REQUEST_NOOP:
+        case OMPI_REQUEST_NULL:
+        case OMPI_REQUEST_MAX:
+            /**
+             * NOTE: not using the default label so a warning is triggered if a new request type is introduced
+             * NULL and NOOP requests do not fail so signal that they are safe to assume they would abort
+             */
+            return true;
+    }
 }
