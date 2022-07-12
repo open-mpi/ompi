@@ -430,6 +430,11 @@ static inline bool ompi_request_tag_is_collective(int tag) {
 
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+    if (OMPI_REQUEST_CONT == req->req_type) {
+        ompi_continue_progress_request(req);
+    }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
     if (opal_using_threads ()) {
         if(!REQUEST_COMPLETE(req)) {
             void *_tmp_ptr;
