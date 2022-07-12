@@ -700,7 +700,6 @@ static void handle_failed_cont(ompi_continuation_t *cont, int status, bool have_
 static int request_completion_cb(ompi_request_t *request)
 {
     assert(NULL != request->req_complete_cb_data);
-    int rc = 0;
     ompi_request_cont_data_t *req_cont_data;
 
     /* atomically swap the pointer here to avoid race with ompi_continue_global_wakeup */
@@ -708,7 +707,7 @@ static int request_completion_cb(ompi_request_t *request)
 
     if (NULL == req_cont_data) {
         /* the wakeup call took away our callback data */
-        return rc;
+        return 1;
     }
 
     ompi_continuation_t *cont = req_cont_data->cont_obj;
@@ -754,7 +753,7 @@ static int request_completion_cb(ompi_request_t *request)
 
     opal_free_list_return(&ompi_request_cont_data_freelist, &req_cont_data->super);
 
-    return rc;
+    return 1;
 }
 
 /* release all continuations, either by checking the requests for failure or just marking
