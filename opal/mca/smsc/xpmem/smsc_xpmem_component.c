@@ -119,7 +119,7 @@ static int mca_smsc_xpmem_component_query(void)
     while (fgets(buffer, sizeof(buffer), fh)) {
         uintptr_t low, high;
         char *tmp;
-        /* each line of /proc/self/maps starts with low-high in hexidecimal (without a 0x) */
+        /* each line of /proc/self/maps starts with low-high in hexadecimal (without a 0x) */
         low = strtoul(buffer, &tmp, 16);
         high = strtoul(tmp + 1, NULL, 16);
         if (address_max < high) {
@@ -135,7 +135,7 @@ static int mca_smsc_xpmem_component_query(void)
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    /* save the calcuated maximum */
+    /* save the calculated maximum */
     mca_smsc_xpmem_component.my_address_max = address_max - 1;
 
     /* it is safe to use XPMEM_MAXADDR_SIZE here (which is always (size_t)-1 even though

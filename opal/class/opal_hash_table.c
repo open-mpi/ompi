@@ -37,7 +37,7 @@
  * Sketch: [Contributed by David Linden of Hewlett-Packard]
  *
  * This has been found to be good for search and insert and
- * (seldom-)remove, all with probablistic O(1) time.  Having a good
+ * (seldom-)remove, all with probabilistic O(1) time.  Having a good
  * distribution of the hash indices is important, so even if you know
  * the keys distribute well under a mask, that micro-optimization
  * isn't worth doing.
@@ -299,7 +299,7 @@ opal_hash_table_remove_elt_at(opal_hash_table_t *ht, size_t ii)
                 /* already in place, either ideal or best-for-now */
                 break;
             } else if (!elts[jj].valid) {
-                /* move it down, and invaildate where it came from */
+                /* move it down, and invalidate where it came from */
                 elts[jj] = elts[ii];
                 elts[ii].valid = 0;
                 break;

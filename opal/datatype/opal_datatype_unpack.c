@@ -272,7 +272,7 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
  * - a datatype (with the flag DT_DATA set) will have the contiguous flags set if and only if
  *   the data is really contiguous (extent equal with size)
  * - for the OPAL_DATATYPE_LOOP type the DT_CONTIGUOUS flag set means that the content of the loop
- * is contiguous but with a gap in the begining or at the end.
+ * is contiguous but with a gap in the beginning or at the end.
  * - the DT_CONTIGUOUS flag for the type OPAL_DATATYPE_END_LOOP is meaningless.
  */
 int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct iovec *iov,

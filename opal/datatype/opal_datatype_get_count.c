@@ -59,7 +59,7 @@ ssize_t opal_datatype_get_element_count(const opal_datatype_t *datatype, size_t 
                 }
                 pos_desc++; /* advance to the next element after the end loop */
             } else {
-                pos_desc = pStack->index + 1; /* go back to the begining of the loop */
+                pos_desc = pStack->index + 1; /* go back to the beginning of the loop */
             }
             continue;
         }
@@ -129,7 +129,7 @@ int32_t opal_datatype_set_element_count(const opal_datatype_t *datatype, size_t 
                 }
                 pos_desc++; /* advance to the next element after the end loop */
             } else {
-                pos_desc = pStack->index + 1; /* go back to the begining of the loop */
+                pos_desc = pStack->index + 1; /* go back to the beginning of the loop */
             }
             continue;
         }
@@ -195,7 +195,7 @@ int opal_datatype_compute_ptypes(opal_datatype_t *datatype)
                 }
                 pos_desc++; /* advance to the next element after the end loop */
             } else {
-                pos_desc = pStack->index + 1; /* go back to the begining of the loop */
+                pos_desc = pStack->index + 1; /* go back to the beginning of the loop */
             }
             continue;
         }

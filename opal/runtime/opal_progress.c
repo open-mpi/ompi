@@ -85,8 +85,8 @@ static int debug_output = -1;
 #endif
 
 /**
- * Fake callback used for threading purpose when one thread
- * progesses callbacks while another unregister somes. The root
+ * Fake callback used for threading purposes when one thread
+ * progresses callbacks while another unregisters some. The root
  * of the problem is that we allow modifications of the callback
  * array directly from the callbacks themselves. Now if
  * writing a pointer is atomic, we should not have any more
@@ -204,11 +204,11 @@ static int opal_progress_events(void)
 
 /*
  * Progress the event library and any functions that have registered to
- * be called.  We don't propogate errors from the progress functions,
+ * be called.  We don't propagate errors from the progress functions,
  * so no action is taken if they return failures.  The functions are
  * expected to return the number of events progressed, to determine
  * whether or not we should yield the CPU during MPI progress.
- * This is only losely tracked, as an error return can cause the number
+ * This is only loosely tracked, as an error return can cause the number
  * of progressed events to appear lower than it actually is.  We don't
  * care, as the cost of that happening is far outweighed by the cost
  * of the if checks (they were resulting in bad pipe stalling behavior)

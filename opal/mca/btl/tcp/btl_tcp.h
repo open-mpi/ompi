@@ -121,8 +121,8 @@ struct mca_btl_tcp_component_t {
 #endif
     /* Port range restriction */
 
-    char *tcp_if_include;   /**< comma seperated list of interface to include */
-    char *tcp_if_exclude;   /**< comma seperated list of interface to exclude */
+    char *tcp_if_include;   /**< comma separated list of interface to include */
+    char *tcp_if_exclude;   /**< comma separated list of interface to exclude */
     int tcp_sndbuf;         /**< socket sndbuf size */
     int tcp_rcvbuf;         /**< socket rcvbuf size */
     int tcp_disable_family; /**< disabled AF_family */
@@ -191,8 +191,8 @@ extern mca_btl_tcp_module_t mca_btl_tcp_module;
  * TCP component initialization.
  *
  * @param num_btl_modules (OUT)           Number of BTLs returned in BTL array.
- * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
- * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
+ * @param allow_multi_user_threads (OUT)  Flag indicating whether BTL supports user threads (TRUE)
+ * @param have_hidden_threads (OUT)       Flag indicating whether BTL uses threads (TRUE)
  */
 extern mca_btl_base_module_t **mca_btl_tcp_component_init(int *num_btl_modules,
                                                           bool allow_multi_user_threads,
@@ -243,7 +243,7 @@ extern int mca_btl_tcp_del_procs(struct mca_btl_base_module_t *btl, size_t nproc
  *
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transfered
+ * @param descriptor (IN)  Description of the data to be transferred
  * @param tag (IN)         The tag value used to notify the peer.
  */
 
@@ -297,7 +297,7 @@ extern int mca_btl_tcp_free(struct mca_btl_base_module_t *btl, mca_btl_base_desc
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
- * convertor. If the convertor references data that is contigous,
+ * convertor. If the convertor references data that is contiguous,
  * the descriptor may simply point to the user buffer. Otherwise,
  * this routine is responsible for allocating buffer space and
  * packing if required.

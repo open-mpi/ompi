@@ -149,7 +149,7 @@ struct options_data_t {
      * language-binding specific file (for example, a C++ header file)
      * when invoking an optional language binding. */
     char *req_file;
-    /* Default includedir, before variable expansion.  Almost alwyas
+    /* Default includedir, before variable expansion.  Almost always
      * set as ${includedir} outside of multilib situations. */
     char *path_includedir;
     /* Default libdir, before variable expansion.  Almost always set
@@ -610,7 +610,7 @@ int main(int argc, char *argv[])
             old_match = temp;
             temp = strstr(temp + 1, extension);
         }
-        /* Only if there was a match of .exe, erase the last occurence of .exe */
+        /* Only if there was a match of .exe, erase the last occurrence of .exe */
         if (NULL != old_match) {
             *old_match = '\0';
         }
@@ -836,7 +836,7 @@ int main(int argc, char *argv[])
                    || 0 == strcmp(user_argv[i], "-Wl,-Bdynamic")) {
             flags &= ~COMP_WANT_STATIC;
         } else if (0 == strcmp(user_argv[i], "--openmpi:linkall")) {
-            /* This is an intentionally undocummented wrapper compiler
+            /* This is an intentionally undocumented wrapper compiler
                switch.  It should only be used by Open MPI developers
                -- not end users.  It will cause mpicc to use the
                static library list, even if we're compiling

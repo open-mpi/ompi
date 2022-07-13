@@ -72,7 +72,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_group_t);
  * @param[in] project_name Project name for this group.
  * @param[in] framework_name Framework name for this group.
  * @param[in] component_name Component name for this group.
- * @param[in] descrition Description of this group.
+ * @param[in] description Description of this group.
  *
  * @retval index Unique group index
  * @return opal error code on Error

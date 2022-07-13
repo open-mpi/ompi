@@ -54,7 +54,7 @@ typedef enum {
         return value should be the size of the bound communicator. */
     MCA_BASE_PVAR_HANDLE_BIND,
     /** A handle associated with this variable has been started. It is
-        recommended that any computation that might affect perfomance
+        recommended that any computation that might affect performance
         only be performed when a bound handle has been started. */
     MCA_BASE_PVAR_HANDLE_START,
     /** A handle associated with this variable has been stopped */
@@ -82,7 +82,7 @@ enum {
     /** Variable describes the low-watermark of the utilization
        of a resource */
     MCA_BASE_PVAR_CLASS_LOWWATERMARK,
-    /** Variable counts the number of occurences of a specific event */
+    /** Variable counts the number of occurrences of a specific event */
     MCA_BASE_PVAR_CLASS_COUNTER,
     /** Variable represents a sum of arguments processed during a
        specific event */
@@ -147,7 +147,7 @@ typedef int (*mca_base_set_value_fn_t)(struct mca_base_pvar_t *pvar, const void 
 /**
  * Function to notify of a pvar handle event.
  *
- * @param[in]  pvar  Performance variable the handle is assocaited with
+ * @param[in]  pvar  Performance variable the handle is associated with
  * @param[in]  event Event that has occurred. See mca_base_pvar_event_t.
  * @param[in]  obj   Bound object
  * @param[out] count Value count for this object (on MCA_BASE_PVAR_HANDLE_BIND)
@@ -320,7 +320,7 @@ mca_base_pvar_register(const char *project, const char *framework, const char *c
                        mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify, void *ctx);
 
 /**
- * Convinience function for registering a performance variable
+ * Convenience function for registering a performance variable
  * associated with a component.
  *
  * While quite similar to mca_base_pvar_register(), there is one key
@@ -429,7 +429,7 @@ OPAL_DECLSPEC int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_t
 int mca_base_pvar_mark_invalid(int index);
 
 /**
- * Convienience functions for performance variables
+ * Convenience functions for performance variables
  */
 static inline bool mca_base_pvar_is_sum(const mca_base_pvar_t *pvar)
 {
@@ -532,7 +532,7 @@ OPAL_DECLSPEC int mca_base_pvar_handle_write_value(mca_base_pvar_handle_t *handl
                                                    const void *value);
 
 /**
- * Convienience function for sending notification of a handle change
+ * Convenience function for sending notification of a handle change
  *
  * @param[in]  handle Handle event occurred on
  * @param[in]  event  Event that occurred

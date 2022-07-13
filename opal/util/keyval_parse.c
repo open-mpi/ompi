@@ -280,7 +280,7 @@ static int add_to_env_str(char *var, char *val)
     varsz = strlen(var);
     if (NULL != val) {
         valsz = strlen(val);
-        /* If we have a value, it will be preceeded by a '=', so be
+        /* If we have a value, it will be preceded by a '=', so be
            sure to account for that */
         valsz += 1;
     }

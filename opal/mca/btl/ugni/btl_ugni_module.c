@@ -340,7 +340,7 @@ int mca_btl_ugni_device_handle_event_error(mca_btl_ugni_rdma_desc_t *rdma_desc,
         char char_buffer[1024];
         GNI_CqErrorStr(event_data, char_buffer, sizeof(char_buffer));
 
-        BTL_ERROR(("giving up on desciptor %p, recoverable %d: %s", (void *) rdma_desc, recoverable,
+        BTL_ERROR(("giving up on descriptor %p, recoverable %d: %s", (void *) rdma_desc, recoverable,
                    char_buffer));
 
         return OPAL_ERROR;

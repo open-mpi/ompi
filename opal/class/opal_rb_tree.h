@@ -100,7 +100,7 @@ typedef int (*opal_rb_tree_condition_fn_t)(void *);
 typedef void (*opal_rb_tree_action_fn_t)(void *, void *);
 
 /*
- * Public function protoypes
+ * Public function prototypes
  */
 
 /**
@@ -194,7 +194,7 @@ OPAL_DECLSPEC int opal_rb_tree_traverse(opal_rb_tree_t *tree, opal_rb_tree_condi
  *
  * @param tree a pointer to the tree data structure
  *
- * @retval int the nuber of items on the tree
+ * @retval int the number of items on the tree
  */
 OPAL_DECLSPEC int opal_rb_tree_size(opal_rb_tree_t *tree);
 

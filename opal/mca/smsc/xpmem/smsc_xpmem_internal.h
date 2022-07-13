@@ -59,7 +59,7 @@ struct mca_smsc_xpmem_component_t {
      * larger value will produce fewer entries in the cache but will increase attachment time. */
     unsigned int log_attach_align;
     /** maximum size that will be used with a single memcpy call. on some systems we see better
-     * peformance if we chunk the copy into multiple memcpy calls. */
+     * performance if we chunk the copy into multiple memcpy calls. */
     uint64_t memcpy_chunk_size;
 };
 

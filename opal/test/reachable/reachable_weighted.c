@@ -558,7 +558,7 @@ int ranking_test()
 
     /* TEST8
      * Compares interface pairs with bandwidth 10->11 and 11->10.
-     * These connections should be equivilant, as they have the same
+     * These connections should be equivalent, as they have the same
      * bandwidth and same discrepancy.
      */
     test_no++;

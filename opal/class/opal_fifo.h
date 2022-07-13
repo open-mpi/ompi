@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
- *                         reseved.
+ *                         reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -222,7 +222,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
     /* use load-linked store-conditional to avoid ABA issues */
     do {
         if (++attempt == 5) {
-            /* deliberatly suspend this thread to allow other threads to run. this should
+            /* deliberately suspend this thread to allow other threads to run. this should
              * only occur during periods of contention on the lifo. */
             _opal_lifo_release_cpu();
             attempt = 0;

@@ -163,7 +163,7 @@ int opal_info_free(opal_info_t **info);
 
 /**
  *   Get a (key, value) pair from an 'MPI_Info' object and assign it
- *   into a boolen output.
+ *   into a boolean output.
  *
  *   This call marks the entry referenced.
  *
@@ -175,7 +175,7 @@ int opal_info_free(opal_info_t **info);
  *
  *   @retval OPAL_SUCCESS
  *
- *   If found, the string value will be cast to the boolen output in
+ *   If found, the string value will be cast to the boolean output in
  *   the following manner:
  *
  *   - If the string value is digits, the return value is "(bool)
@@ -221,7 +221,7 @@ OPAL_DECLSPEC int opal_info_get_value_enum(opal_info_t *info, const char *key, i
  *   @retval OPAL_SUCCESS
  *
  *   The \c string pointer will only be set if the key is found, i.e., if \c flag
- *   is set to \c true. It is the caller's responsibility to decremenet the
+ *   is set to \c true. It is the caller's responsibility to decrement the
  *   reference count of the \c string object by calling \c OBJ_RELEASE on it
  *   once the object is not needed any more.
  */
@@ -268,7 +268,7 @@ OPAL_DECLSPEC int opal_info_get_valuelen(opal_info_t *info, const char *key, int
  *   @retval OPAL_SUCCESS
  *   @retval OPAL_ERR_BAD_PARAM
  *
- *   It is the caller's responsibility to decremenet the reference count of the
+ *   It is the caller's responsibility to decrement the reference count of the
  *   \c key string by calling \c OBJ_RELEASE on it once the object is not needed
  *   any more.
  */

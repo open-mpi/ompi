@@ -87,7 +87,7 @@ static void opal_interval_tree_construct(opal_interval_tree_t *tree)
     tree->reader_count = 0;
     tree->epoch = 0;
 
-    /* set all reader epochs to UINT_MAX. this value is used to simplfy
+    /* set all reader epochs to UINT_MAX. this value is used to simplify
      * checks against the current epoch. */
     for (int i = 0; i < OPAL_INTERVAL_TREE_MAX_READERS; ++i) {
         tree->reader_epochs[i] = UINT_MAX;
@@ -788,7 +788,7 @@ static opal_interval_tree_node_t *left_rotate(opal_interval_tree_t *tree,
 
     rp_publish(&y->left, x_copy);
 
-    /* normlly we would have to check to see if we are at the root.
+    /* normally we would have to check to see if we are at the root.
      * however, the root sentinal takes care of it for us */
     if (x == parent->left) {
         rp_publish(&parent->left, y);

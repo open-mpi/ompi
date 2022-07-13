@@ -45,7 +45,7 @@ int create_socketpair(int family, int type, int protocol, int fd[2])
         return -1;
     }
     if (!fd) {
-        opal_output(0, "Invalid socked: %d", (ERR(EINVAL)));
+        opal_output(0, "Invalid socket: %d", (ERR(EINVAL)));
         return -1;
     }
 
