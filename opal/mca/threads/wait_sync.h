@@ -145,9 +145,10 @@ OPAL_DECLSPEC void opal_threads_base_wait_sync_global_wakeup_mt(int status);
 static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int status)
 {
     if (OPAL_LIKELY(OPAL_SUCCESS == status)) {
-        if (0 != (OPAL_THREAD_ADD_FETCH32(&sync->count, -updates))) {
+        if (1 != sync->count && 0 != (OPAL_THREAD_ADD_FETCH32(&sync->count, -updates))) {
             return;
         }
+        sync->count = 0;
     } else {
         /* this is an error path so just use the atomic */
         sync->status = status;
