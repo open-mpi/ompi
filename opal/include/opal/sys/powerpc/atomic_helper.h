@@ -25,7 +25,7 @@
 #define OPAL_SYS_ARCH_ATOMIC_HELPER_H 1
 
 #if defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__) || defined(__ibmxl__)
-/* work-around bizzare xlc bug in which it sign-extends
+/* work-around bizarre xlc bug in which it sign-extends
    a pointer to a 32-bit signed integer */
 #    define OPAL_ASM_ADDR(a) ((uintptr_t) a)
 #else

@@ -77,7 +77,7 @@ static void opal_mem_hooks_finalize(void)
     release_run_callbacks = false;
     opal_atomic_mb();
 
-    /* aquire the lock, just to make sure no one is currently
+    /* acquire the lock, just to make sure no one is currently
        twiddling with the list.  We know this won't last long, since
        no new calls will come in after we set run_callbacks to false */
     opal_atomic_lock(&release_lock);

@@ -37,7 +37,7 @@ BEGIN_C_DECLS
  * opal_hwloc_topology, nor does it set the process-wide memory
  * affinity policy.  Filling opal_hwloc_topology via
  * hwloc_topology_load() can be expensive (and/or serialized by the
- * OS); it may not be desireable to call this function in every MPI
+ * OS); it may not be desirable to call this function in every MPI
  * process on a machine.  Hence, it is the responsibility for an upper
  * layer to both fill opal_hwloc_topology in some scalable way.
  */

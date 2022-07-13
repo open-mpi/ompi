@@ -199,7 +199,7 @@ static int ptym_open(char *pts_name)
                     continue; /* try next pty device */
                 }
             }
-            pts_name[5] = 't'; /* chage "pty" to "tty" */
+            pts_name[5] = 't'; /* change "pty" to "tty" */
             return fdm;        /* got it, return fd of master */
         }
     }

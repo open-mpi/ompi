@@ -102,7 +102,7 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
     if ((blocklen_bytes * cando_count) > *(SPACE))
         cando_count = (*SPACE) / blocklen_bytes;
 
-    /* premptively update the number of COUNT we will return. */
+    /* preemptively update the number of COUNT we will return. */
     *(COUNT) -= cando_count;
 
     if (_elem->blocklen < 9) {

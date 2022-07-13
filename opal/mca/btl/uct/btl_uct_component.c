@@ -613,7 +613,7 @@ static int mca_btl_uct_component_progress_pending(mca_btl_uct_module_t *uct_btl)
 /**
  * @brief UCT BTL progress function
  *
- * This function explictly progresses all workers.
+ * This function explicitly progresses all workers.
  */
 static int mca_btl_uct_component_progress(void)
 {

@@ -106,7 +106,7 @@ static inline void opal_btl_usnic_update_window(opal_btl_usnic_endpoint_t *endpo
         opal_btl_usnic_add_to_endpoints_needing_ack(endpoint);
     }
 
-    /* A hueristic: set to send this ACK after we have checked our
+    /* A heuristic: set to send this ACK after we have checked our
        incoming DATA_CHANNEL component.act_iteration_delay times
        (i.e., so we can piggyback an ACK on an outgoing send) */
     if (0 == endpoint->endpoint_acktime) {
@@ -208,7 +208,7 @@ static inline int opal_btl_usnic_check_rx_seq(opal_btl_usnic_endpoint_t *endpoin
        ACKed).
 
        We have saved all un-ACKed segment in an array on the
-       endpoint that is the same legnth as the receiver's window
+       endpoint that is the same length as the receiver's window
        (i.e., WINDOW_SIZE).  We can use the incoming segment sequence
        number to find its position in the array.  It's a little
        tricky because the left edge of the receiver window keeps

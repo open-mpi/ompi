@@ -397,7 +397,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t *mem)
                 }
             }
         }
-        /* relese the lock on the bucket */
+        /* release the lock on the bucket */
         OPAL_THREAD_UNLOCK(&(mem_options->buckets[i].lock));
     }
     return (OPAL_SUCCESS);

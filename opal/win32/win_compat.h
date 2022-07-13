@@ -119,7 +119,7 @@ typedef unsigned int uint;
  * Microsoft compiler complain about non conformance of the default UNIX function.
  * Non conformance to the POSIX standard, and they suggest to use the version
  * starting with an _ instead. So, in order to keep cl.exe happy (and quiet) we can
- * use the followings defines.
+ * use the following defines.
  */
 #    define getpid                  _getpid
 #    define strdup                  _strdup

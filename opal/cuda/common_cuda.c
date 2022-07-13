@@ -217,7 +217,7 @@ static void cuda_dump_memhandle(int, void *, char *) __opal_attribute_unused__;
 #    define CUDA_DUMP_EVTHANDLE(a)
 #endif /* OPAL_ENABLE_DEBUG */
 
-/* This is a seperate function so we can see these variables with ompi_info and
+/* This is a separate function so we can see these variables with ompi_info and
  * also set them with the tools interface */
 void mca_common_cuda_register_mca_variables(void)
 {
@@ -258,7 +258,7 @@ void mca_common_cuda_register_mca_variables(void)
 
     /* Use this parameter to increase the number of outstanding events allows */
     (void) mca_base_var_register("ompi", "mpi", "common_cuda", "event_max",
-                                 "Set number of oustanding CUDA events", MCA_BASE_VAR_TYPE_INT,
+                                 "Set number of outstanding CUDA events", MCA_BASE_VAR_TYPE_INT,
                                  NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                  &cuda_event_max);
 
@@ -289,7 +289,7 @@ void mca_common_cuda_register_mca_variables(void)
 /**
  * This is the first stage of initialization.  This function is called
  * explicitly by any BTLs that can support CUDA-aware. It is called during
- * the component open phase of initialization. This fuction will look for
+ * the component open phase of initialization. This function will look for
  * the SONAME of the library which is libcuda.so.1. In most cases, this will
  * result in the library found.  However, there are some setups that require
  * the extra steps for searching. This function will then load the symbols
@@ -1788,11 +1788,11 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
         }
     }
 
-    /* WORKAROUND - They are times when the above code determines a pice of memory
+    /* WORKAROUND - They are times when the above code determines a piece of memory
      * is GPU memory, but it actually is not.  That has been seen on multi-GPU systems
      * with 6 or 8 GPUs on them. Therefore, we will do this extra check.  Note if we
      * made it this far, then the assumption at this point is we have GPU memory.
-     * Unfotunately, this extra call is costing us another 100 ns almost doubling
+     * Unfortunately, this extra call is costing us another 100 ns almost doubling
      * the cost of this entire function. */
     if (OPAL_LIKELY(mca_common_cuda_gpu_mem_check_workaround)) {
         CUdeviceptr pbase;
@@ -2132,7 +2132,7 @@ bool opal_cuda_check_bufs(char *dest, char *src)
 /* Checks the type of pointer
  *
  * @param buf   check one pointer providing a convertor.
- *  Provides aditional information, e.g. managed vs. unmanaged GPU buffer
+ *  Provides additional information, e.g. managed vs. unmanaged GPU buffer
  */
 bool opal_cuda_check_one_buf(char *buf, opal_convertor_t *convertor)
 {

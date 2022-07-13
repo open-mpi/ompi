@@ -85,7 +85,7 @@ struct ompi_cmd_line_param_t {
     opal_list_item_t super;
 
     /* Note that clp_arg points to storage "owned" by someone else; it
-       has the original option string by referene, not by value.
+       has the original option string by reference, not by value.
        Hence, it should not be free()'ed. */
 
     char *clp_arg;
@@ -269,7 +269,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown, bool ignore_u
     }
 
     /* Now traverse the easy-to-parse sequence of tokens.  Note that
-       incrementing i must happen elsehwere; it can't be the third
+       incrementing i must happen elsewhere; it can't be the third
        clause in the "if" statement. */
 
     param = NULL;
@@ -608,7 +608,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 
                 /* Loop over adding the description to the array, breaking
                    the string at most at MAX_WIDTH characters.  We need a
-                   modifyable description (for simplicity), so strdup the
+                   modifiable description (for simplicity), so strdup the
                    clo_description (because it's likely a compiler
                    constant, and may barf if we write temporary \0's in
                    the middle). */
@@ -1073,7 +1073,7 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args, int *out
         }
 
         /* If we do find the option, copy it and all of its parameters
-           to the output args.  If we run out of paramters (i.e., no
+           to the output args.  If we run out of parameters (i.e., no
            more tokens in the original argv), that error will be
            handled at a higher level) */
 

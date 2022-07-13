@@ -19,7 +19,7 @@
 /**
  * @file
  * The opal_graph interface is used to provide a generic graph infrastructure
- * to Open-MPI. The graph is represented as an adjacentcy list.
+ * to Open-MPI. The graph is represented as an adjacency list.
  * The graph is a list of vertices. The graph is a weighted directional graph.
  * Each vertex contains a pointer to a vertex data.
  * This pointer can point to the structure that this vertex belongs to.
@@ -53,7 +53,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_adjacency_list_t);
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_graph_t);
 
 /**
- * Function pointer for coping a vertex data from one vertex to
+ * Function pointer for copying a vertex data from one vertex to
  * another
  *
  * @param dst The destination pointer of vertex_data
@@ -83,7 +83,7 @@ typedef void *(*opal_graph_alloc_vertex_data)(void);
  *@param vertex_data1
  *@param vertex_data2
  *
- *@return int The comparition results. 1- vertex_data1 is bigger
+ *@return int The comparison results. 1- vertex_data1 is bigger
  *        then vertex_data2, 0- vertex_data1 is equal to
  *        vertex_data2 and -1- vertex_data1 is smaller the
  *        vertex_data2.
@@ -310,7 +310,7 @@ OPAL_DECLSPEC int opal_graph_get_adjacent_vertices(opal_graph_t *graph, opal_gra
 
 /**
  * This graph API duplicates a graph. Note that this API does
- * not copy the graph but builds a new graph while coping just
+ * not copy the graph but builds a new graph while copying just
  * the vertices data.
  *
  * @param dest The new created graph.

@@ -18,7 +18,7 @@ The MCA for threading libraries is implemented in two places, once as a set of `
 
 For performance reasons, in particular synchronization overhead, it is not possible to implement a threading model as a traditional MCA. This means --at least in the short term-- that threading models are chosen at compile time rather than runtime options, using mechanisms similar to Open MPI's libevent integration.
 
-The .h files are meant to be run on the fast path containing inline synchonization functions (threads_<threading_model>_mutex.h, thread local storage (threads_<threading_model>_tsd.h) and the opal_thread structure (threads_<threading_model>_thread.h).
+The .h files are meant to be run on the fast path containing inline synchronization functions (threads_<threading_model>_mutex.h, thread local storage (threads_<threading_model>_tsd.h) and the opal_thread structure (threads_<threading_model>_thread.h).
 
 The rest of the threading implementation follows the normal MCA model:
 

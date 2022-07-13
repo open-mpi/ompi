@@ -66,7 +66,7 @@ BEGIN_C_DECLS
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 /*
- * Shared Memory resource managment
+ * Shared Memory resource management
  */
 
 struct sm_fifo_t;

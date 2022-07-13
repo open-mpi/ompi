@@ -86,7 +86,7 @@
 **   real
 **   double precision
 **
-**   Unfortunatly, here we have to take care, whether float and real,
+**   Unfortunately, here we have to take care, whether float and real,
 **   respectively double and double precision do match...
 **
 **  a) fr32 (float and real are 32 bits) (e.g. SGI n32 and 64, SUN, NEC SX5,...)
@@ -126,7 +126,7 @@
 **                (128                 106       10) (special flags required).
 **  SX5:           128                 105       22
 **
-** We will not implement all of these routiens, but we consider them
+** We will not implement all of these routines, but we consider them
 ** now when defining the header-settings
 **
 ***********************************************************************/
@@ -171,7 +171,7 @@
 **   bits 7 & 8: reserved for later use. currently set to 00
 ** 2. Byte:
 **   bits 1 & 2: length of long: 00 = 32, 01 = 64
-**   bits 3 & 4: lenght of long long (not used currently, set to 00).
+**   bits 3 & 4: length of long long (not used currently, set to 00).
 **   bits 5 & 6: length of C/C++ bool (00 = 8, 01 = 16, 10 = 32)
 **   bits 7 & 8: length of Fortran Logical (00 = 8, 01 = 16, 10 = 32)
 ** 3. Byte:

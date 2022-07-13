@@ -95,7 +95,7 @@ static inline int opal_clock_gettime(struct timespec *spec)
  * Simple, portable wrapper around clock_getres(3) for high-precision time.
  *
  * If the underlying system does not have clock_gettime(3), return usec
- * precison (because opal_clock_gettime() will be using gettimeofday(3)).
+ * precision (because opal_clock_gettime() will be using gettimeofday(3)).
  *
  * @param spec (OUT) Struct to return the resolution
  * @return Return value from underlying clock_getres()

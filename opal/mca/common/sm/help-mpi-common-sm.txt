@@ -21,4 +21,4 @@ Open MPI, and if not, contact the Open MPI developers.
   Local host:        %s
   Requested size:    %ul
   Control seg size:  %ul
-  Data seg aligment: %ul
+  Data seg alignment: %ul

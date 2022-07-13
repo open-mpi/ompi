@@ -36,7 +36,7 @@ AC_DEFUN([MCA_opal_btl_portals4_CONFIG],[
            $1],
           [$2])
 
-    # need to propogate CPPFLAGS to all of OPAL
+    # need to propagate CPPFLAGS to all of OPAL
     AS_IF([test "$DIRECT_btl" = "portals4"],
           [CPPFLAGS="$CPPFLAGS $btl_portals4_CPPFLAGS"])
 

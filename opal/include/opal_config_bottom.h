@@ -129,7 +129,7 @@
 #    define __opal_attribute_format__(a, b, c)
 #endif
 
-/* Use this __atribute__ on function-ptr declarations, only */
+/* Use this __attribute__ on function-ptr declarations, only */
 #if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
 #    define __opal_attribute_format_funcptr__(a, b, c) __attribute__((__format__(a, b, c)))
 #else
@@ -180,7 +180,7 @@
 #    define __opal_attribute_noreturn__
 #endif
 
-/* Use this __atribute__ on function-ptr declarations, only */
+/* Use this __attribute__ on function-ptr declarations, only */
 #if OPAL_HAVE_ATTRIBUTE_NORETURN_FUNCPTR
 #    define __opal_attribute_noreturn_funcptr__ __attribute__((__noreturn__))
 #else
@@ -404,7 +404,7 @@
 #    endif
 
 /*
- * On some homogenous big-iron machines (Sandia's Red Storm), there
+ * On some homogeneous big-iron machines (Sandia's Red Storm), there
  * are no htonl and friends.  If that's the case, provide stubs.  I
  * would hope we never find a platform that doesn't have these macros
  * and would want to talk to the outside world... On other platforms
@@ -494,7 +494,7 @@ static inline uint16_t ntohs(uint16_t netvar)
 /* Prior to Mac OS X 10.3, the length modifier "ll" wasn't
    supported, but "q" was for long long.  This isn't ANSI
    C and causes a warning when using PRI?64 macros.  We
-   don't support versions prior to OS X 10.3, so we dont'
+   don't support versions prior to OS X 10.3, so we don't
    need such backward compatibility.  Instead, redefine
    the macros to be "ll", which is ANSI C and doesn't
    cause a compiler warning. */

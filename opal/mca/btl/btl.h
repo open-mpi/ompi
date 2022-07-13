@@ -44,7 +44,7 @@
  * transport are not available.
  *
  * The mca_btl_base_component_init_fn_t() is then called for each of the
- * components that are succesfully opened. The component init function may
+ * components that are successfully opened. The component init function may
  * return either:
  *
  * (1) a NULL list of BTL modules if the transport is not available,
@@ -197,7 +197,7 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_TAG_SMCUDA (MCA_BTL_TAG_BTL + 2)
 #define MCA_BTL_TAG_SM     (MCA_BTL_TAG_BTL + 3)
 
-/* prefered protocol */
+/* preferred protocol */
 #define MCA_BTL_FLAGS_SEND 0x0001
 #define MCA_BTL_FLAGS_PUT  0x0002
 #define MCA_BTL_FLAGS_GET  0x0004
@@ -263,9 +263,9 @@ typedef uint8_t mca_btl_base_tag_t;
 /* The BTL has active-message based atomics */
 #define MCA_BTL_FLAGS_ATOMIC_AM_FOP 0x400000
 
-/** Ths BTL's RDMA/atomics operation supports remote completion.
+/** The BTL's RDMA/atomics operation supports remote completion.
  * When the BTL reported the completion of a RDMA/atomic operation
- * on the initator side, the operation also finished on the target side.
+ * on the initiator side, the operation also finished on the target side.
  *
  * Note, this flag is for put and atomic write operations. Operations
  * like get, atomic fetch and atomic swap support remote
@@ -498,7 +498,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  */
 #define MCA_BTL_DES_FLAGS_BTL_OWNERSHIP 0x0002
 /* Allow the BTL to avoid calling the descriptor callback
- * if the send succeded in the btl_send (i.e in the fast path).
+ * if the send succeeded in the btl_send (i.e in the fast path).
  */
 #define MCA_BTL_DES_SEND_ALWAYS_CALLBACK 0x0004
 
@@ -879,7 +879,7 @@ typedef int (*mca_btl_base_module_deregister_mem_fn_t)(
  *
  * @param[IN] btl          BTL module
  * @param[IN] endpoint     BTL addressing information
- * @param[IN] descriptor   Description of the data to be transfered
+ * @param[IN] descriptor   Description of the data to be transferred
  * @param[IN] tag          The tag value used to notify the peer.
  *
  * @retval 1               The descriptor was successfully sent (see
@@ -1063,7 +1063,7 @@ typedef int (*mca_btl_base_module_atomic_op64_fn_t)(
  * @param[IN] btl             BTL module
  * @param[IN] endpoint        BTL addressing information
  * @param[IN] local_address (OUT) Local address to store the result in
- * @param[IN] remote_address  Remote address perfom operation on to (registered remotely)
+ * @param[IN] remote_address  Remote address perform operation on to (registered remotely)
  * @param[IN] local_handle    Local registration handle for region containing
  *                            (local_address, local_address + 8)
  * @param[IN] remote_handle   Remote registration handle for region containing
@@ -1110,7 +1110,7 @@ typedef int (*mca_btl_base_module_atomic_fop64_fn_t)(
  * @param[IN] btl             BTL module
  * @param[IN] endpoint        BTL addressing information
  * @param[OUT] local_address  Local address to store the result in
- * @param[IN] remote_address  Remote address perfom operation on to (registered remotely)
+ * @param[IN] remote_address  Remote address perform operation on to (registered remotely)
  * @param[IN] local_handle    Local registration handle for region containing
  *                            (local_address, local_address + 8)
  * @param[IN] remote_handle   Remote registration handle for region containing

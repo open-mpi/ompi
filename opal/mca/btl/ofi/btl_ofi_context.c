@@ -386,7 +386,7 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
         MCA_BTL_OFI_ABORT();
     }
 #ifdef FI_EINTR
-    /* sometimes, sockets provider complain about interupt. We do nothing. */
+    /* sometimes, sockets provider complain about interrupt. We do nothing. */
     else if (OPAL_UNLIKELY(ret == -FI_EINTR)) {
 
     }
