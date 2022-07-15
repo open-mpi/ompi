@@ -15,9 +15,8 @@
 #                         All rights reserved.
 # Copyright (c) 2014      Artem Polyakov <artpol84@gmail.com>
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (c) 2017      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
-#
+# Copyright (c) 2017-2022 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2019      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -28,23 +27,13 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-man_pages = mpisync.1
-EXTRA_DIST = $(man_pages:.1=.1in)\
-	     mpirun_prof \
+EXTRA_DIST = mpirun_prof \
 	     ompi_timing_post
 
 if OPAL_INSTALL_TIMING_BINARIES
 
 bin_PROGRAMS = mpisync
 bin_SCRIPTS = mpirun_prof ompi_timing_post
-
-nodist_man_MANS = $(man_pages)
-
-$(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
-
-install-data-hook:
-	(cd $(DESTDIR)$(mandir)/man1; rm -f mpirun_prof.1; $(LN_S) mpisync.1 mpirun_prof.1)
-	(cd $(DESTDIR)$(mandir)/man1; rm -f ompi_timing_post.1; $(LN_S) mpisync.1 ompi_timing_post.1)
 
 endif
 
@@ -57,6 +46,3 @@ mpisync_SOURCES = \
 
 mpisync_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 mpisync_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-distclean-local:
-	rm -f $(man_pages)
