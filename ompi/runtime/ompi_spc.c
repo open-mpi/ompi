@@ -166,9 +166,11 @@ static const ompi_spc_event_t ompi_spc_events_desc[OMPI_SPC_NUM_COUNTERS] = {
     SET_COUNTER_ARRAY(OMPI_SPC_MAX_UNEXPECTED_IN_QUEUE, "The maximum number of messages that the unexpected message queue(s) within an MPI process "
                                                     "contained at once since the last reset of this counter. Note: This counter is reset each time it is read.", true, false),
     SET_COUNTER_ARRAY(OMPI_SPC_MAX_OOS_IN_QUEUE, "The maximum number of messages that the out of sequence message queue(s) within an MPI process "
-                                             "contained at once since the last reset of this counter. Note: This counter is reset each time it is read.", true, false)
+                                             "contained at once since the last reset of this counter. Note: This counter is reset each time it is read.", true, false),
     SET_COUNTER_ARRAY(OMPI_SPC_ISENDRECV, "The number of times MPI_Isendrecv was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_ISENDRECV_REPLACE, "The number of times MPI_Isendrecv_replace was called.", false, false),
+    SET_COUNTER_ARRAY(OMPI_SPC_PARRIVED, "The number of times MPI_Parrived was called.", false, false),
+    SET_COUNTER_ARRAY(OMPI_SPC_PREADY, "The number of times MPI_Pready (or similar functions) was called.", false, false),
 };
 
 /* An array of event structures to store the event data (value, attachments, flags) */

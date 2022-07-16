@@ -48,8 +48,6 @@ int MPI_Psend_init(const void* buf, int partitions, MPI_Count count, MPI_Datatyp
 {
     int rc;
 
-    SPC_RECORD(OMPI_SPC_ARRIVED, 1);
-
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
 
