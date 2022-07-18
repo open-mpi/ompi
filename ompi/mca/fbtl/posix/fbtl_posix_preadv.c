@@ -121,7 +121,8 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh)
         }
         
         size_t sstart = (size_t)fh->f_io_array[startindex].offset;
-        size_t slen=0;
+        size_t slen=0, maxlen=0;
+        int maxindex = startindex;
 
         for ( j = startindex; j < fh->f_num_of_io_entries; j++ ) {
             endindex = j;
@@ -130,15 +131,19 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh)
                 endindex = j-1;
                 break;
             }
+            if (slen > maxlen) {
+                maxlen   = slen;
+                maxindex = endindex;
+            }
         }
         // Need to increment the value of endindex
         // by one for the loop syntax to work correctly.
         endindex++;
         
         start = (size_t)fh->f_io_array[startindex].offset;
-        end   = (size_t)fh->f_io_array[endindex-1].offset + fh->f_io_array[endindex-1].length;
+        end   = (size_t)fh->f_io_array[maxindex].offset + fh->f_io_array[maxindex].length;
         len   = end - start;
-        
+
         if ( len > bufsize ) {
             if ( NULL != temp_buf ) {
                 free ( temp_buf);
