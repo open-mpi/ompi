@@ -1310,14 +1310,11 @@ int ompi_group_from_pset (ompi_instance_t *instance, const char *pset_name, ompi
     if (NULL == group_out) {
         return OMPI_ERR_BAD_PARAM;
     }
-    if (*group_out == MPI_GROUP_NULL) {
-        return OMPI_ERR_BAD_PARAM;
-    }
-    
+
     if (0 == strncmp (pset_name, "mpi://", 6)) {
         pset_name += 6;
         if (0 == strcasecmp (pset_name, "WORLD")) {
-        return ompi_instance_group_world (instance, group_out);
+            return ompi_instance_group_world (instance, group_out);
         }
         if (0 == strcasecmp (pset_name, "SELF")) {
             return ompi_instance_group_self (instance, group_out);
