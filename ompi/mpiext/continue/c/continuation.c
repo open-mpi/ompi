@@ -206,6 +206,14 @@ struct thread_local_data_t {
 };
 typedef struct thread_local_data_t thread_local_data_t;
 
+static void init_tl_data(thread_local_data_t* tld)
+{
+    OBJ_CONSTRUCT(&tld->thread_progress_list, opal_list_t);
+    OBJ_CONSTRUCT(&tld->tmplist, opal_list_t);
+    tld->is_initialized = true;
+
+}
+
 static __opal_attribute_always_inline__ inline
 thread_local_data_t* get_tl_data()
 {
@@ -213,17 +221,13 @@ thread_local_data_t* get_tl_data()
     /* process global tl_data if threads are disabled */
     static thread_local_data_t gl_data = { .in_progress = false, .is_initialized = false };
 
-    thread_local_data_t* tld;
+    thread_local_data_t* tld = &gl_data;
     if (opal_using_threads()) {
         tld = &tl_data;
-    } else {
-        tld = &gl_data;
     }
 
     if (OPAL_UNLIKELY(!tld->is_initialized)) {
-        OBJ_CONSTRUCT(&tld->thread_progress_list, opal_list_t);
-        OBJ_CONSTRUCT(&tld->tmplist, opal_list_t);
-        tld->is_initialized = true;
+        init_tl_data(tld);
     }
     return tld;
 }
@@ -242,7 +246,7 @@ int ompi_continue_progress_request_n(ompi_cont_request_t *cont_req,
 static inline
 int ompi_continue_check_request_error_abort(ompi_request_t *req);
 
-static inline
+static
 void ompi_continue_cont_release(ompi_continuation_t *cont, int rc)
 {
     ompi_cont_request_t *cont_req = cont->cont_req;
