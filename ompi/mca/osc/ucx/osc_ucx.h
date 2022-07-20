@@ -228,5 +228,10 @@ int ompi_osc_ucx_flush_local_all(struct ompi_win_t *win);
 int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_wins,
                                            int min_index, int max_index,
                                            uint64_t base, size_t len, int *insert);
+extern inline bool ompi_osc_need_acc_lock(ompi_osc_ucx_module_t *module, int target);
+extern inline int ompi_osc_state_lock(ompi_osc_ucx_module_t *module, int target,
+        bool *lock_acquired, bool force_lock);
+extern inline int ompi_osc_state_unlock(ompi_osc_ucx_module_t *module, int target,
+        bool lock_acquired, void *free_ptr);
 
 #endif /* OMPI_OSC_UCX_H */
