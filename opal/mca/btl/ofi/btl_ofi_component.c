@@ -189,6 +189,13 @@ static int mca_btl_ofi_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_ofi_component.rd_num);
 
+    mca_btl_ofi_component.disable_inject = false;
+    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version, "disable_inject",
+                                           "disable use of fi_inject for short messages.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_ofi_component.disable_inject);
+
     /* for now we want this component to lose to the MTL. */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
 
@@ -476,6 +483,11 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         BTL_VERBOSE(("%s failed fi_domain with err=%s", linux_device_name, fi_strerror(-rc)));
         goto fail;
     }
+
+    /**
+     * Save the maximum sizes.
+     */
+    mca_btl_ofi_component.max_inject_size = ofi_info->tx_attr->inject_size;
 
     /* AV */
     av_attr.type = FI_AV_MAP;
