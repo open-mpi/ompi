@@ -251,7 +251,7 @@ void *mca_common_sm_seg_alloc(void *ctx, size_t *size)
         seg->seg_offset += *size;
 
         /* fix up seg_offset so next allocation is aligned on a
-         * sizeof(long) boundry.  Do it here so that we don't have to
+         * sizeof(long) boundary.  Do it here so that we don't have to
          * check before checking remaining size in buffer
          */
         if ((fixup = (seg->seg_offset & (sizeof(long) - 1))) > 0) {

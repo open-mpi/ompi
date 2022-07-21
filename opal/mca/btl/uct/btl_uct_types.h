@@ -92,7 +92,7 @@ struct mca_btl_uct_conn_req_t {
 typedef struct mca_btl_uct_conn_req_t mca_btl_uct_conn_req_t;
 
 /**
- * @brief Transport endpoint stucture
+ * @brief Transport endpoint structure
  */
 struct mca_btl_uct_tl_endpoint_t {
     /** current flags (connected, requested, etc) */
@@ -315,7 +315,7 @@ struct mca_btl_uct_tl_t {
     /** device name for this tl (used for creating device contexts) */
     char *uct_dev_name;
 
-    /** maxiumum number of device contexts that can be created */
+    /** maximum number of device contexts that can be created */
     int max_device_contexts;
 
     /** array of device contexts */

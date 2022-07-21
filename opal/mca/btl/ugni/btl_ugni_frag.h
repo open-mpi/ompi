@@ -86,7 +86,7 @@ typedef struct mca_btl_ugni_base_frag_t mca_btl_ugni_rdma_frag_t;
 typedef struct mca_btl_ugni_base_frag_t mca_btl_ugni_eager_frag_t;
 
 typedef struct mca_btl_ugni_post_descriptor_t {
-    /** endpoint currently associated with this desctiptor */
+    /** endpoint currently associated with this descriptor */
     mca_btl_base_endpoint_t *endpoint;
     /** local memory handle (for callback) */
     mca_btl_base_registration_handle_t *local_handle;

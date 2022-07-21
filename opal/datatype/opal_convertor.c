@@ -153,7 +153,7 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
     /**
      * Now we can compute the conversion mask. For all sizes where the remote
      * and local architecture differ a conversion is needed. Moreover, if the
-     * 2 architectures don't have the same endianess all data with a length
+     * 2 architectures don't have the same endianness all data with a length
      * over 2 bytes (with the exception of logicals) have to be byte-swapped.
      */
     for (i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++) {
@@ -187,7 +187,7 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
         }
     }
 
-    /* We're done so far, return the mater convertor */
+    /* We're done so far, return the master convertor */
     return master;
 }
 
@@ -224,7 +224,7 @@ opal_convertor_t *opal_convertor_create(int32_t remote_arch, int32_t mode)
 /**
  * Return 0 if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
- *        1 if everything went fine and the data was completly converted
+ *        1 if everything went fine and the data was completely converted
  *       -1 something wrong occurs.
  */
 int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t *out_size,
@@ -293,7 +293,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
     if (OPAL_LIKELY(pConv->flags & CONVERTOR_NO_OP)) {
         /**
          * We are doing conversion on a contiguous datatype on a homogeneous
-         * environment. The convertor contain minimal informations, we only
+         * environment. The convertor contain minimal information, we only
          * use the bConverted to manage the conversion.
          */
         uint32_t i;
@@ -363,7 +363,7 @@ static inline int opal_convertor_create_stack_with_pos_contig(opal_convertor_t *
     /* now compute the number of pending bytes */
     count = starting_point % pData->size;
     /**
-     * We save the current displacement starting from the begining
+     * We save the current displacement starting from the beginning
      * of this data.
      */
     if (OPAL_LIKELY(0 == count)) {

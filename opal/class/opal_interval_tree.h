@@ -114,7 +114,7 @@ typedef int (*opal_interval_tree_condition_fn_t)(void *);
 typedef int (*opal_interval_tree_action_fn_t)(uint64_t low, uint64_t high, void *data, void *ctx);
 
 /*
- * Public function protoypes
+ * Public function prototypes
  */
 
 /**
@@ -189,7 +189,7 @@ OPAL_DECLSPEC int opal_interval_tree_destroy(opal_interval_tree_t *tree);
  * @param tree a pointer to the tree
  * @param low low value of interval
  * @param high high value of interval
- * @param partial_ok traverse nodes that parially overlap the given range
+ * @param partial_ok traverse nodes that partially overlap the given range
  * @param action a pointer to the action function
  * @param ctx context to pass to action function
  *
@@ -205,7 +205,7 @@ OPAL_DECLSPEC int opal_interval_tree_traverse(opal_interval_tree_t *tree, uint64
  *
  * @param tree a pointer to the tree data structure
  *
- * @retval int the nuber of items on the tree
+ * @retval int the number of items on the tree
  */
 OPAL_DECLSPEC size_t opal_interval_tree_size(opal_interval_tree_t *tree);
 

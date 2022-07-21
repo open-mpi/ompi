@@ -54,7 +54,7 @@ struct mca_btl_portals4_component_t {
      * portals4_init_interface(). */
     int need_init;
 
-    /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
+    /* Use the logical to physical table to accelerate portals4 addressing: 1 (true) : 0 (false) */
     int use_logical;
 
     /* initial size of free lists */

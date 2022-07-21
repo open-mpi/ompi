@@ -74,7 +74,7 @@ variables are supposed to affect.
 [re-register-with-different-type]
 An MCA variable was re-registered with a different type (i.e., it was
 either originally registered as an INT and re-registered as a STRING,
-or it was originially registered as a STRING and re-registered as an
+or it was originally registered as a STRING and re-registered as an
 INT).  This a developer error; your job may abort.
 
   MCA variable name: %s

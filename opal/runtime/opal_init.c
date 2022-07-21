@@ -519,7 +519,7 @@ int opal_init_util(int *pargc, char ***pargv)
 
     OPAL_TIMING_ENV_NEXT(otmng, "opal_show_help_init");
 
-    /* register handler for errnum -> string converstion */
+    /* register handler for errnum -> string conversion */
     if (OPAL_SUCCESS
         != (ret = opal_error_register("OPAL", OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
         return opal_init_error("opal_error_register", ret);
@@ -683,7 +683,7 @@ int opal_init(int *pargc, char ***pargv)
         return opal_init_error("opal_shmem_base_select", ret);
     }
 
-    /* Intitialize reachable framework */
+    /* Initialize reachable framework */
     if (OPAL_SUCCESS != (ret = opal_reachable_base_select())) {
         return opal_init_error("opal_reachable_base_select", ret);
     }

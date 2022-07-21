@@ -34,9 +34,9 @@
 
 struct mca_btl_base_endpoint_t {
     int my_smp_rank;   /**< My SMP process rank.  Used for accessing
-                        *   SMP specfic data structures. */
+                        *   SMP specific data structures. */
     int peer_smp_rank; /**< My peer's SMP process rank.  Used for accessing
-                        *   SMP specfic data structures. */
+                        *   SMP specific data structures. */
 #if OPAL_CUDA_SUPPORT
     mca_rcache_base_module_t *rcache; /**< rcache for remotely registered memory */
 #endif                                /* OPAL_CUDA_SUPPORT */

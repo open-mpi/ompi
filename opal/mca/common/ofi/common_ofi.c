@@ -518,7 +518,7 @@ static int count_providers(struct fi_info *provider_list)
     return num_provider;
 }
 
-/* Calculate the currrent process package rank.
+/* Calculate the current process package rank.
  *     @param (IN) process_info     struct opal_process_info_t information
  *                                  about the current process. used to get
  *                                  num_local_peers, myprocid.rank, and

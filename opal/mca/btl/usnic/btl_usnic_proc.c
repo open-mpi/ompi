@@ -672,7 +672,7 @@ int opal_btl_usnic_create_endpoint(opal_btl_usnic_module_t *module, opal_btl_usn
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Initalize the endpoint */
+    /* Initialize the endpoint */
     endpoint->endpoint_module = module;
     assert(modex_index >= 0 && modex_index < (int) proc->proc_modex_count);
     endpoint->endpoint_remote_modex = proc->proc_modex[modex_index];

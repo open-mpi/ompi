@@ -102,7 +102,7 @@ advised that the number of context should be equal to number of
 physical core for optimal performance.
 
 User can disable scalable endpoint by MCA parameter
-`btl_ofi_disable_sep`.  With scalable endpoint disbled, the BTL will
+`btl_ofi_disable_sep`.  With scalable endpoint disabled, the BTL will
 alias OFI endpoint to both tx and rx context.
 
 ## Two sided communication

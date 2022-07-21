@@ -110,7 +110,7 @@ static int mca_mpool_base_close(void)
     while (NULL != (item = opal_list_remove_first(&mca_mpool_base_modules))) {
         sm = (mca_mpool_base_selected_module_t *) item;
 
-        /* Blatently ignore the return code (what would we do to recover,
+        /* Blatantly ignore the return code (what would we do to recover,
            anyway?  This component is going away, so errors don't matter
            anymore).  Note that it's legal for the module to have NULL for
            the finalize function. */

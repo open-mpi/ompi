@@ -83,7 +83,7 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
         return 1; /* We're still done */
     }
     if (OPAL_LIKELY(pConvertor->flags & CONVERTOR_NO_OP)) {
-        /* The convertor contain minimal informations, we only use the bConverted
+        /* The convertor contain minimal information, we only use the bConverted
          * to manage the conversion. This function work even after the convertor
          * was moved to a specific position.
          */

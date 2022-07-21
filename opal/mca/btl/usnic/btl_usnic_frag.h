@@ -44,7 +44,7 @@ struct opal_btl_usnic_module_t;
 
 /**
  * Fragment types
- * The upper layer may give us very large "fragements" to send, larger than
+ * The upper layer may give us very large "fragments" to send, larger than
  * an MTU.  We break fragments into segments for sending, a segment being
  * defined to fit within an MTU.
  */
@@ -138,8 +138,8 @@ typedef struct {
     opal_btl_usnic_seq_t pkt_seq;
     opal_btl_usnic_seq_t ack_seq; /* for piggy-backing ACKs */
 
-    /* payload legnth (in bytes).  We unfortunately have to include
-       this in our header because the L2 layer may artifically inflate
+    /* payload length (in bytes).  We unfortunately have to include
+       this in our header because the L2 layer may artificially inflate
        the length of the packet to meet a minimum size */
     uint16_t payload_len;
 

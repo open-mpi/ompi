@@ -33,7 +33,7 @@ AC_DEFUN([MCA_opal_reachable_netlink_CONFIG],[
          with_libnl_route_incdir=${with_libnl_incdir}
 
          # The first argument of OAC_CHECK_PACKAGE must be a valid
-         # shell variable name, which means no dashs.  Deal with that
+         # shell variable name, which means no dashes.  Deal with that
          # by being explicit with our module.
          m4_define([libnl_route_pkgconfig_module], [libnl-route-3.0])
          OAC_CHECK_PACKAGE([libnl_route],
@@ -44,7 +44,7 @@ AC_DEFUN([MCA_opal_reachable_netlink_CONFIG],[
                            [opal_reachable_netlink_happy=1],
                            [opal_reachable_netlink_happy=0])
 
-         # See if we have linux/netlink.h, which is part of the kernal
+         # See if we have linux/netlink.h, which is part of the kernel
          # ABI headers and not the libnl3 package (so we assume are in
          # default includes, as opposed to the libnl directory.
          AS_IF([test ${opal_reachable_netlink_happy} -eq 1],

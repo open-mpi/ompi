@@ -351,7 +351,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
     }
 #if OPAL_CUDA_SUPPORT
     /* Register the entire shared memory region with the CUDA library which will
-     * force it to be pinned.  This aproach was chosen as there is no way for this
+     * force it to be pinned.  This approach was chosen as there is no way for this
      * local process to know which parts of the memory are being utilized by a
      * remote process. */
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
@@ -1064,7 +1064,7 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t *btl, struct mca_btl_ba
     frag->local_handle = local_handle;
 
     /* Set to 0 for debugging since it is a list item but I am not
-     * intializing it properly and it is annoying to see all the
+     * initializing it properly and it is annoying to see all the
      * garbage in the debugger.  */
 
     memset(&rget_reg, 0, sizeof(rget_reg));

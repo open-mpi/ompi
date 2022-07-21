@@ -251,7 +251,7 @@ typedef struct opal_cmd_line_init_t opal_cmd_line_init_t;
  *
  * This handle is used for accessing all command line functionality
  * (i.e., all opal_cmd_line*() functions).  Multiple handles can be
- * created and simultaneously processed; each handle is independant
+ * created and simultaneously processed; each handle is independent
  * from others.
  *
  * The opal_cmd_line_t handles are [simplisticly] thread safe;

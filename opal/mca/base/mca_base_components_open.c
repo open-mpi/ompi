@@ -86,7 +86,7 @@ static int open_components(mca_base_framework_t *framework)
      *
      * JJH Note: Currently checkpoint/restart is the only user of this
      *           functionality. If other component constraint options are
-     *           added, then this logic can be used for all contraint
+     *           added, then this logic can be used for all constraint
      *           options.
      *
      * NTH: Logic moved to mca_base_components_filter.

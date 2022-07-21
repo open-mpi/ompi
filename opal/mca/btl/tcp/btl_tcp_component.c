@@ -508,7 +508,7 @@ static int mca_btl_tcp_create(const int if_kindex, const char *if_name)
      * split_and_resolve and pass the address used to select the
      * device into mca_btl_tcp_create().  This is a cleanup of the
      * logic that's been in use for years, but the case it doesn't
-     * cover is (say) only specifing mca_btl_if_include 10.0.0.0/16
+     * cover is (say) only specifying mca_btl_if_include 10.0.0.0/16
      * when the interface has addresses of both 10.0.0.1 and 10.1.0.1;
      * there's absolutely nothing that keeps this code from picking
      * 10.1.0.1 as the one that is published in the modex and used for
@@ -1048,7 +1048,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         return OPAL_ERROR;
     }
 socket_binded:
-    /* resolve system assignend port */
+    /* resolve system assigned port */
     if (getsockname(sd, (struct sockaddr *) &inaddr, &addrlen) < 0) {
         BTL_ERROR(
             ("getsockname() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
@@ -1321,7 +1321,7 @@ mca_btl_base_module_t **mca_btl_tcp_component_init(int *num_btl_modules,
         }
     }
 
-    /* Avoid a race in wire-up when using threads (progess or user)
+    /* Avoid a race in wire-up when using threads (progress or user)
        and multiple BTL modules.  The details of the race are in
        https://github.com/open-mpi/ompi/issues/3035#issuecomment-429500032,
        but the summary is that the lookup code in
@@ -1407,7 +1407,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
     struct timeval save, tv;
     socklen_t rcvtimeo_save_len = sizeof(save);
 
-    /* Note, Socket will be in blocking mode during intial handshake
+    /* Note, Socket will be in blocking mode during initial handshake
      * hence setting SO_RCVTIMEO to say 2 seconds here to avoid waiting
      * forever when connecting to older versions (that reply to the
      * handshake with only the guid) or when the remote side isn't OMPI

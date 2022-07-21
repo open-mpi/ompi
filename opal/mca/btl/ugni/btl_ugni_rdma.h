@@ -82,8 +82,8 @@ static inline int mca_btl_ugni_post_bte(mca_btl_base_endpoint_t *endpoint, gni_p
     mca_btl_ugni_post_descriptor_t post_desc;
     int rc;
 
-    /* There is a performance benefit to throttling the total number of active BTE tranactions. Not
-     * sure what the optimium is but the limit is inforced as a soft limit. */
+    /* There is a performance benefit to throttling the total number of active BTE transactions. Not
+     * sure what the optimium is but the limit is enforced as a soft limit. */
     if (module->active_rdma_count >= mca_btl_ugni_component.active_rdma_threshold) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

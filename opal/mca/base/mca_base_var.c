@@ -566,7 +566,7 @@ int mca_base_var_get_value(int vari, const void *value, mca_base_var_source_t *s
     }
 
     if (NULL != value) {
-        /* Return a poiner to our backing store (either a char **, int *,
+        /* Return a pointer to our backing store (either a char **, int *,
            or bool *) */
         *tmp = var->mbv_storage;
     }
@@ -2143,7 +2143,7 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
         opal_asprintf(out[0] + line++, "%sstatus:%s", tmp,
                       VAR_IS_SETTABLE(var[0]) ? "writeable" : "read-only");
 
-        /* Output the info level of this parametere */
+        /* Output the info level of this parameter */
         opal_asprintf(out[0] + line++, "%slevel:%d", tmp, var->mbv_info_lvl + 1);
 
         /* If it has a help message, output the help message */
