@@ -74,20 +74,9 @@ int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win) {
     }
 
     if (!(mpi_assert & MPI_MODE_NOPRECEDE)) {
-        if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {
-            int i; 
-            for (i = 0; i < OMPI_OSC_UCX_ATTACH_MAX; i++) {
-                ret = opal_common_ucx_wpmem_flush(module->local_dynamic_win_info[i].mem,
-                            OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
-                if (ret != OMPI_SUCCESS) {
-                    return ret;
-                }
-            }
-        } else {
-            ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
-            if (ret != OMPI_SUCCESS) {
-                return ret;
-            }
+        ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
+        if (ret != OMPI_SUCCESS) {
+            return ret;
         }
     }
 
@@ -183,7 +172,7 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
 
     module->epoch_type.access = NONE_EPOCH;
 
-    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
@@ -199,7 +188,7 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
             OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_post failed: %d", ret);
         }
 
-        ret = opal_common_ucx_wpmem_flush(module->state_mem, OPAL_COMMON_UCX_SCOPE_EP,
+        ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP,
                                         module->start_grp_ranks[i]);
         if (ret != OMPI_SUCCESS) {
             return ret;
