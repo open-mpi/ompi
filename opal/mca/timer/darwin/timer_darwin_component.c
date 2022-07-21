@@ -65,8 +65,8 @@ const opal_timer_base_component_2_0_0_t mca_timer_darwin_component = {
    arithmetic errors due to integer math.  But since we want the
    least amount of math in the critical path as possible and
    mach_absolute_time is already a cycle counter, we claim we have
-   native cycle count support and set the frequencey to be the
-   frequencey of the global clock, which is sTBI.denom *
+   native cycle count support and set the frequency to be the
+   frequency of the global clock, which is sTBI.denom *
    (1000000000 / sTBI.numer), which is sTBI.denom * (1 / 1), or
    sTBI.denom.
 
@@ -82,7 +82,7 @@ const opal_timer_base_component_2_0_0_t mca_timer_darwin_component = {
 
    More generally, since mach_timebase_info() gives the "keys" to
    transition the return from mach_absolute_time() into
-   nanoseconds, taking the reverse of that and multipling by
+   nanoseconds, taking the reverse of that and multiplying by
    1000000000 will give you a frequency in cycles / second if you
    think of mach_absolute_time() always returning a cycle count.
 */

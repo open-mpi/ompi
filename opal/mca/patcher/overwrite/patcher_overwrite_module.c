@@ -223,7 +223,7 @@ static int mca_patcher_overwrite_apply_patch(mca_patcher_base_patch_t *patch)
  * 1: Directly check constant instructions (ignoring addresses as parameters)
  * 2: Generate a bit mask by passing min and max values to underlying helper
  *    functions and negate the XOR'ed results. These results can be used to
- *    mask off transient values (like addresess) and non-instruction values
+ *    mask off transient values (like addresses) and non-instruction values
  *    (like register contents). Once the masks are applied, the results are
  *    compared against the min values directly to check for equality. If equal,
  *    we consider the memory to be previously patched.
@@ -338,7 +338,7 @@ static int mca_patcher_overwrite_patch_symbol(const char *func_symbol_name, uint
     old_addr = (unsigned long) sym_addr;
 
     if (func_old_addr) {
-        /* we will be overwritting part of the original function. do not return
+        /* we will be overwriting part of the original function. do not return
          * its address */
         *func_old_addr = 0;
     }

@@ -22,7 +22,7 @@
  * $HEADER$
  */
 
-/* NOTE: This framework accomodates two kinds of memory hooks systems:
+/* NOTE: This framework accommodates two kinds of memory hooks systems:
 
    1. Those that only require being setup once and then will
       automatically call back to internal component/module functions
@@ -80,7 +80,7 @@ typedef int (*opal_memory_base_component_process_fn_t)(void);
 
 /**
  * Prototype for a function that is invoked when the memory base is
- * trying to select a component. This funtionality is required.
+ * trying to select a component. This functionality is required.
  */
 typedef int (*opal_memory_base_component_query_fn_t)(int *priority);
 

@@ -376,7 +376,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
              * however some may have multiple info objects with different
              * attributes for the same NIC. The initial provider attributes
              * are used to ensure that all NICs we return provide the same
-             * capabilities as the inital one.
+             * capabilities as the initial one.
              */
             selected_info = opal_mca_common_ofi_select_provider(info, &opal_process_info);
             rc = mca_btl_ofi_init_device(selected_info);
@@ -459,7 +459,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
      * domain open.  Silently ignore not-supported errors, as they
      * are not critical to program correctness, but only indicate
      * that LIbfabric will have to pick a different, possibly less
-     * optimial, monitor. */
+     * optimal, monitor. */
     rc = opal_common_ofi_export_memory_monitor();
     if (0 != rc && -FI_ENOSYS != rc) {
         BTL_VERBOSE(("Failed to inject Libfabric memory monitor: %s",
@@ -670,7 +670,7 @@ fail:
 /**
  * @brief OFI BTL progress function
  *
- * This function explictly progresses all workers.
+ * This function explicitly progresses all workers.
  */
 static int mca_btl_ofi_component_progress(void)
 {

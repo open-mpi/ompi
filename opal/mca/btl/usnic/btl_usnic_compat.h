@@ -34,7 +34,7 @@
 /* Free lists are unified into OPAL free lists */
 #include "opal/class/opal_free_list.h"
 
-/* Inclue the progress thread stuff */
+/* Include the progress thread stuff */
 #include "opal/runtime/opal_progress_threads.h"
 
 #define USNIC_OUT opal_btl_base_framework.framework_output

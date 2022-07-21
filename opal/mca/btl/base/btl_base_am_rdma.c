@@ -212,7 +212,7 @@ struct am_rdma_operation_t {
     /** endpoint used to communicate with the origin */
     struct mca_btl_base_endpoint_t *endpoint;
     /** response descriptor (if allocated). this will be stored
-     * if the send operation was unsuccessfull and the response
+     * if the send operation was unsuccessful and the response
      * needs to be retried. */
     mca_btl_base_descriptor_t *descriptor;
     /** incoming operation header */

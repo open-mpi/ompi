@@ -488,7 +488,7 @@ static char *opal_check_mtab(char *dev_path)
 #    define PAN_KERNEL_FS_CLIENT_SUPER_MAGIC 0xAAD7AAEA /* Panasas FS */
 #endif
 #ifndef GPFS_SUPER_MAGIC
-#    define GPFS_SUPER_MAGIC 0x47504653 /* Thats GPFS in ASCII */
+#    define GPFS_SUPER_MAGIC 0x47504653 /* That's GPFS in ASCII */
 #endif
 #ifndef AUTOFS_SUPER_MAGIC
 #    define AUTOFS_SUPER_MAGIC 0x0187

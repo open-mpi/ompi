@@ -5,7 +5,7 @@ Most of the developers at the time didn't really understand CUDA (or
 GPUs), and the developers working on CUDA were new to Open MPI's
 abstractions.  It was also unclear whether there would be another
 interface for someone else's GPUs or whether the world would choose
-CUDA.  With this backrgound, choices were made.
+CUDA.  With this background, choices were made.
 
 The initial implementation put much of the cuda buffer handling
 functions in the datatype engine, including the code to determine if

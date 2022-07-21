@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
- *                         reseved.
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

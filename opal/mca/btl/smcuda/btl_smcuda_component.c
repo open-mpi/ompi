@@ -125,7 +125,7 @@ static inline unsigned int mca_btl_smcuda_param_register_uint(const char *param_
 
 static int mca_btl_smcuda_component_verify(void)
 {
-    /* We canot support async memcpy right now */
+    /* We cannot support async memcpy right now */
     if ((mca_btl_smcuda.super.btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV)
         || (mca_btl_smcuda.super.btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND)) {
         opal_output_verbose(10, opal_btl_base_framework.framework_output,
@@ -208,7 +208,7 @@ static int smcuda_register(void)
     /* Call the BTL based to register its MCA params */
     mca_btl_base_param_register(&mca_btl_smcuda_component.super.btl_version, &mca_btl_smcuda.super);
 #if OPAL_CUDA_SUPPORT
-    /* If user has not set the value, then set to the defalt */
+    /* If user has not set the value, then set to the default */
     if (0 == mca_btl_smcuda.super.btl_cuda_max_send_size) {
         mca_btl_smcuda.super.btl_cuda_max_send_size = 128 * 1024;
     }
@@ -364,7 +364,7 @@ static int create_and_attach(mca_btl_smcuda_component_t *comp_ptr, size_t size, 
                                                                data_seg_alignment))) {
         opal_output(0,
                     "create_and_attach: unable to create shared memory "
-                    "BTL coordinating strucure :: size %lu \n",
+                    "BTL coordinating structure :: size %lu \n",
                     (unsigned long) size);
         return OPAL_ERROR;
     }
@@ -497,7 +497,7 @@ static int create_rndv_file(mca_btl_smcuda_component_t *comp_ptr,
             size = mca_btl_smcuda_component.mpool_min_size;
         }
 
-        /* we only need the shmem_ds info at this point. initilization will be
+        /* we only need the shmem_ds info at this point. initialization will be
          * completed in the mpool module code. the idea is that we just need this
          * info so we can populate the rndv file (or modex when we have it). */
         if (OPAL_SUCCESS
@@ -708,7 +708,7 @@ static void btl_smcuda_control(mca_btl_base_module_t *btl,
              * same device and use_cuda_ipc_same_gpu is 1 (default),
              * then assume CUDA IPC is possible.  This could be a
              * device running in DEFAULT mode or running under MPS.
-             * Otherwise, check peer acces to determine CUDA IPC
+             * Otherwise, check peer access to determine CUDA IPC
              * support.  If the CUDA API call fails, then just move
              * endpoint into bad state.  No need to send a reply. */
             if (mydevnum == ctrlhdr.cudev) {
@@ -952,7 +952,7 @@ void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 
         if (NULL == si)
-            return; /* Another thread got in before us. Thats ok. */
+            return; /* Another thread got in before us. That's ok. */
 
         OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_pending_sends, -1);
 
@@ -998,7 +998,7 @@ int mca_btl_smcuda_component_progress(void)
     for (j = 0; j < FIFO_MAP_NUM(mca_btl_smcuda_component.num_smp_procs); j++) {
         fifo = &(mca_btl_smcuda_component.fifo[my_smp_rank][j]);
     recheck_peer:
-        /* aquire thread lock */
+        /* acquire thread lock */
         if (opal_using_threads()) {
             opal_atomic_lock(&(fifo->tail_lock));
         }

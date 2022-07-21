@@ -114,7 +114,7 @@ typedef struct mca_mpool_base_component_3_1_0_t mca_mpool_base_component_t;
  *  details.
  */
 struct mca_mpool_base_module_t {
-    mca_mpool_base_component_t *mpool_component;      /**< component stuct */
+    mca_mpool_base_component_t *mpool_component;      /**< component struct */
     mca_mpool_base_module_address_fn_t mpool_base;    /**< returns the base address */
     mca_mpool_base_module_alloc_fn_t mpool_alloc;     /**< allocate function */
     mca_mpool_base_module_realloc_fn_t mpool_realloc; /**< reallocate function */
@@ -138,7 +138,7 @@ struct mca_mpool_base_module_t {
  * key in info that does not match any mpool, an error will be returned.
  *
  * If the info parameter is MPI_INFO_NULL, then this function will try to allocate
- * the memory and register it wih as many mpools as possible. However,
+ * the memory and register it with as many mpools as possible. However,
  * if any of the registratons fail the mpool will simply be ignored.
  *
  * @param size the size of the memory area to allocate

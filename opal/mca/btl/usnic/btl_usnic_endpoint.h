@@ -105,7 +105,7 @@ typedef struct opal_btl_usnic_rx_frag_info_t {
     bool rfi_data_in_pool;             /* data in data_pool if true, else malloced */
     int rfi_data_pool;                 /* if <0, data malloced, else rx buf pool */
     char *rfi_data;                    /* pointer to assembly area */
-    opal_free_list_item_t *rfi_fl_elt; /* free list elemement from buf pool
+    opal_free_list_item_t *rfi_fl_elt; /* free list element from buf pool
                                           when rfi_data_pool is nonzero */
 } opal_btl_usnic_rx_frag_info_t;
 
@@ -187,7 +187,7 @@ typedef mca_btl_base_endpoint_t opal_btl_usnic_endpoint_t;
 OBJ_CLASS_DECLARATION(opal_btl_usnic_endpoint_t);
 
 /*
- * Helper struct for the asynchornous creation of fi_addr array
+ * Helper struct for the asynchronous creation of fi_addr array
  */
 typedef struct {
     opal_btl_usnic_endpoint_t *endpoint;

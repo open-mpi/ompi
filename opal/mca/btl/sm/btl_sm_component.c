@@ -124,7 +124,7 @@ static int mca_btl_sm_component_register(void)
     mca_btl_sm_component.memcpy_limit = 524288;
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version, "memcpy_limit",
                                            "Message size to switch from using "
-                                           "memove to memcpy. The relative speed of these two "
+                                           "memmove to memcpy. The relative speed of these two "
                                            "routines can vary by size.",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
@@ -484,7 +484,7 @@ static int mca_btl_sm_poll_fifo(void)
  * @param ep (IN)       Sm BTL endpoint
  *
  * This is called with the component lock held so the component lock does
- * not need to be aquired before modifying the pending_endpoints list.
+ * not need to be acquired before modifying the pending_endpoints list.
  */
 static void mca_btl_sm_progress_waiting(mca_btl_base_endpoint_t *ep)
 {

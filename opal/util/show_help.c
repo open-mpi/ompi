@@ -144,7 +144,7 @@ static void local_delivery(const char *file, const char *topic, char *msg) {
 // Not available in PMIx releases of v4.1.2 and earlier.
 // This should be available in future v4.1 and v4.2 releases,
 // as well as future major releases.
-// Disabling the aggregate behavior here, but stil log it, as
+// Disabling the aggregate behavior here, but still log it, as
 // seeing duplicate messages is better than not seeing anything at all.
 #ifdef PMIX_LOG_AGG
         PMIX_INFO_CREATE(dirs, 3);

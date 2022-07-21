@@ -136,7 +136,7 @@ static inline void opal_dt_swap_long_double(void *to_p, const void *from_p, cons
 /**
  * BEWARE: Do not use the following macro with composed types such as
  * complex. As the swap is done using the entire type sizeof, the
- * wrong endianess translation will be done.  Instead, use the
+ * wrong endianness translation will be done.  Instead, use the
  * COPY_2SAMETYPE_HETEROGENEOUS.
  */
 #define COPY_TYPE_HETEROGENEOUS(TYPENAME, TYPE) COPY_TYPE_HETEROGENEOUS_INTERNAL(TYPENAME, TYPE, 0)
@@ -469,7 +469,7 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
     datatype_check("long", sizeof(long), pConvertor->master->remote_sizes[OPAL_DATATYPE_LONG], &count, from, from_len, from_extent, to,
                    to_length, to_extent);
     if (!((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_LONGIS64)) {  /* same sizeof(long) */
-        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianess */
+        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianness */
             for (i = 0; i < count; i++) {
                 opal_dt_swap_bytes(to, from, sizeof(long), 1);
                 to += to_extent;
@@ -505,7 +505,7 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else {  /* both have the same endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         long val = *(long*)from;
@@ -542,7 +542,7 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else {  /* both have the same endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         int32_t val = *(int32_t*)from;
@@ -576,7 +576,7 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
     datatype_check("unsigned long", sizeof(unsigned long), pConvertor->master->remote_sizes[OPAL_DATATYPE_UNSIGNED_LONG],
                    &count, from, from_len, from_extent, to, to_length, to_extent);
     if (!((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_LONGIS64)) {  /* same sizeof(long) */
-        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianess */
+        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianness */
             for (i = 0; i < count; i++) {
                 opal_dt_swap_bytes(to, from, sizeof(unsigned long), 1);
                 to += to_extent;
@@ -612,7 +612,7 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else {  /* both have the same endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         unsigned long val = *(unsigned long*)from;
@@ -649,7 +649,7 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else {  /* both have the same endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         uint32_t val = *(uint32_t*)from;

@@ -160,7 +160,7 @@ static struct mca_btl_base_descriptor_t *mca_btl_self_prepare_src(
         return NULL;
     }
 
-    /* non-contigous data */
+    /* non-contiguous data */
     if (OPAL_UNLIKELY(!inline_send)) {
         struct iovec iov = {.iov_len = *size,
                             .iov_base = (IOVBASE_TYPE *) ((uintptr_t) frag->data + reserve)};

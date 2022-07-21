@@ -175,13 +175,13 @@ OPAL_DECLSPEC int opal_free_list_grow_st(opal_free_list_t *flist, size_t num_ele
 OPAL_DECLSPEC int opal_free_list_resize_mt(opal_free_list_t *flist, size_t size);
 
 /**
- * Attemp to obtain an item from a free list.
+ * Attempt to obtain an item from a free list.
  *
  * @param fl (IN)        Free list.
  * @param item (OUT)     Allocated item.
  *
  * If the requested item is not available the free list is grown to
- * accomodate the request - unless the max number of allocations has
+ * accommodate the request - unless the max number of allocations has
  * been reached.  If this is the case - a NULL pointer is returned
  * to the caller. This function comes in three flavor: thread safe
  * (opal_free_list_get_mt), single threaded (opal_free_list_get_st),
@@ -230,7 +230,7 @@ static inline opal_free_list_item_t *opal_free_list_get(opal_free_list_t *flist)
  * @param item (OUT)     Allocated item.
  *
  * If the requested item is not available the free list is grown to
- * accomodate the request - unless the max number of allocations has
+ * accommodate the request - unless the max number of allocations has
  * been reached. In this case the caller is blocked until an item
  * is returned to the list.
  */
@@ -259,8 +259,8 @@ static inline opal_free_list_item_t *opal_free_list_wait_mt(opal_free_list_t *fl
                 }
             }
         } else {
-            /* If I wasn't able to get the lock in the begining when I finaly grab it
-             * the one holding the lock in the begining already grow the list. I will
+            /* If I wasn't able to get the lock in the beginning when I finally grab it
+             * the one holding the lock in the beginning already grow the list. I will
              * release the lock and try to get a new element until I succeed.
              */
             opal_mutex_lock(&fl->fl_lock);

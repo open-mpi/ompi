@@ -127,7 +127,7 @@ int mca_btl_ugni_sendi(struct mca_btl_base_module_t *btl, struct mca_btl_base_en
 
     do {
         BTL_VERBOSE(("btl/ugni isend sending fragment from %d -> %d. length = %" PRIu64
-                     " endoint state %d",
+                     " endpoint state %d",
                      OPAL_PROC_MY_NAME.vpid, endpoint->peer_proc->proc_name.vpid,
                      payload_size + header_size, endpoint->state));
 

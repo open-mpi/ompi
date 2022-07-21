@@ -51,7 +51,7 @@ BEGIN_C_DECLS
  * @retval OPAL_ERROR On failure
  *
  * This function adds a string to an argv array of strings by value;
- * it is permissable to pass a string on the stack as the str
+ * it is permissible to pass a string on the stack as the str
  * argument to this function.
  *
  * To add the first entry to an argv array, call this function with
@@ -83,7 +83,7 @@ OPAL_DECLSPEC int opal_argv_append(int *argc, char ***argv, const char *arg)
  * except that it does not take a pointer to an argc (integer
  * representing the size of the array).  This is handy for
  * argv-style arrays that do not have integers that are actively
- * maintaing their sizes.
+ * maintaining their sizes.
  */
 OPAL_DECLSPEC int opal_argv_append_nosize(char ***argv, const char *arg);
 
@@ -267,7 +267,7 @@ OPAL_DECLSPEC int opal_argv_delete(int *argc, char ***argv, int start, int num_t
  * another.  The first token in source will be inserted at index
  * start in the target argv; all other tokens will follow it.
  * Similar to opal_argv_append(), the target may be realloc()'ed
- * to accomodate the new storage requirements.
+ * to accommodate the new storage requirements.
  *
  * The source array is left unaffected -- its contents are copied
  * by value over to the target array (i.e., the strings that
@@ -290,7 +290,7 @@ OPAL_DECLSPEC int opal_argv_insert(char ***target, int start, char **source);
  * another.  The token will be inserted at the specified index
  * in the target argv; all other tokens will be shifted down.
  * Similar to opal_argv_append(), the target may be realloc()'ed
- * to accomodate the new storage requirements.
+ * to accommodate the new storage requirements.
  *
  * The source token is left unaffected -- its contents are copied
  * by value over to the target array (i.e., the string that

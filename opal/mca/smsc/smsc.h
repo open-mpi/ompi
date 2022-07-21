@@ -161,7 +161,7 @@ struct mca_smsc_module_t {
     /** Map a peer memory region into this processes address space. The module is allowed to cache
      * the mapping and return it in subsequent calls. */
     mca_smsc_module_map_peer_region_fn_t map_peer_region;
-    /** Delete a mapping. This is allowed to leave the mappping in place. */
+    /** Delete a mapping. This is allowed to leave the mapping in place. */
     mca_smsc_module_unmap_peer_region_fn_t unmap_peer_region;
 
     /* Defined if MCA_SMSC_FEATURE_REQUIRES_REGISTRATION is set. */

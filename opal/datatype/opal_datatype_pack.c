@@ -57,7 +57,7 @@
 #endif /* defined(CHECKSUM) */
 
 /* the contig versions does not use the stack. They can easily retrieve
- * the status with just the informations from pConvertor->bConverted.
+ * the status with just the information from pConvertor->bConverted.
  */
 int32_t opal_pack_homogeneous_contig_function(opal_convertor_t *pConv, struct iovec *iov,
                                               uint32_t *out_size, size_t *max_data)
@@ -115,7 +115,7 @@ int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv,
     uint32_t idx;
     size_t i;
 
-    /* The memory layout is contiguous with gaps in the begining and at the end. The datatype
+    /* The memory layout is contiguous with gaps in the beginning and at the end. The datatype
      * true_lb is the initial displacement, the size the length of the contiguous area and the
      * extent represent how much we should jump between elements.
      */
@@ -240,7 +240,7 @@ update_status_and_return:
  * - a datatype (with the flag DT_DATA set) will have the contiguous flags set if and only if
  *   the data is really contiguous (extent equal with size)
  * - for the OPAL_DATATYPE_LOOP type the DT_CONTIGUOUS flag set means that the content of the loop
- * is contiguous but with a gap in the begining or at the end.
+ * is contiguous but with a gap in the beginning or at the end.
  * - the DT_CONTIGUOUS flag for the type OPAL_DATATYPE_END_LOOP is meaningless.
  */
 int32_t opal_generic_simple_pack_function(opal_convertor_t *pConvertor, struct iovec *iov,
@@ -329,7 +329,7 @@ int32_t opal_generic_simple_pack_function(opal_convertor_t *pConvertor, struct i
                     pStack--;
                     pos_desc++; /* and move to the next element */
                 } else {
-                    pos_desc = pStack->index + 1; /* jump back to the begining of the loop */
+                    pos_desc = pStack->index + 1; /* jump back to the beginning of the loop */
                     if (pStack->index == -1) {    /* If it's the datatype count loop */
                         pStack->disp += (pData->ub - pData->lb); /* jump by the datatype extent */
                     } else {

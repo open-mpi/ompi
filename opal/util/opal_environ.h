@@ -44,7 +44,7 @@ BEGIN_C_DECLS
  * @retval New array of environ
  *
  * Merge two environ-like arrays into a single, new array,
- * ensuring that there are no duplicate entires.  If there are
+ * ensuring that there are no duplicate entries.  If there are
  * duplicates, entries in the \em major array are favored over
  * those in the \em minor array.
  *
@@ -86,7 +86,7 @@ OPAL_DECLSPEC char **opal_environ_merge(char **minor,
  *
  * The \em env array will be grown if necessary.
  *
- * It is permissable to invoke this function with the
+ * It is permissible to invoke this function with the
  * system-defined \em environ variable.  For example:
  *
  * \code
@@ -99,7 +99,7 @@ OPAL_DECLSPEC char **opal_environ_merge(char **minor,
  * environment.  This may very well lead to a memory leak, so its
  * use is strongly discouraged.
  *
- * It is also permissable to call this function with an empty \em
+ * It is also permissible to call this function with an empty \em
  * env, as long as it is pre-initialized with NULL:
  *
  * \code

@@ -54,7 +54,7 @@ static void chunk_seg_constructor(opal_btl_usnic_chunk_segment_t *cseg)
     bseg = &cseg->ss_base;
     bseg->us_type = OPAL_BTL_USNIC_SEG_CHUNK;
 
-    /* some more common initializaiton */
+    /* some more common initialization */
     common_send_seg_helper(cseg);
 
     /* payload starts next byte beyond BTL chunk header */
@@ -70,7 +70,7 @@ static void frag_seg_constructor(opal_btl_usnic_frag_segment_t *fseg)
     bseg = &fseg->ss_base;
     bseg->us_type = OPAL_BTL_USNIC_SEG_FRAG;
 
-    /* some more common initializaiton */
+    /* some more common initialization */
     common_send_seg_helper(fseg);
 
     /* payload starts next byte beyond BTL header */
@@ -86,7 +86,7 @@ static void ack_seg_constructor(opal_btl_usnic_ack_segment_t *ack)
     bseg = &ack->ss_base;
     bseg->us_type = OPAL_BTL_USNIC_SEG_ACK;
 
-    /* some more common initializaiton */
+    /* some more common initialization */
     common_send_seg_helper(ack);
 
     /* ACK value embedded in BTL header */

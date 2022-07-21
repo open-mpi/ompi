@@ -232,7 +232,7 @@ out:
             rc = OPAL_ERROR;
         }
     }
-    /* an error occured, so invalidate the shmem object and release any
+    /* an error occurred, so invalidate the shmem object and release any
      * allocated resources.
      */
     if (OPAL_SUCCESS != rc) {
@@ -362,7 +362,7 @@ static int segment_unlink(opal_shmem_ds_t *ds_buf)
      * across unlinks. other information stored in flags will remain untouched.
      */
     ds_buf->seg_id = OPAL_SHMEM_DS_ID_INVALID;
-    /* note: this is only chaning the valid bit to 0. */
+    /* note: this is only changing the valid bit to 0. */
     OPAL_SHMEM_DS_INVALIDATE(ds_buf);
     return OPAL_SUCCESS;
 }

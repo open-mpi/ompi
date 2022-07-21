@@ -41,7 +41,7 @@
 BEGIN_C_DECLS
 
 /**
- * Intiailize the network helper subsystem
+ * Initialize the network helper subsystem
  *
  * Initialize the network helper subsystem.  Should be called exactly
  * once for any process that will use any function in the network

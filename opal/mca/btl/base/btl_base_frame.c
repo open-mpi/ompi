@@ -219,7 +219,7 @@ static int mca_btl_base_close(void)
 
     OPAL_LIST_FOREACH_SAFE (sm, next, &mca_btl_base_modules_initialized,
                             mca_btl_base_selected_module_t) {
-        /* Blatently ignore the return code (what would we do to recover,
+        /* Blatantly ignore the return code (what would we do to recover,
            anyway?  This component is going away, so errors don't matter
            anymore) */
 

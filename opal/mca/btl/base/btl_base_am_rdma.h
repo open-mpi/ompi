@@ -43,7 +43,7 @@
  * MCA_BTL_FLAGS_ATOMIC_AM_FOP, etc.).
  *
  * Second, this interface can be used to provide different
- * sementicsthan a BTL natively provides.  This mode is not
+ * semantics than a BTL natively provides.  This mode is not
  * transparent to the caller (unlike the first mode).  Instead, the
  * caller must manage calling the active message put/get/atomic
  * interface directly (rather than through the BTL function pointers).

@@ -126,7 +126,7 @@ OPAL_DECLSPEC int mca_base_open(void);
  * @return OPAL_ERROR Upon failure
  *
  * This function closes down the entire MCA.  It clears all MCA
- * parameters and closes down the MCA component respository.
+ * parameters and closes down the MCA component repository.
  *
  * It must be the last MCA function invoked.  It is normally invoked
  * during the finalize stage.

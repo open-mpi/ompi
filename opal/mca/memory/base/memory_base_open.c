@@ -53,7 +53,7 @@ static int empty_query(int *priority)
  * Local variables
  */
 static opal_memory_base_component_2_0_0_t empty_component = {
-    /* Empty / safe functions to call if no memory componet is selected */
+    /* Empty / safe functions to call if no memory component is selected */
     .memoryc_query = empty_query,
     .memoryc_process = empty_process,
     .memoryc_register = opal_memory_base_component_register_empty,

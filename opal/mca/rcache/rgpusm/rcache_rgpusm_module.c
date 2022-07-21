@@ -184,7 +184,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
     /* This chunk of code handles the case where leave pinned is not
      * set and we do not use the cache.  This is not typically how we
      * will be running.  This means that one can have an unlimited
-     * number of registrations occuring at the same time.  Since we
+     * number of registrations occurring at the same time.  Since we
      * are not leaving the registrations pinned, the number of
      * registrations is unlimited and there is no need for a cache. */
     if (!mca_rcache_rgpusm_component.leave_pinned
