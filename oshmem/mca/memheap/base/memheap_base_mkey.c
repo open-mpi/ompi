@@ -280,7 +280,7 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
 
 /**
  * simple/fast version of MPI_Test that
- * - only works with persistant request
+ * - only works with persistent request
  * - does not do any progress
  * - can be safely called from within opal_progress()
  */
@@ -618,7 +618,7 @@ void mca_memheap_modex_recv_all(void)
 
     rcv_buffer = malloc (buffer_size);
     if (NULL == rcv_buffer) {
-        MEMHEAP_ERROR("failed to allocate recieve buffer");
+        MEMHEAP_ERROR("failed to allocate receive buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto exit_fatal;
     }

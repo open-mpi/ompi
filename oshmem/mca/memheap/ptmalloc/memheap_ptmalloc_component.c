@@ -58,7 +58,7 @@ mca_memheap_ptmalloc_component_query(mca_base_module_t **module, int *priority)
 }
 
 /*
- * This function is automaticaly called from mca_base_components_close.
+ * This function is automatically called from mca_base_components_close.
  * It releases the component's allocated memory.
  */
 int mca_memheap_ptmalloc_component_close()

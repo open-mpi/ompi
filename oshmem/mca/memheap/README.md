@@ -3,7 +3,7 @@
 Copyright (c) 2013      Mellanox Technologies, Inc.
                         All rights reserved
 
-MEMHEAP Infrustructure is responsible for managing the symmetric heap.
+MEMHEAP Infrastructure is responsible for managing the symmetric heap.
 The framework currently has following components: buddy and
 ptmalloc. buddy which uses a buddy allocator in order to manage the
 Memory allocations on the symmetric heap. Ptmalloc is an adaptation of
@@ -11,7 +11,7 @@ ptmalloc3.
 
 Additional components may be added easily to the framework by defining
 the component's and the module's base and extended structures, and
-their funtionalities.
+their functionalities.
 
 The buddy allocator has the following data structures:
 
@@ -54,7 +54,7 @@ The supported activities are:
 
 1. buddy_init (Initialization)
 1. buddy_alloc (Allocates a variable on the symmetric heap)
-1. buddy_free (frees a variable previously allocated on the symetric heap)
+1. buddy_free (frees a variable previously allocated on the symmetric heap)
 1. buddy_finalize (Finalization).
 
 Data members of buddy module:
