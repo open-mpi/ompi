@@ -205,6 +205,46 @@ assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
 }
 
 /*
+ *  upper_ilog2
+ *
+ *  Function:   - compute ceiling of log2(i)
+ *  Accepts:	- integer number
+ *  Returns:	- integer result
+ */ 
+static int
+upper_ilog2(const int i) {
+	int ilog2 = 0;
+	int ii = i;
+	while (ii > 1) {
+		ii = (ii + 1) >> 1;
+		ilog2++;
+	}
+	return ilog2;
+}
+
+/*
+ *  upper_isqrt
+ *
+ *  Function:	- compute ceiling of sqrt(i)
+ *  Accepts:	- integer number
+ *  		- integer number (result of upper_ilog2(i))
+ *  Returns:	- integer result
+ */ 
+static int
+upper_isqrt(const int i, const int ilog2) {
+	if (i < 2) return i;
+	int a, b, c;
+	a = 1 << (((ilog2+1) >> 1) - 1);
+	b = 1 <<  ((ilog2+1) >> 1);
+	do {
+		c = (a + b) >> 1;
+		if (c * c >= i) b = c - 1;
+		else            a = c + 1;
+	} while (b > a);
+	return (a * a >= i) ? a : a + 1;
+}
+
+/*
  *  getfactors
  *
  *  Function:   - factorize a number
@@ -219,6 +259,7 @@ getfactors(int num, int *nfactors, int **factors) {
     int d;
     int i;
     int sqrtnum;
+    int factors2;
 
     if(num  < 2) {
         (*nfactors) = 0;
@@ -226,8 +267,9 @@ getfactors(int num, int *nfactors, int **factors) {
         return MPI_SUCCESS;
     }
     /* Allocate the array of prime factors which cannot exceed log_2(num) entries */
-    sqrtnum = ceil(sqrt(num));
-    size = ceil(log(num) / log(2));
+    size = upper_ilog2(num);
+//  sqrtnum = ceil(sqrt(num));
+//  size = ceil(log(num) / log(2));
     *factors = (int *) malloc((unsigned) size * sizeof(int));
 
     i = 0;
@@ -236,6 +278,8 @@ getfactors(int num, int *nfactors, int **factors) {
         num /= 2;
         (*factors)[i++] = 2;
     }
+
+    sqrtnum = upper_isqrt(num, size - i);
     /* determine all occurences of uneven prime numbers up to sqrt(num) */
     d = 3;
     for(d = 3; (num > 1) && (d <= sqrtnum); d += 2) {
