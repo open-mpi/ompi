@@ -180,9 +180,9 @@ struct mca_atomic_base_component_1_0_0_t {
 };
 typedef struct mca_atomic_base_component_1_0_0_t mca_atomic_base_component_1_0_0_t;
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
  want to always keep up with the most recent version of the
- interace. */
+ interface. */
 typedef struct mca_atomic_base_component_1_0_0_t mca_atomic_base_component_t;
 
 /**
@@ -299,9 +299,9 @@ struct mca_atomic_base_module_1_0_0_t {
 };
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_1_0_0_t;
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
  want to always keep up with the most recent version of the
- interace. */
+ interface. */
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_t;
 OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_atomic_base_module_t);
 

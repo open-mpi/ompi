@@ -168,7 +168,7 @@ int mca_spml_base_select(bool enable_progress_threads, bool enable_mpi_threads)
 
             if (NULL != om->om_component->spmlm_finalize) {
 
-                /* Blatently ignore the return code (what would we do to
+                /* Blatantly ignore the return code (what would we do to
                  recover, anyway?  This component is going away, so errors
                  don't matter anymore) */
 

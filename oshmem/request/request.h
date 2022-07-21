@@ -83,7 +83,7 @@ typedef int (*oshmem_request_cancel_fn_t)(struct oshmem_request_t* request,
 /*
  * Optional function called when the request is completed from the SHMEM
  * library perspective. This function is not allowed to release any
- * ressources related to the request.
+ * resources related to the request.
  */
 typedef int (*oshmem_request_complete_fn_t)(struct oshmem_request_t* request);
 
@@ -133,7 +133,7 @@ struct oshmem_request_t {
 typedef struct oshmem_request_t oshmem_request_t;
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See oshmem/communicator/communicator.h comments with struct oshmem_group_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -172,7 +172,7 @@ typedef struct oshmem_predefined_request_t oshmem_predefined_request_t;
  * This function should be called only from the SHMEM layer. It should
  * never be called from the SPML. It take care of the upper level clean-up.
  * When the user call MPI_Request_free we should release all SHMEM level
- * ressources, so we have to call this function too.
+ * resources, so we have to call this function too.
  */
 #define OSHMEM_REQUEST_FINI(request)                                      \
 do {                                                                    \
@@ -221,7 +221,7 @@ typedef int (*oshmem_request_test_any_fn_t)(size_t count,
  *
  * @param count (IN)      Number of requests
  * @param requests (IN)   Array of requests
- * @param completed (OUT) Flag indicating wether all requests completed.
+ * @param completed (OUT) Flag indicating whether all requests completed.
  * @param statuses (OUT)  Array of completion statuses.
  * @return                OSHMEM_SUCCESS or failure status.
  *
