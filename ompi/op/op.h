@@ -163,10 +163,6 @@ struct ompi_op_t {
             int baseType;
         } java_data;
     } o_func;
-
-    /** 3-buffer functions, which is only for intrinsic ops.  No need
-        for the C/C++/Fortran user-defined functions. */
-    ompi_op_base_op_3buff_fns_t o_3buff_intrinsic;
 };
 
 /**
@@ -590,57 +586,6 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
     }
     op->o_func.c_fn(source, target, &count, &dtype);
     return;
-}
-
-static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, void * restrict source2,
-                                       void * restrict result, int count, struct ompi_datatype_t *dtype)
-{
-    ompi_datatype_copy_content_same_ddt (dtype, count, result, source1);
-    op->o_func.c_fn (source2, result, &count, &dtype);
-}
-
-/**
- * Perform a reduction operation.
- *
- * @param op The operation (IN)
- * @param source Source1 (input) buffer (IN)
- * @param source Source2 (input) buffer (IN)
- * @param target Target (output) buffer (IN/OUT)
- * @param count Number of elements (IN)
- * @param dtype MPI datatype (IN)
- *
- * @returns void As with MPI user-defined reduction functions, there
- * is no return code from this function.
- *
- * Perform a reduction operation with count elements of type dtype in
- * the buffers source and target.  The target buffer obtains the
- * result (i.e., the original values in the target buffer are reduced
- * with the values in the source buffer and the result is stored in
- * the target buffer).
- *
- * This function will *only* be invoked on intrinsic MPI_Ops.
- *
- * Otherwise, this function is the same as ompi_op_reduce.
- */
-static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
-                                        void *source2, void *target,
-                                        int count, ompi_datatype_t * dtype)
-{
-    void *restrict src1;
-    void *restrict src2;
-    void *restrict tgt;
-    src1 = source1;
-    src2 = source2;
-    tgt = target;
-
-    if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
-        op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
-                                                              tgt, &count,
-                                                              &dtype,
-                                                              op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
-    } else {
-        ompi_3buff_op_user (op, src1, src2, tgt, count, dtype);
-    }
 }
 
 END_C_DECLS

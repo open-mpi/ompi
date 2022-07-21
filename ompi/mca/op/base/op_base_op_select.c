@@ -110,15 +110,10 @@ int ompi_op_base_op_select(ompi_op_t *op)
        indicating that these are base functions with no corresponding
        module. */
     memset(&op->o_func, 0, sizeof(op->o_func));
-    memset(&op->o_3buff_intrinsic, 0, sizeof(op->o_3buff_intrinsic));
     for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
         op->o_func.intrinsic.fns[i] =
             ompi_op_base_functions[op->o_f_to_c_index][i];
         op->o_func.intrinsic.modules[i] = module;
-        OBJ_RETAIN(module);
-        op->o_3buff_intrinsic.fns[i] =
-            ompi_op_base_3buff_functions[op->o_f_to_c_index][i];
-        op->o_3buff_intrinsic.modules[i] = module;
         OBJ_RETAIN(module);
     }
 
@@ -160,15 +155,6 @@ int ompi_op_base_op_select(ompi_op_t *op)
                 op->o_func.intrinsic.modules[i] = avail->ao_module;
                 OBJ_RETAIN(avail->ao_module);
             }
-
-            /* 3-buffer variants */
-            if (NULL != avail->ao_module->opm_3buff_fns[i]) {
-                OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
-                op->o_3buff_intrinsic.fns[i] =
-                    avail->ao_module->opm_3buff_fns[i];
-                op->o_3buff_intrinsic.modules[i] = avail->ao_module;
-                OBJ_RETAIN(avail->ao_module);
-            }
         }
 
         /* release the original module reference and the list item */
@@ -181,9 +167,8 @@ int ompi_op_base_op_select(ompi_op_t *op)
 
     /* Sanity check: for intrinsic MPI_Ops, we should have exactly the
        same pointers non-NULL as the corresponding initial table row
-       in ompi_op_base_functions / ompi_op_base_3buff_functions.  The
-       values may be different, of course, but the pattern of
-       NULL/non-NULL should be exactly the same. */
+       in ompi_op_base_functions. The values may be different, of course,
+       but the pattern of NULL/non-NULL should be exactly the same. */
     for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
         if ((NULL == ompi_op_base_functions[op->o_f_to_c_index][i] &&
              NULL != op->o_func.intrinsic.fns[i]) ||

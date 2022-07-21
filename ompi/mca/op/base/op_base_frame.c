@@ -43,7 +43,6 @@ static void module_constructor(ompi_op_base_module_t *m)
     m->opm_enable = NULL;
     m->opm_op = NULL;
     memset(&(m->opm_fns), 0, sizeof(m->opm_fns));
-    memset(&(m->opm_3buff_fns), 0, sizeof(m->opm_3buff_fns));
 }
 
 static void module_constructor_1_0_0(ompi_op_base_module_1_0_0_t *m)
@@ -51,7 +50,6 @@ static void module_constructor_1_0_0(ompi_op_base_module_1_0_0_t *m)
     m->opm_enable = NULL;
     m->opm_op = NULL;
     memset(&(m->opm_fns), 0, sizeof(m->opm_fns));
-    memset(&(m->opm_3buff_fns), 0, sizeof(m->opm_3buff_fns));
 }
 
 OBJ_CLASS_INSTANCE(ompi_op_base_module_t, opal_object_t,

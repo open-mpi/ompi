@@ -472,8 +472,6 @@ static void ompi_op_construct(ompi_op_t *new_op)
     for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
         new_op->o_func.intrinsic.fns[i] = NULL;
         new_op->o_func.intrinsic.modules[i] = NULL;
-        new_op->o_3buff_intrinsic.fns[i] = NULL;
-        new_op->o_3buff_intrinsic.modules[i] = NULL;
     }
 }
 
@@ -499,11 +497,6 @@ static void ompi_op_destruct(ompi_op_t *op)
         if( NULL != op->o_func.intrinsic.modules[i] ) {
             OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
             op->o_func.intrinsic.modules[i] = NULL;
-        }
-        op->o_3buff_intrinsic.fns[i] = NULL;
-        if( NULL != op->o_3buff_intrinsic.modules[i] ) {
-            OBJ_RELEASE(op->o_3buff_intrinsic.modules[i]);
-            op->o_3buff_intrinsic.modules[i] = NULL;
         }
     }
 }

@@ -266,17 +266,6 @@ typedef void (*ompi_op_base_handler_fn_1_0_0_t)(const void *, void *, int *,
 
 typedef ompi_op_base_handler_fn_1_0_0_t ompi_op_base_handler_fn_t;
 
-/*
- * Typedef for 3-buffer (two input and one output) op functions.
- */
-typedef void (*ompi_op_base_3buff_handler_fn_1_0_0_t)(const void *,
-                                                      const void *,
-                                                      void *, int *,
-                                                      struct ompi_datatype_t **,
-                                                      struct ompi_op_base_module_1_0_0_t *);
-
-typedef ompi_op_base_3buff_handler_fn_1_0_0_t ompi_op_base_3buff_handler_fn_t;
-
 /**
  * Op component initialization
  *
@@ -379,7 +368,6 @@ typedef struct ompi_op_base_module_1_0_0_t {
     /** Function pointers for all the different datatypes to be used
         with the MPI_Op that this module is used with */
     ompi_op_base_handler_fn_1_0_0_t opm_fns[OMPI_OP_BASE_TYPE_MAX];
-    ompi_op_base_3buff_handler_fn_1_0_0_t opm_3buff_fns[OMPI_OP_BASE_TYPE_MAX];
 } ompi_op_base_module_1_0_0_t;
 
 /**
@@ -403,18 +391,6 @@ typedef struct ompi_op_base_op_fns_1_0_0_t {
 } ompi_op_base_op_fns_1_0_0_t;
 
 typedef ompi_op_base_op_fns_1_0_0_t ompi_op_base_op_fns_t;
-
-/**
- * Struct that is used in op.h to hold all the function pointers and
- * pointers to the corresopnding modules (so that we can properly
- * RETAIN/RELEASE them)
- */
-typedef struct ompi_op_base_op_3buff_fns_1_0_0_t {
-    ompi_op_base_3buff_handler_fn_1_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
-    ompi_op_base_module_t *modules[OMPI_OP_BASE_TYPE_MAX];
-} ompi_op_base_op_3buff_fns_1_0_0_t;
-
-typedef ompi_op_base_op_3buff_fns_1_0_0_t ompi_op_base_op_3buff_fns_t;
 
 /*
  * Macro for use in modules that are of type op v2.0.0
