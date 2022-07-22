@@ -98,16 +98,16 @@ Chapter and section delimiters
     .. code-block:: rst
 
        Subsection 1: hello world
-       -------------------------
+       ^^^^^^^^^^^^^^^^^^^^^^^^^
 
     .. code-block:: rst
 
        Subsubsection 1: hello world
-       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+       ++++++++++++++++++++++++++++
 
     Meaning: underlines made of ``=`` denotes chapters, underlines
-    made of ``-`` denotes sections, underlines made of ``-`` denotes
-    subsections, and underlines made of ``^`` denote subsubsections.
+    made of ``-`` denotes sections, underlines made of ``^`` denotes
+    subsections, and underlines made of ``+`` denote subsubsections.
 
 Multi-line code/fixed-width font
 --------------------------------
