@@ -259,7 +259,7 @@ segment_detach(map_segment_t *ds_buf, sshmem_mkey_t *mkey)
 
     if (mca_sshmem_sysv_component.use_hp != 0) {
         /**
-         *  Workaround kernel panic when detaching huge pages from user space simultanously from several processes
+         *  Workaround kernel panic when detaching huge pages from user space simultaneously from several processes
          *  dont detach here instead let kernel do it during process cleanup
          */
         /* shmdt((void *)ds_buf->seg_base_addr); */

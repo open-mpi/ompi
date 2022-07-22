@@ -336,7 +336,7 @@ int mca_spml_ucx_del_procs(oshmem_group_t* group, size_t nprocs)
     return ret;
 }
 
-/* TODO: move func into common place, use it with rkey exchng too */
+/* TODO: move func into common place, use it with rkey exchange too */
 static int oshmem_shmem_xchng(
         void **local_data, unsigned int *local_size, int nprocs, int ucp_workers,
         void **rdata_p, unsigned int **roffsets_p, unsigned int **rsizes_p)
