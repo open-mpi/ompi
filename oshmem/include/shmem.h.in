@@ -185,7 +185,7 @@ OSHMEM_DECLSPEC void shmem_info_get_version(int *major, int *minor);
 OSHMEM_DECLSPEC void shmem_info_get_name(char *name);
 
 /*
- * Accessability routines
+ * Accessibility routines
  */
 OSHMEM_DECLSPEC int shmem_pe_accessible(int pe);
 OSHMEM_DECLSPEC int shmem_addr_accessible(const void *addr, int pe);
@@ -2510,7 +2510,7 @@ OSHMEM_DECLSPEC void shmem_longlong_inc(long long *target, int pe);
 
 
 /*
- * Nonblocking Atomic Memroy Operations
+ * Nonblocking Atomic Memory Operations
  */
 
 /* Atomic Nonblocking Fetch */

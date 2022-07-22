@@ -82,7 +82,7 @@ OSHMEM_DECLSPEC extern shmem_ctx_t oshmem_ctx_default;
 #define OSHMEM_THREADLEVEL_SERIALIZED_BF 0x00000004
 #define OSHMEM_THREADLEVEL_MULTIPLE_BF   0x00000008
 
-/** In ompi_mpi_init: the lists of Fortran 90 mathing datatypes.
+/** In ompi_mpi_init: the lists of Fortran 90 matching datatypes.
  * We need these lists and hashtables in order to satisfy the new
  * requirements introduced in MPI 2-1 Sect. 10.2.5,
  * MPI_TYPE_CREATE_F90_xxxx, page 295, line 47.
@@ -105,12 +105,12 @@ OSHMEM_DECLSPEC extern const char oshmem_version_string[];
  * @returns OSHMEM_SUCCESS if successful
  * @returns Error code if unsuccessful
  *
- * Intialize all support code needed for SHMEM applications.  This
+ * Initialize all support code needed for SHMEM applications.  This
  * function should only be called by SHMEM applications (including
  * singletons).  If this function is called, ompi_init() and
  * ompi_rte_init() should *not* be called.
  *
- * It is permissable to pass in (0, NULL) for (argc, argv).
+ * It is permissible to pass in (0, NULL) for (argc, argv).
  */
 int oshmem_shmem_init(int argc, char **argv, int requested, int *provided);
 

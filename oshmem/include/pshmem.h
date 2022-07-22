@@ -45,7 +45,7 @@ OSHMEM_DECLSPEC  int pshmem_my_pe(void);
 OSHMEM_DECLSPEC  void pshmem_query_thread(int *provided);
 
 /*
- * Accessability routines
+ * Accessibility routines
  */
 OSHMEM_DECLSPEC int pshmem_pe_accessible(int pe);
 OSHMEM_DECLSPEC int pshmem_addr_accessible(const void *addr, int pe);

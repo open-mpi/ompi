@@ -40,7 +40,7 @@
 #define _my_pe                       p_my_pe /* shmem-compat.h */
 
 /*
- * Accessability routines
+ * Accessibility routines
  */
 #define shmem_pe_accessible          pshmem_pe_accessible
 #define shmem_addr_accessible        pshmem_addr_accessible

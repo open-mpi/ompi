@@ -105,8 +105,8 @@ static void* shmem_opal_thread(void* argc)
 {
 /*
  * WHAT: sleep() invocation
- * WHY:  there occures a segfault sometimes and sleep()
- *       reduces it's possibility
+ * WHY:  there occurs a segfault sometimes and sleep()
+ *       reduces its possibility
  */
     sleep(1);
     while(oshmem_shmem_initialized)
