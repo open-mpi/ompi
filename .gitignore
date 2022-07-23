@@ -357,10 +357,16 @@ opal/mca/crs/opal_crs.7
 
 opal/mca/event/libevent*/libevent/config.h.in
 opal/mca/event/libevent*/libevent/config.h
+opal/mca/event/libevent*/libevent/evconfig-private.h
 opal/mca/event/libevent*/libevent/libevent.pc
+opal/mca/event/libevent*/libevent/libevent_core.pc
+opal/mca/event/libevent*/libevent/libevent_extra.pc
 opal/mca/event/libevent*/libevent/libevent_openssl.pc
 opal/mca/event/libevent*/libevent/libevent_pthreads.pc
 opal/mca/event/libevent*/libevent/include/event2/event-config.h
+opal/mca/event/libevent*/libevent/build-aux/test-driver
+opal/mca/event/libevent*/libevent/sample/*
+opal/mca/event/libevent*/libevent/test/*
 
 opal/mca/hwloc/hwloc*/hwloc/include/hwloc/autogen/config.h
 opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h
