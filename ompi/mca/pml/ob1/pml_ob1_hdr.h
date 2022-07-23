@@ -634,7 +634,7 @@ ob1_hdr_copy(mca_pml_ob1_hdr_t *src, mca_pml_ob1_hdr_t *dst)
 	    mca_pml_ob1_hdr_t *next_dst = (mca_pml_ob1_hdr_t *) ((uintptr_t) dst + sizeof (dst->hdr_cid));
 
 	    memcpy (&dst->hdr_cid, &src->hdr_cid, sizeof (src->hdr_cid));
-            /* can't call recusively and expect inlining */
+            /* can't call recursively and expect inlining */
             src = next_src;
             dst = next_dst;
             continue;

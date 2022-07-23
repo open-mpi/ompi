@@ -1229,7 +1229,7 @@ put_to_noncontig(opal_atomic_int64_t *opcount,
         /* opal_convertor_raw returns done when it has reached the end of the data */
         done = opal_convertor_raw (&target_convertor, target_iovec, &target_iov_count, &target_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (target_iov_index != target_iov_count) {
             if (origin_iov_index == origin_iov_count) {
                 /* decode segments of the target buffer */
@@ -1338,7 +1338,7 @@ atomic_put_to_noncontig(ompi_osc_portals4_module_t *module,
         /* opal_convertor_raw returns done when it has reached the end of the data */
         done = opal_convertor_raw (&target_convertor, target_iovec, &target_iov_count, &target_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (target_iov_index != target_iov_count) {
             if (origin_iov_index == origin_iov_count) {
                 /* decode segments of the target buffer */
@@ -1456,7 +1456,7 @@ atomic_to_noncontig(ompi_osc_portals4_module_t *module,
         /* opal_convertor_raw returns done when it has reached the end of the data */
         done = opal_convertor_raw (&target_convertor, target_iovec, &target_iov_count, &target_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (target_iov_index != target_iov_count) {
             if (origin_iov_index == origin_iov_count) {
                 /* decode segments of the target buffer */
@@ -1563,7 +1563,7 @@ get_from_noncontig(opal_atomic_int64_t *opcount,
         /* opal_convertor_raw returns done when it has reached the end of the data */
         done = opal_convertor_raw (&target_convertor, target_iovec, &target_iov_count, &target_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (target_iov_index != target_iov_count) {
             if (origin_iov_index == origin_iov_count) {
                 /* decode segments of the target buffer */
@@ -1664,7 +1664,7 @@ atomic_get_from_noncontig(ompi_osc_portals4_module_t *module,
         /* opal_convertor_raw returns done when it has reached the end of the data */
         done = opal_convertor_raw (&target_convertor, target_iovec, &target_iov_count, &target_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (target_iov_index != target_iov_count) {
             if (origin_iov_index == origin_iov_count) {
                 /* decode segments of the target buffer */
@@ -1787,7 +1787,7 @@ swap_from_noncontig(ompi_osc_portals4_module_t *module,
         /* opal_convertor_raw returns done when it has reached the end of the data */
         done = opal_convertor_raw (&target_convertor, target_iovec, &target_iov_count, &target_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (target_iov_index != target_iov_count) {
             if (result_iov_index == result_iov_count) {
                 /* decode segments of the target buffer */
@@ -1939,7 +1939,7 @@ fetch_atomic_from_noncontig(ompi_osc_portals4_module_t *module,
         /* opal_convertor_raw returns done when it has reached the end of the data */
         done = opal_convertor_raw (&target_convertor, target_iovec, &target_iov_count, &target_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (target_iov_index != target_iov_count) {
             if (result_iov_index == result_iov_count) {
                 /* decode segments of the target buffer */

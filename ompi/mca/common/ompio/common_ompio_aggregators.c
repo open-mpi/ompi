@@ -42,7 +42,7 @@
 #include "common_ompio.h"
 
 /*
-** This file contains all the functionality related to determing the number of aggregators
+** This file contains all the functionality related to determining the number of aggregators
 ** and the list of aggregators.
 **
 ** The first group functions determines the number of aggregators based on various characteristics
@@ -1418,7 +1418,7 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
     }
 
     //print decision list of aggregators
-    /*printf("RANK%d  : Printing decsion list   : \n",fh->f_rank);
+    /*printf("RANK%d  : Printing decision list   : \n",fh->f_rank);
     for( i = 0; i < fh->f_init_num_aggrs; i++){
         if(decision_list_tmp[i] == OMPIO_MERGE)
             printf("MERGE,");

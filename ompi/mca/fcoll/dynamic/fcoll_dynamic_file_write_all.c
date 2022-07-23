@@ -116,7 +116,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     opal_datatype_get_extent ( &datatype->super, &lb, &ftype_extent );
 
     /**************************************************************************
-     ** 1.  In case the data is not contigous in memory, decode it into an iovec
+     ** 1.  In case the data is not contiguous in memory, decode it into an iovec
      **************************************************************************/
     if ( ( ftype_extent == (ptrdiff_t) ftype_size)             &&
          opal_datatype_is_contiguous_memory_layout(&datatype->super,1) &&
@@ -622,7 +622,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
 
         /*************************************************************************
 	 *** 7d. Calculate the displacement on where to put the data and allocate
-         ***     the recieve buffer (global_buf)
+         ***     the receive buffer (global_buf)
 	 *************************************************************************/
         if (my_aggregator == fh->f_rank) {
             entries_per_aggregator=0;
@@ -802,7 +802,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
         }
         else if (bytes_sent) {
             /* allocate a send buffer and copy the data that needs
-               to be sent into it in case the data is non-contigous
+               to be sent into it in case the data is non-contiguous
                in memory */
             ptrdiff_t mem_address;
             size_t remaining = 0;
@@ -844,7 +844,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
 	}
 	total_bytes_written += bytes_sent;
 
-	/* Gather the sendbuf from each process in appropritate locations in
+	/* Gather the sendbuf from each process in appropriate locations in
            aggregators*/
 
 	if (bytes_sent){
@@ -927,7 +927,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
             fh->f_num_of_io_entries++;
 
             for (i=1;i<entries_per_aggregator;i++){
-                /* If the enrties are contiguous merge them,
+                /* If the entries are contiguous merge them,
                    else make a new entry */
                 if (file_offsets_for_agg[sorted_file_offsets[i-1]].offset +
                     file_offsets_for_agg[sorted_file_offsets[i-1]].length ==

@@ -91,7 +91,7 @@ int mca_sharedfp_sm_write_ordered (ompio_file_t *fh,
 
     if( NULL == fh->f_sharedfp_data){
         opal_output(ompi_sharedfp_base_framework.framework_output,
-                    "sharedfp_sm_write_ordered: module not initialzed \n");
+                    "sharedfp_sm_write_ordered: module not initialized \n");
         return OMPI_ERROR;
     }
 

@@ -680,7 +680,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         (void)opal_convertor_pack( &sendreq->req_send.req_base.req_convertor,
                                    &iov, &iov_count, &max_data );
          /*
-          *  Packing finished, make the user buffer unaccessable.
+          *  Packing finished, make the user buffer unaccessible.
           */
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_noaccess,
@@ -803,7 +803,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
 
 
 /**
- *  We have contigous data that is registered - schedule across
+ *  We have contiguous data that is registered - schedule across
  *  available nics.
  */
 
@@ -1129,7 +1129,7 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
             add_request_to_send_pending(sendreq,
                     MCA_PML_OB1_SEND_PENDING_SCHEDULE, true);
             /* Note that request remains locked. send_request_process_pending()
-             * function will call shedule_exclusive() directly without taking
+             * function will call schedule_exclusive() directly without taking
              * the lock */
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

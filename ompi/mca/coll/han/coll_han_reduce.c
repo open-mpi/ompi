@@ -51,7 +51,7 @@ mca_coll_han_set_reduce_args(mca_coll_han_reduce_args_t * args, mca_coll_task_t 
 }
 
 /*
- * Each segment of the messsage needs to go though 2 steps to perform MPI_Reduce:
+ * Each segment of the message needs to go though 2 steps to perform MPI_Reduce:
  *     lb: low level (shared-memory or intra-node) reduce.
  *     ub: upper level (inter-node) reduce
  * Hence, in each iteration, there is a combination of collective operations which is called a task.
@@ -364,7 +364,7 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
             free(tmp_buf);
         } else {
             /* Take advantage of any optimisation made for IN_PLACE
-             * communcations */
+             * communications */
             ret = up_comm->c_coll->coll_reduce(MPI_IN_PLACE, (char *)tmp_buf,
                         count, dtype, op, root_up_rank,
                         up_comm, up_comm->c_coll->coll_reduce_module);

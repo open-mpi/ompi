@@ -24,7 +24,7 @@
 #include "nbc_internal.h"
 
 /* an reduce_csttare schedule can not be cached easily because the contents
- * ot the recvcount value may change, so a comparison of the address
+ * of the recvcount value may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
 
 /* binomial reduce to rank 0 followed by a linear scatter ...

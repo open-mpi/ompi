@@ -353,7 +353,7 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int mpi_assert, ompi_win_t 
     sync->num_peers = ompi_group_size (group);
     sync->sync.pscw.group = group;
 
-    /* haven't processed any post messaes yet */
+    /* haven't processed any post messages yet */
     state->num_post_msgs = 0;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start group size %d", sync->num_peers);
@@ -577,7 +577,7 @@ int ompi_osc_rdma_fence_atomic (int mpi_assert, ompi_win_t *win)
     }
 
     /* NTH: locking here isn't really needed per-se but it may make user synchronization errors more
-     * predicable. if the user is using RMA correctly then there will be no contention on this lock. */
+     * predictable. if the user is using RMA correctly then there will be no contention on this lock. */
     OPAL_THREAD_LOCK(&module->lock);
 
     /* active sends are now active (we will close the epoch if NOSUCCEED is specified) */

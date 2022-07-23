@@ -141,7 +141,7 @@ mca_pml_cm_component_init(int* priority,
 
     opal_output_verbose( 10, 0,
                          "in cm pml priority is %d\n", *priority);
-    /* find a useable MTL */
+    /* find a usable MTL */
     ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads, priority);
     if (OMPI_SUCCESS != ret) {
         return NULL;

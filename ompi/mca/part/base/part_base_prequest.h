@@ -49,7 +49,7 @@ typedef enum {
 
 
 /**
- *  Base type for Partitoned P2P requests
+ *  Base type for Partitioned P2P requests
  */
 struct mca_part_base_prequest_t {
 

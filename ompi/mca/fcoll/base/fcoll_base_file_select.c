@@ -49,7 +49,7 @@ static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
 /*
  * Only one fcoll module can be attached to each file.
  *
- * This module calls the query funtion on all the components that were
+ * This module calls the query function on all the components that were
  * detected by fcoll_base_open. This function is called on a
  * per-file basis. This function has the following function.
  *
@@ -212,14 +212,14 @@ int mca_fcoll_base_file_select (struct ompio_file_t *file,
             * module of this component.
             *
             * ANJU: a component might not have all the functions
-            * defined.  Whereever a function pointer is null in the
+            * defined.  Wherever a function pointer is null in the
             * module structure we need to fill it in with the base
             * structure function pointers. This is yet to be done
             */
 
             /*
-             * We don return here coz we still need to go through and
-             * elease the other objects
+             * We don't return here coz we still need to go through and
+             * release the other objects
              */
 
             /*fill_null_pointers (om->om_module);*/
@@ -231,7 +231,7 @@ int mca_fcoll_base_file_select (struct ompio_file_t *file,
             */
          } else {
             /*
-             * this is not the "choosen one", finalize
+             * this is not the "chosen one", finalize
              */
              if (NULL != om->om_component->fcollm_file_unquery) {
                 /* unquery the component only if they have some clean

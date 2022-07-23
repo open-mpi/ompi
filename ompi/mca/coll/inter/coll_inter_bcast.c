@@ -51,7 +51,7 @@ mca_coll_inter_bcast_inter(void *buff, int count,
         /* do nothing */
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
-        /* Non-root, first process recieves the data and bcast to others */
+        /* Non-root, first process receives the data and bcast to others */
 	if ( 0 == rank ) {
 	    err = MCA_PML_CALL(recv(buff, count, datatype, root,
 				    MCA_COLL_BASE_TAG_BCAST, comm,

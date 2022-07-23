@@ -84,7 +84,7 @@ mca_coll_han_component_t mca_coll_han_component = {
         .collm_comm_query = mca_coll_han_comm_query,
     },
 
-    /* han-component specifc information */
+    /* han-component specific information */
 
     /* (default) priority */
     20,
@@ -336,7 +336,7 @@ static int han_register(void)
     /*
      * Simple algorithms MCA parameters :
      * using simple algorithms will just perform hierarchical communications.
-     * By default communications are also splitted into tasks
+     * By default communications are also split into tasks
      * to handle thread noise
      */
     for(coll = 0 ; coll < COLLCOUNT ; coll++) {

@@ -158,7 +158,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     
     
     /**************************************************************************
-     ** 1.  In case the data is not contigous in memory, decode it into an iovec
+     ** 1.  In case the data is not contiguous in memory, decode it into an iovec
      **************************************************************************/
     vulcan_num_io_procs = fh->f_get_mca_parameter_value ( "num_aggregators", strlen ("num_aggregators"));
     if ( OMPI_ERR_MAX == vulcan_num_io_procs ) {
@@ -168,7 +168,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     bytes_per_cycle = fh->f_bytes_per_agg;
 
     if( (1 == mca_fcoll_vulcan_async_io) && (NULL == fh->f_fbtl->fbtl_ipwritev) ) {
-        opal_output (1, "vulcan_write_all: fbtl Does NOT support ipwritev() (asynchrounous write) \n");
+        opal_output (1, "vulcan_write_all: fbtl Does NOT support ipwritev() (asynchronous write) \n");
         ret = MPI_ERR_UNSUPPORTED_OPERATION;
         goto exit;
     }
@@ -1024,7 +1024,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     
     /*************************************************************************
      *** 7d. Calculate the displacement on where to put the data and allocate
-     ***     the recieve buffer (global_buf)
+     ***     the receive buffer (global_buf)
      *************************************************************************/
     if (aggregator == rank) {
         entries_per_aggregator=0;
@@ -1315,7 +1315,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
         data->num_io_entries++;
         
         for (i=1;i<entries_per_aggregator;i++){
-            /* If the enrties are contiguous merge them,
+            /* If the entries are contiguous merge them,
                else make a new entry */
             if (file_offsets_for_agg[sorted_file_offsets[i-1]].offset +
                 file_offsets_for_agg[sorted_file_offsets[i-1]].length ==

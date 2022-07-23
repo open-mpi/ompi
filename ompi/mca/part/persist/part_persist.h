@@ -70,7 +70,7 @@ struct ompi_part_persist_t {
     ompi_communicator_t   *part_comm_setup; /* We create a second communicator to send set-up messages (rational: these 
                                                messages go in the opposite direction of normal messages, need to use MPI_ANY_SOURCE 
                                                to support different communicators, and thus need to have a unique tag. Because tags 
-                                               are controled by the sender in this model, we cannot assume that the tag will be 
+                                               are controlled by the sender in this model, we cannot assume that the tag will be 
                                                unused in part_comm. */
     ompi_request_t        *part_comm_sreq;
     int32_t                part_comm_sready;
@@ -245,7 +245,7 @@ mca_part_persist_progress(void)
                     dt_size = (dt_size_ > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) dt_size_;
                     int32_t bytes = req->real_count * dt_size;
 
-                    /* Set up persistant sends */
+                    /* Set up persistent sends */
                     req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
                     for(i = 0; i < req->real_parts; i++) {
                          void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
@@ -264,7 +264,7 @@ mca_part_persist_progress(void)
                     dt_size = (dt_size_ > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) dt_size_;
                     int32_t bytes = req->real_count * dt_size;
 
-                    /* Set up persistant sends */
+                    /* Set up persistent sends */
                     req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
                     req->flags = (int*) calloc(req->real_parts,sizeof(int));
                     for(i = 0; i < req->real_parts; i++) {
@@ -362,7 +362,7 @@ mca_part_persist_precv_init(void *buf,
     req->first_send  = true; 
     req->flag_post_setup_recv = false;
     req->flags = NULL;
-    /* Non-blocking recive on setup info */
+    /* Non-blocking receive on setup info */
     err	= MCA_PML_CALL(irecv(&req->setup_info[1], sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, src, tag, comm, &req->setup_req[1])); 
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
 
@@ -452,7 +452,7 @@ mca_part_persist_psend_init(const void* buf,
     err = MCA_PML_CALL(isend(&(req->setup_info[0]), sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, dst, tag, MCA_PML_BASE_SEND_STANDARD, comm, &req->setup_req[0]));
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
 
-    /* Non-blocking recive on setup info */
+    /* Non-blocking receive on setup info */
     if(1 == ompi_part_persist.init_comms) {
         err = MCA_PML_CALL(irecv(&(req->setup_info[1]), sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, MPI_ANY_SOURCE, req->my_recv_tag, ompi_part_persist.part_comm_setup, &req->setup_req[1]));
         if(OMPI_SUCCESS != err) return OMPI_ERROR;
@@ -535,7 +535,7 @@ mca_part_persist_pready(size_t min_part,
     {
         err = req->persist_reqs[min_part]->req_start(max_part-min_part+1, (&(req->persist_reqs[min_part])));
         for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
-            req->flags[i] = 0; /* Mark partion as ready for testing */
+            req->flags[i] = 0; /* Mark partition as ready for testing */
         }
     }
     else

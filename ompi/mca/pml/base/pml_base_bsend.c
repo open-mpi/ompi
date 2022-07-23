@@ -250,7 +250,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 
         OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
 
-        /* The convertor is already initialized in the begining so we just have to
+        /* The convertor is already initialized in the beginning so we just have to
          * pack the data in the newly allocated buffer.
          */
         iov.iov_base = (IOVBASE_TYPE*)sendreq->req_addr;

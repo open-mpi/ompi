@@ -781,7 +781,7 @@ static inline int red_sched_redscat_gather(
 
         for (int mask = 1; mask < nprocs_pof2; mask <<= 1) {
             /*
-             * On each iteration: rindex[step] = sindex[step] -- begining of the
+             * On each iteration: rindex[step] = sindex[step] -- beginning of the
              * current window. Length of the current window is storded in wsize.
              */
             int vdest = vrank ^ mask;

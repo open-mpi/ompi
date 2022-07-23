@@ -185,7 +185,7 @@ ompi_mtl_ofi_component_register(void)
     control_progress = MTL_OFI_PROG_UNSPEC;
     mca_base_component_var_register (&mca_mtl_ofi_component.super.mtl_version,
                                      "control_progress",
-                                     "Specify control progress model (default: unspecificed, use provider's default). Set to auto or manual for auto or manual progress respectively.",
+                                     "Specify control progress model (default: unspecified, use provider's default). Set to auto or manual for auto or manual progress respectively.",
                                      MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
                                      OPAL_INFO_LVL_3,
                                      MCA_BASE_VAR_SCOPE_READONLY,
@@ -352,7 +352,7 @@ select_ofi_provider(struct fi_info *providers,
       * however some may have multiple info objects with different
       * attributes for the same NIC. The initial provider attributes
       * are used to ensure that all NICs we return provide the same
-      * capabilities as the inital one.
+      * capabilities as the initial one.
       *
       * We use package rank to select between NICs of equal distance
       * if we cannot calculate a package_rank, we fall back to using the
@@ -475,7 +475,7 @@ static int ompi_mtl_ofi_init_sep(struct fi_info *prov, int universe_size)
 
     /*
      * If SEP supported and Thread Grouping feature enabled, use
-     * num_ofi_contexts + 2. Extra 2 items is to accomodate Open MPI contextid
+     * num_ofi_contexts + 2. Extra 2 items is to accommodate Open MPI contextid
      * numbering- COMM_WORLD is 0, COMM_SELF is 1. Other user created
      * Comm contextid values are assigned sequentially starting with 3.
      */
@@ -923,7 +923,7 @@ select_prov:
      * that before domain open.  Silently ignore not-supported errors,
      * as they are not critical to program correctness, but only
      * indicate that LIbfabric will have to pick a different, possibly
-     * less optimial, monitor. */
+     * less optimal, monitor. */
     ret = opal_common_ofi_export_memory_monitor();
     if (0 != ret && -FI_ENOSYS != ret) {
         opal_output_verbose(1, opal_common_ofi.output,
@@ -967,7 +967,7 @@ select_prov:
      */
     ret = fi_domain(ompi_mtl_ofi.fabric,  /* In:  Fabric object                 */
                     prov,                 /* In:  Provider                      */
-                    &ompi_mtl_ofi.domain, /* Out: Domain oject                  */
+                    &ompi_mtl_ofi.domain, /* Out: Domain object                 */
                     NULL);                /* Optional context for domain events */
     if (0 != ret) {
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,

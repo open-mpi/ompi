@@ -31,7 +31,7 @@ int mca_coll_hcoll_init_query(bool enable_progress_threads, bool enable_mpi_thre
 {
 #if HCOLL_API < HCOLL_VERSION(3,2)
     if (enable_mpi_threads) {
-        HCOL_VERBOSE(1, "MPI_THREAD_MULTIPLE not suppported; skipping hcoll component");
+        HCOL_VERBOSE(1, "MPI_THREAD_MULTIPLE not supported; skipping hcoll component");
         return OMPI_ERROR;
     }
 #endif
@@ -289,7 +289,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     if (!cm->libhcoll_initialized)
     {
-        /* libhcoll should be initialized here since current implmentation of
+        /* libhcoll should be initialized here since current implementation of
            mxm bcol in libhcoll needs world_group fully functional during init
            world_group, i.e. ompi_comm_world, is not ready at hcoll component open
            call */

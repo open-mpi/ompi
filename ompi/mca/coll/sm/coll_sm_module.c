@@ -365,7 +365,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     /* Once the communicator is bootstrapped, setup the pointers into
        the per-communicator shmem data segment.  First, setup the
        barrier buffers.  There are 2 sets of barrier buffers (because
-       there can never be more than one outstanding barrier occuring
+       there can never be more than one outstanding barrier occurring
        at any timie).  Setup pointers to my control buffers, my
        parents, and [the beginning of] my children (note that the
        children are contiguous, so having the first pointer and the

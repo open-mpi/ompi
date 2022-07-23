@@ -63,7 +63,7 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
 	if(0 == rank) {
-	    /* local root recieves the counts from the root */
+	    /* local root receives the counts from the root */
 	    counts = (int *)malloc(sizeof(int) * size_local);
 	    err = MCA_PML_CALL(recv(counts, size_local, MPI_INT,
 				    root, MCA_COLL_BASE_TAG_SCATTERV,
