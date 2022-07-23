@@ -43,7 +43,7 @@
  */
  /* IMPORTANT: Update here when adding sharedfp component interface functions*/
 static mca_sharedfp_base_module_1_0_0_t lockedfile =  {
-    mca_sharedfp_lockedfile_module_init, /* initalise after being selected */
+    mca_sharedfp_lockedfile_module_init, /* initialise after being selected */
     mca_sharedfp_lockedfile_module_finalize, /* close a module on a communicator */
     mca_sharedfp_lockedfile_seek,
     mca_sharedfp_lockedfile_get_position,

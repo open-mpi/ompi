@@ -1044,7 +1044,7 @@ static int era_tree_check_node(era_tree_t *tree, int tree_size, int r, int displ
     if( tree[r].rank_in_comm <
         tree[ tree[r].parent ].rank_in_comm ) {
         tree_errors++;
-        fprintf(stderr, "TC %s -- %d/%d(%d): broken hiearchy as my parent is %d in the communicator\n",
+        fprintf(stderr, "TC %s -- %d/%d(%d): broken hierarchy as my parent is %d in the communicator\n",
                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), r, tree_size, tree[r].rank_in_comm, tree[tree[r].parent].rank_in_comm);
     }
 
@@ -1300,7 +1300,7 @@ static void era_call_tree_fn(era_agreement_info_t *ci)
     }
 #else
     /* Hierarchical tree disabled for now. ESS does not give daemon names
-     * anymore. TODO: ENABLE_FT_MPI: restore hierarchical tree capabilitiy. */
+     * anymore. TODO: ENABLE_FT_MPI: restore hierarchical tree capability. */
     era_tree_fn(AGS(ci->comm)->tree, AGS(ci->comm)->tree_size);
 #endif
 }
@@ -1636,7 +1636,7 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
                                          ci->agreement_id.ERAID_KEY, &value) == OMPI_SUCCESS ) {
         /**
          * If the value was already decided, then this DOWN message
-         * *must* provide the same decision: it can only be a dupplicate.
+         * *must* provide the same decision: it can only be a duplicate.
          */
         era_value_t *old_agreement_value;
         old_agreement_value = (era_value_t*)value;
@@ -1749,7 +1749,7 @@ static void era_decide(era_value_t *decided_value, era_agreement_info_t *ci)
     r = -1;
     while( (r = era_next_child(ci, r)) < ompi_comm_size(comm) ) {
 
-        /** Cleanup the early_requesters list, to avoid sending unecessary dupplicate messages */
+        /** Cleanup the early_requesters list, to avoid sending unnecessary duplicate messages */
         if( opal_list_get_size(&ci->early_requesters) > 0 ) {
             for(rl = (era_rank_item_t*)opal_list_get_first(&ci->early_requesters);
                 rl != (era_rank_item_t*)opal_list_get_end(&ci->early_requesters);

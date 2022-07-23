@@ -125,7 +125,7 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
        everyone has available */
 #if 1
     /* For the moment, just take the top module off the list */
-    /* MSC actually take the buttom */
+    /* MSC actually take the bottom */
     item = opal_list_remove_last(selectable);
     avail = (avail_io_t *) item;
     selected = *avail;

@@ -44,7 +44,7 @@ int mca_coll_monitoring_neighbor_alltoall(const void *sbuf, int scount,
         if (MPI_PROC_NULL != srank) {
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
-             * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+             * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
              */
             if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(srank, comm->c_remote_group, &world_rank) ) {
                 mca_common_monitoring_record_coll(world_rank, data_size);
@@ -55,7 +55,7 @@ int mca_coll_monitoring_neighbor_alltoall(const void *sbuf, int scount,
         if (MPI_PROC_NULL != drank) {
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
-             * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+             * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
              */
             if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(drank, comm->c_remote_group, &world_rank) ) {
                 mca_common_monitoring_record_coll(world_rank, data_size);
@@ -98,7 +98,7 @@ int mca_coll_monitoring_ineighbor_alltoall(const void *sbuf, int scount,
         if (MPI_PROC_NULL != srank) {
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
-             * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+             * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
              */
             if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(srank, comm->c_remote_group, &world_rank) ) {
                 mca_common_monitoring_record_coll(world_rank, data_size);
@@ -109,7 +109,7 @@ int mca_coll_monitoring_ineighbor_alltoall(const void *sbuf, int scount,
         if (MPI_PROC_NULL != drank) {
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
-             * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+             * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
              */
             if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(drank, comm->c_remote_group, &world_rank) ) {
                 mca_common_monitoring_record_coll(world_rank, data_size);

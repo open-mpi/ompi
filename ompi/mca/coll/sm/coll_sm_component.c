@@ -88,7 +88,7 @@ mca_coll_sm_component_t mca_coll_sm_component = {
         .collm_comm_query = mca_coll_sm_comm_query,
     },
 
-    /* sm-component specifc information */
+    /* sm-component specific information */
 
     /* (default) priority */
     /* JMS temporarily lowered until we can get more testing */

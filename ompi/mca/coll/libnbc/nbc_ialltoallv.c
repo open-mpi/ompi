@@ -38,7 +38,7 @@ static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
                                     MPI_Aint ext, MPI_Datatype type, ptrdiff_t gap);
 
 /* an alltoallv schedule can not be cached easily because the contents
- * ot the recvcounts array may change, so a comparison of the address
+ * of the recvcounts array may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear Alltoallv */
@@ -77,8 +77,8 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
     span = opal_datatype_span(&recvtype->super, count, &gap);
     /**
      * If this process has no data to send or receive it can bail out early,
-     * but it needs to increase the nonblocking tag to stay in sycn with the
-     * rest of the processses.
+     * but it needs to increase the nonblocking tag to stay in sync with the
+     * rest of the processes.
      */
     if (OPAL_UNLIKELY(0 == span)) {
       ompi_coll_base_nbc_reserve_tags(comm, 1);

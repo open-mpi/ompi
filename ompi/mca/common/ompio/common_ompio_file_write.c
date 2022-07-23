@@ -240,7 +240,7 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
         size_t max_data = 0;
         size_t total_bytes_written =0;
         int i = 0; /* index into the decoded iovec of the buffer */
-        int j = 0; /* index into the file vie iovec */
+        int j = 0; /* index into the file via iovec */
 
         bool need_to_copy = false;
 

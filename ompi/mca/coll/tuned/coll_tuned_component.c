@@ -71,7 +71,7 @@ int   ompi_coll_tuned_scatter_large_msg = 0;
 int   ompi_coll_tuned_scatter_min_procs = 0;
 int   ompi_coll_tuned_scatter_blocking_send_ratio = 0;
 
-/* forced alogrithm variables */
+/* forced algorithm variables */
 /* indices for the MCA parameters */
 coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT] = {{0}};
 /* max algorithm values */
@@ -141,7 +141,7 @@ static int tuned_register(void)
     ompi_coll_tuned_init_tree_fanout = 4;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "init_tree_fanout",
-                                           "Inital fanout used in the tree topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
+                                           "Initial fanout used in the tree topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -150,7 +150,7 @@ static int tuned_register(void)
     ompi_coll_tuned_init_chain_fanout = 4;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "init_chain_fanout",
-                                           "Inital fanout used in the chain (fanout followed by pipeline) topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
+                                           "Initial fanout used in the chain (fanout followed by pipeline) topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -223,7 +223,7 @@ static int tuned_open(void)
     /* now check that the user hasn't overrode any of the decision functions if dynamic rules are enabled */
     /* the user can redo this before every comm dup/create if they like */
     /* this is useful for benchmarking and user knows best tuning */
-    /* as this is the component we only lookup the indicies of the mca params */
+    /* as this is the component we only lookup the indices of the mca params */
     /* the actual values are looked up during comm create via module init */
 
     /* intra functions first */
@@ -250,13 +250,13 @@ static int tuned_open(void)
 }
 
 /* here we should clean up state stored on the component */
-/* i.e. alg table and dynamic changable rules if allocated etc */
+/* i.e. alg table and dynamic changeable rules if allocated etc */
 static int tuned_close(void)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: called"));
 
     /* dealloc alg table if allocated */
-    /* dealloc dynamic changable rules if allocated */
+    /* dealloc dynamic changeable rules if allocated */
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: done!"));
 

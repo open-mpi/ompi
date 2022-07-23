@@ -209,7 +209,7 @@ static int ompi_osc_rdma_component_register (void)
     mca_osc_rdma_component.acc_use_amo = true;
     opal_asprintf(&description_str, "Enable the use of network atomic memory operations when using single "
              "intrinsic optimizations. If not set network compare-and-swap will be "
-             "used instread (default: %s)", mca_osc_rdma_component.acc_use_amo ? "true" : "false");
+             "used instead (default: %s)", mca_osc_rdma_component.acc_use_amo ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_rdma_component.super.osc_version, "acc_use_amo", description_str,
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_GROUP,
                                            &mca_osc_rdma_component.acc_use_amo);
@@ -914,7 +914,7 @@ static int btl_latency_sort_fn(const void *a, const void *b)
  *
  * We directly use the active message rdma wrappers for alternate
  * BTLs, in all cases.  This greatly simplifies the alternate BTL
- * impementation, at the expense of some performance.  With the
+ * implementation, at the expense of some performance.  With the
  * AM wrappers, we can always enforce remote completion and the lack
  * of memory registration, at some performance cost.  But we can use
  * as many BTLs as we like.  The module's btl list is sorted by
@@ -1094,7 +1094,7 @@ static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi
      * reachability to self, which is not strictly needed if BTL and
      * CPU atomics are atomic with each other.  However, the set of
      * BTLs which can not send to self, which have RDMA semantics, an
-     * which have the rquired atomicity is currently the null set and
+     * which have the required atomicity is currently the null set and
      * almost certain to remain the null set, so we keep it simple.
      *
      * We only want BTLs that can reach all peers, so use rank 0's BTL

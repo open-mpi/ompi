@@ -31,7 +31,7 @@ AC_DEFUN([MCA_ompi_osc_portals4_CONFIG],[
            $1],
           [$2])
 
-    # need to propogate CPPFLAGS to all of OMPI
+    # need to propagate CPPFLAGS to all of OMPI
     AS_IF([test "$DIRECT_osc" = "portals4"],
           [CPPFLAGS="$CPPFLAGS $osc_portals4_CPPFLAGS"])
 

@@ -219,7 +219,7 @@ allreduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
             }
 
             /*
-             ** Prepare ME for receving RTR
+             ** Prepare ME for receiving RTR
              ** Priority List, match also with "Overflow list Me" in coll_portals4_component
              */
 

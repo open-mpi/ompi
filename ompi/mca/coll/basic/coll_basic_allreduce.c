@@ -97,7 +97,7 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
      * and which one enters coll_reduce with providing
      * MPI_PROC_NULL as root argument etc.) Here,
      * we execute the data exchange for both groups
-     * simultaniously. */
+     * simultaneously. */
     /*****************************************************************/
     if (rank == root) {
         err = ompi_datatype_type_extent(dtype, &extent);

@@ -196,7 +196,7 @@ MCA_BASE_FRAMEWORK_DECLARE(ompi, hook, "hook hooks",
 
 /*
  * Once the framework is open then call all available components with
- * the approprate function pointer. Call order:
+ * the appropriate function pointer. Call order:
  * 1) static components
  * 2) dynamic components
  * 3) 'registered' components (those registered by ompi_hook_base_register_callbacks)

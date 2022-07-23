@@ -238,7 +238,7 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
         /* opal_convertor_raw returns true when it has reached the end of the data */
         done = opal_convertor_raw (&remote_convertor, remote_iovec, &remote_iov_count, &remote_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (remote_iov_index != remote_iov_count) {
             if (local_iov_index == local_iov_count) {
                 /* decode segments of the target buffer */
@@ -516,7 +516,7 @@ int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *
         /* NTH: when using the btl_flush function there is no guarantee that the callback will happen
          * before the flush is complete. because of this there is a chance that the sync object will be
          * released before there is a callback. to handle this case we call different callback that doesn't
-         * use the sync object. its possible the btl sematics will change in the future and the callback
+         * use the sync object. its possible the btl semantics will change in the future and the callback
          * will happen *before* flush is considered complete. if that is the case this workaround can be
          * removed */
         cbcontext = (void *) module;

@@ -424,7 +424,7 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
        - wait on block (r + 1)
        - compute on block (r + 1)
        - send block (r + 1) to rank (r + 1)
-       Note that we must be careful when computing the begining of buffers and
+       Note that we must be careful when computing the beginning of buffers and
        for send operations and computation we must compute the exact block size.
     */
     send_to = (rank + 1) % size;
@@ -717,7 +717,7 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
            - wait on block (r + 1)
            - compute on block (r + 1)
            - send block (r + 1) to rank (r + 1)
-           Note that we must be careful when computing the begining of buffers and
+           Note that we must be careful when computing the beginning of buffers and
            for send operations and computation we must compute the exact block size.
         */
         send_to = (rank + 1) % size;
@@ -1122,7 +1122,7 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
 
         for (int mask = 1; mask < nprocs_pof2; mask <<= 1) {
             /*
-             * On each iteration: rindex[step] = sindex[step] -- begining of the
+             * On each iteration: rindex[step] = sindex[step] -- beginning of the
              * current window. Length of the current window is storded in wsize.
              */
             int vdest = vrank ^ mask;

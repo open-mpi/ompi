@@ -73,7 +73,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
     size_t spc=0;
     ssize_t ret_code=0;
     int i = 0; /* index into the decoded iovec of the buffer */
-    int j = 0; /* index into the file vie iovec */
+    int j = 0; /* index into the file via iovec */
 
     if (fh->f_amode & MPI_MODE_WRONLY){
 //      opal_output(10, "Improper use of FILE Mode, Using WRONLY for Read!\n");
@@ -265,7 +265,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
         
         size_t max_data = 0;
         int i = 0; /* index into the decoded iovec of the buffer */
-        int j = 0; /* index into the file vie iovec */
+        int j = 0; /* index into the file via iovec */
         
         bool need_to_copy = false;    
     

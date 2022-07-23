@@ -453,7 +453,7 @@ static opal_list_t *check_components(opal_list_t * components,
     /* For all valid component reorder them not on their provided priorities but on
      * the order requested in the info key. As at this point the coll_include is
      * already ordered backward we can simply append the components.
-     * Note that the last element in selectable will have the highest priorty.
+     * Note that the last element in selectable will have the highest priority.
      */
     for (int idx = count_include-1; idx >= 0; --idx) {
         mca_coll_base_avail_coll_t *item;

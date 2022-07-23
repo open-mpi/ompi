@@ -83,7 +83,7 @@ ompi_coll_base_sendrecv_zero( int dest, int stag,
             if( MPI_ERR_PROC_FAILED_PENDING == rc ) {
                 rc = MPI_ERR_PROC_FAILED;
             }
-        } else /* this 'else' intentionaly spills outside the ifdef */
+        } else /* this 'else' intentionally spills outside the ifdef */
 #endif /* OPAL_ENABLE_FT_MPI */
         ompi_request_free(&req);
     }
@@ -95,7 +95,7 @@ ompi_coll_base_sendrecv_zero( int dest, int stag,
 }
 
 /*
- * Barrier is ment to be a synchronous operation, as some BTLs can mark
+ * Barrier is meant to be a synchronous operation, as some BTLs can mark
  * a request done before its passed to the NIC and progress might not be made
  * elsewhere we cannot allow a process to exit the barrier until its last
  * [round of] sends are completed.
@@ -110,7 +110,7 @@ ompi_coll_base_sendrecv_zero( int dest, int stag,
 /*
  * Simple double ring version of barrier
  *
- * synchronous gurantee made by last ring of sends are synchronous
+ * synchronous guarantee made by last ring of sends are synchronous
  *
  */
 int ompi_coll_base_barrier_intra_doublering(struct ompi_communicator_t *comm,

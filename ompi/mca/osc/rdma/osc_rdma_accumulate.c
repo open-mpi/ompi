@@ -568,7 +568,7 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
         target_iov_index = 0;
         done = opal_convertor_raw (&target_convertor, target_iovec, &target_iov_count, &target_size);
 
-        /* loop on the source segments (if any) until we have exhaused the decoded target data */
+        /* loop on the source segments (if any) until we have exhausted the decoded target data */
         while (target_iov_index != target_iov_count) {
             if (source_iov_count == source_iov_index) {
                 /* decode segments of the source data */

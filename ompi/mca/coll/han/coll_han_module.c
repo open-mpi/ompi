@@ -22,7 +22,7 @@
 
 /*
  *@file
- * Coll han module managment file. Used for each new communicator.
+ * Coll han module management file. Used for each new communicator.
  */
 
 /*

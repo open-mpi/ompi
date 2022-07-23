@@ -115,7 +115,7 @@ struct ompi_osc_rdma_component_t {
     /** maximum count for network AMO usage */
     unsigned long network_amo_max_count;
 
-    /** memory alignmen to be used for new windows */
+    /** memory alignment to be used for new windows */
     size_t memory_alignment;
 };
 typedef struct ompi_osc_rdma_component_t ompi_osc_rdma_component_t;
@@ -219,7 +219,7 @@ struct ompi_osc_rdma_module_t {
     /** offset in the shared memory segment where the state array starts */
     size_t state_offset;
 
-    /** memory alignmen to be used for new windows */
+    /** memory alignment to be used for new windows */
     size_t memory_alignment;
 
     /* ********************* sync data ************************ */

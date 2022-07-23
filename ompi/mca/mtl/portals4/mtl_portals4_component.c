@@ -90,7 +90,7 @@ ompi_mtl_portals4_component_register(void)
     ompi_mtl_portals4.use_logical = 0;
     (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
                                            "use_logical",
-                                           "Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false)",
+                                           "Use the logical to physical table to accelerate portals4 addressing: 1 (true) : 0 (false)",
                                            MCA_BASE_VAR_TYPE_INT,
                                            NULL,
                                            0,

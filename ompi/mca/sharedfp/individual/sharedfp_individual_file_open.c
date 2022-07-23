@@ -192,7 +192,7 @@ int mca_sharedfp_individual_file_close (ompio_file_t *fh)
     }
     sh = fh->f_sharedfp_data;
 
-    /* Merge data from individal files to final output file */
+    /* Merge data from individual files to final output file */
     err = mca_sharedfp_individual_collaborate_data (sh, fh);
 
     headnode = (mca_sharedfp_individual_header_record*)(sh->selected_module_data);
@@ -201,7 +201,7 @@ int mca_sharedfp_individual_file_close (ompio_file_t *fh)
         if (headnode->datafilehandle)  {
             /*TODO: properly deal with returned error code*/
             err = mca_common_ompio_file_close(headnode->datafilehandle);
-            /* NOTE: No neeed to manually delete the file,
+            /* NOTE: No need to manually delete the file,
 	    ** the amode should have been set to delete on close
 	    */
         }
@@ -213,7 +213,7 @@ int mca_sharedfp_individual_file_close (ompio_file_t *fh)
         if (headnode->metadatafilehandle)  {
             /*TODO: properly deal with returned error code*/
             err = mca_common_ompio_file_close(headnode->metadatafilehandle);
-            /* NOTE: No neeed to manually delete the file,
+            /* NOTE: No need to manually delete the file,
 	    ** the amode should have been set to delete on close
 	    */
         }

@@ -170,7 +170,7 @@ static inline void custom_match_prq_append(custom_match_prq* list, void* payload
     }
     mca_pml_base_request_t *req = (mca_pml_base_request_t *)payload;
 #if CUSTOM_MATCH_DEBUG_VERBOSE
-    printf("custom_match_prq_append list: %x tag: %x soruce: %x tag: %x peer: %x\n", list, tag, source, req->req_tag, req->req_peer);
+    printf("custom_match_prq_append list: %x tag: %x source: %x tag: %x peer: %x\n", list, tag, source, req->req_tag, req->req_peer);
 #endif
     int i;
     custom_match_prq_node* elem;
@@ -261,7 +261,7 @@ static inline void custom_match_print(custom_match_prq* list)
     custom_match_prq_node* elem;
     int i = 0;
     int j = 0;
-    printf("Elements in the list (this is currenly only partialy implemented):\n");
+    printf("Elements in the list (this is currently only partially implemented):\n");
     for(elem = list->head; elem; elem = elem->next)
     {
         printf("This is the %d linked list element\n", ++i);

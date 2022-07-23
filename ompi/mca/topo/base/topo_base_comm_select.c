@@ -61,7 +61,7 @@ static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
  * communicator provided as argument is the old communicator, and the
  * newly selected topology is __not__ supposed to be attached to it.
  *
- * This module calls the query funtion on all the components that were
+ * This module calls the query function on all the components that were
  * detected by topo_base_open. This function is called on a
  * per-communicator basis. This function has the following function.
  *
@@ -227,7 +227,7 @@ static int _mca_topo_base_select (const ompi_communicator_t *comm, const ompi_gr
             * module of this component.
             *
             * ANJU: a component might not have all the functions
-            * defined.  Whereever a function pointer is null in the
+            * defined.  Wherever a function pointer is null in the
             * module structure we need to fill it in with the base
             * structure function pointers. This is yet to be done
             */
@@ -235,7 +235,7 @@ static int _mca_topo_base_select (const ompi_communicator_t *comm, const ompi_gr
             om->om_module->topo_component = best_component;
             *selected_module = om->om_module;
          } else {
-             /* this is not the "choosen one", finalize */
+             /* this is not the "chosen one", finalize */
               opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                                   "select: component %s is not selected",
                                   om->om_component->topoc_version.mca_component_name);
@@ -276,7 +276,7 @@ int mca_topo_base_group_select(const ompi_group_t *group, mca_topo_base_module_t
  * This function fills in the null function pointers, in other words,
  * those functions which are not implemented by the module with the
  * pointers from the base function. Somewhere, I need to incoroporate
- * a check for the common minimum funtions being implemented by the
+ * a check for the common minimum functions being implemented by the
  * module.
  */
 static void fill_null_pointers(int type, mca_topo_base_module_t *module)
