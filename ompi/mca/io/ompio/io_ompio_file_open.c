@@ -55,7 +55,7 @@ int mca_io_ompio_file_open (ompi_communicator_t *comm,
 
     /* No locking required for file_open according to my understanding
        There is virtually no way on how to reach this point from multiple
-       threads simultaniously 
+       threads simultaneously 
     */
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     if ( NULL == data ) {

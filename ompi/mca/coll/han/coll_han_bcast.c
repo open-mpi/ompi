@@ -51,7 +51,7 @@ mca_coll_han_set_bcast_args(mca_coll_han_bcast_args_t * args, mca_coll_task_t * 
 }
 
 /*
- * Each segment of the messsage needs to go though 2 steps to perform MPI_Bcast:
+ * Each segment of the message needs to go though 2 steps to perform MPI_Bcast:
  *     ub: upper level (inter-node) bcast
  *     lb: low level (shared-memory or intra-node) bcast.
  * Hence, in each iteration, there is a combination of collective operations which is called a task.

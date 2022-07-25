@@ -28,7 +28,7 @@ BEGIN_C_DECLS
 
 typedef struct msg_rule_s {
     /* paranoid / debug */
-    int mpi_comsize;  /* which MPI comm size this is is for */
+    int mpi_comsize;  /* which MPI comm size is this for */
 
     /* paranoid / debug */
     int alg_rule_id; /* unique alg rule id */
@@ -48,7 +48,7 @@ typedef struct msg_rule_s {
 
 typedef struct com_rule_s {
     /* paranoid / debug */
-    int mpi_comsize;  /* which MPI comm size this is is for */
+    int mpi_comsize;  /* which MPI comm size is this for */
 
     /* paranoid / debug */
     int alg_rule_id; /* unique alg rule id */

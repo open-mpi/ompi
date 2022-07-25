@@ -110,7 +110,7 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
 #endif
 
     /**************************************************************************
-     ** 1. In case the data is not contigous in memory, decode it into an iovec
+     ** 1. In case the data is not contiguous in memory, decode it into an iovec
      **************************************************************************/
     ret = mca_common_ompio_decode_datatype ((struct ompio_file_t *)fh,
                                             datatype,
@@ -580,7 +580,7 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
 
         /*************************************************************************
 	 *** 7d. Calculate the displacement on where to put the data and allocate
-         ***     the recieve buffer (global_buf)
+         ***     the receive buffer (global_buf)
 	 *************************************************************************/
         if (my_aggregator == fh->f_rank) {
             entries_per_aggregator=0;

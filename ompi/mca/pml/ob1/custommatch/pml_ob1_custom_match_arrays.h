@@ -297,7 +297,7 @@ static inline void custom_match_print(custom_match_prq* list)
     custom_match_prq_node* elem;
     int i = 0;
     int j = 0;
-    printf("Elements in the list (this is currenly only partialy implemented):\n");
+    printf("Elements in the list (this is currently only partially implemented):\n");
     for(elem = list->head; elem; elem = elem->next)
     {
         printf("This is the %d linked list element\n", ++i);

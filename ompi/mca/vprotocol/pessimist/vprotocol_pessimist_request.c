@@ -31,7 +31,7 @@ static void vprotocol_pessimist_request_construct(mca_pml_base_request_t *req)
     ftreq->pml_req_free = req->req_ompi.req_free;
     ftreq->event = NULL;
     ftreq->sb.bytes_progressed = 0;
-    assert(ftreq->pml_req_free == req->req_ompi.req_free); /* detection of aligment issues on different arch */
+    assert(ftreq->pml_req_free == req->req_ompi.req_free); /* detection of alignment issues on different arch */
     req->req_ompi.req_free = mca_vprotocol_pessimist_request_free;
     OBJ_CONSTRUCT(& ftreq->list_item, opal_list_item_t);
 }

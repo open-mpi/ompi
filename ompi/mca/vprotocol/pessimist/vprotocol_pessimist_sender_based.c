@@ -127,7 +127,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
         ompi_comm_dup(MPI_COMM_SELF, &sb.sb_comm, 1);
 #endif
 
-    /* Take care of alignement of sb_offset                             */
+    /* Take care of alignment of sb_offset                             */
     sb.sb_offset += sb.sb_cursor - sb.sb_addr;
     sb.sb_cursor = sb.sb_offset % sb.sb_pagesize;
     sb.sb_offset -= sb.sb_cursor;

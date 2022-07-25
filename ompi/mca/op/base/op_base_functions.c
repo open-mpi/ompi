@@ -1343,11 +1343,11 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
  *
  * **NOTE** These #define's used to be strictly ordered but the use of
  * designated initializers removed this restrictions. When adding new
- * operators ALWAYS use a designated initalizer!
+ * operators ALWAYS use a designated initializer!
  */
 
 /** C integer ***********************************************************/
-#define C_INTEGER(name, ftype)                                              \
+#define C_INTEGER(name, ftype)                                             \
   [OMPI_OP_BASE_TYPE_INT8_T] = ompi_op_base_##ftype##_##name##_int8_t,     \
   [OMPI_OP_BASE_TYPE_UINT8_T] = ompi_op_base_##ftype##_##name##_uint8_t,   \
   [OMPI_OP_BASE_TYPE_INT16_T] = ompi_op_base_##ftype##_##name##_int16_t,   \
@@ -1624,7 +1624,7 @@ ompi_op_base_handler_fn_t ompi_op_base_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OM
         [OMPI_OP_BASE_FORTRAN_REPLACE] = {
             /* (MPI_ACCUMULATE is handled differently than the other
                reductions, so just zero out its function
-               impementations here to ensure that users don't invoke
+               implementations here to ensure that users don't invoke
                MPI_REPLACE with any reduction operations other than
                ACCUMULATE) */
             NULL,
@@ -1711,7 +1711,7 @@ ompi_op_base_3buff_handler_fn_t ompi_op_base_3buff_functions[OMPI_OP_BASE_FORTRA
         [OMPI_OP_BASE_FORTRAN_REPLACE] = {
             /* MPI_ACCUMULATE is handled differently than the other
                reductions, so just zero out its function
-               impementations here to ensure that users don't invoke
+               implementations here to ensure that users don't invoke
                MPI_REPLACE with any reduction operations other than
                ACCUMULATE */
             NULL,

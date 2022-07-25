@@ -93,7 +93,7 @@ instead of creating them all at once during init time and this
 approach also favours only creating as many contexts as needed.
 
 1. Multi-communicator model:
-   With this approach, the MPI application is requried to first duplicate
+   With this approach, the MPI application is required to first duplicate
    the communicators it wants to use with MPI operations (ideally creating
    as many communicators as the number of threads it wants to use to call
    into MPI). The duplicated communicators are then used by the

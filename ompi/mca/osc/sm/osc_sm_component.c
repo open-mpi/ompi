@@ -269,7 +269,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         /* Note that the alloc_shared_noncontig info key only has
          * meaning during window creation.  Once the window is
          * created, we can't move memory around without making
-         * everything miserable.  So we intentionally do not subcribe
+         * everything miserable.  So we intentionally do not subscribe
          * to updates on the info key, because there's no useful
          * update to occur. */
         module->noncontig = false;

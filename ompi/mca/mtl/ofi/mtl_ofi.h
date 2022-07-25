@@ -169,7 +169,7 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
         }
     } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
         /**
-         * An error occured and is being reported via the CQ.
+         * An error occurred and is being reported via the CQ.
          * Read the error and forward it to the upper layer.
          */
         ret = fi_cq_readerr(ompi_mtl_ofi.ofi_ctxt[ctxt_id].cq,
@@ -1164,7 +1164,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
         /**
         * We must continue to use the user's original tag but remove the
         * sync_send protocol tag bit and instead apply the sync_send_ack
-        * tag bit to complete the initator's sync send receive.
+        * tag bit to complete the initiator's sync send receive.
         */
         tagged_msg.tag = (wc->tag | ompi_mtl_ofi.sync_send_ack) & ~ompi_mtl_ofi.sync_send;
         tagged_msg.context = NULL;
@@ -1184,7 +1184,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
 }
 
 /**
- * Called when an error occured on a recv request.
+ * Called when an error occurred on a recv request.
  */
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_recv_error_callback(struct fi_cq_err_entry *error,
@@ -1337,7 +1337,7 @@ ompi_mtl_ofi_mrecv_callback(struct fi_cq_tagged_entry *wc,
 }
 
 /**
- * Called when an error occured on a mrecv request.
+ * Called when an error occurred on a mrecv request.
  */
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_mrecv_error_callback(struct fi_cq_err_entry *error,

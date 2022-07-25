@@ -200,7 +200,7 @@ libnbc_register(void)
      * As a result we are adding an MCA parameter to make a conservative
      * decision to avoid this issue. If the user knows that their application
      * does not use data types in this way, then they can set this parameter
-     * to get the old behavior. Once the issue is truely fixed, then this
+     * to get the old behavior. Once the issue is truly fixed, then this
      * parameter can be removed.
      */
     libnbc_ibcast_skip_dt_decision = true;

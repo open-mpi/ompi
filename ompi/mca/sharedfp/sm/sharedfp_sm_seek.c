@@ -112,10 +112,10 @@ mca_sharedfp_sm_seek (ompio_file_t *fh,
         /*--------------------*/
         if ( mca_sharedfp_sm_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
-                        "sharedfp_sm_seek: Aquiring lock, rank=%d...",fh->f_rank); fflush(stdout);
+                        "sharedfp_sm_seek: Acquiring lock, rank=%d...",fh->f_rank); fflush(stdout);
         }
 
-        /* Aquire an exclusive lock */
+        /* Acquire an exclusive lock */
         sm_offset_ptr = sm_data->sm_offset_ptr;
 
         sem_wait(sm_data->mutex);

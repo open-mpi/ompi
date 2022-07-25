@@ -26,7 +26,7 @@ const char *mca_topo_basic_component_version_string =
     "Open MPI basic topology MCA component version" OMPI_VERSION;
 
 /*
- * Local funtions
+ * Local functions
  */
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads);
 static struct mca_topo_base_module_t *

@@ -285,7 +285,7 @@ typedef ompi_op_base_3buff_handler_fn_1_0_0_t ompi_op_base_3buff_handler_fn_t;
  * MPI_INIT.
  *
  * @note The component framework is not lazily opened, so attempts
- * should be made to minimze the amount of memory allocated during
+ * should be made to minimize the amount of memory allocated during
  * this function.
  *
  * @param[in] enable_progress_threads True if the component needs to
@@ -341,14 +341,14 @@ typedef struct ompi_op_base_component_1_0_0_t {
 
     /** Component initialization function */
     ompi_op_base_component_init_query_fn_t opc_init_query;
-    /** Query whether component is useable for given op */
+    /** Query whether component is usable for given op */
     ompi_op_base_component_op_query_1_0_0_fn_t opc_op_query;
 } ompi_op_base_component_1_0_0_t;
 
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
     want to always keep up with the most recent version of the
-    interace. */
+    interface. */
 typedef struct ompi_op_base_component_1_0_0_t ompi_op_base_component_t;
 
 /**

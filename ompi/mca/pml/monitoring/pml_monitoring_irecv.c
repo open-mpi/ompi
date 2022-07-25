@@ -16,7 +16,7 @@
 #include "pml_monitoring.h"
 
 
-/* EJ: loging is done on the sender. Nothing to do here */
+/* EJ: logging is done on the sender. Nothing to do here */
 
 int mca_pml_monitoring_irecv_init(void *buf,
                                   size_t count,

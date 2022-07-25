@@ -47,12 +47,12 @@ int mca_sharedfp_sm_request_position(ompio_file_t *fh,
     *offset = 0;
     if ( mca_sharedfp_sm_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
-                    "Aquiring lock, rank=%d...",fh->f_rank);
+                    "Acquiring lock, rank=%d...",fh->f_rank);
     }
 
     sm_offset_ptr = sm_data->sm_offset_ptr;
 
-    /* Aquire an exclusive lock */
+    /* Acquire an exclusive lock */
 
     sem_wait(sm_data->mutex);
 

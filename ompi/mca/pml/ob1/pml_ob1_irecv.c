@@ -65,8 +65,8 @@ int mca_pml_ob1_irecv_init(void *addr,
                              PERUSE_RECV);
 
     /* Work around a leak in start by marking this request as complete. The
-     * problem occured because we do not have a way to differentiate an
-     * inital request and an incomplete pml request in start. This line
+     * problem occurred because we do not have a way to differentiate an
+     * initial request and an incomplete pml request in start. This line
      * allows us to detect this state. */
     recvreq->req_recv.req_base.req_pml_complete = true;
 

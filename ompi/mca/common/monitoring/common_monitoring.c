@@ -55,7 +55,7 @@ static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
 };
 
 /*** MCA params to mark the monitoring as enabled. ***/
-/* This signals that the monitoring will highjack the PML, OSC and COLL */
+/* This signals that the monitoring will hijack the PML, OSC and COLL */
 int mca_common_monitoring_enabled = 0;
 int mca_common_monitoring_current_state = 0;
 /* Signals there will be an output of the monitored data at component close */
@@ -64,7 +64,7 @@ static int mca_common_monitoring_output_enabled = 0;
 static char* mca_common_monitoring_initial_filename = "";
 static char* mca_common_monitoring_current_filename = NULL;
 
-/* array for stroring monitoring data*/
+/* array for storing monitoring data*/
 static opal_atomic_size_t* pml_data = NULL;
 static opal_atomic_size_t* pml_count = NULL;
 static opal_atomic_size_t* filtered_pml_data = NULL;
@@ -91,35 +91,35 @@ static void mca_common_monitoring_reset ( void );
 /* Flushes the monitored data and reset the values */
 static int mca_common_monitoring_flush (int fd, char* filename);
 
-/* Retreive the PML recorded count of messages sent */
+/* Retrieve the PML recorded count of messages sent */
 static int mca_common_monitoring_get_pml_count (const struct mca_base_pvar_t *pvar,
                                                 void *value, void *obj_handle);
 
-/* Retreive the PML recorded amount of data sent */
+/* Retrieve the PML recorded amount of data sent */
 static int mca_common_monitoring_get_pml_size (const struct mca_base_pvar_t *pvar,
                                                void *value, void *obj_handle);
 
-/* Retreive the OSC recorded count of messages sent */
+/* Retrieve the OSC recorded count of messages sent */
 static int mca_common_monitoring_get_osc_sent_count (const struct mca_base_pvar_t *pvar,
                                                      void *value, void *obj_handle);
 
-/* Retreive the OSC recorded amount of data sent */
+/* Retrieve the OSC recorded amount of data sent */
 static int mca_common_monitoring_get_osc_sent_size (const struct mca_base_pvar_t *pvar,
                                                     void *value, void *obj_handle);
 
-/* Retreive the OSC recorded count of messages received */
+/* Retrieve the OSC recorded count of messages received */
 static int mca_common_monitoring_get_osc_recv_count (const struct mca_base_pvar_t *pvar,
                                                      void *value, void *obj_handle);
 
-/* Retreive the OSC recorded amount of data received */
+/* Retrieve the OSC recorded amount of data received */
 static int mca_common_monitoring_get_osc_recv_size (const struct mca_base_pvar_t *pvar,
                                                     void *value, void *obj_handle);
 
-/* Retreive the COLL recorded count of messages sent */
+/* Retrieve the COLL recorded count of messages sent */
 static int mca_common_monitoring_get_coll_count (const struct mca_base_pvar_t *pvar,
                                                  void *value, void *obj_handle);
 
-/* Retreive the COLL recorded amount of data sent */
+/* Retrieve the COLL recorded amount of data sent */
 static int mca_common_monitoring_get_coll_size (const struct mca_base_pvar_t *pvar,
                                                 void *value, void *obj_handle);
 
@@ -236,7 +236,7 @@ void mca_common_monitoring_finalize( void )
         0 < opal_atomic_sub_fetch_32(&mca_common_monitoring_hold, 1) ) return;
 
     OPAL_MONITORING_PRINT_INFO("common_component_finish");
-    /* Dump monitoring informations */
+    /* Dump monitoring information */
     mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
                                 mca_common_monitoring_current_filename);
     /* Disable all monitoring */

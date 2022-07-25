@@ -64,9 +64,9 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
     fl.l_pid    = getpid();
 
 
-    /* Aquire an exclusive lock */
+    /* Acquire an exclusive lock */
     if (fcntl(fd, F_SETLKW, &fl) == -1) {
-        opal_output(0,"sharedfp_lockedfile_request_position: errorr acquiring lock: fcntl(%d,F_SETLKW,&fl)\n",fd);
+        opal_output(0,"sharedfp_lockedfile_request_position: error acquiring lock: fcntl(%d,F_SETLKW,&fl)\n",fd);
         opal_output(0,"sharedfp_lockedfile_request_position: error(%i): %s", errno, strerror(errno));
         return OMPI_ERROR;
     }

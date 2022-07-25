@@ -33,7 +33,7 @@ int mca_coll_monitoring_scan(const void *sbuf, void *rbuf, int count,
     for( i = my_rank + 1; i < comm_size; ++i ) {
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
-         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+         * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
          */
         if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm->c_remote_group, &rank) ) {
             mca_common_monitoring_record_coll(rank, data_size);
@@ -60,7 +60,7 @@ int mca_coll_monitoring_iscan(const void *sbuf, void *rbuf, int count,
     for( i = my_rank + 1; i < comm_size; ++i ) {
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
-         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+         * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
          */
         if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm->c_remote_group, &rank) ) {
             mca_common_monitoring_record_coll(rank, data_size);

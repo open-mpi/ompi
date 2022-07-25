@@ -57,25 +57,25 @@ mca_coll_han_init_dynamic_rules(void)
     /* Loop counters */
     int i, j, k, l;
 
-    /* Collective informations */
+    /* Collective information */
     long nb_coll, coll_id;
     char * coll_name = NULL;
     collective_rule_t *coll_rules;
 
-    /* Topo informations */
+    /* Topo information */
     long nb_topo, topo_lvl;
     topologic_rule_t *topo_rules;
 
-    /* Configuration informations */
+    /* Configuration information */
     long nb_rules, conf_size;
     configuration_rule_t *conf_rules;
 
-    /* Message size informations */
+    /* Message size information */
     long nb_msg_size;
     size_t msg_size;
     msg_size_rule_t *msg_size_rules;
 
-    /* Component informations */
+    /* Component information */
     long component;
 
     /* If the dynamic rules are not used, do not even read the file */
@@ -175,7 +175,7 @@ mca_coll_han_init_dynamic_rules(void)
             goto file_reading_error;
         }
 
-        /* Store the collective rule informations */
+        /* Store the collective rule information */
         coll_rules[i].nb_topologic_levels = nb_topo;
         coll_rules[i].collective_id = (COLLTYPE_T)coll_id;
 
@@ -224,7 +224,7 @@ mca_coll_han_init_dynamic_rules(void)
                 goto file_reading_error;
             }
 
-            /* Store the topologic rule informations */
+            /* Store the topologic rule information */
             topo_rules[j].collective_id = coll_id;
             topo_rules[j].topologic_level = (TOPO_LVL_T)topo_lvl;
             topo_rules[j].nb_rules = nb_rules;
@@ -485,25 +485,25 @@ static void check_dynamic_rules(void)
     /* Loop counters */
     int i, j, k, l;
 
-    /* Collective informations */
+    /* Collective information */
     int nb_coll;
     COLLTYPE_T coll_id;
     collective_rule_t *coll_rules;
 
-    /* Topo informations */
+    /* Topo information */
     TOPO_LVL_T topo_lvl;
     topologic_rule_t *topo_rules;
 
-    /* Configuration informations */
+    /* Configuration information */
     int nb_rules, conf_size;
     configuration_rule_t *conf_rules;
 
-    /* Message size informations */
+    /* Message size information */
     int nb_msg_size;
     size_t msg_size;
     msg_size_rule_t *msg_size_rules;
 
-    /* Component informations */
+    /* Component information */
     COMPONENT_T component;
 
     nb_coll = mca_coll_han_component.dynamic_rules.nb_collectives;
@@ -564,24 +564,24 @@ void mca_coll_han_dump_dynamic_rules(void)
 {
     int nb_entries = 0;
 
-    /* Collective informations */
+    /* Collective information */
     int nb_coll;
     COLLTYPE_T coll_id;
     collective_rule_t *coll_rules;
 
-    /* Topo informations */
+    /* Topo information */
     TOPO_LVL_T topo_lvl;
     topologic_rule_t *topo_rules;
 
-    /* Configuration informations */
+    /* Configuration information */
     int nb_rules, conf_size;
     configuration_rule_t *conf_rules;
 
-    /* Message size informations */
+    /* Message size information */
     int nb_msg_size, msg_size;
     msg_size_rule_t *msg_size_rules;
 
-    /* Component informations */
+    /* Component information */
     COMPONENT_T component;
 
     nb_coll = mca_coll_han_component.dynamic_rules.nb_collectives;
@@ -609,7 +609,7 @@ void mca_coll_han_dump_dynamic_rules(void)
                     opal_output(mca_coll_han_component.han_output,
                                 "coll:han:dump_dynamic_rules %d collective %d (%s) "
                                 "topology level %d (%s) configuration size %d "
-                                "mesage size %d -> collective component %d (%s)\n",
+                                "message size %d -> collective component %d (%s)\n",
                                 nb_entries, coll_id, mca_coll_base_colltype_to_str(coll_id),
                                 topo_lvl, mca_coll_han_topo_lvl_to_str(topo_lvl), conf_size,
                                 msg_size, component, available_components[component].component_name);

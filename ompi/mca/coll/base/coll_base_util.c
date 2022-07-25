@@ -94,7 +94,7 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
             if( MPI_ERR_PROC_FAILED_PENDING == err ) {
                 err = MPI_ERR_PROC_FAILED;
             }
-        } else /* this 'else' intentionaly spills outside the ifdef */
+        } else /* this 'else' intentionally spills outside the ifdef */
 #endif /* OPAL_ENABLE_FT_MPI */
         ompi_request_free(&req);
     }
@@ -130,7 +130,7 @@ int ompi_rounddown(int num, int factor)
 /**
  * Release all objects and arrays stored into the nbc_request.
  * The release_arrays are temporary memory to stored the values
- * converted from Fortran, and should dissapear in same time as the
+ * converted from Fortran, and should disappear in same time as the
  * request itself.
  */
 static void

@@ -102,7 +102,7 @@ void vprotocol_pessimist_matching_replay(int *src) {
         else if(mevent->reqid > max)
             max = mevent->reqid;
     }
-    /* not forcing a ANY SOURCE event whose recieve clock is lower than max
+    /* not forcing a ANY SOURCE event whose receive clock is lower than max
      * is a bug indicating we have missed an event during logging ! */
     assert(((*src) != MPI_ANY_SOURCE) || (mca_vprotocol_pessimist.clock > max));
 #else

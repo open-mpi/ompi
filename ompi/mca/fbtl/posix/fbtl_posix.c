@@ -46,7 +46,7 @@ int fbtl_posix_max_aio_active_reqs=2048;
  * *******************************************************************
  */
 static mca_fbtl_base_module_1_0_0_t posix =  {
-    mca_fbtl_posix_module_init,     /* initalise after being selected */
+    mca_fbtl_posix_module_init,     /* initialise after being selected */
     mca_fbtl_posix_module_finalize, /* close a module on a communicator */
     mca_fbtl_posix_preadv,          /* blocking read */
 #if defined (FBTL_POSIX_HAVE_AIO)
@@ -189,7 +189,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 		continue;
 	    }
 	    else {
-		/* an error occured. Mark the request done, but
+		/* an error occurred. Mark the request done, but
 		   set an error code in the status */
 		req->req_ompi.req_status.MPI_ERROR = OMPI_ERROR;
 		req->req_ompi.req_status._ucount = data->aio_total_len;

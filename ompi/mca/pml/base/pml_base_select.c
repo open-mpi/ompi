@@ -194,7 +194,7 @@ int mca_pml_base_select(bool enable_progress_threads,
 
             if (NULL != om->om_component->pmlm_finalize) {
 
-                /* Blatently ignore the return code (what would we do to
+                /* Blatantly ignore the return code (what would we do to
                    recover, anyway?  This component is going away, so errors
                    don't matter anymore) */
 
