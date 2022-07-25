@@ -389,6 +389,12 @@
 #    define THIS_FUNCTION_WAS_REMOVED_IN_MPI30(func, newfunc)
 #endif
 
+#if MPI_VERSION >= 4
+#    define __mpi_interface_deprecated_in_mpi40__(msg) __mpi_interface_deprecated__(msg)
+#else
+#    define __mpi_interface_deprecated_in_mpi40__(msg)
+#endif
+
 #if !defined(OMPI_REMOVED_USE_STATIC_ASSERT)
 #    define OMPI_REMOVED_USE_STATIC_ASSERT 0
 #endif
@@ -1742,18 +1748,10 @@ OMPI_DECLSPEC  int MPI_Info_delete(MPI_Info info, const char *key);
 OMPI_DECLSPEC  int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
 OMPI_DECLSPEC  MPI_Info MPI_Info_f2c(MPI_Fint info);
 OMPI_DECLSPEC  int MPI_Info_free(MPI_Info *info);
-#if MPI_VERSION < 4
-OMPI_DECLSPEC  int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
-                                char *value, int *flag);
-#endif
 OMPI_DECLSPEC  int MPI_Info_get_nkeys(MPI_Info info, int *nkeys);
 OMPI_DECLSPEC  int MPI_Info_get_nthkey(MPI_Info info, int n, char *key);
 OMPI_DECLSPEC  int MPI_Info_get_string(MPI_Info info, const char *key, int *buflen,
                                        char *value, int *flag);
-#if MPI_VERSION < 4
-OMPI_DECLSPEC  int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
-                                         int *flag);
-#endif
 OMPI_DECLSPEC  int MPI_Info_set(MPI_Info info, const char *key, const char *value);
 OMPI_DECLSPEC  int MPI_Init(int *argc, char ***argv);
 OMPI_DECLSPEC  int MPI_Initialized(int *flag);
@@ -2510,18 +2508,10 @@ OMPI_DECLSPEC  int PMPI_Info_delete(MPI_Info info, const char *key);
 OMPI_DECLSPEC  int PMPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
 OMPI_DECLSPEC  MPI_Info PMPI_Info_f2c(MPI_Fint info);
 OMPI_DECLSPEC  int PMPI_Info_free(MPI_Info *info);
-#if MPI_VERSION < 4
-OMPI_DECLSPEC  int PMPI_Info_get(MPI_Info info, const char *key, int valuelen,
-                                 char *value, int *flag);
-#endif
 OMPI_DECLSPEC  int PMPI_Info_get_nkeys(MPI_Info info, int *nkeys);
 OMPI_DECLSPEC  int PMPI_Info_get_nthkey(MPI_Info info, int n, char *key);
 OMPI_DECLSPEC  int PMPI_Info_get_string(MPI_Info info, const char *key, int *buflen,
                                         char *value, int *flag);
-#if MPI_VERSION < 4
-OMPI_DECLSPEC  int PMPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
-                                          int *flag);
-#endif
 OMPI_DECLSPEC  int PMPI_Info_set(MPI_Info info, const char *key, const char *value);
 OMPI_DECLSPEC  int PMPI_Init(int *argc, char ***argv);
 OMPI_DECLSPEC  int PMPI_Initialized(int *flag);
@@ -3022,20 +3012,19 @@ OMPI_DECLSPEC  int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
             __mpi_interface_deprecated__("MPI_Attr_put was deprecated in MPI-2.0; use MPI_Comm_set_attr instead");
 OMPI_DECLSPEC  int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
     __mpi_interface_deprecated__("PMPI_Attr_put was deprecated in MPI-2.0; use PMPI_Comm_set_attr instead");
-#if MPI_VERSION >= 4
+
 OMPI_DECLSPEC  int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
                                 char *value, int *flag)
-            __mpi_interface_deprecated__("MPI_Info_get was deprecated in MPI-4.0; use MPI_Info_get_string instead");
+            __mpi_interface_deprecated_in_mpi40__("MPI_Info_get was deprecated in MPI-4.0; use MPI_Info_get_string instead");
 OMPI_DECLSPEC  int PMPI_Info_get(MPI_Info info, const char *key, int valuelen,
                                  char *value, int *flag)
-            __mpi_interface_deprecated__("PMPI_Info_get was deprecated in MPI-4.0; use PMPI_Info_get_string instead");
+            __mpi_interface_deprecated_in_mpi40__("PMPI_Info_get was deprecated in MPI-4.0; use PMPI_Info_get_string instead");
 OMPI_DECLSPEC  int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
                                          int *flag)
-            __mpi_interface_deprecated__("MPI_Info_get_valuelen was deprecated in MPI-4.0; use MPI_Info_get_string instead");
+            __mpi_interface_deprecated_in_mpi40__("MPI_Info_get_valuelen was deprecated in MPI-4.0; use MPI_Info_get_string instead");
 OMPI_DECLSPEC  int PMPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
                                           int *flag)
-            __mpi_interface_deprecated__("PMPI_Info_get_valuelen was deprecated in MPI-4.0; use PMPI_Info_get_string instead");
-#endif
+            __mpi_interface_deprecated_in_mpi40__("PMPI_Info_get_valuelen was deprecated in MPI-4.0; use PMPI_Info_get_string instead");
 
 /*
  * Even though MPI_Copy_function and MPI_Delete_function are
