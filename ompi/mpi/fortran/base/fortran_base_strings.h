@@ -69,7 +69,7 @@ BEGIN_C_DECLS
      * @retval OMPI_SUCCESS upon success
      * @retval OMPI_ERROR upon error
      *
-     * This function is intented to be used in the MPI F77 bindings to
+     * This function is intended to be used in the MPI F77 bindings to
      * convert arrays of fortran strings to argv-style arrays of C
      * strings.  The argv array will be allocated and returned; it is
      * the caller's responsibility to invoke opal_argv_free() to free
@@ -115,9 +115,9 @@ BEGIN_C_DECLS
      * @param count Dimension of the array of argvs
      * @param array Array of fortran argv
      * @param len Length of Fortran array
-     * @param argv Returned C arrray of argvs
+     * @param argv Returned C array of argvs
      *
-     * This function is intented to be used in the MPI F77 bindings to
+     * This function is intended to be used in the MPI F77 bindings to
      * convert arrays of fortran strings to argv-style arrays of C
      * strings.  The argv array will be allocated and returned; it is
      * the caller's responsibility to invoke opal_argv_free() to free

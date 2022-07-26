@@ -173,14 +173,14 @@ bool ompi_request_is_failed_fn(ompi_request_t *req)
             MCA_PML_CALL(dump(req->req_mpi_object.comm, ompi_ftmpi_output_handle));
         }
 #endif /* OPAL_ENABLE_DEBUG */
-        /* Cancel and force completion immmediately
+        /* Cancel and force completion immediately
          * However, for Revoked and Collective error we can't complete
          * with an error before the buffer is unpinned (i.e. the request gets
          * wire cancelled).
          */
         ompi_request_cancel(req);
         req->req_status._cancelled = cancelled; /* This request is not user cancelled here, it is completed in error */
-        return REQUEST_COMPLETE(req); /* If this request is not complete yet, it is stil ok and needs more spinning */
+        return REQUEST_COMPLETE(req); /* If this request is not complete yet, it is still ok and needs more spinning */
     }
     return (MPI_SUCCESS != req->req_status.MPI_ERROR);
 }

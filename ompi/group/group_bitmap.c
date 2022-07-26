@@ -54,13 +54,13 @@ int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group,
             m = ranks1[j];
             count = 0;
             tmp = ( 1 << (m % BSIZE) );
-            /* check if the bit that correponds to the parent rank is set in the bitmap */
+            /* check if the bit that corresponds to the parent rank is set in the bitmap */
             if ( tmp == (child_group->sparse_data.grp_bitmap.grp_bitmap_array[(int)(m/BSIZE)]
                          & (1 << (m % BSIZE)))) {
                 /*
                  * add up how many bits are set, till we get to the bit of parent
                  * rank that we want. The rank in the child will be the sum of the bits
-                 * that are set on the way till we get to the correponding bit
+                 * that are set on the way till we get to the corresponding bit
                  */
                 for (i=0 ; i<=(int)(m/BSIZE) ; i++) {
                     for (k=0 ; k<BSIZE ; k++) {
@@ -131,7 +131,7 @@ int ompi_group_div_ceil (int num, int den)
 /*
  * This functions is to check that all ranks in the included list of ranks
  * are monotonically increasing. If not, the bitmap format can not be used
- * since we won't be able to translate the ranks corrently since the algorithms
+ * since we won't be able to translate the ranks correctly since the algorithms
  * assume that the ranks are in order in the bitmap list.
  */
 static bool check_ranks (int n, const int *ranks) {

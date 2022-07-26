@@ -86,7 +86,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  *
  * 1. Call to MPI_GREQUEST_COMPLETE and then a corresponding call to
  * some flavor of MPI_TEST* or MPI_WAIT*.  This will both complete the
- * requests and destroy the coresponding MPI generalized request
+ * requests and destroy the corresponding MPI generalized request
  * object.
  *
  * 2. Call MPI_REQUEST_FREE and then (!) -- with some other
@@ -111,7 +111,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  * TEST* / WAIT* notified the user as such, and this function is also
  * invoked by REQUEST_FREE).  Hence, these two functions will *always*
  * be invoked, but the order in which they are invoked is up to the
- * user.  So this is a perfect opprotunity for the OBJ_* reference
+ * user.  So this is a perfect opportunity for the OBJ_* reference
  * count system.  When we create an ompi_grequest_t in
  * ompi_grequest_start(), we both OBJ_NEW and OBJ_RETAIN it so that
  * its reference count goes to 0.  Then in ompi_grequest_complete()

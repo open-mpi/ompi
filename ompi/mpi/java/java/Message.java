@@ -111,7 +111,7 @@ public final class Message
 	/**
 	 * Java binding of {@code MPI_MRECV}.
 	 * @param buf   receive buffer
-	 * @param count number of elements in receve buffer
+	 * @param count number of elements in receive buffer
 	 * @param type  datatype of each receive buffer element
 	 * @return status object
 	 * @throws MPIException Signals that an MPI error of some sort has occurred.
@@ -142,7 +142,7 @@ public final class Message
 	/**
 	 * Java binding of {@code MPI_IMRECV}.
 	 * @param buf   receive buffer
-	 * @param count number of elements in receve buffer
+	 * @param count number of elements in receive buffer
 	 * @param type  datatype of each receive buffer element
 	 * @return request object
 	 * @throws MPIException Signals that an MPI error of some sort has occurred.

@@ -90,7 +90,7 @@ typedef enum {
 
 /*
  * These variables are for the MPI F03 bindings (F03 must bind Fortran
- * varaiables to symbols; it cannot bind Fortran variables to the
+ * variables to symbols; it cannot bind Fortran variables to the
  * address of a C variable).
  */
 
@@ -151,7 +151,7 @@ OMPI_DECLSPEC extern struct ompi_status_public_t *ompi_mpi_statuses_ignore_addr;
     MPI_FINALIZE. */
 OMPI_DECLSPEC extern opal_list_t ompi_registered_datareps;
 
-/** In ompi_mpi_init: the lists of Fortran 90 mathing datatypes.
+/** In ompi_mpi_init: the lists of Fortran 90 matching datatypes.
  * We need these lists and hashtables in order to satisfy the new
  * requirements introduced in MPI 2-1 Sect. 10.2.5,
  * MPI_TYPE_CREATE_F90_xxxx, page 295, line 47.
@@ -184,12 +184,12 @@ void ompi_mpi_thread_level(int requested, int *provided);
  * @returns MPI_SUCCESS if successful
  * @returns Error code if unsuccessful
  *
- * Intialize all support code needed for MPI applications.  This
+ * Initialize all support code needed for MPI applications.  This
  * function should only be called by MPI applications (including
  * singletons).  If this function is called, ompi_init() and
  * ompi_rte_init() should *not* be called.
  *
- * It is permissable to pass in (0, NULL) for (argc, argv).
+ * It is permissible to pass in (0, NULL) for (argc, argv).
  */
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
                   bool reinit_ok);

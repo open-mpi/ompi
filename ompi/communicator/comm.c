@@ -2049,7 +2049,7 @@ int ompi_comm_get_rprocs (ompi_communicator_t *local_comm, ompi_communicator_t *
         PMIX_DATA_BUFFER_RELEASE(sbuf);
     }
 
-    /* broadcast name list to all proceses in local_comm */
+    /* broadcast name list to all processes in local_comm */
     rc = local_comm->c_coll->coll_bcast( recvbuf, rlen, MPI_BYTE,
                                         local_leader, local_comm,
                                         local_comm->c_coll->coll_bcast_module);

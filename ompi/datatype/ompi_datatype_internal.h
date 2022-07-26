@@ -455,7 +455,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
 /*
  * Initialization for these types is deferred until runtime.
  *
- * Using this macro implies that at this point not all informations needed
+ * Using this macro implies that at this point not all information needed
  * to fill up the datatype are known. We fill them with zeros and then later
  * when the datatype engine will be initialized we complete with the
  * correct information. This macro should be used for all composed types.

@@ -197,7 +197,7 @@ int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2,
 int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,
                           ompi_group_t **new_group) {
 
-    /* local varibles */
+    /* local variables */
     int new_group_size, overlap_count, rc;
     ompi_group_t *new_group_pointer;
     ompi_proc_t *proc1_pointer;

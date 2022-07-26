@@ -286,7 +286,7 @@ int mpidbg_init_per_image(mqs_image *image, const mqs_image_callbacks *icb,
     handle_types->hi_cxx_win =
         mqs_find_type(image, "MPI::Win", mqs_lang_cplus);
 
-    /* Tell the debuger what capabilities we have */
+    /* Tell the debugger what capabilities we have */
     mpidbg_comm_capabilities =
         MPIDBG_COMM_CAP_BASIC |
         MPIDBG_COMM_CAP_STRING_NAMES |

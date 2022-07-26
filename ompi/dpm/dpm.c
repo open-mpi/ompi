@@ -2065,7 +2065,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
         set_handler_default(SIGCHLD);
 
         /* Unblock all signals, for many of the same reasons that
-         we set the default handlers, above.  This is noticable
+         we set the default handlers, above.  This is noticeable
          on Linux where the event library blocks SIGTERM, but we
          don't want that blocked by the prted (or, more
          specifically, we don't want it to be blocked by the

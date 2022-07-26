@@ -181,7 +181,7 @@ static int ompi_socket_send (int fd, char *buf, int len )
             }
 #endif
             else {
-                /* Another error occured */
+                /* Another error occurred */
                 fprintf (stderr,"ompi_socket_send: error while writing to socket"
                          " error:%s", strerror (errno) );
                 return MPI_ERR_OTHER;
@@ -230,7 +230,7 @@ static int ompi_socket_recv (int fd, char *buf, int len )
             }
 #endif
             else {
-                /* Another error occured */
+                /* Another error occurred */
                 fprintf (stderr,"ompi_socket_recv: error while reading from socket"
                          " error:%s", strerror (errno) );
                 return MPI_ERR_OTHER;

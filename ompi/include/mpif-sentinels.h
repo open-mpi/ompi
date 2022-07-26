@@ -36,7 +36,7 @@
 !     MPI_IN_PLACE has the same rationale as MPI_BOTTOM.
       integer MPI_IN_PLACE
 !     Making MPI_ARGV_NULL be the same type as the parameter that is
-!     exepected in the F90 binding for MPI_COMM_SPAWN means that we
+!     expected in the F90 binding for MPI_COMM_SPAWN means that we
 !     don't need another interface for MPI_COMM_SPAWN.
       character MPI_ARGV_NULL(1)
 !     Ditto for MPI_ARGVS_NULL / MPI_COMM_SPAWN_MULTIPLE.

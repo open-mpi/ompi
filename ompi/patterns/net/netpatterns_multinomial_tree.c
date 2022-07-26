@@ -49,7 +49,7 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_multinomial_tree(int tree_order, int nu
     result=num_nodes;
     /* cnt - number of ranks in given level */
     cnt=1;
-    /*  cummulative count of ranks */
+    /*  cumulative count of ranks */
     while( 0 < result ) {
         result-=cnt;
         cnt*=tree_order;

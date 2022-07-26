@@ -55,7 +55,7 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), opal_conv
         /*  We have a contiguous type. */
         f( (void *)pConvertor->pBaseBuf , pConvertor->local_size);
     } else {
-        /* Now we got a noncontigous data. */
+        /* Now we got a non-contiguous data. */
         uint32_t elem_pos = 0, i;
         ptrdiff_t  stack_disp  = 0;
         dt_elem_desc_t*  description = pConvertor->use_desc->desc;
@@ -109,7 +109,7 @@ static inline int memchecker_call (int (*f)(void *, size_t), const void * addr,
         /*  We have a contiguous type. */
         f( (void*)((char *)addr+datatype->super.true_lb), datatype->super.size * count );
     } else {
-        /* Now we got a noncontigous type. */
+        /* Now we got a non-contiguous type. */
         uint32_t         elem_pos = 0, i;
         ptrdiff_t        stack_disp  = 0;
         dt_elem_desc_t*  description = datatype->super.opt_desc.desc;

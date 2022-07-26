@@ -36,7 +36,7 @@ typedef struct ompi_message_t ompi_message_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_message_t);
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
