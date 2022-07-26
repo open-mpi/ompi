@@ -48,7 +48,7 @@ We are not able to proceed. Please correct your application.
 #
 [execv-error]
 
-The singleton application was not able to find an executabe in your
+The singleton application was not able to find an executable in your
 PATH or in the directory where PRTE was initially installed, and
 therefore cannot continue.
 

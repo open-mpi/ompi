@@ -273,7 +273,7 @@ struct ompi_communicator_t {
                to a child*/
     int c_id_start_index; /* the starting index of the block of cids
                  allocated to this communicator*/
-    uint32_t c_epoch;  /* Identifier used to differenciate between two communicators
+    uint32_t c_epoch;  /* Identifier used to differentiate between two communicators
                           using the same c_contextid (not at the same time, obviously) */
 
     ompi_group_t        *c_local_group;
@@ -346,7 +346,7 @@ struct ompi_communicator_t {
 typedef struct ompi_communicator_t ompi_communicator_t;
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  *
  * The following ompi_predefined_xxx_t structure is used to maintain
  * backwards binary compatibility for MPI applications compiled
@@ -395,7 +395,7 @@ typedef struct ompi_communicator_t ompi_communicator_t;
  *
  * - union of struct and padding - Similar to current implementation
  *   except using a union for the parent.  This worked except in cases
- *   where the compilers did not support C99 union static initalizers.
+ *   where the compilers did not support C99 union static initializers.
  *   It would have been a pain to convert a bunch of the code to use
  *   non-static initializers (e.g., MPI datatypes).
  */
@@ -452,7 +452,7 @@ OMPI_DECLSPEC extern ompi_predefined_communicator_t ompi_mpi_comm_null;
 
 /*
  * These variables are for the MPI F03 bindings (F03 must bind Fortran
- * varaiables to symbols; it cannot bind Fortran variables to the
+ * variables to symbols; it cannot bind Fortran variables to the
  * address of a C variable).
  */
 OMPI_DECLSPEC extern ompi_predefined_communicator_t *ompi_mpi_comm_world_addr;
@@ -480,7 +480,7 @@ OMPI_DECLSPEC extern ompi_predefined_communicator_t *ompi_mpi_comm_null_addr;
  * ompi_comm_invalid() as originally coded -- per the MPI-1
  * definition, where MPI_COMM_NULL is an invalid communicator.
  * The MPI_Comm_c2f() function, therefore, calls
- * ompi_comm_invalid() but also explictily checks to see if the
+ * ompi_comm_invalid() but also explicitly checks to see if the
  * handle is MPI_COMM_NULL.
  */
 static inline int ompi_comm_invalid (const ompi_communicator_t* comm)
@@ -1072,7 +1072,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                 int high );
 
 /**
- * This is a routine determining wether the local or the
+ * This is a routine determining whether the local or the
  * remote group will be first in the new intra-comm.
  * It does not communicate to exchange the "high" values; used in Agree
  */

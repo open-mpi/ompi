@@ -96,7 +96,7 @@
   #define OMPI_SINGLE_INT_2_FINT(in) \
     *(in) = OMPI_ARRAY_NAME_CONVERT(in)
 
-  /* This is for OUT/IN-OUT parametes. Does back assignment and free */
+  /* This is for OUT/IN-OUT parameters. Does back assignment and free */
   #define OMPI_ARRAY_INT_2_FINT(in, n) \
     do { \
       int converted_n = (int)(n); \

@@ -388,7 +388,7 @@ ompi_op_t *ompi_op_create_user(bool commute,
 
     /* Set the user-defined callback function.  The "fort_fn" member
        is part of a union, so it doesn't matter if this is a C or
-       Fortan callback; we'll call the right flavor (per o_flags) at
+       Fortran callback; we'll call the right flavor (per o_flags) at
        invocation time. */
     new_op->o_func.fort_fn = func;
 

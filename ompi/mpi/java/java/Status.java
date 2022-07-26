@@ -95,7 +95,7 @@ public final class Status
 	/**
 	 * Tests if the communication was cancelled.
 	 * <p>Java binding of the MPI operation {@code MPI_TEST_CANCELLED}.
-	 * @return true if the operation was succesfully cancelled, false otherwise
+	 * @return true if the operation was successfully cancelled, false otherwise
 	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public boolean isCancelled() throws MPIException

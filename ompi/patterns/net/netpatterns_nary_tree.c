@@ -63,7 +63,7 @@ int ompi_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_node
     result=my_rank;
     /* cnt - number of ranks in given level */
     cnt=1;
-    /*  cummulative count of ranks */
+    /*  cumulative count of ranks */
     while( 0 <= result ) {
         result-=cnt;
         cnt*=tree_order;
@@ -80,7 +80,7 @@ int ompi_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_node
         cnt=1;
         cum_cnt=0;
         for (lvl = 0 ; lvl < my_level_in_tree ; lvl ++ ) {
-            /* cummulative count up to this level */
+            /* cumulative count up to this level */
             cum_cnt+=cnt;
             /* number of ranks in this level */
             cnt*=tree_order;
@@ -95,7 +95,7 @@ int ompi_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_node
     result=num_nodes;
     /* cnt - number of ranks in given level */
     cnt=1;
-    /*  cummulative count of ranks */
+    /*  cumulative count of ranks */
     while( 0 < result ) {
         result-=cnt;
         cnt*=tree_order;
@@ -204,7 +204,7 @@ int ompi_netpatterns_setup_narray_knomial_tree(
     result=my_rank;
     /* cnt - number of ranks in given level */
     cnt=1;
-    /*  cummulative count of ranks */
+    /*  cumulative count of ranks */
     while( 0 <= result ) {
         result-=cnt;
         cnt*=tree_order;
@@ -221,7 +221,7 @@ int ompi_netpatterns_setup_narray_knomial_tree(
         cnt=1;
         cum_cnt=0;
         for (lvl = 0 ; lvl < my_level_in_tree ; lvl ++ ) {
-            /* cummulative count up to this level */
+            /* cumulative count up to this level */
             cum_cnt+=cnt;
             /* number of ranks in this level */
             cnt*=tree_order;
@@ -248,7 +248,7 @@ int ompi_netpatterns_setup_narray_knomial_tree(
     result=num_nodes;
     /* cnt - number of ranks in given level */
     cnt=1;
-    /*  cummulative count of ranks */
+    /*  cumulative count of ranks */
     while( 0 < result ) {
         result-=cnt;
         cnt*=tree_order;

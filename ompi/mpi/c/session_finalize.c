@@ -40,6 +40,6 @@ int MPI_Session_finalize (MPI_Session *session)
     }
 
     rc = ompi_mpi_instance_finalize (session);
-    /* if an error occured raise it on the null session */
+    /* if an error occurred raise it on the null session */
     OMPI_ERRHANDLER_RETURN (rc, MPI_SESSION_NULL, rc, FUNC_NAME);
 }

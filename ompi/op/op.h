@@ -176,7 +176,7 @@ typedef struct ompi_op_t ompi_op_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_t);
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -358,7 +358,7 @@ ompi_op_t *ompi_op_create_user(bool commute,
                                ompi_op_fortran_handler_fn_t func);
 
 /**
- * Mark an MPI_Op as holding a Java calback function, and cache that
+ * Mark an MPI_Op as holding a Java callback function, and cache that
  * function in the MPI_Op.
  */
 OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op,  void *jnienv,

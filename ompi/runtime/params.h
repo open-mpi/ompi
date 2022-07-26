@@ -63,7 +63,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_param_check;
  * handles that are still allocated during MPI_FINALIZE.
  *
  * This is good debugging for user applications to find out if they
- * are inadvertantly orphaning MPI handles.
+ * are inadvertently orphaning MPI handles.
  */
 OMPI_DECLSPEC extern bool ompi_debug_show_handle_leaks;
 
@@ -73,7 +73,7 @@ OMPI_DECLSPEC extern bool ompi_debug_show_handle_leaks;
  * freed via MPI_FREE_MEM will be displayed during MPI_FINALIZE.
  *
  * This is good debugging for user applications to find out if they
- * are inadvertantly orphaning MPI "special" memory.
+ * are inadvertently orphaning MPI "special" memory.
  */
 OMPI_DECLSPEC extern int ompi_debug_show_mpi_alloc_mem_leaks;
 
@@ -84,7 +84,7 @@ OMPI_DECLSPEC extern int ompi_debug_show_mpi_alloc_mem_leaks;
  * attempt to use them will result in an MPI error.
  *
  * This is good debugging for user applications to find out if they
- * are inadvertantly using MPI handles after they have been freed.
+ * are inadvertently using MPI handles after they have been freed.
  */
 OMPI_DECLSPEC extern bool ompi_debug_no_free_handles;
 
@@ -178,7 +178,7 @@ OMPI_DECLSPEC extern char * ompi_mpi_spc_attach_string;
 OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
 
 /**
- * Timeout for calls to PMIx_Connect(defaut 0, no timeout)
+ * Timeout for calls to PMIx_Connect(default 0, no timeout)
  */
 OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
 

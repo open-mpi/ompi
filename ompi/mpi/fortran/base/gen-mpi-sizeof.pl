@@ -233,7 +233,7 @@ sub output_file {
 ! Specifically: we need support for the INTERFACE keyword,
 ! ISO_FORTRAN_ENV, and the STORAGE_SIZE() intrinsic on all types.
 ! Apparently, this compiler does not support both of those things, so
-! this file will be (effecitvely) blank (i.e., we didn't bother
+! this file will be (effectively) blank (i.e., we didn't bother
 ! generating the necessary stuff for MPI_SIZEOF because the compiler
 ! doesn't support
 ! it).

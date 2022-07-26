@@ -725,7 +725,7 @@ static int ompi_comm_activate_complete (ompi_communicator_t **newcomm, ompi_comm
     /**
      * Check to see if this process is in the new communicator.
      *
-     * Specifically, this function is invoked by all proceses in the
+     * Specifically, this function is invoked by all processes in the
      * old communicator, regardless of whether they are in the new
      * communicator or not.  This is because it is far simpler to use
      * MPI collective functions on the old communicator to determine
@@ -736,7 +736,7 @@ static int ompi_comm_activate_complete (ompi_communicator_t **newcomm, ompi_comm
      *
      * That being said, only processes in the new communicator need to
      * select a coll module for the new communicator.  More
-     * specifically, proceses who are not in the new communicator
+     * specifically, processes who are not in the new communicator
      * should *not* select a coll module -- for example,
      * ompi_comm_rank(newcomm) returns MPI_UNDEFINED for processes who
      * are not in the new communicator.  This can cause errors in the

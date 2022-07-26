@@ -202,7 +202,7 @@ int ompi_group_incl(ompi_group_t* group, int n, const int *ranks, ompi_group_t *
         len[2] = ompi_group_calc_sporadic ( n ,ranks );
         len[3] = ompi_group_calc_bmap     ( n , group->grp_proc_count ,ranks );
 
-        /* determin minimum length */
+        /* determine minimum length */
         method = ompi_group_minloc ( len, 4 );
     }
 #endif

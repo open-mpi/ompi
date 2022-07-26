@@ -84,7 +84,7 @@ OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_infosubscriber_t,
                    ompi_comm_destruct);
 
 /* This is the counter for the number of communicators, which contain
-   process with more than one jobid. This counter is a usefull
+   process with more than one jobid. This counter is a useful
    shortcut for finalize and abort. */
 int ompi_comm_num_dyncomm=0;
 
@@ -231,7 +231,7 @@ int ompi_comm_init_mpi3 (void)
     ompi_attr_get_ref();
 
     /* We have to create a hash (although it is legal to leave this
-       filed NULL -- the attribute accessor functions will intepret
+       filed NULL -- the attribute accessor functions will interpret
        this as "there are no attributes cached on this object")
        because MPI_COMM_WORLD has some predefined attributes. */
     ompi_attr_hash_init(&ompi_mpi_comm_world.comm.c_keyhash);

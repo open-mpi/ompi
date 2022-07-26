@@ -50,7 +50,7 @@ int ompi_request_default_wait(
 #endif /* OPAL_ENABLE_FT_MPI */
 
     /* return status.  If it's a generalized request, we *have* to
-       invoke the query_fn, even if the user procided STATUS_IGNORE.
+       invoke the query_fn, even if the user provided STATUS_IGNORE.
        MPI-2:8.2. */
     if (OMPI_REQUEST_GEN == req->req_type) {
         ompi_grequest_invoke_query(req, &req->req_status);
@@ -316,7 +316,7 @@ recheck:
             if( OPAL_UNLIKELY(0 < failed) ) {
                 /* if we have failed requests we skipped the waiting on the sync. Thus,
                  * some of the requests might not be properly completed, in which case
-                 * we must detach all requests from the sync. However, if we can succesfully
+                 * we must detach all requests from the sync. However, if we can successfully
                  * mark the request as pending then it is neither failed nor complete, and
                  * we must stop altering it.
                  */
@@ -501,7 +501,7 @@ int ompi_request_default_wait_some(size_t count,
 
     if(num_requests_null_inactive == count) {
         *outcount = MPI_UNDEFINED;
-        /* nobody will signall us */
+        /* nobody will signal us */
         WAIT_SYNC_RELEASE_NOWAIT(&sync);
         return rc;
     }

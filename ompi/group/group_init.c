@@ -334,7 +334,7 @@ static void ompi_group_construct(ompi_group_t *new_group)
 
     /* Note that we do *NOT* increase the refcount on all the included
        procs here because that is handled at a different level (e.g.,
-       the proc counts are not decreased during the desstructor,
+       the proc counts are not decreased during the destructor,
        either). */
 
     /* assign entry in fortran <-> c translation array */

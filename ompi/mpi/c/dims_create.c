@@ -231,12 +231,12 @@ getfactors(int num, int *nfactors, int **factors) {
     *factors = (int *) malloc((unsigned) size * sizeof(int));
 
     i = 0;
-    /* determine all occurences of factor 2 */
+    /* determine all occurrences of factor 2 */
     while((num % 2) == 0) {
         num /= 2;
         (*factors)[i++] = 2;
     }
-    /* determine all occurences of uneven prime numbers up to sqrt(num) */
+    /* determine all occurrences of uneven prime numbers up to sqrt(num) */
     d = 3;
     for(d = 3; (num > 1) && (d <= sqrtnum); d += 2) {
         while((num % d) == 0) {

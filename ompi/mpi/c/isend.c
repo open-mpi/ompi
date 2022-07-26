@@ -94,7 +94,7 @@ int MPI_Isend(const void *buf, int count, MPI_Datatype type, int dest,
     /*
      * today's MPI standard mandates the send buffer remains accessible during the send operation
      * hence memchecker cannot mark buf as non accessible, but it might mark buf as read-only in
-     * order to trap end user errors. Unfortunatly valgrind does not support marking buffers as read-only,
+     * order to trap end user errors. Unfortunately valgrind does not support marking buffers as read-only,
      * so there is pretty much nothing we can do here.
      */
 

@@ -77,7 +77,7 @@ Error:
 }
 
 /**
- * All-reduce for contigous primitive types
+ * All-reduce for contiguous primitive types
  */
 static
 comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
@@ -104,7 +104,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
     int data_type;
 
     /* get size of data needed - same layout as user data, so that
-     *   we can apply the reudction routines directly on these buffers
+     *   we can apply the reduction routines directly on these buffers
      */
     rc=opal_datatype_type_size(dtype, &dt_size);
     if( OMPI_SUCCESS != rc ) {
@@ -112,7 +112,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
     }
     message_extent=dt_extent*count;
 
-    /* lenght of control and data regions */
+    /* length of control and data regions */
     len_data_buffer=sm_module->data_memory_per_proc_per_segment;
 
     /* number of data types copies that the scratch buffer can hold */
@@ -138,7 +138,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
             item != opal_list_get_end(peers) ;
             item = opal_list_get_next(peers)) {
         if(ompi_proc_local()==(ompi_proc_t *)item){
-            /* this is the pointer to my proc strucuture */
+            /* this is the pointer to my proc structure */
             break;
         }
         my_rank++;
@@ -227,7 +227,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
 
             /* change pointer to scratch buffer - this was we can send data
             ** that we have summed w/o a memory copy, and receive data into the
-            ** other buffer, w/o fear of over writting data that has not yet
+            ** other buffer, w/o fear of over writing data that has not yet
             ** completed being send
             */
             recv_buffer^=1;

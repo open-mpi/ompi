@@ -505,7 +505,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
     }
 
-    /* All the types are here. Let's succesfully return. */
+    /* All the types are here. Let's successfully return. */
     *message = NULL;
     return mqs_ok;
 

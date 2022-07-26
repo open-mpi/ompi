@@ -79,7 +79,7 @@
 
 /* Notice to developers!!!!
  * The following include files with _dbg.h suffixes contains definitions
- * that are shared between the debuggger plugins and the OMPI code base.
+ * that are shared between the debugger plugins and the OMPI code base.
  * This is done instead of including the non-_dbg suffixed files because
  * of the different way compilers may handle extern definitions. The
  * particular case that is causing problems is when there is an extern
