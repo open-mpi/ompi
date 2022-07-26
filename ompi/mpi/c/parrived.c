@@ -47,7 +47,7 @@ int MPI_Parrived(MPI_Request request, MPI_Count partition,  int *flag)
 {
     int rc;
 
-    SPC_RECORD(OMPI_SPC_ARRIVED, 1);
+    SPC_RECORD(OMPI_SPC_PARRIVED, 1);
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
