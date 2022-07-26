@@ -609,11 +609,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     AC_ARG_ENABLE([c11-atomics],
         [AS_HELP_STRING([--enable-c11-atomics],
-             [Enable use of C11 atomics if available (default: use if available, disabled by default on 64-bit PowerPC)])])
+             [Enable use of C11 atomics if available. Note: GCC builtin atomics are currently preferred over C11 atomics. (default: use if available, disabled by default on 64-bit PowerPC)])])
 
     AC_ARG_ENABLE([builtin-atomics],
         [AS_HELP_STRING([--enable-builtin-atomics],
-             [Enable use of GCC built-in atomics.  Note that C11 atomics are preferred over built-in atomics.   (default: use if available, disabled by default on 64-bit PowerPC)])])
+             [Enable use of GCC built-in atomics. Currently preferred over C11 atomics. (default: use if available, disabled by default on 64-bit PowerPC)])])
 
     AC_ARG_ENABLE([builtin-atomics-for-ppc],
         [AS_HELP_STRING([--enable-builtin-atomics-for-ppc],
@@ -636,23 +636,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     ;;
     esac
 
-    # Option 1 for atomics: C11
+    # Option 1 for atomics: GCC-style Builtin
     #
-    # We currently always disable C11 atomics with the Intel compilers.
-    # We know builds older than 20200310 are broken with respect to
-    # C11 atomics, but have not apparently found a build we are happy
-    # with.  In the future, this should be changed to a check for a
-    # particular Intel version.
-    AS_IF([test "$enable_c11_atomics" != "no" -a "$opal_cv_c11_supported" = "yes" -a "$opal_cv_c_compiler_vendor" != "intel"],
-          [AC_MSG_NOTICE([Using C11 atomics])
-           OPAL_CHECK_C11_CSWAP_INT128
-           want_c11_atomics=1
-           atomics_found="C11 atomics"],
-          [test "$enable_c11_atomics" = "yes"],
-          [AC_MSG_WARN([C11 atomics were requested but are not supported])
-           AC_MSG_ERROR([Cannot continue])])
-
-    # Option 2 for atomics: GCC-style Builtin
+    # We prefer builtin atomics over C11 atomics because our use of C11 atomics
+    # at this point is broken as it either incurs undue overheads or
+    # requires casts to _Atomic where there should be no casts.
     AS_IF([test "$atomics_found" = "no" -a "$enable_builtin_atomics" != "no"],
           [OPAL_CHECK_GCC_ATOMIC_BUILTINS
            AS_IF([test $opal_cv_have___atomic = "yes"],
@@ -662,6 +650,22 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
                  [test "$enable_builtin_atomics" = "yes"],
                  [AC_MSG_WARN([GCC built-in atomics requested but not found.])
                   AC_MSG_ERROR([Cannot continue])])])
+
+    # Option 2 for atomics: C11
+    #
+    # We currently always disable C11 atomics with the Intel compilers.
+    # We know builds older than 20200310 are broken with respect to
+    # C11 atomics, but have not apparently found a build we are happy
+    # with.  In the future, this should be changed to a check for a
+    # particular Intel version.
+    AS_IF([test "$atomics_found" = "no" -a "$enable_c11_atomics" == "yes" -a "$opal_cv_c11_supported" = "yes" -a "$opal_cv_c_compiler_vendor" != "intel"],
+          [AC_MSG_NOTICE([Using C11 atomics])
+           OPAL_CHECK_C11_CSWAP_INT128
+           want_c11_atomics=1
+           atomics_found="C11 atomics"],
+          [test "$enable_c11_atomics" = "yes"],
+          [AC_MSG_WARN([C11 atomics were requested but are not supported])
+           AC_MSG_ERROR([Cannot continue])])
 
     # Option 3 for atomics: inline assembly
     AS_IF([test "$atomics_found" = "no" -a "$gcc_inline" = "1"],
@@ -687,7 +691,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             AC_MSG_CHECKING([for inline assembly atomics])
             AC_MSG_RESULT([$atomics_found])])
 
-    AS_IF([test "$aomics_found" = "no"],
+    AS_IF([test "$atomics_found" = "no"],
           [AC_MSG_ERROR([No usable atomics implementation found.  Cannot continue.])])
 
     AC_DEFINE_UNQUOTED([OPAL_USE_C11_ATOMICS],

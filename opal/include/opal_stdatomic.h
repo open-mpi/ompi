@@ -31,7 +31,11 @@ typedef volatile ssize_t opal_atomic_ssize_t;
 typedef volatile intptr_t opal_atomic_intptr_t;
 typedef volatile uintptr_t opal_atomic_uintptr_t;
 
+#if OPAL_USE_GCC_BUILTIN_ATOMICS == 0
 typedef opal_atomic_int32_t opal_atomic_lock_t;
+#else // OPAL_USE_GCC_BUILTIN_ATOMICS
+typedef volatile bool opal_atomic_lock_t;
+#endif // OPAL_USE_GCC_BUILTIN_ATOMICS
 
 enum { OPAL_ATOMIC_LOCK_UNLOCKED = 0,
        OPAL_ATOMIC_LOCK_LOCKED = 1 };

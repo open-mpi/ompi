@@ -36,7 +36,7 @@
  *
  *********************************************************************/
 
-#if defined(PLATFORM_ARCH_X86_64) && defined (__GNUC__) && !defined(__llvm) && (__GNUC__ < 6)
+#if defined(PLATFORM_ARCH_X86_64) && defined(PLATFORM_COMPILER_GNU) && __GNUC__ < 8
     /* work around a bug in older gcc versions where ACQUIRE seems to get
      * treated as a no-op instead */
 #define OPAL_BUSTED_ATOMIC_MB 1
@@ -193,26 +193,30 @@ static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t
 
 static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, int32_t value)
 {
-    lock = value;
+    if (OPAL_ATOMIC_LOCK_UNLOCKED == value) {
+        __atomic_clear(lock, __ATOMIC_RELAXED);
+    } else {
+        *lock = true;
+    }
 }
 
 static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
-    int ret = __atomic_exchange_n(&lock, OPAL_ATOMIC_LOCK_LOCKED,
-                                  __ATOMIC_ACQUIRE | __ATOMIC_HLE_ACQUIRE);
-    if (OPAL_ATOMIC_LOCK_LOCKED == ret) {
+    bool ret = __atomic_test_and_set(&lock, OPAL_ATOMIC_LOCK_LOCKED,
+                                    __ATOMIC_ACQUIRE | __ATOMIC_HLE_ACQUIRE);
+    if (ret) {
         /* abort the transaction */
         _mm_pause();
-        return 1;
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
 {
     while (OPAL_ATOMIC_LOCK_LOCKED
-           == __atomic_exchange_n(&lock, OPAL_ATOMIC_LOCK_LOCKED,
+           == __atomic_test_and_set(&lock, OPAL_ATOMIC_LOCK_LOCKED,
                                   __ATOMIC_ACQUIRE | __ATOMIC_HLE_ACQUIRE)) {
         /* abort the transaction */
         _mm_pause();
@@ -221,13 +225,35 @@ static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
 
 static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
 {
-    __atomic_store_n(&lock, OPAL_ATOMIC_LOCK_UNLOCKED,
-                     __ATOMIC_RELEASE | __ATOMIC_HLE_RELEASE);
+    __atomic_clear(&lock, __ATOMIC_RELEASE | __ATOMIC_HLE_RELEASE);
 }
 
 #else  /* #if defined(__HLE__) */
 
-#include "opal/sys/atomic_impl_spinlock.h"
+static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, int32_t value)
+{
+    if (OPAL_ATOMIC_LOCK_UNLOCKED == value) {
+        __atomic_clear(lock, __ATOMIC_RELAXED);
+    } else {
+        *lock = true;
+    }
+}
+
+static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
+{
+    return __atomic_test_and_set(lock, __ATOMIC_ACQUIRE);
+}
+
+static inline void opal_atomic_lock(opal_atomic_lock_t *lock)
+{
+    while (!opal_atomic_trylock(lock)) {}
+}
+
+static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
+{
+    __atomic_clear(&lock, __ATOMIC_RELEASE);
+}
+
 
 #endif
 
