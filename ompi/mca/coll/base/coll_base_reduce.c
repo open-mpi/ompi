@@ -98,7 +98,7 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
     if( tree->tree_nextsize > 0 ) {
         ptrdiff_t real_segment_size;
 
-        /* handle non existant recv buffer (i.e. its NULL) and
+        /* handle non existent recv buffer (i.e. its NULL) and
            protect the recv buffer on non-root nodes */
         accumbuf = (char*)recvbuf;
         if( (NULL == accumbuf) || (root != rank) ) {

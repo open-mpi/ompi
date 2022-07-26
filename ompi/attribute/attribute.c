@@ -1333,7 +1333,7 @@ static int set_value(ompi_attribute_type_t type, void *object,
     ret = opal_hash_table_set_value_uint32(*attr_hash, key, new_attr);
 
     /* Increase the reference count of the object, only if there was no
-       old atribute/no old entry in the object's key hash */
+       old attribute/no old entry in the object's key hash */
     if (OMPI_SUCCESS == ret && !had_old) {
         OBJ_RETAIN(keyval);
     }

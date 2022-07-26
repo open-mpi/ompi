@@ -906,7 +906,7 @@ public class Comm implements Freeable, Cloneable
 	 * Java binding of the MPI operation {@code MPI_PACK}.
 	 * <p>
 	 * The return value is the output value of {@code position} - the
-	 * inital value incremented by the number of bytes written.
+	 * initial value incremented by the number of bytes written.
 	 * @param inbuf    input buffer
 	 * @param incount  number of items in input buffer
 	 * @param type     datatype of each item in input buffer
@@ -944,7 +944,7 @@ public class Comm implements Freeable, Cloneable
 	 * Java binding of the MPI operation {@code MPI_UNPACK}.
 	 * <p>
 	 * The return value is the output value of {@code position} - the
-	 * inital value incremented by the number of bytes read.
+	 * initial value incremented by the number of bytes read.
 	 * @param inbuf    input buffer
 	 * @param position initial position in input buffer
 	 * @param outbuf   output buffer
@@ -1150,7 +1150,7 @@ public class Comm implements Freeable, Cloneable
 
 	private native int getTopology(long comm) throws MPIException;
 
-	// Enviromental Management
+	// Environmental Management
 
 	/**
 	 * Abort MPI.

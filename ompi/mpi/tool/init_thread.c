@@ -48,7 +48,7 @@ int MPI_T_init_thread (int required, int *provided)
             break;
         }
 
-        /* call opal_init_util to intialize the MCA system */
+        /* call opal_init_util to initialize the MCA system */
         rc = opal_init_util (NULL, NULL);
         if (OPAL_SUCCESS != rc) {
             rc = MPI_T_ERR_INVALID;

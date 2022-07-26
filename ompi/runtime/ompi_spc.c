@@ -395,7 +395,7 @@ static void ompi_spc_dump(void)
     ompi_spc_comm->c_coll->coll_barrier(ompi_spc_comm, ompi_spc_comm->c_coll->coll_barrier_module);
 }
 
-/* Frees any dynamically alocated OMPI SPC data structures */
+/* Frees any dynamically allocated OMPI SPC data structures */
 void ompi_spc_fini(void)
 {
     if (ompi_mpi_spc_dump_enabled) {

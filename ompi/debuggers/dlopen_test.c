@@ -117,7 +117,7 @@ static int do_test(void)
     /* If we're using libltdl, it will find the .la file and may
        discover that it needs to open the actual file in the .libs
        directory.  If we're not using libltdl, then we won't know
-       about the magic .la file / .libs directory.  Hueristic: if we
+       about the magic .la file / .libs directory.  Heuristic: if we
        get here, manually prefix the filename with .libs/ and try
        again. */
     char *rel_filename;

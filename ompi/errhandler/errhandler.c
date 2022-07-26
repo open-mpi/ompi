@@ -420,7 +420,7 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
      * forward through errors in collectives" as this is less intrusive to the
      * code base.) */
     if( forward ) {
-        /* TODO: this to become redundand when pmix has rbcast */
+        /* TODO: this to become redundant when pmix has rbcast */
         ompi_comm_failure_propagate(&ompi_mpi_comm_world.comm, ompi_proc, status);
         /* Let pmix know: flush modex information, propagate to connect/accept
          * jobs; we will tell our local daemon, and it will do the proper thing */

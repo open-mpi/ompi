@@ -74,7 +74,7 @@ static ssize_t mca_fbtl_ime_blocking_op(ompio_file_t *fh, int io_op)
            - OR the next iovec is not "contiguous"
            - OR we exceeded the advised number of iovecs for IME
            Then: pwritev/preadv shall be called,
-                 and the iovec array resetted */
+                 and the iovec array reset */
         if (i+1 == fh->f_num_of_io_entries ||
             ((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset +
              (ptrdiff_t)fh->f_io_array[i].length) !=

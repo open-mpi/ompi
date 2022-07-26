@@ -23,7 +23,7 @@
 
 /*
  * ******************************************************************
- * ******** functions which provide MCA interface comppliance *******
+ * ******** functions which provide MCA interface compliance ********
  * ******************************************************************
  * These functions are:
  *       - mca_topo_treematch_module_open

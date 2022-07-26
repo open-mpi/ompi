@@ -54,7 +54,7 @@
  *
  * As a deviation from the norm, ompi_mpi_param_check is also
  * extern'ed in src/mpi/interface/c/bindings.h because it is already
- * included in all MPI function imlementation files
+ * included in all MPI function implementation files
  *
  * The values below are the default values.
  */
@@ -206,7 +206,7 @@ int ompi_mpi_register_params(void)
     /* Whether or not to print all MCA parameters in MPI_INIT */
     ompi_mpi_show_mca_params_string = NULL;
     (void) mca_base_var_register("ompi", "mpi", NULL, "show_mca_params",
-                                 "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducability of MPI jobs "
+                                 "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducibility of MPI jobs "
                                  "for debug purposes). Accepted values are all, default, file, api, and enviro - or a comma "
                                  "delimited combination of them",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -249,7 +249,7 @@ int ompi_mpi_register_params(void)
     /* File to use when dumping the parameters */
     (void) mca_base_var_register("ompi", "mpi", NULL, "show_mca_params_file",
                                  "If mpi_show_mca_params is true, setting this string to a valid filename tells "
-                                 OMPI_IDENT_STRING " to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducability of MPI jobs)",
+                                 OMPI_IDENT_STRING " to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducibility of MPI jobs)",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,

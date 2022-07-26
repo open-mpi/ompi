@@ -62,7 +62,7 @@ int MPI_Start(MPI_Request *request)
      * Per definition of the handling of persistent request in the
      * MPI standard 3.1 page 78 line 19: we must have the following
      * sequence CREATE (START COMPLETE)* FREE. The upper level is
-     * responsible for handling any concurency. The PML must handle
+     * responsible for handling any concurrency. The PML must handle
      * this case, as it is the only one knowing if the request can
      * be reused or not (it is PML completed or not?).
      */

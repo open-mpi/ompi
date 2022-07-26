@@ -42,7 +42,7 @@ static int fileline = 1;
 
 /*
  * File parsing function. Allocated memory depending on the number of rules.
- * This functions expects a file formatted as describbed in coll_han_dynamic_file.h.
+ * This functions expects a file formatted as described in coll_han_dynamic_file.h.
  * The configuration is then used by coll/han component to determine which module to
  * use at each topological level.
  */

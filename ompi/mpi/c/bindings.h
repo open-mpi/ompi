@@ -34,10 +34,10 @@ BEGIN_C_DECLS
    doesn't work to simply list all of the pragmas in a top-level
    header file. */
 
-/* These macros have to be used to check the corectness of the datatype depending on the
+/* These macros have to be used to check the correctness of the datatype depending on the
  * operations that we have to do with them. They can be used on all functions, not only
  * on the top level MPI functions, as they does not trigger the error handler. Is the user
- * responsability to do it.
+ * responsibility to do it.
  */
 #define OMPI_CHECK_DATATYPE_FOR_SEND( RC, DDT, COUNT )                  \
     do {                                                                \

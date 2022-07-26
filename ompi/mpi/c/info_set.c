@@ -59,8 +59,8 @@ static const char FUNC_NAME[] = "MPI_Info_set";
  *   @retval MPI_ERR_NO_MEM
  *
  *   MPI_Info_set adds the (key,value) pair to info, and overrides
- *   the value if for the same key a previsou value was set. key and
- *   value must be NULL terminated strings in C. In Fortan, leading
+ *   the value if for the same key a previous value was set. key and
+ *   value must be NULL terminated strings in C. In Fortran, leading
  *   and trailing spaces in key and value are stripped. If either
  *   key or value is greater than the allowed maxima, MPI_ERR_INFO_KEY
  *   and MPI_ERR_INFO_VALUE are raised

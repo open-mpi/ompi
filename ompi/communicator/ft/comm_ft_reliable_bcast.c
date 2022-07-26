@@ -170,7 +170,7 @@ static void ompi_comm_rbcast_bml_recv_cb(
     msg = (ompi_comm_rbcast_message_t*) descriptor->des_segments->seg_addr.pval;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
-                         "%s %s: Info: Recieved rbcast tag for communicator with CID %3d:%d",
+                         "%s %s: Info: Received rbcast tag for communicator with CID %3d:%d",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->cid, msg->epoch));
 
     /* Find the target comm */
@@ -190,7 +190,7 @@ static void ompi_comm_rbcast_bml_recv_cb(
     /* Check if this is a delayed rbcast for an old communicator whose CID has been reused */
     if(OPAL_UNLIKELY( comm->c_epoch != msg->epoch )) {
         OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
-                             "%s %s: Info: Received a late rbcast order for the communicator with CID %3d:%d when is is now at epoch %d - ignoring, nothing to do",
+                             "%s %s: Info: Received a late rbcast order for the communicator with CID %3d:%d when it is now at epoch %d - ignoring, nothing to do",
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->cid, msg->epoch, comm->c_epoch));
         return;
     }
@@ -204,7 +204,7 @@ static void ompi_comm_rbcast_bml_recv_cb(
         }
     }
     else {
-        /* During finalize, we loosly synchronize so it may happen 
+        /* During finalize, we loosely synchronize so it may happen 
          * that we keep receiving messages after we deregistered the type.
          * Any other time, this is indicative of a problem.
          */

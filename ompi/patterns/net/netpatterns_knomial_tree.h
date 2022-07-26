@@ -39,7 +39,7 @@ struct netpatterns_pair_exchange_node_t {
     /* number of nodes this node will exchange data with */
     int n_exchanges;
 
-    /* ranks of nodes involved in data exchnge */
+    /* ranks of nodes involved in data exchange */
     int *rank_exchanges;
 
     /* number of extra sources of data - outside largest power of 2 in
@@ -82,7 +82,7 @@ struct netpatterns_k_exchange_node_t {
     int n_exchanges;
     /* total number of exchanges that I actually participate in */
     int n_actual_exchanges;
-    /* ranks of nodes involved in data exchnge */
+    /* ranks of nodes involved in data exchange */
     int **rank_exchanges;
     /* number of extra sources of data - outside largest power of 2 in
      *  this group */

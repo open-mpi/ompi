@@ -28,7 +28,7 @@
 #include "commpatterns.h"
 
 /**
- * All-reduce for contigous primitive types
+ * All-reduce for contiguous primitive types
  */
 OMPI_DECLSPEC int ompi_comm_allreduce_pml(void *sbuf, void *rbuf, int count,
         ompi_datatype_t *dtype, int my_rank_in_group,
@@ -46,7 +46,7 @@ OMPI_DECLSPEC int ompi_comm_allreduce_pml(void *sbuf, void *rbuf, int count,
     char *sbuf_current, *rbuf_current;
 
     /* get size of data needed - same layout as user data, so that
-     *   we can apply the reudction routines directly on these buffers
+     *   we can apply the reduction routines directly on these buffers
      */
     rc = opal_datatype_type_size((opal_datatype_t *)dtype, &dt_size);
     if( OMPI_SUCCESS != rc ) {
@@ -153,7 +153,7 @@ OMPI_DECLSPEC int ompi_comm_allreduce_pml(void *sbuf, void *rbuf, int count,
 
             /* change pointer to scratch buffer - this was we can send data
             ** that we have summed w/o a memory copy, and receive data into the
-            ** other buffer, w/o fear of over writting data that has not yet
+            ** other buffer, w/o fear of over writing data that has not yet
             ** completed being send
             */
             recv_buffer^=1;

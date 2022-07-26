@@ -933,7 +933,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iGather(
     if(rootOrInter || sPtr == MPI_IN_PLACE)
     {
         /*
-         * In principle need the "id == root" check here and elsewere for
+         * In principle need the "id == root" check here and elsewhere for
          * correctness, in case arguments that are not supposed to be
          * significant except on root are legitimately passed in as `null',
          * say.  Shouldn't produce null pointer exception.
