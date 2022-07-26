@@ -196,7 +196,7 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
     ompi_datatype_type_extent(sdtype, &sext);
     ompi_datatype_type_extent(rdtype, &rext);
 
-   /* Perform pairwise exchange starting from 1 since local exhange is done */
+   /* Perform pairwise exchange starting from 1 since local exchange is done */
     for (step = 0; step < size; step++) {
 
         /* Determine sender and receiver for this step. */

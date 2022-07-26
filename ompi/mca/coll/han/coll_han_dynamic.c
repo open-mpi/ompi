@@ -26,7 +26,7 @@
 
 /*
  * Tests if a dynamic collective is implemented
- * Usefull for file reading warnings and MCA parameter generation
+ * Useful for file reading warnings and MCA parameter generation
  * When a new dynamic collective is implemented, this function must
  * return true for it
  */

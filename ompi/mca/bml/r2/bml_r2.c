@@ -220,7 +220,7 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
 
     if ((btl_flags & (MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_SEND)) == 0) {
         /* If no protocol specified, we have 2 choices: we ignore the BTL
-         * as we don't know which protocl to use, or we suppose that all
+         * as we don't know which protocol to use, or we suppose that all
          * BTLs support the send protocol. This is really a btl error as
          * these flags should have been sanitized by the btl. */
         btl_flags |= MCA_BTL_FLAGS_SEND;
@@ -634,7 +634,7 @@ static int mca_bml_r2_del_procs(size_t nprocs,
             }
 
             /* The reference stored in btl_eager and btl_rdma will automatically
-             * dissapear once the btl_array destructor is called. Thus, there is
+             * disappear once the btl_array destructor is called. Thus, there is
              * no need for extra cleaning here.
              */
         }
@@ -916,7 +916,7 @@ static int mca_bml_r2_register( mca_btl_base_tag_t tag,
 {
     mca_btl_base_active_message_trigger[tag].cbfunc = cbfunc;
     mca_btl_base_active_message_trigger[tag].cbdata = data;
-    /* Give an oportunity to the BTLs to do something special
+    /* Give an opportunity to the BTLs to do something special
      * for each registration.
      */
     {

@@ -167,7 +167,7 @@ struct ompi_osc_base_component_2_0_0_t {
     mca_base_component_data_t osc_data;
     /** Component initialization function */
     ompi_osc_base_component_init_fn_t osc_init;
-    /** Query whether component is useable for give comm/info */
+    /** Query whether component is usable for given comm/info */
     ompi_osc_base_component_query_fn_t osc_query;
     /** Create module for the given window */
     ompi_osc_base_component_select_fn_t osc_select;

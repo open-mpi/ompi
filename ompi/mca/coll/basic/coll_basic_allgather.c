@@ -60,10 +60,10 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
     rsize = ompi_comm_remote_size(comm);
 
     /* Algorithm:
-     * - a gather to the root in remote group (simultaniously executed,
-     * thats why we cannot use coll_gather).
+     * - a gather to the root in remote group (simultaneously executed,
+     * that's why we cannot use coll_gather).
      * - exchange the temp-results between two roots
-     * - inter-bcast (again simultanious).
+     * - inter-bcast (again simultaneous).
      */
 
     /* Step one: gather operations: */
@@ -106,7 +106,7 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
         err = ompi_request_wait_all(rsize + 1, reqs, MPI_STATUSES_IGNORE);
         if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
-        /* Step 2: exchange the resuts between the root processes */
+        /* Step 2: exchange the results between the root processes */
         span = opal_datatype_span(&sdtype->super, (int64_t)scount * (int64_t)size, &gap);
         tmpbuf_free = (char *) malloc(span);
         if (NULL == tmpbuf_free) { line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto exit; }

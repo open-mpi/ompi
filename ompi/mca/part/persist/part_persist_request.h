@@ -73,7 +73,7 @@ struct mca_part_persist_request_t {
     size_t real_count;
     size_t part_size; 
 
-    ompi_request_t** persist_reqs;            /**< requests for persistant sends/recvs */
+    ompi_request_t** persist_reqs;            /**< requests for persistent sends/recvs */
     ompi_request_t* setup_req [2];                /**< Request structure for setup messages */
 
 
@@ -81,20 +81,20 @@ struct mca_part_persist_request_t {
     int32_t req_partitions_recv;          /**< Recv side number of partitions */
 
     int32_t my_send_tag;                  /**< This is a counter for send tags for the actual data transfer. */
-    int32_t my_recv_tag;                  /**< This is a counter for recive tags, for incoming setup messages. */ 
+    int32_t my_recv_tag;                  /**< This is a counter for receive tags, for incoming setup messages. */ 
 
     int32_t world_peer;                   /**< peer's rank in MPI_COMM_WORLD */
 
     int32_t initialized;                  /**< flag for initialized state */
-    int32_t first_send;                   /**< flag for whether the first send has happend */
+    int32_t first_send;                   /**< flag for whether the first send has happened */
     int32_t flag_post_setup_recv;  
     size_t done_count;             /**< counter for the number of partitions marked ready */
 
     int32_t *flags;               /**< array of flags to determine whether a partition has arrived */
 
-    struct ompi_mca_persist_setup_t setup_info[2]; /**< Setup info to send durring initialization. */
+    struct ompi_mca_persist_setup_t setup_info[2]; /**< Setup info to send during initialization. */
   
-    struct mca_part_persist_list_t* progress_elem; /**< pointer to progress list element for removal durring free. */ 
+    struct mca_part_persist_list_t* progress_elem; /**< pointer to progress list element for removal during free. */ 
 
 };
 typedef struct mca_part_persist_request_t mca_part_persist_request_t;

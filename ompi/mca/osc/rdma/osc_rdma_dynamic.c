@@ -214,7 +214,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         return ret;
     }
 
-    /* do a binary seach for where the region should be inserted */
+    /* do a binary search for where the region should be inserted */
     if (region_count) {
         region = find_insertion_point ((ompi_osc_rdma_region_t *) module->state->regions, 0, region_count - 1,
                                        (intptr_t) base, module->region_size, &region_index);

@@ -21,7 +21,7 @@ int mca_vprotocol_pessimist_progress(void)
     printf("PROGRESS\n");
     /* First let the real progress take place */
     ret = mca_pml_v.host_pml.pml_progress();
-    /* Then progess the sender_based copies */
+    /* Then progress the sender_based copies */
     vprotocol_pessimist_sb_progress_all_reqs();
     return ret;
 }

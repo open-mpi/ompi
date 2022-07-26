@@ -24,7 +24,7 @@
  * Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
- *                         reseved.
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -337,7 +337,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
                                    hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             /* And now the ugly part. As some fragments can be inserted in the cant_match list,
-             * every time we succesfully add a fragment in the unexpected list we have to make
+             * every time we successfully add a fragment in the unexpected list we have to make
              * sure the next one is not in the cant_match. Otherwise, we will endup in a deadlock
              * situation as the cant_match is only checked when a new fragment is received from
              * the network.

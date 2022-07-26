@@ -146,7 +146,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE))) {
         /* long expected messages with the eager protocol
            (and also with the rndv protocol if the length
-           is less or egal to eager_limit) won't see a
+           is less or equal to eager_limit) won't see a
            get event to complete the message.  Give them an extra
            count to cause the message to complete with just the SEND
            and ACK events and remove the ME. (we wait for the counter
@@ -385,7 +385,7 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, uint32_t contextid, int
     }
 
     /* We have to wait for some GET events.
-       If the first put falls in overflow list, the number of GET event is egal to:
+       If the first put falls in overflow list, the number of GET event is equal to:
            (length - 1) / ompi_mtl_portals4.max_msg_size_mtl + 1
        else we will re-calculate this number when we received the first ACK event (with remote overflow list)
      */

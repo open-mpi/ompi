@@ -70,7 +70,7 @@ mca_coll_han_set_allreduce_args(mca_coll_han_allreduce_args_t * args,
 }
 
 /*
- * Each segment of the messsage needs to go though 4 steps to perform MPI_Allreduce:
+ * Each segment of the message needs to go though 4 steps to perform MPI_Allreduce:
  *     lr: lower level (shared-memory or intra-node) reduce,
  *     ur: upper level (inter-node) reduce,
  *     ub: upper level (inter-node) bcast,

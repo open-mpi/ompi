@@ -155,8 +155,8 @@ static void ompi_mtl_psm2_set_shadow_env (struct ompi_mtl_psm2_shadow_variable *
         break;
     case MCA_BASE_VAR_TYPE_UNSIGNED_LONG:
         if (0 == strcmp (variable->env_name, "PSM2_TRACEMASK")) {
-            /* PSM2 documentation shows the tracemask as a hexidecimal number. to be consitent
-             * use hexidecimal here. */
+            /* PSM2 documentation shows the tracemask as a hexadecimal number. to be consistent
+             * use hexadecimal here. */
             ret = opal_asprintf (&env_value, "%s=0x%lx", variable->env_name, storage->ulval);
         } else {
             ret = opal_asprintf (&env_value, "%s=%lu", variable->env_name, storage->ulval);

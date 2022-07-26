@@ -741,7 +741,7 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, int count,
                 (ompi_coll_adapt_reduce_context_t *)opal_free_list_wait(mca_coll_adapt_component.adapt_ireduce_context_free_list);
             context->buff = (char *) sbuf + (ptrdiff_t) seg_index * (ptrdiff_t) segment_increment;
             context->seg_index = seg_index;
-            /* Actural rank of the peer */
+            /* Actual rank of the peer */
             context->peer = tree->tree_prev;
             context->con = con;
             context->inbuf = NULL;

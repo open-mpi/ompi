@@ -291,7 +291,7 @@ remove_head_from_ordered_list(mca_pml_ob1_recv_frag_t** queue)
  *
  * @param hdr (IN)                  Header of received recv_frag.
  * @param segments (IN)             Received recv_frag descriptor.
- * @param num_segments (IN)         Flag indicating wether a match was made.
+ * @param num_segments (IN)         Flag indicating whether a match was made.
  * @param type (IN)                 Type of the message header.
  * @return                          OMPI_SUCCESS or error status on failure.
  */
@@ -310,7 +310,7 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
  * @param proc (IN)                 Proc for which we have received the message.
  * @param hdr (IN)                  Header of received recv_frag.
  * @param segments (IN)             Received recv_frag descriptor.
- * @param num_segments (IN)         Flag indicating wether a match was made.
+ * @param num_segments (IN)         Flag indicating whether a match was made.
  * @param type (IN)                 Type of the message header.
  * @return                          OMPI_SUCCESS or error status on failure.
  */
@@ -354,7 +354,7 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
     OBJ_CONSTRUCT(&nack_list, opal_list_t);
 
     OPAL_THREAD_LOCK(&comm->matching_lock);
-    /* these assignement need to be here because we need the matching_lock */
+    /* these assignments need to be here because we need the matching_lock */
     ompi_comm->coll_revoked = true;
     if( !coll_only ) ompi_comm->comm_revoked = true;
 
@@ -503,7 +503,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      * run, lock to make sure that if another thread is processing
      * a frag from the same message a match is made only once.
      * Also, this prevents other posted receives (for a pair of
-     * end points) from being processed, and potentially "loosing"
+     * end points) from being processed, and potentially "losing"
      * the fragment.
      */
     OB1_MATCHING_LOCK(&comm->matching_lock);
@@ -573,7 +573,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
             uint32_t iov_count = 1;
 
             /*
-             *  Make user buffer accessable(defined) before unpacking.
+             *  Make user buffer accessible(defined) before unpacking.
              */
             MEMCHECKER(
                        memchecker_call(&opal_memchecker_base_mem_defined,
@@ -599,7 +599,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
             SPC_USER_OR_MPI(match->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                             OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
             /*
-             *  Unpacking finished, make the user buffer unaccessable again.
+             *  Unpacking finished, make the user buffer unaccessible again.
              */
             MEMCHECKER(
                        memchecker_call(&opal_memchecker_base_mem_noaccess,
@@ -1025,7 +1025,7 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
  * RCS/CTS receive side matching
  *
  * @param hdr list of parameters needed for matching
- *                    This list is also embeded in frag,
+ *                    This list is also embedded in frag,
  *                    but this allows to save a memory copy when
  *                    a match is made in this routine. (IN)
  * @param frag   pointer to receive fragment which we want
@@ -1096,7 +1096,7 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
      * run, lock to make sure that if another thread is processing
      * a frag from the same message a match is made only once.
      * Also, this prevents other posted receives (for a pair of
-     * end points) from being processed, and potentially "loosing"
+     * end points) from being processed, and potentially "losing"
      * the fragment.
      */
     OB1_MATCHING_LOCK(&comm->matching_lock);
@@ -1220,7 +1220,7 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
     /*
      * Now that new message has arrived, check to see if
      * any fragments on the frags_cant_match list
-     * may now be used to form new matchs
+     * may now be used to form new matches
      */
     if(OPAL_UNLIKELY(NULL != proc->frags_cant_match)) {
         OB1_MATCHING_LOCK(&comm->matching_lock);

@@ -50,7 +50,7 @@ BEGIN_C_DECLS
 #undef NBC_CACHE_SCHEDULE
 #endif
 #define NBC_SCHED_DICT_UPPER 1024 /* max. number of dict entries */
-#define NBC_SCHED_DICT_LOWER 512  /* nuber of dict entries after wipe, if SCHED_DICT_UPPER is reached */
+#define NBC_SCHED_DICT_LOWER 512  /* number of dict entries after wipe, if SCHED_DICT_UPPER is reached */
 
 /********************* end of LibNBC tuning parameters ************************/
 

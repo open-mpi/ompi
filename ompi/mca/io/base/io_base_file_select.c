@@ -172,7 +172,7 @@ int mca_io_base_file_select(ompi_file_t *file,
 
 #if 1
     /* For the moment, just take the top module off the list */
-    /* MSC actually take the buttom */
+    /* MSC actually take the bottom */
     item = opal_list_remove_last(selectable);
     avail = (avail_io_t *) item;
     selected = *avail;
@@ -244,7 +244,7 @@ int mca_io_base_file_select(ompi_file_t *file,
     file->f_io_selected_module = selected.ai_module;
     file->f_io_selected_data = selected.ai_module_data;
 
-    /* Finally -- intialize the selected module. */
+    /* Finally -- initialize the selected module. */
 
     if (OMPI_SUCCESS != (err = module_init(file))) {
         return err;

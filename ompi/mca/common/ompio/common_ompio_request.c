@@ -103,7 +103,7 @@ void mca_common_ompio_request_init ( void )
 void mca_common_ompio_request_fini ( void ) 
 {
     /* Destroy the list of pending requests */
-    /* JMS: Good opprotunity here to list out all the IO requests that
+    /* JMS: Good opportunity here to list out all the IO requests that
        were not destroyed / completed upon MPI_FINALIZE */
 
     OBJ_DESTRUCT(&mca_common_ompio_pending_requests);

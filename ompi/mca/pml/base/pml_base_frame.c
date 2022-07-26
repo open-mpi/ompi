@@ -136,7 +136,7 @@ static int mca_pml_base_close(void)
         opal_progress_unregister(mca_pml.pml_progress);
     }
 
-    /* Blatently ignore the return code (what would we do to recover,
+    /* Blatantly ignore the return code (what would we do to recover,
        anyway?  This module is going away, so errors don't matter
        anymore) */
 

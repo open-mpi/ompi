@@ -53,13 +53,13 @@
  *     - File defined rules
  *
  * MCA parameter defined rules are stored in mca_coll_han_component.mca_rules.
- * This is a double indexed table. The first index is the coresponding collective
+ * This is a double indexed table. The first index is the corresponding collective
  * communication and the second index is the topological level aimed by the rule.
  * These parameters define the collective component to use for a specific
  * collective communication on a specific topologic level.
  *
  * File defined rules are stored in mca_coll_han_component.dynamic_rules.
- * These structures are defined bellow. The rule storage is directy deduced
+ * These structures are defined below. The rule storage is directly deduced
  * from the rule file format.
  *
  * File defined rules precede MCA parameter defined rules.

@@ -27,8 +27,8 @@
 
 # Do *NOT* invoke AC_MSG_ERROR, or any other macro that will abort
 # configure, except upon catastrophic error.  For example, it *is* a
-# catastropic error if the user specifically requested your component
-# but it cannot be built.  If it *not* a catastropic error if your
+# catastrophic error if the user specifically requested your component
+# but it cannot be built.  If it *not* a catastrophic error if your
 # component cannot be built (but was not specifically requested).
 
 # See https://github.com/open-mpi/ompi/wiki/devel-CreateComponent

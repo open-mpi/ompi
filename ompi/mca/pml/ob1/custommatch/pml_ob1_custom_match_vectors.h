@@ -315,7 +315,7 @@ static inline void custom_match_print(custom_match_prq* list)
     custom_match_prq_node* elem;
     int i = 0;
     int j = 0;
-    printf("Elements in the list (this is currenly only partialy implemented):\n");
+    printf("Elements in the list (this is currently only partially implemented):\n");
     for(elem = list->head; elem; elem = elem->next)
     {
         printf("This is the %d linked list element\n", ++i);
@@ -476,7 +476,7 @@ static inline void custom_match_umq_append(custom_match_umq* list, int tag, int 
 {
 #if CUSTOM_MATCH_DEBUG_VERBOSE
     int32_t key = source;
-    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higer order bits...
+    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higher order bits...
 #endif
 #if CUSTOM_MATCH_DEBUG_VERBOSE
     mca_pml_ob1_recv_frag_t *req = (mca_pml_ob1_recv_frag_t *)payload;
