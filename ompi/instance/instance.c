@@ -376,7 +376,7 @@ static int ompi_mpi_instance_init_common (void)
            default is specified before forcing "all" in case that is not what
            the user desires. Note that we do *NOT* set this value as an
            environment variable, just so that it won't be inherited by
-           any spawned processes and potentially cause unintented
+           any spawned processes and potentially cause unintended
            side-effects with launching RTE tools... */
         mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
     }
@@ -474,7 +474,7 @@ static int ompi_mpi_instance_init_common (void)
     }
 
     /* Initialize the op framework. This has to be done *after*
-       ddt_init, but befor mca_coll_base_open, since some collective
+       ddt_init, but before mca_coll_base_open, since some collective
        modules (e.g., the hierarchical coll component) may need ops in
        their query function. */
     if (OMPI_SUCCESS != (ret = ompi_op_base_find_available (OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple))) {
@@ -791,7 +791,7 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
 
     *instance = &ompi_mpi_instance_null.instance;
 
-    /* If thread support was enabled, then setup OPAL to allow for them by deault. This must be done
+    /* If thread support was enabled, then setup OPAL to allow for them by default. This must be done
      * early to prevent a race condition that can occur with orte_init(). */
     if (ts_level == MPI_THREAD_MULTIPLE) {
         opal_set_using_threads(true);

@@ -189,7 +189,7 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_conversion, MPI_ERR_CONVERSION, "MPI_ERR_CONVERSION: error in data conversion" );
     CONSTRUCT_ERRCODE( ompi_err_disp, MPI_ERR_DISP, "MPI_ERR_DISP: invalid displacement" );
     CONSTRUCT_ERRCODE( ompi_err_dup_datarep, MPI_ERR_DUP_DATAREP, "MPI_ERR_DUP_DATAREP: error duplicating data representation" );
-    CONSTRUCT_ERRCODE( ompi_err_file_exists, MPI_ERR_FILE_EXISTS, "MPI_ERR_FILE_EXISTS: file exists alreay" );
+    CONSTRUCT_ERRCODE( ompi_err_file_exists, MPI_ERR_FILE_EXISTS, "MPI_ERR_FILE_EXISTS: file exists already" );
     CONSTRUCT_ERRCODE( ompi_err_file_in_use, MPI_ERR_FILE_IN_USE, "MPI_ERR_FILE_IN_USE: file already in use" );
     CONSTRUCT_ERRCODE( ompi_err_file, MPI_ERR_FILE, "MPI_ERR_FILE: invalid file" );
     CONSTRUCT_ERRCODE( ompi_err_info_key, MPI_ERR_INFO_KEY, "MPI_ERR_INFO_KEY: invalid key argument for info object" );

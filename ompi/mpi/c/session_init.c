@@ -55,6 +55,6 @@ int MPI_Session_init (MPI_Info info, MPI_Errhandler errhandler, MPI_Session *ses
     }
 
     rc = ompi_mpi_instance_init (ts_level, &info->super, errhandler, session);
-    /* if an error occured raise it on the null session */
+    /* if an error occurred raise it on the null session */
     OMPI_ERRHANDLER_RETURN (rc, MPI_SESSION_NULL, rc, FUNC_NAME);
 }

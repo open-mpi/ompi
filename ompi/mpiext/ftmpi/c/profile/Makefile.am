@@ -12,7 +12,7 @@
 
 # If OMPI_BUILD_MPI_PROFILING is enabled when we want our generated MPI_* symbols
 # to be replaced by PMPI_*.
-# In this directory, we definately need it to be 1.
+# In this directory, we definitely need it to be 1.
 AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
 noinst_LTLIBRARIES = libpmpiext_ftmpi_c.la

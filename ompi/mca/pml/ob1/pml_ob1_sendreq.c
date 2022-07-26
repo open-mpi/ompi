@@ -463,7 +463,7 @@ mca_pml_ob1_copy_frag_completion( mca_btl_base_module_t* btl,
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context;
 
     des->des_cbfunc = mca_pml_ob1_frag_completion;
-    /* Reset the BTL onwership flag as the BTL can free it after completion. */
+    /* Reset the BTL ownership flag as the BTL can free it after completion. */
     des->des_flags |= MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
     OPAL_OUTPUT((-1, "copy_frag_completion FRAG frag=%p", (void *)des));
     /* Currently, we cannot support a failure in the send.  In the blocking

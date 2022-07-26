@@ -52,7 +52,7 @@
  *
  * MPI_HOST is set to MPI_PROC_NULL (per MPI-1, see 7.1.1, p192).
  *
- * MPI_IO is set to MPI_ANY_SOURCE.  We may need to revist this.
+ * MPI_IO is set to MPI_ANY_SOURCE.  We may need to revisit this.
  *
  * MPI_WTIME_IS_GLOBAL is set to 0 (a conservative answer).
  *
@@ -78,7 +78,7 @@
  * integer-valued attributes, *BUT* at least the MPI_WIN_SIZE is an
  * MPI_Aint, so in terms of consistency, both should be the same --
  * hence, we treat them as MPI-2 Fortran integer-valued attributes.
- * All three of these atrributes have NULL_COPY_FN copy functions; it
+ * All three of these attributes have NULL_COPY_FN copy functions; it
  * doesn't make sense to copy them to new windows (because they're
  * values specific and unique to each window) -- especially when
  * WIN_CREATE will explicitly set them on new windows anyway.

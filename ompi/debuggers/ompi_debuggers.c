@@ -58,7 +58,7 @@
  * information on optimized build, and as a result we are unable to access
  * the fields structure (i.e. to get their displacement). This file is
  * included in the optimized build just to provide us with this missing
- * informations. Therefore, it always have to be compiled with the -g flag,
+ * information. Therefore, it always have to be compiled with the -g flag,
  * otherwise the type information will be missing and the parallel
  * debuggers will be unable to initialize the Open MPI debug library.
  */

@@ -69,7 +69,7 @@ OBJ_CLASS_INSTANCE(ompi_file_t,
 
 
 /*
- * Initialize file handling bookeeping
+ * Initialize file handling bookkeeping
  */
 int ompi_file_init(void)
 {

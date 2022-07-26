@@ -121,7 +121,7 @@ struct ompi_errhandler_t {
 typedef struct ompi_errhandler_t ompi_errhandler_t;
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */

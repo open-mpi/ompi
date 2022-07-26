@@ -507,7 +507,7 @@ create their own requests.
   - Whether the underlying object has been "freed" by the MPI
     implementation (i.e., made inactive, and would have actually been
     freed if not running under a debugger)
-  - Peer process(es) invovled with the request (if available)
+  - Peer process(es) involved with the request (if available)
   - If pt2pt, communicator associated with the request
   - If file, file associated with the request
   - If pt2pt or file, whether the data transfer has started yet
@@ -570,7 +570,7 @@ C++: MPI::Status
 
 A user-accessible struct that contains information about a completed
 communication.  The MPI status is a little different from other MPI
-handles in that it is the object itselt; not a handle to an underlying
+handles in that it is the object itself; not a handle to an underlying
 MPI status.  For example, if a point-to-point communication was
 started with a wildcard receive, the status will contain information
 about the peer to whom the communication completed.  There are no

@@ -57,7 +57,7 @@ int ompi_datatype_pack_external(const char datarep[], const void *inbuf, int inc
         return MPI_ERR_TRUNCATE;
     }
 
-    /* Prepare the iovec with all informations */
+    /* Prepare the iovec with all information */
     invec.iov_base = (char*) outbuf + (*position);
     invec.iov_len = size;
 
@@ -97,7 +97,7 @@ int ompi_datatype_unpack_external (const char datarep[], const void *inbuf, MPI_
         return MPI_ERR_TRUNCATE;
     }
 
-    /* Prepare the iovec with all informations */
+    /* Prepare the iovec with all information */
     outvec.iov_base = (char*) inbuf + (*position);
     outvec.iov_len = size;
 

@@ -36,7 +36,7 @@ typedef int (peruse_comm_callback_f)(peruse_event_h event_h,
 
 /* PERUSE constants */
 enum {
-    PERUSE_SUCCESS = 0,       /* Success *//* XXX Devation from 1.11 */
+    PERUSE_SUCCESS = 0,       /* Success *//* XXX Deviation from 1.11 */
     PERUSE_ERR_INIT,          /* PERUSE initialization failure */
     PERUSE_ERR_GENERIC,       /* Generic unspecified error */
     PERUSE_ERR_MALLOC,        /* Memory-related error */
@@ -49,7 +49,7 @@ enum {
 };
 
 enum {
-    PERUSE_EVENT_INVALID = -1, /* Must differ in value from PERUSE_SUCCESS. Devation from 1.11 */
+    PERUSE_EVENT_INVALID = -1, /* Must differ in value from PERUSE_SUCCESS. Deviation from 1.11 */
 
     /* Point-to-point request events */
     PERUSE_COMM_REQ_ACTIVATE,
@@ -80,13 +80,13 @@ enum {
 
 /* Scope of message queues */
 enum {
-    PERUSE_PER_COMM=0,                  /* XXX Devation from 1.11 */
+    PERUSE_PER_COMM=0,                  /* XXX Deviation from 1.11 */
     PERUSE_GLOBAL
 };
 
 /* Operation values */
 enum {
-    PERUSE_SEND=0,                      /* XXX Devation from 1.11 */
+    PERUSE_SEND=0,                      /* XXX Deviation from 1.11 */
     PERUSE_RECV
 };
 

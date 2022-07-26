@@ -91,7 +91,7 @@ struct netpatterns_tree_node_t {
     int n_children;
     /* parent rank within the group */
     int parent_rank;
-    /* chidren ranks within the group */
+    /* children ranks within the group */
     int *children_ranks;
 };
 typedef struct netpatterns_tree_node_t netpatterns_tree_node_t;
@@ -113,7 +113,7 @@ struct netpatterns_narray_knomial_tree_node_t {
     int n_children;
     /* parent rank within the group */
     int parent_rank;
-    /* chidren ranks within the group */
+    /* children ranks within the group */
     int *children_ranks;
     /* Total number of ranks on this specific level */
     int level_size;

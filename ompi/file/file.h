@@ -101,7 +101,7 @@ struct ompi_file_t {
 typedef struct ompi_file_t ompi_file_t;
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -136,7 +136,7 @@ int ompi_file_init(void);
 
 /**
  * Back-end to MPI_FILE_OPEN: create a file handle, select an io
- * component to use, and have that componet open the file.
+ * component to use, and have that component open the file.
  *
  * @param comm Communicator
  * @param filename String filename

@@ -109,7 +109,7 @@ typedef struct ompi_group_t ompi_group_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_group_t);
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -344,7 +344,7 @@ int ompi_group_calc_bmap ( int n, int orig_size , const int *ranks );
 int ompi_group_minloc (int list[], int length);
 
 /**
- * @brief Helper function for retreiving the proc of a group member in a dense group
+ * @brief Helper function for retrieving the proc of a group member in a dense group
  *
  * This function exists to handle the translation of sentinel group members to real
  * ompi_proc_t's. If a sentinel value is found and allocate is true then this function

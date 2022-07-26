@@ -352,7 +352,7 @@ int ompi_proc_complete_init(void)
      * are already in the hash table
      */
     if (ompi_process_info.num_procs < ompi_add_procs_cutoff) {
-        /* sinse ompi_proc_for_name is locking internally -
+        /* since ompi_proc_for_name is locking internally -
          * we need to release lock here
          */
         opal_mutex_unlock (&ompi_proc_lock);

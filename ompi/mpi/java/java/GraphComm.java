@@ -135,7 +135,7 @@ public final class GraphComm extends Intracomm
 	 * <p>The number of nodes and number of edges can be extracted
 	 * from the sizes of the {@code index} and {@code edges} fields
 	 * of the returned object.
-	 * @return object defining node degress and edges of graph
+	 * @return object defining node degrees and edges of graph
 	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public GraphParms getDims() throws MPIException

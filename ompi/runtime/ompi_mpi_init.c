@@ -106,7 +106,7 @@
 #ifdef HAVE___MALLOC_INITIALIZE_HOOK
 #include "opal/mca/memory/base/base.h"
 /* So this sucks, but with OPAL in its own library that is brought in
-   implicity from libmpi, there are times when the malloc initialize
+   implicitly from libmpi, there are times when the malloc initialize
    hook in the memory component doesn't work.  So we have to do it
    from here, since any MPI code is going to call MPI_Init... */
 OPAL_DECLSPEC void (*__malloc_initialize_hook) (void) =
@@ -135,7 +135,7 @@ opal_thread_t *ompi_mpi_main_thread = NULL;
 
 /*
  * These variables are for the MPI F08 bindings (F08 must bind Fortran
- * varaiables to symbols; it cannot bind Fortran variables to the
+ * variables to symbols; it cannot bind Fortran variables to the
  * address of a C variable).
  */
 
@@ -257,7 +257,7 @@ MPI_Fint *MPI_F08_STATUSES_IGNORE = NULL;
    in a linker warning).  FWIW, if you initialize these variables in
    functions (i.e., not at the instantiation in the global scope), the
    linker somehow "figures it all out" (w.r.t. different alignments
-   between fortan common blocks and the corresponding C variables) and
+   between fortran common blocks and the corresponding C variables) and
    no linker warnings occur.
 
    Note that the rationale for the types of each of these variables is
