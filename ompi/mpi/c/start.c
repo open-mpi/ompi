@@ -77,7 +77,7 @@ int MPI_Start(MPI_Request *request)
         ret = (*request)->req_start(1, request);
 
         OPAL_CR_EXIT_LIBRARY();
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
+        return ret;
 
     case OMPI_REQUEST_NOOP:
         /**
