@@ -49,6 +49,8 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/mpiext-use-mpi-f08/Makefile
         ompi/mpi/tool/Makefile
 
+        ompi/templates/Makefile
+
         ompi/tools/ompi_info/Makefile
         ompi/tools/wrappers/Makefile
         ompi/tools/wrappers/mpicc-wrapper-data.txt

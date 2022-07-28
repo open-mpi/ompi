@@ -72,6 +72,7 @@ SUBDIRS = \
         datatype \
         debuggers \
         etc \
+        templates \
         mpi/c \
         mpi/tool \
         $(OMPI_MPIEXT_C_DIRS) \
