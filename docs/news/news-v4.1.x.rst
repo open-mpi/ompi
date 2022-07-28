@@ -4,6 +4,31 @@ Open MPI v4.1.x series
 This file contains all the NEWS updates for the Open MPI v4.1.x
 series, in reverse chronological order.
 
+4.1.4 -- May, 2022
+------------------
+:Date: May, 2022
+
+- Fix possible length integer overflow in numerous non-blocking collective
+  operations.
+- Fix segmentation fault in UCX if MPI Tool interface is finalized before
+  ``MPI_Init`` is called.
+- Remove ``/usr/bin/python`` dependency in configure.
+- Fix OMPIO issue with long double etypes.
+- Update treematch topology component to fix numerous correctness issues.
+- Fix memory leak in UCX MCA parameter registration.
+- Fix long operation closing file descriptors on non-Linux systems that
+  can appear as a hang to users.
+- Fix for attribute handling on GCC 11 due to pointer aliasing.
+- Fix multithreaded race in UCX PML's datatype handling.
+- Fix a correctness issue in CUDA Reduce algorithm.
+- Fix compilation issue with CUDA GPUDirect RDMA support.
+- Fix to make ``shmem_calloc(..., 0)`` conform to the OpenSHMEM
+  specification.
+- Add UCC collectives component.
+- Fix divide by zero issue in OMPI IO component.
+- Fix compile issue with libnl when not in standard search locations.
+
+
 Open MPI version 4.1.3
 ----------------------
 :Date: March, 2022
