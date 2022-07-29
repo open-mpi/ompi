@@ -5,6 +5,7 @@
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,35 +32,45 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
     AC_ARG_WITH([valgrind],
         [AS_HELP_STRING([--with-valgrind(=DIR)],
             [Directory where the valgrind software is installed])])
-    OPAL_CHECK_WITHDIR([valgrind], [$with_valgrind], [include/valgrind/valgrind.h])
 
-    opal_memchecker_valgrind_CPPFLAGS=
-    opal_memchecker_valgrind_save_CPPFLAGS="$CPPFLAGS"
-    opal_memchecker_valgrind_happy=no
-    AS_IF([test "$with_valgrind" != "no"],
-          [AS_IF([test -n "$with_valgrind" && test "$with_valgrind" != "yes"],
-                 [opal_memchecker_valgrind_CPPFLAGS="-I$with_valgrind/include"
-                  # We need this -I to stay in CPPFLAGS when we're done
-                  CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
-                  opal_memchecker_valgrind_save_CPPFLAGS=$CPPFLAGS])
-           AC_CHECK_HEADERS([valgrind/valgrind.h],
-                 [AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE])
-                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+    OAC_CHECK_PACKAGE([valgrind],
+                      [memchecker_valgrind],
+                      [valgrind/valgrind.h],
+                      [],
+                      [],
+                      [opal_memchecker_valgrind_happy=yes],
+                      [opal_memchecker_valgrind_happy=no])
+
+    # We only need the headers for Valgrind; ignore the libraries if
+    # we used the module.  Ignore the pkg-config module to avoid
+    # leaking libraries into the pkg-config module later.
+    AS_UNSET([memchecker_valgrind_LDFLAGS])
+    AS_UNSET([memchecker_valgrind_LIBS])
+    AS_UNSET([memchecker_valgrind_PC_MODULES])
+
+    AS_IF([test "${opal_memchecker_valgrind_happy}" = "yes"],
+          [opal_memchecker_valgrind_save_CPPFLAGS=${CPPFLAGS}
+           OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${memchecker_valgrind_CPPFLAGS}])
+
+           AC_CACHE_CHECK([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE],
+              [opal_memchecker_valgrind_cv_check_mem_is_addressable],
+              [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include "valgrind/memcheck.h"
-]],
-                     [[char buffer = 0x0f;
-                       VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));]])],
-                     [AC_MSG_RESULT([yes])
-                      opal_memchecker_valgrind_happy=yes],
-                     [AC_MSG_RESULT([no])
-                      AC_MSG_WARN([Need Valgrind version 3.2.0 or later. Can not build component.])]
-                     [AC_MSG_RESULT([cross-compiling; assume yes...?])
-                      AC_MSG_WARN([OMPI will fail to compile if you do not have Valgrind version 3.2.0 or later])
-                      opal_memchecker_valgrind_happy=yes]),
-                 ],
-                 [AC_MSG_WARN([valgrind.h not found])
-                  AC_MSG_WARN([Cannot compile this component])])])
-    CPPFLAGS="$opal_memchecker_valgrind_save_CPPFLAGS"
+                  ]], [[
+char buffer = 0x0f;
+VALGRIND_CHECK_MEM_IS_ADDRESSABLE(&buffer, sizeof(buffer));
+                  ]])],
+                 [opal_memchecker_valgrind_cv_check_mem_is_addressable=yes],
+                 [opal_memchecker_valgrind_cv_check_mem_is_addressable=no],
+                 [opal_memchecker_valgrind_cv_check_mem_is_addressable=cross-compiling])])
+
+           CPPFLAGS=${opal_memchecker_valgrind_save_CPPFLAGS}
+
+           AS_IF([test "${opal_memchecker_valgrind_cv_check_mem_is_addressable}" = "no"],
+                 [AC_MSG_WARN([Need Valgrind version 3.2.0 or later. Can not build component.])
+                  opal_memchecker_valgrind_happy=no],
+                 [test "${opal_memchecker_valgrind_cv_check_mem_is_addressable}" = "cross-compiling"],
+                 [AC_MSG_WARN([OMPI will fail to compile if you do not have Valgrind version 3.2.0 or later])])])
 
     # If we specifically requested this component and can't build it, error
     AS_IF([test "$with_valgrind" != "no" && test -n "$with_valgrind" && test "$opal_memchecker_valgrind_happy" != "yes"],
@@ -68,7 +79,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
     AS_IF([test "$opal_memchecker_valgrind_happy" = "yes"],
           [$1],[$2])
 
-    AC_SUBST([opal_memchecker_valgrind_CPPFLAGS])
+    AC_SUBST([memchecker_valgrind_CPPFLAGS])
 
     OPAL_VAR_SCOPE_POP
 ])dnl

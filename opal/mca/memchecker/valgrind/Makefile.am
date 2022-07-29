@@ -3,6 +3,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -10,7 +11,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(opal_memchecker_valgrind_CPPFLAGS)
+AM_CPPFLAGS = $(memchecker_valgrind_CPPFLAGS)
 sources = \
         memchecker_valgrind.h \
         memchecker_valgrind_component.c \
