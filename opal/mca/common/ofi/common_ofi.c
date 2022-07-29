@@ -2,7 +2,7 @@
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2020-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
+#include <rdma/fi_cm.h>
 #ifdef HAVE_RDMA_FI_EXT_H
 #include <rdma/fi_ext.h>
 #endif
@@ -685,3 +686,71 @@ struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_lis
     free(provider_table);
     return provider;
 }
+
+/**
+ * Obtain EP endpoint name
+ *
+ * Obtain the EP endpoint name and length for the supplied endpoint fid.
+ *
+ * @param fid (IN)     fid of (S)EP endpoint
+ * @param addr (OUT)   buffer containing endpoint name 
+ * @param addrlen (OUT) length of allocated buffer in bytes
+ *
+ * @return             OPAL_SUCCESS or OPAL error code
+ *
+ * The caller is responsible for freeing the buffer allocated to
+ * contain the endpoint name.
+ *
+ */
+OPAL_DECLSPEC int opal_common_ofi_fi_getname(fid_t fid, void **addr, size_t *addrlen)
+{
+    int ret=OPAL_SUCCESS;
+    size_t namelen = 0;
+    char *ep_name = NULL;
+
+    /**
+     * Get our address and publish it with modex.
+     * Use the two step process of first getting the required
+     * buffer size, then allocating the memory and calling
+     * fi_getname again.
+     */
+    namelen = 0;
+    ret = fi_getname(fid,
+                     NULL,
+                     &namelen);
+    if ((FI_SUCCESS != ret) && (-FI_ETOOSMALL != ret)) {
+        opal_output_verbose(1, opal_common_ofi.output, "%s:%d:fi_endpoint (namelen) returned %s\n",
+                            __FILE__, __LINE__, fi_strerror(-ret));
+        ret = OPAL_ERROR;
+        goto error;
+    }
+
+    ep_name = (char *)malloc(namelen);
+    if (NULL == ep_name) {
+        ret = OPAL_ERR_OUT_OF_RESOURCE;
+        goto error;
+    }
+
+    ret = fi_getname(fid,
+                     ep_name,
+                     &namelen);
+    if (ret) {
+        opal_output_verbose(1, opal_common_ofi.output, "%s:%d:fi_endpoint (ep_name) returned %s\n",
+                            __FILE__, __LINE__, fi_strerror(-ret));
+        ret = OPAL_ERROR;
+        goto error;
+    }
+
+    *addr = ep_name;
+    *addrlen = namelen;
+
+    return ret;
+
+error:
+    if (NULL != ep_name) {
+       free(ep_name); 
+    }
+    return ret;
+}
+
+
