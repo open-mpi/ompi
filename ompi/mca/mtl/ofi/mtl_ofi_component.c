@@ -604,7 +604,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_info *providers = NULL;
     struct fi_info *prov = NULL;
     struct fi_info *prov_cq_data = NULL;
-    char ep_name[FI_NAME_MAX] = {0};
+    void *ep_name;
     size_t namelen;
     int universe_size;
     char *univ_size_str;
@@ -1070,15 +1070,11 @@ select_prov:
     fi_freeinfo(providers);
     providers = NULL;
 
-    /**
-     * Get our address and publish it with modex.
-     */
-    namelen = sizeof(ep_name);
-    ret = fi_getname((fid_t)ompi_mtl_ofi.sep,
-                     &ep_name[0],
-                     &namelen);
-    if (ret) {
-        MTL_OFI_LOG_FI_ERR(ret, "fi_getname failed");
+    ret = opal_common_ofi_fi_getname((fid_t)ompi_mtl_ofi.sep,
+                                     &ep_name,
+                                     &namelen);
+    if (OMPI_SUCCESS != ret) {
+        MTL_OFI_LOG_FI_ERR(ret, "opal_common_ofi_fi_getname failed");
         goto error;
     }
 
@@ -1094,6 +1090,7 @@ select_prov:
     }
 
     ompi_mtl_ofi.epnamelen = namelen;
+    free(ep_name);
 
     /**
      * Set the ANY_SRC address.
@@ -1152,6 +1149,9 @@ error:
     }
     if (ompi_mtl_ofi.ofi_ctxt) {
         free(ompi_mtl_ofi.ofi_ctxt);
+    }
+    if (ep_name) {
+        free(ep_name);
     }
 
     return NULL;

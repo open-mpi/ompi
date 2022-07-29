@@ -419,7 +419,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     size_t num_contexts_to_create;
 
     char *linux_device_name;
-    char ep_name[FI_NAME_MAX];
+    void *ep_name;
 
     struct fi_info *ofi_info;
     struct fi_ep_attr *ep_attr;
@@ -596,15 +596,14 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         goto fail;
     }
 
-    /* create and send the modex for this device */
-    namelen = sizeof(ep_name);
-    rc = fi_getname((fid_t) ep, &ep_name[0], &namelen);
-    if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_getname with err=%s", linux_device_name, fi_strerror(-rc)));
+    rc = opal_common_ofi_fi_getname((fid_t)ep,
+                                     &ep_name,
+                                     &namelen);
+    if (OPAL_SUCCESS != rc) {
+        BTL_VERBOSE(("%s failed opal_common_ofi_fi_getname  with err=%d", linux_device_name, rc));
         goto fail;
     }
 
-    /* If we have two-sided support. */
     if (TWO_SIDED_ENABLED) {
 
         /* post wildcard recvs */
@@ -618,8 +617,9 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     }
 
     /* post our endpoint name so peer can use it to connect to us */
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ofi_component.super.btl_version, &ep_name, namelen);
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ofi_component.super.btl_version, ep_name, namelen);
     mca_btl_ofi_component.namelen = namelen;
+    free(ep_name);
 
     /* add this module to the list */
     mca_btl_ofi_component.modules[(*module_count)++] = module;
@@ -662,6 +662,10 @@ fail:
         fi_close(&fabric->fid);
     }
     free(module);
+
+    if (NULL != ep_name) {
+        free(ep_name);
+    }
 
     /* not really a failure. just skip this device. */
     return OPAL_ERR_OUT_OF_RESOURCE;
