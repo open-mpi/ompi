@@ -8,11 +8,6 @@
 .gdb*
 .idea
 
-.hgrc
-.hgignore
-.hg
-.hgignore_local
-
 *.la
 *.lo
 *.o
@@ -213,15 +208,6 @@ ompi/mca/osc/monitoring/osc_monitoring_template_gen.h
 ompi/mca/pml/v/autogen.vprotocols
 ompi/mca/pml/v/mca_vprotocol_config_output
 
-ompi/mca/rte/orte/ompi-ps.1
-ompi/mca/rte/orte/ompi-clean.1
-ompi/mca/rte/orte/mpiexec.1
-ompi/mca/rte/orte/ompi-top.1
-ompi/mca/rte/orte/ompi-server.1
-ompi/mca/rte/orte/ompi-restart.1
-ompi/mca/rte/orte/ompi-checkpoint.1
-ompi/mca/rte/orte/mpirun.1
-
 ompi/mca/sharedfp/addproc/mca_sharedfp_addproc_control
 
 ompi/mca/topo/treematch/config.h
@@ -264,13 +250,8 @@ ompi/mpi/java/java/*.jar
 ompi/mpi/java/java/*.h
 ompi/mpi/java/java/doc
 
-ompi/mpi/man/man3/MPI*.3
-ompi/mpi/man/man3/OpenMPI.3
-ompi/mpi/man/man3/.dir-stamp
-
 ompi/mpi/tool/profile/*.c
 
-ompi/mpiext/affinity/c/OMPI_Affinity_str.3
 ompi/mpiext/affinity/c/example
 
 ompi/mpiext/ftmpi/c/profile/pcomm_agree.c
@@ -286,60 +267,10 @@ ompi/mpiext/example/tests/progress_mpifh
 ompi/mpiext/example/tests/progress_usempi
 ompi/mpiext/example/tests/progress_usempif08
 
-ompi/mpiext/cuda/c/MPIX_Query_cuda_support.3
 ompi/mpiext/cuda/c/mpiext_cuda_c.h
 ompi/mpiext/cuda/c/cuda_c.h
 
 ompi/mpiext/rocm/c/mpiext_rocm_c.h
-
-ompi/mpiext/pcollreq/c/MPIX_*.3
-ompi/mpiext/pcollreq/c/profile/pallgather_init.c
-ompi/mpiext/pcollreq/c/profile/pallgatherv_init.c
-ompi/mpiext/pcollreq/c/profile/pallreduce_init.c
-ompi/mpiext/pcollreq/c/profile/palltoall_init.c
-ompi/mpiext/pcollreq/c/profile/palltoallv_init.c
-ompi/mpiext/pcollreq/c/profile/palltoallw_init.c
-ompi/mpiext/pcollreq/c/profile/pbarrier_init.c
-ompi/mpiext/pcollreq/c/profile/pbcast_init.c
-ompi/mpiext/pcollreq/c/profile/pexscan_init.c
-ompi/mpiext/pcollreq/c/profile/pgather_init.c
-ompi/mpiext/pcollreq/c/profile/pgatherv_init.c
-ompi/mpiext/pcollreq/c/profile/pmpiext_pcollreq_c.h
-ompi/mpiext/pcollreq/c/profile/pneighbor_allgather_init.c
-ompi/mpiext/pcollreq/c/profile/pneighbor_allgatherv_init.c
-ompi/mpiext/pcollreq/c/profile/pneighbor_alltoall_init.c
-ompi/mpiext/pcollreq/c/profile/pneighbor_alltoallv_init.c
-ompi/mpiext/pcollreq/c/profile/pneighbor_alltoallw_init.c
-ompi/mpiext/pcollreq/c/profile/preduce_init.c
-ompi/mpiext/pcollreq/c/profile/preduce_scatter_block_init.c
-ompi/mpiext/pcollreq/c/profile/preduce_scatter_init.c
-ompi/mpiext/pcollreq/c/profile/pscan_init.c
-ompi/mpiext/pcollreq/c/profile/pscatter_init.c
-ompi/mpiext/pcollreq/c/profile/pscatterv_init.c
-ompi/mpiext/pcollreq/c/profile/ppcollreq_c.h
-
-ompi/mpiext/pcollreq/mpif-h/profile/pallgather_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pallgatherv_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pallreduce_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/palltoall_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/palltoallv_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/palltoallw_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pbarrier_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pbcast_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pexscan_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pgather_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pgatherv_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_allgather_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_allgatherv_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_alltoall_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_alltoallv_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pneighbor_alltoallw_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/preduce_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/preduce_scatter_block_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/preduce_scatter_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pscan_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pscatter_init_f.c
-ompi/mpiext/pcollreq/mpif-h/profile/pscatterv_init_f.c
 
 ompi/mpiext/shortfloat/c/mpiext_shortfloat_c.h
 ompi/mpiext/shortfloat/mpif-h/mpiext_shortfloat_mpifh.h
@@ -348,11 +279,9 @@ ompi/mpiext/shortfloat/use-mpi-f08/mpiext_shortfloat_usempif08.h
 ompi/tools/mpisync/mpisync
 ompi/tools/mpisync/mpirun_prof
 ompi/tools/mpisync/ompi_timing_post
-ompi/tools/mpisync/mpisync.1
 ompi/tools/mpirun/mpirun
 
 ompi/tools/ompi_info/ompi_info
-ompi/tools/ompi_info/ompi_info.1
 
 ompi/tools/wrappers/mpic++-wrapper-data.txt
 ompi/tools/wrappers/mpicc-wrapper-data.txt
@@ -366,8 +295,6 @@ ompi/tools/wrappers/mpijavac.pl
 ompi/tools/wrappers/mpicxx-wrapper-data.txt
 ompi/tools/wrappers/mpif77-wrapper-data.txt
 ompi/tools/wrappers/mpif90-wrapper-data.txt
-
-opal/libltdl
 
 opal/asm/atomic-asm.S
 opal/asm/atomic-test
@@ -384,13 +311,7 @@ opal/include/opal/sys/powerpc/atomic-32-64.s
 
 opal/mca/base/mca_base_parse_paramfile_lex.c
 
-opal/mca/common/libfabric/libfabric/config.h
-
-opal/mca/btl/openib/btl_openib_lex.c
-
 opal/mca/btl/usnic/usnic_btl_run_tests
-
-opal/mca/crs/opal_crs.7
 
 opal/mca/event/libevent*/libevent/config.h.in
 opal/mca/event/libevent*/libevent/config.h
@@ -400,67 +321,6 @@ opal/mca/event/libevent*/libevent/libevent_pthreads.pc
 opal/mca/event/libevent*/libevent/include/event2/event-config.h
 
 opal/mca/installdirs/config/install_dirs.h
-
-!opal/mca/pmix/pmix*/openpmix/AUTHORS
-!opal/mca/pmix/pmix*/openpmix/contrib/perf_tools/Makefile
-opal/mca/pmix/pmix*/openpmix/include/pmix/autogen/config.h
-opal/mca/pmix/pmix*/openpmix/include/pmix/autogen/config.h.in
-opal/mca/pmix/pmix*/openpmix/src/include/private/autogen/config.h.in
-opal/mca/pmix/pmix*/openpmix/src/include/private/autogen/config.h
-opal/mca/pmix/pmix*/openpmix/src/include/frameworks.h
-opal/mca/pmix/pmix*/openpmix/src/mca/pinstalldirs/config/pinstall_dirs.h
-opal/mca/pmix/pmix*/openpmix/config/autogen_found_items.m4
-opal/mca/pmix/pmix*/openpmix/config/mca_library_paths.txt
-opal/mca/pmix/pmix*/openpmix/config/test-driver
-opal/mca/pmix/pmix*/openpmix/src/include/pmix_config.h
-opal/mca/pmix/pmix*/openpmix/src/include/pmix_config.h.in
-opal/mca/pmix/pmix*/openpmix/include/pmix_common.h
-opal/mca/pmix/pmix*/openpmix/include/pmix_rename.h
-opal/mca/pmix/pmix*/openpmix/include/pmix_version.h
-opal/mca/pmix/pmix*/openpmix/src/util/keyval/keyval_lex.c
-opal/mca/pmix/pmix*/openpmix/src/util/show_help_lex.c
-opal/mca/pmix/pmix*/openpmix/examples/alloc
-opal/mca/pmix/pmix*/openpmix/examples/client
-opal/mca/pmix/pmix*/openpmix/examples/debugger
-opal/mca/pmix/pmix*/openpmix/examples/debuggerd
-opal/mca/pmix/pmix*/openpmix/examples/dmodex
-opal/mca/pmix/pmix*/openpmix/examples/dynamic
-opal/mca/pmix/pmix*/openpmix/examples/fault
-opal/mca/pmix/pmix*/openpmix/examples/jctrl
-opal/mca/pmix/pmix*/openpmix/examples/pub
-opal/mca/pmix/pmix*/openpmix/examples/server
-opal/mca/pmix/pmix*/openpmix/examples/tool
-opal/mca/pmix/pmix*/openpmix/test/run_tests00.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests01.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests02.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests03.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests04.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests05.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests06.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests07.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests08.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests09.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests10.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests11.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests12.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests13.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests14.pl
-opal/mca/pmix/pmix*/openpmix/test/run_tests15.pl
-opal/mca/pmix/pmix*/openpmix/src/tools/wrapper/pmix.pc
-opal/mca/pmix/pmix*/openpmix/src/tools/wrapper/pmixcc-wrapper-data.txt
-
-
-opal/mca/pmix/ext4x/ext4x.c
-opal/mca/pmix/ext4x/ext4x.h
-opal/mca/pmix/ext4x/ext4x_client.c
-opal/mca/pmix/ext4x/ext4x_component.c
-opal/mca/pmix/ext4x/ext4x_server_north.c
-opal/mca/pmix/ext4x/ext4x_server_south.c
-
-opal/tools/opal-checkpoint/opal-checkpoint
-opal/tools/opal-checkpoint/opal-checkpoint.1
-opal/tools/opal-restart/opal-restart
-opal/tools/opal-restart/opal-restart.1
 
 opal/tools/wrappers/opalcc-wrapper-data.txt
 opal/tools/wrappers/opalc++-wrapper-data.txt
@@ -560,48 +420,15 @@ oshmem/shmem/fortran/profile/pshpalloc_f.c
 oshmem/shmem/fortran/profile/pnum_pes_f.c
 oshmem/shmem/fortran/profile/pstart_pes_f.c
 
-oshmem/shmem/java/java/shmem.jar
-oshmem/shmem/java/java/doc
-oshmem/shmem/java/java/shmem_Constant.h
-oshmem/shmem/java/java/shmem_ShMem.h
-oshmem/shmem/java/java/shmem
-oshmem/shmem/java/java/shmem_Addr.h
-oshmem/shmem/java/java/shmem_PSync.h
-
-oshmem/shmem/man/man3/shmem_*.3
-oshmem/shmem/man/man3/OpenSHMEM.3
-oshmem/shmem/man/man3/intro_shmem.3
-oshmem/shmem/man/man3/_my_pe.3
-oshmem/shmem/man/man3/_num_pes.3
-oshmem/shmem/man/man3/shfree.3
-oshmem/shmem/man/man3/shmalloc.3
-oshmem/shmem/man/man3/shmemalign.3
-oshmem/shmem/man/man3/shrealloc.3
-oshmem/shmem/man/man3/start_pes.3
-oshmem/shmem/man/man3/.dir-stamp
-
 oshmem/tools/oshmem_info/oshmem_info
-oshmem/tools/oshmem_info/oshmem_info.1
 
-oshmem/tools/wrappers/oshcc.1
-oshmem/tools/wrappers/oshfort.1
-oshmem/tools/wrappers/oshrun.1
 oshmem/tools/wrappers/oshmem-c.pc
 oshmem/tools/wrappers/oshmem-cxx.pc
 oshmem/tools/wrappers/oshmem-fort.pc
 oshmem/tools/wrappers/oshmem.pc
-oshmem/tools/wrappers/shmemcc.1
-oshmem/tools/wrappers/shmemfort.1
-oshmem/tools/wrappers/shmemrun.1
 oshmem/tools/wrappers/shmemcc-wrapper-data.txt
 oshmem/tools/wrappers/shmemfort-wrapper-data.txt
-oshmem/tools/wrappers/oshCC.1
-oshmem/tools/wrappers/oshc++.1
-oshmem/tools/wrappers/oshcxx.1
-oshmem/tools/wrappers/shmemCC.1
 oshmem/tools/wrappers/shmemc++-wrapper-data.txt
-oshmem/tools/wrappers/shmemc++.1
-oshmem/tools/wrappers/shmemcxx.1
 
 test/asm/atomic_math_noinline
 test/asm/atomic_barrier
@@ -654,7 +481,6 @@ test/monitoring/check_monitoring
 test/monitoring/example_reduce_count
 test/monitoring/test_overhead
 test/monitoring/test_pvar_access
-
 
 test/mpi/environment/chello
 
