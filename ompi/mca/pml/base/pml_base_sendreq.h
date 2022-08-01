@@ -16,6 +16,7 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,6 +68,19 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
  * is done in the send request start routine.
  */
 
+#if MPI_VERSION >= 4
+/*
+ * Deprecation of MPI_Cancel for non blocking sends in MPI 4.0 and later
+ * is handled by adding a callback for the cancel request.
+ */
+#define MCA_PML_BASE_SEND_CANCEL_CALLBACK(req)                              \
+    if (NULL == (req)->req_base.req_ompi.req_cancel) {                      \
+        (req)->req_base.req_ompi.req_cancel = mca_pml_cancel_send_callback; \
+    }
+#else
+#define MCA_PML_BASE_SEND_CANCEL_CALLBACK(req)
+#endif
+
 #define MCA_PML_BASE_SEND_REQUEST_INIT( request,                          \
                                         addr,                             \
                                         count,                            \
@@ -95,6 +109,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
       (request)->req_base.req_pml_complete = false;                       \
       (request)->req_base.req_free_called = false;                        \
       (request)->req_base.req_ompi.req_status._cancelled = 0;             \
+      MCA_PML_BASE_SEND_CANCEL_CALLBACK(request)                          \
       (request)->req_bytes_packed = 0;                                    \
                                                                           \
       /* initialize datatype convertor for this request */                \
@@ -152,6 +167,21 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
         opal_convertor_cleanup( &((request)->req_base.req_convertor) );   \
     } while (0)
 
+
+#if MPI_VERSION >= 4
+enum {
+      OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_ALWAYS = 1,
+      OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_ONCE   = 2,
+      OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_NEVER  = 3,
+};
+OMPI_DECLSPEC extern int ompi_pml_base_warn_dep_cancel_send_level;
+
+/**
+ * Cancellation callback used to issue a deprecation warning on
+ * nonblocking sends (per MPI 4.0).
+ */
+OMPI_DECLSPEC extern int mca_pml_cancel_send_callback(struct ompi_request_t *request, int flag);
+#endif
 
 END_C_DECLS
 
