@@ -8,13 +8,15 @@ This script is designed to run as a Github Action.  It assumes environment
 variables that are available in the Github Action environment.  Specifically:
 
 * GITHUB_WORKSPACE: directory where the git clone is located
-* GITHUB_SHA: the git commit SHA of the artificial Github PR test merge commit
 * GITHUB_BASE_REF: the git ref for the base branch
+* GITHUB_HEAD_REF: the git commit ref of the head branch
 * GITHUB_TOKEN: token authorizing Github API usage
 * GITHUB_REPOSITORY: "org/repo" name of the Github repository of this PR
 * GITHUB_REF: string that includes this Github PR number
+* GITHUB_RUN_ID: unique ID for each workflow run
+* GITHUB_SERVER_URL: the URL of the GitHub server
 
-This script tests each git commit between (and not including) GITHUB_SHA and
+This script tests each git commit between (and not including) GITHUB_HEAD_REF and
 GITHUB_BASE_REF multiple ways:
 
 1. Ensure that the committer and author do not match any bad patterns (e.g.,
@@ -53,19 +55,25 @@ BAD  = "bad"
 NACP = "bot:notacherrypick"
 
 GITHUB_WORKSPACE  = os.environ.get('GITHUB_WORKSPACE')
-GITHUB_SHA        = os.environ.get('GITHUB_SHA')
 GITHUB_BASE_REF   = os.environ.get('GITHUB_BASE_REF')
+GITHUB_HEAD_REF   = os.environ.get('GITHUB_HEAD_REF')
 GITHUB_TOKEN      = os.environ.get('GITHUB_TOKEN')
 GITHUB_REPOSITORY = os.environ.get('GITHUB_REPOSITORY')
 GITHUB_REF        = os.environ.get('GITHUB_REF')
+GITHUB_RUN_ID     = os.environ.get('GITHUB_RUN_ID')
+GITHUB_SERVER_URL = os.environ.get('GITHUB_SERVER_URL')
+PR_NUM            = os.environ.get('PR_NUM')
 
 # Sanity check
 if (GITHUB_WORKSPACE is None or
-    GITHUB_SHA is None or
     GITHUB_BASE_REF is None or
+    GITHUB_HEAD_REF is None or
     GITHUB_TOKEN is None or
     GITHUB_REPOSITORY is None or
-    GITHUB_REF is None):
+    GITHUB_REF is None or
+    GITHUB_RUN_ID is None or
+    GITHUB_SERVER_URL is None or
+    PR_NUM is None):
     print("Error: this script is designed to run as a Github Action")
     exit(1)
 
@@ -82,6 +90,50 @@ def make_commit_message(repo, hash):
         message += "..."
 
     return message
+
+#----------------------------------------------------------------------------
+
+"""
+Iterate through the BAD results, collect the error messages, and send a nicely
+formatted comment to the PR.
+
+For the structure of the results dictionary, see comment for print_results()
+below.
+
+"""
+def comment_on_pr(pr, results, repo):
+    # If there are no BAD results, just return without posting a comment to the
+    # GitHub PR.
+    if len(results[BAD]) == 0:
+        return
+
+    comment = "Hello! The Git Commit Checker CI bot found a few problems with this PR:"
+    for hash, entry in results[BAD].items():
+        comment += f"\n\n**{hash[:8]}: {make_commit_message(repo, hash)}**"
+        for check_name, message in entry.items():
+            if message is not None:
+                comment += f"\n  * *{check_name}: {message}*"
+    comment_footer = "\n\nPlease fix these problems and, if necessary, force-push new commits back up to the PR branch. Thanks!"
+
+    # GitHub says that 65536 characters is the limit of comment messages, so
+    # check if our comment is over that limit. If it is, truncate it to fit, and
+    # add a message explaining with a link to the full error list.
+    comment_char_limit = 65536
+    if len(comment + comment_footer) >= comment_char_limit:
+        run_url = f"{GITHUB_SERVER_URL}/{GITHUB_REPOSITORY}/actions/runs/{GITHUB_RUN_ID}?check_suite_focus=true"
+        truncation_message =  f"\n\n**Additional errors could not be shown...\n[Please click here for a full list of errors.]({run_url})**"
+        # Cut the comment down so we can get the comment itself, and the new
+        # message in.
+        comment = comment[:(comment_char_limit - len(comment_footer + truncation_message))]
+        # In case a newline gets split in half, remove the leftover '\' (if
+        # there is one). (This is purely an aesthetics choice).
+        comment = comment.rstrip("\\")
+        comment += truncation_message
+
+    comment += comment_footer
+    pr.create_issue_comment(comment)
+
+    return
 
 #----------------------------------------------------------------------------
 
@@ -242,15 +294,15 @@ def check_cherry_pick(config, repo, commit):
 #----------------------------------------------------------------------------
 
 def check_all_commits(config, repo):
-    # Get a list of commits that we'll be examining.  Use the progromatic form
-    # of "git log GITHUB_BASE_REF..GITHUB_SHA" (i.e., "git log ^GITHUB_BASE_REF
-    # GITHUB_SHA") to do the heavy lifting to find that set of commits.
+    # Get a list of commits that we'll be examining. Use the programmatic form
+    # of "git log GITHUB_BASE_REF..GITHUB_HEAD_REF" (i.e., "git log
+    # ^GITHUB_BASE_REF GITHUB_HEAD_REF") to do the heavy lifting to find that
+    # set of commits. Because we're using pull_request_target, GITHUB_BASE_REF
+    # is already checked out. GITHUB_HEAD_REF has never been checked out, so we
+    # specify "origin/{GITHUB_HEAD_REF}".
     git_cli = git.cmd.Git(GITHUB_WORKSPACE)
-    hashes  = git_cli.log(f"--pretty=format:%h", f"origin/{GITHUB_BASE_REF}..{GITHUB_SHA}").splitlines()
-
-    # The first entry in the list will be the artificial Github merge commit for
-    # this PR. We don't want to examine this commit.
-    del hashes[0]
+    hashes = git_cli.log(f"--pretty=format:%h",
+                         f"{GITHUB_BASE_REF}..origin/{GITHUB_HEAD_REF}").splitlines()
 
     #------------------------------------------------------------------------
 
@@ -292,15 +344,7 @@ def check_all_commits(config, repo):
 If "bot:notacherrypick" is in the PR description, then disable the
 cherry-pick message requirement.
 """
-def check_github_pr_description(config):
-    g      = Github(GITHUB_TOKEN)
-    repo   = g.get_repo(GITHUB_REPOSITORY)
-
-    # Extract the PR number from GITHUB_REF
-    match  = re.search("/(\d+)/", GITHUB_REF)
-    pr_num = int(match.group(1))
-    pr     = repo.get_pull(pr_num)
-
+def check_github_pr_description(config, pr):
     if pr.body and NACP in pr.body:
         config['cherry pick required'] = False
 
@@ -334,11 +378,17 @@ def load_config():
 
 def main():
     config = load_config()
-    check_github_pr_description(config)
 
-    repo = git.Repo(GITHUB_WORKSPACE)
-    results, hashes = check_all_commits(config, repo)
-    print_results(results, repo, hashes)
+    g = Github(GITHUB_TOKEN)
+    github_repo = g.get_repo(GITHUB_REPOSITORY)
+    pr_num = int(PR_NUM)
+    pr = github_repo.get_pull(pr_num)
+    check_github_pr_description(config, pr)
+
+    local_repo = git.Repo(GITHUB_WORKSPACE)
+    results, hashes = check_all_commits(config, local_repo)
+    print_results(results, local_repo, hashes)
+    comment_on_pr(pr, results, local_repo)
 
     if len(results[BAD]) == 0:
         print("\nTest passed: everything was good!")
