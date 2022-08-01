@@ -21,6 +21,7 @@
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -127,6 +128,10 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 
 static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int complete)
 {
+#if MPI_VERSION >= 4
+    mca_pml_cancel_send_callback(request, complete);
+#endif
+
 #if OPAL_ENABLE_FT_MPI
     ompi_communicator_t* comm = request->req_mpi_object.comm;
     mca_pml_ob1_send_request_t* pml_req = (mca_pml_ob1_send_request_t*)request;
