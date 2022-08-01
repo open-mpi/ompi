@@ -30,6 +30,11 @@
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
 
+#if MPI_VERSION >= 4
+extern int ompi_pml_base_deprecation_warn_level;
+extern ompi_request_t ompi_request_empty_send;
+#endif
+
 /**
  * Single usage request. As we allow recursive calls (as an
  * example from the request completion callback), we cannot rely
@@ -181,6 +186,12 @@ int mca_pml_ob1_isend(const void *buf,
             /* NTH: it is legal to return ompi_request_empty since the only valid
              * field in a send completion status is whether or not the send was
              * cancelled (which it can't be at this point anyway). */
+#if MPI_VERSION >= 4
+            if (OPAL_UNLIKELY(ompi_pml_base_deprecation_warn_level != 3)) {
+                *request = &ompi_request_empty_send;
+                return OMPI_SUCCESS;
+            }
+#endif
             *request = &ompi_request_empty;
             return OMPI_SUCCESS;
         }

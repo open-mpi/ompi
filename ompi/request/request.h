@@ -383,6 +383,10 @@ OMPI_DECLSPEC extern ompi_predefined_request_t        *ompi_request_null_addr;
 OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty;
 OMPI_DECLSPEC extern ompi_status_public_t   ompi_status_empty;
 OMPI_DECLSPEC extern ompi_request_fns_t     ompi_request_functions;
+#if MPI_VERSION >= 4
+OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty_send;
+extern int mca_pml_cancel_send_callback(struct ompi_request_t *request, int flag);
+#endif
 
 /**
  * Initialize the MPI_Request subsystem; invoked during MPI_INIT.

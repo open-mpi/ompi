@@ -34,6 +34,9 @@
 #include "ompi/request/request.h"
 #include "ompi/request/request_default.h"
 #include "ompi/constants.h"
+#if MPI_VERSION >= 4
+#include "opal/sys/atomic.h"
+#endif
 
 opal_pointer_array_t             ompi_request_f_to_c_table = {{0}};
 ompi_predefined_request_t        ompi_request_null = {{{{{0}}}}};
@@ -50,6 +53,10 @@ ompi_request_fns_t               ompi_request_functions = {
     ompi_request_default_wait_all,
     ompi_request_default_wait_some
 };
+#if MPI_VERSION >= 4
+ompi_request_t ompi_request_empty_send = {{{{0}}}};
+extern int ompi_pml_base_deprecation_warn_level;
+#endif
 
 static void ompi_request_construct(ompi_request_t* req)
 {
@@ -179,6 +186,36 @@ int ompi_request_init(void)
         return OMPI_ERR_REQUEST;
     }
 
+#if MPI_VERSION >= 4
+    /*
+     * This is a copy of the ompi_request_empty object where the only difference
+     * is that the req_cancel callback is set to a callback which issues a
+     * message that calling MPI_Cancel on a non-blocking send request is
+     * deprecated.
+     */
+    OBJ_CONSTRUCT(&ompi_request_empty_send, ompi_request_t);
+    ompi_request_empty_send.req_type = OMPI_REQUEST_NULL;
+    ompi_request_empty_send.req_status.MPI_SOURCE = MPI_PROC_NULL;
+    ompi_request_empty_send.req_status.MPI_TAG = MPI_ANY_TAG;
+    ompi_request_empty_send.req_status.MPI_ERROR = MPI_SUCCESS;
+    ompi_request_empty_send.req_status._ucount = 0;
+    ompi_request_empty_send.req_status._cancelled = 0;
+
+    ompi_request_empty_send.req_complete = REQUEST_COMPLETED;
+    ompi_request_empty_send.req_state = OMPI_REQUEST_ACTIVE;
+    ompi_request_empty_send.req_persistent = false;
+    ompi_request_empty_send.req_f_to_c_index =
+        opal_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_empty_send);
+    ompi_request_empty_send.req_start = NULL; /* should not be called */
+    ompi_request_empty_send.req_free = ompi_request_empty_free;
+    ompi_request_empty_send.req_cancel = mca_pml_cancel_send_callback;
+    ompi_request_empty_send.req_mpi_object.comm = &ompi_mpi_comm_world.comm;
+
+    if (2 != ompi_request_empty_send.req_f_to_c_index) {
+        return OMPI_ERR_REQUEST;
+    }
+#endif
+
     ompi_status_empty.MPI_SOURCE = MPI_ANY_SOURCE;
     ompi_status_empty.MPI_TAG = MPI_ANY_TAG;
     ompi_status_empty.MPI_ERROR = MPI_SUCCESS;
@@ -211,3 +248,19 @@ int ompi_request_persistent_noop_create(ompi_request_t** request)
     *request = req;
     return OMPI_SUCCESS;
 }
+
+#if MPI_VERSION >= 4
+int mca_pml_cancel_send_callback(struct ompi_request_t *request, int flag)
+{
+    static opal_atomic_int32_t send_deprecate_count = 0;
+    int32_t val;
+
+    val = opal_atomic_add_fetch_32(&send_deprecate_count, 1);
+    if (((1 == ompi_pml_base_deprecation_warn_level) && (1 == val)) ||
+               (2 == ompi_pml_base_deprecation_warn_level)) {
+        opal_output(0, "Calling MPI_Cancel for a request created by a non-blocking send is deprecated.");
+        send_deprecate_count++;
+    }
+    return OMPI_SUCCESS;
+}
+#endif

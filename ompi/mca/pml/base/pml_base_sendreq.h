@@ -67,6 +67,19 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
  * is done in the send request start routine.
  */
 
+#if MPI_VERSION >= 4
+/*
+ * Deprecation of MPI_Cancel for non blocking sends in MPI 4.0 and later
+ * is handled by adding a callback for the cancel request.
+ */
+#define MCA_PML_BASE_SEND_CANCEL_CALLBACK(req)                              \
+    if (NULL == (req)->req_base.req_ompi.req_cancel) {                      \
+        (req)->req_base.req_ompi.req_cancel = mca_pml_cancel_send_callback; \
+    }
+#else
+#define MCA_PML_BASE_SEND_CANCEL_CALLBACK(req)
+#endif
+
 #define MCA_PML_BASE_SEND_REQUEST_INIT( request,                          \
                                         addr,                             \
                                         count,                            \
@@ -95,6 +108,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
       (request)->req_base.req_pml_complete = false;                       \
       (request)->req_base.req_free_called = false;                        \
       (request)->req_base.req_ompi.req_status._cancelled = 0;             \
+      MCA_PML_BASE_SEND_CANCEL_CALLBACK(request)                          \
       (request)->req_bytes_packed = 0;                                    \
                                                                           \
       /* initialize datatype convertor for this request */                \

@@ -100,10 +100,25 @@ char *ompi_pml_base_bsend_allocator_name = NULL;
 static char *ompi_pml_base_wrapper = NULL;
 #endif
 
+#if MPI_VERSION >= 4
+int ompi_pml_base_deprecation_warn_level = 1;
+mca_base_var_enum_value_t ompi_pml_base_deprecation_warnings[] = {
+    {1, "once"},
+    {2, "always"},
+    {3, "never"},
+    {0, NULL}
+};
+#endif
+
 static int mca_pml_base_register(mca_base_register_flag_t flags)
 {
 #if !MCA_ompi_pml_DIRECT_CALL
     int var_id;
+#endif
+
+#if MPI_VERSION >= 4
+    mca_base_var_enum_t *new_enum = NULL;
+    int rc;
 #endif
 
     ompi_pml_base_bsend_allocator_name = "basic";
@@ -124,6 +139,20 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
     (void) mca_base_var_register_synonym(var_id, "ompi", "pml", NULL, "wrapper", 0);
 #endif
 
+#if MPI_VERSION >= 4
+    mca_base_var_enum_create("pml_base_deprecate_warnings", ompi_pml_base_deprecation_warnings,
+                             &new_enum);
+    rc = mca_base_var_register("ompi", "pml", "base", "warn_deprecated",
+                               "Specify number of deprecation warnings",
+                               MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
+                               OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                               &ompi_pml_base_deprecation_warn_level);
+    OBJ_RELEASE(new_enum);
+    if (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc) {
+        opal_output(0, "pml:base:register: Warning invalid deprecation warning count specified.");
+        return OMPI_ERROR;
+    }
+#endif
     return OMPI_SUCCESS;
 }
 

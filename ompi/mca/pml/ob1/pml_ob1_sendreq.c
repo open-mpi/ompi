@@ -125,8 +125,16 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     return OMPI_SUCCESS;
 }
 
+#if MPI_VERSION >= 4
+extern int mca_pml_cancel_send_callback(struct ompi_request_t* request, int complete);
+#endif
+
 static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int complete)
 {
+#if MPI_VERSION >= 4
+    mca_pml_cancel_send_callback(request, complete);
+#endif
+
 #if OPAL_ENABLE_FT_MPI
     ompi_communicator_t* comm = request->req_mpi_object.comm;
     mca_pml_ob1_send_request_t* pml_req = (mca_pml_ob1_send_request_t*)request;
