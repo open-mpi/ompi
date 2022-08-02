@@ -818,6 +818,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
         opal_process_info.initial_wdir = val;
         val = NULL;  // protect the string
     }
+    else {
+        // Probably singleton case. Just assume cwd.
+        opal_process_info.initial_wdir = calloc(1, OPAL_PATH_MAX + 1);
+        opal_getcwd(opal_process_info.initial_wdir, OPAL_PATH_MAX);
+    }
 
     /* identify our location */
     val = NULL;
