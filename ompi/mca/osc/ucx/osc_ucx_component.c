@@ -399,7 +399,7 @@ int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
 
     if (MPI_PROC_NULL != rank) {
         *size = module->sizes[rank];
-        *((void**) baseptr) = module->shmem_addrs[rank];
+        *((void**) baseptr) = (void *)module->shmem_addrs[rank];
         if (module->disp_unit == -1) {
             *disp_unit = module->disp_units[rank];
         } else {
@@ -414,7 +414,7 @@ int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
         for (i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
             if (0 != module->sizes[i]) {
                 *size = module->sizes[i];
-                *((void**) baseptr) = module->shmem_addrs[i];
+                *((void**) baseptr) = (void *)module->shmem_addrs[i];
                 if (module->disp_unit == -1) {
                     *disp_unit = module->disp_units[rank];
                 } else {
@@ -694,7 +694,7 @@ select_unlock:
         free(rbuf);
 
         module->size = module->sizes[ompi_comm_rank(module->comm)];
-        *base = module->shmem_addrs[ompi_comm_rank(module->comm)];
+        *base = (void *)module->shmem_addrs[ompi_comm_rank(module->comm)];
     }
 
     void **mem_base = base;
@@ -740,11 +740,11 @@ select_unlock:
     /* exchange window addrs */
     if (flavor == MPI_WIN_FLAVOR_ALLOCATE || flavor == MPI_WIN_FLAVOR_CREATE ||
             flavor == MPI_WIN_FLAVOR_SHARED) {
-        my_info[0] = *base;
+        my_info[0] = (uint64_t)*base;
     } else if (flavor == MPI_WIN_FLAVOR_DYNAMIC) {
-        my_info[0] = dynamic_base;
+        my_info[0] = (uint64_t)dynamic_base;
     }
-    my_info[1] = state_base;
+    my_info[1] = (uint64_t)state_base;
 
     recv_buf = (char *)calloc(comm_size, 2 * sizeof(uint64_t));
     ret = comm->c_coll->coll_allgather((void *)my_info, 2 * sizeof(uint64_t),
@@ -850,6 +850,87 @@ int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_
                                                       base, len, insert);
     }
 }
+inline bool ompi_osc_need_acc_lock(ompi_osc_ucx_module_t *module, int target)
+{
+    ompi_osc_ucx_lock_t *lock = NULL;
+    opal_hash_table_get_value_uint32(&module->outstanding_locks,
+                                     (uint32_t) target, (void **) &lock);
+
+    /* if there is an exclusive lock there is no need to acqurie the accumulate lock */
+    return !(NULL != lock && LOCK_EXCLUSIVE == lock->type);
+}
+
+inline int ompi_osc_state_lock(
+    ompi_osc_ucx_module_t *module,
+    int                    target,
+    bool                  *lock_acquired,
+    bool                   force_lock) {
+    uint64_t result_value = -1;
+    uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_ACC_LOCK_OFFSET;
+    int ret = OMPI_SUCCESS;
+
+    if (force_lock || ompi_osc_need_acc_lock(module, target)) {
+        for (;;) {
+            ret = opal_common_ucx_wpmem_cmpswp(module->state_mem,
+                                            TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
+                                            target, &result_value, sizeof(result_value),
+                                            remote_addr);
+            if (ret != OMPI_SUCCESS) {
+                OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_cmpswp failed: %d", ret);
+                return OMPI_ERROR;
+            }
+            if (result_value == TARGET_LOCK_UNLOCKED) {
+                break;
+            }
+
+            opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
+        }
+
+        *lock_acquired = true;
+    } else {
+        *lock_acquired = false;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+inline int ompi_osc_state_unlock(
+    ompi_osc_ucx_module_t *module,
+    int                    target,
+    bool                   lock_acquired,
+    void                  *free_ptr) {
+    uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_ACC_LOCK_OFFSET;
+    int ret = OMPI_SUCCESS;
+
+    if (lock_acquired) {
+        uint64_t result_value = 0;
+        /* fence any still active operations */
+        ret = opal_common_ucx_wpmem_fence(module->mem);
+        if (ret != OMPI_SUCCESS) {
+            OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
+            return OMPI_ERROR;
+        }
+
+        ret = opal_common_ucx_wpmem_fetch(module->state_mem,
+                                        UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
+                                        target, &result_value, sizeof(result_value),
+                                        remote_addr);
+        assert(result_value == TARGET_LOCK_EXCLUSIVE);
+    } else if (NULL != free_ptr){
+        /* flush before freeing the buffer */
+        ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
+    }
+    /* TODO: encapsulate in a request and make the release non-blocking */
+    if (NULL != free_ptr) {
+        free(free_ptr);
+    }
+    if (ret != OMPI_SUCCESS) {
+        OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fetch failed: %d", ret);
+        return OMPI_ERROR;
+    }
+
+    return ret;
+}
 
 int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
@@ -857,7 +938,17 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
     int ret = OMPI_SUCCESS;
 
     if (module->state.dynamic_win_count >= OMPI_OSC_UCX_ATTACH_MAX) {
+        OSC_UCX_ERROR("Dynamic window attach failed: Cannot satisfy %d attached windows. "
+                "Max attached windows is %d \n",
+                module->state.dynamic_win_count+1,
+                OMPI_OSC_UCX_ATTACH_MAX);
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+    bool lock_acquired = false;
+    ret = ompi_osc_state_lock(module, ompi_comm_rank(module->comm), &lock_acquired, true);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
 
     if (module->state.dynamic_win_count > 0) {
@@ -866,6 +957,7 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
                                                                (uint64_t)base, len, &insert_index);
         if (contain_index >= 0) {
             module->local_dynamic_win_info[contain_index].refcnt++;
+            ompi_osc_state_unlock(module, ompi_comm_rank(module->comm), lock_acquired, NULL);
             return ret;
         }
 
@@ -889,6 +981,7 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
                                        &(module->local_dynamic_win_info[insert_index].my_mem_addr_size),
                                        &(module->local_dynamic_win_info[insert_index].mem));
     if (ret != OMPI_SUCCESS) {
+        ompi_osc_state_unlock(module, ompi_comm_rank(module->comm), lock_acquired, NULL);
         return ret;
     }
 
@@ -902,12 +995,18 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
     module->local_dynamic_win_info[insert_index].refcnt++;
     module->state.dynamic_win_count++;
 
-    return ret;
+    return ompi_osc_state_unlock(module, ompi_comm_rank(module->comm), lock_acquired, NULL);
 }
 
 int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int insert, contain;
+
+    bool lock_acquired = false;
+    int ret = ompi_osc_state_lock(module, ompi_comm_rank(module->comm), &lock_acquired, true);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
+    }
 
     assert(module->state.dynamic_win_count > 0);
 
@@ -918,7 +1017,7 @@ int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base) {
 
     /* if we can't find region - just exit */
     if (contain < 0) {
-        return OMPI_SUCCESS;
+        return ompi_osc_state_unlock(module, ompi_comm_rank(module->comm), lock_acquired, NULL);
     }
 
     module->local_dynamic_win_info[contain].refcnt--;
@@ -934,7 +1033,8 @@ int ompi_osc_ucx_win_detach(struct ompi_win_t *win, const void *base) {
         module->state.dynamic_win_count--;
     }
 
-    return OMPI_SUCCESS;
+    return ompi_osc_state_unlock(module, ompi_comm_rank(module->comm), lock_acquired, NULL);
+
 }
 
 int ompi_osc_ucx_free(struct ompi_win_t *win) {
@@ -974,8 +1074,8 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
         }
         module->state.dynamic_win_count = 0;
 
-        if (module->addrs[ompi_comm_rank(module->comm)] != NULL) {
-            free(module->addrs[ompi_comm_rank(module->comm)]);
+        if (module->addrs[ompi_comm_rank(module->comm)] != 0) {
+            free((void *)module->addrs[ompi_comm_rank(module->comm)]);
         }
     }
 
