@@ -42,13 +42,6 @@ AM_CFLAGS = \
             -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
             -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
 
-# JMS Delete me
-#include $(top_srcdir)/Makefile.ompi-rules
-
-# JMS What to do about this?
-#man_pages = ompi_info.1
-#EXTRA_DIST = $(man_pages:.1=.1in)
-
 if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = ompi_info
