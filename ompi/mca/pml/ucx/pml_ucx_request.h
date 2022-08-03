@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -144,6 +145,11 @@ void mca_pml_ucx_completed_request_init(ompi_request_t *ompi_req);
 void mca_pml_ucx_request_init(void *request);
 
 void mca_pml_ucx_request_cleanup(void *request);
+
+int mca_pml_ucx_request_cancel(ompi_request_t *req, int flag);
+#if MPI_VERSION >= 4
+int mca_pml_ucx_request_cancel_send(ompi_request_t *req, int flag);
+#endif
 
 
 static inline void mca_pml_ucx_request_reset(ompi_request_t *req)
