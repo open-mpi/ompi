@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2018-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2018 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
@@ -358,6 +358,9 @@ int mca_pml_ucx_init(int enable_mpi_threads)
     /* Create a completed request to be returned from isend */
     OBJ_CONSTRUCT(&ompi_pml_ucx.completed_send_req, ompi_request_t);
     mca_pml_ucx_completed_request_init(&ompi_pml_ucx.completed_send_req);
+#if MPI_VERSION >= 4
+    ompi_pml_ucx.completed_send_req.req_cancel = mca_pml_cancel_send_callback;
+#endif
 
     opal_progress_register(mca_pml_ucx_progress);
 
@@ -924,6 +927,11 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
     } else if (!UCS_PTR_IS_ERR(req)) {
         PML_UCX_VERBOSE(8, "got request %p", (void*)req);
         req->req_mpi_object.comm = comm;
+#if MPI_VERSION >= 4
+        if (OPAL_LIKELY(mca_pml_ucx_request_cancel == req->req_cancel)) {
+            req->req_cancel      = mca_pml_ucx_request_cancel_send;
+        }
+#endif
         *request                 = req;
         return OMPI_SUCCESS;
     } else {
