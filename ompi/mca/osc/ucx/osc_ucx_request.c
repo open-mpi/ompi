@@ -24,9 +24,9 @@ static int request_cancel(struct ompi_request_t *request, int complete)
 
 static int request_free(struct ompi_request_t **ompi_req)
 {
-    ompi_osc_ucx_request_t *request = (ompi_osc_ucx_request_t*) *ompi_req;
+    ompi_osc_ucx_generic_request_t *request = (ompi_osc_ucx_generic_request_t*) *ompi_req;
 
-    if (true != (bool)(request->super.req_complete)) {
+    if (true != (bool)(request->super.super.req_complete)) {
         return MPI_ERR_REQUEST;
     }
 
@@ -37,20 +37,15 @@ static int request_free(struct ompi_request_t **ompi_req)
     return OMPI_SUCCESS;
 }
 
-static void request_construct(ompi_osc_ucx_request_t *request)
+static void request_construct(ompi_osc_ucx_generic_request_t *request)
 {
-    request->super.req_type = OMPI_REQUEST_WIN;
-    request->super.req_status._cancelled = 0;
-    request->super.req_free = request_free;
-    request->super.req_cancel = request_cancel;
+    request->super.super.req_type = OMPI_REQUEST_WIN;
+    request->super.super.req_status._cancelled = 0;
+    request->super.super.req_free = request_free;
+    request->super.super.req_cancel = request_cancel;
 }
 
-void req_completion(void *request) {
-    ompi_osc_ucx_request_t *req = (ompi_osc_ucx_request_t *)request;
-    ompi_request_complete(&(req->super), true);
-    mca_osc_ucx_component.num_incomplete_req_ops--;
-    assert(mca_osc_ucx_component.num_incomplete_req_ops >= 0);
-}
-
-OBJ_CLASS_INSTANCE(ompi_osc_ucx_request_t, ompi_request_t,
+OBJ_CLASS_INSTANCE(ompi_osc_ucx_generic_request_t, ompi_request_t,
+                   request_construct, NULL);
+OBJ_CLASS_INSTANCE(ompi_osc_ucx_accumulate_request_t, ompi_request_t,
                    request_construct, NULL);
