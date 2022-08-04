@@ -19,7 +19,7 @@
  * Copyright (c) 2015      University of Houston. All rights reserved.
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021-2022 Google, LLC. All rights reserved.
  * Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights
@@ -846,7 +846,9 @@ enum {
   OMPI_COMM_TYPE_BOARD,
   OMPI_COMM_TYPE_HOST,
   OMPI_COMM_TYPE_CU,
-  OMPI_COMM_TYPE_CLUSTER
+  OMPI_COMM_TYPE_CLUSTER,
+  MPI_COMM_TYPE_HW_UNGUIDED,
+  MPI_COMM_TYPE_HW_GUIDED
 };
 #define OMPI_COMM_TYPE_NODE MPI_COMM_TYPE_SHARED
 

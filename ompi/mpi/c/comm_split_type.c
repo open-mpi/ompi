@@ -14,7 +14,7 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +65,8 @@ int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
         }
 
         if ( MPI_COMM_TYPE_SHARED != split_type && // Same as OMPI_COMM_TYPE_NODE
+             MPI_COMM_TYPE_HW_UNGUIDED != split_type &&
+             MPI_COMM_TYPE_HW_GUIDED != split_type &&
 	     OMPI_COMM_TYPE_CLUSTER != split_type &&
 	     OMPI_COMM_TYPE_CU != split_type &&
 	     OMPI_COMM_TYPE_HOST != split_type &&
@@ -98,6 +100,30 @@ int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
 #endif
+
+    if ( MPI_COMM_TYPE_HW_GUIDED == split_type ) {
+        int flag;
+        opal_cstring_t *value = NULL;
+
+        /* MPI_Info is required for this split_type.
+         * Not an error condition, per MPI 4.0.
+         */
+        if ( MPI_INFO_NULL == info ) {
+            *newcomm = MPI_COMM_NULL;
+            rc = MPI_SUCCESS;
+            OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
+        }
+
+        /* MPI_Info with key "mpi_hw_resource_type" is required for this split_type.
+         * Not an error condition, per MPI 4.0.
+         */
+        ompi_info_get(info, "mpi_hw_resource_type", &value, &flag);
+        if ( !flag ) {
+            *newcomm = MPI_COMM_NULL;
+            rc = MPI_SUCCESS;
+            OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
+        }
+    }
 
     if( (MPI_COMM_SELF == comm) && (MPI_UNDEFINED == split_type) ) {
         *newcomm = MPI_COMM_NULL;
