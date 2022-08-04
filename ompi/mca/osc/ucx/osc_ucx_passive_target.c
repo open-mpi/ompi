@@ -21,12 +21,14 @@ OBJ_CLASS_INSTANCE(ompi_osc_ucx_lock_t, opal_object_t, NULL, NULL);
 static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
     uint64_t result_value = -1;
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
+    ucp_ep_h *ep;
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
     int ret = OMPI_SUCCESS;
 
     while (true) {
         ret = opal_common_ucx_wpmem_fetch(module->state_mem, UCP_ATOMIC_FETCH_OP_FADD, 1,
                                         target, &result_value, sizeof(result_value),
-                                        remote_addr);
+                                        remote_addr, ep);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
@@ -35,7 +37,7 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
         if (result_value >= TARGET_LOCK_EXCLUSIVE) {
             ret = opal_common_ucx_wpmem_post(module->state_mem,
                                            UCP_ATOMIC_POST_OP_ADD, (-1), target,
-                                           sizeof(uint64_t), remote_addr);
+                                           sizeof(uint64_t), remote_addr, ep);
             if (OMPI_SUCCESS != ret) {
                 return ret;
             }
@@ -50,20 +52,24 @@ static inline int start_shared(ompi_osc_ucx_module_t *module, int target) {
 
 static inline int end_shared(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
+    ucp_ep_h *ep;
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
     return opal_common_ucx_wpmem_post(module->state_mem, UCP_ATOMIC_POST_OP_ADD,
-                                    (-1), target, sizeof(uint64_t), remote_addr);
+                                    (-1), target, sizeof(uint64_t), remote_addr, ep);
 }
 
 static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
     uint64_t result_value = -1;
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
+    ucp_ep_h *ep;
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
     int ret = OMPI_SUCCESS;
 
     for (;;) {
         ret = opal_common_ucx_wpmem_cmpswp(module->state_mem,
                                          TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
                                          target, &result_value, sizeof(result_value),
-                                         remote_addr);
+                                         remote_addr, ep);
         if (OMPI_SUCCESS != ret) {
             return ret;
         }
@@ -76,9 +82,11 @@ static inline int start_exclusive(ompi_osc_ucx_module_t *module, int target) {
 
 static inline int end_exclusive(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_LOCK_OFFSET;
+    ucp_ep_h *ep;
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
     return opal_common_ucx_wpmem_post(module->state_mem, UCP_ATOMIC_POST_OP_ADD,
                                       -((int64_t)TARGET_LOCK_EXCLUSIVE), target,
-                                      sizeof(uint64_t), remote_addr);
+                                      sizeof(uint64_t), remote_addr, ep);
 }
 
 int ompi_osc_ucx_lock(int lock_type, int target, int mpi_assert, struct ompi_win_t *win) {
@@ -155,12 +163,12 @@ int ompi_osc_ucx_unlock(int target, struct ompi_win_t *win) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    opal_hash_table_remove_value_uint32(&module->outstanding_locks,
-                                        (uint32_t)target);
-    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+    opal_hash_table_remove_value_uint32(&module->outstanding_locks,
+                                        (uint32_t)target);
 
     if (lock->is_nocheck == false) {
         if (lock->type == LOCK_EXCLUSIVE) {
