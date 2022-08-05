@@ -272,13 +272,14 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
 {
     const bool use_amo = module->acc_use_amo;
     const size_t dt_size = datatype->super.size;
+    void *result_start = result;
     void *to_free = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using network atomics for accumulate operation with count %d", count);
 
     if (NULL == result) {
-        to_free = result = malloc (request->len);
+        to_free = result_start = result = malloc (request->len);
         if (OPAL_UNLIKELY(NULL == result)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
        }
@@ -307,6 +308,7 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
             target_address += dt_size;
             ++i;
         } else if (OPAL_UNLIKELY(OMPI_ERR_NOT_SUPPORTED == ret)) {
+            free(to_free);
             return OMPI_ERR_NOT_SUPPORTED;
         }
     }
@@ -314,7 +316,7 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
     if (NULL != result_convertor) {
         /* result buffer is not necessarily contiguous. use the opal datatype engine to
          * copy the data over in this case */
-        struct iovec iov = {.iov_base = result, .iov_len = request->len};
+        struct iovec iov = {.iov_base = result_start, .iov_len = request->len};
         uint32_t iov_count = 1;
         size_t size = request->len;
 
