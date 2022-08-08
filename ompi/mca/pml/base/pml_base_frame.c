@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -42,6 +42,9 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
+#if MPI_VERSION >= 4
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#endif
 
 /*
  * The following file was created by configure.  It contains extern
@@ -100,10 +103,26 @@ char *ompi_pml_base_bsend_allocator_name = NULL;
 static char *ompi_pml_base_wrapper = NULL;
 #endif
 
+#if MPI_VERSION >= 4
+#define OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_DEFAULT OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_ONCE
+int ompi_pml_base_warn_dep_cancel_send_level = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_DEFAULT;
+mca_base_var_enum_value_t ompi_pml_base_warn_dep_cancel_send_values[] = {
+    {.value = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_ALWAYS, .string = "always"},
+    {.value = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_ONCE,   .string = "once"},
+    {.value = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_NEVER,  .string = "never"},
+    {0, NULL}
+};
+#endif
+
 static int mca_pml_base_register(mca_base_register_flag_t flags)
 {
 #if !MCA_ompi_pml_DIRECT_CALL
     int var_id;
+#endif
+
+#if MPI_VERSION >= 4
+    mca_base_var_enum_t *ompi_pml_base_warn_dep_cancel_send_enum = NULL;
+    int rc;
 #endif
 
     ompi_pml_base_bsend_allocator_name = "basic";
@@ -124,6 +143,21 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
     (void) mca_base_var_register_synonym(var_id, "ompi", "pml", NULL, "wrapper", 0);
 #endif
 
+#if MPI_VERSION >= 4
+    mca_base_var_enum_create("pml_base_deprecate_warnings", ompi_pml_base_warn_dep_cancel_send_values,
+                             &ompi_pml_base_warn_dep_cancel_send_enum);
+    rc = mca_base_var_register("ompi", "pml", "base", "warn_dep_cancel_send",
+                               "How often to issue warnings for deprecated cancelation of send requests",
+                               MCA_BASE_VAR_TYPE_INT, ompi_pml_base_warn_dep_cancel_send_enum, 0, 0,
+                               OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                               &ompi_pml_base_warn_dep_cancel_send_level);
+    OBJ_RELEASE(ompi_pml_base_warn_dep_cancel_send_enum);
+    if (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc) {
+        ompi_pml_base_warn_dep_cancel_send_level = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_DEFAULT;
+        opal_output(0, "pml:base:register: Warning invalid deprecation warning value specified. Using default: %d",
+                    ompi_pml_base_warn_dep_cancel_send_level);
+    }
+#endif
     return OMPI_SUCCESS;
 }
 

@@ -18,6 +18,7 @@
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -383,6 +384,9 @@ OMPI_DECLSPEC extern ompi_predefined_request_t        *ompi_request_null_addr;
 OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty;
 OMPI_DECLSPEC extern ompi_status_public_t   ompi_status_empty;
 OMPI_DECLSPEC extern ompi_request_fns_t     ompi_request_functions;
+#if MPI_VERSION >= 4
+OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty_send;
+#endif
 
 /**
  * Initialize the MPI_Request subsystem; invoked during MPI_INIT.

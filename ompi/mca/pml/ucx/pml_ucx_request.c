@@ -3,6 +3,7 @@
  * Copyright (c) 2016      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +15,7 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/message/message.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/request/request.h"
 #include <inttypes.h>
 
 
@@ -29,11 +31,19 @@ static int mca_pml_ucx_request_free(ompi_request_t **rptr)
     return OMPI_SUCCESS;
 }
 
-static int mca_pml_ucx_request_cancel(ompi_request_t *req, int flag)
+int mca_pml_ucx_request_cancel(ompi_request_t *req, int flag)
 {
     ucp_request_cancel(ompi_pml_ucx.ucp_worker, req);
     return OMPI_SUCCESS;
 }
+
+#if MPI_VERSION >= 4
+int mca_pml_ucx_request_cancel_send(ompi_request_t *req, int flag)
+{
+    mca_pml_cancel_send_callback(req, flag);
+    return mca_pml_ucx_request_cancel(req, flag);
+}
+#endif
 
 __opal_attribute_always_inline__ static inline void
 mca_pml_ucx_send_completion_internal(void *request, ucs_status_t status)

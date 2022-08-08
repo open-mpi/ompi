@@ -15,6 +15,7 @@
  * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,9 @@
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
+#if MPI_VERSION >= 4
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#endif
 
 /**
  * Single usage request. As we allow recursive calls (as an
@@ -181,6 +185,12 @@ int mca_pml_ob1_isend(const void *buf,
             /* NTH: it is legal to return ompi_request_empty since the only valid
              * field in a send completion status is whether or not the send was
              * cancelled (which it can't be at this point anyway). */
+#if MPI_VERSION >= 4
+            if (OPAL_UNLIKELY(OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_NEVER != ompi_pml_base_warn_dep_cancel_send_level)) {
+                *request = &ompi_request_empty_send;
+                return OMPI_SUCCESS;
+            }
+#endif
             *request = &ompi_request_empty;
             return OMPI_SUCCESS;
         }
