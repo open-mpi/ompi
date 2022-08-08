@@ -23,7 +23,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -301,33 +301,6 @@ int ompi_comm_init_mpi3 (void)
      * as comm_world (thus, the initial error handler). */
 
     return OMPI_SUCCESS;
-}
-
-
-ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
-{
-    ompi_communicator_t *new_comm;
-
-    /* create new communicator element */
-    new_comm = OBJ_NEW(ompi_communicator_t);
-    new_comm->super.s_info = NULL;
-    new_comm->c_local_group = ompi_group_allocate ( local_size );
-    if ( 0 < remote_size ) {
-        new_comm->c_remote_group = ompi_group_allocate (remote_size);
-        new_comm->c_flags |= OMPI_COMM_INTER;
-    } else {
-        /*
-         * simplifies some operations (e.g. p2p), if
-         * we can always use the remote group
-         */
-        new_comm->c_remote_group = new_comm->c_local_group;
-        OBJ_RETAIN(new_comm->c_remote_group);
-    }
-
-    /* fill in the inscribing hyper-cube dimensions */
-    new_comm->c_cube_dim = opal_cube_dim(local_size);
-
-    return new_comm;
 }
 
 static int ompi_comm_finalize (void)

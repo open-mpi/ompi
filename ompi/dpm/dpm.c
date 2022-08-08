@@ -21,7 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -485,7 +485,7 @@ bcast_rportlen:
 
     /* now deal with the remote group */
     rsize = opal_list_get_size(&rlist);
-    new_group_pointer=ompi_group_allocate(rsize);
+    new_group_pointer=ompi_group_allocate(NULL, rsize);
     if (NULL == new_group_pointer) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         OPAL_LIST_DESTRUCT(&rlist);

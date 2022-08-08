@@ -16,7 +16,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -71,7 +71,7 @@ opal_mutex_t ompi_group_afp_mutex = OPAL_MUTEX_STATIC_INIT;
 /*
  * Allocate a new group structure
  */
-ompi_group_t *ompi_group_allocate(int group_size)
+ompi_group_t *ompi_group_allocate(ompi_group_t *orig_group, int group_size)
 {
     /* local variables */
     ompi_proc_t **procs = calloc (group_size, sizeof (ompi_proc_t *));
@@ -81,7 +81,7 @@ ompi_group_t *ompi_group_allocate(int group_size)
         return NULL;
     }
 
-    new_group = ompi_group_allocate_plist_w_procs (procs, group_size);
+    new_group = ompi_group_allocate_plist_w_procs (orig_group, procs, group_size);
     if (NULL == new_group) {
         free (procs);
     }
@@ -89,7 +89,7 @@ ompi_group_t *ompi_group_allocate(int group_size)
     return new_group;
 }
 
-ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_size)
+ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_group_t *orig_group, ompi_proc_t **procs, int group_size)
 {
     /* local variables */
     ompi_group_t * new_group = NULL;
@@ -121,12 +121,18 @@ ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_
     new_group->grp_my_rank = MPI_UNDEFINED;
     OMPI_GROUP_SET_DENSE(new_group);
 
+    if (NULL != orig_group) {
+        new_group->grp_instance = orig_group->grp_instance;
+    } else {
+        new_group->grp_instance = NULL;
+    }
+
     ompi_group_increment_proc_count (new_group);
 
     return new_group;
 }
 
-ompi_group_t *ompi_group_allocate_sporadic(int group_size)
+ompi_group_t *ompi_group_allocate_sporadic(ompi_group_t *orig_group, int group_size)
 {
     /* local variables */
     ompi_group_t *new_group = NULL;
@@ -165,13 +171,14 @@ ompi_group_t *ompi_group_allocate_sporadic(int group_size)
     /* initialize our rank to MPI_UNDEFINED */
     new_group->grp_my_rank       = MPI_UNDEFINED;
     new_group->grp_proc_pointers = NULL;
+    new_group->grp_instance = orig_group->grp_instance;
     OMPI_GROUP_SET_SPORADIC(new_group);
 
  error_exit:
     return new_group;
 }
 
-ompi_group_t *ompi_group_allocate_strided(void)
+ompi_group_t *ompi_group_allocate_strided(ompi_group_t *orig_group)
 {
     ompi_group_t *new_group = NULL;
 
@@ -188,6 +195,7 @@ ompi_group_t *ompi_group_allocate_strided(void)
     /* initialize our rank to MPI_UNDEFINED */
     new_group->grp_my_rank    = MPI_UNDEFINED;
     new_group->grp_proc_pointers     = NULL;
+    new_group->grp_instance = orig_group->grp_instance;
     OMPI_GROUP_SET_STRIDED(new_group);
     new_group->sparse_data.grp_strided.grp_strided_stride         = -1;
     new_group->sparse_data.grp_strided.grp_strided_offset         = -1;
@@ -196,9 +204,13 @@ ompi_group_t *ompi_group_allocate_strided(void)
     /* return */
     return new_group;
 }
-ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
+
+ompi_group_t *ompi_group_allocate_bmap(ompi_group_t *orig_group , int group_size)
 {
     ompi_group_t *new_group = NULL;
+    int orig_group_size;
+
+    orig_group_size = orig_group->grp_proc_count;
 
     assert (group_size >= 0);
 
@@ -224,6 +236,7 @@ ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
     /* initialize our rank to MPI_UNDEFINED */
     new_group->grp_my_rank    = MPI_UNDEFINED;
     new_group->grp_proc_pointers     = NULL;
+    new_group->grp_instance = orig_group->grp_instance;
     OMPI_GROUP_SET_BITMAP(new_group);
 
  error_exit:
