@@ -761,7 +761,7 @@ OPAL_DECLSPEC int opal_common_ucx_winfo_flush(opal_common_ucx_winfo_t *winfo, in
         ((opal_common_ucx_request_t *) req)->winfo = winfo;
     }
 
-    if (OPAL_COMMON_UCX_FLUSH_B == type) {
+    if (OPAL_COMMON_UCX_FLUSH_B) {
         rc = opal_common_ucx_wait_request_mt(req, "ucp_ep_flush_nb");
     } else {
         *req_ptr = req;
@@ -818,56 +818,12 @@ OPAL_DECLSPEC int opal_common_ucx_ctx_flush(opal_common_ucx_ctx_t *ctx,
         if (rc != OPAL_SUCCESS) {
             MCA_COMMON_UCX_ERROR("opal_common_ucx_flush failed: %d", rc);
             rc = OPAL_ERROR;
-            break;
         }
     }
     opal_mutex_unlock(&ctx->mutex);
 
     return rc;
 }
-
-
-OPAL_DECLSPEC int opal_common_ucx_wpmem_flush_ep_nb(opal_common_ucx_wpmem_t *mem,
-                                                    int target,
-                                                    opal_common_ucx_user_req_handler_t user_req_cb,
-                                                    void *user_req_ptr)
-{
-#if HAVE_DECL_UCP_EP_FLUSH_NB
-    int rc = OPAL_SUCCESS;
-    ucp_ep_h ep = NULL;
-    ucp_rkey_h rkey = NULL;
-    opal_common_ucx_winfo_t *winfo = NULL;
-
-    if (NULL == mem) {
-        return OPAL_SUCCESS;
-    }
-
-    rc = opal_common_ucx_tlocal_fetch(mem, target, &ep, &rkey, &winfo);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        MCA_COMMON_UCX_ERROR("tlocal_fetch failed: %d", rc);
-        return rc;
-    }
-
-    opal_mutex_lock(&winfo->mutex);
-    opal_common_ucx_request_t *req;
-    req = ucp_worker_flush_nb(winfo->worker, 0, opal_common_ucx_req_completion);
-    if (UCS_PTR_IS_PTR(req)) {
-        req->ext_req = user_req_ptr;
-        req->ext_cb = user_req_cb;
-        req->winfo = winfo;
-    } else {
-        if (user_req_cb != NULL) {
-            (*user_req_cb)(user_req_ptr);
-        }
-    }
-    opal_mutex_unlock(&winfo->mutex);
-    return rc;
-#else
-    return OPAL_ERR_NOT_SUPPORTED;
-#endif // HAVE_DECL_UCP_EP_FLUSH_NB
-
-}
-
 
 OPAL_DECLSPEC int opal_common_ucx_wpmem_fence(opal_common_ucx_wpmem_t *mem)
 {
