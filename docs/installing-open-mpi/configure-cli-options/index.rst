@@ -19,3 +19,4 @@ below.
    mpi
    oshmem
    misc
+   rpath-and-runpath
