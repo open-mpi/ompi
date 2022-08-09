@@ -17,6 +17,8 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,7 +83,7 @@ int ompi_group_incl_plist(ompi_group_t* group, int n, const int *ranks,
     }
 
     /* get new group struct */
-    new_group_pointer=ompi_group_allocate(n);
+    new_group_pointer=ompi_group_allocate(group,n);
     if( NULL == new_group_pointer ) {
         return MPI_ERR_GROUP;
     }
@@ -102,6 +104,8 @@ int ompi_group_incl_plist(ompi_group_t* group, int n, const int *ranks,
     } else {
         new_group_pointer->grp_my_rank = MPI_UNDEFINED;
     }
+
+    new_group_pointer->grp_instance = group->grp_instance;
 
     *new_group = (MPI_Group)new_group_pointer;
 
@@ -148,7 +152,7 @@ int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2,
     }
 
     /* get new group struct */
-    new_group_pointer = ompi_group_allocate(new_group_size);
+    new_group_pointer = ompi_group_allocate(group1, new_group_size);
     if (NULL == new_group_pointer) {
         OBJ_DESTRUCT(&bitmap);
         return MPI_ERR_GROUP;
@@ -230,7 +234,7 @@ int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,
     }
 
     /* allocate a new ompi_group_t structure */
-    new_group_pointer = ompi_group_allocate(new_group_size);
+    new_group_pointer = ompi_group_allocate(group1, new_group_size);
     if( NULL == new_group_pointer ) {
         OBJ_DESTRUCT(&bitmap);
         return MPI_ERR_GROUP;
