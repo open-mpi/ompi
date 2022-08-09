@@ -10,7 +10,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc.  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
@@ -149,14 +149,16 @@ static void hnp_abort(int error_code, char *fmt, ...)
     orte_abnormal_term_ordered = true;
 
     /* If there was a message, construct it */
-    va_start(arglist, fmt);
-    if (NULL != fmt) {
-        vasprintf(&outmsg, fmt, arglist);
-    }
-    va_end(arglist);
+    if (!orte_do_not_launch) {
+        va_start(arglist, fmt);
+        if (NULL != fmt) {
+            vasprintf(&outmsg, fmt, arglist);
+        }
+        va_end(arglist);
 
-    /* use the show-help system to get the message out */
-    orte_show_help("help-errmgr-base.txt", "simple-message", true, outmsg);
+        /* use the show-help system to get the message out */
+        orte_show_help("help-errmgr-base.txt", "simple-message", true, outmsg);
+    }
 
     /* this could have happened very early, so see if it happened
      * before we started anything - if so, we can just finalize */
