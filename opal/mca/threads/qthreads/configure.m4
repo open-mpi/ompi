@@ -13,7 +13,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2019      Triad National Security, LLC. All rights
+# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -45,8 +45,10 @@ AC_DEFUN([OPAL_CONFIG_QTHREADS],[
                       [opal_qthreads_happy=yes],
                       [opal_qthreads_happy=no])
 
-    AS_IF([test $opal_qthreads_happy = yes && test -n "$opal_qthreads_dir"],
-          [OPAL_QTHREADS_INCLUDE_PATH="$opal_qthreads_dir/include/"],
+dnl extract the fully qualified include path from the opal_qthreads_CPPFLAGS variable
+dnl for use in threads_qthreads.h
+    AS_IF([test $opal_qthreads_happy = yes],
+          [OPAL_QTHREADS_INCLUDE_PATH=`echo "${opal_qthreads_CPPFLAGS}/" | sed -e 's/\-I//g' | sed -e 's/ //g'`],
           [OPAL_QTHREADS_INCLUDE_PATH=""])
 
     AS_IF([test $opal_qthreads_happy = yes],
