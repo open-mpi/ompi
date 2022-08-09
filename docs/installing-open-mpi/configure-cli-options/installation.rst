@@ -1,5 +1,3 @@
-.. This file is included by building-open-mpi.rst
-
 Installation options
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -32,48 +30,100 @@ be used with ``configure``:
   Be sure to read the description of ``--without-memory-manager``,
   below; it may have some effect on ``--enable-static``.
 
-* ``--disable-wrapper-rpath``:
-  By default, the wrapper compilers (e.g., ``mpicc``) will enable
-  "rpath" support in generated executables on systems that support it.
-  That is, they will include a file reference to the location of Open
-  MPI's libraries in the application executable itself.  This means
-  that the user does not have to set ``LD_LIBRARY_PATH`` to find Open
-  MPI's libraries (e.g., if they are installed in a location that the
-  run-time linker does not search by default).
+* ``--disable-wrapper-runpath`` / ``--disable-wrapper-rpath``: By
+  default, the wrapper compilers (e.g., ``mpicc``) will enable
+  "runpath" or "rpath" support in generated executables on systems
+  that support it.  That is, they will include a filesystem path
+  reference to the location of Open MPI's libraries in the application
+  executable itself.  This means that the user does not have to set
+  ``LD_LIBRARY_PATH`` to find Open MPI's libraries, which can be
+  helpful if they are installed in a location that the run-time linker
+  does not search by default.
 
-  On systems that utilize the GNU ``ld`` linker, recent enough versions
-  will actually utilize "runpath" functionality, not "rpath".  There
-  is an important difference between the two:
+  .. note:: By default, the wrapper compilers prefer "runpath"
+            behavior over "rpath" behavior.
 
-  #. "rpath": the location of the Open MPI libraries is hard-coded into
-     the MPI/OpenSHMEM application and cannot be overridden at
-     run-time.
-  #. "runpath": the location of the Open MPI libraries is hard-coded into
-     the MPI/OpenSHMEM application, but can be overridden at run-time
-     by setting the ``LD_LIBRARY_PATH`` environment variable.
+            * Using ``--disable-wrapper-runpath`` alters this
+              preference: "runpath" behavior will never be used.
+              Instead, the wrapper compilers will use "rpath" behavior
+              if it is supported.
+            * Using ``--disable-wrapper-rpath`` will disable *both*
+              "runpath" and "rpath" behavior in the wrapper compilers.
+
+  .. important:: Note that the ``--disable-wrapper-runpath`` and
+                 ``--disable-wrapper-rpath`` CLI options *only* affect
+                 the flags that the wrapper compilers use when
+                 building MPI/OpenSHMEM applications.  These options
+                 do not affect how Open MPI or OpenSHMEM are built (to
+                 include the wrapper compilers themselves).
+
+                 See the :ref:`Linker "rpath" and "runpath"
+                 functionality
+                 <building-ompi-cli-options-rpath-and-runpath-label>`
+                 section for details on how "rpath" and "runpath"
+                 affect the building and linking of Open MPI itself.
+
+  When either of "runpath" or "rpath" behaviors are enabled, the
+  wrapper compilers will hard-code the filesystem path location of the
+  Open MPI libraries into the Open MPI/OpenSHMEM application.  The
+  most notable differences between "runpath" and "rpath" behavior are:
+
+  * runpath
+
+     #. The run-time linker first searches the paths in the
+        ``LD_LIBRARY_PATH`` environment variable for the relevant Open
+        MPI/OpenSHMEM libraries.
+     #. If not found there, the run-time linker falls back to checking
+        the hard-coded location for the relevant Open MPI/OpenSHMEM
+        libraries.
+
+  * rpath
+
+     #. The run-time linker first checks the hard-coded location for
+        the relevant Open MPI/OpenSHMEM libraries.
+     #. If not found there, the run-time linker falls back to
+        searching the paths in the ``LD_LIBRARY_PATH`` environment
+        variable for the relevant Open MPI/OpenSHMEM libraries.
+
+  .. warning:: There are other, subtle differences between "runpath"
+               and "rpath" which are out of scope for this
+               documentation.  You may wish to consult other sources
+               for more information.
+
+               For example, a decent set of explanations can be found
+               in the slides for a Linux course entitled "Building and
+               Using Shared Libraries on Linux // `Shared Libraries:
+               The Dynamic Linker
+               <https://man7.org/training/download/shlib_dynlinker_slides.pdf>`_".
 
   For example, consider that you install Open MPI vA.B.0 and
   compile/link your MPI/OpenSHMEM application against it.  Later, you
   install Open MPI vA.B.1 to a different installation prefix (e.g.,
-  ``/opt/openmpi/A.B.1`` vs. ``/opt/openmpi/A.B.0``), and you leave the old
-  installation intact.
+  ``/opt/openmpi/A.B.1`` vs. ``/opt/openmpi/A.B.0``), and you leave
+  the old installation intact.
 
-  In the rpath case, your MPI application will always use the
-  libraries from your A.B.0 installation.  In the runpath case, you
-  can set the ``LD_LIBRARY_PATH`` environment variable to point to the
-  A.B.1 installation, and then your MPI application will use those
-  libraries.
+  In the runpath case, you can set the ``LD_LIBRARY_PATH`` environment
+  variable to point to the A.B.1 installation, and then your MPI
+  application will use those libraries, since the runtime will search
+  the paths in ``LD_LIBRARY_PATH`` first.
+
+  In the rpath case, since the run-time linker searches the
+  ``/opt/openmpi/A.B.0`` location that is hard-coded in your MPI
+  application first, your application will use the libraries from your
+  A.B.0 installation (regardless of the value of the
+  ``LD_LIBRARY_PATH`` environment variable).
 
   Note that in both cases, however, if you remove the original A.B.0
   installation and set ``LD_LIBRARY_PATH`` to point to the A.B.1
   installation, your application will use the A.B.1 libraries.
 
-  This rpath/runpath behavior can be disabled via
+  As noted above, both runpath/rpath behaviors can be disabled via
   ``--disable-wrapper-rpath``.
 
-  If you would like to keep the rpath option, but not enable runpath
-  a different ``configure`` option is avalabile
-  ``--disable-wrapper-runpath``.
+  .. note:: You can also :ref:`customize the compiler/linker flags
+            that are used by the wrapper compilers
+            <label-customizing-wrapper-compiler>` to build Open
+            MPI/OpenSHMEM applications.
 
 * ``--enable-dlopen``: Enable Open MPI to load components as
   standalone Dynamic Shared Objects (DSOs) at run-time.  This option
