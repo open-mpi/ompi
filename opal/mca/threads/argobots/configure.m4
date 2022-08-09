@@ -56,8 +56,8 @@ AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
 
     AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = no],
           [AC_MSG_ERROR([Open MPI requires Argobots 1.1 or newer.])])
-    AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = yes && test -n "$opal_argo_dir"],
-          [OPAL_ARGO_INCLUDE_PATH="$opal_argo_dir/include/"],
+    AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = yes],
+          [OPAL_ARGO_INCLUDE_PATH=`echo "${opal_argo_CPPFLAGS}/" | sed -e 's/\-I//g' | sed -e 's/ //g'`],
           [OPAL_ARGO_INCLUDE_PATH=""])
 
     AS_IF([test $opal_argo_happy = yes],
