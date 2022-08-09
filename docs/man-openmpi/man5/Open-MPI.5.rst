@@ -390,6 +390,10 @@ Standard error return classes for Open MPI:
      - 73
      - The variable or category name is invalid.
 
+   * - MPI_ERR_SESSION
+     - 78
+     - Invalid session
+
    * - MPI_ERR_LASTCODE
      - 93
      - Last error code.
