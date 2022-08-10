@@ -1075,9 +1075,6 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     ret = opal_common_ucx_wpmem_flush_ep_nb(mem, target, req_completion, ucx_req);
 
     if (ret != OMPI_SUCCESS) {
-        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
-        return ret;
-
         /* fallback to using an atomic op to acquire a request handle */
         ret = opal_common_ucx_wpmem_fence(mem);
         if (ret != OMPI_SUCCESS) {
@@ -1131,9 +1128,6 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     ret = opal_common_ucx_wpmem_flush_ep_nb(mem, target, req_completion, ucx_req);
 
     if (ret != OMPI_SUCCESS) {
-        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
-        return ret;
-
         /* fallback to using an atomic op to acquire a request handle */
         ret = opal_common_ucx_wpmem_fence(mem);
         if (ret != OMPI_SUCCESS) {
