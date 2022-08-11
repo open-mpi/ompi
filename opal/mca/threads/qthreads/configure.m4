@@ -45,8 +45,8 @@ AC_DEFUN([OPAL_CONFIG_QTHREADS],[
                       [opal_qthreads_happy=yes],
                       [opal_qthreads_happy=no])
 
-    AS_IF([test $opal_qthreads_happy = yes && test -n "$opal_qthreads_dir"],
-          [OPAL_QTHREADS_INCLUDE_PATH="$opal_qthreads_dir/include/"],
+    AS_IF([test $opal_qthreads_happy = yes],
+          [OPAL_QTHREADS_INCLUDE_PATH=`echo "${opal_qthreads_CPPFLAGS}/" | sed -e 's/\-I//g' | sed -e 's/ //g'`],
           [OPAL_QTHREADS_INCLUDE_PATH=""])
 
     AS_IF([test $opal_qthreads_happy = yes],
