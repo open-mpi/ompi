@@ -1,5 +1,5 @@
 .. _mpi_raccumulate:
- 
+
 MPI_Raccumulate
 ===============
     .. include_body

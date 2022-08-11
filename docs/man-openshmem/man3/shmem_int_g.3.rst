@@ -1,5 +1,5 @@
 .. _shmem_int_g:
- 
+
 shmem_int_g
 ===========
     .. include_body

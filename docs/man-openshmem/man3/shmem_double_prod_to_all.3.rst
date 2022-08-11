@@ -1,5 +1,5 @@
 .. _shmem_double_prod_to_all:
- 
+
 shmem_double_prod_to_all
 ========================
     .. include_body

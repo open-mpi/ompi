@@ -1,5 +1,5 @@
 .. _mpi_group_c2f:
- 
+
 MPI_Group_c2f
 =============
     .. include_body

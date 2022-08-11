@@ -1,5 +1,5 @@
 .. _shmem_free:
- 
+
 shmem_free
 ==========
     .. include_body

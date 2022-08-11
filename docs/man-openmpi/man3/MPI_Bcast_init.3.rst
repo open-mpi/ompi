@@ -1,5 +1,5 @@
 .. _mpi_bcast_init:
- 
+
 MPI_Bcast_init
 ==============
     .. include_body

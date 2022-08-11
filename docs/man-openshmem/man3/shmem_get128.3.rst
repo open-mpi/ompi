@@ -1,5 +1,5 @@
 .. _shmem_get128:
- 
+
 shmem_get128
 ============
     .. include_body

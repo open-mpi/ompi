@@ -1,5 +1,5 @@
 .. _mpi_info_f2c:
- 
+
 MPI_Info_f2c
 ============
     .. include_body

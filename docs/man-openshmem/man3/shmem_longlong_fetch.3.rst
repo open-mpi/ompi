@@ -1,5 +1,5 @@
 .. _shmem_longlong_fetch:
- 
+
 shmem_longlong_fetch
 ====================
     .. include_body

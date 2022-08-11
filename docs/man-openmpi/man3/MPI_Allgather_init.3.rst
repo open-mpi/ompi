@@ -1,5 +1,5 @@
 .. _mpi_allgather_init:
- 
+
 MPI_Allgather_init
 ==================
     .. include_body
