@@ -1,5 +1,5 @@
 .. _shmem_short_wait:
- 
+
 shmem_short_wait
 ================
     .. include_body

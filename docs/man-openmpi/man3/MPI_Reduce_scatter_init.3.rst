@@ -1,5 +1,5 @@
 .. _mpi_reduce_scatter_init:
- 
+
 MPI_Reduce_scatter_init
 =======================
     .. include_body

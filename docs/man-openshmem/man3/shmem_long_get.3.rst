@@ -1,5 +1,5 @@
 .. _shmem_long_get:
- 
+
 shmem_long_get
 ==============
     .. include_body

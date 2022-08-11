@@ -1,5 +1,5 @@
 .. _openshmem:
- 
+
 OpenSHMEM
 =========
     .. include_body

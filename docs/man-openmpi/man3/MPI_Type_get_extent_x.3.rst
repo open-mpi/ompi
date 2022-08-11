@@ -1,5 +1,5 @@
 .. _mpi_type_get_extent_x:
- 
+
 MPI_Type_get_extent_x
 =====================
     .. include_body

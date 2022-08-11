@@ -1,5 +1,5 @@
 .. _shmem_longlong_swap:
- 
+
 shmem_longlong_swap
 ===================
     .. include_body

@@ -1,5 +1,5 @@
 .. _shmem_longdouble_max_to_all:
- 
+
 shmem_longdouble_max_to_all
 ===========================
     .. include_body

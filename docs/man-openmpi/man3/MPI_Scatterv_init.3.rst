@@ -1,5 +1,5 @@
 .. _mpi_scatterv_init:
- 
+
 MPI_Scatterv_init
 =================
     .. include_body

@@ -1,5 +1,5 @@
 .. _shmem_longlong_get_nbi:
- 
+
 shmem_longlong_get_nbi
 ======================
     .. include_body

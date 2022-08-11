@@ -1,5 +1,5 @@
 .. _shmem_long_inc:
- 
+
 shmem_long_inc
 ==============
     .. include_body

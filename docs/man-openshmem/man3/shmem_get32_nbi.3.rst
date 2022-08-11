@@ -1,5 +1,5 @@
 .. _shmem_get32_nbi:
- 
+
 shmem_get32_nbi
 ===============
     .. include_body

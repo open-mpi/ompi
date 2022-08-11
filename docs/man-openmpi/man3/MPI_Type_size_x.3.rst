@@ -1,5 +1,5 @@
 .. _mpi_type_size_x:
- 
+
 MPI_Type_size_x
 ===============
     .. include_body

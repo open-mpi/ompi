@@ -1,5 +1,5 @@
 .. _shmem_alltoalls32:
- 
+
 shmem_alltoalls32
 =================
     .. include_body

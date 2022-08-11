@@ -1,5 +1,5 @@
 .. _shmem_short_g:
- 
+
 shmem_short_g
 =============
     .. include_body
