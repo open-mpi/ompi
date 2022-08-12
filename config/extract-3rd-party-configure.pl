@@ -120,7 +120,7 @@ sub process_m4($)
     #  AC_ARG_WITH (package, help-string, [action-if-given], [action-if-not-given])
     my @conf_keywords = ("AC_ARG_ENABLE", "AC_ARG_WITH");
 
-    # stack with funciton parameters: '(', ')'
+    # stack with function parameters: '(', ')'
     my @the_stack = ();
     # push(@the_stack) / pop(@the_stack) / scalar(@the_stack)
     my $arg_num = 0;
@@ -151,7 +151,7 @@ sub process_m4($)
                         last;
                     }
 
-                    # Skip any option that contains a variable substition
+                    # Skip any option that contains a variable substitution
                     if ( $option_name =~ /\$/ ) {
                         if( !$list_only && !$quiet_arg) {
                             print "# Warning: Skipped (embedded variable): $option_name\n";

@@ -64,7 +64,7 @@ AC_ARG_WITH([cs_fs],
             [AS_HELP_STRING([--with-cs-fs],
                            [Destination FS is case sensitive (default: set to value of the build FS's case sensitivity)])])
 
-dnl Stupid emacs syntax hilighting: '
+dnl Stupid emacs syntax highlighting: '
 
 if test "$with_cs_fs" = "yes"; then
     OPAL_WANT_CS_FS=1

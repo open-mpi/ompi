@@ -81,7 +81,7 @@ AC_DEFUN([OMPI_SETUP_FC],[
 
     # OS X before 10.3 (deployment target) does not allow undefined common
     # symbols in shared libraries.  Because we can't figure out how to
-    # implement MPI_STATUSES_IGNORE and friends wihtout common symbols, on
+    # implement MPI_STATUSES_IGNORE and friends without common symbols, on
     # OS X we can't build the F90 bindings as a shared library.
     OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS=
     AS_IF([test $ompi_fc_happy -eq 1],

@@ -317,7 +317,7 @@ AC_DEFUN([RPATHIFY_FC_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_fc_args])
 # and pkg-config files:
 #
 # 1) --enable-shared --disable-static (today's default): Any
-#    application linking against libmpi will be a dynamicly linked
+#    application linking against libmpi will be a dynamically linked
 #    application
 # 2) --enable-shared --enable-static: An application linking against
 #    libmpi will dynamically link against libmpi unless -static (or

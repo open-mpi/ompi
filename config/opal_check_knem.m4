@@ -39,7 +39,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
 
     # need at least version 0x0000000b
     AS_IF([test "$opal_check_knem_happy" = "yes"],
-          [AC_CACHE_CHECK([for recent vesion of knem ABI],
+          [AC_CACHE_CHECK([for recent version of knem ABI],
               [opal_check_knem_cv_abi_version],
               [AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
 #include <knem_io.h>

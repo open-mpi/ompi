@@ -168,7 +168,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         # following lines and update the warning when we require a C11 compiler.
         # AC_MSG_WARNING([Open MPI requires a C11 (or newer) compiler])
         # AC_MSG_ERROR([Aborting.])
-        # From Open MPI 1.7 on we require a C99 compiant compiler
+        # From Open MPI 1.7 on we require a C99 compliant compiler
         dnl with autoconf 2.70 AC_PROG_CC makes AC_PROG_CC_C99 obsolete
         m4_version_prereq([2.70],
             [],
@@ -411,7 +411,7 @@ AC_DEFUN([_OPAL_START_SETUP_CC],[
 
 
 AC_DEFUN([_OPAL_PROG_CC],[
-    dnl It is really easy to accidently call AC_PROG_CC implicitly through
+    dnl It is really easy to accidentally call AC_PROG_CC implicitly through
     dnl some other test run before OPAL_SETUP_CC.  Try to make that harder.
     m4_provide_if([AC_PROG_CC],
                   [m4_fatal([AC_PROG_CC called before OPAL_SETUP_CC])])

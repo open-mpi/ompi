@@ -588,7 +588,7 @@ dnl   - OPAL_USE_GCC_BUILTIN_ATOMICS - 1 if atomics implementation
 dnl         should use GCC built-in style atomics
 dnl   - OPAL_USE_ASM_ATOMICS - 1 if atomics implementation should
 dnl         use inline assembly (using GCC-style inline assembly)
-dnl        for atomics implementaiton
+dnl        for atomics implementation
 dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CONFIG_ASM],[
@@ -678,7 +678,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
             powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
                 AS_IF([test "$ac_cv_sizeof_long" = "8"],
-                      [atomics_found="PowerPC asssembly"])
+                      [atomics_found="PowerPC assembly"])
             ;;
             esac
 
