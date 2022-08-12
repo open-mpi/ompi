@@ -81,7 +81,7 @@ AC_DEFUN([OPAL_MCA],[
                         supported) is to build all components as DSOs.
                         Enabling a component as static disables it
                         building as a DSO.  The default is to build all
-                        components staticly.])])
+                        components statically.])])
     AC_ARG_ENABLE([mca-direct],
         [AS_HELP_STRING([--enable-mca-direct=LIST],
                        [Comma-separated list of type-component pairs that
@@ -153,7 +153,7 @@ of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
             AS_VAR_COPY([var_value], [$var_name])
 
             if test -n "$var_value" ; then
-                AC_MSG_ERROR([enable-mca-direct can only enable a single component per framwork: specified both ${type}-${var_value} and ${type}-${comp}.])
+                AC_MSG_ERROR([enable-mca-direct can only enable a single component per framework: specified both ${type}-${var_value} and ${type}-${comp}.])
             fi
 
             AS_VAR_SET([$var_name], AS_TR_SH([${comp}]))

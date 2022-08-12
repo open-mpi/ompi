@@ -95,7 +95,7 @@ AC_DEFUN([_OMPI_FIND_MPI_COUNT_TYPE], [
     # memory space, the scheme we use below may not work.  ...but such
     # systems are pretty rare today.
 
-    MPI_COUNT_TYPE=unknonwn
+    MPI_COUNT_TYPE=unknown
     AC_MSG_CHECKING([for type of MPI_Count])
     if test $ac_cv_sizeof_long_long -le $ac_cv_sizeof_size_t && \
        test $ac_cv_sizeof_long_long -ge $MPI_AINT_SIZE; then

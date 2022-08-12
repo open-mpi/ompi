@@ -33,7 +33,7 @@ dnl If m4_ifdef(internal support) does not evaluate to true (ie, at
 dnl autogen time), the references to internal in the help strings will
 dnl be removed and internal will not be a supported option.
 dnl
-dnl If m4_ifval(ddisbaled ok) does not evaluete to true (ie, at autogen
+dnl If m4_ifval(ddisbaled ok) does not evaluate to true (ie, at autogen
 dnl time), then --without-pkg will not be a valid configure option and
 dnl will raise an error.
 dnl
