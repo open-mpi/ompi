@@ -53,7 +53,7 @@ dnl      in the specified path.
 dnl   4. We try to find the specified header and function with no change
 dnl      in CPPFLAGS or LDFLAGS and adding the specified libraries to LIBS.
 dnl
-dnl It is the resposibility of the caller to register arguments of the form
+dnl It is the responsibility of the caller to register arguments of the form
 dnl with-<package name>, with-<package name>-libdir, and with-package name>-incdir.
 dnl All three are optional, nothing will break if the caller doesn't specify them
 dnl (and indeed, if the package being searched for isn't libnl3, it's likely the
@@ -63,7 +63,7 @@ dnl By default, OAC_CHECK_PACKAGE will use <package name> for the module name to
 dnl to pkg-config, meaning there is a <package name>.pc in the filesystem.  If a
 dnl different module name should be used, add a macro to the M4 environment named
 dnl <package name>_pkgconfig_module with the value of the pkgconfig module name
-dnl to use.  For exmaple, if the libevent module name is libevent_core, you could
+dnl to use.  For example, if the libevent module name is libevent_core, you could
 dnl specify:
 dnl
 dnl    m4_define([libevent_pkgconfig_module], [libevent_core])
@@ -326,7 +326,7 @@ dnl Rarely, packages change linking or in some other way make it
 dnl difficult to determine all the correct arguments for
 dnl OAC_CHECK_PACKAGE in one try.  The TM interface is a good example
 dnl of this, which has changed the name of the library (or its
-dnl dependencies) throughtout the years.  Because OAC_CHECK_PACKAGE
+dnl dependencies) throughout the years.  Because OAC_CHECK_PACKAGE
 dnl makes heavy use of caching (yay!), it is generally not useful to
 dnl call OAC_CHECK_PACKAGE multiple times with the same package name,
 dnl but different arguments.  This macro may be expanded between calls
@@ -621,7 +621,7 @@ AC_DEFUN([_OAC_CHECK_PACKAGE_GENERIC_PREFIX], [
                   AS_IF([test $? -eq 0],
                         [check_package_generic_prefix_happy=1
                          $2_LDFLAGS="-L${check_package_libdir}"
-                         AC_MSG_RESULT([foound])],
+                         AC_MSG_RESULT([found])],
                         [AC_MSG_RESULT([not found])])],
                  [check_package_generic_prefix_lib=0
                   check_package_generic_prefix_lib64=0

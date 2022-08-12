@@ -39,7 +39,7 @@ dnl
 # OPAL_SUMMARY_ADD([Resource Type], [Component Name], [], [$results])
 # and then unset $results to avoid namespace pollution.  This will
 # work properly with the current behavior, but would result in odd
-# errors if we delayed evaulation.
+# errors if we delayed evaluation.
 #
 # As a historical note, the third argument has never been used in
 # OPAL_SUMMARY_ADD and its meaning is unclear.  Preferred behavior is
