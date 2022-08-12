@@ -31,30 +31,40 @@ be used with ``configure``:
   below; it may have some effect on ``--enable-static``.
 
 * ``--disable-wrapper-runpath`` / ``--disable-wrapper-rpath``: By
-  default, the wrapper compilers (e.g., ``mpicc``) will enable
-  "runpath" or "rpath" support in generated executables on systems
-  that support it.  That is, they will include a filesystem path
-  reference to the location of Open MPI's libraries in the application
-  executable itself.  This means that the user does not have to set
-  ``LD_LIBRARY_PATH`` to find Open MPI's libraries, which can be
-  helpful if they are installed in a location that the run-time linker
-  does not search by default.
+  default, the wrapper compilers (e.g., ``mpicc``) will explicitly add
+  "runpath" and "rpath" linker flags when linking user executables on
+  systems that support them.  That is, the created executables will
+  include a filesystem path reference to the location of Open MPI's
+  libraries in the application executable itself.  This means that the
+  user does not have to set ``LD_LIBRARY_PATH`` to find Open MPI's
+  libraries, which can be helpful if they are installed in a location
+  that the run-time linker does not search by default.
+
+  Using the ``--disable-wrapper-r*path`` options will prevent the
+  wrappers from explicitly adding one or both of these linker flags.
 
   .. note:: By default, the wrapper compilers prefer "runpath"
             behavior over "rpath" behavior.
 
             * Using ``--disable-wrapper-runpath`` alters this
-              preference: "runpath" behavior will never be used.
-              Instead, the wrapper compilers will use "rpath" behavior
-              if it is supported.
-            * Using ``--disable-wrapper-rpath`` will disable *both*
-              "runpath" and "rpath" behavior in the wrapper compilers.
+              preference: explicit "runpath" linker flags will not be
+              added by the wrappers.  However, "rpath" flags may still
+              be added, if the platform supports them.
+            * Using both ``--disable-wrapper-runpath`` *and*
+              ``--disable-wrapper-rpath`` will prevent the wrappers
+              from explicitly adding "runpath" *and* "rpath" linker
+              flags.
 
-  .. important:: Note that the ``--disable-wrapper-runpath`` and
+  .. caution:: Even if the wrapper compilers do not explicitly add
+               "runpath" or "rpath" linker flags, the local compiler,
+               linker, and/or operating system may implicitly enable
+               either "runpath" or "rpath" behavior when linking.
+
+  .. important:: The ``--disable-wrapper-runpath`` and
                  ``--disable-wrapper-rpath`` CLI options *only* affect
                  the flags that the wrapper compilers use when
-                 building MPI/OpenSHMEM applications.  These options
-                 do not affect how Open MPI or OpenSHMEM are built (to
+                 building MPI/SHMEM applications.  These options do
+                 not affect how Open MPI or OpenSHMEM are built (to
                  include the wrapper compilers themselves).
 
                  See the :ref:`Linker "rpath" and "runpath"
@@ -64,8 +74,8 @@ be used with ``configure``:
                  affect the building and linking of Open MPI itself.
 
   When either of "runpath" or "rpath" behaviors are enabled, the
-  wrapper compilers will hard-code the filesystem path location of the
-  Open MPI libraries into the Open MPI/OpenSHMEM application.  The
+  applications will have the filesystem path location of the Open MPI
+  libraries hard-coded into the Open MPI/OpenSHMEM application.  The
   most notable differences between "runpath" and "rpath" behavior are:
 
   * runpath
