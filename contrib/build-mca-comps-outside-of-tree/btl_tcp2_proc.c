@@ -190,7 +190,7 @@ static void evaluate_assignment(int *a) {
     }
 
     /*
-     * check wether current solution beats all previous solutions
+     * check whether current solution beats all previous solutions
      */
     if(assignment_cardinality > max_assignment_cardinality
             || (assignment_cardinality == max_assignment_cardinality
@@ -692,7 +692,7 @@ int mca_btl_tcp2_proc_remove(mca_btl_tcp2_proc_t* btl_proc, mca_btl_base_endpoin
                 OBJ_RELEASE(btl_proc);
                 return OMPI_SUCCESS;
             }
-            /* The endpoint_addr may still be NULL if this enpoint is
+            /* The endpoint_addr may still be NULL if this endpoint is
                being removed early in the wireup sequence (e.g., if it
                is unreachable by all other procs) */
             if (NULL != btl_endpoint->endpoint_addr) {
