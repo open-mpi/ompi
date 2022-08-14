@@ -264,7 +264,7 @@ function do_checksync_mpiperf() {
 }
 
 # $1 - sync filename
-# $2 - verbose mode: on - exit in case synchronization values exceed a treshold and off - silent mode (default: off)
+# $2 - verbose mode: on - exit in case synchronization values exceed a threshold and off - silent mode (default: off)
 # $3+ - application additional options
 function do_checksync() {
   if [ -z "$1" ]; then

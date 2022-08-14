@@ -213,7 +213,7 @@ sub generate_stats {
 
     while (<INPUT>) {
         #generate the gcov file for this particular file
-        #1. Get the directory name and filename seperately
+        #1. Get the directory name and filename separately
         #2. Invoke gcov on the file
         #3. Print the statistic onto a file
 

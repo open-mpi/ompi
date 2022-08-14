@@ -39,7 +39,7 @@ btl_base_warn_peer_error=false
 
 #
 # The following frameworks/components are TESTED
-# They handle faults amd should be prefered when running with FT.
+# They handle faults amd should be preferred when running with FT.
 #   pml     ob1
 #   btl     tcp, self, sm(+xpmem,+cma), ugni, uct
 #   coll    base/basic, tuned, ftagree, libnbc
@@ -49,7 +49,7 @@ threads=pthreads
 #
 # The following frameworks/components are UNTESTED, but **may** work.
 # They should run without faults, and **may** work with faults.
-# You may try and report if successfull.
+# You may try and report if successful.
 #   btl     ofi, portals4, smcuda, usnic, sm(+knem)
 #   coll    inter, sm, sync, cuda, monitoring
 #   pml     monitoring, v/vprotocol
@@ -79,9 +79,9 @@ coll=^hcoll,portals4
 #   mtl     (all)
 #   pml     cm, crcpw, ucx
 mtl=^ofi,portals4,psm2
-# allready enforced by pml=ob1 above
+# already enforced by pml=ob1 above
 #pml=^cm,crcpw,ucx
-# allready enforced by threads=pthreads above
+# already enforced by threads=pthreads above
 #threads=^argobots,qthreads
 # There is a bug in libevent with the "select" backend that causes an infinite loop
 # when an unplanned disconnect happens. Use something else, or bail.
