@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     if (MPI_SUCCESS != rc) {
         MPI_Error_string(rc, estr, &slen);
         fprintf(stderr,
-                "  UNEXPECTED: An error occured during MPI_COMM_SETERRHANDLER(SELF) rc=%d: %s\n",
+                "  UNEXPECTED: An error occurred during MPI_COMM_SETERRHANDLER(SELF) rc=%d: %s\n",
                 rc, estr);
         return rc;
     }
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
     rc = MPI_Finalize();
     if (MPI_SUCCESS != rc) {
         MPI_Error_string(rc, estr, &slen);
-        fprintf(stderr, "  UNEXPECTED: An error occured during MPI_FINALIZE rc=%d: %s\n", rc, estr);
+        fprintf(stderr, "  UNEXPECTED: An error occurred during MPI_FINALIZE rc=%d: %s\n", rc, estr);
         return rc;
     }
 
@@ -202,7 +202,7 @@ int main_child(int argc, char *argv[])
     rc = MPI_Init(&argc, &argv);
     if (MPI_SUCCESS != rc) {
         MPI_Error_string(rc, estr, &slen);
-        fprintf(stderr, "  UNEXPECTED: An error occured during MPI_INIT rc=%d: %s\n", rc, estr);
+        fprintf(stderr, "  UNEXPECTED: An error occurred during MPI_INIT rc=%d: %s\n", rc, estr);
         return rc;
     }
 
@@ -212,7 +212,7 @@ int main_child(int argc, char *argv[])
     if (MPI_SUCCESS != rc) {
         MPI_Error_string(rc, estr, &slen);
         fprintf(stderr,
-                "  UNEXPECTED: An error occured during MPI_COMM_SETERRHANDLER(PARENT) rc=%d: %s\n",
+                "  UNEXPECTED: An error occurred during MPI_COMM_SETERRHANDLER(PARENT) rc=%d: %s\n",
                 rc, estr);
         return rc;
     }

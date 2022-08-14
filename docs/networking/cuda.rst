@@ -235,7 +235,7 @@ GPUs that are the same distance away.  This is dependent on having
    /**
     * Test program to show the use of hwloc to select the GPU closest to the CPU
     * that the MPI program is running on.  Note that this works even without
-    * any libpciacces or libpci support as it keys off the NVIDIA vendor ID.
+    * any libpciaccess or libpci support as it keys off the NVIDIA vendor ID.
     * There may be other ways to implement this but this is one way.
     * January 10, 2014
     */

@@ -984,7 +984,7 @@ sub patch_autotools_output {
         $c =~ s/$search_string/$replace_string/;
 
         # Newer versions of Libtool have the previous patch already. Therefore,
-        # we add the support for convenience libraries separetly
+        # we add the support for convenience libraries separately
         my $search_string = "whole_archive_flag_spec${tag}=" . '\n\s+' .
             "tmp_sharedflag='--shared' ;;" . '\n\s+' .
             'nagfor\052.*# NAGFOR 5.3\n\s+' .
@@ -1344,7 +1344,7 @@ $dnl_line\n\n";
 
 #---------------------------------------------------------------------------
 
-# Verify that we're in the OMPI root directorty by checking for a token file.
+# Verify that we're in the OMPI root directory by checking for a token file.
 
 my_die "Not at the root directory of an OMPI source tree"
     if (! -f "config/opal_mca.m4");

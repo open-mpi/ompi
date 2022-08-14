@@ -644,7 +644,7 @@ end type test_mpi_handle],
     AC_SUBST(OMPI_FC_ABSOLUTE)
     AC_DEFINE_UNQUOTED(OMPI_FC, ["$OMPI_FC"], [Underlying Fortran compiler])
     AC_DEFINE_UNQUOTED(OMPI_FC_ABSOLUTE, ["$OMPI_FC_ABSOLUTE"],
-                       [Absolutey path to the underlying Fortran compiler found by configure])
+                       [Absolute path to the underlying Fortran compiler found by configure])
 
     # These go into ompi/info/param.c
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_BUILD_SIZEOF],

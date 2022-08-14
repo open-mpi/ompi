@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
- *                         reseved.
+ *                         reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$

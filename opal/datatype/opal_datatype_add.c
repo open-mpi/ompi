@@ -250,7 +250,7 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
 
     /* Now that we have the new ub and the alignment we should update the ub to match
      * the new alignment. We have to add an epsilon that is the least nonnegative
-     * increment needed to roung the extent to the next multiple of the alignment.
+     * increment needed to round the extent to the next multiple of the alignment.
      * This rule apply only if there is user specified upper bound as stated in the
      * MPI standard MPI 1.2 page 71.
      */
