@@ -321,7 +321,7 @@ typedef struct mca_base_var_t mca_base_var_t;
 BEGIN_C_DECLS
 
 /**
- * Object declarayion for mca_base_var_t
+ * Object declaration for mca_base_var_t
  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_t);
 

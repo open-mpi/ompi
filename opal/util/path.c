@@ -211,7 +211,7 @@ char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
 }
 
 /**
- *  Forms a complete pathname and checks it for existance and
+ *  Forms a complete pathname and checks it for existence and
  *  permissions
  *
  *  Accepts:

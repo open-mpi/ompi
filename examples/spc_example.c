@@ -69,7 +69,7 @@ int main(int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    /* Determine the MPI_T pvar indices for the OMPI_BYTES_SENT/RECIEVED_USER SPCs */
+    /* Determine the MPI_T pvar indices for the OMPI_BYTES_SENT/RECEIVED_USER SPCs */
     index = -1;
     MPI_T_pvar_get_num(&num);
     for(i = 0; i < num; i++) {
