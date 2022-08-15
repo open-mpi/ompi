@@ -14,6 +14,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -399,7 +400,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
 
         tmp2 = NULL;
         asprintf(&pfx3, "%s\t\t", pfx2);
-        opal_dss.print(&tmp2, pfx3, src->topology, OPAL_HWLOC_TOPO);
+        opal_dss.print(&tmp2, pfx3, src->topology->topo, OPAL_HWLOC_TOPO);
         free(pfx3);
         asprintf(&tmp3, "%s%s", tmp, tmp2);
         free(tmp);
