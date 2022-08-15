@@ -1,11 +1,7 @@
 name: GitHub Action CI
 
-# We're using pull_request_target here instead of just pull_request so that the
-# action runs in the context of the base of the pull request, rather than in the
-# context of the merge commit. For more detail about the differences, see:
-# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
 on:
-    pull_request_target:
+    pull_request:
         # We don't need this to be run on all types of PR behavior
         # See https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
         types:
@@ -36,4 +32,3 @@ jobs:
             run: $GITHUB_WORKSPACE/.github/workflows/git-commit-checks.py
             env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                PR_NUM: ${{ github.event.number }}
