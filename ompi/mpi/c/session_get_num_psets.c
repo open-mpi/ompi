@@ -31,12 +31,14 @@ int MPI_Session_get_num_psets (MPI_Session session, MPI_Info info, int *npset_na
     int rc;
 
     if ( MPI_PARAM_CHECK ) {
-        if (NULL == session || NULL == npset_names) {
+        if (ompi_instance_invalid(session)) {
             if (NULL != session) {
-                return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG, FUNC_NAME);
+                return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_SESSION, FUNC_NAME);
             } else {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_SESSION, FUNC_NAME);
             }
+        } else if (NULL == npset_names) {
+            return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
