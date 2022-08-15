@@ -1,5 +1,5 @@
 .. _shmem_longlong_put:
- 
+
 shmem_longlong_put
 ==================
     .. include_body

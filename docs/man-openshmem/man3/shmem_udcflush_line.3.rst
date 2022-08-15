@@ -1,5 +1,5 @@
 .. _shmem_udcflush_line:
- 
+
 shmem_udcflush_line
 ===================
     .. include_body

@@ -1,5 +1,5 @@
 .. _shmem_get16_nbi:
- 
+
 shmem_get16_nbi
 ===============
     .. include_body

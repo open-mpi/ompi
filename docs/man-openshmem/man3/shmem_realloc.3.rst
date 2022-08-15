@@ -1,5 +1,5 @@
 .. _shmem_realloc:
- 
+
 shmem_realloc
 =============
     .. include_body

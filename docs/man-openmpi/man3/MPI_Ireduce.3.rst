@@ -1,5 +1,5 @@
 .. _mpi_ireduce:
- 
+
 MPI_Ireduce
 ===========
     .. include_body

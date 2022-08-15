@@ -1,5 +1,5 @@
 .. _shmem_iput128:
- 
+
 shmem_iput128
 =============
     .. include_body

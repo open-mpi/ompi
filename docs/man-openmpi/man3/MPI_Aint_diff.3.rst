@@ -1,5 +1,5 @@
 .. _mpi_aint_diff:
- 
+
 MPI_Aint_diff
 =============
     .. include_body

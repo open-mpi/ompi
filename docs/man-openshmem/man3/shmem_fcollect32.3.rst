@@ -1,5 +1,5 @@
 .. _shmem_fcollect32:
- 
+
 shmem_fcollect32
 ================
     .. include_body

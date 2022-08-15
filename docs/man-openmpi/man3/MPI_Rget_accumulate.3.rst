@@ -1,5 +1,5 @@
 .. _mpi_rget_accumulate:
- 
+
 MPI_Rget_accumulate
 ===================
     .. include_body

@@ -1,5 +1,5 @@
 .. _mpi_type_create_hindexed:
- 
+
 MPI_Type_create_hindexed
 ========================
     .. include_body

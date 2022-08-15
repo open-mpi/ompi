@@ -1,5 +1,5 @@
 .. _shmem_int_wait:
- 
+
 shmem_int_wait
 ==============
     .. include_body

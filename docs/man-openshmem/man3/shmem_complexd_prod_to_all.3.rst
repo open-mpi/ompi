@@ -1,5 +1,5 @@
 .. _shmem_complexd_prod_to_all:
- 
+
 shmem_complexd_prod_to_all
 ==========================
     .. include_body

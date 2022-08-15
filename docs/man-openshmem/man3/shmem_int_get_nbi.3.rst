@@ -1,5 +1,5 @@
 .. _shmem_int_get_nbi:
- 
+
 shmem_int_get_nbi
 =================
     .. include_body

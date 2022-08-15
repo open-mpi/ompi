@@ -1,5 +1,5 @@
 .. _mpi_status_c2f:
- 
+
 MPI_Status_c2f
 ==============
     .. include_body

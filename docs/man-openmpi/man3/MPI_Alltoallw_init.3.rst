@@ -1,5 +1,5 @@
 .. _mpi_alltoallw_init:
- 
+
 MPI_Alltoallw_init
 ==================
     .. include_body
