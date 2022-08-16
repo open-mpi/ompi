@@ -1062,21 +1062,18 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
 
     CHECK_DYNAMIC_WIN(remote_addr, module, target, ret, true);
 
-    OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    assert(NULL != ucx_req);
-
     ret = ompi_osc_ucx_put(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
     if (ret != OMPI_SUCCESS) {
-        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
+
+    OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
 
     mca_osc_ucx_component.num_incomplete_req_ops++;
     ret = opal_common_ucx_wpmem_flush_ep_nb(mem, target, req_completion, ucx_req);
 
     if (ret != OMPI_SUCCESS) {
-
         /* fallback to using an atomic op to acquire a request handle */
         ret = opal_common_ucx_wpmem_fence(mem);
         if (ret != OMPI_SUCCESS) {
@@ -1118,21 +1115,18 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
 
     CHECK_DYNAMIC_WIN(remote_addr, module, target, ret, true);
 
-    OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
-    assert(NULL != ucx_req);
-
     ret = ompi_osc_ucx_get(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
     if (ret != OMPI_SUCCESS) {
-        OMPI_OSC_UCX_REQUEST_RETURN(ucx_req);
         return ret;
     }
+
+    OMPI_OSC_UCX_REQUEST_ALLOC(win, ucx_req);
 
     mca_osc_ucx_component.num_incomplete_req_ops++;
     ret = opal_common_ucx_wpmem_flush_ep_nb(mem, target, req_completion, ucx_req);
 
     if (ret != OMPI_SUCCESS) {
-
         /* fallback to using an atomic op to acquire a request handle */
         ret = opal_common_ucx_wpmem_fence(mem);
         if (ret != OMPI_SUCCESS) {
