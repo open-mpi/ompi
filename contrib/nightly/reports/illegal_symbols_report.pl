@@ -300,7 +300,7 @@ my $bad_compsymbols = check_comps(@comps);
 if ($$bad_compsymbols || $$bad_libsymbols) {
 
     open MAIL, "|$mail -s \"$subject\" \"$email_arg\"" ||
-        die "Could ot open pipe to output e-mail\n";
+        die "Could not open pipe to output e-mail\n";
     print MAIL "Found global symbols with missing or illegal prefixes\n\n";
 
     if ($$bad_compsymbols) {

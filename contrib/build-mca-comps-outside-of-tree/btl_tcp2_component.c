@@ -740,7 +740,7 @@ static int mca_btl_tcp2_component_create_listen(uint16_t af_family)
         return OMPI_ERROR;
     }
   socket_binded:
-    /* resolve system assignend port */
+    /* resolve system assigned port */
     if(getsockname(sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         BTL_ERROR(("getsockname() failed: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));

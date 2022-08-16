@@ -21,8 +21,8 @@ dnl
 #    - LAM (synonym for 'cr' currently)
 #    - cr
 #  /* General FT sections */
-#  #if OPAL_ENABLE_FT == 0 /* FT Disabled globaly */
-#  #if OPAL_ENABLE_FT == 1 /* FT Enabled globaly */
+#  #if OPAL_ENABLE_FT == 0 /* FT Disabled globally */
+#  #if OPAL_ENABLE_FT == 1 /* FT Enabled globally */
 #  /* ULFM Specific sections */
 #  #if OPAL_ENABLE_FT_MPI == 0 /* FT ULFM Disabled */
 #  #if OPAL_ENABLE_FT_MPI == 1 /* FT ULFM Enabled */

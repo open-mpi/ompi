@@ -56,7 +56,7 @@
 # This specfile expects to find all required 3rd party packages
 # (Libevent, Hwloc, PMIx, PRRTE) externally, and will not use the
 # internal/embedded copies of these packages.  This behavior is
-# strongly recomended for packagers.  However, if you want to override
+# strongly recommended for packagers.  However, if you want to override
 # this behavior, change the definition below to 0.
 #
 # NOTE: This option will cause "--with-libevent=external
@@ -105,7 +105,7 @@
 %{!?mpi_selector_rpm_name: %define mpi_selector_rpm_name mpi-selector}
 # The location of the mpi-selector executable (can be a relative path
 # name if "mpi-selector" can be found in the path)
-# type: string (path to mpi-selector exectuable)
+# type: string (path to mpi-selector executable)
 %{!?mpi_selector: %define mpi_selector mpi-selector}
 
 # Should we build a debuginfo RPM or not?
@@ -159,7 +159,7 @@
 %global _binary_filedigest_algorithm 1
 %global _source_filedigest_algorithm 1
 
-# Define this to 1 if you want to keep libtool achive files
+# Define this to 1 if you want to keep libtool archive files
 # Default is 0 (remove *.la files)
 # type: bool (0/1)
 %{!?install_libtool_archive: %define install_libtool_archive 0}
@@ -398,7 +398,7 @@ This subpackage provides the documentation for Open MPI/OpenSHMEM.
 
 #############################################################################
 #
-# Prepatory Section
+# Preparatory Section
 #
 #############################################################################
 %prep
@@ -539,7 +539,7 @@ proc ModulesHelp { } {
    puts stderr "This module adds Open MPI/SHMEM v%{version} to various paths"
 }
 
-module-whatis   "Sets up Open MPI/SHMEM v%{version} in your enviornment"
+module-whatis   "Sets up Open MPI/SHMEM v%{version} in your environment"
 
 prepend-path PATH "%{_prefix}/bin/"
 prepend-path LD_LIBRARY_PATH %{_libdir}
@@ -722,7 +722,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if !%{sysconfdir_in_prefix}
 %{_sysconfdir}
 %endif
-# If install_in_opt, then we're instaling OMPI to
+# If install_in_opt, then we're installing OMPI to
 # /opt/openmpi/<version>.  But be sure to also explicitly mention
 # /opt/openmpi so that it can be removed by RPM when everything under
 # there is also removed.
@@ -761,7 +761,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %endif
 %endif
 
-# If install_in_opt, then we're instaling OMPI to
+# If install_in_opt, then we're installing OMPI to
 # /opt/openmpi/<version>.  But be sure to also explicitly mention
 # /opt/openmpi so that it can be removed by RPM when everything under
 # there is also removed.  Also list /opt/openmpi/<version>/share so
@@ -871,11 +871,11 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
 * Tue Sep  8 2009 Jeff Squyres <jsquyres@cisco.com>
 - Change shell_scripts_basename to not include version number to
-  accomodate what mpi-selector expects.
+  accommodate what mpi-selector expects.
 
 * Mon Feb  4 2008 Jeff Squyres <jsquyres@cisco.com>
 - OFED 1.3 has a much better installer; remove all the
-  leave_build_root kludge nastyness.  W00t!
+  leave_build_root kludge nastiness.  W00t!
 
 * Fri Jan 18 2008 Jeff Squyres <jsquyres@cisco.com>
 - Remove the hard-coded "openmpi" name from two Requires statements
@@ -918,7 +918,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
   shell script files be %{_bindir}/mpivars.{sh|csh}
 - Add %{munge_build_into_install} option for OFED 1.2 installer on SLES
 - Change shell script files and modulefile to *pre*pend all the OMPI paths
-- Make shell script and modulefile installation indepdendent of
+- Make shell script and modulefile installation independent of
   %{install_in_opt} (they're really separate issues)
 - Add more "ofed" shortcut qualifiers
 - Slightly better test for basename CC in the fortify source section

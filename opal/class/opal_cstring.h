@@ -60,7 +60,7 @@
  * The string is eventually free'd by calling \c OBJ_RELEASE on it.
  *
  * If allocated using \c OBJ_NEW the object will contain an empty string.
- * The member field \c _ignored is used to force the existance of padding bytes
+ * The member field \c _ignored is used to force the existence of padding bytes
  * that can be used to write the null-terminator even if no additional memory
  * was allocated succeeding the object itself and is ignored.
  */

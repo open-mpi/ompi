@@ -37,7 +37,7 @@ function del_header()
 
 #
 # In Subdirectory DIR, search for headers provided in array SEARCH_HEADER
-# SEARCH_HEADER must initilized with a[0]="header_file.h  typdefs  macros  functions"
+# SEARCH_HEADER must be initialized with a[0]="header_file.h  typdefs  macros  functions"
 #
 # If any of the typedefs, macros or functions show up, then
 # including the header is valid required, otherwise del_header
@@ -232,7 +232,7 @@ echo "# for i in *.c ; do grep -q '#include \"ompi/runtime/params.h\"' $$i || ad
 
 
 # Finally erase a header that has been introduced for the STCI replacement
-# and is not necessary, if no occurences of #include "orte..."  reside...
+# and is not necessary, if no occurrences of #include "orte..."  reside...
 SEARCH_HEADER[0]="rte.h orte"
 SEARCH_HEADER[1]=""
 

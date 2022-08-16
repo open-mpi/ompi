@@ -309,7 +309,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_src(
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
- * convertor. If the convertor references data that is contigous,
+ * convertor. If the convertor references data that is contiguous,
  * the descriptor may simply point to the user buffer. Otherwise,
  * this routine is responsible for allocating buffer space and
  * packing if required.
@@ -359,7 +359,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_dst(
  *
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transfered
+ * @param descriptor (IN)  Description of the data to be transferred
  * @param tag (IN)         The tag value used to notify the peer.
  */
 

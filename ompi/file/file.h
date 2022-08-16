@@ -157,7 +157,7 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
                    ompi_file_t **fh);
 
 /**
- * Atomicly set a name on a file handle.
+ * Atomically set a name on a file handle.
  *
  * @param file MPI_File handle to set the name on
  * @param name NULL-terminated string to use

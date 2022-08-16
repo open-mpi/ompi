@@ -8,7 +8,7 @@
 
 #
 # External script parameters
-# The folowing parameters could be used to affect script behaviour.
+# The following parameters could be used to affect script behaviour.
 # Please, do NOT set the same settings with parameters and config vars.
 #
 # -b
@@ -21,7 +21,7 @@
 #    This option will change the name of the produced RPM to the "name".
 #    It is useful to use with "-o" and "-m" options if you want to have
 #    multiple Open MPI versions installed simultaneously in the same
-#    enviroment. Requires use of option "-b".
+#    environment. Requires use of option "-b".
 #
 # -o
 #    With this option the install path of the binary RPM will be changed
@@ -59,7 +59,7 @@
 #    the script will look for the specfile in the current directory.
 #
 # -R directory
-#    Specifies the top level RPM build direcotry.
+#    Specifies the top level RPM build directory.
 #
 # -h
 #    Prints script usage information.
@@ -149,7 +149,7 @@ usage="Usage: $0 [-b][-o][-m][-d][-u][-s][-h] [-n name][-f lf_location][-t tm_lo
              add custom RPM build parameter
 
   -R directory
-             Specifies the top level RPM build direcotry.
+             Specifies the top level RPM build directory.
 
   -h         print this message and exit
 
