@@ -3,7 +3,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2020      Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
@@ -20,6 +20,9 @@
 
 #include "opal/util/proc.h"
 #include "opal/memoryhooks/memory.h"
+
+#include <rdma/fabric.h>
+#include <rdma/fi_cm.h>
 
 BEGIN_C_DECLS
 
@@ -150,6 +153,23 @@ OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
  */
 OPAL_DECLSPEC struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
                                                                   opal_process_info_t *process_info);
+
+/**
+ * Obtain EP endpoint name
+ *
+ * Obtain the EP endpoint name and length for the supplied endpoint fid.
+ *
+ * @param fid (IN)     fid of (S)EP endpoint
+ * @param addr (OUT)   buffer containing endpoint name 
+ * @param addrlen (OUT) length of allocated buffer in bytes
+ *
+ * @return             OPAL_SUCCESS or OPAL error code
+ *
+ * The caller is responsible for freeing the buffer allocated to
+ * contain the endpoint name.
+ *
+ */
+OPAL_DECLSPEC int opal_common_ofi_fi_getname(fid_t fid, void **addr, size_t *addrlen);
 
 END_C_DECLS
 
