@@ -294,7 +294,7 @@ static inline int opal_common_ucx_wait_request_mt(ucs_status_ptr_t request, cons
                 break;
             }
             ctr--;
-        } while (ctr > 0 && ret > 0 && status == UCS_INPROGRESS);
+        } while (ctr > 0 && ret == 0 && status == UCS_INPROGRESS);
         opal_mutex_unlock(&winfo->mutex);
         if (!ctr) {
             opal_progress();
