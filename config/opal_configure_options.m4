@@ -523,7 +523,7 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(info_val,        256,  32, 1024)
 # Min length according to _POSIX_HOST_NAME_MAX=255 (4*HOST_NAME_MAX)
 OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name,      1024, 255, 2048)
 
-# Min length accroding to MPI-2.1, p. 418
+# Min length according to MPI-2.1, p. 418
 OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
 
 OPAL_WITH_OPTION_MIN_MAX_VALUE(pset_name_len,  512,  512, 4096)

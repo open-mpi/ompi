@@ -30,7 +30,7 @@ dnl Check for / configure PRRTE package.  Prefer finding an external
 dnl PRRTE, build our internal one if required.  If we can not find an
 dnl external PRRTE and the internal one fails to configure, abort.
 dnl
-dnl This macro wil change the environment in the following way:
+dnl This macro will change the environment in the following way:
 dnl
 dnl A Makefile conditional OMPI_WANT_PRRTE will be defined based on the
 dnl results of the build.
@@ -62,7 +62,7 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
                                            [prrte_setup_internal_happy=0])])
 
          # if we have a pmix package and configure did not complete
-         # successfullly (or wasn't started), then disable make dist.
+         # successfully (or wasn't started), then disable make dist.
          AS_IF([test $prrte_setup_internal_happy != 1],
                [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE PRRTE"])])
 

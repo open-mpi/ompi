@@ -492,7 +492,7 @@ dnl #######################################################################
 # variable, it is appended to variable.
 #
 # If an argument in new_argument begins with a -l and is already in
-# variable, the existing occurances of the argument are removed from
+# variable, the existing occurrences of the argument are removed from
 # variable and the argument is appended to variable.  This behavior
 # is most useful in LIBS, where ordering matters and being rightmost
 # is usually the right behavior.
@@ -553,7 +553,7 @@ AC_DEFUN([OPAL_WHICH],[
     # executable, return the absolute path of that value in $2.
     # Otherwise, $2 is unchanged.
 
-    # 3. opal_prog contains no /.  Search the PATH for an excutable
+    # 3. opal_prog contains no /.  Search the PATH for an executable
     # with the appropriate name.  If found, return the absolute path
     # in $2.  Otherwise, $2 is unchanged.
 
