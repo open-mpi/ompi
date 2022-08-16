@@ -1,5 +1,5 @@
 .. _shmem_put64:
- 
+
 shmem_put64
 ===========
     .. include_body

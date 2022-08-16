@@ -1,5 +1,5 @@
 .. _shmem_short_get_nbi:
- 
+
 shmem_short_get_nbi
 ===================
     .. include_body

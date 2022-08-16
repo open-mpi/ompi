@@ -1,5 +1,5 @@
 .. _shmem_float_swap:
- 
+
 shmem_float_swap
 ================
     .. include_body

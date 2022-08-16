@@ -1,5 +1,5 @@
 .. _mpi_win_detach:
- 
+
 MPI_Win_detach
 ==============
     .. include_body

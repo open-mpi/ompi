@@ -1,5 +1,5 @@
 .. _mpi_ibarrier:
- 
+
 MPI_Ibarrier
 ============
     .. include_body

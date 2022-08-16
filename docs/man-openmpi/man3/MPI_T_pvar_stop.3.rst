@@ -1,5 +1,5 @@
 .. _mpi_t_pvar_stop:
- 
+
 MPI_T_pvar_stop
 ===============
     .. include_body

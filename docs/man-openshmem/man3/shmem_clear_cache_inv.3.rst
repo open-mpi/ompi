@@ -1,5 +1,5 @@
 .. _shmem_clear_cache_inv:
- 
+
 shmem_clear_cache_inv
 =====================
     .. include_body

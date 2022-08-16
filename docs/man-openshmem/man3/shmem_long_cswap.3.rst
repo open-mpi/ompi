@@ -1,5 +1,5 @@
 .. _shmem_long_cswap:
- 
+
 shmem_long_cswap
 ================
     .. include_body

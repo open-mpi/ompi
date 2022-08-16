@@ -1,5 +1,5 @@
 .. _shmem_double_fetch:
- 
+
 shmem_double_fetch
 ==================
     .. include_body

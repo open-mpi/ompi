@@ -1,5 +1,5 @@
 .. _shmem_iput32:
- 
+
 shmem_iput32
 ============
     .. include_body

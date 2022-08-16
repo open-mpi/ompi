@@ -1,5 +1,5 @@
 .. _mpi_iexscan:
- 
+
 MPI_Iexscan
 ===========
     .. include_body

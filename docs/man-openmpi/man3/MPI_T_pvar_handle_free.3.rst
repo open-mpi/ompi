@@ -1,5 +1,5 @@
 .. _mpi_t_pvar_handle_free:
- 
+
 MPI_T_pvar_handle_free
 ======================
     .. include_body

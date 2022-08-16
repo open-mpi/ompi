@@ -1,5 +1,5 @@
 .. _mpi_group_f2c:
- 
+
 MPI_Group_f2c
 =============
     .. include_body

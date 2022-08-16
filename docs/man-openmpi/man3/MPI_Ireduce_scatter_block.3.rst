@@ -1,5 +1,5 @@
 .. _mpi_ireduce_scatter_block:
- 
+
 MPI_Ireduce_scatter_block
 =========================
     .. include_body

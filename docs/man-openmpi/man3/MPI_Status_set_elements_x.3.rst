@@ -1,5 +1,5 @@
 .. _mpi_status_set_elements_x:
- 
+
 MPI_Status_set_elements_x
 =========================
     .. include_body

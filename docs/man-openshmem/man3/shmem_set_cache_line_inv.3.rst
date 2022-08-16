@@ -1,5 +1,5 @@
 .. _shmem_set_cache_line_inv:
- 
+
 shmem_set_cache_line_inv
 ========================
     .. include_body

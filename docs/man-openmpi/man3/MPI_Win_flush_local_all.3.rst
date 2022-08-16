@@ -1,5 +1,5 @@
 .. _mpi_win_flush_local_all:
- 
+
 MPI_Win_flush_local_all
 =======================
     .. include_body

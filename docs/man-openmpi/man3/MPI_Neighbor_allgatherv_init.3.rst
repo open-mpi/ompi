@@ -1,5 +1,5 @@
 .. _mpi_neighbor_allgatherv_init:
- 
+
 MPI_Neighbor_allgatherv_init
 ============================
     .. include_body

@@ -1,5 +1,5 @@
 .. _shmem_float_max_to_all:
- 
+
 shmem_float_max_to_all
 ======================
     .. include_body

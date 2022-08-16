@@ -1,5 +1,5 @@
 .. _mpi_barrier_init:
- 
+
 MPI_Barrier_init
 ================
     .. include_body
