@@ -1285,7 +1285,7 @@ static int ompi_instance_get_pmix_pset_size (ompi_instance_t *instance, const ch
         OPAL_PMIX_CONVERT_NAME(&p, &name);
         rc = PMIx_Get(&p, PMIX_PSET_NAME, NULL, 0, &pval);
         if (OPAL_UNLIKELY(PMIX_SUCCESS != rc)) {
-            return rc;
+            return opal_pmix_convert_status(rc);
         }
 
         PMIX_VALUE_UNLOAD(rc,
@@ -1296,6 +1296,7 @@ static int ompi_instance_get_pmix_pset_size (ompi_instance_t *instance, const ch
         size += (0 == strcmp (pset_name, stmp));
         PMIX_VALUE_RELEASE(pval);
         free(stmp);
+        stmp = NULL;
 
         ++size;
     }
@@ -1336,7 +1337,7 @@ int ompi_instance_get_pset_info (ompi_instance_t *instance, const char *pset_nam
     ompi_info_t *info = ompi_info_allocate ();
     char tmp[16];
     size_t size = 0UL;
-    int ret;
+    int ret = OMPI_SUCCESS ;
 
     *info_used = (opal_info_t *) MPI_INFO_NULL;
 
@@ -1346,25 +1347,31 @@ int ompi_instance_get_pset_info (ompi_instance_t *instance, const char *pset_nam
 
     if (0 == strncmp (pset_name, "mpi://", 6)) {
         pset_name += 6;
-        if (0 == strcmp (pset_name, "world")) {
+        if (0 == strcasecmp (pset_name, "WORLD")) {
             size = ompi_process_info.num_procs;
-        } else if (0 == strcmp (pset_name, "self")) {
+        } else if (0 == strcasecmp (pset_name, "SELF")) {
             size = 1;
-        } else if (0 == strcmp (pset_name, "shared")) {
+        } 
+    } else if (0 == strncmp (pset_name, "mpix://", 7)) {
+        pset_name += 7;
+        if (0 == strcasecmp (pset_name, "SHARED")) {
             size = ompi_process_info.num_local_peers + 1;
         }
     } else {
-        ompi_instance_get_pmix_pset_size (instance, pset_name, &size);
+        ret = ompi_instance_get_pmix_pset_size (instance, pset_name, &size);
     }
 
-    snprintf (tmp, 16, "%" PRIsize_t, size);
-    ret = opal_info_set (&info->super, MPI_INFO_KEY_SESSION_PSET_SIZE, tmp);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+    if (OMPI_SUCCESS == ret) {
+        snprintf (tmp, 16, "%" PRIsize_t, size);
+        ret = opal_info_set (&info->super, MPI_INFO_KEY_SESSION_PSET_SIZE, tmp);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+            ompi_info_free (&info);
+            return ret;
+        }
+        *info_used = &info->super;
+    } else { 
         ompi_info_free (&info);
-        return ret;
     }
 
-    *info_used = &info->super;
-
-    return OMPI_SUCCESS;
+    return ret;
 }

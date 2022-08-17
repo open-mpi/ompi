@@ -31,12 +31,14 @@ int MPI_Session_get_nth_pset (MPI_Session session, MPI_Info info, int n, int *le
     int rc = MPI_SUCCESS;
 
     if ( MPI_PARAM_CHECK ) {
-        if (NULL == session || (NULL == pset_name && *len > 0) || n < 0) {
+        if (ompi_instance_invalid(session)) {
             if (NULL != session) {
-                return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG, FUNC_NAME);
+                return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_SESSION, FUNC_NAME);
             } else {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_SESSION, FUNC_NAME);
             }
+        } else if ((NULL == pset_name && *len > 0) || n < 0) {
+            return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG, FUNC_NAME);
         }
     }
 
