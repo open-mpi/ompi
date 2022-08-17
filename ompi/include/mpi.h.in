@@ -199,6 +199,12 @@
 #undef OMPI_MINOR_VERSION
 #undef OMPI_RELEASE_VERSION
 
+/*
+ * MPI version
+ */
+#undef MPI_VERSION
+#undef MPI_SUBVERSION
+
 /* A  type that allows us to have sentinel type values that are still
    valid */
 #undef ompi_fortran_bogus_type_t
@@ -248,12 +254,6 @@
  * Just in case you need it.  :-)
  */
 #define OPEN_MPI 1
-
-/*
- * MPI version
- */
-#define MPI_VERSION 3
-#define MPI_SUBVERSION 1
 
 
 /*

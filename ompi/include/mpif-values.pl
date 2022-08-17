@@ -70,6 +70,30 @@ sub write_file {
 
 #----------------------------------------------------------------------------
 
+# Read a value for a specified key from the file specified.
+
+sub read_value_from_file {
+    my ($filename, $key) = @_;
+    my $value;
+
+    open(FILE_IN, $filename) || die "Couldn't open $filename";
+    while(my $line = <FILE_IN>) {
+        if( $line =~ /^$key=(.+)/ ) {
+            $value = $1;
+            last;
+        }
+    }
+    close(FILE_IN);
+
+    if(!defined($value)) {
+        die "Did not find the string \"$key\" in the file $filename"
+    }
+
+    return $value;
+}
+
+#----------------------------------------------------------------------------
+
 print "creating Fortran header files (with common constants)...\n";
 
 # Find the OMPI topdir.  It is likely the pwd.
@@ -215,8 +239,8 @@ $io_handles->{MPI_FILE_NULL} = 0;
 
 my $constants;
 
-$constants->{MPI_VERSION} = 3;
-$constants->{MPI_SUBVERSION} = 1;
+$constants->{MPI_VERSION} = read_value_from_file("$topdir/VERSION", "mpi_standard_version");
+$constants->{MPI_SUBVERSION} = read_value_from_file("$topdir/VERSION", "mpi_standard_subversion");
 
 $constants->{MPI_ANY_SOURCE} = -1;
 $constants->{MPI_ANY_TAG} = -1;

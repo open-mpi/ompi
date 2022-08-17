@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -61,4 +62,23 @@ AC_DEFUN([OPAL_SAVE_VERSION], [
         [Release date of ]$2)
 
     AC_CONFIG_FILES([$4])
+])dnl
+
+# OPAL_SAVE_MPI_STANDARD_VERSION(version_file)
+# ----------------------------------------------
+# creates version information for project from version_file, using
+# OPAL_GET_MPI_STANDARD_VERSION().
+AC_DEFUN([OPAL_SAVE_MPI_STANDARD_VERSION], [
+    OPAL_GET_MPI_STANDARD_VERSION([$1])
+
+    AC_SUBST([MPI_VERSION])
+    AC_SUBST([MPI_SUBVERSION])
+
+    AC_DEFINE_UNQUOTED([MPI_VERSION], [$MPI_VERSION],
+                       [MPI Standard Major version number])
+    AC_DEFINE_UNQUOTED([MPI_SUBVERSION], [$MPI_SUBVERSION],
+                       [MPI Standard Minor version number])
+
+    AC_MSG_CHECKING([MPI Standard version])
+    AC_MSG_RESULT([$MPI_VERSION.$MPI_SUBVERSION])
 ])dnl
