@@ -22,7 +22,7 @@
 # Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2014-2022 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
+# Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -141,7 +141,8 @@ opal_show_subtitle "Checking versions"
 
 m4_ifdef([project_ompi],
          [OPAL_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION],
-                            [ompi/include/ompi/version.h])])
+                            [ompi/include/ompi/version.h])
+          OPAL_SAVE_MPI_STANDARD_VERSION([$srcdir/VERSION])])
 
 m4_ifdef([project_oshmem],
          [OPAL_SAVE_VERSION([OSHMEM], [Open SHMEM],
