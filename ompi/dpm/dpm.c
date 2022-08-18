@@ -2038,7 +2038,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
     opal_asprintf(&tmp, "%d", death_pipe[0]);
     opal_argv_append_nosize(&args, tmp);
     free(tmp);
-    opal_argv_append_nosize(&args, "&");
+    opal_argv_append_nosize(&args, "--daemonize");
 
     /* Fork off the child */
     pid = fork();
