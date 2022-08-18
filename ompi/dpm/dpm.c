@@ -23,6 +23,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2032,7 +2033,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
     opal_asprintf(&tmp, "%d", death_pipe[0]);
     opal_argv_append_nosize(&args, tmp);
     free(tmp);
-    opal_argv_append_nosize(&args, "&");
+    opal_argv_append_nosize(&args, "--daemonize");
 
     /* Fork off the child */
     pid = fork();
