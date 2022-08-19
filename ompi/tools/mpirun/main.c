@@ -2,7 +2,7 @@
  *                                                                         *
  *          Open MPI: Open Source High Performance Computing               *
  *                                                                         *
- *                   http://www.open-mpi.org/                              *
+ *                   https://www.open-mpi.org/                             *
  *                                                                         *
  ***************************************************************************/
 #include "ompi_config.h"

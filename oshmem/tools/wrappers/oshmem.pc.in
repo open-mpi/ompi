@@ -6,7 +6,7 @@
 Name: Open SHMEM
 Description: Open MPI based Open SHMEM implementation
 Version: @OSHMEM_VERSION@
-URL: http://www.open-mpi.org/
+URL: https://www.open-mpi.org/
 #
 prefix=@prefix@
 exec_prefix=@exec_prefix@
