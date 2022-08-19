@@ -32,7 +32,9 @@
 static char *find_prterun(void)
 {
     char *filename = NULL;
+#if !OMPI_USING_INTERNAL_PRRTE
     char *prrte_prefix = NULL;
+#endif
 
     /* 1) Did the user tell us exactly where to find prterun? */
     filename = getenv("OMPI_PRTERUN");
@@ -144,7 +146,7 @@ int main(int argc, char *argv[])
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2020-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
