@@ -1,6 +1,6 @@
 ! -*- fortran -*-
 !
-! Copyright (c) 2020      Research Organization for Information Science
+! Copyright (c) 2020-2022 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
@@ -31,8 +31,8 @@
 #define MPI_Alltoallw_init PMPI_Alltoallw_init
 #define MPI_Barrier PMPI_Barrier
 #define MPI_Barrier_init PMPI_Barrier_init
-#define MPI_Bcast PPMPI_Bcast
-#define MPI_Bcast_init PPMPI_Bcast_init
+#define MPI_Bcast PMPI_Bcast
+#define MPI_Bcast_init PMPI_Bcast_init
 #define MPI_Bsend PMPI_Bsend
 #define MPI_Bsend_init PMPI_Bsend_init
 #define MPI_Buffer_attach PMPI_Buffer_attach
