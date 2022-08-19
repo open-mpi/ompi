@@ -204,7 +204,15 @@ public final class MPI
 
 	static
 	{
-		System.loadLibrary("mpi_java");
+		try
+		{
+			System.loadLibrary("mpi_java") ;
+		}
+		catch (UnsatisfiedLinkError e)
+		{
+			System.err.println("mpi java lib failed to load: " + e  + "\n") ;
+			System.exit(1) ;
+		}
 
 		DATATYPE_NULL = new Datatype();
 
