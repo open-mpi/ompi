@@ -112,6 +112,14 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    /*
+     * set environment variable for our install location
+     * used within the OMPI prrte schizo component
+     */
+
+    setenv("OMPI_LIBDIR_LOC", opal_install_dirs.libdir, 1);
+
+
     /* calling mpirun (and now prterun) with a full path has a special
      * meaning in terms of -prefix behavior, so copy that behavior
      * into prterun */
@@ -147,6 +155,9 @@ int main(int argc, char *argv[])
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
+
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
