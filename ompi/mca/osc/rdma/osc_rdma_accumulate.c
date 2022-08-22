@@ -306,7 +306,8 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
     if (NULL != result_convertor) {
         /* result buffer is not necessarily contiguous. use the opal datatype engine to
          * copy the data over in this case */
-        struct iovec iov = {.iov_base = result_start, .iov_len = request->len};
+        size_t len = count * dt_size;
+        struct iovec iov = {.iov_base = result_start, .iov_len = len};
         uint32_t iov_count = 1;
         size_t size = request->len;
 
