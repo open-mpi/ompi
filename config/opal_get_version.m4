@@ -14,6 +14,7 @@ dnl Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl Copyright (c) 2014-2020 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
+dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -97,5 +98,29 @@ m4_define([OPAL_GET_VERSION],[
 
         m4_ifdef([AC_MSG_RESULT],
                  [AC_MSG_RESULT([$$2_REPO_REV])])
+    fi
+])
+
+# OPAL_GET_MPI_STANDARD_VERSION(version_file)
+# -----------------------------------------------
+# parse version_file for MPI Standard version information, setting
+# the following shell variables:
+#
+#  MPI_VERSION
+#  MPI_SUBVERSION
+m4_define([OPAL_GET_MPI_STANDARD_VERSION],[
+    dnl quote eval to suppress macro expansion with non-GNU m4
+    if test -f "$1"; then
+        srcdir=`dirname $1`
+        mpi_standard_vers=`sed -n "
+        t clear
+        : clear
+        s/^mpi_standard_version/MPI_VERSION/
+        s/^mpi_standard_subversion/MPI_SUBVERSION/
+        t print
+        b
+        : print
+        p" < "$1"`
+        [eval] "$mpi_standard_vers"
     fi
 ])
