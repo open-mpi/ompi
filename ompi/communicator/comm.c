@@ -868,7 +868,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     ompi_communicator_t *newcomp = MPI_COMM_NULL;
     int my_size, my_rsize = 0, mode, inter;
     int *lranks = NULL, *rranks = NULL;
-    int global_split_type, global_orig_split_type, ok, tmp[6];
+    int global_split_type, global_orig_split_type, ok[2], tmp[6];
     int rc;
     int orig_split_type = split_type;
 
@@ -941,11 +941,12 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     global_orig_split_type = tmp[0];
     global_split_type = tmp[4];
 
-    if (tmp[0] != -tmp[1] || inter) {
+    if (tmp[0] != -tmp[1] || tmp[4] != -tmp[5] || inter) {
         /* at least one rank supplied a different split type check if our split_type is ok */
-        ok = (MPI_UNDEFINED == orig_split_type) || global_orig_split_type == orig_split_type;
+        ok[0] = (MPI_UNDEFINED == orig_split_type) || global_orig_split_type == orig_split_type;
+        ok[1] = (MPI_UNDEFINED == orig_split_type) || global_split_type == split_type;
 
-        rc = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
+        rc = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &ok, 2, MPI_INT, MPI_MIN, comm,
                                           comm->c_coll->coll_allreduce_module);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             return rc;
@@ -953,14 +954,21 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
 
         if (inter) {
             /* need an extra allreduce to ensure that all ranks have the same result */
-            rc = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
+            rc = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &ok, 2, MPI_INT, MPI_MIN, comm,
                                               comm->c_coll->coll_allreduce_module);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
                 return rc;
             }
         }
 
-        if (OPAL_UNLIKELY(!ok)) {
+        if (OPAL_UNLIKELY(!ok[0] || !ok[1])) {
+            if (0 == ompi_comm_rank(comm)) {
+                if (!ok[1]) {
+                    opal_output(0, "Error: Mismatched info values for MPI_COMM_TYPE_HW_GUIDED");
+                } else {
+                    opal_output(0, "Error: Mismatched info values for split_type");
+                }
+            }
             return OMPI_ERR_BAD_PARAM;
         }
 
@@ -976,14 +984,6 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         /* short-circut. every rank provided MPI_UNDEFINED */
         *newcomm = MPI_COMM_NULL;
         return OMPI_SUCCESS;
-    }
-
-    /* MPI_COMM_TYPE_HW_GUIDED: Check if 'value' the same at all ranks */
-    if (tmp[4] != -tmp[5]) {
-        if (0 == ompi_comm_rank(comm)) {
-            opal_output(0, "Error: Mismatched info values for MPI_COMM_TYPE_HW_GUIDED");
-        }
-        return OMPI_ERR_BAD_PARAM;
     }
 
     /* TODO: Make this better...
