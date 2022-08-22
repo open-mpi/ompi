@@ -47,8 +47,8 @@ int MPI_Session_set_errhandler(MPI_Session session, MPI_Errhandler errhandler)
     /* Error checking */
 
     if (MPI_PARAM_CHECK) {
-        if (NULL == session) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        if (ompi_instance_invalid(session)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_SESSION, FUNC_NAME);
         } else if (NULL == errhandler ||
                    MPI_ERRHANDLER_NULL == errhandler ||
                    ( OMPI_ERRHANDLER_TYPE_INSTANCE != errhandler->eh_mpi_object_type &&
