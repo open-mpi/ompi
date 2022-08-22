@@ -266,7 +266,7 @@ static void show_stackframe(int signo, siginfo_t *info, void *p)
 #    endif
 #    ifdef BUS_ADRERR
             case BUS_ADRERR:
-                si_code_str = "Non-existant physical address";
+                si_code_str = "Non-existent physical address";
                 break;
 #    endif
 #    ifdef BUS_OBJERR

@@ -341,7 +341,7 @@ int main(int argc, char **argv)
                                                in_int8, inout_int8, inout_int8_for_check,
                                                count, PRId8);
                         }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                        if( 0 == strcmp(op, "min") ) {  // intentionally reversed in and out
                             MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_INT8_T, int8_t,
                                                in_int8, inout_int8, inout_int8_for_check,
                                                count, PRId8);
@@ -387,7 +387,7 @@ int main(int argc, char **argv)
                                                in_int16, inout_int16, inout_int16_for_check,
                                                count, PRId16);
                         }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                        if( 0 == strcmp(op, "min") ) {  // intentionally reversed in and out
                             MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_INT16_T, int16_t,
                                                in_int16, inout_int16, inout_int16_for_check,
                                                count, PRId16);
@@ -433,7 +433,7 @@ int main(int argc, char **argv)
                                                in_int32, inout_int32, inout_int32_for_check,
                                                count, PRId32);
                         }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                        if( 0 == strcmp(op, "min") ) {  // intentionally reversed in and out
                             MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_INT32_T, int32_t,
                                                in_int32, inout_int32, inout_int32_for_check,
                                                count, PRId32);
@@ -479,7 +479,7 @@ int main(int argc, char **argv)
                                                in_int64, inout_int64, inout_int64_for_check,
                                                count, PRId64);
                         }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                        if( 0 == strcmp(op, "min") ) {  // intentionally reversed in and out
                             MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_INT64_T, int64_t,
                                                in_int64, inout_int64, inout_int64_for_check,
                                                count, PRId64);
@@ -528,7 +528,7 @@ int main(int argc, char **argv)
                                                in_uint8, inout_uint8, inout_uint8_for_check,
                                                count, PRIu8);
                         }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                        if( 0 == strcmp(op, "min") ) {  //intentionall reversed in and out
                             MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_UINT8_T, uint8_t,
                                                in_uint8, inout_uint8, inout_uint8_for_check,
                                                count, PRIu8);
@@ -574,7 +574,7 @@ int main(int argc, char **argv)
                                                in_uint16, inout_uint16, inout_uint16_for_check,
                                                count, PRIu16);
                         }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                        if( 0 == strcmp(op, "min") ) {  //intentionally reversed in and out
                             MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_UINT16_T, uint16_t,
                                                in_uint16, inout_uint16, inout_uint16_for_check,
                                                count, PRIu16);
@@ -620,7 +620,7 @@ int main(int argc, char **argv)
                                                in_uint32, inout_uint32, inout_uint32_for_check,
                                                count, PRIu32);
                         }
-                        if( 0 == strcmp(op, "min") ) {  //intentionly reversed in and out
+                        if( 0 == strcmp(op, "min") ) {  //intentionally reversed in and out
                             MPI_OP_MINMAX_TEST(min, mpi_op,  MPI_UINT32_T, uint32_t,
                                                in_uint32, inout_uint32, inout_uint32_for_check,
                                                count, PRIu32);

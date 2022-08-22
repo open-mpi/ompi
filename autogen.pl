@@ -1326,7 +1326,7 @@ $dnl_line\n\n";
 
 #---------------------------------------------------------------------------
 
-# Verify that we're in the OMPI root directorty by checking for a token file.
+# Verify that we're in the OMPI root directory by checking for a token file.
 
 my_die "Not at the root directory of an OMPI source tree"
     if (! -f "config/opal_mca.m4");

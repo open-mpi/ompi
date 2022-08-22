@@ -224,7 +224,7 @@ static int register_component(void)
     mca_io_ompio_aggregators_cutoff_threshold=3;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "aggregators_cutoff_threshold",
-                                           "Relativ cutoff threshold for incrementing the number of aggregators "
+                                           "Relative cutoff threshold for incrementing the number of aggregators "
                                            "in the simple aggregator selection algorithm (5). Lower value "
                                            "for this parameter will lead to higher no. of aggregators.",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,

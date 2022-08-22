@@ -872,7 +872,7 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
 # MCA_PROCESS_DEAD_COMPONENT(project_name (1), framework_name (2),
 #                            component_name (3))
 # ----------------------------------------------------------------
-# Finall setup work for a component that can not be built.  Do the
+# Final setup work for a component that can not be built.  Do the
 # last minute checks to make sure the user isn't doing something
 # stupid.
 #

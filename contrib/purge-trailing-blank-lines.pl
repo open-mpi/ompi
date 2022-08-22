@@ -8,7 +8,7 @@ use Getopt::Long;
 # Will exit with status 111 if there are out of date copyrights which this
 # script can correct.
 my $CHECK_ONLY = 0;
-# used by $CHECK_ONLY logic for bookeeping
+# used by $CHECK_ONLY logic for bookkeeping
 my $would_replace = 0;
 
 # Set to true to suppress most informational messages.  Only out of date files

@@ -2,7 +2,7 @@ ULFM OPEN MPI COMPONENTS DESIGN AND REQUIREMENTS FOR FAULT TOLERANT OPERATION
 =============================================================================
 
 This documents the requirements and best practices for Open MPI
-components to support operating accross failures with the
+components to support operating across failures with the
 **User Level Failure Mitigation (ULFM)** Open MPI implementation.
 ___________________________________________________________________________
 [TOC]
@@ -62,11 +62,11 @@ in the following figure:
    with the peer (send, recv, atomic operation, etc.). The network transport
    component (BTL, MTL) should report the failure to the PML, so that the PML
    has a chance of reacting, performing necessary cleanup, and initiate recovery
-   actions as needed by trigerring the `errhandler_proc_failed_internal` function.
+   actions as needed by triggering the `errhandler_proc_failed_internal` function.
 
 2. The runtime environment (PRTE) has identified a peer failure. A PMIx event
    notification containing the identification of the impacted processes will be
-   received from the PMIx thread, and transitionned as an event in the main
+   received from the PMIx thread, and transitioned as an event in the main
    OMPI progress loop. This event will cause the OMPI errhandler function
    `errhandler_proc_failed_internal` to be called.
 
@@ -130,7 +130,7 @@ whose state is failed will complete in error and return control to the user. The
 `sync->status` field will contain the reason for interrupting the sync object.
 
 Modifications to the wait-sync logic must pay attention to not damage the error path.
-That is, a meaningfull error must be present in `sync->status` when an error condition is
+That is, a meaningful error must be present in `sync->status` when an error condition is
 found, and the `wait_sync_global_wakeup()` function does require tracking of all currently
 active `sync` objects. In the `pthreads` sync implementation, the management of multiple
 threads each using a different `sync` object also uses a list of active `sync`, which is
@@ -205,7 +205,7 @@ of OB1 over the OFI BTL, and thus fault recovery.
     +        return OPAL_ERR_UNREACH;
          }
      #ifdef FI_EINTR
-         /* sometimes, sockets provider complain about interupt. We do nothing. */
+         /* sometimes, sockets provider complain about interrupt. We do nothing. */
 
 Complete affected fragments
 ---------------------------
@@ -221,7 +221,7 @@ Use the error callback mechanism
 --------------------------------
 
 The BTL should invoke the error callback registered by the PML when a process error is
-produced within the component. The BTL module contains the API funcion `btl_register_error`.
+produced within the component. The BTL module contains the API function `btl_register_error`.
 The PML will attach a callback for managing the error at the PML level. A good example of
 using the error callback is found in the TCP BTL. When an error is produced within the
 TCP BTL, the endpoint is marked with a special internal flag, and is then closed. Upon
@@ -316,13 +316,13 @@ case: its pending operation does not necessarily peer with a failed process, thu
 not be interrupted with an `MPI_ERR_PROC_FAILED` error. Yet, that operation will not be
 matched, hence it may never complete. The solution is for the rank that initially
 experienced the process fault error to call the `MPIX_COMM_REVOKE` operation when it
-is intent in abandonning an ongoing communication pattern.
+is intent in abandoning an ongoing communication pattern.
 
 The `MPIX_COMM_REVOKE` operation will cause all operations on `comm` (pending or future)
 to be interrupted with the specific error class `MPI_ERR_REVOKED`. This in turn will
 ensure that no process deadlock on unmatched operations.
 
-It is unlikely that a developper will need to concern himself with the reliable
+It is unlikely that a developer will need to concern himself with the reliable
 broadcast algorithm that propagates the revoke order between the processes of
 a communicator. On the other hand, when a communicator is revoked, the PML needs to
 identify which requests need to be interrupted, and do so in an orderly fashion.
@@ -366,7 +366,7 @@ Again, different PML/MTL may have different implementation for stopping ongoing
 communication when a revoke occurs. The described implementation has the major
 advantage that it does not require the BTL/network driver to be able to
 cancel or interrupt ongoing RDMA operations. Another implementation may be able
-to close an endpoint, thus causing all ongoing operations to implicitely terminate.
+to close an endpoint, thus causing all ongoing operations to implicitly terminate.
 
 Note that legacy components may use static initializers to fill-in the component
 module structure. This practice should be avoided in general, because it will
@@ -436,7 +436,7 @@ tags to the range of reserved collective tags that are non-interruptible (see th
 function `ompi_request_tag_is_ft()` for details).
 
 2. The second approach, which is provided by the shared Open MPI infrastructure,
-is for the occurence of a fault at any rank to cause the interruption of all
+is for the occurrence of a fault at any rank to cause the interruption of all
 collective operations at all ranks on the communicator. This feature is
 implemented by the `errhandler_proc_failed_internal()` calling the `ompi_comm_revoke()`
 operation internally, with the special mode `coll_only`. This call will cause the
@@ -463,7 +463,7 @@ updates from the network receiving message fragments, or RDMA updates.
 
 Instead, the cleanup of such requests must wait that they complete in error
 (as they will, due to the mechanism discussed in the above paragrah). Note
-that only process failure errors are garanteed to complete in error. Other
+that only process failure errors are guaranteed to complete in error. Other
 types of errors may deadlock if the request is waited. An example of the
 appropriate cleanup of fault-interrupted requests is found in `coll_base_util.c`
 
@@ -487,7 +487,7 @@ appropriate cleanup of fault-interrupted requests is found in `coll_base_util.c`
     +            if( MPI_ERR_PROC_FAILED_PENDING == err ) {
     +                err = MPI_ERR_PROC_FAILED;
     +            }
-    +        } else /* this 'else' intentionaly spills outside the ifdef */
+    +        } else /* this 'else' intentionally spills outside the ifdef */
     +#endif /* OPAL_ENABLE_FT_MPI */
     +        ompi_request_free(&req);
     +    }
@@ -514,7 +514,7 @@ Other ranks will also experience an error in operations that are blocking thus
 ensuring that no deadlock arises.
 
 A good example of that mode of operation can be found in the
-`libnbc` collective communication component progres in `mca/coll/libnb/nbc.c`:
+`libnbc` collective communication component progress in `mca/coll/libnb/nbc.c`:
 
     @@ -334,8 +336,20 @@ int NBC_Progress(NBC_Handle *handle) {
          /* don't call ompi_request_test_all as it causes a recursive call into opal_progress */
@@ -542,7 +542,7 @@ Changing CID algorithms
 -----------------------
 
 This section describes some specificities of the allocation of CID under fault
-tolerant operations, and is addressed to developpers intending to modify the CID
+tolerant operations, and is addressed to developers intending to modify the CID
 algorithm.
 
 The `MPI_COMM_REVOKE` operation interrupts all calls on the communicator. Because it is
@@ -566,7 +566,7 @@ period at which the revoke notification is received.
 
 In order to associate an unique couple (CID,epoch) to communicators, the CID allocation
 algorithm has been expanded to integrate the computation of the epoch as a byproduct
-of the normal operation of hte CID algorithm. The way the normal CID algorihm operates
+of the normal operation of the CID algorithm. The way the normal CID algorithm operates
 is based on a multi-step non-blocking allreduce operation to select the best global
 CID. At each round, every rank proposes one (or many) CID that are locally available.
 A non-blocking allreduce then identifies the best among all propositions (if any). If
@@ -574,8 +574,8 @@ a good CID is found, a second allreduce confirms the choice. If no good CID is f
 that second allreduce will trigger another round of propositions and the algorithm
 repeats. In order to not increase the complexity of that algorithm, the selection of the
 epoch is integrated into the second allreduce that flags the successful selection of a
-proposed CID. A developper that wants to modify the CID algorithm must pay attention to
-the  computation of teh epoch.  Ideally the two numbers can be computed in a combined fashion.
+proposed CID. A developer that wants to modify the CID algorithm must pay attention to
+the  computation of the epoch.  Ideally the two numbers can be computed in a combined fashion.
 
 Testing Fault Tolerant Operation
 ================================
@@ -625,7 +625,7 @@ and thus the cleanup code for fragments of requests whose peer with a failed pro
 This test executes a ring-like neighbor pattern that is repeated for a long-enough
 period of time that the network driver will reach the maximum retry-count timeout.
 This will verify that errors are reported quickly from the failure detector, and that
-the occurence of retry timeout at the BTL level do not cause issues (like unexpected
+the occurrence of retry timeout at the BTL level do not cause issues (like unexpected
 aborts in the BTL, or crash due to orphaned fragments cleanup).
 
 Stress test for MPI_COMM_SPAWN

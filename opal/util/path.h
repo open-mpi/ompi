@@ -110,7 +110,7 @@ OPAL_DECLSPEC bool opal_path_is_absolute(const char *path);
 OPAL_DECLSPEC char *opal_find_absolute_path(char *app_name) __opal_attribute_warn_unused_result__;
 
 /**
- * Forms a complete pathname and checks it for existance and
+ * Forms a complete pathname and checks it for existence and
  * permissions
  *
  * @param fname File name
