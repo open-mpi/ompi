@@ -1624,6 +1624,16 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
             return MPI_ERR_SPAWN;
         }
+        /* tell it to forward output to us */
+        info = OBJ_NEW(opal_info_item_t);
+        PMIX_INFO_LOAD(&info->info, PMIX_FWD_STDOUT, NULL, PMIX_BOOL);
+        opal_list_append(&job_info, &info->super);
+        info = OBJ_NEW(opal_info_item_t);
+        PMIX_INFO_LOAD(&info->info, PMIX_FWD_STDERR, NULL, PMIX_BOOL);
+        opal_list_append(&job_info, &info->super);
+        info = OBJ_NEW(opal_info_item_t);
+        PMIX_INFO_LOAD(&info->info, PMIX_FWD_STDDIAG, NULL, PMIX_BOOL);
+        opal_list_append(&job_info, &info->super);
     }
     if (NULL != hostfiles) {
         opal_argv_free(hostfiles);
