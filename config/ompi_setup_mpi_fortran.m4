@@ -17,7 +17,7 @@ dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2014-2021 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
-dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl Copyright (c) 2022      Triad National Security, LLC. All rights
 dnl                         reserved.
@@ -306,6 +306,38 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT16_T], 4, [OMPI_FORTRAN_C_INT16_T_KIND])
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], 9, [OMPI_FORTRAN_C_INT32_T_KIND])
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], 18, [OMPI_FORTRAN_C_INT64_T_KIND])
+
+    #
+    # See if "attributes deprecated" is supported
+    # - False positives were seen with compilers like XL which will ignore
+    #   this option by default, but if the user specifies some options to
+    #   the wrapper compiler later it will fail to recognize the option.
+    # - For now just limit this check to compilers that we know will work
+    # This directive is only recognized, and works, for gfortran 11.0 and
+    # later. As a result, this directive is generated only if the
+    # Fortran compiler building Open MPI is gfortran 11.0 or later.
+    OMPI_FORTRAN_HAVE_ATTR_DEPRECATED=0
+    AS_IF([test $ompi_fortran_happy -eq 1],
+          [AC_MSG_CHECKING([if Fortran compiler supports the deprecated attribute])
+           AS_IF([test "$opal_cv_c_compiler_vendor" = "gnu"],
+                 [AC_LANG_PUSH([Fortran])
+                  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[program check_for_attr_deprecated
+!GCC$ ATTRIBUTES DEPRECATED :: x
+  real*4 x
+  x = 123.4
+  print *,x
+end program]])],
+                                    [OMPI_FORTRAN_HAVE_ATTR_DEPRECATED=1
+                                     AC_MSG_RESULT([Yes])],
+                                    [AC_MSG_RESULT([No])])
+                  AC_LANG_POP([Fortran])],
+                 [AC_MSG_RESULT([Unknown])])
+          ])
+    AC_SUBST(OMPI_FORTRAN_HAVE_ATTR_DEPRECATED)
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_ATTR_DEPRECATED,
+                       $OMPI_FORTRAN_HAVE_ATTR_DEPRECATED,
+                       [Whether the compiler supports Fortran ATTRIBUTES DEPRECATED or not])
+
 
     #--------------------------------------------------------
     # Fortran mpif.h MPI bindings
