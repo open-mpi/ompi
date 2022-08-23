@@ -14,7 +14,7 @@
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
-# Copyright (c) 2019      Triad National Security, LLC. All rights
+# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 #                         Reserved.
 # Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
 # $COPYRIGHT$
@@ -56,6 +56,8 @@ AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
 
     AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = no],
           [AC_MSG_ERROR([Open MPI requires Argobots 1.1 or newer.])])
+dnl extract the fully qualified include path from the opal_argo_CPPFLAGS variable
+dnl for use in threads_argobots.h
     AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = yes],
           [OPAL_ARGO_INCLUDE_PATH=`echo "${opal_argo_CPPFLAGS}/" | sed -e 's/\-I//g' | sed -e 's/ //g'`],
           [OPAL_ARGO_INCLUDE_PATH=""])
