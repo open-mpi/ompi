@@ -15,7 +15,7 @@
 #                         reserved.
 # Copyright (c) 2014-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -136,7 +136,9 @@ mpi-tkr-sizeof.h:
 	    --iso_real16=$(OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV_REAL16) \
 	    --real16=$(OMPI_HAVE_FORTRAN_REAL16) \
 	    --complex4=$(OMPI_HAVE_FORTRAN_COMPLEX4) \
-	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
+	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32) \
+	    --mpi_version=$(MPI_VERSION) \
+	    --request_deprecate=$(OMPI_FORTRAN_HAVE_ATTR_DEPRECATED)
 
 mpi-tkr-sizeof.f90: $(top_builddir)/config.status
 mpi-tkr-sizeof.f90: $(sizeof_pl)
