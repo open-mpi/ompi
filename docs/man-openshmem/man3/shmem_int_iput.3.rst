@@ -1,5 +1,5 @@
 .. _shmem_int_iput:
- 
+
 shmem_int_iput
 ==============
     .. include_body

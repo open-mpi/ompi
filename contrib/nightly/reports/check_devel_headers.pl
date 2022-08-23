@@ -52,7 +52,7 @@ foreach my $p (@projects) {
 }
 
 sub wanted {
-    # don't process directories or links, and dont' recurse down
+    # don't process directories or links, and don't recurse down
     # "special" directories
     if ( -l $_ ) { return; }
     if ( -d $_ ) {

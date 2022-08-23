@@ -1,5 +1,5 @@
 .. _mpi_iscan:
- 
+
 MPI_Iscan
 =========
     .. include_body

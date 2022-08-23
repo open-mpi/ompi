@@ -16,7 +16,7 @@
 
 #define PRINT_VALID_ERR                                        \
     fprintf(error_out, "================================ \n"); \
-    fprintf(error_out, "This is suppossed to throw error \n"); \
+    fprintf(error_out, "This is supposed to throw error  \n"); \
     fprintf(error_out, "================================ \n")
 
 static void test_bitmap_set(opal_bitmap_t *bm);
@@ -300,7 +300,7 @@ int set_all(opal_bitmap_t *bm)
     }
     for (i = 0; i < bm->array_size; ++i)
         if (bm->bitmap[i] != 0xffffffffffffffffUL) {
-            fprintf(error_out, "ERROR: set_all for bitmap arry entry %d\n\n", i);
+            fprintf(error_out, "ERROR: set_all for bitmap array entry %d\n\n", i);
             return ERR_CODE;
         }
     return 0;

@@ -1,5 +1,5 @@
 .. _mpi_rput:
- 
+
 MPI_Rput
 ========
     .. include_body

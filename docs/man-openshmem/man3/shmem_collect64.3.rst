@@ -1,5 +1,5 @@
 .. _shmem_collect64:
- 
+
 shmem_collect64
 ===============
     .. include_body

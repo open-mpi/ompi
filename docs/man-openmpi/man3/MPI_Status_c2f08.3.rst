@@ -1,5 +1,5 @@
 .. _mpi_status_c2f08:
- 
+
 MPI_Status_c2f08
 ================
     .. include_body

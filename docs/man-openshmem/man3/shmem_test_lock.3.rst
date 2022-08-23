@@ -1,5 +1,5 @@
 .. _shmem_test_lock:
- 
+
 shmem_test_lock
 ===============
     .. include_body

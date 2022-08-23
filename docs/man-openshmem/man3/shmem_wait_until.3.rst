@@ -1,5 +1,5 @@
 .. _shmem_wait_until:
- 
+
 shmem_wait_until
 ================
     .. include_body

@@ -156,4 +156,12 @@ OMPI_DECLSPEC int ompi_instance_get_pset_info (ompi_instance_t *instance, const 
  */
 extern opal_atomic_int32_t ompi_instance_count;
 
+static inline int ompi_instance_invalid (const ompi_instance_t* instance)
+{
+    if ((NULL == instance) || (MPI_SESSION_NULL == instance))
+        return true;
+    else
+        return false;
+}
+
 #endif /* !defined(OMPI_INSTANCE_H) */

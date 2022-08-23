@@ -868,7 +868,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     ompi_communicator_t *newcomp = MPI_COMM_NULL;
     int my_size, my_rsize = 0, mode, inter;
     int *lranks = NULL, *rranks = NULL;
-    int global_split_type, ok, tmp[6];
+    int global_split_type, global_orig_split_type, ok, tmp[6];
     int rc;
     int orig_split_type = split_type;
 
@@ -902,8 +902,10 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
          * If not the same at all ranks, throw an error.
          */
         flag = 0;
-        for (int i = 0; ompi_comm_split_type_hw_guided_support[i].info_value; ++i) {
-            if (0 == strncasecmp(value->string, ompi_comm_split_type_hw_guided_support[i].info_value, strlen(ompi_comm_split_type_hw_guided_support[i].info_value))) {
+        for (int i = 0; NULL != ompi_comm_split_type_hw_guided_support[i].info_value; ++i) {
+            if (0 == strncasecmp(value->string,
+                                 ompi_comm_split_type_hw_guided_support[i].info_value,
+                                 strlen(ompi_comm_split_type_hw_guided_support[i].info_value))) {
                 split_type = ompi_comm_split_type_hw_guided_support[i].split_type;
                 flag = 1;
                 break;
@@ -936,11 +938,12 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         return rc;
     }
 
-    global_split_type = tmp[0];
+    global_orig_split_type = tmp[0];
+    global_split_type = tmp[4];
 
     if (tmp[0] != -tmp[1] || inter) {
         /* at least one rank supplied a different split type check if our split_type is ok */
-        ok = (MPI_UNDEFINED == split_type) || global_split_type == split_type;
+        ok = (MPI_UNDEFINED == orig_split_type) || global_orig_split_type == orig_split_type;
 
         rc = comm->c_coll->coll_allreduce (MPI_IN_PLACE, &ok, 1, MPI_INT, MPI_MIN, comm,
                                           comm->c_coll->coll_allreduce_module);
@@ -969,7 +972,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         no_reorder = tmp[2] == -tmp[3];
     }
 
-    if (MPI_UNDEFINED == global_split_type) {
+    if (MPI_UNDEFINED == global_orig_split_type) {
         /* short-circut. every rank provided MPI_UNDEFINED */
         *newcomm = MPI_COMM_NULL;
         return OMPI_SUCCESS;
@@ -990,7 +993,7 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
      * Stage 0: Recognized, but not implemented.
      * Stage 1: Do better than that
      */
-    if (MPI_COMM_TYPE_HW_UNGUIDED == global_split_type) {
+    if (MPI_COMM_TYPE_HW_UNGUIDED == global_orig_split_type) {
         *newcomm = MPI_COMM_NULL;
         return OMPI_SUCCESS;
     }

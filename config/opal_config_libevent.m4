@@ -136,7 +136,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_EXTERNAL], [
               [opal_libevent_cv_threads_enabled="yes"],
               [opal_libevent_cv_threads_enabled="no"])])
            AS_IF([test "${opal_libevent_cv_threads_enabled}" = "no"],
-                 [AC_MSG_WARN([Open MPI rquires libevent to be compiled with thread support enabled])
+                 [AC_MSG_WARN([Open MPI requires libevent to be compiled with thread support enabled])
                   opal_libevent_external_support="no"])])
 
     AS_IF([test "$opal_libevent_external_support" = "yes"],

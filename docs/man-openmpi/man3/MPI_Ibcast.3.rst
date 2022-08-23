@@ -1,5 +1,5 @@
 .. _mpi_ibcast:
- 
+
 MPI_Ibcast
 ==========
     .. include_body

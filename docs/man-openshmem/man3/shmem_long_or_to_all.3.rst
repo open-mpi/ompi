@@ -1,5 +1,5 @@
 .. _shmem_long_or_to_all:
- 
+
 shmem_long_or_to_all
 ====================
     .. include_body

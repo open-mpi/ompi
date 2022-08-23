@@ -1,5 +1,5 @@
 .. _mpi_win_c2f:
- 
+
 MPI_Win_c2f
 ===========
     .. include_body

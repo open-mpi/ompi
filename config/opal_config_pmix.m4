@@ -116,7 +116,7 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
                 OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS openpmix"])
 
          # if we have a pmix package and configure did not complete
-         # successfullly (or wasn't started), then disable make dist.
+         # successfully (or wasn't started), then disable make dist.
          AS_IF([test $internal_pmix_happy != 1],
                [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE PMIX"])])
 

@@ -1,5 +1,5 @@
 .. _shmem_longlong_fadd:
- 
+
 shmem_longlong_fadd
 ===================
     .. include_body

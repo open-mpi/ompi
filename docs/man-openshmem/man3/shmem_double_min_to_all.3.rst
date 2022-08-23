@@ -1,5 +1,5 @@
 .. _shmem_double_min_to_all:
- 
+
 shmem_double_min_to_all
 =======================
     .. include_body

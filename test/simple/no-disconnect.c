@@ -108,7 +108,7 @@ int main(int argc, char **argv)
         printf("Skipping, because the orte cannot handle concurrent MPI_Comm_spawns\n");
         return 77;
     } else {
-        printf("Verify that this test is truly working because conncurrent MPI_Comm_spawns"
+        printf("Verify that this test is truly working because concurrent MPI_Comm_spawns"
                " has not worked before.\n");
     }
 #endif

@@ -15,7 +15,7 @@
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2021      IBM Corporation. All rights reserved.
+ * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -848,19 +848,21 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     /* retrieve the local peers - defaults to local node */
     val = NULL;
-    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS,
-                          &pname, &val, PMIX_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_PEERS,
+                                   &pname, &val, PMIX_STRING);
     if (PMIX_SUCCESS == rc && NULL != val) {
         peers = opal_argv_split(val, ',');
         free(val);
     } else {
-        ret = opal_pmix_convert_status(rc);
-        error = "local peers";
-        goto error;
+        peers = NULL;
     }
     /* if we were unable to retrieve the #local peers, set it here */
     if (0 == opal_process_info.num_local_peers) {
-        opal_process_info.num_local_peers = opal_argv_count(peers) - 1;
+        if (NULL != peers) {
+            opal_process_info.num_local_peers = opal_argv_count(peers) - 1;
+        } else {
+            opal_process_info.num_local_peers = 1;
+        }
     }
     /* if my local rank if too high, then that's an error */
     if (opal_process_info.num_local_peers < opal_process_info.my_local_rank) {

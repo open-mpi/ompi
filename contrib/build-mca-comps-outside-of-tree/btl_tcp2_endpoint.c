@@ -748,7 +748,7 @@ static void mca_btl_tcp2_endpoint_recv_handler(int sd, short flags, void* user)
                     frag = NULL;
 #else
                     /* If the cache still contain some data we can reuse the same fragment
-                     * until we flush it completly.
+                     * until we flush it completely.
                      */
                     MCA_BTL_TCP_FRAG_INIT_DST(frag, btl_endpoint);
 #endif  /* MCA_BTL_TCP_USES_PROGRESS_THREAD */

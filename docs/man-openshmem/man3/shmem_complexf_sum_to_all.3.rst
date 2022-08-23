@@ -1,5 +1,5 @@
 .. _shmem_complexf_sum_to_all:
- 
+
 shmem_complexf_sum_to_all
 =========================
     .. include_body

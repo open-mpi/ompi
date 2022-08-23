@@ -1,5 +1,5 @@
 .. _shmem_clear_lock:
- 
+
 shmem_clear_lock
 ================
     .. include_body

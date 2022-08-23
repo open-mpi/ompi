@@ -6,6 +6,7 @@ dnl Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2016      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -39,7 +40,7 @@ dnl
 # OPAL_SUMMARY_ADD([Resource Type], [Component Name], [], [$results])
 # and then unset $results to avoid namespace pollution.  This will
 # work properly with the current behavior, but would result in odd
-# errors if we delayed evaulation.
+# errors if we delayed evaluation.
 #
 # As a historical note, the third argument has never been used in
 # OPAL_SUMMARY_ADD and its meaning is unclear.  Preferred behavior is
@@ -92,6 +93,7 @@ AC_DEFUN([OPAL_SUMMARY_PRINT],[
 Open MPI configuration:
 -----------------------
 Version: $OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION.$OMPI_RELEASE_VERSION$OMPI_GREEK_VERSION
+MPI Standard Version: $MPI_VERSION.$MPI_SUBVERSION
 EOF
 
     if test "$project_ompi_amc" = "true" ; then

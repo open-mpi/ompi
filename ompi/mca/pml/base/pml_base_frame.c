@@ -147,7 +147,7 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
     mca_base_var_enum_create("pml_base_deprecate_warnings", ompi_pml_base_warn_dep_cancel_send_values,
                              &ompi_pml_base_warn_dep_cancel_send_enum);
     rc = mca_base_var_register("ompi", "pml", "base", "warn_dep_cancel_send",
-                               "How often to issue warnings for deprecated cancelation of send requests",
+                               "How often to issue warnings for deprecated cancellation of send requests",
                                MCA_BASE_VAR_TYPE_INT, ompi_pml_base_warn_dep_cancel_send_enum, 0, 0,
                                OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                &ompi_pml_base_warn_dep_cancel_send_level);

@@ -301,7 +301,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     #
     # ...and you can't have a "use..." statement before that (to get
     # the Fortran/C interop C_INTxx_T KIND values).  So figure out
-    # those KIND values here and just substitue them in via
+    # those KIND values here and just substitute them in via
     # AC_DEFINE's.  Kinda gross, but there you are.  :-\
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT16_T], 4, [OMPI_FORTRAN_C_INT16_T_KIND])
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], 9, [OMPI_FORTRAN_C_INT32_T_KIND])
@@ -644,7 +644,7 @@ end type test_mpi_handle],
     AC_SUBST(OMPI_FC_ABSOLUTE)
     AC_DEFINE_UNQUOTED(OMPI_FC, ["$OMPI_FC"], [Underlying Fortran compiler])
     AC_DEFINE_UNQUOTED(OMPI_FC_ABSOLUTE, ["$OMPI_FC_ABSOLUTE"],
-                       [Absolutey path to the underlying Fortran compiler found by configure])
+                       [Absolute path to the underlying Fortran compiler found by configure])
 
     # These go into ompi/info/param.c
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_BUILD_SIZEOF],
