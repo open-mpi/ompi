@@ -1611,6 +1611,11 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     OPAL_LIST_DESTRUCT(&job_info);
 
     if (ompi_singleton) {
+        /* The GDS 'hash' component is known to work for singleton, so
+         * recommend it. The user may set this envar to override the setting.
+         */
+        setenv("PMIX_MCA_gds", "hash", 0);
+        /* Start the DVM */
         rc = start_dvm(hostfiles, dash_host);
         if (OPAL_SUCCESS != rc) {
             if (NULL != pinfo) {
