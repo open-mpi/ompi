@@ -24,9 +24,14 @@ AC_DEFUN([MCA_ompi_mtl_ofi_POST_CONFIG], [
 #                    [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
-    OPAL_VAR_SCOPE_PUSH([mtl_ofi_happy])
+    OPAL_VAR_SCOPE_PUSH([mtl_ofi_happy common_ofi_compile_mode mtl_ofi_compile_mode])
 
     AC_CONFIG_FILES([ompi/mca/mtl/ofi/Makefile])
+
+    MCA_COMPONENT_COMPILE_MODE("opal", "common", "ofi", common_ofi_compile_mode)
+    MCA_COMPONENT_COMPILE_MODE("ompi", "mtl", "ofi", mtl_ofi_compile_mode)
+    AS_IF([test ${common_ofi_compile_mode} = "dso" && test ${mtl_ofi_compile_mode} = "static"],
+          [AC_MSG_ERROR([mtl-ofi must be included on the --enable-mca-dso list if common-ofi is on this list])])
 
     OPAL_CHECK_OFI([mtl_ofi],
                    [mtl_ofi_happy=1],

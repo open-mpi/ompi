@@ -31,9 +31,14 @@
 # support, otherwise executes action-if-not-found
 
 AC_DEFUN([MCA_opal_btl_ofi_CONFIG],[
-    OPAL_VAR_SCOPE_PUSH([btl_ofi_happy CPPFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([btl_ofi_happy CPPFLAGS_save common_ofi_compile_mode btl_ofi_compile_mode])
 
     AC_CONFIG_FILES([opal/mca/btl/ofi/Makefile])
+
+    MCA_COMPONENT_COMPILE_MODE("opal", "common", "ofi", common_ofi_compile_mode)
+    MCA_COMPONENT_COMPILE_MODE("opal", "btl", "ofi", btl_ofi_compile_mode)
+    AS_IF([test ${common_ofi_compile_mode} = "dso" && test ${btl_ofi_compile_mode} = "static"],
+          [AC_MSG_ERROR([ofi-btl must be included on the --enable-mca-dso list if common-ofi is on this list])])
 
     # Check for OFI
     OPAL_CHECK_OFI([btl_ofi], [btl_ofi_happy=1], [btl_ofi_happy=0])
