@@ -342,11 +342,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     opal_pmix_lock_t mylock;
     OMPI_TIMING_INIT(64);
 
-    ret = ompi_mpi_instance_retain ();
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return ret;
-    }
-
     OBJ_CONSTRUCT(&ompi_instance_common_domain, opal_finalize_domain_t);
     opal_finalize_domain_init (&ompi_instance_common_domain, "ompi_mpi_instance_init_common");
     opal_finalize_set_domain (&ompi_instance_common_domain);
@@ -796,12 +791,17 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
     if (ts_level == MPI_THREAD_MULTIPLE) {
         opal_set_using_threads(true);
     }
-
+    
+    ret = ompi_mpi_instance_retain ();
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return ret;
+    }
+    
     opal_mutex_lock (&instance_lock);
+
     if (0 == opal_atomic_fetch_add_32 (&ompi_instance_count, 1)) {
         ret = ompi_mpi_instance_init_common (argc, argv);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
-            opal_mutex_unlock (&instance_lock);
             return ret;
         }
     }
@@ -1046,7 +1046,7 @@ static void ompi_instance_refresh_pmix_psets (const char *key)
     if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(&query, 1, 
                                                  ompi_instance_get_num_psets_complete,
                                                  (void*)&lock))) {
-       opal_mutex_unlock (&instance_lock);
+        opal_mutex_unlock (&instance_lock);
     }
 
     OPAL_PMIX_WAIT_THREAD(&lock);
