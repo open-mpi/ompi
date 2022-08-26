@@ -193,7 +193,7 @@ static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t
 
 static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, int32_t value)
 {
-    lock = value;
+    *lock = value;
 }
 
 static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
