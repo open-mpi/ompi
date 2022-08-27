@@ -13,8 +13,12 @@ on:
           - opened
           - edited
 
+permissions: {} # none
+
 jobs:
     ci:
+        permissions:
+          pull-requests: write
         name: Label Bot
         runs-on: ubuntu-latest
         steps:
