@@ -12,8 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2021 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
-dnl Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
-dnl                         All Rights reserved.
+dnl Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2021      Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl $COPYRIGHT$
@@ -604,9 +603,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$8], [should_build=0])
     # Allow the component to override the build mode if it really wants to.
     # It is, of course, free to end up calling MCA_COMPONENT_COMPILE_MODE
-    m4_ifdef([MCA_$1_$2_$3_COMPILE_MODE],
-             [MCA_$1_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
-             [MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)])
+    MCA_COMPONENT_COMPILE_MODE([$1], [$2], [$3], [compile_mode])
 
     # try to configure the component
     m4_ifdef([MCA_$1_$2_$3_CONFIG],
@@ -706,10 +703,52 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
 # MCA_COMPONENT_COMPILE_MODE(project_name (1), framework_name (2),
 #                            component_name (3), compile_mode_variable (4))
 # -------------------------------------------------------------------------
-# set compile_mode_variable to the compile mode for the given component
+# set compile_mode_variable to the compile mode for the given component.
+# this macro will only evaluate the build mode once per configure, returning
+# the cached value for subsequent tests.  The string is not stored in a cache
+# variable (ie .*_cv_.*) because cache variables would not be invalidated
+# based on changes to --enable-mca-dso or --enable-mca-static.
 #
 #   NOTE: component_name may not be determined until runtime....
 AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
+    OAC_ASSERT_LITERAL([$1], [1])dnl
+    OAC_ASSERT_LITERAL([$2], [2])dnl
+
+    AS_VAR_PUSHDEF([compile_mode_cv], [$1_$2_$3_compile_mode])dnl
+    AS_VAR_SET_IF([compile_mode_cv],
+        [],
+	[AS_LITERAL_IF([$3],
+             [m4_ifdef([MCA_$1_$2_$3_COMPILE_MODE],
+                  [dnl We introduced caching of this check after setting the compile
+                   dnl mode by the substitute macro was common, and there was not a
+                   dnl polymorphic variable assumption in all those macros, so we use
+                   dnl a temporary with a fixed name.
+                   OPAL_VAR_SCOPE_PUSH([component_compile_mode_tmp])
+                   MCA_$1_$2_$3_COMPILE_MODE([$1], [$2], [$3], [component_compile_mode_tmp])
+                   AS_VAR_COPY([compile_mode_cv], [$component_compile_mode_tmp])
+                   OPAL_VAR_SCOPE_POP],
+                  [MCA_COMPONENT_COMPILE_MODE_INTERNAL([$1], [$2], [$3], [compile_mode_cv])])],
+             [MCA_COMPONENT_COMPILE_MODE_INTERNAL([$1], [$2], [$3], [compile_mode_cv])])])
+    AS_VAR_COPY([$4], [compile_mode_cv])
+    AS_VAR_POPDEF([compile_mode_cv])dnl
+])
+
+# MCA_COMPONENT_COMPILE_MODE_INTERNAL(project_name (1), framework_name (2),
+#                            component_name (3), compile_mode_variable (4))
+# -------------------------------------------------------------------------
+# Determine compile mode of the given component.  Prefer a static
+# build by default.  Users can customize build mode by influencing the
+# component, framework, or all-up build flags.  This function starts
+# at the most specific (component) and works its way out, looking for
+# a set option.
+#
+# Components can avoid calling this function by defining a macro
+# MCA_<project>_<framework>_<component>_COMPILE_MODE.
+#
+#   NOTE: component_name may not be determined until runtime....
+AC_DEFUN([MCA_COMPONENT_COMPILE_MODE_INTERNAL], [
+    OPAL_VAR_SCOPE_PUSH([compile_mode_internal_tmp SHARED_FRAMEWORK SHARED_COMPONENT STATIC_FRAMEWORK STATIC_COMPONENT])
+
     SHARED_FRAMEWORK="$DSO_$2"
     AS_VAR_COPY([SHARED_COMPONENT], [DSO_$2_$3])
 
@@ -720,27 +759,31 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     # there is a tie (either neither or both specified), prefer
     # static.
     if test "$STATIC_COMPONENT" = "1"; then
-        $4=static
+        compile_mode_internal_tmp=static
     elif test "$SHARED_COMPONENT" = "1"; then
-        $4=dso
+        compile_mode_internal_tmp=dso
     elif test "$STATIC_FRAMEWORK" = "1"; then
-        $4=static
+        compile_mode_internal_tmp=static
     elif test "$SHARED_FRAMEWORK" = "1"; then
-        $4=dso
+        compile_mode_internal_tmp=dso
     elif test "$STATIC_all" = "1"; then
-        $4=static
+        compile_mode_internal_tmp=static
     elif test "$DSO_all" = "1"; then
-        $4=dso
+        compile_mode_internal_tmp=dso
     else
-        $4=static
+        compile_mode_internal_tmp=static
     fi
+
+    AS_VAR_SET([$4], [$compile_mode_internal_tmp])
 
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
     if test "$DIRECT_$2" = "$3" ; then
-        AC_MSG_RESULT([$$4 - direct])
+        AC_MSG_RESULT([$compile_mode_internal_tmp - direct])
     else
-        AC_MSG_RESULT([$$4])
+        AC_MSG_RESULT([$compile_mode_internal_tmp])
     fi
+
+    OPAL_VAR_SCOPE_POP
 ])
 
 # OPAL_MCA_STRIP_LAFILES(output_variable(1),
