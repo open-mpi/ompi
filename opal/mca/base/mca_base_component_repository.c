@@ -432,7 +432,7 @@ int mca_base_component_repository_open(mca_base_framework_t *framework,
                 || file_exists(ri->ri_path, "dylib") || file_exists(ri->ri_path, "dll"))) {
             err_msg = "perhaps a missing symbol, or compiled for a different version of Open MPI?";
         }
-        opal_output_verbose(vl, 0,
+        opal_output_verbose(vl, MCA_BASE_VERBOSE_COMPONENT,
                             "mca_base_component_repository_open: unable to open %s: %s (ignored)",
                             ri->ri_base, err_msg);
 
