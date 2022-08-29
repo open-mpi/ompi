@@ -23,6 +23,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1610,6 +1611,11 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     OPAL_LIST_DESTRUCT(&job_info);
 
     if (ompi_singleton) {
+        /* The GDS 'hash' component is known to work for singleton, so
+         * recommend it. The user may set this envar to override the setting.
+         */
+        setenv("PMIX_MCA_gds", "hash", 0);
+        /* Start the DVM */
         rc = start_dvm(hostfiles, dash_host);
         if (OPAL_SUCCESS != rc) {
             if (NULL != pinfo) {
@@ -1624,6 +1630,16 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
             return MPI_ERR_SPAWN;
         }
+        /* tell it to forward output to us */
+        info = OBJ_NEW(opal_info_item_t);
+        PMIX_INFO_LOAD(&info->info, PMIX_FWD_STDOUT, NULL, PMIX_BOOL);
+        opal_list_append(&job_info, &info->super);
+        info = OBJ_NEW(opal_info_item_t);
+        PMIX_INFO_LOAD(&info->info, PMIX_FWD_STDERR, NULL, PMIX_BOOL);
+        opal_list_append(&job_info, &info->super);
+        info = OBJ_NEW(opal_info_item_t);
+        PMIX_INFO_LOAD(&info->info, PMIX_FWD_STDDIAG, NULL, PMIX_BOOL);
+        opal_list_append(&job_info, &info->super);
     }
     if (NULL != hostfiles) {
         opal_argv_free(hostfiles);
@@ -2032,7 +2048,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
     opal_asprintf(&tmp, "%d", death_pipe[0]);
     opal_argv_append_nosize(&args, tmp);
     free(tmp);
-    opal_argv_append_nosize(&args, "&");
+    opal_argv_append_nosize(&args, "--daemonize");
 
     /* Fork off the child */
     pid = fork();
