@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -17,8 +17,6 @@
 #include "ompi_config.h"
 #include "coll_hcoll.h"
 #include "coll_hcoll_dtypes.h"
-
-static int use_safety_valve = 0;
 
 int hcoll_comm_attr_keyval;
 int hcoll_type_attr_keyval;
@@ -331,7 +329,6 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
                     cm->using_mem_hooks = 1;
                     opal_mem_hooks_register_release(mca_coll_hcoll_mem_release_cb, NULL);
                     setenv("MXM_HCOLL_MEM_ON_DEMAND_MAP", "y", 0);
-                    use_safety_valve = 1;
                 }
             }
         } else {
@@ -452,9 +449,7 @@ OBJ_CLASS_INSTANCE(mca_coll_hcoll_module_t,
         mca_coll_hcoll_module_construct,
         mca_coll_hcoll_module_destruct);
 
-static void safety_valve(void) __attribute__((destructor));
+static void safety_valve(void) __opal_attribute_destructor__;
 void safety_valve(void) {
-    if (use_safety_valve) {
-        opal_mem_hooks_unregister_release(mca_coll_hcoll_mem_release_cb);
-    }
+    opal_mem_hooks_unregister_release(mca_coll_hcoll_mem_release_cb);
 }
