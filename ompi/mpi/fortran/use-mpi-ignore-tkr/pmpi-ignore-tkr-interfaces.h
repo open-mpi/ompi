@@ -154,6 +154,7 @@
 #define MPI_Ineighbor_alltoallv PMPI_Ineighbor_alltoallv
 #define MPI_Ineighbor_alltoallw PMPI_Ineighbor_alltoallw
 #define MPI_Info_create PMPI_Info_create
+#define MPI_Info_create_env PMPI_Info_create_env
 #define MPI_Info_delete PMPI_Info_delete
 #define MPI_Info_dup PMPI_Info_dup
 #define MPI_Info_free PMPI_Info_free

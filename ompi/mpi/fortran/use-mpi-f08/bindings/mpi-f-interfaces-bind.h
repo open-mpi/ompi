@@ -12,7 +12,7 @@
 ! Copyright (c) 2019      Triad National Security, LLC. All rights
 !                         reserved.
 ! Copyright (c) 2021      Bull S.A.S. All rights reserved.
-! Copyright (c) 2021      Triad National Security, LLC. All rights
+! Copyright (c) 2021-2022 Triad National Security, LLC. All rights
 !                         reserved.
 ! $COPYRIGHT$
 !
@@ -2439,6 +2439,13 @@ subroutine ompi_info_create_f(info,ierror) &
    INTEGER, INTENT(OUT) :: info
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_info_create_f
+
+subroutine ompi_info_create_env_f(info,ierror) &
+   BIND(C, name="ompi_info_create_env_f")
+   implicit none
+   INTEGER, INTENT(OUT) :: info
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_info_create_env_f
 
 subroutine ompi_info_delete_f(info,key,ierror,key_len) &
    BIND(C, name="ompi_info_delete_f")

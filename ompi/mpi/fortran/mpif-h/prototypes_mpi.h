@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2016-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2019      Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
@@ -303,6 +303,7 @@ PN2(void, MPI_Iscan, mpi_iscan, MPI_ISCAN, (char *sendbuf, char *recvbuf, MPI_Fi
 PN2(void, MPI_Iscatter, mpi_iscatter, MPI_ISCATTER, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Iscatterv, mpi_iscatterv, MPI_ISCATTERV, (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Info_create, mpi_info_create, MPI_INFO_CREATE, (MPI_Fint *info, MPI_Fint *ierr));
+PN2(void, MPI_Info_create_env, mpi_info_create_env, MPI_INFO_CREATE_ENV, (MPI_Fint *info, MPI_Fint *ierr));
 PN2(void, MPI_Info_delete, mpi_info_delete, MPI_INFO_DELETE, (MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len));
 PN2(void, MPI_Info_dup, mpi_info_dup, MPI_INFO_DUP, (MPI_Fint *info, MPI_Fint *newinfo, MPI_Fint *ierr));
 PN2(void, MPI_Info_free, mpi_info_free, MPI_INFO_FREE, (MPI_Fint *info, MPI_Fint *ierr));

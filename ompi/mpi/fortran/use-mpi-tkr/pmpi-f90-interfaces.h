@@ -91,6 +91,7 @@
 #define MPI_Group_translate_ranks PMPI_Group_translate_ranks
 #define MPI_Group_union PMPI_Group_union
 #define MPI_Info_create PMPI_Info_create
+#define MPI_Info_create_env PMPI_Info_create_env
 #define MPI_Info_delete PMPI_Info_delete
 #define MPI_Info_dup PMPI_Info_dup
 #define MPI_Info_free PMPI_Info_free

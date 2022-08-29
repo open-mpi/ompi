@@ -11,7 +11,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2019      Triad National Security, LLC. All rights
+# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -317,6 +317,7 @@ mpi_api_files = \
         ineighbor_alltoallv_f08.F90 \
         ineighbor_alltoallw_f08.F90 \
         info_create_f08.F90 \
+        info_create_env_f08.F90 \
         info_delete_f08.F90 \
         info_dup_f08.F90 \
         info_free_f08.F90 \

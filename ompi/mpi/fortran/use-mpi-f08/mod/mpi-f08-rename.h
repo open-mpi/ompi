@@ -506,6 +506,8 @@
 #define MPI_Win_set_errhandler_f08 PMPI_Win_set_errhandler_f08
 #define MPI_Info_create PMPI_Info_create
 #define MPI_Info_create_f08 PMPI_Info_create_f08
+#define MPI_Info_create_env PMPI_Info_create_env
+#define MPI_Info_create_env_f08 PMPI_Info_create_env_f08
 #define MPI_Info_delete PMPI_Info_delete
 #define MPI_Info_delete_f08 PMPI_Info_delete_f08
 #define MPI_Info_dup PMPI_Info_dup

@@ -116,59 +116,74 @@ int ompi_mpiinfo_init(void)
     return OMPI_SUCCESS;
 }
 
-/*
- * Fill in the MPI_INFO_ENV if using MPI3 initialization
+/**
+ * Fill in an info object with ENV info.  Used for setting
+ * MPI_INFO_ENV and by invocation of MPI_Info_create_env.
  */
-int ompi_mpiinfo_init_mpi3(void)
+
+int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info)
 {
-    char *cptr, **tmp;
+    char *cptr = NULL, **tmp = NULL;
 
     /* fill the env info object */
 
     /* command for this app_context */
-    if (NULL != ompi_process_info.command) {
+    if (NULL != argv) {
+        tmp = argv;
+    } else if (NULL != ompi_process_info.command) {
         tmp = opal_argv_split(ompi_process_info.command, ' ');
-        opal_info_set(&ompi_mpi_info_env.info.super, "command", tmp[0]);
+    }
+
+    if (NULL != tmp) {
+        if (NULL != tmp[0]) {
+            opal_info_set(&info->super, "command", tmp[0]);
+        }
 
         /* space-separated list of argv for this command */
         if (1 < opal_argv_count(tmp)) {
             cptr = opal_argv_join(&tmp[1], ' ');
         } else {
-            cptr = strdup(tmp[0]);
+            if (NULL != tmp[0]) {
+                cptr = strdup(tmp[0]);
+            }
         }
-        opal_argv_free(tmp);
-        opal_info_set(&ompi_mpi_info_env.info.super, "argv", cptr);
-        free(cptr);
+	if (NULL == argv) {
+            opal_argv_free(tmp);
+        }
+        opal_info_set(&info->super, "argv", cptr);
+        if (NULL != cptr) {
+            free(cptr);
+        }
     }
 
     /* max procs for the entire job */
     opal_asprintf(&cptr, "%u", ompi_process_info.num_procs);
-    opal_info_set(&ompi_mpi_info_env.info.super, "maxprocs", cptr);
+    opal_info_set(&info->super, "maxprocs", cptr);
     /* Open MPI does not support the "soft" option, so set it to maxprocs */
-    opal_info_set(&ompi_mpi_info_env.info.super, "soft", cptr);
+    opal_info_set(&info->super, "soft", cptr);
     free(cptr);
 
     /* the initial error handler, set it as requested (nothing if not
      * requested) */
     if (NULL != ompi_process_info.initial_errhandler) {
-        opal_info_set(&ompi_mpi_info_env.info.super, "mpi_initial_errhandler", ompi_process_info.initial_errhandler);
+        opal_info_set(&info->super, "mpi_initial_errhandler", ompi_process_info.initial_errhandler);
     }
 
     /* local host name */
-    opal_info_set(&ompi_mpi_info_env.info.super, "host", ompi_process_info.nodename);
+    opal_info_set(&info->super, "host", ompi_process_info.nodename);
 
 #ifdef HAVE_SYS_UTSNAME_H
     {
         struct utsname sysname;
         uname(&sysname);
         cptr = sysname.machine;
-        opal_info_set(&ompi_mpi_info_env.info.super, "arch", cptr);
+        opal_info_set(&info->super, "arch", cptr);
     }
 #endif
 
     /* initial working dir of this process, if provided */
     if (NULL != ompi_process_info.initial_wdir) {
-        opal_info_set(&ompi_mpi_info_env.info.super, "wdir", ompi_process_info.initial_wdir);
+        opal_info_set(&info->super, "wdir", ompi_process_info.initial_wdir);
     }
 
     /* provide the REQUESTED thread level - may be different
@@ -176,16 +191,16 @@ int ompi_mpiinfo_init_mpi3(void)
      * ugly, but have to do a switch to find the string representation */
     switch (ompi_mpi_thread_requested) {
     case MPI_THREAD_SINGLE:
-        opal_info_set(&ompi_mpi_info_env.info.super, "thread_level", "MPI_THREAD_SINGLE");
+        opal_info_set(&info->super, "thread_level", "MPI_THREAD_SINGLE");
         break;
     case MPI_THREAD_FUNNELED:
-        opal_info_set(&ompi_mpi_info_env.info.super, "thread_level", "MPI_THREAD_FUNNELED");
+        opal_info_set(&info->super, "thread_level", "MPI_THREAD_FUNNELED");
         break;
     case MPI_THREAD_SERIALIZED:
-        opal_info_set(&ompi_mpi_info_env.info.super, "thread_level", "MPI_THREAD_SERIALIZED");
+        opal_info_set(&info->super, "thread_level", "MPI_THREAD_SERIALIZED");
         break;
     case MPI_THREAD_MULTIPLE:
-        opal_info_set(&ompi_mpi_info_env.info.super, "thread_level", "MPI_THREAD_MULTIPLE");
+        opal_info_set(&info->super, "thread_level", "MPI_THREAD_MULTIPLE");
         break;
     default:
         /* do nothing - don't know the value */
@@ -196,24 +211,24 @@ int ompi_mpiinfo_init_mpi3(void)
 
     /* the number of app_contexts in this job */
     opal_asprintf(&cptr, "%u", ompi_process_info.num_apps);
-    opal_info_set(&ompi_mpi_info_env.info.super, "ompi_num_apps", cptr);
+    opal_info_set(&info->super, "ompi_num_apps", cptr);
     free(cptr);
 
     /* space-separated list of first MPI rank of each app_context */
     if (NULL != ompi_process_info.app_ldrs) {
-        opal_info_set(&ompi_mpi_info_env.info.super, "ompi_first_rank", ompi_process_info.app_ldrs);
+        opal_info_set(&info->super, "ompi_first_rank", ompi_process_info.app_ldrs);
     }
 
     /* space-separated list of num procs for each app_context */
     if (NULL != ompi_process_info.app_sizes) {
-        opal_info_set(&ompi_mpi_info_env.info.super, "ompi_np", ompi_process_info.app_sizes);
+        opal_info_set(&info->super, "ompi_np", ompi_process_info.app_sizes);
     }
 
     /* location of the directory containing any prepositioned files
      * the user may have requested
      */
     if (NULL != ompi_process_info.proc_session_dir) {
-        opal_info_set(&ompi_mpi_info_env.info.super, "ompi_positioned_file_dir", ompi_process_info.proc_session_dir);
+        opal_info_set(&info->super, "ompi_positioned_file_dir", ompi_process_info.proc_session_dir);
     }
 
     /* All done */
