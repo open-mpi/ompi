@@ -36,7 +36,7 @@
  *
  *********************************************************************/
 
-#if defined(PLATFORM_ARCH_X86_64) && defined (__GNUC__) && !defined(__llvm) && (__GNUC__ < 6)
+#if defined(PLATFORM_ARCH_X86_64) && defined(PLATFORM_COMPILER_GNU) && __GNUC__ < 8
     /* work around a bug in older gcc versions where ACQUIRE seems to get
      * treated as a no-op instead */
 #define OPAL_BUSTED_ATOMIC_MB 1
@@ -193,7 +193,7 @@ static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t
 
 static inline void opal_atomic_lock_init(opal_atomic_lock_t *lock, int32_t value)
 {
-    lock = value;
+    *lock = value;
 }
 
 static inline int opal_atomic_trylock(opal_atomic_lock_t *lock)
