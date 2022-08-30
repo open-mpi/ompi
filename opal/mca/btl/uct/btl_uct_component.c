@@ -19,6 +19,7 @@
  *                         reserved.
  * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -669,3 +670,8 @@ mca_btl_uct_component_t mca_btl_uct_component = {
         .btl_init = mca_btl_uct_component_init,
         .btl_progress = mca_btl_uct_component_progress,
     }};
+
+static void safety_valve(void) __attribute__((destructor));
+void safety_valve(void) {
+    opal_mem_hooks_unregister_release(mca_btl_uct_mem_release_cb);
+}

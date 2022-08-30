@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,4 +121,9 @@ int mca_rcache_base_module_destroy(mca_rcache_base_module_t *module)
     }
 
     return OPAL_ERR_NOT_FOUND;
+}
+
+static void safety_valve(void) __attribute__((destructor));
+void safety_valve(void) {
+    opal_mem_hooks_unregister_release(mca_rcache_base_mem_cb);
 }

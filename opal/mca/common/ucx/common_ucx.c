@@ -7,6 +7,7 @@
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -473,4 +474,9 @@ OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, s
     opal_common_ucx_del_procs_nofence(procs, count, my_rank, max_disconnect, worker);
 
     return opal_common_ucx_mca_pmix_fence(worker);
+}
+
+static void safety_valve(void) __attribute__((destructor));
+void safety_valve(void) {
+    opal_mem_hooks_unregister_release(opal_common_ucx_mem_release_cb);
 }

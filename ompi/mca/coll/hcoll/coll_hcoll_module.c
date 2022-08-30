@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -449,5 +449,7 @@ OBJ_CLASS_INSTANCE(mca_coll_hcoll_module_t,
         mca_coll_hcoll_module_construct,
         mca_coll_hcoll_module_destruct);
 
-
-
+static void safety_valve(void) __attribute__((destructor));
+void safety_valve(void) {
+    opal_mem_hooks_unregister_release(mca_coll_hcoll_mem_release_cb);
+}
