@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017-2019 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
@@ -137,7 +137,7 @@ int opal_bp_graph_order(const opal_bp_graph_t *g);
 
 /**
  * This function solves the "assignment problem":
- * http://en.wikipedia.org/wiki/Assignment_problem
+ * https://en.wikipedia.org/wiki/Assignment_problem
  *
  * The goal is to find a maximum cardinality, minimum cost matching in a
  * weighted bipartite graph.  Maximum cardinality takes priority over minimum

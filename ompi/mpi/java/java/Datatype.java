@@ -12,6 +12,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,7 @@
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
