@@ -1090,6 +1090,12 @@ sub export_version {
     $m4 .= "m4_define([OMPI_${name}_NUMERIC_MIN_VERSION], [$hex])\n";
 }
 
+sub export_mpi_version {
+    my ($name,$version) = @_;
+    $version =~ s/[^a-zA-Z0-9,.]//g;
+    $m4 .= "m4_define([$name], [$version])\n";
+}
+
 sub get_and_define_min_versions() {
 
     open(IN, "VERSION") || my_die "Can't open VERSION";
@@ -1129,6 +1135,16 @@ sub get_and_define_min_versions() {
           elsif($fields[0] eq "event_min_version") {
               if ($fields[1] ne "\n") {
                   export_version("EVENT", $fields[1]);
+              }
+          }
+          elsif($fields[0] eq "mpi_standard_version") {
+              if ($fields[1] ne "\n") {
+                  export_mpi_version("MPI_VERSION_NUM", $fields[1]);
+              }
+          }
+          elsif($fields[0] eq "mpi_standard_subversion") {
+              if ($fields[1] ne "\n") {
+                  export_mpi_version("MPI_SUBVERSION_NUM", $fields[1]);
               }
           }
     }
