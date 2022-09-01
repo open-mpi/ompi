@@ -123,11 +123,6 @@ int mca_spml_ucx_peer_mkey_cache_add(ucp_peer_t *ucp_peer, int index)
     /* Allocate an array to hold the pointers to the ucx_cached_mkey */
     if (index >= (int)ucp_peer->mkeys_cnt) {
         int old_size = ucp_peer->mkeys_cnt;
-        if (MCA_MEMHEAP_MAX_SEGMENTS <= (index + 1)) {
-            SPML_UCX_ERROR("Failed to get new mkey for segment: max number (%d) of segment descriptor is exhausted",
-                        MCA_MEMHEAP_MAX_SEGMENTS);
-            return OSHMEM_ERROR;
-        }
         ucp_peer->mkeys_cnt = index + 1;
         ucp_peer->mkeys = realloc(ucp_peer->mkeys, sizeof(ucp_peer->mkeys[0]) * ucp_peer->mkeys_cnt);
         if (NULL == ucp_peer->mkeys) {
