@@ -66,19 +66,17 @@ AC_DEFUN([OPAL_SAVE_VERSION], [
 
 # OPAL_SAVE_MPI_STANDARD_VERSION(version_file)
 # ----------------------------------------------
-# creates version information for project from version_file, using
-# OPAL_GET_MPI_STANDARD_VERSION().
+# Export MPI versions.
 AC_DEFUN([OPAL_SAVE_MPI_STANDARD_VERSION], [
-    OPAL_GET_MPI_STANDARD_VERSION([$1])
+
+    AC_DEFINE_UNQUOTED([MPI_VERSION], [MPI_VERSION_NUM],
+                       [MPI Standard Major version number])
+    AC_DEFINE_UNQUOTED([MPI_SUBVERSION], [MPI_SUBVERSION_NUM],
+                       [MPI Standard Minor version number])
 
     AC_SUBST([MPI_VERSION])
     AC_SUBST([MPI_SUBVERSION])
 
-    AC_DEFINE_UNQUOTED([MPI_VERSION], [$MPI_VERSION],
-                       [MPI Standard Major version number])
-    AC_DEFINE_UNQUOTED([MPI_SUBVERSION], [$MPI_SUBVERSION],
-                       [MPI Standard Minor version number])
-
     AC_MSG_CHECKING([MPI Standard version])
-    AC_MSG_RESULT([$MPI_VERSION.$MPI_SUBVERSION])
+    AC_MSG_RESULT([MPI_VERSION_NUM.MPI_SUBVERSION_NUM])
 ])dnl
