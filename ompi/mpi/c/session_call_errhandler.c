@@ -45,8 +45,12 @@ int MPI_Session_call_errhandler(MPI_Session session, int errorcode)
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == session) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+    if (ompi_instance_invalid(session)) {
+        if (NULL != session) {
+            return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_SESSION, FUNC_NAME);
+        } else {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_SESSION, FUNC_NAME);
+        }
     }
   }
 
