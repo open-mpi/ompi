@@ -1,6 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (C) Mellanox Technologies Ltd. 2001-2017.  ALL RIGHTS RESERVED.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,6 +25,9 @@ AC_DEFUN([MCA_ompi_osc_ucx_CONFIG],[
     OMPI_CHECK_UCX([osc_ucx],
                    [osc_ucx_happy="yes"],
                    [osc_ucx_happy="no"])
+
+    AS_IF([test "${osc_ucx_happy}" = "yes"],
+          [OPAL_MCA_CHECK_DEPENDENCY([ompi], [osc], [ucx], [opal], [common], [ucx])])
 
     AS_IF([test "$osc_ucx_happy" = "yes"],
           [$1],

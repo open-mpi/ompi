@@ -49,6 +49,9 @@ AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
                                             [mtl_ofi_happy=0])])])
 
     AS_IF([test ${mtl_ofi_happy} -eq 1],
+          [OPAL_MCA_CHECK_DEPENDENCY([opal], [btl], [ofi], [opal], [common], [ofi])])
+
+    AS_IF([test ${mtl_ofi_happy} -eq 1],
           [$1],
           [AS_IF([test -n "${with_ofi}" -a "${with_ofi}" != "no"],
                  [AC_MSG_WARN([OFI libfabric support requested (via --with-ofi or --with-libfabric), but not found.])

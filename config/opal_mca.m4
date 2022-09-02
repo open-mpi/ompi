@@ -1033,3 +1033,29 @@ AC_DEFUN([OPAL_MCA_MAKE_DIR_LIST],[
     done
     AC_SUBST($1)
 ])
+
+
+# OPAL_MCA_CHECK_DEPENDENCY(check project, check framework, check component,
+#                           dependent project, dependent framework, dependent component)
+# --------------------------------------------------------------------------
+# Enforce that the check component does not introduce a dependency from its
+# project library (ie libmpi.so or libopen-pal.so) to another component
+# (ie, a common_*.so).  This can happen if the check component is set to
+# build static and the common library is set to build dso.  If this situation
+# is detected, print an error and abort configure.
+AC_DEFUN([OPAL_MCA_CHECK_DEPENDENCY],
+[
+    OPAL_VAR_SCOPE_PUSH([component_compile_mode dependency_compile_mode])
+
+    MCA_COMPONENT_COMPILE_MODE([$1], [$2], [$3], [component_compile_mode])
+    MCA_COMPONENT_COMPILE_MODE([$4], [$5], [$6], [dependency_compile_mode])
+
+    AS_IF([test "${component_compile_mode}" = "static" -a "${dependency_compile_mode}" = "dso"],
+         [AC_MSG_ERROR([Component $2:$3 is set to build as a
+static component, but its dependency $5:$6 is set to build as
+a dynamic component.  This configuration is not supported.  Please
+either build $5:$6 as a static component or build $2:$3 as a dynamic
+component.])])
+
+    OPAL_VAR_SCOPE_POP
+])
