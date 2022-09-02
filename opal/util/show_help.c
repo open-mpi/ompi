@@ -134,7 +134,7 @@ static void opal_show_help_cbfunc(pmix_status_t status, void *cbdata)
 }
 
 static void local_delivery(const char *file, const char *topic, char *msg) {
-    pmix_info_t *info, *dirs;
+    pmix_info_t *info, *dirs = NULL;
     int ninfo = 0, ndirs = 0;
     PMIX_INFO_CREATE(info, 1);
     PMIX_INFO_LOAD(&info[ninfo++], PMIX_LOG_STDERR, msg, PMIX_STRING);
