@@ -15,7 +15,6 @@
 # Copyright (c) 2011-2018 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2018      Intel, inc. All rights reserved
-#
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
@@ -44,6 +43,9 @@ AC_DEFUN([MCA_opal_btl_ofi_CONFIG],[
            AC_CHECK_DECL([FI_MR_VIRT_ADDR], [], [btl_ofi_happy=0],
                          [#include <rdma/fabric.h>])
            CPPFLAGS=${CPPFLAGS_save}])
+
+    AS_IF([test ${btl_ofi_happy} -eq 1],
+          [OPAL_MCA_CHECK_DEPENDENCY([opal], [btl], [ofi], [opal], [common], [ofi])])
 
     AS_IF([test ${btl_ofi_happy} -eq 1],
           [$1],

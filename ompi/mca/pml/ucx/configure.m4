@@ -1,5 +1,6 @@
 #
 # Copyright (C) Mellanox Technologies Ltd. 2001-2015.  ALL RIGHTS RESERVED.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,6 +19,9 @@ AC_DEFUN([MCA_ompi_pml_ucx_CONFIG], [
     OMPI_CHECK_UCX([pml_ucx],
                    [pml_ucx_happy="yes"],
                    [pml_ucx_happy="no"])
+
+    AS_IF([test "${pml_ucx_happy}" = "yes"],
+          [OPAL_MCA_CHECK_DEPENDENCY([ompi], [pml], [ucx], [opal], [common], [ucx])])
 
     AS_IF([test "$pml_ucx_happy" = "yes"],
           [$1],
