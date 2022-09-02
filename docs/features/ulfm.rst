@@ -6,6 +6,18 @@ User-Level Fault Mitigation (ULFM)
 This chapter documents the features and options specific to the **User
 Level Failure Mitigation (ULFM)** Open MPI implementation.
 
+Quick Start
+-----------
+
+This is an extremely terse summary of how to use ULFM:
+
+.. code-block::
+
+  shell$ ./configure --with-ft=ulfm [...options...]
+  shell$ make [-j N] all install
+  shell$ mpicc my-ft-program.c -o my-ft-program
+  shell$ mpirun -n 4 --with-ft ulfm my-ft-program
+
 Features
 --------
 
@@ -100,60 +112,212 @@ Available from: https://journals.sagepub.com/doi/10.1177/1094342013488238.
 Building ULFM support in Open MPI
 ---------------------------------
 
-In Open MPI |ompi_ver|, ULFM support is **enabled by default** |mdash|
-when you build Open MPI, unless you specify ``--without-ft``, ULFM
-support will automatically be built.
+In Open MPI |ompi_ver|, ULFM support is **built-in by default** |mdash|
+that is, when you build Open MPI, unless you specify ``--without-ft``, ULFM
+support is automatically available (but is inactive unless enabled at
+runtime).
 
-Optionally, you can specify ``--with-ft`` to ensure that ULFM support
+Optionally, you can specify ``--with-ft ulfm`` to ensure that ULFM support
 is definitely built.
 
-Support notes
-^^^^^^^^^^^^^
+.. note:: ULFM Fault Tolerance does not apply to OpenSHMEM.  It is recommended
+   that if you are going to use ULFM, you should disable building OpenSHMEM
+   with ``--disable-oshmem``.
 
-* ULFM Fault Tolerance does not apply to OpenSHMEM.  It is recommended
-  that if you are going to use ULFM, you should disable building
-  OpenSHMEM with ``--disable-oshmem``.
+Running ULFM Open MPI
+---------------------
+
+Building your application
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As ULFM is still an extension to the MPI standard, you will need to
+``#include <mpi-ext.h>`` in C, or ``use mpi_ext`` in Fortran to access
+the supplementary error codes and functions.
+
+Compile your application as usual, using the provided ``mpicc`` or
+``mpifort`` wrappers.
+
+Running your application
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can launch your application with fault tolerance by simply using
+the normal Open MPI ``mpirun`` launcher, with the
+``--with-ft ulfm`` CLI option (or its synonym ``--with-ft mpi``):
+
+.. code-block::
+
+   shell$ mpirun --with-ft ulfm ...
+
+.. important:: By default, fault tolerance is not active at run time.
+   It must be enabled via ``--with-ft ulfm``.
+
+Running under a batch scheduler
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ULFM can operate under a job/batch scheduler, and is tested routinely
+with ALPS, PBS, and Slurm. One difficulty comes from the fact that
+many job schedulers handle failures by triggering an immediate "cleanup"
+of the application as soon as any process fails. In addition, failure
+detection subsystems integrated into PRTE are not active in direct launch
+scenarios and may not have a launcher specific alternative. This may cause
+the application to not detect failures and lock. In order to avoid these
+problems, it is preferred that you use ``mpirun`` within an allocation
+(e.g., ``salloc``, ``sbatch``, ``qsub``) rather than a direct launch.
 
 * SLURM is tested and supported with fault tolerance.
 
-  .. important:: Do not use ``srun``, or your application gets killed
-                 by the scheduler upon the first failure.  Instead,
-                 use ``mpirun`` in an ``salloc/sbatch`` allocation.
-
-* LSF is untested with fault tolerance.
+  .. important:: Use ``mpirun`` in an ``salloc`` or ``sbatch`` allocation.
+     Direct launch with ``srun`` is not supported.
 
 * PBS/Torque is tested and supported with fault tolerance.
 
-  .. important:: Be sure to use ``mpirun`` in a ``qsub`` allocation.
+  .. important:: Use ``mpirun`` in a ``qsub`` allocation. Direct launch
+     with ``aprun`` is not supported.
+
+* LSF is untested with fault tolerance.
+
+Run-time tuning knobs
+^^^^^^^^^^^^^^^^^^^^^
+
+ULFM comes with a variety of knobs for controlling how it runs. The
+default parameters are sane and should result in good performance in
+most cases. You can change the default settings with ``--mca
+mpi_ft_foo <value>`` for Open MPI options, and with ``--prtemca
+errmgr_detector_bar <value>`` for PRTE options.
+
+.. important:: The main control for enabling/disabling fault tolerance
+   at runtime is the ``--with-ft ulfm`` (or its synomym ``--with-ft mpi``)
+   ``mpirun`` CLI option. This option sets up multiple subsystems in
+   Open MPI to enable fault tolerance. The options described below are
+   best used to override the default behavior after the ``--with-ft ulfm``
+   opion is used.
+
+PRTE level options
+~~~~~~~~~~~~~~~~~~
+
+* ``prrte_enable_ft <true|false> (default: false)`` controls
+  automatic cleanup of apps with failed processes within
+  ``mpirun``. This option is automatically set to ``true`` when using
+  ``--with-ft ulfm``.
+* ``errmgr_detector_priority <int> (default 1005``) selects the
+  PRRTE-based failure detector. Only available when
+  ``prte_enable_recovery`` is ``true``. You can set this to ``0`` when
+  using the (experimental) Open MPI detector instead.
+* ``errmgr_detector_heartbeat_period <float> (default: 5e0)`` controls
+  the heartbeat period. Recommended value is 1/2 of the timeout.
+* ``errmgr_detector_heartbeat_timeout <float> (default: 1e1 seconds)``
+  heartbeat timeout (i.e. failure detection speed). Recommended value
+  is 2 times the heartbeat period. The default setup is tuned for
+  failure-free performance at the expense of fault detection
+  reactivity. In environments where faults are expected to be common,
+  less conservative values can be used (e.g., 100ms); Values lower
+  than the TCP poll rate (typically 10ms) can cause false positive.
+
+Open MPI level options
+~~~~~~~~~~~~~~~~~~~~~~
+
+Default values are applied to some Open MPI parameters when using
+``mpirun --with-ft ulfm``. These defaults are obtained from the ``ft-mpi``
+aggregate MCA param file
+``$installdir/share/openmpi/amca-param-sets/ft-mpi``. You can tune the
+runtime behavior of ULFM by either setting or unsetting variables in
+this file, or by overriding the variable on the command line (e.g.,
+``--mca btl ofi,self``).
+
+.. important:: Note that if fault tolerance is disabled at runtime,
+   (that is, when not using ``--with-ft ulfm``), the ``ft-mpi`` AMCA
+   param file is not loaded, thus components that are unsafe for fault
+   tolerance will load normally (this may change observed performance
+   when comparing with and without fault tolerance).
+
+* ``mpi_ft_enable <true|false> (default: false)``
+  permits turning on/off fault tolerance at runtime. This option is
+  automatically set to ``true`` from the aggregate MCA param file
+  ``ft-mpi`` loaded when using ``--with-ft ulfm``. When false, failure
+  detection is disabled; Interfaces defined by the fault tolerance extensions
+  are substituted with dummy non-fault tolerant implementations (e.g.,
+  ``MPIX_Comm_agree`` is implemented with ``MPI_Allreduce``); All other
+  controls below become irrelevant.
+* ``mpi_ft_verbose <int> (default: 0)`` increases the output of the
+  fault tolerance activities. A value of 1 will report detected
+  failures.
+* ``mpi_ft_detector <true|false> (default: false)``, **DEPRECATED**
+  controls the activation of the Open MPI level failure detector. When
+  this detector is turned off, all failure detection is delegated to
+  PRTE (see above).  The Open MPI level fault detector is
+  experimental. There is a tradeoff between failure detection accuracy
+  and performance with this detector. Users that experience accuracy
+  issues may enable a more precise mode.  See the tuning knobs below
+  to adjust to taste; The Open MPI failure detector operates on
+  ``MPI_COMM_WORLD`` exclusively.  Processes connected from
+  ``MPI_COMM_CONNECT``/``ACCEPT`` and ``MPI_COMM_SPAWN`` may
+  occasionally not be detected when they fail.
+
+  .. caution:: This component is deprecated. Failure detection is now
+     performed at the PRTE level. See the section above on controlling
+     PRTE behavior for information about how to tune the failure detector.
+
+* ``mpi_ft_detector_thread <true|false> (default: false)`` controls
+  the use of a thread to emit and receive failure detector's
+  heartbeats. *Setting this value to "true" will also set
+  MPI_THREAD_MULTIPLE support, which has a noticeable effect on
+  latency (typically 1us increase).* You may want to **enable this
+  option if you experience false positive** processes incorrectly
+  reported as failed with the Open MPI failure detector.
+
+  .. important:: This option is only relevant when ``mpi_ft_detector`` is ``true``.
+
+* ``mpi_ft_detector_period <float> (default: 3e0 seconds)`` heartbeat
+  period. Recommended value is 1/3 of the timeout. _Values lower than
+  100us may impart a noticeable effect on latency (typically a 3us
+  increase)._
+
+  .. important:: This option is only relevant when ``mpi_ft_detector`` is ``true``.
+
+* ``mpi_ft_detector_timeout <float> (default: 1e1 seconds)`` heartbeat
+  timeout (i.e. failure detection speed). Recommended value is 3 times
+  the heartbeat period.
+
+  .. important:: This option is only relevant when ``mpi_ft_detector`` is ``true``.
+
+Known Limitations in ULFM
+-------------------------
+
+* InfiniBand support is provided through the UCT BTL; fault tolerant
+  operation over the UCX PML is not yet supported for production runs.
+* TOPO, FILE, RMA are not fault tolerant. They are expected to work
+  properly before the occurrence of the first failure.
 
 Modified, Untested and Disabled Components
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------------
 
-Frameworks and components which are not listed in the following list
-are unmodified and support fault tolerance. Listed frameworks may be
-**modified** (and work after a failure), **untested** (and work before
-a failure, but may malfunction after a failure), or **disabled** (they
-cause unspecified behavior all around when FT is enabled).
+Frameworks and components are listed below and categorized into one of
+three classifications:
 
-All runtime disabled components are listed in the ``ft-mpi`` aggregate
-MCA param file
-``$installdir/share/openmpi/amca-param-sets/ft-mpi``. You can tune the
-runtime behavior with ULFM by either setting or unsetting variables in
-this file (or by overriding the variable on the command line (e.g.,
-``--mca btl ofi,self``). Note that if fault tolerance is disabled at
-runtime, these components will load normally (this may change observed
-performance when comparing with and without fault tolerance).
+1. **Modified:** This framework/component has been specifically modified
+   such that it will continue to work after a failure.
+2. **Untested:** This framework/component has not been modified and/or
+   tested with fault tolerance scenarios, and _may_ malfunction
+   after a failure.
+3. **Disabled:** This framework/component will cause unspecified behavior when
+   fault tolerance is enabled. As a consequence, it will be disabled when the
+   ``--with-ft ulfm`` option is used (see above for defails about implicit
+   parameters loaded from the ``ft-mpi`` aggregate param file).
+
+Any framework or component not listed below are categorized as **Unmodified**,
+meaning that it is unmodified for fault tolerance, but will continue to work
+correctly after a failure.
 
 * ``pml``: MPI point-to-point management layer
 
-  * ``monitoring``, ``v``: **untested** (they have not been modified
-    to handle faults)
+  * ``monitoring``, ``v``: **untested** (they have not been modified to handle
+    faults)
   * ``cm``, ``crcpw``, ``ucx``: **disabled**
 
 * ``btl``: Point-to-point Byte Transfer Layer
 
-  * ``ofi``, ``portals4``, ``smcuda``, ``usnic``, ``sm(+knem)``:
-    **untested** (they may work properly, please report)
+  * ``ofi``, ``portals4``, ``smcuda``, ``usnic``, ``sm(+knem)``: **untested**
+    (they may work properly, please report)
 
 * ``mtl``: Matching transport layer Used for MPI point-to-point messages on
   some types of networks
@@ -186,8 +350,7 @@ performance when comparing with and without fault tolerance).
 
 * ``vprotocol``: Checkpoint/Restart components
 
-  * These components have not been modified to handle faults, and are
-    **untested**.
+  * All ``vprotocol`` components are **untested**
 
 * ``threads``, ``wait-sync``: Multithreaded wait-synchronization
   object
@@ -195,117 +358,6 @@ performance when comparing with and without fault tolerance).
   * ``argotbots``, ``qthreads``: **disabled** (these components have
     not been modified to handle faults; we expect post-failure
     deadlock)
-
-
-Running ULFM Open MPI
----------------------
-
-Building your application
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-As ULFM is still an extension to the MPI standard, you will need to
-``#include <mpi-ext.h>`` in C, or ``use mpi_ext`` in Fortran to access
-the supplementary error codes and functions.
-
-Compile your application as usual, using the provided ``mpicc`` or
-``mpifort`` wrappers.
-
-Running your application
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-You can launch your application with fault tolerance by simply using
-the normal Open MPI ``mpiexec`` launcher, with the
-``--with-ft ulfm`` CLI option:
-
-.. code-block::
-
-   shell$ mpirun --with-ft ulfm ...
-
-Running under a batch scheduler
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-ULFM can operate under a job/batch scheduler, and is tested routinely
-with ALPS, PBS, and Slurm. One difficulty comes from the fact that
-many job schedulers will "cleanup" the application as soon as any
-process fails. In order to avoid this problem, it is preferred that
-you use ``mpiexec`` within an allocation (e.g., ``salloc``,
-``sbatch``, ``qsub``) rather than a direct launch (e.g., ``srun``).
-
-Run-time tuning knobs
-^^^^^^^^^^^^^^^^^^^^^
-
-ULFM comes with a variety of knobs for controlling how it runs. The
-default parameters are sane and should result in good performance in
-most cases. You can change the default settings with ``--mca
-mpi_ft_foo <value>`` for Open MPI options, and with ``--prtemca
-errmgr_detector_bar <value>`` for PRTE options.
-
-PRTE level options
-~~~~~~~~~~~~~~~~~~
-
-* ``prrte_enable_recovery <true|false> (default: false)`` controls
-  automatic cleanup of apps with failed processes within
-  mpirun. Enabling this option also enables ``mpi_ft_enable``.
-* ``errmgr_detector_priority <int> (default 1005``) selects the
-  PRRTE-based failure detector. Only available when
-  ``prte_enable_recovery`` is ``true``. You can set this to ``0`` when
-  using the (experimental) Open MPI detector instead.
-* ``errmgr_detector_heartbeat_period <float> (default: 5e0)`` controls
-  the heartbeat period. Recommended value is 1/2 of the timeout.
-* ``errmgr_detector_heartbeat_timeout <float> (default: 1e1 seconds)``
-  heartbeat timeout (i.e. failure detection speed). Recommended value
-  is 2 times the heartbeat period. The default setup is tuned for
-  failure-free performance at the expense of fault detection
-  reactivity. In environments where faults are expected to be common,
-  less conservative values can be used (e.g., 100ms); Values lower
-  than the TCP poll rate (typically 10ms) can cause false positive.
-
-Open MPI level options
-~~~~~~~~~~~~~~~~~~~~~~
-
-* ``mpi_ft_enable <true|false> (default: same as
-  prrte_enable_recovery)`` permits turning on/off fault tolerance at
-  runtime. When false, failure detection is disabled; Interfaces
-  defined by the fault tolerance extensions are substituted with dummy
-  non-fault tolerant implementations (e.g., ``MPIX_Comm_agree`` is
-  implemented with ``MPI_Allreduce``); All other controls below become
-  irrelevant.
-* ``mpi_ft_verbose <int> (default: 0)`` increases the output of the
-  fault tolerance activities. A value of 1 will report detected
-  failures.
-* ``mpi_ft_detector <true|false> (default: false)``, **EXPERIMENTAL**
-  controls the activation of the Open MPI level failure detector. When
-  this detector is turned off, all failure detection is delegated to
-  PRTE (see above).  The Open MPI level fault detector is
-  experimental. There is a tradeoff between failure detection accuracy
-  and performance with this detector. Users that experience accuracy
-  issues may enable a more precise mode.  See the tuning knobs below
-  to adjust to taste; The Open MPI failure detector operates on
-  ``MPI_COMM_WORLD`` exclusively.  Processes connected from
-  ``MPI_COMM_CONNECT``/``ACCEPT`` and ``MPI_COMM_SPAWN`` may
-  occasionally not be detected when they fail.
-* ``mpi_ft_detector_thread <true|false> (default: false)`` controls
-  the use of a thread to emit and receive failure detector's
-  heartbeats. *Setting this value to "true" will also set
-  MPI_THREAD_MULTIPLE support, which has a noticeable effect on
-  latency (typically 1us increase).* You may want to **enable this
-  option if you experience false positive** processes incorrectly
-  reported as failed with the Open MPI failure detector.
-* ``mpi_ft_detector_period <float> (default: 3e0 seconds)`` heartbeat
-  period. Recommended value is 1/3 of the timeout. _Values lower than
-  100us may impart a noticeable effect on latency (typically a 3us
-  increase)._
-* ``mpi_ft_detector_timeout <float> (default: 1e1 seconds)`` heartbeat
-  timeout (i.e. failure detection speed). Recommended value is 3 times
-  the heartbeat period.
-
-Known Limitations in ULFM
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* InfiniBand support is provided through the UCT BTL; fault tolerant
-  operation over the UCX PML is not yet supported for production runs.
-* TOPO, FILE, RMA are not fault tolerant. They are expected to work
-  properly before the occurrence of the first failure.
 
 Changelog
 ---------
