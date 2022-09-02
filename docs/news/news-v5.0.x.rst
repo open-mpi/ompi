@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc7
+Open MPI version 5.0.0rc8
 -------------------------
-:Date: 13 May 2022
+:Date: 6 September 2022
 
 .. admonition:: MPIR API has been removed
    :class: warning
@@ -40,45 +40,29 @@ Open MPI version 5.0.0rc7
       libraries, rather than linked into the Open MPI core libraries.
 
 
-- Changes since rc6:
+- Changes since rc7:
 
-  - The PRRTE and OpenPMIx submodule pointers have been updated to bring in the following fixes:
-
-    - Fixed a bug where ``opal_show_help()`` output would not be aggregated and de-duplicated
-      by default. This was a regression from the Open MPI v4.x series, and should now be fixed.
-      Users can change the default by using the mca parameter ``opal_base_help_aggregate``.
-    - Fixed a segmentation fault in the launcher when running with fault tolerance enabled.
-    - Fixed issues when launching indirectly via ``SLURM``:
-
-      - Fixed launch failures found in ``rc6`` where the environment was not properly setup
-        for launching.
-      - Restored the use of ``--cpu-bind=NONE``.
-    - Fixed a bug ``--allow-run-as-root`` was not propagated to the backend ``prte`` daemons.
-  - Changes were made to ``mpirun`` to improve its detection of the backend launcher ``prterun``.
-    This fixes most of the launch issues where ``mpirun`` failed to find ``prterun`` in out-of-the-box
-    RPM installs of Open MPI.
-  - ``UCX`` one-sided MPI changes:
-
-    - Added support for shared memory windows (``MPI_Win_allocate_shared()``).
-    - Various other updates and bug fixes.
-  - Fixed a regression were the FORTRAN ``OSHMEM`` wrapper compiler would fail
-    to compile user applications.
-  - ``OSHMEM``: updated ``shmem_calloc()`` to be standard-compliant regarding zero-byte
-    inputs.
-  - Fixed various memory leaks when running applications that use non-blocking collectives.
-  - Fixed a segmentation fault in sparsely connected applications in ``MPI_Finalize()``.
-  - Issue a warning if ``PMIx`` is unreachable and a ``PMI1`` or ``PMI2`` or ``SLURM`` environment
-    is detected before falling back to singleton mode launching. This will prevent confusion to end users
-    running in these situtations, as ``PMI`` support has been dropped from Open MPI v5.0.0.
-  - ``MPI Sessions``: Added support for ``MPI_TAG_UB``.
-  - Fixed a build failure when compiling Open MPI with ``PSM2`` (``configure --with-psm2=..``).
-
-    - Thanks to Sascha Hunold for the fix.
+  - Switched to the PRRTe v3.0 branch.
+  - Many improvements and bugfixes to the one-sided ``UCX`` transport.
+  - Many improvements and bugfixes to ``MPI Sessions``.
+  - Fixes to singleton/MPI_COMM_SPAWN launching.
+  - GCC atomics were made to be the default atomic implementation, with C11
+    atomics as the fallback.
+  - Github: Automatic labeler added to label pull requests with their
+    destination branch. Thanks to Joe Downs for the contribution.
+  - Fixed a deadlock in a one-sided ``RDMA`` function call. Thanks to @jotabf
+    for the fix.
+  - Configure: Fix typo in CUDA checks. Thanks to Andreas Schwab for the fix.
+  - Include missing sys/stat.h in sharedfp_sm.c to fix a compile error on FreeBSD.
+    Thanks to Mosè Giordano for the fix.
+  - Fixed numerous typos throughout the code base. Thanks to @luzpaz for these fixes.
+  - Removed trailing whitespace from documentation. Thanks to @a-szegel for their
+    contribution.
 
 - All other notable updates for v5.0.0:
 
-  - Updated PMIx to the ``v4.2`` branch - current hash: ``8c39d8e``.
-  - Updated PRRTE to the ``v2.1`` branch - current hash: ``f75647a``.
+  - Updated PMIx to the ``v4.2`` branch - current hash: ``a004dbc``.
+  - Updated PRRTE to the ``v3.0`` branch - current hash: ``e88c431``.
 
   - New Features:
 
@@ -103,7 +87,7 @@ Open MPI version 5.0.0rc7
 
   - MPI-4.0 updates and additions:
 
-    - Support for ``MPI Sesisons`` has been added.
+    - Support for ``MPI Sessions`` has been added.
     - Added partitioned communication using persistent sends
       and persistent receives.
     - Added persistent collectives to the ``MPI_`` namespace
