@@ -4,6 +4,7 @@
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  *
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +45,7 @@ static void _osc_ucx_init_unlock(void)
 
 
 static int component_open(void);
+static int component_close(void);
 static int component_register(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
 static int component_finalize(void);
@@ -62,6 +64,7 @@ ompi_osc_ucx_component_t mca_osc_ucx_component = {
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                                   OMPI_RELEASE_VERSION),
             .mca_open_component = component_open,
+            .mca_close_component = component_close,
             .mca_register_component_params = component_register,
         },
         .osc_data = {
@@ -143,6 +146,14 @@ static bool check_config_value_bool (char *key, opal_info_t *info)
 }
 
 static int component_open(void) {
+    opal_common_ucx_mca_register();
+
+    return OMPI_SUCCESS;
+}
+
+static int component_close(void) {
+    opal_common_ucx_mca_deregister();
+
     return OMPI_SUCCESS;
 }
 
@@ -253,7 +264,6 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
 
     mca_osc_ucx_component.enable_mpi_threads = enable_mpi_threads;
     mca_osc_ucx_component.wpool = opal_common_ucx_wpool_allocate();
-    opal_common_ucx_mca_register();
 
     ret = ucp_context_init(enable_mpi_threads,  ompi_proc_world_size());
     if (OMPI_ERROR == ret) {
@@ -286,7 +296,7 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
 }
 
 static int component_finalize(void) {
-    opal_common_ucx_mca_deregister();
+
     if (mca_osc_ucx_component.env_initialized) {
         opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
     }
