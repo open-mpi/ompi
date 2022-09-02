@@ -905,26 +905,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
         opal_argv_free(peers);
     }
 
-    /*
-     * stdout/stderr buffering
-     * If the user requested to override the default setting then do
-     * as they wish.
-     */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "OMPI_STREAM_BUFFERING",
-                                   &opal_process_info.my_name, &u16ptr, PMIX_UINT16);
-    if (PMIX_SUCCESS == rc) {
-        if (0 == u16) {
-            setvbuf(stdout, NULL, _IONBF, 0);
-            setvbuf(stderr, NULL, _IONBF, 0);
-        } else if (1 == u16) {
-            setvbuf(stdout, NULL, _IOLBF, 0);
-            setvbuf(stderr, NULL, _IOLBF, 0);
-        } else if (2 == u16 ) {
-            setvbuf(stdout, NULL, _IOFBF, 0);
-            setvbuf(stderr, NULL, _IOFBF, 0);
-        }
-    }
-
 #ifdef PMIX_NODE_OVERSUBSCRIBED
     pname.jobid = opal_process_info.my_name.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
