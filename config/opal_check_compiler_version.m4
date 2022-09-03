@@ -27,8 +27,7 @@ AC_DEFUN([OPAL_CHECK_COMPILER_VERSION_ID],
 
 
 AC_DEFUN([OPAL_CHECK_COMPILER], [
-    AS_LITERAL_IF([$1], [],
-                  [m4_fatal([OPAL_CHECK_COMPILER argument must be a literal])])
+    OAC_ASSERT_LITERAL([$1], [1])dnl
     lower=m4_tolower([$1])
     AC_CACHE_CHECK([for compiler $lower], [opal_cv_compiler_$1],
     [
