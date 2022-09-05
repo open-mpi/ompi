@@ -131,7 +131,9 @@ network at a system level, such that when users invoke ``mpirun`` or
 ``mpiexec`` to launch their jobs, they will automatically only be using
 the network meant for MPI jobs.
 
-:doc:`See the run-time tuning FAQ category </faq/tuning>` for information on how to set global MCA parameters.
+:ref:`See how to set MCA params
+<label-running-setting-mca-param-values>` for information on how to
+set global MCA parameters.
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -161,8 +163,10 @@ I have power users who will want to override my global MCA parameters; is this p
 
 Absolutely.
 
-:doc:`See the run-time tuning FAQ category </faq/tuning>` for information how to set MCA parameters, both at the
-system level and on a per-user (or per-MPI-job) basis.
+:ref:`See how to set MCA params
+<label-running-setting-mca-param-values>` for information how to set
+MCA parameters, both at the system level and on a per-user (or
+per-MPI-job) basis.
 
 /////////////////////////////////////////////////////////////////////////
 

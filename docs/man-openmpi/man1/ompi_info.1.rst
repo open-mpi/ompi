@@ -198,8 +198,8 @@ machine-parsable format:
 
    ompi_info --param btl tcp --parsable
 
-Show the level 3 MCA parameters of string type in a human-readable /
-prettyprint format:
+Show the level 1 through level 3 MCA parameters of string type in a
+human-readable / prettyprint format:
 
 .. code-block::
 
