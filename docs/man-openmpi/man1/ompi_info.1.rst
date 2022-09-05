@@ -163,65 +163,65 @@ more MCA parameters, use the ``--level`` command line option.
 EXAMPLES
 --------
 
+Show the default output of options and listing of installed
+components in a human-readable / prettyprint format:
+
 .. code-block::
 
    ompi_info
 
-Show the default output of options and listing of installed
-components in a human-readable / prettyprint format.
+Show the default output of options and listing of installed components
+in a machine-parsable format:
 
 .. code-block::
 
    ompi_info --parsable
 
-Show the default output of options and listing of installed components
-in a machine-parsable format.
+Show the level 1 MCA parameters of the "tcp" BTL component in a
+human-readable / prettyprint format:
 
 .. code-block::
 
    ompi_info --param btl tcp
 
-Show the level 1 MCA parameters of the "tcp" BTL component in a
-human-readable / prettyprint format.
+Show the level 1 through level 6 MCA parameters of the "tcp" BTL
+component in a human-readable / prettyprint format:
 
 .. code-block::
 
    ompi_info --param btl tcp --level 6
 
-Show the level 1 through level 6 MCA parameters of the "tcp" BTL
-component in a human-readable / prettyprint format.
+Show the level 1 MCA parameters of the "tcp" BTL component in a
+machine-parsable format:
 
 .. code-block::
 
    ompi_info --param btl tcp --parsable
 
-Show the level 1 MCA parameters of the "tcp" BTL component in a
-machine-parsable format.
+Show the level 3 MCA parameters of string type in a human-readable /
+prettyprint format:
 
 .. code-block::
 
    ompi_info --type string --pretty-print --level 3
 
-Show the level 3 MCA parameters of string type in a human-readable /
-prettyprint format.
+Show the "bindir" that Open MPI was configured with:
 
 .. code-block::
 
    ompi_info --path bindir
 
-Show the "bindir" that Open MPI was configured with.
+Show the version of Open MPI version numbers in a prettyprint format:
 
 .. code-block::
 
    ompi_info --version
 
-Show the version of Open MPI version numbers in a prettyprint format.
+Show *all* information about the Open MPI installation, including all
+components that can be found, all the MCA parameters that they support
+(i.e., levels 1 through 9), versions of Open MPI and the components,
+etc.:
 
 .. code-block::
 
    ompi_info --all
-
-Show *all* information about the Open MPI installation, including all
-components that can be found, all the MCA parameters that they support
-(i.e., levels 1 through 9), versions of Open MPI and the components,
-etc.
