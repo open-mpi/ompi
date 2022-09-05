@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2011-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
@@ -52,7 +52,7 @@ char *mca_base_component_path = NULL;
 int mca_base_opened = 0;
 char *mca_base_system_default_path = NULL;
 char *mca_base_user_default_path = NULL;
-bool mca_base_component_show_load_errors = (bool) OPAL_SHOW_LOAD_ERRORS_DEFAULT;
+char *mca_base_component_show_load_errors = NULL;
 bool mca_base_component_track_load_errors = false;
 bool mca_base_component_disable_dlopen = false;
 
@@ -104,14 +104,23 @@ int mca_base_open(void)
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     free(value);
 
-    mca_base_component_show_load_errors = (bool) OPAL_SHOW_LOAD_ERRORS_DEFAULT;
+    mca_base_component_show_load_errors = OPAL_SHOW_LOAD_ERRORS_DEFAULT;
     var_id
-        = mca_base_var_register("opal", "mca", "base", "component_show_load_errors",
-                                "Whether to show errors for components that failed to load or not",
-                                MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                MCA_BASE_VAR_SCOPE_READONLY, &mca_base_component_show_load_errors);
+        = mca_base_var_register("opal", "mca", "base",
+                                "component_show_load_errors",
+                                "Whether to show warnings for components that fail to load or not.  Valid values are \"all\" (meaning: all load failures are reported), \"none\" (no load failures are reported), or a comma-delimited list of items, each of which can be a framework/component pair or a framework name (only load failures from the specifically-listed items are reported).  If the comma-delimited list is prefixed with \"^\", then orientation of the list is negated: warn about all load failures *except* for the listed items.",
+                                MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &mca_base_component_show_load_errors);
     (void) mca_base_var_register_synonym(var_id, "opal", "mca", NULL, "component_show_load_errors",
                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    // Parse the mca_base_component_show_load_errors value
+    int ret = mca_base_show_load_errors_init();
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
 
     mca_base_component_track_load_errors = false;
     var_id
