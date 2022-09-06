@@ -10,8 +10,6 @@ The macros are defined on a per project basis:
     * Open MPI: `OMPI_DECLSPEC`, `OMPI_MODULE_DECLSPEC`
     * Open PAL: `OPAL_DECLSPEC`, `OPAL_MODULE_DECLSPEC`
     * OpenSHMEM: `OSHMEM_DECLSPEC`, `OSHMEM_MODULE_DECLSPEC`
-    * HWLOC: `HWLOC_DECLSPEC`
-    * OpenPMIx: `PMIX_DECLSPEC`
 
 The macros expand to the appropriate compiler and platform flags for marking
 whether a symbol should be explicitly made public in the target projects
