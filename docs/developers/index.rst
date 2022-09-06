@@ -18,6 +18,7 @@ probably don't need to read this section.
    building-open-mpi
    terminology
    source-code-tree-layout
+   source-code-declspec
    frameworks
    gnu-autotools
    sphinx
