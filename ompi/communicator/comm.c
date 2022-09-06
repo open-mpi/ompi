@@ -46,6 +46,7 @@
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/dpm/dpm.h"
@@ -78,6 +79,21 @@ static const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_sup
     {.info_value = "cluster",  .split_type = OMPI_COMM_TYPE_CLUSTER},
     {.info_value = NULL},
 };
+
+static const char * ompi_comm_split_type_to_str(int split_type) {
+    for (int i = 0; NULL != ompi_comm_split_type_hw_guided_support[i].info_value; ++i) {
+        if (split_type == ompi_comm_split_type_hw_guided_support[i].split_type) {
+            return ompi_comm_split_type_hw_guided_support[i].info_value;
+        }
+    }
+    if (MPI_COMM_TYPE_HW_GUIDED == split_type) {
+        return "MPI_COMM_TYPE_HW_GUIDED";
+    }
+    else if (MPI_COMM_TYPE_HW_UNGUIDED == split_type) {
+        return "MPI_COMM_TYPE_HW_UNGUIDED";
+    }
+    return "Unknown";
+}
 
 /*
 ** sort-function for MPI_Comm_split
@@ -793,7 +809,11 @@ static int ompi_comm_split_type_get_part (ompi_group_t *group, const int split_t
              * We should not get here as the split type will be changed
              * at a higher level.
              */
-            opal_output(0, "Error: in ompi_comm_split_type_get_part() unexpected split_type=%d", split_type);
+            opal_show_help("help-comm.txt",
+                           "unexpected-split-type",
+                           true,
+                           ompi_comm_split_type_to_str(split_type),
+                           split_type);
             return OMPI_ERR_BAD_PARAM;
         }
 
@@ -871,6 +891,8 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     int global_split_type, global_orig_split_type, ok[2], tmp[6];
     int rc;
     int orig_split_type = split_type;
+    int flag;
+    opal_cstring_t *value = NULL;
 
     /* silence clang warning. newcomm should never be NULL */
     if (OPAL_UNLIKELY(NULL == newcomm)) {
@@ -881,9 +903,6 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
 
     /* Step 0: Convert MPI_COMM_TYPE_HW_GUIDED to the internal type */
     if (MPI_COMM_TYPE_HW_GUIDED == split_type) {
-        int flag;
-        opal_cstring_t *value = NULL;
-
         opal_info_get(info, "mpi_hw_resource_type", &value, &flag);
         /* If key is not in the 'info', then return MPI_COMM_NULL.
          * This is caught at the MPI interface level, but it doesn't hurt to
@@ -963,11 +982,16 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
 
         if (OPAL_UNLIKELY(!ok[0] || !ok[1])) {
             if (0 == ompi_comm_rank(comm)) {
-                if (!ok[1]) {
-                    opal_output(0, "Error: Mismatched info values for MPI_COMM_TYPE_HW_GUIDED");
-                } else {
-                    opal_output(0, "Error: Mismatched info values for split_type");
+                opal_info_get(info, "mpi_hw_resource_type", &value, &flag);
+                if (!flag) {
+                    value = NULL;
                 }
+                opal_show_help("help-comm.txt",
+                               "mismatched-split_type-values",
+                               true,
+                               ompi_comm_split_type_to_str(orig_split_type),
+                               orig_split_type,
+                               NULL == value ? "" : value->string);
             }
             return OMPI_ERR_BAD_PARAM;
         }
