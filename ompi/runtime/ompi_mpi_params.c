@@ -23,6 +23,7 @@
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,6 +102,8 @@ int ompi_ftmpi_output_handle = 0;
 bool ompi_ftmpi_enabled = false;
 #include "ompi/communicator/communicator.h"
 #endif /* OPAL_ENABLE_FT_MPI */
+
+static int ompi_stream_buffering_mode = -1;
 
 int ompi_mpi_register_params(void)
 {
@@ -403,6 +406,33 @@ int ompi_mpi_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_enable_timing);
+
+    /*
+     * stdout/stderr buffering
+     * If the user requested to override the default setting then do
+     * as they wish.
+     */
+    (void) mca_base_var_register("ompi", "ompi", NULL, "stream_buffering",
+                                 "Adjust buffering for stdout/stderr. "
+                                 "(0) unbuffered, (1) line buffered, (2) fully buffered.",
+                                 MCA_BASE_VAR_TYPE_INT,
+                                 NULL, 0, 0,
+                                 OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_stream_buffering_mode);
+    if(0 == ompi_stream_buffering_mode) {
+        setvbuf(stdout, NULL, _IONBF, 0);
+        setvbuf(stderr, NULL, _IONBF, 0);
+    }
+    else if(1 == ompi_stream_buffering_mode) {
+        setvbuf(stdout, NULL, _IOLBF, 0);
+        setvbuf(stderr, NULL, _IOLBF, 0);
+    }
+    else if(2 == ompi_stream_buffering_mode) {
+        setvbuf(stdout, NULL, _IOFBF, 0);
+        setvbuf(stderr, NULL, _IOFBF, 0);
+    }
+
 
 #if OPAL_ENABLE_FT_MPI
     /* Before loading any other part of the MPI library, we need to load
