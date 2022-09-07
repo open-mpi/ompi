@@ -26,8 +26,8 @@
 #ifndef OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_H
 #define OPAL_MCA_THREADS_QTHREADS_THREADS_QTHREADS_H 1
 
-#include "@OPAL_QTHREADS_INCLUDE_PATH@qthread.h"
-#include "@OPAL_QTHREADS_INCLUDE_PATH@qthread/tls.h"
+#include "qthread.h"
+#include "qthread/tls.h"
 
 static inline void opal_threads_ensure_init_qthreads(void)
 {
