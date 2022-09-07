@@ -17,7 +17,7 @@ probably don't need to read this section.
    autogen
    building-open-mpi
    terminology
-   source-code-tree-layout
+   source-code
    frameworks
    gnu-autotools
    sphinx
