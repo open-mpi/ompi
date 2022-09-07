@@ -44,7 +44,7 @@ extern int mca_sharedfp_individual_priority;
 extern int mca_sharedfp_individual_verbose;
 extern int mca_sharedfp_individual_usage_counter;
 
-OMPI_MODULE_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_individual_component;
+OMPI_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_individual_component;
 /*
  * ******************************************************************
  * ********* functions which are implemented in this module *********

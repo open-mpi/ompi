@@ -94,7 +94,7 @@ typedef struct mca_coll_cuda_component_t {
 
 /* Globally exported variables */
 
-OMPI_MODULE_DECLSPEC extern mca_coll_cuda_component_t mca_coll_cuda_component;
+OMPI_DECLSPEC extern mca_coll_cuda_component_t mca_coll_cuda_component;
 
 END_C_DECLS
 

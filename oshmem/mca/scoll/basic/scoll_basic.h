@@ -32,7 +32,7 @@ BEGIN_C_DECLS
 
 /* Globally exported variables */
 
-OSHMEM_MODULE_DECLSPEC extern mca_scoll_base_component_1_0_0_t
+OSHMEM_DECLSPEC extern mca_scoll_base_component_1_0_0_t
 mca_scoll_basic_component;
 
 extern int mca_scoll_basic_priority_param;

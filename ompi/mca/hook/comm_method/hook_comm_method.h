@@ -18,7 +18,7 @@
 
 BEGIN_C_DECLS
 
-OMPI_MODULE_DECLSPEC extern ompi_hook_base_component_1_0_0_t mca_hook_comm_method_component;
+OMPI_DECLSPEC extern ompi_hook_base_component_1_0_0_t mca_hook_comm_method_component;
 
 extern int mca_hook_comm_method_verbose;
 extern int mca_hook_comm_method_output;

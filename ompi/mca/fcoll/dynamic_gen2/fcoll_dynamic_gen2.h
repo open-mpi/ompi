@@ -40,7 +40,7 @@ BEGIN_C_DECLS
 extern int mca_fcoll_dynamic_gen2_priority;
 extern int mca_fcoll_dynamic_gen2_num_groups;
 
-OMPI_MODULE_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_gen2_component;
+OMPI_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_gen2_component;
 
 /* API functions */
 

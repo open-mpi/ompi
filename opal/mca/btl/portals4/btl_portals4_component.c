@@ -47,7 +47,7 @@ static mca_btl_base_module_t **mca_btl_portals4_component_init(int *num_btls,
                                                                bool enable_mpi_threads);
 int mca_btl_portals4_component_progress(void);
 
-OPAL_MODULE_DECLSPEC extern mca_btl_portals4_component_t mca_btl_portals4_component;
+OPAL_DECLSPEC extern mca_btl_portals4_component_t mca_btl_portals4_component;
 
 mca_btl_portals4_component_t mca_btl_portals4_component = {{
     /* First, the mca_base_module_t struct containing meta
