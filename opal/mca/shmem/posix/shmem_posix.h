@@ -54,7 +54,7 @@ typedef struct opal_shmem_posix_component_t {
     int priority;
 } opal_shmem_posix_component_t;
 
-OPAL_MODULE_DECLSPEC extern opal_shmem_posix_component_t mca_shmem_posix_component;
+OPAL_DECLSPEC extern opal_shmem_posix_component_t mca_shmem_posix_component;
 
 typedef struct opal_shmem_posix_module_t {
     opal_shmem_base_module_t super;

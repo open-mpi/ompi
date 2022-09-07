@@ -204,7 +204,7 @@ typedef struct mca_coll_tuned_component_t mca_coll_tuned_component_t;
 /**
  * Global component instance
  */
-OMPI_MODULE_DECLSPEC extern mca_coll_tuned_component_t mca_coll_tuned_component;
+OMPI_DECLSPEC extern mca_coll_tuned_component_t mca_coll_tuned_component;
 
 struct mca_coll_tuned_module_t {
     mca_coll_base_module_t super;

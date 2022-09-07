@@ -394,7 +394,7 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 /**
  * Global component instance
  */
-OMPI_MODULE_DECLSPEC extern mca_coll_han_component_t mca_coll_han_component;
+OMPI_DECLSPEC extern mca_coll_han_component_t mca_coll_han_component;
 
 /*
  * coll module functions

@@ -243,7 +243,7 @@ struct mca_btl_base_registration_handle_t {
 /*
  * global structures
  */
-OPAL_MODULE_DECLSPEC extern mca_btl_portals4_component_t mca_btl_portals4_component;
+OPAL_DECLSPEC extern mca_btl_portals4_component_t mca_btl_portals4_component;
 extern mca_btl_portals4_module_t mca_btl_portals4_module;
 
 /**

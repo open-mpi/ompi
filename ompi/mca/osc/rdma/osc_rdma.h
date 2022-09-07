@@ -317,7 +317,7 @@ struct ompi_osc_rdma_module_t {
     opal_atomic_int32_t pending_ops;
 };
 typedef struct ompi_osc_rdma_module_t ompi_osc_rdma_module_t;
-OMPI_MODULE_DECLSPEC extern ompi_osc_rdma_component_t mca_osc_rdma_component;
+OMPI_DECLSPEC extern ompi_osc_rdma_component_t mca_osc_rdma_component;
 
 #define GET_MODULE(win) ((ompi_osc_rdma_module_t*) win->w_osc_module)
 

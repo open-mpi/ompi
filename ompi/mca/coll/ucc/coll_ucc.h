@@ -58,7 +58,7 @@ struct mca_coll_ucc_component_t {
 };
 typedef struct mca_coll_ucc_component_t mca_coll_ucc_component_t;
 
-OMPI_MODULE_DECLSPEC extern mca_coll_ucc_component_t mca_coll_ucc_component;
+OMPI_DECLSPEC extern mca_coll_ucc_component_t mca_coll_ucc_component;
 
 /**
  * UCC enabled communicator

@@ -45,7 +45,7 @@ typedef struct mca_topo_treematch_component_2_2_0_t {
     int reorder_mode;
 } mca_topo_treematch_component_2_2_0_t;
 
-OMPI_MODULE_DECLSPEC extern mca_topo_treematch_component_2_2_0_t
+OMPI_DECLSPEC extern mca_topo_treematch_component_2_2_0_t
     mca_topo_treematch_component;
 
 /*

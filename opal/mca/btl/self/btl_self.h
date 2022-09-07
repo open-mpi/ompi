@@ -51,7 +51,7 @@ struct mca_btl_self_component_t {
     opal_free_list_t self_frags_rdma;  /**< free list of self second */
 };
 typedef struct mca_btl_self_component_t mca_btl_self_component_t;
-OPAL_MODULE_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;
+OPAL_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;
 
 extern mca_btl_base_module_t mca_btl_self;
 

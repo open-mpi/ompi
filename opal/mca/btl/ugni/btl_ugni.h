@@ -298,8 +298,8 @@ typedef struct mca_btl_ugni_component_t {
 
 /* Global structures */
 
-OPAL_MODULE_DECLSPEC extern mca_btl_ugni_component_t mca_btl_ugni_component;
-OPAL_MODULE_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;
+OPAL_DECLSPEC extern mca_btl_ugni_component_t mca_btl_ugni_component;
+OPAL_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;
 
 static inline uint32_t mca_btl_ugni_ep_get_device_index(mca_btl_ugni_module_t *ugni_module)
 {

@@ -71,8 +71,8 @@ BEGIN_C_DECLS
 
 struct sm_fifo_t;
 
-OPAL_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
-OPAL_MODULE_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
+OPAL_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
+OPAL_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
 
 /* number of peers on the node (not including self) */
 #define MCA_BTL_SM_NUM_LOCAL_PEERS opal_process_info.num_local_peers

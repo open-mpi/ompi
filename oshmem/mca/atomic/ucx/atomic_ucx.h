@@ -26,7 +26,7 @@ BEGIN_C_DECLS
 
 /* Globally exported variables */
 
-OSHMEM_MODULE_DECLSPEC extern mca_atomic_base_component_1_0_0_t
+OSHMEM_DECLSPEC extern mca_atomic_base_component_1_0_0_t
 mca_atomic_ucx_component;
 
 /* this component works with spml:ucx only */
