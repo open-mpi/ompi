@@ -31,3 +31,6 @@ Detected mismatched split_type and/or info "mpi_hw_resource_type" values
 in a call to MPI_Comm_split_type between peers in the communicator.
   split_type:  %s (%d)
   info:        %s
+[unexpected-split-type]
+Detected an unexpected split type in a call to MPI_Comm_split_type.
+  split_type:  %s (%d)
