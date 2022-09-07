@@ -77,7 +77,7 @@ struct mca_btl_template_component_t {
 };
 typedef struct mca_btl_template_component_t mca_btl_template_component_t;
 
-OPAL_MODULE_DECLSPEC extern mca_btl_template_component_t mca_btl_template_component;
+OPAL_DECLSPEC extern mca_btl_template_component_t mca_btl_template_component;
 
 /**
  * BTL Module Interface

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -249,10 +249,8 @@
 
 #if OPAL_C_HAVE_VISIBILITY
 #    define OPAL_DECLSPEC        __opal_attribute_visibility__("default")
-#    define OPAL_MODULE_DECLSPEC __opal_attribute_visibility__("default")
 #else
 #    define OPAL_DECLSPEC
-#    define OPAL_MODULE_DECLSPEC
 #endif
 
 #if !defined(__STDC_LIMIT_MACROS) && (defined(c_plusplus) || defined(__cplusplus))

@@ -19,7 +19,7 @@ BEGIN_C_DECLS
 /*
  * SPML module functions.
  */
-OSHMEM_MODULE_DECLSPEC extern mca_spml_base_component_2_0_0_t mca_spml_ucx_component;
+OSHMEM_DECLSPEC extern mca_spml_base_component_2_0_0_t mca_spml_ucx_component;
 END_C_DECLS
 
 #endif

@@ -241,7 +241,7 @@ typedef struct opal_btl_usnic_component_t {
     opal_event_base_t *opal_evbase;
 } opal_btl_usnic_component_t;
 
-OPAL_MODULE_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;
+OPAL_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;
 
 typedef mca_btl_base_recv_reg_t opal_btl_usnic_recv_reg_t;
 

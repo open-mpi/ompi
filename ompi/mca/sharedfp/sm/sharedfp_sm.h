@@ -44,7 +44,7 @@ int mca_sharedfp_sm_module_finalize (ompio_file_t *file);
 extern int mca_sharedfp_sm_priority;
 extern int mca_sharedfp_sm_verbose;
 
-OMPI_MODULE_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_sm_component;
+OMPI_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_sm_component;
 /*
  * ******************************************************************
  * ********* functions which are implemented in this module *********

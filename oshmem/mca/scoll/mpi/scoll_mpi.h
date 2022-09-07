@@ -49,7 +49,7 @@ struct mca_scoll_mpi_component_t {
 };
 typedef struct mca_scoll_mpi_component_t mca_scoll_mpi_component_t;
 
-OMPI_MODULE_DECLSPEC extern mca_scoll_mpi_component_t mca_scoll_mpi_component;
+OMPI_DECLSPEC extern mca_scoll_mpi_component_t mca_scoll_mpi_component;
 
 
 /**
