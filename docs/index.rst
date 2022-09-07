@@ -26,9 +26,11 @@ Documentation for Open can be found in the following locations:
      - Documentation location
 
    * - v5.0.0 and later
-     - Open MPI documentation has consolidated and moved to
+     - Web: https://docs.open-mpi.org/
 
-       https://docs.open-mpi.org/.
+       Tarball: ``docs/_build/html/index.html``
+
+       Installed: ``$prefix/share/doc/openmpi/html/index.html``
 
    * - v4.1.x and earlier
      - See the `legacy Open MPI FAQ <https://www.open-mpi.org/faq/>`_
