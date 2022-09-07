@@ -73,146 +73,70 @@ to send bytes across different types underlying networks.  The ``tcp``
 ``btl``, for example, sends messages across TCP-based networks; the
 ``ucx`` ``pml`` sends messages across InfiniBand-based networks.
 
+MCA parameter notes
+-------------------
+
 Each component typically has some tunable parameters that can be
-changed at run-time.  Use the ``ompi_info`` command to check a component
-to see what its tunable parameters are.  For example:
+changed at run-time.  Use the :ref:`ompi_info(1) <man1-ompi_info>`
+command to check a component to see what its tunable parameters are.
+For example:
 
 .. code-block:: sh
 
    shell$ ompi_info --param btl tcp
 
 shows some of the parameters (and default values) for the ``tcp`` ``btl``
-component (use ``--level`` to show *all* the parameters; see below).
+component (use ``--all`` or ``--level 9`` to show *all* the parameters).
 
-Note that ``ompi_info`` only shows a small number a component's MCA
-parameters by default.  Each MCA parameter has a "level" value from 1
-to 9, corresponding to the MPI-3 MPI_T tool interface levels.  In Open
-MPI, we have interpreted these nine levels as three groups of three:
+Note that ``ompi_info`` (without ``--all`` or a specified level) only
+shows a small number a component's MCA parameters by default.  Each
+MCA parameter has a "level" value from 1 to 9, corresponding to the
+MPI-3 MPI_T tool interface levels.  :ref:`See the LEVELS section in
+the ompi_info(1) man page <man1-ompi_info-levels>` for an explanation
+of the levels and how they correspond to Open MPI's code.
 
-#. End user / basic
-#. End user / detailed
-#. End user / all
-#. Application tuner / basic
-#. Application tuner / detailed
-#. Application tuner / all
-#. MPI/OpenSHMEM developer / basic
-#. MPI/OpenSHMEM developer / detailed
-#. MPI/OpenSHMEM developer / all
+Here's rules of thumb to keep in mind when using Open MPI's levels:
 
-Here's how the three sub-groups are defined:
+* Levels 1-3:
 
-#. End user: Generally, these are parameters that are required for
-   correctness, meaning that someone may need to set these just to
-   get their MPI/OpenSHMEM application to run correctly.
-#. Application tuner: Generally, these are parameters that can be
-   used to tweak MPI application performance.
-#. MPI/OpenSHMEM developer: Parameters that either don't fit in the
-   other two, or are specifically intended for debugging /
-   development of Open MPI itself.
+  * These levels should contain only a few MCA parameters.
+  * Generally, only put MCA parameters in these levels that matter to
+    users who just need to *run* Open MPI applications (and don't
+    know/care anything about MPI).  Examples (these are not
+    comprehensive):
 
-Each sub-group is broken down into three classifications:
+    * Selection of which network interfaces to use.
+    * Selection of which MCA components to use.
+    * Selective disabling of warning messages (e.g., show warning
+      message XYZ unless a specific MCA parameter is set, which
+      disables showing that warning message).
+    * Enabling additional stderr logging verbosity.  This allows a
+      user to run with this logging enabled, and then use that output
+      to get technical assistance.
 
-#. Basic: For parameters that everyone in this category will want to
-   see.
-#. Detailed: Parameters that are useful, but you probably won't need
-   to change them often.
-#. All: All other parameters -- probably including some fairly
-   esoteric parameters.
+* Levels 4-6:
 
-To see *all* available parameters for a given component, specify that
-ompi_info should use level 9:
+  * These levels should contain any other MCA parameters that are
+    useful to expose to end users.
+  * There is an expectation that "power users" will utilize these MCA
+    parameters |mdash| e.g., those who are trying to tune the system
+    and extract more performance.
+  * Here's some examples of MCA parameters suitable for these levels
+    (these are not comprehensive):
 
-.. code-block:: sh
+    * When you could have hard-coded a constant size of a resource
+      (e.g., a resource pool size or buffer length), make it an MCA
+      parameter instead.
+    * When there are multiple different algorithms available for a
+      particular operation, code them all up and provide an MCA
+      parameter to let the user select between them.
 
-   shell$ ompi_info --param btl tcp --level 9
+* Levels 7-9:
 
-.. error:: TODO The following content seems redundant with the FAQ.
-   Additionally, information about how to set MCA params should be
-   prominently documented somewhere that is easy for users to find --
-   not buried here in the developer's section.
+  * Put any other MCA parameters here.
+  * It's ok for these MCA parameters to be esoteric and only relevant
+    to deep magic / the internals of Open MPI.
+  * There is little expectation of users using these MCA parameters.
 
-These values can be overridden at run-time in several ways.  At
-run-time, the following locations are examined (in order) for new
-values of parameters:
-
-#. ``PREFIX/etc/openmpi-mca-params.conf``:
-   This file is intended to set any system-wide default MCA parameter
-   values -- it will apply, by default, to all users who use this Open
-   MPI installation.  The default file that is installed contains many
-   comments explaining its format.
-
-#. ``$HOME/.openmpi/mca-params.conf``:
-   If this file exists, it should be in the same format as
-   ``PREFIX/etc/openmpi-mca-params.conf``.  It is intended to provide
-   per-user default parameter values.
-
-#. environment variables of the form ``OMPI_MCA_<name>`` set equal to a
-   ``VALUE``:
-
-   Where ``<name>`` is the name of the parameter.  For example, set the
-   variable named ``OMPI_MCA_btl_tcp_frag_size`` to the value 65536
-   (Bourne-style shells):
-
-   .. code-block:: sh
-
-      shell$ OMPI_MCA_btl_tcp_frag_size=65536
-      shell$ export OMPI_MCA_btl_tcp_frag_size
-
-   .. error:: TODO Do we need content here about PMIx and PRTE env vars?
-
-#. the ``mpirun``/``oshrun`` command line: ``--mca NAME VALUE``
-
-   Where ``<name>`` is the name of the parameter.  For example:
-
-   .. code-block:: sh
-
-      shell$ mpirun --mca btl_tcp_frag_size 65536 -n 2 hello_world_mpi
-
-   .. error:: TODO Do we need content here about PMIx and PRTE MCA vars
-              and corresponding command line switches?
-
-These locations are checked in order.  For example, a parameter value
-passed on the ``mpirun`` command line will override an environment
-variable; an environment variable will override the system-wide
-defaults.
-
-Each component typically activates itself when relevant.  For example,
-the usNIC component will detect that usNIC devices are present and
-will automatically be used for MPI communications.  The Slurm
-component will automatically detect when running inside a Slurm job
-and activate itself.  And so on.
-
-Components can be manually activated or deactivated if necessary, of
-course.  The most common components that are manually activated,
-deactivated, or tuned are the ``btl`` components -- components that are
-used for MPI point-to-point communications on many types common
-networks.
-
-For example, to *only* activate the ``tcp`` and ``self`` (process loopback)
-components are used for MPI communications, specify them in a
-comma-delimited list to the ``btl`` MCA parameter:
-
-.. code-block:: sh
-
-   shell$ mpirun --mca btl tcp,self hello_world_mpi
-
-To add shared memory support, add ``sm`` into the command-delimited list
-(list order does not matter):
-
-.. code-block:: sh
-
-   shell$ mpirun --mca btl tcp,sm,self hello_world_mpi
-
-.. note:: There used to be a ``vader`` ``btl`` component for shared
-          memory support; it was renamed to ``sm`` in Open MPI v5.0.0,
-          but the alias ``vader`` still works as well.
-
-To specifically deactivate a specific component, the comma-delimited
-list can be prepended with a ``^`` to negate it:
-
-.. code-block:: sh
-
-   shell$ mpirun --mca btl ^tcp hello_mpi_world
-
-The above command will use any other ``btl`` component other than the
-``tcp`` component.
+See :ref:`this section <label-running-setting-mca-param-values>` for
+details on how to set MCA parameters at run time.
