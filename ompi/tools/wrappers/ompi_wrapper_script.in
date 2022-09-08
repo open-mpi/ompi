@@ -103,17 +103,17 @@ if (basename($0) eq "mpicc") {
     $comp_flags = $wrapper_cflags;
     $comp_flags_prefix = $wrapper_cflags_prefix;
     $linker_flags = $wrapper_ldflags;
-    $linker_flags_static = $wrapper_ldflags_static
+    $linker_flags_static = $wrapper_ldflags_static;
     $libs = $wrapper_libs;
     $libs_static = $wrapper_libs_static;
 } elsif (basename($0) eq "mpic++" || basename($0) eq "mpiCC" || basename($0) eq "mpicxx") {
     $lang = "C++";
     $comp = check_env("CXX", $CXX);
     $preproc_flags = $wrapper_cppflags;
-    $comp_flags = $wrapper_cxxflags
+    $comp_flags = $wrapper_cxxflags;
     $comp_flags_prefix = $wrapper_cxxflags_prefix;
     $linker_flags = $wrapper_ldflags;
-    $linker_flags_static = $wrapper_ldflags_static
+    $linker_flags_static = $wrapper_ldflags_static;
     $libs = $wrapper_libs;
     $libs_static = $wrapper_libs_static;
 }
@@ -123,10 +123,10 @@ elsif (basename($0) eq "mpifort" ||
     $lang = "Fortran";
     $comp = check_env("FC", $FC);
     $preproc_flags = $wrapper_cppflags;
-    $comp_flags = $wrapper_fcflags
+    $comp_flags = $wrapper_fcflags;
     $comp_flags_prefix = $wrapper_fcflags_prefix;
     $linker_flags = $wrapper_fc_ldflags;
-    $linker_flags_static = $wrapper_fc_ldflags_static
+    $linker_flags_static = $wrapper_fc_ldflags_static;
     $libs = $wrapper_fc_libs;
     $libs_static = $wrapper_fc_libs_static;
 }
