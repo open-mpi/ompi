@@ -43,7 +43,7 @@ int mca_sharedfp_lockedfile_module_finalize (ompio_file_t *file);
 extern int mca_sharedfp_lockedfile_priority;
 extern int mca_sharedfp_lockedfile_verbose;
 
-OMPI_MODULE_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_lockedfile_component;
+OMPI_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_lockedfile_component;
 /*
  * ******************************************************************
  * ********* functions which are implemented in this module *********

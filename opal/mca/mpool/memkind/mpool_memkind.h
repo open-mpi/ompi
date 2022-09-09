@@ -74,7 +74,7 @@ struct mca_mpool_memkind_component_t {
 };
 
 typedef struct mca_mpool_memkind_component_t mca_mpool_memkind_component_t;
-OPAL_MODULE_DECLSPEC extern mca_mpool_memkind_component_t mca_mpool_memkind_component;
+OPAL_DECLSPEC extern mca_mpool_memkind_component_t mca_mpool_memkind_component;
 
 /**
  *  Initializes the mpool module.

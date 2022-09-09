@@ -171,7 +171,7 @@ struct mca_btl_ofi_component_t {
 };
 typedef struct mca_btl_ofi_component_t mca_btl_ofi_component_t;
 
-OPAL_MODULE_DECLSPEC extern mca_btl_ofi_component_t mca_btl_ofi_component;
+OPAL_DECLSPEC extern mca_btl_ofi_component_t mca_btl_ofi_component;
 
 struct mca_btl_base_registration_handle_t {
     uint64_t rkey;

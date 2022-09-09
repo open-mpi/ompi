@@ -42,7 +42,7 @@ extern int mca_fcoll_vulcan_num_groups;
 extern int mca_fcoll_vulcan_write_chunksize;
 extern int mca_fcoll_vulcan_async_io;
 
-OMPI_MODULE_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_vulcan_component;
+OMPI_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_vulcan_component;
 
 /* API functions */
 

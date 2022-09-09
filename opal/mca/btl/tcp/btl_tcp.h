@@ -148,7 +148,7 @@ struct mca_btl_tcp_component_t {
 };
 typedef struct mca_btl_tcp_component_t mca_btl_tcp_component_t;
 
-OPAL_MODULE_DECLSPEC extern mca_btl_tcp_component_t mca_btl_tcp_component;
+OPAL_DECLSPEC extern mca_btl_tcp_component_t mca_btl_tcp_component;
 
 /**
  * BTL Module Interface

@@ -201,7 +201,7 @@ BEGIN_C_DECLS
     /**
      * Global component instance
      */
-    OMPI_MODULE_DECLSPEC extern mca_coll_sm_component_t mca_coll_sm_component;
+    OMPI_DECLSPEC extern mca_coll_sm_component_t mca_coll_sm_component;
 
     /*
      * coll module functions

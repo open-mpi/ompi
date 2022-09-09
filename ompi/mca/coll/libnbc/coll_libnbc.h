@@ -88,7 +88,7 @@ struct ompi_coll_libnbc_component_t {
 typedef struct ompi_coll_libnbc_component_t ompi_coll_libnbc_component_t;
 
 /* Globally exported variables */
-OMPI_MODULE_DECLSPEC extern ompi_coll_libnbc_component_t mca_coll_libnbc_component;
+OMPI_DECLSPEC extern ompi_coll_libnbc_component_t mca_coll_libnbc_component;
 
 struct ompi_coll_libnbc_module_t {
     mca_coll_base_module_t super;

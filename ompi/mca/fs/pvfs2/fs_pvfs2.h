@@ -63,7 +63,7 @@ int mca_fs_pvfs2_component_file_unquery (ompio_file_t *file);
 int mca_fs_pvfs2_module_init (ompio_file_t *file);
 int mca_fs_pvfs2_module_finalize (ompio_file_t *file);
 
-OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component;
+OMPI_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component;
 /*
  * ******************************************************************
  * ********* functions which are implemented in this module *********

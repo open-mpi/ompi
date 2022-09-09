@@ -208,7 +208,7 @@ struct mca_btl_smcuda_component_t {
     char *allocator;
 };
 typedef struct mca_btl_smcuda_component_t mca_btl_smcuda_component_t;
-OPAL_MODULE_DECLSPEC extern mca_btl_smcuda_component_t mca_btl_smcuda_component;
+OPAL_DECLSPEC extern mca_btl_smcuda_component_t mca_btl_smcuda_component;
 
 /**
  * SM BTL Interface
@@ -220,7 +220,7 @@ struct mca_btl_smcuda_t {
     mca_rcache_base_module_t *rcache;
 };
 typedef struct mca_btl_smcuda_t mca_btl_smcuda_t;
-OPAL_MODULE_DECLSPEC extern mca_btl_smcuda_t mca_btl_smcuda;
+OPAL_DECLSPEC extern mca_btl_smcuda_t mca_btl_smcuda;
 
 struct btl_smcuda_pending_send_item_t {
     opal_free_list_item_t super;

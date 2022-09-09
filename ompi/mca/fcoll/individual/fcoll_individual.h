@@ -36,7 +36,7 @@ BEGIN_C_DECLS
 
 extern int mca_fcoll_individual_priority;
 
-OMPI_MODULE_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_individual_component;
+OMPI_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_individual_component;
 
 /* API functions */
 
