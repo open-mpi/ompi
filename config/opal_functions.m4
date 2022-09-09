@@ -202,9 +202,9 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OPAL_LOG_MSG],[
 # 1 is the message
 # 2 is whether to put a prefix or not
+AC_DEFUN([OPAL_LOG_MSG],[
 if test -n "$2"; then
     echo "configure:__oline__: $1" >&5
 else
@@ -215,8 +215,8 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OPAL_LOG_FILE],[
 # 1 is the filename
+AC_DEFUN([OPAL_LOG_FILE],[
 if test -n "$1" && test -f "$1"; then
     cat $1 >&5
 fi])dnl
@@ -225,10 +225,10 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OPAL_LOG_COMMAND],[
 # 1 is the command
 # 2 is actions to do if success
 # 3 is actions to do if fail
+AC_DEFUN([OPAL_LOG_COMMAND],[
 echo "configure:__oline__: $1" >&5
 $1 1>&5 2>&1
 opal_status=$?
@@ -245,8 +245,8 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN([OPAL_UNIQ],[
 # 1 is the variable name to be uniq-ized
+AC_DEFUN([OPAL_UNIQ],[
 opal_name=$1
 
 # Go through each item in the variable and only keep the unique ones
@@ -436,10 +436,10 @@ dnl #######################################################################
 # ~/.whatever file (and we do not want the error messages to be part
 # of the assignment in foo=`which <prog>`). This macro ensures that we
 # get a sane executable value.
+#
+# 1 is the variable name to do "which" on
+# 2 is the variable name to assign the return value to
 AC_DEFUN([OPAL_WHICH],[
-    # 1 is the variable name to do "which" on
-    # 2 is the variable name to assign the return value to
-
     OPAL_VAR_SCOPE_PUSH([opal_prog opal_file opal_dir opal_sentinel])
 
     opal_prog=$1
@@ -499,7 +499,6 @@ dnl #######################################################################
 # Declare some variables; use OPAL_VAR_SCOPE_POP to ensure that they
 # are cleaned up / undefined.
 AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
-
     # Is the private index set?  If not, set it.
     if test "x$opal_scope_index" = "x"; then
         opal_scope_index=1
