@@ -235,7 +235,7 @@ perspective.
           value).  The value of ``io_ompio_bytes_per_agg`` could be
           set by system administrators in the system-wide Open MPI
           configuration file, or by users individually. See :ref:`this
-          FAQ item <faq-tuning-setting-mca-params-label>` on setting
+          FAQ item <label-running-setting-mca-param-values>` on setting
           MCA parameters for details.
 
 For more exhaustive tuning of I/O parameters, we recommend the

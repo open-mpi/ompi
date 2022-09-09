@@ -19,6 +19,7 @@ but they can generally be broken down into two categories:
 
    quickstart
    pmix-and-prrte
+   tuning
 
    localhost
    ssh

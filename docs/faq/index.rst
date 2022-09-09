@@ -27,5 +27,4 @@ that they are worth categorizing in an official way.
    ompio
    macos
 
-   tuning
    general-tuning

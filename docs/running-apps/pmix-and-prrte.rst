@@ -1,3 +1,5 @@
+.. _label-running-role-of-pmix-and-prte:
+
 The role of PMIx and PRRTE
 ==========================
 

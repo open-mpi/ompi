@@ -743,8 +743,8 @@ Several notable options are:
   :ref:`this FAQ entry for more details
   <faq-running-mpi-apps-mpirun-host-label>`).
 * ``-n``: Indicate the number of processes to start.
-* ``--mca``: Set MCA parameters (see the :doc:`Run-Time Tuning FAQ
-  category </faq/tuning/>` for more details).
+* ``--mca``: Set MCA parameters (see :ref:`how to set MCA params
+  <label-running-setting-mca-param-values>` for more details).
 * ``--wdir DIRECTORY``: Set the working directory of the started
   applications.  If not supplied, the current working directory is
   assumed (or ``$HOME``, if the current working directory does not
@@ -1320,7 +1320,7 @@ Yes.
 The MCA parameter ``mpi_yield_when_idle`` controls whether an MPI
 process runs in Aggressive or Degraded performance mode.  Setting it
 to 0 forces Aggressive mode; setting it to 1 forces Degraded mode (see
-:ref:`this FAQ entry <faq-tuning-setting-mca-params-label>` to see how
+:ref:`this FAQ entry <label-running-setting-mca-param-values>` to see how
 to set MCA parameters).
 
 Note that this value *only* affects the behavior of MPI processes when
