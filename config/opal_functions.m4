@@ -496,60 +496,68 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-# Declare some variables; use OPAL_VAR_SCOPE_POP to ensure that they
-# are cleaned up / undefined.
-AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
-    # Is the private index set?  If not, set it.
-    if test "x$opal_scope_index" = "x"; then
-        opal_scope_index=1
-    fi
-
+AC_DEFUN([OPAL_VAR_SCOPE_INIT],
+[opal_var_scope_push()
+{
+    opal_var_scope_push_lineno=$[]1
+    shift
     # First, check to see if any of these variables are already set.
     # This is a simple sanity check to ensure we're not already
     # overwriting pre-existing variables (that have a non-empty
     # value).  It's not a perfect check, but at least it's something.
-    for opal_var in $1; do
-        opal_str="opal_str=\"\$$opal_var\""
-        eval $opal_str
-
-        if test "x$opal_str" != "x"; then
-            AC_MSG_WARN([Found configure shell variable clash at line $LINENO!])
-            AC_MSG_WARN([[OPAL_VAR_SCOPE_PUSH] called on "$opal_var",])
-            AC_MSG_WARN([but it is already defined with value "$opal_str"])
-            AC_MSG_WARN([This usually indicates an error in configure.])
-            AC_MSG_ERROR([Cannot continue])
-        fi
+    for opal_var_scope_tmp_var in $[]@; do
+        AS_VAR_SET_IF([$opal_var_scope_tmp_var],
+            [AS_VAR_COPY([opal_var_scope_tmp_var_val], [$opal_var_scope_tmp_var])
+             AC_MSG_WARN([Found configure shell variable clash at line $opal_var_scope_push_lineno!])
+             AC_MSG_WARN([[OPAL_VAR_SCOPE_PUSH] called on "$opal_var_scope_tmp_var",])
+             AC_MSG_WARN([but it is already defined with value "$opal_var_scope_tmp_var_val"])
+             AC_MSG_WARN([This usually indicates an error in configure.])
+             AC_MSG_ERROR([Cannot continue])])
     done
+    AS_UNSET([opal_var_scope_push_lineno])
+    AS_UNSET([opal_var_scope_tmp_var])
+    AS_UNSET([opal_var_scope_tmp_var_val])
+}
 
-    # Ok, we passed the simple sanity check.  Save all these names so
-    # that we can unset them at the end of the scope.
-    opal_str="opal_scope_$opal_scope_index=\"$1\""
-    eval $opal_str
-    unset opal_str
+opal_var_scope_pop()
+{
+    # Iterate over all the variables and unset them all
+    for opal_var_scope_tmp_var in $[]@; do
+        AS_UNSET([$opal_var_scope_tmp_var])
+    done
+    AS_UNSET([opal_var_scope_tmp_var])
+}])
 
-    env | grep opal_scope
-    opal_scope_index=`expr $opal_scope_index + 1`
+# OPAL_VAR_SCOPE_PUSH(vars list)
+# ------------------------------
+# Scope-check that the vars in the space-separated vars list are not already
+# in use.  Generate a configure-time error if a conflict is found.  Note that
+# the in use check is defined as "defined", so even if a var in vars list is
+# set outside of OPAL_VAR_SCOPE_PUSH, the check will still trip.
+AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
+    AC_REQUIRE([OPAL_VAR_SCOPE_INIT])dnl
+    m4_pushdef([opal_var_scope_stack], [$1])dnl
+    m4_foreach_w([opal_var_scope_var], [$1],
+                 [m4_set_add([opal_var_scope_active_set], opal_var_scope_var,
+                             [], [m4_fatal([OPAL_VAR_SCOPE_PUSH found the variable ]opal_var_scope_var[
+active in a previous scope.])])])dnl
+    opal_var_scope_push ${LINENO} $1
 ])dnl
 
-# Unset a bunch of variables that were previously set
+# OPAL_VAR_SCOPE_POP()
+# --------------------
+# Unset the last set of variables set in OPAL_VAR_SCOPE_POP.  Every call to
+# OPAL_VAR_SCOPE_PUSH should have a matched call to this macro.
 AC_DEFUN([OPAL_VAR_SCOPE_POP],[
-    # Unwind the index
-    opal_scope_index=`expr $opal_scope_index - 1`
-    opal_scope_test=`expr $opal_scope_index \> 0`
-    if test "$opal_scope_test" = "0"; then
-        AC_MSG_WARN([[OPAL_VAR_SCOPE_POP] popped too many OPAL configure scopes.])
-        AC_MSG_WARN([This usually indicates an error in configure.])
-        AC_MSG_ERROR([Cannot continue])
-    fi
-
-    # Get the variable names from that index
-    opal_str="opal_str=\"\$opal_scope_$opal_scope_index\""
-    eval $opal_str
-
-    # Iterate over all the variables and unset them all
-    for opal_var in $opal_str; do
-        unset $opal_var
-    done
+    AC_REQUIRE([OPAL_VAR_SCOPE_INIT])dnl
+    m4_ifdef([opal_var_scope_stack], [],
+             [m4_fatal([OPAL_VAR_SCOPE_POP was called without a defined
+variable stack.  This usually means that OPAL_VAR_SCOPE_POP was called more
+times than OPAL_VAR_SCOPE_PUSH.])])dnl
+    m4_foreach_w([opal_var_scope_var], opal_var_scope_stack,
+                 [m4_set_remove([opal_var_scope_active_set], opal_var_scope_var)])dnl
+    opal_var_scope_pop opal_var_scope_stack
+    m4_popdef([opal_var_scope_stack])dnl
 ])dnl
 
 
