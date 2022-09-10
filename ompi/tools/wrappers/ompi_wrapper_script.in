@@ -64,21 +64,21 @@ my $libs = "";
 my $libs_static = "";
 
 # run flags through regex to fix directories...
-$cppflags =~ s/\$\{includedir\}/$includedir/g;
-$cflags =~ s/\$\{includedir\}/$includedir/g;
-$cflags_prefix =~ s/\$\{includedir\}/$includedir/g;
-$cxxflags =~ s/\$\{includedir\}/$includedir/g;
-$cxxflags_prefix =~ s/\$\{includedir\}/$includedir/g;
-$fcflags =~ s/\$\{includedir\}/$includedir/g;
-$fcflags_prefix =~ s/\$\{includedir\}/$includedir/g;
-$ldflags =~ s/\$\{libdir\}/$libdir/g;
-$ldflags_static =~ s/\$\{libdir\}/$libdir/g;
-$libs =~ s/\$\{libdir\}/$libdir/g;
-$libs_static =~ s/\$\{libdir\}/$libdir/g;
-$fc_ldflags =~ s/\$\{libdir\}/$libdir/g;
-$fc_ldflags_static =~ s/\$\{libdir\}/$libdir/g;
-$fc_libs =~ s/\$\{libdir\}/$libdir/g;
-$fc_libs_static =~ s/\$\{libdir\}/$libdir/g;
+$wrapper_cppflags =~ s/\$\{includedir\}/$includedir/g;
+$wrapper_cflags =~ s/\$\{includedir\}/$includedir/g;
+$wrapper_cflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$wrapper_cxxflags =~ s/\$\{includedir\}/$includedir/g;
+$wrapper_cxxflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$wrapper_fcflags =~ s/\$\{includedir\}/$includedir/g;
+$wrapper_fcflags_prefix =~ s/\$\{includedir\}/$includedir/g;
+$wrapper_ldflags =~ s/\$\{libdir\}/$libdir/g;
+$wrapper_ldflags_static =~ s/\$\{libdir\}/$libdir/g;
+$wrapper_libs =~ s/\$\{libdir\}/$libdir/g;
+$wrapper_libs_static =~ s/\$\{libdir\}/$libdir/g;
+$wrapper_fc_ldflags =~ s/\$\{libdir\}/$libdir/g;
+$wrapper_fc_ldflags_static =~ s/\$\{libdir\}/$libdir/g;
+$wrapper_fc_libs =~ s/\$\{libdir\}/$libdir/g;
+$wrapper_fc_libs_static =~ s/\$\{libdir\}/$libdir/g;
 
 sub check_env {
     my $envvar = shift;
