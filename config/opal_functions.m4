@@ -319,8 +319,69 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-m4_copy([OAC_VAR_SCOPE_PUSH], [OPAL_VAR_SCOPE_PUSH])
-m4_copy([OAC_VAR_SCOPE_POP], [OPAL_VAR_SCOPE_POP])
+AC_DEFUN([OPAL_VAR_SCOPE_INIT],
+[opal_var_scope_push()
+{
+    opal_var_scope_push_lineno=$[]1
+    shift
+    # First, check to see if any of these variables are already set.
+    # This is a simple sanity check to ensure we're not already
+    # overwriting pre-existing variables (that have a non-empty
+    # value).  It's not a perfect check, but at least it's something.
+    for opal_var_scope_tmp_var in $[]@; do
+        AS_VAR_SET_IF([$opal_var_scope_tmp_var],
+            [AS_VAR_COPY([opal_var_scope_tmp_var_val], [$opal_var_scope_tmp_var])
+             AC_MSG_WARN([Found configure shell variable clash at line $opal_var_scope_push_lineno!])
+             AC_MSG_WARN([[OPAL_VAR_SCOPE_PUSH] called on "$opal_var_scope_tmp_var",])
+             AC_MSG_WARN([but it is already defined with value "$opal_var_scope_tmp_var_val"])
+             AC_MSG_WARN([This usually indicates an error in configure.])
+             AC_MSG_ERROR([Cannot continue])])
+    done
+    AS_UNSET([opal_var_scope_push_lineno])
+    AS_UNSET([opal_var_scope_tmp_var])
+    AS_UNSET([opal_var_scope_tmp_var_val])
+}
+
+opal_var_scope_pop()
+{
+    # Iterate over all the variables and unset them all
+    for opal_var_scope_tmp_var in $[]@; do
+        AS_UNSET([$opal_var_scope_tmp_var])
+    done
+    AS_UNSET([opal_var_scope_tmp_var])
+}])
+
+# OPAL_VAR_SCOPE_PUSH(vars list)
+# ------------------------------
+# Scope-check that the vars in the space-separated vars list are not already
+# in use.  Generate a configure-time error if a conflict is found.  Note that
+# the in use check is defined as "defined", so even if a var in vars list is
+# set outside of OPAL_VAR_SCOPE_PUSH, the check will still trip.
+AC_DEFUN([OPAL_VAR_SCOPE_PUSH],[
+    AC_REQUIRE([OPAL_VAR_SCOPE_INIT])dnl
+    m4_pushdef([opal_var_scope_stack], [$1])dnl
+    m4_foreach_w([opal_var_scope_var], [$1],
+                 [m4_set_add([opal_var_scope_active_set], opal_var_scope_var,
+                             [], [m4_fatal([OPAL_VAR_SCOPE_PUSH found the variable ]opal_var_scope_var[
+active in a previous scope.])])])dnl
+    opal_var_scope_push ${LINENO} $1
+])dnl
+
+# OPAL_VAR_SCOPE_POP()
+# --------------------
+# Unset the last set of variables set in OPAL_VAR_SCOPE_POP.  Every call to
+# OPAL_VAR_SCOPE_PUSH should have a matched call to this macro.
+AC_DEFUN([OPAL_VAR_SCOPE_POP],[
+    AC_REQUIRE([OPAL_VAR_SCOPE_INIT])dnl
+    m4_ifdef([opal_var_scope_stack], [],
+             [m4_fatal([OPAL_VAR_SCOPE_POP was called without a defined
+variable stack.  This usually means that OPAL_VAR_SCOPE_POP was called more
+times than OPAL_VAR_SCOPE_PUSH.])])dnl
+    m4_foreach_w([opal_var_scope_var], opal_var_scope_stack,
+                 [m4_set_remove([opal_var_scope_active_set], opal_var_scope_var)])dnl
+    opal_var_scope_pop opal_var_scope_stack
+    m4_popdef([opal_var_scope_stack])dnl
+])dnl
 
 dnl #######################################################################
 dnl #######################################################################
