@@ -203,7 +203,7 @@ if ($disable_flags == 1 && !($dry_run == 1 && $real_flag == 0)) {
     $want_preproc = $want_compile = $want_link = 0;
 }
 
-if ($want_static == 1 || $have_dynamic == 0) {
+if ($want_static == 1) {
     $libs = $libs_static;
     $linker_flags = $linker_flags_static;
 }
