@@ -1,11 +1,34 @@
 .. _developers-installing-sphinx-label:
 
-Installing Sphinx
-=================
+Installing and running Sphinx (building the Open MPI docs)
+==========================================================
 
-The Sphinx documentation recommends installing Sphinx (and its
-required Python dependencies) via ``pip``, which typically requires
-connectivity to the general internet.
+As with all content in the Developer's Guide, this section is only
+relevant for developers who work in the Open MPI code base itself.
+End users who install a binary Open MPI package or build from an
+official Open MPI distribution tarball do not need to have Sphinx
+installed.
+
+Installing Python
+-----------------
+
+The `Sphinx tool <https://www.sphinx-doc.org/>`_ is written in Python,
+and therefore needs to have Python available.  As of late 2022, Sphinx
+requires Python >= v3.7.
+
+This documentation does not contain detailed instructions for
+installing a Python version sufficient for using Sphinx.  Consult your
+local OS documentation for how to obtain Python >= v3.7, or search the
+internet for further information.
+
+Installing Sphinx
+-----------------
+
+`The Sphinx documentation
+<https://www.sphinx-doc.org/en/master/usage/installation.html>`_
+recommends installing Sphinx (and its required Python dependencies)
+via ``pip``, which typically requires connectivity to the general
+internet.
 
 .. note:: If you are running on MacOS, you may be tempted to use
    Homebrew or MacPorts to install Sphinx.  The Sphinx documentation
@@ -16,7 +39,7 @@ There are three general ways to install Sphinx; you only need one of
 them.
 
 Install Sphinx in a Python virtual environment
-----------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The preferred method of installing Sphinx for Open MPI documentation
 development is to install Sphinx in a Python virtual environment.
@@ -51,7 +74,7 @@ environment.
                Sphinx in your ``PATH`` *before* running ``configure``.
 
 Install Sphinx globally
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 If Python virtual environments are not desirable on your system, you
 can install Sphinx globally on your system (you may need to run with
@@ -75,7 +98,7 @@ your ``PATH``, then you need to add it to your ``PATH``.
 
 
 Install Sphinx locally
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 If you cannot or do not want to install Sphinx globally on your
 system, the following will install Sphinx somewhere under your
@@ -102,3 +125,116 @@ installed and add it to your ``PATH``.
 
 .. important:: You will need to ensure that Sphinx is in your ``PATH``
                *before* running ``configure``.
+
+Running Sphinx
+--------------
+
+Open MPI's build environment is setup to invoke Sphinx automatically;
+you should not need to invoke Sphinx manually.
+
+.. important:: You will need to ensure that Sphinx is in your ``PATH``
+               *before* running ``configure``.
+
+As long as ``configure`` found Sphinx, ``make`` will invoke Sphinx to
+build the documentation.  You can also run ``make`` directly in the
+``docs/`` directory to build *just* the docs and skip building the
+rest of the Open MPI software.  This can be a huge time-saver when
+iteratively writing, rendering, and viewing/proofing documentation.
+
+.. note:: The fully-built HTML and man page docs are included in
+          official Open MPI distribution tarballs.  Meaning: if you
+          download an Open MPI tarball from
+          https://www.open-mpi.org/software/ompi (version v5.0.0 or
+          later), the pre-built HTML and man page files are included
+          in the tarball.
+
+          Sphinx is a requirement for *developers* who want to build
+          the Open MPI docs.  End users do *not* need to have Sphinx
+          available to build Open MPI or have its docs installed from
+          an official distribution tarball.
+
+Sphinx execution time
+^^^^^^^^^^^^^^^^^^^^^
+
+The first time you invoke Sphinx on a clean tree, it takes a little
+time to render all the docs.
+
+However, Sphinx is stateful: subsequent runs can be significantly
+faster because Sphinx will only re-render HTML files that have
+changes.  This is an enormous time saver for Open MPI (e.g., if you
+are iterating over writing the docs and running ``make`` to see how
+they rendered in HTML).
+
+.. caution:: Sphinx is only *somewhat* smart in its partial
+             re-rendering.  If you change a title in an RST file, for
+             example, Sphinx will (by default) only re-render *that*
+             page.  The Tables of Contents / left hand navigation on
+             other pages may not be updated.
+
+             You can always force a full re-render via:
+
+             .. code:: sh
+
+                shell$ cd docs
+                shell$ rm -rf _build
+                shell$ make
+
+Checking Sphinx HTML links
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``linkcheck`` ``make`` target will invoke Sphinx's functionality
+to check all the external links in the documentation::
+
+.. code:: sh
+
+   shell$ cd docs
+   shell$ make linkcheck
+
+.. important:: You will need to be on a computer that has good access
+               to the internet when running this command.
+
+Viewing docs locally
+^^^^^^^^^^^^^^^^^^^^
+
+Once you have built the docs in your local Git clone, you can view
+them locally in the build tree:
+
+#. Open ``docs/_build/html/index.html`` in a browser to view the HTML
+   docs.  For example, on MacOS, the following command opens the build
+   tree docs in the default web browser:
+
+   .. code:: sh
+
+      shell$ open docs/_build/html/index.html
+
+#. Use the ``man`` command to view the Nroff files in
+   ``docs/_build/man`` (you may need to use an absolute or relative
+   filename to prevent ``man`` from using its search paths).  For
+   example:
+
+   .. code:: sh
+
+      shell$ cd docs/_build/man
+      shell$ man ./MPI_Send.3
+
+Alternatively, you can view these files in their installed locations
+after running ``make install``:
+
+#. The HTML docs are installed (by default) to
+   ``$prefix/share/doc/openmpi/html``.  You can use a web browser to
+   open the ``index.html`` in that directory to view the docs locally.
+   For example, on MacOS, the following command opens the installed
+   docs in the default web browser:
+
+   .. code:: sh
+
+      shell$ open $prefix/share/doc/openmpi/html/index.html
+
+#. The man pages are installed (by default) to ``$preix/share/man``.
+   If your man page search path includes this location, you can invoke
+   commands similar to the following to see the same content that you
+   see in these HTML pages:
+
+   .. code:: sh
+
+      shell$ man MPI_Send

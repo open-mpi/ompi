@@ -25,6 +25,12 @@ There are many ways to contribute.  Here are a few:
 #. Submit bug fixes to the main code base.
 
    * Awesome!  Open a new GitHub pull request with the patch.
+
+     * Please submit bug fixes / new features on the ``main`` branch
+       first, and then port them to the relevant release branch(es)
+       after they have been accepted on ``main``.  :ref:`See this
+       section for more information <git-github-branch-scheme-label>`.
+
    * Ensure the PR description clearly describes the problem and
      solution. If there is an existing GitHub issue open describing
      this bug, please include it in the description so we can track
@@ -49,6 +55,18 @@ There are many ways to contribute.  Here are a few:
      realistic in what we can reliably test and deliver to our users.
    * Be sure to see the :ref:`Open source contributions
      <contributing-open-source-label>` section, below.
+
+#. Submit fixes and/or entirely new content to this documentation.
+
+   * Docs are great!  We always need help with documentation.
+   * These docs are authored using ReStructured Text markup with the
+     Sphinx rendering tool under the ``docs/`` directory in the
+     repository.  This means you can submit a pull request with your
+     docs updates, just like you would for any Open MPI code contribution.
+   * :ref:`See this section <developers-installing-sphinx-label>` and
+     :ref:`also this section <developers-rst-for-markdown-expats>` for
+     information about how to install Sphinx locally and some
+     high-level logistical instructions on how to write these docs.
 
 #. Provide testing resources:
 
