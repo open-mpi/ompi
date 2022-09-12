@@ -100,27 +100,3 @@ m4_define([OPAL_GET_VERSION],[
                  [AC_MSG_RESULT([$$2_REPO_REV])])
     fi
 ])
-
-# OPAL_GET_MPI_STANDARD_VERSION(version_file)
-# -----------------------------------------------
-# parse version_file for MPI Standard version information, setting
-# the following shell variables:
-#
-#  MPI_VERSION
-#  MPI_SUBVERSION
-m4_define([OPAL_GET_MPI_STANDARD_VERSION],[
-    dnl quote eval to suppress macro expansion with non-GNU m4
-    if test -f "$1"; then
-        srcdir=`dirname $1`
-        mpi_standard_vers=`sed -n "
-        t clear
-        : clear
-        s/^mpi_standard_version/MPI_VERSION/
-        s/^mpi_standard_subversion/MPI_SUBVERSION/
-        t print
-        b
-        : print
-        p" < "$1"`
-        [eval] "$mpi_standard_vers"
-    fi
-])
