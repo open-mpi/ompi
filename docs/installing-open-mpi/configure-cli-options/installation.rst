@@ -1,3 +1,5 @@
+.. _label-building-installation-cli-options:
+
 Installation options
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -21,6 +23,11 @@ be used with ``configure``:
   libraries and disabling shared libraries are two independent
   options.
 
+  .. tip::
+
+     :ref:`See this section <label-install-packagers-dso-or-not>` for
+     advice to packagers about this CLI option.
+
 * ``--enable-static``:
   Build MPI and OpenSHMEM as static libraries, and statically link in
   all components.  Note that this option does *not* imply
@@ -29,6 +36,11 @@ be used with ``configure``:
 
   Be sure to read the description of ``--without-memory-manager``,
   below; it may have some effect on ``--enable-static``.
+
+  .. tip::
+
+     :ref:`See this section <label-install-packagers-dso-or-not>` for
+     advice to packagers about this CLI option.
 
 * ``--disable-wrapper-runpath`` / ``--disable-wrapper-rpath``: By
   default, the wrapper compilers (e.g., ``mpicc``) will explicitly add
@@ -245,6 +257,11 @@ be used with ``configure``:
      same level always wins::
 
         shell$ ./configure --enable-mca-dso=btl-tcp --enable-mca-static=btl-tcp
+
+  .. tip::
+
+     :ref:`See this section <label-install-packagers-dso-or-not>` for
+     advice to packagers about this CLI option.
 
 * ``--enable-mca-no-build=LIST``: Comma-separated list of
   ``<framework>-<component>`` pairs that will not be built. For

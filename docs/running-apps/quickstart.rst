@@ -14,8 +14,9 @@ probably work in many environments.
    Please consult the other sections in this chapter for more details,
    if necessary.
 
-Open MPI supports both ``mpirun`` and ``mpiexec`` (they are exactly
-equivalent) to launch MPI applications.  For example:
+Open MPI supports both :ref:`mpirun(1) <man1-mpirun>` and
+:ref:`mpiexec(1) <man1-mpiexec>` (they are exactly equivalent) to
+launch MPI applications.  For example:
 
 .. code-block:: sh
 
@@ -28,17 +29,17 @@ equivalent) to launch MPI applications.  For example:
 are all equivalent.  For simplicity, the rest of this documentation
 will simply refer to ``mpirun``.
 
-.. error:: TODO Link to the mpirun(1) page here.
-
-Note that the ``mpirun`` command supports a *large* number of options.
-Be sure to see the ``mpirun`` man page for much more information.
+Note that the :ref:`mpirun(1) <man1-mpirun>` command supports a
+*large* number of options.  Be sure to see the :ref:`mpirun(1)
+<man1-mpirun>` man page for much more information.
 
 Launching on a single host
 --------------------------
 
 It is common to develop MPI applications on a single laptop or
-workstation.  In such cases, use ``mpirun`` and specify how many MPI
-processes you want to launch via the ``-n`` option:
+workstation.  In such cases, use :ref:`mpirun(1) <man1-mpirun>` and
+specify how many MPI processes you want to launch via the ``-n``
+option:
 
 .. code-block:: sh
 
@@ -48,9 +49,9 @@ processes you want to launch via the ``-n`` option:
    ...
    Hello world, I am 5 of 6 (running on my-laptop)
 
-If you do not specify the ``-n`` option, ``mpirun`` will default to
-launching as many MPI processes as there are processor cores (not
-hyperthreads) on the machine.
+If you do not specify the ``-n`` option, :ref:`mpirun(1)
+<man1-mpirun>` will default to launching as many MPI processes as
+there are processor cores (not hyperthreads) on the machine.
 
 Launching in a non-scheduled environments (via ``ssh``)
 -------------------------------------------------------
@@ -64,8 +65,8 @@ applications:
 #. Open MPI's libraries must be findable (e.g., in your
    ``LD_LIBRARY_PATH``).
 
-``mpirun`` accepts a ``--hostfile`` parameter to specify a hostfile
-containing one hostname per line:
+:ref:`mpirun(1) <man1-mpirun>` accepts a ``--hostfile`` parameter to
+specify a hostfile containing one hostname per line:
 
 .. code-block:: sh
 
@@ -119,25 +120,25 @@ processes and the hosts to use) to Open MPI.
 There are two ways to launch in a scheduled environment.  Nominally,
 they both achieve the same thing: they launch MPI processes.  Them
 main user-observable difference between the two methods is that
-``mpirun`` has many more features than scheduler direct launchers.
+:ref:`mpirun(1) <man1-mpirun>` has many more features than scheduler
+direct launchers.
 
-Using Open MPI's ``mpirun``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using Open MPI's :ref:`mpirun(1) <man1-mpirun>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. note:: Technically, Open MPI's ``mpirun`` is a thin layer around
-          the PRRTE ``prun``.  Hence, most of the functionality
-          described here is really about ``prun``.  For simplicity,
-          however, this docmentation will describe everything in terms
-          of ``mpirun``.
+.. note:: Technically, Open MPI's :ref:`mpirun(1) <man1-mpirun>` is a
+          thin layer around the PRRTE ``prun``.  Hence, most of the
+          functionality described here is really about ``prun``.  For
+          simplicity, however, this docmentation will describe
+          everything in terms of ``mpirun``.
 
-.. error:: TODO Link to mpirun(1) here.
-
-When using the full-featured ``mpirun`` in a scheduled environment,
-there is no need to specify a hostfile or number of MPI processes to
-launch.  ``mpirun`` will receive this information directly from the
-scheduler.  Hence, if you want to launch an MPI job that completely
-"fills" your scheduled allocation (i.e., one MPI process for each slot
-in the scheduled allocation), you can simply:
+When using the full-featured :ref:`mpirun(1) <man1-mpirun>` in a
+scheduled environment, there is no need to specify a hostfile or
+number of MPI processes to launch.  :ref:`mpirun(1) <man1-mpirun>`
+will receive this information directly from the scheduler.  Hence, if
+you want to launch an MPI job that completely "fills" your scheduled
+allocation (i.e., one MPI process for each slot in the scheduled
+allocation), you can simply:
 
 .. code-block:: sh
 
@@ -178,19 +179,18 @@ The above example shows that simply invoking ``mpirun
 mpi-hello-world`` |mdash| with no other CLI options |mdash| obtains
 the number of processes to run and hosts to use from the scheduler.
 
-.. error:: TODO Link to mpirun(1) here.
+:ref:`mpirun(1) <man1-mpirun>` has many more features not described in
+this Quick Start section.  For example, while uncommon in scheduled
+environments, you can use ``-n`` and/or ``--hostfile`` to launch in
+subsets of the overall scheduler allocation.  See the :ref:`mpirun(1)
+<man1-mpirun>` man page for more details.
 
-``mpirun`` has many more features not described in this Quick Start
-section.  For example, while uncommon in scheduled environments, you
-can use ``-n`` and/or ``--hostfile`` to launch in subsets of the
-overall scheduler allocation.  See the mpirun man page for more
-details.
-
-Using the scheduler to "direct launch" (without ``mpirun``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using the scheduler to "direct launch" (without :ref:`mpirun(1) <man1-mpirun>`)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Some schedulers (such as Slurm) have the ability to "direct launch"
-MPI processes without using Open MPI's ``mpirun``.  For example:
+MPI processes without using Open MPI's :ref:`mpirun(1) <man1-mpirun>`.
+For example:
 
 .. code-block:: sh
 
@@ -204,4 +204,4 @@ MPI processes without using Open MPI's ``mpirun``.  For example:
 
 Similar to the prior example, this example launches 40 copies of
 ``mpi-hello-world``, but it does so via the Slurm ``srun`` command
-without using ``mpirun``.
+without using :ref:`mpirun(1) <man1-mpirun>`.

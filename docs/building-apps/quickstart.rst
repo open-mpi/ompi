@@ -17,16 +17,20 @@ probably work in many environments.
 Open MPI provides "wrapper" compilers that should be used for
 compiling MPI and OpenSHMEM applications:
 
-+---------+--------------------------+
-| C       | ``mpicc``, ``oshcc``     |
-+---------+--------------------------+
-| C++     | ``mpiCC``, ``oshCC`` (or |
-|         | ``mpic++`` if your       |
-|         | filesystem is            |
-|         | case-insensitive)        |
-+---------+--------------------------+
-| Fortran | ``mpifort``, ``oshfort`` |
-+---------+--------------------------+
++---------+-----------------------------------+
+| C       | :ref:`mpicc(1) <man1-mpicc>`,     |
+|         | :ref:`oshcc(1) <man1-oshcc>`      |
++---------+-----------------------------------+
+| C++     | :ref:`mpic++(1) <man1-mpic++>`,   |
+|         | :ref:`oshc++(1) <man1-oshc++>`    |
+|         | (and :ref:`mpiCC(1) <man1-mpiCC>` |
+|         | and :ref:`oshCC(1) <man1-oshCC>`  |
+|         | if you filesystem is              |
+|         | case-sensitive)                   |
++---------+-----------------------------------+
+| Fortran | :ref:`mpifort(1) <man1-mpifort>`, |
+|         | :ref:`oshfort(1) <man1-oshfort>`  |
++---------+-----------------------------------+
 
 .. caution:: The legacy names ``mpif77`` and ``mpif90`` still exist,
              and are simply symbolic links to the ``mpifort`` wrapper

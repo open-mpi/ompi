@@ -79,18 +79,23 @@ C / C++
   * In Open MPI, we **always** ``#define`` a logical macro to be
     either 0 or 1 -- we never ``#undef`` it.
   * The reason for this is defensive programming: if you are only
-    checking if a preprocessor macro is defined (via ``#ifdef`` or
-    ``"#if`` defined(FOO)"), you will get no warning when compiling if
+    checking if a preprocessor macro is defined (via ``#ifdef FOO`` or
+    ``#if defined(FOO)``), you will get no warning when compiling if
     you accidentally misspell the macro name.  However, if you use the
     logic test ``#if FOO`` with an undefined macro (e.g., because you
     misspelled it), you'll get a compiler warning or error.
-    Misspelled macro names can be tremendously difficult to find when
-    they are buried in thousands of lines of code, so we will take all
-    the help from the preprocessor/compiler that we can get!
+
+    .. admonition:: Rationale
+       :class: tip
+
+       Misspelled macro names can be tremendously difficult to find
+       when they are buried in thousands of lines of code; we will
+       take all the help from the preprocessor/compiler that we can
+       get!
 
   .. code-block:: c
 
-     /* Gnu Way - you will get no warning from the compiler if you
+     /* GNU Way - you will get no warning from the compiler if you
         misspell "FOO"; the test will simply be false */
      #ifdef FOO
      ...
@@ -154,18 +159,6 @@ and try to use a similar style.
 
      # This is good
      if test "$foo" = "bar"; then
-
-* Do not use the ``-a`` or ``-o`` operators for ``test`` |mdash| this
-  has caused portability problems with ``test(1)`` on BSD systems.
-  Instead, use the ``&&`` or ``||`` shell operators.
-
-  .. code-block:: sh
-
-     # This is bad
-     if test "$foo" = "bar" -a "$baz" = "yow"; then
-
-     # This is good
-     if test "$foo" = "bar" && test "$baz" = "yow"; then
 
 m4
 ^^^

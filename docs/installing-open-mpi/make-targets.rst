@@ -11,10 +11,3 @@ Automake, such as:
 
 Once Open MPI has been built and installed, it is safe to run ``make
 clean`` and/or remove the entire build tree.
-
-Generally speaking, the only thing that users need to do to use Open
-MPI is ensure that ``PREFIX/bin`` is in their ``PATH`` and
-``PREFIX/lib`` is in their ``LD_LIBRARY_PATH``.  Users may need to
-ensure to set the ``PATH`` and ``LD_LIBRARY_PATH`` in their shell
-setup files (e.g., ``.bashrc``, ``.cshrc``) so that non-interactive
-``ssh``-based logins will be able to find the Open MPI executables.
