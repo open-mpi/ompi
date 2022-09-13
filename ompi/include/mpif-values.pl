@@ -7,6 +7,7 @@
 # Copyright (c) 2020      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2022      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -395,6 +396,8 @@ $constants->{OMPI_COMM_TYPE_BOARD} = 8;
 $constants->{OMPI_COMM_TYPE_HOST} = 9;
 $constants->{OMPI_COMM_TYPE_CU} = 10;
 $constants->{OMPI_COMM_TYPE_CLUSTER} = 11;
+$constants->{MPI_COMM_TYPE_HW_UNGUIDED} = 12;
+$constants->{MPI_COMM_TYPE_HW_GUIDED} = 13;
 
 #----------------------------------------------------------------------------
 
