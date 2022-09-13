@@ -310,11 +310,14 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
 {
     pmix_info_t pinfo, *results = NULL;
     size_t nresults;
-    opal_process_name_t *name_array;
+    opal_process_name_t *name_array = NULL;
     char *tag = NULL;
-    size_t proc_count, cid_base = 0UL;
+    size_t proc_count;
+    size_t cid_base;
+    static opal_atomic_uint64_t singleton_counter = 0UL;
     int rc, leader_rank;
-    pmix_proc_t *procs;
+    int ret = OMPI_SUCCESS;
+    pmix_proc_t *procs = NULL;
 
     rc = ompi_group_to_proc_name_array (newcomm->c_local_group, &name_array, &proc_count);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
@@ -336,29 +339,57 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
         break;
     }
 
-    PMIX_INFO_LOAD(&pinfo, PMIX_GROUP_ASSIGN_CONTEXT_ID, NULL, PMIX_BOOL);
+    if (!ompi_singleton) {
+        PMIX_INFO_LOAD(&pinfo, PMIX_GROUP_ASSIGN_CONTEXT_ID, NULL, PMIX_BOOL);
 
-    PMIX_PROC_CREATE(procs, proc_count);
-    for (size_t i = 0 ; i < proc_count; ++i) {
-        OPAL_PMIX_CONVERT_NAME(&procs[i],&name_array[i]);
+        PMIX_PROC_CREATE(procs, proc_count);
+        for (size_t i = 0 ; i < proc_count; ++i) {
+            OPAL_PMIX_CONVERT_NAME(&procs[i],&name_array[i]);
+        }
+
+        rc = PMIx_Group_construct(tag, procs, proc_count, &pinfo, 1, &results, &nresults);
+        PMIX_INFO_DESTRUCT(&pinfo);
+        if(PMIX_SUCCESS != rc) {
+                ret = opal_pmix_convert_status(rc);
+                goto fn_exit;
+        }
+
+        if (NULL != results) {
+            PMIX_VALUE_GET_NUMBER(rc, &results[0].value, cid_base, size_t);
+        }
+
+        rc = PMIx_Group_destruct (tag, NULL, 0);
+        if(PMIX_SUCCESS != rc) {
+                ret = opal_pmix_convert_status(rc);
+                goto fn_exit;
+        }
+
+    } else {
+
+       /* in singleton mode there's no pmix server so we have to manage cid_base ourselves */
+       cid_base = opal_atomic_fetch_add_64(&singleton_counter,1);
+
     }
-
-    rc = PMIx_Group_construct(tag, procs, proc_count, &pinfo, 1, &results, &nresults);
-    PMIX_INFO_DESTRUCT(&pinfo);
-
-    if (NULL != results) {
-        PMIX_VALUE_GET_NUMBER(rc, &results[0].value, cid_base, size_t);
-        PMIX_INFO_FREE(results, nresults);
-    }
-
-    PMIX_PROC_FREE(procs, proc_count);
-    free (name_array);
-
-    rc = PMIx_Group_destruct (tag, NULL, 0);
 
     ompi_comm_extended_cid_block_initialize (new_block, cid_base, 0, 0);
 
-    return OMPI_SUCCESS;
+fn_exit:
+    if (NULL != results) {
+        PMIX_INFO_FREE(results, nresults);
+        results = NULL;
+    }
+
+    if(NULL != procs) {
+        PMIX_PROC_FREE(procs, proc_count);
+        procs = NULL;
+    }
+
+    if(NULL != name_array) {
+        free (name_array);
+        name_array = NULL;
+    }
+
+    return ret;
 }
 
 static int ompi_comm_nextcid_ext_nb (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
