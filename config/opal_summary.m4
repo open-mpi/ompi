@@ -6,6 +6,7 @@ dnl Copyright (c) 2016-2018 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2016      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -92,6 +93,7 @@ AC_DEFUN([OPAL_SUMMARY_PRINT],[
 Open MPI configuration:
 -----------------------
 Version: $OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION.$OMPI_RELEASE_VERSION$OMPI_GREEK_VERSION
+MPI Standard Version: $MPI_VERSION.$MPI_SUBVERSION
 EOF
 
     if test "$project_ompi_amc" = "true" ; then

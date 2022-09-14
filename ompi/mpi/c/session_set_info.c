@@ -37,10 +37,14 @@ int MPI_Session_set_info (MPI_Session session, MPI_Info info)
 {
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == session || MPI_SESSION_NULL == session) {
-            return MPI_ERR_ARG;
-        }
+        if (ompi_instance_invalid(session)) {
+            if (NULL != session) {
+                return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_SESSION, FUNC_NAME);
+            } else {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_SESSION, FUNC_NAME);
+            }
 
+        }
         if (NULL == info || MPI_INFO_NULL == info || ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_INVOKE (session, MPI_ERR_INFO, FUNC_NAME);
         }

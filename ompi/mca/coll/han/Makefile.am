@@ -2,6 +2,7 @@
 # Copyright (c) 2018-2020 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -40,9 +41,6 @@ component_install += mca_coll_han.la
 else
 component_noinst += libmca_coll_han.la
 endif
-
-# See ompi/mca/btl/sm/Makefile.am for an explanation of
-# libmca_common_sm.la.
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
