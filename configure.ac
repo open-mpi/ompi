@@ -77,11 +77,6 @@ OPAL_CONFIGURE_SETUP
 opal_show_title "Configuring project_name_long"
 opal_show_subtitle "Prerequisites"
 
-# compatibility for oac_check_package
-m4_copy([OPAL_LOG_COMMAND], [OAC_LOG_COMMAND])
-m4_copy([OPAL_LOG_MSG], [OAC_LOG_MSG])
-m4_copy([OPAL_APPEND], [OAC_APPEND])
-
 AC_PROG_SED
 
 AC_CHECK_PROG([PERL],[perl],[perl],[no])
