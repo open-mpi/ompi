@@ -1391,12 +1391,9 @@ if (-f ".gitmodules") {
     open(IN, "git submodule status|")
         || die "Can't run \"git submodule status\"";
     while (<IN>) {
-        chomp;
-        $_ =~ m/^(.)(.{40}) ([^ ]+) *\(*([^\(\)]*)\)*$/;
-        my $status     = $1;
-        my $local_hash = $2;
-        my $path       = $3;
-        my $extra      = $4;
+        $_ =~ m/^(.).{40} ([^ ]+) /;
+        my $status = $1;
+        my $path   = $2;
 
         print("=== Submodule: $path\n");
         if (index($path, "pmix") != -1 and list_contains("pmix", @disabled_3rdparty_packages)) {
@@ -1419,19 +1416,14 @@ Perhaps you forgot to \"git clone --recursive ...\", or you need to
             exit(1);
         }
 
-        # See if the submodule is at the expected git hash
-        # (it may be ok if it's not -- just warn the user)
-        $extra =~ m/-g(.+)/;
-        my $remote_hash = $1;
-        if ($remote_hash) {
-            my $abbrev_local_hash = substr($local_hash, 0, length($remote_hash));
-            if ($remote_hash ne $abbrev_local_hash) {
+        # See if the commit in the submodule is not the same as the
+        # commit that the git submodule thinks it should be.
+        elsif ($status eq "+") {
                 print("    ==> WARNING: Submodule hash is different than upstream.
          If this is not intentional, you may want to run:
          \"git submodule update --init --recursive\"\n");
-            } else {
-                print("    Local hash == remote hash (good!)\n");
-            }
+        } else {
+            print("    Local hash is what is expected by the submodule (good!)\n");
         }
     }
 }
