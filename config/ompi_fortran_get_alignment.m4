@@ -55,8 +55,7 @@ dnl
 # OMPI_FORTRAN_GET_ALIGNMENT(type, shell variable to set)
 # ----------------------------------------------------
 AC_DEFUN([OMPI_FORTRAN_GET_ALIGNMENT],[
-    unset happy
-    OPAL_VAR_SCOPE_PUSH([happy ompi_conftest_h])
+    OPAL_VAR_SCOPE_PUSH([fortran_get_alignment_happy ompi_conftest_h])
     # Use of m4_translit suggested by Eric Blake:
     # http://lists.gnu.org/archive/html/bug-autoconf/2010-10/msg00016.html
     AS_VAR_PUSHDEF([type_var],
@@ -112,9 +111,11 @@ EOF
 
         OPAL_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
             [OPAL_LOG_COMMAND([$FC $FCFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
-                [happy="yes"], [happy="no"])], [happy="no"])
+                [fortran_get_alignment_happy="yes"],
+                [fortran_get_alignment_happy="no"])],
+            [fortran_get_alignment_happy="no"])
 
-        if test "$happy" = "no" ; then
+        if test "$fortran_get_alignment_happy" = "no" ; then
             AC_MSG_RESULT([Error!])
             AC_MSG_ERROR([Could not determine alignment of $1])
         fi

@@ -23,7 +23,7 @@ dnl $HEADER$
 # Does this compiler support (void*)-like functionality for MPI choice
 # buffers?  If so, which flavor?
 AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR], [
-    OPAL_VAR_SCOPE_PUSH([result happy type predecl])
+    OPAL_VAR_SCOPE_PUSH([result ignore_tkr_happy type predecl])
 
     OMPI_FORTRAN_IGNORE_TKR_PREDECL=
     OMPI_FORTRAN_IGNORE_TKR_TYPE=
@@ -41,11 +41,11 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR], [
     AS_VAR_COPY([result], [fortran_ignore_tkr_data])
 
     # Parse the result
-    happy=`echo $result | cut -d: -f1`
+    ignore_tkr_happy=`echo $result | cut -d: -f1`
     type=`echo $result | cut -d: -f2`
     predecl=`echo $result | cut -d: -f3-`
 
-    AS_IF([test $happy -eq 1],
+    AS_IF([test $ignore_tkr_happy -eq 1],
           [OMPI_FORTRAN_IGNORE_TKR_PREDECL=$predecl
            OMPI_FORTRAN_IGNORE_TKR_TYPE=$type
            $1],
@@ -58,7 +58,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR], [
 ################
 
 AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
-    OPAL_VAR_SCOPE_PUSH([happy ompi_fortran_ignore_tkr_predecl ompi_fortran_ignore_tkr_type])
+    OPAL_VAR_SCOPE_PUSH([internal_ignore_tkr_happy ompi_fortran_ignore_tkr_predecl ompi_fortran_ignore_tkr_type])
 
     # If we were called here, it means that the value was not cached,
     # so we need to check several different things.  Since CACHE_CHECK
@@ -74,43 +74,43 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
     OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
          [!], [type(*)],
          [TYPE(*), DIMENSION(*)],
-         [happy=1], [happy=0])
+         [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])
 
     # GCC compilers
-    AS_IF([test $happy -eq 0],
+    AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
               [!GCC\$ ATTRIBUTES NO_ARG_CHECK ::], [type(*), dimension(*)],
               [!GCC\$ ATTRIBUTES NO_ARG_CHECK],
-              [happy=1], [happy=0])])
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # Intel compilers
-    AS_IF([test $happy -eq 0],
+    AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
               [!DEC\$ ATTRIBUTES NO_ARG_CHECK ::], [real, dimension(*)],
               [!DEC\$ ATTRIBUTES NO_ARG_CHECK],
-              [happy=1], [happy=0])])
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # Solaris Studio compilers
     # Note that due to a compiler bug, we have been advised by Oracle to
     # use the "character(*)" type
-    AS_IF([test $happy -eq 0],
+    AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
               [!\$PRAGMA IGNORE_TKR], [character(*)],
               [!\$PRAGMA IGNORE_TKR],
-              [happy=1], [happy=0])])
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # Cray compilers
-    AS_IF([test $happy -eq 0],
+    AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
               [!DIR\$ IGNORE_TKR], [real, dimension(*)],
               [!DIR\$ IGNORE_TKR],
-              [happy=1], [happy=0])])
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # IBM compilers
-    AS_IF([test $happy -eq 0],
+    AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
               [!IBM* IGNORE_TKR], [real, dimension(*)],
               [!IBM* IGNORE_TKR],
-              [happy=1], [happy=0])])
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
 
     AS_VAR_SET(fortran_ignore_tkr_data,
-               [${happy}:${ompi_fortran_ignore_tkr_type}:${ompi_fortran_ignore_tkr_predecl}])
+               [${internal_ignore_tkr_happy}:${ompi_fortran_ignore_tkr_type}:${ompi_fortran_ignore_tkr_predecl}])
 
     # Now put the original CACHE_CHECK MSG_CHECKING back so that it can
     # output the MSG_RESULT.
