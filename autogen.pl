@@ -1725,7 +1725,7 @@ safe_system("autom4te --language=m4sh opal_get_version.m4sh -o opal_get_version.
 # Run autoreconf
 verbose "==> Running autoreconf\n";
 chdir("..");
-my $cmd = "autoreconf -ivf --warnings=all,no-obsolete,no-override -I config";
+my $cmd = "autoreconf -ivf --warnings=all,no-obsolete,no-override -I config -I config/oac";
 foreach my $project (@{$projects}) {
     $cmd .= " -I $project->{dir}/config"
         if (-d "$project->{dir}/config");
