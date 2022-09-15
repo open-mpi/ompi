@@ -1,3 +1,12 @@
+---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 Thank you for taking the time to submit an issue!
 
 ## Background information
@@ -16,9 +25,9 @@ Thank you for taking the time to submit an issue!
 
 ### Please describe the system on which you are running
 
-* Operating system/version: 
-* Computer hardware: 
-* Network type: 
+* Operating system/version:
+* Computer hardware:
+* Network type:
 
 -----------------------------
 
@@ -30,4 +39,3 @@ Please describe, in detail, the problem that you are having, including the behav
 ```shell
 shell$ mpirun -n 2 ./hello_world
 ```
-
