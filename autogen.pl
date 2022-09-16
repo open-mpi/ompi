@@ -1409,7 +1409,7 @@ if (-f ".gitmodules") {
     open(IN, "git submodule status|")
         || die "Can't run \"git submodule status\"";
     while (<IN>) {
-        $_ =~ m/^(.).{40} ([^ ]+) /;
+        $_ =~ m/^(.)[0-9a-f]{40}\s+(\S+)/;
         my $status = $1;
         my $path   = $2;
 
