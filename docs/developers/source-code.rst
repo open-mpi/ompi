@@ -209,6 +209,16 @@ Each of the three main source directories (``oshmem``, ``ompi``, and
 either static or shared libraries.  Executables are also produced in
 subdirectories of some of the trees.
 
+The ``libopen-pal`` top-level library is built internally in two parts:
+
+* ``libopen-pal_core`` Internal "core" portion of OPAL containing the essential source and MCA needed for tools like mpicc/mpirun to link against. The "core" library is not installed.
+
+   * Includes the following MCA frameworks: ``backtrace``, ``dl``, ``installdirs``,  ``threads``,  ``timer``
+   * Includes all of the source under ``opal/class`` and most of ``opal/util``
+   * Includes the files suffixed with ``_core`` in ``opal/runtime``
+
+* ``libopen-pal``  Includes "core" plus all of the other OPAL project sources. This is installed.
+
 Each of the sub-project source directories have similar (but not
 identical) directory structures under them:
 
