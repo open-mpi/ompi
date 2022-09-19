@@ -8,4 +8,4 @@
 	branch = v4.2
 [submodule "oac"]
 	path = config/oac
-	url = ../oac
+	url = ../../open-mpi/oac
