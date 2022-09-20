@@ -84,9 +84,8 @@ static inline int opal_thread_internal_mutex_trylock(opal_thread_internal_mutex_
         opal_output(0, "opal_thread_internal_mutex_trylock()");
 #endif
         return 1;
-    } else {
-        return 0;
     }
+    return 0;
 }
 
 static inline void opal_thread_internal_mutex_unlock(opal_thread_internal_mutex_t *p_mutex)
