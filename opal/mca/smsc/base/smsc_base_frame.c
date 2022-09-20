@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +36,7 @@
  */
 #include "opal/mca/smsc/base/static-components.h"
 
-mca_smsc_component_t *selected_component = NULL;
+static mca_smsc_component_t *selected_component = NULL;
 mca_smsc_module_t *mca_smsc = NULL;
 
 /*
