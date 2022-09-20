@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+#                         Laboratory, ICS Forth. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -57,3 +59,13 @@ WARNING: Cannot set both the MCA parameters opal_leave_pinned (a.k.a.,
 mpi_leave_pinned) and opal_leave_pinned_pipeline (a.k.a.,
 mpi_leave_pinned_pipeline) to "true".  Defaulting to mpi_leave_pinned
 ONLY.
+#
+[mpi-params:var_dump_color:format-error]
+WARNING: Token "%s" in opal_var_dump_color MCA parameter
+is not in the expected "key=value" format, ignoring.
+#
+[mpi-params:var_dump_color:unknown-key]
+WARNING: Key "%s" in opal_var_dump_color MCA parameter
+token "%s" is unknown, ignoring.
+
+  Valid keys are: %s

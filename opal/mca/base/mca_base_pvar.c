@@ -908,7 +908,8 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
         if (NULL != pvar->enumerator) {
             char *values;
 
-            ret = pvar->enumerator->dump(pvar->enumerator, &values);
+            ret = pvar->enumerator->dump(pvar->enumerator, &values,
+                MCA_BASE_VAR_DUMP_TYPE_TO_ENUM_DUMP_TYPE(output_type));
             if (OPAL_SUCCESS == ret) {
                 (void) opal_asprintf(out[0] + line++, "Values: %s", values);
                 free(values);
