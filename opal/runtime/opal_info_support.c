@@ -18,6 +18,8 @@
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +76,7 @@ const char *opal_info_path_pkgdatadir = "pkgdatadir";
 const char *opal_info_path_pkgincludedir = "pkgincludedir";
 
 bool opal_info_pretty = true;
+bool opal_info_color = false;
 mca_base_register_flag_t opal_info_register_flags = MCA_BASE_REGISTER_ALL;
 
 const char *opal_info_type_all = "all";
@@ -152,6 +155,8 @@ int opal_info_init(int argc, char **argv, opal_cmd_line_t *opal_info_cmd_line)
     opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "pretty-print", 0,
                             "When used in conjunction with other parameters, the output is "
                             "displayed in 'pretty-print' format (default)");
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "color", 1,
+                            "Control color coding: auto (default), never, always");
     opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "parsable", 0,
                             "When used in conjunction with other parameters, the output is "
                             "displayed in a machine-parsable format");
@@ -197,9 +202,34 @@ int opal_info_init(int argc, char **argv, opal_cmd_line_t *opal_info_cmd_line)
     if (!cmd_error
         && (opal_cmd_line_is_taken(opal_info_cmd_line, "help")
             || opal_cmd_line_is_taken(opal_info_cmd_line, "h"))) {
+        want_help = true;
+    }
+
+    /* Determine color support */
+    if (!cmd_error && !want_help) {
+        char *color = (opal_cmd_line_is_taken(opal_info_cmd_line, "color") ?
+            opal_cmd_line_get_param(opal_info_cmd_line, "color", 0, 0) : "auto");
+
+        if (0 == strcasecmp(color, "auto")) {
+            #if HAVE_ISATTY
+                opal_info_color = isatty(STDOUT_FILENO);
+            #else
+                opal_info_color = false;
+            #endif
+        } else if (0 == strcasecmp(color, "always")) {
+            opal_info_color = true;
+        } else if (0 == strcasecmp(color, "never")) {
+            opal_info_color = false;
+        } else {
+            fprintf(stderr, "%s: Unrecognized value '%s' to color parameter\n", argv[0], color);
+            cmd_error = true;
+            want_help = true;
+        }
+    }
+
+    if(want_help) {
         char *str, *usage;
 
-        want_help = true;
         usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
         str = opal_show_help_string("help-opal_info.txt", "usage", true, usage);
         if (NULL != str) {
@@ -605,9 +635,12 @@ void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line)
             }
             if (0 == strcmp(type, ompi_var_type_names[var->mbv_type])
                 && (var->mbv_info_lvl <= max_level)) {
-                ret = mca_base_var_dump(var->mbv_index, &strings,
-                                        !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE
-                                                          : MCA_BASE_VAR_DUMP_READABLE);
+
+                mca_base_var_dump_type_t dump_type = (!opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE
+                   : (opal_info_color ? MCA_BASE_VAR_DUMP_READABLE_COLOR : MCA_BASE_VAR_DUMP_READABLE));
+
+                ret = mca_base_var_dump(var->mbv_index, &strings, dump_type);
+
                 if (OPAL_SUCCESS != ret) {
                     continue;
                 }
@@ -693,9 +726,11 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group,
             curr_group = group;
         }
 
-        ret = mca_base_var_dump(variables[i], &strings,
-                                !opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE
-                                                  : MCA_BASE_VAR_DUMP_READABLE);
+        mca_base_var_dump_type_t dump_type = (!opal_info_pretty ? MCA_BASE_VAR_DUMP_PARSABLE
+            : (opal_info_color ? MCA_BASE_VAR_DUMP_READABLE_COLOR : MCA_BASE_VAR_DUMP_READABLE));
+
+        ret = mca_base_var_dump(variables[i], &strings, dump_type);
+
         if (OPAL_SUCCESS != ret) {
             continue;
         }
@@ -865,7 +900,7 @@ static int screen_width = 78;
  */
 void opal_info_out(const char *pretty_message, const char *plain_message, const char *value)
 {
-    size_t len, max_value_width, value_offset;
+    size_t len, max_line_width, value_offset;
     char *spaces = NULL;
     char *filler = NULL;
     char *pos, *v, savev, *v_to_free;
@@ -918,7 +953,7 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
             }
 #endif
         }
-        max_value_width = screen_width - strlen(spaces) - strlen(pretty_message) - 2;
+        max_line_width = screen_width - strlen(spaces) - strlen(pretty_message) - 2;
         if (0 < strlen(pretty_message)) {
             opal_asprintf(&filler, "%s%s: ", spaces, pretty_message);
         } else {
@@ -928,24 +963,54 @@ void opal_info_out(const char *pretty_message, const char *plain_message, const 
         spaces = NULL;
 
         while (true) {
-            if (strlen(v) < max_value_width) {
+            size_t max_value_chars = max_line_width;
+
+            if (opal_info_color) {
+                /* We want to print at most max_line_width characters to the
+                * output. Because `value` might contain bytes that do not
+                * appear in the output (ie. escape codes), simply printing
+                * `max_line_width` bytes will not maximize the number of
+                * visible characters that we can print. */
+                bool in_escape = false;
+                size_t invis = 0;
+
+                /* The loop counts how many invisible characters we encounter
+                * until the visible ones (= i - invis) reach `max_line_width` */
+                for (size_t i = 0; v[i] && (i - invis) < max_line_width; i++) {
+                    if ('\033' == v[i]) {
+                        in_escape = true;
+                    }
+                    if (in_escape) {
+                        invis++;
+                    }
+                    if ('m' == v[i]) {
+                        in_escape = false;
+                    }
+                }
+
+                /* Increase the line limit, so that the invisible
+                 * characters are effectively disregarded */
+                max_value_chars += invis;
+            }
+
+            if (strlen(v) < max_value_chars) {
                 printf("%s%s\n", filler, v);
                 break;
             } else {
                 opal_asprintf(&spaces, "%*s", centerpoint + 2, " ");
 
                 /* Work backwards to find the first space before
-                 * max_value_width
+                 * max_value_chars
                  */
-                savev = v[max_value_width];
-                v[max_value_width] = '\0';
+                savev = v[max_value_chars];
+                v[max_value_chars] = '\0';
                 pos = (char *) strrchr(v, (int) ' ');
-                v[max_value_width] = savev;
+                v[max_value_chars] = savev;
                 if (NULL == pos) {
-                    /* No space found < max_value_width.  Look for the first
-                     * space after max_value_width.
+                    /* No space found < max_value_chars.  Look for the first
+                     * space after max_value_chars.
                      */
-                    pos = strchr(&v[max_value_width], ' ');
+                    pos = strchr(&v[max_value_chars], ' ');
 
                     if (NULL == pos) {
 

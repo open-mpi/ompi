@@ -17,6 +17,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017-2022 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +48,8 @@ static void mca_base_var_enum_flag_destructor(mca_base_var_enum_flag_t *enumerat
 static OBJ_CLASS_INSTANCE(mca_base_var_enum_flag_t, opal_object_t,
                           mca_base_var_enum_flag_constructor, mca_base_var_enum_flag_destructor);
 
-static int enum_dump(mca_base_var_enum_t *self, char **out);
+static int enum_dump(mca_base_var_enum_t *self, char **out,
+                     mca_base_var_enum_dump_type_t output_type);
 static int enum_get_count(mca_base_var_enum_t *self, int *count);
 static int enum_get_value(mca_base_var_enum_t *self, int index, int *value,
                           const char **string_value);
@@ -109,10 +112,37 @@ static int mca_base_var_enum_bool_sfv(mca_base_var_enum_t *self, const int value
     return OPAL_SUCCESS;
 }
 
-static int mca_base_var_enum_bool_dump(mca_base_var_enum_t *self, char **out)
+static int mca_base_var_enum_bool_dump(mca_base_var_enum_t *self, char **out,
+                                       mca_base_var_enum_dump_type_t output_type)
 {
-    *out = strdup("0: f|false|disabled|no|n, 1: t|true|enabled|yes|y");
-    return *out ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
+    int ret;
+    char *color_vv = "", *color_reset = "";
+
+    if (MCA_BASE_VAR_ENUM_DUMP_READABLE_COLOR == output_type) {
+        color_vv = opal_var_dump_color[OPAL_VAR_DUMP_COLOR_VALID_VALUES];
+        color_reset = "\033[0m";
+    }
+
+    ret = opal_asprintf(out, "%s0%s|%sf%s|%sfalse%s|%sdisabled%s|%sno%s|%sn%s, "
+                        "%s1%s|%st%s|%strue%s|%senabled%s|%syes%s|%sy%s",
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset);
+    if (ret < 0) {
+        *out = NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    return OPAL_SUCCESS;
 }
 
 mca_base_var_enum_t mca_base_var_enum_bool = {.super = OPAL_OBJ_STATIC_INIT(opal_object_t),
@@ -199,10 +229,40 @@ static int mca_base_var_enum_auto_bool_sfv(mca_base_var_enum_t *self, const int 
     return OPAL_SUCCESS;
 }
 
-static int mca_base_var_enum_auto_bool_dump(mca_base_var_enum_t *self, char **out)
+static int mca_base_var_enum_auto_bool_dump(mca_base_var_enum_t *self, char **out,
+                                            mca_base_var_enum_dump_type_t output_type)
 {
-    *out = strdup("-1: auto, 0: f|false|disabled|no|n, 1: t|true|enabled|yes|y");
-    return *out ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
+    int ret;
+    char *color_vv = "", *color_reset = "";
+
+    if (MCA_BASE_VAR_ENUM_DUMP_READABLE_COLOR == output_type) {
+        color_vv = opal_var_dump_color[OPAL_VAR_DUMP_COLOR_VALID_VALUES];
+        color_reset = "\033[0m";
+    }
+
+    ret = opal_asprintf(out, "%s-1%s|%sauto%s, "
+                        "%s0%s|%sf%s|%sfalse%s|%sdisabled%s|%sno%s|%sn%s, "
+                        "%s1%s|%st%s|%strue%s|%senabled%s|%syes%s|%sy%s",
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset,
+                        color_vv, color_reset);
+    if (ret < 0) {
+        *out = NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    return OPAL_SUCCESS;
 }
 
 mca_base_var_enum_t mca_base_var_enum_auto_bool
@@ -284,17 +344,27 @@ static int mca_base_var_enum_verbose_sfv(mca_base_var_enum_t *self, const int va
     return OPAL_SUCCESS;
 }
 
-static int mca_base_var_enum_verbose_dump(mca_base_var_enum_t *self, char **out)
+static int mca_base_var_enum_verbose_dump(mca_base_var_enum_t *self, char **out,
+                                          mca_base_var_enum_dump_type_t output_type)
 {
     char *tmp;
     int ret;
 
-    ret = enum_dump(self, out);
+    char *color_vv = "", *color_reset = "";
+
+    ret = enum_dump(self, out, output_type);
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
 
-    ret = opal_asprintf(&tmp, "%s, 0 - 100", *out);
+    if (MCA_BASE_VAR_ENUM_DUMP_READABLE_COLOR == output_type) {
+        color_vv = opal_var_dump_color[OPAL_VAR_DUMP_COLOR_VALID_VALUES];
+        color_reset = "\033[0m";
+    }
+
+    ret = opal_asprintf(&tmp, "%s, %s0%s-%s100%s", *out,
+                        color_vv, color_reset,
+                        color_vv, color_reset);
     free(*out);
     if (0 > ret) {
         *out = NULL;
@@ -408,11 +478,14 @@ int mca_base_var_enum_create_flag(const char *name, const mca_base_var_enum_valu
     return OPAL_SUCCESS;
 }
 
-static int enum_dump(mca_base_var_enum_t *self, char **out)
+static int enum_dump(mca_base_var_enum_t *self, char **out,
+                     mca_base_var_enum_dump_type_t output_type)
 {
     int i;
     char *tmp;
     int ret;
+
+    char *color_vv = "", *color_reset = "";
 
     *out = NULL;
 
@@ -420,10 +493,17 @@ static int enum_dump(mca_base_var_enum_t *self, char **out)
         return OPAL_ERROR;
     }
 
+    if (MCA_BASE_VAR_ENUM_DUMP_READABLE_COLOR == output_type) {
+        color_vv = opal_var_dump_color[OPAL_VAR_DUMP_COLOR_VALID_VALUES];
+        color_reset = "\033[0m";
+    }
+
     tmp = NULL;
     for (i = 0; i < self->enum_value_count && self->enum_values[i].string; ++i) {
-        ret = opal_asprintf(out, "%s%s%d:\"%s\"", tmp ? tmp : "", tmp ? ", " : "",
-                            self->enum_values[i].value, self->enum_values[i].string);
+        ret = opal_asprintf(out, "%s%s%s%d%s|%s%s%s",
+                            tmp ? tmp : "", tmp ? ", " : "",
+                            color_vv, self->enum_values[i].value, color_reset,
+                            color_vv, self->enum_values[i].string, color_reset);
         if (tmp) {
             free(tmp);
         }
@@ -691,16 +771,24 @@ static int enum_string_from_value_flag(mca_base_var_enum_t *self, const int valu
     return OPAL_SUCCESS;
 }
 
-static int enum_dump_flag(mca_base_var_enum_t *self, char **out)
+static int enum_dump_flag(mca_base_var_enum_t *self, char **out,
+                          mca_base_var_enum_dump_type_t output_type)
 {
     mca_base_var_enum_flag_t *flag_enum = (mca_base_var_enum_flag_t *) self;
     char *tmp;
     int ret;
 
+    char *color_vv = "", *color_reset = "";
+
     *out = NULL;
 
     if (NULL == self) {
         return OPAL_ERROR;
+    }
+
+    if (MCA_BASE_VAR_ENUM_DUMP_READABLE_COLOR == output_type) {
+        color_vv = opal_var_dump_color[OPAL_VAR_DUMP_COLOR_VALID_VALUES];
+        color_reset = "\033[0m";
     }
 
     *out = strdup("Comma-delimited list of: ");
@@ -711,8 +799,10 @@ static int enum_dump_flag(mca_base_var_enum_t *self, char **out)
     for (int i = 0; i < self->enum_value_count; ++i) {
         tmp = *out;
 
-        ret = opal_asprintf(out, "%s%s0x%x:\"%s\"", tmp, i ? ", " : " ",
-                            flag_enum->enum_flags[i].flag, flag_enum->enum_flags[i].string);
+        ret = opal_asprintf(out, "%s%s%s0x%x%s|%s%s%s",
+                            tmp, i ? ", " : " ",
+                            color_vv, flag_enum->enum_flags[i].flag, color_reset,
+                            color_vv, flag_enum->enum_flags[i].string, color_reset);
         free(tmp);
         if (0 > ret) {
             return OPAL_ERR_OUT_OF_RESOURCE;

@@ -17,6 +17,8 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -699,7 +701,9 @@ typedef enum {
     /* Dump easily parsable strings */
     MCA_BASE_VAR_DUMP_PARSABLE = 1,
     /* Dump simple name=value string */
-    MCA_BASE_VAR_DUMP_SIMPLE = 2
+    MCA_BASE_VAR_DUMP_SIMPLE = 2,
+    /* Dump human-readable strings, with color where supported */
+    MCA_BASE_VAR_DUMP_READABLE_COLOR = 3
 } mca_base_var_dump_type_t;
 
 /**
