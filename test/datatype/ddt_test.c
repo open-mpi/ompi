@@ -343,7 +343,7 @@ int main( int argc, char* argv[] )
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc, length = 500;
 
-    opal_init_util(&argc, &argv);
+    opal_init(&argc, &argv);
     ompi_datatype_init();
 
     /**

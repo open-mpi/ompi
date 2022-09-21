@@ -82,7 +82,7 @@ int main( int argc, char* argv[] )
     char* bpacked;
     int i, j;
 
-    opal_init_util (NULL, NULL);
+    opal_init(NULL, NULL);
     ompi_datatype_init();
 
     ompi_datatype_create_vector(TYPE_COUNT, TYPE_BLEN, TYPE_STRIDE, MPI_DOUBLE, &base);

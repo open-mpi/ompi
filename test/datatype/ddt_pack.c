@@ -67,7 +67,7 @@ main(int argc, char* argv[])
     int _dbg = 0;
     while (_dbg) poll(NULL, 0, 1);
 
-    opal_init_util (NULL, NULL);
+    opal_init(NULL, NULL);
     ompi_datatype_init();
 
     /**

@@ -234,7 +234,7 @@ int main( int argc, char* argv[] )
     }
     memcpy(recv_buffer, send_buffer, sizeof(ddt_ldi_t) * data_count );
 
-    opal_init_util (NULL, NULL);
+    opal_init(NULL, NULL);
     ompi_datatype_init();
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
