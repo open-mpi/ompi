@@ -987,7 +987,14 @@ AC_CACHE_SAVE
 
 opal_show_title "System-specific tests"
 
-OPAL_CHECK_CUDA
+################
+# CUDA support #
+################
+# Note, we should remove this when opal/cuda is removed
+OPAL_CHECK_CUDA([opal_cuda],
+                [opal_cuda_happy="yes"],
+                [opal_cuda_happy="no"])
+
 ##################################
 OPAL_CHECK_OS_FLAVORS
 
@@ -1232,8 +1239,6 @@ AC_CACHE_SAVE
 # after the opal DL MCA checks have done.  Someday this could perhaps
 # be done better by having some kind of "run this check at the end of
 # all other MCA checks" hook...?
-
-OPAL_CHECK_CUDA_AFTER_OPAL_DL
 
 OPAL_CHECK_ROCM_AFTER_OPAL_DL
 
