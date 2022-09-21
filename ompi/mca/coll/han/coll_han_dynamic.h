@@ -22,6 +22,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
+#include "ompi/mca/coll/han/coll_han.h"
 
 /*
  * @file
@@ -53,7 +54,7 @@
  *     - MCA parameter defined rules
  *     - File defined rules
  *
- * MCA parameter defined rules are stored in mca_coll_han_component.mca_rules.
+ * MCA parameter defined rules are stored in mca_coll_han_component.mca_sub_components.
  * This is a double indexed table. The first index is the corresponding collective
  * communication and the second index is the topological level aimed by the rule.
  * These parameters define the collective component to use for a specific
@@ -139,6 +140,7 @@ typedef struct msg_size_rule_s {
     /* Component to use on this specific configuration
      * and message size */
     COMPONENT_T component;
+    int algorithm_id;
 } msg_size_rule_t;
 
 /* Rule for a specific configuration
@@ -209,5 +211,6 @@ typedef struct mca_coll_han_collective_modules_storage_s {
 /* Tests if a dynamic collective is implemented */
 bool mca_coll_han_is_coll_dynamic_implemented(COLLTYPE_T coll_id);
 COMPONENT_T mca_coll_han_component_name_to_id(const char* name);
+int mca_coll_han_topo_lvl_name_to_id(const char *topo_level_str);
 
 #endif
