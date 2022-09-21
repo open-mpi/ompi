@@ -34,7 +34,7 @@ dist_opaldata_DATA = help-opal-util.txt
 AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy
 
-noinst_LTLIBRARIES = libopalutil.la
+noinst_LTLIBRARIES = libopalutil.la libopalutil_core.la
 
 AM_CPPFLAGS = $(LTDLINCL)
 
@@ -84,6 +84,14 @@ headers = \
 
 libopalutil_la_SOURCES = \
         $(headers) \
+	ethtool.c \
+	event.c \
+        if.c \
+        net.c \
+        info_subscriber.c \
+        info.c
+
+libopalutil_core_la_SOURCES = \
         alfg.c \
         arch.c \
         argv.c \
@@ -91,15 +99,11 @@ libopalutil_la_SOURCES = \
 	bipartite_graph.c \
         cmd_line.c \
         crc.c \
-	ethtool.c \
         error.c \
-	event.c \
         fd.c \
         few.c \
-        if.c \
         keyval_parse.c \
         malloc.c \
-        net.c \
         numtostr.c \
         opal_environ.c \
         opal_getcwd.c \
@@ -116,17 +120,15 @@ libopalutil_la_SOURCES = \
         stacktrace.c \
         string_copy.c \
         sys_limits.c \
-        uri.c \
-        info_subscriber.c \
-        info.c
+        uri.c
 
 if OPAL_COMPILE_TIMING
 libopalutil_la_SOURCES += timings.c
 endif
 
-libopalutil_la_LIBADD = \
+libopalutil_core_la_LIBADD = \
         keyval/libopalutilkeyval.la
-libopalutil_la_DEPENDENCIES = \
+libopalutil_core_la_DEPENDENCIES = \
         keyval/libopalutilkeyval.la
 
 # Conditionally install the header files

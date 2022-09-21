@@ -1,12 +1,16 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
 dnl
+
+dnl need in the core library
+AC_DEFUN([MCA_opal_dl_CORE_LIB], [1])
 
 dnl There will only be one component used in this framework, and it will
 dnl be selected at configure time by priority.  Components must set

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      The University of Tennessee and The University
+ * Copyright (c) 2013-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
@@ -172,6 +172,6 @@ OPAL_DECLSPEC extern struct opal_proc_t *(*opal_proc_for_name)(const opal_proces
  * our own. This is to be used by all BTLs so we don't retrieve hostnames
  * unless needed. The returned value MUST NOT be free'd as it is
  * owned by the proc_t */
-OPAL_DECLSPEC char *opal_get_proc_hostname(const opal_proc_t *proc);
+OPAL_DECLSPEC extern char *(*opal_get_proc_hostname)(const opal_proc_t *proc);
 
 #endif /* OPAL_PROC_H */

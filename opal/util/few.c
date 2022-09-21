@@ -29,8 +29,6 @@
 #endif
 
 #include "opal/constants.h"
-#include "opal/util/argv.h"
-#include "opal/util/basename.h"
 #include "opal/util/few.h"
 
 int opal_few(char *argv[], int *status)
