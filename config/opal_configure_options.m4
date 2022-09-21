@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved
+dnl Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -327,25 +327,24 @@ fi
 #
 
 AC_MSG_CHECKING([for default value of mca_base_component_show_load_errors])
-AC_ARG_ENABLE([show-load-errors-by-default],
-    [AS_HELP_STRING([--enable-show-load-errors-by-default],
-                    [Set the default value for the MCA parameter
-                     mca_base_component_show_load_errors (but can be
-                     overridden at run time by the usual
-                     MCA-variable-setting mechansism).  This MCA variable
-                     controls whether warnings are displayed when an MCA
-                     component fails to load at run time due to an error.
-                     (default: enabled, meaning that
-                      mca_base_component_show_load_errors is enabled
-                      by default])])
-if test "$enable_show_load_errors_by_default" = "no" ; then
-    OPAL_SHOW_LOAD_ERRORS_DEFAULT=0
-    AC_MSG_RESULT([disabled by default])
-else
-    OPAL_SHOW_LOAD_ERRORS_DEFAULT=1
-    AC_MSG_RESULT([enabled by default])
-fi
-AC_DEFINE_UNQUOTED(OPAL_SHOW_LOAD_ERRORS_DEFAULT, $OPAL_SHOW_LOAD_ERRORS_DEFAULT,
+AC_ARG_WITH([show-load-errors],
+            [AS_HELP_STRING([--with-show-load-errors],
+                            [Set the default value for the MCA
+                            parameter
+                            mca_base_component_show_load_errors (but
+                            can be overridden at run time by the usual
+                            MCA-variable-setting mechansism).
+                            (default: "all")])])
+
+AS_IF([test -z "$with_show_load_errors" -o "$with_show_load_errors" = "yes"],
+      [with_show_load_errors=all
+       AC_MSG_RESULT([enabled for all])],
+      [AS_IF([test "$with_show_load_errors" = "no"],
+             [with_show_load_errors=none
+              AC_MSG_RESULT([disabled for all])],
+             [AC_MSG_RESULT([$with_show_load_errors])])])
+
+AC_DEFINE_UNQUOTED(OPAL_SHOW_LOAD_ERRORS_DEFAULT, ["$with_show_load_errors"],
                    [Default value for mca_base_component_show_load_errors MCA variable])
 
 
