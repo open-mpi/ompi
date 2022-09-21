@@ -1850,7 +1850,7 @@ OMPI_DECLSPEC  int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatyp
                             void *outbuf, int outsize, int *position, MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
                                  int *size);
-OMPI_DECLSPEC  int MPI_Parrived(MPI_Request request, MPI_Count partition, int *flag);
+OMPI_DECLSPEC  int MPI_Parrived(MPI_Request request, int partition, int *flag);
 OMPI_DECLSPEC  int MPI_Pcontrol(const int level, ...);
 OMPI_DECLSPEC  int MPI_Pready(int partitions, MPI_Request request);
 OMPI_DECLSPEC  int MPI_Pready_range(int partition_low, int partition_high,
@@ -2555,7 +2555,7 @@ OMPI_DECLSPEC  int PMPI_Pready(int partitions, MPI_Request request);
 OMPI_DECLSPEC  int PMPI_Pready_range(int partition_low, int partition_high,
                                     MPI_Request request);
 OMPI_DECLSPEC  int PMPI_Pready_list(int length, int partition_list[], MPI_Request request);
-OMPI_DECLSPEC  int PMPI_Parrived(MPI_Request request, MPI_Count partition, int *flag);
+OMPI_DECLSPEC  int PMPI_Parrived(MPI_Request request, int partition, int *flag);
 OMPI_DECLSPEC  int PMPI_Is_thread_main(int *flag);
 OMPI_DECLSPEC  int PMPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint PMPI_Message_c2f(MPI_Message message);
