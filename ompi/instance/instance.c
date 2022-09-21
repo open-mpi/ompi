@@ -448,9 +448,9 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ret;
     }
 
-    /* initialize info */
-    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_init_mpi3())) {
-        return ompi_instance_print_error ("ompi_info_init_mpi3() failed", ret);
+    /* initialize MPI_INFO_ENV */
+    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_init_env(0, NULL, &ompi_mpi_info_env.info))) {
+        return ompi_instance_print_error ("ompi_info_init_env() failed", ret);
     }
 
     /* declare our presence for interlib coordination, and
