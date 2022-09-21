@@ -658,7 +658,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     # C11 atomics, but have not apparently found a build we are happy
     # with.  In the future, this should be changed to a check for a
     # particular Intel version.
-    AS_IF([test "$atomics_found" = "no" -a "$enable_c11_atomics" == "yes" -a "$opal_cv_c11_supported" = "yes" -a "$opal_cv_c_compiler_vendor" != "intel"],
+    AS_IF([test "$atomics_found" = "no" -a "$enable_c11_atomics" != "no" -a "$opal_cv_c11_supported" = "yes" -a "$opal_cv_c_compiler_vendor" != "intel"],
           [AC_MSG_NOTICE([Using C11 atomics])
            OPAL_CHECK_C11_CSWAP_INT128
            want_c11_atomics=1
