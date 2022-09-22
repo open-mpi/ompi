@@ -39,7 +39,7 @@
 #include "opal/constants.h"
 #include "opal/mca/threads/qthreads/threads_qthreads.h"
 #include "opal/sys/atomic.h"
-#include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 BEGIN_C_DECLS
 
@@ -55,7 +55,7 @@ static inline int opal_thread_internal_mutex_init(opal_thread_internal_mutex_t *
     #if OPAL_ENABLE_DEBUG
     int ret = qthread_spinlock_init(p_mutex,recursive);
     if (QTHREAD_SUCCESS != ret) {
-        opal_output(0, "opal_thread_internal_mutex_init()");
+        opal_show_help("help-opal-threads.txt", "mutex init failed", true);
     }
     #else
     qthread_spinlock_init(p_mutex,recursive);
@@ -69,7 +69,7 @@ static inline void opal_thread_internal_mutex_lock(opal_thread_internal_mutex_t 
     #if OPAL_ENABLE_DEBUG
     int ret = qthread_spinlock_lock(p_mutex);
     if (QTHREAD_SUCCESS != ret) {
-        opal_output(0, "opal_thread_internal_mutex_lock()");
+        opal_show_help("help-opal-threads.txt", "mutex lock failed", true);
     }
     #else
     qthread_spinlock_lock(p_mutex);
@@ -84,7 +84,7 @@ static inline int opal_thread_internal_mutex_trylock(opal_thread_internal_mutex_
         return 1;
     } else if (QTHREAD_SUCCESS != ret) {
 #if OPAL_ENABLE_DEBUG
-        opal_output(0, "opal_thread_internal_mutex_trylock()");
+        opal_show_help("help-opal-threads.txt", "mutex trylock failed", true);
 #endif
         return 1;
     } 
@@ -98,7 +98,7 @@ static inline void opal_thread_internal_mutex_unlock(opal_thread_internal_mutex_
     #if OPAL_ENABLE_DEBUG
     ret = qthread_spinlock_unlock(p_mutex);
     if (QTHREAD_SUCCESS != ret) {
-        opal_output(0, "opal_thread_internal_mutex_unlock()");
+        opal_show_help("help-opal-threads.txt", "mutex unlock failed", true);
     }
     #else
     qthread_spinlock_unlock(p_mutex);
