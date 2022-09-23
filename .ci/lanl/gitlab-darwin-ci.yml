@@ -103,7 +103,7 @@ build:gnu:
       - install_test
     expire_in: 1 week
 
-build:cce
+build:cce:
   stage: build
   tags: [darwin-slurm-shared]
   variables:
@@ -261,7 +261,7 @@ test:gnu:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     expire_in: 1 week
 
-test:cce
+test:cce:
   stage: test
   tags: [darwin-slurm-shared]
   dependencies:
