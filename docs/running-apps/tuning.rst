@@ -172,6 +172,15 @@ in priority order:
 #. Tuning MCA parameter files
 #. Configuration files
 
+.. danger:: Due to how the PMIx and PRRTE projects both evolved to
+            become independent projects from Open MPI (:ref:`see this
+            section for more detail
+            <label-running-role-of-pmix-and-prte>`), they both have
+            their own MCA system for setting MCA parameters.
+
+            Hence, all the information about MCA parameters below
+            *also* applies to PMIx and PRRTE.
+
 Command line parameters
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -194,6 +203,19 @@ format used on the command line is ``--mca <param_name> <value>``.
 
              shell$ mpirun --mca param "value with multiple words" ...
 
+.. warning:: Setting Open MPI MCA parameters via the command line
+             entails using the ``--mca`` CLI option.  When setting
+             PMIx- and PRRTE-specific MCA parameters via configuration
+             files, use a different CLI option:
+
+             +----------+----------------+
+             | Open MPI | ``--mca``      |
+             +----------+----------------+
+             | PMIx     | ``--pmixmca``  |
+             +----------+----------------+
+             | PRRTE    | ``--prtemca``  |
+             +----------+----------------+
+
 Environment variables
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -215,10 +237,23 @@ shells):
 
              shell$ export OMPI_MCA_param="value with multiple words"
 
+.. warning:: Setting Open MPI MCA parameters via environment variables
+             entails prefixing the parameter name with ``OMPI_MCA_``.
+             When setting PMIx- and PRRTE-specific MCA parameters via
+             environment variables, use a different prefix:
+
+             +----------+----------------+
+             | Open MPI | ``OMPI_MCA_``  |
+             +----------+----------------+
+             | PMIx     | ``PMIX_MCA_``  |
+             +----------+----------------+
+             | PRRTE    | ``PRRTE_MCA_`` |
+             +----------+----------------+
+
 Tuning MCA parameter files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. error:: TODO This entire entry needs to be checked for correctness.
+.. error:: TODO This entire section needs to be checked for correctness.
 
 Simple text files can be used to set MCA parameter values for a
 specific application.
@@ -333,6 +368,25 @@ precedence.
           customization, which is especially relevant in heterogeneous
           environments.
 
+.. error:: TODO This table needs to be checked for correctness.
+
+.. warning:: Setting Open MPI MCA parameters via configuration files
+             entails editing (by default) the ``mca-params.conf`` or
+             ``openmpi-mca-params.conf`` files.  When setting PMIx-
+             and PRRTE-specific MCA parameters via configuration
+             files, set them (by default) in different files:
+
+             +----------+------------------------------------------+
+             | Open MPI | ``$HOME/.openmpi/mca-params.conf`` or    |
+             |          | ``$prefix/etc/openmpi-mca-params.conf``  |
+             +----------+------------------------------------------+
+             | PMIx     | ``$HOME/.pmix/mca-params.conf`` or       |
+             |          | ``$prefix/etc/openpmix-mca-params.conf`` |
+             +----------+------------------------------------------+
+             | PRRTE    | ``$HOME/.prrte/mca-params.conf`` or      |
+             |          | ``$prefix/etc/prte-mca-params.conf``     |
+             +----------+------------------------------------------+
+
 /////////////////////////////////////////////////////////////////////////
 
 .. _label-running-selecting-framework-components:
@@ -387,6 +441,14 @@ Common MCA parameters
 Open MPI has a *large* number of MCA parameters available.  Users can
 use the :ref:`ompi_info(1) <man1-ompi_info>` command to see *all*
 available MCA parameters.
+
+.. note:: Similarly, you can use the ``pmix_info(1)`` and
+          ``prte_info(1)`` commands to see all the MCA parameters
+          available for the PMIx and PRRTE projects, respectively.
+
+          The documentation for these commands are not included in the
+          Open MPI docs, but they are both quite similar to
+          :ref:`ompi_info(1) <man1-ompi_info>`.
 
 The vast majority of these MCA parameters, however, are not useful to
 most users.  Indeed, there only are a handful of MCA parameters that

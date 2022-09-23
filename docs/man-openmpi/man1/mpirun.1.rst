@@ -9,8 +9,10 @@ mpirun / mpiexec
 
 mpirun, mpiexec |mdash| Execute serial and parallel jobs in Open MPI.
 
-.. note:: ``mpirun`` and ``mpiexec`` are all synonyms for each other.
-          Using either of the names will produce the same behavior.
+.. note:: ``mpirun`` and ``mpiexec`` are synonyms for each other.
+          Indeed, they are symbolic links to the same executable.
+          Using either of the names will produce the exact same
+          behavior.
 
 SYNOPSIS
 --------

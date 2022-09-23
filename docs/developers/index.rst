@@ -12,7 +12,7 @@ probably don't need to read this section.
    :maxdepth: 1
 
    prerequisites
-   git-clone
+   git-github
    compiler-pickyness
    autogen
    building-open-mpi

@@ -1,3 +1,5 @@
+.. _label-building-fully-static-apps:
+
 Building fully-static MPI applications
 ======================================
 
