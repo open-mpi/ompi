@@ -39,12 +39,12 @@
 #include "opal/align.h"
 
 #include "opal/util/proc.h"
-#if OPAL_CUDA_GDR_SUPPORT
-#    include "opal/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_GDR_SUPPORT */
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
-
+#include "opal/mca/accelerator/accelerator.h"
+#if OPAL_CUDA_GDR_SUPPORT
+#include "opal/cuda/common_cuda.h"
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 #include "opal/align.h"
 #include "opal/util/sys_limits.h"
 #include "rcache_grdma.h"
@@ -331,7 +331,10 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
 #if OPAL_CUDA_GDR_SUPPORT
     if (flags & MCA_RCACHE_FLAGS_CUDA_GPU_MEM) {
         size_t psize;
-        mca_common_cuda_get_address_range(&base, &psize, addr);
+        int res = opal_accelerator.get_address_range(MCA_ACCELERATOR_NO_DEVICE_ID, addr, (void **)&base, &psize);
+        if (OPAL_SUCCESS != res) {
+            abort();
+        }
         bound = base + psize - 1;
         /* Check to see if this memory is in the cache and if it has been freed. If so,
          * this call will boot it out of the cache. */
@@ -543,6 +546,7 @@ static int mca_rcache_grdma_invalidate_range(mca_rcache_base_module_t *rcache, v
 
 static int check_for_cuda_freed_memory(mca_rcache_base_module_t *rcache, void *addr, size_t size)
 {
+    unsigned long long buf_id;
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) rcache;
     mca_rcache_base_registration_t *reg;
 

@@ -24,6 +24,8 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/communicator/communicator.h"
+#include "opal/mca/accelerator/accelerator.h"
+#include "opal/mca/accelerator/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -70,6 +72,41 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
                                    struct ompi_op_t *op,
                                    struct ompi_communicator_t *comm,
                                    mca_coll_base_module_t *module);
+
+
+/* Checks the type of pointer
+ *
+ * @param addr   One pointer to check
+ * @retval <0                An error has occurred.
+ * @retval 0                 The buffer does not belong to a managed buffer
+ *                           in device memory.
+ * @retval >0                The buffer belongs to a managed buffer in
+ *                           device memory.
+ */
+static inline int mca_coll_cuda_check_buf(void *addr)
+{
+    uint64_t flags;
+    int dev_id;
+    if (OPAL_LIKELY(NULL != addr)) {
+        return opal_accelerator.check_addr(addr, &dev_id, &flags);
+    } else {
+        return OPAL_ERROR;
+    }
+}
+
+static inline void *mca_coll_cuda_memcpy(void *dest, const void *src, size_t size)
+{
+    int res;
+    res = opal_accelerator.memcpy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+                                  dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+    if (res != 0) {
+        opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d", res, dest, src,
+                    (int) size);
+        abort();
+    } else {
+        return dest;
+    }
+}
 
 /* Types */
 /* Module */

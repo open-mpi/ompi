@@ -239,7 +239,9 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
                             "RGPUSM: Found addr=%p,size=%d (base=%p,size=%d) in cache", addr,
                             (int) size, (*reg)->base, (int) ((*reg)->bound - (*reg)->base));
 
-        if (mca_common_cuda_memhandle_matches((mca_rcache_common_cuda_reg_t *) *reg, rget_reg)) {
+        if (0 ==
+            memcmp(((mca_rcache_common_cuda_reg_t *)*reg)->data.memHandle, rget_reg->data.memHandle,
+                  sizeof(((mca_rcache_common_cuda_reg_t *)*reg)->data.memHandle))) {
             /* Registration matches what was requested.  All is good. */
             rcache_rgpusm->stat_cache_valid++;
         } else {
@@ -372,7 +374,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
             }
             /* Clear out one registration. */
             rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
-                                    (mca_rcache_base_registration_t *) rget_reg);
+                                    (mca_rcache_base_registration_t *) rget_reg); 
         }
     }
 

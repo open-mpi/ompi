@@ -25,9 +25,6 @@
 #include "ompi/runtime/ompi_spc.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "opal/mca/common/ucx/common_ucx.h"
-#if OPAL_CUDA_SUPPORT
-#include "opal/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_SUPPORT */
 #include "pml_ucx_request.h"
 
 #include <inttypes.h>
@@ -265,14 +262,7 @@ int mca_pml_ucx_open(void)
     }
 
     ompi_pml_ucx.request_size     = attr.request_size;
-    ompi_pml_ucx.cuda_initialized = false;
 
-#if HAVE_UCP_ATTR_MEMORY_TYPES && OPAL_CUDA_SUPPORT
-    if (attr.memory_types & UCS_BIT(UCS_MEMORY_TYPE_CUDA)) {
-        mca_common_cuda_stage_one_init();
-        ompi_pml_ucx.cuda_initialized = true;
-    }
-#endif
     return OMPI_SUCCESS;
 }
 
@@ -280,11 +270,6 @@ int mca_pml_ucx_close(void)
 {
     PML_UCX_VERBOSE(1, "mca_pml_ucx_close");
 
-#if OPAL_CUDA_SUPPORT
-    if (ompi_pml_ucx.cuda_initialized) {
-        mca_common_cuda_fini();
-    }
-#endif
     if (ompi_pml_ucx.ucp_context != NULL) {
         ucp_cleanup(ompi_pml_ucx.ucp_context);
         ompi_pml_ucx.ucp_context = NULL;

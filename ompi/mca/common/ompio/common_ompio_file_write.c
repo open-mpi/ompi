@@ -71,19 +71,17 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
 
     bool need_to_copy = false;
 
-#if OPAL_CUDA_SUPPORT
     int is_gpu, is_managed;
     mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
     if ( is_gpu && !is_managed ) {
         need_to_copy = true;
     }
-#endif
 
     if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
          !(datatype == &ompi_mpi_byte.dt  ||
            datatype == &ompi_mpi_char.dt   )) {
         /* only need to copy if any of these conditions are given:
-           1. buffer is an unmanaged CUDA buffer (checked above).
+           1. buffer is an unmanaged device buffer (checked above).
            2. Datarepresentation is anything other than 'native' and
            3. datatype is not byte or char (i.e it does require some actual
               work to be done e.g. for external32.
@@ -244,19 +242,17 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
 
         bool need_to_copy = false;
 
-#if OPAL_CUDA_SUPPORT
         int is_gpu, is_managed;
         mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
         if ( is_gpu && !is_managed ) {
             need_to_copy = true;
         }
-#endif
 
         if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
              !(datatype == &ompi_mpi_byte.dt  ||
                datatype == &ompi_mpi_char.dt   )) {
             /* only need to copy if any of these conditions are given:
-               1. buffer is an unmanaged CUDA buffer (checked above).
+               1. buffer is an unmanaged device buffer (checked above).
                2. Datarepresentation is anything other than 'native' and
                3. datatype is not byte or char (i.e it does require some actual
                work to be done e.g. for external32.
@@ -397,7 +393,7 @@ int mca_common_ompio_file_write_all (ompio_file_t *fh,
            
            If the individual fcoll component is used: there are no aggregators 
            in that concept. However, since they call common_ompio_file_write, 
-           CUDA buffers are handled by that routine.
+           device buffers are handled by that routine.
 
            Thus, we only check for
            1. Datarepresentation is anything other than 'native' and

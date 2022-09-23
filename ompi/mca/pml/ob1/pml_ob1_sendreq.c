@@ -452,7 +452,6 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
-#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
 /**
  * This function is called when the copy of the frag from the GPU buffer
  * to the internal buffer is complete.  Used to support asynchronous
@@ -483,7 +482,6 @@ mca_pml_ob1_copy_frag_completion( mca_btl_base_module_t* btl,
         ompi_rte_abort(-1, NULL);
     }
 }
-#endif /* OPAL_CUDA_SUPPORT */
 
 /**
  *  Buffer the entire message and mark as complete.
@@ -833,7 +831,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     int rc;
 
     bml_btl = sendreq->req_rdma[0].bml_btl;
-    if (!(bml_btl->btl_flags & (MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_CUDA_GET))) {
+    if (!(bml_btl->btl_flags & (MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_ACCELERATOR_GET))) {
         sendreq->rdma_frag = NULL;
         /* This BTL does not support get. Use rendezvous to start the RDMA operation using put instead. */
         return mca_pml_ob1_send_request_start_rndv (sendreq, bml_btl, 0, MCA_PML_OB1_HDR_FLAGS_CONTIG |
@@ -1154,17 +1152,12 @@ cannot_pack:
 
         /* makes sure that we don't exceed BTL max send size */
         if(bml_btl->btl->btl_max_send_size != 0) {
-#if OPAL_CUDA_SUPPORT
             size_t max_send_size;
-            if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) && (bml_btl->btl->btl_cuda_max_send_size != 0)) {
-                max_send_size = bml_btl->btl->btl_cuda_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
+            if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) && (bml_btl->btl->btl_accelerator_max_send_size != 0)) {
+                max_send_size = bml_btl->btl->btl_accelerator_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
             } else {
                 max_send_size = bml_btl->btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
             }
-#else /* OPAL_CUDA_SUPPORT */
-            size_t max_send_size = bml_btl->btl->btl_max_send_size -
-                sizeof(mca_pml_ob1_frag_hdr_t);
-#endif /* OPAL_CUDA_SUPPORT */
             if (size > max_send_size) {
                 size = max_send_size;
             }
@@ -1221,13 +1214,12 @@ cannot_pack:
                  &(sendreq->req_send.req_base), size, PERUSE_SEND);
 #endif  /* OMPI_WANT_PERUSE */
 
-#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_SEND */
          /* At this point, check to see if the BTL is doing an asynchronous
           * copy.  This would have been initiated in the mca_bml_base_prepare_src
           * called above.  The flag is checked here as we let the hdr be
           * set up prior to checking.
           */
-        if (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC) {
+        if (des->des_flags & MCA_BTL_DES_FLAGS_ACCELERATOR_COPY_ASYNC) {
             OPAL_OUTPUT((-1, "Initiating async copy on FRAG frag=%p", (void *)des));
             /* Need to make sure BTL does not free frag after completion
              * of asynchronous copy as we still need to send the fragment. */
@@ -1245,7 +1237,6 @@ cannot_pack:
             }
             continue;
         }
-#endif /* OPAL_CUDA_SUPPORT */
 
         /* initiate send - note that this may complete before the call returns */
         rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_FRAG);

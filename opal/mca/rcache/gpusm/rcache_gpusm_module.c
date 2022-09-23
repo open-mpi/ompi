@@ -39,9 +39,9 @@
  */
 
 #include "opal_config.h"
-#include "opal/cuda/common_cuda.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/gpusm/rcache_gpusm.h"
+#include "opal/cuda/common_cuda.h"
 
 /**
  * Called when the registration free list is created.  An event is created
@@ -58,6 +58,7 @@ static void mca_rcache_gpusm_registration_constructor(mca_rcache_gpusm_registrat
 static void mca_rcache_gpusm_registration_destructor(mca_rcache_gpusm_registration_t *item)
 {
     mca_common_cuda_destruct_event(item->event);
+
 }
 
 OBJ_CLASS_INSTANCE(mca_rcache_gpusm_registration_t, mca_rcache_base_registration_t,
@@ -153,7 +154,6 @@ int mca_rcache_gpusm_deregister(struct mca_rcache_base_module_t *rcache,
     int rc;
     mca_rcache_gpusm_module_t *rcache_gpusm = (mca_rcache_gpusm_module_t *) rcache;
 
-    rc = cuda_ungetmemhandle(NULL, reg);
     opal_free_list_return(&rcache_gpusm->reg_list, (opal_free_list_item_t *) reg);
     return OPAL_SUCCESS;
 }

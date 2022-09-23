@@ -18,7 +18,6 @@ AC_DEFUN([OPAL_CONFIG_FILES],[
     AC_CONFIG_FILES([
         opal/Makefile
         opal/cuda/Makefile
-        opal/rocm/Makefile
         opal/etc/Makefile
         opal/include/Makefile
         opal/datatype/Makefile

@@ -35,9 +35,7 @@ static inline void mca_btl_smcuda_frag_common_constructor(mca_btl_smcuda_frag_t 
     frag->base.des_segments = &frag->segment;
     frag->base.des_segment_count = 1;
     frag->base.des_flags = 0;
-#if OPAL_CUDA_SUPPORT
     frag->registration = NULL;
-#endif /* OPAL_CUDA_SUPPORT */
 }
 
 static void mca_btl_smcuda_frag1_constructor(mca_btl_smcuda_frag_t *frag)

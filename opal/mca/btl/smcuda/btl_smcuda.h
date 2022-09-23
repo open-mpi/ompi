@@ -198,12 +198,12 @@ struct mca_btl_smcuda_component_t {
     char *sm_mpool_rndv_file_name;
     char *sm_ctl_file_name;
     char *sm_rndv_file_name;
-#if OPAL_CUDA_SUPPORT
+
     int cuda_ipc_verbose;
     int cuda_ipc_output;
     int use_cuda_ipc;
     int use_cuda_ipc_same_gpu;
-#endif /* OPAL_CUDA_SUPPORT */
+
     unsigned long mpool_min_size;
     char *allocator;
 };
@@ -443,7 +443,7 @@ extern int mca_btl_smcuda_send(struct mca_btl_base_module_t *btl,
                                struct mca_btl_base_descriptor_t *descriptor,
                                mca_btl_base_tag_t tag);
 
-#if OPAL_CUDA_SUPPORT
+
 /**
  * Remote get using device memory.
  */
@@ -469,8 +469,6 @@ typedef struct ctrlhdr_st {
 
 /* State of setting up CUDA IPC on an endpoint */
 enum ipcState { IPC_INIT = 1, IPC_SENT, IPC_ACKING, IPC_ACKED, IPC_OK, IPC_BAD };
-
-#endif /* OPAL_CUDA_SUPPORT */
 
 extern void mca_btl_smcuda_dump(struct mca_btl_base_module_t *btl,
                                 struct mca_btl_base_endpoint_t *endpoint, int verbose);
