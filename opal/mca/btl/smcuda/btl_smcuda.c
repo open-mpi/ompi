@@ -1006,7 +1006,7 @@ mca_btl_smcuda_register_mem(struct mca_btl_base_module_t *btl,
 
 #if OPAL_CUDA_GDR_SUPPORT
     if (MCA_BTL_REG_FLAG_CUDA_GPU_MEM & flags) {
-        rcache_flags |= MCA_RCACHE_FLAGS_CUDA_GPU_MEM;
+        rcache_flags |= MCA_RCACHE_FLAGS_ACCELERATOR_MEM;
     }
 #endif
 

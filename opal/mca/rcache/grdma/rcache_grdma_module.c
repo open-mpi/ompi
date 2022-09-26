@@ -42,9 +42,6 @@
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/accelerator/accelerator.h"
-#if OPAL_CUDA_GDR_SUPPORT
-#include "opal/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_GDR_SUPPORT */
 #include "opal/align.h"
 #include "opal/util/sys_limits.h"
 #include "rcache_grdma.h"
@@ -61,6 +58,7 @@ static int mca_rcache_grdma_invalidate_range(mca_rcache_base_module_t *rcache, v
 static void mca_rcache_grdma_finalize(mca_rcache_base_module_t *rcache);
 static bool mca_rcache_grdma_evict(mca_rcache_base_module_t *rcache);
 static int mca_rcache_grdma_add_to_gc(mca_rcache_base_registration_t *grdma_reg);
+static int check_for_accelerator_freed_memory(mca_rcache_base_module_t *rcache, void *addr, size_t size);
 
 static inline bool registration_flags_cacheable(uint32_t flags)
 {
@@ -75,9 +73,6 @@ static inline bool registration_is_cacheable(mca_rcache_base_registration_t *reg
     return registration_flags_cacheable(reg->flags);
 }
 
-#if OPAL_CUDA_GDR_SUPPORT
-static int check_for_cuda_freed_memory(mca_rcache_base_module_t *rcache, void *addr, size_t size);
-#endif /* OPAL_CUDA_GDR_SUPPORT */
 static void mca_rcache_grdma_cache_contructor(mca_rcache_grdma_cache_t *cache)
 {
     memset((void *) ((uintptr_t) cache + sizeof(cache->super)), 0,
@@ -328,8 +323,7 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
     base = OPAL_DOWN_ALIGN_PTR(addr, page_size, unsigned char *);
     bound = OPAL_ALIGN_PTR((intptr_t) addr + size, page_size, unsigned char *) - 1;
 
-#if OPAL_CUDA_GDR_SUPPORT
-    if (flags & MCA_RCACHE_FLAGS_CUDA_GPU_MEM) {
+    if (flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM) {
         size_t psize;
         int res = opal_accelerator.get_address_range(MCA_ACCELERATOR_NO_DEVICE_ID, addr, (void **)&base, &psize);
         if (OPAL_SUCCESS != res) {
@@ -338,9 +332,8 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
         bound = base + psize - 1;
         /* Check to see if this memory is in the cache and if it has been freed. If so,
          * this call will boot it out of the cache. */
-        check_for_cuda_freed_memory(rcache, base, psize);
+        check_for_accelerator_freed_memory(rcache, base, psize);
     }
-#endif /* OPAL_CUDA_GDR_SUPPORT */
 
     do_unregistration_gc(rcache);
 
@@ -378,11 +371,9 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
     grdma_reg->flags = flags;
     grdma_reg->access_flags = access_flags;
     grdma_reg->ref_count = 1;
-#if OPAL_CUDA_GDR_SUPPORT
-    if (flags & MCA_RCACHE_FLAGS_CUDA_GPU_MEM) {
-        mca_common_cuda_get_buffer_id(grdma_reg);
+    if (flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM) {
+        opal_accelerator.get_buffer_id(MCA_ACCELERATOR_NO_DEVICE_ID, grdma_reg->base, &grdma_reg->gpu_bufID);
     }
-#endif /* OPAL_CUDA_GDR_SUPPORT */
 
     while (OPAL_ERR_OUT_OF_RESOURCE
            == (rc = rcache_grdma->resources.register_mem(rcache_grdma->resources.reg_data, base,
@@ -538,15 +529,34 @@ static int mca_rcache_grdma_invalidate_range(mca_rcache_base_module_t *rcache, v
                                        &args);
 }
 
+/* Check to see if the memory was freed between the time it was stored in
+ * the registration cache and now.  Return true if the memory was previously
+ * freed.  This is indicated by the BUFFER_ID value in the registration cache
+ * not matching the BUFFER_ID of the buffer we are checking.  Return false
+ * if the registration is still good.
+ */
+static bool mca_rcache_accelerator_previously_freed_memory(mca_rcache_base_registration_t *reg)
+{
+    int res;
+    opal_accelerator_buffer_id_t buf_id;
+    unsigned char *dbuf = reg->base;
+    opal_accelerator.get_buffer_id(MCA_ACCELERATOR_NO_DEVICE_ID, dbuf, &buf_id);
+    if (OPAL_UNLIKELY(res != OPAL_SUCCESS)) {
+        return true;
+    }
+    if (buf_id != reg->gpu_bufID) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 /* Make sure this registration request is not stale.  In other words, ensure
  * that we do not have a cuMemAlloc, cuMemFree, cuMemAlloc state.  If we do
  * kick out the regisrations and deregister.  This function needs to be called
  * with the rcache->vma_module->vma_lock held. */
-#if OPAL_CUDA_GDR_SUPPORT
-
-static int check_for_cuda_freed_memory(mca_rcache_base_module_t *rcache, void *addr, size_t size)
+static int check_for_accelerator_freed_memory(mca_rcache_base_module_t *rcache, void *addr, size_t size)
 {
-    unsigned long long buf_id;
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) rcache;
     mca_rcache_base_registration_t *reg;
 
@@ -556,7 +566,7 @@ static int check_for_cuda_freed_memory(mca_rcache_base_module_t *rcache, void *a
     }
 
     /* If not previously freed memory, just return 0 */
-    if (!(mca_common_cuda_previously_freed_memory(reg))) {
+    if (!(mca_rcache_accelerator_previously_freed_memory(reg))) {
         return OPAL_SUCCESS;
     }
 
@@ -566,7 +576,6 @@ static int check_for_cuda_freed_memory(mca_rcache_base_module_t *rcache, void *a
     return mca_rcache_base_vma_iterate(rcache_grdma->cache->vma_module, addr, size, true, gc_add,
                                        NULL);
 }
-#endif /* OPAL_CUDA_GDR_SUPPORT */
 
 static void mca_rcache_grdma_finalize(mca_rcache_base_module_t *rcache)
 {
