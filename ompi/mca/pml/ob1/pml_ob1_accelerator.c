@@ -72,6 +72,7 @@ static volatile int accelerator_event_dtoh_num_used, accelerator_event_htod_num_
 
 /* Size of array holding events */
 int accelerator_event_max = 400;
+static int accelerator_event_dtoh_most = 0;
 static int accelerator_event_htod_most = 0;
 
 int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *frag)
@@ -175,6 +176,101 @@ int mca_pml_ob1_progress_one_htod_event(struct mca_btl_base_descriptor_t **frag)
         return 1;
     }
     OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_htod_lock);
+    return 0;
+}
+
+int mca_pml_ob1_record_dtoh_event(char *msg, struct mca_btl_base_descriptor_t *frag)
+{
+    int result;
+
+    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null")) {
+        return 0;
+    }
+
+    /* First make sure there is room to store the event.  If not, then
+     * return an error.  The error message will tell the user to try and
+     * run again, but with a larger array for storing events. */
+    OPAL_THREAD_LOCK(&pml_ob1_accelerator_dtoh_lock);
+    if (accelerator_event_dtoh_num_used == accelerator_event_max) {
+        opal_output_verbose(1, mca_pml_ob1_output, "Out of event handles. Max: %d. Suggested to rerun with new max with mca mpi_common_accelerator_event_max %d.",
+                            accelerator_event_max, accelerator_event_max + 100);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (accelerator_event_dtoh_num_used > accelerator_event_dtoh_most) {
+        accelerator_event_dtoh_most = accelerator_event_dtoh_num_used;
+        /* Just print multiples of 10 */
+        if (0 == (accelerator_event_dtoh_most % 10)) {
+            opal_output_verbose(20, mca_pml_ob1_output, "Maximum DtoH events used is now %d",
+                                accelerator_event_dtoh_most);
+        }
+    }
+
+    result = opal_accelerator.record_event(&accelerator_event_dtoh_array[accelerator_event_dtoh_first_avail], &dtoh_stream);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        opal_output_verbose(1, mca_pml_ob1_output, "Event Record failed.");
+        OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_dtoh_lock);
+        return OPAL_ERROR;
+    }
+    accelerator_event_dtoh_frag_array[accelerator_event_dtoh_first_avail] = frag;
+
+    /* Bump up the first available slot and number used by 1 */
+    accelerator_event_dtoh_first_avail++;
+    if (accelerator_event_dtoh_first_avail >= accelerator_event_max) {
+        accelerator_event_dtoh_first_avail = 0;
+    }
+    accelerator_event_dtoh_num_used++;
+
+    OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_dtoh_lock);
+    return OPAL_SUCCESS;
+}
+
+/**
+ * Progress any dtoh event completions.
+ */
+int mca_pml_ob1_progress_one_dtoh_event(struct mca_btl_base_descriptor_t **frag)
+{
+    int result;
+
+    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null")) {
+        return 0;
+    }
+
+    OPAL_THREAD_LOCK(&pml_ob1_accelerator_dtoh_lock);
+    if (accelerator_event_dtoh_num_used > 0) {
+        opal_output_verbose(30, mca_pml_ob1_output,
+                            "mca_pml_ob1_progress_one_dtoh_event, outstanding_events=%d",
+                            accelerator_event_dtoh_num_used);
+
+        result = opal_accelerator.query_event(&accelerator_event_dtoh_array[accelerator_event_dtoh_first_used]);
+
+        /* We found an event that is not ready, so return. */
+        if (OPAL_ERR_RESOURCE_BUSY == result) {
+            opal_output_verbose(30, mca_pml_ob1_output,
+                                "Accelerator event query returned OPAL_ERR_RESOURCE_BUSY");
+            *frag = NULL;
+            OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_dtoh_lock);
+            return 0;
+        } else if (OPAL_SUCCESS != result) {
+            opal_output_verbose(1, mca_pml_ob1_output, "Accelerator event query failed: %d,", result);
+            *frag = NULL;
+            OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_dtoh_lock);
+            return OPAL_ERROR;
+        }
+
+        *frag = accelerator_event_dtoh_frag_array[accelerator_event_dtoh_first_used];
+
+        /* Bump counters, loop around the circular buffer if necessary */
+        --accelerator_event_dtoh_num_used;
+        ++accelerator_event_dtoh_first_used;
+        if (accelerator_event_dtoh_first_used >= accelerator_event_max) {
+            accelerator_event_dtoh_first_used = 0;
+        }
+        /* A return value of 1 indicates an event completed and a frag was returned */
+        OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_dtoh_lock);
+        return 1;
+    }
+    OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_dtoh_lock);
     return 0;
 }
 
