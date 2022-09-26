@@ -61,6 +61,8 @@ static int accelerator_null_host_unregister(int dev_id, void *ptr);
 static int accelerator_null_get_device(int *dev_id);
 static int accelerator_null_device_can_access_peer(int *access, int dev1, int dev2);
 
+static int accelerator_null_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
@@ -120,7 +122,9 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_host_unregister,
 
     accelerator_null_get_device,
-    accelerator_null_device_can_access_peer
+    accelerator_null_device_can_access_peer,
+
+    accelerator_null_get_buffer_id
 };
 
 static int accelerator_null_open(void)
@@ -232,6 +236,11 @@ static int accelerator_null_get_device(int *dev_id)
 }
 
 static int accelerator_null_device_can_access_peer( int *access, int dev1, int dev2)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
