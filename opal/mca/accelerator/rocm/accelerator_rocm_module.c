@@ -24,6 +24,10 @@ static int mca_accelerator_rocm_memcpy_async(int dest_dev_id, int src_dev_id, vo
                                   opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                             size_t size, opal_accelerator_transfer_type_t type);
+static int mca_accelerator_rocm_matrix_memcpy(int dest_dev_id, int src_dev_id, void *dest, size_t dpitch,
+                                              const void *src, size_t spitch,
+                                              size_t width, size_t height,
+                                              opal_accelerator_transfer_type_t type);
 static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                                         opal_accelerator_transfer_type_t type);
 static int mca_accelerator_rocm_malloc(int dev_id, void **ptr, size_t size);
@@ -50,6 +54,7 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
 
     mca_accelerator_rocm_memcpy_async,
     mca_accelerator_rocm_memcpy,
+    mca_accelerator_rocm_matrix_memcpy,
     mca_accelerator_rocm_memmove,
     mca_accelerator_rocm_malloc,
     mca_accelerator_rocm_free,
@@ -291,6 +296,46 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error during synchronous copy\n");
+            return OPAL_ERROR;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_accelerator_rocm_matrix_memcpy(int dest_dev_id, int src_dev_id, void *dest, size_t dpitch,
+                                              const void *src, size_t spitch,
+                                              size_t width, size_t height,
+                                              opal_accelerator_transfer_type_t type)
+{
+    hipError_t err;
+
+    if (NULL == dest || NULL == src || width <= 0 || height <= 0 ||
+        dpitch <= 0  || spitch <= 0) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    if (opal_accelerator_rocm_memcpy_async) {
+        err = HIP_FUNCS.hipMemcpy2DAsync(dest, dpitch, src, spitch, width, height,
+                                         hipMemcpyDefault, opal_accelerator_rocm_MemcpyStream);
+        if (hipSuccess != err ) {
+            opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                                "error starting async 2Dcopy\n");
+            return OPAL_ERROR;
+        }
+
+        err = HIP_FUNCS.hipStreamSynchronize(opal_accelerator_rocm_MemcpyStream);
+        if (hipSuccess != err ) {
+            opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                                "error synchronizing stream after async 2Dcopy\n");
+            return OPAL_ERROR;
+       }
+    } else {
+        err = HIP_FUNCS.hipMemcpy2D(dest, dpitch, src, spitch, width, height,
+                                    hipMemcpyDefault);
+        if (hipSuccess != err ) {
+            opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                                "error during synchronous 2Dcopy\n");
             return OPAL_ERROR;
         }
     }

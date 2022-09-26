@@ -34,6 +34,10 @@ static int accelerator_cuda_memcpy_async(int dest_dev_id, int src_dev_id, void *
                                   opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                             size_t size, opal_accelerator_transfer_type_t type);
+static int accelerator_cuda_matrix_memcpy(int dest_dev_id, int src_dev_id, void *dest, size_t dpitch,
+                                          const void *src, size_t spitch,
+                                          size_t width, size_t height,
+                                          opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                              opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_malloc(int dev_id, void **ptr, size_t size);
@@ -59,6 +63,7 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
 
     accelerator_cuda_memcpy_async,
     accelerator_cuda_memcpy,
+    accelerator_cuda_matrix_memcpy,
     accelerator_cuda_memmove,
     accelerator_cuda_malloc,
     accelerator_cuda_free,
@@ -377,6 +382,112 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
         opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
         return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_cuda_matrix_memcpy(int dest_dev_id, int src_dev_id, void *dest, size_t dpitch,
+                                   const void *src, size_t spitch,
+                                   size_t width, size_t height,
+                                   opal_accelerator_transfer_type_t type)
+{
+    CUDA_MEMCPY2D copy = {0};
+    CUmemorytype src_type, dest_type;
+    CUresult result;
+
+    if (NULL == dest || NULL == src || width <= 0 || height <= 0) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    switch (type) {
+        case MCA_ACCELERATOR_TRANSFER_HTOH:
+            {
+                src_type = CU_MEMORYTYPE_HOST;
+                dest_type = CU_MEMORYTYPE_HOST;
+                break;
+            }
+        case MCA_ACCELERATOR_TRANSFER_HTOD:
+            {
+                src_type = CU_MEMORYTYPE_HOST;
+                dest_type = CU_MEMORYTYPE_DEVICE;
+                break;
+            }
+        case MCA_ACCELERATOR_TRANSFER_DTOH:
+            {
+                src_type = CU_MEMORYTYPE_DEVICE;
+                dest_type = CU_MEMORYTYPE_HOST;
+                break;
+            }
+        case MCA_ACCELERATOR_TRANSFER_DTOD:
+            {
+                src_type = CU_MEMORYTYPE_DEVICE;
+                dest_type = CU_MEMORYTYPE_DEVICE;
+                break;
+            }
+        default:
+                result = opal_accelerator_cuda_func.cuPointerGetAttribute(&src_type, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr) src);
+                if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+                    return OPAL_ERROR;
+                }
+                result = opal_accelerator_cuda_func.cuPointerGetAttribute(&dest_type, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr) dest);
+                if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+                    return OPAL_ERROR;
+                }
+    }
+
+    switch (src_type) {
+        case (CU_MEMORYTYPE_HOST):
+            {
+                copy.srcHost = src;
+                break;
+            }
+        case (CU_MEMORYTYPE_DEVICE):
+            {
+                copy.srcDevice = (CUdeviceptr) src;
+                break;
+            }
+        case (CU_MEMORYTYPE_UNIFIED):
+            {
+                copy.srcDevice = (CUdeviceptr) src;
+                break;
+            }
+        default:
+            opal_output(0, "CUDA: cuMemcpy2D failed: Unhandled memory type");
+            return OPAL_ERROR;
+    }
+
+    switch (dest_type) {
+        case (CU_MEMORYTYPE_HOST):
+            {
+                copy.dstHost = dest;
+                break;
+            }
+        case (CU_MEMORYTYPE_DEVICE):
+            {
+                copy.dstDevice = (CUdeviceptr) dest;
+                break;
+            }
+        case (CU_MEMORYTYPE_UNIFIED):
+            {
+                copy.dstDevice = (CUdeviceptr) dest;
+                break;
+            }
+        default:
+            opal_output(0, "CUDA: cuMemcpy2D failed: Unhandled memory type");
+            return OPAL_ERROR;
+    }
+
+    copy.srcMemoryType  = src_type;
+    copy.srcPitch       = spitch;
+    copy.dstMemoryType  = dest_type;
+    copy.dstPitch       = dpitch;
+    copy.WidthInBytes   = width;
+    copy.Height         = height;
+    result = opal_accelerator_cuda_func.cuMemcpy2D(&copy);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuMemcpy2D failed", true,
+                       OPAL_PROC_MY_HOSTNAME, result);
+        return result;
     }
     return OPAL_SUCCESS;
 }

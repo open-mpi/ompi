@@ -48,6 +48,10 @@ static int accelerator_null_memcpy_async(int dest_dev_id, int src_dev_id, void *
                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_null_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                                    size_t size, opal_accelerator_transfer_type_t type);
+static int accelerator_null_matrix_memcpy(int dest_dev_id, int src_dev_id, void *dest, size_t dpitch,
+                                          const void *src, size_t spitch,
+                                          size_t width, size_t height,
+                                          opal_accelerator_transfer_type_t type);
 static int accelerator_null_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                                     opal_accelerator_transfer_type_t type);
 
@@ -111,6 +115,7 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
 
     accelerator_null_memcpy_async,
     accelerator_null_memcpy,
+    accelerator_null_matrix_memcpy,
     accelerator_null_memmove,
     accelerator_null_malloc,
     accelerator_null_free,
@@ -189,6 +194,14 @@ static int accelerator_null_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
 {
     memcpy(dest, src, size);
     return OPAL_SUCCESS;
+}
+
+static int accelerator_null_matrix_memcpy(void *dest, size_t dpitch,
+                                   const void *src, size_t spitch,
+                                   size_t width, size_t height,
+                                   opal_accelerator_transfer_type_t type)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int accelerator_null_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,

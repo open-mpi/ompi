@@ -242,6 +242,29 @@ typedef int (*opal_accelerator_base_module_memcpy_fn_t)(
     opal_accelerator_transfer_type_t type);
 
 /**
+ * Copies a matrix of memory (height rows of width bytes) synchronously
+ * from src to dest. Memory of dest and src may not overlap. Optionally
+ * can specify the transfer type to avoid pointer detection for
+ * performance.
+ *
+ * @param[IN] dev_id         Associated device to copy to/from
+ * @param[IN] dest           Destination to copy memory to
+ * @param[IN] dpitch         Pitch of destination memory
+ * @param[IN] src            Source to copy memory from
+ * @param[IN] spitch         Pitch of source memory
+ * @param[IN] width          Width of matrix transfer (columns in bytes)
+ * @param[IN] height         Height of matrix transfer (rows)
+ * @param[IN] type           Transfer type field for performance
+ *                           Can be set to MCA_ACCELERATOR_TRANSFER_UNSPEC
+ *                           if caller is unsure of the transfer direction.
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_matrix_memcpy_fn_t)(
+    int dest_dev_id, int src_dev_id, void *dest, size_t dpitch, const void *src, size_t spitch,
+    size_t width, size_t height, opal_accelerator_transfer_type_t type);
+
+/**
  * Copies memory synchronously from src to dest. Memory of dest and src
  * may overlap. Optionally can specify the transfer type to
  * avoid pointer detection for performance.
@@ -373,6 +396,7 @@ typedef struct {
 
     opal_accelerator_base_module_memcpy_async_fn_t memcpy_async;
     opal_accelerator_base_module_memcpy_fn_t memcpy;
+    opal_accelerator_base_module_matrix_memcpy_fn_t matrix_memcpy;
     opal_accelerator_base_module_memmove_fn_t memmove;
 
     opal_accelerator_base_module_malloc_fn_t malloc;
