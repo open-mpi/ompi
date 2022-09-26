@@ -1005,7 +1005,7 @@ mca_btl_smcuda_register_mem(struct mca_btl_base_module_t *btl,
     int rcache_flags = 0;
 
     if (MCA_BTL_REG_FLAG_CUDA_GPU_MEM & flags) {
-        rcache_flags |= MCA_RCACHE_FLAGS_CUDA_GPU_MEM;
+        rcache_flags |= MCA_RCACHE_FLAGS_ACCELERATOR_MEM;
     }
 
     smcuda_module->rcache->rcache_register(smcuda_module->rcache, base, size, rcache_flags,
