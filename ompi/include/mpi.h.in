@@ -1741,6 +1741,7 @@ OMPI_DECLSPEC  int MPI_Imrecv(void *buf, int count, MPI_Datatype type,
                               MPI_Message *message, MPI_Request *request);
 OMPI_DECLSPEC  MPI_Fint MPI_Info_c2f(MPI_Info info);
 OMPI_DECLSPEC  int MPI_Info_create(MPI_Info *info);
+OMPI_DECLSPEC  int MPI_Info_create_env(int argc, char *argv[], MPI_Info *info);
 OMPI_DECLSPEC  int MPI_Info_delete(MPI_Info info, const char *key);
 OMPI_DECLSPEC  int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
 OMPI_DECLSPEC  MPI_Info MPI_Info_f2c(MPI_Fint info);
@@ -2505,6 +2506,7 @@ OMPI_DECLSPEC  int PMPI_Imrecv(void *buf, int count, MPI_Datatype type,
                                MPI_Message *message, MPI_Request *request);
 OMPI_DECLSPEC  MPI_Fint PMPI_Info_c2f(MPI_Info info);
 OMPI_DECLSPEC  int PMPI_Info_create(MPI_Info *info);
+OMPI_DECLSPEC  int PMPI_Info_create_env(int argc, char *argv[], MPI_Info *info);
 OMPI_DECLSPEC  int PMPI_Info_delete(MPI_Info info, const char *key);
 OMPI_DECLSPEC  int PMPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
 OMPI_DECLSPEC  MPI_Info PMPI_Info_f2c(MPI_Fint info);

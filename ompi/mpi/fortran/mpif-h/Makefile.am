@@ -18,7 +18,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2021      Triad National Security, LLC. All rights
+# Copyright (c) 2021-2022 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -334,6 +334,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         ineighbor_alltoallv_f.c \
         ineighbor_alltoallw_f.c \
         info_create_f.c \
+        info_create_env_f.c \
         info_delete_f.c \
         info_dup_f.c \
         info_free_f.c \

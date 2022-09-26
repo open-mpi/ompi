@@ -13,7 +13,7 @@
 ! Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2016-2018 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
-! Copyright (c) 2019      Triad National Security, LLC. All rights
+! Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 !                         reserved.
 ! Copyright (c) 2021      Sandia National Laboratories. All rights reserved.
 ! Copyright (c) 2021      IBM Corporation.  All rights reserved.
@@ -997,6 +997,15 @@ end subroutine MPI_Info_delete
 
 end interface
 
+
+interface
+
+subroutine MPI_Info_create_env(info, ierror)
+  integer, intent(out) :: info
+  integer, intent(out) :: ierror
+end subroutine MPI_Info_create_env
+
+end interface
 
 interface
 

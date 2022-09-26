@@ -266,6 +266,7 @@ interface_profile_sources = \
         imrecv.c \
         info_c2f.c \
         info_create.c \
+        info_create_env.c \
         info_delete.c \
         info_dup.c \
         info_f2c.c \

@@ -18,7 +18,7 @@
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2019      Triad National Security, LLC. All rights
+# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 #
@@ -246,6 +246,7 @@ linked_files = \
         pineighbor_alltoallv_f.c \
         pineighbor_alltoallw_f.c \
         pinfo_create_f.c \
+        pinfo_create_env_f.c \
         pinfo_delete_f.c \
         pinfo_dup_f.c \
         pinfo_free_f.c \

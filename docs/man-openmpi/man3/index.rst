@@ -221,6 +221,7 @@ MPI API manual pages (section 3)
    MPI_Ineighbor_alltoallw.3.rst
    MPI_Info_c2f.3.rst
    MPI_Info_create.3.rst
+   MPI_Info_create_env.3.rst
    MPI_Info_delete.3.rst
    MPI_Info_dup.3.rst
    MPI_Info_env.3.rst

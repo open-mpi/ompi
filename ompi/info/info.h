@@ -92,10 +92,10 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_t);
 int ompi_mpiinfo_init(void);
 
 /**
- * This function is invoked during ompi_mpi_init() and sets up
- * the MPI_INFO_ENV object
+ * Fill in an info object with ENV info.  Used for setting
+ * MPI_INFO_ENV and by invocation of MPI_Info_create_env.
  */
-int ompi_mpiinfo_init_mpi3(void);
+int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info);
 
 /**
  * This function is used to free a ompi level info

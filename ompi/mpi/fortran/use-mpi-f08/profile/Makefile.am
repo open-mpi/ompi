@@ -19,6 +19,8 @@
 #                         reserved.
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2022      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -255,6 +257,7 @@ pmpi_api_files = \
         pineighbor_alltoallv_f08.F90 \
         pineighbor_alltoallw_f08.F90 \
         pinfo_create_f08.F90 \
+        pinfo_create_env_f08.F90 \
         pinfo_delete_f08.F90 \
         pinfo_dup_f08.F90 \
         pinfo_free_f08.F90 \
