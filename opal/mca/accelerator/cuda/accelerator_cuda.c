@@ -47,6 +47,8 @@ static int accelerator_cuda_host_unregister(int dev_id, void *ptr);
 static int accelerator_cuda_get_device(int *dev_id);
 static int accelerator_cuda_device_can_access_peer( int *access, int dev1, int dev2);
 
+static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
+
 opal_accelerator_base_module_t opal_accelerator_cuda_module =
 {
     accelerator_cuda_check_addr,
@@ -68,7 +70,9 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_host_unregister,
 
     accelerator_cuda_get_device,
-    accelerator_cuda_device_can_access_peer
+    accelerator_cuda_device_can_access_peer,
+
+    accelerator_cuda_get_buffer_id
 };
 
 static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *flags)
@@ -537,4 +541,31 @@ static int accelerator_cuda_device_can_access_peer(int *access, int dev1, int de
         return result;
     }
     return 0;
+}
+
+/*
+ * Get the buffer ID from the memory.
+ * This is needed to ensure the cached registration is not stale.  If
+ * we fail to get buffer ID, print an error and set buffer ID to 0.
+ * Also set SYNC_MEMOPS on any GPU registration to ensure that
+ * synchronous copies complete before the buffer is accessed.
+ */
+static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id)
+{
+    CUresult result;
+    int enable = 1;
+    result = opal_accelerator_cuda_func.cuPointerGetAttribute((unsigned long long *)buf_id, CU_POINTER_ATTRIBUTE_BUFFER_ID, (CUdeviceptr) addr);
+    if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
+        opal_show_help("help-accelerator-cuda.txt", "bufferID failed", true, OPAL_PROC_MY_HOSTNAME,
+                       result);
+        return result;
+    }
+    result = opal_accelerator_cuda_func.cuPointerSetAttribute(&enable, CU_POINTER_ATTRIBUTE_SYNC_MEMOPS,
+                                       (CUdeviceptr) addr);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuPointerSetAttribute failed", true,
+                       OPAL_PROC_MY_HOSTNAME, result, addr);
+        return result;
+    }
+    return OPAL_SUCCESS;
 }
