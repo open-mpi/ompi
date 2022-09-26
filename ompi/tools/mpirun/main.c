@@ -69,6 +69,48 @@ static char *find_prterun(void)
 #endif
 }
 
+static void append_prefixes(char ***out, const char *in)
+{
+    if (NULL == in) {
+        return;
+    }
+
+    char **tokenized;
+    tokenized = opal_argv_split(in, ' ');
+
+    int count = opal_argv_count(*out);
+    for (int i = 0; tokenized[i] != NULL; ++i) {
+        // Skip adding the names "common" and "pmix" to the list
+        if (strcmp(tokenized[i], "common") == 0 ||
+            strcmp(tokenized[i], "pmix") == 0) {
+            continue;
+        }
+        opal_argv_append(&count, out, tokenized[i]);
+    }
+
+    opal_argv_free(tokenized);
+}
+
+static void setup_mca_prefixes(void)
+{
+    int count = 0;
+    char **tmp = NULL;
+
+    opal_argv_append(&count, &tmp, "mca");
+    opal_argv_append(&count, &tmp, "opal");
+    opal_argv_append(&count, &tmp, "ompi");
+
+    append_prefixes(&tmp, MCA_oshmem_FRAMEWORKS);
+    append_prefixes(&tmp, MCA_ompi_FRAMEWORKS);
+    append_prefixes(&tmp, MCA_opal_FRAMEWORKS);
+
+    char *env_str = opal_argv_join(tmp, ',');
+    opal_setenv("OMPI_MCA_PREFIXES", env_str, true,
+                &environ);
+
+    opal_argv_free(tmp);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -121,6 +163,9 @@ int main(int argc, char *argv[])
 
     setenv("OMPI_LIBDIR_LOC", opal_install_dirs.libdir, 1);
 
+    // Set environment variable to tell PRTE what MCA prefixes belong
+    // to Open MPI.
+    setup_mca_prefixes();
 
     /* calling mpirun (and now prterun) with a full path has a special
      * meaning in terms of -prefix behavior, so copy that behavior
