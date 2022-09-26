@@ -47,6 +47,14 @@ build them manually, see the :ref:`how to build and install GNU
 Autotools section <developers-installing-autotools-label>` for much
 more detail.
 
+Perl
+----
+
+Open MPI still uses Perl for a few of its build scripts (most notably,
+``autogen.pl``).
+
+Generally speaking, any recent-ish release of Perl 5 should be
+sufficient to correctly execute Open MPI's Perl scripts.
 
 Flex
 ----
@@ -80,12 +88,12 @@ MacPorts on MacOS), see `the Flex Github repository
 <https://github.com/westes/flex>`_.
 
 
-Sphinx
-------
+Sphinx (and therefore Python)
+-----------------------------
 
-`Sphinx <https://www.sphinx-doc.org/>`_ is used to generate both the
-HTML version of the documentation (that you are reading right now) and
-the nroff man pages.
+`Sphinx <https://www.sphinx-doc.org/>`_ is a Python-based tool used to
+generate both the HTML version of the documentation (that you are
+reading right now) and the nroff man pages.
 
 Official Open MPI distribution tarballs contain pre-built HTML
 documentation and man pages.  This means that -- similar to the GNU

@@ -39,9 +39,10 @@ Open MPI requires the following support libraries with the minimum listed versio
          | tree, or compile/link against an external PRRTE installation.
          | :ref:`See this section for details about how to specify each method <label-building-ompi-cli-options-support-libraries>`.
 
-Since these support libraries are fundamental to Open MPI's operation,
-they are directly incorporated into Open MPI's configure, build, and
-installation process.  More on this below.
+Since these support libraries are fundamental to Open MPI's operation
+and not universally available in all environments, they are directly
+incorporated into Open MPI's configure, build, and installation
+process.  More on this below.
 
 Library dependencies
 --------------------
@@ -245,26 +246,9 @@ versions of the required libraries.
 
 If you are an Open MPI packager, we **strongly** suggest that your
 Open MPI package should not include Hwloc, Libevent, PMIx, or PRRTE.
-Instead, it should depend on independently-built versions of these
-packages.
+Instead, it should depend on external, independently-built versions of
+these packages.
 
-You may wish to configure Open MPI with something like the
-following:
-
-.. code-block:: sh
-
-   ./configure --with-libevent=external --with-hwloc=external \
-       --with-pmix=external --with-prrte=external ...
-
-The ``external`` keywords will force ``configure`` to ignore all the
-bundled libraries and only look for external versions of these support
-libraries.  This also has the benefit of causing ``configure`` to fail
-if it cannot find the required support libraries outside of the Open
-MPI source tree |mdash| a good sanity check to ensure that your
-package is correctly relying on the independently-built and installed
-versions.
-
-:ref:`See this section
-<label-building-ompi-cli-options-support-libraries>` for more
-information about the required support library ``--with-FOO`` command
-line options.
+See the :ref:`Advice for packagers
+<label-install-packagers-do-not-use-internal>` section for more
+details.

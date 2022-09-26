@@ -23,7 +23,7 @@ that will show what commands would have been invoked.
    shell$ mpicc --showme
 
 .. note:: If you pass ``--showme`` *and additional command line
-   parameters* to the wrapper compiler, sure to *also* pass in a
+   parameters* to the wrapper compiler, be sure to *also* pass in a
    filename.  Otherwise, the ``--showme`` functionality will not
    display output as expected.
 

@@ -52,14 +52,14 @@ places.  If you have:
       than this, please try compressing it and/or posting it on the
       web somewhere for people to download.  A `Github Gist
       <https://gist.github.com/>`_ or a `Pastebin
-      <https://pastebin.com/>`_ might be an easy choice for posting
+      <https://pastebin.com/>`_ might be a good choice for posting
       large text files.
 
    .. important:: Please **use a descriptive "subject" line in your
       email!** Some Open MPI question-answering people decide whether
       to read a mail based on its subject line (e.g., to see if it's a
-      question that they can answer).  So please please please use a
-      good subject line that succinctly describes your problem.
+      question that they can answer).  So please *please* **please**
+      use a good subject line that succinctly describes your problem.
 
 #. **A bug report:** you should probably post it to `Open MPI's Github
    issue tracker <https://github.com/open-mpi/ompi/issues>`_.  Follow

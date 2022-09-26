@@ -4,17 +4,18 @@ Validating your installation
 Checking your Open MPI configuration
 ------------------------------------
 
-The ``ompi_info`` command can be used to check the status of your Open
-MPI installation (located in ``PREFIX/bin/ompi_info``).  Running it with
-no arguments provides a summary of information about your Open MPI
-installation.
+The :ref:`ompi_info(1) <man1-ompi_info>` command can be used to check
+the status of your Open MPI installation (located in
+``$prefix/bin/ompi_info``).  Running it with no arguments provides a
+summary of information about your Open MPI installation.
 
-Note that the ``ompi_info`` command is extremely helpful in determining
-which components are installed as well as listing all the run-time
-settable parameters that are available in each component (as well as
-their default values).
+Note that the :ref:`ompi_info(1) <man1-ompi_info>` command is
+extremely helpful in determining which components are installed as
+well as listing all the run-time settable parameters that are
+available in each component (as well as their default values).
 
-The following ``ompi_info`` options may be helpful:
+The following :ref:`ompi_info(1) <man1-ompi_info>` options may be
+helpful:
 
 * ``--all``: Show a *lot* of information about your Open MPI
   installation.
@@ -36,11 +37,8 @@ The following ``ompi_info`` options may be helpful:
   for a given component.  See "The Modular Component Architecture
   (MCA)" section, below, for a fuller explanation.
 
-.. error:: TODO move the ref below to a better / more-prominent place
-   to explain how to set MCA params.
-
-Changing the values of these parameters is explained in the
-:ref:`Internal frameworks section <label-frameworks>`.
+Changing the values of these MCA parameters is explained in the
+:ref:`Tuning section <label-running-setting-mca-param-values>`.
 
 
 Testing your Open MPI installation
@@ -49,22 +47,25 @@ Testing your Open MPI installation
 When verifying a new Open MPI installation, we recommend running the
 following tests in order (the tests build upon each other):
 
-#. Use ``mpirun`` to launch a non-MPI program (e.g., ``hostname`` or
-   ``uptime``) across multiple nodes.
-#. Use ``mpirun`` to launch a trivial MPI program that does no MPI
-   communication (e.g., the ``hello_c`` program in the ``examples/``
-   directory in the Open MPI distribution).
-#. Use ``mpirun`` to launch a trivial MPI program that sends and
-   receives a few MPI messages (e.g., the ``ring_c`` program in the
-   ``examples/`` directory in the Open MPI distribution).
-#. Use ``oshrun`` to launch a non-OpenSHMEM program across multiple
-   nodes.
-#. Use ``oshrun`` to launch a trivial MPI program that does no OpenSHMEM
-   communication (e.g., ``hello_shmem.c`` program in the ``examples/``
-   directory in the Open MPI distribution.)
-#. Use ``oshrun`` to launch a trivial OpenSHMEM program that puts and
-   gets a few messages (e.g., the ``ring_shmem.c`` in the ``examples/``
-   directory in the Open MPI distribution.)
+#. Use :ref:`mpirun(1) <man1-mpirun>` to launch a non-MPI program
+   (e.g., ``hostname`` or ``uptime``) across multiple nodes.
+#. Use :ref:`mpirun(1) <man1-mpirun>` to launch a trivial MPI program
+   that does no MPI communication (e.g., the ``hello_c`` program in
+   the ``examples/`` directory in the Open MPI distribution).
+#. Use :ref:`mpirun(1) <man1-mpirun>` to launch a trivial MPI program
+   that sends and receives a few MPI messages (e.g., the ``ring_c``
+   program in the ``examples/`` directory in the Open MPI
+   distribution).
+#. Use :ref:`oshrun(1) <man1-oshrun>` to launch a non-OpenSHMEM
+   program across multiple nodes.
+#. Use :ref:`oshrun(1) <man1-oshrun>` to launch a trivial MPI program
+   that does no OpenSHMEM communication (e.g., ``hello_shmem.c``
+   program in the ``examples/`` directory in the Open MPI
+   distribution.)
+#. Use :ref:`oshrun <man1-oshrun>` to launch a trivial OpenSHMEM
+   program that puts and gets a few messages (e.g., the
+   ``ring_shmem.c`` in the ``examples/`` directory in the Open MPI
+   distribution.)
 
 If you can run all of these tests successfully, that is a good
 indication that Open MPI built and installed properly.
