@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
@@ -217,7 +217,7 @@ int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name, const char *s
 
     e.ocl_description = desc;
 
-    e.ocl_otype = OPAL_CMD_LINE_OTYPE_NULL;
+    e.ocl_otype = OPAL_CMD_LINE_OTYPE_GENERAL;
 
     return make_opt(cmd, &e);
 }
@@ -689,17 +689,6 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                 free(desc);
             }
         }
-    }
-    if (otype == OPAL_CMD_LINE_OTYPE_NULL || otype == OPAL_CMD_LINE_OTYPE_GENERAL) {
-        char *argument_line
-            = "\nFor additional mpirun arguments, run 'mpirun --help <category>'\n\nThe following "
-              "categories exist: general (Defaults to this option), debug,\n    output, input, "
-              "mapping, ranking, binding, devel (arguments useful to OMPI\n    Developers), "
-              "compatibility (arguments supported for backwards compatibility),\n    launch "
-              "(arguments to modify launch options), and dvm (Distributed Virtual\n    Machine "
-              "arguments).";
-
-        opal_argv_append(&argc, &argv, argument_line);
     }
     if (NULL != argv) {
         ret = opal_argv_join(argv, '\n');
