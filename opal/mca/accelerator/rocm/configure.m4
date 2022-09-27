@@ -22,5 +22,6 @@ AC_DEFUN([MCA_opal_accelerator_rocm_CONFIG],[
     AS_IF([test "$opal_rocm_happy" = "yes"],
 	  [$1],
 	  [$2])
-
+    AC_SUBST([opal_rocm_LDFLAGS])
+    AC_SUBST([opal_rocm_LIBS])
 ])dnl

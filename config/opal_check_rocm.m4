@@ -20,11 +20,12 @@ dnl
 #
 AC_DEFUN([OPAL_CHECK_ROCM],[
 
-     OPAL_VAR_SCOPE_PUSH([opal_check_rocm_happy rocm_save_CPPFLAGS rocm_save_LDFLAGS rocm_CPPFLAGS rocm_LDFLAGS])
+     OPAL_VAR_SCOPE_PUSH([opal_check_rocm_happy rocm_save_CPPFLAGS rocm_save_LDFLAGS rocm_save_LIBS rocm_CPPFLAGS rocm_LDFLAGS rocm_LIBS])
 
      rocm_save_CPPFLAGS="$CPPFLAGS"
      rocm_save_LDFLAGS="$LDFLAGS"
-     
+     rocm_save_LIBS="$LIBS"
+
      # Get some configuration information
      AC_ARG_WITH([rocm],
         [AS_HELP_STRING([--with-rocm(=DIR)],
@@ -51,7 +52,8 @@ AC_DEFUN([OPAL_CHECK_ROCM],[
 
      LDFLAGS="$rocm_save_LDFLAGS"
      OPAL_APPEND([CPPFLAGS], [${$1_CPPFLAGS}] )
-     
+     LIBS="$rocm_save_LIBS"
+
      AS_IF([ test "$opal_check_rocm_happy" = "no" ],
            [ CPPFLAGS="$rocm_save_CPPFLAGS"])
 
@@ -69,14 +71,4 @@ AC_DEFUN([OPAL_CHECK_ROCM],[
 
      AM_CONDITIONAL([OPAL_rocm_support], [test "$opal_check_rocm_happy" = "yes"])
      OPAL_VAR_SCOPE_POP
-])
-
-AC_DEFUN([OPAL_CHECK_ROCM_AFTER_OPAL_DL],[
-    # We cannot have ROCm support without OPAL DL support.  Error out
-    # if the user wants Rocm but we do not have OPAL DL support.
-     AS_IF([test $OPAL_HAVE_DL_SUPPORT -eq 0 && test "$opal_check_rocm_happy" = "yes"],
-          [AC_MSG_WARN([--with-rocm was specified, but dlopen support is disabled.])
-           AC_MSG_WARN([You must reconfigure Open MPI with dlopen ("dl") support.])
-           AC_MSG_ERROR([Cannot continue.])])
-
 ])

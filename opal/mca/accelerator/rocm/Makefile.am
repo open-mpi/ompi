@@ -35,9 +35,11 @@ endif
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_accelerator_rocm_la_SOURCES = $(sources)
-mca_accelerator_rocm_la_LDFLAGS = -module -avoid-version
-mca_accelerator_rocm_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+mca_accelerator_rocm_la_LDFLAGS = -module -avoid-version $(opal_rocm_LDFLAGS)
+mca_accelerator_rocm_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+	$(opal_rocm_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_accelerator_rocm_la_SOURCES =$(sources)
-libmca_accelerator_rocm_la_LDFLAGS = -module -avoid-version
+libmca_accelerator_rocm_la_LDFLAGS = -module -avoid-version $(opal_rocm_LDFLAGS)
+libmca_accelerator_rocm_la_LIBADD = $(opal_rocm_LIBS)
