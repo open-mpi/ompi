@@ -79,7 +79,6 @@
 
 BEGIN_C_DECLS
 
-
 #define MCA_ACCELERATOR_NO_DEVICE_ID -1
 /**
  * Accelerator flags
@@ -102,6 +101,8 @@ typedef enum {
     MCA_ACCELERATOR_TRANSFER_DTOH,
     MCA_ACCELERATOR_TRANSFER_DTOD,
 } opal_accelerator_transfer_type_t;
+
+typedef uint64_t opal_accelerator_buffer_id_t;
 
 struct opal_accelerator_stream_t {
     opal_object_t super;
@@ -359,6 +360,20 @@ typedef int (*opal_accelerator_base_module_get_device_fn_t)(
 typedef int (*opal_accelerator_base_module_device_can_access_peer_fn_t)(
     int *access, int dev1, int dev2);
 
+/**
+ * Retrieves current device id for a device associated with the local process.
+ * If MCA_ACCELERATOR_NO_DEVICE_ID is provided, there is no device/process pairing.
+ *
+ * @param[IN] dev_id         ID of the device or MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN] addr           Buffer pointer to check
+ * @param[OUT] buf_id        ID of the given buffer
+ *
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_get_buffer_id_fn_t)(
+    int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
+
 /*
  * the standard public API data structure
  */
@@ -384,6 +399,8 @@ typedef struct {
 
     opal_accelerator_base_module_get_device_fn_t get_device;
     opal_accelerator_base_module_device_can_access_peer_fn_t device_can_access_peer;
+
+    opal_accelerator_base_module_get_buffer_id_fn_t get_buffer_id;
 } opal_accelerator_base_module_t;
 
 /**

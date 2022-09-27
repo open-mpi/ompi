@@ -52,7 +52,7 @@ static void opal_free_list_construct(opal_free_list_t *fl)
     fl->fl_mpool = NULL;
     fl->fl_rcache = NULL;
     /* default flags */
-    fl->fl_rcache_reg_flags = MCA_RCACHE_FLAGS_CACHE_BYPASS | MCA_RCACHE_FLAGS_CUDA_REGISTER_MEM;
+    fl->fl_rcache_reg_flags = MCA_RCACHE_FLAGS_CACHE_BYPASS | MCA_RCACHE_FLAGS_ACCELERATOR_REGISTER_MEM;
     fl->ctx = NULL;
     OBJ_CONSTRUCT(&(fl->fl_allocations), opal_list_t);
 }
@@ -190,7 +190,7 @@ int opal_free_list_grow_st(opal_free_list_t *flist, size_t num_elements,
         buffer_size = num_elements * elem_size;
         align = flist->fl_payload_buffer_alignment;
 
-        if (MCA_RCACHE_FLAGS_CUDA_REGISTER_MEM & flist->fl_rcache_reg_flags) {
+        if (MCA_RCACHE_FLAGS_ACCELERATOR_REGISTER_MEM & flist->fl_rcache_reg_flags) {
             size_t pagesize = opal_getpagesize();
             /* CUDA cannot handle registering overlapping regions, so make
              * sure each region is page sized and page aligned. */

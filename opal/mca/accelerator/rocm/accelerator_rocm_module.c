@@ -37,6 +37,7 @@ static int mca_accelerator_rocm_host_unregister(int dev_id, void *ptr);
 static int mca_accelerator_rocm_get_device(int *dev_id);
 static int mca_accelerator_rocm_device_can_access_peer( int *access, int dev1, int dev2);
 
+static int mca_accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
 
 opal_accelerator_base_module_t opal_accelerator_rocm_module =
 {
@@ -59,7 +60,9 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_host_unregister,
 
     mca_accelerator_rocm_get_device,
-    mca_accelerator_rocm_device_can_access_peer
+    mca_accelerator_rocm_device_can_access_peer,
+
+    mca_accelerator_rocm_get_buffer_id
 };
 
 
@@ -481,5 +484,11 @@ static int mca_accelerator_rocm_device_can_access_peer(int *access, int dev1, in
         return OPAL_ERROR;
     }
 
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id)
+{
+    *buf_id = 0;
     return OPAL_SUCCESS;
 }
