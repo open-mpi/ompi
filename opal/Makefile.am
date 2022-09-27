@@ -22,26 +22,18 @@
 # $HEADER$
 #
 
-if OPAL_cuda_support
-LIBOPAL_GPU_SUBDIR = cuda
-LIBOPAL_GPU_LA = cuda/libopalcuda.la
-endif
-
-
 SUBDIRS = \
 	include \
         datatype \
         etc \
         util \
 	mca/base \
-	$(LIBOPAL_GPU_SUBDIR) \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 DIST_SUBDIRS = \
 	include \
-	cuda \
         datatype \
         etc \
 	util \
@@ -67,13 +59,11 @@ lib@OPAL_LIB_NAME@_la_LIBADD = \
 	libopen-pal_core.la \
         datatype/libdatatype.la \
         util/libopalutil.la \
-	$(LIBOPAL_GPU_LA) \
 	$(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_NAME@_la_DEPENDENCIES = \
 	libopen-pal_core.la \
         datatype/libdatatype.la \
         util/libopalutil.la \
-        $(LIBOPAL_GPU_LA)  \
         $(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@
 
