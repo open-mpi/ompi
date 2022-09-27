@@ -36,8 +36,8 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
                             size_t size, opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                              opal_accelerator_transfer_type_t type);
-static int accelerator_cuda_malloc(int dev_id, void **ptr, size_t size);
-static int accelerator_cuda_free(int dev_id, void *ptr);
+static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size);
+static int accelerator_cuda_mem_release(int dev_id, void *ptr);
 static int accelerator_cuda_get_address_range(int dev_id, const void *ptr, void **base,
                                               size_t *size);
 
@@ -60,8 +60,8 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_memcpy_async,
     accelerator_cuda_memcpy,
     accelerator_cuda_memmove,
-    accelerator_cuda_malloc,
-    accelerator_cuda_free,
+    accelerator_cuda_mem_alloc,
+    accelerator_cuda_mem_release,
     accelerator_cuda_get_address_range,
 
     accelerator_cuda_host_register,
@@ -417,7 +417,7 @@ static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest,
     return OPAL_SUCCESS;
 }
 
-static int accelerator_cuda_malloc(int dev_id, void **ptr, size_t size)
+static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
 {
     CUresult result;
 
@@ -436,7 +436,7 @@ static int accelerator_cuda_malloc(int dev_id, void **ptr, size_t size)
     return 0;
 }
 
-static int accelerator_cuda_free(int dev_id, void *ptr)
+static int accelerator_cuda_mem_release(int dev_id, void *ptr)
 {
     CUresult result;
     if (NULL != ptr) {
