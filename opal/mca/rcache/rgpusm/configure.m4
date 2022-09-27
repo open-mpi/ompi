@@ -19,9 +19,14 @@
 AC_DEFUN([MCA_opal_rcache_rgpusm_CONFIG],[
     AC_CONFIG_FILES([opal/mca/rcache/rgpusm/Makefile])
 
+    OPAL_CHECK_CUDA([rcache_rgpusm])
+
     # Use CUDA_SUPPORT which was filled in by the opal configure code.
     AS_IF([test "x$CUDA_SUPPORT" = "x1"],
           [$1],
           [$2])
 
+    AC_SUBST([rcache_rgpusm_CPPFLAGS])
+    AC_SUBST([rcache_rgpusm_LDFLAGS])
+    AC_SUBST([rcache_rgpusm_LIBS])
 ])dnl
