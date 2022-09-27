@@ -1,0 +1,85 @@
+// -*- groovy -*-
+//
+// Copyright (c) 2022-2023 Amazon.com, Inc. or its affiliates.  All rights
+//                         reserved.
+// Copyright (c) 2022-2023 Joe Downs.  All rights reserved.
+// $COPYRIGHT$
+//
+// Additional copyrights may follow
+//
+// $HEADER$
+//
+// Build an Open MPI Pull Request
+//
+//
+// WORKSPACE Layout:
+//   autotools-install/    Autotools install for the builder
+//   ompi/                 Open MPI source tree
+
+// We if we push changes to a PR, we don't need to keep old jobs running, so
+// we'll use the milestone step in Jenkins. Using an example from
+// https://stackoverflow.com/questions/40760716/jenkins-abort-running-build-if-new-one-is-started:
+//
+// - Build 1 runs and creates milestone 1.
+// - While build 1 is running, build 2 fires. It has milestone 1 and milestone
+//   2. It passes milestone 1, which causes build 1 to abort.
+def buildNumber = env.BUILD_NUMBER as int
+if (buildNumber > 1) {
+    milestone(buildNumber - 1)
+}
+milestone(buildNumber)
+
+check_stages = prepare_check_stages()
+println("Initialized Pipeline")
+
+// Today, we only expect to have one stage (do everything), but allow that
+// we may split build and test stages in the future.
+for (check_stage in check_stages) {
+    parallel(check_stage)
+}
+
+println('Tests Completed')
+
+// Returns a list of build stages ("build Open MPI", "Build Tests", etc.),
+// although currently we only support the one stage of "everything", where each
+// build stage is a map of different configurations to test.
+def prepare_check_stages() {
+    def configure_options = ["--disable-dlopen", "--disable-oshmem", "--enable-builtin-atomic", "--enable-ipv6"]
+    def compilers = ["clang10", "gcc5", "gcc6", "gcc7", "gcc8", "gcc9", "gcc10"]
+    def platforms = ["amazon_linux_2", "amazon_linux_2-arm64", "rhel7", "rhel8", "ubuntu_18.04"]
+    def check_stages_list = []
+
+    // Build everything stage
+    def build_parallel_map = [:]
+    for (platform in platforms) {
+        def name = "Platform: ${platform}".replaceAll("-", "")
+        build_parallel_map.put(name, prepare_build(name, platform, ""))
+    }
+
+    for (compiler in compilers) {
+        def name = "Compiler: ${compiler}".replaceAll("-", "")
+        build_parallel_map.put(name, prepare_build(name, compiler, "--compiler \\\"${compiler}\\\""))
+    }
+
+      for (configure_option in configure_options) {
+        def name = "Configure: ${configure_option}".replaceAll("-", "")
+        build_parallel_map.put(name, prepare_build(name, "(ec2&&linux)", "--configure-args \\\"${configure_option}\\\""))
+    }
+
+    build_parallel_map.put("distcheck", prepare_build("distcheck", "tarball_build", "--distcheck"))
+
+    check_stages_list.add(build_parallel_map)
+
+    return check_stages_list
+}
+
+def prepare_build(build_name, label, build_arg) {
+    return {
+        stage("${build_name}") {
+            node(label) {
+                checkout(changelog: false, poll: false, scm: scm)
+                sh "/bin/bash -x .ci/community-jenkins/pr-builder.sh ${build_arg} ompi"
+            }
+        }
+    }
+}
