@@ -1232,18 +1232,6 @@ fi
 AC_CACHE_SAVE
 
 ##################################
-# CUDA: part two
-##################################
-
-# This is somewhat gross to have a configure check for a common MCA
-# component outside of the normal MCA checks, but this check must come
-# after the opal DL MCA checks have done.  Someday this could perhaps
-# be done better by having some kind of "run this check at the end of
-# all other MCA checks" hook...?
-
-OPAL_CHECK_ROCM_AFTER_OPAL_DL
-
-##################################
 # MPI Extended Interfaces
 ##################################
 

@@ -77,7 +77,7 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
     }
 
     *flags = 0;
-    err = HIP_FUNCS.hipPointerGetAttributes(&srcAttr, addr);
+    err = hipPointerGetAttributes(&srcAttr, addr);
     if (hipSuccess == err) {
         ret = 0;
         if (hipMemoryTypeDevice == srcAttr.memoryType) {
@@ -112,11 +112,11 @@ static int mca_accelerator_rocm_create_stream(int dev_id, opal_accelerator_strea
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    hipError_t err = HIP_FUNCS.hipStreamCreate((hipStream_t *)(*stream)->stream);
+    hipError_t err = hipStreamCreate((hipStream_t *)(*stream)->stream);
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "Could not create hipStream, err=%d %s\n",
-                            err, HIP_FUNCS.hipGetErrorString(err));
+                            err, hipGetErrorString(err));
         free((*stream)->stream);
         OBJ_RELEASE(*stream);
         return OPAL_ERROR;
@@ -128,7 +128,7 @@ static int mca_accelerator_rocm_create_stream(int dev_id, opal_accelerator_strea
 static void mca_accelerator_rocm_stream_destruct(opal_accelerator_rocm_stream_t *stream)
 {
     if (NULL != stream->base.stream) {
-        hipError_t err = HIP_FUNCS.hipStreamDestroy(*(hipStream_t *)stream->base.stream);
+        hipError_t err = hipStreamDestroy(*(hipStream_t *)stream->base.stream);
         if (hipSuccess != err) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error while destroying the hipStream\n");
@@ -159,7 +159,7 @@ static int mca_accelerator_rocm_create_event(int dev_id, opal_accelerator_event_
         OBJ_RELEASE(*event);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    hipError_t err = HIP_FUNCS.hipEventCreateWithFlags((hipEvent_t*)(*event)->event,
+    hipError_t err = hipEventCreateWithFlags((hipEvent_t*)(*event)->event,
                                                        hipEventDisableTiming);
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
@@ -175,7 +175,7 @@ static int mca_accelerator_rocm_create_event(int dev_id, opal_accelerator_event_
 static void mca_accelerator_rocm_event_destruct(opal_accelerator_rocm_event_t *event)
 {
     if (NULL != event->base.event) {
-        hipError_t err = HIP_FUNCS.hipEventDestroy(*(hipEvent_t*)event->base.event);
+        hipError_t err = hipEventDestroy(*(hipEvent_t*)event->base.event);
         if (hipSuccess != err) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error destroying event\n");
@@ -200,7 +200,7 @@ static int mca_accelerator_rocm_record_event(int dev_id, opal_accelerator_event_
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipEventRecord((hipEvent_t)event->event,
+    hipError_t err = hipEventRecord(*((hipEvent_t *)event->event),
                                               *((hipStream_t *)stream->stream));
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
@@ -217,7 +217,7 @@ static int mca_accelerator_rocm_query_event(int dev_id, opal_accelerator_event_t
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipEventQuery(*((hipEvent_t *)event->event));
+    hipError_t err = hipEventQuery(*((hipEvent_t *)event->event));
     switch (err) {
         case hipSuccess:
             return OPAL_SUCCESS;
@@ -243,7 +243,7 @@ static int mca_accelerator_rocm_memcpy_async(int dest_dev_id, int src_dev_id, vo
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipMemcpyAsync(dest, src, size, hipMemcpyDefault,
+    hipError_t err = hipMemcpyAsync(dest, src, size, hipMemcpyDefault,
                                               *((hipStream_t *)stream->stream));
     if (hipSuccess != err ) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
@@ -275,7 +275,7 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
     }
 
     if (opal_accelerator_rocm_memcpy_async) {
-        err = HIP_FUNCS.hipMemcpyAsync(dest, src, size, hipMemcpyDefault,
+        err = hipMemcpyAsync(dest, src, size, hipMemcpyDefault,
                                        opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
@@ -283,14 +283,14 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
             return OPAL_ERROR;
         }
 
-        err = HIP_FUNCS.hipStreamSynchronize(opal_accelerator_rocm_MemcpyStream);
+        err = hipStreamSynchronize(opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error synchronizing stream after async copy\n");
             return OPAL_ERROR;
         }
     } else {
-        err = HIP_FUNCS.hipMemcpy(dest, src, size, hipMemcpyDefault);
+        err = hipMemcpy(dest, src, size, hipMemcpyDefault);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error during synchronous copy\n");
@@ -312,7 +312,7 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
         return OPAL_ERR_BAD_PARAM;
     }
 
-    err = HIP_FUNCS.hipMalloc((void **)&tmp, size);
+    err = hipMalloc((void **)&tmp, size);
     if (hipSuccess != err ) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error allocating memory for memmove\n");
@@ -320,7 +320,7 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
     }
 
     if (opal_accelerator_rocm_memcpy_async) {
-        err = HIP_FUNCS.hipMemcpyAsync(tmp, src, size, hipMemcpyDefault,
+        err = hipMemcpyAsync(tmp, src, size, hipMemcpyDefault,
                                        opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
@@ -328,7 +328,7 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
             return OPAL_ERROR;
         }
 
-        err = HIP_FUNCS.hipMemcpyAsync(dest, tmp, size, hipMemcpyDefault,
+        err = hipMemcpyAsync(dest, tmp, size, hipMemcpyDefault,
                                        opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
@@ -336,20 +336,20 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
             return OPAL_ERROR;
         }
 
-        err = HIP_FUNCS.hipStreamSynchronize(opal_accelerator_rocm_MemcpyStream);
+        err = hipStreamSynchronize(opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error synchronizing stream for memmove\n");
             return OPAL_ERROR;
         }
     } else {
-        err = HIP_FUNCS.hipMemcpy(tmp, src, size, hipMemcpyDefault);
+        err = hipMemcpy(tmp, src, size, hipMemcpyDefault);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error in memcpy for memmove\n");
             return OPAL_ERROR;
         }
-        err = HIP_FUNCS.hipMemcpy(dest, tmp, size, hipMemcpyDefault);
+        err = hipMemcpy(dest, tmp, size, hipMemcpyDefault);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error in memcpy for memmove\n");
@@ -357,7 +357,7 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
         }
     }
 
-    err = HIP_FUNCS.hipFree(tmp);
+    err = hipFree(tmp);
     if (hipSuccess != err ) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error in hipFree for memmove\n");
@@ -373,7 +373,7 @@ static int mca_accelerator_rocm_mem_alloc(int dev_id, void **ptr, size_t size)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipMalloc(ptr, size);
+    hipError_t err = hipMalloc(ptr, size);
     if (hipSuccess != err ) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error allocating memory\n");
@@ -389,7 +389,7 @@ static int mca_accelerator_rocm_mem_release(int dev_id, void *ptr)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipFree(ptr);
+    hipError_t err = hipFree(ptr);
     if (hipSuccess != err ) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error freeing memory\n");
@@ -410,7 +410,7 @@ static int mca_accelerator_rocm_get_address_range(int dev_id, const void *ptr, v
         return OPAL_ERR_BAD_PARAM;
     }
 
-    err = HIP_FUNCS.hipMemGetAddressRange(&tBase, &tSize, (hipDeviceptr_t) ptr);
+    err = hipMemGetAddressRange(&tBase, &tSize, (hipDeviceptr_t) ptr);
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "couldn't get address range for pointer %p/%lu", ptr, *size);
@@ -429,7 +429,7 @@ static int mca_accelerator_rocm_host_register(int dev_id, void *ptr, size_t size
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipHostRegister(ptr, size, 0);
+    hipError_t err = hipHostRegister(ptr, size, 0);
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error registering address %p", ptr);
@@ -445,7 +445,7 @@ static int mca_accelerator_rocm_host_unregister(int dev_id, void *ptr)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipHostUnregister(ptr);
+    hipError_t err = hipHostUnregister(ptr);
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error unregistering address %p", ptr);
@@ -461,7 +461,7 @@ static int mca_accelerator_rocm_get_device(int *dev_id)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipGetDevice(dev_id);
+    hipError_t err = hipGetDevice(dev_id);
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error retrieviung current device");
@@ -477,7 +477,7 @@ static int mca_accelerator_rocm_device_can_access_peer(int *access, int dev1, in
         return OPAL_ERR_BAD_PARAM;
     }
 
-    hipError_t err = HIP_FUNCS.hipDeviceCanAccessPeer(access, dev1, dev2);
+    hipError_t err = hipDeviceCanAccessPeer(access, dev1, dev2);
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error in hipDeviceCanAccessPerr dev1 %d dev2 %d", dev1, dev2);
@@ -487,7 +487,7 @@ static int mca_accelerator_rocm_device_can_access_peer(int *access, int dev1, in
     return OPAL_SUCCESS;
 }
 
-static int accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id)
+static int mca_accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id)
 {
     *buf_id = 0;
     return OPAL_SUCCESS;
