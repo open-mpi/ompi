@@ -68,7 +68,7 @@ ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
             iov.iov_base = malloc(*buffer_len);
         /* The remaining case is if this is an accelerator buffer and we have accelerator support and we need buffers. We will need to do an accelerator malloc*/
         } else {
-            opal_accelerator.malloc(MCA_ACCELERATOR_NO_DEVICE_ID, &iov.iov_base, *buffer_len);
+            opal_accelerator.mem_alloc(MCA_ACCELERATOR_NO_DEVICE_ID, &iov.iov_base, *buffer_len);
         }
 
         if (NULL == iov.iov_base) return OMPI_ERR_OUT_OF_RESOURCE;
@@ -103,7 +103,7 @@ ompi_mtl_datatype_recv_buf(struct opal_convertor_t *convertor,
             *buffer = malloc(*buffer_len);
         /* The remaining case is if this is an accelerator buffer and we have accelerator support and we need buffers. Wwe will need to do an accelerator malloc*/
         } else {
-            opal_accelerator.malloc(MCA_ACCELERATOR_NO_DEVICE_ID, buffer, *buffer_len);
+            opal_accelerator.mem_alloc(MCA_ACCELERATOR_NO_DEVICE_ID, buffer, *buffer_len);
         }
 
         if (NULL == *buffer) return OMPI_ERR_OUT_OF_RESOURCE;
@@ -132,7 +132,7 @@ ompi_mtl_datatype_unpack(struct opal_convertor_t *convertor,
         opal_convertor_unpack(convertor, &iov, &iov_count, &buffer_len);
         /* If it's an accelerator buffer and we have accelerator support, we will need to free the accelerator buffer */
         if (is_accelerator && true == ompi_mtl_base_selected_component->accelerator_support) {
-            opal_accelerator.free(MCA_ACCELERATOR_NO_DEVICE_ID, buffer);
+            opal_accelerator.mem_release(MCA_ACCELERATOR_NO_DEVICE_ID, buffer);
         /* If it's not an accelerator buffer or we don't have accelerator support, we will need to free the host buffer */
         } else {
             free(buffer);

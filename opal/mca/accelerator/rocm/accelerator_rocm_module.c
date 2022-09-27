@@ -26,8 +26,8 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
                             size_t size, opal_accelerator_transfer_type_t type);
 static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                                         opal_accelerator_transfer_type_t type);
-static int mca_accelerator_rocm_malloc(int dev_id, void **ptr, size_t size);
-static int mca_accelerator_rocm_free(int dev_id, void *ptr);
+static int mca_accelerator_rocm_mem_alloc(int dev_id, void **ptr, size_t size);
+static int mca_accelerator_rocm_mem_release(int dev_id, void *ptr);
 static int mca_accelerator_rocm_get_address_range(int dev_id, const void *ptr, void **base,
                                                   size_t *size);
 
@@ -51,8 +51,8 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_memcpy_async,
     mca_accelerator_rocm_memcpy,
     mca_accelerator_rocm_memmove,
-    mca_accelerator_rocm_malloc,
-    mca_accelerator_rocm_free,
+    mca_accelerator_rocm_mem_alloc,
+    mca_accelerator_rocm_mem_release,
     mca_accelerator_rocm_get_address_range,
 
     mca_accelerator_rocm_host_register,
@@ -364,7 +364,7 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
     return OPAL_SUCCESS;
 }
 
-static int mca_accelerator_rocm_malloc(int dev_id, void **ptr, size_t size)
+static int mca_accelerator_rocm_mem_alloc(int dev_id, void **ptr, size_t size)
 {
     if (NULL == ptr || size <= 0) {
         return OPAL_ERR_BAD_PARAM;
@@ -380,7 +380,7 @@ static int mca_accelerator_rocm_malloc(int dev_id, void **ptr, size_t size)
     return OPAL_SUCCESS;
 }
 
-static int mca_accelerator_rocm_free(int dev_id, void *ptr)
+static int mca_accelerator_rocm_mem_release(int dev_id, void *ptr)
 {
     if (NULL == ptr) {
         return OPAL_ERR_BAD_PARAM;

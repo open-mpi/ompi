@@ -382,7 +382,7 @@ int ompi_mtl_ofi_deregister_and_free_buffer(ompi_mtl_ofi_request_t *ofi_req) {
             free(ofi_req->buffer);
         /* The buffer must be an accelerator buffer */
         } else {
-            ret = opal_accelerator.free(MCA_ACCELERATOR_NO_DEVICE_ID, ofi_req->buffer);
+            ret = opal_accelerator.mem_release(MCA_ACCELERATOR_NO_DEVICE_ID, ofi_req->buffer);
         }
     }
     ofi_req->buffer = NULL;

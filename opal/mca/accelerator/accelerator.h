@@ -274,12 +274,12 @@ typedef int (*opal_accelerator_base_module_memmove_fn_t)(
  *
  * @return                   OPAL_SUCCESS or error status on failure
  */
-typedef int (*opal_accelerator_base_module_malloc_fn_t)(
+typedef int (*opal_accelerator_base_module_mem_alloc_fn_t)(
     int dev_id, void **ptr, size_t size);
 
 /**
  * Frees the memory space pointed to by ptr which has been returned by
- * a previous call to an opal_accelerator_base_module_malloc_fn_t().
+ * a previous call to an opal_accelerator_base_module_mem_alloc_fn_t().
  * If the function is called on a ptr that has already been freed,
  * undefined behavior occurs. If ptr is NULL, no operation is performed,
  * and the function returns OPAL_SUCCESS.
@@ -290,7 +290,7 @@ typedef int (*opal_accelerator_base_module_malloc_fn_t)(
  *
  * @return                   OPAL_SUCCESS or error status on failure
  */
-typedef int (*opal_accelerator_base_module_free_fn_t)(
+typedef int (*opal_accelerator_base_module_mem_release_fn_t)(
     int dev_id, void *ptr);
 
 /**
@@ -375,8 +375,8 @@ typedef struct {
     opal_accelerator_base_module_memcpy_fn_t memcpy;
     opal_accelerator_base_module_memmove_fn_t memmove;
 
-    opal_accelerator_base_module_malloc_fn_t malloc;
-    opal_accelerator_base_module_free_fn_t free;
+    opal_accelerator_base_module_mem_alloc_fn_t mem_alloc;
+    opal_accelerator_base_module_mem_release_fn_t mem_release;
     opal_accelerator_base_module_get_address_range_fn_t get_address_range;
 
     opal_accelerator_base_module_host_register_fn_t host_register;
