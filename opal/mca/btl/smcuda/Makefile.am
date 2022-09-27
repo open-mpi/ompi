@@ -53,10 +53,12 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_smcuda_la_SOURCES = $(libmca_btl_smcuda_la_sources)
 mca_btl_smcuda_la_LDFLAGS = -module -avoid-version
 mca_btl_smcuda_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/lib@OPAL_LIB_NAME@mca_common_sm.la
+    $(OPAL_TOP_BUILDDIR)/opal/mca/common/sm/lib@OPAL_LIB_NAME@mca_common_sm.la \
+    $(btl_smcuda_LIBS)
 mca_btl_smcuda_la_CPPFLAGS = $(btl_smcuda_CPPFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_smcuda_la_SOURCES = $(libmca_btl_smcuda_la_sources)
 libmca_btl_smcuda_la_LDFLAGS = -module -avoid-version
 libmca_btl_smcuda_la_CPPFLAGS = $(btl_smcuda_CPPFLAGS)
+libmca_btl_smcuda_la_LIBADD = $(btl_smcuda_LIBS)

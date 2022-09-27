@@ -68,7 +68,8 @@
 #include "btl_smcuda_frag.h"
 #include "btl_smcuda_accelerator.h"
 
-#include "opal/cuda/common_cuda.h"
+
+#include "opal/include/opal/opal_cuda.h"
 
 static struct mca_btl_base_registration_handle_t *
 mca_btl_smcuda_register_mem(struct mca_btl_base_module_t *btl,
@@ -1000,7 +1001,7 @@ mca_btl_smcuda_register_mem(struct mca_btl_base_module_t *btl,
                             uint32_t flags)
 {
     mca_btl_smcuda_t *smcuda_module = (mca_btl_smcuda_t *) btl;
-    mca_rcache_common_cuda_reg_t *reg;
+    mca_opal_cuda_reg_t *reg;
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rcache_flags = 0;
 
@@ -1021,13 +1022,62 @@ static int mca_btl_smcuda_deregister_mem(struct mca_btl_base_module_t *btl,
                                          struct mca_btl_base_registration_handle_t *handle)
 {
     mca_btl_smcuda_t *smcuda_module = (mca_btl_smcuda_t *) btl;
-    mca_rcache_common_cuda_reg_t *reg = (mca_rcache_common_cuda_reg_t
+    mca_opal_cuda_reg_t *reg = (mca_opal_cuda_reg_t
                                              *) ((intptr_t) handle
-                                                 - offsetof(mca_rcache_common_cuda_reg_t, data));
+                                                 - offsetof(mca_opal_cuda_reg_t, data));
 
     smcuda_module->rcache->rcache_deregister(smcuda_module->rcache, &reg->base);
 
     return OPAL_SUCCESS;
+}
+
+/*
+ * Put remote event on stream to ensure that the the start of the
+ * copy does not start until the completion of the event.
+ */
+static void mca_btl_smcuda_wait_stream_synchronize(mca_opal_cuda_reg_t *rget_reg)
+{
+#if OPAL_CUDA_SYNC_MEMOPS
+    /* No need for any of this with SYNC_MEMOPS feature */
+    return;
+#else /* OPAL_CUDA_SYNC_MEMOPS */
+    CUipcEventHandle evtHandle;
+    CUevent event;
+    CUresult result;
+
+    memcpy(&evtHandle, rget_reg->data.evtHandle, sizeof(evtHandle));
+
+    result = cuIpcOpenEventHandle(&event, evtHandle);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                            "cuIpcOpenEventHandle failed");
+    }
+
+    /* BEGIN of Workaround - There is a bug in CUDA 4.1 RC2 and earlier
+     * versions.  Need to record an event on the stream, even though
+     * it is not used, to make sure we do not short circuit our way
+     * out of the cuStreamWaitEvent test.
+     */
+    result = cuEventRecord(event, 0);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                            "cuEventRecord failed");
+    }
+    /* END of Workaround */
+
+    result = cuStreamWaitEvent(0, event, 0);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                            "cuStreamWaitEvent failed");
+    }
+
+    /* All done with this event. */
+    result = cuEventDestroy(event);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                            "cuStreamWaitEvent failed");
+    }
+#endif /* OPAL_CUDA_SYNC_MEMOPS */
 }
 
 int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *ep,
@@ -1037,8 +1087,8 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t *btl, struct mca_btl_ba
                             int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                             void *cbcontext, void *cbdata)
 {
-    mca_rcache_common_cuda_reg_t rget_reg;
-    mca_rcache_common_cuda_reg_t *reg_ptr = &rget_reg;
+    mca_opal_cuda_reg_t rget_reg;
+    mca_opal_cuda_reg_t *reg_ptr = &rget_reg;
     int rc, done;
     void *remote_memory_address;
     size_t offset;
@@ -1109,7 +1159,7 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t *btl, struct mca_btl_ba
      * is available in the sender's GPU buffer.  Therefore, do a stream synchronize
      * on the IPC event that we received.  Note that we pull it from
      * rget_reg, not reg_ptr, as we do not cache the event. */
-    mca_common_wait_stream_synchronize(&rget_reg);
+    mca_btl_smcuda_wait_stream_synchronize(&rget_reg);
 
     rc = mca_btl_smcuda_memcpy(local_address, remote_memory_address, size, "mca_btl_smcuda_get",
                                 (mca_btl_base_descriptor_t *) frag);
