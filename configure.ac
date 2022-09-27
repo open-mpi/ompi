@@ -996,14 +996,6 @@ AC_CACHE_SAVE
 
 opal_show_title "System-specific tests"
 
-################
-# CUDA support #
-################
-# Note, we should remove this when opal/cuda is removed
-OPAL_CHECK_CUDA([opal_cuda],
-                [opal_cuda_happy="yes"],
-                [opal_cuda_happy="no"])
-
 ##################################
 OPAL_CHECK_OS_FLAVORS
 
