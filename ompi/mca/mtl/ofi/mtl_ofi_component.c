@@ -354,7 +354,7 @@ select_ofi_provider(struct fi_info *providers,
       * process id.
       */
     if (NULL != prov) {
-        prov = opal_mca_common_ofi_select_provider(prov, &ompi_process_info);
+        prov = opal_common_ofi_select_provider(prov, &ompi_process_info);
         opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: mtl:ofi:provider:domain: %s\n",
                             __FILE__, __LINE__,

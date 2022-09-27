@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -612,7 +613,7 @@ void mca_coll_han_dump_dynamic_rules(void)
                                 "message size %d -> collective component %d (%s)\n",
                                 nb_entries, coll_id, mca_coll_base_colltype_to_str(coll_id),
                                 topo_lvl, mca_coll_han_topo_lvl_to_str(topo_lvl), conf_size,
-                                msg_size, component, available_components[component].component_name);
+                                msg_size, component, ompi_coll_han_available_components[component].component_name);
 
                     nb_entries++;
                 }

@@ -17,6 +17,7 @@
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -175,7 +176,7 @@ static int smcuda_register(void)
         NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_smcuda_component.allocator);
 
     /* Lower priority when CUDA support is not requested */
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
 
         mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH + 1;
     } else {

@@ -20,6 +20,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -319,7 +320,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
         return rc;
     }
     /* now that res is fully populated, create the thing */
-    mca_btl_smcuda_component.sm_mpools[0] = common_sm_mpool_create(res);
+    mca_btl_smcuda_component.sm_mpools[0] = opal_btl_smcuda_common_sm_mpool_create(res);
     /* Sanity check to ensure that we found it */
     if (NULL == mca_btl_smcuda_component.sm_mpools[0]) {
         free(res);
@@ -353,7 +354,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
                         "btl:smcuda: CUDA cuMemHostRegister address=%p, size=%d",
                         mca_btl_smcuda_component.sm_mpool_base, (int) res->size);
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
         res = opal_accelerator.host_register(MCA_ACCELERATOR_NO_DEVICE_ID, mca_btl_smcuda_component.sm_mpool_base, res->size); 
         if (OPAL_UNLIKELY(OPAL_SUCCESS != res)) {
             /* If registering the memory fails, print a message and continue.
@@ -874,7 +875,7 @@ int mca_btl_smcuda_sendi(struct mca_btl_base_module_t *btl,
     }
     /* Initiate setting up CUDA IPC support. */
 
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "cuda") && (IPC_INIT == endpoint->ipcstate)
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda") && (IPC_INIT == endpoint->ipcstate)
         && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
@@ -964,7 +965,7 @@ int mca_btl_smcuda_send(struct mca_btl_base_module_t *btl, struct mca_btl_base_e
         mca_btl_smcuda_component_progress();
     }
     /* Initiate setting up CUDA IPC support */
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "cuda") && (IPC_INIT == endpoint->ipcstate)
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda") && (IPC_INIT == endpoint->ipcstate)
         && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }

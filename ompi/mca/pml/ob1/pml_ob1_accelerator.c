@@ -19,6 +19,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,13 +54,13 @@ static opal_mutex_t pml_ob1_accelerator_dtoh_lock;
 
 /* Array of accelerator events to be queried for sending side and
  * receiving side. */
-opal_accelerator_event_t **accelerator_event_dtoh_array = NULL;
-opal_accelerator_event_t **accelerator_event_htod_array = NULL;
+static opal_accelerator_event_t **accelerator_event_dtoh_array = NULL;
+static opal_accelerator_event_t **accelerator_event_htod_array = NULL;
 
 /* Array of fragments currently being moved by accelerator async non-blocking
  * operations */
-struct mca_btl_base_descriptor_t **accelerator_event_dtoh_frag_array = NULL;
-struct mca_btl_base_descriptor_t **accelerator_event_htod_frag_array = NULL;
+static struct mca_btl_base_descriptor_t **accelerator_event_dtoh_frag_array = NULL;
+static struct mca_btl_base_descriptor_t **accelerator_event_htod_frag_array = NULL;
 
 /* First free/available location in accelerator_event_status_array */
 static int accelerator_event_dtoh_first_avail, accelerator_event_htod_first_avail;
@@ -71,14 +72,14 @@ static int accelerator_event_dtoh_first_used, accelerator_event_htod_first_used;
 static volatile int accelerator_event_dtoh_num_used, accelerator_event_htod_num_used;
 
 /* Size of array holding events */
-int accelerator_event_max = 400;
+static int accelerator_event_max = 400;
 static int accelerator_event_htod_most = 0;
 
 int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *frag)
 {
     int result;
 
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null")) {
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         return 0;
     }
 
@@ -136,7 +137,7 @@ int mca_pml_ob1_progress_one_htod_event(struct mca_btl_base_descriptor_t **frag)
 {
     int result;
 
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null")) {
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         return 0;
     }
 
@@ -184,7 +185,7 @@ int mca_pml_ob1_accelerator_init(void)
     int result = OPAL_SUCCESS;
     int i;
 
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null")) {
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         return 0;
     }
 
@@ -297,7 +298,7 @@ void mca_pml_ob1_accelerator_fini(void)
 {
     int i;
 
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null")) {
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         return;
     }
 

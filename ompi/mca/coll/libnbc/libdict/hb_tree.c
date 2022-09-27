@@ -43,6 +43,7 @@ struct hb_itor {
 
 static int rot_left __P((hb_tree *tree, hb_node *node));
 static int rot_right __P((hb_tree *tree, hb_node *node));
+static int hb_itor_search __P((hb_itor *itor, const void *key));
 static unsigned node_height __P((const hb_node *node));
 static unsigned node_mheight __P((const hb_node *node));
 static unsigned node_pathlen __P((const hb_node *node, unsigned level));
@@ -52,32 +53,8 @@ static hb_node *node_max __P((hb_node *node));
 static hb_node *node_next __P((hb_node *node));
 static hb_node *node_prev __P((hb_node *node));
 
-static dict *hb_dict_new __P((dict_cmp_func key_cmp, dict_del_func key_del,
-                                                  dict_del_func dat_del));
-static dict_itor *hb_dict_itor_new __P((hb_tree *tree));
-static void hb_itor_invalidate __P((hb_itor *itor));
-static int hb_itor_first __P((hb_itor *itor));
-static void *hb_itor_data __P((hb_itor *itor));
-static const void *hb_itor_cdata __P((const hb_itor *itor));
-static int hb_itor_last __P((hb_itor *itor));
-static int hb_itor_nextn __P((hb_itor *itor, unsigned count));
-static int hb_itor_prev __P((hb_itor *itor));
-static int hb_itor_prevn __P((hb_itor *itor, unsigned count));
-static int hb_itor_search __P((hb_itor *itor, const void *key));
-static int hb_itor_set_data __P((hb_itor *itor, void *dat, int del));
-static unsigned hb_tree_count __P((const hb_tree *tree));
-static void hb_tree_destroy __P((hb_tree *tree, int del));
-static void hb_tree_empty __P((hb_tree *tree, int del));
-static unsigned hb_tree_height __P((const hb_tree *tree));
-static const void *hb_tree_max __P((const hb_tree *tree));
-static unsigned hb_tree_mheight __P((const hb_tree *tree));
-static const void *hb_tree_min __P((const hb_tree *tree));
-static unsigned hb_tree_pathlen __P((const hb_tree *tree));
-static int hb_tree_probe __P((hb_tree *tree, void *key, void **dat));
-static void hb_tree_walk __P((hb_tree *tree, dict_vis_func visit));
-
 hb_tree *
-hb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
+ompi_coll_libnbc_hb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 			dict_del_func dat_del)
 {
 	hb_tree *tree;
@@ -87,15 +64,15 @@ hb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 
 	tree->root = NULL;
 	tree->count = 0;
-	tree->key_cmp = key_cmp ? key_cmp : dict_ptr_cmp;
+	tree->key_cmp = key_cmp ? key_cmp : ompi_coll_libnbc_dict_ptr_cmp;
 	tree->key_del = key_del;
 	tree->dat_del = dat_del;
 
 	return tree;
 }
 
-static dict *
-hb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
+dict *
+ompi_coll_libnbc_hb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 			dict_del_func dat_del)
 {
 	dict *dct;
@@ -104,38 +81,38 @@ hb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	if ((dct = (dict*)MALLOC(sizeof(*dct))) == NULL)
 		return NULL;
 
-	if ((tree = hb_tree_new(key_cmp, key_del, dat_del)) == NULL) {
+	if ((tree = ompi_coll_libnbc_hb_tree_new(key_cmp, key_del, dat_del)) == NULL) {
 		FREE(dct);
 		return NULL;
 	}
 
 	dct->_object = tree;
-	dct->_inew = (inew_func)hb_dict_itor_new;
-	dct->_destroy = (destroy_func)hb_tree_destroy;
-	dct->_insert = (insert_func)hb_tree_insert;
-	dct->_probe = (probe_func)hb_tree_probe;
-	dct->_search = (search_func)hb_tree_search;
-	dct->_remove = (remove_func)hb_tree_remove;
-	dct->_empty = (empty_func)hb_tree_empty;
-	dct->_walk = (walk_func)hb_tree_walk;
-	dct->_count = (count_func)hb_tree_count;
+	dct->_inew = (inew_func)ompi_coll_libnbc_hb_dict_itor_new;
+	dct->_destroy = (destroy_func)ompi_coll_libnbc_hb_tree_destroy;
+	dct->_insert = (insert_func)ompi_coll_libnbc_hb_tree_insert;
+	dct->_probe = (probe_func)ompi_coll_libnbc_hb_tree_probe;
+	dct->_search = (search_func)ompi_coll_libnbc_hb_tree_search;
+	dct->_remove = (remove_func)ompi_coll_libnbc_hb_tree_remove;
+	dct->_empty = (empty_func)ompi_coll_libnbc_hb_tree_empty;
+	dct->_walk = (walk_func)ompi_coll_libnbc_hb_tree_walk;
+	dct->_count = (count_func)ompi_coll_libnbc_hb_tree_count;
 
 	return dct;
 }
 
-static void
-hb_tree_destroy(hb_tree *tree, int del)
+void
+ompi_coll_libnbc_hb_tree_destroy(hb_tree *tree, int del)
 {
 	ASSERT(tree != NULL);
 
 	if (tree->root)
-		hb_tree_empty(tree, del);
+		ompi_coll_libnbc_hb_tree_empty(tree, del);
 
 	FREE(tree);
 }
 
-static void
-hb_tree_empty(hb_tree *tree, int del)
+void
+ompi_coll_libnbc_hb_tree_empty(hb_tree *tree, int del)
 {
 	hb_node *node, *parent;
 
@@ -173,7 +150,7 @@ hb_tree_empty(hb_tree *tree, int del)
 }
 
 void *
-hb_tree_search(hb_tree *tree, const void *key)
+ompi_coll_libnbc_hb_tree_search(hb_tree *tree, const void *key)
 {
 	int rv;
 	hb_node *node;
@@ -195,7 +172,7 @@ hb_tree_search(hb_tree *tree, const void *key)
 }
 
 int
-hb_tree_insert(hb_tree *tree, void *key, void *dat, int overwrite)
+ompi_coll_libnbc_hb_tree_insert(hb_tree *tree, void *key, void *dat, int overwrite)
 {
 	int rv = 0;
 	hb_node *node, *parent = NULL, *q = NULL;
@@ -261,8 +238,8 @@ hb_tree_insert(hb_tree *tree, void *key, void *dat, int overwrite)
 	return 0;
 }
 
-static int
-hb_tree_probe(hb_tree *tree, void *key, void **dat)
+int
+ompi_coll_libnbc_hb_tree_probe(hb_tree *tree, void *key, void **dat)
 {
 	int rv = 0;
 	hb_node *node, *parent = NULL, *q = NULL;
@@ -331,7 +308,7 @@ hb_tree_probe(hb_tree *tree, void *key, void **dat)
 	FREE(n)
 
 int
-hb_tree_remove(hb_tree *tree, const void *key, int del)
+ompi_coll_libnbc_hb_tree_remove(hb_tree *tree, const void *key, int del)
 {
 	int rv, left;
 	hb_node *node, *out, *parent = NULL;
@@ -427,8 +404,8 @@ higher:
 	return 0;
 }
 
-static const void *
-hb_tree_min(const hb_tree *tree)
+const void *
+ompi_coll_libnbc_hb_tree_min(const hb_tree *tree)
 {
 	const hb_node *node;
 
@@ -442,8 +419,8 @@ hb_tree_min(const hb_tree *tree)
 	return node->key;
 }
 
-static const void *
-hb_tree_max(const hb_tree *tree)
+const void *
+ompi_coll_libnbc_hb_tree_max(const hb_tree *tree)
 {
 	const hb_node *node;
 
@@ -457,8 +434,8 @@ hb_tree_max(const hb_tree *tree)
 	return node->key;
 }
 
-static void
-hb_tree_walk(hb_tree *tree, dict_vis_func visit)
+void
+ompi_coll_libnbc_hb_tree_walk(hb_tree *tree, dict_vis_func visit)
 {
 	hb_node *node;
 
@@ -471,32 +448,32 @@ hb_tree_walk(hb_tree *tree, dict_vis_func visit)
 			break;
 }
 
-static unsigned
-hb_tree_count(const hb_tree *tree)
+unsigned
+ompi_coll_libnbc_hb_tree_count(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
 
 	return tree->count;
 }
 
-static unsigned
-hb_tree_height(const hb_tree *tree)
+unsigned
+ompi_coll_libnbc_hb_tree_height(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
 
 	return tree->root ? node_height(tree->root) : 0;
 }
 
-static unsigned
-hb_tree_mheight(const hb_tree *tree)
+unsigned
+ompi_coll_libnbc_hb_tree_mheight(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
 
 	return tree->root ? node_mheight(tree->root) : 0;
 }
 
-static unsigned
-hb_tree_pathlen(const hb_tree *tree)
+unsigned
+ompi_coll_libnbc_hb_tree_pathlen(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
 
@@ -708,7 +685,7 @@ rot_right(hb_tree *tree, hb_node *node)
 }
 
 hb_itor *
-hb_itor_new(hb_tree *tree)
+ompi_coll_libnbc_hb_itor_new(hb_tree *tree)
 {
 	hb_itor *itor;
 
@@ -718,12 +695,12 @@ hb_itor_new(hb_tree *tree)
 		return NULL;
 
 	itor->tree = tree;
-	hb_itor_first(itor);
+	ompi_coll_libnbc_hb_itor_first(itor);
 	return itor;
 }
 
-static dict_itor *
-hb_dict_itor_new(hb_tree *tree)
+dict_itor *
+ompi_coll_libnbc_hb_dict_itor_new(hb_tree *tree)
 {
 	dict_itor *itor;
 
@@ -732,31 +709,31 @@ hb_dict_itor_new(hb_tree *tree)
 	if ((itor = (dict_itor*)MALLOC(sizeof(*itor))) == NULL)
 		return NULL;
 
-	if ((itor->_itor = hb_itor_new(tree)) == NULL) {
+	if ((itor->_itor = ompi_coll_libnbc_hb_itor_new(tree)) == NULL) {
 		FREE(itor);
 		return NULL;
 	}
 
-	itor->_destroy = (idestroy_func)hb_itor_destroy;
-	itor->_valid = (valid_func)hb_itor_valid;
-	itor->_invalid = (invalidate_func)hb_itor_invalidate;
-	itor->_next = (next_func)hb_itor_next;
-	itor->_prev = (prev_func)hb_itor_prev;
-	itor->_nextn = (nextn_func)hb_itor_nextn;
-	itor->_prevn = (prevn_func)hb_itor_prevn;
-	itor->_first = (first_func)hb_itor_first;
-	itor->_last = (last_func)hb_itor_last;
+	itor->_destroy = (idestroy_func)ompi_coll_libnbc_hb_itor_destroy;
+	itor->_valid = (valid_func)ompi_coll_libnbc_hb_itor_valid;
+	itor->_invalid = (invalidate_func)ompi_coll_libnbc_hb_itor_invalidate;
+	itor->_next = (next_func)ompi_coll_libnbc_hb_itor_next;
+	itor->_prev = (prev_func)ompi_coll_libnbc_hb_itor_prev;
+	itor->_nextn = (nextn_func)ompi_coll_libnbc_hb_itor_nextn;
+	itor->_prevn = (prevn_func)ompi_coll_libnbc_hb_itor_prevn;
+	itor->_first = (first_func)ompi_coll_libnbc_hb_itor_first;
+	itor->_last = (last_func)ompi_coll_libnbc_hb_itor_last;
 	itor->_search = (isearch_func)hb_itor_search;
-	itor->_key = (key_func)hb_itor_key;
-	itor->_data = (data_func)hb_itor_data;
-	itor->_cdata = (cdata_func)hb_itor_cdata;
-	itor->_setdata = (dataset_func)hb_itor_set_data;
+	itor->_key = (key_func)ompi_coll_libnbc_hb_itor_key;
+	itor->_data = (data_func)ompi_coll_libnbc_hb_itor_data;
+	itor->_cdata = (cdata_func)ompi_coll_libnbc_hb_itor_cdata;
+	itor->_setdata = (dataset_func)ompi_coll_libnbc_hb_itor_set_data;
 
 	return itor;
 }
 
 void
-hb_itor_destroy(hb_itor *itor)
+ompi_coll_libnbc_hb_itor_destroy(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
@@ -766,15 +743,15 @@ hb_itor_destroy(hb_itor *itor)
 #define RETVALID(itor)		return itor->node != NULL
 
 int
-hb_itor_valid(const hb_itor *itor)
+ompi_coll_libnbc_hb_itor_valid(const hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
 	RETVALID(itor);
 }
 
-static void
-hb_itor_invalidate(hb_itor *itor)
+void
+ompi_coll_libnbc_hb_itor_invalidate(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
@@ -782,37 +759,37 @@ hb_itor_invalidate(hb_itor *itor)
 }
 
 int
-hb_itor_next(hb_itor *itor)
+ompi_coll_libnbc_hb_itor_next(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
 	if (itor->node == NULL)
-		hb_itor_first(itor);
+		ompi_coll_libnbc_hb_itor_first(itor);
 	else
 		itor->node = node_next(itor->node);
 	RETVALID(itor);
 }
 
-static int
-hb_itor_prev(hb_itor *itor)
+int
+ompi_coll_libnbc_hb_itor_prev(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
 	if (itor->node == NULL)
-		hb_itor_last(itor);
+		ompi_coll_libnbc_hb_itor_last(itor);
 	else
 		itor->node = node_prev(itor->node);
 	RETVALID(itor);
 }
 
-static int
-hb_itor_nextn(hb_itor *itor, unsigned count)
+int
+ompi_coll_libnbc_hb_itor_nextn(hb_itor *itor, unsigned count)
 {
 	ASSERT(itor != NULL);
 
 	if (count) {
 		if (itor->node == NULL) {
-			hb_itor_first(itor);
+			ompi_coll_libnbc_hb_itor_first(itor);
 			count--;
 		}
 
@@ -823,14 +800,14 @@ hb_itor_nextn(hb_itor *itor, unsigned count)
 	RETVALID(itor);
 }
 
-static int
-hb_itor_prevn(hb_itor *itor, unsigned count)
+int
+ompi_coll_libnbc_hb_itor_prevn(hb_itor *itor, unsigned count)
 {
 	ASSERT(itor != NULL);
 
 	if (count) {
 		if (itor->node == NULL) {
-			hb_itor_last(itor);
+			ompi_coll_libnbc_hb_itor_last(itor);
 			count--;
 		}
 
@@ -841,8 +818,8 @@ hb_itor_prevn(hb_itor *itor, unsigned count)
 	RETVALID(itor);
 }
 
-static int
-hb_itor_first(hb_itor *itor)
+int
+ompi_coll_libnbc_hb_itor_first(hb_itor *itor)
 {
 	hb_tree *t;
 
@@ -853,8 +830,8 @@ hb_itor_first(hb_itor *itor)
 	RETVALID(itor);
 }
 
-static int
-hb_itor_last(hb_itor *itor)
+int
+ompi_coll_libnbc_hb_itor_last(hb_itor *itor)
 {
 	hb_tree *t;
 
@@ -886,31 +863,31 @@ hb_itor_search(hb_itor *itor, const void *key)
 }
 
 const void *
-hb_itor_key(const hb_itor *itor)
+ompi_coll_libnbc_hb_itor_key(const hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
 	return itor->node ? itor->node->key : NULL;
 }
 
-static void *
-hb_itor_data(hb_itor *itor)
+void *
+ompi_coll_libnbc_hb_itor_data(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
 	return itor->node ? itor->node->dat : NULL;
 }
 
-static const void *
-hb_itor_cdata(const hb_itor *itor)
+const void *
+ompi_coll_libnbc_hb_itor_cdata(const hb_itor *itor)
 {
 	ASSERT(itor != NULL);
 
 	return itor->node ? itor->node->dat : NULL;
 }
 
-static int
-hb_itor_set_data(hb_itor *itor, void *dat, int del)
+int
+ompi_coll_libnbc_hb_itor_set_data(hb_itor *itor, void *dat, int del)
 {
 	ASSERT(itor != NULL);
 

@@ -15,7 +15,7 @@
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation. All rights reserved.
  * Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
  *
@@ -91,19 +91,19 @@ typedef struct ompi_wait_sync_t {
     }
 
 /* not static for inline "wait_sync_st" */
-OPAL_DECLSPEC extern ompi_wait_sync_t *wait_sync_list;
+OPAL_DECLSPEC extern ompi_wait_sync_t *opal_threads_base_wait_sync_list;
 
 OPAL_DECLSPEC int ompi_sync_wait_mt(ompi_wait_sync_t *sync);
 static inline int sync_wait_st(ompi_wait_sync_t *sync)
 {
-    assert(NULL == wait_sync_list);
+    assert(NULL == opal_threads_base_wait_sync_list);
     assert(NULL == sync->next);
-    wait_sync_list = sync;
+    opal_threads_base_wait_sync_list = sync;
 
     while (sync->count > 0) {
         opal_progress();
     }
-    wait_sync_list = NULL;
+    opal_threads_base_wait_sync_list = NULL;
 
     return sync->status;
 }
@@ -126,10 +126,11 @@ static inline int sync_wait_st(ompi_wait_sync_t *sync)
  * operation is a NO-OP. Otherwise it will trigger the "error condition" from
  * all registered sync.
  */
-OPAL_DECLSPEC void wait_sync_global_wakeup_st(int status);
-OPAL_DECLSPEC void wait_sync_global_wakeup_mt(int status);
+OPAL_DECLSPEC void opal_threads_base_wait_sync_global_wakeup_st(int status);
+OPAL_DECLSPEC void opal_threads_base_wait_sync_global_wakeup_mt(int status);
 #define wait_sync_global_wakeup(st) \
-    (opal_using_threads() ? wait_sync_global_wakeup_mt(st) : wait_sync_global_wakeup_st(st))
+    (opal_using_threads() ? opal_threads_base_wait_sync_global_wakeup_mt(st) : \
+    		                opal_threads_base_wait_sync_global_wakeup_st(st))
 
 /**
  * Update the status of the synchronization primitive. If an error is

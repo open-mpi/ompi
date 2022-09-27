@@ -5,6 +5,7 @@
  *                    Corporation.  All rights reserved.
  * Copyright (c) 2006 The Technical University of Chemnitz. All
  *                    rights reserved.
+ * Copyright (c) 2022 IBM Corporation. All rights reserved
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -568,12 +569,12 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 static inline void NBC_SchedCache_dictwipe(hb_tree *dict_in, int *size) {
   hb_itor *itor;
 
-  itor = hb_itor_new(dict_in);
-  for (; hb_itor_valid(itor) && (*size>NBC_SCHED_DICT_LOWER); hb_itor_next(itor)) {
-    hb_tree_remove(dict_in, hb_itor_key(itor), 0);
+  itor = ompi_coll_libnbc_hb_itor_new(dict_in);
+  for (; ompi_coll_libnbc_hb_itor_valid(itor) && (*size>NBC_SCHED_DICT_LOWER); ompi_coll_libnbc_hb_itor_next(itor)) {
+    ompi_coll_libnbc_hb_tree_remove(dict_in, ompi_coll_libnbc_hb_itor_key(itor), 0);
     *size = *size-1;
   }
-  hb_itor_destroy(itor);
+  ompi_coll_libnbc_hb_itor_destroy(itor);
 }
 
 #define NBC_IN_PLACE(sendbuf, recvbuf, inplace) \
