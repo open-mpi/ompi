@@ -15,6 +15,7 @@
  * Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights
  * Copyright (c) 2018-2020 Triad National Security, LLC. All rights
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,7 +126,7 @@ int opal_accelerator_base_select(void)
         return OPAL_ERR_FATAL;
     } else if (2 >= initialized_list.opal_list_length) {
         ali = (accelerator_list_item_t *) opal_list_get_first(&initialized_list);
-        accelerator_base_selected_component = *ali->accelerator_component;
+        opal_accelerator_base_selected_component = *ali->accelerator_component;
         skip = (mca_base_component_t *) ali->accelerator_component;
         opal_accelerator = *ali->accelerator_module;
     } else {
@@ -135,7 +136,7 @@ int opal_accelerator_base_select(void)
     }
 
     opal_output_verbose(10, opal_accelerator_base_framework.framework_output, "selected %s\n",
-                        accelerator_base_selected_component.base_version.mca_component_name);
+                        opal_accelerator_base_selected_component.base_version.mca_component_name);
 
     /* This base function closes, unloads, and removes from the available list all
      * unselected components. The available list will contain only the selected component. */

@@ -10,6 +10,7 @@
  * Copyright (c) 2021      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -320,10 +321,10 @@ int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
         attr.context = NULL;
         if (false == ompi_mtl_base_selected_component->accelerator_support) {
             goto reg;
-        } else if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
+        } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
             attr.iface = FI_HMEM_CUDA;
             opal_accelerator.get_device(&attr.device.cuda);
-        } else if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
+        } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
             attr.iface = FI_HMEM_ROCR;
             opal_accelerator.get_device(&attr.device.cuda);
         } else {
@@ -334,7 +335,7 @@ reg:
 
         if (ret) {
             opal_show_help("help-mtl-ofi.txt", "Buffer Memory Registration Failed", true,
-                           accelerator_base_selected_component.base_version.mca_component_name,
+                           opal_accelerator_base_selected_component.base_version.mca_component_name,
                            buffer, ofi_req->length,
                            fi_strerror(-ret), ret);
             ofi_req->mr = NULL;

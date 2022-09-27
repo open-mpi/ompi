@@ -16,6 +16,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -164,7 +165,7 @@ static int segment_create(opal_shmem_ds_t *ds_buf, const char *file_name, size_t
      * buffer
      */
     if (-1
-        == (ds_buf->seg_id = shmem_posix_shm_open(ds_buf->seg_name,
+        == (ds_buf->seg_id = opal_shmem_posix_shm_open(ds_buf->seg_name,
                                                   OPAL_SHMEM_POSIX_FILE_LEN_MAX - 1))) {
         /* snaps!  something happened in posix_shm_open.  don't report anything
          * here because posix_shm_open will display all the necessary info.

@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation. All rights reserved.
  * Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
  *
@@ -19,28 +19,28 @@
 #include "opal/mca/threads/wait_sync.h"
 
 static opal_mutex_t wait_sync_lock = OPAL_MUTEX_STATIC_INIT;
-ompi_wait_sync_t *wait_sync_list = NULL; /* not static for inline "wait_sync_st" */
+ompi_wait_sync_t *opal_threads_base_wait_sync_list = NULL; /* not static for inline "wait_sync_st" */
 
-void wait_sync_global_wakeup_st(int status)
+void opal_threads_base_wait_sync_global_wakeup_st(int status)
 {
     ompi_wait_sync_t *sync;
-    for (sync = wait_sync_list; sync != NULL; sync = sync->next) {
+    for (sync = opal_threads_base_wait_sync_list; sync != NULL; sync = sync->next) {
         wait_sync_update(sync, 0, status);
     }
 }
 
-void wait_sync_global_wakeup_mt(int status)
+void opal_threads_base_wait_sync_global_wakeup_mt(int status)
 {
     ompi_wait_sync_t *sync;
     opal_mutex_lock(&wait_sync_lock);
-    for (sync = wait_sync_list; sync != NULL; sync = sync->next) {
+    for (sync = opal_threads_base_wait_sync_list; sync != NULL; sync = sync->next) {
         /* sync_update is going to  take the sync->lock from within
          * the wait_sync_lock. Thread lightly here: Idealy we should
          * find a way to not take a lock in a lock as this is deadlock prone,
          * but as of today we are the only place doing this so it is safe.
          */
         wait_sync_update(sync, 0, status);
-        if (sync->next == wait_sync_list) {
+        if (sync->next == opal_threads_base_wait_sync_list) {
             break; /* special case for rings */
         }
     }
@@ -79,14 +79,14 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
 
     /* Insert sync on the list of pending synchronization constructs */
     OPAL_THREAD_LOCK(&wait_sync_lock);
-    if (NULL == wait_sync_list) {
+    if (NULL == opal_threads_base_wait_sync_list) {
         sync->next = sync->prev = sync;
-        wait_sync_list = sync;
+        opal_threads_base_wait_sync_list = sync;
     } else {
-        sync->prev = wait_sync_list->prev;
+        sync->prev = opal_threads_base_wait_sync_list->prev;
         sync->prev->next = sync;
-        sync->next = wait_sync_list;
-        wait_sync_list->prev = sync;
+        sync->next = opal_threads_base_wait_sync_list;
+        opal_threads_base_wait_sync_list->prev = sync;
     }
     OPAL_THREAD_UNLOCK(&wait_sync_lock);
 
@@ -97,7 +97,7 @@ int ompi_sync_wait_mt(ompi_wait_sync_t *sync)
      *  - our sync has been triggered.
      */
 check_status:
-    if (sync != wait_sync_list && num_thread_in_progress >= opal_max_thread_in_progress) {
+    if (sync != opal_threads_base_wait_sync_list && num_thread_in_progress >= opal_max_thread_in_progress) {
         opal_thread_internal_cond_wait(&sync->condition, &sync->lock);
 
         /**
@@ -128,10 +128,10 @@ i_am_done:
     sync->prev->next = sync->next;
     sync->next->prev = sync->prev;
     /* In case I am the progress manager, pass the duties on */
-    if (sync == wait_sync_list) {
-        wait_sync_list = (sync == sync->next) ? NULL : sync->next;
-        if (NULL != wait_sync_list) {
-            WAIT_SYNC_PASS_OWNERSHIP(wait_sync_list);
+    if (sync == opal_threads_base_wait_sync_list) {
+        opal_threads_base_wait_sync_list = (sync == sync->next) ? NULL : sync->next;
+        if (NULL != opal_threads_base_wait_sync_list) {
+            WAIT_SYNC_PASS_OWNERSHIP(opal_threads_base_wait_sync_list);
         }
     }
     OPAL_THREAD_UNLOCK(&wait_sync_lock);

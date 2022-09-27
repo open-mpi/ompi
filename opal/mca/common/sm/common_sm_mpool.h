@@ -16,6 +16,7 @@
  *                         All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +58,7 @@ typedef struct mca_common_sm_mpool_module_t {
     int32_t mem_node;
 } mca_common_sm_mpool_module_t;
 
-OPAL_DECLSPEC mca_mpool_base_module_t *common_sm_mpool_create(mca_common_sm_mpool_resources_t *);
+OPAL_DECLSPEC mca_mpool_base_module_t *opal_btl_smcuda_common_sm_mpool_create(mca_common_sm_mpool_resources_t *);
 
 END_C_DECLS
 

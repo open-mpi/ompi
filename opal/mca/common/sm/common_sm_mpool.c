@@ -15,6 +15,7 @@
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +70,7 @@ static void mca_common_sm_mpool_module_init(mca_common_sm_mpool_module_t *mpool)
     mpool->mem_node = -1;
 }
 
-mca_mpool_base_module_t *common_sm_mpool_create(mca_common_sm_mpool_resources_t *resources)
+mca_mpool_base_module_t *opal_btl_smcuda_common_sm_mpool_create(mca_common_sm_mpool_resources_t *resources)
 {
     mca_common_sm_mpool_module_t *mpool_module;
     mca_allocator_base_component_t *allocator_component;

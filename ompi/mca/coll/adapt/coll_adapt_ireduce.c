@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -504,7 +505,8 @@ int ompi_coll_adapt_ireduce(const void *sbuf, void *rbuf, int count, struct ompi
 
 
     return ompi_coll_adapt_ireduce_generic(sbuf, rbuf, count, dtype, op, root, comm, request, module,
-                                           adapt_module_cached_topology(module, comm, root, mca_coll_adapt_component.adapt_ireduce_algorithm),
+                                           ompi_coll_adapt_module_cached_topology(module, comm, root,
+                                        		                                            mca_coll_adapt_component.adapt_ireduce_algorithm),
                                            mca_coll_adapt_component.adapt_ireduce_segment_size);
 
 }

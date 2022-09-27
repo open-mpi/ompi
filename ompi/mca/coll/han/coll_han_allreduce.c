@@ -5,6 +5,7 @@
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  *
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -536,7 +537,7 @@ mca_coll_han_allreduce_reproducible_decision(struct ompi_communicator_t *comm,
                 opal_output_verbose(30, mca_coll_han_component.han_output,
                                     "coll:han:allreduce_reproducible: "
                                     "fallback on %s\n",
-                                    available_components[fallback].component_name);
+                                    ompi_coll_han_available_components[fallback].component_name);
             }
             han_module->reproducible_allreduce_module = fallback_module;
             han_module->reproducible_allreduce = fallback_module->coll_allreduce;
