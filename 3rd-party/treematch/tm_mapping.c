@@ -28,9 +28,6 @@
 
 #include <sys/mman.h>
 
-
-#define MIN(a,b) (a)<(b)?(a):(b)
-
 #define TEST_ERROR(n) do{ \
     if( (n) != 0 ){       \
        fprintf(stderr,"Error %d Line %d\n",n,__LINE__); \
@@ -47,25 +44,25 @@ typedef struct {
 } hash2_t;
 
 
-tm_affinity_mat_t * new_affinity_mat(double **mat, double *sum_row, int order, long int nnz);
-int compute_nb_leaves_from_level(int depth,tm_topology_t *topology);
-void depth_first(tm_tree_t *comm_tree, int *proc_list,int *i);
-int  fill_tab(int **new_tab,int *tab, int n, int start, int max_val, int shift);
-long int init_mat(char *filename,int N, double **mat, double *sum_row);
-void map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
+OMPI_HIDDEN tm_affinity_mat_t * tm_new_affinity_mat(double **mat, double *sum_row, int order, long int nnz);
+OMPI_HIDDEN int tm_compute_nb_leaves_from_level(int depth,tm_topology_t *topology);
+static void depth_first(tm_tree_t *comm_tree, int *proc_list,int *i);
+OMPI_HIDDEN int  tm_fill_tab(int **new_tab,int *tab, int n, int start, int max_val, int shift);
+static long int init_mat(char *filename,int N, double **mat, double *sum_row);
+OMPI_HIDDEN void tm_map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
 		  int *sigma, int nb_processes, int **k, int nb_compute_units);
-int nb_leaves(tm_tree_t *comm_tree);
-int nb_lines(char *filename);
-void print_1D_tab(int *tab,int N);
+static int nb_leaves(tm_tree_t *comm_tree);
+static int nb_lines(char *filename);
+OMPI_HIDDEN void tm_print_1D_tab(int *tab,int N);
 tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree);
 void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
-tm_affinity_mat_t *tm_load_aff_mat(char *filename);
-void update_comm_speed(double **comm_speed,int old_size,int new_size);
+OMPI_HIDDEN tm_affinity_mat_t *tm_load_aff_mat(char *filename);
+static void update_comm_speed(double **comm_speed,int old_size,int new_size);
 tm_affinity_mat_t * tm_build_affinity_mat(double **mat, int order);
 
 
 /* compute the number of leaves of any subtree starting froma node of depth depth*/
-int compute_nb_leaves_from_level(int depth,tm_topology_t *topology)
+int tm_compute_nb_leaves_from_level(int depth,tm_topology_t *topology)
 {
   int res = 1;
 
@@ -76,13 +73,13 @@ int compute_nb_leaves_from_level(int depth,tm_topology_t *topology)
 }
 
 void tm_finalize(){
-  terminate_thread_pool();
+  tm_terminate_thread_pool();
   tm_mem_check();
 }
 
 
 
-void print_1D_tab(int *tab,int N)
+void tm_print_1D_tab(int *tab,int N)
 {
   int i;
   for (i = 0; i < N; i++) {
@@ -93,7 +90,7 @@ void print_1D_tab(int *tab,int N)
   printf("\n");
 }
 
-int nb_lines(char *filename)
+static int nb_lines(char *filename)
 {
   FILE *pf = NULL;
   char line[LINE_SIZE];
@@ -117,7 +114,7 @@ int nb_lines(char *filename)
 
 
 
-long int  init_mat(char *filename,int N, double **mat, double *sum_row){
+static inline long int  init_mat(char *filename,int N, double **mat, double *sum_row){
   FILE *pf = NULL;
   char *ptr= NULL;
   char line[LINE_SIZE];
@@ -275,7 +272,7 @@ static long int init_mat_long(char *filename,int N, double **mat, double *sum_ro
 }
 #endif
 
-tm_affinity_mat_t * new_affinity_mat(double **mat, double *sum_row, int order, long int nnz){
+tm_affinity_mat_t * tm_new_affinity_mat(double **mat, double *sum_row, int order, long int nnz){
   tm_affinity_mat_t * aff_mat;
 
   aff_mat = (tm_affinity_mat_t *) MALLOC(sizeof(tm_affinity_mat_t));
@@ -304,7 +301,7 @@ tm_affinity_mat_t * tm_build_affinity_mat(double **mat, int order){
     }
   }
 
-  return new_affinity_mat(mat, sum_row, order, nnz);
+  return tm_new_affinity_mat(mat, sum_row, order, nnz);
 }
 
 
@@ -368,7 +365,7 @@ tm_affinity_mat_t *tm_load_aff_mat(char *filename)
     if(tm_get_verbose_level() >= INFO)
     printf("Affinity matrix built from %s!\n",filename);
 
-    return new_affinity_mat(mat, sum_row, order, nnz);
+    return tm_new_affinity_mat(mat, sum_row, order, nnz);
 
 
 }
@@ -396,7 +393,7 @@ tm_affinity_mat_t *tm_load_aff_mat(char *filename)
     }*/
 /* } */
 
-void depth_first(tm_tree_t *comm_tree, int *proc_list,int *i)
+static void depth_first(tm_tree_t *comm_tree, int *proc_list,int *i)
 {
   int j;
   if(!comm_tree->child){
@@ -408,7 +405,7 @@ void depth_first(tm_tree_t *comm_tree, int *proc_list,int *i)
     depth_first(comm_tree->child[j],proc_list,i);
 }
 
-int nb_leaves(tm_tree_t *comm_tree)
+static int nb_leaves(tm_tree_t *comm_tree)
 {
   int j,n=0;
 
@@ -452,7 +449,7 @@ static void set_val(int *tab, int val, int n){
  k_i =-1 if no process is mapped on core i
 */
 
-void map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
+void tm_map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
 		  int *sigma, int nb_processes, int **k, int nb_compute_units)
 {
   int *nodes_id = NULL;
@@ -482,7 +479,7 @@ void map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
   if(k){/*if we need the k vector*/
     if(vl >= INFO)
       printf("M=%d, N=%d, BS=%d\n",M,N,block_size);
-    for( i = 0 ; i < nb_processing_units(topology) ; i++ )
+    for( i = 0 ; i < tm_nb_processing_units(topology) ; i++ )
       for(j = 0 ; j < topology->oversub_fact ; j++){
 	k[i][j] = -1;
     }
@@ -511,7 +508,7 @@ void map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
 
   if((vl >= DEBUG) && (k)){
     printf("k: ");
-    for( i = 0 ; i < nb_processing_units(topology) ; i++ ){
+    for( i = 0 ; i < tm_nb_processing_units(topology) ; i++ ){
       printf("Procesing unit %d: ",i);
       for (j = 0 ; j<topology->oversub_fact; j++){
 	if( k[i][j] == -1)
@@ -531,7 +528,7 @@ tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree)
   tm_solution_t *solution;
   int *sigma, **k;
   size_t sigma_length  = comm_tree->nb_processes;
-  size_t k_length      = nb_processing_units(topology);
+  size_t k_length      = tm_nb_processing_units(topology);
 
   solution =  (tm_solution_t *)MALLOC(sizeof(tm_solution_t));
   sigma    =  (int*)  MALLOC(sizeof(int) * sigma_length);
@@ -540,7 +537,7 @@ tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree)
     k[i] =  (int*) MALLOC(sizeof(int) * topology->oversub_fact);
   }
 
-  map_topology(topology, comm_tree, topology->nb_levels-1, sigma, sigma_length ,k, k_length);
+  tm_map_topology(topology, comm_tree, topology->nb_levels-1, sigma, sigma_length ,k, k_length);
 
   solution->sigma         = sigma;
   solution->sigma_length  = sigma_length;
@@ -553,7 +550,7 @@ tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree)
 
 
 
-void update_comm_speed(double **comm_speed,int old_size,int new_size)
+static inline void update_comm_speed(double **comm_speed,int old_size,int new_size)
 {
   double *old_tab = NULL,*new_tab= NULL;
   int i;
@@ -588,7 +585,7 @@ void update_comm_speed(double **comm_speed,int old_size,int new_size)
    copy element of tab in *new_tab from start to end and shift negativeley them
    allocates *new_tab
 */
-int  fill_tab(int **new_tab,int *tab, int n, int start, int max_val, int shift)
+int  tm_fill_tab(int **new_tab,int *tab, int n, int start, int max_val, int shift)
 {
   int *res = NULL,i,j,end;
 

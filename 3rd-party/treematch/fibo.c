@@ -28,6 +28,7 @@
 ** 
 ** The fact that you are presently reading this means that you have had
 ** knowledge of the CeCILL-B license and that you accept its terms.
+**
 */
 /************************************************************/
 /**                                                        **/
@@ -69,6 +70,8 @@
 #define memFree                     free
 #endif /* memAlloc */
 
+static FiboNode *fiboTreeConsolidate (FiboTree * const);
+
 /*********************************************/
 /*                                           */
 /* These routines deal with Fibonacci trees. */
@@ -83,7 +86,7 @@
 */
 
 int
-fiboTreeInit (
+tm_fiboTreeInit (
 FiboTree * const            treeptr,
 int                      (* cmpfptr) (const FiboNode * const, const FiboNode * const))
 {
@@ -106,7 +109,7 @@ int                      (* cmpfptr) (const FiboNode * const, const FiboNode * c
 */
 
 void
-fiboTreeExit (
+tm_fiboTreeExit (
 FiboTree * const            treeptr)
 {
   if (treeptr->degrtab != NULL)
@@ -122,7 +125,7 @@ FiboTree * const            treeptr)
 */
 
 void
-fiboTreeFree (
+tm_fiboTreeFree (
 FiboTree * const            treeptr)
 {
   treeptr->rootdat.linkdat.prevptr =              /* Link root node to itself */
@@ -138,7 +141,7 @@ FiboTree * const            treeptr)
 ** - NULL   : Fibonacci tree is empty.
 */
 
-FiboNode *
+static FiboNode *
 fiboTreeConsolidate (
 FiboTree * const            treeptr)
 {
@@ -229,7 +232,7 @@ FiboTree * const            treeptr)
 #ifndef fiboTreeMin
 
 FiboNode *
-fiboTreeMin (
+tm_fiboTreeMin (
 FiboTree * const            treeptr)
 {
   FiboNode *            bestptr;
@@ -279,7 +282,7 @@ FiboNode * const            nodeptr)
 #ifndef fiboTreeDel
 
 void
-fiboTreeDel (
+tm_fiboTreeDel (
 FiboTree * const            treeptr,
 FiboNode * const            nodeptr)
 {

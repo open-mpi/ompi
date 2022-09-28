@@ -3,7 +3,7 @@
 static CLOCK_T time_tab[MAX_CLOCK];
 static int clock_num = -1;
 
-void get_time(void)
+void tm_get_time(void)
 {
   clock_num++;
 
@@ -13,7 +13,7 @@ void get_time(void)
   CLOCK(time_tab[clock_num]);
 }
 
-double time_diff(void)
+double tm_time_diff(void)
 {
   CLOCK_T t2,t1;
 

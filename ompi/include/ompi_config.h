@@ -44,10 +44,17 @@
 #    ifndef OMPI_DECLSPEC
 #      define OMPI_DECLSPEC            __opal_attribute_visibility__("default")
 #    endif
+#    ifndef OMPI_HIDDEN
+#      define OMPI_HIDDEN              __opal_attribute_visibility__("hidden")
+#    endif
 #  else
 #    ifndef OMPI_DECLSPEC
 #      define OMPI_DECLSPEC
 #    endif
+#    ifndef OMPI_HIDDEN
+#      define OMPI_HIDDEN
+#    endif
 #  endif
+
 
 #endif
