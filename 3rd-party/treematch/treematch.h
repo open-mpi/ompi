@@ -4,6 +4,7 @@
 /* size_t definition */
 #include <stddef.h>
 #include "tm_verbose.h"
+#include "ompi_config.h"
 
 /********* TreeMatch Public Enum **********/
 
@@ -105,10 +106,10 @@ typedef struct {
 
 /************ TreeMatch Public API ************/
 /* construct topology from local one using hwloc */
-tm_topology_t* tm_get_local_topology_with_hwloc(void);
+OMPI_HIDDEN tm_topology_t* tm_get_local_topology_with_hwloc(void);
 
 /* Aletrnatively, load XML or TGT topology */
-tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_type);
+OMPI_HIDDEN tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_type);
 /*
    Alternatively, build a synthetic balanced topology.
 
@@ -136,74 +137,74 @@ tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_ty
    topology = tm_build_synthetic_topology(arity,cost,5,cn,2);
 
  */
-tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_levels, int *core_numbering, int nb_core_per_nodes);
+OMPI_HIDDEN tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_levels, int *core_numbering, int nb_core_per_nodes);
 /* load affinity matrix */
-tm_affinity_mat_t *tm_load_aff_mat(char *com_filename);
+OMPI_HIDDEN tm_affinity_mat_t *tm_load_aff_mat(char *com_filename);
 /*
    Alternativelly, build the affinity matrix from a array of array of matrix of size order by order
    For performance reason mat is not copied.
 */
-tm_affinity_mat_t * tm_build_affinity_mat(double **mat, int order);
+OMPI_HIDDEN tm_affinity_mat_t * tm_build_affinity_mat(double **mat, int order);
 /* Add constraints to toplogy
    Return 1 on success and 0  if the constari,ts id are not compatible withe nodes id */
-int tm_topology_add_binding_constraints(char *bind_filename, tm_topology_t *topology);
+OMPI_HIDDEN int tm_topology_add_binding_constraints(char *bind_filename, tm_topology_t *topology);
 /* Alternatively, set the constraints from an array.
    Return 1 on success and 0  if the constari,ts id are not compatible withe nodes id
 
    The array constraints is copied inside tm_topology_set_binding_constraints
 
 */
-int tm_topology_set_binding_constraints(int *constraints, int nb_constraints, tm_topology_t *topology);
+OMPI_HIDDEN int tm_topology_set_binding_constraints(int *constraints, int nb_constraints, tm_topology_t *topology);
 /* display arity of the topology */
-void  tm_display_arity(tm_topology_t *topology);
+OMPI_HIDDEN void  tm_display_arity(tm_topology_t *topology);
 /* display the full topology */
-void  tm_display_topology(tm_topology_t *topology);
+OMPI_HIDDEN void  tm_display_topology(tm_topology_t *topology);
 /* Optimize the topology by decomposing arities */
-void tm_optimize_topology(tm_topology_t **topology);
+OMPI_HIDDEN void tm_optimize_topology(tm_topology_t **topology);
 /* Manage oversubscribing */
-void tm_enable_oversubscribing(tm_topology_t *topology, unsigned int oversub_fact);
+OMPI_HIDDEN void tm_enable_oversubscribing(tm_topology_t *topology, unsigned int oversub_fact);
 /* core of the treematch: compute the solution tree */
-tm_tree_t *tm_build_tree_from_topology(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, double *obj_weight, double *com_speed);
+OMPI_HIDDEN tm_tree_t *tm_build_tree_from_topology(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, double *obj_weight, double *com_speed);
 /* compute the mapping according to the tree and the core numbering*/
-tm_solution_t *tm_compute_mapping(tm_topology_t *topology, tm_tree_t *comm_tree);
+OMPI_HIDDEN tm_solution_t *tm_compute_mapping(tm_topology_t *topology, tm_tree_t *comm_tree);
 /* display the solution*/
-double tm_display_solution(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_solution_t *sol, tm_metric_t metric);
+OMPI_HIDDEN double tm_display_solution(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_solution_t *sol, tm_metric_t metric);
 /* display RR, packed, MPIPP*/
-void tm_display_other_heuristics(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_metric_t metric);
+OMPI_HIDDEN void tm_display_other_heuristics(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_metric_t metric);
 /* free TM strutures*/
-void tm_free_topology(tm_topology_t *topology);
-void tm_free_tree(tm_tree_t *comm_tree);
-void tm_free_solution(tm_solution_t *sol);
-void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
+OMPI_HIDDEN void tm_free_topology(tm_topology_t *topology);
+OMPI_HIDDEN void tm_free_tree(tm_tree_t *comm_tree);
+OMPI_HIDDEN void tm_free_solution(tm_solution_t *sol);
+OMPI_HIDDEN void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
 /* manage verbosity of TM*/
 void tm_set_verbose_level(unsigned int level);
 unsigned int  tm_get_verbose_level(void);
 /* finalize treematch :check memory if necessary, and free internal variables (thread pool)*/
-void tm_finalize(void);
+OMPI_HIDDEN void tm_finalize(void);
 
 /*
 Ask for exhaustive search: may be very long
    new_val == 0 : no exhuative search
    new_val != 0 : exhuative search
 */
-void tm_set_exhaustive_search_flag(int new_val);
-int tm_get_exhaustive_search_flag(void);
+OMPI_HIDDEN void tm_set_exhaustive_search_flag(int new_val);
+OMPI_HIDDEN int tm_get_exhaustive_search_flag(void);
 
 /*
 Ask for greedy k-partitionning even if scotch is available
    new_val == 0 : no greedy k-partitionning
    new_val != 0 : greedy k-partitionning
 */
-void tm_set_greedy_flag(int new_val);
-int tm_get_greedy_flag(void);
+OMPI_HIDDEN void tm_set_greedy_flag(int new_val);
+OMPI_HIDDEN int tm_get_greedy_flag(void);
 
 
 /* Setting the maximum number of threads you want to use in parallel parts of TreeMatch */
-void tm_set_max_nb_threads(unsigned int val);
+OMPI_HIDDEN void tm_set_max_nb_threads(unsigned int val);
 
 /* managing the usage of physical vs. logical core numbering when using hwloc/xml files */
-void            tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
-tm_numbering_t  tm_get_numbering(void); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
+OMPI_HIDDEN void tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
+OMPI_HIDDEN tm_numbering_t  tm_get_numbering(void); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
 
 #include "tm_malloc.h"
 

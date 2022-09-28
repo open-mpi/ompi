@@ -1,6 +1,8 @@
 #ifndef __BUCKET_H__
 #define __BUCKET_H__
 
+#include "ompi_config.h"
+
 typedef struct{
   int i;
   int j;
@@ -28,8 +30,8 @@ typedef struct{
 
 typedef _bucket_list_t *bucket_list_t;
 
-double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t *new_tab_node, 
+OMPI_HIDDEN double tm_bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t *new_tab_node, 
 		       int arity,int M);
-int try_add_edge(tm_tree_t *tab_node, tm_tree_t *parent,int arity,int i,int j,int *nb_groups);
+OMPI_HIDDEN int tm_try_add_edge(tm_tree_t *tab_node, tm_tree_t *parent,int arity,int i,int j,int *nb_groups);
 #endif
 
