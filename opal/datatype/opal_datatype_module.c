@@ -48,8 +48,6 @@ bool opal_ddt_copy_debug = false;
 bool opal_ddt_raw_debug = false;
 int opal_ddt_verbose = -1; /* Has the datatype verbose it's own output stream */
 
-extern int opal_cuda_verbose;
-
 /* Using this macro implies that at this point _all_ information needed
  * to fill up the datatype are known.
  * We fill all the static information, the pointer to desc.desc is setup
@@ -226,16 +224,6 @@ int opal_datatype_register_params(void)
     if (0 > ret) {
         return ret;
     }
-#    if OPAL_CUDA_SUPPORT
-    /* Set different levels of verbosity in the cuda related code. */
-    ret = mca_base_var_register("opal", "opal", NULL, "cuda_verbose",
-                                "Set level of opal cuda verbosity", MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_8,
-                                MCA_BASE_VAR_SCOPE_LOCAL, &opal_cuda_verbose);
-    if (0 > ret) {
-        return ret;
-    }
-#    endif
 
 #endif /* OPAL_ENABLE_DEBUG */
 

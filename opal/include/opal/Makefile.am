@@ -29,7 +29,8 @@ headers += \
         opal/hash_string.h \
 	opal/frameworks.h \
 	opal/opal_portable_platform.h \
-	opal/opal_portable_platform_real.h
+	opal/opal_portable_platform_real.h \
+	opal/opal_cuda.h
 
 nodist_headers += \
 	opal/version.h

@@ -27,7 +27,22 @@ dnl
 dnl $HEADER$
 dnl
 
+
+# OPAL_CHECK_CUDA(prefix, [action-if-found], [action-if-not-found])
+# --------------------------------------------------------
+# check if CUDA support can be found.  sets prefix_{CPPFLAGS,
+# LDFLAGS, LIBS} as needed and runs action-if-found if there is
+# support, otherwise executes action-if-not-found
+
+#
+# Check for CUDA support
+#
 AC_DEFUN([OPAL_CHECK_CUDA],[
+OPAL_VAR_SCOPE_PUSH([cuda_save_CPPFLAGS cuda_save_LDFLAGS cuda_save_LIBS])
+
+cuda_save_CPPFLAGS="$CPPFLAGS"
+cuda_save_LDFLAGS="$LDFLAGS"
+cuda_save_LIBS="$LIBS"
 #
 # Check to see if user wants CUDA support
 #
@@ -72,12 +87,15 @@ AS_IF([test "$with_cuda" = "no" || test "x$with_cuda" = "x"],
                             opal_cuda_incdir="$with_cuda/include"
                             AC_MSG_RESULT([found ($opal_cuda_incdir/cuda.h)])])])])])
 
-dnl We cannot have CUDA support without dlopen support.  HOWEVER, at
-dnl this point in configure, we can't know whether the DL framework
-dnl has been configured or not yet (it likely hasn't, since CUDA is a
-dnl common framework, and likely configured first).  So we have to
-dnl defer this check until later (see the OPAL_CHECK_CUDA_AFTER_OPAL_DL m4
-dnl macro, below).  :-(
+AS_IF([test "$opal_check_cuda_happy" = "yes"],
+    [OAC_CHECK_PACKAGE([cuda],
+                       [$1],
+                       [cuda.h],
+                       [cuda],
+                       [cuMemFree],
+                       [opal_check_cuda_happy="yes"],
+                       [opal_check_cuda_happy="no"])],
+    [])
 
 # We require CUDA IPC support which started in CUDA 4.1. Error
 # out if the support is not there.
@@ -144,22 +162,9 @@ AM_CONDITIONAL([OPAL_cuda_gdr_support], [test "x$CUDA_VERSION_60_OR_GREATER" = "
 AC_DEFINE_UNQUOTED([OPAL_CUDA_GDR_SUPPORT],$CUDA_VERSION_60_OR_GREATER,
                    [Whether we have CUDA GDR support available])
 
+CPPFLAGS=${cuda_save_CPPFLAGS}
+LDFLAGS=${cuda_save_LDFLAGS}
+LIBS=${cuda_save_LIBS}
+OPAL_VAR_SCOPE_POP
 ])
 
-dnl
-dnl CUDA support requires DL support (it dynamically opens the CUDA
-dnl library at run time).  But we do not check for OPAL DL support
-dnl until lafter the initial OPAL_CHECK_CUDA is called.  So put the
-dnl CUDA+DL check in a separate macro that can be called after the DL MCA
-dnl framework checks in the top-level configure.ac.
-dnl
-AC_DEFUN([OPAL_CHECK_CUDA_AFTER_OPAL_DL],[
-
-    # We cannot have CUDA support without OPAL DL support.  Error out
-    # if the user wants CUDA but we do not have OPAL DL support.
-    AS_IF([test $OPAL_HAVE_DL_SUPPORT -eq 0 && \
-           test "$opal_check_cuda_happy" = "yes"],
-          [AC_MSG_WARN([--with-cuda was specified, but dlopen support is disabled.])
-           AC_MSG_WARN([You must reconfigure Open MPI with dlopen ("dl") support.])
-           AC_MSG_ERROR([Cannot continue.])])
-])
