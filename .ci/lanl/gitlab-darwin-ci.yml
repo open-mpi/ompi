@@ -109,6 +109,9 @@ build:cce:
   variables:
     SCHEDULER_PARAMETERS: "-pcrossroads-dev -t 4:00:00 -N 1 --ntasks-per-node=16"
   script:
+    - hostname
+    - module use --append /opt/cray/pe/modulefiles
+    - module avail cce
     - module load cce
     - module unload libsci
     - module unload cray-mvapich2_nogpu
@@ -264,12 +267,17 @@ test:gnu:
 test:cce:
   stage: test
   tags: [darwin-slurm-shared]
+  variables:
+    SCHEDULER_PARAMETERS: "-pcrossroads-dev -t 4:00:00 -N 1 --ntasks-per-node=16"
   dependencies:
     - build:cce
   needs: ["build:cce"]
   script:
     - pwd
     - ls
+    - hostname
+    - module use --append /opt/cray/pe/modulefiles
+    - module avail cce
     - module load cce
     - module unload libsci
     - module unload cray-mvapich2_nogpu
