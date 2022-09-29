@@ -1,4 +1,4 @@
-# Open MPI
+# Open MPI (CI tester)
 
 [The Open MPI Project](https://www.open-mpi.org/) is an open source
 implementation of the [Message Passing Interface (MPI)
