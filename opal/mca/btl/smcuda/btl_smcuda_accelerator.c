@@ -209,8 +209,8 @@ int mca_btl_smcuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         }
     }
 
-    result = opal_accelerator.memcpy_async(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                           dst, src, amount, ipc_stream, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+    result = opal_accelerator.mem_copy_async(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+                                             dst, src, amount, ipc_stream, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
         opal_output_verbose(1, mca_btl_smcuda_component.cuda_ipc_output, "smcuda: memcpy async failed: %d",
                             result);

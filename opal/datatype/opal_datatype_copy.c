@@ -58,7 +58,7 @@
 static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_t size)
 {
     int res;
-    res = opal_accelerator.memcpy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+    res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
                                   dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (OPAL_SUCCESS != res) {
         opal_output(0, "Error in accelerator memcpy");
@@ -70,8 +70,8 @@ static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_
 static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size_t size)
 {
     int res;
-    res = opal_accelerator.memmove(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                   dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+    res = opal_accelerator.mem_move(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+                                    dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (OPAL_SUCCESS != res) {
         opal_output(0, "Error in accelerator memmove");
         abort();

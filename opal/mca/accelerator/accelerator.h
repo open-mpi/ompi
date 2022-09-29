@@ -386,9 +386,9 @@ typedef struct {
     opal_accelerator_base_module_record_event_fn_t record_event;
     opal_accelerator_base_module_query_event_fn_t query_event;
 
-    opal_accelerator_base_module_memcpy_async_fn_t memcpy_async;
-    opal_accelerator_base_module_memcpy_fn_t memcpy;
-    opal_accelerator_base_module_memmove_fn_t memmove;
+    opal_accelerator_base_module_memcpy_async_fn_t mem_copy_async;
+    opal_accelerator_base_module_memcpy_fn_t mem_copy;
+    opal_accelerator_base_module_memmove_fn_t mem_move;
 
     opal_accelerator_base_module_mem_alloc_fn_t mem_alloc;
     opal_accelerator_base_module_mem_release_fn_t mem_release;
