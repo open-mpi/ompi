@@ -77,6 +77,9 @@ static void append_prefixes(char ***out, const char *in)
 
     char **tokenized;
     tokenized = opal_argv_split(in, ' ');
+    if (NULL == tokenized) {
+        return;
+    }
 
     int count = opal_argv_count(*out);
     for (int i = 0; tokenized[i] != NULL; ++i) {
