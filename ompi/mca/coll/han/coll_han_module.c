@@ -199,13 +199,6 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
                             ompi_comm_print_cid(comm), comm->c_name);
         return NULL;
     }
-    if( !ompi_group_have_remote_peers(comm->c_local_group) ) {
-        /* The group only contains local processes. Disable HAN for now */
-        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                            "coll:han:comm_query (%s/%s): comm has only local processes; disqualifying myself",
-                            ompi_comm_print_cid(comm), comm->c_name);
-        return NULL;
-    }
     /* Get the priority level attached to this module. If priority is less
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_han_component.han_priority;
@@ -238,6 +231,17 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
             }
             OBJ_RELEASE(info_str);
         }
+    }
+
+    if( !ompi_group_have_remote_peers(comm->c_local_group)
+            && INTRA_NODE != han_module->topologic_level ) {
+        /* The group only contains local processes, and this is not a
+         * intra-node subcomm we created. Disable HAN for now */
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                            "coll:han:comm_query (%s/%s): comm has only local processes; disqualifying myself",
+                            ompi_comm_print_cid(comm), comm->c_name);
+        OBJ_RELEASE(han_module);
+        return NULL;
     }
 
     han_module->super.coll_module_enable = han_module_enable;

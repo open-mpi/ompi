@@ -110,7 +110,7 @@ mca_coll_han_allreduce_intra(const void *sbuf,
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
         return comm->c_coll->coll_allreduce(sbuf, rbuf, count, dtype, op,
-                                            comm, comm->c_coll->coll_reduce_module);
+                                            comm, comm->c_coll->coll_allreduce_module);
     }
 
     ptrdiff_t extent, lb;
@@ -444,7 +444,7 @@ mca_coll_han_allreduce_intra_simple(const void *sbuf,
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
         return comm->c_coll->coll_allreduce(sbuf, rbuf, count, dtype, op,
-                                            comm, comm->c_coll->coll_reduce_module);
+                                            comm, comm->c_coll->coll_allreduce_module);
     }
 
     low_comm = han_module->sub_comm[INTRA_NODE];
