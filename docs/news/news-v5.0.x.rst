@@ -6,7 +6,7 @@ series, in reverse chronological order.
 
 Open MPI version 5.0.0rc8
 -------------------------
-:Date: 6 September 2022
+:Date: 29 September 2022
 
 .. admonition:: MPIR API has been removed
    :class: warning
@@ -45,14 +45,23 @@ Open MPI version 5.0.0rc8
   - Switched to the PRRTe v3.0 branch.
   - Many improvements and bugfixes to the one-sided ``UCX`` transport.
   - Many improvements and bugfixes to ``MPI Sessions``.
+  - MPI-4: Initial implementations of ``MPI_COMM_TYPE_HW_GUIDED`` and ``MPI_COMM_TYPE_HW_GUIDED`` added.
   - Fixes to singleton/MPI_COMM_SPAWN launching.
-  - GCC atomics were made to be the default atomic implementation, with C11
-    atomics as the fallback.
+  - Changed the mpirun command line option ``--stream-buffering`` to be an --mca option. It can now be enabled with
+    ``--mca ompi_stream_buffering X`` where X could be 0 for unbuffered, 1 for line buffered, or 2 for fully buffered.
   - Github: Automatic labeler added to label pull requests with their
     destination branch. Thanks to Joe Downs for the contribution.
-  - Fixed a deadlock in a one-sided ``RDMA`` function call. Thanks to @jotabf
-    for the fix.
+  - Fixed a deadlock in a one-sided ``RDMA`` function call. Thanks to @jotabf for the fix.
+  - Split out opal-core into two libraries. This will prevent unnecessary external dependencies from being
+    linked with mpirun and other Open MPI tools.
+  - The default atomics have been changed to be GCC, with C11 as a fallback. C11 atomics incurs sequential
+    memory ordering, which in most cases is not desired.
+  - Lots of updates to OpenMPI documentation.
+  - Fixed a bug where users could not build the ``OFI`` component as a DSO. Thanks to Moritz Kreutzer for the report.
+  - Fixed the MPI_Parrived C binding. Thanks to @jprotze for the report.
   - Configure: Fix typo in CUDA checks. Thanks to Andreas Schwab for the fix.
+  - Fixed bugs when compiling Open MPI with the --enable-script-wrapper-compilers configure option.
+    Thanks to Julien Olivain for the fix.
   - Include missing sys/stat.h in sharedfp_sm.c to fix a compile error on FreeBSD.
     Thanks to Mosè Giordano for the fix.
   - Fixed numerous typos throughout the code base. Thanks to @luzpaz for these fixes.
@@ -61,8 +70,8 @@ Open MPI version 5.0.0rc8
 
 - All other notable updates for v5.0.0:
 
-  - Updated PMIx to the ``v4.2`` branch - current hash: ``a004dbc``.
-  - Updated PRRTE to the ``v3.0`` branch - current hash: ``e88c431``.
+  - Updated PMIx to the ``v4.2`` branch - current hash: ``1f0b53f``.
+  - Updated PRRTE to the ``v3.0`` branch - current hash: ``30b3222``.
 
   - New Features:
 
