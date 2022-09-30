@@ -15,7 +15,7 @@ below.
    installation
    networking
    runtime
-   support-libraries
+   required-support-libraries
    mpi
    oshmem
    misc

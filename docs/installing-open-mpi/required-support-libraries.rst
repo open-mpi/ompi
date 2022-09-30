@@ -37,7 +37,7 @@ Open MPI requires the following support libraries with the minimum listed versio
          | support.
        * | Open MPI can use the copy of PRRTE embedded in its source code
          | tree, or compile/link against an external PRRTE installation.
-         | :ref:`See this section for details about how to specify each method <label-building-ompi-cli-options-support-libraries>`.
+         | :ref:`See this section for details about how to specify each method <label-building-ompi-cli-options-required-support-libraries>`.
 
 Since these support libraries are fundamental to Open MPI's operation
 and not universally available in all environments, they are directly
@@ -198,7 +198,7 @@ Overriding ``configure`` behavior
 If ``configure``'s default searching behavior is not sufficient for
 your environment, you can use :ref:`command line options to override
 its default behavior
-<label-building-ompi-cli-options-support-libraries>`.
+<label-building-ompi-cli-options-required-support-libraries>`.
 
 For example, if PMIx and/or PRRTE are installed such that the default
 header file and linker search paths will not find them, you can
