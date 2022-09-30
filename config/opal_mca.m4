@@ -455,18 +455,6 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                          [AS_IF([test $components_last_result -eq 1], [best_mca_component_priority=]OPAL_EVAL_ARG([MCA_$1_$2_]mca_component[_PRIORITY]))])
                    ])])
 
-    # configure components that provide their own configure script.
-    # It would be really hard to run these for "find first that
-    # works", so we don't :)
-    m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
-        [m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
-             [m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [PRIORITY], [],
-                 [MCA_CHECK_IGNORED_PRIORITY($1, $2)
-                  AS_IF([test "$3" != "0"],
-                        [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
-                                               [static_components], [dso_components],
-                                               [static_ltlibs])])])])])
-
     AS_VAR_SET_IF([OPAL_EVAL_ARG([DIRECT_$2])], [
                       AC_MSG_CHECKING([if direct-selection component exists for $2 framework])
                       direct_component_happy=no
@@ -640,74 +628,6 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     unset compile_mode
 ])
 
-
-######################################################################
-#
-# MCA_CONFIGURE_ALL_CONFIG_COMPONENTS
-#
-# configure all components in the given framework that have configure
-# scripts and should be configured according to the usual rules...
-#
-# USAGE:
-#   MCA_CONFIGURE_ALL_CONFIG_COMPONENTS(project_name,
-#                         framework_name,
-#                         all_components_variable,
-#                         static_components_variable,
-#                         dso_components_variable,
-#                         static_ltlibs_variable)
-#
-######################################################################
-AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
-    for component_path in $srcdir/$1/mca/$2/* ; do
-        component="`basename $component_path`"
-        if test -d $component_path && test -x $component_path/configure ; then
-            opal_show_subsubsubtitle "MCA component $2:$component (need to configure)"
-
-            opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: before, should_build=$8"
-            MCA_COMPONENT_BUILD_CHECK($1, $2, $component,
-                                      [should_build=1], [should_build=0])
-            MCA_COMPONENT_COMPILE_MODE($1, $2, $component, compile_mode)
-            opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: after, should_build=$should_build"
-
-            if test "$should_build" = "1" ; then
-                OPAL_CONFIG_SUBDIR([$1/mca/$2/$component],
-                                   [$opal_subdir_args],
-                                   [should_build=1], [should_build=0])
-                opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: after subdir, should_build=$should_build"
-            fi
-
-            if test "$should_build" = "1" ; then
-                # do some extra work to pass flags back from the
-                # top-level configure, the way a configure.m4
-                # component would.
-                infile="$srcdir/$1/mca/$2/$3/post_configure.sh"
-                if test -f $infile; then
-
-                    # First check for the ABORT tag
-                    line="`$GREP ABORT= $infile | cut -d= -f2-`"
-                    if test -n "$line" && test "$line" != "no"; then
-                        AC_MSG_WARN([MCA component configure script told me to abort])
-                        AC_MSG_ERROR([cannot continue])
-                    fi
-
-                    m4_foreach(flags, [LDFLAGS, LIBS],
-                        [[line="`$GREP WRAPPER_EXTRA_]flags[= $infile | cut -d= -f2-`"]
-                            eval "line=$line"
-                            if test -n "$line"; then
-                                $2[_]$3[_WRAPPER_EXTRA_]flags[="$line"]
-                            fi
-                        ])dnl
-                fi
-
-                MCA_PROCESS_COMPONENT($1, $2, $component, $3, $4, $5, $6, $compile_mode)
-            else
-                MCA_PROCESS_DEAD_COMPONENT($1, $2, $component)
-            fi
-        fi
-    done
-])
-
-
 # MCA_COMPONENT_COMPILE_MODE(project_name (1), framework_name (2),
 #                            component_name (3), compile_mode_variable (4))
 # -------------------------------------------------------------------------
@@ -716,17 +636,15 @@ AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
 # the cached value for subsequent tests.  The string is not stored in a cache
 # variable (ie .*_cv_.*) because cache variables would not be invalidated
 # based on changes to --enable-mca-dso or --enable-mca-static.
-#
-#   NOTE: component_name may not be determined until runtime....
 AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
     OAC_ASSERT_LITERAL([$1], [1])dnl
     OAC_ASSERT_LITERAL([$2], [2])dnl
+    OAC_ASSERT_LITERAL([$3], [3])dnl
 
     AS_VAR_PUSHDEF([compile_mode_cv], [$1_$2_$3_compile_mode])dnl
     AS_VAR_SET_IF([compile_mode_cv],
         [],
-	[AS_LITERAL_IF([$3],
-             [m4_ifdef([MCA_$1_$2_$3_COMPILE_MODE],
+	[m4_ifdef([MCA_$1_$2_$3_COMPILE_MODE],
                   [dnl We introduced caching of this check after setting the compile
                    dnl mode by the substitute macro was common, and there was not a
                    dnl polymorphic variable assumption in all those macros, so we use
@@ -735,8 +653,7 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
                    MCA_$1_$2_$3_COMPILE_MODE([$1], [$2], [$3], [component_compile_mode_tmp])
                    AS_VAR_COPY([compile_mode_cv], [$component_compile_mode_tmp])
                    OPAL_VAR_SCOPE_POP],
-                  [MCA_COMPONENT_COMPILE_MODE_INTERNAL([$1], [$2], [$3], [compile_mode_cv])])],
-             [MCA_COMPONENT_COMPILE_MODE_INTERNAL([$1], [$2], [$3], [compile_mode_cv])])])
+                  [MCA_COMPONENT_COMPILE_MODE_INTERNAL([$1], [$2], [$3], [compile_mode_cv])])])
     AS_VAR_COPY([$4], [compile_mode_cv])
     AS_VAR_POPDEF([compile_mode_cv])dnl
 ])
@@ -758,10 +675,10 @@ AC_DEFUN([MCA_COMPONENT_COMPILE_MODE_INTERNAL], [
     OPAL_VAR_SCOPE_PUSH([compile_mode_internal_tmp SHARED_FRAMEWORK SHARED_COMPONENT STATIC_FRAMEWORK STATIC_COMPONENT])
 
     SHARED_FRAMEWORK="$DSO_$2"
-    AS_VAR_COPY([SHARED_COMPONENT], [DSO_$2_$3])
+    SHARED_COMPONENT="$DSO_$2_$3"
 
     STATIC_FRAMEWORK="$STATIC_$2"
-    AS_VAR_COPY([STATIC_COMPONENT], [STATIC_$2_$3])
+    STATIC_COMPONENT="$STATIC_$2_$3"
 
     # Look for the most specific specifier between static/dso.  If
     # there is a tie (either neither or both specified), prefer
@@ -819,8 +736,6 @@ AC_DEFUN([OPAL_MCA_STRIP_LAFILES], [
 #---------------------------------------------------------------------
 # Final setup work for a given component.  It should be known before
 # calling that this component can build properly (and exists)
-#
-#   NOTE: component_name may not be determined until runtime....
 AC_DEFUN([MCA_PROCESS_COMPONENT],[
     AC_REQUIRE([AC_PROG_GREP])
 
@@ -893,13 +808,13 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # wishes all LDFLAGS and LIBS to be provided as wrapper flags.
     AS_IF([test "$8" = "static"],
           [AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_LDFLAGS],
-              [AS_VAR_COPY([tmp_flags], [$2_$3_WRAPPER_EXTRA_LDFLAGS])],
-              [AS_VAR_COPY([tmp_flags], [$2_$3_LDFLAGS])])
+              [tmp_flags=${$2_$3_WRAPPER_EXTRA_LDFLAGS}],
+              [tmp_flags=${$2_$3_LDFLAGS}])
            OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_ldflags], [$tmp_flags])
 
            AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_LIBS],
-              [AS_VAR_COPY([tmp_flags], [$2_$3_WRAPPER_EXTRA_LIBS])],
-              [AS_VAR_COPY([tmp_all_flags], [$2_$3_LIBS])
+              [tmp_flags=${$2_$3_WRAPPER_EXTRA_LIBS}],
+              [tmp_all_flags=${$2_$3_LIBS}
                OPAL_MCA_STRIP_LAFILES([tmp_flags], [$tmp_all_flags])])
            OPAL_FLAGS_APPEND_MOVE([mca_wrapper_extra_libs], [$tmp_flags])])
 
@@ -910,13 +825,12 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # Since a configure script component can never be used in a
     # STOP_AT_FIRST framework, we don't have to implement the else
     # clause in the literal check.
-    AS_LITERAL_IF([$3],
-        [AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""],
-           [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
-            AS_IF([test "$8" = "static" && test "$stop_at_first" = "1"],
-              [AS_IF([test "$with_devel_headers" = "yes"],
-                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
-              [AC_MSG_WARN([ignoring $2_$3_WRAPPER_EXTRA_CPPFLAGS ($$2_$3_WRAPPER_EXTRA_CPPFLAGS): component conditions not met])])])])
+    AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""],
+          [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
+           AS_IF([test "$8" = "static" && test "$stop_at_first" = "1"],
+                 [AS_IF([test "$with_devel_headers" = "yes"],
+                        [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
+                 [AC_MSG_WARN([ignoring $2_$3_WRAPPER_EXTRA_CPPFLAGS ($$2_$3_WRAPPER_EXTRA_CPPFLAGS): component conditions not met])])])
 ])
 
 
@@ -926,8 +840,6 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
 # Final setup work for a component that can not be built.  Do the
 # last minute checks to make sure the user isn't doing something
 # stupid.
-#
-#   NOTE: component_name may not be determined until runtime....
 AC_DEFUN([MCA_PROCESS_DEAD_COMPONENT],[
     AC_MSG_CHECKING([if MCA component $2:$3 can compile])
     AC_MSG_RESULT([no])
@@ -1004,7 +916,7 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
 
     # if we were explicitly disabled, don't build :)
     AS_IF([test "$DISABLE_$2" = "1"], [want_component=0])
-    AS_VAR_IF([DISABLE_$2_$3], [1], [want_component=0])
+    AS_IF([test "${DISABLE_$2_$3}" = "1"], [want_component=0])
 
     AS_IF([test "$want_component" = "1"], [$4], [$5])
 ])
