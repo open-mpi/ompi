@@ -540,7 +540,7 @@ static bool mca_rcache_accelerator_previously_freed_memory(mca_rcache_base_regis
     int res;
     opal_accelerator_buffer_id_t buf_id;
     unsigned char *dbuf = reg->base;
-    opal_accelerator.get_buffer_id(MCA_ACCELERATOR_NO_DEVICE_ID, dbuf, &buf_id);
+    res = opal_accelerator.get_buffer_id(MCA_ACCELERATOR_NO_DEVICE_ID, dbuf, &buf_id);
     if (OPAL_UNLIKELY(res != OPAL_SUCCESS)) {
         return true;
     }

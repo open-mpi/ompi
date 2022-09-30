@@ -97,8 +97,8 @@ static inline int mca_coll_cuda_check_buf(void *addr)
 static inline void *mca_coll_cuda_memcpy(void *dest, const void *src, size_t size)
 {
     int res;
-    res = opal_accelerator.memcpy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                  dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+    res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+                                    dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (res != 0) {
         opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d", res, dest, src,
                     (int) size);

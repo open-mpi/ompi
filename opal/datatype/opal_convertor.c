@@ -52,7 +52,7 @@ static void *opal_convertor_accelerator_memcpy(void *dest, const void *src, size
         return MEMCPY(dest, src, size);
     }
 
-    res = opal_accelerator.memcpy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+    res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
                                   dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (OPAL_SUCCESS != res) {
         opal_output(0, "Error in accelerator memcpy");
