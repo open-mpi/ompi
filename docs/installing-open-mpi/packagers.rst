@@ -32,7 +32,7 @@ ensure that your package is correctly relying on the
 independently-built and installed versions.
 
 :ref:`See this section
-<label-building-ompi-cli-options-support-libraries>` for more
+<label-building-ompi-cli-options-required-support-libraries>` for more
 information about the required support library ``--with-FOO`` command
 line options.
 
