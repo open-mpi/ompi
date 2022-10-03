@@ -124,6 +124,7 @@ int opal_common_ofi_export_memory_monitor(void)
     OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
 
     if (NULL != opal_common_ofi_cache_fid) {
+        OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
         return 0;
     }
 
