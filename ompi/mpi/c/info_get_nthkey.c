@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,24 +58,23 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
     int err;
 
     /*
-     * 1. Check if info is a valid handle
+     * 1. Check if info is a valid handle 
      * 2. Check if there are at least (n+1) elements
      * 3. If so, give the nth defined key
      */
+    if (NULL == info || MPI_INFO_NULL == info) {
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
+    }
+
     if (MPI_PARAM_CHECK) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info ||
-            ompi_info_is_freed(info)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO,
-                                           FUNC_NAME);
+        if (ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }
         if (0 > n) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                           FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
         if (NULL == key) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
-                                           FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO_KEY, FUNC_NAME);
         }
     }
 
@@ -84,8 +85,7 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
     err = ompi_info_get_nkeys(info, &nkeys);
     OMPI_ERRHANDLER_NOHANDLE_CHECK(err, err, FUNC_NAME);
     if (n > (nkeys - 1)) {
-        return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
-                                       FUNC_NAME);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE (MPI_ERR_INFO_KEY, FUNC_NAME);
     }
 
     /* Everything seems alright. Call the back end key copy */
@@ -96,5 +96,6 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
         opal_string_copy(key, key_str->string, MPI_MAX_INFO_KEY);
         OBJ_RELEASE(key_str);
     }
+
     OMPI_ERRHANDLER_NOHANDLE_RETURN(err, err, FUNC_NAME);
 }

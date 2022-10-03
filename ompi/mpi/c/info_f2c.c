@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -65,9 +65,12 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
         return MPI_INFO_ENV;
     }
 
-    if (MPI_PARAM_CHECK) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    }
+    /* 
+     * if the application has not created an info object yet
+     * then the size of the ompi_info_f_to_c_table is zero
+     * so this check can be done even if an info object has not
+     * previously been created.
+     */
 
     if (info_index < 0 ||
         info_index >=
@@ -75,5 +78,10 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
         return NULL;
     }
 
+    /*
+     * if we get here, then the info support infrastructure has been initialized
+     * either via a prior call to MPI_Info_create or one of the MPI initialization
+     * methods.
+     */
     return (MPI_Info)opal_pointer_array_get_item(&ompi_info_f_to_c_table, info_index);
 }
