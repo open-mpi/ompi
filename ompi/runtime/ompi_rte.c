@@ -1088,7 +1088,7 @@ void ompi_rte_breakpoint(char *name)
     u32ptr = &u32;
     pname.jobid = opal_process_info.my_name.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "PMIX_DEBUG_STOP_IN_APP",
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_DEBUG_STOP_IN_APP,
                                    &pname, &u32ptr, PMIX_PROC_RANK);
     if (PMIX_SUCCESS != rc) {
         /* if not, just return */
