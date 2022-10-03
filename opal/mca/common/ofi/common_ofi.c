@@ -238,9 +238,6 @@ int opal_common_ofi_close(void)
     if (-1 != opal_common_ofi.output) {
         opal_output_close(opal_common_ofi.output);
         opal_common_ofi.output = -1;
-        if (OPAL_SUCCESS != ret) {
-            return ret;
-        }
     }
 
     return OPAL_SUCCESS;
