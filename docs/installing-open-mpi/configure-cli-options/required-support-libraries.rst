@@ -1,21 +1,21 @@
-.. _label-building-ompi-cli-options-support-libraries:
+.. _label-building-ompi-cli-options-required-support-libraries:
 
-Support libraries
-^^^^^^^^^^^^^^^^^
+CLI Options for required support libraries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:ref:`See this section <label-install-required-support-libraries>` for
-information about the CLI options for the support libraries described
-in this section.
-
-The following are command line options for the support libraries that
-are used by Open MPI that can be used with ``configure``:
+The following ``configure`` command line options are for Open MPI's
+:ref:`required support libraries
+<label-install-required-support-libraries>`
 
 * ``--with-hwloc[=VALUE]``:
 * ``--with-libevent[=VALUE]``:
 * ``--with-pmix[=VALUE]``:
 * ``--with-prrte[=VALUE]``: These four options specify where to find
-  the headers and libraries for the Hwloc, Libevent, PMIx, and PRRTE
-  libraries, respectively.  The following ``VALUE``\s are permitted:
+  the headers and libraries for the `Hwloc
+  <https://www.open-mpi.org/projects/hwloc/>`_, `Libevent
+  <https://libevent.org/>`_, `PMIx <https://openpmix.github.io/>`_,
+  and `PRRTE <https://github.com/openpmix/prrte>`_ libraries,
+  respectively.  The following ``VALUE``\s are permitted:
 
   * ``external``: Use an external installation (rely on default
     compiler and linker paths to find it).  ``configure`` will abort
