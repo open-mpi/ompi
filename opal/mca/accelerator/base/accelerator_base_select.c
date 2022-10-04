@@ -47,6 +47,7 @@ static void multiple_accelerators_found_help_message(opal_list_t *components);
 int opal_accelerator_base_select(void)
 {
     mca_base_component_list_item_t *cli = NULL;
+    mca_base_component_t *skip = NULL;
     opal_accelerator_base_component_t *component = NULL;
     opal_accelerator_base_module_t *module = NULL;
     accelerator_list_item_t *ali = NULL, *ali2 = NULL;
@@ -125,6 +126,7 @@ int opal_accelerator_base_select(void)
     } else if (2 >= initialized_list.opal_list_length) {
         ali = (accelerator_list_item_t *) opal_list_get_first(&initialized_list);
         accelerator_base_selected_component = *ali->accelerator_component;
+        skip = (mca_base_component_t *) ali->accelerator_component;
         opal_accelerator = *ali->accelerator_module;
     } else {
         multiple_accelerators_found_help_message(&initialized_list);
@@ -137,9 +139,7 @@ int opal_accelerator_base_select(void)
 
     /* This base function closes, unloads, and removes from the available list all
      * unselected components. The available list will contain only the selected component. */
-    mca_base_components_close(opal_accelerator_base_framework.framework_output,
-                              &opal_accelerator_base_framework.framework_components,
-                              (mca_base_component_t *) &accelerator_base_selected_component);
+    mca_base_framework_components_close(&opal_accelerator_base_framework, skip);
 
     /* Cleanup Lists */
     for (item = opal_list_remove_first(&ordered_list); NULL != item; item = opal_list_remove_first(&ordered_list)) {
