@@ -1052,6 +1052,7 @@ static void ompi_instance_refresh_pmix_psets (const char *key)
                                                  ompi_instance_get_num_psets_complete,
                                                  (void*)&lock))) {
        opal_mutex_unlock (&instance_lock);
+       return;
     }
 
     OPAL_PMIX_WAIT_THREAD(&lock);
