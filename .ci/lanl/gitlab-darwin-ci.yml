@@ -14,7 +14,7 @@ build:intel:
     - module load intel/2022.0.1
     - rm .gitmodules
     - cp $GITSUBMODULEPATCH .gitmodules
-    - git submodule update --init
+    - git submodule update --init --recursive
     - ./autogen.pl
     - ./configure CC=icx FC=ifx CXX=icpx --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
@@ -39,7 +39,7 @@ build:ibm:
     - module load ibm
     - rm .gitmodules
     - cp $GITSUBMODULEPATCH .gitmodules
-    - git submodule update --init
+    - git submodule update --init --recursive
     - ./autogen.pl
     - ./configure CC=xlc FC=xlf CXX=xlc++ --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
@@ -64,7 +64,7 @@ build:amd:
     - module load aocc/3.0.0
     - rm .gitmodules
     - cp $GITSUBMODULEPATCH .gitmodules
-    - git submodule update --init
+    - git submodule update --init --recursive
     - ./autogen.pl
     - ./configure CC=clang FC=flang CXX=clang++ --prefix=$PWD/install_test --with-libevent=internal LIBS="-lucm -lucs"
     - make -j 8 install
@@ -87,7 +87,7 @@ build:gnu:
     - module load gcc
     - rm .gitmodules
     - cp $GITSUBMODULEPATCH .gitmodules
-    - git submodule update --init
+    - git submodule update --init --recursive
     - ./autogen.pl
     - ./configure --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
@@ -117,7 +117,7 @@ build:cce:
     - module unload cray-mvapich2_nogpu
     - rm .gitmodules
     - cp $GITSUBMODULEPATCH .gitmodules
-    - git submodule update --init
+    - git submodule update --init --recursive
     - ./autogen.pl
     - ./configure CC=cc FTN=ftn CXX=CC --with-ucx=no --prefix=$PWD/install_test --with-libevent=internal
     - make -j 8 install
