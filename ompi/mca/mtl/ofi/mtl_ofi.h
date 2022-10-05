@@ -417,6 +417,26 @@ ompi_mtl_ofi_send_callback(struct fi_cq_tagged_entry *wc,
     return OMPI_SUCCESS;
 }
 
+
+/*
+ * special send callback for excid send operation.
+ * Since the send excid operation cannot block
+ * waiting for completion of the send operation,
+ * we have to free the internal message buffer allocated
+ * as part of the excid operation here as well as the
+ * request itself.
+ */
+__opal_attribute_always_inline__ static inline int
+ompi_mtl_ofi_send_excid_callback(struct fi_cq_tagged_entry *wc,
+                           ompi_mtl_ofi_request_t *ofi_req)
+{
+    assert(ofi_req->completion_count > 0);
+    free(ofi_req->buffer);
+    ofi_req->completion_count--; /* no one's waiting on this */
+    free(ofi_req);
+    return OMPI_SUCCESS;
+}
+
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_send_error_callback(struct fi_cq_err_entry *error,
                                  ompi_mtl_ofi_request_t *ofi_req)
@@ -668,6 +688,13 @@ ompi_mtl_ofi_ssend_recv(ompi_mtl_ofi_request_t *ack_req,
     return OMPI_SUCCESS;
 }
 
+/*
+ * this routine is invoked in the case of communicators which are not using a
+ * global cid, i.e. those created using MPI_Comm_create_from_group/
+ * MPI_Intercomm_create_from_groups in order to exchange the local cid used
+ * by the sender for this supplied communicator.  This function is only invoked
+ * for the first message sent to a given receiver.
+ */
 static int
 ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
                   struct ompi_communicator_t *comm,
@@ -676,14 +703,26 @@ ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
                   bool is_send)
 {
     ssize_t ret = OMPI_SUCCESS;
-    ompi_mtl_ofi_request_t *ofi_req = malloc(sizeof(ompi_mtl_ofi_request_t));
+    ompi_mtl_ofi_request_t *ofi_req = NULL;
     int ctxt_id = 0;
-    mca_mtl_ofi_cid_hdr_t *start = malloc(sizeof(mca_mtl_ofi_cid_hdr_t));
+    mca_mtl_ofi_cid_hdr_t *start = NULL;
     ompi_proc_t *ompi_proc = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     fi_addr_t sep_peer_fiaddr = 0;
     mca_mtl_comm_t *mtl_comm;
     
+    ofi_req = (ompi_mtl_ofi_request_t *)malloc(sizeof(ompi_mtl_ofi_request_t));
+    if (NULL == ofi_req) {
+        ret =  OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
+    }
+
+    start = (mca_mtl_ofi_cid_hdr_t *)malloc(sizeof(mca_mtl_ofi_cid_hdr_t));
+    if (NULL == start) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
+    }
+
     mtl_comm = comm->c_mtl_comm;
 
     ctxt_id = 0;
@@ -692,8 +731,9 @@ ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
     /**
      * Create a send request, start it and wait until it completes.
      */
-    ofi_req->event_callback = ompi_mtl_ofi_send_callback;
+    ofi_req->event_callback = ompi_mtl_ofi_send_excid_callback;
     ofi_req->error_callback = ompi_mtl_ofi_send_error_callback;
+    ofi_req->buffer = start;
 
     ompi_proc = ompi_comm_peer_lookup(comm, dest);
     endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
@@ -719,11 +759,9 @@ ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
         opal_show_help("help-mtl-ofi.txt",
             "message too big", false,
             length, endpoint->mtl_ofi_module->max_msg_size);
-        return OMPI_ERROR;
+        ret = OMPI_ERROR;
+        goto fn_exit;
     }
-
-    if (OPAL_UNLIKELY(ofi_req->status.MPI_ERROR != OMPI_SUCCESS))
-        return ofi_req->status.MPI_ERROR;
 
     if (ompi_mtl_ofi.max_inject_size >= length) {
         if (ofi_cq_data) {
@@ -743,8 +781,6 @@ ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
                                ofi_cq_data ? "fi_injectdata failed"
                                : "fi_inject failed");
 
-            ofi_req->status.MPI_ERROR = ompi_mtl_ofi_get_error(ret);
-            return ofi_req->status.MPI_ERROR;
         }
     } else {
         ofi_req->completion_count = 1;
@@ -768,11 +804,20 @@ ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
             MTL_OFI_LOG_FI_ERR(ret,
                                ofi_cq_data ? "fi_tsenddata failed"
                                : "fi_tsend failed");
-            ofi_req->status.MPI_ERROR = ompi_mtl_ofi_get_error(ret);
         }
     }
 
-    return ofi_req->status.MPI_ERROR;
+    ret = ompi_mtl_ofi_get_error(ret);
+    ofi_req->status.MPI_ERROR = ret;
+
+fn_exit:
+
+    if ((OMPI_SUCCESS != ret) || (ofi_req->completion_count == 0)) {
+        if (NULL != ofi_req) free(ofi_req);
+        if (NULL != start) free(start);
+    }
+
+    return ret;
 }
 
 __opal_attribute_always_inline__ static inline int
