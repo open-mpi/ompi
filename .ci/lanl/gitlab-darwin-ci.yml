@@ -20,7 +20,7 @@ build:intel:
     - make -j 8 install
     - make check
     - export PATH=$PWD/install_test/bin:$PATH
-    - cd examples 
+    - cd examples
     - make
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
@@ -93,7 +93,7 @@ build:gnu:
     - make -j 8 install
     - make check
     - export PATH=$PWD/install_test/bin:$PATH
-    - cd examples 
+    - cd examples
     - make
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
@@ -123,7 +123,7 @@ build:cce:
     - make -j 8 install
     - make check
     - export PATH=$PWD/install_test/bin:$PATH
-    - cd examples»
+    - cd examples
     - make
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
