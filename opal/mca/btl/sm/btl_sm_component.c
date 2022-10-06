@@ -40,7 +40,6 @@
 #include "opal/mca/btl/sm/btl_sm_fbox.h"
 #include "opal/mca/btl/sm/btl_sm_fifo.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
-#include "opal/mca/smsc/base/base.h"
 #include "opal/mca/smsc/smsc.h"
 
 #ifdef HAVE_SYS_STAT_H
@@ -332,8 +331,8 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
     /* no fast boxes allocated initially */
     component->num_fbox_in_endpoints = 0;
 
-    rc = mca_smsc_base_select();
-    if (OPAL_SUCCESS == rc) {
+    bool have_smsc = (NULL != mca_smsc);
+    if (have_smsc) {
         mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_RDMA;
         mca_btl_sm.super.btl_get = mca_btl_sm_get;
         mca_btl_sm.super.btl_put = mca_btl_sm_put;
@@ -355,11 +354,11 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
             } else {
                 BTL_ERROR(("single-copy component requires registration but could not provide the "
                            "registration handle size"));
-                rc = (int) handle_size;
+                have_smsc = false;
             }
         }
     }
-    if (OPAL_SUCCESS != rc) {
+    if (!have_smsc) {
         mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
         mca_btl_sm.super.btl_get = NULL;
         mca_btl_sm.super.btl_put = NULL;
