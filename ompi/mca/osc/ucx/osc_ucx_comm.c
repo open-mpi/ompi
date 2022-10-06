@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2001-2017 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
- * Copyright (c) 2019-2020 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2019-2022 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * $COPYRIGHT$
@@ -255,7 +255,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
                                        int target, bool lock_required) {
     uint64_t remote_state_addr = (module->state_addrs)[target] + OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET;
     size_t remote_state_len = sizeof(uint64_t) + sizeof(ompi_osc_dynamic_win_info_t) * OMPI_OSC_UCX_ATTACH_MAX;
-    char *temp_buf = calloc(remote_state_len, 1);
+    char *temp_buf;
     ompi_osc_dynamic_win_info_t *temp_dynamic_wins;
     int contain = 0;
     uint64_t win_count;
@@ -268,11 +268,12 @@ static inline int get_dynamic_win_info(uint64_t remote_addr, ompi_osc_ucx_module
          * Therefore, force lock is needed. Remote process protects its window
          * attach/detach operations with an acc-lock */
         ret = ompi_osc_state_lock(module, target, &lock_acquired, true);
-        if (ret != OMPI_SUCCESS) {
+        if (OMPI_SUCCESS != ret) {
             return ret;
         }
     }
 
+    temp_buf = calloc(remote_state_len, 1);
     ret = opal_common_ucx_wpmem_putget(module->state_mem, OPAL_COMMON_UCX_GET, target,
                                        (void *)((intptr_t)temp_buf),
                                        remote_state_len, remote_state_addr);
