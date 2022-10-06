@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +40,14 @@ static const char FUNC_NAME[] = "MPI_Error_class";
 
 int MPI_Error_class(int errorcode, int *errorclass)
 {
+    int ret;
+
+    /* make sure the infrastructure is initialized */
+    ret = ompi_mpi_instance_retain ();
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
+    }
+
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_errcode_is_invalid(errorcode)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
@@ -47,5 +57,7 @@ int MPI_Error_class(int errorcode, int *errorclass)
 
 
     *errorclass = ompi_mpi_errcode_get_class(errorcode);
+    ompi_mpi_instance_release ();
+
     return MPI_SUCCESS;
 }
