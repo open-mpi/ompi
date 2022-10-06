@@ -214,6 +214,12 @@ int mca_pml_ucx_open(void)
         return OMPI_ERROR;
     }
 
+    if ((major_version == 1) && (minor_version < 9)) {
+        /* show warning due to issue #8549 */
+        PML_UCX_WARN("UCX version %u.%u.%u is too old, please install 1.9.x or "
+                     "newer", major_version, minor_version, release_number);
+    }
+
     /* Read options */
     status = ucp_config_read("MPI", NULL, &config);
     if (UCS_OK != status) {
