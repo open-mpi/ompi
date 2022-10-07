@@ -13,6 +13,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +44,15 @@ static const char FUNC_NAME[] = "MPI_Error_string";
 
 int MPI_Error_string(int errorcode, char *string, int *resultlen)
 {
+    int ret;
     char *tmpstring;
+
+    /* make sure the infrastructure is initialized */
+    ret = ompi_mpi_instance_retain ();
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret,
+                                               FUNC_NAME);
+    }
 
     if ( MPI_PARAM_CHECK ) {
         if ( ompi_mpi_errcode_is_invalid(errorcode)) {
@@ -54,6 +64,8 @@ int MPI_Error_string(int errorcode, char *string, int *resultlen)
     tmpstring = ompi_mpi_errnum_get_string (errorcode);
     opal_string_copy(string, tmpstring, MPI_MAX_ERROR_STRING);
     *resultlen = (int)strlen(string);
+
+    ompi_mpi_instance_release();
 
     return MPI_SUCCESS;
 }
