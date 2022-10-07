@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2019 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2022 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -814,6 +814,7 @@ static int ompi_comm_split_type_get_part (ompi_group_t *group, const int split_t
                            true,
                            ompi_comm_split_type_to_str(split_type),
                            split_type);
+            free (ranks);
             return OMPI_ERR_BAD_PARAM;
         }
 
