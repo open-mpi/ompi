@@ -1007,6 +1007,7 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
     ofi_req->length = length;
     ofi_req->status.MPI_ERROR = OMPI_SUCCESS;
     ofi_req->completion_count = 1;
+    ofi_req->convertor = convertor;
 
     if (OPAL_UNLIKELY(length > endpoint->mtl_ofi_module->max_msg_size)) {
         opal_show_help("help-mtl-ofi.txt",
