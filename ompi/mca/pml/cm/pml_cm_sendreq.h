@@ -239,22 +239,14 @@ do {                                                                    \
             ompi_mpi_local_convertor->flags;                            \
         (req_send)->req_base.req_convertor.master     =                 \
             ompi_mpi_local_convertor->master;                           \
-        (req_send)->req_base.req_convertor.local_size =                 \
-            count * datatype->super.size;                               \
-        (req_send)->req_base.req_convertor.pBaseBuf   =                 \
-            (unsigned char*)buf + datatype->super.true_lb;              \
-        (req_send)->req_base.req_convertor.count      = count;          \
-        (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
-        if (opal_built_with_cuda_support) {                             \
-            /* Switches off device buffer  detection if                 \
-             MTL set MCA_MTL_BASE_FLAG_ACCELERATOR_INIT_DISABLE during init */     \
-            MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);   \
-            (req_send)->req_base.req_convertor.flags |= flags;              \
-            /* Sets CONVERTOR_ACCELERATOR flag if device buffer */                   \
-            opal_convertor_prepare_for_send(                            \
-                &req_send->req_base.req_convertor,                      \
-                &datatype->super, count, buf );                         \
-        }                                                               \
+        /* Switches off device buffer  detection if                 \
+         MTL set MCA_MTL_BASE_FLAG_ACCELERATOR_INIT_DISABLE during init */     \
+        MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);   \
+        (req_send)->req_base.req_convertor.flags |= flags;              \
+        /* Sets CONVERTOR_ACCELERATOR flag if device buffer */                   \
+        opal_convertor_prepare_for_send(                            \
+            &req_send->req_base.req_convertor,                      \
+            &datatype->super, count, (unsigned char*)buf + datatype->super.true_lb); \
     } else {                                                            \
         MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);   \
         opal_convertor_copy_and_prepare_for_send(                       \
