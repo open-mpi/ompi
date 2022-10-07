@@ -1047,6 +1047,30 @@ sub patch_autotools_output {
       *)';
     $c =~ s/$search_string/$replace_string/g;
 
+    # Fix ifort support on OSX
+    # see https://ntq1982.github.io/files/20200621.html
+    $search_string = 'case \$cc_basename in
+      nagfor\*\)
+        # NAG Fortran compiler
+        lt_prog_compiler_wl_FC=\'-Wl,-Wl,,\'
+        lt_prog_compiler_pic_FC=\'-PIC\'
+        lt_prog_compiler_static_FC=\'-Bstatic\'
+        ;;';
+    $replace_string = "case \$cc_basename in
+      icc* | ifort*)
+        #Intel Fortran compiler
+        lt_prog_compiler_wl_FC='-Wl,'
+        lt_prog_compiler_pic_FC='-fno-common -PIC'
+        lt_prog_compiler_static_FC=''
+        ;;
+      nagfor*)
+        # NAG Fortran compiler
+        lt_prog_compiler_wl_FC='-Wl,-Wl,,'
+        lt_prog_compiler_pic_FC='-PIC'
+        lt_prog_compiler_static_FC='-Bstatic'
+        ;;";
+    $c =~ s/$search_string/$replace_string/g;
+
     # Only write out verbose statements and a new configure if the
     # configure content actually changed
     return
