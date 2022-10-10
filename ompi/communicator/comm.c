@@ -64,19 +64,24 @@ struct ompi_comm_split_type_hw_guided_t {
 };
 typedef struct ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_t;
 
+/*
+ * The ompi_comm_split_unguided function uses this array to determine the next
+ * topology to test for a MPI_COMM_TYPE_HW_UNGUIDED communicator split. Therefore,
+ * the order in this array must be from largest topology class to smallest.
+ */
 static const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_support[] = {
-    {.info_value = "mpi_shared_memory", .split_type = MPI_COMM_TYPE_SHARED},
-    {.info_value = "hwthread", .split_type = OMPI_COMM_TYPE_HWTHREAD},
-    {.info_value = "core",     .split_type = OMPI_COMM_TYPE_CORE},
-    {.info_value = "l1cache",  .split_type = OMPI_COMM_TYPE_L1CACHE},
-    {.info_value = "l2cache",  .split_type = OMPI_COMM_TYPE_L2CACHE},
-    {.info_value = "l3cache",  .split_type = OMPI_COMM_TYPE_L3CACHE},
-    {.info_value = "socket",   .split_type = OMPI_COMM_TYPE_SOCKET},
-    {.info_value = "numanode", .split_type = OMPI_COMM_TYPE_NUMA},
-    {.info_value = "board",    .split_type = OMPI_COMM_TYPE_BOARD},
-    {.info_value = "host",     .split_type = OMPI_COMM_TYPE_HOST},
-    {.info_value = "cu",       .split_type = OMPI_COMM_TYPE_CU},
     {.info_value = "cluster",  .split_type = OMPI_COMM_TYPE_CLUSTER},
+    {.info_value = "cu",       .split_type = OMPI_COMM_TYPE_CU},
+    {.info_value = "host",     .split_type = OMPI_COMM_TYPE_HOST},
+    {.info_value = "mpi_shared_memory", .split_type = MPI_COMM_TYPE_SHARED},
+    {.info_value = "board",    .split_type = OMPI_COMM_TYPE_BOARD},
+    {.info_value = "numanode", .split_type = OMPI_COMM_TYPE_NUMA},
+    {.info_value = "socket",   .split_type = OMPI_COMM_TYPE_SOCKET},
+    {.info_value = "l3cache",  .split_type = OMPI_COMM_TYPE_L3CACHE},
+    {.info_value = "l2cache",  .split_type = OMPI_COMM_TYPE_L2CACHE},
+    {.info_value = "l1cache",  .split_type = OMPI_COMM_TYPE_L1CACHE},
+    {.info_value = "core",     .split_type = OMPI_COMM_TYPE_CORE},
+    {.info_value = "hwthread", .split_type = OMPI_COMM_TYPE_HWTHREAD},
     {.info_value = NULL},
 };
 
@@ -882,13 +887,268 @@ static int ompi_comm_split_verify (ompi_communicator_t *comm, int split_type, in
     return OMPI_SUCCESS;
 }
 
+/**
+ * ompi_comm_split_type_core: Perform common processing for a MPI_Comm_type_split
+ *                            function call.
+ *
+ * comm(in) i            : input communicator
+ * global_split_type(in) : Split type defined by all ranks in the communicator
+ * local_split_type(in)  : Split type defined by this rank in the communicator
+ *                         (might be MPI_UNDEFINED)
+ * key(in)               : original key from the user
+ * need_split            : If a split is needed to separate ranks supplying
+ *                         MPI_UNDEFINED from others
+ * no_reorder(in)        : Did all of the ranks specify the same key (optimization)
+ * no_undefined(in)      : None of the ranks specified MPI_UNDEFINED (optimization)
+ * info(out)             : info guiding the split operation
+ * newcomm(out)          : Pointer to the newly created communicator, or pointer to MPI_COMM_NULL
+ *                         if no communicator created.
+ */
+static int ompi_comm_split_type_core(ompi_communicator_t *comm,
+                                     int global_split_type, int local_split_type,
+                                     int key, bool need_split, bool no_reorder,
+                                     bool no_undefined, opal_info_t *info,
+                                     ompi_communicator_t **newcomm)
+{
+    int *lranks = NULL, *rranks = NULL;
+    ompi_communicator_t *newcomp = MPI_COMM_NULL;
+    int my_size, my_rsize = 0, mode;
+    int rc;
+    int inter = OMPI_COMM_IS_INTER(comm);
+
+    /* Perform the rest of the processing for a communicator split.
+     *
+     * Step 1: Build potential communicator groups. If any ranks will not be part of
+     * the ultimate communicator we will drop them later. This saves doing an extra
+     * allgather on the whole communicator. By using ompi_comm_split() later only
+     * if needed we 1) optimized the common case (no MPI_UNDEFINED and no reorder),
+     * and 2) limit the allgather to a smaller set of peers in the uncommon case. */
+    /* --------------------------------------------------------- */
+
+    /* allowed splitting types:
+       CLUSTER
+       CU
+       HOST
+       BOARD
+       NODE
+       NUMA
+       SOCKET
+       L3CACHE
+       L2CACHE
+       L1CACHE
+       CORE
+       HWTHREAD
+       Even though HWTHREAD/CORE etc. is overkill they are here for consistency.
+       They will most likely return a communicator which is equal to MPI_COMM_SELF
+       Unless oversubscribing.
+    */
+
+    /* how many ranks are potentially participating and on my node? */
+    rc = ompi_comm_split_type_get_part (comm->c_local_group, global_split_type, &lranks, &my_size);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        return rc;
+    }
+
+    /* Step 2: determine all the information for the remote group */
+    /* --------------------------------------------------------- */
+    if (inter) {
+        rc = ompi_comm_split_type_get_part (comm->c_remote_group, global_split_type, &rranks, &my_rsize);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            free (lranks);
+            return rc;
+        }
+    }
+
+    /* set the CID allgather mode to the appropriate one for the communicator */
+    mode = inter ? OMPI_COMM_CID_INTER : OMPI_COMM_CID_INTRA;
+
+    /* Step 3: set up the communicator                           */
+    /* --------------------------------------------------------- */
+    /* Create the communicator finally */
+
+    rc = ompi_comm_set (&newcomp, comm, my_size, lranks, my_rsize,
+                        rranks, NULL, comm->error_handler, NULL, NULL, 0);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+       goto exit;
+    }
+
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        goto exit;
+    }
+
+    ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_LAZY_BARRIER);
+    ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_ACTIVE_POLL);
+    if (info) {
+        opal_infosubscribe_change_info(&newcomp->super, info);
+    }
+
+    /* Activate the communicator and init coll-component */
+    rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        goto exit;
+    }
+
+    /* Step 4: Check if we need to remove or reorder ranks in the communicator */
+    if (!(no_reorder && no_undefined)) {
+        rc = ompi_comm_split_verify (newcomp, local_split_type, key, &need_split);
+
+        if (inter) {
+            /* verify that no local ranks need to be removed or reordered */
+            rc = ompi_comm_split_verify (newcomp->c_local_comm, local_split_type, key,
+                                         &need_split);
+        }
+    }
+
+    if (!need_split) {
+
+        /* common case. no reordering and no MPI_UNDEFINED */
+        *newcomm = newcomp;
+
+        /* Set name for debugging purposes */
+        snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMM %s SPLIT_TYPE FROM %s",
+        ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
+        goto exit;
+    }
+
+    /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
+    opal_info_remove_unreferenced(newcomp->super.s_info);
+
+    /* TODO: there probably is better way to handle this case without throwing away the
+     * intermediate communicator. */
+    rc = ompi_comm_split (newcomp, local_split_type, key, newcomm, false);
+    /* get rid of the intermediate communicator */
+    ompi_comm_free (&newcomp);
+
+ exit:
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc && MPI_COMM_NULL != newcomp)) {
+        ompi_comm_free (&newcomp);
+        *newcomm = MPI_COMM_NULL;
+    }
+
+    free (lranks);
+    free (rranks);
+
+    return rc;
+}
+
+/**
+ * ompi_comm_split_unguided: Process an MPI_Comm_split_type function call where the
+ *                           split is performed at the next lower topology level where
+ *                           the new communicator would contain fewer ranks than the
+ *                           input communicator.
+ *
+ * comm(in)         : Input communicator
+ * split_type(in)   : Communicator split type for this task, may be MPI_UNDEFINED
+ * key(in)          : Original key from the user
+ * need_split(in)   : If a split is needed to separate ranks supplying MPI_UNDEFINED
+ *                    from others
+ * no_reorder(in)   : Did all of the ranks specify the same key (optimization)
+ * no_undefined(in) : None of the ranks specified MPI_UNDEFINED (optimization)
+ * info(out)        : Info object to update with selected topology class
+ * newcomm(out)     : Pointer to newly created communicator, or pointer to
+ *                    MPI_COMM_NULL if no communicator generated.
+ */
+static int ompi_comm_split_unguided(ompi_communicator_t *comm, int split_type, int key,
+                                    bool need_split, bool no_reorder,
+                                    bool no_undefined, struct opal_info_t *info,
+                                    ompi_communicator_t** newcomm)
+{
+    int i, rc;
+    struct opal_info_t *split_info = NULL;
+    int new_size, original_size;
+    ompi_communicator_t *unguided_comm = NULL;
+
+    if (1 == ompi_comm_size(comm)) {
+        /* Communicator cannot be split any smaller */
+        *newcomm = MPI_COMM_NULL;
+        return OMPI_SUCCESS;
+    }
+
+    /*
+     * Split out the MPI_UNDEFINED
+     */
+    rc = ompi_comm_split(comm,
+                         MPI_UNDEFINED == split_type ? MPI_UNDEFINED : 0,
+                         key,
+                         &unguided_comm, false);
+    if (OMPI_SUCCESS != rc) {
+        *newcomm = MPI_COMM_NULL;
+        return rc;
+    }
+    if (MPI_UNDEFINED == split_type) {
+        ompi_comm_free(&unguided_comm);
+        *newcomm = MPI_COMM_NULL;
+        return OMPI_SUCCESS;
+    }
+
+    /*
+     * Attempt to split the communicator based on topology class by iteratively
+     * calling ompi_comm_split_type specifying the split type as
+     * MPI_COMM_TYPE_HW_GUIDED using the next lower topology class until a
+     * split results in a smaller size communicator than the input communicator.
+     * The search starts with OMPI_COMM_TYPE_CU since that is the highest possible
+     * topology class where the communicator size can be smaller than MPI_COMM_WORLD.
+     */
+    original_size = ompi_comm_size(unguided_comm);
+    split_info = OBJ_NEW(opal_info_t);
+    i = 1;
+    while (NULL != ompi_comm_split_type_hw_guided_support[i].info_value) {
+        /* MPI_COMM_TYPE_HW_GUIDED splits require mpi_hw_resource_type to be set */
+        opal_info_set(split_info, "mpi_hw_resource_type",
+                      ompi_comm_split_type_hw_guided_support[i].info_value);
+
+        rc = ompi_comm_split_type_core(unguided_comm,
+                                       ompi_comm_split_type_hw_guided_support[i].split_type,
+                                       ompi_comm_split_type_hw_guided_support[i].split_type,
+                                       key, need_split, no_reorder, no_undefined,
+                                       split_info, newcomm);
+        if (OMPI_SUCCESS != rc) {
+            break;
+        }
+
+        // Everyone else will get a new communicator.
+        // Check the size to see if we need to iterate again.
+        new_size = ompi_comm_size(*newcomm);
+        if (new_size < original_size) {
+            /* If a valid info object was passed, set the selected topology */
+            if (NULL != info) {
+                opal_info_set(info, "mpi_hw_resource_type", 
+                              ompi_comm_split_type_hw_guided_support[i].info_value);
+            }
+            ompi_comm_free(&unguided_comm);
+            OBJ_RELEASE(split_info);
+            return OMPI_SUCCESS;
+        }
+
+        // Free the new communicator, and prepare for the next iteration.
+        ompi_comm_free(newcomm);
+        i = i + 1;
+    }
+
+    ompi_comm_free(&unguided_comm);
+    OBJ_RELEASE(split_info);
+    *newcomm = MPI_COMM_NULL;
+    return rc;
+}
+
+/*
+ * ompi_comm_split_type: Performs a communicator split. This function performs initial
+ *                       processing to set up a  MPI_COMM_TYPE_HW_GUIDED split and
+ *                       validation of input parameters.
+ * comm(in)              : Input communicator
+ * split_type(in)        : Split type to be performed by this rank, may be MPI_UNDEFINED
+ * key(in)               : Original key from the user
+ * info(in/out)          : Info guiding the split operation
+ * newcomm(out)          : Pointer to the newly created communicator, or pointer to MPI_COMM_NULL
+ *                         if no communicator created.
+ */                         
 int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
                           opal_info_t *info, ompi_communicator_t **newcomm)
 {
     bool need_split = false, no_reorder = false, no_undefined = false;
-    ompi_communicator_t *newcomp = MPI_COMM_NULL;
-    int my_size, my_rsize = 0, mode, inter;
-    int *lranks = NULL, *rranks = NULL;
+    int inter;
     int global_split_type, global_orig_split_type, ok[2], tmp[6];
     int rc;
     int orig_split_type = split_type;
@@ -1011,131 +1271,16 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         return OMPI_SUCCESS;
     }
 
-    /* TODO: Make this better...
-     *
-     * See Example 7.4 in the MPI 4.0 standard for example usage.
-     *
-     * Stage 0: Recognized, but not implemented.
-     * Stage 1: Do better than that
-     */
     if (MPI_COMM_TYPE_HW_UNGUIDED == global_orig_split_type) {
-        *newcomm = MPI_COMM_NULL;
-        return OMPI_SUCCESS;
+        /* Handle MPI_COMM_TYPE_HW_UNGUIDED communicator split. */
+        return ompi_comm_split_unguided( comm, split_type,
+                                         key, need_split, no_reorder,
+                                         no_undefined, info, newcomm );
+    } else {
+        return ompi_comm_split_type_core( comm, global_split_type, split_type,
+                                          key, need_split, no_reorder,
+                                          no_undefined, info, newcomm);
     }
-
-    /* Step 2: Build potential communicator groups. If any ranks will not be part of
-     * the ultimate communicator we will drop them later. This saves doing an extra
-     * allgather on the whole communicator. By using ompi_comm_split() later only
-     * if needed we 1) optimized the common case (no MPI_UNDEFINED and no reorder),
-     * and 2) limit the allgather to a smaller set of peers in the uncommon case. */
-    /* --------------------------------------------------------- */
-
-    /* allowed splitting types:
-       CLUSTER
-       CU
-       HOST
-       BOARD
-       NODE
-       NUMA
-       SOCKET
-       L3CACHE
-       L2CACHE
-       L1CACHE
-       CORE
-       HWTHREAD
-       Even though HWTHREAD/CORE etc. is overkill they are here for consistency.
-       They will most likely return a communicator which is equal to MPI_COMM_SELF
-       Unless oversubscribing.
-    */
-
-    /* how many ranks are potentially participating and on my node? */
-    rc = ompi_comm_split_type_get_part (comm->c_local_group, global_split_type, &lranks, &my_size);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        return rc;
-    }
-
-    /* Step 3: determine all the information for the remote group */
-    /* --------------------------------------------------------- */
-    if (inter) {
-        rc = ompi_comm_split_type_get_part (comm->c_remote_group, global_split_type, &rranks, &my_rsize);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-            free (lranks);
-            return rc;
-        }
-    }
-
-    /* set the CID allgather mode to the appropriate one for the communicator */
-    mode = inter ? OMPI_COMM_CID_INTER : OMPI_COMM_CID_INTRA;
-
-    /* Step 4: set up the communicator                           */
-    /* --------------------------------------------------------- */
-    /* Create the communicator finally */
-
-    do {
-        rc = ompi_comm_set (&newcomp, comm, my_size, lranks, my_rsize,
-                            rranks, NULL, comm->error_handler, NULL, NULL, 0);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-            break;
-        }
-
-        /* Determine context id. It is identical to f_2_c_handle */
-        rc = ompi_comm_nextcid (newcomp, comm, NULL, NULL, NULL, false, mode);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-            break;
-        }
-
-        ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_LAZY_BARRIER);
-        ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_ACTIVE_POLL);
-        if (info) {
-            opal_infosubscribe_change_info(&newcomp->super, info);
-        }
-
-        /* Activate the communicator and init coll-component */
-        rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-            break;
-        }
-
-        /* Step 5: Check if we need to remove or reorder ranks in the communicator */
-        if (!(no_reorder && no_undefined)) {
-            rc = ompi_comm_split_verify (newcomp, split_type, key, &need_split);
-
-            if (inter) {
-                /* verify that no local ranks need to be removed or reordered */
-                rc = ompi_comm_split_verify (newcomp->c_local_comm, split_type, key, &need_split);
-            }
-        }
-
-        if (!need_split) {
-
-            /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
-            opal_info_remove_unreferenced(newcomp->super.s_info);
-
-            /* common case. no reordering and no MPI_UNDEFINED */
-            *newcomm = newcomp;
-
-            /* Set name for debugging purposes */
-            snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMM %s SPLIT_TYPE FROM %s",
-		     ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
-            break;
-        }
-
-        /* TODO: there probably is better way to handle this case without throwing away the
-         * intermediate communicator. */
-        rc = ompi_comm_split (newcomp, split_type, key, newcomm, false);
-        /* get rid of the intermediate communicator */
-        ompi_comm_free (&newcomp);
-    } while (0);
-
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc && MPI_COMM_NULL != newcomp)) {
-        ompi_comm_free (&newcomp);
-        *newcomm = MPI_COMM_NULL;
-    }
-
-    free (lranks);
-    free (rranks);
-
-    return rc;
 }
 
 /**********************************************************************/
