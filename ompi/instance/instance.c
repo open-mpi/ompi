@@ -498,6 +498,10 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
 
     /* Select which MPI components to use */
 
+    if (OPAL_SUCCESS != (ret = mca_smsc_base_select())) {
+        return ompi_instance_print_error ("mca_smsc_base_select() failed", ret);
+    }
+
     if (OMPI_SUCCESS != (ret = mca_pml_base_select (OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple))) {
         return ompi_instance_print_error ("mca_pml_base_select() failed", ret);
     }
