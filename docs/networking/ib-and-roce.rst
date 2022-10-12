@@ -24,7 +24,7 @@ communication library which supports multiple networks, including
 RoCE, InfiniBand, uGNI, TCP, shared memory, and others. UCX
 mixes-and-matches transports and protocols which are available on the
 system to provide optimal performance. It also has built-in support
-for GPU transports (with CUDA and RoCM providers) which lets
+for GPU transports (with CUDA and ROCm providers) which lets
 RDMA-capable transports access the GPU memory directly.
 
 /////////////////////////////////////////////////////////////////////////
