@@ -126,12 +126,14 @@ comm_method_string(MPI_Comm comm, int rank, int *comm_mode) {
     else {
         /* Determine how much memory is needed to store UCX transport info */
         char *s = UCX_TAG;
-        name_length = strlen(s);
+        /* Allocate storage to store UCX transport info, accounting for
+         * trailing '\0' in UCX_TAG and ',' and ';' delimiting each transport string
+         * then build the info string */
+        name_length = strlen(s) + 1;
         for (i = 0; i < transports->count; i++) {
             name_length = name_length + strlen(transports->entries[i].transport_name) +
                                         strlen(transports->entries[i].device_name) + 2;
         }
-        /* Allocate storage to store UCX transport info then build the info string */
         string = malloc(name_length);
         if (!string) {
             return NULL;
