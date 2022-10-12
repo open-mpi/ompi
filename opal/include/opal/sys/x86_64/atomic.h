@@ -208,7 +208,7 @@ static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i
     return ret;
 }
 
-static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i)
+static inline int64_t opal_atomic_sub_fetch_64(opal_atomic_int64_t *v, int64_t i)
 {
     return opal_atomic_sub_fetch_64(v, i) - i;
 }
@@ -231,7 +231,7 @@ static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i
             do {                                                                                   \
                 oldval = *addr;                                                                    \
                 newval = oldval operation value;                                                   \
-            } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval, newval);           \
+            } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval, newval));          \
                                                                                                    \
             return newval;                                                                         \
         }
@@ -244,7 +244,7 @@ OPAL_ATOMIC_DEFINE_OP(int64_t, 64, &, and)
 OPAL_ATOMIC_DEFINE_OP(int64_t, 64, |, or)
 OPAL_ATOMIC_DEFINE_OP(int64_t, 64, ^, xor)
 
-#include "opal/sys/atomic_math_minmax_impl.h"
-#include "opal/sys/atomic_math_size_t_impl.h"
+#include "opal/sys/atomic_impl_minmax_math.h"
+#include "opal/sys/atomic_impl_size_t_math.h"
 
 #endif /* ! OPAL_SYS_ARCH_ATOMIC_H */
