@@ -14,7 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2022 Nanook Consulting.  All rights reserved.
  * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  */
@@ -1074,7 +1074,6 @@ void ompi_rte_breakpoint(char *name)
     char *evar;
     int rc, code = PMIX_DEBUGGER_RELEASE;
     pmix_info_t info[2];
-    uint32_t u32, *u32ptr;
     opal_process_name_t pname;
 
     if (NULL != name
@@ -1085,18 +1084,12 @@ void ompi_rte_breakpoint(char *name)
     }
 
     /* check PMIx to see if we are under a debugger */
-    u32ptr = &u32;
     pname.jobid = opal_process_info.my_name.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_DEBUG_STOP_IN_APP,
-                                   &pname, &u32ptr, PMIX_PROC_RANK);
+                                   &pname, NULL, PMIX_BOOL);
     if (PMIX_SUCCESS != rc) {
         /* if not, just return */
-        return;
-    }
-    /* are we included? */
-    if (!PMIX_CHECK_RANK(u32, opal_process_info.myprocid.rank)) {
-        /* no - ignore it */
         return;
     }
 
@@ -1105,7 +1098,7 @@ void ompi_rte_breakpoint(char *name)
     PMIx_Register_event_handler(&code, 1, &directive, 1, _release_fn, NULL, NULL);
     PMIX_INFO_DESTRUCT(&directive);
 
-    /* notify the host that we are waiting */
+    /* notify the host that we are waiting in MPI_Init */
     PMIX_INFO_LOAD(&info[0], PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
     PMIX_INFO_LOAD(&info[1], PMIX_BREAKPOINT, "mpi-init", PMIX_STRING);
     PMIx_Notify_event(PMIX_READY_FOR_DEBUG,
