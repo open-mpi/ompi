@@ -48,184 +48,74 @@
         }                                          \
     } while (_res == 0);
 
+#define SPML_BASE_TEST_CASE(_type, _shmem_type, _addr, _value, _cmp, _out_value) \
+    case _shmem_type: \
+        { \
+            _type typed_value = *(const _type*)_value; \
+            const _type *typed_addr = (const _type*)_addr; \
+            SPML_BASE_DO_CMP((*_out_value), typed_addr , _cmp, typed_value); \
+        } \
+        break;
+
 /**
  * Check on a variable given in addr to see it is not equal to value.
  */
 int mca_spml_base_test(void* addr, int cmp, void* value, int datatype, int *out_value)
 {
-    volatile int *int_addr;
-    volatile long *long_addr;
-    volatile short *short_addr;
-    volatile long long *longlong_addr;
-    volatile int32_t *int32_addr;
-    volatile int64_t *int64_addr;
-
-    int int_value;
-    long long_value;
-    short short_value;
-    long long longlong_value;
-    int32_t int32_value;
-    int64_t int64_value;
-
-    ompi_fortran_integer_t *fint_addr, fint_value;
-    ompi_fortran_integer4_t *fint4_addr, fint4_value;
-    ompi_fortran_integer8_t *fint8_addr, fint8_value;
-
     switch (datatype) {
-
-    /* Int */
-    case SHMEM_INT:
-        int_value = *(int*) value;
-        int_addr = (int*) addr;
-        SPML_BASE_DO_CMP((*out_value), int_addr, cmp, int_value);
-        break;
-
-        /* Short */
-    case SHMEM_SHORT:
-        short_value = *(short*) value;
-        short_addr = (short*) addr;
-        SPML_BASE_DO_CMP((*out_value), short_addr, cmp, short_value);
-        break;
-
-        /* Long */
-    case SHMEM_LONG:
-        long_value = *(long*) value;
-        long_addr = (long*) addr;
-        SPML_BASE_DO_CMP((*out_value), long_addr, cmp, long_value);
-        break;
-
-        /* Long-Long */
-    case SHMEM_LLONG:
-        longlong_value = *(long long*) value;
-        longlong_addr = (long long*) addr;
-        SPML_BASE_DO_CMP((*out_value), longlong_addr, cmp, longlong_value);
-        break;
-
-       /* Int32_t */
-    case SHMEM_INT32_T:
-        int32_value = *(int32_t*) value;
-        int32_addr = (int32_t*) addr;
-        SPML_BASE_DO_CMP((*out_value), int32_addr, cmp, int32_value);
-        break;
-
-       /* Int64_t */
-    case SHMEM_INT64_T:
-        int64_value = *(int64_t*) value;
-        int64_addr = (int64_t*) addr;
-        SPML_BASE_DO_CMP((*out_value), int64_addr, cmp, int64_value);
-        break;
-
-        /*C equivalent of Fortran integer type */
-    case SHMEM_FINT:
-        fint_value = *(ompi_fortran_integer_t *) value;
-        fint_addr = (ompi_fortran_integer_t *) addr;
-        SPML_BASE_DO_CMP((*out_value), fint_addr, cmp, fint_value);
-        break;
-
-        /*C equivalent of Fortran int4 type*/
-    case SHMEM_FINT4:
-        fint4_value = *(ompi_fortran_integer4_t *) value;
-        fint4_addr = (ompi_fortran_integer4_t *) addr;
-        SPML_BASE_DO_CMP((*out_value), fint4_addr, cmp, fint4_value);
-        break;
-
-        /*C equivalent of Fortran int8 type*/
-    case SHMEM_FINT8:
-        fint8_value = *(ompi_fortran_integer8_t *) value;
-        fint8_addr = (ompi_fortran_integer8_t *) addr;
-        SPML_BASE_DO_CMP((*out_value), fint8_addr, cmp, fint8_value);
-        break;
+        SPML_BASE_TEST_CASE(int, SHMEM_INT, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(unsigned int, SHMEM_UINT, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(long, SHMEM_LONG, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(unsigned long, SHMEM_ULONG, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(short, SHMEM_SHORT, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(unsigned short, SHMEM_USHORT, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(long long, SHMEM_LLONG, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(unsigned long long, SHMEM_ULLONG, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(int32_t, SHMEM_INT32_T, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(uint32_t, SHMEM_UINT32_T, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(int64_t, SHMEM_INT64_T, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(uint64_t, SHMEM_UINT64_T, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(size_t, SHMEM_SIZE_T, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(ptrdiff_t, SHMEM_PTRDIFF_T, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(ompi_fortran_integer_t, SHMEM_FINT, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(ompi_fortran_integer4_t, SHMEM_FINT4, addr, value, cmp, out_value);
+        SPML_BASE_TEST_CASE(ompi_fortran_integer8_t, SHMEM_FINT8, addr, value, cmp, out_value);
     }
 
     return OSHMEM_SUCCESS;
 }
 
+#define SPML_BASE_WAIT_CASE(_type, _shmem_type, _addr, _value, _cmp, _res) \
+    case _shmem_type: \
+        { \
+            _type typed_value = *(const _type*)_value; \
+            const _type *typed_addr = (const _type*)_addr; \
+            SPML_BASE_DO_WAIT(_res, typed_addr, _cmp, typed_value); \
+        } \
+        break;
+
 int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
 {
-    volatile int *int_addr;
-    volatile long *long_addr;
-    volatile short *short_addr;
-    volatile long long *longlong_addr;
-    volatile int32_t *int32_addr;
-    volatile int64_t *int64_addr;
-
-    int int_value;
-    long long_value;
-    short short_value;
-    long long longlong_value;
-    int32_t int32_value;
-    int64_t int64_value;
-
-    ompi_fortran_integer_t *fint_addr, fint_value;
-    ompi_fortran_integer4_t *fint4_addr, fint4_value;
-    ompi_fortran_integer8_t *fint8_addr, fint8_value;
-
     int res = 0;
 
     switch (datatype) {
-
-    /* Int */
-    case SHMEM_INT:
-        int_value = *(int*) value;
-        int_addr = (int*) addr;
-        SPML_BASE_DO_WAIT(res, int_addr, cmp, int_value);
-        break;
-
-        /* Short */
-    case SHMEM_SHORT:
-        short_value = *(short*) value;
-        short_addr = (short*) addr;
-        SPML_BASE_DO_WAIT(res, short_addr, cmp, short_value);
-        break;
-
-        /* Long */
-    case SHMEM_LONG:
-        long_value = *(long*) value;
-        long_addr = (long*) addr;
-        SPML_BASE_DO_WAIT(res, long_addr, cmp, long_value);
-        break;
-
-        /* Long-Long */
-    case SHMEM_LLONG:
-        longlong_value = *(long long*) value;
-        longlong_addr = (long long*) addr;
-        SPML_BASE_DO_WAIT(res, longlong_addr, cmp, longlong_value);
-        break;
-
-       /* Int32_t */
-    case SHMEM_INT32_T:
-        int32_value = *(int32_t*) value;
-        int32_addr = (int32_t*) addr;
-        SPML_BASE_DO_WAIT(res, int32_addr, cmp, int32_value);
-        break;
-
-       /* Int64_t */
-    case SHMEM_INT64_T:
-        int64_value = *(int64_t*) value;
-        int64_addr = (int64_t*) addr;
-        SPML_BASE_DO_WAIT(res, int64_addr, cmp, int64_value);
-        break;
-
-        /*C equivalent of Fortran integer type */
-    case SHMEM_FINT:
-        fint_value = *(ompi_fortran_integer_t *) value;
-        fint_addr = (ompi_fortran_integer_t *) addr;
-        SPML_BASE_DO_WAIT(res, fint_addr, cmp, fint_value);
-        break;
-
-        /*C equivalent of Fortran int4 type*/
-    case SHMEM_FINT4:
-        fint4_value = *(ompi_fortran_integer4_t *) value;
-        fint4_addr = (ompi_fortran_integer4_t *) addr;
-        SPML_BASE_DO_WAIT(res, fint4_addr, cmp, fint4_value);
-        break;
-
-        /*C equivalent of Fortran int8 type*/
-    case SHMEM_FINT8:
-        fint8_value = *(ompi_fortran_integer8_t *) value;
-        fint8_addr = (ompi_fortran_integer8_t *) addr;
-        SPML_BASE_DO_WAIT(res, fint8_addr, cmp, fint8_value);
-        break;
+        SPML_BASE_WAIT_CASE(int, SHMEM_INT, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(unsigned int, SHMEM_UINT, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(long, SHMEM_LONG, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(unsigned long, SHMEM_ULONG, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(short, SHMEM_SHORT, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(unsigned short, SHMEM_USHORT, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(long long, SHMEM_LLONG, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(unsigned long long, SHMEM_ULLONG, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(int32_t, SHMEM_INT32_T, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(uint32_t, SHMEM_UINT32_T, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(int64_t, SHMEM_INT64_T, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(uint64_t, SHMEM_UINT64_T, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(size_t, SHMEM_SIZE_T, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(ptrdiff_t, SHMEM_PTRDIFF_T, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(ompi_fortran_integer_t, SHMEM_FINT, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(ompi_fortran_integer4_t, SHMEM_FINT4, addr, value, cmp, res);
+        SPML_BASE_WAIT_CASE(ompi_fortran_integer8_t, SHMEM_FINT8, addr, value, cmp, res);
     }
 
     return OSHMEM_SUCCESS;
