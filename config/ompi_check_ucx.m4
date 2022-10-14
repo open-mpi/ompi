@@ -74,8 +74,15 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                              [ompi_check_ucx_cv_have_version_1_8=yes])])
            AS_IF([test "${ompi_check_ucx_cv_have_version_1_8}" = "yes"],
                  [AC_MSG_WARN([UCX support skipped because version 1.8.x was found, which has a known catastrophic issue.])
-                  AC_MSG_WARN([Please upgrade to UCX version 1.9 or higher.])
                   ompi_check_ucx_happy=no])])
+           AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
+#include <ucp/api/ucp_version.h>
+                             ]], [[
+#if (UCP_API_MAJOR < 1) || ((UCP_API_MAJOR == 1) && (UCP_API_MINOR < 9))
+#error "Version too low"
+#endif
+                             ]])],
+                             [], [AC_MSG_WARN([UCX version is too old, please upgrade to 1.9 or higher.])])
 
     AS_IF([test "$ompi_check_ucx_happy" = yes],
           [AC_CHECK_DECLS([ucp_tag_send_nbr],
