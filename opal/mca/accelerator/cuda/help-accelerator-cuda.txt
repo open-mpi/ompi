@@ -1,7 +1,9 @@
 # -*- text -*-
 #
 # Copyright (c) 2011-2015 NVIDIA.  All rights reserved.
-# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,6 +39,13 @@ ensure that there is a CUDA context prior to calling MPI_Init.
 NOTE: You can turn off this warning by setting the MCA parameter
       mpi_common_cuda_warning to 0.
 #
+[cuCtxGetDevice failed]
+WARNING: The call to cuCtxGetDevice() failed.
+  cuCtxGetDevice return value:   %d
+
+NOTE: You can turn off this warning by setting the MCA parameter
+      mpi_common_cuda_warning to 0.
+#
 [cuMemHostRegister during init failed]
 The call to cuMemHostRegister(%p, %d, 0) failed.
   Host:  %s
@@ -48,6 +57,11 @@ The call to cuMemHostRegister(%p, %d, 0) failed.
   Host:  %s
   cuMemHostRegister return value:  %d
   Registration cache:  %s
+#
+[cuMemHostUnregister failed]
+The call to cuMemHostRegister(%p) failed.
+  Host:  %s
+  cuMemHostUnregister return value:  %d
 #
 [cuIpcGetMemHandle failed]
 The call to cuIpcGetMemHandle failed. This means the GPU RDMA protocol
@@ -124,6 +138,11 @@ cause the program to abort.
   cuEventQuery return value:   %d
 Check the cuda.h file for what the return value means.
 #
+[cuEventSynchronize failed]
+The call to cuEventSynchronize failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  cuEventSynchronize return value:     %d
+#
 [cuIpcGetEventHandle failed]
 The call to cuIpcGetEventHandle failed. This is a unrecoverable error and will
 cause the program to abort.
@@ -154,6 +173,12 @@ cause the program to abort.
   Hostname:                      %s
   cuStreamCreate return value:   %d
 Check the cuda.h file for what the return vale means.
+#
+[cuStreamDestroy failed]
+The call to cuStreamDestroy failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  cuStreamDestroy return value:         %d
+Check the cuda.h file for what the return value means.
 #
 [dlopen disabled]
 Open MPI was compiled without dynamic library support (e.g., with the
@@ -204,6 +229,33 @@ The call to cuMemcpy failed. This is highly unusual and should
 not happen.  Please report this error to the Open MPI developers.
   Hostname:                  %s
   cuMemcpy return value:     %d
+Check the cuda.h file for what the return value means.
+#
+[cuMemcpy2D failed]
+The call to cuMemcpy2D failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  Hostname:                  %s
+  cuMemcpy2D return value:   %d
+Check the cuda.h file for what the return value means.
+#
+[cuMemAlloc failed]
+The call to cuMemAlloc failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  Hostname:                  %s
+  cuMemAlloc return value:   %d
+Check the cuda.h file for what the return value means.
+#
+[cuMemFree failed]
+The call to cuMemFree failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  Hostname:                  %s
+  cuMemFree return value:    %d
+Check the cuda.h file for what the return value means.
+#
+[cuDeviceCanAccessPeer failed]
+The call to cuDeviceCanAccessPeer failed.
+  Hostname:                              %s
+  cuDeviceCanAccessPeer return value:    %d
 Check the cuda.h file for what the return value means.
 #
 [No memory]

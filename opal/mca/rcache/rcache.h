@@ -28,6 +28,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/threads/mutex.h"
+#include "opal/mca/accelerator/accelerator.h"
 
 /* forward-declaration of rcache module structure */
 struct mca_rcache_base_module_t;
@@ -40,10 +41,10 @@ enum {
     MCA_RCACHE_FLAGS_PERSIST = 0x0002,
     /** registation requires strong ordering (disables relaxed ordering) */
     MCA_RCACHE_FLAGS_SO_MEM = 0x0004,
-    /** address range is cuda buffer */
-    MCA_RCACHE_FLAGS_CUDA_GPU_MEM = 0x0008,
-    /** register with common cuda */
-    MCA_RCACHE_FLAGS_CUDA_REGISTER_MEM = 0x0010,
+    /** address range is accelerator buffer */
+    MCA_RCACHE_FLAGS_ACCELERATOR_MEM = 0x0008,
+    /** register with accelerator framework */
+    MCA_RCACHE_FLAGS_ACCELERATOR_REGISTER_MEM = 0x0010,
     /** invalid registration (no valid for passing to rcache register) */
     MCA_RCACHE_FLAGS_INVALID = 0x0080,
     /** reserved for rcache module */
@@ -88,7 +89,7 @@ struct mca_rcache_base_registration_t {
     unsigned char *base;
     /** bound of registered region */
     unsigned char *bound;
-    /** artifact of old mpool/rcache architecture. used by cuda code */
+    /** artifact of old mpool/rcache architecture. */
     unsigned char *alloc_base;
     /** number of outstanding references */
     opal_atomic_int32_t ref_count;
@@ -96,10 +97,8 @@ struct mca_rcache_base_registration_t {
     opal_atomic_uint32_t flags;
     /** internal rcache context */
     void *rcache_context;
-#if OPAL_CUDA_GDR_SUPPORT
-    /** CUDA gpu buffer identifier */
-    unsigned long long gpu_bufID;
-#endif /* OPAL_CUDA_GDR_SUPPORT */
+    /** Accelerator buffer identifier */
+    opal_accelerator_buffer_id_t gpu_bufID;
     /** registration access flags */
     int32_t access_flags;
     unsigned char padding[64];

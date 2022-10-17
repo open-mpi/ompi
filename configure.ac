@@ -996,20 +996,6 @@ AC_CACHE_SAVE
 
 opal_show_title "System-specific tests"
 
-OPAL_CHECK_CUDA
-##################################
-# ROCm support
-##################################
-OPAL_CHECK_ROCM([opal_rocm],
-	        [opal_rocm_happy="yes"],
-	        [opal_rocm_happy="no"])
-OPAL_SUMMARY_ADD([Miscellaneous], [ROCm support], [], [$opal_rocm_happy])
-
-AS_IF([test "$OPAL_CUDA_SUPPORT" = "1" && test "$OPAL_ROCM_SUPPORT" = "1"],
-          [AC_MSG_WARN([Cannot support both CUDA and ROCm.])
-           AC_MSG_WARN([You must reconfigure Open MPI choosing either CUDA or ROCm .])
-           AC_MSG_ERROR([Cannot continue.])])
-
 ##################################
 OPAL_CHECK_OS_FLAVORS
 
@@ -1244,20 +1230,6 @@ fi
 
 # checkpoint results
 AC_CACHE_SAVE
-
-##################################
-# CUDA: part two
-##################################
-
-# This is somewhat gross to have a configure check for a common MCA
-# component outside of the normal MCA checks, but this check must come
-# after the opal DL MCA checks have done.  Someday this could perhaps
-# be done better by having some kind of "run this check at the end of
-# all other MCA checks" hook...?
-
-OPAL_CHECK_CUDA_AFTER_OPAL_DL
-
-OPAL_CHECK_ROCM_AFTER_OPAL_DL
 
 ##################################
 # MPI Extended Interfaces

@@ -42,6 +42,7 @@
 #include "opal/include/opal_config.h"
 
 #include "opal/datatype/opal_datatype.h"
+#include "opal/mca/accelerator/base/base.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -79,9 +80,6 @@
 #include "opal/util/stacktrace.h"
 #include "opal/util/sys_limits.h"
 #include "opal/util/timings.h"
-#if OPAL_ROCM_SUPPORT
-#include "opal/rocm/common_rocm_prototypes.h"
-#endif
 
 const char opal_version_string[] = OPAL_IDENT_STRING;
 
@@ -177,11 +175,6 @@ int opal_init(int *pargc, char ***pargv)
 
     OPAL_TIMING_ENV_NEXT(otmng, "opal_init_psm");
 
-#if OPAL_ROCM_SUPPORT
-    /* register params for opal/rocm. This is temporarily done here. */
-    mca_common_rocm_register_mca_variables();
-#endif
-
     if (OPAL_SUCCESS != (ret = opal_net_init())) {
         return opal_init_error("opal_net_init", ret);
     }
@@ -199,6 +192,15 @@ int opal_init(int *pargc, char ***pargv)
     if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         return opal_init_error("opal_init framework open", ret);
     }
+
+    /* Intitialize Accelerator framework
+     * The datatype convertor code has a dependency on the accelerator framework
+     * being initialized. */
+    ret = mca_base_framework_open(&opal_accelerator_base_framework, 0);
+    if (OPAL_SUCCESS == ret && OPAL_SUCCESS != (ret = opal_accelerator_base_select())) {
+        return opal_init_error("opal_accelerator_base_select", ret);
+    }
+    opal_finalize_register_cleanup(accelerator_base_selected_component.accelerator_finalize);
 
     /* initialize the datatype engine */
     if (OPAL_SUCCESS != (ret = opal_datatype_init())) {

@@ -18,7 +18,6 @@
 
 #include "ompi/op/op.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/cuda/common_cuda.h"
 
 /*
  *	scan
@@ -40,23 +39,29 @@ int mca_coll_cuda_scan(const void *sbuf, void *rbuf, int count,
     int rc;
 
     bufsize = opal_datatype_span(&dtype->super, count, &gap);
-
-    if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *)sbuf, NULL))) {
+    rc = mca_coll_cuda_check_buf((void *)sbuf);
+    if (rc < 0) {
+        return rc;
+    }
+    if ((MPI_IN_PLACE != sbuf) && (rc > 0)) {
         sbuf1 = (char*)malloc(bufsize);
         if (NULL == sbuf1) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        opal_cuda_memcpy_sync(sbuf1, sbuf, bufsize);
+        mca_coll_cuda_memcpy(sbuf1, sbuf, bufsize);
         sbuf = sbuf1 - gap;
     }
-
-    if (opal_cuda_check_bufs(rbuf, NULL)) {
+    rc = mca_coll_cuda_check_buf(rbuf);
+    if (rc < 0) {
+        return rc;
+    }
+    if (rc > 0) {
         rbuf1 = (char*)malloc(bufsize);
         if (NULL == rbuf1) {
             if (NULL != sbuf1) free(sbuf1);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        opal_cuda_memcpy_sync(rbuf1, rbuf, bufsize);
+        mca_coll_cuda_memcpy(rbuf1, rbuf, bufsize);
         rbuf2 = rbuf; /* save away original buffer */
         rbuf = rbuf1 - gap;
     }
@@ -67,7 +72,7 @@ int mca_coll_cuda_scan(const void *sbuf, void *rbuf, int count,
     }
     if (NULL != rbuf1) {
         rbuf = rbuf2;
-        opal_cuda_memcpy_sync(rbuf, rbuf1, bufsize);
+        mca_coll_cuda_memcpy(rbuf, rbuf1, bufsize);
         free(rbuf1);
     }
     return rc;

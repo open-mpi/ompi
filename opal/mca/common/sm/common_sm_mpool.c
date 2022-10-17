@@ -25,7 +25,6 @@
 #include "opal_config.h"
 #include "common_sm_mpool.h"
 #include "opal/mca/allocator/base/base.h"
-#include "opal/cuda/common_cuda.h"
 #include "opal/mca/common/sm/common_sm.h"
 #include "opal/util/printf.h"
 #include <string.h>

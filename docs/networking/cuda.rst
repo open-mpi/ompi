@@ -38,15 +38,32 @@ Open MPI offers two flavors of CUDA support:
       shell$ ./configure --prefix=/path/to/ucx-cuda-install --with-cuda=/usr/local/cuda --with-gdrcopy=/usr
 
       # Configure Open MPI this way
-      shell$ ./configure --with-cuda=/usr/local/cuda --with-ucx=/path/to/ucx-cuda-install <other configure params>
+      shell$ ./configure --with-cuda=/usr/local/cuda --with-cuda-libdir=/usr/local/cuda/lib64/stubs/ --with-ucx=/path/to/ucx-cuda-install <other configure params>
 
 #. Via internal Open MPI CUDA support
 
 Regardless of which flavor of CUDA support (or both) you plan to use,
 Open MPI should be configured using the ``--with-cuda=<path-to-cuda>``
-configure option to build CUDA support into Open MPI.
+and ``--with-cuda-libdir=<path-to-libcuda.so>`` configure options to
+build CUDA support into Open MPI.
 
-This affects the smcuda shared memory btl, as well as the uct btl.
+Open MPI supports building with CUDA libraries and running on systems
+without CUDA libraries or hardware. In order to take advantage of
+this functionality, when compiling, you have to specify the CUDA
+dependent components to be built as DSOs using the
+``--enable-mca-dso=<comma-delimited-list-of-cuda-components.``
+configure option.
+
+This affects the ``smcuda`` shared memory and ``uct`` BTLs, as well
+as the ``rgpusm`` and ``gpusm`` rcache components.
+
+An example configure command would look like the following:
+
+   .. code-block:: sh
+
+      # Configure Open MPI this way
+      shell$ ./configure --with-cuda=/usr/local/cuda --with-cuda-libdir=/usr/local/cuda/lib64/stubs \
+             --enable-mca-dso=btl-smcuda,rcache-rgpusm,rcache-gpusm,accelerator-cuda <other configure params>
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -124,6 +141,7 @@ CUDA-aware support is available in:
 
 * The UCX (``ucx``) PML
 * The PSM2 (``psm2``) MTL with the CM (``cm``) PML.
+* The OFI (``ofi``) MTL with the CM (``cm``) PML.
 * Both CUDA-ized shared memory (``smcuda``) and TCP (``tcp``) BTLs
   with the OB1 (``ob1``) PML.
 * The HCOLL (``hcoll``) COLL
@@ -151,6 +169,22 @@ For more information refer to the `Intel Omni-Path documentation
 <https://www.intel.com/content/www/us/en/support/articles/000016242/network-and-i-o/fabric-products.html>`_.
 
 /////////////////////////////////////////////////////////////////////////
+
+OFI support for CUDA
+---------------------
+
+CUDA-aware support is present in OFI MTL.  When running CUDA-aware
+Open MPI over Libfabric, the OFI MTL will check if there are any
+providers capable of handling GPU (or other accelerator) memory
+through the ``hmem``-related flags. If a CUDA-capable provider is
+available, the OFI MTL will directly send GPU buffers through
+Libfabric's API after registering the memory. If there are no
+CUDA-capable providers available, the buffers will automatically
+be copied to host buffers before being transferred through
+Libfabric's API.
+
+/////////////////////////////////////////////////////////////////////////
+
 
 How can I tell if Open MPI was built with CUDA support?
 -------------------------------------------------------

@@ -29,6 +29,8 @@
 
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype_internal.h"
+#include "opal/mca/accelerator/accelerator.h"
+#include "opal/mca/accelerator/base/base.h"
 
 #if OPAL_ENABLE_DEBUG
 #    include "opal/util/output.h"
@@ -217,13 +219,9 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
     MEMCPY( temporary + start_position, partial_data, length );
 
     /* Save the original content of the user memory */
-#if OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
     /* In the case where the data is being unpacked from device memory, need to
      * use the special host to device memory copy. */
     pConvertor->cbmemcpy(saved_data, user_data, data_length, pConvertor );
-#else
-    MEMCPY( saved_data, user_data, data_length );
-#endif
 
     /* Then unpack the data into the user memory */
     UNPACK_PREDEFINED_DATATYPE(pConvertor, &single_elem, count_desc, temporary_buffer, user_data,
@@ -235,24 +233,23 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
 
     /* Rebuild the data by pulling back the unmodified bytes from the original
      * content in the user memory. */
-#if OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
     /* Need to copy the modified user_data again so we can see which
      * bytes need to be converted back to their original values. */
-    {
+    if (0 != strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         char resaved_data[16];
         pConvertor->cbmemcpy(resaved_data, user_data, data_length, pConvertor);
         for (size_t i = 0; i < data_length; i++) {
             if (unused_byte == resaved_data[i])
                 pConvertor->cbmemcpy(&user_data[i], &saved_data[i], 1, pConvertor);
         }
-    }
-#else
-    for (size_t i = 0; i < data_length; i++) {
-        if (unused_byte == user_data[i]) {
-            user_data[i] = saved_data[i];
+    } else {
+        for (size_t i = 0; i < data_length; i++) {
+            if (unused_byte == user_data[i]) {
+                user_data[i] = saved_data[i];
+            }
         }
     }
-#endif
+
     pConvertor->partial_length = (pConvertor->partial_length + length) % data_length;
     *SPACE  -= length;
     *packed += length;

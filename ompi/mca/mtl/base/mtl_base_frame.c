@@ -76,7 +76,7 @@ ompi_mtl_base_select (bool enable_progress_threads,
                          best_component->mtl_version.mca_component_name );
 
     if (NULL == best_component->mtl_init(enable_progress_threads,
-                                          enable_mpi_threads)) {
+                                          enable_mpi_threads, &best_component->accelerator_support)) {
         opal_output_verbose( 10, ompi_mtl_base_framework.framework_output,
                              "select: init returned failure for component %s",
                              best_component->mtl_version.mca_component_name );

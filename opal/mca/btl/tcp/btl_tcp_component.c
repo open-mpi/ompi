@@ -88,9 +88,6 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/btl.h"
-#if OPAL_CUDA_SUPPORT
-#    include "opal/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_SUPPORT */
 
 #define MCA_BTL_TCP_BTL_BANDWIDTH 100
 #define MCA_BTL_TCP_BTL_LATENCY   100
@@ -476,10 +473,6 @@ static int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_lock);
     OBJ_DESTRUCT(&mca_btl_tcp_component.local_ifs);
-
-#if OPAL_CUDA_SUPPORT
-    mca_common_cuda_fini();
-#endif /* OPAL_CUDA_SUPPORT */
 
     return OPAL_SUCCESS;
 }
@@ -1338,10 +1331,6 @@ mca_btl_base_module_t **mca_btl_tcp_component_init(int *num_btl_modules,
             mca_btl_tcp_component.tcp_btls[i]->super.btl_flags |= MCA_BTL_FLAGS_SINGLE_ADD_PROCS;
         }
     }
-
-#if OPAL_CUDA_SUPPORT
-    mca_common_cuda_stage_one_init();
-#endif /* OPAL_CUDA_SUPPORT */
 
     memcpy(btls, mca_btl_tcp_component.tcp_btls,
            mca_btl_tcp_component.tcp_num_btls * sizeof(mca_btl_tcp_module_t *));

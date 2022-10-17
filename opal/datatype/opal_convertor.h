@@ -35,31 +35,30 @@
 #include "opal/constants.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/prefetch.h"
+#include "opal/mca/accelerator/accelerator.h"
 
 BEGIN_C_DECLS
 /*
  * CONVERTOR SECTION
  */
 /* keep the last 16 bits free for data flags */
-#define CONVERTOR_DATATYPE_MASK   0x0000FFFF
-#define CONVERTOR_SEND_CONVERSION 0x00010000
-#define CONVERTOR_RECV            0x00020000
-#define CONVERTOR_SEND            0x00040000
-#define CONVERTOR_HOMOGENEOUS     0x00080000
-#define CONVERTOR_NO_OP           0x00100000
-#define CONVERTOR_WITH_CHECKSUM   0x00200000
-#define CONVERTOR_CUDA            0x00400000
-#define CONVERTOR_ROCM            0x00400000 //same as CUDA on purpose
-#define CONVERTOR_CUDA_ASYNC      0x00800000
-#define CONVERTOR_TYPE_MASK       0x10FF0000
-#define CONVERTOR_STATE_START     0x01000000
-#define CONVERTOR_STATE_COMPLETE  0x02000000
-#define CONVERTOR_STATE_ALLOC     0x04000000
-#define CONVERTOR_COMPLETED       0x08000000
-#define CONVERTOR_CUDA_UNIFIED    0x10000000
-#define CONVERTOR_HAS_REMOTE_SIZE 0x20000000
-#define CONVERTOR_SKIP_CUDA_INIT  0x40000000
-#define CONVERTOR_SKIP_GPU_INIT   0x40000000 // same as CUDA on purpose
+#define CONVERTOR_DATATYPE_MASK          0x0000FFFF
+#define CONVERTOR_SEND_CONVERSION        0x00010000
+#define CONVERTOR_RECV                   0x00020000
+#define CONVERTOR_SEND                   0x00040000
+#define CONVERTOR_HOMOGENEOUS            0x00080000
+#define CONVERTOR_NO_OP                  0x00100000
+#define CONVERTOR_WITH_CHECKSUM          0x00200000
+#define CONVERTOR_ACCELERATOR            0x00400000
+#define CONVERTOR_ACCELERATOR_ASYNC      0x00800000
+#define CONVERTOR_TYPE_MASK              0x10FF0000
+#define CONVERTOR_STATE_START            0x01000000
+#define CONVERTOR_STATE_COMPLETE         0x02000000
+#define CONVERTOR_STATE_ALLOC            0x04000000
+#define CONVERTOR_COMPLETED              0x08000000
+#define CONVERTOR_ACCELERATOR_UNIFIED    0x10000000
+#define CONVERTOR_HAS_REMOTE_SIZE        0x20000000
+#define CONVERTOR_SKIP_ACCELERATOR_INIT  0x40000000
 
 union dt_elem_desc;
 typedef struct opal_convertor_t opal_convertor_t;
@@ -118,10 +117,8 @@ struct opal_convertor_t {
     /* --- fields are no more aligned on cacheline --- */
     dt_stack_t static_stack[DT_STATIC_STACK_SIZE]; /**< local stack for small datatypes */
 
-#if OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
-    memcpy_fct_t cbmemcpy; /**< memcpy, cuMemcpy, or hipMemcpy */
-    void *stream;          /**< CUstream/hipStream for async copy */
-#endif
+    memcpy_fct_t cbmemcpy; /**< memcpy or accelerator memcpy */
+    opal_accelerator_stream_t *stream;  /**<Accelerator stream for async copy */
 };
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_convertor_t);
 
@@ -183,10 +180,6 @@ static inline int32_t opal_convertor_need_buffers(const opal_convertor_t *pConve
 {
     if (OPAL_UNLIKELY(0 == (pConvertor->flags & CONVERTOR_HOMOGENEOUS)))
         return 1;
-#if OPAL_CUDA_SUPPORT || OPAL_ROCM_SUPPORT
-    if (pConvertor->flags & (CONVERTOR_CUDA | CONVERTOR_CUDA_UNIFIED | CONVERTOR_ROCM))
-        return 1;
-#endif
     if (pConvertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)
         return 0;
     if ((pConvertor->count == 1) && (pConvertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS))

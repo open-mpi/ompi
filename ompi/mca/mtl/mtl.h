@@ -62,9 +62,7 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  * MTL module flags
  */
 #define MCA_MTL_BASE_FLAG_REQUIRE_WORLD 0x00000001
-#if OPAL_CUDA_SUPPORT
-#define MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE 0x00000002
-#endif
+#define MCA_MTL_BASE_FLAG_ACCELERATOR_INIT_DISABLE 0x00000002
 #define MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID 0x00000004
 
 /**
@@ -93,19 +91,23 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  *                  support MPI_THREAD_MULTIPLE.  This variable only
  *                  needs to be set if enable_mpi_threads is true.
  *                  Otherwise, the return value will be ignored.
+ * @param accelerator_support (OUT) Component does / does not support
+ *                  direct transfers with an accelerator buffer.
  *
  * @retval NULL     component can not operate on the current machine
  * @retval non-NULL component interface function
  */
 typedef struct mca_mtl_base_module_t*
 (*mca_mtl_base_component_init_fn_t)(bool enable_progress_threads,
-                                    bool enable_mpi_threads);
+                                    bool enable_mpi_threads,
+                                    bool *accelerator_support);
 
 
 struct mca_mtl_base_component_2_0_0_t {
   mca_base_component_t mtl_version;
   mca_base_component_data_t mtl_data;
   mca_mtl_base_component_init_fn_t mtl_init;
+  bool accelerator_support;
 };
 typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_2_0_0_t;
 typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_t;

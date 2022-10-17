@@ -43,16 +43,11 @@
 #include "pml_ob1_recvfrag.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_rdmafrag.h"
+#include "pml_ob1_accelerator.h"
 #include "ompi/mca/bml/base/base.h"
 
-#if OPAL_CUDA_SUPPORT
-#include "opal/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_SUPPORT */
-
-#if OPAL_CUDA_SUPPORT
-int mca_pml_ob1_cuda_need_buffers(mca_pml_ob1_recv_request_t* recvreq,
-                                  mca_btl_base_module_t* btl);
-#endif /* OPAL_CUDA_SUPPORT */
+int mca_pml_ob1_accelerator_need_buffers(mca_pml_ob1_recv_request_t* recvreq,
+                                         mca_btl_base_module_t* btl);
 
 void mca_pml_ob1_recv_request_process_pending(void)
 {
@@ -307,11 +302,15 @@ static int mca_pml_ob1_recv_request_ack(
         /*
          * lookup request buffer to determine if memory is already
          * registered.
+         *
+         * We only want this code to be hit if these buffers don't need to be packed
+         * and they're not device buffers.
          */
-
-        if(opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == 0 &&
-           hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_CONTIG &&
-           rdma_num != 0) {
+        if (opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == 0 &&
+            !(recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) &&
+            !(recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR_UNIFIED) &&
+            hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_CONTIG &&
+            rdma_num != 0) {
             unsigned char *base;
             opal_convertor_get_current_pointer( &recvreq->req_recv.req_base.req_convertor, (void**)&(base) );
 
@@ -604,7 +603,6 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
     }
 }
 
-#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
 /**
  * This function is basically the first half of the code in the
  * mca_pml_ob1_recv_request_progress_frag function.  This fires off
@@ -644,7 +642,7 @@ void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvr
     /* Then record an event that will get triggered by a PML progress call which
      * checks the stream events.  If we get an error, abort.  Should get message
      * from CUDA code about what went wrong. */
-    result = mca_common_cuda_record_htod_event("pml", des);
+    result = mca_pml_ob1_record_htod_event("pml", des);
     if (OMPI_SUCCESS != result) {
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         ompi_rte_abort(-1, NULL);
@@ -682,7 +680,6 @@ void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
         mca_pml_ob1_recv_request_schedule(recvreq, NULL);
     }
 }
-#endif /* OPAL_CUDA_SUPPORT */
 
 /*
  * Update the recv request status to reflect the number of bytes
@@ -713,9 +710,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
      * sender side is already registered. We need to be smarter here, perhaps
      * do couple of RDMA reads */
     if (opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
-#if OPAL_CUDA_SUPPORT
-        if (mca_pml_ob1_cuda_need_buffers(recvreq, btl))
-#endif /* OPAL_CUDA_SUPPORT */
+        if (mca_pml_ob1_accelerator_need_buffers(recvreq, btl))
         {
             mca_pml_ob1_recv_request_ack(recvreq, btl, &hdr->hdr_rndv, 0);
             return;
@@ -726,13 +721,12 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc);
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 
-#if OPAL_CUDA_SUPPORT
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
-        if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+        if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
             mca_bml_base_btl_t *bml_btl;
             bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
-            /* Check to see if this is a CUDA get */
-            if (bml_btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET) {
+            /* Check to see if this is an accelerator get */
+            if (bml_btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_GET) {
                 rdma_bml = bml_btl;
             }
         } else {
@@ -741,7 +735,6 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
             return;
         }
     }
-#endif /* OPAL_CUDA_SUPPORT */
 
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
@@ -759,7 +752,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         void *data_ptr;
         uint32_t flags = MCA_BTL_REG_FLAG_LOCAL_WRITE | MCA_BTL_REG_FLAG_REMOTE_WRITE;
 #if OPAL_CUDA_GDR_SUPPORT
-        if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+        if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
             flags |= MCA_BTL_REG_FLAG_CUDA_GPU_MEM;
         }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
@@ -897,16 +890,14 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
         mca_pml_ob1_recv_request_schedule(recvreq, NULL);
     }
 
-#if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
-    /* If BTL supports it and this is a CUDA buffer being received into,
+    /* If BTL supports it and this is an ACCELERATOR buffer being received into,
      * have all subsequent FRAGS copied in asynchronously. */
-    if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
-        (btl->btl_flags & MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV)) {
-        void *strm = mca_common_cuda_get_htod_stream();
-        opal_cuda_set_copy_function_async(&recvreq->req_recv.req_base.req_convertor, strm);
+    if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) &&
+        (btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_RECV)) {
+        opal_accelerator_stream_t *stream = mca_pml_ob1_get_htod_stream();
+        recvreq->req_recv.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
+        recvreq->req_recv.req_base.req_convertor.stream = stream;
     }
-#endif
-
 }
 
 /*

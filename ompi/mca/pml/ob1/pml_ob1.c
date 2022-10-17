@@ -60,6 +60,7 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_rdmafrag.h"
+#include "pml_ob1_accelerator.h"
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {
@@ -94,11 +95,9 @@ mca_pml_ob1_t mca_pml_ob1 = {
     }
 };
 
-#if OPAL_CUDA_SUPPORT
-extern void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl,
+extern void mca_pml_ob1_accelerator_add_ipc_support(struct mca_btl_base_module_t* btl,
                                              int32_t flags, ompi_proc_t* errproc,
                                              char* btlinfo);
-#endif /* OPAL_CUDA_SUPPORT */
 
 void mca_pml_ob1_error_handler( struct mca_btl_base_module_t* btl,
                                 int32_t flags, opal_proc_t* errproc,
@@ -196,6 +195,8 @@ int mca_pml_ob1_enable(bool enable)
                           mca_pml_ob1.free_list_max,
                           mca_pml_ob1.free_list_inc,
                           NULL, 0, NULL, NULL, NULL);
+
+    mca_pml_ob1_accelerator_init();
 
     mca_pml_ob1.enabled = true;
 
@@ -431,38 +432,38 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 #if OPAL_CUDA_GDR_SUPPORT
         /* If size is SIZE_MAX, then we know we want to set this to the minimum possible
          * value which is the size of the PML header. */
-        if (SIZE_MAX == sm->btl_module->btl_cuda_eager_limit) {
-            sm->btl_module->btl_cuda_eager_limit = sizeof(mca_pml_ob1_hdr_t);
+        if (SIZE_MAX == sm->btl_module->btl_accelerator_eager_limit) {
+            sm->btl_module->btl_accelerator_eager_limit = sizeof(mca_pml_ob1_hdr_t);
         }
         /* If size is 0, then this value is unused.  If it is non-zero then do some
          * extra checking of it. */
-        if (0 != sm->btl_module->btl_cuda_eager_limit) {
-            if (sm->btl_module->btl_cuda_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
+        if (0 != sm->btl_module->btl_accelerator_eager_limit) {
+            if (sm->btl_module->btl_accelerator_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
                 opal_show_help("help-mpi-pml-ob1.txt", "cuda_eager_limit_too_small",
                                true,
                                sm->btl_component->btl_version.mca_component_name,
                                ompi_process_info.nodename,
                                sm->btl_component->btl_version.mca_component_name,
-                               sm->btl_module->btl_cuda_eager_limit,
+                               sm->btl_module->btl_accelerator_eager_limit,
                                sm->btl_component->btl_version.mca_component_name,
                                sizeof(mca_pml_ob1_hdr_t),
                                sm->btl_component->btl_version.mca_component_name);
                 return OMPI_ERR_BAD_PARAM;
             }
         }
-        if (0 == sm->btl_module->btl_cuda_rdma_limit) {
+        if (0 == sm->btl_module->btl_accelerator_rdma_limit) {
             /* All is fine.  0 means to ignore value so set to SIZE_MAX */
-            sm->btl_module->btl_cuda_rdma_limit = SIZE_MAX;
+            sm->btl_module->btl_accelerator_rdma_limit = SIZE_MAX;
         } else {
-            if (sm->btl_module->btl_cuda_rdma_limit < sm->btl_module->btl_cuda_eager_limit) {
+            if (sm->btl_module->btl_accelerator_rdma_limit < sm->btl_module->btl_accelerator_eager_limit) {
                 opal_show_help("help-mpi-pml-ob1.txt", "cuda_rdma_limit_too_small",
                                true,
                                sm->btl_component->btl_version.mca_component_name,
                                ompi_process_info.nodename,
                                sm->btl_component->btl_version.mca_component_name,
-                               sm->btl_module->btl_cuda_rdma_limit,
+                               sm->btl_module->btl_accelerator_rdma_limit,
                                sm->btl_component->btl_version.mca_component_name,
-                               sm->btl_module->btl_cuda_eager_limit,
+                               sm->btl_module->btl_accelerator_eager_limit,
                                sm->btl_component->btl_version.mca_component_name);
                 return OMPI_ERR_BAD_PARAM;
             }
@@ -896,12 +897,11 @@ void mca_pml_ob1_process_pending_rdma(void)
 void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
         opal_proc_t* errproc, char* btlinfo ) {
-#if OPAL_CUDA_SUPPORT
-    if (flags & MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC) {
-        mca_pml_ob1_cuda_add_ipc_support(btl, flags, (struct ompi_proc_t*)errproc, btlinfo);
+
+    if (flags & MCA_BTL_ERROR_FLAGS_ADD_ACCELERATOR_IPC) {
+        mca_pml_ob1_accelerator_add_ipc_support(btl, flags, (struct ompi_proc_t*)errproc, btlinfo);
         return;
     }
-#endif /* OPAL_CUDA_SUPPORT */
 
     /* Some BTL report unreachable errors during normal MPI_Finalize
      * termination. Lets simply ignore such errors after MPI is not supposed to

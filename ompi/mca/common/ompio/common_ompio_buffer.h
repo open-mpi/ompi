@@ -58,10 +58,8 @@
     _decoded_iov->iov_len  = _max_data;                                 \
     _iov_count=1;}
 
-#if OPAL_CUDA_SUPPORT
 void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, 
 				      int *is_gpu, int *is_managed);
-#endif
 int mca_common_ompio_buffer_alloc_init ( void );
 int mca_common_ompio_buffer_alloc_fini ( void );
 

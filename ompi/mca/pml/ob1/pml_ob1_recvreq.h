@@ -331,7 +331,6 @@ void mca_pml_ob1_recv_request_progress_frag(
     const mca_btl_base_segment_t* segments,
     size_t num_segments);
 
-#if OPAL_CUDA_SUPPORT
 void mca_pml_ob1_recv_request_frag_copy_start(
     mca_pml_ob1_recv_request_t* req,
     struct mca_btl_base_module_t* btl,
@@ -343,7 +342,6 @@ void mca_pml_ob1_recv_request_frag_copy_finished(struct mca_btl_base_module_t* b
     struct mca_btl_base_endpoint_t* ep,
     struct mca_btl_base_descriptor_t* des,
     int status );
-#endif /* OPAL_CUDA_SUPPORT */
 /**
  *
  */

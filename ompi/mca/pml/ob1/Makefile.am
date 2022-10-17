@@ -49,6 +49,8 @@ ob1_sources  = \
 	pml_ob1_sendreq.c \
 	pml_ob1_sendreq.h \
 	pml_ob1_start.c \
+	pml_ob1_accelerator.h \
+	pml_ob1_accelerator.c \
 	custommatch/pml_ob1_custom_match.h \
 	custommatch/pml_ob1_custom_match_arrays.h \
 	custommatch/pml_ob1_custom_match_vectors.h \
@@ -56,12 +58,6 @@ ob1_sources  = \
 	custommatch/pml_ob1_custom_match_fuzzy512-byte.h \
 	custommatch/pml_ob1_custom_match_fuzzy512-short.h \
 	custommatch/pml_ob1_custom_match_fuzzy512-word.h
-
-# If we have CUDA support requested, build the CUDA file also
-if OPAL_cuda_support
-ob1_sources += \
-    pml_ob1_cuda.c
-endif
 
 if MCA_BUILD_ompi_pml_ob1_DSO
 component_noinst =

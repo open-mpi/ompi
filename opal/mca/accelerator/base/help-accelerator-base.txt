@@ -1,0 +1,20 @@
+# -*- text -*-
+#
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[Multiple Accelerators Found]
+ERROR: Open MPI only supports one accelerator framework per node. Please pick one of the
+initialized accelerator components via command line argument "--mca accelerator <component>".
+The following accelerators initialized successfully: %s.
+The program will abort to allow you to resolve the accelerator conflict.
+
+
+[No Accelerators Found]
+ERROR: User specified an accelerator component via "--mca accelerator <component>", and that
+component failed to initialize successfully.  The program will abort to allow you to fix the issue.

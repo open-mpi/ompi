@@ -59,8 +59,9 @@ static int ompi_mtl_psm2_component_close(void);
 static int ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority);
 static int ompi_mtl_psm2_component_register(void);
 
-static mca_mtl_base_module_t* ompi_mtl_psm2_component_init( bool enable_progress_threads,
-                                                          bool enable_mpi_threads );
+static mca_mtl_base_module_t* ompi_mtl_psm2_component_init(bool enable_progress_threads,
+                                                           bool enable_mpi_threads,
+                                                           bool *accelerator_support);
 
 mca_mtl_psm2_component_t mca_mtl_psm2_component = {
 
@@ -376,7 +377,8 @@ get_local_rank(int *out_rank)
 
 static mca_mtl_base_module_t *
 ompi_mtl_psm2_component_init(bool enable_progress_threads,
-                            bool enable_mpi_threads)
+                             bool enable_mpi_threads,
+                             bool *accelerator_support)
 {
     psm2_error_t	err;
     int	verno_major = PSM2_VERNO_MAJOR;
