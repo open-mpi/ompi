@@ -29,9 +29,11 @@
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/btl/btl.h"
 
+OPAL_DECLSPEC int mca_pml_ob1_record_dtoh_event(char *msg, struct mca_btl_base_descriptor_t *frag);
 OPAL_DECLSPEC int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *frag);
 OPAL_DECLSPEC opal_accelerator_stream_t *mca_pml_ob1_get_dtoh_stream(void);
 OPAL_DECLSPEC opal_accelerator_stream_t *mca_pml_ob1_get_htod_stream(void);
+OPAL_DECLSPEC int mca_pml_ob1_progress_one_dtoh_event(struct mca_btl_base_descriptor_t **);
 OPAL_DECLSPEC int mca_pml_ob1_progress_one_htod_event(struct mca_btl_base_descriptor_t **);
 OPAL_DECLSPEC int mca_pml_ob1_accelerator_init(void);
 OPAL_DECLSPEC void mca_pml_ob1_accelerator_fini(void);
