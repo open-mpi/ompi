@@ -537,6 +537,7 @@ OMPI_MAN3 = \
         MPI_Wtick.3 \
         MPI_Wtime.3 \
         MPIX_Query_cuda_support.3 \
+        MPIX_Query_rocm_support.3 \
         OMPI_Affinity_str.3
 
 OMPI_MAN5 = \

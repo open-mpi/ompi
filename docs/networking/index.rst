@@ -26,3 +26,4 @@ build support for that library).
    ib-and-roce
    iwarp
    cuda
+   rocm
