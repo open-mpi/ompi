@@ -525,11 +525,6 @@ ompi_report_comm_methods(int called_from_location)
 
 // Each host leader fills in a "numhosts" sized array method[] of
 // how it communicates with each peer.
-    // Use a bitmap to keep track of which communication methods are used
-    n = ((comm_method_string_conversion.n + 7) / 8) * sizeof(unsigned char);
-    methods_used = malloc(n);
-    memset(methods_used, 0, n);
-
     for (i=0; i<nleaderranks; ++i) {
         method[i] = comm_method(leader_comm, i);
 
