@@ -12,6 +12,7 @@
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All
  *                         Rights reserved.
+ * Copyright (c) 2022      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,8 +46,10 @@ int opal_event_register_params(void)
     // Get supported methods
     opal_event_all_available_eventops = event_get_supported_methods();
 
-#ifdef __APPLE__
+#if defined(PLATFORM_OS_DARWIN)
     opal_event_module_include = "select";
+#elif defined(PLATFORM_OS_LINUX)
+    opal_event_module_include = "epoll";
 #else
     opal_event_module_include = "poll";
 #endif
