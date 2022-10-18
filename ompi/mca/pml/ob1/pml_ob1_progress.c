@@ -67,7 +67,7 @@ int mca_pml_ob1_progress(void)
 {
     int i, queue_length = opal_list_get_size(&mca_pml_ob1.send_pending);
     int j, completed_requests = 0;
-    bool send_succedded;
+    bool send_succeeded;
 
     completed_requests += mca_pml_ob1_process_pending_accelerator_async_copies();
 
@@ -94,7 +94,7 @@ int mca_pml_ob1_progress(void)
         case MCA_PML_OB1_SEND_PENDING_START:
             MCA_PML_OB1_SEND_REQUEST_RESET(sendreq);
             endpoint = sendreq->req_endpoint;
-            send_succedded = false;
+            send_succeeded = false;
             for(j = 0; j < (int)mca_bml_base_btl_array_get_size(&endpoint->btl_eager); j++) {
                 mca_bml_base_btl_t* bml_btl;
                 int rc;
@@ -103,12 +103,12 @@ int mca_pml_ob1_progress(void)
                 bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
                 rc = mca_pml_ob1_send_request_start_btl(sendreq, bml_btl);
                 if( OPAL_LIKELY(OMPI_SUCCESS == rc) ) {
-                    send_succedded = true;
+                    send_succeeded = true;
                     completed_requests++;
                     break;
                 }
             }
-            if( false == send_succedded ) {
+            if( false == send_succeeded ) {
                 add_request_to_send_pending(sendreq, MCA_PML_OB1_SEND_PENDING_START, true);
             }
         }
