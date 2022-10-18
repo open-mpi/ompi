@@ -50,6 +50,9 @@ AC_ARG_WITH([cuda],
             [AS_HELP_STRING([--with-cuda(=DIR)],
             [Build cuda support, optionally adding DIR/include])])
 AC_MSG_CHECKING([if --with-cuda is set])
+AC_ARG_WITH([cuda-libdir],
+            [AS_HELP_STRING([--with-cuda-libdir=DIR],
+                            [Search for CUDA libraries in DIR])])
 
 # Note that CUDA support is off by default.  To turn it on, the user has to
 # request it.  The user can just ask for --with-cuda and it that case we
