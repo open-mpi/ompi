@@ -48,7 +48,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/constants.h"
-#include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 BEGIN_C_DECLS
 
@@ -110,7 +110,7 @@ static inline void opal_thread_internal_mutex_lock(opal_thread_internal_mutex_t 
 #if OPAL_ENABLE_DEBUG
     int ret = pthread_mutex_lock(p_mutex);
     if (EDEADLK == ret) {
-        opal_output(0, "opal_thread_internal_mutex_lock() %d", ret);
+        opal_show_help("help-opal-threads.txt", "mutex lock failed", true);
     }
     assert(0 == ret);
 #else

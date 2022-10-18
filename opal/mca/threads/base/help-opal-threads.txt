@@ -1,0 +1,22 @@
+# -*- text -*-
+#
+# Copyright (c) 2022      Sandia National Laboratories.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's OPAL thread MCA.
+#
+[mutex init failed]
+A mutex initialization has failed.
+
+[mutex lock failed]
+A mutex acquire (mutex lock) has failed.
+
+[mutex unlock failed]
+A mutex release (mutex unlock) has failed.
+
+[mutex trylock failed]
+A try to acquire a mutex (mutex trylock) has failed.

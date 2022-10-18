@@ -19,6 +19,7 @@
  *                         reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
+ * Copyright (c) 2022      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +40,7 @@
 #include "opal/mca/threads/argobots/threads_argobots.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 BEGIN_C_DECLS
 
@@ -66,7 +68,7 @@ static inline void opal_thread_internal_mutex_lock(opal_thread_internal_mutex_t 
 #if OPAL_ENABLE_DEBUG
     int ret = ABT_mutex_lock(mutex);
     if (ABT_SUCCESS != ret) {
-        opal_output(0, "opal_thread_internal_mutex_lock()");
+        opal_show_help("help-opal-threads.txt", "mutex lock failed", true);
     }
 #else
     ABT_mutex_lock(mutex);
@@ -81,12 +83,11 @@ static inline int opal_thread_internal_mutex_trylock(opal_thread_internal_mutex_
         return 1;
     } else if (ABT_SUCCESS != ret) {
 #if OPAL_ENABLE_DEBUG
-        opal_output(0, "opal_thread_internal_mutex_trylock()");
+        opal_show_help("help-opal-threads.txt", "mutex trylock failed", true);
 #endif
         return 1;
-    } else {
-        return 0;
     }
+    return 0;
 }
 
 static inline void opal_thread_internal_mutex_unlock(opal_thread_internal_mutex_t *p_mutex)
@@ -95,7 +96,7 @@ static inline void opal_thread_internal_mutex_unlock(opal_thread_internal_mutex_
 #if OPAL_ENABLE_DEBUG
     int ret = ABT_mutex_unlock(mutex);
     if (ABT_SUCCESS != ret) {
-        opal_output(0, "opal_thread_internal_mutex_unlock()");
+        opal_show_help("help-opal-threads.txt", "mutex unlock failed", true);
     }
 #else
     ABT_mutex_unlock(mutex);
