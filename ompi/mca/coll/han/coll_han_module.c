@@ -173,6 +173,45 @@ int mca_coll_han_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
+/**
+ * check whether all ranks on our node are consecutive
+ * and exchange that information with our peers
+ */
+static bool proc_ranks_consecutive(struct ompi_communicator_t * comm)
+{
+    int last_rank = -1;
+    int num_jumps = 0;
+    for (int i = 0 ; i < comm->c_local_group->grp_proc_count ; ++i) {
+        ompi_proc_t *proc = NULL;
+        proc = ompi_group_get_proc_ptr_raw (comm->c_local_group, i);
+        if (ompi_proc_is_sentinel (proc)) {
+            /* non-local proc */
+            continue;
+        }
+        if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+            /* non-local proc */
+            continue;
+        }
+        if ((last_rank + 1) != i) {
+            num_jumps++;
+        }
+        last_rank = i;
+    }
+
+    /* the module is not used in the recursive-doubling implementation */
+    ompi_coll_base_allreduce_intra_recursivedoubling(MPI_IN_PLACE,
+                                                     &num_jumps, 1, MPI_INT,
+                                                     MPI_MAX, comm,
+                                                     NULL /* module */);
+
+    /* if there is more than one jump in the rank sequence the ranks are not consecutive
+     * one jump in ranks may stem from the first rank on the node (on all but the first node) */
+    if (num_jumps > 1) {
+        return false;
+    }
+
+    return true;
+}
 
 /*
  * Invoked when there's a new communicator that has been created.
@@ -203,6 +242,10 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     /* Get the priority level attached to this module. If priority is less
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_han_component.han_priority;
+    /* reduce priority if the rank distribution is linear across nodes */
+    if (proc_ranks_consecutive(comm)) {
+        *priority -= mca_coll_han_component.han_priority_penalty;
+    }
     if (mca_coll_han_component.han_priority < 0) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:han:comm_query (%s/%s): priority too low; disqualifying myself",

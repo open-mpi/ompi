@@ -249,7 +249,7 @@ static int han_register(void)
     TOPO_LVL_T topo_lvl;
     COMPONENT_T component;
 
-    cs->han_priority = 0;
+    cs->han_priority = 35;
     (void) mca_base_component_var_register(c, "priority", "Priority of the HAN coll component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
@@ -260,6 +260,14 @@ static int han_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_output_verbose);
+
+    cs->han_priority_penalty = 10;
+    (void) mca_base_component_var_register(c, "priority_penalty",
+                                           "Priority reduction of the HAN component "
+                                           "for linear process distributions",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_priority_penalty);
 
     cs->han_bcast_segsize = 65536;
     (void) mca_base_component_var_register(c, "bcast_segsize",
