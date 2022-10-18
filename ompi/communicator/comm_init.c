@@ -326,6 +326,8 @@ static int ompi_comm_finalize (void)
         OBJ_DESTRUCT( &ompi_mpi_comm_self );
         /* Shut down MPI_COMM_WORLD */
         OBJ_DESTRUCT( &ompi_mpi_comm_world );
+
+        ompi_comm_intrinsic_init = false;
     }
 
     /* Shut down the parent communicator, if it exists */
