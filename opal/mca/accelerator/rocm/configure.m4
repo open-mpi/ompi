@@ -17,7 +17,7 @@ AC_DEFUN([MCA_opal_accelerator_rocm_CONFIG],[
     OPAL_CHECK_ROCM([opal_rocm],
 	        [opal_rocm_happy="yes"],
 	        [opal_rocm_happy="no"])
-    OPAL_SUMMARY_ADD([Miscellaneous], [ROCm support], [], [$opal_rocm_happy])
+    OPAL_SUMMARY_ADD([Accelerators], [ROCm support], [], [$opal_rocm_happy])
 
     AS_IF([test "$opal_rocm_happy" = "yes"],
 	  [$1],
