@@ -4,6 +4,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +28,7 @@
 
 
 opal_accelerator_base_module_t opal_accelerator = {0};
-opal_accelerator_base_component_t accelerator_base_selected_component = {{0}};
+opal_accelerator_base_component_t opal_accelerator_base_selected_component = {{0}};
 
 static int opal_accelerator_base_frame_register(mca_base_register_flag_t flags)
 {

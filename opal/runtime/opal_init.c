@@ -26,6 +26,7 @@
  *                         reserved.
  * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -200,7 +201,7 @@ int opal_init(int *pargc, char ***pargv)
     if (OPAL_SUCCESS == ret && OPAL_SUCCESS != (ret = opal_accelerator_base_select())) {
         return opal_init_error("opal_accelerator_base_select", ret);
     }
-    opal_finalize_register_cleanup(accelerator_base_selected_component.accelerator_finalize);
+    opal_finalize_register_cleanup(opal_accelerator_base_selected_component.accelerator_finalize);
 
     /* initialize the datatype engine */
     if (OPAL_SUCCESS != (ret = opal_datatype_init())) {

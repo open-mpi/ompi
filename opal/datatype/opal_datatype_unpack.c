@@ -15,6 +15,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -235,7 +236,7 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
      * content in the user memory. */
     /* Need to copy the modified user_data again so we can see which
      * bytes need to be converted back to their original values. */
-    if (0 != strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null")) {
+    if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         char resaved_data[16];
         pConvertor->cbmemcpy(resaved_data, user_data, data_length, pConvertor);
         for (size_t i = 0; i < data_length; i++) {

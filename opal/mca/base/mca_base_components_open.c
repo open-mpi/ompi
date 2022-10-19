@@ -14,6 +14,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,9 +51,9 @@ typedef struct fc_pair {
     opal_list_item_t li;
     char *framework_name;
     char *component_name;
-} fc_pair_t;
+} opal_base_fc_pair_t;
 
-OBJ_CLASS_DECLARATION(fc_pair_t);
+OBJ_CLASS_DECLARATION(opal_base_fc_pair_t);
 
 typedef enum {
     SHOW_LOAD_ERRORS_ALL,
@@ -80,7 +81,7 @@ static void fc_pair_destructor(struct fc_pair *obj)
     obj->component_name = NULL;
 }
 
-OBJ_CLASS_INSTANCE(fc_pair_t, opal_list_item_t,
+OBJ_CLASS_INSTANCE(opal_base_fc_pair_t, opal_list_item_t,
                    fc_pair_constructor,
                    fc_pair_destructor);
 
@@ -160,7 +161,7 @@ int mca_base_show_load_errors_init(void)
 
         char **split;
         int argc;
-        fc_pair_t *fcp;
+        opal_base_fc_pair_t *fcp;
         for (int i = 0; values[i] != NULL; ++i) {
             split = opal_argv_split(values[i], '/');
             if (NULL == split) {
@@ -199,7 +200,7 @@ int mca_base_show_load_errors_init(void)
                 return ret;
             }
 
-            fcp = OBJ_NEW(fc_pair_t);
+            fcp = OBJ_NEW(opal_base_fc_pair_t);
             if (NULL == fcp) {
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 opal_show_help("help-mca-base.txt",
@@ -249,8 +250,8 @@ bool mca_base_show_load_errors(const char *framework_name,
 
     // See if the framework_name/component_name pair is found in the
     // active list.
-    fc_pair_t *item;
-    OPAL_LIST_FOREACH(item, list, fc_pair_t) {
+    opal_base_fc_pair_t *item;
+    OPAL_LIST_FOREACH(item, list, opal_base_fc_pair_t) {
         if (strcmp(framework_name, item->framework_name) == 0) {
             if (NULL == item->component_name) {
                 // If there's no component name, then we're matching

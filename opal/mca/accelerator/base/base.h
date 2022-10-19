@@ -2,6 +2,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,7 @@ OPAL_DECLSPEC extern mca_base_framework_t opal_accelerator_base_framework;
  */
 OPAL_DECLSPEC int opal_accelerator_base_select(void);
 
-OPAL_DECLSPEC extern opal_accelerator_base_component_t accelerator_base_selected_component;
+OPAL_DECLSPEC extern opal_accelerator_base_component_t opal_accelerator_base_selected_component;
 
 END_C_DECLS
 

@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +68,7 @@ mca_pml_base_component_2_1_0_t mca_pml_cm_component = {
  * These are called internally by the library when the send
  * is completed from its perspective.
  */
-void (*send_completion_callbacks[MCA_PML_BASE_SEND_SIZE])
+static void (*send_completion_callbacks[MCA_PML_BASE_SEND_SIZE])
     (struct mca_mtl_request_t *mtl_request) =
   { mca_pml_cm_send_request_completion,
     mca_pml_cm_send_request_completion,

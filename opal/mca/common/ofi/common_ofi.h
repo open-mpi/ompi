@@ -151,7 +151,7 @@ OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
  * balance across available NICs.
  *
  */
-OPAL_DECLSPEC struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
+OPAL_DECLSPEC struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
                                                                   opal_process_info_t *process_info);
 
 /**
