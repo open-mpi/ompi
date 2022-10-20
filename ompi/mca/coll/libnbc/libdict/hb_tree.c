@@ -3,6 +3,7 @@
  *
  * Implementation of height balanced tree.
  * Copyright (C) 2001-2004 Farooq Mela.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  *
  * $Id: hb_tree.c,v 1.10 2001/11/25 08:30:21 farooq Exp farooq $
  *
@@ -51,6 +52,30 @@ static hb_node *node_max __P((hb_node *node));
 static hb_node *node_next __P((hb_node *node));
 static hb_node *node_prev __P((hb_node *node));
 
+static dict *hb_dict_new __P((dict_cmp_func key_cmp, dict_del_func key_del,
+                                                  dict_del_func dat_del));
+static dict_itor *hb_dict_itor_new __P((hb_tree *tree));
+static void hb_itor_invalidate __P((hb_itor *itor));
+static int hb_itor_first __P((hb_itor *itor));
+static void *hb_itor_data __P((hb_itor *itor));
+static const void *hb_itor_cdata __P((const hb_itor *itor));
+static int hb_itor_last __P((hb_itor *itor));
+static int hb_itor_nextn __P((hb_itor *itor, unsigned count));
+static int hb_itor_prev __P((hb_itor *itor));
+static int hb_itor_prevn __P((hb_itor *itor, unsigned count));
+static int hb_itor_search __P((hb_itor *itor, const void *key));
+static int hb_itor_set_data __P((hb_itor *itor, void *dat, int del));
+static unsigned hb_tree_count __P((const hb_tree *tree));
+static void hb_tree_destroy __P((hb_tree *tree, int del));
+static void hb_tree_empty __P((hb_tree *tree, int del));
+static unsigned hb_tree_height __P((const hb_tree *tree));
+static const void *hb_tree_max __P((const hb_tree *tree));
+static unsigned hb_tree_mheight __P((const hb_tree *tree));
+static const void *hb_tree_min __P((const hb_tree *tree));
+static unsigned hb_tree_pathlen __P((const hb_tree *tree));
+static int hb_tree_probe __P((hb_tree *tree, void *key, void **dat));
+static void hb_tree_walk __P((hb_tree *tree, dict_vis_func visit));
+
 hb_tree *
 hb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 			dict_del_func dat_del)
@@ -69,7 +94,7 @@ hb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	return tree;
 }
 
-dict *
+static dict *
 hb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 			dict_del_func dat_del)
 {
@@ -98,7 +123,7 @@ hb_dict_new(dict_cmp_func key_cmp, dict_del_func key_del,
 	return dct;
 }
 
-void
+static void
 hb_tree_destroy(hb_tree *tree, int del)
 {
 	ASSERT(tree != NULL);
@@ -109,7 +134,7 @@ hb_tree_destroy(hb_tree *tree, int del)
 	FREE(tree);
 }
 
-void
+static void
 hb_tree_empty(hb_tree *tree, int del)
 {
 	hb_node *node, *parent;
@@ -236,7 +261,7 @@ hb_tree_insert(hb_tree *tree, void *key, void *dat, int overwrite)
 	return 0;
 }
 
-int
+static int
 hb_tree_probe(hb_tree *tree, void *key, void **dat)
 {
 	int rv = 0;
@@ -402,7 +427,7 @@ higher:
 	return 0;
 }
 
-const void *
+static const void *
 hb_tree_min(const hb_tree *tree)
 {
 	const hb_node *node;
@@ -417,7 +442,7 @@ hb_tree_min(const hb_tree *tree)
 	return node->key;
 }
 
-const void *
+static const void *
 hb_tree_max(const hb_tree *tree)
 {
 	const hb_node *node;
@@ -432,7 +457,7 @@ hb_tree_max(const hb_tree *tree)
 	return node->key;
 }
 
-void
+static void
 hb_tree_walk(hb_tree *tree, dict_vis_func visit)
 {
 	hb_node *node;
@@ -446,7 +471,7 @@ hb_tree_walk(hb_tree *tree, dict_vis_func visit)
 			break;
 }
 
-unsigned
+static unsigned
 hb_tree_count(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -454,7 +479,7 @@ hb_tree_count(const hb_tree *tree)
 	return tree->count;
 }
 
-unsigned
+static unsigned
 hb_tree_height(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -462,7 +487,7 @@ hb_tree_height(const hb_tree *tree)
 	return tree->root ? node_height(tree->root) : 0;
 }
 
-unsigned
+static unsigned
 hb_tree_mheight(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -470,7 +495,7 @@ hb_tree_mheight(const hb_tree *tree)
 	return tree->root ? node_mheight(tree->root) : 0;
 }
 
-unsigned
+static unsigned
 hb_tree_pathlen(const hb_tree *tree)
 {
 	ASSERT(tree != NULL);
@@ -697,7 +722,7 @@ hb_itor_new(hb_tree *tree)
 	return itor;
 }
 
-dict_itor *
+static dict_itor *
 hb_dict_itor_new(hb_tree *tree)
 {
 	dict_itor *itor;
@@ -748,7 +773,7 @@ hb_itor_valid(const hb_itor *itor)
 	RETVALID(itor);
 }
 
-void
+static void
 hb_itor_invalidate(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
@@ -768,7 +793,7 @@ hb_itor_next(hb_itor *itor)
 	RETVALID(itor);
 }
 
-int
+static int
 hb_itor_prev(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
@@ -780,7 +805,7 @@ hb_itor_prev(hb_itor *itor)
 	RETVALID(itor);
 }
 
-int
+static int
 hb_itor_nextn(hb_itor *itor, unsigned count)
 {
 	ASSERT(itor != NULL);
@@ -798,7 +823,7 @@ hb_itor_nextn(hb_itor *itor, unsigned count)
 	RETVALID(itor);
 }
 
-int
+static int
 hb_itor_prevn(hb_itor *itor, unsigned count)
 {
 	ASSERT(itor != NULL);
@@ -816,7 +841,7 @@ hb_itor_prevn(hb_itor *itor, unsigned count)
 	RETVALID(itor);
 }
 
-int
+static int
 hb_itor_first(hb_itor *itor)
 {
 	hb_tree *t;
@@ -828,7 +853,7 @@ hb_itor_first(hb_itor *itor)
 	RETVALID(itor);
 }
 
-int
+static int
 hb_itor_last(hb_itor *itor)
 {
 	hb_tree *t;
@@ -840,7 +865,7 @@ hb_itor_last(hb_itor *itor)
 	RETVALID(itor);
 }
 
-int
+static int
 hb_itor_search(hb_itor *itor, const void *key)
 {
 	int rv;
@@ -868,7 +893,7 @@ hb_itor_key(const hb_itor *itor)
 	return itor->node ? itor->node->key : NULL;
 }
 
-void *
+static void *
 hb_itor_data(hb_itor *itor)
 {
 	ASSERT(itor != NULL);
@@ -876,7 +901,7 @@ hb_itor_data(hb_itor *itor)
 	return itor->node ? itor->node->dat : NULL;
 }
 
-const void *
+static const void *
 hb_itor_cdata(const hb_itor *itor)
 {
 	ASSERT(itor != NULL);
@@ -884,7 +909,7 @@ hb_itor_cdata(const hb_itor *itor)
 	return itor->node ? itor->node->dat : NULL;
 }
 
-int
+static int
 hb_itor_set_data(hb_itor *itor, void *dat, int del)
 {
 	ASSERT(itor != NULL);

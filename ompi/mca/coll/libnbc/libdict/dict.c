@@ -3,6 +3,7 @@
  *
  * Implementation of generic dictionary routines.
  * Copyright (C) 2001-2004 Farooq Mela.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  *
  * $Id: dict.c,v 1.7 2001/11/25 06:00:49 farooq Exp farooq $
  */
@@ -15,7 +16,15 @@
 dict_malloc_func _dict_malloc = malloc;
 dict_free_func _dict_free = free;
 
-dict_malloc_func
+static void dict_destroy __P((dict *dct, int del));
+static void dict_itor_destroy __P((dict_itor *itor));
+static int  dict_int_cmp __P((const void *k1, const void *k2));
+static int  dict_uint_cmp __P((const void *k1, const void *k2));
+static int  dict_long_cmp __P((const void *k1, const void *k2));
+static int  dict_ulong_cmp __P((const void *k1, const void *k2));
+static int  dict_str_cmp __P((const void *k1, const void *k2));
+
+static dict_malloc_func
 dict_set_malloc(dict_malloc_func func)
 {
 	dict_malloc_func old = _dict_malloc;
@@ -23,7 +32,7 @@ dict_set_malloc(dict_malloc_func func)
 	return old;
 }
 
-dict_free_func
+static dict_free_func
 dict_set_free(dict_free_func func)
 {
 	dict_free_func old = _dict_free;
@@ -35,7 +44,7 @@ dict_set_free(dict_free_func func)
  * In comparing, we cannot simply subtract because that might result in signed
  * overflow.
  */
-int
+static int
 dict_int_cmp(const void *k1, const void *k2)
 {
 	const int *a = (int*)k1, *b = (int*)k2;
@@ -43,7 +52,7 @@ dict_int_cmp(const void *k1, const void *k2)
 	return (*a < *b) ? -1 : (*a > *b) ? +1 : 0;
 }
 
-int
+static int
 dict_uint_cmp(const void *k1, const void *k2)
 {
 	const unsigned int *a = (unsigned int*)k1, *b = (unsigned int*)k2;
@@ -51,7 +60,7 @@ dict_uint_cmp(const void *k1, const void *k2)
 	return (*a < *b) ? -1 : (*a > *b) ? +1 : 0;
 }
 
-int
+static int
 dict_long_cmp(const void *k1, const void *k2)
 {
 	const long *a = (long*)k1, *b = (long*)k2;
@@ -59,7 +68,7 @@ dict_long_cmp(const void *k1, const void *k2)
 	return (*a < *b) ? -1 : (*a > *b) ? +1 : 0;
 }
 
-int
+static int
 dict_ulong_cmp(const void *k1, const void *k2)
 {
 	const unsigned long *a = (unsigned long*)k1, *b = (unsigned long*)k2;
@@ -73,7 +82,7 @@ dict_ptr_cmp(const void *k1, const void *k2)
 	return (k1 > k2) - (k1 < k2);
 }
 
-int
+static int
 dict_str_cmp(const void *k1, const void *k2)
 {
 	const char *a = (char*)k1, *b = (char*)k2;
@@ -87,7 +96,7 @@ dict_str_cmp(const void *k1, const void *k2)
 	return (p > q) - (p < q);
 }
 
-void
+static void
 dict_destroy(dict *dct, int del)
 {
 	ASSERT(dct != NULL);
@@ -96,7 +105,7 @@ dict_destroy(dict *dct, int del)
 	FREE(dct);
 }
 
-void
+static void
 dict_itor_destroy(dict_itor *itor)
 {
 	ASSERT(itor != NULL);
