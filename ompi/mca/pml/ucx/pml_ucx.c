@@ -410,6 +410,11 @@ static ucp_ep_h mca_pml_ucx_add_proc_common(ompi_proc_t *proc)
     ucp_ep_h ep;
     int ret;
 
+    /* Do not add a new endpoint if we already created one */
+    if (NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML]) {
+        return proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
+    }
+
     ret = mca_pml_ucx_recv_worker_address(proc, &address, &addrlen);
     if (ret < 0) {
         return NULL;
