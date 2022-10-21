@@ -61,6 +61,19 @@ included in the vX.Y.Z section and be denoted as:
 4.1.5 -- November, 2022
 -----------------------
 
+- Fix issue building with ifort on MacOS.
+- Backport patches to Libevent for CVE-2016-10195, CVE-2016-10196, and
+  CVE-2016-10197.  Note that Open MPI's internal libevent does not
+  use the impacted portions of the Libevent code base.
+- Fix initializer bugs in SHMEM interface.
+- Fix UCX memory registration bug that could occur when UCX was built
+  but not selected.
+- Fix data corruption bug in osc/rdma component.
+- Fix overflow bug in alltoall collective
+- Fix crash when displaying topology.
+- Add some MPI_F_XXX constants that were missing from mpi.h.
+- coll/ucc bug fixes.
+
 
 4.1.4 -- May, 2022
 ------------------
