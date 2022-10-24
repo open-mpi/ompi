@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
 const char *mca_coll_han_component_version_string =
     "Open MPI HAN collective MCA component version " OMPI_VERSION;
 
-ompi_coll_han_components available_components[COMPONENTS_COUNT] = {
+ompi_coll_han_components ompi_coll_han_available_components[COMPONENTS_COUNT] = {
     { SELF, "self",  NULL },
     { BASIC, "basic", NULL },
     { LIBNBC, "libnbc", NULL },
@@ -191,7 +192,7 @@ mca_coll_han_query_module_from_mca(mca_base_component_t* c,
     mod_id = (*module_id > (uint32_t)mod_id) ? mod_id : (int)*module_id; /* stay in range */
     mod_id = (mod_id < 0) ? 0 : mod_id;  /* in range */
 
-    *storage = available_components[mod_id].component_name;
+    *storage = ompi_coll_han_available_components[mod_id].component_name;
 
     (void) mca_base_component_var_register(c, param_name, param_doc,
                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -401,7 +402,7 @@ static int han_register(void)
                 param_desc_size += snprintf(param_desc+param_desc_size, sizeof(param_desc) - param_desc_size,
                                             "%d = %s; ",
                                             component,
-                                            available_components[component].component_name);
+                                            ompi_coll_han_available_components[component].component_name);
             }
 
             mca_base_component_var_register(c, param_name, param_desc,

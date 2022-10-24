@@ -4,6 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -183,13 +184,13 @@ static int mca_vprotocol_pessimist_component_finalize(void)
 int mca_vprotocol_pessimist_enable(bool enable) {
     if(enable) {
         int ret;
-        if((ret = vprotocol_pessimist_sender_based_init(_mmap_file_name,
+        if((ret = ompi_vprotocol_pessimist_sender_based_init(_mmap_file_name,
                                                  _sender_based_size)) != OMPI_SUCCESS)
             return ret;
     }
     else {
-        vprotocol_pessimist_sender_based_finalize();
-        vprotocol_pessimist_event_logger_disconnect(mca_vprotocol_pessimist.el_comm);
+        ompi_vprotocol_pessimist_sender_based_finalize();
+        ompi_vprotocol_pessimist_event_logger_disconnect(mca_vprotocol_pessimist.el_comm);
     }
     return OMPI_SUCCESS;
 }

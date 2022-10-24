@@ -17,6 +17,7 @@
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -61,7 +62,7 @@
 #include "shmem_posix_common_utils.h"
 
 /* ////////////////////////////////////////////////////////////////////////// */
-int shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
+int opal_shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
 {
     int attempt = 0, fd = -1;
 

@@ -1,5 +1,6 @@
 /* 
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,7 @@ static int accelerator_event_ipc_first_used;
 static volatile int accelerator_event_ipc_num_used;
 
 /* Size of array holding events */
-int accelerator_event_max = 400;
+static int accelerator_event_max = 400;
 static int accelerator_event_ipc_most = 0;
 static bool smcuda_accelerator_initialized = false;
 
@@ -106,7 +107,7 @@ void mca_btl_smcuda_accelerator_fini(void)
 {
     int i;
 
-    if (0 == strcmp(accelerator_base_selected_component.base_version.mca_component_name, "null") ||
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null") ||
         false == smcuda_accelerator_initialized) {
         return;
     }

@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -112,7 +113,7 @@ typedef struct {
     mca_coll_base_component_t* component;
 } ompi_coll_han_components;
 
-extern ompi_coll_han_components available_components[COMPONENTS_COUNT];
+extern ompi_coll_han_components ompi_coll_han_available_components[COMPONENTS_COUNT];
 
 /* Topologic levels */
 typedef enum TOPO_LVL {

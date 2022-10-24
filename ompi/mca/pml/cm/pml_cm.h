@@ -7,6 +7,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,13 +43,6 @@
 BEGIN_C_DECLS
 
 struct mca_mtl_request_t;
-
-/* Array of send completion callback - one per send type
- * These are called internally by the library when the send
- * is completed from its perspective.
- */
-extern void (*send_completion_callbacks[])
-    (struct mca_mtl_request_t *mtl_request);
 
 struct ompi_pml_cm_t {
     mca_pml_base_module_t super;

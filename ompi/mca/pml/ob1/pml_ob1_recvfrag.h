@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -170,7 +171,7 @@ extern void mca_pml_ob1_recv_frag_callback_cid( mca_btl_base_module_t *btl,
  * will be the next in sequence.
  */
 extern mca_pml_ob1_recv_frag_t*
-check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
+ompi_pml_ob1_check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
 
 /**
  * Move for all peers all pending cant_match fragments into the matching queues. This
@@ -178,9 +179,9 @@ check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
  */
 int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm );
 
-void append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
-                                 mca_pml_ob1_recv_frag_t* frag,
-                                 uint16_t seq);
+void ompi_pml_ob1_append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
+                                                  mca_pml_ob1_recv_frag_t* frag,
+                                                  uint16_t seq);
 
 void mca_pml_ob1_handle_cid (ompi_communicator_t *comm, int src, mca_pml_ob1_cid_hdr_t *hdr_cid);
 

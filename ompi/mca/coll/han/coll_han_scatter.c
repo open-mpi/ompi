@@ -2,6 +2,7 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,7 +118,7 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
     ompi_request_t *temp_request = OBJ_NEW(ompi_request_t);
     temp_request->req_state = OMPI_REQUEST_ACTIVE;
     temp_request->req_type = OMPI_REQUEST_COLL;
-    temp_request->req_free = han_request_free;
+    temp_request->req_free = ompi_coll_han_request_free;
     temp_request->req_status = (ompi_status_public_t){0};
     temp_request->req_complete = REQUEST_PENDING;
 

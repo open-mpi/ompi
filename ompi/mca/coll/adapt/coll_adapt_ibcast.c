@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -335,7 +336,7 @@ int ompi_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *dataty
     }
 
     return ompi_coll_adapt_ibcast_generic(buff, count, datatype, root, comm, request, module,
-                                          adapt_module_cached_topology(module, comm, root, mca_coll_adapt_component.adapt_ibcast_algorithm),
+                                          ompi_coll_adapt_module_cached_topology(module, comm, root, mca_coll_adapt_component.adapt_ibcast_algorithm),
                                           mca_coll_adapt_component.adapt_ibcast_segment_size);
 }
 

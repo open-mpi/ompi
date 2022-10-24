@@ -114,7 +114,13 @@ struct dict_itor {
 #define dict_itor_set_data(i,dat,d)	(i)->_setdata((i)->_itor, (dat), (d))
 #define dict_itor_remove(i)			(i)->_remove((i)->_itor)
 
-int		dict_ptr_cmp __P((const void *k1, const void *k2));
+int ompi_coll_libnbc_dict_ptr_cmp __P((const void *k1, const void *k2));
+void ompi_coll_libnbc_dict_destroy __P((dict *dct, int del));
+void ompi_coll_libnbc_dict_itor_destroy __P((dict_itor *itor));
+int  ompi_coll_libnbc_dict_uint_cmp __P((const void *k1, const void *k2));
+int  ompi_coll_libnbc_dict_long_cmp __P((const void *k1, const void *k2));
+int  ompi_coll_libnbc_dict_ulong_cmp __P((const void *k1, const void *k2));
+int  ompi_coll_libnbc_dict_str_cmp __P((const void *k1, const void *k2));
 
 END_DECL
 

@@ -592,7 +592,7 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     return (uint32_t) package_ranks[process_info->my_local_rank];
 }
 
-struct fi_info *opal_mca_common_ofi_select_provider(struct fi_info *provider_list,
+struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
                                                     opal_process_info_t *process_info)
 {
     struct fi_info *provider = provider_list, *current_provider = provider_list;

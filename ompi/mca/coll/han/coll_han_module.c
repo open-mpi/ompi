@@ -6,6 +6,7 @@
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -354,7 +355,7 @@ mca_coll_han_module_disable(mca_coll_base_module_t * module,
 /*
  * Free the han request
  */
-int han_request_free(ompi_request_t ** request)
+int ompi_coll_han_request_free(ompi_request_t ** request)
 {
     (*request)->req_state = OMPI_REQUEST_INVALID;
     OBJ_RELEASE(*request);
