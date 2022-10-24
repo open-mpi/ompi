@@ -90,7 +90,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(o
     for (i = 0; i < size; ++i) {
         proc = ompi_group_peer_lookup(group,i);
         if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)){
-            opal_output(ompi_sharedfp_base_framework.framework_output,
+            opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
                         "mca_sharedfp_sm_component_file_query: Disqualifying myself: (%d/%s) "
                         "not all processes are on the same node.",
                         comm->c_contextid, comm->c_name);
@@ -113,7 +113,9 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(o
                      S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if ( sm_fd == -1){
         /*error opening file*/
-        opal_output(0,"mca_sharedfp_sm_component_file_query: Error, unable to open file for mmap: %s\n",sm_filename);
+        opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
+		    "mca_sharedfp_sm_component_file_query: Error, unable to open file "
+		    "for mmap: %s\n",sm_filename);
         free(sm_filename);
         return NULL;
     }
