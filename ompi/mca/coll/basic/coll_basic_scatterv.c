@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,6 +93,9 @@ mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
             if (scounts[i] > 0 && MPI_IN_PLACE != rbuf) {
                 err = ompi_datatype_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
                                       rdtype);
+                if (MPI_SUCCESS != err) {
+                    return err;
+                }
             }
         } else {
             /* Only send if there is something to send */
