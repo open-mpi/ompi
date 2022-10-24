@@ -171,6 +171,7 @@ examples/oshmem_shmalloc
 examples/oshmem_strided_puts
 examples/oshmem_symmetric_data
 examples/spc_example
+examples/sessions_hello
 
 ompi/debuggers/*.in
 ompi/debuggers/dlopen_test
