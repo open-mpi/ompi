@@ -207,6 +207,7 @@ static int opal_common_ofi_remove_memory_monitor(void)
         fi_close(opal_common_ofi_cache_fid);
         fi_close(&opal_common_ofi_monitor->fid);
         free(opal_common_ofi_monitor);
+        mca_base_framework_close(&opal_memory_base_framework);
         opal_common_ofi_installed_memory_monitor = false;
     }
 #endif
