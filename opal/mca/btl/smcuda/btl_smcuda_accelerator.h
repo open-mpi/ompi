@@ -17,7 +17,6 @@
 #include "opal/mca/btl/btl.h"
 
 OPAL_DECLSPEC int mca_btl_smcuda_accelerator_init(void);
-OPAL_DECLSPEC void mca_btl_smcuda_accelerator_fini(void);
 OPAL_DECLSPEC int mca_btl_smcuda_progress_one_ipc_event(struct mca_btl_base_descriptor_t **frag);
 OPAL_DECLSPEC int mca_btl_smcuda_memcpy(void *dst, void *src, size_t amount, char *msg,
                            struct mca_btl_base_descriptor_t *frag);

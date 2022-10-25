@@ -96,14 +96,15 @@ static void ompi_instance_destruct(ompi_instance_t *instance)
 
 OBJ_CLASS_INSTANCE(ompi_instance_t, opal_infosubscriber_t, ompi_instance_construct, ompi_instance_destruct);
 
-/* NTH: frameworks needed by MPI */
+/* OMPI MCA frameworks needed by MPI.  New frameworks need to be added to this list */
 static mca_base_framework_t *ompi_framework_dependencies[] = {
     &ompi_hook_base_framework, &ompi_op_base_framework,
     &opal_allocator_base_framework, &opal_rcache_base_framework, &opal_mpool_base_framework, &opal_smsc_base_framework,
     &ompi_bml_base_framework, &ompi_pml_base_framework, &ompi_coll_base_framework,
-    &ompi_osc_base_framework, NULL,
+    &ompi_osc_base_framework, &ompi_part_base_framework, NULL,
 };
 
+/* OMPI MCA frameworks that can be opened multiple times need to be added to this list */
 static mca_base_framework_t *ompi_lazy_frameworks[] = {
     &ompi_io_base_framework, &ompi_topo_base_framework, NULL,
 };
@@ -642,11 +643,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_win_init() failed", ret);
     }
 
-    /* initialize partcomm */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_part_base_framework, 0))) {
-        return ompi_instance_print_error ("mca_part_base_select() failed", ret);
-    }
-
+    /* select partcomm */
     if (OMPI_SUCCESS != (ret = mca_part_base_select (true, true))) {
         return ompi_instance_print_error ("mca_part_base_select() failed", ret);
     }

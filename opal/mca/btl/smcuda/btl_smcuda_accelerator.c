@@ -35,6 +35,8 @@ static int accelerator_event_max = 400;
 static int accelerator_event_ipc_most = 0;
 static bool smcuda_accelerator_initialized = false;
 
+static void mca_btl_smcuda_accelerator_fini(void);
+
 int mca_btl_smcuda_accelerator_init(void)
 {
     int rc = OPAL_SUCCESS;
@@ -79,6 +81,7 @@ int mca_btl_smcuda_accelerator_init(void)
         goto cleanup_and_error;
     }
 
+    opal_finalize_register_cleanup(mca_btl_smcuda_accelerator_fini);
     smcuda_accelerator_initialized = true;
 
 cleanup_and_error:
@@ -103,7 +106,7 @@ cleanup_and_error:
     return rc;
 }
 
-void mca_btl_smcuda_accelerator_fini(void)
+static void mca_btl_smcuda_accelerator_fini(void)
 {
     int i;
 
