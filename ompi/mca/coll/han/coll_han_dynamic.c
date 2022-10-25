@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
@@ -23,6 +23,7 @@
 #include "opal/class/opal_list.h"
 #include "ompi/mca/coll/han/coll_han.h"
 #include "ompi/mca/coll/han/coll_han_dynamic.h"
+#include "ompi/mca/coll/han/coll_han_algorithms.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 /*
@@ -272,7 +273,7 @@ get_module(COLLTYPE_T coll_id,
     COMPONENT_T mca_rule_component;
 
     topo_lvl = han_module->topologic_level;
-    mca_rule_component = mca_coll_han_component.mca_rules[coll_id][topo_lvl];
+    mca_rule_component = mca_coll_han_component.mca_sub_components[coll_id][topo_lvl];
 
     mca_coll_han_get_all_coll_modules(comm, han_module);
 
@@ -303,6 +304,60 @@ get_module(COLLTYPE_T coll_id,
         return NULL;
     }
     return han_module->modules_storage.modules[mca_rule_component].module_handler;
+}
+
+/*
+ * whether OMPI_MCA_coll_han_use_xxx_algorithm was set by user
+ */
+static bool
+han_algorithm_is_user_provided(COLLTYPE_T coll_id) {
+    const int *value = NULL;
+    mca_base_var_source_t source;
+    mca_base_var_get_value(mca_coll_han_component.use_algorithm_param[coll_id],
+                           &value, &source, NULL);
+    return (MCA_BASE_VAR_SOURCE_DEFAULT != source);
+}
+
+/*
+ * Return the algorithm to use for the collective coll_id
+ * for a msg_size sized message on the comm communicator
+ * following the dynamic rules
+ */
+static int
+get_algorithm(COLLTYPE_T coll_id,
+              size_t msg_size,
+              struct ompi_communicator_t *comm,
+              mca_coll_han_module_t *han_module)
+{
+    int algorithm_id = -1;
+    int rank = ompi_comm_rank(comm);
+    algorithm_id = mca_coll_han_component.use_algorithm[coll_id];
+    if (!han_algorithm_is_user_provided(coll_id)) {
+        /* find the correct dynamic rule to check */
+        const msg_size_rule_t *dynamic_rule = get_dynamic_rule(coll_id,
+                                                               msg_size,
+                                                               comm,
+                                                               han_module);
+        if(NULL != dynamic_rule && dynamic_rule->algorithm_id >= 0) {
+            /* Use dynamic rule from file */
+            algorithm_id = dynamic_rule->algorithm_id;
+        } else {
+            /*
+             * No dynamic rule from file
+             * Use default behaviour
+             */
+            algorithm_id = 0;
+        }
+    }
+    if ( 0 == rank ) {
+        opal_output_verbose(1, mca_coll_han_component.han_output,
+                            "coll:han:get_algorithm %s size:%ld algorithm:%d %s",
+                            mca_coll_base_colltype_to_str(coll_id),
+                            msg_size,
+                            algorithm_id,
+                            mca_coll_han_algorithm_id_to_name(coll_id, algorithm_id));
+    }
+    return algorithm_id;
 }
 
 
@@ -390,10 +445,17 @@ mca_coll_han_allgather_intra_dynamic(const void *sbuf, int scount,
          * sub_module->coll_allgather is valid and point to this function
          * Call han topological collective algorithm
          */
-        if(mca_coll_han_component.use_simple_algorithm[ALLGATHER]) {
-            allgather = mca_coll_han_allgather_intra_simple;
-        } else {
-            allgather = mca_coll_han_allgather_intra;
+        int algorithm_id = get_algorithm(ALLGATHER,
+                                         dtype_size,
+                                         comm,
+                                         han_module);
+        allgather = (mca_coll_base_module_allgather_fn_t)mca_coll_han_algorithm_id_to_fn(ALLGATHER, algorithm_id);
+        if (NULL == allgather) { /* default behaviour */
+            if(mca_coll_han_component.use_simple_algorithm[ALLGATHER]) {
+                allgather = mca_coll_han_allgather_intra_simple;
+            } else {
+                allgather = mca_coll_han_allgather_intra;
+            }
         }
     } else {
         /*
@@ -608,7 +670,7 @@ mca_coll_han_allreduce_intra_dynamic(const void *sbuf,
         allreduce = han_module->previous_allreduce;
         sub_module = han_module->previous_allreduce_module;
     } else if (GLOBAL_COMMUNICATOR == topo_lvl && sub_module == module) {
-        /* Reproducibility: fallback on reproducible algo */
+        /* Reproducibility: fallback on reproducible algorithm */
         if (mca_coll_han_component.han_reproducible) {
             allreduce = mca_coll_han_allreduce_reproducible;
         } else {
@@ -618,13 +680,17 @@ mca_coll_han_allreduce_intra_dynamic(const void *sbuf,
              * sub_module->coll_allreduce is valid and point to this function
              * Call han topological collective algorithm
              */
-            if(mca_coll_han_component.use_simple_algorithm[ALLREDUCE]) {
-                allreduce = mca_coll_han_allreduce_intra_simple;
-            } else {
-                allreduce = mca_coll_han_allreduce_intra;
+            int algorithm_id = get_algorithm(ALLREDUCE, dtype_size, comm, han_module);
+            allreduce = (mca_coll_base_module_allreduce_fn_t) mca_coll_han_algorithm_id_to_fn(ALLREDUCE, algorithm_id);
+
+            if (NULL == allreduce) { /* default behaviour */
+                if(mca_coll_han_component.use_simple_algorithm[ALLREDUCE]) {
+                    allreduce = mca_coll_han_allreduce_intra_simple;
+                } else {
+                    allreduce = mca_coll_han_allreduce_intra;
+                }
             }
         }
-        sub_module = module;
     } else {
         /*
          * If we get here:
@@ -716,7 +782,11 @@ mca_coll_han_barrier_intra_dynamic(struct ompi_communicator_t *comm,
          * sub_module->coll_barrier is valid and point to this function
          * Call han topological collective algorithm
          */
-        barrier = mca_coll_han_barrier_intra_simple;
+        int algorithm_id = get_algorithm(BARRIER, 0, comm, han_module);
+        barrier = (mca_coll_base_module_barrier_fn_t) mca_coll_han_algorithm_id_to_fn(BARRIER, algorithm_id);
+        if (NULL == barrier) { /* default behaviour*/
+            barrier = mca_coll_han_barrier_intra_simple;
+        }
     } else {
         /*
          * If we get here:
@@ -813,12 +883,18 @@ mca_coll_han_bcast_intra_dynamic(void *buff,
          * sub_module->coll_bcast is valid and point to this function
          * Call han topological collective algorithm
          */
-        if(mca_coll_han_component.use_simple_algorithm[BCAST]) {
-            bcast = mca_coll_han_bcast_intra_simple;
-        } else {
-            bcast = mca_coll_han_bcast_intra;
+        int algorithm_id = get_algorithm(BCAST,
+                                         dtype_size,
+                                         comm,
+                                         han_module);
+        bcast = (mca_coll_base_module_bcast_fn_t)mca_coll_han_algorithm_id_to_fn(BCAST, algorithm_id);
+        if (NULL == bcast) { /* default behaviour */
+             if(mca_coll_han_component.use_simple_algorithm[BCAST]) {
+                bcast = mca_coll_han_bcast_intra_simple;
+            } else {
+                bcast = mca_coll_han_bcast_intra;
+            }
         }
-        sub_module = module;
     } else {
         /*
          * If we get here:
@@ -923,10 +999,17 @@ mca_coll_han_gather_intra_dynamic(const void *sbuf, int scount,
          * sub_module->coll_gather is valid and point to this function
          * Call han topological collective algorithm
          */
-        if(mca_coll_han_component.use_simple_algorithm[GATHER]) {
-            gather = mca_coll_han_gather_intra_simple;
-        } else {
-            gather = mca_coll_han_gather_intra;
+        int algorithm_id = get_algorithm(GATHER,
+                                         dtype_size,
+                                         comm,
+                                         han_module);
+        gather = (mca_coll_base_module_gather_fn_t) mca_coll_han_algorithm_id_to_fn(GATHER, algorithm_id);
+        if (NULL == gather) { /* default behaviour */
+            if(mca_coll_han_component.use_simple_algorithm[GATHER]) {
+                gather = mca_coll_han_gather_intra_simple;
+            } else {
+                gather = mca_coll_han_gather_intra;
+            }
         }
     } else {
         /*
@@ -1024,7 +1107,7 @@ mca_coll_han_reduce_intra_dynamic(const void *sbuf,
         reduce = han_module->previous_reduce;
         sub_module = han_module->previous_reduce_module;
     } else if (GLOBAL_COMMUNICATOR == topo_lvl && sub_module == module) {
-        /* Reproducibility: fallback on reproducible algo */
+        /* Reproducibility: fallback on reproducible algorithm */
         if (mca_coll_han_component.han_reproducible) {
             reduce = mca_coll_han_reduce_reproducible;
         } else {
@@ -1034,13 +1117,19 @@ mca_coll_han_reduce_intra_dynamic(const void *sbuf,
              * sub_module->coll_reduce is valid and point to this function
              * Call han topological collective algorithm
              */
-            if(mca_coll_han_component.use_simple_algorithm[REDUCE]) {
-                reduce = mca_coll_han_reduce_intra_simple;
-            } else {
-                reduce = mca_coll_han_reduce_intra;
+            int algorithm_id = get_algorithm(REDUCE,
+                                             dtype_size,
+                                             comm,
+                                             han_module);
+            reduce = (mca_coll_base_module_reduce_fn_t)mca_coll_han_algorithm_id_to_fn(REDUCE, algorithm_id);
+            if (NULL == reduce) { /* default behaviour */
+                if(mca_coll_han_component.use_simple_algorithm[REDUCE]) {
+                    reduce = mca_coll_han_reduce_intra_simple;
+                } else {
+                    reduce = mca_coll_han_reduce_intra;
+                }
             }
         }
-        sub_module = module;
     } else {
         /*
          * If we get here:
@@ -1145,10 +1234,17 @@ mca_coll_han_scatter_intra_dynamic(const void *sbuf, int scount,
          * sub_module->coll_scatter is valid and point to this function
          * Call han topological collective algorithm
          */
-        if(mca_coll_han_component.use_simple_algorithm[SCATTER]) {
-            scatter = mca_coll_han_scatter_intra_simple;
-        } else {
-            scatter = mca_coll_han_scatter_intra;
+        int algorithm_id = get_algorithm(SCATTER,
+                                         dtype_size,
+                                         comm,
+                                         han_module);
+        scatter = (mca_coll_base_module_scatter_fn_t)mca_coll_han_algorithm_id_to_fn(SCATTER, algorithm_id);
+        if (NULL == scatter) { /* default behaviour */
+            if(mca_coll_han_component.use_simple_algorithm[SCATTER]) {
+                scatter = mca_coll_han_scatter_intra_simple;
+            } else {
+                scatter = mca_coll_han_scatter_intra;
+            }
         }
     } else {
         /*
