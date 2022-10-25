@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "config.h"
+#include "ompi_config.h"
 
 #if defined(HAVE_LIBSCOTCH)
 #include <scotch.h>
@@ -20,22 +21,22 @@ static int verbose_level = ERROR;
 #define USE_KL_STRATEGY 1
 
 
-#define MIN(a,b) ((a)<(b)?(a):(b))
+#define TM_MIN(a,b) ((a)<(b)?(a):(b))
 
 
-int  fill_tab(int **,int *,int,int,int,int);
-void complete_obj_weight(double **,int,int);
+OMPI_HIDDEN int  tm_fill_tab(int **,int *,int,int,int,int);
+OMPI_HIDDEN void tm_complete_obj_weight(double **,int,int);
 
-void allocate_vertex(int,int *,com_mat_t *,int,int *,int);
-double eval_cost(int *, com_mat_t *);
-int *kpartition_greedy(int, com_mat_t *,int,int *,int);
-constraint_t *split_constraints (int *,int,int,tm_topology_t *,int, int);
-com_mat_t **split_com_mat(com_mat_t *,int,int,int *);
-int **split_vertices(int *,int,int,int *);
-void free_tab_com_mat(com_mat_t **,int);
-void free_tab_local_vertices(int **,int);
-void free_const_tab(constraint_t *,int);
-void kpartition_build_level_topology(tm_tree_t *,com_mat_t *,int,int,tm_topology_t *,
+static void allocate_vertex(int,int *,com_mat_t *,int,int *,int);
+static double eval_cost(int *, com_mat_t *);
+static int *kpartition_greedy(int, com_mat_t *,int,int *,int);
+static constraint_t *split_constraints (int *,int,int,tm_topology_t *,int, int);
+static com_mat_t **split_com_mat(com_mat_t *,int,int,int *);
+static int **split_vertices(int *,int,int,int *);
+static void free_tab_com_mat(com_mat_t **,int);
+static void free_tab_local_vertices(int **,int);
+static void free_const_tab(constraint_t *,int);
+static void kpartition_build_level_topology(tm_tree_t *,com_mat_t *,int,int,tm_topology_t *,
 				     int *,int *,int,double *,double *);
 
 static int greedy_flag = 0;
@@ -287,7 +288,7 @@ int  *kpartition_scotch(int k, com_mat_t *com_mat, int n, int *constraints, int 
 #endif /* defined(HAVE_LIBSCOTCH) */
 
 
-void allocate_vertex(int u, int *res, com_mat_t *com_mat, int n, int *size, int max_size)
+static void allocate_vertex(int u, int *res, com_mat_t *com_mat, int n, int *size, int max_size)
 {
   int i,best_part=0;
   double cost, best_cost = -1;
@@ -324,7 +325,7 @@ void allocate_vertex(int u, int *res, com_mat_t *com_mat, int n, int *size, int 
   size[best_part]++;
 }
 
-double eval_cost(int *partition, com_mat_t *com_mat)
+static double eval_cost(int *partition, com_mat_t *com_mat)
 {
   double cost = 0;
   int i,j;
@@ -337,7 +338,7 @@ double eval_cost(int *partition, com_mat_t *com_mat)
   return cost;
 }
 
-int  *kpartition_greedy(int k, com_mat_t *com_mat, int n, int *constraints, int nb_constraints)
+static int  *kpartition_greedy(int k, com_mat_t *com_mat, int n, int *constraints, int nb_constraints)
 {
   int *partition = NULL, *best_partition=NULL, *size = NULL;
   int i,j,nb_trials;
@@ -362,7 +363,8 @@ int  *kpartition_greedy(int k, com_mat_t *com_mat, int n, int *constraints, int 
     printf("nb_constraints = %d\n",nb_constraints);
 
     if(n<=16){
-      printf("Constraints: ");print_1D_tab(constraints,nb_constraints);
+      printf("Constraints: ");
+      tm_print_1D_tab(constraints,nb_constraints);
     }
   }
   /* if(com_mat->n){ */
@@ -424,7 +426,7 @@ int  *kpartition_greedy(int k, com_mat_t *com_mat, int n, int *constraints, int 
       /* find a vertex not allready partitionned*/
       do{
 	/* call the mersenne twister PRNG of tm_mt.c*/
-	j =  genrand_int32() % n;
+	j =  tm_genrand_int32() % n;
       } while ( partition[j] != -1 );
       /* allocate and update size of partition*/
       partition[j] = i;
@@ -460,7 +462,7 @@ int  *kpartition_greedy(int k, com_mat_t *com_mat, int n, int *constraints, int 
   return best_partition;
 }
 
-int *kpartition(int k, com_mat_t *com_mat, int n, int *constraints, int nb_constraints)
+int *tm_kpartition(int k, com_mat_t *com_mat, int n, int *constraints, int nb_constraints)
 {
   int *res= NULL;
 
@@ -493,7 +495,7 @@ int *kpartition(int k, com_mat_t *com_mat, int n, int *constraints, int nb_const
   return res;
 }
 
-constraint_t *split_constraints (int *constraints, int nb_constraints, int k, tm_topology_t *topology, int depth, int N)
+static constraint_t *split_constraints (int *constraints, int nb_constraints, int k, tm_topology_t *topology, int depth, int N)
 {
   constraint_t *const_tab = NULL;
   int nb_leaves, start, end;
@@ -505,7 +507,7 @@ constraint_t *split_constraints (int *constraints, int nb_constraints, int k, tm
   /* nb_leaves is the number of leaves of the current subtree
      this will help to determine where to split constraints and how to shift values
   */
-  nb_leaves = compute_nb_leaves_from_level( depth + 1, topology );
+  nb_leaves = tm_compute_nb_leaves_from_level( depth + 1, topology );
 
 /* split the constraints into k sub-constraints
      each sub-contraints 'i' contains constraints of value in [i*nb_leaves,(i+1)*nb_leaves[
@@ -515,12 +517,12 @@ constraint_t *split_constraints (int *constraints, int nb_constraints, int k, tm
   for( i = 0; i < k; i++ ){
     /*returns the indice in constraints that contains the smallest value not copied
       end is used to compute the number of copied elements (end-size) and is used as the next staring indices*/
-    end = fill_tab(&(const_tab[i].constraints), constraints, nb_constraints,start, (i+1) * nb_leaves, i * nb_leaves);
+    end = tm_fill_tab(&(const_tab[i].constraints), constraints, nb_constraints,start, (i+1) * nb_leaves, i * nb_leaves);
     const_tab[i].length = end-start;
     if(vl>=DEBUG){
       printf("Step %d\n",i);
-      printf("\tConstraint: "); print_1D_tab(constraints, nb_constraints);
-      printf("\tSub constraint: "); print_1D_tab(const_tab[i].constraints, end-start);
+      printf("\tConstraint: "); tm_print_1D_tab(constraints, nb_constraints);
+      printf("\tSub constraint: "); tm_print_1D_tab(const_tab[i].constraints, end-start);
     }
 
     if(end-start > N/k){
@@ -539,7 +541,7 @@ constraint_t *split_constraints (int *constraints, int nb_constraints, int k, tm
 
 
 /* split the com_mat of order n in k partiton according to parmutition table*/
-com_mat_t **split_com_mat(com_mat_t *com_mat, int n, int k, int *partition)
+static com_mat_t **split_com_mat(com_mat_t *com_mat, int n, int k, int *partition)
 {
   com_mat_t **res = NULL, *sub_com_mat;
   double **sub_mat = NULL;
@@ -550,8 +552,8 @@ com_mat_t **split_com_mat(com_mat_t *com_mat, int n, int k, int *partition)
 
 
   if(verbose_level >= DEBUG){
-    printf("Partition: "); print_1D_tab(partition,n);
-    display_tab(com_mat->comm,com_mat->n);
+    printf("Partition: "); tm_print_1D_tab(partition,n);
+    tm_display_tab(com_mat->comm,com_mat->n);
     printf("m=%d,n=%d,k=%d\n",m,n,k);
     printf("perm=%p\n", (void *)perm);
   }
@@ -571,8 +573,8 @@ com_mat_t **split_com_mat(com_mat_t *com_mat, int n, int k, int *partition)
 
     if(s>m){
       if(verbose_level >= CRITICAL){
-	fprintf(stderr,"Partition: "); print_1D_tab(partition,n);
-	display_tab(com_mat->comm,com_mat->n);
+	fprintf(stderr,"Partition: "); tm_print_1D_tab(partition,n);
+	tm_display_tab(com_mat->comm,com_mat->n);
 	fprintf(stderr,"too many elements of the partition for the permuation (s=%d>%d=m). n=%d, k=%d, cur_part= %d\n",s,m,n,k, cur_part);
       }
       exit(-1);
@@ -609,7 +611,7 @@ com_mat_t **split_com_mat(com_mat_t *com_mat, int n, int k, int *partition)
   return res;
 }
 
-int **split_vertices( int *vertices, int n, int k, int *partition)
+static int **split_vertices( int *vertices, int n, int k, int *partition)
 {
   int **res = NULL, *sub_vertices = NULL;
   int m = n/k;
@@ -620,8 +622,8 @@ int **split_vertices( int *vertices, int n, int k, int *partition)
 
 
   if(verbose_level >= DEBUG){
-    printf("Partition: ");print_1D_tab(partition,n);
-    printf("Vertices id: ");print_1D_tab(vertices,n);
+    printf("Partition: ");tm_print_1D_tab(partition,n);
+    printf("Vertices id: ");tm_print_1D_tab(vertices,n);
   }
 
   /*split the vertices tab of the partition cur_part  to the sub_vertices tab*/
@@ -633,14 +635,14 @@ int **split_vertices( int *vertices, int n, int k, int *partition)
 	sub_vertices[i++] = vertices[j];
     res[cur_part] = sub_vertices;
     if(verbose_level >= DEBUG){
-      printf("partition %d: ",cur_part);print_1D_tab(sub_vertices,m);
+      printf("partition %d: ",cur_part);tm_print_1D_tab(sub_vertices,m);
     }
   }
   /*exit(-1);*/
   return res;
 }
 
-void free_tab_com_mat(com_mat_t **mat,int k)
+static void free_tab_com_mat(com_mat_t **mat,int k)
 {
   int i,j;
   if( !mat )
@@ -656,7 +658,7 @@ void free_tab_com_mat(com_mat_t **mat,int k)
   FREE(mat);
 }
 
-void free_tab_local_vertices(int **mat, int k)
+static void free_tab_local_vertices(int **mat, int k)
 {
   int i; /* m=n/k; */
   if( !mat )
@@ -669,7 +671,7 @@ void free_tab_local_vertices(int **mat, int k)
 }
 
 
-void free_const_tab(constraint_t *const_tab, int k)
+static void free_const_tab(constraint_t *const_tab, int k)
 {
   int i;
 
@@ -717,7 +719,7 @@ static void display_partition(int *partition, int *local_vertices, int n, int de
   }	
 }
 
-void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, int N, int depth,
+static void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, int N, int depth,
 				     tm_topology_t *topology, int *local_vertices,
 				     int *constraints, int nb_constraints,
 				     double *obj_weight, double *comm_speed)
@@ -736,7 +738,7 @@ void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, in
   if ( depth == topology->nb_levels - 1 ){
     if(verbose_level>=DEBUG)
       printf("id : %d, com_mat= %p\n",local_vertices[0], (void *)com_mat->comm);
-    set_node(cur_node,NULL, 0, NULL, local_vertices[0], 0, NULL, depth);
+    tm_set_node(cur_node,NULL, 0, NULL, local_vertices[0], 0, NULL, depth);
     return;
   }
 
@@ -748,7 +750,7 @@ void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, in
   /* check_com_mat(com_mat); */
 
   /* partition the com_matrix in k partitions*/
-  partition = kpartition(k, com_mat, N, constraints, nb_constraints);
+  partition = tm_kpartition(k, com_mat, N, constraints, nb_constraints);
 
   if(verbose_level>=INFO)
     display_partition(partition, local_vertices, N, depth, k);
@@ -780,7 +782,7 @@ void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, in
   }
 
   /* link the node with its child */
-  set_node( cur_node, tab_child, k, NULL, cur_node->id, 0, NULL, depth);
+  tm_set_node( cur_node, tab_child, k, NULL, cur_node->id, 0, NULL, depth);
 
   /* free local data*/
   FREE(partition);
@@ -790,7 +792,7 @@ void kpartition_build_level_topology(tm_tree_t *cur_node, com_mat_t *com_mat, in
 }
 
 
-tm_tree_t *kpartition_build_tree_from_topology(tm_topology_t *topology,double **comm,int N, int *constraints, int nb_constraints, double *obj_weight, double *com_speed)
+tm_tree_t *tm_kpartition_build_tree_from_topology(tm_topology_t *topology,double **comm,int N, int *constraints, int nb_constraints, double *obj_weight, double *com_speed)
 {
   int depth,i, K;
   tm_tree_t *root = NULL;
@@ -801,7 +803,7 @@ tm_tree_t *kpartition_build_tree_from_topology(tm_topology_t *topology,double **
   verbose_level = tm_get_verbose_level();
 
 
-  nb_cores=nb_processing_units(topology)*topology->oversub_fact;
+  nb_cores=tm_nb_processing_units(topology)*topology->oversub_fact;
 
 
   if(verbose_level>=INFO)
@@ -824,7 +826,7 @@ tm_tree_t *kpartition_build_tree_from_topology(tm_topology_t *topology,double **
   /* if we have more cores than processes add new dumb process to the com matrix*/
   if((K=nb_cores - N)>0){
     /* add K element to the object weight*/
-    complete_obj_weight(&obj_weight,N,K);
+    tm_complete_obj_weight(&obj_weight,N,K);
   } else if( K < 0){
     if(verbose_level>=ERROR)
       fprintf(stderr,"Not enough cores!\n");
@@ -847,9 +849,9 @@ tm_tree_t *kpartition_build_tree_from_topology(tm_topology_t *topology,double **
 
   local_vertices = (int*) MALLOC (sizeof(int) * (K+N));
 
-  for( i = 0 ; i < MIN(N,nb_constraints) ; i++)
+  for( i = 0 ; i < TM_MIN(N,nb_constraints) ; i++)
     local_vertices[i] = i;
-  for( i = MIN(N,nb_constraints) ;i < N + K ; i++)
+  for( i = TM_MIN(N,nb_constraints) ;i < N + K ; i++)
     local_vertices[i] = -1;
 
   /* we assume all objects have the same arity*/

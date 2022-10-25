@@ -2,11 +2,13 @@
 #define _TM_MALLOC_H_
 
 #include <stdlib.h>
-void *tm_malloc(size_t size, char *, int);
-void *tm_calloc(size_t count, size_t size, char *, int);
-void *tm_realloc(void *ptr, size_t size, char *, int);
-void tm_free(void *ptr);
-void tm_mem_check(void);
+#include "ompi_config.h"
+
+OMPI_HIDDEN void *tm_malloc(size_t size, char *, int);
+OMPI_HIDDEN void *tm_calloc(size_t count, size_t size, char *, int);
+OMPI_HIDDEN void *tm_realloc(void *ptr, size_t size, char *, int);
+OMPI_HIDDEN void tm_free(void *ptr);
+OMPI_HIDDEN void tm_mem_check(void);
 
 /* for debugging malloc */
 /* #define __DEBUG_TM_MALLOC__ */

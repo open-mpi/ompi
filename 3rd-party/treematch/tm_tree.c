@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <pthread.h>
 
+#include "ompi_config.h"
 #include "tm_tree.h"
 #include "tm_mapping.h"
 #include "tm_timings.h"
@@ -14,8 +15,8 @@
 #include "tm_thread_pool.h"
 
 
-#define MIN(a, b) ((a)<(b)?(a):(b))
-#define MAX(a, b) ((a)>(b)?(a):(b))
+#define TM_MIN(a, b) ((a)<(b)?(a):(b))
+#define TM_MAX(a, b) ((a)>(b)?(a):(b))
 
 #ifndef __CHARMC__
 #define __CHARMC__ 0
@@ -32,62 +33,63 @@
 static int verbose_level = ERROR;
 static int exhaustive_search_flag = 0;
 
-void free_list_child(tm_tree_t *);void free_tab_child(tm_tree_t *);
-double choose (long, long);void display_node(tm_tree_t *);
-void clone_tree(tm_tree_t *, tm_tree_t *);
-double *aggregate_obj_weight(tm_tree_t *, double *, int);
+static void free_list_child(tm_tree_t *);
+static void free_tab_child(tm_tree_t *);
+static double choose (long, long);void display_node(tm_tree_t *);
+static void clone_tree(tm_tree_t *, tm_tree_t *);
+static double *aggregate_obj_weight(tm_tree_t *, double *, int);
 tm_affinity_mat_t *aggregate_com_mat(tm_tree_t *, tm_affinity_mat_t *, int);
-double eval_grouping(tm_affinity_mat_t *, tm_tree_t **, int);
-group_list_t *new_group_list(tm_tree_t **, double, group_list_t *);
-void add_to_list(group_list_t *, tm_tree_t **, int, double);
-void  list_all_possible_groups(tm_affinity_mat_t *, tm_tree_t *, int, int, int, tm_tree_t **, group_list_t *);
-int independent_groups(group_list_t **, int, group_list_t *, int);
-void display_selection (group_list_t**, int, int, double);
-void display_grouping (tm_tree_t *, int, int, double);
-int recurs_select_independent_groups(group_list_t **, int, int, int, int,
-				     int, double, double *, group_list_t **, group_list_t **);
-int test_independent_groups(group_list_t **, int, int, int, int, int, double, double *,
-			    group_list_t **, group_list_t **);
-void delete_group_list(group_list_t *);
-int group_list_id(const void*, const void*);
-int group_list_asc(const void*, const void*);
-int group_list_dsc(const void*, const void*);
-int weighted_degree_asc(const void*, const void*);
-int weighted_degree_dsc(const void*, const void*);
-int  select_independent_groups(group_list_t **, int, int, int, double *, group_list_t **, int, double);
-int  select_independent_groups_by_largest_index(group_list_t **, int, int, int, double *,
-						group_list_t **, int, double);
-void list_to_tab(group_list_t *, group_list_t **, int);
-void display_tab_group(group_list_t **, int, int);
-int independent_tab(tm_tree_t **, tm_tree_t **, int);
-void compute_weighted_degree(group_list_t **, int, int);
+static double eval_grouping(tm_affinity_mat_t *, tm_tree_t **, int);
+static group_list_t *new_group_list(tm_tree_t **, double, group_list_t *);
+static void add_to_list(group_list_t *, tm_tree_t **, int, double);
+static void  list_all_possible_groups(tm_affinity_mat_t *, tm_tree_t *, int, int, int, tm_tree_t **, group_list_t *);
+static int independent_groups(group_list_t **, int, group_list_t *, int);
+static void display_selection (group_list_t**, int, int, double);
+static void display_grouping (tm_tree_t *, int, int, double);
+static int recurs_select_independent_groups(group_list_t **, int, int, int, int,
+                                            int, double, double *, group_list_t **, group_list_t **);
+static int test_independent_groups(group_list_t **, int, int, int, int, int, double, double *,
+                                   group_list_t **, group_list_t **);
+static void delete_group_list(group_list_t *);
+static int group_list_id(const void*, const void*);
+static int group_list_asc(const void*, const void*);
+static int group_list_dsc(const void*, const void*);
+static int weighted_degree_asc(const void*, const void*);
+static int weighted_degree_dsc(const void*, const void*);
+static int  select_independent_groups(group_list_t **, int, int, int, double *, group_list_t **, int, double);
+static int  select_independent_groups_by_largest_index(group_list_t **, int, int, int, double *,
+                                                       group_list_t **, int, double);
+static void list_to_tab(group_list_t *, group_list_t **, int);
+static void display_tab_group(group_list_t **, int, int);
+static int independent_tab(tm_tree_t **, tm_tree_t **, int);
+static void compute_weighted_degree(group_list_t **, int, int);
 void  group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **);
-void  fast_group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **, int *, int);
-int adjacency_asc(const void*, const void*);
-int adjacency_dsc(const void*, const void*);
-		 void super_fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int);
-tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *, double *, double);
-void group_nodes(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int , int, double*, double);
-double fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, double);
-void complete_aff_mat(tm_affinity_mat_t **, int, int);
-void complete_obj_weight(double **, int, int);
-void create_dumb_tree(tm_tree_t *, int, tm_topology_t *);
-void complete_tab_node(tm_tree_t **, int, int, int, tm_topology_t *);
-void set_deb_tab_child(tm_tree_t *, tm_tree_t *, int);
-tm_tree_t *build_level_topology(tm_tree_t *, tm_affinity_mat_t *, int, int, tm_topology_t *, double *, double *);
-int check_constraints(tm_topology_t  *, int **);
-tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *, tm_affinity_mat_t *, double *, double *);
-void free_non_constraint_tree(tm_tree_t *);
-void free_constraint_tree(tm_tree_t *);
-void free_tab_double(double**, int);
-void free_tab_int(int**, int );
+static void  fast_group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **, int *, int);
+static int adjacency_asc(const void*, const void*);
+static int adjacency_dsc(const void*, const void*);
+static void super_fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int);
+static tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *, double *, double);
+static void group_nodes(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int , int, double*, double);
+static double fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, double);
+static void complete_aff_mat(tm_affinity_mat_t **, int, int);
+OMPI_HIDDEN void tm_complete_obj_weight(double **, int, int);
+static void create_dumb_tree(tm_tree_t *, int, tm_topology_t *);
+static void complete_tab_node(tm_tree_t **, int, int, int, tm_topology_t *);
+static void set_deb_tab_child(tm_tree_t *, tm_tree_t *, int);
+static tm_tree_t *build_level_topology(tm_tree_t *, tm_affinity_mat_t *, int, int, tm_topology_t *, double *, double *);
+static int check_constraints(tm_topology_t  *, int **);
+static tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *, tm_affinity_mat_t *, double *, double *);
+static void free_non_constraint_tree(tm_tree_t *);
+static void free_constraint_tree(tm_tree_t *);
+static void free_tab_double(double**, int);
+static void free_tab_int(int**, int );
 static void partial_aggregate_aff_mat (int, void **, int);
-void free_affinity_mat(tm_affinity_mat_t *aff_mat);
-int int_cmp_inc(const void* x1, const void* x2);
+static void free_affinity_mat(tm_affinity_mat_t *aff_mat);
+OMPI_HIDDEN int tm_int_cmp_inc(const void* x1, const void* x2);
 
 
 
-double choose (long n, long k)
+static double choose (long n, long k)
 {
   /* compute C_n_k */
   double res = 1;
@@ -109,13 +111,13 @@ int tm_get_exhaustive_search_flag(){
 }
 
 
-void free_affinity_mat(tm_affinity_mat_t *aff_mat){
+static void free_affinity_mat(tm_affinity_mat_t *aff_mat){
   free_tab_double(aff_mat->mat, aff_mat->order);
   FREE(aff_mat->sum_row);
   FREE(aff_mat);
 }
 
-void free_list_child(tm_tree_t *tree)
+static void free_list_child(tm_tree_t *tree)
 {
   int i;
 
@@ -128,7 +130,7 @@ void free_list_child(tm_tree_t *tree)
       FREE(tree);
   }
 }
-void free_tab_child(tm_tree_t *tree)
+static void free_tab_child(tm_tree_t *tree)
 {
   if(tree){
     /*in a non constaint tree internal node are allocated in an array an stored ib tab_child : they are freed globaly here */
@@ -137,7 +139,7 @@ void free_tab_child(tm_tree_t *tree)
   }
 }
 
-void free_non_constraint_tree(tm_tree_t *tree)
+static void free_non_constraint_tree(tm_tree_t *tree)
 {
   if(tree->dumb){
     if(tm_get_verbose_level() <= CRITICAL){
@@ -151,7 +153,7 @@ void free_non_constraint_tree(tm_tree_t *tree)
   FREE(tree);
 }
 
-void free_constraint_tree(tm_tree_t *tree)
+static void free_constraint_tree(tm_tree_t *tree)
 {
   int i;
 
@@ -174,7 +176,7 @@ void tm_free_tree(tm_tree_t *tree)
 }
 
 
-void set_node(tm_tree_t *node, tm_tree_t ** child, int arity, tm_tree_t *parent,
+void tm_set_node(tm_tree_t *node, tm_tree_t ** child, int arity, tm_tree_t *parent,
 	      int id, double val, tm_tree_t *tab_child, int depth)
 {
   static int uniq = 0;
@@ -189,14 +191,7 @@ void set_node(tm_tree_t *node, tm_tree_t ** child, int arity, tm_tree_t *parent,
   node->dumb = 0;
 }
 
-void display_node(tm_tree_t *node)
-{
-  if (verbose_level >= DEBUG)
-    printf("child : %p\narity : %d\nparent : %p\nid : %d\nval : %f\nuniq : %d\n\n",
-	   (void *)(node->child), node->arity, (void *)(node->parent), node->id, node->val, node->uniq);
-}
-
-void clone_tree(tm_tree_t *new, tm_tree_t *old)
+static void clone_tree(tm_tree_t *new, tm_tree_t *old)
 {
   int i;
   new->child = old->child;
@@ -213,7 +208,7 @@ void clone_tree(tm_tree_t *new, tm_tree_t *old)
 }
 
 
-double *aggregate_obj_weight(tm_tree_t *new_tab_node, double *tab, int M)
+static double *aggregate_obj_weight(tm_tree_t *new_tab_node, double *tab, int M)
 {
   int i, i1, id1;
   double *res = NULL;
@@ -298,7 +293,7 @@ static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat
     int *sup;
     long int *nnz_tab;
 
-    nb_threads = MIN(M/512, get_nb_threads());
+    nb_threads = TM_MIN(M/512, tm_get_nb_threads());
     works = (work_t**)MALLOC(sizeof(work_t*)*nb_threads);
     inf = (int*)MALLOC(sizeof(int)*nb_threads);
     sup = (int*)MALLOC(sizeof(int)*nb_threads);
@@ -318,18 +313,18 @@ static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat
       args[6]=(void*)sum_row;
       args[7]=(void*)(nnz_tab+id);
 
-      works[id]= create_work(8, args, partial_aggregate_aff_mat);
+      works[id]= tm_create_work(8, args, partial_aggregate_aff_mat);
       if(verbose_level >= DEBUG)
 	printf("Executing %p\n", (void *)works[id]);
 
-      submit_work( works[id], id);
+      tm_submit_work( works[id], id);
     }
 
     for(id=0;id<nb_threads;id++){
-      wait_work_completion(works[id]);
+      tm_wait_work_completion(works[id]);
       FREE(works[id]->args);
       nnz += nnz_tab[id];
-      destroy_work(works[id]);
+      tm_destroy_work(works[id]);
     }
 
     FREE(inf);
@@ -358,10 +353,10 @@ static tm_affinity_mat_t *aggregate_aff_mat(tm_tree_t *tab_node, tm_affinity_mat
     }
   }
  
-  return new_affinity_mat(new_mat, sum_row, M, nnz);
+  return tm_new_affinity_mat(new_mat, sum_row, M, nnz);
 }
 
-void free_tab_double(double**tab, int mat_order)
+static void free_tab_double(double**tab, int mat_order)
 {
   int i;
   for( i = 0 ; i < mat_order ; i++ )
@@ -369,7 +364,7 @@ void free_tab_double(double**tab, int mat_order)
   FREE(tab);
 }
 
-void free_tab_int(int**tab, int mat_order)
+static inline void free_tab_int(int**tab, int mat_order)
 {
   int i;
   for( i = 0 ; i < mat_order ; i++ )
@@ -377,7 +372,7 @@ void free_tab_int(int**tab, int mat_order)
   FREE(tab);
 }
 
-void display_tab(double **tab, int mat_order)
+void tm_display_tab(double **tab, int mat_order)
 {
   int i, j;
   double line, total = 0;
@@ -402,8 +397,7 @@ void display_tab(double **tab, int mat_order)
   /* printf("Total: %.2f\n", total);*/
 }
 
-
-double eval_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t **cur_group, int arity)
+static double eval_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t **cur_group, int arity)
 {
   double res = 0;
   int i, j, id, id1, id2;
@@ -430,7 +424,7 @@ double eval_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t **cur_group, int arit
 }
 
 
-group_list_t *new_group_list(tm_tree_t **tab, double val, group_list_t *next)
+static group_list_t *new_group_list(tm_tree_t **tab, double val, group_list_t *next)
 {
   group_list_t *res = NULL;
 
@@ -443,7 +437,7 @@ group_list_t *new_group_list(tm_tree_t **tab, double val, group_list_t *next)
 }
 
 
-void add_to_list(group_list_t *list, tm_tree_t **cur_group, int arity, double val)
+static void add_to_list(group_list_t *list, tm_tree_t **cur_group, int arity, double val)
 {
   group_list_t *elem = NULL;
   tm_tree_t **tab = NULL;
@@ -466,7 +460,7 @@ void add_to_list(group_list_t *list, tm_tree_t **cur_group, int arity, double va
 }
 
 
-void  list_all_possible_groups(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, int id, int arity, int depth,
+static void  list_all_possible_groups(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, int id, int arity, int depth,
 			       tm_tree_t **cur_group, group_list_t *list)
 {
   double val;
@@ -490,7 +484,7 @@ void  list_all_possible_groups(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, 
   }
 }
 
-void update_val(tm_affinity_mat_t *aff_mat, tm_tree_t *parent)
+void tm_update_val(tm_affinity_mat_t *aff_mat, tm_tree_t *parent)
 {
   /* int i; */
 
@@ -508,7 +502,7 @@ void update_val(tm_affinity_mat_t *aff_mat, tm_tree_t *parent)
   /*printf(": %f\n", parent->val);*/
 }
 
-int independent_groups(group_list_t **selection, int d, group_list_t *elem, int arity)
+static int independent_groups(group_list_t **selection, int d, group_list_t *elem, int arity)
 {
   int i, j, k;
 
@@ -525,7 +519,7 @@ int independent_groups(group_list_t **selection, int d, group_list_t *elem, int 
 
 
 
-void display_selection (group_list_t** selection, int M, int arity, double val)
+static void display_selection (group_list_t** selection, int M, int arity, double val)
 {
   int i, j;
   double local_val = 0;
@@ -544,7 +538,7 @@ void display_selection (group_list_t** selection, int M, int arity, double val)
 }
 
 
-void display_grouping (tm_tree_t *father, int M, int arity, double val)
+static void display_grouping (tm_tree_t *father, int M, int arity, double val)
 {
   int i, j;
 
@@ -561,7 +555,7 @@ void display_grouping (tm_tree_t *father, int M, int arity, double val)
 }
 
 
-int recurs_select_independent_groups(group_list_t **tab, int i, int n, int arity, int d, int M, double val, double *best_val, group_list_t **selection, group_list_t **best_selection)
+static int recurs_select_independent_groups(group_list_t **tab, int i, int n, int arity, int d, int M, double val, double *best_val, group_list_t **selection, group_list_t **best_selection)
 {
   group_list_t *elem = NULL;
   /*
@@ -597,7 +591,7 @@ int recurs_select_independent_groups(group_list_t **tab, int i, int n, int arity
 
 
 
-int test_independent_groups(group_list_t **tab, int i, int n, int arity, int d, int M, double val, double *best_val, group_list_t **selection, group_list_t **best_selection)
+static int test_independent_groups(group_list_t **tab, int i, int n, int arity, int d, int M, double val, double *best_val, group_list_t **selection, group_list_t **best_selection)
 {
   group_list_t *elem = NULL;
 
@@ -619,7 +613,7 @@ int test_independent_groups(group_list_t **tab, int i, int n, int arity, int d, 
   return 0;
 }
 
-void  delete_group_list(group_list_t *list)
+static void  delete_group_list(group_list_t *list)
 {
 
   if(list){
@@ -629,7 +623,7 @@ void  delete_group_list(group_list_t *list)
   }
 }
 
-int group_list_id(const void* x1, const void* x2)
+static int group_list_id(const void* x1, const void* x2)
 {
   group_list_t *e1 = NULL, *e2= NULL;
 
@@ -639,7 +633,7 @@ int group_list_id(const void* x1, const void* x2)
   return (e1->tab[0]->id < e2->tab[0]->id) ? - 1 : 1;
 }
 
-int group_list_asc(const void* x1, const void* x2)
+static int group_list_asc(const void* x1, const void* x2)
 {
   group_list_t *e1 = NULL, *e2 = NULL;
 
@@ -649,7 +643,7 @@ int group_list_asc(const void* x1, const void* x2)
   return (e1->val < e2->val) ? - 1 : 1;
 }
 
-int group_list_dsc(const void* x1, const void* x2)
+static int group_list_dsc(const void* x1, const void* x2)
 {
   group_list_t *e1 = NULL, *e2 = NULL;
 
@@ -659,7 +653,7 @@ int group_list_dsc(const void* x1, const void* x2)
   return (e1->val > e2->val) ? -1 : 1;
 }
 
-int weighted_degree_asc(const void* x1, const void* x2)
+static inline int weighted_degree_asc(const void* x1, const void* x2)
 {
   group_list_t *e1= NULL, *e2 = NULL;
 
@@ -669,7 +663,7 @@ int weighted_degree_asc(const void* x1, const void* x2)
   return (e1->wg > e2->wg) ? 1 : -1;
 }
 
-int weighted_degree_dsc(const void* x1, const void* x2)
+static int weighted_degree_dsc(const void* x1, const void* x2)
 {
   group_list_t *e1 = NULL, *e2 = NULL;
 
@@ -679,8 +673,8 @@ int weighted_degree_dsc(const void* x1, const void* x2)
   return (e1->wg > e2->wg) ? - 1 : 1;
 }
 
-int  select_independent_groups(group_list_t **tab_group, int n, int arity, int M, double *best_val,
-			       group_list_t **best_selection, int bound, double max_duration)
+static int select_independent_groups(group_list_t **tab_group, int n, int arity, int M, double *best_val,
+                                     group_list_t **best_selection, int bound, double max_duration)
 {
   int i, j;
   group_list_t **selection = NULL;
@@ -700,8 +694,8 @@ int  select_independent_groups(group_list_t **tab_group, int n, int arity, int M
 
   selection = (group_list_t **)MALLOC(sizeof(group_list_t*)*M);
   CLOCK(time0);
-  for( i = 0 ; i < MIN(bound, n) ; i++ ){
-    /* if(!(i%100)) {printf("%d/%d ", i, MIN(bound, n)); fflush(stdout);} */
+  for( i = 0 ; i < TM_MIN(bound, n) ; i++ ){
+    /* if(!(i%100)) {printf("%d/%d ", i, TM_MIN(bound, n)); fflush(stdout);} */
     selection[0] = tab_group[i];
     val = tab_group[i]->val;
     recurs_select_independent_groups(tab_group, i+1, n, arity, 1, M, val, best_val, selection, best_selection);
@@ -1138,7 +1132,7 @@ static int thread_exhaustive_search(group_list_t **tab_group, int nb_groups, int
   TIC;
 
   pthread_mutex_init(&lock, NULL);
-  nb_threads   = get_nb_threads();
+  nb_threads   = tm_get_nb_threads();
   nb_threads   = 4;
   works        = (work_t**)MALLOC(sizeof(work_t*)*nb_threads);
 
@@ -1186,17 +1180,17 @@ static int thread_exhaustive_search(group_list_t **tab_group, int nb_groups, int
     args[6]=(void*)indep_mat;
     args[7]=(void*)work_list;
     args[8]=(void*)&lock;
-    works[id]= create_work(9, args, partial_exhaustive_search);
+    works[id]= tm_create_work(9, args, partial_exhaustive_search);
     if(verbose_level >= DEBUG)
       printf("Executing %p\n", (void *)works[id]);
 
-    submit_work( works[id], id);
+    tm_submit_work( works[id], id);
   }
 
   for(id=0;id<nb_threads;id++){
-    wait_work_completion(works[id]);
+    tm_wait_work_completion(works[id]);
     FREE(works[id]->args);
-    destroy_work(works[id]);
+    tm_destroy_work(works[id]);
   }
 
   exit(-1);
@@ -1385,7 +1379,7 @@ static int  exhaustive_search(group_list_t **tab_group, int n, int arity, int so
 #endif
 
 
-int  select_independent_groups_by_largest_index(group_list_t **tab_group, int n, int arity, int solution_size, double *best_val, group_list_t **best_selection, int bound, double max_duration)
+static int select_independent_groups_by_largest_index(group_list_t **tab_group, int n, int arity, int solution_size, double *best_val, group_list_t **best_selection, int bound, double max_duration)
 {
   int i, dec, nb_groups=0;
   group_list_t **selection = NULL;
@@ -1395,7 +1389,7 @@ int  select_independent_groups_by_largest_index(group_list_t **tab_group, int n,
   selection = (group_list_t **)MALLOC(sizeof(group_list_t*)*solution_size);
   CLOCK(time0);
 
-  dec = MAX(n/10000, 2);
+  dec = TM_MAX(n/10000, 2);
   for( i = n-1 ; i >= 0 ; i -= dec*dec){
     selection[0] = tab_group[i];
     val = tab_group[i]->val;
@@ -1425,7 +1419,7 @@ int  select_independent_groups_by_largest_index(group_list_t **tab_group, int n,
   return 0;
 }
 
-void list_to_tab(group_list_t *list, group_list_t **tab, int n)
+static void list_to_tab(group_list_t *list, group_list_t **tab, int n)
 {
   int i;
   for( i = 0 ; i < n ; i++ ){
@@ -1445,7 +1439,7 @@ void list_to_tab(group_list_t *list, group_list_t **tab, int n)
   }
 }
 
-void display_tab_group(group_list_t **tab, int n, int arity)
+static inline void display_tab_group(group_list_t **tab, int n, int arity)
 {
   int i, j;
   if(verbose_level<DEBUG)
@@ -1457,7 +1451,7 @@ void display_tab_group(group_list_t **tab, int n, int arity)
   }
 }
 
-int independent_tab(tm_tree_t **tab1, tm_tree_t **tab2, int arity)
+static int independent_tab(tm_tree_t **tab1, tm_tree_t **tab2, int arity)
 {
   int ii, jj;
   for( ii = 0 ; ii < arity ; ii++ ){
@@ -1470,7 +1464,7 @@ int independent_tab(tm_tree_t **tab1, tm_tree_t **tab2, int arity)
   return 1;
 }
 
-void compute_weighted_degree(group_list_t **tab, int n, int arity)
+static void compute_weighted_degree(group_list_t **tab, int n, int arity)
 {
   int i, j;
   for( i = 0 ; i < n ; i++)
@@ -1501,7 +1495,7 @@ void compute_weighted_degree(group_list_t **tab, int n, int arity)
   cur_group: current grouping
   mat_order: size of tab and tab_node. i.e. number of nodes at the considered level
  */
-void  fast_group(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *parent, int id, int arity, int n,
+static void  fast_group(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *parent, int id, int arity, int n,
 		 double *best_val, tm_tree_t **cur_group, int *nb_groups, int max_groups)
 {
   double val;
@@ -1553,7 +1547,7 @@ void  fast_group(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *par
 
   
 
-double fast_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node, int arity, int solution_size, double nb_groups)
+static double fast_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node, int arity, int solution_size, double nb_groups)
 {
   tm_tree_t **cur_group = NULL;
   int l, i, nb_done;
@@ -1565,12 +1559,12 @@ double fast_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t 
     nb_done = 0;
     /*printf("nb_groups%d/%d, nb_groups=%ld\n", l, M, nb_groups);*/
     /* select the best greedy grouping among the 10 first one*/
-    /*fast_group(tab, tab_node, &new_tab_node[l], -1, arity, 0, &best_val, cur_group, mat_order, &nb_done, MAX(2, (int)(50-log2(nb_groups))-M/10));*/
-    fast_group(aff_mat, tab_node, &new_tab_node[l], -1, arity, 0, &best_val, cur_group, &nb_done, MAX(10, (int)(50-CmiLog2(nb_groups))-solution_size/10));
+    /*fast_group(tab, tab_node, &new_tab_node[l], -1, arity, 0, &best_val, cur_group, mat_order, &nb_done, TM_MAX(2, (int)(50-log2(nb_groups))-M/10));*/
+    fast_group(aff_mat, tab_node, &new_tab_node[l], -1, arity, 0, &best_val, cur_group, &nb_done, TM_MAX(10, (int)(50-CmiLog2(nb_groups))-solution_size/10));
     val += best_val;
     for( i = 0 ; i < new_tab_node[l].arity ; i++ )
       new_tab_node[l].child[i]->parent=&new_tab_node[l];
-    update_val(aff_mat, &new_tab_node[l]);
+    tm_update_val(aff_mat, &new_tab_node[l]);
     if(new_tab_node[l].val != best_val){
           if(verbose_level>=CRITICAL)
 	    printf("Error: best_val = %f, new_tab_node[%d].val = %f\n", best_val, l, new_tab_node[l].val);
@@ -1596,7 +1590,7 @@ static double k_partition_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_no
   if(verbose_level>=DEBUG)
     printf("K-Partitionning: n=%d, solution_size=%d, arity=%d\n",n, solution_size,arity);
 
-  partition = kpartition(solution_size, &com_mat, n, NULL, 0);
+  partition = tm_kpartition(solution_size, &com_mat, n, NULL, 0);
 
   /* new_tab_node[i]->child[j] = &tab_node[k] where 0<=i< solution size, 0<=j<arity and partition[k]=i and the jth occurence of i in the partition*/
 
@@ -1612,7 +1606,7 @@ static double k_partition_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_no
   
   for( i = 0 ; i < solution_size ; i++ ){
     new_tab_node[i].arity = arity;
-    update_val(aff_mat, &new_tab_node[i]);
+    tm_update_val(aff_mat, &new_tab_node[i]);
     val += new_tab_node[i].val;
   }
 
@@ -1623,7 +1617,7 @@ static double k_partition_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_no
 
 }
 
-int adjacency_asc(const void* x1, const void* x2)
+static inline int adjacency_asc(const void* x1, const void* x2)
 {
   adjacency_t *e1 = NULL, *e2 = NULL;
 
@@ -1633,7 +1627,7 @@ int adjacency_asc(const void* x1, const void* x2)
   return (e1->val < e2->val) ? - 1 : 1;
 }
 
-int adjacency_dsc(const void* x1, const void* x2)
+static int adjacency_dsc(const void* x1, const void* x2)
 {
   adjacency_t *e1 = NULL, *e2 = NULL;
 
@@ -1644,7 +1638,7 @@ int adjacency_dsc(const void* x1, const void* x2)
   return (e1->val > e2->val) ? -1 : 1;
 }
 
-void super_fast_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node, int arity, int solution_size)
+static inline void super_fast_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node, int arity, int solution_size)
 {
   double val = 0, duration;
   adjacency_t *graph;
@@ -1683,11 +1677,11 @@ TIC;
   l = 0;
   nb_groups = 0;
   for( i = 0 ; (i < e) && (l < solution_size) ; i++ )
-    if(try_add_edge(tab_node, &new_tab_node[l], arity, graph[i].i, graph[i].j, &nb_groups))
+    if(tm_try_add_edge(tab_node, &new_tab_node[l], arity, graph[i].i, graph[i].j, &nb_groups))
       l++;
 
   for( l = 0 ; l < solution_size ; l++ ){
-    update_val(aff_mat, &new_tab_node[l]);
+    tm_update_val(aff_mat, &new_tab_node[l]);
     val += new_tab_node[l].val;
   }
 
@@ -1706,7 +1700,7 @@ TIC;
 }
 
 
-tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *aff_mat, double* obj_weight, double comm_speed)
+static tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *aff_mat, double* obj_weight, double comm_speed)
 {
   double **mat = NULL, *sum_row;
   double **old_mat;
@@ -1747,7 +1741,7 @@ tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *aff_mat, double* obj_wei
       }
       if(mat[i][j]) nnz++;
     }
-  return new_affinity_mat(mat, sum_row, mat_order,nnz);
+  return tm_new_affinity_mat(mat, sum_row, mat_order,nnz);
 
 }
 
@@ -1759,7 +1753,7 @@ tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *aff_mat, double* obj_wei
   arity: number of children of parent (i.e.) size of the group to compute
   solution_size: size of new_tab_node (i.e) the number of parents
 */
-void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node,
+static void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node,
 		 int arity, int solution_size, double* obj_weigth, double comm_speed){
 
  /*
@@ -1800,7 +1794,7 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
       /*super_fast_grouping(tab, tab_node, new_tab_node, arity, mat_order, solution_size, k);*/
       if(verbose_level >= INFO )
 	printf("Bucket Grouping...\n");
-      val = bucket_grouping(cost_mat, tab_node, new_tab_node, arity, solution_size);
+      val = tm_bucket_grouping(cost_mat, tab_node, new_tab_node, arity, solution_size);
     }else if( arity <= 5){
       if(verbose_level >= INFO)
 	printf("Fast Grouping...\n");
@@ -1932,7 +1926,7 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
       new_tab_node[l].arity = arity;
 
       /* printf("arity=%d\n", new_tab_node[l].arity); */
-      update_val(cost_mat, &new_tab_node[l]);
+      tm_update_val(cost_mat, &new_tab_node[l]);
     }
 
     delete_group_list((&list)->next);
@@ -1952,7 +1946,7 @@ void group_nodes(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new
     printf("Grouping done in %.4fs!\n", duration);
 }
 
-void complete_aff_mat(tm_affinity_mat_t **aff_mat , int mat_order, int K)
+static void complete_aff_mat(tm_affinity_mat_t **aff_mat , int mat_order, int K)
 {
   double **old_mat = NULL, **new_mat = NULL; double *sum_row;
   int M, i;
@@ -1971,10 +1965,10 @@ void complete_aff_mat(tm_affinity_mat_t **aff_mat , int mat_order, int K)
     sum_row[i] = (*aff_mat)->sum_row[i];
   }
 
-  *aff_mat = new_affinity_mat(new_mat, sum_row, M, (*aff_mat)->nnz);
+  *aff_mat = tm_new_affinity_mat(new_mat, sum_row, M, (*aff_mat)->nnz);
 }
 
-void complete_obj_weight(double **tab, int mat_order, int K)
+void tm_complete_obj_weight(double **tab, int mat_order, int K)
 {
   double *old_tab = NULL, *new_tab = NULL, avg;
   int M, i;
@@ -2000,13 +1994,13 @@ void complete_obj_weight(double **tab, int mat_order, int K)
       new_tab[i] = avg;
 }
 
-void create_dumb_tree(tm_tree_t *node, int depth, tm_topology_t *topology)
+static void create_dumb_tree(tm_tree_t *node, int depth, tm_topology_t *topology)
 {
   tm_tree_t **list_child = NULL;
   int arity, i;
 
   if( depth == topology->nb_levels-1) {
-    set_node(node, NULL, 0, NULL, -1, 0, NULL, depth);
+    tm_set_node(node, NULL, 0, NULL, -1, 0, NULL, depth);
     return;
   }
 
@@ -2022,9 +2016,9 @@ void create_dumb_tree(tm_tree_t *node, int depth, tm_topology_t *topology)
 
   /* list_child => node->child ; list_child[0] => node->tab_child */
   /* printf("list_child[0] =  %p\n",list_child[0]); */
-  set_node(node, list_child, arity, NULL, -1, 0, NULL, depth);
+  tm_set_node(node, list_child, arity, NULL, -1, 0, NULL, depth);
 }
-void complete_tab_node(tm_tree_t **tab, int mat_order, int K, int depth, tm_topology_t *topology)
+static void complete_tab_node(tm_tree_t **tab, int mat_order, int K, int depth, tm_topology_t *topology)
 {
   tm_tree_t *old_tab = NULL, *new_tab = NULL;
   int M, i;
@@ -2050,7 +2044,7 @@ void complete_tab_node(tm_tree_t **tab, int mat_order, int K, int depth, tm_topo
   FREE(old_tab);
 }
 
-void set_deb_tab_child(tm_tree_t *tree, tm_tree_t *child, int depth)
+static void set_deb_tab_child(tm_tree_t *tree, tm_tree_t *child, int depth)
 {
   /* printf("depth=%d\t%p\t%p\n", depth, child, tree);*/
   if( depth > 0 )
@@ -2071,7 +2065,7 @@ depth: current depth of the algorithm
 toplogy: description of the hardware topology.
 constraints:  set of constraints: core ids where to bind the processes
 */
-tm_tree_t *build_level_topology(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat, int arity, int depth, tm_topology_t *topology,
+static tm_tree_t *build_level_topology(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat, int arity, int depth, tm_topology_t *topology,
 			     double *obj_weight, double *comm_speed)
 {
 
@@ -2107,7 +2101,7 @@ tm_tree_t *build_level_topology(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat,
     /* add K rows and columns to comm_matrix*/
     complete_aff_mat(&aff_mat, mat_order, K);
     /* add K element to the object weight*/
-    complete_obj_weight(&obj_weight, mat_order, K);
+    tm_complete_obj_weight(&obj_weight, mat_order, K);
     /*display_tab(tab, mat_order+K);*/
     /* add a dumb tree to the K new "virtual nodes"*/
     complete_tab_node(&tab_node, mat_order, K, depth, topology);
@@ -2129,7 +2123,7 @@ tm_tree_t *build_level_topology(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat,
   for( i = 0 ; i < M ; i++ ){
     tm_tree_t **list_child = NULL;
     list_child = (tm_tree_t**)CALLOC(arity, sizeof(tm_tree_t*));
-    set_node(&new_tab_node[i], list_child, arity, NULL, i, 0, tab_node, depth); 
+    tm_set_node(&new_tab_node[i], list_child, arity, NULL, i, 0, tab_node, depth); 
  }
   duration = TOC;
   if(verbose_level >= INFO)
@@ -2192,7 +2186,7 @@ tm_tree_t *build_level_topology(tm_tree_t *tab_node, tm_affinity_mat_t *aff_mat,
 
 
 
-tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *topology, tm_affinity_mat_t *aff_mat,
+static tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *topology, tm_affinity_mat_t *aff_mat,
 					      double *obj_weight, double *comm_speed){
   int depth, i;
   tm_tree_t *res = NULL, *tab_node = NULL;
@@ -2201,7 +2195,7 @@ tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *topology, tm_affini
   tab_node = (tm_tree_t*)MALLOC(sizeof(tm_tree_t)*mat_order);
   depth = topology->nb_levels;
   for( i = 0 ; i < mat_order ; i++ )
-    set_node(&tab_node[i], NULL, 0, NULL, i, 0, NULL, depth);
+    tm_set_node(&tab_node[i], NULL, 0, NULL, i, 0, NULL, depth);
 
 
   if(verbose_level >= INFO)
@@ -2229,7 +2223,7 @@ tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *topology, tm_affini
 
 */
 
-int check_constraints(tm_topology_t  *topology, int **constraints)
+static int check_constraints(tm_topology_t  *topology, int **constraints)
 {
 
   int sorted = 1;
@@ -2254,7 +2248,7 @@ int check_constraints(tm_topology_t  *topology, int **constraints)
     }
 
     if(!sorted){
-      qsort(*constraints, nb_constraints , sizeof(int), int_cmp_inc);
+      qsort(*constraints, nb_constraints , sizeof(int), tm_int_cmp_inc);
     }
 
   }else{
@@ -2280,14 +2274,14 @@ tm_tree_t * tm_build_tree_from_topology(tm_topology_t *topology, tm_affinity_mat
   /* Here constraints expended to take into account the oversuscribing factor */
   nb_constraints = check_constraints (topology, &constraints);
   nb_processes   = aff_mat->order;
-  npu            = nb_processing_units(topology);
+  npu            = tm_nb_processing_units(topology);
   nb_slots       = npu * oversub_fact;
 
   if(verbose_level >= INFO){
     printf("Com matrix size      : %d\n", nb_processes);
     printf("nb_constraints       : %d\n", nb_constraints);
     if(constraints)
-      print_1D_tab(constraints, nb_constraints);
+      tm_print_1D_tab(constraints, nb_constraints);
     printf("nb_processing units  : %d\n", npu);
     printf("Oversubscrbing factor: %d\n", oversub_fact);
     printf("Nb of slots          : %d\n", nb_slots);
@@ -2315,7 +2309,7 @@ tm_tree_t * tm_build_tree_from_topology(tm_topology_t *topology, tm_affinity_mat
     if(verbose_level >= INFO){
       printf("Partitionning with constraints\n");
     }
-    result = kpartition_build_tree_from_topology(topology, aff_mat->mat, nb_processes, constraints, nb_constraints,
+    result = tm_kpartition_build_tree_from_topology(topology, aff_mat->mat, nb_processes, constraints, nb_constraints,
 						 obj_weight, com_speed);
     result->nb_processes = aff_mat->order;
     FREE(constraints);

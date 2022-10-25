@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "IntConstantInitializedVector.h"
 
-int intCIV_isInitialized(int_CIVector * v, int i)
+int tm_intCIV_isInitialized(int_CIVector * v, int i)
 {
   if(v->top == 0)
     return 0;
@@ -14,7 +14,7 @@ int intCIV_isInitialized(int_CIVector * v, int i)
 
 
 
-void intCIV_init(int_CIVector * v, int size, int init_value)
+void tm_intCIV_init(int_CIVector * v, int size, int init_value)
 {
   v->init_value = init_value;
   v->size = size;
@@ -24,20 +24,20 @@ void intCIV_init(int_CIVector * v, int size, int init_value)
   v->vec = malloc(sizeof(int)*size);
 }
 
-void intCIV_exit(int_CIVector * v)
+static inline void intCIV_exit(int_CIVector * v)
 {
   free(v->to);
   free(v->from);
   free(v->vec);
  }
 
-int intCIV_set(int_CIVector * v, int i, int val)
+int tm_intCIV_set(int_CIVector * v, int i, int val)
 {
   if(v == NULL)
     return -1;
   if(i < 0 || i >= v->size)
     return -1;
-  if(!intCIV_isInitialized(v,i))
+  if(!tm_intCIV_isInitialized(v,i))
     {
       v->from[i] = v->top;
       v->to[v->top] = i;
@@ -47,13 +47,13 @@ int intCIV_set(int_CIVector * v, int i, int val)
   return 0;  
 }
 
-int intCIV_get(int_CIVector * v, int i)
+int tm_intCIV_get(int_CIVector * v, int i)
 {
   if(v == NULL)
     return -1;
   if(i < 0 || i >= v->size)
     return -1;
-  if(intCIV_isInitialized(v,i))
+  if(tm_intCIV_isInitialized(v,i))
     return v->vec[i];
   return v->init_value;
 }
