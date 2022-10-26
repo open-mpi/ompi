@@ -33,27 +33,28 @@ static int verbose_level = ERROR;
 
 static bucket_list_t global_bl = {0};
 
-int tab_cmp(const void*,const void*);
-int old_bucket_id(int,int,bucket_list_t);
-int bucket_id(int,int,bucket_list_t);
-void display_bucket(bucket_t *);
-void check_bucket(bucket_t *,double **,double, double);
-void display_pivots(bucket_list_t);
-void display_bucket_list(bucket_list_t);
-void add_to_bucket(int,int,int,bucket_list_t);
-void dfs(int,int,int,double *,double *,int,int);
-void built_pivot_tree(bucket_list_t);
-void fill_buckets(bucket_list_t);
-int is_power_of_2(int);
-void partial_sort(bucket_list_t *,double **,int);
-void next_bucket_elem(bucket_list_t,int *,int *);
-int add_edge_3(tm_tree_t *,tm_tree_t *,int,int,int *);
-void free_bucket(bucket_t *);
-void free_tab_bucket(bucket_t **,int);
-void free_bucket_list(bucket_list_t);
-void partial_update_val (int nb_args, void **args, int thread_id);
-double bucket_grouping(tm_affinity_mat_t *,tm_tree_t *, tm_tree_t *, int ,int);
-int tab_cmp(const void* x1,const void* x2)
+static int tab_cmp(const void*,const void*);
+static int old_bucket_id(int,int,bucket_list_t);
+static int bucket_id(int,int,bucket_list_t);
+static void display_bucket(bucket_t *);
+static void check_bucket(bucket_t *,double **,double, double);
+static void display_pivots(bucket_list_t);
+static void display_bucket_list(bucket_list_t);
+static void add_to_bucket(int,int,int,bucket_list_t);
+static void dfs(int,int,int,double *,double *,int,int);
+static void built_pivot_tree(bucket_list_t);
+static void fill_buckets(bucket_list_t);
+static int is_power_of_2(int);
+static void partial_sort(bucket_list_t *,double **,int);
+static void next_bucket_elem(bucket_list_t,int *,int *);
+static int add_edge_3(tm_tree_t *,tm_tree_t *,int,int,int *);
+static void free_bucket(bucket_t *);
+static void free_tab_bucket(bucket_t **,int);
+static void free_bucket_list(bucket_list_t);
+static void partial_update_val (int nb_args, void **args, int thread_id);
+double tm_bucket_grouping(tm_affinity_mat_t *,tm_tree_t *, tm_tree_t *, int ,int);
+
+static int tab_cmp(const void* x1,const void* x2)
 {
   int *e1 = NULL,*e2 = NULL,i1,i2,j1,j2;
   double **tab = NULL;
@@ -82,7 +83,7 @@ int tab_cmp(const void* x1,const void* x2)
 }
 
 
-int old_bucket_id(int i,int j,bucket_list_t bucket_list)
+static inline int old_bucket_id(int i,int j,bucket_list_t bucket_list)
 {
   double *pivot = NULL,val;
   int n,sup,inf,p;
@@ -111,7 +112,7 @@ int old_bucket_id(int i,int j,bucket_list_t bucket_list)
   return sup;
 }
 
-int bucket_id(int i,int j,bucket_list_t bucket_list)
+static int bucket_id(int i,int j,bucket_list_t bucket_list)
 {
   double *pivot_tree = NULL,val;
   int p,k;
@@ -131,14 +132,14 @@ int bucket_id(int i,int j,bucket_list_t bucket_list)
   return (int)pivot_tree[p];
 }
 
-void  display_bucket(bucket_t *b)
+static void  display_bucket(bucket_t *b)
 {
   printf("\tb.bucket=%p\n",(void *)b->bucket);
   printf("\tb.bucket_len=%d\n",(int)b->bucket_len);
   printf("\tb.nb_elem=%d\n",(int)b->nb_elem);
 }
 
-void check_bucket(bucket_t *b,double **tab,double inf, double sup)
+static void check_bucket(bucket_t *b,double **tab,double inf, double sup)
 {
   int i,j,k;
   for( k = 0 ; k < b->nb_elem ; k++ ){
@@ -152,7 +153,7 @@ void check_bucket(bucket_t *b,double **tab,double inf, double sup)
   }
 }
 
-void display_pivots(bucket_list_t bucket_list)
+static void display_pivots(bucket_list_t bucket_list)
 {
   int i;
   for( i = 0 ; i < bucket_list->nb_buckets-1 ; i++)
@@ -160,7 +161,7 @@ void display_pivots(bucket_list_t bucket_list)
   printf("\n");
 }
 
-void display_bucket_list(bucket_list_t bucket_list)
+static inline void display_bucket_list(bucket_list_t bucket_list)
 {
   int i;
   double inf,sup;
@@ -184,7 +185,7 @@ void display_bucket_list(bucket_list_t bucket_list)
 
 }
 
-void add_to_bucket(int id,int i,int j,bucket_list_t bucket_list)
+static void add_to_bucket(int id,int i,int j,bucket_list_t bucket_list)
 {
   bucket_t *bucket = NULL;
   int N,n,size;
@@ -222,7 +223,7 @@ void add_to_bucket(int id,int i,int j,bucket_list_t bucket_list)
  /* exit(-1); */
 }
 
-void dfs(int i,int inf,int sup,double *pivot,double *pivot_tree,int depth,int max_depth)
+static void dfs(int i,int inf,int sup,double *pivot,double *pivot_tree,int depth,int max_depth)
 {
   int p;
   if( depth == max_depth )
@@ -235,7 +236,7 @@ void dfs(int i,int inf,int sup,double *pivot,double *pivot_tree,int depth,int ma
   dfs(2*i+1,p+1,sup,pivot,pivot_tree,depth+1,max_depth);
 }
 
-void  built_pivot_tree(bucket_list_t bucket_list)
+static void  built_pivot_tree(bucket_list_t bucket_list)
 {
   double *pivot_tree = NULL,*pivot = NULL;
   int n,i,k;
@@ -261,7 +262,7 @@ void  built_pivot_tree(bucket_list_t bucket_list)
   }
 }
 
-void fill_buckets(bucket_list_t bucket_list)
+static void fill_buckets(bucket_list_t bucket_list)
 {
   int N,i,j,id;
 
@@ -274,7 +275,7 @@ void fill_buckets(bucket_list_t bucket_list)
     }
 }
 
-int is_power_of_2(int val)
+static int is_power_of_2(int val)
 {
   int n = 1;
   do{
@@ -286,7 +287,7 @@ int is_power_of_2(int val)
 }
 
 
-void partial_sort(bucket_list_t *bl,double **tab,int N)
+static void partial_sort(bucket_list_t *bl,double **tab,int N)
 {
   double *pivot = NULL;
   int *sample = NULL;
@@ -325,11 +326,11 @@ void partial_sort(bucket_list_t *bl,double **tab,int N)
   sample = (int*)MALLOC(2*sizeof(int)*n);
 
   for( k =  0 ; k < n ; k++ ){
-    i = genrand_int32()%(N-2)+1;
+    i = tm_genrand_int32()%(N-2)+1;
     if( i == N-2 )
       j = N-1;
     else
-      j = genrand_int32()%(N-i-2)+i+1;
+      j = tm_genrand_int32()%(N-i-2)+i+1;
     if(verbose_level >= DEBUG)
       printf("i=%d, j=%d\n",i,j);
     assert( i != j );
@@ -386,7 +387,7 @@ void partial_sort(bucket_list_t *bl,double **tab,int N)
   *bl = bucket_list;
 }
 
-void next_bucket_elem(bucket_list_t bucket_list,int *i,int *j)
+static void next_bucket_elem(bucket_list_t bucket_list,int *i,int *j)
 {
   bucket_t *bucket = bucket_list->bucket_tab[bucket_list->cur_bucket];
 
@@ -415,7 +416,7 @@ void next_bucket_elem(bucket_list_t bucket_list,int *i,int *j)
 }
 
 
-int add_edge_3(tm_tree_t *tab_node, tm_tree_t *parent,int i,int j,int *nb_groups)
+static int add_edge_3(tm_tree_t *tab_node, tm_tree_t *parent,int i,int j,int *nb_groups)
 {
   /* printf("%d <-> %d ?\n",tab_node[i].id,tab_node[j].id); */
   if((!tab_node[i].parent) && (!tab_node[j].parent)){
@@ -464,7 +465,7 @@ int add_edge_3(tm_tree_t *tab_node, tm_tree_t *parent,int i,int j,int *nb_groups
   return 0;
 }
 
-int try_add_edge(tm_tree_t *tab_node, tm_tree_t *parent,int arity,int i,int j,int *nb_groups)
+int tm_try_add_edge(tm_tree_t *tab_node, tm_tree_t *parent,int arity,int i,int j,int *nb_groups)
 {
   assert( i != j );
 
@@ -492,13 +493,13 @@ int try_add_edge(tm_tree_t *tab_node, tm_tree_t *parent,int arity,int i,int j,in
   }
 }
 
-void free_bucket(bucket_t *bucket)
+static void free_bucket(bucket_t *bucket)
 {
   FREE(bucket->bucket);
   FREE(bucket);
 }
 
-void free_tab_bucket(bucket_t **bucket_tab,int N)
+static void free_tab_bucket(bucket_t **bucket_tab,int N)
 {
   int i;
   for( i = 0 ; i < N ; i++ )
@@ -506,7 +507,7 @@ void free_tab_bucket(bucket_t **bucket_tab,int N)
   FREE(bucket_tab);
 }
 
-void free_bucket_list(bucket_list_t bucket_list)
+static void free_bucket_list(bucket_list_t bucket_list)
 {
   /* Do not free the tab field it is used elsewhere */
   free_tab_bucket(bucket_list->bucket_tab,bucket_list->nb_buckets);
@@ -515,7 +516,7 @@ void free_bucket_list(bucket_list_t bucket_list)
   FREE(bucket_list);
 }
 
-void partial_update_val (int nb_args, void **args, int thread_id){
+static void partial_update_val (int nb_args, void **args, int thread_id){
   int inf = *(int*)args[0];
   int sup = *(int*)args[1];
   tm_affinity_mat_t *aff_mat = (tm_affinity_mat_t*)args[2];
@@ -530,12 +531,12 @@ void partial_update_val (int nb_args, void **args, int thread_id){
   }
 
   for( l = inf ; l < sup ; l++ ){
-      update_val(aff_mat,&new_tab_node[l]);
+      tm_update_val(aff_mat,&new_tab_node[l]);
       *res += new_tab_node[l].val;
     }
 }
 
-double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t *new_tab_node,
+double tm_bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t *new_tab_node,
 		     int arity,int M)
 {
   bucket_list_t bucket_list;
@@ -576,7 +577,7 @@ double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t
 	printf("elem[%d][%d]=%f ",i,j,mat[i][j]);
       gr1_1 += TOC;
       TIC;
-      if(try_add_edge(tab_node,&new_tab_node[l],arity,i,j,&nb_groups)){
+      if(tm_try_add_edge(tab_node,&new_tab_node[l],arity,i,j,&nb_groups)){
 	l++;
       }
       gr1_2 += TOC;
@@ -584,7 +585,7 @@ double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t
   }else{
     while( l < M ){
       next_bucket_elem(bucket_list,&i,&j);
-      if(try_add_edge(tab_node,&new_tab_node[l],arity,i,j,&nb_groups)){
+      if(tm_try_add_edge(tab_node,&new_tab_node[l],arity,i,j,&nb_groups)){
 	l++;
       }
     }
@@ -600,7 +601,7 @@ double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t
   TIC;
   while( nb_groups < M ){
     next_bucket_elem(bucket_list,&i,&j);
-    try_add_edge(tab_node,NULL,arity,i,j,&nb_groups);
+    tm_try_add_edge(tab_node,NULL,arity,i,j,&nb_groups);
   }
 
   gr2=TOC;
@@ -621,7 +622,7 @@ double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t
     int *sup;
     double *tab_val;
 
-    nb_threads = get_nb_threads();
+    nb_threads = tm_get_nb_threads();
     works = (work_t**)MALLOC(sizeof(work_t*)*nb_threads);
     inf = (int*)MALLOC(sizeof(int)*nb_threads);
     sup = (int*)MALLOC(sizeof(int)*nb_threads);
@@ -637,18 +638,18 @@ double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t
       args[3]=(void*)new_tab_node;
       args[4]=(void*)(tab_val+id);
 
-      works[id]= create_work(5,args,partial_update_val);
+      works[id]= tm_create_work(5,args,partial_update_val);
       if(verbose_level >= DEBUG)
 	printf("Executing %p\n",(void *)works[id]);
 
-      submit_work( works[id], id);
+      tm_submit_work( works[id], id);
     }
 
     for(id=0;id<nb_threads;id++){
-      wait_work_completion(works[id]);
+      tm_wait_work_completion(works[id]);
       val+=tab_val[id];
       FREE(works[id]->args);
-      destroy_work(works[id]);
+      tm_destroy_work(works[id]);
     }
 
 
@@ -659,7 +660,7 @@ double bucket_grouping(tm_affinity_mat_t *aff_mat,tm_tree_t *tab_node, tm_tree_t
   }else{
     for( l = 0 ; l < M ; l++ ){
 
-      update_val(aff_mat,&new_tab_node[l]);
+      tm_update_val(aff_mat,&new_tab_node[l]);
       val += new_tab_node[l].val;
     }
   }

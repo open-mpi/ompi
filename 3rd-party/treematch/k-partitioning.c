@@ -4,19 +4,19 @@
 #include "tm_mt.h"
 #include "tm_verbose.h"
 
-void memory_allocation(PriorityQueue ** Q, PriorityQueue ** Qinst, double *** D, int n, int k);
-void initialization(int * const part, double ** const matrice, PriorityQueue * const Qpart, PriorityQueue * const Q, PriorityQueue * const Qinst, double ** const D, int n, int k, int * const deficit, int * const surplus);
-void algo(int * const part, double ** const matrice, PriorityQueue * const Qpart, PriorityQueue * const Q, PriorityQueue * const Qinst, double ** const D, int n,  int * const deficit, int * const surplus);
-double nextGain(PriorityQueue * const Qpart, PriorityQueue * const Q, int * const deficit, int * const surplus);
-void balancing(int n, int deficit, int surplus, double ** const D, int * const part);
-void destruction(PriorityQueue * Qpart, PriorityQueue * Q, PriorityQueue * Qinst, double ** D, int n, int k);
+static void memory_allocation(PriorityQueue ** Q, PriorityQueue ** Qinst, double *** D, int n, int k);
+static void initialization(int * const part, double ** const matrice, PriorityQueue * const Qpart, PriorityQueue * const Q, PriorityQueue * const Qinst, double ** const D, int n, int k, int * const deficit, int * const surplus);
+static void algo(int * const part, double ** const matrice, PriorityQueue * const Qpart, PriorityQueue * const Q, PriorityQueue * const Qinst, double ** const D, int n,  int * const deficit, int * const surplus);
+static double nextGain(PriorityQueue * const Qpart, PriorityQueue * const Q, int * const deficit, int * const surplus);
+static void balancing(int n, int deficit, int surplus, double ** const D, int * const part);
+static void destruction(PriorityQueue * Qpart, PriorityQueue * Q, PriorityQueue * Qinst, double ** D, int n, int k);
 
-void allocate_vertex2(int u, int *res, double **comm, int n, int *size, int max_size);
-double eval_cost2(int *,int,double **);
-int  *kpartition_greedy2(int k, double **comm, int n, int nb_try_max, int *constraints, int nb_constraints);
-int*  build_p_vector(double **comm, int n, int k, int greedy_trials, int * constraints, int nb_constraints);
+static void allocate_vertex2(int u, int *res, double **comm, int n, int *size, int max_size);
+static double eval_cost2(int *,int,double **);
+static int  *kpartition_greedy2(int k, double **comm, int n, int nb_try_max, int *constraints, int nb_constraints);
+static int*  build_p_vector(double **comm, int n, int k, int greedy_trials, int * constraints, int nb_constraints);
 
-int* kPartitioning(double ** comm, int n, int k, int * constraints, int nb_constraints, int greedy_trials)
+int* tm_kPartitioning(double ** comm, int n, int k, int * constraints, int nb_constraints, int greedy_trials)
 {
   /* ##### declarations & allocations ##### */
 
@@ -48,7 +48,7 @@ int* kPartitioning(double ** comm, int n, int k, int * constraints, int nb_const
   return part;
 }
 
-void memory_allocation(PriorityQueue ** Q, PriorityQueue ** Qinst, double *** D, int n, int k)
+static void memory_allocation(PriorityQueue ** Q, PriorityQueue ** Qinst, double *** D, int n, int k)
 {
   int i;
   *Q = calloc(k, sizeof(PriorityQueue)); /*one Q for each partition*/
@@ -58,7 +58,7 @@ void memory_allocation(PriorityQueue ** Q, PriorityQueue ** Qinst, double *** D,
     (*D)[i] = calloc(k, sizeof(double));
 }
 
-void initialization(int * const part, double ** const matrice, PriorityQueue * const Qpart, PriorityQueue * const Q, PriorityQueue * const Qinst, double ** const D, int n, int k, int * const deficit, int * const surplus)
+static void initialization(int * const part, double ** const matrice, PriorityQueue * const Qpart, PriorityQueue * const Q, PriorityQueue * const Qinst, double ** const D, int n, int k, int * const deficit, int * const surplus)
 {
   int i,j;
 
@@ -103,7 +103,7 @@ void initialization(int * const part, double ** const matrice, PriorityQueue * c
   *surplus = *deficit = 0;
 }
 
-void algo(int * const part, double ** const matrice, PriorityQueue * const Qpart, PriorityQueue * const Q, PriorityQueue * const Qinst, double ** const D, int n, int * const deficit, int * const surplus)
+static void algo(int * const part, double ** const matrice, PriorityQueue * const Qpart, PriorityQueue * const Q, PriorityQueue * const Qinst, double ** const D, int n, int * const deficit, int * const surplus)
 {
   int p,u,v,j;
   double d;
@@ -149,7 +149,7 @@ void algo(int * const part, double ** const matrice, PriorityQueue * const Qpart
   PQ_adjustKey(Qpart, part[u], d); /*we update the new highest possible gain in u's subset*/
 }
 
-double nextGain(PriorityQueue * const Qpart, PriorityQueue * const Q, int * const deficit, int * const surplus)
+static double nextGain(PriorityQueue * const Qpart, PriorityQueue * const Q, int * const deficit, int * const surplus)
 {
   double res;
   if(*deficit == *surplus) /*if the current partition is balanced*/
@@ -159,7 +159,7 @@ double nextGain(PriorityQueue * const Qpart, PriorityQueue * const Q, int * cons
   return res;
 }
 
-void balancing(int n, int deficit, int surplus, double ** const D, int * const part)
+static void balancing(int n, int deficit, int surplus, double ** const D, int * const part)
 {
   if(surplus != deficit) /*if the current partition is not balanced*/
     {
@@ -176,7 +176,7 @@ void balancing(int n, int deficit, int surplus, double ** const D, int * const p
     }
 }
 
-void destruction(PriorityQueue * Qpart, PriorityQueue * Q, PriorityQueue * Qinst, double ** D, int n, int k)
+static void destruction(PriorityQueue * Qpart, PriorityQueue * Q, PriorityQueue * Qinst, double ** D, int n, int k)
 {
   int i;
   PQ_exit(Qpart);
@@ -195,7 +195,7 @@ void destruction(PriorityQueue * Qpart, PriorityQueue * Q, PriorityQueue * Qinst
 }
 
 
-int  *kpartition_greedy2(int k, double **comm, int n, int nb_try_max, int *constraints, int nb_constraints)
+static int  *kpartition_greedy2(int k, double **comm, int n, int nb_try_max, int *constraints, int nb_constraints)
 {
   int *res = NULL, *best_res=NULL, *size = NULL;
   int i,j,nb_trials;
@@ -229,7 +229,7 @@ int  *kpartition_greedy2(int k, double **comm, int n, int nb_try_max, int *const
       /* find a vertex not already partitionned*/
       do{
 	/* call the mersenne twister PRNG of tm_mt.c*/
-	j =  genrand_int32() % n;
+	j =  tm_genrand_int32() % n;
       } while ( res[j] != -1 );
       /* allocate and update size of partition*/
       res[j] = i;
@@ -261,7 +261,7 @@ int  *kpartition_greedy2(int k, double **comm, int n, int nb_try_max, int *const
   return best_res;
 }
 
-void allocate_vertex2(int u, int *res, double **comm, int n, int *size, int max_size)
+static void allocate_vertex2(int u, int *res, double **comm, int n, int *size, int max_size)
 {
   int i,best_part = -1;
   double cost, best_cost = -1;
@@ -285,7 +285,7 @@ void allocate_vertex2(int u, int *res, double **comm, int n, int *size, int max_
   size[best_part]++;
 }
 
-double eval_cost2(int *partition, int n, double **comm)
+static double eval_cost2(int *partition, int n, double **comm)
 {
   double cost = 0;
   int i,j;
@@ -298,7 +298,7 @@ double eval_cost2(int *partition, int n, double **comm)
   return cost;
 }
 
-int* build_p_vector(double **comm, int n, int k, int greedy_trials, int * constraints, int nb_constraints)
+static int* build_p_vector(double **comm, int n, int k, int greedy_trials, int * constraints, int nb_constraints)
 {
   int * part = NULL;
   if(greedy_trials>0) /*if greedy_trials > 0 then we use kpartition_greedy with greedy_trials trials*/

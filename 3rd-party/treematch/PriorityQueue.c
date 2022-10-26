@@ -21,7 +21,7 @@ int PQ_init(PriorityQueue * const q, int size)
   q->elements = malloc(sizeof(QueueElement *) * size);
   for(i=0; i < size; i++)
     q->elements[i]=NULL;
-  return fiboTreeInit((FiboTree *)q, compFunc);
+  return tm_fiboTreeInit((FiboTree *)q, compFunc);
 }
 
 void PQ_exit(PriorityQueue * const q)
@@ -35,7 +35,7 @@ void PQ_exit(PriorityQueue * const q)
     }
   if(q->elements != NULL)
     free(q->elements);
-  fiboTreeExit((FiboTree *)q);
+  tm_fiboTreeExit((FiboTree *)q);
 }
 void PQ_free(PriorityQueue * const q)
 {
@@ -45,7 +45,7 @@ void PQ_free(PriorityQueue * const q)
       if(q->elements[i] != NULL)
 	free(q->elements[i]);
     }
-  fiboTreeFree((FiboTree *)q);
+  tm_fiboTreeFree((FiboTree *)q);
 }
 
 int PQ_isEmpty(PriorityQueue * const q)
@@ -68,7 +68,7 @@ void PQ_insertElement(PriorityQueue * const q, QueueElement * const e)
 }
 void PQ_deleteElement(PriorityQueue * const q, QueueElement * const e)
 {
-  fiboTreeDel((FiboTree *)q, (FiboNode *)(e));
+  tm_fiboTreeDel((FiboTree *)q, (FiboNode *)(e));
   q->elements[e->value] = NULL;
   e->isInQueue = 0;
 }
@@ -93,12 +93,12 @@ void PQ_delete(PriorityQueue * const q, int val)
 
 QueueElement * PQ_findMaxElement(PriorityQueue * const q)
 {
-  QueueElement * e = (QueueElement *)(fiboTreeMin((FiboTree *)q));
+  QueueElement * e = (QueueElement *)(tm_fiboTreeMin((FiboTree *)q));
   return e;
 }
 QueueElement * PQ_deleteMaxElement(PriorityQueue * const q)
 {
-  QueueElement * e = (QueueElement *)(fiboTreeMin((FiboTree *)q));
+  QueueElement * e = (QueueElement *)(tm_fiboTreeMin((FiboTree *)q));
   if(e != NULL)
     {
       PQ_deleteElement(q, e);

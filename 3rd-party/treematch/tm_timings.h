@@ -2,6 +2,8 @@
 #define TIMINGS_H
 #include <stdio.h>
 
+#include "ompi_config.h"
+
 #ifndef _WIN32
 #include <sys/time.h>
 #else
@@ -36,11 +38,11 @@ typedef struct _timeb CLOCK_T;
 
 #endif
 
-double time_diff(void);
-void get_time(void);
+OMPI_HIDDEN double tm_time_diff(void);
+OMPI_HIDDEN void tm_get_time(void);
 
-#define TIC get_time()
-#define TOC time_diff()
+#define TIC tm_get_time()
+#define TOC tm_time_diff()
 
 #endif /*TIMINGS_H*/
 

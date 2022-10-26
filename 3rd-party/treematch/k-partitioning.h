@@ -1,6 +1,8 @@
 #ifndef K_PARTITIONING
 #define K_PARTITIONING
 
+#include "ompi_config.h"
+
 #include "PriorityQueue.h"
 
 /*
@@ -14,7 +16,7 @@
           - 0 : cyclic distribution of vertices
 	  - > 0 : use of kpartition_greedy with greedy_trials number of trials 
  */
-             
-int* kPartitioning(double ** comm, int n, int k, int * const constraints, int nb_constraints, int greedy_trials);
+
+OMPI_HIDDEN int* tm_kPartitioning(double ** comm, int n, int k, int * const constraints, int nb_constraints, int greedy_trials);
 
 #endif /*K_PARTITIONING*/

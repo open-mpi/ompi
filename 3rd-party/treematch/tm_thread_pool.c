@@ -24,8 +24,8 @@ static thread_pool_t *create_threads(void);
 static void f1 (int nb_args, void **args, int thread_id);
 static void f2 (int nb_args, void **args, int thread_id);
 
-#define MIN(a, b) ((a)<(b)?(a):(b))
-#define MAX(a, b) ((a)>(b)?(a):(b))
+#define TM_MIN(a, b) ((a)<(b)?(a):(b))
+#define TM_MAX(a, b) ((a)>(b)?(a):(b))
 
 
 
@@ -45,7 +45,7 @@ int bind_myself_to_core(hwloc_topology_t topology, int id){
   int depth = hwloc_topology_get_depth(topology);
   int nb_cores = hwloc_get_nbobjs_by_depth(topology, depth-1);
   int my_core;
-  int nb_threads = get_nb_threads();
+  int nb_threads = tm_get_nb_threads();
   /* printf("depth=%d\n",depth); */
 
   switch (mapping_policy){
@@ -156,7 +156,7 @@ void add_work(pthread_mutex_t *list_lock, pthread_cond_t *cond_var, work_t *work
 }
 
 
-void wait_work_completion(work_t *work){
+void tm_wait_work_completion(work_t *work){
   pthread_mutex_lock(&work->mutex);
   while(!work->done)
     pthread_cond_wait(&work->work_done, &work->mutex);
@@ -164,7 +164,7 @@ void wait_work_completion(work_t *work){
 }
 
 
-int submit_work(work_t *work, int thread_id){
+int tm_submit_work(work_t *work, int thread_id){
   if( (thread_id>=0) && (thread_id< pool->nb_threads)){
     work->thread_id = thread_id;
     add_work(&pool->list_lock[thread_id], &pool->cond_var[thread_id], &pool->working_list[thread_id], work);
@@ -201,7 +201,7 @@ thread_pool_t *create_threads(){
 
   /* at depth 'depth' it is necessary a PU/core where we can execute things*/
   nb_cores = hwloc_get_nbobjs_by_depth(topology, depth-1);
-  nb_threads = MIN(nb_cores,  max_nb_threads);
+  nb_threads = TM_MIN(nb_cores,  max_nb_threads);
 
   if(verbose_level>=INFO)
     printf("nb_threads = %d\n",nb_threads);
@@ -241,7 +241,7 @@ thread_pool_t *get_thread_pool(){;
   return pool;
 }
 
-void terminate_thread_pool(){
+void tm_terminate_thread_pool(){
   int id;
   int *ret=NULL;
   work_t work;
@@ -249,7 +249,7 @@ void terminate_thread_pool(){
   if(pool){
     work.task=NULL;
     for (id=0;id<pool->nb_threads;id++){
-      submit_work(&work,id);
+      tm_submit_work(&work,id);
     }
 
 
@@ -277,13 +277,13 @@ void terminate_thread_pool(){
 
 
 
-int get_nb_threads(){
+int tm_get_nb_threads(){
   pool = get_thread_pool();
   return pool -> nb_threads;
 }
 
 
-work_t *create_work(int nb_args, void **args, void (*task) (int, void **, int)){
+work_t *tm_create_work(int nb_args, void **args, void (*task) (int, void **, int)){
   work_t *work;
   work = MALLOC(sizeof(work_t));
   work -> nb_args = nb_args;
@@ -298,7 +298,7 @@ work_t *create_work(int nb_args, void **args, void (*task) (int, void **, int)){
 }
 
 
-void destroy_work(work_t *work){
+void tm_destroy_work(work_t *work){
   pthread_cond_destroy(&work->work_done);
   pthread_mutex_destroy(&work->mutex);
   FREE(work);
@@ -333,7 +333,7 @@ void f2 (int nb_args, void **args, int thread_id){
 
 
 
-int test_main(void){
+int tm_test_main(void){
 
   int a=3, c;
   int b=-5;
@@ -342,7 +342,7 @@ int test_main(void){
   int tab[100];
   int i,res;
   work_t *work1,*work2,*work3,*work4;
-  int nb_threads = get_nb_threads();
+  int nb_threads = tm_get_nb_threads();
 
 
   printf("nb_threads= %d\n", nb_threads);
@@ -350,7 +350,7 @@ int test_main(void){
 
   args1[0] = &a;
   args1[1] = &b;
-  work1 = create_work(2,args1,f1);
+  work1 = tm_create_work(2,args1,f1);
 
 
   for (i=0;i<100;i++)
@@ -361,28 +361,28 @@ int test_main(void){
   args2[1] = tab;
   args2[2] = &res;
 
-  work2 = create_work(3, args2, f2);
-  work3 = create_work(4, args2, f2);
-  work4 = create_work(5, args2, f2);
+  work2 = tm_create_work(3, args2, f2);
+  work3 = tm_create_work(4, args2, f2);
+  work4 = tm_create_work(5, args2, f2);
 
-  submit_work(work1,0);
-  submit_work(work2,1);
-  submit_work(work3,1);
-  submit_work(work4,1);
+  tm_submit_work(work1,0);
+  tm_submit_work(work2,1);
+  tm_submit_work(work3,1);
+  tm_submit_work(work4,1);
 
 
 
-  terminate_thread_pool();
-  wait_work_completion(work1);
-  wait_work_completion(work2);
-  wait_work_completion(work3);
-  wait_work_completion(work4);
+  tm_terminate_thread_pool();
+  tm_wait_work_completion(work1);
+  tm_wait_work_completion(work2);
+  tm_wait_work_completion(work3);
+  tm_wait_work_completion(work4);
 
   printf("res=%d\n",res);
 
-  destroy_work(work1);
-  destroy_work(work2);
-  destroy_work(work3);
-  destroy_work(work4);
+  tm_destroy_work(work1);
+  tm_destroy_work(work2);
+  tm_destroy_work(work3);
+  tm_destroy_work(work4);
   return 0;
 }
