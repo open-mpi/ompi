@@ -213,9 +213,8 @@ mca_coll_han_query_module_from_mca(mca_base_component_t* c,
 {
     char *module_name, *endptr = NULL;
 
-    int mod_id = COMPONENTS_COUNT;
+    int mod_id = COMPONENTS_COUNT-1;
     mod_id = (*module_id > (uint32_t)mod_id) ? mod_id : (int)*module_id; /* stay in range */
-    mod_id = (mod_id < 0) ? 0 : mod_id;  /* in range */
 
     *storage = ompi_coll_han_available_components[mod_id].component_name;
 
