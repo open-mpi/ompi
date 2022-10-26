@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
@@ -373,6 +373,7 @@ int mca_base_var_enum_create_flag(const char *name, const mca_base_var_enum_valu
 
     new_enum->super.enum_name = strdup(name);
     if (NULL == new_enum->super.enum_name) {
+        OBJ_RELEASE(new_enum);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
