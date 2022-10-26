@@ -1779,6 +1779,7 @@ int ompi_dpm_dyn_finalize(void)
         }
 
         disconnect_waitall(ompi_comm_num_dyncomm, objs);
+        cleanup_dpm_disconnect_objs(objs, ompi_comm_num_dyncomm);
     }
 
     return OMPI_SUCCESS;
@@ -1896,8 +1897,6 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
     /* force all non-blocking all-to-alls to finish */
     ret = ompi_request_wait_all(2*totalcount, reqs, MPI_STATUSES_IGNORE);
 
-    /* Finally, free everything */
-    cleanup_dpm_disconnect_objs(objs, count);
     free(reqs);
 
     return ret;
