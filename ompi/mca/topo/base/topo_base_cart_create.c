@@ -35,6 +35,9 @@ static int mca_topo_base_cart_allocate (ompi_group_t *group, int ndims, const in
                                         int *my_rank, int *num_procs, mca_topo_base_comm_cart_2_2_0_t **cart_out)
 {
     mca_topo_base_comm_cart_2_2_0_t *cart = OBJ_NEW(mca_topo_base_comm_cart_2_2_0_t);
+    if (OPAL_UNLIKELY(NULL == cart)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     int nprocs = 1;
 
     *num_procs = group->grp_proc_count;
@@ -43,6 +46,7 @@ static int mca_topo_base_cart_allocate (ompi_group_t *group, int ndims, const in
     /* Calculate the number of processes in this grid */
     for (int i = 0 ; i < ndims ; ++i) {
         if (dims[i] <= 0) {
+            OBJ_RELEASE(cart);
             return OMPI_ERROR;
         }
         nprocs *= dims[i];
@@ -50,6 +54,7 @@ static int mca_topo_base_cart_allocate (ompi_group_t *group, int ndims, const in
 
     /* check for the error condition */
     if (OPAL_UNLIKELY(*num_procs < nprocs)) {
+        OBJ_RELEASE(cart);
         return MPI_ERR_DIMS;
     }
 
@@ -64,13 +69,11 @@ static int mca_topo_base_cart_allocate (ompi_group_t *group, int ndims, const in
 
     if (MPI_UNDEFINED == *my_rank) {
         /* nothing more to do */
+        OBJ_RELEASE(cart);
         *cart_out = NULL;
         return OMPI_SUCCESS;
     }
 
-    if (OPAL_UNLIKELY(NULL == cart)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
     cart->ndims = ndims;
 
     /* MPI-2.1 allows 0-dimension cartesian communicators, so prevent
