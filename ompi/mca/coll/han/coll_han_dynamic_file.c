@@ -226,6 +226,8 @@ mca_coll_han_init_dynamic_rules(void)
                                         "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
                                         "at line %d: unknown topo level '%s'\n",
                                         fname, fileline, topo_lvl_name);
+                    free(topo_lvl_name);
+                    topo_lvl_name = NULL;
                     goto file_reading_error;
                 }
             }
@@ -352,6 +354,7 @@ mca_coll_han_init_dynamic_rules(void)
                                             "least %d and less than %d\n",
                                             fname, fileline, target_comp_name, SELF, COMPONENTS_COUNT);
                         free(target_comp_name);
+                        target_comp_name = NULL;
                         goto file_reading_error;
                     }
 
@@ -364,17 +367,23 @@ mca_coll_han_init_dynamic_rules(void)
                                                 "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
                                                 "at line %d: cannot read the name/id of an algorithm\n",
                                                 fname, fileline);
+                            free(target_comp_name);
+                            target_comp_name = NULL;
                             goto file_reading_error;
                         }
                         algorithm_id = mca_coll_han_algorithm_name_to_id(coll_id, algorithm_name);
                         if (algorithm_id < 0) {
                             char *endp;
                             algorithm_id = (int)strtol(algorithm_name, &endp, 10);
+                            free(algorithm_name);
+                            algorithm_name = NULL;
                             if (('\0' != *endp ) || !mca_coll_han_algorithm_id_is_valid(coll_id, algorithm_id)) {
                                 opal_output_verbose(5, mca_coll_han_component.han_output,
                                                     "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
                                                     "at line %d: unknown algorithm '%s' for %s\n",
                                                     fname, fileline, algorithm_name, coll_name);
+                                free(target_comp_name);
+                                target_comp_name = NULL;
                                 goto file_reading_error;
                             }
                         }
