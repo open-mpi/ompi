@@ -803,8 +803,11 @@ OMPI_MAN1_REDIRECTS = \
         man-openmpi/man1/mpic++.1 \
         man-openmpi/man1/mpifort.1 \
         man-openmpi/man1/mpif77.1 \
-        man-openmpi/man1/mpif90.1 \
+        man-openmpi/man1/mpif90.1
+if OMPI_WANT_JAVA_BINDINGS
+OMPI_MAN1_REDIRECTS += \
         man-openmpi/man1/mpijavac.1
+endif
 
 OSHMEM_MAN1_REDIRECTS = \
         man-openshmem/man1/oshcc.1 \
