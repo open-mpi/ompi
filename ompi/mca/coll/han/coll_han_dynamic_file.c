@@ -375,9 +375,10 @@ mca_coll_han_init_dynamic_rules(void)
                         if (algorithm_id < 0) {
                             char *endp;
                             algorithm_id = (int)strtol(algorithm_name, &endp, 10);
+                            char endc = *endp;
                             free(algorithm_name);
                             algorithm_name = NULL;
-                            if (('\0' != *endp ) || !mca_coll_han_algorithm_id_is_valid(coll_id, algorithm_id)) {
+                            if (('\0' != endc ) || !mca_coll_han_algorithm_id_is_valid(coll_id, algorithm_id)) {
                                 opal_output_verbose(5, mca_coll_han_component.han_output,
                                                     "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
                                                     "at line %d: unknown algorithm '%s' for %s\n",
