@@ -153,6 +153,7 @@ Open MPI version 5.0.0rc9
     - ompi/contrib: Removed ``libompitrace``.
       This library was incomplete and unmaintained. If needed, it
       is available in the v4/v4.1 series.
+    - The rankfile format no longer supports physical processor locations. Only logical processor locations are supported.
 
   - HWLOC updates:
 
