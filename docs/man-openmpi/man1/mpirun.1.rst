@@ -357,6 +357,7 @@ For process binding:
 For rankfiles:
 
 * ``--rankfile <rankfile>``: Provide a rankfile file.
+  (deprecated in favor of ``--map-by rankfile:file=FILE``)
 
 To manage standard I/O:
 
@@ -1106,41 +1107,18 @@ For example:
    shell$ cat myrankfile
    rank 0=aa slot=1:0-2
    rank 1=bb slot=0:0,1
-   rank 2=cc slot=1-2
-   shell$ mpirun -H aa,bb,cc,dd -rf myrankfile ./a.out
+   rank 2=cc slot=2-3
+   shell$ mpirun -H aa,bb,cc,dd --map-by rankfile:file=myrankfile ./a.out
 
 Means that:
 
 * Rank 0 runs on node aa, bound to logical socket 1, cores 0-2.
 * Rank 1 runs on node bb, bound to logical socket 0, cores 0 and 1.
-* Rank 2 runs on node cc, bound to logical cores 1 and 2.
+* Rank 2 runs on node cc, bound to logical cores 2 and 3.
 
-Rankfiles can alternatively be used to specify physical processor
-locations. In this case, the syntax is somewhat different. Sockets are
-no longer recognized, and the slot number given must be the number of
-the physical PU as most OS's do not assign a unique physical
-identifier to each core in the node. Thus, a proper physical rankfile
-looks something like the following:
+Note that only logicical processor locations are supported. By default, the values specifed are assumed to be cores. If you intend to specify specific hardware threads then you must add the ``:hwtcpus`` qualifier to the ``--map-by`` command line option (e.g., ``--map-by rankfile:file=myrankfile:hwtcpus``).
 
-.. code::
-
-   shell$ cat myphysicalrankfile
-   rank 0=aa slot=1
-   rank 1=bb slot=8
-   rank 2=cc slot=6
-
-This means that
-
-* Rank 0 will run on node aa, bound to the core that contains physical
-  PU 1
-* Rank 1 will run on node bb, bound to the core that contains physical
-  PU 8
-* Rank 2 will run on node cc, bound to the core that contains physical
-  PU 6
-
-Rankfiles are treated as logical by default, and the MCA parameter
-``rmaps_rank_file_physical`` must be set to 1 to indicate that the
-rankfile is to be considered as physical.
+If the binding specification overlaps between any two ranks then an error occurs. If you intend to allow processes to share the same logical processing unit then you must pass the ``--bind-to :overload-allowed`` command line option to tell the runtime to ignore this check.
 
 The hostnames listed above are "absolute," meaning that actual
 resolveable hostnames are specified.  However, hostnames can also be
@@ -1157,12 +1135,12 @@ hostnames, indexed from 0.  For example:
    shell$ cat myrankfile
    rank 0=+n0 slot=1:0-2
    rank 1=+n1 slot=0:0,1
-   rank 2=+n2 slot=1-2
-   shell$ mpirun -H aa,bb,cc,dd -rf myrankfile ./a.out
+   rank 2=+n2 slot=2-3
+   shell$ mpirun -H aa,bb,cc,dd --map-by rankfile:file=myrankfile ./a.out
 
 All socket/core slot locations are specified as logical indexes.
 
-.. note:: The Open MPI v1.6 series used physical indexes.
+.. note:: The Open MPI v1.6 series used physical indexes. Starting in Open MPI v5.0 only logicial indexes are supported and the ``rmaps_rank_file_physical`` MCA parameter is no longer recognized.
 
 You can use tools such as Hwloc's `lstopo(1)` to find the logical
 indexes of socket and cores.
