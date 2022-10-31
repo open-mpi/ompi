@@ -419,7 +419,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     size_t num_contexts_to_create;
 
     char *linux_device_name;
-    void *ep_name;
+    void *ep_name = NULL;
 
     struct fi_info *ofi_info;
     struct fi_ep_attr *ep_attr;
