@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -145,6 +146,9 @@ mca_coll_basic_reduce_log_intra(const void *sbuf, void *rbuf, int count,
         }
         sbuf = inplace_temp - gap;
         err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, (char*)rbuf);
+        if (MPI_SUCCESS != err) {
+            goto cleanup_and_return;
+        }
     }
     snd_buffer = (char*)sbuf;
 
