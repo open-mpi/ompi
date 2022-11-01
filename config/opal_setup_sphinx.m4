@@ -69,8 +69,8 @@ AC_DEFUN([OPAL_SETUP_SPHINX],[
           [AC_MSG_WARN([*** You will not have documentation installed.])
            AC_MSG_WARN([*** See the following URL for more information:])
            dnl Note that we have to double escape the string below
-           dnl so that the # it contains coesn't confuse the Autotools
-           AC_MSG_WARN([[***   https://ompi.readthedocs.io/en/latest/developers/prerequisites.html#sphinx]])
+           dnl so that the # it contains doesn't confuse the Autotools
+           AC_MSG_WARN([[***   https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx-and-therefore-python]])
           ])
 
     # If --enable-sphinx was specified and we did not find Sphinx,
