@@ -43,7 +43,21 @@ AC_DEFUN([OPAL_SETUP_SPHINX],[
     # version.
     AS_IF([test -n "$SPHINX_BUILD"],
           [[sphinx_target_version=`sed -n -e 's/sphinx[><=]*\([0-9\.]\)/\1/p' $srcdir/docs/requirements.txt`]
-           sphinx_found_version=`$SPHINX_BUILD --version 2>&1 | cut -d\  -f2`
+           # Some older versions of Sphinx (e.g., Sphinx v1.1.3 in
+           # RHEL 7):
+           #
+           # - Don't support "--version".
+           # - But do emit the version number as part of the general
+           #   CLI help when they don't recognize the --version CLI
+           #   option.
+           #
+           # In that case, we only want the first line, and we want to
+           # strip off the leading "v" from the version number.
+           #
+           # In the case where --version *is* recognized, all the
+           # additional processing is harmless and we still end up
+           # with the Sphinx version number.
+           sphinx_found_version=`$SPHINX_BUILD --version 2>&1 | head -n 1 | cut -d\  -f2 | sed -e 's/^v//'`
            AC_MSG_CHECKING([if Sphinx version is high enough ($sphinx_found_version >= $sphinx_target_version)])
            AS_VERSION_COMPARE([$sphinx_found_version],
                               [$sphinx_target_version],
