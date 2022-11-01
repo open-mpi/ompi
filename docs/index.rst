@@ -17,7 +17,7 @@ computer science researchers.
 Documentation locations
 =======================
 
-Documentation for Open can be found in the following locations:
+Documentation for Open MPI can be found in the following locations:
 
 .. list-table::
    :header-rows: 1
