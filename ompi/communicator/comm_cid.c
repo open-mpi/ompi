@@ -355,7 +355,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
             opal_show_help("help-comm.txt",
                            "MPI function not supported",
                            true,
-                           "MPI_Comm_from_group/MPI_Intercomm_from_groups",
+                           "MPI_Comm_create_from_group/MPI_Intercomm_create_from_groups",
                            msg_string);
 
             ret = MPI_ERR_UNSUPPORTED_OPERATION;
