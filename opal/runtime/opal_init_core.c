@@ -337,6 +337,7 @@ int opal_init_gethostname(void)
     size_t count, length = OPAL_LOCAL_MAXHOSTNAMELEN;
     int ret_val, num_tries = 0;
 
+    char *newbuf;
     char *buf = calloc(1, length);
     if (NULL == buf) {
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -407,10 +408,12 @@ int opal_init_gethostname(void)
          * the buffer and try again.
          */
         length *= 2;
-        buf = realloc(buf, length);
-        if (NULL == buf) {
+        newbuf = realloc(buf, length);
+        if (NULL == newbuf) {
+            free(buf);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
+        buf = newbuf;
     } /* end while */
 
     /* If we got here, it means that we tried too many times and are
