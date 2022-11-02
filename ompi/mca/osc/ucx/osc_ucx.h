@@ -27,13 +27,16 @@
 #define OMPI_OSC_UCX_ATTACH_MAX    48
 #define OMPI_OSC_UCX_MEM_ADDR_MAX_LEN  1024
 
+
 typedef struct ompi_osc_ucx_component {
     ompi_osc_base_component_t super;
     opal_common_ucx_wpool_t *wpool;
     bool enable_mpi_threads;
     opal_free_list_t requests; /* request free list for the r* communication variants */
+    opal_free_list_t accumulate_requests; /* request free list for the r* communication variants */
     bool env_initialized; /* UCX environment is initialized or not */
-    int num_incomplete_req_ops;
+    int comm_world_size;
+    ucp_ep_h *endpoints;
     int num_modules;
     bool no_locks; /* Default value of the no_locks info key for new windows */
     bool acc_single_intrinsic;
@@ -43,6 +46,16 @@ typedef struct ompi_osc_ucx_component {
 } ompi_osc_ucx_component_t;
 
 OMPI_DECLSPEC extern ompi_osc_ucx_component_t mca_osc_ucx_component;
+
+#define OSC_UCX_INCREMENT_OUTSTANDING_NB_OPS(_module)                               \
+    do {                                                                            \
+        opal_atomic_add_fetch_size_t(&_module->ctx->num_incomplete_req_ops, 1);     \
+    } while(0);
+
+#define OSC_UCX_DECREMENT_OUTSTANDING_NB_OPS(_module)                               \
+    do {                                                                            \
+        opal_atomic_add_fetch_size_t(&_module->ctx->num_incomplete_req_ops, -1);    \
+    } while(0);
 
 typedef enum ompi_osc_ucx_epoch {
     NONE_EPOCH,
@@ -69,7 +82,8 @@ typedef struct ompi_osc_ucx_epoch_type {
 #define OSC_UCX_STATE_COMPLETE_COUNT_OFFSET (sizeof(uint64_t) * 3)
 #define OSC_UCX_STATE_POST_INDEX_OFFSET (sizeof(uint64_t) * 4)
 #define OSC_UCX_STATE_POST_STATE_OFFSET (sizeof(uint64_t) * 5)
-#define OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET (sizeof(uint64_t) * (5 + OMPI_OSC_UCX_POST_PEER_MAX))
+#define OSC_UCX_STATE_DYNAMIC_LOCK_OFFSET (sizeof(uint64_t) * 6)
+#define OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET (sizeof(uint64_t) * (6 + OMPI_OSC_UCX_POST_PEER_MAX))
 
 typedef struct ompi_osc_dynamic_win_info {
     uint64_t base;
@@ -102,6 +116,7 @@ typedef struct ompi_osc_ucx_module {
     size_t size;
     uint64_t *addrs;
     uint64_t *state_addrs;
+    uint64_t *comm_world_ranks;
     int disp_unit; /* if disp_unit >= 0, then everyone has the same
                     * disp unit size; if disp_unit == -1, then we
                     * need to look at disp_units */
@@ -125,6 +140,7 @@ typedef struct ompi_osc_ucx_module {
     opal_common_ucx_wpmem_t *mem;
     opal_common_ucx_wpmem_t *state_mem;
 
+    bool skip_sync_check;
     bool noncontig_shared_win;
     size_t *sizes;
     /* in shared windows, shmem_addrs can be used for direct load store to
@@ -147,8 +163,17 @@ typedef struct ompi_osc_ucx_lock {
     bool is_nocheck;
 } ompi_osc_ucx_lock_t;
 
-#define OSC_UCX_GET_EP(comm_, rank_) (ompi_comm_peer_lookup(comm_, rank_)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_UCX])
+#define OSC_UCX_GET_EP(_module, rank_) (mca_osc_ucx_component.endpoints[_module->comm_world_ranks[rank_]])
 #define OSC_UCX_GET_DISP(module_, rank_) ((module_->disp_unit < 0) ? module_->disp_units[rank_] : module_->disp_unit)
+
+#define OSC_UCX_GET_DEFAULT_EP(_ep_ptr, _module, _target)                   \
+    if (opal_common_ucx_thread_enabled) {                  \
+        _ep_ptr = NULL;                                                     \
+    } else {                                                                \
+        _ep_ptr = (ucp_ep_h *)&(OSC_UCX_GET_EP(_module, _target));          \
+    }
+
+extern size_t ompi_osc_ucx_outstanding_ops_flush_threshold;
 
 int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
         int *disp_unit, void * baseptr);
@@ -169,6 +194,11 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
                             int target, ptrdiff_t target_disp, int target_count,
                             struct ompi_datatype_t *target_dt,
                             struct ompi_op_t *op, struct ompi_win_t *win);
+int ompi_osc_ucx_accumulate_nb(const void *origin_addr, int origin_count,
+                            struct ompi_datatype_t *origin_dt,
+                            int target, ptrdiff_t target_disp, int target_count,
+                            struct ompi_datatype_t *target_dt,
+                            struct ompi_op_t *op, struct ompi_win_t *win);
 int ompi_osc_ucx_compare_and_swap(const void *origin_addr, const void *compare_addr,
                                   void *result_addr, struct ompi_datatype_t *dt,
                                   int target, ptrdiff_t target_disp,
@@ -178,6 +208,13 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
                               ptrdiff_t target_disp, struct ompi_op_t *op,
                               struct ompi_win_t *win);
 int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
+                                struct ompi_datatype_t *origin_datatype,
+                                void *result_addr, int result_count,
+                                struct ompi_datatype_t *result_datatype,
+                                int target_rank, ptrdiff_t target_disp,
+                                int target_count, struct ompi_datatype_t *target_datatype,
+                                struct ompi_op_t *op, struct ompi_win_t *win);
+int ompi_osc_ucx_get_accumulate_nb(const void *origin_addr, int origin_count,
                                 struct ompi_datatype_t *origin_datatype,
                                 void *result_addr, int result_count,
                                 struct ompi_datatype_t *result_datatype,
@@ -228,10 +265,7 @@ int ompi_osc_ucx_flush_local_all(struct ompi_win_t *win);
 int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_wins,
                                            int min_index, int max_index,
                                            uint64_t base, size_t len, int *insert);
-extern inline bool ompi_osc_need_acc_lock(ompi_osc_ucx_module_t *module, int target);
-extern inline int ompi_osc_state_lock(ompi_osc_ucx_module_t *module, int target,
-        bool *lock_acquired, bool force_lock);
-extern inline int ompi_osc_state_unlock(ompi_osc_ucx_module_t *module, int target,
-        bool lock_acquired, void *free_ptr);
+int ompi_osc_ucx_dynamic_lock(ompi_osc_ucx_module_t *module, int target);
+int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target);
 
 #endif /* OMPI_OSC_UCX_H */
