@@ -887,4 +887,9 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_BUILD_FORTRAN_BINDINGS,
                        $OMPI_BUILD_FORTRAN_BINDINGS,
                        [The level of fortran bindings to be built])
+
+    # This is an overall "are we building any Fortran MPI bindings"
+    # conditional
+    AM_CONDITIONAL([OMPI_BUILD_ANY_FORTRAN_BINDINGS],
+                   [test $OMPI_BUILD_FORTRAN_BINDINGS -gt 0])
 ])

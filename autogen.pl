@@ -46,10 +46,6 @@ my $mpiext_found;
 my @subdirs;
 
 # Command line parameters
-my $no_ompi_arg = 0;
-my $no_orte_arg = 0;
-my $no_prrte_arg = 0;
-my $no_oshmem_arg = 0;
 my $no_3rdparty_arg = "";
 my $quiet_arg = 0;
 my $debug_arg = 0;
@@ -1297,11 +1293,7 @@ sub replace_config_sub_guess {
 
 # Command line parameters
 
-my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
-                                  "no-orte" => \$no_orte_arg,
-                                  "no-prrte" => \$no_prrte_arg,
-                                  "no-oshmem" => \$no_oshmem_arg,
-                                  "no-3rdparty=s" => \$no_3rdparty_arg,
+my $ok = Getopt::Long::GetOptions("no-3rdparty=s" => \$no_3rdparty_arg,
                                   "quiet|q" => \$quiet_arg,
                                   "debug|d" => \$debug_arg,
                                   "help|h" => \$help_arg,
@@ -1316,10 +1308,6 @@ if (!$ok || $help_arg) {
     print "Invalid command line argument.\n\n"
         if (!$ok);
     print "Options:
-  --no-ompi | -no-ompi          Do not build the Open MPI layer
-  --no-orte | -no-orte          Do not build Open MPI's runtime support (alias for --no-prrte)
-  --no-prrte | -no-prrte        Do not build Open MPI's runtime support
-  --no-oshmem | -no-oshmem      Do not build the OSHMEM layer
   --no-3rdparty <package>       Do not build the listed 3rd-party package (comma separtated list)
   --quiet | -q                  Do not display normal verbose output
   --debug | -d                  Output lots of debug information
@@ -1343,24 +1331,6 @@ if (!$ok || $help_arg) {
 # Check for project existence
 my $project_name_long = "Open MPI";
 my $project_name_short = "openmpi";
-
-if (! -e "ompi") {
-    $no_ompi_arg = 1;
-    debug "No ompi subdirectory found - will not build MPI layer\n";
-}
-if (! -e "oshmem") {
-    $no_oshmem_arg = 1;
-    debug "No oshmem subdirectory found - will not build OSHMEM\n";
-}
-# alias --no-orte to --no-prrte
-if ($no_orte_arg == 1) {
-    $no_prrte_arg = 1;
-}
-
-if ($no_ompi_arg == 1) {
-    $project_name_long = "Open Portability Access Layer";
-    $project_name_short = "open-pal";
-}
 
 my_die "Invalid value for --jobs $automake_jobs. Must be greater than 0."
     if (defined $automake_jobs && $automake_jobs <= 0);
@@ -1419,9 +1389,6 @@ verbose "\n$step. Checking for git submodules\n\n";
 
 my @enabled_3rdparty_packages = ();
 my @disabled_3rdparty_packages = split(/,/, $no_3rdparty_arg);
-if ($no_prrte_arg) {
-    push(@disabled_3rdparty_packages, "prrte");
-}
 # Alias: 'openpmix' -> 'pmix'
 if (list_contains("openpmix", @disabled_3rdparty_packages)) {
     push(@disabled_3rdparty_packages, "pmix");
@@ -1583,10 +1550,8 @@ if (! (-f "VERSION" && -f "configure.ac" && -f $topdir_file)) {
 # Top-level projects to examine
 my $projects;
 push(@{$projects}, { name => "opal", dir => "opal", need_base => 1 });
-push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 })
-    if (!$no_ompi_arg);
-push(@{$projects}, { name => "oshmem", dir => "oshmem", need_base => 1 })
-    if (!$no_ompi_arg && !$no_oshmem_arg);
+push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 });
+push(@{$projects}, { name => "oshmem", dir => "oshmem", need_base => 1 });
 
 $m4 .= "dnl Separate m4 define for each project\n";
 foreach my $p (@$projects) {
@@ -1694,11 +1659,9 @@ process_autogen_subdirs("3rd-party");
 #---------------------------------------------------------------------------
 
 # Find MPI extensions
-if (!$no_ompi_arg) {
-    ++$step;
-    verbose "\n$step. Searching for Open MPI extensions\n\n";
-    mpiext_run_global("ompi/mpiext");
-}
+++$step;
+verbose "\n$step. Searching for Open MPI extensions\n\n";
+mpiext_run_global("ompi/mpiext");
 
 #---------------------------------------------------------------------------
 
