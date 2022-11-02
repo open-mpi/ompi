@@ -36,7 +36,7 @@
 #endif
 
 
-static const char FUNC_NAME[] = "MPI_Session_call_errhandler";
+static const char FUNC_NAME[] __opal_attribute_unused__ = "MPI_Session_call_errhandler";
 
 
 int MPI_Session_call_errhandler(MPI_Session session, int errorcode)
@@ -44,7 +44,6 @@ int MPI_Session_call_errhandler(MPI_Session session, int errorcode)
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (ompi_instance_invalid(session)) {
         if (NULL != session) {
             return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_SESSION, FUNC_NAME);
