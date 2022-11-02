@@ -58,24 +58,24 @@ probably want to use a command line of the following form:
 
    shell$ mpirun [ -n X ] [ --hostfile <filename> ]  <program>
 
-This will run X copies of <program> in your current run-time
+This will run ``X`` copies of ``<program>`` in your current run-time
 environment (if running under a supported resource manager, Open MPI's
 mpirun will usually automatically use the corresponding resource
-manager process starter, as opposed to, for example, rsh or ssh, which
-require the use of a hostfile, or will default to running all X copies
+manager process starter, as opposed to, for example, ``rsh`` or ``ssh``, which
+require the use of a hostfile, or will default to running all ``X`` copies
 on the localhost), scheduling (by default) in a round-robin fashion by
 CPU slot.  See the rest of this page for more details.
 
 Please note that mpirun automatically binds processes as of the start
 of the v1.8 series. Three binding patterns are used in the absence of
-any further directives:
+any further directives (See :ref:`map/rank/bind defaults <man1-mpirun-map-rank-bind-defaults>` for more details):
 
-* Bind to core:     when the number of processes is <= 2
-* Bind to socket:   when the number of processes is > 2
-* Bind to none:     when oversubscribed
+* **Bind to core**:     when the number of processes is <= 2
+* **Bind to package**:  when the number of processes is > 2
+* **Bind to none**:     when oversubscribed
 
 If your application uses threads, then you probably want to ensure
-that you are either not bound at all (by specifying --bind-to none),
+that you are either not bound at all (by specifying ``--bind-to none``),
 or bound to multiple cores using an appropriate binding level or
 specific number of processing elements per application process.
 
@@ -121,7 +121,7 @@ launches a number of processes equal to the number of hardware
 threads on ``node1``.
 
 When Open MPI applications are invoked in an environment managed by a
-resource manager (e.g., inside of a SLURM job), and Open MPI was built
+resource manager (e.g., inside of a Slurm job), and Open MPI was built
 with appropriate support for that resource manager, then Open MPI will
 be informed of the number of slots for each node by the resource
 manager.  For example:
@@ -211,14 +211,7 @@ further details.
 
 * ``--dvm``: Create a persistent distributed virtual machine (DVM).
 
-* ``--max-vm-size <size>``: Number of processes to run.
-
-* ``--novm``: Execute without creating an allocation-spanning virtual
-  machine (only start daemons on nodes hosting application procs).
-
-* ``--hnp <arg0>``: Specify the URI of the Head Node Process (HNP), or
-  the name of the file (specified as ``file:filename``) that contains
-  that info.
+* ``--max-vm-size <size>``: Number of daemons to start.
 
 Use one of the following options to specify which hosts (nodes) of the
 cluster to run on. Note that as of the start of the v1.8 release,
@@ -249,8 +242,8 @@ application processes would actually be executing.
 
 The following options specify the number of processes to launch. Note
 that none of the options imply a particular binding policy |mdash| e.g.,
-requesting N processes for each socket does not imply that the
-processes will be bound to the socket.
+requesting N processes for each package does not imply that the
+processes will be bound to the package.
 
 * ``-n``, ``--n``, ``-c``, ``-np <#>``: Run this many copies of the
   program on the given nodes.  This option indicates that the
@@ -258,7 +251,7 @@ processes will be bound to the socket.
   context. If no value is provided for the number of copies to execute
   (i.e., neither the ``-n`` nor its synonyms are provided on the
   command line), Open MPI will automatically execute a copy of the
-  program on each process slot (see below for description of a
+  program on each process slot (see :ref:`defintion of slot <man1-mpirun-definition-of-slot>` for description of a
   "process slot"). This feature, however, can only be used in the SPMD
   model and will return an error (without beginning execution of the
   application) otherwise.
@@ -274,7 +267,7 @@ processes will be bound to the socket.
 * ``--npersocket <#persocket>``: On each node, launch this many
   processes times the number of processor sockets on the node.
   The -npersocket option also turns on the ``--bind-to-socket``
-  option.  (deprecated in favor of ``--map-by ppr:n:socket``)
+  option.  (deprecated in favor of ``--map-by ppr:n:package``)
 
 * ``--npernode <#pernode>``: On each node, launch this many processes.
   (deprecated in favor of ``--map-by ppr:n:node``).
@@ -285,42 +278,52 @@ processes will be bound to the socket.
 To map processes:
 
 * ``--map-by <object>``: Map to the specified object, defaults to
-  socket. Supported options include ``slot``, ``hwthread``, ``core``,
-  ``L1cache``, ``L2cache``, ``L3cache``, ``socket``, ``numa``,
-  ``board``, ``node``, ``sequential``, ``distance``, and ``ppr``. Any
-  object can include modifiers by adding a ``:`` and any combination
-  of ``PE=n`` (bind n processing elements to each proc), ``SPAN``
-  (load balance the processes across the allocation),
-  ``OVERSUBSCRIBE`` (allow more processes on a node than processing
-  elements), and ``NOOVERSUBSCRIBE``.  This includes ``PPR``, where
-  the pattern would be terminated by another colon to separate it from
-  the modifiers.
+  ``package``. Supported options include ``slot``, ``hwthread``, ``core``,
+  ``L1cache``, ``L2cache``, ``L3cache``, ``package``, ``numa``,
+  ``node``, ``seq``, ``rankfile``, ``pe-list=#``, and ``ppr``. 
+  Any object can include modifiers by adding a ``:`` and any combination
+  of the following:
+
+    * ``pe=n``: bind ``n`` processing elements to each proc
+    * ``span``: load balance the processes across the allocation
+    * ``oversubscribe``: allow more processes on a node than processing elements
+    * ``nooversubscribe``: do *not* allow more processes on a node than processing elements (default)
+    * ``nolocal``: do not place processes on the same host as the ``mpirun`` process
+    * ``hwtcpus``: use hardware threads as CPU slots for mapping
+    * ``corecpus``: use processor cores as CPU slots for mapping (default)
+    * ``file=filename``: used with ``rankfile``; use ``filename`` to specify the file to use
+    * ``ordered``: used with ``pe-list`` to bind each process to one of the specified processing elements
+
+  .. note:: ``socket`` is also accepted as an alias for ``package``.
 
 * ``--bycore``: Map processes by core (deprecated in favor of
-  ``--map-by core``)
+  ``--map-by core``).
 
-* ``--byslot``: Map and rank processes round-robin by slot.
+* ``--byslot``: Map and rank processes round-robin by slot (deprecated
+  in favor of ``--map-by slot``).
 
 * ``--nolocal``: Do not run any copies of the launched application on
   the same node as orterun is running.  This option will override
   listing the localhost with ``--host`` or any other host-specifying
-  mechanism.
+  mechanism. Alias for ``--map-by :nolocal``.
 
 * ``--nooversubscribe``: Do not oversubscribe any nodes; error
   (without starting any processes) if the requested number of
   processes would cause oversubscription.  This option implicitly sets
   "max_slots" equal to the "slots" value for each node. (Enabled by
-  default).
+  default). Alias for ``--map-by :nooversubscribe``.
 
 * ``--oversubscribe``: Nodes are allowed to be oversubscribed, even on
   a managed system, and overloading of processing elements.
+  Alias for ``--map-by :oversubscribe``.
 
 * ``--bynode``: Launch processes one per node, cycling by node in a
   round-robin fashion.  This spreads processes evenly among nodes and
   assigns MPI_COMM_WORLD ranks in a round-robin, "by node" manner.
+  (deprecated in favor of ``--map-by node``)
 
 * ``--cpu-list <cpus>``: Comma-delimited list of processor IDs to
-  which to bind processes [default=NULL].  Processor IDs are
+  which to bind processes [default=``NULL``].  Processor IDs are
   interpreted as hwloc logical core IDs.
 
   .. note:: You can run Run the hwloc ``lstopo(1)`` command to see a
@@ -328,17 +331,16 @@ To map processes:
 
 To order processes' ranks in MPI_COMM_WORLD:
 
-* ``--rank-by <object>``: Rank in round-robin fashion according to the
-  specified object, defaults to slot. Supported options include
-  ``slot``, ``hwthread``, ``core``, ``L1cache``, ``L2cache``,
-  ``L3cache``, ``socket``, ``numa``, ``board``, and ``node``.
+* ``--rank-by <mode>``: Rank in round-robin fashion according to the
+  specified mode, defaults to slot. Supported options include
+  ``slot``, ``node``, ``fill``, and ``span``.
 
 For process binding:
 
 * ``--bind-to <object>``: Bind processes to the specified object,
   defaults to ``core``.  Supported options include ``slot``,
   ``hwthread``, ``core``, ``l1cache``, ``l2cache``, ``l3cache``,
-  ``socket``, ``numa``, ``board``, ``cpu-list``, and ``none``.
+  ``package``, ``numa``, and ``none``.
 
 * ``--cpus-per-proc <#perproc>``: Bind each process to the specified
   number of cpus.  (deprecated in favor of ``--map-by <obj>:PE=n``)
@@ -350,7 +352,7 @@ For process binding:
   ``--bind-to core``)
 
 * ``--bind-to-socket``: Bind processes to processor sockets
-  (deprecated in favor of ``--bind-to socket``)
+  (deprecated in favor of ``--bind-to package``)
 
 * ``--report-bindings``: Report any bindings for launched processes.
 
@@ -399,7 +401,7 @@ To manage standard I/O:
 * ``--xterm <ranks>``: Display the output from the processes
   identified by their MPI_COMM_WORLD ranks in separate xterm
   windows. The ranks are specified as a comma-separated list of
-  ranges, with a -1 indicating all. A separate window will be created
+  ranges, with a ``-1`` indicating all. A separate window will be created
   for each specified process.
 
   .. note:: xterm will normally terminate the window upon termination
@@ -479,17 +481,12 @@ Setting MCA parameters:
   the :ref:`Setting MCA Parameters
   <man1-mpirun-setting-mca-parameters>` section for mode details.
 
-* ``--am <arg0>``: Aggregate MCA parameter set file list.
-
 * ``--tune <tune_file>``: Specify a tune file to set arguments for
   various MCA modules and environment variables.  See the :ref:`
   Setting MCA parameters and environment variables from file
-  <man1-mpirun-setting-mca-params-from-file>`
+  <man1-mpirun-setting-mca-params-from-file>`. ``--am <arg>`` is an alias for ``--tune <arg>``.
 
 For debugging:
-
-* ``--debug``: Invoke the user-level debugger indicated by the
-  ``orte_base_user_debugger`` MCA parameter.
 
 * ``--get-stack-traces``: When paired with the ``--timeout`` option,
   ``mpirun`` will obtain and print out stack traces from all launched
@@ -497,18 +494,11 @@ For debugging:
   obtaining stack traces can take a little time and produce a lot of
   output, especially for large process-count jobs.
 
-* ``--debugger <args>``: Sequence of debuggers to search for when
-  ``--debug`` is used (i.e., a synonym for the
-  ``orte_base_user_debugger`` MCA parameter).
-
 * ``--timeout <seconds>``: The maximum number of seconds that
   ``mpirun`` will run.  After this many seconds, ``mpirun`` will abort
   the launched job and exit with a non-zero exit status.  Using
   ``--timeout`` can be also useful when combined with the
   ``--get-stack-traces`` option.
-
-* ``--tv``: Launch processes under a debugger.  Deprecated backwards
-  compatibility flag. Synonym for ``--debug``.
 
 There are also other options:
 
@@ -520,8 +510,6 @@ There are also other options:
 * ``--app <appfile>``: Provide an appfile, ignoring all other command
   line options.
 
-* ``--cartofile <cartofile>``: Provide a cartography file.
-
 * ``--continuous``: Job is to run until explicitly terminated.
 
 * ``--disable-recovery``: Disable recovery (resets all recovery
@@ -530,13 +518,8 @@ There are also other options:
 * ``--do-not-launch``: Perform all necessary operations to prepare to
   launch the application, but do not actually launch it.
 
-* ``--do-not-resolve``: Do not attempt to resolve interfaces.
-
 * ``--enable-recovery``: Enable recovery from process failure (default:
   disabled)
-
-* ``--index-argv-by-rank``: Uniquely index argv[0] for each process
-  using its rank.
 
 * ``--leave-session-attached``: Do not detach back-end daemons used by
   this application. This allows error messages from the daemons as
@@ -546,19 +529,11 @@ There are also other options:
 * ``--max-restarts <num>``: Max number of times to restart a failed
   process.
 
-* ``--ompi-server <uri or file>``: Specify the URI of the Open MPI
-  server (or the mpirun to be used as the server), the name of the
-  file (specified as ``file:filename``) that contains that info, or
-  the PID (specified as ``pid:#``) of the mpirun to be used as the
-  server.  The Open MPI server is used to support multi-application
-  data exchange via the :ref:`MPI_Publish_name(3) <mpi_publish_name>`
-  and :ref:`MPI_Lookup_name(3) <mpi_lookup_name>` functions.
-
 * ``--personality <list>``: Comma-separated list of programming model,
   languages, and containers being used (default=``ompi``).
 
 * ``--ppr <list>``: Comma-separated list of number of processes on a
-  given resource type (default: none).
+  given resource type (default: none). Alias for ``--map-by ppr:N:OBJ``.
 
 * ``--report-child-jobs-separately``: Return the exit status of the
   primary job only.
@@ -585,7 +560,7 @@ There are also other options:
 
   Note that if a number of slots is not provided to Open MPI (e.g.,
   via the ``slots`` keyword in a hostfile or from a resource manager
-  such as SLURM), the use of this option changes the default
+  such as Slurm), the use of this option changes the default
   calculation of number of slots on a node.  See the :ref:`DEFINITION
   OF 'SLOT' <man1-mpirun-definition-of-slot>` section.
 
@@ -594,13 +569,8 @@ There are also other options:
   hardware thread.  See the :ref:`DEFINITION OF 'PROCESSOR ELEMENT'
   <man1-mpirun-definition-of-processor-element>` section.
 
-* ``--use-regexp``: Use regular expressions for launch.
-
 The following options are useful for developers; they are not
 generally useful to most Open MPI users:
-
-* ``-d``, ``--debug-devel``: Enable debugging of the back-end run-time
-  system.  This is not generally useful for most users.
 
 * ``--debug-daemons``: Enable debugging of the run-time daemons used
   by this application.
@@ -608,24 +578,18 @@ generally useful to most Open MPI users:
 * ``--debug-daemons-file``: Enable debugging of the run-time daemons
   used by this application, storing output in files.
 
-* ``--display-devel-allocation``:
-  Display a detailed list of the allocation being used by this job.
-
 * ``--display-devel-map``: Display a more detailed table showing the
   mapped location of each process prior to launch.
-
-* ``--display-diffable-map``: Display a diffable process map just
-  before launch.
 
 * ``--display-topo``: Display the topology as part of the process map
   just before launch.
 
 * ``--launch-agent``: Name of the executable that is to be used to
-  start processes on the remote nodes. The default is ``prted``. This
+  start processes on the remote nodes. The default is ``PRRTEd``. This
   option can be used to test new daemon concepts, or to pass options
   back to the daemons without having mpirun itself see them. For
-  example, specifying a launch agent of ``prted -mca odls_base_verbose
-  5`` allows the developer to ask the ``prted`` for debugging output
+  example, specifying a launch agent of ``PRRTEd -mca odls_base_verbose
+  5`` allows the developer to ask the ``PRRTEd`` for debugging output
   without clutter from ``mpirun`` itself.
 
 * ``--report-state-on-timeout``: When paired with the ``--timeout``
@@ -708,7 +672,7 @@ will launch two processes, both on node ``aa``.
 will find no hosts to run on and will abort with an error.  That is,
 the specified host ``dd`` is not in the specified hostfile.
 
-When running under resource managers (e.g., SLURM, Torque, etc.), Open
+When running under resource managers (e.g., Slurm, Torque, etc.), Open
 MPI will obtain both the hostnames and the number of slots directly
 from the resource manager.
 
@@ -719,26 +683,24 @@ As we have just seen, the number of processes to run can be set using the
 hostfile.  Other mechanisms exist.
 
 The number of processes launched can be specified as a multiple of the
-number of nodes or processor sockets available.  For example,
+number of nodes or processor packages available.  For example,
 
 .. code:: sh
 
-   shell$ mpirun -H aa,bb --npersocket 2 ./a.out
+   shell$ mpirun -H aa,bb --map-by ppr:2:package ./a.out
 
 launches processes 0-3 on node ``aa`` and process 4-7 on node ``bb``
-(assuming ``aa`` and ``bb`` both contain 4 slots each).  The
-``--npersocket`` option also turns on the ``--bind-to-socket`` option,
-which is discussed in a later section.
+(assuming ``aa`` and ``bb`` both contain 4 slots each).
 
 .. code:: sh
 
-   shell$ mpirun -H aa,bb --npernode 2 ./a.out
+   shell$ mpirun -H aa,bb --map-by ppr:2:node ./a.out
 
 launches processes 0-1 on node ``aa`` and processes 2-3 on node ``bb``.
 
 .. code:: sh
 
-   shell$ mpirun -H aa,bb --npernode 1 ./a.out
+   shell$ mpirun -H aa,bb --map-by ppr:1:node ./a.out
 
 launches one process per host node.
 
@@ -746,7 +708,7 @@ launches one process per host node.
 
    mpirun -H aa,bb --pernode ./a.out
 
-is the same as ``--npernode 1``.
+is the same as ``--map-by ppr:1:node`` and ``--npernode 1``.
 
 Another alternative is to specify the number of processes with the ``-n``
 option.  Consider now the hostfile:
@@ -878,15 +840,17 @@ And here is a MIMD example:
 will launch process 0 running hostname on node ``aa`` and processes 1
 and 2 each running uptime on nodes ``bb`` and ``cc``, respectively.
 
+.. _man1-mpirun-map-rank-bind:
+
 Mapping, Ranking, and Binding: Oh My!
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Open MPI employs a three-phase procedure for assigning process locations
 and ranks:
 
-#. Mapping: Assigns a default location to each process
-#. Ranking: Assigns an MPI_COMM_WORLD rank value to each process
-#. Binding: Constrains each process to run on specific processors
+#. **Mapping**: Assigns a default location to each process
+#. **Ranking**: Assigns an MPI_COMM_WORLD rank value to each process
+#. **Binding**: Constrains each process to run on specific processors
 
 The mapping step is used to assign a default location to each process
 based on the mapper being employed. Mapping by slot, node, and
@@ -902,26 +866,25 @@ The mapping of process processes to nodes can be defined not just with
 general policies but also, if necessary, using arbitrary mappings that
 cannot be described by a simple policy.  One can use the "sequential
 mapper," which reads the hostfile line by line, assigning processes to
-nodes in whatever order the hostfile specifies.  Use the ``--mca rmaps
-seq`` option.  For example, using the same hostfile as before:
+nodes in whatever order the hostfile specifies.  Use the ``---map-by seq`` option.  For example, using the same hostfile as before:
 
 .. code:: sh
 
-   shell$ mpirun -hostfile myhostfile -mca rmaps seq ./a.out
+   shell$ mpirun -hostfile myhostfile --map-by seq ./a.out
 
-will launch three processes, one on each of nodes aa, bb, and cc,
+will launch three processes, one on each of nodes ``aa``, ``bb``, and ``cc``,
 respectively.  The slot counts don't matter; one process is launched
 per line on whatever node is listed on the line.
 
 Another way to specify arbitrary mappings is with a rankfile, which
 gives you detailed control over process binding as well.  Rankfiles
-are discussed below.
+are discussed :ref:`below <man1-mpirun-rankfiles>`.
 
 The second phase focuses on the ranking of the process within the
 job's MPI_COMM_WORLD.  Open MPI separates this from the mapping
 procedure to allow more flexibility in the relative placement of MPI
-processes. This is best illustrated by considering the following two
-cases where we used the ``map-by ppr:2:socket`` option:
+processes. This is best illustrated by considering the following
+cases where we used the ``--np 8 --map-by ppr:2:package --host aa:4,bb:4`` option:
 
 .. list-table::
    :header-rows: 1
@@ -930,31 +893,28 @@ cases where we used the ``map-by ppr:2:socket`` option:
      - Node ``aa``
      - Node ``bb``
 
-   * - ``--rank-by core``
+   * - ``--rank-by fill`` (i.e., dense packing) Default
      - 0 1 | 2 3
      - 4 5 | 6 7
 
-   * - ``--rank-by socket``
-     - 0 2 | 1 3
-     - 4 6 | 5 7
-
-   * - ``--rank-by socket:span``
+   * - ``--rank-by span`` (i.e., sparse or load balanced packing)
      - 0 4 | 1 5
      - 2 6 | 3 7
 
-Ranking by core and by slot provide the identical result |mdash| a
-simple progression of MPI_COMM_WORLD ranks across each node. Ranking
-by socket does a round-robin ranking within each node until all
-processes have been assigned an MCW rank, and then progresses to the
-next node. Adding the ``span`` modifier to the ranking directive causes
-the ranking algorithm to treat the entire allocation as a single
-entity |mdash| thus, the MCW ranks are assigned across all sockets
-before circling back around to the beginning.
+   * - ``--rank-by node``
+     - 0 2 | 4 6
+     - 1 3 | 5 7
+
+Ranking by ``fill`` assigns MCW ranks in a simple progression across each
+node. Ranking by ``span`` and by ``slot`` provide the identical
+result |mdash| a round-robin progression of the packages across all nodes
+before returning to the first package on the first node. Ranking by
+``node`` assigns MCW ranks iterating first across nodes then by package.
 
 The binding phase actually binds each process to a given set of
 processors. This can improve performance if the operating system is
 placing processes suboptimally.  For example, it might oversubscribe
-some multi-core processor sockets, leaving other sockets idle; this
+some multi-core processor packages, leaving other packages idle; this
 can lead processes to contend unnecessarily for common resources.  Or,
 it might spread processes out too widely; this can be suboptimal if
 application performance is sensitive to interprocess communication
@@ -966,82 +926,99 @@ The processors to be used for binding can be identified in terms of
 topological groupings |mdash| e.g., binding to an ``l3cache`` will
 bind each process to all processors within the scope of a single L3
 cache within their assigned location. Thus, if a process is assigned
-by the mapper to a certain socket, then a ``--bind-to l3cache``
+by the mapper to a certain package, then a ``--bind-to l3cache``
 directive will cause the process to be bound to the processors that
-share a single L3 cache within that socket.
+share a single L3 cache within that package.
 
-Alternatively, processes can be assigned to processors based on their
-local rank on a node using the ``--bind-to cpu-list:ordered`` option with
-an associated ``--cpu-list 0,2,5``. In this example, the first process
+Alternatively, processes can be mapped and bound to specified cores using
+the ``--map-by pe-list=`` option. For example, ``--map-by pe-list=0,2,5``
+will map three processes all three of which will be bound to logical cores
+``0,2,5``. If you intend to bind each of the three processes to different
+cores then the ``:ordered`` qualifier can be used like 
+``--map-by pe-list=0,2,5:ordered``. In this example, the first process
 on a node will be bound to CPU 0, the second process on the node will
 be bound to CPU 2, and the third process on the node will be bound to
 CPU 5.
 
-``--bind-to`` will also accept ``cpulist:ordered`` as a synonym to
-``cpu-list:ordered``.  Note that an error will result if more
-processes are assigned to a node than CPUs are provided.
-
-To help balance loads, the binding directive uses a round-robin method
-when binding to levels lower than used in the mapper. For example,
-consider the case where a job is mapped to the socket level, and then
-bound to core. Each socket will have multiple cores, so if multiple
-processes are mapped to a given socket, the binding algorithm will
-assign each process located to a socket to a unique core in a
-round-robin manner.
-
-Alternatively, processes mapped by ``l2cache`` and then bound to socket
-will simply be bound to all the processors in the socket where they
-are located. In this manner, users can exert detailed control over
-relative MCW rank location and binding.
-
 Finally, ``--report-bindings`` can be used to report bindings.
 
-As an example, consider a node with two processor sockets, each
+As an example, consider a node with two processor packages, each
 comprised of four cores, and each of those cores contains one hardware
-thread.  We run mpirun with ``-n 4 --report-bindings`` and the
-following additional options:
+thread.  The ``--report-bindings`` option shows the binding of each process in a
+descriptive manner. Below are some examples.
 
 .. code::
 
-   shell$ mpirun ... --map-by core --bind-to core
-   [...] ... binding child [...,0] to cpus 0001
-   [...] ... binding child [...,1] to cpus 0002
-   [...] ... binding child [...,2] to cpus 0004
-   [...] ... binding child [...,3] to cpus 0008
+   shell$ mpirun --np 4 --report-bindings --map-by core --bind-to core
+   [...] Rank 0 bound to package[0][core:0]
+   [...] Rank 1 bound to package[0][core:1]
+   [...] Rank 2 bound to package[0][core:2]
+   [...] Rank 3 bound to package[0][core:3]
 
-   shell$ mpirun ... --map-by socket --bind-to socket
-   [...] ... binding child [...,0] to socket 0 cpus 000f
-   [...] ... binding child [...,1] to socket 1 cpus 00f0
-   [...] ... binding child [...,2] to socket 0 cpus 000f
-   [...] ... binding child [...,3] to socket 1 cpus 00f0
+In the above case, the processes bind to successive cores.
 
-   shell$ mpirun ... --map-by slot:PE=2 --bind-to core
-   [...] ... binding child [...,0] to cpus 0003
-   [...] ... binding child [...,1] to cpus 000c
-   [...] ... binding child [...,2] to cpus 0030
-   [...] ... binding child [...,3] to cpus 00c0
+.. code::
 
-   shell$ mpirun ... --bind-to none
+   shell$ mpirun --np 4 --report-bindings --map-by package --bind-to package
+   [...] Rank 0 bound to package[0][core:0-3]
+   [...] Rank 1 bound to package[0][core:0-3]
+   [...] Rank 2 bound to package[1][core:4-7]
+   [...] Rank 3 bound to package[1][core:4-7]
 
-.. error:: TODO Is this still right?  Don't we show something more
-           user-friendly these days?
+In the above case, processes bind to all cores on successive packages.
+The processes cycle through the processor packages in a
+round-robin fashion as many times as are needed. By default, the processes
+are ranked in a ``fill`` manner.
 
-Here, ``--report-bindings`` shows the binding of each process as a
-mask.  In the first case, the processes bind to successive cores as
-indicated by the masks 0001, 0002, 0004, and 0008.  In the second
-case, processes bind to all cores on successive sockets as indicated
-by the masks 000f and 00f0.  The processes cycle through the processor
-sockets in a round-robin fashion as many times as are needed.
+.. code::
 
-In the third case, the masks show us that 2 cores have been bound per
-process.  Specifically, the mapping by slot with the PE=2 qualifier
+   shell$ mpirun --np 4 --report-bindings --map-by package --bind-to package --rank-by span
+   [...] Rank 0 bound to package[0][core:0-3]
+   [...] Rank 1 bound to package[1][core:4-7]
+   [...] Rank 2 bound to package[0][core:0-3]
+   [...] Rank 3 bound to package[1][core:4-7]
+
+The above case demonstrates the difference
+in ranking when the ``span`` qualifier is used instead of the default.
+
+.. code::
+
+   shell$ mpirun --np 4 --report-bindings --map-by slot:PE=2 --bind-to core
+   [...] Rank 0 bound to package[0][core:0-1]
+   [...] Rank 1 bound to package[0][core:2-3]
+   [...] Rank 2 bound to package[0][core:4-5]
+   [...] Rank 3 bound to package[0][core:6-7]
+
+In the above case, the output shows us that 2 cores have been bound per
+process.  Specifically, the mapping by ``slot`` with the ``PE=2`` qualifier
 indicated that each slot (i.e., process) should consume two processor
-elements.  Since ``--use-hwthread-cpus`` was not specified, Open MPI
-defined "processor element" as "core", and therefore the ``--bind-to
-core`` caused each process to be bound to both of the cores to which
-it was mapped.
+elements.  By default, Open MPI defines "processor element" as "core", 
+and therefore the ``--bind-to core`` caused each process to be bound to
+both of the cores to which it was mapped.
 
-In the fourth case, binding is turned off and no bindings are reported.
+.. code::
+
+   shell$ mpirun --np 4 --report-bindings --map-by slot:PE=2 --use-hwthread-cpus
+   [...]] Rank 0 bound to package[0][hwt:0-1]
+   [...]] Rank 1 bound to package[0][hwt:2-3]
+   [...]] Rank 2 bound to package[0][hwt:4-5]
+   [...]] Rank 3 bound to package[0][hwt:6-7]
+
+In the above case, we replace the ``--bind-to core`` with
+``--use-hwthread-cpus``. The ``--use-hwthread-cpus`` is converted into
+``--bind-to hwthread`` and tells the ``--report-bindings`` output to show the
+hardware threads to which a process is bound. In this case, processes are
+bound to 2 hardware threads per process.
+
+.. code::
+
+   shell$ mpirun --np 4 --report-bindings --bind-to none
+   [...] Rank 0 is not bound (or bound to all available processors)
+   [...] Rank 1 is not bound (or bound to all available processors)
+   [...] Rank 2 is not bound (or bound to all available processors)
+   [...] Rank 3 is not bound (or bound to all available processors)
+
+In the above case, binding is turned off and are reported as such.
 
 Open MPI's support for process binding depends on the underlying
 operating system.  Therefore, certain process binding options may not
@@ -1052,39 +1029,140 @@ less convenient than that of ``mpirun`` options.  On the other hand,
 MCA parameters can be set not only on the mpirun command line, but
 alternatively in a system or user ``mca-params.conf`` file or as
 environment variables, as described in the :ref:`Setting MCA
-Parameters <man1-mpirun-setting-mca-parameters>`.  Some examples
-include:
+Parameters <man1-mpirun-setting-mca-parameters>`. These are MCA parameters for
+the PRRTE runtime so the command line argument ``--PRRTEmca`` must be used to 
+pass the MCA parameter key/value pair. Alternatively, the MCA parameter key/
+value pair may be specific on the command line by prefixing the key with 
+``PRRTE_MCA_``. Some examples include:
 
 .. list-table::
    :header-rows: 1
 
    * - Option
-     - MCA parameter key
+     - PRRTE MCA parameter key 
      - Value
 
    * - ``--map-by core``
-     - ``rmaps_base_mapping_policy``
+     - ``rmaps_default_mapping_policy``
      - ``core``
 
-   * - ``--map-by socket``
-     - ``rmaps_base_mapping_policy``
-     - ``socket``
+   * - ``--map-by package``
+     - ``rmaps_default_mapping_policy``
+     - ``package``
 
-   * - ``--rank-by core``
-     - ``rmaps_base_ranking_policy``
-     - ``core``
+   * - ``--rank-by fill``
+     - ``rmaps_default_ranking_policy``
+     - ``fill``
 
    * - ``--bind-to core``
-     - ``hwloc_base_binding_policy``
+     - ``hwloc_default_binding_policy``
      - ``core``
 
-   * - ``--bind-to socket``
-     - ``hwloc_base_binding_policy``
-     - ``socket``
+   * - ``--bind-to package``
+     - ``hwloc_default_binding_policy``
+     - ``package``
 
    * - ``--bind-to none``
-     - ``hwloc_base_binding_policy``
+     - ``hwloc_default_binding_policy``
      - ``none``
+
+.. _man1-mpirun-map-rank-bind-defaults:
+
+Defaults for Mapping, Ranking, and Binding
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the user does not specify each of ``--map-by``, ``--rank-by``, and ``--bind-to`` option then the default values are as follows:
+
+* If no options are specified then
+
+    * If the number of processes is less than or equal to 2, then:
+
+        * ``--map-by`` is ``core``
+        * ``--bind-to`` is ``core``
+        * ``--rank-by`` is ``span``
+        * Result: ``--map-by core --bind-to core --rank-by span``
+
+    * Otherwise:
+
+        * ``--map-by`` is ``package``
+        * ``--bind-to`` is ``package``
+        * ``--rank-by`` is ``fill``
+        * Result: ``--map-by package --bind-to package --rank-by fill``
+
+* If only ``--map-by OBJ`` (where ``OBJ`` is something like ``core``) is specified, then:
+
+    * ``--map-by`` specified ``OBJ``
+    * ``--bind-to`` uses the same ``OBJ`` as ``--map-by``
+    * ``--rank-by`` defaults to ``fill``
+    * Result: ``--map-by OBJ --bind-to OBJ --rank-by fill``
+
+* If only ``--bind-to OBJ`` (where ``OBJ`` is something like ``core``) is specified, then:
+
+    * ``--map-by`` is either ``core`` or ``package`` depending on the number of processes
+    * ``--bind-to`` specified ``OBJ``
+    * ``--rank-by`` defaults to ``fill``
+    * Result: ``--map-by OBJ --bind-to OBJ --rank-by fill``
+
+* If ``--map-by OBJ1 --bind-to OBJ2``, then:
+
+    * ``--map-by`` specified ``OBJ1``
+    * ``--bind-to`` specified ``OBJ2``
+    * ``--rank-by`` defaults to ``fill``
+    * Result: ``--map-by OBJ2 --bind-to OBJ2 --rank-by fill``
+
+
+Consider 2 identical hosts (``hostA`` and ``hostB``) with 2 packages (denoted by ``[]``) each with 8 cores (denoted by ``/../``) and 2 hardware threads per core (denoted by a ``.``).
+
+Default of ``--map-by core --bind-to core --rank-by span`` when the number of processes is less than or equal to 2.
+
+.. code::
+
+  shell$ mpirun --np 2 --host hostA:4,hostB:2 ./a.out
+  R0  hostA  [BB/../../../../../../..][../../../../../../../..]
+  R1  hostA  [../BB/../../../../../..][../../../../../../../..]
+
+Default of ``--map-by package --bind-to package --rank-by fill`` when the number of processes is greater than 2.
+
+.. code::
+
+  shell$ mpirun --np 4 --host hostA:4,hostB:2 ./a.out
+  R0  hostA  [BB/BB/BB/BB/BB/BB/BB/BB][../../../../../../../..]
+  R1  hostA  [BB/BB/BB/BB/BB/BB/BB/BB][../../../../../../../..]
+  R2  hostA  [../../../../../../../..][BB/BB/BB/BB/BB/BB/BB/BB]
+  R3  hostA  [../../../../../../../..][BB/BB/BB/BB/BB/BB/BB/BB]
+
+If only ``--map-by OBJ`` is specified, then it implies ``--bind-to OBJ --rank-by fill``. The example below results in ``--map-by hwthread --bind-to hwthread --rank-by fill``
+
+.. code::
+
+  shell$ mpirun --np 4 --map-by hwthread --host hostA:4,hostB:2 ./a.out
+  R0  hostA  [B./../../../../../../..][../../../../../../../..]
+  R1  hostA  [.B/../../../../../../..][../../../../../../../..]
+  R0  hostA  [../B./../../../../../..][../../../../../../../..]
+  R1  hostA  [../.B/../../../../../..][../../../../../../../..]
+
+If only ``--bind-to OBJ`` is specified, then ``--map-by`` is determined by the number of processes and ``--rank-by fill``. The example below results in ``--map-by package --bind-to core --rank-by fill``
+
+.. code::
+
+  shell$ mpirun --np 4 --bind-to core --host hostA:4,hostB:2 ./a.out
+  R0  hostA  [BB/../../../../../../..][../../../../../../../..]
+  R1  hostA  [../BB/../../../../../..][../../../../../../../..]
+  R2  hostA  [../../../../../../../..][BB/../../../../../../..]
+  R3  hostA  [../../../../../../../..][../BB/../../../../../..]
+
+The mapping pattern might be better seen if we change the default ``--rank-by`` from ``fill`` to ``span``. First, the processes are mapped by package iterating between the two marking a core at a time. Next, the processes are ranked in a spanning manner that load balances them across the object they were mapped against. Finally, the processes are bound to the core that they were mapped againast.
+
+.. code::
+
+  shell$ mpirun --np 4 --bind-to core --rank-by span --host hostA:4,hostB:2 ./a.out
+  R0  hostA  [BB/../../../../../../..][../../../../../../../..]
+  R1  hostA  [../../../../../../../..][BB/../../../../../../..]
+  R2  hostA  [../BB/../../../../../..][../../../../../../../..]
+  R3  hostA  [../../../../../../../..][../BB/../../../../../..]
+
+
+.. _man1-mpirun-rankfiles:
 
 Rankfiles
 ^^^^^^^^^
@@ -1112,8 +1190,8 @@ For example:
 
 Means that:
 
-* Rank 0 runs on node aa, bound to logical socket 1, cores 0-2.
-* Rank 1 runs on node bb, bound to logical socket 0, cores 0 and 1.
+* Rank 0 runs on node aa, bound to logical package 1, cores 0-2.
+* Rank 1 runs on node bb, bound to logical package 0, cores 0 and 1.
 * Rank 2 runs on node cc, bound to logical cores 2 and 3.
 
 Note that only logicical processor locations are supported. By default, the values specifed are assumed to be cores. If you intend to specify specific hardware threads then you must add the ``:hwtcpus`` qualifier to the ``--map-by`` command line option (e.g., ``--map-by rankfile:file=myrankfile:hwtcpus``).
@@ -1138,12 +1216,12 @@ hostnames, indexed from 0.  For example:
    rank 2=+n2 slot=2-3
    shell$ mpirun -H aa,bb,cc,dd --map-by rankfile:file=myrankfile ./a.out
 
-All socket/core slot locations are specified as logical indexes.
+All package/core slot locations are specified as logical indexes.
 
 .. note:: The Open MPI v1.6 series used physical indexes. Starting in Open MPI v5.0 only logicial indexes are supported and the ``rmaps_rank_file_physical`` MCA parameter is no longer recognized.
 
 You can use tools such as Hwloc's `lstopo(1)` to find the logical
-indexes of socket and cores.
+indexes of package and cores.
 
 Application Context or Executable Program?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1269,12 +1347,12 @@ Process Environment
 ^^^^^^^^^^^^^^^^^^^
 
 Processes in the MPI application inherit their environment from the
-Open RTE daemon upon the node on which they are running.  The
+PRRTE daemon upon the node on which they are running.  The
 environment is typically inherited from the user's shell.  On remote
 nodes, the exact environment is determined by the boot MCA module
 used.  The rsh launch module, for example, uses either rsh/ssh to
-launch the Open RTE daemon on remote nodes, and typically executes one
-or more of the user's shell-setup files before launching the Open RTE
+launch the PRRTE daemon on remote nodes, and typically executes one
+or more of the user's shell-setup files before launching the PRRTE
 daemon.  When running dynamically linked applications which require
 the ``LD_LIBRARY_PATH`` environment variable to be set, care must be
 taken to ensure that it is correctly set when booting Open MPI.
@@ -1511,15 +1589,12 @@ that job are designated "secondary" jobs):
   summary print statement.
 
 By default, the job will abort when any process terminates with
-non-zero status. The MCA parameter ``orte_abort_on_non_zero_status``
+non-zero status. The MCA parameter ``--PRRTEmca state_base_error_non_zero_exit``
 can be set to "false" (or "0") to cause Open MPI to not abort a job if
 one or more processes return a non-zero status. In that situation the
 Open MPI records and notes that processes exited with non-zero
 termination status to report the appropriate exit status of ``mpirun`` (per
 bullet points above).
-
-.. error:: TODO The ``orte_abort...`` name above is definitely wrong for
-           Open MPI 5.0.0.
 
 EXAMPLES
 --------
