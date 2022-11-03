@@ -269,14 +269,14 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     uint64_t win_count;
     int insert = -1;
     int ret;
+    int ret_unlock;
 
     /* We need to lock dyn-lock even if the process has an exclusive lock.
      * Remote process protects its window attach/detach operations with a
      * dynamic lock */
     ret = ompi_osc_ucx_dynamic_lock(module, target);
     if (ret != OPAL_SUCCESS) {
-        ret = OMPI_ERROR;
-        goto cleanup;
+        return OMPI_ERROR;
     }
 
     temp_buf = calloc(remote_state_len, 1);
@@ -361,9 +361,9 @@ cleanup:
     free(temp_buf);
 
     /* unlock the dynamic lock */
-    ompi_osc_ucx_dynamic_unlock(module, target);
-
-    return ret;
+    ret_unlock = ompi_osc_ucx_dynamic_unlock(module, target);
+    /* ignore unlock result in case of error */
+    return (OPAL_SUCCESS != ret) ? ret : ret_unlock;
 }
 
 static inline
@@ -1615,7 +1615,7 @@ void ompi_osc_ucx_req_completion(void *request) {
         assert(req->phase != ACC_INIT);
         void *free_addr = NULL;
         bool release_lock = false;
-        ptrdiff_t temp_lb, temp_extent;
+        ptrdiff_t temp_extent, temp_lb;
         const void *origin_addr = req->origin_addr;
         int origin_count = req->origin_count;
         struct ompi_datatype_t *origin_dt = req->origin_dt;
@@ -1786,7 +1786,7 @@ void ompi_osc_ucx_req_completion(void *request) {
             module->state_mem->skip_periodic_flush = false;
         }
     }
+    assert(module->ctx->num_incomplete_req_ops > 0);
     OSC_UCX_DECREMENT_OUTSTANDING_NB_OPS(module);
     ompi_request_complete(&(ucx_req->super.super), true);
-    assert(module->ctx->num_incomplete_req_ops >= 0);
 }

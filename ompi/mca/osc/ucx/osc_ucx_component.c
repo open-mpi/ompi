@@ -784,6 +784,9 @@ select_unlock:
     case MPI_WIN_FLAVOR_SHARED:
         mem_type = OPAL_COMMON_UCX_MEM_MAP;
         break;
+    default:
+        ret = OMPI_ERR_BAD_PARAM;
+        goto error;
     }
     ret = opal_common_ucx_wpmem_create(module->ctx, mem_base, module->size,
                                      mem_type, &exchange_len_info,
