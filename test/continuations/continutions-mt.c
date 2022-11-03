@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
   sleep(2);
 
   /* initialize the continuation request */
-  MPIX_Continue_init(0, 0, &cont_req, MPI_INFO_NULL);
+  MPIX_Continue_init(0, 0, MPI_INFO_NULL, &cont_req);
 
   MPI_Start(&cont_req);
 
@@ -113,14 +113,8 @@ int main(int argc, char *argv[])
   /****************************************************************
    * Do the same thing, but with a poll-only continuation request
    ****************************************************************/
-
-  MPI_Info info;
-  MPI_Info_create(&info);
-  MPI_Info_set(info, "mpi_continue_poll_only", "true");
-  MPI_Info_set(info, "mpi_continue_enqueue_complete", "true");
-
   /* initialize the continuation request */
-  MPIX_Continue_init(0, 0, &cont_req, info);
+  MPIX_Continue_init(MPIX_CONT_POLL_ONLY, MPI_UNDEFINED, MPI_INFO_NULL, &cont_req);
 
   MPI_Info_free(&info);
 
@@ -133,7 +127,7 @@ int main(int argc, char *argv[])
   MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[1]);
 
   cb_cnt = 0;
-  MPIX_Continueall(2, reqs, &complete_cnt_cb, &cb_cnt, 0, MPI_STATUSES_IGNORE, cont_req);
+  MPIX_Continueall(2, reqs, &complete_cnt_cb, &cb_cnt, MPIX_CONT_DEFER_COMPLETE, MPI_STATUSES_IGNORE, cont_req);
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
   assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);
   assert(cb_cnt == 1);
@@ -145,10 +139,10 @@ int main(int argc, char *argv[])
    */
   cb_cnt = 0;
   MPI_Irecv(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[0]);
-  MPIX_Continue(&reqs[0], &complete_cnt_cb, &cb_cnt, 0, MPI_STATUS_IGNORE, cont_req);
+  MPIX_Continue(&reqs[0], &complete_cnt_cb, &cb_cnt, MPIX_CONT_DEFER_COMPLETE, MPI_STATUS_IGNORE, cont_req);
 
   MPI_Isend(&val, 1, MPI_INT, rank, 1001, MPI_COMM_WORLD, &reqs[1]);
-  MPIX_Continue(&reqs[1], &complete_cnt_cb, &cb_cnt, 0, MPI_STATUS_IGNORE, cont_req);
+  MPIX_Continue(&reqs[1], &complete_cnt_cb, &cb_cnt, MPIX_CONT_DEFER_COMPLETE, MPI_STATUS_IGNORE, cont_req);
 
   MPI_Wait(&cont_req, MPI_STATUS_IGNORE);
   assert(reqs[0] == MPI_REQUEST_NULL && reqs[1] == MPI_REQUEST_NULL);

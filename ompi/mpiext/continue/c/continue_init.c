@@ -36,8 +36,8 @@ static const char FUNC_NAME[] = "MPIX_Continue_init";
 int MPIX_Continue_init(
     int max_poll,
     int flags,
-    MPI_Request *cont_req,
-    MPI_Info info)
+    MPI_Info info,
+    MPI_Request *cont_req)
 {
     int rc = MPI_SUCCESS;
 
