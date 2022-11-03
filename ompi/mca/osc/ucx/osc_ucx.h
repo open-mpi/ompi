@@ -49,12 +49,12 @@ OMPI_DECLSPEC extern ompi_osc_ucx_component_t mca_osc_ucx_component;
 
 #define OSC_UCX_INCREMENT_OUTSTANDING_NB_OPS(_module)                               \
     do {                                                                            \
-        opal_atomic_add_fetch_size_t(&_module->ctx->num_incomplete_req_ops, 1);     \
+        opal_atomic_add_fetch_64(&_module->ctx->num_incomplete_req_ops, 1);         \
     } while(0);
 
 #define OSC_UCX_DECREMENT_OUTSTANDING_NB_OPS(_module)                               \
     do {                                                                            \
-        opal_atomic_add_fetch_size_t(&_module->ctx->num_incomplete_req_ops, -1);    \
+        opal_atomic_add_fetch_64(&_module->ctx->num_incomplete_req_ops, -1);        \
     } while(0);
 
 typedef enum ompi_osc_ucx_epoch {

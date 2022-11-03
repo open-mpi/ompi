@@ -650,6 +650,7 @@ select_unlock:
         module->noncontig_shared_win = false;
         if (OMPI_SUCCESS != opal_info_get_bool(info, "alloc_shared_noncontig",
                                                &module->noncontig_shared_win, &flag)) {
+            free(rbuf);
             goto error;
         }
 
@@ -879,6 +880,7 @@ error:
     if (module->disp_units) free(module->disp_units);
     if (module->comm) ompi_comm_free(&module->comm);
     free(module);
+    module = NULL;
 
 error_nomem:
     if (env_initialized == true) {
@@ -887,7 +889,7 @@ error_nomem:
         mca_osc_ucx_component.env_initialized = false;
     }
 
-    if (0 == ompi_comm_rank (module->comm) && unlink_needed) {
+    if ((NULL != module) && (0 == ompi_comm_rank (module->comm)) && unlink_needed) {
         opal_shmem_unlink (&module->seg_ds);
     }
     ompi_osc_ucx_unregister_progress();
@@ -1082,7 +1084,10 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     }
     OBJ_DESTRUCT(&module->pending_posts);
 
-    opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
 
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
