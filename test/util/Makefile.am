@@ -39,7 +39,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 check_PROGRAMS = \
 	opal_bit_ops \
 	opal_path_nfs \
-	bipartite_graph
+	bipartite_graph \
+        opal_sha256
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -127,6 +128,12 @@ bipartite_graph_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 bipartite_graph_DEPENDENCIES = $(bipartite_graph_LDADD)
+
+opal_sha256_SOURCES = opal_sha256.c
+opal_sha256_LDADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+        $(top_builddir)/test/support/libsupport.a
+opal_sha256_DEPENDENCIES = $(opal_sha256_LDADD)
 
 clean-local:
 	rm -f test_session_dir_out test-file opal_path_nfs.out
