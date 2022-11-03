@@ -824,6 +824,7 @@ int ompi_continue_attach(
     }
 
     bool req_volatile = (flags & MPIX_CONT_REQBUF_VOLATILE);
+    bool defer_complete = (flags & MPIX_CONT_DEFER_COMPLETE);
 
     ompi_cont_request_t *cont_req = (ompi_cont_request_t *)continuation_request;
     ompi_continuation_t *cont = ompi_continue_cont_create(count, cont_req, cont_cb,
@@ -901,7 +902,7 @@ int ompi_continue_attach(
         last_num_active = OPAL_THREAD_ADD_FETCH32(&cont->cont_num_active, -num_complete);
     }
     if (0 == last_num_active) {
-        if (cont_req->cont_enqueue_complete || OMPI_REQUEST_INACTIVE == cont_req->super.req_state) {
+        if (defer_complete || OMPI_REQUEST_INACTIVE == cont_req->super.req_state) {
             /* enqueue for later processing */
             ompi_continue_enqueue_runnable(cont);
         } else {
@@ -930,8 +931,8 @@ int ompi_continue_attach(
  */
 int ompi_continue_allocate_request(
     ompi_request_t **cont_req_ptr,
-    int max_poll,
     int flags,
+    int max_poll,
     ompi_info_t *info)
 {
     ompi_cont_request_t *cont_req = OBJ_NEW(ompi_cont_request_t);
@@ -940,35 +941,11 @@ int ompi_continue_allocate_request(
 
         cont_req->cont_flags = flags;
 
-        int flag;
-        bool test_poll = false;
-        /* TODO: remove the info flag */
-        ompi_info_get_bool(info, "mpi_continue_poll_only", &test_poll, &flag);
-
-        if ((flag && test_poll)) {
-            cont_req->cont_flags |= MPIX_CONT_POLL_ONLY;
-        }
-
         if (cont_req->cont_flags & MPIX_CONT_POLL_ONLY) {
             cont_req->cont_complete_list = OBJ_NEW(opal_list_t);
         }
 
-        /* TODO: remove this flags, it should be part of attach */
-        bool enqueue_complete = false;
-        ompi_info_get_bool(info, "mpi_continue_enqueue_complete", &enqueue_complete, &flag);
-        cont_req->cont_enqueue_complete = (flag && enqueue_complete);
-
         cont_req->continue_max_poll = max_poll;
-        /* TODO: remove this flag, it's explicit now */
-        opal_cstring_t *value_str;
-        ompi_info_get(info, "mpi_continue_max_poll", &value_str, &flag);
-        if (flag) {
-            int max_poll = atoi(value_str->string);
-            OBJ_RELEASE(value_str);
-            if (max_poll > 0) {
-                cont_req->continue_max_poll = max_poll;
-            }
-        }
         if (0 == cont_req->continue_max_poll) {
             cont_req->continue_max_poll = UINT32_MAX;
         }
