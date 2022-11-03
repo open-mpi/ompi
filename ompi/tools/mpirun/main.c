@@ -110,6 +110,7 @@ static void setup_mca_prefixes(void)
     char *env_str = opal_argv_join(tmp, ',');
     opal_setenv("OMPI_MCA_PREFIXES", env_str, true,
                 &environ);
+    free(env_str);
 
     opal_argv_free(tmp);
 }
