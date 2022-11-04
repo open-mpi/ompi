@@ -120,5 +120,5 @@ that either you are operating in a PMIx-enabled environment, or use "mpirun"
 to execute the job.
 #
 [no-pmix-but]
-No PMIx server was reachable, but a PMI1/2 or SLURM environment was detected.
-Open MPI will start %d singletons
+No PMIx server was reachable, but a PMI1/2 was detected.
+If srun is being used to launch application,  %d singletons will be started.

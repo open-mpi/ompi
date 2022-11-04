@@ -541,6 +541,9 @@ int ompi_rte_init(int *pargc, char ***pargv)
     pmix_status_t rc;
     char **tmp;
     bool singleton = false;
+    const static char *pmi_sentinels[] = {"PMI_FD", /* SLURM PMI1,2 */
+                                          "PMI_CONTROL_PORT", /* Cray Shasta */
+                                          NULL};
 
     u32ptr = &u32;
     u16ptr = &u16;
@@ -569,21 +572,32 @@ int ompi_rte_init(int *pargc, char ***pargv)
         /* if we get PMIX_ERR_UNREACH indicating that we cannot reach the
          * server, then we assume we are operating as a singleton */
         if (PMIX_ERR_UNREACH == ret) {
-            /* if we are in a PMI or SLURM environment with two tasks or more,
+            bool found_a_pmi = false;
+            int n = 0;
+            /* if we are in a PMI environment with two tasks or more,
              * we probably do not want to start singletons */
-            char *size_str = getenv("PMI_SIZE");
-            if (NULL == size_str) {
-                size_str = getenv("SLURM_NPROCS");
-            }
-            int size = (NULL != size_str)?atoi(size_str):1;
-            if (1 < size) {
-                char *rank_str = getenv("PMI_RANK");
-                if (NULL == rank_str) {
-                    rank_str = getenv("SLURM_PROCID");
+            while (pmi_sentinels[n] != NULL) {
+                if (NULL != getenv(pmi_sentinels[n])) {
+                    found_a_pmi = true;
+                    break;
                 }
-                int rank = (NULL != rank_str)?atoi(rank_str):0;
-                if (0 == rank) {
-                    opal_show_help("help-mpi-runtime.txt", "no-pmix-but", false, size);
+                n++;
+            }
+            if (found_a_pmi) {
+                char *size_str = getenv("PMI_SIZE");
+                if (NULL == size_str) {
+                    size_str = getenv("SLURM_NPROCS");
+                }
+                int size = (NULL != size_str)?atoi(size_str):1;
+                if (1 < size) {
+                    char *rank_str = getenv("PMI_RANK");
+                    if (NULL == rank_str) {
+                        rank_str = getenv("SLURM_PROCID");
+                    }
+                    int rank = (NULL != rank_str)?atoi(rank_str):0;
+                    if (0 == rank) {
+                        opal_show_help("help-mpi-runtime.txt", "no-pmix-but", false, size);
+                    }
                 }
             }
             singleton = true;
