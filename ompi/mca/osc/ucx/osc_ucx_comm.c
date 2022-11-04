@@ -268,7 +268,8 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     int contain = 0;
     uint64_t win_count;
     int insert = -1;
-    int ret;
+    int ret = OMPI_SUCCESS;
+    int ret_unlock = OMPI_SUCCESS;
 
     /* We need to lock dyn-lock even if the process has an exclusive lock.
      * Remote process protects its window attach/detach operations with a
@@ -316,6 +317,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     _mem_record_t *mem_rec = NULL;
     ret = opal_tsd_tracked_key_get(&module->mem->tls_key, (void **) &mem_rec);
     if (OPAL_SUCCESS != ret) {
+        ret = OMPI_ERROR;
         goto cleanup;
     }
     
@@ -323,10 +325,12 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
         OSC_UCX_GET_DEFAULT_EP(ep, module, target);
         ret = opal_common_ucx_tlocal_fetch_spath(module->mem, target, ep);
         if (OPAL_SUCCESS != ret) {
+            ret = OMPI_ERROR;
             goto cleanup;
         }
         ret = opal_tsd_tracked_key_get(&module->mem->tls_key, (void **) &mem_rec);
         if (OPAL_SUCCESS != ret) {
+            ret = OMPI_ERROR;
             goto cleanup;
         }
 
@@ -358,7 +362,10 @@ cleanup:
     free(temp_buf);
 
     /* unlock the dynamic lock */
-    return ompi_osc_ucx_dynamic_unlock(module, target);
+    ret_unlock = ompi_osc_ucx_dynamic_unlock(module, target);
+    /* give precedence to previous errors over unlock error */
+    ret = (OMPI_SUCCESS != ret) ? ret : ret_unlock;
+    return ret;
 }
 
 static inline
