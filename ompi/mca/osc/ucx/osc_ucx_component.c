@@ -5,6 +5,8 @@
  *                         reserved.
  *
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2022      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -933,7 +935,7 @@ int ompi_osc_ucx_dynamic_lock(ompi_osc_ucx_module_t *module, int target) {
                                         TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
                                         target, &result_value, sizeof(result_value),
                                         remote_addr, ep);
-        if (ret != OMPI_SUCCESS) {
+        if (ret != OPAL_SUCCESS) {
             OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_cmpswp failed: %d", ret);
             return OMPI_ERROR;
         }
@@ -955,7 +957,7 @@ int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target) {
     int ret = OMPI_SUCCESS;
 
     ret = opal_common_ucx_wpmem_fence(module->mem);
-    if (ret != OMPI_SUCCESS) {
+    if (ret != OPAL_SUCCESS) {
         OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
         return OMPI_ERROR;
     }
