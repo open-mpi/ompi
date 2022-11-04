@@ -554,11 +554,13 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     }
 #endif
 
-    // Get the local peers
+    // Get the local peers - note there may not always be local peers,e.g. .singleton launch case
     OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS, &pname, &local_peers, PMIX_STRING);
     if (PMIX_SUCCESS != rc || NULL == local_peers) {
         // We can't find package_rank, fall back to procid
-        opal_show_help("help-common-ofi.txt", "package_rank failed", true);
+        if (10 <= opal_common_ofi_verbose_level) {
+            opal_show_help("help-common-ofi.txt", "package_rank failed", true, 10);
+        }
         return (uint32_t) process_info->myprocid.rank;
     }
     peers = opal_argv_split(local_peers, ',');
