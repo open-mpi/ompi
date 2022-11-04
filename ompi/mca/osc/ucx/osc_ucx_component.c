@@ -928,7 +928,7 @@ int ompi_osc_ucx_dynamic_lock(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_DYNAMIC_LOCK_OFFSET;
     ucp_ep_h *ep;
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
-    int ret = OMPI_SUCCESS;
+    int ret = OPAL_SUCCESS;
 
     for (;;) {
         ret = opal_common_ucx_wpmem_cmpswp(module->state_mem,
@@ -946,7 +946,7 @@ int ompi_osc_ucx_dynamic_lock(ompi_osc_ucx_module_t *module, int target) {
         opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
     }
 
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target) {
@@ -954,7 +954,7 @@ int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_DYNAMIC_LOCK_OFFSET;
     ucp_ep_h *ep;
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
-    int ret = OMPI_SUCCESS;
+    int ret = OPAL_SUCCESS;
 
     ret = opal_common_ucx_wpmem_fence(module->mem);
     if (ret != OPAL_SUCCESS) {
@@ -966,8 +966,11 @@ int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target) {
                                     UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
                                     target, &result_value, sizeof(result_value),
                                     remote_addr, ep);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
     assert(result_value == TARGET_LOCK_EXCLUSIVE);
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
