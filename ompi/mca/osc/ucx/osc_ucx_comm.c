@@ -276,8 +276,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
      * dynamic lock */
     ret = ompi_osc_ucx_dynamic_lock(module, target);
     if (ret != OPAL_SUCCESS) {
-        ret = OMPI_ERROR;
-        goto cleanup;
+        return OMPI_ERROR;
     }
 
     temp_buf = calloc(remote_state_len, 1);
