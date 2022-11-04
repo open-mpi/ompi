@@ -281,6 +281,10 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     }
 
     temp_buf = calloc(remote_state_len, 1);
+    if (NULL == temp_buf) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
     ret = opal_common_ucx_wpmem_putget(module->state_mem, OPAL_COMMON_UCX_GET, target,
                                        (void *)((intptr_t)temp_buf),
                                        remote_state_len, remote_state_addr, ep);
