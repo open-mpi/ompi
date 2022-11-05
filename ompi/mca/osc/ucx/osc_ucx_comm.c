@@ -280,6 +280,11 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     }
 
     temp_buf = calloc(remote_state_len, 1);
+    if (NULL == temp_buf) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
+
     ret = opal_common_ucx_wpmem_putget(module->state_mem, OPAL_COMMON_UCX_GET, target,
                                        (void *)((intptr_t)temp_buf),
                                        remote_state_len, remote_state_addr, ep);
@@ -316,6 +321,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     _mem_record_t *mem_rec = NULL;
     ret = opal_tsd_tracked_key_get(&module->mem->tls_key, (void **) &mem_rec);
     if (OPAL_SUCCESS != ret) {
+        ret = OMPI_ERROR;
         goto cleanup;
     }
     
@@ -323,10 +329,12 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
         OSC_UCX_GET_DEFAULT_EP(ep, module, target);
         ret = opal_common_ucx_tlocal_fetch_spath(module->mem, target, ep);
         if (OPAL_SUCCESS != ret) {
+            ret = OMPI_ERROR;
             goto cleanup;
         }
         ret = opal_tsd_tracked_key_get(&module->mem->tls_key, (void **) &mem_rec);
         if (OPAL_SUCCESS != ret) {
+            ret = OMPI_ERROR;
             goto cleanup;
         }
 
@@ -363,7 +371,7 @@ cleanup:
     /* unlock the dynamic lock */
     ret_unlock = ompi_osc_ucx_dynamic_unlock(module, target);
     /* ignore unlock result in case of error */
-    return (OPAL_SUCCESS != ret) ? ret : ret_unlock;
+    return (OMPI_SUCCESS != ret) ? ret : ret_unlock;
 }
 
 static inline
