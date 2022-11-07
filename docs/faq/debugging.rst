@@ -577,3 +577,99 @@ line:
 More information on suppression-files and how to generate them can be
 found in `Valgrind's documentation
 <https://valgrind.org/docs/manual/manual-core.html#manual-core.suppress>`_.
+
+/////////////////////////////////////////////////////////////////////////
+
+How to use MPIR-based tools with Open MPI
+---------------------------------------------------------------
+
+A shim module is available for use with debuggers and tools which rely on the
+`MPIR specification <https://www.mpi-forum.org/docs/mpir-specification-03-01-2018.pdf>`_
+to access application process mappings.
+
+The source code for this shim module can be downloaded from 
+`MPIR to PMIx Shim repository <https://github.com/openpmix/mpir-to-pmix-guide>`_.
+
+Instructions for use of the shim module are available at
+`<https://github.com/openpmix/mpir-to-pmix-guide/blob/master/README.md>`_.
+
+/////////////////////////////////////////////////////////////////////////
+
+Verification of MPIR shim functionality using Open MPI
+---------------------------------------------------------------
+
+Correct operation of the MPIR shim layer with Open MPI can be verified by
+following these instructions.
+
+* Build a current version of Open MPI and install it into a sub-directory of the
+  test directory, for instance, ``/home/shim_test/ompi``. The build should use the
+  versions of PMIX and PRRTE included with Open MPI. The configure
+  ``--with-pmix``, ``-with-prrte``, ``--with-pmix-libdir`` and
+  ``--with-prrte-libdir`` flags should not be used.
+
+* Clone the mpir-to-pmix-guide Github repository into the test directory by
+  running ``git clone git@github.com:openpmix/mpir-to-pmix-guide.git``.
+
+* Change the directory to the directory the MPIR shim code was cloned into,
+  for instance ``/home/shim_test/mpir-to-pmix-guide``.
+
+* Generate the configuration files by running ``./autogen.sh``.
+
+* Run the configure step, specifying the test shim install directory and the
+  location of the PMIX runtime. For instance
+  ``./configure --prefix=/home/shim_test --with-pmix=/home/shim_test/ompi
+  --with-pmix-libdir=/home/shim_test/ompi/lib``.
+
+* Run the ``make`` and ``make install`` commands.
+
+* Change the directory back to the top-level test directory (``/home/shim_test``).
+
+* Set the following environment variables:
+
+.. code-block:: sh
+
+  export MPI_ROOT=/home/shim_test/ompi
+  export PATH=/home/shim_test/bin:$MPI_ROOT/bin:$PATH
+  export LD_LIBRARY_PATH=/home/shim_test/lib:$MPI_ROOT/lib:$LD_LIBRARY_PATH
+
+* Change the directory to the test directory where the MPIR shim build created
+  the test driver program.  For instance ``/home/shim_test/mpir-to-pmix-guide/test``.
+
+* Create the following test program, ``testprog.c``. The duration of the sleep can
+  be modified to whatever value suspends the test target program long enough
+  for you to attach to running mpirun processes:
+
+.. code-block:: sh
+
+  #include <mpi.h>
+  #include <unistd.h>
+
+  void main(int argc, char **argv) {
+    MPI_Init(&argc, &argv);
+    sleep(60);
+    MPI_Finalize();
+  }
+
+* Compile the target test program, for instance ``mpicc -o testprog testprog.c``
+
+* Run the shim test program in Proxy Mode,
+  ``mpirshim_test mpirun -n 2 ./testprog``.
+
+* The test program should display output including one line for each application
+  task showing task rank, execution node, executable path, and application task
+  PID.
+
+* To run the test program in Attach Mode, first invoke ``mpirun`` as
+  ``mpirun -n 2 ./testprog`` and note the PID displayed, which is the PID of
+  the ``mpirun`` process.
+
+* Then run the shim test program as ``mpirshim_test -c <pid>`` where ``<pid>`` is
+  the PID of the ``mpirun`` program.
+
+* The test program should display output including one line for each application
+  task showing task rank, execution node, executable path, and application task
+  PID.
+
+* Note that if you modify the test program to write output to ``stdout`` or ``stderr``,
+  that output will not be displayed when the program is run in Proxy mode
+  since the ``mpirshim_test`` program does not forward application ``stdio`` output.
