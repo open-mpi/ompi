@@ -738,7 +738,7 @@ no_hmem:
 
     if (FI_ENODATA == -ret) {
         /* Attempt selecting a provider without FI_HMEM hints */
-        if (hints->caps |= FI_HMEM) {
+        if (hints->caps & FI_HMEM) {
             hints->caps &= ~FI_HMEM;
             hints->domain_attr->mr_mode &= ~FI_MR_HMEM;
             goto no_hmem;
