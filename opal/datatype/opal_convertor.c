@@ -48,7 +48,7 @@
 static void *opal_convertor_accelerator_memcpy(void *dest, const void *src, size_t size, opal_convertor_t *convertor)
 {
     int res;
-    if (!(convertor->flags & CONVERTOR_ACCELERATOR)) {
+    if (!(convertor->flags & CONVERTOR_ACCELERATOR) || (convertor->flags & CONVERTOR_ACCELERATOR_UNIFIED)) {
         return MEMCPY(dest, src, size);
     }
 
