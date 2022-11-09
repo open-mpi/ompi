@@ -192,16 +192,7 @@ length of the declared integer in bytes.
 Errors
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler
-MPI_ERRORS_RETURN may be used to cause error values to be returned.
-Note that MPI does not guarantee that an MPI program can continue past
-an error.
+.. include:: ./ERRORS.rst
 
 All callback functions return an error code. The code is passed back and
 dealt with as appropriate for the error code by the MPI function that
@@ -219,5 +210,3 @@ error code returned by the corresponding invocation of its ``free_fn``
 callback function. However, if the MPI function was passed
 MPI_STATUSES_IGNORE, then the individual error codes returned by
 each callback function will be lost.
-
-See the MPI man page for a full list of MPI error codes.

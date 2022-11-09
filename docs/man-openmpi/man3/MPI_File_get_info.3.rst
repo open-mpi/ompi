@@ -142,12 +142,4 @@ The following hints can be used as values for the *info_used* argument.
 ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. For MPI I/O function errors, the default error handler is set to
-MPI_ERRORS_RETURN. The error handler may be changed with
-:ref:`MPI_File_set_errhandler`; the predefined error handler
-MPI_ERRORS_ARE_FATAL may be used to make I/O errors fatal. Note that MPI
-does not guarantee that an MPI program can continue past an error.
+.. include:: ./ERRORS.rst
