@@ -72,9 +72,6 @@ processes in session if the default error handler has not been changed.
 Errors
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. See the MPI
-man page for a full list of MPI error codes.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Session_create_errhandler`
