@@ -19,6 +19,40 @@ probably work in many environments.
    Developer's Guide </developers/index>` before attempting to build Open
    MPI. Really.
 
+Binary packages
+---------------
+
+Although the Open MPI community itself does not distribute binary
+packages for Open MPI, many downstream packagers do.
+
+For example, many Linux distributions include Open MPI packages
+|mdash| even if they are not installed by default.  You should consult
+the documentation and/or package list for your Linux distribution to
+see if you can use its built-in package system to install Open MPI.
+
+The MacOS package managers `Homebrew <https://brew.sh/>`_ and
+`MacPorts <https://macports.org/>`_ both offer binary Open MPI
+packages:
+
+.. code-block:: sh
+
+   # For Homebrew
+   shell$ brew install openmpi
+
+   # For MacPorts
+   shell$ port install openmpi
+
+.. important:: Binary packages may or may not include support for
+               features that are required on your platform (e.g., a
+               specific networking stack).  Or the binary packages
+               available to you may be older / out of date.  As such,
+               it may be better to build and install Open MPI from a
+               source tarball available from `the main Open MPI web
+               site <https://www.open-mpi.org/>`_.
+
+Building from source
+--------------------
+
 Open MPI uses a traditional ``configure`` script paired with ``make``
 to build.  Typical installs can be of the pattern:
 

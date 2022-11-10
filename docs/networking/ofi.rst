@@ -78,7 +78,7 @@ For more information refer to the `Libfabric web site
 
 /////////////////////////////////////////////////////////////////////////
 
-Ompi-Path: How can the multi-rail settings be adjusted if multiple HFI (Host Fabric Interface) cards are installed on the system?
+Omni-Path: How can the multi-rail settings be adjusted if multiple HFI (Host Fabric Interface) cards are installed on the system?
 ---------------------------------------------------------------------------------------------------------------------------------
 
 Multi-Rail feature allows a process to use multiple HFIs to transfer a message
