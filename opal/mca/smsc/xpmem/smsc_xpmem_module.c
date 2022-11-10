@@ -23,6 +23,7 @@
 #include "opal/mca/smsc/base/base.h"
 #include "opal/mca/smsc/xpmem/smsc_xpmem_internal.h"
 #include "opal/util/minmax.h"
+#include "opal/util/sys_limits.h"
 
 OBJ_CLASS_INSTANCE(mca_smsc_xpmem_endpoint_t, opal_object_t, NULL, NULL);
 
@@ -116,7 +117,7 @@ void *mca_smsc_xpmem_map_peer_region(mca_smsc_endpoint_t *endpoint, uint64_t fla
     int rc;
 
     base = OPAL_DOWN_ALIGN((uintptr_t) remote_ptr, attach_align, uintptr_t);
-    bound = OPAL_ALIGN((uintptr_t) remote_ptr + size - 1, attach_align, uintptr_t) + 1;
+    bound = OPAL_ALIGN((uintptr_t) remote_ptr + size, attach_align, uintptr_t);
     if (OPAL_UNLIKELY(bound > xpmem_endpoint->address_max)) {
         bound = xpmem_endpoint->address_max;
     }
@@ -157,8 +158,14 @@ void *mca_smsc_xpmem_map_peer_region(mca_smsc_endpoint_t *endpoint, uint64_t fla
 
             reg->rcache_context = xpmem_attach(xpmem_addr, bound - base, NULL);
             if (OPAL_UNLIKELY((void *) -1 == reg->rcache_context)) {
-                OBJ_RELEASE(reg);
-                return NULL;
+                /* retry with the page as upper bound */
+                bound = OPAL_ALIGN((uintptr_t) remote_ptr + size, opal_getpagesize(), uintptr_t);
+                reg->bound = (unsigned char *) bound;
+                reg->rcache_context = xpmem_attach(xpmem_addr, bound - base, NULL);
+                if (OPAL_UNLIKELY((void *) -1 == reg->rcache_context)) {
+                    OBJ_RELEASE(reg);
+                    return NULL;
+                }
             }
 
             opal_memchecker_base_mem_defined(reg->rcache_context, bound - base);
@@ -307,5 +314,5 @@ mca_smsc_xpmem_module_t mca_smsc_xpmem_module = {
         .copy_from = mca_smsc_xpmem_copy_from,
         .map_peer_region = mca_smsc_xpmem_map_peer_region,
         .unmap_peer_region = mca_smsc_xpmem_unmap_peer_region,
-    }, 
+    },
 };
