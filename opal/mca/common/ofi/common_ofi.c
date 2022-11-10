@@ -121,6 +121,7 @@ int opal_common_ofi_export_memory_monitor(void)
     int ret = -FI_ENOSYS;
 
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
+    bool memory_base_frame_open = false;
     OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
 
     if (NULL != opal_common_ofi_cache_fid) {
@@ -145,7 +146,10 @@ int opal_common_ofi_export_memory_monitor(void)
     if (OPAL_SUCCESS != ret) {
         ret = -FI_ENOSYS;
         goto err;
+    } else {
+       memory_base_frame_open = true;
     }
+
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
         != (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
         & opal_mem_hooks_support_level())) {
@@ -190,6 +194,9 @@ err:
             free(opal_common_ofi_monitor);
         }
 
+        if (memory_base_frame_open) {
+            mca_base_framework_close(&opal_memory_base_framework);
+        }
         opal_common_ofi_installed_memory_monitor = false;
     }
 
