@@ -22,7 +22,6 @@ build support for that library).
    ofi
    tcp
    shared-memory
-   opa
    ib-and-roce
    iwarp
    cuda

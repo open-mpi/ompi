@@ -25,6 +25,5 @@ that they are worth categorizing in an official way.
    large-clusters
 
    ompio
-   macos
 
    general-tuning
