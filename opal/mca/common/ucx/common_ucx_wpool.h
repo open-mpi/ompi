@@ -59,6 +59,17 @@ typedef struct {
 } opal_common_ucx_wpool_t;
 
 extern bool opal_common_ucx_thread_enabled;
+extern opal_atomic_int64_t opal_common_ucx_ep_counts;
+extern opal_atomic_int64_t opal_common_ucx_unpacked_rkey_counts;
+
+#if OPAL_ENABLE_DEBUG
+#define OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(_var, _val)                                \
+    do {                                                                            \
+        opal_atomic_add_fetch_64(&(_var), (_val));                                  \
+    } while(0);
+#else
+#define OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(&(_var), (_val));
+#endif
 
 /* Worker Pool Context (wpctx) is an object that is comprised of a set of UCP
  * workers that are considered as one logical communication entity.
