@@ -182,8 +182,8 @@ they rendered in HTML).
 Checking Sphinx HTML links
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``linkcheck`` ``make`` target will invoke Sphinx's functionality
-to check all the external links in the documentation::
+``make linkcheck`` will invoke Sphinx's functionality to check all the
+external links in the documentation:
 
 .. code:: sh
 
