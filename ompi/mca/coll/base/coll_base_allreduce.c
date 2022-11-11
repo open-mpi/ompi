@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Siberian State University of Telecommunications
  *                         and Information Science. All rights reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -982,7 +983,9 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
 
     /* Find nearest power-of-two less than or equal to comm_size */
     int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
-    assert(nsteps >= 0);
+    if (-1 == nsteps) {
+        return MPI_ERR_ARG;
+    }
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
 
     if (count < nprocs_pof2 || !ompi_op_is_commute(op)) {
