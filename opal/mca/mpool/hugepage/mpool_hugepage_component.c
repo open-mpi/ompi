@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
@@ -238,9 +238,8 @@ static void mca_mpool_hugepage_find_hugepages(void)
         }
 
         tok = strtok_r(opts, ",", &ctx);
-
         do {
-            if (0 == strncmp(tok, "pagesize", 8)) {
+            if (NULL != tok && 0 == strncmp(tok, "pagesize", 8)) {
                 break;
             }
             tok = strtok_r(NULL, ",", &ctx);
