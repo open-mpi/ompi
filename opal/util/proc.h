@@ -10,6 +10,8 @@
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,6 +132,7 @@ typedef struct opal_process_info_t {
     uint32_t reincarnation;
     bool proc_is_bound;
     char *initial_errhandler;
+    bool is_singleton;         /**<note this value can transition from false to true in some cases */
 } opal_process_info_t;
 OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
 

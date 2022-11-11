@@ -522,7 +522,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
    OMPI_TIMING_NEXT("commit");
 #if (OPAL_ENABLE_TIMING)
     if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
-            opal_pmix_collect_all_data && !ompi_singleton) {
+            opal_pmix_collect_all_data && !opal_process_info.is_singleton) {
         if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
             ret = opal_pmix_convert_status(rc);
             return ompi_instance_print_error ("timing: pmix-barrier-1 failed", ret);
@@ -535,7 +535,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     }
 #endif
 
-   if (!ompi_singleton) {
+   if (! opal_process_info.is_singleton) {
         if (opal_pmix_base_async_modex) {
             /* if we are doing an async modex, but we are collecting all
              * data, then execute the non-blocking modex in the background.
@@ -714,7 +714,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     /* Next timing measurement */
     OMPI_TIMING_NEXT("modex-barrier");
 
-    if (!ompi_singleton) {
+    if (!opal_process_info.is_singleton) {
         /* if we executed the above fence in the background, then
          * we have to wait here for it to complete. However, there
          * is no reason to do two barriers! */
