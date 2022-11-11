@@ -27,7 +27,7 @@
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -394,7 +394,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 
 #if (OPAL_ENABLE_TIMING)
     if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
-            opal_pmix_collect_all_data && !ompi_singleton) {
+            opal_pmix_collect_all_data && !opal_process_info.is_singleton) {
         if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
             ret = opal_pmix_convert_status(rc);
             error = "timing: pmix-barrier-1 failed";
@@ -410,7 +410,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     }
 #endif
 
-    if (!ompi_singleton) {
+    if (!opal_process_info.is_singleton) {
         if (opal_pmix_base_async_modex) {
             /* if we are doing an async modex, but we are collecting all
              * data, then execute the non-blocking modex in the background.
@@ -494,7 +494,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* Next timing measurement */
     OMPI_TIMING_NEXT("modex-barrier");
 
-    if (!ompi_singleton) {
+    if (!opal_process_info.is_singleton) {
         /* if we executed the above fence in the background, then
          * we have to wait here for it to complete. However, there
          * is no reason to do two barriers! */
