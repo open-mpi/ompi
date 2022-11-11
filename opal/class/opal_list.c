@@ -135,9 +135,9 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
         assert(1 == item->opal_list_item_refcount);
         item->opal_list_item_belong_to = list;
 #endif
+        list->opal_list_length++;
     }
 
-    list->opal_list_length++;
     return true;
 }
 
