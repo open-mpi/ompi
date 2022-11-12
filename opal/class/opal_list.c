@@ -93,54 +93,6 @@ static void opal_list_destruct(opal_list_t *list)
     opal_list_construct(list);
 }
 
-/*
- * Insert an item at a specific place in a list
- */
-bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
-{
-    /* Adds item to list at index and retains item. */
-    int i;
-    volatile opal_list_item_t *ptr, *next;
-
-    if (idx >= (long long) list->opal_list_length) {
-        return false;
-    }
-
-    if (0 == idx) {
-        opal_list_prepend(list, item);
-    } else {
-#if OPAL_ENABLE_DEBUG
-        /* Spot check: ensure that this item is previously on no
-           lists */
-
-        assert(0 == item->opal_list_item_refcount);
-#endif
-        /* pointer to element 0 */
-        ptr = list->opal_list_sentinel.opal_list_next;
-        for (i = 0; i < idx - 1; i++) {
-            ptr = ptr->opal_list_next;
-        }
-
-        next = ptr->opal_list_next;
-        item->opal_list_next = next;
-        item->opal_list_prev = ptr;
-        next->opal_list_prev = item;
-        ptr->opal_list_next = item;
-
-#if OPAL_ENABLE_DEBUG
-        /* Spot check: ensure this item is only on the list that we
-           just inserted it into */
-
-        opal_atomic_add(&(item->opal_list_item_refcount), 1);
-        assert(1 == item->opal_list_item_refcount);
-        item->opal_list_item_belong_to = list;
-#endif
-    }
-
-    list->opal_list_length++;
-    return true;
-}
-
 static void opal_list_transfer(opal_list_item_t *pos, opal_list_item_t *begin,
                                opal_list_item_t *end)
 {
