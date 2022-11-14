@@ -211,6 +211,9 @@ int mca_base_component_repository_add(const char *path)
     path_to_use = strdup(path);
 
     dir = strtok_r(path_to_use, sep, &ctx);
+    if (NULL == dir) {
+        goto done;
+    }
     do {
         if ((0 == strcmp(dir, "USER_DEFAULT") || 0 == strcmp(dir, "USR_DEFAULT"))
             && NULL != mca_base_user_default_path) {
@@ -224,6 +227,7 @@ int mca_base_component_repository_add(const char *path)
         }
     } while (NULL != (dir = strtok_r(NULL, sep, &ctx)));
 
+ done:
     free(path_to_use);
 
 #endif /* OPAL_HAVE_DL_SUPPORT */

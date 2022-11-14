@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -818,10 +819,10 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
     new_instance = OBJ_NEW(ompi_instance_t);
     if (OPAL_UNLIKELY(NULL == new_instance)) {
         if (0 == opal_atomic_add_fetch_32 (&ompi_instance_count, -1)) {
-            ret = ompi_mpi_instance_finalize_common ();
-            if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
-                opal_mutex_unlock (&instance_lock);
-            }
+            // We can't do anything if an error occurs here because
+            // we're already in an error path, so don't even bother to
+            // look at the return value.
+            (void) ompi_mpi_instance_finalize_common ();
         }
         opal_mutex_unlock (&instance_lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
